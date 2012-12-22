@@ -6,9 +6,10 @@ Seafile-iOS is a the iOS client for [Seafile](http://www.seafile.com).
 
 Build and Run
 =============
+
 Follow these steps :
 
-	git clone gonggeng@gonggeng.org:~/git-repo/seafile-iOS.git 
+	git clone https://github.com/haiwen/seafile-iOS.git
 	cd seafile-iOS
 	git submodule init
 	git submodue update
