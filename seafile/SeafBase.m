@@ -1,0 +1,156 @@
+//
+//  SeafDentry.m
+//  seafile
+//
+//  Created by Wang Wei on 10/11/12.
+//  Copyright (c) 2012 Seafile Ltd. All rights reserved.
+//
+
+#import "SeafBase.h"
+#import "SeafDir.h"
+#import "SeafConnection.h"
+
+#import "UIImage+FileType.h"
+#import "Utils.h"
+#import "Debug.h"
+
+@implementation NSObject (NSObjectValue)
+- (long long)integerValue:(int)defaultValue
+{
+    if ([self respondsToSelector:@selector(intValue)])
+        return [((id)self)longLongValue];
+    else
+        return defaultValue;
+}
+- (BOOL)booleanValue:(BOOL)defaultValue
+{
+    if ([self respondsToSelector:@selector(boolValue)])
+        return [((id)self)boolValue];
+    else
+        return defaultValue;
+}
+@end
+
+
+@interface SeafBase ()
+@property BOOL cacheLoaded;
+@end
+
+@implementation SeafBase
+@synthesize name = _name, oid = _oid, path = _path, repoId = _repoId, mime=_mime;
+@synthesize delegate = _delegate;
+@synthesize ooid = _ooid;
+@synthesize state;
+@synthesize cacheLoaded;
+
+
+- (id)initWithConnection:(SeafConnection *)aConnection
+                     oid:(NSString *)anId
+                  repoId:(NSString *)aRepoId
+                    name:(NSString *)aName
+                    path:(NSString *)aPath
+                    mime:(NSString *)aMime
+{
+    if (self = [super init]) {
+        connection = aConnection;
+        _oid = anId;
+        _name = aName;
+        _path = aPath;
+        _repoId = aRepoId;
+        _mime = aMime;
+        _ooid = nil;
+        self.cacheLoaded = NO;
+        self.state = SEAF_DENTRY_INIT;
+    }
+    return self;
+}
+
+- (BOOL)savetoCache:(NSString *)content
+{
+    return NO;
+}
+
+- (void)realLoadContent
+{
+    // must be override
+}
+
+- (BOOL)realLoadCache
+{
+    return NO;
+}
+
+- (void)updateWithEntry:(SeafBase *)entry
+{
+    _oid = entry.oid;
+}
+
+- (NSString *)key
+{
+    return _name;
+}
+
+- (NSString *)url
+{
+    // must be override
+    return nil;
+}
+
+- (UIImage *)image;
+{
+    return [UIImage imageForMimeType:self.mime];
+}
+
+- (BOOL)loadCache
+{
+    @synchronized (self) {
+        if (self.cacheLoaded) {
+            [_delegate entry:self contentUpdated:YES completeness:100];
+            return YES;
+        }
+        self.cacheLoaded = YES;
+    }
+    return [self realLoadCache];
+}
+
+- (void)loadContent:(BOOL)force;
+{
+    @synchronized (self) {
+        if (self.state == SEAF_DENTRY_UPTODATE && !force) {
+            [_delegate entry:self contentUpdated:NO completeness:0];
+            return;
+        }
+        if (self.state == SEAF_DENTRY_LOADING)
+            return;
+        self.state = SEAF_DENTRY_LOADING;
+    }
+
+    [self loadCache];
+    [self realLoadContent];
+}
+
+- (void)setRepoPassword:(NSString *)password
+{
+    if (!self.repoId) {
+        [self.delegate repoPasswordSet:self WithResult:NO];
+        return;
+    }
+    NSString *request_str = [NSString stringWithFormat:API_URL"/repo/%@/?op=setpassword", self.repoId];
+    NSString *formString = [NSString stringWithFormat:@"password=%@",
+                            [password stringByAddingPercentEscapesUsingEncoding:NSASCIIStringEncoding]];
+    [connection sendPost:request_str repo:self.repoId form:formString
+                 success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+                     [Utils setRepo:self.repoId password:password];
+                     [self.delegate repoPasswordSet:self WithResult:YES];
+                 } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+                     [Utils setRepo:self.repoId password:nil];
+                     [self.delegate repoPasswordSet:self WithResult:NO];
+                 } ];
+}
+
+- (BOOL)hasCache
+{
+    return _ooid != nil;
+}
+
+@end
