@@ -12,9 +12,9 @@
 #import "SeafConnection.h"
 #import "SeafBase.h"
 #import "SeafAppDelegate.h"
-#import "AFJSONUtilities.h"
 
 #import "ExtentedString.h"
+#import "Utils.h"
 #import "Debug.h"
 
 @interface SeafDir ()
@@ -221,7 +221,7 @@
         return NO;
     NSData *data = [NSData dataWithBytes:[[dir content] UTF8String] length:[[dir content] length]];
 
-    id JSON = AFJSONDecode (data, &error);
+    id JSON = [Utils JSONDecode:data error:&error];
     if (error) {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         NSManagedObjectContext *context = [appdelegate managedObjectContext];

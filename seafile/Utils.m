@@ -162,4 +162,9 @@
     return [self _folderSizeAtPath:[folderPath cStringUsingEncoding:NSUTF8StringEncoding]];
 }
 
++ (id)JSONDecode:(NSData *)data error:(NSError **)error
+{
+    return [NSJSONSerialization JSONObjectWithData:data options:0 error:error];
+}
+
 @end

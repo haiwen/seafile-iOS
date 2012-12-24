@@ -62,7 +62,7 @@
     Debug("conn=%@, %@\n", connection.address, repoId);
     [_delegate uploadProgress:self result:YES completeness:_uploadProgress];
 
-    NSString *upload_url = [NSString stringWithFormat:API_URL"/repos/%@/fileops/upload/", repoId];
+    NSString *upload_url = [NSString stringWithFormat:API_URL"/repos/%@/uploadlink/", repoId];
     [connection sendRequest:upload_url repo:repoId success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          NSString *identifierString = (__bridge NSString *)CFUUIDCreateString(NULL, CFUUIDCreate(NULL));

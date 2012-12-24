@@ -24,4 +24,6 @@
 + (void)setRepo:(NSString *)repoId password:(NSString *)password;
 + (NSString *)getRepoPassword:(NSString *)repoId;
 
++ (id)JSONDecode:(NSData *)data error:(NSError **)error;
+
 @end

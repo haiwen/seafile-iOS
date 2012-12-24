@@ -7,7 +7,7 @@
 //
 
 #import "SeafJSONRequestOperation.h"
-#import "AFJSONUtilities.h"
+#import "Utils.h"
 #import "Debug.h"
 
 static dispatch_queue_t af_json_request_operation_processing_queue;
@@ -81,7 +81,7 @@ static dispatch_queue_t json_request_operation_processing_queue() {
             self.responseJSON = nil;
         }
         else {
-            self.responseJSON = AFJSONDecode(self.responseData, &error);
+            self.responseJSON = [Utils JSONDecode:self.responseData error:&error];
         }
 
         self.JSONError = error;

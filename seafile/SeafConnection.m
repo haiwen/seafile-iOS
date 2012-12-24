@@ -13,7 +13,6 @@
 #import "SeafData.h"
 #import "SeafAppDelegate.h"
 
-#import "AFJSONUtilities.h"
 #import "ExtentedString.h"
 #import "Debug.h"
 #import "Utils.h"
@@ -78,11 +77,6 @@
     return [_info objectForKey:@"password"];
 }
 
-- (NSString *)feedback
-{
-    return [_info objectForKey:@"feedback"];
-}
-
 - (long long)quota
 {
     return [[_info objectForKey:@"total"] integerValue:0];
@@ -107,7 +101,6 @@
     NSDictionary *account = data;
     [_info setObject:[account objectForKey:@"total"] forKey:@"total"];
     [_info setObject:[account objectForKey:@"usage"] forKey:@"usage"];
-    [_info setObject:[account objectForKey:@"feedback"] forKey:@"feedback"];
     [_info setObject:_address forKey:@"link"];
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     [userDefaults setObject:_info forKey:_address];
@@ -334,7 +327,7 @@
     NSError *error = nil;
     NSData *data = [NSData dataWithBytes:[starfiles.content UTF8String] length:starfiles.content.length];
 
-    id JSON = AFJSONDecode (data, &error);
+    id JSON = [Utils JSONDecode:data error:&error];
     if (error) {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         NSManagedObjectContext *context = [appdelegate managedObjectContext];

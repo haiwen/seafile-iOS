@@ -11,7 +11,6 @@
 #import "SeafDir.h"
 #import "SeafConnection.h"
 #import "SeafAppDelegate.h"
-#import "AFJSONUtilities.h"
 #import "ExtentedString.h"
 #import "Debug.h"
 #import "Utils.h"
@@ -243,7 +242,7 @@
         return NO;
     NSData *data = [NSData dataWithBytes:[[server content] UTF8String] length:[[server content] length]];
 
-    id JSON = AFJSONDecode (data, &error);
+    id JSON = [Utils JSONDecode:data error:&error];
     if (error) {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         NSManagedObjectContext *context = [appdelegate managedObjectContext];

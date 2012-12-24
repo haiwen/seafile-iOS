@@ -190,13 +190,6 @@ enum {
     [self displayMailPicker];
 }
 
-- (void)configureFeedbackMail:(MFMailComposeViewController *)mailPicker
-{
-    [mailPicker setSubject:[NSString stringWithFormat:@"%@", @"Feedback on ipad"]];
-    [mailPicker setToRecipients:[NSArray arrayWithObject:_connection.feedback]];
-    [mailPicker setMessageBody:nil isHTML:YES];
-}
-
 - (void)configureInvitationMail:(MFMailComposeViewController *)mailPicker
 {
     [mailPicker setSubject:[NSString stringWithFormat:@"%@ invite you to Seafile", NSFullUserName()]];
@@ -209,10 +202,7 @@ enum {
 {
     MFMailComposeViewController *mailPicker = [[MFMailComposeViewController alloc] init];
     mailPicker.mailComposeDelegate = self;
-    if (_state == CELL_FEEDBACK)
-        [self configureFeedbackMail:mailPicker];
-    else if (_state == CELL_INVITATION)
-        [self configureInvitationMail:mailPicker];
+    [self configureInvitationMail:mailPicker];
     [self presentViewController:mailPicker animated:YES completion:nil];
 }
 

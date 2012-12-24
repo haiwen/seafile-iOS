@@ -10,11 +10,11 @@
 #import "SeafStarredFilesViewController.h"
 #import "SeafDetailViewController.h"
 #import "SeafStarredFile.h"
-#import "AFJSONUtilities.h"
 #import "FileSizeFormatter.h"
 #import "SeafDateFormatter.h"
 
 #import "SeafData.h"
+#import "Utils.h"
 #import "Debug.h"
 
 @interface SeafStarredFilesViewController ()

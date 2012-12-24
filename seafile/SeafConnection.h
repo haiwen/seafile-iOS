@@ -39,7 +39,6 @@
 @property (strong) SeafRepos *rootFolder;
 @property (readonly) NSString *username;
 @property (readonly) NSString *password;
-@property (readonly) NSString *feedback;
 @property (readonly) long long quota;
 @property (readonly) long long usage;
 
