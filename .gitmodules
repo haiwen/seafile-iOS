@@ -1,0 +1,8 @@
+[submodule "libs/AFNetworking"]
+	path = libs/AFNetworking
+	url = git://github.com/AFNetworking/AFNetworking.git
+    ignore = dirty
+[submodule "libs/EGOTableViewPullRefresh"]
+	path = libs/EGOTableViewPullRefresh
+	url = https://github.com/enormego/EGOTableViewPullRefresh.git
+    ignore = dirty
