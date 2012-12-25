@@ -48,6 +48,7 @@
     if (self = [super initWithConnection:aConnection oid:anId repoId:aRepoId name:aName path:aPath mime:[FileMimeType mimeType:aName]]) {
         _mtime = mtime;
         _filesize = size;
+        _shareLink = nil;
     }
 
     return self;
@@ -102,14 +103,9 @@
     _preViewURL = nil;
 }
 
-- (NSString *)urlWithOperation:(NSString *)op
+- (NSString *)downloadLinkUrl
 {
-    return [NSString stringWithFormat:API_URL"/repos/%@/filepath/?p=%@&file_name=%@&op=%@", self.repoId, [self.path escapedUrl], [self.name escapedUrl], op];
-}
-
-- (NSString *)url
-{
-    return [self urlWithOperation:@"download"];
+    return [NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@", self.repoId, [self.path escapedUrl]];
 }
 
 #pragma - NSURLConnectionDelegate
@@ -179,7 +175,7 @@
 - (void)realLoadContent
 {
     _tmpOid = nil;
-    [connection sendRequest:self.url  repo:self.repoId success:
+    [connection sendRequest:self.downloadLinkUrl repo:self.repoId success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          NSString *url = JSON;
          NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
@@ -283,17 +279,21 @@
 
 - (void)generateShareLink:(id<SeafFileDelegate>)dg
 {
-    [connection sendRequest:[self urlWithOperation:@"sharelink"]  repo:self.repoId
-                    success:
+    NSString *url = [NSString stringWithFormat:API_URL"/repos/%@/file/shared-link/", self.repoId];
+    NSString *form = [NSString stringWithFormat:@"p=%@", [self.path escapedUrl]];
+    [connection sendPut:url repo:self.repoId form:form
+                success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
-         NSString *link = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+         NSString *link = [[response allHeaderFields] objectForKey:@"Location"];
+         Debug(" share link = %@\n", link);
+
          if ([link hasPrefix:@"\""])
              _shareLink = [link substringWithRange:NSMakeRange(1, link.length-2)];
          else
              _shareLink = link;
          [dg generateSharelink:self WithResult:YES];
      }
-                    failure:
+                failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
          [dg generateSharelink:self WithResult:NO];
      }];

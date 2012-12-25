@@ -193,6 +193,31 @@
     [self sendRequestAsync:request repo:repoId success:success failure:failure];
 }
 
+- (void)sendDelete:(NSString *)url repo:(NSString *)repoId
+           success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data))success
+           failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure
+{
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:[_address stringByAppendingString:url]]];
+    [request setHTTPMethod:@"DELETE"];
+    [self sendRequestAsync:request repo:repoId success:success failure:failure];
+}
+
+- (void)sendPut:(NSString *)url repo:(NSString *)repoId form:(NSString *)form
+        success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data))success
+        failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure;
+{
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:[_address stringByAppendingString:url]]];
+    [request setHTTPMethod:@"PUT"];
+    [request setValue:@"application/x-www-form-urlencoded; charset=UTF-8" forHTTPHeaderField:@"Content-Type"];
+
+    if (form) {
+        form = [form stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+        NSData *requestData = [NSData dataWithBytes:[form UTF8String] length:[form length]];
+        [request setHTTPBody:requestData];
+    }
+    [self sendRequestAsync:request repo:repoId success:success failure:failure];
+}
+
 - (void)sendPost:(NSString *)url repo:(NSString *)repoId form:(NSString *)form
          success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data))success
          failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure
@@ -347,25 +372,34 @@
 
 - (BOOL)setStarred:(BOOL)starred repo:(NSString *)repo path:(NSString *)path
 {
-    NSString *op;
     NSString *key = [NSString stringWithFormat:@"%@-%@", repo, path];
     if (starred) {
-        op = @"star";
         [_starredFiles addObject:key];
+        NSString *form = [NSString stringWithFormat:@"repo_id=%@&p=%@", repo, [path escapedUrl]];
+        NSString *url = [NSString stringWithFormat:API_URL"/starredfiles/"];
+        [self sendPost:url repo:repo form:form
+               success:
+         ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+             Debug("Success to star file %@, %@\n", repo, path);
+         }
+               failure:
+         ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+             Warning("Failed to star file %@, %@\n", repo, path);
+         }];
     } else {
-        op = @"unstar";
         [_starredFiles removeObject:key];
+        NSString *url = [NSString stringWithFormat:API_URL"/starredfiles/?repo_id=%@&p=%@", repo, path.escapedUrl];
+        [self sendDelete:url repo:repo
+               success:
+         ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+             Debug("Success to unstar file %@, %@\n", repo, path);
+         }
+               failure:
+         ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+             Warning("Failed to unstar file %@, %@\n", repo, path);
+         }];
     }
-    NSString *url = [NSString stringWithFormat:API_URL"/repos/%@/filepath/?p=%@&op=%@", repo, [path escapedUrl], op];
-    [self sendPost:url repo:repo form:nil
-           success:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
-         Debug("Success to star files %@, %@\n", repo, path);
-     }
-           failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-         Warning("Failed to star files %@, %@\n", repo, path);
-     }];
+
     return YES;
 }
 

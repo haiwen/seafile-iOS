@@ -90,12 +90,6 @@
     return _name;
 }
 
-- (NSString *)url
-{
-    // must be override
-    return nil;
-}
-
 - (UIImage *)image;
 {
     return [UIImage imageForMimeType:self.mime];
@@ -135,7 +129,7 @@
         [self.delegate repoPasswordSet:self WithResult:NO];
         return;
     }
-    NSString *request_str = [NSString stringWithFormat:API_URL"/repo/%@/?op=setpassword", self.repoId];
+    NSString *request_str = [NSString stringWithFormat:API_URL"/repos/%@/?op=setpassword", self.repoId];
     NSString *formString = [NSString stringWithFormat:@"password=%@",
                             [password stringByAddingPercentEscapesUsingEncoding:NSASCIIStringEncoding]];
     [connection sendPost:request_str repo:self.repoId form:formString

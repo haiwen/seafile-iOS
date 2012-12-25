@@ -59,7 +59,6 @@ enum SEAFDENTRY_STATE {
 
 - (void)setRepoPassword:(NSString *)password;
 - (NSString *)key;
-- (NSString *)url;
 - (UIImage *)image;
 - (BOOL)hasCache;
 

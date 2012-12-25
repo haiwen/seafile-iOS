@@ -97,7 +97,7 @@
 
 - (NSString *)url
 {
-    NSString *requestStr = [NSString stringWithFormat:API_URL"/repos/%@/dirents/?p=%@", self.repoId, [self.path escapedUrl]];
+    NSString *requestStr = [NSString stringWithFormat:API_URL"/repos/%@/dir/?p=%@", self.repoId, [self.path escapedUrl]];
     if (self.ooid)
         requestStr = [requestStr stringByAppendingFormat:@"&oid=%@", self.ooid ];
 
@@ -236,9 +236,9 @@
 - (void)mkdir:(NSString *)newDirName
 {
     NSString *path = [self.path stringByAppendingPathComponent:newDirName];
-    NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/fileops/mkdir/?p=%@&reloaddir=true", self.repoId, [path escapedUrl]];
+    NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/dir/?p=%@&reloaddir=true", self.repoId, [path escapedUrl]];
 
-    [connection sendPost:requestUrl repo:self.repoId form:nil
+    [connection sendPost:requestUrl repo:self.repoId form:@"operation=mkdir"
                  success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          Debug("resp=%d\n", response.statusCode);
