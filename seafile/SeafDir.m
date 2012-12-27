@@ -144,20 +144,39 @@
     }
 }
 
+- (BOOL)checkSorted:(NSArray *)items
+{
+    int i;
+    for (i = 1; i < [items count]; ++i) {
+        SeafBase *obj1 = (SeafBase*)[items objectAtIndex:i-1];
+        SeafBase *obj2 = (SeafBase*)[items objectAtIndex:i];
+        if ([obj1 class] == [obj2 class]) {
+            if ([obj1.key caseInsensitiveCompare:obj2.key] != NSOrderedAscending)
+                return NO;
+        } else {
+            if (![obj1 isKindOfClass:[SeafDir class]])
+                return NO;
+        }
+    }
+    return YES;
+}
+
 - (void)loadedItems:(NSMutableArray *)items
 {
-    [items sortUsingComparator:(NSComparator)^NSComparisonResult(id obj1, id obj2){
-        if ([obj1 class]==[obj2 class]) {
-            return [((SeafBase*)obj1).key caseInsensitiveCompare:((SeafBase*)obj2).key];
-        } else {
-            if ([obj1 isKindOfClass:[SeafDir class]]) {
-                return NSOrderedAscending;
+    if ([self checkSorted:items] == NO) {
+        [items sortUsingComparator:(NSComparator)^NSComparisonResult(id obj1, id obj2){
+            if ([obj1 class]==[obj2 class]) {
+                return [((SeafBase*)obj1).key caseInsensitiveCompare:((SeafBase*)obj2).key];
             } else {
-                return NSOrderedDescending;
+                if ([obj1 isKindOfClass:[SeafDir class]]) {
+                    return NSOrderedAscending;
+                } else {
+                    return NSOrderedDescending;
+                }
             }
-        }
-        return NSOrderedSame;
-    }];
+            return NSOrderedSame;
+        }];
+    }
     [self updateItems:items];
     Debug("load oid=%@, %@, %@\n", self.ooid, self.path, self.mime);
 }
