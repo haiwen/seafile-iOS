@@ -19,7 +19,7 @@
 
 @interface SeafConnection ()
 
-@property (readwrite) NSString *sessionid;
+@property (readwrite) NSString *token;
 @property NSMutableSet *starredFiles;
 - (void)testConnection;
 
@@ -28,7 +28,7 @@
 @implementation SeafConnection
 @synthesize address = _address;
 @synthesize info = _info;
-@synthesize sessionid = _sessionid;
+@synthesize token = _token;
 @synthesize delegate = _delegate;
 @synthesize rootFolder = _rootFolder;
 @synthesize starredFiles = _starredFiles;
@@ -54,7 +54,7 @@
         NSDictionary *ainfo = [userDefaults objectForKey:url];
         if (ainfo) {
             _info = [ainfo mutableCopy];
-            _sessionid = [_info objectForKey:@"sessionid"];
+            _token = [_info objectForKey:@"token"];
         } else {
             _info = [[NSMutableDictionary alloc] init];
         }
@@ -64,7 +64,7 @@
 
 - (BOOL)logined
 {
-    return (_sessionid != nil);
+    return (_token != nil);
 }
 
 - (NSString *)username
@@ -142,10 +142,10 @@
     SeafJSONRequestOperation *operation = [SeafJSONRequestOperation
                                            JSONRequestOperationWithRequest:request
                                            success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
-                                               _sessionid = [JSON objectForKey:@"token"];
+                                               _token = [JSON objectForKey:@"token"];
                                                [_info setObject:username forKey:@"username"];
                                                [_info setObject:password forKey:@"password"];
-                                               [_info setObject:_sessionid forKey:@"sessionid"];
+                                               [_info setObject:_token forKey:@"token"];
                                                [_info setObject:_address forKey:@"link"];
                                                NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
                                                [userDefaults setObject:_info forKey:_address];
@@ -164,8 +164,8 @@
                  failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure
 {
     NSString *password;
-    if (_sessionid)
-        [request setValue:[NSString stringWithFormat:@"Token %@", _sessionid] forHTTPHeaderField:@"Authorization"];
+    if (_token)
+        [request setValue:[NSString stringWithFormat:@"Token %@", _token] forHTTPHeaderField:@"Authorization"];
 
     if (repoId) {
         password = [Utils getRepoPassword:repoId];
@@ -173,7 +173,7 @@
             [request setValue:password forHTTPHeaderField:@"password"];
         }
     }
-    Debug("requestUrl=%@, sessionid=%@, password=%@\n", request.URL, _sessionid, password);
+    Debug("requestUrl=%@, token=%@, password=%@\n", request.URL, _token, password);
 
     [request setTimeoutInterval:10.0f];
     SeafJSONRequestOperation *operation = [SeafJSONRequestOperation JSONRequestOperationWithRequest:request success:success  failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
@@ -245,7 +245,7 @@
          NSString *logined = [[response allHeaderFields] objectForKey:@"logined"];
          if ([@"pong" caseInsensitiveCompare:JSON] == NSOrderedSame) {
              if ([logined caseInsensitiveCompare:@"true"] != NSOrderedSame)
-                 _sessionid = nil;
+                 _token = nil;
              [self.delegate connectionEstablishingSuccess:self];
          } else {
              [self.delegate connectionEstablishingFailed:self];
