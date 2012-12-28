@@ -134,6 +134,13 @@
         v.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin| UIViewAutoresizingFlexibleRightMargin
         | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
     }
+
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSString *server = [userDefaults objectForKey:@"DEAULT-SERVER"];
+    if (server) {
+        [self selectServer:server];
+        [self transferToReposView];
+    }
 }
 
 - (void)viewDidUnload
@@ -168,7 +175,7 @@
 {
     [SVProgressHUD dismiss];
     NSString *url = [self getSelectedServer];
-    if (!url || 1)
+    if (!url)
         return;
 
     NSString *registerUrl = [NSString stringWithFormat:@"%@/accounts/register/", url];
@@ -201,21 +208,25 @@
 }
 
 #pragma mark - SSConnectionDelegate
-- (void)transferToReposView:(SeafConnection *)conn
+- (void)transferToReposView
 {
-    Debug("%@\n", [conn address]);
+    Debug("%@\n", connection.address);
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults setObject:connection.address forKey:@"DEAULT-SERVER"];
+    [userDefaults synchronize];
+
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    [conn loadRepos:appdelegate.masterVC];
-    appdelegate.uploadVC.connection = conn;
-    appdelegate.starredVC.connection = conn;
-    appdelegate.settingVC.connection = conn;
+    [connection loadRepos:appdelegate.masterVC];
+    appdelegate.uploadVC.connection = connection;
+    appdelegate.starredVC.connection = connection;
+    appdelegate.settingVC.connection = connection;
     [appdelegate.detailVC setPreViewItem:nil];
     if (IsIpad())
         appdelegate.window.rootViewController = appdelegate.splitVC;
     else
         appdelegate.window.rootViewController = appdelegate.tabbarController;
 
-    [appdelegate.masterVC setDirectory:(SeafDir *)conn.rootFolder];
+    [appdelegate.masterVC setDirectory:(SeafDir *)connection.rootFolder];
     [appdelegate.window makeKeyAndVisible];
 }
 
@@ -237,7 +248,7 @@
     }
 
     [SVProgressHUD dismiss];
-    [self transferToReposView:conn];
+    [self transferToReposView];
 }
 
 - (void)connectionLinkingFailed:(SeafConnection *)conn error:(int)error
@@ -264,7 +275,7 @@
                  && [_passwordTextField.text isEqualToString:conn.password]
                  && conn.logined) {
             [self alertWithMessage:@"The selected server seems unavailable, you can browser the offline files"];
-            [self transferToReposView:conn];
+            [self transferToReposView];
         } else {
             [self alertWithMessage:@"Failed to login"];
         }
