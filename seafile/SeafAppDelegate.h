@@ -23,13 +23,13 @@
     Reachability* wifiReach;
 }
 
-@property (retain) NSMutableDictionary *conns;
 @property (strong, nonatomic) UIWindow *window;
 
 @property (readonly, strong, nonatomic) NSManagedObjectContext *managedObjectContext;
 @property (readonly, strong, nonatomic) NSManagedObjectModel *managedObjectModel;
 @property (readonly, strong, nonatomic) NSPersistentStoreCoordinator *persistentStoreCoordinator;
 
+@property (readonly) UINavigationController *startNav;
 @property (readonly) StartViewController *startVC;
 @property (readonly) UISplitViewController *splitVC;
 @property (readonly) SeafFileViewController *masterVC;
@@ -43,10 +43,6 @@
 @property (readonly) NSArray *toolItems1;
 @property (readonly) NSArray *toolItems2;
 @property (readonly) NSArray *toolItems3;
-
-
-- (void)saveConnection:(SeafConnection *)conn;
-- (SeafConnection *)getConnection:(NSString *)url;
 
 - (void)saveContext;
 - (NSURL *)applicationDocumentsDirectory;

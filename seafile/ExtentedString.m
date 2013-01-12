@@ -27,7 +27,7 @@
 }
 
 #define HTTP @"http://"
-#define HTTPS @"http://"
+#define HTTPS @"https://"
 #define WWW @"http://www."
 #define WWWS @"https://www."
 

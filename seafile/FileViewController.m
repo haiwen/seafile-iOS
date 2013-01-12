@@ -241,7 +241,12 @@ enum PREVIEW_STATE {
     if (![_preViewItem isKindOfClass:[SeafFile class]])
         return;
 
-    UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:@"How would you like to share this file?" delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:@"Email", @"Copy Link to Clipboard", nil ];
+    UIActionSheet *actionSheet;
+    if (IsIpad())
+        actionSheet = [[UIActionSheet alloc] initWithTitle:@"How would you like to share this file?" delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:@"Email", @"Copy Link to Clipboard", nil ];
+    else
+        actionSheet = [[UIActionSheet alloc] initWithTitle:@"How would you like to share this file?" delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Email", @"Copy Link to Clipboard", nil ];
+
     [actionSheet showFromBarButtonItem:sender animated:YES];
 }
 

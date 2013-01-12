@@ -96,9 +96,7 @@
 
 - (id)initWithConnection:(SeafConnection *)aConnection
 {
-    NSString *name = aConnection.address.trimUrl;
-    Debug("%@, %@\n", name, aConnection.address);
-    self = [super initWithConnection:aConnection oid:nil repoId:nil name:name path:nil mime:nil];
+    self = [super initWithConnection:aConnection oid:nil repoId:nil name:@"Home" path:nil mime:nil];
     return self;
 }
 

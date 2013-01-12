@@ -44,7 +44,7 @@
     return self;
 }
 
-- (id)initWithUrl:(NSString *)url
+- (id)initWithUrl:(NSString *)url username:(NSString *)username
 {
     self = [self init:url];
     if (!url) {
@@ -127,10 +127,11 @@
  */
 - (void)loginWithAddress:(NSString *)anAddress username:(NSString *)username password:(NSString *)password
 {
-    if (!_address && anAddress)
-        _address = anAddress;
+    NSString *url = _address;
+    if (anAddress)
+        url = anAddress;
 
-    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:[_address stringByAppendingString:API_URL"/auth-token/"]]];
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:[url stringByAppendingString:API_URL"/auth-token/"]]];
     [request setHTTPMethod:@"POST"];
     [request setValue:@"application/x-www-form-urlencoded" forHTTPHeaderField:@"Content-Type"];
 
@@ -142,6 +143,7 @@
     SeafJSONRequestOperation *operation = [SeafJSONRequestOperation
                                            JSONRequestOperationWithRequest:request
                                            success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+                                               _address = url;
                                                _token = [JSON objectForKey:@"token"];
                                                [_info setObject:username forKey:@"username"];
                                                [_info setObject:password forKey:@"password"];

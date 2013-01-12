@@ -17,7 +17,6 @@
 
 
 @interface SeafUploadDirViewController ()
-@property (strong, readonly) UIView *overlayView;
 @property (strong) InputAlertPrompt *passSetView;
 @property (strong) SeafDir *curDir;
 @end
@@ -26,7 +25,6 @@
 @synthesize passSetView = _passSetView;
 @synthesize directory = _directory;
 @synthesize curDir = _curDir;
-@synthesize overlayView = _overlayView;
 
 - (id)initWithStyle:(UITableViewStyle)style
 {
@@ -47,29 +45,6 @@
     }
     return self;
 }
-
-- (UIView *)overlayView
-{
-    if (_overlayView == nil) {
-        self.tableView.autoresizesSubviews = YES;
-        _overlayView = [[UIView alloc] initWithFrame:self.tableView.frame];
-        _overlayView.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.2];
-        UIActivityIndicatorView *activityIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
-        activityIndicator.center = self.overlayView.center;
-        [_overlayView addSubview:activityIndicator];
-        _overlayView.autoresizingMask = UIViewAutoresizingFlexibleHeight;
-        [activityIndicator startAnimating];
-    }
-    return _overlayView;
-}
-
-- (void)dismissOverlayView
-{
-    if (_overlayView && _overlayView.superview) {
-        [_overlayView removeFromSuperview];
-    }
-}
-
 
 - (void)cancel:(id)sender
 {
@@ -104,14 +79,13 @@
     if ([_directory isKindOfClass:[SeafRepos class]]) {
         [chooseItem setEnabled:NO];
     }
-
+#if 0
     UILabel *label = [[UILabel alloc] init];
     label.text = @"Choose a folder to upload the file";
     label.frame = CGRectMake(0, 0, self.tableView.frame.size.width, 40);
     label.textAlignment = NSTextAlignmentCenter;
     self.tableView.tableHeaderView = label;
-    if (![_directory hasCache])
-        [self.tableView addSubview:self.overlayView];
+#endif
 }
 
 - (void)didReceiveMemoryWarning
@@ -125,6 +99,11 @@
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
     return 1;
+}
+
+- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
+{
+    return @"Choose a folder to upload the file";
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
@@ -213,7 +192,6 @@
 #pragma mark - SeafDentryDelegate
 - (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent
 {
-    [self dismissOverlayView];
     if (updated) {
         [self.tableView reloadData];
     }

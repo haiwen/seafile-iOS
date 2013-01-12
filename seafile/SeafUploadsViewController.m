@@ -71,7 +71,6 @@
     NSError *error = nil;
     NSString *uploadPath = [[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"];
     NSArray *dirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:uploadPath error:&error];
-    Debug (">>>%@,  %@\n", uploadPath, dirContents);
     if (!dirContents) {
         Debug("unable to get the contents of uploads directory:%@\n", error);
         return;
@@ -281,13 +280,18 @@
     SeafUploadDirViewController *controller = [[SeafUploadDirViewController alloc] initWithSeafDir:_connection.rootFolder];
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
     [navController setModalPresentationStyle:UIModalPresentationFormSheet];
-    [self presentViewController:navController animated:YES completion:nil];
+    //navController.view.superview.autoresizingMask = UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
+    //navController.view.autoresizingMask = UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
 
-    navController.view.superview.autoresizingMask = UIViewAutoresizingFlexibleTopMargin |    UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
-    navController.view.superview.frame = self.tableView.frame;
+    //navController.view.superview.frame = CGRectMake(navController.view.superview.frame.origin.x, navController.view.superview.frame.origin.y, self.tableView.frame.size.width, navController.view.superview.frame.size.height);
+    //navController.view.superview.frame = self.tableView.frame;
+#if 0
     CGRect screenBounds = [[UIScreen mainScreen] bounds];
     CGPoint center = CGPointMake(CGRectGetMidX(screenBounds), CGRectGetMidY(screenBounds));
+    navController.view.superview.center = center;
     navController.view.superview.center = UIDeviceOrientationIsPortrait(self.interfaceOrientation) ? center :CGPointMake(center.y, center.x);
+#endif
+    [self presentViewController:navController animated:YES completion:nil];
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section

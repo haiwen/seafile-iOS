@@ -42,7 +42,7 @@
 @property (readonly) long long quota;
 @property (readonly) long long usage;
 
-- (id)initWithUrl:(NSString *)url;
+- (id)initWithUrl:(NSString *)url username:(NSString *)username;
 - (void)estabilishConnection;
 - (BOOL)logined;
 - (void)loadRepos:(id)degt;
@@ -63,7 +63,7 @@
          success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data))success
          failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure;
 
-- (void)loginWithAddress:(NSURL *)anAddress username:(NSString *)username password:(NSString *)password;
+- (void)loginWithAddress:(NSString *)anAddress username:(NSString *)username password:(NSString *)password;
 
 - (void)getAccountInfo:(id<SSConnectionAccountDelegate>)degt;
 

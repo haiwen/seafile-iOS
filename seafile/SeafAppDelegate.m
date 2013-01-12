@@ -23,6 +23,7 @@ enum {
 @synthesize managedObjectContext = __managedObjectContext;
 @synthesize managedObjectModel = __managedObjectModel;
 @synthesize persistentStoreCoordinator = __persistentStoreCoordinator;
+@synthesize startNav = _startNav;
 @synthesize startVC = _startVC;
 @synthesize splitVC = _splitVC;
 @synthesize detailVC = _detailVC;
@@ -57,13 +58,14 @@ enum {
     [userDefaults synchronize];
 
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-    self.window.rootViewController = self.startVC;
+    _startNav = [[UINavigationController alloc] initWithRootViewController:self.startVC];
+
+    self.window.rootViewController = _startNav;
     [self.window makeKeyAndVisible];
 
     [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
     [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"]];
 
-    self.conns = [[NSMutableDictionary alloc] init ];
     [Utils clearAllFiles:NSTemporaryDirectory()];
 
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reachabilityChanged:) name:kReachabilityChangedNotification object:nil];
@@ -317,21 +319,6 @@ enum {
 {
     UINavigationController *settingsNavigationController = [self.tabbarController.viewControllers objectAtIndex:TABBED_SETTINGS];
     return (SeafSettingsViewController *)[settingsNavigationController.viewControllers objectAtIndex:0];
-}
-
-- (void)saveConnection:(SeafConnection *)conn
-{
-    [[self conns] setObject:conn forKey:conn.address];
-}
-
-- (SeafConnection *)getConnection:(NSString *)url
-{
-    SeafConnection *connection = [self.conns objectForKey:url];
-    if (!connection) {
-        connection = [[SeafConnection alloc] initWithUrl:url];
-        [self saveConnection:connection];
-    }
-    return connection;
 }
 
 - (BOOL)checkNetworkStatus

@@ -79,8 +79,7 @@ static dispatch_queue_t json_request_operation_processing_queue() {
         NSError *error = nil;
         if ([self.responseData length] == 0) {
             self.responseJSON = nil;
-        }
-        else {
+        } else {
             self.responseJSON = [Utils JSONDecode:self.responseData error:&error];
         }
 

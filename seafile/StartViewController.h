@@ -12,15 +12,9 @@
 #import "ColorfulButton.h"
 
 
-@interface StartViewController : UIViewController <SSConnectionDelegate, UITextFieldDelegate>
+@interface StartViewController : UITableViewController<UIActionSheetDelegate>
 
-@property (strong, nonatomic) IBOutlet UITextField *nameTextField;
-@property (strong, nonatomic) IBOutlet UITextField *passwordTextField;
-@property (strong, nonatomic) IBOutlet ColorfulButton *registerButton;
-@property (strong, nonatomic) IBOutlet ColorfulButton *loginButton;
-@property (strong, nonatomic) IBOutlet UIButton *otherServerButton;
-@property (strong, nonatomic) IBOutlet UILabel *serverUrlLabel;
-
-- (void)selectServer:(NSString *)url;
+- (void)saveAccount:(SeafConnection *)conn;
+- (void)selectAccount:(SeafConnection *)conn;
 
 @end

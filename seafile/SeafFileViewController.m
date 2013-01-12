@@ -50,7 +50,7 @@
 
 - (void)initTabBarItem
 {
-    self.navigationController.title = @"Seafile";
+    self.title = @"Seafile";
     self.navigationController.tabBarItem.image = [[UIImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"tab-home" ofType:@"png"]];
 }
 
@@ -211,7 +211,7 @@
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [appdelegate.detailVC setPreViewItem:nil];
-    appdelegate.window.rootViewController = appdelegate.startVC;
+    appdelegate.window.rootViewController = appdelegate.startNav;
     [appdelegate.window makeKeyAndVisible];
 }
 
@@ -241,11 +241,11 @@
     if (!_directory)
         [self initNavigationItems:directory];
 
-    self.title = directory.name;
     _directory = directory;
+    self.title = directory.name;
     [_directory setDelegate:self];
     [_directory loadContent:NO];
-    Debug("%@, loading ... %d\n", directory.name, _directory.hasCache);
+    Debug("%@, loading ... %d\n", _directory.name, _directory.hasCache);
     [self tableViewReloadData];
     if (!_directory.hasCache) {
         [self.tableView addSubview:self.overlayView];

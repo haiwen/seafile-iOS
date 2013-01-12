@@ -320,7 +320,7 @@
                 _checkoutURL = [NSURL fileURLWithPath:tempFileName];
             }
     }
-    //[self.content writeToFile:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:self.name] atomically:YES];
+    //[self.content writeToFile:[[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:self.name] atomically:YES];
 
     return _checkoutURL;
 }
