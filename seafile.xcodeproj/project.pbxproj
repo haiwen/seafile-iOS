@@ -31,6 +31,10 @@
 		570DFAC916A15D0100ADD5F2 /* SeafAccountViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 570DFAC516A15D0100ADD5F2 /* SeafAccountViewController.xib */; };
 		570DFACB16A19EFD00ADD5F2 /* account.png in Resources */ = {isa = PBXBuildFile; fileRef = 570DFACA16A19EFD00ADD5F2 /* account.png */; };
 		570DFACC16A19EFD00ADD5F2 /* account.png in Resources */ = {isa = PBXBuildFile; fileRef = 570DFACA16A19EFD00ADD5F2 /* account.png */; };
+		570DFACF16A1EA1B00ADD5F2 /* SeafStartHeaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = 570DFACE16A1EA1A00ADD5F2 /* SeafStartHeaderView.m */; };
+		570DFAD016A1EA1B00ADD5F2 /* SeafStartHeaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = 570DFACE16A1EA1A00ADD5F2 /* SeafStartHeaderView.m */; };
+		570DFAD216A1EA3E00ADD5F2 /* SeafStartHeaderView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 570DFAD116A1EA3D00ADD5F2 /* SeafStartHeaderView.xib */; };
+		570DFAD316A1EA3E00ADD5F2 /* SeafStartHeaderView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 570DFAD116A1EA3D00ADD5F2 /* SeafStartHeaderView.xib */; };
 		571401641663AE1600A4E194 /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = 571401631663AE1600A4E194 /* Default.png */; };
 		571401661663AE2400A4E194 /* Default@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 571401651663AE2400A4E194 /* Default@2x.png */; };
 		571401681663AE3500A4E194 /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 571401671663AE3500A4E194 /* Default-568h@2x.png */; };
@@ -580,6 +584,9 @@
 		570DFAC416A15D0100ADD5F2 /* SeafAccountViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafAccountViewController.m; sourceTree = "<group>"; };
 		570DFAC516A15D0100ADD5F2 /* SeafAccountViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafAccountViewController.xib; sourceTree = "<group>"; };
 		570DFACA16A19EFD00ADD5F2 /* account.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = account.png; sourceTree = "<group>"; };
+		570DFACD16A1EA1A00ADD5F2 /* SeafStartHeaderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafStartHeaderView.h; sourceTree = "<group>"; };
+		570DFACE16A1EA1A00ADD5F2 /* SeafStartHeaderView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafStartHeaderView.m; sourceTree = "<group>"; };
+		570DFAD116A1EA3D00ADD5F2 /* SeafStartHeaderView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafStartHeaderView.xib; sourceTree = "<group>"; };
 		571401631663AE1600A4E194 /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Default.png; path = ../../Default.png; sourceTree = "<group>"; };
 		571401651663AE2400A4E194 /* Default@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Default@2x.png"; path = "../../Default@2x.png"; sourceTree = "<group>"; };
 		571401671663AE3500A4E194 /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Default-568h@2x.png"; path = "../../Default-568h@2x.png"; sourceTree = "<group>"; };
@@ -1002,6 +1009,8 @@
 				575753E415EE56850049D720 /* SeafTableViewRepoCell.m */,
 				57931B521632E5DB00B462BA /* SeafUploadDirViewController.h */,
 				57931B531632E5DB00B462BA /* SeafUploadDirViewController.m */,
+				570DFACD16A1EA1A00ADD5F2 /* SeafStartHeaderView.h */,
+				570DFACE16A1EA1A00ADD5F2 /* SeafStartHeaderView.m */,
 				57C07CE21632556600502B06 /* SeafUploadingFileCell.h */,
 				57C07CE31632556600502B06 /* SeafUploadingFileCell.m */,
 				572500A916291A22001E5C75 /* SeafUploadsViewController.h */,
@@ -1048,6 +1057,7 @@
 				57DB828815A833FA00097CEC /* FolderView_iPad.storyboard */,
 				57DB828515A833FA00097CEC /* FolderView_iPhone.storyboard */,
 				570DFAC516A15D0100ADD5F2 /* SeafAccountViewController.xib */,
+				570DFAD116A1EA3D00ADD5F2 /* SeafStartHeaderView.xib */,
 				575753E715EE56D10049D720 /* SeafTableViewRepoCell.xib */,
 				57C07CE8163272CE00502B06 /* SeafUploadingFileCell.xib */,
 			);
@@ -1648,6 +1658,7 @@
 				571D8DB61677881400F1A22C /* Default-568h@2x.png in Resources */,
 				570DFAC916A15D0100ADD5F2 /* SeafAccountViewController.xib in Resources */,
 				570DFACC16A19EFD00ADD5F2 /* account.png in Resources */,
+				570DFAD316A1EA3E00ADD5F2 /* SeafStartHeaderView.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1864,6 +1875,7 @@
 				571401681663AE3500A4E194 /* Default-568h@2x.png in Resources */,
 				570DFAC816A15D0100ADD5F2 /* SeafAccountViewController.xib in Resources */,
 				570DFACB16A19EFD00ADD5F2 /* account.png in Resources */,
+				570DFAD216A1EA3E00ADD5F2 /* SeafStartHeaderView.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1922,6 +1934,7 @@
 				571D8CDA1677881400F1A22C /* SVProgressHUD.m in Sources */,
 				571D8CDB1677881400F1A22C /* SeafFile.m in Sources */,
 				570DFAC716A15D0100ADD5F2 /* SeafAccountViewController.m in Sources */,
+				570DFAD016A1EA1B00ADD5F2 /* SeafStartHeaderView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1977,6 +1990,7 @@
 				57C57BDD165FBB4C006834DF /* SVProgressHUD.m in Sources */,
 				570CF8B81660B00900DFADBC /* SeafFile.m in Sources */,
 				570DFAC616A15D0100ADD5F2 /* SeafAccountViewController.m in Sources */,
+				570DFACF16A1EA1B00ADD5F2 /* SeafStartHeaderView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

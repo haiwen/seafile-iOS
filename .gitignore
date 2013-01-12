@@ -4,3 +4,4 @@ seafile.xcodeproj/project.xcworkspace/
 seafile.xcodeproj/xcuserdata/
 *~
 *.bak
+.DS_Store

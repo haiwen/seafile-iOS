@@ -80,41 +80,7 @@
     [self transferToReposView:conn];
 }
 
-- (void)keyboardWillShow:(NSNotification *)noti
-{
-    float height = 216.0;
-    CGRect frame = self.view.frame;
-    frame.size = CGSizeMake(frame.size.width, frame.size.height - height);
-    [UIView beginAnimations:@"Curl"context:nil];
-    [UIView setAnimationDuration:0.30];
-    [UIView setAnimationDelegate:self];
-    [self.view setFrame:frame];
-    [UIView commitAnimations];
-}
-
-- (void)keyboardWillHide:(NSNotification *)noti
-{
-    float height = 216.0;
-    CGRect frame = self.view.frame;
-    frame.size = CGSizeMake(frame.size.width, frame.size.height + height);
-    [UIView beginAnimations:@"Curl"context:nil];
-    [UIView setAnimationDuration:0.30];
-    [UIView setAnimationDelegate:self];
-    [self.view setFrame:frame];
-    [UIView commitAnimations];
-}
-
-- (void)viewWillAppear:(BOOL)animated
-{
-    [super viewWillAppear:animated];
-}
-
-- (void)viewWillDisappear:(BOOL)animated
-{
-    [super viewWillDisappear:animated];
-}
-
-- (void)setExtraCellLineHidden: (UITableView *)tableView
+- (void)setExtraCellLineHidden:(UITableView *)tableView
 {
     UIView *view = [UIView new];
     view.backgroundColor = [UIColor clearColor];
@@ -125,9 +91,17 @@
 {
     [super viewDidLoad];
     [self setExtraCellLineHidden:self.tableView];
-    self.title = @"Welcome to Seafile";
+    self.title = @"Seafile";
     UIBarButtonItem *addItem = [[UIBarButtonItem alloc] initWithTitle:@"Add account" style:UIBarButtonItemStyleBordered target:self action:@selector(addAccount:)];
     self.navigationItem.rightBarButtonItem = addItem;
+
+    NSArray *views = [[NSBundle mainBundle] loadNibNamed:@"SeafStartHeaderView" owner:self options:nil];
+    UIView *header = [views objectAtIndex:0];
+    header.frame = CGRectMake(0,0, self.tableView.frame.size.width, 100);
+    header.autoresizesSubviews = YES;
+    header.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin| UIViewAutoresizingFlexibleRightMargin| UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleTopMargin;
+    header.backgroundColor = [UIColor clearColor];
+    self.tableView.tableHeaderView = header;
 
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     NSString *server = [userDefaults objectForKey:@"DEAULT-SERVER"];
@@ -169,11 +143,6 @@
     return self.conns.count;
 }
 
-- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
-{
-    return @"Choose an account to start";
-}
-
 - (void)showEditMenu:(UILongPressGestureRecognizer *)gestureRecognizer
 {
     UIActionSheet *actionSheet;
@@ -206,6 +175,7 @@
     cell.imageView.image = [UIImage imageWithContentsOfFile:path];
     cell.textLabel.text = conn.address;
     cell.detailTextLabel.text = conn.username;
+    cell.textLabel.font = [UIFont systemFontOfSize:17];
     cell.accessoryType = UITableViewCellAccessoryNone;
 
     UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditMenu:)];

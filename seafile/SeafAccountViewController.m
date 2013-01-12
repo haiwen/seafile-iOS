@@ -91,12 +91,6 @@
         | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
     }
     self.title = @"Seafile Server";
-#if 0
-    UIBarButtonItem *cancelItem = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStyleBordered target:self action:@selector(cancel:)];
-    UIBarButtonItem *loginItem = [[UIBarButtonItem alloc] initWithTitle:@"Login" style:UIBarButtonItemStyleBordered target:self action:@selector(login:)];
-    self.navigationItem.leftBarButtonItem = loginItem;
-    self.navigationItem.rightBarButtonItem = cancelItem;
-#endif
 
     CGRect rect = CGRectMake(0, 0, 90, 25);
     UILabel *serverLabel = [[UILabel alloc] initWithFrame:rect];

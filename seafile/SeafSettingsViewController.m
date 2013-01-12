@@ -35,6 +35,7 @@ enum {
 @property (strong, nonatomic) IBOutlet UITableViewCell *serverCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *cacheCell;
 @property (strong, nonatomic) IBOutlet ColorfulButton *wipeCacheBt;
+@property (strong, nonatomic) IBOutlet UITableViewCell *versionCell;
 - (IBAction)wipeCache:(id)sender;
 @property int state;
 
@@ -42,7 +43,7 @@ enum {
 
 @implementation SeafSettingsViewController
 @synthesize connection = _connection;
-@synthesize nameCell, usedspaceCell, serverCell, cacheCell;
+@synthesize nameCell, usedspaceCell, serverCell, cacheCell, versionCell;
 @synthesize wipeCacheBt;
 @synthesize state = _state;
 
@@ -91,6 +92,10 @@ enum {
     if (!_connection)
         return;
 
+    NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
+    NSString *version = [infoDictionary objectForKey:@"CFBundleVersion"];
+    versionCell.detailTextLabel.text = version;
+
     nameCell.detailTextLabel.text = _connection.username;
     serverCell.detailTextLabel.text = [[NSString stringWithFormat:@"%@/", _connection.address] trimUrl];
     long long cacheSize = [Utils folderSizeAtPath:NSTemporaryDirectory()];
@@ -125,9 +130,7 @@ enum {
     }
 }
 
-
 #pragma mark - Table view delegate
-
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     //Debug("section=%d, row=%d\n", indexPath.section, indexPath.row);
@@ -154,6 +157,7 @@ enum {
             case CELL_SERVER:
                 [[UIApplication sharedApplication] openURL:[NSURL URLWithString:[NSString stringWithFormat:@"%@/", _connection.address]]];
                 break;
+
             default:
                 break;
         }
@@ -171,6 +175,7 @@ enum {
     [self setServerCell:nil];
     [self setCacheCell:nil];
     [self setWipeCacheBt:nil];
+    [self setVersionCell:nil];
     [super viewDidUnload];
 }
 

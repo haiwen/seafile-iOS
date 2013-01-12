@@ -72,20 +72,13 @@
 
     [self.navigationController setToolbarHidden:NO];
     UIBarButtonItem *flexibleFpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
-    UIBarButtonItem *chooseItem = [[UIBarButtonItem alloc] initWithTitle:@"Choose Folder"  style:UIBarButtonItemStyleBordered target:self action:@selector(chooseFolder:)];
+    UIBarButtonItem *chooseItem = [[UIBarButtonItem alloc] initWithTitle:@"Choose Current Folder"  style:UIBarButtonItemStyleBordered target:self action:@selector(chooseFolder:)];
     NSArray *items = [NSArray arrayWithObjects:flexibleFpaceItem, chooseItem, flexibleFpaceItem, nil];
     [self setToolbarItems:items];
 
     if ([_directory isKindOfClass:[SeafRepos class]]) {
         [chooseItem setEnabled:NO];
     }
-#if 0
-    UILabel *label = [[UILabel alloc] init];
-    label.text = @"Choose a folder to upload the file";
-    label.frame = CGRectMake(0, 0, self.tableView.frame.size.width, 40);
-    label.textAlignment = NSTextAlignmentCenter;
-    self.tableView.tableHeaderView = label;
-#endif
 }
 
 - (void)didReceiveMemoryWarning
@@ -123,11 +116,12 @@
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
-        cell.accessoryType = UITableViewCellAccessoryDetailDisclosureButton;
+        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
     }
 
     SeafDir *sdir = [_directory.items objectAtIndex:indexPath.row];
     cell.textLabel.text = sdir.name;
+    cell.textLabel.font = [UIFont systemFontOfSize:17];
     cell.imageView.image = sdir.image;
     return cell;
 }
