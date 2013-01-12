@@ -49,6 +49,13 @@ enum {
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     // Override point for customization after application launch.
+    NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
+    NSString *version = [infoDictionary objectForKey:@"CFBundleVersion"];
+    Debug("Current app version is %@\n", version);
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults setObject:version forKey:@"VERSION"];
+    [userDefaults synchronize];
+
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     self.window.rootViewController = self.startVC;
     [self.window makeKeyAndVisible];
@@ -67,13 +74,6 @@ enum {
     [wifiReach startNotifier];
 
     [self checkNetworkStatus];
-    NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
-    NSString *version = [infoDictionary objectForKey:@"CFBundleVersion"];
-    Debug("Current app version is %@\n", version);
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    [userDefaults setObject:version forKey:@"VERSION"];
-    [userDefaults synchronize];
-
     return YES;
 }
 
