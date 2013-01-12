@@ -67,6 +67,13 @@ enum {
     [wifiReach startNotifier];
 
     [self checkNetworkStatus];
+    NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
+    NSString *version = [infoDictionary objectForKey:@"CFBundleVersion"];
+    Debug("Current app version is %@\n", version);
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults setObject:version forKey:@"VERSION"];
+    [userDefaults synchronize];
+
     return YES;
 }
 

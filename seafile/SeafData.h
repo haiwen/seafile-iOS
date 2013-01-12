@@ -13,6 +13,7 @@
 @interface SeafServer : NSManagedObject
 
 @property (nonatomic, retain) NSString *url;
+@property (nonatomic, retain) NSString *username;
 @property (nonatomic, retain) NSString *content;
 
 @end
@@ -21,6 +22,7 @@
 @interface StarredFiles : NSManagedObject
 
 @property (nonatomic, retain) NSString *url;
+@property (nonatomic, retain) NSString *username;
 @property (nonatomic, retain) NSString *content;
 
 @end

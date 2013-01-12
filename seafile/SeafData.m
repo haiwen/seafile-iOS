@@ -12,6 +12,7 @@
 @implementation SeafServer
 
 @dynamic url;
+@dynamic username;
 @dynamic content;
 
 @end
@@ -20,6 +21,7 @@
 @implementation StarredFiles
 
 @dynamic url;
+@dynamic username;
 @dynamic content;
 
 @end

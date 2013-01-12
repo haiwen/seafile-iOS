@@ -195,7 +195,7 @@
     NSArray *descriptor=[NSArray arrayWithObject:sortDescriptor];
     [fetchRequest setSortDescriptors:descriptor];
 
-    NSString *preformat = [NSString stringWithFormat:@"url=='%@'", connection.address];
+    NSString *preformat = [NSString stringWithFormat:@"url=='%@' AND username=='%@'", connection.address, connection.username];
     [fetchRequest setPredicate:[NSPredicate predicateWithFormat:preformat]];
 
     NSFetchedResultsController *controller = [[NSFetchedResultsController alloc]
@@ -225,6 +225,7 @@
         server = (SeafServer *)[NSEntityDescription insertNewObjectForEntityForName:@"SeafServer" inManagedObjectContext:context];
         server.url = connection.address;
         server.content = content;
+        server.username = connection.username;
     } else {
         server.content = content;
         [context updatedObjects];

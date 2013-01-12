@@ -275,7 +275,7 @@
     NSArray *descriptor=[NSArray arrayWithObject:sortDescriptor];
     [fetchRequest setSortDescriptors:descriptor];
 
-    NSString *preformat = [NSString stringWithFormat:@"url=='%@'", self.address];
+    NSString *preformat = [NSString stringWithFormat:@"url=='%@' AND username=='%@'", self.address, self.username];
     [fetchRequest setPredicate:[NSPredicate predicateWithFormat:preformat]];
 
     NSFetchedResultsController *controller = [[NSFetchedResultsController alloc]
@@ -304,6 +304,7 @@
         starfiles = (StarredFiles *)[NSEntityDescription insertNewObjectForEntityForName:@"StarredFiles" inManagedObjectContext:context];
         starfiles.url = self.address;
         starfiles.content = content;
+        starfiles.username = self.username;
     } else {
         starfiles.content = content;
         [context updatedObjects];

@@ -14,15 +14,17 @@
     <entity name="SeafServer" representedClassName="SeafServer" syncable="YES">
         <attribute name="content" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="url" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="username" optional="YES" attributeType="String" syncable="YES"/>
     </entity>
     <entity name="StarredFiles" syncable="YES">
         <attribute name="content" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="url" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="username" optional="YES" attributeType="String" syncable="YES"/>
     </entity>
     <elements>
         <element name="Directory" positionX="160" positionY="192" width="128" height="105"/>
         <element name="DownloadedFile" positionX="160" positionY="192" width="128" height="90"/>
-        <element name="SeafServer" positionX="160" positionY="192" width="128" height="75"/>
-        <element name="StarredFiles" positionX="160" positionY="192" width="128" height="75"/>
+        <element name="SeafServer" positionX="160" positionY="192" width="128" height="90"/>
+        <element name="StarredFiles" positionX="160" positionY="192" width="128" height="90"/>
     </elements>
 </model>
