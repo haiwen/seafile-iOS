@@ -93,7 +93,7 @@ enum PREVIEW_STATE {
 - (void)configureView
 {
     self.title = _preViewItem.previewItemTitle;
-    Debug("Preview file:%@,%@ [%d]\n", _preViewItem.previewItemTitle, _preViewItem.previewItemURL, [QLPreviewController canPreviewItem:_preViewItem]);
+    Debug("Preview file:%@,%@,%@ [%d]\n", _preViewItem.previewItemTitle, [_preViewItem checkoutURL],_preViewItem.previewItemURL, [QLPreviewController canPreviewItem:_preViewItem]);
     [self checkBarItems];
     if (_state == PREVIEW_FAILED)
         [_failedView removeFromSuperview];
@@ -138,18 +138,17 @@ enum PREVIEW_STATE {
 
 - (void)updateDownloadProgress:(BOOL)res completeness:(int)percent;
 {
-    if (_state != PREVIEW_DOWNLOADING && percent < 100)
+    if (_state != PREVIEW_DOWNLOADING)
         return;
 
     if (!res) {
-        if (_state != PREVIEW_DOWNLOADING)
-            return;
         [self alertWithMessage:[NSString stringWithFormat:@"Failed to download file '%@'",_preViewItem.previewItemTitle]];
     } else {
-        //Debug ("DownLoading file %@:%@, percent=%d\n", _sfile.oid, _sfile.path, percent);
-        if (_state == PREVIEW_DOWNLOADING && percent < 100) {
+        //Debug ("DownLoading file %@, percent=%d\n", _preViewItem.previewItemTitle, percent);
+        if (_state == PREVIEW_DOWNLOADING) {
             [_progressView configureViewWithItem:_preViewItem completeness:percent];
-        } else {
+        }
+        if (percent == 100) {
             [self configureView];
         }
     }

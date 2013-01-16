@@ -65,8 +65,9 @@ enum {
 
     [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
     [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"]];
+    [Utils checkMakeDir:[Utils applicationTempDirectory]];
 
-    [Utils clearAllFiles:NSTemporaryDirectory()];
+    [Utils clearAllFiles:[Utils applicationTempDirectory]];
 
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reachabilityChanged:) name:kReachabilityChangedNotification object:nil];
 

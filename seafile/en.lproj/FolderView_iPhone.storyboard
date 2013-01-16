@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="2.0" toolsVersion="2844" systemVersion="12C60" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" initialViewController="IwU-Z8-46U">
     <dependencies>
-        <deployment defaultVersion="1536" identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="1930"/>
     </dependencies>
     <scenes>
@@ -448,6 +447,7 @@
                         <outlet property="nameCell" destination="5xi-tG-aX7" id="ca7-Gk-LIC"/>
                         <outlet property="serverCell" destination="ggp-Jn-gkE" id="Xdv-ti-fV2"/>
                         <outlet property="usedspaceCell" destination="hMG-4N-mUp" id="wXC-Pe-G7a"/>
+                        <outlet property="versionCell" destination="zdI-jv-Dan" id="BxQ-qf-CeN"/>
                         <outlet property="wipeCacheBt" destination="Vhk-wl-sey" id="9Lg-T3-qfl"/>
                     </connections>
                 </tableViewController>
@@ -507,6 +507,9 @@
         <class className="SeafDetailViewController" superclassName="UIViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/SeafDetailViewController.h"/>
         </class>
+        <class className="SeafFileViewController" superclassName="UITableViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/SeafFileViewController.h"/>
+        </class>
         <class className="SeafSettingsViewController" superclassName="UITableViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/SeafSettingsViewController.h"/>
             <relationships>
@@ -515,6 +518,7 @@
                 <relationship kind="outlet" name="nameCell" candidateClass="UITableViewCell"/>
                 <relationship kind="outlet" name="serverCell" candidateClass="UITableViewCell"/>
                 <relationship kind="outlet" name="usedspaceCell" candidateClass="UITableViewCell"/>
+                <relationship kind="outlet" name="versionCell" candidateClass="UITableViewCell"/>
                 <relationship kind="outlet" name="wipeCacheBt" candidateClass="ColorfulButton"/>
             </relationships>
         </class>

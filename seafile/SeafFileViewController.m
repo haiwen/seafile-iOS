@@ -499,7 +499,6 @@
 #pragma mark - SeafDentryDelegate
 - (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent
 {
-    //Debug("update=%d, percent=%d \n", updated, percent);
     if (entry == _directory) {
         [self dismissOverlayView];
         [SVProgressHUD dismiss];

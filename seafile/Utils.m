@@ -19,6 +19,12 @@
     return [[[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject] path];
 }
 
++ (NSString *)applicationTempDirectory
+{
+    return [[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"temp"];
+}
+
+
 + (BOOL)checkMakeDir:(NSString *)path
 {
     NSError *error;
@@ -165,6 +171,39 @@
 + (id)JSONDecode:(NSData *)data error:(NSError **)error
 {
     return [NSJSONSerialization JSONObjectWithData:data options:0 error:error];
+}
+
++ (BOOL)tryTransformEncoding:(NSString *)outfile fromFile:(NSString *)fromfile
+{
+    if ([Utils fileSizeAtPath1:fromfile] > 10 * 1024 * 1024)
+        return NO;
+    NSData *data = [NSData dataWithContentsOfFile:fromfile];
+    NSString *encodeContent;
+    int i = 0;
+
+    NSStringEncoding encodes[] = {
+        NSUTF8StringEncoding,
+        CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGB_18030_2000),
+        CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGB_2312_80),
+        CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGBK_95),
+        NSUnicodeStringEncoding,
+        NSASCIIStringEncoding,
+        0,
+    };
+
+    while (encodes[i]) {
+        encodeContent = [[NSString alloc] initWithData:data encoding:encodes[i]];
+        if (encodeContent) {
+            Debug("use encoding %d\n", i);
+            break;
+        }
+        ++i;
+    }
+
+    if ([encodeContent writeToFile:outfile atomically:YES encoding:NSUTF16StringEncoding error:nil]) {
+        return YES;
+    }
+    return NO;
 }
 
 @end

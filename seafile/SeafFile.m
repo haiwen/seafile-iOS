@@ -17,24 +17,20 @@
 
 @interface SeafFile ()
 
-@property (readonly, strong) NSData *content;
-@property (strong) NSURL *preViewURL;
+@property (strong, readonly) NSURL *preViewURL;
 @property (readonly) NSURL *checkoutURL;
-
-@property (readonly, strong) NSMutableData *tmpData;
-@property (readonly, strong) NSString *tmpOid;
-
+@property (strong) NSString *downloadingFileOid;
+@property (strong) NSFileHandle *downloadFileHandle;
 
 @end
 
 @implementation SeafFile
 @synthesize checkoutURL = _checkoutURL;
 @synthesize preViewURL = _preViewURL;
-@synthesize content = _content;
-@synthesize filesize = _filesize;
 @synthesize shareLink = _shareLink;
-@synthesize tmpData = _tmpData;
-@synthesize tmpOid = _tmpOid;
+@synthesize filesize;
+@synthesize downloadFileHandle;
+@synthesize downloadingFileOid;
 
 
 - (id)initWithConnection:(SeafConnection *)aConnection
@@ -47,8 +43,10 @@
 {
     if (self = [super initWithConnection:aConnection oid:anId repoId:aRepoId name:aName path:aPath mime:[FileMimeType mimeType:aName]]) {
         _mtime = mtime;
-        _filesize = size;
         _shareLink = nil;
+        filesize = size;
+        downloadingFileOid = nil;
+        downloadFileHandle = nil;
     }
 
     return self;
@@ -59,11 +57,16 @@
     return [FileMimeType mimeType:self.name];
 }
 
+- (NSString *)downloadTempPath
+{
+    return [[Utils applicationTempDirectory] stringByAppendingPathComponent:self.downloadingFileOid];;
+}
+
 - (void)updateWithEntry:(SeafBase *)entry
 {
     SeafFile *file = (SeafFile *)entry;
     [super updateWithEntry:entry];
-    _filesize = file.filesize;
+    filesize = file.filesize;
     _mtime = file.mtime;
 }
 
@@ -77,23 +80,6 @@
     if (!self.ooid)
         return nil;
     return [SeafFile documentPath:self.ooid];
-}
-
-- (void)setContent:(NSData *)content
-{
-    _content = content;
-    [_content writeToFile:[self documentPath] atomically:YES];
-}
-
-- (NSData *)content
-{
-    if (_content)
-        return _content;
-    if (self.ooid) {
-        _content = [NSData dataWithContentsOfFile:[self documentPath]];
-    }
-
-    return _content;
 }
 
 - (void)setOoid:(NSString *)ooid
@@ -111,10 +97,10 @@
 #pragma - NSURLConnectionDelegate
 - (void)connection:(NSURLConnection *)aConn didReceiveData:(NSData *)data
 {
-    [_tmpData appendData:data];
+    [downloadFileHandle writeData:data];
     int percent = 0;
-    if (_filesize != 0)
-        percent = _tmpData.length * 100/_filesize;
+    if (filesize != 0)
+        percent = downloadFileHandle.offsetInFile * 100/filesize;
     if (percent >= 100)
         percent = 99;
     [self.delegate entry:self contentUpdated:YES completeness:percent];
@@ -125,24 +111,24 @@
     Debug("error=%@",[error localizedDescription]);
     self.state = SEAF_DENTRY_INIT;
     [self.delegate entryContentLoadingFailed:error.code entry:self];
-    _tmpData = nil;
-    _tmpOid = nil;
+    downloadingFileOid = nil;
+    [downloadFileHandle closeFile];
 }
 
 - (void)connectionDidFinishLoading:(NSURLConnection *)aConn
 {
     @synchronized(self) {
         self.state = SEAF_DENTRY_UPTODATE;
-        [self setOoid:_tmpOid];
-        [self setContent:_tmpData];
+        [self setOoid:downloadingFileOid];
         [self savetoCache];
-        _tmpData = nil;
-        _tmpOid = nil;
+        [downloadFileHandle closeFile];
+        [[NSFileManager defaultManager] moveItemAtPath:[self downloadTempPath] toPath:[self documentPath] error:nil];
+        downloadingFileOid = nil;
     }
     [self.delegate entry:self contentUpdated:YES completeness:100];
-    if (![self.oid isEqualToString:_tmpOid]) {
-        Debug("the parent is out of date and need to reload %@, %@\n", self.oid, _tmpOid);
-        self.oid = _tmpOid;
+    if (![self.oid isEqualToString:self.ooid]) {
+        Debug("the parent is out of date and need to reload %@, %@\n", self.oid, self.ooid);
+        self.oid = self.ooid;
     }
 }
 
@@ -155,7 +141,11 @@
         Debug("headers=%@", dictionary);
     }
 #endif
-    _tmpData = [[NSMutableData alloc] init];
+    NSError *error = nil;
+    if (![[NSFileManager defaultManager] fileExistsAtPath:[self downloadTempPath]])
+        [[NSFileManager defaultManager] createFileAtPath: [self downloadTempPath] contents: nil attributes: nil];
+    self.downloadFileHandle = [NSFileHandle fileHandleForWritingToURL:[NSURL fileURLWithPath:[self downloadTempPath]] error:&error];
+    [self.downloadFileHandle truncateFileAtOffset:0];
 }
 
 - (BOOL)connection:(NSURLConnection *)connection canAuthenticateAgainstProtectionSpace:(NSURLProtectionSpace *)protectionSpace
@@ -174,7 +164,6 @@
  */
 - (void)realLoadContent
 {
-    _tmpOid = nil;
     [connection sendRequest:self.downloadLinkUrl repo:self.repoId success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          NSString *url = JSON;
@@ -194,9 +183,9 @@
 
          NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:[url escapedPostForm]]];
 
-         if (_tmpOid)
+         if (downloadingFileOid)
              return;
-         _tmpOid = curId;
+         downloadingFileOid = curId;
 
          NSURLConnection *downloadConncetion = [[NSURLConnection alloc] initWithRequest:downloadRequest delegate:self startImmediately:YES];
          if (!downloadConncetion) {
@@ -302,52 +291,25 @@
 #pragma mark - QLPreviewItem
 - (NSURL *)checkoutURL
 {
+    NSError *error = nil;
     if (_checkoutURL)
         return _checkoutURL;
     if (!self.ooid)
         return nil;
-
     @synchronized (self) {
-        NSString *tempPath = [NSTemporaryDirectory() stringByAppendingPathComponent:self.ooid];
+        NSString *tempPath = [[Utils applicationTempDirectory] stringByAppendingPathComponent:self.ooid];
         if (![Utils checkMakeDir:tempPath])
             return nil;
 
         NSString *tempFileName = [tempPath stringByAppendingPathComponent:self.name];
         if ([[NSFileManager defaultManager] fileExistsAtPath:tempFileName]
-            || [[NSFileManager defaultManager] createFileAtPath:tempFileName
-                                                       contents:self.content
-                                                     attributes:nil]) {
-                _checkoutURL = [NSURL fileURLWithPath:tempFileName];
-            }
-    }
-    //[self.content writeToFile:[[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:self.name] atomically:YES];
-
-    return _checkoutURL;
-}
-
-- (NSString *)tryTransformEncoding:(NSData *)data
-{
-    int i = 0;
-    NSString *res = nil;
-    NSStringEncoding encodes[] = {
-        NSUTF8StringEncoding,
-        CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGB_18030_2000),
-        CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGB_2312_80),
-        CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGBK_95),
-        NSUnicodeStringEncoding,
-        NSASCIIStringEncoding,
-        0,
-    };
-
-    while (encodes[i]) {
-        res = [[NSString alloc] initWithData:data encoding:encodes[i]];
-        if (res) {
-            Debug("use encoding %d\n", i);
-            break;
+            || [[NSFileManager defaultManager] copyItemAtPath:[self documentPath] toPath:tempFileName error:&error]) {
+            _checkoutURL = [NSURL fileURLWithPath:tempFileName];
+        } else {
+            Warning("Copy file to checkoutURL failed:%@\n", error);
         }
-        ++i;
     }
-    return res;
+    return _checkoutURL;
 }
 
 - (NSURL *)previewItemURL
@@ -363,24 +325,15 @@
         return _preViewURL;
     }
 
+    NSString *encodePath = [[[Utils applicationTempDirectory] stringByAppendingPathComponent:self.ooid] stringByAppendingPathComponent:@"utf16" ];
+    if (![Utils checkMakeDir:encodePath])
+        return _preViewURL;
+
+    NSString *encodeFileName = [encodePath stringByAppendingPathComponent:self.name];
     @synchronized (self) {
-        NSString *tempPath = [[NSTemporaryDirectory() stringByAppendingPathComponent:self.ooid] stringByAppendingPathComponent:@"utf16" ];
-        if (![Utils checkMakeDir:tempPath])
-            return _preViewURL;
-
-        NSString *tempFileName = [tempPath stringByAppendingPathComponent:self.name];
-        if ([[NSFileManager defaultManager] fileExistsAtPath:tempFileName]) {
-            Debug("file %@ existes already\n", tempFileName);
-            _preViewURL = [NSURL fileURLWithPath:tempFileName];
-        } else {
-            NSString *encodeContent = [self tryTransformEncoding:self.content];
-            if (!encodeContent)
-                return _preViewURL;
-
-            if ([encodeContent writeToFile:tempFileName atomically:YES encoding:NSUTF16StringEncoding error:nil]) {
-                _preViewURL = [NSURL fileURLWithPath:tempFileName];
-                return _preViewURL;
-            }
+        if ([[NSFileManager defaultManager] fileExistsAtPath:encodeFileName]
+            || [Utils tryTransformEncoding:encodeFileName fromFile:[self documentPath]]) {
+            _preViewURL = [NSURL fileURLWithPath:encodeFileName];
         }
     }
     return _preViewURL;

@@ -16,10 +16,15 @@
 @interface Utils : NSObject
 
 + (NSString *)applicationDocumentsDirectory;
++ (NSString *)applicationTempDirectory;
+
 + (BOOL)checkMakeDir:(NSString *)path;
 + (void)clearAllFiles:(NSString *)path;
 + (long long)folderSizeAtPath:(NSString*)folderPath;
 + (int)copyFile:(NSURL *)from to:(NSURL *)to;
+
++ (BOOL)tryTransformEncoding:(NSString *)outfile fromFile:(NSString *)fromfile;
+
 
 + (void)setRepo:(NSString *)repoId password:(NSString *)password;
 + (NSString *)getRepoPassword:(NSString *)repoId;

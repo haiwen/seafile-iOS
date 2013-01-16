@@ -19,7 +19,7 @@
 @end
 
 
-@interface SeafUploadFile : NSObject<NSURLConnectionDelegate, PreViewDelegate, QLPreviewItem>
+@interface SeafUploadFile : NSObject<PreViewDelegate, QLPreviewItem>
 
 
 @property (readonly) NSString *path;
