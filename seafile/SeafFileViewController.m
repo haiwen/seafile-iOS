@@ -21,6 +21,12 @@
 #import "SVProgressHUD.h"
 #import "Debug.h"
 
+enum {
+    STATE_INIT = 0,
+    STATE_LOADING,
+    STATE_DELETE,
+    STATE_MKDIR,
+};
 
 @interface SeafFileViewController ()
 - (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView;
@@ -36,6 +42,7 @@
 @property (strong) UIBarButtonItem *backItem;
 
 @property (strong, readonly) UIView *overlayView;
+@property int state;
 @end
 
 @implementation SeafFileViewController
@@ -45,6 +52,8 @@
 @synthesize curEntry = _curEntry;
 @synthesize passSetView = _passSetView, mkdirView = _mkdirView;
 @synthesize backItem = _backItem, selectAllItem = _selectAllItem, selectNoneItem = _selectNoneItem;
+@synthesize state;
+
 
 @synthesize overlayView = _overlayView;
 
@@ -90,7 +99,7 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
     self.tableView.scrollEnabled = YES;
-
+    self.state = STATE_INIT;
     if (_refreshHeaderView == nil) {
         EGORefreshTableHeaderView *view = [[EGORefreshTableHeaderView alloc] initWithFrame:CGRectMake(0.0f, 0.0f - self.tableView.bounds.size.height, self.view.frame.size.width, self.tableView.bounds.size.height)];
         view.delegate = self;
@@ -249,6 +258,7 @@
     [self tableViewReloadData];
     if (!_directory.hasCache) {
         [self.tableView addSubview:self.overlayView];
+        self.state = STATE_LOADING;
     }
 }
 
@@ -510,6 +520,7 @@
     } else if ([entry isKindOfClass:[SeafFile class]]) {
         [_detailViewController fileContentLoaded:(SeafFile *)entry result:updated completeness:percent];
     }
+    self.state = STATE_INIT;
 }
 
 - (void)entryContentLoadingFailed:(int)errCode entry:(SeafBase *)entry;
@@ -527,16 +538,26 @@
     Debug("%@,%@, %@\n", folder.path, folder.repoId, _directory.path);
     if (entry == _directory) {
         [self doneLoadingTableViewData];
-        if (_mkdirView) {
-            [SVProgressHUD showErrorWithStatus:@"Failed to create folder"];
-            [_mkdirView.inputTextField setEnabled:YES];
-        } else if (!_directory.hasCache) {
-            [self dismissOverlayView];
-            [self alertWithMessage:@"Failed to load files"];
-        } else {
-            [SVProgressHUD dismiss];
+        switch (self.state) {
+            case STATE_DELETE:
+                [SVProgressHUD showErrorWithStatus:@"Failed to delete files"];
+                break;
+            case STATE_MKDIR:
+                [SVProgressHUD showErrorWithStatus:@"Failed to create folder"];
+                [_mkdirView.inputTextField setEnabled:YES];
+                break;
+            case STATE_LOADING:
+                if (!_directory.hasCache) {
+                    [self dismissOverlayView];
+                    [SVProgressHUD showErrorWithStatus:@"Failed to load files"];
+                } else
+                    [SVProgressHUD dismiss];
+                break;
+            default:
+                break;
         }
     }
+    self.state = STATE_INIT;
 }
 
 - (void)repoPasswordSet:(SeafBase *)entry WithResult:(BOOL)success;
@@ -626,6 +647,7 @@
     }
     switch ([sender tag]) {
         case EDITOP_MKDIR:
+            self.state = STATE_MKDIR;
             [self popupMkdirView];
             break;
 
@@ -634,6 +656,7 @@
             if (!idxs) {
                 return;
             }
+            self.state = STATE_DELETE;
             entries = [[NSMutableArray alloc] init];
             for (NSIndexPath *indexPath in idxs) {
                 [entries addObject:[_directory.items objectAtIndex:indexPath.row]];

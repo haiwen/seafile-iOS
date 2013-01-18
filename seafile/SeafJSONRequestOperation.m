@@ -82,7 +82,6 @@ static dispatch_queue_t json_request_operation_processing_queue() {
         } else {
             self.responseJSON = [Utils JSONDecode:self.responseData error:&error];
         }
-
         self.JSONError = error;
     }
 

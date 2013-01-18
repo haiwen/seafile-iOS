@@ -9,6 +9,7 @@
 #import "StartViewController.h"
 #import "SeafAccountViewController.h"
 #import "SeafAppDelegate.h"
+#import "SeafAccountCell.h"
 
 #import "Debug.h"
 
@@ -165,17 +166,17 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    NSString *CellIdentifier = @"AccountCell";
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+    NSString *CellIdentifier = @"SeafAccountCell";
+    SeafAccountCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier];
+        NSArray *cells = [[NSBundle mainBundle] loadNibNamed:CellIdentifier owner:self options:nil];
+        cell = [cells objectAtIndex:0];
     }
     SeafConnection *conn = [self.conns objectAtIndex:indexPath.row];
     NSString* path = [[NSBundle mainBundle] pathForResource:@"account" ofType:@"png"];
-    cell.imageView.image = [UIImage imageWithContentsOfFile:path];
-    cell.textLabel.text = conn.address;
-    cell.detailTextLabel.text = conn.username;
-    cell.textLabel.font = [UIFont systemFontOfSize:17];
+    cell.imageview.image = [UIImage imageWithContentsOfFile:path];
+    cell.serverLabel.text = conn.address;
+    cell.emailLabel.text = conn.username;
     cell.accessoryType = UITableViewCellAccessoryNone;
 
     UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditMenu:)];

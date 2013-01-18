@@ -170,7 +170,10 @@
 
 + (id)JSONDecode:(NSData *)data error:(NSError **)error
 {
-    return [NSJSONSerialization JSONObjectWithData:data options:0 error:error];
+    id ret = [NSJSONSerialization JSONObjectWithData:data options:0 error:error];
+    if (*error)
+        Debug("Parse json error:%@, %@\n", *error, [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
+    return ret;
 }
 
 + (BOOL)tryTransformEncoding:(NSString *)outfile fromFile:(NSString *)fromfile
