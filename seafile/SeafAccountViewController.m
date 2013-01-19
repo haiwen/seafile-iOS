@@ -90,7 +90,7 @@
         v.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin| UIViewAutoresizingFlexibleRightMargin
         | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
     }
-    self.title = @"Seafile Server";
+    self.title = @"Seafile Account";
 
     CGRect rect = CGRectMake(0, 0, 90, 25);
     UILabel *serverLabel = [[UILabel alloc] initWithFrame:rect];
@@ -169,7 +169,7 @@
     if (error == HTTP_ERR_LOGIN_INCORRECT_PASSWORD)
         [self alertWithMessage:@"Wrong username or password"];
     else {
-        [self alertWithMessage:@"Failed to login"];
+        [SVProgressHUD showErrorWithStatus:@"Failed to login"];
     }
 }
 

@@ -11,7 +11,7 @@
 #import "SeafConnection.h"
 #import "SeafDir.h"
 
-@interface SeafUploadsViewController : UITableViewController<SeafUploadDelegate>
+@interface SeafUploadsViewController : UITableViewController<SeafUploadDelegate, UIActionSheetDelegate>
 @property (strong) SeafConnection *connection;
 
 - (void)initTabBarItem;

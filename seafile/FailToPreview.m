@@ -9,6 +9,7 @@
 #import "FailToPreview.h"
 #import "Debug.h"
 
+
 @interface FailToPreview ()
 @property (strong) id<QLPreviewItem, PreViewDelegate> item;
 @property (strong) UIDocumentInteractionController *docController;

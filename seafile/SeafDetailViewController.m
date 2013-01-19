@@ -71,7 +71,6 @@
 - (void)goBack:(id)sender
 {
     [self.navigationController popViewControllerAnimated:YES];
-    [self setPreViewItem:nil];
 }
 
 - (void)viewDidLoad

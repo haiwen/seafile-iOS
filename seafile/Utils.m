@@ -170,6 +170,10 @@
 
 + (id)JSONDecode:(NSData *)data error:(NSError **)error
 {
+    NSString *rawData = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    if ([rawData hasPrefix:@"\""] && [rawData hasSuffix:@"\""]) {
+        return [rawData substringWithRange:NSMakeRange(1, [rawData length] - 2)];
+    }
     id ret = [NSJSONSerialization JSONObjectWithData:data options:0 error:error];
     if (*error)
         Debug("Parse json error:%@, %@\n", *error, [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);

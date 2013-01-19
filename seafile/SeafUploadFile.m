@@ -140,7 +140,6 @@
         [formData appendPartWithFileURL:[NSURL fileURLWithPath:self.path] name:@"file" error:nil];
     }];
     request.URL = url;
-    [request setTimeoutInterval:1];
     [request setValue:@"close" forHTTPHeaderField:@"Connection"];
     AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
     [operation setCompletionBlockWithSuccess:
@@ -160,7 +159,6 @@
                                      }];
 
     [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
-        Debug("Sent %lld of %lld bytes", totalBytesWritten, totalBytesExpectedToWrite);
         if (totalBytesWritten == totalBytesExpectedToWrite) {
             _uploading = NO;
            [_delegate uploadProgress:self result:YES completeness:100];

@@ -15,6 +15,34 @@
 #import "SVProgressHUD.h"
 #import "Debug.h"
 
+@interface PrevFile : NSObject<QLPreviewItem>
+@end
+
+static PrevFile *pfile;
+
+@implementation PrevFile
+
+- (NSString *)previewItemTitle
+{
+    return nil;
+}
+
+- (NSURL *)previewItemURL
+{
+    NSString *path = [[NSBundle mainBundle] pathForResource:@"app-icon-ipad-50" ofType:@"png"];
+    return [NSURL fileURLWithPath:path];
+}
+
++ (PrevFile *)defaultFile
+{
+    if (!pfile)
+        pfile = [[PrevFile alloc] init];
+    return pfile;
+}
+
+
+@end
+
 enum PREVIEW_STATE {
     PREVIEW_SUCCESS = 0,
     PREVIEW_DOWNLOADING,
@@ -142,7 +170,7 @@ enum PREVIEW_STATE {
         return;
 
     if (!res) {
-        [self alertWithMessage:[NSString stringWithFormat:@"Failed to download file '%@'",_preViewItem.previewItemTitle]];
+        [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:@"Failed to download file '%@'",_preViewItem.previewItemTitle]];
     } else {
         //Debug ("DownLoading file %@, percent=%d\n", _preViewItem.previewItemTitle, percent);
         if (_state == PREVIEW_DOWNLOADING) {
@@ -203,10 +231,10 @@ enum PREVIEW_STATE {
 
 - (id <QLPreviewItem>)previewController:(QLPreviewController *)controller previewItemAtIndex:(NSInteger)index;
 {
-    if (index == 0 && _preViewItem) {
+    if (_preViewItem && _preViewItem.previewItemURL) {
         return _preViewItem;
     }
-    return nil;
+    return [PrevFile defaultFile];
 }
 
 
@@ -231,7 +259,7 @@ enum PREVIEW_STATE {
     docController = [UIDocumentInteractionController interactionControllerWithURL:url];
     BOOL ret = [docController presentOpenInMenuFromBarButtonItem:sender animated:YES];
     if (ret == NO) {
-        [self alertWithMessage:@"There is no app which can open this type of file on this machine"];
+        [SVProgressHUD showErrorWithStatus:@"There is no app which can open this type of file on this machine"];
     }
 }
 

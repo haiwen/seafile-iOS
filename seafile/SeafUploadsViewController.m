@@ -25,7 +25,8 @@
 @property NSMutableDictionary *attrs;
 @property UIImage *cellImage;
 
-@property SeafUploadFile *ufile;
+@property (retain) NSIndexPath *selectedindex;
+
 @end
 
 @implementation SeafUploadsViewController
@@ -33,7 +34,7 @@
 @synthesize attrs = _attrs;
 @synthesize cellImage = _cellImage;
 @synthesize connection = _connection;
-@synthesize ufile = _ufile;
+@synthesize selectedindex = _selectedindex;
 
 
 - (id)initWithStyle:(UITableViewStyle)style
@@ -95,13 +96,13 @@
         return [[(SeafUploadFile *)obj1 name] caseInsensitiveCompare:[(SeafUploadFile *)obj2 name]];
     }];
     [self saveAttrs];
-    Debug("count=%d\n", _entries.count);
 }
 
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
     [self loadEntries];
+    [self.tableView reloadData];
 }
 
 - (void)viewDidLoad
@@ -123,7 +124,27 @@
 
 - (void)chooseUploadDir:(SeafDir *)dir
 {
-    [_ufile upload:_connection repo:dir.repoId dir:dir.path];
+    [[_entries objectAtIndex:_selectedindex.row] upload:_connection repo:dir.repoId dir:dir.path];
+}
+
+- (void)uploadFile:(NSIndexPath *)index
+{
+    _selectedindex = index;
+    SeafUploadDirViewController *controller = [[SeafUploadDirViewController alloc] initWithSeafDir:_connection.rootFolder];
+    UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
+    [navController setModalPresentationStyle:UIModalPresentationFormSheet];
+    [self presentViewController:navController animated:YES completion:nil];
+}
+
+- (void)deleteFile:(NSIndexPath *)index
+{
+    // Delete the row from the data source
+    SeafUploadFile *file = [_entries objectAtIndex:index.row];
+    [_entries removeObjectAtIndex:index.row];
+    [_attrs removeObjectForKey:file.name];
+    [self saveAttrs];
+    [file removeFile];
+    [self.tableView reloadData];
 }
 
 #pragma mark - SeafUploadDelegate
@@ -175,6 +196,25 @@
     }
 }
 
+- (void)showEditMenu:(UILongPressGestureRecognizer *)gestureRecognizer
+{
+    UIActionSheet *actionSheet;
+    if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
+        return;
+    CGPoint touchPoint = [gestureRecognizer locationInView:self.tableView];
+    _selectedindex = [self.tableView indexPathForRowAtPoint:touchPoint];
+    if (!_selectedindex)
+        return;
+    if (IsIpad())
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:@"Upload", @"Delete", nil];
+    else
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Upload", @"Delete", nil];
+
+    Debug("index=%d\n", _selectedindex.row);
+    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
+    [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
+}
+
 - (UITableViewCell *)getCell:tableView file:(SeafUploadFile *)file
 {
     NSString *CellIdentifier = @"UploadFileCell";
@@ -207,7 +247,8 @@
     } else {
         cell.detailTextLabel.text = sizeStr;
     }
-
+    UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditMenu:)];
+    [cell addGestureRecognizer:longPressGesture];
     return cell;
 }
 
@@ -254,14 +295,7 @@
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if (editingStyle == UITableViewCellEditingStyleDelete) {
-        // Delete the row from the data source
-        SeafUploadFile *file = [_entries objectAtIndex:indexPath.row];
-        //[tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-        [_entries removeObjectAtIndex:indexPath.row];
-        [_attrs removeObjectForKey:file.name];
-        [self saveAttrs];
-        [file removeFile];
-        [self.tableView reloadData];
+        [self deleteFile:indexPath];
     }
 }
 
@@ -274,24 +308,7 @@
 
 - (void)tableView:(UITableView *)tableView accessoryButtonTappedForRowWithIndexPath:(NSIndexPath *)indexPath
 {
-    _ufile = [_entries objectAtIndex:indexPath.row];
-    Debug("uploading %@\n", _ufile.name);
-
-    SeafUploadDirViewController *controller = [[SeafUploadDirViewController alloc] initWithSeafDir:_connection.rootFolder];
-    UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
-    [navController setModalPresentationStyle:UIModalPresentationFormSheet];
-    //navController.view.superview.autoresizingMask = UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
-    //navController.view.autoresizingMask = UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
-
-    //navController.view.superview.frame = CGRectMake(navController.view.superview.frame.origin.x, navController.view.superview.frame.origin.y, self.tableView.frame.size.width, navController.view.superview.frame.size.height);
-    //navController.view.superview.frame = self.tableView.frame;
-#if 0
-    CGRect screenBounds = [[UIScreen mainScreen] bounds];
-    CGPoint center = CGPointMake(CGRectGetMidX(screenBounds), CGRectGetMidY(screenBounds));
-    navController.view.superview.center = center;
-    navController.view.superview.center = UIDeviceOrientationIsPortrait(self.interfaceOrientation) ? center :CGPointMake(center.y, center.x);
-#endif
-    [self presentViewController:navController animated:YES completion:nil];
+    [self deleteFile:indexPath];
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
@@ -306,7 +323,6 @@
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     SeafDetailViewController *detailViewController = appdelegate.detailVC;
     SeafUploadFile *file = [_entries objectAtIndex:indexPath.row];
-    Debug("selected %d\n", indexPath.row);
     if (!IsIpad())
         [self.navigationController pushViewController:detailViewController animated:YES];
     [detailViewController setPreViewItem:file];
@@ -315,6 +331,17 @@
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
     return YES;
+}
+
+
+#pragma mark - UIActionSheetDelegate
+- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    if (buttonIndex == 0) {
+        [self uploadFile:_selectedindex];
+    } else if (buttonIndex == 1) {
+        [self deleteFile:_selectedindex];
+    }
 }
 
 @end
