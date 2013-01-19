@@ -9,10 +9,10 @@
 #import "SeafAppDelegate.h"
 #import "SeafFileViewController.h"
 #import "SeafDetailViewController.h"
-#import "SeafTableViewRepoCell.h"
 
 #import "SeafFile.h"
 #import "SeafRepos.h"
+#import "SeafCell.h"
 
 #import "FileSizeFormatter.h"
 #import "SeafDateFormatter.h"
@@ -281,61 +281,40 @@ enum {
     return repos.count;
 }
 
-- (UITableViewCell *)getCell:(NSString *)CellIdentifier forTableView:(UITableView *)tableView
+- (SeafCell *)getCell:(NSString *)CellIdentifier forTableView:(UITableView *)tableView
 {
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+    SeafCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
-        NSArray *cells = [[NSBundle mainBundle] loadNibNamed:CellIdentifier owner:self options:nil];
+        NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafCell" owner:self options:nil];
         cell = [cells objectAtIndex:0];
     }
     return cell;
 }
 
-- (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView
+- (SeafCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView
 {
-    NSString *CellIdentifier = @"SeafTableViewFileCell";
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-    if (cell == nil) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier];
-        cell.accessoryType = UITableViewCellAccessoryDetailDisclosureButton;
-        cell.textLabel.font = [UIFont systemFontOfSize:18];
-        cell.textLabel.textColor = [UIColor darkTextColor];
-    }
-
+    SeafCell *cell = [self getCell:@"SeafCell" forTableView:tableView];
     cell.textLabel.text = sfile.name;
     cell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:sfile.filesize ] useBaseTen:NO];
     cell.imageView.image = sfile.image;
     return cell;
 }
 
-- (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView
+- (SeafCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView
 {
-    NSString *CellIdentifier = @"SeafTableViewDirCell";
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-    if (cell == nil) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
-        cell.accessoryType = UITableViewCellAccessoryDetailDisclosureButton;
-        cell.textLabel.font = [UIFont systemFontOfSize:18];
-        cell.textLabel.textColor = [UIColor darkTextColor];
-    }
-
-    cell.textLabel.text = sdir.name;
+    SeafCell *cell = [self getCell:@"SeafCell" forTableView:tableView];
+    cell.detailTextLabel.text = sdir.name;
     cell.imageView.image = sdir.image;
     return cell;
 }
 
-- (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView
+- (SeafCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView
 {
-    NSString *CellIdentifier = @"SeafTableViewRepoCell";
-    SeafTableViewRepoCell *cell = (SeafTableViewRepoCell *)[self getCell:CellIdentifier forTableView:tableView];
-
+    SeafCell *cell = [self getCell:@"SeafCell" forTableView:tableView];
+    NSString *detail = [NSString stringWithFormat:@"%@, %@", [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:srepo.size ] useBaseTen:NO], [SeafDateFormatter stringFromInt:srepo.mtime]];
+    cell.detailTextLabel.text = detail;
     cell.imageView.image = srepo.image;
-    if (srepo.mtime != 0)
-        [cell.mtimeLabel setText:[SeafDateFormatter stringFromInt:srepo.mtime]];
-
-    [cell.sizeLabel setText:[FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:srepo.size ] useBaseTen:NO]];
-    [cell.nameLabel setText:srepo.name];
-    [cell.descLabel setText:srepo.desc];
+    cell.textLabel.text = srepo.name;
     return cell;
 }
 

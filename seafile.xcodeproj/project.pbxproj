@@ -66,7 +66,6 @@
 		571D8CC21677881400F1A22C /* FileSizeFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 57F53B0515DF49EF0027140D /* FileSizeFormatter.m */; };
 		571D8CC31677881400F1A22C /* EGORefreshTableHeaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = 576D89E315E39ED700F2BD17 /* EGORefreshTableHeaderView.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		571D8CC41677881400F1A22C /* InputAlertPrompt.m in Sources */ = {isa = PBXBuildFile; fileRef = 57713AA215E53A5E00651A9C /* InputAlertPrompt.m */; };
-		571D8CC51677881400F1A22C /* SeafTableViewRepoCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 575753E415EE56850049D720 /* SeafTableViewRepoCell.m */; };
 		571D8CC61677881400F1A22C /* SeafDateFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 575753EA15EE7AE30049D720 /* SeafDateFormatter.m */; };
 		571D8CC71677881400F1A22C /* ExtentedString.m in Sources */ = {isa = PBXBuildFile; fileRef = 5760144A15FA193900FBDDEF /* ExtentedString.m */; };
 		571D8CC81677881400F1A22C /* Reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 57335CF1160D9D2500018AE8 /* Reachability.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
@@ -107,7 +106,6 @@
 		571D8CEE1677881400F1A22C /* grayArrow@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D89EA15E39ED700F2BD17 /* grayArrow@2x.png */; };
 		571D8CEF1677881400F1A22C /* whiteArrow.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D89EB15E39ED700F2BD17 /* whiteArrow.png */; };
 		571D8CF01677881400F1A22C /* whiteArrow@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D89EC15E39ED700F2BD17 /* whiteArrow@2x.png */; };
-		571D8CF11677881400F1A22C /* SeafTableViewRepoCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 575753E715EE56D10049D720 /* SeafTableViewRepoCell.xib */; };
 		571D8CF21677881400F1A22C /* app-icon-ipad-50.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D6EAA1604804E000310F5 /* app-icon-ipad-50.png */; };
 		571D8CF31677881400F1A22C /* app-icon-ipad-50@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D6EAB1604804E000310F5 /* app-icon-ipad-50@2x.png */; };
 		571D8CF41677881400F1A22C /* app-icon-ipad-72.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D6EAC1604804E000310F5 /* app-icon-ipad-72.png */; };
@@ -482,8 +480,6 @@
 		5739703D165800810089F32F /* text.png in Resources */ = {isa = PBXBuildFile; fileRef = 5739703C165800810089F32F /* text.png */; };
 		5739703F1658008A0089F32F /* text-directory.png in Resources */ = {isa = PBXBuildFile; fileRef = 5739703E1658008A0089F32F /* text-directory.png */; };
 		57397041165801EE0089F32F /* text-directory-documents.png in Resources */ = {isa = PBXBuildFile; fileRef = 57397040165801EE0089F32F /* text-directory-documents.png */; };
-		575753E515EE56850049D720 /* SeafTableViewRepoCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 575753E415EE56850049D720 /* SeafTableViewRepoCell.m */; };
-		575753E815EE56D10049D720 /* SeafTableViewRepoCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 575753E715EE56D10049D720 /* SeafTableViewRepoCell.xib */; };
 		575753EB15EE7AE30049D720 /* SeafDateFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 575753EA15EE7AE30049D720 /* SeafDateFormatter.m */; };
 		5760144B15FA193900FBDDEF /* ExtentedString.m in Sources */ = {isa = PBXBuildFile; fileRef = 5760144A15FA193900FBDDEF /* ExtentedString.m */; };
 		576069CC164558A2005C2F13 /* ColorfulButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 576069CA164558A1005C2F13 /* ColorfulButton.m */; };
@@ -520,6 +516,12 @@
 		576EE11C162F078400327EB9 /* FileMimeType.m in Sources */ = {isa = PBXBuildFile; fileRef = 576EE11B162F078400327EB9 /* FileMimeType.m */; };
 		576EE11F162F0A2900327EB9 /* FileMimeType.plist in Resources */ = {isa = PBXBuildFile; fileRef = 576EE11E162F0A2900327EB9 /* FileMimeType.plist */; };
 		57713AA315E53A5E00651A9C /* InputAlertPrompt.m in Sources */ = {isa = PBXBuildFile; fileRef = 57713AA215E53A5E00651A9C /* InputAlertPrompt.m */; };
+		577B6C6116AAD241008E82C2 /* tab-star.png in Resources */ = {isa = PBXBuildFile; fileRef = 577B6C6016AAD241008E82C2 /* tab-star.png */; };
+		577B6C6216AAD241008E82C2 /* tab-star.png in Resources */ = {isa = PBXBuildFile; fileRef = 577B6C6016AAD241008E82C2 /* tab-star.png */; };
+		577B6C6516AADBA3008E82C2 /* SeafCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 577B6C6416AADBA3008E82C2 /* SeafCell.m */; };
+		577B6C6616AADBA3008E82C2 /* SeafCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 577B6C6416AADBA3008E82C2 /* SeafCell.m */; };
+		577B6C6816AADC26008E82C2 /* SeafCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 577B6C6716AADC26008E82C2 /* SeafCell.xib */; };
+		577B6C6916AADC26008E82C2 /* SeafCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 577B6C6716AADC26008E82C2 /* SeafCell.xib */; };
 		57853C8F164675CB00CE8857 /* SeafStarredFilesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57853C8E164675CB00CE8857 /* SeafStarredFilesViewController.m */; };
 		57853C9216467A5000CE8857 /* gray-star-icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 57853C9116467A5000CE8857 /* gray-star-icon.png */; };
 		57853C951646818A00CE8857 /* SeafStarredFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57853C941646818A00CE8857 /* SeafStarredFile.m */; };
@@ -788,9 +790,6 @@
 		5739703C165800810089F32F /* text.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = text.png; sourceTree = "<group>"; };
 		5739703E1658008A0089F32F /* text-directory.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "text-directory.png"; sourceTree = "<group>"; };
 		57397040165801EE0089F32F /* text-directory-documents.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "text-directory-documents.png"; sourceTree = "<group>"; };
-		575753E315EE56850049D720 /* SeafTableViewRepoCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafTableViewRepoCell.h; sourceTree = "<group>"; };
-		575753E415EE56850049D720 /* SeafTableViewRepoCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafTableViewRepoCell.m; sourceTree = "<group>"; };
-		575753E715EE56D10049D720 /* SeafTableViewRepoCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafTableViewRepoCell.xib; sourceTree = "<group>"; };
 		575753E915EE7AE30049D720 /* SeafDateFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafDateFormatter.h; sourceTree = "<group>"; };
 		575753EA15EE7AE30049D720 /* SeafDateFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafDateFormatter.m; sourceTree = "<group>"; };
 		5760144915FA193900FBDDEF /* ExtentedString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExtentedString.h; sourceTree = "<group>"; };
@@ -837,6 +836,10 @@
 		576EE11E162F0A2900327EB9 /* FileMimeType.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = FileMimeType.plist; sourceTree = "<group>"; };
 		57713A9F15E5351900651A9C /* InputAlertPrompt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InputAlertPrompt.h; sourceTree = "<group>"; };
 		57713AA215E53A5E00651A9C /* InputAlertPrompt.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = InputAlertPrompt.m; sourceTree = "<group>"; };
+		577B6C6016AAD241008E82C2 /* tab-star.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-star.png"; sourceTree = "<group>"; };
+		577B6C6316AADBA3008E82C2 /* SeafCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafCell.h; sourceTree = "<group>"; };
+		577B6C6416AADBA3008E82C2 /* SeafCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafCell.m; sourceTree = "<group>"; };
+		577B6C6716AADC26008E82C2 /* SeafCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafCell.xib; sourceTree = "<group>"; };
 		57853C8D164675CB00CE8857 /* SeafStarredFilesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafStarredFilesViewController.h; sourceTree = "<group>"; };
 		57853C8E164675CB00CE8857 /* SeafStarredFilesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafStarredFilesViewController.m; sourceTree = "<group>"; };
 		57853C9116467A5000CE8857 /* gray-star-icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "gray-star-icon.png"; sourceTree = "<group>"; };
@@ -917,6 +920,7 @@
 			isa = PBXGroup;
 			children = (
 				570DFACA16A19EFD00ADD5F2 /* account.png */,
+				577B6C6016AAD241008E82C2 /* tab-star.png */,
 				576D6EAA1604804E000310F5 /* app-icon-ipad-50.png */,
 				576D6EAB1604804E000310F5 /* app-icon-ipad-50@2x.png */,
 				576D6EAC1604804E000310F5 /* app-icon-ipad-72.png */,
@@ -992,6 +996,8 @@
 		5709512615B9ACDF00F48C08 /* views */ = {
 			isa = PBXGroup;
 			children = (
+				577B6C6316AADBA3008E82C2 /* SeafCell.h */,
+				577B6C6416AADBA3008E82C2 /* SeafCell.m */,
 				571ABF511625DF31005C9B08 /* DownloadingProgressView.h */,
 				571ABF521625DF31005C9B08 /* DownloadingProgressView.m */,
 				57655330161BEA40005E5327 /* FailToPreview.h */,
@@ -1012,8 +1018,6 @@
 				5764C82A163BF91B006AD511 /* SeafSettingsViewController.m */,
 				57853C8D164675CB00CE8857 /* SeafStarredFilesViewController.h */,
 				57853C8E164675CB00CE8857 /* SeafStarredFilesViewController.m */,
-				575753E315EE56850049D720 /* SeafTableViewRepoCell.h */,
-				575753E415EE56850049D720 /* SeafTableViewRepoCell.m */,
 				57931B521632E5DB00B462BA /* SeafUploadDirViewController.h */,
 				57931B531632E5DB00B462BA /* SeafUploadDirViewController.m */,
 				570DFACD16A1EA1A00ADD5F2 /* SeafStartHeaderView.h */,
@@ -1059,6 +1063,7 @@
 		5709512815B9B1B600F48C08 /* ui */ = {
 			isa = PBXGroup;
 			children = (
+				577B6C6716AADC26008E82C2 /* SeafCell.xib */,
 				5795F49C16A726DF00FF90E3 /* SeafAccountCell.xib */,
 				571ABF551625DF6E005C9B08 /* DownloadingProgress_iPad.xib */,
 				570CF8BF16613E5600DFADBC /* DownloadingProgress_iPhone.xib */,
@@ -1068,7 +1073,6 @@
 				57DB828515A833FA00097CEC /* FolderView_iPhone.storyboard */,
 				570DFAC516A15D0100ADD5F2 /* SeafAccountViewController.xib */,
 				570DFAD116A1EA3D00ADD5F2 /* SeafStartHeaderView.xib */,
-				575753E715EE56D10049D720 /* SeafTableViewRepoCell.xib */,
 				57C07CE8163272CE00502B06 /* SeafUploadingFileCell.xib */,
 			);
 			name = ui;
@@ -1470,7 +1474,6 @@
 				571D8CEE1677881400F1A22C /* grayArrow@2x.png in Resources */,
 				571D8CEF1677881400F1A22C /* whiteArrow.png in Resources */,
 				571D8CF01677881400F1A22C /* whiteArrow@2x.png in Resources */,
-				571D8CF11677881400F1A22C /* SeafTableViewRepoCell.xib in Resources */,
 				571D8CF21677881400F1A22C /* app-icon-ipad-50.png in Resources */,
 				571D8CF31677881400F1A22C /* app-icon-ipad-50@2x.png in Resources */,
 				571D8CF41677881400F1A22C /* app-icon-ipad-72.png in Resources */,
@@ -1670,6 +1673,8 @@
 				570DFACC16A19EFD00ADD5F2 /* account.png in Resources */,
 				570DFAD316A1EA3E00ADD5F2 /* SeafStartHeaderView.xib in Resources */,
 				5795F49E16A726E000FF90E3 /* SeafAccountCell.xib in Resources */,
+				577B6C6216AAD241008E82C2 /* tab-star.png in Resources */,
+				577B6C6916AADC26008E82C2 /* SeafCell.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1688,7 +1693,6 @@
 				576D89F315E39ED700F2BD17 /* grayArrow@2x.png in Resources */,
 				576D89F415E39ED700F2BD17 /* whiteArrow.png in Resources */,
 				576D89F515E39ED700F2BD17 /* whiteArrow@2x.png in Resources */,
-				575753E815EE56D10049D720 /* SeafTableViewRepoCell.xib in Resources */,
 				576D6EB51604804E000310F5 /* app-icon-ipad-50.png in Resources */,
 				576D6EB61604804E000310F5 /* app-icon-ipad-50@2x.png in Resources */,
 				576D6EB71604804E000310F5 /* app-icon-ipad-72.png in Resources */,
@@ -1888,6 +1892,8 @@
 				570DFACB16A19EFD00ADD5F2 /* account.png in Resources */,
 				570DFAD216A1EA3E00ADD5F2 /* SeafStartHeaderView.xib in Resources */,
 				5795F49D16A726E000FF90E3 /* SeafAccountCell.xib in Resources */,
+				577B6C6116AAD241008E82C2 /* tab-star.png in Resources */,
+				577B6C6816AADC26008E82C2 /* SeafCell.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1923,7 +1929,6 @@
 				571D8CC21677881400F1A22C /* FileSizeFormatter.m in Sources */,
 				571D8CC31677881400F1A22C /* EGORefreshTableHeaderView.m in Sources */,
 				571D8CC41677881400F1A22C /* InputAlertPrompt.m in Sources */,
-				571D8CC51677881400F1A22C /* SeafTableViewRepoCell.m in Sources */,
 				571D8CC61677881400F1A22C /* SeafDateFormatter.m in Sources */,
 				571D8CC71677881400F1A22C /* ExtentedString.m in Sources */,
 				571D8CC81677881400F1A22C /* Reachability.m in Sources */,
@@ -1948,6 +1953,7 @@
 				570DFAC716A15D0100ADD5F2 /* SeafAccountViewController.m in Sources */,
 				570DFAD016A1EA1B00ADD5F2 /* SeafStartHeaderView.m in Sources */,
 				5795F49B16A7266F00FF90E3 /* SeafAccountCell.m in Sources */,
+				577B6C6616AADBA3008E82C2 /* SeafCell.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1980,7 +1986,6 @@
 				57F53B0615DF49EF0027140D /* FileSizeFormatter.m in Sources */,
 				576D89ED15E39ED700F2BD17 /* EGORefreshTableHeaderView.m in Sources */,
 				57713AA315E53A5E00651A9C /* InputAlertPrompt.m in Sources */,
-				575753E515EE56850049D720 /* SeafTableViewRepoCell.m in Sources */,
 				575753EB15EE7AE30049D720 /* SeafDateFormatter.m in Sources */,
 				5760144B15FA193900FBDDEF /* ExtentedString.m in Sources */,
 				57335CF2160D9D2500018AE8 /* Reachability.m in Sources */,
@@ -2005,6 +2010,7 @@
 				570DFAC616A15D0100ADD5F2 /* SeafAccountViewController.m in Sources */,
 				570DFACF16A1EA1B00ADD5F2 /* SeafStartHeaderView.m in Sources */,
 				5795F49A16A7266F00FF90E3 /* SeafAccountCell.m in Sources */,
+				577B6C6516AADBA3008E82C2 /* SeafCell.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

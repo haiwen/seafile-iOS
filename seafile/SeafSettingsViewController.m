@@ -97,7 +97,7 @@ enum {
     versionCell.detailTextLabel.text = version;
 
     nameCell.detailTextLabel.text = _connection.username;
-    serverCell.detailTextLabel.text = [[NSString stringWithFormat:@"%@/", _connection.address] trimUrl];
+    serverCell.detailTextLabel.text = [_connection.address trimUrl];
     long long cacheSize = [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
     cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:cacheSize] useBaseTen:NO];
     Debug("%@, %lld, %lld, total cache=%lld", _connection.username, _connection.usage, _connection.quota, cacheSize);
@@ -242,6 +242,8 @@ enum {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         [appdelegate.detailVC setPreViewItem:nil];
         [Utils clearAllFiles:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
+        long long cacheSize = [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
+        cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:cacheSize] useBaseTen:NO];
     }
 }
 

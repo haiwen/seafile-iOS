@@ -12,6 +12,7 @@
 #import "SeafStarredFile.h"
 #import "FileSizeFormatter.h"
 #import "SeafDateFormatter.h"
+#import "SeafCell.h"
 
 #import "SeafData.h"
 #import "Utils.h"
@@ -58,7 +59,7 @@
 - (void)initTabBarItem
 {
     self.title = @"Starred";
-    self.tabBarItem = [[UITabBarItem alloc] initWithTabBarSystemItem:UITabBarSystemItemFavorites tag:3];
+    self.tabBarItem.image = [[UIImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"tab-star" ofType:@"png"]];
 }
 
 - (BOOL)handleData:(id)JSON
@@ -127,11 +128,11 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    NSString *CellIdentifier = @"StarredFileCell";
+    NSString *CellIdentifier = @"SeafCell";
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier];
-        cell.accessoryType = UITableViewCellAccessoryNone;
+        NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafCell" owner:self options:nil];
+        cell = [cells objectAtIndex:0];
     }
     SeafStarredFile *sfile = [_starredFiles objectAtIndex:indexPath.row];
     cell.textLabel.text = sfile.name;

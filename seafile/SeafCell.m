@@ -1,19 +1,17 @@
 //
-//  SeafTableViewRepoCell.m
+//  SeafCell.m
 //  seafile
 //
-//  Created by Wang Wei on 8/29/12.
-//  Copyright (c) 2012 Seafile Ltd. All rights reserved.
+//  Created by Wang Wei on 1/19/13.
+//  Copyright (c) 2013 tsinghua. All rights reserved.
 //
 
-#import "SeafTableViewRepoCell.h"
+#import "SeafCell.h"
 
-@implementation SeafTableViewRepoCell
-@synthesize mimeImage;
-@synthesize nameLabel;
-@synthesize mtimeLabel;
-@synthesize sizeLabel;
-@synthesize descLabel;
+@implementation SeafCell
+@synthesize imageView;
+@synthesize textLabel;
+@synthesize detailTextLabel;
 
 - (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
 {
@@ -27,6 +25,7 @@
 - (void)setSelected:(BOOL)selected animated:(BOOL)animated
 {
     [super setSelected:selected animated:animated];
+
     // Configure the view for the selected state
 }
 

@@ -15,6 +15,7 @@
 #import "SeafUploadDirViewController.h"
 #import "SeafUploadFile.h"
 #import "SeafRepos.h"
+#import "SeafCell.h"
 
 #import "FileSizeFormatter.h"
 #import "SeafDateFormatter.h"
@@ -192,6 +193,8 @@
     CGPoint currentTouchPosition = [touch locationInView:self.tableView];
     NSIndexPath *indexPath= [self.tableView indexPathForRowAtPoint:currentTouchPosition];
     if (indexPath!= nil) {
+
+        Debug("inedx=%d\n", indexPath.row);
         [self tableView:self.tableView accessoryButtonTappedForRowWithIndexPath:indexPath];
     }
 }
@@ -217,12 +220,11 @@
 
 - (UITableViewCell *)getCell:tableView file:(SeafUploadFile *)file
 {
-    NSString *CellIdentifier = @"UploadFileCell";
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+    NSString *CellIdentifier = @"SeafCell";
+    SeafCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier];
-        cell.textLabel.font = [UIFont systemFontOfSize:18];
-        cell.textLabel.textColor = [UIColor darkTextColor];
+        NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafCell" owner:self options:nil];
+        cell = [cells objectAtIndex:0];
     }
     cell.textLabel.text = file.name;
     cell.imageView.image = file.image;
@@ -308,7 +310,7 @@
 
 - (void)tableView:(UITableView *)tableView accessoryButtonTappedForRowWithIndexPath:(NSIndexPath *)indexPath
 {
-    [self deleteFile:indexPath];
+    [self uploadFile:indexPath];
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
