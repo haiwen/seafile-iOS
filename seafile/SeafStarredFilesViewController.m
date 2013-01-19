@@ -168,7 +168,6 @@
 
 - (void)repoPasswordSet:(SeafBase *)entry WithResult:(BOOL)success;
 {
-
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation

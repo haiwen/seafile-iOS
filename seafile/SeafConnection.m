@@ -19,9 +19,9 @@
 
 @interface SeafConnection ()
 
-@property (readwrite) NSString *token;
+@property (readwrite, strong) NSString *token;
+@property (readwrite, strong) NSString *version;
 @property NSMutableSet *starredFiles;
-- (void)testConnection;
 
 @end
 
@@ -32,7 +32,7 @@
 @synthesize delegate = _delegate;
 @synthesize rootFolder = _rootFolder;
 @synthesize starredFiles = _starredFiles;
-
+@synthesize version;
 
 - (id)init:(NSString *)url
 {
@@ -40,6 +40,8 @@
         _address = url;
         queue = [[NSOperationQueue alloc] init];
         _rootFolder = [[SeafRepos alloc] initWithConnection:self];
+        NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
+        version = [infoDictionary objectForKey:@"CFBundleVersion"];
     }
     return self;
 }
@@ -62,11 +64,6 @@
     return self;
 }
 
-- (BOOL)logined
-{
-    return (_token != nil);
-}
-
 - (NSString *)username
 {
     return [_info objectForKey:@"username"];
@@ -87,33 +84,18 @@
     return [[_info objectForKey:@"usage"] integerValue:-1];
 }
 
-- (void)estabilishConnection
-{
-    if (!_address) {
-        [self.delegate connectionEstablishingFailed:self];
-    } else {
-        [self testConnection];
-    }
-}
-
-- (void)handleAccountInfo:(id)data
-{
-    NSDictionary *account = data;
-    [_info setObject:[account objectForKey:@"total"] forKey:@"total"];
-    [_info setObject:[account objectForKey:@"usage"] forKey:@"usage"];
-    [_info setObject:_address forKey:@"link"];
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    [userDefaults setObject:_info forKey:_address];
-    [userDefaults synchronize];
-}
-
 - (void)getAccountInfo:(id<SSConnectionAccountDelegate>)degt
 {
     [self sendRequest:API_URL"/account/info/" repo:nil
               success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
-         [self handleAccountInfo:JSON];
-         [degt getAccountInfoResult:YES connection:self];
+         NSDictionary *account = JSON;
+         [_info setObject:[account objectForKey:@"total"] forKey:@"total"];
+         [_info setObject:[account objectForKey:@"usage"] forKey:@"usage"];
+         [_info setObject:_address forKey:@"link"];
+         NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+         [userDefaults setObject:_info forKey:_address];
+         [userDefaults synchronize];         [degt getAccountInfoResult:YES connection:self];
      }
               failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
@@ -123,7 +105,7 @@
 
 
 /*
- curl -D a.txt --data "username=pithier@163.com&password=pithier" http://www.gonggeng.org/seahub/api/login/
+ curl -D a.txt --data "username=pithier@163.com&password=pithier" http://www.gonggeng.org/seahub/api2/auth-token/
  */
 - (void)loginWithAddress:(NSString *)anAddress username:(NSString *)username password:(NSString *)password
 {
@@ -138,8 +120,7 @@
     NSString *formString = [NSString stringWithFormat:@"username=%@&password=%@",
                             [username stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding],
                             [password stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
-    NSData *requestData = [NSData dataWithBytes:[formString UTF8String] length:[formString length]];
-    [request setHTTPBody:requestData];
+    [request setHTTPBody:[NSData dataWithBytes:[formString UTF8String] length:[formString length]]];
     SeafJSONRequestOperation *operation = [SeafJSONRequestOperation
                                            JSONRequestOperationWithRequest:request
                                            success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
@@ -175,6 +156,9 @@
             [request setValue:password forHTTPHeaderField:@"password"];
         }
     }
+    [request setValue:[NSString stringWithFormat:@"iOS Client v%@", version] forHTTPHeaderField:@"User-Agent"];
+    [request setValue:@"iOS Client" forHTTPHeaderField:@"User-Agent"];
+
     Debug("requestUrl=%@, token=%@, password=%@\n", request.URL, _token, password);
 
     [request setTimeoutInterval:10.0f];
@@ -192,6 +176,7 @@
             failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure
 {
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:[_address stringByAppendingString:url]]];
+    [request setHTTPMethod:@"GET"];
     [self sendRequestAsync:request repo:repoId success:success failure:failure];
 }
 
@@ -224,8 +209,7 @@
          success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data))success
          failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure
 {
-    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:
-                                    [NSURL URLWithString:[_address stringByAppendingString:url]]];
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:[_address stringByAppendingString:url]]];
     [request setHTTPMethod:@"POST"];
     [request setValue:@"application/x-www-form-urlencoded; charset=UTF-8" forHTTPHeaderField:@"Content-Type"];
 
@@ -236,27 +220,6 @@
     }
 
     [self sendRequestAsync:request repo:repoId success:success failure:failure];
-}
-
-- (void)testConnection
-{
-    [self sendRequest:API_URL"/ping/" repo:nil
-              success:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
-         Debug("header=%@\n",  [response allHeaderFields]);
-         NSString *logined = [[response allHeaderFields] objectForKey:@"logined"];
-         if ([@"pong" caseInsensitiveCompare:JSON] == NSOrderedSame) {
-             if ([logined caseInsensitiveCompare:@"true"] != NSOrderedSame)
-                 _token = nil;
-             [self.delegate connectionEstablishingSuccess:self];
-         } else {
-             [self.delegate connectionEstablishingFailed:self];
-         }
-     }
-              failure:
-     ^(NSURLRequest *request, NSURLResponse *response, NSError *error, id JSON) {
-         [self.delegate connectionEstablishingFailed:self];
-     }];
 }
 
 - (void)loadRepos:(id)degt

@@ -15,7 +15,7 @@
 - (BOOL)booleanValue:(BOOL)defaultValue;
 @end
 
-enum SEAFDENTRY_STATE {
+enum SEAFBASE_STATE {
     SEAF_DENTRY_INIT = 0,
     SEAF_DENTRY_LOADING,
     SEAF_DENTRY_UPTODATE,

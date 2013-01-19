@@ -139,14 +139,6 @@
 }
 
 #pragma mark - SSConnectionDelegate
-- (void)connectionEstablishingSuccess:(SeafConnection *)conn
-{
-}
-
-- (void)connectionEstablishingFailed:(SeafConnection *)conn
-{
-}
-
 - (void)connectionLinkingSuccess:(SeafConnection *)conn
 {
     Debug("%@", conn.address);

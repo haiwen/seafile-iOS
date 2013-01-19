@@ -17,8 +17,6 @@
 @class SeafRepos;
 
 @protocol SSConnectionDelegate <NSObject>
-- (void)connectionEstablishingSuccess:(SeafConnection *)connection;
-- (void)connectionEstablishingFailed:(SeafConnection *)connection;
 - (void)connectionLinkingSuccess:(SeafConnection *)connection;
 - (void)connectionLinkingFailed:(SeafConnection *)connection error:(int)error;
 @end
@@ -43,9 +41,8 @@
 @property (readonly) long long usage;
 
 - (id)initWithUrl:(NSString *)url username:(NSString *)username;
-- (void)estabilishConnection;
-- (BOOL)logined;
 - (void)loadRepos:(id)degt;
+
 - (void)sendRequest:(NSString *)url repo:(NSString *)repoId
             success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data))success
             failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure;
