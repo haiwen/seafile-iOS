@@ -233,17 +233,19 @@
 
 - (BOOL)realLoadCache
 {
+    NSString *did = self.oid;
     DownloadedFile *dfile = [self loadCacheObj];
-    if (!dfile)
-        return NO;
-
-    if (![[NSFileManager defaultManager] fileExistsAtPath:[SeafFile documentPath:dfile.oid]]) {
+    if (dfile)
+        did =  dfile.oid;
+    if (![[NSFileManager defaultManager] fileExistsAtPath:[SeafFile documentPath:did]]) {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        NSManagedObjectContext *context = [appdelegate managedObjectContext];
-        [context deleteObject:dfile];
+        if (dfile) {
+            NSManagedObjectContext *context = [appdelegate managedObjectContext];
+            [context deleteObject:dfile];
+        }
         return NO;
     }
-    [self setOoid:dfile.oid];
+    [self setOoid:did];
     [self.delegate entry:self contentUpdated:YES completeness:100];
     return YES;
 }
@@ -297,13 +299,12 @@
     if (!self.ooid)
         return nil;
     @synchronized (self) {
-        NSString *tempPath = [[Utils applicationTempDirectory] stringByAppendingPathComponent:self.ooid];
-        if (![Utils checkMakeDir:tempPath])
+        NSString *tempDir = [[Utils applicationTempDirectory] stringByAppendingPathComponent:self.ooid];
+        if (![Utils checkMakeDir:tempDir])
             return nil;
-
-        NSString *tempFileName = [tempPath stringByAppendingPathComponent:self.name];
+        NSString *tempFileName = [tempDir stringByAppendingPathComponent:self.name];
         if ([[NSFileManager defaultManager] fileExistsAtPath:tempFileName]
-            || [[NSFileManager defaultManager] copyItemAtPath:[self documentPath] toPath:tempFileName error:&error]) {
+            || [[NSFileManager defaultManager] linkItemAtPath:[self documentPath] toPath:tempFileName error:&error]) {
             _checkoutURL = [NSURL fileURLWithPath:tempFileName];
         } else {
             Warning("Copy file to checkoutURL failed:%@\n", error);

@@ -44,7 +44,7 @@
 							<object class="IBUILabel" id="999473938">
 								<reference key="NSNextResponder" ref="132936688"/>
 								<int key="NSvFlags">292</int>
-								<string key="NSFrame">{{54, 2}, {217, 20}}</string>
+								<string key="NSFrame">{{48, 2}, {217, 20}}</string>
 								<reference key="NSSuperview" ref="132936688"/>
 								<reference key="NSWindow"/>
 								<reference key="NSNextKeyView" ref="210495795"/>
@@ -80,7 +80,7 @@
 							<object class="IBUIImageView" id="252351555">
 								<reference key="NSNextResponder" ref="132936688"/>
 								<int key="NSvFlags">292</int>
-								<string key="NSFrameSize">{40, 40}</string>
+								<string key="NSFrame">{{5, 2}, {36, 36}}</string>
 								<reference key="NSSuperview" ref="132936688"/>
 								<reference key="NSWindow"/>
 								<reference key="NSNextKeyView" ref="999473938"/>
@@ -91,7 +91,7 @@
 							<object class="IBUIProgressView" id="210495795">
 								<reference key="NSNextResponder" ref="132936688"/>
 								<int key="NSvFlags">292</int>
-								<string key="NSFrame">{{54, 29}, {217, 9}}</string>
+								<string key="NSFrame">{{48, 29}, {217, 9}}</string>
 								<reference key="NSSuperview" ref="132936688"/>
 								<reference key="NSWindow"/>
 								<string key="NSReuseIdentifierKey">_NS:9</string>
@@ -124,7 +124,7 @@
 				<string key="targetRuntimeIdentifier">IBIPadFramework</string>
 				<reference key="IBUIContentView" ref="132936688"/>
 				<string key="IBUIReuseIdentifier">SeafUploadingFileCell</string>
-				<real value="36" key="IBUIRowHeight"/>
+				<real value="40" key="IBUIRowHeight"/>
 			</object>
 		</array>
 		<object class="IBObjectContainer" key="IBDocument.Objects">

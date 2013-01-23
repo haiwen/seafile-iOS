@@ -92,7 +92,6 @@
 								<string key="NSFrame">{{76, 31}, {197, 21}}</string>
 								<reference key="NSSuperview" ref="132936688"/>
 								<reference key="NSWindow"/>
-								<reference key="NSNextKeyView"/>
 								<string key="NSReuseIdentifierKey">_NS:9</string>
 								<bool key="IBUIOpaque">NO</bool>
 								<bool key="IBUIClipsSubviews">YES</bool>
@@ -241,7 +240,6 @@
 					<string key="superclassName">UITableViewCell</string>
 					<dictionary class="NSMutableDictionary" key="outlets">
 						<string key="emailLabel">UILabel</string>
-						<string key="imageView">UIImageView</string>
 						<string key="imageview">UIImageView</string>
 						<string key="serverLabel">UILabel</string>
 					</dictionary>
@@ -249,10 +247,6 @@
 						<object class="IBToOneOutletInfo" key="emailLabel">
 							<string key="name">emailLabel</string>
 							<string key="candidateClassName">UILabel</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="imageView">
-							<string key="name">imageView</string>
-							<string key="candidateClassName">UIImageView</string>
 						</object>
 						<object class="IBToOneOutletInfo" key="imageview">
 							<string key="name">imageview</string>
