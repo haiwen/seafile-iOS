@@ -377,7 +377,6 @@ enum {
         return;
     }
     _curEntry = [self getDentrybyIndexPath:indexPath];
-    Debug(@"selected %d %@, %@\n", [indexPath row], _curEntry.mime, _curEntry.name);
 
     [_curEntry setDelegate:self];
     if ([_curEntry isKindOfClass:[SeafRepo class]] && [(SeafRepo *)_curEntry passwordRequired]) {

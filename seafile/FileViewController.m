@@ -45,6 +45,7 @@ static PrevFile *pfile;
 
 enum PREVIEW_STATE {
     PREVIEW_SUCCESS = 0,
+    PREVIEW_AUDIO,
     PREVIEW_DOWNLOADING,
     PREVIEW_FAILED
 };
@@ -54,6 +55,7 @@ enum PREVIEW_STATE {
 @property (strong) NSArray *barItemsUnStar;
 @property (strong) FailToPreview *failedView;
 @property (strong) DownloadingProgressView *progressView;
+@property (strong) UIWebView *webView;
 @property id<QLPreviewItem, PreViewDelegate> preViewItem;
 @property (strong) UIDocumentInteractionController *docController;
 @property int state;
@@ -68,6 +70,7 @@ enum PREVIEW_STATE {
 @synthesize barItemsUnStar = _barItemsUnStar;
 @synthesize failedView = _failedView;
 @synthesize progressView = _progressView;
+@synthesize webView = _webView;
 @synthesize state = _state;
 @synthesize buttonIndex = _buttonIndex;
 @synthesize navItem;
@@ -120,6 +123,7 @@ enum PREVIEW_STATE {
 
 - (void)configureView
 {
+    NSURLRequest *request;
     self.title = _preViewItem.previewItemTitle;
     Debug("Preview file:%@,%@,%@ [%d]\n", _preViewItem.previewItemTitle, [_preViewItem checkoutURL],_preViewItem.previewItemURL, [QLPreviewController canPreviewItem:_preViewItem]);
     [self checkBarItems];
@@ -127,14 +131,20 @@ enum PREVIEW_STATE {
         [_failedView removeFromSuperview];
     if (_state == PREVIEW_DOWNLOADING)
         [_progressView removeFromSuperview];
+    if (_state == PREVIEW_AUDIO) {
+        [_webView removeFromSuperview];
+        _webView = nil;
+    }
     NSAssert(_preViewItem, @"the file to preview must not be nil");
 
     if (_preViewItem.previewItemURL) {
         if (![QLPreviewController canPreviewItem:_preViewItem]) {
             _state = PREVIEW_FAILED;
         } else {
-            Debug (@"Preview file %@ success\n", _preViewItem.previewItemTitle);
+            Debug (@"Preview file %@ mime=%@ success\n", _preViewItem.previewItemTitle, _preViewItem.mime);
             _state = PREVIEW_SUCCESS;
+            if ([_preViewItem.mime hasPrefix:@"audio"])
+                _state = PREVIEW_AUDIO;
         }
     } else {
         _state = PREVIEW_DOWNLOADING;
@@ -157,6 +167,14 @@ enum PREVIEW_STATE {
             _failedView.frame = self.view.frame;
             //Debug("%d, frame=%f,%f,%f,%f\n", self.view.autoresizesSubviews, _failedView.frame.origin.x, _failedView.frame.origin.y, _failedView.frame.size.width, _failedView.frame.size.height);
             [_failedView configureViewWithPrevireItem:_preViewItem];
+            break;
+        case PREVIEW_AUDIO:
+            Debug("Preview audio\n");
+            request = [[NSURLRequest alloc] initWithURL:_preViewItem.previewItemURL cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
+            _webView = [[UIWebView alloc] initWithFrame:self.view.frame];
+            [_webView loadRequest: request];
+            _webView.frame = self.view.frame;
+            [self.view addSubview:_webView];
             break;
         default:
             break;
@@ -213,6 +231,7 @@ enum PREVIEW_STATE {
             views = [[NSBundle mainBundle] loadNibNamed:@"DownloadingProgress_iPhone" owner:self options:nil];
             _progressView = [views objectAtIndex:0];
         }
+        self.view.autoresizesSubviews = YES;
     }
     return self;
 }
@@ -231,9 +250,8 @@ enum PREVIEW_STATE {
 
 - (id <QLPreviewItem>)previewController:(QLPreviewController *)controller previewItemAtIndex:(NSInteger)index;
 {
-    if (_preViewItem && _preViewItem.previewItemURL) {
+    if (_state == PREVIEW_SUCCESS)
         return _preViewItem;
-    }
     return [PrevFile defaultFile];
 }
 

@@ -11,6 +11,7 @@
 @protocol PreViewDelegate <NSObject>
 - (UIImage *)image;
 - (NSURL *)checkoutURL;
+- (NSString *)mime;
 @end
 
 @interface Utils : NSObject
