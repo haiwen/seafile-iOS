@@ -216,20 +216,6 @@ enum PREVIEW_STATE {
     return YES;
 }
 
--(void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
-{
-    UIView *v = self.view;
-    if (self.state == PREVIEW_AUDIO) {
-        v = webView;
-    } else if (self.state = PREVIEW_FAILED)
-        v = failedView;
-    Debug("%d, frame=%f,%f,%f,%f\n", self.view.autoresizesSubviews, self.view.frame.origin.x, self.view.frame.origin.y, self.view.frame.size.width, self.view.frame.size.height);
-
-    Debug("%d, frame=%f,%f,%f,%f\n", self.view.autoresizesSubviews, v.frame.origin.x, v.frame.origin.y, v.frame.size.width, v.frame.size.height);
-    //if (self.state == PREVIEW_AUDIO)
-    //    webView.frame = self.view.frame;
-}
-
 #pragma mark - Split view
 
 - (void)splitViewController:(UISplitViewController *)splitController willHideViewController:(UIViewController *)viewController withBarButtonItem:(UIBarButtonItem *)barButtonItem forPopoverController:(UIPopoverController *)popoverController
@@ -256,6 +242,7 @@ enum PREVIEW_STATE {
         return;
     if (!res) {
         [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:@"Failed to download file '%@'",preViewItem.previewItemTitle]];
+        [self configureView];
     } else {
         //Debug ("DownLoading file %@, percent=%d\n", preViewItem.previewItemTitle, percent);
         [progressView configureViewWithItem:preViewItem completeness:percent];

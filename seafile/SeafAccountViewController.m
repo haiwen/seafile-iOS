@@ -19,11 +19,15 @@
 @property (strong, nonatomic) IBOutlet UITextField *serverTextField;
 @property (strong, nonatomic) IBOutlet UITextField *usernameTextField;
 @property (strong, nonatomic) IBOutlet UITextField *passwordTextField;
+@property (strong, nonatomic) IBOutlet ColorfulButton *loginButton;
+@property (strong, nonatomic) IBOutlet ColorfulButton *cancelButton;
 @property StartViewController *startController;
 @property SeafConnection *connection;
 @end
 
 @implementation SeafAccountViewController
+@synthesize loginButton;
+@synthesize cancelButton;
 @synthesize httpsSwitch;
 @synthesize serverTextField;
 @synthesize usernameTextField;
@@ -120,6 +124,8 @@
         usernameTextField.text = connection.username;
         passwordTextField.text = connection.password;
     }
+    [self.loginButton setHighColor:[UIColor whiteColor] lowColor:[UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1]];
+    [self.cancelButton setHighColor:[UIColor whiteColor] lowColor:[UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1]];
 }
 
 - (void)didReceiveMemoryWarning
@@ -135,6 +141,8 @@
     [self setServerTextField:nil];
     [self setUsernameTextField:nil];
     [self setPasswordTextField:nil];
+    [self setLoginButton:nil];
+    [self setCancelButton:nil];
     [super viewDidUnload];
 }
 
