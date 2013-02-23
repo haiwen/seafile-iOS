@@ -31,66 +31,66 @@
 
 - (id)initWithImage:(UIImage *)anImage chooseBlock:(dispatch_block_t)chooseBlock cancelBlock:(dispatch_block_t)cancelBlock
 {
-  NSParameterAssert(chooseBlock);
-  NSParameterAssert(cancelBlock);
+    NSParameterAssert(chooseBlock);
+    NSParameterAssert(cancelBlock);
 
-  self = [super initWithNibName:nil bundle:nil];
+    self = [super initWithNibName:nil bundle:nil];
 
-  if (self) {
-    self.cancelBlock = cancelBlock;
-    self.chooseBlock = chooseBlock;
-    self.image = anImage;
-    self.title = NSLocalizedString(@"Choose Photo", nil);
-  }
+    if (self) {
+        self.cancelBlock = cancelBlock;
+        self.chooseBlock = chooseBlock;
+        self.image = anImage;
+        self.title = NSLocalizedString(@"Choose Photo", nil);
+    }
 
-  return self;
+    return self;
 }
 
 #pragma mark - Methods
 
 - (IBAction)didCancel:(id)sender
 {
-  self.cancelBlock();
+    self.cancelBlock();
 }
 
 - (IBAction)didChoose:(id)sender
 {
-  self.chooseBlock();
+    self.chooseBlock();
 }
 
 #pragma mark - UIViewController
 
 - (void)viewDidLoad
 {
-  [super viewDidLoad];
+    [super viewDidLoad];
 
-  self.imageView.image = self.image;
+    self.imageView.image = self.image;
 
-  // No toolbar on iPad, use the nav bar. Mimic how Mail.app’s picker works
+    // No toolbar on iPad, use the nav bar. Mimic how Mail.app’s picker works
 
-  if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
-    self.toolbar.hidden = YES;
-    self.previewLabel.hidden = YES;
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+        self.toolbar.hidden = YES;
+        self.previewLabel.hidden = YES;
 
-    // Intentionally not using the bar buttons from the xib as that causes
-    // a weird re-layout.
+        // Intentionally not using the bar buttons from the xib as that causes
+        // a weird re-layout.
 
-    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(didCancel:)];
-    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Upload", nil) style:UIBarButtonItemStyleBordered target:self action:@selector(didChoose:)];
-  }
-  else {
-    self.toolbar.tintColor = [UIColor blackColor];
-    [self.navigationController setNavigationBarHidden:YES animated:YES];
-  }
+        self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(didCancel:)];
+        self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Upload", nil) style:UIBarButtonItemStyleBordered target:self action:@selector(didChoose:)];
+    }
+    else {
+        self.toolbar.tintColor = [UIColor blackColor];
+        [self.navigationController setNavigationBarHidden:YES animated:YES];
+    }
 }
 
 - (void)viewWillAppear:(BOOL)animated
 {
-  CGSize size = CGSizeMake(320, 480);
+    CGSize size = CGSizeMake(320, 480);
 
-  self.contentSizeForViewInPopover = size;
+    self.contentSizeForViewInPopover = size;
 
-  [super viewWillAppear:animated];
+    [super viewWillAppear:animated];
 }
 
 @end
