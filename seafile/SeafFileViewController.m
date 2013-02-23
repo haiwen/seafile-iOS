@@ -303,7 +303,8 @@ enum {
 - (SeafCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView
 {
     SeafCell *cell = [self getCell:@"SeafCell" forTableView:tableView];
-    cell.detailTextLabel.text = sdir.name;
+    cell.textLabel.text = sdir.name;
+    cell.detailTextLabel.text = nil;
     cell.imageView.image = sdir.image;
     return cell;
 }

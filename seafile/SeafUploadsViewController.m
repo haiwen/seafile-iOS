@@ -17,6 +17,8 @@
 #import "SeafRepos.h"
 #import "SeafCell.h"
 
+#import "CZPhotoPickerController.h"
+
 #import "FileSizeFormatter.h"
 #import "SeafDateFormatter.h"
 #import "Debug.h"
@@ -27,6 +29,8 @@
 @property UIImage *cellImage;
 
 @property (retain) NSIndexPath *selectedindex;
+@property (retain) CZPhotoPickerController *picker;
+@property (retain)  NSDateFormatter *formatter;
 
 @end
 
@@ -36,6 +40,9 @@
 @synthesize cellImage = _cellImage;
 @synthesize connection = _connection;
 @synthesize selectedindex = _selectedindex;
+
+@synthesize picker;
+@synthesize formatter;
 
 
 - (id)initWithStyle:(UITableViewStyle)style
@@ -106,6 +113,26 @@
     [self.tableView reloadData];
 }
 
+- (void)addPhotos:(id)sender
+{
+    if (self.picker)
+        return;
+    picker = [[CZPhotoPickerController alloc] initWithPresentingViewController:self withCompletionBlock:^(UIImagePickerController *imagePickerController, NSDictionary *imageInfoDict) {
+        self.picker = nil;
+        UIImage *image = [imageInfoDict objectForKey:@"UIImagePickerControllerOriginalImage"];
+        if (!image)
+            return;
+        NSString *filename = [NSString stringWithFormat:@"Photo %@.jpg", [formatter stringFromDate:[NSDate date]] ];
+        NSString *path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
+        [UIImageJPEGRepresentation(image, 1.0) writeToFile:path atomically:YES];
+        [self loadEntries];
+        [self.tableView reloadData];
+        [self uploadFileWithName:filename];
+    }];
+    picker.allowsEditing = NO;
+    [picker showFromBarButtonItem:sender];
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
@@ -115,6 +142,9 @@
     // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
     [self loadEntries];
     self.navigationItem.rightBarButtonItem = self.editButtonItem;
+    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addPhotos:)];
+    self.formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
 }
 
 - (void)didReceiveMemoryWarning
@@ -126,6 +156,22 @@
 - (void)chooseUploadDir:(SeafDir *)dir
 {
     [[_entries objectAtIndex:_selectedindex.row] upload:_connection repo:dir.repoId dir:dir.path];
+}
+
+- (void)uploadFileWithName:(NSString *)filename
+{
+    int i = 0;
+    NSIndexPath *indexPath = nil;
+    for (SeafUploadFile *ufile in self.entries) {
+        if ([ufile.name isEqualToString:filename]) {
+            indexPath = [NSIndexPath indexPathForRow:i inSection:0];
+            break;
+        }
+        ++i;
+    }
+    if (indexPath) {
+        [self uploadFile:indexPath];
+    }
 }
 
 - (void)uploadFile:(NSIndexPath *)index
@@ -193,8 +239,6 @@
     CGPoint currentTouchPosition = [touch locationInView:self.tableView];
     NSIndexPath *indexPath= [self.tableView indexPathForRowAtPoint:currentTouchPosition];
     if (indexPath!= nil) {
-
-        Debug("inedx=%d\n", indexPath.row);
         [self tableView:self.tableView accessoryButtonTappedForRowWithIndexPath:indexPath];
     }
 }

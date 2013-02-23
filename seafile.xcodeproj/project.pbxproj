@@ -548,6 +548,14 @@
 		57DB828A15A833FA00097CEC /* FolderView_iPad.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57DB828815A833FA00097CEC /* FolderView_iPad.storyboard */; };
 		57DB829015A833FA00097CEC /* SeafFileViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DB828F15A833FA00097CEC /* SeafFileViewController.m */; };
 		57DB829315A833FA00097CEC /* SeafDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DB829215A833FA00097CEC /* SeafDetailViewController.m */; };
+		57F0AAF616D8905C00364D18 /* CZPhotoPreviewViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57F0AAF316D8905C00364D18 /* CZPhotoPreviewViewController.xib */; };
+		57F0AAF716D8905C00364D18 /* CZPhotoPreviewViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57F0AAF316D8905C00364D18 /* CZPhotoPreviewViewController.xib */; };
+		57F0AAF816D8905C00364D18 /* CZPhotoPickerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57F0AAF416D8905C00364D18 /* CZPhotoPickerController.m */; };
+		57F0AAF916D8905C00364D18 /* CZPhotoPickerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57F0AAF416D8905C00364D18 /* CZPhotoPickerController.m */; };
+		57F0AAFA16D8905C00364D18 /* CZPhotoPreviewViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57F0AAF516D8905C00364D18 /* CZPhotoPreviewViewController.m */; };
+		57F0AAFB16D8905C00364D18 /* CZPhotoPreviewViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57F0AAF516D8905C00364D18 /* CZPhotoPreviewViewController.m */; };
+		57F0AAFD16D8913700364D18 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57F0AAFC16D8913600364D18 /* AssetsLibrary.framework */; };
+		57F0AAFE16D8935800364D18 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57F0AAFC16D8913600364D18 /* AssetsLibrary.framework */; };
 		57F53B0615DF49EF0027140D /* FileSizeFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 57F53B0515DF49EF0027140D /* FileSizeFormatter.m */; };
 /* End PBXBuildFile section */
 
@@ -876,6 +884,12 @@
 		57DB828F15A833FA00097CEC /* SeafFileViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafFileViewController.m; sourceTree = "<group>"; };
 		57DB829115A833FA00097CEC /* SeafDetailViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafDetailViewController.h; sourceTree = "<group>"; };
 		57DB829215A833FA00097CEC /* SeafDetailViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafDetailViewController.m; sourceTree = "<group>"; };
+		57F0AAF016D8904100364D18 /* CZPhotoPickerController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CZPhotoPickerController.h; sourceTree = "<group>"; };
+		57F0AAF116D8904100364D18 /* CZPhotoPreviewViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CZPhotoPreviewViewController.h; sourceTree = "<group>"; };
+		57F0AAF316D8905C00364D18 /* CZPhotoPreviewViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = CZPhotoPreviewViewController.xib; sourceTree = "<group>"; };
+		57F0AAF416D8905C00364D18 /* CZPhotoPickerController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CZPhotoPickerController.m; sourceTree = "<group>"; };
+		57F0AAF516D8905C00364D18 /* CZPhotoPreviewViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CZPhotoPreviewViewController.m; sourceTree = "<group>"; };
+		57F0AAFC16D8913600364D18 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
 		57F53B0415DF49EF0027140D /* FileSizeFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FileSizeFormatter.h; sourceTree = "<group>"; };
 		57F53B0515DF49EF0027140D /* FileSizeFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FileSizeFormatter.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -885,6 +899,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				57F0AAFE16D8935800364D18 /* AssetsLibrary.framework in Frameworks */,
 				571F5148168C80380055D69B /* MobileCoreServices.framework in Frameworks */,
 				571D8CDD1677881400F1A22C /* MessageUI.framework in Frameworks */,
 				571D8CDE1677881400F1A22C /* SystemConfiguration.framework in Frameworks */,
@@ -901,6 +916,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				57F0AAFD16D8913700364D18 /* AssetsLibrary.framework in Frameworks */,
 				571F514A168C80470055D69B /* MobileCoreServices.framework in Frameworks */,
 				57335CF9160DA00000018AE8 /* SystemConfiguration.framework in Frameworks */,
 				5765533E161D44A2005E5327 /* MessageUI.framework in Frameworks */,
@@ -996,8 +1012,11 @@
 		5709512615B9ACDF00F48C08 /* views */ = {
 			isa = PBXGroup;
 			children = (
-				577B6C6316AADBA3008E82C2 /* SeafCell.h */,
-				577B6C6416AADBA3008E82C2 /* SeafCell.m */,
+				57F0AAF016D8904100364D18 /* CZPhotoPickerController.h */,
+				57F0AAF416D8905C00364D18 /* CZPhotoPickerController.m */,
+				57F0AAF116D8904100364D18 /* CZPhotoPreviewViewController.h */,
+				57F0AAF516D8905C00364D18 /* CZPhotoPreviewViewController.m */,
+				57F0AAF316D8905C00364D18 /* CZPhotoPreviewViewController.xib */,
 				571ABF511625DF31005C9B08 /* DownloadingProgressView.h */,
 				571ABF521625DF31005C9B08 /* DownloadingProgressView.m */,
 				57655330161BEA40005E5327 /* FailToPreview.h */,
@@ -1006,10 +1025,14 @@
 				576B9EB315DD2D4E00802D07 /* FileViewController.m */,
 				57713A9F15E5351900651A9C /* InputAlertPrompt.h */,
 				57713AA215E53A5E00651A9C /* InputAlertPrompt.m */,
+				5795F49816A7266E00FF90E3 /* SeafAccountCell.h */,
+				5795F49916A7266E00FF90E3 /* SeafAccountCell.m */,
 				570DFAC316A15D0100ADD5F2 /* SeafAccountViewController.h */,
 				570DFAC416A15D0100ADD5F2 /* SeafAccountViewController.m */,
 				57DB828215A833FA00097CEC /* SeafAppDelegate.h */,
 				57DB828315A833FA00097CEC /* SeafAppDelegate.m */,
+				577B6C6316AADBA3008E82C2 /* SeafCell.h */,
+				577B6C6416AADBA3008E82C2 /* SeafCell.m */,
 				57DB829115A833FA00097CEC /* SeafDetailViewController.h */,
 				57DB829215A833FA00097CEC /* SeafDetailViewController.m */,
 				57DB828E15A833FA00097CEC /* SeafFileViewController.h */,
@@ -1018,14 +1041,12 @@
 				5764C82A163BF91B006AD511 /* SeafSettingsViewController.m */,
 				57853C8D164675CB00CE8857 /* SeafStarredFilesViewController.h */,
 				57853C8E164675CB00CE8857 /* SeafStarredFilesViewController.m */,
-				57931B521632E5DB00B462BA /* SeafUploadDirViewController.h */,
-				57931B531632E5DB00B462BA /* SeafUploadDirViewController.m */,
 				570DFACD16A1EA1A00ADD5F2 /* SeafStartHeaderView.h */,
 				570DFACE16A1EA1A00ADD5F2 /* SeafStartHeaderView.m */,
+				57931B521632E5DB00B462BA /* SeafUploadDirViewController.h */,
+				57931B531632E5DB00B462BA /* SeafUploadDirViewController.m */,
 				57C07CE21632556600502B06 /* SeafUploadingFileCell.h */,
 				57C07CE31632556600502B06 /* SeafUploadingFileCell.m */,
-				5795F49816A7266E00FF90E3 /* SeafAccountCell.h */,
-				5795F49916A7266E00FF90E3 /* SeafAccountCell.m */,
 				572500A916291A22001E5C75 /* SeafUploadsViewController.h */,
 				572500AA16291A22001E5C75 /* SeafUploadsViewController.m */,
 				572B0A7515D16C1C00798C6E /* StartViewController.h */,
@@ -1301,6 +1322,7 @@
 		57DB826215A833F900097CEC = {
 			isa = PBXGroup;
 			children = (
+				57F0AAFC16D8913600364D18 /* AssetsLibrary.framework */,
 				57094B5515B9AC4A00F48C08 /* libs */,
 				57DB827915A833FA00097CEC /* seafile */,
 				57DB827015A833FA00097CEC /* Frameworks */,
@@ -1675,6 +1697,7 @@
 				5795F49E16A726E000FF90E3 /* SeafAccountCell.xib in Resources */,
 				577B6C6216AAD241008E82C2 /* tab-star.png in Resources */,
 				577B6C6916AADC26008E82C2 /* SeafCell.xib in Resources */,
+				57F0AAF716D8905C00364D18 /* CZPhotoPreviewViewController.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1894,6 +1917,7 @@
 				5795F49D16A726E000FF90E3 /* SeafAccountCell.xib in Resources */,
 				577B6C6116AAD241008E82C2 /* tab-star.png in Resources */,
 				577B6C6816AADC26008E82C2 /* SeafCell.xib in Resources */,
+				57F0AAF616D8905C00364D18 /* CZPhotoPreviewViewController.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1954,6 +1978,8 @@
 				570DFAD016A1EA1B00ADD5F2 /* SeafStartHeaderView.m in Sources */,
 				5795F49B16A7266F00FF90E3 /* SeafAccountCell.m in Sources */,
 				577B6C6616AADBA3008E82C2 /* SeafCell.m in Sources */,
+				57F0AAF916D8905C00364D18 /* CZPhotoPickerController.m in Sources */,
+				57F0AAFB16D8905C00364D18 /* CZPhotoPreviewViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2011,6 +2037,8 @@
 				570DFACF16A1EA1B00ADD5F2 /* SeafStartHeaderView.m in Sources */,
 				5795F49A16A7266F00FF90E3 /* SeafAccountCell.m in Sources */,
 				577B6C6516AADBA3008E82C2 /* SeafCell.m in Sources */,
+				57F0AAF816D8905C00364D18 /* CZPhotoPickerController.m in Sources */,
+				57F0AAFA16D8905C00364D18 /* CZPhotoPreviewViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
