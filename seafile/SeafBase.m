@@ -10,6 +10,7 @@
 #import "SeafDir.h"
 #import "SeafConnection.h"
 
+#import "ExtentedString.h"
 #import "UIImage+FileType.h"
 #import "Utils.h"
 #import "Debug.h"
@@ -130,8 +131,7 @@
         return;
     }
     NSString *request_str = [NSString stringWithFormat:API_URL"/repos/%@/?op=setpassword", self.repoId];
-    NSString *formString = [NSString stringWithFormat:@"password=%@",
-                            [password stringByAddingPercentEscapesUsingEncoding:NSASCIIStringEncoding]];
+    NSString *formString = [NSString stringWithFormat:@"password=%@", [password escapedPostForm]];
     [connection sendPost:request_str repo:self.repoId form:formString
                  success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
                      [Utils setRepo:self.repoId password:password];

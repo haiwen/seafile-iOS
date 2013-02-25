@@ -608,7 +608,6 @@ enum {
     _mkdirView.inputTextField.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
     _mkdirView.inputTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
     _mkdirView.inputTextField.returnKeyType = UIReturnKeyDone;
-    _mkdirView.inputTextField.keyboardType = UIKeyboardTypeASCIICapable;
     _mkdirView.inputTextField.autocorrectionType = UITextAutocapitalizationTypeNone;
     _mkdirView.inputDoneDelegate = self;
     [_mkdirView show];

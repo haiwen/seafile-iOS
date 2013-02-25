@@ -117,9 +117,7 @@
     [request setHTTPMethod:@"POST"];
     [request setValue:@"application/x-www-form-urlencoded" forHTTPHeaderField:@"Content-Type"];
 
-    NSString *formString = [NSString stringWithFormat:@"username=%@&password=%@",
-                            [username stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding],
-                            [password stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
+    NSString *formString = [NSString stringWithFormat:@"username=%@&password=%@", [username escapedPostForm], [password escapedPostForm]];
     [request setHTTPBody:[NSData dataWithBytes:[formString UTF8String] length:[formString length]]];
     SeafJSONRequestOperation *operation = [SeafJSONRequestOperation
                                            JSONRequestOperationWithRequest:request
@@ -198,7 +196,6 @@
     [request setValue:@"application/x-www-form-urlencoded; charset=UTF-8" forHTTPHeaderField:@"Content-Type"];
 
     if (form) {
-        form = [form stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
         NSData *requestData = [NSData dataWithBytes:[form UTF8String] length:[form length]];
         [request setHTTPBody:requestData];
     }
@@ -214,7 +211,6 @@
     [request setValue:@"application/x-www-form-urlencoded; charset=UTF-8" forHTTPHeaderField:@"Content-Type"];
 
     if (form) {
-        form = [form stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
         NSData *requestData = [NSData dataWithBytes:[form UTF8String] length:[form length]];
         [request setHTTPBody:requestData];
     }

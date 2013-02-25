@@ -273,7 +273,6 @@
 - (void)delEntries:(NSArray *)entries
 {
     int i = 0;
-
     NSAssert(entries.count > 0, @"There must be at least more entry");
     NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/fileops/delete/?p=%@&reloaddir=true", self.repoId, [self.path escapedUrl]];
 
