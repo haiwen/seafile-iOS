@@ -103,7 +103,7 @@
 
 - (void)uploadFile2:(NSString *)surl dir:(NSString *)dir
 {
-    NSMutableURLRequest *uploadRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:[surl escapedPostForm]]];
+    NSMutableURLRequest *uploadRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:[surl escapedUrl]]];
     [uploadRequest setHTTPMethod:@"POST"];
     NSString *boundary = @"------WebKitFormBoundaryXaXmpsUEnSt1pbbp";
     NSString *contentType = [NSString stringWithFormat:@"multipart/form-data; boundary=%@", boundary];

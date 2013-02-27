@@ -23,7 +23,7 @@
 
 - (NSString *)escapedPostForm
 {
-    return [self stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    return [self escapedUrl];
 }
 
 #define HTTP @"http://"

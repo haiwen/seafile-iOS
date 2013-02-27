@@ -181,7 +181,7 @@
              return;
          }
 
-         NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:[url escapedPostForm]]];
+         NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:[url escapedUrl]]];
 
          if (downloadingFileOid)
              return;
@@ -271,7 +271,7 @@
 - (void)generateShareLink:(id<SeafFileDelegate>)dg
 {
     NSString *url = [NSString stringWithFormat:API_URL"/repos/%@/file/shared-link/", self.repoId];
-    NSString *form = [NSString stringWithFormat:@"p=%@", [self.path escapedUrl]];
+    NSString *form = [NSString stringWithFormat:@"p=%@", [self.path escapedPostForm]];
     [connection sendPut:url repo:self.repoId form:form
                 success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
