@@ -98,7 +98,7 @@ enum PREVIEW_STATE {
         } else {
             Debug (@"Preview file %@ mime=%@ success\n", preViewItem.previewItemTitle, preViewItem.mime);
             self.state = PREVIEW_SUCCESS;
-            if ([preViewItem.mime hasPrefix:@"audio"])
+            if ([preViewItem.mime hasPrefix:@"audio"] || [preViewItem.mime hasPrefix:@"video"])
                 self.state = PREVIEW_AUDIO;
         }
     } else {

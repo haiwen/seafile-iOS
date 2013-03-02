@@ -119,6 +119,8 @@
         return;
     picker = [[CZPhotoPickerController alloc] initWithPresentingViewController:self withCompletionBlock:^(UIImagePickerController *imagePickerController, NSDictionary *imageInfoDict) {
         self.picker = nil;
+        if (self.modalViewController)
+           [self dismissViewControllerAnimated:YES completion:nil];
         UIImage *image = [imageInfoDict objectForKey:@"UIImagePickerControllerOriginalImage"];
         if (!image)
             return;

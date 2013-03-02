@@ -180,9 +180,8 @@
              [self.delegate entry:self contentUpdated:YES completeness:100];
              return;
          }
-
-         NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:[url escapedUrl]]];
-
+         url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+         NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
          if (downloadingFileOid)
              return;
          downloadingFileOid = curId;
