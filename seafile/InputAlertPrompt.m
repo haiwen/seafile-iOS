@@ -8,6 +8,7 @@
 
 #import <QuartzCore/QuartzCore.h>
 #import "InputAlertPrompt.h"
+#import "SVProgressHUD.h"
 
 @interface InputAlertPrompt ()
 @property BOOL autoDismiss;
@@ -47,6 +48,7 @@
 -(void)dismissWithClickedButtonIndex:(NSInteger)buttonIndex animated:(BOOL)animated
 {
     if (buttonIndex == [self cancelButtonIndex]) {
+        [SVProgressHUD dismiss];
         [super dismissWithClickedButtonIndex:buttonIndex animated:animated];
     } else {
         if (![self.inputTextField isEnabled])

@@ -211,8 +211,7 @@
     NSArray *descriptor=[NSArray arrayWithObject:sortDescriptor];
     [fetchRequest setSortDescriptors:descriptor];
 
-    NSString *preformat = [NSString stringWithFormat:@"repoid=='%@' AND path=='%@'", self.repoId, self.path];
-    [fetchRequest setPredicate:[NSPredicate predicateWithFormat:preformat]];
+    [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"repoid==%@ AND path==%@", self.repoId, self.path]];
     NSFetchedResultsController *controller = [[NSFetchedResultsController alloc]
                                               initWithFetchRequest:fetchRequest
                                               managedObjectContext:context

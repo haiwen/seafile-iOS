@@ -236,8 +236,7 @@
     NSArray *descriptor=[NSArray arrayWithObject:sortDescriptor];
     [fetchRequest setSortDescriptors:descriptor];
 
-    NSString *preformat = [NSString stringWithFormat:@"url=='%@' AND username=='%@'", self.address, self.username];
-    [fetchRequest setPredicate:[NSPredicate predicateWithFormat:preformat]];
+    [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"url==%@ AND username==%@", self.address, self.username]];
 
     NSFetchedResultsController *controller = [[NSFetchedResultsController alloc]
                                               initWithFetchRequest:fetchRequest
