@@ -112,6 +112,7 @@
     self.state = SEAF_DENTRY_INIT;
     [self.delegate entryContentLoadingFailed:error.code entry:self];
     downloadingFileOid = nil;
+    [SeafAppDelegate decDownloadnum];
     [downloadFileHandle closeFile];
 }
 
@@ -125,6 +126,7 @@
         [[NSFileManager defaultManager] moveItemAtPath:[self downloadTempPath] toPath:[self documentPath] error:nil];
         downloadingFileOid = nil;
     }
+    [SeafAppDelegate decDownloadnum];
     [self.delegate entry:self contentUpdated:YES completeness:100];
     if (![self.oid isEqualToString:self.ooid]) {
         Debug("the parent is out of date and need to reload %@, %@\n", self.oid, self.ooid);
@@ -164,6 +166,7 @@
  */
 - (void)realLoadContent
 {
+    [SeafAppDelegate incDownloadnum];
     [connection sendRequest:self.downloadLinkUrl repo:self.repoId success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          NSString *url = JSON;
@@ -172,23 +175,28 @@
              curId = self.oid;
          if ([curId isEqualToString:self.ooid]) {
              Debug("already uptodate oid=%@, %@\n", self.ooid, curId);
-             [self.delegate entry:self contentUpdated:NO completeness:0];
+             [self.delegate entry:self contentUpdated:NO completeness:100];
+             [SeafAppDelegate decDownloadnum];
              return;
          } else if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafFile documentPath:curId]]) {
              [self setOoid:curId];
              [self savetoCache];
              [self.delegate entry:self contentUpdated:YES completeness:100];
+             [SeafAppDelegate decDownloadnum];
              return;
          }
          url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
          NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
-         if (downloadingFileOid)
+         if (downloadingFileOid) {
+             [SeafAppDelegate decDownloadnum];
              return;
+         }
          downloadingFileOid = curId;
-
          NSURLConnection *downloadConncetion = [[NSURLConnection alloc] initWithRequest:downloadRequest delegate:self startImmediately:YES];
          if (!downloadConncetion) {
              self.state = SEAF_DENTRY_UPTODATE;
+             downloadingFileOid = nil;
+             [SeafAppDelegate decDownloadnum];
              [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
              return;
          }

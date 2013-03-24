@@ -48,4 +48,10 @@
 - (NSURL *)applicationDocumentsDirectory;
 - (BOOL)checkNetworkStatus;
 
++ (void)incDownloadnum;
++ (void)decDownloadnum;
+
++ (void)incUploadnum;
++ (void)decUploadnum;
+
 @end

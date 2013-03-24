@@ -497,7 +497,8 @@ enum {
             [_mkdirView dismissWithClickedButtonIndex:0 animated:YES];
         }
     } else if ([entry isKindOfClass:[SeafFile class]]) {
-        [_detailViewController fileContentLoaded:(SeafFile *)entry result:updated completeness:percent];
+        if (updated)
+            [_detailViewController fileContentLoaded:(SeafFile *)entry result:YES completeness:percent];
     }
     self.state = STATE_INIT;
 }

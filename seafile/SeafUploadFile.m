@@ -6,6 +6,7 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
+#import "SeafAppDelegate.h"
 #import "SeafUploadFile.h"
 #import "SeafConnection.h"
 #import "AFHTTPClient.h"
@@ -62,6 +63,7 @@
     Debug("error=%@",[error localizedDescription]);
     _uploading = NO;
     [_delegate uploadProgress:self result:NO completeness:0];
+    [SeafAppDelegate decUploadnum];
 }
 
 - (void)connectionDidFinishLoading:(NSURLConnection *)aConn
@@ -71,6 +73,7 @@
     _uploading = NO;
     Debug("Upload file %@ success\n", self.name);
     [_delegate uploadProgress:self result:YES completeness:100];
+    [SeafAppDelegate decUploadnum];
 }
 
 - (NSURLRequest *)connection:(NSURLConnection *)connection willSendRequest:(NSURLRequest *)request redirectResponse:(NSURLResponse *)redirectResponse
@@ -148,6 +151,7 @@
          if (!_uploading)
              return;
          _uploading = NO;
+         [SeafAppDelegate decUploadnum];
          [_delegate uploadProgress:self result:YES completeness:100];
      }
                                      failure:^(AFHTTPRequestOperation *operation, NSError *error) {
@@ -155,6 +159,7 @@
                                          if (!_uploading)
                                              return;
                                          _uploading = NO;
+                                         [SeafAppDelegate decUploadnum];
                                          [_delegate uploadProgress:self result:NO completeness:0];
                                      }];
 
@@ -191,7 +196,7 @@
         _uploadProgress = 0;
     }
     [_delegate uploadProgress:self result:YES completeness:_uploadProgress];
-
+    [SeafAppDelegate incUploadnum];
     NSString *upload_url = [NSString stringWithFormat:API_URL"/repos/%@/upload-link/", repoId];
     [connection sendRequest:upload_url repo:repoId success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
@@ -203,6 +208,7 @@
                     failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
          _uploading = NO;
+         [SeafAppDelegate decUploadnum];
          [_delegate uploadProgress:self result:NO completeness:0];
      }];
 }

@@ -17,6 +17,14 @@ enum {
     TABBED_SETTINGS,
 };
 
+@interface SeafAppDelegate ()
+
+@property UIBackgroundTaskIdentifier bgTask;
+@property int downloadnum;
+@property int uploadnum;
+
+@end
+
 @implementation SeafAppDelegate
 
 @synthesize window = _window;
@@ -31,6 +39,9 @@ enum {
 @synthesize tabbarController = _tabbarController;
 @synthesize toolItems1 = _toolItems1, toolItems2 = _toolItems2, toolItems3 = _toolItems3;
 
+@synthesize bgTask;
+@synthesize downloadnum;
+@synthesize uploadnum;
 
 - (void)reachabilityChanged:(NSNotification* )note
 {
@@ -47,6 +58,7 @@ enum {
     }
     return YES;
 }
+
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     // Override point for customization after application launch.
@@ -77,6 +89,8 @@ enum {
     [wifiReach startNotifier];
 
     [self checkNetworkStatus];
+    self.downloadnum = 0;
+    self.uploadnum = 0;
     return YES;
 }
 
@@ -90,6 +104,29 @@ enum {
 {
     // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
     // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+    if (self.uploadnum == 0 && self.downloadnum == 0)
+        return;
+    self.bgTask = [application beginBackgroundTaskWithExpirationHandler:^{
+        Debug(@"Time Remain = %f", [application backgroundTimeRemaining]);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (UIBackgroundTaskInvalid != self.bgTask) {
+                [application endBackgroundTask:self.bgTask];
+                self.bgTask = UIBackgroundTaskInvalid;
+#if 0
+                if (self.uploadnum != 0 || self.downloadnum != 0) {
+                    UILocalNotification* alarm = [[UILocalNotification alloc] init];
+                    if (alarm) {
+                        alarm.fireDate = [NSDate dateWithTimeIntervalSinceNow:0];
+                        alarm.timeZone = [NSTimeZone defaultTimeZone];
+                        alarm.repeatInterval = 0;
+                        alarm.alertBody = @"Time to wake up!";
+                        [[UIApplication sharedApplication] presentLocalNotificationNow:alarm];
+                    }
+                }
+#endif
+            }
+        });
+    }];
 }
 
 - (void)applicationWillEnterForeground:(UIApplication *)application
@@ -100,6 +137,11 @@ enum {
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+    [application cancelAllLocalNotifications];
+    if (UIBackgroundTaskInvalid != self.bgTask) {
+        [application endBackgroundTask:self.bgTask];
+        self.bgTask = UIBackgroundTaskInvalid;
+    }
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application
@@ -341,6 +383,53 @@ enum {
         return NO;
     }
     return YES;
+}
+
+- (void)checkBackgroudTask:(UIApplication *)application
+{
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    Debug("%d upload, %d download\n", appdelegate.uploadnum, appdelegate.downloadnum);
+    if (appdelegate.downloadnum != 0 || appdelegate.uploadnum != 0)
+        return;
+    if (UIBackgroundTaskInvalid != appdelegate.bgTask) {
+        [application endBackgroundTask:appdelegate.bgTask];
+        appdelegate.bgTask = UIBackgroundTaskInvalid;
+    }
+}
+
++ (void)incDownloadnum
+{
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    @synchronized (appdelegate) {
+        appdelegate.downloadnum ++;
+    }
+    Debug("%d upload, %d download\n", appdelegate.uploadnum, appdelegate.downloadnum);
+}
++ (void)decDownloadnum
+{
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    @synchronized (appdelegate) {
+        appdelegate.downloadnum --;
+    }
+    [appdelegate checkBackgroudTask:[UIApplication sharedApplication]];
+}
+
++ (void)incUploadnum
+{
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    @synchronized (appdelegate) {
+        appdelegate.uploadnum ++;
+    }
+    Debug("%d upload, %d download\n", appdelegate.uploadnum, appdelegate.downloadnum);
+}
+
++ (void)decUploadnum
+{
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    @synchronized (appdelegate) {
+        appdelegate.uploadnum ++;
+    }
+    [appdelegate checkBackgroudTask:[UIApplication sharedApplication]];
 }
 
 @end
