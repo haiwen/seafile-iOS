@@ -69,14 +69,26 @@
 
 + (void)setRepo:(NSString *)repoId password:(NSString *)password
 {
+    if (!password)
+        return;
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    [userDefaults setObject:password forKey:[NSString stringWithFormat:@"%@-password", repoId]];
+    NSMutableDictionary *repopasswds = [NSMutableDictionary dictionaryWithDictionary:(NSDictionary*)[userDefaults objectForKey:@"repopassword"]];
+    [repopasswds setObject:password forKey:repoId];
+    [userDefaults setObject:repopasswds forKey:@"repopassword"];
     [userDefaults synchronize];
 }
 
 + (NSString *)getRepoPassword:(NSString *)repoId
 {
-    return [[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat:@"%@-password", repoId ]];
+    NSDictionary *repopasswds = (NSDictionary*)[[NSUserDefaults standardUserDefaults] objectForKey:@"repopassword"];
+    return [repopasswds objectForKey:repoId];
+}
+
++ (void)clearRepoPasswords
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults removeObjectForKey:@"repopassword"];
+    [userDefaults synchronize];
 }
 
 + (long long)fileSizeAtPath1:(NSString*)filePath

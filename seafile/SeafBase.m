@@ -137,7 +137,6 @@
                      [Utils setRepo:self.repoId password:password];
                      [self.delegate repoPasswordSet:self WithResult:YES];
                  } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-                     [Utils setRepo:self.repoId password:nil];
                      [self.delegate repoPasswordSet:self WithResult:NO];
                  } ];
 }

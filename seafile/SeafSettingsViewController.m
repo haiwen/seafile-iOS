@@ -106,7 +106,7 @@ enum {
         return;
     }
 
-    float usage = 100 * _connection.usage/_connection.quota;
+    float usage = 100.0 * _connection.usage/_connection.quota;
     NSString *quotaString = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:_connection.quota ] useBaseTen:NO];
     if (usage < 0)
         usedspaceCell.detailTextLabel.text = [NSString stringWithFormat:@"? of %@", quotaString];

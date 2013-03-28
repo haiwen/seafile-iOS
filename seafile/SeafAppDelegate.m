@@ -91,6 +91,7 @@ enum {
     [self checkNetworkStatus];
     self.downloadnum = 0;
     self.uploadnum = 0;
+    [Utils clearRepoPasswords];
     return YES;
 }
 
