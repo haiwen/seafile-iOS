@@ -295,7 +295,11 @@ enum {
 {
     SeafCell *cell = [self getCell:@"SeafCell" forTableView:tableView];
     cell.textLabel.text = sfile.name;
-    cell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:sfile.filesize ] useBaseTen:NO];
+    if (!sfile.mtime)
+        cell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:sfile.filesize ] useBaseTen:NO];
+    else
+        cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, %@", [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:sfile.filesize ] useBaseTen:NO], [SeafDateFormatter stringFromInt:sfile.mtime]];
+
     cell.imageView.image = sfile.image;
     return cell;
 }
