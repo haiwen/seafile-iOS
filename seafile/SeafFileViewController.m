@@ -42,6 +42,9 @@ enum {
 @property (strong) UIBarButtonItem *backItem;
 
 @property (strong, readonly) UIView *overlayView;
+
+@property (retain) NSIndexPath *selectedindex;
+
 @property int state;
 @end
 
@@ -52,6 +55,7 @@ enum {
 @synthesize curEntry = _curEntry;
 @synthesize passSetView = _passSetView, mkdirView = _mkdirView;
 @synthesize backItem = _backItem, selectAllItem = _selectAllItem, selectNoneItem = _selectNoneItem;
+@synthesize selectedindex = _selectedindex;
 @synthesize state;
 
 
@@ -291,6 +295,30 @@ enum {
     return cell;
 }
 
+- (void)showEditFileMenu:(UILongPressGestureRecognizer *)gestureRecognizer
+{
+    if (self.tableView.editing == YES)
+        return;
+    UIActionSheet *actionSheet;
+    if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
+        return;
+    CGPoint touchPoint = [gestureRecognizer locationInView:self.tableView];
+    _selectedindex = [self.tableView indexPathForRowAtPoint:touchPoint];
+    if (!_selectedindex)
+        return;
+    SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex];
+    if (![file hasCache])
+        return;
+    if (IsIpad())
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:@"Delete", @"Redownload", nil];
+    else
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Delete", @"Redownload", nil];
+
+    Debug("index=%d\n", _selectedindex.row);
+    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
+    [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
+}
+
 - (SeafCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView
 {
     SeafCell *cell = [self getCell:@"SeafCell" forTableView:tableView];
@@ -301,6 +329,8 @@ enum {
         cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, %@", [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:sfile.filesize ] useBaseTen:NO], [SeafDateFormatter stringFromInt:sfile.mtime]];
 
     cell.imageView.image = sfile.image;
+    UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditFileMenu:)];
+    [cell addGestureRecognizer:longPressGesture];
     return cell;
 }
 
@@ -381,6 +411,7 @@ enum {
         [self noneSelected:NO];
         return;
     }
+    Debug("%d %d\n", indexPath.row, indexPath.section);
     _curEntry = [self getDentrybyIndexPath:indexPath];
 
     [_curEntry setDelegate:self];
@@ -648,6 +679,33 @@ enum {
             [SVProgressHUD showWithStatus:@"Deleting files ..."];
         default:
             break;
+    }
+}
+
+- (void)deleteFile:(SeafFile *)file
+{
+    NSArray *entries = [NSArray arrayWithObject:file];
+    self.state = EDITOP_DELETE;
+    [SVProgressHUD showWithStatus:@"Deleting file ..."];
+    [_directory delEntries:entries];
+}
+
+- (void)redownloadFile:(SeafFile *)file
+{
+    [file deleteCache];
+    [_detailViewController setPreViewItem:nil];
+    Debug("...%d\n", _selectedindex.row);
+    [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
+}
+
+#pragma mark - UIActionSheetDelegate
+- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex];
+    if (buttonIndex == 0) {
+        [self deleteFile:file];
+    } else if (buttonIndex == 1) {
+        [self redownloadFile:file];
     }
 }
 

@@ -31,7 +31,7 @@ enum {
 #import "SeafDir.h"
 
 
-@interface SeafFileViewController : UITableViewController <UIAlertViewDelegate, SeafDentryDelegate, EGORefreshTableHeaderDelegate, InputDoneDelegate> {
+@interface SeafFileViewController : UITableViewController <UIAlertViewDelegate, UIActionSheetDelegate, SeafDentryDelegate, EGORefreshTableHeaderDelegate, InputDoneDelegate> {
 }
 
 @property (strong, nonatomic) SeafDetailViewController *detailViewController;

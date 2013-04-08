@@ -361,5 +361,17 @@
     [connection setStarred:starred repo:self.repoId path:self.path];
 }
 
+- (void)deleteCache
+{
+    _checkoutURL = nil;
+    _preViewURL = nil;
+    _shareLink = nil;
+    [[NSFileManager defaultManager] removeItemAtPath:[self documentPath] error:nil];
+    NSString *tempDir = [[Utils applicationTempDirectory] stringByAppendingPathComponent:self.ooid];
+    [[NSFileManager defaultManager] removeItemAtPath:tempDir error:nil];
+    self.ooid = nil;
+    self.state = SEAF_DENTRY_INIT;
+}
+
 
 @end

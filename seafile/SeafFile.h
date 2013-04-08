@@ -37,5 +37,6 @@
 
 - (BOOL)isStarred;
 - (void)setStarred:(BOOL)starred;
+- (void)deleteCache;
 
 @end
