@@ -11,15 +11,18 @@
 #import "FileViewController.h"
 #import "FailToPreview.h"
 #import "DownloadingProgressView.h"
+#import "SeafTextEditorViewController.h"
 
 #import "UIViewController+AlertMessage.h"
 #import "SVProgressHUD.h"
+#import "ExtentedString.h"
 #import "Debug.h"
 
 enum PREVIEW_STATE {
     PREVIEW_NONE = 0,
     PREVIEW_SUCCESS,
-    PREVIEW_AUDIO,
+    PREVIEW_WEBVIEW,
+    PREVIEW_WEBVIEW_JS,
     PREVIEW_DOWNLOADING,
     PREVIEW_FAILED
 };
@@ -35,6 +38,7 @@ enum PREVIEW_STATE {
 
 @property (strong) NSArray *barItemsStar;
 @property (strong) NSArray *barItemsUnStar;
+@property (strong) UIBarButtonItem *editItem;
 
 @property (strong) UIDocumentInteractionController *docController;
 @property int buttonIndex;
@@ -62,13 +66,32 @@ enum PREVIEW_STATE {
 
 - (void)checkNavItems
 {
+    NSMutableArray *array = [[NSMutableArray alloc] init];
     if ([preViewItem isKindOfClass:[SeafFile class]]) {
         if ([(SeafFile *)preViewItem isStarred])
-            self.navigationItem.rightBarButtonItems = barItemsStar;
+            [array addObjectsFromArray:barItemsStar];
         else
-            self.navigationItem.rightBarButtonItems = barItemsUnStar;
-    } else
-        self.navigationItem.rightBarButtonItems = nil;
+            [array addObjectsFromArray:barItemsUnStar];
+    }
+    if ([preViewItem.mime isEqualToString:@"text/x-markdown"]
+        || [preViewItem.mime isEqualToString:@"text/x-seafile"]
+        || [preViewItem.mime isEqualToString:@"text/plain"])
+        [array addObject:self.editItem];
+    self.navigationItem.rightBarButtonItems = array;
+}
+
+- (void)clearPreView
+{
+    if (self.state == PREVIEW_FAILED)
+        [failedView removeFromSuperview];
+    if (self.state == PREVIEW_DOWNLOADING)
+        [progressView removeFromSuperview];
+    if (self.state == PREVIEW_SUCCESS)
+        [self.fileViewController.view removeFromSuperview];
+    if (self.state == PREVIEW_WEBVIEW || self.state == PREVIEW_WEBVIEW_JS) {
+        [webView removeFromSuperview];
+        [webView stopLoading];
+    }
 }
 
 - (void)configureView
@@ -76,19 +99,10 @@ enum PREVIEW_STATE {
     NSURLRequest *request;
     self.title = preViewItem.previewItemTitle;
     Debug("Preview file:%@,%@,%@ [%d]\n", preViewItem.previewItemTitle, [preViewItem checkoutURL],preViewItem.previewItemURL, [QLPreviewController canPreviewItem:preViewItem]);
-    [self checkNavItems];
-    if (self.state == PREVIEW_FAILED)
-        [failedView removeFromSuperview];
-    if (self.state == PREVIEW_DOWNLOADING)
-        [progressView removeFromSuperview];
-    if (self.state == PREVIEW_SUCCESS)
-        [self.fileViewController.view removeFromSuperview];
-    if (self.state == PREVIEW_AUDIO) {
-        [webView removeFromSuperview];
-        webView = nil;
-    }
+    [self clearPreView];
     if (!preViewItem) {
         self.state = PREVIEW_NONE;
+        [self checkNavItems];
         return;
     }
 
@@ -98,13 +112,15 @@ enum PREVIEW_STATE {
         } else {
             Debug (@"Preview file %@ mime=%@ success\n", preViewItem.previewItemTitle, preViewItem.mime);
             self.state = PREVIEW_SUCCESS;
-            if ([preViewItem.mime hasPrefix:@"audio"] || [preViewItem.mime hasPrefix:@"video"])
-                self.state = PREVIEW_AUDIO;
+            if ([preViewItem.mime hasPrefix:@"audio"] || [preViewItem.mime hasPrefix:@"video"] || [preViewItem.mime isEqualToString:@"image/svg+xml"])
+                self.state = PREVIEW_WEBVIEW;
+            else if([preViewItem.mime isEqualToString:@"text/x-markdown"] || [preViewItem.mime isEqualToString:@"text/x-seafile"])
+                self.state = PREVIEW_WEBVIEW_JS;
         }
     } else {
         self.state = PREVIEW_DOWNLOADING;
     }
-
+    [self checkNavItems];
     switch (self.state) {
         case PREVIEW_DOWNLOADING:
             Debug (@"DownLoading file %@\n", preViewItem.previewItemTitle);
@@ -123,16 +139,21 @@ enum PREVIEW_STATE {
             [self.fileViewController setPreItem:preViewItem];
             [self.view addSubview:self.fileViewController.view];
             break;
-        case PREVIEW_AUDIO:
-            Debug("Preview audio\n");
+        case PREVIEW_WEBVIEW_JS:
+        case PREVIEW_WEBVIEW:
+            Debug("Preview by webview\n");
             request = [[NSURLRequest alloc] initWithURL:preViewItem.previewItemURL cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
             if (!webView) {
                 webView = [[UIWebView alloc] initWithFrame:self.view.frame];
                 webView.scalesPageToFit = YES;
                 webView.autoresizesSubviews = YES;
                 webView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
+                if (self.state == PREVIEW_WEBVIEW_JS)
+                    webView.delegate = self;
+                else
+                    webView.delegate = nil;
             }
-            [webView loadRequest: request];
+            [webView loadRequest:request];
             [self.view addSubview:webView];
             webView.center = self.view.center;
             break;
@@ -169,6 +190,8 @@ enum PREVIEW_STATE {
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
 
+    self.editItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCompose target:self action:@selector(editFile:)];
+    
     UIBarButtonItem *item1 = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAction target:self action:@selector(openElsewhere:)];
     NSString* path = [[NSBundle mainBundle] pathForResource:@"gray-share-icon" ofType:@"png"];
     UIBarButtonItem *item2 = [[UIBarButtonItem alloc] initWithImage:[UIImage imageWithContentsOfFile:path] style:UIBarButtonItemStylePlain target:self action:@selector(share:)];
@@ -262,6 +285,15 @@ enum PREVIEW_STATE {
 {
     [(SeafFile *)preViewItem setStarred:NO];
     [self checkNavItems];
+}
+
+- (IBAction)editFile:(id)sender
+{
+    SeafTextEditorViewController *editViewController = [[SeafTextEditorViewController alloc] init];
+    [editViewController setFile:preViewItem];
+    UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:editViewController];
+    [navController setModalPresentationStyle:UIModalPresentationFullScreen];
+    [self presentViewController:navController animated:NO completion:nil];
 }
 
 - (IBAction)openElsewhere:(id)sender
@@ -380,6 +412,15 @@ enum PREVIEW_STATE {
             break;
     }
     Debug("share file:send mail %@\n", msg);
+}
+
+# pragma - UIWebViewDelegate
+- (void)webViewDidFinishLoad:(UIWebView *)webView
+{
+    if (preViewItem) {
+        NSString *js = [NSString stringWithFormat:@"setContent('%@');", [preViewItem.content stringEscapedForJavasacript]];
+        [self.webView stringByEvaluatingJavaScriptFromString:js];
+    }
 }
 
 @end

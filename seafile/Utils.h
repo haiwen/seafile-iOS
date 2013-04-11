@@ -12,6 +12,7 @@
 - (UIImage *)image;
 - (NSURL *)checkoutURL;
 - (NSString *)mime;
+- (NSString *)content;
 @end
 
 @interface Utils : NSObject
@@ -26,6 +27,7 @@
 
 + (BOOL)tryTransformEncoding:(NSString *)outfile fromFile:(NSString *)fromfile;
 
++ (NSString *)stringContent:(NSString *)path;
 
 + (void)setRepo:(NSString *)repoId password:(NSString *)password;
 + (NSString *)getRepoPassword:(NSString *)repoId;

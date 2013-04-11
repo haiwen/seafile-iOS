@@ -582,6 +582,8 @@
 	<string>application/sdp</string>
 	<key>sea</key>
 	<string>application/x-stuffit</string>
+	<key>seaf</key>
+	<string>text/x-seafile</string>
 	<key>sgm</key>
 	<string>text/x-sgml</string>
 	<key>sgml</key>

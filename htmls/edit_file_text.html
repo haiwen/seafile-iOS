@@ -1,0 +1,24 @@
+<html>
+  <style>
+    textarea
+    {
+    width:100%;
+    height:100%;
+    border:0;
+    outline:0;
+    }
+  </style>
+  <script type="text/javascript">
+    function setContent(content) {
+      document.getElementById("content").value = content
+      return 1
+    }
+
+    function getContent() {
+      return document.getElementById("content").value
+    }
+  </script>
+    <body>
+      <textarea id="content"></textarea>
+    </body>
+</html>

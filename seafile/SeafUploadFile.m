@@ -52,6 +52,11 @@
     return [FileMimeType mimeType:self.name];
 }
 
+- (NSString *)content
+{
+    return [Utils stringContent:self.path];
+}
+
 - (void)removeFile;
 {
     [[NSFileManager defaultManager] removeItemAtPath:self.path error:nil];

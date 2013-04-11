@@ -14,5 +14,6 @@
 - (NSString *)escapedPostForm;
 - (NSString *)trimUrl;
 - (BOOL)isValidFolderName;
+- (NSString *)stringEscapedForJavasacript;
 
 @end

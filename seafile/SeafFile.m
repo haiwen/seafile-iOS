@@ -57,6 +57,11 @@
     return [FileMimeType mimeType:self.name];
 }
 
+- (NSString *)content
+{
+    return [Utils stringContent:[self documentPath]];
+}
+
 - (NSString *)downloadTempPath
 {
     return [[Utils applicationTempDirectory] stringByAppendingPathComponent:self.downloadingFileOid];;
@@ -319,6 +324,18 @@
     return _checkoutURL;
 }
 
+- (NSURL *)markdownPreviewItemURL
+{
+    _preViewURL = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"view_markdown" ofType:@"html"]];
+    return _preViewURL;
+}
+
+- (NSURL *)seafPreviewItemURL
+{
+    _preViewURL = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"view_seaf" ofType:@"html"]];
+    return _preViewURL;
+}
+
 - (NSURL *)previewItemURL
 {
     if (_preViewURL)
@@ -331,7 +348,11 @@
     if (![self.mime hasPrefix:@"text"]) {
         return _preViewURL;
     }
-
+    if ([self.mime hasSuffix:@"markdown"]) {
+        return [self markdownPreviewItemURL];
+    } else if ([self.mime hasSuffix:@"seafile"]) {
+        return [self seafPreviewItemURL];
+    }
     NSString *encodePath = [[[Utils applicationTempDirectory] stringByAppendingPathComponent:self.ooid] stringByAppendingPathComponent:@"utf16" ];
     if (![Utils checkMakeDir:encodePath])
         return _preViewURL;

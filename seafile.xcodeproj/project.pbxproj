@@ -22,6 +22,16 @@
 		5709513915B9B6BD00F48C08 /* SeafJSONRequestOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 5709513215B9B6BD00F48C08 /* SeafJSONRequestOperation.m */; };
 		5709513A15B9B6BD00F48C08 /* SeafRepos.m in Sources */ = {isa = PBXBuildFile; fileRef = 5709513415B9B6BD00F48C08 /* SeafRepos.m */; };
 		570A300416578B4F007D0CBF /* upload.png in Resources */ = {isa = PBXBuildFile; fileRef = 570A300316578B4F007D0CBF /* upload.png */; };
+		570B7AFE1715D658002F0E1D /* edit_file_seaf.html in Resources */ = {isa = PBXBuildFile; fileRef = 570B7AFA1715D657002F0E1D /* edit_file_seaf.html */; };
+		570B7AFF1715D658002F0E1D /* edit_file_seaf.html in Resources */ = {isa = PBXBuildFile; fileRef = 570B7AFA1715D657002F0E1D /* edit_file_seaf.html */; };
+		570B7B001715D658002F0E1D /* jq.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 570B7AFB1715D657002F0E1D /* jq.min.js */; };
+		570B7B011715D658002F0E1D /* jq.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 570B7AFB1715D657002F0E1D /* jq.min.js */; };
+		570B7B021715D658002F0E1D /* Markdown.Converter.js in Resources */ = {isa = PBXBuildFile; fileRef = 570B7AFC1715D658002F0E1D /* Markdown.Converter.js */; };
+		570B7B031715D658002F0E1D /* Markdown.Converter.js in Resources */ = {isa = PBXBuildFile; fileRef = 570B7AFC1715D658002F0E1D /* Markdown.Converter.js */; };
+		570B7B041715D658002F0E1D /* Markdown.Extra.js in Resources */ = {isa = PBXBuildFile; fileRef = 570B7AFD1715D658002F0E1D /* Markdown.Extra.js */; };
+		570B7B051715D658002F0E1D /* Markdown.Extra.js in Resources */ = {isa = PBXBuildFile; fileRef = 570B7AFD1715D658002F0E1D /* Markdown.Extra.js */; };
+		570B7B071715D866002F0E1D /* view_seaf.html in Resources */ = {isa = PBXBuildFile; fileRef = 570B7B061715D866002F0E1D /* view_seaf.html */; };
+		570B7B081715D866002F0E1D /* view_seaf.html in Resources */ = {isa = PBXBuildFile; fileRef = 570B7B061715D866002F0E1D /* view_seaf.html */; };
 		570CF8B81660B00900DFADBC /* SeafFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 570CF8B71660B00900DFADBC /* SeafFile.m */; };
 		570CF8C016613E5700DFADBC /* DownloadingProgress_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 570CF8BF16613E5600DFADBC /* DownloadingProgress_iPhone.xib */; };
 		570CF8C216613FF700DFADBC /* FailToPreview_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 570CF8C116613FF600DFADBC /* FailToPreview_iPhone.xib */; };
@@ -516,6 +526,14 @@
 		576EE11C162F078400327EB9 /* FileMimeType.m in Sources */ = {isa = PBXBuildFile; fileRef = 576EE11B162F078400327EB9 /* FileMimeType.m */; };
 		576EE11F162F0A2900327EB9 /* FileMimeType.plist in Resources */ = {isa = PBXBuildFile; fileRef = 576EE11E162F0A2900327EB9 /* FileMimeType.plist */; };
 		57713AA315E53A5E00651A9C /* InputAlertPrompt.m in Sources */ = {isa = PBXBuildFile; fileRef = 57713AA215E53A5E00651A9C /* InputAlertPrompt.m */; };
+		5779C7BB171088D900307C36 /* view_markdown.html in Resources */ = {isa = PBXBuildFile; fileRef = 5779C7B0171088D900307C36 /* view_markdown.html */; };
+		5779C7BC171088D900307C36 /* view_markdown.html in Resources */ = {isa = PBXBuildFile; fileRef = 5779C7B0171088D900307C36 /* view_markdown.html */; };
+		5779C7D41714702100307C36 /* SeafTextEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5779C7D21714702100307C36 /* SeafTextEditorViewController.m */; };
+		5779C7D51714702100307C36 /* SeafTextEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5779C7D21714702100307C36 /* SeafTextEditorViewController.m */; };
+		5779C7D61714702100307C36 /* SeafTextEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5779C7D31714702100307C36 /* SeafTextEditorViewController.xib */; };
+		5779C7D71714702100307C36 /* SeafTextEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5779C7D31714702100307C36 /* SeafTextEditorViewController.xib */; };
+		5779C7D9171473E000307C36 /* edit_file_text.html in Resources */ = {isa = PBXBuildFile; fileRef = 5779C7D8171473E000307C36 /* edit_file_text.html */; };
+		5779C7DA171473E000307C36 /* edit_file_text.html in Resources */ = {isa = PBXBuildFile; fileRef = 5779C7D8171473E000307C36 /* edit_file_text.html */; };
 		577B6C6116AAD241008E82C2 /* tab-star.png in Resources */ = {isa = PBXBuildFile; fileRef = 577B6C6016AAD241008E82C2 /* tab-star.png */; };
 		577B6C6216AAD241008E82C2 /* tab-star.png in Resources */ = {isa = PBXBuildFile; fileRef = 577B6C6016AAD241008E82C2 /* tab-star.png */; };
 		577B6C6516AADBA3008E82C2 /* SeafCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 577B6C6416AADBA3008E82C2 /* SeafCell.m */; };
@@ -591,6 +609,11 @@
 		5709513315B9B6BD00F48C08 /* SeafRepos.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafRepos.h; sourceTree = "<group>"; };
 		5709513415B9B6BD00F48C08 /* SeafRepos.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafRepos.m; sourceTree = "<group>"; };
 		570A300316578B4F007D0CBF /* upload.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = upload.png; sourceTree = "<group>"; };
+		570B7AFA1715D657002F0E1D /* edit_file_seaf.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = edit_file_seaf.html; path = htmls/edit_file_seaf.html; sourceTree = SOURCE_ROOT; };
+		570B7AFB1715D657002F0E1D /* jq.min.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = jq.min.js; path = htmls/jq.min.js; sourceTree = SOURCE_ROOT; };
+		570B7AFC1715D658002F0E1D /* Markdown.Converter.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = Markdown.Converter.js; path = htmls/Markdown.Converter.js; sourceTree = SOURCE_ROOT; };
+		570B7AFD1715D658002F0E1D /* Markdown.Extra.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = Markdown.Extra.js; path = htmls/Markdown.Extra.js; sourceTree = SOURCE_ROOT; };
+		570B7B061715D866002F0E1D /* view_seaf.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = view_seaf.html; path = htmls/view_seaf.html; sourceTree = SOURCE_ROOT; };
 		570CF8B71660B00900DFADBC /* SeafFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafFile.m; sourceTree = "<group>"; };
 		570CF8BF16613E5600DFADBC /* DownloadingProgress_iPhone.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DownloadingProgress_iPhone.xib; sourceTree = "<group>"; };
 		570CF8C116613FF600DFADBC /* FailToPreview_iPhone.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = FailToPreview_iPhone.xib; sourceTree = "<group>"; };
@@ -844,6 +867,11 @@
 		576EE11E162F0A2900327EB9 /* FileMimeType.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = FileMimeType.plist; sourceTree = "<group>"; };
 		57713A9F15E5351900651A9C /* InputAlertPrompt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InputAlertPrompt.h; sourceTree = "<group>"; };
 		57713AA215E53A5E00651A9C /* InputAlertPrompt.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = InputAlertPrompt.m; sourceTree = "<group>"; };
+		5779C7B0171088D900307C36 /* view_markdown.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = view_markdown.html; path = htmls/view_markdown.html; sourceTree = SOURCE_ROOT; };
+		5779C7D11714702100307C36 /* SeafTextEditorViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafTextEditorViewController.h; path = ../SeafTextEditorViewController.h; sourceTree = "<group>"; };
+		5779C7D21714702100307C36 /* SeafTextEditorViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafTextEditorViewController.m; path = ../SeafTextEditorViewController.m; sourceTree = "<group>"; };
+		5779C7D31714702100307C36 /* SeafTextEditorViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = SeafTextEditorViewController.xib; path = ../SeafTextEditorViewController.xib; sourceTree = "<group>"; };
+		5779C7D8171473E000307C36 /* edit_file_text.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = edit_file_text.html; path = htmls/edit_file_text.html; sourceTree = SOURCE_ROOT; };
 		577B6C6016AAD241008E82C2 /* tab-star.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-star.png"; sourceTree = "<group>"; };
 		577B6C6316AADBA3008E82C2 /* SeafCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafCell.h; sourceTree = "<group>"; };
 		577B6C6416AADBA3008E82C2 /* SeafCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafCell.m; sourceTree = "<group>"; };
@@ -1012,6 +1040,16 @@
 		5709512615B9ACDF00F48C08 /* views */ = {
 			isa = PBXGroup;
 			children = (
+				570B7B061715D866002F0E1D /* view_seaf.html */,
+				570B7AFA1715D657002F0E1D /* edit_file_seaf.html */,
+				570B7AFB1715D657002F0E1D /* jq.min.js */,
+				570B7AFC1715D658002F0E1D /* Markdown.Converter.js */,
+				570B7AFD1715D658002F0E1D /* Markdown.Extra.js */,
+				5779C7D8171473E000307C36 /* edit_file_text.html */,
+				5779C7B0171088D900307C36 /* view_markdown.html */,
+				5779C7D11714702100307C36 /* SeafTextEditorViewController.h */,
+				5779C7D21714702100307C36 /* SeafTextEditorViewController.m */,
+				5779C7D31714702100307C36 /* SeafTextEditorViewController.xib */,
 				57F0AAF016D8904100364D18 /* CZPhotoPickerController.h */,
 				57F0AAF416D8905C00364D18 /* CZPhotoPickerController.m */,
 				57F0AAF116D8904100364D18 /* CZPhotoPreviewViewController.h */,
@@ -1322,7 +1360,6 @@
 		57DB826215A833F900097CEC = {
 			isa = PBXGroup;
 			children = (
-				57F0AAFC16D8913600364D18 /* AssetsLibrary.framework */,
 				57094B5515B9AC4A00F48C08 /* libs */,
 				57DB827915A833FA00097CEC /* seafile */,
 				57DB827015A833FA00097CEC /* Frameworks */,
@@ -1342,6 +1379,7 @@
 		57DB827015A833FA00097CEC /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				57F0AAFC16D8913600364D18 /* AssetsLibrary.framework */,
 				571F5147168C80380055D69B /* MobileCoreServices.framework */,
 				5765533D161D44A2005E5327 /* MessageUI.framework */,
 				57335CF8160DA00000018AE8 /* SystemConfiguration.framework */,
@@ -1538,6 +1576,9 @@
 				571D8D1A1677881400F1A22C /* 80_application-vnd.oasis.opendocument.graphics.png in Resources */,
 				571D8D1B1677881400F1A22C /* 80_application-vnd.oasis.opendocument.image.png in Resources */,
 				571D8D1C1677881400F1A22C /* 80_application-vnd.oasis.opendocument.spreadsheet.png in Resources */,
+				570B7B011715D658002F0E1D /* jq.min.js in Resources */,
+				570B7B031715D658002F0E1D /* Markdown.Converter.js in Resources */,
+				570B7B051715D658002F0E1D /* Markdown.Extra.js in Resources */,
 				571D8D1D1677881400F1A22C /* 80_application-vnd.oasis.opendocument.text-web.png in Resources */,
 				571D8D1E1677881400F1A22C /* 80_application-vnd.oasis.opendocument.text.png in Resources */,
 				571D8D1F1677881400F1A22C /* 80_application-vnd.openxmlformats-officedocument.spreadsheetml.sheet.png in Resources */,
@@ -1698,6 +1739,11 @@
 				577B6C6216AAD241008E82C2 /* tab-star.png in Resources */,
 				577B6C6916AADC26008E82C2 /* SeafCell.xib in Resources */,
 				57F0AAF716D8905C00364D18 /* CZPhotoPreviewViewController.xib in Resources */,
+				5779C7BC171088D900307C36 /* view_markdown.html in Resources */,
+				5779C7D71714702100307C36 /* SeafTextEditorViewController.xib in Resources */,
+				5779C7DA171473E000307C36 /* edit_file_text.html in Resources */,
+				570B7AFF1715D658002F0E1D /* edit_file_seaf.html in Resources */,
+				570B7B081715D866002F0E1D /* view_seaf.html in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1705,6 +1751,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				570B7B001715D658002F0E1D /* jq.min.js in Resources */,
+				570B7B021715D658002F0E1D /* Markdown.Converter.js in Resources */,
+				570B7B041715D658002F0E1D /* Markdown.Extra.js in Resources */,
 				57DB827E15A833FA00097CEC /* InfoPlist.strings in Resources */,
 				57DB828715A833FA00097CEC /* FolderView_iPhone.storyboard in Resources */,
 				57DB828A15A833FA00097CEC /* FolderView_iPad.storyboard in Resources */,
@@ -1918,6 +1967,11 @@
 				577B6C6116AAD241008E82C2 /* tab-star.png in Resources */,
 				577B6C6816AADC26008E82C2 /* SeafCell.xib in Resources */,
 				57F0AAF616D8905C00364D18 /* CZPhotoPreviewViewController.xib in Resources */,
+				5779C7BB171088D900307C36 /* view_markdown.html in Resources */,
+				5779C7D61714702100307C36 /* SeafTextEditorViewController.xib in Resources */,
+				5779C7D9171473E000307C36 /* edit_file_text.html in Resources */,
+				570B7AFE1715D658002F0E1D /* edit_file_seaf.html in Resources */,
+				570B7B071715D866002F0E1D /* view_seaf.html in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1980,6 +2034,7 @@
 				577B6C6616AADBA3008E82C2 /* SeafCell.m in Sources */,
 				57F0AAF916D8905C00364D18 /* CZPhotoPickerController.m in Sources */,
 				57F0AAFB16D8905C00364D18 /* CZPhotoPreviewViewController.m in Sources */,
+				5779C7D51714702100307C36 /* SeafTextEditorViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2039,6 +2094,7 @@
 				577B6C6516AADBA3008E82C2 /* SeafCell.m in Sources */,
 				57F0AAF816D8905C00364D18 /* CZPhotoPickerController.m in Sources */,
 				57F0AAFA16D8905C00364D18 /* CZPhotoPreviewViewController.m in Sources */,
+				5779C7D41714702100307C36 /* SeafTextEditorViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

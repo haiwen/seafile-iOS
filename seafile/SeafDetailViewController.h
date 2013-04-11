@@ -12,7 +12,7 @@
 #import "SeafFile.h"
 
 
-@interface SeafDetailViewController : UIViewController <UISplitViewControllerDelegate, UIActionSheetDelegate, MFMailComposeViewControllerDelegate, SeafFileDelegate>
+@interface SeafDetailViewController : UIViewController <UISplitViewControllerDelegate, UIWebViewDelegate, UIActionSheetDelegate, MFMailComposeViewControllerDelegate, SeafFileDelegate>
 
 @property (nonatomic) id<QLPreviewItem, PreViewDelegate> preViewItem;
 

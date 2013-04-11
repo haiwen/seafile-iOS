@@ -8,11 +8,14 @@
 
 #import "Utils.h"
 #import "Debug.h"
+#import "ExtentedString.h"
+
 
 #include <sys/stat.h>
 #include <dirent.h>
 
 @implementation Utils
+
 
 + (NSString *)applicationDocumentsDirectory
 {
@@ -223,6 +226,34 @@
         return YES;
     }
     return NO;
+}
+
++ (NSString *)stringContent:(NSString *)path
+{
+    if ([Utils fileSizeAtPath1:path] > 10 * 1024 * 1024)
+        return nil;
+    NSData *data = [NSData dataWithContentsOfFile:path];
+    NSString *encodeContent = nil;
+    int i = 0;
+
+    NSStringEncoding encodes[] = {
+        NSUTF8StringEncoding,
+        CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGB_18030_2000),
+        CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGB_2312_80),
+        CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGBK_95),
+        NSUnicodeStringEncoding,
+        NSASCIIStringEncoding,
+        0,
+    };
+
+    while (encodes[i]) {
+        encodeContent = [[NSString alloc] initWithData:data encoding:encodes[i]];
+        if (encodeContent) {
+            break;
+        }
+        ++i;
+    }
+    return encodeContent;
 }
 
 @end
