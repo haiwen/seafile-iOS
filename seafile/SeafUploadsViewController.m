@@ -32,6 +32,8 @@
 @property (retain) CZPhotoPickerController *picker;
 @property (retain)  NSDateFormatter *formatter;
 
+@property (retain) InputAlertPrompt *addFileView;
+
 @end
 
 @implementation SeafUploadsViewController
@@ -40,10 +42,10 @@
 @synthesize cellImage = _cellImage;
 @synthesize connection = _connection;
 @synthesize selectedindex = _selectedindex;
+@synthesize addFileView = _addFileView;
 
 @synthesize picker;
 @synthesize formatter;
-
 
 - (id)initWithStyle:(UITableViewStyle)style
 {
@@ -135,6 +137,18 @@
     [picker showFromBarButtonItem:sender];
 }
 
+- (void)addFile:(id)sender
+{
+    _addFileView = [[InputAlertPrompt alloc] initWithTitle:@"New file" delegate:self autoDismiss:YES];
+    _addFileView.inputTextField.placeholder = @"New file name";
+    _addFileView.inputTextField.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
+    _addFileView.inputTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
+    _addFileView.inputTextField.returnKeyType = UIReturnKeyDone;
+    _addFileView.inputTextField.autocorrectionType = UITextAutocapitalizationTypeNone;
+    _addFileView.inputDoneDelegate = self;
+    [_addFileView show];
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
@@ -144,7 +158,10 @@
     // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
     [self loadEntries];
     self.navigationItem.rightBarButtonItem = self.editButtonItem;
-    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCamera target:self action:@selector(addPhotos:)];
+    UIBarButtonItem *addItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addFile:)];
+    UIBarButtonItem *photoItem  = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCamera target:self action:@selector(addPhotos:)];
+    self.navigationItem.leftBarButtonItems = [NSArray arrayWithObjects:addItem, photoItem, nil];
+
     self.formatter = [[NSDateFormatter alloc] init];
     [formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
 }
@@ -390,6 +407,39 @@
     } else if (buttonIndex == 1) {
         [self deleteFile:_selectedindex];
     }
+}
+
+#pragma mark - UIAlertViewDelegate
+- (void)didPresentAlertView:(UIAlertView *)alertView
+{
+    if ([alertView isKindOfClass:[InputAlertPrompt class]]) {
+    }
+}
+
+- (void)alertView:(UIAlertView *)alertView willDismissWithButtonIndex:(NSInteger)buttonIndex
+{
+    _addFileView = nil;
+}
+
+#pragma mark - InputDoneDelegate
+- (BOOL)inputDone:(InputAlertPrompt *)alertView input:(NSString *)input errmsg:(NSString **)errmsg;
+{
+    if (!input || input.length < 1) {
+        *errmsg = @"A valid filename is needed";
+        return NO;
+    }
+    NSString *path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:input];
+
+    if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
+        *errmsg = @"The file already exists";
+        return NO;
+    } else if (![[NSFileManager defaultManager] createFileAtPath:path contents:[NSData data] attributes:nil]) {
+        *errmsg = @"Failed to create file";
+        return NO;
+    }
+    [self loadEntries];
+    [self.tableView reloadData];
+    return YES;
 }
 
 @end

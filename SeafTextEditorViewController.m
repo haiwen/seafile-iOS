@@ -7,6 +7,7 @@
 //
 
 #import "SeafTextEditorViewController.h"
+#import "SeafAppDelegate.h"
 #import "ExtentedString.h"
 #import "Utils.h"
 #import "Debug.h"
@@ -41,9 +42,9 @@
     return [self initWithNibName:(NSStringFromClass ([self class])) bundle:nil];
 }
 
-- (BOOL) plainText
+- (BOOL) richText
 {
-    return [sfile.mime isEqualToString:@"text/x-markdown"] || [sfile.mime isEqualToString:@"text/plain"];
+    return [sfile.mime isEqualToString:@"text/x-seafile"];
 }
 
 - (UIWebView *)webView
@@ -95,9 +96,10 @@
 
 - (void)checkSelection:(id)sender
 {
-    if ([self plainText])
+    if (![self richText]) {
         self.navigationItem.rightBarButtonItems = nil;
-
+        return;
+    }
     BOOL boldEnabled = [[self.webView stringByEvaluatingJavaScriptFromString:@"document.queryCommandState('Bold')"] boolValue];
     BOOL italicEnabled = [[self.webView stringByEvaluatingJavaScriptFromString:@"document.queryCommandState('Italic')"] boolValue];
     BOOL underlineEnabled = [[self.webView stringByEvaluatingJavaScriptFromString:@"document.queryCommandState('Underline')"] boolValue];
@@ -128,7 +130,9 @@
 - (void)save
 {
     NSString *content = [self.webView stringByEvaluatingJavaScriptFromString:@"getContent()"];
-    Debug("content=%@\n", content);
+    [sfile saveContent:content];
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    [appdelegate.detailVC refreshView];
     [self.navigationController dismissViewControllerAnimated:NO completion:nil];
 }
 
@@ -163,8 +167,7 @@
 - (void)setFile:(id<QLPreviewItem, PreViewDelegate>) file
 {
     self.sfile = file;
-    NSString *path = [[NSBundle mainBundle] pathForResource: [self plainText]? @"edit_file_text":@"edit_file_seaf" ofType:@"html"];
-    
+    NSString *path = [[NSBundle mainBundle] pathForResource: [self richText]? @"edit_file_seaf":@"edit_file_text" ofType:@"html"];
     NSURL *url = [NSURL fileURLWithPath:path];
     NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url.previewItemURL cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
     [(UIWebView *)self.view loadRequest: request];

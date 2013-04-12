@@ -52,16 +52,6 @@
     return self;
 }
 
-- (NSString *)mime
-{
-    return [FileMimeType mimeType:self.name];
-}
-
-- (NSString *)content
-{
-    return [Utils stringContent:[self documentPath]];
-}
-
 - (NSString *)downloadTempPath
 {
     return [[Utils applicationTempDirectory] stringByAppendingPathComponent:self.downloadingFileOid];;
@@ -347,12 +337,12 @@
 
     if (![self.mime hasPrefix:@"text"]) {
         return _preViewURL;
-    }
-    if ([self.mime hasSuffix:@"markdown"]) {
+    } else if ([self.mime hasSuffix:@"markdown"]) {
         return [self markdownPreviewItemURL];
     } else if ([self.mime hasSuffix:@"seafile"]) {
         return [self seafPreviewItemURL];
     }
+
     NSString *encodePath = [[[Utils applicationTempDirectory] stringByAppendingPathComponent:self.ooid] stringByAppendingPathComponent:@"utf16" ];
     if (![Utils checkMakeDir:encodePath])
         return _preViewURL;
@@ -371,6 +361,24 @@
 {
     return self.name;
 }
+
+- (NSString *)mime
+{
+    return [FileMimeType mimeType:self.name];
+}
+
+- (NSString *)content
+{
+    return [Utils stringContent:[self documentPath]];
+}
+
+- (BOOL)saveContent:(NSString *)content
+{
+    //TODO
+    //return [content writeToFile:self.path atomically:YES encoding:NSUTF8StringEncoding error:nil];
+    return YES;
+}
+
 
 - (BOOL)isStarred
 {

@@ -18,4 +18,6 @@
 
 - (void)fileContentLoaded :(SeafFile *)file result:(BOOL)res completeness:(int)percent;
 
+- (void)refreshView;
+
 @end

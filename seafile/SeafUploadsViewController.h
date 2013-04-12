@@ -7,11 +7,12 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "InputAlertPrompt.h"
 #import "SeafUploadFile.h"
 #import "SeafConnection.h"
 #import "SeafDir.h"
 
-@interface SeafUploadsViewController : UITableViewController<SeafUploadDelegate, UIActionSheetDelegate>
+@interface SeafUploadsViewController : UITableViewController<SeafUploadDelegate, UIActionSheetDelegate, InputDoneDelegate, UIAlertViewDelegate>
 @property (strong) SeafConnection *connection;
 
 - (void)initTabBarItem;

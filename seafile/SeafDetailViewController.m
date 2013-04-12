@@ -94,19 +94,16 @@ enum PREVIEW_STATE {
     }
 }
 
-- (void)configureView
+- (void)refreshView
 {
     NSURLRequest *request;
     self.title = preViewItem.previewItemTitle;
-    Debug("Preview file:%@,%@,%@ [%d]\n", preViewItem.previewItemTitle, [preViewItem checkoutURL],preViewItem.previewItemURL, [QLPreviewController canPreviewItem:preViewItem]);
     [self clearPreView];
     if (!preViewItem) {
         self.state = PREVIEW_NONE;
         [self checkNavItems];
         return;
-    }
-
-    if (preViewItem.previewItemURL) {
+    } else if (preViewItem.previewItemURL) {
         if (![QLPreviewController canPreviewItem:preViewItem]) {
             self.state = PREVIEW_FAILED;
         } else {
@@ -171,7 +168,7 @@ enum PREVIEW_STATE {
         return;
 
     preViewItem = item;
-    [self configureView];
+    [self refreshView];
 }
 
 - (void)goBack:(id)sender
@@ -265,12 +262,12 @@ enum PREVIEW_STATE {
         return;
     if (!res) {
         [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:@"Failed to download file '%@'",preViewItem.previewItemTitle]];
-        [self configureView];
+        [self refreshView];
     } else {
         //Debug ("DownLoading file %@, percent=%d\n", preViewItem.previewItemTitle, percent);
         [progressView configureViewWithItem:preViewItem completeness:percent];
         if (percent == 100)
-            [self configureView];
+            [self refreshView];
     }
 }
 
@@ -290,9 +287,9 @@ enum PREVIEW_STATE {
 - (IBAction)editFile:(id)sender
 {
     SeafTextEditorViewController *editViewController = [[SeafTextEditorViewController alloc] init];
-    [editViewController setFile:preViewItem];
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:editViewController];
     [navController setModalPresentationStyle:UIModalPresentationFullScreen];
+    [editViewController setFile:preViewItem];
     [self presentViewController:navController animated:NO completion:nil];
 }
 

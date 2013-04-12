@@ -19,6 +19,7 @@
 
 @interface SeafUploadFile ()
 @property (readonly) NSString *mime;
+@property (strong, readonly) NSURL *preViewURL;
 @end
 
 @implementation SeafUploadFile
@@ -28,6 +29,8 @@
 @synthesize delegate = _delegate;
 @synthesize uploading = _uploading;
 @synthesize uploadProgress = _uploadProgress;
+@synthesize preViewURL = _preViewURL;
+
 
 - (id)initWithPath:(NSString *)path
 {
@@ -45,16 +48,6 @@
 - (NSString *)name
 {
     return [_path lastPathComponent];
-}
-
-- (NSString *)mime
-{
-    return [FileMimeType mimeType:self.name];
-}
-
-- (NSString *)content
-{
-    return [Utils stringContent:self.path];
 }
 
 - (void)removeFile;
@@ -226,7 +219,23 @@
 
 - (NSURL *)previewItemURL
 {
-    return [NSURL fileURLWithPath:self.path];
+    if (_preViewURL)
+        return _preViewURL;
+
+    if (![self.mime hasPrefix:@"text"]) {
+        _preViewURL = [NSURL fileURLWithPath:self.path];
+    } else if ([self.mime hasSuffix:@"markdown"]) {
+        _preViewURL = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"view_markdown" ofType:@"html"]];
+    } else if ([self.mime hasSuffix:@"seafile"]) {
+        _preViewURL = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"view_seaf" ofType:@"html"]];
+    } else {
+        NSString *encodePath = [[Utils applicationTempDirectory] stringByAppendingPathComponent:self.name];
+        if ([Utils tryTransformEncoding:encodePath fromFile:self.path])
+            _preViewURL = [NSURL fileURLWithPath:encodePath];
+    }
+    if (!_preViewURL)
+        _preViewURL = [NSURL fileURLWithPath:self.path];
+    return _preViewURL;
 }
 
 - (UIImage *)image
@@ -237,6 +246,21 @@
 - (NSURL *)checkoutURL
 {
     return [NSURL fileURLWithPath:self.path];
+}
+
+- (NSString *)mime
+{
+    return [FileMimeType mimeType:self.name];
+}
+
+- (NSString *)content
+{
+    return [Utils stringContent:self.path];
+}
+
+- (BOOL)saveContent:(NSString *)content
+{
+    return [content writeToFile:self.path atomically:YES encoding:NSUTF8StringEncoding error:nil];
 }
 
 @end

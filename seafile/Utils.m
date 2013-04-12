@@ -199,31 +199,14 @@
 {
     if ([Utils fileSizeAtPath1:fromfile] > 10 * 1024 * 1024)
         return NO;
-    NSData *data = [NSData dataWithContentsOfFile:fromfile];
     NSString *encodeContent;
-    int i = 0;
-
-    NSStringEncoding encodes[] = {
-        NSUTF8StringEncoding,
-        CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGB_18030_2000),
-        CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGB_2312_80),
-        CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGBK_95),
-        NSUnicodeStringEncoding,
-        NSASCIIStringEncoding,
-        0,
-    };
-
-    while (encodes[i]) {
-        encodeContent = [[NSString alloc] initWithData:data encoding:encodes[i]];
-        if (encodeContent) {
-            Debug("use encoding %d\n", i);
-            break;
+    NSStringEncoding encode;
+    encodeContent = [NSString stringWithContentsOfFile:fromfile usedEncoding:&encode error:nil];
+    if (encodeContent) {
+        Debug("path=%@, encode=%d\n", fromfile, encode);
+        if ([encodeContent writeToFile:outfile atomically:YES encoding:NSUTF16StringEncoding error:nil]) {
+            return YES;
         }
-        ++i;
-    }
-
-    if ([encodeContent writeToFile:outfile atomically:YES encoding:NSUTF16StringEncoding error:nil]) {
-        return YES;
     }
     return NO;
 }
@@ -231,28 +214,10 @@
 + (NSString *)stringContent:(NSString *)path
 {
     if ([Utils fileSizeAtPath1:path] > 10 * 1024 * 1024)
-        return nil;
-    NSData *data = [NSData dataWithContentsOfFile:path];
-    NSString *encodeContent = nil;
-    int i = 0;
-
-    NSStringEncoding encodes[] = {
-        NSUTF8StringEncoding,
-        CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGB_18030_2000),
-        CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGB_2312_80),
-        CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGBK_95),
-        NSUnicodeStringEncoding,
-        NSASCIIStringEncoding,
-        0,
-    };
-
-    while (encodes[i]) {
-        encodeContent = [[NSString alloc] initWithData:data encoding:encodes[i]];
-        if (encodeContent) {
-            break;
-        }
-        ++i;
-    }
+        return NO;
+    NSString *encodeContent;
+    NSStringEncoding encode;
+    encodeContent = [NSString stringWithContentsOfFile:path usedEncoding:&encode error:nil];
     return encodeContent;
 }
 

@@ -13,6 +13,7 @@
 - (NSURL *)checkoutURL;
 - (NSString *)mime;
 - (NSString *)content;
+- (BOOL)saveContent:(NSString *)content;
 @end
 
 @interface Utils : NSObject
