@@ -29,9 +29,10 @@ enum {
 #import "EGORefreshTableHeaderView.h"
 #import "InputAlertPrompt.h"
 #import "SeafDir.h"
+#import "SeafFile.h"
 
 
-@interface SeafFileViewController : UITableViewController <UIAlertViewDelegate, UIActionSheetDelegate, SeafDentryDelegate, EGORefreshTableHeaderDelegate, InputDoneDelegate> {
+@interface SeafFileViewController : UITableViewController <UIAlertViewDelegate, UIActionSheetDelegate, SeafDentryDelegate, EGORefreshTableHeaderDelegate, InputDoneDelegate, SeafFileUploadDelegate> {
 }
 
 @property (strong, nonatomic) SeafDetailViewController *detailViewController;
@@ -39,5 +40,7 @@ enum {
 @property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
 
 - (void)initTabBarItem;
+- (void)refreshView;
+
 
 @end

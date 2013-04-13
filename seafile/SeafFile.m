@@ -12,6 +12,8 @@
 #import "SeafAppDelegate.h"
 #import "FileMimeType.h"
 #import "ExtentedString.h"
+#import "FileSizeFormatter.h"
+#import "SeafDateFormatter.h"
 #import "Debug.h"
 #import "Utils.h"
 
@@ -21,6 +23,8 @@
 @property (readonly) NSURL *checkoutURL;
 @property (strong) NSString *downloadingFileOid;
 @property (strong) NSFileHandle *downloadFileHandle;
+@property (strong) SeafUploadFile *ufile;
+@property (weak) id <SeafFileUploadDelegate> udelegate;
 
 @end
 
@@ -31,6 +35,9 @@
 @synthesize filesize;
 @synthesize downloadFileHandle;
 @synthesize downloadingFileOid;
+@synthesize mpath;
+@synthesize ufile;
+@synthesize udelegate;
 
 
 - (id)initWithConnection:(SeafConnection *)aConnection
@@ -48,8 +55,21 @@
         downloadingFileOid = nil;
         downloadFileHandle = nil;
     }
-
+    [self loadCache];
     return self;
+}
+
+- (NSString *)detailText
+{
+    if (self.mpath) {
+        if (self.ufile.uploading)
+            return [NSString stringWithFormat:@"%@, uploading", [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:self.filesize ] useBaseTen:NO]];
+        else
+            return [NSString stringWithFormat:@"%@, modified", [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:self.filesize ] useBaseTen:NO]];
+    } else if (!self.mtime)
+        return [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:self.filesize ] useBaseTen:NO];
+    else
+        return [NSString stringWithFormat:@"%@, %@", [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:self.filesize ] useBaseTen:NO], [SeafDateFormatter stringFromInt:self.mtime]];
 }
 
 - (NSString *)downloadTempPath
@@ -247,6 +267,8 @@
         return NO;
     }
     [self setOoid:did];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:dfile.mpath])
+        self.mpath = dfile.mpath;
     [self.delegate entry:self contentUpdated:YES completeness:100];
     return YES;
 }
@@ -261,8 +283,10 @@
         dfile.repoid = self.repoId;
         dfile.oid = self.ooid;
         dfile.path = self.path;
+        dfile.mpath = self.mpath;
     } else {
         dfile.oid = self.ooid;
+        dfile.mpath = self.mpath;
         [context updatedObjects];
     }
     [appdelegate saveContext];
@@ -295,6 +319,9 @@
 - (NSURL *)checkoutURL
 {
     NSError *error = nil;
+    if (self.mpath)
+        _checkoutURL = [NSURL fileURLWithPath:self.mpath];
+
     if (_checkoutURL)
         return _checkoutURL;
     if (!self.ooid)
@@ -342,16 +369,23 @@
     } else if ([self.mime hasSuffix:@"seafile"]) {
         return [self seafPreviewItemURL];
     }
-
-    NSString *encodePath = [[[Utils applicationTempDirectory] stringByAppendingPathComponent:self.ooid] stringByAppendingPathComponent:@"utf16" ];
-    if (![Utils checkMakeDir:encodePath])
+    NSString *src = nil;
+    NSString *tmpdir = nil;
+    if (!self.mpath) {
+        src = [self documentPath];
+        tmpdir = [[[Utils applicationTempDirectory] stringByAppendingPathComponent:self.ooid] stringByAppendingPathComponent:@"utf16" ];
+    } else {
+        src = self.mpath;
+        tmpdir = [[Utils applicationTempDirectory] stringByAppendingPathComponent:[[self.mpath stringByDeletingLastPathComponent] lastPathComponent]];
+    }
+    if (![Utils checkMakeDir:tmpdir])
         return _preViewURL;
-
-    NSString *encodeFileName = [encodePath stringByAppendingPathComponent:self.name];
+    NSString *dst = [tmpdir stringByAppendingPathComponent:self.name];
+    Debug("dst=%@\n", dst);
     @synchronized (self) {
-        if ([[NSFileManager defaultManager] fileExistsAtPath:encodeFileName]
-            || [Utils tryTransformEncoding:encodeFileName fromFile:[self documentPath]]) {
-            _preViewURL = [NSURL fileURLWithPath:encodeFileName];
+        if ([[NSFileManager defaultManager] fileExistsAtPath:dst]
+            || [Utils tryTransformEncoding:dst fromFile:src]) {
+            _preViewURL = [NSURL fileURLWithPath:dst];
         }
     }
     return _preViewURL;
@@ -369,16 +403,35 @@
 
 - (NSString *)content
 {
+    if (self.mpath) {
+        return [Utils stringContent:self.mpath];
+    }
     return [Utils stringContent:[self documentPath]];
 }
 
 - (BOOL)saveContent:(NSString *)content
 {
-    //TODO
-    //return [content writeToFile:self.path atomically:YES encoding:NSUTF8StringEncoding error:nil];
-    return YES;
-}
+    @synchronized (self) {
+        NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+        [formatter setDateFormat:@"yyyy-MM-dd-HH.mm.ss"];
+        NSString *dir = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"] stringByAppendingPathComponent:[formatter stringFromDate:[NSDate date]]];
+        if (![Utils checkMakeDir:dir])
+            return NO;
 
+        NSString *newpath = [dir stringByAppendingPathComponent:self.name];
+        BOOL ret = [content writeToFile:newpath atomically:YES encoding:NSUTF8StringEncoding error:nil];
+        Debug("newpath=%@, ret=%d\n", newpath, ret);
+        if (ret) {
+            self.mpath = newpath;
+            ret = [self savetoCache];
+            if (ret) {
+                _preViewURL = nil;
+                _checkoutURL = nil;
+            }
+        }
+        return ret;
+    }
+}
 
 - (BOOL)isStarred
 {
@@ -388,6 +441,18 @@
 - (void)setStarred:(BOOL)starred
 {
     [connection setStarred:starred repo:self.repoId path:self.path];
+}
+
+- (void)upload:(id<SeafFileUploadDelegate>)dg
+{
+    if (!self.mpath)
+        return;
+    if (!self.ufile) {
+        self.ufile = [[SeafUploadFile alloc] initWithPath:self.mpath];
+        self.ufile.delegate = self;
+        self.udelegate = dg;
+    }
+    [self.ufile upload:connection repo:self.repoId path:self.path update:YES];
 }
 
 - (void)deleteCache
@@ -402,5 +467,18 @@
     self.state = SEAF_DENTRY_INIT;
 }
 
+#pragma mark - SeafUploadDelegate
+- (void)uploadProgress:(SeafUploadFile *)file result:(BOOL)res completeness:(int)percent
+{
+    Debug("res=%d, percent==%d\n", res, percent);
+    [self.udelegate uploadProgress:self result:res completeness:percent];
+    if (res && percent == 100) {
+        self.udelegate = nil;
+        self.ufile = nil;
+        self.mpath = nil;
+        self.ooid = nil;
+        [self savetoCache];
+    }
+}
 
 @end

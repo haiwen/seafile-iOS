@@ -135,7 +135,7 @@ enum {
     }
 }
 
-- (void)tableViewReloadData
+- (void)refreshView
 {
     [self.tableView reloadData];
     if (IsIpad() && _detailViewController.preViewItem && [_detailViewController.preViewItem isKindOfClass:[SeafFile class]]) {
@@ -259,7 +259,7 @@ enum {
     [_directory setDelegate:self];
     [_directory loadContent:NO];
     Debug("%@, loading ... %d\n", _directory.name, _directory.hasCache);
-    [self tableViewReloadData];
+    [self refreshView];
     if (!_directory.hasCache) {
         [self.tableView addSubview:self.overlayView];
         self.state = STATE_LOADING;
@@ -309,8 +309,11 @@ enum {
     SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex];
     if (![file hasCache])
         return;
-    if (IsIpad())
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:@"Delete", @"Redownload", nil];
+    NSString *cancelTitle = nil;
+    if (!IsIpad())
+        cancelTitle = @"Cancel";
+    if (file.mpath)
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:@"Delete", @"Redownload", @"Upload", nil];
     else
         actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Delete", @"Redownload", nil];
 
@@ -323,11 +326,7 @@ enum {
 {
     SeafCell *cell = [self getCell:@"SeafCell" forTableView:tableView];
     cell.textLabel.text = sfile.name;
-    if (!sfile.mtime)
-        cell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:sfile.filesize ] useBaseTen:NO];
-    else
-        cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, %@", [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:sfile.filesize ] useBaseTen:NO], [SeafDateFormatter stringFromInt:sfile.mtime]];
-
+    cell.detailTextLabel.text = sfile.detailText;
     cell.imageView.image = sfile.image;
     UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditFileMenu:)];
     [cell addGestureRecognizer:longPressGesture];
@@ -527,7 +526,7 @@ enum {
         [self dismissOverlayView];
         [SVProgressHUD dismiss];
         [self doneLoadingTableViewData];
-        [self tableViewReloadData];
+        [self refreshView];
         if (_mkdirView) {
             [_mkdirView dismissWithClickedButtonIndex:0 animated:YES];
         }
@@ -694,7 +693,6 @@ enum {
 {
     [file deleteCache];
     [_detailViewController setPreViewItem:nil];
-    Debug("...%d\n", _selectedindex.row);
     [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
 }
 
@@ -706,7 +704,23 @@ enum {
         [self deleteFile:file];
     } else if (buttonIndex == 1) {
         [self redownloadFile:file];
+    } else if (buttonIndex == 2)  {
+        [file upload:self];
+        [self refreshView];
     }
 }
+
+#pragma mark - SeafFileUploadDelegate
+- (void)uploadProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent
+{
+    Debug("res=%d, percent==%d\n", res, percent);
+    if (!res) {
+        [SVProgressHUD showErrorWithStatus:@"Failed to uplod file"];
+    }
+    [self refreshView];
+    if (self.detailViewController.preViewItem == file)
+        [self.detailViewController refreshView];
+}
+
 
 @end

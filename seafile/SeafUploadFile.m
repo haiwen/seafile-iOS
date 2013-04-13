@@ -131,12 +131,16 @@
     }
 }
 
-- (void)uploadFile:(NSString *)surl dir:(NSString *)dir
+- (void)uploadFile:(NSString *)surl path:(NSString *)uploadpath update:(BOOL)update
 {
     NSURL *url = [NSURL URLWithString:surl];
     AFHTTPClient *httpClient = [[AFHTTPClient alloc] initWithBaseURL:url];
     NSMutableURLRequest *request = [httpClient multipartFormRequestWithMethod:@"POST" path:nil parameters:nil constructingBodyWithBlock: ^(id <AFMultipartFormData>formData) {
-        [formData appendPartWithFormData:[dir dataUsingEncoding:NSUTF8StringEncoding] name:@"parent_dir"];
+        if (update)
+            [formData appendPartWithFormData:[uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"target_file"];
+        else
+            [formData appendPartWithFormData:[uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"parent_dir"];
+
         [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
         [formData appendPartWithFileURL:[NSURL fileURLWithPath:self.path] name:@"file" error:nil];
     }];
@@ -185,7 +189,7 @@
     [operation start];
 }
 
-- (void)upload:(SeafConnection *)connection repo:(NSString *)repoId dir:(NSString *)dir
+- (void)upload:(SeafConnection *)connection repo:(NSString *)repoId path:(NSString *)uploadpath update:(BOOL)update
 {
     @synchronized (self) {
         if (_uploading)
@@ -195,13 +199,17 @@
     }
     [_delegate uploadProgress:self result:YES completeness:_uploadProgress];
     [SeafAppDelegate incUploadnum];
-    NSString *upload_url = [NSString stringWithFormat:API_URL"/repos/%@/upload-link/", repoId];
+    NSString *upload_url;
+    if (!update)
+        upload_url = [NSString stringWithFormat:API_URL"/repos/%@/upload-link/", repoId];
+    else
+        upload_url = [NSString stringWithFormat:API_URL"/repos/%@/update-link/", repoId];
     [connection sendRequest:upload_url repo:repoId success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          NSString *identifierString = (__bridge NSString *)CFUUIDCreateString(NULL, CFUUIDCreate(NULL));
          NSString *url = [NSString stringWithFormat:@"%@?X-Progress-ID=%@", JSON, identifierString];
-         Debug("Upload file %@ %@\n", self.name, url);
-         [self uploadFile:url dir:dir];
+         Debug("Upload file %@ %@, %@ update=%d\n", self.name, url, uploadpath, update);
+         [self uploadFile:url path:uploadpath update:update];
      }
                     failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {

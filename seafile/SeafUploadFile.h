@@ -32,7 +32,7 @@
 @property id<SeafUploadDelegate> delegate;
 
 - (id)initWithPath:(NSString *)path;
-- (void)upload:(SeafConnection *)connection repo:(NSString *)repoId dir:(NSString *)dir;
+- (void)upload:(SeafConnection *)connection repo:(NSString *)repoId path:(NSString *)uploadpath update:(BOOL)update;
 
 - (void)removeFile;
 

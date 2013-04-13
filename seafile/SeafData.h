@@ -45,5 +45,7 @@
 @property (nonatomic, retain) NSString *repoid;
 @property (nonatomic, retain) NSString *path;
 @property (nonatomic, retain) NSString *oid;
+@property (nonatomic, retain) NSString *mpath;
+
 
 @end

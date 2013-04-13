@@ -133,6 +133,7 @@
     [sfile saveContent:content];
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [appdelegate.detailVC refreshView];
+    [appdelegate.masterVC refreshView];
     [self.navigationController dismissViewControllerAnimated:NO completion:nil];
 }
 

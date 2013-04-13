@@ -77,6 +77,7 @@ enum {
 
     [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
     [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"]];
+     [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"]];
     [Utils checkMakeDir:[Utils applicationTempDirectory]];
 
     [Utils clearAllFiles:[Utils applicationTempDirectory]];
@@ -202,7 +203,6 @@ enum {
     if (__persistentStoreCoordinator != nil) {
         return __persistentStoreCoordinator;
     }
-
     NSURL *storeURL = [[self applicationDocumentsDirectory] URLByAppendingPathComponent:@"seafile.sqlite"];
 
     NSError *error = nil;
@@ -231,8 +231,12 @@ enum {
          Lightweight migration will only work for a limited set of schema changes; consult "Core Data Model Versioning and Data Migration Programming Guide" for details.
 
          */
-        NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
-        abort();
+        [[NSFileManager defaultManager] removeItemAtURL:storeURL error:nil];
+
+        if (![__persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:storeURL options:nil error:&error]) {
+            NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
+            abort();
+        }
     }
 
     return __persistentStoreCoordinator;

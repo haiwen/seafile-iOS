@@ -54,6 +54,7 @@ enum SEAFBASE_STATE {
 
 @property (weak) id <SeafDentryDelegate> delegate;
 
+- (BOOL)loadCache;
 - (void)loadContent:(BOOL)force;
 - (void)updateWithEntry:(SeafBase *)entry;
 

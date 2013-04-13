@@ -39,6 +39,7 @@ enum PREVIEW_STATE {
 @property (strong) NSArray *barItemsStar;
 @property (strong) NSArray *barItemsUnStar;
 @property (strong) UIBarButtonItem *editItem;
+@property (strong) UIBarButtonItem *uploadItem;
 
 @property (strong) UIDocumentInteractionController *docController;
 @property int buttonIndex;
@@ -58,6 +59,8 @@ enum PREVIEW_STATE {
 
 @synthesize barItemsStar;
 @synthesize barItemsUnStar;
+@synthesize editItem;
+@synthesize uploadItem;
 @synthesize buttonIndex;
 @synthesize docController;
 
@@ -77,6 +80,8 @@ enum PREVIEW_STATE {
         || [preViewItem.mime isEqualToString:@"text/x-seafile"]
         || [preViewItem.mime isEqualToString:@"text/plain"])
         [array addObject:self.editItem];
+    if (IsIpad() && [preViewItem isKindOfClass:[SeafFile class]] && ((SeafFile *)preViewItem).mpath)
+        [array addObject:self.uploadItem];
     self.navigationItem.rightBarButtonItems = array;
 }
 
@@ -126,7 +131,7 @@ enum PREVIEW_STATE {
             [progressView configureViewWithItem:preViewItem completeness:0];
             break;
         case PREVIEW_FAILED:
-            Debug ("Can not preview file %@\n", preViewItem.previewItemTitle);
+            Debug ("Can not preview file %@ %@\n", preViewItem.previewItemTitle, preViewItem.previewItemURL);
             failedView.frame = self.view.frame;
             [self.view addSubview:failedView];
             [failedView configureViewWithPrevireItem:preViewItem];
@@ -188,9 +193,11 @@ enum PREVIEW_STATE {
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
 
     self.editItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCompose target:self action:@selector(editFile:)];
-    
+    NSString* path = [[NSBundle mainBundle] pathForResource:@"upload" ofType:@"png"];
+    self.uploadItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageWithContentsOfFile:path] style:UIBarButtonItemStylePlain target:self action:@selector(uploadFile:)];
+
     UIBarButtonItem *item1 = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAction target:self action:@selector(openElsewhere:)];
-    NSString* path = [[NSBundle mainBundle] pathForResource:@"gray-share-icon" ofType:@"png"];
+    path = [[NSBundle mainBundle] pathForResource:@"gray-share-icon" ofType:@"png"];
     UIBarButtonItem *item2 = [[UIBarButtonItem alloc] initWithImage:[UIImage imageWithContentsOfFile:path] style:UIBarButtonItemStylePlain target:self action:@selector(share:)];
     path = [[NSBundle mainBundle] pathForResource:@"gray-star-icon" ofType:@"png"];
     UIBarButtonItem *item3 = [[UIBarButtonItem alloc] initWithImage:[UIImage imageWithContentsOfFile:path] style:UIBarButtonItemStylePlain target:self action:@selector(unstarFile:)];
@@ -291,6 +298,15 @@ enum PREVIEW_STATE {
     [navController setModalPresentationStyle:UIModalPresentationFullScreen];
     [editViewController setFile:preViewItem];
     [self presentViewController:navController animated:NO completion:nil];
+}
+
+- (IBAction)uploadFile:(id)sender
+{
+    if ([preViewItem isKindOfClass:[SeafFile class]]) {
+        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+        [((SeafFile *)preViewItem) upload:appdelegate.masterVC];
+        [appdelegate.masterVC refreshView];
+    }
 }
 
 - (IBAction)openElsewhere:(id)sender

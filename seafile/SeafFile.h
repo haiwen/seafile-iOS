@@ -7,7 +7,7 @@
 //
 
 #import <QuickLook/QuickLook.h>
-
+#import "SeafUploadFile.h"
 #import "SeafBase.h"
 #import "Utils.h"
 
@@ -18,7 +18,11 @@
 - (void)generateSharelink:(SeafFile *)entry WithResult:(BOOL)success;
 @end
 
-@interface SeafFile : SeafBase<QLPreviewItem, PreViewDelegate, NSURLConnectionDelegate>
+@protocol SeafFileUploadDelegate <NSObject>
+- (void)uploadProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent;
+@end
+
+@interface SeafFile : SeafBase<QLPreviewItem, PreViewDelegate, NSURLConnectionDelegate, SeafUploadDelegate>
 
 - (id)initWithConnection:(SeafConnection *)aConnection
                      oid:(NSString *)anId
@@ -28,7 +32,8 @@
                    mtime:(int)mtime
                     size:(int)size;
 
-
+@property (strong) NSString *mpath;// For modified files
+@property (readonly) NSString *detailText;
 @property (readonly) int filesize;
 @property (readonly) int mtime;
 @property (readonly, copy) NSString *shareLink;
@@ -38,5 +43,6 @@
 - (BOOL)isStarred;
 - (void)setStarred:(BOOL)starred;
 - (void)deleteCache;
+- (void)upload:(id<SeafFileUploadDelegate>)dg;
 
 @end

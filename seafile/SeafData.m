@@ -43,5 +43,6 @@
 @dynamic repoid;
 @dynamic path;
 @dynamic oid;
+@dynamic mpath;
 
 @end

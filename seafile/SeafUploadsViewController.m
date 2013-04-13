@@ -174,7 +174,7 @@
 
 - (void)chooseUploadDir:(SeafDir *)dir
 {
-    [[_entries objectAtIndex:_selectedindex.row] upload:_connection repo:dir.repoId dir:dir.path];
+    [[_entries objectAtIndex:_selectedindex.row] upload:_connection repo:dir.repoId path:dir.path update:NO];
 }
 
 - (void)uploadFileWithName:(NSString *)filename
