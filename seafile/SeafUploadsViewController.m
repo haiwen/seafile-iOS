@@ -144,7 +144,7 @@
     // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
     [self loadEntries];
     self.navigationItem.rightBarButtonItem = self.editButtonItem;
-    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addPhotos:)];
+    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCamera target:self action:@selector(addPhotos:)];
     self.formatter = [[NSDateFormatter alloc] init];
     [formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
 }

@@ -19,14 +19,12 @@
 
 enum {
     CELL_INVITATION = 0,
-    CELL_FEEDBACK,
     CELL_WEBSITE,
     CELL_SERVER,
     CELL_VERSION,
 };
 
 #define SEAFILE_SITE @"http://www.seafile.com"
-#define SEAFILE_FEEDBACK @"http://www.seafile.com/feedback/"
 
 
 @interface SeafSettingsViewController ()
@@ -143,10 +141,6 @@ enum {
         switch ((indexPath.row)) {
             case CELL_INVITATION:
                 [self sendMailInApp];
-                break;
-
-            case CELL_FEEDBACK:
-                [[UIApplication sharedApplication] openURL:[NSURL URLWithString:SEAFILE_FEEDBACK]];
                 break;
 
             case CELL_WEBSITE:
