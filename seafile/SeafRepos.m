@@ -39,7 +39,10 @@
                    mtime:(int)aMtime
                encrypted:(BOOL)aEncrypted
 {
-    if (self = [super initWithConnection:aConnection oid:anId repoId:aRepoId name:aName path:@"/" mime:@"text/directory-documents"]) {
+    NSString *aMime = @"text/directory-documents";
+    if (aEncrypted)
+        aMime = @"text/directory-documents-encrypted";
+    if (self = [super initWithConnection:aConnection oid:anId repoId:aRepoId name:aName path:@"/" mime:aMime]) {
         _desc = aDesc;
         _owner = aOwner;
         _repoType = aRepoType;

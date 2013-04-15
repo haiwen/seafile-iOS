@@ -17,6 +17,8 @@
 #import "ExtentedString.h"
 #import "Debug.h"
 
+#import "SeafJSONRequestOperation.h"
+
 @interface SeafUploadFile ()
 @property (readonly) NSString *mime;
 @property (strong, readonly) NSURL *preViewURL;
@@ -48,6 +50,11 @@
 - (NSString *)name
 {
     return [_path lastPathComponent];
+}
+
+- (BOOL)editable
+{
+    return YES;
 }
 
 - (void)removeFile;
@@ -104,11 +111,13 @@
 
 - (void)uploadFile2:(NSString *)surl dir:(NSString *)dir
 {
-    NSMutableURLRequest *uploadRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:[surl escapedUrl]]];
+    NSMutableURLRequest *uploadRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:surl]];
     [uploadRequest setHTTPMethod:@"POST"];
+
     NSString *boundary = @"------WebKitFormBoundaryXaXmpsUEnSt1pbbp";
     NSString *contentType = [NSString stringWithFormat:@"multipart/form-data; boundary=%@", boundary];
     [uploadRequest setValue:contentType forHTTPHeaderField:@"Content-Type"];
+    [uploadRequest setValue:@"close" forHTTPHeaderField:@"Connection"];
 
     NSMutableData *postbody = [[NSMutableData alloc] init];
     [postbody appendData:[[NSString stringWithFormat:@"--%@\r\nContent-Disposition: form-data; name=\"csrfmiddlewaretoken\"\r\n\r\n8ba38951c9ba66418311a25195e2e380\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
@@ -147,6 +156,21 @@
     request.URL = url;
     [request setValue:@"close" forHTTPHeaderField:@"Connection"];
     AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
+    [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
+        if (totalBytesWritten == totalBytesExpectedToWrite) {
+            _uploading = NO;
+            [_delegate uploadProgress:self result:YES completeness:100];
+        } else {
+            int percent;
+            if (totalBytesExpectedToWrite > 0)
+                percent = totalBytesWritten * 100 / totalBytesExpectedToWrite;
+            else
+                percent = 100;
+            if (percent >= 100)
+                percent = 99;
+            [_delegate uploadProgress:self result:YES completeness:percent];
+        }
+    }];
     [operation setCompletionBlockWithSuccess:
      ^(AFHTTPRequestOperation *operation, id responseObject) {
          Debug("Upload success\n");
@@ -165,21 +189,6 @@
                                          [_delegate uploadProgress:self result:NO completeness:0];
                                      }];
 
-    [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
-        if (totalBytesWritten == totalBytesExpectedToWrite) {
-            _uploading = NO;
-           [_delegate uploadProgress:self result:YES completeness:100];
-        } else {
-           int percent;
-           if (totalBytesExpectedToWrite > 0)
-               percent = totalBytesWritten * 100 / totalBytesExpectedToWrite;
-           else
-               percent = 100;
-           if (percent >= 100)
-               percent = 99;
-           [_delegate uploadProgress:self result:YES completeness:percent];
-       }
-    }];
     [operation setAuthenticationAgainstProtectionSpaceBlock:^BOOL(NSURLConnection *connection, NSURLProtectionSpace *protectionSpace) {
         return YES;
     }];
@@ -206,8 +215,7 @@
         upload_url = [NSString stringWithFormat:API_URL"/repos/%@/update-link/", repoId];
     [connection sendRequest:upload_url repo:repoId success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
-         NSString *identifierString = (__bridge NSString *)CFUUIDCreateString(NULL, CFUUIDCreate(NULL));
-         NSString *url = [NSString stringWithFormat:@"%@?X-Progress-ID=%@", JSON, identifierString];
+         NSString *url = JSON;
          Debug("Upload file %@ %@, %@ update=%d\n", self.name, url, uploadpath, update);
          [self uploadFile:url path:uploadpath update:update];
      }

@@ -12,6 +12,7 @@
 - (UIImage *)image;
 - (NSURL *)checkoutURL;
 - (NSString *)mime;
+- (BOOL)editable;
 - (NSString *)content;
 - (BOOL)saveContent:(NSString *)content;
 @end
@@ -25,6 +26,8 @@
 + (void)clearAllFiles:(NSString *)path;
 + (long long)folderSizeAtPath:(NSString*)folderPath;
 + (int)copyFile:(NSURL *)from to:(NSURL *)to;
+
++ (long long)fileSizeAtPath1:(NSString*)filePath;
 
 + (BOOL)tryTransformEncoding:(NSString *)outfile fromFile:(NSString *)fromfile;
 

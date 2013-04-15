@@ -34,8 +34,8 @@
 
 @property (strong) NSString *mpath;// For modified files
 @property (readonly) NSString *detailText;
-@property (readonly) int filesize;
-@property (readonly) int mtime;
+@property (readwrite) int filesize;
+@property (readwrite) int mtime;
 @property (readonly, copy) NSString *shareLink;
 
 - (void)generateShareLink:(id<SeafFileDelegate>)dg;

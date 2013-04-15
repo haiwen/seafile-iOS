@@ -203,7 +203,7 @@ enum {
     if (__persistentStoreCoordinator != nil) {
         return __persistentStoreCoordinator;
     }
-    NSURL *storeURL = [[self applicationDocumentsDirectory] URLByAppendingPathComponent:@"seafile.sqlite"];
+    NSURL *storeURL = [[self applicationDocumentsDirectory] URLByAppendingPathComponent:@"seafile_pro.sqlite"];
 
     NSError *error = nil;
     __persistentStoreCoordinator = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:[self managedObjectModel]];
@@ -435,6 +435,24 @@ enum {
         appdelegate.uploadnum ++;
     }
     [appdelegate checkBackgroudTask:[UIApplication sharedApplication]];
+}
+
+- (void)deleteAllObjects:(NSString *)entityDescription
+{
+    NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
+    NSEntityDescription *entity = [NSEntityDescription entityForName:entityDescription inManagedObjectContext:__managedObjectContext];
+    [fetchRequest setEntity:entity];
+
+    NSError *error;
+    NSArray *items = [__managedObjectContext executeFetchRequest:fetchRequest error:&error];
+
+    for (NSManagedObject *managedObject in items) {
+        [__managedObjectContext deleteObject:managedObject];
+        Debug(@"%@ object deleted",entityDescription);
+    }
+    if (![__managedObjectContext save:&error]) {
+        Debug(@"Error deleting %@ - error:%@",entityDescription,error);
+    }
 }
 
 @end

@@ -47,6 +47,7 @@
 - (void)saveContext;
 - (NSURL *)applicationDocumentsDirectory;
 - (BOOL)checkNetworkStatus;
+- (void) deleteAllObjects: (NSString *) entityDescription;
 
 + (void)incDownloadnum;
 + (void)decDownloadnum;

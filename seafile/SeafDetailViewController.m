@@ -76,9 +76,9 @@ enum PREVIEW_STATE {
         else
             [array addObjectsFromArray:barItemsUnStar];
     }
-    if ([preViewItem.mime isEqualToString:@"text/x-markdown"]
-        || [preViewItem.mime isEqualToString:@"text/x-seafile"]
-        || [preViewItem.mime isEqualToString:@"text/plain"])
+    if ([preViewItem editable] && ([preViewItem.mime isEqualToString:@"text/x-markdown"]
+                                   || [preViewItem.mime isEqualToString:@"text/x-seafile"]
+                                   || [preViewItem.mime isEqualToString:@"text/plain"]))
         [array addObject:self.editItem];
     if (IsIpad() && [preViewItem isKindOfClass:[SeafFile class]] && ((SeafFile *)preViewItem).mpath)
         [array addObject:self.uploadItem];
@@ -95,7 +95,7 @@ enum PREVIEW_STATE {
         [self.fileViewController.view removeFromSuperview];
     if (self.state == PREVIEW_WEBVIEW || self.state == PREVIEW_WEBVIEW_JS) {
         [webView removeFromSuperview];
-        [webView stopLoading];
+        [webView loadHTMLString:@"" baseURL:nil];
     }
 }
 
@@ -269,7 +269,7 @@ enum PREVIEW_STATE {
         return;
     if (!res) {
         [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:@"Failed to download file '%@'",preViewItem.previewItemTitle]];
-        [self refreshView];
+        [self setPreViewItem:nil];
     } else {
         //Debug ("DownLoading file %@, percent=%d\n", preViewItem.previewItemTitle, percent);
         [progressView configureViewWithItem:preViewItem completeness:percent];

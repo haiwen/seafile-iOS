@@ -718,8 +718,10 @@ enum {
         [SVProgressHUD showErrorWithStatus:@"Failed to uplod file"];
     }
     [self refreshView];
-    if (self.detailViewController.preViewItem == file)
-        [self.detailViewController refreshView];
+    if (res && percent == 100) {
+        if (self.detailViewController.preViewItem == file)
+            [self.detailViewController refreshView];
+    }
 }
 
 

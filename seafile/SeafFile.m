@@ -267,10 +267,17 @@
         return NO;
     }
     [self setOoid:did];
-    if ([[NSFileManager defaultManager] fileExistsAtPath:dfile.mpath])
+    if ([[NSFileManager defaultManager] fileExistsAtPath:dfile.mpath]) {
         self.mpath = dfile.mpath;
+        self.filesize = [Utils fileSizeAtPath1:self.mpath];
+    }
     [self.delegate entry:self contentUpdated:YES completeness:100];
     return YES;
+}
+
+- (BOOL)loadCache
+{
+    return [self realLoadCache];
 }
 
 - (BOOL)savetoCache
@@ -319,11 +326,14 @@
 - (NSURL *)checkoutURL
 {
     NSError *error = nil;
-    if (self.mpath)
-        _checkoutURL = [NSURL fileURLWithPath:self.mpath];
-
     if (_checkoutURL)
         return _checkoutURL;
+
+    if (self.mpath) {
+        _checkoutURL = [NSURL fileURLWithPath:self.mpath];
+        return _checkoutURL;
+    }
+
     if (!self.ooid)
         return nil;
     @synchronized (self) {
@@ -401,6 +411,11 @@
     return [FileMimeType mimeType:self.name];
 }
 
+- (BOOL)editable
+{
+    return [self hasCache] && [connection repoEditable:self.repoId];
+}
+
 - (NSString *)content
 {
     if (self.mpath) {
@@ -427,7 +442,10 @@
             if (ret) {
                 _preViewURL = nil;
                 _checkoutURL = nil;
-            }
+                self.filesize = [Utils fileSizeAtPath1:self.mpath];
+                self.mtime = [[NSDate date] timeIntervalSince1970];
+            } else
+                self.mpath = nil;
         }
         return ret;
     }
@@ -471,14 +489,19 @@
 - (void)uploadProgress:(SeafUploadFile *)file result:(BOOL)res completeness:(int)percent
 {
     Debug("res=%d, percent==%d\n", res, percent);
-    [self.udelegate uploadProgress:self result:res completeness:percent];
+    id<SeafFileUploadDelegate> dg = self.udelegate;
     if (res && percent == 100) {
-        self.udelegate = nil;
         self.ufile = nil;
+        self.udelegate = nil;
+        self.state = SEAF_DENTRY_INIT;
+        NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+        [formatter setDateFormat:@"yyyy-MM-dd-HH.mm.ss"];
+        self.ooid = [self.ooid stringByAppendingString:[formatter stringFromDate:[NSDate date]]];
+        [[NSFileManager defaultManager] moveItemAtPath:self.mpath toPath:[self documentPath] error:nil];
         self.mpath = nil;
-        self.ooid = nil;
         [self savetoCache];
     }
+    [dg uploadProgress:self result:res completeness:percent];
 }
 
 @end

@@ -11,6 +11,6 @@
 
 @interface SeafAccountViewController : UIViewController<SSConnectionDelegate, UITextFieldDelegate>
 
-- (id)initWithController:(StartViewController *)controller connection: (SeafConnection *)conn;
+- (id)initWithController:(StartViewController *)controller connection: (SeafConnection *)conn type:(int)type;
 
 @end

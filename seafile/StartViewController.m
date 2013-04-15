@@ -120,9 +120,9 @@
     [super viewDidUnload];
 }
 
-- (void)showAccountView:(SeafConnection *)conn
+- (void)showAccountView:(SeafConnection *)conn type:(int)type
 {
-    SeafAccountViewController *controller = [[SeafAccountViewController alloc] initWithController:self connection:conn];
+    SeafAccountViewController *controller = [[SeafAccountViewController alloc] initWithController:self connection:conn type:type];
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
     navController.modalPresentationStyle = UIModalPresentationFormSheet;
     [self presentViewController:navController animated:YES completion:nil];
@@ -130,7 +130,13 @@
 
 - (IBAction)addAccount:(id)sender
 {
-    [self showAccountView:nil];
+    UIActionSheet *actionSheet;
+    pressedIndex = nil;
+    if (IsIpad())
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:@"Private Seafile Server", @"SeaCloud.cc", @"cloud.seafile.com", nil];
+    else
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Private Seafile Server", @"SeaCloud.cc", @"cloud.seafile.com", nil];
+    [actionSheet showFromBarButtonItem:sender animated:YES];
 }
 
 #pragma mark - Table view data source
@@ -219,13 +225,19 @@
 #pragma mark - UIActionSheetDelegate
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
 {
-    Debug("buttonIndex=%d, indexpath=%d\n", buttonIndex, pressedIndex.row);
-    if (buttonIndex == 0) {
-        [self showAccountView:[self.conns objectAtIndex:pressedIndex.row]];
-    } else if (buttonIndex == 1) {
-        [self.conns removeObjectAtIndex:pressedIndex.row];
-        [self saveAccounts];
-        [self.tableView reloadData];
+    Debug("index=%@, buttonIndex=%d\n", pressedIndex, buttonIndex);
+    if (pressedIndex) {// Long press account
+        if (buttonIndex == 0) {
+            [self showAccountView:[self.conns objectAtIndex:pressedIndex.row] type:0];
+        } else if (buttonIndex == 1) {
+            [self.conns removeObjectAtIndex:pressedIndex.row];
+            [self saveAccounts];
+            [self.tableView reloadData];
+        }
+    } else {
+        if (buttonIndex >= 0 && buttonIndex <=2) {
+            [self showAccountView:nil type:buttonIndex];
+        }
     }
 }
 

@@ -23,6 +23,7 @@
 @property (strong, nonatomic) IBOutlet ColorfulButton *cancelButton;
 @property StartViewController *startController;
 @property SeafConnection *connection;
+@property int type;
 @end
 
 @implementation SeafAccountViewController
@@ -34,13 +35,15 @@
 @synthesize passwordTextField;
 @synthesize startController;
 @synthesize connection;
+@synthesize type;
 
 
-- (id)initWithController:(StartViewController *)controller connection: (SeafConnection *)conn;
+- (id)initWithController:(StartViewController *)controller connection: (SeafConnection *)conn type:(int)atype
 {
     if (self = [super initWithNibName:@"SeafAccountViewController" bundle:nil]) {
         self.startController = controller;
         self.connection = conn;
+        self.type = atype;
     }
     return self;
 }
@@ -123,6 +126,11 @@
         }
         usernameTextField.text = connection.username;
         passwordTextField.text = connection.password;
+    } else {
+        if (self.type == 1)
+            serverTextField.text = @"seacloud.cc";
+        else if (self.type == 2)
+            serverTextField.text = @"cloud.seafile.com";
     }
     [self.loginButton setHighColor:[UIColor whiteColor] lowColor:[UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1]];
     [self.cancelButton setHighColor:[UIColor whiteColor] lowColor:[UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1]];
