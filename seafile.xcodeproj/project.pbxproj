@@ -635,7 +635,7 @@
 		571ABF551625DF6E005C9B08 /* DownloadingProgress_iPad.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DownloadingProgress_iPad.xib; sourceTree = "<group>"; };
 		571CE59A15C01879004CD403 /* SeafData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafData.h; sourceTree = "<group>"; };
 		571CE59B15C01879004CD403 /* SeafData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafData.m; sourceTree = "<group>"; };
-		571D8DBA1677881400F1A22C /* seafile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = seafile.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		571D8DBA1677881400F1A22C /* seafilePro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = seafilePro.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		571D8DBD1677897D00F1A22C /* seafile-appstore-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "seafile-appstore-Info.plist"; sourceTree = "<group>"; };
 		571F5147168C80380055D69B /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = System/Library/Frameworks/MobileCoreServices.framework; sourceTree = SDKROOT; };
 		572500A916291A22001E5C75 /* SeafUploadsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafUploadsViewController.h; sourceTree = "<group>"; };
@@ -898,7 +898,7 @@
 		57C57BDB165FBB4C006834DF /* SVProgressHUD.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVProgressHUD.m; sourceTree = "<group>"; };
 		57C57BDC165FBB4C006834DF /* SVProgressHUD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVProgressHUD.h; sourceTree = "<group>"; };
 		57C57BDE165FC87B006834DF /* SVProgressHUD.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = SVProgressHUD.bundle; sourceTree = "<group>"; };
-		57DB826D15A833FA00097CEC /* seafile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = seafile.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		57DB826D15A833FA00097CEC /* seafilePro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = seafilePro.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		57DB827115A833FA00097CEC /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		57DB827315A833FA00097CEC /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		57DB827515A833FA00097CEC /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -1374,8 +1374,8 @@
 		57DB826E15A833FA00097CEC /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				57DB826D15A833FA00097CEC /* seafile.app */,
-				571D8DBA1677881400F1A22C /* seafile.app */,
+				57DB826D15A833FA00097CEC /* seafilePro.app */,
+				571D8DBA1677881400F1A22C /* seafilePro.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1474,7 +1474,7 @@
 			);
 			name = "seafile-appstore";
 			productName = seafile;
-			productReference = 571D8DBA1677881400F1A22C /* seafile.app */;
+			productReference = 571D8DBA1677881400F1A22C /* seafilePro.app */;
 			productType = "com.apple.product-type.application";
 		};
 		57DB826C15A833FA00097CEC /* seafile */ = {
@@ -1491,7 +1491,7 @@
 			);
 			name = seafile;
 			productName = seafile;
-			productReference = 57DB826D15A833FA00097CEC /* seafile.app */;
+			productReference = 57DB826D15A833FA00097CEC /* seafilePro.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -2143,9 +2143,9 @@
 				GCC_PREFIX_HEADER = "seafile/seafile-Prefix.pch";
 				INFOPLIST_FILE = "seafile/seafile-appstore-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
-				PRODUCT_NAME = seafile;
-				PROVISIONING_PROFILE = "22A60CBE-548A-4596-9F01-06BB17D1C2E2";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "1FB650DF-7AF4-4064-A2AB-22DBB54F6F04";
+				PRODUCT_NAME = seafilePro;
+				PROVISIONING_PROFILE = "4D776EE3-55F2-4899-9187-315F5F385190";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "4D776EE3-55F2-4899-9187-315F5F385190";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
@@ -2161,9 +2161,9 @@
 				GCC_PREFIX_HEADER = "seafile/seafile-Prefix.pch";
 				INFOPLIST_FILE = "seafile/seafile-appstore-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
-				PRODUCT_NAME = seafile;
-				PROVISIONING_PROFILE = "7B9700E1-4D64-4E0B-AB61-228478457A31";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "7B9700E1-4D64-4E0B-AB61-228478457A31";
+				PRODUCT_NAME = seafilePro;
+				PROVISIONING_PROFILE = "50743626-BE56-418B-B49C-8FDE3A880F76";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "50743626-BE56-418B-B49C-8FDE3A880F76";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
@@ -2196,8 +2196,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
-				PROVISIONING_PROFILE = "1FB650DF-7AF4-4064-A2AB-22DBB54F6F04";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "1FB650DF-7AF4-4064-A2AB-22DBB54F6F04";
+				PROVISIONING_PROFILE = "4D776EE3-55F2-4899-9187-315F5F385190";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "4D776EE3-55F2-4899-9187-315F5F385190";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -2223,8 +2223,8 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
-				PROVISIONING_PROFILE = "7B9700E1-4D64-4E0B-AB61-228478457A31";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "7B9700E1-4D64-4E0B-AB61-228478457A31";
+				PROVISIONING_PROFILE = "50743626-BE56-418B-B49C-8FDE3A880F76";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "50743626-BE56-418B-B49C-8FDE3A880F76";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
@@ -2240,7 +2240,7 @@
 				GCC_PREFIX_HEADER = "seafile/seafile-Prefix.pch";
 				INFOPLIST_FILE = "seafile/seafile-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = seafilePro;
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
@@ -2258,7 +2258,7 @@
 				GCC_PREFIX_HEADER = "seafile/seafile-Prefix.pch";
 				INFOPLIST_FILE = "seafile/seafile-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = seafilePro;
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;

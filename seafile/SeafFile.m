@@ -266,15 +266,18 @@
     NSString *did = self.oid;
     //if (dfile)         did = dfile.oid;
 
-    if (![[NSFileManager defaultManager] fileExistsAtPath:[SeafFile documentPath:did]]) {
-        return NO;
-    }
-    [self setOoid:did];
     if (dfile && dfile.mpath && [[NSFileManager defaultManager] fileExistsAtPath:dfile.mpath]) {
         self.mpath = dfile.mpath;
         self.filesize = [Utils fileSizeAtPath1:self.mpath];
-        [self autoupload];
     }
+    if (self.mpath)
+        [self autoupload];
+
+    if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafFile documentPath:did]])
+        [self setOoid:did];
+
+    if (!self.mpath && !self.ooid)
+        return NO;
     [self.delegate entry:self contentUpdated:YES completeness:100];
     return YES;
 }
