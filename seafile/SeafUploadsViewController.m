@@ -156,6 +156,7 @@
     // self.clearsSelectionOnViewWillAppear = NO;
 
     // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
+    self.tableView.rowHeight = 50;
     [self loadEntries];
     self.navigationItem.rightBarButtonItem = self.editButtonItem;
     UIBarButtonItem *addItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addFile:)];

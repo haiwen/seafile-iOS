@@ -134,6 +134,7 @@
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [appdelegate.detailVC refreshView];
     [appdelegate.masterVC refreshView];
+    [appdelegate.starredVC refreshView];
     [self.navigationController dismissViewControllerAnimated:NO completion:nil];
 }
 
@@ -161,7 +162,7 @@
 # pragma - UIWebViewDelegate
 - (void)webViewDidFinishLoad:(UIWebView *)webView
 {
-    NSString *js = [NSString stringWithFormat:@"setContent('%@');", [sfile.content stringEscapedForJavasacript]];
+    NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [sfile.content stringEscapedForJavasacript]];
     [self.webView stringByEvaluatingJavaScriptFromString:js];
 }
 

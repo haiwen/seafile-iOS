@@ -14,6 +14,7 @@
 #import "SeafDateFormatter.h"
 #import "SeafCell.h"
 
+#import "SVProgressHUD.h"
 #import "SeafData.h"
 #import "Utils.h"
 #import "Debug.h"
@@ -21,12 +22,16 @@
 @interface SeafStarredFilesViewController ()
 @property NSMutableArray *starredFiles;
 @property SeafDetailViewController *detailViewController;
+@property (retain) NSIndexPath *selectedindex;
+
 @end
 
 @implementation SeafStarredFilesViewController
 @synthesize connection = _connection;
 @synthesize starredFiles = _starredFiles;
 @synthesize detailViewController = _detailViewController;
+@synthesize selectedindex = _selectedindex;
+
 
 - (id)initWithStyle:(UITableViewStyle)style
 {
@@ -37,18 +42,22 @@
     return self;
 }
 
+- (void)refresh:(id)sender
+{
+    [self getStarredFiles];
+}
 - (void)viewDidLoad
 {
     [super viewDidLoad];
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     _detailViewController = appdelegate.detailVC;
+    self.tableView.rowHeight = 50;
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(refresh:)];
 }
 
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    [self getStarredFiles];
-    [_detailViewController setPreViewItem:nil];
 }
 
 - (void)didReceiveMemoryWarning
@@ -62,14 +71,35 @@
     self.tabBarItem.image = [[UIImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"tab-star" ofType:@"png"]];
 }
 
+- (void)refreshView
+{
+    [self.tableView reloadData];
+}
+
 - (BOOL)handleData:(id)JSON
 {
+    int i;
     NSMutableArray *stars = [NSMutableArray array];
     for (NSDictionary *info in JSON) {
         SeafStarredFile *sfile = [[SeafStarredFile alloc] initWithConnection:_connection repo:[info objectForKey:@"repo"] path:[info objectForKey:@"path"] mtime:[[info objectForKey:@"mtime"] integerValue:0] size:[[info objectForKey:@"size"] integerValue:0] org:[[info objectForKey:@"org"] integerValue:0]];
         sfile.delegate = self;
         sfile.starDelegate = self;
         [stars addObject:sfile];
+    }
+    if (_starredFiles) {
+        NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+        for (i = 0; i < [_starredFiles count]; ++i) {
+            SeafBase *obj = (SeafBase*)[_starredFiles objectAtIndex:i];
+            [dict setObject:obj forKey:[obj key]];
+        }
+        for (i = 0; i < [_starredFiles count]; ++i) {
+            SeafStarredFile *obj = (SeafStarredFile*)[_starredFiles objectAtIndex:i];
+            SeafStarredFile *oldObj = [dict objectForKey:[obj key]];
+            if (oldObj) {
+                [oldObj updateWithEntry:obj];
+                [stars replaceObjectAtIndex:i withObject:oldObj];
+            }
+        }
     }
     _starredFiles = stars;
     return YES;
@@ -114,6 +144,33 @@
     return _connection;
 }
 
+- (void)showEditFileMenu:(UILongPressGestureRecognizer *)gestureRecognizer
+{
+    UIActionSheet *actionSheet;
+    if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
+        return;
+
+    CGPoint touchPoint = [gestureRecognizer locationInView:self.tableView];
+    _selectedindex = [self.tableView indexPathForRowAtPoint:touchPoint];
+    if (!_selectedindex)
+        return;
+
+    SeafFile *file = (SeafFile *)[_starredFiles objectAtIndex:_selectedindex.row];
+    if (![file hasCache])
+        return;
+
+    NSString *cancelTitle = nil;
+    if (!IsIpad())
+        cancelTitle = @"Cancel";
+    if (file.mpath)
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:@"Redownload", @"Upload", nil];
+    else
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Redownload", nil];
+    
+    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
+    [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
+}
+
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
@@ -136,9 +193,10 @@
     }
     SeafStarredFile *sfile = [_starredFiles objectAtIndex:indexPath.row];
     cell.textLabel.text = sfile.name;
-    NSString *sizeStr = [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:sfile.filesize ] useBaseTen:NO];
-    cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, %@", sizeStr, [SeafDateFormatter stringFromInt:sfile.mtime ]];
+    cell.detailTextLabel.text = sfile.detailText;
     cell.imageView.image = sfile.image;
+    UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditFileMenu:)];
+    [cell addGestureRecognizer:longPressGesture];
     return cell;
 }
 
@@ -156,6 +214,9 @@
 }
 
 #pragma mark - SeafDentryDelegate
+- (void)entryChanged:(SeafBase *)entry
+{
+}
 - (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent
 {
     //Debug("update=%d, percent=%d \n", updated, percent);
@@ -188,4 +249,34 @@
 
     [self.tableView reloadData];
 }
+
+#pragma mark - UIActionSheetDelegate
+- (void)redownloadFile:(SeafFile *)file
+{
+    [file deleteCache];
+    [_detailViewController setPreViewItem:nil];
+    [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
+}
+
+- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    SeafFile *file = (SeafFile *)[_starredFiles objectAtIndex:_selectedindex.row];
+    if (buttonIndex == 0) {
+        [self redownloadFile:file];
+    } else if (buttonIndex == 1)  {
+        [file upload:self];
+        [self refreshView];
+    }
+}
+
+#pragma mark - SeafFileUploadDelegate
+- (void)uploadProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent
+{
+    Debug("res=%d, percent==%d\n", res, percent);
+    if (!res) {
+        [SVProgressHUD showErrorWithStatus:@"Failed to uplod file"];
+    }
+    [self refreshView];
+}
+
 @end

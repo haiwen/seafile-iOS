@@ -103,6 +103,11 @@
     return self;
 }
 
+- (BOOL)checkSorted:(NSArray *)items
+{
+    return YES;
+}
+
 - (void)groupingRepos
 {
     int i;

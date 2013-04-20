@@ -67,6 +67,10 @@ enum PREVIEW_STATE {
 
 #pragma mark - Managing the detail item
 
+- (BOOL)previewSuccess
+{
+    return (self.state == PREVIEW_SUCCESS) || (self.state == PREVIEW_WEBVIEW) || (self.state == PREVIEW_WEBVIEW_JS);
+}
 - (void)checkNavItems
 {
     NSMutableArray *array = [[NSMutableArray alloc] init];
@@ -76,12 +80,11 @@ enum PREVIEW_STATE {
         else
             [array addObjectsFromArray:barItemsUnStar];
     }
-    if ([preViewItem editable] && ([preViewItem.mime isEqualToString:@"text/x-markdown"]
-                                   || [preViewItem.mime isEqualToString:@"text/x-seafile"]
-                                   || [preViewItem.mime isEqualToString:@"text/plain"]))
+    if ([preViewItem editable] && [self previewSuccess]
+        && [preViewItem.mime hasPrefix:@"text/"])
         [array addObject:self.editItem];
-    if (IsIpad() && [preViewItem isKindOfClass:[SeafFile class]] && ((SeafFile *)preViewItem).mpath)
-        [array addObject:self.uploadItem];
+    //if (IsIpad() && [preViewItem isKindOfClass:[SeafFile class]] && ((SeafFile *)preViewItem).mpath)
+    //    [array addObject:self.uploadItem];
     self.navigationItem.rightBarButtonItems = array;
 }
 
@@ -102,7 +105,16 @@ enum PREVIEW_STATE {
 - (void)refreshView
 {
     NSURLRequest *request;
-    self.title = preViewItem.previewItemTitle;
+    if (IsIpad())
+        self.title = preViewItem.previewItemTitle;
+    else {
+        UILabel* tlabel = [[UILabel alloc] initWithFrame:CGRectMake(0,0, 60, 40)];
+        tlabel.text = preViewItem.previewItemTitle;
+        tlabel.textColor = [UIColor whiteColor];
+        tlabel.backgroundColor = [UIColor clearColor];
+        tlabel.adjustsFontSizeToFitWidth = YES;
+        self.navigationItem.titleView = tlabel;
+    }
     [self clearPreView];
     if (!preViewItem) {
         self.state = PREVIEW_NONE;
@@ -169,8 +181,7 @@ enum PREVIEW_STATE {
     if (item && self.masterPopoverController != nil) {
         [self.masterPopoverController dismissPopoverAnimated:YES];
     }
-    if (preViewItem == item)
-        return;
+    //if (preViewItem == item) return;
 
     preViewItem = item;
     [self refreshView];
@@ -186,7 +197,7 @@ enum PREVIEW_STATE {
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
     if (!IsIpad()) {
-        UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"All files" style:UIBarButtonItemStyleDone target:self action:@selector(goBack:)];
+        UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Back" style:UIBarButtonItemStyleDone target:self action:@selector(goBack:)];
         [self.navigationItem setLeftBarButtonItem:barButtonItem animated:YES];
     }
     self.view.autoresizesSubviews = YES;
@@ -265,8 +276,10 @@ enum PREVIEW_STATE {
 {
     if (file != preViewItem)
         return;
-    if (self.state != PREVIEW_DOWNLOADING)
+    if (self.state != PREVIEW_DOWNLOADING) {
+        [self refreshView];
         return;
+    }
     if (!res) {
         [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:@"Failed to download file '%@'",preViewItem.previewItemTitle]];
         [self setPreViewItem:nil];
@@ -431,7 +444,7 @@ enum PREVIEW_STATE {
 - (void)webViewDidFinishLoad:(UIWebView *)webView
 {
     if (preViewItem) {
-        NSString *js = [NSString stringWithFormat:@"setContent('%@');", [preViewItem.content stringEscapedForJavasacript]];
+        NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [preViewItem.content stringEscapedForJavasacript]];
         [self.webView stringByEvaluatingJavaScriptFromString:js];
     }
 }

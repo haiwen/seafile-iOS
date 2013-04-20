@@ -64,7 +64,6 @@
 
     // Uncomment the following line to preserve selection between presentations.
     // self.clearsSelectionOnViewWillAppear = NO;
-
     UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithTitle:_directory.name style:UIBarButtonItemStyleBordered target:self action:nil];
     self.navigationItem.backBarButtonItem = backItem;
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStyleBordered target:self action:@selector(cancel:)];
@@ -184,6 +183,10 @@
 }
 
 #pragma mark - SeafDentryDelegate
+- (void)entryChanged:(SeafBase *)entry
+{
+}
+
 - (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent
 {
     if (updated) {

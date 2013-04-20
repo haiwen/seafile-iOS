@@ -9,6 +9,7 @@
 #import "SeafStarredFile.h"
 #import "SeafConnection.h"
 #import "FileMimeType.h"
+#import "Debug.h"
 
 
 @implementation SeafStarredFile
@@ -33,6 +34,17 @@
 {
     [connection setStarred:starred repo:self.repoId path:self.path];
     [_starDelegate fileStateChanged:starred file:self];
+}
+- (NSString *)key
+{
+    return [NSString stringWithFormat:@"%@%@", self.repoId, self.path];
+}
+
+- (void)updateWithEntry:(SeafBase *)entry
+{
+    self.filesize = ((SeafStarredFile *)entry).filesize;
+    self.mtime = ((SeafStarredFile *)entry).mtime;
+    [self loadCache];
 }
 
 @end

@@ -103,6 +103,7 @@ enum {
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
     self.tableView.scrollEnabled = YES;
+    self.tableView.rowHeight = 50;
     self.state = STATE_INIT;
     if (_refreshHeaderView == nil) {
         EGORefreshTableHeaderView *view = [[EGORefreshTableHeaderView alloc] initWithFrame:CGRectMake(0.0f, 0.0f - self.tableView.bounds.size.height, self.view.frame.size.width, self.tableView.bounds.size.height)];
@@ -400,12 +401,13 @@ enum {
     if (![_directory isKindOfClass:[SeafRepos class]]) {
         return [_directory.items objectAtIndex:[indexPath row]];
     }
-    NSArray *repos =  [[((SeafRepos *)_directory)repoGroups] objectAtIndex:[indexPath section]];
+    NSArray *repos = [[((SeafRepos *)_directory)repoGroups] objectAtIndex:[indexPath section]];
     return [repos objectAtIndex:[indexPath row]];
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    _selectedindex = indexPath;
     if (tableView.editing == YES) {
         [self noneSelected:NO];
         return;
@@ -520,6 +522,11 @@ enum {
 }
 
 #pragma mark - SeafDentryDelegate
+- (void)entryChanged:(SeafBase *)entry
+{
+    if ([entry isKindOfClass:[SeafFile class]] && entry == _detailViewController.preViewItem)
+        [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
+}
 - (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent
 {
     if (entry == _directory) {
@@ -531,7 +538,7 @@ enum {
             [_mkdirView dismissWithClickedButtonIndex:0 animated:YES];
         }
     } else if ([entry isKindOfClass:[SeafFile class]]) {
-        if (updated)
+        if (updated && entry == _detailViewController.preViewItem)
             [_detailViewController fileContentLoaded:(SeafFile *)entry result:YES completeness:percent];
     }
     self.state = STATE_INIT;
@@ -718,10 +725,6 @@ enum {
         [SVProgressHUD showErrorWithStatus:@"Failed to uplod file"];
     }
     [self refreshView];
-    if (res && percent == 100) {
-        if (self.detailViewController.preViewItem == file)
-            [self.detailViewController refreshView];
-    }
 }
 
 

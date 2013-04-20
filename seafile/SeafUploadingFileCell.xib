@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <archive type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="8.00">
 	<data>
-		<int key="IBDocument.SystemTarget">1536</int>
-		<string key="IBDocument.SystemVersion">12C60</string>
-		<string key="IBDocument.InterfaceBuilderVersion">2844</string>
-		<string key="IBDocument.AppKitVersion">1187.34</string>
-		<string key="IBDocument.HIToolboxVersion">625.00</string>
+		<int key="IBDocument.SystemTarget">1552</int>
+		<string key="IBDocument.SystemVersion">12D78</string>
+		<string key="IBDocument.InterfaceBuilderVersion">3084</string>
+		<string key="IBDocument.AppKitVersion">1187.37</string>
+		<string key="IBDocument.HIToolboxVersion">626.00</string>
 		<object class="NSMutableDictionary" key="IBDocument.PluginVersions">
 			<string key="NS.key.0">com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
-			<string key="NS.object.0">1930</string>
+			<string key="NS.object.0">2083</string>
 		</object>
 		<array key="IBDocument.IntegratedClassDependencies">
 			<string>IBProxyObject</string>
@@ -44,7 +44,7 @@
 							<object class="IBUILabel" id="999473938">
 								<reference key="NSNextResponder" ref="132936688"/>
 								<int key="NSvFlags">292</int>
-								<string key="NSFrame">{{48, 2}, {217, 20}}</string>
+								<string key="NSFrame">{{48, 7}, {217, 20}}</string>
 								<reference key="NSSuperview" ref="132936688"/>
 								<reference key="NSWindow"/>
 								<reference key="NSNextKeyView" ref="210495795"/>
@@ -80,7 +80,7 @@
 							<object class="IBUIImageView" id="252351555">
 								<reference key="NSNextResponder" ref="132936688"/>
 								<int key="NSvFlags">292</int>
-								<string key="NSFrame">{{5, 2}, {36, 36}}</string>
+								<string key="NSFrame">{{5, 6}, {36, 36}}</string>
 								<reference key="NSSuperview" ref="132936688"/>
 								<reference key="NSWindow"/>
 								<reference key="NSNextKeyView" ref="999473938"/>
@@ -91,7 +91,7 @@
 							<object class="IBUIProgressView" id="210495795">
 								<reference key="NSNextResponder" ref="132936688"/>
 								<int key="NSvFlags">292</int>
-								<string key="NSFrame">{{48, 29}, {217, 9}}</string>
+								<string key="NSFrame">{{48, 34}, {217, 9}}</string>
 								<reference key="NSSuperview" ref="132936688"/>
 								<reference key="NSWindow"/>
 								<string key="NSReuseIdentifierKey">_NS:9</string>
@@ -100,7 +100,7 @@
 								<float key="IBUIProgress">0.5</float>
 							</object>
 						</array>
-						<string key="NSFrameSize">{320, 40}</string>
+						<string key="NSFrameSize">{320, 49}</string>
 						<reference key="NSSuperview" ref="1061710470"/>
 						<reference key="NSWindow"/>
 						<reference key="NSNextKeyView" ref="252351555"/>
@@ -116,7 +116,7 @@
 						<string key="targetRuntimeIdentifier">IBCocoaTouchFramework</string>
 					</object>
 				</array>
-				<string key="NSFrameSize">{320, 41}</string>
+				<string key="NSFrameSize">{320, 50}</string>
 				<reference key="NSSuperview"/>
 				<reference key="NSWindow"/>
 				<reference key="NSNextKeyView" ref="132936688"/>
@@ -124,7 +124,7 @@
 				<string key="targetRuntimeIdentifier">IBIPadFramework</string>
 				<reference key="IBUIContentView" ref="132936688"/>
 				<string key="IBUIReuseIdentifier">SeafUploadingFileCell</string>
-				<real value="40" key="IBUIRowHeight"/>
+				<real value="50" key="IBUIRowHeight"/>
 			</object>
 		</array>
 		<object class="IBObjectContainer" key="IBDocument.Objects">
@@ -251,6 +251,6 @@
 		<string key="IBDocument.TargetRuntimeIdentifier">IBIPadFramework</string>
 		<bool key="IBDocument.PluginDeclaredDependenciesTrackSystemTargetVersion">YES</bool>
 		<int key="IBDocument.defaultPropertyAccessControl">3</int>
-		<string key="IBCocoaTouchPluginVersion">1930</string>
+		<string key="IBCocoaTouchPluginVersion">2083</string>
 	</data>
 </archive>

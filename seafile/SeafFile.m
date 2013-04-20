@@ -80,9 +80,15 @@
 - (void)updateWithEntry:(SeafBase *)entry
 {
     SeafFile *file = (SeafFile *)entry;
+    if ([self.oid isEqualToString:entry.oid])
+        return;
     [super updateWithEntry:entry];
     filesize = file.filesize;
     _mtime = file.mtime;
+    self.ooid = nil;
+    self.state = SEAF_DENTRY_INIT;
+    [self loadCache];
+    [self.delegate entryChanged:self];
 }
 
 + (NSString *)documentPath:(NSString*)fileId
@@ -254,22 +260,20 @@
 
 - (BOOL)realLoadCache
 {
-    NSString *did = self.oid;
     DownloadedFile *dfile = [self loadCacheObj];
-    if (dfile)
-        did =  dfile.oid;
+    if (!self.oid)
+        self.oid = dfile.oid;
+    NSString *did = self.oid;
+    //if (dfile)         did = dfile.oid;
+
     if (![[NSFileManager defaultManager] fileExistsAtPath:[SeafFile documentPath:did]]) {
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        if (dfile) {
-            NSManagedObjectContext *context = [appdelegate managedObjectContext];
-            [context deleteObject:dfile];
-        }
         return NO;
     }
     [self setOoid:did];
-    if ([[NSFileManager defaultManager] fileExistsAtPath:dfile.mpath]) {
+    if (dfile && dfile.mpath && [[NSFileManager defaultManager] fileExistsAtPath:dfile.mpath]) {
         self.mpath = dfile.mpath;
         self.filesize = [Utils fileSizeAtPath1:self.mpath];
+        [self autoupload];
     }
     [self.delegate entry:self contentUpdated:YES completeness:100];
     return YES;
@@ -413,7 +417,7 @@
 
 - (BOOL)editable
 {
-    return [self hasCache] && [connection repoEditable:self.repoId];
+    return [connection repoEditable:self.repoId];
 }
 
 - (NSString *)content
@@ -422,6 +426,16 @@
         return [Utils stringContent:self.mpath];
     }
     return [Utils stringContent:[self documentPath]];
+}
+
+- (void)autoupload
+{
+    if (ufile && ufile.uploading)
+        return;
+    if ([self.delegate conformsToProtocol:@protocol(SeafFileUploadDelegate)])
+        [self upload:(id<SeafFileUploadDelegate>)self.delegate];
+    else
+        [self upload:self.udelegate];
 }
 
 - (BOOL)saveContent:(NSString *)content
@@ -438,14 +452,12 @@
         Debug("newpath=%@, ret=%d\n", newpath, ret);
         if (ret) {
             self.mpath = newpath;
-            ret = [self savetoCache];
-            if (ret) {
-                _preViewURL = nil;
-                _checkoutURL = nil;
-                self.filesize = [Utils fileSizeAtPath1:self.mpath];
-                self.mtime = [[NSDate date] timeIntervalSince1970];
-            } else
-                self.mpath = nil;
+            [self savetoCache];
+            _preViewURL = nil;
+            _checkoutURL = nil;
+            self.filesize = [Utils fileSizeAtPath1:self.mpath];
+            self.mtime = [[NSDate date] timeIntervalSince1970];
+            [self autoupload];
         }
         return ret;
     }
@@ -465,10 +477,10 @@
 {
     if (!self.mpath)
         return;
+    self.udelegate = dg;
     if (!self.ufile) {
         self.ufile = [[SeafUploadFile alloc] initWithPath:self.mpath];
         self.ufile.delegate = self;
-        self.udelegate = dg;
     }
     [self.ufile upload:connection repo:self.repoId path:self.path update:YES];
 }
@@ -497,6 +509,7 @@
         NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
         [formatter setDateFormat:@"yyyy-MM-dd-HH.mm.ss"];
         self.ooid = [self.ooid stringByAppendingString:[formatter stringFromDate:[NSDate date]]];
+        self.oid = self.ooid;
         [[NSFileManager defaultManager] moveItemAtPath:self.mpath toPath:[self documentPath] error:nil];
         self.mpath = nil;
         [self savetoCache];

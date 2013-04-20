@@ -83,7 +83,8 @@
 
 - (void)updateWithEntry:(SeafBase *)entry
 {
-    _oid = entry.oid;
+    if (_oid != entry.oid)
+        _oid = entry.oid;
 }
 
 - (NSString *)key

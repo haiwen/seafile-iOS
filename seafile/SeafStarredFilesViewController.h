@@ -11,10 +11,11 @@
 #import "SeafStarredFile.h"
 
 
-@interface SeafStarredFilesViewController : UITableViewController<SeafDentryDelegate, SeafStarFileDelegate>
+@interface SeafStarredFilesViewController : UITableViewController<UIActionSheetDelegate, SeafDentryDelegate, SeafStarFileDelegate, SeafFileUploadDelegate>
 
 @property (strong) SeafConnection *connection;
 
 - (void)initTabBarItem;
+- (void)refreshView;
 
 @end
