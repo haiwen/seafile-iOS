@@ -1504,7 +1504,7 @@
 				LastUpgradeCheck = 0460;
 				ORGANIZATIONNAME = tsinghua;
 			};
-			buildConfigurationList = 57DB826715A833F900097CEC /* Build configuration list for PBXProject "seafile" */;
+			buildConfigurationList = 57DB826715A833F900097CEC /* Build configuration list for PBXProject "seafilePro" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -2279,7 +2279,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		57DB826715A833F900097CEC /* Build configuration list for PBXProject "seafile" */ = {
+		57DB826715A833F900097CEC /* Build configuration list for PBXProject "seafilePro" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				57DB829415A833FA00097CEC /* Debug */,
