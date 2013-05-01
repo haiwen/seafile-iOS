@@ -115,23 +115,43 @@
     [self.tableView reloadData];
 }
 
+- (void)delayupload
+{
+    [self uploadFile:_selectedindex];
+}
 - (void)addPhotos:(id)sender
 {
     if (self.picker)
         return;
     picker = [[CZPhotoPickerController alloc] initWithPresentingViewController:self withCompletionBlock:^(UIImagePickerController *imagePickerController, NSDictionary *imageInfoDict) {
+        NSString *filename;
         self.picker = nil;
-        if (self.modalViewController)
-           [self dismissViewControllerAnimated:YES completion:nil];
         UIImage *image = [imageInfoDict objectForKey:@"UIImagePickerControllerOriginalImage"];
+        if (image) {
+            filename = [NSString stringWithFormat:@"Photo %@.jpg", [formatter stringFromDate:[NSDate date]]];
+            NSString *path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
+            [UIImageJPEGRepresentation(image, 1.0) writeToFile:path atomically:YES];
+        }
+
+        if (self.modalViewController)
+            [self dismissViewControllerAnimated:YES completion:nil];
         if (!image)
             return;
-        NSString *filename = [NSString stringWithFormat:@"Photo %@.jpg", [formatter stringFromDate:[NSDate date]] ];
-        NSString *path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
-        [UIImageJPEGRepresentation(image, 1.0) writeToFile:path atomically:YES];
+
         [self loadEntries];
-        [self.tableView reloadData];
-        [self uploadFileWithName:filename];
+        if (IsIpad()) {
+            [self uploadFile:_selectedindex];
+        } else {
+            int i = 0;
+            for (SeafUploadFile *ufile in self.entries) {
+                if ([ufile.name isEqualToString:filename]) {
+                    _selectedindex = [NSIndexPath indexPathForRow:i inSection:0];
+                    break;
+                }
+                ++i;
+            }
+            [self performSelector:@selector(delayupload) withObject:self afterDelay:0.5];
+        }
     }];
     picker.allowsEditing = NO;
     [picker showFromBarButtonItem:sender];
@@ -176,22 +196,6 @@
 - (void)chooseUploadDir:(SeafDir *)dir
 {
     [[_entries objectAtIndex:_selectedindex.row] upload:_connection repo:dir.repoId path:dir.path update:NO];
-}
-
-- (void)uploadFileWithName:(NSString *)filename
-{
-    int i = 0;
-    NSIndexPath *indexPath = nil;
-    for (SeafUploadFile *ufile in self.entries) {
-        if ([ufile.name isEqualToString:filename]) {
-            indexPath = [NSIndexPath indexPathForRow:i inSection:0];
-            break;
-        }
-        ++i;
-    }
-    if (indexPath) {
-        [self uploadFile:indexPath];
-    }
 }
 
 - (void)uploadFile:(NSIndexPath *)index
