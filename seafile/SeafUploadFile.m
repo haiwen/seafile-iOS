@@ -276,6 +276,7 @@
 
 - (BOOL)saveContent:(NSString *)content
 {
+    _preViewURL = nil;
     return [content writeToFile:self.path atomically:YES encoding:NSUTF8StringEncoding error:nil];
 }
 

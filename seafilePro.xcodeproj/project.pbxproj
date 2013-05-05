@@ -542,6 +542,40 @@
 		577B6C6616AADBA3008E82C2 /* SeafCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 577B6C6416AADBA3008E82C2 /* SeafCell.m */; };
 		577B6C6816AADC26008E82C2 /* SeafCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 577B6C6716AADC26008E82C2 /* SeafCell.xib */; };
 		577B6C6916AADC26008E82C2 /* SeafCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 577B6C6716AADC26008E82C2 /* SeafCell.xib */; };
+		5782EE6C1734F3A300A76338 /* bg.png in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE641734F3A200A76338 /* bg.png */; };
+		5782EE6D1734F3A300A76338 /* bg.png in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE641734F3A200A76338 /* bg.png */; };
+		5782EE6E1734F3A300A76338 /* edit_file_md.html in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE651734F3A200A76338 /* edit_file_md.html */; };
+		5782EE6F1734F3A300A76338 /* edit_file_md.html in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE651734F3A200A76338 /* edit_file_md.html */; };
+		5782EE701734F3A300A76338 /* jquery-ui-1.8.16.custom.css in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE661734F3A200A76338 /* jquery-ui-1.8.16.custom.css */; };
+		5782EE711734F3A300A76338 /* jquery-ui-1.8.16.custom.css in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE661734F3A200A76338 /* jquery-ui-1.8.16.custom.css */; };
+		5782EE721734F3A300A76338 /* logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE671734F3A300A76338 /* logo.png */; };
+		5782EE731734F3A300A76338 /* logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE671734F3A300A76338 /* logo.png */; };
+		5782EE741734F3A300A76338 /* Markdown.Editor.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE681734F3A300A76338 /* Markdown.Editor.js */; };
+		5782EE751734F3A300A76338 /* Markdown.Editor.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE681734F3A300A76338 /* Markdown.Editor.js */; };
+		5782EE761734F3A300A76338 /* pagedown.css in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE691734F3A300A76338 /* pagedown.css */; };
+		5782EE771734F3A300A76338 /* pagedown.css in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE691734F3A300A76338 /* pagedown.css */; };
+		5782EE781734F3A300A76338 /* seahub.css in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE6A1734F3A300A76338 /* seahub.css */; };
+		5782EE791734F3A300A76338 /* seahub.css in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE6A1734F3A300A76338 /* seahub.css */; };
+		5782EE7A1734F3A300A76338 /* wmd-buttons.png in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE6B1734F3A300A76338 /* wmd-buttons.png */; };
+		5782EE7B1734F3A300A76338 /* wmd-buttons.png in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE6B1734F3A300A76338 /* wmd-buttons.png */; };
+		5782EE84173571FB00A76338 /* gettheme.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE7C173571FB00A76338 /* gettheme.js */; };
+		5782EE85173571FB00A76338 /* gettheme.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE7C173571FB00A76338 /* gettheme.js */; };
+		5782EE86173571FB00A76338 /* jquery-1.8.3.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE7D173571FB00A76338 /* jquery-1.8.3.min.js */; };
+		5782EE87173571FB00A76338 /* jquery-1.8.3.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE7D173571FB00A76338 /* jquery-1.8.3.min.js */; };
+		5782EE88173571FB00A76338 /* jqx.base.css in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE7E173571FB00A76338 /* jqx.base.css */; };
+		5782EE89173571FB00A76338 /* jqx.base.css in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE7E173571FB00A76338 /* jqx.base.css */; };
+		5782EE8A173571FB00A76338 /* jqxbuttons.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE7F173571FB00A76338 /* jqxbuttons.js */; };
+		5782EE8B173571FB00A76338 /* jqxbuttons.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE7F173571FB00A76338 /* jqxbuttons.js */; };
+		5782EE8C173571FB00A76338 /* jqxcore.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE80173571FB00A76338 /* jqxcore.js */; };
+		5782EE8D173571FB00A76338 /* jqxcore.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE80173571FB00A76338 /* jqxcore.js */; };
+		5782EE8E173571FB00A76338 /* jqxpanel.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE81173571FB00A76338 /* jqxpanel.js */; };
+		5782EE8F173571FB00A76338 /* jqxpanel.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE81173571FB00A76338 /* jqxpanel.js */; };
+		5782EE90173571FB00A76338 /* jqxscrollbar.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE82173571FB00A76338 /* jqxscrollbar.js */; };
+		5782EE91173571FB00A76338 /* jqxscrollbar.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE82173571FB00A76338 /* jqxscrollbar.js */; };
+		5782EE92173571FB00A76338 /* jqxsplitter.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE83173571FB00A76338 /* jqxsplitter.js */; };
+		5782EE93173571FB00A76338 /* jqxsplitter.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE83173571FB00A76338 /* jqxsplitter.js */; };
+		5782EE951736AA7200A76338 /* jquery.simplemodal.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE941736AA7200A76338 /* jquery.simplemodal.js */; };
+		5782EE961736AA7200A76338 /* jquery.simplemodal.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE941736AA7200A76338 /* jquery.simplemodal.js */; };
 		57853C8F164675CB00CE8857 /* SeafStarredFilesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57853C8E164675CB00CE8857 /* SeafStarredFilesViewController.m */; };
 		57853C9216467A5000CE8857 /* gray-star-icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 57853C9116467A5000CE8857 /* gray-star-icon.png */; };
 		57853C951646818A00CE8857 /* SeafStarredFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57853C941646818A00CE8857 /* SeafStarredFile.m */; };
@@ -879,6 +913,23 @@
 		577B6C6316AADBA3008E82C2 /* SeafCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafCell.h; sourceTree = "<group>"; };
 		577B6C6416AADBA3008E82C2 /* SeafCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafCell.m; sourceTree = "<group>"; };
 		577B6C6716AADC26008E82C2 /* SeafCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafCell.xib; sourceTree = "<group>"; };
+		5782EE641734F3A200A76338 /* bg.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = bg.png; path = htmls/bg.png; sourceTree = SOURCE_ROOT; };
+		5782EE651734F3A200A76338 /* edit_file_md.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = edit_file_md.html; path = htmls/edit_file_md.html; sourceTree = SOURCE_ROOT; };
+		5782EE661734F3A200A76338 /* jquery-ui-1.8.16.custom.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; name = "jquery-ui-1.8.16.custom.css"; path = "htmls/jquery-ui-1.8.16.custom.css"; sourceTree = SOURCE_ROOT; };
+		5782EE671734F3A300A76338 /* logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = logo.png; path = htmls/logo.png; sourceTree = SOURCE_ROOT; };
+		5782EE681734F3A300A76338 /* Markdown.Editor.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = Markdown.Editor.js; path = htmls/Markdown.Editor.js; sourceTree = SOURCE_ROOT; };
+		5782EE691734F3A300A76338 /* pagedown.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; name = pagedown.css; path = htmls/pagedown.css; sourceTree = SOURCE_ROOT; };
+		5782EE6A1734F3A300A76338 /* seahub.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; name = seahub.css; path = htmls/seahub.css; sourceTree = SOURCE_ROOT; };
+		5782EE6B1734F3A300A76338 /* wmd-buttons.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "wmd-buttons.png"; path = "htmls/wmd-buttons.png"; sourceTree = SOURCE_ROOT; };
+		5782EE7C173571FB00A76338 /* gettheme.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = gettheme.js; path = htmls/gettheme.js; sourceTree = SOURCE_ROOT; };
+		5782EE7D173571FB00A76338 /* jquery-1.8.3.min.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = "jquery-1.8.3.min.js"; path = "htmls/jquery-1.8.3.min.js"; sourceTree = SOURCE_ROOT; };
+		5782EE7E173571FB00A76338 /* jqx.base.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; name = jqx.base.css; path = htmls/jqx.base.css; sourceTree = SOURCE_ROOT; };
+		5782EE7F173571FB00A76338 /* jqxbuttons.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = jqxbuttons.js; path = htmls/jqxbuttons.js; sourceTree = SOURCE_ROOT; };
+		5782EE80173571FB00A76338 /* jqxcore.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = jqxcore.js; path = htmls/jqxcore.js; sourceTree = SOURCE_ROOT; };
+		5782EE81173571FB00A76338 /* jqxpanel.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = jqxpanel.js; path = htmls/jqxpanel.js; sourceTree = SOURCE_ROOT; };
+		5782EE82173571FB00A76338 /* jqxscrollbar.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = jqxscrollbar.js; path = htmls/jqxscrollbar.js; sourceTree = SOURCE_ROOT; };
+		5782EE83173571FB00A76338 /* jqxsplitter.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = jqxsplitter.js; path = htmls/jqxsplitter.js; sourceTree = SOURCE_ROOT; };
+		5782EE941736AA7200A76338 /* jquery.simplemodal.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = jquery.simplemodal.js; path = htmls/jquery.simplemodal.js; sourceTree = SOURCE_ROOT; };
 		57853C8D164675CB00CE8857 /* SeafStarredFilesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafStarredFilesViewController.h; sourceTree = "<group>"; };
 		57853C8E164675CB00CE8857 /* SeafStarredFilesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafStarredFilesViewController.m; sourceTree = "<group>"; };
 		57853C9116467A5000CE8857 /* gray-star-icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "gray-star-icon.png"; sourceTree = "<group>"; };
@@ -1043,13 +1094,6 @@
 		5709512615B9ACDF00F48C08 /* views */ = {
 			isa = PBXGroup;
 			children = (
-				570B7B061715D866002F0E1D /* view_seaf.html */,
-				570B7AFA1715D657002F0E1D /* edit_file_seaf.html */,
-				570B7AFB1715D657002F0E1D /* jq.min.js */,
-				570B7AFC1715D658002F0E1D /* Markdown.Converter.js */,
-				570B7AFD1715D658002F0E1D /* Markdown.Extra.js */,
-				5779C7D8171473E000307C36 /* edit_file_text.html */,
-				5779C7B0171088D900307C36 /* view_markdown.html */,
 				5779C7D11714702100307C36 /* SeafTextEditorViewController.h */,
 				5779C7D21714702100307C36 /* SeafTextEditorViewController.m */,
 				5779C7D31714702100307C36 /* SeafTextEditorViewController.xib */,
@@ -1361,6 +1405,37 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
+		5782EE631734F37B00A76338 /* htmls */ = {
+			isa = PBXGroup;
+			children = (
+				5782EE941736AA7200A76338 /* jquery.simplemodal.js */,
+				5782EE7C173571FB00A76338 /* gettheme.js */,
+				5782EE7D173571FB00A76338 /* jquery-1.8.3.min.js */,
+				5782EE7E173571FB00A76338 /* jqx.base.css */,
+				5782EE7F173571FB00A76338 /* jqxbuttons.js */,
+				5782EE80173571FB00A76338 /* jqxcore.js */,
+				5782EE81173571FB00A76338 /* jqxpanel.js */,
+				5782EE82173571FB00A76338 /* jqxscrollbar.js */,
+				5782EE83173571FB00A76338 /* jqxsplitter.js */,
+				5782EE641734F3A200A76338 /* bg.png */,
+				5782EE651734F3A200A76338 /* edit_file_md.html */,
+				5782EE661734F3A200A76338 /* jquery-ui-1.8.16.custom.css */,
+				5782EE671734F3A300A76338 /* logo.png */,
+				5782EE681734F3A300A76338 /* Markdown.Editor.js */,
+				5782EE691734F3A300A76338 /* pagedown.css */,
+				5782EE6A1734F3A300A76338 /* seahub.css */,
+				5782EE6B1734F3A300A76338 /* wmd-buttons.png */,
+				570B7B061715D866002F0E1D /* view_seaf.html */,
+				570B7AFA1715D657002F0E1D /* edit_file_seaf.html */,
+				570B7AFB1715D657002F0E1D /* jq.min.js */,
+				570B7AFC1715D658002F0E1D /* Markdown.Converter.js */,
+				570B7AFD1715D658002F0E1D /* Markdown.Extra.js */,
+				5779C7D8171473E000307C36 /* edit_file_text.html */,
+				5779C7B0171088D900307C36 /* view_markdown.html */,
+			);
+			name = htmls;
+			sourceTree = "<group>";
+		};
 		57DB826215A833F900097CEC = {
 			isa = PBXGroup;
 			children = (
@@ -1400,6 +1475,7 @@
 		57DB827915A833FA00097CEC /* seafile */ = {
 			isa = PBXGroup;
 			children = (
+				5782EE631734F37B00A76338 /* htmls */,
 				57094B3315B9A64500F48C08 /* images */,
 				5709512715B9ACF300F48C08 /* models */,
 				57396B7D1657E3850089F32F /* Resources */,
@@ -1527,6 +1603,15 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5782EE85173571FB00A76338 /* gettheme.js in Resources */,
+				5782EE87173571FB00A76338 /* jquery-1.8.3.min.js in Resources */,
+				5782EE8B173571FB00A76338 /* jqxbuttons.js in Resources */,
+				5782EE8D173571FB00A76338 /* jqxcore.js in Resources */,
+				5782EE8F173571FB00A76338 /* jqxpanel.js in Resources */,
+				5782EE91173571FB00A76338 /* jqxscrollbar.js in Resources */,
+				5782EE93173571FB00A76338 /* jqxsplitter.js in Resources */,
+				5782EE961736AA7200A76338 /* jquery.simplemodal.js in Resources */,
+				5782EE751734F3A300A76338 /* Markdown.Editor.js in Resources */,
 				571D8CE61677881400F1A22C /* InfoPlist.strings in Resources */,
 				571D8CE71677881400F1A22C /* FolderView_iPhone.storyboard in Resources */,
 				571D8CE81677881400F1A22C /* FolderView_iPad.storyboard in Resources */,
@@ -1749,6 +1834,14 @@
 				570B7AFF1715D658002F0E1D /* edit_file_seaf.html in Resources */,
 				570B7B081715D866002F0E1D /* view_seaf.html in Resources */,
 				57122F001719343D00F4E01C /* text-directory-documents-encrypted.png in Resources */,
+				5782EE6D1734F3A300A76338 /* bg.png in Resources */,
+				5782EE6F1734F3A300A76338 /* edit_file_md.html in Resources */,
+				5782EE711734F3A300A76338 /* jquery-ui-1.8.16.custom.css in Resources */,
+				5782EE731734F3A300A76338 /* logo.png in Resources */,
+				5782EE771734F3A300A76338 /* pagedown.css in Resources */,
+				5782EE791734F3A300A76338 /* seahub.css in Resources */,
+				5782EE7B1734F3A300A76338 /* wmd-buttons.png in Resources */,
+				5782EE89173571FB00A76338 /* jqx.base.css in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1756,6 +1849,15 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5782EE84173571FB00A76338 /* gettheme.js in Resources */,
+				5782EE86173571FB00A76338 /* jquery-1.8.3.min.js in Resources */,
+				5782EE8A173571FB00A76338 /* jqxbuttons.js in Resources */,
+				5782EE8C173571FB00A76338 /* jqxcore.js in Resources */,
+				5782EE8E173571FB00A76338 /* jqxpanel.js in Resources */,
+				5782EE90173571FB00A76338 /* jqxscrollbar.js in Resources */,
+				5782EE92173571FB00A76338 /* jqxsplitter.js in Resources */,
+				5782EE741734F3A300A76338 /* Markdown.Editor.js in Resources */,
+				5782EE951736AA7200A76338 /* jquery.simplemodal.js in Resources */,
 				570B7B001715D658002F0E1D /* jq.min.js in Resources */,
 				570B7B021715D658002F0E1D /* Markdown.Converter.js in Resources */,
 				570B7B041715D658002F0E1D /* Markdown.Extra.js in Resources */,
@@ -1978,6 +2080,14 @@
 				570B7AFE1715D658002F0E1D /* edit_file_seaf.html in Resources */,
 				570B7B071715D866002F0E1D /* view_seaf.html in Resources */,
 				57122EFF1719343D00F4E01C /* text-directory-documents-encrypted.png in Resources */,
+				5782EE6C1734F3A300A76338 /* bg.png in Resources */,
+				5782EE6E1734F3A300A76338 /* edit_file_md.html in Resources */,
+				5782EE701734F3A300A76338 /* jquery-ui-1.8.16.custom.css in Resources */,
+				5782EE721734F3A300A76338 /* logo.png in Resources */,
+				5782EE761734F3A300A76338 /* pagedown.css in Resources */,
+				5782EE781734F3A300A76338 /* seahub.css in Resources */,
+				5782EE7A1734F3A300A76338 /* wmd-buttons.png in Resources */,
+				5782EE88173571FB00A76338 /* jqx.base.css in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

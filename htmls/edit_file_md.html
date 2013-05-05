@@ -1,0 +1,190 @@
+<html><head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" type="text/css" href="./seahub.css">
+    <link rel="stylesheet" type="text/css" href="./pagedown.css">
+    <style type="text/css">
+      #wmd-preview {
+      border:1px solid #ccc;
+      min-height:0;
+      overflow:auto;
+      }
+      .article p {
+      margin:0;
+      }
+    </style>
+    <link rel="stylesheet" href="./jqx.base.css" type="text/css" />
+    <script type="text/javascript" src="./jquery-1.8.3.min.js"></script>
+    <script type="text/javascript" src="./gettheme.js"></script>
+    <script type="text/javascript" src="./jqxcore.js"></script>
+    <script type="text/javascript" src="./jqxsplitter.js"></script>
+    <script type="text/javascript" src="./jqxbuttons.js"></script>
+    <script type="text/javascript" src="./jqxscrollbar.js"></script>
+    <script type="text/javascript" src="./jqxpanel.js"></script>
+    <script type="text/javascript">
+      function onresize(){
+      //setContent("window:"+$(window).width()+","+$(window).height())
+      $('#mainSplitter').css({width:$(window).width() - 5 });
+      $('#mainSplitter').css({height:$(window).height() - 5 });
+      $('#wmd-input').css({'height':$(window).height() - 2 });
+      $('#wmd-preview').css({ 'height':$(window).height() - 2});
+      }
+
+      //$(window).resize(onresize)
+
+      $(document).ready(function () {
+      var theme = getDemoTheme();
+      $('#mainSplitter').jqxSplitter({ width: $(window).width()-5, height: $(window).height()-2, theme: theme, panels: [{ size: $(window).width()*0.48 }, { size: $(window).width()*0.48}] });
+      onresize()
+      });
+
+    </script>
+  </head>
+
+  <body class="default">
+    <div id="wmd-button-bar" style="display: none;"></div>
+    <div id='jqxWidget'>
+      <div id="mainSplitter" class="ovhd" style="width:100%">
+          <textarea class="wmd-input fleft splitter-panel" id="wmd-input" style="overflow:auto; font-size:14px"></textarea>
+        <div id="wmd-preview" class="article fright splitter-panel"></div>
+      </div><!-- mainSplitter -->
+    </div>
+
+ <div id="md-edit-help" class="hide">
+        <h3>Standard Syntax</h3>
+        <table>
+          <tbody>
+            <tr>
+              <th>Enter this</th>
+              <th>To see this</th>
+            </tr>
+            <tr>
+              <td><pre>**bold** text</pre></td>
+              <td><strong class="bold">bold</strong> text</td>
+            </tr>
+            <tr>
+              <td><pre>*italics* text</pre></td>
+              <td><span class="italic">italics</span> text</td>
+            </tr>
+            <tr>
+              <td><pre>Header
+                  ====== </pre></td>
+              <td>
+                <h3>Header</h3>
+              </td>
+            </tr>
+            <tr>
+              <td><pre>Smaller header
+                  --------- </pre></td>
+              <td><h4>Smaller header</h4></td>
+            </tr>
+            <tr>
+              <td><pre>[Link something](https://cloud.seafile.com/)</pre></td>
+              <td><a href="https://cloud.seafile.com/">Link something</a></td>
+            </tr>
+            <tr>
+              <td><pre>![alt text](https://cloud.seafile.com/media/img/logo.png)</pre></td>
+              <td><img src="https://cloud.seafile.com/media/img/logo.png" alt="" /></td>
+            </tr>
+            <!--                         <tr> -->
+            <!--                             <td><pre>* unordered list -->
+            <!-- * leave empty lines around the list</pre></td> -->
+            <!--                             <td> -->
+            <!--                                 <ul> -->
+            <!--                                     <li>unordered list</li> -->
+            <!--                                     <li>leave empty lines around the list</li> -->
+            <!--                                 </ul> -->
+            <!--                             </td> -->
+            <!--                         </tr> -->
+            <!--                         <tr> -->
+            <!--                             <td><pre>1. ordered list -->
+            <!-- 2. leave empty lines</pre></td> -->
+            <!--                             <td> -->
+            <!--                                 <ol> -->
+            <!--                                     <li>ordered list</li> -->
+            <!--                                     <li>leave empty lines</li> -->
+            <!--                                 </ol> -->
+            <!--                             </td> -->
+            <!--                         </tr> -->
+        </tbody></table>
+        <h3>Extended Syntax for Wiki</h3>
+        <ul>
+          <li><p>[[page name]] or [[display name|page name]] : internal link to another wiki page.</p></li>
+          <li><p>[[images/pic.jpg]]: internal link to a picture at this-library/images/pic.jpg.</p></li>
+          <li><p>[[folder/file.doc]]: internal link to a file at this-library/folder/file.doc.</p></li>
+        </ul>
+      </div>
+
+    <script type="text/javascript" src="./Markdown.Converter.js"></script>
+    <script type="text/javascript" src="./Markdown.Editor.js"></script>
+    <script type="text/javascript" src="./Markdown.Extra.js"></script>
+    <script type="text/javascript">
+      var converter = new Markdown.Converter();
+      converter.hooks.chain("preBlockGamut", function (text, rbg) {
+      return text.replace(/^ {0,3}""" *\n((?:.*?\n)+?) {0,3}""" *$/gm, function (whole, inner) {
+      return "<blockquote>" + rbg(inner) + "</blockquote>\n";
+      });
+      });
+      Markdown.Extra.init(converter, {extensions: ["fenced_code_gfm", "tables", "def_list"]});
+
+      var local_toolbar_strs = {
+      bold: "Strong <strong> Ctrl+B",
+        boldexample: "strong text",
+
+        italic: "Emphasis <em> Ctrl+I",
+          italicexample: "emphasized text",
+
+          link: "Hyperlink <a> Ctrl+L",
+            linkdescription: "enter link description here",
+            linkdialog: "<h3>Insert Hyperlink</h3><p>http://example.com/ \"optional title\"</p>",
+
+            quote: "Blockquote <blockquote> Ctrl+Q",
+              quoteexample: "Blockquote",
+
+              code: "Code Sample <pre><code> Ctrl+K",
+                  codeexample: "enter code here",
+
+                  image: "Image <img> Ctrl+G",
+                  imagedescription: "enter image description here",
+                  imagedialog: "<h3>Insert Image</h3><p>http://example.com/images/diagram.jpg \"optional title\"</p>",
+
+                  olist: "Numbered List <ol> Ctrl+O",
+                    ulist: "Bulleted List <ul> Ctrl+U",
+                      litem: "List item",
+
+                      heading: "Heading <h1>/<h2> Ctrl+H",
+                          headingexample: "Heading",
+
+                          hr: "Horizontal Rule <hr> Ctrl+R",
+                          undo: "Undo - Ctrl+Z",
+                          redo: "Redo - Ctrl+Y",
+                          redomac: "Redo - Ctrl+Shift+Z",
+
+                          help: "Editing Help"
+                          };
+
+                          var editor = new Markdown.Editor(converter, null, { helpButton: { handler: mdEditHelp }, strings: local_toolbar_strs });
+                          editor.run();
+                          function mdEditHelp() {
+                          $('#md-edit-help').modal();
+                          }
+
+      function setContent(content) {
+        document.getElementById("wmd-input").value = content
+        $('#wmd-preview').html(converter.makeHtml(content, '0'))
+      }
+      
+      function getContent() {
+        return document.getElementById("wmd-input").value
+      }
+    </script>
+    <script type="text/javascript">
+      function btClicked(tag) {
+        var bid = "wmd-"+tag+"-button"
+        var fireOnThis = document.getElementById(bid);
+        var evObj = document.createEvent('MouseEvents');
+        evObj.initEvent( 'click', true, false );
+        fireOnThis.dispatchEvent(evObj);
+      }
+    </script>
+    <script type='text/javascript' src='jquery.simplemodal.js'></script>
+</body></html>
