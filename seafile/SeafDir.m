@@ -270,6 +270,24 @@
      }];
 }
 
+- (void)createFile:(NSString *)newFileName
+{
+    NSString *path = [self.path stringByAppendingPathComponent:newFileName];
+    NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@&reloaddir=true", self.repoId, [path escapedUrl]];
+
+    [connection sendPost:requestUrl repo:self.repoId form:@"operation=create"
+                 success:
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+         Debug("resp=%d\n", response.statusCode);
+         [self handleResponse:response json:JSON data:data];
+     }
+                 failure:
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+         Warning("resp=%d\n", response.statusCode);
+         [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
+     }];
+}
+
 - (void)delEntries:(NSArray *)entries
 {
     int i = 0;

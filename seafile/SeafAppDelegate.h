@@ -41,8 +41,6 @@
 @property (readonly) UITabBarController *tabbarController;
 
 @property (readonly) NSArray *toolItems1;
-@property (readonly) NSArray *toolItems2;
-@property (readonly) NSArray *toolItems3;
 
 - (void)saveContext;
 - (NSURL *)applicationDocumentsDirectory;

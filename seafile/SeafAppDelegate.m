@@ -37,7 +37,7 @@ enum {
 @synthesize detailVC = _detailVC;
 @synthesize masterNavController = _masterNacController;
 @synthesize tabbarController = _tabbarController;
-@synthesize toolItems1 = _toolItems1, toolItems2 = _toolItems2, toolItems3 = _toolItems3;
+@synthesize toolItems1 = _toolItems1;
 
 @synthesize bgTask;
 @synthesize downloadnum;
@@ -258,7 +258,7 @@ enum {
     UIBarButtonItem *fixedSpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:rootViewController action:@selector(editOperation:)];
     fixedSpaceItem.width = 10.0f;
 
-    NSArray *itemsTitles = [NSArray arrayWithObjects:@"New Folder", @"Copy", @"Move", @"Delete", @"Paste", @"MoveTo", @"Cancel", nil ];
+    NSArray *itemsTitles = [NSArray arrayWithObjects:@"New Folder", @"New File", @"Copy", @"Move", @"Delete", @"Paste", @"MoveTo", @"Cancel", nil ];
 
     UIBarButtonItem *items[EDITOP_NUM];
     items[0] = flexibleFpaceItem;
@@ -267,11 +267,7 @@ enum {
         items[i].tag = i;
     }
 
-    //_toolItems1 = [NSArray arrayWithObjects:items[1], items[0], items[2], items[0], items[3], fixedSpaceItem, items[4], nil ];
-    _toolItems1 = [NSArray arrayWithObjects:items[1], items[0], items[4], nil ];
-    _toolItems2 = [NSArray arrayWithObjects:items[5], items[0], items[7], nil ];
-    _toolItems3 = [NSArray arrayWithObjects:items[6], items[0], items[7], nil ];
-
+    _toolItems1 = [NSArray arrayWithObjects:items[EDITOP_MKDIR], items[EDITOP_SPACE], items[EDITOP_CREATE], items[EDITOP_SPACE], items[EDITOP_DELETE], nil ];
 }
 
 - (void)initTabController

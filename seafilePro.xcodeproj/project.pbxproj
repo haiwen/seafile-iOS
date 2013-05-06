@@ -530,10 +530,6 @@
 		57713AA315E53A5E00651A9C /* InputAlertPrompt.m in Sources */ = {isa = PBXBuildFile; fileRef = 57713AA215E53A5E00651A9C /* InputAlertPrompt.m */; };
 		5779C7BB171088D900307C36 /* view_markdown.html in Resources */ = {isa = PBXBuildFile; fileRef = 5779C7B0171088D900307C36 /* view_markdown.html */; };
 		5779C7BC171088D900307C36 /* view_markdown.html in Resources */ = {isa = PBXBuildFile; fileRef = 5779C7B0171088D900307C36 /* view_markdown.html */; };
-		5779C7D41714702100307C36 /* SeafTextEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5779C7D21714702100307C36 /* SeafTextEditorViewController.m */; };
-		5779C7D51714702100307C36 /* SeafTextEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5779C7D21714702100307C36 /* SeafTextEditorViewController.m */; };
-		5779C7D61714702100307C36 /* SeafTextEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5779C7D31714702100307C36 /* SeafTextEditorViewController.xib */; };
-		5779C7D71714702100307C36 /* SeafTextEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5779C7D31714702100307C36 /* SeafTextEditorViewController.xib */; };
 		5779C7D9171473E000307C36 /* edit_file_text.html in Resources */ = {isa = PBXBuildFile; fileRef = 5779C7D8171473E000307C36 /* edit_file_text.html */; };
 		5779C7DA171473E000307C36 /* edit_file_text.html in Resources */ = {isa = PBXBuildFile; fileRef = 5779C7D8171473E000307C36 /* edit_file_text.html */; };
 		577B6C6116AAD241008E82C2 /* tab-star.png in Resources */ = {isa = PBXBuildFile; fileRef = 577B6C6016AAD241008E82C2 /* tab-star.png */; };
@@ -602,6 +598,10 @@
 		57DB828A15A833FA00097CEC /* FolderView_iPad.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57DB828815A833FA00097CEC /* FolderView_iPad.storyboard */; };
 		57DB829015A833FA00097CEC /* SeafFileViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DB828F15A833FA00097CEC /* SeafFileViewController.m */; };
 		57DB829315A833FA00097CEC /* SeafDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DB829215A833FA00097CEC /* SeafDetailViewController.m */; };
+		57E1E89E1737ED0F006601FE /* SeafTextEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E1E89C1737ED0F006601FE /* SeafTextEditorViewController.m */; };
+		57E1E89F1737ED0F006601FE /* SeafTextEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E1E89C1737ED0F006601FE /* SeafTextEditorViewController.m */; };
+		57E1E8A01737ED0F006601FE /* SeafTextEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E89D1737ED0F006601FE /* SeafTextEditorViewController.xib */; };
+		57E1E8A11737ED0F006601FE /* SeafTextEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E89D1737ED0F006601FE /* SeafTextEditorViewController.xib */; };
 		57F0AAF616D8905C00364D18 /* CZPhotoPreviewViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57F0AAF316D8905C00364D18 /* CZPhotoPreviewViewController.xib */; };
 		57F0AAF716D8905C00364D18 /* CZPhotoPreviewViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57F0AAF316D8905C00364D18 /* CZPhotoPreviewViewController.xib */; };
 		57F0AAF816D8905C00364D18 /* CZPhotoPickerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57F0AAF416D8905C00364D18 /* CZPhotoPickerController.m */; };
@@ -905,9 +905,6 @@
 		57713A9F15E5351900651A9C /* InputAlertPrompt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InputAlertPrompt.h; sourceTree = "<group>"; };
 		57713AA215E53A5E00651A9C /* InputAlertPrompt.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = InputAlertPrompt.m; sourceTree = "<group>"; };
 		5779C7B0171088D900307C36 /* view_markdown.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = view_markdown.html; path = htmls/view_markdown.html; sourceTree = SOURCE_ROOT; };
-		5779C7D11714702100307C36 /* SeafTextEditorViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafTextEditorViewController.h; path = ../SeafTextEditorViewController.h; sourceTree = "<group>"; };
-		5779C7D21714702100307C36 /* SeafTextEditorViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafTextEditorViewController.m; path = ../SeafTextEditorViewController.m; sourceTree = "<group>"; };
-		5779C7D31714702100307C36 /* SeafTextEditorViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = SeafTextEditorViewController.xib; path = ../SeafTextEditorViewController.xib; sourceTree = "<group>"; };
 		5779C7D8171473E000307C36 /* edit_file_text.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = edit_file_text.html; path = htmls/edit_file_text.html; sourceTree = SOURCE_ROOT; };
 		577B6C6016AAD241008E82C2 /* tab-star.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-star.png"; sourceTree = "<group>"; };
 		577B6C6316AADBA3008E82C2 /* SeafCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafCell.h; sourceTree = "<group>"; };
@@ -966,6 +963,9 @@
 		57DB828F15A833FA00097CEC /* SeafFileViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafFileViewController.m; sourceTree = "<group>"; };
 		57DB829115A833FA00097CEC /* SeafDetailViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafDetailViewController.h; sourceTree = "<group>"; };
 		57DB829215A833FA00097CEC /* SeafDetailViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafDetailViewController.m; sourceTree = "<group>"; };
+		57E1E89B1737ED0F006601FE /* SeafTextEditorViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafTextEditorViewController.h; sourceTree = "<group>"; };
+		57E1E89C1737ED0F006601FE /* SeafTextEditorViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafTextEditorViewController.m; sourceTree = "<group>"; };
+		57E1E89D1737ED0F006601FE /* SeafTextEditorViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafTextEditorViewController.xib; sourceTree = "<group>"; };
 		57F0AAF016D8904100364D18 /* CZPhotoPickerController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CZPhotoPickerController.h; sourceTree = "<group>"; };
 		57F0AAF116D8904100364D18 /* CZPhotoPreviewViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CZPhotoPreviewViewController.h; sourceTree = "<group>"; };
 		57F0AAF316D8905C00364D18 /* CZPhotoPreviewViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = CZPhotoPreviewViewController.xib; sourceTree = "<group>"; };
@@ -1094,9 +1094,9 @@
 		5709512615B9ACDF00F48C08 /* views */ = {
 			isa = PBXGroup;
 			children = (
-				5779C7D11714702100307C36 /* SeafTextEditorViewController.h */,
-				5779C7D21714702100307C36 /* SeafTextEditorViewController.m */,
-				5779C7D31714702100307C36 /* SeafTextEditorViewController.xib */,
+				57E1E89B1737ED0F006601FE /* SeafTextEditorViewController.h */,
+				57E1E89C1737ED0F006601FE /* SeafTextEditorViewController.m */,
+				57E1E89D1737ED0F006601FE /* SeafTextEditorViewController.xib */,
 				57F0AAF016D8904100364D18 /* CZPhotoPickerController.h */,
 				57F0AAF416D8905C00364D18 /* CZPhotoPickerController.m */,
 				57F0AAF116D8904100364D18 /* CZPhotoPreviewViewController.h */,
@@ -1829,7 +1829,6 @@
 				577B6C6916AADC26008E82C2 /* SeafCell.xib in Resources */,
 				57F0AAF716D8905C00364D18 /* CZPhotoPreviewViewController.xib in Resources */,
 				5779C7BC171088D900307C36 /* view_markdown.html in Resources */,
-				5779C7D71714702100307C36 /* SeafTextEditorViewController.xib in Resources */,
 				5779C7DA171473E000307C36 /* edit_file_text.html in Resources */,
 				570B7AFF1715D658002F0E1D /* edit_file_seaf.html in Resources */,
 				570B7B081715D866002F0E1D /* view_seaf.html in Resources */,
@@ -1842,6 +1841,7 @@
 				5782EE791734F3A300A76338 /* seahub.css in Resources */,
 				5782EE7B1734F3A300A76338 /* wmd-buttons.png in Resources */,
 				5782EE89173571FB00A76338 /* jqx.base.css in Resources */,
+				57E1E8A11737ED0F006601FE /* SeafTextEditorViewController.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2075,7 +2075,6 @@
 				577B6C6816AADC26008E82C2 /* SeafCell.xib in Resources */,
 				57F0AAF616D8905C00364D18 /* CZPhotoPreviewViewController.xib in Resources */,
 				5779C7BB171088D900307C36 /* view_markdown.html in Resources */,
-				5779C7D61714702100307C36 /* SeafTextEditorViewController.xib in Resources */,
 				5779C7D9171473E000307C36 /* edit_file_text.html in Resources */,
 				570B7AFE1715D658002F0E1D /* edit_file_seaf.html in Resources */,
 				570B7B071715D866002F0E1D /* view_seaf.html in Resources */,
@@ -2088,6 +2087,7 @@
 				5782EE781734F3A300A76338 /* seahub.css in Resources */,
 				5782EE7A1734F3A300A76338 /* wmd-buttons.png in Resources */,
 				5782EE88173571FB00A76338 /* jqx.base.css in Resources */,
+				57E1E8A01737ED0F006601FE /* SeafTextEditorViewController.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2150,7 +2150,7 @@
 				577B6C6616AADBA3008E82C2 /* SeafCell.m in Sources */,
 				57F0AAF916D8905C00364D18 /* CZPhotoPickerController.m in Sources */,
 				57F0AAFB16D8905C00364D18 /* CZPhotoPreviewViewController.m in Sources */,
-				5779C7D51714702100307C36 /* SeafTextEditorViewController.m in Sources */,
+				57E1E89F1737ED0F006601FE /* SeafTextEditorViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2210,7 +2210,7 @@
 				577B6C6516AADBA3008E82C2 /* SeafCell.m in Sources */,
 				57F0AAF816D8905C00364D18 /* CZPhotoPickerController.m in Sources */,
 				57F0AAFA16D8905C00364D18 /* CZPhotoPreviewViewController.m in Sources */,
-				5779C7D41714702100307C36 /* SeafTextEditorViewController.m in Sources */,
+				57E1E89E1737ED0F006601FE /* SeafTextEditorViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

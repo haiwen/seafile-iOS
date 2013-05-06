@@ -12,6 +12,7 @@
 enum {
     EDITOP_SPACE = 0,
     EDITOP_MKDIR = 1,
+    EDITOP_CREATE,
     EDITOP_COPY,
     EDITOP_MOVE,
     EDITOP_DELETE,

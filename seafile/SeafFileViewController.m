@@ -26,6 +26,7 @@ enum {
     STATE_LOADING,
     STATE_DELETE,
     STATE_MKDIR,
+    STATE_CREATE,
 };
 
 @interface SeafFileViewController ()
@@ -35,7 +36,7 @@ enum {
 
 @property (strong) SeafBase *curEntry;
 @property (strong) InputAlertPrompt *passSetView;
-@property (strong) InputAlertPrompt *mkdirView;
+@property (strong) InputAlertPrompt *inputView;
 
 @property (strong) UIBarButtonItem *selectAllItem;
 @property (strong) UIBarButtonItem *selectNoneItem;
@@ -53,7 +54,7 @@ enum {
 @synthesize detailViewController = _detailViewController;
 @synthesize directory = _directory;
 @synthesize curEntry = _curEntry;
-@synthesize passSetView = _passSetView, mkdirView = _mkdirView;
+@synthesize passSetView = _passSetView, inputView = _inputView;
 @synthesize backItem = _backItem, selectAllItem = _selectAllItem, selectNoneItem = _selectNoneItem;
 @synthesize selectedindex = _selectedindex;
 @synthesize state;
@@ -123,16 +124,14 @@ enum {
         self.navigationItem.leftBarButtonItem = _selectAllItem;
         NSArray *items = self.toolbarItems;
         [[items objectAtIndex:0] setEnabled:YES];
-        [[items objectAtIndex:2] setEnabled:NO];
-        //[[items objectAtIndex:4] setEnabled:NO];
-        //[[items objectAtIndex:6] setEnabled:NO];
+        [[items objectAtIndex:2] setEnabled:YES];
+        [[items objectAtIndex:4] setEnabled:NO];
     } else {
         self.navigationItem.leftBarButtonItem = _selectNoneItem;
         NSArray *items = self.toolbarItems;
         [[items objectAtIndex:0] setEnabled:NO];
-        [[items objectAtIndex:2] setEnabled:YES];
-        //[[items objectAtIndex:4] setEnabled:YES];
-        //[[items objectAtIndex:6] setEnabled:YES];
+        [[items objectAtIndex:2] setEnabled:NO];
+        [[items objectAtIndex:4] setEnabled:YES];
     }
 }
 
@@ -485,19 +484,34 @@ enum {
         [_curEntry setRepoPassword:input];
         [_passSetView.inputTextField setEnabled:NO];
         return YES;
-    } else if (alertView == _mkdirView) {
-        if (!input) {
-            *errmsg = @"Folder name must not be empty";
-            return NO;
-        }
-        if (![input isValidFolderName]) {
-            *errmsg = @"Folder name invalid";
-            return NO;
-        }
+    } else if (alertView == _inputView) {
         [_directory setDelegate:self];
-        [_directory mkdir:input];
-        [_mkdirView.inputTextField setEnabled:NO];
-        [SVProgressHUD showWithStatus:@"Creating folder ..."];
+
+        if (self.state == STATE_MKDIR) {
+            if (!input) {
+                *errmsg = @"Folder name must not be empty";
+                return NO;
+            }
+            if (![input isValidFileName]) {
+                *errmsg = @"Folder name invalid";
+                return NO;
+            }
+            [_directory mkdir:input];
+            [_inputView.inputTextField setEnabled:NO];
+            [SVProgressHUD showWithStatus:@"Creating folder ..."];
+        } else {
+            if (!input) {
+                *errmsg = @"File name must not be empty";
+                return NO;
+            }
+            if (![input isValidFileName]) {
+                *errmsg = @"File name invalid";
+                return NO;
+            }
+            [_directory createFile:input];
+            [_inputView.inputTextField setEnabled:NO];
+            [SVProgressHUD showWithStatus:@"Creating file ..."];
+        }
         return YES;
     }
     return NO;
@@ -515,8 +529,8 @@ enum {
     if ([alertView isKindOfClass:[InputAlertPrompt class]]) {
         if (_passSetView == alertView) {
             _passSetView = nil;
-        } else if (_mkdirView == alertView) {
-            _mkdirView = nil;
+        } else if (_inputView == alertView) {
+            _inputView = nil;
         }
     }
 }
@@ -534,8 +548,8 @@ enum {
         [SVProgressHUD dismiss];
         [self doneLoadingTableViewData];
         [self refreshView];
-        if (_mkdirView) {
-            [_mkdirView dismissWithClickedButtonIndex:0 animated:YES];
+        if (_inputView) {
+            [_inputView dismissWithClickedButtonIndex:0 animated:YES];
         }
     } else if ([entry isKindOfClass:[SeafFile class]]) {
         if (updated && entry == _detailViewController.preViewItem)
@@ -565,7 +579,11 @@ enum {
                 break;
             case STATE_MKDIR:
                 [SVProgressHUD showErrorWithStatus:@"Failed to create folder"];
-                [_mkdirView.inputTextField setEnabled:YES];
+                [_inputView.inputTextField setEnabled:YES];
+                break;
+            case STATE_CREATE:
+                [SVProgressHUD showErrorWithStatus:@"Failed to create file"];
+                [_inputView.inputTextField setEnabled:YES];
                 break;
             case STATE_LOADING:
                 if (!_directory.hasCache) {
@@ -643,16 +661,16 @@ enum {
 
 #pragma mark - edit files
 
-- (void)popupMkdirView
+- (void)popupInputView:(NSString *)title placeholder:(NSString *)tip
 {
-    _mkdirView = [[InputAlertPrompt alloc] initWithTitle:@"New folder" delegate:self autoDismiss:NO];
-    _mkdirView.inputTextField.placeholder = @"New folder name";
-    _mkdirView.inputTextField.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
-    _mkdirView.inputTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
-    _mkdirView.inputTextField.returnKeyType = UIReturnKeyDone;
-    _mkdirView.inputTextField.autocorrectionType = UITextAutocapitalizationTypeNone;
-    _mkdirView.inputDoneDelegate = self;
-    [_mkdirView show];
+    _inputView = [[InputAlertPrompt alloc] initWithTitle:title delegate:self autoDismiss:NO];
+    _inputView.inputTextField.placeholder = tip;
+    _inputView.inputTextField.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
+    _inputView.inputTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
+    _inputView.inputTextField.returnKeyType = UIReturnKeyDone;
+    _inputView.inputTextField.autocorrectionType = UITextAutocapitalizationTypeNone;
+    _inputView.inputDoneDelegate = self;
+    [_inputView show];
 }
 
 - (void)editOperation:(id)sender
@@ -668,7 +686,12 @@ enum {
     switch ([sender tag]) {
         case EDITOP_MKDIR:
             self.state = STATE_MKDIR;
-            [self popupMkdirView];
+            [self popupInputView:@"New folder" placeholder:@"New folder name"];
+            break;
+
+        case EDITOP_CREATE:
+            self.state = STATE_CREATE;
+            [self popupInputView:@"New file" placeholder:@"New file name"];
             break;
 
         case EDITOP_DELETE:

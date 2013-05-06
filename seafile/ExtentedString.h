@@ -13,7 +13,7 @@
 - (NSString *)escapedUrl;
 - (NSString *)escapedPostForm;
 - (NSString *)trimUrl;
-- (BOOL)isValidFolderName;
+- (BOOL)isValidFileName;
 - (NSString *)stringEscapedForJavasacript;
 
 @end

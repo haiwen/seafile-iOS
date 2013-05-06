@@ -488,14 +488,6 @@
         </class>
         <class className="SeafDetailViewController" superclassName="UIViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/SeafDetailViewController.h"/>
-            <relationships>
-                <relationship kind="action" name="editFile:"/>
-                <relationship kind="action" name="openElsewhere:"/>
-                <relationship kind="action" name="share:"/>
-                <relationship kind="action" name="starFile:"/>
-                <relationship kind="action" name="unstarFile:"/>
-                <relationship kind="action" name="uploadFile:"/>
-            </relationships>
         </class>
         <class className="SeafFileViewController" superclassName="UITableViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/SeafFileViewController.h"/>

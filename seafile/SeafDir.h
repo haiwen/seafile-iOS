@@ -22,6 +22,7 @@
 
 - (void)loadedItems:(NSMutableArray *)items;
 - (void)mkdir:(NSString *)newDirName;
+- (void)createFile:(NSString *)newFileName;
 - (void)delEntries:(NSArray *)entries;
 
 @end

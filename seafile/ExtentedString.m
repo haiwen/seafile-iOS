@@ -48,7 +48,7 @@
 }
 
 
-- (BOOL)isValidFolderName
+- (BOOL)isValidFileName
 {
     if([self compare:[NSString stringWithUTF8String:[[self lastPathComponent]  fileSystemRepresentation]]] == NSOrderedSame)
         return YES;
