@@ -602,6 +602,18 @@
 		57E1E89F1737ED0F006601FE /* SeafTextEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E1E89C1737ED0F006601FE /* SeafTextEditorViewController.m */; };
 		57E1E8A01737ED0F006601FE /* SeafTextEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E89D1737ED0F006601FE /* SeafTextEditorViewController.xib */; };
 		57E1E8A11737ED0F006601FE /* SeafTextEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E89D1737ED0F006601FE /* SeafTextEditorViewController.xib */; };
+		57E1E8A31737F4C1006601FE /* edit_file_seaf2.html in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E8A21737F4C1006601FE /* edit_file_seaf2.html */; };
+		57E1E8A41737F4C1006601FE /* edit_file_seaf2.html in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E8A21737F4C1006601FE /* edit_file_seaf2.html */; };
+		57E1E8A81737F4D3006601FE /* bootstrap-wysiwyg.js in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E8A51737F4D3006601FE /* bootstrap-wysiwyg.js */; };
+		57E1E8A91737F4D3006601FE /* bootstrap-wysiwyg.js in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E8A51737F4D3006601FE /* bootstrap-wysiwyg.js */; };
+		57E1E8AA1737F4D3006601FE /* bootstrap.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E8A61737F4D3006601FE /* bootstrap.min.js */; };
+		57E1E8AB1737F4D3006601FE /* bootstrap.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E8A61737F4D3006601FE /* bootstrap.min.js */; };
+		57E1E8AC1737F4D3006601FE /* sf_editor_toolbar.css in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E8A71737F4D3006601FE /* sf_editor_toolbar.css */; };
+		57E1E8AD1737F4D3006601FE /* sf_editor_toolbar.css in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E8A71737F4D3006601FE /* sf_editor_toolbar.css */; };
+		57E1FD90173AB85500523912 /* ios.js in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FD8E173AB85500523912 /* ios.js */; };
+		57E1FD91173AB85500523912 /* ios.js in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FD8E173AB85500523912 /* ios.js */; };
+		57E1FD92173AB85500523912 /* jquery.hotkeys.js in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FD8F173AB85500523912 /* jquery.hotkeys.js */; };
+		57E1FD93173AB85500523912 /* jquery.hotkeys.js in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FD8F173AB85500523912 /* jquery.hotkeys.js */; };
 		57F0AAF616D8905C00364D18 /* CZPhotoPreviewViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57F0AAF316D8905C00364D18 /* CZPhotoPreviewViewController.xib */; };
 		57F0AAF716D8905C00364D18 /* CZPhotoPreviewViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57F0AAF316D8905C00364D18 /* CZPhotoPreviewViewController.xib */; };
 		57F0AAF816D8905C00364D18 /* CZPhotoPickerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57F0AAF416D8905C00364D18 /* CZPhotoPickerController.m */; };
@@ -966,6 +978,12 @@
 		57E1E89B1737ED0F006601FE /* SeafTextEditorViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafTextEditorViewController.h; sourceTree = "<group>"; };
 		57E1E89C1737ED0F006601FE /* SeafTextEditorViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafTextEditorViewController.m; sourceTree = "<group>"; };
 		57E1E89D1737ED0F006601FE /* SeafTextEditorViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafTextEditorViewController.xib; sourceTree = "<group>"; };
+		57E1E8A21737F4C1006601FE /* edit_file_seaf2.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = edit_file_seaf2.html; path = htmls/edit_file_seaf2.html; sourceTree = SOURCE_ROOT; };
+		57E1E8A51737F4D3006601FE /* bootstrap-wysiwyg.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = "bootstrap-wysiwyg.js"; path = "htmls/bootstrap-wysiwyg.js"; sourceTree = SOURCE_ROOT; };
+		57E1E8A61737F4D3006601FE /* bootstrap.min.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = bootstrap.min.js; path = htmls/bootstrap.min.js; sourceTree = SOURCE_ROOT; };
+		57E1E8A71737F4D3006601FE /* sf_editor_toolbar.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; name = sf_editor_toolbar.css; path = htmls/sf_editor_toolbar.css; sourceTree = SOURCE_ROOT; };
+		57E1FD8E173AB85500523912 /* ios.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = ios.js; path = htmls/ios.js; sourceTree = SOURCE_ROOT; };
+		57E1FD8F173AB85500523912 /* jquery.hotkeys.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = jquery.hotkeys.js; path = htmls/jquery.hotkeys.js; sourceTree = SOURCE_ROOT; };
 		57F0AAF016D8904100364D18 /* CZPhotoPickerController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CZPhotoPickerController.h; sourceTree = "<group>"; };
 		57F0AAF116D8904100364D18 /* CZPhotoPreviewViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CZPhotoPreviewViewController.h; sourceTree = "<group>"; };
 		57F0AAF316D8905C00364D18 /* CZPhotoPreviewViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = CZPhotoPreviewViewController.xib; sourceTree = "<group>"; };
@@ -1408,30 +1426,36 @@
 		5782EE631734F37B00A76338 /* htmls */ = {
 			isa = PBXGroup;
 			children = (
-				5782EE941736AA7200A76338 /* jquery.simplemodal.js */,
+				5782EE641734F3A200A76338 /* bg.png */,
+				57E1E8A51737F4D3006601FE /* bootstrap-wysiwyg.js */,
+				57E1E8A61737F4D3006601FE /* bootstrap.min.js */,
+				5782EE651734F3A200A76338 /* edit_file_md.html */,
+				570B7AFA1715D657002F0E1D /* edit_file_seaf.html */,
+				57E1E8A21737F4C1006601FE /* edit_file_seaf2.html */,
+				5779C7D8171473E000307C36 /* edit_file_text.html */,
 				5782EE7C173571FB00A76338 /* gettheme.js */,
+				57E1FD8E173AB85500523912 /* ios.js */,
+				570B7AFB1715D657002F0E1D /* jq.min.js */,
 				5782EE7D173571FB00A76338 /* jquery-1.8.3.min.js */,
+				5782EE661734F3A200A76338 /* jquery-ui-1.8.16.custom.css */,
+				57E1FD8F173AB85500523912 /* jquery.hotkeys.js */,
+				5782EE941736AA7200A76338 /* jquery.simplemodal.js */,
 				5782EE7E173571FB00A76338 /* jqx.base.css */,
 				5782EE7F173571FB00A76338 /* jqxbuttons.js */,
 				5782EE80173571FB00A76338 /* jqxcore.js */,
 				5782EE81173571FB00A76338 /* jqxpanel.js */,
 				5782EE82173571FB00A76338 /* jqxscrollbar.js */,
 				5782EE83173571FB00A76338 /* jqxsplitter.js */,
-				5782EE641734F3A200A76338 /* bg.png */,
-				5782EE651734F3A200A76338 /* edit_file_md.html */,
-				5782EE661734F3A200A76338 /* jquery-ui-1.8.16.custom.css */,
 				5782EE671734F3A300A76338 /* logo.png */,
+				570B7AFC1715D658002F0E1D /* Markdown.Converter.js */,
 				5782EE681734F3A300A76338 /* Markdown.Editor.js */,
+				570B7AFD1715D658002F0E1D /* Markdown.Extra.js */,
 				5782EE691734F3A300A76338 /* pagedown.css */,
 				5782EE6A1734F3A300A76338 /* seahub.css */,
-				5782EE6B1734F3A300A76338 /* wmd-buttons.png */,
-				570B7B061715D866002F0E1D /* view_seaf.html */,
-				570B7AFA1715D657002F0E1D /* edit_file_seaf.html */,
-				570B7AFB1715D657002F0E1D /* jq.min.js */,
-				570B7AFC1715D658002F0E1D /* Markdown.Converter.js */,
-				570B7AFD1715D658002F0E1D /* Markdown.Extra.js */,
-				5779C7D8171473E000307C36 /* edit_file_text.html */,
+				57E1E8A71737F4D3006601FE /* sf_editor_toolbar.css */,
 				5779C7B0171088D900307C36 /* view_markdown.html */,
+				570B7B061715D866002F0E1D /* view_seaf.html */,
+				5782EE6B1734F3A300A76338 /* wmd-buttons.png */,
 			);
 			name = htmls;
 			sourceTree = "<group>";
@@ -1605,9 +1629,13 @@
 			files = (
 				5782EE85173571FB00A76338 /* gettheme.js in Resources */,
 				5782EE87173571FB00A76338 /* jquery-1.8.3.min.js in Resources */,
+				57E1E8A91737F4D3006601FE /* bootstrap-wysiwyg.js in Resources */,
+				57E1E8AB1737F4D3006601FE /* bootstrap.min.js in Resources */,
 				5782EE8B173571FB00A76338 /* jqxbuttons.js in Resources */,
 				5782EE8D173571FB00A76338 /* jqxcore.js in Resources */,
 				5782EE8F173571FB00A76338 /* jqxpanel.js in Resources */,
+				57E1FD91173AB85500523912 /* ios.js in Resources */,
+				57E1FD93173AB85500523912 /* jquery.hotkeys.js in Resources */,
 				5782EE91173571FB00A76338 /* jqxscrollbar.js in Resources */,
 				5782EE93173571FB00A76338 /* jqxsplitter.js in Resources */,
 				5782EE961736AA7200A76338 /* jquery.simplemodal.js in Resources */,
@@ -1842,6 +1870,8 @@
 				5782EE7B1734F3A300A76338 /* wmd-buttons.png in Resources */,
 				5782EE89173571FB00A76338 /* jqx.base.css in Resources */,
 				57E1E8A11737ED0F006601FE /* SeafTextEditorViewController.xib in Resources */,
+				57E1E8A41737F4C1006601FE /* edit_file_seaf2.html in Resources */,
+				57E1E8AD1737F4D3006601FE /* sf_editor_toolbar.css in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1849,7 +1879,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				57E1FD90173AB85500523912 /* ios.js in Resources */,
+				57E1FD92173AB85500523912 /* jquery.hotkeys.js in Resources */,
 				5782EE84173571FB00A76338 /* gettheme.js in Resources */,
+				57E1E8A81737F4D3006601FE /* bootstrap-wysiwyg.js in Resources */,
+				57E1E8AA1737F4D3006601FE /* bootstrap.min.js in Resources */,
 				5782EE86173571FB00A76338 /* jquery-1.8.3.min.js in Resources */,
 				5782EE8A173571FB00A76338 /* jqxbuttons.js in Resources */,
 				5782EE8C173571FB00A76338 /* jqxcore.js in Resources */,
@@ -2088,6 +2122,8 @@
 				5782EE7A1734F3A300A76338 /* wmd-buttons.png in Resources */,
 				5782EE88173571FB00A76338 /* jqx.base.css in Resources */,
 				57E1E8A01737ED0F006601FE /* SeafTextEditorViewController.xib in Resources */,
+				57E1E8A31737F4C1006601FE /* edit_file_seaf2.html in Resources */,
+				57E1E8AC1737F4D3006601FE /* sf_editor_toolbar.css in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -44,14 +44,17 @@ jQuery(function ($) {
             options,
             updateToolbar = function () {
                 if (options.activeToolbarClass) {
+                    var arr = new Array()
                     $(options.toolbarSelector).find('.btn[data-' + options.commandRole + ']').each(function () {
                         var command = $(this).data(options.commandRole);
                         if (document.queryCommandState(command)) {
                             $(this).addClass(options.activeToolbarClass);
+                            arr.push(command)
                         } else {
                             $(this).removeClass(options.activeToolbarClass);
                         }
                     });
+                    calliOSFunction ("func", arr, null, null)
                 }
             },
             execCommand = function (commandWithArgs, valueArg) {
