@@ -554,24 +554,6 @@
 		5782EE791734F3A300A76338 /* seahub.css in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE6A1734F3A300A76338 /* seahub.css */; };
 		5782EE7A1734F3A300A76338 /* wmd-buttons.png in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE6B1734F3A300A76338 /* wmd-buttons.png */; };
 		5782EE7B1734F3A300A76338 /* wmd-buttons.png in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE6B1734F3A300A76338 /* wmd-buttons.png */; };
-		5782EE84173571FB00A76338 /* gettheme.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE7C173571FB00A76338 /* gettheme.js */; };
-		5782EE85173571FB00A76338 /* gettheme.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE7C173571FB00A76338 /* gettheme.js */; };
-		5782EE86173571FB00A76338 /* jquery-1.8.3.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE7D173571FB00A76338 /* jquery-1.8.3.min.js */; };
-		5782EE87173571FB00A76338 /* jquery-1.8.3.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE7D173571FB00A76338 /* jquery-1.8.3.min.js */; };
-		5782EE88173571FB00A76338 /* jqx.base.css in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE7E173571FB00A76338 /* jqx.base.css */; };
-		5782EE89173571FB00A76338 /* jqx.base.css in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE7E173571FB00A76338 /* jqx.base.css */; };
-		5782EE8A173571FB00A76338 /* jqxbuttons.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE7F173571FB00A76338 /* jqxbuttons.js */; };
-		5782EE8B173571FB00A76338 /* jqxbuttons.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE7F173571FB00A76338 /* jqxbuttons.js */; };
-		5782EE8C173571FB00A76338 /* jqxcore.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE80173571FB00A76338 /* jqxcore.js */; };
-		5782EE8D173571FB00A76338 /* jqxcore.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE80173571FB00A76338 /* jqxcore.js */; };
-		5782EE8E173571FB00A76338 /* jqxpanel.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE81173571FB00A76338 /* jqxpanel.js */; };
-		5782EE8F173571FB00A76338 /* jqxpanel.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE81173571FB00A76338 /* jqxpanel.js */; };
-		5782EE90173571FB00A76338 /* jqxscrollbar.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE82173571FB00A76338 /* jqxscrollbar.js */; };
-		5782EE91173571FB00A76338 /* jqxscrollbar.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE82173571FB00A76338 /* jqxscrollbar.js */; };
-		5782EE92173571FB00A76338 /* jqxsplitter.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE83173571FB00A76338 /* jqxsplitter.js */; };
-		5782EE93173571FB00A76338 /* jqxsplitter.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE83173571FB00A76338 /* jqxsplitter.js */; };
-		5782EE951736AA7200A76338 /* jquery.simplemodal.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE941736AA7200A76338 /* jquery.simplemodal.js */; };
-		5782EE961736AA7200A76338 /* jquery.simplemodal.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE941736AA7200A76338 /* jquery.simplemodal.js */; };
 		57853C8F164675CB00CE8857 /* SeafStarredFilesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57853C8E164675CB00CE8857 /* SeafStarredFilesViewController.m */; };
 		57853C9216467A5000CE8857 /* gray-star-icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 57853C9116467A5000CE8857 /* gray-star-icon.png */; };
 		57853C951646818A00CE8857 /* SeafStarredFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57853C941646818A00CE8857 /* SeafStarredFile.m */; };
@@ -587,6 +569,8 @@
 		57C07CE9163272CE00502B06 /* SeafUploadingFileCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57C07CE8163272CE00502B06 /* SeafUploadingFileCell.xib */; };
 		57C57BDD165FBB4C006834DF /* SVProgressHUD.m in Sources */ = {isa = PBXBuildFile; fileRef = 57C57BDB165FBB4C006834DF /* SVProgressHUD.m */; };
 		57C57BDF165FC87B006834DF /* SVProgressHUD.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 57C57BDE165FC87B006834DF /* SVProgressHUD.bundle */; };
+		57DA26F4173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DA26F3173E6DFC0003BA31 /* SeafTextEditorViewController.m */; };
+		57DA26F5173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DA26F3173E6DFC0003BA31 /* SeafTextEditorViewController.m */; };
 		57DB827215A833FA00097CEC /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57DB827115A833FA00097CEC /* UIKit.framework */; };
 		57DB827415A833FA00097CEC /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57DB827315A833FA00097CEC /* Foundation.framework */; };
 		57DB827615A833FA00097CEC /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57DB827515A833FA00097CEC /* CoreGraphics.framework */; };
@@ -598,8 +582,6 @@
 		57DB828A15A833FA00097CEC /* FolderView_iPad.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57DB828815A833FA00097CEC /* FolderView_iPad.storyboard */; };
 		57DB829015A833FA00097CEC /* SeafFileViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DB828F15A833FA00097CEC /* SeafFileViewController.m */; };
 		57DB829315A833FA00097CEC /* SeafDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DB829215A833FA00097CEC /* SeafDetailViewController.m */; };
-		57E1E89E1737ED0F006601FE /* SeafTextEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E1E89C1737ED0F006601FE /* SeafTextEditorViewController.m */; };
-		57E1E89F1737ED0F006601FE /* SeafTextEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E1E89C1737ED0F006601FE /* SeafTextEditorViewController.m */; };
 		57E1E8A01737ED0F006601FE /* SeafTextEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E89D1737ED0F006601FE /* SeafTextEditorViewController.xib */; };
 		57E1E8A11737ED0F006601FE /* SeafTextEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E89D1737ED0F006601FE /* SeafTextEditorViewController.xib */; };
 		57E1E8A31737F4C1006601FE /* edit_file_seaf2.html in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E8A21737F4C1006601FE /* edit_file_seaf2.html */; };
@@ -614,6 +596,50 @@
 		57E1FD91173AB85500523912 /* ios.js in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FD8E173AB85500523912 /* ios.js */; };
 		57E1FD92173AB85500523912 /* jquery.hotkeys.js in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FD8F173AB85500523912 /* jquery.hotkeys.js */; };
 		57E1FD93173AB85500523912 /* jquery.hotkeys.js in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FD8F173AB85500523912 /* jquery.hotkeys.js */; };
+		57E1FDF6173BDF7900523912 /* bt-strikethrough.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FDF1173BDF7900523912 /* bt-strikethrough.png */; };
+		57E1FDF7173BDF7900523912 /* bt-strikethrough.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FDF1173BDF7900523912 /* bt-strikethrough.png */; };
+		57E1FDF9173BF04000523912 /* bt-bold.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FDF8173BF04000523912 /* bt-bold.png */; };
+		57E1FDFA173BF04000523912 /* bt-bold.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FDF8173BF04000523912 /* bt-bold.png */; };
+		57E1FE08173BF04F00523912 /* bt-center2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FDFB173BF04F00523912 /* bt-center2.png */; };
+		57E1FE09173BF04F00523912 /* bt-center2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FDFB173BF04F00523912 /* bt-center2.png */; };
+		57E1FE0A173BF04F00523912 /* bt-indent.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FDFC173BF04F00523912 /* bt-indent.png */; };
+		57E1FE0B173BF04F00523912 /* bt-indent.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FDFC173BF04F00523912 /* bt-indent.png */; };
+		57E1FE0C173BF04F00523912 /* bt-italic.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FDFD173BF04F00523912 /* bt-italic.png */; };
+		57E1FE0D173BF04F00523912 /* bt-italic.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FDFD173BF04F00523912 /* bt-italic.png */; };
+		57E1FE0E173BF04F00523912 /* bt-justify2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FDFE173BF04F00523912 /* bt-justify2.png */; };
+		57E1FE0F173BF04F00523912 /* bt-justify2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FDFE173BF04F00523912 /* bt-justify2.png */; };
+		57E1FE10173BF04F00523912 /* bt-left2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FDFF173BF04F00523912 /* bt-left2.png */; };
+		57E1FE11173BF04F00523912 /* bt-left2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FDFF173BF04F00523912 /* bt-left2.png */; };
+		57E1FE12173BF04F00523912 /* bt-link.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE00173BF04F00523912 /* bt-link.png */; };
+		57E1FE13173BF04F00523912 /* bt-link.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE00173BF04F00523912 /* bt-link.png */; };
+		57E1FE14173BF04F00523912 /* bt-ol.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE01173BF04F00523912 /* bt-ol.png */; };
+		57E1FE15173BF04F00523912 /* bt-ol.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE01173BF04F00523912 /* bt-ol.png */; };
+		57E1FE16173BF04F00523912 /* bt-outdent.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE02173BF04F00523912 /* bt-outdent.png */; };
+		57E1FE17173BF04F00523912 /* bt-outdent.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE02173BF04F00523912 /* bt-outdent.png */; };
+		57E1FE18173BF04F00523912 /* bt-redo.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE03173BF04F00523912 /* bt-redo.png */; };
+		57E1FE19173BF04F00523912 /* bt-redo.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE03173BF04F00523912 /* bt-redo.png */; };
+		57E1FE1A173BF04F00523912 /* bt-right2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE04173BF04F00523912 /* bt-right2.png */; };
+		57E1FE1B173BF04F00523912 /* bt-right2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE04173BF04F00523912 /* bt-right2.png */; };
+		57E1FE1C173BF04F00523912 /* bt-ul.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE05173BF04F00523912 /* bt-ul.png */; };
+		57E1FE1D173BF04F00523912 /* bt-ul.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE05173BF04F00523912 /* bt-ul.png */; };
+		57E1FE1E173BF04F00523912 /* bt-underline.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE06173BF04F00523912 /* bt-underline.png */; };
+		57E1FE1F173BF04F00523912 /* bt-underline.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE06173BF04F00523912 /* bt-underline.png */; };
+		57E1FE20173BF04F00523912 /* bt-undo.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE07173BF04F00523912 /* bt-undo.png */; };
+		57E1FE21173BF04F00523912 /* bt-undo.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE07173BF04F00523912 /* bt-undo.png */; };
+		57E1FE23173BF29000523912 /* bt-unlink.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE22173BF29000523912 /* bt-unlink.png */; };
+		57E1FE24173BF29000523912 /* bt-unlink.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE22173BF29000523912 /* bt-unlink.png */; };
+		57E1FE2A173BFAE000523912 /* bt-code.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE25173BFAE000523912 /* bt-code.png */; };
+		57E1FE2B173BFAE000523912 /* bt-code.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE25173BFAE000523912 /* bt-code.png */; };
+		57E1FE2C173BFAE000523912 /* bt-heading.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE26173BFAE000523912 /* bt-heading.png */; };
+		57E1FE2D173BFAE000523912 /* bt-heading.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE26173BFAE000523912 /* bt-heading.png */; };
+		57E1FE2E173BFAE000523912 /* bt-hor.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE27173BFAE000523912 /* bt-hor.png */; };
+		57E1FE2F173BFAE000523912 /* bt-hor.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE27173BFAE000523912 /* bt-hor.png */; };
+		57E1FE30173BFAE000523912 /* bt-image.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE28173BFAE000523912 /* bt-image.png */; };
+		57E1FE31173BFAE000523912 /* bt-image.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE28173BFAE000523912 /* bt-image.png */; };
+		57E1FE32173BFAE000523912 /* bt-quote.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE29173BFAE000523912 /* bt-quote.png */; };
+		57E1FE33173BFAE000523912 /* bt-quote.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE29173BFAE000523912 /* bt-quote.png */; };
+		57E1FE35173BFC6F00523912 /* bt-help.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE34173BFC6F00523912 /* bt-help.png */; };
+		57E1FE36173BFC6F00523912 /* bt-help.png in Resources */ = {isa = PBXBuildFile; fileRef = 57E1FE34173BFC6F00523912 /* bt-help.png */; };
 		57F0AAF616D8905C00364D18 /* CZPhotoPreviewViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57F0AAF316D8905C00364D18 /* CZPhotoPreviewViewController.xib */; };
 		57F0AAF716D8905C00364D18 /* CZPhotoPreviewViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57F0AAF316D8905C00364D18 /* CZPhotoPreviewViewController.xib */; };
 		57F0AAF816D8905C00364D18 /* CZPhotoPickerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57F0AAF416D8905C00364D18 /* CZPhotoPickerController.m */; };
@@ -930,15 +956,6 @@
 		5782EE691734F3A300A76338 /* pagedown.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; name = pagedown.css; path = htmls/pagedown.css; sourceTree = SOURCE_ROOT; };
 		5782EE6A1734F3A300A76338 /* seahub.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; name = seahub.css; path = htmls/seahub.css; sourceTree = SOURCE_ROOT; };
 		5782EE6B1734F3A300A76338 /* wmd-buttons.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "wmd-buttons.png"; path = "htmls/wmd-buttons.png"; sourceTree = SOURCE_ROOT; };
-		5782EE7C173571FB00A76338 /* gettheme.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = gettheme.js; path = htmls/gettheme.js; sourceTree = SOURCE_ROOT; };
-		5782EE7D173571FB00A76338 /* jquery-1.8.3.min.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = "jquery-1.8.3.min.js"; path = "htmls/jquery-1.8.3.min.js"; sourceTree = SOURCE_ROOT; };
-		5782EE7E173571FB00A76338 /* jqx.base.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; name = jqx.base.css; path = htmls/jqx.base.css; sourceTree = SOURCE_ROOT; };
-		5782EE7F173571FB00A76338 /* jqxbuttons.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = jqxbuttons.js; path = htmls/jqxbuttons.js; sourceTree = SOURCE_ROOT; };
-		5782EE80173571FB00A76338 /* jqxcore.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = jqxcore.js; path = htmls/jqxcore.js; sourceTree = SOURCE_ROOT; };
-		5782EE81173571FB00A76338 /* jqxpanel.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = jqxpanel.js; path = htmls/jqxpanel.js; sourceTree = SOURCE_ROOT; };
-		5782EE82173571FB00A76338 /* jqxscrollbar.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = jqxscrollbar.js; path = htmls/jqxscrollbar.js; sourceTree = SOURCE_ROOT; };
-		5782EE83173571FB00A76338 /* jqxsplitter.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = jqxsplitter.js; path = htmls/jqxsplitter.js; sourceTree = SOURCE_ROOT; };
-		5782EE941736AA7200A76338 /* jquery.simplemodal.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = jquery.simplemodal.js; path = htmls/jquery.simplemodal.js; sourceTree = SOURCE_ROOT; };
 		57853C8D164675CB00CE8857 /* SeafStarredFilesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafStarredFilesViewController.h; sourceTree = "<group>"; };
 		57853C8E164675CB00CE8857 /* SeafStarredFilesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafStarredFilesViewController.m; sourceTree = "<group>"; };
 		57853C9116467A5000CE8857 /* gray-star-icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "gray-star-icon.png"; sourceTree = "<group>"; };
@@ -958,6 +975,7 @@
 		57C57BDB165FBB4C006834DF /* SVProgressHUD.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVProgressHUD.m; sourceTree = "<group>"; };
 		57C57BDC165FBB4C006834DF /* SVProgressHUD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVProgressHUD.h; sourceTree = "<group>"; };
 		57C57BDE165FC87B006834DF /* SVProgressHUD.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = SVProgressHUD.bundle; sourceTree = "<group>"; };
+		57DA26F3173E6DFC0003BA31 /* SeafTextEditorViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafTextEditorViewController.m; sourceTree = "<group>"; };
 		57DB826D15A833FA00097CEC /* seafilePro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = seafilePro.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		57DB827115A833FA00097CEC /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		57DB827315A833FA00097CEC /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -976,7 +994,6 @@
 		57DB829115A833FA00097CEC /* SeafDetailViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafDetailViewController.h; sourceTree = "<group>"; };
 		57DB829215A833FA00097CEC /* SeafDetailViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafDetailViewController.m; sourceTree = "<group>"; };
 		57E1E89B1737ED0F006601FE /* SeafTextEditorViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafTextEditorViewController.h; sourceTree = "<group>"; };
-		57E1E89C1737ED0F006601FE /* SeafTextEditorViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafTextEditorViewController.m; sourceTree = "<group>"; };
 		57E1E89D1737ED0F006601FE /* SeafTextEditorViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafTextEditorViewController.xib; sourceTree = "<group>"; };
 		57E1E8A21737F4C1006601FE /* edit_file_seaf2.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = edit_file_seaf2.html; path = htmls/edit_file_seaf2.html; sourceTree = SOURCE_ROOT; };
 		57E1E8A51737F4D3006601FE /* bootstrap-wysiwyg.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = "bootstrap-wysiwyg.js"; path = "htmls/bootstrap-wysiwyg.js"; sourceTree = SOURCE_ROOT; };
@@ -984,6 +1001,28 @@
 		57E1E8A71737F4D3006601FE /* sf_editor_toolbar.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; name = sf_editor_toolbar.css; path = htmls/sf_editor_toolbar.css; sourceTree = SOURCE_ROOT; };
 		57E1FD8E173AB85500523912 /* ios.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = ios.js; path = htmls/ios.js; sourceTree = SOURCE_ROOT; };
 		57E1FD8F173AB85500523912 /* jquery.hotkeys.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = jquery.hotkeys.js; path = htmls/jquery.hotkeys.js; sourceTree = SOURCE_ROOT; };
+		57E1FDF1173BDF7900523912 /* bt-strikethrough.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-strikethrough.png"; path = "htmls/bt-strikethrough.png"; sourceTree = SOURCE_ROOT; };
+		57E1FDF8173BF04000523912 /* bt-bold.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-bold.png"; path = "htmls/bt-bold.png"; sourceTree = SOURCE_ROOT; };
+		57E1FDFB173BF04F00523912 /* bt-center2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-center2.png"; path = "htmls/bt-center2.png"; sourceTree = SOURCE_ROOT; };
+		57E1FDFC173BF04F00523912 /* bt-indent.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-indent.png"; path = "htmls/bt-indent.png"; sourceTree = SOURCE_ROOT; };
+		57E1FDFD173BF04F00523912 /* bt-italic.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-italic.png"; path = "htmls/bt-italic.png"; sourceTree = SOURCE_ROOT; };
+		57E1FDFE173BF04F00523912 /* bt-justify2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-justify2.png"; path = "htmls/bt-justify2.png"; sourceTree = SOURCE_ROOT; };
+		57E1FDFF173BF04F00523912 /* bt-left2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-left2.png"; path = "htmls/bt-left2.png"; sourceTree = SOURCE_ROOT; };
+		57E1FE00173BF04F00523912 /* bt-link.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-link.png"; path = "htmls/bt-link.png"; sourceTree = SOURCE_ROOT; };
+		57E1FE01173BF04F00523912 /* bt-ol.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-ol.png"; path = "htmls/bt-ol.png"; sourceTree = SOURCE_ROOT; };
+		57E1FE02173BF04F00523912 /* bt-outdent.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-outdent.png"; path = "htmls/bt-outdent.png"; sourceTree = SOURCE_ROOT; };
+		57E1FE03173BF04F00523912 /* bt-redo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-redo.png"; path = "htmls/bt-redo.png"; sourceTree = SOURCE_ROOT; };
+		57E1FE04173BF04F00523912 /* bt-right2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-right2.png"; path = "htmls/bt-right2.png"; sourceTree = SOURCE_ROOT; };
+		57E1FE05173BF04F00523912 /* bt-ul.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-ul.png"; path = "htmls/bt-ul.png"; sourceTree = SOURCE_ROOT; };
+		57E1FE06173BF04F00523912 /* bt-underline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-underline.png"; path = "htmls/bt-underline.png"; sourceTree = SOURCE_ROOT; };
+		57E1FE07173BF04F00523912 /* bt-undo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-undo.png"; path = "htmls/bt-undo.png"; sourceTree = SOURCE_ROOT; };
+		57E1FE22173BF29000523912 /* bt-unlink.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-unlink.png"; path = "htmls/bt-unlink.png"; sourceTree = SOURCE_ROOT; };
+		57E1FE25173BFAE000523912 /* bt-code.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-code.png"; path = "htmls/bt-code.png"; sourceTree = SOURCE_ROOT; };
+		57E1FE26173BFAE000523912 /* bt-heading.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-heading.png"; path = "htmls/bt-heading.png"; sourceTree = SOURCE_ROOT; };
+		57E1FE27173BFAE000523912 /* bt-hor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-hor.png"; path = "htmls/bt-hor.png"; sourceTree = SOURCE_ROOT; };
+		57E1FE28173BFAE000523912 /* bt-image.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-image.png"; path = "htmls/bt-image.png"; sourceTree = SOURCE_ROOT; };
+		57E1FE29173BFAE000523912 /* bt-quote.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-quote.png"; path = "htmls/bt-quote.png"; sourceTree = SOURCE_ROOT; };
+		57E1FE34173BFC6F00523912 /* bt-help.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-help.png"; path = "htmls/bt-help.png"; sourceTree = SOURCE_ROOT; };
 		57F0AAF016D8904100364D18 /* CZPhotoPickerController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CZPhotoPickerController.h; sourceTree = "<group>"; };
 		57F0AAF116D8904100364D18 /* CZPhotoPreviewViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CZPhotoPreviewViewController.h; sourceTree = "<group>"; };
 		57F0AAF316D8905C00364D18 /* CZPhotoPreviewViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = CZPhotoPreviewViewController.xib; sourceTree = "<group>"; };
@@ -1112,8 +1151,8 @@
 		5709512615B9ACDF00F48C08 /* views */ = {
 			isa = PBXGroup;
 			children = (
+				57DA26F3173E6DFC0003BA31 /* SeafTextEditorViewController.m */,
 				57E1E89B1737ED0F006601FE /* SeafTextEditorViewController.h */,
-				57E1E89C1737ED0F006601FE /* SeafTextEditorViewController.m */,
 				57E1E89D1737ED0F006601FE /* SeafTextEditorViewController.xib */,
 				57F0AAF016D8904100364D18 /* CZPhotoPickerController.h */,
 				57F0AAF416D8905C00364D18 /* CZPhotoPickerController.m */,
@@ -1426,6 +1465,28 @@
 		5782EE631734F37B00A76338 /* htmls */ = {
 			isa = PBXGroup;
 			children = (
+				57E1FE34173BFC6F00523912 /* bt-help.png */,
+				57E1FE25173BFAE000523912 /* bt-code.png */,
+				57E1FE26173BFAE000523912 /* bt-heading.png */,
+				57E1FE27173BFAE000523912 /* bt-hor.png */,
+				57E1FE28173BFAE000523912 /* bt-image.png */,
+				57E1FE29173BFAE000523912 /* bt-quote.png */,
+				57E1FE22173BF29000523912 /* bt-unlink.png */,
+				57E1FDFB173BF04F00523912 /* bt-center2.png */,
+				57E1FDFC173BF04F00523912 /* bt-indent.png */,
+				57E1FDFD173BF04F00523912 /* bt-italic.png */,
+				57E1FDFE173BF04F00523912 /* bt-justify2.png */,
+				57E1FDFF173BF04F00523912 /* bt-left2.png */,
+				57E1FE00173BF04F00523912 /* bt-link.png */,
+				57E1FE01173BF04F00523912 /* bt-ol.png */,
+				57E1FE02173BF04F00523912 /* bt-outdent.png */,
+				57E1FE03173BF04F00523912 /* bt-redo.png */,
+				57E1FE04173BF04F00523912 /* bt-right2.png */,
+				57E1FE05173BF04F00523912 /* bt-ul.png */,
+				57E1FE06173BF04F00523912 /* bt-underline.png */,
+				57E1FE07173BF04F00523912 /* bt-undo.png */,
+				57E1FDF8173BF04000523912 /* bt-bold.png */,
+				57E1FDF1173BDF7900523912 /* bt-strikethrough.png */,
 				5782EE641734F3A200A76338 /* bg.png */,
 				57E1E8A51737F4D3006601FE /* bootstrap-wysiwyg.js */,
 				57E1E8A61737F4D3006601FE /* bootstrap.min.js */,
@@ -1433,19 +1494,10 @@
 				570B7AFA1715D657002F0E1D /* edit_file_seaf.html */,
 				57E1E8A21737F4C1006601FE /* edit_file_seaf2.html */,
 				5779C7D8171473E000307C36 /* edit_file_text.html */,
-				5782EE7C173571FB00A76338 /* gettheme.js */,
 				57E1FD8E173AB85500523912 /* ios.js */,
 				570B7AFB1715D657002F0E1D /* jq.min.js */,
-				5782EE7D173571FB00A76338 /* jquery-1.8.3.min.js */,
 				5782EE661734F3A200A76338 /* jquery-ui-1.8.16.custom.css */,
 				57E1FD8F173AB85500523912 /* jquery.hotkeys.js */,
-				5782EE941736AA7200A76338 /* jquery.simplemodal.js */,
-				5782EE7E173571FB00A76338 /* jqx.base.css */,
-				5782EE7F173571FB00A76338 /* jqxbuttons.js */,
-				5782EE80173571FB00A76338 /* jqxcore.js */,
-				5782EE81173571FB00A76338 /* jqxpanel.js */,
-				5782EE82173571FB00A76338 /* jqxscrollbar.js */,
-				5782EE83173571FB00A76338 /* jqxsplitter.js */,
 				5782EE671734F3A300A76338 /* logo.png */,
 				570B7AFC1715D658002F0E1D /* Markdown.Converter.js */,
 				5782EE681734F3A300A76338 /* Markdown.Editor.js */,
@@ -1627,18 +1679,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5782EE85173571FB00A76338 /* gettheme.js in Resources */,
-				5782EE87173571FB00A76338 /* jquery-1.8.3.min.js in Resources */,
 				57E1E8A91737F4D3006601FE /* bootstrap-wysiwyg.js in Resources */,
 				57E1E8AB1737F4D3006601FE /* bootstrap.min.js in Resources */,
-				5782EE8B173571FB00A76338 /* jqxbuttons.js in Resources */,
-				5782EE8D173571FB00A76338 /* jqxcore.js in Resources */,
-				5782EE8F173571FB00A76338 /* jqxpanel.js in Resources */,
 				57E1FD91173AB85500523912 /* ios.js in Resources */,
 				57E1FD93173AB85500523912 /* jquery.hotkeys.js in Resources */,
-				5782EE91173571FB00A76338 /* jqxscrollbar.js in Resources */,
-				5782EE93173571FB00A76338 /* jqxsplitter.js in Resources */,
-				5782EE961736AA7200A76338 /* jquery.simplemodal.js in Resources */,
 				5782EE751734F3A300A76338 /* Markdown.Editor.js in Resources */,
 				571D8CE61677881400F1A22C /* InfoPlist.strings in Resources */,
 				571D8CE71677881400F1A22C /* FolderView_iPhone.storyboard in Resources */,
@@ -1868,10 +1912,31 @@
 				5782EE771734F3A300A76338 /* pagedown.css in Resources */,
 				5782EE791734F3A300A76338 /* seahub.css in Resources */,
 				5782EE7B1734F3A300A76338 /* wmd-buttons.png in Resources */,
-				5782EE89173571FB00A76338 /* jqx.base.css in Resources */,
 				57E1E8A11737ED0F006601FE /* SeafTextEditorViewController.xib in Resources */,
 				57E1E8A41737F4C1006601FE /* edit_file_seaf2.html in Resources */,
 				57E1E8AD1737F4D3006601FE /* sf_editor_toolbar.css in Resources */,
+				57E1FDF7173BDF7900523912 /* bt-strikethrough.png in Resources */,
+				57E1FDFA173BF04000523912 /* bt-bold.png in Resources */,
+				57E1FE09173BF04F00523912 /* bt-center2.png in Resources */,
+				57E1FE0B173BF04F00523912 /* bt-indent.png in Resources */,
+				57E1FE0D173BF04F00523912 /* bt-italic.png in Resources */,
+				57E1FE0F173BF04F00523912 /* bt-justify2.png in Resources */,
+				57E1FE11173BF04F00523912 /* bt-left2.png in Resources */,
+				57E1FE13173BF04F00523912 /* bt-link.png in Resources */,
+				57E1FE15173BF04F00523912 /* bt-ol.png in Resources */,
+				57E1FE17173BF04F00523912 /* bt-outdent.png in Resources */,
+				57E1FE19173BF04F00523912 /* bt-redo.png in Resources */,
+				57E1FE1B173BF04F00523912 /* bt-right2.png in Resources */,
+				57E1FE1D173BF04F00523912 /* bt-ul.png in Resources */,
+				57E1FE1F173BF04F00523912 /* bt-underline.png in Resources */,
+				57E1FE21173BF04F00523912 /* bt-undo.png in Resources */,
+				57E1FE24173BF29000523912 /* bt-unlink.png in Resources */,
+				57E1FE2B173BFAE000523912 /* bt-code.png in Resources */,
+				57E1FE2D173BFAE000523912 /* bt-heading.png in Resources */,
+				57E1FE2F173BFAE000523912 /* bt-hor.png in Resources */,
+				57E1FE31173BFAE000523912 /* bt-image.png in Resources */,
+				57E1FE33173BFAE000523912 /* bt-quote.png in Resources */,
+				57E1FE36173BFC6F00523912 /* bt-help.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1881,17 +1946,9 @@
 			files = (
 				57E1FD90173AB85500523912 /* ios.js in Resources */,
 				57E1FD92173AB85500523912 /* jquery.hotkeys.js in Resources */,
-				5782EE84173571FB00A76338 /* gettheme.js in Resources */,
 				57E1E8A81737F4D3006601FE /* bootstrap-wysiwyg.js in Resources */,
 				57E1E8AA1737F4D3006601FE /* bootstrap.min.js in Resources */,
-				5782EE86173571FB00A76338 /* jquery-1.8.3.min.js in Resources */,
-				5782EE8A173571FB00A76338 /* jqxbuttons.js in Resources */,
-				5782EE8C173571FB00A76338 /* jqxcore.js in Resources */,
-				5782EE8E173571FB00A76338 /* jqxpanel.js in Resources */,
-				5782EE90173571FB00A76338 /* jqxscrollbar.js in Resources */,
-				5782EE92173571FB00A76338 /* jqxsplitter.js in Resources */,
 				5782EE741734F3A300A76338 /* Markdown.Editor.js in Resources */,
-				5782EE951736AA7200A76338 /* jquery.simplemodal.js in Resources */,
 				570B7B001715D658002F0E1D /* jq.min.js in Resources */,
 				570B7B021715D658002F0E1D /* Markdown.Converter.js in Resources */,
 				570B7B041715D658002F0E1D /* Markdown.Extra.js in Resources */,
@@ -2120,10 +2177,31 @@
 				5782EE761734F3A300A76338 /* pagedown.css in Resources */,
 				5782EE781734F3A300A76338 /* seahub.css in Resources */,
 				5782EE7A1734F3A300A76338 /* wmd-buttons.png in Resources */,
-				5782EE88173571FB00A76338 /* jqx.base.css in Resources */,
 				57E1E8A01737ED0F006601FE /* SeafTextEditorViewController.xib in Resources */,
 				57E1E8A31737F4C1006601FE /* edit_file_seaf2.html in Resources */,
 				57E1E8AC1737F4D3006601FE /* sf_editor_toolbar.css in Resources */,
+				57E1FDF6173BDF7900523912 /* bt-strikethrough.png in Resources */,
+				57E1FDF9173BF04000523912 /* bt-bold.png in Resources */,
+				57E1FE08173BF04F00523912 /* bt-center2.png in Resources */,
+				57E1FE0A173BF04F00523912 /* bt-indent.png in Resources */,
+				57E1FE0C173BF04F00523912 /* bt-italic.png in Resources */,
+				57E1FE0E173BF04F00523912 /* bt-justify2.png in Resources */,
+				57E1FE10173BF04F00523912 /* bt-left2.png in Resources */,
+				57E1FE12173BF04F00523912 /* bt-link.png in Resources */,
+				57E1FE14173BF04F00523912 /* bt-ol.png in Resources */,
+				57E1FE16173BF04F00523912 /* bt-outdent.png in Resources */,
+				57E1FE18173BF04F00523912 /* bt-redo.png in Resources */,
+				57E1FE1A173BF04F00523912 /* bt-right2.png in Resources */,
+				57E1FE1C173BF04F00523912 /* bt-ul.png in Resources */,
+				57E1FE1E173BF04F00523912 /* bt-underline.png in Resources */,
+				57E1FE20173BF04F00523912 /* bt-undo.png in Resources */,
+				57E1FE23173BF29000523912 /* bt-unlink.png in Resources */,
+				57E1FE2A173BFAE000523912 /* bt-code.png in Resources */,
+				57E1FE2C173BFAE000523912 /* bt-heading.png in Resources */,
+				57E1FE2E173BFAE000523912 /* bt-hor.png in Resources */,
+				57E1FE30173BFAE000523912 /* bt-image.png in Resources */,
+				57E1FE32173BFAE000523912 /* bt-quote.png in Resources */,
+				57E1FE35173BFC6F00523912 /* bt-help.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2186,7 +2264,7 @@
 				577B6C6616AADBA3008E82C2 /* SeafCell.m in Sources */,
 				57F0AAF916D8905C00364D18 /* CZPhotoPickerController.m in Sources */,
 				57F0AAFB16D8905C00364D18 /* CZPhotoPreviewViewController.m in Sources */,
-				57E1E89F1737ED0F006601FE /* SeafTextEditorViewController.m in Sources */,
+				57DA26F5173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2246,7 +2324,7 @@
 				577B6C6516AADBA3008E82C2 /* SeafCell.m in Sources */,
 				57F0AAF816D8905C00364D18 /* CZPhotoPickerController.m in Sources */,
 				57F0AAFA16D8905C00364D18 /* CZPhotoPreviewViewController.m in Sources */,
-				57E1E89E1737ED0F006601FE /* SeafTextEditorViewController.m in Sources */,
+				57DA26F4173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

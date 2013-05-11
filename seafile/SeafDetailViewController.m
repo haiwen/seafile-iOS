@@ -308,8 +308,8 @@ enum PREVIEW_STATE {
 {
     SeafTextEditorViewController *editViewController = [[SeafTextEditorViewController alloc] init];
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:editViewController];
-    [navController setModalPresentationStyle:UIModalPresentationFullScreen];
     [editViewController setFile:preViewItem];
+    [navController setModalPresentationStyle:UIModalPresentationFullScreen];
     [self presentViewController:navController animated:NO completion:nil];
 }
 

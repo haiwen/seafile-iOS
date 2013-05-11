@@ -114,6 +114,10 @@ enum TOOL_ITEM {
 {
     [self btClicked:@"code"];
 }
+- (void)image
+{
+    [self btClicked:@"image"];
+}
 - (void)ol
 {
     [self btClicked:@"olist"];
@@ -179,6 +183,27 @@ enum TOOL_ITEM {
 {
     [self btClicked:@"unlink"];
 }
+
+- (void)highlightButton:(UIButton *)b {
+    [b setHighlighted:YES];
+}
+- (UIBarButtonItem *)getBarItem:(NSString *)imageName action:(SEL)action active:(int)active
+{
+    UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
+    btn.frame = CGRectMake(0,0,20,20);
+    UIImage *img = [UIImage imageNamed:[NSString stringWithFormat:@"%@.png", imageName]];
+    [btn setImage:img forState:UIControlStateNormal];
+    [btn addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];
+    if(active) {
+        //btn.highlighted = YES;
+        //[btn setSelected:YES];
+        //[self performSelector:@selector(highlightButton:) withObject:btn afterDelay:0.0];
+        [btn setBackgroundColor:[UIColor lightGrayColor]];
+    }
+    UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithCustomView:btn];
+    return item;
+}
+
 - (void)removeBar {
     // Locate non-UIWindow.
     UIWindow *keyboardWindow = nil;
@@ -206,76 +231,52 @@ enum TOOL_ITEM {
 {
     [self performSelector:@selector(removeBar) withObject:nil afterDelay:0];
 }
-
+- (void)addItem:(UIBarButtonItem *)item to:(NSMutableArray *)items
+{
+    UIBarButtonItem *space = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:self action:nil];
+    space.width = 20.0;
+    [items addObject:item];
+    [items addObject:space];
+}
 - (void)initSeafToolbar:(int)flag
 {
     if (flag == flags)
         return;
     flags = flag;
     NSMutableArray *items = [[NSMutableArray alloc] init];
+
     UIBarButtonItem *item;
-    item = [[UIBarButtonItem alloc] initWithTitle: @"rd" style:UIBarButtonItemStyleBordered target:self action:@selector(redo)];
-    [items addObject:item];
-    item = [[UIBarButtonItem alloc] initWithTitle: @"ud" style:UIBarButtonItemStyleBordered target:self action:@selector(undo)];
-    [items addObject:item];
-    item = [[UIBarButtonItem alloc] initWithTitle: @"uLk" style:UIBarButtonItemStyleBordered target:self action:@selector(removeLink)];
-    [items addObject:item];
-    item = [[UIBarButtonItem alloc] initWithTitle: @"Lk" style:UIBarButtonItemStyleBordered target:self action:@selector(insertLink)];
-    [items addObject:item];
-    if (flag & (1 << ITEM_JUSTIFY))
-        item = [[UIBarButtonItem alloc] initWithTitle:@"-J" style:UIBarButtonItemStyleBordered target:self action:@selector(justify)];
-    else
-        item = [[UIBarButtonItem alloc] initWithTitle:@"J" style:UIBarButtonItemStyleBordered target:self action:@selector(justify)];
-    [items addObject:item];
-    if (flag & (1 << ITEM_RIGHT))
-        item = [[UIBarButtonItem alloc] initWithTitle:@"-R" style:UIBarButtonItemStyleBordered target:self action:@selector(right)];
-    else
-        item = [[UIBarButtonItem alloc] initWithTitle:@"R" style:UIBarButtonItemStyleBordered target:self action:@selector(right)];
-    [items addObject:item];
-    if (flag & (1 << ITEM_CENTER))
-        item = [[UIBarButtonItem alloc] initWithTitle:@"-C" style:UIBarButtonItemStyleBordered target:self action:@selector(center)];
-    else
-        item = [[UIBarButtonItem alloc] initWithTitle:@"C" style:UIBarButtonItemStyleBordered target:self action:@selector(center)];
-    [items addObject:item];
-    if (flag & (1 << ITEM_LEFT))
-        item = [[UIBarButtonItem alloc] initWithTitle:@"-L" style:UIBarButtonItemStyleBordered target:self action:@selector(left)];
-    else
-        item = [[UIBarButtonItem alloc] initWithTitle:@"L" style:UIBarButtonItemStyleBordered target:self action:@selector(left)];
-    [items addObject:item];
-    item = [[UIBarButtonItem alloc] initWithTitle: @"Out" style:UIBarButtonItemStyleBordered target:self action:@selector(outdent)];
-    [items addObject:item];
-    item = [[UIBarButtonItem alloc] initWithTitle: @"In" style:UIBarButtonItemStyleBordered target:self action:@selector(indent)];
-    [items addObject:item];
-    if (flag & (1 << ITEM_OL))
-        item = [[UIBarButtonItem alloc] initWithTitle: @"-ol" style:UIBarButtonItemStyleBordered target:self action:@selector(ol)];
-    else
-        item = [[UIBarButtonItem alloc] initWithTitle: @"ol" style:UIBarButtonItemStyleBordered target:self action:@selector(ol)];
-    [items addObject:item];
-    if (flag & (1 << ITEM_UL))
-        item = [[UIBarButtonItem alloc] initWithTitle: @"-ul" style:UIBarButtonItemStyleBordered target:self action:@selector(ul)];
-    else
-        item = [[UIBarButtonItem alloc] initWithTitle: @"ul" style:UIBarButtonItemStyleBordered target:self action:@selector(ul)];
-    [items addObject:item];
-    if (flag & (1 << ITEM_UNDERLINE))
-        item = [[UIBarButtonItem alloc] initWithTitle:@"-U" style:UIBarButtonItemStyleBordered target:self action:@selector(underline)];
-    else
-        item = [[UIBarButtonItem alloc] initWithTitle:@"U" style:UIBarButtonItemStyleBordered target:self action:@selector(underline)];
-    [items addObject:item];
-    if (flag & (1 << ITEM_STRIKE))
-        item = [[UIBarButtonItem alloc] initWithTitle:@"-S" style:UIBarButtonItemStyleBordered target:self action:@selector(strike)];
-    else
-        item = [[UIBarButtonItem alloc] initWithTitle:@"S" style:UIBarButtonItemStyleBordered target:self action:@selector(strike)];
-    [items addObject:item];
-    if (flag & (1 << ITEM_ITALIC))
-        item= [[UIBarButtonItem alloc] initWithTitle:@"-I" style:UIBarButtonItemStyleBordered target:self action:@selector(italic)];
-    else
-        item= [[UIBarButtonItem alloc] initWithTitle:@"I" style:UIBarButtonItemStyleBordered target:self action:@selector(italic)];
-    [items addObject:item];
-    if (flag & (1 << ITEM_BOLD))
-        item = [[UIBarButtonItem alloc] initWithTitle:@"-B" style:UIBarButtonItemStyleBordered target:self action:@selector(bold)];
-    else
-        item = [[UIBarButtonItem alloc] initWithTitle:@"B" style:UIBarButtonItemStyleBordered target:self action:@selector(bold)];
-    [items addObject:item];
+    item = [self getBarItem:@"bt-redo" action:@selector(redo) active:0];
+    [self addItem:item to:items];
+    item = [self getBarItem:@"bt-undo" action:@selector(undo) active:0];
+    [self addItem:item to:items];
+    //item = [self getBarItem:@"bt-unlink" action:@selector(removeLink) active:0];
+    //[self addItem:item to:items];
+    //item = [self getBarItem:@"bt-link" action:@selector(insertLink) active:0];
+    //[self addItem:item to:items];
+    item = [self getBarItem:@"bt-justify2" action:@selector(justify) active:flag & (1 << ITEM_JUSTIFY)];
+    item = [self getBarItem:@"bt-right2" action:@selector(right) active:flag & (1 << ITEM_RIGHT)];
+    [self addItem:item to:items];
+    item = [self getBarItem:@"bt-center2" action:@selector(center) active:flag & (1 << ITEM_CENTER)];
+    [self addItem:item to:items];
+    item = [self getBarItem:@"bt-left2" action:@selector(left) active:flag & (1 << ITEM_LEFT)];
+    [self addItem:item to:items];
+    item = [self getBarItem:@"bt-outdent" action:@selector(outdent) active:0];
+    [self addItem:item to:items];
+    item = [self getBarItem:@"bt-indent" action:@selector(indent) active:0];
+    [self addItem:item to:items];
+    item = [self getBarItem:@"bt-ol" action:@selector(ol) active:flag & (1 << ITEM_OL)];
+    [self addItem:item to:items];
+    item = [self getBarItem:@"bt-ul" action:@selector(ul) active:flag & (1 << ITEM_UL)];
+    [self addItem:item to:items];
+    item = [self getBarItem:@"bt-underline" action:@selector(underline) active:flag & (1 << ITEM_UNDERLINE)];
+    [self addItem:item to:items];
+    item = [self getBarItem:@"bt-strikethrough" action:@selector(strike) active:flag & (1 << ITEM_STRIKE)];
+    [self addItem:item to:items];
+    item = [self getBarItem:@"bt-italic" action:@selector(italic) active:flag & (1 << ITEM_ITALIC)];
+    [self addItem:item to:items];
+    item = [self getBarItem:@"bt-bold" action:@selector(bold) active:flag & (1 << ITEM_BOLD)];
+    [self addItem:item to:items];
     self.navigationItem.rightBarButtonItems = items;
 }
 
@@ -316,42 +317,44 @@ enum TOOL_ITEM {
         }
     } else if ([self IsMarkdown]) {
         NSMutableArray *items = [[NSMutableArray alloc] init];
-        UIBarButtonItem *bold = [[UIBarButtonItem alloc] initWithTitle:@"B" style:UIBarButtonItemStyleBordered target:self action:@selector(bold)];
-        UIBarButtonItem *italic = [[UIBarButtonItem alloc] initWithTitle:@"I" style:UIBarButtonItemStyleBordered target:self action:@selector(italic)];
-        UIBarButtonItem *link = [[UIBarButtonItem alloc] initWithTitle: @"Link" style:UIBarButtonItemStyleBordered target:self action:@selector(insertLink)];
-        UIBarButtonItem *quote = [[UIBarButtonItem alloc] initWithTitle: @"Quote" style:UIBarButtonItemStyleBordered target:self action:@selector(quote)];
-        UIBarButtonItem *code = [[UIBarButtonItem alloc] initWithTitle: @"Code" style:UIBarButtonItemStyleBordered target:self action:@selector(code)];
-        UIBarButtonItem *pic = [[UIBarButtonItem alloc] initWithTitle: @"Pic" style:UIBarButtonItemStyleBordered target:self action:@selector(pic)];
-        UIBarButtonItem *ol = [[UIBarButtonItem alloc] initWithTitle: @"ol" style:UIBarButtonItemStyleBordered target:self action:@selector(ol)];
-        UIBarButtonItem *ul = [[UIBarButtonItem alloc] initWithTitle: @"ul" style:UIBarButtonItemStyleBordered target:self action:@selector(ul)];
-        UIBarButtonItem *heading = [[UIBarButtonItem alloc] initWithTitle: @"heading" style:UIBarButtonItemStyleBordered target:self action:@selector(heading)];
-        UIBarButtonItem *hor = [[UIBarButtonItem alloc] initWithTitle: @"hr" style:UIBarButtonItemStyleBordered target:self action:@selector(hor)];
-        UIBarButtonItem *undo = [[UIBarButtonItem alloc] initWithTitle: @"undo" style:UIBarButtonItemStyleBordered target:self action:@selector(undo)];
-        UIBarButtonItem *redo = [[UIBarButtonItem alloc] initWithTitle: @"redo" style:UIBarButtonItemStyleBordered target:self action:@selector(redo)];
-        UIBarButtonItem *help = [[UIBarButtonItem alloc] initWithTitle: @"?" style:UIBarButtonItemStyleBordered target:self action:@selector(redo)];
-        [items addObject:help];
-        [items addObject:redo];
-        [items addObject:undo];
-        [items addObject:hor];
-        [items addObject:heading];
-        [items addObject:ul];
-        [items addObject:ol];
-        [items addObject:pic];
-        [items addObject:code];
-        [items addObject:quote];
-        [items addObject:link];
-        [items addObject:italic];
-        [items addObject:bold];
-
+        UIBarButtonItem *bold = [self getBarItem:@"bt-bold" action:@selector(bold) active:0];
+        UIBarButtonItem *italic = [self getBarItem:@"bt-italic" action:@selector(italic) active:0];
+        UIBarButtonItem *link = [self getBarItem:@"bt-link" action:@selector(insertLink) active:0];
+        UIBarButtonItem *quote = [self getBarItem:@"bt-quote" action:@selector(quote) active:0];
+        UIBarButtonItem *code = [self getBarItem:@"bt-code" action:@selector(code) active:0];
+        UIBarButtonItem *img = [self getBarItem:@"bt-image" action:@selector(image) active:0];
+        UIBarButtonItem *ol = [self getBarItem:@"bt-ol" action:@selector(ol) active:0];
+        UIBarButtonItem *ul = [self getBarItem:@"bt-ul" action:@selector(ul) active:0];
+        UIBarButtonItem *heading = [self getBarItem:@"bt-heading" action:@selector(heading) active:0];
+        UIBarButtonItem *hor = [self getBarItem:@"bt-hor" action:@selector(hor) active:0];
+        UIBarButtonItem *undo = [self getBarItem:@"bt-undo" action:@selector(undo) active:0];
+        UIBarButtonItem *redo = [self getBarItem:@"bt-redo" action:@selector(redo) active:0];
+        UIBarButtonItem *help = [self getBarItem:@"bt-help" action:@selector(help) active:0];
+        [self addItem:help to:items];
+        [self addItem:redo to:items];
+        [self addItem:undo to:items];
+        [self addItem:hor to:items];
+        [self addItem:heading to:items];
+        [self addItem:ul to:items];
+        [self addItem:ol to:items];
+        [self addItem:img to:items];
+        [self addItem:code to:items];
+        [self addItem:quote to:items];
+        [self addItem:link to:items];
+        [self addItem:italic to:items];
+        [self addItem:bold to:items];
         self.navigationItem.rightBarButtonItems = items;
     } else {
         self.navigationItem.rightBarButtonItems = nil;
     }
 }
-
-- (void)cancel
+- (void)dismissCurrentView
 {
     [self.navigationController dismissViewControllerAnimated:NO completion:nil];
+}
+- (void)cancel
+{
+    [self dismissCurrentView];
 }
 
 - (void)save
@@ -362,7 +365,7 @@ enum TOOL_ITEM {
     [appdelegate.detailVC refreshView];
     [appdelegate.masterVC refreshView];
     [appdelegate.starredVC refreshView];
-    [self.navigationController dismissViewControllerAnimated:NO completion:nil];
+    [self dismissCurrentView];
 }
 
 - (void)viewDidLoad
@@ -373,8 +376,8 @@ enum TOOL_ITEM {
     [self checkSelection:self];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];
     NSMutableArray *litems = [[NSMutableArray alloc] init];
-    UIBarButtonItem *cancelItem = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStyleBordered target:self action:@selector(cancel)];
-    UIBarButtonItem *saveItem = [[UIBarButtonItem alloc] initWithTitle:@"Save" style:UIBarButtonItemStyleBordered target:self action:@selector(save)];
+    UIBarButtonItem *cancelItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancel)];
+    UIBarButtonItem *saveItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSave target:self action:@selector(save)];
     [litems addObject:cancelItem];
     [litems addObject:saveItem];
     self.navigationItem.leftBarButtonItems = litems;
@@ -390,7 +393,6 @@ enum TOOL_ITEM {
 - (void)webViewDidFinishLoad:(UIWebView *)webView
 {
     NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [sfile.content stringEscapedForJavasacript]];
-    Debug("content=%@\n", [sfile.content stringEscapedForJavasacript]);
     [self.webView stringByEvaluatingJavaScriptFromString:js];
 }
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
@@ -401,6 +403,10 @@ enum TOOL_ITEM {
 - (BOOL)handleUrl:(NSString *)urlStr
 {
     //Decode the url string
+    if (!urlStr || urlStr.length < 1) {
+        [self initSeafToolbar:0];
+        return NO;
+    }
     urlStr = [urlStr stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     NSError *jsonError;
     //parse JSON input in the URL
@@ -480,15 +486,33 @@ enum TOOL_ITEM {
     NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url.previewItemURL cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
     [(UIWebView *)self.view loadRequest: request];
 }
-
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
     if (!IsIpad()) {
         return (interfaceOrientation == UIInterfaceOrientationPortrait);
-    } else if ([self IsMarkdown])
-        return (interfaceOrientation == UIInterfaceOrientationLandscapeLeft) || (interfaceOrientation == UIInterfaceOrientationLandscapeRight);
-    else
-        return YES;
+    }
+    return YES;
+}
+-(BOOL)shouldAutorotate
+{
+    return YES;
+}
+-(NSInteger)supportedInterfaceOrientations{
+    NSInteger mask = 0;
+    if ([self shouldAutorotateToInterfaceOrientation: UIInterfaceOrientationLandscapeRight])
+        mask |= UIInterfaceOrientationMaskLandscapeRight;
+    if ([self shouldAutorotateToInterfaceOrientation: UIInterfaceOrientationLandscapeLeft])
+        mask |= UIInterfaceOrientationMaskLandscapeLeft;
+    if ([self shouldAutorotateToInterfaceOrientation: UIInterfaceOrientationPortrait])
+        mask |= UIInterfaceOrientationMaskPortrait;
+    if ([self shouldAutorotateToInterfaceOrientation: UIInterfaceOrientationPortraitUpsideDown])
+        mask |= UIInterfaceOrientationMaskPortraitUpsideDown;
+    Debug("mask=%d, %d,%d,%d,%d\n", mask,UIInterfaceOrientationLandscapeRight,UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown);
+    return mask;
+}
+- (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
+{
+    [self.webView stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.execCommand(resizeTO(%f,%f))", self.webView.frame.size.width, self.webView.frame.size.height]];
 }
 
 @end

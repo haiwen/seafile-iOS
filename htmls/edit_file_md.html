@@ -7,46 +7,26 @@
       border:1px solid #ccc;
       min-height:0;
       overflow:auto;
+      height:100%;
       }
       .article p {
       margin:0;
       }
-    </style>
-    <link rel="stylesheet" href="./jqx.base.css" type="text/css" />
-    <script type="text/javascript" src="./jquery-1.8.3.min.js"></script>
-    <script type="text/javascript" src="./gettheme.js"></script>
-    <script type="text/javascript" src="./jqxcore.js"></script>
-    <script type="text/javascript" src="./jqxsplitter.js"></script>
-    <script type="text/javascript" src="./jqxbuttons.js"></script>
-    <script type="text/javascript" src="./jqxscrollbar.js"></script>
-    <script type="text/javascript" src="./jqxpanel.js"></script>
-    <script type="text/javascript">
-      function onresize(){
-      //setContent("window:"+$(window).width()+","+$(window).height())
-      $('#mainSplitter').css({width:$(window).width() - 5 });
-      $('#mainSplitter').css({height:$(window).height() - 5 });
-      $('#wmd-input').css({'height':$(window).height() - 2 });
-      $('#wmd-preview').css({ 'height':$(window).height() - 2});
+      .article h1 {
+      margin:0.5em 0;
       }
-
-      //$(window).resize(onresize)
-
-      $(document).ready(function () {
-      var theme = getDemoTheme();
-      $('#mainSplitter').jqxSplitter({ width: $(window).width()-5, height: $(window).height()-2, theme: theme, panels: [{ size: $(window).width()*0.48 }, { size: $(window).width()*0.48}] });
-      onresize()
-      });
-
-    </script>
+      #wmd-input {
+      border:1px solid #ccc;
+      height:100%;
+      }
+    </style>
   </head>
 
   <body class="default">
     <div id="wmd-button-bar" style="display: none;"></div>
-    <div id='jqxWidget'>
-      <div id="mainSplitter" class="ovhd" style="width:100%">
-          <textarea class="wmd-input fleft splitter-panel" id="wmd-input" style="overflow:auto; font-size:14px"></textarea>
-        <div id="wmd-preview" class="article fright splitter-panel"></div>
-      </div><!-- mainSplitter -->
+    <div id="mainSplitter" class="ovhd" style="width:100%">
+      <textarea class="wmd-input fleft" id="wmd-input" style="overflow:auto; font-size:14px"></textarea>
+      <div id="wmd-preview" class="article fright"></div>
     </div>
 
  <div id="md-edit-help" class="hide">
@@ -186,5 +166,31 @@
         fireOnThis.dispatchEvent(evObj);
       }
     </script>
-    <script type='text/javascript' src='jquery.simplemodal.js'></script>
+    <script type="text/javascript" src="./jq.min.js"></script>
+    <script type="text/javascript">
+      function wresize() {
+      $('#wmd-input').css({'width': $(window).width() *0.78 });
+      $('#wmd-preview').css({'width': $(window).width() *0.20 });
+      //setContent(getContent()+"\n" +$(window).width()  + ", "+ $(window).height());
+      }
+
+      $(window).resize(wresize)
+
+      $(document).ready(function () {
+        wresize()
+      });
+
+      $('#wmd-preview').children(':first').css('margin-top', '0');
+
+      $("#wmd-input").click(function() {
+      $("#wmd-input").animate({'width':$(window).width() *0.78 }, 1000)
+      $("#wmd-preview").animate({'width':$(window).width() *0.2 }, 1000)
+      });
+
+      $("#wmd-preview").click(function() {
+      $("#wmd-input").animate({'width':$(window).width() *0.2 }, 1000)
+      $("#wmd-preview").animate({'width':$(window).width() *0.78 }, 1000)
+      });
+
+    </script>
 </body></html>

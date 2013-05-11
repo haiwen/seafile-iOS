@@ -5,6 +5,7 @@
 <style type="text/css">
 #sf {
     width:auto;
+    heigth:auto;
     padding:0;
     outline:0;
     box-shadow:0 0 6px #ccc;
@@ -14,7 +15,6 @@
 }
 </style>
 </head>
-
 <body>
     <div id="wrapper" class="en">
         <div class="btn-toolbar" data-role="editor-toolbar" data-target="#sf" style="display: none;">
@@ -64,10 +64,10 @@
                     <a id="sf-justify-button" class="btn" data-edit="justifyfull" title="" data-original-title="Justify (Ctrl/Cmd+J)">J</a>
                 </div>
                 <div class="btn-group">
-                    <a id="sf-link-button" class="btn dropdown-toggle" data-toggle="dropdown" title="" data-original-title="Hyperlink">Link</a>
+                    <a id="sf-link-button" class="btn dropdown-toggle"
+                     data-toggle="dropdown" title=""
+                     data-original-title="Hyperlink">Link</a>
                     <div class="dropdown-menu input-append">
-                        <input placeholder="URL" type="text" data-edit="createLink">
-                        <button class="btn" type="button">Add</button>
                     </div>
                     <a id="sf-unlink-button" class="btn" data-edit="unlink" title="" data-original-title="Remove Hyperlink">Unlink</a>
                 </div>
@@ -78,6 +78,10 @@
             </div>
         </div>
         <div id="sf" class="article"></div>
+<div id="link-popupx" style="display: none;">
+ <input placeholder="URL" type="text" data-edit="createLink">
+ <button class="btn" type="button">Add</button>
+</div>
     </div><!-- wrapper -->
 <script type="text/javascript" src="./jq.min.js"></script>
 <script type="text/javascript" src="./ios.js"></script>
@@ -85,9 +89,14 @@
 <script type="text/javascript" src="./bootstrap.min.js"></script>
 <script type="text/javascript" src="./bootstrap-wysiwyg.js"></script>
 <script type="text/javascript">
+$('#sf-link-button').click(function() {
+  var con = '<input placeholder="URL" type="text" data-edit="createLink"> <button class="btn" type="button">Add</button>';
+  $.modal(con);
+});
+
 $(function() {
     function initToolbarBootstrapBindings() {
-      var fonts = ['Serif', 'Sans', 'Arial', 'Arial Black', 'Courier', 
+      var fonts = ['Serif', 'Sans', 'Arial', 'Arial Black', 'Courier',
             'Courier New', 'Comic Sans MS', 'Helvetica', 'Impact', 'Lucida Grande', 'Lucida Sans', 'Tahoma', 'Times',
             'Times New Roman', 'Verdana'],
             fontTarget = $('#font-list');
@@ -99,21 +108,37 @@ $(function() {
             .change(function () {$(this).parent('.dropdown-menu').siblings('.dropdown-toggle').dropdown('toggle');})
         .keydown('esc', function () {this.value='';$(this).change();});
 
-      $('[data-role=magic-overlay]').each(function () { 
-        var overlay = $(this), target = $(overlay.data('target')); 
+      $('[data-role=magic-overlay]').each(function () {
+        var overlay = $(this), target = $(overlay.data('target'));
         overlay.css('opacity', 0).css('position', 'absolute').offset(target.offset()).width(target.outerWidth()).height(target.outerHeight());
       });
     };
-    initToolbarBootstrapBindings();  
-    $('#sf').wysiwyg().css({'height':$(window).height() - $('.btn-toolbar').outerHeight(true) - 2});
+    initToolbarBootstrapBindings();
+    $('#sf').wysiwyg().css({'height':$(window).height() - 2});
 });
 </script>
 <script type="text/javascript">
+  function isIpad() {
+    return (navigator.platform.indexOf('iPad') != -1);
+  };
+  function resizeTO(width, height) {
+    if (isIpad())
+      window.resizeTo(width, height)
+    $('#sf').css({'width':width - 2});
+    $('#sf').css({'height':height - 2});
+    //document.getElementById("sf").innerHTML = document.getElementById("sf").innerHTML+"<p>" +width + ", "+ height +"</p>"
+  }
+  function wresize(){
+    resizeTO($(window).width(), $(window).height())
+  }
+  if (!isIpad())
+    $(window).resize(wresize)
+
   function setContent(content) {
     document.getElementById("sf").innerHTML = content
     return 1
   }
-  
+
   function getContent() {
     return document.getElementById("sf").innerHTML
   }
@@ -124,7 +149,7 @@ $(function() {
     evObj.initEvent( 'click', true, false );
     fireOnThis.dispatchEvent(evObj);
   }
-  
+
   function test() {
     calliOSFunction ("func", ["bold", "italic"], null, null)
   }
