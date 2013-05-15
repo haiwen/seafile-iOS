@@ -30,6 +30,7 @@ enum TOOL_ITEM {
 @property BOOL currentBoldStatus;
 @property BOOL currentItalicStatus;
 @property BOOL currentUnderlineStatus;
+@property UIBarButtonItem *ep;
 
 @property id<QLPreviewItem, PreViewDelegate> sfile;
 @property int flags;
@@ -42,6 +43,7 @@ enum TOOL_ITEM {
 @synthesize currentUnderlineStatus;
 @synthesize sfile;
 @synthesize flags;
+@synthesize ep;
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -94,6 +96,17 @@ enum TOOL_ITEM {
         [self handleUrl:str];
     }
 }
+
+- (void)edit_preview
+{
+    NSString *ret = [self.webView stringByEvaluatingJavaScriptFromString:@"toggle_ep()"];
+    if ([ret isEqualToString:@"1"]) {
+        ep.title = @"Edit";
+    } else {
+        ep.title = @"Preview";
+    }
+}
+
 - (void)bold
 {
     [self btClicked:@"bold"];
@@ -190,7 +203,7 @@ enum TOOL_ITEM {
 - (UIBarButtonItem *)getBarItem:(NSString *)imageName action:(SEL)action active:(int)active
 {
     UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
-    btn.frame = CGRectMake(0,0,20,20);
+    btn.frame = CGRectMake(0,0,25,25);
     UIImage *img = [UIImage imageNamed:[NSString stringWithFormat:@"%@.png", imageName]];
     [btn setImage:img forState:UIControlStateNormal];
     [btn addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];
@@ -201,6 +214,12 @@ enum TOOL_ITEM {
         [btn setBackgroundColor:[UIColor lightGrayColor]];
     }
     UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithCustomView:btn];
+    return item;
+}
+
+- (UIBarButtonItem *)getTextBarItem:(NSString *)title action:(SEL)action active:(int)active
+{
+    UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithTitle:title style:UIBarButtonItemStyleBordered target:self action:action];
     return item;
 }
 
@@ -234,7 +253,7 @@ enum TOOL_ITEM {
 - (void)addItem:(UIBarButtonItem *)item to:(NSMutableArray *)items
 {
     UIBarButtonItem *space = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:self action:nil];
-    space.width = 20.0;
+    space.width = 16.0;
     [items addObject:item];
     [items addObject:space];
 }
@@ -317,6 +336,7 @@ enum TOOL_ITEM {
         }
     } else if ([self IsMarkdown]) {
         NSMutableArray *items = [[NSMutableArray alloc] init];
+        ep = [self getTextBarItem:@"Preview" action:@selector(edit_preview) active:0];
         UIBarButtonItem *bold = [self getBarItem:@"bt-bold" action:@selector(bold) active:0];
         UIBarButtonItem *italic = [self getBarItem:@"bt-italic" action:@selector(italic) active:0];
         UIBarButtonItem *link = [self getBarItem:@"bt-link" action:@selector(insertLink) active:0];
@@ -343,6 +363,8 @@ enum TOOL_ITEM {
         [self addItem:link to:items];
         [self addItem:italic to:items];
         [self addItem:bold to:items];
+        [self addItem:ep to:items];
+
         self.navigationItem.rightBarButtonItems = items;
     } else {
         self.navigationItem.rightBarButtonItems = nil;
@@ -497,7 +519,8 @@ enum TOOL_ITEM {
 {
     return YES;
 }
--(NSInteger)supportedInterfaceOrientations{
+-(NSInteger)supportedInterfaceOrientations
+{
     NSInteger mask = 0;
     if ([self shouldAutorotateToInterfaceOrientation: UIInterfaceOrientationLandscapeRight])
         mask |= UIInterfaceOrientationMaskLandscapeRight;

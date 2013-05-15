@@ -169,8 +169,6 @@
     <script type="text/javascript" src="./jq.min.js"></script>
     <script type="text/javascript">
       function wresize() {
-      $('#wmd-input').css({'width': $(window).width() *0.78 });
-      $('#wmd-preview').css({'width': $(window).width() *0.20 });
       //setContent(getContent()+"\n" +$(window).width()  + ", "+ $(window).height());
       }
 
@@ -178,19 +176,24 @@
 
       $(document).ready(function () {
         wresize()
+        $("#wmd-input").css({'width':$(window).width(), 'display': "block" })
+        $("#wmd-preview").css({'width':$(window).width(), 'display': "none" })
       });
 
       $('#wmd-preview').children(':first').css('margin-top', '0');
 
-      $("#wmd-input").click(function() {
-      $("#wmd-input").animate({'width':$(window).width() *0.78 }, 1000)
-      $("#wmd-preview").animate({'width':$(window).width() *0.2 }, 1000)
-      });
-
-      $("#wmd-preview").click(function() {
-      $("#wmd-input").animate({'width':$(window).width() *0.2 }, 1000)
-      $("#wmd-preview").animate({'width':$(window).width() *0.78 }, 1000)
-      });
-
+      var state = 0
+      function toggle_ep() {
+      if (state == 0) {
+        state = 1;
+        $("#wmd-input").css({'width':$(window).width(), 'display': "none" })
+        $("#wmd-preview").css({'width':$(window).width(), 'display': "block" })
+      } else {
+        state = 0;
+        $("#wmd-input").css({'width':$(window).width(), 'display': "block" })
+        $("#wmd-preview").css({'width':$(window).width(), 'display': "none" })
+      }
+      return state
+      }
     </script>
 </body></html>
