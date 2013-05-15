@@ -476,8 +476,8 @@ enum {
             *errmsg = @"Password must not be empty";
             return NO;
         }
-        if (input.length < 3 || input.length  > 15) {
-            *errmsg = @"The length of password should be between 3 and 15";
+        if (input.length < 3 || input.length  > 100) {
+            *errmsg = @"The length of password should be between 3 and 100";
             return NO;
         }
         [_curEntry setDelegate:self];
