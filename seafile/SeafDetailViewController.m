@@ -178,7 +178,7 @@ enum PREVIEW_STATE {
 
 - (void)setPreViewItem:(SeafFile *)item
 {
-    if (item && self.masterPopoverController != nil) {
+    if (self.masterPopoverController != nil) {
         [self.masterPopoverController dismissPopoverAnimated:YES];
     }
     //if (preViewItem == item) return;
