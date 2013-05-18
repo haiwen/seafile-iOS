@@ -76,8 +76,13 @@
 - (void)loadEntries
 {
     _attrs = [[NSMutableDictionary alloc] init];
-    _entries = [[NSMutableArray alloc] init];
+    NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+    for (int i = 0; i < [_entries count]; ++i) {
+        SeafUploadFile *obj = [_entries objectAtIndex:i];
+        [dict setObject:obj forKey:obj.name];
+    }
 
+    NSMutableArray *newentries = [[NSMutableArray alloc] init];
     NSMutableDictionary *attributes = [[NSMutableDictionary alloc] initWithContentsOfFile:self.attrsFile];
     NSError *error = nil;
     NSString *uploadPath = [[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"];
@@ -94,17 +99,21 @@
             if (isDirectory)
                 [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
             else {
-                SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
-                file.delegate = self;
-                [_entries addObject:file];
+                SeafUploadFile *file = [dict objectForKey:name];
+                if (!file) {
+                    file = [[SeafUploadFile alloc] initWithPath:path];
+                    file.delegate = self;
+                }
+                [newentries addObject:file];
                 if (attributes && [attributes objectForKey:name])
                     [ _attrs setObject:[attributes objectForKey:name] forKey:name];
             }
         }
     }
-    [_entries sortUsingComparator:(NSComparator)^NSComparisonResult(id obj1, id obj2){
+    [newentries sortUsingComparator:(NSComparator)^NSComparisonResult(id obj1, id obj2){
         return [[(SeafUploadFile *)obj1 name] caseInsensitiveCompare:[(SeafUploadFile *)obj2 name]];
     }];
+    _entries = newentries;
     [self saveAttrs];
 }
 
@@ -139,17 +148,19 @@
             return;
 
         [self loadEntries];
+        [self.tableView reloadData];
+        int i = 0;
+        _selectedindex = nil;
+        for (SeafUploadFile *ufile in self.entries) {
+            if ([ufile.name isEqualToString:filename]) {
+                _selectedindex = [NSIndexPath indexPathForRow:i inSection:0];
+                break;
+            }
+            ++i;
+        }
         if (IsIpad()) {
             [self uploadFile:_selectedindex];
         } else {
-            int i = 0;
-            for (SeafUploadFile *ufile in self.entries) {
-                if ([ufile.name isEqualToString:filename]) {
-                    _selectedindex = [NSIndexPath indexPathForRow:i inSection:0];
-                    break;
-                }
-                ++i;
-            }
             [self performSelector:@selector(delayupload) withObject:self afterDelay:0.5];
         }
     }];
@@ -239,7 +250,7 @@
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
     if (res && file.uploading && [cell isKindOfClass:[SeafUploadingFileCell class]]) {
-        [((SeafUploadingFileCell *)cell).progressView setProgress:percent*1.0/100];
+        [((SeafUploadingFileCell *)cell).progressView setProgress:percent*1.0f/100];
         return;
     }
     [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic ];
