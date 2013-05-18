@@ -11,6 +11,7 @@
 #import "InputAlertPrompt.h"
 #import "SeafDir.h"
 #import "SeafRepos.h"
+#import "SeafCell.h"
 #import "Debug.h"
 #import "UIViewController+AlertMessage.h"
 #import "SVProgressHUD.h"
@@ -111,17 +112,18 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    NSString *CellIdentifier = @"Cell";
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+    NSString *CellIdentifier = @"SeafCell";
+    SeafCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
-        cell.accessoryType = UITableViewCellAccessoryNone;
+        NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafCell" owner:self options:nil];
+        cell = [cells objectAtIndex:0];
     }
 
     SeafDir *sdir = [_directory.items objectAtIndex:indexPath.row];
     cell.textLabel.text = sdir.name;
     cell.textLabel.font = [UIFont systemFontOfSize:17];
     cell.imageView.image = sdir.image;
+    cell.detailTextLabel.text = nil;
     return cell;
 }
 
