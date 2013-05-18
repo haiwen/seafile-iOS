@@ -256,18 +256,19 @@ enum {
     int i;
     UIBarButtonItem *flexibleFpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:rootViewController action:@selector(editOperation:)];
     UIBarButtonItem *fixedSpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:rootViewController action:@selector(editOperation:)];
-    fixedSpaceItem.width = 10.0f;
 
     NSArray *itemsTitles = [NSArray arrayWithObjects:@"New Folder", @"New File", @"Copy", @"Move", @"Delete", @"Paste", @"MoveTo", @"Cancel", nil ];
 
     UIBarButtonItem *items[EDITOP_NUM];
     items[0] = flexibleFpaceItem;
+
+    fixedSpaceItem.width = 38.0f;;
     for (i = 1; i < itemsTitles.count + 1; ++i) {
         items[i] = [[UIBarButtonItem alloc] initWithTitle:[itemsTitles objectAtIndex:i-1] style:UIBarButtonItemStyleBordered target:rootViewController action:@selector(editOperation:)];
         items[i].tag = i;
     }
 
-    _toolItems1 = [NSArray arrayWithObjects:items[EDITOP_MKDIR], items[EDITOP_SPACE], items[EDITOP_CREATE], items[EDITOP_SPACE], items[EDITOP_DELETE], nil ];
+    _toolItems1 = [NSArray arrayWithObjects:items[EDITOP_CREATE], fixedSpaceItem, items[EDITOP_MKDIR], items[EDITOP_SPACE], items[EDITOP_DELETE], nil ];
 }
 
 - (void)initTabController

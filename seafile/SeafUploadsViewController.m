@@ -179,9 +179,10 @@
     self.tableView.rowHeight = 50;
     [self loadEntries];
     self.navigationItem.rightBarButtonItem = self.editButtonItem;
-    UIBarButtonItem *addItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addFile:)];
     UIBarButtonItem *photoItem  = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCamera target:self action:@selector(addPhotos:)];
-    self.navigationItem.leftBarButtonItems = [NSArray arrayWithObjects:addItem, photoItem, nil];
+    //UIBarButtonItem *addItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addFile:)];
+    //self.navigationItem.leftBarButtonItems = [NSArray arrayWithObjects:addItem, photoItem, nil];
+    self.navigationItem.leftBarButtonItems = [NSArray arrayWithObjects:photoItem, nil];
 
     self.formatter = [[NSDateFormatter alloc] init];
     [formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
@@ -311,11 +312,11 @@
         int utime = [[dict objectForKey:@"utime"] intValue];
         BOOL result = [[dict objectForKey:@"result"] boolValue];
         if (result)
-            cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, Uploaded %@", sizeStr, [SeafDateFormatter stringFromInt:utime ]];
+            cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, Uploaded %@", sizeStr, [SeafDateFormatter stringFromInt:utime]];
         else
-            cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, Failed %@", sizeStr, [SeafDateFormatter stringFromInt:utime ]];
+            cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, Failed %@", sizeStr, [SeafDateFormatter stringFromInt:utime]];
     } else {
-        cell.detailTextLabel.text = sizeStr;
+        cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, Select folder to upload", sizeStr];
     }
     UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditMenu:)];
     [cell addGestureRecognizer:longPressGesture];

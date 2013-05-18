@@ -106,7 +106,18 @@ enum TOOL_ITEM {
         ep.title = @"Preview";
     }
 }
-
+- (void)pound
+{
+    [self btClicked:@"pound"];
+}
+- (void)star
+{
+    [self btClicked:@"star"];
+}
+- (void)equal
+{
+    [self btClicked:@"equal"];
+}
 - (void)bold
 {
     [self btClicked:@"bold"];
@@ -336,7 +347,9 @@ enum TOOL_ITEM {
         }
     } else if ([self IsMarkdown]) {
         NSMutableArray *items = [[NSMutableArray alloc] init];
-        ep = [self getTextBarItem:@"Preview" action:@selector(edit_preview) active:0];
+        UIBarButtonItem *pound = [self getBarItem:@"bt-pound" action:@selector(pound) active:0];
+        UIBarButtonItem *star = [self getBarItem:@"bt-star" action:@selector(star) active:0];
+        UIBarButtonItem *equal = [self getBarItem:@"bt-equal" action:@selector(equal) active:0];
         UIBarButtonItem *bold = [self getBarItem:@"bt-bold" action:@selector(bold) active:0];
         UIBarButtonItem *italic = [self getBarItem:@"bt-italic" action:@selector(italic) active:0];
         UIBarButtonItem *link = [self getBarItem:@"bt-link" action:@selector(insertLink) active:0];
@@ -345,16 +358,16 @@ enum TOOL_ITEM {
         UIBarButtonItem *img = [self getBarItem:@"bt-image" action:@selector(image) active:0];
         UIBarButtonItem *ol = [self getBarItem:@"bt-ol" action:@selector(ol) active:0];
         UIBarButtonItem *ul = [self getBarItem:@"bt-ul" action:@selector(ul) active:0];
-        UIBarButtonItem *heading = [self getBarItem:@"bt-heading" action:@selector(heading) active:0];
-        UIBarButtonItem *hor = [self getBarItem:@"bt-hor" action:@selector(hor) active:0];
+        //UIBarButtonItem *heading = [self getBarItem:@"bt-heading" action:@selector(heading) active:0];
+        //UIBarButtonItem *hor = [self getBarItem:@"bt-hor" action:@selector(hor) active:0];
         UIBarButtonItem *undo = [self getBarItem:@"bt-undo" action:@selector(undo) active:0];
         UIBarButtonItem *redo = [self getBarItem:@"bt-redo" action:@selector(redo) active:0];
         UIBarButtonItem *help = [self getBarItem:@"bt-help" action:@selector(help) active:0];
         [self addItem:help to:items];
         [self addItem:redo to:items];
         [self addItem:undo to:items];
-        [self addItem:hor to:items];
-        [self addItem:heading to:items];
+        //[self addItem:hor to:items];
+        //[self addItem:heading to:items];
         [self addItem:ul to:items];
         [self addItem:ol to:items];
         [self addItem:img to:items];
@@ -363,7 +376,9 @@ enum TOOL_ITEM {
         [self addItem:link to:items];
         [self addItem:italic to:items];
         [self addItem:bold to:items];
-        [self addItem:ep to:items];
+        [self addItem:equal to:items];
+        [self addItem:star to:items];
+        [self addItem:pound to:items];
 
         self.navigationItem.rightBarButtonItems = items;
     } else {
@@ -397,12 +412,6 @@ enum TOOL_ITEM {
     self.flags = -1;
     [self checkSelection:self];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];
-    NSMutableArray *litems = [[NSMutableArray alloc] init];
-    UIBarButtonItem *cancelItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancel)];
-    UIBarButtonItem *saveItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSave target:self action:@selector(save)];
-    [litems addObject:cancelItem];
-    [litems addObject:saveItem];
-    self.navigationItem.leftBarButtonItems = litems;
 }
 
 - (void)didReceiveMemoryWarning
@@ -491,9 +500,18 @@ enum TOOL_ITEM {
 {
     self.sfile = file;
     NSString *path;
-    if ([self IsMarkdown])
+    NSMutableArray *litems = [[NSMutableArray alloc] init];
+    UIBarButtonItem *cancelItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancel)];
+    UIBarButtonItem *saveItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSave target:self action:@selector(save)];
+    ep = nil;
+    [litems addObject:cancelItem];
+    [litems addObject:saveItem];
+
+    if ([self IsMarkdown]) {
+        ep = [self getTextBarItem:@"Preview" action:@selector(edit_preview) active:0];
+        [litems addObject:ep];
         path = [[NSBundle mainBundle] pathForResource:@"edit_file_md" ofType:@"html"];
-    else if ([self IsSeaf]) {
+    } else if ([self IsSeaf]) {
         if (IsIpad()) {
             path = [[NSBundle mainBundle] pathForResource:@"edit_file_seaf2" ofType:@"html"];
             timer = [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(checkBtState:) userInfo:nil repeats:YES];
@@ -503,6 +521,8 @@ enum TOOL_ITEM {
         }
     } else
         path = [[NSBundle mainBundle] pathForResource:@"edit_file_text" ofType:@"html"];
+
+    self.navigationItem.leftBarButtonItems = litems;
 
     NSURL *url = [NSURL fileURLWithPath:path];
     NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url.previewItemURL cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];

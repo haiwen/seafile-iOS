@@ -90,7 +90,7 @@
     // - run() actually starts the editor; should be called after all necessary plugins are registered. Calling this more than once is a no-op.
     // - refreshPreview() forces the preview to be updated. This method is only available after run() was called.
     Markdown.Editor = function (markdownConverter, idPostfix, options) {
-        
+
         options = options || {};
 
         if (typeof options.handler === "function") { //backwards compatible behavior
@@ -1023,9 +1023,9 @@
 
         var background = doc.createElement("div"),
             style = background.style;
-        
+
         background.className = "wmd-prompt-background";
-        
+
         style.position = "absolute";
         style.top = "0";
 
@@ -1445,6 +1445,29 @@
                 buttonRow.appendChild(button);
                 return button;
             };
+            var makeButton2 = function (id, title, XShift, textOp) {
+                var button = document.createElement("li");
+                button.className = "wmd-button";
+                button.style.left = xPosition + "px";
+                xPosition += 25;
+                button.id = id + postfix;
+                button.text = title;
+                var buttonImage = document.createElement("span");
+                button.appendChild(buttonImage);
+                button.title = title;
+                button.XShift = XShift;
+                if (textOp)
+                    button.textOp = textOp;
+                button.onclick = function () {
+                    if (this.onmouseout) {
+                        this.onmouseout();
+                    }
+                    doClick(this);
+                    return false;
+                }
+                buttonRow.appendChild(button);
+                return button;
+            };
             var makeSpacer = function (num) {
                 var spacer = document.createElement("li");
                 spacer.className = "wmd-spacer wmd-spacer" + num;
@@ -1453,6 +1476,9 @@
                 xPosition += 25;
             }
 
+            buttons.star = makeButton2("wmd-star-button", "star", "0px", bindCommand("doStar"));
+            buttons.pound = makeButton2("wmd-pound-button", "pound", "0px", bindCommand("doPound"));
+            buttons.equal = makeButton2("wmd-equal-button", "equal", "0px", bindCommand("doEqual"));
             buttons.bold = makeButton("wmd-bold-button", getString("bold"), "0px", bindCommand("doBold"));
             buttons.italic = makeButton("wmd-italic-button", getString("italic"), "-20px", bindCommand("doItalic"));
             makeSpacer(1);
@@ -1707,7 +1733,7 @@
 
         }
         else {
-            
+
             // We're moving start and end tag back into the selection, since (as we're in the else block) we're not
             // *removing* a link, but *adding* one, so whatever findTags() found is now back to being part of the
             // link text. linkEnteredCallback takes care of escaping any brackets.
@@ -1745,7 +1771,7 @@
                     // would mean a zero-width match at the start. Since zero-width matches advance the string position,
                     // the first bracket could then not act as the "not a backslash" for the second.
                     chunk.selection = (" " + chunk.selection).replace(/([^\\](?:\\\\)*)(?=[[\]])/g, "$1\\").substr(1);
-                    
+
                     var linkDef = " [999]: " + properlyEncoded(link);
 
                     var num = that.addLinkDef(chunk, linkDef);
@@ -1787,7 +1813,7 @@
         chunk.before = chunk.before.replace(/(\n|^)[ ]{0,3}([*+-]|\d+[.])[ \t]*\n$/, "\n\n");
         chunk.before = chunk.before.replace(/(\n|^)[ ]{0,3}>[ \t]*\n$/, "\n\n");
         chunk.before = chunk.before.replace(/(\n|^)[ \t]+\n$/, "\n\n");
-        
+
         // There's no selection, end the cursor wasn't at the end of the line:
         // The user wants to split the current list item / code line / blockquote line
         // (for the latter it doesn't really matter) in two. Temporarily select the
@@ -1815,7 +1841,7 @@
                 commandMgr.doCode(chunk);
             }
         }
-        
+
         if (fakeSelection) {
             chunk.after = chunk.selection + chunk.after;
             chunk.selection = "";
@@ -2199,5 +2225,16 @@
         chunk.skipLines(2, 1, true);
     }
 
-
+    commandProto.doStar = function (chunk, postProcessing) {
+        chunk.startTag = "*";
+        chunk.selection = "";
+    }
+    commandProto.doPound = function (chunk, postProcessing) {
+        chunk.startTag = "#";
+        chunk.selection = "";
+    }
+    commandProto.doEqual = function (chunk, postProcessing) {
+        chunk.startTag = "=";
+        chunk.selection = "";
+    }
 })();
