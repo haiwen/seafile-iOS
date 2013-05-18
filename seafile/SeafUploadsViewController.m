@@ -299,8 +299,8 @@
     cell.imageView.image = file.image;
 
     UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
-    CGRect frame = CGRectMake(0.0, 0.0, _cellImage.size.width, _cellImage.size.height);
-    button.frame = frame;
+    //CGRect frame = CGRectMake(0.0, 0.0, _cellImage.size.width, _cellImage.size.height);
+    button.frame = CGRectMake(0,0,24,24);;
     [button setBackgroundImage:_cellImage forState:UIControlStateNormal];
     button.backgroundColor= [UIColor clearColor];
     [button addTarget:self action:@selector(btnClicked:event:) forControlEvents:UIControlEventTouchUpInside];

@@ -124,14 +124,14 @@ enum {
         self.navigationItem.leftBarButtonItem = _selectAllItem;
         NSArray *items = self.toolbarItems;
         [[items objectAtIndex:0] setEnabled:YES];
-        [[items objectAtIndex:2] setEnabled:YES];
-        [[items objectAtIndex:4] setEnabled:NO];
+        [[items objectAtIndex:1] setEnabled:YES];
+        [[items objectAtIndex:3] setEnabled:NO];
     } else {
         self.navigationItem.leftBarButtonItem = _selectNoneItem;
         NSArray *items = self.toolbarItems;
         [[items objectAtIndex:0] setEnabled:NO];
-        [[items objectAtIndex:2] setEnabled:NO];
-        [[items objectAtIndex:4] setEnabled:YES];
+        [[items objectAtIndex:1] setEnabled:NO];
+        [[items objectAtIndex:3] setEnabled:YES];
     }
 }
 

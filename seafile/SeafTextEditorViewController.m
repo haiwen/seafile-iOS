@@ -13,16 +13,21 @@
 #import "Debug.h"
 
 enum TOOL_ITEM {
-    ITEM_BOLD = 0,
-    ITEM_ITALIC,
-    ITEM_STRIKE,
-    ITEM_UNDERLINE,
-    ITEM_UL,
-    ITEM_OL,
-    ITEM_LEFT,
-    ITEM_CENTER,
-    ITEM_RIGHT,
+    ITEM_REDO = 0,
+    ITEM_UNDO,
     ITEM_JUSTIFY,
+    ITEM_RIGHT,
+    ITEM_CENTER,
+    ITEM_LEFT,
+    ITEM_OUDENT,
+    ITEM_INDENT,
+    ITEM_OL,
+    ITEM_UL,
+    ITEM_UNDERLINE,
+    ITEM_STRIKE,
+    ITEM_ITALIC,
+    ITEM_BOLD,
+    ITEM_MAX,
 };
 
 @interface SeafTextEditorViewController ()
@@ -110,7 +115,7 @@ enum TOOL_ITEM {
 {
     [self btClicked:@"pound"];
 }
-- (void)star
+- (void)asterisk
 {
     [self btClicked:@"star"];
 }
@@ -208,22 +213,18 @@ enum TOOL_ITEM {
     [self btClicked:@"unlink"];
 }
 
-- (void)highlightButton:(UIButton *)b {
-    [b setHighlighted:YES];
-}
 - (UIBarButtonItem *)getBarItem:(NSString *)imageName action:(SEL)action active:(int)active
 {
     UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
-    btn.frame = CGRectMake(0,0,25,25);
+    btn.frame = CGRectMake(0,0,20,20);
     UIImage *img = [UIImage imageNamed:[NSString stringWithFormat:@"%@.png", imageName]];
+    UIImage *img2 = [UIImage imageNamed:[NSString stringWithFormat:@"%@2.png", imageName]];
     [btn setImage:img forState:UIControlStateNormal];
+    [btn setImage:img2 forState:UIControlStateSelected];
+
+    if(active)
+        btn.selected = YES;
     [btn addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];
-    if(active) {
-        //btn.highlighted = YES;
-        //[btn setSelected:YES];
-        //[self performSelector:@selector(highlightButton:) withObject:btn afterDelay:0.0];
-        [btn setBackgroundColor:[UIColor lightGrayColor]];
-    }
     UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithCustomView:btn];
     return item;
 }
@@ -268,28 +269,35 @@ enum TOOL_ITEM {
     [items addObject:item];
     [items addObject:space];
 }
-- (void)initSeafToolbar:(int)flag
+- (void)updateSeafToolbar:(int)flag
 {
     if (flag == flags)
         return;
     flags = flag;
-    NSMutableArray *items = [[NSMutableArray alloc] init];
+    for (int i = 0; i < ITEM_MAX; ++i) {
+        UIBarButtonItem *item = [self.navigationItem.rightBarButtonItems objectAtIndex:2*i];
+        UIButton *btn = (UIButton *)item.customView;
+        btn.selected = (flag & (1 << i)) != 0;
+    }
+}
 
+- (void)initSeafToolbar:(int)flag
+{
+    flags = flag;
+    NSMutableArray *items = [[NSMutableArray alloc] init];
     UIBarButtonItem *item;
+
     item = [self getBarItem:@"bt-redo" action:@selector(redo) active:0];
     [self addItem:item to:items];
     item = [self getBarItem:@"bt-undo" action:@selector(undo) active:0];
     [self addItem:item to:items];
-    //item = [self getBarItem:@"bt-unlink" action:@selector(removeLink) active:0];
-    //[self addItem:item to:items];
-    //item = [self getBarItem:@"bt-link" action:@selector(insertLink) active:0];
-    //[self addItem:item to:items];
-    item = [self getBarItem:@"bt-justify2" action:@selector(justify) active:flag & (1 << ITEM_JUSTIFY)];
-    item = [self getBarItem:@"bt-right2" action:@selector(right) active:flag & (1 << ITEM_RIGHT)];
+    item = [self getBarItem:@"bt-justify" action:@selector(justify) active:flag & (1 << ITEM_JUSTIFY)];
     [self addItem:item to:items];
-    item = [self getBarItem:@"bt-center2" action:@selector(center) active:flag & (1 << ITEM_CENTER)];
+    item = [self getBarItem:@"bt-right" action:@selector(right) active:flag & (1 << ITEM_RIGHT)];
     [self addItem:item to:items];
-    item = [self getBarItem:@"bt-left2" action:@selector(left) active:flag & (1 << ITEM_LEFT)];
+    item = [self getBarItem:@"bt-center" action:@selector(center) active:flag & (1 << ITEM_CENTER)];
+    [self addItem:item to:items];
+    item = [self getBarItem:@"bt-left" action:@selector(left) active:flag & (1 << ITEM_LEFT)];
     [self addItem:item to:items];
     item = [self getBarItem:@"bt-outdent" action:@selector(outdent) active:0];
     [self addItem:item to:items];
@@ -348,7 +356,7 @@ enum TOOL_ITEM {
     } else if ([self IsMarkdown]) {
         NSMutableArray *items = [[NSMutableArray alloc] init];
         UIBarButtonItem *pound = [self getBarItem:@"bt-pound" action:@selector(pound) active:0];
-        UIBarButtonItem *star = [self getBarItem:@"bt-star" action:@selector(star) active:0];
+        UIBarButtonItem *asterisk = [self getBarItem:@"bt-asterisk" action:@selector(asterisk) active:0];
         UIBarButtonItem *equal = [self getBarItem:@"bt-equal" action:@selector(equal) active:0];
         UIBarButtonItem *bold = [self getBarItem:@"bt-bold" action:@selector(bold) active:0];
         UIBarButtonItem *italic = [self getBarItem:@"bt-italic" action:@selector(italic) active:0];
@@ -377,7 +385,7 @@ enum TOOL_ITEM {
         [self addItem:italic to:items];
         [self addItem:bold to:items];
         [self addItem:equal to:items];
-        [self addItem:star to:items];
+        [self addItem:asterisk to:items];
         [self addItem:pound to:items];
 
         self.navigationItem.rightBarButtonItems = items;
@@ -410,6 +418,7 @@ enum TOOL_ITEM {
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
     self.flags = -1;
+    self.navigationItem.rightBarButtonItems = nil;
     [self checkSelection:self];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];
 }
@@ -435,7 +444,7 @@ enum TOOL_ITEM {
 {
     //Decode the url string
     if (!urlStr || urlStr.length < 1) {
-        [self initSeafToolbar:0];
+        [self updateSeafToolbar:0];
         return NO;
     }
     urlStr = [urlStr stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
@@ -481,8 +490,7 @@ enum TOOL_ITEM {
         else if ([@"justifyfull" isEqualToString:s])
             flag |= 1 << ITEM_JUSTIFY;
     }
-    //Debug("args=%@, flag=%x\n", argsArray, flag);
-    [self initSeafToolbar:flag];
+    [self updateSeafToolbar:flag];
     return NO;
 }
 - (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType

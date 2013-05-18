@@ -268,7 +268,7 @@ enum {
         items[i].tag = i;
     }
 
-    _toolItems1 = [NSArray arrayWithObjects:items[EDITOP_CREATE], fixedSpaceItem, items[EDITOP_MKDIR], items[EDITOP_SPACE], items[EDITOP_DELETE], nil ];
+    _toolItems1 = [NSArray arrayWithObjects:items[EDITOP_CREATE], items[EDITOP_MKDIR], items[EDITOP_SPACE], items[EDITOP_DELETE], nil ];
 }
 
 - (void)initTabController
