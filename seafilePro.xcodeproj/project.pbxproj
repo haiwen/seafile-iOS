@@ -534,6 +534,10 @@
 		5775EA0A17474DB3000A1765 /* bt-asterisk.png in Resources */ = {isa = PBXBuildFile; fileRef = 5775EA0617474DB3000A1765 /* bt-asterisk.png */; };
 		5775EA0C17475E86000A1765 /* bt-equal.png in Resources */ = {isa = PBXBuildFile; fileRef = 5775EA0B17475E86000A1765 /* bt-equal.png */; };
 		5775EA0D17475E86000A1765 /* bt-equal.png in Resources */ = {isa = PBXBuildFile; fileRef = 5775EA0B17475E86000A1765 /* bt-equal.png */; };
+		5775EA1117476FAD000A1765 /* SeafActivityViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5775EA0F17476FAD000A1765 /* SeafActivityViewController.m */; };
+		5775EA1217476FAD000A1765 /* SeafActivityViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5775EA0F17476FAD000A1765 /* SeafActivityViewController.m */; };
+		5775EA1317476FAD000A1765 /* SeafActivityViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5775EA1017476FAD000A1765 /* SeafActivityViewController.xib */; };
+		5775EA1417476FAD000A1765 /* SeafActivityViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5775EA1017476FAD000A1765 /* SeafActivityViewController.xib */; };
 		5779C7BB171088D900307C36 /* view_markdown.html in Resources */ = {isa = PBXBuildFile; fileRef = 5779C7B0171088D900307C36 /* view_markdown.html */; };
 		5779C7BC171088D900307C36 /* view_markdown.html in Resources */ = {isa = PBXBuildFile; fileRef = 5779C7B0171088D900307C36 /* view_markdown.html */; };
 		5779C7D9171473E000307C36 /* edit_file_text.html in Resources */ = {isa = PBXBuildFile; fileRef = 5779C7D8171473E000307C36 /* edit_file_text.html */; };
@@ -983,6 +987,9 @@
 		5775EA0517474DB3000A1765 /* bt-pound.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-pound.png"; path = "htmls/bt-pound.png"; sourceTree = SOURCE_ROOT; };
 		5775EA0617474DB3000A1765 /* bt-asterisk.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-asterisk.png"; path = "htmls/bt-asterisk.png"; sourceTree = SOURCE_ROOT; };
 		5775EA0B17475E86000A1765 /* bt-equal.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-equal.png"; path = "htmls/bt-equal.png"; sourceTree = SOURCE_ROOT; };
+		5775EA0E17476FAD000A1765 /* SeafActivityViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafActivityViewController.h; sourceTree = "<group>"; };
+		5775EA0F17476FAD000A1765 /* SeafActivityViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafActivityViewController.m; sourceTree = "<group>"; };
+		5775EA1017476FAD000A1765 /* SeafActivityViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafActivityViewController.xib; sourceTree = "<group>"; };
 		5779C7B0171088D900307C36 /* view_markdown.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = view_markdown.html; path = htmls/view_markdown.html; sourceTree = SOURCE_ROOT; };
 		5779C7D8171473E000307C36 /* edit_file_text.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = edit_file_text.html; path = htmls/edit_file_text.html; sourceTree = SOURCE_ROOT; };
 		577B6C6016AAD241008E82C2 /* tab-star.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-star.png"; sourceTree = "<group>"; };
@@ -1210,7 +1217,8 @@
 			children = (
 				57DA26F3173E6DFC0003BA31 /* SeafTextEditorViewController.m */,
 				57E1E89B1737ED0F006601FE /* SeafTextEditorViewController.h */,
-				57E1E89D1737ED0F006601FE /* SeafTextEditorViewController.xib */,
+				5775EA0E17476FAD000A1765 /* SeafActivityViewController.h */,
+				5775EA0F17476FAD000A1765 /* SeafActivityViewController.m */,
 				57F0AAF016D8904100364D18 /* CZPhotoPickerController.h */,
 				57F0AAF416D8905C00364D18 /* CZPhotoPickerController.m */,
 				57F0AAF116D8904100364D18 /* CZPhotoPreviewViewController.h */,
@@ -1283,17 +1291,19 @@
 		5709512815B9B1B600F48C08 /* ui */ = {
 			isa = PBXGroup;
 			children = (
-				577B6C6716AADC26008E82C2 /* SeafCell.xib */,
-				5795F49C16A726DF00FF90E3 /* SeafAccountCell.xib */,
 				571ABF551625DF6E005C9B08 /* DownloadingProgress_iPad.xib */,
 				570CF8BF16613E5600DFADBC /* DownloadingProgress_iPhone.xib */,
 				57655333161BEA69005E5327 /* FailToPreview_iPad.xib */,
 				570CF8C116613FF600DFADBC /* FailToPreview_iPhone.xib */,
 				57DB828815A833FA00097CEC /* FolderView_iPad.storyboard */,
 				57DB828515A833FA00097CEC /* FolderView_iPhone.storyboard */,
+				5795F49C16A726DF00FF90E3 /* SeafAccountCell.xib */,
 				570DFAC516A15D0100ADD5F2 /* SeafAccountViewController.xib */,
+				5775EA1017476FAD000A1765 /* SeafActivityViewController.xib */,
+				577B6C6716AADC26008E82C2 /* SeafCell.xib */,
 				570DFAD116A1EA3D00ADD5F2 /* SeafStartHeaderView.xib */,
 				57C07CE8163272CE00502B06 /* SeafUploadingFileCell.xib */,
+				57E1E89D1737ED0F006601FE /* SeafTextEditorViewController.xib */,
 			);
 			name = ui;
 			sourceTree = "<group>";
@@ -2032,6 +2042,7 @@
 				57EB1374174782B900D2ACF9 /* bt-ul2.png in Resources */,
 				57EB1376174782B900D2ACF9 /* bt-underline2.png in Resources */,
 				57EB1378174782B900D2ACF9 /* bt-undo2.png in Resources */,
+				5775EA1417476FAD000A1765 /* SeafActivityViewController.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2316,6 +2327,7 @@
 				57EB1373174782B900D2ACF9 /* bt-ul2.png in Resources */,
 				57EB1375174782B900D2ACF9 /* bt-underline2.png in Resources */,
 				57EB1377174782B900D2ACF9 /* bt-undo2.png in Resources */,
+				5775EA1317476FAD000A1765 /* SeafActivityViewController.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2379,6 +2391,7 @@
 				57F0AAF916D8905C00364D18 /* CZPhotoPickerController.m in Sources */,
 				57F0AAFB16D8905C00364D18 /* CZPhotoPreviewViewController.m in Sources */,
 				57DA26F5173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */,
+				5775EA1217476FAD000A1765 /* SeafActivityViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2439,6 +2452,7 @@
 				57F0AAF816D8905C00364D18 /* CZPhotoPickerController.m in Sources */,
 				57F0AAFA16D8905C00364D18 /* CZPhotoPreviewViewController.m in Sources */,
 				57DA26F4173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */,
+				5775EA1117476FAD000A1765 /* SeafActivityViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

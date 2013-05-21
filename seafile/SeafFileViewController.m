@@ -219,7 +219,6 @@ enum {
     [self.tableView setEditing:editing animated:animated];
 }
 
-
 - (void)goBack:(id)sender
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
@@ -228,10 +227,22 @@ enum {
     [appdelegate.window makeKeyAndVisible];
 }
 
+- (void)switchModule:(id)sender
+{
+    UIActionSheet *actionSheet;
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+
+    if (IsIpad())
+        actionSheet = [[UIActionSheet alloc] initWithTitle:@"...?" delegate:appdelegate cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:@"Accounts", @"Files", @"Activities", nil ];
+    else
+        actionSheet = [[UIActionSheet alloc] initWithTitle:@"...?" delegate:appdelegate cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Accounts", @"Files", @"Activities", nil ];
+    [actionSheet showFromBarButtonItem:sender animated:YES];
+}
+
 - (void)initNavigationItems:(SeafDir *)directory
 {
     if ([directory isKindOfClass:[SeafRepos class]]) {
-        _backItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRewind target:self action:@selector(goBack:)];
+        _backItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRewind target:self action:@selector(switchModule:)];
         self.navigationItem.leftBarButtonItem = _backItem;
     } else {
         if (directory.editable) {

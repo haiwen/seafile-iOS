@@ -18,10 +18,12 @@ enum {
 };
 
 @interface SeafAppDelegate ()
+@property (readonly) UINavigationController *activityNavController;
 
 @property UIBackgroundTaskIdentifier bgTask;
 @property int downloadnum;
 @property int uploadnum;
+@property NSInteger moduleIdx;
 
 @end
 
@@ -39,9 +41,14 @@ enum {
 @synthesize tabbarController = _tabbarController;
 @synthesize toolItems1 = _toolItems1;
 
+@synthesize actvityVC = _actvityVC;
+@synthesize activityNavController = _activityNavController;
+
 @synthesize bgTask;
 @synthesize downloadnum;
 @synthesize uploadnum;
+@synthesize moduleIdx;
+
 
 - (void)reachabilityChanged:(NSNotification* )note
 {
@@ -366,6 +373,20 @@ enum {
     return (SeafSettingsViewController *)[settingsNavigationController.viewControllers objectAtIndex:0];
 }
 
+- (SeafActivityViewController *)actvityVC
+{
+    if (_actvityVC)
+        return _actvityVC;
+    _actvityVC = [[SeafActivityViewController alloc] init];
+    return _actvityVC;
+}
+- (UINavigationController *)activityNavController
+{
+    if (!_activityNavController)
+        _activityNavController = [[UINavigationController alloc] initWithRootViewController:self.actvityVC];
+    return _activityNavController;
+}
+
 - (BOOL)checkNetworkStatus
 {
     NetworkStatus netStatus3G = [internetReach currentReachabilityStatus];
@@ -450,6 +471,35 @@ enum {
     if (![__managedObjectContext save:&error]) {
         Debug(@"Error deleting %@ - error:%@",entityDescription,error);
     }
+}
+
+
+#pragma mark - UIActionSheetDelegate
+- (void)switchModule
+{
+    if (moduleIdx == 0) {
+        if (self.window.rootViewController == self.startNav) return;
+        [self.detailVC setPreViewItem:nil];
+        self.window.rootViewController = self.startNav;
+    } else if (moduleIdx == 1) {
+        if (IsIpad()) {
+            if (self.window.rootViewController == self.splitVC) return;
+            self.window.rootViewController = self.splitVC;
+        } else {
+            if (self.window.rootViewController == self.tabbarController) return;
+            self.window.rootViewController = self.tabbarController;
+        }
+    } else if (moduleIdx == 2) {
+        self.window.rootViewController = self.activityNavController;
+        self.actvityVC.connection = self.uploadVC.connection;
+    }
+    [self.window makeKeyAndVisible];
+}
+- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    Debug("index=%d\n", buttonIndex);
+    moduleIdx = buttonIndex;
+    [self performSelector:@selector(switchModule) withObject:nil afterDelay:0];
 }
 
 @end

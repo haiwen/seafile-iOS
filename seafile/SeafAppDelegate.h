@@ -15,10 +15,11 @@
 #import "SeafStarredFilesViewController.h"
 #import "SeafDetailViewController.h"
 #import "SeafSettingsViewController.h"
+#import "SeafActivityViewController.h"
 #import "Reachability.h"
 
 
-@interface SeafAppDelegate : UIResponder <UIApplicationDelegate> {
+@interface SeafAppDelegate : UIResponder <UIApplicationDelegate, UIActionSheetDelegate> {
     Reachability* internetReach;
     Reachability* wifiReach;
 }
@@ -39,6 +40,8 @@
 @property (readonly) SeafSettingsViewController *settingVC;
 @property (readonly) UINavigationController *masterNavController;
 @property (readonly) UITabBarController *tabbarController;
+
+@property (readonly) SeafActivityViewController *actvityVC;
 
 @property (readonly) NSArray *toolItems1;
 

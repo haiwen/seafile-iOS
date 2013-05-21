@@ -533,9 +533,10 @@ enum TOOL_ITEM {
     self.navigationItem.leftBarButtonItems = litems;
 
     NSURL *url = [NSURL fileURLWithPath:path];
-    NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url.previewItemURL cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
+    NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
     [(UIWebView *)self.view loadRequest: request];
 }
+
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
     if (!IsIpad()) {
@@ -543,10 +544,12 @@ enum TOOL_ITEM {
     }
     return YES;
 }
+
 -(BOOL)shouldAutorotate
 {
     return YES;
 }
+
 -(NSInteger)supportedInterfaceOrientations
 {
     NSInteger mask = 0;
@@ -561,6 +564,7 @@ enum TOOL_ITEM {
     Debug("mask=%d, %d,%d,%d,%d\n", mask,UIInterfaceOrientationLandscapeRight,UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown);
     return mask;
 }
+
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
     [self.webView stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.execCommand(resizeTO(%f,%f))", self.webView.frame.size.width, self.webView.frame.size.height]];
