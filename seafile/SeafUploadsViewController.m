@@ -315,7 +315,6 @@
     [button setBackgroundImage:_cellImage forState:UIControlStateNormal];
     button.backgroundColor= [UIColor clearColor];
     [button addTarget:self action:@selector(btnClicked:event:) forControlEvents:UIControlEventTouchUpInside];
-    cell.accessoryView = button;
 
     NSString *sizeStr = [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:file.filesize ] useBaseTen:NO];
     NSDictionary *dict = [_attrs objectForKey:file.name];
@@ -324,10 +323,13 @@
         BOOL result = [[dict objectForKey:@"result"] boolValue];
         if (result)
             cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, Uploaded %@", sizeStr, [SeafDateFormatter stringFromInt:utime]];
-        else
+        else {
             cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, Failed %@", sizeStr, [SeafDateFormatter stringFromInt:utime]];
+            cell.accessoryView = button;
+        }
     } else {
         cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, Select folder to upload", sizeStr];
+        cell.accessoryView = button;
     }
     UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditMenu:)];
     [cell addGestureRecognizer:longPressGesture];

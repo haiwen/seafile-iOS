@@ -39,6 +39,9 @@
 @property (readonly) NSString *password;
 @property (readonly) long long quota;
 @property (readonly) long long usage;
+@property (readwrite, strong) NSString *token;
+@property (readonly) NSArray *seafGroups;
+
 
 - (id)initWithUrl:(NSString *)url username:(NSString *)username;
 - (void)loadRepos:(id)degt;
@@ -69,6 +72,10 @@
                 failure:(void (^)(NSHTTPURLResponse *response, NSError *error, id JSON))failure;
 
 - (id)getCachedStarredFiles;
+
+- (void)getSeafGroups:(void (^)(NSHTTPURLResponse *response, id JSON, NSData *data))success
+              failure:(void (^)(NSHTTPURLResponse *response, NSError *error, id JSON))failure;
+
 
 - (BOOL)isStarred:(NSString *)repo path:(NSString *)path;
 

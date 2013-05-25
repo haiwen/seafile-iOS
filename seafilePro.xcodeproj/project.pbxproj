@@ -575,6 +575,18 @@
 		57A055A61644EAD1006511AA /* tab-home.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A055A51644EAD1006511AA /* tab-home.png */; };
 		57A055A91644EC84006511AA /* seafile-logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A055A81644EC84006511AA /* seafile-logo.png */; };
 		57B66EB015BA513E00C2B41B /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57B66EAF15BA513E00C2B41B /* QuartzCore.framework */; };
+		57BD9322174B0A0E00F7732F /* DisStoryboard_iPad.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57BD931C174B0A0E00F7732F /* DisStoryboard_iPad.storyboard */; };
+		57BD9323174B0A0E00F7732F /* DisStoryboard_iPad.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57BD931C174B0A0E00F7732F /* DisStoryboard_iPad.storyboard */; };
+		57BD9324174B0A0E00F7732F /* DisStoryboard_iPhone.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57BD931D174B0A0E00F7732F /* DisStoryboard_iPhone.storyboard */; };
+		57BD9325174B0A0E00F7732F /* DisStoryboard_iPhone.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57BD931D174B0A0E00F7732F /* DisStoryboard_iPhone.storyboard */; };
+		57BD9326174B0A0E00F7732F /* SeafDisDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BD931F174B0A0E00F7732F /* SeafDisDetailViewController.m */; };
+		57BD9327174B0A0E00F7732F /* SeafDisDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BD931F174B0A0E00F7732F /* SeafDisDetailViewController.m */; };
+		57BD9328174B0A0E00F7732F /* SeafDisMasterViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BD9321174B0A0E00F7732F /* SeafDisMasterViewController.m */; };
+		57BD9329174B0A0E00F7732F /* SeafDisMasterViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BD9321174B0A0E00F7732F /* SeafDisMasterViewController.m */; };
+		57BD932B174DD86D00F7732F /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = 57BD932A174DD86D00F7732F /* index.html */; };
+		57BD932C174DD86D00F7732F /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = 57BD932A174DD86D00F7732F /* index.html */; };
+		57BD932E174DDA8700F7732F /* group.png in Resources */ = {isa = PBXBuildFile; fileRef = 57BD932D174DDA8700F7732F /* group.png */; };
+		57BD932F174DDA8700F7732F /* group.png in Resources */ = {isa = PBXBuildFile; fileRef = 57BD932D174DDA8700F7732F /* group.png */; };
 		57C07CE41632556600502B06 /* SeafUploadingFileCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 57C07CE31632556600502B06 /* SeafUploadingFileCell.m */; };
 		57C07CE9163272CE00502B06 /* SeafUploadingFileCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57C07CE8163272CE00502B06 /* SeafUploadingFileCell.xib */; };
 		57C57BDD165FBB4C006834DF /* SVProgressHUD.m in Sources */ = {isa = PBXBuildFile; fileRef = 57C57BDB165FBB4C006834DF /* SVProgressHUD.m */; };
@@ -1017,6 +1029,14 @@
 		57A055A51644EAD1006511AA /* tab-home.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-home.png"; sourceTree = "<group>"; };
 		57A055A81644EC84006511AA /* seafile-logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "seafile-logo.png"; sourceTree = "<group>"; };
 		57B66EAF15BA513E00C2B41B /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		57BD931C174B0A0E00F7732F /* DisStoryboard_iPad.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = DisStoryboard_iPad.storyboard; sourceTree = "<group>"; };
+		57BD931D174B0A0E00F7732F /* DisStoryboard_iPhone.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = DisStoryboard_iPhone.storyboard; sourceTree = "<group>"; };
+		57BD931E174B0A0E00F7732F /* SeafDisDetailViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafDisDetailViewController.h; sourceTree = "<group>"; };
+		57BD931F174B0A0E00F7732F /* SeafDisDetailViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafDisDetailViewController.m; sourceTree = "<group>"; };
+		57BD9320174B0A0E00F7732F /* SeafDisMasterViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafDisMasterViewController.h; sourceTree = "<group>"; };
+		57BD9321174B0A0E00F7732F /* SeafDisMasterViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafDisMasterViewController.m; sourceTree = "<group>"; };
+		57BD932A174DD86D00F7732F /* index.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = index.html; path = htmls/index.html; sourceTree = SOURCE_ROOT; };
+		57BD932D174DDA8700F7732F /* group.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = group.png; sourceTree = "<group>"; };
 		57C07CE21632556600502B06 /* SeafUploadingFileCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafUploadingFileCell.h; sourceTree = "<group>"; };
 		57C07CE31632556600502B06 /* SeafUploadingFileCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafUploadingFileCell.m; sourceTree = "<group>"; };
 		57C07CE8163272CE00502B06 /* SeafUploadingFileCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafUploadingFileCell.xib; sourceTree = "<group>"; };
@@ -1138,6 +1158,7 @@
 		57094B3315B9A64500F48C08 /* images */ = {
 			isa = PBXGroup;
 			children = (
+				57BD932D174DDA8700F7732F /* group.png */,
 				570DFACA16A19EFD00ADD5F2 /* account.png */,
 				577B6C6016AAD241008E82C2 /* tab-star.png */,
 				576D6EAA1604804E000310F5 /* app-icon-ipad-50.png */,
@@ -1215,6 +1236,10 @@
 		5709512615B9ACDF00F48C08 /* views */ = {
 			isa = PBXGroup;
 			children = (
+				57BD931E174B0A0E00F7732F /* SeafDisDetailViewController.h */,
+				57BD931F174B0A0E00F7732F /* SeafDisDetailViewController.m */,
+				57BD9320174B0A0E00F7732F /* SeafDisMasterViewController.h */,
+				57BD9321174B0A0E00F7732F /* SeafDisMasterViewController.m */,
 				57DA26F3173E6DFC0003BA31 /* SeafTextEditorViewController.m */,
 				57E1E89B1737ED0F006601FE /* SeafTextEditorViewController.h */,
 				5775EA0E17476FAD000A1765 /* SeafActivityViewController.h */,
@@ -1291,6 +1316,8 @@
 		5709512815B9B1B600F48C08 /* ui */ = {
 			isa = PBXGroup;
 			children = (
+				57BD931C174B0A0E00F7732F /* DisStoryboard_iPad.storyboard */,
+				57BD931D174B0A0E00F7732F /* DisStoryboard_iPhone.storyboard */,
 				571ABF551625DF6E005C9B08 /* DownloadingProgress_iPad.xib */,
 				570CF8BF16613E5600DFADBC /* DownloadingProgress_iPhone.xib */,
 				57655333161BEA69005E5327 /* FailToPreview_iPad.xib */,
@@ -1302,8 +1329,8 @@
 				5775EA1017476FAD000A1765 /* SeafActivityViewController.xib */,
 				577B6C6716AADC26008E82C2 /* SeafCell.xib */,
 				570DFAD116A1EA3D00ADD5F2 /* SeafStartHeaderView.xib */,
-				57C07CE8163272CE00502B06 /* SeafUploadingFileCell.xib */,
 				57E1E89D1737ED0F006601FE /* SeafTextEditorViewController.xib */,
+				57C07CE8163272CE00502B06 /* SeafUploadingFileCell.xib */,
 			);
 			name = ui;
 			sourceTree = "<group>";
@@ -1532,6 +1559,7 @@
 		5782EE631734F37B00A76338 /* htmls */ = {
 			isa = PBXGroup;
 			children = (
+				57BD932A174DD86D00F7732F /* index.html */,
 				5782EE641734F3A200A76338 /* bg.png */,
 				57E1E8A51737F4D3006601FE /* bootstrap-wysiwyg.js */,
 				57E1E8A61737F4D3006601FE /* bootstrap.min.js */,
@@ -2043,6 +2071,10 @@
 				57EB1376174782B900D2ACF9 /* bt-underline2.png in Resources */,
 				57EB1378174782B900D2ACF9 /* bt-undo2.png in Resources */,
 				5775EA1417476FAD000A1765 /* SeafActivityViewController.xib in Resources */,
+				57BD9323174B0A0E00F7732F /* DisStoryboard_iPad.storyboard in Resources */,
+				57BD9325174B0A0E00F7732F /* DisStoryboard_iPhone.storyboard in Resources */,
+				57BD932C174DD86D00F7732F /* index.html in Resources */,
+				57BD932F174DDA8700F7732F /* group.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2328,6 +2360,10 @@
 				57EB1375174782B900D2ACF9 /* bt-underline2.png in Resources */,
 				57EB1377174782B900D2ACF9 /* bt-undo2.png in Resources */,
 				5775EA1317476FAD000A1765 /* SeafActivityViewController.xib in Resources */,
+				57BD9322174B0A0E00F7732F /* DisStoryboard_iPad.storyboard in Resources */,
+				57BD9324174B0A0E00F7732F /* DisStoryboard_iPhone.storyboard in Resources */,
+				57BD932B174DD86D00F7732F /* index.html in Resources */,
+				57BD932E174DDA8700F7732F /* group.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2392,6 +2428,8 @@
 				57F0AAFB16D8905C00364D18 /* CZPhotoPreviewViewController.m in Sources */,
 				57DA26F5173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */,
 				5775EA1217476FAD000A1765 /* SeafActivityViewController.m in Sources */,
+				57BD9327174B0A0E00F7732F /* SeafDisDetailViewController.m in Sources */,
+				57BD9329174B0A0E00F7732F /* SeafDisMasterViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2453,6 +2491,8 @@
 				57F0AAFA16D8905C00364D18 /* CZPhotoPreviewViewController.m in Sources */,
 				57DA26F4173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */,
 				5775EA1117476FAD000A1765 /* SeafActivityViewController.m in Sources */,
+				57BD9326174B0A0E00F7732F /* SeafDisDetailViewController.m in Sources */,
+				57BD9328174B0A0E00F7732F /* SeafDisMasterViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

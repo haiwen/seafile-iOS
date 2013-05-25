@@ -44,7 +44,16 @@
 
 - (void)refresh:(id)sender
 {
-    [self getStarredFiles];
+    [_connection getStarredFiles:^(NSHTTPURLResponse *response, id JSON, NSData *data) {
+        @synchronized(self) {
+            Debug("Success to get starred files ...\n");
+            [self handleData:JSON];
+            [self.tableView reloadData];
+        }
+    }
+                         failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
+                             Warning("Failed to get starred files ...\n");
+                         }];
 }
 - (void)viewDidLoad
 {
@@ -113,20 +122,6 @@
 
     [self handleData:JSON];
     return YES;
-}
-
-- (void)getStarredFiles
-{
-    [_connection getStarredFiles:^(NSHTTPURLResponse *response, id JSON, NSData *data) {
-        @synchronized(self) {
-            Debug("Success to get starred files ...\n");
-            [self handleData:JSON];
-            [self.tableView reloadData];
-        }
-    }
-                         failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
-                             Warning("Failed to get starred files ...\n");
-                         }];
 }
 
 - (void)setConnection:(SeafConnection *)connection

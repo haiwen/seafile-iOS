@@ -43,6 +43,10 @@ enum {
 
 @synthesize actvityVC = _actvityVC;
 @synthesize activityNavController = _activityNavController;
+@synthesize discussVC = _discussVC;
+@synthesize dismasterVC = _dismasterVC;
+@synthesize disdetailVC = _disdetailVC;
+@synthesize switchItem;
 
 @synthesize bgTask;
 @synthesize downloadnum;
@@ -349,7 +353,7 @@ enum {
     if (_detailVC)
         return _detailVC;
     if (IsIpad())
-        _detailVC = (SeafDetailViewController *)[[[self.splitVC.viewControllers lastObject] viewControllers] objectAtIndex:TABBED_SEAFILE];
+        _detailVC = (SeafDetailViewController *)[[[self.splitVC.viewControllers lastObject] viewControllers] objectAtIndex:0];
     else {
         _detailVC = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
     }
@@ -375,9 +379,8 @@ enum {
 
 - (SeafActivityViewController *)actvityVC
 {
-    if (_actvityVC)
-        return _actvityVC;
-    _actvityVC = [[SeafActivityViewController alloc] init];
+    if (!_actvityVC)
+        _actvityVC = [[SeafActivityViewController alloc] init];
     return _actvityVC;
 }
 - (UINavigationController *)activityNavController
@@ -385,6 +388,25 @@ enum {
     if (!_activityNavController)
         _activityNavController = [[UINavigationController alloc] initWithRootViewController:self.actvityVC];
     return _activityNavController;
+}
+
+- (UIViewController *)discussVC
+{
+    if (!_discussVC) {
+        if (IsIpad()) {
+            UISplitViewController *split = [[UIStoryboard storyboardWithName:@"DisStoryboard_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"SPLITVC"];
+            UINavigationController *detailNavigationController = [split.viewControllers lastObject];
+            split.delegate = (id)detailNavigationController.topViewController;
+            _dismasterVC = [[[split.viewControllers objectAtIndex:0] viewControllers] objectAtIndex:0];
+            _disdetailVC = [[[split.viewControllers lastObject] viewControllers] objectAtIndex:0];
+            _discussVC = split;
+        } else {
+            _discussVC = [[UIStoryboard storyboardWithName:@"DisStoryboard_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERNAV"];
+            _dismasterVC = [((UINavigationController *)_discussVC).viewControllers objectAtIndex:0];
+            _disdetailVC = [[UIStoryboard storyboardWithName:@"DisStoryboard_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
+        }
+    }
+    return _discussVC;
 }
 
 - (BOOL)checkNetworkStatus
@@ -492,6 +514,9 @@ enum {
     } else if (moduleIdx == 2) {
         self.window.rootViewController = self.activityNavController;
         self.actvityVC.connection = self.uploadVC.connection;
+    } else if (moduleIdx == 3) {
+        self.window.rootViewController = self.discussVC;
+        self.dismasterVC.connection = self.uploadVC.connection;
     }
     [self.window makeKeyAndVisible];
 }
@@ -501,5 +526,19 @@ enum {
     moduleIdx = buttonIndex;
     [self performSelector:@selector(switchModule) withObject:nil afterDelay:0];
 }
+- (void)switchModuleHandler:(id)sender
+{
+    UIActionSheet *actionSheet;
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    if (IsIpad())
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:appdelegate cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:@"Accounts", @"Files", @"Activities", @"Discussion", nil ];
+    else
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:appdelegate cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Accounts", @"Files", @"Activities", @"Discussion", nil ];
+    [actionSheet showFromBarButtonItem:sender animated:YES];
+}
 
+- (UIBarButtonItem *)switchItem
+{
+    return [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemOrganize target:self action:@selector(switchModuleHandler:)];
+}
 @end

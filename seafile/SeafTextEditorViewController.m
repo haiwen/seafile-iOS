@@ -437,7 +437,6 @@ enum TOOL_ITEM {
 }
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
 {
-    Debug("...");
 }
 
 - (BOOL)handleUrl:(NSString *)urlStr

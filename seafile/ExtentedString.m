@@ -64,4 +64,12 @@
     return escapedString;
 }
 
+- (unsigned int) indexOf:(char) searchChar
+{
+    NSRange searchRange;
+    searchRange.location = (unsigned int)searchChar;
+    searchRange.length = 1;
+    NSRange foundRange = [self rangeOfCharacterFromSet:[NSCharacterSet characterSetWithRange:searchRange]];
+    return foundRange.location;
+}
 @end

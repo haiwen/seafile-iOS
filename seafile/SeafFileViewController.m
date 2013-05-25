@@ -55,7 +55,7 @@ enum {
 @synthesize directory = _directory;
 @synthesize curEntry = _curEntry;
 @synthesize passSetView = _passSetView, inputView = _inputView;
-@synthesize backItem = _backItem, selectAllItem = _selectAllItem, selectNoneItem = _selectNoneItem;
+@synthesize selectAllItem = _selectAllItem, selectNoneItem = _selectNoneItem;
 @synthesize selectedindex = _selectedindex;
 @synthesize state;
 
@@ -204,14 +204,12 @@ enum {
     if (editing) {
         if (![appdelegate checkNetworkStatus])
             return;
-        self.navigationItem.backBarButtonItem = nil;
         [self setToolbarItems:appdelegate.toolItems1];
         [self.navigationController.toolbar sizeToFit];
         [self noneSelected:YES];
         [self.navigationController setToolbarHidden:NO animated:YES];
     } else {
         self.navigationItem.leftBarButtonItem = nil;
-        self.navigationItem.backBarButtonItem = _backItem;
         [self.navigationController setToolbarHidden:YES animated:YES];
     }
 
@@ -219,39 +217,17 @@ enum {
     [self.tableView setEditing:editing animated:animated];
 }
 
-- (void)goBack:(id)sender
-{
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    [appdelegate.detailVC setPreViewItem:nil];
-    appdelegate.window.rootViewController = appdelegate.startNav;
-    [appdelegate.window makeKeyAndVisible];
-}
-
-- (void)switchModule:(id)sender
-{
-    UIActionSheet *actionSheet;
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-
-    if (IsIpad())
-        actionSheet = [[UIActionSheet alloc] initWithTitle:@"...?" delegate:appdelegate cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:@"Accounts", @"Files", @"Activities", nil ];
-    else
-        actionSheet = [[UIActionSheet alloc] initWithTitle:@"...?" delegate:appdelegate cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Accounts", @"Files", @"Activities", nil ];
-    [actionSheet showFromBarButtonItem:sender animated:YES];
-}
-
 - (void)initNavigationItems:(SeafDir *)directory
 {
     if ([directory isKindOfClass:[SeafRepos class]]) {
-        _backItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRewind target:self action:@selector(switchModule:)];
-        self.navigationItem.leftBarButtonItem = _backItem;
+        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+        self.navigationItem.leftBarButtonItem = appdelegate.switchItem;
     } else {
         if (directory.editable) {
             self.navigationItem.rightBarButtonItem = self.editButtonItem;
             _selectAllItem = [[UIBarButtonItem alloc] initWithTitle:@"Select All" style:UIBarButtonItemStylePlain target:self action:@selector(selectAll:)];
             _selectNoneItem = [[UIBarButtonItem alloc] initWithTitle:@"Select None" style:UIBarButtonItemStylePlain target:self action:@selector(selectNone:)];
-            _backItem = [[UIBarButtonItem alloc] initWithTitle:directory.name style:UIBarButtonItemStyleBordered target:self action:nil];
         }
-        self.navigationItem.backBarButtonItem = _backItem;
     }
 }
 

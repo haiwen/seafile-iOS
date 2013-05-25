@@ -272,6 +272,14 @@ enum PREVIEW_STATE {
     self.masterPopoverController = nil;
 }
 
+- (void)viewWillDisappear:(BOOL)animated
+{
+    if (self.masterPopoverController != nil) {
+        [self.masterPopoverController dismissPopoverAnimated:YES];
+    }
+    [super viewWillDisappear:animated];
+}
+
 - (void)fileContentLoaded :(SeafFile *)file result:(BOOL)res completeness:(int)percent
 {
     if (file != preViewItem)

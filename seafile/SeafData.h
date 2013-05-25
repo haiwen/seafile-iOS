@@ -49,3 +49,12 @@
 
 
 @end
+
+@interface SeafGroups : NSManagedObject
+
+@property (nonatomic, retain) NSString *url;
+@property (nonatomic, retain) NSString *username;
+@property (nonatomic, retain) NSString *content;
+
+
+@end

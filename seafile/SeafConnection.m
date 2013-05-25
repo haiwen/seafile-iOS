@@ -19,10 +19,8 @@
 
 @interface SeafConnection ()
 
-@property (readwrite, strong) NSString *token;
 @property (readwrite, strong) NSString *version;
 @property NSMutableSet *starredFiles;
-
 @end
 
 @implementation SeafConnection
@@ -32,6 +30,7 @@
 @synthesize delegate = _delegate;
 @synthesize rootFolder = _rootFolder;
 @synthesize starredFiles = _starredFiles;
+@synthesize seafGroups = _seafGroups;
 @synthesize version;
 
 - (id)init:(NSString *)url
@@ -222,16 +221,17 @@
 {
     _rootFolder.delegate = degt;
     [_rootFolder loadContent:NO];
+    [self handleGroupsData:[self getCachedGroups]];
     [self getStarredFiles:nil failure:nil];
 }
 
 #pragma -mark starred files
-- (StarredFiles *)loadCacheObj
+- (id)loadCacheObj:(NSString *)name
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     NSManagedObjectContext *context = [appdelegate managedObjectContext];
     NSFetchRequest *fetchRequest=[[NSFetchRequest alloc] init];
-    [fetchRequest setEntity:[NSEntityDescription entityForName:@"StarredFiles" inManagedObjectContext:context]];
+    [fetchRequest setEntity:[NSEntityDescription entityForName:name inManagedObjectContext:context]];
     NSSortDescriptor *sortDescriptor=[[NSSortDescriptor alloc] initWithKey:@"url" ascending:YES selector:nil];
     NSArray *descriptor=[NSArray arrayWithObject:sortDescriptor];
     [fetchRequest setSortDescriptors:descriptor];
@@ -255,11 +255,11 @@
     return [results objectAtIndex:0];
 }
 
-- (BOOL)savetoCache:(NSString *)content
+- (BOOL)saveStarstoCache:(NSString *)content
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     NSManagedObjectContext *context = [appdelegate managedObjectContext];
-    StarredFiles *starfiles = [self loadCacheObj];
+    StarredFiles *starfiles = [self loadCacheObj:@"StarredFiles"];
     if (!starfiles) {
         starfiles = (StarredFiles *)[NSEntityDescription insertNewObjectForEntityForName:@"StarredFiles" inManagedObjectContext:context];
         starfiles.url = self.address;
@@ -267,6 +267,24 @@
         starfiles.username = self.username;
     } else {
         starfiles.content = content;
+        [context updatedObjects];
+    }
+    [appdelegate saveContext];
+    return YES;
+}
+
+- (BOOL)saveGroupstoCache:(NSString *)content
+{
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    NSManagedObjectContext *context = [appdelegate managedObjectContext];
+    SeafGroups *groups = [self loadCacheObj:@"SeafGroups"];
+    if (!groups) {
+        groups = (SeafGroups *)[NSEntityDescription insertNewObjectForEntityForName:@"SeafGroups" inManagedObjectContext:context];
+        groups.url = self.address;
+        groups.content = content;
+        groups.username = self.username;
+    } else {
+        groups.content = content;
         [context updatedObjects];
     }
     [appdelegate saveContext];
@@ -292,7 +310,7 @@
          @synchronized(self) {
              Debug("Success to get starred files ...\n");
              [self handleData:JSON];
-             [self savetoCache:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
+             [self saveStarstoCache:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
              if (success)
                  success (response, JSON, data);
          }
@@ -306,7 +324,7 @@
 
 - (id)getCachedStarredFiles
 {
-    StarredFiles *starfiles = [self loadCacheObj];
+    StarredFiles *starfiles = [self loadCacheObj:@"StarredFiles"];
     if (!starfiles)
         return nil;
 
@@ -362,6 +380,56 @@
     }
 
     return YES;
+}
+
+- (BOOL)handleGroupsData:(id)JSON
+{
+    NSMutableArray *groups = [[NSMutableArray alloc] init];
+    for (NSDictionary *info in JSON) {
+        [groups addObject:info];
+    }
+    _seafGroups = groups;
+    return YES;
+}
+
+- (void)getSeafGroups:(void (^)(NSHTTPURLResponse *response, id JSON, NSData *data))success
+              failure:(void (^)(NSHTTPURLResponse *response, NSError *error, id JSON))failure
+{
+    [self sendRequest:API_URL"/groups/"  repo:nil
+              success:
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+         @synchronized(self) {
+             Debug("Success to get groups ...%@\n", JSON);
+             [self handleGroupsData:JSON];
+             [self saveGroupstoCache:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
+             if (success)
+                 success (response, JSON, data);
+         }
+     }
+              failure:
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+         if (failure)
+             failure (response, error, JSON);
+     }];
+}
+
+- (id)getCachedGroups
+{
+    SeafGroups *groups = [self loadCacheObj:@"SeafGroups"];
+    if (!groups)
+        return nil;
+    
+    NSError *error = nil;
+    NSData *data = [NSData dataWithBytes:[groups.content UTF8String] length:groups.content.length];
+    
+    id JSON = [Utils JSONDecode:data error:&error];
+    if (error) {
+        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+        NSManagedObjectContext *context = [appdelegate managedObjectContext];
+        [context deleteObject:groups];
+        return nil;
+    }
+    return JSON;
 }
 
 - (BOOL)repoEditable:(NSString *)repo

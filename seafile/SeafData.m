@@ -46,3 +46,11 @@
 @dynamic mpath;
 
 @end
+
+@implementation SeafGroups
+
+@dynamic url;
+@dynamic username;
+@dynamic content;
+
+@end

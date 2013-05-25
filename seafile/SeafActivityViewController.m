@@ -7,14 +7,17 @@
 //
 
 #import "SeafActivityViewController.h"
+#import "SeafAppDelegate.h"
+#import "SVProgressHUD.h"
 #import "Debug.h"
 
 @interface SeafActivityViewController ()
-
+@property BOOL flag;
 @end
 
 @implementation SeafActivityViewController
 @synthesize connection = _connection;
+@synthesize flag;
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -30,11 +33,20 @@
     return [self initWithNibName:(NSStringFromClass ([self class])) bundle:nil];
 }
 
+- (void)refresh:(id)sender
+{
+    [self start];
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
     self.title = @"Activities";
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    self.navigationItem.leftBarButtonItem = appdelegate.switchItem;
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(refresh:)];
+    ((UIWebView *)self.view).delegate = self;
 }
 
 - (void)didReceiveMemoryWarning
@@ -47,8 +59,10 @@
 {
     @synchronized(self) {
         if (_connection != connection) {
+            NSURLRequest *request = [[NSURLRequest alloc] initWithURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"index" ofType:@"html"]] cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
+            [(UIWebView *)self.view loadRequest: request];
             _connection = connection;
-            [self start];
+            self.flag = YES;
         }
     }
 }
@@ -59,24 +73,43 @@
 
 - (void)start
 {
-    NSString *urlStr = [NSString stringWithFormat:@"http://www.seafile.com"];
-    NSURL *url = [NSURL URLWithString:urlStr];
-    NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
+    [SVProgressHUD showWithStatus:@"Loading ..."];
+    NSString *urlStr = [_connection.address stringByAppendingString:API_URL"/activity/"];
+    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:urlStr] cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
+    [request setHTTPMethod:@"GET"];
+    [request setValue:[NSString stringWithFormat:@"Token %@", _connection.token] forHTTPHeaderField:@"Authorization"];
     [(UIWebView *)self.view loadRequest: request];
 }
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+}
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+}
+
 
 # pragma - UIWebViewDelegate
 - (void)webViewDidFinishLoad:(UIWebView *)webView
 {
-    Debug("...");
+    if (self.flag) {
+        self.flag = NO;
+        [self start];
+    } else {
+        [SVProgressHUD dismiss];
+    }
 }
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
 {
-    Debug("...");
+    [SVProgressHUD showErrorWithStatus:@"Failed to load activities"];
 }
 
 - (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
 {
+    Debug("Request %@\n", request.URL);
     return YES;
 }
 

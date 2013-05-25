@@ -16,6 +16,7 @@
 #import "SeafDetailViewController.h"
 #import "SeafSettingsViewController.h"
 #import "SeafActivityViewController.h"
+#import "SeafDisMasterViewController.h"
 #import "Reachability.h"
 
 
@@ -42,7 +43,11 @@
 @property (readonly) UITabBarController *tabbarController;
 
 @property (readonly) SeafActivityViewController *actvityVC;
+@property (readonly) UIViewController *discussVC;
+@property (readonly) SeafDisMasterViewController *dismasterVC;
+@property (readonly) SeafDisDetailViewController *disdetailVC;
 
+@property (readonly) UIBarButtonItem *switchItem;
 @property (readonly) NSArray *toolItems1;
 
 - (void)saveContext;
