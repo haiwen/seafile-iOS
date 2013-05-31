@@ -15,7 +15,6 @@
 @interface SeafUploadsViewController : UITableViewController<SeafUploadDelegate, UIActionSheetDelegate, InputDoneDelegate, UIAlertViewDelegate>
 @property (strong) SeafConnection *connection;
 
-- (void)initTabBarItem;
 - (void)chooseUploadDir:(SeafDir *)dir;
 
 @end

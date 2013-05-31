@@ -242,27 +242,24 @@
 }
 
 #pragma mark - SSConnectionDelegate
+- (void)delayOP
+{
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    [appdelegate.tabbarController setSelectedIndex:TABBED_SEAFILE];
+
+}
 - (void)transferToReposView:(SeafConnection *)conn
 {
-    Debug("%@\n", conn.address);
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     [userDefaults setObject:conn.address forKey:@"DEAULT-SERVER"];
     [userDefaults setObject:conn.username forKey:@"DEAULT-USER"];
     [userDefaults synchronize];
 
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    [conn loadRepos:appdelegate.masterVC];
-    appdelegate.uploadVC.connection = conn;
-    appdelegate.starredVC.connection = conn;
-    appdelegate.settingVC.connection = conn;
-    [appdelegate.detailVC setPreViewItem:nil];
-    if (IsIpad())
-        appdelegate.window.rootViewController = appdelegate.splitVC;
-    else
-        appdelegate.window.rootViewController = appdelegate.tabbarController;
-
-    [appdelegate.masterVC setDirectory:(SeafDir *)conn.rootFolder];
+    appdelegate.connection = conn;
+    appdelegate.window.rootViewController = appdelegate.tabbarController;
     [appdelegate.window makeKeyAndVisible];
+    [self performSelector:@selector(delayOP) withObject:nil afterDelay:0.01];
 }
 
 @end

@@ -68,21 +68,10 @@ enum {
     [_connection getAccountInfo:self];
 }
 
-- (void)initTabBarItem
-{
-    self.title = @"Settings";
-    self.tabBarItem.image = [[UIImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"tab-settings" ofType:@"png"]];
-}
-
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
-}
-
-- (SeafConnection *)connection
-{
-    return _connection;
 }
 
 - (void)configureView
@@ -114,9 +103,7 @@ enum {
 
 - (void)setConnection:(SeafConnection *)connection
 {
-    @synchronized(self) {
-        _connection = connection;
-    }
+    _connection = connection;
 }
 
 #pragma mark - SSConnectionAccountDelegate
@@ -198,10 +185,11 @@ enum {
 
 - (void)displayMailPicker
 {
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     MFMailComposeViewController *mailPicker = [[MFMailComposeViewController alloc] init];
     mailPicker.mailComposeDelegate = self;
     [self configureInvitationMail:mailPicker];
-    [self presentViewController:mailPicker animated:YES completion:nil];
+    [appdelegate.tabbarController presentViewController:mailPicker animated:YES completion:nil];
 }
 
 #pragma mark - MFMailComposeViewControllerDelegate
@@ -234,7 +222,7 @@ enum {
 {
     if (buttonIndex == 1) {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        [appdelegate.detailVC setPreViewItem:nil];
+        [(SeafDetailViewController *)[appdelegate detailViewController:TABBED_SETTINGS] setPreViewItem:nil];
         [Utils clearAllFiles:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
         [Utils clearAllFiles:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"]];
         [Utils clearAllFiles:[Utils applicationTempDirectory]];

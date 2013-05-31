@@ -178,7 +178,6 @@
         }];
     }
     [self updateItems:items];
-    Debug("load oid=%@, %@, %@\n", self.ooid, self.path, self.mime);
 }
 
 - (Directory *)loadCacheObj

@@ -407,8 +407,8 @@ enum TOOL_ITEM {
     NSString *content = [self.webView stringByEvaluatingJavaScriptFromString:@"getContent()"];
     [sfile saveContent:content];
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    [appdelegate.detailVC refreshView];
-    [appdelegate.masterVC refreshView];
+    [self.detailViewController refreshView];
+    [appdelegate.fileVC refreshView];
     [appdelegate.starredVC refreshView];
     [self dismissCurrentView];
 }

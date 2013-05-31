@@ -7,6 +7,30 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5704C6D21753A1380028F4FE /* IntelligentSplitViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6D11753A1380028F4FE /* IntelligentSplitViewController.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		5704C6D31753A1380028F4FE /* IntelligentSplitViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6D11753A1380028F4FE /* IntelligentSplitViewController.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		5704C6E2175518F00028F4FE /* M13InfiniteTabBar.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6D7175518EE0028F4FE /* M13InfiniteTabBar.m */; };
+		5704C6E3175518F00028F4FE /* M13InfiniteTabBar.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6D7175518EE0028F4FE /* M13InfiniteTabBar.m */; };
+		5704C6E4175518F00028F4FE /* M13InfiniteTabBarCentralPullNotificationBackgroundView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6D9175518EF0028F4FE /* M13InfiniteTabBarCentralPullNotificationBackgroundView.m */; };
+		5704C6E5175518F00028F4FE /* M13InfiniteTabBarCentralPullNotificationBackgroundView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6D9175518EF0028F4FE /* M13InfiniteTabBarCentralPullNotificationBackgroundView.m */; };
+		5704C6E6175518F00028F4FE /* M13InfiniteTabBarCentralPullViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6DB175518EF0028F4FE /* M13InfiniteTabBarCentralPullViewController.m */; };
+		5704C6E7175518F00028F4FE /* M13InfiniteTabBarCentralPullViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6DB175518EF0028F4FE /* M13InfiniteTabBarCentralPullViewController.m */; };
+		5704C6E8175518F00028F4FE /* M13InfiniteTabBarController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6DD175518EF0028F4FE /* M13InfiniteTabBarController.m */; };
+		5704C6E9175518F00028F4FE /* M13InfiniteTabBarController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6DD175518EF0028F4FE /* M13InfiniteTabBarController.m */; };
+		5704C6EA175518F00028F4FE /* M13InfiniteTabBarItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6DF175518EF0028F4FE /* M13InfiniteTabBarItem.m */; };
+		5704C6EB175518F00028F4FE /* M13InfiniteTabBarItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6DF175518EF0028F4FE /* M13InfiniteTabBarItem.m */; };
+		5704C6EC175518F00028F4FE /* M13PanGestureRecognizer.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6E1175518F00028F4FE /* M13PanGestureRecognizer.m */; };
+		5704C6ED175518F00028F4FE /* M13PanGestureRecognizer.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6E1175518F00028F4FE /* M13PanGestureRecognizer.m */; };
+		5704C6F01755AA0D0028F4FE /* SeafEmptyViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6EF1755AA0C0028F4FE /* SeafEmptyViewController.m */; };
+		5704C6F11755AA0D0028F4FE /* SeafEmptyViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6EF1755AA0C0028F4FE /* SeafEmptyViewController.m */; };
+		5704C6F317566BEA0028F4FE /* SeafActivityViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F217566BEA0028F4FE /* SeafActivityViewController.xib */; };
+		5704C6F417566BEA0028F4FE /* SeafActivityViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F217566BEA0028F4FE /* SeafActivityViewController.xib */; };
+		5704C6F81756710F0028F4FE /* tab-account.png in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F51756710F0028F4FE /* tab-account.png */; };
+		5704C6F91756710F0028F4FE /* tab-account.png in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F51756710F0028F4FE /* tab-account.png */; };
+		5704C6FA1756710F0028F4FE /* tab-activity.png in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F61756710F0028F4FE /* tab-activity.png */; };
+		5704C6FB1756710F0028F4FE /* tab-activity.png in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F61756710F0028F4FE /* tab-activity.png */; };
+		5704C6FC1756710F0028F4FE /* tab-discussion.png in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F71756710F0028F4FE /* tab-discussion.png */; };
+		5704C6FD1756710F0028F4FE /* tab-discussion.png in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F71756710F0028F4FE /* tab-discussion.png */; };
 		57094E7115B9AC4C00F48C08 /* AFHTTPClient.m in Sources */ = {isa = PBXBuildFile; fileRef = 57094B5915B9AC4A00F48C08 /* AFHTTPClient.m */; };
 		57094E7215B9AC4C00F48C08 /* AFHTTPRequestOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 57094B5B15B9AC4A00F48C08 /* AFHTTPRequestOperation.m */; };
 		57094E7315B9AC4C00F48C08 /* AFImageRequestOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 57094B5D15B9AC4A00F48C08 /* AFImageRequestOperation.m */; };
@@ -536,8 +560,6 @@
 		5775EA0D17475E86000A1765 /* bt-equal.png in Resources */ = {isa = PBXBuildFile; fileRef = 5775EA0B17475E86000A1765 /* bt-equal.png */; };
 		5775EA1117476FAD000A1765 /* SeafActivityViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5775EA0F17476FAD000A1765 /* SeafActivityViewController.m */; };
 		5775EA1217476FAD000A1765 /* SeafActivityViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5775EA0F17476FAD000A1765 /* SeafActivityViewController.m */; };
-		5775EA1317476FAD000A1765 /* SeafActivityViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5775EA1017476FAD000A1765 /* SeafActivityViewController.xib */; };
-		5775EA1417476FAD000A1765 /* SeafActivityViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5775EA1017476FAD000A1765 /* SeafActivityViewController.xib */; };
 		5779C7BB171088D900307C36 /* view_markdown.html in Resources */ = {isa = PBXBuildFile; fileRef = 5779C7B0171088D900307C36 /* view_markdown.html */; };
 		5779C7BC171088D900307C36 /* view_markdown.html in Resources */ = {isa = PBXBuildFile; fileRef = 5779C7B0171088D900307C36 /* view_markdown.html */; };
 		5779C7D9171473E000307C36 /* edit_file_text.html in Resources */ = {isa = PBXBuildFile; fileRef = 5779C7D8171473E000307C36 /* edit_file_text.html */; };
@@ -575,10 +597,6 @@
 		57A055A61644EAD1006511AA /* tab-home.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A055A51644EAD1006511AA /* tab-home.png */; };
 		57A055A91644EC84006511AA /* seafile-logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A055A81644EC84006511AA /* seafile-logo.png */; };
 		57B66EB015BA513E00C2B41B /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57B66EAF15BA513E00C2B41B /* QuartzCore.framework */; };
-		57BD9322174B0A0E00F7732F /* DisStoryboard_iPad.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57BD931C174B0A0E00F7732F /* DisStoryboard_iPad.storyboard */; };
-		57BD9323174B0A0E00F7732F /* DisStoryboard_iPad.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57BD931C174B0A0E00F7732F /* DisStoryboard_iPad.storyboard */; };
-		57BD9324174B0A0E00F7732F /* DisStoryboard_iPhone.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57BD931D174B0A0E00F7732F /* DisStoryboard_iPhone.storyboard */; };
-		57BD9325174B0A0E00F7732F /* DisStoryboard_iPhone.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57BD931D174B0A0E00F7732F /* DisStoryboard_iPhone.storyboard */; };
 		57BD9326174B0A0E00F7732F /* SeafDisDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BD931F174B0A0E00F7732F /* SeafDisDetailViewController.m */; };
 		57BD9327174B0A0E00F7732F /* SeafDisDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BD931F174B0A0E00F7732F /* SeafDisDetailViewController.m */; };
 		57BD9328174B0A0E00F7732F /* SeafDisMasterViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BD9321174B0A0E00F7732F /* SeafDisMasterViewController.m */; };
@@ -706,6 +724,26 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		5704C6D01753A1380028F4FE /* IntelligentSplitViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IntelligentSplitViewController.h; sourceTree = "<group>"; };
+		5704C6D11753A1380028F4FE /* IntelligentSplitViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IntelligentSplitViewController.m; sourceTree = "<group>"; };
+		5704C6D6175518EE0028F4FE /* M13InfiniteTabBar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = M13InfiniteTabBar.h; sourceTree = "<group>"; };
+		5704C6D7175518EE0028F4FE /* M13InfiniteTabBar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = M13InfiniteTabBar.m; sourceTree = "<group>"; };
+		5704C6D8175518EE0028F4FE /* M13InfiniteTabBarCentralPullNotificationBackgroundView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = M13InfiniteTabBarCentralPullNotificationBackgroundView.h; sourceTree = "<group>"; };
+		5704C6D9175518EF0028F4FE /* M13InfiniteTabBarCentralPullNotificationBackgroundView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = M13InfiniteTabBarCentralPullNotificationBackgroundView.m; sourceTree = "<group>"; };
+		5704C6DA175518EF0028F4FE /* M13InfiniteTabBarCentralPullViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = M13InfiniteTabBarCentralPullViewController.h; sourceTree = "<group>"; };
+		5704C6DB175518EF0028F4FE /* M13InfiniteTabBarCentralPullViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = M13InfiniteTabBarCentralPullViewController.m; sourceTree = "<group>"; };
+		5704C6DC175518EF0028F4FE /* M13InfiniteTabBarController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = M13InfiniteTabBarController.h; sourceTree = "<group>"; };
+		5704C6DD175518EF0028F4FE /* M13InfiniteTabBarController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = M13InfiniteTabBarController.m; sourceTree = "<group>"; };
+		5704C6DE175518EF0028F4FE /* M13InfiniteTabBarItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = M13InfiniteTabBarItem.h; sourceTree = "<group>"; };
+		5704C6DF175518EF0028F4FE /* M13InfiniteTabBarItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = M13InfiniteTabBarItem.m; sourceTree = "<group>"; };
+		5704C6E0175518EF0028F4FE /* M13PanGestureRecognizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = M13PanGestureRecognizer.h; sourceTree = "<group>"; };
+		5704C6E1175518F00028F4FE /* M13PanGestureRecognizer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = M13PanGestureRecognizer.m; sourceTree = "<group>"; };
+		5704C6EE1755AA0C0028F4FE /* SeafEmptyViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafEmptyViewController.h; sourceTree = "<group>"; };
+		5704C6EF1755AA0C0028F4FE /* SeafEmptyViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafEmptyViewController.m; sourceTree = "<group>"; };
+		5704C6F217566BEA0028F4FE /* SeafActivityViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafActivityViewController.xib; sourceTree = "<group>"; };
+		5704C6F51756710F0028F4FE /* tab-account.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-account.png"; sourceTree = "<group>"; };
+		5704C6F61756710F0028F4FE /* tab-activity.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-activity.png"; sourceTree = "<group>"; };
+		5704C6F71756710F0028F4FE /* tab-discussion.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-discussion.png"; sourceTree = "<group>"; };
 		57094B5815B9AC4A00F48C08 /* AFHTTPClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AFHTTPClient.h; sourceTree = "<group>"; };
 		57094B5915B9AC4A00F48C08 /* AFHTTPClient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AFHTTPClient.m; sourceTree = "<group>"; };
 		57094B5A15B9AC4A00F48C08 /* AFHTTPRequestOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AFHTTPRequestOperation.h; sourceTree = "<group>"; };
@@ -1001,7 +1039,6 @@
 		5775EA0B17475E86000A1765 /* bt-equal.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-equal.png"; path = "htmls/bt-equal.png"; sourceTree = SOURCE_ROOT; };
 		5775EA0E17476FAD000A1765 /* SeafActivityViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafActivityViewController.h; sourceTree = "<group>"; };
 		5775EA0F17476FAD000A1765 /* SeafActivityViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafActivityViewController.m; sourceTree = "<group>"; };
-		5775EA1017476FAD000A1765 /* SeafActivityViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafActivityViewController.xib; sourceTree = "<group>"; };
 		5779C7B0171088D900307C36 /* view_markdown.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = view_markdown.html; path = htmls/view_markdown.html; sourceTree = SOURCE_ROOT; };
 		5779C7D8171473E000307C36 /* edit_file_text.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = edit_file_text.html; path = htmls/edit_file_text.html; sourceTree = SOURCE_ROOT; };
 		577B6C6016AAD241008E82C2 /* tab-star.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-star.png"; sourceTree = "<group>"; };
@@ -1029,8 +1066,6 @@
 		57A055A51644EAD1006511AA /* tab-home.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-home.png"; sourceTree = "<group>"; };
 		57A055A81644EC84006511AA /* seafile-logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "seafile-logo.png"; sourceTree = "<group>"; };
 		57B66EAF15BA513E00C2B41B /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
-		57BD931C174B0A0E00F7732F /* DisStoryboard_iPad.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = DisStoryboard_iPad.storyboard; sourceTree = "<group>"; };
-		57BD931D174B0A0E00F7732F /* DisStoryboard_iPhone.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = DisStoryboard_iPhone.storyboard; sourceTree = "<group>"; };
 		57BD931E174B0A0E00F7732F /* SeafDisDetailViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafDisDetailViewController.h; sourceTree = "<group>"; };
 		57BD931F174B0A0E00F7732F /* SeafDisDetailViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafDisDetailViewController.m; sourceTree = "<group>"; };
 		57BD9320174B0A0E00F7732F /* SeafDisMasterViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafDisMasterViewController.h; sourceTree = "<group>"; };
@@ -1155,12 +1190,41 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		5704C6CF1753A07E0028F4FE /* thirdpart */ = {
+			isa = PBXGroup;
+			children = (
+				57F0AAF016D8904100364D18 /* CZPhotoPickerController.h */,
+				57F0AAF416D8905C00364D18 /* CZPhotoPickerController.m */,
+				57F0AAF116D8904100364D18 /* CZPhotoPreviewViewController.h */,
+				57F0AAF516D8905C00364D18 /* CZPhotoPreviewViewController.m */,
+				57F0AAF316D8905C00364D18 /* CZPhotoPreviewViewController.xib */,
+				5704C6D01753A1380028F4FE /* IntelligentSplitViewController.h */,
+				5704C6D11753A1380028F4FE /* IntelligentSplitViewController.m */,
+				5704C6D6175518EE0028F4FE /* M13InfiniteTabBar.h */,
+				5704C6D7175518EE0028F4FE /* M13InfiniteTabBar.m */,
+				5704C6D8175518EE0028F4FE /* M13InfiniteTabBarCentralPullNotificationBackgroundView.h */,
+				5704C6D9175518EF0028F4FE /* M13InfiniteTabBarCentralPullNotificationBackgroundView.m */,
+				5704C6DA175518EF0028F4FE /* M13InfiniteTabBarCentralPullViewController.h */,
+				5704C6DB175518EF0028F4FE /* M13InfiniteTabBarCentralPullViewController.m */,
+				5704C6DC175518EF0028F4FE /* M13InfiniteTabBarController.h */,
+				5704C6DD175518EF0028F4FE /* M13InfiniteTabBarController.m */,
+				5704C6DE175518EF0028F4FE /* M13InfiniteTabBarItem.h */,
+				5704C6DF175518EF0028F4FE /* M13InfiniteTabBarItem.m */,
+				5704C6E0175518EF0028F4FE /* M13PanGestureRecognizer.h */,
+				5704C6E1175518F00028F4FE /* M13PanGestureRecognizer.m */,
+				57335CF0160D9D2500018AE8 /* Reachability.h */,
+				57335CF1160D9D2500018AE8 /* Reachability.m */,
+				57C57BDE165FC87B006834DF /* SVProgressHUD.bundle */,
+				57C57BDC165FBB4C006834DF /* SVProgressHUD.h */,
+				57C57BDB165FBB4C006834DF /* SVProgressHUD.m */,
+			);
+			name = thirdpart;
+			sourceTree = "<group>";
+		};
 		57094B3315B9A64500F48C08 /* images */ = {
 			isa = PBXGroup;
 			children = (
-				57BD932D174DDA8700F7732F /* group.png */,
 				570DFACA16A19EFD00ADD5F2 /* account.png */,
-				577B6C6016AAD241008E82C2 /* tab-star.png */,
 				576D6EAA1604804E000310F5 /* app-icon-ipad-50.png */,
 				576D6EAB1604804E000310F5 /* app-icon-ipad-50@2x.png */,
 				576D6EAC1604804E000310F5 /* app-icon-ipad-72.png */,
@@ -1181,9 +1245,14 @@
 				576D6EB41604804E000310F5 /* gray-share-icon.png */,
 				57853C9116467A5000CE8857 /* gray-star-icon.png */,
 				5725F686164E5AF400A2DCC6 /* gray-unstar-icon.png */,
+				57BD932D174DDA8700F7732F /* group.png */,
 				57A055A81644EC84006511AA /* seafile-logo.png */,
+				5704C6F51756710F0028F4FE /* tab-account.png */,
+				5704C6F61756710F0028F4FE /* tab-activity.png */,
+				5704C6F71756710F0028F4FE /* tab-discussion.png */,
 				57A055A51644EAD1006511AA /* tab-home.png */,
 				5764C834163C3E83006AD511 /* tab-settings.png */,
+				577B6C6016AAD241008E82C2 /* tab-star.png */,
 				572500AF16294388001E5C75 /* tab-upload.png */,
 				570A300316578B4F007D0CBF /* upload.png */,
 			);
@@ -1236,19 +1305,6 @@
 		5709512615B9ACDF00F48C08 /* views */ = {
 			isa = PBXGroup;
 			children = (
-				57BD931E174B0A0E00F7732F /* SeafDisDetailViewController.h */,
-				57BD931F174B0A0E00F7732F /* SeafDisDetailViewController.m */,
-				57BD9320174B0A0E00F7732F /* SeafDisMasterViewController.h */,
-				57BD9321174B0A0E00F7732F /* SeafDisMasterViewController.m */,
-				57DA26F3173E6DFC0003BA31 /* SeafTextEditorViewController.m */,
-				57E1E89B1737ED0F006601FE /* SeafTextEditorViewController.h */,
-				5775EA0E17476FAD000A1765 /* SeafActivityViewController.h */,
-				5775EA0F17476FAD000A1765 /* SeafActivityViewController.m */,
-				57F0AAF016D8904100364D18 /* CZPhotoPickerController.h */,
-				57F0AAF416D8905C00364D18 /* CZPhotoPickerController.m */,
-				57F0AAF116D8904100364D18 /* CZPhotoPreviewViewController.h */,
-				57F0AAF516D8905C00364D18 /* CZPhotoPreviewViewController.m */,
-				57F0AAF316D8905C00364D18 /* CZPhotoPreviewViewController.xib */,
 				571ABF511625DF31005C9B08 /* DownloadingProgressView.h */,
 				571ABF521625DF31005C9B08 /* DownloadingProgressView.m */,
 				57655330161BEA40005E5327 /* FailToPreview.h */,
@@ -1261,12 +1317,20 @@
 				5795F49916A7266E00FF90E3 /* SeafAccountCell.m */,
 				570DFAC316A15D0100ADD5F2 /* SeafAccountViewController.h */,
 				570DFAC416A15D0100ADD5F2 /* SeafAccountViewController.m */,
+				5775EA0E17476FAD000A1765 /* SeafActivityViewController.h */,
+				5775EA0F17476FAD000A1765 /* SeafActivityViewController.m */,
 				57DB828215A833FA00097CEC /* SeafAppDelegate.h */,
 				57DB828315A833FA00097CEC /* SeafAppDelegate.m */,
 				577B6C6316AADBA3008E82C2 /* SeafCell.h */,
 				577B6C6416AADBA3008E82C2 /* SeafCell.m */,
 				57DB829115A833FA00097CEC /* SeafDetailViewController.h */,
 				57DB829215A833FA00097CEC /* SeafDetailViewController.m */,
+				57BD931E174B0A0E00F7732F /* SeafDisDetailViewController.h */,
+				57BD931F174B0A0E00F7732F /* SeafDisDetailViewController.m */,
+				57BD9320174B0A0E00F7732F /* SeafDisMasterViewController.h */,
+				57BD9321174B0A0E00F7732F /* SeafDisMasterViewController.m */,
+				5704C6EE1755AA0C0028F4FE /* SeafEmptyViewController.h */,
+				5704C6EF1755AA0C0028F4FE /* SeafEmptyViewController.m */,
 				57DB828E15A833FA00097CEC /* SeafFileViewController.h */,
 				57DB828F15A833FA00097CEC /* SeafFileViewController.m */,
 				5764C829163BF91B006AD511 /* SeafSettingsViewController.h */,
@@ -1275,6 +1339,8 @@
 				57853C8E164675CB00CE8857 /* SeafStarredFilesViewController.m */,
 				570DFACD16A1EA1A00ADD5F2 /* SeafStartHeaderView.h */,
 				570DFACE16A1EA1A00ADD5F2 /* SeafStartHeaderView.m */,
+				57E1E89B1737ED0F006601FE /* SeafTextEditorViewController.h */,
+				57DA26F3173E6DFC0003BA31 /* SeafTextEditorViewController.m */,
 				57931B521632E5DB00B462BA /* SeafUploadDirViewController.h */,
 				57931B531632E5DB00B462BA /* SeafUploadDirViewController.m */,
 				57C07CE21632556600502B06 /* SeafUploadingFileCell.h */,
@@ -1316,8 +1382,6 @@
 		5709512815B9B1B600F48C08 /* ui */ = {
 			isa = PBXGroup;
 			children = (
-				57BD931C174B0A0E00F7732F /* DisStoryboard_iPad.storyboard */,
-				57BD931D174B0A0E00F7732F /* DisStoryboard_iPhone.storyboard */,
 				571ABF551625DF6E005C9B08 /* DownloadingProgress_iPad.xib */,
 				570CF8BF16613E5600DFADBC /* DownloadingProgress_iPhone.xib */,
 				57655333161BEA69005E5327 /* FailToPreview_iPad.xib */,
@@ -1326,7 +1390,7 @@
 				57DB828515A833FA00097CEC /* FolderView_iPhone.storyboard */,
 				5795F49C16A726DF00FF90E3 /* SeafAccountCell.xib */,
 				570DFAC516A15D0100ADD5F2 /* SeafAccountViewController.xib */,
-				5775EA1017476FAD000A1765 /* SeafActivityViewController.xib */,
+				5704C6F217566BEA0028F4FE /* SeafActivityViewController.xib */,
 				577B6C6716AADC26008E82C2 /* SeafCell.xib */,
 				570DFAD116A1EA3D00ADD5F2 /* SeafStartHeaderView.xib */,
 				57E1E89D1737ED0F006601FE /* SeafTextEditorViewController.xib */,
@@ -1665,6 +1729,7 @@
 		57DB827915A833FA00097CEC /* seafile */ = {
 			isa = PBXGroup;
 			children = (
+				5704C6CF1753A07E0028F4FE /* thirdpart */,
 				5782EE631734F37B00A76338 /* htmls */,
 				57094B3315B9A64500F48C08 /* images */,
 				5709512715B9ACF300F48C08 /* models */,
@@ -1702,15 +1767,10 @@
 				576EE11E162F0A2900327EB9 /* FileMimeType.plist */,
 				57F53B0415DF49EF0027140D /* FileSizeFormatter.h */,
 				57F53B0515DF49EF0027140D /* FileSizeFormatter.m */,
-				57335CF0160D9D2500018AE8 /* Reachability.h */,
-				57335CF1160D9D2500018AE8 /* Reachability.m */,
 				575753E915EE7AE30049D720 /* SeafDateFormatter.h */,
 				575753EA15EE7AE30049D720 /* SeafDateFormatter.m */,
 				57396B791657E0900089F32F /* SKFileTypeImageLoader.h */,
 				57396B781657E0900089F32F /* SKFileTypeImageLoader.m */,
-				57C57BDE165FC87B006834DF /* SVProgressHUD.bundle */,
-				57C57BDC165FBB4C006834DF /* SVProgressHUD.h */,
-				57C57BDB165FBB4C006834DF /* SVProgressHUD.m */,
 				57396B721657DCE30089F32F /* UIImage+FileType.h */,
 				57396B711657DCE30089F32F /* UIImage+FileType.m */,
 				57655340161D83CF005E5327 /* UIViewController+AlertMessage.h */,
@@ -2070,11 +2130,12 @@
 				57EB1374174782B900D2ACF9 /* bt-ul2.png in Resources */,
 				57EB1376174782B900D2ACF9 /* bt-underline2.png in Resources */,
 				57EB1378174782B900D2ACF9 /* bt-undo2.png in Resources */,
-				5775EA1417476FAD000A1765 /* SeafActivityViewController.xib in Resources */,
-				57BD9323174B0A0E00F7732F /* DisStoryboard_iPad.storyboard in Resources */,
-				57BD9325174B0A0E00F7732F /* DisStoryboard_iPhone.storyboard in Resources */,
 				57BD932C174DD86D00F7732F /* index.html in Resources */,
 				57BD932F174DDA8700F7732F /* group.png in Resources */,
+				5704C6F417566BEA0028F4FE /* SeafActivityViewController.xib in Resources */,
+				5704C6F91756710F0028F4FE /* tab-account.png in Resources */,
+				5704C6FB1756710F0028F4FE /* tab-activity.png in Resources */,
+				5704C6FD1756710F0028F4FE /* tab-discussion.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2359,11 +2420,12 @@
 				57EB1373174782B900D2ACF9 /* bt-ul2.png in Resources */,
 				57EB1375174782B900D2ACF9 /* bt-underline2.png in Resources */,
 				57EB1377174782B900D2ACF9 /* bt-undo2.png in Resources */,
-				5775EA1317476FAD000A1765 /* SeafActivityViewController.xib in Resources */,
-				57BD9322174B0A0E00F7732F /* DisStoryboard_iPad.storyboard in Resources */,
-				57BD9324174B0A0E00F7732F /* DisStoryboard_iPhone.storyboard in Resources */,
 				57BD932B174DD86D00F7732F /* index.html in Resources */,
 				57BD932E174DDA8700F7732F /* group.png in Resources */,
+				5704C6F317566BEA0028F4FE /* SeafActivityViewController.xib in Resources */,
+				5704C6F81756710F0028F4FE /* tab-account.png in Resources */,
+				5704C6FA1756710F0028F4FE /* tab-activity.png in Resources */,
+				5704C6FC1756710F0028F4FE /* tab-discussion.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2430,6 +2492,14 @@
 				5775EA1217476FAD000A1765 /* SeafActivityViewController.m in Sources */,
 				57BD9327174B0A0E00F7732F /* SeafDisDetailViewController.m in Sources */,
 				57BD9329174B0A0E00F7732F /* SeafDisMasterViewController.m in Sources */,
+				5704C6D31753A1380028F4FE /* IntelligentSplitViewController.m in Sources */,
+				5704C6E3175518F00028F4FE /* M13InfiniteTabBar.m in Sources */,
+				5704C6E5175518F00028F4FE /* M13InfiniteTabBarCentralPullNotificationBackgroundView.m in Sources */,
+				5704C6E7175518F00028F4FE /* M13InfiniteTabBarCentralPullViewController.m in Sources */,
+				5704C6E9175518F00028F4FE /* M13InfiniteTabBarController.m in Sources */,
+				5704C6EB175518F00028F4FE /* M13InfiniteTabBarItem.m in Sources */,
+				5704C6ED175518F00028F4FE /* M13PanGestureRecognizer.m in Sources */,
+				5704C6F11755AA0D0028F4FE /* SeafEmptyViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2493,6 +2563,14 @@
 				5775EA1117476FAD000A1765 /* SeafActivityViewController.m in Sources */,
 				57BD9326174B0A0E00F7732F /* SeafDisDetailViewController.m in Sources */,
 				57BD9328174B0A0E00F7732F /* SeafDisMasterViewController.m in Sources */,
+				5704C6D21753A1380028F4FE /* IntelligentSplitViewController.m in Sources */,
+				5704C6E2175518F00028F4FE /* M13InfiniteTabBar.m in Sources */,
+				5704C6E4175518F00028F4FE /* M13InfiniteTabBarCentralPullNotificationBackgroundView.m in Sources */,
+				5704C6E6175518F00028F4FE /* M13InfiniteTabBarCentralPullViewController.m in Sources */,
+				5704C6E8175518F00028F4FE /* M13InfiniteTabBarController.m in Sources */,
+				5704C6EA175518F00028F4FE /* M13InfiniteTabBarItem.m in Sources */,
+				5704C6EC175518F00028F4FE /* M13PanGestureRecognizer.m in Sources */,
+				5704C6F01755AA0D0028F4FE /* SeafEmptyViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

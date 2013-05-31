@@ -7,10 +7,12 @@
 //
 
 #import "SeafDisDetailViewController.h"
+#import "SVProgressHUD.h"
 #import "Debug.h"
 
 @interface SeafDisDetailViewController ()
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
+@property (readonly) UIWebView *webview;
 - (void)configureView;
 @end
 
@@ -18,6 +20,11 @@
 @synthesize connection;
 
 #pragma mark - Managing the detail item
+
+- (UIWebView *)webview
+{
+    return (UIWebView *)self.view;
+}
 
 - (void)setGroup:(id)g
 {
@@ -41,11 +48,16 @@
         NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:urlStr] cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
         [request setHTTPMethod:@"GET"];
         [request setValue:[NSString stringWithFormat:@"Token %@", self.connection.token] forHTTPHeaderField:@"Authorization"];
-        [(UIWebView *)self.view loadRequest: request];
+        [self.webview loadRequest: request];
     } else {
         NSURLRequest *request = [[NSURLRequest alloc] initWithURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"index" ofType:@"html"]] cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
-        [(UIWebView *)self.view loadRequest: request];
+        [self.webview loadRequest: request];
     }
+}
+
+- (void)goBack:(id)sender
+{
+    [self.navigationController dismissViewControllerAnimated:NO completion:nil];
 }
 
 - (void)viewDidLoad
@@ -53,7 +65,11 @@
     [super viewDidLoad];
 	// Do any additional setup after loading the view, typically from a nib.
     self.title = @"Discussion";
-    ((UIWebView *)self.view).delegate = self;
+    self.webview.delegate = self;
+    if (!IsIpad()) {
+        UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Back" style:UIBarButtonItemStyleDone target:self action:@selector(goBack:)];
+        [self.navigationItem setLeftBarButtonItem:barButtonItem animated:YES];
+    }
     [self configureView];
 }
 
@@ -93,6 +109,25 @@
         return (interfaceOrientation == UIInterfaceOrientationPortrait);
     }
     return YES;
+}
+
+- (void)webViewDidFinishLoad:(UIWebView *)webView
+{
+    [SVProgressHUD dismiss];
+}
+
+- (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
+{
+    [SVProgressHUD showErrorWithStatus:@"Failed to load discussion"];
+}
+
+- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
+{
+    Debug("Request %@\n", request.URL);
+    NSString *urlStr = request.URL.absoluteString;
+    if ([urlStr hasPrefix:@"file://"] || [urlStr hasPrefix:[self.connection.address stringByAppendingString:API_URL]])
+        return YES;
+    return NO;
 }
 
 @end

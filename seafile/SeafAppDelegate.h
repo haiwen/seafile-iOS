@@ -19,8 +19,18 @@
 #import "SeafDisMasterViewController.h"
 #import "Reachability.h"
 
+enum {
+    TABBED_SEAFILE = 0,
+    TABBED_UPLOADS,
+    TABBED_STARRED,
+    TABBED_SETTINGS,
+    TABBED_ACTIVITY,
+    TABBED_DISCUSSION,
+    TABBED_ACCOUNTS,
+};
 
-@interface SeafAppDelegate : UIResponder <UIApplicationDelegate, UIActionSheetDelegate> {
+
+@interface SeafAppDelegate : UIResponder <UIApplicationDelegate> {
     Reachability* internetReach;
     Reachability* wifiReach;
 }
@@ -32,23 +42,23 @@
 @property (readonly, strong, nonatomic) NSPersistentStoreCoordinator *persistentStoreCoordinator;
 
 @property (readonly) UINavigationController *startNav;
+@property (readonly) UITabBarController *tabbarController;
+
 @property (readonly) StartViewController *startVC;
-@property (readonly) UISplitViewController *splitVC;
-@property (readonly) SeafFileViewController *masterVC;
-@property (readonly) SeafDetailViewController *detailVC;
+@property (readonly) SeafFileViewController *fileVC;
 @property (readonly) SeafUploadsViewController *uploadVC;
 @property (readonly) SeafStarredFilesViewController *starredVC;
 @property (readonly) SeafSettingsViewController *settingVC;
-@property (readonly) UINavigationController *masterNavController;
-@property (readonly) UITabBarController *tabbarController;
-
 @property (readonly) SeafActivityViewController *actvityVC;
-@property (readonly) UIViewController *discussVC;
-@property (readonly) SeafDisMasterViewController *dismasterVC;
-@property (readonly) SeafDisDetailViewController *disdetailVC;
+@property (readonly) SeafDisMasterViewController *discussVC;
 
-@property (readonly) UIBarButtonItem *switchItem;
-@property (readonly) NSArray *toolItems1;
+@property (readwrite) SeafConnection *connection;
+
+- (UINavigationController *)masterNavController:(int)index;
+- (UIViewController *)detailViewController:(int)index;
+
+- (void)showDetailView:(UIViewController *) c;
+
 
 - (void)saveContext;
 - (NSURL *)applicationDocumentsDirectory;

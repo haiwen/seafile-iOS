@@ -7,23 +7,21 @@
 //
 
 #import "SeafAppDelegate.h"
+#import "SeafEmptyViewController.h"
 #import "Debug.h"
 #import "Utils.h"
 
-enum {
-    TABBED_SEAFILE = 0,
-    TABBED_UPLOADS,
-    TABBED_STARRED,
-    TABBED_SETTINGS,
-};
+#import "M13InfiniteTabBarController.h"
+#import "M13InfiniteTabBarItem.h"
 
-@interface SeafAppDelegate ()
-@property (readonly) UINavigationController *activityNavController;
+@interface SeafAppDelegate () <M13InfiniteTabBarControllerDelegate, UITabBarControllerDelegate>
 
 @property UIBackgroundTaskIdentifier bgTask;
 @property int downloadnum;
 @property int uploadnum;
 @property NSInteger moduleIdx;
+@property (readonly) SeafDetailViewController *detailVC;
+@property (readonly) SeafDisDetailViewController *disDetailVC;
 
 @end
 
@@ -35,24 +33,43 @@ enum {
 @synthesize persistentStoreCoordinator = __persistentStoreCoordinator;
 @synthesize startNav = _startNav;
 @synthesize startVC = _startVC;
-@synthesize splitVC = _splitVC;
 @synthesize detailVC = _detailVC;
-@synthesize masterNavController = _masterNacController;
+@synthesize disDetailVC = _disDetailVC;
 @synthesize tabbarController = _tabbarController;
-@synthesize toolItems1 = _toolItems1;
 
-@synthesize actvityVC = _actvityVC;
-@synthesize activityNavController = _activityNavController;
-@synthesize discussVC = _discussVC;
-@synthesize dismasterVC = _dismasterVC;
-@synthesize disdetailVC = _disdetailVC;
-@synthesize switchItem;
+@synthesize actvityVC;
+@synthesize discussVC;
+@synthesize connection = _connection;
 
 @synthesize bgTask;
 @synthesize downloadnum;
 @synthesize uploadnum;
 @synthesize moduleIdx;
 
+- (SeafConnection *)connection
+{
+    return _connection;
+}
+- (void)setConnection:(SeafConnection *)conn
+{
+    @synchronized(self) {
+        if (_connection != conn) {
+            _connection = conn;
+            [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
+            [[self masterNavController:TABBED_UPLOADS] popToRootViewControllerAnimated:NO];
+            [[self masterNavController:TABBED_STARRED] popToRootViewControllerAnimated:NO];
+            [[self masterNavController:TABBED_SETTINGS] popToRootViewControllerAnimated:NO];
+            [[self masterNavController:TABBED_ACTIVITY] popToRootViewControllerAnimated:NO];
+            [[self masterNavController:TABBED_DISCUSSION] popToRootViewControllerAnimated:NO];
+            self.fileVC.connection = conn;
+            self.uploadVC.connection = conn;
+            self.starredVC.connection = conn;
+            self.settingVC.connection = conn;
+            self.actvityVC.connection = conn;
+            self.discussVC.connection = conn;
+        }
+    }
+}
 
 - (void)reachabilityChanged:(NSNotification* )note
 {
@@ -254,6 +271,21 @@ enum {
 }
 
 #pragma mark - Application's Documents directory
+- (BOOL)infiniteTabBarController:(M13InfiniteTabBarController *)tabBarController shouldSelectViewContoller:(UIViewController *)viewController
+{
+    Debug("SELECT INDEX=%d, %@, %d\n", [tabBarController.viewControllers indexOfObject:viewController], viewController, [viewController isKindOfClass:[UINavigationController class]]);
+    if ([self.tabbarController.viewControllers indexOfObject:viewController] == TABBED_ACCOUNTS) {
+        self.window.rootViewController = self.startNav;
+        [self.window makeKeyAndVisible];
+        return NO;
+    }
+    return YES;
+}
+
+- (void)infiniteTabBarController:(M13InfiniteTabBarController *)tabBarController didSelectViewController:(UIViewController *)viewController
+{
+    //Do nothing
+}
 
 // Returns the URL to the application's Documents directory.
 - (NSURL *)applicationDocumentsDirectory
@@ -261,72 +293,96 @@ enum {
     return [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
 }
 
-#pragma mark - ViewController
-- (void)initToolItems:(UIViewController *)rootViewController
+- (BOOL)tabBarController:(UITabBarController *)tabBarController shouldSelectViewController:(UIViewController *)viewController
 {
-    int i;
-    UIBarButtonItem *flexibleFpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:rootViewController action:@selector(editOperation:)];
-    UIBarButtonItem *fixedSpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:rootViewController action:@selector(editOperation:)];
-
-    NSArray *itemsTitles = [NSArray arrayWithObjects:@"New Folder", @"New File", @"Copy", @"Move", @"Delete", @"Paste", @"MoveTo", @"Cancel", nil ];
-
-    UIBarButtonItem *items[EDITOP_NUM];
-    items[0] = flexibleFpaceItem;
-
-    fixedSpaceItem.width = 38.0f;;
-    for (i = 1; i < itemsTitles.count + 1; ++i) {
-        items[i] = [[UIBarButtonItem alloc] initWithTitle:[itemsTitles objectAtIndex:i-1] style:UIBarButtonItemStyleBordered target:rootViewController action:@selector(editOperation:)];
-        items[i].tag = i;
+    if ([self.tabbarController.viewControllers indexOfObject:viewController] == TABBED_ACCOUNTS) {
+        self.window.rootViewController = self.startNav;
+        [self.window makeKeyAndVisible];
+        return NO;
     }
-
-    _toolItems1 = [NSArray arrayWithObjects:items[EDITOP_CREATE], items[EDITOP_MKDIR], items[EDITOP_SPACE], items[EDITOP_DELETE], nil ];
+    return YES;
 }
 
+#pragma mark - ViewController
 - (void)initTabController
 {
+    UITabBarController *tabs;
     if (IsIpad()) {
-        _tabbarController = [self.splitVC.viewControllers objectAtIndex:0];
+        tabs = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"TABVC"];
     } else {
-        _tabbarController = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"TABVC"];
+        tabs = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"TABVC"];
     }
-    UINavigationController *masterNavigationController = [self.tabbarController.viewControllers objectAtIndex:TABBED_SEAFILE];
-    UINavigationController *uploadNavigationController = [self.tabbarController.viewControllers objectAtIndex:TABBED_UPLOADS];
-    UINavigationController *starredNavigationController = [self.tabbarController.viewControllers objectAtIndex:TABBED_STARRED];
-    UINavigationController *settingsNavigationController = [self.tabbarController.viewControllers objectAtIndex:TABBED_SETTINGS];
+    UIViewController *fileController = [tabs.viewControllers objectAtIndex:TABBED_SEAFILE];
+    UIViewController *uploadController = [tabs.viewControllers objectAtIndex:TABBED_UPLOADS];
+    UIViewController *starredController = [tabs.viewControllers objectAtIndex:TABBED_STARRED];
+    UIViewController *settingsController = [tabs.viewControllers objectAtIndex:TABBED_SETTINGS];
+    UINavigationController *activityController = [tabs.viewControllers objectAtIndex:TABBED_ACTIVITY];
+    UIViewController *discussionController = [tabs.viewControllers objectAtIndex:TABBED_DISCUSSION];
+    
 
-    SeafFileViewController *rootViewController = (SeafFileViewController *)[masterNavigationController topViewController];
-    SeafUploadsViewController *uploadViewController = (SeafUploadsViewController *)[uploadNavigationController topViewController];
-    SeafStarredFilesViewController *starredViewController = (SeafStarredFilesViewController *)[starredNavigationController topViewController];
-    SeafSettingsViewController *settingsViewController = (SeafSettingsViewController *)[settingsNavigationController topViewController];
-    [rootViewController initTabBarItem];
-    [uploadViewController initTabBarItem];
-    [starredViewController initTabBarItem];
-    [settingsViewController initTabBarItem];
+    fileController.tabBarItem.title = @"Files";
+    fileController.tabBarItem.image = [UIImage imageNamed:@"tab-home.png"];
+    uploadController.tabBarItem.title = @"Uploads";
+    uploadController.tabBarItem.image = [UIImage imageNamed:@"tab-upload.png"];
+    starredController.tabBarItem.title = @"Starred";
+    starredController.tabBarItem.image = [UIImage imageNamed:@"tab-star.png"];
+    settingsController.tabBarItem.title = @"Settings";
+    settingsController.tabBarItem.image = [UIImage imageNamed:@"tab-settings.png"];
+    activityController.tabBarItem.title = @"Activity";
+    activityController.tabBarItem.image = [UIImage imageNamed:@"tab-activity.png"];
+    discussionController.tabBarItem.title = @"Discussion";
+    discussionController.tabBarItem.image = [UIImage imageNamed:@"tab-discussion.png"];
+    
+    UIViewController *accountvc = [[SeafEmptyViewController alloc] init];
+    accountvc.tabBarItem.title = @"Accounts";
+    accountvc.tabBarItem.image = [UIImage imageNamed:@"tab-account.png"];
+    if (IsIpad()) {
+        ((UISplitViewController *)fileController).delegate = (id)[[((UISplitViewController *)fileController).viewControllers lastObject] topViewController];
+        ((UISplitViewController *)uploadController).delegate = (id)[[((UISplitViewController *)uploadController).viewControllers lastObject] topViewController];
+        
+        ((UISplitViewController *)starredController).delegate = (id)[[((UISplitViewController *)starredController).viewControllers lastObject] topViewController];
+        ((UISplitViewController *)settingsController).delegate = (id)[[((UISplitViewController *)settingsController).viewControllers lastObject] topViewController];
+        ((UISplitViewController *)discussionController).delegate = (id)[[((UISplitViewController *)discussionController).viewControllers lastObject] topViewController];
+        _tabbarController = [[UITabBarController alloc] init];
+        _tabbarController.viewControllers = [tabs.viewControllers arrayByAddingObject:accountvc];
+        _tabbarController.delegate = self;
+    } else {
+        NSMutableArray *items = [[NSMutableArray alloc] init];
+        NSMutableArray *vcs = [NSMutableArray arrayWithArray:tabs.viewControllers];
 
-    [self initToolItems:rootViewController];
-}
+        for (UIViewController *vc in tabs.viewControllers) {
+            M13InfiniteTabBarItem *item = [[M13InfiniteTabBarItem alloc] initWithTitle:vc.tabBarItem.title andIcon:vc.tabBarItem.image];
+                [items addObject:item];
+        }
 
-- (UISplitViewController *)splitVC
-{
-    if (_splitVC)
-        return _splitVC;
+        SeafActivityViewController *ac = [[SeafActivityViewController alloc] initWithNibName:@"SeafActivityViewController" bundle:nil];
+        UINavigationController *c5 = [[UINavigationController alloc] initWithRootViewController:ac];
+        
+        c5.tabBarItem.title = @"Activity";
+        c5.tabBarItem.image = [[UIImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"tab-activity" ofType:@"png"]];
+        [vcs replaceObjectAtIndex:4 withObject:c5];
+        
+        SeafDisMasterViewController *dc = [[SeafDisMasterViewController alloc] init];
+        UINavigationController *c6 = [[UINavigationController alloc] initWithRootViewController:dc];
+        c6.tabBarItem.title = @"Discussion";
+        c6.tabBarItem.image = [[UIImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"tab-discussion" ofType:@"png"]];
+        
+        [vcs replaceObjectAtIndex:5 withObject:c6];
 
-    _splitVC = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"SPLITVC"];
-
-    UINavigationController *detailNavigationController = [_splitVC.viewControllers lastObject];
-    _splitVC.delegate = (id)detailNavigationController.topViewController;
-
-    [self initTabController];
-
-    return _splitVC;
+        [vcs addObject:accountvc];
+        M13InfiniteTabBarItem *item = [[M13InfiniteTabBarItem alloc] initWithTitle:accountvc.tabBarItem.title andIcon:accountvc.tabBarItem.image];
+        [items addObject:item];
+        
+        M13InfiniteTabBarController *viewController = [[M13InfiniteTabBarController alloc] initWithViewControllers:vcs pairedWithInfiniteTabBarItems:items];
+        viewController.delegate = self;
+        _tabbarController = viewController;
+    }
 }
 
 - (UITabBarController *)tabbarController
 {
-    if (_tabbarController)
-        return _tabbarController;
-
-    [self initTabController];
+    if (!_tabbarController)
+        [self initTabController];
     return _tabbarController;
 }
 
@@ -338,75 +394,59 @@ enum {
     return _startVC;
 }
 
-- (SeafFileViewController *)masterVC
+- (UINavigationController *)masterNavController:(int)index
 {
-    return (SeafFileViewController *)self.masterNavController.topViewController;
-}
-
-- (UINavigationController *)masterNavController
-{
-    return [self.tabbarController.viewControllers objectAtIndex:TABBED_SEAFILE];
-}
-
-- (SeafDetailViewController *)detailVC
-{
-    if (_detailVC)
-        return _detailVC;
-    if (IsIpad())
-        _detailVC = (SeafDetailViewController *)[[[self.splitVC.viewControllers lastObject] viewControllers] objectAtIndex:0];
+    if (!IsIpad())
+        return [self.tabbarController.viewControllers objectAtIndex:index];
     else {
-        _detailVC = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
+        if (index == TABBED_ACTIVITY)
+            return [self.tabbarController.viewControllers objectAtIndex:index];
+        return [[[self.tabbarController.viewControllers objectAtIndex:index] viewControllers] objectAtIndex:0];
     }
-    return _detailVC;
+}
+
+- (SeafFileViewController *)fileVC
+{
+    return (SeafFileViewController *)[[self masterNavController:TABBED_SEAFILE] topViewController];
+}
+
+- (UIViewController *)detailViewController:(int)index
+{
+    if (IsIpad()) {
+        return [[[[self.tabbarController.viewControllers objectAtIndex:index] viewControllers] lastObject] topViewController];
+    } else {
+        if (!_detailVC)
+            _detailVC = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
+        if (!_disDetailVC)
+            _disDetailVC = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DISDETAILVC"];
+        if (index == TABBED_DISCUSSION)
+            return (UIViewController *)_disDetailVC;
+        return _detailVC;
+    }
 }
 
 - (SeafUploadsViewController *)uploadVC
 {
-    UINavigationController *uploadNavigationController = [self.tabbarController.viewControllers objectAtIndex:TABBED_UPLOADS];
-    return (SeafUploadsViewController *)[uploadNavigationController.viewControllers objectAtIndex:0];
+    return (SeafUploadsViewController *)[[self masterNavController:TABBED_UPLOADS] topViewController];
 }
 - (SeafStarredFilesViewController *)starredVC
 {
-    UINavigationController *uploadNavigationController = [self.tabbarController.viewControllers objectAtIndex:TABBED_STARRED];
-    return (SeafStarredFilesViewController *)[uploadNavigationController.viewControllers objectAtIndex:0];
+    return (SeafStarredFilesViewController *)[[self masterNavController:TABBED_STARRED] topViewController];
 }
 
 - (SeafSettingsViewController *)settingVC
 {
-    UINavigationController *settingsNavigationController = [self.tabbarController.viewControllers objectAtIndex:TABBED_SETTINGS];
-    return (SeafSettingsViewController *)[settingsNavigationController.viewControllers objectAtIndex:0];
+    return (SeafSettingsViewController *)[[self masterNavController:TABBED_SETTINGS] topViewController];
 }
 
 - (SeafActivityViewController *)actvityVC
 {
-    if (!_actvityVC)
-        _actvityVC = [[SeafActivityViewController alloc] init];
-    return _actvityVC;
-}
-- (UINavigationController *)activityNavController
-{
-    if (!_activityNavController)
-        _activityNavController = [[UINavigationController alloc] initWithRootViewController:self.actvityVC];
-    return _activityNavController;
+    return (SeafActivityViewController *)[[self.tabbarController.viewControllers objectAtIndex:TABBED_ACTIVITY] topViewController];
 }
 
-- (UIViewController *)discussVC
+- (SeafDisMasterViewController *)discussVC
 {
-    if (!_discussVC) {
-        if (IsIpad()) {
-            UISplitViewController *split = [[UIStoryboard storyboardWithName:@"DisStoryboard_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"SPLITVC"];
-            UINavigationController *detailNavigationController = [split.viewControllers lastObject];
-            split.delegate = (id)detailNavigationController.topViewController;
-            _dismasterVC = [[[split.viewControllers objectAtIndex:0] viewControllers] objectAtIndex:0];
-            _disdetailVC = [[[split.viewControllers lastObject] viewControllers] objectAtIndex:0];
-            _discussVC = split;
-        } else {
-            _discussVC = [[UIStoryboard storyboardWithName:@"DisStoryboard_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERNAV"];
-            _dismasterVC = [((UINavigationController *)_discussVC).viewControllers objectAtIndex:0];
-            _disdetailVC = [[UIStoryboard storyboardWithName:@"DisStoryboard_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
-        }
-    }
-    return _discussVC;
+    return (SeafDisMasterViewController *)[[self masterNavController:TABBED_DISCUSSION] topViewController];
 }
 
 - (BOOL)checkNetworkStatus
@@ -495,50 +535,11 @@ enum {
     }
 }
 
-
-#pragma mark - UIActionSheetDelegate
-- (void)switchModule
+- (void)showDetailView:(UIViewController *) c
 {
-    if (moduleIdx == 0) {
-        if (self.window.rootViewController == self.startNav) return;
-        [self.detailVC setPreViewItem:nil];
-        self.window.rootViewController = self.startNav;
-    } else if (moduleIdx == 1) {
-        if (IsIpad()) {
-            if (self.window.rootViewController == self.splitVC) return;
-            self.window.rootViewController = self.splitVC;
-        } else {
-            if (self.window.rootViewController == self.tabbarController) return;
-            self.window.rootViewController = self.tabbarController;
-        }
-    } else if (moduleIdx == 2) {
-        self.window.rootViewController = self.activityNavController;
-        self.actvityVC.connection = self.uploadVC.connection;
-    } else if (moduleIdx == 3) {
-        self.window.rootViewController = self.discussVC;
-        self.dismasterVC.connection = self.uploadVC.connection;
-    }
-    [self.window makeKeyAndVisible];
-}
-- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
-{
-    Debug("index=%d\n", buttonIndex);
-    moduleIdx = buttonIndex;
-    [self performSelector:@selector(switchModule) withObject:nil afterDelay:0];
-}
-- (void)switchModuleHandler:(id)sender
-{
-    UIActionSheet *actionSheet;
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    if (IsIpad())
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:appdelegate cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:@"Accounts", @"Files", @"Activities", @"Discussion", nil ];
-    else
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:appdelegate cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Accounts", @"Files", @"Activities", @"Discussion", nil ];
-    [actionSheet showFromBarButtonItem:sender animated:YES];
+    UINavigationController *nc = [[UINavigationController alloc] initWithRootViewController:c];
+    [nc setModalPresentationStyle:UIModalPresentationFullScreen];
+    [self.tabbarController presentViewController:nc animated:NO completion:nil];
 }
 
-- (UIBarButtonItem *)switchItem
-{
-    return [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemOrganize target:self action:@selector(switchModuleHandler:)];
-}
 @end

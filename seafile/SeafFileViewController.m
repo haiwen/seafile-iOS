@@ -34,6 +34,7 @@ enum {
 - (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView;
 
+@property (strong, nonatomic) SeafDir *directory;
 @property (strong) SeafBase *curEntry;
 @property (strong) InputAlertPrompt *passSetView;
 @property (strong) InputAlertPrompt *inputView;
@@ -45,27 +46,60 @@ enum {
 @property (strong, readonly) UIView *overlayView;
 
 @property (retain) NSIndexPath *selectedindex;
+@property (readonly) NSArray *editToolItems;
 
 @property int state;
 @end
 
 @implementation SeafFileViewController
 
-@synthesize detailViewController = _detailViewController;
+@synthesize connection = _connection;
 @synthesize directory = _directory;
 @synthesize curEntry = _curEntry;
 @synthesize passSetView = _passSetView, inputView = _inputView;
 @synthesize selectAllItem = _selectAllItem, selectNoneItem = _selectNoneItem;
 @synthesize selectedindex = _selectedindex;
+@synthesize editToolItems = _editToolItems;
 @synthesize state;
-
 
 @synthesize overlayView = _overlayView;
 
-- (void)initTabBarItem
+
+- (SeafDetailViewController *)detailViewController
 {
-    self.title = @"Seafile";
-    self.navigationController.tabBarItem.image = [[UIImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"tab-home" ofType:@"png"]];
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    return (SeafDetailViewController *)[appdelegate detailViewController:TABBED_SEAFILE];
+}
+
+- (NSArray *)editToolItems
+{
+    if (!_editToolItems) {
+        int i;
+        UIBarButtonItem *flexibleFpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:self action:@selector(editOperation:)];
+        UIBarButtonItem *fixedSpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:self action:@selector(editOperation:)];
+        
+        NSArray *itemsTitles = [NSArray arrayWithObjects:@"New Folder", @"New File", @"Copy", @"Move", @"Delete", @"Paste", @"MoveTo", @"Cancel", nil ];
+        
+        UIBarButtonItem *items[EDITOP_NUM];
+        items[0] = flexibleFpaceItem;
+        
+        fixedSpaceItem.width = 38.0f;;
+        for (i = 1; i < itemsTitles.count + 1; ++i) {
+            items[i] = [[UIBarButtonItem alloc] initWithTitle:[itemsTitles objectAtIndex:i-1] style:UIBarButtonItemStyleBordered target:self action:@selector(editOperation:)];
+            items[i].tag = i;
+        }
+        
+        _editToolItems = [NSArray arrayWithObjects:items[EDITOP_CREATE], items[EDITOP_MKDIR], items[EDITOP_SPACE], items[EDITOP_DELETE], nil ];
+        Debug("...\n");
+    }
+    return _editToolItems;
+}
+
+- (void)setConnection:(SeafConnection *)conn
+{
+    _connection = conn;
+    [_connection loadRepos:self];
+    [self setDirectory:(SeafDir *)_connection.rootFolder];
 }
 
 - (UIView *)overlayView
@@ -114,9 +148,7 @@ enum {
     }
     //  update the last update date
     [_refreshHeaderView refreshLastUpdatedDate];
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    _detailViewController = appdelegate.detailVC;
-}
+    }
 
 - (void)noneSelected:(BOOL)none
 {
@@ -138,8 +170,8 @@ enum {
 - (void)refreshView
 {
     [self.tableView reloadData];
-    if (IsIpad() && _detailViewController.preViewItem && [_detailViewController.preViewItem isKindOfClass:[SeafFile class]]) {
-        SeafFile *sfile = (SeafFile *)_detailViewController.preViewItem;
+    if (IsIpad() && self.detailViewController.preViewItem && [self.detailViewController.preViewItem isKindOfClass:[SeafFile class]]) {
+        SeafFile *sfile = (SeafFile *)self.detailViewController.preViewItem;
         NSString *parent = [sfile.path stringByDeletingLastPathComponent];
         BOOL deleted = YES;
         if ([parent isEqualToString:_directory.path]) {
@@ -150,7 +182,7 @@ enum {
                 }
             }
             if (deleted)
-                [_detailViewController setPreViewItem:nil];
+                [self.detailViewController setPreViewItem:nil];
         }
     }
     if (self.editing) {
@@ -166,7 +198,6 @@ enum {
     [super viewDidUnload];
     // Release any retained subviews of the main view.
     _refreshHeaderView = nil;
-    _detailViewController = nil;
     _directory = nil;
     _curEntry = nil;
 }
@@ -189,13 +220,40 @@ enum {
 
 - (void)selectNone:(id)sender
 {
-    int row;
     int count = _directory.items.count;
-    for (row = 0; row < count; ++row) {
+    for (int row = 0; row < count; ++row) {
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
         [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
     }
     [self noneSelected:YES];
+}
+
+- (void)hideTabBar
+{
+    if (self.tabBarController.tabBar.hidden == YES) {
+        return;
+    }
+    UIView *contentView;
+    if ( [[self.tabBarController.view.subviews objectAtIndex:0] isKindOfClass:[UITabBar class]] )
+        contentView = [self.tabBarController.view.subviews objectAtIndex:1];
+    else
+        contentView = [self.tabBarController.view.subviews objectAtIndex:0];
+    contentView.frame = CGRectMake(contentView.bounds.origin.x,  contentView.bounds.origin.y,  contentView.bounds.size.width, contentView.bounds.size.height + self.tabBarController.tabBar.frame.size.height);
+    self.tabBarController.tabBar.hidden = YES;
+}
+
+- (void)showTabBar
+{
+    if (self.tabBarController.tabBar.hidden == NO) {
+        return;
+    }
+    UIView *contentView;
+    if ([[self.tabBarController.view.subviews objectAtIndex:0] isKindOfClass:[UITabBar class]])
+        contentView = [self.tabBarController.view.subviews objectAtIndex:1];
+    else
+        contentView = [self.tabBarController.view.subviews objectAtIndex:0];
+    contentView.frame = CGRectMake(contentView.bounds.origin.x, contentView.bounds.origin.y,  contentView.bounds.size.width, contentView.bounds.size.height - self.tabBarController.tabBar.frame.size.height);
+    self.tabBarController.tabBar.hidden = NO;
 }
 
 - (void)setEditing:(BOOL)editing animated:(BOOL)animated
@@ -204,13 +262,15 @@ enum {
     if (editing) {
         if (![appdelegate checkNetworkStatus])
             return;
-        [self setToolbarItems:appdelegate.toolItems1];
+        [self setToolbarItems:self.editToolItems];
+        [self hideTabBar];
         [self.navigationController.toolbar sizeToFit];
         [self noneSelected:YES];
         [self.navigationController setToolbarHidden:NO animated:YES];
     } else {
         self.navigationItem.leftBarButtonItem = nil;
         [self.navigationController setToolbarHidden:YES animated:YES];
+        [self showTabBar];
     }
 
     [super setEditing:editing animated:animated];
@@ -220,8 +280,6 @@ enum {
 - (void)initNavigationItems:(SeafDir *)directory
 {
     if ([directory isKindOfClass:[SeafRepos class]]) {
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        self.navigationItem.leftBarButtonItem = appdelegate.switchItem;
     } else {
         if (directory.editable) {
             self.navigationItem.rightBarButtonItem = self.editButtonItem;
@@ -398,7 +456,6 @@ enum {
         [self noneSelected:NO];
         return;
     }
-    Debug("%d %d\n", indexPath.row, indexPath.section);
     _curEntry = [self getDentrybyIndexPath:indexPath];
 
     [_curEntry setDelegate:self];
@@ -409,13 +466,14 @@ enum {
 
     if ([_curEntry isKindOfClass:[SeafFile class]]) {
         [_curEntry loadContent:NO];
-        if (!IsIpad())
-            [self.navigationController pushViewController:_detailViewController animated:YES];
-        [_detailViewController setPreViewItem:(SeafFile *)_curEntry];
+        if (!IsIpad()) {
+            SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+            [appdelegate showDetailView:self.detailViewController];
+        }
+        [self.detailViewController setPreViewItem:(SeafFile *)_curEntry];
     } else if ([_curEntry isKindOfClass:[SeafDir class]]) {
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         SeafFileViewController *controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
-        [appdelegate.masterNavController pushViewController:controller animated:YES];
+        [self.navigationController pushViewController:controller animated:YES];
         [controller setDirectory:(SeafDir *)_curEntry];
     }
 }
@@ -447,13 +505,6 @@ enum {
         return @"";
     return repo.owner;
 }
-
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
-{
-    // TODO? it seems useless
-    Debug("%@\n", [segue identifier]);
-}
-
 
 #pragma mark - InputDoneDelegate
 - (BOOL)inputDone:(InputAlertPrompt *)alertView input:(NSString *)input errmsg:(NSString **)errmsg;
@@ -525,7 +576,7 @@ enum {
 #pragma mark - SeafDentryDelegate
 - (void)entryChanged:(SeafBase *)entry
 {
-    if ([entry isKindOfClass:[SeafFile class]] && entry == _detailViewController.preViewItem)
+    if ([entry isKindOfClass:[SeafFile class]] && entry == self.detailViewController.preViewItem)
         [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
 }
 - (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent
@@ -539,8 +590,8 @@ enum {
             [_inputView dismissWithClickedButtonIndex:0 animated:YES];
         }
     } else if ([entry isKindOfClass:[SeafFile class]]) {
-        if (updated && entry == _detailViewController.preViewItem)
-            [_detailViewController fileContentLoaded:(SeafFile *)entry result:YES completeness:percent];
+        if (updated && entry == self.detailViewController.preViewItem)
+            [self.detailViewController fileContentLoaded:(SeafFile *)entry result:YES completeness:percent];
     }
     self.state = STATE_INIT;
 }
@@ -551,7 +602,7 @@ enum {
         NSAssert(0, @"Here should never be reached");
     }
     if ([entry isKindOfClass:[SeafFile class]]) {
-        [_detailViewController fileContentLoaded:(SeafFile *)entry result:NO completeness:0];
+        [self.detailViewController fileContentLoaded:(SeafFile *)entry result:NO completeness:0];
         return;
     }
 
@@ -595,9 +646,8 @@ enum {
     NSAssert([entry isKindOfClass:[SeafRepo class]], @"entry must be a repo\n");
     if (success) {
         [self.passSetView dismissWithClickedButtonIndex:0 animated:YES];
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         SeafFileViewController *controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
-        [appdelegate.masterNavController pushViewController:controller animated:YES];
+        [self.navigationController pushViewController:controller animated:YES];
         [controller setDirectory:(SeafDir *)_curEntry];
     } else {
         [self alertWithMessage:@"Wrong library password"];
@@ -667,8 +717,8 @@ enum {
     Debug("%d, %@\n", [sender tag], self.title);
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
 
-    if (self != appdelegate.masterVC) {
-        return [appdelegate.masterVC editOperation:sender];
+    if (self != appdelegate.fileVC) {
+        return [appdelegate.fileVC editOperation:sender];
     }
     switch ([sender tag]) {
         case EDITOP_MKDIR:
@@ -709,7 +759,7 @@ enum {
 - (void)redownloadFile:(SeafFile *)file
 {
     [file deleteCache];
-    [_detailViewController setPreViewItem:nil];
+    [self.detailViewController setPreViewItem:nil];
     [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
 }
 

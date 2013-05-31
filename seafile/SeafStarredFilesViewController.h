@@ -13,9 +13,8 @@
 
 @interface SeafStarredFilesViewController : UITableViewController<UIActionSheetDelegate, SeafDentryDelegate, SeafStarFileDelegate, SeafFileUploadDelegate>
 
-@property (strong) SeafConnection *connection;
+@property (strong, nonatomic) SeafConnection *connection;
 
-- (void)initTabBarItem;
 - (void)refreshView;
 
 @end

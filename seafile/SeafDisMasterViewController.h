@@ -16,7 +16,6 @@
 @interface SeafDisMasterViewController : UITableViewController
 
 @property (strong, nonatomic) SeafDisDetailViewController *detailViewController;
-
-@property (strong, retain) SeafConnection *connection;
+@property (strong, nonatomic) SeafConnection *connection;
 
 @end

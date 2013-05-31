@@ -21,7 +21,7 @@
 
 @interface SeafStarredFilesViewController ()
 @property NSMutableArray *starredFiles;
-@property SeafDetailViewController *detailViewController;
+@property (readonly) SeafDetailViewController *detailViewController;
 @property (retain) NSIndexPath *selectedindex;
 
 @end
@@ -29,7 +29,6 @@
 @implementation SeafStarredFilesViewController
 @synthesize connection = _connection;
 @synthesize starredFiles = _starredFiles;
-@synthesize detailViewController = _detailViewController;
 @synthesize selectedindex = _selectedindex;
 
 
@@ -40,6 +39,12 @@
         // Custom initialization
     }
     return self;
+}
+
+- (SeafDetailViewController *)detailViewController
+{
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    return (SeafDetailViewController *)[appdelegate detailViewController:TABBED_STARRED];
 }
 
 - (void)refresh:(id)sender
@@ -58,8 +63,6 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    _detailViewController = appdelegate.detailVC;
     self.tableView.rowHeight = 50;
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(refresh:)];
 }
@@ -72,12 +75,6 @@
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
-}
-
-- (void)initTabBarItem
-{
-    self.title = @"Starred";
-    self.tabBarItem.image = [[UIImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"tab-star" ofType:@"png"]];
 }
 
 - (void)refreshView
@@ -124,19 +121,13 @@
     return YES;
 }
 
-- (void)setConnection:(SeafConnection *)connection
+- (void)setConnection:(SeafConnection *)conn
 {
-    @synchronized(self) {
-        _connection = connection;
-        _starredFiles = nil;
-        [self loadCache];
-        [self.tableView reloadData];
-    }
-}
-
-- (SeafConnection *)connection
-{
-    return _connection;
+    _connection = conn;
+    _starredFiles = nil;
+    [self.detailViewController setPreViewItem:nil];
+    [self loadCache];
+    [self.tableView reloadData];
 }
 
 - (void)showEditFileMenu:(UILongPressGestureRecognizer *)gestureRecognizer
@@ -203,9 +194,11 @@
     SeafStarredFile *sfile = [_starredFiles objectAtIndex:indexPath.row];
     sfile.delegate = self;
     [sfile loadContent:NO];
-    if (!IsIpad())
-        [self.navigationController pushViewController:_detailViewController animated:YES];
-    [_detailViewController setPreViewItem:sfile];
+    if (!IsIpad()) {
+        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+        [appdelegate showDetailView:self.detailViewController];
+    }
+    [self.detailViewController setPreViewItem:sfile];
 }
 
 #pragma mark - SeafDentryDelegate
@@ -215,12 +208,12 @@
 - (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent
 {
     //Debug("update=%d, percent=%d \n", updated, percent);
-    [_detailViewController fileContentLoaded:(SeafFile *)entry result:updated completeness:percent];
+    [self.detailViewController fileContentLoaded:(SeafFile *)entry result:updated completeness:percent];
 }
 
 - (void)entryContentLoadingFailed:(int)errCode entry:(SeafBase *)entry;
 {
-    [_detailViewController fileContentLoaded:(SeafFile *)entry result:NO completeness:0];
+    [self.detailViewController fileContentLoaded:(SeafFile *)entry result:NO completeness:0];
 }
 
 - (void)repoPasswordSet:(SeafBase *)entry WithResult:(BOOL)success;
@@ -249,7 +242,7 @@
 - (void)redownloadFile:(SeafFile *)file
 {
     [file deleteCache];
-    [_detailViewController setPreViewItem:nil];
+    [self.detailViewController setPreViewItem:nil];
     [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
 }
 

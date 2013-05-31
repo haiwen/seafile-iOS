@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="2.0" toolsVersion="3084" systemVersion="12D78" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" initialViewController="OjQ-wd-tlO">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="2.0" toolsVersion="3084" systemVersion="12D78" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" initialViewController="0cD-ba-5xh">
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="2083"/>
     </dependencies>
@@ -41,7 +41,7 @@
                             </tableViewCell>
                         </prototypes>
                     </tableView>
-                    <navigationItem key="navigationItem" title="Root View Controller" id="6G7-6O-TvS"/>
+                    <navigationItem key="navigationItem" title="Uploads" id="6G7-6O-TvS"/>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="cvw-xB-6Oz" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
@@ -281,9 +281,9 @@
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="RGF-wG-KHp" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-26" y="-1022"/>
+            <point key="canvasLocation" x="-50" y="-542"/>
         </scene>
-        <!--Seaf Starred Files View Controller - Root View Controller-->
+        <!--Seaf Starred Files View Controller - Starred-->
         <scene sceneID="YTT-hf-bdC">
             <objects>
                 <tableViewController id="IQD-Hw-8QD" customClass="SeafStarredFilesViewController" sceneMemberID="viewController">
@@ -312,11 +312,11 @@
                             </tableViewCell>
                         </prototypes>
                     </tableView>
-                    <navigationItem key="navigationItem" title="Root View Controller" id="su1-pU-wbR"/>
+                    <navigationItem key="navigationItem" title="Starred" id="su1-pU-wbR"/>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="cBf-AF-eEw" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="815" y="-826"/>
+            <point key="canvasLocation" x="-401" y="-1498"/>
         </scene>
         <!--Navigation Controller - Starred-->
         <scene sceneID="d0c-Ai-QVN">
@@ -332,7 +332,7 @@
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="h9e-lX-qLG" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="491" y="-1858"/>
+            <point key="canvasLocation" x="-933" y="-1402"/>
         </scene>
         <!--Navigation Controller - Settings-->
         <scene sceneID="SAc-tl-SaL">
@@ -348,7 +348,7 @@
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="gKQ-Kr-YZY" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-623" y="-1234"/>
+            <point key="canvasLocation" x="-551" y="-642"/>
         </scene>
         <!--Navigation Controller - Uploads-->
         <scene sceneID="HLH-Y8-eOz">
@@ -367,26 +367,27 @@
             <point key="canvasLocation" x="-712" y="-2301"/>
         </scene>
         <!--Tab Bar Controller-->
-        <scene sceneID="O8F-VI-QHL">
+        <scene sceneID="IDr-x3-K7D">
             <objects>
-                <tabBarController storyboardIdentifier="TABVC" definesPresentationContext="YES" providesPresentationContextTransitionStyle="YES" id="OjQ-wd-tlO" sceneMemberID="viewController">
-                    <nil key="simulatedBottomBarMetrics"/>
-                    <tabBar key="tabBar" contentMode="scaleToFill" id="mki-NH-4bJ">
+                <tabBarController storyboardIdentifier="TABVC" definesPresentationContext="YES" id="cyW-Je-Rn4" sceneMemberID="viewController">
+                    <simulatedTabBarMetrics key="simulatedBottomBarMetrics"/>
+                    <tabBar key="tabBar" contentMode="scaleToFill" id="nRy-eg-aBb">
                         <rect key="frame" x="129" y="330" width="163" height="49"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                        <color key="tintColor" red="0.86767578125" green="0.86767578125" blue="0.86767578125" alpha="1" colorSpace="calibratedRGB"/>
-                        <color key="selectedImageTintColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                     </tabBar>
                     <connections>
-                        <segue destination="3" kind="relationship" relationship="viewControllers" id="aHI-8u-wPl"/>
-                        <segue destination="R5m-pr-XxP" kind="relationship" relationship="viewControllers" id="a2K-py-p22"/>
-                        <segue destination="HbK-VG-mor" kind="relationship" relationship="viewControllers" id="b0r-wt-X4i"/>
-                        <segue destination="ZS2-rO-b6R" kind="relationship" relationship="viewControllers" id="jUS-Pc-x8W"/>
+                        <segue destination="5" kind="relationship" relationship="viewControllers" id="NRW-Ra-2ea"/>
+                        <segue destination="0cD-ba-5xh" kind="relationship" relationship="viewControllers" id="Sea-5N-2bS"/>
+                        <segue destination="DCp-tP-YXD" kind="relationship" relationship="viewControllers" id="OVM-1q-DgC"/>
+                        <segue destination="gPc-rh-924" kind="relationship" relationship="viewControllers" id="z1O-zP-jli"/>
+                        <segue destination="8iO-sG-chl" kind="relationship" relationship="viewControllers" id="OAn-K0-yev"/>
+                        <segue destination="m1g-B7-asj" kind="relationship" relationship="viewControllers" id="DKR-RA-OJf"/>
                     </connections>
                 </tabBarController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="DxX-Eq-hOc" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="dz9-Xp-uZA" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-1195" y="-1750"/>
+            <point key="canvasLocation" x="-3527" y="-1938"/>
         </scene>
         <!--Navigation Controller - Seafile-->
         <scene sceneID="14">
@@ -428,28 +429,29 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="15" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-101" y="344"/>
+            <point key="canvasLocation" x="1739" y="-3100"/>
         </scene>
-        <!--Split View Controller-->
+        <!--Intelligent Split View Controller - Item-->
         <scene sceneID="18">
             <objects>
-                <splitViewController storyboardIdentifier="SPLITVC" id="5" sceneMemberID="viewController">
+                <splitViewController storyboardIdentifier="FILESPLITVC" id="5" customClass="IntelligentSplitViewController" sceneMemberID="viewController">
+                    <tabBarItem key="tabBarItem" title="Item" id="6ir-TC-WJB"/>
                     <toolbarItems/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
                     <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
                     <connections>
                         <segue destination="42" kind="relationship" relationship="detailViewController" id="51"/>
-                        <segue destination="OjQ-wd-tlO" kind="relationship" relationship="masterViewController" id="yMQ-h9-f32"/>
+                        <segue destination="3" kind="relationship" relationship="masterViewController" id="SpX-W7-y2Q"/>
                     </connections>
                 </splitViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="17" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-2223" y="-509"/>
+            <point key="canvasLocation" x="-2455" y="-2709"/>
         </scene>
-        <!--Seaf File View Controller - Master-->
+        <!--Seaf File View Controller - Files-->
         <scene sceneID="24">
             <objects>
-                <tableViewController storyboardIdentifier="MASTERVC" title="Master" clearsSelectionOnViewWillAppear="NO" id="19" customClass="SeafFileViewController" sceneMemberID="viewController">
+                <tableViewController storyboardIdentifier="MASTERVC" title="Files" clearsSelectionOnViewWillAppear="NO" id="19" customClass="SeafFileViewController" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" allowsSelectionDuringEditing="YES" allowsMultipleSelectionDuringEditing="YES" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="20">
                         <rect key="frame" x="0.0" y="64" width="320" height="660"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -487,7 +489,7 @@
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="23" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-345" y="-3211"/>
+            <point key="canvasLocation" x="279" y="-3199"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="50">
@@ -511,7 +513,353 @@
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="49" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-1006" y="140"/>
+            <point key="canvasLocation" x="866" y="-3100"/>
+        </scene>
+        <!--Seaf Detail View Controller - Detail-->
+        <scene sceneID="XEy-Q2-Ob3">
+            <objects>
+                <viewController storyboardIdentifier="" title="Detail" id="UYP-5e-PSx" customClass="SeafDetailViewController" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="FEM-WE-uiS">
+                        <rect key="frame" x="0.0" y="64" width="703" height="660"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="seafile-logo.png" id="vnS-Hw-TWh">
+                                <rect key="frame" x="133" y="266" width="437" height="128"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
+                    </view>
+                    <toolbarItems/>
+                    <navigationItem key="navigationItem" id="Prp-rV-SaZ"/>
+                    <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="MhX-km-CD8" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1587" y="-2080"/>
+        </scene>
+        <!--Intelligent Split View Controller - Item-->
+        <scene sceneID="S8C-Vk-wAt">
+            <objects>
+                <splitViewController storyboardIdentifier="UPLOADSPLITVC" id="0cD-ba-5xh" customClass="IntelligentSplitViewController" sceneMemberID="viewController">
+                    <tabBarItem key="tabBarItem" title="Item" id="9Dk-VF-96u"/>
+                    <toolbarItems/>
+                    <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
+                    <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
+                    <connections>
+                        <segue destination="NNK-0K-3ZR" kind="relationship" relationship="detailViewController" id="SjW-hv-Idh"/>
+                        <segue destination="R5m-pr-XxP" kind="relationship" relationship="masterViewController" id="pHK-BI-UR3"/>
+                    </connections>
+                </splitViewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="UqP-MR-CFt" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-2367" y="-1829"/>
+        </scene>
+        <!--Navigation Controller-->
+        <scene sceneID="j0T-jw-xa2">
+            <objects>
+                <navigationController id="NNK-0K-3ZR" sceneMemberID="viewController">
+                    <toolbarItems/>
+                    <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" prompted="NO"/>
+                    <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
+                    <splitViewDetailSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+                    <navigationBar key="navigationBar" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" id="Mpw-J6-2yL">
+                        <rect key="frame" x="0.0" y="-44" width="0.0" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <toolbar key="toolbar" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="hff-Gg-Eya">
+                        <rect key="frame" x="0.0" y="724" width="703" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </toolbar>
+                    <connections>
+                        <segue destination="UYP-5e-PSx" kind="relationship" relationship="rootViewController" id="6gf-HP-DbJ"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="akU-BB-2wY" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="815" y="-2317"/>
+        </scene>
+        <!--Seaf Detail View Controller - Detail-->
+        <scene sceneID="HzG-IL-C8U">
+            <objects>
+                <viewController storyboardIdentifier="" title="Detail" id="aq4-iN-3KN" customClass="SeafDetailViewController" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="0hA-bR-7L1">
+                        <rect key="frame" x="0.0" y="64" width="703" height="660"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="seafile-logo.png" id="iWu-tk-cBb">
+                                <rect key="frame" x="133" y="266" width="437" height="128"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
+                    </view>
+                    <toolbarItems/>
+                    <navigationItem key="navigationItem" id="AnV-R5-D8g"/>
+                    <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="8qC-k5-u6b" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1331" y="-280"/>
+        </scene>
+        <!--Intelligent Split View Controller - Item-->
+        <scene sceneID="hb3-nf-fjQ">
+            <objects>
+                <splitViewController storyboardIdentifier="SETTINGSSPLITVC" id="gPc-rh-924" customClass="IntelligentSplitViewController" sceneMemberID="viewController">
+                    <tabBarItem key="tabBarItem" title="Item" id="pWO-cS-x7A"/>
+                    <toolbarItems/>
+                    <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
+                    <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
+                    <connections>
+                        <segue destination="2cB-kf-Cey" kind="relationship" relationship="detailViewController" id="W1h-yP-DYf"/>
+                        <segue destination="ZS2-rO-b6R" kind="relationship" relationship="masterViewController" id="OsG-A7-13x"/>
+                    </connections>
+                </splitViewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="STP-dG-bvn" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-2463" y="91"/>
+        </scene>
+        <!--Navigation Controller-->
+        <scene sceneID="21C-SD-d5Y">
+            <objects>
+                <navigationController id="2cB-kf-Cey" sceneMemberID="viewController">
+                    <toolbarItems/>
+                    <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" prompted="NO"/>
+                    <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
+                    <splitViewDetailSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+                    <navigationBar key="navigationBar" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" id="9NP-4d-wc8">
+                        <rect key="frame" x="0.0" y="-44" width="0.0" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <toolbar key="toolbar" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="vS9-wU-eCD">
+                        <rect key="frame" x="0.0" y="724" width="703" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </toolbar>
+                    <connections>
+                        <segue destination="aq4-iN-3KN" kind="relationship" relationship="rootViewController" id="BAh-01-Bus"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="kue-fT-LY7" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="394" y="-268"/>
+        </scene>
+        <!--Seaf Detail View Controller - Detail-->
+        <scene sceneID="0zA-VA-wdt">
+            <objects>
+                <viewController storyboardIdentifier="" title="Detail" id="tun-G6-TEU" customClass="SeafDetailViewController" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="EuK-4E-G7N">
+                        <rect key="frame" x="0.0" y="64" width="703" height="660"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="seafile-logo.png" id="cX6-TS-zDN">
+                                <rect key="frame" x="133" y="266" width="437" height="128"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
+                    </view>
+                    <toolbarItems/>
+                    <navigationItem key="navigationItem" id="F6n-Ji-vP8"/>
+                    <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="XIg-da-kV3" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1451" y="-1136"/>
+        </scene>
+        <!--Intelligent Split View Controller - Item-->
+        <scene sceneID="sQ3-WJ-qxR">
+            <objects>
+                <splitViewController storyboardIdentifier="StarSPLITVC" id="DCp-tP-YXD" customClass="IntelligentSplitViewController" sceneMemberID="viewController">
+                    <tabBarItem key="tabBarItem" title="Item" id="HaV-xZ-CCJ"/>
+                    <toolbarItems/>
+                    <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
+                    <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
+                    <connections>
+                        <segue destination="lUU-xX-neR" kind="relationship" relationship="detailViewController" id="rQa-rE-3bt"/>
+                        <segue destination="HbK-VG-mor" kind="relationship" relationship="masterViewController" id="cJU-4G-IWx"/>
+                    </connections>
+                </splitViewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="dT8-ZR-hc2" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-2411" y="-861"/>
+        </scene>
+        <!--Navigation Controller-->
+        <scene sceneID="ndj-lS-Fiu">
+            <objects>
+                <navigationController id="lUU-xX-neR" sceneMemberID="viewController">
+                    <toolbarItems/>
+                    <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" prompted="NO"/>
+                    <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
+                    <splitViewDetailSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+                    <navigationBar key="navigationBar" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" id="UNl-5c-Ys1">
+                        <rect key="frame" x="0.0" y="-44" width="0.0" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <toolbar key="toolbar" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="zpt-c2-dcF">
+                        <rect key="frame" x="0.0" y="724" width="703" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </toolbar>
+                    <connections>
+                        <segue destination="tun-G6-TEU" kind="relationship" relationship="rootViewController" id="yFy-Jx-xkX"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="9SX-dV-Zyn" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="322" y="-1316"/>
+        </scene>
+        <!--Seaf Activity View Controller - Detail-->
+        <scene sceneID="Nt1-JY-c0I">
+            <objects>
+                <viewController storyboardIdentifier="" title="Detail" id="tZi-tZ-wdU" customClass="SeafActivityViewController" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="V4C-0w-DQ6" customClass="UIWebView">
+                        <rect key="frame" x="0.0" y="64" width="768" height="916"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <connections>
+                            <outlet property="delegate" destination="tZi-tZ-wdU" id="6kS-E6-haW"/>
+                        </connections>
+                    </view>
+                    <toolbarItems/>
+                    <navigationItem key="navigationItem" id="K76-3k-sji"/>
+                    <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="fdv-NA-JP2" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="509" y="524"/>
+        </scene>
+        <!--Navigation Controller - Item-->
+        <scene sceneID="ugv-Os-bZc">
+            <objects>
+                <navigationController id="8iO-sG-chl" sceneMemberID="viewController">
+                    <tabBarItem key="tabBarItem" title="Item" id="nP4-Sy-Gkr"/>
+                    <toolbarItems/>
+                    <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" prompted="NO"/>
+                    <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
+                    <splitViewDetailSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+                    <navigationBar key="navigationBar" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" id="7bz-Re-mbk">
+                        <rect key="frame" x="0.0" y="-44" width="0.0" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <toolbar key="toolbar" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="Aau-1A-wWh">
+                        <rect key="frame" x="0.0" y="980" width="768" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </toolbar>
+                    <connections>
+                        <segue destination="tZi-tZ-wdU" kind="relationship" relationship="rootViewController" id="tbx-2I-Yex"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="GxR-hx-KDV" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-1180" y="464"/>
+        </scene>
+        <!--Navigation Controller-->
+        <scene sceneID="O9y-ix-l3j">
+            <objects>
+                <navigationController id="vBp-wB-bH9" sceneMemberID="viewController">
+                    <navigationBar key="navigationBar" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" id="fMC-z5-cy6">
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <connections>
+                        <segue destination="oVy-oK-fv4" kind="relationship" relationship="rootViewController" id="LMN-N7-qXK"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="CPc-fK-gPX" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="240" y="1650"/>
+        </scene>
+        <!--Seaf Dis Detail View Controller - Detail-->
+        <scene sceneID="qow-BH-Ksf">
+            <objects>
+                <viewController storyboardIdentifier="" title="Detail" id="ZjO-AT-Ini" customClass="SeafDisDetailViewController" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="4cj-kW-DhW" customClass="UIWebView">
+                        <rect key="frame" x="0.0" y="64" width="703" height="655"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
+                    </view>
+                    <toolbarItems/>
+                    <navigationItem key="navigationItem" title="Detail" id="c2x-oK-G6H"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Bmp-e1-Qo9" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1200" y="1650"/>
+        </scene>
+        <!--Split View Controller - Item-->
+        <scene sceneID="kLi-aU-lDH">
+            <objects>
+                <splitViewController storyboardIdentifier="SPLITVC" id="m1g-B7-asj" sceneMemberID="viewController">
+                    <tabBarItem key="tabBarItem" title="Item" id="gKR-cO-ptM"/>
+                    <toolbarItems/>
+                    <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackTranslucent"/>
+                    <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
+                    <connections>
+                        <segue destination="vBp-wB-bH9" kind="relationship" relationship="masterViewController" id="Ywh-NB-R0F"/>
+                        <segue destination="MS7-yp-xx7" kind="relationship" relationship="detailViewController" id="BzP-GE-sdo"/>
+                    </connections>
+                </splitViewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="eWh-hW-Ytt" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-1059" y="1682"/>
+        </scene>
+        <!--Seaf Dis Master View Controller - Master-->
+        <scene sceneID="tFh-La-Oo2">
+            <objects>
+                <tableViewController storyboardIdentifier="" title="Master" clearsSelectionOnViewWillAppear="NO" id="oVy-oK-fv4" customClass="SeafDisMasterViewController" sceneMemberID="viewController">
+                    <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="FeK-qw-Fg0">
+                        <rect key="frame" x="0.0" y="64" width="320" height="655"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
+                        <prototypes>
+                            <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="Cell" textLabel="gBS-I4-dW2" rowHeight="50" style="IBUITableViewCellStyleDefault" id="0Er-j1-LgI">
+                                <rect key="frame" x="0.0" y="22" width="320" height="50"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
+                                    <rect key="frame" x="0.0" y="0.0" width="320" height="49"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                    <subviews>
+                                        <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="Title" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="gBS-I4-dW2">
+                                            <rect key="frame" x="10" y="0.0" width="300" height="49"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <fontDescription key="fontDescription" type="boldSystem" pointSize="20"/>
+                                            <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                            <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                        </label>
+                                    </subviews>
+                                    <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                </view>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                            </tableViewCell>
+                        </prototypes>
+                        <sections/>
+                        <connections>
+                            <outlet property="dataSource" destination="oVy-oK-fv4" id="aNc-5R-NDe"/>
+                            <outlet property="delegate" destination="oVy-oK-fv4" id="tYE-Vt-QRo"/>
+                        </connections>
+                    </tableView>
+                    <navigationItem key="navigationItem" title="Master" id="D4g-PC-vdz"/>
+                </tableViewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="mUv-nL-bmL" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="619" y="1657"/>
+        </scene>
+        <!--Navigation Controller-->
+        <scene sceneID="cdG-Ai-P2P">
+            <objects>
+                <navigationController id="MS7-yp-xx7" sceneMemberID="viewController">
+                    <navigationBar key="navigationBar" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" id="CmH-N0-H2I">
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <connections>
+                        <segue destination="ZjO-AT-Ini" kind="relationship" relationship="rootViewController" id="egc-KO-Tgp"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="KMr-TX-odD" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="970" y="1664"/>
         </scene>
     </scenes>
     <resources>

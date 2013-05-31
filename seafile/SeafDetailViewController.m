@@ -12,6 +12,7 @@
 #import "FailToPreview.h"
 #import "DownloadingProgressView.h"
 #import "SeafTextEditorViewController.h"
+#import "M13InfiniteTabBarController.h"
 
 #import "UIViewController+AlertMessage.h"
 #import "SVProgressHUD.h"
@@ -151,6 +152,7 @@ enum PREVIEW_STATE {
         case PREVIEW_SUCCESS:
             Debug("Preview SUCCESS\n");
             [self.fileViewController setPreItem:preViewItem];
+            fileViewController.view.frame = self.view.frame;
             [self.view addSubview:self.fileViewController.view];
             break;
         case PREVIEW_WEBVIEW_JS:
@@ -181,7 +183,6 @@ enum PREVIEW_STATE {
     if (self.masterPopoverController != nil) {
         [self.masterPopoverController dismissPopoverAnimated:YES];
     }
-    //if (preViewItem == item) return;
 
     preViewItem = item;
     [self refreshView];
@@ -189,7 +190,13 @@ enum PREVIEW_STATE {
 
 - (void)goBack:(id)sender
 {
-    [self.navigationController popViewControllerAnimated:YES];
+    //[self.navigationController popViewControllerAnimated:YES];
+    [self.navigationController dismissViewControllerAnimated:NO completion:nil];
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
 }
 
 - (void)viewDidLoad
@@ -254,13 +261,18 @@ enum PREVIEW_STATE {
     return YES;
 }
 
+- (void)viewWillLayoutSubviews
+{
+    if (self.state == PREVIEW_SUCCESS)
+        fileViewController.view.frame = self.view.frame;
+}
+
 #pragma mark - Split view
 
 - (void)splitViewController:(UISplitViewController *)splitController willHideViewController:(UIViewController *)viewController withBarButtonItem:(UIBarButtonItem *)barButtonItem forPopoverController:(UIPopoverController *)popoverController
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-
-    barButtonItem.title = appdelegate.masterVC.title;
+    barButtonItem.title = appdelegate.fileVC.title;
     [self.navigationItem setLeftBarButtonItem:barButtonItem animated:YES];
     self.masterPopoverController = popoverController;
 }
@@ -315,6 +327,7 @@ enum PREVIEW_STATE {
 - (IBAction)editFile:(id)sender
 {
     SeafTextEditorViewController *editViewController = [[SeafTextEditorViewController alloc] init];
+    editViewController.detailViewController = self;
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:editViewController];
     [editViewController setFile:preViewItem];
     [navController setModalPresentationStyle:UIModalPresentationFullScreen];
@@ -325,8 +338,8 @@ enum PREVIEW_STATE {
 {
     if ([preViewItem isKindOfClass:[SeafFile class]]) {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        [((SeafFile *)preViewItem) upload:appdelegate.masterVC];
-        [appdelegate.masterVC refreshView];
+        [((SeafFile *)preViewItem) upload:appdelegate.fileVC];
+        [appdelegate.fileVC refreshView];
     }
 }
 
@@ -455,6 +468,12 @@ enum PREVIEW_STATE {
         NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [preViewItem.content stringEscapedForJavasacript]];
         [self.webView stringByEvaluatingJavaScriptFromString:js];
     }
+}
+- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
+{
+    if ([request.URL.absoluteString hasPrefix:@"file://"])
+        return YES;
+    return NO;
 }
 
 @end

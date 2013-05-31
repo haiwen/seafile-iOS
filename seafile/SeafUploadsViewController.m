@@ -26,8 +26,9 @@
 @interface SeafUploadsViewController ()
 @property NSMutableArray *entries;
 @property NSMutableDictionary *attrs;
-@property UIImage *cellImage;
+@property (readonly) UIImage *cellImage;
 
+@property (readonly) SeafDetailViewController *detailViewController;
 @property (retain) NSIndexPath *selectedindex;
 @property (retain) CZPhotoPickerController *picker;
 @property (retain)  NSDateFormatter *formatter;
@@ -51,16 +52,21 @@
 {
     self = [super initWithStyle:style];
     if (self) {
-        // Custom initialization
     }
     return self;
 }
 
-- (void)initTabBarItem
+-(UIImage *)cellImage
 {
-    self.title = @"Uploads";
-    self.tabBarItem.image = [[UIImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"tab-upload" ofType:@"png"]];
-    _cellImage = [[UIImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"upload" ofType:@"png"]];
+    if (!_cellImage)
+        _cellImage = [[UIImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"upload" ofType:@"png"]];
+    return _cellImage;
+}
+
+- (SeafDetailViewController *)detailViewController
+{
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    return (SeafDetailViewController *)[appdelegate detailViewController:TABBED_UPLOADS];
 }
 
 - (NSString *)attrsFile
@@ -128,11 +134,13 @@
 {
     [self uploadFile:_selectedindex];
 }
+
 - (void)addPhotos:(id)sender
 {
     if (self.picker)
         return;
-    picker = [[CZPhotoPickerController alloc] initWithPresentingViewController:self withCompletionBlock:^(UIImagePickerController *imagePickerController, NSDictionary *imageInfoDict) {
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    picker = [[CZPhotoPickerController alloc] initWithPresentingViewController:appdelegate.tabbarController withCompletionBlock:^(UIImagePickerController *imagePickerController, NSDictionary *imageInfoDict) {
         NSString *filename;
         self.picker = nil;
         UIImage *image = [imageInfoDict objectForKey:@"UIImagePickerControllerOriginalImage"];
@@ -191,10 +199,12 @@
     [self loadEntries];
     self.navigationItem.rightBarButtonItem = self.editButtonItem;
     UIBarButtonItem *photoItem  = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCamera target:self action:@selector(addPhotos:)];
-    //UIBarButtonItem *addItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addFile:)];
-    //self.navigationItem.leftBarButtonItems = [NSArray arrayWithObjects:addItem, photoItem, nil];
+#if 1
     self.navigationItem.leftBarButtonItems = [NSArray arrayWithObjects:photoItem, nil];
-
+#else
+    UIBarButtonItem *addItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addFile:)];
+    self.navigationItem.leftBarButtonItems = [NSArray arrayWithObjects:addItem, photoItem, nil];
+#endif
     self.formatter = [[NSDateFormatter alloc] init];
     [formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
 }
@@ -212,11 +222,12 @@
 
 - (void)uploadFile:(NSIndexPath *)index
 {
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     _selectedindex = index;
     SeafUploadDirViewController *controller = [[SeafUploadDirViewController alloc] initWithSeafDir:_connection.rootFolder];
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
     [navController setModalPresentationStyle:UIModalPresentationFormSheet];
-    [self presentViewController:navController animated:YES completion:nil];
+    [appdelegate.tabbarController presentViewController:navController animated:YES completion:nil];
 }
 
 - (void)deleteFile:(NSIndexPath *)index
@@ -310,9 +321,8 @@
     cell.imageView.image = file.image;
 
     UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
-    //CGRect frame = CGRectMake(0.0, 0.0, _cellImage.size.width, _cellImage.size.height);
     button.frame = CGRectMake(0,0,24,24);;
-    [button setBackgroundImage:_cellImage forState:UIControlStateNormal];
+    [button setBackgroundImage:self.cellImage forState:UIControlStateNormal];
     button.backgroundColor= [UIColor clearColor];
     [button addTarget:self action:@selector(btnClicked:event:) forControlEvents:UIControlEventTouchUpInside];
 
@@ -404,12 +414,12 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    SeafDetailViewController *detailViewController = appdelegate.detailVC;
     SeafUploadFile *file = [_entries objectAtIndex:indexPath.row];
-    if (!IsIpad())
-        [self.navigationController pushViewController:detailViewController animated:YES];
-    [detailViewController setPreViewItem:file];
+    if (!IsIpad()) {
+        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+        [appdelegate showDetailView:self.detailViewController];
+    }
+    [self.detailViewController setPreViewItem:file];
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation

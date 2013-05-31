@@ -7,9 +7,12 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "SeafDetailViewController.h"
 #import "SeafFile.h"
 
 @interface SeafTextEditorViewController : UIViewController<UIWebViewDelegate>
+
+@property (strong) SeafDetailViewController *detailViewController;
 
 - (void) setFile:(id<QLPreviewItem, PreViewDelegate>) file;
 

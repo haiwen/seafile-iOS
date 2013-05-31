@@ -36,12 +36,11 @@ enum {
 @interface SeafFileViewController : UITableViewController <UIAlertViewDelegate, UIActionSheetDelegate, SeafDentryDelegate, EGORefreshTableHeaderDelegate, InputDoneDelegate, SeafFileUploadDelegate> {
 }
 
-@property (strong, nonatomic) SeafDetailViewController *detailViewController;
-@property (strong, nonatomic) SeafDir *directory;
+@property (strong, nonatomic) SeafConnection *connection;
+
+@property (strong, readonly) SeafDetailViewController *detailViewController;
 @property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
 
-- (void)initTabBarItem;
 - (void)refreshView;
-
 
 @end

@@ -13,7 +13,6 @@
 
 @interface SeafSettingsViewController : UITableViewController<UIAlertViewDelegate, SSConnectionAccountDelegate, MFMailComposeViewControllerDelegate>
 
-@property (strong) SeafConnection *connection;
-- (void)initTabBarItem;
+@property (strong, nonatomic) SeafConnection *connection;
 
 @end

@@ -37,8 +37,7 @@
 
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(refresh:)];;
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    self.detailViewController = appdelegate.disdetailVC;
-    self.navigationItem.leftBarButtonItem = appdelegate.switchItem;
+    self.detailViewController = (SeafDisDetailViewController *)[appdelegate detailViewController:TABBED_DISCUSSION];
     self.title = @"Groups";
     self.tableView.rowHeight = 50;
     self.detailViewController.connection = _connection;
@@ -65,19 +64,10 @@
 
 - (void)setConnection:(SeafConnection *)conn
 {
-    @synchronized(self) {
-        if (_connection != conn) {
-            _connection = conn;
-            self.detailViewController.group = nil;
-            self.detailViewController.connection = conn;
-            [self refresh:nil];
-        }
-    }
-}
-
-- (SeafConnection *)connection
-{
-    return _connection;
+    _connection = conn;
+    self.detailViewController.group = nil;
+    self.detailViewController.connection = conn;
+    [self refresh:nil];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -131,16 +121,11 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if (!IsIpad()) {
-        [self.navigationController pushViewController:self.detailViewController animated:YES];
+        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+        [appdelegate showDetailView:self.detailViewController];
     }
     NSString *gid = [[self.connection.seafGroups objectAtIndex:indexPath.row] objectForKey:@"id"];
     self.detailViewController.group = gid;
-}
-
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
-{
-    if ([[segue identifier] isEqualToString:@"showDetail"]) {
-    }
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
