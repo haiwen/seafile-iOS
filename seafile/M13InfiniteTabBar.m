@@ -14,7 +14,7 @@
 
 #import "M13InfiniteTabBar.h"
 #import "M13InfiniteTabBarItem.h"
-#import "Debug.h"
+
 @implementation M13InfiniteTabBar
 {
     UITapGestureRecognizer *_singleTapGesture;
@@ -148,9 +148,7 @@
     if (indexToInsert == [_items count]) {
         indexToInsert = 0;
     }
-    //M13InfiniteTabBarItem *itemToInsert = [(M13InfiniteTabBarItem *)[_items objectAtIndex:indexToInsert] copy];
-    M13InfiniteTabBarItem *itemToInsert = (M13InfiniteTabBarItem *)[_items objectAtIndex:indexToInsert];
-
+    M13InfiniteTabBarItem *itemToInsert = [(M13InfiniteTabBarItem *)[_items objectAtIndex:indexToInsert] copy];
     itemToInsert.tag = indexToInsert;
     [_visibleIcons addObject:itemToInsert];
     
@@ -174,9 +172,7 @@
     if (indexToInsert == -1) {
         indexToInsert = [_items count] - 1;
     }
-    //M13InfiniteTabBarItem *itemToInsert = [(M13InfiniteTabBarItem *)[_items objectAtIndex:indexToInsert] copy];
-    M13InfiniteTabBarItem *itemToInsert = (M13InfiniteTabBarItem *)[_items objectAtIndex:indexToInsert];
-
+    M13InfiniteTabBarItem *itemToInsert = [(M13InfiniteTabBarItem *)[_items objectAtIndex:indexToInsert] copy];
     itemToInsert.tag = indexToInsert;
     [_visibleIcons insertObject:itemToInsert atIndex:0];  // add leftmost label at the beginning of the array
     
@@ -194,8 +190,7 @@
     // the upcoming tiling logic depends on there already being at least one label in the visibleLabels array, so
     // to kick off the tiling we need to make sure there's at least one label
     if ([_visibleIcons count] == 0) {
-        //M13InfiniteTabBarItem *itemToInsert = [(M13InfiniteTabBarItem *)[_items objectAtIndex:0] copy];
-        M13InfiniteTabBarItem *itemToInsert = (M13InfiniteTabBarItem *)[_items objectAtIndex:0];
+        M13InfiniteTabBarItem *itemToInsert = [(M13InfiniteTabBarItem *)[_items objectAtIndex:0] copy];
         itemToInsert.tag = 0;
         [_visibleIcons addObject:itemToInsert];
         
@@ -254,12 +249,12 @@
 
 - (void)setSelectedItem:(M13InfiniteTabBarItem *)selectedItem
 {
-    Debug("#%d %f\n", selectedItem.tag, selectedItem.frame.origin.x);
     if (self.contentOffset.x == (selectedItem.frame.origin.x + (selectedItem.frame.size.width / 2.0)) - (self.frame.size.width / 2.0)) {
         //center tab tapped
         [self scrollViewDidEndScrollingAnimation:self];
     } else {
         //Center tapped tab
+        //[self setContentOffset:CGPointMake((selectedItem.frame.origin.x + (selectedItem.frame.size.width / 2.0)) - (self.frame.size.width / 2.0), 0) animated:YES];
         [self setContentOffset:CGPointMake((selectedItem.frame.origin.x + (selectedItem.frame.size.width / 2.0)) - (self.frame.size.width / 2.0), 0) animated:NO];
         [self scrollViewDidEndScrollingAnimation:self];
     }

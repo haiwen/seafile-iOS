@@ -16,7 +16,6 @@
 #import <QuartzCore/QuartzCore.h>
 
 #import "M13InfiniteTabBarItem.h"
-#import "Debug.h"
 
 
 @interface M13InfiniteTabBarController ()

@@ -606,44 +606,6 @@
     <resources>
         <image name="seafile-logo.png" width="619" height="179"/>
     </resources>
-    <classes>
-        <class className="ColorfulButton" superclassName="UIButton">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/ColorfulButton.h"/>
-        </class>
-        <class className="SeafActivityViewController" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/SeafActivityViewController.h"/>
-        </class>
-        <class className="SeafDetailViewController" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/SeafDetailViewController.h"/>
-        </class>
-        <class className="SeafDisDetailViewController" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/SeafDisDetailViewController.h"/>
-        </class>
-        <class className="SeafDisMasterViewController" superclassName="UITableViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/SeafDisMasterViewController.h"/>
-        </class>
-        <class className="SeafFileViewController" superclassName="UITableViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/SeafFileViewController.h"/>
-        </class>
-        <class className="SeafSettingsViewController" superclassName="UITableViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/SeafSettingsViewController.h"/>
-            <relationships>
-                <relationship kind="action" name="wipeCache:"/>
-                <relationship kind="outlet" name="cacheCell" candidateClass="UITableViewCell"/>
-                <relationship kind="outlet" name="nameCell" candidateClass="UITableViewCell"/>
-                <relationship kind="outlet" name="serverCell" candidateClass="UITableViewCell"/>
-                <relationship kind="outlet" name="usedspaceCell" candidateClass="UITableViewCell"/>
-                <relationship kind="outlet" name="versionCell" candidateClass="UITableViewCell"/>
-                <relationship kind="outlet" name="wipeCacheBt" candidateClass="ColorfulButton"/>
-            </relationships>
-        </class>
-        <class className="SeafStarredFilesViewController" superclassName="UITableViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/SeafStarredFilesViewController.h"/>
-        </class>
-        <class className="SeafUploadsViewController" superclassName="UITableViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/SeafUploadsViewController.h"/>
-        </class>
-    </classes>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">
         <simulatedStatusBarMetrics key="statusBar"/>
         <simulatedOrientationMetrics key="orientation"/>

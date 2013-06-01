@@ -28,17 +28,13 @@
 @end
 
 @interface M13InfiniteTabBarController : UIViewController <M13InfiniteTabBarDelegate, M13InfiniteTabBarCentralPullViewControllerDelegate>
-{
-}
+
 - (id)initWithViewControllers:(NSArray *)viewControllers pairedWithInfiniteTabBarItems:(NSArray *)items;
-
-@property (nonatomic, readonly) NSArray *viewControllers;
-@property (nonatomic, readonly) UIView *maskView;
-
 
 @property (nonatomic, retain) id<M13InfiniteTabBarControllerDelegate> delegate; //Delegate
 @property (nonatomic, readonly) M13InfiniteTabBar *infiniteTabBar; //Infinite tab bar
 
+@property (nonatomic, readonly) NSArray *viewControllers;
 @property (nonatomic, assign) UIViewController *selectedViewController;
 @property (nonatomic) NSUInteger selectedIndex;
 
@@ -51,7 +47,6 @@
 - (void)showAlertForCentralViewControllerIsEmergency:(BOOL)emergency;
 - (void)setCentralViewControllerOpened:(BOOL)opened animated:(BOOL)animated;
 - (void)endAlertAnimation;
-
 
 //Delegate
 - (void)infiniteTabBar:(M13InfiniteTabBar *)tabBar didSelectItem:(M13InfiniteTabBarItem *)item;

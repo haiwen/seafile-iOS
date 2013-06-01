@@ -150,8 +150,9 @@
             [UIImageJPEGRepresentation(image, 1.0) writeToFile:path atomically:YES];
         }
 
-        if (self.modalViewController)
-            [self dismissViewControllerAnimated:YES completion:nil];
+        if (appdelegate.tabbarController.modalViewController)
+           [appdelegate.tabbarController dismissViewControllerAnimated:YES completion:nil];
+
         if (!image)
             return;
 

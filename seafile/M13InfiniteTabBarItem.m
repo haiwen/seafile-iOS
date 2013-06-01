@@ -78,6 +78,9 @@
 
 - (id)copy
 {
+#if 1
+    return self;
+#else
     M13InfiniteTabBarItem *item = [[M13InfiniteTabBarItem alloc] initWithTitle:_titleLabel.text andIcon:_icon];
     if (item) {
         [item setSelected:_selected];
@@ -85,12 +88,15 @@
         itemContainerView.transform = _containerView.transform;
     }
     return item;
+#endif
 }
 
 - (void)setSelected:(BOOL)selected
 {
     _selected = selected;
-    [_iconView setImage:[self createColoredIconForCurrnetState]];
+    //[_iconView setImage:[self createColoredIconForCurrnetState]];
+    [_iconView setImage:_icon];
+
     
     if (_selected) {
         _titleLabel.textColor = _selectedTitleColor;
