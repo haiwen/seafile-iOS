@@ -418,10 +418,10 @@
     SeafGroups *groups = [self loadCacheObj:@"SeafGroups"];
     if (!groups)
         return nil;
-    
+
     NSError *error = nil;
     NSData *data = [NSData dataWithBytes:[groups.content UTF8String] length:groups.content.length];
-    
+
     id JSON = [Utils JSONDecode:data error:&error];
     if (error) {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];

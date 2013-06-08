@@ -43,7 +43,7 @@
 							<object class="IBUILabel" id="999473938">
 								<reference key="NSNextResponder" ref="132936688"/>
 								<int key="NSvFlags">292</int>
-								<string key="NSFrame">{{48, 6}, {217, 20}}</string>
+								<string key="NSFrame">{{48, 14}, {217, 20}}</string>
 								<reference key="NSSuperview" ref="132936688"/>
 								<reference key="NSWindow"/>
 								<reference key="NSNextKeyView" ref="520392349"/>
@@ -90,7 +90,7 @@
 							<object class="IBUILabel" id="520392349">
 								<reference key="NSNextResponder" ref="132936688"/>
 								<int key="NSvFlags">292</int>
-								<string key="NSFrame">{{48, 23}, {217, 21}}</string>
+								<string key="NSFrame">{{51, 32}, {217, 15}}</string>
 								<reference key="NSSuperview" ref="132936688"/>
 								<reference key="NSWindow"/>
 								<string key="NSReuseIdentifierKey">_NS:9</string>
@@ -141,7 +141,7 @@
 				<string key="NSReuseIdentifierKey">_NS:9</string>
 				<string key="targetRuntimeIdentifier">IBIPadFramework</string>
 				<reference key="IBUIContentView" ref="132936688"/>
-				<string key="IBUIReuseIdentifier">SeafCell</string>
+				<string key="IBUIReuseIdentifier">SeafDirCell</string>
 				<real value="50" key="IBUIRowHeight"/>
 			</object>
 		</array>

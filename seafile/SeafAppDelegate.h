@@ -23,9 +23,9 @@ enum {
     TABBED_SEAFILE = 0,
     TABBED_UPLOADS,
     TABBED_STARRED,
-    TABBED_SETTINGS,
     TABBED_ACTIVITY,
     TABBED_DISCUSSION,
+    TABBED_SETTINGS,
     TABBED_ACCOUNTS,
 };
 
@@ -70,5 +70,7 @@ enum {
 
 + (void)incUploadnum;
 + (void)decUploadnum;
+
+- (void)goTo:(NSString *)repo path:(NSString *)path;
 
 @end

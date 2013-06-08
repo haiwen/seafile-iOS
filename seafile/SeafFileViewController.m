@@ -77,20 +77,19 @@ enum {
         int i;
         UIBarButtonItem *flexibleFpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:self action:@selector(editOperation:)];
         UIBarButtonItem *fixedSpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:self action:@selector(editOperation:)];
-        
+
         NSArray *itemsTitles = [NSArray arrayWithObjects:@"New Folder", @"New File", @"Copy", @"Move", @"Delete", @"Paste", @"MoveTo", @"Cancel", nil ];
-        
+
         UIBarButtonItem *items[EDITOP_NUM];
         items[0] = flexibleFpaceItem;
-        
+
         fixedSpaceItem.width = 38.0f;;
         for (i = 1; i < itemsTitles.count + 1; ++i) {
             items[i] = [[UIBarButtonItem alloc] initWithTitle:[itemsTitles objectAtIndex:i-1] style:UIBarButtonItemStyleBordered target:self action:@selector(editOperation:)];
             items[i].tag = i;
         }
-        
+
         _editToolItems = [NSArray arrayWithObjects:items[EDITOP_CREATE], items[EDITOP_MKDIR], items[EDITOP_SPACE], items[EDITOP_DELETE], nil ];
-        Debug("...\n");
     }
     return _editToolItems;
 }
@@ -263,14 +262,14 @@ enum {
         if (![appdelegate checkNetworkStatus])
             return;
         [self setToolbarItems:self.editToolItems];
-        [self hideTabBar];
+        if(!IsIpad())  [self hideTabBar];
         [self.navigationController.toolbar sizeToFit];
         [self noneSelected:YES];
         [self.navigationController setToolbarHidden:NO animated:YES];
     } else {
         self.navigationItem.leftBarButtonItem = nil;
         [self.navigationController setToolbarHidden:YES animated:YES];
-        [self showTabBar];
+        if(!IsIpad())  [self showTabBar];
     }
 
     [super setEditing:editing animated:animated];
@@ -334,7 +333,7 @@ enum {
 {
     SeafCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
-        NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafCell" owner:self options:nil];
+        NSArray *cells = [[NSBundle mainBundle] loadNibNamed:CellIdentifier owner:self options:nil];
         cell = [cells objectAtIndex:0];
     }
     return cell;
@@ -380,7 +379,7 @@ enum {
 
 - (SeafCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView
 {
-    SeafCell *cell = [self getCell:@"SeafCell" forTableView:tableView];
+    SeafCell *cell = [self getCell:@"SeafDirCell" forTableView:tableView];
     cell.textLabel.text = sdir.name;
     cell.detailTextLabel.text = nil;
     cell.imageView.image = sdir.image;
@@ -785,6 +784,41 @@ enum {
         [SVProgressHUD showErrorWithStatus:@"Failed to uplod file"];
     }
     [self refreshView];
+}
+
+- (BOOL)goTo:(NSString *)repo path:(NSString *)path
+{
+    Debug("repo=%@, path=%@\n", repo, path);
+    if ([self.directory isKindOfClass:[SeafRepos class]]) {
+        for (int i = 0; i < ((SeafRepos *)_directory).repoGroups.count; ++i) {
+            NSArray *repos = [((SeafRepos *)_directory).repoGroups objectAtIndex:i];
+            for (int j = 0; j < repos.count; ++j) {
+                SeafRepo *r = [repos objectAtIndex:j];
+                if ([r.repoId isEqualToString:repo]) {
+                    NSIndexPath *idx = [NSIndexPath indexPathForRow:j inSection:i];
+                    [self tableView:self.tableView didSelectRowAtIndexPath:idx];
+                }
+            }
+        }
+    } else {
+        if ([@"/" isEqualToString:path])
+            return NO;
+        for (int i = 0; i < _directory.items.count; ++i) {
+            SeafBase *b = [_directory.items objectAtIndex:i];
+            NSString *p = b.path;
+            if ([b isKindOfClass:[SeafDir class]]) {
+                p = [p stringByAppendingString:@"/"];
+            }
+            if ([path hasPrefix:p]) {
+                NSIndexPath *idx = [NSIndexPath indexPathForRow:i inSection:0];
+                [self tableView:self.tableView didSelectRowAtIndexPath:idx];
+            }
+        }
+    }
+    if (self.navigationController.topViewController != self)
+        return YES;
+    Debug("stop\n");
+    return NO;
 }
 
 

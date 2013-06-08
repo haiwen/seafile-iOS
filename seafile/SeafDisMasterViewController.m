@@ -33,7 +33,7 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-	// Do any additional setup after loading the view, typically from a nib.
+    // Do any additional setup after loading the view, typically from a nib.
 
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(refresh:)];;
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
@@ -67,11 +67,11 @@
     _connection = conn;
     self.detailViewController.group = nil;
     self.detailViewController.connection = conn;
-    [self refresh:nil];
 }
 
 - (void)viewWillAppear:(BOOL)animated
 {
+    [self refresh:nil];
     [self.tableView reloadData];
     [super viewWillAppear:animated];
 }

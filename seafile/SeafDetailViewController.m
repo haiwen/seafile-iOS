@@ -21,6 +21,7 @@
 
 enum PREVIEW_STATE {
     PREVIEW_NONE = 0,
+    PREVIEW_INIT,
     PREVIEW_SUCCESS,
     PREVIEW_WEBVIEW,
     PREVIEW_WEBVIEW_JS,
@@ -119,8 +120,6 @@ enum PREVIEW_STATE {
     [self clearPreView];
     if (!preViewItem) {
         self.state = PREVIEW_NONE;
-        [self checkNavItems];
-        return;
     } else if (preViewItem.previewItemURL) {
         if (![QLPreviewController canPreviewItem:preViewItem]) {
             self.state = PREVIEW_FAILED;
@@ -172,6 +171,8 @@ enum PREVIEW_STATE {
             [webView loadRequest:request];
             [self.view addSubview:webView];
             webView.center = self.view.center;
+            break;
+        case PREVIEW_NONE:
             break;
         default:
             break;
@@ -240,6 +241,9 @@ enum PREVIEW_STATE {
     }
     fileViewController = [[FileViewController alloc] init];
     self.state = PREVIEW_NONE;
+    self.view.autoresizesSubviews = YES;
+    self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
+    [self refreshView];
 }
 
 - (void)viewDidUnload
@@ -263,8 +267,13 @@ enum PREVIEW_STATE {
 
 - (void)viewWillLayoutSubviews
 {
+    Debug("self.view=%f %f\n", self.view.frame.size.width, self.view.frame.size.height);
     if (self.state == PREVIEW_SUCCESS)
         fileViewController.view.frame = self.view.frame;
+    else if (self.state == PREVIEW_NONE) {
+        UIView *v = [self.view.subviews objectAtIndex:0];
+        v.center = self.view.center;
+    }
 }
 
 #pragma mark - Split view
@@ -348,6 +357,9 @@ enum PREVIEW_STATE {
     NSURL *url = [preViewItem checkoutURL];
     if (!url)
         return;
+
+    if (docController)
+        [docController dismissMenuAnimated:NO];
     docController = [UIDocumentInteractionController interactionControllerWithURL:url];
     BOOL ret = [docController presentOpenInMenuFromBarButtonItem:sender animated:YES];
     if (ret == NO) {

@@ -318,7 +318,7 @@
     UIViewController *settingsController = [tabs.viewControllers objectAtIndex:TABBED_SETTINGS];
     UINavigationController *activityController = [tabs.viewControllers objectAtIndex:TABBED_ACTIVITY];
     UIViewController *discussionController = [tabs.viewControllers objectAtIndex:TABBED_DISCUSSION];
-    
+
 
     fileController.tabBarItem.title = @"Files";
     fileController.tabBarItem.image = [UIImage imageNamed:@"tab-home.png"];
@@ -332,14 +332,14 @@
     activityController.tabBarItem.image = [UIImage imageNamed:@"tab-activity.png"];
     discussionController.tabBarItem.title = @"Discussion";
     discussionController.tabBarItem.image = [UIImage imageNamed:@"tab-discussion.png"];
-    
+
     UIViewController *accountvc = [[SeafEmptyViewController alloc] init];
     accountvc.tabBarItem.title = @"Accounts";
     accountvc.tabBarItem.image = [UIImage imageNamed:@"tab-account.png"];
     if (IsIpad()) {
         ((UISplitViewController *)fileController).delegate = (id)[[((UISplitViewController *)fileController).viewControllers lastObject] topViewController];
         ((UISplitViewController *)uploadController).delegate = (id)[[((UISplitViewController *)uploadController).viewControllers lastObject] topViewController];
-        
+
         ((UISplitViewController *)starredController).delegate = (id)[[((UISplitViewController *)starredController).viewControllers lastObject] topViewController];
         ((UISplitViewController *)settingsController).delegate = (id)[[((UISplitViewController *)settingsController).viewControllers lastObject] topViewController];
         ((UISplitViewController *)discussionController).delegate = (id)[[((UISplitViewController *)discussionController).viewControllers lastObject] topViewController];
@@ -355,24 +355,17 @@
                 [items addObject:item];
         }
 
-        SeafActivityViewController *ac = [[SeafActivityViewController alloc] initWithNibName:@"SeafActivityViewController" bundle:nil];
-        UINavigationController *c5 = [[UINavigationController alloc] initWithRootViewController:ac];
-        
-        c5.tabBarItem.title = @"Activity";
-        c5.tabBarItem.image = [[UIImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"tab-activity" ofType:@"png"]];
-        [vcs replaceObjectAtIndex:4 withObject:c5];
-        
+        UINavigationController *c5 =  [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"SETTINGSNAV"];
+        [vcs replaceObjectAtIndex:5 withObject:c5];
+
         SeafDisMasterViewController *dc = [[SeafDisMasterViewController alloc] init];
         UINavigationController *c6 = [[UINavigationController alloc] initWithRootViewController:dc];
-        c6.tabBarItem.title = @"Discussion";
-        c6.tabBarItem.image = [[UIImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"tab-discussion" ofType:@"png"]];
-        
-        [vcs replaceObjectAtIndex:5 withObject:c6];
+        [vcs replaceObjectAtIndex:4 withObject:c6];
 
         [vcs addObject:accountvc];
         M13InfiniteTabBarItem *item = [[M13InfiniteTabBarItem alloc] initWithTitle:accountvc.tabBarItem.title andIcon:accountvc.tabBarItem.image];
         [items addObject:item];
-        
+
         M13InfiniteTabBarController *viewController = [[M13InfiniteTabBarController alloc] initWithViewControllers:vcs pairedWithInfiniteTabBarItems:items];
         viewController.delegate = self;
         _tabbarController = viewController;
@@ -540,6 +533,18 @@
     UINavigationController *nc = [[UINavigationController alloc] initWithRootViewController:c];
     [nc setModalPresentationStyle:UIModalPresentationFullScreen];
     [self.tabbarController presentViewController:nc animated:NO completion:nil];
+}
+
+- (void)goTo:(NSString *)repo path:(NSString *)path
+{
+    [self.tabbarController setSelectedIndex:TABBED_SEAFILE];
+    [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
+    while (YES) {
+        SeafFileViewController *c = (SeafFileViewController *)[[self masterNavController:TABBED_SEAFILE] topViewController];
+        if (![c goTo:repo path:path])
+            break;
+        Debug("....\n");
+    }
 }
 
 @end

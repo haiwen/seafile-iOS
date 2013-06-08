@@ -596,6 +596,8 @@
 		5795F49E16A726E000FF90E3 /* SeafAccountCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5795F49C16A726DF00FF90E3 /* SeafAccountCell.xib */; };
 		57A055A61644EAD1006511AA /* tab-home.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A055A51644EAD1006511AA /* tab-home.png */; };
 		57A055A91644EC84006511AA /* seafile-logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A055A81644EC84006511AA /* seafile-logo.png */; };
+		57A94357176331050035FD20 /* SeafDirCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57A94356176331050035FD20 /* SeafDirCell.xib */; };
+		57A94358176331050035FD20 /* SeafDirCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57A94356176331050035FD20 /* SeafDirCell.xib */; };
 		57B66EB015BA513E00C2B41B /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57B66EAF15BA513E00C2B41B /* QuartzCore.framework */; };
 		57BD9326174B0A0E00F7732F /* SeafDisDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BD931F174B0A0E00F7732F /* SeafDisDetailViewController.m */; };
 		57BD9327174B0A0E00F7732F /* SeafDisDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BD931F174B0A0E00F7732F /* SeafDisDetailViewController.m */; };
@@ -1065,6 +1067,7 @@
 		5795F49C16A726DF00FF90E3 /* SeafAccountCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafAccountCell.xib; sourceTree = "<group>"; };
 		57A055A51644EAD1006511AA /* tab-home.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-home.png"; sourceTree = "<group>"; };
 		57A055A81644EC84006511AA /* seafile-logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "seafile-logo.png"; sourceTree = "<group>"; };
+		57A94356176331050035FD20 /* SeafDirCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafDirCell.xib; sourceTree = "<group>"; };
 		57B66EAF15BA513E00C2B41B /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		57BD931E174B0A0E00F7732F /* SeafDisDetailViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafDisDetailViewController.h; sourceTree = "<group>"; };
 		57BD931F174B0A0E00F7732F /* SeafDisDetailViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafDisDetailViewController.m; sourceTree = "<group>"; };
@@ -1392,6 +1395,7 @@
 				570DFAC516A15D0100ADD5F2 /* SeafAccountViewController.xib */,
 				5704C6F217566BEA0028F4FE /* SeafActivityViewController.xib */,
 				577B6C6716AADC26008E82C2 /* SeafCell.xib */,
+				57A94356176331050035FD20 /* SeafDirCell.xib */,
 				570DFAD116A1EA3D00ADD5F2 /* SeafStartHeaderView.xib */,
 				57E1E89D1737ED0F006601FE /* SeafTextEditorViewController.xib */,
 				57C07CE8163272CE00502B06 /* SeafUploadingFileCell.xib */,
@@ -2136,6 +2140,7 @@
 				5704C6F91756710F0028F4FE /* tab-account.png in Resources */,
 				5704C6FB1756710F0028F4FE /* tab-activity.png in Resources */,
 				5704C6FD1756710F0028F4FE /* tab-discussion.png in Resources */,
+				57A94358176331050035FD20 /* SeafDirCell.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2426,6 +2431,7 @@
 				5704C6F81756710F0028F4FE /* tab-account.png in Resources */,
 				5704C6FA1756710F0028F4FE /* tab-activity.png in Resources */,
 				5704C6FC1756710F0028F4FE /* tab-discussion.png in Resources */,
+				57A94357176331050035FD20 /* SeafDirCell.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

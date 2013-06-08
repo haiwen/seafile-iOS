@@ -3,12 +3,12 @@
 //  M13InfiniteTabBar
 /*
  Copyright (c) 2013 Brandon McQuilkin
- 
+
  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- 
+
  The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
  One does not claim this software as ones own.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
@@ -47,16 +47,16 @@
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor blackColor];
     _continueShowingAlert = NO;
-	
+
     //create content view to hold view controllers
     _contentView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height - 50.0)];
     _contentView.backgroundColor = [UIColor blackColor];
     _contentView.clipsToBounds = YES;
-    
+
     //initalize the tab bar
     _infiniteTabBar = [[M13InfiniteTabBar alloc] initWithInfiniteTabBarItems:_tabBarItems];
     _infiniteTabBar.tabBarDelegate = self;
-        
+
     //Create mask for tab bar
     _maskView = [[UIView alloc] initWithFrame:CGRectMake(0, [[UIScreen mainScreen] applicationFrame].size.height - 60.0, [[UIScreen mainScreen] applicationFrame].size.width, 60.0)];
     //Add shadow gradient to mask layer
@@ -64,25 +64,25 @@
     gradient.frame = CGRectMake(0, 0, _infiniteTabBar.frame.size.width, 20);
     gradient.colors = [NSArray arrayWithObjects:(id)[[UIColor blackColor] CGColor], (id)[[UIColor clearColor] CGColor], nil];
     gradient.opacity = .4;
-    
+
     //Combine views
     _maskView.backgroundColor = [UIColor underPageBackgroundColor];
     [self.view addSubview:_maskView];
     [_maskView.layer insertSublayer:gradient above:0];
     [_maskView addSubview:_infiniteTabBar];
     [self.view addSubview:_contentView];
-    
+
     //Catch rotation changes for tabs
     //[[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
     //[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleRotation:) name:UIDeviceOrientationDidChangeNotification object:nil];
-    
+
     //Set Up View Controllers
     _selectedIndex = ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone) ? 2 : 5;
     _selectedViewController = [_viewControllers objectAtIndex:_selectedIndex];
     _selectedViewController.view.frame = CGRectMake(0, 0, _contentView.frame.size.width, _contentView.frame.size.height);
     _selectedViewController.view.contentScaleFactor = [UIScreen mainScreen].scale;
     //[_contentView addSubview:_selectedViewController.view];
-    
+
     for (UIViewController *controller in _viewControllers) {
         if (controller != _selectedViewController) {
             controller.view.contentScaleFactor = [UIScreen mainScreen].scale;
@@ -96,7 +96,7 @@
 {
     [super viewWillAppear:animated];
     [_selectedViewController viewWillAppear:animated];
-    
+
     [_infiniteTabBar rotateItemsToOrientation:[UIDevice currentDevice].orientation];
 }
 
@@ -131,19 +131,19 @@
 - (void)handleRotation:(NSNotification *)notification
 {
     UIDeviceOrientation orientation = [UIDevice currentDevice].orientation;
-    
+
     [UIView beginAnimations:@"HandleRotation" context:nil];
     [UIView setAnimationDuration:0.5];
-    
+
     CGFloat angle = 0.0;
     if (orientation == UIDeviceOrientationLandscapeLeft) angle = M_PI_2;
     else if (orientation == UIDeviceOrientationLandscapeRight) angle = -M_PI_2;
     else if (orientation == UIDeviceOrientationPortraitUpsideDown) angle = M_PI;
-    
+
     CGSize size = self.view.frame.size;
     CGFloat triangleDepth = 10.0;
     CGFloat statusBarHeight = [UIApplication sharedApplication].statusBarFrame.size.height;
-    
+
     //Rotate Status Bar
     [[UIApplication sharedApplication] setStatusBarOrientation:orientation];
     //Rotate tab bar items
@@ -153,7 +153,7 @@
         CGRect tempFrame = CGRectMake(0, 0, size.width, size.height - 50);
         _contentView.frame = tempFrame;
         _maskView.frame = CGRectMake(0, tempFrame.size.height - 10, _maskView.frame.size.width, _maskView.frame.size.height);
-        
+
         //Create content mask
         CAShapeLayer *maskLayer = [[CAShapeLayer alloc] init];
         CGMutablePathRef path = CGPathCreateMutable();
@@ -172,9 +172,9 @@
         CGRect tempFrame = CGRectMake(0, 0, size.width, size.height - 50);
         _contentView.frame = tempFrame;
         _maskView.frame = CGRectMake(0, tempFrame.size.height - 10 - statusBarHeight, _maskView.frame.size.width, _maskView.frame.size.height);
-        
+
         tempFrame.size.height = tempFrame.size.height - statusBarHeight;
-        
+
         //Create content mask
         CAShapeLayer *maskLayer = [[CAShapeLayer alloc] init];
         CGMutablePathRef path = CGPathCreateMutable();
@@ -193,7 +193,7 @@
         CGRect tempFrame = CGRectMake(0, 0, size.width - statusBarHeight, size.height - 50);
         _contentView.frame = tempFrame;
         _maskView.frame = CGRectMake(-10, tempFrame.size.height - 10, _maskView.frame.size.width, _maskView.frame.size.height);
-                
+
         //Create content mask
         CAShapeLayer *maskLayer = [[CAShapeLayer alloc] init];
         CGMutablePathRef path = CGPathCreateMutable();
@@ -212,7 +212,7 @@
         CGRect tempFrame = CGRectMake(0, 0, size.width - statusBarHeight, size.height - 50 + statusBarHeight);
         _contentView.frame = tempFrame;
         _maskView.frame = CGRectMake(statusBarHeight-10, tempFrame.size.height - 10 - statusBarHeight, _maskView.frame.size.width, _maskView.frame.size.height);
-        
+
         //Create content mask
         CAShapeLayer *maskLayer = [[CAShapeLayer alloc] init];
         CGMutablePathRef path = CGPathCreateMutable();
@@ -228,7 +228,7 @@
         CGPathRelease(path);
         _contentView.layer.mask = maskLayer;
     }
-    
+
     //Rotate View controllers bounds
     CGAffineTransform transform = CGAffineTransformMakeRotation(angle);
     for (UIViewController *viewController in _viewControllers) {
@@ -247,7 +247,7 @@
         }
         viewController.view.transform = transform;
     }
-    
+
     [UIView commitAnimations];
 }
 
@@ -280,7 +280,7 @@
         aView.layer.opacity = 0.0;
         [aView removeFromSuperview];
     }
-    
+
     if ([_delegate respondsToSelector:@selector(infiniteTabBarController:didSelectViewController:)]) {
         [_delegate infiniteTabBarController:self didSelectViewController:[_viewControllers objectAtIndex:item.tag]];
     }
@@ -344,10 +344,10 @@
     //Appearance
     _pullViewController.backgroundColor = centralViewController.view.backgroundColor;
     centralViewController.view.backgroundColor = [UIColor clearColor];
-    
+
     //Add pull view to tab bar
     [self.view addSubview:_pullViewController];
-    
+
     //Other
     _continueShowingAlert = YES;
 }

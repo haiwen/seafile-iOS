@@ -3,12 +3,12 @@
 //  M13InfiniteTabBar
 /*
  Copyright (c) 2013 Brandon McQuilkin
- 
+
  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- 
+
  The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
  One does not claim this software as ones own.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
@@ -33,30 +33,30 @@
         self.delegate = self;
         self.contentSize = self.frame.size;
         self.backgroundColor = [UIColor clearColor];
-        
+
         //Content size
         self.contentSize = CGSizeMake(items.count * ((M13InfiniteTabBarItem *)[items lastObject]).frame.size.width * 4, self.frame.size.height); //Need to iterate 4 times for infinite animation
         _tabContainerView = [[UIView alloc] initWithFrame:CGRectMake(0, 10, self.contentSize.width, self.contentSize.height)];
         _tabContainerView.backgroundColor = [UIColor clearColor];
         _tabContainerView.userInteractionEnabled = NO;
         [self addSubview:_tabContainerView];
-        
+
         //hide horizontal indicator so the recentering trick is not revealed
         [self setShowsHorizontalScrollIndicator:NO];
         [self setShowsVerticalScrollIndicator:NO];
         self.userInteractionEnabled = YES;
-        
+
         //Add gesture for taps
         _singleTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(singleTapGestureCaptured:)];
         _singleTapGesture.cancelsTouchesInView = NO;
         _singleTapGesture.delegate = self;
         _singleTapGesture.delaysTouchesBegan = NO;
         [self addGestureRecognizer:_singleTapGesture];
-        
-        
+
+
         _visibleIcons = [[NSMutableArray alloc] initWithCapacity:items.count];
         _items = items;
-        
+
         //Reindex
         int tag = 0;
         for (M13InfiniteTabBarItem *item in items) {
@@ -64,12 +64,12 @@
             item.tag = tag;
             tag += 1;
         }
-        
+
         //Set Previous Index
         _previousSelectedIndex = ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone) ? 2 : 5;
         _selectedItem = [_items objectAtIndex:_previousSelectedIndex];
         [((M13InfiniteTabBarItem *)[_items objectAtIndex:_previousSelectedIndex]) setSelected:YES];
-        
+
         [self rotateItemsToOrientation:[UIDevice currentDevice].orientation];
         NSLog(@"%@ : %@ : %@", NSStringFromCGRect(self.frame), NSStringFromCGSize(self.contentSize), NSStringFromCGRect(_tabContainerView.frame));
     }
@@ -93,10 +93,10 @@
     CGFloat contentWidth = [self contentSize].width;
     CGFloat centerOffsetX = (contentWidth - [self bounds].size.width) / 2.0;
     CGFloat distanceFromCenter = fabs(currentOffset.x - centerOffsetX);
-    
+
     if (distanceFromCenter > (contentWidth / 4.0)) {
         self.contentOffset = CGPointMake(centerOffsetX, currentOffset.y);
-        
+
         // move content by the same amount so it appears to stay still
         for (M13InfiniteTabBarItem *view in _visibleIcons) {
             CGPoint center = [_tabContainerView convertPoint:view.center toView:self];
@@ -110,14 +110,14 @@
 - (void)layoutSubviews
 {
     [super layoutSubviews];
-    
+
     [self recenterIfNecessary];
-    
+
     // tile content in visible bounds
     CGRect visibleBounds = [self convertRect:[self bounds] toView:_tabContainerView];
     CGFloat minimumVisibleX = CGRectGetMinX(visibleBounds);
     CGFloat maximumVisibleX = CGRectGetMaxX(visibleBounds);
-    
+
     [self tileLabelsFromMinX:minimumVisibleX toMaxX:maximumVisibleX];
 }
 
@@ -151,14 +151,14 @@
     M13InfiniteTabBarItem *itemToInsert = [(M13InfiniteTabBarItem *)[_items objectAtIndex:indexToInsert] copy];
     itemToInsert.tag = indexToInsert;
     [_visibleIcons addObject:itemToInsert];
-    
+
     CGRect frame = [itemToInsert frame];
     frame.origin.x = rightEdge;
     frame.origin.y = 0;
     [itemToInsert setFrame:frame];
-    
+
     [_tabContainerView addSubview:itemToInsert];
-    
+
     return CGRectGetMaxX(frame);
 }
 
@@ -175,14 +175,14 @@
     M13InfiniteTabBarItem *itemToInsert = [(M13InfiniteTabBarItem *)[_items objectAtIndex:indexToInsert] copy];
     itemToInsert.tag = indexToInsert;
     [_visibleIcons insertObject:itemToInsert atIndex:0];  // add leftmost label at the beginning of the array
-    
+
     CGRect frame = [itemToInsert frame];
     frame.origin.x = leftEdge - frame.size.width;
     frame.origin.y = 0;
     [itemToInsert setFrame:frame];
-    
+
     [_tabContainerView addSubview:itemToInsert];
-    
+
     return CGRectGetMinX(frame);
 }
 
@@ -193,29 +193,29 @@
         M13InfiniteTabBarItem *itemToInsert = [(M13InfiniteTabBarItem *)[_items objectAtIndex:0] copy];
         itemToInsert.tag = 0;
         [_visibleIcons addObject:itemToInsert];
-        
+
         CGRect frame = [itemToInsert frame];
         frame.origin.x = minimumVisibleX;
         frame.origin.y = 0;
         [itemToInsert setFrame:frame];
-        
+
         [_tabContainerView addSubview:itemToInsert];
     }
-    
+
     // add labels that are missing on right side
     M13InfiniteTabBarItem *lastItem = [_visibleIcons lastObject];
     CGFloat rightEdge = CGRectGetMaxX([lastItem frame]);
     while (rightEdge < maximumVisibleX) {
         rightEdge = [self placeNewLabelOnRight:rightEdge];
     }
-    
+
     // add labels that are missing on left side
     M13InfiniteTabBarItem *firstItem = [_visibleIcons objectAtIndex:0];
     CGFloat leftEdge = CGRectGetMinX([firstItem frame]);
     while (leftEdge > minimumVisibleX) {
         leftEdge = [self placeNewLabelOnLeft:leftEdge];
     }
-    
+
     // remove labels that have fallen off right edge
     lastItem = [_visibleIcons lastObject];
     while ([lastItem frame].origin.x > maximumVisibleX) {
@@ -223,7 +223,7 @@
         [_visibleIcons removeLastObject];
         lastItem = [_visibleIcons lastObject];
     }
-    
+
     // remove labels that have fallen off left edge
     firstItem = [_visibleIcons objectAtIndex:0];
     while (CGRectGetMaxX([firstItem frame]) < minimumVisibleX) {
@@ -295,17 +295,17 @@
         if ([_tabBarDelegate respondsToSelector:@selector(infiniteTabBar:shouldSelectItem:)]) {
             shouldUpdate = [_tabBarDelegate infiniteTabBar:self shouldSelectItem:item];
         }
-        
+
         if (shouldUpdate) {
             [UIView beginAnimations:@"TabChangedAnimation" context:nil];
             [UIView setAnimationDuration:.5];
             [UIView setAnimationDelegate:self];
-            
+
             //Swap Nav controllers
             if ([_tabBarDelegate respondsToSelector:@selector(infiniteTabBar:animateInViewControllerForItem:)]) {
                 [_tabBarDelegate infiniteTabBar:self animateInViewControllerForItem:item];
             }
-           
+
             //Change Tabs
             //Set selected highlight tab on every visible tab with tag, and the one in the available array to highlight all icons while scrolling
             [item setSelected:YES];
@@ -322,12 +322,12 @@
                     [temp setSelected:NO];
                 }
             }
-            
+
             _previousSelectedIndex = item.tag;
             _selectedItem = item;
-            
+
             [UIView setAnimationDidStopSelector:@selector(didSelectItem)];
-            
+
             [UIView commitAnimations];
         } else {
             //Scroll Back to nearest tab with previous index
@@ -352,7 +352,7 @@
     } else {
         _scrollAnimationCheck = NO;
     }
-    
+
 }
 
 //Finished tab change animation

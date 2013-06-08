@@ -30,14 +30,14 @@
 {
     if (_group != g) {
         _group = g;
-        
+
         // Update the view.
         [self configureView];
     }
 
     if (self.masterPopoverController != nil) {
         [self.masterPopoverController dismissPopoverAnimated:YES];
-    }        
+    }
 }
 
 - (void)configureView
@@ -60,16 +60,22 @@
     [self.navigationController dismissViewControllerAnimated:NO completion:nil];
 }
 
+- (void)refresh:(id)sender
+{
+    [self configureView];
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-	// Do any additional setup after loading the view, typically from a nib.
+    // Do any additional setup after loading the view, typically from a nib.
     self.title = @"Discussion";
     self.webview.delegate = self;
     if (!IsIpad()) {
         UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Back" style:UIBarButtonItemStyleDone target:self action:@selector(goBack:)];
         [self.navigationItem setLeftBarButtonItem:barButtonItem animated:YES];
     }
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(refresh:)];
     [self configureView];
 }
 
@@ -114,6 +120,8 @@
 - (void)webViewDidFinishLoad:(UIWebView *)webView
 {
     [SVProgressHUD dismiss];
+    NSString *js = [NSString stringWithFormat:@"setToken(\"%@\");", self.connection.token];
+    [webView stringByEvaluatingJavaScriptFromString:js];
 }
 
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
@@ -121,12 +129,13 @@
     [SVProgressHUD showErrorWithStatus:@"Failed to load discussion"];
 }
 
-- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
+- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSMutableURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
 {
-    Debug("Request %@\n", request.URL);
+    Debug("Request %@, %@\n", request.URL, request.allHTTPHeaderFields);
     NSString *urlStr = request.URL.absoluteString;
-    if ([urlStr hasPrefix:@"file://"] || [urlStr hasPrefix:[self.connection.address stringByAppendingString:API_URL]])
+    if ([urlStr hasPrefix:@"file://"] || [urlStr hasPrefix:[self.connection.address stringByAppendingString:API_URL]]) {
         return YES;
+    }
     return NO;
 }
 

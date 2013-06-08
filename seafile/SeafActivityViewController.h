@@ -13,4 +13,6 @@
 
 @property (strong, nonatomic) SeafConnection *connection;
 
+- (void)setUrl:(NSString *)url connection:(SeafConnection *)conn;
+
 @end

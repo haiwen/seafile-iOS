@@ -3,12 +3,12 @@
 //  M13InfiniteTabBar
 /*
  Copyright (c) 2013 Brandon McQuilkin
- 
+
  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- 
+
  The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
  One does not claim this software as ones own.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
@@ -33,7 +33,7 @@
         //Container view to handle rotations
         _containerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.frame.size.width, self.frame.size.height)];
         _containerView.backgroundColor = [UIColor clearColor];
-        
+
         //Set default properties
         _icon = icon;
         self.backgroundColor = [UIColor clearColor];
@@ -41,13 +41,13 @@
         _selectedTitleColor = [UIColor colorWithRed:(51.0/255.0) green:(51.0/255.0) blue:(51.0/255.0) alpha:1.0];
         _unselectedIconTintColor = [UIColor colorWithRed:(75.0/255.0) green:(75.0/255.0) blue:(75.0/255.0) alpha:1.0];
         _selectedIconTintColor = [UIColor colorWithRed:(51.0/255.0) green:(51.0/255.0) blue:(51.0/255.0) alpha:1.0];
-        
+
         //Create icon's view
         _iconView = [[UIImageView alloc] initWithFrame:CGRectMake(7, 7, self.frame.size.width - 14, 29)];
         _iconView.contentMode = UIViewContentModeScaleAspectFit;
         [self setSelected:NO];
         [_containerView addSubview:_iconView];
-        
+
         //Create Text Label
         _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(2, 37, self.frame.size.width - 4.0, 10)];
         _titleLabel.text = title;
@@ -57,16 +57,16 @@
         _titleFont = [UIFont boldSystemFontOfSize:7.0];
         _titleLabel.font = _titleFont;
         [_containerView addSubview:_titleLabel];
-        
+
         //Shadow
         self.layer.rasterizationScale = [UIScreen mainScreen].scale;
         self.layer.shadowColor = [UIColor blackColor].CGColor;
         self.layer.shadowOpacity = 0.4;
         self.layer.shadowOffset = CGSizeMake(0, 1);
         self.layer.shouldRasterize = YES;
-        
+
         [self addSubview:_containerView];
-        
+
     }
     return self;
 }
@@ -97,13 +97,13 @@
     //[_iconView setImage:[self createColoredIconForCurrnetState]];
     [_iconView setImage:_icon];
 
-    
+
     if (_selected) {
         _titleLabel.textColor = _selectedTitleColor;
     } else {
         _titleLabel.textColor = _unselectedTitleColor;
     }
-    
+
 }
 
 - (UIImage *)createColoredIconForCurrnetState
@@ -130,12 +130,12 @@
     //Save image
     UIImage *backgroundImage = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
-    
+
     CGImageRef maskRef = _icon.CGImage;
-    
+
     CGImageRef mask = CGImageMaskCreate(CGImageGetWidth(maskRef), CGImageGetHeight(maskRef), CGImageGetBitsPerComponent(maskRef), CGImageGetBitsPerPixel(maskRef), CGImageGetBytesPerRow(maskRef), CGImageGetDataProvider(maskRef), NULL, FALSE);
     CGImageRef masked = CGImageCreateWithMask(backgroundImage.CGImage, mask);
-    
+
     return [UIImage imageWithCGImage:masked];
 }
 

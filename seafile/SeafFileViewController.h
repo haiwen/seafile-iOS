@@ -42,5 +42,6 @@ enum {
 @property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
 
 - (void)refreshView;
+- (BOOL)goTo:(NSString *)repo path:(NSString *)path;
 
 @end

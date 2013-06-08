@@ -329,6 +329,7 @@
 
     NSString *sizeStr = [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:file.filesize ] useBaseTen:NO];
     NSDictionary *dict = [_attrs objectForKey:file.name];
+    cell.accessoryView = nil;
     if (dict) {
         int utime = [[dict objectForKey:@"utime"] intValue];
         BOOL result = [[dict objectForKey:@"result"] boolValue];

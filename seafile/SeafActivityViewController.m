@@ -20,10 +20,12 @@ enum {
 @interface SeafActivityViewController ()
 @property int state;
 @property (readonly) UIWebView *webview;
+@property (strong) NSString *url;
 @end
 
 @implementation SeafActivityViewController
 @synthesize connection = _connection;
+@synthesize url = _url;
 @synthesize state;
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
@@ -33,7 +35,7 @@ enum {
         // Custom initialization
     }
     return self;
-    
+
 }
 
 - (void)refresh:(id)sender
@@ -63,21 +65,26 @@ enum {
 
 - (void)setConnection:(SeafConnection *)connection
 {
+    if (IsIpad())
+        [self.navigationController popToRootViewControllerAnimated:NO];
     self.state = ACTIVITY_INIT;
     NSURLRequest *request = [[NSURLRequest alloc] initWithURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"index" ofType:@"html"]] cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
     [self.webview loadRequest: request];
     _connection = connection;
+    _url = [_connection.address stringByAppendingString:API_URL"/activity/"];
 }
 
-- (NSString *)urlStr
+- (void)setUrl:(NSString *)url connection:(SeafConnection *)conn
 {
-    return [_connection.address stringByAppendingString:API_URL"/activity/"];
+    _connection = conn;
+    _url = url;
+    self.state = ACTIVITY_START;
 }
 
 - (void)start
 {
     [SVProgressHUD showWithStatus:@"Loading ..."];
-    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:[self urlStr]] cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
+    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:self.url] cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
     [request setHTTPMethod:@"GET"];
     [request setValue:[NSString stringWithFormat:@"Token %@", _connection.token] forHTTPHeaderField:@"Authorization"];
     [self.webview loadRequest: request];
@@ -106,6 +113,8 @@ enum {
             [self start];
     } else {
         [SVProgressHUD dismiss];
+        NSString *js = [NSString stringWithFormat:@"setToken(\"%@\");", self.connection.token];
+        [webView stringByEvaluatingJavaScriptFromString:js];
         self.state = ACTIVITY_END;
     }
 }
@@ -119,8 +128,29 @@ enum {
 {
     Debug("Request %@\n", request.URL);
     NSString *urlStr = request.URL.absoluteString;
-    if ([urlStr hasPrefix:@"file://"] || [urlStr hasPrefix:[_connection.address stringByAppendingString:API_URL]])
+    if ([urlStr hasPrefix:@"file://"] || [urlStr isEqualToString:self.url])
         return YES;
+    else if ([urlStr hasPrefix:[_connection.address stringByAppendingString:API_URL"/repo_history_changes/"]]) {
+        SeafActivityViewController *ac = [[SeafActivityViewController alloc] initWithNibName:@"SeafActivityViewController" bundle:nil];
+        [ac setUrl:urlStr connection:self.connection];
+        [self.navigationController pushViewController:ac animated:NO];
+    } else if ([urlStr hasPrefix:@"api://"]) {
+        NSString *path = @"/";
+        NSRange range;
+        NSRange foundRange = [urlStr rangeOfString:@"api://repo/" options:NSCaseInsensitiveSearch];
+        if (foundRange.location == NSNotFound)
+            return NO;
+        range.location = foundRange.location + foundRange.length;
+        range.length = 36;
+        NSString *repo_id = [urlStr substringWithRange:range];
+
+        foundRange = [urlStr rangeOfString:@"?p=" options:NSCaseInsensitiveSearch];
+        if (foundRange.location != NSNotFound) {
+            path = [urlStr substringFromIndex:(foundRange.location+foundRange.length)];
+        }
+        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+        [appdelegate goTo:repo_id path:path];
+    }
     return NO;
 }
 
