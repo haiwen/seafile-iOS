@@ -220,7 +220,6 @@
     NSStringEncoding encode;
     encodeContent = [NSString stringWithContentsOfFile:fromfile usedEncoding:&encode error:nil];
     if (encodeContent) {
-        Debug("path=%@, encode=%d\n", fromfile, encode);
         if ([encodeContent writeToFile:outfile atomically:YES encoding:NSUTF16StringEncoding error:nil]) {
             return YES;
         }

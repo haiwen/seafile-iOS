@@ -157,13 +157,6 @@
 
 - (void)connection:(NSURLConnection *)aConn didReceiveResponse:(NSURLResponse *)response
 {
-#if 0
-    NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse*)response;
-    if ([response respondsToSelector:@selector(allHeaderFields)]) {
-        NSDictionary *dictionary = [httpResponse allHeaderFields];
-        Debug("headers=%@", dictionary);
-    }
-#endif
     NSError *error = nil;
     if (![[NSFileManager defaultManager] fileExistsAtPath:[self downloadTempPath]])
         [[NSFileManager defaultManager] createFileAtPath: [self downloadTempPath] contents: nil attributes: nil];
@@ -398,7 +391,6 @@
     if (![Utils checkMakeDir:tmpdir])
         return _preViewURL;
     NSString *dst = [tmpdir stringByAppendingPathComponent:self.name];
-    Debug("dst=%@\n", dst);
     @synchronized (self) {
         if ([[NSFileManager defaultManager] fileExistsAtPath:dst]
             || [Utils tryTransformEncoding:dst fromFile:src]) {
@@ -452,7 +444,6 @@
 
         NSString *newpath = [dir stringByAppendingPathComponent:self.name];
         BOOL ret = [content writeToFile:newpath atomically:YES encoding:NSUTF8StringEncoding error:nil];
-        Debug("newpath=%@, ret=%d\n", newpath, ret);
         if (ret) {
             self.mpath = newpath;
             [self savetoCache];
@@ -503,7 +494,6 @@
 #pragma mark - SeafUploadDelegate
 - (void)uploadProgress:(SeafUploadFile *)file result:(BOOL)res completeness:(int)percent
 {
-    Debug("res=%d, percent==%d\n", res, percent);
     id<SeafFileUploadDelegate> dg = self.udelegate;
     if (res && percent == 100) {
         self.ufile = nil;

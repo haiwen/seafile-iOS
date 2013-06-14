@@ -71,7 +71,7 @@ enum {
     NSURLRequest *request = [[NSURLRequest alloc] initWithURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"index" ofType:@"html"]] cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
     [self.webview loadRequest: request];
     _connection = connection;
-    _url = [_connection.address stringByAppendingString:API_URL"/activity/"];
+    _url = [_connection.address stringByAppendingString:API_URL"/html/activity/"];
 }
 
 - (void)setUrl:(NSString *)url connection:(SeafConnection *)conn
@@ -130,7 +130,7 @@ enum {
     NSString *urlStr = request.URL.absoluteString;
     if ([urlStr hasPrefix:@"file://"] || [urlStr isEqualToString:self.url])
         return YES;
-    else if ([urlStr hasPrefix:[_connection.address stringByAppendingString:API_URL"/repo_history_changes/"]]) {
+    else if ([urlStr hasPrefix:[_connection.address stringByAppendingString:API_URL"/html/repo_history_changes/"]]) {
         SeafActivityViewController *ac = [[SeafActivityViewController alloc] initWithNibName:@"SeafActivityViewController" bundle:nil];
         [ac setUrl:urlStr connection:self.connection];
         [self.navigationController pushViewController:ac animated:NO];

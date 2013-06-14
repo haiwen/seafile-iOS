@@ -207,7 +207,6 @@
 }
 - (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent
 {
-    //Debug("update=%d, percent=%d \n", updated, percent);
     [self.detailViewController fileContentLoaded:(SeafFile *)entry result:updated completeness:percent];
 }
 
@@ -260,7 +259,6 @@
 #pragma mark - SeafFileUploadDelegate
 - (void)uploadProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent
 {
-    Debug("res=%d, percent==%d\n", res, percent);
     if (!res) {
         [SVProgressHUD showErrorWithStatus:@"Failed to uplod file"];
     }

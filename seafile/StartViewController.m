@@ -165,7 +165,6 @@
     else
         actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Edit", @"Delete", nil];
 
-    Debug("index=%d\n", pressedIndex.row);
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:pressedIndex];
     [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
 }
@@ -209,7 +208,6 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    Debug("%d, %@\n", indexPath.row, [[self.conns objectAtIndex:indexPath.row] address]);
     [self selectAccount:[self.conns objectAtIndex:indexPath.row]];
 }
 
@@ -225,7 +223,6 @@
 #pragma mark - UIActionSheetDelegate
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
 {
-    Debug("index=%@, buttonIndex=%d\n", pressedIndex, buttonIndex);
     if (pressedIndex) {// Long press account
         if (buttonIndex == 0) {
             [self showAccountView:[self.conns objectAtIndex:pressedIndex.row] type:0];

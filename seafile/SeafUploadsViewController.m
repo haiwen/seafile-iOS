@@ -258,7 +258,6 @@
     }
 
     int index = [_entries indexOfObject:file];
-    //Debug("index=%d, res=%d, percent=%d\n", index, res, percent);
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
     if (res && file.uploading && [cell isKindOfClass:[SeafUploadingFileCell class]]) {
@@ -305,7 +304,6 @@
     else
         actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Upload", @"Delete", nil];
 
-    Debug("index=%d\n", _selectedindex.row);
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
     [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
 }

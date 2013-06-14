@@ -267,7 +267,6 @@ enum PREVIEW_STATE {
 
 - (void)viewWillLayoutSubviews
 {
-    Debug("self.view=%f %f\n", self.view.frame.size.width, self.view.frame.size.height);
     if (self.state == PREVIEW_SUCCESS)
         fileViewController.view.frame = self.view.frame;
     else if (self.state == PREVIEW_NONE) {

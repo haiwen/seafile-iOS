@@ -84,7 +84,7 @@
             self.ooid = curId;
             [self savetoCache:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
         } else {
-            Debug("already uptodate oid=%@, %@\n", self.ooid, curId);
+            Debug("Already uptodate oid=%@, %@\n", self.ooid, curId);
             self.state = SEAF_DENTRY_UPTODATE;
             [self.delegate entry:self contentUpdated:NO completeness:0];
         }

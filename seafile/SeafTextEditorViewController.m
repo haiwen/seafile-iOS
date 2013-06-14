@@ -560,7 +560,6 @@ enum TOOL_ITEM {
         mask |= UIInterfaceOrientationMaskPortrait;
     if ([self shouldAutorotateToInterfaceOrientation: UIInterfaceOrientationPortraitUpsideDown])
         mask |= UIInterfaceOrientationMaskPortraitUpsideDown;
-    Debug("mask=%d, %d,%d,%d,%d\n", mask,UIInterfaceOrientationLandscapeRight,UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown);
     return mask;
 }
 

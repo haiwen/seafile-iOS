@@ -147,7 +147,7 @@ enum {
     }
     //  update the last update date
     [_refreshHeaderView refreshLastUpdatedDate];
-    }
+}
 
 - (void)noneSelected:(BOOL)none
 {
@@ -302,7 +302,7 @@ enum {
     self.title = directory.name;
     [_directory setDelegate:self];
     [_directory loadContent:NO];
-    Debug("%@, loading ... %d\n", _directory.name, _directory.hasCache);
+    Debug("%@, loading ... %d\n", _directory.path, _directory.hasCache);
     [self refreshView];
     if (!_directory.hasCache) {
         [self.tableView addSubview:self.overlayView];
@@ -361,7 +361,6 @@ enum {
     else
         actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Delete", @"Redownload", nil];
 
-    Debug("index=%d\n", _selectedindex.row);
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
     [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
 }
@@ -450,6 +449,8 @@ enum {
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    if (self.navigationController.topViewController != self)
+        return;
     _selectedindex = indexPath;
     if (tableView.editing == YES) {
         [self noneSelected:NO];
@@ -472,8 +473,8 @@ enum {
         [self.detailViewController setPreViewItem:(SeafFile *)_curEntry];
     } else if ([_curEntry isKindOfClass:[SeafDir class]]) {
         SeafFileViewController *controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
-        [self.navigationController pushViewController:controller animated:YES];
         [controller setDirectory:(SeafDir *)_curEntry];
+        [self.navigationController pushViewController:controller animated:YES];
     }
 }
 
@@ -638,7 +639,6 @@ enum {
 
 - (void)repoPasswordSet:(SeafBase *)entry WithResult:(BOOL)success;
 {
-    Debug("%@,%d\n", entry.repoId, success);
     if (entry != _curEntry) {
         return;
     }
@@ -713,7 +713,6 @@ enum {
 {
     NSArray *idxs;
     NSMutableArray *entries;
-    Debug("%d, %@\n", [sender tag], self.title);
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
 
     if (self != appdelegate.fileVC) {
@@ -779,7 +778,6 @@ enum {
 #pragma mark - SeafFileUploadDelegate
 - (void)uploadProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent
 {
-    Debug("res=%d, percent==%d\n", res, percent);
     if (!res) {
         [SVProgressHUD showErrorWithStatus:@"Failed to uplod file"];
     }
@@ -788,7 +786,6 @@ enum {
 
 - (BOOL)goTo:(NSString *)repo path:(NSString *)path
 {
-    Debug("repo=%@, path=%@\n", repo, path);
     if ([self.directory isKindOfClass:[SeafRepos class]]) {
         for (int i = 0; i < ((SeafRepos *)_directory).repoGroups.count; ++i) {
             NSArray *repos = [((SeafRepos *)_directory).repoGroups objectAtIndex:i];
@@ -809,7 +806,7 @@ enum {
             if ([b isKindOfClass:[SeafDir class]]) {
                 p = [p stringByAppendingString:@"/"];
             }
-            if ([path hasPrefix:p]) {
+            if ([b.path isEqualToString:path] || [path hasPrefix:p]) {
                 NSIndexPath *idx = [NSIndexPath indexPathForRow:i inSection:0];
                 [self tableView:self.tableView didSelectRowAtIndexPath:idx];
             }
@@ -817,9 +814,13 @@ enum {
     }
     if (self.navigationController.topViewController != self)
         return YES;
-    Debug("stop\n");
     return NO;
 }
 
+- (void)viewDidAppear:(BOOL)animated
+{
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    [appdelegate checkGoto:self];
+}
 
 @end

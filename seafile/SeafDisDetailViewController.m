@@ -44,7 +44,7 @@
 {
     // Update the user interface for the detail item.
     if (self.connection && self.group) {
-        NSString *urlStr = [self.connection.address stringByAppendingFormat:API_URL"/discussion/%@/", self.group];
+        NSString *urlStr = [self.connection.address stringByAppendingFormat:API_URL"/html/discussion/%@/", self.group];
         NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:urlStr] cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
         [request setHTTPMethod:@"GET"];
         [request setValue:[NSString stringWithFormat:@"Token %@", self.connection.token] forHTTPHeaderField:@"Authorization"];

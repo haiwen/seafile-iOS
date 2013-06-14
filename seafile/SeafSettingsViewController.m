@@ -117,7 +117,6 @@ enum {
 #pragma mark - Table view delegate
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    //Debug("section=%d, row=%d\n", indexPath.section, indexPath.row);
     [self.tableView deselectRowAtIndexPath:[self.tableView indexPathForSelectedRow] animated:NO];
     if (indexPath.section == 0) {
         if (indexPath.row == 1) // Select the quota cell

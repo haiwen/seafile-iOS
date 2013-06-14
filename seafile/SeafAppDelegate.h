@@ -72,5 +72,6 @@ enum {
 + (void)decUploadnum;
 
 - (void)goTo:(NSString *)repo path:(NSString *)path;
+- (void)checkGoto:(SeafFileViewController *)c;
 
 @end
