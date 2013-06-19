@@ -281,7 +281,6 @@
 #pragma mark - Application's Documents directory
 - (BOOL)infiniteTabBarController:(M13InfiniteTabBarController *)tabBarController shouldSelectViewContoller:(UIViewController *)viewController
 {
-    Debug("SELECT INDEX=%d, %@, %d\n", [tabBarController.viewControllers indexOfObject:viewController], viewController, [viewController isKindOfClass:[UINavigationController class]]);
     if ([self.tabbarController.viewControllers indexOfObject:viewController] == TABBED_ACCOUNTS) {
         self.window.rootViewController = self.startNav;
         [self.window makeKeyAndVisible];

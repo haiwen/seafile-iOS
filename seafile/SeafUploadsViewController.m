@@ -17,23 +17,24 @@
 #import "SeafRepos.h"
 #import "SeafCell.h"
 
-#import "CZPhotoPickerController.h"
+#import "QBImagePickerController.h"
 
 #import "FileSizeFormatter.h"
 #import "SeafDateFormatter.h"
 #import "Debug.h"
 
-@interface SeafUploadsViewController ()
+@interface SeafUploadsViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate>
 @property NSMutableArray *entries;
+@property NSMutableArray *selectedEntries;
 @property NSMutableDictionary *attrs;
 @property (readonly) UIImage *cellImage;
 
 @property (readonly) SeafDetailViewController *detailViewController;
 @property (retain) NSIndexPath *selectedindex;
-@property (retain) CZPhotoPickerController *picker;
 @property (retain)  NSDateFormatter *formatter;
 
 @property (retain) InputAlertPrompt *addFileView;
+@property(nonatomic,strong) UIPopoverController *popoverController;
 
 @end
 
@@ -44,8 +45,9 @@
 @synthesize connection = _connection;
 @synthesize selectedindex = _selectedindex;
 @synthesize addFileView = _addFileView;
+@synthesize popoverController;
 
-@synthesize picker;
+@synthesize selectedEntries;
 @synthesize formatter;
 
 - (id)initWithStyle:(UITableViewStyle)style
@@ -137,45 +139,22 @@
 
 - (void)addPhotos:(id)sender
 {
-    if (self.picker)
+    if(self.popoverController)
         return;
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    picker = [[CZPhotoPickerController alloc] initWithPresentingViewController:appdelegate.tabbarController withCompletionBlock:^(UIImagePickerController *imagePickerController, NSDictionary *imageInfoDict) {
-        NSString *filename;
-        self.picker = nil;
-        UIImage *image = [imageInfoDict objectForKey:@"UIImagePickerControllerOriginalImage"];
-        if (image) {
-            filename = [NSString stringWithFormat:@"Photo %@.jpg", [formatter stringFromDate:[NSDate date]]];
-            NSString *path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
-            [UIImageJPEGRepresentation(image, 1.0) writeToFile:path atomically:YES];
-        }
-
-        if (appdelegate.tabbarController.modalViewController)
-           [appdelegate.tabbarController dismissViewControllerAnimated:YES completion:nil];
-
-        if (!image)
-            return;
-
-        [self loadEntries];
-        [self.tableView reloadData];
-        int i = 0;
-        _selectedindex = nil;
-        for (SeafUploadFile *ufile in self.entries) {
-            if ([ufile.name isEqualToString:filename]) {
-                _selectedindex = [NSIndexPath indexPathForRow:i inSection:0];
-                break;
-            }
-            ++i;
-        }
-        if (IsIpad()) {
-            [self uploadFile:_selectedindex];
-        } else {
-            [self performSelector:@selector(delayupload) withObject:self afterDelay:0.5];
-        }
-    }];
-    picker.allowsEditing = NO;
-    [picker showFromBarButtonItem:sender];
+    QBImagePickerController *imagePickerController = [[QBImagePickerController alloc] init];
+    imagePickerController.delegate = self;
+    imagePickerController.allowsMultipleSelection = YES;
+    
+    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:imagePickerController];
+    if (IsIpad()) {
+        self.popoverController = [[UIPopoverController alloc] initWithContentViewController:navigationController];
+        self.popoverController.delegate = self;
+        [self.popoverController presentPopoverFromBarButtonItem:sender permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
+    } else {
+        [self presentViewController:navigationController animated:YES completion:NULL];
+    }
 }
+
 
 - (void)addFile:(id)sender
 {
@@ -218,17 +197,26 @@
 
 - (void)chooseUploadDir:(SeafDir *)dir
 {
-    [[_entries objectAtIndex:_selectedindex.row] upload:_connection repo:dir.repoId path:dir.path update:NO];
+    for (SeafUploadFile *file in self.selectedEntries) {
+        [file upload:_connection repo:dir.repoId path:dir.path update:NO];
+    }
 }
 
-- (void)uploadFile:(NSIndexPath *)index
+- (void)uploadFiles:(NSMutableArray *)arr
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    _selectedindex = index;
+    _selectedindex = nil;
+    self.selectedEntries = arr;
     SeafUploadDirViewController *controller = [[SeafUploadDirViewController alloc] initWithSeafDir:_connection.rootFolder];
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
     [navController setModalPresentationStyle:UIModalPresentationFormSheet];
     [appdelegate.tabbarController presentViewController:navController animated:YES completion:nil];
+}
+
+- (void)uploadFile:(NSIndexPath *)index
+{
+    NSMutableArray *arr = [NSMutableArray arrayWithObject:[_entries objectAtIndex:index.row]];
+    [self uploadFiles:arr];
 }
 
 - (void)deleteFile:(NSIndexPath *)index
@@ -284,7 +272,7 @@
     NSSet *touches =[event allTouches];
     UITouch *touch =[touches anyObject];
     CGPoint currentTouchPosition = [touch locationInView:self.tableView];
-    NSIndexPath *indexPath= [self.tableView indexPathForRowAtPoint:currentTouchPosition];
+    NSIndexPath *indexPath = [self.tableView indexPathForRowAtPoint:currentTouchPosition];
     if (indexPath!= nil) {
         [self tableView:self.tableView accessoryButtonTappedForRowWithIndexPath:indexPath];
     }
@@ -407,7 +395,7 @@
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
 {
-    return @"Recent";
+    return @"Click at the arrow to upload";
 }
 
 #pragma mark - Table view delegate
@@ -471,4 +459,82 @@
     return YES;
 }
 
+
+#pragma mark - QBImagePickerControllerDelegate
+- (void)imagePickerController:(QBImagePickerController *)imagePickerController didFinishPickingMediaWithInfo:(id)info
+{
+    if (IsIpad()) {
+        [self.popoverController dismissPopoverAnimated:YES];
+        self.popoverController = nil;
+    } else {
+        [self dismissViewControllerAnimated:YES completion:NULL];
+    }
+    if (imagePickerController.allowsMultipleSelection) {
+        NSArray *mediaInfoArray = (NSArray *)info;
+        Debug("Selected %d photos:%@\n", mediaInfoArray.count, mediaInfoArray);
+    } else {
+        NSDictionary *mediaInfo = (NSDictionary *)info;
+        Debug("Selected: %@", mediaInfo);
+    }
+
+    NSMutableArray *files = [[NSMutableArray alloc] init];
+    if (imagePickerController.allowsMultipleSelection) {
+        int i = 0;
+        NSString *date = [formatter stringFromDate:[NSDate date]];
+        for (NSDictionary *dict in info) {
+            i++;
+            UIImage *image = [dict objectForKey:@"UIImagePickerControllerOriginalImage"];
+            NSString *filename = [NSString stringWithFormat:@"Photo %@-%d.jpg", date, i];
+            NSString *path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
+            [UIImageJPEGRepresentation(image, 1.0) writeToFile:path atomically:YES];
+            SeafUploadFile *file =  [[SeafUploadFile alloc] initWithPath:path];
+            file.delegate = self;
+            [files addObject:file];
+            [_entries addObject:file];
+        }
+    }
+    [self.tableView reloadData];
+    [self uploadFiles:files];
+}
+
+- (void)imagePickerControllerDidCancel:(QBImagePickerController *)imagePickerController
+{
+    if (IsIpad()) {
+        [self.popoverController dismissPopoverAnimated:YES];
+        self.popoverController = nil;
+    } else {
+        [self dismissViewControllerAnimated:YES completion:NULL];
+    }
+}
+
+- (NSString *)descriptionForSelectingAllAssets:(QBImagePickerController *)imagePickerController
+{
+    return @"Select all photos";
+}
+
+- (NSString *)descriptionForDeselectingAllAssets:(QBImagePickerController *)imagePickerController
+{
+    return @"Deselect all photos";
+}
+
+- (NSString *)imagePickerController:(QBImagePickerController *)imagePickerController descriptionForNumberOfPhotos:(NSUInteger)numberOfPhotos
+{
+    return [NSString stringWithFormat:@"%d photos", numberOfPhotos];
+}
+
+- (NSString *)imagePickerController:(QBImagePickerController *)imagePickerController descriptionForNumberOfVideos:(NSUInteger)numberOfVideos
+{
+    return [NSString stringWithFormat:@"%d videos", numberOfVideos];
+}
+
+- (NSString *)imagePickerController:(QBImagePickerController *)imagePickerController descriptionForNumberOfPhotos:(NSUInteger)numberOfPhotos numberOfVideos:(NSUInteger)numberOfVideos
+{
+    return [NSString stringWithFormat:@"%d photos、%d videos", numberOfPhotos, numberOfVideos];
+}
+
+#pragma mark - UIPopoverControllerDelegate
+- (void)popoverControllerDidDismissPopover:(UIPopoverController *)popoverController
+{
+    self.popoverController = nil;
+}
 @end

@@ -6,3 +6,6 @@
 	path = libs/EGOTableViewPullRefresh
 	url = https://github.com/enormego/EGOTableViewPullRefresh.git
     ignore = dirty
+[submodule "libs/QBImagePickerController"]
+	path = libs/QBImagePickerController
+	url = git@github.com:haiwen/QBImagePickerController.git

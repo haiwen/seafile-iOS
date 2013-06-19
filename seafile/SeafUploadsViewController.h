@@ -12,6 +12,7 @@
 #import "SeafConnection.h"
 #import "SeafDir.h"
 
+
 @interface SeafUploadsViewController : UITableViewController<SeafUploadDelegate, UIActionSheetDelegate, InputDoneDelegate, UIAlertViewDelegate>
 @property (strong) SeafConnection *connection;
 
