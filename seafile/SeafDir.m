@@ -324,7 +324,7 @@
 {
     if (_allItems)
         return _allItems;
-    
+
     _allItems = [[NSMutableArray alloc] init];
     [_allItems addObjectsFromArray:_items];
     if (self.uploadItems)

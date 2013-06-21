@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="2.0" toolsVersion="3084" systemVersion="12D78" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" initialViewController="r0W-or-KJe">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="2.0" toolsVersion="3084" systemVersion="12E55" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" initialViewController="r0W-or-KJe">
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="2083"/>
     </dependencies>
@@ -18,7 +18,6 @@
                     </tabBar>
                     <connections>
                         <segue destination="CNF-ja-c3a" kind="relationship" relationship="viewControllers" id="udP-do-9F7"/>
-                        <segue destination="JTb-To-5Mb" kind="relationship" relationship="viewControllers" id="YfC-OW-drM"/>
                         <segue destination="z9c-1t-xJ2" kind="relationship" relationship="viewControllers" id="vnq-Uu-mkU"/>
                         <segue destination="mEX-CF-kI0" kind="relationship" relationship="viewControllers" id="hEv-Za-HGM"/>
                         <segue destination="t1H-03-KSK" kind="relationship" relationship="viewControllers" id="4c4-Ho-XQa"/>
@@ -96,7 +95,7 @@
             <objects>
                 <tableViewController title="Uploads" id="2WT-8g-HRr" customClass="SeafUploadsViewController" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="8je-wc-3G0">
-                        <rect key="frame" x="0.0" y="64" width="320" height="367"/>
+                        <rect key="frame" x="0.0" y="64" width="320" height="416"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <prototypes>

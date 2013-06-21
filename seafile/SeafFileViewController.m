@@ -296,7 +296,7 @@ enum {
     QBImagePickerController *imagePickerController = [[QBImagePickerController alloc] init];
     imagePickerController.delegate = self;
     imagePickerController.allowsMultipleSelection = YES;
-    
+
     UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:imagePickerController];
     if (IsIpad()) {
         self.popoverController = [[UIPopoverController alloc] initWithContentViewController:navigationController];
@@ -414,7 +414,7 @@ enum {
         SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
         cell.textLabel.text = file.name;
         cell.imageView.image = file.image;
-        
+
         NSString *sizeStr = [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:file.filesize ] useBaseTen:NO];
         NSDictionary *dict = [file uploadAttr];
         cell.accessoryView = nil;
@@ -544,7 +544,7 @@ enum {
         [self.detailViewController setPreViewItem:(SeafUploadFile *)_curEntry];
         return;
     }
-    
+
     [_curEntry setDelegate:self];
     if ([_curEntry isKindOfClass:[SeafRepo class]] && [(SeafRepo *)_curEntry passwordRequired]) {
         [self popupSetRepoPassword];
@@ -938,7 +938,7 @@ enum {
         NSDictionary *mediaInfo = (NSDictionary *)info;
         Debug("Selected: %@", mediaInfo);
     }
-    
+
     NSMutableArray *files = [[NSMutableArray alloc] init];
     if (imagePickerController.allowsMultipleSelection) {
         int i = 0;

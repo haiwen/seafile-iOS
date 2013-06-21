@@ -11,7 +11,6 @@
 #import "SeafConnection.h"
 #import "StartViewController.h"
 #import "SeafFileViewController.h"
-#import "SeafUploadsViewController.h"
 #import "SeafStarredFilesViewController.h"
 #import "SeafDetailViewController.h"
 #import "SeafSettingsViewController.h"
@@ -21,7 +20,6 @@
 
 enum {
     TABBED_SEAFILE = 0,
-    TABBED_UPLOADS,
     TABBED_STARRED,
     TABBED_ACTIVITY,
     TABBED_DISCUSSION,
@@ -46,7 +44,6 @@ enum {
 
 @property (readonly) StartViewController *startVC;
 @property (readonly) SeafFileViewController *fileVC;
-@property (readonly) SeafUploadsViewController *uploadVC;
 @property (readonly) SeafStarredFilesViewController *starredVC;
 @property (readonly) SeafSettingsViewController *settingVC;
 @property (readonly) SeafActivityViewController *actvityVC;
