@@ -89,7 +89,7 @@
 
 - (NSString *)key
 {
-    return _name;
+    return self.name;
 }
 
 - (UIImage *)image;

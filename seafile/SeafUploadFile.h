@@ -13,6 +13,7 @@
 
 @class SeafConnection;
 @class SeafUploadFile;
+@class SeafDir;
 
 @protocol SeafUploadDelegate <NSObject>
 - (void)uploadProgress:(SeafUploadFile *)file result:(BOOL)res completeness:(int)percent;
@@ -21,9 +22,7 @@
 
 @interface SeafUploadFile : NSObject<PreViewDelegate, QLPreviewItem>
 
-
-@property (readonly) NSString *path;
-
+@property (readonly) NSString *lpath;
 @property (readonly) NSString *name;
 @property (readonly) int filesize;
 
@@ -31,9 +30,19 @@
 @property (readonly) int uploadProgress;
 @property id<SeafUploadDelegate> delegate;
 
-- (id)initWithPath:(NSString *)path;
+@property (readwrite) SeafDir *udir;
+
+- (id)initWithPath:(NSString *)lpath;
 - (void)upload:(SeafConnection *)connection repo:(NSString *)repoId path:(NSString *)uploadpath update:(BOOL)update;
 
 - (void)removeFile;
+
+- (BOOL)uploaded;
+
+- (NSString *)key;
+- (NSMutableDictionary *)uploadAttr;
+- (void)saveAttr:(NSMutableDictionary *)attr;
+
++ (NSMutableArray *)uploadFilesForDir:(SeafDir *)dir;
 
 @end

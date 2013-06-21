@@ -103,15 +103,6 @@
     header.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin| UIViewAutoresizingFlexibleRightMargin| UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleTopMargin;
     header.backgroundColor = [UIColor clearColor];
     self.tableView.tableHeaderView = header;
-
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    NSString *server = [userDefaults objectForKey:@"DEAULT-SERVER"];
-    NSString *username = [userDefaults objectForKey:@"DEAULT-USER"];
-    if (server && username) {
-        SeafConnection *connection = [self getConnection:server username:username];
-        if (connection)
-            [self selectAccount:connection];
-    }
 }
 
 - (void)viewDidUnload
@@ -257,6 +248,21 @@
     appdelegate.window.rootViewController = appdelegate.tabbarController;
     [appdelegate.window makeKeyAndVisible];
     [self performSelector:@selector(delayOP) withObject:nil afterDelay:0.01];
+}
+
+- (BOOL)goToDefaultReposView
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSString *server = [userDefaults objectForKey:@"DEAULT-SERVER"];
+    NSString *username = [userDefaults objectForKey:@"DEAULT-USER"];
+    if (server && username) {
+        SeafConnection *connection = [self getConnection:server username:username];
+        if (connection) {
+            [self transferToReposView:connection];
+            return YES;
+        }
+    }
+    return NO;
 }
 
 @end

@@ -19,6 +19,9 @@
 
 #import "SeafJSONRequestOperation.h"
 
+static NSMutableDictionary *uploadFiles = nil;
+
+
 @interface SeafUploadFile ()
 @property (readonly) NSString *mime;
 @property (strong, readonly) NSURL *preViewURL;
@@ -26,7 +29,7 @@
 
 @implementation SeafUploadFile
 
-@synthesize path = _path;
+@synthesize lpath = _lpath;
 @synthesize filesize = _filesize;
 @synthesize delegate = _delegate;
 @synthesize uploading = _uploading;
@@ -34,12 +37,12 @@
 @synthesize preViewURL = _preViewURL;
 
 
-- (id)initWithPath:(NSString *)path
+- (id)initWithPath:(NSString *)lpath
 {
     self = [super init];
     if (self) {
-        _path = path;
-        NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:nil];
+        _lpath = lpath;
+        NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:lpath error:nil];
         _filesize = attrs.fileSize;
         _uploadProgress = 0;
         _uploading = NO;
@@ -47,27 +50,54 @@
     return self;
 }
 
+- (NSString *)key
+{
+    return self.name;
+}
+
 - (NSString *)name
 {
-    return [_path lastPathComponent];
+    return [_lpath lastPathComponent];
 }
 
 - (BOOL)editable
 {
-    return YES;
+    return NO;
 }
 
-- (void)removeFile;
+- (void)removeFile
 {
-    [[NSFileManager defaultManager] removeItemAtPath:self.path error:nil];
+    [[NSFileManager defaultManager] removeItemAtPath:self.lpath error:nil];
 }
 
+- (BOOL)uploaded
+{
+    NSMutableDictionary *dict = self.uploadAttr;
+    if (dict && [[dict objectForKey:@"result"] boolValue])
+        return YES;
+    return NO;
+}
+
+- (void)uploadProgress:(SeafUploadFile *)file result:(BOOL)res completeness:(int)percent
+{
+    if (!res || (res && percent == 100)) {
+        NSMutableDictionary *dict = file.uploadAttr;
+        if (!dict) {
+            dict = [[NSMutableDictionary alloc] init];
+            [dict setObject:file.name forKey:@"name"];
+        }
+        [dict setObject:[NSNumber numberWithDouble:[[NSDate date] timeIntervalSince1970]]forKey:@"utime"];
+        [dict setObject:[NSNumber numberWithBool:res] forKey:@"result"];
+        [file saveAttr:dict];
+    }
+    [_delegate uploadProgress:file result:res completeness:percent];
+}
 #pragma - NSURLConnectionDelegate
 - (void)connection:(NSURLConnection *)aConn didFailWithError:(NSError *)error
 {
     Debug("error=%@",[error localizedDescription]);
     _uploading = NO;
-    [_delegate uploadProgress:self result:NO completeness:0];
+    [self uploadProgress:self result:NO completeness:0];
     [SeafAppDelegate decUploadnum];
 }
 
@@ -77,13 +107,13 @@
         return;
     _uploading = NO;
     Debug("Upload file %@ success\n", self.name);
-    [_delegate uploadProgress:self result:YES completeness:100];
+    [self uploadProgress:self result:YES completeness:100];
     [SeafAppDelegate decUploadnum];
 }
 
 - (NSURLRequest *)connection:(NSURLConnection *)connection willSendRequest:(NSURLRequest *)request redirectResponse:(NSURLResponse *)redirectResponse
 {
-    [_delegate uploadProgress:self result:YES completeness:0];
+    [self uploadProgress:self result:YES completeness:0];
     return request;
 }
 
@@ -91,12 +121,12 @@
 {
     if (totalBytesWritten == totalBytesExpectedToWrite) {
         _uploading = NO;
-        [_delegate uploadProgress:self result:YES completeness:100];
+        [self uploadProgress:self result:YES completeness:100];
     }
     int percent = totalBytesWritten * 100 / totalBytesExpectedToWrite;
     if (percent >= 100)
         percent = 99;
-    [_delegate uploadProgress:self result:YES completeness:percent];
+    [self uploadProgress:self result:YES completeness:percent];
 }
 
 - (BOOL)connection:(NSURLConnection *)connection canAuthenticateAgainstProtectionSpace:(NSURLProtectionSpace *)protectionSpace
@@ -127,7 +157,7 @@
     [postbody appendData:[[NSString stringWithFormat:@"--%@\r\n",boundary] dataUsingEncoding:NSUTF8StringEncoding]];
     [postbody appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"file\"; filename=\"%@\"\r\n", self.name] dataUsingEncoding:NSUTF8StringEncoding]];
     [postbody appendData:[@"Content-Type: application/octet-stream\r\n\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
-    [postbody appendData:[NSData dataWithContentsOfFile:self.path]];
+    [postbody appendData:[NSData dataWithContentsOfFile:self.lpath]];
     [postbody appendData:[[NSString stringWithFormat:@"\r\n--%@--\r\n",boundary] dataUsingEncoding:NSUTF8StringEncoding]];
 
     [uploadRequest setValue:[NSString stringWithFormat:@"%d", postbody.length] forHTTPHeaderField:@"Content-Length"];
@@ -136,7 +166,7 @@
     NSURLConnection *uploadConncetion = [[NSURLConnection alloc] initWithRequest:uploadRequest delegate:self startImmediately:YES];
     if (!uploadConncetion) {
         _uploading = NO;
-        [_delegate uploadProgress:self result:NO completeness:0];
+        [self uploadProgress:self result:NO completeness:0];
     }
 }
 
@@ -151,15 +181,14 @@
             [formData appendPartWithFormData:[uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"parent_dir"];
 
         [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
-        [formData appendPartWithFileURL:[NSURL fileURLWithPath:self.path] name:@"file" error:nil];
+        [formData appendPartWithFileURL:[NSURL fileURLWithPath:self.lpath] name:@"file" error:nil];
     }];
     request.URL = url;
-    [request setValue:@"close" forHTTPHeaderField:@"Connection"];
     AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
     [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
         if (totalBytesWritten == totalBytesExpectedToWrite) {
             _uploading = NO;
-            [_delegate uploadProgress:self result:YES completeness:100];
+            [self uploadProgress:self result:YES completeness:100];
         } else {
             int percent;
             if (totalBytesExpectedToWrite > 0)
@@ -168,7 +197,7 @@
                 percent = 100;
             if (percent >= 100)
                 percent = 99;
-            [_delegate uploadProgress:self result:YES completeness:percent];
+            [self uploadProgress:self result:YES completeness:percent];
         }
     }];
     [operation setCompletionBlockWithSuccess:
@@ -178,7 +207,7 @@
              return;
          _uploading = NO;
          [SeafAppDelegate decUploadnum];
-         [_delegate uploadProgress:self result:YES completeness:100];
+         [self uploadProgress:self result:YES completeness:100];
      }
                                      failure:^(AFHTTPRequestOperation *operation, NSError *error) {
                                          Debug("Upload failed :%@,code=%d, res=%@, %@\n", error, operation.response.statusCode, operation.responseData, operation.responseString);
@@ -186,7 +215,7 @@
                                              return;
                                          _uploading = NO;
                                          [SeafAppDelegate decUploadnum];
-                                         [_delegate uploadProgress:self result:NO completeness:0];
+                                         [self uploadProgress:self result:NO completeness:0];
                                      }];
 
     [operation setAuthenticationAgainstProtectionSpaceBlock:^BOOL(NSURLConnection *connection, NSURLProtectionSpace *protectionSpace) {
@@ -206,7 +235,7 @@
         _uploading = YES;
         _uploadProgress = 0;
     }
-    [_delegate uploadProgress:self result:YES completeness:_uploadProgress];
+    [self uploadProgress:self result:YES completeness:_uploadProgress];
     [SeafAppDelegate incUploadnum];
     NSString *upload_url;
     if (!update)
@@ -223,7 +252,7 @@
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
          _uploading = NO;
          [SeafAppDelegate decUploadnum];
-         [_delegate uploadProgress:self result:NO completeness:0];
+         [self uploadProgress:self result:NO completeness:0];
      }];
 }
 
@@ -239,18 +268,18 @@
         return _preViewURL;
 
     if (![self.mime hasPrefix:@"text"]) {
-        _preViewURL = [NSURL fileURLWithPath:self.path];
+        _preViewURL = [NSURL fileURLWithPath:self.lpath];
     } else if ([self.mime hasSuffix:@"markdown"]) {
         _preViewURL = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"view_markdown" ofType:@"html"]];
     } else if ([self.mime hasSuffix:@"seafile"]) {
         _preViewURL = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"view_seaf" ofType:@"html"]];
     } else {
         NSString *encodePath = [[Utils applicationTempDirectory] stringByAppendingPathComponent:self.name];
-        if ([Utils tryTransformEncoding:encodePath fromFile:self.path])
+        if ([Utils tryTransformEncoding:encodePath fromFile:self.lpath])
             _preViewURL = [NSURL fileURLWithPath:encodePath];
     }
     if (!_preViewURL)
-        _preViewURL = [NSURL fileURLWithPath:self.path];
+        _preViewURL = [NSURL fileURLWithPath:self.lpath];
     return _preViewURL;
 }
 
@@ -261,7 +290,7 @@
 
 - (NSURL *)checkoutURL
 {
-    return [NSURL fileURLWithPath:self.path];
+    return [NSURL fileURLWithPath:self.lpath];
 }
 
 - (NSString *)mime
@@ -271,13 +300,53 @@
 
 - (NSString *)content
 {
-    return [Utils stringContent:self.path];
+    return [Utils stringContent:self.lpath];
 }
 
 - (BOOL)saveContent:(NSString *)content
 {
     _preViewURL = nil;
-    return [content writeToFile:self.path atomically:YES encoding:NSUTF8StringEncoding error:nil];
+    return [content writeToFile:self.lpath atomically:YES encoding:NSUTF8StringEncoding error:nil];
+}
+
++ (NSMutableDictionary *)uploadFiles
+{
+    if (uploadFiles == nil) {
+        NSString *attrsFile = [[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploadfiles.plist"];
+        uploadFiles = [[NSMutableDictionary alloc] initWithContentsOfFile:attrsFile];
+        if (!uploadFiles)
+            uploadFiles = [[NSMutableDictionary alloc] init];
+    }
+    return uploadFiles;
+}
+
+- (NSDictionary *)uploadAttr
+{
+    return [[SeafUploadFile uploadFiles] objectForKey:self.lpath];
+}
+
+- (void)saveAttr:(NSMutableDictionary *)attr
+{
+    NSString *attrsFile = [[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploadfiles.plist"];
+    if (attr)
+        [[SeafUploadFile uploadFiles] setObject:attr forKey:self.lpath];
+    else
+        [[SeafUploadFile uploadFiles] removeObjectForKey:self.lpath];
+    [[SeafUploadFile uploadFiles] writeToFile:attrsFile atomically:YES];
+}
+
++ (NSMutableArray *)uploadFilesForDir:(SeafDir *)dir
+{
+    NSMutableDictionary *allFiles = [SeafUploadFile uploadFiles];
+    NSMutableArray *files = [[NSMutableArray alloc] init];
+    for (NSString *lpath in allFiles.allKeys) {
+        NSDictionary *info = [allFiles objectForKey:lpath];
+        if ([dir.repoId isEqualToString:[info objectForKey:@"urepo"]] && [dir.path isEqualToString:[info objectForKey:@"upath"]]) {
+            SeafUploadFile *file  = [[SeafUploadFile alloc] initWithPath:lpath];
+            [files addObject:file];
+        }
+    }
+    return files;
 }
 
 @end

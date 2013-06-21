@@ -20,12 +20,14 @@
 @interface SeafUploadDirViewController ()
 @property (strong) InputAlertPrompt *passSetView;
 @property (strong) SeafDir *curDir;
+@property (strong) UIBarButtonItem *chooseItem;
 @end
 
 @implementation SeafUploadDirViewController
 @synthesize passSetView = _passSetView;
 @synthesize directory = _directory;
 @synthesize curDir = _curDir;
+@synthesize chooseItem;
 
 - (id)initWithStyle:(UITableViewStyle)style
 {
@@ -56,7 +58,7 @@
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [self.navigationController dismissViewControllerAnimated:YES completion:nil];
-    [appdelegate.uploadVC chooseUploadDir:_directory];
+    [appdelegate.fileVC chooseUploadDir:_directory];
 }
 
 - (void)viewDidLoad
@@ -70,17 +72,19 @@
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStyleBordered target:self action:@selector(cancel:)];
     self.tableView.scrollEnabled = YES;
 
-    [self.navigationController setToolbarHidden:NO];
     UIBarButtonItem *flexibleFpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
-    UIBarButtonItem *chooseItem = [[UIBarButtonItem alloc] initWithTitle:@"Choose Current Folder"  style:UIBarButtonItemStyleBordered target:self action:@selector(chooseFolder:)];
+    chooseItem = [[UIBarButtonItem alloc] initWithTitle:@"Choose Current Folder" style:UIBarButtonItemStyleBordered target:self action:@selector(chooseFolder:)];
     NSArray *items = [NSArray arrayWithObjects:flexibleFpaceItem, chooseItem, flexibleFpaceItem, nil];
     [self setToolbarItems:items];
+}
 
+- (void)viewDidAppear:(BOOL)animated
+{
+    [self.navigationController setToolbarHidden:NO];
     if ([_directory isKindOfClass:[SeafRepos class]]) {
         [chooseItem setEnabled:NO];
     }
 }
-
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];

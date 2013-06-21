@@ -124,7 +124,6 @@ enum PREVIEW_STATE {
         if (![QLPreviewController canPreviewItem:preViewItem]) {
             self.state = PREVIEW_FAILED;
         } else {
-            Debug (@"Preview file %@ mime=%@ success\n", preViewItem.previewItemTitle, preViewItem.mime);
             self.state = PREVIEW_SUCCESS;
             if ([preViewItem.mime hasPrefix:@"audio"] || [preViewItem.mime hasPrefix:@"video"] || [preViewItem.mime isEqualToString:@"image/svg+xml"])
                 self.state = PREVIEW_WEBVIEW;
@@ -149,7 +148,7 @@ enum PREVIEW_STATE {
             [failedView configureViewWithPrevireItem:preViewItem];
             break;
         case PREVIEW_SUCCESS:
-            Debug("Preview SUCCESS\n");
+            Debug (@"Preview file %@ mime=%@ success\n", preViewItem.previewItemTitle, preViewItem.mime);
             [self.fileViewController setPreItem:preViewItem];
             fileViewController.view.frame = self.view.frame;
             [self.view addSubview:self.fileViewController.view];
@@ -346,7 +345,7 @@ enum PREVIEW_STATE {
 {
     if ([preViewItem isKindOfClass:[SeafFile class]]) {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        [((SeafFile *)preViewItem) upload:appdelegate.fileVC];
+        [((SeafFile *)preViewItem) update:appdelegate.fileVC];
         [appdelegate.fileVC refreshView];
     }
 }

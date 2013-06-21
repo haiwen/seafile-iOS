@@ -16,5 +16,6 @@
 
 - (void)saveAccount:(SeafConnection *)conn;
 - (void)selectAccount:(SeafConnection *)conn;
+- (BOOL)goToDefaultReposView;
 
 @end

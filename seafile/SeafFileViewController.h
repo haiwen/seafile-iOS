@@ -44,4 +44,7 @@ enum {
 - (void)refreshView;
 - (BOOL)goTo:(NSString *)repo path:(NSString *)path;
 
+- (void)uploadFile:(SeafUploadFile *)file;
+- (void)chooseUploadDir:(SeafDir *)dir;
+
 @end

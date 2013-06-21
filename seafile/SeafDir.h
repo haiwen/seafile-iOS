@@ -7,7 +7,7 @@
 //
 
 #import "SeafBase.h"
-
+@class SeafUploadFile;
 
 @interface SeafDir : SeafBase
 
@@ -17,12 +17,17 @@
                     name:(NSString *)aName
                     path:(NSString *)aPath;
 
+@property (readonly, copy) NSMutableArray *allItems;
 @property (readonly, copy) NSMutableArray *items;
+@property (readonly, nonatomic) NSMutableArray *uploadItems;
+
 @property (readonly) BOOL editable;
 
 - (void)loadedItems:(NSMutableArray *)items;
 - (void)mkdir:(NSString *)newDirName;
 - (void)createFile:(NSString *)newFileName;
 - (void)delEntries:(NSArray *)entries;
+- (void)addUploadFiles:(NSMutableArray *)uploadItems;
+- (void)removeUploadFile:(SeafUploadFile *)file;
 
 @end

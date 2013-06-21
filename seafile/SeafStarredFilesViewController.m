@@ -251,7 +251,7 @@
     if (buttonIndex == 0) {
         [self redownloadFile:file];
     } else if (buttonIndex == 1)  {
-        [file upload:self];
+        [file update:self];
         [self refreshView];
     }
 }

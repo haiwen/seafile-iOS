@@ -428,9 +428,9 @@
     if (ufile && ufile.uploading)
         return;
     if ([self.delegate conformsToProtocol:@protocol(SeafFileUploadDelegate)])
-        [self upload:(id<SeafFileUploadDelegate>)self.delegate];
+        [self update:(id<SeafFileUploadDelegate>)self.delegate];
     else
-        [self upload:self.udelegate];
+        [self update:self.udelegate];
 }
 
 - (BOOL)saveContent:(NSString *)content
@@ -467,7 +467,7 @@
     [connection setStarred:starred repo:self.repoId path:self.path];
 }
 
-- (void)upload:(id<SeafFileUploadDelegate>)dg
+- (void)update:(id<SeafFileUploadDelegate>)dg
 {
     if (!self.mpath)
         return;

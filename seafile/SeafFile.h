@@ -43,6 +43,6 @@
 - (BOOL)isStarred;
 - (void)setStarred:(BOOL)starred;
 - (void)deleteCache;
-- (void)upload:(id<SeafFileUploadDelegate>)dg;
+- (void)update:(id<SeafFileUploadDelegate>)dg;
 
 @end

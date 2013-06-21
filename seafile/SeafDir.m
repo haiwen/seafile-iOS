@@ -11,6 +11,7 @@
 #import "SeafFile.h"
 #import "SeafConnection.h"
 #import "SeafBase.h"
+#import "SeafUploadFile.h"
 #import "SeafAppDelegate.h"
 
 #import "ExtentedString.h"
@@ -18,10 +19,13 @@
 #import "Debug.h"
 
 @interface SeafDir ()
+
 @end
 
 @implementation SeafDir
 @synthesize items = _items;
+@synthesize uploadItems = _uploadItems;
+@synthesize allItems = _allItems;
 
 
 - (id)initWithConnection:(SeafConnection *)aConnection
@@ -69,6 +73,7 @@
         [newItems addObject:newItem];
     }
     [self loadedItems:newItems];
+    [self checkUploadFiles];
     [self.delegate entry:self contentUpdated:YES completeness:100];
     return YES;
 }
@@ -142,6 +147,7 @@
         }
         _items = items;
     }
+    _allItems = nil;
 }
 
 - (BOOL)checkSorted:(NSArray *)items
@@ -312,6 +318,82 @@
          Warning("resp=%d\n", response.statusCode);
          [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
      }];
+}
+
+- (NSMutableArray *)allItems
+{
+    if (_allItems)
+        return _allItems;
+    
+    _allItems = [[NSMutableArray alloc] init];
+    [_allItems addObjectsFromArray:_items];
+    if (self.uploadItems)
+        [_allItems addObjectsFromArray:self.uploadItems];
+
+    if ([self checkSorted:_allItems] == NO) {
+        [_allItems sortUsingComparator:(NSComparator)^NSComparisonResult(id obj1, id obj2){
+            if (([obj1 class] == [SeafDir class]) || ([obj2 class] == [SeafDir class])) {
+                if ([obj1 isKindOfClass:[SeafDir class]]) {
+                    return NSOrderedAscending;
+                } else {
+                    return NSOrderedDescending;
+                }
+            } else {
+                return [[obj1 key] caseInsensitiveCompare:[obj2 key]];
+            }
+            return NSOrderedSame;
+        }];
+    }
+    return _allItems;
+}
+
+- (NSMutableArray *)uploadItems
+{
+    if (!_uploadItems)
+        _uploadItems = [SeafUploadFile uploadFilesForDir:self];
+    if (!_uploadItems)
+        _uploadItems = [[NSMutableArray alloc] init];
+    return _uploadItems;
+}
+
+- (void)addUploadFiles:(NSMutableArray *)uploadItems
+{
+    for (SeafUploadFile *file in uploadItems) {
+        NSMutableDictionary *dict = file.uploadAttr;
+        if (!dict)
+            dict = [[NSMutableDictionary alloc] init];
+        [dict setObject:self.repoId forKey:@"urepo"];
+        [dict setObject:self.path forKey:@"upath"];
+        [file saveAttr:dict];
+        file.udir = self;
+    }
+    [self.uploadItems addObjectsFromArray:uploadItems];
+    _allItems = nil;
+}
+
+- (void)removeUploadFile:(SeafUploadFile *)file
+{
+    [file saveAttr:nil];
+    _allItems = nil;
+}
+
+- (void)checkUploadFiles
+{
+    NSMutableArray *arr = [[NSMutableArray alloc] init];
+    for (SeafUploadFile *file in _uploadItems) {
+        NSMutableDictionary *dict = file.uploadAttr;
+        if (dict) {
+            BOOL result = [[dict objectForKey:@"result"] boolValue];
+            if (result) {
+                [file saveAttr:nil];
+                [arr addObject:file];
+            }
+        }
+    }
+    for (SeafUploadFile *file in arr) {
+        [_uploadItems removeObject:file];
+    }
+    _allItems = nil;
 }
 
 @end

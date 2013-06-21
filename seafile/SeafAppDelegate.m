@@ -87,8 +87,14 @@
 {
     if (url != nil && [url isFileURL]) {
         NSURL *to = [NSURL fileURLWithPath:[[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:url.lastPathComponent ]];
-        Debug("Copy %@, to %@\n", url, to);
+        Debug("Copy %@, to %@, %@, %@\n", url, to, to.absoluteString, to.path);
         [Utils copyFile:url to:to];
+        if (self.window.rootViewController == self.startNav)
+            if (![self.startVC goToDefaultReposView])
+                return NO;
+        [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
+        SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:to.path];
+        [self.fileVC uploadFile:file];
     }
     return YES;
 }
@@ -129,6 +135,7 @@
     [Utils clearRepoPasswords];
     self.gotoRepo = nil;
     self.gotoPath = nil;
+    [self.startVC goToDefaultReposView];
     return YES;
 }
 
@@ -512,7 +519,7 @@
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     @synchronized (appdelegate) {
-        appdelegate.uploadnum ++;
+        appdelegate.uploadnum --;
     }
     [appdelegate checkBackgroudTask:[UIApplication sharedApplication]];
 }
@@ -558,11 +565,11 @@
 
 - (void)checkGoto:(SeafFileViewController *)c
 {
-    Debug("%@ %@\n", self.gotoRepo, self.gotoPath);
     if (!self.gotoRepo || !self.gotoPath)
         return;
     if (![c goTo:self.gotoRepo path:self.gotoPath]) {
         [self endGoto];
     }
 }
+
 @end

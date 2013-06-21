@@ -9,10 +9,12 @@
 #import "SeafAppDelegate.h"
 #import "SeafFileViewController.h"
 #import "SeafDetailViewController.h"
+#import "SeafUploadDirViewController.h"
 
 #import "SeafFile.h"
 #import "SeafRepos.h"
 #import "SeafCell.h"
+#import "SeafUploadingFileCell.h"
 
 #import "FileSizeFormatter.h"
 #import "SeafDateFormatter.h"
@@ -20,6 +22,8 @@
 #import "UIViewController+AlertMessage.h"
 #import "SVProgressHUD.h"
 #import "Debug.h"
+
+#import "QBImagePickerController.h"
 
 enum {
     STATE_INIT = 0,
@@ -29,7 +33,7 @@ enum {
     STATE_CREATE,
 };
 
-@interface SeafFileViewController ()
+@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate>
 - (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView;
@@ -42,6 +46,7 @@ enum {
 @property (strong) UIBarButtonItem *selectAllItem;
 @property (strong) UIBarButtonItem *selectNoneItem;
 @property (strong) UIBarButtonItem *backItem;
+@property (strong) UIBarButtonItem *photoItem;
 
 @property (strong, readonly) UIView *overlayView;
 
@@ -49,6 +54,11 @@ enum {
 @property (readonly) NSArray *editToolItems;
 
 @property int state;
+
+@property(nonatomic,strong) UIPopoverController *popoverController;
+@property (retain) NSDateFormatter *formatter;
+@property (retain) SeafUploadFile *ufile;
+
 @end
 
 @implementation SeafFileViewController
@@ -61,8 +71,12 @@ enum {
 @synthesize selectedindex = _selectedindex;
 @synthesize editToolItems = _editToolItems;
 @synthesize state;
+@synthesize photoItem;
 
+@synthesize popoverController;
+@synthesize formatter;
 @synthesize overlayView = _overlayView;
+@synthesize ufile;
 
 
 - (SeafDetailViewController *)detailViewController
@@ -96,9 +110,8 @@ enum {
 
 - (void)setConnection:(SeafConnection *)conn
 {
-    _connection = conn;
-    [_connection loadRepos:self];
-    [self setDirectory:(SeafDir *)_connection.rootFolder];
+    [conn loadRepos:self];
+    [self setDirectory:(SeafDir *)conn.rootFolder];
 }
 
 - (UIView *)overlayView
@@ -135,7 +148,8 @@ enum {
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    // Do any additional setup after loading the view, typically from a nib.
+    self.formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
     self.tableView.scrollEnabled = YES;
     self.tableView.rowHeight = 50;
     self.state = STATE_INIT;
@@ -145,7 +159,6 @@ enum {
         [self.tableView addSubview:view];
         _refreshHeaderView = view;
     }
-    //  update the last update date
     [_refreshHeaderView refreshLastUpdatedDate];
 }
 
@@ -174,7 +187,7 @@ enum {
         NSString *parent = [sfile.path stringByDeletingLastPathComponent];
         BOOL deleted = YES;
         if ([parent isEqualToString:_directory.path]) {
-            for (SeafBase *entry in _directory.items) {
+            for (SeafBase *entry in _directory.allItems) {
                 if (entry == sfile) {
                     deleted = NO;
                     break;
@@ -195,7 +208,6 @@ enum {
 - (void)viewDidUnload
 {
     [super viewDidUnload];
-    // Release any retained subviews of the main view.
     _refreshHeaderView = nil;
     _directory = nil;
     _curEntry = nil;
@@ -209,17 +221,19 @@ enum {
 - (void)selectAll:(id)sender
 {
     int row;
-    int count = _directory.items.count;
+    int count = _directory.allItems.count;
     for (row = 0; row < count; ++row) {
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
-        [self.tableView selectRowAtIndexPath:indexPath animated:YES scrollPosition:UITableViewScrollPositionNone];
+        NSObject *entry  = [self getDentrybyIndexPath:indexPath];
+        if (![entry isKindOfClass:[SeafUploadFile class]])
+            [self.tableView selectRowAtIndexPath:indexPath animated:YES scrollPosition:UITableViewScrollPositionNone];
     }
     [self noneSelected:NO];
 }
 
 - (void)selectNone:(id)sender
 {
-    int count = _directory.items.count;
+    int count = _directory.allItems.count;
     for (int row = 0; row < count; ++row) {
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
         [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
@@ -259,8 +273,7 @@ enum {
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     if (editing) {
-        if (![appdelegate checkNetworkStatus])
-            return;
+        if (![appdelegate checkNetworkStatus]) return;
         [self setToolbarItems:self.editToolItems];
         if(!IsIpad())  [self hideTabBar];
         [self.navigationController.toolbar sizeToFit];
@@ -276,12 +289,31 @@ enum {
     [self.tableView setEditing:editing animated:animated];
 }
 
+- (void)addPhotos:(id)sender
+{
+    if(self.popoverController)
+        return;
+    QBImagePickerController *imagePickerController = [[QBImagePickerController alloc] init];
+    imagePickerController.delegate = self;
+    imagePickerController.allowsMultipleSelection = YES;
+    
+    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:imagePickerController];
+    if (IsIpad()) {
+        self.popoverController = [[UIPopoverController alloc] initWithContentViewController:navigationController];
+        self.popoverController.delegate = self;
+        [self.popoverController presentPopoverFromBarButtonItem:sender permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
+    } else {
+        [self presentViewController:navigationController animated:YES completion:NULL];
+    }
+}
+
 - (void)initNavigationItems:(SeafDir *)directory
 {
     if ([directory isKindOfClass:[SeafRepos class]]) {
     } else {
         if (directory.editable) {
-            self.navigationItem.rightBarButtonItem = self.editButtonItem;
+            self.photoItem  = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCamera target:self action:@selector(addPhotos:)];
+            self.navigationItem.rightBarButtonItems = [NSArray arrayWithObjects: self.editButtonItem, self.photoItem, nil];
             _selectAllItem = [[UIBarButtonItem alloc] initWithTitle:@"Select All" style:UIBarButtonItemStylePlain target:self action:@selector(selectAll:)];
             _selectNoneItem = [[UIBarButtonItem alloc] initWithTitle:@"Select None" style:UIBarButtonItemStylePlain target:self action:@selector(selectNone:)];
         }
@@ -298,6 +330,7 @@ enum {
     if (!_directory)
         [self initNavigationItems:directory];
 
+    _connection = directory->connection;
     _directory = directory;
     self.title = directory.name;
     [_directory setDelegate:self];
@@ -323,15 +356,15 @@ enum {
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
     if (![_directory isKindOfClass:[SeafRepos class]]) {
-        return _directory.items.count;
+        return _directory.allItems.count;
     }
     NSArray *repos =  [[((SeafRepos *)_directory)repoGroups] objectAtIndex:section];
     return repos.count;
 }
 
-- (SeafCell *)getCell:(NSString *)CellIdentifier forTableView:(UITableView *)tableView
+- (UITableViewCell *)getCell:(NSString *)CellIdentifier forTableView:(UITableView *)tableView
 {
-    SeafCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:CellIdentifier owner:self options:nil];
         cell = [cells objectAtIndex:0];
@@ -351,6 +384,8 @@ enum {
     if (!_selectedindex)
         return;
     SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex];
+    if ([file isKindOfClass:[SeafUploadFile class]])
+        return;
     if (![file hasCache])
         return;
     NSString *cancelTitle = nil;
@@ -365,9 +400,42 @@ enum {
     [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
 }
 
+
+- (UITableViewCell *)getSeafUploadFileCell:(SeafUploadFile *)file forTableView:(UITableView *)tableView
+{
+    file.delegate = self;
+    if (file.uploading) {
+        SeafUploadingFileCell *cell = (SeafUploadingFileCell *)[self getCell:@"SeafUploadingFileCell" forTableView:tableView];
+        cell.nameLabel.text = file.name;
+        cell.imageView.image = file.image;
+        [cell.progressView setProgress:file.uploadProgress *1.0/100];
+        return cell;
+    } else {
+        SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
+        cell.textLabel.text = file.name;
+        cell.imageView.image = file.image;
+        
+        NSString *sizeStr = [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:file.filesize ] useBaseTen:NO];
+        NSDictionary *dict = [file uploadAttr];
+        cell.accessoryView = nil;
+        if (dict) {
+            int utime = [[dict objectForKey:@"utime"] intValue];
+            BOOL result = [[dict objectForKey:@"result"] boolValue];
+            if (result)
+                cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, Uploaded %@", sizeStr, [SeafDateFormatter stringFromInt:utime]];
+            else {
+                cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, waiting to upload", sizeStr];
+            }
+        } else {
+            cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, waiting to upload", sizeStr];
+        }
+        return cell;
+    }
+}
+
 - (SeafCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView
 {
-    SeafCell *cell = [self getCell:@"SeafCell" forTableView:tableView];
+    SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
     cell.textLabel.text = sfile.name;
     cell.detailTextLabel.text = sfile.detailText;
     cell.imageView.image = sfile.image;
@@ -378,7 +446,7 @@ enum {
 
 - (SeafCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView
 {
-    SeafCell *cell = [self getCell:@"SeafDirCell" forTableView:tableView];
+    SeafCell *cell = (SeafCell *)[self getCell:@"SeafDirCell" forTableView:tableView];
     cell.textLabel.text = sdir.name;
     cell.detailTextLabel.text = nil;
     cell.imageView.image = sdir.image;
@@ -387,7 +455,7 @@ enum {
 
 - (SeafCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView
 {
-    SeafCell *cell = [self getCell:@"SeafCell" forTableView:tableView];
+    SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
     NSString *detail = [NSString stringWithFormat:@"%@, %@", [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:srepo.size ] useBaseTen:NO], [SeafDateFormatter stringFromInt:srepo.mtime]];
     cell.detailTextLabel.text = detail;
     cell.imageView.image = srepo.image;
@@ -397,19 +465,31 @@ enum {
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    SeafBase *entry  = [self getDentrybyIndexPath:indexPath];
+    NSObject *entry  = [self getDentrybyIndexPath:indexPath];
     if ([entry isKindOfClass:[SeafRepo class]]) {
         return [self getSeafRepoCell:(SeafRepo *)entry forTableView:tableView];
     } else if ([entry isKindOfClass:[SeafFile class]]) {
         return [self getSeafFileCell:(SeafFile *)entry forTableView:tableView];
-    } else {
+    } else if ([entry isKindOfClass:[SeafDir class]]) {
         return [self getSeafDirCell:(SeafDir *)entry forTableView:tableView];
+    } else {
+        return [self getSeafUploadFileCell:(SeafUploadFile *)entry forTableView:tableView];
     }
+}
+
+- (NSIndexPath *)tableView:(UITableView *)tableView willSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    NSObject *entry  = [self getDentrybyIndexPath:indexPath];
+    if (tableView.editing && [entry isKindOfClass:[SeafUploadFile class]])
+        return nil;
+    return indexPath;
 }
 
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    // Return NO if you do not want the specified item to be editable.
+    NSObject *entry  = [self getDentrybyIndexPath:indexPath];
+    if ([entry isKindOfClass:[SeafUploadFile class]])
+        return NO;
     return YES;
 }
 
@@ -420,7 +500,6 @@ enum {
 
 - (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    // The table view should not be re-orderable.
     return NO;
 }
 
@@ -441,7 +520,7 @@ enum {
 - (SeafBase *)getDentrybyIndexPath:(NSIndexPath *)indexPath
 {
     if (![_directory isKindOfClass:[SeafRepos class]]) {
-        return [_directory.items objectAtIndex:[indexPath row]];
+        return [_directory.allItems objectAtIndex:[indexPath row]];
     }
     NSArray *repos = [[((SeafRepos *)_directory)repoGroups] objectAtIndex:[indexPath section]];
     return [repos objectAtIndex:[indexPath row]];
@@ -457,7 +536,15 @@ enum {
         return;
     }
     _curEntry = [self getDentrybyIndexPath:indexPath];
-
+    if ([_curEntry isKindOfClass:[SeafUploadFile class]]) {
+        if (!IsIpad()) {
+            SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+            [appdelegate showDetailView:self.detailViewController];
+        }
+        [self.detailViewController setPreViewItem:(SeafUploadFile *)_curEntry];
+        return;
+    }
+    
     [_curEntry setDelegate:self];
     if ([_curEntry isKindOfClass:[SeafRepo class]] && [(SeafRepo *)_curEntry passwordRequired]) {
         [self popupSetRepoPassword];
@@ -633,8 +720,8 @@ enum {
             default:
                 break;
         }
+        self.state = STATE_INIT;
     }
-    self.state = STATE_INIT;
 }
 
 - (void)repoPasswordSet:(SeafBase *)entry WithResult:(BOOL)success;
@@ -656,7 +743,6 @@ enum {
 
 - (void)doneLoadingTableViewData
 {
-    //  model should call this when its done loading
     [_refreshHeaderView egoRefreshScrollViewDataSourceDidFinishedLoading:self.tableView];
 }
 
@@ -677,12 +763,12 @@ enum {
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     if (![appdelegate checkNetworkStatus]) {
-        [self doneLoadingTableViewData];
+        [self performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
         return;
     }
+
     _directory.delegate = self;
     [_directory loadContent:YES];
-    //[self performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:3.0];
 }
 
 - (BOOL)egoRefreshTableHeaderDataSourceIsLoading:(EGORefreshTableHeaderView*)view
@@ -692,7 +778,7 @@ enum {
 
 - (NSDate*)egoRefreshTableHeaderDataSourceLastUpdated:(EGORefreshTableHeaderView*)view
 {
-    return [NSDate date]; // should return date data source was last changed
+    return [NSDate date];
 }
 
 #pragma mark - edit files
@@ -737,7 +823,7 @@ enum {
             self.state = STATE_DELETE;
             entries = [[NSMutableArray alloc] init];
             for (NSIndexPath *indexPath in idxs) {
-                [entries addObject:[_directory.items objectAtIndex:indexPath.row]];
+                [entries addObject:[_directory.allItems objectAtIndex:indexPath.row]];
             }
             [_directory delEntries:entries];
             [SVProgressHUD showWithStatus:@"Deleting files ..."];
@@ -770,20 +856,12 @@ enum {
     } else if (buttonIndex == 1) {
         [self redownloadFile:file];
     } else if (buttonIndex == 2)  {
-        [file upload:self];
+        [file update:self];
         [self refreshView];
     }
 }
 
 #pragma mark - SeafFileUploadDelegate
-- (void)uploadProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent
-{
-    if (!res) {
-        [SVProgressHUD showErrorWithStatus:@"Failed to uplod file"];
-    }
-    [self refreshView];
-}
-
 - (BOOL)goTo:(NSString *)repo path:(NSString *)path
 {
     if ([self.directory isKindOfClass:[SeafRepos class]]) {
@@ -800,8 +878,8 @@ enum {
     } else {
         if ([@"/" isEqualToString:path])
             return NO;
-        for (int i = 0; i < _directory.items.count; ++i) {
-            SeafBase *b = [_directory.items objectAtIndex:i];
+        for (int i = 0; i < _directory.allItems.count; ++i) {
+            SeafBase *b = [_directory.allItems objectAtIndex:i];
             NSString *p = b.path;
             if ([b isKindOfClass:[SeafDir class]]) {
                 p = [p stringByAppendingString:@"/"];
@@ -821,6 +899,120 @@ enum {
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [appdelegate checkGoto:self];
+    for (SeafUploadFile *file in _directory.uploadItems)
+        if (!file.uploaded && !file.uploading)
+         [file upload:_connection repo:_directory.repoId path:_directory.path update:NO];
+}
+
+- (void)chooseUploadDir:(SeafDir *)dir
+{
+    [dir addUploadFiles:[NSArray arrayWithObject:self.ufile]];
+    [self.ufile upload:dir->connection repo:dir.repoId path:dir.path update:NO];
+}
+
+- (void)uploadFile:(SeafUploadFile *)file
+{
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    file.delegate = self;
+    self.ufile = file;
+
+    SeafUploadDirViewController *controller = [[SeafUploadDirViewController alloc] initWithSeafDir:_connection.rootFolder];
+    UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
+    [navController setModalPresentationStyle:UIModalPresentationFormSheet];
+    [appdelegate.tabbarController presentViewController:navController animated:YES completion:nil];
+}
+
+#pragma mark - QBImagePickerControllerDelegate
+- (void)imagePickerController:(QBImagePickerController *)imagePickerController didFinishPickingMediaWithInfo:(id)info
+{
+    if (IsIpad()) {
+        [self.popoverController dismissPopoverAnimated:YES];
+        self.popoverController = nil;
+    } else {
+        [self dismissViewControllerAnimated:YES completion:NULL];
+    }
+    if (imagePickerController.allowsMultipleSelection) {
+        NSArray *mediaInfoArray = (NSArray *)info;
+        Debug("Selected %d photos:%@\n", mediaInfoArray.count, mediaInfoArray);
+    } else {
+        NSDictionary *mediaInfo = (NSDictionary *)info;
+        Debug("Selected: %@", mediaInfo);
+    }
+    
+    NSMutableArray *files = [[NSMutableArray alloc] init];
+    if (imagePickerController.allowsMultipleSelection) {
+        int i = 0;
+        NSString *date = [formatter stringFromDate:[NSDate date]];
+        for (NSDictionary *dict in info) {
+            i++;
+            UIImage *image = [dict objectForKey:@"UIImagePickerControllerOriginalImage"];
+            NSString *filename = [NSString stringWithFormat:@"Photo %@-%d.jpg", date, i];
+            NSString *path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
+            [UIImageJPEGRepresentation(image, 1.0) writeToFile:path atomically:YES];
+            SeafUploadFile *file =  [[SeafUploadFile alloc] initWithPath:path];
+            file.delegate = self;
+            [files addObject:file];
+        }
+    }
+    [self.directory addUploadFiles:files];
+    [self.tableView reloadData];
+    for (SeafUploadFile *file in files) {
+        [file upload:_connection repo:self.directory.repoId path:self.directory.path update:NO];
+    }
+}
+
+- (void)imagePickerControllerDidCancel:(QBImagePickerController *)imagePickerController
+{
+    if (IsIpad()) {
+        [self.popoverController dismissPopoverAnimated:YES];
+        self.popoverController = nil;
+    } else {
+        [self dismissViewControllerAnimated:YES completion:NULL];
+    }
+}
+
+- (NSString *)descriptionForSelectingAllAssets:(QBImagePickerController *)imagePickerController
+{
+    return @"Select all photos";
+}
+
+- (NSString *)descriptionForDeselectingAllAssets:(QBImagePickerController *)imagePickerController
+{
+    return @"Deselect all photos";
+}
+
+- (NSString *)imagePickerController:(QBImagePickerController *)imagePickerController descriptionForNumberOfPhotos:(NSUInteger)numberOfPhotos
+{
+    return [NSString stringWithFormat:@"%d photos", numberOfPhotos];
+}
+
+- (NSString *)imagePickerController:(QBImagePickerController *)imagePickerController descriptionForNumberOfVideos:(NSUInteger)numberOfVideos
+{
+    return [NSString stringWithFormat:@"%d videos", numberOfVideos];
+}
+
+- (NSString *)imagePickerController:(QBImagePickerController *)imagePickerController descriptionForNumberOfPhotos:(NSUInteger)numberOfPhotos numberOfVideos:(NSUInteger)numberOfVideos
+{
+    return [NSString stringWithFormat:@"%d photos、%d videos", numberOfPhotos, numberOfVideos];
+}
+
+#pragma mark - UIPopoverControllerDelegate
+- (void)popoverControllerDidDismissPopover:(UIPopoverController *)popoverController
+{
+    self.popoverController = nil;
+}
+
+#pragma mark - SeafUploadDelegate
+- (void)uploadProgress:(SeafUploadFile *)file result:(BOOL)res completeness:(int)percent
+{
+    int index = [_directory.allItems indexOfObject:file];
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
+    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+    if (res && file.uploading && [cell isKindOfClass:[SeafUploadingFileCell class]]) {
+        [((SeafUploadingFileCell *)cell).progressView setProgress:percent*1.0f/100];
+        return;
+    }
+    [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic ];
 }
 
 @end

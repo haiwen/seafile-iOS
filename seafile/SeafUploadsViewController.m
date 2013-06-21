@@ -31,7 +31,7 @@
 
 @property (readonly) SeafDetailViewController *detailViewController;
 @property (retain) NSIndexPath *selectedindex;
-@property (retain)  NSDateFormatter *formatter;
+@property (retain) NSDateFormatter *formatter;
 
 @property (retain) InputAlertPrompt *addFileView;
 @property(nonatomic,strong) UIPopoverController *popoverController;
@@ -215,8 +215,13 @@
 
 - (void)uploadFile:(NSIndexPath *)index
 {
-    NSMutableArray *arr = [NSMutableArray arrayWithObject:[_entries objectAtIndex:index.row]];
-    [self uploadFiles:arr];
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+
+    SeafUploadFile *ufile = [_entries objectAtIndex:index.row];
+    [appdelegate.tabbarController setSelectedIndex:TABBED_SEAFILE];
+    [appdelegate.fileVC uploadFile:ufile];
+    //NSMutableArray *arr = [NSMutableArray arrayWithObject:[_entries objectAtIndex:index.row]];
+    //[self uploadFiles:arr];
 }
 
 - (void)deleteFile:(NSIndexPath *)index
@@ -252,7 +257,7 @@
         [((SeafUploadingFileCell *)cell).progressView setProgress:percent*1.0f/100];
         return;
     }
-    [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic ];
+    [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
 }
 
 #pragma mark - Table view data source

@@ -13,8 +13,6 @@
 int main(int argc, char *argv[])
 {
     @autoreleasepool {
-        NSLog(@"...\n");
-
         return UIApplicationMain(argc, argv, nil, NSStringFromClass([SeafAppDelegate class]));
     }
 }
