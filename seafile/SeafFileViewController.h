@@ -33,13 +33,12 @@ enum {
 #import "SeafFile.h"
 
 
-@interface SeafFileViewController : UITableViewController <UIAlertViewDelegate, UIActionSheetDelegate, SeafDentryDelegate, EGORefreshTableHeaderDelegate, InputDoneDelegate, SeafFileUploadDelegate> {
+@interface SeafFileViewController : UITableViewController <UIAlertViewDelegate, UIActionSheetDelegate, SeafDentryDelegate, InputDoneDelegate, SeafFileUploadDelegate> {
 }
 
 @property (strong, nonatomic) SeafConnection *connection;
 
 @property (strong, readonly) SeafDetailViewController *detailViewController;
-@property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
 
 - (void)refreshView;
 - (BOOL)goTo:(NSString *)repo path:(NSString *)path;

@@ -204,7 +204,7 @@ enum PREVIEW_STATE {
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
     if (!IsIpad()) {
-        UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Back" style:UIBarButtonItemStyleDone target:self action:@selector(goBack:)];
+        UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Back" style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
         [self.navigationItem setLeftBarButtonItem:barButtonItem animated:YES];
     }
     self.view.autoresizesSubviews = YES;

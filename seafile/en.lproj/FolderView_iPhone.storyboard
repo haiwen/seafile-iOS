@@ -90,66 +90,6 @@
             </objects>
             <point key="canvasLocation" x="-449" y="-3624"/>
         </scene>
-        <!--Seaf Uploads View Controller - Uploads-->
-        <scene sceneID="UsF-In-Fpm">
-            <objects>
-                <tableViewController title="Uploads" id="2WT-8g-HRr" customClass="SeafUploadsViewController" sceneMemberID="viewController">
-                    <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="8je-wc-3G0">
-                        <rect key="frame" x="0.0" y="64" width="320" height="416"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                        <prototypes>
-                            <tableViewCell contentMode="scaleToFill" selectionStyle="none" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="Cell" textLabel="55Z-rf-JOB" detailTextLabel="Mem-S5-kbK" style="IBUITableViewCellStyleSubtitle" id="klB-fk-oqm">
-                                <rect key="frame" x="0.0" y="22" width="320" height="44"/>
-                                <autoresizingMask key="autoresizingMask"/>
-                                <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
-                                    <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
-                                    <autoresizingMask key="autoresizingMask"/>
-                                    <subviews>
-                                        <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="Title" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="55Z-rf-JOB">
-                                            <rect key="frame" x="10" y="2" width="35" height="22"/>
-                                            <autoresizingMask key="autoresizingMask"/>
-                                            <fontDescription key="fontDescription" type="system" pointSize="18"/>
-                                            <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
-                                            <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
-                                        </label>
-                                        <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="Subtitle" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="Mem-S5-kbK">
-                                            <rect key="frame" x="10" y="24" width="47" height="18"/>
-                                            <autoresizingMask key="autoresizingMask"/>
-                                            <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                            <color key="textColor" red="0.50196078430000002" green="0.50196078430000002" blue="0.50196078430000002" alpha="1" colorSpace="calibratedRGB"/>
-                                            <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
-                                        </label>
-                                    </subviews>
-                                    <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
-                                </view>
-                            </tableViewCell>
-                        </prototypes>
-                    </tableView>
-                    <navigationItem key="navigationItem" title="Uploads" id="Nft-6S-wd7"/>
-                    <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
-                </tableViewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="r8F-Ai-nfU" userLabel="First Responder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="-30" y="-3323"/>
-        </scene>
-        <!--Navigation Controller - Uploads-->
-        <scene sceneID="3AH-nG-Yk2">
-            <objects>
-                <navigationController title="Uploads" definesPresentationContext="YES" id="JTb-To-5Mb" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Item" id="Cs3-Fy-nT1"/>
-                    <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
-                    <navigationBar key="navigationBar" contentMode="scaleToFill" id="FfP-0L-ROq">
-                        <autoresizingMask key="autoresizingMask"/>
-                    </navigationBar>
-                    <connections>
-                        <segue destination="2WT-8g-HRr" kind="relationship" relationship="rootViewController" id="4Jd-QI-m2M"/>
-                    </connections>
-                </navigationController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="Vog-LK-5Jz" userLabel="First Responder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="-543" y="-2967"/>
-        </scene>
         <!--Seaf Starred Files View Controller - Starred-->
         <scene sceneID="n5y-ZA-vP7">
             <objects>
@@ -642,9 +582,6 @@
         </class>
         <class className="SeafStarredFilesViewController" superclassName="UITableViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/SeafStarredFilesViewController.h"/>
-        </class>
-        <class className="SeafUploadsViewController" superclassName="UITableViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/SeafUploadsViewController.h"/>
         </class>
     </classes>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">

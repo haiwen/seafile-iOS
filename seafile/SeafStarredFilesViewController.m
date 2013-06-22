@@ -14,15 +14,18 @@
 #import "SeafDateFormatter.h"
 #import "SeafCell.h"
 
+#import "EGORefreshTableHeaderView.h"
 #import "SVProgressHUD.h"
 #import "SeafData.h"
 #import "Utils.h"
 #import "Debug.h"
 
-@interface SeafStarredFilesViewController ()
+@interface SeafStarredFilesViewController ()<EGORefreshTableHeaderDelegate, UIScrollViewDelegate>
 @property NSMutableArray *starredFiles;
 @property (readonly) SeafDetailViewController *detailViewController;
 @property (retain) NSIndexPath *selectedindex;
+
+@property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
 
 @end
 
@@ -30,7 +33,7 @@
 @synthesize connection = _connection;
 @synthesize starredFiles = _starredFiles;
 @synthesize selectedindex = _selectedindex;
-
+@synthesize refreshHeaderView = _refreshHeaderView;
 
 - (id)initWithStyle:(UITableViewStyle)style
 {
@@ -52,19 +55,29 @@
     [_connection getStarredFiles:^(NSHTTPURLResponse *response, id JSON, NSData *data) {
         @synchronized(self) {
             Debug("Success to get starred files ...\n");
+            [self doneLoadingTableViewData];
             [self handleData:JSON];
             [self.tableView reloadData];
         }
     }
                          failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
                              Warning("Failed to get starred files ...\n");
+                             [SVProgressHUD showErrorWithStatus:@"Failed to get starred files"];
+                             [self doneLoadingTableViewData];
                          }];
 }
 - (void)viewDidLoad
 {
     [super viewDidLoad];
     self.tableView.rowHeight = 50;
-    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(refresh:)];
+    //self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(refresh:)];
+    if (_refreshHeaderView == nil) {
+        EGORefreshTableHeaderView *view = [[EGORefreshTableHeaderView alloc] initWithFrame:CGRectMake(0.0f, 0.0f - self.tableView.bounds.size.height, self.view.frame.size.width, self.tableView.bounds.size.height)];
+        view.delegate = self;
+        [self.tableView addSubview:view];
+        _refreshHeaderView = view;
+    }
+    [_refreshHeaderView refreshLastUpdatedDate];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -263,6 +276,44 @@
         [SVProgressHUD showErrorWithStatus:@"Failed to uplod file"];
     }
     [self refreshView];
+}
+
+- (void)doneLoadingTableViewData
+{
+    [_refreshHeaderView egoRefreshScrollViewDataSourceDidFinishedLoading:self.tableView];
+}
+
+#pragma mark - mark UIScrollViewDelegate Methods
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView
+{
+    [_refreshHeaderView egoRefreshScrollViewDidScroll:scrollView];
+}
+
+- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
+{
+    [_refreshHeaderView egoRefreshScrollViewDidEndDragging:scrollView];
+}
+
+#pragma mark - EGORefreshTableHeaderDelegate Methods
+- (void)egoRefreshTableHeaderDidTriggerRefresh:(EGORefreshTableHeaderView*)view
+{
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    if (![appdelegate checkNetworkStatus]) {
+        [self performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
+        return;
+    }
+
+    [self refresh:nil];
+}
+
+- (BOOL)egoRefreshTableHeaderDataSourceIsLoading:(EGORefreshTableHeaderView*)view
+{
+    return NO;
+}
+
+- (NSDate*)egoRefreshTableHeaderDataSourceLastUpdated:(EGORefreshTableHeaderView*)view
+{
+    return [NSDate date];
 }
 
 @end

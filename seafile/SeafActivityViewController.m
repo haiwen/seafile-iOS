@@ -21,12 +21,14 @@ enum {
 @property int state;
 @property (readonly) UIWebView *webview;
 @property (strong) NSString *url;
+
 @end
 
 @implementation SeafActivityViewController
 @synthesize connection = _connection;
 @synthesize url = _url;
 @synthesize state;
+
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -130,11 +132,7 @@ enum {
     NSString *urlStr = request.URL.absoluteString;
     if ([urlStr hasPrefix:@"file://"] || [urlStr isEqualToString:self.url])
         return YES;
-    else if ([urlStr hasPrefix:[_connection.address stringByAppendingString:API_URL"/html/repo_history_changes/"]]) {
-        SeafActivityViewController *ac = [[SeafActivityViewController alloc] initWithNibName:@"SeafActivityViewController" bundle:nil];
-        [ac setUrl:urlStr connection:self.connection];
-        [self.navigationController pushViewController:ac animated:NO];
-    } else if ([urlStr hasPrefix:@"api://"]) {
+    else if ([urlStr hasPrefix:@"api://"]) {
         NSString *path = @"/";
         NSRange range;
         NSRange foundRange = [urlStr rangeOfString:@"api://repo/" options:NSCaseInsensitiveSearch];

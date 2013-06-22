@@ -11,15 +11,18 @@
 #import "SeafAppDelegate.h"
 #import "SeafDateFormatter.h"
 #import "ExtentedString.h"
+#import "SVProgressHUD.h"
 #import "Debug.h"
 
 
-@interface SeafDisMasterViewController ()
+@interface SeafDisMasterViewController ()<EGORefreshTableHeaderDelegate, UIScrollViewDelegate>
+@property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
 
 @end
 
 @implementation SeafDisMasterViewController
 @synthesize connection = _connection;
+@synthesize refreshHeaderView = _refreshHeaderView;
 
 - (void)awakeFromNib
 {
@@ -35,18 +38,25 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
 
-    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(refresh:)];;
+    //self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(refresh:)];
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     self.detailViewController = (SeafDisDetailViewController *)[appdelegate detailViewController:TABBED_DISCUSSION];
     self.title = @"Groups";
     self.tableView.rowHeight = 50;
     self.detailViewController.connection = _connection;
+    if (_refreshHeaderView == nil) {
+        EGORefreshTableHeaderView *view = [[EGORefreshTableHeaderView alloc] initWithFrame:CGRectMake(0.0f, 0.0f - self.tableView.bounds.size.height, self.view.frame.size.width, self.tableView.bounds.size.height)];
+        view.delegate = self;
+        [self.tableView addSubview:view];
+        _refreshHeaderView = view;
+    }
+    [_refreshHeaderView refreshLastUpdatedDate];
+    [self refresh:nil];
 }
 
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
 }
 
 - (void)refresh:(id)sender
@@ -55,10 +65,13 @@
         @synchronized(self) {
             Debug("Success to get groups ...\n");
             [self.tableView reloadData];
+            [self doneLoadingTableViewData];
         }
     }
                          failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
                              Warning("Failed to get groups ...\n");
+                             [SVProgressHUD showErrorWithStatus:@"Failed to get groups ..."];
+                             [self doneLoadingTableViewData];
                          }];
 }
 
@@ -71,7 +84,6 @@
 
 - (void)viewWillAppear:(BOOL)animated
 {
-    [self refresh:nil];
     [self.tableView reloadData];
     [super viewWillAppear:animated];
 }
@@ -134,6 +146,44 @@
         return (interfaceOrientation == UIInterfaceOrientationPortrait);
     }
     return YES;
+}
+
+- (void)doneLoadingTableViewData
+{
+    [_refreshHeaderView egoRefreshScrollViewDataSourceDidFinishedLoading:self.tableView];
+}
+
+#pragma mark - mark UIScrollViewDelegate Methods
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView
+{
+    [_refreshHeaderView egoRefreshScrollViewDidScroll:scrollView];
+}
+
+- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
+{
+    [_refreshHeaderView egoRefreshScrollViewDidEndDragging:scrollView];
+}
+
+#pragma mark - EGORefreshTableHeaderDelegate Methods
+- (void)egoRefreshTableHeaderDidTriggerRefresh:(EGORefreshTableHeaderView*)view
+{
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    if (![appdelegate checkNetworkStatus]) {
+        [self performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
+        return;
+    }
+
+    [self refresh:nil];
+}
+
+- (BOOL)egoRefreshTableHeaderDataSourceIsLoading:(EGORefreshTableHeaderView*)view
+{
+    return NO;
+}
+
+- (NSDate*)egoRefreshTableHeaderDataSourceLastUpdated:(EGORefreshTableHeaderView*)view
+{
+    return [NSDate date];
 }
 
 @end

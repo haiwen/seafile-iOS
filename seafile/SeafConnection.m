@@ -153,11 +153,8 @@
             [request setValue:password forHTTPHeaderField:@"password"];
         }
     }
-    [request setValue:[NSString stringWithFormat:@"iOS Client v%@", version] forHTTPHeaderField:@"User-Agent"];
-    [request setValue:@"iOS Client" forHTTPHeaderField:@"User-Agent"];
 
     Debug("requestUrl=%@, token=%@, password=%@\n", request.URL, _token, password);
-
     [request setTimeoutInterval:10.0f];
     SeafJSONRequestOperation *operation = [SeafJSONRequestOperation JSONRequestOperationWithRequest:request success:success  failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
         if (response.statusCode == HTTP_ERR_LOGIN_REUIRED && self.username && self.password) {

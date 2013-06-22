@@ -72,7 +72,7 @@
     self.title = @"Discussion";
     self.webview.delegate = self;
     if (!IsIpad()) {
-        UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Back" style:UIBarButtonItemStyleDone target:self action:@selector(goBack:)];
+        UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Back" style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
         [self.navigationItem setLeftBarButtonItem:barButtonItem animated:YES];
     }
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(refresh:)];
@@ -131,7 +131,7 @@
 
 - (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSMutableURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
 {
-    Debug("Request %@, %@\n", request.URL, request.allHTTPHeaderFields);
+    Debug("Request %@\n", request.URL);
     NSString *urlStr = request.URL.absoluteString;
     if ([urlStr hasPrefix:@"file://"] || [urlStr hasPrefix:[self.connection.address stringByAppendingString:API_URL]]) {
         return YES;

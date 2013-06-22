@@ -33,7 +33,7 @@ enum {
     STATE_CREATE,
 };
 
-@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate>
+@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, EGORefreshTableHeaderDelegate>
 - (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView;
@@ -49,6 +49,7 @@ enum {
 @property (strong) UIBarButtonItem *photoItem;
 
 @property (strong, readonly) UIView *overlayView;
+@property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
 
 @property (retain) NSIndexPath *selectedindex;
 @property (readonly) NSArray *editToolItems;
@@ -278,11 +279,13 @@ enum {
         if(!IsIpad())  [self hideTabBar];
         [self.navigationController.toolbar sizeToFit];
         [self noneSelected:YES];
+        [self.photoItem setEnabled:NO];
         [self.navigationController setToolbarHidden:NO animated:YES];
     } else {
         self.navigationItem.leftBarButtonItem = nil;
         [self.navigationController setToolbarHidden:YES animated:YES];
         if(!IsIpad())  [self showTabBar];
+        [self.photoItem setEnabled:YES];
     }
 
     [super setEditing:editing animated:animated];
@@ -758,7 +761,6 @@ enum {
 }
 
 #pragma mark - EGORefreshTableHeaderDelegate Methods
-
 - (void)egoRefreshTableHeaderDidTriggerRefresh:(EGORefreshTableHeaderView*)view
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
