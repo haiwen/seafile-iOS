@@ -248,10 +248,13 @@
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="1x4-I5-Tb4">
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
+                    <connections>
+                        <segue destination="pQh-cj-nJC" kind="relationship" relationship="rootViewController" id="YiZ-Jn-OY5"/>
+                    </connections>
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="h9e-lX-qLG" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-933" y="-1402"/>
+            <point key="canvasLocation" x="-649" y="-1614"/>
         </scene>
         <!--Navigation Controller - Settings-->
         <scene sceneID="SAc-tl-SaL">
@@ -473,7 +476,7 @@
                 </splitViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dT8-ZR-hc2" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-2411" y="-861"/>
+            <point key="canvasLocation" x="-2315" y="-1733"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="ndj-lS-Fiu">
@@ -497,7 +500,7 @@
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="9SX-dV-Zyn" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="322" y="-1316"/>
+            <point key="canvasLocation" x="650" y="-1860"/>
         </scene>
         <!--Seaf Activity View Controller - Detail-->
         <scene sceneID="Nt1-JY-c0I">
@@ -562,19 +565,19 @@
         <!--Seaf Dis Detail View Controller - Detail-->
         <scene sceneID="qow-BH-Ksf">
             <objects>
-                <viewController storyboardIdentifier="" title="Detail" id="ZjO-AT-Ini" customClass="SeafDisDetailViewController" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="4cj-kW-DhW" customClass="UIWebView">
+                <viewController storyboardIdentifier="DISDETAILVC" title="Detail" id="ZjO-AT-Ini" customClass="SeafDisDetailViewController" sceneMemberID="viewController">
+                    <view key="view" clipsSubviews="YES" contentMode="scaleToFill" id="4cj-kW-DhW" customClass="UIWebView">
                         <rect key="frame" x="0.0" y="64" width="703" height="655"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
                     </view>
                     <toolbarItems/>
-                    <navigationItem key="navigationItem" title="Detail" id="c2x-oK-G6H"/>
+                    <navigationItem key="navigationItem" title="Discussion" id="c2x-oK-G6H"/>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Bmp-e1-Qo9" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="1973" y="1283"/>
+            <point key="canvasLocation" x="1915" y="1260"/>
         </scene>
         <!--Intelligent Split View Controller - Item-->
         <scene sceneID="kLi-aU-lDH">
@@ -672,7 +675,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="AGf-nf-LXi" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="1387" y="-1212"/>
+            <point key="canvasLocation" x="1539" y="-2060"/>
         </scene>
         <!--Seaf Detail View Controller - Detail-->
         <scene sceneID="vK1-qr-l6I">
@@ -698,45 +701,53 @@
             </objects>
             <point key="canvasLocation" x="1539" y="-212"/>
         </scene>
+        <!--Seaf Starred Files View Controller - Starred-->
+        <scene sceneID="Xxd-eu-DTG">
+            <objects>
+                <tableViewController storyboardIdentifier="" title="Starred" clearsSelectionOnViewWillAppear="NO" id="pQh-cj-nJC" customClass="SeafStarredFilesViewController" sceneMemberID="viewController">
+                    <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" allowsSelectionDuringEditing="YES" allowsMultipleSelectionDuringEditing="YES" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="lye-1i-9RD">
+                        <rect key="frame" x="0.0" y="64" width="320" height="655"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
+                        <prototypes>
+                            <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="Cell" textLabel="Df4-fL-ajt" style="IBUITableViewCellStyleDefault" id="4f3-AN-kcg">
+                                <rect key="frame" x="0.0" y="22" width="320" height="44"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
+                                    <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                    <subviews>
+                                        <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" text="Title" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="Df4-fL-ajt">
+                                            <rect key="frame" x="10" y="0.0" width="300" height="43"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <fontDescription key="fontDescription" type="system" pointSize="20"/>
+                                            <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                            <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                        </label>
+                                    </subviews>
+                                    <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                </view>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                            </tableViewCell>
+                        </prototypes>
+                        <sections/>
+                        <connections>
+                            <outlet property="dataSource" destination="pQh-cj-nJC" id="l61-c6-rWh"/>
+                            <outlet property="delegate" destination="pQh-cj-nJC" id="2G5-6w-jbf"/>
+                        </connections>
+                    </tableView>
+                    <tabBarItem key="tabBarItem" title="Item" id="hxw-bB-A2V"/>
+                    <navigationItem key="navigationItem" title="Master" id="Xnp-MH-ftg"/>
+                </tableViewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="DLs-dI-Bcl" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-41" y="-1827"/>
+        </scene>
     </scenes>
     <resources>
         <image name="seafile-logo.png" width="619" height="179"/>
     </resources>
-    <classes>
-        <class className="ColorfulButton" superclassName="UIButton">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/ColorfulButton.h"/>
-        </class>
-        <class className="IntelligentSplitViewController" superclassName="UISplitViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/IntelligentSplitViewController.h"/>
-        </class>
-        <class className="SeafActivityViewController" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/SeafActivityViewController.h"/>
-        </class>
-        <class className="SeafDetailViewController" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/SeafDetailViewController.h"/>
-        </class>
-        <class className="SeafDisDetailViewController" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/SeafDisDetailViewController.h"/>
-        </class>
-        <class className="SeafDisMasterViewController" superclassName="UITableViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/SeafDisMasterViewController.h"/>
-        </class>
-        <class className="SeafFileViewController" superclassName="UITableViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/SeafFileViewController.h"/>
-        </class>
-        <class className="SeafSettingsViewController" superclassName="UITableViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/SeafSettingsViewController.h"/>
-            <relationships>
-                <relationship kind="action" name="wipeCache:"/>
-                <relationship kind="outlet" name="cacheCell" candidateClass="UITableViewCell"/>
-                <relationship kind="outlet" name="nameCell" candidateClass="UITableViewCell"/>
-                <relationship kind="outlet" name="serverCell" candidateClass="UITableViewCell"/>
-                <relationship kind="outlet" name="usedspaceCell" candidateClass="UITableViewCell"/>
-                <relationship kind="outlet" name="versionCell" candidateClass="UITableViewCell"/>
-                <relationship kind="outlet" name="wipeCacheBt" candidateClass="ColorfulButton"/>
-            </relationships>
-        </class>
-    </classes>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">
         <simulatedStatusBarMetrics key="statusBar" statusBarStyle="blackTranslucent"/>
         <simulatedOrientationMetrics key="orientation"/>
