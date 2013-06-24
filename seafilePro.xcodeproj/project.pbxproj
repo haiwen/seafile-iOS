@@ -360,6 +360,18 @@
 		5725F68C164EC3C700A2DCC6 /* circle_arrow_right.png in Resources */ = {isa = PBXBuildFile; fileRef = 5725F68B164EC3C700A2DCC6 /* circle_arrow_right.png */; };
 		572B0A7815D16C1C00798C6E /* StartViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 572B0A7615D16C1C00798C6E /* StartViewController.m */; };
 		572B0A7F15D1709500798C6E /* UIViewController+AutoPlatformNibName.m in Sources */ = {isa = PBXBuildFile; fileRef = 572B0A7E15D1709500798C6E /* UIViewController+AutoPlatformNibName.m */; };
+		5732A95D177894E700D806C7 /* DEComposeRuledView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A939177894E700D806C7 /* DEComposeRuledView.m */; };
+		5732A95E177894E700D806C7 /* DEComposeRuledView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A939177894E700D806C7 /* DEComposeRuledView.m */; };
+		5732A95F177894E700D806C7 /* DEComposeTextView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A93B177894E700D806C7 /* DEComposeTextView.m */; };
+		5732A960177894E700D806C7 /* DEComposeTextView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A93B177894E700D806C7 /* DEComposeTextView.m */; };
+		5732A961177894E700D806C7 /* REComposeBackgroundView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A93D177894E700D806C7 /* REComposeBackgroundView.m */; };
+		5732A962177894E700D806C7 /* REComposeBackgroundView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A93D177894E700D806C7 /* REComposeBackgroundView.m */; };
+		5732A963177894E700D806C7 /* REComposeSheetView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A93F177894E700D806C7 /* REComposeSheetView.m */; };
+		5732A964177894E700D806C7 /* REComposeSheetView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A93F177894E700D806C7 /* REComposeSheetView.m */; };
+		5732A965177894E700D806C7 /* REComposeViewController.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 5732A940177894E700D806C7 /* REComposeViewController.bundle */; };
+		5732A966177894E700D806C7 /* REComposeViewController.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 5732A940177894E700D806C7 /* REComposeViewController.bundle */; };
+		5732A967177894E700D806C7 /* REComposeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A942177894E700D806C7 /* REComposeViewController.m */; };
+		5732A968177894E700D806C7 /* REComposeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A942177894E700D806C7 /* REComposeViewController.m */; };
 		57335CF2160D9D2500018AE8 /* Reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 57335CF1160D9D2500018AE8 /* Reachability.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		57335CF9160DA00000018AE8 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57335CF8160DA00000018AE8 /* SystemConfiguration.framework */; };
 		57396B731657DCE30089F32F /* UIImage+FileType.m in Sources */ = {isa = PBXBuildFile; fileRef = 57396B711657DCE30089F32F /* UIImage+FileType.m */; };
@@ -840,6 +852,17 @@
 		572B0A7615D16C1C00798C6E /* StartViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = StartViewController.m; sourceTree = "<group>"; };
 		572B0A7D15D1709500798C6E /* UIViewController+AutoPlatformNibName.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIViewController+AutoPlatformNibName.h"; sourceTree = "<group>"; };
 		572B0A7E15D1709500798C6E /* UIViewController+AutoPlatformNibName.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIViewController+AutoPlatformNibName.m"; sourceTree = "<group>"; };
+		5732A938177894E700D806C7 /* DEComposeRuledView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DEComposeRuledView.h; sourceTree = "<group>"; };
+		5732A939177894E700D806C7 /* DEComposeRuledView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DEComposeRuledView.m; sourceTree = "<group>"; };
+		5732A93A177894E700D806C7 /* DEComposeTextView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DEComposeTextView.h; sourceTree = "<group>"; };
+		5732A93B177894E700D806C7 /* DEComposeTextView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DEComposeTextView.m; sourceTree = "<group>"; };
+		5732A93C177894E700D806C7 /* REComposeBackgroundView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = REComposeBackgroundView.h; sourceTree = "<group>"; };
+		5732A93D177894E700D806C7 /* REComposeBackgroundView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = REComposeBackgroundView.m; sourceTree = "<group>"; };
+		5732A93E177894E700D806C7 /* REComposeSheetView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = REComposeSheetView.h; sourceTree = "<group>"; };
+		5732A93F177894E700D806C7 /* REComposeSheetView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = REComposeSheetView.m; sourceTree = "<group>"; };
+		5732A940177894E700D806C7 /* REComposeViewController.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = REComposeViewController.bundle; sourceTree = "<group>"; };
+		5732A941177894E700D806C7 /* REComposeViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = REComposeViewController.h; sourceTree = "<group>"; };
+		5732A942177894E700D806C7 /* REComposeViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = REComposeViewController.m; sourceTree = "<group>"; };
 		57335CF0160D9D2500018AE8 /* Reachability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Reachability.h; sourceTree = "<group>"; };
 		57335CF1160D9D2500018AE8 /* Reachability.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Reachability.m; sourceTree = "<group>"; };
 		57335CF8160DA00000018AE8 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
@@ -1275,6 +1298,7 @@
 		57094B5515B9AC4A00F48C08 /* libs */ = {
 			isa = PBXGroup;
 			children = (
+				5732A934177894E700D806C7 /* REComposeViewController */,
 				57191CBF176CA6650064BCEA /* QBImagePickerController */,
 				576D89DF15E39ED700F2BD17 /* EGOTableViewPullRefresh */,
 				57094B5615B9AC4A00F48C08 /* AFNetworking */,
@@ -1451,6 +1475,32 @@
 				57191CD7176CA6650064BCEA /* QBImagePickerVideoInfoView.m */,
 			);
 			path = Classes;
+			sourceTree = "<group>";
+		};
+		5732A934177894E700D806C7 /* REComposeViewController */ = {
+			isa = PBXGroup;
+			children = (
+				5732A937177894E700D806C7 /* REComposeViewController */,
+			);
+			path = REComposeViewController;
+			sourceTree = "<group>";
+		};
+		5732A937177894E700D806C7 /* REComposeViewController */ = {
+			isa = PBXGroup;
+			children = (
+				5732A938177894E700D806C7 /* DEComposeRuledView.h */,
+				5732A939177894E700D806C7 /* DEComposeRuledView.m */,
+				5732A93A177894E700D806C7 /* DEComposeTextView.h */,
+				5732A93B177894E700D806C7 /* DEComposeTextView.m */,
+				5732A93C177894E700D806C7 /* REComposeBackgroundView.h */,
+				5732A93D177894E700D806C7 /* REComposeBackgroundView.m */,
+				5732A93E177894E700D806C7 /* REComposeSheetView.h */,
+				5732A93F177894E700D806C7 /* REComposeSheetView.m */,
+				5732A940177894E700D806C7 /* REComposeViewController.bundle */,
+				5732A941177894E700D806C7 /* REComposeViewController.h */,
+				5732A942177894E700D806C7 /* REComposeViewController.m */,
+			);
+			path = REComposeViewController;
 			sourceTree = "<group>";
 		};
 		57396B7D1657E3850089F32F /* Resources */ = {
@@ -2190,6 +2240,7 @@
 				5704C6FD1756710F0028F4FE /* tab-discussion.png in Resources */,
 				57A94358176331050035FD20 /* SeafDirCell.xib in Resources */,
 				57191CF5176CA6650064BCEA /* QBImagePickerController.bundle in Resources */,
+				5732A966177894E700D806C7 /* REComposeViewController.bundle in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2480,6 +2531,7 @@
 				5704C6FC1756710F0028F4FE /* tab-discussion.png in Resources */,
 				57A94357176331050035FD20 /* SeafDirCell.xib in Resources */,
 				57191CF4176CA6650064BCEA /* QBImagePickerController.bundle in Resources */,
+				5732A965177894E700D806C7 /* REComposeViewController.bundle in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2558,6 +2610,11 @@
 				57191CF9176CA6650064BCEA /* QBImagePickerFooterView.m in Sources */,
 				57191CFB176CA6650064BCEA /* QBImagePickerGroupCell.m in Sources */,
 				57191CFD176CA6650064BCEA /* QBImagePickerVideoInfoView.m in Sources */,
+				5732A95E177894E700D806C7 /* DEComposeRuledView.m in Sources */,
+				5732A960177894E700D806C7 /* DEComposeTextView.m in Sources */,
+				5732A962177894E700D806C7 /* REComposeBackgroundView.m in Sources */,
+				5732A964177894E700D806C7 /* REComposeSheetView.m in Sources */,
+				5732A968177894E700D806C7 /* REComposeViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2633,6 +2690,11 @@
 				57191CF8176CA6650064BCEA /* QBImagePickerFooterView.m in Sources */,
 				57191CFA176CA6650064BCEA /* QBImagePickerGroupCell.m in Sources */,
 				57191CFC176CA6650064BCEA /* QBImagePickerVideoInfoView.m in Sources */,
+				5732A95D177894E700D806C7 /* DEComposeRuledView.m in Sources */,
+				5732A95F177894E700D806C7 /* DEComposeTextView.m in Sources */,
+				5732A961177894E700D806C7 /* REComposeBackgroundView.m in Sources */,
+				5732A963177894E700D806C7 /* REComposeSheetView.m in Sources */,
+				5732A967177894E700D806C7 /* REComposeViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

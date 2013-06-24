@@ -9,3 +9,6 @@
 [submodule "libs/QBImagePickerController"]
 	path = libs/QBImagePickerController
 	url = git@github.com:haiwen/QBImagePickerController.git
+[submodule "libs/REComposeViewController"]
+	path = libs/REComposeViewController
+	url = git@github.com:romaonthego/REComposeViewController.git

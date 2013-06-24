@@ -7,18 +7,19 @@
 //
 
 #import "SeafDisDetailViewController.h"
+#import "REComposeViewController.h"
 #import "InputAlertPrompt.h"
+
 #import "SVProgressHUD.h"
 #import "ExtentedString.h"
 #import "Debug.h"
 
-@interface SeafDisDetailViewController ()<UITextFieldDelegate, InputDoneDelegate>
+@interface SeafDisDetailViewController ()<UITextFieldDelegate, REComposeViewControllerDelegate>
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
 @property (strong, nonatomic) NSString *url;
 @property (strong) UIBarButtonItem *msgItem;
 @property (strong) UIBarButtonItem *refreshItem;
-@property (strong) InputAlertPrompt *inputView;
-
+@property (strong) REComposeViewController *composeVC;
 
 - (void)configureView;
 @end
@@ -28,7 +29,7 @@
 @synthesize url = _url;
 @synthesize msgItem;
 @synthesize refreshItem;
-@synthesize inputView = _inputView;
+@synthesize composeVC = _composeVC;
 
 #pragma mark - Managing the detail item
 
@@ -110,7 +111,10 @@
 
 - (void)compose:(id)sender
 {
-    [self popupInputView:@"Add discussion" placeholder:@"discussion"];
+    if (![self isReply])
+        [self popupInputView:@"Discussion" placeholder:@"discussion"];
+    else
+        [self popupInputView:@"Reply" placeholder:@"reply"];
 }
 
 - (void)viewDidLoad
@@ -188,42 +192,37 @@
 
 - (void)popupInputView:(NSString *)title placeholder:(NSString *)tip
 {
-    _inputView = [[InputAlertPrompt alloc] initWithTitle:title delegate:self autoDismiss:NO];
-    _inputView.inputTextField.placeholder = tip;
-    _inputView.inputTextField.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
-    _inputView.inputTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
-    _inputView.inputTextField.returnKeyType = UIReturnKeyDone;
-    _inputView.inputTextField.autocorrectionType = UITextAutocapitalizationTypeNone;
-    _inputView.inputDoneDelegate = self;
-    [_inputView show];
+    _composeVC = [[REComposeViewController alloc] init];
+    _composeVC.title = title;
+    _composeVC.hasAttachment = YES;
+    _composeVC.attachmentImage = [UIImage imageNamed:@"app-icon-ipad-72.png"];
+    _composeVC.delegate = self;
+    _composeVC.text = @"";
+    _composeVC.placeholderText = tip;
+    [_composeVC presentFromRootViewController];
 }
 
-#pragma mark - InputDoneDelegate
-- (BOOL)inputDone:(InputAlertPrompt *)alertView input:(NSString *)input errmsg:(NSString **)errmsg;
+- (void)composeViewController:(REComposeViewController *)composeViewController didFinishWithResult:(REComposeResult)result
 {
-    if (alertView == _inputView) {
-        if (!input) {
-            *errmsg = @"msg must not be empty";
-            return NO;
-        }
-        [_inputView.inputTextField setEnabled:NO];
-        NSString *form = [NSString stringWithFormat:@"message=%@", [input escapedPostForm]];
+    
+    if (result == REComposeResultCancelled) {
+        [composeViewController dismissViewControllerAnimated:YES completion:nil];
+    } else if (result == REComposeResultPosted) {
+        NSLog(@"Text: %@", composeViewController.text);
+        NSString *form = [NSString stringWithFormat:@"message=%@", [composeViewController.text escapedPostForm]];
         [self.connection sendPost:self.url repo:nil form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
-            [_inputView dismissWithClickedButtonIndex:0 animated:YES];
+            [_composeVC dismissViewControllerAnimated:YES completion:nil];
             NSString *html = [JSON objectForKey:@"html"];
             NSString *js = [NSString stringWithFormat:@"addMessage(\"%@\");", [html stringEscapedForJavasacript]];
             [self.webview stringByEvaluatingJavaScriptFromString:js];
             [SVProgressHUD dismiss];
         } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-            if (_inputView) {
+            if (_composeVC) {
                 [SVProgressHUD showErrorWithStatus:@"Failed to add discussion"];
-                [_inputView.inputTextField setEnabled:YES];
             }
         }];
         [SVProgressHUD showWithStatus:@"Adding discussion ..."];
-        return YES;
     }
-    return NO;
 }
 
 @end
