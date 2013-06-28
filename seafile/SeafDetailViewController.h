@@ -12,12 +12,9 @@
 #import "SeafFile.h"
 
 
-@interface SeafDetailViewController : UIViewController <UISplitViewControllerDelegate, UIWebViewDelegate, UIActionSheetDelegate, MFMailComposeViewControllerDelegate, SeafFileDelegate>
+@interface SeafDetailViewController : UIViewController <UISplitViewControllerDelegate, UIWebViewDelegate, UIActionSheetDelegate, MFMailComposeViewControllerDelegate, SeafFileDelegate, SeafDentryDelegate>
 
 @property (nonatomic) id<QLPreviewItem, PreViewDelegate> preViewItem;
-
-- (void)fileContentLoaded :(SeafFile *)file result:(BOOL)res completeness:(int)percent;
-
 - (void)refreshView;
 
 @end

@@ -23,9 +23,6 @@
 @property (readonly) SeafDetailViewController *detailVC;
 @property (readonly) SeafDisDetailViewController *disDetailVC;
 
-@property (retain) NSString *gotoRepo;
-@property (retain) NSString *gotoPath;
-
 @end
 
 @implementation SeafAppDelegate
@@ -49,8 +46,6 @@
 @synthesize uploadnum;
 @synthesize moduleIdx;
 
-@synthesize gotoRepo;
-@synthesize gotoPath;
 
 - (SeafConnection *)connection
 {
@@ -131,8 +126,6 @@
     self.downloadnum = 0;
     self.uploadnum = 0;
     [Utils clearRepoPasswords];
-    self.gotoRepo = nil;
-    self.gotoPath = nil;
     [self.startVC goToDefaultReposView];
     return YES;
 }
@@ -529,29 +522,6 @@
     UINavigationController *nc = [[UINavigationController alloc] initWithRootViewController:c];
     [nc setModalPresentationStyle:UIModalPresentationFullScreen];
     [self.tabbarController presentViewController:nc animated:NO completion:nil];
-}
-
-- (void)goTo:(NSString *)repo path:(NSString *)path
-{
-    self.gotoRepo = repo;
-    self.gotoPath = path;
-    [self.tabbarController setSelectedIndex:TABBED_SEAFILE];
-    [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
-}
-
-- (void)endGoto
-{
-    self.gotoRepo = nil;
-    self.gotoPath = nil;
-}
-
-- (void)checkGoto:(SeafFileViewController *)c
-{
-    if (!self.gotoRepo || !self.gotoPath)
-        return;
-    if (![c goTo:self.gotoRepo path:self.gotoPath]) {
-        [self endGoto];
-    }
 }
 
 @end

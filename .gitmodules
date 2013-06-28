@@ -9,6 +9,8 @@
 [submodule "libs/QBImagePickerController"]
 	path = libs/QBImagePickerController
 	url = git@github.com:haiwen/QBImagePickerController.git
+    ignore = dirty
 [submodule "libs/REComposeViewController"]
 	path = libs/REComposeViewController
 	url = git@github.com:romaonthego/REComposeViewController.git
+    ignore = dirty

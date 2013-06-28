@@ -163,9 +163,19 @@
     return YES;
 }
 
+- (BOOL)htmlOK:(UIWebView *)webView
+{
+    NSString *res = [webView stringByEvaluatingJavaScriptFromString:@"getToken()"];
+    if ([@"TOKEN" isEqualToString:res] || [self.connection.token isEqualToString:res])
+        return YES;
+    return NO;
+}
 - (void)webViewDidFinishLoad:(UIWebView *)webView
 {
     [SVProgressHUD dismiss];
+    if (![self htmlOK:webView])
+        return;
+
     NSString *js = [NSString stringWithFormat:@"setToken(\"%@\");", self.connection.token];
     [webView stringByEvaluatingJavaScriptFromString:js];
     [msgItem setEnabled:YES];
@@ -173,7 +183,9 @@
 
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
 {
-    [SVProgressHUD showErrorWithStatus:@"Failed to load discussions"];
+    Debug("error=%@\n", error);
+      if (error.code != NSURLErrorCancelled)
+        [SVProgressHUD showErrorWithStatus:@"Failed to load discussions"];
 }
 
 - (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSMutableURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType

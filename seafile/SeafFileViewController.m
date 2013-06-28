@@ -555,7 +555,6 @@ enum {
     }
 
     if ([_curEntry isKindOfClass:[SeafFile class]]) {
-        [_curEntry loadContent:NO];
         if (!IsIpad()) {
             SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
             [appdelegate showDetailView:self.detailViewController];
@@ -667,7 +666,7 @@ enum {
 - (void)entryChanged:(SeafBase *)entry
 {
     if ([entry isKindOfClass:[SeafFile class]] && entry == self.detailViewController.preViewItem)
-        [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
+        [self.detailViewController entryChanged:entry];
 }
 - (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent
 {
@@ -681,7 +680,7 @@ enum {
         }
     } else if ([entry isKindOfClass:[SeafFile class]]) {
         if (updated && entry == self.detailViewController.preViewItem)
-            [self.detailViewController fileContentLoaded:(SeafFile *)entry result:YES completeness:percent];
+            [self.detailViewController entry:entry contentUpdated:updated completeness:percent];
     }
     self.state = STATE_INIT;
 }
@@ -692,7 +691,7 @@ enum {
         NSAssert(0, @"Here should never be reached");
     }
     if ([entry isKindOfClass:[SeafFile class]]) {
-        [self.detailViewController fileContentLoaded:(SeafFile *)entry result:NO completeness:0];
+        [self.detailViewController entryContentLoadingFailed:errCode entry:entry];
         return;
     }
 
@@ -899,8 +898,6 @@ enum {
 
 - (void)viewDidAppear:(BOOL)animated
 {
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    [appdelegate checkGoto:self];
     for (SeafUploadFile *file in _directory.uploadItems)
         if (!file.uploaded && !file.uploading)
          [file upload:_connection repo:_directory.repoId path:_directory.path update:NO];

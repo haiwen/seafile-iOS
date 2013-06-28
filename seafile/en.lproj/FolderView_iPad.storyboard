@@ -744,6 +744,29 @@
             </objects>
             <point key="canvasLocation" x="-41" y="-1827"/>
         </scene>
+        <!--Seaf Detail View Controller - Detail-->
+        <scene sceneID="alm-4N-fdG">
+            <objects>
+                <viewController storyboardIdentifier="DETAILVC" title="Detail" wantsFullScreenLayout="YES" hidesBottomBarWhenPushed="YES" id="7pV-uG-dJl" customClass="SeafDetailViewController" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="vft-if-3P2">
+                        <rect key="frame" x="0.0" y="20" width="768" height="1004"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" image="seafile-logo.png" id="W4j-rh-yf1">
+                                <rect key="frame" x="229" y="435" width="310" height="90"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                    </view>
+                    <toolbarItems/>
+                    <navigationItem key="navigationItem" id="Rv3-Pi-9jP"/>
+                    <nil key="simulatedBottomBarMetrics"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="cfQ-M5-5zH" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-2733" y="1100"/>
+        </scene>
     </scenes>
     <resources>
         <image name="seafile-logo.png" width="619" height="179"/>

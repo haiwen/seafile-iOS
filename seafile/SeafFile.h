@@ -44,5 +44,6 @@
 - (void)setStarred:(BOOL)starred;
 - (void)deleteCache;
 - (void)update:(id<SeafFileUploadDelegate>)dg;
+- (void)cancelDownload;
 
 @end

@@ -13,6 +13,7 @@
 #import "DownloadingProgressView.h"
 #import "SeafTextEditorViewController.h"
 #import "M13InfiniteTabBarController.h"
+#import "SeafUploadFile.h"
 
 #import "UIViewController+AlertMessage.h"
 #import "SVProgressHUD.h"
@@ -178,13 +179,15 @@ enum PREVIEW_STATE {
     }
 }
 
-- (void)setPreViewItem:(SeafFile *)item
+- (void)setPreViewItem:(id<QLPreviewItem, PreViewDelegate>)item
 {
     if (self.masterPopoverController != nil) {
         [self.masterPopoverController dismissPopoverAnimated:YES];
     }
 
     preViewItem = item;
+    if ([item isKindOfClass:[SeafFile class]])
+        [(SeafFile *)item loadContent:NO];
     [self refreshView];
 }
 
@@ -226,7 +229,6 @@ enum PREVIEW_STATE {
     barItemsStar  = [NSArray arrayWithObjects:item1, item2, item3, nil];
     barItemsUnStar  = [NSArray arrayWithObjects:item1, item2, item4, nil];
 
-    [self.navigationItem setHidesBackButton:YES];
     if(IsIpad()) {
         NSArray *views = [[NSBundle mainBundle] loadNibNamed:@"FailToPreview_iPad" owner:self options:nil];
         failedView = [views objectAtIndex:0];
@@ -269,8 +271,10 @@ enum PREVIEW_STATE {
     if (self.state == PREVIEW_SUCCESS)
         fileViewController.view.frame = self.view.frame;
     else if (self.state == PREVIEW_NONE) {
-        UIView *v = [self.view.subviews objectAtIndex:0];
-        v.center = self.view.center;
+        if (self.view.subviews.count > 0) {
+            UIView *v = [self.view.subviews objectAtIndex:0];
+            v.center = self.view.center;
+        }
     }
 }
 
@@ -316,6 +320,29 @@ enum PREVIEW_STATE {
         if (percent == 100)
             [self refreshView];
     }
+}
+
+#pragma mark - SeafDentryDelegate
+- (void)entryChanged:(SeafBase *)entry
+{
+    if (entry == preViewItem) {
+        [self setPreViewItem:preViewItem];
+    }
+}
+- (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent
+{
+    if (entry == preViewItem)
+        [self fileContentLoaded:(SeafFile *)entry result:YES completeness:percent];
+}
+
+- (void)entryContentLoadingFailed:(int)errCode entry:(SeafBase *)entry;
+{
+    if (entry == preViewItem)
+        [self fileContentLoaded:(SeafFile *)entry result:NO completeness:0];
+}
+
+- (void)repoPasswordSet:(SeafBase *)entry WithResult:(BOOL)success;
+{
 }
 
 #pragma mark - file operations

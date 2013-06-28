@@ -220,12 +220,12 @@
 }
 - (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent
 {
-    [self.detailViewController fileContentLoaded:(SeafFile *)entry result:updated completeness:percent];
+    [self.detailViewController entry:entry contentUpdated:updated completeness:percent];
 }
 
 - (void)entryContentLoadingFailed:(int)errCode entry:(SeafBase *)entry;
 {
-    [self.detailViewController fileContentLoaded:(SeafFile *)entry result:NO completeness:0];
+    [self.detailViewController entryContentLoadingFailed:errCode entry:entry];
 }
 
 - (void)repoPasswordSet:(SeafBase *)entry WithResult:(BOOL)success;

@@ -22,7 +22,9 @@
 @property (strong, readonly) NSURL *preViewURL;
 @property (readonly) NSURL *checkoutURL;
 @property (strong) NSString *downloadingFileOid;
+@property (strong) NSURLConnection *downloadConncetion;
 @property (strong) NSFileHandle *downloadFileHandle;
+
 @property (strong) SeafUploadFile *ufile;
 @property (weak) id <SeafFileUploadDelegate> udelegate;
 
@@ -35,6 +37,7 @@
 @synthesize filesize;
 @synthesize downloadFileHandle;
 @synthesize downloadingFileOid;
+@synthesize downloadConncetion;
 @synthesize mpath;
 @synthesize ufile;
 @synthesize udelegate;
@@ -54,6 +57,7 @@
         filesize = size;
         downloadingFileOid = nil;
         downloadFileHandle = nil;
+        downloadConncetion = nil;
     }
     [self loadCache];
     return self;
@@ -133,6 +137,7 @@
     self.state = SEAF_DENTRY_INIT;
     [self.delegate entryContentLoadingFailed:error.code entry:self];
     downloadingFileOid = nil;
+    downloadConncetion = nil;
     [SeafAppDelegate decDownloadnum];
     [downloadFileHandle closeFile];
 }
@@ -146,6 +151,7 @@
         [downloadFileHandle closeFile];
         [[NSFileManager defaultManager] moveItemAtPath:[self downloadTempPath] toPath:[self documentPath] error:nil];
         downloadingFileOid = nil;
+        downloadConncetion = nil;
     }
     [SeafAppDelegate decDownloadnum];
     [self.delegate entry:self contentUpdated:YES completeness:100];
@@ -206,10 +212,11 @@
              return;
          }
          downloadingFileOid = curId;
-         NSURLConnection *downloadConncetion = [[NSURLConnection alloc] initWithRequest:downloadRequest delegate:self startImmediately:YES];
+         downloadConncetion = [[NSURLConnection alloc] initWithRequest:downloadRequest delegate:self startImmediately:YES];
          if (!downloadConncetion) {
              self.state = SEAF_DENTRY_UPTODATE;
              downloadingFileOid = nil;
+             downloadConncetion = nil;
              [SeafAppDelegate decDownloadnum];
              [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
              return;
@@ -489,6 +496,18 @@
     [[NSFileManager defaultManager] removeItemAtPath:tempDir error:nil];
     self.ooid = nil;
     self.state = SEAF_DENTRY_INIT;
+}
+
+- (void)cancelDownload
+{
+    if (self.downloadingFileOid) {
+        self.state = SEAF_DENTRY_INIT;
+        [downloadConncetion cancel];
+        downloadingFileOid = nil;
+        downloadConncetion = nil;
+        [SeafAppDelegate decDownloadnum];
+        [downloadFileHandle closeFile];
+    }
 }
 
 #pragma mark - SeafUploadDelegate

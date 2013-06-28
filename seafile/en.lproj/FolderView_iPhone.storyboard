@@ -561,6 +561,9 @@
         </class>
         <class className="SeafDisDetailViewController" superclassName="UIViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/SeafDisDetailViewController.h"/>
+            <relationships>
+                <relationship kind="outlet" name="webview" candidateClass="UIWebView"/>
+            </relationships>
         </class>
         <class className="SeafDisMasterViewController" superclassName="UITableViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/SeafDisMasterViewController.h"/>

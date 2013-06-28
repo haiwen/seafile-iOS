@@ -73,7 +73,7 @@ enum {
     NSURLRequest *request = [[NSURLRequest alloc] initWithURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"index" ofType:@"html"]] cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
     [self.webview loadRequest: request];
     _connection = connection;
-    _url = [_connection.address stringByAppendingString:API_URL"/html/activity/"];
+    _url = [_connection.address stringByAppendingString:API_URL"/html/events/"];
 }
 
 - (void)setUrl:(NSString *)url connection:(SeafConnection *)conn
@@ -135,7 +135,7 @@ enum {
     else if ([urlStr hasPrefix:@"api://"]) {
         NSString *path = @"/";
         NSRange range;
-        NSRange foundRange = [urlStr rangeOfString:@"api://repo/" options:NSCaseInsensitiveSearch];
+        NSRange foundRange = [urlStr rangeOfString:@"/repo/" options:NSCaseInsensitiveSearch];
         if (foundRange.location == NSNotFound)
             return NO;
         range.location = foundRange.location + foundRange.length;
@@ -146,8 +146,18 @@ enum {
         if (foundRange.location != NSNotFound) {
             path = [urlStr substringFromIndex:(foundRange.location+foundRange.length)];
         }
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        [appdelegate goTo:repo_id path:path];
+        path = [path stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+        Debug("repo=%@, path=%@\n", repo_id, path);
+        SeafFile *sfile = [[SeafFile alloc] initWithConnection:self.connection oid:nil repoId:repo_id name:path.lastPathComponent path:path mtime:0 size:0];
+        SeafDetailViewController *detailvc;
+        if (IsIpad()) {
+            detailvc = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
+        } else {
+            detailvc = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
+        }
+        [self.navigationController pushViewController:detailvc animated:NO];
+        sfile.delegate = detailvc;
+        [detailvc setPreViewItem:sfile];
     }
     return NO;
 }
