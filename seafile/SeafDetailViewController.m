@@ -193,7 +193,6 @@ enum PREVIEW_STATE {
 
 - (void)goBack:(id)sender
 {
-    //[self.navigationController popViewControllerAnimated:YES];
     [self.navigationController dismissViewControllerAnimated:NO completion:nil];
 }
 

@@ -300,13 +300,14 @@ enum {
     imagePickerController.delegate = self;
     imagePickerController.allowsMultipleSelection = YES;
 
-    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:imagePickerController];
     if (IsIpad()) {
+        UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:imagePickerController];
         self.popoverController = [[UIPopoverController alloc] initWithContentViewController:navigationController];
         self.popoverController.delegate = self;
         [self.popoverController presentPopoverFromBarButtonItem:sender permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
     } else {
-        [self presentViewController:navigationController animated:YES completion:NULL];
+        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+        [appdelegate showDetailView:imagePickerController];
     }
 }
 
@@ -863,39 +864,6 @@ enum {
 }
 
 #pragma mark - SeafFileUploadDelegate
-- (BOOL)goTo:(NSString *)repo path:(NSString *)path
-{
-    if ([self.directory isKindOfClass:[SeafRepos class]]) {
-        for (int i = 0; i < ((SeafRepos *)_directory).repoGroups.count; ++i) {
-            NSArray *repos = [((SeafRepos *)_directory).repoGroups objectAtIndex:i];
-            for (int j = 0; j < repos.count; ++j) {
-                SeafRepo *r = [repos objectAtIndex:j];
-                if ([r.repoId isEqualToString:repo]) {
-                    NSIndexPath *idx = [NSIndexPath indexPathForRow:j inSection:i];
-                    [self tableView:self.tableView didSelectRowAtIndexPath:idx];
-                }
-            }
-        }
-    } else {
-        if ([@"/" isEqualToString:path])
-            return NO;
-        for (int i = 0; i < _directory.allItems.count; ++i) {
-            SeafBase *b = [_directory.allItems objectAtIndex:i];
-            NSString *p = b.path;
-            if ([b isKindOfClass:[SeafDir class]]) {
-                p = [p stringByAppendingString:@"/"];
-            }
-            if ([b.path isEqualToString:path] || [path hasPrefix:p]) {
-                NSIndexPath *idx = [NSIndexPath indexPathForRow:i inSection:0];
-                [self tableView:self.tableView didSelectRowAtIndexPath:idx];
-            }
-        }
-    }
-    if (self.navigationController.topViewController != self)
-        return YES;
-    return NO;
-}
-
 - (void)viewDidAppear:(BOOL)animated
 {
     for (SeafUploadFile *file in _directory.uploadItems)
@@ -966,7 +934,7 @@ enum {
         [self.popoverController dismissPopoverAnimated:YES];
         self.popoverController = nil;
     } else {
-        [self dismissViewControllerAnimated:YES completion:NULL];
+        [imagePickerController.navigationController dismissViewControllerAnimated:YES completion:NULL];
     }
 }
 

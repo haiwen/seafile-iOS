@@ -152,10 +152,12 @@ enum {
         SeafDetailViewController *detailvc;
         if (IsIpad()) {
             detailvc = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
+            [self.navigationController pushViewController:detailvc animated:NO];
         } else {
             detailvc = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
+            SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+            [appdelegate showDetailView:detailvc];
         }
-        [self.navigationController pushViewController:detailvc animated:NO];
         sfile.delegate = detailvc;
         [detailvc setPreViewItem:sfile];
     }
