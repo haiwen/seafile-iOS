@@ -195,26 +195,28 @@
              curId = self.oid;
          if ([curId isEqualToString:self.ooid]) {
              Debug("already uptodate oid=%@, %@\n", self.ooid, curId);
+             self.state = SEAF_DENTRY_UPTODATE;
              [self.delegate entry:self contentUpdated:NO completeness:100];
              [SeafAppDelegate decDownloadnum];
              return;
          } else if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafFile documentPath:curId]]) {
              [self setOoid:curId];
              [self savetoCache];
+             self.state = SEAF_DENTRY_UPTODATE;
              [self.delegate entry:self contentUpdated:YES completeness:100];
              [SeafAppDelegate decDownloadnum];
              return;
          }
          url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
          NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
-         if (downloadingFileOid) {
+         if (downloadingFileOid) {// Already downloading
              [SeafAppDelegate decDownloadnum];
              return;
          }
          downloadingFileOid = curId;
          downloadConncetion = [[NSURLConnection alloc] initWithRequest:downloadRequest delegate:self startImmediately:YES];
          if (!downloadConncetion) {
-             self.state = SEAF_DENTRY_UPTODATE;
+             self.state = SEAF_DENTRY_INIT;
              downloadingFileOid = nil;
              downloadConncetion = nil;
              [SeafAppDelegate decDownloadnum];
@@ -224,7 +226,7 @@
      }
                     failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-         self.state = SEAF_DENTRY_UPTODATE;
+         self.state = SEAF_DENTRY_INIT;
          [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
      }];
 }

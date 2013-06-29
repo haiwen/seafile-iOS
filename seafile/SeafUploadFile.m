@@ -186,19 +186,14 @@ static NSMutableDictionary *uploadFiles = nil;
     request.URL = url;
     AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
     [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
-        if (totalBytesWritten == totalBytesExpectedToWrite) {
-            _uploading = NO;
-            [self uploadProgress:self result:YES completeness:100];
-        } else {
-            int percent;
-            if (totalBytesExpectedToWrite > 0)
-                percent = totalBytesWritten * 100 / totalBytesExpectedToWrite;
-            else
-                percent = 100;
-            if (percent >= 100)
-                percent = 99;
-            [self uploadProgress:self result:YES completeness:percent];
-        }
+        int percent;
+        if (totalBytesExpectedToWrite > 0)
+            percent = totalBytesWritten * 100 / totalBytesExpectedToWrite;
+        else
+            percent = 100;
+        if (percent >= 100)
+            percent = 99;
+        [self uploadProgress:self result:YES completeness:percent];
     }];
     [operation setCompletionBlockWithSuccess:
      ^(AFHTTPRequestOperation *operation, id responseObject) {
