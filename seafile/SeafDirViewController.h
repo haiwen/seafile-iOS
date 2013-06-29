@@ -7,11 +7,14 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "InputAlertPrompt.h"
 #import "SeafDir.h"
 
-@interface SeafUploadDirViewController : UIViewController
+@protocol SeafDirDelegate <NSObject>
+- (void)chooseDir:(SeafDir *)dir;
+@end
 
-- (id)initWithSeafConnection:(SeafConnection *)conn uploadFile:(SeafUploadFile *) ufile;
+@interface SeafDirViewController : UITableViewController
+
+- (id)initWithSeafDir:(SeafDir *)dir delegate:(id<SeafDirDelegate>)delegate;
 
 @end

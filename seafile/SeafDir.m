@@ -94,7 +94,6 @@
             [self.delegate entry:self contentUpdated:NO completeness:0];
         }
         if (![self.oid isEqualToString:curId]) {
-            Debug("%@, %@,%@\n", @"the parent is out of date and need to reload", self.oid, curId);
             self.oid = curId;
         }
     }

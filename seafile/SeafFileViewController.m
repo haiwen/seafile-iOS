@@ -45,7 +45,6 @@ enum {
 
 @property (strong) UIBarButtonItem *selectAllItem;
 @property (strong) UIBarButtonItem *selectNoneItem;
-@property (strong) UIBarButtonItem *backItem;
 @property (strong) UIBarButtonItem *photoItem;
 
 @property (strong, readonly) UIView *overlayView;
@@ -58,7 +57,6 @@ enum {
 
 @property(nonatomic,strong) UIPopoverController *popoverController;
 @property (retain) NSDateFormatter *formatter;
-@property (retain) SeafUploadFile *ufile;
 
 @end
 
@@ -77,7 +75,6 @@ enum {
 @synthesize popoverController;
 @synthesize formatter;
 @synthesize overlayView = _overlayView;
-@synthesize ufile;
 
 
 - (SeafDetailViewController *)detailViewController
@@ -871,22 +868,30 @@ enum {
          [file upload:_connection repo:_directory.repoId path:_directory.path update:NO];
 }
 
-- (void)chooseUploadDir:(SeafDir *)dir
+- (void)backgroundUpload:(SeafUploadFile *)ufile
 {
-    [dir addUploadFiles:[NSArray arrayWithObject:self.ufile]];
-    [self.ufile upload:dir->connection repo:dir.repoId path:dir.path update:NO];
+    [ufile upload:ufile.udir->connection repo:ufile.udir.repoId path:ufile.udir.path update:NO];
+}
+
+- (void)chooseUploadDir:(SeafDir *)dir file:(SeafUploadFile *)ufile
+{
+    [dir addUploadFiles:[NSArray arrayWithObject:ufile]];
+    [NSThread detachNewThreadSelector:@selector(backgroundUpload:) toTarget:self withObject:ufile];
 }
 
 - (void)uploadFile:(SeafUploadFile *)file
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     file.delegate = self;
-    self.ufile = file;
+    SeafUploadDirViewController *controller = [[SeafUploadDirViewController alloc] initWithSeafConnection:_connection uploadFile:file];
 
-    SeafUploadDirViewController *controller = [[SeafUploadDirViewController alloc] initWithSeafDir:_connection.rootFolder];
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
     [navController setModalPresentationStyle:UIModalPresentationFormSheet];
     [appdelegate.tabbarController presentViewController:navController animated:YES completion:nil];
+    if (IsIpad()) {
+        CGRect frame = navController.view.superview.frame;
+        navController.view.superview.frame = CGRectMake(frame.origin.x+frame.size.width/2-320/2, frame.origin.y+frame.size.height/2-500/2, 320, 500);
+    }
 }
 
 #pragma mark - QBImagePickerControllerDelegate
@@ -896,14 +901,7 @@ enum {
         [self.popoverController dismissPopoverAnimated:YES];
         self.popoverController = nil;
     } else {
-        [self dismissViewControllerAnimated:YES completion:NULL];
-    }
-    if (imagePickerController.allowsMultipleSelection) {
-        NSArray *mediaInfoArray = (NSArray *)info;
-        Debug("Selected %d photos:%@\n", mediaInfoArray.count, mediaInfoArray);
-    } else {
-        NSDictionary *mediaInfo = (NSDictionary *)info;
-        Debug("Selected: %@", mediaInfo);
+        [imagePickerController.navigationController dismissViewControllerAnimated:YES completion:NULL];
     }
 
     NSMutableArray *files = [[NSMutableArray alloc] init];
@@ -918,6 +916,7 @@ enum {
             [UIImageJPEGRepresentation(image, 1.0) writeToFile:path atomically:YES];
             SeafUploadFile *file =  [[SeafUploadFile alloc] initWithPath:path];
             file.delegate = self;
+            //[self performSelector:@selector(uploadFile:) withObject:file afterDelay:0.5];
             [files addObject:file];
         }
     }

@@ -7,45 +7,49 @@
 //
 
 #import "SeafUploadDirViewController.h"
+#import "SeafDirViewController.h"
 #import "SeafAppDelegate.h"
-#import "InputAlertPrompt.h"
 #import "SeafDir.h"
 #import "SeafRepos.h"
-#import "SeafCell.h"
 #import "Debug.h"
-#import "UIViewController+AlertMessage.h"
-#import "SVProgressHUD.h"
 
 
-@interface SeafUploadDirViewController ()
-@property (strong) InputAlertPrompt *passSetView;
+@interface SeafUploadDirViewController ()<SeafDirDelegate>
+@property (strong) SeafConnection *connection;
 @property (strong) SeafDir *curDir;
-@property (strong) UIBarButtonItem *chooseItem;
+@property (strong) SeafUploadFile *ufile;
+@property (strong, nonatomic) IBOutlet UIImageView *imageVIew;
+@property (strong, nonatomic) IBOutlet UILabel *nameLabel;
+@property (strong, nonatomic) IBOutlet UILabel *dirLabel;
+@property (strong) UIBarButtonItem *saveItem;
+
 @end
 
 @implementation SeafUploadDirViewController
-@synthesize passSetView = _passSetView;
-@synthesize directory = _directory;
-@synthesize curDir = _curDir;
-@synthesize chooseItem;
 
-- (id)initWithStyle:(UITableViewStyle)style
-{
-    self = [super initWithStyle:style];
-    if (self) {
-        // Custom initialization
-    }
-    return self;
-}
 
-- (id)initWithSeafDir:(SeafDir *)dir
+- (id)initWithSeafConnection:(SeafConnection *)conn uploadFile:(SeafUploadFile *) ufile;
 {
-    if (self = [self init]) {
-        _directory = dir;
-        self.title = _directory.name;
-        _directory.delegate = self;
-        [_directory loadContent:NO];
+    if (self = [super initWithNibName:@"SeafUploadDirViewController" bundle:nil]) {
+        self.connection = conn;
+        self.title = @"Save to Seafile";
+        self.ufile = ufile;
+
+        NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+        NSString *repo = [userDefaults objectForKey: [@"LAST-REPO" stringByAppendingString:conn.address]];
+        NSString *path = [userDefaults objectForKey:[@"LAST-DIR" stringByAppendingString:conn.address]];
+        if (repo && path) {
+            NSString *name = path.lastPathComponent;
+            if (!name)
+                name = @"/";
+            self.curDir = [[SeafDir alloc] initWithConnection:conn oid:nil repoId:repo name:name.lastPathComponent path:path];
+        }
+        self.view.autoresizesSubviews = YES;
+        for (UIView *v in self.view.subviews) {
+            v.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin| UIViewAutoresizingFlexibleRightMargin|  UIViewAutoresizingFlexibleBottomMargin;
+        }
     }
+
     return self;
 }
 
@@ -54,11 +58,24 @@
     [self.navigationController dismissViewControllerAnimated:YES completion:nil];
 }
 
-- (void)chooseFolder:(id)sender
+- (void)save:(id)sender
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [self.navigationController dismissViewControllerAnimated:YES completion:nil];
-    [appdelegate.fileVC chooseUploadDir:_directory];
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults setObject:_curDir.repoId forKey:[@"LAST-REPO" stringByAppendingString:self.connection.address]];
+    [userDefaults setObject:_curDir.path forKey:[@"LAST-DIR" stringByAppendingString:self.connection.address]];
+    [userDefaults synchronize];
+    [appdelegate.fileVC chooseUploadDir:_curDir file:self.ufile];
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    [self.navigationController setToolbarHidden:YES];
+    if (self.curDir)
+        [self.saveItem setEnabled:YES];
+    else
+        [self.saveItem setEnabled:NO];
 }
 
 - (void)viewDidLoad
@@ -66,168 +83,51 @@
     [super viewDidLoad];
 
     // Uncomment the following line to preserve selection between presentations.
-    // self.clearsSelectionOnViewWillAppear = NO;
-    UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithTitle:_directory.name style:UIBarButtonItemStyleBordered target:self action:nil];
-    self.navigationItem.backBarButtonItem = backItem;
-    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStyleBordered target:self action:@selector(cancel:)];
-    self.tableView.scrollEnabled = YES;
+    self.saveItem = [[UIBarButtonItem alloc] initWithTitle:@"Save" style:UIBarButtonItemStyleBordered target:self action:@selector(save:)];
+    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStyleBordered target:self action:@selector(cancel:)];
+    self.navigationItem.rightBarButtonItem = self.saveItem;
 
-    UIBarButtonItem *flexibleFpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
-    chooseItem = [[UIBarButtonItem alloc] initWithTitle:@"Choose Current Folder" style:UIBarButtonItemStyleBordered target:self action:@selector(chooseFolder:)];
-    NSArray *items = [NSArray arrayWithObjects:flexibleFpaceItem, chooseItem, flexibleFpaceItem, nil];
-    [self setToolbarItems:items];
-}
-
-- (void)viewDidAppear:(BOOL)animated
-{
-    [self.navigationController setToolbarHidden:NO];
-    if ([_directory isKindOfClass:[SeafRepos class]]) {
-        [chooseItem setEnabled:NO];
+    self.imageVIew.image = self.ufile.image;
+    self.nameLabel.text = self.ufile.name;
+    if (self.curDir) {
+        [self.saveItem setEnabled:YES];
+        self.dirLabel.text = self.curDir.name;
+    } else {
+        self.dirLabel.text = @"choose";
+        [self.saveItem setEnabled:NO];
     }
 }
+
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
 
-#pragma mark - Table view data source
-
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+- (IBAction)choose:(id)sender
 {
-    return 1;
+    SeafDirViewController *c = [[SeafDirViewController alloc] initWithSeafDir:self.connection.rootFolder delegate:self];
+    [self.navigationController pushViewController:c animated:YES];
 }
 
-- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
+#pragma mark - SeafDirDelegate
+- (void)chooseDir:(SeafDir *)dir
 {
-    return @"Choose a folder to upload the file";
-}
-
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
-{
-    int i;
-    for (i = 0; i < _directory.items.count; ++i) {
-        if (![[_directory.items objectAtIndex:i] isKindOfClass:[SeafDir class]]) {
-            break;
-        }
-    }
-    return i;
-}
-
-- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    NSString *CellIdentifier = @"SeafDirCell";
-    SeafCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-    if (cell == nil) {
-        NSArray *cells = [[NSBundle mainBundle] loadNibNamed:CellIdentifier owner:self options:nil];
-        cell = [cells objectAtIndex:0];
-    }
-
-    SeafDir *sdir = [_directory.items objectAtIndex:indexPath.row];
-    cell.textLabel.text = sdir.name;
-    cell.textLabel.font = [UIFont systemFontOfSize:17];
-    cell.imageView.image = sdir.image;
-    cell.detailTextLabel.text = nil;
-    return cell;
-}
-
-// Override to support conditional editing of the table view.
-- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    return NO;
-}
-
-
-#pragma mark - Table view delegate
-
-- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    _curDir = [_directory.items objectAtIndex:indexPath.row];
-    if ([_curDir isKindOfClass:[SeafRepo class]] && [(SeafRepo *)_curDir passwordRequired]) {
-        [self popupSetRepoPassword];
-        return;
-    }
-    SeafUploadDirViewController *controller = [[SeafUploadDirViewController alloc] initWithSeafDir:_curDir];
-    [self.navigationController pushViewController:controller animated:YES];
-}
-
-
-#pragma mark - InputDoneDelegate
-- (BOOL)inputDone:(InputAlertPrompt *)alertView input:(NSString *)input errmsg:(NSString **)errmsg;
-{
-    if (!input) {
-        *errmsg = @"Password must not be empty";
-        return NO;
-    }
-    if (input.length < 3 || input.length  > 100) {
-        *errmsg = @"The length of password should be between 3 and 100";
-        return NO;
-    }
-    [_curDir setDelegate:self];
-    [_curDir setRepoPassword:input];
-    [_passSetView.inputTextField setEnabled:NO];
-    return YES;
-}
-
-- (void)alertView:(UIAlertView *)alertView willDismissWithButtonIndex:(NSInteger)buttonIndex
-{
-    _passSetView = nil;
-}
-
-- (void)popupSetRepoPassword
-{
-    _passSetView = [[InputAlertPrompt alloc] initWithTitle:@"Password of this library" delegate:self autoDismiss:NO];
-    _passSetView.inputTextField.secureTextEntry = YES;
-    _passSetView.inputTextField.placeholder = @"Password";
-    _passSetView.inputTextField.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
-    _passSetView.inputTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
-    _passSetView.inputTextField.returnKeyType = UIReturnKeyDone;
-    _passSetView.inputTextField.keyboardType = UIKeyboardTypeASCIICapable;
-    _passSetView.inputTextField.autocorrectionType = UITextAutocapitalizationTypeNone;
-    _passSetView.inputDoneDelegate = self;
-    [_passSetView show];
-}
-
-#pragma mark - SeafDentryDelegate
-- (void)entryChanged:(SeafBase *)entry
-{
-}
-
-- (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent
-{
-    if (updated) {
-        [self.tableView reloadData];
-    }
-}
-- (void)entryContentLoadingFailed:(int)errCode entry:(SeafBase *)entry
-{
-    if ([_directory hasCache]) {
-        return;
-    }
-    if (errCode == HTTP_ERR_REPO_PASSWORD_REQUIRED) {
-        NSAssert(0, @"Here should never be reached");
-    } else {
-        [SVProgressHUD showErrorWithStatus:@"Failed to load content of the directory"];
-        [self.tableView reloadData];
-        Warning("Failed to load directory content %@\n", _directory.name);
-    }
-}
-
-- (void)repoPasswordSet:(SeafBase *)entry WithResult:(BOOL)success
-{
-    if (success) {
-        [self.passSetView dismissWithClickedButtonIndex:0 animated:YES];
-        SeafUploadDirViewController *controller = [[SeafUploadDirViewController alloc] initWithSeafDir:_curDir];
-        [self.navigationController pushViewController:controller animated:YES];
-    } else {
-        [self alertWithMessage:@"Wrong library password"];
-        [_passSetView.inputTextField setEnabled:YES];
-    }
+    _curDir = dir;
+    self.dirLabel.text = self.curDir.name;
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
     return YES;
+}
+
+- (void)viewDidUnload
+{
+    [self setImageVIew:nil];
+    [self setNameLabel:nil];
+    [self setDirLabel:nil];
+    [super viewDidUnload];
 }
 
 @end
