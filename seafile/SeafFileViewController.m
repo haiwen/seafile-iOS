@@ -148,6 +148,7 @@ enum {
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    self.clearsSelectionOnViewWillAppear = YES;
     self.formatter = [[NSDateFormatter alloc] init];
     [self.formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
     self.tableView.scrollEnabled = YES;
@@ -367,11 +368,15 @@ enum {
     [_directory setDelegate:self];
     [_directory loadContent:NO];
     Debug("%@, loading ... %d\n", _directory.path, _directory.hasCache);
+
+    if (![_directory isKindOfClass:[SeafRepos class]])
+        self.tableView.sectionHeaderHeight = 0;
     [self refreshView];
     if (!_directory.hasCache) {
         [self.tableView addSubview:self.overlayView];
         self.state = STATE_LOADING;
     }
+
 }
 
 #pragma mark - Table View
@@ -608,19 +613,30 @@ enum {
     }
 }
 
-- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
 {
     if (![_directory isKindOfClass:[SeafRepos class]]) {
         return nil;
     }
+    NSString *text = nil;
     if (section == 0) {
-        return @"My Own Libraries";
+        text = @"My Own Libraries";
+    } else {
+        NSArray *repos =  [[((SeafRepos *)_directory)repoGroups] objectAtIndex:section];
+        SeafRepo *repo = (SeafRepo *)[repos objectAtIndex:0];
+        if (!repo)
+            text =  @"";
+        else
+            text =  repo.owner;
     }
-    NSArray *repos =  [[((SeafRepos *)_directory)repoGroups] objectAtIndex:section];
-    SeafRepo *repo = (SeafRepo *)[repos objectAtIndex:0];
-    if (!repo)
-        return @"";
-    return repo.owner;
+    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 3, tableView.bounds.size.width - 10, 18)];
+    label.text = text;
+    label.textColor = [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:0.75];
+    label.backgroundColor = [UIColor clearColor];
+    [headerView setBackgroundColor:HEADER_COLOR];
+    [headerView addSubview:label];
+    return headerView;
 }
 
 #pragma mark - InputDoneDelegate
