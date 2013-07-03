@@ -3,7 +3,7 @@
 //  seafilePro
 //
 //  Created by Wang Wei on 5/18/13.
-//  Copyright (c) 2013 tsinghua. All rights reserved.
+//  Copyright (c) 2013 Seafile Ltd. All rights reserved.
 //
 
 #import "SeafActivityViewController.h"
