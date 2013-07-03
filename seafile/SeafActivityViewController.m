@@ -8,6 +8,7 @@
 
 #import "SeafActivityViewController.h"
 #import "SeafAppDelegate.h"
+#import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
 #import "Debug.h"
 
@@ -27,18 +28,7 @@ enum {
 @implementation SeafActivityViewController
 @synthesize connection = _connection;
 @synthesize url = _url;
-@synthesize state;
 
-
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
-{
-    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
-    if (self) {
-        // Custom initialization
-    }
-    return self;
-
-}
 
 - (void)refresh:(id)sender
 {
@@ -55,8 +45,9 @@ enum {
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
     self.title = @"Activities";
-    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(refresh:)];
+    self.navigationItem.rightBarButtonItem = [self getBarItemAutoSize:@"refresh.png" action:@selector(refresh:)];
     self.webview.delegate = self;
+    self.navigationController.navigationBar.tintColor = BAR_COLOR;
 }
 
 - (void)didReceiveMemoryWarning

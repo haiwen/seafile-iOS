@@ -18,6 +18,8 @@
 #import "SeafDisMasterViewController.h"
 #import "Reachability.h"
 
+#define BAR_COLOR     [UIColor colorWithRed:240.0/256 green:128.0/256 blue:48.0/256 alpha:1.0]
+
 enum {
     TABBED_SEAFILE = 0,
     TABBED_STARRED,

@@ -70,7 +70,6 @@
 {
     [super viewDidLoad];
     self.tableView.rowHeight = 50;
-    //self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(refresh:)];
     if (_refreshHeaderView == nil) {
         EGORefreshTableHeaderView *view = [[EGORefreshTableHeaderView alloc] initWithFrame:CGRectMake(0.0f, 0.0f - self.tableView.bounds.size.height, self.view.frame.size.width, self.tableView.bounds.size.height)];
         view.delegate = self;
@@ -78,6 +77,7 @@
         _refreshHeaderView = view;
     }
     [_refreshHeaderView refreshLastUpdatedDate];
+    self.navigationController.navigationBar.tintColor = BAR_COLOR;
 }
 
 - (void)viewWillAppear:(BOOL)animated

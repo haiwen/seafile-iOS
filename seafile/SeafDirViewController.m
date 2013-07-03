@@ -13,22 +13,27 @@
 #import "SeafRepos.h"
 #import "SeafCell.h"
 #import "Debug.h"
-#import "UIViewController+AlertMessage.h"
+#import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
 
 
-@interface SeafDirViewController ()<SeafDentryDelegate, InputDoneDelegate, UIAlertViewDelegate>
+@interface SeafDirViewController ()<SeafDentryDelegate, InputDoneDelegate, UIAlertViewDelegate, EGORefreshTableHeaderDelegate, UIScrollViewDelegate>
 @property (strong) InputAlertPrompt *passSetView;
 @property (strong) SeafDir *curDir;
 @property (strong) UIBarButtonItem *chooseItem;
 @property (strong, readonly) SeafDir *directory;
 @property (strong) id<SeafDirDelegate> delegate;
+
+@property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
+
 @end
 
 @implementation SeafDirViewController
 @synthesize passSetView = _passSetView;
 @synthesize directory = _directory;
 @synthesize curDir = _curDir;
+@synthesize refreshHeaderView = _refreshHeaderView;
+
 
 
 - (id)initWithSeafDir:(SeafDir *)dir delegate:(id<SeafDirDelegate>)delegate
@@ -68,6 +73,14 @@
     NSArray *items = [NSArray arrayWithObjects:flexibleFpaceItem, self.chooseItem, flexibleFpaceItem, nil];
     [self setToolbarItems:items];
     self.title = _directory.name;
+
+    if (_refreshHeaderView == nil) {
+        EGORefreshTableHeaderView *view = [[EGORefreshTableHeaderView alloc] initWithFrame:CGRectMake(0.0f, 0.0f - self.tableView.bounds.size.height, self.view.frame.size.width, self.tableView.bounds.size.height)];
+        view.delegate = self;
+        [self.tableView addSubview:view];
+        _refreshHeaderView = view;
+    }
+    [_refreshHeaderView refreshLastUpdatedDate];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -187,12 +200,14 @@
 
 - (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent
 {
+    [self doneLoadingTableViewData];
     if (updated) {
         [self.tableView reloadData];
     }
 }
 - (void)entryContentLoadingFailed:(int)errCode entry:(SeafBase *)entry
 {
+    [self doneLoadingTableViewData];
     if ([_directory hasCache]) {
         return;
     }
@@ -226,4 +241,44 @@
 {
     [super viewDidUnload];
 }
+
+- (void)doneLoadingTableViewData
+{
+    [_refreshHeaderView egoRefreshScrollViewDataSourceDidFinishedLoading:self.tableView];
+}
+
+#pragma mark - mark UIScrollViewDelegate Methods
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView
+{
+    [_refreshHeaderView egoRefreshScrollViewDidScroll:scrollView];
+}
+
+- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
+{
+    [_refreshHeaderView egoRefreshScrollViewDidEndDragging:scrollView];
+}
+
+#pragma mark - EGORefreshTableHeaderDelegate Methods
+- (void)egoRefreshTableHeaderDidTriggerRefresh:(EGORefreshTableHeaderView*)view
+{
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    if (![appdelegate checkNetworkStatus]) {
+        [self performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
+        return;
+    }
+
+    _directory.delegate = self;
+    [_directory loadContent:YES];
+}
+
+- (BOOL)egoRefreshTableHeaderDataSourceIsLoading:(EGORefreshTableHeaderView*)view
+{
+    return NO;
+}
+
+- (NSDate*)egoRefreshTableHeaderDataSourceLastUpdated:(EGORefreshTableHeaderView*)view
+{
+    return [NSDate date];
+}
+
 @end

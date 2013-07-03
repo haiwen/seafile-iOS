@@ -15,7 +15,7 @@
 #import "M13InfiniteTabBarController.h"
 #import "SeafUploadFile.h"
 
-#import "UIViewController+AlertMessage.h"
+#import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
 #import "ExtentedString.h"
 #import "Debug.h"
@@ -42,7 +42,9 @@ enum PREVIEW_STATE {
 @property (strong) NSArray *barItemsStar;
 @property (strong) NSArray *barItemsUnStar;
 @property (strong) UIBarButtonItem *editItem;
-@property (strong) UIBarButtonItem *uploadItem;
+@property (strong) UIBarButtonItem *exportItem;
+@property (strong) UIBarButtonItem *shareItem;
+
 
 @property (strong) UIDocumentInteractionController *docController;
 @property int buttonIndex;
@@ -62,8 +64,6 @@ enum PREVIEW_STATE {
 
 @synthesize barItemsStar;
 @synthesize barItemsUnStar;
-@synthesize editItem;
-@synthesize uploadItem;
 @synthesize buttonIndex;
 @synthesize docController;
 
@@ -74,6 +74,7 @@ enum PREVIEW_STATE {
 {
     return (self.state == PREVIEW_SUCCESS) || (self.state == PREVIEW_WEBVIEW) || (self.state == PREVIEW_WEBVIEW_JS);
 }
+
 - (void)checkNavItems
 {
     NSMutableArray *array = [[NSMutableArray alloc] init];
@@ -86,8 +87,6 @@ enum PREVIEW_STATE {
     if ([preViewItem editable] && [self previewSuccess]
         && [preViewItem.mime hasPrefix:@"text/"])
         [array addObject:self.editItem];
-    //if (IsIpad() && [preViewItem isKindOfClass:[SeafFile class]] && ((SeafFile *)preViewItem).mpath)
-    //    [array addObject:self.uploadItem];
     self.navigationItem.rightBarButtonItems = array;
 }
 
@@ -212,21 +211,14 @@ enum PREVIEW_STATE {
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
 
-    self.editItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCompose target:self action:@selector(editFile:)];
-    NSString* path = [[NSBundle mainBundle] pathForResource:@"upload" ofType:@"png"];
-    self.uploadItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageWithContentsOfFile:path] style:UIBarButtonItemStylePlain target:self action:@selector(uploadFile:)];
-
-    UIBarButtonItem *item1 = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAction target:self action:@selector(openElsewhere:)];
-    path = [[NSBundle mainBundle] pathForResource:@"gray-share-icon" ofType:@"png"];
-    UIBarButtonItem *item2 = [[UIBarButtonItem alloc] initWithImage:[UIImage imageWithContentsOfFile:path] style:UIBarButtonItemStylePlain target:self action:@selector(share:)];
-    path = [[NSBundle mainBundle] pathForResource:@"gray-star-icon" ofType:@"png"];
-    UIBarButtonItem *item3 = [[UIBarButtonItem alloc] initWithImage:[UIImage imageWithContentsOfFile:path] style:UIBarButtonItemStylePlain target:self action:@selector(unstarFile:)];
-
-    path = [[NSBundle mainBundle] pathForResource:@"gray-unstar-icon" ofType:@"png"];
-    UIBarButtonItem *item4 = [[UIBarButtonItem alloc] initWithImage:[UIImage imageWithContentsOfFile:path] style:UIBarButtonItemStylePlain target:self action:@selector(starFile:)];
-
-    barItemsStar  = [NSArray arrayWithObjects:item1, item2, item3, nil];
-    barItemsUnStar  = [NSArray arrayWithObjects:item1, item2, item4, nil];
+    self.editItem = [self getBarItemAutoSize:@"editfile.png" action:@selector(editFile:)];
+    self.exportItem = [self getBarItemAutoSize:@"export.png" action:@selector(openElsewhere:)];
+    self.shareItem = [self getBarItemAutoSize:@"share.png" action:@selector(share:)];
+    UIBarButtonItem *item3 = [self getBarItemAutoSize:@"star.png" action:@selector(unstarFile:)];
+    UIBarButtonItem *item4 = [self getBarItemAutoSize:@"unstar.png" action:@selector(starFile:)];
+    UIBarButtonItem *space = [self getSpaceBarItem:20.0];
+    barItemsStar  = [NSArray arrayWithObjects:self.exportItem, space, self.shareItem, space, item3, space, nil];
+    barItemsUnStar  = [NSArray arrayWithObjects:self.exportItem, space, self.shareItem, space, item4, space, nil];
 
     if(IsIpad()) {
         NSArray *views = [[NSBundle mainBundle] loadNibNamed:@"FailToPreview_iPad" owner:self options:nil];
@@ -243,6 +235,7 @@ enum PREVIEW_STATE {
     self.state = PREVIEW_NONE;
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
+    self.navigationController.navigationBar.tintColor = BAR_COLOR;
     [self refreshView];
 }
 
@@ -378,6 +371,7 @@ enum PREVIEW_STATE {
 
 - (IBAction)openElsewhere:(id)sender
 {
+    BOOL ret;
     NSURL *url = [preViewItem checkoutURL];
     if (!url)
         return;
@@ -385,7 +379,7 @@ enum PREVIEW_STATE {
     if (docController)
         [docController dismissMenuAnimated:NO];
     docController = [UIDocumentInteractionController interactionControllerWithURL:url];
-    BOOL ret = [docController presentOpenInMenuFromBarButtonItem:sender animated:YES];
+    ret = [docController presentOpenInMenuFromBarButtonItem:self.exportItem animated:YES];
     if (ret == NO) {
         [SVProgressHUD showErrorWithStatus:@"There is no app which can open this type of file on this machine"];
     }
@@ -402,7 +396,7 @@ enum PREVIEW_STATE {
     else
         actionSheet = [[UIActionSheet alloc] initWithTitle:@"How would you like to share this file?" delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Email", @"Copy Link to Clipboard", nil ];
 
-    [actionSheet showFromBarButtonItem:sender animated:YES];
+    [actionSheet showFromBarButtonItem:self.shareItem animated:YES];
 }
 
 #pragma mark - UIActionSheetDelegate

@@ -11,6 +11,8 @@
 #import "SeafAppDelegate.h"
 #import "SeafDir.h"
 #import "SeafRepos.h"
+
+#import "UIViewController+Extend.h"
 #import "Debug.h"
 
 
@@ -30,7 +32,7 @@
 
 - (id)initWithSeafConnection:(SeafConnection *)conn uploadFile:(SeafUploadFile *) ufile;
 {
-    if (self = [super initWithNibName:@"SeafUploadDirViewController" bundle:nil]) {
+    if (self = [self initWithAutoNibName]) {
         self.connection = conn;
         self.title = @"Save to Seafile";
         self.ufile = ufile;
@@ -91,7 +93,7 @@
     self.nameLabel.text = self.ufile.name;
     if (self.curDir) {
         [self.saveItem setEnabled:YES];
-        self.dirLabel.text = self.curDir.name;
+        self.dirLabel.text = [[self.connection getRepoName:self.curDir.repoId] stringByAppendingString:self.curDir.path];
     } else {
         self.dirLabel.text = @"choose";
         [self.saveItem setEnabled:NO];
@@ -107,14 +109,14 @@
 - (IBAction)choose:(id)sender
 {
     SeafDirViewController *c = [[SeafDirViewController alloc] initWithSeafDir:self.connection.rootFolder delegate:self];
-    [self.navigationController pushViewController:c animated:YES];
+    [self.navigationController pushViewController:c animated:NO];
 }
 
 #pragma mark - SeafDirDelegate
 - (void)chooseDir:(SeafDir *)dir
 {
     _curDir = dir;
-    self.dirLabel.text = self.curDir.name;
+    self.dirLabel.text = [[self.connection getRepoName:self.curDir.repoId] stringByAppendingString:self.curDir.path];
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation

@@ -11,9 +11,10 @@
 
 @interface SeafDisDetailViewController : UIViewController <UISplitViewControllerDelegate, UIWebViewDelegate>
 
-@property (strong, nonatomic) NSString *group;
 @property (strong, nonatomic, readonly) IBOutlet UIWebView *webview;
 
 @property (strong, nonatomic) SeafConnection *connection;
+
+- (void)setGroup:(NSString *)groupName groupId:(NSString *)groupId;
 
 @end

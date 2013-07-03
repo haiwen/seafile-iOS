@@ -23,8 +23,6 @@
 		5704C6ED175518F00028F4FE /* M13PanGestureRecognizer.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6E1175518F00028F4FE /* M13PanGestureRecognizer.m */; };
 		5704C6F01755AA0D0028F4FE /* SeafEmptyViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6EF1755AA0C0028F4FE /* SeafEmptyViewController.m */; };
 		5704C6F11755AA0D0028F4FE /* SeafEmptyViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6EF1755AA0C0028F4FE /* SeafEmptyViewController.m */; };
-		5704C6F317566BEA0028F4FE /* SeafActivityViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F217566BEA0028F4FE /* SeafActivityViewController.xib */; };
-		5704C6F417566BEA0028F4FE /* SeafActivityViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F217566BEA0028F4FE /* SeafActivityViewController.xib */; };
 		5704C6F81756710F0028F4FE /* tab-account.png in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F51756710F0028F4FE /* tab-account.png */; };
 		5704C6F91756710F0028F4FE /* tab-account.png in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F51756710F0028F4FE /* tab-account.png */; };
 		5704C6FA1756710F0028F4FE /* tab-activity.png in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F61756710F0028F4FE /* tab-activity.png */; };
@@ -113,7 +111,6 @@
 		571D8CBD1677881400F1A22C /* SeafRepos.m in Sources */ = {isa = PBXBuildFile; fileRef = 5709513415B9B6BD00F48C08 /* SeafRepos.m */; };
 		571D8CBE1677881400F1A22C /* SeafData.m in Sources */ = {isa = PBXBuildFile; fileRef = 571CE59B15C01879004CD403 /* SeafData.m */; };
 		571D8CBF1677881400F1A22C /* StartViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 572B0A7615D16C1C00798C6E /* StartViewController.m */; };
-		571D8CC01677881400F1A22C /* UIViewController+AutoPlatformNibName.m in Sources */ = {isa = PBXBuildFile; fileRef = 572B0A7E15D1709500798C6E /* UIViewController+AutoPlatformNibName.m */; };
 		571D8CC11677881400F1A22C /* FileViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 576B9EB315DD2D4E00802D07 /* FileViewController.m */; };
 		571D8CC21677881400F1A22C /* FileSizeFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 57F53B0515DF49EF0027140D /* FileSizeFormatter.m */; };
 		571D8CC31677881400F1A22C /* EGORefreshTableHeaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = 576D89E315E39ED700F2BD17 /* EGORefreshTableHeaderView.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
@@ -122,7 +119,7 @@
 		571D8CC71677881400F1A22C /* ExtentedString.m in Sources */ = {isa = PBXBuildFile; fileRef = 5760144A15FA193900FBDDEF /* ExtentedString.m */; };
 		571D8CC81677881400F1A22C /* Reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 57335CF1160D9D2500018AE8 /* Reachability.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		571D8CC91677881400F1A22C /* FailToPreview.m in Sources */ = {isa = PBXBuildFile; fileRef = 57655331161BEA40005E5327 /* FailToPreview.m */; };
-		571D8CCA1677881400F1A22C /* UIViewController+AlertMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = 57655341161D848F005E5327 /* UIViewController+AlertMessage.m */; };
+		571D8CCA1677881400F1A22C /* UIViewController+Extend.m in Sources */ = {isa = PBXBuildFile; fileRef = 57655341161D848F005E5327 /* UIViewController+Extend.m */; };
 		571D8CCB1677881400F1A22C /* DownloadingProgressView.m in Sources */ = {isa = PBXBuildFile; fileRef = 571ABF521625DF31005C9B08 /* DownloadingProgressView.m */; };
 		571D8CCD1677881400F1A22C /* Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 572500B2162984B3001E5C75 /* Utils.m */; };
 		571D8CCE1677881400F1A22C /* SeafUploadFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 572500B516298C7C001E5C75 /* SeafUploadFile.m */; };
@@ -165,7 +162,7 @@
 		571D8CF71677881400F1A22C /* app-icon-iphone-29@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D6EAF1604804E000310F5 /* app-icon-iphone-29@2x.png */; };
 		571D8CF81677881400F1A22C /* app-icon-iphone-57.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D6EB01604804E000310F5 /* app-icon-iphone-57.png */; };
 		571D8CF91677881400F1A22C /* app-icon-iphone-57@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D6EB11604804E000310F5 /* app-icon-iphone-57@2x.png */; };
-		571D8CFA1677881400F1A22C /* gray-share-icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D6EB41604804E000310F5 /* gray-share-icon.png */; };
+		571D8CFA1677881400F1A22C /* share.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D6EB41604804E000310F5 /* share.png */; };
 		571D8CFB1677881400F1A22C /* Default-Landscape~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 5761834116094D3700B05BA5 /* Default-Landscape~ipad.png */; };
 		571D8CFC1677881400F1A22C /* Default-Landscape@2x~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 5761834316094D7000B05BA5 /* Default-Landscape@2x~ipad.png */; };
 		571D8CFD1677881400F1A22C /* Default-Portrait@2x~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 5761834516094D7300B05BA5 /* Default-Portrait@2x~ipad.png */; };
@@ -177,10 +174,8 @@
 		571D8D041677881400F1A22C /* tab-settings.png in Resources */ = {isa = PBXBuildFile; fileRef = 5764C834163C3E83006AD511 /* tab-settings.png */; };
 		571D8D051677881400F1A22C /* tab-home.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A055A51644EAD1006511AA /* tab-home.png */; };
 		571D8D061677881400F1A22C /* seafile-logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A055A81644EC84006511AA /* seafile-logo.png */; };
-		571D8D081677881400F1A22C /* gray-star-icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 57853C9116467A5000CE8857 /* gray-star-icon.png */; };
-		571D8D091677881400F1A22C /* gray-unstar-icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 5725F686164E5AF400A2DCC6 /* gray-unstar-icon.png */; };
-		571D8D0A1677881400F1A22C /* gray-right-circle-arrow-icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 5725F689164EA80C00A2DCC6 /* gray-right-circle-arrow-icon.png */; };
-		571D8D0B1677881400F1A22C /* circle_arrow_right.png in Resources */ = {isa = PBXBuildFile; fileRef = 5725F68B164EC3C700A2DCC6 /* circle_arrow_right.png */; };
+		571D8D081677881400F1A22C /* star.png in Resources */ = {isa = PBXBuildFile; fileRef = 57853C9116467A5000CE8857 /* star.png */; };
+		571D8D091677881400F1A22C /* unstar.png in Resources */ = {isa = PBXBuildFile; fileRef = 5725F686164E5AF400A2DCC6 /* unstar.png */; };
 		571D8D0C1677881400F1A22C /* upload.png in Resources */ = {isa = PBXBuildFile; fileRef = 570A300316578B4F007D0CBF /* upload.png */; };
 		571D8D0D1677881400F1A22C /* FileTypeIcons.plist in Resources */ = {isa = PBXBuildFile; fileRef = 57396B7E1657E3850089F32F /* FileTypeIcons.plist */; };
 		571D8D0E1677881400F1A22C /* 80_application-7zip.png in Resources */ = {isa = PBXBuildFile; fileRef = 57396B801657E3850089F32F /* 80_application-7zip.png */; };
@@ -355,11 +350,8 @@
 		571F514A168C80470055D69B /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 571F5147168C80380055D69B /* MobileCoreServices.framework */; };
 		572500B3162984B3001E5C75 /* Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 572500B2162984B3001E5C75 /* Utils.m */; };
 		572500B616298C7C001E5C75 /* SeafUploadFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 572500B516298C7C001E5C75 /* SeafUploadFile.m */; };
-		5725F687164E5AF400A2DCC6 /* gray-unstar-icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 5725F686164E5AF400A2DCC6 /* gray-unstar-icon.png */; };
-		5725F68A164EA80C00A2DCC6 /* gray-right-circle-arrow-icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 5725F689164EA80C00A2DCC6 /* gray-right-circle-arrow-icon.png */; };
-		5725F68C164EC3C700A2DCC6 /* circle_arrow_right.png in Resources */ = {isa = PBXBuildFile; fileRef = 5725F68B164EC3C700A2DCC6 /* circle_arrow_right.png */; };
+		5725F687164E5AF400A2DCC6 /* unstar.png in Resources */ = {isa = PBXBuildFile; fileRef = 5725F686164E5AF400A2DCC6 /* unstar.png */; };
 		572B0A7815D16C1C00798C6E /* StartViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 572B0A7615D16C1C00798C6E /* StartViewController.m */; };
-		572B0A7F15D1709500798C6E /* UIViewController+AutoPlatformNibName.m in Sources */ = {isa = PBXBuildFile; fileRef = 572B0A7E15D1709500798C6E /* UIViewController+AutoPlatformNibName.m */; };
 		5732A95D177894E700D806C7 /* DEComposeRuledView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A939177894E700D806C7 /* DEComposeRuledView.m */; };
 		5732A95E177894E700D806C7 /* DEComposeRuledView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A939177894E700D806C7 /* DEComposeRuledView.m */; };
 		5732A95F177894E700D806C7 /* DEComposeTextView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A93B177894E700D806C7 /* DEComposeTextView.m */; };
@@ -554,7 +546,7 @@
 		57655332161BEA40005E5327 /* FailToPreview.m in Sources */ = {isa = PBXBuildFile; fileRef = 57655331161BEA40005E5327 /* FailToPreview.m */; };
 		57655334161BEA69005E5327 /* FailToPreview_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57655333161BEA69005E5327 /* FailToPreview_iPad.xib */; };
 		5765533E161D44A2005E5327 /* MessageUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5765533D161D44A2005E5327 /* MessageUI.framework */; };
-		57655342161D848F005E5327 /* UIViewController+AlertMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = 57655341161D848F005E5327 /* UIViewController+AlertMessage.m */; };
+		57655342161D848F005E5327 /* UIViewController+Extend.m in Sources */ = {isa = PBXBuildFile; fileRef = 57655341161D848F005E5327 /* UIViewController+Extend.m */; };
 		576B9EB515DD2D4E00802D07 /* FileViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 576B9EB315DD2D4E00802D07 /* FileViewController.m */; };
 		576B9EC115DD394600802D07 /* QuickLook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 576B9EC015DD394600802D07 /* QuickLook.framework */; };
 		576C91C3177EB43F007B50BD /* SeafDirViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 576C91C2177EB43F007B50BD /* SeafDirViewController.m */; };
@@ -567,7 +559,7 @@
 		576D6EBA1604804E000310F5 /* app-icon-iphone-29@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D6EAF1604804E000310F5 /* app-icon-iphone-29@2x.png */; };
 		576D6EBB1604804E000310F5 /* app-icon-iphone-57.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D6EB01604804E000310F5 /* app-icon-iphone-57.png */; };
 		576D6EBC1604804E000310F5 /* app-icon-iphone-57@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D6EB11604804E000310F5 /* app-icon-iphone-57@2x.png */; };
-		576D6EBF1604804E000310F5 /* gray-share-icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D6EB41604804E000310F5 /* gray-share-icon.png */; };
+		576D6EBF1604804E000310F5 /* share.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D6EB41604804E000310F5 /* share.png */; };
 		576D89ED15E39ED700F2BD17 /* EGORefreshTableHeaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = 576D89E315E39ED700F2BD17 /* EGORefreshTableHeaderView.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		576D89EE15E39ED700F2BD17 /* blackArrow.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D89E515E39ED700F2BD17 /* blackArrow.png */; };
 		576D89EF15E39ED700F2BD17 /* blackArrow@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D89E615E39ED700F2BD17 /* blackArrow@2x.png */; };
@@ -615,7 +607,7 @@
 		5782EE7A1734F3A300A76338 /* wmd-buttons.png in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE6B1734F3A300A76338 /* wmd-buttons.png */; };
 		5782EE7B1734F3A300A76338 /* wmd-buttons.png in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE6B1734F3A300A76338 /* wmd-buttons.png */; };
 		57853C8F164675CB00CE8857 /* SeafStarredFilesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57853C8E164675CB00CE8857 /* SeafStarredFilesViewController.m */; };
-		57853C9216467A5000CE8857 /* gray-star-icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 57853C9116467A5000CE8857 /* gray-star-icon.png */; };
+		57853C9216467A5000CE8857 /* star.png in Resources */ = {isa = PBXBuildFile; fileRef = 57853C9116467A5000CE8857 /* star.png */; };
 		57853C951646818A00CE8857 /* SeafStarredFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57853C941646818A00CE8857 /* SeafStarredFile.m */; };
 		57931B551632E5DB00B462BA /* SeafUploadDirViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57931B531632E5DB00B462BA /* SeafUploadDirViewController.m */; };
 		5795F49A16A7266F00FF90E3 /* SeafAccountCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 5795F49916A7266E00FF90E3 /* SeafAccountCell.m */; };
@@ -624,6 +616,18 @@
 		5795F49E16A726E000FF90E3 /* SeafAccountCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5795F49C16A726DF00FF90E3 /* SeafAccountCell.xib */; };
 		57A055A61644EAD1006511AA /* tab-home.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A055A51644EAD1006511AA /* tab-home.png */; };
 		57A055A91644EC84006511AA /* seafile-logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A055A81644EC84006511AA /* seafile-logo.png */; };
+		57A550DA177F23BB00E3BA9B /* refresh.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550D9177F23BB00E3BA9B /* refresh.png */; };
+		57A550DB177F23BB00E3BA9B /* refresh.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550D9177F23BB00E3BA9B /* refresh.png */; };
+		57A550DD177F283700E3BA9B /* addmsg.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550DC177F283700E3BA9B /* addmsg.png */; };
+		57A550DE177F283700E3BA9B /* addmsg.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550DC177F283700E3BA9B /* addmsg.png */; };
+		57A550E0177F2C4400E3BA9B /* export.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550DF177F2C4400E3BA9B /* export.png */; };
+		57A550E1177F2C4400E3BA9B /* export.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550DF177F2C4400E3BA9B /* export.png */; };
+		57A550E3177F2CBA00E3BA9B /* editfile.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550E2177F2CBA00E3BA9B /* editfile.png */; };
+		57A550E4177F2CBA00E3BA9B /* editfile.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550E2177F2CBA00E3BA9B /* editfile.png */; };
+		57A550E7177F311700E3BA9B /* checkmask.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550E5177F311700E3BA9B /* checkmask.png */; };
+		57A550E8177F311700E3BA9B /* checkmask.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550E5177F311700E3BA9B /* checkmask.png */; };
+		57A550E9177F311700E3BA9B /* plus.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550E6177F311700E3BA9B /* plus.png */; };
+		57A550EA177F311700E3BA9B /* plus.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550E6177F311700E3BA9B /* plus.png */; };
 		57A94357176331050035FD20 /* SeafDirCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57A94356176331050035FD20 /* SeafDirCell.xib */; };
 		57A94358176331050035FD20 /* SeafDirCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57A94356176331050035FD20 /* SeafDirCell.xib */; };
 		57B66EB015BA513E00C2B41B /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57B66EAF15BA513E00C2B41B /* QuartzCore.framework */; };
@@ -764,7 +768,6 @@
 		5704C6E1175518F00028F4FE /* M13PanGestureRecognizer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = M13PanGestureRecognizer.m; sourceTree = "<group>"; };
 		5704C6EE1755AA0C0028F4FE /* SeafEmptyViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafEmptyViewController.h; sourceTree = "<group>"; };
 		5704C6EF1755AA0C0028F4FE /* SeafEmptyViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafEmptyViewController.m; sourceTree = "<group>"; };
-		5704C6F217566BEA0028F4FE /* SeafActivityViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafActivityViewController.xib; sourceTree = "<group>"; };
 		5704C6F51756710F0028F4FE /* tab-account.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-account.png"; sourceTree = "<group>"; };
 		5704C6F61756710F0028F4FE /* tab-activity.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-activity.png"; sourceTree = "<group>"; };
 		5704C6F71756710F0028F4FE /* tab-discussion.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-discussion.png"; sourceTree = "<group>"; };
@@ -849,13 +852,9 @@
 		572500B416298C7C001E5C75 /* SeafUploadFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafUploadFile.h; sourceTree = "<group>"; };
 		572500B516298C7C001E5C75 /* SeafUploadFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafUploadFile.m; sourceTree = "<group>"; };
 		5725063C162328EB0002B040 /* Debug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Debug.h; sourceTree = "<group>"; };
-		5725F686164E5AF400A2DCC6 /* gray-unstar-icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "gray-unstar-icon.png"; sourceTree = "<group>"; };
-		5725F689164EA80C00A2DCC6 /* gray-right-circle-arrow-icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "gray-right-circle-arrow-icon.png"; sourceTree = "<group>"; };
-		5725F68B164EC3C700A2DCC6 /* circle_arrow_right.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = circle_arrow_right.png; sourceTree = "<group>"; };
+		5725F686164E5AF400A2DCC6 /* unstar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = unstar.png; sourceTree = "<group>"; };
 		572B0A7515D16C1C00798C6E /* StartViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StartViewController.h; sourceTree = "<group>"; };
 		572B0A7615D16C1C00798C6E /* StartViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = StartViewController.m; sourceTree = "<group>"; };
-		572B0A7D15D1709500798C6E /* UIViewController+AutoPlatformNibName.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIViewController+AutoPlatformNibName.h"; sourceTree = "<group>"; };
-		572B0A7E15D1709500798C6E /* UIViewController+AutoPlatformNibName.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIViewController+AutoPlatformNibName.m"; sourceTree = "<group>"; };
 		5732A938177894E700D806C7 /* DEComposeRuledView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DEComposeRuledView.h; sourceTree = "<group>"; };
 		5732A939177894E700D806C7 /* DEComposeRuledView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DEComposeRuledView.m; sourceTree = "<group>"; };
 		5732A93A177894E700D806C7 /* DEComposeTextView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DEComposeTextView.h; sourceTree = "<group>"; };
@@ -1057,8 +1056,8 @@
 		57655331161BEA40005E5327 /* FailToPreview.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FailToPreview.m; sourceTree = "<group>"; };
 		57655333161BEA69005E5327 /* FailToPreview_iPad.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = FailToPreview_iPad.xib; sourceTree = "<group>"; };
 		5765533D161D44A2005E5327 /* MessageUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MessageUI.framework; path = System/Library/Frameworks/MessageUI.framework; sourceTree = SDKROOT; };
-		57655340161D83CF005E5327 /* UIViewController+AlertMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIViewController+AlertMessage.h"; sourceTree = "<group>"; };
-		57655341161D848F005E5327 /* UIViewController+AlertMessage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIViewController+AlertMessage.m"; sourceTree = "<group>"; };
+		57655340161D83CF005E5327 /* UIViewController+Extend.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIViewController+Extend.h"; sourceTree = "<group>"; };
+		57655341161D848F005E5327 /* UIViewController+Extend.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIViewController+Extend.m"; sourceTree = "<group>"; };
 		576B9EB215DD2D4E00802D07 /* FileViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FileViewController.h; sourceTree = "<group>"; };
 		576B9EB315DD2D4E00802D07 /* FileViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FileViewController.m; sourceTree = "<group>"; };
 		576B9EC015DD394600802D07 /* QuickLook.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickLook.framework; path = System/Library/Frameworks/QuickLook.framework; sourceTree = SDKROOT; };
@@ -1072,7 +1071,7 @@
 		576D6EAF1604804E000310F5 /* app-icon-iphone-29@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "app-icon-iphone-29@2x.png"; sourceTree = "<group>"; };
 		576D6EB01604804E000310F5 /* app-icon-iphone-57.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "app-icon-iphone-57.png"; sourceTree = "<group>"; };
 		576D6EB11604804E000310F5 /* app-icon-iphone-57@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "app-icon-iphone-57@2x.png"; sourceTree = "<group>"; };
-		576D6EB41604804E000310F5 /* gray-share-icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "gray-share-icon.png"; sourceTree = "<group>"; };
+		576D6EB41604804E000310F5 /* share.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = share.png; sourceTree = "<group>"; };
 		576D89E215E39ED700F2BD17 /* EGORefreshTableHeaderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EGORefreshTableHeaderView.h; sourceTree = "<group>"; };
 		576D89E315E39ED700F2BD17 /* EGORefreshTableHeaderView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EGORefreshTableHeaderView.m; sourceTree = "<group>"; };
 		576D89E515E39ED700F2BD17 /* blackArrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = blackArrow.png; sourceTree = "<group>"; };
@@ -1109,7 +1108,7 @@
 		5782EE6B1734F3A300A76338 /* wmd-buttons.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "wmd-buttons.png"; path = "htmls/wmd-buttons.png"; sourceTree = SOURCE_ROOT; };
 		57853C8D164675CB00CE8857 /* SeafStarredFilesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafStarredFilesViewController.h; sourceTree = "<group>"; };
 		57853C8E164675CB00CE8857 /* SeafStarredFilesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafStarredFilesViewController.m; sourceTree = "<group>"; };
-		57853C9116467A5000CE8857 /* gray-star-icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "gray-star-icon.png"; sourceTree = "<group>"; };
+		57853C9116467A5000CE8857 /* star.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = star.png; sourceTree = "<group>"; };
 		57853C931646818A00CE8857 /* SeafStarredFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafStarredFile.h; sourceTree = "<group>"; };
 		57853C941646818A00CE8857 /* SeafStarredFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafStarredFile.m; sourceTree = "<group>"; };
 		57931B521632E5DB00B462BA /* SeafUploadDirViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafUploadDirViewController.h; sourceTree = "<group>"; };
@@ -1119,6 +1118,12 @@
 		5795F49C16A726DF00FF90E3 /* SeafAccountCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafAccountCell.xib; sourceTree = "<group>"; };
 		57A055A51644EAD1006511AA /* tab-home.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-home.png"; sourceTree = "<group>"; };
 		57A055A81644EC84006511AA /* seafile-logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "seafile-logo.png"; sourceTree = "<group>"; };
+		57A550D9177F23BB00E3BA9B /* refresh.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = refresh.png; sourceTree = "<group>"; };
+		57A550DC177F283700E3BA9B /* addmsg.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = addmsg.png; sourceTree = "<group>"; };
+		57A550DF177F2C4400E3BA9B /* export.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = export.png; sourceTree = "<group>"; };
+		57A550E2177F2CBA00E3BA9B /* editfile.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = editfile.png; sourceTree = "<group>"; };
+		57A550E5177F311700E3BA9B /* checkmask.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = checkmask.png; sourceTree = "<group>"; };
+		57A550E6177F311700E3BA9B /* plus.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = plus.png; sourceTree = "<group>"; };
 		57A94356176331050035FD20 /* SeafDirCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafDirCell.xib; sourceTree = "<group>"; };
 		57B66EAF15BA513E00C2B41B /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		57BD931E174B0A0E00F7732F /* SeafDisDetailViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafDisDetailViewController.h; sourceTree = "<group>"; };
@@ -1269,6 +1274,7 @@
 			isa = PBXGroup;
 			children = (
 				570DFACA16A19EFD00ADD5F2 /* account.png */,
+				57A550DC177F283700E3BA9B /* addmsg.png */,
 				576D6EAA1604804E000310F5 /* app-icon-ipad-50.png */,
 				576D6EAB1604804E000310F5 /* app-icon-ipad-50@2x.png */,
 				576D6EAC1604804E000310F5 /* app-icon-ipad-72.png */,
@@ -1277,7 +1283,7 @@
 				576D6EAF1604804E000310F5 /* app-icon-iphone-29@2x.png */,
 				576D6EB01604804E000310F5 /* app-icon-iphone-57.png */,
 				576D6EB11604804E000310F5 /* app-icon-iphone-57@2x.png */,
-				5725F68B164EC3C700A2DCC6 /* circle_arrow_right.png */,
+				57A550E5177F311700E3BA9B /* checkmask.png */,
 				571401671663AE3500A4E194 /* Default-568h@2x.png */,
 				5761834316094D7000B05BA5 /* Default-Landscape@2x~ipad.png */,
 				5761834116094D3700B05BA5 /* Default-Landscape~ipad.png */,
@@ -1285,18 +1291,21 @@
 				5761834716094D7600B05BA5 /* Default-Portrait~ipad.png */,
 				571401631663AE1600A4E194 /* Default.png */,
 				571401651663AE2400A4E194 /* Default@2x.png */,
-				5725F689164EA80C00A2DCC6 /* gray-right-circle-arrow-icon.png */,
-				576D6EB41604804E000310F5 /* gray-share-icon.png */,
-				57853C9116467A5000CE8857 /* gray-star-icon.png */,
-				5725F686164E5AF400A2DCC6 /* gray-unstar-icon.png */,
+				57A550E2177F2CBA00E3BA9B /* editfile.png */,
+				57A550DF177F2C4400E3BA9B /* export.png */,
 				57BD932D174DDA8700F7732F /* group.png */,
+				57A550E6177F311700E3BA9B /* plus.png */,
+				57A550D9177F23BB00E3BA9B /* refresh.png */,
 				57A055A81644EC84006511AA /* seafile-logo.png */,
+				576D6EB41604804E000310F5 /* share.png */,
+				57853C9116467A5000CE8857 /* star.png */,
 				5704C6F51756710F0028F4FE /* tab-account.png */,
 				5704C6F61756710F0028F4FE /* tab-activity.png */,
 				5704C6F71756710F0028F4FE /* tab-discussion.png */,
 				57A055A51644EAD1006511AA /* tab-home.png */,
 				5764C834163C3E83006AD511 /* tab-settings.png */,
 				577B6C6016AAD241008E82C2 /* tab-star.png */,
+				5725F686164E5AF400A2DCC6 /* unstar.png */,
 				570A300316578B4F007D0CBF /* upload.png */,
 			);
 			path = images;
@@ -1364,19 +1373,19 @@
 				570DFAC416A15D0100ADD5F2 /* SeafAccountViewController.m */,
 				5775EA0E17476FAD000A1765 /* SeafActivityViewController.h */,
 				5775EA0F17476FAD000A1765 /* SeafActivityViewController.m */,
-				57DB828315A833FA00097CEC /* SeafAppDelegate.m */,
 				574456821774922B00EA46A6 /* SeafAppDelegate.h */,
+				57DB828315A833FA00097CEC /* SeafAppDelegate.m */,
 				577B6C6316AADBA3008E82C2 /* SeafCell.h */,
 				577B6C6416AADBA3008E82C2 /* SeafCell.m */,
 				57DB829115A833FA00097CEC /* SeafDetailViewController.h */,
 				57DB829215A833FA00097CEC /* SeafDetailViewController.m */,
+				576C91C1177EB43F007B50BD /* SeafDirViewController.h */,
+				576C91C2177EB43F007B50BD /* SeafDirViewController.m */,
 				57BD931E174B0A0E00F7732F /* SeafDisDetailViewController.h */,
 				57BD931F174B0A0E00F7732F /* SeafDisDetailViewController.m */,
 				57BD9320174B0A0E00F7732F /* SeafDisMasterViewController.h */,
 				57BD9321174B0A0E00F7732F /* SeafDisMasterViewController.m */,
 				5704C6EE1755AA0C0028F4FE /* SeafEmptyViewController.h */,
-				576C91C1177EB43F007B50BD /* SeafDirViewController.h */,
-				576C91C2177EB43F007B50BD /* SeafDirViewController.m */,
 				5704C6EF1755AA0C0028F4FE /* SeafEmptyViewController.m */,
 				57DB828E15A833FA00097CEC /* SeafFileViewController.h */,
 				57DB828F15A833FA00097CEC /* SeafFileViewController.m */,
@@ -1435,13 +1444,12 @@
 				57DB828515A833FA00097CEC /* FolderView_iPhone.storyboard */,
 				5795F49C16A726DF00FF90E3 /* SeafAccountCell.xib */,
 				570DFAC516A15D0100ADD5F2 /* SeafAccountViewController.xib */,
-				5704C6F217566BEA0028F4FE /* SeafActivityViewController.xib */,
 				577B6C6716AADC26008E82C2 /* SeafCell.xib */,
 				57A94356176331050035FD20 /* SeafDirCell.xib */,
 				570DFAD116A1EA3D00ADD5F2 /* SeafStartHeaderView.xib */,
 				57E1E89D1737ED0F006601FE /* SeafTextEditorViewController.xib */,
-				57C07CE8163272CE00502B06 /* SeafUploadingFileCell.xib */,
 				574171BF177E8D3700D24B6F /* SeafUploadDirViewController.xib */,
+				57C07CE8163272CE00502B06 /* SeafUploadingFileCell.xib */,
 			);
 			name = ui;
 			sourceTree = "<group>";
@@ -1887,10 +1895,8 @@
 				57396B781657E0900089F32F /* SKFileTypeImageLoader.m */,
 				57396B721657DCE30089F32F /* UIImage+FileType.h */,
 				57396B711657DCE30089F32F /* UIImage+FileType.m */,
-				57655340161D83CF005E5327 /* UIViewController+AlertMessage.h */,
-				57655341161D848F005E5327 /* UIViewController+AlertMessage.m */,
-				572B0A7D15D1709500798C6E /* UIViewController+AutoPlatformNibName.h */,
-				572B0A7E15D1709500798C6E /* UIViewController+AutoPlatformNibName.m */,
+				57655340161D83CF005E5327 /* UIViewController+Extend.h */,
+				57655341161D848F005E5327 /* UIViewController+Extend.m */,
 				572500B1162984B2001E5C75 /* Utils.h */,
 				572500B2162984B3001E5C75 /* Utils.m */,
 			);
@@ -1991,7 +1997,7 @@
 				571D8CF71677881400F1A22C /* app-icon-iphone-29@2x.png in Resources */,
 				571D8CF81677881400F1A22C /* app-icon-iphone-57.png in Resources */,
 				571D8CF91677881400F1A22C /* app-icon-iphone-57@2x.png in Resources */,
-				571D8CFA1677881400F1A22C /* gray-share-icon.png in Resources */,
+				571D8CFA1677881400F1A22C /* share.png in Resources */,
 				571D8CFB1677881400F1A22C /* Default-Landscape~ipad.png in Resources */,
 				571D8CFC1677881400F1A22C /* Default-Landscape@2x~ipad.png in Resources */,
 				571D8CFD1677881400F1A22C /* Default-Portrait@2x~ipad.png in Resources */,
@@ -2003,10 +2009,8 @@
 				571D8D041677881400F1A22C /* tab-settings.png in Resources */,
 				571D8D051677881400F1A22C /* tab-home.png in Resources */,
 				571D8D061677881400F1A22C /* seafile-logo.png in Resources */,
-				571D8D081677881400F1A22C /* gray-star-icon.png in Resources */,
-				571D8D091677881400F1A22C /* gray-unstar-icon.png in Resources */,
-				571D8D0A1677881400F1A22C /* gray-right-circle-arrow-icon.png in Resources */,
-				571D8D0B1677881400F1A22C /* circle_arrow_right.png in Resources */,
+				571D8D081677881400F1A22C /* star.png in Resources */,
+				571D8D091677881400F1A22C /* unstar.png in Resources */,
 				571D8D0C1677881400F1A22C /* upload.png in Resources */,
 				571D8D0D1677881400F1A22C /* FileTypeIcons.plist in Resources */,
 				571D8D0E1677881400F1A22C /* 80_application-7zip.png in Resources */,
@@ -2244,7 +2248,6 @@
 				57EB1378174782B900D2ACF9 /* bt-undo2.png in Resources */,
 				57BD932C174DD86D00F7732F /* index.html in Resources */,
 				57BD932F174DDA8700F7732F /* group.png in Resources */,
-				5704C6F417566BEA0028F4FE /* SeafActivityViewController.xib in Resources */,
 				5704C6F91756710F0028F4FE /* tab-account.png in Resources */,
 				5704C6FB1756710F0028F4FE /* tab-activity.png in Resources */,
 				5704C6FD1756710F0028F4FE /* tab-discussion.png in Resources */,
@@ -2252,6 +2255,12 @@
 				57191CF5176CA6650064BCEA /* QBImagePickerController.bundle in Resources */,
 				5732A966177894E700D806C7 /* REComposeViewController.bundle in Resources */,
 				574171C1177E8D3800D24B6F /* SeafUploadDirViewController.xib in Resources */,
+				57A550DB177F23BB00E3BA9B /* refresh.png in Resources */,
+				57A550DE177F283700E3BA9B /* addmsg.png in Resources */,
+				57A550E1177F2C4400E3BA9B /* export.png in Resources */,
+				57A550E4177F2CBA00E3BA9B /* editfile.png in Resources */,
+				57A550E8177F311700E3BA9B /* checkmask.png in Resources */,
+				57A550EA177F311700E3BA9B /* plus.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2286,7 +2295,7 @@
 				576D6EBA1604804E000310F5 /* app-icon-iphone-29@2x.png in Resources */,
 				576D6EBB1604804E000310F5 /* app-icon-iphone-57.png in Resources */,
 				576D6EBC1604804E000310F5 /* app-icon-iphone-57@2x.png in Resources */,
-				576D6EBF1604804E000310F5 /* gray-share-icon.png in Resources */,
+				576D6EBF1604804E000310F5 /* share.png in Resources */,
 				5761834216094D3700B05BA5 /* Default-Landscape~ipad.png in Resources */,
 				5761834416094D7000B05BA5 /* Default-Landscape@2x~ipad.png in Resources */,
 				5761834616094D7300B05BA5 /* Default-Portrait@2x~ipad.png in Resources */,
@@ -2298,10 +2307,8 @@
 				5764C835163C3E83006AD511 /* tab-settings.png in Resources */,
 				57A055A61644EAD1006511AA /* tab-home.png in Resources */,
 				57A055A91644EC84006511AA /* seafile-logo.png in Resources */,
-				57853C9216467A5000CE8857 /* gray-star-icon.png in Resources */,
-				5725F687164E5AF400A2DCC6 /* gray-unstar-icon.png in Resources */,
-				5725F68A164EA80C00A2DCC6 /* gray-right-circle-arrow-icon.png in Resources */,
-				5725F68C164EC3C700A2DCC6 /* circle_arrow_right.png in Resources */,
+				57853C9216467A5000CE8857 /* star.png in Resources */,
+				5725F687164E5AF400A2DCC6 /* unstar.png in Resources */,
 				570A300416578B4F007D0CBF /* upload.png in Resources */,
 				57396C9F1657E3850089F32F /* FileTypeIcons.plist in Resources */,
 				57396CA01657E3850089F32F /* 80_application-7zip.png in Resources */,
@@ -2536,7 +2543,6 @@
 				57EB1377174782B900D2ACF9 /* bt-undo2.png in Resources */,
 				57BD932B174DD86D00F7732F /* index.html in Resources */,
 				57BD932E174DDA8700F7732F /* group.png in Resources */,
-				5704C6F317566BEA0028F4FE /* SeafActivityViewController.xib in Resources */,
 				5704C6F81756710F0028F4FE /* tab-account.png in Resources */,
 				5704C6FA1756710F0028F4FE /* tab-activity.png in Resources */,
 				5704C6FC1756710F0028F4FE /* tab-discussion.png in Resources */,
@@ -2544,6 +2550,12 @@
 				57191CF4176CA6650064BCEA /* QBImagePickerController.bundle in Resources */,
 				5732A965177894E700D806C7 /* REComposeViewController.bundle in Resources */,
 				574171C0177E8D3800D24B6F /* SeafUploadDirViewController.xib in Resources */,
+				57A550DA177F23BB00E3BA9B /* refresh.png in Resources */,
+				57A550DD177F283700E3BA9B /* addmsg.png in Resources */,
+				57A550E0177F2C4400E3BA9B /* export.png in Resources */,
+				57A550E3177F2CBA00E3BA9B /* editfile.png in Resources */,
+				57A550E7177F311700E3BA9B /* checkmask.png in Resources */,
+				57A550E9177F311700E3BA9B /* plus.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2574,7 +2586,6 @@
 				571D8CBD1677881400F1A22C /* SeafRepos.m in Sources */,
 				571D8CBE1677881400F1A22C /* SeafData.m in Sources */,
 				571D8CBF1677881400F1A22C /* StartViewController.m in Sources */,
-				571D8CC01677881400F1A22C /* UIViewController+AutoPlatformNibName.m in Sources */,
 				571D8CC11677881400F1A22C /* FileViewController.m in Sources */,
 				571D8CC21677881400F1A22C /* FileSizeFormatter.m in Sources */,
 				571D8CC31677881400F1A22C /* EGORefreshTableHeaderView.m in Sources */,
@@ -2583,7 +2594,7 @@
 				571D8CC71677881400F1A22C /* ExtentedString.m in Sources */,
 				571D8CC81677881400F1A22C /* Reachability.m in Sources */,
 				571D8CC91677881400F1A22C /* FailToPreview.m in Sources */,
-				571D8CCA1677881400F1A22C /* UIViewController+AlertMessage.m in Sources */,
+				571D8CCA1677881400F1A22C /* UIViewController+Extend.m in Sources */,
 				571D8CCB1677881400F1A22C /* DownloadingProgressView.m in Sources */,
 				571D8CCD1677881400F1A22C /* Utils.m in Sources */,
 				571D8CCE1677881400F1A22C /* SeafUploadFile.m in Sources */,
@@ -2655,7 +2666,6 @@
 				5709513A15B9B6BD00F48C08 /* SeafRepos.m in Sources */,
 				571CE59C15C01879004CD403 /* SeafData.m in Sources */,
 				572B0A7815D16C1C00798C6E /* StartViewController.m in Sources */,
-				572B0A7F15D1709500798C6E /* UIViewController+AutoPlatformNibName.m in Sources */,
 				576B9EB515DD2D4E00802D07 /* FileViewController.m in Sources */,
 				57F53B0615DF49EF0027140D /* FileSizeFormatter.m in Sources */,
 				576D89ED15E39ED700F2BD17 /* EGORefreshTableHeaderView.m in Sources */,
@@ -2664,7 +2674,7 @@
 				5760144B15FA193900FBDDEF /* ExtentedString.m in Sources */,
 				57335CF2160D9D2500018AE8 /* Reachability.m in Sources */,
 				57655332161BEA40005E5327 /* FailToPreview.m in Sources */,
-				57655342161D848F005E5327 /* UIViewController+AlertMessage.m in Sources */,
+				57655342161D848F005E5327 /* UIViewController+Extend.m in Sources */,
 				571ABF531625DF31005C9B08 /* DownloadingProgressView.m in Sources */,
 				572500B3162984B3001E5C75 /* Utils.m in Sources */,
 				572500B616298C7C001E5C75 /* SeafUploadFile.m in Sources */,

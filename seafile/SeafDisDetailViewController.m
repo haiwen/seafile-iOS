@@ -6,11 +6,13 @@
 //  Copyright (c) 2013 Wang Wei. All rights reserved.
 //
 
+#import "SeafAppDelegate.h"
 #import "SeafDisDetailViewController.h"
 #import "REComposeViewController.h"
 #import "InputAlertPrompt.h"
 
 #import "SVProgressHUD.h"
+#import "UIViewController+Extend.h"
 #import "ExtentedString.h"
 #import "Debug.h"
 
@@ -21,22 +23,25 @@
 @property (strong) UIBarButtonItem *refreshItem;
 @property (strong) REComposeViewController *composeVC;
 
+@property (strong, nonatomic) NSString *group;
+@property (strong, nonatomic) NSString *groupName;
+
+
 - (void)configureView;
 @end
 
 @implementation SeafDisDetailViewController
 @synthesize connection = _connection;
 @synthesize url = _url;
-@synthesize msgItem;
-@synthesize refreshItem;
 @synthesize composeVC = _composeVC;
 
 #pragma mark - Managing the detail item
 
-- (void)setGroup:(id)g
+- (void)setGroup:(NSString *)groupName groupId:(NSString *)groupId
 {
-    if (_group != g) {
-        _group = g;
+    if (_group != groupId) {
+        _group = groupId;
+        self.groupName = groupName;
         [self configureView];
         if (IsIpad())
             [self.navigationController popToRootViewControllerAnimated:NO];
@@ -83,16 +88,21 @@
 - (void)configureView
 {
     // Update the user interface for the detail item.
-    [msgItem setEnabled:NO];
+    [self.msgItem setEnabled:NO];
     if (self.connection && self.url) {
+        [self.refreshItem setEnabled:YES];
         if (self.isReply)
             self.title = @"Reply";
+        else
+            self.title = self.groupName;
         NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:self.url] cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
         [request setHTTPMethod:@"GET"];
         [request setValue:[NSString stringWithFormat:@"Token %@", self.connection.token] forHTTPHeaderField:@"Authorization"];
         self.webview.delegate = self;
         [self.webview loadRequest:request];
     } else {
+        self.title = @"Discussions";
+        [self.refreshItem setEnabled:NO];
         NSURLRequest *request = [[NSURLRequest alloc] initWithURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"index" ofType:@"html"]] cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
         self.webview.delegate = nil;
         [self.webview loadRequest:request];
@@ -126,10 +136,14 @@
         UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Back" style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
         [self.navigationItem setLeftBarButtonItem:barButtonItem animated:YES];
     }
-    refreshItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(refresh:)];
-    msgItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCompose target:self action:@selector(compose:)];
-    [msgItem setEnabled:NO];
-    self.navigationItem.rightBarButtonItems = [NSArray arrayWithObjects:refreshItem, msgItem, nil];
+
+    self.refreshItem = [self getBarItemAutoSize:@"refresh.png" action:@selector(refresh:)];
+    self.msgItem = [self getBarItemAutoSize:@"addmsg.png" action:@selector(compose:)];
+    UIBarButtonItem *space = [self getSpaceBarItem:16.0];
+    self.navigationItem.rightBarButtonItems = [NSArray arrayWithObjects:self.refreshItem, space, self.msgItem, nil];
+
+    [self.msgItem setEnabled:NO];
+    self.navigationController.navigationBar.tintColor = BAR_COLOR;
     [self configureView];
 }
 
@@ -178,7 +192,7 @@
 
     NSString *js = [NSString stringWithFormat:@"setToken(\"%@\");", self.connection.token];
     [webView stringByEvaluatingJavaScriptFromString:js];
-    [msgItem setEnabled:YES];
+    [self.msgItem setEnabled:YES];
 }
 
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
@@ -206,17 +220,18 @@
 {
     _composeVC = [[REComposeViewController alloc] init];
     _composeVC.title = title;
-    _composeVC.hasAttachment = YES;
-    _composeVC.attachmentImage = [UIImage imageNamed:@"app-icon-ipad-72.png"];
+    _composeVC.hasAttachment = NO;
     _composeVC.delegate = self;
     _composeVC.text = @"";
     _composeVC.placeholderText = tip;
+    _composeVC.lineWidth = 0;
+    _composeVC.navigationBar.tintColor = BAR_COLOR;
     [_composeVC presentFromRootViewController];
 }
 
 - (void)composeViewController:(REComposeViewController *)composeViewController didFinishWithResult:(REComposeResult)result
 {
-    
+
     if (result == REComposeResultCancelled) {
         [composeViewController dismissViewControllerAnimated:YES completion:nil];
     } else if (result == REComposeResultPosted) {

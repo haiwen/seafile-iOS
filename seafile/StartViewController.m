@@ -103,6 +103,7 @@
     header.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin| UIViewAutoresizingFlexibleRightMargin| UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleTopMargin;
     header.backgroundColor = [UIColor clearColor];
     self.tableView.tableHeaderView = header;
+    self.navigationController.navigationBar.tintColor = BAR_COLOR;
 }
 
 - (void)viewDidUnload

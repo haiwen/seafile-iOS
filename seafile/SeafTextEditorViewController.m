@@ -8,6 +8,8 @@
 
 #import "SeafTextEditorViewController.h"
 #import "SeafAppDelegate.h"
+
+#import "UIViewController+Extend.h"
 #import "ExtentedString.h"
 #import "Utils.h"
 #import "Debug.h"
@@ -50,18 +52,9 @@ enum TOOL_ITEM {
 @synthesize flags;
 @synthesize ep;
 
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
-{
-    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
-    if (self) {
-        // Custom initialization
-    }
-    return self;
-}
-
 - (id) init
 {
-    return [self initWithNibName:(NSStringFromClass ([self class])) bundle:nil];
+    return [self initWithAutoNibName];
 }
 
 - (BOOL) IsSeaf
@@ -221,6 +214,7 @@ enum TOOL_ITEM {
     UIImage *img2 = [UIImage imageNamed:[NSString stringWithFormat:@"%@2.png", imageName]];
     [btn setImage:img forState:UIControlStateNormal];
     [btn setImage:img2 forState:UIControlStateSelected];
+    btn.showsTouchWhenHighlighted = YES;
 
     if(active)
         btn.selected = YES;
@@ -262,13 +256,14 @@ enum TOOL_ITEM {
 {
     [self performSelector:@selector(removeBar) withObject:nil afterDelay:0];
 }
-- (void)addItem:(UIBarButtonItem *)item to:(NSMutableArray *)items
+
+- (void)addItem:(NSMutableArray *)items image:(NSString *)imageName action:(SEL)action
 {
-    UIBarButtonItem *space = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:self action:nil];
-    space.width = 16.0;
+    UIBarButtonItem *item = [self getBarItem:imageName action:action active:0];
     [items addObject:item];
-    [items addObject:space];
+    [items addObject:[self getSpaceBarItem:16.0]];
 }
+
 - (void)updateSeafToolbar:(int)flag
 {
     if (flag == flags)
@@ -281,40 +276,23 @@ enum TOOL_ITEM {
     }
 }
 
-- (void)initSeafToolbar:(int)flag
+- (void)initSeafToolbar
 {
-    flags = flag;
     NSMutableArray *items = [[NSMutableArray alloc] init];
-    UIBarButtonItem *item;
-
-    item = [self getBarItem:@"bt-redo" action:@selector(redo) active:0];
-    [self addItem:item to:items];
-    item = [self getBarItem:@"bt-undo" action:@selector(undo) active:0];
-    [self addItem:item to:items];
-    item = [self getBarItem:@"bt-justify" action:@selector(justify) active:flag & (1 << ITEM_JUSTIFY)];
-    [self addItem:item to:items];
-    item = [self getBarItem:@"bt-right" action:@selector(right) active:flag & (1 << ITEM_RIGHT)];
-    [self addItem:item to:items];
-    item = [self getBarItem:@"bt-center" action:@selector(center) active:flag & (1 << ITEM_CENTER)];
-    [self addItem:item to:items];
-    item = [self getBarItem:@"bt-left" action:@selector(left) active:flag & (1 << ITEM_LEFT)];
-    [self addItem:item to:items];
-    item = [self getBarItem:@"bt-outdent" action:@selector(outdent) active:0];
-    [self addItem:item to:items];
-    item = [self getBarItem:@"bt-indent" action:@selector(indent) active:0];
-    [self addItem:item to:items];
-    item = [self getBarItem:@"bt-ol" action:@selector(ol) active:flag & (1 << ITEM_OL)];
-    [self addItem:item to:items];
-    item = [self getBarItem:@"bt-ul" action:@selector(ul) active:flag & (1 << ITEM_UL)];
-    [self addItem:item to:items];
-    item = [self getBarItem:@"bt-underline" action:@selector(underline) active:flag & (1 << ITEM_UNDERLINE)];
-    [self addItem:item to:items];
-    item = [self getBarItem:@"bt-strikethrough" action:@selector(strike) active:flag & (1 << ITEM_STRIKE)];
-    [self addItem:item to:items];
-    item = [self getBarItem:@"bt-italic" action:@selector(italic) active:flag & (1 << ITEM_ITALIC)];
-    [self addItem:item to:items];
-    item = [self getBarItem:@"bt-bold" action:@selector(bold) active:flag & (1 << ITEM_BOLD)];
-    [self addItem:item to:items];
+    [self addItem:items image:@"bt-redo" action:@selector(redo)];
+    [self addItem:items image:@"bt-undo" action:@selector(undo)];
+    [self addItem:items image:@"bt-justify" action:@selector(justify)];
+    [self addItem:items image:@"bt-right" action:@selector(right)];
+    [self addItem:items image:@"bt-center" action:@selector(center)];
+    [self addItem:items image:@"bt-left" action:@selector(left)];
+    [self addItem:items image:@"bt-outdent" action:@selector(outdent)];
+    [self addItem:items image:@"bt-indent" action:@selector(indent)];
+    [self addItem:items image:@"bt-ol" action:@selector(ol)];
+    [self addItem:items image:@"bt-ul" action:@selector(ul)];
+    [self addItem:items image:@"bt-underline" action:@selector(underline)];
+    [self addItem:items image:@"bt-strikethrough" action:@selector(strike)];
+    [self addItem:items image:@"bt-italic" action:@selector(italic)];
+    [self addItem:items image:@"bt-bold" action:@selector(bold)];
     self.navigationItem.rightBarButtonItems = items;
 }
 
@@ -351,52 +329,35 @@ enum TOOL_ITEM {
                 currentUnderlineStatus = underlineEnabled;
             }
         } else {
-            [self initSeafToolbar:0];
+            [self initSeafToolbar];
         }
     } else if ([self IsMarkdown]) {
         NSMutableArray *items = [[NSMutableArray alloc] init];
-        UIBarButtonItem *pound = [self getBarItem:@"bt-pound" action:@selector(pound) active:0];
-        UIBarButtonItem *asterisk = [self getBarItem:@"bt-asterisk" action:@selector(asterisk) active:0];
-        UIBarButtonItem *equal = [self getBarItem:@"bt-equal" action:@selector(equal) active:0];
-        UIBarButtonItem *bold = [self getBarItem:@"bt-bold" action:@selector(bold) active:0];
-        UIBarButtonItem *italic = [self getBarItem:@"bt-italic" action:@selector(italic) active:0];
-        UIBarButtonItem *link = [self getBarItem:@"bt-link" action:@selector(insertLink) active:0];
-        UIBarButtonItem *quote = [self getBarItem:@"bt-quote" action:@selector(quote) active:0];
-        UIBarButtonItem *code = [self getBarItem:@"bt-code" action:@selector(code) active:0];
-        UIBarButtonItem *img = [self getBarItem:@"bt-image" action:@selector(image) active:0];
-        UIBarButtonItem *ol = [self getBarItem:@"bt-ol" action:@selector(ol) active:0];
-        UIBarButtonItem *ul = [self getBarItem:@"bt-ul" action:@selector(ul) active:0];
-        //UIBarButtonItem *heading = [self getBarItem:@"bt-heading" action:@selector(heading) active:0];
-        //UIBarButtonItem *hor = [self getBarItem:@"bt-hor" action:@selector(hor) active:0];
-        UIBarButtonItem *undo = [self getBarItem:@"bt-undo" action:@selector(undo) active:0];
-        UIBarButtonItem *redo = [self getBarItem:@"bt-redo" action:@selector(redo) active:0];
-        UIBarButtonItem *help = [self getBarItem:@"bt-help" action:@selector(help) active:0];
-        [self addItem:help to:items];
-        [self addItem:redo to:items];
-        [self addItem:undo to:items];
-        //[self addItem:hor to:items];
-        //[self addItem:heading to:items];
-        [self addItem:ul to:items];
-        [self addItem:ol to:items];
-        [self addItem:img to:items];
-        [self addItem:code to:items];
-        [self addItem:quote to:items];
-        [self addItem:link to:items];
-        [self addItem:italic to:items];
-        [self addItem:bold to:items];
-        [self addItem:equal to:items];
-        [self addItem:asterisk to:items];
-        [self addItem:pound to:items];
-
+        [self addItem:items image:@"bt-help" action:@selector(help)];
+        [self addItem:items image:@"bt-redo" action:@selector(redo)];
+        [self addItem:items image:@"bt-undo" action:@selector(undo)];
+        [self addItem:items image:@"bt-ul" action:@selector(ul)];
+        [self addItem:items image:@"bt-ol" action:@selector(ol)];
+        [self addItem:items image:@"bt-image" action:@selector(image)];
+        [self addItem:items image:@"bt-code" action:@selector(code)];
+        [self addItem:items image:@"bt-quote" action:@selector(quote)];
+        [self addItem:items image:@"bt-link" action:@selector(insertLink)];
+        [self addItem:items image:@"bt-italic" action:@selector(italic)];
+        [self addItem:items image:@"bt-bold" action:@selector(bold)];
+        [self addItem:items image:@"bt-equal" action:@selector(equal)];
+        [self addItem:items image:@"bt-asterisk" action:@selector(asterisk)];
+        [self addItem:items image:@"bt-pound" action:@selector(pound)];
         self.navigationItem.rightBarButtonItems = items;
     } else {
         self.navigationItem.rightBarButtonItems = nil;
     }
 }
+
 - (void)dismissCurrentView
 {
     [self.navigationController dismissViewControllerAnimated:NO completion:nil];
 }
+
 - (void)cancel
 {
     [self dismissCurrentView];
@@ -421,6 +382,7 @@ enum TOOL_ITEM {
     self.navigationItem.rightBarButtonItems = nil;
     [self checkSelection:self];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];
+    self.navigationController.navigationBar.tintColor = BAR_COLOR;
 }
 
 - (void)didReceiveMemoryWarning

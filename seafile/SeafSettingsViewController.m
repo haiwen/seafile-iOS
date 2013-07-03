@@ -11,7 +11,7 @@
 #import "SeafAppDelegate.h"
 #import "SeafDetailViewController.h"
 #import "SeafSettingsViewController.h"
-#import "UIViewController+AlertMessage.h"
+#import "UIViewController+Extend.h"
 #import "FileSizeFormatter.h"
 #import "ColorfulButton.h"
 #import "ExtentedString.h"
@@ -59,6 +59,7 @@ enum {
     [super viewDidLoad];
     UIColor *color = [UIColor colorWithRed:1.0 green:0.5 blue:0.5 alpha:1.0];
     [wipeCacheBt setHighColor:color lowColor:[UIColor redColor]];
+    self.navigationController.navigationBar.tintColor = BAR_COLOR;
 }
 
 - (void)viewWillAppear:(BOOL)animated

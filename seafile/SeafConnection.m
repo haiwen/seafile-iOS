@@ -439,4 +439,9 @@
     return [[self.rootFolder getRepo:repo] editable];
 }
 
+- (NSString *)getRepoName:(NSString *)repo
+{
+    return [[self.rootFolder getRepo:repo] name];
+}
+
 @end

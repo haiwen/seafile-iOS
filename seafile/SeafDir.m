@@ -357,6 +357,8 @@
 
 - (void)addUploadFiles:(NSMutableArray *)uploadItems
 {
+    Debug("udir=%d %@\n",self.uploadItems.count, self.uploadItems);
+
     for (SeafUploadFile *file in uploadItems) {
         NSMutableDictionary *dict = file.uploadAttr;
         if (!dict)
@@ -365,8 +367,10 @@
         [dict setObject:self.path forKey:@"upath"];
         [file saveAttr:dict];
         file.udir = self;
+        Debug("...%@\n", dict);
     }
     [self.uploadItems addObjectsFromArray:uploadItems];
+    Debug("udir=%d %@\n",self.uploadItems.count, self.uploadItems);
     _allItems = nil;
 }
 

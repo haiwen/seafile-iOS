@@ -19,7 +19,7 @@
 #import "FileSizeFormatter.h"
 #import "SeafDateFormatter.h"
 #import "ExtentedString.h"
-#import "UIViewController+AlertMessage.h"
+#import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
 #import "Debug.h"
 
@@ -46,6 +46,10 @@ enum {
 @property (strong) UIBarButtonItem *selectAllItem;
 @property (strong) UIBarButtonItem *selectNoneItem;
 @property (strong) UIBarButtonItem *photoItem;
+@property (strong) UIBarButtonItem *doneItem;
+@property (strong) UIBarButtonItem *editItem;
+@property (strong) NSArray *rightItems;
+
 
 @property (strong, readonly) UIView *overlayView;
 @property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
@@ -69,11 +73,8 @@ enum {
 @synthesize selectAllItem = _selectAllItem, selectNoneItem = _selectNoneItem;
 @synthesize selectedindex = _selectedindex;
 @synthesize editToolItems = _editToolItems;
-@synthesize state;
-@synthesize photoItem;
 
 @synthesize popoverController;
-@synthesize formatter;
 @synthesize overlayView = _overlayView;
 
 
@@ -87,8 +88,8 @@ enum {
 {
     if (!_editToolItems) {
         int i;
-        UIBarButtonItem *flexibleFpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:self action:@selector(editOperation:)];
-        UIBarButtonItem *fixedSpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:self action:@selector(editOperation:)];
+        UIBarButtonItem *flexibleFpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:self action:nil];
+        UIBarButtonItem *fixedSpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:self action:nil];
 
         NSArray *itemsTitles = [NSArray arrayWithObjects:@"New Folder", @"New File", @"Copy", @"Move", @"Delete", @"Paste", @"MoveTo", @"Cancel", nil ];
 
@@ -108,6 +109,7 @@ enum {
 
 - (void)setConnection:(SeafConnection *)conn
 {
+    [self.detailViewController setPreViewItem:nil];
     [conn loadRepos:self];
     [self setDirectory:(SeafDir *)conn.rootFolder];
 }
@@ -115,11 +117,11 @@ enum {
 - (UIView *)overlayView
 {
     if (_overlayView == nil) {
-        self.tableView.autoresizesSubviews = YES;
-        _overlayView = [[UIView alloc] initWithFrame:self.tableView.frame];
+        CGRect frame = CGRectMake(0, 0, self.tableView.frame.size.width, self.tableView.frame.size.height);
+        _overlayView = [[UIView alloc] initWithFrame:frame];
         _overlayView.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.2];
         UIActivityIndicatorView *activityIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
-        activityIndicator.center = self.overlayView.center;
+        activityIndicator.center = _overlayView.center;
         [_overlayView addSubview:activityIndicator];
         _overlayView.autoresizingMask = UIViewAutoresizingFlexibleHeight;
         [activityIndicator startAnimating];
@@ -147,9 +149,11 @@ enum {
 {
     [super viewDidLoad];
     self.formatter = [[NSDateFormatter alloc] init];
-    [formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
+    [self.formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
     self.tableView.scrollEnabled = YES;
     self.tableView.rowHeight = 50;
+    self.tableView.autoresizesSubviews = YES;
+
     self.state = STATE_INIT;
     if (_refreshHeaderView == nil) {
         EGORefreshTableHeaderView *view = [[EGORefreshTableHeaderView alloc] initWithFrame:CGRectMake(0.0f, 0.0f - self.tableView.bounds.size.height, self.view.frame.size.width, self.tableView.bounds.size.height)];
@@ -158,6 +162,7 @@ enum {
         _refreshHeaderView = view;
     }
     [_refreshHeaderView refreshLastUpdatedDate];
+    self.navigationController.navigationBar.tintColor = BAR_COLOR;
 }
 
 - (void)noneSelected:(BOOL)none
@@ -301,10 +306,30 @@ enum {
         UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:imagePickerController];
         self.popoverController = [[UIPopoverController alloc] initWithContentViewController:navigationController];
         self.popoverController.delegate = self;
-        [self.popoverController presentPopoverFromBarButtonItem:sender permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
+        [self.popoverController presentPopoverFromBarButtonItem:self.photoItem permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
     } else {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         [appdelegate showDetailView:imagePickerController];
+    }
+}
+
+- (void)editDone:(id)sender
+{
+    [self setEditing:NO animated:NO];
+    self.navigationItem.rightBarButtonItem = nil;
+    self.navigationItem.rightBarButtonItems = self.rightItems;
+}
+
+- (void)editStart:(id)sender
+{
+    [self setEditing:YES animated:NO];
+    if (self.editing) {
+        self.navigationItem.rightBarButtonItems = nil;
+        self.navigationItem.rightBarButtonItem = self.doneItem;
+        if (IsIpad() && self.popoverController) {
+            [self.popoverController dismissPopoverAnimated:YES];
+            self.popoverController = nil;
+        }
     }
 }
 
@@ -313,8 +338,13 @@ enum {
     if ([directory isKindOfClass:[SeafRepos class]]) {
     } else {
         if (directory.editable) {
-            self.photoItem  = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCamera target:self action:@selector(addPhotos:)];
-            self.navigationItem.rightBarButtonItems = [NSArray arrayWithObjects: self.editButtonItem, self.photoItem, nil];
+            self.photoItem = [self getBarItem:@"plus.png" action:@selector(addPhotos:)size:20];
+            self.doneItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(editDone:)];
+            self.editItem = [self getBarItemAutoSize:@"checkmask.png" action:@selector(editStart:)];
+            UIBarButtonItem *space = [self getSpaceBarItem:16.0];
+            self.rightItems = [NSArray arrayWithObjects: self.editItem, space, self.photoItem, nil];
+            self.navigationItem.rightBarButtonItems = self.rightItems;
+
             _selectAllItem = [[UIBarButtonItem alloc] initWithTitle:@"Select All" style:UIBarButtonItemStylePlain target:self action:@selector(selectAll:)];
             _selectNoneItem = [[UIBarButtonItem alloc] initWithTitle:@"Select None" style:UIBarButtonItemStylePlain target:self action:@selector(selectNone:)];
         }
@@ -870,6 +900,7 @@ enum {
 
 - (void)backgroundUpload:(SeafUploadFile *)ufile
 {
+    Debug("udir=%d %@\n", ufile.udir.uploadItems.count, ufile.udir.uploadItems);
     [ufile upload:ufile.udir->connection repo:ufile.udir.repoId path:ufile.udir.path update:NO];
 }
 
@@ -907,7 +938,7 @@ enum {
     NSMutableArray *files = [[NSMutableArray alloc] init];
     if (imagePickerController.allowsMultipleSelection) {
         int i = 0;
-        NSString *date = [formatter stringFromDate:[NSDate date]];
+        NSString *date = [self.formatter stringFromDate:[NSDate date]];
         for (NSDictionary *dict in info) {
             i++;
             UIImage *image = [dict objectForKey:@"UIImagePickerControllerOriginalImage"];

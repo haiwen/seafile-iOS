@@ -38,7 +38,6 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
 
-    //self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(refresh:)];
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     self.detailViewController = (SeafDisDetailViewController *)[appdelegate detailViewController:TABBED_DISCUSSION];
     self.title = @"Groups";
@@ -51,6 +50,7 @@
         _refreshHeaderView = view;
     }
     [_refreshHeaderView refreshLastUpdatedDate];
+    self.navigationController.navigationBar.tintColor = BAR_COLOR;
     [self refresh:nil];
 }
 
@@ -78,7 +78,7 @@
 - (void)setConnection:(SeafConnection *)conn
 {
     _connection = conn;
-    self.detailViewController.group = nil;
+    [self.detailViewController setGroup:nil groupId:nil];
     self.detailViewController.connection = conn;
 }
 
@@ -137,7 +137,8 @@
         [appdelegate showDetailView:self.detailViewController];
     }
     NSString *gid = [[self.connection.seafGroups objectAtIndex:indexPath.row] objectForKey:@"id"];
-    self.detailViewController.group = gid;
+    NSString *name = [[self.connection.seafGroups objectAtIndex:indexPath.row] objectForKey:@"name"];
+    [self.detailViewController setGroup:name groupId:gid];
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation

@@ -6,8 +6,9 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
+#import "SeafAppDelegate.h"
 #import "SeafAccountViewController.h"
-#import "UIViewController+AlertMessage.h"
+#import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
 #import "Debug.h"
 
@@ -40,7 +41,7 @@
 
 - (id)initWithController:(StartViewController *)controller connection: (SeafConnection *)conn type:(int)atype
 {
-    if (self = [super initWithNibName:@"SeafAccountViewController" bundle:nil]) {
+    if (self = [super initWithAutoNibName]) {
         self.startController = controller;
         self.connection = conn;
         self.type = atype;
@@ -134,6 +135,7 @@
     }
     [self.loginButton setHighColor:[UIColor whiteColor] lowColor:[UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1]];
     [self.cancelButton setHighColor:[UIColor whiteColor] lowColor:[UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1]];
+    self.navigationController.navigationBar.tintColor = BAR_COLOR;
 }
 
 - (void)didReceiveMemoryWarning

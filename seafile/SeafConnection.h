@@ -83,5 +83,6 @@
 
 - (BOOL)repoEditable:(NSString *)repo;
 
+- (NSString *)getRepoName:(NSString *)repo;
 
 @end
