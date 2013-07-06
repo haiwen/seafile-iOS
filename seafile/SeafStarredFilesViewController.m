@@ -270,7 +270,7 @@
 }
 
 #pragma mark - SeafFileUploadDelegate
-- (void)uploadProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent
+- (void)updateProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent
 {
     if (!res) {
         [SVProgressHUD showErrorWithStatus:@"Failed to uplod file"];

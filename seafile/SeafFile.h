@@ -18,8 +18,8 @@
 - (void)generateSharelink:(SeafFile *)entry WithResult:(BOOL)success;
 @end
 
-@protocol SeafFileUploadDelegate <NSObject>
-- (void)uploadProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent;
+@protocol SeafFileUpdateDelegate <NSObject>
+- (void)updateProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent;
 @end
 
 @interface SeafFile : SeafBase<QLPreviewItem, PreViewDelegate, NSURLConnectionDelegate, SeafUploadDelegate>
@@ -43,7 +43,7 @@
 - (BOOL)isStarred;
 - (void)setStarred:(BOOL)starred;
 - (void)deleteCache;
-- (void)update:(id<SeafFileUploadDelegate>)dg;
+- (void)update:(id<SeafFileUpdateDelegate>)dg;
 - (void)cancelDownload;
 
 @end

@@ -42,6 +42,7 @@
     if (_group != groupId) {
         _group = groupId;
         self.groupName = groupName;
+        self.title = groupName;
         [self configureView];
         if (IsIpad())
             [self.navigationController popToRootViewControllerAnimated:NO];
@@ -144,6 +145,7 @@
 
     [self.msgItem setEnabled:NO];
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
+    self.view.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
     [self configureView];
 }
 
@@ -189,7 +191,6 @@
     [SVProgressHUD dismiss];
     if (![self htmlOK:webView])
         return;
-
     NSString *js = [NSString stringWithFormat:@"setToken(\"%@\");", self.connection.token];
     [webView stringByEvaluatingJavaScriptFromString:js];
     [self.msgItem setEnabled:YES];
@@ -198,13 +199,13 @@
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
 {
     Debug("error=%@\n", error);
-      if (error.code != NSURLErrorCancelled)
+      if (error.code != NSURLErrorCancelled && error.code != 102)
         [SVProgressHUD showErrorWithStatus:@"Failed to load discussions"];
 }
 
 - (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSMutableURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
 {
-    Debug("Request %@\n", request.URL);
+    Debug("Request %@, self=%@\n", request.URL, self.url);
     NSString *urlStr = request.URL.absoluteString;
     if ([urlStr hasPrefix:@"file://"] || [urlStr isEqualToString:self.url]) {
         return YES;
@@ -231,7 +232,6 @@
 
 - (void)composeViewController:(REComposeViewController *)composeViewController didFinishWithResult:(REComposeResult)result
 {
-
     if (result == REComposeResultCancelled) {
         [composeViewController dismissViewControllerAnimated:YES completion:nil];
     } else if (result == REComposeResultPosted) {

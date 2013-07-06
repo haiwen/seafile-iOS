@@ -26,7 +26,7 @@
 @property (strong) NSFileHandle *downloadFileHandle;
 
 @property (strong) SeafUploadFile *ufile;
-@property (weak) id <SeafFileUploadDelegate> udelegate;
+@property (weak) id <SeafFileUpdateDelegate> udelegate;
 
 @end
 
@@ -436,8 +436,8 @@
 {
     if (ufile && ufile.uploading)
         return;
-    if ([self.delegate conformsToProtocol:@protocol(SeafFileUploadDelegate)])
-        [self update:(id<SeafFileUploadDelegate>)self.delegate];
+    if ([self.delegate conformsToProtocol:@protocol(SeafFileUpdateDelegate)])
+        [self update:(id<SeafFileUpdateDelegate>)self.delegate];
     else
         [self update:self.udelegate];
 }
@@ -476,7 +476,7 @@
     [connection setStarred:starred repo:self.repoId path:self.path];
 }
 
-- (void)update:(id<SeafFileUploadDelegate>)dg
+- (void)update:(id<SeafFileUpdateDelegate>)dg
 {
     if (!self.mpath)
         return;
@@ -513,9 +513,9 @@
 }
 
 #pragma mark - SeafUploadDelegate
-- (void)uploadProgress:(SeafUploadFile *)file result:(BOOL)res completeness:(int)percent
+- (void)uploadProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent
 {
-    id<SeafFileUploadDelegate> dg = self.udelegate;
+    id<SeafFileUpdateDelegate> dg = self.udelegate;
     if (res && percent == 100) {
         self.ufile = nil;
         self.udelegate = nil;
@@ -528,7 +528,7 @@
         self.mpath = nil;
         [self savetoCache];
     }
-    [dg uploadProgress:self result:res completeness:percent];
+    [dg updateProgress:self result:res completeness:percent];
 }
 
 @end

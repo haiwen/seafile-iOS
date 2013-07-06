@@ -11,7 +11,7 @@
 #import "SeafStarredFile.h"
 
 
-@interface SeafStarredFilesViewController : UITableViewController<UIActionSheetDelegate, SeafDentryDelegate, SeafStarFileDelegate, SeafFileUploadDelegate>
+@interface SeafStarredFilesViewController : UITableViewController<UIActionSheetDelegate, SeafDentryDelegate, SeafStarFileDelegate, SeafFileUpdateDelegate>
 
 @property (strong, nonatomic) SeafConnection *connection;
 

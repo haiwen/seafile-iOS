@@ -117,6 +117,7 @@ enum {
     if (!self.loadingView) {
         self.loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
         self.loadingView.color = [UIColor darkTextColor];
+        self.loadingView.hidesWhenStopped = YES;
         [self.tableView addSubview:self.loadingView];
     }
     self.loadingView.center = self.view.center;
@@ -143,6 +144,7 @@ enum {
     self.formatter = [[NSDateFormatter alloc] init];
     [self.formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
     self.tableView.rowHeight = 50;
+    self.clearsSelectionOnViewWillAppear = YES;
 
     self.state = STATE_INIT;
     if (_refreshHeaderView == nil) {
@@ -650,7 +652,7 @@ enum {
     UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
     UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 3, tableView.bounds.size.width - 10, 18)];
     label.text = text;
-    label.textColor = [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:0.75];
+    label.textColor = [UIColor whiteColor];
     label.backgroundColor = [UIColor clearColor];
     [headerView setBackgroundColor:HEADER_COLOR];
     [headerView addSubview:label];
@@ -930,7 +932,6 @@ enum {
     }
 }
 
-#pragma mark - SeafFileUploadDelegate
 - (void)viewDidAppear:(BOOL)animated
 {
     for (SeafUploadFile *file in _directory.uploadItems)
@@ -1038,17 +1039,25 @@ enum {
     self.popoverController = nil;
 }
 
+#pragma mark - SeafFileUploadDelegate
+- (void)updateProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent
+{
+    int index = [_directory.allItems indexOfObject:file];
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
+    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+    if (res && file && [cell isKindOfClass:[SeafUploadingFileCell class]]) {
+        [((SeafUploadingFileCell *)cell).progressView setProgress:percent*1.0f/100];
+        return;
+    }
+    [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic ];
+}
+
 #pragma mark - SeafUploadDelegate
 - (void)uploadProgress:(SeafUploadFile *)file result:(BOOL)res completeness:(int)percent
 {
     int index = [_directory.allItems indexOfObject:file];
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
-    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
-    if (res && file.uploading && [cell isKindOfClass:[SeafUploadingFileCell class]]) {
-        [((SeafUploadingFileCell *)cell).progressView setProgress:percent*1.0f/100];
-        return;
-    }
-    [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic ];
+    [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
 }
 
 @end

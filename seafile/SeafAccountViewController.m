@@ -159,7 +159,6 @@
 #pragma mark - SSConnectionDelegate
 - (void)connectionLinkingSuccess:(SeafConnection *)conn
 {
-    Debug("%@", conn.address);
     if (conn != connection) {
         return;
     }

@@ -211,11 +211,11 @@ enum PREVIEW_STATE {
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
 
-    self.editItem = [self getBarItemAutoSize:@"editfile.png" action:@selector(editFile:)];
+    self.editItem = [self getBarItem:@"editfile.png" action:@selector(editFile:)size:18];
     self.exportItem = [self getBarItemAutoSize:@"export.png" action:@selector(openElsewhere:)];
     self.shareItem = [self getBarItemAutoSize:@"share.png" action:@selector(share:)];
-    UIBarButtonItem *item3 = [self getBarItemAutoSize:@"star.png" action:@selector(unstarFile:)];
-    UIBarButtonItem *item4 = [self getBarItemAutoSize:@"unstar.png" action:@selector(starFile:)];
+    UIBarButtonItem *item3 = [self getBarItem:@"star.png" action:@selector(unstarFile:)size:24];
+    UIBarButtonItem *item4 = [self getBarItem:@"unstar.png" action:@selector(starFile:)size:24];
     UIBarButtonItem *space = [self getSpaceBarItem:20.0];
     barItemsStar  = [NSArray arrayWithObjects:self.exportItem, space, self.shareItem, space, item3, space, nil];
     barItemsUnStar  = [NSArray arrayWithObjects:self.exportItem, space, self.shareItem, space, item4, space, nil];

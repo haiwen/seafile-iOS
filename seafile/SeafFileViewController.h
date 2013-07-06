@@ -33,7 +33,7 @@ enum {
 #import "SeafFile.h"
 
 
-@interface SeafFileViewController : UITableViewController <UIAlertViewDelegate, UIActionSheetDelegate, SeafDentryDelegate, InputDoneDelegate, SeafFileUploadDelegate> {
+@interface SeafFileViewController : UITableViewController <UIAlertViewDelegate, UIActionSheetDelegate, SeafDentryDelegate, InputDoneDelegate, SeafFileUpdateDelegate> {
 }
 
 @property (strong, nonatomic) SeafConnection *connection;

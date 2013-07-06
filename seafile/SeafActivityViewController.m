@@ -22,6 +22,7 @@ enum {
 @property int state;
 @property (readonly) UIWebView *webview;
 @property (strong) NSString *url;
+@property (strong, nonatomic) IBOutlet UIActivityIndicatorView *loadingView;
 
 @end
 
@@ -61,22 +62,31 @@ enum {
     if (IsIpad())
         [self.navigationController popToRootViewControllerAnimated:NO];
     self.state = ACTIVITY_INIT;
-    NSURLRequest *request = [[NSURLRequest alloc] initWithURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"index" ofType:@"html"]] cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
-    [self.webview loadRequest: request];
+    [self.webview loadHTMLString:nil baseURL:nil];
     _connection = connection;
     _url = [_connection.address stringByAppendingString:API_URL"/html/events/"];
 }
 
-- (void)setUrl:(NSString *)url connection:(SeafConnection *)conn
+- (void)showLodingView
 {
-    _connection = conn;
-    _url = url;
-    self.state = ACTIVITY_START;
+    if (!self.loadingView) {
+        self.loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+        self.loadingView.color = [UIColor darkTextColor];
+        self.loadingView.hidesWhenStopped = YES;
+        [self.view addSubview:self.loadingView];
+    }
+    self.loadingView.center = self.view.center;
+    [self.loadingView startAnimating];
+}
+
+- (void)dismissLoadingView
+{
+    [self.loadingView stopAnimating];
 }
 
 - (void)start
 {
-    [SVProgressHUD showWithStatus:@"Loading ..."];
+    [self showLodingView];
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:self.url] cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
     [request setHTTPMethod:@"GET"];
     [request setValue:[NSString stringWithFormat:@"Token %@", _connection.token] forHTTPHeaderField:@"Authorization"];
@@ -86,7 +96,7 @@ enum {
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    if (self.state == ACTIVITY_START)
+    if (self.state == ACTIVITY_INIT)
         [self start];
 }
 
@@ -100,17 +110,12 @@ enum {
 # pragma - UIWebViewDelegate
 - (void)webViewDidFinishLoad:(UIWebView *)webView
 {
-    if (self.state == ACTIVITY_INIT) {
-        self.state = ACTIVITY_START;
-        if (self.isViewLoaded && self.view.window)
-            [self start];
-    } else {
-        [SVProgressHUD dismiss];
-        NSString *js = [NSString stringWithFormat:@"setToken(\"%@\");", self.connection.token];
-        [webView stringByEvaluatingJavaScriptFromString:js];
-        self.state = ACTIVITY_END;
-    }
+    [self dismissLoadingView];
+    NSString *js = [NSString stringWithFormat:@"setToken(\"%@\");", self.connection.token];
+    [webView stringByEvaluatingJavaScriptFromString:js];
+    self.state = ACTIVITY_END;
 }
+
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
 {
     [SVProgressHUD showErrorWithStatus:@"Failed to load activities"];

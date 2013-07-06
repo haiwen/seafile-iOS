@@ -91,6 +91,7 @@ static NSMutableDictionary *uploadFiles = nil;
         [dict setObject:[NSNumber numberWithBool:res] forKey:@"result"];
         [file saveAttr:dict];
     }
+
     [_delegate uploadProgress:file result:res completeness:percent];
 }
 #pragma - NSURLConnectionDelegate
@@ -231,6 +232,7 @@ static NSMutableDictionary *uploadFiles = nil;
         _uploading = YES;
         _uploadProgress = 0;
     }
+
     [self uploadProgress:self result:YES completeness:_uploadProgress];
     [SeafAppDelegate incUploadnum];
     NSString *upload_url;
