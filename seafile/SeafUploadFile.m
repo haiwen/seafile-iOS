@@ -67,6 +67,7 @@ static NSMutableDictionary *uploadFiles = nil;
 
 - (void)removeFile
 {
+    [self saveAttr:nil];
     [[NSFileManager defaultManager] removeItemAtPath:self.lpath error:nil];
 }
 
@@ -337,7 +338,8 @@ static NSMutableDictionary *uploadFiles = nil;
     for (NSString *lpath in allFiles.allKeys) {
         NSDictionary *info = [allFiles objectForKey:lpath];
         if ([dir.repoId isEqualToString:[info objectForKey:@"urepo"]] && [dir.path isEqualToString:[info objectForKey:@"upath"]]) {
-            SeafUploadFile *file  = [[SeafUploadFile alloc] initWithPath:lpath];
+            SeafUploadFile *file  = [dir->connection getUploadfile:lpath];
+            file.udir = dir;
             [files addObject:file];
         }
     }

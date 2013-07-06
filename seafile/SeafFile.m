@@ -482,7 +482,7 @@
         return;
     self.udelegate = dg;
     if (!self.ufile) {
-        self.ufile = [[SeafUploadFile alloc] initWithPath:self.mpath];
+        self.ufile = [connection getUploadfile:self.mpath];
         self.ufile.delegate = self;
     }
     [self.ufile upload:connection repo:self.repoId path:self.path update:YES];

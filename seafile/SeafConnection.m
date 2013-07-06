@@ -21,6 +21,8 @@
 
 @property (readwrite, strong) NSString *version;
 @property NSMutableSet *starredFiles;
+@property NSMutableDictionary *uploadFiles;
+
 @end
 
 @implementation SeafConnection
@@ -31,7 +33,6 @@
 @synthesize rootFolder = _rootFolder;
 @synthesize starredFiles = _starredFiles;
 @synthesize seafGroups = _seafGroups;
-@synthesize version;
 
 - (id)init:(NSString *)url
 {
@@ -40,7 +41,8 @@
         queue = [[NSOperationQueue alloc] init];
         _rootFolder = [[SeafRepos alloc] initWithConnection:self];
         NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
-        version = [infoDictionary objectForKey:@"CFBundleVersion"];
+        self.version = [infoDictionary objectForKey:@"CFBundleVersion"];
+        self.uploadFiles = [[NSMutableDictionary alloc] init];
     }
     return self;
 }
@@ -442,6 +444,19 @@
 - (NSString *)getRepoName:(NSString *)repo
 {
     return [[self.rootFolder getRepo:repo] name];
+}
+
+- (SeafUploadFile *)getUploadfile:(NSString *)lpath
+{
+    SeafUploadFile *ufile = [self.uploadFiles objectForKey:lpath];
+    if (!ufile)
+        ufile = [[SeafUploadFile alloc] initWithPath:lpath];
+    return ufile;
+}
+
+- (void)removeUploadfile:(SeafUploadFile *)ufile
+{
+    [self.uploadFiles removeObjectForKey:ufile.lpath];
 }
 
 @end

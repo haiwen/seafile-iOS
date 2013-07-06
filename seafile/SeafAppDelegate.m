@@ -51,6 +51,7 @@
 {
     return _connection;
 }
+
 - (void)setConnection:(SeafConnection *)conn
 {
     @synchronized(self) {
@@ -86,7 +87,7 @@
             if (![self.startVC goToDefaultReposView])
                 return NO;
         [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
-        SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:to.path];
+        SeafUploadFile *file = [self.connection getUploadfile:to.path];
         [self.fileVC uploadFile:file];
     }
     return YES;

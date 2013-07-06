@@ -42,6 +42,7 @@ enum {
 @property (strong) SeafBase *curEntry;
 @property (strong) InputAlertPrompt *passSetView;
 @property (strong) InputAlertPrompt *inputView;
+@property (strong, nonatomic) IBOutlet UIActivityIndicatorView *loadingView;
 
 @property (strong) UIBarButtonItem *selectAllItem;
 @property (strong) UIBarButtonItem *selectNoneItem;
@@ -50,8 +51,6 @@ enum {
 @property (strong) UIBarButtonItem *editItem;
 @property (strong) NSArray *rightItems;
 
-
-@property (strong, readonly) UIView *overlayView;
 @property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
 
 @property (retain) NSIndexPath *selectedindex;
@@ -75,7 +74,6 @@ enum {
 @synthesize editToolItems = _editToolItems;
 
 @synthesize popoverController;
-@synthesize overlayView = _overlayView;
 
 
 - (SeafDetailViewController *)detailViewController
@@ -114,26 +112,20 @@ enum {
     [self setDirectory:(SeafDir *)conn.rootFolder];
 }
 
-- (UIView *)overlayView
+- (void)showLodingView
 {
-    if (_overlayView == nil) {
-        CGRect frame = CGRectMake(0, 0, self.tableView.frame.size.width, self.tableView.frame.size.height);
-        _overlayView = [[UIView alloc] initWithFrame:frame];
-        _overlayView.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.2];
-        UIActivityIndicatorView *activityIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
-        activityIndicator.center = _overlayView.center;
-        [_overlayView addSubview:activityIndicator];
-        _overlayView.autoresizingMask = UIViewAutoresizingFlexibleHeight;
-        [activityIndicator startAnimating];
+    if (!self.loadingView) {
+        self.loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+        self.loadingView.color = [UIColor darkTextColor];
+        [self.tableView addSubview:self.loadingView];
     }
-    return _overlayView;
+    self.loadingView.center = self.view.center;
+    [self.loadingView startAnimating];
 }
 
-- (void)dismissOverlayView
+- (void)dismissLoadingView
 {
-    if (_overlayView && _overlayView.superview) {
-        [_overlayView removeFromSuperview];
-    }
+    [self.loadingView stopAnimating];
 }
 
 - (void)awakeFromNib
@@ -148,12 +140,9 @@ enum {
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    self.clearsSelectionOnViewWillAppear = YES;
     self.formatter = [[NSDateFormatter alloc] init];
     [self.formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
-    self.tableView.scrollEnabled = YES;
     self.tableView.rowHeight = 50;
-    self.tableView.autoresizesSubviews = YES;
 
     self.state = STATE_INIT;
     if (_refreshHeaderView == nil) {
@@ -211,6 +200,7 @@ enum {
 
 - (void)viewDidUnload
 {
+    [self setLoadingView:nil];
     [super viewDidUnload];
     _refreshHeaderView = nil;
     _directory = nil;
@@ -368,15 +358,17 @@ enum {
     [_directory setDelegate:self];
     [_directory loadContent:NO];
     Debug("%@, loading ... %d\n", _directory.path, _directory.hasCache);
-
     if (![_directory isKindOfClass:[SeafRepos class]])
         self.tableView.sectionHeaderHeight = 0;
     [self refreshView];
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
     if (!_directory.hasCache) {
-        [self.tableView addSubview:self.overlayView];
+        [self showLodingView];
         self.state = STATE_LOADING;
     }
-
 }
 
 #pragma mark - Table View
@@ -436,16 +428,39 @@ enum {
     [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
 }
 
+- (void)showEditUploadFileMenu:(UILongPressGestureRecognizer *)gestureRecognizer
+{
+    if (self.tableView.editing == YES)
+        return;
+    UIActionSheet *actionSheet;
+    if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
+        return;
+    CGPoint touchPoint = [gestureRecognizer locationInView:self.tableView];
+    _selectedindex = [self.tableView indexPathForRowAtPoint:touchPoint];
+    if (!_selectedindex)
+        return;
+    SeafUploadFile *file = (SeafUploadFile *)[self getDentrybyIndexPath:_selectedindex];
+    if (![file isKindOfClass:[SeafUploadFile class]])
+        return;
+
+    NSString *cancelTitle = nil;
+    if (!IsIpad())
+        cancelTitle = @"Cancel";
+    actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:@"Delete", nil];
+    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
+    [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
+}
 
 - (UITableViewCell *)getSeafUploadFileCell:(SeafUploadFile *)file forTableView:(UITableView *)tableView
 {
     file.delegate = self;
+    UITableViewCell *c;
     if (file.uploading) {
         SeafUploadingFileCell *cell = (SeafUploadingFileCell *)[self getCell:@"SeafUploadingFileCell" forTableView:tableView];
         cell.nameLabel.text = file.name;
         cell.imageView.image = file.image;
         [cell.progressView setProgress:file.uploadProgress *1.0/100];
-        return cell;
+        c = cell;
     } else {
         SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
         cell.textLabel.text = file.name;
@@ -465,8 +480,11 @@ enum {
         } else {
             cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, waiting to upload", sizeStr];
         }
-        return cell;
+        c = cell;
     }
+    UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditUploadFileMenu:)];
+    [c addGestureRecognizer:longPressGesture];
+    return c;
 }
 
 - (SeafCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView
@@ -715,7 +733,7 @@ enum {
 - (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent
 {
     if (entry == _directory) {
-        [self dismissOverlayView];
+        [self dismissLoadingView];
         [SVProgressHUD dismiss];
         [self doneLoadingTableViewData];
         [self refreshView];
@@ -758,7 +776,7 @@ enum {
                 break;
             case STATE_LOADING:
                 if (!_directory.hasCache) {
-                    [self dismissOverlayView];
+                    [self dismissLoadingView];
                     [SVProgressHUD showErrorWithStatus:@"Failed to load files"];
                 } else
                     [SVProgressHUD dismiss];
@@ -897,7 +915,13 @@ enum {
 {
     SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex];
     if (buttonIndex == 0) {
-        [self deleteFile:file];
+        if ([file isKindOfClass:[SeafUploadFile class]]) {
+            if (self.detailViewController.preViewItem == file)
+                self.detailViewController.preViewItem = nil;
+            [self.directory removeUploadFile:(SeafUploadFile *)file];
+            [self.tableView reloadData];
+        } else
+            [self deleteFile:file];
     } else if (buttonIndex == 1) {
         [self redownloadFile:file];
     } else if (buttonIndex == 2)  {
@@ -916,7 +940,6 @@ enum {
 
 - (void)backgroundUpload:(SeafUploadFile *)ufile
 {
-    Debug("udir=%d %@\n", ufile.udir.uploadItems.count, ufile.udir.uploadItems);
     [ufile upload:ufile.udir->connection repo:ufile.udir.repoId path:ufile.udir.path update:NO];
 }
 
@@ -961,7 +984,7 @@ enum {
             NSString *filename = [NSString stringWithFormat:@"Photo %@-%d.jpg", date, i];
             NSString *path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
             [UIImageJPEGRepresentation(image, 1.0) writeToFile:path atomically:YES];
-            SeafUploadFile *file =  [[SeafUploadFile alloc] initWithPath:path];
+            SeafUploadFile *file =  [self.connection getUploadfile:path];
             file.delegate = self;
             //[self performSelector:@selector(uploadFile:) withObject:file afterDelay:0.5];
             [files addObject:file];

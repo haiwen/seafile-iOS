@@ -326,8 +326,7 @@
 
     _allItems = [[NSMutableArray alloc] init];
     [_allItems addObjectsFromArray:_items];
-    if (self.uploadItems)
-        [_allItems addObjectsFromArray:self.uploadItems];
+    [_allItems addObjectsFromArray:self.uploadItems];
 
     if ([self checkSorted:_allItems] == NO) {
         [_allItems sortUsingComparator:(NSComparator)^NSComparisonResult(id obj1, id obj2){
@@ -346,6 +345,13 @@
     return _allItems;
 }
 
+- (void)loadContent:(BOOL)force;
+{
+    _uploadItems = nil;
+    _allItems = nil;
+    [super loadContent:force];
+}
+
 - (NSMutableArray *)uploadItems
 {
     if (!_uploadItems)
@@ -357,8 +363,6 @@
 
 - (void)addUploadFiles:(NSMutableArray *)uploadItems
 {
-    Debug("udir=%d %@\n",self.uploadItems.count, self.uploadItems);
-
     for (SeafUploadFile *file in uploadItems) {
         NSMutableDictionary *dict = file.uploadAttr;
         if (!dict)
@@ -367,36 +371,38 @@
         [dict setObject:self.path forKey:@"upath"];
         [file saveAttr:dict];
         file.udir = self;
-        Debug("...%@\n", dict);
     }
     [self.uploadItems addObjectsFromArray:uploadItems];
-    Debug("udir=%d %@\n",self.uploadItems.count, self.uploadItems);
-    _allItems = nil;
-}
-
-- (void)removeUploadFile:(SeafUploadFile *)file
-{
-    [file saveAttr:nil];
     _allItems = nil;
 }
 
 - (void)checkUploadFiles
 {
     NSMutableArray *arr = [[NSMutableArray alloc] init];
-    for (SeafUploadFile *file in _uploadItems) {
+    for (SeafUploadFile *file in self.uploadItems) {
         NSMutableDictionary *dict = file.uploadAttr;
         if (dict) {
             BOOL result = [[dict objectForKey:@"result"] boolValue];
             if (result) {
-                [file saveAttr:nil];
                 [arr addObject:file];
             }
         }
     }
     for (SeafUploadFile *file in arr) {
-        [_uploadItems removeObject:file];
+        [self.uploadItems removeObject:file];
+        [connection removeUploadfile:file];
+        [file removeFile];
     }
     _allItems = nil;
 }
+
+- (void)removeUploadFile:(SeafUploadFile *)ufile
+{
+    [connection removeUploadfile:ufile];
+    [ufile removeFile];
+    [self.uploadItems removeObject:ufile];
+    _allItems = nil;
+}
+
 
 @end

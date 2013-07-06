@@ -28,6 +28,6 @@
 - (void)createFile:(NSString *)newFileName;
 - (void)delEntries:(NSArray *)entries;
 - (void)addUploadFiles:(NSMutableArray *)uploadItems;
-- (void)removeUploadFile:(SeafUploadFile *)file;
+- (void)removeUploadFile:(SeafUploadFile *)ufile;
 
 @end
