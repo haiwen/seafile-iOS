@@ -118,6 +118,7 @@ enum {
 
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
 {
+    [self dismissLoadingView];
     [SVProgressHUD showErrorWithStatus:@"Failed to load activities"];
     self.state = ACTIVITY_END;
 }

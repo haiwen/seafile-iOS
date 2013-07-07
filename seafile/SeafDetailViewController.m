@@ -44,32 +44,27 @@ enum PREVIEW_STATE {
 @property (strong) UIBarButtonItem *editItem;
 @property (strong) UIBarButtonItem *exportItem;
 @property (strong) UIBarButtonItem *shareItem;
+@property (strong, nonatomic) UIBarButtonItem *fullscreenItem;
+@property (strong, nonatomic) UIBarButtonItem *exitfsItem;
+@property (strong, nonatomic) UIBarButtonItem *leftItem;
 
 
 @property (strong) UIDocumentInteractionController *docController;
 @property int buttonIndex;
+@property (readwrite, nonatomic) bool hideMaster;
 
 @end
 
 
 @implementation SeafDetailViewController
-@synthesize masterPopoverController = _masterPopoverController;
-@synthesize preViewItem;
-
-@synthesize fileViewController;
-@synthesize failedView;
-@synthesize progressView;
-@synthesize webView;
-@synthesize state;
-
-@synthesize barItemsStar;
-@synthesize barItemsUnStar;
 @synthesize buttonIndex;
-@synthesize docController;
+@synthesize fullscreenItem = _fullscreenItem;
+@synthesize exitfsItem = _exitfsItem;
+@synthesize preViewItem = _preViewItem;
+@synthesize hideMaster = _hideMaster;
 
 
 #pragma mark - Managing the detail item
-
 - (BOOL)previewSuccess
 {
     return (self.state == PREVIEW_SUCCESS) || (self.state == PREVIEW_WEBVIEW) || (self.state == PREVIEW_WEBVIEW_JS);
@@ -78,14 +73,14 @@ enum PREVIEW_STATE {
 - (void)checkNavItems
 {
     NSMutableArray *array = [[NSMutableArray alloc] init];
-    if ([preViewItem isKindOfClass:[SeafFile class]]) {
-        if ([(SeafFile *)preViewItem isStarred])
-            [array addObjectsFromArray:barItemsStar];
+    if ([self.self.preViewItem isKindOfClass:[SeafFile class]]) {
+        if ([(SeafFile *)self.preViewItem isStarred])
+            [array addObjectsFromArray:self.barItemsStar];
         else
-            [array addObjectsFromArray:barItemsUnStar];
+            [array addObjectsFromArray:self.barItemsUnStar];
     }
-    if ([preViewItem editable] && [self previewSuccess]
-        && [preViewItem.mime hasPrefix:@"text/"])
+    if ([self.preViewItem editable] && [self previewSuccess]
+        && [self.preViewItem.mime hasPrefix:@"text/"])
         [array addObject:self.editItem];
     self.navigationItem.rightBarButtonItems = array;
 }
@@ -93,14 +88,14 @@ enum PREVIEW_STATE {
 - (void)clearPreView
 {
     if (self.state == PREVIEW_FAILED)
-        [failedView removeFromSuperview];
+        [self.failedView removeFromSuperview];
     if (self.state == PREVIEW_DOWNLOADING)
-        [progressView removeFromSuperview];
+        [self.progressView removeFromSuperview];
     if (self.state == PREVIEW_SUCCESS)
         [self.fileViewController.view removeFromSuperview];
     if (self.state == PREVIEW_WEBVIEW || self.state == PREVIEW_WEBVIEW_JS) {
-        [webView removeFromSuperview];
-        [webView loadHTMLString:@"" baseURL:nil];
+        [self.webView removeFromSuperview];
+        [self.webView loadHTMLString:@"" baseURL:nil];
     }
 }
 
@@ -108,26 +103,26 @@ enum PREVIEW_STATE {
 {
     NSURLRequest *request;
     if (IsIpad())
-        self.title = preViewItem.previewItemTitle;
+        self.title = self.preViewItem.previewItemTitle;
     else {
         UILabel* tlabel = [[UILabel alloc] initWithFrame:CGRectMake(0,0, 60, 40)];
-        tlabel.text = preViewItem.previewItemTitle;
+        tlabel.text = self.preViewItem.previewItemTitle;
         tlabel.textColor = [UIColor whiteColor];
         tlabel.backgroundColor = [UIColor clearColor];
         tlabel.adjustsFontSizeToFitWidth = YES;
         self.navigationItem.titleView = tlabel;
     }
     [self clearPreView];
-    if (!preViewItem) {
+    if (!self.preViewItem) {
         self.state = PREVIEW_NONE;
-    } else if (preViewItem.previewItemURL) {
-        if (![QLPreviewController canPreviewItem:preViewItem]) {
+    } else if (self.preViewItem.previewItemURL) {
+        if (![QLPreviewController canPreviewItem:self.preViewItem]) {
             self.state = PREVIEW_FAILED;
         } else {
             self.state = PREVIEW_SUCCESS;
-            if ([preViewItem.mime hasPrefix:@"audio"] || [preViewItem.mime hasPrefix:@"video"] || [preViewItem.mime isEqualToString:@"image/svg+xml"])
+            if ([self.preViewItem.mime hasPrefix:@"audio"] || [self.preViewItem.mime hasPrefix:@"video"] || [self.preViewItem.mime isEqualToString:@"image/svg+xml"])
                 self.state = PREVIEW_WEBVIEW;
-            else if([preViewItem.mime isEqualToString:@"text/x-markdown"] || [preViewItem.mime isEqualToString:@"text/x-seafile"])
+            else if([self.preViewItem.mime isEqualToString:@"text/x-markdown"] || [self.preViewItem.mime isEqualToString:@"text/x-seafile"])
                 self.state = PREVIEW_WEBVIEW_JS;
         }
     } else {
@@ -136,40 +131,40 @@ enum PREVIEW_STATE {
     [self checkNavItems];
     switch (self.state) {
         case PREVIEW_DOWNLOADING:
-            Debug (@"DownLoading file %@\n", preViewItem.previewItemTitle);
-            progressView.frame = self.view.frame;
-            [self.view addSubview:progressView];
-            [progressView configureViewWithItem:preViewItem completeness:0];
+            Debug (@"DownLoading file %@\n", self.preViewItem.previewItemTitle);
+            self.progressView.frame = self.view.frame;
+            [self.view addSubview:self.progressView];
+            [self.progressView configureViewWithItem:self.preViewItem completeness:0];
             break;
         case PREVIEW_FAILED:
-            Debug ("Can not preview file %@ %@\n", preViewItem.previewItemTitle, preViewItem.previewItemURL);
-            failedView.frame = self.view.frame;
-            [self.view addSubview:failedView];
-            [failedView configureViewWithPrevireItem:preViewItem];
+            Debug ("Can not preview file %@ %@\n", self.preViewItem.previewItemTitle, self.preViewItem.previewItemURL);
+            self.failedView.frame = self.view.frame;
+            [self.view addSubview:self.failedView];
+            [self.failedView configureViewWithPrevireItem:self.preViewItem];
             break;
         case PREVIEW_SUCCESS:
-            Debug (@"Preview file %@ mime=%@ success\n", preViewItem.previewItemTitle, preViewItem.mime);
-            [self.fileViewController setPreItem:preViewItem];
-            fileViewController.view.frame = self.view.frame;
+            Debug (@"Preview file %@ mime=%@ success\n", self.preViewItem.previewItemTitle, self.preViewItem.mime);
+            [self.fileViewController setPreItem:self.preViewItem];
+            self.fileViewController.view.frame = self.view.frame;
             [self.view addSubview:self.fileViewController.view];
             break;
         case PREVIEW_WEBVIEW_JS:
         case PREVIEW_WEBVIEW:
             Debug("Preview by webview\n");
-            request = [[NSURLRequest alloc] initWithURL:preViewItem.previewItemURL cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
-            if (!webView) {
-                webView = [[UIWebView alloc] initWithFrame:self.view.frame];
-                webView.scalesPageToFit = YES;
-                webView.autoresizesSubviews = YES;
-                webView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
+            request = [[NSURLRequest alloc] initWithURL:self.preViewItem.previewItemURL cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
+            if (!self.webView) {
+                self.webView = [[UIWebView alloc] initWithFrame:self.view.frame];
+                self.webView.scalesPageToFit = YES;
+                self.webView.autoresizesSubviews = YES;
+                self.webView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
                 if (self.state == PREVIEW_WEBVIEW_JS)
-                    webView.delegate = self;
+                    self.webView.delegate = self;
                 else
-                    webView.delegate = nil;
+                    self.webView.delegate = nil;
             }
-            [webView loadRequest:request];
-            [self.view addSubview:webView];
-            webView.center = self.view.center;
+            [self.webView loadRequest:request];
+            [self.view addSubview:self.webView];
+            self.webView.center = self.view.center;
             break;
         case PREVIEW_NONE:
             break;
@@ -183,10 +178,16 @@ enum PREVIEW_STATE {
     if (self.masterPopoverController != nil) {
         [self.masterPopoverController dismissPopoverAnimated:YES];
     }
-
-    preViewItem = item;
+    _preViewItem = item;
     if ([item isKindOfClass:[SeafFile class]])
         [(SeafFile *)item loadContent:NO];
+    if (IsIpad() && UIInterfaceOrientationIsLandscape(self.interfaceOrientation) && !self.hideMaster) {
+        if (_preViewItem == nil) {
+            self.navigationItem.leftBarButtonItem = nil;
+        } else {
+            self.navigationItem.leftBarButtonItem = self.fullscreenItem;
+        }
+    }
     [self refreshView];
 }
 
@@ -217,25 +218,26 @@ enum PREVIEW_STATE {
     UIBarButtonItem *item3 = [self getBarItem:@"star.png" action:@selector(unstarFile:)size:24];
     UIBarButtonItem *item4 = [self getBarItem:@"unstar.png" action:@selector(starFile:)size:24];
     UIBarButtonItem *space = [self getSpaceBarItem:20.0];
-    barItemsStar  = [NSArray arrayWithObjects:self.exportItem, space, self.shareItem, space, item3, space, nil];
-    barItemsUnStar  = [NSArray arrayWithObjects:self.exportItem, space, self.shareItem, space, item4, space, nil];
+    self.barItemsStar  = [NSArray arrayWithObjects:self.exportItem, space, self.shareItem, space, item3, space, nil];
+    self.barItemsUnStar  = [NSArray arrayWithObjects:self.exportItem, space, self.shareItem, space, item4, space, nil];
 
     if(IsIpad()) {
         NSArray *views = [[NSBundle mainBundle] loadNibNamed:@"FailToPreview_iPad" owner:self options:nil];
-        failedView = [views objectAtIndex:0];
+        self.failedView = [views objectAtIndex:0];
         views = [[NSBundle mainBundle] loadNibNamed:@"DownloadingProgress_iPad" owner:self options:nil];
-        progressView = [views objectAtIndex:0];
+        self.progressView = [views objectAtIndex:0];
     } else {
         NSArray *views = [[NSBundle mainBundle] loadNibNamed:@"FailToPreview_iPhone" owner:self options:nil];
-        failedView = [views objectAtIndex:0];
+        self.failedView = [views objectAtIndex:0];
         views = [[NSBundle mainBundle] loadNibNamed:@"DownloadingProgress_iPhone" owner:self options:nil];
-        progressView = [views objectAtIndex:0];
+        self.progressView = [views objectAtIndex:0];
     }
-    fileViewController = [[FileViewController alloc] init];
+    self.fileViewController = [[FileViewController alloc] init];
     self.state = PREVIEW_NONE;
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
+    self.hideMaster = NO;
     [self refreshView];
 }
 
@@ -261,7 +263,7 @@ enum PREVIEW_STATE {
 - (void)viewWillLayoutSubviews
 {
     if (self.state == PREVIEW_SUCCESS)
-        fileViewController.view.frame = self.view.frame;
+        self.fileViewController.view.frame = self.view.frame;
     else if (self.state == PREVIEW_NONE) {
         if (self.view.subviews.count > 0) {
             UIView *v = [self.view.subviews objectAtIndex:0];
@@ -274,8 +276,7 @@ enum PREVIEW_STATE {
 
 - (void)splitViewController:(UISplitViewController *)splitController willHideViewController:(UIViewController *)viewController withBarButtonItem:(UIBarButtonItem *)barButtonItem forPopoverController:(UIPopoverController *)popoverController
 {
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    barButtonItem.title = appdelegate.fileVC.title;
+    self.hideMaster = NO;
     [self.navigationItem setLeftBarButtonItem:barButtonItem animated:YES];
     self.masterPopoverController = popoverController;
 }
@@ -283,8 +284,105 @@ enum PREVIEW_STATE {
 - (void)splitViewController:(UISplitViewController *)splitController willShowViewController:(UIViewController *)viewController invalidatingBarButtonItem:(UIBarButtonItem *)barButtonItem
 {
     // Called when the view is shown again in the split view, invalidating the button and popover controller.
+    self.leftItem = barButtonItem;
     [self.navigationItem setLeftBarButtonItem:nil animated:YES];
     self.masterPopoverController = nil;
+    if (_preViewItem)
+        [self.navigationItem setLeftBarButtonItem:self.fullscreenItem animated:YES];
+}
+
+- (BOOL)splitViewController:(UISplitViewController *)svc shouldHideViewController:(UIViewController *)vc inOrientation:(UIInterfaceOrientation)orientation
+{
+    if (UIInterfaceOrientationIsLandscape(orientation))
+        return self.hideMaster;
+    else
+        return YES;
+}
+
+-(void)makeTabBarHidden:(BOOL)hide
+{
+    // Custom code to hide TabBar
+    UITabBarController *tabBarController = self.splitViewController.tabBarController;
+    if ( [tabBarController.view.subviews count] < 2 ) {
+        return;
+    }
+
+    UIView *contentView;
+
+    if ( [[tabBarController.view.subviews objectAtIndex:0] isKindOfClass:[UITabBar class]] ) {
+        contentView = [tabBarController.view.subviews objectAtIndex:1];
+    } else {
+        contentView = [tabBarController.view.subviews objectAtIndex:0];
+    }
+
+    if (hide) {
+        contentView.frame = tabBarController.view.bounds;
+    }
+    else {
+        contentView.frame = CGRectMake(tabBarController.view.bounds.origin.x,
+                                       tabBarController.view.bounds.origin.y,
+                                       tabBarController.view.bounds.size.width,
+                                       tabBarController.view.bounds.size.height - tabBarController.tabBar.frame.size.height);
+    }
+
+    tabBarController.tabBar.hidden = hide;
+}
+- (void)setHideMaster:(bool)hideMaster
+{
+    _hideMaster = hideMaster;
+    [self makeTabBarHidden:hideMaster];
+    self.splitViewController.delegate = nil;
+    self.splitViewController.delegate = self;
+    [self.splitViewController willRotateToInterfaceOrientation:[UIApplication sharedApplication].statusBarOrientation duration:0];
+    [self.splitViewController.view setNeedsLayout];
+}
+
+- (IBAction)fullscreen:(id)sender
+{
+    self.hideMaster = YES;
+    self.navigationItem.leftBarButtonItem = self.exitfsItem;
+    self.splitViewController.delegate = nil;
+    self.splitViewController.delegate = self;
+}
+
+- (IBAction)exitfullscreen:(id)sender
+{
+    self.hideMaster = NO;
+    self.navigationItem.leftBarButtonItem = self.fullscreenItem;
+}
+
+- (UIBarButtonItem *)fullscreenItem
+{
+    if (!_fullscreenItem) {
+        _fullscreenItem = [self getBarItem:@"arrowleft.png" action:@selector(fullscreen:) size:22];
+    }
+    return _fullscreenItem;
+}
+
+- (UIBarButtonItem *)exitfsItem
+{
+    if (!_exitfsItem) {
+        _exitfsItem = [self getBarItem:@"arrowright.png" action:@selector(exitfullscreen:) size:22];
+    }
+    return _exitfsItem;
+}
+
+- (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration
+{
+    if (IsIpad()) self.splitViewController.delegate = self;
+    [super willRotateToInterfaceOrientation:toInterfaceOrientation duration:duration];
+}
+
+- (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
+{
+    if (IsIpad()) self.splitViewController.delegate = self;
+    if (IsIpad() && !UIInterfaceOrientationIsLandscape(self.interfaceOrientation)) {
+        if (self.hideMaster) {
+            self.navigationItem.leftBarButtonItem = self.leftItem;
+            self.hideMaster = NO;
+        }
+    }
+    [super didRotateFromInterfaceOrientation:fromInterfaceOrientation];
 }
 
 - (void)viewWillDisappear:(BOOL)animated
@@ -295,41 +393,40 @@ enum PREVIEW_STATE {
     [super viewWillDisappear:animated];
 }
 
+#pragma mark - SeafDentryDelegate
 - (void)fileContentLoaded :(SeafFile *)file result:(BOOL)res completeness:(int)percent
 {
-    if (file != preViewItem)
+    if (file != self.preViewItem)
         return;
     if (self.state != PREVIEW_DOWNLOADING) {
         [self refreshView];
         return;
     }
     if (!res) {
-        [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:@"Failed to download file '%@'",preViewItem.previewItemTitle]];
+        [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:@"Failed to download file '%@'",self.preViewItem.previewItemTitle]];
         [self setPreViewItem:nil];
     } else {
-        //Debug ("DownLoading file %@, percent=%d\n", preViewItem.previewItemTitle, percent);
-        [progressView configureViewWithItem:preViewItem completeness:percent];
+        [self.progressView configureViewWithItem:self.preViewItem completeness:percent];
         if (percent == 100)
             [self refreshView];
     }
 }
 
-#pragma mark - SeafDentryDelegate
 - (void)entryChanged:(SeafBase *)entry
 {
-    if (entry == preViewItem) {
-        [self setPreViewItem:preViewItem];
+    if (entry == self.preViewItem) {
+        [self setPreViewItem:self.preViewItem];
     }
 }
 - (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent
 {
-    if (entry == preViewItem)
+    if (entry == self.preViewItem)
         [self fileContentLoaded:(SeafFile *)entry result:YES completeness:percent];
 }
 
 - (void)entryContentLoadingFailed:(int)errCode entry:(SeafBase *)entry;
 {
-    if (entry == preViewItem)
+    if (entry == self.preViewItem)
         [self fileContentLoaded:(SeafFile *)entry result:NO completeness:0];
 }
 
@@ -340,13 +437,13 @@ enum PREVIEW_STATE {
 #pragma mark - file operations
 - (IBAction)starFile:(id)sender
 {
-    [(SeafFile *)preViewItem setStarred:YES];
+    [(SeafFile *)self.preViewItem setStarred:YES];
     [self checkNavItems];
 }
 
 - (IBAction)unstarFile:(id)sender
 {
-    [(SeafFile *)preViewItem setStarred:NO];
+    [(SeafFile *)self.preViewItem setStarred:NO];
     [self checkNavItems];
 }
 
@@ -355,16 +452,16 @@ enum PREVIEW_STATE {
     SeafTextEditorViewController *editViewController = [[SeafTextEditorViewController alloc] init];
     editViewController.detailViewController = self;
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:editViewController];
-    [editViewController setFile:preViewItem];
+    [editViewController setFile:self.preViewItem];
     [navController setModalPresentationStyle:UIModalPresentationFullScreen];
     [self presentViewController:navController animated:NO completion:nil];
 }
 
 - (IBAction)uploadFile:(id)sender
 {
-    if ([preViewItem isKindOfClass:[SeafFile class]]) {
+    if ([self.preViewItem isKindOfClass:[SeafFile class]]) {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        [((SeafFile *)preViewItem) update:appdelegate.fileVC];
+        [((SeafFile *)self.preViewItem) update:appdelegate.fileVC];
         [appdelegate.fileVC refreshView];
     }
 }
@@ -372,14 +469,14 @@ enum PREVIEW_STATE {
 - (IBAction)openElsewhere:(id)sender
 {
     BOOL ret;
-    NSURL *url = [preViewItem checkoutURL];
+    NSURL *url = [self.preViewItem checkoutURL];
     if (!url)
         return;
 
-    if (docController)
-        [docController dismissMenuAnimated:NO];
-    docController = [UIDocumentInteractionController interactionControllerWithURL:url];
-    ret = [docController presentOpenInMenuFromBarButtonItem:self.exportItem animated:YES];
+    if (self.docController)
+        [self.docController dismissMenuAnimated:NO];
+    self.docController = [UIDocumentInteractionController interactionControllerWithURL:url];
+    ret = [self.docController presentOpenInMenuFromBarButtonItem:self.exportItem animated:YES];
     if (ret == NO) {
         [SVProgressHUD showErrorWithStatus:@"There is no app which can open this type of file on this machine"];
     }
@@ -387,7 +484,7 @@ enum PREVIEW_STATE {
 
 - (IBAction)share:(id)sender
 {
-    if (![preViewItem isKindOfClass:[SeafFile class]])
+    if (![self.preViewItem isKindOfClass:[SeafFile class]])
         return;
 
     UIActionSheet *actionSheet;
@@ -408,7 +505,7 @@ enum PREVIEW_STATE {
         if (![appdelegate checkNetworkStatus])
             return;
 
-        SeafFile *file = (SeafFile *)preViewItem;
+        SeafFile *file = (SeafFile *)self.preViewItem;
         if (!file.shareLink) {
             [SVProgressHUD showWithStatus:@"Generate share link ..."];
             [file generateShareLink:self];
@@ -421,10 +518,10 @@ enum PREVIEW_STATE {
 #pragma mark - SeafFileDelegate
 - (void)generateSharelink:(SeafFile *)entry WithResult:(BOOL)success
 {
-    if (entry != preViewItem)
+    if (entry != self.preViewItem)
         return;
 
-    SeafFile *file = (SeafFile *)preViewItem;
+    SeafFile *file = (SeafFile *)self.preViewItem;
     if (!success) {
         [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:@"Failed to generate share link of file '%@'", file.name]];
         return;
@@ -459,7 +556,7 @@ enum PREVIEW_STATE {
     MFMailComposeViewController *mailPicker = [[MFMailComposeViewController alloc] init];
     mailPicker.mailComposeDelegate = self;
 
-    SeafFile *file = (SeafFile *)preViewItem;
+    SeafFile *file = (SeafFile *)self.preViewItem;
     [mailPicker setSubject:[NSString stringWithFormat:@"File '%@' is shared with you using seafile", file.name]];
     NSString *emailBody = [NSString stringWithFormat:@"Hi,<br/><br/>Here is a link to <b>'%@'</b> in my Seafile:<br/><br/> <a href=\"%@\">%@</a>\n\n", file.name, file.shareLink, file.shareLink];
     [mailPicker setMessageBody:emailBody isHTML:YES];
@@ -494,8 +591,8 @@ enum PREVIEW_STATE {
 # pragma - UIWebViewDelegate
 - (void)webViewDidFinishLoad:(UIWebView *)webView
 {
-    if (preViewItem) {
-        NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [preViewItem.content stringEscapedForJavasacript]];
+    if (self.preViewItem) {
+        NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [self.preViewItem.content stringEscapedForJavasacript]];
         [self.webView stringByEvaluatingJavaScriptFromString:js];
     }
 }

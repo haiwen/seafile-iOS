@@ -181,7 +181,7 @@ enum {
         SeafFile *sfile = (SeafFile *)self.detailViewController.preViewItem;
         NSString *parent = [sfile.path stringByDeletingLastPathComponent];
         BOOL deleted = YES;
-        if ([parent isEqualToString:_directory.path]) {
+        if (![_directory isKindOfClass:[SeafRepos class]] && _directory.repoId == sfile.repoId && [parent isEqualToString:_directory.path]) {
             for (SeafBase *entry in _directory.allItems) {
                 if (entry == sfile) {
                     deleted = NO;

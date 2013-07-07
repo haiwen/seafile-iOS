@@ -523,7 +523,7 @@
     UINavigationController *nc = [[UINavigationController alloc] initWithRootViewController:c];
     [nc setModalPresentationStyle:UIModalPresentationFullScreen];
     nc.navigationBar.tintColor = BAR_COLOR;
-    [self.tabbarController presentViewController:nc animated:NO completion:nil];
+    [self.window.rootViewController presentViewController:nc animated:NO completion:nil];
 }
 
 @end
