@@ -35,7 +35,7 @@
                    owner:(NSString *)aOwner
                 repoType:(NSString *)aRepoType
                     perm:(NSString *)aPerm
-                    size:(int)aSize
+                    size:(unsigned long long)aSize
                    mtime:(int)aMtime
                encrypted:(BOOL)aEncrypted
 {

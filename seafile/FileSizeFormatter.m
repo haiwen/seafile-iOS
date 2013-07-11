@@ -16,6 +16,14 @@ static int sMaxUnits = sizeof sUnits - 1;
 @implementation FileSizeFormatter
 static FileSizeFormatter *sharedLoader = nil;
 
+- (id)init
+{
+    if (self = [super init]) {
+        [self setNumberStyle:NSNumberFormatterDecimalStyle];
+        [self setMaximumFractionDigits:1];
+    }
+    return self;
+}
 
 - (NSString *)stringFromNumber:(NSNumber *)number useBaseTen:(BOOL)useBaseTen
 {
