@@ -35,6 +35,8 @@
 @property (nonatomic, readonly) M13InfiniteTabBar *infiniteTabBar; //Infinite tab bar
 
 @property (nonatomic, readonly) NSArray *viewControllers;
+@property (nonatomic, readonly) NSArray *tabBarItems;
+
 @property (nonatomic, assign) UIViewController *selectedViewController;
 @property (nonatomic) NSUInteger selectedIndex;
 

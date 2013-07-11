@@ -39,5 +39,6 @@
 - (void)setSelected:(BOOL)selected; //Used to set the highlight of a view
 - (id)copy; //Quickly duplicate view
 - (void)rotateToAngle:(CGFloat)angle; //handling view rotation
+- (void)setBadge:(int)badge;
 
 @end

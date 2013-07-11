@@ -47,7 +47,7 @@ enum {
     // Do any additional setup after loading the view from its nib.
     self.title = @"Activities";
     self.navigationItem.rightBarButtonItem = [self getBarItemAutoSize:@"refresh.png" action:@selector(refresh:)];
-    self.webview.delegate = self;
+    self.webview.delegate = nil;
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 }
 
@@ -62,6 +62,7 @@ enum {
     if (IsIpad())
         [self.navigationController popToRootViewControllerAnimated:NO];
     self.state = ACTIVITY_INIT;
+    self.webview.delegate = nil;
     [self.webview loadHTMLString:nil baseURL:nil];
     _connection = connection;
     _url = [_connection.address stringByAppendingString:API_URL"/html/events/"];
@@ -90,6 +91,7 @@ enum {
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:self.url] cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
     [request setHTTPMethod:@"GET"];
     [request setValue:[NSString stringWithFormat:@"Token %@", _connection.token] forHTTPHeaderField:@"Authorization"];
+    self.webview.delegate = self;
     [self.webview loadRequest: request];
 }
 
@@ -127,9 +129,9 @@ enum {
 {
     Debug("Request %@\n", request.URL);
     NSString *urlStr = request.URL.absoluteString;
-    if ([urlStr hasPrefix:@"file://"] || [urlStr isEqualToString:self.url])
+    if ([urlStr hasPrefix:@"file://"] || [urlStr isEqualToString:self.url] || [@"about:blank" isEqualToString:urlStr]) {
         return YES;
-    else if ([urlStr hasPrefix:@"api://"]) {
+    } else if ([urlStr hasPrefix:@"api://"]) {
         NSString *path = @"/";
         NSRange range;
         NSRange foundRange = [urlStr rangeOfString:@"/repo/" options:NSCaseInsensitiveSearch];
@@ -145,18 +147,19 @@ enum {
         }
         path = [path stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
         Debug("repo=%@, path=%@\n", repo_id, path);
+        if (path.length <= 1) return NO;
         SeafFile *sfile = [[SeafFile alloc] initWithConnection:self.connection oid:nil repoId:repo_id name:path.lastPathComponent path:path mtime:0 size:0];
         SeafDetailViewController *detailvc;
         if (IsIpad()) {
-            detailvc = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
+            detailvc = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
             [self.navigationController pushViewController:detailvc animated:NO];
         } else {
-            detailvc = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
+            detailvc = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
             SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
             [appdelegate showDetailView:detailvc];
         }
         sfile.delegate = detailvc;
-        [detailvc setPreViewItem:sfile];
+        [detailvc setPreViewItem:sfile master:nil];
     }
     return NO;
 }

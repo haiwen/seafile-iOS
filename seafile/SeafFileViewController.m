@@ -107,7 +107,7 @@ enum {
 
 - (void)setConnection:(SeafConnection *)conn
 {
-    [self.detailViewController setPreViewItem:nil];
+    [self.detailViewController setPreViewItem:nil master:nil];
     [conn loadRepos:self];
     [self setDirectory:(SeafDir *)conn.rootFolder];
 }
@@ -189,7 +189,7 @@ enum {
                 }
             }
             if (deleted)
-                [self.detailViewController setPreViewItem:nil];
+                [self.detailViewController setPreViewItem:nil master:nil];
         }
     }
     if (self.editing) {
@@ -467,6 +467,7 @@ enum {
         SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
         cell.textLabel.text = file.name;
         cell.imageView.image = file.image;
+        cell.accLabel.text = nil;
 
         NSString *sizeStr = [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:file.filesize ] useBaseTen:NO];
         NSDictionary *dict = [file uploadAttr];
@@ -495,6 +496,7 @@ enum {
     cell.textLabel.text = sfile.name;
     cell.detailTextLabel.text = sfile.detailText;
     cell.imageView.image = sfile.image;
+    cell.accLabel.text = nil;
     UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditFileMenu:)];
     [cell addGestureRecognizer:longPressGesture];
     return cell;
@@ -516,6 +518,7 @@ enum {
     cell.detailTextLabel.text = detail;
     cell.imageView.image = srepo.image;
     cell.textLabel.text = srepo.name;
+    cell.accLabel.text = nil;
     return cell;
 }
 
@@ -597,7 +600,7 @@ enum {
             SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
             [appdelegate showDetailView:self.detailViewController];
         }
-        [self.detailViewController setPreViewItem:(SeafUploadFile *)_curEntry];
+        [self.detailViewController setPreViewItem:(SeafUploadFile *)_curEntry master:self];
         return;
     }
 
@@ -612,7 +615,7 @@ enum {
             SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
             [appdelegate showDetailView:self.detailViewController];
         }
-        [self.detailViewController setPreViewItem:(SeafFile *)_curEntry];
+        [self.detailViewController setPreViewItem:(SeafFile *)_curEntry master:self];
     } else if ([_curEntry isKindOfClass:[SeafDir class]]) {
         SeafFileViewController *controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
         [controller setDirectory:(SeafDir *)_curEntry];
@@ -908,7 +911,7 @@ enum {
 - (void)redownloadFile:(SeafFile *)file
 {
     [file deleteCache];
-    [self.detailViewController setPreViewItem:nil];
+    [self.detailViewController setPreViewItem:nil master:nil];
     [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
 }
 

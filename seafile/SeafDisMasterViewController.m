@@ -10,8 +10,12 @@
 #import "SeafDisDetailViewController.h"
 #import "SeafAppDelegate.h"
 #import "SeafDateFormatter.h"
+#import "SeafBase.h"
 #import "ExtentedString.h"
+#import "M13InfiniteTabBarController.h"
+#import "M13InfiniteTabBarItem.h"
 #import "SVProgressHUD.h"
+#import "SeafCell.h"
 #import "Debug.h"
 
 
@@ -59,12 +63,39 @@
     [super didReceiveMemoryWarning];
 }
 
+- (void)refreshTabBarItem
+{
+    int num = 0;
+    for (NSDictionary *dict in self.connection.seafGroups) {
+        if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0 )
+            num ++;
+    }
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    if (IsIpad()) {
+        UITabBarItem *tbi = (UITabBarItem *)[appdelegate.tabbarController.tabBar.items objectAtIndex:TABBED_DISCUSSION];
+        if (num > 0)
+            tbi.badgeValue = [NSString stringWithFormat:@"%d", num];
+        else
+            tbi.badgeValue = nil;
+    } else {
+        M13InfiniteTabBarController *bvc = (M13InfiniteTabBarController *)appdelegate.tabbarController;
+        M13InfiniteTabBarItem *tbi = [bvc.tabBarItems objectAtIndex:TABBED_DISCUSSION];
+        [tbi setBadge:num];
+    }
+}
+
+- (void)refreshView
+{
+    [self.tableView reloadData];
+    [self refreshTabBarItem];
+}
+
 - (void)refresh:(id)sender
 {
     [_connection getSeafGroups:^(NSHTTPURLResponse *response, id JSON, NSData *data) {
         @synchronized(self) {
             Debug("Success to get groups ...\n");
-            [self.tableView reloadData];
+            [self refreshView];
             [self doneLoadingTableViewData];
         }
     }
@@ -84,7 +115,7 @@
 
 - (void)viewWillAppear:(BOOL)animated
 {
-    [self.tableView reloadData];
+    [self refreshView];
     [super viewWillAppear:animated];
 }
 
@@ -103,18 +134,31 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     NSString *CellIdentifier = @"SeafCell";
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+    SeafCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafCell" owner:self options:nil];
         cell = [cells objectAtIndex:0];
     }
-    NSDictionary *dict = [self.connection.seafGroups objectAtIndex:indexPath.row];
+    NSMutableDictionary *dict = [self.connection.seafGroups objectAtIndex:indexPath.row];
     cell.textLabel.text = [dict objectForKey:@"name"];
+#if 0
     int ctime = [[dict objectForKey:@"ctime"] integerValue:0];
     NSString *creator = [dict objectForKey:@"creator"];
     creator = [creator substringToIndex:[creator indexOf:'@']];
     cell.detailTextLabel.text = [NSString stringWithFormat:@"%@ created at %@", creator, [SeafDateFormatter stringFromInt:ctime]];
+#else
+    int mtime = [[dict objectForKey:@"mtime"] integerValue:0];
+    if (mtime)
+        cell.detailTextLabel.text = [NSString stringWithFormat:@"Last dicsussion at %@",  [SeafDateFormatter stringFromInt:mtime]];
+    else
+        cell.detailTextLabel.text = nil;
+#endif
     cell.imageView.image = [UIImage imageNamed:@"group.png"];
+    if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0 ) {
+        cell.accLabel.text = [NSString stringWithFormat:@"%lld", [[dict objectForKey:@"msgnum"] integerValue:0]];
+    } else {
+        cell.accLabel.text = nil;
+    }
     return cell;
 }
 
@@ -136,8 +180,14 @@
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         [appdelegate showDetailView:self.detailViewController];
     }
-    NSString *gid = [[self.connection.seafGroups objectAtIndex:indexPath.row] objectForKey:@"id"];
-    NSString *name = [[self.connection.seafGroups objectAtIndex:indexPath.row] objectForKey:@"name"];
+    NSMutableDictionary *dict = [self.connection.seafGroups objectAtIndex:indexPath.row];
+    NSString *gid = [dict objectForKey:@"id"];
+    NSString *name = [dict objectForKey:@"name"];
+    if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0 ) {
+        [dict setObject:@"0" forKey:@"msgnum"];
+        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationNone];
+        [self refreshTabBarItem];
+    }
     [self.detailViewController setGroup:name groupId:gid];
 }
 

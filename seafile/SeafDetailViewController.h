@@ -15,6 +15,9 @@
 @interface SeafDetailViewController : UIViewController <UISplitViewControllerDelegate, UIWebViewDelegate, UIActionSheetDelegate, MFMailComposeViewControllerDelegate, SeafFileDelegate, SeafDentryDelegate>
 
 @property (nonatomic) id<QLPreviewItem, PreViewDelegate> preViewItem;
+@property (nonatomic) UIViewController *masterVc;
 - (void)refreshView;
+- (void)setPreViewItem:(id<QLPreviewItem, PreViewDelegate>)item master:(UIViewController *)c;
+
 
 @end

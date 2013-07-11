@@ -138,7 +138,7 @@
 {
     _connection = conn;
     _starredFiles = nil;
-    [self.detailViewController setPreViewItem:nil];
+    [self.detailViewController setPreViewItem:nil master:nil];
     [self loadCache];
     [self.tableView reloadData];
 }
@@ -190,6 +190,7 @@
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafCell" owner:self options:nil];
         cell = [cells objectAtIndex:0];
     }
+    ((SeafCell *)cell).accLabel.text = nil;
     SeafStarredFile *sfile = [_starredFiles objectAtIndex:indexPath.row];
     cell.textLabel.text = sfile.name;
     cell.detailTextLabel.text = sfile.detailText;
@@ -211,7 +212,7 @@
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         [appdelegate showDetailView:self.detailViewController];
     }
-    [self.detailViewController setPreViewItem:sfile];
+    [self.detailViewController setPreViewItem:sfile master:self];
 }
 
 #pragma mark - SeafDentryDelegate
@@ -254,7 +255,7 @@
 - (void)redownloadFile:(SeafFile *)file
 {
     [file deleteCache];
-    [self.detailViewController setPreViewItem:nil];
+    [self.detailViewController setPreViewItem:nil master:nil];
     [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
 }
 

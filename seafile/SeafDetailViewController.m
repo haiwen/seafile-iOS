@@ -22,7 +22,6 @@
 
 enum PREVIEW_STATE {
     PREVIEW_NONE = 0,
-    PREVIEW_INIT,
     PREVIEW_SUCCESS,
     PREVIEW_WEBVIEW,
     PREVIEW_WEBVIEW_JS,
@@ -30,7 +29,7 @@ enum PREVIEW_STATE {
     PREVIEW_FAILED
 };
 
-@interface SeafDetailViewController ()
+@interface SeafDetailViewController ()<UIPrintInteractionControllerDelegate>
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
 
 @property (retain) FileViewController *fileViewController;
@@ -44,6 +43,8 @@ enum PREVIEW_STATE {
 @property (strong) UIBarButtonItem *editItem;
 @property (strong) UIBarButtonItem *exportItem;
 @property (strong) UIBarButtonItem *shareItem;
+@property (strong) UIBarButtonItem *saveimgItem;
+
 @property (strong, nonatomic) UIBarButtonItem *fullscreenItem;
 @property (strong, nonatomic) UIBarButtonItem *exitfsItem;
 @property (strong, nonatomic) UIBarButtonItem *leftItem;
@@ -70,18 +71,47 @@ enum PREVIEW_STATE {
     return (self.state == PREVIEW_SUCCESS) || (self.state == PREVIEW_WEBVIEW) || (self.state == PREVIEW_WEBVIEW_JS);
 }
 
+- (BOOL)isImage:(NSString *)name
+{
+    static NSString *imgexts[] = {@"tif", @"tiff", @"jpg", @"jpeg", @"gif", @"png", @"bmp", @"ico", nil};
+    NSString *ext = name.pathExtension.lowercaseString;
+    if (ext && ext.length != 0) {
+        for (int i = 0; imgexts[i]; ++i) {
+            if ([imgexts[i] isEqualToString:ext])
+                return true;
+        }
+    }
+    return false;
+}
+
+- (BOOL)isPrintable:(SeafFile *)file
+{
+    NSArray *exts = [NSArray arrayWithObjects:@"pdf", @"doc", @"docx", @"jpeg", @"jpg", @"rtf", nil];
+    NSString *ext = file.name.pathExtension.lowercaseString;
+    if (ext && ext.length != 0 && [exts indexOfObject:ext] != NSNotFound) {
+        if ([UIPrintInteractionController canPrintURL:file.checkoutURL])
+            return true;
+    }
+    return false;
+}
+
 - (void)checkNavItems
 {
     NSMutableArray *array = [[NSMutableArray alloc] init];
-    if ([self.self.preViewItem isKindOfClass:[SeafFile class]]) {
+    if ([self.preViewItem isKindOfClass:[SeafFile class]]) {
         if ([(SeafFile *)self.preViewItem isStarred])
             [array addObjectsFromArray:self.barItemsStar];
         else
             [array addObjectsFromArray:self.barItemsUnStar];
+        if (self.state == PREVIEW_DOWNLOADING) {
+            [self.exportItem setEnabled:NO];
+        } else
+            [self.exportItem setEnabled:YES];
     }
     if ([self.preViewItem editable] && [self previewSuccess]
         && [self.preViewItem.mime hasPrefix:@"text/"])
         [array addObject:self.editItem];
+
     self.navigationItem.rightBarButtonItems = array;
 }
 
@@ -105,7 +135,7 @@ enum PREVIEW_STATE {
     if (IsIpad())
         self.title = self.preViewItem.previewItemTitle;
     else {
-        UILabel* tlabel = [[UILabel alloc] initWithFrame:CGRectMake(0,0, 60, 40)];
+        UILabel* tlabel = [[UILabel alloc] initWithFrame:CGRectMake(0,0, 130, 40)];
         tlabel.text = self.preViewItem.previewItemTitle;
         tlabel.textColor = [UIColor whiteColor];
         tlabel.backgroundColor = [UIColor clearColor];
@@ -173,15 +203,16 @@ enum PREVIEW_STATE {
     }
 }
 
-- (void)setPreViewItem:(id<QLPreviewItem, PreViewDelegate>)item
+- (void)setPreViewItem:(id<QLPreviewItem, PreViewDelegate>)item master:(UIViewController *)c
 {
     if (self.masterPopoverController != nil) {
         [self.masterPopoverController dismissPopoverAnimated:YES];
     }
+    self.masterVc = c;
     _preViewItem = item;
     if ([item isKindOfClass:[SeafFile class]])
         [(SeafFile *)item loadContent:NO];
-    if (IsIpad() && UIInterfaceOrientationIsLandscape(self.interfaceOrientation) && !self.hideMaster) {
+    if (IsIpad() && UIInterfaceOrientationIsLandscape(self.interfaceOrientation) && !self.hideMaster && self.masterVc) {
         if (_preViewItem == nil) {
             self.navigationItem.leftBarButtonItem = nil;
         } else {
@@ -213,11 +244,14 @@ enum PREVIEW_STATE {
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
 
     self.editItem = [self getBarItem:@"editfile.png" action:@selector(editFile:)size:18];
-    self.exportItem = [self getBarItemAutoSize:@"export.png" action:@selector(openElsewhere:)];
+    self.exportItem = [self getBarItemAutoSize:@"export.png" action:@selector(export:)];
     self.shareItem = [self getBarItemAutoSize:@"share.png" action:@selector(share:)];
     UIBarButtonItem *item3 = [self getBarItem:@"star.png" action:@selector(unstarFile:)size:24];
     UIBarButtonItem *item4 = [self getBarItem:@"unstar.png" action:@selector(starFile:)size:24];
-    UIBarButtonItem *space = [self getSpaceBarItem:20.0];
+    float spacewidth = 20.0;
+    if (!IsIpad())
+        spacewidth = 10.0;
+    UIBarButtonItem *space = [self getSpaceBarItem:spacewidth];
     self.barItemsStar  = [NSArray arrayWithObjects:self.exportItem, space, self.shareItem, space, item3, space, nil];
     self.barItemsUnStar  = [NSArray arrayWithObjects:self.exportItem, space, self.shareItem, space, item4, space, nil];
 
@@ -237,7 +271,7 @@ enum PREVIEW_STATE {
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
-    self.hideMaster = NO;
+    _hideMaster = NO;
     [self refreshView];
 }
 
@@ -308,7 +342,6 @@ enum PREVIEW_STATE {
     }
 
     UIView *contentView;
-
     if ( [[tabBarController.view.subviews objectAtIndex:0] isKindOfClass:[UITabBar class]] ) {
         contentView = [tabBarController.view.subviews objectAtIndex:1];
     } else {
@@ -317,8 +350,7 @@ enum PREVIEW_STATE {
 
     if (hide) {
         contentView.frame = tabBarController.view.bounds;
-    }
-    else {
+    } else {
         contentView.frame = CGRectMake(tabBarController.view.bounds.origin.x,
                                        tabBarController.view.bounds.origin.y,
                                        tabBarController.view.bounds.size.width,
@@ -327,8 +359,10 @@ enum PREVIEW_STATE {
 
     tabBarController.tabBar.hidden = hide;
 }
+
 - (void)setHideMaster:(bool)hideMaster
 {
+    if (!self.masterVc) return;
     _hideMaster = hideMaster;
     [self makeTabBarHidden:hideMaster];
     self.splitViewController.delegate = nil;
@@ -353,17 +387,15 @@ enum PREVIEW_STATE {
 
 - (UIBarButtonItem *)fullscreenItem
 {
-    if (!_fullscreenItem) {
+    if (!_fullscreenItem)
         _fullscreenItem = [self getBarItem:@"arrowleft.png" action:@selector(fullscreen:) size:22];
-    }
     return _fullscreenItem;
 }
 
 - (UIBarButtonItem *)exitfsItem
 {
-    if (!_exitfsItem) {
+    if (!_exitfsItem)
         _exitfsItem = [self getBarItem:@"arrowright.png" action:@selector(exitfullscreen:) size:22];
-    }
     return _exitfsItem;
 }
 
@@ -404,7 +436,7 @@ enum PREVIEW_STATE {
     }
     if (!res) {
         [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:@"Failed to download file '%@'",self.preViewItem.previewItemTitle]];
-        [self setPreViewItem:nil];
+        [self setPreViewItem:nil master:nil];
     } else {
         [self.progressView configureViewWithItem:self.preViewItem completeness:percent];
         if (percent == 100)
@@ -415,7 +447,7 @@ enum PREVIEW_STATE {
 - (void)entryChanged:(SeafBase *)entry
 {
     if (entry == self.preViewItem) {
-        [self setPreViewItem:self.preViewItem];
+        [self setPreViewItem:self.preViewItem master:self.masterVc];
     }
 }
 - (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent
@@ -466,7 +498,7 @@ enum PREVIEW_STATE {
     }
 }
 
-- (IBAction)openElsewhere:(id)sender
+- (IBAction)openElsewhere
 {
     BOOL ret;
     NSURL *url = [self.preViewItem checkoutURL];
@@ -479,6 +511,34 @@ enum PREVIEW_STATE {
     ret = [self.docController presentOpenInMenuFromBarButtonItem:self.exportItem animated:YES];
     if (ret == NO) {
         [SVProgressHUD showErrorWithStatus:@"There is no app which can open this type of file on this machine"];
+    }
+}
+
+- (IBAction)export:(id)sender
+{
+    //image :save album, copy clipboard, print
+    //pdf :print
+    NSMutableArray *bts = [[NSMutableArray alloc] init];
+    SeafFile *file = (SeafFile *)self.preViewItem;
+    if ([self isImage:file.name]) {
+        [bts addObject:@"Save to album"];
+        [bts addObject:@"Copy image to clipboard"];
+    }
+    if ([self isPrintable:file])
+        [bts addObject:@"Print"];
+    if (bts.count == 0) {
+        [self openElsewhere];
+    } else {
+        UIActionSheet *actionSheet;
+        if (IsIpad())
+            actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:nil ];
+        else
+            actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:nil ];
+        for (NSString *title in bts) {
+            [actionSheet addButtonWithTitle:title];
+        }
+        [actionSheet addButtonWithTitle:@"Open elsewhere..."];
+        [actionSheet showFromBarButtonItem:self.exportItem animated:YES];
     }
 }
 
@@ -496,23 +556,83 @@ enum PREVIEW_STATE {
     [actionSheet showFromBarButtonItem:self.shareItem animated:YES];
 }
 
+- (void)thisImage:(UIImage *)image hasBeenSavedInPhotoAlbumWithError:(NSError *)error usingContextInfo:(void *)ctxInfo
+{
+    Debug("error=%@\n", error);
+    SeafFile *file = (__bridge SeafFile *)ctxInfo;
+
+    if (error) {
+        [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:@"Failed to save %@ to album", file.name]];
+    } else {
+        [SVProgressHUD showSuccessWithStatus:[NSString stringWithFormat:@"Success to save %@ to album", file.name]];
+    }
+}
+
+- (void)printFile:(SeafFile *)file
+{
+    UIPrintInteractionController *pic = [UIPrintInteractionController sharedPrintController];
+    if  (pic && [UIPrintInteractionController canPrintURL:file.checkoutURL] ) {
+        pic.delegate = self;
+
+        UIPrintInfo *printInfo = [UIPrintInfo printInfo];
+        printInfo.outputType = UIPrintInfoOutputGeneral;
+        printInfo.jobName = file.name;
+        printInfo.duplex = UIPrintInfoDuplexLongEdge;
+        pic.printInfo = printInfo;
+        pic.showsPageRange = YES;
+        pic.printingItem = file.checkoutURL;
+
+        void (^completionHandler)(UIPrintInteractionController *, BOOL, NSError *) =
+        ^(UIPrintInteractionController *pic, BOOL completed, NSError *error) {
+            if (!completed && error)
+                NSLog(@"FAILED! due to error in domain %@ with error code %u",
+                      error.domain, error.code);
+        };
+        if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+            [pic presentFromBarButtonItem:self.exportItem animated:YES
+                        completionHandler:completionHandler];
+        } else {
+            [pic presentAnimated:YES completionHandler:completionHandler];
+        }
+    }
+}
+
 #pragma mark - UIActionSheetDelegate
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)bIndex
 {
     buttonIndex = bIndex;
-    if (buttonIndex == 0 || buttonIndex == 1) {
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        if (![appdelegate checkNetworkStatus])
-            return;
+    if (bIndex < 0 || bIndex >= actionSheet.numberOfButtons)
+        return;
+    SeafFile *file = (SeafFile *)self.preViewItem;
+    if ([@"How would you like to share this file?" isEqualToString:actionSheet.title]) {
+        if (buttonIndex == 0 || buttonIndex == 1) {
+            SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+            if (![appdelegate checkNetworkStatus])
+                return;
 
-        SeafFile *file = (SeafFile *)self.preViewItem;
-        if (!file.shareLink) {
-            [SVProgressHUD showWithStatus:@"Generate share link ..."];
-            [file generateShareLink:self];
-        } else {
-            [self generateSharelink:file WithResult:YES];
+            if (!file.shareLink) {
+                [SVProgressHUD showWithStatus:@"Generate share link ..."];
+                [file generateShareLink:self];
+            } else {
+                [self generateSharelink:file WithResult:YES];
+            }
+        }
+    } else {
+        NSString *title = [actionSheet buttonTitleAtIndex:bIndex];
+        if ([@"Open elsewhere..." isEqualToString:title]) {
+            [self openElsewhere];
+        } else if ([@"Save to album" isEqualToString:title]) {
+            UIImage *img = [UIImage imageWithContentsOfFile:file.previewItemURL.path];
+            UIImageWriteToSavedPhotosAlbum(img, self, @selector(thisImage:hasBeenSavedInPhotoAlbumWithError:usingContextInfo:), (void *)CFBridgingRetain(file));
+        }  else if ([@"Copy image to clipboard" isEqualToString:title]) {
+            UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+            NSData *data = [NSData dataWithContentsOfFile:file.previewItemURL.path];
+            [pasteboard setData:data forPasteboardType:file.name];
+        } else if ([@"Print" isEqualToString:title]) {
+            [self printFile:file];
         }
     }
+
 }
 
 #pragma mark - SeafFileDelegate

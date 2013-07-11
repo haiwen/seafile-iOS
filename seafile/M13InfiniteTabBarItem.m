@@ -103,7 +103,19 @@
     } else {
         _titleLabel.textColor = _unselectedTitleColor;
     }
+}
 
+- (void)setBadge:(int)badge
+{
+    if (badge) {
+        _titleLabel.textColor = [UIColor redColor];
+    } else {
+        if (_selected) {
+            _titleLabel.textColor = _selectedTitleColor;
+        } else {
+            _titleLabel.textColor = _unselectedTitleColor;
+        }
+    }
 }
 
 - (UIImage *)createColoredIconForCurrnetState

@@ -390,7 +390,7 @@
 {
     NSMutableArray *groups = [[NSMutableArray alloc] init];
     for (NSDictionary *info in JSON) {
-        [groups addObject:info];
+        [groups addObject:[NSMutableDictionary dictionaryWithDictionary:info]];
     }
     _seafGroups = groups;
     return YES;
