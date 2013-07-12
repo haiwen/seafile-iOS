@@ -30,7 +30,7 @@
                     name:(NSString *)aName
                     path:(NSString *)aPath
                    mtime:(int)mtime
-                    size:(int)size;
+                    size:(unsigned long long)size;
 
 @property (strong) NSString *mpath;// For modified files
 @property (readonly) NSString *detailText;

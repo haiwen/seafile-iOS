@@ -49,7 +49,7 @@
                     name:(NSString *)aName
                     path:(NSString *)aPath
                    mtime:(int)mtime
-                    size:(int)size;
+                    size:(unsigned long long)size;
 {
     if (self = [super initWithConnection:aConnection oid:anId repoId:aRepoId name:aName path:aPath mime:[FileMimeType mimeType:aName]]) {
         _mtime = mtime;
@@ -73,7 +73,7 @@
     } else if (!self.mtime)
         return [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:self.filesize ] useBaseTen:NO];
     else
-        return [NSString stringWithFormat:@"%@, %@", [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:self.filesize ] useBaseTen:NO], [SeafDateFormatter stringFromInt:self.mtime]];
+        return [NSString stringWithFormat:@"%@, %@", [FileSizeFormatter stringFromNumber:[NSNumber numberWithUnsignedLongLong:self.filesize ] useBaseTen:NO], [SeafDateFormatter stringFromInt:self.mtime]];
 }
 
 - (NSString *)downloadTempPath

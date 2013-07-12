@@ -514,7 +514,7 @@ enum {
 - (SeafCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView
 {
     SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
-    NSString *detail = [NSString stringWithFormat:@"%@, %@", [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:srepo.size ] useBaseTen:NO], [SeafDateFormatter stringFromInt:srepo.mtime]];
+    NSString *detail = [NSString stringWithFormat:@"%@, %@", [FileSizeFormatter stringFromNumber:[NSNumber numberWithUnsignedLongLong:srepo.size ] useBaseTen:NO], [SeafDateFormatter stringFromInt:srepo.mtime]];
     cell.detailTextLabel.text = detail;
     cell.imageView.image = srepo.image;
     cell.textLabel.text = srepo.name;
