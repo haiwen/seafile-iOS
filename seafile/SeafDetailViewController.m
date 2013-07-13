@@ -71,19 +71,6 @@ enum PREVIEW_STATE {
     return (self.state == PREVIEW_SUCCESS) || (self.state == PREVIEW_WEBVIEW) || (self.state == PREVIEW_WEBVIEW_JS);
 }
 
-- (BOOL)isImage:(NSString *)name
-{
-    static NSString *imgexts[] = {@"tif", @"tiff", @"jpg", @"jpeg", @"gif", @"png", @"bmp", @"ico", nil};
-    NSString *ext = name.pathExtension.lowercaseString;
-    if (ext && ext.length != 0) {
-        for (int i = 0; imgexts[i]; ++i) {
-            if ([imgexts[i] isEqualToString:ext])
-                return true;
-        }
-    }
-    return false;
-}
-
 - (BOOL)isPrintable:(SeafFile *)file
 {
     NSArray *exts = [NSArray arrayWithObjects:@"pdf", @"doc", @"docx", @"jpeg", @"jpg", @"rtf", nil];
@@ -132,16 +119,7 @@ enum PREVIEW_STATE {
 - (void)refreshView
 {
     NSURLRequest *request;
-    if (IsIpad())
-        self.title = self.preViewItem.previewItemTitle;
-    else {
-        UILabel* tlabel = [[UILabel alloc] initWithFrame:CGRectMake(0,0, 130, 40)];
-        tlabel.text = self.preViewItem.previewItemTitle;
-        tlabel.textColor = [UIColor whiteColor];
-        tlabel.backgroundColor = [UIColor clearColor];
-        tlabel.adjustsFontSizeToFitWidth = YES;
-        self.navigationItem.titleView = tlabel;
-    }
+    self.title = self.preViewItem.previewItemTitle;
     [self clearPreView];
     if (!self.preViewItem) {
         self.state = PREVIEW_NONE;
@@ -520,7 +498,7 @@ enum PREVIEW_STATE {
     //pdf :print
     NSMutableArray *bts = [[NSMutableArray alloc] init];
     SeafFile *file = (SeafFile *)self.preViewItem;
-    if ([self isImage:file.name]) {
+    if ([Utils isImageFile:file.name]) {
         [bts addObject:@"Save to album"];
         [bts addObject:@"Copy image to clipboard"];
     }
@@ -713,6 +691,7 @@ enum PREVIEW_STATE {
 {
     if (self.preViewItem) {
         NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [self.preViewItem.content stringEscapedForJavasacript]];
+        Debug("js=%@\n", js);
         [self.webView stringByEvaluatingJavaScriptFromString:js];
     }
 }
@@ -721,6 +700,24 @@ enum PREVIEW_STATE {
     if ([request.URL.absoluteString hasPrefix:@"file://"])
         return YES;
     return NO;
+}
+
+- (IBAction)handleSwipe:(UISwipeGestureRecognizer*)recognizer
+{
+    if (![Utils isImageFile:self.preViewItem.previewItemTitle] || !self.masterVc || ![self.masterVc isKindOfClass:SeafFileViewController.class])
+        return;
+
+    id<QLPreviewItem, PreViewDelegate> next = nil;
+    SeafFileViewController *c = (SeafFileViewController *)self.masterVc;
+    if (recognizer.direction == UISwipeGestureRecognizerDirectionLeft) {
+        next = [c nextItem:self.preViewItem next:YES];
+    } else if (recognizer.direction == UISwipeGestureRecognizerDirectionRight) {
+        next = [c nextItem:self.preViewItem next:NO];
+    }
+
+    if (!next)
+        return;
+    [self setPreViewItem:next master:self.masterVc];
 }
 
 @end

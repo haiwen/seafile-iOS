@@ -90,16 +90,18 @@ enum {
     cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:cacheSize] useBaseTen:NO];
     Debug("%@, %lld, %lld, total cache=%lld", _connection.username, _connection.usage, _connection.quota, cacheSize);
     if (_connection.quota <= 0) {
-        usedspaceCell.detailTextLabel.text = @"Unknown";
-        return;
+        if (_connection.usage < 0)
+            usedspaceCell.detailTextLabel.text = @"Unknown";
+        else
+            usedspaceCell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:_connection.usage] useBaseTen:NO];
+    } else {
+        float usage = 100.0 * _connection.usage/_connection.quota;
+        NSString *quotaString = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:_connection.quota ] useBaseTen:NO];
+        if (usage < 0)
+            usedspaceCell.detailTextLabel.text = [NSString stringWithFormat:@"? of %@", quotaString];
+        else
+            usedspaceCell.detailTextLabel.text = [NSString stringWithFormat:@"%.2f%% of %@", usage, quotaString];
     }
-
-    float usage = 100.0 * _connection.usage/_connection.quota;
-    NSString *quotaString = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:_connection.quota ] useBaseTen:NO];
-    if (usage < 0)
-        usedspaceCell.detailTextLabel.text = [NSString stringWithFormat:@"? of %@", quotaString];
-    else
-        usedspaceCell.detailTextLabel.text = [NSString stringWithFormat:@"%.2f%% of %@", usage, quotaString];
 }
 
 - (void)setConnection:(SeafConnection *)connection

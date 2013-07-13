@@ -1,19 +1,19 @@
 <html><head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <link rel="stylesheet" type="text/css" href="./seahub.css">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+    <link rel="stylesheet" type="text/css" href="./mobile.css">
     <link rel="stylesheet" type="text/css" href="./pagedown.css">
     <style type="text/css">
       #wmd-preview {
       border:1px solid #ccc;
-      min-height:0;
       overflow:auto;
       height:100%;
+      padding:0 10px;
       }
       .article p {
-      margin:0;
+      margin:0 0 0 1em;
       }
       .article h1 {
-      margin:0.5em 0;
+      margin:0.5em 0 0 0;
       }
       #wmd-input {
       border:1px solid #ccc;
@@ -25,8 +25,8 @@
   <body class="default">
     <div id="wmd-button-bar" style="display: none;"></div>
     <div id="mainSplitter" class="ovhd" style="width:100%">
-      <textarea class="wmd-input fleft" id="wmd-input" style="overflow:auto; font-size:14px"></textarea>
-      <div id="wmd-preview" class="article fright"></div>
+      <textarea class="wmd-input" id="wmd-input" style="overflow:auto; font-size:14px"></textarea>
+      <div id="wmd-preview" class="article"></div>
     </div>
 
  <div id="md-edit-help" class="hide">
@@ -65,26 +65,6 @@
               <td><pre>![alt text](https://cloud.seafile.com/media/img/logo.png)</pre></td>
               <td><img src="https://cloud.seafile.com/media/img/logo.png" alt="" /></td>
             </tr>
-            <!--                         <tr> -->
-            <!--                             <td><pre>* unordered list -->
-            <!-- * leave empty lines around the list</pre></td> -->
-            <!--                             <td> -->
-            <!--                                 <ul> -->
-            <!--                                     <li>unordered list</li> -->
-            <!--                                     <li>leave empty lines around the list</li> -->
-            <!--                                 </ul> -->
-            <!--                             </td> -->
-            <!--                         </tr> -->
-            <!--                         <tr> -->
-            <!--                             <td><pre>1. ordered list -->
-            <!-- 2. leave empty lines</pre></td> -->
-            <!--                             <td> -->
-            <!--                                 <ol> -->
-            <!--                                     <li>ordered list</li> -->
-            <!--                                     <li>leave empty lines</li> -->
-            <!--                                 </ol> -->
-            <!--                             </td> -->
-            <!--                         </tr> -->
         </tbody></table>
         <h3>Extended Syntax for Wiki</h3>
         <ul>
@@ -98,6 +78,15 @@
     <script type="text/javascript" src="./Markdown.Editor.js"></script>
     <script type="text/javascript" src="./Markdown.Extra.js"></script>
     <script type="text/javascript">
+      function setContent(content) {
+        document.getElementById("wmd-input").value = content;
+        $('#wmd-preview').html(converter.makeHtml(content, '0'));
+      }
+      
+      function getContent() {
+        return document.getElementById("wmd-input").value;
+      }
+
       var converter = new Markdown.Converter();
       converter.hooks.chain("preBlockGamut", function (text, rbg) {
       return text.replace(/^ {0,3}""" *\n((?:.*?\n)+?) {0,3}""" *$/gm, function (whole, inner) {
@@ -147,15 +136,6 @@
                           function mdEditHelp() {
                           $('#md-edit-help').modal();
                           }
-
-      function setContent(content) {
-        document.getElementById("wmd-input").value = content
-        $('#wmd-preview').html(converter.makeHtml(content, '0'))
-      }
-      
-      function getContent() {
-        return document.getElementById("wmd-input").value
-      }
     </script>
     <script type="text/javascript">
       function btClicked(tag) {
@@ -177,7 +157,7 @@
       $(document).ready(function () {
         wresize()
         $("#wmd-input").css({'width':$(window).width(), 'display': "block" })
-        $("#wmd-preview").css({'width':$(window).width(), 'display': "none" })
+        $("#wmd-preview").css({'display': "none" })
       });
 
       $('#wmd-preview').children(':first').css('margin-top', '0');
@@ -187,11 +167,11 @@
       if (state == 0) {
         state = 1;
         $("#wmd-input").css({'width':$(window).width(), 'display': "none" })
-        $("#wmd-preview").css({'width':$(window).width(), 'display': "block" })
+        $("#wmd-preview").css({'display': "block" })
       } else {
         state = 0;
         $("#wmd-input").css({'width':$(window).width(), 'display': "block" })
-        $("#wmd-preview").css({'width':$(window).width(), 'display': "none" })
+        $("#wmd-preview").css({'display': "none" })
       }
       return state
       }

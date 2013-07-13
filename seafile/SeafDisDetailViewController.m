@@ -248,7 +248,7 @@
                 [SVProgressHUD showErrorWithStatus:@"Failed to add discussion"];
             }
         }];
-        [SVProgressHUD showWithStatus:@"Adding discussion ..."];
+        //[SVProgressHUD showWithStatus:@"Adding discussion ..."];
     }
 }
 

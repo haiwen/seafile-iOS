@@ -326,13 +326,30 @@
                             </imageView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <gestureRecognizers/>
                         <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
+                        <connections>
+                            <outletCollection property="gestureRecognizers" destination="dgN-6S-yM8" appends="YES" id="291-6a-6AG"/>
+                            <outletCollection property="gestureRecognizers" destination="9EE-ST-nue" appends="YES" id="bQ3-rU-eiZ"/>
+                        </connections>
                     </view>
                     <toolbarItems/>
                     <navigationItem key="navigationItem" id="53"/>
                     <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="15" sceneMemberID="firstResponder"/>
+                <swipeGestureRecognizer cancelsTouchesInView="NO" direction="left" id="dgN-6S-yM8" userLabel="Left Swipe Gesture Recognizer">
+                    <connections>
+                        <action selector="handleSwipe:" destination="4" id="GuC-uc-J3m"/>
+                        <outlet property="delegate" destination="4" id="69K-Eh-1vX"/>
+                    </connections>
+                </swipeGestureRecognizer>
+                <swipeGestureRecognizer direction="right" id="9EE-ST-nue" userLabel="Right Swipe Gesture Recognizer">
+                    <connections>
+                        <action selector="handleSwipe:" destination="4" id="Le6-8h-4Oi"/>
+                        <outlet property="delegate" destination="4" id="fVh-ow-INm"/>
+                    </connections>
+                </swipeGestureRecognizer>
             </objects>
             <point key="canvasLocation" x="1915" y="-3164"/>
         </scene>

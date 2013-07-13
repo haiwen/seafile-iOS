@@ -100,6 +100,7 @@ enum TOOL_ITEM {
     NSString *ret = [self.webView stringByEvaluatingJavaScriptFromString:@"toggle_ep()"];
     if ([ret isEqualToString:@"1"]) {
         ep.title = @"Edit";
+        [self.webView endEditing:YES];
     } else {
         ep.title = @"Preview";
     }
@@ -461,8 +462,9 @@ enum TOOL_ITEM {
     if ([[urlStr lowercaseString] hasPrefix:protocolPrefix]) {
         urlStr = [urlStr substringFromIndex:protocolPrefix.length];
         return [self handleUrl:urlStr];
-    }
-    return YES;
+    } else if ([urlStr.lowercaseString hasPrefix:@"file://"])
+        return YES;
+    return NO;
 }
 
 - (void)setFile:(id<QLPreviewItem, PreViewDelegate>) file

@@ -237,4 +237,17 @@
     return encodeContent;
 }
 
++ (BOOL)isImageFile:(NSString *)name
+{
+    static NSString *imgexts[] = {@"tif", @"tiff", @"jpg", @"jpeg", @"gif", @"png", @"bmp", @"ico", nil};
+    NSString *ext = name.pathExtension.lowercaseString;
+    if (ext && ext.length != 0) {
+        for (int i = 0; imgexts[i]; ++i) {
+            if ([imgexts[i] isEqualToString:ext])
+                return true;
+        }
+    }
+    return false;
+}
+
 @end

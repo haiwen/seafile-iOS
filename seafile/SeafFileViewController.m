@@ -39,7 +39,7 @@ enum {
 - (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView;
 
 @property (strong, nonatomic) SeafDir *directory;
-@property (strong) SeafBase *curEntry;
+@property (strong) id curEntry;
 @property (strong) InputAlertPrompt *passSetView;
 @property (strong) InputAlertPrompt *inputView;
 @property (strong, nonatomic) IBOutlet UIActivityIndicatorView *loadingView;
@@ -499,6 +499,7 @@ enum {
     cell.accLabel.text = nil;
     UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditFileMenu:)];
     [cell addGestureRecognizer:longPressGesture];
+    sfile.delegate = self;
     return cell;
 }
 
@@ -508,6 +509,7 @@ enum {
     cell.textLabel.text = sdir.name;
     cell.detailTextLabel.text = nil;
     cell.imageView.image = sdir.image;
+    sdir.delegate = self;
     return cell;
 }
 
@@ -519,6 +521,7 @@ enum {
     cell.imageView.image = srepo.image;
     cell.textLabel.text = srepo.name;
     cell.accLabel.text = nil;
+    srepo.delegate = self;
     return cell;
 }
 
@@ -595,27 +598,19 @@ enum {
         return;
     }
     _curEntry = [self getDentrybyIndexPath:indexPath];
-    if ([_curEntry isKindOfClass:[SeafUploadFile class]]) {
-        if (!IsIpad()) {
-            SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-            [appdelegate showDetailView:self.detailViewController];
-        }
-        [self.detailViewController setPreViewItem:(SeafUploadFile *)_curEntry master:self];
-        return;
-    }
-
     [_curEntry setDelegate:self];
     if ([_curEntry isKindOfClass:[SeafRepo class]] && [(SeafRepo *)_curEntry passwordRequired]) {
         [self popupSetRepoPassword];
         return;
     }
 
-    if ([_curEntry isKindOfClass:[SeafFile class]]) {
+    if ([_curEntry isKindOfClass:[SeafFile class]] || [_curEntry isKindOfClass:[SeafUploadFile class]]) {
         if (!IsIpad()) {
             SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
             [appdelegate showDetailView:self.detailViewController];
         }
-        [self.detailViewController setPreViewItem:(SeafFile *)_curEntry master:self];
+        id<QLPreviewItem, PreViewDelegate> item = (id<QLPreviewItem, PreViewDelegate>)_curEntry;
+        [self.detailViewController setPreViewItem:item master:self];
     } else if ([_curEntry isKindOfClass:[SeafDir class]]) {
         SeafFileViewController *controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
         [controller setDirectory:(SeafDir *)_curEntry];
@@ -1061,6 +1056,38 @@ enum {
     int index = [_directory.allItems indexOfObject:file];
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
     [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+}
+
+- (id<QLPreviewItem, PreViewDelegate>)nextItem:(id<QLPreviewItem, PreViewDelegate>)cur next:(BOOL)next
+{
+    id<QLPreviewItem, PreViewDelegate> n = nil;
+    int count = _directory.allItems.count;
+    int idx = [_directory.allItems indexOfObject:cur];
+    if (idx == NSNotFound)
+        return nil;
+    int nidx = -1;
+
+    if (next) {
+        for (int i = idx+1; i < count; ++i)
+            if ([Utils isImageFile:[[_directory.allItems objectAtIndex:i] name]]) {
+                nidx = i;
+                break;
+            }
+    } else {
+        for (int i = idx-1; i >=  0; --i)
+            if ([Utils isImageFile:[[_directory.allItems objectAtIndex:i] name]]) {
+                nidx = i;
+                break;
+            }
+    }
+    if (nidx >= 0) {
+        n = [_directory.allItems objectAtIndex:nidx];
+        if ([n isKindOfClass:[SeafFile class]])
+            ((SeafFile *)n).delegate = self;
+        NSIndexPath *ip = [NSIndexPath indexPathForRow:nidx inSection:0];
+        [self.tableView selectRowAtIndexPath:ip animated:YES scrollPosition:UITableViewScrollPositionBottom];
+    }
+    return n;
 }
 
 @end

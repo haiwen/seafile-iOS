@@ -44,4 +44,6 @@ enum {
 - (void)uploadFile:(SeafUploadFile *)file;
 - (void)chooseUploadDir:(SeafDir *)dir file:(SeafUploadFile *)ufile;
 
+- (id<QLPreviewItem, PreViewDelegate>)nextItem:(id<QLPreviewItem, PreViewDelegate>)cur next:(BOOL)next;
+
 @end

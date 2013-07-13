@@ -606,8 +606,6 @@
 		5782EE751734F3A300A76338 /* Markdown.Editor.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE681734F3A300A76338 /* Markdown.Editor.js */; };
 		5782EE761734F3A300A76338 /* pagedown.css in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE691734F3A300A76338 /* pagedown.css */; };
 		5782EE771734F3A300A76338 /* pagedown.css in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE691734F3A300A76338 /* pagedown.css */; };
-		5782EE781734F3A300A76338 /* seahub.css in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE6A1734F3A300A76338 /* seahub.css */; };
-		5782EE791734F3A300A76338 /* seahub.css in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE6A1734F3A300A76338 /* seahub.css */; };
 		5782EE7A1734F3A300A76338 /* wmd-buttons.png in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE6B1734F3A300A76338 /* wmd-buttons.png */; };
 		5782EE7B1734F3A300A76338 /* wmd-buttons.png in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE6B1734F3A300A76338 /* wmd-buttons.png */; };
 		57853C8F164675CB00CE8857 /* SeafStarredFilesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57853C8E164675CB00CE8857 /* SeafStarredFilesViewController.m */; };
@@ -647,6 +645,8 @@
 		57C07CE9163272CE00502B06 /* SeafUploadingFileCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57C07CE8163272CE00502B06 /* SeafUploadingFileCell.xib */; };
 		57C57BDD165FBB4C006834DF /* SVProgressHUD.m in Sources */ = {isa = PBXBuildFile; fileRef = 57C57BDB165FBB4C006834DF /* SVProgressHUD.m */; };
 		57C57BDF165FC87B006834DF /* SVProgressHUD.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 57C57BDE165FC87B006834DF /* SVProgressHUD.bundle */; };
+		57D0AD3717914E7900D741BE /* mobile.css in Resources */ = {isa = PBXBuildFile; fileRef = 57D0AD3617914E7900D741BE /* mobile.css */; };
+		57D0AD3817914E7900D741BE /* mobile.css in Resources */ = {isa = PBXBuildFile; fileRef = 57D0AD3617914E7900D741BE /* mobile.css */; };
 		57DA26F4173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DA26F3173E6DFC0003BA31 /* SeafTextEditorViewController.m */; };
 		57DA26F5173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DA26F3173E6DFC0003BA31 /* SeafTextEditorViewController.m */; };
 		57DB827215A833FA00097CEC /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57DB827115A833FA00097CEC /* UIKit.framework */; };
@@ -1110,7 +1110,6 @@
 		5782EE671734F3A300A76338 /* logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = logo.png; path = htmls/logo.png; sourceTree = SOURCE_ROOT; };
 		5782EE681734F3A300A76338 /* Markdown.Editor.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = Markdown.Editor.js; path = htmls/Markdown.Editor.js; sourceTree = SOURCE_ROOT; };
 		5782EE691734F3A300A76338 /* pagedown.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; name = pagedown.css; path = htmls/pagedown.css; sourceTree = SOURCE_ROOT; };
-		5782EE6A1734F3A300A76338 /* seahub.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; name = seahub.css; path = htmls/seahub.css; sourceTree = SOURCE_ROOT; };
 		5782EE6B1734F3A300A76338 /* wmd-buttons.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "wmd-buttons.png"; path = "htmls/wmd-buttons.png"; sourceTree = SOURCE_ROOT; };
 		57853C8D164675CB00CE8857 /* SeafStarredFilesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafStarredFilesViewController.h; sourceTree = "<group>"; };
 		57853C8E164675CB00CE8857 /* SeafStarredFilesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafStarredFilesViewController.m; sourceTree = "<group>"; };
@@ -1144,6 +1143,7 @@
 		57C57BDB165FBB4C006834DF /* SVProgressHUD.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVProgressHUD.m; sourceTree = "<group>"; };
 		57C57BDC165FBB4C006834DF /* SVProgressHUD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVProgressHUD.h; sourceTree = "<group>"; };
 		57C57BDE165FC87B006834DF /* SVProgressHUD.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = SVProgressHUD.bundle; sourceTree = "<group>"; };
+		57D0AD3617914E7900D741BE /* mobile.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; name = mobile.css; path = htmls/mobile.css; sourceTree = SOURCE_ROOT; };
 		57DA26F3173E6DFC0003BA31 /* SeafTextEditorViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafTextEditorViewController.m; sourceTree = "<group>"; };
 		57DB826D15A833FA00097CEC /* SeafilePro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SeafilePro.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		57DB827115A833FA00097CEC /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
@@ -1753,10 +1753,10 @@
 		5782EE631734F37B00A76338 /* htmls */ = {
 			isa = PBXGroup;
 			children = (
-				57BD932A174DD86D00F7732F /* index.html */,
 				5782EE641734F3A200A76338 /* bg.png */,
 				57E1E8A51737F4D3006601FE /* bootstrap-wysiwyg.js */,
 				57E1E8A61737F4D3006601FE /* bootstrap.min.js */,
+				5775EA0617474DB3000A1765 /* bt-asterisk.png */,
 				57E1FDF8173BF04000523912 /* bt-bold.png */,
 				57EB13461747774900D2ACF9 /* bt-bold2.png */,
 				57E1FDFB173BF04F00523912 /* bt-center.png */,
@@ -1788,7 +1788,6 @@
 				57EB1355174782B900D2ACF9 /* bt-redo2.png */,
 				57EB134917477D2200D2ACF9 /* bt-right.png */,
 				57EB1356174782B900D2ACF9 /* bt-right2.png */,
-				5775EA0617474DB3000A1765 /* bt-asterisk.png */,
 				57E1FDF1173BDF7900523912 /* bt-strikethrough.png */,
 				57EB1357174782B900D2ACF9 /* bt-strikethrough2.png */,
 				57E1FE05173BF04F00523912 /* bt-ul.png */,
@@ -1802,6 +1801,7 @@
 				570B7AFA1715D657002F0E1D /* edit_file_seaf.html */,
 				57E1E8A21737F4C1006601FE /* edit_file_seaf2.html */,
 				5779C7D8171473E000307C36 /* edit_file_text.html */,
+				57BD932A174DD86D00F7732F /* index.html */,
 				57E1FD8E173AB85500523912 /* ios.js */,
 				570B7AFB1715D657002F0E1D /* jq.min.js */,
 				5782EE661734F3A200A76338 /* jquery-ui-1.8.16.custom.css */,
@@ -1810,8 +1810,8 @@
 				570B7AFC1715D658002F0E1D /* Markdown.Converter.js */,
 				5782EE681734F3A300A76338 /* Markdown.Editor.js */,
 				570B7AFD1715D658002F0E1D /* Markdown.Extra.js */,
+				57D0AD3617914E7900D741BE /* mobile.css */,
 				5782EE691734F3A300A76338 /* pagedown.css */,
-				5782EE6A1734F3A300A76338 /* seahub.css */,
 				57E1E8A71737F4D3006601FE /* sf_editor_toolbar.css */,
 				5779C7B0171088D900307C36 /* view_markdown.html */,
 				570B7B061715D866002F0E1D /* view_seaf.html */,
@@ -2208,7 +2208,6 @@
 				5782EE711734F3A300A76338 /* jquery-ui-1.8.16.custom.css in Resources */,
 				5782EE731734F3A300A76338 /* logo.png in Resources */,
 				5782EE771734F3A300A76338 /* pagedown.css in Resources */,
-				5782EE791734F3A300A76338 /* seahub.css in Resources */,
 				5782EE7B1734F3A300A76338 /* wmd-buttons.png in Resources */,
 				57E1E8A11737ED0F006601FE /* SeafTextEditorViewController.xib in Resources */,
 				57E1E8A41737F4C1006601FE /* edit_file_seaf2.html in Resources */,
@@ -2271,6 +2270,7 @@
 				57A550EA177F311700E3BA9B /* plus.png in Resources */,
 				573F4AAC1788763500F096D3 /* arrowleft.png in Resources */,
 				573F4AAE1788763500F096D3 /* arrowright.png in Resources */,
+				57D0AD3817914E7900D741BE /* mobile.css in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2505,7 +2505,6 @@
 				5782EE701734F3A300A76338 /* jquery-ui-1.8.16.custom.css in Resources */,
 				5782EE721734F3A300A76338 /* logo.png in Resources */,
 				5782EE761734F3A300A76338 /* pagedown.css in Resources */,
-				5782EE781734F3A300A76338 /* seahub.css in Resources */,
 				5782EE7A1734F3A300A76338 /* wmd-buttons.png in Resources */,
 				57E1E8A01737ED0F006601FE /* SeafTextEditorViewController.xib in Resources */,
 				57E1E8A31737F4C1006601FE /* edit_file_seaf2.html in Resources */,
@@ -2568,6 +2567,7 @@
 				57A550E9177F311700E3BA9B /* plus.png in Resources */,
 				573F4AAB1788763500F096D3 /* arrowleft.png in Resources */,
 				573F4AAD1788763500F096D3 /* arrowright.png in Resources */,
+				57D0AD3717914E7900D741BE /* mobile.css in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

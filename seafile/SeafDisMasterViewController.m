@@ -116,6 +116,7 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [self refreshView];
+    [self refresh:nil];
     [super viewWillAppear:animated];
 }
 

@@ -290,6 +290,7 @@
 
 - (void)infiniteTabBarController:(M13InfiniteTabBarController *)tabBarController didSelectViewController:(UIViewController *)viewController
 {
+    Debug("idx=%d\n", [self.tabbarController.viewControllers indexOfObject:viewController]);
     //Do nothing
 }
 

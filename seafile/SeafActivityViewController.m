@@ -141,7 +141,7 @@ enum {
         range.length = 36;
         NSString *repo_id = [urlStr substringWithRange:range];
 
-        foundRange = [urlStr rangeOfString:@"?p=" options:NSCaseInsensitiveSearch];
+        foundRange = [urlStr rangeOfString:@"files/?p=" options:NSCaseInsensitiveSearch];
         if (foundRange.location != NSNotFound) {
             path = [urlStr substringFromIndex:(foundRange.location+foundRange.length)];
         }
