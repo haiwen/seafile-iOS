@@ -21,6 +21,7 @@
 
 @interface SeafDisMasterViewController ()<EGORefreshTableHeaderDelegate, UIScrollViewDelegate>
 @property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
+@property (readwrite, nonatomic) int newReplyNum;
 
 @end
 
@@ -120,16 +121,58 @@
     [super viewWillAppear:animated];
 }
 
+- (int)newReplyNum
+{
+    int num = 0;
+    for (NSDictionary *dict in self.connection.seafGroups) {
+        if ([[dict objectForKey:@"replynum"] integerValue:0] > 0 )
+            num ++;
+    }
+    return num;
+}
+
+- (void)clearnewReplyNum
+{
+    for (NSMutableDictionary *dict in self.connection.seafGroups) {
+        if ([[dict objectForKey:@"replynum"] integerValue:0] > 0 )
+            [dict setObject:@"0" forKey:@"replynum"];
+    }
+}
+
 #pragma mark - Table View
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    return 1;
+    return 2;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return self.connection.seafGroups.count;
+    if (section == 0)
+        return 1;
+    else
+        return self.connection.seafGroups.count;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section{
+    if (section)
+        return 22;
+    return 0;
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
+{
+    if (section == 0)
+        return nil;
+    NSString *text = @"Groups";
+    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 2, tableView.bounds.size.width - 10, 18)];
+    label.text = text;
+    label.textColor = [UIColor whiteColor];
+    label.backgroundColor = [UIColor clearColor];
+    [headerView setBackgroundColor:HEADER_COLOR];
+    [headerView addSubview:label];
+    return headerView;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -139,6 +182,17 @@
     if (cell == nil) {
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafCell" owner:self options:nil];
         cell = [cells objectAtIndex:0];
+    }
+    if (indexPath.section == 0) {
+        cell.textLabel.text = @"New Replies";
+        cell.detailTextLabel.text = nil;
+        cell.imageView.image = [UIImage imageNamed:@"group.png"];
+        int num = self.newReplyNum;
+        if (num > 0)
+            cell.accLabel.text = [NSString stringWithFormat:@"%d", num];
+        else
+            cell.accLabel.text = nil;
+        return cell;
     }
     NSMutableDictionary *dict = [self.connection.seafGroups objectAtIndex:indexPath.row];
     cell.textLabel.text = [dict objectForKey:@"name"];
@@ -181,6 +235,13 @@
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         [appdelegate showDetailView:self.detailViewController];
     }
+    if (indexPath.section == 0){
+        NSString *urlStr = [self.connection.address stringByAppendingString:API_URL"/html/newreply/"];
+        self.detailViewController.hiddenAddmsg = YES;
+        [self.detailViewController setUrl:urlStr connection:self.connection];
+        return;
+    }
+    self.detailViewController.hiddenAddmsg = NO;
     NSMutableDictionary *dict = [self.connection.seafGroups objectAtIndex:indexPath.row];
     NSString *gid = [dict objectForKey:@"id"];
     NSString *name = [dict objectForKey:@"name"];

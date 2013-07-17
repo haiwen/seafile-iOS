@@ -26,6 +26,8 @@
 @property (strong, nonatomic) NSString *group;
 @property (strong, nonatomic) NSString *groupName;
 
+@property (strong, nonatomic) IBOutlet UIActivityIndicatorView *loadingView;
+
 
 - (void)configureView;
 @end
@@ -40,17 +42,33 @@
 - (void)setGroup:(NSString *)groupName groupId:(NSString *)groupId
 {
     if (_group != groupId) {
+        _url = nil;
         _group = groupId;
         self.groupName = groupName;
-        self.title = groupName;
         [self configureView];
         if (IsIpad())
             [self.navigationController popToRootViewControllerAnimated:NO];
     }
-
     if (self.masterPopoverController != nil) {
         [self.masterPopoverController dismissPopoverAnimated:YES];
     }
+}
+
+- (void)showLodingView
+{
+    if (!self.loadingView) {
+        self.loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+        self.loadingView.color = [UIColor darkTextColor];
+        self.loadingView.hidesWhenStopped = YES;
+        [self.view addSubview:self.loadingView];
+    }
+    self.loadingView.center = self.view.center;
+    [self.loadingView startAnimating];
+}
+
+- (void)dismissLoadingView
+{
+    [self.loadingView stopAnimating];
 }
 
 - (UIWebView *)webview
@@ -77,6 +95,8 @@
 {
     _connection = conn;
     _url = url;
+    _group = nil;
+    [self configureView];
 }
 
 - (BOOL)isReply
@@ -92,10 +112,13 @@
     [self.msgItem setEnabled:NO];
     if (self.connection && self.url) {
         [self.refreshItem setEnabled:YES];
-        if (self.isReply)
+        if (self.hiddenAddmsg)
+            self.title = @"New replies";
+        else if (self.isReply)
             self.title = @"Reply";
         else
             self.title = self.groupName;
+        [self showLodingView];
         NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:self.url] cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
         [request setHTTPMethod:@"GET"];
         [request setValue:[NSString stringWithFormat:@"Token %@", self.connection.token] forHTTPHeaderField:@"Authorization"];
@@ -142,7 +165,6 @@
     self.msgItem = [self getBarItemAutoSize:@"addmsg.png" action:@selector(compose:)];
     UIBarButtonItem *space = [self getSpaceBarItem:16.0];
     self.navigationItem.rightBarButtonItems = [NSArray arrayWithObjects:self.refreshItem, space, self.msgItem, nil];
-
     [self.msgItem setEnabled:NO];
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
@@ -188,7 +210,9 @@
 }
 - (void)webViewDidFinishLoad:(UIWebView *)webView
 {
-    [SVProgressHUD dismiss];
+    [self dismissLoadingView];
+    if (self.hiddenAddmsg)
+        return;
     if (![self htmlOK:webView])
         return;
     NSString *js = [NSString stringWithFormat:@"setToken(\"%@\");", self.connection.token];
@@ -199,6 +223,7 @@
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
 {
     Debug("error=%@\n", error);
+    [self dismissLoadingView];
       if (error.code != NSURLErrorCancelled && error.code != 102)
         [SVProgressHUD showErrorWithStatus:@"Failed to load discussions"];
 }
@@ -242,13 +267,11 @@
             NSString *html = [JSON objectForKey:@"html"];
             NSString *js = [NSString stringWithFormat:@"addMessage(\"%@\");", [html stringEscapedForJavasacript]];
             [self.webview stringByEvaluatingJavaScriptFromString:js];
-            [SVProgressHUD dismiss];
         } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
             if (_composeVC) {
                 [SVProgressHUD showErrorWithStatus:@"Failed to add discussion"];
             }
         }];
-        //[SVProgressHUD showWithStatus:@"Adding discussion ..."];
     }
 }
 

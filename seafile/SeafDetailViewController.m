@@ -691,7 +691,6 @@ enum PREVIEW_STATE {
 {
     if (self.preViewItem) {
         NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [self.preViewItem.content stringEscapedForJavasacript]];
-        Debug("js=%@\n", js);
         [self.webView stringByEvaluatingJavaScriptFromString:js];
     }
 }

@@ -14,7 +14,10 @@
 @property (strong, nonatomic, readonly) IBOutlet UIWebView *webview;
 
 @property (strong, nonatomic) SeafConnection *connection;
+@property (readwrite, nonatomic) BOOL hiddenAddmsg;
+
 
 - (void)setGroup:(NSString *)groupName groupId:(NSString *)groupId;
+- (void)setUrl:(NSString *)url connection:(SeafConnection *)conn;
 
 @end
