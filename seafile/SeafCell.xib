@@ -54,11 +54,7 @@
 								<bool key="IBUIUserInteractionEnabled">NO</bool>
 								<string key="targetRuntimeIdentifier">IBIPadFramework</string>
 								<string key="IBUIText">name</string>
-								<object class="NSColor" key="IBUITextColor">
-									<int key="NSColorSpace">1</int>
-									<bytes key="NSRGB">MCAwIDAAA</bytes>
-									<string key="IBUIColorCocoaTouchKeyPath">darkTextColor</string>
-								</object>
+								<nil key="IBUITextColor"/>
 								<object class="NSColor" key="IBUIHighlightedColor" id="256973502">
 									<int key="NSColorSpace">3</int>
 									<bytes key="NSWhite">MQA</bytes>
@@ -287,7 +283,6 @@
 					<string key="superclassName">UITableViewCell</string>
 					<dictionary class="NSMutableDictionary" key="outlets">
 						<string key="accLabel">UILabel</string>
-						<string key="accView">UILabel</string>
 						<string key="detailTextLabel">UILabel</string>
 						<string key="imageView">UIImageView</string>
 						<string key="textLabel">UILabel</string>
@@ -295,10 +290,6 @@
 					<dictionary class="NSMutableDictionary" key="toOneOutletInfosByName">
 						<object class="IBToOneOutletInfo" key="accLabel">
 							<string key="name">accLabel</string>
-							<string key="candidateClassName">UILabel</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="accView">
-							<string key="name">accView</string>
 							<string key="candidateClassName">UILabel</string>
 						</object>
 						<object class="IBToOneOutletInfo" key="detailTextLabel">

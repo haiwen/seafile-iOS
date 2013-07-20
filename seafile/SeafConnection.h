@@ -42,6 +42,7 @@
 @property (readonly) long long usage;
 @property (readwrite, strong) NSString *token;
 @property (readonly) NSArray *seafGroups;
+@property (readwrite) int newreply;
 
 
 - (id)initWithUrl:(NSString *)url username:(NSString *)username;

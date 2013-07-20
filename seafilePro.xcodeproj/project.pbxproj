@@ -366,6 +366,8 @@
 		5732A968177894E700D806C7 /* REComposeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A942177894E700D806C7 /* REComposeViewController.m */; };
 		57335CF2160D9D2500018AE8 /* Reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 57335CF1160D9D2500018AE8 /* Reachability.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		57335CF9160DA00000018AE8 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57335CF8160DA00000018AE8 /* SystemConfiguration.framework */; };
+		5736A5311796F44C00CF2C53 /* SeafStartFooterView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5736A5301796F44C00CF2C53 /* SeafStartFooterView.xib */; };
+		5736A5321796F44C00CF2C53 /* SeafStartFooterView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5736A5301796F44C00CF2C53 /* SeafStartFooterView.xib */; };
 		57396B731657DCE30089F32F /* UIImage+FileType.m in Sources */ = {isa = PBXBuildFile; fileRef = 57396B711657DCE30089F32F /* UIImage+FileType.m */; };
 		57396B771657E0190089F32F /* seafile.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 57396B751657E0190089F32F /* seafile.xcdatamodeld */; };
 		57396B7A1657E0900089F32F /* SKFileTypeImageLoader.m in Sources */ = {isa = PBXBuildFile; fileRef = 57396B781657E0900089F32F /* SKFileTypeImageLoader.m */; };
@@ -873,6 +875,7 @@
 		57335CF0160D9D2500018AE8 /* Reachability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Reachability.h; sourceTree = "<group>"; };
 		57335CF1160D9D2500018AE8 /* Reachability.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Reachability.m; sourceTree = "<group>"; };
 		57335CF8160DA00000018AE8 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
+		5736A5301796F44C00CF2C53 /* SeafStartFooterView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafStartFooterView.xib; sourceTree = "<group>"; };
 		57396B711657DCE30089F32F /* UIImage+FileType.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+FileType.m"; sourceTree = "<group>"; };
 		57396B721657DCE30089F32F /* UIImage+FileType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+FileType.h"; sourceTree = "<group>"; };
 		57396B761657E0190089F32F /* seafile.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = seafile.xcdatamodel; sourceTree = "<group>"; };
@@ -1444,6 +1447,7 @@
 		5709512815B9B1B600F48C08 /* ui */ = {
 			isa = PBXGroup;
 			children = (
+				5736A5301796F44C00CF2C53 /* SeafStartFooterView.xib */,
 				571ABF551625DF6E005C9B08 /* DownloadingProgress_iPad.xib */,
 				570CF8BF16613E5600DFADBC /* DownloadingProgress_iPhone.xib */,
 				57655333161BEA69005E5327 /* FailToPreview_iPad.xib */,
@@ -2271,6 +2275,7 @@
 				573F4AAC1788763500F096D3 /* arrowleft.png in Resources */,
 				573F4AAE1788763500F096D3 /* arrowright.png in Resources */,
 				57D0AD3817914E7900D741BE /* mobile.css in Resources */,
+				5736A5321796F44C00CF2C53 /* SeafStartFooterView.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2568,6 +2573,7 @@
 				573F4AAB1788763500F096D3 /* arrowleft.png in Resources */,
 				573F4AAD1788763500F096D3 /* arrowright.png in Resources */,
 				57D0AD3717914E7900D741BE /* mobile.css in Resources */,
+				5736A5311796F44C00CF2C53 /* SeafStartFooterView.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

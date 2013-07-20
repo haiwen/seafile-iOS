@@ -17,6 +17,7 @@
 @interface StartViewController ()
 @property (retain) NSMutableArray *conns;
 @property (retain) NSIndexPath *pressedIndex;
+@property (retain) ColorfulButton *footer;
 @end
 
 @implementation StartViewController
@@ -104,6 +105,45 @@
     header.backgroundColor = [UIColor clearColor];
     self.tableView.tableHeaderView = header;
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
+
+    views = [[NSBundle mainBundle] loadNibNamed:@"SeafStartFooterView" owner:self options:nil];
+    ColorfulButton *bt = [views objectAtIndex:0];
+    bt.frame = CGRectMake(0,0, self.tableView.frame.size.width, 50);
+    bt.backgroundColor = [UIColor clearColor];
+    [bt addTarget:self action:@selector(goToDefaultBtclicked:) forControlEvents:UIControlEventTouchUpInside];
+    [bt.layer setBorderColor:[[UIColor colorWithRed:224/255.0 green:224/255.0 blue:224/255.0 alpha:1.0] CGColor]];
+    bt.layer.cornerRadius = 0;
+    [bt setHighColor:[UIColor colorWithRed:244/255.0 green:244/255.0 blue:244/255.0 alpha:1.0] lowColor:[UIColor colorWithRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1.0]];
+    [bt setTitleColor:[UIColor colorWithRed:112/255.0 green:112/255.0 blue:112/255.0 alpha:1.0] forState:UIControlStateNormal];
+    self.footer = bt;
+    [self.view addSubview:self.footer];
+    self.footer.hidden = YES;
+}
+
+- (BOOL)checkLastAccount
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSString *server = [userDefaults objectForKey:@"DEAULT-SERVER"];
+    NSString *username = [userDefaults objectForKey:@"DEAULT-USER"];
+    if (server && username) {
+        SeafConnection *connection = [self getConnection:server username:username];
+        if (connection)
+            return YES;
+    }
+    return NO;
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    if ([self checkLastAccount])
+        self.footer.hidden = NO;
+    else
+        self.footer.hidden = YES;
+}
+
+- (void)viewWillLayoutSubviews
+{
+    self.footer.frame = CGRectMake(0, self.view.frame.size.height-50, self.tableView.frame.size.width, 50);
 }
 
 - (void)viewDidUnload
@@ -264,6 +304,12 @@
         }
     }
     return NO;
+}
+
+
+- (IBAction)goToDefaultBtclicked:(id)sender
+{
+    [self goToDefaultReposView];
 }
 
 @end

@@ -30,7 +30,7 @@
     [self.layer setCornerRadius:8.0f];
     [self.layer setMasksToBounds:YES];
     [self.layer setBorderWidth:1.0f];
-    [self.layer setBorderColor:[[UIColor lightGrayColor] CGColor]];
+    [self.layer setBorderColor:[[UIColor lightTextColor] CGColor]];
 }
 
 - (void)drawRect:(CGRect)rect;

@@ -22,12 +22,13 @@
 @interface SeafDisMasterViewController ()<EGORefreshTableHeaderDelegate, UIScrollViewDelegate>
 @property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
 @property (readwrite, nonatomic) int newReplyNum;
-
+@property (readwrite, nonatomic) UIView *headerView;
 @end
 
 @implementation SeafDisMasterViewController
 @synthesize connection = _connection;
 @synthesize refreshHeaderView = _refreshHeaderView;
+@synthesize newReplyNum = _newReplyNum;
 
 - (void)awakeFromNib
 {
@@ -42,7 +43,7 @@
 {
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
-
+    self.newReplyNum = 0;
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     self.detailViewController = (SeafDisDetailViewController *)[appdelegate detailViewController:TABBED_DISCUSSION];
     self.title = @"Groups";
@@ -56,6 +57,18 @@
     }
     [_refreshHeaderView refreshLastUpdatedDate];
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
+    NSArray *views = [[NSBundle mainBundle] loadNibNamed:@"SeafStartFooterView" owner:self options:nil];
+    ColorfulButton *bt = [views objectAtIndex:0];
+    bt.frame = CGRectMake(0,0, self.tableView.frame.size.width, 50);
+    self.headerView.backgroundColor = [UIColor clearColor];
+    [bt addTarget:self action:@selector(newReplies:) forControlEvents:UIControlEventTouchUpInside];
+    bt.layer.cornerRadius = 0;
+    [bt.layer setBorderColor:[[UIColor colorWithRed:224/255.0 green:224/255.0 blue:224/255.0 alpha:1.0] CGColor]];
+    [bt setHighColor:[UIColor colorWithRed:244/255.0 green:244/255.0 blue:244/255.0 alpha:1.0] lowColor:[UIColor colorWithRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1.0]];
+    [bt setHighColor:[UIColor colorWithRed:244/255.0 green:244/255.0 blue:244/255.0 alpha:1.0] lowColor:[UIColor colorWithRed:244/255.0 green:244/255.0 blue:244/255.0 alpha:1.0]];
+    [bt setTitleColor:[UIColor colorWithRed:112/255.0 green:112/255.0 blue:112/255.0 alpha:1.0] forState:UIControlStateNormal];
+
+    self.headerView = bt;
     [self refresh:nil];
 }
 
@@ -87,6 +100,15 @@
 
 - (void)refreshView
 {
+    if (self.newReplyNum > 0) {
+        ColorfulButton *bt = (ColorfulButton *)self.headerView;
+        NSString *text = [NSString stringWithFormat:@"%d new replies", self.newReplyNum];
+        [bt setTitle:text forState:UIControlStateNormal];
+        [bt setTitle:text forState:UIControlStateSelected];
+        [bt setTitle:text forState:UIControlStateHighlighted];
+        self.tableView.tableHeaderView = self.headerView;
+    } else
+        self.tableView.tableHeaderView = nil;
     [self.tableView reloadData];
     [self refreshTabBarItem];
 }
@@ -96,6 +118,7 @@
     [_connection getSeafGroups:^(NSHTTPURLResponse *response, id JSON, NSData *data) {
         @synchronized(self) {
             Debug("Success to get groups ...\n");
+            _newReplyNum = self.connection.newreply;
             [self refreshView];
             [self doneLoadingTableViewData];
         }
@@ -121,80 +144,32 @@
     [super viewWillAppear:animated];
 }
 
-- (int)newReplyNum
-{
-    int num = 0;
-    for (NSDictionary *dict in self.connection.seafGroups) {
-        if ([[dict objectForKey:@"replynum"] integerValue:0] > 0 )
-            num ++;
-    }
-    return num;
-}
-
 - (void)clearnewReplyNum
 {
-    for (NSMutableDictionary *dict in self.connection.seafGroups) {
-        if ([[dict objectForKey:@"replynum"] integerValue:0] > 0 )
-            [dict setObject:@"0" forKey:@"replynum"];
-    }
+    self.newReplyNum = 0;
 }
 
 #pragma mark - Table View
-
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    return 2;
+    return 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    if (section == 0)
-        return 1;
-    else
-        return self.connection.seafGroups.count;
-}
-
-- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section{
-    if (section)
-        return 22;
-    return 0;
-}
-
-- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
-{
-    if (section == 0)
-        return nil;
-    NSString *text = @"Groups";
-    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
-    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 2, tableView.bounds.size.width - 10, 18)];
-    label.text = text;
-    label.textColor = [UIColor whiteColor];
-    label.backgroundColor = [UIColor clearColor];
-    [headerView setBackgroundColor:HEADER_COLOR];
-    [headerView addSubview:label];
-    return headerView;
+    return self.connection.seafGroups.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    int row = indexPath.row;
     NSString *CellIdentifier = @"SeafCell";
     SeafCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafCell" owner:self options:nil];
         cell = [cells objectAtIndex:0];
     }
-    if (indexPath.section == 0) {
-        cell.textLabel.text = @"New Replies";
-        cell.detailTextLabel.text = nil;
-        cell.imageView.image = [UIImage imageNamed:@"group.png"];
-        int num = self.newReplyNum;
-        if (num > 0)
-            cell.accLabel.text = [NSString stringWithFormat:@"%d", num];
-        else
-            cell.accLabel.text = nil;
-        return cell;
-    }
-    NSMutableDictionary *dict = [self.connection.seafGroups objectAtIndex:indexPath.row];
+    NSMutableDictionary *dict = [self.connection.seafGroups objectAtIndex:row];
     cell.textLabel.text = [dict objectForKey:@"name"];
 #if 0
     int ctime = [[dict objectForKey:@"ctime"] integerValue:0];
@@ -235,14 +210,9 @@
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         [appdelegate showDetailView:self.detailViewController];
     }
-    if (indexPath.section == 0){
-        NSString *urlStr = [self.connection.address stringByAppendingString:API_URL"/html/newreply/"];
-        self.detailViewController.hiddenAddmsg = YES;
-        [self.detailViewController setUrl:urlStr connection:self.connection];
-        return;
-    }
+    int row = indexPath.row;
     self.detailViewController.hiddenAddmsg = NO;
-    NSMutableDictionary *dict = [self.connection.seafGroups objectAtIndex:indexPath.row];
+    NSMutableDictionary *dict = [self.connection.seafGroups objectAtIndex:row];
     NSString *gid = [dict objectForKey:@"id"];
     NSString *name = [dict objectForKey:@"name"];
     if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0 ) {
@@ -297,6 +267,15 @@
 - (NSDate*)egoRefreshTableHeaderDataSourceLastUpdated:(EGORefreshTableHeaderView*)view
 {
     return [NSDate date];
+}
+
+- (IBAction)newReplies:(id)sender
+{
+    [self clearnewReplyNum];
+    NSString *urlStr = [self.connection.address stringByAppendingString:API_URL"/html/newreply/"];
+    self.detailViewController.hiddenAddmsg = YES;
+    [self.detailViewController setUrl:urlStr connection:self.connection];
+    return;
 }
 
 @end

@@ -239,6 +239,7 @@
         [c setUrl:urlStr connection:self.connection];
         [self.navigationController pushViewController:c animated:NO];
     }
+
     return NO;
 }
 

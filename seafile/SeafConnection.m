@@ -33,6 +33,7 @@
 @synthesize rootFolder = _rootFolder;
 @synthesize starredFiles = _starredFiles;
 @synthesize seafGroups = _seafGroups;
+@synthesize newreply = _newreply;
 
 - (id)init:(NSString *)url
 {
@@ -389,10 +390,13 @@
 - (BOOL)handleGroupsData:(id)JSON
 {
     NSMutableArray *groups = [[NSMutableArray alloc] init];
-    for (NSDictionary *info in JSON) {
+    if (![JSON isKindOfClass:[NSDictionary class]])
+        return NO;
+    for (NSDictionary *info in [JSON objectForKey:@"groups"]) {
         [groups addObject:[NSMutableDictionary dictionaryWithDictionary:info]];
     }
     _seafGroups = groups;
+    _newreply = [[JSON objectForKey:@"replynum"] integerValue:0];
     return YES;
 }
 

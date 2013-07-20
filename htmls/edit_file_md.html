@@ -6,7 +6,6 @@
       #wmd-preview {
       border:1px solid #ccc;
       overflow:auto;
-      height:100%;
       padding:0 10px;
       }
       .article p {
@@ -16,8 +15,9 @@
       margin:0.5em 0 0 0;
       }
       #wmd-input {
+      min-height:100%;
+      overflow-y:auto;
       border:1px solid #ccc;
-      height:100%;
       }
     </style>
   </head>
@@ -25,7 +25,7 @@
   <body class="default">
     <div id="wmd-button-bar" style="display: none;"></div>
     <div id="mainSplitter" class="ovhd" style="width:100%">
-      <textarea class="wmd-input" id="wmd-input" style="overflow:auto; font-size:14px"></textarea>
+      <textarea class="wmd-input" id="wmd-input" style="overflow:auto;font-size:14px" onchange="textareaheight()"></textarea>
       <div id="wmd-preview" class="article"></div>
     </div>
 
@@ -77,10 +77,16 @@
     <script type="text/javascript" src="./Markdown.Converter.js"></script>
     <script type="text/javascript" src="./Markdown.Editor.js"></script>
     <script type="text/javascript" src="./Markdown.Extra.js"></script>
+    <script type="text/javascript" src="./jq.min.js"></script>
     <script type="text/javascript">
+      function textareaheight() {
+        $("#wmd-input").height($('#wmd-input').get(0).scrollHeight+10);
+      }
+
       function setContent(content) {
         document.getElementById("wmd-input").value = content;
         $('#wmd-preview').html(converter.makeHtml(content, '0'));
+        textareaheight();
       }
       
       function getContent() {
@@ -145,33 +151,29 @@
         evObj.initEvent( 'click', true, false );
         fireOnThis.dispatchEvent(evObj);
       }
-    </script>
-    <script type="text/javascript" src="./jq.min.js"></script>
-    <script type="text/javascript">
-      function wresize() {
-      //setContent(getContent()+"\n" +$(window).width()  + ", "+ $(window).height());
-      }
 
-      $(window).resize(wresize)
+      function wresize() {
+      }
+      $(window).resize(wresize);
 
       $(document).ready(function () {
         wresize()
-        $("#wmd-input").css({'width':$(window).width(), 'display': "block" })
-        $("#wmd-preview").css({'display': "none" })
+        $("#wmd-input").css({'width':$(window).width(), 'display': "block" });
+        $("#wmd-preview").css({'display': "none" });
       });
-
+      
       $('#wmd-preview').children(':first').css('margin-top', '0');
 
-      var state = 0
+      var state = 0;
       function toggle_ep() {
       if (state == 0) {
         state = 1;
-        $("#wmd-input").css({'width':$(window).width(), 'display': "none" })
-        $("#wmd-preview").css({'display': "block" })
+        $("#wmd-input").css({'width':$(window).width(), 'display': "none" });
+        $("#wmd-preview").css({'display': "block" });
       } else {
         state = 0;
-        $("#wmd-input").css({'width':$(window).width(), 'display': "block" })
-        $("#wmd-preview").css({'display': "none" })
+        $("#wmd-input").css({'width':$(window).width(), 'display': "block" });
+        $("#wmd-preview").css({'display': "none" });
       }
       return state
       }

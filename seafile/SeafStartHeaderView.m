@@ -20,3 +20,17 @@
 }
 
 @end
+
+
+@implementation SeafStartFooterView
+
+- (id)initWithCoder:(NSCoder *)decoder
+{
+    self = [super initWithCoder:decoder];
+    for (UIView *v in self.subviews) {
+        v.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin| UIViewAutoresizingFlexibleRightMargin| UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleTopMargin;
+    }
+    return self;
+}
+
+@end

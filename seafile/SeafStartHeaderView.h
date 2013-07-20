@@ -11,3 +11,7 @@
 @interface SeafStartHeaderView : UIView
 
 @end
+
+@interface SeafStartFooterView : UIView
+
+@end
