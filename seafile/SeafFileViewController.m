@@ -294,7 +294,7 @@ enum {
     QBImagePickerController *imagePickerController = [[QBImagePickerController alloc] init];
     imagePickerController.delegate = self;
     imagePickerController.allowsMultipleSelection = YES;
-
+    imagePickerController.maximumNumberOfSelection = 20;
     if (IsIpad()) {
         UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:imagePickerController];
         self.popoverController = [[UIPopoverController alloc] initWithContentViewController:navigationController];
@@ -1055,7 +1055,11 @@ enum {
 {
     int index = [_directory.allItems indexOfObject:file];
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
-    [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+    if (res && percent < 100 && [cell isKindOfClass:[SeafUploadingFileCell class]])
+        [((SeafUploadingFileCell *)cell).progressView setProgress:percent];
+    else
+        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
 }
 
 - (id<QLPreviewItem, PreViewDelegate>)nextItem:(id<QLPreviewItem, PreViewDelegate>)cur next:(BOOL)next

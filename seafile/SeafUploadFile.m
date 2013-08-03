@@ -94,6 +94,8 @@ static NSMutableDictionary *uploadFiles = nil;
 
     [_delegate uploadProgress:file result:res completeness:percent];
 }
+
+#if 0
 #pragma - NSURLConnectionDelegate
 - (void)connection:(NSURLConnection *)aConn didFailWithError:(NSError *)error
 {
@@ -171,6 +173,7 @@ static NSMutableDictionary *uploadFiles = nil;
         [self uploadProgress:self result:NO completeness:0];
     }
 }
+#endif
 
 - (void)uploadFile:(NSString *)surl path:(NSString *)uploadpath update:(BOOL)update
 {
@@ -188,18 +191,16 @@ static NSMutableDictionary *uploadFiles = nil;
     request.URL = url;
     AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
     [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
-        int percent;
+        int percent = 99;
         if (totalBytesExpectedToWrite > 0)
             percent = totalBytesWritten * 100 / totalBytesExpectedToWrite;
-        else
-            percent = 100;
         if (percent >= 100)
             percent = 99;
         [self uploadProgress:self result:YES completeness:percent];
     }];
     [operation setCompletionBlockWithSuccess:
      ^(AFHTTPRequestOperation *operation, id responseObject) {
-         Debug("Upload success\n");
+         Debug("Upload success _uploading=%d\n", _uploading);
          if (!_uploading)
              return;
          _uploading = NO;
