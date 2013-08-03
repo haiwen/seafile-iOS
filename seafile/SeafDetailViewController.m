@@ -14,6 +14,7 @@
 #import "SeafTextEditorViewController.h"
 #import "M13InfiniteTabBarController.h"
 #import "SeafUploadFile.h"
+#import "REComposeViewController.h"
 
 #import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
@@ -29,7 +30,7 @@ enum PREVIEW_STATE {
     PREVIEW_FAILED
 };
 
-@interface SeafDetailViewController ()<UIPrintInteractionControllerDelegate>
+@interface SeafDetailViewController ()<UIWebViewDelegate, UIActionSheetDelegate, UIPrintInteractionControllerDelegate, MFMailComposeViewControllerDelegate, REComposeViewControllerDelegate>
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
 
 @property (retain) FileViewController *fileViewController;
@@ -43,7 +44,8 @@ enum PREVIEW_STATE {
 @property (strong) UIBarButtonItem *editItem;
 @property (strong) UIBarButtonItem *exportItem;
 @property (strong) UIBarButtonItem *shareItem;
-@property (strong) UIBarButtonItem *saveimgItem;
+@property (strong) UIBarButtonItem *commentItem;
+
 
 @property (strong, nonatomic) UIBarButtonItem *fullscreenItem;
 @property (strong, nonatomic) UIBarButtonItem *exitfsItem;
@@ -53,6 +55,8 @@ enum PREVIEW_STATE {
 @property (strong) UIDocumentInteractionController *docController;
 @property int buttonIndex;
 @property (readwrite, nonatomic) bool hideMaster;
+@property (readwrite, nonatomic) NSString *gid;
+
 
 @end
 
@@ -63,6 +67,7 @@ enum PREVIEW_STATE {
 @synthesize exitfsItem = _exitfsItem;
 @synthesize preViewItem = _preViewItem;
 @synthesize hideMaster = _hideMaster;
+@synthesize gid = _gid;
 
 
 #pragma mark - Managing the detail item
@@ -94,11 +99,19 @@ enum PREVIEW_STATE {
             [self.exportItem setEnabled:NO];
         } else
             [self.exportItem setEnabled:YES];
+
+        if (((SeafFile *)self.preViewItem).groups.count > 0) {
+            [array addObject:self.commentItem];
+            float spacewidth = 20.0;
+            if (!IsIpad())
+                spacewidth = 10.0;
+            UIBarButtonItem *space = [self getSpaceBarItem:spacewidth];
+            [array addObject:space];
+        }
     }
     if ([self.preViewItem editable] && [self previewSuccess]
         && [self.preViewItem.mime hasPrefix:@"text/"])
         [array addObject:self.editItem];
-
     self.navigationItem.rightBarButtonItems = array;
 }
 
@@ -224,6 +237,7 @@ enum PREVIEW_STATE {
     self.editItem = [self getBarItem:@"editfile.png" action:@selector(editFile:)size:18];
     self.exportItem = [self getBarItemAutoSize:@"export.png" action:@selector(export:)];
     self.shareItem = [self getBarItemAutoSize:@"share.png" action:@selector(share:)];
+    self.commentItem = [self getBarItem:@"addmsg.png" action:@selector(comment:) size:20];
     UIBarButtonItem *item3 = [self getBarItem:@"star.png" action:@selector(unstarFile:)size:24];
     UIBarButtonItem *item4 = [self getBarItem:@"unstar.png" action:@selector(starFile:)size:24];
     float spacewidth = 20.0;
@@ -445,6 +459,19 @@ enum PREVIEW_STATE {
 }
 
 #pragma mark - file operations
+- (IBAction)comment:(id)sender
+{
+    UIActionSheet *actionSheet;
+    if (IsIpad())
+        actionSheet = [[UIActionSheet alloc] initWithTitle:@"Post a discussion to group" delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:nil ];
+    else
+        actionSheet = [[UIActionSheet alloc] initWithTitle:@"Post a discussion to group" delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:nil ];
+    for (NSDictionary *grp in ((SeafFile *)self.preViewItem).groups) {
+        [actionSheet addButtonWithTitle:[grp objectForKey:@"name"]];
+    }
+    [actionSheet showFromBarButtonItem:self.commentItem animated:YES];
+}
+
 - (IBAction)starFile:(id)sender
 {
     [(SeafFile *)self.preViewItem setStarred:YES];
@@ -575,6 +602,41 @@ enum PREVIEW_STATE {
     }
 }
 
+#pragma mark - REComposeViewControllerDelegate
+- (void)composeViewController:(REComposeViewController *)composeViewController didFinishWithResult:(REComposeResult)result
+{
+    if (result == REComposeResultCancelled) {
+        [composeViewController dismissViewControllerAnimated:YES completion:nil];
+    } else if (result == REComposeResultPosted) {
+        NSLog(@"Text: %@", composeViewController.text);
+        SeafFile *file = (SeafFile *)self.preViewItem;
+        NSString *form = [NSString stringWithFormat:@"message=%@&repo_id=%@&path=%@", [composeViewController.text escapedPostForm], file.repoId, [file.path escapedPostForm]];
+        NSString *url = [file->connection.address stringByAppendingFormat:API_URL"/html/discussions/%@/", _gid];
+        [file->connection sendPost:url repo:nil form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+            [composeViewController dismissViewControllerAnimated:YES completion:nil];
+            NSString *html = [JSON objectForKey:@"html"];
+            NSString *js = [NSString stringWithFormat:@"addMessage(\"%@\");", [html stringEscapedForJavasacript]];
+            [self.webView stringByEvaluatingJavaScriptFromString:js];
+        } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+            [SVProgressHUD showErrorWithStatus:@"Failed to add discussion"];
+        }];
+    }
+}
+
+- (void)popupInputView:(NSString *)title placeholder:(NSString *)tip groupid:(NSString *)gid
+{
+    REComposeViewController *composeVC = [[REComposeViewController alloc] init];
+    composeVC.title = title;
+    composeVC.hasAttachment = NO;
+    composeVC.delegate = self;
+    composeVC.text = @"";
+    composeVC.placeholderText = tip;
+    composeVC.lineWidth = 0;
+    composeVC.navigationBar.tintColor = BAR_COLOR;
+    [composeVC presentFromRootViewController];
+    _gid = gid;
+}
+
 #pragma mark - UIActionSheetDelegate
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)bIndex
 {
@@ -595,6 +657,10 @@ enum PREVIEW_STATE {
                 [self generateSharelink:file WithResult:YES];
             }
         }
+    } else if ([@"Post a discussion to group" isEqualToString:actionSheet.title]) {
+        NSArray *groups = ((SeafFile *)self.preViewItem).groups;
+        NSString *gid = [[groups objectAtIndex:bIndex] objectForKey:@"id"];
+        [self popupInputView:@"Discussion" placeholder:@"Discussion" groupid:gid];
     } else {
         NSString *title = [actionSheet buttonTitleAtIndex:bIndex];
         if ([@"Open elsewhere..." isEqualToString:title]) {

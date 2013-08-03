@@ -25,6 +25,7 @@
 @synthesize desc = _desc, size = _size, owner = _owner, mtime = _mtime;
 @synthesize encrypted = _encrypted;
 @synthesize repoType = _repoType;
+@synthesize gid = _gid;
 @synthesize perm = _perm;
 
 - (id)initWithConnection:(SeafConnection *)aConnection
@@ -33,6 +34,7 @@
                     name:(NSString *)aName
                     desc:(NSString *)aDesc
                    owner:(NSString *)aOwner
+                     gid:(NSString *)groupid
                 repoType:(NSString *)aRepoType
                     perm:(NSString *)aPerm
                     size:(int)aSize
@@ -50,6 +52,7 @@
         _size = aSize;
         _mtime = aMtime;
         _encrypted = aEncrypted;
+        _gid = groupid;
     }
     return self;
 }
@@ -147,6 +150,7 @@
                              name:[repoInfo objectForKey:@"name"]
                              desc:[repoInfo objectForKey:@"desc"]
                              owner:[repoInfo objectForKey:@"owner"]
+                             gid:[repoInfo objectForKey:@"groupid"]
                              repoType:[repoInfo objectForKey:@"type"]
                              perm:[repoInfo objectForKey:@"permission"]
                              size:[[repoInfo objectForKey:@"size"] integerValue:0]

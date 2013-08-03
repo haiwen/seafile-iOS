@@ -37,6 +37,8 @@
 @property (readwrite) int filesize;
 @property (readwrite) int mtime;
 @property (readonly, copy) NSString *shareLink;
+@property (readonly) NSMutableArray *groups;
+
 
 - (void)generateShareLink:(id<SeafFileDelegate>)dg;
 

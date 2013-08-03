@@ -16,6 +16,7 @@
 @property (readonly) BOOL editable;
 @property (readonly) unsigned long long size;
 @property (readonly) int mtime;
+@property (readonly) NSString *gid;
 @end
 
 

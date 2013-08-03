@@ -21,8 +21,6 @@
 @property (strong, nonatomic) NSString *url;
 @property (strong) UIBarButtonItem *msgItem;
 @property (strong) UIBarButtonItem *refreshItem;
-@property (strong) REComposeViewController *composeVC;
-
 @property (strong, nonatomic) NSString *group;
 @property (strong, nonatomic) NSString *groupName;
 
@@ -35,7 +33,6 @@
 @implementation SeafDisDetailViewController
 @synthesize connection = _connection;
 @synthesize url = _url;
-@synthesize composeVC = _composeVC;
 
 #pragma mark - Managing the detail item
 
@@ -245,15 +242,15 @@
 
 - (void)popupInputView:(NSString *)title placeholder:(NSString *)tip
 {
-    _composeVC = [[REComposeViewController alloc] init];
-    _composeVC.title = title;
-    _composeVC.hasAttachment = NO;
-    _composeVC.delegate = self;
-    _composeVC.text = @"";
-    _composeVC.placeholderText = tip;
-    _composeVC.lineWidth = 0;
-    _composeVC.navigationBar.tintColor = BAR_COLOR;
-    [_composeVC presentFromRootViewController];
+    REComposeViewController *composeVC = [[REComposeViewController alloc] init];
+    composeVC.title = title;
+    composeVC.hasAttachment = NO;
+    composeVC.delegate = self;
+    composeVC.text = @"";
+    composeVC.placeholderText = tip;
+    composeVC.lineWidth = 0;
+    composeVC.navigationBar.tintColor = BAR_COLOR;
+    [composeVC presentFromRootViewController];
 }
 
 - (void)composeViewController:(REComposeViewController *)composeViewController didFinishWithResult:(REComposeResult)result
@@ -264,14 +261,12 @@
         NSLog(@"Text: %@", composeViewController.text);
         NSString *form = [NSString stringWithFormat:@"message=%@", [composeViewController.text escapedPostForm]];
         [self.connection sendPost:self.url repo:nil form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
-            [_composeVC dismissViewControllerAnimated:YES completion:nil];
+            [composeViewController dismissViewControllerAnimated:YES completion:nil];
             NSString *html = [JSON objectForKey:@"html"];
             NSString *js = [NSString stringWithFormat:@"addMessage(\"%@\");", [html stringEscapedForJavasacript]];
             [self.webview stringByEvaluatingJavaScriptFromString:js];
         } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-            if (_composeVC) {
-                [SVProgressHUD showErrorWithStatus:@"Failed to add discussion"];
-            }
+            [SVProgressHUD showErrorWithStatus:@"Failed to add discussion"];
         }];
     }
 }

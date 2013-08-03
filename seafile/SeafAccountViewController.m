@@ -20,8 +20,8 @@
 @property (strong, nonatomic) IBOutlet UITextField *serverTextField;
 @property (strong, nonatomic) IBOutlet UITextField *usernameTextField;
 @property (strong, nonatomic) IBOutlet UITextField *passwordTextField;
-@property (strong, nonatomic) IBOutlet ColorfulButton *loginButton;
-@property (strong, nonatomic) IBOutlet ColorfulButton *cancelButton;
+@property (strong, nonatomic) IBOutlet UIButton *loginButton;
+@property (strong, nonatomic) IBOutlet UIButton *cancelButton;
 @property StartViewController *startController;
 @property SeafConnection *connection;
 @property int type;
@@ -133,8 +133,6 @@
         else if (self.type == 2)
             serverTextField.text = @"cloud.seafile.com";
     }
-    [self.loginButton setHighColor:[UIColor whiteColor] lowColor:[UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1]];
-    [self.cancelButton setHighColor:[UIColor whiteColor] lowColor:[UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1]];
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 }
 
