@@ -14,3 +14,6 @@
 	path = libs/REComposeViewController
 	url = git@github.com:romaonthego/REComposeViewController.git
     ignore = dirty
+[submodule "libs/ios-openssl"]
+	path = libs/ios-openssl
+	url = git@github.com:st3fan/ios-openssl.git

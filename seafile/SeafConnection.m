@@ -440,14 +440,9 @@
     return JSON;
 }
 
-- (BOOL)repoEditable:(NSString *)repo
+- (SeafRepo *)getRepo:(NSString *)repo
 {
-    return [[self.rootFolder getRepo:repo] editable];
-}
-
-- (NSString *)getRepoName:(NSString *)repo
-{
-    return [[self.rootFolder getRepo:repo] name];
+    return [self.rootFolder getRepo:repo];
 }
 
 - (SeafUploadFile *)getUploadfile:(NSString *)lpath

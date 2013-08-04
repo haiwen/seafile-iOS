@@ -8,6 +8,8 @@
 
 #import "SeafData.h"
 #import "SeafDir.h"
+#import "SeafRepos.h"
+
 #import "SeafFile.h"
 #import "SeafConnection.h"
 #import "SeafBase.h"
@@ -40,7 +42,7 @@
 
 - (BOOL)editable
 {
-    return [connection repoEditable:self.repoId];
+    return [[connection getRepo:self.repoId] editable];
 }
 
 - (BOOL)handleData:(NSString *)oid data:(id)JSON

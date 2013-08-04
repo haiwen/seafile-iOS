@@ -43,7 +43,6 @@ static dispatch_queue_t json_request_operation_processing_queue() {
     [requestOperation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
         if (success) {
             Debug("%d, %@\n", [operation.response statusCode], operation.request.URL);
-            Debug("resp=%@\n", responseObject);
             success (operation.request, operation.response, responseObject, operation.responseData);
         }
     }

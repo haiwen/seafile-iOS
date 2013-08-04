@@ -16,17 +16,10 @@
 #import "Utils.h"
 
 @interface SeafRepo ()
-@property (readonly) BOOL encrypted;
 @property (readonly) NSString *perm;
 
 @end
 @implementation SeafRepo;
-
-@synthesize desc = _desc, size = _size, owner = _owner, mtime = _mtime;
-@synthesize encrypted = _encrypted;
-@synthesize repoType = _repoType;
-@synthesize gid = _gid;
-@synthesize perm = _perm;
 
 - (id)initWithConnection:(SeafConnection *)aConnection
                      oid:(NSString *)anId
@@ -40,6 +33,7 @@
                     size:(int)aSize
                    mtime:(int)aMtime
                encrypted:(BOOL)aEncrypted
+              encVersion:(int)aEncVersion
 {
     NSString *aMime = @"text/directory-documents";
     if (aEncrypted)
@@ -53,6 +47,7 @@
         _mtime = aMtime;
         _encrypted = aEncrypted;
         _gid = groupid;
+        _encVersion = aEncVersion;
     }
     return self;
 }
@@ -156,6 +151,7 @@
                              size:[[repoInfo objectForKey:@"size"] integerValue:0]
                              mtime:[[repoInfo objectForKey:@"mtime"] integerValue:0]
                              encrypted:[[repoInfo objectForKey:@"encrypted"] booleanValue:NO]
+                             encVersion:[[repoInfo objectForKey:@"encversion"] integerValue:0]
                              ];
         newRepo.delegate = self.delegate;
         [newRepos addObject:newRepo];

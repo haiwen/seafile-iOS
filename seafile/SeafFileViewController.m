@@ -985,7 +985,6 @@ enum {
             [UIImageJPEGRepresentation(image, 1.0) writeToFile:path atomically:YES];
             SeafUploadFile *file =  [self.connection getUploadfile:path];
             file.delegate = self;
-            //[self performSelector:@selector(uploadFile:) withObject:file afterDelay:0.5];
             [files addObject:file];
         }
     }

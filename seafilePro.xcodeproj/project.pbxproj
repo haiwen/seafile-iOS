@@ -350,6 +350,12 @@
 		571F514A168C80470055D69B /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 571F5147168C80380055D69B /* MobileCoreServices.framework */; };
 		572500B3162984B3001E5C75 /* Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 572500B2162984B3001E5C75 /* Utils.m */; };
 		572500B616298C7C001E5C75 /* SeafUploadFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 572500B516298C7C001E5C75 /* SeafUploadFile.m */; };
+		5725185F17AE7A6F0078CD12 /* NSData+Encryption.m in Sources */ = {isa = PBXBuildFile; fileRef = 5725185E17AE7A6F0078CD12 /* NSData+Encryption.m */; };
+		5725186017AE7A6F0078CD12 /* NSData+Encryption.m in Sources */ = {isa = PBXBuildFile; fileRef = 5725185E17AE7A6F0078CD12 /* NSData+Encryption.m */; };
+		5725186217AE7D010078CD12 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5725186117AE7D000078CD12 /* Security.framework */; };
+		5725186317AE7D080078CD12 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5725186117AE7D000078CD12 /* Security.framework */; };
+		5725186517AEA6E90078CD12 /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5725186417AEA6E90078CD12 /* libcrypto.a */; };
+		5725186617AEA6EA0078CD12 /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5725186417AEA6E90078CD12 /* libcrypto.a */; };
 		5725F687164E5AF400A2DCC6 /* unstar.png in Resources */ = {isa = PBXBuildFile; fileRef = 5725F686164E5AF400A2DCC6 /* unstar.png */; };
 		572B0A7815D16C1C00798C6E /* StartViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 572B0A7615D16C1C00798C6E /* StartViewController.m */; };
 		5732A95D177894E700D806C7 /* DEComposeRuledView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A939177894E700D806C7 /* DEComposeRuledView.m */; };
@@ -858,6 +864,10 @@
 		572500B416298C7C001E5C75 /* SeafUploadFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafUploadFile.h; sourceTree = "<group>"; };
 		572500B516298C7C001E5C75 /* SeafUploadFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafUploadFile.m; sourceTree = "<group>"; };
 		5725063C162328EB0002B040 /* Debug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Debug.h; sourceTree = "<group>"; };
+		5725185D17AE794B0078CD12 /* NSData+Encryption.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSData+Encryption.h"; path = "../NSData+Encryption.h"; sourceTree = "<group>"; };
+		5725185E17AE7A6F0078CD12 /* NSData+Encryption.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSData+Encryption.m"; sourceTree = "<group>"; };
+		5725186117AE7D000078CD12 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		5725186417AEA6E90078CD12 /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = "ios-openssl/lib/libcrypto.a"; sourceTree = "<group>"; };
 		5725F686164E5AF400A2DCC6 /* unstar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = unstar.png; sourceTree = "<group>"; };
 		572B0A7515D16C1C00798C6E /* StartViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StartViewController.h; sourceTree = "<group>"; };
 		572B0A7615D16C1C00798C6E /* StartViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = StartViewController.m; sourceTree = "<group>"; };
@@ -1220,6 +1230,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5725186217AE7D010078CD12 /* Security.framework in Frameworks */,
 				57F0AAFE16D8935800364D18 /* AssetsLibrary.framework in Frameworks */,
 				571F5148168C80380055D69B /* MobileCoreServices.framework in Frameworks */,
 				571D8CDD1677881400F1A22C /* MessageUI.framework in Frameworks */,
@@ -1230,6 +1241,7 @@
 				571D8CE21677881400F1A22C /* Foundation.framework in Frameworks */,
 				571D8CE31677881400F1A22C /* CoreGraphics.framework in Frameworks */,
 				571D8CE41677881400F1A22C /* CoreData.framework in Frameworks */,
+				5725186617AEA6EA0078CD12 /* libcrypto.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1237,6 +1249,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5725186317AE7D080078CD12 /* Security.framework in Frameworks */,
 				57F0AAFD16D8913700364D18 /* AssetsLibrary.framework in Frameworks */,
 				571F514A168C80470055D69B /* MobileCoreServices.framework in Frameworks */,
 				57335CF9160DA00000018AE8 /* SystemConfiguration.framework in Frameworks */,
@@ -1247,6 +1260,7 @@
 				57DB827415A833FA00097CEC /* Foundation.framework in Frameworks */,
 				57DB827615A833FA00097CEC /* CoreGraphics.framework in Frameworks */,
 				57DB827815A833FA00097CEC /* CoreData.framework in Frameworks */,
+				5725186517AEA6E90078CD12 /* libcrypto.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1325,6 +1339,7 @@
 		57094B5515B9AC4A00F48C08 /* libs */ = {
 			isa = PBXGroup;
 			children = (
+				5725186417AEA6E90078CD12 /* libcrypto.a */,
 				5732A934177894E700D806C7 /* REComposeViewController */,
 				57191CBF176CA6650064BCEA /* QBImagePickerController */,
 				576D89DF15E39ED700F2BD17 /* EGOTableViewPullRefresh */,
@@ -1846,6 +1861,7 @@
 		57DB827015A833FA00097CEC /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				5725186117AE7D000078CD12 /* Security.framework */,
 				57F0AAFC16D8913600364D18 /* AssetsLibrary.framework */,
 				571F5147168C80380055D69B /* MobileCoreServices.framework */,
 				5765533D161D44A2005E5327 /* MessageUI.framework */,
@@ -1891,6 +1907,8 @@
 		57F53B0315DF49D00027140D /* utils */ = {
 			isa = PBXGroup;
 			children = (
+				5725185D17AE794B0078CD12 /* NSData+Encryption.h */,
+				5725185E17AE7A6F0078CD12 /* NSData+Encryption.m */,
 				576069CB164558A1005C2F13 /* ColorfulButton.h */,
 				576069CA164558A1005C2F13 /* ColorfulButton.m */,
 				5725063C162328EB0002B040 /* Debug.h */,
@@ -2657,6 +2675,7 @@
 				5732A964177894E700D806C7 /* REComposeSheetView.m in Sources */,
 				5732A968177894E700D806C7 /* REComposeViewController.m in Sources */,
 				576C91C4177EB43F007B50BD /* SeafDirViewController.m in Sources */,
+				5725186017AE7A6F0078CD12 /* NSData+Encryption.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2737,6 +2756,7 @@
 				5732A963177894E700D806C7 /* REComposeSheetView.m in Sources */,
 				5732A967177894E700D806C7 /* REComposeViewController.m in Sources */,
 				576C91C3177EB43F007B50BD /* SeafDirViewController.m in Sources */,
+				5725185F17AE7A6F0078CD12 /* NSData+Encryption.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2777,8 +2797,13 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "seafile/seafile-Prefix.pch";
+				HEADER_SEARCH_PATHS = "libs/ios-openssl/include/";
 				INFOPLIST_FILE = "seafile/seafile-appstore-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/libs/ios-openssl/lib\"",
+				);
 				PRODUCT_NAME = SeafilePro;
 				PROVISIONING_PROFILE = "4D776EE3-55F2-4899-9187-315F5F385190";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "4D776EE3-55F2-4899-9187-315F5F385190";
@@ -2795,8 +2820,13 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Seafile Inc.";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "seafile/seafile-Prefix.pch";
+				HEADER_SEARCH_PATHS = "libs/ios-openssl/include/";
 				INFOPLIST_FILE = "seafile/seafile-appstore-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/libs/ios-openssl/lib\"",
+				);
 				PRODUCT_NAME = SeafilePro;
 				PROVISIONING_PROFILE = "50743626-BE56-418B-B49C-8FDE3A880F76";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "50743626-BE56-418B-B49C-8FDE3A880F76";
@@ -2832,6 +2862,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				"PRIVATE_HEADERS_FOLDER_PATH[sdk=*]" = "";
 				PROVISIONING_PROFILE = "4D776EE3-55F2-4899-9187-315F5F385190";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "4D776EE3-55F2-4899-9187-315F5F385190";
 				SDKROOT = iphoneos;
@@ -2874,8 +2905,14 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Seafile-self-signed";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "seafile/seafile-Prefix.pch";
+				HEADER_SEARCH_PATHS = "libs/ios-openssl/include/";
 				INFOPLIST_FILE = "seafile/seafile-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/libs/ios-openssl/lib\"",
+				);
+				PRIVATE_HEADERS_FOLDER_PATH = "";
 				PRODUCT_NAME = SeafilePro;
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
@@ -2892,8 +2929,15 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Seafile-self-signed";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "seafile/seafile-Prefix.pch";
+				HEADER_SEARCH_PATHS = "libs/ios-openssl/include/";
 				INFOPLIST_FILE = "seafile/seafile-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/libs/ios-openssl/lib\"",
+				);
+				PRIVATE_HEADERS_FOLDER_PATH = "";
+				"PRIVATE_HEADERS_FOLDER_PATH[sdk=*]" = "";
 				PRODUCT_NAME = SeafilePro;
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";

@@ -14,6 +14,8 @@
 @property (readonly, copy) NSString *owner;
 @property (readonly) BOOL passwordRequired;
 @property (readonly) BOOL editable;
+@property (readwrite) BOOL encrypted;
+@property (readwrite) int encVersion;
 @property (readonly) unsigned long long size;
 @property (readonly) int mtime;
 @property (readonly) NSString *gid;

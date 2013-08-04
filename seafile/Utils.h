@@ -41,4 +41,5 @@
 + (id)JSONDecode:(NSData *)data error:(NSError **)error;
 + (BOOL)isImageFile:(NSString *)name;
 
+
 @end

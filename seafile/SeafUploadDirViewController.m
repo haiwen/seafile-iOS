@@ -93,7 +93,7 @@
     self.nameLabel.text = self.ufile.name;
     if (self.curDir) {
         [self.saveItem setEnabled:YES];
-        self.dirLabel.text = [[self.connection getRepoName:self.curDir.repoId] stringByAppendingString:self.curDir.path];
+        self.dirLabel.text = [[[self.connection getRepo:self.curDir.repoId] name]stringByAppendingString:self.curDir.path];
     } else {
         self.dirLabel.text = @"choose";
         [self.saveItem setEnabled:NO];
@@ -116,7 +116,7 @@
 - (void)chooseDir:(SeafDir *)dir
 {
     _curDir = dir;
-    self.dirLabel.text = [[self.connection getRepoName:self.curDir.repoId] stringByAppendingString:self.curDir.path];
+    self.dirLabel.text = [[[self.connection getRepo:self.curDir.repoId] name] stringByAppendingString:self.curDir.path];
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation

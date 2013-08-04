@@ -15,6 +15,7 @@
 
 @class SeafConnection;
 @class SeafRepos;
+@class SeafRepo;
 @class SeafUploadFile;
 
 @protocol SSConnectionDelegate <NSObject>
@@ -83,8 +84,7 @@
 
 - (BOOL)setStarred:(BOOL)starred repo:(NSString *)repo path:(NSString *)path;
 
-- (BOOL)repoEditable:(NSString *)repo;
-- (NSString *)getRepoName:(NSString *)repo;
+- (SeafRepo *)getRepo:(NSString *)repo;
 
 - (SeafUploadFile *)getUploadfile:(NSString *)lpath;
 - (void)removeUploadfile:(SeafUploadFile *)ufile;

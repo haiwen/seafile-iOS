@@ -15,6 +15,8 @@
 #import "ExtentedString.h"
 #import "FileSizeFormatter.h"
 #import "SeafDateFormatter.h"
+#import "NSData+Encryption.h"
+#import "AFHTTPRequestOperation.h"
 #import "Debug.h"
 #import "Utils.h"
 
@@ -23,11 +25,12 @@
 @property (strong, readonly) NSURL *preViewURL;
 @property (readonly) NSURL *checkoutURL;
 @property (strong) NSString *downloadingFileOid;
-@property (strong) NSURLConnection *downloadConncetion;
-@property (strong) NSFileHandle *downloadFileHandle;
+@property (strong) AFHTTPRequestOperation *operation;
 
 @property (strong) SeafUploadFile *ufile;
 @property (weak) id <SeafFileUpdateDelegate> udelegate;
+@property (strong) NSArray *blks;
+@property int index;
 
 @end
 
@@ -35,13 +38,6 @@
 @synthesize checkoutURL = _checkoutURL;
 @synthesize preViewURL = _preViewURL;
 @synthesize shareLink = _shareLink;
-@synthesize filesize;
-@synthesize downloadFileHandle;
-@synthesize downloadingFileOid;
-@synthesize downloadConncetion;
-@synthesize mpath;
-@synthesize ufile;
-@synthesize udelegate;
 @synthesize groups = _groups;
 
 - (id)initWithConnection:(SeafConnection *)aConnection
@@ -55,10 +51,9 @@
     if (self = [super initWithConnection:aConnection oid:anId repoId:aRepoId name:aName path:aPath mime:[FileMimeType mimeType:aName]]) {
         _mtime = mtime;
         _shareLink = nil;
-        filesize = size;
-        downloadingFileOid = nil;
-        downloadFileHandle = nil;
-        downloadConncetion = nil;
+        self.filesize = size;
+        self.downloadingFileOid = nil;
+        self.operation = nil;
     }
     [self loadCache];
     return self;
@@ -95,9 +90,9 @@
         return [NSString stringWithFormat:@"%@, %@", [FileSizeFormatter stringFromNumber:[NSNumber numberWithUnsignedLongLong:self.filesize ] useBaseTen:NO], [SeafDateFormatter stringFromInt:self.mtime]];
 }
 
-- (NSString *)downloadTempPath
+- (NSString *)downloadTempPath:(NSString *)objId
 {
-    return [[Utils applicationTempDirectory] stringByAppendingPathComponent:self.downloadingFileOid];;
+    return [[Utils applicationTempDirectory] stringByAppendingPathComponent:objId];
 }
 
 - (void)updateWithEntry:(SeafBase *)entry
@@ -106,7 +101,7 @@
     if ([self.oid isEqualToString:entry.oid])
         return;
     [super updateWithEntry:entry];
-    filesize = file.filesize;
+    self.filesize = file.filesize;
     _mtime = file.mtime;
     self.ooid = nil;
     self.state = SEAF_DENTRY_INIT;
@@ -119,11 +114,9 @@
     return [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"] stringByAppendingPathComponent:fileId];
 }
 
-- (NSString *)documentPath
++ (NSString *)blockPath:(NSString*)blkId
 {
-    if (!self.ooid)
-        return nil;
-    return [SeafFile documentPath:self.ooid];
+    return [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"] stringByAppendingPathComponent:blkId];
 }
 
 - (void)setOoid:(NSString *)ooid
@@ -133,114 +126,213 @@
     _preViewURL = nil;
 }
 
-- (NSString *)downloadLinkUrl
+- (void)finishDownload:(NSString *)ooid
 {
-    return [NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@", self.repoId, [self.path escapedUrl]];
-}
-
-#pragma - NSURLConnectionDelegate
-- (void)connection:(NSURLConnection *)aConn didReceiveData:(NSData *)data
-{
-    [downloadFileHandle writeData:data];
-    int percent = 0;
-    if (filesize != 0)
-        percent = downloadFileHandle.offsetInFile * 100/filesize;
-    if (percent >= 100)
-        percent = 99;
-    [self.delegate entry:self contentUpdated:YES completeness:percent];
-}
-
-- (void)connection:(NSURLConnection *)aConn didFailWithError:(NSError *)error
-{
-    Debug("error=%@",[error localizedDescription]);
-    self.state = SEAF_DENTRY_INIT;
-    [self.delegate entryContentLoadingFailed:error.code entry:self];
-    downloadingFileOid = nil;
-    downloadConncetion = nil;
+    [self setOoid:ooid];
+    self.state = SEAF_DENTRY_UPTODATE;
+    [self savetoCache];
+    self.downloadingFileOid = nil;
+    self.operation = nil;
     [SeafAppDelegate decDownloadnum];
-    [downloadFileHandle closeFile];
-}
-
-- (void)connectionDidFinishLoading:(NSURLConnection *)aConn
-{
-    @synchronized(self) {
-        self.state = SEAF_DENTRY_UPTODATE;
-        [self setOoid:downloadingFileOid];
-        [self savetoCache];
-        [downloadFileHandle closeFile];
-        [[NSFileManager defaultManager] moveItemAtPath:[self downloadTempPath] toPath:[self documentPath] error:nil];
-        downloadingFileOid = nil;
-        downloadConncetion = nil;
-    }
-    [SeafAppDelegate decDownloadnum];
-    [self.delegate entry:self contentUpdated:YES completeness:100];
     if (![self.oid isEqualToString:self.ooid]) {
         Debug("the parent is out of date and need to reload %@, %@\n", self.oid, self.ooid);
         self.oid = self.ooid;
     }
 }
 
-- (void)connection:(NSURLConnection *)aConn didReceiveResponse:(NSURLResponse *)response
+- (void)failedDownload:(NSError *)error
 {
-    NSError *error = nil;
-    if (![[NSFileManager defaultManager] fileExistsAtPath:[self downloadTempPath]])
-        [[NSFileManager defaultManager] createFileAtPath: [self downloadTempPath] contents: nil attributes: nil];
-    self.downloadFileHandle = [NSFileHandle fileHandleForWritingToURL:[NSURL fileURLWithPath:[self downloadTempPath]] error:&error];
-    [self.downloadFileHandle truncateFileAtOffset:0];
+    self.state = SEAF_DENTRY_INIT;
+    [self.delegate entryContentLoadingFailed:error.code entry:self];
+    self.downloadingFileOid = nil;
+    self.operation = nil;
+    [SeafAppDelegate decDownloadnum];
+}
+/*
+ curl -D a.txt -H 'Cookie:sessionid=7eb567868b5df5b22b2ba2440854589c' http://127.0.0.1:8000/api/file/640fd90d-ef4e-490d-be1c-b34c24040da7/8dd0a3be9289aea6795c1203351691fcc1373fbb/
+
+ */
+- (void)downloadByFile
+{
+    [SeafAppDelegate incDownloadnum];
+    [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@", self.repoId, [self.path escapedUrl]] repo:self.repoId success:
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+         NSString *url = JSON;
+         NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
+         if (!curId)
+             curId = self.oid;
+         if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafFile documentPath:curId]]) {
+             Debug("already uptodate oid=%@, %@\n", self.ooid, curId);
+             [self finishDownload:curId];
+             return;
+         }
+         @synchronized (self) {
+             if (self.downloadingFileOid) {// Already downloading
+                 [SeafAppDelegate decDownloadnum];
+                 return;
+             }
+             self.downloadingFileOid = curId;
+         }
+         url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+         NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
+         AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:downloadRequest];
+         self.operation = operation;
+         operation.outputStream = [NSOutputStream outputStreamToFileAtPath:[self downloadTempPath:self.downloadingFileOid] append:NO];
+         [operation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
+             Debug("Successfully downloaded file");
+             [[NSFileManager defaultManager] moveItemAtPath:[self downloadTempPath:self.downloadingFileOid] toPath:[SeafFile documentPath:self.downloadingFileOid] error:nil];
+             [self finishDownload:self.downloadingFileOid];
+             [self.delegate entry:self contentUpdated:YES completeness:100];
+         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+             Debug("error=%@",[error localizedDescription]);
+             [self failedDownload:error];
+         }];
+         [operation setAuthenticationAgainstProtectionSpaceBlock:^BOOL(NSURLConnection *connection, NSURLProtectionSpace *protectionSpace) {
+             return YES;
+         }];
+         [operation setAuthenticationChallengeBlock:^(NSURLConnection *connection, NSURLAuthenticationChallenge *challenge) {
+             [challenge.sender useCredential:[NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust] forAuthenticationChallenge:challenge];
+         }];
+         [operation setDownloadProgressBlock:^(NSUInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead) {
+             int percent = 99;
+             if (totalBytesExpectedToRead > 0)
+                 percent = totalBytesRead * 100 / totalBytesExpectedToRead;
+             if (percent >= 100)
+                 percent = 99;
+             [self.delegate entry:self contentUpdated:YES completeness:percent];
+         }];
+         [operation start];
+     }
+                    failure:
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+         self.state = SEAF_DENTRY_INIT;
+         [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
+     }];
 }
 
-- (BOOL)connection:(NSURLConnection *)connection canAuthenticateAgainstProtectionSpace:(NSURLProtectionSpace *)protectionSpace
+- (int)checkoutFile
 {
-    return YES;
+    NSString *password = nil;
+    SeafRepo *repo = [connection getRepo:self.repoId];
+    if (repo.encrypted)
+        password = [Utils getRepoPassword:self.repoId];
+    NSString *tmpPath = [self downloadTempPath:self.downloadingFileOid];
+    if (![[NSFileManager defaultManager] fileExistsAtPath:tmpPath])
+        [[NSFileManager defaultManager] createFileAtPath:tmpPath contents: nil attributes: nil];
+    NSFileHandle *handle = [NSFileHandle fileHandleForWritingAtPath:tmpPath];
+    [handle truncateFileAtOffset:0];
+    for (NSString *blk_id in self.blks) {
+        NSData *data = [[NSData alloc] initWithContentsOfFile:[SeafFile blockPath:blk_id]];
+        if (password)
+            data = [data decrypt:password version:repo.encVersion];
+        if (!data)
+            return -1;
+        [handle writeData:data];
+    }
+    [handle closeFile];
+    Debug("ooid=%@\n", self.downloadingFileOid);
+    if (!self.downloadingFileOid)
+        return -1;
+    [[NSFileManager defaultManager] moveItemAtPath:tmpPath toPath:[SeafFile documentPath:self.downloadingFileOid] error:nil];
+    return 0;
 }
 
-- (void)connection:(NSURLConnection *)connection didReceiveAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge
+- (void)finishBlock:(NSString *)url
 {
-    [challenge.sender useCredential:[NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust] forAuthenticationChallenge:challenge];
+    self.index ++;
+    if (self.index >= self.blks.count) {
+        if ([self checkoutFile] < 0) {
+            Debug("Faile to checkout out file %@\n", self.downloadingFileOid);
+            self.index = 0;
+            //for (NSString *blk_id in self.blks)
+            //    [[NSFileManager defaultManager] removeItemAtPath:[SeafFile blockPath:blk_id] error:nil];
+            self.blks = nil;
+            [self failedDownload:nil];
+            return;
+        }
+        [self finishDownload:self.downloadingFileOid];
+        [self.delegate entry:self contentUpdated:YES completeness:100];
+        self.index = 0;
+        self.blks = nil;
+        return;
+    }
+    [self performSelector:@selector(downloadBlock:) withObject:url afterDelay:0.0];
+}
+
+- (void)downloadBlock:(NSString *)url
+{
+    NSString *blk_id = [self.blks objectAtIndex:self.index];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafFile blockPath:blk_id]])
+        return [self finishBlock:url];
+    NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:[url stringByAppendingString:blk_id]]];
+    AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:downloadRequest];
+    self.operation = operation;
+    operation.outputStream = [NSOutputStream outputStreamToFileAtPath:[self downloadTempPath:blk_id] append:NO];
+    [operation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
+        Debug("Successfully downloaded block %@\n", blk_id);
+        [[NSFileManager defaultManager] moveItemAtPath:[self downloadTempPath:blk_id] toPath:[SeafFile blockPath:blk_id] error:nil];
+        [self finishBlock:url];
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        Debug("error=%@",[error localizedDescription]);
+        self.index = 0;
+        self.blks = nil;
+        [self failedDownload:error];
+    }];
+    [operation setAuthenticationAgainstProtectionSpaceBlock:^BOOL(NSURLConnection *connection, NSURLProtectionSpace *protectionSpace) {
+        return YES;
+    }];
+    [operation setAuthenticationChallengeBlock:^(NSURLConnection *connection, NSURLAuthenticationChallenge *challenge) {
+        [challenge.sender useCredential:[NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust] forAuthenticationChallenge:challenge];
+    }];
+    [operation setDownloadProgressBlock:^(NSUInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead) {
+        int percent = 99;
+        if (totalBytesExpectedToRead > 0)
+            percent = totalBytesRead * 100 / totalBytesExpectedToRead;
+        percent = (percent + self.index*100.0)/self.blks.count;
+        if (percent >= 100)
+            percent = 99;
+        [self.delegate entry:self contentUpdated:YES completeness:percent];
+    }];
+    [operation start];
 }
 
 /*
  curl -D a.txt -H 'Cookie:sessionid=7eb567868b5df5b22b2ba2440854589c' http://127.0.0.1:8000/api/file/640fd90d-ef4e-490d-be1c-b34c24040da7/8dd0a3be9289aea6795c1203351691fcc1373fbb/
 
  */
-- (void)realLoadContent
+- (void)downloadByBlocks
 {
     [SeafAppDelegate incDownloadnum];
-    [connection sendRequest:self.downloadLinkUrl repo:self.repoId success:
+    [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@&op=downloadblks", self.repoId, [self.path escapedUrl]] repo:self.repoId success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
-         NSString *url = JSON;
          NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
          if (!curId)
              curId = self.oid;
-         if ([curId isEqualToString:self.ooid]) {
+         if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafFile documentPath:curId]]) {
              Debug("already uptodate oid=%@, %@\n", self.ooid, curId);
-             self.state = SEAF_DENTRY_UPTODATE;
-             [self.delegate entry:self contentUpdated:NO completeness:100];
-             [SeafAppDelegate decDownloadnum];
+             [self finishDownload:curId];
              return;
-         } else if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafFile documentPath:curId]]) {
-             [self setOoid:curId];
-             [self savetoCache];
-             self.state = SEAF_DENTRY_UPTODATE;
+         }
+         @synchronized (self) {
+             if (self.downloadingFileOid) {// Already downloading
+                 [SeafAppDelegate decDownloadnum];
+                 return;
+             }
+             self.downloadingFileOid = curId;
+         }
+         NSString *url = [[JSON objectForKey:@"url"] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+         self.blks = [JSON objectForKey:@"blklist"];
+         if (self.blks.count <= 0) {
+             [@"" writeToFile:[SeafFile documentPath:self.downloadingFileOid] atomically:YES encoding:NSUTF8StringEncoding error:nil];
+             [self finishDownload:self.downloadingFileOid];
              [self.delegate entry:self contentUpdated:YES completeness:100];
-             [SeafAppDelegate decDownloadnum];
-             return;
-         }
-         url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-         NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
-         if (downloadingFileOid) {// Already downloading
-             [SeafAppDelegate decDownloadnum];
-             return;
-         }
-         downloadingFileOid = curId;
-         downloadConncetion = [[NSURLConnection alloc] initWithRequest:downloadRequest delegate:self startImmediately:YES];
-         if (!downloadConncetion) {
-             self.state = SEAF_DENTRY_INIT;
-             downloadingFileOid = nil;
-             downloadConncetion = nil;
-             [SeafAppDelegate decDownloadnum];
-             [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
-             return;
+         } else {
+             SeafRepo *repo = [connection getRepo:self.repoId];
+             repo.encrypted = [[JSON objectForKey:@"encrypted"] booleanValue:repo.encrypted];
+             repo.encVersion = [[JSON objectForKey:@"encversion"] integerValue:repo.encVersion];
+             self.index = 0;
+             Debug("blks=%@, encver=%d\n", self.blks, repo.encVersion);
+             [self performSelector:@selector(downloadBlock:) withObject:url afterDelay:0.0];
          }
      }
                     failure:
@@ -248,6 +340,11 @@
          self.state = SEAF_DENTRY_INIT;
          [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
      }];
+}
+
+- (void)realLoadContent
+{
+    [self downloadByBlocks];
 }
 
 - (DownloadedFile *)loadCacheObj
@@ -336,8 +433,7 @@
                 success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          NSString *link = [[response allHeaderFields] objectForKey:@"Location"];
-         Debug(" share link = %@\n", link);
-
+         Debug("share link = %@\n", link);
          if ([link hasPrefix:@"\""])
              _shareLink = [link substringWithRange:NSMakeRange(1, link.length-2)];
          else
@@ -370,7 +466,7 @@
             return nil;
         NSString *tempFileName = [tempDir stringByAppendingPathComponent:self.name];
         if ([[NSFileManager defaultManager] fileExistsAtPath:tempFileName]
-            || [[NSFileManager defaultManager] linkItemAtPath:[self documentPath] toPath:tempFileName error:&error]) {
+            || [[NSFileManager defaultManager] linkItemAtPath:[SeafFile documentPath:self.ooid] toPath:tempFileName error:&error]) {
             _checkoutURL = [NSURL fileURLWithPath:tempFileName];
         } else {
             Warning("Copy file to checkoutURL failed:%@\n", error);
@@ -410,7 +506,7 @@
     NSString *src = nil;
     NSString *tmpdir = nil;
     if (!self.mpath) {
-        src = [self documentPath];
+        src = [SeafFile documentPath:self.ooid];
         tmpdir = [[[Utils applicationTempDirectory] stringByAppendingPathComponent:self.ooid] stringByAppendingPathComponent:@"utf16" ];
     } else {
         src = self.mpath;
@@ -440,20 +536,19 @@
 
 - (BOOL)editable
 {
-    return [connection repoEditable:self.repoId];
+    return [[connection getRepo:self.repoId] editable];
 }
 
 - (NSString *)content
 {
-    if (self.mpath) {
+    if (self.mpath)
         return [Utils stringContent:self.mpath];
-    }
-    return [Utils stringContent:[self documentPath]];
+    return [Utils stringContent:[SeafFile documentPath:self.ooid]];
 }
 
 - (void)autoupload
 {
-    if (ufile && ufile.uploading)
+    if (self.ufile && self.ufile.uploading)
         return;
     if ([self.delegate conformsToProtocol:@protocol(SeafFileUpdateDelegate)])
         [self update:(id<SeafFileUpdateDelegate>)self.delegate];
@@ -512,7 +607,7 @@
     _checkoutURL = nil;
     _preViewURL = nil;
     _shareLink = nil;
-    [[NSFileManager defaultManager] removeItemAtPath:[self documentPath] error:nil];
+    [[NSFileManager defaultManager] removeItemAtPath:[SeafFile documentPath:self.ooid] error:nil];
     NSString *tempDir = [[Utils applicationTempDirectory] stringByAppendingPathComponent:self.ooid];
     [[NSFileManager defaultManager] removeItemAtPath:tempDir error:nil];
     self.ooid = nil;
@@ -523,11 +618,12 @@
 {
     if (self.downloadingFileOid) {
         self.state = SEAF_DENTRY_INIT;
-        [downloadConncetion cancel];
-        downloadingFileOid = nil;
-        downloadConncetion = nil;
+        self.downloadingFileOid = nil;
+        [self.operation cancel];
+        self.operation = nil;
+        self.index = 0;
+        self.blks = nil;
         [SeafAppDelegate decDownloadnum];
-        [downloadFileHandle closeFile];
     }
 }
 
@@ -543,7 +639,7 @@
         [formatter setDateFormat:@"yyyy-MM-dd-HH.mm.ss"];
         self.ooid = [self.ooid stringByAppendingString:[formatter stringFromDate:[NSDate date]]];
         self.oid = self.ooid;
-        [[NSFileManager defaultManager] moveItemAtPath:self.mpath toPath:[self documentPath] error:nil];
+        [[NSFileManager defaultManager] moveItemAtPath:self.mpath toPath:[SeafFile documentPath:self.ooid] error:nil];
         self.mpath = nil;
         [self savetoCache];
     }
