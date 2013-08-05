@@ -12,5 +12,6 @@
 
 - (NSData *)decrypt:(NSString *)password version:(int)version;
 - (NSData *)encrypt:(NSString *)password version:(int)version;
++ (NSString *)passwordMaigc:(NSString *)password repo:(NSString *)repoId version:(int)version;
 
 @end

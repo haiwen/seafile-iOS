@@ -61,6 +61,8 @@ enum SEAFBASE_STATE {
 - (void)updateWithEntry:(SeafBase *)entry;
 
 - (void)setRepoPassword:(NSString *)password;
+- (void)checkRepoPassword:(NSString *)password;
+
 - (NSString *)key;
 - (UIImage *)image;
 - (BOOL)hasCache;

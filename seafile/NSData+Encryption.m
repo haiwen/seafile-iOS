@@ -67,7 +67,7 @@
 }
 
 #if 0
-- (CCOptions)generateKeyIv:(NSString *)password version:(int)version key:(uint8_t *)key iv:(uint8_t *)iv
++ (CCOptions)generateKeyIv:(NSString *)password version:(int)version key:(uint8_t *)key iv:(uint8_t *)iv
 {
     int rounds = 1 << 19;
     unsigned char salt[8] = { 0xda, 0x90, 0x45, 0xc3, 0x06, 0xc7, 0xcc, 0x26 };
@@ -89,24 +89,11 @@
     return option;
 }
 
-- (NSData *)decrypt:(NSString *)password version:(int)version
-{
-    uint8_t key[kCCKeySizeAES128+1], iv[kCCKeySizeAES128+1];
-    CCOptions option = [self generateKeyIv:password version:version key:key iv:iv];
-    return [self AES128DecryptWithKey:key iv:NULL option:option];
-}
-
-- (NSData *)encrypt:(NSString *)password version:(int)version
-{
-    uint8_t key[kCCKeySizeAES128+1], iv[kCCKeySizeAES128+1];
-    CCOptions option = [self generateKeyIv:password version:version key:key iv:iv];
-    return [self AES128EncryptWithKey:key iv:iv option:option];
-}
 #else
 
 #include <openssl/evp.h>
 
-- (int)generateEncKey:(const char *)data_in inlen:(int)in_len version:(int)version key:(unsigned char *)key iv:(unsigned char *)iv
++ (int)generateEncKey:(const char *)data_in inlen:(int)in_len version:(int)version key:(unsigned char *)key iv:(unsigned char *)iv
 {
     unsigned char salt[8] = { 0xda, 0x90, 0x45, 0xc3, 0x06, 0xc7, 0xcc, 0x26 };
     if (version >= 1)
@@ -129,7 +116,7 @@
                                iv); /* IV, initial vector */
 }
 
-- (CCOptions)generateKeyIv:(NSString *)password version:(int)version key:(uint8_t *)key iv:(uint8_t *)iv
++ (CCOptions)generateKeyIv:(NSString *)password version:(int)version key:(uint8_t *)key iv:(uint8_t *)iv
 {
     CCOptions option = kCCOptionPKCS7Padding;
     if (version < 1) {
@@ -140,25 +127,48 @@
     
     // fetch key data
     [password getCString:passwordPtr maxLength:sizeof(passwordPtr) encoding:NSUTF8StringEncoding];
-    [self generateEncKey:passwordPtr inlen:password.length version:version key:key iv:iv];
+    [NSData generateEncKey:passwordPtr inlen:password.length version:version key:key iv:iv];
     return option;
 }
+#endif
 
 - (NSData *)decrypt:(NSString *)password version:(int)version
 {
     uint8_t key[kCCKeySizeAES128+1], iv[kCCKeySizeAES128+1];
-    CCOptions option = [self generateKeyIv:password version:version key:key iv:iv];
+    CCOptions option = [NSData generateKeyIv:password version:version key:key iv:iv];
     return [self AES128DecryptWithKey:key iv:iv option:option];
 }
 
 - (NSData *)encrypt:(NSString *)password version:(int)version
 {
     uint8_t key[kCCKeySizeAES128+1], iv[kCCKeySizeAES128+1];
-    CCOptions option = [self generateKeyIv:password version:version key:key iv:iv];
+    CCOptions option = [NSData generateKeyIv:password version:version key:key iv:iv];
     return [self AES128EncryptWithKey:key iv:iv option:option];
 }
 
-#endif
+
++ (void)rawdata:(const unsigned char *)rawdata ToHex:(char *)hex_str size:(int)n_bytes
+{
+    static const char hex[] = "0123456789abcdef";
+    int i;
+    
+    for (i = 0; i < n_bytes; i++) {
+        unsigned int val = *rawdata++;
+        *hex_str++ = hex[val >> 4];
+        *hex_str++ = hex[val & 0xf];
+    }
+    *hex_str = '\0';
+}
+
++ (NSString *)passwordMaigc:(NSString *)password repo:(NSString *)repoId version:(int)version
+{
+    uint8_t key[kCCKeySizeAES128+1], iv[kCCKeySizeAES128+1];
+    char res[kCCKeySizeAES128*2+1];
+    NSString *s = [repoId stringByAppendingString:password];
+    [NSData generateKeyIv:s version:version key:key iv:iv];
+    [NSData rawdata:key ToHex:res size:kCCKeySizeAES128];
+    return [NSString stringWithUTF8String:res];
+}
 
 @end
 

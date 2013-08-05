@@ -670,7 +670,7 @@ enum {
             return NO;
         }
         [_curEntry setDelegate:self];
-        [_curEntry setRepoPassword:input];
+        [_curEntry checkRepoPassword:input];
         [_passSetView.inputTextField setEnabled:NO];
         return YES;
     } else if (alertView == _inputView) {

@@ -146,18 +146,9 @@
                  success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data))success
                  failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure
 {
-    NSString *password;
     if (_token)
         [request setValue:[NSString stringWithFormat:@"Token %@", _token] forHTTPHeaderField:@"Authorization"];
 
-    if (repoId) {
-        password = [Utils getRepoPassword:repoId];
-        if (password) {
-            [request setValue:password forHTTPHeaderField:@"password"];
-        }
-    }
-
-    Debug("requestUrl=%@, token=%@, password=%@\n", request.URL, _token, password);
     [request setTimeoutInterval:10.0f];
     SeafJSONRequestOperation *operation = [SeafJSONRequestOperation JSONRequestOperationWithRequest:request success:success  failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
         if (response.statusCode == HTTP_ERR_LOGIN_REUIRED && self.username && self.password) {

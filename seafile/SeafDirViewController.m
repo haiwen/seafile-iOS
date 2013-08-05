@@ -169,7 +169,7 @@
         return NO;
     }
     [_curDir setDelegate:self];
-    [_curDir setRepoPassword:input];
+    [_curDir checkRepoPassword:input];
     [_passSetView.inputTextField setEnabled:NO];
     return YES;
 }
