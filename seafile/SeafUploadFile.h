@@ -17,6 +17,7 @@
 
 @protocol SeafUploadDelegate <NSObject>
 - (void)uploadProgress:(SeafUploadFile *)file result:(BOOL)res completeness:(int)percent;
+- (void)uploadSucess:(SeafUploadFile *)file oid:(NSString *)oid;
 @end
 
 

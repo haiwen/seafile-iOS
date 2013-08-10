@@ -11,10 +11,12 @@
 #import "SeafConnection.h"
 #import "AFHTTPClient.h"
 #import "AFHTTPRequestOperation.h"
+#import "SeafRepos.h"
 
 #import "FileMimeType.h"
 #import "UIImage+FileType.h"
 #import "ExtentedString.h"
+#import "NSData+Encryption.h"
 #import "Debug.h"
 
 #import "SeafJSONRequestOperation.h"
@@ -79,103 +81,30 @@ static NSMutableDictionary *uploadFiles = nil;
     return NO;
 }
 
-- (void)uploadProgress:(SeafUploadFile *)file result:(BOOL)res completeness:(int)percent
+- (void)finishUpload:(BOOL)result
 {
-    if (!res || (res && percent == 100)) {
-        NSMutableDictionary *dict = file.uploadAttr;
-        if (!dict) {
-            dict = [[NSMutableDictionary alloc] init];
-            [dict setObject:file.name forKey:@"name"];
-        }
-        [dict setObject:[NSNumber numberWithDouble:[[NSDate date] timeIntervalSince1970]]forKey:@"utime"];
-        [dict setObject:[NSNumber numberWithBool:res] forKey:@"result"];
-        [file saveAttr:dict];
-    }
-
-    [_delegate uploadProgress:file result:res completeness:percent];
-}
-
-#if 0
-#pragma - NSURLConnectionDelegate
-- (void)connection:(NSURLConnection *)aConn didFailWithError:(NSError *)error
-{
-    Debug("error=%@",[error localizedDescription]);
-    _uploading = NO;
-    [self uploadProgress:self result:NO completeness:0];
-    [SeafAppDelegate decUploadnum];
-}
-
-- (void)connectionDidFinishLoading:(NSURLConnection *)aConn
-{
-    if (!_uploading)
-        return;
-    _uploading = NO;
-    Debug("Upload file %@ success\n", self.name);
-    [self uploadProgress:self result:YES completeness:100];
-    [SeafAppDelegate decUploadnum];
-}
-
-- (NSURLRequest *)connection:(NSURLConnection *)connection willSendRequest:(NSURLRequest *)request redirectResponse:(NSURLResponse *)redirectResponse
-{
-    [self uploadProgress:self result:YES completeness:0];
-    return request;
-}
-
-- (void)connection:(NSURLConnection *)connection didSendBodyData:(NSInteger)bytesWritten totalBytesWritten:(NSInteger)totalBytesWritten totalBytesExpectedToWrite:(NSInteger)totalBytesExpectedToWrite
-{
-    if (totalBytesWritten == totalBytesExpectedToWrite) {
+    @synchronized(self) {
+        if (!_uploading)
+            return;
         _uploading = NO;
-        [self uploadProgress:self result:YES completeness:100];
     }
-    int percent = totalBytesWritten * 100 / totalBytesExpectedToWrite;
-    if (percent >= 100)
-        percent = 99;
-    [self uploadProgress:self result:YES completeness:percent];
-}
-
-- (BOOL)connection:(NSURLConnection *)connection canAuthenticateAgainstProtectionSpace:(NSURLProtectionSpace *)protectionSpace
-{
-    return YES;
-}
-
-- (void)connection:(NSURLConnection *)connection didReceiveAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge
-{
-    [challenge.sender useCredential:[NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust] forAuthenticationChallenge:challenge];
-}
-
-- (void)uploadFile2:(NSString *)surl dir:(NSString *)dir
-{
-    NSMutableURLRequest *uploadRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:surl]];
-    [uploadRequest setHTTPMethod:@"POST"];
-
-    NSString *boundary = @"------WebKitFormBoundaryXaXmpsUEnSt1pbbp";
-    NSString *contentType = [NSString stringWithFormat:@"multipart/form-data; boundary=%@", boundary];
-    [uploadRequest setValue:contentType forHTTPHeaderField:@"Content-Type"];
-    [uploadRequest setValue:@"close" forHTTPHeaderField:@"Connection"];
-
-    NSMutableData *postbody = [[NSMutableData alloc] init];
-    [postbody appendData:[[NSString stringWithFormat:@"--%@\r\nContent-Disposition: form-data; name=\"csrfmiddlewaretoken\"\r\n\r\n8ba38951c9ba66418311a25195e2e380\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
-
-    [postbody appendData:[[NSString stringWithFormat:@"--%@\r\n",boundary] dataUsingEncoding:NSUTF8StringEncoding]];
-    [postbody appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"parent_dir\"\r\n\r\n%@\r\n", dir] dataUsingEncoding:NSUTF8StringEncoding]];
-    [postbody appendData:[[NSString stringWithFormat:@"--%@\r\n",boundary] dataUsingEncoding:NSUTF8StringEncoding]];
-    [postbody appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"file\"; filename=\"%@\"\r\n", self.name] dataUsingEncoding:NSUTF8StringEncoding]];
-    [postbody appendData:[@"Content-Type: application/octet-stream\r\n\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
-    [postbody appendData:[NSData dataWithContentsOfFile:self.lpath]];
-    [postbody appendData:[[NSString stringWithFormat:@"\r\n--%@--\r\n",boundary] dataUsingEncoding:NSUTF8StringEncoding]];
-
-    [uploadRequest setValue:[NSString stringWithFormat:@"%d", postbody.length] forHTTPHeaderField:@"Content-Length"];
-    [uploadRequest setHTTPBody:postbody];
-
-    NSURLConnection *uploadConncetion = [[NSURLConnection alloc] initWithRequest:uploadRequest delegate:self startImmediately:YES];
-    if (!uploadConncetion) {
-        _uploading = NO;
-        [self uploadProgress:self result:NO completeness:0];
+    NSMutableDictionary *dict = self.uploadAttr;
+    if (!dict) {
+        dict = [[NSMutableDictionary alloc] init];
+        [dict setObject:self.name forKey:@"name"];
     }
+    [dict setObject:[NSNumber numberWithDouble:[[NSDate date] timeIntervalSince1970]]forKey:@"utime"];
+    [dict setObject:[NSNumber numberWithBool:result] forKey:@"result"];
+    [self saveAttr:dict];
+    [SeafAppDelegate decUploadnum];
+    Debug("result=%d\n", result);
+    if (result)
+        [_delegate uploadProgress:self result:YES completeness:100];
+    else
+        [_delegate uploadProgress:self result:NO completeness:0];
 }
-#endif
 
-- (void)uploadFile:(NSString *)surl path:(NSString *)uploadpath update:(BOOL)update
+- (void)uploadByFile:(NSString *)surl path:(NSString *)uploadpath update:(BOOL)update
 {
     NSURL *url = [NSURL URLWithString:surl];
     AFHTTPClient *httpClient = [[AFHTTPClient alloc] initWithBaseURL:url];
@@ -196,24 +125,100 @@ static NSMutableDictionary *uploadFiles = nil;
             percent = totalBytesWritten * 100 / totalBytesExpectedToWrite;
         if (percent >= 100)
             percent = 99;
-        [self uploadProgress:self result:YES completeness:percent];
+        [_delegate uploadProgress:self result:YES completeness:percent];
     }];
     [operation setCompletionBlockWithSuccess:
      ^(AFHTTPRequestOperation *operation, id responseObject) {
-         Debug("Upload success _uploading=%d\n", _uploading);
-         if (!_uploading)
-             return;
-         _uploading = NO;
-         [SeafAppDelegate decUploadnum];
-         [self uploadProgress:self result:YES completeness:100];
+         NSString *oid = nil;
+         if ([responseObject isKindOfClass:[NSData class]]) {
+             oid = [[NSString alloc] initWithData:responseObject encoding:NSUTF8StringEncoding];
+             [[NSFileManager defaultManager] linkItemAtPath:self.lpath toPath:[Utils documentPath:oid] error:nil];
+         }
+         Debug("Upload success _uploading=%d, oid=%@\n", _uploading, oid);
+         [_delegate uploadSucess:self oid:oid];
+         [self finishUpload:YES];
      }
                                      failure:^(AFHTTPRequestOperation *operation, NSError *error) {
                                          Debug("Upload failed :%@,code=%d, res=%@, %@\n", error, operation.response.statusCode, operation.responseData, operation.responseString);
-                                         if (!_uploading)
-                                             return;
-                                         _uploading = NO;
-                                         [SeafAppDelegate decUploadnum];
-                                         [self uploadProgress:self result:NO completeness:0];
+                                         [self finishUpload:NO];
+                                     }];
+
+    [operation setAuthenticationAgainstProtectionSpaceBlock:^BOOL(NSURLConnection *connection, NSURLProtectionSpace *protectionSpace) {
+        return YES;
+    }];
+    [operation setAuthenticationChallengeBlock:^(NSURLConnection *connection, NSURLAuthenticationChallenge *challenge) {
+        [challenge.sender useCredential:[NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust] forAuthenticationChallenge:challenge];
+    }];
+    [operation start];
+}
+
+- (BOOL)chunkFile:(NSString *)path blockids:(NSMutableArray *)blockids paths:(NSMutableArray *)paths password:(NSString *)password version:(int)version
+{
+    BOOL ret = YES;
+    int CHUNK_LENGTH = 1024*1024;
+    NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath:path];
+    if (!fileHandle)
+        return NO;
+    while (YES) {
+        NSData *data = [fileHandle readDataOfLength:CHUNK_LENGTH];
+        if (!data || data.length == 0) break;
+        if (password)
+            data = [data encrypt:password version:version];
+        if (!data) {
+            ret = NO;
+            break;
+        }
+        NSString *blockid = [data SHA1];
+        NSString *blockpath = [Utils blockPath:blockid];
+        Debug("Chunk file blockid=%@, path=%@, len=%d\n", blockid, blockpath, data.length);
+        [blockids addObject:blockid];
+        [paths addObject:blockpath];
+        [data writeToFile:blockpath atomically:YES];
+    }
+    [fileHandle closeFile];
+    return ret;
+}
+
+- (void)uploadByBlocks:(NSString *)surl uploadpath:(NSString *)uploadpath blocks:(NSArray *)blockids paths:(NSArray *)paths update:(BOOL)update
+{
+    NSURL *url = [NSURL URLWithString:surl];
+    AFHTTPClient *httpClient = [[AFHTTPClient alloc] initWithBaseURL:url];
+    NSMutableURLRequest *request = [httpClient multipartFormRequestWithMethod:@"POST" path:nil parameters:nil constructingBodyWithBlock: ^(id <AFMultipartFormData>formData) {
+        if (update)
+            [formData appendPartWithFormData:[uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"target_file"];
+        else {
+            [formData appendPartWithFormData:[uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"parent_dir"];
+            [formData appendPartWithFormData:[self.name dataUsingEncoding:NSUTF8StringEncoding] name:@"file_name"];
+        }
+        [formData appendPartWithFormData:[[NSString stringWithFormat:@"%lld", [Utils fileSizeAtPath1:self.lpath]] dataUsingEncoding:NSUTF8StringEncoding] name:@"file_size"];
+        for (NSString *path in paths) {
+            [formData appendPartWithFileURL:[NSURL fileURLWithPath:path] name:@"file" error:nil];
+        }
+    }];
+    request.URL = url;
+    AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
+    [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
+        int percent = 99;
+        if (totalBytesExpectedToWrite > 0)
+            percent = totalBytesWritten * 100 / totalBytesExpectedToWrite;
+        if (percent >= 100)
+            percent = 99;
+        [_delegate uploadProgress:self result:YES completeness:percent];
+    }];
+    [operation setCompletionBlockWithSuccess:
+     ^(AFHTTPRequestOperation *operation, id responseObject) {
+         NSString *oid = nil;
+         if ([responseObject isKindOfClass:[NSData class]]) {
+             oid = [[NSString alloc] initWithData:responseObject encoding:NSUTF8StringEncoding];
+             [[NSFileManager defaultManager] linkItemAtPath:self.lpath toPath:[Utils documentPath:oid] error:nil];
+         }
+         Debug("Upload success _uploading=%d, oid=%@\n", _uploading, oid);
+         [self finishUpload:YES];
+         [_delegate uploadSucess:self oid:oid];
+     }
+                                     failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                                         Debug("Upload failed :%@,code=%d, res=%@, %@\n", error, operation.response.statusCode, operation.responseData, operation.responseString);
+                                         [self finishUpload:NO];
                                      }];
 
     [operation setAuthenticationAgainstProtectionSpaceBlock:^BOOL(NSURLConnection *connection, NSURLProtectionSpace *protectionSpace) {
@@ -233,25 +238,44 @@ static NSMutableDictionary *uploadFiles = nil;
         _uploading = YES;
         _uploadProgress = 0;
     }
-
-    [self uploadProgress:self result:YES completeness:_uploadProgress];
+    [_delegate uploadProgress:self result:YES completeness:0];
     [SeafAppDelegate incUploadnum];
     NSString *upload_url;
-    if (!update)
-        upload_url = [NSString stringWithFormat:API_URL"/repos/%@/upload-link/", repoId];
+    int byblock = NO;
+    SeafRepo *repo = [connection getRepo:repoId];
+    if (repo.encrypted)
+        byblock = YES;
     else
-        upload_url = [NSString stringWithFormat:API_URL"/repos/%@/update-link/", repoId];
+        byblock = NO;
+    if (!update)
+        upload_url = [NSString stringWithFormat:API_URL"/repos/%@/upload-", repoId];
+    else
+        upload_url = [NSString stringWithFormat:API_URL"/repos/%@/update-", repoId];
+    if (byblock)
+        upload_url = [upload_url stringByAppendingString:@"blks-link/"];
+    else
+        upload_url = [upload_url stringByAppendingString:@"link/"];
+
     [connection sendRequest:upload_url repo:repoId success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          NSString *url = JSON;
          Debug("Upload file %@ %@, %@ update=%d\n", self.name, url, uploadpath, update);
-         [self uploadFile:url path:uploadpath update:update];
+         if (byblock) {
+             NSMutableArray *blockids = [[NSMutableArray alloc] init];
+             NSMutableArray *paths = [[NSMutableArray alloc] init];
+             NSString *passwrod = [Utils getRepoPassword:repo.repoId];
+             if ([self chunkFile:self.lpath blockids:blockids paths:paths password:passwrod version:repo.encVersion]) {
+                 [self uploadByBlocks:url uploadpath:uploadpath blocks:blockids paths:paths update:update];
+             } else {
+                 [self finishUpload:NO];
+             }
+         } else {
+             [self uploadByFile:url path:uploadpath update:update];
+         }
      }
                     failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-         _uploading = NO;
-         [SeafAppDelegate decUploadnum];
-         [self uploadProgress:self result:NO completeness:0];
+         [self finishUpload:NO];
      }];
 }
 

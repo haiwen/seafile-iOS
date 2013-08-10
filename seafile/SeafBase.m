@@ -126,23 +126,6 @@
     [self realLoadContent];
 }
 
-- (void)setRepoPassword:(NSString *)password
-{
-    if (!self.repoId) {
-        [self.delegate repoPasswordSet:self WithResult:NO];
-        return;
-    }
-    NSString *request_str = [NSString stringWithFormat:API_URL"/repos/%@/?op=setpassword", self.repoId];
-    NSString *formString = [NSString stringWithFormat:@"password=%@", [password escapedPostForm]];
-    [connection sendPost:request_str repo:self.repoId form:formString
-                 success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
-                     [Utils setRepo:self.repoId password:password];
-                     [self.delegate repoPasswordSet:self WithResult:YES];
-                 } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-                     [self.delegate repoPasswordSet:self WithResult:NO];
-                 } ];
-}
-
 - (void)checkRepoPassword:(NSString *)password
 {
     if (!self.repoId) {

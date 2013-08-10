@@ -905,9 +905,11 @@ enum {
 
 - (void)redownloadFile:(SeafFile *)file
 {
-    [file deleteCache];
-    [self.detailViewController setPreViewItem:nil master:nil];
-    [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
+    Debug("....\n");
+    [file testupload];
+    //[file deleteCache];
+    //[self.detailViewController setPreViewItem:nil master:nil];
+    //[self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
 }
 
 #pragma mark - UIActionSheetDelegate
@@ -1057,8 +1059,14 @@ enum {
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
     if (res && percent < 100 && [cell isKindOfClass:[SeafUploadingFileCell class]])
         [((SeafUploadingFileCell *)cell).progressView setProgress:percent];
-    else
+    else {
         [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+    }
+}
+
+- (void)uploadSucess:(SeafUploadFile *)file oid:(NSString *)oid
+{
+    [self uploadProgress:file result:YES completeness:100];
 }
 
 - (id<QLPreviewItem, PreViewDelegate>)nextItem:(id<QLPreviewItem, PreViewDelegate>)cur next:(BOOL)next

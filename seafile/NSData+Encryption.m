@@ -16,13 +16,13 @@
 - (NSData *)AES128EncryptWithKey:(void *)key iv:(void *)iv option:(CCOptions)option
 {
     NSUInteger dataLength = [self length];
-    
+
     //See the doc: For block ciphers, the output size will always be less than or
     //equal to the input size plus the size of one block.
     //That's why we need to add the size of one block here
     size_t bufferSize = dataLength + kCCBlockSizeAES128;
     void *buffer = malloc(bufferSize);
-    
+
     size_t numBytesEncrypted = 0;
     CCCryptorStatus cryptStatus = CCCrypt(kCCEncrypt, kCCAlgorithmAES128, option,
                                           key, kCCKeySizeAES128,
@@ -34,7 +34,7 @@
         //the returned NSData takes ownership of the buffer and will free it on deallocation
         return [NSData dataWithBytesNoCopy:buffer length:numBytesEncrypted];
     }
-    
+
     free(buffer); //free the buffer;
     return nil;
 }
@@ -42,13 +42,13 @@
 - (NSData *)AES128DecryptWithKey:(void *)key iv:(void *)iv option:(CCOptions)option
 {
     NSUInteger dataLength = [self length];
-    
+
     //See the doc: For block ciphers, the output size will always be less than or
     //equal to the input size plus the size of one block.
     //That's why we need to add the size of one block here
     size_t bufferSize = dataLength + kCCBlockSizeAES128;
     void *buffer = malloc(bufferSize);
-    
+
     size_t numBytesDecrypted = 0;
     CCCryptorStatus cryptStatus = CCCrypt(kCCDecrypt, kCCAlgorithmAES128, option,
                                           key, kCCKeySizeAES128,
@@ -56,12 +56,12 @@
                                           [self bytes], dataLength, /* input */
                                           buffer, bufferSize, /* output */
                                           &numBytesDecrypted);
-    
+
     if (cryptStatus == kCCSuccess) {
         //the returned NSData takes ownership of the buffer and will free it on deallocation
         return [NSData dataWithBytesNoCopy:buffer length:numBytesDecrypted];
     }
-    
+
     free(buffer); //free the buffer;
     return nil;
 }
@@ -81,7 +81,7 @@
     bzero(iv, kCCKeySizeAES128);
     char passwordPtr[256]; // room for terminator (unused)
     bzero(passwordPtr, sizeof(passwordPtr)); // fill with zeroes (for padding)
-    
+
     // fetch key data
     [password getCString:passwordPtr maxLength:sizeof(passwordPtr) encoding:NSUTF8StringEncoding];
     int ret = CCKeyDerivationPBKDF(kCCPBKDF2, passwordPtr, password.length, salt, saltlen, kCCPRFHmacAlgSHA1, rounds, key, kCCKeySizeAES128);
@@ -124,7 +124,7 @@
     }
     char passwordPtr[256]; // room for terminator (unused)
     bzero(passwordPtr, sizeof(passwordPtr)); // fill with zeroes (for padding)
-    
+
     // fetch key data
     [password getCString:passwordPtr maxLength:sizeof(passwordPtr) encoding:NSUTF8StringEncoding];
     [NSData generateEncKey:passwordPtr inlen:password.length version:version key:key iv:iv];
@@ -151,7 +151,7 @@
 {
     static const char hex[] = "0123456789abcdef";
     int i;
-    
+
     for (i = 0; i < n_bytes; i++) {
         unsigned int val = *rawdata++;
         *hex_str++ = hex[val >> 4];
@@ -168,6 +168,16 @@
     [NSData generateKeyIv:s version:version key:key iv:iv];
     [NSData rawdata:key ToHex:res size:kCCKeySizeAES128];
     return [NSString stringWithUTF8String:res];
+}
+
+- (NSString *)SHA1
+{
+    unsigned char sha1[20];
+    char hex[41];
+    hex[40] = '\0';
+    CC_SHA1(self.bytes, self.length, sha1);
+    [NSData rawdata:sha1 ToHex:hex size:20];
+    return [NSString stringWithUTF8String:hex];
 }
 
 @end

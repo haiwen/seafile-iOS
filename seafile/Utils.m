@@ -250,4 +250,14 @@
     return false;
 }
 
++ (NSString *)documentPath:(NSString*)fileId
+{
+    return [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"] stringByAppendingPathComponent:fileId];
+}
+
++ (NSString *)blockPath:(NSString*)blkId
+{
+    return [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"] stringByAppendingPathComponent:blkId];
+}
+
 @end
