@@ -151,7 +151,7 @@
                              size:[[repoInfo objectForKey:@"size"] integerValue:0]
                              mtime:[[repoInfo objectForKey:@"mtime"] integerValue:0]
                              encrypted:[[repoInfo objectForKey:@"encrypted"] booleanValue:NO]
-                             encVersion:[[repoInfo objectForKey:@"encversion"] integerValue:0]
+                             encVersion:[[repoInfo objectForKey:@"enc_version"] integerValue:1]
                              ];
         newRepo.delegate = self.delegate;
         [newRepos addObject:newRepo];

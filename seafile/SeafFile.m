@@ -319,7 +319,7 @@
          } else {
              SeafRepo *repo = [connection getRepo:self.repoId];
              repo.encrypted = [[JSON objectForKey:@"encrypted"] booleanValue:repo.encrypted];
-             repo.encVersion = [[JSON objectForKey:@"encversion"] integerValue:repo.encVersion];
+             repo.encVersion = [[JSON objectForKey:@"enc_version"] integerValue:repo.encVersion];
              self.index = 0;
              Debug("blks=%@, encver=%d\n", self.blks, repo.encVersion);
              [self performSelector:@selector(downloadBlock:) withObject:url afterDelay:0.0];
