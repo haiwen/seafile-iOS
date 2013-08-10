@@ -88,6 +88,9 @@ enum {
     serverCell.detailTextLabel.text = [_connection.address trimUrl];
     long long cacheSize = [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
     cacheSize += [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"]];
+    cacheSize += [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"]];
+    cacheSize += [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"]];
+
     cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:cacheSize] useBaseTen:NO];
     Debug("%@, %lld, %lld, total cache=%lld", _connection.username, _connection.usage, _connection.quota, cacheSize);
     if (_connection.quota <= 0) {
@@ -229,11 +232,14 @@ enum {
         [Utils clearAllFiles:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
         [Utils clearAllFiles:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"]];
         [Utils clearAllFiles:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"]];
+        [Utils clearAllFiles:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"]];
         [Utils clearAllFiles:[Utils applicationTempDirectory]];
         [appdelegate deleteAllObjects:@"Directory"];
 
         long long cacheSize = [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
         cacheSize += [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"]];
+        cacheSize += [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"]];
+        cacheSize += [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"]];
         cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:cacheSize] useBaseTen:NO];
     }
 }

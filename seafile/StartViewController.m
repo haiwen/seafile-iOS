@@ -113,8 +113,10 @@
     [bt addTarget:self action:@selector(goToDefaultBtclicked:) forControlEvents:UIControlEventTouchUpInside];
     [bt.layer setBorderColor:[[UIColor colorWithRed:224/255.0 green:224/255.0 blue:224/255.0 alpha:1.0] CGColor]];
     bt.layer.cornerRadius = 0;
+    [bt.layer setBorderColor:[[UIColor lightTextColor] CGColor]];
     [bt setHighColor:[UIColor colorWithRed:244/255.0 green:244/255.0 blue:244/255.0 alpha:1.0] lowColor:[UIColor colorWithRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1.0]];
     [bt setTitleColor:[UIColor colorWithRed:112/255.0 green:112/255.0 blue:112/255.0 alpha:1.0] forState:UIControlStateNormal];
+
     self.footer = bt;
     [self.view addSubview:self.footer];
     self.footer.hidden = YES;

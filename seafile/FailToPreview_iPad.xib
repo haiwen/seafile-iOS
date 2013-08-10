@@ -2,9 +2,9 @@
 <archive type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="8.00">
 	<data>
 		<int key="IBDocument.SystemTarget">1552</int>
-		<string key="IBDocument.SystemVersion">12D78</string>
+		<string key="IBDocument.SystemVersion">12E55</string>
 		<string key="IBDocument.InterfaceBuilderVersion">3084</string>
-		<string key="IBDocument.AppKitVersion">1187.37</string>
+		<string key="IBDocument.AppKitVersion">1187.39</string>
 		<string key="IBDocument.HIToolboxVersion">626.00</string>
 		<object class="NSMutableDictionary" key="IBDocument.PluginVersions">
 			<string key="NS.key.0">com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
@@ -46,7 +46,6 @@
 								<int key="NSvFlags">292</int>
 								<string key="NSFrame">{{244, 51}, {150, 150}}</string>
 								<reference key="NSSuperview" ref="351324396"/>
-								<reference key="NSWindow"/>
 								<reference key="NSNextKeyView" ref="881527877"/>
 								<string key="NSReuseIdentifierKey">_NS:9</string>
 								<bool key="IBUIUserInteractionEnabled">NO</bool>
@@ -57,7 +56,6 @@
 								<int key="NSvFlags">292</int>
 								<string key="NSFrame">{{110, 217}, {417, 25}}</string>
 								<reference key="NSSuperview" ref="351324396"/>
-								<reference key="NSWindow"/>
 								<reference key="NSNextKeyView" ref="13771449"/>
 								<string key="NSReuseIdentifierKey">_NS:9</string>
 								<bool key="IBUIOpaque">NO</bool>
@@ -90,7 +88,6 @@
 								<int key="NSvFlags">292</int>
 								<string key="NSFrame">{{69, 298}, {500, 21}}</string>
 								<reference key="NSSuperview" ref="351324396"/>
-								<reference key="NSWindow"/>
 								<reference key="NSNextKeyView" ref="130402970"/>
 								<string key="NSReuseIdentifierKey">_NS:9</string>
 								<bool key="IBUIOpaque">NO</bool>
@@ -117,7 +114,7 @@
 								<int key="NSvFlags">292</int>
 								<string key="NSFrame">{{212, 361}, {227, 37}}</string>
 								<reference key="NSSuperview" ref="351324396"/>
-								<reference key="NSWindow"/>
+								<reference key="NSNextKeyView"/>
 								<string key="NSReuseIdentifierKey">_NS:9</string>
 								<bool key="IBUIOpaque">NO</bool>
 								<string key="targetRuntimeIdentifier">IBIPadFramework</string>
@@ -146,7 +143,6 @@
 						</array>
 						<string key="NSFrame">{{65, 257}, {638, 491}}</string>
 						<reference key="NSSuperview" ref="191373211"/>
-						<reference key="NSWindow"/>
 						<reference key="NSNextKeyView" ref="277167387"/>
 						<string key="NSReuseIdentifierKey">_NS:9</string>
 						<object class="NSColor" key="IBUIBackgroundColor">
@@ -161,7 +157,6 @@
 				</array>
 				<string key="NSFrame">{{0, 20}, {768, 1004}}</string>
 				<reference key="NSSuperview"/>
-				<reference key="NSWindow"/>
 				<reference key="NSNextKeyView" ref="351324396"/>
 				<object class="NSColor" key="IBUIBackgroundColor">
 					<int key="NSColorSpace">3</int>
@@ -274,7 +269,7 @@
 				<string key="5.CustomClassName">ColorfulButton</string>
 				<string key="5.IBPluginDependency">com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
 				<real value="0.0" key="5.IBUIButtonInspectorSelectedEdgeInsetMetadataKey"/>
-				<real value="2" key="5.IBUIButtonInspectorSelectedStateConfigurationMetadataKey"/>
+				<real value="1" key="5.IBUIButtonInspectorSelectedStateConfigurationMetadataKey"/>
 				<string key="7.IBPluginDependency">com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
 			</dictionary>
 			<dictionary class="NSMutableDictionary" key="unlocalizedProperties"/>
@@ -283,51 +278,7 @@
 			<nil key="sourceID"/>
 			<int key="maxID">16</int>
 		</object>
-		<object class="IBClassDescriber" key="IBDocument.Classes">
-			<array class="NSMutableArray" key="referencedPartialClassDescriptions">
-				<object class="IBPartialClassDescription">
-					<string key="className">ColorfulButton</string>
-					<string key="superclassName">UIButton</string>
-					<object class="IBClassDescriptionSource" key="sourceIdentifier">
-						<string key="majorKey">IBProjectSource</string>
-						<string key="minorKey">./Classes/ColorfulButton.h</string>
-					</object>
-				</object>
-				<object class="IBPartialClassDescription">
-					<string key="className">FailToPreview</string>
-					<string key="superclassName">UIView</string>
-					<object class="NSMutableDictionary" key="actions">
-						<string key="NS.key.0">openElsewhere:</string>
-						<string key="NS.object.0">id</string>
-					</object>
-					<object class="NSMutableDictionary" key="actionInfosByName">
-						<string key="NS.key.0">openElsewhere:</string>
-						<object class="IBActionInfo" key="NS.object.0">
-							<string key="name">openElsewhere:</string>
-							<string key="candidateClassName">id</string>
-						</object>
-					</object>
-					<dictionary class="NSMutableDictionary" key="outlets">
-						<string key="imageView">UIImageView</string>
-						<string key="nameLabel">UILabel</string>
-					</dictionary>
-					<dictionary class="NSMutableDictionary" key="toOneOutletInfosByName">
-						<object class="IBToOneOutletInfo" key="imageView">
-							<string key="name">imageView</string>
-							<string key="candidateClassName">UIImageView</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="nameLabel">
-							<string key="name">nameLabel</string>
-							<string key="candidateClassName">UILabel</string>
-						</object>
-					</dictionary>
-					<object class="IBClassDescriptionSource" key="sourceIdentifier">
-						<string key="majorKey">IBProjectSource</string>
-						<string key="minorKey">./Classes/FailToPreview.h</string>
-					</object>
-				</object>
-			</array>
-		</object>
+		<object class="IBClassDescriber" key="IBDocument.Classes"/>
 		<int key="IBDocument.localizationMode">0</int>
 		<string key="IBDocument.TargetRuntimeIdentifier">IBIPadFramework</string>
 		<object class="NSMutableDictionary" key="IBDocument.PluginDeclaredDependencyDefaults">

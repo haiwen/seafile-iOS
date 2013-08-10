@@ -335,7 +335,7 @@
 - (void)realLoadContent
 {
     SeafRepo *repo = [connection getRepo:self.repoId];
-    if (repo.encrypted)
+    if (!repo.encrypted)
         [self downloadByFile];
     else
         [self downloadByBlocks];
@@ -376,7 +376,6 @@
     if (!self.oid)
         self.oid = dfile.oid;
     NSString *did = self.oid;
-    //if (dfile)         did = dfile.oid;
 
     if (dfile && dfile.mpath && [[NSFileManager defaultManager] fileExistsAtPath:dfile.mpath]) {
         self.mpath = dfile.mpath;
