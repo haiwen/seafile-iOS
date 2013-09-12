@@ -42,7 +42,7 @@
 				<int key="IBUIContentHorizontalAlignment">0</int>
 				<int key="IBUIContentVerticalAlignment">0</int>
 				<int key="IBUIButtonType">1</int>
-				<string key="IBUINormalTitle">Back to the last account</string>
+				<string key="IBUINormalTitle">Back to Last Account</string>
 				<object class="NSColor" key="IBUIHighlightedTitleColor" id="480453772">
 					<int key="NSColorSpace">3</int>
 					<bytes key="NSWhite">MC42NjY2NjY2NjY3AA</bytes>

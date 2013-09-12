@@ -111,8 +111,8 @@
             SeafBase *obj = (SeafBase*)[_starredFiles objectAtIndex:i];
             [dict setObject:obj forKey:[obj key]];
         }
-        for (i = 0; i < [_starredFiles count]; ++i) {
-            SeafStarredFile *obj = (SeafStarredFile*)[_starredFiles objectAtIndex:i];
+        for (i = 0; i < [stars count]; ++i) {
+            SeafStarredFile *obj = (SeafStarredFile*)[stars objectAtIndex:i];
             SeafStarredFile *oldObj = [dict objectForKey:[obj key]];
             if (oldObj) {
                 [oldObj updateWithEntry:obj];
@@ -207,7 +207,7 @@
 {
     SeafStarredFile *sfile = [_starredFiles objectAtIndex:indexPath.row];
     sfile.delegate = self;
-    [sfile loadContent:NO];
+    [sfile loadContent:YES];
     if (!IsIpad()) {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         [appdelegate showDetailView:self.detailViewController];
@@ -218,7 +218,10 @@
 #pragma mark - SeafDentryDelegate
 - (void)entryChanged:(SeafBase *)entry
 {
+    if ([entry isKindOfClass:[SeafStarredFile class]] && entry == self.detailViewController.preViewItem)
+        [self.detailViewController entryChanged:entry];
 }
+
 - (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent
 {
     [self.detailViewController entry:entry contentUpdated:updated completeness:percent];
