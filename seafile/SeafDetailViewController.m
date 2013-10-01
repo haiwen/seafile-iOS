@@ -226,6 +226,8 @@ enum PREVIEW_STATE {
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    if([self respondsToSelector:@selector(edgesForExtendedLayout)])
+        self.edgesForExtendedLayout = UIRectEdgeNone;
     // Do any additional setup after loading the view, typically from a nib.
     if (!IsIpad()) {
         UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Back" style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];

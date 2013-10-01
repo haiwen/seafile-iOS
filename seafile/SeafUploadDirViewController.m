@@ -83,7 +83,8 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-
+    if([self respondsToSelector:@selector(edgesForExtendedLayout)])
+        self.edgesForExtendedLayout = UIRectEdgeNone;
     // Uncomment the following line to preserve selection between presentations.
     self.saveItem = [[UIBarButtonItem alloc] initWithTitle:@"Save" style:UIBarButtonItemStyleBordered target:self action:@selector(save:)];
     self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStyleBordered target:self action:@selector(cancel:)];

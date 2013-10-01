@@ -114,7 +114,6 @@
 		571D8CC11677881400F1A22C /* FileViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 576B9EB315DD2D4E00802D07 /* FileViewController.m */; };
 		571D8CC21677881400F1A22C /* FileSizeFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 57F53B0515DF49EF0027140D /* FileSizeFormatter.m */; };
 		571D8CC31677881400F1A22C /* EGORefreshTableHeaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = 576D89E315E39ED700F2BD17 /* EGORefreshTableHeaderView.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
-		571D8CC41677881400F1A22C /* InputAlertPrompt.m in Sources */ = {isa = PBXBuildFile; fileRef = 57713AA215E53A5E00651A9C /* InputAlertPrompt.m */; };
 		571D8CC61677881400F1A22C /* SeafDateFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 575753EA15EE7AE30049D720 /* SeafDateFormatter.m */; };
 		571D8CC71677881400F1A22C /* ExtentedString.m in Sources */ = {isa = PBXBuildFile; fileRef = 5760144A15FA193900FBDDEF /* ExtentedString.m */; };
 		571D8CC81677881400F1A22C /* Reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 57335CF1160D9D2500018AE8 /* Reachability.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
@@ -583,7 +582,6 @@
 		576D89F515E39ED700F2BD17 /* whiteArrow@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D89EC15E39ED700F2BD17 /* whiteArrow@2x.png */; };
 		576EE11C162F078400327EB9 /* FileMimeType.m in Sources */ = {isa = PBXBuildFile; fileRef = 576EE11B162F078400327EB9 /* FileMimeType.m */; };
 		576EE11F162F0A2900327EB9 /* FileMimeType.plist in Resources */ = {isa = PBXBuildFile; fileRef = 576EE11E162F0A2900327EB9 /* FileMimeType.plist */; };
-		57713AA315E53A5E00651A9C /* InputAlertPrompt.m in Sources */ = {isa = PBXBuildFile; fileRef = 57713AA215E53A5E00651A9C /* InputAlertPrompt.m */; };
 		5775EA0717474DB3000A1765 /* bt-pound.png in Resources */ = {isa = PBXBuildFile; fileRef = 5775EA0517474DB3000A1765 /* bt-pound.png */; };
 		5775EA0817474DB3000A1765 /* bt-pound.png in Resources */ = {isa = PBXBuildFile; fileRef = 5775EA0517474DB3000A1765 /* bt-pound.png */; };
 		5775EA0917474DB3000A1765 /* bt-asterisk.png in Resources */ = {isa = PBXBuildFile; fileRef = 5775EA0617474DB3000A1765 /* bt-asterisk.png */; };
@@ -1104,8 +1102,6 @@
 		576EE11A162F078400327EB9 /* FileMimeType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FileMimeType.h; sourceTree = "<group>"; };
 		576EE11B162F078400327EB9 /* FileMimeType.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FileMimeType.m; sourceTree = "<group>"; };
 		576EE11E162F0A2900327EB9 /* FileMimeType.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = FileMimeType.plist; sourceTree = "<group>"; };
-		57713A9F15E5351900651A9C /* InputAlertPrompt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InputAlertPrompt.h; sourceTree = "<group>"; };
-		57713AA215E53A5E00651A9C /* InputAlertPrompt.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = InputAlertPrompt.m; sourceTree = "<group>"; };
 		5775EA0517474DB3000A1765 /* bt-pound.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-pound.png"; path = "htmls/bt-pound.png"; sourceTree = SOURCE_ROOT; };
 		5775EA0617474DB3000A1765 /* bt-asterisk.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-asterisk.png"; path = "htmls/bt-asterisk.png"; sourceTree = SOURCE_ROOT; };
 		5775EA0B17475E86000A1765 /* bt-equal.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-equal.png"; path = "htmls/bt-equal.png"; sourceTree = SOURCE_ROOT; };
@@ -1391,8 +1387,6 @@
 				57655331161BEA40005E5327 /* FailToPreview.m */,
 				576B9EB215DD2D4E00802D07 /* FileViewController.h */,
 				576B9EB315DD2D4E00802D07 /* FileViewController.m */,
-				57713A9F15E5351900651A9C /* InputAlertPrompt.h */,
-				57713AA215E53A5E00651A9C /* InputAlertPrompt.m */,
 				5795F49816A7266E00FF90E3 /* SeafAccountCell.h */,
 				5795F49916A7266E00FF90E3 /* SeafAccountCell.m */,
 				570DFAC316A15D0100ADD5F2 /* SeafAccountViewController.h */,
@@ -2625,7 +2619,6 @@
 				571D8CC11677881400F1A22C /* FileViewController.m in Sources */,
 				571D8CC21677881400F1A22C /* FileSizeFormatter.m in Sources */,
 				571D8CC31677881400F1A22C /* EGORefreshTableHeaderView.m in Sources */,
-				571D8CC41677881400F1A22C /* InputAlertPrompt.m in Sources */,
 				571D8CC61677881400F1A22C /* SeafDateFormatter.m in Sources */,
 				571D8CC71677881400F1A22C /* ExtentedString.m in Sources */,
 				571D8CC81677881400F1A22C /* Reachability.m in Sources */,
@@ -2706,7 +2699,6 @@
 				576B9EB515DD2D4E00802D07 /* FileViewController.m in Sources */,
 				57F53B0615DF49EF0027140D /* FileSizeFormatter.m in Sources */,
 				576D89ED15E39ED700F2BD17 /* EGORefreshTableHeaderView.m in Sources */,
-				57713AA315E53A5E00651A9C /* InputAlertPrompt.m in Sources */,
 				575753EB15EE7AE30049D720 /* SeafDateFormatter.m in Sources */,
 				5760144B15FA193900FBDDEF /* ExtentedString.m in Sources */,
 				57335CF2160D9D2500018AE8 /* Reachability.m in Sources */,

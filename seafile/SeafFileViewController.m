@@ -142,6 +142,8 @@ enum {
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    if([self respondsToSelector:@selector(edgesForExtendedLayout)])
+        self.edgesForExtendedLayout = UIRectEdgeNone;
     self.formatter = [[NSDateFormatter alloc] init];
     [self.formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
     self.tableView.rowHeight = 50;

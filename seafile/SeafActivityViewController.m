@@ -44,6 +44,8 @@ enum {
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    if([self respondsToSelector:@selector(edgesForExtendedLayout)])
+        self.edgesForExtendedLayout = UIRectEdgeNone;
     // Do any additional setup after loading the view from its nib.
     self.title = @"Activities";
     self.navigationItem.rightBarButtonItem = [self getBarItemAutoSize:@"refresh.png" action:@selector(refresh:)];

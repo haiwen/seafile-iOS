@@ -150,7 +150,8 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    // Do any additional setup after loading the view, typically from a nib.
+    if([self respondsToSelector:@selector(edgesForExtendedLayout)])
+        self.edgesForExtendedLayout = UIRectEdgeNone;
     self.title = @"Discussions";
     if (!IsIpad() && !self.isReply) {
         UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Back" style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];

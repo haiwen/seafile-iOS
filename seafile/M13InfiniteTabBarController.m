@@ -58,7 +58,7 @@
     _infiniteTabBar.tabBarDelegate = self;
 
     //Create mask for tab bar
-    _maskView = [[UIView alloc] initWithFrame:CGRectMake(0, [[UIScreen mainScreen] applicationFrame].size.height - 60.0, [[UIScreen mainScreen] applicationFrame].size.width, 60.0)];
+    _maskView = [[UIView alloc] initWithFrame:CGRectMake(0, self.view.frame.size.height - 60.0, self.view.frame.size.width, 60.0)];
     //Add shadow gradient to mask layer
     CAGradientLayer *gradient = [CAGradientLayer layer];
     gradient.frame = CGRectMake(0, 0, _infiniteTabBar.frame.size.width, 20);

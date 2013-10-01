@@ -60,6 +60,8 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    if([self respondsToSelector:@selector(edgesForExtendedLayout)])
+        self.edgesForExtendedLayout = UIRectEdgeNone;
     if ([self.directory isKindOfClass:[SeafRepos class]]) {
         [self.navigationItem setHidesBackButton:YES];
     } else

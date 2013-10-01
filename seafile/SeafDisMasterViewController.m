@@ -42,6 +42,8 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    if([self respondsToSelector:@selector(edgesForExtendedLayout)])
+        self.edgesForExtendedLayout = UIRectEdgeNone;
     // Do any additional setup after loading the view, typically from a nib.
     self.newReplyNum = 0;
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];

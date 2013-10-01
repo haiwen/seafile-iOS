@@ -364,6 +364,8 @@
 
         M13InfiniteTabBarController *viewController = [[M13InfiniteTabBarController alloc] initWithViewControllers:vcs pairedWithInfiniteTabBarItems:items];
         viewController.delegate = self;
+        if([viewController respondsToSelector:@selector(edgesForExtendedLayout)])
+            viewController.edgesForExtendedLayout = UIRectEdgeNone;
         _tabbarController = viewController;
     }
 }
