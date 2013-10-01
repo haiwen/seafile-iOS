@@ -334,9 +334,9 @@ enum {
     if ([directory isKindOfClass:[SeafRepos class]]) {
     } else {
         if (directory.editable) {
-            self.photoItem = [self getBarItem:@"plus.png" action:@selector(addPhotos:)size:20];
+            self.photoItem = [self getBarItem:@"plus".navItemImgName action:@selector(addPhotos:)size:20];
             self.doneItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(editDone:)];
-            self.editItem = [self getBarItemAutoSize:@"checkmask.png" action:@selector(editStart:)];
+            self.editItem = [self getBarItemAutoSize:@"checkmask".navItemImgName action:@selector(editStart:)];
             UIBarButtonItem *space = [self getSpaceBarItem:16.0];
             self.rightItems = [NSArray arrayWithObjects: self.editItem, space, self.photoItem, nil];
             self.navigationItem.rightBarButtonItems = self.rightItems;

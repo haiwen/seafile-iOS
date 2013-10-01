@@ -95,7 +95,7 @@
 
 - (UIImage *)image;
 {
-    return [UIImage imageForMimeType:self.mime];
+    return [UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString];
 }
 
 - (BOOL)loadCache

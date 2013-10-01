@@ -11,9 +11,9 @@
 
 @implementation UIImage (FileType)
 
-+ (UIImage *)imageForMimeType:(NSString *)mimeType
++ (UIImage *)imageForMimeType:(NSString *)mimeType ext:(NSString *)ext
 {
-    return [SKFileTypeImageLoader imageForMimeType:mimeType];
+    return [SKFileTypeImageLoader imageForMimeType:mimeType ext:ext];
 };
 
 @end

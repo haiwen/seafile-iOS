@@ -10,6 +10,7 @@
 #import "SeafAppDelegate.h"
 #import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
+#import "ExtentedString.h"
 #import "Debug.h"
 
 enum {
@@ -48,7 +49,7 @@ enum {
         self.edgesForExtendedLayout = UIRectEdgeNone;
     // Do any additional setup after loading the view from its nib.
     self.title = @"Activities";
-    self.navigationItem.rightBarButtonItem = [self getBarItemAutoSize:@"refresh.png" action:@selector(refresh:)];
+    self.navigationItem.rightBarButtonItem = [self getBarItemAutoSize:@"refresh".navItemImgName action:@selector(refresh:)];
     self.webview.delegate = nil;
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 }

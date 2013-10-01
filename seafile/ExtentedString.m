@@ -76,4 +76,13 @@
     NSRange foundRange = [self rangeOfCharacterFromSet:[NSCharacterSet characterSetWithRange:searchRange]];
     return foundRange.location;
 }
+
+- (NSString *)navItemImgName
+{
+    if (NSFoundationVersionNumber > NSFoundationVersionNumber_iOS_6_1)
+        return [self stringByAppendingString:@"2.png"];
+    else
+        return [self stringByAppendingString:@".png"];
+    
+}
 @end

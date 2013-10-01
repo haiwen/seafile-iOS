@@ -52,29 +52,27 @@ static SKFileTypeImageLoader *sharedLoader = nil;
     }
 }
 
-- (UIImage *)imageForMimeType:(NSString *)mimeType
+
+- (UIImage *)imageForMimeType:(NSString *)mimeType ext:(NSString *)ext
 {
-    int size = 80;
-    if (!mimeType) {
-        return [self loadImageWithName:@"unknown-file"];
+    if (ext && ext.length > 0) {
+        UIImage *img = [self loadImageWithName:ext];
+        if (img)
+            return img;
     }
+    if (!mimeType)
+        return [self loadImageWithName:@"unknown-file"];
 
     NSString *basename = [mimeType stringByReplacingOccurrencesOfString:@"/" withString:@"-"];
     UIImage * image = [self loadImageWithName:basename];
     if (image)
         return image;
-
-    NSString *imageName = [self constructFilenameWithBasename:basename size:80];
-    image = [self loadImageWithName:imageName];
-    if (image == nil) {
-        if ((basename=[[_config objectForKey:@"Synonyms"] objectForKey:basename])) {
-            imageName = [self constructFilenameWithBasename:basename size:size];
-            image = [self loadImageWithName:imageName];
-        } else {
-            basename = [mimeType.pathComponents objectAtIndex:0];
-            if (![mimeType isEqualToString:basename])
-                return [self imageForMimeType:basename];
-        }
+    if ((basename=[[_config objectForKey:@"Synonyms"] objectForKey:basename])) {
+        image = [self loadImageWithName:basename];
+    } else {
+        basename = [mimeType.pathComponents objectAtIndex:0];
+        if (![mimeType isEqualToString:basename])
+            return [self imageForMimeType:basename ext:nil];
     }
     if (!image)
         return [self loadImageWithName:@"unknown-file"];
@@ -91,7 +89,11 @@ static SKFileTypeImageLoader *sharedLoader = nil;
 
 + (UIImage *)imageForMimeType:(NSString *)mimeType
 {
-    return [[self sharedLoader] imageForMimeType:mimeType];
+    return [[self sharedLoader] imageForMimeType:mimeType ext:nil];
+}
++ (UIImage *)imageForMimeType:(NSString *)mimeType ext:(NSString *)ext
+{
+    return [[self sharedLoader] imageForMimeType:mimeType ext:ext];
 }
 
 @end

@@ -236,12 +236,12 @@ enum PREVIEW_STATE {
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
 
-    self.editItem = [self getBarItem:@"editfile.png" action:@selector(editFile:)size:18];
-    self.exportItem = [self getBarItemAutoSize:@"export.png" action:@selector(export:)];
-    self.shareItem = [self getBarItemAutoSize:@"share.png" action:@selector(share:)];
-    self.commentItem = [self getBarItem:@"addmsg.png" action:@selector(comment:) size:20];
-    UIBarButtonItem *item3 = [self getBarItem:@"star.png" action:@selector(unstarFile:)size:24];
-    UIBarButtonItem *item4 = [self getBarItem:@"unstar.png" action:@selector(starFile:)size:24];
+    self.editItem = [self getBarItem:@"editfile".navItemImgName action:@selector(editFile:)size:18];
+    self.exportItem = [self getBarItemAutoSize:@"export".navItemImgName action:@selector(export:)];
+    self.shareItem = [self getBarItemAutoSize:@"share".navItemImgName action:@selector(share:)];
+    self.commentItem = [self getBarItem:@"addmsg".navItemImgName action:@selector(comment:) size:20];
+    UIBarButtonItem *item3 = [self getBarItem:@"star".navItemImgName action:@selector(unstarFile:)size:24];
+    UIBarButtonItem *item4 = [self getBarItem:@"unstar".navItemImgName action:@selector(starFile:)size:24];
     float spacewidth = 20.0;
     if (!IsIpad())
         spacewidth = 10.0;
@@ -382,14 +382,14 @@ enum PREVIEW_STATE {
 - (UIBarButtonItem *)fullscreenItem
 {
     if (!_fullscreenItem)
-        _fullscreenItem = [self getBarItem:@"arrowleft.png" action:@selector(fullscreen:) size:22];
+        _fullscreenItem = [self getBarItem:@"arrowleft".navItemImgName action:@selector(fullscreen:) size:22];
     return _fullscreenItem;
 }
 
 - (UIBarButtonItem *)exitfsItem
 {
     if (!_exitfsItem)
-        _exitfsItem = [self getBarItem:@"arrowright.png" action:@selector(exitfullscreen:) size:22];
+        _exitfsItem = [self getBarItem:@"arrowright".navItemImgName action:@selector(exitfullscreen:) size:22];
     return _exitfsItem;
 }
 

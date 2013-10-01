@@ -10,6 +10,6 @@
 
 @interface UIImage (FileType)
 
-+ (UIImage *)imageForMimeType:(NSString *)mimeType;
++ (UIImage *)imageForMimeType:(NSString *)mimeType ext:(NSString *)ext;
 
 @end

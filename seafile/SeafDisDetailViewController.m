@@ -158,8 +158,8 @@
         [self.navigationItem setLeftBarButtonItem:barButtonItem animated:YES];
     }
 
-    self.refreshItem = [self getBarItemAutoSize:@"refresh.png" action:@selector(refresh:)];
-    self.msgItem = [self getBarItemAutoSize:@"addmsg.png" action:@selector(compose:)];
+    self.refreshItem = [self getBarItemAutoSize:@"refresh".navItemImgName action:@selector(refresh:)];
+    self.msgItem = [self getBarItemAutoSize:@"addmsg".navItemImgName action:@selector(compose:)];
     UIBarButtonItem *space = [self getSpaceBarItem:16.0];
     self.navigationItem.rightBarButtonItems = [NSArray arrayWithObjects:self.refreshItem, space, self.msgItem, nil];
     [self.msgItem setEnabled:NO];
