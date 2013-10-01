@@ -29,13 +29,13 @@
                   repoId:(NSString *)aRepoId
                     name:(NSString *)aName
                     path:(NSString *)aPath
-                   mtime:(int)mtime
+                   mtime:(long long)mtime
                     size:(unsigned long long)size;
 
 @property (strong) NSString *mpath;// For modified files
 @property (readonly) NSString *detailText;
-@property (readwrite) int filesize;
-@property (readwrite) int mtime;
+@property (readwrite) long long filesize;
+@property (readwrite) long long mtime;
 @property (readonly, copy) NSString *shareLink;
 @property (readonly) NSMutableArray *groups;
 

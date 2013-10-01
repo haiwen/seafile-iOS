@@ -363,7 +363,7 @@
     return _uploadItems;
 }
 
-- (void)addUploadFiles:(NSMutableArray *)uploadItems
+- (void)addUploadFiles:(NSArray *)uploadItems
 {
     for (SeafUploadFile *file in uploadItems) {
         NSMutableDictionary *dict = file.uploadAttr;

@@ -17,7 +17,7 @@
 @property (readwrite) BOOL encrypted;
 @property (readwrite) int encVersion;
 @property (readonly) unsigned long long size;
-@property (readonly) int mtime;
+@property (readonly) long long mtime;
 @property (readonly) NSString *gid;
 @end
 

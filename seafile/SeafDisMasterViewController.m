@@ -177,9 +177,9 @@
     creator = [creator substringToIndex:[creator indexOf:'@']];
     cell.detailTextLabel.text = [NSString stringWithFormat:@"%@ created at %@", creator, [SeafDateFormatter stringFromInt:ctime]];
 #else
-    int mtime = [[dict objectForKey:@"mtime"] integerValue:0];
+    long long mtime = [[dict objectForKey:@"mtime"] integerValue:0];
     if (mtime)
-        cell.detailTextLabel.text = [NSString stringWithFormat:@"Last dicsussion at %@",  [SeafDateFormatter stringFromInt:mtime]];
+        cell.detailTextLabel.text = [NSString stringWithFormat:@"Last dicsussion at %@",  [SeafDateFormatter stringFromLongLong:mtime]];
     else
         cell.detailTextLabel.text = nil;
 #endif

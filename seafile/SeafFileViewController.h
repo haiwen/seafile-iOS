@@ -28,12 +28,11 @@ enum {
 #import <CoreData/CoreData.h>
 
 #import "EGORefreshTableHeaderView.h"
-#import "InputAlertPrompt.h"
 #import "SeafDir.h"
 #import "SeafFile.h"
 
 
-@interface SeafFileViewController : UITableViewController <UIAlertViewDelegate, UIActionSheetDelegate, SeafDentryDelegate, InputDoneDelegate, SeafFileUpdateDelegate> {
+@interface SeafFileViewController : UITableViewController <UIAlertViewDelegate, UIActionSheetDelegate, SeafDentryDelegate, SeafFileUpdateDelegate> {
 }
 
 @property (strong, nonatomic) SeafConnection *connection;

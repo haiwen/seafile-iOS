@@ -45,7 +45,7 @@
                   repoId:(NSString *)aRepoId
                     name:(NSString *)aName
                     path:(NSString *)aPath
-                   mtime:(int)mtime
+                   mtime:(long long)mtime
                     size:(unsigned long long)size;
 {
     if (self = [super initWithConnection:aConnection oid:anId repoId:aRepoId name:aName path:aPath mime:[FileMimeType mimeType:aName]]) {
@@ -81,13 +81,13 @@
 {
     if (self.mpath) {
         if (self.ufile.uploading)
-            return [NSString stringWithFormat:@"%@, uploading", [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:self.filesize ] useBaseTen:NO]];
+            return [NSString stringWithFormat:@"%@, uploading", [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:self.filesize ] useBaseTen:NO]];
         else
-            return [NSString stringWithFormat:@"%@, modified", [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:self.filesize ] useBaseTen:NO]];
+            return [NSString stringWithFormat:@"%@, modified", [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:self.filesize ] useBaseTen:NO]];
     } else if (!self.mtime)
-        return [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:self.filesize ] useBaseTen:NO];
+        return [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:self.filesize ] useBaseTen:NO];
     else
-        return [NSString stringWithFormat:@"%@, %@", [FileSizeFormatter stringFromNumber:[NSNumber numberWithUnsignedLongLong:self.filesize ] useBaseTen:NO], [SeafDateFormatter stringFromInt:self.mtime]];
+        return [NSString stringWithFormat:@"%@, %@", [FileSizeFormatter stringFromNumber:[NSNumber numberWithUnsignedLongLong:self.filesize ] useBaseTen:NO], [SeafDateFormatter stringFromLongLong:self.mtime]];
 }
 
 - (NSString *)downloadTempPath:(NSString *)objId
@@ -187,7 +187,7 @@
          [operation setDownloadProgressBlock:^(NSUInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead) {
              int percent = 99;
              if (totalBytesExpectedToRead > 0)
-                 percent = totalBytesRead * 100 / totalBytesExpectedToRead;
+                 percent = (int)(totalBytesRead * 100 / totalBytesExpectedToRead);
              if (percent >= 100)
                  percent = 99;
              [self.delegate entry:self contentUpdated:YES completeness:percent];
@@ -277,7 +277,7 @@
     [operation setDownloadProgressBlock:^(NSUInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead) {
         int percent = 99;
         if (totalBytesExpectedToRead > 0)
-            percent = totalBytesRead * 100 / totalBytesExpectedToRead;
+            percent = (int)(totalBytesRead * 100 / totalBytesExpectedToRead);
         percent = (percent + self.index*100.0)/self.blks.count;
         if (percent >= 100)
             percent = 99;
@@ -334,11 +334,35 @@
 
 - (void)realLoadContent
 {
-    SeafRepo *repo = [connection getRepo:self.repoId];
-    if (!repo.encrypted)
+    //SeafRepo *repo = [connection getRepo:self.repoId];
+    //if (!repo.encrypted)
         [self downloadByFile];
-    else
-        [self downloadByBlocks];
+    //else
+    //    [self downloadByBlocks];
+}
+
+- (void)loadContent:(BOOL)force;
+{
+    @synchronized (self) {
+        if (self.state == SEAF_DENTRY_UPTODATE && !force && self.hasCache) {
+            [self.delegate entry:self contentUpdated:NO completeness:0];
+            return;
+        }
+        if (self.state == SEAF_DENTRY_LOADING)
+            return;
+        self.state = SEAF_DENTRY_LOADING;
+    }
+
+    [self loadCache];
+    [self realLoadContent];
+}
+
+- (BOOL)hasCache
+{
+    if (self.ooid && [[NSFileManager defaultManager] fileExistsAtPath:[Utils documentPath:self.ooid]])
+        return YES;
+    self.ooid = NO;
+    return NO;
 }
 
 - (DownloadedFile *)loadCacheObj
@@ -443,7 +467,7 @@
 - (NSURL *)checkoutURL
 {
     NSError *error = nil;
-    if (_checkoutURL)
+    if (_checkoutURL && [[NSFileManager defaultManager] fileExistsAtPath:_checkoutURL.path])
         return _checkoutURL;
 
     if (self.mpath) {
@@ -463,6 +487,8 @@
             _checkoutURL = [NSURL fileURLWithPath:tempFileName];
         } else {
             Warning("Copy file to checkoutURL failed:%@\n", error);
+            self.ooid = nil;
+            _checkoutURL = nil;
         }
     }
     return _checkoutURL;
@@ -482,7 +508,7 @@
 
 - (NSURL *)previewItemURL
 {
-    if (_preViewURL)
+    if (_preViewURL && [[NSFileManager defaultManager] fileExistsAtPath:_preViewURL.path])
         return _preViewURL;
 
     _preViewURL = self.checkoutURL;

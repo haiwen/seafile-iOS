@@ -9,6 +9,7 @@
 #import <QuartzCore/QuartzCore.h>
 #import "InputAlertPrompt.h"
 #import "SVProgressHUD.h"
+#import "Debug.h"
 
 @interface InputAlertPrompt ()
 @property BOOL autoDismiss;
@@ -45,8 +46,10 @@
     return YES;
 }
 
--(void)dismissWithClickedButtonIndex:(NSInteger)buttonIndex animated:(BOOL)animated
+- (void)dismissWithClickedButtonIndex:(NSInteger)buttonIndex animated:(BOOL)animated
 {
+    Debug("...buttonIndex=%d", buttonIndex);
+
     if (buttonIndex == [self cancelButtonIndex]) {
         [SVProgressHUD dismiss];
         [super dismissWithClickedButtonIndex:buttonIndex animated:animated];

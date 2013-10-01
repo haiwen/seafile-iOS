@@ -513,7 +513,7 @@ enum TOOL_ITEM {
     return YES;
 }
 
--(NSInteger)supportedInterfaceOrientations
+-(NSUInteger)supportedInterfaceOrientations
 {
     NSInteger mask = 0;
     if ([self shouldAutorotateToInterfaceOrientation: UIInterfaceOrientationLandscapeRight])

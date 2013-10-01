@@ -9,7 +9,6 @@
 #import "SeafAppDelegate.h"
 #import "SeafDisDetailViewController.h"
 #import "REComposeViewController.h"
-#import "InputAlertPrompt.h"
 
 #import "SVProgressHUD.h"
 #import "UIViewController+Extend.h"

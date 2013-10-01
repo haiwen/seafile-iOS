@@ -50,7 +50,11 @@
 
 - (BOOL)isValidFileName
 {
-    if([self compare:[NSString stringWithUTF8String:[[self lastPathComponent]  fileSystemRepresentation]]] == NSOrderedSame)
+    if (self.length == 0)
+        return NO;
+    NSCharacterSet* illegalFileNameCharacters = [NSCharacterSet characterSetWithCharactersInString:@"\\/:"];
+    NSRange range = [self rangeOfCharacterFromSet:illegalFileNameCharacters];
+    if (range.location == NSNotFound)
         return YES;
     return NO;
 }

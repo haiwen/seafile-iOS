@@ -20,7 +20,7 @@
 - (id)initWithConnection:(SeafConnection *)aConnection
                     repo:(NSString *)aRepo
                     path:(NSString *)aPath
-                   mtime:(int)mtime
-                    size:(int)size
+                   mtime:(long long)mtime
+                    size:(long long)size
                      org:(int)org;
 @end

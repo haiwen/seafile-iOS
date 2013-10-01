@@ -10,6 +10,6 @@
 
 @interface SeafDateFormatter : NSDateFormatter
 
-+ (NSString *)stringFromInt:(int)time;
++ (NSString *)stringFromLongLong:(long long)time;
 
 @end

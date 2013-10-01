@@ -41,12 +41,14 @@
 
 - (void)alertWithMessage:(NSString*)message;
 {
-    UIAlertView *alert = [[UIAlertView alloc]initWithTitle:nil
-                                                   message:message
-                                                  delegate:nil
+    UIAlertView *alert = [[UIAlertView alloc]initWithTitle:message
+                                                   message:nil
+                                                  delegate:self
                                          cancelButtonTitle:@"OK"
                                          otherButtonTitles:nil, nil];
     alert.transform = CGAffineTransformTranslate( alert.transform, 0.0, 130.0 );
+    alert.alertViewStyle = UIAlertViewStyleDefault;
+
     [alert show];
 }
 

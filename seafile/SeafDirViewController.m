@@ -8,7 +8,6 @@
 
 #import "SeafDirViewController.h"
 #import "SeafAppDelegate.h"
-#import "InputAlertPrompt.h"
 #import "SeafDir.h"
 #import "SeafRepos.h"
 #import "SeafCell.h"
@@ -16,9 +15,9 @@
 #import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
 
+#define TITLE_PASSWORD @"Password of this library"
 
-@interface SeafDirViewController ()<SeafDentryDelegate, InputDoneDelegate, UIAlertViewDelegate, EGORefreshTableHeaderDelegate, UIScrollViewDelegate>
-@property (strong) InputAlertPrompt *passSetView;
+@interface SeafDirViewController ()<SeafDentryDelegate, UIAlertViewDelegate, EGORefreshTableHeaderDelegate, UIScrollViewDelegate>
 @property (strong) SeafDir *curDir;
 @property (strong) UIBarButtonItem *chooseItem;
 @property (strong, readonly) SeafDir *directory;
@@ -29,7 +28,6 @@
 @end
 
 @implementation SeafDirViewController
-@synthesize passSetView = _passSetView;
 @synthesize directory = _directory;
 @synthesize curDir = _curDir;
 @synthesize refreshHeaderView = _refreshHeaderView;
@@ -157,40 +155,34 @@
 }
 
 
-#pragma mark - InputDoneDelegate
-- (BOOL)inputDone:(InputAlertPrompt *)alertView input:(NSString *)input errmsg:(NSString **)errmsg;
-{
-    if (!input) {
-        *errmsg = @"Password must not be empty";
-        return NO;
-    }
-    if (input.length < 3 || input.length  > 100) {
-        *errmsg = @"The length of password should be between 3 and 100";
-        return NO;
-    }
-    [_curDir setDelegate:self];
-    [_curDir checkRepoPassword:input];
-    [_passSetView.inputTextField setEnabled:NO];
-    return YES;
-}
-
+#pragma mark - UIAlertViewDelegate
 - (void)alertView:(UIAlertView *)alertView willDismissWithButtonIndex:(NSInteger)buttonIndex
 {
-    _passSetView = nil;
+    if (buttonIndex != alertView.cancelButtonIndex) {
+        UITextField *textfiled = [alertView textFieldAtIndex:0];
+        NSString *input = textfiled.text;
+        if (!input) {
+             [self alertWithMessage:@"Password must not be empty"];
+            return;
+        }
+        if (input.length < 3 || input.length  > 100) {
+             [self alertWithMessage:@"The length of password should be between 3 and 100"];
+            return;
+        }
+        [_curDir setDelegate:self];
+        [_curDir checkRepoPassword:input];
+        [SVProgressHUD showWithStatus:@"Checking library password ..."];
+        return;
+    } else if ([alertView.title isEqualToString:TITLE_PASSWORD]) {
+        [self popupSetRepoPassword];
+    }
 }
 
 - (void)popupSetRepoPassword
 {
-    _passSetView = [[InputAlertPrompt alloc] initWithTitle:@"Password of this library" delegate:self autoDismiss:NO];
-    _passSetView.inputTextField.secureTextEntry = YES;
-    _passSetView.inputTextField.placeholder = @"Password";
-    _passSetView.inputTextField.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
-    _passSetView.inputTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
-    _passSetView.inputTextField.returnKeyType = UIReturnKeyDone;
-    _passSetView.inputTextField.keyboardType = UIKeyboardTypeASCIICapable;
-    _passSetView.inputTextField.autocorrectionType = UITextAutocapitalizationTypeNone;
-    _passSetView.inputDoneDelegate = self;
-    [_passSetView show];
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Password of this library" message:nil delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"OK", nil];
+    alert.alertViewStyle = UIAlertViewStyleSecureTextInput;
+    [alert show];
 }
 
 #pragma mark - SeafDentryDelegate
@@ -222,13 +214,13 @@
 
 - (void)repoPasswordSet:(SeafBase *)entry WithResult:(BOOL)success
 {
+    [SVProgressHUD dismiss];
     if (success) {
-        [self.passSetView dismissWithClickedButtonIndex:0 animated:YES];
         SeafDirViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:_curDir delegate:self.delegate];
         [self.navigationController pushViewController:controller animated:YES];
     } else {
-        [self alertWithMessage:@"Wrong library password"];
-        [_passSetView.inputTextField setEnabled:YES];
+        [SVProgressHUD showErrorWithStatus:@"Wrong library password" duration:2.0];
+        [self performSelector:@selector(popupSetRepoPassword) withObject:nil afterDelay:1.0];
     }
 }
 

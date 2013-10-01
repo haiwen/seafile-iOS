@@ -27,7 +27,7 @@
 - (void)mkdir:(NSString *)newDirName;
 - (void)createFile:(NSString *)newFileName;
 - (void)delEntries:(NSArray *)entries;
-- (void)addUploadFiles:(NSMutableArray *)uploadItems;
+- (void)addUploadFiles:(NSArray *)uploadItems;
 - (void)removeUploadFile:(SeafUploadFile *)ufile;
 
 @end

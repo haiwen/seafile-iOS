@@ -31,7 +31,11 @@ enum {
     STATE_DELETE,
     STATE_MKDIR,
     STATE_CREATE,
+    STATE_PASSWORD,
 };
+#define TITLE_PASSWORD @"Password of this library"
+#define TITLE_MKDIR @"New folder"
+#define TITLE_NEWFILE @"New file"
 
 @interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, EGORefreshTableHeaderDelegate>
 - (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView;
@@ -40,8 +44,6 @@ enum {
 
 @property (strong, nonatomic) SeafDir *directory;
 @property (strong) id curEntry;
-@property (strong) InputAlertPrompt *passSetView;
-@property (strong) InputAlertPrompt *inputView;
 @property (strong, nonatomic) IBOutlet UIActivityIndicatorView *loadingView;
 
 @property (strong) UIBarButtonItem *selectAllItem;
@@ -68,7 +70,6 @@ enum {
 @synthesize connection = _connection;
 @synthesize directory = _directory;
 @synthesize curEntry = _curEntry;
-@synthesize passSetView = _passSetView, inputView = _inputView;
 @synthesize selectAllItem = _selectAllItem, selectNoneItem = _selectNoneItem;
 @synthesize selectedindex = _selectedindex;
 @synthesize editToolItems = _editToolItems;
@@ -469,14 +470,14 @@ enum {
         cell.imageView.image = file.image;
         cell.accLabel.text = nil;
 
-        NSString *sizeStr = [FileSizeFormatter stringFromNumber:[NSNumber numberWithInt:file.filesize ] useBaseTen:NO];
+        NSString *sizeStr = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:file.filesize ] useBaseTen:NO];
         NSDictionary *dict = [file uploadAttr];
         cell.accessoryView = nil;
         if (dict) {
             int utime = [[dict objectForKey:@"utime"] intValue];
             BOOL result = [[dict objectForKey:@"result"] boolValue];
             if (result)
-                cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, Uploaded %@", sizeStr, [SeafDateFormatter stringFromInt:utime]];
+                cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, Uploaded %@", sizeStr, [SeafDateFormatter stringFromLongLong:utime]];
             else {
                 cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, waiting to upload", sizeStr];
             }
@@ -516,7 +517,7 @@ enum {
 - (SeafCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView
 {
     SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
-    NSString *detail = [NSString stringWithFormat:@"%@, %@", [FileSizeFormatter stringFromNumber:[NSNumber numberWithUnsignedLongLong:srepo.size ] useBaseTen:NO], [SeafDateFormatter stringFromInt:srepo.mtime]];
+    NSString *detail = [NSString stringWithFormat:@"%@, %@", [FileSizeFormatter stringFromNumber:[NSNumber numberWithUnsignedLongLong:srepo.size ] useBaseTen:NO], [SeafDateFormatter stringFromLongLong:srepo.mtime]];
     cell.detailTextLabel.text = detail;
     cell.imageView.image = srepo.image;
     cell.textLabel.text = srepo.name;
@@ -567,17 +568,30 @@ enum {
 
 - (void)popupSetRepoPassword
 {
-    _passSetView = [[InputAlertPrompt alloc] initWithTitle:@"Password of this library" delegate:self autoDismiss:NO];
-    _passSetView.inputTextField.secureTextEntry = YES;
-    _passSetView.inputTextField.placeholder = @"Password";
-    _passSetView.inputTextField.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
-    _passSetView.inputTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
-    _passSetView.inputTextField.returnKeyType = UIReturnKeyDone;
-    _passSetView.inputTextField.keyboardType = UIKeyboardTypeASCIICapable;
-    _passSetView.inputTextField.autocorrectionType = UITextAutocapitalizationTypeNone;
-    _passSetView.inputDoneDelegate = self;
-    [_passSetView show];
+    self.state = STATE_PASSWORD;
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Password of this library" message:nil delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"OK", nil];
+    alert.alertViewStyle = UIAlertViewStyleSecureTextInput;
+    [alert show];
 }
+- (void)popupInputView:(NSString *)title placeholder:(NSString *)tip
+{
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:nil delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"OK", nil];
+    alert.alertViewStyle = UIAlertViewStylePlainTextInput;
+    UITextField *textfiled = [alert textFieldAtIndex:0];
+    textfiled.placeholder = tip;
+    [alert show];
+}
+- (void)popupMkdirView
+{
+    self.state = STATE_MKDIR;
+    [self popupInputView:TITLE_MKDIR placeholder:@"New folder name"];
+}
+- (void)popupCreateView
+{
+    self.state = STATE_CREATE;
+    [self popupInputView:TITLE_NEWFILE placeholder:@"New file name"];
+}
+
 
 - (SeafBase *)getDentrybyIndexPath:(NSIndexPath *)indexPath
 {
@@ -657,69 +671,62 @@ enum {
     return headerView;
 }
 
-#pragma mark - InputDoneDelegate
-- (BOOL)inputDone:(InputAlertPrompt *)alertView input:(NSString *)input errmsg:(NSString **)errmsg;
+#pragma mark - UIAlertViewDelegate
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
-    if (alertView == _passSetView) {
-        if (!input) {
-            *errmsg = @"Password must not be empty";
-            return NO;
+    if (buttonIndex == alertView.cancelButtonIndex) {
+        if ([alertView.title isEqualToString:TITLE_PASSWORD]
+            || [alertView.title isEqualToString:TITLE_MKDIR]
+            || [alertView.title isEqualToString:TITLE_NEWFILE]) {
+            self.state = STATE_INIT;
+            return;
         }
-        if (input.length < 3 || input.length  > 100) {
-            *errmsg = @"The length of password should be between 3 and 100";
-            return NO;
+        if (self.state == STATE_PASSWORD) {
+            [self popupSetRepoPassword];
+        } else if (self.state == STATE_MKDIR) {
+            [self popupMkdirView];
+        } else if (self.state == STATE_CREATE) {
+            [self popupCreateView];
         }
-        [_curEntry setDelegate:self];
-        [_curEntry checkRepoPassword:input];
-        [_passSetView.inputTextField setEnabled:NO];
-        return YES;
-    } else if (alertView == _inputView) {
+    } else {
+        NSString *title = alertView.title;
+        NSString *input = [alertView textFieldAtIndex:0].text;
         [_directory setDelegate:self];
-
-        if (self.state == STATE_MKDIR) {
-            if (!input) {
-                *errmsg = @"Folder name must not be empty";
-                return NO;
+        if ([title isEqualToString:TITLE_PASSWORD]) {
+            if (!input || input.length == 0) {
+                [self alertWithMessage:@"Password must not be empty"];
+                return;
+            }
+            if (input.length < 3 || input.length  > 100) {
+                [self alertWithMessage:@"The length of password should be between 3 and 100"];
+                return;
+            }
+            [_curEntry setDelegate:self];
+            //[_curEntry checkRepoPassword:input];
+            [_curEntry setRepoPassword:input];
+            [SVProgressHUD showWithStatus:@"Checking library password ..."];
+        } else if (self.state == STATE_MKDIR) {
+            if (!input || input.length == 0) {
+                [self alertWithMessage:@"Folder name must not be empty"];
+                return;
             }
             if (![input isValidFileName]) {
-                *errmsg = @"Folder name invalid";
-                return NO;
+                [self alertWithMessage:@"Folder name invalid"];
+                return;
             }
             [_directory mkdir:input];
-            [_inputView.inputTextField setEnabled:NO];
             [SVProgressHUD showWithStatus:@"Creating folder ..."];
-        } else {
-            if (!input) {
-                *errmsg = @"File name must not be empty";
-                return NO;
+        } else if (self.state == STATE_CREATE) {
+            if (!input || input.length == 0) {
+                [self alertWithMessage:@"File name must not be empty"];
+                return;
             }
             if (![input isValidFileName]) {
-                *errmsg = @"File name invalid";
-                return NO;
+                [self alertWithMessage:@"File name invalid"];
+                return;
             }
             [_directory createFile:input];
-            [_inputView.inputTextField setEnabled:NO];
             [SVProgressHUD showWithStatus:@"Creating file ..."];
-        }
-        return YES;
-    }
-    return NO;
-}
-
-#pragma mark - UIAlertViewDelegate
-- (void)didPresentAlertView:(UIAlertView *)alertView
-{
-    if ([alertView isKindOfClass:[InputAlertPrompt class]]) {
-    }
-}
-
-- (void)alertView:(UIAlertView *)alertView willDismissWithButtonIndex:(NSInteger)buttonIndex
-{
-    if ([alertView isKindOfClass:[InputAlertPrompt class]]) {
-        if (_passSetView == alertView) {
-            _passSetView = nil;
-        } else if (_inputView == alertView) {
-            _inputView = nil;
         }
     }
 }
@@ -737,9 +744,6 @@ enum {
         [SVProgressHUD dismiss];
         [self doneLoadingTableViewData];
         [self refreshView];
-        if (_inputView) {
-            [_inputView dismissWithClickedButtonIndex:0 animated:YES];
-        }
     } else if ([entry isKindOfClass:[SeafFile class]]) {
         if (updated && entry == self.detailViewController.preViewItem)
             [self.detailViewController entry:entry contentUpdated:updated completeness:percent];
@@ -767,12 +771,12 @@ enum {
                 [SVProgressHUD showErrorWithStatus:@"Failed to delete files"];
                 break;
             case STATE_MKDIR:
-                [SVProgressHUD showErrorWithStatus:@"Failed to create folder"];
-                [_inputView.inputTextField setEnabled:YES];
+                [SVProgressHUD showErrorWithStatus:@"Failed to create folder" duration:2.0];
+                [self performSelector:@selector(popupMkdirView) withObject:nil afterDelay:1.0];
                 break;
             case STATE_CREATE:
-                [SVProgressHUD showErrorWithStatus:@"Failed to create file"];
-                [_inputView.inputTextField setEnabled:YES];
+                [SVProgressHUD showErrorWithStatus:@"Failed to create file" duration:2.0];
+                [self performSelector:@selector(popupCreateView) withObject:nil afterDelay:1.0];
                 break;
             case STATE_LOADING:
                 if (!_directory.hasCache) {
@@ -794,14 +798,15 @@ enum {
         return;
     }
     NSAssert([entry isKindOfClass:[SeafRepo class]], @"entry must be a repo\n");
+    [SVProgressHUD dismiss];
     if (success) {
-        [self.passSetView dismissWithClickedButtonIndex:0 animated:YES];
+        self.state = STATE_INIT;
         SeafFileViewController *controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
         [self.navigationController pushViewController:controller animated:YES];
         [controller setDirectory:(SeafDir *)_curEntry];
     } else {
-        [self alertWithMessage:@"Wrong library password"];
-        [_passSetView.inputTextField setEnabled:YES];
+        [SVProgressHUD showErrorWithStatus:@"Wrong library password" duration:2.0];
+        [self performSelector:@selector(popupSetRepoPassword) withObject:nil afterDelay:1.0];
     }
 }
 
@@ -846,17 +851,6 @@ enum {
 
 #pragma mark - edit files
 
-- (void)popupInputView:(NSString *)title placeholder:(NSString *)tip
-{
-    _inputView = [[InputAlertPrompt alloc] initWithTitle:title delegate:self autoDismiss:NO];
-    _inputView.inputTextField.placeholder = tip;
-    _inputView.inputTextField.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
-    _inputView.inputTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
-    _inputView.inputTextField.returnKeyType = UIReturnKeyDone;
-    _inputView.inputTextField.autocorrectionType = UITextAutocapitalizationTypeNone;
-    _inputView.inputDoneDelegate = self;
-    [_inputView show];
-}
 
 - (void)editOperation:(id)sender
 {
@@ -869,13 +863,11 @@ enum {
     }
     switch ([sender tag]) {
         case EDITOP_MKDIR:
-            self.state = STATE_MKDIR;
-            [self popupInputView:@"New folder" placeholder:@"New folder name"];
+            [self popupMkdirView];
             break;
 
         case EDITOP_CREATE:
-            self.state = STATE_CREATE;
-            [self popupInputView:@"New file" placeholder:@"New file name"];
+            [self popupCreateView];
             break;
 
         case EDITOP_DELETE:
@@ -905,11 +897,9 @@ enum {
 
 - (void)redownloadFile:(SeafFile *)file
 {
-    Debug("....\n");
-    [file testupload];
-    //[file deleteCache];
-    //[self.detailViewController setPreViewItem:nil master:nil];
-    //[self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
+    [file deleteCache];
+    [self.detailViewController setPreViewItem:nil master:nil];
+    [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
 }
 
 #pragma mark - UIActionSheetDelegate

@@ -100,7 +100,7 @@
     int i;
     NSMutableArray *stars = [NSMutableArray array];
     for (NSDictionary *info in JSON) {
-        SeafStarredFile *sfile = [[SeafStarredFile alloc] initWithConnection:_connection repo:[info objectForKey:@"repo"] path:[info objectForKey:@"path"] mtime:[[info objectForKey:@"mtime"] integerValue:0] size:[[info objectForKey:@"size"] integerValue:0] org:[[info objectForKey:@"org"] integerValue:0]];
+        SeafStarredFile *sfile = [[SeafStarredFile alloc] initWithConnection:_connection repo:[info objectForKey:@"repo"] path:[info objectForKey:@"path"] mtime:[[info objectForKey:@"mtime"] integerValue:0] size:[[info objectForKey:@"size"] integerValue:0] org:(int)[[info objectForKey:@"org"] integerValue:0]];
         sfile.delegate = self;
         sfile.starDelegate = self;
         [stars addObject:sfile];

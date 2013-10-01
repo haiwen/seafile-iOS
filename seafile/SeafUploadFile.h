@@ -25,7 +25,7 @@
 
 @property (readonly) NSString *lpath;
 @property (readonly) NSString *name;
-@property (readonly) int filesize;
+@property (readonly) long long filesize;
 
 @property (readonly) BOOL uploading;
 @property (readonly) int uploadProgress;

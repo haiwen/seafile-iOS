@@ -27,7 +27,7 @@
     [gradientLayer setBounds:[self bounds]];
     [gradientLayer setPosition:CGPointMake([self bounds].size.width/2, [self bounds].size.height/2)];
     [self.layer insertSublayer:gradientLayer atIndex:0];
-    [self.layer setCornerRadius:8.0f];
+    [self.layer setCornerRadius:0.0f];
     [self.layer setMasksToBounds:YES];
     [self.layer setBorderWidth:1.0f];
 }

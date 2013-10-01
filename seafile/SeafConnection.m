@@ -387,7 +387,7 @@
         [groups addObject:[NSMutableDictionary dictionaryWithDictionary:info]];
     }
     _seafGroups = groups;
-    _newreply = [[JSON objectForKey:@"replynum"] integerValue:0];
+    _newreply = (int)[[JSON objectForKey:@"replynum"] integerValue:0];
     return YES;
 }
 

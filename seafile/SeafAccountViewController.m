@@ -98,22 +98,37 @@
         v.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin| UIViewAutoresizingFlexibleRightMargin
         | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
     }
+    if (NSFoundationVersionNumber > NSFoundationVersionNumber_iOS_6_1) {
+        loginButton.layer.borderColor = [[UIColor lightGrayColor] CGColor];
+        loginButton.layer.borderWidth = 0.5f;
+        loginButton.layer.cornerRadius = 5.0f;
+        cancelButton.layer.borderColor = [[UIColor lightGrayColor] CGColor];
+        cancelButton.layer.borderWidth = 0.5f;
+        cancelButton.layer.cornerRadius = 5.0f;
+    } else {
+        loginButton.reversesTitleShadowWhenHighlighted = NO;
+        cancelButton.reversesTitleShadowWhenHighlighted = NO;
+        loginButton.tintColor=[UIColor whiteColor];
+        cancelButton.tintColor=[UIColor whiteColor];
+    }
     self.title = @"Seafile Account";
-
     CGRect rect = CGRectMake(0, 0, 90, 25);
+    NSString *align = @"";
+    if (NSFoundationVersionNumber > NSFoundationVersionNumber_iOS_6_1)
+        align = @"  ";
     UILabel *serverLabel = [[UILabel alloc] initWithFrame:rect];
-    serverLabel.text = @"Server";
+    serverLabel.text = [align stringByAppendingString:@"Server"];
     serverLabel.font = [UIFont boldSystemFontOfSize:14];
     serverTextField.leftView = serverLabel;
     serverTextField.leftViewMode = UITextFieldViewModeAlways;
 
     UILabel *nameLabel = [[UILabel alloc] initWithFrame:rect];
-    nameLabel.text = @"Username";
+    nameLabel.text = [align stringByAppendingString:@"Username"];
     nameLabel.font = [UIFont boldSystemFontOfSize:14];
     usernameTextField.leftView = nameLabel;
     usernameTextField.leftViewMode = UITextFieldViewModeAlways;
     UILabel *passwordLabel = [[UILabel alloc] initWithFrame:rect];
-    passwordLabel.text = @"Password";
+    passwordLabel.text = [align stringByAppendingString:@"Password"];
     passwordLabel.font = [UIFont boldSystemFontOfSize:14];
     passwordTextField.leftView = passwordLabel;
     passwordTextField.leftViewMode = UITextFieldViewModeAlways;

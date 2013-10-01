@@ -30,8 +30,8 @@
                      gid:(NSString *)groupid
                 repoType:(NSString *)aRepoType
                     perm:(NSString *)aPerm
-                    size:(int)aSize
-                   mtime:(int)aMtime
+                    size:(long long)aSize
+                   mtime:(long long)aMtime
                encrypted:(BOOL)aEncrypted
               encVersion:(int)aEncVersion
 {
@@ -151,7 +151,7 @@
                              size:[[repoInfo objectForKey:@"size"] integerValue:0]
                              mtime:[[repoInfo objectForKey:@"mtime"] integerValue:0]
                              encrypted:[[repoInfo objectForKey:@"encrypted"] booleanValue:NO]
-                             encVersion:[[repoInfo objectForKey:@"enc_version"] integerValue:1]
+                             encVersion:(int)[[repoInfo objectForKey:@"enc_version"] integerValue:1]
                              ];
         newRepo.delegate = self.delegate;
         [newRepos addObject:newRepo];

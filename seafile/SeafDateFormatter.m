@@ -21,7 +21,7 @@ static SeafDateFormatter *sharedLoader = nil;
     return sharedLoader;
 }
 
-+ (NSString *)stringFromInt:(int)time
++ (NSString *)stringFromLongLong:(long long)time
 {
     return [[SeafDateFormatter sharedLoader] stringFromDate:[NSDate dateWithTimeIntervalSince1970:time]];
 }

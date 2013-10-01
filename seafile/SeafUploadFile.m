@@ -122,7 +122,7 @@ static NSMutableDictionary *uploadFiles = nil;
     [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
         int percent = 99;
         if (totalBytesExpectedToWrite > 0)
-            percent = totalBytesWritten * 100 / totalBytesExpectedToWrite;
+            percent = (int)totalBytesWritten * 100 / totalBytesExpectedToWrite;
         if (percent >= 100)
             percent = 99;
         [_delegate uploadProgress:self result:YES completeness:percent];
@@ -200,7 +200,7 @@ static NSMutableDictionary *uploadFiles = nil;
     [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
         int percent = 99;
         if (totalBytesExpectedToWrite > 0)
-            percent = totalBytesWritten * 100 / totalBytesExpectedToWrite;
+            percent = (int)(totalBytesWritten * 100 / totalBytesExpectedToWrite);
         if (percent >= 100)
             percent = 99;
         [_delegate uploadProgress:self result:YES completeness:percent];
@@ -243,10 +243,10 @@ static NSMutableDictionary *uploadFiles = nil;
     NSString *upload_url;
     int byblock = NO;
     SeafRepo *repo = [connection getRepo:repoId];
-    if (repo.encrypted)
+    //if (repo.encrypted)
         byblock = YES;
-    else
-        byblock = NO;
+    //else
+    //    byblock = NO;
     if (!update)
         upload_url = [NSString stringWithFormat:API_URL"/repos/%@/upload-", repoId];
     else

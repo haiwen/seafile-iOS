@@ -7,7 +7,6 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "InputAlertPrompt.h"
 #import "SeafDir.h"
 
 @interface SeafUploadDirViewController : UIViewController

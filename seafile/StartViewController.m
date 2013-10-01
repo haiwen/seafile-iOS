@@ -114,11 +114,13 @@
     [bt.layer setBorderColor:[[UIColor colorWithRed:224/255.0 green:224/255.0 blue:224/255.0 alpha:1.0] CGColor]];
     bt.layer.cornerRadius = 0;
     [bt.layer setBorderColor:[[UIColor lightTextColor] CGColor]];
-    [bt setHighColor:[UIColor colorWithRed:244/255.0 green:244/255.0 blue:244/255.0 alpha:1.0] lowColor:[UIColor colorWithRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1.0]];
+    //[bt setHighColor:[UIColor colorWithRed:244/255.0 green:244/255.0 blue:244/255.0 alpha:1.0] lowColor:[UIColor colorWithRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1.0]];
+    [bt setHighColor:[UIColor colorWithRed:244/255.0 green:244/255.0 blue:244/255.0 alpha:1.0] lowColor:[UIColor colorWithRed:244/255.0 green:244/255.0 blue:244/255.0 alpha:1.0]];
+
     [bt setTitleColor:[UIColor colorWithRed:112/255.0 green:112/255.0 blue:112/255.0 alpha:1.0] forState:UIControlStateNormal];
 
     self.footer = bt;
-    [self.view addSubview:self.footer];
+    [self.view addSubview:bt];
     self.footer.hidden = YES;
 }
 
@@ -145,7 +147,14 @@
 
 - (void)viewWillLayoutSubviews
 {
-    self.footer.frame = CGRectMake(0, self.view.frame.size.height-50, self.tableView.frame.size.width, 50);
+    CGRect frame = self.view.frame;
+    CGRect viewBounds = [[UIScreen mainScreen] applicationFrame];
+    Debug("%f %f %f %f\n", viewBounds.origin.x, viewBounds.origin.y, viewBounds.size.width, viewBounds.size.height);
+    Debug("%f %f %f %f\n", frame.origin.x, frame.origin.y, frame.size.width,frame.size.height);
+    frame = self.tableView.frame;
+    Debug("%f %f %f %f\n", frame.origin.x, frame.origin.y, frame.size.width,frame.size.height);
+
+    self.footer.frame = CGRectMake(self.view.frame.origin.x, self.view.frame.size.height-110, self.tableView.frame.size.width, 50);
 }
 
 - (void)viewDidUnload
@@ -307,7 +316,6 @@
     }
     return NO;
 }
-
 
 - (IBAction)goToDefaultBtclicked:(id)sender
 {

@@ -13,7 +13,6 @@
 #import "SeafSettingsViewController.h"
 #import "UIViewController+Extend.h"
 #import "FileSizeFormatter.h"
-#import "ColorfulButton.h"
 #import "ExtentedString.h"
 #import "Debug.h"
 
@@ -32,9 +31,7 @@ enum {
 @property (strong, nonatomic) IBOutlet UITableViewCell *usedspaceCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *serverCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *cacheCell;
-@property (strong, nonatomic) IBOutlet ColorfulButton *wipeCacheBt;
 @property (strong, nonatomic) IBOutlet UITableViewCell *versionCell;
-- (IBAction)wipeCache:(id)sender;
 @property int state;
 
 @end
@@ -42,7 +39,6 @@ enum {
 @implementation SeafSettingsViewController
 @synthesize connection = _connection;
 @synthesize nameCell, usedspaceCell, serverCell, cacheCell, versionCell;
-@synthesize wipeCacheBt;
 @synthesize state = _state;
 
 - (id)initWithStyle:(UITableViewStyle)style
@@ -57,8 +53,6 @@ enum {
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    UIColor *color = [UIColor colorWithRed:1.0 green:0.5 blue:0.5 alpha:1.0];
-    [wipeCacheBt setHighColor:color lowColor:[UIColor redColor]];
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 }
 
@@ -147,6 +141,10 @@ enum {
             default:
                 break;
         }
+    } else if (indexPath.section == 3) {
+        NSString *title = @"Are you sure to clear all the cache ?";
+        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:title message:nil delegate:self cancelButtonTitle:@"NO" otherButtonTitles:@"YES", nil];
+        [alertView show];
     }
 }
 
@@ -160,7 +158,6 @@ enum {
     [self setUsedspaceCell:nil];
     [self setServerCell:nil];
     [self setCacheCell:nil];
-    [self setWipeCacheBt:nil];
     [self setVersionCell:nil];
     [super viewDidUnload];
 }
@@ -244,10 +241,4 @@ enum {
     }
 }
 
-- (IBAction)wipeCache:(id)sender
-{
-    NSString *title = @"Are you sure to clear all the cache ?";
-    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:title message:nil delegate:self cancelButtonTitle:@"NO" otherButtonTitles:@"YES", nil];
-    [alertView show];
-}
 @end

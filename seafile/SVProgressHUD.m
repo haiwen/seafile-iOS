@@ -103,12 +103,16 @@
 + (void)showErrorWithStatus:(NSString *)string duration:(NSTimeInterval)duration
 {
     [SVProgressHUD show];
-    [SVProgressHUD showImage:[UIImage imageNamed:@"SVProgressHUD.bundle/error.png"] status:string];
+    [SVProgressHUD showImage:[UIImage imageNamed:@"SVProgressHUD.bundle/error.png"] status:string duration:duration];
 }
-
 + (void)showImage:(UIImage *)image status:(NSString *)string
 {
-    [[SVProgressHUD sharedView] showImage:image status:string duration:1.0];
+    [SVProgressHUD showImage:image status:string duration:1.0f];
+}
+
++ (void)showImage:(UIImage *)image status:(NSString *)string duration:(NSTimeInterval)duration
+{
+    [[SVProgressHUD sharedView] showImage:image status:string duration:duration];
 }
 
 
