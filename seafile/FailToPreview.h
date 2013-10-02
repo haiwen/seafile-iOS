@@ -8,12 +8,13 @@
 
 #import <UIKit/UIKit.h>
 #import <QuickLook/QuickLook.h>
-
+#import "ColorfulButton.h"
 #import "Utils.h"
 
 @interface FailToPreview : UIView
 @property (strong, nonatomic) IBOutlet UIImageView *imageView;
 @property (strong, nonatomic) IBOutlet UILabel *nameLabel;
+@property (strong, nonatomic) IBOutlet ColorfulButton *openElseBtn;
 - (IBAction)openElsewhere:(id)sender;
 
 - (void)configureViewWithPrevireItem:(id<QLPreviewItem, PreViewDelegate>)item;

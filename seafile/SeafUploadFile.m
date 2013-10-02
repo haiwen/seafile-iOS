@@ -244,7 +244,7 @@ static NSMutableDictionary *uploadFiles = nil;
     int byblock = NO;
     SeafRepo *repo = [connection getRepo:repoId];
     //if (repo.encrypted)
-        byblock = YES;
+    //    byblock = YES;
     //else
     //    byblock = NO;
     if (!update)

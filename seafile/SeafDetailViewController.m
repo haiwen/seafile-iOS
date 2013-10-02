@@ -150,23 +150,24 @@ enum PREVIEW_STATE {
         self.state = PREVIEW_DOWNLOADING;
     }
     [self checkNavItems];
+    CGRect r = CGRectMake(self.view.frame.origin.x, 0, self.view.frame.size.width, self.view.frame.size.height);
     switch (self.state) {
         case PREVIEW_DOWNLOADING:
             Debug (@"DownLoading file %@\n", self.preViewItem.previewItemTitle);
-            self.progressView.frame = self.view.frame;
+            self.progressView.frame = r;
             [self.view addSubview:self.progressView];
             [self.progressView configureViewWithItem:self.preViewItem completeness:0];
             break;
         case PREVIEW_FAILED:
             Debug ("Can not preview file %@ %@\n", self.preViewItem.previewItemTitle, self.preViewItem.previewItemURL);
-            self.failedView.frame = self.view.frame;
+            self.failedView.frame = r;
             [self.view addSubview:self.failedView];
             [self.failedView configureViewWithPrevireItem:self.preViewItem];
             break;
         case PREVIEW_SUCCESS:
             Debug (@"Preview file %@ mime=%@ success\n", self.preViewItem.previewItemTitle, self.preViewItem.mime);
             [self.fileViewController setPreItem:self.preViewItem];
-            self.fileViewController.view.frame = self.view.frame;
+            self.fileViewController.view.frame = r;
             [self.view addSubview:self.fileViewController.view];
             break;
         case PREVIEW_WEBVIEW_JS:
@@ -183,9 +184,9 @@ enum PREVIEW_STATE {
                 else
                     self.webView.delegate = nil;
             }
+            self.webView.frame = r;
             [self.webView loadRequest:request];
             [self.view addSubview:self.webView];
-            self.webView.center = self.view.center;
             break;
         case PREVIEW_NONE:
             break;
@@ -199,6 +200,7 @@ enum PREVIEW_STATE {
     if (self.masterPopoverController != nil) {
         [self.masterPopoverController dismissPopoverAnimated:YES];
     }
+
     self.masterVc = c;
     _preViewItem = item;
     if ([item isKindOfClass:[SeafFile class]])
@@ -229,6 +231,7 @@ enum PREVIEW_STATE {
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeNone;
     // Do any additional setup after loading the view, typically from a nib.
+
     if (!IsIpad()) {
         UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Back" style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
         [self.navigationItem setLeftBarButtonItem:barButtonItem animated:YES];
@@ -290,12 +293,13 @@ enum PREVIEW_STATE {
 
 - (void)viewWillLayoutSubviews
 {
-    if (self.state == PREVIEW_SUCCESS)
-        self.fileViewController.view.frame = self.view.frame;
-    else if (self.state == PREVIEW_NONE) {
-        if (self.view.subviews.count > 0) {
+    CGRect r = CGRectMake(self.view.frame.origin.x, 0, self.view.frame.size.width, self.view.frame.size.height);
+    if (self.state == PREVIEW_SUCCESS) {
+        self.fileViewController.view.frame = r;
+    } else {
+        if (self.view.subviews.count > 1) {
             UIView *v = [self.view.subviews objectAtIndex:0];
-            v.center = self.view.center;
+            v.frame = r;
         }
     }
 }
