@@ -144,6 +144,8 @@ enum {
     [super viewDidLoad];
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeNone;
+    if ([self.tableView respondsToSelector:@selector(setSeparatorInset:)])
+        [self.tableView setSeparatorInset:UIEdgeInsetsMake(0, 0, 0, 0)];
     self.formatter = [[NSDateFormatter alloc] init];
     [self.formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
     self.tableView.rowHeight = 50;
@@ -297,7 +299,7 @@ enum {
     QBImagePickerController *imagePickerController = [[QBImagePickerController alloc] init];
     imagePickerController.delegate = self;
     imagePickerController.allowsMultipleSelection = YES;
-    imagePickerController.maximumNumberOfSelection = 20;
+    imagePickerController.maximumNumberOfSelection = 10;
     if (IsIpad()) {
         UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:imagePickerController];
         self.popoverController = [[UIPopoverController alloc] initWithContentViewController:navigationController];
@@ -376,6 +378,13 @@ enum {
     }
 }
 
+- (void)viewWillDisappear:(BOOL)animated
+{
+    if (IsIpad() && self.popoverController) {
+        [self.popoverController dismissPopoverAnimated:YES];
+        self.popoverController = nil;
+    }
+}
 #pragma mark - Table View
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView

@@ -293,6 +293,9 @@ enum PREVIEW_STATE {
 
 - (void)viewWillLayoutSubviews
 {
+    if (IsIpad() && self.hideMaster && (NSFoundationVersionNumber > NSFoundationVersionNumber_iOS_6_1)) {
+        self.view.frame = CGRectMake(self.view.frame.origin.x, self.view.frame.origin.y, self.view.frame.size.width, self.view.frame.size.height + self.splitViewController.tabBarController.tabBar.frame.size.height);
+    }
     CGRect r = CGRectMake(self.view.frame.origin.x, 0, self.view.frame.size.width, self.view.frame.size.height);
     if (self.state == PREVIEW_SUCCESS) {
         self.fileViewController.view.frame = r;
@@ -354,7 +357,6 @@ enum PREVIEW_STATE {
                                        tabBarController.view.bounds.size.width,
                                        tabBarController.view.bounds.size.height - tabBarController.tabBar.frame.size.height);
     }
-
     tabBarController.tabBar.hidden = hide;
 }
 

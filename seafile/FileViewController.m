@@ -88,7 +88,6 @@ static PrevFile *pfile;
     if (self = [super init]) {
         self.dataSource = self;
         self.view.autoresizesSubviews = YES;
-        //self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
         self.view.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin| UIViewAutoresizingFlexibleRightMargin| UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleTopMargin;
     }
     return self;
@@ -97,7 +96,7 @@ static PrevFile *pfile;
 - (void)setPreItem:(id<QLPreviewItem, PreViewDelegate>)prevItem
 {
     _preViewItem = prevItem;
-    Debug("Preview file:%@,%@,%@ [%d]\n", _preViewItem.previewItemTitle, [_preViewItem checkoutURL],_preViewItem.previewItemURL, [QLPreviewController canPreviewItem:_preViewItem]);
+    //Debug("Preview file:%@,%@,%@ [%d]\n", _preViewItem.previewItemTitle, [_preViewItem checkoutURL],_preViewItem.previewItemURL, [QLPreviewController canPreviewItem:_preViewItem]);
 
     [self reloadData];
     [self setCurrentPreviewItemIndex:0];

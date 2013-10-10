@@ -7,6 +7,7 @@
 //
 
 #import "SeafUploadingFileCell.h"
+#import "Debug.h"
 
 @implementation SeafUploadingFileCell
 
@@ -23,6 +24,13 @@
 {
     [super setSelected:selected animated:animated];
     // Configure the view for the selected state
+}
+
+- (void) layoutSubviews
+{
+    CGRect r = self.imageView.frame;
+    Debug(">>>>%f %f %f %f", r.origin.x, r.origin.y, r.size.width, r.size.height);
+
 }
 
 @end

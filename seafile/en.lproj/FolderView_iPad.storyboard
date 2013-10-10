@@ -784,9 +784,6 @@
     </scenes>
     <resources>
         <image name="seafile-logo.png" width="619" height="179"/>
-        <image name="seafile-logo.png" width="619" height="179"/>
-        <image name="seafile-logo.png" width="619" height="179"/>
-        <image name="seafile-logo.png" width="619" height="179"/>
     </resources>
     <color key="tintColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">

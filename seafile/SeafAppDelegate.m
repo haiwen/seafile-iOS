@@ -446,7 +446,7 @@
 
     if ((netStatus3G == NotReachable || connectionRequired3G)
         && (netStatusWifi == NotReachable || connectionRequiredWifi)) {
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"NetWork unavailable"
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Network unavailable"
                                                         message:nil
                                                        delegate:nil
                                               cancelButtonTitle:@"OK"
@@ -460,7 +460,7 @@
 - (void)checkBackgroudTask:(UIApplication *)application
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    Debug("%d upload, %d download\n", appdelegate.uploadnum, appdelegate.downloadnum);
+    //Debug("%d upload, %d download\n", appdelegate.uploadnum, appdelegate.downloadnum);
     if (appdelegate.downloadnum != 0 || appdelegate.uploadnum != 0)
         return;
     if (UIBackgroundTaskInvalid != appdelegate.bgTask) {
