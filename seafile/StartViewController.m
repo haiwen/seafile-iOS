@@ -60,8 +60,18 @@
 
 - (void)saveAccount:(SeafConnection *)conn
 {
+    BOOL exist = NO;
     if (![self.conns containsObject:conn]) {
-        [self.conns addObject:conn];
+        for (int i = 0; i < self.conns.count; ++i) {
+            SeafConnection *c = self.conns[i];
+            if ([c.address isEqual:conn.address] && [conn.username isEqual:c.username]) {
+                self.conns[i] = conn;
+                exist = YES;
+                break;
+            }
+        }
+        if (!exist)
+            [self.conns addObject:conn];
     }
     [self saveAccounts];
     [self.tableView reloadData];

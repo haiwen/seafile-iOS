@@ -184,9 +184,9 @@
 - (void)connectionLinkingFailed:(SeafConnection *)conn error:(int)error
 {
     Debug("%@, error=%d\n", conn.address, error);
-    if (conn != connection) {
+    if (conn != connection)
         return;
-    }
+
     [SVProgressHUD dismiss];
     if (error == HTTP_ERR_LOGIN_INCORRECT_PASSWORD)
         [self alertWithMessage:@"Wrong username or password"];

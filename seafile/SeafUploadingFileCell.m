@@ -28,9 +28,6 @@
 
 - (void) layoutSubviews
 {
-    CGRect r = self.imageView.frame;
-    Debug(">>>>%f %f %f %f", r.origin.x, r.origin.y, r.size.width, r.size.height);
-
 }
 
 @end
