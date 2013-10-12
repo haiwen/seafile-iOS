@@ -366,7 +366,7 @@
         viewController.delegate = self;
         if([viewController respondsToSelector:@selector(edgesForExtendedLayout)])
             viewController.edgesForExtendedLayout = UIRectEdgeNone;
-        _tabbarController = viewController;
+        _tabbarController = (UITabBarController *)viewController;
     }
 }
 

@@ -172,7 +172,10 @@
             return;
         }
         [_curDir setDelegate:self];
-        [_curDir checkRepoPassword:input];
+        if (_directory->connection.localDecrypt)
+            [_curDir checkRepoPassword:input];
+        else
+            [_curDir setRepoPassword:input];
         [SVProgressHUD showWithStatus:@"Checking library password ..."];
         return;
     } else if ([alertView.title isEqualToString:TITLE_PASSWORD]) {

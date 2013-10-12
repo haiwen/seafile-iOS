@@ -334,11 +334,11 @@
 
 - (void)realLoadContent
 {
-    //SeafRepo *repo = [connection getRepo:self.repoId];
-    //if (!repo.encrypted)
+    SeafRepo *repo = [connection getRepo:self.repoId];
+    if (repo.encrypted && connection.localDecrypt)
+        [self downloadByBlocks];
+    else
         [self downloadByFile];
-    //else
-    //    [self downloadByBlocks];
 }
 
 - (void)loadContent:(BOOL)force;

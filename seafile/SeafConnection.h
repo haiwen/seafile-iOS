@@ -44,6 +44,7 @@
 @property (readwrite, strong) NSString *token;
 @property (readonly) NSArray *seafGroups;
 @property (readwrite) int newreply;
+@property (readonly) BOOL localDecrypt;
 
 
 - (id)initWithUrl:(NSString *)url username:(NSString *)username;

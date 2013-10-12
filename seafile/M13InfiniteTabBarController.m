@@ -145,7 +145,7 @@
     CGFloat statusBarHeight = [UIApplication sharedApplication].statusBarFrame.size.height;
 
     //Rotate Status Bar
-    [[UIApplication sharedApplication] setStatusBarOrientation:orientation];
+    [[UIApplication sharedApplication] setStatusBarOrientation:(UIInterfaceOrientation)orientation];
     //Rotate tab bar items
     [_infiniteTabBar rotateItemsToOrientation:orientation];
     //Recreate mask and adjust frames to make room for status bar.

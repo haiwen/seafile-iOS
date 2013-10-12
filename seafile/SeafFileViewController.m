@@ -713,8 +713,10 @@ enum {
                 return;
             }
             [_curEntry setDelegate:self];
-            //[_curEntry checkRepoPassword:input];
-            [_curEntry setRepoPassword:input];
+            if (self.connection.localDecrypt)
+                [_curEntry checkRepoPassword:input];
+            else
+                [_curEntry setRepoPassword:input];
             [SVProgressHUD showWithStatus:@"Checking library password ..."];
         } else if (self.state == STATE_MKDIR) {
             if (!input || input.length == 0) {

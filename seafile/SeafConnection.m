@@ -17,6 +17,10 @@
 #import "Debug.h"
 #import "Utils.h"
 
+enum {
+    FLAG_LOCAL_DECRYPT = 0x1,
+};
+
 @interface SeafConnection ()
 
 @property (readwrite, strong) NSString *version;
@@ -84,6 +88,11 @@
 - (long long)usage
 {
     return [[_info objectForKey:@"usage"] integerValue:-1];
+}
+
+- (BOOL)localDecrypt
+{
+    return [[_info objectForKey:@"flags"] integerValue:0] & FLAG_LOCAL_DECRYPT;
 }
 
 - (void)getAccountInfo:(id<SSConnectionAccountDelegate>)degt

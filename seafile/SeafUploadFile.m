@@ -243,10 +243,8 @@ static NSMutableDictionary *uploadFiles = nil;
     NSString *upload_url;
     int byblock = NO;
     SeafRepo *repo = [connection getRepo:repoId];
-    //if (repo.encrypted)
-    //    byblock = YES;
-    //else
-    //    byblock = NO;
+    if (repo.encrypted && connection.localDecrypt)
+        byblock = YES;
     if (!update)
         upload_url = [NSString stringWithFormat:API_URL"/repos/%@/upload-", repoId];
     else
