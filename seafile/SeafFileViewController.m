@@ -299,6 +299,7 @@ enum {
     QBImagePickerController *imagePickerController = [[QBImagePickerController alloc] init];
     imagePickerController.delegate = self;
     imagePickerController.allowsMultipleSelection = YES;
+    imagePickerController.filterType = QBImagePickerFilterTypeAllAssets;
     imagePickerController.maximumNumberOfSelection = 10;
     if (IsIpad()) {
         UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:imagePickerController];
@@ -979,19 +980,27 @@ enum {
     }
 
     NSMutableArray *files = [[NSMutableArray alloc] init];
-    if (imagePickerController.allowsMultipleSelection) {
-        int i = 0;
-        NSString *date = [self.formatter stringFromDate:[NSDate date]];
-        for (NSDictionary *dict in info) {
-            i++;
+    int i = 0;
+    NSString *date = [self.formatter stringFromDate:[NSDate date]];
+    for (NSDictionary *dict in info) {
+        i++;
+        NSString *path;
+        if (![@"ALAssetTypeVideo" isEqualToString:[dict objectForKey:UIImagePickerControllerMediaType]]) {
             UIImage *image = [dict objectForKey:@"UIImagePickerControllerOriginalImage"];
             NSString *filename = [NSString stringWithFormat:@"Photo %@-%d.jpg", date, i];
-            NSString *path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
+            path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
             [UIImageJPEGRepresentation(image, 1.0) writeToFile:path atomically:YES];
-            SeafUploadFile *file =  [self.connection getUploadfile:path];
-            file.delegate = self;
-            [files addObject:file];
+        } else {
+            NSString *ext = [[dict objectForKey:@"UIImagePickerControllerReferenceURL"] pathExtension];
+            NSString *filename = [NSString stringWithFormat:@"Video %@-%d.%@", date, i, ext];
+            path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
+            BOOL ret = [Utils writeDataToPath:path andAsset:[dict objectForKey:@"asset"]];
+            if (!ret)  continue;
         }
+
+        SeafUploadFile *file =  [self.connection getUploadfile:path];
+        file.delegate = self;
+        [files addObject:file];
     }
     [self.directory addUploadFiles:files];
     [self.tableView reloadData];

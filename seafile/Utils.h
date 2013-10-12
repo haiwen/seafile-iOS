@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <AssetsLibrary/AssetsLibrary.h>
 
 @protocol PreViewDelegate <NSObject>
 - (UIImage *)image;
@@ -43,6 +44,8 @@
 
 + (NSString *)documentPath:(NSString*)fileId;
 + (NSString *)blockPath:(NSString*)blkId;
+
++ (BOOL)writeDataToPath:(NSString*)filePath andAsset:(ALAsset*)asset;
 
 
 @end

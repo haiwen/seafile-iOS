@@ -83,6 +83,6 @@
         return [self stringByAppendingString:@"2.png"];
     else
         return [self stringByAppendingString:@".png"];
-    
+
 }
 @end
