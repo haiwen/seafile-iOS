@@ -141,7 +141,9 @@ enum PREVIEW_STATE {
             self.state = PREVIEW_FAILED;
         } else {
             self.state = PREVIEW_SUCCESS;
-            if ([self.preViewItem.mime hasPrefix:@"audio"] || [self.preViewItem.mime hasPrefix:@"video"] || [self.preViewItem.mime isEqualToString:@"image/svg+xml"])
+            if ([self.preViewItem.mime hasPrefix:@"audio"]
+                || [self.preViewItem.mime hasPrefix:@"video"]
+                || [self.preViewItem.mime isEqualToString:@"image/svg+xml"])
                 self.state = PREVIEW_WEBVIEW;
             else if([self.preViewItem.mime isEqualToString:@"text/x-markdown"] || [self.preViewItem.mime isEqualToString:@"text/x-seafile"])
                 self.state = PREVIEW_WEBVIEW_JS;
