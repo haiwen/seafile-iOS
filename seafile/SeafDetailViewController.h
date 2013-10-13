@@ -19,5 +19,6 @@
 - (void)refreshView;
 - (void)setPreViewItem:(id<QLPreviewItem, PreViewDelegate>)item master:(UIViewController *)c;
 
+- (void)setPreViewItems:(NSArray *)items current:(id<QLPreviewItem, PreViewDelegate>)item master:(UIViewController *)c;
 
 @end

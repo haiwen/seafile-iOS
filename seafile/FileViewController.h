@@ -10,8 +10,19 @@
 #import <QuickLook/QuickLook.h>
 
 #import "Utils.h"
-@interface FileViewController : QLPreviewController <QLPreviewControllerDataSource>;
+
+@protocol PreViewSelectDelegate <NSObject>
+- (void)selectItem:(id<QLPreviewItem, PreViewDelegate>)prevItem;
+- (void)willSelect:(id<QLPreviewItem, PreViewDelegate>)prevItem;
+
+@end
+
+@interface FileViewController : QLPreviewController;
 
 - (void)setPreItem:(id<QLPreviewItem, PreViewDelegate>)prevItem;
+
+- (void)setPreItems:(NSArray *)prevItems current:(id<QLPreviewItem, PreViewDelegate>)item;
+
+@property id<PreViewSelectDelegate> selectDelegate;
 
 @end

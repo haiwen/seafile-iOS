@@ -38,13 +38,12 @@ static PrevFile *pfile;
 @end
 
 
-@interface FileViewController ()
-@property id<QLPreviewItem, PreViewDelegate> preViewItem;
+@interface FileViewController ()<QLPreviewControllerDelegate, QLPreviewControllerDataSource>
+@property NSArray *items;
 @end
 
 
 @implementation FileViewController
-@synthesize preViewItem = _preViewItem;
 
 - (void)didReceiveMemoryWarning
 {
@@ -76,9 +75,8 @@ static PrevFile *pfile;
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
-    if (!IsIpad()) {
+    if (!IsIpad())
         return (interfaceOrientation == UIInterfaceOrientationPortrait);
-    }
     return YES;
 }
 
@@ -87,31 +85,62 @@ static PrevFile *pfile;
 {
     if (self = [super init]) {
         self.dataSource = self;
+        self.delegate = self;
         self.view.autoresizesSubviews = YES;
         self.view.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin| UIViewAutoresizingFlexibleRightMargin| UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleTopMargin;
+        self.items = [[NSMutableArray alloc] init];
+        [self addObserver:self forKeyPath:@"currentPreviewItemIndex" options:NSKeyValueObservingOptionNew context:nil];
     }
     return self;
 }
 
 - (void)setPreItem:(id<QLPreviewItem, PreViewDelegate>)prevItem
 {
-    _preViewItem = prevItem;
-    //Debug("Preview file:%@,%@,%@ [%d]\n", _preViewItem.previewItemTitle, [_preViewItem checkoutURL],_preViewItem.previewItemURL, [QLPreviewController canPreviewItem:_preViewItem]);
+    if (prevItem)
+        self.items = [NSArray arrayWithObject:prevItem];
+    else
+        self.items = [NSArray arrayWithObject:[PrevFile defaultFile]];
+    //Debug("Preview file:%@, %@ [%d]\n", prevItem.previewItemTitle, prevItem.previewItemURL, [QLPreviewController canPreviewItem:prevItem]);
 
     [self reloadData];
     [self setCurrentPreviewItemIndex:0];
 }
 
+- (void)setPreItems:(NSArray *)prevItems current:(id<QLPreviewItem, PreViewDelegate>)item;
+{
+    self.items = prevItems;
+    [self reloadData];
+    [self setCurrentPreviewItemIndex:[self.items indexOfObject:item]];
+}
+
 - (NSInteger)numberOfPreviewItemsInPreviewController:(QLPreviewController *)controller
 {
-    return 1;
+    return self.items.count;
 }
 
 - (id <QLPreviewItem>)previewController:(QLPreviewController *)controller previewItemAtIndex:(NSInteger)index;
 {
-    if (_preViewItem)
-        return _preViewItem;
-    return [PrevFile defaultFile];
+    if (index < 0 || index >= self.items.count)
+        return [PrevFile defaultFile];
+    [self.selectDelegate willSelect:self.items[index]];
+    return self.items[index];
+}
+
+- (void)setCurrentPreviewItemIndex:(NSInteger)index
+{
+    super.currentPreviewItemIndex = index;
+    [self.selectDelegate selectItem:(id<QLPreviewItem, PreViewDelegate>)self.items[index]];
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object
+                        change:(NSDictionary *)change
+                       context:(void *)context
+{
+    if ([keyPath isEqualToString:@"currentPreviewItemIndex"]){
+        // process here
+        Debug("currentPreviewItemIndex changed :%d", self.currentPreviewItemIndex);
+        [self.selectDelegate selectItem:(id<QLPreviewItem, PreViewDelegate>)self.items[self.currentPreviewItemIndex]];
+    }
 }
 
 @end

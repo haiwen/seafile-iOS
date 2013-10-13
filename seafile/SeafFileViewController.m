@@ -635,8 +635,25 @@ enum {
             SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
             [appdelegate showDetailView:self.detailViewController];
         }
-        id<QLPreviewItem, PreViewDelegate> item = (id<QLPreviewItem, PreViewDelegate>)_curEntry;
-        [self.detailViewController setPreViewItem:item master:self];
+        BOOL isImage = NO;
+#if 0
+        if ([_curEntry isKindOfClass:[SeafFile class]]) {
+            if ([Utils isImageFile:((SeafFile *)_curEntry).name]) {
+                isImage = YES;
+                NSMutableArray *arr = [[NSMutableArray alloc] init];
+                for (id entry in _directory.allItems) {
+                    if ([entry isKindOfClass:[SeafFile class]]
+                        && [Utils isImageFile:((SeafFile *)entry).name])
+                        [arr addObject:entry];
+                }
+                [self.detailViewController setPreViewItems:arr current:_curEntry master:self];
+            }
+        }
+#endif
+        if (!isImage) {
+            id<QLPreviewItem, PreViewDelegate> item = (id<QLPreviewItem, PreViewDelegate>)_curEntry;
+            [self.detailViewController setPreViewItem:item master:self];
+        }
     } else if ([_curEntry isKindOfClass:[SeafDir class]]) {
         SeafFileViewController *controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
         [controller setDirectory:(SeafDir *)_curEntry];
@@ -808,9 +825,9 @@ enum {
 
 - (void)repoPasswordSet:(SeafBase *)entry WithResult:(BOOL)success;
 {
-    if (entry != _curEntry) {
+    if (entry != _curEntry)
         return;
-    }
+
     NSAssert([entry isKindOfClass:[SeafRepo class]], @"entry must be a repo\n");
     [SVProgressHUD dismiss];
     if (success) {

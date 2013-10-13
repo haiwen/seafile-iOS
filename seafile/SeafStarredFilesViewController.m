@@ -103,7 +103,6 @@
     NSMutableArray *stars = [NSMutableArray array];
     for (NSDictionary *info in JSON) {
         SeafStarredFile *sfile = [[SeafStarredFile alloc] initWithConnection:_connection repo:[info objectForKey:@"repo"] path:[info objectForKey:@"path"] mtime:[[info objectForKey:@"mtime"] integerValue:0] size:[[info objectForKey:@"size"] integerValue:0] org:(int)[[info objectForKey:@"org"] integerValue:0]];
-        sfile.delegate = self;
         sfile.starDelegate = self;
         [stars addObject:sfile];
     }
@@ -204,38 +203,14 @@
 
 
 #pragma mark - Table view delegate
-
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     SeafStarredFile *sfile = [_starredFiles objectAtIndex:indexPath.row];
-    sfile.delegate = self;
-    [sfile loadContent:YES];
     if (!IsIpad()) {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         [appdelegate showDetailView:self.detailViewController];
     }
     [self.detailViewController setPreViewItem:sfile master:self];
-}
-
-#pragma mark - SeafDentryDelegate
-- (void)entryChanged:(SeafBase *)entry
-{
-    if ([entry isKindOfClass:[SeafStarredFile class]] && entry == self.detailViewController.preViewItem)
-        [self.detailViewController entryChanged:entry];
-}
-
-- (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent
-{
-    [self.detailViewController entry:entry contentUpdated:updated completeness:percent];
-}
-
-- (void)entryContentLoadingFailed:(int)errCode entry:(SeafBase *)entry;
-{
-    [self.detailViewController entryContentLoadingFailed:errCode entry:entry];
-}
-
-- (void)repoPasswordSet:(SeafBase *)entry WithResult:(BOOL)success;
-{
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation

@@ -352,9 +352,10 @@
             return;
         self.state = SEAF_DENTRY_LOADING;
     }
-
-    [self loadCache];
-    [self realLoadContent];
+    if (!self.downloadingFileOid) {
+        [self loadCache];
+        [self realLoadContent];
+    }
 }
 
 - (BOOL)hasCache

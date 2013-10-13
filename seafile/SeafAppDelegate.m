@@ -475,7 +475,7 @@
     @synchronized (appdelegate) {
         appdelegate.downloadnum ++;
     }
-    Debug("%d upload, %d download\n", appdelegate.uploadnum, appdelegate.downloadnum);
+    //Debug("%d upload, %d download\n", appdelegate.uploadnum, appdelegate.downloadnum);
 }
 + (void)decDownloadnum
 {

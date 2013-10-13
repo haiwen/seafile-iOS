@@ -27,10 +27,11 @@ enum PREVIEW_STATE {
     PREVIEW_WEBVIEW,
     PREVIEW_WEBVIEW_JS,
     PREVIEW_DOWNLOADING,
+    PREVIEW_PHOTO,
     PREVIEW_FAILED
 };
 
-@interface SeafDetailViewController ()<UIWebViewDelegate, UIActionSheetDelegate, UIPrintInteractionControllerDelegate, MFMailComposeViewControllerDelegate, REComposeViewControllerDelegate>
+@interface SeafDetailViewController ()<UIWebViewDelegate, UIActionSheetDelegate, UIPrintInteractionControllerDelegate, MFMailComposeViewControllerDelegate, REComposeViewControllerDelegate, PreViewSelectDelegate>
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
 
 @property (retain) FileViewController *fileViewController;
@@ -95,10 +96,11 @@ enum PREVIEW_STATE {
             [array addObjectsFromArray:self.barItemsStar];
         else
             [array addObjectsFromArray:self.barItemsUnStar];
-        if (self.state == PREVIEW_DOWNLOADING) {
-            [self.exportItem setEnabled:NO];
-        } else
+
+        if ([self.preViewItem checkoutURL])
             [self.exportItem setEnabled:YES];
+        else
+            [self.exportItem setEnabled:NO];
 
         if (((SeafFile *)self.preViewItem).groups.count > 0) {
             [array addObject:self.commentItem];
@@ -132,25 +134,28 @@ enum PREVIEW_STATE {
 - (void)refreshView
 {
     NSURLRequest *request;
-    self.title = self.preViewItem.previewItemTitle;
-    [self clearPreView];
-    if (!self.preViewItem) {
-        self.state = PREVIEW_NONE;
-    } else if (self.preViewItem.previewItemURL) {
-        if (![QLPreviewController canPreviewItem:self.preViewItem]) {
-            self.state = PREVIEW_FAILED;
+    if (self.state != PREVIEW_PHOTO) {
+        [self clearPreView];
+        if (!self.preViewItem) {
+            self.state = PREVIEW_NONE;
+        } else if (self.preViewItem.previewItemURL) {
+            if (![QLPreviewController canPreviewItem:self.preViewItem]) {
+                self.state = PREVIEW_FAILED;
+            } else {
+                self.state = PREVIEW_SUCCESS;
+                if ([self.preViewItem.mime hasPrefix:@"audio"]
+                    || [self.preViewItem.mime hasPrefix:@"video"]
+                    || [self.preViewItem.mime isEqualToString:@"image/svg+xml"])
+                    self.state = PREVIEW_WEBVIEW;
+                else if([self.preViewItem.mime isEqualToString:@"text/x-markdown"] || [self.preViewItem.mime isEqualToString:@"text/x-seafile"])
+                    self.state = PREVIEW_WEBVIEW_JS;
+            }
         } else {
-            self.state = PREVIEW_SUCCESS;
-            if ([self.preViewItem.mime hasPrefix:@"audio"]
-                || [self.preViewItem.mime hasPrefix:@"video"]
-                || [self.preViewItem.mime isEqualToString:@"image/svg+xml"])
-                self.state = PREVIEW_WEBVIEW;
-            else if([self.preViewItem.mime isEqualToString:@"text/x-markdown"] || [self.preViewItem.mime isEqualToString:@"text/x-seafile"])
-                self.state = PREVIEW_WEBVIEW_JS;
+            self.state = PREVIEW_DOWNLOADING;
         }
-    } else {
-        self.state = PREVIEW_DOWNLOADING;
     }
+    self.title = self.preViewItem.previewItemTitle;
+    Debug("title=%@, state=%d", self.title, self.state);
     [self checkNavItems];
     CGRect r = CGRectMake(self.view.frame.origin.x, 0, self.view.frame.size.width, self.view.frame.size.height);
     switch (self.state) {
@@ -190,6 +195,9 @@ enum PREVIEW_STATE {
             [self.webView loadRequest:request];
             [self.view addSubview:self.webView];
             break;
+        case PREVIEW_PHOTO:
+            [self.fileViewController refreshCurrentPreviewItem];
+            break;
         case PREVIEW_NONE:
             break;
         default:
@@ -199,32 +207,38 @@ enum PREVIEW_STATE {
 
 - (void)setPreViewItem:(id<QLPreviewItem, PreViewDelegate>)item master:(UIViewController *)c
 {
-    if (self.masterPopoverController != nil) {
+    if (self.masterPopoverController != nil)
         [self.masterPopoverController dismissPopoverAnimated:YES];
-    }
 
     self.masterVc = c;
     _preViewItem = item;
-    if ([item isKindOfClass:[SeafFile class]])
+    if ([item isKindOfClass:[SeafFile class]]) {
+        ((SeafFile *)item).delegate = self;
         [(SeafFile *)item loadContent:NO];
-    if (IsIpad() && UIInterfaceOrientationIsLandscape(self.interfaceOrientation) && !self.hideMaster && self.masterVc) {
-        if (_preViewItem == nil) {
-            self.navigationItem.leftBarButtonItem = nil;
-        } else {
-            self.navigationItem.leftBarButtonItem = self.fullscreenItem;
-        }
     }
+    if (IsIpad() && UIInterfaceOrientationIsLandscape(self.interfaceOrientation) && !self.hideMaster && self.masterVc) {
+        if (_preViewItem == nil)
+            self.navigationItem.leftBarButtonItem = nil;
+        else
+            self.navigationItem.leftBarButtonItem = self.fullscreenItem;
+    }
+    if (self.state == PREVIEW_PHOTO)
+        self.state = PREVIEW_SUCCESS;
     [self refreshView];
+}
+
+- (void)setPreViewItems:(NSArray *)items current:(id<QLPreviewItem, PreViewDelegate>)item master:(UIViewController *)c
+{
+    [self clearPreView];
+    self.state = PREVIEW_PHOTO;
+    self.fileViewController.view.frame = CGRectMake(self.view.frame.origin.x, 0, self.view.frame.size.width, self.view.frame.size.height);;
+    [self.view addSubview:self.fileViewController.view];
+    [self.fileViewController setPreItems:items current:item];
 }
 
 - (void)goBack:(id)sender
 {
     [self.navigationController dismissViewControllerAnimated:NO completion:nil];
-}
-
-- (void)viewWillAppear:(BOOL)animated
-{
-    [super viewWillAppear:animated];
 }
 
 - (void)viewDidLoad
@@ -266,6 +280,7 @@ enum PREVIEW_STATE {
         self.progressView = [views objectAtIndex:0];
     }
     self.fileViewController = [[FileViewController alloc] init];
+    self.fileViewController.selectDelegate = self;
     self.state = PREVIEW_NONE;
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
@@ -430,8 +445,6 @@ enum PREVIEW_STATE {
 #pragma mark - SeafDentryDelegate
 - (void)fileContentLoaded :(SeafFile *)file result:(BOOL)res completeness:(int)percent
 {
-    if (file != self.preViewItem)
-        return;
     if (self.state != PREVIEW_DOWNLOADING) {
         [self refreshView];
         return;
@@ -441,16 +454,14 @@ enum PREVIEW_STATE {
         [self setPreViewItem:nil master:nil];
     } else {
         [self.progressView configureViewWithItem:self.preViewItem completeness:percent];
-        if (percent == 100)
-            [self refreshView];
+        if (percent == 100) [self refreshView];
     }
 }
 
 - (void)entryChanged:(SeafBase *)entry
 {
-    if (entry == self.preViewItem) {
+    if (entry == self.preViewItem)
         [self setPreViewItem:self.preViewItem master:self.masterVc];
-    }
 }
 - (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent
 {
@@ -777,8 +788,27 @@ enum PREVIEW_STATE {
     return NO;
 }
 
+# pragma - PreViewSelectedDelegate
+- (void)selectItem:(id<QLPreviewItem, PreViewDelegate>)prevItem
+{
+    _preViewItem = prevItem;
+    if ([prevItem isKindOfClass:[SeafFile class]]) {
+        ((SeafFile *)prevItem).delegate = self;
+        [(SeafFile *)prevItem loadContent:NO];
+    }
+    self.title = self.preViewItem.previewItemTitle;
+    Debug("prevItem=%@, title=%@", prevItem, self.title);
+    [self checkNavItems];
+}
+- (void)willSelect:(id<QLPreviewItem, PreViewDelegate>)prevItem
+{
+    if ([prevItem isKindOfClass:[SeafFile class]])
+        [(SeafFile *)prevItem loadContent:NO];
+}
+
 - (IBAction)handleSwipe:(UISwipeGestureRecognizer*)recognizer
 {
+#if 0
     if (![Utils isImageFile:self.preViewItem.previewItemTitle] || !self.masterVc || ![self.masterVc isKindOfClass:SeafFileViewController.class])
         return;
 
@@ -793,6 +823,7 @@ enum PREVIEW_STATE {
     if (!next)
         return;
     [self setPreViewItem:next master:self.masterVc];
+#endif
 }
 
 @end
