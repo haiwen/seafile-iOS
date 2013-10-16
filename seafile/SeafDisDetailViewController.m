@@ -59,6 +59,7 @@
         [self.view addSubview:self.loadingView];
     }
     self.loadingView.center = self.view.center;
+    self.loadingView.frame = CGRectMake(self.loadingView.frame.origin.x, (self.view.frame.size.height-self.loadingView.frame.size.height)/2, self.loadingView.frame.size.width, self.loadingView.frame.size.height);
     [self.loadingView startAnimating];
 }
 

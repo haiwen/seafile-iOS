@@ -313,7 +313,7 @@ enum {
               success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          @synchronized(self) {
-             Debug("Success to get starred files ...\n");
+             //Debug("Success to get starred files ...\n");
              [self handleData:JSON];
              [self saveStarstoCache:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
              if (success)

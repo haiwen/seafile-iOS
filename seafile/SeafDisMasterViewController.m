@@ -181,7 +181,7 @@
 #else
     long long mtime = [[dict objectForKey:@"mtime"] integerValue:0];
     if (mtime)
-        cell.detailTextLabel.text = [NSString stringWithFormat:@"Last dicsussion at %@",  [SeafDateFormatter stringFromLongLong:mtime]];
+        cell.detailTextLabel.text = [NSString stringWithFormat:@"%@",  [SeafDateFormatter stringFromLongLong:mtime]];
     else
         cell.detailTextLabel.text = nil;
 #endif

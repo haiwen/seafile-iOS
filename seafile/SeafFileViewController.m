@@ -122,6 +122,7 @@ enum {
         [self.tableView addSubview:self.loadingView];
     }
     self.loadingView.center = self.view.center;
+    self.loadingView.frame = CGRectMake(self.loadingView.frame.origin.x, (self.view.frame.size.height-self.loadingView.frame.size.height)/2, self.loadingView.frame.size.width, self.loadingView.frame.size.height);
     [self.loadingView startAnimating];
 }
 
@@ -1096,38 +1097,6 @@ enum {
 - (void)uploadSucess:(SeafUploadFile *)file oid:(NSString *)oid
 {
     [self uploadProgress:file result:YES completeness:100];
-}
-
-- (id<QLPreviewItem, PreViewDelegate>)nextItem:(id<QLPreviewItem, PreViewDelegate>)cur next:(BOOL)next
-{
-    id<QLPreviewItem, PreViewDelegate> n = nil;
-    int count = _directory.allItems.count;
-    int idx = [_directory.allItems indexOfObject:cur];
-    if (idx == NSNotFound)
-        return nil;
-    int nidx = -1;
-
-    if (next) {
-        for (int i = idx+1; i < count; ++i)
-            if ([Utils isImageFile:[[_directory.allItems objectAtIndex:i] name]]) {
-                nidx = i;
-                break;
-            }
-    } else {
-        for (int i = idx-1; i >=  0; --i)
-            if ([Utils isImageFile:[[_directory.allItems objectAtIndex:i] name]]) {
-                nidx = i;
-                break;
-            }
-    }
-    if (nidx >= 0) {
-        n = [_directory.allItems objectAtIndex:nidx];
-        if ([n isKindOfClass:[SeafFile class]])
-            ((SeafFile *)n).delegate = self;
-        NSIndexPath *ip = [NSIndexPath indexPathForRow:nidx inSection:0];
-        [self.tableView selectRowAtIndexPath:ip animated:YES scrollPosition:UITableViewScrollPositionBottom];
-    }
-    return n;
 }
 
 @end

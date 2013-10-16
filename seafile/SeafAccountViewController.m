@@ -10,6 +10,7 @@
 #import "SeafAccountViewController.h"
 #import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
+#import "SeafRepos.h"
 #import "Debug.h"
 
 #define HTTP @"http://"
@@ -163,6 +164,7 @@
         return;
 
     [SVProgressHUD dismiss];
+    conn.rootFolder = [[SeafRepos alloc] initWithConnection:conn];
     [self.navigationController dismissViewControllerAnimated:YES completion:nil];
     [startController saveAccount:connection];
     [startController selectAccount:connection];

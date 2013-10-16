@@ -122,7 +122,8 @@ static PrevFile *pfile;
 {
     if (index < 0 || index >= self.items.count)
         return [PrevFile defaultFile];
-    [self.selectDelegate willSelect:self.items[index]];
+    if (index != self.currentPreviewItemIndex)
+        [self.selectDelegate willSelect:self.items[index]];
     return self.items[index];
 }
 
@@ -138,7 +139,6 @@ static PrevFile *pfile;
 {
     if ([keyPath isEqualToString:@"currentPreviewItemIndex"]){
         // process here
-        Debug("currentPreviewItemIndex changed :%d", self.currentPreviewItemIndex);
         [self.selectDelegate selectItem:(id<QLPreviewItem, PreViewDelegate>)self.items[self.currentPreviewItemIndex]];
     }
 }

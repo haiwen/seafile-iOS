@@ -80,6 +80,7 @@ enum {
         [self.view addSubview:self.loadingView];
     }
     self.loadingView.center = self.view.center;
+    self.loadingView.frame = CGRectMake(self.loadingView.frame.origin.x, (self.view.frame.size.height-self.loadingView.frame.size.height)/2, self.loadingView.frame.size.width, self.loadingView.frame.size.height);
     [self.loadingView startAnimating];
 }
 
@@ -123,8 +124,10 @@ enum {
 
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
 {
+    Debug("error=%@\n", error);
     [self dismissLoadingView];
-    [SVProgressHUD showErrorWithStatus:@"Failed to load activities"];
+    if (error.code != NSURLErrorCancelled && error.code != 102)
+        [SVProgressHUD showErrorWithStatus:@"Failed to load activities"];
     self.state = ACTIVITY_END;
 }
 
@@ -169,9 +172,8 @@ enum {
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
-    if (!IsIpad()) {
+    if (!IsIpad())
         return (interfaceOrientation == UIInterfaceOrientationPortrait);
-    }
     return YES;
 }
 

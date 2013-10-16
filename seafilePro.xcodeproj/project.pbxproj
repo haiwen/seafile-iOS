@@ -1521,6 +1521,11 @@
 				CLASSPREFIX = Seaf;
 				LastUpgradeCheck = 0500;
 				ORGANIZATIONNAME = tsinghua;
+				TargetAttributes = {
+					57DB826C15A833FA00097CEC = {
+						DevelopmentTeam = 55LCTZ5354;
+					};
+				};
 			};
 			buildConfigurationList = 57DB826715A833F900097CEC /* Build configuration list for PBXProject "seafilePro" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -2119,8 +2124,8 @@
 					"\"$(SRCROOT)/libs/ios-openssl/lib\"",
 				);
 				PRODUCT_NAME = SeafilePro;
-				PROVISIONING_PROFILE = "4D776EE3-55F2-4899-9187-315F5F385190";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "4D776EE3-55F2-4899-9187-315F5F385190";
+				PROVISIONING_PROFILE = "D4BA2663-C28A-441B-97C1-A08722A3B1EE";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "D4BA2663-C28A-441B-97C1-A08722A3B1EE";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
@@ -2224,7 +2229,7 @@
 		57DB829715A833FA00097CEC /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Seafile-self-signed";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Seafile-self-signed";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "seafile/seafile-Prefix.pch";
@@ -2248,7 +2253,7 @@
 		57DB829815A833FA00097CEC /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Seafile-self-signed";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Seafile-self-signed";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "seafile/seafile-Prefix.pch";
