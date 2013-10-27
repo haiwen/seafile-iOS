@@ -702,6 +702,16 @@ enum {
 }
 
 #pragma mark - UIAlertViewDelegate
+- (void)checkPassword:(NSString *)password
+{
+    [_curEntry setDelegate:self];
+    [SVProgressHUD showWithStatus:@"Checking library password ..."];
+    if (self.connection.localDecrypt)
+        [_curEntry checkRepoPassword:password];
+    else
+        [_curEntry setRepoPassword:password];
+}
+
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
     if (buttonIndex == alertView.cancelButtonIndex) {
@@ -731,12 +741,7 @@ enum {
                 [self alertWithMessage:@"The length of password should be between 3 and 100"];
                 return;
             }
-            [_curEntry setDelegate:self];
-            if (self.connection.localDecrypt)
-                [_curEntry checkRepoPassword:input];
-            else
-                [_curEntry setRepoPassword:input];
-            [SVProgressHUD showWithStatus:@"Checking library password ..."];
+            [self performSelector:@selector(checkPassword:) withObject:input afterDelay:0.0];
         } else if (self.state == STATE_MKDIR) {
             if (!input || input.length == 0) {
                 [self alertWithMessage:@"Folder name must not be empty"];
@@ -826,8 +831,7 @@ enum {
 
 - (void)repoPasswordSet:(SeafBase *)entry WithResult:(BOOL)success;
 {
-    if (entry != _curEntry)
-        return;
+    if (entry != _curEntry)  return;
 
     NSAssert([entry isKindOfClass:[SeafRepo class]], @"entry must be a repo\n");
     [SVProgressHUD dismiss];

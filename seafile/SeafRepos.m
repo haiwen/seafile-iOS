@@ -34,6 +34,8 @@
                    mtime:(long long)aMtime
                encrypted:(BOOL)aEncrypted
               encVersion:(int)aEncVersion
+                   magic:(NSString *)aMagic
+                  encKey:(NSString *)aEncKey
 {
     NSString *aMime = @"text/directory-documents";
     if (aEncrypted)
@@ -48,6 +50,8 @@
         _encrypted = aEncrypted;
         _gid = groupid;
         _encVersion = aEncVersion;
+        _magic = aMagic;
+        _encKey = aEncKey;
     }
     return self;
 }
@@ -152,6 +156,8 @@
                              mtime:[[repoInfo objectForKey:@"mtime"] integerValue:0]
                              encrypted:[[repoInfo objectForKey:@"encrypted"] booleanValue:NO]
                              encVersion:(int)[[repoInfo objectForKey:@"enc_version"] integerValue:1]
+                             magic:[repoInfo objectForKey:@"magic"]
+                             encKey:[repoInfo objectForKey:@"random_key"]
                              ];
         newRepo.delegate = self.delegate;
         [newRepos addObject:newRepo];

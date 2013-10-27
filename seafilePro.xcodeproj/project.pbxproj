@@ -1166,7 +1166,6 @@
 		5709512815B9B1B600F48C08 /* ui */ = {
 			isa = PBXGroup;
 			children = (
-				5736A5301796F44C00CF2C53 /* SeafStartFooterView.xib */,
 				571ABF551625DF6E005C9B08 /* DownloadingProgress_iPad.xib */,
 				570CF8BF16613E5600DFADBC /* DownloadingProgress_iPhone.xib */,
 				57655333161BEA69005E5327 /* FailToPreview_iPad.xib */,
@@ -1177,6 +1176,7 @@
 				570DFAC516A15D0100ADD5F2 /* SeafAccountViewController.xib */,
 				577B6C6716AADC26008E82C2 /* SeafCell.xib */,
 				57A94356176331050035FD20 /* SeafDirCell.xib */,
+				5736A5301796F44C00CF2C53 /* SeafStartFooterView.xib */,
 				570DFAD116A1EA3D00ADD5F2 /* SeafStartHeaderView.xib */,
 				57E1E89D1737ED0F006601FE /* SeafTextEditorViewController.xib */,
 				574171BF177E8D3700D24B6F /* SeafUploadDirViewController.xib */,

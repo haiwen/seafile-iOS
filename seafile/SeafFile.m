@@ -215,7 +215,7 @@
     for (NSString *blk_id in self.blks) {
         NSData *data = [[NSData alloc] initWithContentsOfFile:[Utils blockPath:blk_id]];
         if (password)
-            data = [data decrypt:password version:repo.encVersion];
+            data = [data decrypt:password encKey:repo.encKey version:repo.encVersion];
         if (!data)
             return -1;
         [handle writeData:data];

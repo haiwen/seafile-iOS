@@ -143,6 +143,21 @@
                  } ];
 }
 
+- (void)checkRepoPasswordV2:(NSString *)password
+{
+    SeafRepo *repo = [connection getRepo:self.repoId];
+    if (!repo.magic || !repo.encKey) {
+        [self.delegate repoPasswordSet:self WithResult:NO];
+        return;
+    }
+    NSString *magic = [NSData passwordMaigc:password repo:self.repoId version:2];
+    if ([repo.magic isEqualToString:magic]) {
+        [Utils setRepo:self.repoId password:password];
+        [self.delegate repoPasswordSet:self WithResult:YES];
+    } else
+        [self.delegate repoPasswordSet:self WithResult:NO];
+}
+
 - (void)checkRepoPassword:(NSString *)password
 {
     if (!self.repoId) {
@@ -150,7 +165,8 @@
         return;
     }
     int version = [[connection getRepo:self.repoId] encVersion];
-
+    if (version == 2)
+        return [self checkRepoPasswordV2:password];
     NSString *magic = [NSData passwordMaigc:password repo:self.repoId version:version];
     NSString *request_str = [NSString stringWithFormat:API_URL"/repos/%@/?op=checkpassword", self.repoId];
     NSString *formString = [NSString stringWithFormat:@"magic=%@", [magic escapedPostForm]];

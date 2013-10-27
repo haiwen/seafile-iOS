@@ -152,7 +152,7 @@ static NSMutableDictionary *uploadFiles = nil;
     [operation start];
 }
 
-- (BOOL)chunkFile:(NSString *)path blockids:(NSMutableArray *)blockids paths:(NSMutableArray *)paths password:(NSString *)password version:(int)version
+- (BOOL)chunkFile:(NSString *)path blockids:(NSMutableArray *)blockids paths:(NSMutableArray *)paths password:(NSString *)password repo:(SeafRepo *)repo
 {
     BOOL ret = YES;
     int CHUNK_LENGTH = 1024*1024;
@@ -163,7 +163,7 @@ static NSMutableDictionary *uploadFiles = nil;
         NSData *data = [fileHandle readDataOfLength:CHUNK_LENGTH];
         if (!data || data.length == 0) break;
         if (password)
-            data = [data encrypt:password version:version];
+            data = [data encrypt:password encKey:repo.encKey version:repo.encVersion];
         if (!data) {
             ret = NO;
             break;
@@ -262,7 +262,7 @@ static NSMutableDictionary *uploadFiles = nil;
              NSMutableArray *blockids = [[NSMutableArray alloc] init];
              NSMutableArray *paths = [[NSMutableArray alloc] init];
              NSString *passwrod = [Utils getRepoPassword:repo.repoId];
-             if ([self chunkFile:self.lpath blockids:blockids paths:paths password:passwrod version:repo.encVersion]) {
+             if ([self chunkFile:self.lpath blockids:blockids paths:paths password:passwrod repo:repo]) {
                  [self uploadByBlocks:url uploadpath:uploadpath blocks:blockids paths:paths update:update];
              } else {
                  [self finishUpload:NO];

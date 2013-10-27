@@ -10,8 +10,8 @@
 
 @interface NSData (Encryption)
 
-- (NSData *)decrypt:(NSString *)password version:(int)version;
-- (NSData *)encrypt:(NSString *)password version:(int)version;
+- (NSData *)decrypt:(NSString *)password encKey:(NSString *)encKey version:(int)version;
+- (NSData *)encrypt:(NSString *)password encKey:(NSString *)encKey version:(int)version;
 - (NSString *)SHA1;
 
 + (NSString *)passwordMaigc:(NSString *)password repo:(NSString *)repoId version:(int)version;

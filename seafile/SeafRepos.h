@@ -12,6 +12,8 @@
 @property (readonly) NSString *repoType;
 @property (readonly, copy) NSString *desc;
 @property (readonly, copy) NSString *owner;
+@property (readonly, copy) NSString *magic;
+@property (readonly, copy) NSString *encKey;
 @property (readonly) BOOL passwordRequired;
 @property (readonly) BOOL editable;
 @property (readwrite) BOOL encrypted;

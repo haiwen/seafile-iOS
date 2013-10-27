@@ -120,13 +120,13 @@
 
     views = [[NSBundle mainBundle] loadNibNamed:@"SeafStartFooterView" owner:self options:nil];
     ColorfulButton *bt = [views objectAtIndex:0];
-    bt.frame = CGRectMake(0,0, self.tableView.frame.size.width, 50);
-    bt.backgroundColor = [UIColor clearColor];
+    bt.frame = CGRectMake(-1, -1, self.tableView.frame.size.width+2, 50);
     [bt addTarget:self action:@selector(goToDefaultBtclicked:) forControlEvents:UIControlEventTouchUpInside];
-    [bt.layer setBorderColor:[[UIColor colorWithRed:224/255.0 green:224/255.0 blue:224/255.0 alpha:1.0] CGColor]];
     bt.layer.cornerRadius = 0;
-    [bt.layer setBorderColor:[[UIColor lightTextColor] CGColor]];
-    [bt setHighColor:[UIColor colorWithRed:244/255.0 green:244/255.0 blue:244/255.0 alpha:1.0] lowColor:[UIColor colorWithRed:244/255.0 green:244/255.0 blue:244/255.0 alpha:1.0]];
+    bt.layer.borderWidth = 1.0f;
+    bt.layer.masksToBounds = YES;
+    bt.backgroundColor = [UIColor clearColor];
+    [bt.layer setBorderColor:[[UIColor grayColor] CGColor]];
     [bt setTitleColor:[UIColor colorWithRed:112/255.0 green:112/255.0 blue:112/255.0 alpha:1.0] forState:UIControlStateNormal];
 
     self.footer = bt;
@@ -157,7 +157,9 @@
 
 - (void)viewWillLayoutSubviews
 {
-    self.footer.frame = CGRectMake(self.view.frame.origin.x, self.view.frame.size.height-50, self.tableView.frame.size.width, 50);
+    ColorfulButton *bt = self.footer;
+    bt.frame = CGRectMake(self.view.frame.origin.x-1, self.view.frame.size.height-50, self.tableView.frame.size.width+2, 50);
+    [bt.layer setBorderColor:[[UIColor grayColor] CGColor]];
 }
 
 - (void)viewDidUnload
