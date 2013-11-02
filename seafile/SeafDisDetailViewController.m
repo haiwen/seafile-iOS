@@ -193,10 +193,7 @@
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
-    if (!IsIpad()) {
-        return (interfaceOrientation == UIInterfaceOrientationPortrait);
-    }
-    return YES;
+    return IsIpad() || (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
 
 - (BOOL)htmlOK:(UIWebView *)webView
@@ -256,6 +253,7 @@
 
 - (void)composeViewController:(REComposeViewController *)composeViewController didFinishWithResult:(REComposeResult)result
 {
+    Debug("...result=%d", result);
     if (result == REComposeResultCancelled) {
         [composeViewController dismissViewControllerAnimated:YES completion:nil];
     } else if (result == REComposeResultPosted) {

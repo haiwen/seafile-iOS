@@ -302,10 +302,7 @@ enum PREVIEW_STATE {
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
-    if (!IsIpad()) {
-        return (interfaceOrientation == UIInterfaceOrientationPortrait);
-    }
-    return YES;
+    return IsIpad() || (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
 
 - (void)viewWillLayoutSubviews

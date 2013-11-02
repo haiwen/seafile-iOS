@@ -172,9 +172,7 @@ enum {
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
-    if (!IsIpad())
-        return (interfaceOrientation == UIInterfaceOrientationPortrait);
-    return YES;
+    return IsIpad() || (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
 
 @end
