@@ -428,13 +428,10 @@ enum {
     if (!_selectedindex)
         return;
     SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex];
-    if ([file isKindOfClass:[SeafUploadFile class]])
+    if ([file isKindOfClass:[SeafUploadFile class]] || ![file hasCache])
         return;
-    if (![file hasCache])
-        return;
-    NSString *cancelTitle = nil;
-    if (!IsIpad())
-        cancelTitle = @"Cancel";
+
+    NSString *cancelTitle = IsIpad() ? nil : @"Cancel";
     if (file.mpath)
         actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:@"Delete", @"Redownload", @"Upload", nil];
     else
@@ -459,9 +456,7 @@ enum {
     if (![file isKindOfClass:[SeafUploadFile class]])
         return;
 
-    NSString *cancelTitle = nil;
-    if (!IsIpad())
-        cancelTitle = @"Cancel";
+    NSString *cancelTitle = IsIpad() ? nil : @"Cancel";
     actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:@"Delete", nil];
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
     [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
@@ -992,15 +987,8 @@ enum {
 }
 
 #pragma mark - QBImagePickerControllerDelegate
-- (void)imagePickerController:(QBImagePickerController *)imagePickerController didFinishPickingMediaWithInfo:(id)info
+- (void)uploadPickedMedia:(id)info
 {
-    if (IsIpad()) {
-        [self.popoverController dismissPopoverAnimated:YES];
-        self.popoverController = nil;
-    } else {
-        [imagePickerController.navigationController dismissViewControllerAnimated:YES completion:NULL];
-    }
-
     NSMutableArray *files = [[NSMutableArray alloc] init];
     int i = 0;
     NSString *date = [self.formatter stringFromDate:[NSDate date]];
@@ -1029,6 +1017,17 @@ enum {
     for (SeafUploadFile *file in files) {
         [file upload:_connection repo:self.directory.repoId path:self.directory.path update:NO];
     }
+}
+
+- (void)imagePickerController:(QBImagePickerController *)imagePickerController didFinishPickingMediaWithInfo:(id)info
+{
+    if (IsIpad()) {
+        [self.popoverController dismissPopoverAnimated:YES];
+        self.popoverController = nil;
+    } else {
+        [imagePickerController.navigationController dismissViewControllerAnimated:YES completion:NULL];
+    }
+    [self performSelectorInBackground:@selector(uploadPickedMedia:) withObject:info];
 }
 
 - (void)imagePickerControllerDidCancel:(QBImagePickerController *)imagePickerController
@@ -1092,7 +1091,7 @@ enum {
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
     if (res && percent < 100 && [cell isKindOfClass:[SeafUploadingFileCell class]])
-        [((SeafUploadingFileCell *)cell).progressView setProgress:percent];
+        [((SeafUploadingFileCell *)cell).progressView setProgress:percent*1.0f/100];
     else {
         [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
     }

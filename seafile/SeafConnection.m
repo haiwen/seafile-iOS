@@ -448,8 +448,10 @@ enum {
 - (SeafUploadFile *)getUploadfile:(NSString *)lpath
 {
     SeafUploadFile *ufile = [self.uploadFiles objectForKey:lpath];
-    if (!ufile)
+    if (!ufile) {
         ufile = [[SeafUploadFile alloc] initWithPath:lpath];
+        [self.uploadFiles setObject:ufile forKey:lpath];
+    }
     return ufile;
 }
 

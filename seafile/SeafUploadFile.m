@@ -27,6 +27,7 @@ static NSMutableDictionary *uploadFiles = nil;
 @interface SeafUploadFile ()
 @property (readonly) NSString *mime;
 @property (strong, readonly) NSURL *preViewURL;
+@property (strong) AFHTTPRequestOperation *operation;
 @end
 
 @implementation SeafUploadFile
@@ -69,6 +70,7 @@ static NSMutableDictionary *uploadFiles = nil;
 
 - (void)removeFile
 {
+    [self.operation cancel];
     [self saveAttr:nil];
     [[NSFileManager defaultManager] removeItemAtPath:self.lpath error:nil];
 }
@@ -87,6 +89,7 @@ static NSMutableDictionary *uploadFiles = nil;
         if (!_uploading)
             return;
         _uploading = NO;
+        self.operation = nil;
     }
     NSMutableDictionary *dict = self.uploadAttr;
     if (!dict) {
@@ -104,6 +107,16 @@ static NSMutableDictionary *uploadFiles = nil;
         [_delegate uploadProgress:self result:NO completeness:0];
 }
 
+- (int)percentForShow:(long long)totalBytesWritten expected:(long long)totalBytesExpectedToWrite
+{
+    int percent = 99;
+    if (totalBytesExpectedToWrite > 0)
+        percent = (int)(totalBytesWritten * 100 / totalBytesExpectedToWrite);
+    if (percent >= 100)
+        percent = 99;
+    return percent;
+}
+
 - (void)uploadByFile:(NSString *)surl path:(NSString *)uploadpath update:(BOOL)update
 {
     NSURL *url = [NSURL URLWithString:surl];
@@ -119,12 +132,9 @@ static NSMutableDictionary *uploadFiles = nil;
     }];
     request.URL = url;
     AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
+    self.operation = operation;
     [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
-        int percent = 99;
-        if (totalBytesExpectedToWrite > 0)
-            percent = (int)totalBytesWritten * 100 / totalBytesExpectedToWrite;
-        if (percent >= 100)
-            percent = 99;
+        int percent = [self percentForShow:totalBytesWritten expected:totalBytesExpectedToWrite];
         [_delegate uploadProgress:self result:YES completeness:percent];
     }];
     [operation setCompletionBlockWithSuccess:
@@ -198,11 +208,7 @@ static NSMutableDictionary *uploadFiles = nil;
     request.URL = url;
     AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
     [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
-        int percent = 99;
-        if (totalBytesExpectedToWrite > 0)
-            percent = (int)(totalBytesWritten * 100 / totalBytesExpectedToWrite);
-        if (percent >= 100)
-            percent = 99;
+        int percent = [self percentForShow:totalBytesWritten expected:totalBytesExpectedToWrite];
         [_delegate uploadProgress:self result:YES completeness:percent];
     }];
     [operation setCompletionBlockWithSuccess:
@@ -241,10 +247,8 @@ static NSMutableDictionary *uploadFiles = nil;
     [_delegate uploadProgress:self result:YES completeness:0];
     [SeafAppDelegate incUploadnum];
     NSString *upload_url;
-    int byblock = NO;
     SeafRepo *repo = [connection getRepo:repoId];
-    if (repo.encrypted && connection.localDecrypt)
-        byblock = YES;
+    BOOL byblock = (repo.encrypted && connection.localDecrypt);
     if (!update)
         upload_url = [NSString stringWithFormat:API_URL"/repos/%@/upload-", repoId];
     else
@@ -257,7 +261,7 @@ static NSMutableDictionary *uploadFiles = nil;
     [connection sendRequest:upload_url repo:repoId success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          NSString *url = JSON;
-         Debug("Upload file %@ %@, %@ update=%d\n", self.name, url, uploadpath, update);
+         Debug("Upload file %@ %@, %@ update=%d, byblock=%d\n", self.name, url, uploadpath, update, byblock);
          if (byblock) {
              NSMutableArray *blockids = [[NSMutableArray alloc] init];
              NSMutableArray *paths = [[NSMutableArray alloc] init];
