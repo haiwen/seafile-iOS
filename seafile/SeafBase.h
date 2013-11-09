@@ -13,6 +13,8 @@
 @interface NSObject (NSObjectValue)
 - (long long)integerValue:(int)defaultValue;
 - (BOOL)booleanValue:(BOOL)defaultValue;
+- (NSString *)stringValue;
+
 @end
 
 enum SEAFBASE_STATE {

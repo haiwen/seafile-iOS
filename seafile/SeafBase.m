@@ -31,6 +31,13 @@
     else
         return defaultValue;
 }
+
+- (NSString *)stringValue
+{
+    if ([self isKindOfClass:[NSString class]])
+        return (NSString *)self;
+    return nil;
+}
 @end
 
 
@@ -151,7 +158,7 @@
         return;
     }
     NSString *magic = [NSData passwordMaigc:password repo:self.repoId version:2];
-    if ([repo.magic isEqualToString:magic]) {
+    if ([magic isEqualToString:repo.magic]) {
         [Utils setRepo:self.repoId password:password];
         [self.delegate repoPasswordSet:self WithResult:YES];
     } else

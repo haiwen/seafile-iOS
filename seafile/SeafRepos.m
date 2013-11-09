@@ -156,7 +156,7 @@
                              mtime:[[repoInfo objectForKey:@"mtime"] integerValue:0]
                              encrypted:[[repoInfo objectForKey:@"encrypted"] booleanValue:NO]
                              encVersion:(int)[[repoInfo objectForKey:@"enc_version"] integerValue:1]
-                             magic:[repoInfo objectForKey:@"magic"]
+                             magic:[[repoInfo objectForKey:@"magic"] stringValue]
                              encKey:[repoInfo objectForKey:@"random_key"]
                              ];
         newRepo.delegate = self.delegate;

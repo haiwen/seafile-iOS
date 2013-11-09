@@ -1466,6 +1466,9 @@
 				LastUpgradeCheck = 0500;
 				ORGANIZATIONNAME = tsinghua;
 				TargetAttributes = {
+					571D8CA91677881400F1A22C = {
+						DevelopmentTeam = 55LCTZ5354;
+					};
 					57DB826C15A833FA00097CEC = {
 						DevelopmentTeam = 55LCTZ5354;
 					};
