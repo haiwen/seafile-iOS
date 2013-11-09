@@ -166,7 +166,7 @@ enum {
     if (_token)
         [request setValue:[NSString stringWithFormat:@"Token %@", _token] forHTTPHeaderField:@"Authorization"];
 
-    [request setTimeoutInterval:10.0f];
+    [request setTimeoutInterval:30.0f];
     SeafJSONRequestOperation *operation = [SeafJSONRequestOperation JSONRequestOperationWithRequest:request success:success  failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
         if (response.statusCode == HTTP_ERR_LOGIN_REUIRED && self.username && self.password) {
             [self loginWithAddress:nil username:self.username password:self.password];

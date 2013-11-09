@@ -496,7 +496,7 @@ enum TOOL_ITEM {
     self.navigationItem.leftBarButtonItems = litems;
 
     NSURL *url = [NSURL fileURLWithPath:path];
-    NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
+    NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 30];
     [(UIWebView *)self.view loadRequest: request];
 }
 
