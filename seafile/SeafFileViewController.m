@@ -701,7 +701,7 @@ enum {
 {
     [_curEntry setDelegate:self];
     [SVProgressHUD showWithStatus:@"Checking library password ..."];
-    if (self.connection.localDecrypt)
+    if ([self.connection localDecrypt:[_curEntry repoId]])
         [_curEntry checkRepoPassword:password];
     else
         [_curEntry setRepoPassword:password];

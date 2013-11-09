@@ -335,7 +335,7 @@
 - (void)realLoadContent
 {
     SeafRepo *repo = [connection getRepo:self.repoId];
-    if (repo.encrypted && connection.localDecrypt)
+    if (repo.encrypted && [connection localDecrypt:self.repoId])
         [self downloadByBlocks];
     else
         [self downloadByFile];

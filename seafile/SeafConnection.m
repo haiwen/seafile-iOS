@@ -90,10 +90,18 @@ enum {
     return [[_info objectForKey:@"usage"] integerValue:-1];
 }
 
+#if 0
 - (BOOL)localDecrypt
 {
     return [[_info objectForKey:@"flags"] integerValue:0] & FLAG_LOCAL_DECRYPT;
 }
+#else
+- (BOOL)localDecrypt:(NSString *)repoId
+{
+    SeafRepo *repo = [self getRepo:repoId];
+    return repo.encrypted && repo.encVersion >= 2;
+}
+#endif
 
 - (void)getAccountInfo:(id<SSConnectionAccountDelegate>)degt
 {

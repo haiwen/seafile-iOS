@@ -44,11 +44,13 @@
 @property (readwrite, strong) NSString *token;
 @property (readonly) NSArray *seafGroups;
 @property (readwrite) int newreply;
-@property (readonly) BOOL localDecrypt;
 
 
 - (id)initWithUrl:(NSString *)url username:(NSString *)username;
 - (void)loadRepos:(id)degt;
+
+- (BOOL)localDecrypt:(NSString *)repoId;
+
 
 - (void)sendRequest:(NSString *)url repo:(NSString *)repoId
             success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data))success

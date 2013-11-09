@@ -172,7 +172,7 @@
             return;
         }
         [_curDir setDelegate:self];
-        if (_directory->connection.localDecrypt)
+        if ([_directory->connection localDecrypt:_curDir.repoId])
             [_curDir checkRepoPassword:input];
         else
             [_curDir setRepoPassword:input];
