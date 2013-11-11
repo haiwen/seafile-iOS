@@ -991,10 +991,28 @@ enum {
 {
     NSMutableArray *files = [[NSMutableArray alloc] init];
     int i = 0;
+    NSString *path;
     NSString *date = [self.formatter stringFromDate:[NSDate date]];
     for (NSDictionary *dict in info) {
         i++;
-        NSString *path;
+        if (![@"ALAssetTypeVideo" isEqualToString:[dict objectForKey:UIImagePickerControllerMediaType]]) {
+            NSString *filename = [NSString stringWithFormat:@"Photo %@-%d.jpg", date, i];
+            path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
+        } else {
+            NSString *ext = [[dict objectForKey:@"UIImagePickerControllerReferenceURL"] pathExtension];
+            NSString *filename = [NSString stringWithFormat:@"Video %@-%d.%@", date, i, ext];
+            path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
+        }
+
+        SeafUploadFile *file =  [self.connection getUploadfile:path];
+        [files addObject:file];
+    }
+    [self.directory addUploadFiles:files];
+    [self.tableView reloadData];
+
+    i = 0;
+    for (NSDictionary *dict in info) {
+        i++;
         if (![@"ALAssetTypeVideo" isEqualToString:[dict objectForKey:UIImagePickerControllerMediaType]]) {
             UIImage *image = [dict objectForKey:@"UIImagePickerControllerOriginalImage"];
             NSString *filename = [NSString stringWithFormat:@"Photo %@-%d.jpg", date, i];
@@ -1010,11 +1028,6 @@ enum {
 
         SeafUploadFile *file =  [self.connection getUploadfile:path];
         file.delegate = self;
-        [files addObject:file];
-    }
-    [self.directory addUploadFiles:files];
-    [self.tableView reloadData];
-    for (SeafUploadFile *file in files) {
         [file upload:_connection repo:self.directory.repoId path:self.directory.path update:NO];
     }
 }

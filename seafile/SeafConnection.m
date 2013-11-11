@@ -98,9 +98,8 @@ enum {
 #else
 - (BOOL)localDecrypt:(NSString *)repoId
 {
-    //SeafRepo *repo = [self getRepo:repoId];
-    //return repo.encrypted && repo.encVersion >= 2 && repo.magic;
-    return NO;
+    SeafRepo *repo = [self getRepo:repoId];
+    return repo.encrypted && repo.encVersion >= 2 && repo.magic;
 }
 #endif
 

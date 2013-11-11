@@ -243,6 +243,8 @@ static NSMutableDictionary *uploadFiles = nil;
             return;
         _uploading = YES;
         _uploadProgress = 0;
+        NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:self.lpath error:nil];
+        _filesize = attrs.fileSize;
     }
     [_delegate uploadProgress:self result:YES completeness:0];
     [SeafAppDelegate incUploadnum];
