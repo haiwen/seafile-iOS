@@ -71,6 +71,7 @@
     [bt setTitleColor:[UIColor colorWithRed:112/255.0 green:112/255.0 blue:112/255.0 alpha:1.0] forState:UIControlStateNormal];
 
     self.headerView = bt;
+    [self startTimer];
     [self refresh:nil];
 }
 
@@ -125,11 +126,26 @@
             [self doneLoadingTableViewData];
         }
     }
-                         failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
-                             Warning("Failed to get groups ...\n");
-                             [SVProgressHUD showErrorWithStatus:@"Failed to get groups ..."];
-                             [self doneLoadingTableViewData];
-                         }];
+                       failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
+                           Warning("Failed to get groups ...\n");
+                           [SVProgressHUD showErrorWithStatus:@"Failed to get groups ..."];
+                           [self doneLoadingTableViewData];
+                       }];
+}
+
+- (void)startTimer
+{
+    [NSTimer scheduledTimerWithTimeInterval:3*60
+                                     target:self
+                                   selector:@selector(tick:)
+                                   userInfo:nil
+                                    repeats:YES];
+}
+
+- (void)tick:(NSTimer *)timer
+{
+    if (self.connection)
+        [self refresh:nil];
 }
 
 - (void)setConnection:(SeafConnection *)conn
@@ -137,6 +153,7 @@
     _connection = conn;
     [self.detailViewController setGroup:nil groupId:nil];
     self.detailViewController.connection = conn;
+    [self refresh:nil];
 }
 
 - (void)viewWillAppear:(BOOL)animated

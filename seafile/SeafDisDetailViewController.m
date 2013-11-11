@@ -98,9 +98,7 @@
 
 - (BOOL)isReply
 {
-    if (_url)
-        return YES;
-    return NO;
+    return _url ? YES : NO;
 }
 
 - (void)configureView
@@ -253,7 +251,6 @@
 
 - (void)composeViewController:(REComposeViewController *)composeViewController didFinishWithResult:(REComposeResult)result
 {
-    Debug("...result=%d", result);
     if (result == REComposeResultCancelled) {
         [composeViewController dismissViewControllerAnimated:YES completion:nil];
     } else if (result == REComposeResultPosted) {
