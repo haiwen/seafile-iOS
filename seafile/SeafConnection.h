@@ -34,7 +34,7 @@
 }
 
 @property (retain) NSMutableDictionary *info;
-@property (copy) NSString *address;
+@property (nonatomic, copy) NSString *address;
 @property (weak) id <SSConnectionDelegate> delegate;
 @property (strong) SeafRepos *rootFolder;
 @property (readonly) NSString *username;

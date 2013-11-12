@@ -224,13 +224,16 @@
 - (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSMutableURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
 {
     Debug("Request %@, self=%@\n", request.URL, self.url);
+    Debug("...%@", [self.connection.address stringByAppendingString:API_URL"/html/discussion/"]);
     NSString *urlStr = request.URL.absoluteString;
     if ([urlStr hasPrefix:@"file://"] || [urlStr isEqualToString:self.url]) {
         return YES;
     } else if ([urlStr hasPrefix:[self.connection.address stringByAppendingString:API_URL"/html/discussion/"]]) {
+        Debug("....self=%@", self.url);
         SeafDisDetailViewController *c = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"DISDETAILVC"];
         [c setUrl:urlStr connection:self.connection];
         [self.navigationController pushViewController:c animated:NO];
+        Debug("....");
     }
 
     return NO;
@@ -254,13 +257,15 @@
     if (result == REComposeResultCancelled) {
         [composeViewController dismissViewControllerAnimated:YES completion:nil];
     } else if (result == REComposeResultPosted) {
-        NSLog(@"Text: %@", composeViewController.text);
+        Debug("Text: %@", composeViewController.text);
+        [SVProgressHUD showWithStatus:@""];
         NSString *form = [NSString stringWithFormat:@"message=%@", [composeViewController.text escapedPostForm]];
         [self.connection sendPost:self.url repo:nil form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
             [composeViewController dismissViewControllerAnimated:YES completion:nil];
             NSString *html = [JSON objectForKey:@"html"];
             NSString *js = [NSString stringWithFormat:@"addMessage(\"%@\");", [html stringEscapedForJavasacript]];
             [self.webview stringByEvaluatingJavaScriptFromString:js];
+            [SVProgressHUD dismiss];
         } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
             [SVProgressHUD showErrorWithStatus:@"Failed to add discussion"];
         }];

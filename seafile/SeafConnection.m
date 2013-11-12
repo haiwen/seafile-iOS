@@ -42,7 +42,7 @@ enum {
 - (id)init:(NSString *)url
 {
     if (self = [super init]) {
-        _address = url;
+        self.address = url;
         queue = [[NSOperationQueue alloc] init];
         _rootFolder = [[SeafRepos alloc] initWithConnection:self];
         NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
@@ -68,6 +68,14 @@ enum {
         }
     }
     return self;
+}
+
+-(void)setAddress:(NSString *)address
+{
+    if ([address hasSuffix:@"/"]) {
+        _address = [address substringToIndex:address.length-1];
+    } else
+        _address = address;
 }
 
 - (NSString *)username
@@ -141,7 +149,7 @@ enum {
     SeafJSONRequestOperation *operation = [SeafJSONRequestOperation
                                            JSONRequestOperationWithRequest:request
                                            success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
-                                               _address = url;
+                                               self.address = url;
                                                _token = [JSON objectForKey:@"token"];
                                                [_info setObject:username forKey:@"username"];
                                                [_info setObject:password forKey:@"password"];
