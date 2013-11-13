@@ -402,7 +402,7 @@
         _pullNotificatonBackgroundView.frame = CGRectMake(0, 0, _pullNotificatonBackgroundView.frame.size.width, _pullNotificatonBackgroundView.frame.size.height);
         [UIView beginAnimations:@"CheveronAnimation" context:nil];
         [UIView setAnimationDelegate:self];
-        [UIView setAnimationDidStopSelector:@selector(repeatAnimation)];
+        //[UIView setAnimationDidStopSelector:@selector(repeatAnimation)];
         [UIView setAnimationDuration:2.0];
         [UIView setAnimationCurve:UIViewAnimationCurveLinear];
         _pullNotificatonBackgroundView.layer.opacity = 0.0;

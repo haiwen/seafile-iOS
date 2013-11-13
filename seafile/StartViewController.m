@@ -119,8 +119,8 @@
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 
     views = [[NSBundle mainBundle] loadNibNamed:@"SeafStartFooterView" owner:self options:nil];
+
     ColorfulButton *bt = [views objectAtIndex:0];
-    bt.frame = CGRectMake(-1, -1, self.tableView.frame.size.width+2, 50);
     [bt addTarget:self action:@selector(goToDefaultBtclicked:) forControlEvents:UIControlEventTouchUpInside];
     bt.layer.cornerRadius = 0;
     bt.layer.borderWidth = 1.0f;
@@ -128,7 +128,6 @@
     bt.backgroundColor = [UIColor clearColor];
     [bt.layer setBorderColor:[[UIColor grayColor] CGColor]];
     [bt setTitleColor:[UIColor colorWithRed:112/255.0 green:112/255.0 blue:112/255.0 alpha:1.0] forState:UIControlStateNormal];
-
     self.footer = bt;
     [self.view addSubview:bt];
     self.footer.hidden = YES;
@@ -158,7 +157,11 @@
 - (void)viewWillLayoutSubviews
 {
     ColorfulButton *bt = self.footer;
-    bt.frame = CGRectMake(self.view.frame.origin.x-1, self.view.frame.size.height-50, self.tableView.frame.size.width+2, 50);
+    if (IsIpad()) {
+        bt.frame = CGRectMake(self.view.frame.origin.x-1, self.view.frame.size.height-57, self.tableView.frame.size.width+2, 58);
+        bt.backgroundColor = [UIColor colorWithRed:227.0/255.0 green:227.0/255.0 blue:227.0/255.0 alpha:1.0];
+    } else
+        bt.frame = CGRectMake(self.view.frame.origin.x-1, self.view.frame.size.height-51, self.tableView.frame.size.width+2, 52);
     [bt.layer setBorderColor:[[UIColor grayColor] CGColor]];
 }
 

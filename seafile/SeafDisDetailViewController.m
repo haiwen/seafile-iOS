@@ -259,6 +259,7 @@
     } else if (result == REComposeResultPosted) {
         Debug("Text: %@", composeViewController.text);
         [SVProgressHUD showWithStatus:@""];
+        [composeViewController.navigationItem.rightBarButtonItem setEnabled:NO];
         NSString *form = [NSString stringWithFormat:@"message=%@", [composeViewController.text escapedPostForm]];
         [self.connection sendPost:self.url repo:nil form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
             [composeViewController dismissViewControllerAnimated:YES completion:nil];
@@ -268,6 +269,8 @@
             [SVProgressHUD dismiss];
         } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
             [SVProgressHUD showErrorWithStatus:@"Failed to add discussion"];
+            [composeViewController.navigationItem.rightBarButtonItem setEnabled:YES];
+
         }];
     }
 }
