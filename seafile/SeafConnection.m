@@ -423,7 +423,6 @@ enum {
               success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          @synchronized(self) {
-             Debug("Success to get groups ...%@\n", JSON);
              [self handleGroupsData:JSON];
              [self saveGroupstoCache:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
              if (success)

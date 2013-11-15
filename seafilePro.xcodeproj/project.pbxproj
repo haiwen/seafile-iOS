@@ -344,6 +344,10 @@
 		57A550EA177F311700E3BA9B /* plus.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550E6177F311700E3BA9B /* plus.png */; };
 		57A94357176331050035FD20 /* SeafDirCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57A94356176331050035FD20 /* SeafDirCell.xib */; };
 		57A94358176331050035FD20 /* SeafDirCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57A94356176331050035FD20 /* SeafDirCell.xib */; };
+		57A95E5818369147009D268A /* close.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A95E5618369147009D268A /* close.png */; };
+		57A95E5918369147009D268A /* close.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A95E5618369147009D268A /* close.png */; };
+		57A95E5A18369147009D268A /* close2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A95E5718369147009D268A /* close2.png */; };
+		57A95E5B18369147009D268A /* close2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A95E5718369147009D268A /* close2.png */; };
 		57B66EB015BA513E00C2B41B /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57B66EAF15BA513E00C2B41B /* QuartzCore.framework */; };
 		57BD9326174B0A0E00F7732F /* SeafDisDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BD931F174B0A0E00F7732F /* SeafDisDetailViewController.m */; };
 		57BD9327174B0A0E00F7732F /* SeafDisDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BD931F174B0A0E00F7732F /* SeafDisDetailViewController.m */; };
@@ -738,6 +742,8 @@
 		57A550E5177F311700E3BA9B /* checkmask.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = checkmask.png; sourceTree = "<group>"; };
 		57A550E6177F311700E3BA9B /* plus.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = plus.png; sourceTree = "<group>"; };
 		57A94356176331050035FD20 /* SeafDirCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafDirCell.xib; sourceTree = "<group>"; };
+		57A95E5618369147009D268A /* close.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = close.png; sourceTree = "<group>"; };
+		57A95E5718369147009D268A /* close2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = close2.png; sourceTree = "<group>"; };
 		57B66EAF15BA513E00C2B41B /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		57BD931E174B0A0E00F7732F /* SeafDisDetailViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafDisDetailViewController.h; sourceTree = "<group>"; };
 		57BD931F174B0A0E00F7732F /* SeafDisDetailViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafDisDetailViewController.m; sourceTree = "<group>"; };
@@ -912,6 +918,8 @@
 			isa = PBXGroup;
 			children = (
 				570DFACA16A19EFD00ADD5F2 /* account.png */,
+				57A95E5618369147009D268A /* close.png */,
+				57A95E5718369147009D268A /* close2.png */,
 				57A550DC177F283700E3BA9B /* addmsg.png */,
 				57C03F3817FB227100F7B575 /* addmsg2.png */,
 				573F4AA91788763500F096D3 /* arrowleft.png */,
@@ -1568,6 +1576,7 @@
 				571D8DAD1677881400F1A22C /* text.png in Resources */,
 				571D8DAE1677881400F1A22C /* text-directory.png in Resources */,
 				571D8DAF1677881400F1A22C /* text-directory-documents.png in Resources */,
+				57A95E5B18369147009D268A /* close2.png in Resources */,
 				571D8DB01677881400F1A22C /* SVProgressHUD.bundle in Resources */,
 				571D8DB21677881400F1A22C /* DownloadingProgress_iPhone.xib in Resources */,
 				571D8DB31677881400F1A22C /* FailToPreview_iPhone.xib in Resources */,
@@ -1590,6 +1599,7 @@
 				5782EE731734F3A300A76338 /* logo.png in Resources */,
 				5782EE771734F3A300A76338 /* pagedown.css in Resources */,
 				5782EE7B1734F3A300A76338 /* wmd-buttons.png in Resources */,
+				57A95E5918369147009D268A /* close.png in Resources */,
 				57E1E8A11737ED0F006601FE /* SeafTextEditorViewController.xib in Resources */,
 				57E1E8A41737F4C1006601FE /* edit_file_seaf2.html in Resources */,
 				57C03F4C17FB271100F7B575 /* arrowright2.png in Resources */,
@@ -1739,6 +1749,7 @@
 				5739703D165800810089F32F /* text.png in Resources */,
 				5739703F1658008A0089F32F /* text-directory.png in Resources */,
 				57397041165801EE0089F32F /* text-directory-documents.png in Resources */,
+				57A95E5A18369147009D268A /* close2.png in Resources */,
 				57C57BDF165FC87B006834DF /* SVProgressHUD.bundle in Resources */,
 				570CF8C016613E5700DFADBC /* DownloadingProgress_iPhone.xib in Resources */,
 				570CF8C216613FF700DFADBC /* FailToPreview_iPhone.xib in Resources */,
@@ -1761,6 +1772,7 @@
 				5782EE721734F3A300A76338 /* logo.png in Resources */,
 				5782EE761734F3A300A76338 /* pagedown.css in Resources */,
 				5782EE7A1734F3A300A76338 /* wmd-buttons.png in Resources */,
+				57A95E5818369147009D268A /* close.png in Resources */,
 				57E1E8A01737ED0F006601FE /* SeafTextEditorViewController.xib in Resources */,
 				57E1E8A31737F4C1006601FE /* edit_file_seaf2.html in Resources */,
 				57C03F4B17FB271100F7B575 /* arrowright2.png in Resources */,

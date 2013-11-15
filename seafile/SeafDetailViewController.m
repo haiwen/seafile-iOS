@@ -45,6 +45,7 @@ enum PREVIEW_STATE {
 @property (strong) UIBarButtonItem *editItem;
 @property (strong) UIBarButtonItem *exportItem;
 @property (strong) UIBarButtonItem *shareItem;
+@property (strong) UIBarButtonItem *cancelItem;
 @property (strong) UIBarButtonItem *commentItem;
 
 @property (strong, nonatomic) UIBarButtonItem *fullscreenItem;
@@ -99,13 +100,14 @@ enum PREVIEW_STATE {
         else
             [self.exportItem setEnabled:NO];
 
+        if (self.state == PREVIEW_DOWNLOADING) {
+            [array addObject:self.cancelItem];
+            [array addObject:[self getSpaceBarItem]];
+        }
+
         if (((SeafFile *)self.preViewItem).groups.count > 0) {
             [array addObject:self.commentItem];
-            float spacewidth = 20.0;
-            if (!IsIpad())
-                spacewidth = 10.0;
-            UIBarButtonItem *space = [self getSpaceBarItem:spacewidth];
-            [array addObject:space];
+            [array addObject:[self getSpaceBarItem]];
         }
     }
     if ([self.preViewItem editable] && [self previewSuccess]
@@ -175,7 +177,7 @@ enum PREVIEW_STATE {
             break;
         case PREVIEW_WEBVIEW_JS:
         case PREVIEW_WEBVIEW:
-            Debug("Preview by webview\n");
+            Debug("Preview by webview %@\n", self.preViewItem.previewItemTitle);
             request = [[NSURLRequest alloc] initWithURL:self.preViewItem.previewItemURL cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
             if (!self.webView) {
                 self.webView = [[UIWebView alloc] initWithFrame:self.view.frame];
@@ -205,7 +207,7 @@ enum PREVIEW_STATE {
 {
     if (self.masterPopoverController != nil)
         [self.masterPopoverController dismissPopoverAnimated:YES];
-
+    Debug("... %@", item.previewItemTitle);
     self.masterVc = c;
     _preViewItem = item;
     if (IsIpad() && UIInterfaceOrientationIsLandscape(self.interfaceOrientation) && !self.hideMaster && self.masterVc) {
@@ -216,11 +218,11 @@ enum PREVIEW_STATE {
     }
     if (self.state == PREVIEW_PHOTO)
         self.state = PREVIEW_SUCCESS;
+    [self refreshView];
     if ([item isKindOfClass:[SeafFile class]]) {
         ((SeafFile *)item).delegate = self;
         [(SeafFile *)item loadContent:NO];
-    } else
-        [self refreshView];
+    }
 }
 
 - (void)setPreViewItems:(NSArray *)items current:(id<QLPreviewItem, PreViewDelegate>)item master:(UIViewController *)c
@@ -256,15 +258,13 @@ enum PREVIEW_STATE {
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
 
     self.editItem = [self getBarItem:@"editfile".navItemImgName action:@selector(editFile:)size:18];
+    self.cancelItem = [self getBarItem:@"close".navItemImgName action:@selector(cancelDownload:)size:18];
     self.exportItem = [self getBarItemAutoSize:@"export".navItemImgName action:@selector(export:)];
     self.shareItem = [self getBarItemAutoSize:@"share".navItemImgName action:@selector(share:)];
     self.commentItem = [self getBarItem:@"addmsg".navItemImgName action:@selector(comment:) size:20];
     UIBarButtonItem *item3 = [self getBarItem:@"star".navItemImgName action:@selector(unstarFile:)size:24];
     UIBarButtonItem *item4 = [self getBarItem:@"unstar".navItemImgName action:@selector(starFile:)size:24];
-    float spacewidth = 20.0;
-    if (!IsIpad())
-        spacewidth = 10.0;
-    UIBarButtonItem *space = [self getSpaceBarItem:spacewidth];
+    UIBarButtonItem *space = [self getSpaceBarItem];
     self.barItemsStar  = [NSArray arrayWithObjects:self.exportItem, space, self.shareItem, space, item3, space, nil];
     self.barItemsUnStar  = [NSArray arrayWithObjects:self.exportItem, space, self.shareItem, space, item4, space, nil];
 
@@ -462,7 +462,8 @@ enum PREVIEW_STATE {
 }
 - (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent
 {
-    [self fileContentLoaded:(SeafFile *)entry result:YES completeness:percent];
+    if (updated || self.state == PREVIEW_DOWNLOADING)
+        [self fileContentLoaded:(SeafFile *)entry result:YES completeness:percent];
 }
 
 - (void)entryContentLoadingFailed:(int)errCode entry:(SeafBase *)entry;
@@ -508,6 +509,13 @@ enum PREVIEW_STATE {
     [editViewController setFile:self.preViewItem];
     [navController setModalPresentationStyle:UIModalPresentationFullScreen];
     [self presentViewController:navController animated:NO completion:nil];
+}
+
+
+- (IBAction)cancelDownload:(id)sender
+{
+    [(SeafFile *)self.preViewItem cancelDownload];
+    [self setPreViewItem:nil master:nil];
 }
 
 - (IBAction)uploadFile:(id)sender
@@ -805,6 +813,15 @@ enum PREVIEW_STATE {
 
 - (IBAction)handleSwipe:(UISwipeGestureRecognizer*)recognizer
 {
+}
+
+- (UIBarButtonItem *)getSpaceBarItem
+{
+    float spacewidth = 20.0;
+    if (!IsIpad())
+        spacewidth = 10.0;
+    UIBarButtonItem *space = [self getSpaceBarItem:spacewidth];
+    return space;
 }
 
 @end

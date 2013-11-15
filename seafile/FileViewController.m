@@ -120,8 +120,9 @@ static PrevFile *pfile;
 {
     if (index < 0 || index >= self.items.count)
         return [PrevFile defaultFile];
-    if (index != self.currentPreviewItemIndex)
-        [self.selectDelegate willSelect:self.items[index]];
+    //if (index != self.currentPreviewItemIndex)
+    //    [self.selectDelegate willSelect:self.items[index]];
+    Debug("item=%@, %@", self.items[index], [self.items[index] previewItemTitle]);
     return self.items[index];
 }
 
