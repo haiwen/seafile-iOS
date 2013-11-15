@@ -333,6 +333,13 @@ enum {
     }
 }
 
+- (void)editSheet:(id)sender
+{
+    NSString *cancelTitle = IsIpad() ? nil : @"Cancel";
+    UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:@"Create File", @"New Folder", @"Edit", nil];
+    [actionSheet showFromBarButtonItem:self.editItem animated:YES];
+}
+
 - (void)initNavigationItems:(SeafDir *)directory
 {
     if ([directory isKindOfClass:[SeafRepos class]]) {
@@ -340,7 +347,7 @@ enum {
         if (directory.editable) {
             self.photoItem = [self getBarItem:@"plus".navItemImgName action:@selector(addPhotos:)size:20];
             self.doneItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(editDone:)];
-            self.editItem = [self getBarItemAutoSize:@"checkmask".navItemImgName action:@selector(editStart:)];
+            self.editItem = [self getBarItemAutoSize:@"ellipsis".navItemImgName action:@selector(editSheet:)];
             UIBarButtonItem *space = [self getSpaceBarItem:16.0];
             self.rightItems = [NSArray arrayWithObjects: self.editItem, space, self.photoItem, nil];
             self.navigationItem.rightBarButtonItems = self.rightItems;
@@ -445,7 +452,6 @@ enum {
 {
     if (self.tableView.editing == YES)
         return;
-    UIActionSheet *actionSheet;
     if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
         return;
     CGPoint touchPoint = [gestureRecognizer locationInView:self.tableView];
@@ -457,7 +463,7 @@ enum {
         return;
 
     NSString *cancelTitle = IsIpad() ? nil : @"Cancel";
-    actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:@"Delete", nil];
+    UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:@"Delete", nil];
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
     [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
 }
@@ -936,8 +942,17 @@ enum {
 #pragma mark - UIActionSheetDelegate
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
 {
+    if (buttonIndex < 0 || buttonIndex >= actionSheet.numberOfButtons)
+        return;
     SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex];
-    if (buttonIndex == 0) {
+    NSString *title = [actionSheet buttonTitleAtIndex:buttonIndex];
+    if ([@"Create File" isEqualToString:title]) {
+        [self popupCreateView];
+    } else if ([@"New Folder" isEqualToString:title]) {
+        [self popupMkdirView];
+    } else if ([@"Edit" isEqualToString:title]) {
+        [self editStart:nil];
+    } else if ([@"Delete" isEqualToString:title]) {
         if ([file isKindOfClass:[SeafUploadFile class]]) {
             if (self.detailViewController.preViewItem == file)
                 self.detailViewController.preViewItem = nil;
@@ -945,9 +960,9 @@ enum {
             [self.tableView reloadData];
         } else
             [self deleteFile:file];
-    } else if (buttonIndex == 1) {
+    } else if ([@"Redownload" isEqualToString:title]) {
         [self redownloadFile:file];
-    } else if (buttonIndex == 2)  {
+    } else if ([@"Upload" isEqualToString:title]) {
         [file update:self];
         [self refreshView];
     }
