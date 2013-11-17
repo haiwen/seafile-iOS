@@ -190,23 +190,20 @@
     }
     NSMutableDictionary *dict = [self.connection.seafGroups objectAtIndex:row];
     cell.textLabel.text = [dict objectForKey:@"name"];
-#if 0
-    int ctime = [[dict objectForKey:@"ctime"] integerValue:0];
-    NSString *creator = [dict objectForKey:@"creator"];
-    creator = [creator substringToIndex:[creator indexOf:'@']];
-    cell.detailTextLabel.text = [NSString stringWithFormat:@"%@ created at %@", creator, [SeafDateFormatter stringFromInt:ctime]];
-#else
     long long mtime = [[dict objectForKey:@"mtime"] integerValue:0];
     if (mtime)
         cell.detailTextLabel.text = [NSString stringWithFormat:@"%@",  [SeafDateFormatter stringFromLongLong:mtime]];
     else
         cell.detailTextLabel.text = nil;
-#endif
+
     cell.imageView.image = [UIImage imageNamed:@"group.png"];
     if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0 ) {
-        cell.accLabel.text = [NSString stringWithFormat:@"%lld", [[dict objectForKey:@"msgnum"] integerValue:0]];
+        cell.badgeLabel.text = [NSString stringWithFormat:@"%lld", [[dict objectForKey:@"msgnum"] integerValue:0]];
+        cell.badgeLabel.hidden = NO;
+        cell.badgeImage.hidden = NO;
     } else {
-        cell.accLabel.text = nil;
+        cell.badgeLabel.hidden = YES;
+        cell.badgeImage.hidden = YES;
     }
     return cell;
 }

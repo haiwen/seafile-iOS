@@ -197,6 +197,8 @@
 		571D8DB31677881400F1A22C /* FailToPreview_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 570CF8C116613FF600DFADBC /* FailToPreview_iPhone.xib */; };
 		571F5148168C80380055D69B /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 571F5147168C80380055D69B /* MobileCoreServices.framework */; };
 		571F514A168C80470055D69B /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 571F5147168C80380055D69B /* MobileCoreServices.framework */; };
+		57227A5C18389DB600CD28E9 /* red.png in Resources */ = {isa = PBXBuildFile; fileRef = 57227A5B18389DB600CD28E9 /* red.png */; };
+		57227A5D18389DB600CD28E9 /* red.png in Resources */ = {isa = PBXBuildFile; fileRef = 57227A5B18389DB600CD28E9 /* red.png */; };
 		572500B3162984B3001E5C75 /* Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 572500B2162984B3001E5C75 /* Utils.m */; };
 		572500B616298C7C001E5C75 /* SeafUploadFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 572500B516298C7C001E5C75 /* SeafUploadFile.m */; };
 		5725185F17AE7A6F0078CD12 /* NSData+Encryption.m in Sources */ = {isa = PBXBuildFile; fileRef = 5725185E17AE7A6F0078CD12 /* NSData+Encryption.m */; };
@@ -608,6 +610,7 @@
 		571D8DBA1677881400F1A22C /* SeafilePro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SeafilePro.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		571D8DBD1677897D00F1A22C /* seafile-appstore-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "seafile-appstore-Info.plist"; sourceTree = "<group>"; };
 		571F5147168C80380055D69B /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = System/Library/Frameworks/MobileCoreServices.framework; sourceTree = SDKROOT; };
+		57227A5B18389DB600CD28E9 /* red.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = red.png; sourceTree = "<group>"; };
 		572500B1162984B2001E5C75 /* Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Utils.h; sourceTree = "<group>"; };
 		572500B2162984B3001E5C75 /* Utils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Utils.m; sourceTree = "<group>"; };
 		572500B416298C7C001E5C75 /* SeafUploadFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafUploadFile.h; sourceTree = "<group>"; };
@@ -923,6 +926,7 @@
 		57094B3315B9A64500F48C08 /* images */ = {
 			isa = PBXGroup;
 			children = (
+				57227A5B18389DB600CD28E9 /* red.png */,
 				570DFACA16A19EFD00ADD5F2 /* account.png */,
 				57A550DC177F283700E3BA9B /* addmsg.png */,
 				57C03F3817FB227100F7B575 /* addmsg2.png */,
@@ -1543,6 +1547,7 @@
 				571D8D061677881400F1A22C /* seafile-logo.png in Resources */,
 				57C03F5417FB271100F7B575 /* editfile2.png in Resources */,
 				571D8D081677881400F1A22C /* star.png in Resources */,
+				57227A5D18389DB600CD28E9 /* red.png in Resources */,
 				571D8D091677881400F1A22C /* unstar.png in Resources */,
 				571D8D0C1677881400F1A22C /* upload.png in Resources */,
 				571D8D0D1677881400F1A22C /* FileTypeIcons.plist in Resources */,
@@ -1718,6 +1723,7 @@
 				57C07CE9163272CE00502B06 /* SeafUploadingFileCell.xib in Resources */,
 				57C03F5317FB271100F7B575 /* editfile2.png in Resources */,
 				5764C835163C3E83006AD511 /* tab-settings.png in Resources */,
+				57227A5C18389DB600CD28E9 /* red.png in Resources */,
 				57A055A61644EAD1006511AA /* tab-home.png in Resources */,
 				57A055A91644EC84006511AA /* seafile-logo.png in Resources */,
 				57853C9216467A5000CE8857 /* star.png in Resources */,

@@ -91,7 +91,7 @@
     //UIInterfaceOrientation fromOrientation = [UIApplication sharedApplication].statusBarOrientation;
 
     UITabBarController *tabBar = self.tabBarController;
-    BOOL notModal = (!tabBar.modalViewController);
+    BOOL notModal = (!tabBar.presentedViewController );
     BOOL isSelectedTab = [self.tabBarController.selectedViewController isEqual:self];
 
     NSTimeInterval duration = [[UIApplication sharedApplication] statusBarOrientationAnimationDuration];
@@ -161,7 +161,7 @@
     //UIInterfaceOrientation toOrientation = [UIApplication sharedApplication].statusBarOrientation;
 
     UITabBarController *tabBar = self.tabBarController;
-    BOOL notModal = (!tabBar.modalViewController);
+    BOOL notModal = (!tabBar.presentedViewController );
     BOOL isSelectedTab = [self.tabBarController.selectedViewController isEqual:self];
 
     if (!isSelectedTab || !notModal)  {

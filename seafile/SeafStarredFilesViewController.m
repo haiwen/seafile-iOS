@@ -191,7 +191,7 @@
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafCell" owner:self options:nil];
         cell = [cells objectAtIndex:0];
     }
-    ((SeafCell *)cell).accLabel.text = nil;
+    ((SeafCell *)cell).badgeLabel.text = nil;
     SeafStarredFile *sfile = [_starredFiles objectAtIndex:indexPath.row];
     cell.textLabel.text = sfile.name;
     cell.detailTextLabel.text = sfile.detailText;

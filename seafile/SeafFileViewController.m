@@ -482,7 +482,7 @@ enum {
         SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
         cell.textLabel.text = file.name;
         cell.imageView.image = file.image;
-        cell.accLabel.text = nil;
+        cell.badgeLabel.text = nil;
 
         NSString *sizeStr = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:file.filesize ] useBaseTen:NO];
         NSDictionary *dict = [file uploadAttr];
@@ -511,7 +511,7 @@ enum {
     cell.textLabel.text = sfile.name;
     cell.detailTextLabel.text = sfile.detailText;
     cell.imageView.image = sfile.image;
-    cell.accLabel.text = nil;
+    cell.badgeLabel.text = nil;
     UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditFileMenu:)];
     [cell addGestureRecognizer:longPressGesture];
     sfile.delegate = self;
@@ -535,7 +535,7 @@ enum {
     cell.detailTextLabel.text = detail;
     cell.imageView.image = srepo.image;
     cell.textLabel.text = srepo.name;
-    cell.accLabel.text = nil;
+    cell.badgeLabel.text = nil;
     srepo.delegate = self;
     return cell;
 }
