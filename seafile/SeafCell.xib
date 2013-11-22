@@ -32,11 +32,11 @@
                         <color key="highlightedColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </label>
                     <imageView hidden="YES" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="red.png" id="vWy-Pk-w8f">
-                        <rect key="frame" x="291" y="14" width="22" height="22"/>
+                        <rect key="frame" x="294" y="15" width="20" height="20"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     </imageView>
                     <label hidden="YES" opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="0" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="38">
-                        <rect key="frame" x="288" y="11" width="28" height="30"/>
+                        <rect key="frame" x="290" y="11" width="28" height="28"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <fontDescription key="fontDescription" type="system" pointSize="15"/>
                         <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -55,6 +55,6 @@
         </tableViewCell>
     </objects>
     <resources>
-        <image name="red.png" width="300" height="300"/>
+        <image name="red.png" width="25" height="25"/>
     </resources>
 </document>
