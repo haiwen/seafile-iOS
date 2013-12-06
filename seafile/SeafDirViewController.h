@@ -10,7 +10,9 @@
 #import "SeafDir.h"
 
 @protocol SeafDirDelegate <NSObject>
-- (void)chooseDir:(SeafDir *)dir;
+- (void)chooseDir:(UIViewController *)c dir:(SeafDir *)dir;
+- (void)cancelChoose:(UIViewController *)c;
+
 @end
 
 @interface SeafDirViewController : UITableViewController

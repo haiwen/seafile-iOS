@@ -72,7 +72,6 @@
 
     self.headerView = bt;
     [self startTimer];
-    [self refresh:nil];
 }
 
 - (void)didReceiveMemoryWarning
@@ -127,8 +126,10 @@
         }
     }
                        failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
-                           Warning("Failed to get groups ...\n");
-                           [SVProgressHUD showErrorWithStatus:@"Failed to get groups ..."];
+                           Warning("Failed to get groups ...error=%d\n", error.code);
+                           if (self.view.window && error.code != NSURLErrorCancelled && error.code != 102) {
+                               [SVProgressHUD showErrorWithStatus:@"Failed to get groups ..."];
+                           }
                            [self doneLoadingTableViewData];
                        }];
 }

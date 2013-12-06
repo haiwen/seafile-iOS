@@ -8,6 +8,7 @@
 
 #import "SeafBase.h"
 @class SeafUploadFile;
+@class SeafFile;
 
 @interface SeafDir : SeafBase
 
@@ -27,7 +28,12 @@
 - (void)mkdir:(NSString *)newDirName;
 - (void)createFile:(NSString *)newFileName;
 - (void)delEntries:(NSArray *)entries;
+- (void)copyEntries:(NSArray *)entries dstDir:(SeafDir *)dst_dir;
+- (void)moveEntries:(NSArray *)entries dstDir:(SeafDir *)dst_dir;
+
 - (void)addUploadFiles:(NSArray *)uploadItems;
 - (void)removeUploadFile:(SeafUploadFile *)ufile;
+
+- (void)renameFile:(SeafFile *)sfile newName:(NSString *)newName;
 
 @end

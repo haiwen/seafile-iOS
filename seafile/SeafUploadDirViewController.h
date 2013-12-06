@@ -8,9 +8,10 @@
 
 #import <UIKit/UIKit.h>
 #import "SeafDir.h"
+#import "Utils.h"
 
 @interface SeafUploadDirViewController : UIViewController
 
-- (id)initWithSeafConnection:(SeafConnection *)conn uploadFile:(SeafUploadFile *) ufile;
+- (id)initWithSeafConnection:(SeafConnection *)conn uploadFile:(id<PreViewDelegate>) ufile;
 
 @end

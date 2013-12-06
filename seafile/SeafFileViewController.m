@@ -10,7 +10,7 @@
 #import "SeafFileViewController.h"
 #import "SeafDetailViewController.h"
 #import "SeafUploadDirViewController.h"
-
+#import "SeafDirViewController.h"
 #import "SeafFile.h"
 #import "SeafRepos.h"
 #import "SeafCell.h"
@@ -31,13 +31,22 @@ enum {
     STATE_DELETE,
     STATE_MKDIR,
     STATE_CREATE,
+    STATE_RENAME,
     STATE_PASSWORD,
+    STATE_MOVE,
+    STATE_COPY,
 };
-#define TITLE_PASSWORD @"Password of this library"
-#define TITLE_MKDIR @"New folder"
-#define TITLE_NEWFILE @"New file"
+#define S_PASSWORD @"Password of this library"
+#define S_MKDIR @"New folder"
+#define S_NEWFILE @"New file"
+#define S_RENAME @"Rename"
+#define S_EDIT @"Edit"
+#define S_DELETE @"Delete"
+#define S_REDOWNLOAD @"Redownload"
+#define S_UPLOAD @"Upload"
 
-@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, EGORefreshTableHeaderDelegate>
+
+@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, EGORefreshTableHeaderDelegate, SeafDirDelegate>
 - (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView;
@@ -101,7 +110,7 @@ enum {
             items[i].tag = i;
         }
 
-        _editToolItems = [NSArray arrayWithObjects:items[EDITOP_CREATE], items[EDITOP_MKDIR], items[EDITOP_SPACE], items[EDITOP_DELETE], nil ];
+        _editToolItems = [NSArray arrayWithObjects:items[EDITOP_COPY], items[EDITOP_MOVE], items[EDITOP_SPACE], items[EDITOP_DELETE], nil ];
     }
     return _editToolItems;
 }
@@ -168,14 +177,14 @@ enum {
     if (none) {
         self.navigationItem.leftBarButtonItem = _selectAllItem;
         NSArray *items = self.toolbarItems;
-        [[items objectAtIndex:0] setEnabled:YES];
-        [[items objectAtIndex:1] setEnabled:YES];
+        [[items objectAtIndex:0] setEnabled:NO];
+        [[items objectAtIndex:1] setEnabled:NO];
         [[items objectAtIndex:3] setEnabled:NO];
     } else {
         self.navigationItem.leftBarButtonItem = _selectNoneItem;
         NSArray *items = self.toolbarItems;
-        [[items objectAtIndex:0] setEnabled:NO];
-        [[items objectAtIndex:1] setEnabled:NO];
+        [[items objectAtIndex:0] setEnabled:YES];
+        [[items objectAtIndex:1] setEnabled:YES];
         [[items objectAtIndex:3] setEnabled:YES];
     }
 }
@@ -336,7 +345,7 @@ enum {
 - (void)editSheet:(id)sender
 {
     NSString *cancelTitle = IsIpad() ? nil : @"Cancel";
-    UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:@"Create File", @"New Folder", @"Edit", nil];
+    UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_NEWFILE, S_MKDIR, S_EDIT, nil];
     [actionSheet showFromBarButtonItem:self.editItem animated:YES];
 }
 
@@ -440,9 +449,9 @@ enum {
 
     NSString *cancelTitle = IsIpad() ? nil : @"Cancel";
     if (file.mpath)
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:@"Delete", @"Redownload", @"Upload", nil];
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, S_REDOWNLOAD, S_UPLOAD, nil];
     else
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Delete", @"Redownload", nil];
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:S_DELETE, S_REDOWNLOAD, S_RENAME, nil];
 
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
     [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
@@ -463,7 +472,7 @@ enum {
         return;
 
     NSString *cancelTitle = IsIpad() ? nil : @"Cancel";
-    UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:@"Delete", nil];
+    UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, nil];
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
     [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
 }
@@ -598,14 +607,36 @@ enum {
 - (void)popupMkdirView
 {
     self.state = STATE_MKDIR;
-    [self popupInputView:TITLE_MKDIR placeholder:@"New folder name"];
+    [self popupInputView:S_MKDIR placeholder:@"New folder name"];
 }
 - (void)popupCreateView
 {
     self.state = STATE_CREATE;
-    [self popupInputView:TITLE_NEWFILE placeholder:@"New file name"];
+    [self popupInputView:S_NEWFILE placeholder:@"New file name"];
+}
+- (void)popupRenameView:(NSString *)newName
+{
+    self.state = STATE_RENAME;
+    [self popupInputView:S_RENAME placeholder:newName];
 }
 
+- (void)popupDirChooseView:(id<PreViewDelegate>)file
+{
+    UIViewController *controller = nil;
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    if (file)
+        controller = [[SeafUploadDirViewController alloc] initWithSeafConnection:_connection uploadFile:file];
+    else
+        controller = [[SeafDirViewController alloc] initWithSeafDir:self.connection.rootFolder delegate:self];
+
+    UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
+    [navController setModalPresentationStyle:UIModalPresentationFormSheet];
+    [appdelegate.tabbarController presentViewController:navController animated:YES completion:nil];
+    if (IsIpad()) {
+        CGRect frame = navController.view.superview.frame;
+        navController.view.superview.frame = CGRectMake(frame.origin.x+frame.size.width/2-320/2, frame.origin.y+frame.size.height/2-500/2, 320, 500);
+    }
+}
 
 - (SeafBase *)getDentrybyIndexPath:(NSIndexPath *)indexPath
 {
@@ -716,24 +747,13 @@ enum {
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
     if (buttonIndex == alertView.cancelButtonIndex) {
-        if ([alertView.title isEqualToString:TITLE_PASSWORD]
-            || [alertView.title isEqualToString:TITLE_MKDIR]
-            || [alertView.title isEqualToString:TITLE_NEWFILE]) {
-            self.state = STATE_INIT;
-            return;
-        }
-        if (self.state == STATE_PASSWORD) {
-            [self popupSetRepoPassword];
-        } else if (self.state == STATE_MKDIR) {
-            [self popupMkdirView];
-        } else if (self.state == STATE_CREATE) {
-            [self popupCreateView];
-        }
+        self.state = STATE_INIT;
+        return;
     } else {
         NSString *title = alertView.title;
         NSString *input = [alertView textFieldAtIndex:0].text;
         [_directory setDelegate:self];
-        if ([title isEqualToString:TITLE_PASSWORD]) {
+        if ([title isEqualToString:S_PASSWORD]) {
             if (!input || input.length == 0) {
                 [self alertWithMessage:@"Password must not be empty"];
                 return;
@@ -754,6 +774,17 @@ enum {
             }
             [_directory mkdir:input];
             [SVProgressHUD showWithStatus:@"Creating folder ..."];
+        } else if (self.state == STATE_RENAME) {
+            if (!input || input.length == 0) {
+                [self alertWithMessage:@"File name must not be empty"];
+                return;
+            }
+            if (![input isValidFileName]) {
+                [self alertWithMessage:@"File name invalid"];
+                return;
+            }
+            [_directory renameFile:_curEntry newName:input];
+            [SVProgressHUD showWithStatus:@"Renaming file ..."];
         } else if (self.state == STATE_CREATE) {
             if (!input || input.length == 0) {
                 [self alertWithMessage:@"File name must not be empty"];
@@ -816,6 +847,18 @@ enum {
                 [SVProgressHUD showErrorWithStatus:@"Failed to create file" duration:2.0];
                 [self performSelector:@selector(popupCreateView) withObject:nil afterDelay:1.0];
                 break;
+            case STATE_COPY:
+                [SVProgressHUD showErrorWithStatus:@"Failed to copy files" duration:2.0];
+                break;
+            case STATE_MOVE:
+                [SVProgressHUD showErrorWithStatus:@"Failed to move files" duration:2.0];
+                break;
+            case STATE_RENAME: {
+                [SVProgressHUD showErrorWithStatus:@"Failed to rename file" duration:2.0];
+                SeafFile *file = (SeafFile *)_curEntry;
+                [self performSelector:@selector(popupRenameView:) withObject:file.name afterDelay:1.0];
+                break;
+            }
             case STATE_LOADING:
                 if (!_directory.hasCache) {
                     [self dismissLoadingView];
@@ -891,8 +934,6 @@ enum {
 
 - (void)editOperation:(id)sender
 {
-    NSArray *idxs;
-    NSMutableArray *entries;
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
 
     if (self != appdelegate.fileVC) {
@@ -907,18 +948,26 @@ enum {
             [self popupCreateView];
             break;
 
-        case EDITOP_DELETE:
-            idxs = [self.tableView indexPathsForSelectedRows];
-            if (!idxs) {
-                return;
-            }
-            self.state = STATE_DELETE;
-            entries = [[NSMutableArray alloc] init];
+        case EDITOP_COPY:
+            self.state = STATE_COPY;
+            [self popupDirChooseView:nil];
+            break;
+        case EDITOP_MOVE:
+            self.state = STATE_MOVE;
+            [self popupDirChooseView:nil];
+            break;
+        case EDITOP_DELETE: {
+            NSArray *idxs = [self.tableView indexPathsForSelectedRows];
+            if (!idxs) return;
+            NSMutableArray *entries = [[NSMutableArray alloc] init];
             for (NSIndexPath *indexPath in idxs) {
                 [entries addObject:[_directory.allItems objectAtIndex:indexPath.row]];
             }
+            self.state = STATE_DELETE;
             [_directory delEntries:entries];
             [SVProgressHUD showWithStatus:@"Deleting files ..."];
+            break;
+        }
         default:
             break;
     }
@@ -939,6 +988,12 @@ enum {
     [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
 }
 
+- (void)renameFile:(SeafFile *)file
+{
+    _curEntry = file;
+    [self popupRenameView:file.name];
+}
+
 #pragma mark - UIActionSheetDelegate
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
 {
@@ -946,13 +1001,13 @@ enum {
         return;
     SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex];
     NSString *title = [actionSheet buttonTitleAtIndex:buttonIndex];
-    if ([@"Create File" isEqualToString:title]) {
+    if ([S_NEWFILE isEqualToString:title]) {
         [self popupCreateView];
-    } else if ([@"New Folder" isEqualToString:title]) {
+    } else if ([S_MKDIR isEqualToString:title]) {
         [self popupMkdirView];
-    } else if ([@"Edit" isEqualToString:title]) {
+    } else if ([S_EDIT isEqualToString:title]) {
         [self editStart:nil];
-    } else if ([@"Delete" isEqualToString:title]) {
+    } else if ([S_DELETE isEqualToString:title]) {
         if ([file isKindOfClass:[SeafUploadFile class]]) {
             if (self.detailViewController.preViewItem == file)
                 self.detailViewController.preViewItem = nil;
@@ -960,9 +1015,11 @@ enum {
             [self.tableView reloadData];
         } else
             [self deleteFile:file];
-    } else if ([@"Redownload" isEqualToString:title]) {
+    } else if ([S_REDOWNLOAD isEqualToString:title]) {
         [self redownloadFile:file];
-    } else if ([@"Upload" isEqualToString:title]) {
+    } else if ([S_RENAME isEqualToString:title]) {
+        [self renameFile:file];
+    } else if ([S_UPLOAD isEqualToString:title]) {
         [file update:self];
         [self refreshView];
     }
@@ -980,25 +1037,38 @@ enum {
     [ufile upload:ufile.udir->connection repo:ufile.udir.repoId path:ufile.udir.path update:NO];
 }
 
-- (void)chooseUploadDir:(SeafDir *)dir file:(SeafUploadFile *)ufile
+- (void)chooseUploadDir:(SeafDir *)dir file:(id<PreViewDelegate>)ufile
 {
-    [dir addUploadFiles:[NSArray arrayWithObject:ufile]];
+    [dir addUploadFiles:[NSArray arrayWithObject:(SeafUploadFile *)ufile]];
     [NSThread detachNewThreadSelector:@selector(backgroundUpload:) toTarget:self withObject:ufile];
 }
-
 - (void)uploadFile:(SeafUploadFile *)file
 {
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     file.delegate = self;
-    SeafUploadDirViewController *controller = [[SeafUploadDirViewController alloc] initWithSeafConnection:_connection uploadFile:file];
+    [self popupDirChooseView:file];
+}
 
-    UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
-    [navController setModalPresentationStyle:UIModalPresentationFormSheet];
-    [appdelegate.tabbarController presentViewController:navController animated:YES completion:nil];
-    if (IsIpad()) {
-        CGRect frame = navController.view.superview.frame;
-        navController.view.superview.frame = CGRectMake(frame.origin.x+frame.size.width/2-320/2, frame.origin.y+frame.size.height/2-500/2, 320, 500);
+#pragma mark - SeafDirDelegate
+- (void)chooseDir:(UIViewController *)c dir:(SeafDir *)dir
+{
+    [c.navigationController dismissViewControllerAnimated:YES completion:nil];
+    NSArray *idxs = [self.tableView indexPathsForSelectedRows];
+    if (!idxs) return;
+    NSMutableArray *entries = [[NSMutableArray alloc] init];
+    for (NSIndexPath *indexPath in idxs) {
+        [entries addObject:[_directory.allItems objectAtIndex:indexPath.row]];
     }
+    if (self.state == STATE_COPY) {
+        [_directory copyEntries:entries dstDir:dir];
+        [SVProgressHUD showWithStatus:@"Copying files ..."];
+    } else {
+        [_directory moveEntries:entries dstDir:dir];
+        [SVProgressHUD showWithStatus:@"Moving files ..."];
+    }
+}
+- (void)cancelChoose:(UIViewController *)c
+{
+    [c.navigationController dismissViewControllerAnimated:YES completion:nil];
 }
 
 #pragma mark - QBImagePickerControllerDelegate

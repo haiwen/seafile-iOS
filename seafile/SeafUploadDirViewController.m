@@ -19,7 +19,7 @@
 @interface SeafUploadDirViewController ()<SeafDirDelegate>
 @property (strong) SeafConnection *connection;
 @property (strong) SeafDir *curDir;
-@property (strong) SeafUploadFile *ufile;
+@property (strong) id<PreViewDelegate> ufile;
 @property (strong, nonatomic) IBOutlet UIImageView *imageVIew;
 @property (strong, nonatomic) IBOutlet UILabel *nameLabel;
 @property (strong, nonatomic) IBOutlet UILabel *dirLabel;
@@ -34,8 +34,8 @@
 {
     if (self = [self initWithAutoNibName]) {
         self.connection = conn;
-        self.title = @"Save to Seafile";
         self.ufile = ufile;
+        self.title = @"Save to Seafile";
 
         NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
         NSString *repo = [userDefaults objectForKey: [@"LAST-REPO" stringByAppendingString:conn.address]];
@@ -89,7 +89,6 @@
     self.saveItem = [[UIBarButtonItem alloc] initWithTitle:@"Save" style:UIBarButtonItemStyleBordered target:self action:@selector(save:)];
     self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStyleBordered target:self action:@selector(cancel:)];
     self.navigationItem.rightBarButtonItem = self.saveItem;
-
     self.imageVIew.image = self.ufile.image;
     self.nameLabel.text = self.ufile.name;
     if (self.curDir) {
@@ -114,11 +113,17 @@
 }
 
 #pragma mark - SeafDirDelegate
-- (void)chooseDir:(SeafDir *)dir
+- (void)chooseDir:(UIViewController *)c dir:(SeafDir *)dir
 {
+    [self.navigationController popToRootViewControllerAnimated:NO];
     _curDir = dir;
     self.dirLabel.text = [[[self.connection getRepo:self.curDir.repoId] name] stringByAppendingString:self.curDir.path];
 }
+- (void)cancelChoose:(UIViewController *)c
+{
+    [self.navigationController popToRootViewControllerAnimated:NO];
+}
+
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {

@@ -48,13 +48,12 @@
 
 - (void)cancel:(id)sender
 {
-    [self.navigationController popToRootViewControllerAnimated:NO];
+    [self.delegate cancelChoose:self];
 }
 
 - (IBAction)chooseFolder:(id)sender
 {
-    [self.delegate chooseDir:_directory];
-    [self.navigationController popToRootViewControllerAnimated:NO];
+    [self.delegate chooseDir:self dir:_directory];
 }
 
 - (void)viewDidLoad

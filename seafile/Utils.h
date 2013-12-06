@@ -13,6 +13,7 @@
 - (UIImage *)image;
 - (NSURL *)checkoutURL;
 - (NSString *)mime;
+- (NSString *)name;
 - (BOOL)editable;
 - (NSString *)content;
 - (BOOL)saveContent:(NSString *)content;

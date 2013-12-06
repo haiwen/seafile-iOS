@@ -406,5 +406,75 @@
     _allItems = nil;
 }
 
+- (void)renameFile:(SeafFile *)sfile newName:(NSString *)newName
+{
+    NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@&reloaddir=true", self.repoId, [sfile.path escapedUrl]];
+    NSString *form = [NSString stringWithFormat:@"operation=rename&newname=%@", [newName escapedUrl]];
+    [connection sendPost:requestUrl repo:self.repoId form:form
+                 success:
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+         Debug("resp=%d\n", response.statusCode);
+         [self handleResponse:response json:JSON data:data];
+     }
+                 failure:
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+         Warning("resp=%d\n", response.statusCode);
+         [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
+     }];
+}
+
+- (void)copyEntries:(NSArray *)entries dstDir:(SeafDir *)dir
+{
+    int i = 0;
+    NSAssert(entries.count > 0, @"There must be at least one entry");
+    NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/fileops/copy/?p=%@&reloaddir=true", self.repoId, [self.path escapedUrl]];
+
+    NSMutableString *form = [[NSMutableString alloc] init];
+    [form appendFormat:@"dst_repo=%@&dst_dir=%@&file_names=%@", dir.repoId, [dir.path escapedUrl], [[[entries objectAtIndex:0] name] escapedPostForm]];
+
+    for (i = 1; i < entries.count; ++i) {
+        SeafBase *entry = [entries objectAtIndex:i];
+        [form appendFormat:@":%@", [entry.name escapedPostForm]];
+    }
+
+    [connection sendPost:requestUrl repo:self.repoId form:form
+                 success:
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+         Debug("resp=%d\n", response.statusCode);
+         [self handleResponse:response json:JSON data:data];
+     }
+                 failure:
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+         Warning("resp=%d\n", response.statusCode);
+         [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
+     }];
+}
+
+- (void)moveEntries:(NSArray *)entries dstDir:(SeafDir *)dir
+{
+    int i = 0;
+    NSAssert(entries.count > 0, @"There must be at least one entry");
+    NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/fileops/move/?p=%@&reloaddir=true", self.repoId, [self.path escapedUrl]];
+
+    NSMutableString *form = [[NSMutableString alloc] init];
+    [form appendFormat:@"dst_repo=%@&dst_dir=%@&file_names=%@", dir.repoId, [dir.path escapedUrl], [[[entries objectAtIndex:0] name] escapedPostForm]];
+
+    for (i = 1; i < entries.count; ++i) {
+        SeafBase *entry = [entries objectAtIndex:i];
+        [form appendFormat:@":%@", [entry.name escapedPostForm]];
+    }
+
+    [connection sendPost:requestUrl repo:self.repoId form:form
+                 success:
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+         Debug("resp=%d\n", response.statusCode);
+         [self handleResponse:response json:JSON data:data];
+     }
+                 failure:
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+         Warning("resp=%d\n", response.statusCode);
+         [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
+     }];
+}
 
 @end
