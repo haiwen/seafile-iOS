@@ -120,15 +120,12 @@
 {
     [self setOoid:ooid];
     self.state = SEAF_DENTRY_UPTODATE;
-    [self savetoCache];
     self.downloadingFileOid = nil;
     self.operation = nil;
     [SeafAppDelegate decDownloadnum];
-    if (ooid && ![self.oid isEqualToString:self.ooid]) {
-        Debug("the parent is out of date and need to reload %@, %@\n", self.oid, self.ooid);
-        self.oid = self.ooid;
-        [self savetoCache];
-    }
+    self.oid = self.ooid;
+    [self savetoCache];
+    [self.delegate entry:self contentUpdated:YES completeness:100];
 }
 
 - (void)failedDownload:(NSError *)error
@@ -173,7 +170,6 @@
              Debug("Successfully downloaded file");
              [[NSFileManager defaultManager] moveItemAtPath:[self downloadTempPath:self.downloadingFileOid] toPath:[Utils documentPath:self.downloadingFileOid] error:nil];
              [self finishDownload:self.downloadingFileOid];
-             [self.delegate entry:self contentUpdated:YES completeness:100];
          } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
              Debug("error=%@",[error localizedDescription]);
              [self failedDownload:error];
@@ -241,7 +237,6 @@
             return;
         }
         [self finishDownload:self.downloadingFileOid];
-        [self.delegate entry:self contentUpdated:YES completeness:100];
         self.index = 0;
         self.blks = nil;
         return;
@@ -315,7 +310,6 @@
          if (self.blks.count <= 0) {
              [@"" writeToFile:[Utils documentPath:self.downloadingFileOid] atomically:YES encoding:NSUTF8StringEncoding error:nil];
              [self finishDownload:self.downloadingFileOid];
-             [self.delegate entry:self contentUpdated:YES completeness:100];
          } else {
              SeafRepo *repo = [connection getRepo:self.repoId];
              repo.encrypted = [[JSON objectForKey:@"encrypted"] booleanValue:repo.encrypted];

@@ -115,6 +115,22 @@
     [self refreshTabBarItem];
 }
 
+- (void)refreshBackground:(id)sender
+{
+    [_connection getSeafGroups:^(NSHTTPURLResponse *response, id JSON, NSData *data) {
+        @synchronized(self) {
+            Debug("Success to get groups ...\n");
+            _newReplyNum = self.connection.newreply;
+            [self refreshView];
+            [self doneLoadingTableViewData];
+        }
+    }
+                       failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
+                           Warning("Failed to get groups ...error=%d\n", error.code);
+                           [self doneLoadingTableViewData];
+                       }];
+}
+
 - (void)refresh:(id)sender
 {
     [_connection getSeafGroups:^(NSHTTPURLResponse *response, id JSON, NSData *data) {
@@ -136,7 +152,7 @@
 
 - (void)startTimer
 {
-    [NSTimer scheduledTimerWithTimeInterval:3*60
+    [NSTimer scheduledTimerWithTimeInterval:5*60
                                      target:self
                                    selector:@selector(tick:)
                                    userInfo:nil
@@ -146,7 +162,7 @@
 - (void)tick:(NSTimer *)timer
 {
     if (self.connection)
-        [self refresh:nil];
+        [self refreshBackground:nil];
 }
 
 - (void)setConnection:(SeafConnection *)conn
@@ -160,7 +176,6 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [self refreshView];
-    [self refresh:nil];
     [super viewWillAppear:animated];
 }
 

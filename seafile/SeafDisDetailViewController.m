@@ -224,16 +224,15 @@
 - (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSMutableURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
 {
     Debug("Request %@, self=%@\n", request.URL, self.url);
-    Debug("...%@", [self.connection.address stringByAppendingString:API_URL"/html/discussion/"]);
     NSString *urlStr = request.URL.absoluteString;
     if ([urlStr hasPrefix:@"file://"] || [urlStr isEqualToString:self.url]) {
         return YES;
     } else if ([urlStr hasPrefix:[self.connection.address stringByAppendingString:API_URL"/html/discussion/"]]) {
-        Debug("....self=%@", self.url);
         SeafDisDetailViewController *c = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"DISDETAILVC"];
         [c setUrl:urlStr connection:self.connection];
         [self.navigationController pushViewController:c animated:NO];
-        Debug("....");
+    } else {
+        [[UIApplication sharedApplication] openURL:request.URL];
     }
 
     return NO;

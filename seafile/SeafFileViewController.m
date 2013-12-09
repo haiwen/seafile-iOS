@@ -46,7 +46,7 @@ enum {
 #define S_UPLOAD @"Upload"
 
 
-@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, EGORefreshTableHeaderDelegate, SeafDirDelegate>
+@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, EGORefreshTableHeaderDelegate, SeafDirDelegate, UISearchBarDelegate, UISearchDisplayDelegate>
 - (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView;
@@ -71,6 +71,11 @@ enum {
 
 @property(nonatomic,strong) UIPopoverController *popoverController;
 @property (retain) NSDateFormatter *formatter;
+
+@property(nonatomic, strong, readwrite) UISearchBar *searchBar;
+@property(nonatomic, strong) UISearchDisplayController *strongSearchDisplayController;
+
+@property (strong) NSMutableArray *searchResults;
 
 @end
 
@@ -162,13 +167,23 @@ enum {
     self.clearsSelectionOnViewWillAppear = YES;
 
     self.state = STATE_INIT;
-    if (_refreshHeaderView == nil) {
-        EGORefreshTableHeaderView *view = [[EGORefreshTableHeaderView alloc] initWithFrame:CGRectMake(0.0f, 0.0f - self.tableView.bounds.size.height, self.view.frame.size.width, self.tableView.bounds.size.height)];
-        view.delegate = self;
-        [self.tableView addSubview:view];
-        _refreshHeaderView = view;
-    }
+    _refreshHeaderView = [[EGORefreshTableHeaderView alloc] initWithFrame:CGRectMake(0.0f, 0.0f - self.tableView.bounds.size.height, self.view.frame.size.width, self.tableView.bounds.size.height)];
+    _refreshHeaderView.delegate = self;
     [_refreshHeaderView refreshLastUpdatedDate];
+    [self.tableView addSubview:_refreshHeaderView];
+
+    self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectZero];
+    self.searchBar.searchTextPositionAdjustment = UIOffsetMake(0, 0);
+    self.searchBar.placeholder = @"Search";
+    self.searchBar.delegate = self;
+    [self.searchBar sizeToFit];
+    self.strongSearchDisplayController = [[UISearchDisplayController alloc] initWithSearchBar:self.searchBar contentsController:self];
+    self.searchDisplayController.searchResultsDataSource = self;
+    self.searchDisplayController.searchResultsDelegate = self;
+    self.searchDisplayController.delegate = self;
+    self.tableView.tableHeaderView = self.searchBar;
+    self.tableView.contentOffset = CGPointMake(0, CGRectGetHeight(self.searchBar.bounds));
+
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 }
 
@@ -235,7 +250,7 @@ enum {
     int count = _directory.allItems.count;
     for (row = 0; row < count; ++row) {
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
-        NSObject *entry  = [self getDentrybyIndexPath:indexPath];
+        NSObject *entry  = [self getDentrybyIndexPath:indexPath tableView:self.tableView];
         if (![entry isKindOfClass:[SeafUploadFile class]])
             [self.tableView selectRowAtIndexPath:indexPath animated:YES scrollPosition:UITableViewScrollPositionNone];
     }
@@ -407,7 +422,7 @@ enum {
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    if (![_directory isKindOfClass:[SeafRepos class]]) {
+    if (tableView != self.tableView || ![_directory isKindOfClass:[SeafRepos class]]) {
         return 1;
     }
     return [[((SeafRepos *)_directory)repoGroups] count];
@@ -415,6 +430,9 @@ enum {
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
+    if (tableView != self.tableView)
+        return self.searchResults.count;
+
     if (![_directory isKindOfClass:[SeafRepos class]]) {
         return _directory.allItems.count;
     }
@@ -443,7 +461,7 @@ enum {
     _selectedindex = [self.tableView indexPathForRowAtPoint:touchPoint];
     if (!_selectedindex)
         return;
-    SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex];
+    SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
     if ([file isKindOfClass:[SeafUploadFile class]] || ![file hasCache])
         return;
 
@@ -459,15 +477,13 @@ enum {
 
 - (void)showEditUploadFileMenu:(UILongPressGestureRecognizer *)gestureRecognizer
 {
-    if (self.tableView.editing == YES)
-        return;
-    if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
+    if (self.tableView.editing || gestureRecognizer.state != UIGestureRecognizerStateBegan)
         return;
     CGPoint touchPoint = [gestureRecognizer locationInView:self.tableView];
     _selectedindex = [self.tableView indexPathForRowAtPoint:touchPoint];
     if (!_selectedindex)
         return;
-    SeafUploadFile *file = (SeafUploadFile *)[self getDentrybyIndexPath:_selectedindex];
+    SeafUploadFile *file = (SeafUploadFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
     if (![file isKindOfClass:[SeafUploadFile class]])
         return;
 
@@ -509,8 +525,10 @@ enum {
         }
         c = cell;
     }
-    UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditUploadFileMenu:)];
-    [c addGestureRecognizer:longPressGesture];
+    if (tableView == self.tableView) {
+        UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditUploadFileMenu:)];
+        [c addGestureRecognizer:longPressGesture];
+    }
     return c;
 }
 
@@ -521,8 +539,10 @@ enum {
     cell.detailTextLabel.text = sfile.detailText;
     cell.imageView.image = sfile.image;
     cell.badgeLabel.text = nil;
-    UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditFileMenu:)];
-    [cell addGestureRecognizer:longPressGesture];
+    if (tableView == self.tableView) {
+        UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditFileMenu:)];
+        [cell addGestureRecognizer:longPressGesture];
+    }
     sfile.delegate = self;
     return cell;
 }
@@ -551,7 +571,10 @@ enum {
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    NSObject *entry  = [self getDentrybyIndexPath:indexPath];
+    NSObject *entry  = [self getDentrybyIndexPath:indexPath tableView:tableView];
+    if (tableView != self.tableView) {
+        return [self getSeafFileCell:(SeafFile *)entry forTableView:tableView];
+    }
     if ([entry isKindOfClass:[SeafRepo class]]) {
         return [self getSeafRepoCell:(SeafRepo *)entry forTableView:tableView];
     } else if ([entry isKindOfClass:[SeafFile class]]) {
@@ -565,7 +588,8 @@ enum {
 
 - (NSIndexPath *)tableView:(UITableView *)tableView willSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    NSObject *entry  = [self getDentrybyIndexPath:indexPath];
+    if (tableView != self.tableView) return indexPath;
+    NSObject *entry  = [self getDentrybyIndexPath:indexPath tableView:tableView];
     if (tableView.editing && [entry isKindOfClass:[SeafUploadFile class]])
         return nil;
     return indexPath;
@@ -573,7 +597,8 @@ enum {
 
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    NSObject *entry  = [self getDentrybyIndexPath:indexPath];
+    if (tableView != self.tableView) return NO;
+    NSObject *entry  = [self getDentrybyIndexPath:indexPath tableView:tableView];
     if ([entry isKindOfClass:[SeafUploadFile class]])
         return NO;
     return YES;
@@ -638,25 +663,25 @@ enum {
     }
 }
 
-- (SeafBase *)getDentrybyIndexPath:(NSIndexPath *)indexPath
+- (SeafBase *)getDentrybyIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView
 {
-    if (![_directory isKindOfClass:[SeafRepos class]]) {
+    if (tableView != self.tableView)
+        return [self.searchResults objectAtIndex:indexPath.row];
+    if (![_directory isKindOfClass:[SeafRepos class]])
         return [_directory.allItems objectAtIndex:[indexPath row]];
-    }
     NSArray *repos = [[((SeafRepos *)_directory)repoGroups] objectAtIndex:[indexPath section]];
     return [repos objectAtIndex:[indexPath row]];
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (self.navigationController.topViewController != self)
-        return;
+    if (self.navigationController.topViewController != self)   return;
     _selectedindex = indexPath;
     if (tableView.editing == YES) {
         [self noneSelected:NO];
         return;
     }
-    _curEntry = [self getDentrybyIndexPath:indexPath];
+    _curEntry = [self getDentrybyIndexPath:indexPath tableView:tableView];
     [_curEntry setDelegate:self];
     if ([_curEntry isKindOfClass:[SeafRepo class]] && [(SeafRepo *)_curEntry passwordRequired]) {
         [self popupSetRepoPassword];
@@ -709,9 +734,9 @@ enum {
 
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
 {
-    if (![_directory isKindOfClass:[SeafRepos class]]) {
+    if (self.searchResults || tableView != self.tableView || ![_directory isKindOfClass:[SeafRepos class]])
         return nil;
-    }
+
     NSString *text = nil;
     if (section == 0) {
         text = @"My Own Libraries";
@@ -999,7 +1024,7 @@ enum {
 {
     if (buttonIndex < 0 || buttonIndex >= actionSheet.numberOfButtons)
         return;
-    SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex];
+    SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
     NSString *title = [actionSheet buttonTitleAtIndex:buttonIndex];
     if ([S_NEWFILE isEqualToString:title]) {
         [self popupCreateView];
@@ -1198,6 +1223,76 @@ enum {
 - (void)uploadSucess:(SeafUploadFile *)file oid:(NSString *)oid
 {
     [self uploadProgress:file result:YES completeness:100];
+}
+
+#pragma mark - Search Delegate
+#define SEARCH_STATE_INIT @"Click \"Search\" to start"
+#define SEARCH_STATE_SEARCHING @"Searching"
+#define SEARCH_STATE_NORESULTS @"No Results"
+
+- (void)setSearchState:(UISearchDisplayController *)controller state:(NSString *)state
+{
+    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, 0.001);
+    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+        for (UIView* v in controller.searchResultsTableView.subviews) {
+            if ([v isKindOfClass: [UILabel class]] &&
+                ([[(UILabel*)v text] isEqualToString:SEARCH_STATE_NORESULTS]
+                 || [[(UILabel*)v text] isEqualToString:SEARCH_STATE_INIT]
+                 || [[(UILabel*)v text] isEqualToString:SEARCH_STATE_SEARCHING])) {
+                [(UILabel*)v setText:state];
+                break;
+            }
+        }
+    });
+}
+
+- (void)searchDisplayControllerWillBeginSearch:(UISearchDisplayController *)controller
+{
+    self.searchResults = [[NSMutableArray alloc] init];
+    [self.searchDisplayController.searchResultsTableView reloadData];
+    self.tableView.sectionHeaderHeight = 0;
+    [self setSearchState:self.searchDisplayController state:SEARCH_STATE_INIT];
+}
+
+- (void)searchDisplayControllerDidEndSearch:(UISearchDisplayController *)controller
+{
+    self.searchResults = nil;
+    if ([_directory isKindOfClass:[SeafRepos class]]) {
+        self.tableView.sectionHeaderHeight = 22;
+        [self.tableView reloadData];
+    }
+}
+
+- (BOOL)searchDisplayController:(UISearchDisplayController *)controller shouldReloadTableForSearchString:(NSString *)searchString
+{
+    return NO;
+}
+
+- (void)searchDisplayController:(UISearchDisplayController *)controller didLoadSearchResultsTableView:(UITableView *)tableView
+{
+    tableView.sectionHeaderHeight = 0;
+    [self setSearchState:controller state:SEARCH_STATE_INIT];
+}
+
+- (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar
+{
+    Debug("search %@...", searchBar.text);
+    [self setSearchState:self.searchDisplayController state:SEARCH_STATE_SEARCHING];
+    [SVProgressHUD showWithStatus:@"Searching ..."];
+    [_connection search:searchBar.text success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSMutableArray *results) {
+        [SVProgressHUD dismiss];
+        if (results.count == 0)
+            [self setSearchState:self.searchDisplayController state:SEARCH_STATE_NORESULTS];
+        else {
+            self.searchResults = results;
+            [self.searchDisplayController.searchResultsTableView reloadData];
+        }
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        if (response.statusCode == 404) {
+            [SVProgressHUD showErrorWithStatus:@"Search is not supported on the server"];
+        } else
+            [SVProgressHUD showErrorWithStatus:@"Failed to search"];
+    }];
 }
 
 @end

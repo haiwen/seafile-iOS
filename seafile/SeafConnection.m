@@ -475,4 +475,24 @@ enum {
     [self.uploadFiles removeObjectForKey:ufile.lpath];
 }
 
+- (void)search:(NSString *)keyword
+       success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSMutableArray *results))success
+       failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure
+{
+    NSString *url = [NSString stringWithFormat:API_URL"/search/?q=%@", [keyword escapedUrl]];
+    [self sendRequest:url repo:nil success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+        NSMutableArray *results = [[NSMutableArray alloc] init];
+        for (NSDictionary *itemInfo in [JSON objectForKey:@"results"]) {
+            if ([itemInfo objectForKey:@"name"] == [NSNull null]) continue;
+            NSString *oid = [itemInfo objectForKey:@"oid"];
+            NSString *repoId = [itemInfo objectForKey:@"repo_id"];
+            NSString *name = [itemInfo objectForKey:@"name"];
+            NSString *path = [itemInfo objectForKey:@"fullpath"];
+            SeafFile *file = [[SeafFile alloc] initWithConnection:self oid:oid repoId:repoId name:name path:path mtime:[[itemInfo objectForKey:@"last_modified"] integerValue:0] size:[[itemInfo objectForKey:@"size"] integerValue:0]];
+            [results addObject:file];
+        }
+        success(request, response, JSON, results);
+    } failure:failure];
+}
+
 @end

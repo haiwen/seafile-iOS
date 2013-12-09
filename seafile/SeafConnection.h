@@ -92,4 +92,7 @@
 - (SeafUploadFile *)getUploadfile:(NSString *)lpath;
 - (void)removeUploadfile:(SeafUploadFile *)ufile;
 
+- (void)search:(NSString *)keyword
+       success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSMutableArray *results))success
+            failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure;
 @end
