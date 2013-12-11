@@ -43,6 +43,7 @@
         if (conn.username)
             [self.conns addObject:conn];
     }
+    [self saveAccounts];
 }
 
 - (void)saveAccounts

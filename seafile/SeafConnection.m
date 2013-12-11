@@ -64,7 +64,14 @@ enum {
             _info = [ainfo mutableCopy];
             _token = [_info objectForKey:@"token"];
         } else {
-            _info = [[NSMutableDictionary alloc] init];
+            ainfo = [userDefaults objectForKey:url];
+            if (ainfo) {
+                _info = [ainfo mutableCopy];
+                [userDefaults setObject:nil forKey:url];
+                [userDefaults setObject:ainfo forKey:[NSString stringWithFormat:@"%@/%@", url, username]];
+                [userDefaults synchronize];
+            } else
+                _info = [[NSMutableDictionary alloc] init];
         }
     }
     return self;
