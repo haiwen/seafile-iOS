@@ -743,10 +743,7 @@ enum {
     } else {
         NSArray *repos =  [[((SeafRepos *)_directory)repoGroups] objectAtIndex:section];
         SeafRepo *repo = (SeafRepo *)[repos objectAtIndex:0];
-        if (!repo)
-            text =  @"";
-        else
-            text =  repo.owner;
+        text = repo ? repo.owner: @"";
     }
     UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
     UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 3, tableView.bounds.size.width - 10, 18)];

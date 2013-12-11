@@ -59,7 +59,7 @@ enum {
         _info = [[NSMutableDictionary alloc] init];
     } else {
         NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-        NSDictionary *ainfo = [userDefaults objectForKey:url];
+        NSDictionary *ainfo = [userDefaults objectForKey:[NSString stringWithFormat:@"%@/%@", url, username]];
         if (ainfo) {
             _info = [ainfo mutableCopy];
             _token = [_info objectForKey:@"token"];
@@ -121,8 +121,9 @@ enum {
          [_info setObject:[account objectForKey:@"usage"] forKey:@"usage"];
          [_info setObject:_address forKey:@"link"];
          NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-         [userDefaults setObject:_info forKey:_address];
-         [userDefaults synchronize];         [degt getAccountInfoResult:YES connection:self];
+         [userDefaults setObject:_info forKey:[NSString stringWithFormat:@"%@/%@", _address, self.username]];
+         [userDefaults synchronize];
+         [degt getAccountInfoResult:YES connection:self];
      }
               failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
@@ -156,7 +157,7 @@ enum {
                                                [_info setObject:_token forKey:@"token"];
                                                [_info setObject:_address forKey:@"link"];
                                                NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-                                               [userDefaults setObject:_info forKey:_address];
+                                               [userDefaults setObject:_info forKey:[NSString stringWithFormat:@"%@/%@", _address, username]];
                                                [userDefaults synchronize];
                                                [self.delegate connectionLinkingSuccess:self];
                                            }

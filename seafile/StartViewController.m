@@ -40,7 +40,8 @@
     NSArray *accounts = [userDefaults objectForKey:@"ACCOUNTS"];
     for (NSDictionary *account in accounts) {
         SeafConnection *conn = [[SeafConnection alloc] initWithUrl:[account objectForKey:@"url"] username:[account objectForKey:@"username"]];
-        [self.conns addObject:conn];
+        if (conn.username)
+            [self.conns addObject:conn];
     }
 }
 
@@ -234,7 +235,6 @@
     cell.serverLabel.text = conn.address;
     cell.emailLabel.text = conn.username;
     cell.accessoryType = UITableViewCellAccessoryNone;
-
     UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditMenu:)];
     [cell addGestureRecognizer:longPressGesture];
     return cell;
