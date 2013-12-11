@@ -122,6 +122,7 @@ enum {
 
 - (void)setConnection:(SeafConnection *)conn
 {
+    self.searchDisplayController.active = NO;
     [self.detailViewController setPreViewItem:nil master:nil];
     [conn loadRepos:self];
     [self setDirectory:(SeafDir *)conn.rootFolder];
@@ -665,9 +666,9 @@ enum {
 
 - (SeafBase *)getDentrybyIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView
 {
-    if (tableView != self.tableView)
+    if (tableView != self.tableView) {
         return [self.searchResults objectAtIndex:indexPath.row];
-    if (![_directory isKindOfClass:[SeafRepos class]])
+    } else if (![_directory isKindOfClass:[SeafRepos class]])
         return [_directory.allItems objectAtIndex:[indexPath row]];
     NSArray *repos = [[((SeafRepos *)_directory)repoGroups] objectAtIndex:[indexPath section]];
     return [repos objectAtIndex:[indexPath row]];
@@ -920,17 +921,21 @@ enum {
 #pragma mark - mark UIScrollViewDelegate Methods
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
-    [_refreshHeaderView egoRefreshScrollViewDidScroll:scrollView];
+    if (!self.searchDisplayController.active)
+        [_refreshHeaderView egoRefreshScrollViewDidScroll:scrollView];
 }
 
 - (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
 {
-    [_refreshHeaderView egoRefreshScrollViewDidEndDragging:scrollView];
+    if (!self.searchDisplayController.active)
+        [_refreshHeaderView egoRefreshScrollViewDidEndDragging:scrollView];
 }
 
 #pragma mark - EGORefreshTableHeaderDelegate Methods
 - (void)egoRefreshTableHeaderDidTriggerRefresh:(EGORefreshTableHeaderView*)view
 {
+    if (self.searchDisplayController.active)
+        return;
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     if (![appdelegate checkNetworkStatus]) {
         [self performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
@@ -1262,7 +1267,9 @@ enum {
 
 - (BOOL)searchDisplayController:(UISearchDisplayController *)controller shouldReloadTableForSearchString:(NSString *)searchString
 {
-    return NO;
+    self.searchResults = [[NSMutableArray alloc] init];
+    [self setSearchState:controller state:SEARCH_STATE_INIT];
+    return YES;
 }
 
 - (void)searchDisplayController:(UISearchDisplayController *)controller didLoadSearchResultsTableView:(UITableView *)tableView

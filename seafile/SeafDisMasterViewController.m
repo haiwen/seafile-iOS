@@ -119,7 +119,6 @@
 {
     [_connection getSeafGroups:^(NSHTTPURLResponse *response, id JSON, NSData *data) {
         @synchronized(self) {
-            Debug("Success to get groups ...\n");
             _newReplyNum = self.connection.newreply;
             [self refreshView];
             [self doneLoadingTableViewData];
