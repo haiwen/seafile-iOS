@@ -28,7 +28,7 @@
 @property (readonly) long long filesize;
 
 @property (readonly) BOOL uploading;
-@property (readonly) int uploadProgress;
+@property (readonly) int uProgress;
 @property id<SeafUploadDelegate> delegate;
 
 @property (readwrite) SeafDir *udir;

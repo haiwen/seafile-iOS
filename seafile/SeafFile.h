@@ -38,6 +38,7 @@
 @property (readwrite) long long mtime;
 @property (readonly, copy) NSString *shareLink;
 @property (readonly) NSMutableArray *groups;
+@property (strong) id <SeafFileUpdateDelegate> udelegate;
 
 
 - (void)generateShareLink:(id<SeafFileDelegate>)dg;

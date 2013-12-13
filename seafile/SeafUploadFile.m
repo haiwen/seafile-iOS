@@ -36,7 +36,7 @@ static NSMutableDictionary *uploadFiles = nil;
 @synthesize filesize = _filesize;
 @synthesize delegate = _delegate;
 @synthesize uploading = _uploading;
-@synthesize uploadProgress = _uploadProgress;
+@synthesize uProgress = _uProgress;
 @synthesize preViewURL = _preViewURL;
 
 
@@ -47,7 +47,7 @@ static NSMutableDictionary *uploadFiles = nil;
         _lpath = lpath;
         NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:lpath error:nil];
         _filesize = attrs.fileSize;
-        _uploadProgress = 0;
+        _uProgress = 0;
         _uploading = NO;
     }
     return self;
@@ -83,7 +83,7 @@ static NSMutableDictionary *uploadFiles = nil;
     return NO;
 }
 
-- (void)finishUpload:(BOOL)result
+- (void)finishUpload:(BOOL)result oid:(NSString *)oid
 {
     @synchronized(self) {
         if (!_uploading)
@@ -102,7 +102,7 @@ static NSMutableDictionary *uploadFiles = nil;
     [SeafAppDelegate decUploadnum];
     Debug("result=%d\n", result);
     if (result)
-        [_delegate uploadProgress:self result:YES completeness:100];
+        [_delegate uploadSucess:self oid:oid];
     else
         [_delegate uploadProgress:self result:NO completeness:0];
 }
@@ -145,12 +145,11 @@ static NSMutableDictionary *uploadFiles = nil;
              [[NSFileManager defaultManager] linkItemAtPath:self.lpath toPath:[Utils documentPath:oid] error:nil];
          }
          Debug("Upload success _uploading=%d, oid=%@\n", _uploading, oid);
-         [_delegate uploadSucess:self oid:oid];
-         [self finishUpload:YES];
+         [self finishUpload:YES oid:oid];
      }
                                      failure:^(AFHTTPRequestOperation *operation, NSError *error) {
                                          Debug("Upload failed :%@,code=%d, res=%@, %@\n", error, operation.response.statusCode, operation.responseData, operation.responseString);
-                                         [self finishUpload:NO];
+                                         [self finishUpload:NO oid:nil];
                                      }];
 
     [operation setAuthenticationAgainstProtectionSpaceBlock:^BOOL(NSURLConnection *connection, NSURLProtectionSpace *protectionSpace) {
@@ -219,12 +218,11 @@ static NSMutableDictionary *uploadFiles = nil;
              [[NSFileManager defaultManager] linkItemAtPath:self.lpath toPath:[Utils documentPath:oid] error:nil];
          }
          Debug("Upload success _uploading=%d, oid=%@\n", _uploading, oid);
-         [self finishUpload:YES];
-         [_delegate uploadSucess:self oid:oid];
+         [self finishUpload:YES oid:oid];
      }
                                      failure:^(AFHTTPRequestOperation *operation, NSError *error) {
                                          Debug("Upload failed :%@,code=%d, res=%@, %@\n", error, operation.response.statusCode, operation.responseData, operation.responseString);
-                                         [self finishUpload:NO];
+                                         [self finishUpload:NO oid:nil];
                                      }];
 
     [operation setAuthenticationAgainstProtectionSpaceBlock:^BOOL(NSURLConnection *connection, NSURLProtectionSpace *protectionSpace) {
@@ -242,7 +240,7 @@ static NSMutableDictionary *uploadFiles = nil;
         if (_uploading)
             return;
         _uploading = YES;
-        _uploadProgress = 0;
+        _uProgress = 0;
         NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:self.lpath error:nil];
         _filesize = attrs.fileSize;
     }
@@ -271,7 +269,7 @@ static NSMutableDictionary *uploadFiles = nil;
              if ([self chunkFile:self.lpath blockids:blockids paths:paths password:passwrod repo:repo]) {
                  [self uploadByBlocks:url uploadpath:uploadpath blocks:blockids paths:paths update:update];
              } else {
-                 [self finishUpload:NO];
+                 [self finishUpload:NO oid:nil];
              }
          } else {
              [self uploadByFile:url path:uploadpath update:update];
@@ -279,7 +277,7 @@ static NSMutableDictionary *uploadFiles = nil;
      }
                     failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-         [self finishUpload:NO];
+         [self finishUpload:NO oid:nil];
      }];
 }
 

@@ -122,7 +122,7 @@ static PrevFile *pfile;
         return [PrevFile defaultFile];
     //if (index != self.currentPreviewItemIndex)
     //    [self.selectDelegate willSelect:self.items[index]];
-    Debug("item=%@, %@", self.items[index], [self.items[index] previewItemTitle]);
+    //Debug("item=%@, %@", self.items[index], [self.items[index] previewItemTitle]);
     return self.items[index];
 }
 

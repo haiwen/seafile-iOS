@@ -28,7 +28,6 @@
 @property (strong) AFHTTPRequestOperation *operation;
 
 @property (strong) SeafUploadFile *ufile;
-@property (weak) id <SeafFileUpdateDelegate> udelegate;
 @property (strong) NSArray *blks;
 @property int index;
 
@@ -562,12 +561,8 @@
 
 - (void)autoupload
 {
-    if (self.ufile && self.ufile.uploading)
-        return;
-    if ([self.delegate conformsToProtocol:@protocol(SeafFileUpdateDelegate)])
-        [self update:(id<SeafFileUpdateDelegate>)self.delegate];
-    else
-        [self update:self.udelegate];
+    if (self.ufile && self.ufile.uploading)  return;
+    [self update:self.udelegate];
 }
 
 - (BOOL)saveContent:(NSString *)content
@@ -634,8 +629,7 @@
 
 - (void)update:(id<SeafFileUpdateDelegate>)dg
 {
-    if (!self.mpath)
-        return;
+    if (!self.mpath)   return;
     self.udelegate = dg;
     if (!self.ufile) {
         self.ufile = [connection getUploadfile:self.mpath];
@@ -686,7 +680,6 @@
     self.oid = self.ooid;
     self.mpath = nil;
     [self savetoCache];
-    Debug("self.ooid=%@\n", self.ooid);
     [dg updateProgress:self result:YES completeness:100];
 }
 

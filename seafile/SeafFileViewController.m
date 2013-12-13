@@ -502,7 +502,7 @@ enum {
         SeafUploadingFileCell *cell = (SeafUploadingFileCell *)[self getCell:@"SeafUploadingFileCell" forTableView:tableView];
         cell.nameLabel.text = file.name;
         cell.imageView.image = file.image;
-        [cell.progressView setProgress:file.uploadProgress *1.0/100];
+        [cell.progressView setProgress:file.uProgress *1.0/100];
         c = cell;
     } else {
         SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
@@ -545,6 +545,7 @@ enum {
         [cell addGestureRecognizer:longPressGesture];
     }
     sfile.delegate = self;
+    sfile.udelegate = self;
     return cell;
 }
 

@@ -207,7 +207,7 @@ enum PREVIEW_STATE {
 {
     if (self.masterPopoverController != nil)
         [self.masterPopoverController dismissPopoverAnimated:YES];
-    Debug("... %@", item.previewItemTitle);
+    Debug("preview %@", item.previewItemTitle);
     self.masterVc = c;
     _preViewItem = item;
     if (IsIpad() && UIInterfaceOrientationIsLandscape(self.interfaceOrientation) && !self.hideMaster && self.masterVc) {

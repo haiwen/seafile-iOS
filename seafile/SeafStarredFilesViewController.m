@@ -193,6 +193,7 @@
     }
     ((SeafCell *)cell).badgeLabel.text = nil;
     SeafStarredFile *sfile = [_starredFiles objectAtIndex:indexPath.row];
+    sfile.udelegate = self;
     cell.textLabel.text = sfile.name;
     cell.detailTextLabel.text = sfile.detailText;
     cell.imageView.image = sfile.image;
