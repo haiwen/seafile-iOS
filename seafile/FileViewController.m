@@ -9,34 +9,6 @@
 #import "FileViewController.h"
 #import "Debug.h"
 
-@interface PrevFile : NSObject<QLPreviewItem>
-@end
-
-static PrevFile *pfile;
-
-@implementation PrevFile
-
-- (NSString *)previewItemTitle
-{
-    return nil;
-}
-
-- (NSURL *)previewItemURL
-{
-    NSString *path = [[NSBundle mainBundle] pathForResource:@"app-icon-ipad-50" ofType:@"png"];
-    return [NSURL fileURLWithPath:path];
-}
-
-+ (PrevFile *)defaultFile
-{
-    if (!pfile)
-        pfile = [[PrevFile alloc] init];
-    return pfile;
-}
-
-
-@end
-
 
 @interface FileViewController ()<QLPreviewControllerDelegate, QLPreviewControllerDataSource>
 @property NSArray *items;
@@ -97,11 +69,12 @@ static PrevFile *pfile;
     if (prevItem)
         self.items = [NSArray arrayWithObject:prevItem];
     else
-        self.items = [NSArray arrayWithObject:[PrevFile defaultFile]];
+        self.items = [[NSMutableArray alloc] init];
     //Debug("Preview file:%@, %@ [%d]\n", prevItem.previewItemTitle, prevItem.previewItemURL, [QLPreviewController canPreviewItem:prevItem]);
 
     [self reloadData];
-    [self setCurrentPreviewItemIndex:0];
+    if (prevItem)
+        [self setCurrentPreviewItemIndex:0];
 }
 
 - (void)setPreItems:(NSArray *)prevItems current:(id<QLPreviewItem, PreViewDelegate>)item;
@@ -119,7 +92,7 @@ static PrevFile *pfile;
 - (id <QLPreviewItem>)previewController:(QLPreviewController *)controller previewItemAtIndex:(NSInteger)index;
 {
     if (index < 0 || index >= self.items.count)
-        return [PrevFile defaultFile];
+        return nil;
     //if (index != self.currentPreviewItemIndex)
     //    [self.selectDelegate willSelect:self.items[index]];
     //Debug("item=%@, %@", self.items[index], [self.items[index] previewItemTitle]);

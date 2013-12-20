@@ -17,3 +17,6 @@
 [submodule "libs/ios-openssl"]
 	path = libs/ios-openssl
 	url = git@github.com:st3fan/ios-openssl.git
+[submodule "libs/EGOTextView"]
+	path = libs/EGOTextView
+	url = git@github.com:haiwen/EGOTextView.git

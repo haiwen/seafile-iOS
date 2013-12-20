@@ -8,6 +8,7 @@
 
 #import "SeafTextEditorViewController.h"
 #import "SeafAppDelegate.h"
+#import "EGOTextView.h"
 
 #import "UIViewController+Extend.h"
 #import "ExtentedString.h"
@@ -32,15 +33,21 @@ enum TOOL_ITEM {
     ITEM_MAX,
 };
 
-@interface SeafTextEditorViewController ()
+@interface SeafTextEditorViewController ()<EGOTextViewDelegate>
 @property (nonatomic, retain) NSTimer *timer;
 @property BOOL currentBoldStatus;
 @property BOOL currentItalicStatus;
 @property BOOL currentUnderlineStatus;
 @property UIBarButtonItem *ep;
+@property UIBarButtonItem *cancelItem;
+@property UIBarButtonItem *saveItem;
+@property NSMutableArray *litems;
 
 @property id<QLPreviewItem, PreViewDelegate> sfile;
 @property int flags;
+
+@property(nonatomic,retain) EGOTextView *egoTextView;
+
 @end
 
 @implementation SeafTextEditorViewController
@@ -50,11 +57,12 @@ enum TOOL_ITEM {
 @synthesize currentUnderlineStatus;
 @synthesize sfile;
 @synthesize flags;
-@synthesize ep;
 
-- (id) init
+- (id)initWithFile:(id<QLPreviewItem, PreViewDelegate>)file
 {
-    return [self initWithAutoNibName];
+    self = [self initWithAutoNibName];
+    self.sfile = file;
+    return self;
 }
 
 - (BOOL) IsSeaf
@@ -97,12 +105,21 @@ enum TOOL_ITEM {
 
 - (void)edit_preview
 {
-    NSString *ret = [self.webView stringByEvaluatingJavaScriptFromString:@"toggle_ep()"];
-    if ([ret isEqualToString:@"1"]) {
-        ep.title = @"Edit";
-        [self.webView endEditing:YES];
+    if ([self.ep.title isEqualToString:@"Preview"]) {
+        self.ep.title = @"Edit";
+        self.egoTextView.hidden = YES;
+        for (UIBarButtonItem *item in self.navigationItem.rightBarButtonItems) {
+            item.enabled = NO;
+        }
+        NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [self.egoTextView.text stringEscapedForJavasacript]];
+        [self.webView stringByEvaluatingJavaScriptFromString:js];
     } else {
-        ep.title = @"Preview";
+        self.ep.title = @"Preview";
+        self.egoTextView.hidden = NO;
+        [self.egoTextView becomeFirstResponder];
+        for (UIBarButtonItem *item in self.navigationItem.rightBarButtonItems) {
+            item.enabled = YES;
+        }
     }
 }
 - (void)pound
@@ -206,6 +223,66 @@ enum TOOL_ITEM {
 {
     [self btClicked:@"unlink"];
 }
+
+- (void)replaceSelectedWith:(NSString *)dft before:(NSString *)before after:(NSString *)after
+{
+    NSRange r = self.egoTextView.selectedRange;
+    NSString *selected = dft;
+    if (r.length > 0)
+        selected = [[self.egoTextView.attributedString attributedSubstringFromRange:r] string];
+    NSString *news = [NSString stringWithFormat:@"%@%@%@", before, selected, after];
+    Debug("r=%d, %d, %@, %@", r.location, r.length, selected, news);
+    [self.egoTextView replaceNSRange:r withText:news];
+    NSRange selectR = (NSRange) {r.location + before.length, selected.length};
+    self.egoTextView.selectedRange = selectR;
+}
+- (void)insertString:(NSString *)s
+{
+    NSRange r = self.egoTextView.selectedRange;
+    [self.egoTextView replaceNSRange:self.egoTextView.selectedRange withText:s];
+    self.egoTextView.selectedRange = (NSRange) {r.location + 1, 0};;
+}
+- (void)olM
+{
+    [self replaceSelectedWith:@"List item" before:@"\n 1. " after:@""];
+}
+- (void)ulM
+{
+    [self replaceSelectedWith:@"List item" before:@"\n - " after:@""];
+}
+- (void)codeM
+{
+    [self replaceSelectedWith:@"enter code here" before:@"`" after:@"`"];
+}
+- (void)quoteM
+{
+    [self replaceSelectedWith:@"Blockquote" before:@"\n> " after:@""];
+}
+- (void)insertLinkM
+{
+    [self replaceSelectedWith:@"link" before:@"[" after:@"](http://example.com/)"];
+}
+- (void)italicM
+{
+    [self replaceSelectedWith:@"emphasized text" before:@"*" after:@"*"];
+}
+- (void)boldM
+{
+    [self replaceSelectedWith:@"strong text" before:@"**" after:@"**"];
+}
+- (void)equalM
+{
+    [self insertString:@"="];
+}
+- (void)asteriskM
+{
+    [self insertString:@"*"];
+}
+- (void)poundM
+{
+    [self insertString:@"#"];
+}
+
 
 - (UIBarButtonItem *)getBarItem:(NSString *)imageName action:(SEL)action active:(int)active
 {
@@ -332,23 +409,6 @@ enum TOOL_ITEM {
         } else {
             [self initSeafToolbar];
         }
-    } else if ([self IsMarkdown]) {
-        NSMutableArray *items = [[NSMutableArray alloc] init];
-        [self addItem:items image:@"bt-help" action:@selector(help)];
-        [self addItem:items image:@"bt-redo" action:@selector(redo)];
-        [self addItem:items image:@"bt-undo" action:@selector(undo)];
-        [self addItem:items image:@"bt-ul" action:@selector(ul)];
-        [self addItem:items image:@"bt-ol" action:@selector(ol)];
-        [self addItem:items image:@"bt-image" action:@selector(image)];
-        [self addItem:items image:@"bt-code" action:@selector(code)];
-        [self addItem:items image:@"bt-quote" action:@selector(quote)];
-        [self addItem:items image:@"bt-link" action:@selector(insertLink)];
-        [self addItem:items image:@"bt-italic" action:@selector(italic)];
-        [self addItem:items image:@"bt-bold" action:@selector(bold)];
-        [self addItem:items image:@"bt-equal" action:@selector(equal)];
-        [self addItem:items image:@"bt-asterisk" action:@selector(asterisk)];
-        [self addItem:items image:@"bt-pound" action:@selector(pound)];
-        self.navigationItem.rightBarButtonItems = items;
     } else {
         self.navigationItem.rightBarButtonItems = nil;
     }
@@ -366,7 +426,12 @@ enum TOOL_ITEM {
 
 - (void)save
 {
-    NSString *content = [self.webView stringByEvaluatingJavaScriptFromString:@"getContent()"];
+    NSString *content;
+    if (![self IsSeaf]) {
+        content = self.egoTextView.text;
+    } else {
+        content = [self.webView stringByEvaluatingJavaScriptFromString:@"getContent()"];
+    }
     [sfile saveContent:content];
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [self.detailViewController refreshView];
@@ -378,12 +443,24 @@ enum TOOL_ITEM {
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    if([self respondsToSelector:@selector(edgesForExtendedLayout)])
+        self.edgesForExtendedLayout = UIRectEdgeNone;
     // Do any additional setup after loading the view from its nib.
     self.flags = -1;
     self.navigationItem.rightBarButtonItems = nil;
-    [self checkSelection:self];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
+
+    EGOTextView *view = [[EGOTextView alloc] initWithFrame:self.view.bounds];
+    view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    view.frame = self.view.frame;
+    view.delegate = self;
+    [self.view addSubview:view];
+    self.egoTextView = view;
+    [view becomeFirstResponder];
+    self.cancelItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancel)];
+    self.saveItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSave target:self action:@selector(save)];
+    [self start];
 }
 
 - (void)didReceiveMemoryWarning
@@ -467,38 +544,68 @@ enum TOOL_ITEM {
     return NO;
 }
 
-- (void)setFile:(id<QLPreviewItem, PreViewDelegate>) file
+- (void)start
 {
-    self.sfile = file;
-    NSString *path;
-    NSMutableArray *litems = [[NSMutableArray alloc] init];
-    UIBarButtonItem *cancelItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancel)];
-    UIBarButtonItem *saveItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSave target:self action:@selector(save)];
-    ep = nil;
-    [litems addObject:cancelItem];
-    [litems addObject:saveItem];
+    self.litems = [[NSMutableArray alloc] init];
+    self.ep = nil;
+    [self.litems addObject:self.cancelItem];
+    [self.litems addObject: [self getSpaceBarItem:20.0]];
+    [self.litems addObject:self.saveItem];
 
+    if (![self IsSeaf]) {
+        [self prepareRawText];
+    } else {
+        [self prepareSeaf];
+    }
+}
+
+- (void)prepareRawText
+{
+    self.egoTextView.hidden = NO;
+    [self.egoTextView becomeFirstResponder];
+    self.egoTextView.text = sfile.content;
     if ([self IsMarkdown]) {
-        ep = [self getTextBarItem:@"Preview" action:@selector(edit_preview) active:0];
-        [litems addObject:ep];
-        path = [[NSBundle mainBundle] pathForResource:@"edit_file_md" ofType:@"html"];
-    } else if ([self IsSeaf]) {
-        if (IsIpad()) {
-            path = [[NSBundle mainBundle] pathForResource:@"edit_file_seaf2" ofType:@"html"];
-            timer = [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(checkBtState:) userInfo:nil repeats:YES];
-        } else {
-            path = [[NSBundle mainBundle] pathForResource:@"edit_file_seaf" ofType:@"html"];
-            timer = [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(checkSelection:) userInfo:nil repeats:YES];
-        }
-    } else
-        path = [[NSBundle mainBundle] pathForResource:@"edit_file_text" ofType:@"html"];
+        self.ep = [self getTextBarItem:@"Preview" action:@selector(edit_preview) active:0];
+        [self.litems addObject:self.ep];
 
-    self.navigationItem.leftBarButtonItems = litems;
+        NSMutableArray *items = [[NSMutableArray alloc] init];
+        [self addItem:items image:@"bt-ul2" action:@selector(ulM)];
+        [self addItem:items image:@"bt-ol2" action:@selector(olM)];
+        [self addItem:items image:@"bt-code2" action:@selector(codeM)];
+        [self addItem:items image:@"bt-quote2" action:@selector(quoteM)];
+        [self addItem:items image:@"bt-link2" action:@selector(insertLinkM)];
+        [self addItem:items image:@"bt-italic2" action:@selector(italicM)];
+        [self addItem:items image:@"bt-bold2" action:@selector(boldM)];
+        [self addItem:items image:@"bt-equal2" action:@selector(equalM)];
+        [self addItem:items image:@"bt-asterisk2" action:@selector(asteriskM)];
+        [self addItem:items image:@"bt-pound2" action:@selector(poundM)];
+        self.navigationItem.rightBarButtonItems = items;
+        NSURLRequest *request = [[NSURLRequest alloc] initWithURL:self.sfile.previewItemURL cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
+        [self.webView loadRequest:request];
+    } else
+        self.navigationItem.rightBarButtonItems = nil;
+    self.navigationItem.leftBarButtonItems = self.litems;
+}
+
+- (void)prepareSeaf
+{
+    self.egoTextView.hidden = YES;;
+    NSString *path;
+    if (IsIpad()) {
+        path = [[NSBundle mainBundle] pathForResource:@"edit_file_seaf2" ofType:@"html"];
+        timer = [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(checkBtState:) userInfo:nil repeats:YES];
+    } else {
+        path = [[NSBundle mainBundle] pathForResource:@"edit_file_seaf" ofType:@"html"];
+        timer = [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(checkSelection:) userInfo:nil repeats:YES];
+    }
+    self.navigationItem.leftBarButtonItems = self.litems;
+    [self initSeafToolbar];
 
     NSURL *url = [NSURL fileURLWithPath:path];
     NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 30];
     [(UIWebView *)self.view loadRequest: request];
 }
+
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
@@ -518,6 +625,30 @@ enum TOOL_ITEM {
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
     [self.webView stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.execCommand(resizeTO(%f,%f))", self.webView.frame.size.width, self.webView.frame.size.height]];
+}
+
+#pragma mark EGOTextViewDelegate
+
+- (BOOL)egoTextViewShouldBeginEditing:(EGOTextView *)textView {
+    return YES;
+}
+
+- (BOOL)egoTextViewShouldEndEditing:(EGOTextView *)textView {
+    return YES;
+}
+
+- (void)egoTextViewDidBeginEditing:(EGOTextView *)textView {
+}
+
+- (void)egoTextViewDidEndEditing:(EGOTextView *)textView {
+}
+
+- (void)egoTextViewDidChange:(EGOTextView *)textView {
+
+}
+
+- (void)egoTextView:(EGOTextView*)textView didSelectURL:(NSURL *)URL {
+
 }
 
 @end

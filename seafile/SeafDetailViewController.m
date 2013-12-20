@@ -118,16 +118,11 @@ enum PREVIEW_STATE {
 
 - (void)clearPreView
 {
-    if (self.state == PREVIEW_FAILED)
-        [self.failedView removeFromSuperview];
-    if (self.state == PREVIEW_DOWNLOADING)
-        [self.progressView removeFromSuperview];
-    if (self.state == PREVIEW_SUCCESS || self.state == PREVIEW_PHOTO)
-        [self.fileViewController.view removeFromSuperview];
-    if (self.state == PREVIEW_WEBVIEW || self.state == PREVIEW_WEBVIEW_JS) {
-        [self.webView removeFromSuperview];
-        [self.webView loadHTMLString:@"" baseURL:nil];
-    }
+    self.failedView.hidden = YES;
+    self.progressView.hidden = YES;
+    self.fileViewController.view.hidden = YES;
+    self.webView.hidden = YES;
+    [self.webView loadHTMLString:@"" baseURL:nil];
 }
 
 - (void)refreshView
@@ -160,38 +155,32 @@ enum PREVIEW_STATE {
         case PREVIEW_DOWNLOADING:
             Debug (@"DownLoading file %@\n", self.preViewItem.previewItemTitle);
             self.progressView.frame = r;
-            [self.view addSubview:self.progressView];
+            self.progressView.hidden = NO;
             [self.progressView configureViewWithItem:self.preViewItem completeness:0];
             break;
         case PREVIEW_FAILED:
             Debug ("Can not preview file %@ %@\n", self.preViewItem.previewItemTitle, self.preViewItem.previewItemURL);
             self.failedView.frame = r;
-            [self.view addSubview:self.failedView];
+            self.failedView.hidden = NO;
             [self.failedView configureViewWithPrevireItem:self.preViewItem];
             break;
         case PREVIEW_SUCCESS:
             Debug (@"Preview file %@ mime=%@ success\n", self.preViewItem.previewItemTitle, self.preViewItem.mime);
             [self.fileViewController setPreItem:self.preViewItem];
             self.fileViewController.view.frame = r;
-            [self.view addSubview:self.fileViewController.view];
+            self.fileViewController.view.hidden = NO;
             break;
         case PREVIEW_WEBVIEW_JS:
         case PREVIEW_WEBVIEW:
             Debug("Preview by webview %@\n", self.preViewItem.previewItemTitle);
             request = [[NSURLRequest alloc] initWithURL:self.preViewItem.previewItemURL cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
-            if (!self.webView) {
-                self.webView = [[UIWebView alloc] initWithFrame:self.view.frame];
-                self.webView.scalesPageToFit = YES;
-                self.webView.autoresizesSubviews = YES;
-                self.webView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
-                if (self.state == PREVIEW_WEBVIEW_JS)
-                    self.webView.delegate = self;
-                else
-                    self.webView.delegate = nil;
-            }
+            if (self.state == PREVIEW_WEBVIEW_JS)
+                self.webView.delegate = self;
+            else
+                self.webView.delegate = nil;
             self.webView.frame = r;
             [self.webView loadRequest:request];
-            [self.view addSubview:self.webView];
+            self.webView.hidden = NO;
             break;
         case PREVIEW_PHOTO:
             //[self.fileViewController refreshCurrentPreviewItem];
@@ -233,8 +222,8 @@ enum PREVIEW_STATE {
         ((SeafFile *)item).delegate = self;
         [(SeafFile *)item loadContent:NO];
     }
-    self.fileViewController.view.frame = CGRectMake(self.view.frame.origin.x, 0, self.view.frame.size.width, self.view.frame.size.height);;
-    [self.view addSubview:self.fileViewController.view];
+    self.fileViewController.view.frame = CGRectMake(self.view.frame.origin.x, 0, self.view.frame.size.width, self.view.frame.size.height);
+    self.fileViewController.view.hidden = NO;
     [self.fileViewController setPreItems:items current:item];
 }
 
@@ -281,6 +270,15 @@ enum PREVIEW_STATE {
     }
     self.fileViewController = [[FileViewController alloc] init];
     //self.fileViewController.selectDelegate = self;
+    self.webView = [[UIWebView alloc] initWithFrame:self.view.frame];
+    self.webView.scalesPageToFit = YES;
+    self.webView.autoresizesSubviews = YES;
+    self.webView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
+    [self.view addSubview:self.failedView];
+    [self.view addSubview:self.progressView];
+    [self.view addSubview:self.fileViewController.view];
+    [self.view addSubview:self.webView];
+
     self.state = PREVIEW_NONE;
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
@@ -503,10 +501,9 @@ enum PREVIEW_STATE {
 
 - (IBAction)editFile:(id)sender
 {
-    SeafTextEditorViewController *editViewController = [[SeafTextEditorViewController alloc] init];
+    SeafTextEditorViewController *editViewController = [[SeafTextEditorViewController alloc] initWithFile:self.preViewItem];
     editViewController.detailViewController = self;
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:editViewController];
-    [editViewController setFile:self.preViewItem];
     [navController setModalPresentationStyle:UIModalPresentationFullScreen];
     [self presentViewController:navController animated:NO completion:nil];
 }
