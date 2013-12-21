@@ -22,3 +22,5 @@ static inline BOOL IsIpad()
 {
     return ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad);
 }
+
+#define ios7 ([[[UIDevice currentDevice] systemVersion] floatValue] >= 7)

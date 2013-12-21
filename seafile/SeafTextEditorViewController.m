@@ -108,9 +108,8 @@ enum TOOL_ITEM {
     if ([self.ep.title isEqualToString:@"Preview"]) {
         self.ep.title = @"Edit";
         self.egoTextView.hidden = YES;
-        for (UIBarButtonItem *item in self.navigationItem.rightBarButtonItems) {
+        for (UIBarButtonItem *item in self.navigationItem.rightBarButtonItems)
             item.enabled = NO;
-        }
         NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [self.egoTextView.text stringEscapedForJavasacript]];
         [self.webView stringByEvaluatingJavaScriptFromString:js];
     } else {
@@ -307,34 +306,6 @@ enum TOOL_ITEM {
     return item;
 }
 
-- (void)removeBar {
-    // Locate non-UIWindow.
-    UIWindow *keyboardWindow = nil;
-    for (UIWindow *testWindow in [[UIApplication sharedApplication] windows]) {
-        if (![[testWindow class] isEqual:[UIWindow class]]) {
-            keyboardWindow = testWindow;
-            break;
-        }
-    }
-
-    // Locate UIWebFormView.
-    for (UIView *possibleFormView in [keyboardWindow subviews]) {
-        // iOS 5 sticks the UIWebFormView inside a UIPeripheralHostView.
-        if ([[possibleFormView description] rangeOfString:@"UIPeripheralHostView"].location != NSNotFound) {
-            for (UIView *subviewWhichIsPossibleFormView in [possibleFormView subviews]) {
-                if ([[subviewWhichIsPossibleFormView description] rangeOfString:@"UIWebFormAccessory"].location != NSNotFound) {
-                    [subviewWhichIsPossibleFormView removeFromSuperview];
-                }
-            }
-        }
-    }
-}
-
-- (void)keyboardWillShow:(NSNotification *)note
-{
-    [self performSelector:@selector(removeBar) withObject:nil afterDelay:0];
-}
-
 - (void)addItem:(NSMutableArray *)items image:(NSString *)imageName action:(SEL)action
 {
     UIBarButtonItem *item = [self getBarItem:imageName action:action active:0];
@@ -449,6 +420,7 @@ enum TOOL_ITEM {
     self.flags = -1;
     self.navigationItem.rightBarButtonItems = nil;
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];
+
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 
     EGOTextView *view = [[EGOTextView alloc] initWithFrame:self.view.bounds];
@@ -466,7 +438,6 @@ enum TOOL_ITEM {
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
 }
 
 # pragma - UIWebViewDelegate
@@ -546,12 +517,6 @@ enum TOOL_ITEM {
 
 - (void)start
 {
-    self.litems = [[NSMutableArray alloc] init];
-    self.ep = nil;
-    [self.litems addObject:self.cancelItem];
-    [self.litems addObject: [self getSpaceBarItem:20.0]];
-    [self.litems addObject:self.saveItem];
-
     if (![self IsSeaf]) {
         [self prepareRawText];
     } else {
@@ -564,10 +529,11 @@ enum TOOL_ITEM {
     self.egoTextView.hidden = NO;
     [self.egoTextView becomeFirstResponder];
     self.egoTextView.text = sfile.content;
+    self.litems = [[NSMutableArray alloc] init];
+    [self.litems addObject:self.saveItem];
     if ([self IsMarkdown]) {
         self.ep = [self getTextBarItem:@"Preview" action:@selector(edit_preview) active:0];
         [self.litems addObject:self.ep];
-
         NSMutableArray *items = [[NSMutableArray alloc] init];
         [self addItem:items image:@"bt-ul2" action:@selector(ulM)];
         [self addItem:items image:@"bt-ol2" action:@selector(olM)];
@@ -584,11 +550,21 @@ enum TOOL_ITEM {
         [self.webView loadRequest:request];
     } else
         self.navigationItem.rightBarButtonItems = nil;
+
+    [self.litems addObject: [self getSpaceBarItem:30.0]];
+    [self.litems addObject:self.cancelItem];
+    self.navigationItem.leftBarButtonItems = self.litems;
     self.navigationItem.leftBarButtonItems = self.litems;
 }
 
 - (void)prepareSeaf
 {
+    self.litems = [[NSMutableArray alloc] init];
+    [self.litems addObject:self.saveItem];
+    [self.litems addObject: [self getSpaceBarItem:30.0]];
+    [self.litems addObject:self.cancelItem];
+    self.navigationItem.leftBarButtonItems = self.litems;
+
     self.egoTextView.hidden = YES;;
     NSString *path;
     if (IsIpad()) {
@@ -598,7 +574,6 @@ enum TOOL_ITEM {
         path = [[NSBundle mainBundle] pathForResource:@"edit_file_seaf" ofType:@"html"];
         timer = [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(checkSelection:) userInfo:nil repeats:YES];
     }
-    self.navigationItem.leftBarButtonItems = self.litems;
     [self initSeafToolbar];
 
     NSURL *url = [NSURL fileURLWithPath:path];
@@ -644,11 +619,49 @@ enum TOOL_ITEM {
 }
 
 - (void)egoTextViewDidChange:(EGOTextView *)textView {
-
 }
 
 - (void)egoTextView:(EGOTextView*)textView didSelectURL:(NSURL *)URL {
+}
 
+- (void)removeBar {
+    // Locate non-UIWindow.
+    UIWindow *keyboardWindow = nil;
+    for (UIWindow *testWindow in [[UIApplication sharedApplication] windows]) {
+        if (![[testWindow class] isEqual:[UIWindow class]]) {
+            keyboardWindow = testWindow;
+            break;
+        }
+    }
+
+    // Locate UIWebFormView.
+    for (UIView *possibleFormView in [keyboardWindow subviews]) {
+        // iOS 5 sticks the UIWebFormView inside a UIPeripheralHostView.
+        if ([[possibleFormView description] rangeOfString:@"UIPeripheralHostView"].location != NSNotFound) {
+            for (UIView *subviewWhichIsPossibleFormView in [possibleFormView subviews]) {
+                if ([[subviewWhichIsPossibleFormView description] rangeOfString:@"UIWebFormAccessory"].location != NSNotFound) {
+                    [subviewWhichIsPossibleFormView removeFromSuperview];
+                }
+            }
+        }
+    }
+}
+
+- (void)keyboardWillShow:(NSNotification *)notification {
+    if ([self IsSeaf]) {
+        [self performSelector:@selector(removeBar) withObject:nil afterDelay:0];
+        return;
+    }
+    NSDictionary* info = [notification userInfo];
+    CGSize keyBoardSize = [[info objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue].size;
+    float keyH = MIN(keyBoardSize.height, keyBoardSize.width);
+    self.egoTextView.frame = CGRectMake(self.egoTextView.frame.origin.x, self.egoTextView.frame.origin.y, self.egoTextView.frame.size.width, self.view.bounds.size.height - keyH );
+}
+
+- (void)keyboardWillHide:(NSNotification *)notification{
+    if ([self IsSeaf]) return;
+    self.egoTextView.frame = self.view.frame;
+    [self.egoTextView becomeFirstResponder];
 }
 
 @end
