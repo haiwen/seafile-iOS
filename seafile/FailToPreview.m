@@ -41,7 +41,7 @@
     docController = [UIDocumentInteractionController interactionControllerWithURL:url];
     BOOL ret = [docController presentOpenInMenuFromRect:[((UIButton *)sender) frame] inView:self animated:YES];
     if (ret == NO) {
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"There is no app which can open this type of file on this machine"
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"There is no app which can open this type of file on this machine", @"There is no app which can open this type of file on this machine")
                                                         message:nil
                                                        delegate:nil
                                               cancelButtonTitle:@"OK"

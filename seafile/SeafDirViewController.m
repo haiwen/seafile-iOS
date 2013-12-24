@@ -65,10 +65,10 @@
         [self.navigationItem setHidesBackButton:YES];
     } else
         [self.navigationItem setHidesBackButton:NO];
-    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStyleBordered target:self action:@selector(cancel:)];
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Cancel", @"Cancel") style:UIBarButtonItemStyleBordered target:self action:@selector(cancel:)];
     self.tableView.scrollEnabled = YES;
     UIBarButtonItem *flexibleFpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
-    self.chooseItem = [[UIBarButtonItem alloc] initWithTitle:@"Choose" style:UIBarButtonItemStyleBordered target:self action:@selector(chooseFolder:)];
+    self.chooseItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Choose", @"Choose") style:UIBarButtonItemStyleBordered target:self action:@selector(chooseFolder:)];
     NSArray *items = [NSArray arrayWithObjects:flexibleFpaceItem, self.chooseItem, flexibleFpaceItem, nil];
     [self setToolbarItems:items];
     self.title = _directory.name;
@@ -104,7 +104,7 @@
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
 {
-    return @"Choose";
+    return NSLocalizedString(@"Choose", @"Choose");
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
@@ -163,11 +163,11 @@
         UITextField *textfiled = [alertView textFieldAtIndex:0];
         NSString *input = textfiled.text;
         if (!input) {
-             [self alertWithMessage:@"Password must not be empty"];
+             [self alertWithMessage:NSLocalizedString(@"Password must not be empty", @"Password must not be empty")];
             return;
         }
         if (input.length < 3 || input.length  > 100) {
-             [self alertWithMessage:@"The length of password should be between 3 and 100"];
+             [self alertWithMessage:NSLocalizedString(@"The length of password should be between 3 and 100", @"The length of password should be between 3 and 100")];
             return;
         }
         [_curDir setDelegate:self];
@@ -175,7 +175,7 @@
             [_curDir checkRepoPassword:input];
         else
             [_curDir setRepoPassword:input];
-        [SVProgressHUD showWithStatus:@"Checking library password ..."];
+        [SVProgressHUD showWithStatus:NSLocalizedString(@"Checking library password ...", @"Checking library password ...")];
         return;
     } else if ([alertView.title isEqualToString:TITLE_PASSWORD]) {
         [self popupSetRepoPassword];
@@ -184,7 +184,7 @@
 
 - (void)popupSetRepoPassword
 {
-    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Password of this library" message:nil delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"OK", nil];
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Password of this library", @"Password of this library") message:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Cancel") otherButtonTitles:NSLocalizedString(@"OK", @"OK"), nil];
     alert.alertViewStyle = UIAlertViewStyleSecureTextInput;
     [alert show];
 }
@@ -210,7 +210,7 @@
     if (errCode == HTTP_ERR_REPO_PASSWORD_REQUIRED) {
         NSAssert(0, @"Here should never be reached");
     } else {
-        [SVProgressHUD showErrorWithStatus:@"Failed to load content of the directory"];
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load content of the directory", @"Failed to load content of the directory")];
         [self.tableView reloadData];
         Warning("Failed to load directory content %@\n", _directory.name);
     }
@@ -223,7 +223,7 @@
         SeafDirViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:_curDir delegate:self.delegate];
         [self.navigationController pushViewController:controller animated:YES];
     } else {
-        [SVProgressHUD showErrorWithStatus:@"Wrong library password" duration:2.0];
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Wrong library password", @"Wrong library password") duration:2.0];
         [self performSelector:@selector(popupSetRepoPassword) withObject:nil afterDelay:1.0];
     }
 }

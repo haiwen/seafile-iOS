@@ -48,7 +48,6 @@
     self.newReplyNum = 0;
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     self.detailViewController = (SeafDisDetailViewController *)[appdelegate detailViewController:TABBED_DISCUSSION];
-    self.title = @"Groups";
     self.tableView.rowHeight = 50;
     self.detailViewController.connection = _connection;
     if (_refreshHeaderView == nil) {
@@ -104,7 +103,7 @@
 {
     if (self.newReplyNum > 0) {
         ColorfulButton *bt = (ColorfulButton *)self.headerView;
-        NSString *text = [NSString stringWithFormat:@"%d new replies", self.newReplyNum];
+        NSString *text = [NSString stringWithFormat:NSLocalizedString(@"%d new replies", @"%d new replies"), self.newReplyNum];
         [bt setTitle:text forState:UIControlStateNormal];
         [bt setTitle:text forState:UIControlStateSelected];
         [bt setTitle:text forState:UIControlStateHighlighted];
@@ -143,7 +142,7 @@
                        failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
                            Warning("Failed to get groups ...error=%d\n", error.code);
                            if (self.view.window && error.code != NSURLErrorCancelled && error.code != 102) {
-                               [SVProgressHUD showErrorWithStatus:@"Failed to get groups ..."];
+                               [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get groups ...", @"Failed to get groups ...")];
                            }
                            [self doneLoadingTableViewData];
                        }];

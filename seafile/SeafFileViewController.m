@@ -36,14 +36,14 @@ enum {
     STATE_MOVE,
     STATE_COPY,
 };
-#define S_PASSWORD @"Password of this library"
-#define S_MKDIR @"New folder"
-#define S_NEWFILE @"New file"
-#define S_RENAME @"Rename"
-#define S_EDIT @"Edit"
-#define S_DELETE @"Delete"
-#define S_REDOWNLOAD @"Redownload"
-#define S_UPLOAD @"Upload"
+#define S_PASSWORD NSLocalizedString(@"Password of this library", nil)
+#define S_MKDIR NSLocalizedString(@"New Folder", nil)
+#define S_NEWFILE NSLocalizedString(@"New File", nil)
+#define S_RENAME NSLocalizedString(@"Rename", nil)
+#define S_EDIT NSLocalizedString(@"Edit", nil)
+#define S_DELETE NSLocalizedString(@"Delete", nil)
+#define S_REDOWNLOAD NSLocalizedString(@"Redownload", nil)
+#define S_UPLOAD NSLocalizedString(@"Upload", nil)
 
 
 @interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, EGORefreshTableHeaderDelegate, SeafDirDelegate, UISearchBarDelegate, UISearchDisplayDelegate>
@@ -104,7 +104,7 @@ enum {
         UIBarButtonItem *flexibleFpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:self action:nil];
         UIBarButtonItem *fixedSpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:self action:nil];
 
-        NSArray *itemsTitles = [NSArray arrayWithObjects:@"New Folder", @"New File", @"Copy", @"Move", @"Delete", @"Paste", @"MoveTo", @"Cancel", nil ];
+        NSArray *itemsTitles = [NSArray arrayWithObjects:S_MKDIR, S_NEWFILE, NSLocalizedString(@"Copy", nil), NSLocalizedString(@"Move", nil), S_DELETE, NSLocalizedString(@"PasteTo", nil), NSLocalizedString(@"MoveTo", nil), NSLocalizedString(@"Cancel", nil), nil ];
 
         UIBarButtonItem *items[EDITOP_NUM];
         items[0] = flexibleFpaceItem;
@@ -175,7 +175,7 @@ enum {
 
     self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectZero];
     self.searchBar.searchTextPositionAdjustment = UIOffsetMake(0, 0);
-    self.searchBar.placeholder = @"Search";
+    self.searchBar.placeholder = NSLocalizedString(@"Search", @"Search");
     self.searchBar.delegate = self;
     [self.searchBar sizeToFit];
     self.strongSearchDisplayController = [[UISearchDisplayController alloc] initWithSearchBar:self.searchBar contentsController:self];
@@ -360,7 +360,7 @@ enum {
 
 - (void)editSheet:(id)sender
 {
-    NSString *cancelTitle = IsIpad() ? nil : @"Cancel";
+    NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Cancel");
     UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_NEWFILE, S_MKDIR, S_EDIT, nil];
     [actionSheet showFromBarButtonItem:self.editItem animated:YES];
 }
@@ -377,8 +377,8 @@ enum {
             self.rightItems = [NSArray arrayWithObjects: self.editItem, space, self.photoItem, nil];
             self.navigationItem.rightBarButtonItems = self.rightItems;
 
-            _selectAllItem = [[UIBarButtonItem alloc] initWithTitle:@"Select All" style:UIBarButtonItemStylePlain target:self action:@selector(selectAll:)];
-            _selectNoneItem = [[UIBarButtonItem alloc] initWithTitle:@"Select None" style:UIBarButtonItemStylePlain target:self action:@selector(selectNone:)];
+            _selectAllItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Select All", @"Select All") style:UIBarButtonItemStylePlain target:self action:@selector(selectAll:)];
+            _selectNoneItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Select None", @"Select None") style:UIBarButtonItemStylePlain target:self action:@selector(selectNone:)];
         }
     }
 }
@@ -466,11 +466,11 @@ enum {
     if ([file isKindOfClass:[SeafUploadFile class]] || ![file hasCache])
         return;
 
-    NSString *cancelTitle = IsIpad() ? nil : @"Cancel";
+    NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Cancel");
     if (file.mpath)
         actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, S_REDOWNLOAD, S_UPLOAD, nil];
     else
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:S_DELETE, S_REDOWNLOAD, S_RENAME, nil];
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, S_REDOWNLOAD, S_RENAME, nil];
 
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
     [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
@@ -488,7 +488,7 @@ enum {
     if (![file isKindOfClass:[SeafUploadFile class]])
         return;
 
-    NSString *cancelTitle = IsIpad() ? nil : @"Cancel";
+    NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Cancel");
     UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, nil];
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
     [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
@@ -517,12 +517,12 @@ enum {
             int utime = [[dict objectForKey:@"utime"] intValue];
             BOOL result = [[dict objectForKey:@"result"] boolValue];
             if (result)
-                cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, Uploaded %@", sizeStr, [SeafDateFormatter stringFromLongLong:utime]];
+                cell.detailTextLabel.text = [NSString stringWithFormat:NSLocalizedString(@"%@, Uploaded %@", @"%@, Uploaded %@"), sizeStr, [SeafDateFormatter stringFromLongLong:utime]];
             else {
-                cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, waiting to upload", sizeStr];
+                cell.detailTextLabel.text = [NSString stringWithFormat:NSLocalizedString(@"%@, waiting to upload", @"%@, waiting to upload"), sizeStr];
             }
         } else {
-            cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, waiting to upload", sizeStr];
+            cell.detailTextLabel.text = [NSString stringWithFormat:NSLocalizedString(@"%@, waiting to upload", @"%@, waiting to upload"), sizeStr];
         }
         c = cell;
     }
@@ -619,13 +619,13 @@ enum {
 - (void)popupSetRepoPassword
 {
     self.state = STATE_PASSWORD;
-    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Password of this library" message:nil delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"OK", nil];
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:S_PASSWORD message:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", nil) otherButtonTitles:NSLocalizedString(@"OK", nil), nil];
     alert.alertViewStyle = UIAlertViewStyleSecureTextInput;
     [alert show];
 }
 - (void)popupInputView:(NSString *)title placeholder:(NSString *)tip
 {
-    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:nil delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"OK", nil];
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", nil) otherButtonTitles:NSLocalizedString(@"OK", nil), nil];
     alert.alertViewStyle = UIAlertViewStylePlainTextInput;
     UITextField *textfiled = [alert textFieldAtIndex:0];
     textfiled.placeholder = tip;
@@ -634,12 +634,12 @@ enum {
 - (void)popupMkdirView
 {
     self.state = STATE_MKDIR;
-    [self popupInputView:S_MKDIR placeholder:@"New folder name"];
+    [self popupInputView:S_MKDIR placeholder:NSLocalizedString(@"New folder name", nil)];
 }
 - (void)popupCreateView
 {
     self.state = STATE_CREATE;
-    [self popupInputView:S_NEWFILE placeholder:@"New file name"];
+    [self popupInputView:S_NEWFILE placeholder:NSLocalizedString(@"New file name", nil)];
 }
 - (void)popupRenameView:(NSString *)newName
 {
@@ -741,7 +741,7 @@ enum {
 
     NSString *text = nil;
     if (section == 0) {
-        text = @"My Own Libraries";
+        text = NSLocalizedString(@"My Own Libraries", nil);
     } else {
         NSArray *repos =  [[((SeafRepos *)_directory)repoGroups] objectAtIndex:section];
         SeafRepo *repo = (SeafRepo *)[repos objectAtIndex:0];
@@ -761,7 +761,7 @@ enum {
 - (void)checkPassword:(NSString *)password
 {
     [_curEntry setDelegate:self];
-    [SVProgressHUD showWithStatus:@"Checking library password ..."];
+    [SVProgressHUD showWithStatus:NSLocalizedString(@"Checking library password ...", nil)];
     if ([self.connection localDecrypt:[_curEntry repoId]])
         [_curEntry checkRepoPassword:password];
     else
@@ -779,47 +779,47 @@ enum {
         [_directory setDelegate:self];
         if ([title isEqualToString:S_PASSWORD]) {
             if (!input || input.length == 0) {
-                [self alertWithMessage:@"Password must not be empty"];
+                [self alertWithMessage:NSLocalizedString(@"Password must not be empty", nil)];
                 return;
             }
             if (input.length < 3 || input.length  > 100) {
-                [self alertWithMessage:@"The length of password should be between 3 and 100"];
+                [self alertWithMessage:NSLocalizedString(@"The length of password should be between 3 and 100", nil)];
                 return;
             }
             [self performSelector:@selector(checkPassword:) withObject:input afterDelay:0.0];
         } else if (self.state == STATE_MKDIR) {
             if (!input || input.length == 0) {
-                [self alertWithMessage:@"Folder name must not be empty"];
+                [self alertWithMessage:NSLocalizedString(@"Folder name must not be empty", nil)];
                 return;
             }
             if (![input isValidFileName]) {
-                [self alertWithMessage:@"Folder name invalid"];
+                [self alertWithMessage:NSLocalizedString(@"Folder name invalid", nil)];
                 return;
             }
             [_directory mkdir:input];
-            [SVProgressHUD showWithStatus:@"Creating folder ..."];
+            [SVProgressHUD showWithStatus:NSLocalizedString(@"Creating folder ...", nil)];
         } else if (self.state == STATE_RENAME) {
             if (!input || input.length == 0) {
-                [self alertWithMessage:@"File name must not be empty"];
+                [self alertWithMessage:NSLocalizedString(@"File name must not be empty", nil)];
                 return;
             }
             if (![input isValidFileName]) {
-                [self alertWithMessage:@"File name invalid"];
+                [self alertWithMessage:NSLocalizedString(@"File name invalid", nil)];
                 return;
             }
             [_directory renameFile:_curEntry newName:input];
-            [SVProgressHUD showWithStatus:@"Renaming file ..."];
+            [SVProgressHUD showWithStatus:NSLocalizedString(@"Renaming file ...", nil)];
         } else if (self.state == STATE_CREATE) {
             if (!input || input.length == 0) {
-                [self alertWithMessage:@"File name must not be empty"];
+                [self alertWithMessage:NSLocalizedString(@"File name must not be empty", nil)];
                 return;
             }
             if (![input isValidFileName]) {
-                [self alertWithMessage:@"File name invalid"];
+                [self alertWithMessage:NSLocalizedString(@"File name invalid", nil)];
                 return;
             }
             [_directory createFile:input];
-            [SVProgressHUD showWithStatus:@"Creating file ..."];
+            [SVProgressHUD showWithStatus:NSLocalizedString(@"Creating file ...", nil)];
         }
     }
 }
@@ -861,24 +861,24 @@ enum {
         [self doneLoadingTableViewData];
         switch (self.state) {
             case STATE_DELETE:
-                [SVProgressHUD showErrorWithStatus:@"Failed to delete files"];
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to delete files", nil)];
                 break;
             case STATE_MKDIR:
-                [SVProgressHUD showErrorWithStatus:@"Failed to create folder" duration:2.0];
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to create folder", nil) duration:2.0];
                 [self performSelector:@selector(popupMkdirView) withObject:nil afterDelay:1.0];
                 break;
             case STATE_CREATE:
-                [SVProgressHUD showErrorWithStatus:@"Failed to create file" duration:2.0];
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to create file", nil) duration:2.0];
                 [self performSelector:@selector(popupCreateView) withObject:nil afterDelay:1.0];
                 break;
             case STATE_COPY:
-                [SVProgressHUD showErrorWithStatus:@"Failed to copy files" duration:2.0];
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to copy files", nil) duration:2.0];
                 break;
             case STATE_MOVE:
-                [SVProgressHUD showErrorWithStatus:@"Failed to move files" duration:2.0];
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to move files", nil) duration:2.0];
                 break;
             case STATE_RENAME: {
-                [SVProgressHUD showErrorWithStatus:@"Failed to rename file" duration:2.0];
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to rename file", nil) duration:2.0];
                 SeafFile *file = (SeafFile *)_curEntry;
                 [self performSelector:@selector(popupRenameView:) withObject:file.name afterDelay:1.0];
                 break;
@@ -886,7 +886,7 @@ enum {
             case STATE_LOADING:
                 if (!_directory.hasCache) {
                     [self dismissLoadingView];
-                    [SVProgressHUD showErrorWithStatus:@"Failed to load files"];
+                    [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load files", nil)];
                 } else
                     [SVProgressHUD dismiss];
                 break;
@@ -909,7 +909,7 @@ enum {
         [self.navigationController pushViewController:controller animated:YES];
         [controller setDirectory:(SeafDir *)_curEntry];
     } else {
-        [SVProgressHUD showErrorWithStatus:@"Wrong library password" duration:2.0];
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Wrong library password", nil) duration:2.0];
         [self performSelector:@selector(popupSetRepoPassword) withObject:nil afterDelay:1.0];
     }
 }
@@ -993,7 +993,7 @@ enum {
             }
             self.state = STATE_DELETE;
             [_directory delEntries:entries];
-            [SVProgressHUD showWithStatus:@"Deleting files ..."];
+            [SVProgressHUD showWithStatus:NSLocalizedString(@"Deleting files ...", nil)];
             break;
         }
         default:
@@ -1005,7 +1005,7 @@ enum {
 {
     NSArray *entries = [NSArray arrayWithObject:file];
     self.state = EDITOP_DELETE;
-    [SVProgressHUD showWithStatus:@"Deleting file ..."];
+    [SVProgressHUD showWithStatus:NSLocalizedString(@"Deleting file ...", nil)];
     [_directory delEntries:entries];
 }
 
@@ -1088,10 +1088,10 @@ enum {
     }
     if (self.state == STATE_COPY) {
         [_directory copyEntries:entries dstDir:dir];
-        [SVProgressHUD showWithStatus:@"Copying files ..."];
+        [SVProgressHUD showWithStatus:NSLocalizedString(@"Copying files ...", nil)];
     } else {
         [_directory moveEntries:entries dstDir:dir];
-        [SVProgressHUD showWithStatus:@"Moving files ..."];
+        [SVProgressHUD showWithStatus:NSLocalizedString(@"Moving files ...", nil)];
     }
 }
 - (void)cancelChoose:(UIViewController *)c
@@ -1168,27 +1168,27 @@ enum {
 
 - (NSString *)descriptionForSelectingAllAssets:(QBImagePickerController *)imagePickerController
 {
-    return @"Select all photos";
+    return NSLocalizedString(@"Select all photos", nil);
 }
 
 - (NSString *)descriptionForDeselectingAllAssets:(QBImagePickerController *)imagePickerController
 {
-    return @"Deselect all photos";
+    return NSLocalizedString(@"Deselect all photos", nil);
 }
 
 - (NSString *)imagePickerController:(QBImagePickerController *)imagePickerController descriptionForNumberOfPhotos:(NSUInteger)numberOfPhotos
 {
-    return [NSString stringWithFormat:@"%d photos", numberOfPhotos];
+    return [NSString stringWithFormat:NSLocalizedString(@"%d photos", nil), numberOfPhotos];
 }
 
 - (NSString *)imagePickerController:(QBImagePickerController *)imagePickerController descriptionForNumberOfVideos:(NSUInteger)numberOfVideos
 {
-    return [NSString stringWithFormat:@"%d videos", numberOfVideos];
+    return [NSString stringWithFormat:NSLocalizedString(@"%d videos", nil), numberOfVideos];
 }
 
 - (NSString *)imagePickerController:(QBImagePickerController *)imagePickerController descriptionForNumberOfPhotos:(NSUInteger)numberOfPhotos numberOfVideos:(NSUInteger)numberOfVideos
 {
-    return [NSString stringWithFormat:@"%d photos、%d videos", numberOfPhotos, numberOfVideos];
+    return [NSString stringWithFormat:NSLocalizedString(@"%d photos、%d videos", nil), numberOfPhotos, numberOfVideos];
 }
 
 #pragma mark - UIPopoverControllerDelegate
@@ -1229,9 +1229,9 @@ enum {
 }
 
 #pragma mark - Search Delegate
-#define SEARCH_STATE_INIT @"Click \"Search\" to start"
-#define SEARCH_STATE_SEARCHING @"Searching"
-#define SEARCH_STATE_NORESULTS @"No Results"
+#define SEARCH_STATE_INIT NSLocalizedString(@"Click \"Search\" to start", @"Click \"Search\" to start")
+#define SEARCH_STATE_SEARCHING NSLocalizedString(@"Searching", @"Searching")
+#define SEARCH_STATE_NORESULTS NSLocalizedString(@"No Results", @"No Results")
 
 - (void)setSearchState:(UISearchDisplayController *)controller state:(NSString *)state
 {
@@ -1283,7 +1283,7 @@ enum {
 {
     Debug("search %@...", searchBar.text);
     [self setSearchState:self.searchDisplayController state:SEARCH_STATE_SEARCHING];
-    [SVProgressHUD showWithStatus:@"Searching ..."];
+    [SVProgressHUD showWithStatus:NSLocalizedString(@"Searching ...", @"Searching ...")];
     [_connection search:searchBar.text success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSMutableArray *results) {
         [SVProgressHUD dismiss];
         if (results.count == 0)
@@ -1294,9 +1294,9 @@ enum {
         }
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
         if (response.statusCode == 404) {
-            [SVProgressHUD showErrorWithStatus:@"Search is not supported on the server"];
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Search is not supported on the server", @"Search is not supported on the server")];
         } else
-            [SVProgressHUD showErrorWithStatus:@"Failed to search"];
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to search", @"Failed to search")];
     }];
 }
 

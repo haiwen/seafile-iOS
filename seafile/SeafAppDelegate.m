@@ -327,19 +327,19 @@
     UIViewController *discussionController = [tabs.viewControllers objectAtIndex:TABBED_DISCUSSION];
 
 
-    fileController.tabBarItem.title = @"Files";
+    fileController.tabBarItem.title = NSLocalizedString(@"Files", @"Files");
     fileController.tabBarItem.image = [UIImage imageNamed:@"tab-home.png"];
-    starredController.tabBarItem.title = @"Starred";
+    starredController.tabBarItem.title = NSLocalizedString(@"Starred", @"Starred");
     starredController.tabBarItem.image = [UIImage imageNamed:@"tab-star.png"];
-    settingsController.tabBarItem.title = @"Settings";
+    settingsController.tabBarItem.title = NSLocalizedString(@"Settings", @"Settings");
     settingsController.tabBarItem.image = [UIImage imageNamed:@"tab-settings.png"];
-    activityController.tabBarItem.title = @"Activity";
+    activityController.tabBarItem.title = NSLocalizedString(@"Activity", @"Activity");
     activityController.tabBarItem.image = [UIImage imageNamed:@"tab-activity.png"];
-    discussionController.tabBarItem.title = @"Discussion";
+    discussionController.tabBarItem.title = NSLocalizedString(@"Discussion", @"Discussion");
     discussionController.tabBarItem.image = [UIImage imageNamed:@"tab-discussion.png"];
 
     UIViewController *accountvc = [[SeafEmptyViewController alloc] init];
-    accountvc.tabBarItem.title = @"Accounts";
+    accountvc.tabBarItem.title = NSLocalizedString(@"Accounts", @"Accounts");
     accountvc.tabBarItem.image = [UIImage imageNamed:@"tab-account.png"];
     if (IsIpad()) {
         ((UISplitViewController *)fileController).delegate = (id)[[((UISplitViewController *)fileController).viewControllers lastObject] topViewController];
@@ -446,10 +446,10 @@
 
     if ((netStatus3G == NotReachable || connectionRequired3G)
         && (netStatusWifi == NotReachable || connectionRequiredWifi)) {
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Network unavailable"
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Network unavailable", @"Network unavailable")
                                                         message:nil
                                                        delegate:nil
-                                              cancelButtonTitle:@"OK"
+                                              cancelButtonTitle:NSLocalizedString(@"OK", @"OK")
                                               otherButtonTitles:nil];
         [alert show];
         return NO;

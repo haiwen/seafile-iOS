@@ -107,8 +107,8 @@
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeNone;
     [self setExtraCellLineHidden:self.tableView];
-    self.title = @"Seafile";
-    UIBarButtonItem *addItem = [[UIBarButtonItem alloc] initWithTitle:@"Add account" style:UIBarButtonItemStyleBordered target:self action:@selector(addAccount:)];
+    self.title = NSLocalizedString(@"Seafile", @"Seafile");
+    UIBarButtonItem *addItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Add account", @"Add account") style:UIBarButtonItemStyleBordered target:self action:@selector(addAccount:)];
     self.navigationItem.rightBarButtonItem = addItem;
 
     NSArray *views = [[NSBundle mainBundle] loadNibNamed:@"SeafStartHeaderView" owner:self options:nil];
@@ -185,10 +185,11 @@
 {
     UIActionSheet *actionSheet;
     pressedIndex = nil;
+    NSString *privserver = NSLocalizedString(@"Private Seafile Server", @"Private Seafile Server");
     if (IsIpad())
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:@"Private Seafile Server", @"SeaCloud.cc", @"cloud.seafile.com", nil];
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:privserver, @"SeaCloud.cc", @"cloud.seafile.com", nil];
     else
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Private Seafile Server", @"SeaCloud.cc", @"cloud.seafile.com", nil];
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Cancel") destructiveButtonTitle:nil otherButtonTitles:privserver, @"SeaCloud.cc", @"cloud.seafile.com", nil];
     [actionSheet showFromBarButtonItem:sender animated:YES];
 }
 
@@ -216,7 +217,7 @@
     if (IsIpad())
         actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:@"Edit", @"Delete", nil];
     else
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Edit", @"Delete", nil];
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Cancel")  destructiveButtonTitle:nil otherButtonTitles:@"Edit", @"Delete", nil];
 
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:pressedIndex];
     [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];

@@ -1,0 +1,21 @@
+
+/* Class = "IBUITextField"; placeholder = "Server, like https://seafile.cc"; ObjectID = "7"; */
+"7.placeholder" = "服务器, 例如 https://seafile.cc";
+
+/* Class = "IBUITextField"; placeholder = "Password"; ObjectID = "8"; */
+"8.placeholder" = "密码";
+
+/* Class = "IBUITextField"; placeholder = "Email"; ObjectID = "9"; */
+"9.placeholder" = "电子邮件";
+
+/* Class = "IBUILabel"; text = "For example: https://seacloud.cc or http://192.168.1.24:8000"; ObjectID = "fUE-3E-3bS"; */
+"fUE-3E-3bS.text" = "例如: https://seacloud.cc or http://192.168.1.24:8000";
+
+/* Class = "IBUIButton"; normalTitle = "Login"; ObjectID = "ggd-Li-Grh"; */
+"ggd-Li-Grh.normalTitle" = "登录";
+
+/* Class = "IBUIButton"; highlightedTitle = "Cancel"; ObjectID = "ogy-gg-WY9"; */
+"ogy-gg-WY9.highlightedTitle" = "取消";
+
+/* Class = "IBUIButton"; normalTitle = "Cancel"; ObjectID = "ogy-gg-WY9"; */
+"ogy-gg-WY9.normalTitle" = "取消";

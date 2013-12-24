@@ -62,19 +62,19 @@
     NSString *url = serverTextField.text;
 
     if (!url || url.length < 1) {
-        [self alertWithMessage:@"Server must not be empty"];
+        [self alertWithMessage:NSLocalizedString(@"Server must not be empty", @"Server must not be empty")];
         return;
     }
     if (![url hasPrefix:HTTP] && ![url hasPrefix:HTTPS]) {
-        [self alertWithMessage:@"Invalid Server"];
+        [self alertWithMessage:NSLocalizedString(@"Invalid Server", @"Invalid Server")];
         return;
     }
     if (!username || username.length < 1) {
-        [self alertWithMessage:@"Username must not be empty"];
+        [self alertWithMessage:NSLocalizedString(@"Username must not be empty", @"Username must not be empty")];
         return;
     }
     if (!password || password.length < 1) {
-        [self alertWithMessage:@"Password required"];
+        [self alertWithMessage:NSLocalizedString(@"Password required", @"Password required")];
         return;
     }
 
@@ -82,7 +82,7 @@
         connection = [[SeafConnection alloc] initWithUrl:url username:username];
     connection.delegate = self;
     [connection loginWithAddress:url username:username password:password];
-    [SVProgressHUD showWithStatus:@"Connecting to server"];
+    [SVProgressHUD showWithStatus:NSLocalizedString(@"Connecting to server", @"Connecting to server")];
 }
 
 - (void)viewDidLoad
@@ -93,7 +93,7 @@
         v.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin| UIViewAutoresizingFlexibleRightMargin
         | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
     }
-    if (NSFoundationVersionNumber > NSFoundationVersionNumber_iOS_6_1) {
+    if (ios7) {
         loginButton.layer.borderColor = [[UIColor lightGrayColor] CGColor];
         loginButton.layer.borderWidth = 0.5f;
         loginButton.layer.cornerRadius = 5.0f;
@@ -109,21 +109,21 @@
     self.title = @"Seafile Account";
     CGRect rect = CGRectMake(0, 0, 90, 25);
     NSString *align = @"";
-    if (NSFoundationVersionNumber > NSFoundationVersionNumber_iOS_6_1)
+    if (ios7)
         align = @"  ";
     UILabel *serverLabel = [[UILabel alloc] initWithFrame:rect];
-    serverLabel.text = [align stringByAppendingString:@"Server"];
+    serverLabel.text = [align stringByAppendingString:NSLocalizedString(@"Server", @"Server")];
     serverLabel.font = [UIFont boldSystemFontOfSize:14];
     serverTextField.leftView = serverLabel;
     serverTextField.leftViewMode = UITextFieldViewModeAlways;
 
     UILabel *nameLabel = [[UILabel alloc] initWithFrame:rect];
-    nameLabel.text = [align stringByAppendingString:@"Username"];
+    nameLabel.text = [align stringByAppendingString:NSLocalizedString(@"Username", @"Username")];
     nameLabel.font = [UIFont boldSystemFontOfSize:14];
     usernameTextField.leftView = nameLabel;
     usernameTextField.leftViewMode = UITextFieldViewModeAlways;
     UILabel *passwordLabel = [[UILabel alloc] initWithFrame:rect];
-    passwordLabel.text = [align stringByAppendingString:@"Password"];
+    passwordLabel.text = [align stringByAppendingString:NSLocalizedString(@"Password", @"Password")];
     passwordLabel.font = [UIFont boldSystemFontOfSize:14];
     passwordTextField.leftView = passwordLabel;
     passwordTextField.leftViewMode = UITextFieldViewModeAlways;

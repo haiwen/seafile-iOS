@@ -1,0 +1,99 @@
+
+/* Class = "IBUINavigationItem"; title = "Master"; ObjectID = "40"; */
+"40.title" = "Master";
+
+/* Class = "IBUILabel"; text = "Website"; ObjectID = "0ZM-eJ-J4M"; */
+"0ZM-eJ-J4M.text" = "官网";
+
+/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "39k-6q-dJ1"; */
+"39k-6q-dJ1.title" = "Item";
+
+/* Class = "IBUILabel"; text = "Server"; ObjectID = "3Fj-HB-jhE"; */
+"3Fj-HB-jhE.text" = "服务器";
+
+/* Class = "IBUILabel"; text = "Local Cache"; ObjectID = "6T2-bV-0bO"; */
+"6T2-bV-0bO.text" = "本地缓存";
+
+/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "6ir-TC-WJB"; */
+"6ir-TC-WJB.title" = "Item";
+
+/* Class = "IBUILabel"; text = "Used Space"; ObjectID = "C91-ob-60u"; */
+"C91-ob-60u.text" = "已使用空间";
+
+/* Class = "IBUINavigationItem"; title = "Master"; ObjectID = "D4g-PC-vdz"; */
+"D4g-PC-vdz.title" = "群组";
+
+/* Class = "IBUILabel"; text = "Title"; ObjectID = "Df4-fL-ajt"; */
+"Df4-fL-ajt.text" = "Title";
+
+/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "EUN-oC-qhF"; */
+"EUN-oC-qhF.title" = "Item";
+
+/* Class = "IBUITableViewSection"; headerTitle = "About"; ObjectID = "F9c-bc-Mvu"; */
+"F9c-bc-Mvu.headerTitle" = "About";
+
+/* Class = "IBUILabel"; text = "Tell Friends about seafile"; ObjectID = "H1p-P0-Nt3"; */
+"H1p-P0-Nt3.text" = "向朋友们推荐Seafile";
+
+/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "HaV-xZ-CCJ"; */
+"HaV-xZ-CCJ.title" = "Item";
+
+/* Class = "IBUINavigationController"; title = "Starred"; ObjectID = "HbK-VG-mor"; */
+"HbK-VG-mor.title" = "星标文件";
+
+/* Class = "IBUILabel"; text = "Username"; ObjectID = "JhF-v4-NbA"; */
+"JhF-v4-NbA.text" = "用户名";
+
+/* Class = "IBUILabel"; text = "Wipe Cache"; ObjectID = "RGO-ir-R4l"; */
+"RGO-ir-R4l.text" = "清除缓存";
+
+/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "S82-ac-TEU"; */
+"S82-ac-TEU.title" = "Item";
+
+/* Class = "IBUINavigationItem"; title = "Starred"; ObjectID = "Xnp-MH-ftg"; */
+"Xnp-MH-ftg.title" = "星标文件";
+
+/* Class = "IBUINavigationController"; title = "Settings"; ObjectID = "ZS2-rO-b6R"; */
+"ZS2-rO-b6R.title" = "设置";
+
+/* Class = "IBUINavigationItem"; title = "Discussion"; ObjectID = "c2x-oK-G6H"; */
+"c2x-oK-G6H.title" = "讨论";
+
+/* Class = "IBUITableViewSection"; headerTitle = "Account Info"; ObjectID = "eqt-eE-wom"; */
+"eqt-eE-wom.headerTitle" = "账户信息";
+
+/* Class = "IBUILabel"; text = "Title"; ObjectID = "gBS-I4-dW2"; */
+"gBS-I4-dW2.text" = "Title";
+
+/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "gKR-cO-ptM"; */
+"gKR-cO-ptM.title" = "Item";
+
+/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "gvu-Sd-SDA"; */
+"gvu-Sd-SDA.title" = "Item";
+
+/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "hxw-bB-A2V"; */
+"hxw-bB-A2V.title" = "Item";
+
+/* Class = "IBUILabel"; text = "www.seafile.com"; ObjectID = "iJn-XA-D5m"; */
+"iJn-XA-D5m.text" = "www.seafile.com";
+
+/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "nP4-Sy-Gkr"; */
+"nP4-Sy-Gkr.title" = "Item";
+
+/* Class = "IBUITableViewSection"; headerTitle = "Settings"; ObjectID = "oWj-k9-0bj"; */
+"oWj-k9-0bj.headerTitle" = "缓存";
+
+/* Class = "IBUILabel"; text = "Version"; ObjectID = "pLs-ON-pwm"; */
+"pLs-ON-pwm.text" = "版本";
+
+/* Class = "IBUITableViewController"; title = "Starred"; ObjectID = "pQh-cj-nJC"; */
+"pQh-cj-nJC.title" = "星标文件";
+
+/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "pWO-cS-x7A"; */
+"pWO-cS-x7A.title" = "Item";
+
+/* Class = "IBUINavigationItem"; title = "Settings"; ObjectID = "wb3-ep-Aqm"; */
+"wb3-ep-Aqm.title" = "设置";
+
+/* Class = "IBUITableViewController"; title = "Settings"; ObjectID = "yaF-U5-a8T"; */
+"yaF-U5-a8T.title" = "设置";

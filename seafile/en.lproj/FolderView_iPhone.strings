@@ -1,0 +1,105 @@
+
+/* Class = "IBUITableViewSection"; headerTitle = "Settings"; ObjectID = "1FF-GC-okj"; */
+"1FF-GC-okj.headerTitle" = "Cache";
+
+/* Class = "IBUILabel"; text = "Local Cache"; ObjectID = "63f-7w-kh2"; */
+"63f-7w-kh2.text" = "Local Cache";
+
+/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "6rl-FR-hto"; */
+"6rl-FR-hto.title" = "Item";
+
+/* Class = "IBUINavigationItem"; title = "Discussion"; ObjectID = "7Gx-1K-h8m"; */
+"7Gx-1K-h8m.title" = "Discussion";
+
+/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "9Lz-mn-hwx"; */
+"9Lz-mn-hwx.title" = "Item";
+
+/* Class = "IBUINavigationItem"; title = "Starred"; ObjectID = "9U2-Iv-uJL"; */
+"9U2-Iv-uJL.title" = "Starred";
+
+/* Class = "IBUILabel"; text = "Tell Friends about seafile"; ObjectID = "9uz-sk-gtQ"; */
+"9uz-sk-gtQ.text" = "Tell Friends about seafile";
+
+/* Class = "IBUINavigationController"; title = "Seafile"; ObjectID = "CNF-ja-c3a"; */
+"CNF-ja-c3a.title" = "Seafile";
+
+/* Class = "IBUINavigationItem"; title = "Activity"; ObjectID = "FvO-2h-VgV"; */
+"FvO-2h-VgV.title" = "Activity";
+
+/* Class = "IBUINavigationItem"; title = "Groups"; ObjectID = "Fzs-bI-CXk"; */
+"Fzs-bI-CXk.title" = "Groups";
+
+/* Class = "IBUILabel"; text = "www.seafile.com"; ObjectID = "Jf3-AP-WLB"; */
+"Jf3-AP-WLB.text" = "www.seafile.com";
+
+/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "Jmw-Qh-gQG"; */
+"Jmw-Qh-gQG.title" = "Item";
+
+/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "Lne-Be-K6O"; */
+"Lne-Be-K6O.title" = "Item";
+
+/* Class = "IBUILabel"; text = "server url"; ObjectID = "Prn-ee-8Bg"; */
+"Prn-ee-8Bg.text" = "server url";
+
+/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "VH7-iY-RiF"; */
+"VH7-iY-RiF.title" = "Item";
+
+/* Class = "IBUILabel"; text = "Title"; ObjectID = "WeV-Qb-pO5"; */
+"WeV-Qb-pO5.text" = "Title";
+
+/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "WuF-iW-S0M"; */
+"WuF-iW-S0M.title" = "Item";
+
+/* Class = "IBUILabel"; text = "0.1"; ObjectID = "X0g-ge-tAv"; */
+"X0g-ge-tAv.text" = "0.1";
+
+/* Class = "IBUITableViewSection"; headerTitle = "Account Info"; ObjectID = "XDM-wL-lp8"; */
+"XDM-wL-lp8.headerTitle" = "Account Info";
+
+/* Class = "IBUINavigationItem"; title = "Settings"; ObjectID = "aNt-9S-KAr"; */
+"aNt-9S-KAr.title" = "Settings";
+
+/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "bX7-Zj-bqY"; */
+"bX7-Zj-bqY.title" = "Item";
+
+/* Class = "IBUINavigationController"; title = "Settings"; ObjectID = "bYI-tW-uUU"; */
+"bYI-tW-uUU.title" = "Settings";
+
+/* Class = "IBUILabel"; text = "Title"; ObjectID = "fPd-9u-5GI"; */
+"fPd-9u-5GI.text" = "Title";
+
+/* Class = "IBUILabel"; text = "Website"; ObjectID = "fU6-mc-Krp"; */
+"fU6-mc-Krp.text" = "Website";
+
+/* Class = "IBUILabel"; text = "Version"; ObjectID = "gbw-Hm-6Ao"; */
+"gbw-Hm-6Ao.text" = "Version";
+
+/* Class = "IBUILabel"; text = "Username"; ObjectID = "jLS-bB-7ZH"; */
+"jLS-bB-7ZH.text" = "Username";
+
+/* Class = "IBUINavigationItem"; title = "Home"; ObjectID = "jmS-LH-3qj"; */
+"jmS-LH-3qj.title" = "Home";
+
+/* Class = "IBUILabel"; text = "Server"; ObjectID = "kVu-zt-I7X"; */
+"kVu-zt-I7X.text" = "Server";
+
+/* Class = "IBUINavigationController"; title = "Activity"; ObjectID = "mEX-CF-kI0"; */
+"mEX-CF-kI0.title" = "Activity";
+
+/* Class = "IBUILabel"; text = "Wipe Cache"; ObjectID = "ntG-cs-ded"; */
+"ntG-cs-ded.text" = "Wipe Cache";
+
+/* Class = "IBUITableViewSection"; headerTitle = "About"; ObjectID = "prN-wa-tBe"; */
+"prN-wa-tBe.headerTitle" = "About";
+
+/* Class = "IBUIViewController"; title = "Discussion"; ObjectID = "r0W-or-KJe"; */
+"r0W-or-KJe.title" = "Discussion";
+
+/* Class = "IBUILabel"; text = "Used Space"; ObjectID = "w9d-8x-JzH"; */
+"w9d-8x-JzH.text" = "Used Space";
+
+/* Class = "IBUILabel"; text = "Title"; ObjectID = "wkb-np-FdP"; */
+"wkb-np-FdP.text" = "Title";
+
+/* Class = "IBUINavigationController"; title = "Starred"; ObjectID = "z9c-1t-xJ2"; */
+"z9c-1t-xJ2.title" = "Starred";

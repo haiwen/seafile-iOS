@@ -62,7 +62,7 @@
     }
                          failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
                              Warning("Failed to get starred files ...\n");
-                             [SVProgressHUD showErrorWithStatus:@"Failed to get starred files"];
+                             [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get starred files", @"Failed to get starred files")];
                              [self doneLoadingTableViewData];
                          }];
 }
@@ -161,11 +161,11 @@
 
     NSString *cancelTitle = nil;
     if (!IsIpad())
-        cancelTitle = @"Cancel";
+        cancelTitle = NSLocalizedString(@"Cancel", @"Cancel");
     if (file.mpath)
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:@"Redownload", @"Upload", nil];
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"Redownload", @"Redownload"), NSLocalizedString(@"Upload", @"Upload"), nil];
     else
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Redownload", nil];
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"Redownload", @"Redownload"), nil];
 
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
     [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
@@ -255,7 +255,7 @@
 - (void)updateProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent
 {
     if (!res) {
-        [SVProgressHUD showErrorWithStatus:@"Failed to uplod file"];
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to uplod file", @"Failed to uplod file")];
     }
     [self refreshView];
 }

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="4510" systemVersion="12F37" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" initialViewController="r0W-or-KJe">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="4514" systemVersion="13A603" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" initialViewController="xZh-Ns-hDC">
     <dependencies>
-        <deployment version="1536" defaultVersion="1280" identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="3742"/>
+        <deployment version="1536" defaultVersion="1536" identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="3747"/>
     </dependencies>
     <scenes>
         <!--Tab Bar Controller-->
@@ -51,7 +51,7 @@
         <!--Seaf File View Controller - Home-->
         <scene sceneID="UbQ-9W-oFk">
             <objects>
-                <tableViewController storyboardIdentifier="FILEMASTERVC" title="Home" clearsSelectionOnViewWillAppear="NO" id="ZeC-X3-lth" customClass="SeafFileViewController" sceneMemberID="viewController">
+                <tableViewController storyboardIdentifier="FILEMASTERVC" clearsSelectionOnViewWillAppear="NO" id="ZeC-X3-lth" customClass="SeafFileViewController" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" allowsSelectionDuringEditing="YES" allowsMultipleSelectionDuringEditing="YES" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="zZ4-Jf-wgM">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -144,7 +144,7 @@
         <!--Seaf Settings View Controller - Settings-->
         <scene sceneID="eY8-yK-8gB">
             <objects>
-                <tableViewController title="Settings" id="pgN-fh-4Ru" customClass="SeafSettingsViewController" sceneMemberID="viewController">
+                <tableViewController id="pgN-fh-4Ru" customClass="SeafSettingsViewController" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="static" style="grouped" separatorStyle="default" rowHeight="44" sectionHeaderHeight="10" sectionFooterHeight="10" id="pRN-fJ-yUV">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -166,8 +166,8 @@
                                                     <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                                     <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                                 </label>
-                                                <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="username" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="j0y-kW-V67">
-                                                    <rect key="frame" x="229" y="11" width="76" height="21"/>
+                                                <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="j0y-kW-V67">
+                                                    <rect key="frame" x="261" y="11" width="44" height="21"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <color key="textColor" red="0.21960784310000001" green="0.3294117647" blue="0.52941176469999995" alpha="1" colorSpace="calibratedRGB"/>
@@ -190,8 +190,8 @@
                                                     <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                                     <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                                 </label>
-                                                <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="quota" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="1gZ-VD-uTj">
-                                                    <rect key="frame" x="260" y="11" width="45" height="21"/>
+                                                <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="1gZ-VD-uTj">
+                                                    <rect key="frame" x="261" y="11" width="44" height="21"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <color key="textColor" red="0.21960784310000001" green="0.3294117647" blue="0.52941176469999995" alpha="1" colorSpace="calibratedRGB"/>
@@ -202,7 +202,7 @@
                                     </tableViewCell>
                                 </cells>
                             </tableViewSection>
-                            <tableViewSection headerTitle="Settings" id="1FF-GC-okj">
+                            <tableViewSection headerTitle="Cache" id="1FF-GC-okj">
                                 <cells>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="63f-7w-kh2" detailTextLabel="2Kn-7t-ZsF" style="IBUITableViewCellStyleValue1" id="h43-fm-QEc">
                                         <rect key="frame" x="0.0" y="255" width="320" height="44"/>
@@ -218,8 +218,8 @@
                                                     <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                                     <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                                 </label>
-                                                <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="cache size" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="2Kn-7t-ZsF">
-                                                    <rect key="frame" x="224" y="11" width="81" height="21"/>
+                                                <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="2Kn-7t-ZsF">
+                                                    <rect key="frame" x="261" y="11" width="44" height="21"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <color key="textColor" red="0.21960784310000001" green="0.3294117647" blue="0.52941176469999995" alpha="1" colorSpace="calibratedRGB"/>
@@ -378,10 +378,10 @@
             </objects>
             <point key="canvasLocation" x="-147" y="-2616"/>
         </scene>
-        <!--Seaf Detail View Controller - Detail-->
+        <!--Seaf Detail View Controller-->
         <scene sceneID="3hn-ux-u67">
             <objects>
-                <viewController storyboardIdentifier="DETAILVC" title="Detail" wantsFullScreenLayout="YES" hidesBottomBarWhenPushed="YES" id="C9i-QL-0hc" customClass="SeafDetailViewController" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="DETAILVC" wantsFullScreenLayout="YES" hidesBottomBarWhenPushed="YES" id="C9i-QL-0hc" customClass="SeafDetailViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="kWj-E9-PS7"/>
                         <viewControllerLayoutGuide type="bottom" id="QTo-wj-Ehf"/>
@@ -405,10 +405,10 @@
             </objects>
             <point key="canvasLocation" x="-1349" y="-1725"/>
         </scene>
-        <!--Seaf Activity View Controller - Detail-->
+        <!--Seaf Activity View Controller - Activity-->
         <scene sceneID="1gS-U2-JVg">
             <objects>
-                <viewController title="Detail" id="xZh-Ns-hDC" customClass="SeafActivityViewController" sceneMemberID="viewController">
+                <viewController id="xZh-Ns-hDC" customClass="SeafActivityViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="VpO-eu-Fp3"/>
                         <viewControllerLayoutGuide type="bottom" id="r9g-D9-CL0"/>
@@ -516,10 +516,10 @@
             </objects>
             <point key="canvasLocation" x="559" y="-832"/>
         </scene>
-        <!--Navigation Controller - Activity-->
+        <!--Navigation Controller - Item-->
         <scene sceneID="1jc-dg-xd4">
             <objects>
-                <navigationController title="Activity" definesPresentationContext="YES" id="t1H-03-KSK" sceneMemberID="viewController">
+                <navigationController definesPresentationContext="YES" id="t1H-03-KSK" sceneMemberID="viewController">
                     <tabBarItem key="tabBarItem" title="Item" id="WuF-iW-S0M"/>
                     <toolbarItems/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>

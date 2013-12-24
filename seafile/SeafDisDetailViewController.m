@@ -267,7 +267,7 @@
             [self.webview stringByEvaluatingJavaScriptFromString:js];
             [SVProgressHUD dismiss];
         } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-            [SVProgressHUD showErrorWithStatus:@"Failed to add discussion"];
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to add discussion", @"Failed to add discussion")];
             [composeViewController.navigationItem.rightBarButtonItem setEnabled:YES];
 
         }];

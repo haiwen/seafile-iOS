@@ -31,8 +31,8 @@
                                                     <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                                     <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                                 </label>
-                                                <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="username" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="ku3-VT-vxK">
-                                                    <rect key="frame" x="229" y="11" width="76" height="21"/>
+                                                <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="ku3-VT-vxK">
+                                                    <rect key="frame" x="261" y="11" width="44" height="21"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <color key="textColor" red="0.2196078431372549" green="0.32941176470588235" blue="0.52941176470588236" alpha="1" colorSpace="calibratedRGB"/>
@@ -55,8 +55,8 @@
                                                     <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                                     <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                                 </label>
-                                                <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="quota" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="nNm-DU-f33">
-                                                    <rect key="frame" x="260" y="11" width="45" height="21"/>
+                                                <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="nNm-DU-f33">
+                                                    <rect key="frame" x="261" y="11" width="44" height="21"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <color key="textColor" red="0.2196078431372549" green="0.32941176470588235" blue="0.52941176470588236" alpha="1" colorSpace="calibratedRGB"/>
@@ -67,7 +67,7 @@
                                     </tableViewCell>
                                 </cells>
                             </tableViewSection>
-                            <tableViewSection headerTitle="Settings" id="oWj-k9-0bj">
+                            <tableViewSection headerTitle="Cache" id="oWj-k9-0bj">
                                 <cells>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="6T2-bV-0bO" detailTextLabel="MFD-6r-uu6" style="IBUITableViewCellStyleValue1" id="czb-JY-a9K">
                                         <rect key="frame" x="0.0" y="255" width="320" height="44"/>
@@ -83,8 +83,8 @@
                                                     <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                                     <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                                 </label>
-                                                <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="cache size" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="MFD-6r-uu6">
-                                                    <rect key="frame" x="224" y="11" width="81" height="21"/>
+                                                <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="MFD-6r-uu6">
+                                                    <rect key="frame" x="261" y="11" width="44" height="21"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <color key="textColor" red="0.2196078431372549" green="0.32941176470588235" blue="0.52941176470588236" alpha="1" colorSpace="calibratedRGB"/>
@@ -152,8 +152,8 @@
                                                     <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                                     <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                                 </label>
-                                                <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="server url" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="oGo-wY-uqh">
-                                                    <rect key="frame" x="234" y="11" width="71" height="21"/>
+                                                <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="oGo-wY-uqh">
+                                                    <rect key="frame" x="261" y="11" width="44" height="21"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <color key="textColor" red="0.21960784310000001" green="0.3294117647" blue="0.52941176469999995" alpha="1" colorSpace="calibratedRGB"/>
@@ -176,8 +176,8 @@
                                                     <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                                     <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                                 </label>
-                                                <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="0.1" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="sZT-HW-4FS">
-                                                    <rect key="frame" x="281" y="11" width="24" height="21"/>
+                                                <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="sZT-HW-4FS">
+                                                    <rect key="frame" x="261" y="11" width="44" height="21"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <color key="textColor" red="0.21960784310000001" green="0.3294117647" blue="0.52941176469999995" alpha="1" colorSpace="calibratedRGB"/>
@@ -279,10 +279,10 @@
             </objects>
             <point key="canvasLocation" x="-3527" y="-1938"/>
         </scene>
-        <!--Navigation Controller - Seafile-->
+        <!--Navigation Controller - Item-->
         <scene sceneID="14">
             <objects>
-                <navigationController title="Seafile" id="3" sceneMemberID="viewController">
+                <navigationController id="3" sceneMemberID="viewController">
                     <tabBarItem key="tabBarItem" title="Item" id="EUN-oC-qhF"/>
                     <toolbarItems/>
                     <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
@@ -297,10 +297,10 @@
             </objects>
             <point key="canvasLocation" x="-806" y="-3184"/>
         </scene>
-        <!--Seaf Detail View Controller - Detail-->
+        <!--Seaf Detail View Controller-->
         <scene sceneID="16">
             <objects>
-                <viewController title="Detail" id="4" customClass="SeafDetailViewController" sceneMemberID="viewController">
+                <viewController id="4" customClass="SeafDetailViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="8Hp-ek-Io4"/>
                         <viewControllerLayoutGuide type="bottom" id="747-JZ-Jaj"/>
@@ -359,10 +359,10 @@
             </objects>
             <point key="canvasLocation" x="-2455" y="-2709"/>
         </scene>
-        <!--Seaf File View Controller - Files-->
+        <!--Seaf File View Controller - Master-->
         <scene sceneID="24">
             <objects>
-                <tableViewController storyboardIdentifier="MASTERVC" title="Files" id="19" customClass="SeafFileViewController" sceneMemberID="viewController">
+                <tableViewController storyboardIdentifier="MASTERVC" id="19" customClass="SeafFileViewController" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" allowsSelectionDuringEditing="YES" allowsMultipleSelectionDuringEditing="YES" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="20">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="768"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -498,10 +498,10 @@
             </objects>
             <point key="canvasLocation" x="650" y="-1860"/>
         </scene>
-        <!--Seaf Activity View Controller - Detail-->
+        <!--Seaf Activity View Controller-->
         <scene sceneID="Nt1-JY-c0I">
             <objects>
-                <viewController title="Detail" id="tZi-tZ-wdU" customClass="SeafActivityViewController" sceneMemberID="viewController">
+                <viewController id="tZi-tZ-wdU" customClass="SeafActivityViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="S6Z-Am-28g"/>
                         <viewControllerLayoutGuide type="bottom" id="lGO-gM-la5"/>
@@ -562,10 +562,10 @@
             </objects>
             <point key="canvasLocation" x="240" y="1650"/>
         </scene>
-        <!--Seaf Dis Detail View Controller - Detail-->
+        <!--Seaf Dis Detail View Controller - Discussion-->
         <scene sceneID="qow-BH-Ksf">
             <objects>
-                <viewController storyboardIdentifier="DISDETAILVC" title="Detail" id="ZjO-AT-Ini" customClass="SeafDisDetailViewController" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="DISDETAILVC" id="ZjO-AT-Ini" customClass="SeafDisDetailViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="cPd-jC-pvN"/>
                         <viewControllerLayoutGuide type="bottom" id="6Fz-8c-UsJ"/>
@@ -600,10 +600,10 @@
             </objects>
             <point key="canvasLocation" x="-1059" y="1682"/>
         </scene>
-        <!--Seaf Dis Master View Controller - Master-->
+        <!--Seaf Dis Master View Controller - Groups-->
         <scene sceneID="tFh-La-Oo2">
             <objects>
-                <tableViewController title="Master" clearsSelectionOnViewWillAppear="NO" id="oVy-oK-fv4" customClass="SeafDisMasterViewController" sceneMemberID="viewController">
+                <tableViewController clearsSelectionOnViewWillAppear="NO" id="oVy-oK-fv4" customClass="SeafDisMasterViewController" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="FeK-qw-Fg0">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="768"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -635,7 +635,7 @@
                             <outlet property="delegate" destination="oVy-oK-fv4" id="tYE-Vt-QRo"/>
                         </connections>
                     </tableView>
-                    <navigationItem key="navigationItem" title="Master" id="D4g-PC-vdz"/>
+                    <navigationItem key="navigationItem" title="Groups" id="D4g-PC-vdz"/>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="mUv-nL-bmL" sceneMemberID="firstResponder"/>
             </objects>
@@ -656,10 +656,10 @@
             </objects>
             <point key="canvasLocation" x="970" y="1664"/>
         </scene>
-        <!--Seaf Detail View Controller - Detail-->
+        <!--Seaf Detail View Controller-->
         <scene sceneID="cC2-6S-qzP">
             <objects>
-                <viewController title="Detail" id="XPH-mw-KP7" customClass="SeafDetailViewController" sceneMemberID="viewController">
+                <viewController id="XPH-mw-KP7" customClass="SeafDetailViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="8RW-yP-6aJ"/>
                         <viewControllerLayoutGuide type="bottom" id="7Tb-RF-9ow"/>
@@ -684,10 +684,10 @@
             </objects>
             <point key="canvasLocation" x="1539" y="-2060"/>
         </scene>
-        <!--Seaf Detail View Controller - Detail-->
+        <!--Seaf Detail View Controller-->
         <scene sceneID="vK1-qr-l6I">
             <objects>
-                <viewController title="Detail" id="Fp7-3l-Apw" customClass="SeafDetailViewController" sceneMemberID="viewController">
+                <viewController id="Fp7-3l-Apw" customClass="SeafDetailViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="QP9-D6-cfy"/>
                         <viewControllerLayoutGuide type="bottom" id="RJu-yG-3T9"/>
@@ -754,10 +754,10 @@
             </objects>
             <point key="canvasLocation" x="-41" y="-1827"/>
         </scene>
-        <!--Seaf Detail View Controller - Detail-->
+        <!--Seaf Detail View Controller-->
         <scene sceneID="alm-4N-fdG">
             <objects>
-                <viewController storyboardIdentifier="DETAILVC" title="Detail" wantsFullScreenLayout="YES" hidesBottomBarWhenPushed="YES" id="7pV-uG-dJl" customClass="SeafDetailViewController" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="DETAILVC" wantsFullScreenLayout="YES" hidesBottomBarWhenPushed="YES" id="7pV-uG-dJl" customClass="SeafDetailViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="LZa-sF-jY9"/>
                         <viewControllerLayoutGuide type="bottom" id="nEW-Zm-RMe"/>
