@@ -19,14 +19,13 @@
                             <rect key="frame" x="244" y="51" width="150" height="150"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         </imageView>
-                        <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="Label" textAlignment="center" lineBreakMode="middleTruncation" minimumFontSize="10" id="7">
+                        <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="name" textAlignment="center" lineBreakMode="middleTruncation" minimumFontSize="10" id="7">
                             <rect key="frame" x="110" y="217" width="417" height="25"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             <fontDescription key="fontDescription" type="system" pointSize="19"/>
-                            <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                             <nil key="highlightedColor"/>
                         </label>
-                        <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="Seafile does not support to preview file of this kind at the moment." lineBreakMode="tailTruncation" minimumFontSize="10" id="3">
+                        <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="Seafile does not support to preview file of this kind at the moment." textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="3">
                             <rect key="frame" x="69" y="298" width="500" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             <fontDescription key="fontDescription" type="system" pointSize="17"/>
@@ -58,7 +57,7 @@
             <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackOpaque"/>
             <connections>
                 <outlet property="imageView" destination="4" id="12"/>
-                <outlet property="nameLabel" destination="7" id="9"/>
+                <outlet property="nameLabel" destination="7" id="JdS-qk-EPa"/>
             </connections>
         </view>
     </objects>

@@ -223,7 +223,7 @@
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="RGF-wG-KHp" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-50" y="-542"/>
+            <point key="canvasLocation" x="-538" y="-750"/>
         </scene>
         <!--Navigation Controller - Starred-->
         <scene sceneID="d0c-Ai-QVN">
@@ -255,7 +255,7 @@
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="gKQ-Kr-YZY" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-551" y="-642"/>
+            <point key="canvasLocation" x="-1007" y="-698"/>
         </scene>
         <!--Tab Bar Controller-->
         <scene sceneID="IDr-x3-K7D">
@@ -463,7 +463,7 @@
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="kue-fT-LY7" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="394" y="-268"/>
+            <point key="canvasLocation" x="18" y="-828"/>
         </scene>
         <!--Intelligent Split View Controller - Item-->
         <scene sceneID="sQ3-WJ-qxR">
@@ -528,7 +528,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="fdv-NA-JP2" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="509" y="524"/>
+            <point key="canvasLocation" x="573" y="76"/>
         </scene>
         <!--Navigation Controller - Item-->
         <scene sceneID="ugv-Os-bZc">
@@ -553,7 +553,7 @@
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="GxR-hx-KDV" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-1180" y="464"/>
+            <point key="canvasLocation" x="-572" y="224"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="O9y-ix-l3j">
@@ -568,7 +568,7 @@
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="CPc-fK-gPX" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="240" y="1650"/>
+            <point key="canvasLocation" x="360" y="1378"/>
         </scene>
         <!--Seaf Dis Detail View Controller - Discussion-->
         <scene sceneID="qow-BH-Ksf">
@@ -589,7 +589,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Bmp-e1-Qo9" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="1915" y="1260"/>
+            <point key="canvasLocation" x="2179" y="980"/>
         </scene>
         <!--Intelligent Split View Controller - Item-->
         <scene sceneID="kLi-aU-lDH">
@@ -606,7 +606,7 @@
                 </splitViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="eWh-hW-Ytt" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-1059" y="1682"/>
+            <point key="canvasLocation" x="-939" y="1410"/>
         </scene>
         <!--Seaf Dis Master View Controller - Groups-->
         <scene sceneID="tFh-La-Oo2">
@@ -647,7 +647,7 @@
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="mUv-nL-bmL" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="619" y="1657"/>
+            <point key="canvasLocation" x="739" y="1385"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="cdG-Ai-P2P">
@@ -662,7 +662,7 @@
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="KMr-TX-odD" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="970" y="1664"/>
+            <point key="canvasLocation" x="1090" y="1392"/>
         </scene>
         <!--Seaf Detail View Controller-->
         <scene sceneID="cC2-6S-qzP">
@@ -734,7 +734,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="aVy-Uz-Wgu" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="1539" y="-212"/>
+            <point key="canvasLocation" x="1443" y="-940"/>
         </scene>
         <!--Seaf Starred Files View Controller - Starred-->
         <scene sceneID="Xxd-eu-DTG">
@@ -811,7 +811,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="cfQ-M5-5zH" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-2733" y="1100"/>
+            <point key="canvasLocation" x="-3565" y="-356"/>
         </scene>
     </scenes>
     <resources>

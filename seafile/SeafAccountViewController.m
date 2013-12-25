@@ -106,7 +106,7 @@
         loginButton.tintColor=[UIColor whiteColor];
         cancelButton.tintColor=[UIColor whiteColor];
     }
-    self.title = @"Seafile Account";
+    self.title = NSLocalizedString(@"Seafile Account", nil);
     CGRect rect = CGRectMake(0, 0, 90, 25);
     NSString *align = @"";
     if (ios7)
@@ -178,9 +178,9 @@
 
     [SVProgressHUD dismiss];
     if (error == HTTP_ERR_LOGIN_INCORRECT_PASSWORD)
-        [self alertWithMessage:@"Wrong username or password"];
+        [self alertWithMessage:NSLocalizedString(@"Wrong username or password", nil)];
     else {
-        [SVProgressHUD showErrorWithStatus:@"Failed to login"];
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to login", nil)];
     }
 }
 

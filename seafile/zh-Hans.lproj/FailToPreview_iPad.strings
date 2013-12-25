@@ -1,9 +1,9 @@
 
-/* Class = "IBUILabel"; text = "Seafile does not support to preview file of this kind at the moment."; ObjectID = "3"; */
+/* Class = "IBUILabel"; text = "当前Seafile不支持预览这种文件。"; ObjectID = "3"; */
 "3.text" = "当前Seafile不支持预览这种文件。";
 
-/* Class = "IBUIButton"; normalTitle = " Open in other applications"; ObjectID = "5"; */
+/* Class = "IBUIButton"; normalTitle = "在其它应用中打开"; ObjectID = "5"; */
 "5.normalTitle" = "在其它应用中打开";
 
 /* Class = "IBUILabel"; text = "Label"; ObjectID = "7"; */
-"7.text" = "Label";
+"7.text" = "name";

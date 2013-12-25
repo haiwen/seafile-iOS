@@ -16,8 +16,6 @@
 @end
 
 @implementation FailToPreview
-@synthesize imageView;
-@synthesize nameLabel;
 @synthesize item = _item;
 @synthesize docController;
 

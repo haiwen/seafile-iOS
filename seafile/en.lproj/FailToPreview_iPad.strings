@@ -2,8 +2,8 @@
 /* Class = "IBUILabel"; text = "Seafile does not support to preview file of this kind at the moment."; ObjectID = "3"; */
 "3.text" = "Seafile does not support to preview file of this kind at the moment.";
 
-/* Class = "IBUIButton"; normalTitle = " Open in other applications"; ObjectID = "5"; */
+/* Class = "IBUIButton"; normalTitle = "Open in other applications"; ObjectID = "5"; */
 "5.normalTitle" = "Open in other applications";
 
 /* Class = "IBUILabel"; text = "Label"; ObjectID = "7"; */
-"7.text" = "Label";
+"7.text" = "name";

@@ -55,7 +55,6 @@
 		570B7B071715D866002F0E1D /* view_seaf.html in Resources */ = {isa = PBXBuildFile; fileRef = 570B7B061715D866002F0E1D /* view_seaf.html */; };
 		570B7B081715D866002F0E1D /* view_seaf.html in Resources */ = {isa = PBXBuildFile; fileRef = 570B7B061715D866002F0E1D /* view_seaf.html */; };
 		570CF8B81660B00900DFADBC /* SeafFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 570CF8B71660B00900DFADBC /* SeafFile.m */; };
-		570CF8C016613E5700DFADBC /* DownloadingProgress_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 570CF8BF16613E5600DFADBC /* DownloadingProgress_iPhone.xib */; };
 		570DFAC616A15D0100ADD5F2 /* SeafAccountViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 570DFAC416A15D0100ADD5F2 /* SeafAccountViewController.m */; };
 		570DFAC716A15D0100ADD5F2 /* SeafAccountViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 570DFAC416A15D0100ADD5F2 /* SeafAccountViewController.m */; };
 		570DFACB16A19EFD00ADD5F2 /* account.png in Resources */ = {isa = PBXBuildFile; fileRef = 570DFACA16A19EFD00ADD5F2 /* account.png */; };
@@ -81,7 +80,6 @@
 		57191CFC176CA6650064BCEA /* QBImagePickerVideoInfoView.m in Sources */ = {isa = PBXBuildFile; fileRef = 57191CD7176CA6650064BCEA /* QBImagePickerVideoInfoView.m */; };
 		57191CFD176CA6650064BCEA /* QBImagePickerVideoInfoView.m in Sources */ = {isa = PBXBuildFile; fileRef = 57191CD7176CA6650064BCEA /* QBImagePickerVideoInfoView.m */; };
 		571ABF531625DF31005C9B08 /* DownloadingProgressView.m in Sources */ = {isa = PBXBuildFile; fileRef = 571ABF521625DF31005C9B08 /* DownloadingProgressView.m */; };
-		571ABF561625DF6E005C9B08 /* DownloadingProgress_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 571ABF551625DF6E005C9B08 /* DownloadingProgress_iPad.xib */; };
 		571CE59C15C01879004CD403 /* SeafData.m in Sources */ = {isa = PBXBuildFile; fileRef = 571CE59B15C01879004CD403 /* SeafData.m */; };
 		571D8CAB1677881400F1A22C /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DB827F15A833FA00097CEC /* main.m */; };
 		571D8CAC1677881400F1A22C /* SeafAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DB828315A833FA00097CEC /* SeafAppDelegate.m */; };
@@ -146,9 +144,7 @@
 		571D8CEF1677881400F1A22C /* whiteArrow.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D89EB15E39ED700F2BD17 /* whiteArrow.png */; };
 		571D8CF01677881400F1A22C /* whiteArrow@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D89EC15E39ED700F2BD17 /* whiteArrow@2x.png */; };
 		571D8CFA1677881400F1A22C /* share.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D6EB41604804E000310F5 /* share.png */; };
-		571D8D001677881400F1A22C /* DownloadingProgress_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 571ABF551625DF6E005C9B08 /* DownloadingProgress_iPad.xib */; };
 		571D8D021677881400F1A22C /* FileMimeType.plist in Resources */ = {isa = PBXBuildFile; fileRef = 576EE11E162F0A2900327EB9 /* FileMimeType.plist */; };
-		571D8D031677881400F1A22C /* SeafUploadingFileCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57C07CE8163272CE00502B06 /* SeafUploadingFileCell.xib */; };
 		571D8D041677881400F1A22C /* tab-settings.png in Resources */ = {isa = PBXBuildFile; fileRef = 5764C834163C3E83006AD511 /* tab-settings.png */; };
 		571D8D051677881400F1A22C /* tab-home.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A055A51644EAD1006511AA /* tab-home.png */; };
 		571D8D061677881400F1A22C /* seafile-logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A055A81644EC84006511AA /* seafile-logo.png */; };
@@ -187,7 +183,6 @@
 		571D8DAE1677881400F1A22C /* text-directory.png in Resources */ = {isa = PBXBuildFile; fileRef = 5739703E1658008A0089F32F /* text-directory.png */; };
 		571D8DAF1677881400F1A22C /* text-directory-documents.png in Resources */ = {isa = PBXBuildFile; fileRef = 57397040165801EE0089F32F /* text-directory-documents.png */; };
 		571D8DB01677881400F1A22C /* SVProgressHUD.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 57C57BDE165FC87B006834DF /* SVProgressHUD.bundle */; };
-		571D8DB21677881400F1A22C /* DownloadingProgress_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 570CF8BF16613E5600DFADBC /* DownloadingProgress_iPhone.xib */; };
 		571F5148168C80380055D69B /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 571F5147168C80380055D69B /* MobileCoreServices.framework */; };
 		571F514A168C80470055D69B /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 571F5147168C80380055D69B /* MobileCoreServices.framework */; };
 		57227A5C18389DB600CD28E9 /* red.png in Resources */ = {isa = PBXBuildFile; fileRef = 57227A5B18389DB600CD28E9 /* red.png */; };
@@ -313,6 +308,20 @@
 		576D89F515E39ED700F2BD17 /* whiteArrow@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D89EC15E39ED700F2BD17 /* whiteArrow@2x.png */; };
 		576EE11C162F078400327EB9 /* FileMimeType.m in Sources */ = {isa = PBXBuildFile; fileRef = 576EE11B162F078400327EB9 /* FileMimeType.m */; };
 		576EE11F162F0A2900327EB9 /* FileMimeType.plist in Resources */ = {isa = PBXBuildFile; fileRef = 576EE11E162F0A2900327EB9 /* FileMimeType.plist */; };
+		576FFDBA186AAC80009BB81A /* DownloadingProgress_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDAC186AAC80009BB81A /* DownloadingProgress_iPad.xib */; };
+		576FFDBB186AAC80009BB81A /* DownloadingProgress_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDAC186AAC80009BB81A /* DownloadingProgress_iPad.xib */; };
+		576FFDBC186AAC80009BB81A /* DownloadingProgress_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDAE186AAC80009BB81A /* DownloadingProgress_iPhone.xib */; };
+		576FFDBD186AAC80009BB81A /* DownloadingProgress_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDAE186AAC80009BB81A /* DownloadingProgress_iPhone.xib */; };
+		576FFDBE186AAC80009BB81A /* SeafAccountCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDB0186AAC80009BB81A /* SeafAccountCell.xib */; };
+		576FFDBF186AAC80009BB81A /* SeafAccountCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDB0186AAC80009BB81A /* SeafAccountCell.xib */; };
+		576FFDC0186AAC80009BB81A /* SeafCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDB2186AAC80009BB81A /* SeafCell.xib */; };
+		576FFDC1186AAC80009BB81A /* SeafCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDB2186AAC80009BB81A /* SeafCell.xib */; };
+		576FFDC2186AAC80009BB81A /* SeafDirCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDB4186AAC80009BB81A /* SeafDirCell.xib */; };
+		576FFDC3186AAC80009BB81A /* SeafDirCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDB4186AAC80009BB81A /* SeafDirCell.xib */; };
+		576FFDC4186AAC80009BB81A /* SeafTextEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDB6186AAC80009BB81A /* SeafTextEditorViewController.xib */; };
+		576FFDC5186AAC80009BB81A /* SeafTextEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDB6186AAC80009BB81A /* SeafTextEditorViewController.xib */; };
+		576FFDC6186AAC80009BB81A /* SeafUploadingFileCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDB8186AAC80009BB81A /* SeafUploadingFileCell.xib */; };
+		576FFDC7186AAC80009BB81A /* SeafUploadingFileCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDB8186AAC80009BB81A /* SeafUploadingFileCell.xib */; };
 		5775EA0717474DB3000A1765 /* bt-pound2.png in Resources */ = {isa = PBXBuildFile; fileRef = 5775EA0517474DB3000A1765 /* bt-pound2.png */; };
 		5775EA0817474DB3000A1765 /* bt-pound2.png in Resources */ = {isa = PBXBuildFile; fileRef = 5775EA0517474DB3000A1765 /* bt-pound2.png */; };
 		5775EA0917474DB3000A1765 /* bt-asterisk2.png in Resources */ = {isa = PBXBuildFile; fileRef = 5775EA0617474DB3000A1765 /* bt-asterisk2.png */; };
@@ -329,8 +338,6 @@
 		577B6C6216AAD241008E82C2 /* tab-star.png in Resources */ = {isa = PBXBuildFile; fileRef = 577B6C6016AAD241008E82C2 /* tab-star.png */; };
 		577B6C6516AADBA3008E82C2 /* SeafCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 577B6C6416AADBA3008E82C2 /* SeafCell.m */; };
 		577B6C6616AADBA3008E82C2 /* SeafCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 577B6C6416AADBA3008E82C2 /* SeafCell.m */; };
-		577B6C6816AADC26008E82C2 /* SeafCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 577B6C6716AADC26008E82C2 /* SeafCell.xib */; };
-		577B6C6916AADC26008E82C2 /* SeafCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 577B6C6716AADC26008E82C2 /* SeafCell.xib */; };
 		5782EE6C1734F3A300A76338 /* bg.png in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE641734F3A200A76338 /* bg.png */; };
 		5782EE6D1734F3A300A76338 /* bg.png in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE641734F3A200A76338 /* bg.png */; };
 		5782EE6E1734F3A300A76338 /* edit_file_md.html in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE651734F3A200A76338 /* edit_file_md.html */; };
@@ -351,8 +358,6 @@
 		57931B551632E5DB00B462BA /* SeafUploadDirViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57931B531632E5DB00B462BA /* SeafUploadDirViewController.m */; };
 		5795F49A16A7266F00FF90E3 /* SeafAccountCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 5795F49916A7266E00FF90E3 /* SeafAccountCell.m */; };
 		5795F49B16A7266F00FF90E3 /* SeafAccountCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 5795F49916A7266E00FF90E3 /* SeafAccountCell.m */; };
-		5795F49D16A726E000FF90E3 /* SeafAccountCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5795F49C16A726DF00FF90E3 /* SeafAccountCell.xib */; };
-		5795F49E16A726E000FF90E3 /* SeafAccountCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5795F49C16A726DF00FF90E3 /* SeafAccountCell.xib */; };
 		57A055A61644EAD1006511AA /* tab-home.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A055A51644EAD1006511AA /* tab-home.png */; };
 		57A055A91644EC84006511AA /* seafile-logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A055A81644EC84006511AA /* seafile-logo.png */; };
 		57A550DA177F23BB00E3BA9B /* refresh.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550D9177F23BB00E3BA9B /* refresh.png */; };
@@ -367,8 +372,6 @@
 		57A550E8177F311700E3BA9B /* checkmask.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550E5177F311700E3BA9B /* checkmask.png */; };
 		57A550E9177F311700E3BA9B /* plus.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550E6177F311700E3BA9B /* plus.png */; };
 		57A550EA177F311700E3BA9B /* plus.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550E6177F311700E3BA9B /* plus.png */; };
-		57A94357176331050035FD20 /* SeafDirCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57A94356176331050035FD20 /* SeafDirCell.xib */; };
-		57A94358176331050035FD20 /* SeafDirCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57A94356176331050035FD20 /* SeafDirCell.xib */; };
 		57A95E5818369147009D268A /* close.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A95E5618369147009D268A /* close.png */; };
 		57A95E5918369147009D268A /* close.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A95E5618369147009D268A /* close.png */; };
 		57A95E5A18369147009D268A /* close2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A95E5718369147009D268A /* close2.png */; };
@@ -425,7 +428,6 @@
 		57C03F5717FB271100F7B575 /* checkmask2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57C03F4417FB271100F7B575 /* checkmask2.png */; };
 		57C03F5817FB271100F7B575 /* checkmask2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57C03F4417FB271100F7B575 /* checkmask2.png */; };
 		57C07CE41632556600502B06 /* SeafUploadingFileCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 57C07CE31632556600502B06 /* SeafUploadingFileCell.m */; };
-		57C07CE9163272CE00502B06 /* SeafUploadingFileCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57C07CE8163272CE00502B06 /* SeafUploadingFileCell.xib */; };
 		57C57BDD165FBB4C006834DF /* SVProgressHUD.m in Sources */ = {isa = PBXBuildFile; fileRef = 57C57BDB165FBB4C006834DF /* SVProgressHUD.m */; };
 		57C57BDF165FC87B006834DF /* SVProgressHUD.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 57C57BDE165FC87B006834DF /* SVProgressHUD.bundle */; };
 		57D0AD3717914E7900D741BE /* mobile.css in Resources */ = {isa = PBXBuildFile; fileRef = 57D0AD3617914E7900D741BE /* mobile.css */; };
@@ -445,8 +447,6 @@
 		57DB828A15A833FA00097CEC /* FolderView_iPad.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57DB828815A833FA00097CEC /* FolderView_iPad.storyboard */; };
 		57DB829015A833FA00097CEC /* SeafFileViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DB828F15A833FA00097CEC /* SeafFileViewController.m */; };
 		57DB829315A833FA00097CEC /* SeafDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DB829215A833FA00097CEC /* SeafDetailViewController.m */; };
-		57E1E8A01737ED0F006601FE /* SeafTextEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E89D1737ED0F006601FE /* SeafTextEditorViewController.xib */; };
-		57E1E8A11737ED0F006601FE /* SeafTextEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E89D1737ED0F006601FE /* SeafTextEditorViewController.xib */; };
 		57E1E8A31737F4C1006601FE /* edit_file_seaf2.html in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E8A21737F4C1006601FE /* edit_file_seaf2.html */; };
 		57E1E8A41737F4C1006601FE /* edit_file_seaf2.html in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E8A21737F4C1006601FE /* edit_file_seaf2.html */; };
 		57E1E8A81737F4D3006601FE /* bootstrap-wysiwyg.js in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E8A51737F4D3006601FE /* bootstrap-wysiwyg.js */; };
@@ -587,7 +587,6 @@
 		570B7AFD1715D658002F0E1D /* Markdown.Extra.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = Markdown.Extra.js; path = htmls/Markdown.Extra.js; sourceTree = SOURCE_ROOT; };
 		570B7B061715D866002F0E1D /* view_seaf.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = view_seaf.html; path = htmls/view_seaf.html; sourceTree = SOURCE_ROOT; };
 		570CF8B71660B00900DFADBC /* SeafFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafFile.m; sourceTree = "<group>"; };
-		570CF8BF16613E5600DFADBC /* DownloadingProgress_iPhone.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DownloadingProgress_iPhone.xib; sourceTree = "<group>"; };
 		570DFAC316A15D0100ADD5F2 /* SeafAccountViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafAccountViewController.h; sourceTree = "<group>"; };
 		570DFAC416A15D0100ADD5F2 /* SeafAccountViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafAccountViewController.m; sourceTree = "<group>"; };
 		570DFACA16A19EFD00ADD5F2 /* account.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = account.png; sourceTree = "<group>"; };
@@ -614,12 +613,13 @@
 		57191CD7176CA6650064BCEA /* QBImagePickerVideoInfoView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QBImagePickerVideoInfoView.m; sourceTree = "<group>"; };
 		571ABF511625DF31005C9B08 /* DownloadingProgressView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DownloadingProgressView.h; sourceTree = "<group>"; };
 		571ABF521625DF31005C9B08 /* DownloadingProgressView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DownloadingProgressView.m; sourceTree = "<group>"; };
-		571ABF551625DF6E005C9B08 /* DownloadingProgress_iPad.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DownloadingProgress_iPad.xib; sourceTree = "<group>"; };
 		571CE59A15C01879004CD403 /* SeafData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafData.h; sourceTree = "<group>"; };
 		571CE59B15C01879004CD403 /* SeafData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafData.m; sourceTree = "<group>"; };
 		571D8DBA1677881400F1A22C /* SeafilePro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SeafilePro.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		571D8DBD1677897D00F1A22C /* seafile-appstore-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "seafile-appstore-Info.plist"; sourceTree = "<group>"; };
 		571F5147168C80380055D69B /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = System/Library/Frameworks/MobileCoreServices.framework; sourceTree = SDKROOT; };
+		5722027A186B389700E49D74 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/FailToPreview_iPad.strings; sourceTree = "<group>"; };
+		5722027B186B389900E49D74 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/FailToPreview_iPad.strings"; sourceTree = "<group>"; };
 		57227A5B18389DB600CD28E9 /* red.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = red.png; sourceTree = "<group>"; };
 		572500B1162984B2001E5C75 /* Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Utils.h; sourceTree = "<group>"; };
 		572500B2162984B3001E5C75 /* Utils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Utils.m; sourceTree = "<group>"; };
@@ -689,22 +689,20 @@
 		57532BD318688ECA003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/FolderView_iPad.storyboard; sourceTree = "<group>"; };
 		57532BD418688ECA003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/FolderView_iPhone.storyboard; sourceTree = "<group>"; };
 		57532BD718689049003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
-		57532BDA18689503003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file; name = Base; path = Base.lproj/SeafStartHeaderView.xib; sourceTree = "<group>"; };
+		57532BDA18689503003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafStartHeaderView.xib; sourceTree = "<group>"; };
 		57532BDD18689509003D564B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/SeafStartHeaderView.strings; sourceTree = "<group>"; };
 		57532BDF1868950D003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/SeafStartHeaderView.strings"; sourceTree = "<group>"; };
-		57532BE218689561003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file; name = Base; path = Base.lproj/SeafStartFooterView.xib; sourceTree = "<group>"; };
+		57532BE218689561003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafStartFooterView.xib; sourceTree = "<group>"; };
 		57532BE518689569003D564B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/SeafStartFooterView.strings; sourceTree = "<group>"; };
 		57532BE71868956C003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/SeafStartFooterView.strings"; sourceTree = "<group>"; };
-		57532BEA186895A8003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file; name = Base; path = Base.lproj/FailToPreview_iPad.xib; sourceTree = "<group>"; };
-		57532BED186895B0003D564B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/FailToPreview_iPad.strings; sourceTree = "<group>"; };
-		57532BEF186895B2003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/FailToPreview_iPad.strings"; sourceTree = "<group>"; };
-		57532BF2186895B7003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file; name = Base; path = Base.lproj/FailToPreview_iPhone.xib; sourceTree = "<group>"; };
+		57532BEA186895A8003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/FailToPreview_iPad.xib; sourceTree = "<group>"; };
+		57532BF2186895B7003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/FailToPreview_iPhone.xib; sourceTree = "<group>"; };
 		57532BF5186895BB003D564B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/FailToPreview_iPhone.strings; sourceTree = "<group>"; };
 		57532BF7186895BC003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/FailToPreview_iPhone.strings"; sourceTree = "<group>"; };
-		57532BFA186895DE003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file; name = Base; path = Base.lproj/SeafUploadDirViewController.xib; sourceTree = "<group>"; };
+		57532BFA186895DE003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafUploadDirViewController.xib; sourceTree = "<group>"; };
 		57532BFD186895E2003D564B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/SeafUploadDirViewController.strings; sourceTree = "<group>"; };
 		57532BFF186895E4003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/SeafUploadDirViewController.strings"; sourceTree = "<group>"; };
-		57532C0218689616003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file; name = Base; path = Base.lproj/SeafAccountViewController.xib; sourceTree = "<group>"; };
+		57532C0218689616003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafAccountViewController.xib; sourceTree = "<group>"; };
 		57532C051868961C003D564B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/SeafAccountViewController.strings; sourceTree = "<group>"; };
 		57532C071868961E003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/SeafAccountViewController.strings"; sourceTree = "<group>"; };
 		57532C0D18689EF1003D564B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/FolderView_iPhone.strings; sourceTree = "<group>"; };
@@ -757,6 +755,13 @@
 		576EE11A162F078400327EB9 /* FileMimeType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FileMimeType.h; sourceTree = "<group>"; };
 		576EE11B162F078400327EB9 /* FileMimeType.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FileMimeType.m; sourceTree = "<group>"; };
 		576EE11E162F0A2900327EB9 /* FileMimeType.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = FileMimeType.plist; sourceTree = "<group>"; };
+		576FFDAD186AAC80009BB81A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/DownloadingProgress_iPad.xib; sourceTree = "<group>"; };
+		576FFDAF186AAC80009BB81A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/DownloadingProgress_iPhone.xib; sourceTree = "<group>"; };
+		576FFDB1186AAC80009BB81A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafAccountCell.xib; sourceTree = "<group>"; };
+		576FFDB3186AAC80009BB81A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafCell.xib; sourceTree = "<group>"; };
+		576FFDB5186AAC80009BB81A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafDirCell.xib; sourceTree = "<group>"; };
+		576FFDB7186AAC80009BB81A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafTextEditorViewController.xib; sourceTree = "<group>"; };
+		576FFDB9186AAC80009BB81A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafUploadingFileCell.xib; sourceTree = "<group>"; };
 		5775EA0517474DB3000A1765 /* bt-pound2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-pound2.png"; path = "htmls/bt-pound2.png"; sourceTree = SOURCE_ROOT; };
 		5775EA0617474DB3000A1765 /* bt-asterisk2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-asterisk2.png"; path = "htmls/bt-asterisk2.png"; sourceTree = SOURCE_ROOT; };
 		5775EA0B17475E86000A1765 /* bt-equal2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-equal2.png"; path = "htmls/bt-equal2.png"; sourceTree = SOURCE_ROOT; };
@@ -767,7 +772,6 @@
 		577B6C6016AAD241008E82C2 /* tab-star.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-star.png"; sourceTree = "<group>"; };
 		577B6C6316AADBA3008E82C2 /* SeafCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafCell.h; sourceTree = "<group>"; };
 		577B6C6416AADBA3008E82C2 /* SeafCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafCell.m; sourceTree = "<group>"; };
-		577B6C6716AADC26008E82C2 /* SeafCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafCell.xib; sourceTree = "<group>"; };
 		5782EE641734F3A200A76338 /* bg.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = bg.png; path = htmls/bg.png; sourceTree = SOURCE_ROOT; };
 		5782EE651734F3A200A76338 /* edit_file_md.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = edit_file_md.html; path = htmls/edit_file_md.html; sourceTree = SOURCE_ROOT; };
 		5782EE661734F3A200A76338 /* jquery-ui-1.8.16.custom.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; name = "jquery-ui-1.8.16.custom.css"; path = "htmls/jquery-ui-1.8.16.custom.css"; sourceTree = SOURCE_ROOT; };
@@ -784,7 +788,6 @@
 		57931B531632E5DB00B462BA /* SeafUploadDirViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafUploadDirViewController.m; sourceTree = "<group>"; };
 		5795F49816A7266E00FF90E3 /* SeafAccountCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafAccountCell.h; sourceTree = "<group>"; };
 		5795F49916A7266E00FF90E3 /* SeafAccountCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafAccountCell.m; sourceTree = "<group>"; };
-		5795F49C16A726DF00FF90E3 /* SeafAccountCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafAccountCell.xib; sourceTree = "<group>"; };
 		57A055A51644EAD1006511AA /* tab-home.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-home.png"; sourceTree = "<group>"; };
 		57A055A81644EC84006511AA /* seafile-logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "seafile-logo.png"; sourceTree = "<group>"; };
 		57A550D9177F23BB00E3BA9B /* refresh.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = refresh.png; sourceTree = "<group>"; };
@@ -793,7 +796,6 @@
 		57A550E2177F2CBA00E3BA9B /* editfile.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = editfile.png; sourceTree = "<group>"; };
 		57A550E5177F311700E3BA9B /* checkmask.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = checkmask.png; sourceTree = "<group>"; };
 		57A550E6177F311700E3BA9B /* plus.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = plus.png; sourceTree = "<group>"; };
-		57A94356176331050035FD20 /* SeafDirCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafDirCell.xib; sourceTree = "<group>"; };
 		57A95E5618369147009D268A /* close.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = close.png; sourceTree = "<group>"; };
 		57A95E5718369147009D268A /* close2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = close2.png; sourceTree = "<group>"; };
 		57A95E5C18369E5A009D268A /* ellipsis.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ellipsis.png; sourceTree = "<group>"; };
@@ -826,7 +828,6 @@
 		57C03F4417FB271100F7B575 /* checkmask2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = checkmask2.png; sourceTree = "<group>"; };
 		57C07CE21632556600502B06 /* SeafUploadingFileCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafUploadingFileCell.h; sourceTree = "<group>"; };
 		57C07CE31632556600502B06 /* SeafUploadingFileCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafUploadingFileCell.m; sourceTree = "<group>"; };
-		57C07CE8163272CE00502B06 /* SeafUploadingFileCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafUploadingFileCell.xib; sourceTree = "<group>"; };
 		57C57BDB165FBB4C006834DF /* SVProgressHUD.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVProgressHUD.m; sourceTree = "<group>"; };
 		57C57BDC165FBB4C006834DF /* SVProgressHUD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVProgressHUD.h; sourceTree = "<group>"; };
 		57C57BDE165FC87B006834DF /* SVProgressHUD.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = SVProgressHUD.bundle; sourceTree = "<group>"; };
@@ -848,7 +849,6 @@
 		57DB829115A833FA00097CEC /* SeafDetailViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafDetailViewController.h; sourceTree = "<group>"; };
 		57DB829215A833FA00097CEC /* SeafDetailViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafDetailViewController.m; sourceTree = "<group>"; };
 		57E1E89B1737ED0F006601FE /* SeafTextEditorViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafTextEditorViewController.h; sourceTree = "<group>"; };
-		57E1E89D1737ED0F006601FE /* SeafTextEditorViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafTextEditorViewController.xib; sourceTree = "<group>"; };
 		57E1E8A21737F4C1006601FE /* edit_file_seaf2.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = edit_file_seaf2.html; path = htmls/edit_file_seaf2.html; sourceTree = SOURCE_ROOT; };
 		57E1E8A51737F4D3006601FE /* bootstrap-wysiwyg.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = "bootstrap-wysiwyg.js"; path = "htmls/bootstrap-wysiwyg.js"; sourceTree = SOURCE_ROOT; };
 		57E1E8A61737F4D3006601FE /* bootstrap.min.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = bootstrap.min.js; path = htmls/bootstrap.min.js; sourceTree = SOURCE_ROOT; };
@@ -1131,21 +1131,21 @@
 		5709512815B9B1B600F48C08 /* ui */ = {
 			isa = PBXGroup;
 			children = (
-				571ABF551625DF6E005C9B08 /* DownloadingProgress_iPad.xib */,
-				570CF8BF16613E5600DFADBC /* DownloadingProgress_iPhone.xib */,
+				576FFDAC186AAC80009BB81A /* DownloadingProgress_iPad.xib */,
+				576FFDAE186AAC80009BB81A /* DownloadingProgress_iPhone.xib */,
 				57532BEB186895A8003D564B /* FailToPreview_iPad.xib */,
 				57532BF3186895B7003D564B /* FailToPreview_iPhone.xib */,
 				57DB828815A833FA00097CEC /* FolderView_iPad.storyboard */,
 				57DB828515A833FA00097CEC /* FolderView_iPhone.storyboard */,
-				5795F49C16A726DF00FF90E3 /* SeafAccountCell.xib */,
+				576FFDB0186AAC80009BB81A /* SeafAccountCell.xib */,
 				57532C0318689616003D564B /* SeafAccountViewController.xib */,
-				577B6C6716AADC26008E82C2 /* SeafCell.xib */,
-				57A94356176331050035FD20 /* SeafDirCell.xib */,
+				576FFDB2186AAC80009BB81A /* SeafCell.xib */,
+				576FFDB4186AAC80009BB81A /* SeafDirCell.xib */,
 				57532BE318689561003D564B /* SeafStartFooterView.xib */,
 				57532BDB18689503003D564B /* SeafStartHeaderView.xib */,
-				57E1E89D1737ED0F006601FE /* SeafTextEditorViewController.xib */,
+				576FFDB6186AAC80009BB81A /* SeafTextEditorViewController.xib */,
 				57532BFB186895DE003D564B /* SeafUploadDirViewController.xib */,
-				57C07CE8163272CE00502B06 /* SeafUploadingFileCell.xib */,
+				576FFDB8186AAC80009BB81A /* SeafUploadingFileCell.xib */,
 			);
 			name = ui;
 			sourceTree = "<group>";
@@ -1600,13 +1600,12 @@
 				571D8CEE1677881400F1A22C /* grayArrow@2x.png in Resources */,
 				57C03F5017FB271100F7B575 /* refresh2.png in Resources */,
 				571D8CEF1677881400F1A22C /* whiteArrow.png in Resources */,
+				576FFDC1186AAC80009BB81A /* SeafCell.xib in Resources */,
 				571D8CF01677881400F1A22C /* whiteArrow@2x.png in Resources */,
 				57C03F2B17FB1E0500F7B575 /* awk.png in Resources */,
 				571D8CFA1677881400F1A22C /* share.png in Resources */,
 				57532BE9186895A8003D564B /* FailToPreview_iPad.xib in Resources */,
-				571D8D001677881400F1A22C /* DownloadingProgress_iPad.xib in Resources */,
 				571D8D021677881400F1A22C /* FileMimeType.plist in Resources */,
-				571D8D031677881400F1A22C /* SeafUploadingFileCell.xib in Resources */,
 				571D8D041677881400F1A22C /* tab-settings.png in Resources */,
 				571D8D051677881400F1A22C /* tab-home.png in Resources */,
 				571D8D061677881400F1A22C /* seafile-logo.png in Resources */,
@@ -1661,16 +1660,13 @@
 				571D8DAF1677881400F1A22C /* text-directory-documents.png in Resources */,
 				57A95E5B18369147009D268A /* close2.png in Resources */,
 				571D8DB01677881400F1A22C /* SVProgressHUD.bundle in Resources */,
-				571D8DB21677881400F1A22C /* DownloadingProgress_iPhone.xib in Resources */,
 				57532BF1186895B7003D564B /* FailToPreview_iPhone.xib in Resources */,
 				57532C0118689616003D564B /* SeafAccountViewController.xib in Resources */,
 				570DFACC16A19EFD00ADD5F2 /* account.png in Resources */,
 				57532BD918689503003D564B /* SeafStartHeaderView.xib in Resources */,
 				576B990B1861411700A16ED6 /* loupe-hi@2x.png in Resources */,
-				5795F49E16A726E000FF90E3 /* SeafAccountCell.xib in Resources */,
 				577B6C6216AAD241008E82C2 /* tab-star.png in Resources */,
 				57C03F5817FB271100F7B575 /* checkmask2.png in Resources */,
-				577B6C6916AADC26008E82C2 /* SeafCell.xib in Resources */,
 				5779C7BC171088D900307C36 /* view_markdown.html in Resources */,
 				5779C7DA171473E000307C36 /* edit_file_text.html in Resources */,
 				570B7AFF1715D658002F0E1D /* edit_file_seaf.html in Resources */,
@@ -1683,13 +1679,14 @@
 				5782EE731734F3A300A76338 /* logo.png in Resources */,
 				5782EE771734F3A300A76338 /* pagedown.css in Resources */,
 				576B990D1861411700A16ED6 /* loupe-lo@2x.png in Resources */,
+				576FFDC7186AAC80009BB81A /* SeafUploadingFileCell.xib in Resources */,
 				57532C1A1868AA48003D564B /* Localizable.strings in Resources */,
 				5782EE7B1734F3A300A76338 /* wmd-buttons.png in Resources */,
 				57A95E5918369147009D268A /* close.png in Resources */,
-				57E1E8A11737ED0F006601FE /* SeafTextEditorViewController.xib in Resources */,
 				57E1E8A41737F4C1006601FE /* edit_file_seaf2.html in Resources */,
 				57C03F4C17FB271100F7B575 /* arrowright2.png in Resources */,
 				57E1E8AD1737F4D3006601FE /* sf_editor_toolbar.css in Resources */,
+				576FFDBD186AAC80009BB81A /* DownloadingProgress_iPhone.xib in Resources */,
 				57C03F3A17FB227100F7B575 /* addmsg2.png in Resources */,
 				57C03F5217FB271100F7B575 /* plus2.png in Resources */,
 				57E1FDF7173BDF7900523912 /* bt-strikethrough.png in Resources */,
@@ -1740,14 +1737,17 @@
 				576B99111861411700A16ED6 /* magnifier-ranged-hi@2x.png in Resources */,
 				5704C6FB1756710F0028F4FE /* tab-activity.png in Resources */,
 				5704C6FD1756710F0028F4FE /* tab-discussion.png in Resources */,
-				57A94358176331050035FD20 /* SeafDirCell.xib in Resources */,
 				57191CF5176CA6650064BCEA /* QBImagePickerController.bundle in Resources */,
 				5732A966177894E700D806C7 /* REComposeViewController.bundle in Resources */,
+				576FFDBB186AAC80009BB81A /* DownloadingProgress_iPad.xib in Resources */,
 				57532BF9186895DE003D564B /* SeafUploadDirViewController.xib in Resources */,
 				57A550DB177F23BB00E3BA9B /* refresh.png in Resources */,
 				57C03F4E17FB271100F7B575 /* arrowleft2.png in Resources */,
 				57A550DE177F283700E3BA9B /* addmsg.png in Resources */,
+				576FFDC3186AAC80009BB81A /* SeafDirCell.xib in Resources */,
 				57A550E1177F2C4400E3BA9B /* export.png in Resources */,
+				576FFDC5186AAC80009BB81A /* SeafTextEditorViewController.xib in Resources */,
+				576FFDBF186AAC80009BB81A /* SeafAccountCell.xib in Resources */,
 				57A550E4177F2CBA00E3BA9B /* editfile.png in Resources */,
 				57A550E8177F311700E3BA9B /* checkmask.png in Resources */,
 				57A550EA177F311700E3BA9B /* plus.png in Resources */,
@@ -1781,6 +1781,7 @@
 				576D89F015E39ED700F2BD17 /* blueArrow.png in Resources */,
 				57C03F4F17FB271100F7B575 /* refresh2.png in Resources */,
 				576D89F115E39ED700F2BD17 /* blueArrow@2x.png in Resources */,
+				576FFDC0186AAC80009BB81A /* SeafCell.xib in Resources */,
 				576D89F215E39ED700F2BD17 /* grayArrow.png in Resources */,
 				576D89F315E39ED700F2BD17 /* grayArrow@2x.png in Resources */,
 				57C03F2A17FB1E0500F7B575 /* awk.png in Resources */,
@@ -1788,9 +1789,7 @@
 				576D89F515E39ED700F2BD17 /* whiteArrow@2x.png in Resources */,
 				576D6EBF1604804E000310F5 /* share.png in Resources */,
 				57532BE8186895A8003D564B /* FailToPreview_iPad.xib in Resources */,
-				571ABF561625DF6E005C9B08 /* DownloadingProgress_iPad.xib in Resources */,
 				576EE11F162F0A2900327EB9 /* FileMimeType.plist in Resources */,
-				57C07CE9163272CE00502B06 /* SeafUploadingFileCell.xib in Resources */,
 				57C03F5317FB271100F7B575 /* editfile2.png in Resources */,
 				5764C835163C3E83006AD511 /* tab-settings.png in Resources */,
 				57227A5C18389DB600CD28E9 /* red.png in Resources */,
@@ -1842,16 +1841,13 @@
 				57397041165801EE0089F32F /* text-directory-documents.png in Resources */,
 				57A95E5A18369147009D268A /* close2.png in Resources */,
 				57C57BDF165FC87B006834DF /* SVProgressHUD.bundle in Resources */,
-				570CF8C016613E5700DFADBC /* DownloadingProgress_iPhone.xib in Resources */,
 				57532BF0186895B7003D564B /* FailToPreview_iPhone.xib in Resources */,
 				57532C0018689616003D564B /* SeafAccountViewController.xib in Resources */,
 				570DFACB16A19EFD00ADD5F2 /* account.png in Resources */,
 				57532BD818689503003D564B /* SeafStartHeaderView.xib in Resources */,
 				576B990A1861411700A16ED6 /* loupe-hi@2x.png in Resources */,
-				5795F49D16A726E000FF90E3 /* SeafAccountCell.xib in Resources */,
 				577B6C6116AAD241008E82C2 /* tab-star.png in Resources */,
 				57C03F5717FB271100F7B575 /* checkmask2.png in Resources */,
-				577B6C6816AADC26008E82C2 /* SeafCell.xib in Resources */,
 				5779C7BB171088D900307C36 /* view_markdown.html in Resources */,
 				5779C7D9171473E000307C36 /* edit_file_text.html in Resources */,
 				570B7AFE1715D658002F0E1D /* edit_file_seaf.html in Resources */,
@@ -1864,13 +1860,14 @@
 				5782EE721734F3A300A76338 /* logo.png in Resources */,
 				5782EE761734F3A300A76338 /* pagedown.css in Resources */,
 				576B990C1861411700A16ED6 /* loupe-lo@2x.png in Resources */,
+				576FFDC6186AAC80009BB81A /* SeafUploadingFileCell.xib in Resources */,
 				57532C191868AA48003D564B /* Localizable.strings in Resources */,
 				5782EE7A1734F3A300A76338 /* wmd-buttons.png in Resources */,
 				57A95E5818369147009D268A /* close.png in Resources */,
-				57E1E8A01737ED0F006601FE /* SeafTextEditorViewController.xib in Resources */,
 				57E1E8A31737F4C1006601FE /* edit_file_seaf2.html in Resources */,
 				57C03F4B17FB271100F7B575 /* arrowright2.png in Resources */,
 				57E1E8AC1737F4D3006601FE /* sf_editor_toolbar.css in Resources */,
+				576FFDBC186AAC80009BB81A /* DownloadingProgress_iPhone.xib in Resources */,
 				57C03F3917FB227100F7B575 /* addmsg2.png in Resources */,
 				57C03F5117FB271100F7B575 /* plus2.png in Resources */,
 				57E1FDF6173BDF7900523912 /* bt-strikethrough.png in Resources */,
@@ -1921,14 +1918,17 @@
 				576B99101861411700A16ED6 /* magnifier-ranged-hi@2x.png in Resources */,
 				5704C6FA1756710F0028F4FE /* tab-activity.png in Resources */,
 				5704C6FC1756710F0028F4FE /* tab-discussion.png in Resources */,
-				57A94357176331050035FD20 /* SeafDirCell.xib in Resources */,
 				57191CF4176CA6650064BCEA /* QBImagePickerController.bundle in Resources */,
 				5732A965177894E700D806C7 /* REComposeViewController.bundle in Resources */,
+				576FFDBA186AAC80009BB81A /* DownloadingProgress_iPad.xib in Resources */,
 				57532BF8186895DE003D564B /* SeafUploadDirViewController.xib in Resources */,
 				57A550DA177F23BB00E3BA9B /* refresh.png in Resources */,
 				57C03F4D17FB271100F7B575 /* arrowleft2.png in Resources */,
 				57A550DD177F283700E3BA9B /* addmsg.png in Resources */,
+				576FFDC2186AAC80009BB81A /* SeafDirCell.xib in Resources */,
 				57A550E0177F2C4400E3BA9B /* export.png in Resources */,
+				576FFDC4186AAC80009BB81A /* SeafTextEditorViewController.xib in Resources */,
+				576FFDBE186AAC80009BB81A /* SeafAccountCell.xib in Resources */,
 				57A550E3177F2CBA00E3BA9B /* editfile.png in Resources */,
 				57A550E7177F311700E3BA9B /* checkmask.png in Resources */,
 				57A550E9177F311700E3BA9B /* plus.png in Resources */,
@@ -2132,8 +2132,8 @@
 			isa = PBXVariantGroup;
 			children = (
 				57532BEA186895A8003D564B /* Base */,
-				57532BED186895B0003D564B /* en */,
-				57532BEF186895B2003D564B /* zh-Hans */,
+				5722027A186B389700E49D74 /* en */,
+				5722027B186B389900E49D74 /* zh-Hans */,
 			);
 			name = FailToPreview_iPad.xib;
 			sourceTree = "<group>";
@@ -2175,6 +2175,62 @@
 				57532C181868AA48003D564B /* zh-Hans */,
 			);
 			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		576FFDAC186AAC80009BB81A /* DownloadingProgress_iPad.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				576FFDAD186AAC80009BB81A /* Base */,
+			);
+			name = DownloadingProgress_iPad.xib;
+			sourceTree = "<group>";
+		};
+		576FFDAE186AAC80009BB81A /* DownloadingProgress_iPhone.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				576FFDAF186AAC80009BB81A /* Base */,
+			);
+			name = DownloadingProgress_iPhone.xib;
+			sourceTree = "<group>";
+		};
+		576FFDB0186AAC80009BB81A /* SeafAccountCell.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				576FFDB1186AAC80009BB81A /* Base */,
+			);
+			name = SeafAccountCell.xib;
+			sourceTree = "<group>";
+		};
+		576FFDB2186AAC80009BB81A /* SeafCell.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				576FFDB3186AAC80009BB81A /* Base */,
+			);
+			name = SeafCell.xib;
+			sourceTree = "<group>";
+		};
+		576FFDB4186AAC80009BB81A /* SeafDirCell.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				576FFDB5186AAC80009BB81A /* Base */,
+			);
+			name = SeafDirCell.xib;
+			sourceTree = "<group>";
+		};
+		576FFDB6186AAC80009BB81A /* SeafTextEditorViewController.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				576FFDB7186AAC80009BB81A /* Base */,
+			);
+			name = SeafTextEditorViewController.xib;
+			sourceTree = "<group>";
+		};
+		576FFDB8186AAC80009BB81A /* SeafUploadingFileCell.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				576FFDB9186AAC80009BB81A /* Base */,
+			);
+			name = SeafUploadingFileCell.xib;
 			sourceTree = "<group>";
 		};
 		57DB827C15A833FA00097CEC /* InfoPlist.strings */ = {
