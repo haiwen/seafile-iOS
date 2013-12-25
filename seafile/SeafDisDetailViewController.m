@@ -108,9 +108,9 @@
     if (self.connection && self.url) {
         [self.refreshItem setEnabled:YES];
         if (self.hiddenAddmsg)
-            self.title = @"New replies";
+            self.title = NSLocalizedString(@"New replies", nil);
         else if (self.isReply)
-            self.title = @"Reply";
+            self.title = NSLocalizedString(@"Reply", nil);
         else
             self.title = self.groupName;
         [self showLodingView];
@@ -120,7 +120,7 @@
         self.webview.delegate = self;
         [self.webview loadRequest:request];
     } else {
-        self.title = @"Discussions";
+        self.title = NSLocalizedString(@"Discussions", nil);
         [self.refreshItem setEnabled:NO];
         NSURLRequest *request = [[NSURLRequest alloc] initWithURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"index" ofType:@"html"]] cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
         self.webview.delegate = nil;
@@ -141,9 +141,9 @@
 - (void)compose:(id)sender
 {
     if (![self isReply])
-        [self popupInputView:@"Discussion" placeholder:@"discussion"];
+        [self popupInputView:NSLocalizedString(@"Discussion", nil) placeholder:NSLocalizedString(@"discussion", nil)];
     else
-        [self popupInputView:@"Reply" placeholder:@"reply"];
+        [self popupInputView:NSLocalizedString(@"Reply", nil) placeholder:NSLocalizedString(@"reply", nil)];
 }
 
 - (void)viewDidLoad
@@ -151,7 +151,7 @@
     [super viewDidLoad];
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeNone;
-    self.title = @"Discussions";
+    self.title = NSLocalizedString(@"Discussions", niL);
     if (!IsIpad() && !self.isReply) {
         UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Back" style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
         [self.navigationItem setLeftBarButtonItem:barButtonItem animated:YES];

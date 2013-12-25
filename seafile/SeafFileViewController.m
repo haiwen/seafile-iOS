@@ -323,6 +323,7 @@ enum {
     if(self.popoverController)
         return;
     QBImagePickerController *imagePickerController = [[QBImagePickerController alloc] init];
+    imagePickerController.title = NSLocalizedString(@"Photos", @"Photos");
     imagePickerController.delegate = self;
     imagePickerController.allowsMultipleSelection = YES;
     imagePickerController.filterType = QBImagePickerFilterTypeAllAssets;

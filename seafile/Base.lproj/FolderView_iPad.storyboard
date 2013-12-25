@@ -309,13 +309,21 @@
                         <rect key="frame" x="0.0" y="0.0" width="703" height="768"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" fixedFrame="YES" image="seafile-logo.png" translatesAutoresizingMaskIntoConstraints="NO" id="9Hl-rX-Muo">
-                                <rect key="frame" x="196" y="285" width="310" height="90"/>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" image="seafile-logo.png" translatesAutoresizingMaskIntoConstraints="NO" id="9Hl-rX-Muo">
+                                <rect key="frame" x="262" y="294" width="180" height="180"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="180" id="bTb-Wh-cta"/>
+                                    <constraint firstAttribute="width" constant="180" id="z4S-cP-e5i"/>
+                                </constraints>
                             </imageView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <gestureRecognizers/>
+                        <constraints>
+                            <constraint firstAttribute="centerX" secondItem="9Hl-rX-Muo" secondAttribute="centerX" id="6dB-MQ-2JG"/>
+                            <constraint firstAttribute="centerY" secondItem="9Hl-rX-Muo" secondAttribute="centerY" id="qM8-gr-zNU"/>
+                        </constraints>
                         <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
                         <connections>
                             <outletCollection property="gestureRecognizers" destination="dgN-6S-yM8" appends="YES" id="291-6a-6AG"/>
@@ -668,12 +676,20 @@
                         <rect key="frame" x="0.0" y="0.0" width="703" height="768"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" fixedFrame="YES" image="seafile-logo.png" translatesAutoresizingMaskIntoConstraints="NO" id="opH-yh-8QA">
-                                <rect key="frame" x="196" y="285" width="310" height="90"/>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" image="seafile-logo.png" translatesAutoresizingMaskIntoConstraints="NO" id="opH-yh-8QA">
+                                <rect key="frame" x="262" y="294" width="180" height="180"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="180" id="1Ic-tY-YFb"/>
+                                    <constraint firstAttribute="height" constant="180" id="56i-6W-5HN"/>
+                                </constraints>
                             </imageView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstAttribute="centerY" secondItem="opH-yh-8QA" secondAttribute="centerY" id="mbA-tF-eqV"/>
+                            <constraint firstAttribute="centerX" secondItem="opH-yh-8QA" secondAttribute="centerX" id="oTw-Ue-Zp7"/>
+                        </constraints>
                         <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
                     </view>
                     <toolbarItems/>
@@ -696,12 +712,20 @@
                         <rect key="frame" x="0.0" y="0.0" width="703" height="768"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" fixedFrame="YES" image="seafile-logo.png" translatesAutoresizingMaskIntoConstraints="NO" id="7nQ-G7-45Z">
-                                <rect key="frame" x="196" y="285" width="310" height="90"/>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" image="seafile-logo.png" translatesAutoresizingMaskIntoConstraints="NO" id="7nQ-G7-45Z">
+                                <rect key="frame" x="262" y="294" width="180" height="180"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="180" id="SpF-db-jBp"/>
+                                    <constraint firstAttribute="width" constant="180" id="Z9e-uJ-tyg"/>
+                                </constraints>
                             </imageView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstAttribute="centerY" secondItem="7nQ-G7-45Z" secondAttribute="centerY" id="Amc-pn-rI2"/>
+                            <constraint firstAttribute="centerX" secondItem="7nQ-G7-45Z" secondAttribute="centerX" id="iPc-oy-FKH"/>
+                        </constraints>
                         <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
                     </view>
                     <toolbarItems/>
@@ -766,12 +790,20 @@
                         <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" fixedFrame="YES" image="seafile-logo.png" translatesAutoresizingMaskIntoConstraints="NO" id="W4j-rh-yf1">
-                                <rect key="frame" x="229" y="435" width="310" height="90"/>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" image="seafile-logo.png" translatesAutoresizingMaskIntoConstraints="NO" id="W4j-rh-yf1">
+                                <rect key="frame" x="294" y="422" width="180" height="180"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="180" id="1gO-RN-UJu"/>
+                                    <constraint firstAttribute="height" constant="180" id="IEy-fL-jfs"/>
+                                </constraints>
                             </imageView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstAttribute="centerY" secondItem="W4j-rh-yf1" secondAttribute="centerY" id="Gki-9b-CK9"/>
+                            <constraint firstAttribute="centerX" secondItem="W4j-rh-yf1" secondAttribute="centerX" id="dUX-50-i8L"/>
+                        </constraints>
                     </view>
                     <toolbarItems/>
                     <navigationItem key="navigationItem" id="Rv3-Pi-9jP"/>
@@ -783,7 +815,7 @@
         </scene>
     </scenes>
     <resources>
-        <image name="seafile-logo.png" width="619" height="179"/>
+        <image name="seafile-logo.png" width="480" height="480"/>
     </resources>
     <color key="tintColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">

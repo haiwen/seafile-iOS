@@ -390,12 +390,20 @@
                         <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" fixedFrame="YES" image="seafile-logo.png" translatesAutoresizingMaskIntoConstraints="NO" id="ykP-o6-zvM">
-                                <rect key="frame" x="33" y="110" width="254" height="93"/>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="seafile-logo.png" translatesAutoresizingMaskIntoConstraints="NO" id="ykP-o6-zvM">
+                                <rect key="frame" x="128" y="208" width="64" height="64"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="64" id="iuq-z4-dhi"/>
+                                    <constraint firstAttribute="height" constant="64" id="pKD-Gj-b3L"/>
+                                </constraints>
                             </imageView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstAttribute="centerX" secondItem="ykP-o6-zvM" secondAttribute="centerX" id="FHB-CY-Rjx"/>
+                            <constraint firstAttribute="centerY" secondItem="ykP-o6-zvM" secondAttribute="centerY" id="ofX-2g-ejH"/>
+                        </constraints>
                     </view>
                     <toolbarItems/>
                     <navigationItem key="navigationItem" id="N9H-ZX-OWr"/>
@@ -541,7 +549,7 @@
         </scene>
     </scenes>
     <resources>
-        <image name="seafile-logo.png" width="619" height="179"/>
+        <image name="seafile-logo.png" width="480" height="480"/>
     </resources>
     <color key="tintColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">

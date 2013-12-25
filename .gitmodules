@@ -4,7 +4,7 @@
     ignore = dirty
 [submodule "libs/EGOTableViewPullRefresh"]
 	path = libs/EGOTableViewPullRefresh
-	url = https://github.com/enormego/EGOTableViewPullRefresh.git
+	url = git@github.com:haiwen/EGOTableViewPullRefresh.git
     ignore = dirty
 [submodule "libs/QBImagePickerController"]
 	path = libs/QBImagePickerController
@@ -12,7 +12,7 @@
     ignore = dirty
 [submodule "libs/REComposeViewController"]
 	path = libs/REComposeViewController
-	url = git@github.com:romaonthego/REComposeViewController.git
+	url = git@github.com:haiwen/REComposeViewController.git
     ignore = dirty
 [submodule "libs/ios-openssl"]
 	path = libs/ios-openssl
