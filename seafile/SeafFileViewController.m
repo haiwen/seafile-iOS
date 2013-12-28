@@ -1198,7 +1198,7 @@ enum {
     self.popoverController = nil;
 }
 
-#pragma mark - SeafFileUploadDelegate
+#pragma mark - SeafFileUpdateDelegate
 - (void)updateProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent
 {
     int index = [_directory.allItems indexOfObject:file];
@@ -1227,6 +1227,10 @@ enum {
 - (void)uploadSucess:(SeafUploadFile *)file oid:(NSString *)oid
 {
     [self uploadProgress:file result:YES completeness:100];
+    if (!self.isVisible) {
+        [SVProgressHUD showSuccessWithStatus:[NSString stringWithFormat:NSLocalizedString(@"File '%@' uploaded success", nil), file.name] duration:1.0];
+    }
+
 }
 
 #pragma mark - Search Delegate

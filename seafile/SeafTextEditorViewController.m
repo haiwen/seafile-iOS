@@ -108,15 +108,15 @@ enum TOOL_ITEM {
 
 - (void)edit_preview
 {
-    if ([self.ep.title isEqualToString:@"Preview"]) {
-        self.ep.title = @"Edit";
+    if ([self.ep.title isEqualToString:NSLocalizedString(@"Preview", nil)]) {
+        self.ep.title = NSLocalizedString(@"Edit", nil);
         self.egoTextView.hidden = YES;
         for (UIBarButtonItem *item in self.navigationItem.rightBarButtonItems)
             item.enabled = NO;
         NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [self.egoTextView.text stringEscapedForJavasacript]];
         [self.webView stringByEvaluatingJavaScriptFromString:js];
     } else {
-        self.ep.title = @"Preview";
+        self.ep.title = NSLocalizedString(@"Preview", nil);
         self.egoTextView.hidden = NO;
         [self.egoTextView becomeFirstResponder];
         for (UIBarButtonItem *item in self.navigationItem.rightBarButtonItems) {
@@ -421,13 +421,13 @@ enum TOOL_ITEM {
     self.egoTextView = view;
     [view becomeFirstResponder];
     self.cancelItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancel)];
-    self.saveItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSave target:self action:@selector(save)];
+    self.saveItem = [self getTextBarItem:NSLocalizedString(@"Save", nil) action:@selector(save) active:0];
     [self start];
 }
 - (void)viewWillAppear:(BOOL)animated
 {
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillHideNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillHide:) name:UIKeyboardWillHideNotification object:nil];
 }
 
 - (void)viewWillDisappear:(BOOL)animated
@@ -531,7 +531,7 @@ enum TOOL_ITEM {
     self.litems = [[NSMutableArray alloc] init];
     [self.litems addObject:self.saveItem];
     if ([self IsMarkdown]) {
-        self.ep = [self getTextBarItem:@"Preview" action:@selector(edit_preview) active:0];
+        self.ep = [self getTextBarItem:NSLocalizedString(@"Preview", nil) action:@selector(edit_preview) active:0];
         [self.litems addObject:self.ep];
         NSURLRequest *request = [[NSURLRequest alloc] initWithURL:self.sfile.previewItemURL cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
         [self.webView loadRequest:request];
@@ -641,10 +641,12 @@ enum TOOL_ITEM {
     NSDictionary* info = [notification userInfo];
     CGSize keyBoardSize = [[info objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue].size;
     float keyH = MIN(keyBoardSize.height, keyBoardSize.width);
-    self.egoTextView.frame = CGRectMake(self.egoTextView.frame.origin.x, self.egoTextView.frame.origin.y, self.egoTextView.frame.size.width, self.view.bounds.size.height - keyH - TOP_VIEW_HEIGHT );
 
-    if (![self IsMarkdown])
+    if (![self IsMarkdown]) {
+        self.egoTextView.frame = CGRectMake(self.egoTextView.frame.origin.x, self.egoTextView.frame.origin.y, self.egoTextView.frame.size.width, self.view.bounds.size.height - keyH );
         return;
+    } else
+        self.egoTextView.frame = CGRectMake(self.egoTextView.frame.origin.x, self.egoTextView.frame.origin.y, self.egoTextView.frame.size.width, self.view.bounds.size.height - keyH - TOP_VIEW_HEIGHT );
 
     self.topview.frame = CGRectMake(0, self.egoTextView.frame.origin.y+ self.egoTextView.frame.size.height, self.egoTextView.frame.size.width, TOP_VIEW_HEIGHT);
     float unit = self.view.bounds.size.width / self.topview.subviews.count;
@@ -660,7 +662,7 @@ enum TOOL_ITEM {
 
 - (void)keyboardWillHide:(NSNotification *)notification{
     if ([self IsSeaf]) return;
-    self.egoTextView.frame = self.view.frame;
+    self.egoTextView.frame = CGRectMake(self.egoTextView.frame.origin.x, self.egoTextView.frame.origin.y, self.egoTextView.frame.size.width, self.view.bounds.size.height);
     [self.egoTextView becomeFirstResponder];
     [self.topview removeFromSuperview];
 }

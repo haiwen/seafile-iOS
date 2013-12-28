@@ -251,7 +251,7 @@
     }
 }
 
-#pragma mark - SeafFileUploadDelegate
+#pragma mark - SeafFileUpdateDelegate
 - (void)updateProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent
 {
     if (!res) {

@@ -100,11 +100,12 @@ static NSMutableDictionary *uploadFiles = nil;
     [dict setObject:[NSNumber numberWithBool:result] forKey:@"result"];
     [self saveAttr:dict];
     [SeafAppDelegate decUploadnum];
-    Debug("result=%d\n", result);
+    Debug("result=%d, _delegate=%@\n", result, _delegate);
     if (result)
         [_delegate uploadSucess:self oid:oid];
     else
         [_delegate uploadProgress:self result:NO completeness:0];
+    _delegate = nil;
 }
 
 - (int)percentForShow:(long long)totalBytesWritten expected:(long long)totalBytesExpectedToWrite

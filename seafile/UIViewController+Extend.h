@@ -20,4 +20,6 @@
 - (UIBarButtonItem *)getBarItemAutoSize:(NSString *)imageName action:(SEL)action;
 - (UIBarButtonItem *)getSpaceBarItem:(float)width;
 
+- (BOOL)isVisible;
+
 @end
