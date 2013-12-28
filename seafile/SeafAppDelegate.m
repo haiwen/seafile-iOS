@@ -112,7 +112,7 @@
     [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
     [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"]];
     [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"]];
-     [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"]];
+    [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"]];
     [Utils checkMakeDir:[Utils applicationTempDirectory]];
 
     [Utils clearAllFiles:[Utils applicationTempDirectory]];
@@ -123,13 +123,34 @@
     [internetReach startNotifier];
     wifiReach = [Reachability reachabilityForLocalWiFi];
     [wifiReach startNotifier];
-
     [self checkNetworkStatus];
+
     self.downloadnum = 0;
     self.uploadnum = 0;
     [Utils clearRepoPasswords];
+
+    [[UIApplication sharedApplication] registerForRemoteNotificationTypes:UIRemoteNotificationTypeBadge|UIRemoteNotificationTypeAlert];
+
     [self.startVC goToDefaultReposView];
     return YES;
+}
+
+- (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
+{
+    Debug("token=%@\n", deviceToken);
+}
+- (void)application:(UIApplication *)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error
+{
+    Debug("error=%@", error);
+}
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
+{
+    NSString *status = [NSString stringWithFormat:@"Notification received:\n%@",[userInfo description]];
+
+    NSString *badgeStr = [[userInfo objectForKey:@"aps"] objectForKey:@"badge"];
+    Debug("status=%@, badge=%@", status, badgeStr);
+    if (badgeStr != nil)
+        [UIApplication sharedApplication].applicationIconBadgeNumber = [badgeStr intValue];
 }
 
 - (void)applicationWillResignActive:(UIApplication *)application
@@ -355,7 +376,7 @@
 
         for (UIViewController *vc in tabs.viewControllers) {
             M13InfiniteTabBarItem *item = [[M13InfiniteTabBarItem alloc] initWithTitle:vc.tabBarItem.title andIcon:vc.tabBarItem.image];
-                [items addObject:item];
+            [items addObject:item];
         }
 
         [vcs addObject:accountvc];
