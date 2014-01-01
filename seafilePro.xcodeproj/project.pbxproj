@@ -150,6 +150,12 @@
 		5732A968177894E700D806C7 /* REComposeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A942177894E700D806C7 /* REComposeViewController.m */; };
 		573F4AAC1788763500F096D3 /* arrowleft.png in Resources */ = {isa = PBXBuildFile; fileRef = 573F4AA91788763500F096D3 /* arrowleft.png */; };
 		573F4AAE1788763500F096D3 /* arrowright.png in Resources */ = {isa = PBXBuildFile; fileRef = 573F4AAA1788763500F096D3 /* arrowright.png */; };
+		574785B21870587800E6F37E /* bt-asterisk.png in Resources */ = {isa = PBXBuildFile; fileRef = 574785AC1870587800E6F37E /* bt-asterisk.png */; };
+		574785B31870587800E6F37E /* bt-code.png in Resources */ = {isa = PBXBuildFile; fileRef = 574785AD1870587800E6F37E /* bt-code.png */; };
+		574785B41870587800E6F37E /* bt-equal.png in Resources */ = {isa = PBXBuildFile; fileRef = 574785AE1870587800E6F37E /* bt-equal.png */; };
+		574785B51870587800E6F37E /* bt-link.png in Resources */ = {isa = PBXBuildFile; fileRef = 574785AF1870587800E6F37E /* bt-link.png */; };
+		574785B61870587800E6F37E /* bt-pound.png in Resources */ = {isa = PBXBuildFile; fileRef = 574785B01870587800E6F37E /* bt-pound.png */; };
+		574785B71870587800E6F37E /* bt-quote.png in Resources */ = {isa = PBXBuildFile; fileRef = 574785B11870587800E6F37E /* bt-quote.png */; };
 		57532BD918689503003D564B /* SeafStartHeaderView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57532BDB18689503003D564B /* SeafStartHeaderView.xib */; };
 		57532BE118689561003D564B /* SeafStartFooterView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57532BE318689561003D564B /* SeafStartFooterView.xib */; };
 		57532BE9186895A8003D564B /* FailToPreview_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57532BEB186895A8003D564B /* FailToPreview_iPad.xib */; };
@@ -426,6 +432,12 @@
 		573F4AA91788763500F096D3 /* arrowleft.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = arrowleft.png; sourceTree = "<group>"; };
 		573F4AAA1788763500F096D3 /* arrowright.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = arrowright.png; sourceTree = "<group>"; };
 		574456821774922B00EA46A6 /* SeafAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafAppDelegate.h; sourceTree = "<group>"; };
+		574785AC1870587800E6F37E /* bt-asterisk.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-asterisk.png"; path = "htmls/bt-asterisk.png"; sourceTree = SOURCE_ROOT; };
+		574785AD1870587800E6F37E /* bt-code.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-code.png"; path = "htmls/bt-code.png"; sourceTree = SOURCE_ROOT; };
+		574785AE1870587800E6F37E /* bt-equal.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-equal.png"; path = "htmls/bt-equal.png"; sourceTree = SOURCE_ROOT; };
+		574785AF1870587800E6F37E /* bt-link.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-link.png"; path = "htmls/bt-link.png"; sourceTree = SOURCE_ROOT; };
+		574785B01870587800E6F37E /* bt-pound.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-pound.png"; path = "htmls/bt-pound.png"; sourceTree = SOURCE_ROOT; };
+		574785B11870587800E6F37E /* bt-quote.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "bt-quote.png"; path = "htmls/bt-quote.png"; sourceTree = SOURCE_ROOT; };
 		57532BD318688ECA003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/FolderView_iPad.storyboard; sourceTree = "<group>"; };
 		57532BD418688ECA003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/FolderView_iPhone.storyboard; sourceTree = "<group>"; };
 		57532BD718689049003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
@@ -1071,6 +1083,12 @@
 				57EB13461747774900D2ACF9 /* bt-bold2.png */,
 				57E1FDFB173BF04F00523912 /* bt-center.png */,
 				57EB134C174782B800D2ACF9 /* bt-center2.png */,
+				574785AC1870587800E6F37E /* bt-asterisk.png */,
+				574785AD1870587800E6F37E /* bt-code.png */,
+				574785AE1870587800E6F37E /* bt-equal.png */,
+				574785AF1870587800E6F37E /* bt-link.png */,
+				574785B01870587800E6F37E /* bt-pound.png */,
+				574785B11870587800E6F37E /* bt-quote.png */,
 				57E1FE25173BFAE000523912 /* bt-code2.png */,
 				5775EA0B17475E86000A1765 /* bt-equal2.png */,
 				57E1FE28173BFAE000523912 /* bt-image.png */,
@@ -1285,6 +1303,7 @@
 				57E1FD91173AB85500523912 /* ios.js in Resources */,
 				57E1FD93173AB85500523912 /* jquery.hotkeys.js in Resources */,
 				5782EE751734F3A300A76338 /* Markdown.Editor.js in Resources */,
+				574785B51870587800E6F37E /* bt-link.png in Resources */,
 				57C03F3517FB1E0500F7B575 /* tex.png in Resources */,
 				571D8CE61677881400F1A22C /* InfoPlist.strings in Resources */,
 				57C03F4A17FB271100F7B575 /* share2.png in Resources */,
@@ -1315,6 +1334,7 @@
 				571D8D0D1677881400F1A22C /* FileTypeIcons.plist in Resources */,
 				57D189D0182E0A380029A797 /* Images.xcassets in Resources */,
 				570B7B011715D658002F0E1D /* jq.min.js in Resources */,
+				574785B21870587800E6F37E /* bt-asterisk.png in Resources */,
 				570B7B031715D658002F0E1D /* Markdown.Converter.js in Resources */,
 				570B7B051715D658002F0E1D /* Markdown.Extra.js in Resources */,
 				571D8D8E1677881400F1A22C /* unknown-file.png in Resources */,
@@ -1387,6 +1407,7 @@
 				576FFDBD186AAC80009BB81A /* DownloadingProgress_iPhone.xib in Resources */,
 				57C03F3A17FB227100F7B575 /* addmsg2.png in Resources */,
 				57C03F5217FB271100F7B575 /* plus2.png in Resources */,
+				574785B31870587800E6F37E /* bt-code.png in Resources */,
 				57E1FDF7173BDF7900523912 /* bt-strikethrough.png in Resources */,
 				57A95E6118369E5A009D268A /* ellipsis2.png in Resources */,
 				57E1FDFA173BF04000523912 /* bt-bold.png in Resources */,
@@ -1397,6 +1418,7 @@
 				57E1FE11173BF04F00523912 /* bt-left.png in Resources */,
 				57E1FE13173BF04F00523912 /* bt-link2.png in Resources */,
 				57C03F4817FB271100F7B575 /* star2.png in Resources */,
+				574785B41870587800E6F37E /* bt-equal.png in Resources */,
 				57C03F3317FB1E0500F7B575 /* script.png in Resources */,
 				57E1FE15173BF04F00523912 /* bt-ol.png in Resources */,
 				57E1FE17173BF04F00523912 /* bt-outdent.png in Resources */,
@@ -1422,6 +1444,7 @@
 				57EB1368174782B900D2ACF9 /* bt-left2.png in Resources */,
 				57EB136A174782B900D2ACF9 /* bt-ol2.png in Resources */,
 				57EB136C174782B900D2ACF9 /* bt-outdent2.png in Resources */,
+				574785B61870587800E6F37E /* bt-pound.png in Resources */,
 				57EB136E174782B900D2ACF9 /* bt-redo2.png in Resources */,
 				57EB1370174782B900D2ACF9 /* bt-right2.png in Resources */,
 				57C03F2917FB1E0500F7B575 /* application-octet-stream.png in Resources */,
@@ -1447,6 +1470,7 @@
 				576FFDC5186AAC80009BB81A /* SeafTextEditorViewController.xib in Resources */,
 				576FFDBF186AAC80009BB81A /* SeafAccountCell.xib in Resources */,
 				57A550E4177F2CBA00E3BA9B /* editfile.png in Resources */,
+				574785B71870587800E6F37E /* bt-quote.png in Resources */,
 				57A550E8177F311700E3BA9B /* checkmask.png in Resources */,
 				57A550EA177F311700E3BA9B /* plus.png in Resources */,
 				573F4AAC1788763500F096D3 /* arrowleft.png in Resources */,
@@ -1718,8 +1742,8 @@
 					"\"$(SRCROOT)/libs/ios-openssl/lib\"",
 				);
 				PRODUCT_NAME = SeafilePro;
-				PROVISIONING_PROFILE = "D4BA2663-C28A-441B-97C1-A08722A3B1EE";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "D4BA2663-C28A-441B-97C1-A08722A3B1EE";
+				PROVISIONING_PROFILE = "DDC9647D-11E8-49DD-8C0B-6AB1CED57536";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "DDC9647D-11E8-49DD-8C0B-6AB1CED57536";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
@@ -1783,8 +1807,8 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				ONLY_ACTIVE_ARCH = YES;
 				"PRIVATE_HEADERS_FOLDER_PATH[sdk=*]" = "";
-				PROVISIONING_PROFILE = "4D776EE3-55F2-4899-9187-315F5F385190";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "4D776EE3-55F2-4899-9187-315F5F385190";
+				PROVISIONING_PROFILE = "DDC9647D-11E8-49DD-8C0B-6AB1CED57536";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "DDC9647D-11E8-49DD-8C0B-6AB1CED57536";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

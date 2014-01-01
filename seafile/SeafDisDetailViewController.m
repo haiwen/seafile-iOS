@@ -130,7 +130,7 @@
 
 - (void)goBack:(id)sender
 {
-    [self.navigationController dismissViewControllerAnimated:NO completion:nil];
+    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void)refresh:(id)sender
@@ -230,7 +230,7 @@
     } else if ([urlStr hasPrefix:[self.connection.address stringByAppendingString:API_URL"/html/discussion/"]]) {
         SeafDisDetailViewController *c = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"DISDETAILVC"];
         [c setUrl:urlStr connection:self.connection];
-        [self.navigationController pushViewController:c animated:NO];
+        [self.navigationController pushViewController:c animated:YES];
     } else {
         [[UIApplication sharedApplication] openURL:request.URL];
     }

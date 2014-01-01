@@ -109,19 +109,19 @@
 - (IBAction)choose:(id)sender
 {
     SeafDirViewController *c = [[SeafDirViewController alloc] initWithSeafDir:self.connection.rootFolder delegate:self];
-    [self.navigationController pushViewController:c animated:NO];
+    [self.navigationController pushViewController:c animated:YES];
 }
 
 #pragma mark - SeafDirDelegate
 - (void)chooseDir:(UIViewController *)c dir:(SeafDir *)dir
 {
-    [self.navigationController popToRootViewControllerAnimated:NO];
+    [self.navigationController popToRootViewControllerAnimated:YES];
     _curDir = dir;
     self.dirLabel.text = [[[self.connection getRepo:self.curDir.repoId] name] stringByAppendingString:self.curDir.path];
 }
 - (void)cancelChoose:(UIViewController *)c
 {
-    [self.navigationController popToRootViewControllerAnimated:NO];
+    [self.navigationController popToRootViewControllerAnimated:YES];
 }
 
 

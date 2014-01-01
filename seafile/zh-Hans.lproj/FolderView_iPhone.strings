@@ -87,7 +87,7 @@
 "ntG-cs-ded.text" = "清楚缓存";
 
 /* Class = "IBUITableViewSection"; headerTitle = "About"; ObjectID = "prN-wa-tBe"; */
-"prN-wa-tBe.headerTitle" = "About";
+"prN-wa-tBe.headerTitle" = "关于";
 
 /* Class = "IBUIViewController"; title = "Discussion"; ObjectID = "r0W-or-KJe"; */
 "r0W-or-KJe.title" = "讨论";

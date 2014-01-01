@@ -210,11 +210,11 @@ enum PREVIEW_STATE {
     }
     if (self.state == PREVIEW_PHOTO)
         self.state = PREVIEW_SUCCESS;
-    [self refreshView];
     if ([item isKindOfClass:[SeafFile class]]) {
         ((SeafFile *)item).delegate = self;
         [(SeafFile *)item loadContent:NO];
     }
+    [self refreshView];
 }
 
 - (void)setPreViewItems:(NSArray *)items current:(id<QLPreviewItem, PreViewDelegate>)item master:(UIViewController *)c
@@ -232,7 +232,7 @@ enum PREVIEW_STATE {
 
 - (void)goBack:(id)sender
 {
-    [self.navigationController dismissViewControllerAnimated:NO completion:nil];
+    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void)viewDidLoad
@@ -508,7 +508,7 @@ enum PREVIEW_STATE {
     editViewController.detailViewController = self;
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:editViewController];
     [navController setModalPresentationStyle:UIModalPresentationFullScreen];
-    [self presentViewController:navController animated:NO completion:nil];
+    [self presentViewController:navController animated:YES completion:nil];
 }
 
 

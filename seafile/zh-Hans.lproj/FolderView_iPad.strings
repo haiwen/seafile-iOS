@@ -30,7 +30,7 @@
 "EUN-oC-qhF.title" = "Item";
 
 /* Class = "IBUITableViewSection"; headerTitle = "About"; ObjectID = "F9c-bc-Mvu"; */
-"F9c-bc-Mvu.headerTitle" = "About";
+"F9c-bc-Mvu.headerTitle" = "关于";
 
 /* Class = "IBUILabel"; text = "Tell Friends about seafile"; ObjectID = "H1p-P0-Nt3"; */
 "H1p-P0-Nt3.text" = "向朋友们推荐Seafile";

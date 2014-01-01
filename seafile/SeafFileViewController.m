@@ -341,14 +341,14 @@ enum {
 
 - (void)editDone:(id)sender
 {
-    [self setEditing:NO animated:NO];
+    [self setEditing:NO animated:YES];
     self.navigationItem.rightBarButtonItem = nil;
     self.navigationItem.rightBarButtonItems = self.rightItems;
 }
 
 - (void)editStart:(id)sender
 {
-    [self setEditing:YES animated:NO];
+    [self setEditing:YES animated:YES];
     if (self.editing) {
         self.navigationItem.rightBarButtonItems = nil;
         self.navigationItem.rightBarButtonItem = self.doneItem;

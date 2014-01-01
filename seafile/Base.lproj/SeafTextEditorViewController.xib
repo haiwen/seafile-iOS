@@ -69,7 +69,7 @@
 						</object>
 						<object class="NSCustomResource" key="IBUINormalImage">
 							<string key="NSClassName">NSImage</string>
-							<string key="NSResourceName">bt-pound2.png</string>
+							<string key="NSResourceName">bt-pound.png</string>
 						</object>
 						<object class="IBUIFontDescription" key="IBUIFontDescription" id="939915603">
 							<int key="type">1</int>
@@ -96,7 +96,7 @@
 						<reference key="IBUINormalTitleShadowColor" ref="793385858"/>
 						<object class="NSCustomResource" key="IBUINormalImage">
 							<string key="NSClassName">NSImage</string>
-							<string key="NSResourceName">bt-asterisk2.png</string>
+							<string key="NSResourceName">bt-asterisk.png</string>
 						</object>
 						<reference key="IBUIFontDescription" ref="939915603"/>
 						<reference key="IBUIFont" ref="735240534"/>
@@ -115,7 +115,7 @@
 						<reference key="IBUINormalTitleShadowColor" ref="793385858"/>
 						<object class="NSCustomResource" key="IBUINormalImage">
 							<string key="NSClassName">NSImage</string>
-							<string key="NSResourceName">bt-equal2.png</string>
+							<string key="NSResourceName">bt-equal.png</string>
 						</object>
 						<reference key="IBUIFontDescription" ref="939915603"/>
 						<reference key="IBUIFont" ref="735240534"/>
@@ -134,7 +134,7 @@
 						<reference key="IBUINormalTitleShadowColor" ref="793385858"/>
 						<object class="NSCustomResource" key="IBUINormalImage">
 							<string key="NSClassName">NSImage</string>
-							<string key="NSResourceName">bt-bold2.png</string>
+							<string key="NSResourceName">bt-bold.png</string>
 						</object>
 						<reference key="IBUIFontDescription" ref="939915603"/>
 						<reference key="IBUIFont" ref="735240534"/>
@@ -150,10 +150,9 @@
 						<int key="IBUIContentHorizontalAlignment">0</int>
 						<int key="IBUIContentVerticalAlignment">0</int>
 						<bool key="IBUIShowsTouchWhenHighlighted">YES</bool>
-						<reference key="IBUINormalTitleShadowColor" ref="793385858"/>
 						<object class="NSCustomResource" key="IBUINormalImage">
 							<string key="NSClassName">NSImage</string>
-							<string key="NSResourceName">bt-italic2.png</string>
+							<string key="NSResourceName">bt-italic.png</string>
 						</object>
 						<reference key="IBUIFontDescription" ref="939915603"/>
 						<reference key="IBUIFont" ref="735240534"/>
@@ -172,7 +171,7 @@
 						<reference key="IBUINormalTitleShadowColor" ref="793385858"/>
 						<object class="NSCustomResource" key="IBUINormalImage">
 							<string key="NSClassName">NSImage</string>
-							<string key="NSResourceName">bt-link2.png</string>
+							<string key="NSResourceName">bt-link.png</string>
 						</object>
 						<reference key="IBUIFontDescription" ref="939915603"/>
 						<reference key="IBUIFont" ref="735240534"/>
@@ -191,7 +190,7 @@
 						<reference key="IBUINormalTitleShadowColor" ref="793385858"/>
 						<object class="NSCustomResource" key="IBUINormalImage">
 							<string key="NSClassName">NSImage</string>
-							<string key="NSResourceName">bt-quote2.png</string>
+							<string key="NSResourceName">bt-quote.png</string>
 						</object>
 						<reference key="IBUIFontDescription" ref="939915603"/>
 						<reference key="IBUIFont" ref="735240534"/>
@@ -210,7 +209,7 @@
 						<reference key="IBUINormalTitleShadowColor" ref="793385858"/>
 						<object class="NSCustomResource" key="IBUINormalImage">
 							<string key="NSClassName">NSImage</string>
-							<string key="NSResourceName">bt-code2.png</string>
+							<string key="NSResourceName">bt-code.png</string>
 						</object>
 						<reference key="IBUIFontDescription" ref="939915603"/>
 						<reference key="IBUIFont" ref="735240534"/>
@@ -229,7 +228,7 @@
 						<reference key="IBUINormalTitleShadowColor" ref="793385858"/>
 						<object class="NSCustomResource" key="IBUINormalImage">
 							<string key="NSClassName">NSImage</string>
-							<string key="NSResourceName">bt-ul2.png</string>
+							<string key="NSResourceName">bt-ul.png</string>
 						</object>
 						<reference key="IBUIFontDescription" ref="939915603"/>
 						<reference key="IBUIFont" ref="735240534"/>
@@ -247,7 +246,7 @@
 						<reference key="IBUINormalTitleShadowColor" ref="793385858"/>
 						<object class="NSCustomResource" key="IBUINormalImage">
 							<string key="NSClassName">NSImage</string>
-							<string key="NSResourceName">bt-ol2.png</string>
+							<string key="NSResourceName">bt-ol.png</string>
 						</object>
 						<reference key="IBUIFontDescription" ref="939915603"/>
 						<reference key="IBUIFont" ref="735240534"/>
@@ -257,7 +256,8 @@
 				<reference key="NSNextKeyView" ref="855148601"/>
 				<object class="NSColor" key="IBUIBackgroundColor">
 					<int key="NSColorSpace">1</int>
-					<bytes key="NSRGB">MC44IDAuOCAwLjgAA</bytes>
+					<bytes key="NSRGB">MCAwIDAgMAA</bytes>
+					<string key="IBUIColorCocoaTouchKeyPath">groupTableViewBackgroundColor</string>
 				</object>
 				<object class="IBUISimulatedSizeMetrics" key="IBUISimulatedDestinationMetrics">
 					<string key="IBUISimulatedSizeMetricsClass">IBUISimulatedFreeformSizeMetricsSentinel</string>
@@ -548,16 +548,16 @@
 		<bool key="IBDocument.PluginDeclaredDependenciesTrackSystemTargetVersion">YES</bool>
 		<int key="IBDocument.defaultPropertyAccessControl">3</int>
 		<dictionary class="NSMutableDictionary" key="IBDocument.LastKnownImageSizes">
-			<string key="bt-asterisk2.png">{48, 48}</string>
-			<string key="bt-bold2.png">{48, 48}</string>
-			<string key="bt-code2.png">{48, 48}</string>
-			<string key="bt-equal2.png">{48, 48}</string>
-			<string key="bt-italic2.png">{48, 48}</string>
-			<string key="bt-link2.png">{32, 32}</string>
-			<string key="bt-ol2.png">{48, 48}</string>
-			<string key="bt-pound2.png">{48, 48}</string>
-			<string key="bt-quote2.png">{48, 48}</string>
-			<string key="bt-ul2.png">{48, 48}</string>
+			<string key="bt-asterisk.png">{48, 48}</string>
+			<string key="bt-bold.png">{48, 48}</string>
+			<string key="bt-code.png">{48, 48}</string>
+			<string key="bt-equal.png">{48, 48}</string>
+			<string key="bt-italic.png">{48, 48}</string>
+			<string key="bt-link.png">{48, 48}</string>
+			<string key="bt-ol.png">{48, 48}</string>
+			<string key="bt-pound.png">{48, 48}</string>
+			<string key="bt-quote.png">{48, 48}</string>
+			<string key="bt-ul.png">{448, 448}</string>
 		</dictionary>
 		<string key="IBCocoaTouchPluginVersion">3747</string>
 	</data>
