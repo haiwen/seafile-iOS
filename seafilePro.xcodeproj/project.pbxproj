@@ -429,6 +429,10 @@
 		5739703C165800810089F32F /* text.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = text.png; sourceTree = "<group>"; };
 		5739703E1658008A0089F32F /* text-directory.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "text-directory.png"; sourceTree = "<group>"; };
 		57397040165801EE0089F32F /* text-directory-documents.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "text-directory-documents.png"; sourceTree = "<group>"; };
+		573C95A21875AB6E0030E602 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/DownloadingProgress_iPhone.strings; sourceTree = "<group>"; };
+		573C95A41875AB6F0030E602 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/DownloadingProgress_iPhone.strings"; sourceTree = "<group>"; };
+		573C95A61875AB750030E602 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/DownloadingProgress_iPad.strings; sourceTree = "<group>"; };
+		573C95A81875AB760030E602 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/DownloadingProgress_iPad.strings"; sourceTree = "<group>"; };
 		573F4AA91788763500F096D3 /* arrowleft.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = arrowleft.png; sourceTree = "<group>"; };
 		573F4AAA1788763500F096D3 /* arrowright.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = arrowright.png; sourceTree = "<group>"; };
 		574456821774922B00EA46A6 /* SeafAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafAppDelegate.h; sourceTree = "<group>"; };
@@ -1641,6 +1645,8 @@
 			isa = PBXVariantGroup;
 			children = (
 				576FFDAD186AAC80009BB81A /* Base */,
+				573C95A61875AB750030E602 /* en */,
+				573C95A81875AB760030E602 /* zh-Hans */,
 			);
 			name = DownloadingProgress_iPad.xib;
 			sourceTree = "<group>";
@@ -1649,6 +1655,8 @@
 			isa = PBXVariantGroup;
 			children = (
 				576FFDAF186AAC80009BB81A /* Base */,
+				573C95A21875AB6E0030E602 /* en */,
+				573C95A41875AB6F0030E602 /* zh-Hans */,
 			);
 			name = DownloadingProgress_iPhone.xib;
 			sourceTree = "<group>";

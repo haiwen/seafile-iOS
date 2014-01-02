@@ -179,8 +179,10 @@
     [SVProgressHUD dismiss];
     if (error == HTTP_ERR_LOGIN_INCORRECT_PASSWORD)
         [self alertWithMessage:NSLocalizedString(@"Wrong username or password", nil)];
-    else {
-        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to login", nil)];
+    else if (error == 0){
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Network unavailable", @"Network unavailable") duration:1.0];
+    } else {
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to login", nil) duration:1.0];
     }
 }
 

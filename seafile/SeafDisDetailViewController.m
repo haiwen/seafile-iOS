@@ -25,8 +25,6 @@
 
 @property (strong, nonatomic) IBOutlet UIActivityIndicatorView *loadingView;
 
-
-- (void)configureView;
 @end
 
 @implementation SeafDisDetailViewController
@@ -59,7 +57,7 @@
         [self.view addSubview:self.loadingView];
     }
     self.loadingView.center = self.view.center;
-    self.loadingView.frame = CGRectMake(self.loadingView.frame.origin.x, (self.view.frame.size.height-self.loadingView.frame.size.height)/2, self.loadingView.frame.size.width, self.loadingView.frame.size.height);
+    self.loadingView.frame = CGRectMake(self.loadingView.frame.origin.x, (self.navigationController.view.frame.size.height-self.loadingView.frame.size.height-80)/2, self.loadingView.frame.size.width, self.loadingView.frame.size.height);
     [self.loadingView startAnimating];
 }
 
@@ -78,6 +76,8 @@
     if (IsIpad())
         [self.navigationController popToRootViewControllerAnimated:NO];
     _connection = connection;
+    _url = nil;
+    _group = nil;
     [self configureView];
 }
 
@@ -93,7 +93,6 @@
     _connection = conn;
     _url = url;
     _group = nil;
-    [self configureView];
 }
 
 - (BOOL)isReply
@@ -106,19 +105,19 @@
     // Update the user interface for the detail item.
     [self.msgItem setEnabled:NO];
     if (self.connection && self.url) {
-        [self.refreshItem setEnabled:YES];
+        [self showLodingView];
         if (self.hiddenAddmsg)
             self.title = NSLocalizedString(@"New replies", nil);
         else if (self.isReply)
             self.title = NSLocalizedString(@"Reply", nil);
         else
             self.title = self.groupName;
-        [self showLodingView];
         NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:self.url] cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 30];
         [request setHTTPMethod:@"GET"];
         [request setValue:[NSString stringWithFormat:@"Token %@", self.connection.token] forHTTPHeaderField:@"Authorization"];
         self.webview.delegate = self;
         [self.webview loadRequest:request];
+        [self.refreshItem setEnabled:YES];
     } else {
         self.title = NSLocalizedString(@"Discussions", nil);
         [self.refreshItem setEnabled:NO];
@@ -165,6 +164,12 @@
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
     [self configureView];
+}
+
+- (void)viewDidDisappear:(BOOL)animated
+{
+    [self dismissLoadingView];
+    [super viewDidDisappear:animated];
 }
 
 - (void)didReceiveMemoryWarning
@@ -228,6 +233,7 @@
     if ([urlStr hasPrefix:@"file://"] || [urlStr isEqualToString:self.url]) {
         return YES;
     } else if ([urlStr hasPrefix:[self.connection.address stringByAppendingString:API_URL"/html/discussion/"]]) {
+        [self showLodingView];
         SeafDisDetailViewController *c = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"DISDETAILVC"];
         [c setUrl:urlStr connection:self.connection];
         [self.navigationController pushViewController:c animated:YES];

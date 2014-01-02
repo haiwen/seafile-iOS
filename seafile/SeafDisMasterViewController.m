@@ -302,6 +302,7 @@
     NSString *urlStr = [self.connection.address stringByAppendingString:API_URL"/html/newreply/"];
     self.detailViewController.hiddenAddmsg = YES;
     [self.detailViewController setUrl:urlStr connection:self.connection];
+    [self.detailViewController configureView];
     return;
 }
 

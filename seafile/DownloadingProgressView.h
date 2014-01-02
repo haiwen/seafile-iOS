@@ -19,5 +19,6 @@
 
 - (void)configureViewWithItem:(id<QLPreviewItem, PreViewDelegate>)item completeness:(int)percent;
 
+@property (strong, nonatomic) IBOutlet UIButton *cancelBt;
 
 @end

@@ -19,5 +19,7 @@
 
 - (void)setGroup:(NSString *)groupName groupId:(NSString *)groupId;
 - (void)setUrl:(NSString *)url connection:(SeafConnection *)conn;
+- (void)configureView;
+
 
 @end
