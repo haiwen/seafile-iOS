@@ -295,5 +295,18 @@ enc_error:
     return [NSString stringWithUTF8String:hex];
 }
 
+- (NSString *)hexString
+{
+#define HEX_MAXLEN 512
+    char hex[HEX_MAXLEN*2 +1];
+    int len = self.length;
+    if (len == 0) return @"";
+    if (len > HEX_MAXLEN) len = HEX_MAXLEN;
+    rawdata_to_hex(self.bytes, hex, len);
+    hex[len*2] = '\0';
+    return [NSString stringWithUTF8String:hex];
+}
+
+
 @end
 

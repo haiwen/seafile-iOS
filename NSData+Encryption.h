@@ -16,4 +16,6 @@
 
 + (NSString *)passwordMaigc:(NSString *)password repo:(NSString *)repoId version:(int)version;
 
+- (NSString *)hexString;
+
 @end

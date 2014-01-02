@@ -52,6 +52,7 @@ enum {
 @property (readonly) SeafSettingsViewController *settingVC;
 @property (readonly) SeafActivityViewController *actvityVC;
 @property (readonly) SeafDisMasterViewController *discussVC;
+@property (readonly) NSData *deviceToken;
 
 @property (readwrite) SeafConnection *connection;
 

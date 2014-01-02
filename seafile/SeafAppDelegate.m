@@ -40,6 +40,7 @@
 @synthesize actvityVC;
 @synthesize discussVC;
 @synthesize connection = _connection;
+@synthesize deviceToken = _deviceToken;
 
 @synthesize bgTask;
 @synthesize downloadnum;
@@ -69,6 +70,9 @@
             self.discussVC.connection = conn;
         }
     }
+    Debug("self.token=%@", self.deviceToken);
+    if (self.deviceToken)
+        [conn registerDevice:self.deviceToken];
 }
 
 - (void)reachabilityChanged:(NSNotification* )note
@@ -137,7 +141,10 @@
 
 - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
 {
-    Debug("token=%@\n", deviceToken);
+    Debug("token=%@, %d\n", deviceToken, deviceToken.length);
+    _deviceToken = deviceToken;
+    if (self.deviceToken)
+        [self.connection registerDevice:self.deviceToken];
 }
 - (void)application:(UIApplication *)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error
 {

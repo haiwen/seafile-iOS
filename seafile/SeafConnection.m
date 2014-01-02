@@ -14,6 +14,7 @@
 #import "SeafAppDelegate.h"
 
 #import "ExtentedString.h"
+#import "NSData+Encryption.h"
 #import "Debug.h"
 #import "Utils.h"
 
@@ -501,6 +502,17 @@ enum {
         }
         success(request, response, JSON, results);
     } failure:failure];
+}
+
+- (void)registerDevice:(NSData *)deviceToken
+{
+    NSString *form = [NSString stringWithFormat:@"deviceToken=%@", deviceToken.hexString ];
+    Debug("len=%d, form=%@", deviceToken.length, form);
+    [self sendPost:@"regapns" repo:nil form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+        Debug("Register success");
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        Debug("Failed to register device");
+    }];
 }
 
 @end
