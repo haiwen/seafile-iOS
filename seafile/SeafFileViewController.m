@@ -628,8 +628,9 @@ enum {
 {
     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", nil) otherButtonTitles:NSLocalizedString(@"OK", nil), nil];
     alert.alertViewStyle = UIAlertViewStylePlainTextInput;
-    UITextField *textfiled = [alert textFieldAtIndex:0];
-    textfiled.placeholder = tip;
+    UITextField *textfield = [alert textFieldAtIndex:0];
+    textfield.placeholder = tip;
+    textfield.autocorrectionType = UITextAutocorrectionTypeNo;
     [alert show];
 }
 - (void)popupMkdirView

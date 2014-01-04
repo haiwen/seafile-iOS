@@ -35,14 +35,12 @@
 
 - (void)setGroup:(NSString *)groupName groupId:(NSString *)groupId
 {
-    if (_group != groupId) {
-        _url = nil;
-        _group = groupId;
-        self.groupName = groupName;
-        [self configureView];
-        if (IsIpad())
-            [self.navigationController popToRootViewControllerAnimated:NO];
-    }
+    _url = nil;
+    _group = groupId;
+    self.groupName = groupName;
+    [self configureView];
+    if (IsIpad())
+        [self.navigationController popToRootViewControllerAnimated:NO];
     if (self.masterPopoverController != nil) {
         [self.masterPopoverController dismissPopoverAnimated:YES];
     }
