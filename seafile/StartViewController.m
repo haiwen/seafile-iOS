@@ -15,7 +15,6 @@
 
 
 @interface StartViewController ()
-@property (retain) NSMutableArray *conns;
 @property (retain) NSIndexPath *pressedIndex;
 @property (retain) ColorfulButton *footer;
 @end
@@ -82,16 +81,13 @@
 - (SeafConnection *)getConnection:(NSString *)url username:(NSString *)username
 {
     SeafConnection *conn;
+    if ([url hasSuffix:@"/"])
+        url = [url substringToIndex:url.length-1];
     for (conn in self.conns) {
         if ([conn.address isEqual:url] && [conn.username isEqual:username])
             return conn;
     }
     return nil;
-}
-
-- (void)selectAccount:(SeafConnection *)conn;
-{
-    [self transferToReposView:conn];
 }
 
 - (void)setExtraCellLineHidden:(UITableView *)tableView
@@ -293,10 +289,12 @@
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [appdelegate.tabbarController setSelectedIndex:TABBED_SEAFILE];
-
 }
-- (void)transferToReposView:(SeafConnection *)conn
+
+- (BOOL)selectAccount:(SeafConnection *)conn;
 {
+    if (!conn) return NO;
+
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     [userDefaults setObject:conn.address forKey:@"DEAULT-SERVER"];
     [userDefaults setObject:conn.username forKey:@"DEAULT-USER"];
@@ -307,26 +305,27 @@
     appdelegate.window.rootViewController = appdelegate.tabbarController;
     [appdelegate.window makeKeyAndVisible];
     [self performSelector:@selector(delayOP) withObject:nil afterDelay:0.01];
+    return YES;
 }
 
-- (BOOL)goToDefaultReposView
+- (BOOL)gotoAccount:(NSString *)username server:(NSString *)server
+{
+    if (!username || !server) return NO;
+    SeafConnection *conn = [self getConnection:server username:username];
+    return [self selectAccount:conn];
+}
+
+- (BOOL)goToDefaultAccount
 {
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     NSString *server = [userDefaults objectForKey:@"DEAULT-SERVER"];
     NSString *username = [userDefaults objectForKey:@"DEAULT-USER"];
-    if (server && username) {
-        SeafConnection *connection = [self getConnection:server username:username];
-        if (connection) {
-            [self transferToReposView:connection];
-            return YES;
-        }
-    }
-    return NO;
+    return [self gotoAccount:username server:server];
 }
 
 - (IBAction)goToDefaultBtclicked:(id)sender
 {
-    [self goToDefaultReposView];
+    [self goToDefaultAccount];
 }
 
 @end

@@ -73,4 +73,7 @@ enum {
 + (void)incUploadnum;
 + (void)decUploadnum;
 
+- (void)checkIconBadgeNumber;
+
+
 @end

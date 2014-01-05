@@ -6,6 +6,7 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
+
 #import "SeafAppDelegate.h"
 #import "SeafEmptyViewController.h"
 #import "Debug.h"
@@ -88,7 +89,7 @@
         Debug("Copy %@, to %@, %@, %@\n", url, to, to.absoluteString, to.path);
         [Utils copyFile:url to:to];
         if (self.window.rootViewController == self.startNav)
-            if (![self.startVC goToDefaultReposView])
+            if (![self.startVC goToDefaultAccount])
                 return NO;
         [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
         SeafUploadFile *file = [self.connection getUploadfile:to.path];
@@ -132,10 +133,13 @@
     self.downloadnum = 0;
     self.uploadnum = 0;
     [Utils clearRepoPasswords];
+    [[UIApplication sharedApplication] registerForRemoteNotificationTypes:UIRemoteNotificationTypeBadge|UIRemoteNotificationTypeAlert|UIRemoteNotificationTypeSound];
 
-    [[UIApplication sharedApplication] registerForRemoteNotificationTypes:UIRemoteNotificationTypeBadge|UIRemoteNotificationTypeAlert];
-
-    [self.startVC goToDefaultReposView];
+    NSDictionary *dict = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
+    if (dict) {
+        [self application:application didReceiveRemoteNotification:dict];
+    } else
+        [self.startVC goToDefaultAccount];
     return YES;
 }
 
@@ -150,14 +154,38 @@
 {
     Debug("error=%@", error);
 }
+
+- (void)checkIconBadgeNumber
+{
+    int badge = 0;
+    for (SeafConnection *conn in self.startVC.conns) {
+        badge += conn.newreply;
+    }
+    Debug("IconBadgeNumber=%d", badge);
+    [UIApplication sharedApplication].applicationIconBadgeNumber = badge;
+}
+
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
 {
     NSString *status = [NSString stringWithFormat:@"Notification received:\n%@",[userInfo description]];
 
     NSString *badgeStr = [[userInfo objectForKey:@"aps"] objectForKey:@"badge"];
+    NSDictionary *alert = [[userInfo objectForKey:@"aps"] objectForKey:@"alert"];
+    NSArray *args = [alert objectForKey:@"loc-args"];
     Debug("status=%@, badge=%@", status, badgeStr);
-    if (badgeStr != nil)
-        [UIApplication sharedApplication].applicationIconBadgeNumber = [badgeStr intValue];
+    if ([args isKindOfClass:[NSArray class]] && args.count == 2) {
+        NSString *username = [args objectAtIndex:0];
+        NSString *server = [args objectAtIndex:1];
+        if (badgeStr && [badgeStr intValue] > 0) {
+            SeafConnection *connection = [self.startVC getConnection:server username:username];
+            if (!connection) return;
+            connection.newreply = [badgeStr intValue];
+            self.window.rootViewController = self.startNav;
+            [self.window makeKeyAndVisible];
+            [self.startVC selectAccount:connection];
+        }
+    }
+    [self checkIconBadgeNumber];
 }
 
 - (void)applicationWillResignActive:(UIApplication *)application

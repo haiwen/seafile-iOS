@@ -173,7 +173,6 @@
 		576B99131861411700A16ED6 /* magnifier-ranged-lo-stemless@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 576B99031861411700A16ED6 /* magnifier-ranged-lo-stemless@2x.png */; };
 		576B99151861411700A16ED6 /* magnifier-ranged-lo@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 576B99041861411700A16ED6 /* magnifier-ranged-lo@2x.png */; };
 		576B99171861411700A16ED6 /* magnifier-ranged-mask@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 576B99051861411700A16ED6 /* magnifier-ranged-mask@2x.png */; };
-		576B9919186142EC00A16ED6 /* CoreText.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 576B9918186142EC00A16ED6 /* CoreText.framework */; };
 		576C91C4177EB43F007B50BD /* SeafDirViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 576C91C2177EB43F007B50BD /* SeafDirViewController.m */; };
 		576FFDBB186AAC80009BB81A /* DownloadingProgress_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDAC186AAC80009BB81A /* DownloadingProgress_iPad.xib */; };
 		576FFDBD186AAC80009BB81A /* DownloadingProgress_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDAE186AAC80009BB81A /* DownloadingProgress_iPhone.xib */; };
@@ -208,6 +207,7 @@
 		57A95E5B18369147009D268A /* close2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A95E5718369147009D268A /* close2.png */; };
 		57A95E5F18369E5A009D268A /* ellipsis.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A95E5C18369E5A009D268A /* ellipsis.png */; };
 		57A95E6118369E5A009D268A /* ellipsis2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A95E5D18369E5A009D268A /* ellipsis2.png */; };
+		57ABE5FB187925B300145FE3 /* CoreText.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 576B9918186142EC00A16ED6 /* CoreText.framework */; };
 		57BD9327174B0A0E00F7732F /* SeafDisDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BD931F174B0A0E00F7732F /* SeafDisDetailViewController.m */; };
 		57BD9329174B0A0E00F7732F /* SeafDisMasterViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BD9321174B0A0E00F7732F /* SeafDisMasterViewController.m */; };
 		57BD932C174DD86D00F7732F /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = 57BD932A174DD86D00F7732F /* index.html */; };
@@ -653,7 +653,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				576B9919186142EC00A16ED6 /* CoreText.framework in Frameworks */,
+				57ABE5FB187925B300145FE3 /* CoreText.framework in Frameworks */,
 				5725186217AE7D010078CD12 /* Security.framework in Frameworks */,
 				57F0AAFE16D8935800364D18 /* AssetsLibrary.framework in Frameworks */,
 				571F5148168C80380055D69B /* MobileCoreServices.framework in Frameworks */,

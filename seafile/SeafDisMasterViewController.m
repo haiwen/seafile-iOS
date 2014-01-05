@@ -21,14 +21,12 @@
 
 @interface SeafDisMasterViewController ()<EGORefreshTableHeaderDelegate, UIScrollViewDelegate>
 @property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
-@property (readwrite, nonatomic) int newReplyNum;
 @property (readwrite, nonatomic) UIView *headerView;
 @end
 
 @implementation SeafDisMasterViewController
 @synthesize connection = _connection;
 @synthesize refreshHeaderView = _refreshHeaderView;
-@synthesize newReplyNum = _newReplyNum;
 
 - (void)awakeFromNib
 {
@@ -45,7 +43,6 @@
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeNone;
     // Do any additional setup after loading the view, typically from a nib.
-    self.newReplyNum = 0;
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     self.detailViewController = (SeafDisDetailViewController *)[appdelegate detailViewController:TABBED_DISCUSSION];
     self.tableView.rowHeight = 50;
@@ -101,9 +98,9 @@
 
 - (void)refreshView
 {
-    if (self.newReplyNum > 0) {
+    if (self.connection.newreply > 0) {
         ColorfulButton *bt = (ColorfulButton *)self.headerView;
-        NSString *text = [NSString stringWithFormat:NSLocalizedString(@"%d new replies", @"%d new replies"), self.newReplyNum];
+        NSString *text = [NSString stringWithFormat:NSLocalizedString(@"%d new replies", @"%d new replies"), self.connection.newreply];
         [bt setTitle:text forState:UIControlStateNormal];
         [bt setTitle:text forState:UIControlStateSelected];
         [bt setTitle:text forState:UIControlStateHighlighted];
@@ -112,13 +109,14 @@
         self.tableView.tableHeaderView = nil;
     [self.tableView reloadData];
     [self refreshTabBarItem];
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    [appdelegate checkIconBadgeNumber];
 }
 
 - (void)refreshBackground:(id)sender
 {
     [_connection getSeafGroups:^(NSHTTPURLResponse *response, id JSON, NSData *data) {
         @synchronized(self) {
-            _newReplyNum = self.connection.newreply;
             [self refreshView];
             [self doneLoadingTableViewData];
         }
@@ -134,7 +132,6 @@
     [_connection getSeafGroups:^(NSHTTPURLResponse *response, id JSON, NSData *data) {
         @synchronized(self) {
             Debug("Success to get groups ...\n");
-            _newReplyNum = self.connection.newreply;
             [self refreshView];
             [self doneLoadingTableViewData];
         }
@@ -179,7 +176,9 @@
 
 - (void)clearnewReplyNum
 {
-    self.newReplyNum = 0;
+    self.connection.newreply = 0;
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    [appdelegate checkIconBadgeNumber];
 }
 
 #pragma mark - Table View

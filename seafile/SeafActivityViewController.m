@@ -49,7 +49,7 @@ enum {
         self.edgesForExtendedLayout = UIRectEdgeNone;
     // Do any additional setup after loading the view from its nib.
     self.title = NSLocalizedString(@"Activities", @"Activities");
-    self.navigationItem.rightBarButtonItem = [self getBarItemAutoSize:NSLocalizedString(@"refresh", @"refresh").navItemImgName action:@selector(refresh:)];
+    self.navigationItem.rightBarButtonItem = [self getBarItemAutoSize:@"refresh".navItemImgName action:@selector(refresh:)];
     self.webview.delegate = nil;
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 }
@@ -127,7 +127,7 @@ enum {
     Debug("error=%@\n", error);
     [self dismissLoadingView];
     if (error.code != NSURLErrorCancelled && error.code != 102)
-        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load activities", @"Failed to load activities")];
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load activities", @"Failed to load activities") duration:1.0];
     self.state = ACTIVITY_END;
 }
 

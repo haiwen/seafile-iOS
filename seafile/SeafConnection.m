@@ -508,7 +508,7 @@ enum {
 {
     NSString *form = [NSString stringWithFormat:@"deviceToken=%@", deviceToken.hexString ];
     Debug("len=%d, form=%@", deviceToken.length, form);
-    [self sendPost:@"/regapns/" repo:nil form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+    [self sendPost:@"/regdevice/" repo:nil form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
         Debug("Register success");
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
         Debug("Failed to register device");

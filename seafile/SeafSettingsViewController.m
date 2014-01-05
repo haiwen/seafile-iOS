@@ -105,6 +105,7 @@ enum {
 - (void)setConnection:(SeafConnection *)connection
 {
     _connection = connection;
+    [self.tableView reloadData];
 }
 
 #pragma mark - SSConnectionAccountDelegate

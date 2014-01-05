@@ -14,8 +14,14 @@
 
 @interface StartViewController : UITableViewController<UIActionSheetDelegate>
 
+@property (retain) NSMutableArray *conns;
+
+
 - (void)saveAccount:(SeafConnection *)conn;
-- (void)selectAccount:(SeafConnection *)conn;
-- (BOOL)goToDefaultReposView;
+- (BOOL)selectAccount:(SeafConnection *)conn;
+- (BOOL)goToDefaultAccount;
+
+- (SeafConnection *)getConnection:(NSString *)url username:(NSString *)username;
+- (BOOL)gotoAccount:(NSString *)username server:(NSString *)server;
 
 @end

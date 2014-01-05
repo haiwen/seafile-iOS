@@ -636,16 +636,18 @@ enum PREVIEW_STATE {
         [composeViewController dismissViewControllerAnimated:YES completion:nil];
     } else if (result == REComposeResultPosted) {
         NSLog(@"Text: %@", composeViewController.text);
+        [SVProgressHUD showWithStatus:NSLocalizedString(@"Sending...", nil)];
         SeafFile *file = (SeafFile *)self.preViewItem;
         NSString *form = [NSString stringWithFormat:@"message=%@&repo_id=%@&path=%@", [composeViewController.text escapedPostForm], file.repoId, [file.path escapedPostForm]];
         NSString *url = [file->connection.address stringByAppendingFormat:API_URL"/html/discussions/%@/", _gid];
         [file->connection sendPost:url repo:nil form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+            [SVProgressHUD dismiss];
             [composeViewController dismissViewControllerAnimated:YES completion:nil];
             NSString *html = [JSON objectForKey:@"html"];
             NSString *js = [NSString stringWithFormat:@"addMessage(\"%@\");", [html stringEscapedForJavasacript]];
             [self.webView stringByEvaluatingJavaScriptFromString:js];
         } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to add discussion", @"Failed to add discussion")];
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to add discussion", @"Failed to add discussion") duration:1.0];
         }];
     }
 }

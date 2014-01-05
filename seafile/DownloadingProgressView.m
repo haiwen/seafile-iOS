@@ -29,6 +29,14 @@
     }
     self.autoresizesSubviews = YES;
     self.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
+    if (ios7) {
+        self.cancelBt.layer.borderColor = [[UIColor lightGrayColor] CGColor];
+        self.cancelBt.layer.borderWidth = 0.5f;
+        self.cancelBt.layer.cornerRadius = 5.0f;
+    } else {
+        self.cancelBt.reversesTitleShadowWhenHighlighted = NO;
+        self.cancelBt.tintColor=[UIColor whiteColor];
+    }
     return self;
 }
 
