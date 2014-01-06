@@ -208,6 +208,9 @@
 {
     UIActionSheet *actionSheet;
 
+    NSString *strEdit = NSLocalizedString(@"Edit", @"Edit");
+    NSString *strDelete = NSLocalizedString(@"Delete", @"Delete");
+    
     if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
         return;
     CGPoint touchPoint = [gestureRecognizer locationInView:self.tableView];
@@ -215,9 +218,9 @@
     if (!pressedIndex)
         return;
     if (IsIpad())
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:@"Edit", @"Delete", nil];
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:strEdit, strDelete, nil];
     else
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Cancel")  destructiveButtonTitle:nil otherButtonTitles:@"Edit", @"Delete", nil];
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Cancel")  destructiveButtonTitle:nil otherButtonTitles:strEdit, strDelete, nil];
 
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:pressedIndex];
     [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];

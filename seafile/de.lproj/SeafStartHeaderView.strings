@@ -1,0 +1,6 @@
+
+/* Class = "IBUILabel"; text = "Welcome to Seafile"; ObjectID = "3"; */
+"3.text" = "Willkommen bei Seafile";
+
+/* Class = "IBUILabel"; text = "Choose an account to start"; ObjectID = "6"; */
+"6.text" = "Wählen Sie ein Konto, um zu beginnen";
