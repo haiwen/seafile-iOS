@@ -556,6 +556,8 @@
 		57A95E5718369147009D268A /* close2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = close2.png; sourceTree = "<group>"; };
 		57A95E5C18369E5A009D268A /* ellipsis.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ellipsis.png; sourceTree = "<group>"; };
 		57A95E5D18369E5A009D268A /* ellipsis2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ellipsis2.png; sourceTree = "<group>"; };
+		57ABE5FD187BC2DC00145FE3 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/DownloadingProgress_iPad.strings; sourceTree = "<group>"; };
+		57ABE5FF187BC2E000145FE3 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/DownloadingProgress_iPhone.strings; sourceTree = "<group>"; };
 		57B66EAF15BA513E00C2B41B /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		57BD931E174B0A0E00F7732F /* SeafDisDetailViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafDisDetailViewController.h; sourceTree = "<group>"; };
 		57BD931F174B0A0E00F7732F /* SeafDisDetailViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafDisDetailViewController.m; sourceTree = "<group>"; };
@@ -1666,6 +1668,7 @@
 				576FFDAD186AAC80009BB81A /* Base */,
 				573C95A61875AB750030E602 /* en */,
 				573C95A81875AB760030E602 /* zh-Hans */,
+				57ABE5FD187BC2DC00145FE3 /* de */,
 			);
 			name = DownloadingProgress_iPad.xib;
 			sourceTree = "<group>";
@@ -1676,6 +1679,7 @@
 				576FFDAF186AAC80009BB81A /* Base */,
 				573C95A21875AB6E0030E602 /* en */,
 				573C95A41875AB6F0030E602 /* zh-Hans */,
+				57ABE5FF187BC2E000145FE3 /* de */,
 			);
 			name = DownloadingProgress_iPhone.xib;
 			sourceTree = "<group>";
