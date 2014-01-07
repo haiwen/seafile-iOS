@@ -179,7 +179,6 @@
 		576FFDBF186AAC80009BB81A /* SeafAccountCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDB0186AAC80009BB81A /* SeafAccountCell.xib */; };
 		576FFDC1186AAC80009BB81A /* SeafCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDB2186AAC80009BB81A /* SeafCell.xib */; };
 		576FFDC3186AAC80009BB81A /* SeafDirCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDB4186AAC80009BB81A /* SeafDirCell.xib */; };
-		576FFDC5186AAC80009BB81A /* SeafTextEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDB6186AAC80009BB81A /* SeafTextEditorViewController.xib */; };
 		576FFDC7186AAC80009BB81A /* SeafUploadingFileCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDB8186AAC80009BB81A /* SeafUploadingFileCell.xib */; };
 		5775EA0817474DB3000A1765 /* bt-pound2.png in Resources */ = {isa = PBXBuildFile; fileRef = 5775EA0517474DB3000A1765 /* bt-pound2.png */; };
 		5775EA0A17474DB3000A1765 /* bt-asterisk2.png in Resources */ = {isa = PBXBuildFile; fileRef = 5775EA0617474DB3000A1765 /* bt-asterisk2.png */; };
@@ -274,6 +273,7 @@
 		57EB1376174782B900D2ACF9 /* bt-underline2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57EB1359174782B900D2ACF9 /* bt-underline2.png */; };
 		57EB1378174782B900D2ACF9 /* bt-undo2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57EB135A174782B900D2ACF9 /* bt-undo2.png */; };
 		57F0AAFE16D8935800364D18 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57F0AAFC16D8913600364D18 /* AssetsLibrary.framework */; };
+		E4F46F5B187B53EB00B80C36 /* SeafTextEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDB6186AAC80009BB81A /* SeafTextEditorViewController.xib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -646,6 +646,17 @@
 		57F0AAFC16D8913600364D18 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
 		57F53B0415DF49EF0027140D /* FileSizeFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FileSizeFormatter.h; sourceTree = "<group>"; };
 		57F53B0515DF49EF0027140D /* FileSizeFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FileSizeFormatter.m; sourceTree = "<group>"; };
+		E4F46F4E187B2BF700B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		E4F46F4F187B2BF700B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/FailToPreview_iPad.strings; sourceTree = "<group>"; };
+		E4F46F50187B2BF700B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/FailToPreview_iPhone.strings; sourceTree = "<group>"; };
+		E4F46F51187B2BF700B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/FolderView_iPad.strings; sourceTree = "<group>"; };
+		E4F46F52187B2BF700B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/FolderView_iPhone.strings; sourceTree = "<group>"; };
+		E4F46F53187B2BF700B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/SeafAccountViewController.strings; sourceTree = "<group>"; };
+		E4F46F54187B2BF700B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/SeafStartFooterView.strings; sourceTree = "<group>"; };
+		E4F46F55187B2BF700B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/SeafStartHeaderView.strings; sourceTree = "<group>"; };
+		E4F46F56187B2BF700B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/SeafUploadDirViewController.strings; sourceTree = "<group>"; };
+		E4F46F57187B44B200B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		E4F46F5A187B53AB00B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = de; path = de.lproj/SeafTextEditorViewController.xib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1286,6 +1297,7 @@
 				en,
 				"zh-Hans",
 				Base,
+				de,
 			);
 			mainGroup = 57DB826215A833F900097CEC;
 			productRefGroup = 57DB826E15A833FA00097CEC /* Products */;
@@ -1471,8 +1483,8 @@
 				57A550DE177F283700E3BA9B /* addmsg.png in Resources */,
 				576FFDC3186AAC80009BB81A /* SeafDirCell.xib in Resources */,
 				57A550E1177F2C4400E3BA9B /* export.png in Resources */,
-				576FFDC5186AAC80009BB81A /* SeafTextEditorViewController.xib in Resources */,
 				576FFDBF186AAC80009BB81A /* SeafAccountCell.xib in Resources */,
+				E4F46F5B187B53EB00B80C36 /* SeafTextEditorViewController.xib in Resources */,
 				57A550E4177F2CBA00E3BA9B /* editfile.png in Resources */,
 				574785B71870587800E6F37E /* bt-quote.png in Resources */,
 				57A550E8177F311700E3BA9B /* checkmask.png in Resources */,
@@ -1578,6 +1590,7 @@
 				57532BDA18689503003D564B /* Base */,
 				57532BDD18689509003D564B /* en */,
 				57532BDF1868950D003D564B /* zh-Hans */,
+				E4F46F55187B2BF700B80C36 /* de */,
 			);
 			name = SeafStartHeaderView.xib;
 			sourceTree = "<group>";
@@ -1588,6 +1601,7 @@
 				57532BE218689561003D564B /* Base */,
 				57532BE518689569003D564B /* en */,
 				57532BE71868956C003D564B /* zh-Hans */,
+				E4F46F54187B2BF700B80C36 /* de */,
 			);
 			name = SeafStartFooterView.xib;
 			sourceTree = "<group>";
@@ -1598,6 +1612,7 @@
 				57532BEA186895A8003D564B /* Base */,
 				5722027A186B389700E49D74 /* en */,
 				5722027B186B389900E49D74 /* zh-Hans */,
+				E4F46F4F187B2BF700B80C36 /* de */,
 			);
 			name = FailToPreview_iPad.xib;
 			sourceTree = "<group>";
@@ -1608,6 +1623,7 @@
 				57532BF2186895B7003D564B /* Base */,
 				57532BF5186895BB003D564B /* en */,
 				57532BF7186895BC003D564B /* zh-Hans */,
+				E4F46F50187B2BF700B80C36 /* de */,
 			);
 			name = FailToPreview_iPhone.xib;
 			sourceTree = "<group>";
@@ -1618,6 +1634,7 @@
 				57532BFA186895DE003D564B /* Base */,
 				57532BFD186895E2003D564B /* en */,
 				57532BFF186895E4003D564B /* zh-Hans */,
+				E4F46F56187B2BF700B80C36 /* de */,
 			);
 			name = SeafUploadDirViewController.xib;
 			sourceTree = "<group>";
@@ -1628,6 +1645,7 @@
 				57532C0218689616003D564B /* Base */,
 				57532C051868961C003D564B /* en */,
 				57532C071868961E003D564B /* zh-Hans */,
+				E4F46F53187B2BF700B80C36 /* de */,
 			);
 			name = SeafAccountViewController.xib;
 			sourceTree = "<group>";
@@ -1637,6 +1655,7 @@
 			children = (
 				57532C171868AA48003D564B /* en */,
 				57532C181868AA48003D564B /* zh-Hans */,
+				E4F46F57187B44B200B80C36 /* de */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
@@ -1689,6 +1708,7 @@
 			isa = PBXVariantGroup;
 			children = (
 				576FFDB7186AAC80009BB81A /* Base */,
+				E4F46F5A187B53AB00B80C36 /* de */,
 			);
 			name = SeafTextEditorViewController.xib;
 			sourceTree = "<group>";
@@ -1706,6 +1726,7 @@
 			children = (
 				57DB827D15A833FA00097CEC /* en */,
 				57532BD718689049003D564B /* zh-Hans */,
+				E4F46F4E187B2BF700B80C36 /* de */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
@@ -1716,6 +1737,7 @@
 				57532BD418688ECA003D564B /* Base */,
 				57532C0D18689EF1003D564B /* en */,
 				57532C0F18689EF8003D564B /* zh-Hans */,
+				E4F46F52187B2BF700B80C36 /* de */,
 			);
 			name = FolderView_iPhone.storyboard;
 			sourceTree = "<group>";
@@ -1726,6 +1748,7 @@
 				57532BD318688ECA003D564B /* Base */,
 				57532C1318689F1F003D564B /* zh-Hans */,
 				57532C151868A15E003D564B /* en */,
+				E4F46F51187B2BF700B80C36 /* de */,
 			);
 			name = FolderView_iPad.storyboard;
 			sourceTree = "<group>";

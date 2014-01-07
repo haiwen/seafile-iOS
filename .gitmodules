@@ -1,22 +1,23 @@
 [submodule "libs/AFNetworking"]
 	path = libs/AFNetworking
 	url = git://github.com/AFNetworking/AFNetworking.git
-    ignore = dirty
+    	ignore = dirty
 [submodule "libs/EGOTableViewPullRefresh"]
 	path = libs/EGOTableViewPullRefresh
-	url = git@github.com:haiwen/EGOTableViewPullRefresh.git
-    ignore = dirty
+	url=https://github.com/haiwen/EGOTableViewPullRefresh.git
+	ignore = dirty
 [submodule "libs/QBImagePickerController"]
 	path = libs/QBImagePickerController
-	url = git@github.com:haiwen/QBImagePickerController.git
-    ignore = dirty
+	url = https://github.com/haiwen/QBImagePickerController.git
+	ignore = dirty
 [submodule "libs/REComposeViewController"]
 	path = libs/REComposeViewController
-	url = git@github.com:haiwen/REComposeViewController.git
-    ignore = dirty
+	url = https://github.com/haiwen/REComposeViewController.git
+	ignore = dirty
 [submodule "libs/ios-openssl"]
 	path = libs/ios-openssl
-	url = git@github.com:st3fan/ios-openssl.git
+	url=https://github.com/st3fan/ios-openssl.git
 [submodule "libs/EGOTextView"]
 	path = libs/EGOTextView
-	url = git@github.com:haiwen/EGOTextView.git
+	url=https://github.com/haiwen/EGOTextView.git
+
