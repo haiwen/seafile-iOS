@@ -12,8 +12,6 @@
 #import "SeafDateFormatter.h"
 #import "SeafBase.h"
 #import "ExtentedString.h"
-#import "M13InfiniteTabBarController.h"
-#import "M13InfiniteTabBarItem.h"
 #import "SVProgressHUD.h"
 #import "SeafCell.h"
 #import "Debug.h"
@@ -83,17 +81,11 @@
             num ++;
     }
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    if (IsIpad()) {
-        UITabBarItem *tbi = (UITabBarItem *)[appdelegate.tabbarController.tabBar.items objectAtIndex:TABBED_DISCUSSION];
-        if (num > 0)
-            tbi.badgeValue = [NSString stringWithFormat:@"%d", num];
-        else
-            tbi.badgeValue = nil;
-    } else {
-        M13InfiniteTabBarController *bvc = (M13InfiniteTabBarController *)appdelegate.tabbarController;
-        M13InfiniteTabBarItem *tbi = [bvc.tabBarItems objectAtIndex:TABBED_DISCUSSION];
-        [tbi setBadge:num];
-    }
+    UITabBarItem *tbi = (UITabBarItem *)[appdelegate.tabbarController.tabBar.items objectAtIndex:TABBED_DISCUSSION];
+    if (num > 0)
+        tbi.badgeValue = [NSString stringWithFormat:@"%d", num];
+    else
+        tbi.badgeValue = nil;
 }
 
 - (void)refreshView

@@ -8,16 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		5704C6D31753A1380028F4FE /* IntelligentSplitViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6D11753A1380028F4FE /* IntelligentSplitViewController.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
-		5704C6E3175518F00028F4FE /* M13InfiniteTabBar.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6D7175518EE0028F4FE /* M13InfiniteTabBar.m */; };
-		5704C6E5175518F00028F4FE /* M13InfiniteTabBarCentralPullNotificationBackgroundView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6D9175518EF0028F4FE /* M13InfiniteTabBarCentralPullNotificationBackgroundView.m */; };
-		5704C6E7175518F00028F4FE /* M13InfiniteTabBarCentralPullViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6DB175518EF0028F4FE /* M13InfiniteTabBarCentralPullViewController.m */; };
-		5704C6E9175518F00028F4FE /* M13InfiniteTabBarController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6DD175518EF0028F4FE /* M13InfiniteTabBarController.m */; };
-		5704C6EB175518F00028F4FE /* M13InfiniteTabBarItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6DF175518EF0028F4FE /* M13InfiniteTabBarItem.m */; };
-		5704C6ED175518F00028F4FE /* M13PanGestureRecognizer.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6E1175518F00028F4FE /* M13PanGestureRecognizer.m */; };
 		5704C6F11755AA0D0028F4FE /* SeafEmptyViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6EF1755AA0C0028F4FE /* SeafEmptyViewController.m */; };
 		5704C6F91756710F0028F4FE /* tab-account.png in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F51756710F0028F4FE /* tab-account.png */; };
 		5704C6FB1756710F0028F4FE /* tab-activity.png in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F61756710F0028F4FE /* tab-activity.png */; };
 		5704C6FD1756710F0028F4FE /* tab-discussion.png in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F71756710F0028F4FE /* tab-discussion.png */; };
+		570AE68B187CFC66002CCDE9 /* FailToPreview_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 570AE689187CFC66002CCDE9 /* FailToPreview_iPhone.xib */; };
 		570B7AFF1715D658002F0E1D /* edit_file_seaf.html in Resources */ = {isa = PBXBuildFile; fileRef = 570B7AFA1715D657002F0E1D /* edit_file_seaf.html */; };
 		570B7B011715D658002F0E1D /* jq.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 570B7AFB1715D657002F0E1D /* jq.min.js */; };
 		570B7B031715D658002F0E1D /* Markdown.Converter.js in Resources */ = {isa = PBXBuildFile; fileRef = 570B7AFC1715D658002F0E1D /* Markdown.Converter.js */; };
@@ -159,7 +154,6 @@
 		57532BD918689503003D564B /* SeafStartHeaderView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57532BDB18689503003D564B /* SeafStartHeaderView.xib */; };
 		57532BE118689561003D564B /* SeafStartFooterView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57532BE318689561003D564B /* SeafStartFooterView.xib */; };
 		57532BE9186895A8003D564B /* FailToPreview_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57532BEB186895A8003D564B /* FailToPreview_iPad.xib */; };
-		57532BF1186895B7003D564B /* FailToPreview_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57532BF3186895B7003D564B /* FailToPreview_iPhone.xib */; };
 		57532BF9186895DE003D564B /* SeafUploadDirViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57532BFB186895DE003D564B /* SeafUploadDirViewController.xib */; };
 		57532C0118689616003D564B /* SeafAccountViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57532C0318689616003D564B /* SeafAccountViewController.xib */; };
 		57532C1A1868AA48003D564B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 57532C161868AA48003D564B /* Localizable.strings */; };
@@ -279,18 +273,6 @@
 /* Begin PBXFileReference section */
 		5704C6D01753A1380028F4FE /* IntelligentSplitViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IntelligentSplitViewController.h; sourceTree = "<group>"; };
 		5704C6D11753A1380028F4FE /* IntelligentSplitViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IntelligentSplitViewController.m; sourceTree = "<group>"; };
-		5704C6D6175518EE0028F4FE /* M13InfiniteTabBar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = M13InfiniteTabBar.h; sourceTree = "<group>"; };
-		5704C6D7175518EE0028F4FE /* M13InfiniteTabBar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = M13InfiniteTabBar.m; sourceTree = "<group>"; };
-		5704C6D8175518EE0028F4FE /* M13InfiniteTabBarCentralPullNotificationBackgroundView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = M13InfiniteTabBarCentralPullNotificationBackgroundView.h; sourceTree = "<group>"; };
-		5704C6D9175518EF0028F4FE /* M13InfiniteTabBarCentralPullNotificationBackgroundView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = M13InfiniteTabBarCentralPullNotificationBackgroundView.m; sourceTree = "<group>"; };
-		5704C6DA175518EF0028F4FE /* M13InfiniteTabBarCentralPullViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = M13InfiniteTabBarCentralPullViewController.h; sourceTree = "<group>"; };
-		5704C6DB175518EF0028F4FE /* M13InfiniteTabBarCentralPullViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = M13InfiniteTabBarCentralPullViewController.m; sourceTree = "<group>"; };
-		5704C6DC175518EF0028F4FE /* M13InfiniteTabBarController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = M13InfiniteTabBarController.h; sourceTree = "<group>"; };
-		5704C6DD175518EF0028F4FE /* M13InfiniteTabBarController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = M13InfiniteTabBarController.m; sourceTree = "<group>"; };
-		5704C6DE175518EF0028F4FE /* M13InfiniteTabBarItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = M13InfiniteTabBarItem.h; sourceTree = "<group>"; };
-		5704C6DF175518EF0028F4FE /* M13InfiniteTabBarItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = M13InfiniteTabBarItem.m; sourceTree = "<group>"; };
-		5704C6E0175518EF0028F4FE /* M13PanGestureRecognizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = M13PanGestureRecognizer.h; sourceTree = "<group>"; };
-		5704C6E1175518F00028F4FE /* M13PanGestureRecognizer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = M13PanGestureRecognizer.m; sourceTree = "<group>"; };
 		5704C6EE1755AA0C0028F4FE /* SeafEmptyViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafEmptyViewController.h; sourceTree = "<group>"; };
 		5704C6EF1755AA0C0028F4FE /* SeafEmptyViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafEmptyViewController.m; sourceTree = "<group>"; };
 		5704C6F51756710F0028F4FE /* tab-account.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-account.png"; sourceTree = "<group>"; };
@@ -327,6 +309,12 @@
 		5709513315B9B6BD00F48C08 /* SeafRepos.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafRepos.h; sourceTree = "<group>"; };
 		5709513415B9B6BD00F48C08 /* SeafRepos.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafRepos.m; sourceTree = "<group>"; };
 		570A300316578B4F007D0CBF /* upload.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = upload.png; sourceTree = "<group>"; };
+		570AE68A187CFC66002CCDE9 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/FailToPreview_iPhone.xib; sourceTree = "<group>"; };
+		570AE68D187CFCDE002CCDE9 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/FailToPreview_iPhone.strings; sourceTree = "<group>"; };
+		570AE68F187CFCDF002CCDE9 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/FailToPreview_iPhone.strings"; sourceTree = "<group>"; };
+		570AE691187CFCE0002CCDE9 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/FailToPreview_iPhone.strings; sourceTree = "<group>"; };
+		570AE692187D044C002CCDE9 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/SeafAccountViewController.strings"; sourceTree = "<group>"; };
+		570AE694187D0538002CCDE9 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/SeafStartHeaderView.strings; sourceTree = "<group>"; };
 		570B7AFA1715D657002F0E1D /* edit_file_seaf.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = edit_file_seaf.html; path = htmls/edit_file_seaf.html; sourceTree = SOURCE_ROOT; };
 		570B7AFB1715D657002F0E1D /* jq.min.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = jq.min.js; path = htmls/jq.min.js; sourceTree = SOURCE_ROOT; };
 		570B7AFC1715D658002F0E1D /* Markdown.Converter.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = Markdown.Converter.js; path = htmls/Markdown.Converter.js; sourceTree = SOURCE_ROOT; };
@@ -446,21 +434,16 @@
 		57532BD418688ECA003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/FolderView_iPhone.storyboard; sourceTree = "<group>"; };
 		57532BD718689049003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		57532BDA18689503003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafStartHeaderView.xib; sourceTree = "<group>"; };
-		57532BDD18689509003D564B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/SeafStartHeaderView.strings; sourceTree = "<group>"; };
 		57532BDF1868950D003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/SeafStartHeaderView.strings"; sourceTree = "<group>"; };
 		57532BE218689561003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafStartFooterView.xib; sourceTree = "<group>"; };
 		57532BE518689569003D564B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/SeafStartFooterView.strings; sourceTree = "<group>"; };
 		57532BE71868956C003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/SeafStartFooterView.strings"; sourceTree = "<group>"; };
 		57532BEA186895A8003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/FailToPreview_iPad.xib; sourceTree = "<group>"; };
-		57532BF2186895B7003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/FailToPreview_iPhone.xib; sourceTree = "<group>"; };
-		57532BF5186895BB003D564B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/FailToPreview_iPhone.strings; sourceTree = "<group>"; };
-		57532BF7186895BC003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/FailToPreview_iPhone.strings"; sourceTree = "<group>"; };
 		57532BFA186895DE003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafUploadDirViewController.xib; sourceTree = "<group>"; };
 		57532BFD186895E2003D564B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/SeafUploadDirViewController.strings; sourceTree = "<group>"; };
 		57532BFF186895E4003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/SeafUploadDirViewController.strings"; sourceTree = "<group>"; };
 		57532C0218689616003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafAccountViewController.xib; sourceTree = "<group>"; };
 		57532C051868961C003D564B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/SeafAccountViewController.strings; sourceTree = "<group>"; };
-		57532C071868961E003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/SeafAccountViewController.strings"; sourceTree = "<group>"; };
 		57532C0D18689EF1003D564B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/FolderView_iPhone.strings; sourceTree = "<group>"; };
 		57532C0F18689EF8003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/FolderView_iPhone.strings"; sourceTree = "<group>"; };
 		57532C1318689F1F003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/FolderView_iPad.strings"; sourceTree = "<group>"; };
@@ -650,7 +633,6 @@
 		57F53B0515DF49EF0027140D /* FileSizeFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FileSizeFormatter.m; sourceTree = "<group>"; };
 		E4F46F4E187B2BF700B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		E4F46F4F187B2BF700B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/FailToPreview_iPad.strings; sourceTree = "<group>"; };
-		E4F46F50187B2BF700B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/FailToPreview_iPhone.strings; sourceTree = "<group>"; };
 		E4F46F51187B2BF700B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/FolderView_iPad.strings; sourceTree = "<group>"; };
 		E4F46F52187B2BF700B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/FolderView_iPhone.strings; sourceTree = "<group>"; };
 		E4F46F53187B2BF700B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/SeafAccountViewController.strings; sourceTree = "<group>"; };
@@ -690,18 +672,6 @@
 			children = (
 				5704C6D01753A1380028F4FE /* IntelligentSplitViewController.h */,
 				5704C6D11753A1380028F4FE /* IntelligentSplitViewController.m */,
-				5704C6D6175518EE0028F4FE /* M13InfiniteTabBar.h */,
-				5704C6D7175518EE0028F4FE /* M13InfiniteTabBar.m */,
-				5704C6D8175518EE0028F4FE /* M13InfiniteTabBarCentralPullNotificationBackgroundView.h */,
-				5704C6D9175518EF0028F4FE /* M13InfiniteTabBarCentralPullNotificationBackgroundView.m */,
-				5704C6DA175518EF0028F4FE /* M13InfiniteTabBarCentralPullViewController.h */,
-				5704C6DB175518EF0028F4FE /* M13InfiniteTabBarCentralPullViewController.m */,
-				5704C6DC175518EF0028F4FE /* M13InfiniteTabBarController.h */,
-				5704C6DD175518EF0028F4FE /* M13InfiniteTabBarController.m */,
-				5704C6DE175518EF0028F4FE /* M13InfiniteTabBarItem.h */,
-				5704C6DF175518EF0028F4FE /* M13InfiniteTabBarItem.m */,
-				5704C6E0175518EF0028F4FE /* M13PanGestureRecognizer.h */,
-				5704C6E1175518F00028F4FE /* M13PanGestureRecognizer.m */,
 				57335CF0160D9D2500018AE8 /* Reachability.h */,
 				57335CF1160D9D2500018AE8 /* Reachability.m */,
 				57C57BDE165FC87B006834DF /* SVProgressHUD.bundle */,
@@ -883,7 +853,7 @@
 				576FFDAC186AAC80009BB81A /* DownloadingProgress_iPad.xib */,
 				576FFDAE186AAC80009BB81A /* DownloadingProgress_iPhone.xib */,
 				57532BEB186895A8003D564B /* FailToPreview_iPad.xib */,
-				57532BF3186895B7003D564B /* FailToPreview_iPhone.xib */,
+				570AE689187CFC66002CCDE9 /* FailToPreview_iPhone.xib */,
 				57DB828815A833FA00097CEC /* FolderView_iPad.storyboard */,
 				57DB828515A833FA00097CEC /* FolderView_iPhone.storyboard */,
 				576FFDB0186AAC80009BB81A /* SeafAccountCell.xib */,
@@ -1396,7 +1366,6 @@
 				571D8DAF1677881400F1A22C /* text-directory-documents.png in Resources */,
 				57A95E5B18369147009D268A /* close2.png in Resources */,
 				571D8DB01677881400F1A22C /* SVProgressHUD.bundle in Resources */,
-				57532BF1186895B7003D564B /* FailToPreview_iPhone.xib in Resources */,
 				57532C0118689616003D564B /* SeafAccountViewController.xib in Resources */,
 				570DFACC16A19EFD00ADD5F2 /* account.png in Resources */,
 				57532BD918689503003D564B /* SeafStartHeaderView.xib in Resources */,
@@ -1486,6 +1455,7 @@
 				576FFDC3186AAC80009BB81A /* SeafDirCell.xib in Resources */,
 				57A550E1177F2C4400E3BA9B /* export.png in Resources */,
 				576FFDBF186AAC80009BB81A /* SeafAccountCell.xib in Resources */,
+				570AE68B187CFC66002CCDE9 /* FailToPreview_iPhone.xib in Resources */,
 				E4F46F5B187B53EB00B80C36 /* SeafTextEditorViewController.xib in Resources */,
 				57A550E4177F2CBA00E3BA9B /* editfile.png in Resources */,
 				574785B71870587800E6F37E /* bt-quote.png in Resources */,
@@ -1559,12 +1529,6 @@
 				57BD9327174B0A0E00F7732F /* SeafDisDetailViewController.m in Sources */,
 				57BD9329174B0A0E00F7732F /* SeafDisMasterViewController.m in Sources */,
 				5704C6D31753A1380028F4FE /* IntelligentSplitViewController.m in Sources */,
-				5704C6E3175518F00028F4FE /* M13InfiniteTabBar.m in Sources */,
-				5704C6E5175518F00028F4FE /* M13InfiniteTabBarCentralPullNotificationBackgroundView.m in Sources */,
-				5704C6E7175518F00028F4FE /* M13InfiniteTabBarCentralPullViewController.m in Sources */,
-				5704C6E9175518F00028F4FE /* M13InfiniteTabBarController.m in Sources */,
-				5704C6EB175518F00028F4FE /* M13InfiniteTabBarItem.m in Sources */,
-				5704C6ED175518F00028F4FE /* M13PanGestureRecognizer.m in Sources */,
 				5704C6F11755AA0D0028F4FE /* SeafEmptyViewController.m in Sources */,
 				57191CEF176CA6650064BCEA /* QBAssetCollectionViewController.m in Sources */,
 				57191CF1176CA6650064BCEA /* QBImagePickerAssetCell.m in Sources */,
@@ -1586,13 +1550,24 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
+		570AE689187CFC66002CCDE9 /* FailToPreview_iPhone.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				570AE68A187CFC66002CCDE9 /* Base */,
+				570AE68D187CFCDE002CCDE9 /* en */,
+				570AE68F187CFCDF002CCDE9 /* zh-Hans */,
+				570AE691187CFCE0002CCDE9 /* de */,
+			);
+			name = FailToPreview_iPhone.xib;
+			sourceTree = "<group>";
+		};
 		57532BDB18689503003D564B /* SeafStartHeaderView.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
 				57532BDA18689503003D564B /* Base */,
-				57532BDD18689509003D564B /* en */,
 				57532BDF1868950D003D564B /* zh-Hans */,
 				E4F46F55187B2BF700B80C36 /* de */,
+				570AE694187D0538002CCDE9 /* en */,
 			);
 			name = SeafStartHeaderView.xib;
 			sourceTree = "<group>";
@@ -1619,17 +1594,6 @@
 			name = FailToPreview_iPad.xib;
 			sourceTree = "<group>";
 		};
-		57532BF3186895B7003D564B /* FailToPreview_iPhone.xib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				57532BF2186895B7003D564B /* Base */,
-				57532BF5186895BB003D564B /* en */,
-				57532BF7186895BC003D564B /* zh-Hans */,
-				E4F46F50187B2BF700B80C36 /* de */,
-			);
-			name = FailToPreview_iPhone.xib;
-			sourceTree = "<group>";
-		};
 		57532BFB186895DE003D564B /* SeafUploadDirViewController.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -1646,8 +1610,8 @@
 			children = (
 				57532C0218689616003D564B /* Base */,
 				57532C051868961C003D564B /* en */,
-				57532C071868961E003D564B /* zh-Hans */,
 				E4F46F53187B2BF700B80C36 /* de */,
+				570AE692187D044C002CCDE9 /* zh-Hans */,
 			);
 			name = SeafAccountViewController.xib;
 			sourceTree = "<group>";
@@ -1765,8 +1729,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "seafile/seafile-Prefix.pch";
 				HEADER_SEARCH_PATHS = "libs/ios-openssl/include/";
@@ -1791,7 +1755,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Seafile Inc. (55LCTZ5354)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "seafile/seafile-Prefix.pch";
 				HEADER_SEARCH_PATHS = "libs/ios-openssl/include/";

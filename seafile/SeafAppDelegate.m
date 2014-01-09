@@ -12,10 +12,8 @@
 #import "Debug.h"
 #import "Utils.h"
 
-#import "M13InfiniteTabBarController.h"
-#import "M13InfiniteTabBarItem.h"
 
-@interface SeafAppDelegate () <M13InfiniteTabBarControllerDelegate, UITabBarControllerDelegate>
+@interface SeafAppDelegate () <UITabBarControllerDelegate>
 
 @property UIBackgroundTaskIdentifier bgTask;
 @property int downloadnum;
@@ -23,7 +21,6 @@
 @property NSInteger moduleIdx;
 @property (readonly) SeafDetailViewController *detailVC;
 @property (readonly) SeafDisDetailViewController *disDetailVC;
-
 @end
 
 @implementation SeafAppDelegate
@@ -98,6 +95,44 @@
     return YES;
 }
 
+- (SeafConnection *)getConnection:(NSString *)url username:(NSString *)username
+{
+    SeafConnection *conn;
+    if ([url hasSuffix:@"/"])
+        url = [url substringToIndex:url.length-1];
+    for (conn in self.conns) {
+        if ([conn.address isEqual:url] && [conn.username isEqual:username])
+            return conn;
+    }
+    return nil;
+}
+
+- (void)saveAccounts
+{
+    NSMutableArray *accounts = [[NSMutableArray alloc] init];
+    for (SeafConnection *connection in self.conns) {
+        NSMutableDictionary *account = [[NSMutableDictionary alloc] init];
+        [account setObject:connection.address forKey:@"url"];
+        [account setObject:connection.username forKey:@"username"];
+        [accounts addObject:account];
+    }
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults setObject:accounts forKey:@"ACCOUNTS"];
+    [userDefaults synchronize];
+};
+
+- (void)loadAccounts
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSArray *accounts = [userDefaults objectForKey:@"ACCOUNTS"];
+    for (NSDictionary *account in accounts) {
+        SeafConnection *conn = [[SeafConnection alloc] initWithUrl:[account objectForKey:@"url"] username:[account objectForKey:@"username"]];
+        if (conn.username)
+            [self.conns addObject:conn];
+    }
+    [self saveAccounts];
+}
+
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     // Override point for customization after application launch.
@@ -108,6 +143,8 @@
     [userDefaults setObject:version forKey:@"VERSION"];
     [userDefaults synchronize];
 
+    self.conns = [[NSMutableArray alloc] init];
+    [self loadAccounts];
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     _startNav = [[UINavigationController alloc] initWithRootViewController:self.startVC];
 
@@ -158,7 +195,7 @@
 - (void)checkIconBadgeNumber
 {
     int badge = 0;
-    for (SeafConnection *conn in self.startVC.conns) {
+    for (SeafConnection *conn in self.conns) {
         badge += conn.newreply;
     }
     Debug("IconBadgeNumber=%d", badge);
@@ -168,7 +205,6 @@
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
 {
     NSString *status = [NSString stringWithFormat:@"Notification received:\n%@",[userInfo description]];
-
     NSString *badgeStr = [[userInfo objectForKey:@"aps"] objectForKey:@"badge"];
     NSDictionary *alert = [[userInfo objectForKey:@"aps"] objectForKey:@"alert"];
     NSArray *args = [alert objectForKey:@"loc-args"];
@@ -177,7 +213,7 @@
         NSString *username = [args objectAtIndex:0];
         NSString *server = [args objectAtIndex:1];
         if (badgeStr && [badgeStr intValue] > 0) {
-            SeafConnection *connection = [self.startVC getConnection:server username:username];
+            SeafConnection *connection = [self getConnection:server username:username];
             if (!connection) return;
             connection.newreply = [badgeStr intValue];
             self.window.rootViewController = self.startNav;
@@ -335,22 +371,6 @@
 }
 
 #pragma mark - Application's Documents directory
-- (BOOL)infiniteTabBarController:(M13InfiniteTabBarController *)tabBarController shouldSelectViewContoller:(UIViewController *)viewController
-{
-    if ([self.tabbarController.viewControllers indexOfObject:viewController] == TABBED_ACCOUNTS) {
-        self.window.rootViewController = self.startNav;
-        [self.window makeKeyAndVisible];
-        return NO;
-    }
-    return YES;
-}
-
-- (void)infiniteTabBarController:(M13InfiniteTabBarController *)tabBarController didSelectViewController:(UIViewController *)viewController
-{
-    Debug("idx=%d\n", [self.tabbarController.viewControllers indexOfObject:viewController]);
-    //Do nothing
-}
-
 // Returns the URL to the application's Documents directory.
 - (NSURL *)applicationDocumentsDirectory
 {
@@ -359,7 +379,7 @@
 
 - (BOOL)tabBarController:(UITabBarController *)tabBarController shouldSelectViewController:(UIViewController *)viewController
 {
-    if ([self.tabbarController.viewControllers indexOfObject:viewController] == TABBED_ACCOUNTS) {
+    if (IsIpad() && [self.tabbarController.viewControllers indexOfObject:viewController] == TABBED_ACCOUNTS) {
         self.window.rootViewController = self.startNav;
         [self.window makeKeyAndVisible];
         return NO;
@@ -381,7 +401,7 @@
     UIViewController *settingsController = [tabs.viewControllers objectAtIndex:TABBED_SETTINGS];
     UINavigationController *activityController = [tabs.viewControllers objectAtIndex:TABBED_ACTIVITY];
     UIViewController *discussionController = [tabs.viewControllers objectAtIndex:TABBED_DISCUSSION];
-
+    UIViewController *accountvc = [tabs.viewControllers objectAtIndex:TABBED_ACCOUNTS];
 
     fileController.tabBarItem.title = NSLocalizedString(@"Files", @"Files");
     fileController.tabBarItem.image = [UIImage imageNamed:@"tab-home.png"];
@@ -393,37 +413,17 @@
     activityController.tabBarItem.image = [UIImage imageNamed:@"tab-activity.png"];
     discussionController.tabBarItem.title = NSLocalizedString(@"Discussion", @"Discussion");
     discussionController.tabBarItem.image = [UIImage imageNamed:@"tab-discussion.png"];
-
-    UIViewController *accountvc = [[SeafEmptyViewController alloc] init];
     accountvc.tabBarItem.title = NSLocalizedString(@"Accounts", @"Accounts");
     accountvc.tabBarItem.image = [UIImage imageNamed:@"tab-account.png"];
+
     if (IsIpad()) {
         ((UISplitViewController *)fileController).delegate = (id)[[((UISplitViewController *)fileController).viewControllers lastObject] topViewController];
         ((UISplitViewController *)starredController).delegate = (id)[[((UISplitViewController *)starredController).viewControllers lastObject] topViewController];
         ((UISplitViewController *)settingsController).delegate = (id)[[((UISplitViewController *)settingsController).viewControllers lastObject] topViewController];
         ((UISplitViewController *)discussionController).delegate = (id)[[((UISplitViewController *)discussionController).viewControllers lastObject] topViewController];
-        _tabbarController = [[UITabBarController alloc] init];
-        _tabbarController.viewControllers = [tabs.viewControllers arrayByAddingObject:accountvc];
-        _tabbarController.delegate = self;
-    } else {
-        NSMutableArray *items = [[NSMutableArray alloc] init];
-        NSMutableArray *vcs = [NSMutableArray arrayWithArray:tabs.viewControllers];
-
-        for (UIViewController *vc in tabs.viewControllers) {
-            M13InfiniteTabBarItem *item = [[M13InfiniteTabBarItem alloc] initWithTitle:vc.tabBarItem.title andIcon:vc.tabBarItem.image];
-            [items addObject:item];
-        }
-
-        [vcs addObject:accountvc];
-        M13InfiniteTabBarItem *item = [[M13InfiniteTabBarItem alloc] initWithTitle:accountvc.tabBarItem.title andIcon:accountvc.tabBarItem.image];
-        [items addObject:item];
-
-        M13InfiniteTabBarController *viewController = [[M13InfiniteTabBarController alloc] initWithViewControllers:vcs pairedWithInfiniteTabBarItems:items];
-        viewController.delegate = self;
-        if([viewController respondsToSelector:@selector(edgesForExtendedLayout)])
-            viewController.edgesForExtendedLayout = UIRectEdgeNone;
-        _tabbarController = (UITabBarController *)viewController;
     }
+    _tabbarController = tabs;
+    _tabbarController.delegate = self;
 }
 
 - (UITabBarController *)tabbarController

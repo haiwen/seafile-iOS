@@ -46,7 +46,7 @@ enum {
 @property (readonly) UINavigationController *startNav;
 @property (readonly) UITabBarController *tabbarController;
 
-@property (readonly) StartViewController *startVC;
+@property (strong, readonly) StartViewController *startVC;
 @property (readonly) SeafFileViewController *fileVC;
 @property (readonly) SeafStarredFilesViewController *starredVC;
 @property (readonly) SeafSettingsViewController *settingVC;
@@ -54,6 +54,7 @@ enum {
 @property (readonly) SeafDisMasterViewController *discussVC;
 @property (readonly) NSData *deviceToken;
 
+@property (retain) NSMutableArray *conns;
 @property (readwrite) SeafConnection *connection;
 
 - (UINavigationController *)masterNavController:(int)index;
@@ -74,6 +75,9 @@ enum {
 + (void)decUploadnum;
 
 - (void)checkIconBadgeNumber;
+- (void)saveAccounts;
+- (SeafConnection *)getConnection:(NSString *)url username:(NSString *)username;
+
 
 
 @end

@@ -273,6 +273,7 @@
                         <segue destination="8iO-sG-chl" kind="relationship" relationship="viewControllers" id="OAn-K0-yev"/>
                         <segue destination="m1g-B7-asj" kind="relationship" relationship="viewControllers" id="DKR-RA-OJf"/>
                         <segue destination="gPc-rh-924" kind="relationship" relationship="viewControllers" id="z1O-zP-jli"/>
+                        <segue destination="DWY-JB-KVp" kind="relationship" relationship="viewControllers" id="k9H-gR-h9K"/>
                     </connections>
                 </tabBarController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dz9-Xp-uZA" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -812,6 +813,55 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="cfQ-M5-5zH" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-3565" y="-356"/>
+        </scene>
+        <!--Navigation Controller - Item-->
+        <scene sceneID="oCq-zr-gjR">
+            <objects>
+                <navigationController id="DWY-JB-KVp" sceneMemberID="viewController">
+                    <tabBarItem key="tabBarItem" title="Item" id="Uop-xg-1j5"/>
+                    <toolbarItems/>
+                    <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" prompted="NO"/>
+                    <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
+                    <splitViewDetailSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+                    <navigationBar key="navigationBar" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" id="00N-EQ-6DF">
+                        <rect key="frame" x="0.0" y="-44" width="0.0" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <toolbar key="toolbar" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="t9I-Of-dZa">
+                        <rect key="frame" x="0.0" y="980" width="768" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </toolbar>
+                    <connections>
+                        <segue destination="sWb-Kn-dMS" kind="relationship" relationship="rootViewController" id="dDD-bb-beU"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="US8-7R-HcH" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-2180" y="2544"/>
+        </scene>
+        <!--Start View Controller-->
+        <scene sceneID="UWH-Ai-I1q">
+            <objects>
+                <viewController id="sWb-Kn-dMS" customClass="StartViewController" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="4ws-B0-9Zy"/>
+                        <viewControllerLayoutGuide type="bottom" id="Keu-J6-Bjk"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="Fek-Sk-vd0" customClass="UITableView">
+                        <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <connections>
+                            <outlet property="delegate" destination="sWb-Kn-dMS" id="JAN-MQ-qWQ"/>
+                        </connections>
+                    </view>
+                    <toolbarItems/>
+                    <navigationItem key="navigationItem" id="QSQ-vq-HP6"/>
+                    <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="sYJ-fv-xcG" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-411" y="2772"/>
         </scene>
     </scenes>
     <resources>

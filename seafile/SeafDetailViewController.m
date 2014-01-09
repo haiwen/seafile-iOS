@@ -12,7 +12,6 @@
 #import "FailToPreview.h"
 #import "DownloadingProgressView.h"
 #import "SeafTextEditorViewController.h"
-#import "M13InfiniteTabBarController.h"
 #import "SeafUploadFile.h"
 #import "REComposeViewController.h"
 
@@ -705,7 +704,6 @@ enum PREVIEW_STATE {
             [self printFile:file];
         }
     }
-
 }
 
 #pragma mark - SeafFileDelegate

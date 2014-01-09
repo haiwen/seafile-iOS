@@ -84,7 +84,7 @@
 "mEX-CF-kI0.title" = "最近修改";
 
 /* Class = "IBUILabel"; text = "Wipe Cache"; ObjectID = "ntG-cs-ded"; */
-"ntG-cs-ded.text" = "清楚缓存";
+"ntG-cs-ded.text" = "清除缓存";
 
 /* Class = "IBUITableViewSection"; headerTitle = "About"; ObjectID = "prN-wa-tBe"; */
 "prN-wa-tBe.headerTitle" = "关于";
