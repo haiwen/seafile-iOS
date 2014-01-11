@@ -21,11 +21,11 @@
 @property NSInteger moduleIdx;
 @property (readonly) SeafDetailViewController *detailVC;
 @property (readonly) SeafDisDetailViewController *disDetailVC;
+@property (strong) NSArray *viewControllers;
 @end
 
 @implementation SeafAppDelegate
 
-@synthesize window = _window;
 @synthesize managedObjectContext = __managedObjectContext;
 @synthesize managedObjectModel = __managedObjectModel;
 @synthesize persistentStoreCoordinator = __persistentStoreCoordinator;
@@ -35,15 +35,8 @@
 @synthesize disDetailVC = _disDetailVC;
 @synthesize tabbarController = _tabbarController;
 
-@synthesize actvityVC;
-@synthesize discussVC;
 @synthesize connection = _connection;
-@synthesize deviceToken = _deviceToken;
 
-@synthesize bgTask;
-@synthesize downloadnum;
-@synthesize uploadnum;
-@synthesize moduleIdx;
 
 
 - (SeafConnection *)connection
@@ -142,6 +135,12 @@
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     [userDefaults setObject:version forKey:@"VERSION"];
     [userDefaults synchronize];
+    [self initTabController];
+    if (ios7)
+        [[UITabBar appearance] setTintColor:[UIColor colorWithRed:238.0f/256 green:136.0f/256 blue:51.0f/255 alpha:1.0]];
+    else
+        [[UITabBar appearance] setSelectedImageTintColor:[UIColor colorWithRed:238.0f/256 green:136.0f/256 blue:51.0f/255 alpha:1.0]];
+
 
     self.conns = [[NSMutableArray alloc] init];
     [self loadAccounts];
@@ -379,7 +378,7 @@
 
 - (BOOL)tabBarController:(UITabBarController *)tabBarController shouldSelectViewController:(UIViewController *)viewController
 {
-    if (IsIpad() && [self.tabbarController.viewControllers indexOfObject:viewController] == TABBED_ACCOUNTS) {
+    if (IsIpad() && [self.viewControllers indexOfObject:viewController] == TABBED_ACCOUNTS) {
         self.window.rootViewController = self.startNav;
         [self.window makeKeyAndVisible];
         return NO;
@@ -422,6 +421,7 @@
         ((UISplitViewController *)settingsController).delegate = (id)[[((UISplitViewController *)settingsController).viewControllers lastObject] topViewController];
         ((UISplitViewController *)discussionController).delegate = (id)[[((UISplitViewController *)discussionController).viewControllers lastObject] topViewController];
     }
+    self.viewControllers = [NSArray arrayWithArray:tabs.viewControllers];
     _tabbarController = tabs;
     _tabbarController.delegate = self;
 }
@@ -444,11 +444,11 @@
 - (UINavigationController *)masterNavController:(int)index
 {
     if (!IsIpad())
-        return [self.tabbarController.viewControllers objectAtIndex:index];
+        return [self.viewControllers objectAtIndex:index];
     else {
         if (index == TABBED_ACTIVITY)
-            return [self.tabbarController.viewControllers objectAtIndex:index];
-        return [[[self.tabbarController.viewControllers objectAtIndex:index] viewControllers] objectAtIndex:0];
+            return [self.viewControllers objectAtIndex:index];
+        return [[[self.viewControllers objectAtIndex:index] viewControllers] objectAtIndex:0];
     }
 }
 
@@ -460,7 +460,7 @@
 - (UIViewController *)detailViewController:(int)index
 {
     if (IsIpad()) {
-        return [[[[self.tabbarController.viewControllers objectAtIndex:index] viewControllers] lastObject] topViewController];
+        return [[[[self.viewControllers objectAtIndex:index] viewControllers] lastObject] topViewController];
     } else {
         if (!_detailVC)
             _detailVC = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
@@ -484,7 +484,7 @@
 
 - (SeafActivityViewController *)actvityVC
 {
-    return (SeafActivityViewController *)[[self.tabbarController.viewControllers objectAtIndex:TABBED_ACTIVITY] topViewController];
+    return (SeafActivityViewController *)[[self.viewControllers objectAtIndex:TABBED_ACTIVITY] topViewController];
 }
 
 - (SeafDisMasterViewController *)discussVC
