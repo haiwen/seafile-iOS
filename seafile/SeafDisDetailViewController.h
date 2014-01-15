@@ -9,16 +9,22 @@
 #import <UIKit/UIKit.h>
 #import "SeafConnection.h"
 
+enum {
+    MSG_GROUP = 0,
+    MSG_GROUP_REPLY,
+    MSG_NEW_REPLY,
+    MSG_USER,
+};
+
 @interface SeafDisDetailViewController : UIViewController <UISplitViewControllerDelegate, UIWebViewDelegate>
 
 @property (strong, nonatomic, readonly) IBOutlet UIWebView *webview;
 
 @property (strong, nonatomic) SeafConnection *connection;
-@property (readwrite, nonatomic) BOOL hiddenAddmsg;
+@property (readwrite, nonatomic) int msgtype;
 
+- (void)setUrl:(NSString *)url connection:(SeafConnection *)conn title:(NSString *)title;
 
-- (void)setGroup:(NSString *)groupName groupId:(NSString *)groupId;
-- (void)setUrl:(NSString *)url connection:(SeafConnection *)conn;
 - (void)configureView;
 
 

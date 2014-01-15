@@ -38,6 +38,7 @@ enum {
 @synthesize rootFolder = _rootFolder;
 @synthesize starredFiles = _starredFiles;
 @synthesize seafGroups = _seafGroups;
+@synthesize seafContacts = _seafContacts;
 @synthesize newreply = _newreply;
 
 - (id)init:(NSString *)url
@@ -414,13 +415,18 @@ enum {
 
 - (BOOL)handleGroupsData:(id)JSON
 {
+    NSMutableArray *contacts = [[NSMutableArray alloc] init];
     NSMutableArray *groups = [[NSMutableArray alloc] init];
     if (![JSON isKindOfClass:[NSDictionary class]])
         return NO;
     for (NSDictionary *info in [JSON objectForKey:@"groups"]) {
         [groups addObject:[NSMutableDictionary dictionaryWithDictionary:info]];
     }
+    for (NSDictionary *info in [JSON objectForKey:@"contacts"]) {
+        [contacts addObject:[NSMutableDictionary dictionaryWithDictionary:info]];
+    }
     _seafGroups = groups;
+    _seafContacts = contacts;
     _newreply = (int)[[JSON objectForKey:@"replynum"] integerValue:0];
     return YES;
 }
@@ -506,8 +512,13 @@ enum {
 
 - (void)registerDevice:(NSData *)deviceToken
 {
-    NSString *form = [NSString stringWithFormat:@"deviceToken=%@", deviceToken.hexString ];
-    Debug("len=%d, form=%@", deviceToken.length, form);
+    NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
+    NSString *version = [infoDictionary objectForKey:@"CFBundleVersion"];
+    NSString *platform = [infoDictionary objectForKey:@"DTPlatformName"];
+    NSString *platformVersion = [infoDictionary objectForKey:@"DTPlatformVersion"];
+
+    NSString *form = [NSString stringWithFormat:@"deviceToken=%@&version=%@&platform=%@&pversion=%@", deviceToken.hexString, version, platform, platformVersion ];
+    Debug("info=%@, form=%@, len=%d", infoDictionary, form, deviceToken.length);
     [self sendPost:@"/regdevice/" repo:nil form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
         Debug("Register success");
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {

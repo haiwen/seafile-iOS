@@ -20,8 +20,7 @@
 @property (strong, nonatomic) NSString *url;
 @property (strong) UIBarButtonItem *msgItem;
 @property (strong) UIBarButtonItem *refreshItem;
-@property (strong, nonatomic) NSString *group;
-@property (strong, nonatomic) NSString *groupName;
+@property NSString *predefinedTitle;
 
 @property (strong, nonatomic) IBOutlet UIActivityIndicatorView *loadingView;
 
@@ -32,19 +31,6 @@
 @synthesize url = _url;
 
 #pragma mark - Managing the detail item
-
-- (void)setGroup:(NSString *)groupName groupId:(NSString *)groupId
-{
-    _url = nil;
-    _group = groupId;
-    self.groupName = groupName;
-    [self configureView];
-    if (IsIpad())
-        [self.navigationController popToRootViewControllerAnimated:NO];
-    if (self.masterPopoverController != nil) {
-        [self.masterPopoverController dismissPopoverAnimated:YES];
-    }
-}
 
 - (void)showLodingView
 {
@@ -75,27 +61,20 @@
         [self.navigationController popToRootViewControllerAnimated:NO];
     _connection = connection;
     _url = nil;
-    _group = nil;
     [self configureView];
 }
 
-- (NSString *)url
-{
-    if (!_url && _group)
-        return [self.connection.address stringByAppendingFormat:API_URL"/html/discussions/%@/", self.group];
-    return _url;
-}
-
-- (void)setUrl:(NSString *)url connection:(SeafConnection *)conn
+- (void)setUrl:(NSString *)url connection:(SeafConnection *)conn title:(NSString *)title;
 {
     _connection = conn;
     _url = url;
-    _group = nil;
-}
-
-- (BOOL)isReply
-{
-    return _url ? YES : NO;
+    self.predefinedTitle = title;
+    [self configureView];
+    if (IsIpad())
+        [self.navigationController popToRootViewControllerAnimated:NO];
+    if (self.masterPopoverController != nil) {
+        [self.masterPopoverController dismissPopoverAnimated:YES];
+    }
 }
 
 - (void)configureView
@@ -104,12 +83,7 @@
     [self.msgItem setEnabled:NO];
     if (self.connection && self.url) {
         [self showLodingView];
-        if (self.hiddenAddmsg)
-            self.title = NSLocalizedString(@"New replies", nil);
-        else if (self.isReply)
-            self.title = NSLocalizedString(@"Reply", nil);
-        else
-            self.title = self.groupName;
+        self.title = self.predefinedTitle;
         NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:self.url] cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 30];
         [request setHTTPMethod:@"GET"];
         [request setValue:[NSString stringWithFormat:@"Token %@", self.connection.token] forHTTPHeaderField:@"Authorization"];
@@ -137,10 +111,12 @@
 
 - (void)compose:(id)sender
 {
-    if (![self isReply])
+    if (self.msgtype == MSG_GROUP)
         [self popupInputView:NSLocalizedString(@"Discussion", nil) placeholder:NSLocalizedString(@"discussion", nil)];
-    else
+    else if (self.msgtype == MSG_GROUP_REPLY)
         [self popupInputView:NSLocalizedString(@"Reply", nil) placeholder:NSLocalizedString(@"reply", nil)];
+    else if (self.msgtype == MSG_USER)
+        [self popupInputView:NSLocalizedString(@"Message", nil) placeholder:NSLocalizedString(@"send a message", nil)];
 }
 
 - (void)viewDidLoad
@@ -149,7 +125,7 @@
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeNone;
     self.title = NSLocalizedString(@"Discussions", niL);
-    if (!IsIpad() && !self.isReply) {
+    if (!IsIpad() && self.msgtype != MSG_GROUP_REPLY) {
         UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Back", @"Back") style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
         [self.navigationItem setLeftBarButtonItem:barButtonItem animated:YES];
     }
@@ -207,7 +183,7 @@
 - (void)webViewDidFinishLoad:(UIWebView *)webView
 {
     [self dismissLoadingView];
-    if (self.hiddenAddmsg)
+    if (self.msgtype == MSG_NEW_REPLY)
         return;
     if (![self htmlOK:webView])
         return;
@@ -233,7 +209,8 @@
     } else if ([urlStr hasPrefix:[self.connection.address stringByAppendingString:API_URL"/html/discussion/"]]) {
         [self showLodingView];
         SeafDisDetailViewController *c = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"DISDETAILVC"];
-        [c setUrl:urlStr connection:self.connection];
+        c.msgtype = MSG_GROUP_REPLY;
+        [c setUrl:urlStr connection:self.connection title:NSLocalizedString(@"Reply", @"Reply")];
         [self.navigationController pushViewController:c animated:YES];
     } else {
         [[UIApplication sharedApplication] openURL:request.URL];
@@ -271,9 +248,8 @@
             [self.webview stringByEvaluatingJavaScriptFromString:js];
             [SVProgressHUD dismiss];
         } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to add discussion", @"Failed to add discussion")];
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to send message", @"Failed to send message")];
             [composeViewController.navigationItem.rightBarButtonItem setEnabled:YES];
-
         }];
     }
 }

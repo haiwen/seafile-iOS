@@ -60,7 +60,6 @@
     [bt addTarget:self action:@selector(newReplies:) forControlEvents:UIControlEventTouchUpInside];
     bt.layer.cornerRadius = 0;
     [bt.layer setBorderColor:[[UIColor colorWithRed:224/255.0 green:224/255.0 blue:224/255.0 alpha:1.0] CGColor]];
-    [bt setHighColor:[UIColor colorWithRed:244/255.0 green:244/255.0 blue:244/255.0 alpha:1.0] lowColor:[UIColor colorWithRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1.0]];
     [bt setHighColor:[UIColor colorWithRed:244/255.0 green:244/255.0 blue:244/255.0 alpha:1.0] lowColor:[UIColor colorWithRed:244/255.0 green:244/255.0 blue:244/255.0 alpha:1.0]];
     [bt setTitleColor:[UIColor colorWithRed:112/255.0 green:112/255.0 blue:112/255.0 alpha:1.0] forState:UIControlStateNormal];
 
@@ -155,8 +154,7 @@
 - (void)setConnection:(SeafConnection *)conn
 {
     _connection = conn;
-    [self.detailViewController setGroup:nil groupId:nil];
-    self.detailViewController.connection = conn;
+    [self.detailViewController setUrl:Nil connection:conn title:nil];
     [self refresh:nil];
 }
 
@@ -176,12 +174,14 @@
 #pragma mark - Table View
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    return 1;
+    return 2;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return self.connection.seafGroups.count;
+    if (section == 0)
+        return self.connection.seafGroups.count;
+    return self.connection.seafContacts.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -193,7 +193,7 @@
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafCell" owner:self options:nil];
         cell = [cells objectAtIndex:0];
     }
-    NSMutableDictionary *dict = [self.connection.seafGroups objectAtIndex:row];
+    NSMutableDictionary *dict = (indexPath.section == 0)? [self.connection.seafGroups objectAtIndex:row] : [self.connection.seafContacts objectAtIndex:row];
     cell.textLabel.text = [dict objectForKey:@"name"];
     long long mtime = [[dict objectForKey:@"mtime"] integerValue:0];
     if (mtime)
@@ -201,7 +201,10 @@
     else
         cell.detailTextLabel.text = nil;
 
-    cell.imageView.image = [UIImage imageNamed:@"group.png"];
+    if (indexPath.section == 0)
+        cell.imageView.image = [UIImage imageNamed:@"group.png"];
+    else
+        cell.imageView.image = [UIImage imageNamed:@"account.png"];
     if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0 ) {
         cell.badgeLabel.text = [NSString stringWithFormat:@"%lld", [[dict objectForKey:@"msgnum"] integerValue:0]];
         cell.badgeLabel.hidden = NO;
@@ -232,16 +235,49 @@
         [appdelegate showDetailView:self.detailViewController];
     }
     int row = indexPath.row;
-    self.detailViewController.hiddenAddmsg = NO;
-    NSMutableDictionary *dict = [self.connection.seafGroups objectAtIndex:row];
-    NSString *gid = [dict objectForKey:@"id"];
-    NSString *name = [dict objectForKey:@"name"];
-    if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0 ) {
-        [dict setObject:@"0" forKey:@"msgnum"];
-        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationNone];
-        [self refreshTabBarItem];
+    if (indexPath.section == 0) {
+        NSMutableDictionary *dict = [self.connection.seafGroups objectAtIndex:row];
+        NSString *gid = [dict objectForKey:@"id"];
+        NSString *name = [dict objectForKey:@"name"];
+        if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0 ) {
+            [dict setObject:@"0" forKey:@"msgnum"];
+            [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationNone];
+        }
+        NSString *url = [self.connection.address stringByAppendingFormat:API_URL"/html/discussions/%@/", gid];
+        self.detailViewController.msgtype = MSG_GROUP;
+        [self.detailViewController setUrl:url connection:self.connection title:name];
+    } else {
+        NSMutableDictionary *dict = [self.connection.seafContacts objectAtIndex:row];
+        NSString *name = [dict objectForKey:@"name"];
+        NSString *email = [dict objectForKey:@"email"];
+        if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0 ) {
+            [dict setObject:@"0" forKey:@"msgnum"];
+            [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationNone];
+        }
+        NSString *url = [self.connection.address stringByAppendingFormat:API_URL"/html/usermsgs/%@/", email];
+        self.detailViewController.msgtype = MSG_USER;
+        [self.detailViewController setUrl:url connection:self.connection title:name];
     }
-    [self.detailViewController setGroup:name groupId:gid];
+    [self refreshTabBarItem];
+
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
+{
+    NSString *text = nil;
+    if (section == 0) {
+        text = NSLocalizedString(@"Groups", nil);
+    } else {
+        text = NSLocalizedString(@"Contacts", nil);
+    }
+    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 3, tableView.bounds.size.width - 10, 18)];
+    label.text = text;
+    label.textColor = [UIColor whiteColor];
+    label.backgroundColor = [UIColor clearColor];
+    [headerView setBackgroundColor:HEADER_COLOR];
+    [headerView addSubview:label];
+    return headerView;
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
@@ -291,9 +327,8 @@
 {
     [self clearnewReplyNum];
     NSString *urlStr = [self.connection.address stringByAppendingString:API_URL"/html/newreply/"];
-    self.detailViewController.hiddenAddmsg = YES;
-    [self.detailViewController setUrl:urlStr connection:self.connection];
-    [self.detailViewController configureView];
+    self.detailViewController.msgtype = MSG_NEW_REPLY;
+    [self.detailViewController setUrl:urlStr connection:self.connection title:NSLocalizedString(@"New replies", nil)];
     return;
 }
 

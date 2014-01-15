@@ -43,6 +43,7 @@
 @property (readonly) long long usage;
 @property (readwrite, strong) NSString *token;
 @property (readonly) NSArray *seafGroups;
+@property (readonly) NSArray *seafContacts;
 @property (readwrite) int newreply;
 
 
