@@ -268,49 +268,20 @@ enum {
     [self noneSelected:YES];
 }
 
-- (void)hideTabBar
-{
-    if (self.tabBarController.tabBar.hidden == YES) {
-        return;
-    }
-    UIView *contentView;
-    if ( [[self.tabBarController.view.subviews objectAtIndex:0] isKindOfClass:[UITabBar class]] )
-        contentView = [self.tabBarController.view.subviews objectAtIndex:1];
-    else
-        contentView = [self.tabBarController.view.subviews objectAtIndex:0];
-    contentView.frame = CGRectMake(contentView.bounds.origin.x,  contentView.bounds.origin.y,  contentView.bounds.size.width, contentView.bounds.size.height + self.tabBarController.tabBar.frame.size.height);
-    self.tabBarController.tabBar.hidden = YES;
-}
-
-- (void)showTabBar
-{
-    if (self.tabBarController.tabBar.hidden == NO) {
-        return;
-    }
-    UIView *contentView;
-    if ([[self.tabBarController.view.subviews objectAtIndex:0] isKindOfClass:[UITabBar class]])
-        contentView = [self.tabBarController.view.subviews objectAtIndex:1];
-    else
-        contentView = [self.tabBarController.view.subviews objectAtIndex:0];
-    contentView.frame = CGRectMake(contentView.bounds.origin.x, contentView.bounds.origin.y,  contentView.bounds.size.width, contentView.bounds.size.height - self.tabBarController.tabBar.frame.size.height);
-    self.tabBarController.tabBar.hidden = NO;
-}
-
 - (void)setEditing:(BOOL)editing animated:(BOOL)animated
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     if (editing) {
         if (![appdelegate checkNetworkStatus]) return;
-        [self setToolbarItems:self.editToolItems];
-        if(!IsIpad())  [self hideTabBar];
         [self.navigationController.toolbar sizeToFit];
+        [self setToolbarItems:self.editToolItems];
         [self noneSelected:YES];
         [self.photoItem setEnabled:NO];
         [self.navigationController setToolbarHidden:NO animated:YES];
     } else {
         self.navigationItem.leftBarButtonItem = nil;
         [self.navigationController setToolbarHidden:YES animated:YES];
-        if(!IsIpad())  [self showTabBar];
+        if(!IsIpad())  self.tabBarController.tabBar.hidden = NO;
         [self.photoItem setEnabled:YES];
     }
 

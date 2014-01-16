@@ -79,12 +79,19 @@
         if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0 )
             num ++;
     }
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    UITabBarItem *tbi = (UITabBarItem *)[appdelegate.tabbarController.tabBar.items objectAtIndex:TABBED_DISCUSSION];
-    if (num > 0)
-        tbi.badgeValue = [NSString stringWithFormat:@"%d", num];
-    else
-        tbi.badgeValue = nil;
+    for (NSDictionary *dict in self.connection.seafContacts) {
+        if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0 )
+            num ++;
+    }
+
+    UITabBarItem *tbi = nil;
+    if (IsIpad()) {
+        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+        tbi = (UITabBarItem *)[appdelegate.tabbarController.tabBar.items objectAtIndex:TABBED_DISCUSSION];
+    } else
+        tbi = self.navigationController.tabBarItem;
+    Debug("num=%d, tbi=%@, %@\n", num, tbi, tbi.title);
+    tbi.badgeValue = num > 0 ? [NSString stringWithFormat:@"%d", num] : nil;
 }
 
 - (void)refreshView
@@ -230,10 +237,10 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (!IsIpad()) {
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    if (!IsIpad())
         [appdelegate showDetailView:self.detailViewController];
-    }
+
     int row = indexPath.row;
     if (indexPath.section == 0) {
         NSMutableDictionary *dict = [self.connection.seafGroups objectAtIndex:row];
@@ -251,15 +258,16 @@
         NSString *name = [dict objectForKey:@"name"];
         NSString *email = [dict objectForKey:@"email"];
         if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0 ) {
+            self.connection.umsgnum -= [[dict objectForKey:@"msgnum"] integerValue:0];
             [dict setObject:@"0" forKey:@"msgnum"];
             [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationNone];
+            [appdelegate checkIconBadgeNumber];
         }
         NSString *url = [self.connection.address stringByAppendingFormat:API_URL"/html/usermsgs/%@/", email];
         self.detailViewController.msgtype = MSG_USER;
         [self.detailViewController setUrl:url connection:self.connection title:name];
     }
     [self refreshTabBarItem];
-
 }
 
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section

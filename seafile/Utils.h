@@ -16,6 +16,7 @@
 - (NSString *)name;
 - (BOOL)editable;
 - (NSString *)content;
+- (long long )filesize;
 - (BOOL)saveContent:(NSString *)content;
 @end
 

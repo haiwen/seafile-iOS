@@ -195,7 +195,7 @@
 {
     int badge = 0;
     for (SeafConnection *conn in self.conns) {
-        badge += conn.newreply;
+        badge += conn.newreply + conn.umsgnum;
     }
     Debug("IconBadgeNumber=%d", badge);
     [UIApplication sharedApplication].applicationIconBadgeNumber = badge;
@@ -424,6 +424,7 @@
     self.viewControllers = [NSArray arrayWithArray:tabs.viewControllers];
     _tabbarController = tabs;
     _tabbarController.delegate = self;
+    _tabbarController.view.backgroundColor = [UIColor whiteColor];
 }
 
 - (UITabBarController *)tabbarController

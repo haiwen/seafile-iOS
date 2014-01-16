@@ -39,7 +39,7 @@ enum {
 @synthesize starredFiles = _starredFiles;
 @synthesize seafGroups = _seafGroups;
 @synthesize seafContacts = _seafContacts;
-@synthesize newreply = _newreply;
+
 
 - (id)init:(NSString *)url
 {
@@ -427,7 +427,8 @@ enum {
     }
     _seafGroups = groups;
     _seafContacts = contacts;
-    _newreply = (int)[[JSON objectForKey:@"replynum"] integerValue:0];
+    self.newreply = (int)[[JSON objectForKey:@"replynum"] integerValue:0];
+    self.umsgnum = (int)[[JSON objectForKey:@"umsgnum"] integerValue:0];
     return YES;
 }
 

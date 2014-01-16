@@ -504,6 +504,14 @@ enum PREVIEW_STATE {
 
 - (IBAction)editFile:(id)sender
 {
+    if (self.preViewItem.filesize > 10 * 1024 * 1024) {
+        [self alertWithMessage:[NSString stringWithFormat:NSLocalizedString(@"File '%@' is too large to edit", nil), self.preViewItem.name]];
+        return;
+    }
+    if (!self.preViewItem.content) {
+        [self alertWithMessage:[NSString stringWithFormat:NSLocalizedString(@"Failed to identify the coding of '%@'", nil), self.preViewItem.name]];
+        return;
+    }
     SeafTextEditorViewController *editViewController = [[SeafTextEditorViewController alloc] initWithFile:self.preViewItem];
     editViewController.detailViewController = self;
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:editViewController];
@@ -634,7 +642,7 @@ enum PREVIEW_STATE {
     if (result == REComposeResultCancelled) {
         [composeViewController dismissViewControllerAnimated:YES completion:nil];
     } else if (result == REComposeResultPosted) {
-        NSLog(@"Text: %@", composeViewController.text);
+        Debug("Text: %@", composeViewController.text);
         [SVProgressHUD showWithStatus:NSLocalizedString(@"Sending...", nil)];
         SeafFile *file = (SeafFile *)self.preViewItem;
         NSString *form = [NSString stringWithFormat:@"message=%@&repo_id=%@&path=%@", [composeViewController.text escapedPostForm], file.repoId, [file.path escapedPostForm]];

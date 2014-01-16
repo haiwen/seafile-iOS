@@ -516,6 +516,7 @@
     } else if ([self.mime hasSuffix:@"seafile"]) {
         return [self seafPreviewItemURL];
     }
+
     NSString *src = nil;
     NSString *tmpdir = nil;
     if (!self.mpath) {
@@ -525,8 +526,10 @@
         src = self.mpath;
         tmpdir = [[Utils applicationTempDirectory] stringByAppendingPathComponent:[[self.mpath stringByDeletingLastPathComponent] lastPathComponent]];
     }
+
     if (![Utils checkMakeDir:tmpdir])
         return _preViewURL;
+
     NSString *dst = [tmpdir stringByAppendingPathComponent:self.name];
     @synchronized (self) {
         if ([[NSFileManager defaultManager] fileExistsAtPath:dst]
@@ -534,6 +537,7 @@
             _preViewURL = [NSURL fileURLWithPath:dst];
         }
     }
+
     return _preViewURL;
 }
 

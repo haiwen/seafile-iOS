@@ -215,26 +215,39 @@
 
 + (BOOL)tryTransformEncoding:(NSString *)outfile fromFile:(NSString *)fromfile
 {
-    if ([Utils fileSizeAtPath1:fromfile] > 10 * 1024 * 1024)
-        return NO;
-    NSString *encodeContent;
-    NSStringEncoding encode;
-    encodeContent = [NSString stringWithContentsOfFile:fromfile usedEncoding:&encode error:nil];
-    if (encodeContent) {
-        if ([encodeContent writeToFile:outfile atomically:YES encoding:NSUTF16StringEncoding error:nil]) {
-            return YES;
-        }
-    }
-    return NO;
+    NSString *content = [Utils stringContent:fromfile];
+    if (!content) return NO;
+    [content writeToFile:outfile atomically:YES encoding:NSUTF16StringEncoding error:nil];
+    return YES;
 }
 
 + (NSString *)stringContent:(NSString *)path
 {
     if ([Utils fileSizeAtPath1:path] > 10 * 1024 * 1024)
-        return NO;
+        return nil;
     NSString *encodeContent;
     NSStringEncoding encode;
     encodeContent = [NSString stringWithContentsOfFile:path usedEncoding:&encode error:nil];
+    if (!encodeContent) {
+        int i = 0;
+        NSStringEncoding encodes[] = {
+            NSUTF8StringEncoding,
+            CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGB_18030_2000),
+            CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGB_2312_80),
+            CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGBK_95),
+            NSUnicodeStringEncoding,
+            NSASCIIStringEncoding,
+            0,
+        };
+        while (encodes[i]) {
+            encodeContent = [NSString stringWithContentsOfFile:path encoding:encodes[i] error:nil];
+             if (encodeContent) {
+                Debug("use encoding %d, %d\n", i, encodes[i]);
+                break;
+            }
+            ++i;
+        }
+    }
     return encodeContent;
 }
 
