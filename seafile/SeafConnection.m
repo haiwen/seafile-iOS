@@ -429,6 +429,7 @@ enum {
     _seafContacts = contacts;
     self.newreply = (int)[[JSON objectForKey:@"replynum"] integerValue:0];
     self.umsgnum = (int)[[JSON objectForKey:@"umsgnum"] integerValue:0];
+    self.gmsgnum = (int)[[JSON objectForKey:@"gmsgnum"] integerValue:0];
     return YES;
 }
 

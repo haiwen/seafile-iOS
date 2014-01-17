@@ -74,14 +74,14 @@
 
 - (void)refreshTabBarItem
 {
-    int num = 0;
+    int num = self.connection.newreply;
     for (NSDictionary *dict in self.connection.seafGroups) {
         if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0 )
-            num ++;
+            num += [[dict objectForKey:@"msgnum"] integerValue:0];
     }
     for (NSDictionary *dict in self.connection.seafContacts) {
         if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0 )
-            num ++;
+            num += [[dict objectForKey:@"msgnum"] integerValue:0];
     }
 
     UITabBarItem *tbi = nil;
@@ -92,6 +92,7 @@
         tbi = self.navigationController.tabBarItem;
     Debug("num=%d, tbi=%@, %@\n", num, tbi, tbi.title);
     tbi.badgeValue = num > 0 ? [NSString stringWithFormat:@"%d", num] : nil;
+    [(SeafAppDelegate *)[[UIApplication sharedApplication] delegate] checkIconBadgeNumber];
 }
 
 - (void)refreshView
@@ -107,8 +108,6 @@
         self.tableView.tableHeaderView = nil;
     [self.tableView reloadData];
     [self refreshTabBarItem];
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    [appdelegate checkIconBadgeNumber];
 }
 
 - (void)refreshBackground:(id)sender
@@ -169,13 +168,6 @@
 {
     [self refreshView];
     [super viewWillAppear:animated];
-}
-
-- (void)clearnewReplyNum
-{
-    self.connection.newreply = 0;
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    [appdelegate checkIconBadgeNumber];
 }
 
 #pragma mark - Table View
@@ -247,6 +239,7 @@
         NSString *gid = [dict objectForKey:@"id"];
         NSString *name = [dict objectForKey:@"name"];
         if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0 ) {
+            self.connection.umsgnum -= [[dict objectForKey:@"msgnum"] integerValue:0];
             [dict setObject:@"0" forKey:@"msgnum"];
             [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationNone];
         }
@@ -333,7 +326,8 @@
 
 - (IBAction)newReplies:(id)sender
 {
-    [self clearnewReplyNum];
+    self.connection.newreply = 0;
+    [(SeafAppDelegate *)[[UIApplication sharedApplication] delegate] checkIconBadgeNumber];
     NSString *urlStr = [self.connection.address stringByAppendingString:API_URL"/html/newreply/"];
     self.detailViewController.msgtype = MSG_NEW_REPLY;
     [self.detailViewController setUrl:urlStr connection:self.connection title:NSLocalizedString(@"New replies", nil)];

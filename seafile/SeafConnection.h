@@ -46,6 +46,7 @@
 @property (readonly) NSArray *seafContacts;
 @property (readwrite) int newreply;
 @property (readwrite) int umsgnum;
+@property (readwrite) int gmsgnum;
 
 
 - (id)initWithUrl:(NSString *)url username:(NSString *)username;
