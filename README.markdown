@@ -13,6 +13,20 @@ Follow these steps :
 	cd seafile-iOS
 	git submodule init
 	git submodule update
-	open seafile.xcodeproj
+	open seafilePro.xcodeproj
 
 Then you can run seafile in xcode simulator.
+
+
+Internationalization (I18n)
+==========
+
+Please submit translations via Transifex: [https://www.transifex.com/projects/p/seafile-ios/](https://www.transifex.com/projects/p/seafile-ios/)
+
+Steps:
+
+1. Create a free account on Transifex ([https://www.transifex.com/](https://www.transifex.com/)).
+
+2. Send a request to join the language translation.
+
+3. After accepted by the project maintainer, then you can upload your file or translate online.

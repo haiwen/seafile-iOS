@@ -5,17 +5,11 @@
 /* Class = "IBUILabel"; text = "Website"; ObjectID = "0ZM-eJ-J4M"; */
 "0ZM-eJ-J4M.text" = "Webseite";
 
-/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "39k-6q-dJ1"; */
-"39k-6q-dJ1.title" = "Element";
-
 /* Class = "IBUILabel"; text = "Server"; ObjectID = "3Fj-HB-jhE"; */
 "3Fj-HB-jhE.text" = "Server";
 
 /* Class = "IBUILabel"; text = "Local Cache"; ObjectID = "6T2-bV-0bO"; */
 "6T2-bV-0bO.text" = "Lokaler Cache";
-
-/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "6ir-TC-WJB"; */
-"6ir-TC-WJB.title" = "Element";
 
 /* Class = "IBUILabel"; text = "Used Space"; ObjectID = "C91-ob-60u"; */
 "C91-ob-60u.text" = "Verwendeter Speicherplatz";
@@ -23,20 +17,11 @@
 /* Class = "IBUINavigationItem"; title = "Groups"; ObjectID = "D4g-PC-vdz"; */
 "D4g-PC-vdz.title" = "Gruppen";
 
-/* Class = "IBUILabel"; text = "Title"; ObjectID = "Df4-fL-ajt"; */
-"Df4-fL-ajt.text" = "Titel";
-
-/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "EUN-oC-qhF"; */
-"EUN-oC-qhF.title" = "Element";
-
 /* Class = "IBUITableViewSection"; headerTitle = "About"; ObjectID = "F9c-bc-Mvu"; */
 "F9c-bc-Mvu.headerTitle" = "Über";
 
 /* Class = "IBUILabel"; text = "Tell Friends about seafile"; ObjectID = "H1p-P0-Nt3"; */
 "H1p-P0-Nt3.text" = "Erzähl Freunden von Seafile";
-
-/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "HaV-xZ-CCJ"; */
-"HaV-xZ-CCJ.title" = "Element";
 
 /* Class = "IBUINavigationController"; title = "Starred"; ObjectID = "HbK-VG-mor"; */
 "HbK-VG-mor.title" = "Favoriten";
@@ -46,9 +31,6 @@
 
 /* Class = "IBUILabel"; text = "Wipe Cache"; ObjectID = "RGO-ir-R4l"; */
 "RGO-ir-R4l.text" = "Cache löschen";
-
-/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "S82-ac-TEU"; */
-"S82-ac-TEU.title" = "Element";
 
 /* Class = "IBUINavigationItem"; title = "Starred"; ObjectID = "Xnp-MH-ftg"; */
 "Xnp-MH-ftg.title" = "Favoriten";
@@ -62,23 +44,8 @@
 /* Class = "IBUITableViewSection"; headerTitle = "Account Info"; ObjectID = "eqt-eE-wom"; */
 "eqt-eE-wom.headerTitle" = "Kontoinformation";
 
-/* Class = "IBUILabel"; text = "Title"; ObjectID = "gBS-I4-dW2"; */
-"gBS-I4-dW2.text" = "Titel";
-
-/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "gKR-cO-ptM"; */
-"gKR-cO-ptM.title" = "Element";
-
-/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "gvu-Sd-SDA"; */
-"gvu-Sd-SDA.title" = "Element";
-
-/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "hxw-bB-A2V"; */
-"hxw-bB-A2V.title" = "Element";
-
 /* Class = "IBUILabel"; text = "www.seafile.com"; ObjectID = "iJn-XA-D5m"; */
 "iJn-XA-D5m.text" = "www.seafile.com";
-
-/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "nP4-Sy-Gkr"; */
-"nP4-Sy-Gkr.title" = "Element";
 
 /* Class = "IBUITableViewSection"; headerTitle = "Settings"; ObjectID = "oWj-k9-0bj"; */
 "oWj-k9-0bj.headerTitle" = "Cache";
@@ -88,9 +55,6 @@
 
 /* Class = "IBUITableViewController"; title = "Starred"; ObjectID = "pQh-cj-nJC"; */
 "pQh-cj-nJC.title" = "Favoriten";
-
-/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "pWO-cS-x7A"; */
-"pWO-cS-x7A.title" = "Element";
 
 /* Class = "IBUINavigationItem"; title = "Settings"; ObjectID = "wb3-ep-Aqm"; */
 "wb3-ep-Aqm.title" = "Einstellungen";

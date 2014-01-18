@@ -229,7 +229,7 @@
         <scene sceneID="d0c-Ai-QVN">
             <objects>
                 <navigationController title="Starred" definesPresentationContext="YES" id="HbK-VG-mor" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Item" id="gvu-Sd-SDA"/>
+                    <tabBarItem key="tabBarItem" title="" id="gvu-Sd-SDA"/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="1x4-I5-Tb4">
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
@@ -245,7 +245,7 @@
         <scene sceneID="SAc-tl-SaL">
             <objects>
                 <navigationController title="Settings" definesPresentationContext="YES" id="ZS2-rO-b6R" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Item" id="S82-ac-TEU"/>
+                    <tabBarItem key="tabBarItem" title="" id="S82-ac-TEU"/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="0c8-lf-Lr3">
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
@@ -280,11 +280,11 @@
             </objects>
             <point key="canvasLocation" x="-3527" y="-1938"/>
         </scene>
-        <!--Navigation Controller - Item-->
+        <!--Navigation Controller-->
         <scene sceneID="14">
             <objects>
                 <navigationController id="3" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Item" id="EUN-oC-qhF"/>
+                    <tabBarItem key="tabBarItem" title="" id="EUN-oC-qhF"/>
                     <toolbarItems/>
                     <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
                     <navigationBar key="navigationBar" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" id="6">
@@ -425,11 +425,11 @@
             </objects>
             <point key="canvasLocation" x="866" y="-3100"/>
         </scene>
-        <!--Intelligent Split View Controller - Item-->
+        <!--Intelligent Split View Controller-->
         <scene sceneID="hb3-nf-fjQ">
             <objects>
                 <splitViewController storyboardIdentifier="SETTINGSSPLITVC" id="gPc-rh-924" customClass="IntelligentSplitViewController" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Item" id="pWO-cS-x7A"/>
+                    <tabBarItem key="tabBarItem" title="" id="pWO-cS-x7A"/>
                     <toolbarItems/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackOpaque"/>
                     <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
@@ -466,11 +466,11 @@
             </objects>
             <point key="canvasLocation" x="18" y="-828"/>
         </scene>
-        <!--Intelligent Split View Controller - Item-->
+        <!--Intelligent Split View Controller-->
         <scene sceneID="sQ3-WJ-qxR">
             <objects>
                 <splitViewController storyboardIdentifier="StarSPLITVC" id="DCp-tP-YXD" customClass="IntelligentSplitViewController" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Item" id="HaV-xZ-CCJ"/>
+                    <tabBarItem key="tabBarItem" title="" id="HaV-xZ-CCJ"/>
                     <toolbarItems/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackOpaque"/>
                     <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
@@ -531,14 +531,13 @@
             </objects>
             <point key="canvasLocation" x="573" y="76"/>
         </scene>
-        <!--Navigation Controller - Item-->
+        <!--Navigation Controller-->
         <scene sceneID="ugv-Os-bZc">
             <objects>
                 <navigationController id="8iO-sG-chl" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Item" id="nP4-Sy-Gkr"/>
+                    <tabBarItem key="tabBarItem" title="" id="nP4-Sy-Gkr"/>
                     <toolbarItems/>
                     <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" prompted="NO"/>
-                    <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
                     <splitViewDetailSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
                     <navigationBar key="navigationBar" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" id="7bz-Re-mbk">
                         <rect key="frame" x="0.0" y="-44" width="0.0" height="44"/>
@@ -547,6 +546,7 @@
                     <toolbar key="toolbar" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="Aau-1A-wWh">
                         <rect key="frame" x="0.0" y="980" width="768" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
+                        <color key="tintColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                     </toolbar>
                     <connections>
                         <segue destination="tZi-tZ-wdU" kind="relationship" relationship="rootViewController" id="tbx-2I-Yex"/>
@@ -592,11 +592,11 @@
             </objects>
             <point key="canvasLocation" x="2179" y="980"/>
         </scene>
-        <!--Intelligent Split View Controller - Item-->
+        <!--Intelligent Split View Controller-->
         <scene sceneID="kLi-aU-lDH">
             <objects>
                 <splitViewController storyboardIdentifier="SPLITVC" id="m1g-B7-asj" customClass="IntelligentSplitViewController" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Item" id="gKR-cO-ptM"/>
+                    <tabBarItem key="tabBarItem" title="" id="gKR-cO-ptM"/>
                     <toolbarItems/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackOpaque"/>
                     <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
@@ -626,7 +626,7 @@
                                     <rect key="frame" x="0.0" y="0.0" width="320" height="49"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
-                                        <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="Title" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="gBS-I4-dW2">
+                                        <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="gBS-I4-dW2">
                                             <rect key="frame" x="15" y="0.0" width="290" height="49"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <fontDescription key="fontDescription" type="boldSystem" pointSize="20"/>
@@ -754,7 +754,7 @@
                                     <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
-                                        <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" text="Title" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="Df4-fL-ajt">
+                                        <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="Df4-fL-ajt">
                                             <rect key="frame" x="15" y="0.0" width="290" height="43"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <fontDescription key="fontDescription" type="system" pointSize="20"/>
@@ -772,7 +772,7 @@
                             <outlet property="delegate" destination="pQh-cj-nJC" id="2G5-6w-jbf"/>
                         </connections>
                     </tableView>
-                    <tabBarItem key="tabBarItem" title="Item" id="hxw-bB-A2V"/>
+                    <tabBarItem key="tabBarItem" title="" id="hxw-bB-A2V"/>
                     <navigationItem key="navigationItem" title="Starred" id="Xnp-MH-ftg"/>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="DLs-dI-Bcl" sceneMemberID="firstResponder"/>
@@ -814,14 +814,13 @@
             </objects>
             <point key="canvasLocation" x="-3565" y="-356"/>
         </scene>
-        <!--Navigation Controller - Item-->
+        <!--Navigation Controller-->
         <scene sceneID="oCq-zr-gjR">
             <objects>
                 <navigationController id="DWY-JB-KVp" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Item" id="Uop-xg-1j5"/>
+                    <tabBarItem key="tabBarItem" title="" id="Uop-xg-1j5"/>
                     <toolbarItems/>
                     <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" prompted="NO"/>
-                    <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
                     <splitViewDetailSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
                     <navigationBar key="navigationBar" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" id="00N-EQ-6DF">
                         <rect key="frame" x="0.0" y="-44" width="0.0" height="44"/>
@@ -830,6 +829,7 @@
                     <toolbar key="toolbar" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="t9I-Of-dZa">
                         <rect key="frame" x="0.0" y="980" width="768" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
+                        <color key="tintColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                     </toolbar>
                     <connections>
                         <segue destination="sWb-Kn-dMS" kind="relationship" relationship="rootViewController" id="dDD-bb-beU"/>

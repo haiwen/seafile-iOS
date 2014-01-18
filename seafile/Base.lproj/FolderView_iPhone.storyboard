@@ -33,11 +33,10 @@
         <!--Navigation Controller - Seafile-->
         <scene sceneID="cix-vt-Igt">
             <objects>
-                <navigationController title="Seafile" id="CNF-ja-c3a" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Item" id="6rl-FR-hto"/>
+                <navigationController title="Seafile" toolbarHidden="NO" id="CNF-ja-c3a" sceneMemberID="viewController">
+                    <tabBarItem key="tabBarItem" title="" id="6rl-FR-hto"/>
                     <toolbarItems/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
-                    <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
                     <navigationBar key="navigationBar" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" id="fTo-jb-ZSP">
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
@@ -49,12 +48,12 @@
             </objects>
             <point key="canvasLocation" x="-934" y="-3588"/>
         </scene>
-        <!--Seaf File View Controller - Item-->
+        <!--Seaf File View Controller-->
         <scene sceneID="UbQ-9W-oFk">
             <objects>
                 <tableViewController storyboardIdentifier="FILEMASTERVC" clearsSelectionOnViewWillAppear="NO" id="ZeC-X3-lth" customClass="SeafFileViewController" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" allowsSelectionDuringEditing="YES" allowsMultipleSelectionDuringEditing="YES" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="zZ4-Jf-wgM">
-                        <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="436"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <prototypes>
@@ -65,7 +64,7 @@
                                     <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
-                                        <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" text="Title" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="wkb-np-FdP">
+                                        <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="wkb-np-FdP">
                                             <rect key="frame" x="15" y="0.0" width="290" height="43"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <fontDescription key="fontDescription" type="system" pointSize="20"/>
@@ -83,7 +82,7 @@
                             <outlet property="delegate" destination="ZeC-X3-lth" id="AHD-90-bcA"/>
                         </connections>
                     </tableView>
-                    <tabBarItem key="tabBarItem" title="Item" id="bX7-Zj-bqY"/>
+                    <tabBarItem key="tabBarItem" title="" id="bX7-Zj-bqY"/>
                     <navigationItem key="navigationItem" id="jmS-LH-3qj"/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                 </tableViewController>
@@ -107,7 +106,7 @@
                                     <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
-                                        <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="Title" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="WeV-Qb-pO5">
+                                        <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="WeV-Qb-pO5">
                                             <rect key="frame" x="15" y="0.0" width="290" height="43"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <fontDescription key="fontDescription" type="system" pointSize="20"/>
@@ -129,7 +128,7 @@
         <scene sceneID="F3d-4G-2bC">
             <objects>
                 <navigationController title="Starred" definesPresentationContext="YES" id="z9c-1t-xJ2" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Item" id="VH7-iY-RiF"/>
+                    <tabBarItem key="tabBarItem" title="" id="VH7-iY-RiF"/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="cyv-Qp-O9m">
                         <autoresizingMask key="autoresizingMask"/>
@@ -288,8 +287,8 @@
                                                     <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                                     <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                                 </label>
-                                                <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="server url" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="Prn-ee-8Bg">
-                                                    <rect key="frame" x="234" y="11" width="71" height="21"/>
+                                                <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="Prn-ee-8Bg">
+                                                    <rect key="frame" x="261" y="11" width="44" height="21"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <color key="textColor" red="0.21960784310000001" green="0.3294117647" blue="0.52941176469999995" alpha="1" colorSpace="calibratedRGB"/>
@@ -366,7 +365,7 @@
         <scene sceneID="xpW-VU-zvN">
             <objects>
                 <navigationController storyboardIdentifier="SETTINGSNAV" title="Settings" definesPresentationContext="YES" id="bYI-tW-uUU" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Item" id="Jmw-Qh-gQG"/>
+                    <tabBarItem key="tabBarItem" title="" id="Jmw-Qh-gQG"/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="wRf-xr-PKT">
                         <autoresizingMask key="autoresizingMask"/>
@@ -442,7 +441,7 @@
         <scene sceneID="NnU-GF-PKm">
             <objects>
                 <navigationController title="Activity" definesPresentationContext="YES" id="mEX-CF-kI0" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Item" id="Lne-Be-K6O"/>
+                    <tabBarItem key="tabBarItem" title="" id="Lne-Be-K6O"/>
                     <toolbarItems/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                     <navigationBar key="navigationBar" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" id="cTk-LZ-0Cj">
@@ -499,7 +498,7 @@
                                     <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
-                                        <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" text="Title" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="fPd-9u-5GI">
+                                        <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="fPd-9u-5GI">
                                             <rect key="frame" x="15" y="0.0" width="290" height="43"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <fontDescription key="fontDescription" type="system" pointSize="20"/>
@@ -517,7 +516,7 @@
                             <outlet property="delegate" destination="geg-qC-dkP" id="k7O-Ha-N8g"/>
                         </connections>
                     </tableView>
-                    <tabBarItem key="tabBarItem" title="Item" id="9Lz-mn-hwx"/>
+                    <tabBarItem key="tabBarItem" title="" id="9Lz-mn-hwx"/>
                     <navigationItem key="navigationItem" title="Groups" id="Fzs-bI-CXk"/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                 </tableViewController>
@@ -525,11 +524,11 @@
             </objects>
             <point key="canvasLocation" x="71" y="-1196"/>
         </scene>
-        <!--Navigation Controller - Item-->
+        <!--Navigation Controller-->
         <scene sceneID="1jc-dg-xd4">
             <objects>
                 <navigationController definesPresentationContext="YES" id="t1H-03-KSK" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Item" id="WuF-iW-S0M"/>
+                    <tabBarItem key="tabBarItem" title="" id="WuF-iW-S0M"/>
                     <toolbarItems/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                     <navigationBar key="navigationBar" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" id="Wre-g0-1Jb">
@@ -548,11 +547,11 @@
             </objects>
             <point key="canvasLocation" x="-460" y="-1189"/>
         </scene>
-        <!--Navigation Controller - Item-->
+        <!--Navigation Controller-->
         <scene sceneID="Rii-3f-Yq9">
             <objects>
                 <navigationController definesPresentationContext="YES" id="Hxd-Np-RK1" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Item" id="3dy-XG-tKT"/>
+                    <tabBarItem key="tabBarItem" title="" id="3dy-XG-tKT"/>
                     <toolbarItems/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                     <navigationBar key="navigationBar" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" id="UQz-Me-idq">

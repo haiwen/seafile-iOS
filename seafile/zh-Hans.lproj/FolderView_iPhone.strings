@@ -5,14 +5,8 @@
 /* Class = "IBUILabel"; text = "Local Cache"; ObjectID = "63f-7w-kh2"; */
 "63f-7w-kh2.text" = "本地缓存";
 
-/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "6rl-FR-hto"; */
-"6rl-FR-hto.title" = "Item";
-
 /* Class = "IBUINavigationItem"; title = "Discussion"; ObjectID = "7Gx-1K-h8m"; */
 "7Gx-1K-h8m.title" = "讨论";
-
-/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "9Lz-mn-hwx"; */
-"9Lz-mn-hwx.title" = "Item";
 
 /* Class = "IBUINavigationItem"; title = "Starred"; ObjectID = "9U2-Iv-uJL"; */
 "9U2-Iv-uJL.title" = "星标文件";
@@ -32,21 +26,6 @@
 /* Class = "IBUILabel"; text = "www.seafile.com"; ObjectID = "Jf3-AP-WLB"; */
 "Jf3-AP-WLB.text" = "www.seafile.com";
 
-/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "Jmw-Qh-gQG"; */
-"Jmw-Qh-gQG.title" = "Item";
-
-/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "Lne-Be-K6O"; */
-"Lne-Be-K6O.title" = "Item";
-
-/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "VH7-iY-RiF"; */
-"VH7-iY-RiF.title" = "Item";
-
-/* Class = "IBUILabel"; text = "Title"; ObjectID = "WeV-Qb-pO5"; */
-"WeV-Qb-pO5.text" = "Title";
-
-/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "WuF-iW-S0M"; */
-"WuF-iW-S0M.title" = "Item";
-
 /* Class = "IBUILabel"; text = "0.1"; ObjectID = "X0g-ge-tAv"; */
 "X0g-ge-tAv.text" = "0.1";
 
@@ -56,14 +35,8 @@
 /* Class = "IBUINavigationItem"; title = "Settings"; ObjectID = "aNt-9S-KAr"; */
 "aNt-9S-KAr.title" = "设置";
 
-/* Class = "IBUITabBarItem"; title = "Item"; ObjectID = "bX7-Zj-bqY"; */
-"bX7-Zj-bqY.title" = "Item";
-
 /* Class = "IBUINavigationController"; title = "Settings"; ObjectID = "bYI-tW-uUU"; */
 "bYI-tW-uUU.title" = "设置";
-
-/* Class = "IBUILabel"; text = "Title"; ObjectID = "fPd-9u-5GI"; */
-"fPd-9u-5GI.text" = "Title";
 
 /* Class = "IBUILabel"; text = "Website"; ObjectID = "fU6-mc-Krp"; */
 "fU6-mc-Krp.text" = "官网";
@@ -73,9 +46,6 @@
 
 /* Class = "IBUILabel"; text = "Username"; ObjectID = "jLS-bB-7ZH"; */
 "jLS-bB-7ZH.text" = "用户名";
-
-/* Class = "IBUINavigationItem"; title = "Home"; ObjectID = "jmS-LH-3qj"; */
-"jmS-LH-3qj.title" = "Home";
 
 /* Class = "IBUILabel"; text = "Server"; ObjectID = "kVu-zt-I7X"; */
 "kVu-zt-I7X.text" = "服务器";
@@ -94,9 +64,6 @@
 
 /* Class = "IBUILabel"; text = "Used Space"; ObjectID = "w9d-8x-JzH"; */
 "w9d-8x-JzH.text" = "已使用的空间";
-
-/* Class = "IBUILabel"; text = "Title"; ObjectID = "wkb-np-FdP"; */
-"wkb-np-FdP.text" = "Title";
 
 /* Class = "IBUINavigationController"; title = "Starred"; ObjectID = "z9c-1t-xJ2"; */
 "z9c-1t-xJ2.title" = "星标文件";
