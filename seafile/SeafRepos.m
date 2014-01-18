@@ -101,7 +101,7 @@
 
 - (id)initWithConnection:(SeafConnection *)aConnection
 {
-    self = [super initWithConnection:aConnection oid:nil repoId:nil name:NSLocalizedString(@"Home", nil) path:nil mime:nil];
+    self = [super initWithConnection:aConnection oid:nil repoId:nil name:NSLocalizedString(@"Libraries", @"Libraries") path:nil mime:nil];
     return self;
 }
 

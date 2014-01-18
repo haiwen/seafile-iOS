@@ -524,6 +524,8 @@ enum PREVIEW_STATE {
 {
     [(SeafFile *)self.preViewItem cancelDownload];
     [self setPreViewItem:nil master:nil];
+    if (!IsIpad())
+        [self goBack:nil];
 }
 
 - (IBAction)uploadFile:(id)sender

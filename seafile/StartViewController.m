@@ -170,7 +170,7 @@
 
     NSString *strEdit = NSLocalizedString(@"Edit", @"Edit");
     NSString *strDelete = NSLocalizedString(@"Delete", @"Delete");
-    
+
     if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
         return;
     CGPoint touchPoint = [gestureRecognizer locationInView:self.tableView];

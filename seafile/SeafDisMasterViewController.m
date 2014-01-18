@@ -90,7 +90,6 @@
         tbi = (UITabBarItem *)[appdelegate.tabbarController.tabBar.items objectAtIndex:TABBED_DISCUSSION];
     } else
         tbi = self.navigationController.tabBarItem;
-    Debug("num=%d, tbi=%@, %@\n", num, tbi, tbi.title);
     tbi.badgeValue = num > 0 ? [NSString stringWithFormat:@"%d", num] : nil;
     [(SeafAppDelegate *)[[UIApplication sharedApplication] delegate] checkIconBadgeNumber];
 }

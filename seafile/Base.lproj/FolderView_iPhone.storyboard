@@ -49,7 +49,7 @@
             </objects>
             <point key="canvasLocation" x="-934" y="-3588"/>
         </scene>
-        <!--Seaf File View Controller - Home-->
+        <!--Seaf File View Controller - Item-->
         <scene sceneID="UbQ-9W-oFk">
             <objects>
                 <tableViewController storyboardIdentifier="FILEMASTERVC" clearsSelectionOnViewWillAppear="NO" id="ZeC-X3-lth" customClass="SeafFileViewController" sceneMemberID="viewController">
@@ -84,7 +84,7 @@
                         </connections>
                     </tableView>
                     <tabBarItem key="tabBarItem" title="Item" id="bX7-Zj-bqY"/>
-                    <navigationItem key="navigationItem" title="Home" id="jmS-LH-3qj"/>
+                    <navigationItem key="navigationItem" id="jmS-LH-3qj"/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="5tQ-Ax-AdV" sceneMemberID="firstResponder"/>

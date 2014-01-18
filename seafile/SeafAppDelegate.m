@@ -195,7 +195,6 @@
 {
     int badge = 0;
     for (SeafConnection *conn in self.conns) {
-        Debug("%d %d %d\n", conn.newreply, conn.umsgnum, conn.gmsgnum);
         badge += conn.newreply + conn.umsgnum + conn.gmsgnum;
     }
     Debug("IconBadgeNumber=%d", badge);
@@ -403,7 +402,7 @@
     UIViewController *discussionController = [tabs.viewControllers objectAtIndex:TABBED_DISCUSSION];
     UIViewController *accountvc = [tabs.viewControllers objectAtIndex:TABBED_ACCOUNTS];
 
-    fileController.tabBarItem.title = NSLocalizedString(@"Files", @"Files");
+    fileController.tabBarItem.title = NSLocalizedString(@"Libraries", @"Libraries");
     fileController.tabBarItem.image = [UIImage imageNamed:@"tab-home.png"];
     starredController.tabBarItem.title = NSLocalizedString(@"Starred", @"Starred");
     starredController.tabBarItem.image = [UIImage imageNamed:@"tab-star.png"];
@@ -425,7 +424,7 @@
     self.viewControllers = [NSArray arrayWithArray:tabs.viewControllers];
     _tabbarController = tabs;
     _tabbarController.delegate = self;
-    _tabbarController.view.backgroundColor = [UIColor whiteColor];
+    _tabbarController.view.backgroundColor = [UIColor colorWithRed:150.0f/255 green:150.0f/255 blue:150.0f/255 alpha:1];
 }
 
 - (UITabBarController *)tabbarController

@@ -351,11 +351,11 @@
             </objects>
             <point key="canvasLocation" x="1915" y="-3164"/>
         </scene>
-        <!--Intelligent Split View Controller - Item-->
+        <!--Intelligent Split View Controller-->
         <scene sceneID="18">
             <objects>
                 <splitViewController storyboardIdentifier="FILESPLITVC" id="5" customClass="IntelligentSplitViewController" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Item" id="6ir-TC-WJB"/>
+                    <tabBarItem key="tabBarItem" title="" id="6ir-TC-WJB"/>
                     <toolbarItems/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackOpaque"/>
                     <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
@@ -368,7 +368,7 @@
             </objects>
             <point key="canvasLocation" x="-2455" y="-2709"/>
         </scene>
-        <!--Seaf File View Controller - Master-->
+        <!--Seaf File View Controller-->
         <scene sceneID="24">
             <objects>
                 <tableViewController storyboardIdentifier="MASTERVC" id="19" customClass="SeafFileViewController" sceneMemberID="viewController">
@@ -394,8 +394,8 @@
                             <outlet property="delegate" destination="19" id="21"/>
                         </connections>
                     </tableView>
-                    <tabBarItem key="tabBarItem" title="Item" id="39k-6q-dJ1"/>
-                    <navigationItem key="navigationItem" title="Master" id="40"/>
+                    <tabBarItem key="tabBarItem" title="" id="39k-6q-dJ1"/>
+                    <navigationItem key="navigationItem" id="40"/>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="23" sceneMemberID="firstResponder"/>
             </objects>
