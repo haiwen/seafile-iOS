@@ -12,7 +12,7 @@ Follow these steps :
 	git clone https://github.com/haiwen/seafile-iOS.git
 	cd seafile-iOS
 	git submodule init
-	git submodue update
+	git submodule update
 	open seafile.xcodeproj
 
 Then you can run seafile in xcode simulator.
