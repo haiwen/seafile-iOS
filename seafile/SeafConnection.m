@@ -433,10 +433,10 @@ enum {
     return YES;
 }
 
-- (void)getSeafGroups:(void (^)(NSHTTPURLResponse *response, id JSON, NSData *data))success
-              failure:(void (^)(NSHTTPURLResponse *response, NSError *error, id JSON))failure
+- (void)getSeafGroupAndContacts:(void (^)(NSHTTPURLResponse *response, id JSON, NSData *data))success
+                        failure:(void (^)(NSHTTPURLResponse *response, NSError *error, id JSON))failure
 {
-    [self sendRequest:API_URL"/groups/"  repo:nil
+    [self sendRequest:API_URL"/groupandcontacts/"  repo:nil
               success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          @synchronized(self) {

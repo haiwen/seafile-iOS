@@ -82,8 +82,8 @@
 
 - (id)getCachedStarredFiles;
 
-- (void)getSeafGroups:(void (^)(NSHTTPURLResponse *response, id JSON, NSData *data))success
-              failure:(void (^)(NSHTTPURLResponse *response, NSError *error, id JSON))failure;
+- (void)getSeafGroupAndContacts:(void (^)(NSHTTPURLResponse *response, id JSON, NSData *data))success
+                        failure:(void (^)(NSHTTPURLResponse *response, NSError *error, id JSON))failure;
 
 
 - (BOOL)isStarred:(NSString *)repo path:(NSString *)path;

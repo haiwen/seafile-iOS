@@ -111,7 +111,7 @@
 
 - (void)refreshBackground:(id)sender
 {
-    [_connection getSeafGroups:^(NSHTTPURLResponse *response, id JSON, NSData *data) {
+    [_connection getSeafGroupAndContacts:^(NSHTTPURLResponse *response, id JSON, NSData *data) {
         @synchronized(self) {
             [self refreshView];
             [self doneLoadingTableViewData];
@@ -125,7 +125,7 @@
 
 - (void)refresh:(id)sender
 {
-    [_connection getSeafGroups:^(NSHTTPURLResponse *response, id JSON, NSData *data) {
+    [_connection getSeafGroupAndContacts:^(NSHTTPURLResponse *response, id JSON, NSData *data) {
         @synchronized(self) {
             Debug("Success to get groups ...\n");
             [self refreshView];
