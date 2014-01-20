@@ -141,7 +141,6 @@
     else
         [[UITabBar appearance] setSelectedImageTintColor:[UIColor colorWithRed:238.0f/256 green:136.0f/256 blue:51.0f/255 alpha:1.0]];
 
-
     self.conns = [[NSMutableArray alloc] init];
     [self loadAccounts];
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
@@ -155,7 +154,6 @@
     [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"]];
     [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"]];
     [Utils checkMakeDir:[Utils applicationTempDirectory]];
-
     [Utils clearAllFiles:[Utils applicationTempDirectory]];
 
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reachabilityChanged:) name:kReachabilityChangedNotification object:nil];
@@ -424,7 +422,8 @@
     self.viewControllers = [NSArray arrayWithArray:tabs.viewControllers];
     _tabbarController = tabs;
     _tabbarController.delegate = self;
-    _tabbarController.view.backgroundColor = [UIColor colorWithRed:150.0f/255 green:150.0f/255 blue:150.0f/255 alpha:1];
+    if (ios7)
+        _tabbarController.view.backgroundColor = [UIColor colorWithRed:150.0f/255 green:150.0f/255 blue:150.0f/255 alpha:1];
 }
 
 - (UITabBarController *)tabbarController

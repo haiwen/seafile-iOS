@@ -116,6 +116,7 @@
 
 - (void)viewWillLayoutSubviews
 {
+    [super viewWillLayoutSubviews];
     ColorfulButton *bt = self.footer;
     if (IsIpad()) {
         bt.frame = CGRectMake(self.view.frame.origin.x-1, self.view.frame.size.height-57, self.tableView.frame.size.width+2, 58);

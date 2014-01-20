@@ -186,6 +186,7 @@ enum {
     self.tableView.contentOffset = CGPointMake(0, CGRectGetHeight(self.searchBar.bounds));
 
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
+    [self.navigationController setToolbarHidden:YES animated:NO];
 }
 
 - (void)noneSelected:(BOOL)none
@@ -281,7 +282,7 @@ enum {
     } else {
         self.navigationItem.leftBarButtonItem = nil;
         [self.navigationController setToolbarHidden:YES animated:YES];
-        if(!IsIpad())  self.tabBarController.tabBar.hidden = NO;
+        //if(!IsIpad())  self.tabBarController.tabBar.hidden = NO;
         [self.photoItem setEnabled:YES];
     }
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="4514" systemVersion="13B42" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" initialViewController="xZh-Ns-hDC">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="4514" systemVersion="13B42" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none">
     <dependencies>
         <deployment version="1536" defaultVersion="1536" identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="3747"/>
@@ -332,7 +332,7 @@
                                             <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
-                                                <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Wipe Cache" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" translatesAutoresizingMaskIntoConstraints="NO" id="ntG-cs-ded">
+                                                <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Wipe Cache" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" id="ntG-cs-ded">
                                                     <rect key="frame" x="110" y="2" width="104" height="41"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
@@ -382,28 +382,16 @@
         <scene sceneID="3hn-ux-u67">
             <objects>
                 <viewController storyboardIdentifier="DETAILVC" wantsFullScreenLayout="YES" hidesBottomBarWhenPushed="YES" id="C9i-QL-0hc" customClass="SeafDetailViewController" sceneMemberID="viewController">
-                    <layoutGuides>
-                        <viewControllerLayoutGuide type="top" id="kWj-E9-PS7"/>
-                        <viewControllerLayoutGuide type="bottom" id="QTo-wj-Ehf"/>
-                    </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="8S0-6B-In4">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="seafile-logo.png" translatesAutoresizingMaskIntoConstraints="NO" id="ykP-o6-zvM">
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="seafile-logo.png" id="ykP-o6-zvM">
                                 <rect key="frame" x="128" y="208" width="64" height="64"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <constraints>
-                                    <constraint firstAttribute="width" constant="64" id="iuq-z4-dhi"/>
-                                    <constraint firstAttribute="height" constant="64" id="pKD-Gj-b3L"/>
-                                </constraints>
                             </imageView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
-                        <constraints>
-                            <constraint firstAttribute="centerX" secondItem="ykP-o6-zvM" secondAttribute="centerX" id="FHB-CY-Rjx"/>
-                            <constraint firstAttribute="centerY" secondItem="ykP-o6-zvM" secondAttribute="centerY" id="ofX-2g-ejH"/>
-                        </constraints>
                     </view>
                     <toolbarItems/>
                     <navigationItem key="navigationItem" id="N9H-ZX-OWr"/>
@@ -417,10 +405,6 @@
         <scene sceneID="1gS-U2-JVg">
             <objects>
                 <viewController id="xZh-Ns-hDC" customClass="SeafActivityViewController" sceneMemberID="viewController">
-                    <layoutGuides>
-                        <viewControllerLayoutGuide type="top" id="VpO-eu-Fp3"/>
-                        <viewControllerLayoutGuide type="bottom" id="r9g-D9-CL0"/>
-                    </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="4Dx-fw-LSS" customClass="UIWebView">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -464,10 +448,6 @@
         <scene sceneID="f8g-NC-Dfr">
             <objects>
                 <viewController storyboardIdentifier="DISDETAILVC" title="Discussion" id="r0W-or-KJe" customClass="SeafDisDetailViewController" sceneMemberID="viewController">
-                    <layoutGuides>
-                        <viewControllerLayoutGuide type="top" id="cGc-7g-qD4"/>
-                        <viewControllerLayoutGuide type="bottom" id="wpK-as-JNH"/>
-                    </layoutGuides>
                     <view key="view" contentMode="scaleToFill" restorationIdentifier="DISDETAILVC" id="A8I-jK-vZR" customClass="UIWebView">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -550,7 +530,7 @@
         <!--Navigation Controller-->
         <scene sceneID="Rii-3f-Yq9">
             <objects>
-                <navigationController definesPresentationContext="YES" id="Hxd-Np-RK1" sceneMemberID="viewController">
+                <navigationController autoresizesArchivedViewToFullSize="NO" definesPresentationContext="YES" id="Hxd-Np-RK1" sceneMemberID="viewController">
                     <tabBarItem key="tabBarItem" title="" id="3dy-XG-tKT"/>
                     <toolbarItems/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
@@ -574,10 +554,6 @@
         <scene sceneID="rQX-p2-frr">
             <objects>
                 <viewController id="KP6-ow-0kU" customClass="StartViewController" sceneMemberID="viewController">
-                    <layoutGuides>
-                        <viewControllerLayoutGuide type="top" id="PzL-Dt-K48"/>
-                        <viewControllerLayoutGuide type="bottom" id="FaG-Xt-BPP"/>
-                    </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="dX9-fG-GI1" customClass="UITableView">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -593,7 +569,6 @@
     <resources>
         <image name="seafile-logo.png" width="360" height="360"/>
     </resources>
-    <color key="tintColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">
         <simulatedStatusBarMetrics key="statusBar"/>
         <simulatedOrientationMetrics key="orientation"/>

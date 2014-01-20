@@ -310,11 +310,6 @@
 		5709513415B9B6BD00F48C08 /* SeafRepos.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafRepos.m; sourceTree = "<group>"; };
 		570A300316578B4F007D0CBF /* upload.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = upload.png; sourceTree = "<group>"; };
 		570AE68A187CFC66002CCDE9 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/FailToPreview_iPhone.xib; sourceTree = "<group>"; };
-		570AE68D187CFCDE002CCDE9 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/FailToPreview_iPhone.strings; sourceTree = "<group>"; };
-		570AE68F187CFCDF002CCDE9 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/FailToPreview_iPhone.strings"; sourceTree = "<group>"; };
-		570AE691187CFCE0002CCDE9 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/FailToPreview_iPhone.strings; sourceTree = "<group>"; };
-		570AE692187D044C002CCDE9 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/SeafAccountViewController.strings"; sourceTree = "<group>"; };
-		570AE694187D0538002CCDE9 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/SeafStartHeaderView.strings; sourceTree = "<group>"; };
 		570B7AFA1715D657002F0E1D /* edit_file_seaf.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = edit_file_seaf.html; path = htmls/edit_file_seaf.html; sourceTree = SOURCE_ROOT; };
 		570B7AFB1715D657002F0E1D /* jq.min.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = jq.min.js; path = htmls/jq.min.js; sourceTree = SOURCE_ROOT; };
 		570B7AFC1715D658002F0E1D /* Markdown.Converter.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = Markdown.Converter.js; path = htmls/Markdown.Converter.js; sourceTree = SOURCE_ROOT; };
@@ -352,8 +347,6 @@
 		571D8DBA1677881400F1A22C /* SeafilePro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SeafilePro.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		571D8DBD1677897D00F1A22C /* seafile-appstore-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "seafile-appstore-Info.plist"; sourceTree = "<group>"; };
 		571F5147168C80380055D69B /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = System/Library/Frameworks/MobileCoreServices.framework; sourceTree = SDKROOT; };
-		5722027A186B389700E49D74 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/FailToPreview_iPad.strings; sourceTree = "<group>"; };
-		5722027B186B389900E49D74 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/FailToPreview_iPad.strings"; sourceTree = "<group>"; };
 		57227A5B18389DB600CD28E9 /* red.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = red.png; sourceTree = "<group>"; };
 		572500B1162984B2001E5C75 /* Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Utils.h; sourceTree = "<group>"; };
 		572500B2162984B3001E5C75 /* Utils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Utils.m; sourceTree = "<group>"; };
@@ -417,10 +410,6 @@
 		5739703C165800810089F32F /* text.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = text.png; sourceTree = "<group>"; };
 		5739703E1658008A0089F32F /* text-directory.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "text-directory.png"; sourceTree = "<group>"; };
 		57397040165801EE0089F32F /* text-directory-documents.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "text-directory-documents.png"; sourceTree = "<group>"; };
-		573C95A21875AB6E0030E602 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/DownloadingProgress_iPhone.strings; sourceTree = "<group>"; };
-		573C95A41875AB6F0030E602 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/DownloadingProgress_iPhone.strings"; sourceTree = "<group>"; };
-		573C95A61875AB750030E602 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/DownloadingProgress_iPad.strings; sourceTree = "<group>"; };
-		573C95A81875AB760030E602 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/DownloadingProgress_iPad.strings"; sourceTree = "<group>"; };
 		573F4AA91788763500F096D3 /* arrowleft.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = arrowleft.png; sourceTree = "<group>"; };
 		573F4AAA1788763500F096D3 /* arrowright.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = arrowright.png; sourceTree = "<group>"; };
 		574456821774922B00EA46A6 /* SeafAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafAppDelegate.h; sourceTree = "<group>"; };
@@ -434,20 +423,10 @@
 		57532BD418688ECA003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/FolderView_iPhone.storyboard; sourceTree = "<group>"; };
 		57532BD718689049003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		57532BDA18689503003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafStartHeaderView.xib; sourceTree = "<group>"; };
-		57532BDF1868950D003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/SeafStartHeaderView.strings"; sourceTree = "<group>"; };
 		57532BE218689561003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafStartFooterView.xib; sourceTree = "<group>"; };
-		57532BE518689569003D564B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/SeafStartFooterView.strings; sourceTree = "<group>"; };
-		57532BE71868956C003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/SeafStartFooterView.strings"; sourceTree = "<group>"; };
 		57532BEA186895A8003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/FailToPreview_iPad.xib; sourceTree = "<group>"; };
 		57532BFA186895DE003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafUploadDirViewController.xib; sourceTree = "<group>"; };
-		57532BFD186895E2003D564B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/SeafUploadDirViewController.strings; sourceTree = "<group>"; };
-		57532BFF186895E4003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/SeafUploadDirViewController.strings"; sourceTree = "<group>"; };
 		57532C0218689616003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafAccountViewController.xib; sourceTree = "<group>"; };
-		57532C051868961C003D564B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/SeafAccountViewController.strings; sourceTree = "<group>"; };
-		57532C0D18689EF1003D564B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/FolderView_iPhone.strings; sourceTree = "<group>"; };
-		57532C0F18689EF8003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/FolderView_iPhone.strings"; sourceTree = "<group>"; };
-		57532C1318689F1F003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/FolderView_iPad.strings"; sourceTree = "<group>"; };
-		57532C151868A15E003D564B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/FolderView_iPad.strings; sourceTree = "<group>"; };
 		57532C171868AA48003D564B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		57532C181868AA48003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		575753E915EE7AE30049D720 /* SeafDateFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafDateFormatter.h; sourceTree = "<group>"; };
@@ -539,8 +518,6 @@
 		57A95E5718369147009D268A /* close2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = close2.png; sourceTree = "<group>"; };
 		57A95E5C18369E5A009D268A /* ellipsis.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ellipsis.png; sourceTree = "<group>"; };
 		57A95E5D18369E5A009D268A /* ellipsis2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ellipsis2.png; sourceTree = "<group>"; };
-		57ABE5FD187BC2DC00145FE3 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/DownloadingProgress_iPad.strings; sourceTree = "<group>"; };
-		57ABE5FF187BC2E000145FE3 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/DownloadingProgress_iPhone.strings; sourceTree = "<group>"; };
 		57B66EAF15BA513E00C2B41B /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		57BD931E174B0A0E00F7732F /* SeafDisDetailViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafDisDetailViewController.h; sourceTree = "<group>"; };
 		57BD931F174B0A0E00F7732F /* SeafDisDetailViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafDisDetailViewController.m; sourceTree = "<group>"; };
@@ -632,15 +609,7 @@
 		57F53B0415DF49EF0027140D /* FileSizeFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FileSizeFormatter.h; sourceTree = "<group>"; };
 		57F53B0515DF49EF0027140D /* FileSizeFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FileSizeFormatter.m; sourceTree = "<group>"; };
 		E4F46F4E187B2BF700B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		E4F46F4F187B2BF700B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/FailToPreview_iPad.strings; sourceTree = "<group>"; };
-		E4F46F51187B2BF700B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/FolderView_iPad.strings; sourceTree = "<group>"; };
-		E4F46F52187B2BF700B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/FolderView_iPhone.strings; sourceTree = "<group>"; };
-		E4F46F53187B2BF700B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/SeafAccountViewController.strings; sourceTree = "<group>"; };
-		E4F46F54187B2BF700B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/SeafStartFooterView.strings; sourceTree = "<group>"; };
-		E4F46F55187B2BF700B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/SeafStartHeaderView.strings; sourceTree = "<group>"; };
-		E4F46F56187B2BF700B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/SeafUploadDirViewController.strings; sourceTree = "<group>"; };
 		E4F46F57187B44B200B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
-		E4F46F5A187B53AB00B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = de; path = de.lproj/SeafTextEditorViewController.xib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1554,9 +1523,6 @@
 			isa = PBXVariantGroup;
 			children = (
 				570AE68A187CFC66002CCDE9 /* Base */,
-				570AE68D187CFCDE002CCDE9 /* en */,
-				570AE68F187CFCDF002CCDE9 /* zh-Hans */,
-				570AE691187CFCE0002CCDE9 /* de */,
 			);
 			name = FailToPreview_iPhone.xib;
 			sourceTree = "<group>";
@@ -1565,9 +1531,6 @@
 			isa = PBXVariantGroup;
 			children = (
 				57532BDA18689503003D564B /* Base */,
-				57532BDF1868950D003D564B /* zh-Hans */,
-				E4F46F55187B2BF700B80C36 /* de */,
-				570AE694187D0538002CCDE9 /* en */,
 			);
 			name = SeafStartHeaderView.xib;
 			sourceTree = "<group>";
@@ -1576,9 +1539,6 @@
 			isa = PBXVariantGroup;
 			children = (
 				57532BE218689561003D564B /* Base */,
-				57532BE518689569003D564B /* en */,
-				57532BE71868956C003D564B /* zh-Hans */,
-				E4F46F54187B2BF700B80C36 /* de */,
 			);
 			name = SeafStartFooterView.xib;
 			sourceTree = "<group>";
@@ -1587,9 +1547,6 @@
 			isa = PBXVariantGroup;
 			children = (
 				57532BEA186895A8003D564B /* Base */,
-				5722027A186B389700E49D74 /* en */,
-				5722027B186B389900E49D74 /* zh-Hans */,
-				E4F46F4F187B2BF700B80C36 /* de */,
 			);
 			name = FailToPreview_iPad.xib;
 			sourceTree = "<group>";
@@ -1598,9 +1555,6 @@
 			isa = PBXVariantGroup;
 			children = (
 				57532BFA186895DE003D564B /* Base */,
-				57532BFD186895E2003D564B /* en */,
-				57532BFF186895E4003D564B /* zh-Hans */,
-				E4F46F56187B2BF700B80C36 /* de */,
 			);
 			name = SeafUploadDirViewController.xib;
 			sourceTree = "<group>";
@@ -1609,9 +1563,6 @@
 			isa = PBXVariantGroup;
 			children = (
 				57532C0218689616003D564B /* Base */,
-				57532C051868961C003D564B /* en */,
-				E4F46F53187B2BF700B80C36 /* de */,
-				570AE692187D044C002CCDE9 /* zh-Hans */,
 			);
 			name = SeafAccountViewController.xib;
 			sourceTree = "<group>";
@@ -1630,9 +1581,6 @@
 			isa = PBXVariantGroup;
 			children = (
 				576FFDAD186AAC80009BB81A /* Base */,
-				573C95A61875AB750030E602 /* en */,
-				573C95A81875AB760030E602 /* zh-Hans */,
-				57ABE5FD187BC2DC00145FE3 /* de */,
 			);
 			name = DownloadingProgress_iPad.xib;
 			sourceTree = "<group>";
@@ -1641,9 +1589,6 @@
 			isa = PBXVariantGroup;
 			children = (
 				576FFDAF186AAC80009BB81A /* Base */,
-				573C95A21875AB6E0030E602 /* en */,
-				573C95A41875AB6F0030E602 /* zh-Hans */,
-				57ABE5FF187BC2E000145FE3 /* de */,
 			);
 			name = DownloadingProgress_iPhone.xib;
 			sourceTree = "<group>";
@@ -1676,7 +1621,6 @@
 			isa = PBXVariantGroup;
 			children = (
 				576FFDB7186AAC80009BB81A /* Base */,
-				E4F46F5A187B53AB00B80C36 /* de */,
 			);
 			name = SeafTextEditorViewController.xib;
 			sourceTree = "<group>";
@@ -1703,9 +1647,6 @@
 			isa = PBXVariantGroup;
 			children = (
 				57532BD418688ECA003D564B /* Base */,
-				57532C0D18689EF1003D564B /* en */,
-				57532C0F18689EF8003D564B /* zh-Hans */,
-				E4F46F52187B2BF700B80C36 /* de */,
 			);
 			name = FolderView_iPhone.storyboard;
 			sourceTree = "<group>";
@@ -1714,9 +1655,6 @@
 			isa = PBXVariantGroup;
 			children = (
 				57532BD318688ECA003D564B /* Base */,
-				57532C1318689F1F003D564B /* zh-Hans */,
-				57532C151868A15E003D564B /* en */,
-				E4F46F51187B2BF700B80C36 /* de */,
 			);
 			name = FolderView_iPad.storyboard;
 			sourceTree = "<group>";

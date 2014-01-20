@@ -867,7 +867,6 @@
     <resources>
         <image name="seafile-logo.png" width="360" height="360"/>
     </resources>
-    <color key="tintColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">
         <simulatedStatusBarMetrics key="statusBar"/>
         <simulatedOrientationMetrics key="orientation"/>
