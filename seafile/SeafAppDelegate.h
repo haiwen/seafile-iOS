@@ -57,6 +57,9 @@ enum {
 @property (retain) NSMutableArray *conns;
 @property (readwrite) SeafConnection *connection;
 
+@property (retain) NSMutableArray *ufiles;
+
+
 - (UINavigationController *)masterNavController:(int)index;
 - (UIViewController *)detailViewController:(int)index;
 
@@ -72,12 +75,15 @@ enum {
 + (void)decDownloadnum;
 
 + (void)incUploadnum;
-+ (void)decUploadnum;
++ (void)decUploadnum:(BOOL)result;
+
+
++ (void)backgroundUpload:(SeafUploadFile *)ufile;
+
 
 - (void)checkIconBadgeNumber;
 - (void)saveAccounts;
 - (SeafConnection *)getConnection:(NSString *)url username:(NSString *)username;
-
 
 
 @end

@@ -366,6 +366,7 @@
 - (void)addUploadFiles:(NSArray *)uploadItems
 {
     for (SeafUploadFile *file in uploadItems) {
+        if ([self.uploadItems containsObject:file]) continue;
         NSMutableDictionary *dict = file.uploadAttr;
         if (!dict)
             dict = [[NSMutableDictionary alloc] init];
@@ -373,8 +374,8 @@
         [dict setObject:self.path forKey:@"upath"];
         [file saveAttr:dict];
         file.udir = self;
+        [self.uploadItems addObject:file];
     }
-    [self.uploadItems addObjectsFromArray:uploadItems];
     _allItems = nil;
 }
 

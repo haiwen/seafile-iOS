@@ -208,6 +208,9 @@ enum {
 
 - (void)refreshView
 {
+    for (SeafUploadFile *file in _directory.uploadItems) {
+        file.delegate = self;
+    }
     [self.tableView reloadData];
     if (IsIpad() && self.detailViewController.preViewItem && [self.detailViewController.preViewItem isKindOfClass:[SeafFile class]]) {
         SeafFile *sfile = (SeafFile *)self.detailViewController.preViewItem;
@@ -299,7 +302,9 @@ enum {
     imagePickerController.delegate = self;
     imagePickerController.allowsMultipleSelection = YES;
     imagePickerController.filterType = QBImagePickerFilterTypeAllAssets;
-    imagePickerController.maximumNumberOfSelection = 10;
+    imagePickerController.limitsMaximumNumberOfSelection = YES;
+    imagePickerController.maximumNumberOfSelection = 20;
+
     if (IsIpad()) {
         UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:imagePickerController];
         self.popoverController = [[UIPopoverController alloc] initWithContentViewController:navigationController];
@@ -382,6 +387,14 @@ enum {
     if (!_directory.hasCache) {
         [self showLodingView];
         self.state = STATE_LOADING;
+    }
+    Debug("Upload %d", _directory.uploadItems.count);
+
+    for (SeafUploadFile *file in _directory.uploadItems) {
+        file.delegate = self;
+        if (!file.uploaded && !file.uploading) {
+            [SeafAppDelegate backgroundUpload:file];
+        }
     }
 }
 
@@ -641,6 +654,7 @@ enum {
 
 - (SeafBase *)getDentrybyIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView
 {
+    if (!indexPath) return nil;
     if (tableView != self.tableView) {
         return [self.searchResults objectAtIndex:indexPath.row];
     } else if (![_directory isKindOfClass:[SeafRepos class]])
@@ -868,6 +882,7 @@ enum {
                 break;
         }
         self.state = STATE_INIT;
+        [self dismissLoadingView];
     }
 }
 
@@ -1027,16 +1042,9 @@ enum {
     }
 }
 
-- (void)viewDidAppear:(BOOL)animated
-{
-    for (SeafUploadFile *file in _directory.uploadItems)
-        if (!file.uploaded && !file.uploading)
-         [file upload:_connection repo:_directory.repoId path:_directory.path update:NO];
-}
-
 - (void)backgroundUpload:(SeafUploadFile *)ufile
 {
-    [ufile upload:ufile.udir->connection repo:ufile.udir.repoId path:ufile.udir.path update:NO];
+    [SeafAppDelegate backgroundUpload:ufile];
 }
 
 - (void)chooseUploadDir:(SeafDir *)dir file:(id<PreViewDelegate>)ufile
@@ -1092,11 +1100,11 @@ enum {
         }
 
         SeafUploadFile *file =  [self.connection getUploadfile:path];
+        file.delegate = self;
         [files addObject:file];
     }
     [self.directory addUploadFiles:files];
     [self.tableView reloadData];
-
     i = 0;
     for (NSDictionary *dict in info) {
         i++;
@@ -1114,8 +1122,7 @@ enum {
         }
 
         SeafUploadFile *file =  [self.connection getUploadfile:path];
-        file.delegate = self;
-        [file upload:_connection repo:self.directory.repoId path:self.directory.path update:NO];
+        [SeafAppDelegate backgroundUpload:file];
     }
 }
 

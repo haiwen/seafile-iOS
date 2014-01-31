@@ -99,13 +99,12 @@ static NSMutableDictionary *uploadFiles = nil;
     [dict setObject:[NSNumber numberWithDouble:[[NSDate date] timeIntervalSince1970]]forKey:@"utime"];
     [dict setObject:[NSNumber numberWithBool:result] forKey:@"result"];
     [self saveAttr:dict];
-    [SeafAppDelegate decUploadnum];
-    Debug("result=%d, _delegate=%@\n", result, _delegate);
+    Debug("result=%d, name=%@, _delegate=%@\n", result, self.name, _delegate);
     if (result)
         [_delegate uploadSucess:self oid:oid];
     else
         [_delegate uploadProgress:self result:NO completeness:0];
-    _delegate = nil;
+    [SeafAppDelegate decUploadnum:result];
 }
 
 - (int)percentForShow:(long long)totalBytesWritten expected:(long long)totalBytesExpectedToWrite
@@ -238,15 +237,15 @@ static NSMutableDictionary *uploadFiles = nil;
 - (void)upload:(SeafConnection *)connection repo:(NSString *)repoId path:(NSString *)uploadpath update:(BOOL)update
 {
     @synchronized (self) {
-        if (_uploading)
+        if (_uploading || self.uploaded)
             return;
         _uploading = YES;
         _uProgress = 0;
-        NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:self.lpath error:nil];
-        _filesize = attrs.fileSize;
     }
-    [_delegate uploadProgress:self result:YES completeness:0];
     [SeafAppDelegate incUploadnum];
+    NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:self.lpath error:nil];
+    _filesize = attrs.fileSize;
+    [_delegate uploadProgress:self result:YES completeness:0];
     NSString *upload_url;
     SeafRepo *repo = [connection getRepo:repoId];
     BOOL byblock = (repo.encrypted && [connection localDecrypt:repoId]);
@@ -262,7 +261,7 @@ static NSMutableDictionary *uploadFiles = nil;
     [connection sendRequest:upload_url repo:repoId success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          NSString *url = JSON;
-         Debug("Upload file %@ %@, %@ update=%d, byblock=%d\n", self.name, url, uploadpath, update, byblock);
+         Debug("Upload file %@ %@, %@ update=%d, byblock=%d, delegate%@\n", self.name, url, uploadpath, update, byblock, _delegate);
          if (byblock) {
              NSMutableArray *blockids = [[NSMutableArray alloc] init];
              NSMutableArray *paths = [[NSMutableArray alloc] init];

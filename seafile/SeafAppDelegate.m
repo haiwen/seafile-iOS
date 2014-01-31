@@ -18,6 +18,7 @@
 @property UIBackgroundTaskIdentifier bgTask;
 @property int downloadnum;
 @property int uploadnum;
+@property int uploadFailedNum;
 @property NSInteger moduleIdx;
 @property (readonly) SeafDetailViewController *detailVC;
 @property (readonly) SeafDisDetailViewController *disDetailVC;
@@ -141,6 +142,7 @@
     else
         [[UITabBar appearance] setSelectedImageTintColor:[UIColor colorWithRed:238.0f/256 green:136.0f/256 blue:51.0f/255 alpha:1.0]];
 
+    self.ufiles = [[NSMutableArray alloc] init];
     self.conns = [[NSMutableArray alloc] init];
     [self loadAccounts];
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
@@ -525,6 +527,26 @@
     }
 }
 
+- (void)tryUpload
+{
+    if (self.ufiles.count == 0) return;
+    NSMutableArray *toupload = [[NSMutableArray alloc] init];
+    @synchronized (self) {
+        NSMutableArray *arr = [self.ufiles mutableCopy];
+        for (SeafUploadFile *ufile in arr) {
+            if (self.uploadnum + toupload.count + self.uploadFailedNum >= 3) break;
+            [self.ufiles removeObject:ufile];
+            if (!ufile.uploaded) {
+                [self.ufiles addObject:ufile];
+                [toupload addObject:ufile];
+            }
+        }
+    }
+    for (SeafUploadFile *ufile in toupload) {
+        [ufile upload:ufile.udir->connection repo:ufile.udir.repoId path:ufile.udir.path update:NO];
+    }
+}
+
 + (void)incDownloadnum
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
@@ -551,13 +573,40 @@
     Debug("%d upload, %d download\n", appdelegate.uploadnum, appdelegate.downloadnum);
 }
 
-+ (void)decUploadnum
+- (void)decUploadnum:(BOOL)result
+{
+    Debug("upload %d, result=%d", self.uploadnum, result);
+    @synchronized (self) {
+        self.uploadnum --;
+    }
+    [self checkBackgroudTask:[UIApplication sharedApplication]];
+    if (result) {
+        self.uploadFailedNum = 0;
+    } else {
+        self.uploadFailedNum ++;
+        if (self.uploadFailedNum >= 3) {
+            [self performSelector:@selector(tryUpload) withObject:nil afterDelay:10.0];
+            self.uploadFailedNum = 2;
+            return;
+        }
+    }
+    [self tryUpload];
+
+}
+
++ (void)decUploadnum:(BOOL)result
+{
+    [(SeafAppDelegate *)[[UIApplication sharedApplication] delegate] decUploadnum:result];
+}
+
++ (void)backgroundUpload:(SeafUploadFile *)ufile
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     @synchronized (appdelegate) {
-        appdelegate.uploadnum --;
+        if (![appdelegate.ufiles containsObject:ufile])
+            [appdelegate.ufiles addObject:ufile];
     }
-    [appdelegate checkBackgroudTask:[UIApplication sharedApplication]];
+    [appdelegate tryUpload];
 }
 
 - (void)deleteAllObjects:(NSString *)entityDescription
