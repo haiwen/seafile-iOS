@@ -41,13 +41,14 @@ enum TOOL_ITEM {
 @property BOOL currentItalicStatus;
 @property BOOL currentUnderlineStatus;
 @property UIBarButtonItem *ep;
-@property UIBarButtonItem *cancelItem;
 @property UIBarButtonItem *saveItem;
-@property NSMutableArray *litems;
 @property (strong, nonatomic) IBOutlet UIView *topview;
+@property (strong, nonatomic) IBOutlet UIView *seafTopview;
 
 @property id<QLPreviewItem, PreViewDelegate> sfile;
 @property int flags;
+
+@property float barHeight;
 
 @property(nonatomic,retain) EGOTextView *egoTextView;
 
@@ -63,7 +64,7 @@ enum TOOL_ITEM {
 
 - (id)initWithFile:(id<QLPreviewItem, PreViewDelegate>)file
 {
-    self = [self initWithAutoNibName];
+    self = [self initWithAutoPlatformNibName];
     self.sfile = file;
     return self;
 }
@@ -78,29 +79,20 @@ enum TOOL_ITEM {
     return [sfile.mime isEqualToString:@"text/x-markdown"];
 }
 
+- (BOOL)IsRawText
+{
+    return ![self IsSeaf] && ![self IsMarkdown];
+}
+
 - (UIWebView *)webView
 {
     return (UIWebView *)self.view;
-}
-- (void)bold2
-{
-    [self.webView stringByEvaluatingJavaScriptFromString:@"document.execCommand(\"Bold\")"];
-}
-
-- (void)italic2
-{
-    [self.webView stringByEvaluatingJavaScriptFromString:@"document.execCommand(\"Italic\")"];
-}
-
-- (void)underline2
-{
-    [self.webView stringByEvaluatingJavaScriptFromString:@"document.execCommand(\"Underline\")"];
 }
 
 - (void)btClicked:(NSString *)tag
 {
     [self.webView stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"btClicked(\"%@\")", tag]];
-    if (IsIpad() && [self IsSeaf]) {
+    if ([self IsSeaf]) {
         NSString *str = [self.webView stringByEvaluatingJavaScriptFromString:@"getBtState()"];
         [self handleUrl:str];
     }
@@ -111,119 +103,56 @@ enum TOOL_ITEM {
     if ([self.ep.title isEqualToString:NSLocalizedString(@"Preview", nil)]) {
         self.ep.title = NSLocalizedString(@"Edit", nil);
         self.egoTextView.hidden = YES;
-        for (UIBarButtonItem *item in self.navigationItem.rightBarButtonItems)
-            item.enabled = NO;
         NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [self.egoTextView.text stringEscapedForJavasacript]];
         [self.webView stringByEvaluatingJavaScriptFromString:js];
     } else {
         self.ep.title = NSLocalizedString(@"Preview", nil);
         self.egoTextView.hidden = NO;
         [self.egoTextView becomeFirstResponder];
-        for (UIBarButtonItem *item in self.navigationItem.rightBarButtonItems) {
-            item.enabled = YES;
-        }
     }
 }
-- (void)pound
-{
-    [self btClicked:@"pound"];
-}
-- (void)asterisk
-{
-    [self btClicked:@"star"];
-}
-- (void)equal
-{
-    [self btClicked:@"equal"];
-}
-- (void)bold
-{
+
+- (IBAction)bold:(id)sender {
     [self btClicked:@"bold"];
 }
-- (void)italic
-{
+- (IBAction)italic:(id)sender {
     [self btClicked:@"italic"];
 }
-- (void)insertLink
-{
-    [self btClicked:@"link"];
-}
-- (void)quote
-{
-    [self btClicked:@"quote"];
-}
-- (void)code
-{
-    [self btClicked:@"code"];
-}
-- (void)image
-{
-    [self btClicked:@"image"];
-}
-- (void)ol
-{
-    [self btClicked:@"olist"];
-}
-- (void)ul
-{
-    [self btClicked:@"ulist"];
-}
-- (void)heading
-{
-    [self btClicked:@"heading"];
-}
-- (void)hor
-{
-    [self btClicked:@"hr"];
-}
-- (void)undo
-{
-    [self btClicked:@"undo"];
-}
-- (void)redo
-{
-    [self btClicked:@"redo"];
-}
-- (void)help
-{
-    [self btClicked:@"help"];
-}
-
-- (void)strike
-{
+- (IBAction)strike:(id)sender {
     [self btClicked:@"strike"];
 }
-- (void)underline
-{
+- (IBAction)underline:(id)sender {
     [self btClicked:@"underline"];
 }
-- (void)indent
-{
+- (IBAction)ul:(id)sender {
+    [self btClicked:@"ulist"];
+}
+- (IBAction)ol:(id)sender {
+    [self btClicked:@"olist"];
+}
+- (IBAction)indent:(id)sender {
     [self btClicked:@"indent"];
 }
-- (void)outdent
-{
+- (IBAction)outdent:(id)sender {
     [self btClicked:@"outdent"];
 }
-- (void)left
-{
+- (IBAction)left:(id)sender {
     [self btClicked:@"left"];
 }
-- (void)center
-{
+- (IBAction)center:(id)sender {
     [self btClicked:@"center"];
 }
-- (void)right
-{
+- (IBAction)right:(id)sender {
     [self btClicked:@"right"];
 }
-- (void)justify
-{
+- (IBAction)justify:(id)sender {
     [self btClicked:@"justify"];
 }
-- (void)removeLink
-{
-    [self btClicked:@"unlink"];
+- (IBAction)undo:(id)sender {
+    [self btClicked:@"undo"];
+}
+- (IBAction)redo:(id)sender {
+    [self btClicked:@"redo"];
 }
 
 - (void)replaceSelectedWith:(NSString *)dft before:(NSString *)before after:(NSString *)after
@@ -275,34 +204,10 @@ enum TOOL_ITEM {
     [self insertString:@"#"];
 }
 
-- (UIBarButtonItem *)getBarItem:(NSString *)imageName action:(SEL)action active:(int)active
-{
-    UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
-    btn.frame = CGRectMake(0,0,20,20);
-    UIImage *img = [UIImage imageNamed:[NSString stringWithFormat:@"%@.png", imageName]];
-    UIImage *img2 = [UIImage imageNamed:[NSString stringWithFormat:@"%@2.png", imageName]];
-    [btn setImage:img forState:UIControlStateNormal];
-    [btn setImage:img2 forState:UIControlStateSelected];
-    btn.showsTouchWhenHighlighted = YES;
-
-    if(active)
-        btn.selected = YES;
-    [btn addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];
-    UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithCustomView:btn];
-    return item;
-}
-
 - (UIBarButtonItem *)getTextBarItem:(NSString *)title action:(SEL)action active:(int)active
 {
     UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithTitle:title style:UIBarButtonItemStyleBordered target:self action:action];
     return item;
-}
-
-- (void)addItem:(NSMutableArray *)items image:(NSString *)imageName action:(SEL)action
-{
-    UIBarButtonItem *item = [self getBarItem:imageName action:action active:0];
-    [items addObject:item];
-    [items addObject:[self getSpaceBarItem:16.0]];
 }
 
 - (void)updateSeafToolbar:(int)flag
@@ -310,70 +215,17 @@ enum TOOL_ITEM {
     if (flag == flags)
         return;
     flags = flag;
-    for (int i = 0; i < ITEM_MAX; ++i) {
-        UIBarButtonItem *item = [self.navigationItem.rightBarButtonItems objectAtIndex:2*i];
-        UIButton *btn = (UIButton *)item.customView;
-        btn.selected = (flag & (1 << i)) != 0;
+    for (UIView *v in self.seafTopview.subviews) {
+        UIButton *btn = (UIButton *)v;
+        btn.selected = (flag & (1 << btn.tag)) != 0;
     }
-}
-
-- (void)initSeafToolbar
-{
-    NSMutableArray *items = [[NSMutableArray alloc] init];
-    [self addItem:items image:@"bt-redo" action:@selector(redo)];
-    [self addItem:items image:@"bt-undo" action:@selector(undo)];
-    [self addItem:items image:@"bt-justify" action:@selector(justify)];
-    [self addItem:items image:@"bt-right" action:@selector(right)];
-    [self addItem:items image:@"bt-center" action:@selector(center)];
-    [self addItem:items image:@"bt-left" action:@selector(left)];
-    [self addItem:items image:@"bt-outdent" action:@selector(outdent)];
-    [self addItem:items image:@"bt-indent" action:@selector(indent)];
-    [self addItem:items image:@"bt-ol" action:@selector(ol)];
-    [self addItem:items image:@"bt-ul" action:@selector(ul)];
-    [self addItem:items image:@"bt-underline" action:@selector(underline)];
-    [self addItem:items image:@"bt-strikethrough" action:@selector(strike)];
-    [self addItem:items image:@"bt-italic" action:@selector(italic)];
-    [self addItem:items image:@"bt-bold" action:@selector(bold)];
-    self.navigationItem.rightBarButtonItems = items;
 }
 
 - (void)checkBtState:(id)sender
 {
-    if (IsIpad() && [self IsSeaf]) {
+    if ([self IsSeaf]) {
         NSString *str = [self.webView stringByEvaluatingJavaScriptFromString:@"getBtState()"];
         [self handleUrl:str];
-    }
-}
-
-- (void)checkSelection:(id)sender
-{
-    if ([self IsSeaf]) {
-        if (!IsIpad()) {
-            BOOL boldEnabled = [[self.webView stringByEvaluatingJavaScriptFromString:@"document.queryCommandState('Bold')"] boolValue];
-            BOOL italicEnabled = [[self.webView stringByEvaluatingJavaScriptFromString:@"document.queryCommandState('Italic')"] boolValue];
-            BOOL underlineEnabled = [[self.webView stringByEvaluatingJavaScriptFromString:@"document.queryCommandState('Underline')"] boolValue];
-
-            NSMutableArray *items = [[NSMutableArray alloc] init];
-
-            UIBarButtonItem *bold = [[UIBarButtonItem alloc] initWithTitle:(boldEnabled) ? @"[B]" : @" B " style:UIBarButtonItemStyleBordered target:self action:@selector(bold2)];
-            UIBarButtonItem *italic = [[UIBarButtonItem alloc] initWithTitle:(italicEnabled) ? @"[I]" : @" I " style:UIBarButtonItemStyleBordered target:self action:@selector(italic2)];
-            UIBarButtonItem *underline = [[UIBarButtonItem alloc] initWithTitle:(underlineEnabled) ? @"[U]" : @" U " style:UIBarButtonItemStyleBordered target:self action:@selector(underline2)];
-
-            [items addObject:underline];
-            [items addObject:italic];
-            [items addObject:bold];
-            self.navigationItem.rightBarButtonItems = items;
-
-            if (currentBoldStatus != boldEnabled || currentItalicStatus != italicEnabled || currentUnderlineStatus != underlineEnabled || sender == self) {
-                currentBoldStatus = boldEnabled;
-                currentItalicStatus = italicEnabled;
-                currentUnderlineStatus = underlineEnabled;
-            }
-        } else {
-            [self initSeafToolbar];
-        }
-    } else {
-        self.navigationItem.rightBarButtonItems = nil;
     }
 }
 
@@ -414,13 +266,16 @@ enum TOOL_ITEM {
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 
     EGOTextView *view = [[EGOTextView alloc] initWithFrame:self.view.bounds];
+    view.correctable = NO;
     view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     view.frame = self.view.frame;
     view.delegate = self;
     [self.view addSubview:view];
     self.egoTextView = view;
     [view becomeFirstResponder];
-    self.cancelItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancel)];
+    UIBarButtonItem *cancelItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancel)];
+    self.navigationItem.rightBarButtonItem = cancelItem;
+
     self.saveItem = [self getTextBarItem:NSLocalizedString(@"Save", nil) action:@selector(save) active:0];
     [self start];
 }
@@ -528,43 +383,29 @@ enum TOOL_ITEM {
 {
     self.egoTextView.hidden = NO;
     self.egoTextView.text = sfile.content;
-    self.litems = [[NSMutableArray alloc] init];
-    [self.litems addObject:self.saveItem];
+    NSMutableArray *litems = [[NSMutableArray alloc] init];
+    [litems addObject:self.saveItem];
     if ([self IsMarkdown]) {
         self.ep = [self getTextBarItem:NSLocalizedString(@"Preview", nil) action:@selector(edit_preview) active:0];
-        [self.litems addObject:self.ep];
+        [litems addObject:self.ep];
         NSURLRequest *request = [[NSURLRequest alloc] initWithURL:self.sfile.previewItemURL cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
         [self.webView loadRequest:request];
     }
-    self.navigationItem.rightBarButtonItem = self.cancelItem;
-    self.navigationItem.leftBarButtonItems = self.litems;
+    self.navigationItem.leftBarButtonItems = litems;
     [self.egoTextView becomeFirstResponder];
 }
 
 - (void)prepareSeaf
 {
-    self.litems = [[NSMutableArray alloc] init];
-    [self.litems addObject:self.saveItem];
-    [self.litems addObject: [self getSpaceBarItem:30.0]];
-    [self.litems addObject:self.cancelItem];
-    self.navigationItem.leftBarButtonItems = self.litems;
-
+    self.navigationItem.leftBarButtonItem = self.saveItem;
     self.egoTextView.hidden = YES;;
-    NSString *path;
-    if (IsIpad()) {
-        path = [[NSBundle mainBundle] pathForResource:@"edit_file_seaf2" ofType:@"html"];
+    NSString *path = [[NSBundle mainBundle] pathForResource:@"edit_file_seaf" ofType:@"html"];
         timer = [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(checkBtState:) userInfo:nil repeats:YES];
-    } else {
-        path = [[NSBundle mainBundle] pathForResource:@"edit_file_seaf" ofType:@"html"];
-        timer = [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(checkSelection:) userInfo:nil repeats:YES];
-    }
-    [self checkSelection:nil];
 
     NSURL *url = [NSURL fileURLWithPath:path];
-    NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 30];
+    NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 3];
     [(UIWebView *)self.view loadRequest: request];
 }
-
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
@@ -618,53 +459,75 @@ enum TOOL_ITEM {
             break;
         }
     }
-
     // Locate UIWebFormView.
     for (UIView *possibleFormView in [keyboardWindow subviews]) {
-        // iOS 5 sticks the UIWebFormView inside a UIPeripheralHostView.
         if ([[possibleFormView description] rangeOfString:@"UIPeripheralHostView"].location != NSNotFound) {
             for (UIView *subviewWhichIsPossibleFormView in [possibleFormView subviews]) {
+                // hides the accessory bar
                 if ([[subviewWhichIsPossibleFormView description] rangeOfString:@"UIWebFormAccessory"].location != NSNotFound) {
+                    self.barHeight = subviewWhichIsPossibleFormView.frame.size.height;
                     [subviewWhichIsPossibleFormView removeFromSuperview];
+                }
+                // hides the backdrop (iOS 7)
+                if ([[subviewWhichIsPossibleFormView description] hasPrefix:@"<UIKBInputBackdropView"]) {
+                    if ([subviewWhichIsPossibleFormView frame].origin.y == 0){
+                        [[subviewWhichIsPossibleFormView layer] setOpacity:0.0];
+                    }
+                }
+                // hides the thin grey line used to adorn the bar (iOS 6)
+                if([[subviewWhichIsPossibleFormView description] rangeOfString:@"UIImageView"].location != NSNotFound){
+                     [[subviewWhichIsPossibleFormView layer] setOpacity: 0.0];
                 }
             }
         }
     }
+
+    self.seafTopview.frame = CGRectMake(0, self.seafTopview.frame.origin.y + self.barHeight, self.seafTopview.frame.size.width, self.seafTopview.frame.size.height);
+    [self.view addSubview:self.seafTopview];
+    [self.view bringSubviewToFront:self.seafTopview];
 }
 
 - (void)keyboardWillShow:(NSNotification *)notification {
-    if ([self IsSeaf]) {
-        [self performSelector:@selector(removeBar) withObject:nil afterDelay:0];
-        return;
-    }
-
     NSDictionary* info = [notification userInfo];
     CGSize keyBoardSize = [[info objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue].size;
     float keyH = MIN(keyBoardSize.height, keyBoardSize.width);
-
-    if (![self IsMarkdown]) {
+    
+    if ([self IsRawText]) {
         self.egoTextView.frame = CGRectMake(self.egoTextView.frame.origin.x, self.egoTextView.frame.origin.y, self.egoTextView.frame.size.width, self.view.bounds.size.height - keyH );
         return;
-    } else
-        self.egoTextView.frame = CGRectMake(self.egoTextView.frame.origin.x, self.egoTextView.frame.origin.y, self.egoTextView.frame.size.width, self.view.bounds.size.height - keyH - TOP_VIEW_HEIGHT );
+    }
 
-    self.topview.frame = CGRectMake(0, self.egoTextView.frame.origin.y+ self.egoTextView.frame.size.height, self.egoTextView.frame.size.width, TOP_VIEW_HEIGHT);
-    float unit = self.view.bounds.size.width / self.topview.subviews.count;
-    for (int i = 0; i < self.topview.subviews.count; ++i) {
-        UIView *bt = self.topview.subviews[i];
+    UIView *view = [self IsSeaf] ? self.view : self.egoTextView;
+    UIView *topview = [self IsSeaf] ? self.seafTopview : self.topview;
+    float height = self.view.bounds.size.height - keyH - TOP_VIEW_HEIGHT;
+    if ([self IsMarkdown])
+        view.frame = CGRectMake(view.frame.origin.x, view.frame.origin.y, view.frame.size.width, height);
+    topview.frame = CGRectMake(0, height, view.frame.size.width, TOP_VIEW_HEIGHT);
+    CGRect r = topview.frame;
+    Debug("%f %f %d,[%f, %f] %f %f %f %f\n", self.view.bounds.size.height, keyH, TOP_VIEW_HEIGHT, view.frame.origin.y, height, r.origin.x, r.origin.y, r.size.width, r.size.height);
+
+    float unit = self.view.bounds.size.width / topview.subviews.count;
+    for (int i = 0; i < topview.subviews.count; ++i) {
+        UIView *bt = topview.subviews[i];
         float centerX = unit *i + unit/2;
         bt.frame = CGRectMake(centerX - bt.frame.size.width/2, bt.frame.origin.y, bt.frame.size.width, bt.frame.size.height);
-
     }
-    [self.view addSubview:self.topview];
-    [self.view bringSubviewToFront:self.topview];
+
+    if ([self IsSeaf]) {
+        [self performSelector:@selector(removeBar) withObject:nil afterDelay:0];
+        return;
+    } else {
+        [self.view addSubview:topview];
+        [self.view bringSubviewToFront:topview];
+    }
 }
 
 - (void)keyboardWillHide:(NSNotification *)notification{
-    if ([self IsSeaf]) return;
-    self.egoTextView.frame = CGRectMake(self.egoTextView.frame.origin.x, self.egoTextView.frame.origin.y, self.egoTextView.frame.size.width, self.view.bounds.size.height);
-    [self.egoTextView becomeFirstResponder];
-    [self.topview removeFromSuperview];
+    UIView *view = [self IsSeaf] ? self.view : self.egoTextView;
+    UIView *topview = [self IsSeaf] ? self.seafTopview : self.topview;
+    view.frame = CGRectMake(view.frame.origin.x, view.frame.origin.y, view.frame.size.width, self.view.bounds.size.height);
+    [view becomeFirstResponder];
+    [topview removeFromSuperview];
 }
 
 @end
