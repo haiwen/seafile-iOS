@@ -1,4 +1,5 @@
 var g_args=""
+var g_last_url=""
 function openCustomURLinIFrame(src) {
     var rootElm = document.documentElement;
     var newFrameElm = document.createElement("IFRAME");
@@ -6,8 +7,6 @@ function openCustomURLinIFrame(src) {
     rootElm.appendChild(newFrameElm);
     //remove the frame now
     newFrameElm.parentNode.removeChild(newFrameElm);
-    console.log("xx")
-    clearTimeout(t)
 }
 function a(src) {
     var s = document.createElement('script');
@@ -31,9 +30,12 @@ function calliOSFunction(functionName, args, successCallback, errorCallback) {
         callInfo.args = args;
     }
     g_args = JSON.stringify(callInfo)
-    //console.log(g_args)
-    //url += JSON.stringify(callInfo)
-    //openCustomURLinIFrame(url);
+    console.log(g_args)
+    url += JSON.stringify(callInfo)
+    if (g_last_url != url) {
+        g_last_url = url;
+        openCustomURLinIFrame(url);
+    }
 }
 
 function getBtState () {

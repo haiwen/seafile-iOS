@@ -47,7 +47,6 @@ enum PREVIEW_STATE {
 @property (strong) UIBarButtonItem *editItem;
 @property (strong) UIBarButtonItem *exportItem;
 @property (strong) UIBarButtonItem *shareItem;
-//@property (strong) UIBarButtonItem *cancelItem;
 @property (strong) UIBarButtonItem *commentItem;
 
 @property (strong, nonatomic) UIBarButtonItem *fullscreenItem;
@@ -101,12 +100,6 @@ enum PREVIEW_STATE {
             [self.exportItem setEnabled:YES];
         else
             [self.exportItem setEnabled:NO];
-#if 0
-        if (self.state == PREVIEW_DOWNLOADING) {
-            [array addObject:self.cancelItem];
-            [array addObject:[self getSpaceBarItem]];
-        }
-#endif
         if (((SeafFile *)self.preViewItem).groups.count > 0) {
             [array addObject:self.commentItem];
             [array addObject:[self getSpaceBarItem]];
@@ -249,7 +242,6 @@ enum PREVIEW_STATE {
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
 
     self.editItem = [self getBarItem:@"editfile".navItemImgName action:@selector(editFile:)size:18];
-    //self.cancelItem = [self getBarItem:@"close".navItemImgName action:@selector(cancelDownload:)size:18];
     self.exportItem = [self getBarItemAutoSize:@"export".navItemImgName action:@selector(export:)];
     self.shareItem = [self getBarItemAutoSize:@"share".navItemImgName action:@selector(share:)];
     self.commentItem = [self getBarItem:@"addmsg".navItemImgName action:@selector(comment:) size:20];

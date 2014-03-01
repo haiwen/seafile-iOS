@@ -69,7 +69,8 @@
     _connection = conn;
     _url = url;
     self.predefinedTitle = title;
-    [self configureView];
+    if (self.isViewLoaded)
+        [self configureView];
     if (IsIpad())
         [self.navigationController popToRootViewControllerAnimated:NO];
     if (self.masterPopoverController != nil) {

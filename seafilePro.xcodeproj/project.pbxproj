@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		5704C6D31753A1380028F4FE /* IntelligentSplitViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6D11753A1380028F4FE /* IntelligentSplitViewController.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
-		5704C6F11755AA0D0028F4FE /* SeafEmptyViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6EF1755AA0C0028F4FE /* SeafEmptyViewController.m */; };
 		5704C6F91756710F0028F4FE /* tab-account.png in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F51756710F0028F4FE /* tab-account.png */; };
 		5704C6FB1756710F0028F4FE /* tab-activity.png in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F61756710F0028F4FE /* tab-activity.png */; };
 		5704C6FD1756710F0028F4FE /* tab-discussion.png in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F71756710F0028F4FE /* tab-discussion.png */; };
@@ -270,8 +269,6 @@
 /* Begin PBXFileReference section */
 		5704C6D01753A1380028F4FE /* IntelligentSplitViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IntelligentSplitViewController.h; sourceTree = "<group>"; };
 		5704C6D11753A1380028F4FE /* IntelligentSplitViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IntelligentSplitViewController.m; sourceTree = "<group>"; };
-		5704C6EE1755AA0C0028F4FE /* SeafEmptyViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafEmptyViewController.h; sourceTree = "<group>"; };
-		5704C6EF1755AA0C0028F4FE /* SeafEmptyViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafEmptyViewController.m; sourceTree = "<group>"; };
 		5704C6F51756710F0028F4FE /* tab-account.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-account.png"; sourceTree = "<group>"; };
 		5704C6F61756710F0028F4FE /* tab-activity.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-activity.png"; sourceTree = "<group>"; };
 		5704C6F71756710F0028F4FE /* tab-discussion.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-discussion.png"; sourceTree = "<group>"; };
@@ -506,6 +503,7 @@
 		57A95E5718369147009D268A /* close2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = close2.png; sourceTree = "<group>"; };
 		57A95E5C18369E5A009D268A /* ellipsis.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ellipsis.png; sourceTree = "<group>"; };
 		57A95E5D18369E5A009D268A /* ellipsis2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ellipsis2.png; sourceTree = "<group>"; };
+		57AE699418C1C0A200AEBF8B /* ca */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ca; path = ca.lproj/Localizable.strings; sourceTree = "<group>"; };
 		57B66EAF15BA513E00C2B41B /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		57BD931E174B0A0E00F7732F /* SeafDisDetailViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafDisDetailViewController.h; sourceTree = "<group>"; };
 		57BD931F174B0A0E00F7732F /* SeafDisDetailViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafDisDetailViewController.m; sourceTree = "<group>"; };
@@ -804,8 +802,6 @@
 				57BD931F174B0A0E00F7732F /* SeafDisDetailViewController.m */,
 				57BD9320174B0A0E00F7732F /* SeafDisMasterViewController.h */,
 				57BD9321174B0A0E00F7732F /* SeafDisMasterViewController.m */,
-				5704C6EE1755AA0C0028F4FE /* SeafEmptyViewController.h */,
-				5704C6EF1755AA0C0028F4FE /* SeafEmptyViewController.m */,
 				57DB828E15A833FA00097CEC /* SeafFileViewController.h */,
 				57DB828F15A833FA00097CEC /* SeafFileViewController.m */,
 				5764C829163BF91B006AD511 /* SeafSettingsViewController.h */,
@@ -1232,6 +1228,7 @@
 				de,
 				fr,
 				ru,
+				ca,
 			);
 			mainGroup = 57DB826215A833F900097CEC;
 			productRefGroup = 57DB826E15A833FA00097CEC /* Products */;
@@ -1488,7 +1485,6 @@
 				57BD9327174B0A0E00F7732F /* SeafDisDetailViewController.m in Sources */,
 				57BD9329174B0A0E00F7732F /* SeafDisMasterViewController.m in Sources */,
 				5704C6D31753A1380028F4FE /* IntelligentSplitViewController.m in Sources */,
-				5704C6F11755AA0D0028F4FE /* SeafEmptyViewController.m in Sources */,
 				57191CEF176CA6650064BCEA /* QBAssetCollectionViewController.m in Sources */,
 				57191CF1176CA6650064BCEA /* QBImagePickerAssetCell.m in Sources */,
 				57191CF3176CA6650064BCEA /* QBImagePickerAssetView.m in Sources */,
@@ -1565,6 +1561,7 @@
 				E4F46F57187B44B200B80C36 /* de */,
 				5729697418B76F0F00363B2E /* fr */,
 				5729697518B76F3600363B2E /* ru */,
+				57AE699418C1C0A200AEBF8B /* ca */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";

@@ -15,7 +15,7 @@
 #import "Utils.h"
 #import "Debug.h"
 
-#define TOP_VIEW_HEIGHT 33
+#define TOP_VIEW_HEIGHT 44
 
 enum TOOL_ITEM {
     ITEM_REDO = 0,
@@ -89,13 +89,11 @@ enum TOOL_ITEM {
     return (UIWebView *)self.view;
 }
 
+
 - (void)btClicked:(NSString *)tag
 {
     [self.webView stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"btClicked(\"%@\")", tag]];
-    if ([self IsSeaf]) {
-        NSString *str = [self.webView stringByEvaluatingJavaScriptFromString:@"getBtState()"];
-        [self handleUrl:str];
-    }
+    //[self checkBtState:nil];
 }
 
 - (void)edit_preview
@@ -400,7 +398,7 @@ enum TOOL_ITEM {
     self.navigationItem.leftBarButtonItem = self.saveItem;
     self.egoTextView.hidden = YES;;
     NSString *path = [[NSBundle mainBundle] pathForResource:@"edit_file_seaf" ofType:@"html"];
-        timer = [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(checkBtState:) userInfo:nil repeats:YES];
+    //timer = [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(checkBtState:) userInfo:nil repeats:YES];
 
     NSURL *url = [NSURL fileURLWithPath:path];
     NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 3];
@@ -491,7 +489,7 @@ enum TOOL_ITEM {
     NSDictionary* info = [notification userInfo];
     CGSize keyBoardSize = [[info objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue].size;
     float keyH = MIN(keyBoardSize.height, keyBoardSize.width);
-    
+
     if ([self IsRawText]) {
         self.egoTextView.frame = CGRectMake(self.egoTextView.frame.origin.x, self.egoTextView.frame.origin.y, self.egoTextView.frame.size.width, self.view.bounds.size.height - keyH );
         return;
@@ -503,8 +501,6 @@ enum TOOL_ITEM {
     if ([self IsMarkdown])
         view.frame = CGRectMake(view.frame.origin.x, view.frame.origin.y, view.frame.size.width, height);
     topview.frame = CGRectMake(0, height, view.frame.size.width, TOP_VIEW_HEIGHT);
-    CGRect r = topview.frame;
-    Debug("%f %f %d,[%f, %f] %f %f %f %f\n", self.view.bounds.size.height, keyH, TOP_VIEW_HEIGHT, view.frame.origin.y, height, r.origin.x, r.origin.y, r.size.width, r.size.height);
 
     float unit = self.view.bounds.size.width / topview.subviews.count;
     for (int i = 0; i < topview.subviews.count; ++i) {

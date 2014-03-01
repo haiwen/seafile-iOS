@@ -108,9 +108,7 @@
     }
     self.title = NSLocalizedString(@"Seafile Account", nil);
     CGRect rect = CGRectMake(0, 0, 90, 25);
-    NSString *align = @"";
-    if (ios7)
-        align = @"  ";
+    NSString *align = ios7 ? @"  " :  @"";
     UILabel *serverLabel = [[UILabel alloc] initWithFrame:rect];
     serverLabel.text = [align stringByAppendingString:NSLocalizedString(@"Server", @"Server")];
     serverLabel.font = [UIFont boldSystemFontOfSize:14];

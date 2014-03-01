@@ -8,7 +8,6 @@
 
 
 #import "SeafAppDelegate.h"
-#import "SeafEmptyViewController.h"
 #import "Debug.h"
 #import "Utils.h"
 
@@ -437,9 +436,8 @@
 
 - (StartViewController *)startVC
 {
-    if (_startVC)
-        return _startVC;
-    _startVC = [[StartViewController alloc] init];
+    if (!_startVC)
+        _startVC = [[StartViewController alloc] init];
     return _startVC;
 }
 
@@ -448,9 +446,7 @@
     if (!IsIpad())
         return [self.viewControllers objectAtIndex:index];
     else {
-        if (index == TABBED_ACTIVITY)
-            return [self.viewControllers objectAtIndex:index];
-        return [[[self.viewControllers objectAtIndex:index] viewControllers] objectAtIndex:0];
+        return (index == TABBED_ACTIVITY)? [self.viewControllers objectAtIndex:index] : [[[self.viewControllers objectAtIndex:index] viewControllers] objectAtIndex:0];
     }
 }
 
@@ -468,9 +464,7 @@
             _detailVC = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
         if (!_disDetailVC)
             _disDetailVC = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DISDETAILVC"];
-        if (index == TABBED_DISCUSSION)
-            return (UIViewController *)_disDetailVC;
-        return _detailVC;
+        return (index == TABBED_DISCUSSION) ? (UIViewController *)_disDetailVC : _detailVC;
     }
 }
 
