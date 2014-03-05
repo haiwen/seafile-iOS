@@ -8,7 +8,6 @@
 
 #import "SeafAppDelegate.h"
 #import "SeafDetailViewController.h"
-#import "FileViewController.h"
 #import "FailToPreview.h"
 #import "DownloadingProgressView.h"
 #import "SeafTextEditorViewController.h"
@@ -33,10 +32,10 @@ enum PREVIEW_STATE {
 #define SHARE_TITLE NSLocalizedString(@"How would you like to share this file?", @"How would you like to share this file?")
 #define POST_DISCUSSION NSLocalizedString(@"Post a discussion to group", @"Post a discussion to group")
 
-@interface SeafDetailViewController ()<UIWebViewDelegate, UIActionSheetDelegate, UIPrintInteractionControllerDelegate, MFMailComposeViewControllerDelegate, REComposeViewControllerDelegate, PreViewSelectDelegate>
+@interface SeafDetailViewController ()<UIWebViewDelegate, UIActionSheetDelegate, UIPrintInteractionControllerDelegate, MFMailComposeViewControllerDelegate, REComposeViewControllerDelegate, QLPreviewControllerDelegate, QLPreviewControllerDataSource>
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
 
-@property (retain) FileViewController *fileViewController;
+@property (retain) QLPreviewController *fileViewController;
 @property (retain) FailToPreview *failedView;
 @property (retain) DownloadingProgressView *progressView;
 @property (retain) UIWebView *webView;
@@ -161,7 +160,7 @@ enum PREVIEW_STATE {
             break;
         case PREVIEW_SUCCESS:
             Debug (@"Preview file %@ mime=%@ success\n", self.preViewItem.previewItemTitle, self.preViewItem.mime);
-            [self.fileViewController setPreItem:self.preViewItem];
+            [self.fileViewController reloadData];
             self.fileViewController.view.frame = r;
             self.fileViewController.view.hidden = NO;
             break;
@@ -178,7 +177,6 @@ enum PREVIEW_STATE {
             self.webView.hidden = NO;
             break;
         case PREVIEW_PHOTO:
-            //[self.fileViewController refreshCurrentPreviewItem];
             break;
         case PREVIEW_NONE:
             break;
@@ -211,6 +209,7 @@ enum PREVIEW_STATE {
 
 - (void)setPreViewItems:(NSArray *)items current:(id<QLPreviewItem, PreViewDelegate>)item master:(UIViewController *)c
 {
+#if 0
     [self clearPreView];
     self.state = PREVIEW_PHOTO;
     if ([item isKindOfClass:[SeafFile class]]) {
@@ -220,6 +219,7 @@ enum PREVIEW_STATE {
     self.fileViewController.view.frame = CGRectMake(self.view.frame.origin.x, 0, self.view.frame.size.width, self.view.frame.size.height);
     self.fileViewController.view.hidden = NO;
     [self.fileViewController setPreItems:items current:item];
+#endif
 }
 
 - (void)goBack:(id)sender
@@ -263,8 +263,9 @@ enum PREVIEW_STATE {
         self.progressView = [views objectAtIndex:0];
     }
     [self.progressView.cancelBt addTarget:self action:@selector(cancelDownload:) forControlEvents:UIControlEventTouchUpInside];
-    self.fileViewController = [[FileViewController alloc] init];
-    //self.fileViewController.selectDelegate = self;
+    self.fileViewController = [[QLPreviewController alloc] init];
+    self.fileViewController.delegate = self;
+    self.fileViewController.dataSource = self;
     self.webView = [[UIWebView alloc] initWithFrame:self.view.frame];
     self.webView.scalesPageToFit = YES;
     self.webView.autoresizesSubviews = YES;
@@ -830,4 +831,20 @@ enum PREVIEW_STATE {
     return space;
 }
 
+#pragma -mark QLPreviewControllerDataSource
+- (NSInteger)numberOfPreviewItemsInPreviewController:(QLPreviewController *)controller
+{
+    return 1;
+}
+
+- (id <QLPreviewItem>)previewController:(QLPreviewController *)controller previewItemAtIndex:(NSInteger)index;
+{
+    Debug("index=%d", index);
+    if (!ios7 && index < 0) index = 0;
+    if (index < 0 || index >= 1) {
+        return nil;
+    }
+
+    return self.preViewItem;
+}
 @end

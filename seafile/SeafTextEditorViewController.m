@@ -239,12 +239,7 @@ enum TOOL_ITEM {
 
 - (void)save
 {
-    NSString *content;
-    if (![self IsSeaf]) {
-        content = self.egoTextView.text;
-    } else {
-        content = [self.webView stringByEvaluatingJavaScriptFromString:@"getContent()"];
-    }
+    NSString *content = [self IsSeaf] ? [self.webView stringByEvaluatingJavaScriptFromString:@"getContent()"] : self.egoTextView.text;
     [sfile saveContent:content];
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [self.detailViewController refreshView];

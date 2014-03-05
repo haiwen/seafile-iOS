@@ -32,7 +32,6 @@
 		571D8CAB1677881400F1A22C /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DB827F15A833FA00097CEC /* main.m */; };
 		571D8CAC1677881400F1A22C /* SeafAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DB828315A833FA00097CEC /* SeafAppDelegate.m */; };
 		571D8CAD1677881400F1A22C /* SeafFileViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DB828F15A833FA00097CEC /* SeafFileViewController.m */; };
-		571D8CAE1677881400F1A22C /* SeafDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DB829215A833FA00097CEC /* SeafDetailViewController.m */; };
 		571D8CAF1677881400F1A22C /* AFHTTPClient.m in Sources */ = {isa = PBXBuildFile; fileRef = 57094B5915B9AC4A00F48C08 /* AFHTTPClient.m */; };
 		571D8CB01677881400F1A22C /* AFHTTPRequestOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 57094B5B15B9AC4A00F48C08 /* AFHTTPRequestOperation.m */; };
 		571D8CB11677881400F1A22C /* AFImageRequestOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 57094B5D15B9AC4A00F48C08 /* AFImageRequestOperation.m */; };
@@ -49,7 +48,6 @@
 		571D8CBD1677881400F1A22C /* SeafRepos.m in Sources */ = {isa = PBXBuildFile; fileRef = 5709513415B9B6BD00F48C08 /* SeafRepos.m */; };
 		571D8CBE1677881400F1A22C /* SeafData.m in Sources */ = {isa = PBXBuildFile; fileRef = 571CE59B15C01879004CD403 /* SeafData.m */; };
 		571D8CBF1677881400F1A22C /* StartViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 572B0A7615D16C1C00798C6E /* StartViewController.m */; };
-		571D8CC11677881400F1A22C /* FileViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 576B9EB315DD2D4E00802D07 /* FileViewController.m */; };
 		571D8CC21677881400F1A22C /* FileSizeFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 57F53B0515DF49EF0027140D /* FileSizeFormatter.m */; };
 		571D8CC31677881400F1A22C /* EGORefreshTableHeaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = 576D89E315E39ED700F2BD17 /* EGORefreshTableHeaderView.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		571D8CC61677881400F1A22C /* SeafDateFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 575753EA15EE7AE30049D720 /* SeafDateFormatter.m */; };
@@ -184,6 +182,7 @@
 		57A550E4177F2CBA00E3BA9B /* editfile.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550E2177F2CBA00E3BA9B /* editfile.png */; };
 		57A550E8177F311700E3BA9B /* checkmask.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550E5177F311700E3BA9B /* checkmask.png */; };
 		57A550EA177F311700E3BA9B /* plus.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550E6177F311700E3BA9B /* plus.png */; };
+		57A90DA118C49F97005D8A53 /* SeafDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57A90DA018C49F97005D8A53 /* SeafDetailViewController.m */; };
 		57A95E5918369147009D268A /* close.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A95E5618369147009D268A /* close.png */; };
 		57A95E5B18369147009D268A /* close2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A95E5718369147009D268A /* close2.png */; };
 		57A95E5F18369E5A009D268A /* ellipsis.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A95E5C18369E5A009D268A /* ellipsis.png */; };
@@ -409,6 +408,7 @@
 		573F4AA91788763500F096D3 /* arrowleft.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = arrowleft.png; sourceTree = "<group>"; };
 		573F4AAA1788763500F096D3 /* arrowright.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = arrowright.png; sourceTree = "<group>"; };
 		574456821774922B00EA46A6 /* SeafAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafAppDelegate.h; sourceTree = "<group>"; };
+		5752494D18C6EA7700352647 /* hu */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hu; path = hu.lproj/Localizable.strings; sourceTree = "<group>"; };
 		57532BD318688ECA003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/FolderView_iPad.storyboard; sourceTree = "<group>"; };
 		57532BD418688ECA003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/FolderView_iPhone.storyboard; sourceTree = "<group>"; };
 		57532BDA18689503003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafStartHeaderView.xib; sourceTree = "<group>"; };
@@ -443,8 +443,6 @@
 		576B99041861411700A16ED6 /* magnifier-ranged-lo@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "magnifier-ranged-lo@2x.png"; sourceTree = "<group>"; };
 		576B99051861411700A16ED6 /* magnifier-ranged-mask@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "magnifier-ranged-mask@2x.png"; sourceTree = "<group>"; };
 		576B9918186142EC00A16ED6 /* CoreText.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreText.framework; path = System/Library/Frameworks/CoreText.framework; sourceTree = SDKROOT; };
-		576B9EB215DD2D4E00802D07 /* FileViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FileViewController.h; sourceTree = "<group>"; };
-		576B9EB315DD2D4E00802D07 /* FileViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FileViewController.m; sourceTree = "<group>"; };
 		576B9EC015DD394600802D07 /* QuickLook.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickLook.framework; path = System/Library/Frameworks/QuickLook.framework; sourceTree = SDKROOT; };
 		576C91C1177EB43F007B50BD /* SeafDirViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafDirViewController.h; sourceTree = "<group>"; };
 		576C91C2177EB43F007B50BD /* SeafDirViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafDirViewController.m; sourceTree = "<group>"; };
@@ -499,6 +497,7 @@
 		57A550E2177F2CBA00E3BA9B /* editfile.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = editfile.png; sourceTree = "<group>"; };
 		57A550E5177F311700E3BA9B /* checkmask.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = checkmask.png; sourceTree = "<group>"; };
 		57A550E6177F311700E3BA9B /* plus.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = plus.png; sourceTree = "<group>"; };
+		57A90DA018C49F97005D8A53 /* SeafDetailViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafDetailViewController.m; sourceTree = "<group>"; };
 		57A95E5618369147009D268A /* close.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = close.png; sourceTree = "<group>"; };
 		57A95E5718369147009D268A /* close2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = close2.png; sourceTree = "<group>"; };
 		57A95E5C18369E5A009D268A /* ellipsis.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ellipsis.png; sourceTree = "<group>"; };
@@ -591,7 +590,6 @@
 		57DB828E15A833FA00097CEC /* SeafFileViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafFileViewController.h; sourceTree = "<group>"; };
 		57DB828F15A833FA00097CEC /* SeafFileViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafFileViewController.m; sourceTree = "<group>"; };
 		57DB829115A833FA00097CEC /* SeafDetailViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafDetailViewController.h; sourceTree = "<group>"; };
-		57DB829215A833FA00097CEC /* SeafDetailViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafDetailViewController.m; sourceTree = "<group>"; };
 		57E1E89B1737ED0F006601FE /* SeafTextEditorViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafTextEditorViewController.h; sourceTree = "<group>"; };
 		57E1E8A51737F4D3006601FE /* bootstrap-wysiwyg.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = "bootstrap-wysiwyg.js"; path = "htmls/bootstrap-wysiwyg.js"; sourceTree = SOURCE_ROOT; };
 		57E1E8A61737F4D3006601FE /* bootstrap.min.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = bootstrap.min.js; path = htmls/bootstrap.min.js; sourceTree = SOURCE_ROOT; };
@@ -782,8 +780,6 @@
 				571ABF521625DF31005C9B08 /* DownloadingProgressView.m */,
 				57655330161BEA40005E5327 /* FailToPreview.h */,
 				57655331161BEA40005E5327 /* FailToPreview.m */,
-				576B9EB215DD2D4E00802D07 /* FileViewController.h */,
-				576B9EB315DD2D4E00802D07 /* FileViewController.m */,
 				5795F49816A7266E00FF90E3 /* SeafAccountCell.h */,
 				5795F49916A7266E00FF90E3 /* SeafAccountCell.m */,
 				570DFAC316A15D0100ADD5F2 /* SeafAccountViewController.h */,
@@ -795,7 +791,7 @@
 				577B6C6316AADBA3008E82C2 /* SeafCell.h */,
 				577B6C6416AADBA3008E82C2 /* SeafCell.m */,
 				57DB829115A833FA00097CEC /* SeafDetailViewController.h */,
-				57DB829215A833FA00097CEC /* SeafDetailViewController.m */,
+				57A90DA018C49F97005D8A53 /* SeafDetailViewController.m */,
 				576C91C1177EB43F007B50BD /* SeafDirViewController.h */,
 				576C91C2177EB43F007B50BD /* SeafDirViewController.m */,
 				57BD931E174B0A0E00F7732F /* SeafDisDetailViewController.h */,
@@ -1229,6 +1225,7 @@
 				fr,
 				ru,
 				ca,
+				hu,
 			);
 			mainGroup = 57DB826215A833F900097CEC;
 			productRefGroup = 57DB826E15A833FA00097CEC /* Products */;
@@ -1435,7 +1432,6 @@
 				571D8CAB1677881400F1A22C /* main.m in Sources */,
 				571D8CAC1677881400F1A22C /* SeafAppDelegate.m in Sources */,
 				571D8CAD1677881400F1A22C /* SeafFileViewController.m in Sources */,
-				571D8CAE1677881400F1A22C /* SeafDetailViewController.m in Sources */,
 				571D8CAF1677881400F1A22C /* AFHTTPClient.m in Sources */,
 				571D8CB01677881400F1A22C /* AFHTTPRequestOperation.m in Sources */,
 				571D8CB11677881400F1A22C /* AFImageRequestOperation.m in Sources */,
@@ -1452,7 +1448,6 @@
 				571D8CBD1677881400F1A22C /* SeafRepos.m in Sources */,
 				571D8CBE1677881400F1A22C /* SeafData.m in Sources */,
 				571D8CBF1677881400F1A22C /* StartViewController.m in Sources */,
-				571D8CC11677881400F1A22C /* FileViewController.m in Sources */,
 				571D8CC21677881400F1A22C /* FileSizeFormatter.m in Sources */,
 				571D8CC31677881400F1A22C /* EGORefreshTableHeaderView.m in Sources */,
 				571D8CC61677881400F1A22C /* SeafDateFormatter.m in Sources */,
@@ -1482,6 +1477,7 @@
 				577B6C6616AADBA3008E82C2 /* SeafCell.m in Sources */,
 				57DA26F5173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */,
 				5775EA1217476FAD000A1765 /* SeafActivityViewController.m in Sources */,
+				57A90DA118C49F97005D8A53 /* SeafDetailViewController.m in Sources */,
 				57BD9327174B0A0E00F7732F /* SeafDisDetailViewController.m in Sources */,
 				57BD9329174B0A0E00F7732F /* SeafDisMasterViewController.m in Sources */,
 				5704C6D31753A1380028F4FE /* IntelligentSplitViewController.m in Sources */,
@@ -1562,6 +1558,7 @@
 				5729697418B76F0F00363B2E /* fr */,
 				5729697518B76F3600363B2E /* ru */,
 				57AE699418C1C0A200AEBF8B /* ca */,
+				5752494D18C6EA7700352647 /* hu */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
