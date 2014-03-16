@@ -14,6 +14,7 @@
 #import "SeafDateFormatter.h"
 #import "SeafCell.h"
 
+#import "UIViewController+Extend.h"
 #import "EGORefreshTableHeaderView.h"
 #import "SVProgressHUD.h"
 #import "SeafData.h"
@@ -62,7 +63,8 @@
     }
                          failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
                              Warning("Failed to get starred files ...\n");
-                             [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get starred files", @"Failed to get starred files")];
+                             if (self.isVisible)
+                                 [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get starred files", @"Failed to get starred files")];
                              [self doneLoadingTableViewData];
                          }];
 }
@@ -142,6 +144,7 @@
     [self.detailViewController setPreViewItem:nil master:nil];
     [self loadCache];
     [self.tableView reloadData];
+    [self performSelector:@selector(refresh:) withObject:nil afterDelay:1.0f];
 }
 
 - (void)showEditFileMenu:(UILongPressGestureRecognizer *)gestureRecognizer

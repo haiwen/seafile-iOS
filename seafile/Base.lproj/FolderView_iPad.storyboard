@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="4514" systemVersion="13B42" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" initialViewController="cyW-Je-Rn4">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="4514" systemVersion="13C64" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" initialViewController="cyW-Je-Rn4">
     <dependencies>
         <deployment version="1536" defaultVersion="1536" identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="3747"/>
@@ -571,7 +571,7 @@
             </objects>
             <point key="canvasLocation" x="360" y="1378"/>
         </scene>
-        <!--Seaf Dis Detail View Controller - Discussion-->
+        <!--Seaf Dis Detail View Controller - Message-->
         <scene sceneID="qow-BH-Ksf">
             <objects>
                 <viewController storyboardIdentifier="DISDETAILVC" id="ZjO-AT-Ini" customClass="SeafDisDetailViewController" sceneMemberID="viewController">
@@ -579,14 +579,14 @@
                         <viewControllerLayoutGuide type="top" id="cPd-jC-pvN"/>
                         <viewControllerLayoutGuide type="bottom" id="6Fz-8c-UsJ"/>
                     </layoutGuides>
-                    <view key="view" clipsSubviews="YES" contentMode="scaleToFill" id="4cj-kW-DhW" customClass="UIWebView">
+                    <view key="view" clipsSubviews="YES" contentMode="scaleToFill" id="4cj-kW-DhW">
                         <rect key="frame" x="0.0" y="0.0" width="703" height="768"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
                     </view>
                     <toolbarItems/>
-                    <navigationItem key="navigationItem" title="Discussion" id="c2x-oK-G6H"/>
+                    <navigationItem key="navigationItem" title="Message" id="c2x-oK-G6H"/>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Bmp-e1-Qo9" sceneMemberID="firstResponder"/>
             </objects>
@@ -609,7 +609,7 @@
             </objects>
             <point key="canvasLocation" x="-939" y="1410"/>
         </scene>
-        <!--Seaf Dis Master View Controller - Groups-->
+        <!--Seaf Dis Master View Controller - Message-->
         <scene sceneID="tFh-La-Oo2">
             <objects>
                 <tableViewController clearsSelectionOnViewWillAppear="NO" id="oVy-oK-fv4" customClass="SeafDisMasterViewController" sceneMemberID="viewController">
@@ -644,7 +644,7 @@
                             <outlet property="delegate" destination="oVy-oK-fv4" id="tYE-Vt-QRo"/>
                         </connections>
                     </tableView>
-                    <navigationItem key="navigationItem" title="Groups" id="D4g-PC-vdz"/>
+                    <navigationItem key="navigationItem" title="Message" id="D4g-PC-vdz"/>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="mUv-nL-bmL" sceneMemberID="firstResponder"/>
             </objects>

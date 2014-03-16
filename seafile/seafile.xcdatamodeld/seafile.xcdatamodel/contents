@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model name="" userDefinedModelVersionIdentifier="seafile-1" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="2061" systemVersion="12D78" minimumToolsVersion="Automatic" macOSVersion="Automatic" iOSVersion="Automatic">
+<model userDefinedModelVersionIdentifier="seafile-1" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="3401" systemVersion="13C64" minimumToolsVersion="Automatic" macOSVersion="Automatic" iOSVersion="Automatic">
     <entity name="Directory" representedClassName="Directory" syncable="YES">
         <attribute name="content" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="oid" optional="YES" attributeType="String" syncable="YES"/>
@@ -12,26 +12,15 @@
         <attribute name="path" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="repoid" optional="YES" attributeType="String" syncable="YES"/>
     </entity>
-    <entity name="SeafGroups" representedClassName="SeafGroups" syncable="YES">
+    <entity name="SeafCacheObj" representedClassName="SeafCacheObj" syncable="YES">
         <attribute name="content" optional="YES" attributeType="String" syncable="YES"/>
-        <attribute name="url" optional="YES" attributeType="String" syncable="YES"/>
-        <attribute name="username" optional="YES" attributeType="String" syncable="YES"/>
-    </entity>
-    <entity name="SeafServer" representedClassName="SeafServer" syncable="YES">
-        <attribute name="content" optional="YES" attributeType="String" syncable="YES"/>
-        <attribute name="url" optional="YES" attributeType="String" syncable="YES"/>
-        <attribute name="username" optional="YES" attributeType="String" syncable="YES"/>
-    </entity>
-    <entity name="StarredFiles" representedClassName="StarredFiles" syncable="YES">
-        <attribute name="content" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="key" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="url" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="username" optional="YES" attributeType="String" syncable="YES"/>
     </entity>
     <elements>
-        <element name="Directory" positionX="160" positionY="192" width="128" height="105"/>
-        <element name="DownloadedFile" positionX="160" positionY="192" width="128" height="105"/>
-        <element name="SeafServer" positionX="160" positionY="192" width="128" height="90"/>
-        <element name="StarredFiles" positionX="160" positionY="192" width="128" height="90"/>
-        <element name="SeafGroups" positionX="160" positionY="192" width="128" height="90"/>
+        <element name="Directory" positionX="0" positionY="0" width="0" height="0"/>
+        <element name="DownloadedFile" positionX="0" positionY="0" width="0" height="0"/>
+        <element name="SeafCacheObj" positionX="0" positionY="0" width="0" height="0"/>
     </elements>
 </model>

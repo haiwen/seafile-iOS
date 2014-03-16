@@ -22,12 +22,15 @@ enum {
     FLAG_LOCAL_DECRYPT = 0x1,
 };
 
+#define KEY_STARREDFILES @"STARREDFILES"
+#define KEY_CONTACTS @"CONTACTS"
+
 @interface SeafConnection ()
 
 @property (readwrite, strong) NSString *version;
 @property NSMutableSet *starredFiles;
 @property NSMutableDictionary *uploadFiles;
-
+@property NSDictionary *email2nickMap;
 @end
 
 @implementation SeafConnection
@@ -50,6 +53,8 @@ enum {
         NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
         self.version = [infoDictionary objectForKey:@"CFBundleVersion"];
         self.uploadFiles = [[NSMutableDictionary alloc] init];
+        _info = [[NSMutableDictionary alloc] init];
+        self.email2nickMap = [[NSMutableDictionary alloc] init];
     }
     return self;
 }
@@ -57,9 +62,7 @@ enum {
 - (id)initWithUrl:(NSString *)url username:(NSString *)username
 {
     self = [self init:url];
-    if (!url) {
-        _info = [[NSMutableDictionary alloc] init];
-    } else {
+    if (url) {
         NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
         NSDictionary *ainfo = [userDefaults objectForKey:[NSString stringWithFormat:@"%@/%@", url, username]];
         if (ainfo) {
@@ -72,8 +75,7 @@ enum {
                 [userDefaults setObject:nil forKey:url];
                 [userDefaults setObject:ainfo forKey:[NSString stringWithFormat:@"%@/%@", url, username]];
                 [userDefaults synchronize];
-            } else
-                _info = [[NSMutableDictionary alloc] init];
+            }
         }
     }
     return self;
@@ -107,18 +109,11 @@ enum {
     return [[_info objectForKey:@"usage"] integerValue:-1];
 }
 
-#if 0
-- (BOOL)localDecrypt
-{
-    return [[_info objectForKey:@"flags"] integerValue:0] & FLAG_LOCAL_DECRYPT;
-}
-#else
 - (BOOL)localDecrypt:(NSString *)repoId
 {
     SeafRepo *repo = [self getRepo:repoId];
     return repo.encrypted && repo.encVersion >= 2 && repo.magic;
 }
-#endif
 
 - (void)getAccountInfo:(id<SSConnectionAccountDelegate>)degt
 {
@@ -126,6 +121,8 @@ enum {
               success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          NSDictionary *account = JSON;
+         Debug("account detail:%@", account);
+         [self.email2nickMap setValue:[account objectForKey:@"nickname"] forKey:self.username];
          [_info setObject:[account objectForKey:@"total"] forKey:@"total"];
          [_info setObject:[account objectForKey:@"usage"] forKey:@"usage"];
          [_info setObject:_address forKey:@"link"];
@@ -252,23 +249,19 @@ enum {
 {
     _rootFolder.delegate = degt;
     [_rootFolder loadContent:NO];
-    [self handleGroupsData:[self getCachedGroups]];
-    [self getStarredFiles:nil failure:nil];
 }
 
-#pragma -mark starred files
-- (id)loadCacheObj:(NSString *)name
+#pragma - Cache managerment
+- (SeafCacheObj *)loadSeafCacheObj:(NSString *)key
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     NSManagedObjectContext *context = [appdelegate managedObjectContext];
     NSFetchRequest *fetchRequest=[[NSFetchRequest alloc] init];
-    [fetchRequest setEntity:[NSEntityDescription entityForName:name inManagedObjectContext:context]];
-    NSSortDescriptor *sortDescriptor=[[NSSortDescriptor alloc] initWithKey:@"url" ascending:YES selector:nil];
-    NSArray *descriptor=[NSArray arrayWithObject:sortDescriptor];
+    [fetchRequest setEntity:[NSEntityDescription entityForName:@"SeafCacheObj" inManagedObjectContext:context]];
+    NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"url" ascending:YES selector:nil];
+    NSArray *descriptor = [NSArray arrayWithObject:sortDescriptor];
     [fetchRequest setSortDescriptors:descriptor];
-
-    [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"url==%@ AND username==%@", self.address, self.username]];
-
+    [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"url==%@ AND username==%@ AND key==%@", self.address, self.username, key]];
     NSFetchedResultsController *controller = [[NSFetchedResultsController alloc]
                                               initWithFetchRequest:fetchRequest
                                               managedObjectContext:context
@@ -276,7 +269,7 @@ enum {
                                               cacheName:nil];
     NSError *error;
     if (![controller performFetch:&error]) {
-        Debug("Fetch cache error %@",[error localizedDescription]);
+        Warning("Fetch cache error %@",[error localizedDescription]);
         return nil;
     }
     NSArray *results = [controller fetchedObjects];
@@ -286,50 +279,60 @@ enum {
     return [results objectAtIndex:0];
 }
 
-- (BOOL)saveStarstoCache:(NSString *)content
+- (BOOL)savetoCacheKey:(NSString *)key value:(NSString *)content
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     NSManagedObjectContext *context = [appdelegate managedObjectContext];
-    StarredFiles *starfiles = [self loadCacheObj:@"StarredFiles"];
-    if (!starfiles) {
-        starfiles = (StarredFiles *)[NSEntityDescription insertNewObjectForEntityForName:@"StarredFiles" inManagedObjectContext:context];
-        starfiles.url = self.address;
-        starfiles.content = content;
-        starfiles.username = self.username;
+    SeafCacheObj *obj = [self loadSeafCacheObj:key];
+    if (!obj) {
+        obj = (SeafCacheObj *)[NSEntityDescription insertNewObjectForEntityForName:@"SeafCacheObj" inManagedObjectContext:context];
+        obj.key = key;
+        obj.url = self.address;
+        obj.content = content;
+        obj.username = self.username;
     } else {
-        starfiles.content = content;
+        obj.content = content;
         [context updatedObjects];
     }
     [appdelegate saveContext];
     return YES;
 }
 
-- (BOOL)saveGroupstoCache:(NSString *)content
+- (id)getCachedObj:(NSString *)key
 {
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    NSManagedObjectContext *context = [appdelegate managedObjectContext];
-    SeafGroups *groups = [self loadCacheObj:@"SeafGroups"];
-    if (!groups) {
-        groups = (SeafGroups *)[NSEntityDescription insertNewObjectForEntityForName:@"SeafGroups" inManagedObjectContext:context];
-        groups.url = self.address;
-        groups.content = content;
-        groups.username = self.username;
-    } else {
-        groups.content = content;
-        [context updatedObjects];
+    SeafCacheObj *obj = [self loadSeafCacheObj:key];
+    if (!obj) return nil;
+
+    NSError *error = nil;
+    NSData *data = [NSData dataWithBytes:[obj.content UTF8String] length:obj.content.length];
+    id JSON = [Utils JSONDecode:data error:&error];
+    if (error) {
+        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+        NSManagedObjectContext *context = [appdelegate managedObjectContext];
+        [context deleteObject:obj];
+        JSON = nil;
     }
-    [appdelegate saveContext];
-    return YES;
+    return JSON;
 }
 
-- (BOOL)handleData:(id)JSON
+- (id)getCachedStarredFiles
+{
+    return [self getCachedObj:KEY_STARREDFILES];
+}
+
+- (void)handleStarredData:(id)JSON
 {
     NSMutableSet *stars = [NSMutableSet set];
     for (NSDictionary *info in JSON) {
         [stars addObject:[NSString stringWithFormat:@"%@-%@", [info objectForKey:@"repo"], [info objectForKey:@"path"]]];
     }
     _starredFiles = stars;
-    return YES;
+}
+
+- (void)loadCache
+{
+    [self handleGroupsData:[self getCachedObj:KEY_CONTACTS] fromCache:YES];
+    [self handleStarredData:[self getCachedObj:KEY_STARREDFILES]];
 }
 
 - (void)getStarredFiles:(void (^)(NSHTTPURLResponse *response, id JSON, NSData *data))success
@@ -339,9 +342,9 @@ enum {
               success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          @synchronized(self) {
-             //Debug("Success to get starred files ...\n");
-             [self handleData:JSON];
-             [self saveStarstoCache:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
+             Debug("Success to get starred files ...\n");
+             [self handleStarredData:JSON];
+             [self savetoCacheKey:KEY_STARREDFILES value:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
              if (success)
                  success (response, JSON, data);
          }
@@ -351,25 +354,6 @@ enum {
          if (failure)
              failure (response, error, JSON);
      }];
-}
-
-- (id)getCachedStarredFiles
-{
-    StarredFiles *starfiles = [self loadCacheObj:@"StarredFiles"];
-    if (!starfiles)
-        return nil;
-
-    NSError *error = nil;
-    NSData *data = [NSData dataWithBytes:[starfiles.content UTF8String] length:starfiles.content.length];
-
-    id JSON = [Utils JSONDecode:data error:&error];
-    if (error) {
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        NSManagedObjectContext *context = [appdelegate managedObjectContext];
-        [context deleteObject:starfiles];
-        return nil;
-    }
-    return JSON;
 }
 
 - (BOOL)isStarred:(NSString *)repo path:(NSString *)path
@@ -413,35 +397,64 @@ enum {
     return YES;
 }
 
-- (BOOL)handleGroupsData:(id)JSON
+- (BOOL)handleGroupsData:(id)JSON fromCache:(BOOL)fromCache
 {
+    int msgnum = 0;
+    if (!JSON) return YES;
     NSMutableArray *contacts = [[NSMutableArray alloc] init];
     NSMutableArray *groups = [[NSMutableArray alloc] init];
     if (![JSON isKindOfClass:[NSDictionary class]])
         return NO;
     for (NSDictionary *info in [JSON objectForKey:@"groups"]) {
-        [groups addObject:[NSMutableDictionary dictionaryWithDictionary:info]];
+        NSMutableDictionary *dict = [info mutableCopy];
+        [dict setObject:[NSString stringWithFormat:@"%d", MSG_GROUP] forKey:@"type"];
+        if (fromCache)
+            [dict setObject:@"0" forKey:@"type"];
+        else
+            msgnum += [[dict objectForKey:@"msgnum"] integerValue:0];
+        [groups addObject:dict];
     }
     for (NSDictionary *info in [JSON objectForKey:@"contacts"]) {
-        [contacts addObject:[NSMutableDictionary dictionaryWithDictionary:info]];
+        NSMutableDictionary *dict = [info mutableCopy];
+        [dict setObject:[NSString stringWithFormat:@"%d", MSG_USER] forKey:@"type"];
+        if (fromCache)
+            [dict setObject:@"0" forKey:@"type"];
+        else
+            msgnum += [[dict objectForKey:@"msgnum"] integerValue:0];
+        [contacts addObject:dict];
     }
     _seafGroups = groups;
     _seafContacts = contacts;
-    self.newreply = (int)[[JSON objectForKey:@"replynum"] integerValue:0];
-    self.umsgnum = (int)[[JSON objectForKey:@"umsgnum"] integerValue:0];
-    self.gmsgnum = (int)[[JSON objectForKey:@"gmsgnum"] integerValue:0];
+    self.seafReplies = [[NSMutableArray alloc] init];
+    if (!fromCache) {
+        for (NSDictionary *info in [JSON objectForKey:@"newreplies"]) {
+            NSMutableDictionary *dict = [info mutableCopy];
+            [dict setObject:[NSString stringWithFormat:@"%d", MSG_REPLY] forKey:@"type"];
+            NSString *title = [NSString stringWithFormat:@"You got new replies from %@", [dict objectForKey:@"name"]];
+            [dict setObject:title forKey:@"name"];
+            msgnum += [[dict objectForKey:@"msgnum"] integerValue:0];
+            [self.seafReplies addObject:dict];
+        }
+    }
+    self.newmsgnum = msgnum;
     return YES;
 }
 
 - (void)getSeafGroupAndContacts:(void (^)(NSHTTPURLResponse *response, id JSON, NSData *data))success
                         failure:(void (^)(NSHTTPURLResponse *response, NSError *error, id JSON))failure
 {
-    [self sendRequest:API_URL"/groups/"  repo:nil
+    [self sendRequest:API_URL"/groupandcontacts/"  repo:nil
               success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          @synchronized(self) {
-             [self handleGroupsData:JSON];
-             [self saveGroupstoCache:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
+             if ([self handleGroupsData:JSON fromCache:NO]) {
+                 for (NSDictionary *c in self.seafContacts) {
+                     if ([c objectForKey:@"name"] && [c objectForKey:@"email"]) {
+                         [self.email2nickMap setValue:[c objectForKey:@"name"] forKey:[c objectForKey:@"email"]];
+                     }
+                 }
+                 [self savetoCacheKey:KEY_CONTACTS value:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
+             }
              if (success)
                  success (response, JSON, data);
          }
@@ -451,25 +464,6 @@ enum {
          if (failure)
              failure (response, error, JSON);
      }];
-}
-
-- (id)getCachedGroups
-{
-    SeafGroups *groups = [self loadCacheObj:@"SeafGroups"];
-    if (!groups)
-        return nil;
-
-    NSError *error = nil;
-    NSData *data = [NSData dataWithBytes:[groups.content UTF8String] length:groups.content.length];
-
-    id JSON = [Utils JSONDecode:data error:&error];
-    if (error) {
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        NSManagedObjectContext *context = [appdelegate managedObjectContext];
-        [context deleteObject:groups];
-        return nil;
-    }
-    return JSON;
 }
 
 - (SeafRepo *)getRepo:(NSString *)repo
@@ -524,8 +518,28 @@ enum {
     [self sendPost:@"/regdevice/" repo:nil form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
         Debug("Register success");
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-        Debug("Failed to register device");
+        Warning("Failed to register device");
     }];
+}
+
+- (NSString *)nickForEmail:(NSString *)email
+{
+    NSString *nickname = [self.email2nickMap objectForKey:email];
+    return nickname ? nickname : email;
+}
+
+- (NSString *)avatarForEmail:(NSString *)email;
+{
+    return [[NSBundle mainBundle] pathForResource:@"account" ofType:@"png"];
+}
+- (NSString *)avatarForGroup:(NSString *)gid
+{
+    return [[NSBundle mainBundle] pathForResource:@"group" ofType:@"png"];
+}
+
+- (void)downloadAvatars
+{
+
 }
 
 @end

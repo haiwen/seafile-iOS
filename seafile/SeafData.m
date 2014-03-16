@@ -9,24 +9,6 @@
 #import "SeafData.h"
 
 
-@implementation SeafServer
-
-@dynamic url;
-@dynamic username;
-@dynamic content;
-
-@end
-
-
-@implementation StarredFiles
-
-@dynamic url;
-@dynamic username;
-@dynamic content;
-
-@end
-
-
 @implementation Directory
 
 @dynamic repoid;
@@ -35,8 +17,6 @@
 @dynamic content;
 
 @end
-
-
 
 @implementation DownloadedFile
 
@@ -47,10 +27,12 @@
 
 @end
 
-@implementation SeafGroups
+
+@implementation SeafCacheObj
 
 @dynamic url;
 @dynamic username;
+@dynamic key;
 @dynamic content;
 
 @end

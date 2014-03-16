@@ -209,8 +209,21 @@
     }
     id ret = [NSJSONSerialization JSONObjectWithData:data options:0 error:error];
     if (*error)
-        Debug("Parse json error:%@, %@\n", *error, [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
+        Warning("Parse json error:%@, %@\n", *error, [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
     return ret;
+}
++ (NSString *)JSONEncodeDictionary:(NSDictionary *)dict
+{
+    NSError *error;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dict
+                                                       options:(NSJSONWritingOptions)0
+                                                         error:&error];
+    if (! jsonData) {
+        Warning("Failed to encode Dictionary, error: %@", error.localizedDescription);
+        return @"{}";
+    } else {
+        return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+    }
 }
 
 + (BOOL)tryTransformEncoding:(NSString *)outfile fromFile:(NSString *)fromfile

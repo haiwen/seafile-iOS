@@ -60,7 +60,6 @@ enum {
 {
     [super viewWillAppear:animated];
     [self configureView];
-    [_connection getAccountInfo:self];
 }
 
 - (void)didReceiveMemoryWarning
@@ -106,6 +105,7 @@ enum {
 {
     _connection = connection;
     [self.tableView reloadData];
+    [_connection performSelector:@selector(getAccountInfo:) withObject:self afterDelay:1.0f];
 }
 
 #pragma mark - SSConnectionAccountDelegate

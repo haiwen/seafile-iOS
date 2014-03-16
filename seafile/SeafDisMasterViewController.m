@@ -9,7 +9,9 @@
 #import "SeafDisMasterViewController.h"
 #import "SeafDisDetailViewController.h"
 #import "SeafAppDelegate.h"
+
 #import "SeafDateFormatter.h"
+#import "UIViewController+Extend.h"
 #import "SeafBase.h"
 #import "ExtentedString.h"
 #import "SVProgressHUD.h"
@@ -20,6 +22,7 @@
 @interface SeafDisMasterViewController ()<EGORefreshTableHeaderDelegate, UIScrollViewDelegate>
 @property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
 @property (readwrite, nonatomic) UIView *headerView;
+@property (readwrite, nonatomic) NSMutableArray *msgSources;
 @end
 
 @implementation SeafDisMasterViewController
@@ -53,17 +56,6 @@
     }
     [_refreshHeaderView refreshLastUpdatedDate];
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
-    NSArray *views = [[NSBundle mainBundle] loadNibNamed:@"SeafStartFooterView" owner:self options:nil];
-    ColorfulButton *bt = [views objectAtIndex:0];
-    bt.frame = CGRectMake(0,0, self.tableView.frame.size.width, 50);
-    self.headerView.backgroundColor = [UIColor clearColor];
-    [bt addTarget:self action:@selector(newReplies:) forControlEvents:UIControlEventTouchUpInside];
-    bt.layer.cornerRadius = 0;
-    [bt.layer setBorderColor:[[UIColor colorWithRed:224/255.0 green:224/255.0 blue:224/255.0 alpha:1.0] CGColor]];
-    [bt setHighColor:[UIColor colorWithRed:244/255.0 green:244/255.0 blue:244/255.0 alpha:1.0] lowColor:[UIColor colorWithRed:244/255.0 green:244/255.0 blue:244/255.0 alpha:1.0]];
-    [bt setTitleColor:[UIColor colorWithRed:112/255.0 green:112/255.0 blue:112/255.0 alpha:1.0] forState:UIControlStateNormal];
-
-    self.headerView = bt;
     [self startTimer];
 }
 
@@ -74,16 +66,7 @@
 
 - (void)refreshTabBarItem
 {
-    int num = self.connection.newreply;
-    for (NSDictionary *dict in self.connection.seafGroups) {
-        if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0 )
-            num += [[dict objectForKey:@"msgnum"] integerValue:0];
-    }
-    for (NSDictionary *dict in self.connection.seafContacts) {
-        if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0 )
-            num += [[dict objectForKey:@"msgnum"] integerValue:0];
-    }
-
+    int num = self.connection.newmsgnum;
     UITabBarItem *tbi = nil;
     if (IsIpad()) {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
@@ -96,15 +79,22 @@
 
 - (void)refreshView
 {
-    if (self.connection.newreply > 0) {
-        ColorfulButton *bt = (ColorfulButton *)self.headerView;
-        NSString *text = [NSString stringWithFormat:NSLocalizedString(@"%d new replies", @"%d new replies"), self.connection.newreply];
-        [bt setTitle:text forState:UIControlStateNormal];
-        [bt setTitle:text forState:UIControlStateSelected];
-        [bt setTitle:text forState:UIControlStateHighlighted];
-        self.tableView.tableHeaderView = self.headerView;
-    } else
-        self.tableView.tableHeaderView = nil;
+    self.msgSources = [[NSMutableArray alloc] initWithArray:self.connection.seafGroups];
+    [self.msgSources addObjectsFromArray:self.connection.seafContacts];
+    [self.msgSources addObjectsFromArray:self.connection.seafReplies];
+    Debug("group=%d, user=%d, reply=%d, total=%d", self.connection.seafGroups.count, self.connection.seafContacts.count, self.connection.seafReplies.count, self.msgSources.count);
+    [self.msgSources sortUsingComparator:(NSComparator)^NSComparisonResult(id obj1, id obj2){
+        long long x = [[obj1 objectForKey:@"mtime"] integerValue:0];
+        long long y = [[obj2 objectForKey:@"mtime"] integerValue:0];
+        if (x < y) {
+            return (NSComparisonResult)NSOrderedDescending;
+        }
+        if (x > y) {
+            return (NSComparisonResult)NSOrderedAscending;
+        }
+        return (NSComparisonResult)NSOrderedSame;
+    }];
+
     [self.tableView reloadData];
     [self refreshTabBarItem];
 }
@@ -134,7 +124,7 @@
     }
                        failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
                            Warning("Failed to get groups ...error=%d\n", error.code);
-                           if (self.view.window && error.code != NSURLErrorCancelled && error.code != 102) {
+                           if (self.isVisible && error.code != NSURLErrorCancelled && error.code != 102) {
                                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get groups ...", @"Failed to get groups ...")];
                            }
                            [self doneLoadingTableViewData];
@@ -152,15 +142,15 @@
 
 - (void)tick:(NSTimer *)timer
 {
-    if (self.connection)
-        [self refreshBackground:nil];
+    //if (self.connection)
+    //    [self refreshBackground:nil];
 }
 
 - (void)setConnection:(SeafConnection *)conn
 {
     _connection = conn;
-    [self.detailViewController setUrl:Nil connection:conn title:nil];
-    [self refresh:nil];
+    [self.detailViewController setConnection:conn];
+    [self performSelector:@selector(refresh:) withObject:nil afterDelay:1.5f];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -172,37 +162,42 @@
 #pragma mark - Table View
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    return 2;
+    return 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    if (section == 0)
-        return self.connection.seafGroups.count;
-    return self.connection.seafContacts.count;
+    return self.msgSources.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    int row = indexPath.row;
     NSString *CellIdentifier = @"SeafCell";
     SeafCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafCell" owner:self options:nil];
         cell = [cells objectAtIndex:0];
     }
-    NSMutableDictionary *dict = (indexPath.section == 0)? [self.connection.seafGroups objectAtIndex:row] : [self.connection.seafContacts objectAtIndex:row];
+    NSMutableDictionary *dict = [self.msgSources objectAtIndex:indexPath.row];
     cell.textLabel.text = [dict objectForKey:@"name"];
     long long mtime = [[dict objectForKey:@"mtime"] integerValue:0];
-    if (mtime)
-        cell.detailTextLabel.text = [NSString stringWithFormat:@"%@",  [SeafDateFormatter stringFromLongLong:mtime]];
-    else
-        cell.detailTextLabel.text = nil;
-
-    if (indexPath.section == 0)
-        cell.imageView.image = [UIImage imageNamed:@"group.png"];
-    else
-        cell.imageView.image = [UIImage imageNamed:@"account.png"];
+    cell.detailTextLabel.text = mtime ? [NSString stringWithFormat:@"%@", [SeafDateFormatter stringFromLongLong:mtime]] : nil;
+    NSString *avatar = nil;
+    switch ([[dict objectForKey:@"type"] integerValue:-1]) {
+        case MSG_GROUP:
+            avatar = [self.connection avatarForGroup:[dict objectForKey:@"id"]];
+            break;
+        case MSG_USER:
+            avatar = [self.connection avatarForEmail:[dict objectForKey:@"email"]];
+            break;
+        case MSG_REPLY:
+            avatar = [self.connection avatarForEmail:[dict objectForKey:@"reply_from"]];
+            break;
+        default:
+            Warning(@"Unknown msg type");
+            break;
+    }
+    cell.imageView.image = [JSAvatarImageFactory avatarImage:[UIImage imageWithContentsOfFile:avatar] croppedToCircle:YES];
     if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0 ) {
         cell.badgeLabel.text = [NSString stringWithFormat:@"%lld", [[dict objectForKey:@"msgnum"] integerValue:0]];
         cell.badgeLabel.hidden = NO;
@@ -229,55 +224,15 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    if (!IsIpad())
-        [appdelegate showDetailView:self.detailViewController];
-
-    int row = indexPath.row;
-    if (indexPath.section == 0) {
-        NSMutableDictionary *dict = [self.connection.seafGroups objectAtIndex:row];
-        NSString *gid = [dict objectForKey:@"id"];
-        NSString *name = [dict objectForKey:@"name"];
-        if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0 ) {
-            self.connection.umsgnum -= [[dict objectForKey:@"msgnum"] integerValue:0];
-            [dict setObject:@"0" forKey:@"msgnum"];
-            [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationNone];
-        }
-        NSString *url = [self.connection.address stringByAppendingFormat:API_URL"/html/discussions/%@/", gid];
-        self.detailViewController.msgtype = MSG_GROUP;
-        [self.detailViewController setUrl:url connection:self.connection title:name];
-    } else {
-        NSMutableDictionary *dict = [self.connection.seafContacts objectAtIndex:row];
-        NSString *name = [dict objectForKey:@"name"];
-        NSString *email = [dict objectForKey:@"email"];
-        if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0 ) {
-            self.connection.umsgnum -= [[dict objectForKey:@"msgnum"] integerValue:0];
-            [dict setObject:@"0" forKey:@"msgnum"];
-            [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationNone];
-            [appdelegate checkIconBadgeNumber];
-        }
-        NSString *url = [self.connection.address stringByAppendingFormat:API_URL"/html/usermsgs/%@/", email];
-        self.detailViewController.msgtype = MSG_USER;
-        [self.detailViewController setUrl:url connection:self.connection title:name];
-    }
+    NSMutableDictionary *dict = [self.msgSources objectAtIndex:indexPath.row];
+    Debug("dict=%@", dict);
+    self.connection.newmsgnum -= [[dict objectForKey:@"msgnum"] integerValue:0];
+    [dict setObject:@"0" forKey:@"msgnum"];
+    [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationNone];
     [self refreshTabBarItem];
-}
-
-- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
-{
-    NSString *text = nil;
-    if (section == 0) {
-        text = NSLocalizedString(@"Groups", nil);
-    } else {
-        text = NSLocalizedString(@"Contacts", nil);
-    }
-    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
-    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 3, tableView.bounds.size.width - 10, 18)];
-    label.text = text;
-    label.textColor = [UIColor whiteColor];
-    label.backgroundColor = [UIColor clearColor];
-    [headerView setBackgroundColor:HEADER_COLOR];
-    [headerView addSubview:label];
-    return headerView;
+    long long msgtype = [[dict objectForKey:@"type"] integerValue:-1];
+    [self.detailViewController setMsgtype:(int)msgtype info:dict];
+    if (!IsIpad())    [appdelegate showDetailView:self.detailViewController];
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
@@ -321,16 +276,6 @@
 - (NSDate*)egoRefreshTableHeaderDataSourceLastUpdated:(EGORefreshTableHeaderView*)view
 {
     return [NSDate date];
-}
-
-- (IBAction)newReplies:(id)sender
-{
-    self.connection.newreply = 0;
-    [(SeafAppDelegate *)[[UIApplication sharedApplication] delegate] checkIconBadgeNumber];
-    NSString *urlStr = [self.connection.address stringByAppendingString:API_URL"/html/newreply/"];
-    self.detailViewController.msgtype = MSG_NEW_REPLY;
-    [self.detailViewController setUrl:urlStr connection:self.connection title:NSLocalizedString(@"New replies", nil)];
-    return;
 }
 
 @end

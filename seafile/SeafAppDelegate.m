@@ -194,7 +194,7 @@
 {
     int badge = 0;
     for (SeafConnection *conn in self.conns) {
-        badge += conn.newreply + conn.umsgnum + conn.gmsgnum;
+        badge += conn.newmsgnum;
     }
     Debug("IconBadgeNumber=%d", badge);
     [UIApplication sharedApplication].applicationIconBadgeNumber = badge;
@@ -213,7 +213,7 @@
         if (badgeStr && [badgeStr intValue] > 0) {
             SeafConnection *connection = [self getConnection:server username:username];
             if (!connection) return;
-            connection.newreply = [badgeStr intValue];
+            connection.newmsgnum = [badgeStr intValue];
             self.window.rootViewController = self.startNav;
             [self.window makeKeyAndVisible];
             [self.startVC selectAccount:connection];
@@ -409,7 +409,7 @@
     settingsController.tabBarItem.image = [UIImage imageNamed:@"tab-settings.png"];
     activityController.tabBarItem.title = NSLocalizedString(@"Activity", @"Activity");
     activityController.tabBarItem.image = [UIImage imageNamed:@"tab-activity.png"];
-    discussionController.tabBarItem.title = NSLocalizedString(@"Discussion", @"Discussion");
+    discussionController.tabBarItem.title = NSLocalizedString(@"Message", @"Message");
     discussionController.tabBarItem.image = [UIImage imageNamed:@"tab-discussion.png"];
     accountvc.tabBarItem.title = NSLocalizedString(@"Accounts", @"Accounts");
     accountvc.tabBarItem.image = [UIImage imageNamed:@"tab-account.png"];

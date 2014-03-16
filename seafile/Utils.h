@@ -42,6 +42,7 @@
 
 
 + (id)JSONDecode:(NSData *)data error:(NSError **)error;
++ (NSString *)JSONEncodeDictionary:(NSDictionary *)dict;
 + (BOOL)isImageFile:(NSString *)name;
 
 + (NSString *)documentPath:(NSString*)fileId;

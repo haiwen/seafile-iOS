@@ -198,8 +198,7 @@
         cell = [cells objectAtIndex:0];
     }
     SeafConnection *conn = [appdelegate.conns objectAtIndex:indexPath.row];
-    NSString* path = [[NSBundle mainBundle] pathForResource:@"account" ofType:@"png"];
-    cell.imageview.image = [UIImage imageWithContentsOfFile:path];
+    cell.imageview.image = [UIImage imageWithContentsOfFile:[conn avatarForEmail:conn.username]];
     cell.serverLabel.text = conn.address;
     cell.emailLabel.text = conn.username;
     cell.accessoryType = UITableViewCellAccessoryNone;
@@ -272,6 +271,7 @@
     [userDefaults setObject:conn.username forKey:@"DEAULT-USER"];
     [userDefaults synchronize];
 
+    [conn loadCache];
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     appdelegate.connection = conn;
     appdelegate.window.rootViewController = appdelegate.tabbarController;

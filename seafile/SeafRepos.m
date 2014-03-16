@@ -15,6 +15,8 @@
 #import "Debug.h"
 #import "Utils.h"
 
+#define KEY_REPOS @"REPOS"
+
 @interface SeafRepo ()
 @property (readonly) NSString *perm;
 
@@ -186,7 +188,7 @@
          @synchronized(self) {
              self.state = SEAF_DENTRY_UPTODATE;
              if ([self handleData:JSON])
-                 [self savetoCache:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
+                 [self->connection savetoCacheKey:KEY_REPOS value:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
          }
      }
                     failure:
@@ -196,71 +198,11 @@
      }];
 }
 
-- (SeafServer *)loadCacheObj
-{
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    NSManagedObjectContext *context = [appdelegate managedObjectContext];
-    NSFetchRequest *fetchRequest=[[NSFetchRequest alloc] init];
-    [fetchRequest setEntity:[NSEntityDescription entityForName:@"SeafServer"
-                                        inManagedObjectContext:context]];
-    NSSortDescriptor *sortDescriptor=[[NSSortDescriptor alloc] initWithKey:@"url" ascending:YES selector:nil];
-    NSArray *descriptor=[NSArray arrayWithObject:sortDescriptor];
-    [fetchRequest setSortDescriptors:descriptor];
-
-    [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"url==%@ AND username==%@", connection.address, connection.username]];
-
-    NSFetchedResultsController *controller = [[NSFetchedResultsController alloc]
-                                              initWithFetchRequest:fetchRequest
-                                              managedObjectContext:context
-                                              sectionNameKeyPath:nil
-                                              cacheName:nil];
-    NSError *error;
-    if (![controller performFetch:&error]) {
-        Debug("Fetch cache error %@",[error localizedDescription]);
-        return nil;
-    }
-    NSArray *results = [controller fetchedObjects];
-    if ([results count] == 0) {
-        return nil;
-    }
-    SeafServer *server = [results objectAtIndex:0];
-    return server;
-}
-
-- (BOOL)savetoCache:(NSString *)content
-{
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    NSManagedObjectContext *context = [appdelegate managedObjectContext];
-    SeafServer *server = [self loadCacheObj];
-    if (!server) {
-        server = (SeafServer *)[NSEntityDescription insertNewObjectForEntityForName:@"SeafServer" inManagedObjectContext:context];
-        server.url = connection.address;
-        server.content = content;
-        server.username = connection.username;
-    } else {
-        server.content = content;
-        [context updatedObjects];
-    }
-    [appdelegate saveContext];
-
-    return YES;
-}
-
 - (BOOL)realLoadCache
 {
-    NSError *error = nil;
-    SeafServer *server = [self loadCacheObj];
-    if (!server)
+    id JSON = [self->connection getCachedObj:KEY_REPOS];
+    if (!JSON)
         return NO;
-    NSData *data = [NSData dataWithBytes:[[server content] UTF8String] length:[[server content] length]];
-
-    id JSON = [Utils JSONDecode:data error:&error];
-    if (error) {
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        NSManagedObjectContext *context = [appdelegate managedObjectContext];
-        [context deleteObject:server];
-        return NO;
-    }
     [self handleData:JSON];
     return YES;
 }

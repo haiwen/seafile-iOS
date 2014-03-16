@@ -8,24 +8,13 @@
 
 #import <UIKit/UIKit.h>
 #import "SeafConnection.h"
+#import "JSMessagesViewController.h"
 
-enum {
-    MSG_GROUP = 0,
-    MSG_GROUP_REPLY,
-    MSG_NEW_REPLY,
-    MSG_USER,
-};
 
-@interface SeafDisDetailViewController : UIViewController <UISplitViewControllerDelegate, UIWebViewDelegate>
-
-@property (strong, nonatomic, readonly) IBOutlet UIWebView *webview;
+@interface SeafDisDetailViewController : JSMessagesViewController <UISplitViewControllerDelegate, UIWebViewDelegate>
 
 @property (strong, nonatomic) SeafConnection *connection;
-@property (readwrite, nonatomic) int msgtype;
 
-- (void)setUrl:(NSString *)url connection:(SeafConnection *)conn title:(NSString *)title;
-
-- (void)configureView;
-
+- (void)setMsgtype:(int)msgtype info:(NSDictionary *)info;
 
 @end

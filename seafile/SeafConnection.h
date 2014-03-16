@@ -13,6 +13,12 @@
 #define HTTP_ERR_REPO_PASSWORD_REQUIRED         440
 
 
+enum MSG_TYPE{
+    MSG_NONE = 0,
+    MSG_GROUP,
+    MSG_USER,
+    MSG_REPLY,
+};
 @class SeafConnection;
 @class SeafRepos;
 @class SeafRepo;
@@ -44,16 +50,15 @@
 @property (readwrite, strong) NSString *token;
 @property (readonly) NSArray *seafGroups;
 @property (readonly) NSArray *seafContacts;
-@property (readwrite) int newreply;
-@property (readwrite) int umsgnum;
-@property (readwrite) int gmsgnum;
+@property (readwrite) NSMutableArray *seafReplies;
+
+@property (readwrite) int newmsgnum;
 
 
 - (id)initWithUrl:(NSString *)url username:(NSString *)username;
 - (void)loadRepos:(id)degt;
 
 - (BOOL)localDecrypt:(NSString *)repoId;
-
 
 - (void)sendRequest:(NSString *)url repo:(NSString *)repoId
             success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data))success
@@ -80,7 +85,6 @@
 - (void)getStarredFiles:(void (^)(NSHTTPURLResponse *response, id JSON, NSData *data))success
                 failure:(void (^)(NSHTTPURLResponse *response, NSError *error, id JSON))failure;
 
-- (id)getCachedStarredFiles;
 
 - (void)getSeafGroupAndContacts:(void (^)(NSHTTPURLResponse *response, id JSON, NSData *data))success
                         failure:(void (^)(NSHTTPURLResponse *response, NSError *error, id JSON))failure;
@@ -100,5 +104,16 @@
        failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure;
 
 - (void)registerDevice:(NSData *)deviceToken;
+
+- (NSString *)nickForEmail:(NSString *)email;
+- (NSString *)avatarForEmail:(NSString *)email;
+- (NSString *)avatarForGroup:(NSString *)gid;
+
+
+// Cache
+- (void)loadCache;
+- (id)getCachedObj:(NSString *)key;
+- (BOOL)savetoCacheKey:(NSString *)key value:(NSString *)content;
+- (id)getCachedStarredFiles;
 
 @end

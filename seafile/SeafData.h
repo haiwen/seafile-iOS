@@ -10,24 +10,6 @@
 #import <CoreData/CoreData.h>
 
 
-@interface SeafServer : NSManagedObject
-
-@property (nonatomic, retain) NSString *url;
-@property (nonatomic, retain) NSString *username;
-@property (nonatomic, retain) NSString *content;
-
-@end
-
-
-@interface StarredFiles : NSManagedObject
-
-@property (nonatomic, retain) NSString *url;
-@property (nonatomic, retain) NSString *username;
-@property (nonatomic, retain) NSString *content;
-
-@end
-
-
 
 @interface Directory : NSManagedObject
 
@@ -50,10 +32,12 @@
 
 @end
 
-@interface SeafGroups : NSManagedObject
+
+@interface SeafCacheObj : NSManagedObject
 
 @property (nonatomic, retain) NSString *url;
 @property (nonatomic, retain) NSString *username;
+@property (nonatomic, retain) NSString *key;
 @property (nonatomic, retain) NSString *content;
 
 

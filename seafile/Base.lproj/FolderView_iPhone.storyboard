@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="4514" systemVersion="13B42" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="4514" systemVersion="13C64" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" initialViewController="lya-bS-d6v">
     <dependencies>
         <deployment version="1536" defaultVersion="1536" identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="3747"/>
@@ -444,25 +444,7 @@
             </objects>
             <point key="canvasLocation" x="-488" y="-1781"/>
         </scene>
-        <!--Seaf Dis Detail View Controller - Discussion-->
-        <scene sceneID="f8g-NC-Dfr">
-            <objects>
-                <viewController storyboardIdentifier="DISDETAILVC" title="Discussion" id="r0W-or-KJe" customClass="SeafDisDetailViewController" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" restorationIdentifier="DISDETAILVC" id="A8I-jK-vZR" customClass="UIWebView">
-                        <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
-                        <connections>
-                            <outlet property="delegate" destination="r0W-or-KJe" id="Hsq-ty-rO1"/>
-                        </connections>
-                    </view>
-                    <navigationItem key="navigationItem" title="Discussion" id="7Gx-1K-h8m"/>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="J9g-md-C8Q" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="-2158" y="-1968"/>
-        </scene>
-        <!--Seaf Dis Master View Controller - Groups-->
+        <!--Seaf Dis Master View Controller - Message-->
         <scene sceneID="P5F-l7-Lh4">
             <objects>
                 <tableViewController storyboardIdentifier="DISMASTERVC" clearsSelectionOnViewWillAppear="NO" id="geg-qC-dkP" customClass="SeafDisMasterViewController" sceneMemberID="viewController">
@@ -497,7 +479,7 @@
                         </connections>
                     </tableView>
                     <tabBarItem key="tabBarItem" title="" id="9Lz-mn-hwx"/>
-                    <navigationItem key="navigationItem" title="Groups" id="Fzs-bI-CXk"/>
+                    <navigationItem key="navigationItem" title="Message" id="Fzs-bI-CXk"/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="YH7-g1-iBq" sceneMemberID="firstResponder"/>
@@ -564,6 +546,21 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Cto-6H-zeO" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-1253" y="-1115"/>
+        </scene>
+        <!--Seaf Dis Detail View Controller - Discussion-->
+        <scene sceneID="S9r-s7-uuf">
+            <objects>
+                <viewController storyboardIdentifier="DISDETAILVC" title="Discussion" id="lya-bS-d6v" customClass="SeafDisDetailViewController" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" restorationIdentifier="DISDETAILVC" id="KkC-xn-AqD">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                    </view>
+                    <navigationItem key="navigationItem" title="Discussion" id="nzj-zI-sot"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="7bH-U4-hfK" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-2390" y="-1168"/>
         </scene>
     </scenes>
     <resources>
