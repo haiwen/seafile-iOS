@@ -6,7 +6,7 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
-#import "AFHTTPRequestOperation.h"
+#import "AFNetworking.h"
 
 @interface SeafJSONRequestOperation : AFHTTPRequestOperation {
 @private

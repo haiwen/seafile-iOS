@@ -18,4 +18,7 @@
 @property (strong, nonatomic) SeafDisDetailViewController *detailViewController;
 @property (strong, nonatomic) SeafConnection *connection;
 
+- (void)refreshView;
+- (void)refreshTabBarItem;
+
 @end

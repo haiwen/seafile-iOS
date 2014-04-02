@@ -461,7 +461,7 @@ enum PREVIEW_STATE {
         [self fileContentLoaded:(SeafFile *)entry result:YES completeness:percent];
 }
 
-- (void)entryContentLoadingFailed:(int)errCode entry:(SeafBase *)entry;
+- (void)entryContentLoadingFailed:(long)errCode entry:(SeafBase *)entry;
 {
     [self fileContentLoaded:(SeafFile *)entry result:NO completeness:0];
 }
@@ -620,8 +620,8 @@ enum PREVIEW_STATE {
         void (^completionHandler)(UIPrintInteractionController *, BOOL, NSError *) =
         ^(UIPrintInteractionController *pic, BOOL completed, NSError *error) {
             if (!completed && error)
-                NSLog(@"FAILED! due to error in domain %@ with error code %u",
-                      error.domain, error.code);
+                NSLog(@"FAILED! due to error in domain %@ with error code %ld",
+                      error.domain, (long)error.code);
         };
         if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
             [pic presentFromBarButtonItem:self.exportItem animated:YES
@@ -672,7 +672,7 @@ enum PREVIEW_STATE {
 #pragma mark - UIActionSheetDelegate
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)bIndex
 {
-    buttonIndex = bIndex;
+    buttonIndex = (int)bIndex;
     if (bIndex < 0 || bIndex >= actionSheet.numberOfButtons)
         return;
     SeafFile *file = (SeafFile *)self.preViewItem;
@@ -839,7 +839,7 @@ enum PREVIEW_STATE {
 
 - (id <QLPreviewItem>)previewController:(QLPreviewController *)controller previewItemAtIndex:(NSInteger)index;
 {
-    Debug("index=%d", index);
+    Debug("index=%ld", (long)index);
     if (!ios7 && index < 0) index = 0;
     if (index < 0 || index >= 1) {
         return nil;

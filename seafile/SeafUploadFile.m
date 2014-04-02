@@ -9,8 +9,7 @@
 #import "SeafAppDelegate.h"
 #import "SeafUploadFile.h"
 #import "SeafConnection.h"
-#import "AFHTTPClient.h"
-#import "AFHTTPRequestOperation.h"
+#import "AFNetworking.h"
 #import "SeafRepos.h"
 
 #import "FileMimeType.h"
@@ -28,6 +27,8 @@ static NSMutableDictionary *uploadFiles = nil;
 @property (readonly) NSString *mime;
 @property (strong, readonly) NSURL *preViewURL;
 @property (strong) AFHTTPRequestOperation *operation;
+@property (nonatomic, strong) AFHTTPRequestSerializer <AFURLRequestSerialization> * requestSerializer;
+
 @end
 
 @implementation SeafUploadFile
@@ -38,8 +39,14 @@ static NSMutableDictionary *uploadFiles = nil;
 @synthesize uploading = _uploading;
 @synthesize uProgress = _uProgress;
 @synthesize preViewURL = _preViewURL;
+@synthesize requestSerializer = _requestSerializer;
 
-
+- (AFHTTPRequestSerializer <AFURLRequestSerialization> *)requestSerializer
+{
+    if (!_requestSerializer)
+        _requestSerializer = [AFHTTPRequestSerializer serializer];
+    return _requestSerializer;
+}
 - (id)initWithPath:(NSString *)lpath
 {
     self = [super init];
@@ -119,21 +126,21 @@ static NSMutableDictionary *uploadFiles = nil;
 
 - (void)uploadByFile:(NSString *)surl path:(NSString *)uploadpath update:(BOOL)update
 {
-    NSURL *url = [NSURL URLWithString:surl];
-    AFHTTPClient *httpClient = [[AFHTTPClient alloc] initWithBaseURL:url];
-    NSMutableURLRequest *request = [httpClient multipartFormRequestWithMethod:@"POST" path:nil parameters:nil constructingBodyWithBlock: ^(id <AFMultipartFormData>formData) {
+    NSMutableURLRequest *request = [self.requestSerializer multipartFormRequestWithMethod:@"POST" URLString:surl parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
         if (update)
             [formData appendPartWithFormData:[uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"target_file"];
         else
             [formData appendPartWithFormData:[uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"parent_dir"];
-
+        
         [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
         [formData appendPartWithFileURL:[NSURL fileURLWithPath:self.lpath] name:@"file" error:nil];
-    }];
-    request.URL = url;
+    } error:nil];
     AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
+    AFSecurityPolicy *policy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModeNone];
+    policy.allowInvalidCertificates = YES;
+    operation.securityPolicy = policy;
     self.operation = operation;
-    [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
+    [operation setUploadProgressBlock:^(NSUInteger bytesWritten, NSInteger totalBytesWritten, NSInteger totalBytesExpectedToWrite) {
         int percent = [self percentForShow:totalBytesWritten expected:totalBytesExpectedToWrite];
         [_delegate uploadProgress:self result:YES completeness:percent];
     }];
@@ -148,16 +155,9 @@ static NSMutableDictionary *uploadFiles = nil;
          [self finishUpload:YES oid:oid];
      }
                                      failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-                                         Debug("Upload failed :%@,code=%d, res=%@, %@\n", error, operation.response.statusCode, operation.responseData, operation.responseString);
+                                         Debug("Upload failed :%@,code=%ldd, res=%@, %@\n", error, (long)operation.response.statusCode, operation.responseData, operation.responseString);
                                          [self finishUpload:NO oid:nil];
                                      }];
-
-    [operation setAuthenticationAgainstProtectionSpaceBlock:^BOOL(NSURLConnection *connection, NSURLProtectionSpace *protectionSpace) {
-        return YES;
-    }];
-    [operation setAuthenticationChallengeBlock:^(NSURLConnection *connection, NSURLAuthenticationChallenge *challenge) {
-        [challenge.sender useCredential:[NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust] forAuthenticationChallenge:challenge];
-    }];
     [operation start];
 }
 
@@ -179,7 +179,7 @@ static NSMutableDictionary *uploadFiles = nil;
         }
         NSString *blockid = [data SHA1];
         NSString *blockpath = [Utils blockPath:blockid];
-        Debug("Chunk file blockid=%@, path=%@, len=%d\n", blockid, blockpath, data.length);
+        Debug("Chunk file blockid=%@, path=%@, len=%lu\n", blockid, blockpath, (unsigned long)data.length);
         [blockids addObject:blockid];
         [paths addObject:blockpath];
         [data writeToFile:blockpath atomically:YES];
@@ -190,9 +190,7 @@ static NSMutableDictionary *uploadFiles = nil;
 
 - (void)uploadByBlocks:(NSString *)surl uploadpath:(NSString *)uploadpath blocks:(NSArray *)blockids paths:(NSArray *)paths update:(BOOL)update
 {
-    NSURL *url = [NSURL URLWithString:surl];
-    AFHTTPClient *httpClient = [[AFHTTPClient alloc] initWithBaseURL:url];
-    NSMutableURLRequest *request = [httpClient multipartFormRequestWithMethod:@"POST" path:nil parameters:nil constructingBodyWithBlock: ^(id <AFMultipartFormData>formData) {
+    NSMutableURLRequest *request = [self.requestSerializer multipartFormRequestWithMethod:@"POST" URLString:surl parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
         if (update)
             [formData appendPartWithFormData:[uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"target_file"];
         else {
@@ -203,10 +201,12 @@ static NSMutableDictionary *uploadFiles = nil;
         for (NSString *path in paths) {
             [formData appendPartWithFileURL:[NSURL fileURLWithPath:path] name:@"file" error:nil];
         }
-    }];
-    request.URL = url;
+    } error:nil];
     AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
-    [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
+    AFSecurityPolicy *policy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModeNone];
+    policy.allowInvalidCertificates = YES;
+    operation.securityPolicy = policy;
+    [operation setUploadProgressBlock:^(NSUInteger bytesWritten, NSInteger totalBytesWritten, NSInteger totalBytesExpectedToWrite) {
         int percent = [self percentForShow:totalBytesWritten expected:totalBytesExpectedToWrite];
         [_delegate uploadProgress:self result:YES completeness:percent];
     }];
@@ -221,16 +221,9 @@ static NSMutableDictionary *uploadFiles = nil;
          [self finishUpload:YES oid:oid];
      }
                                      failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-                                         Debug("Upload failed :%@,code=%d, res=%@, %@\n", error, operation.response.statusCode, operation.responseData, operation.responseString);
+                                         Debug("Upload failed :%@,code=%ld, res=%@, %@\n", error, (long)operation.response.statusCode, operation.responseData, operation.responseString);
                                          [self finishUpload:NO oid:nil];
                                      }];
-
-    [operation setAuthenticationAgainstProtectionSpaceBlock:^BOOL(NSURLConnection *connection, NSURLProtectionSpace *protectionSpace) {
-        return YES;
-    }];
-    [operation setAuthenticationChallengeBlock:^(NSURLConnection *connection, NSURLAuthenticationChallenge *challenge) {
-        [challenge.sender useCredential:[NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust] forAuthenticationChallenge:challenge];
-    }];
     [operation start];
 }
 

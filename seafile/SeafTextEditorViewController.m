@@ -160,7 +160,7 @@ enum TOOL_ITEM {
     if (r.length > 0)
         selected = [[self.egoTextView.attributedString attributedSubstringFromRange:r] string];
     NSString *news = [NSString stringWithFormat:@"%@%@%@", before, selected, after];
-    Debug("r=%d, %d, %@, %@", r.location, r.length, selected, news);
+    Debug("r=%lu, %lu, %@, %@", (unsigned long)r.location, (unsigned long)r.length, selected, news);
     [self.egoTextView replaceNSRange:r withText:news];
     NSRange selectR = (NSRange) {r.location + before.length, selected.length};
     self.egoTextView.selectedRange = selectR;

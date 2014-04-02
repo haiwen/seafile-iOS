@@ -201,7 +201,7 @@
         [self.tableView reloadData];
     }
 }
-- (void)entryContentLoadingFailed:(int)errCode entry:(SeafBase *)entry
+- (void)entryContentLoadingFailed:(long)errCode entry:(SeafBase *)entry
 {
     [self doneLoadingTableViewData];
     if ([_directory hasCache]) {

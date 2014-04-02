@@ -8,29 +8,37 @@
 
 #import "SeafAppDelegate.h"
 #import "SeafDisDetailViewController.h"
-#import "SeafMessage.h"
 
+#import "SeafBase.h"
 #import "SVProgressHUD.h"
 #import "UIViewController+Extend.h"
 #import "ExtentedString.h"
 #import "Debug.h"
 
-@interface SeafDisDetailViewController ()<JSMessagesViewDataSource, JSMessagesViewDelegate>
+static const CGFloat kJSLabelPadding = 5.0f;
+static const CGFloat kJSTimeStampLabelHeight = 15.0f;
+static const CGFloat kJSSubtitleLabelHeight = 15.0f;
+
+@interface SeafDisDetailViewController ()<JSMessagesViewDataSource, JSMessagesViewDelegate, EGORefreshTableHeaderDelegate, UIScrollViewDelegate>
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
 @property (strong) UIBarButtonItem *msgItem;
 @property (strong) UIBarButtonItem *refreshItem;
 @property (strong) NSArray *items;
 
 @property (strong, nonatomic) NSMutableArray *messages;
-@property (strong, nonatomic) NSDictionary *info;
+@property (strong, nonatomic) NSMutableDictionary *info;
 @property (readwrite, nonatomic) int msgtype;
+@property (readwrite, nonatomic) int next_page;
 
+
+@property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
 @property (strong, nonatomic) IBOutlet UIActivityIndicatorView *loadingView;
 
 @end
 
 @implementation SeafDisDetailViewController
 @synthesize connection = _connection;
+@synthesize refreshHeaderView = _refreshHeaderView;
 
 #pragma mark - Managing the detail item
 
@@ -64,7 +72,7 @@
     [self setMsgtype:MSG_NONE info:nil];
 }
 
-- (void)setMsgtype:(int)msgtype info:(NSDictionary *)info
+- (void)setMsgtype:(int)msgtype info:(NSMutableDictionary *)info
 {
     if (self.masterPopoverController != nil) {
         [self.masterPopoverController dismissPopoverAnimated:YES];
@@ -77,6 +85,7 @@
         [self refreshView];
     [self.messageInputView.textView resignFirstResponder];
     self.messageInputView.textView.text = @"";
+    self.next_page = 2;
 }
 
 - (NSString *)msgUrl
@@ -98,57 +107,60 @@
     return url;
 }
 
-- (void)handleMessageData:(id)JSON
+- (NSMutableArray *)paseMessageData:(id)JSON
 {
-    self.messages = [[NSMutableArray alloc] init];
-    NSArray *arr = [JSON objectForKey:@"msgs"];
-
+    NSMutableArray *messages = [[NSMutableArray alloc] init];
+    Debug("JSON=%@", JSON);
+    if (!JSON || ![JSON isKindOfClass:[NSDictionary class]])
+        return messages;
     switch (self.msgtype) {
         case MSG_NONE:
             break;
-        case MSG_REPLY:
-            for (NSDictionary *dict in arr) {
-                SeafMessage *msg = [[SeafMessage alloc] initWithGroupMsg:dict conn:self.connection];
-                [self.messages addObject:msg];
-            }
+        case MSG_REPLY: {
+            SeafMessage *msg = [[SeafMessage alloc] initWithGroupMsg:JSON conn:self.connection];
+            [messages addObject:msg];
             break;
+        }
         case MSG_GROUP: {
-            for (NSDictionary *dict in arr) {
+            for (NSDictionary *dict in [JSON objectForKey:@"msgs"]) {
                 SeafMessage *msg = [[SeafMessage alloc] initWithGroupMsg:dict conn:self.connection];
-                [self.messages addObject:msg];
+                [messages addObject:msg];
             }
             break;
         }
         case MSG_USER:{
-            for (NSDictionary *dict in arr) {
+            for (NSDictionary *dict in [JSON objectForKey:@"msgs"]) {
                 SeafMessage *msg = [[SeafMessage alloc] initWithUserMsg:dict conn:self.connection];
-                [self.messages addObject:msg];
+                [messages addObject:msg];
             }
             break;
         }
     }
-    [self.messages sortUsingComparator:^NSComparisonResult(SeafMessage *obj1, SeafMessage *obj2) {
+    [messages sortUsingComparator:^NSComparisonResult(SeafMessage *obj1, SeafMessage *obj2) {
         return [obj1.date compare:obj2.date];
     }];
+    return messages;
+}
+
+- (void)handleMessageData:(id)JSON
+{
+    self.messages = [self paseMessageData:JSON];
 }
 - (void)loadCacheData
 {
     switch (self.msgtype) {
         case MSG_NONE:
-            break;
         case MSG_REPLY:
+            break;
         case MSG_GROUP:
         case MSG_USER:
         {
             id JSON = [self.connection getCachedObj:[self msgUrl]];
-            [self handleMessageData:JSON];
-            if (self.messages.count == 0) {
-                [self downloadMessages];
-            }
+            self.messages = [self paseMessageData:JSON];
             break;
         }
     }
-    Debug("cache %d", self.messages.count);
+    Debug("cache %lu", (unsigned long)self.messages.count);
 }
 
 - (void)downloadMessages
@@ -163,13 +175,22 @@
             NSString *url = [self msgUrl];
             [self.connection sendRequest:url repo:nil success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
                 [self.connection savetoCacheKey:url value:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
-                [self handleMessageData:JSON];
+                self.messages = [self paseMessageData:JSON];
                 [self.tableView reloadData];
                 [self scrollToBottomAnimated:YES];
                 [self dismissLoadingView];
                 self.refreshItem.enabled = YES;
+                long long newmsgnum = [[self.info objectForKey:@"msgnum"] integerValue:0];
+                if (newmsgnum > 0) {
+                    [self.info setObject:@"0" forKey:@"msgnum"];
+                    self.connection.newmsgnum -= newmsgnum;
+                    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+                    [appdelegate.discussVC.tableView reloadData];
+                    [appdelegate.discussVC refreshTabBarItem];
+                }
             } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
                 Warning("Failed to get messsages");
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get messages", @"Failed to get message")];
                 [self dismissLoadingView];
                 self.refreshItem.enabled = YES;
             }];
@@ -180,25 +201,42 @@
 
 - (void)refreshView
 {
-    Debug("type=%d, count=%d\n", self.msgtype, self.messages.count);
+    Debug("type=%d, count=%lu\n", self.msgtype, (unsigned long)self.messages.count);
+    if (self.msgtype != MSG_NONE) {
+        long long newmsgnum = [[self.info objectForKey:@"msgnum"] integerValue:0];
+        if (self.messages.count == 0 || newmsgnum > 0) {
+            [self refresh:nil];
+        }
+    }
     // Update the user interface for the detail item.
     switch (self.msgtype) {
         case MSG_NONE:
             self.title = NSLocalizedString(@"Message", nil);
             self.navigationItem.rightBarButtonItems = nil;
             [self setInputViewHidden:YES];
+            if (self.refreshHeaderView.superview)
+                [self.refreshHeaderView removeFromSuperview];
             break;
         case MSG_GROUP:
             self.title = [self.info objectForKey:@"name"];
             self.navigationItem.rightBarButtonItems = self.items;
             [self setInputViewHidden:YES];
             self.msgItem.enabled = YES;
+            if (!self.refreshHeaderView.superview)
+                [self.tableView addSubview:self.refreshHeaderView];
             break;
         case MSG_USER:
-        case MSG_REPLY:
             self.title = [self.info objectForKey:@"name"];
             self.navigationItem.rightBarButtonItems = [NSArray arrayWithObject:self.refreshItem];
             [self setInputViewHidden:NO];
+            if (!self.refreshHeaderView.superview)
+                [self.tableView addSubview:self.refreshHeaderView];
+            break;
+        case MSG_REPLY:
+            self.title = [self.info objectForKey:@"name"];
+            self.navigationItem.rightBarButtonItems = [NSArray arrayWithObject:self.refreshItem];
+            if (self.refreshHeaderView.superview)
+                [self.refreshHeaderView removeFromSuperview];
             break;
         default:
             break;
@@ -249,6 +287,12 @@
     self.messageInputView.textView.placeHolder = @"New Message";
 
     [super viewDidLoad];
+    if (_refreshHeaderView == nil) {
+        EGORefreshTableHeaderView *view = [[EGORefreshTableHeaderView alloc] initWithFrame:CGRectMake(0.0f, 0.0f - self.tableView.bounds.size.height, self.view.frame.size.width, self.tableView.bounds.size.height)];
+        view.delegate = self;
+        _refreshHeaderView = view;
+    }
+    [_refreshHeaderView refreshLastUpdatedDate];
     [self refreshView];
 }
 
@@ -327,6 +371,18 @@
 {
     return self.messages.count;
 }
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    CGFloat height = [super tableView:tableView heightForRowAtIndexPath:indexPath];
+    SeafMessage *msg = [self.messages objectAtIndex:indexPath.row];
+    if (msg.replies.count > 0) {
+//        height += msg.repliesHeight;
+        height += msg.replies.count * 20;
+
+    }
+    Debug("row=%ld, height=%f", (long)indexPath.row, height);
+    return height;
+}
 
 #pragma mark - Messages view delegate: REQUIRED
 - (void)saveToCache
@@ -339,12 +395,37 @@
     NSDictionary *dict = [[NSDictionary alloc] initWithObjectsAndKeys:msgs, @"msgs", nil];
     [self.connection savetoCacheKey:[self msgUrl] value:[Utils JSONEncodeDictionary:dict]];
 }
+
+- (void)addReply:(SeafMessage *)msg text:(NSString *)text fromSender:(NSString *)sender onDate:(NSDate *)date
+{
+    Debug("sender=%@, %@ msg=%@, %@", sender, self.sender, msg, [msg toDictionary]);
+    NSString *url = [NSString stringWithFormat:API_URL"/group/%@/msg/%@/", [self.info objectForKey:@"group_id"], msg.msgId];
+    NSString *form = [NSString stringWithFormat:@"message=%@", [text escapedPostForm]];
+    [self.connection sendPost:url repo:nil form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+        [SVProgressHUD dismiss];
+        NSString *msgId = [JSON objectForKey:@"msgid"];
+        NSString *timestamp = [NSString stringWithFormat:@"%d", (int)[date timeIntervalSince1970]];
+        NSDictionary *reply = [[NSDictionary alloc] initWithObjectsAndKeys:msgId, @"msgid", self.sender, @"from_email", [self.connection nickForEmail:self.sender], @"nickname", timestamp, @"timestamp", text, @"msg", nil];
+        [msg.replies addObject:reply];
+        self.messageInputView.sendButton.enabled = YES;
+        [self finishSend];
+        [self saveToCache];
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to send message", @"Failed to send message")];
+        self.messageInputView.sendButton.enabled = YES;
+    }];
+}
 - (void)didSendText:(NSString *)text fromSender:(NSString *)sender onDate:(NSDate *)date
 {
-    SeafMessage *msg = [[SeafMessage alloc] initWithText:text email:sender date:date conn:self.connection];
-    Debug("sender=%@, %@ msg=%@", sender, self.sender, msg);
+
     [SVProgressHUD showWithStatus:@"Sending"];
     self.messageInputView.sendButton.enabled = NO;
+    if (NO) {
+        [self addReply:nil text:text fromSender:sender onDate:date];
+        return;
+    }
+    SeafMessage *msg = [[SeafMessage alloc] initWithText:text email:sender date:date conn:self.connection type:self.msgtype];
+    Debug("sender=%@, %@ msg=%@, %@", sender, self.sender, msg, [msg toDictionary]);
     NSString *url = [self msgUrl];
     NSString *form = [NSString stringWithFormat:@"message=%@", [text escapedPostForm]];
     [self.connection sendPost:url repo:nil form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
@@ -405,7 +486,6 @@
         if ([cell.bubbleView.textView respondsToSelector:@selector(linkTextAttributes)]) {
             NSMutableDictionary *attrs = [cell.bubbleView.textView.linkTextAttributes mutableCopy];
             [attrs setValue:[UIColor blueColor] forKey:UITextAttributeTextColor];
-
             cell.bubbleView.textView.linkTextAttributes = attrs;
         }
     }
@@ -424,6 +504,62 @@
 #else
     cell.bubbleView.textView.dataDetectorTypes = UIDataDetectorTypeAll;
 #endif
+    SeafMessage *msg = [self.messages objectAtIndex:indexPath.row];
+
+    if (self.msgtype == MSG_GROUP || self.msgtype == MSG_REPLY) {
+        cell.avatarImageView.frame = CGRectMake(cell.avatarImageView.frame.origin.x,
+                                                kJSTimeStampLabelHeight,
+                                                cell.avatarImageView.frame.size.width,
+                                                cell.avatarImageView.frame.size.height);
+       
+        cell.avatarImageView.autoresizingMask = (UIViewAutoresizingFlexibleLeftMargin
+                                                 | UIViewAutoresizingFlexibleRightMargin);
+        cell.subtitleLabel.hidden = YES;
+        cell.timestampLabel.text = [NSString stringWithFormat:@"%@  %@", msg.nickname, cell.timestampLabel.text];
+        cell.timestampLabel.frame = CGRectMake(cell.bubbleView.frame.origin.x,
+                                               kJSLabelPadding,
+                                               cell.bubbleView.frame.size.width,
+                                               kJSTimeStampLabelHeight);
+        cell.timestampLabel.autoresizingMask = (UIViewAutoresizingFlexibleWidth);
+    }
+    if (msg.replies.count > 0) {
+        Debug("...row=%ld reply %lu, %@", (long)indexPath.row, (unsigned long)msg.replies.count, msg.text);
+        UITableView *tview = nil;
+        for (UIView *v in cell.contentView.subviews) {
+            if ([v isKindOfClass:[UITableView class]]) {
+                tview = (UITableView *)v;
+                break;
+            }
+        }
+        Debug("view=%@", tview);
+        CGFloat y = [super tableView:self.tableView heightForRowAtIndexPath:indexPath];
+        CGRect frame = CGRectMake(cell.bubbleView.frame.origin.x, y,
+                                 cell.contentView.frame.size.width - cell.bubbleView.frame.origin.x,
+                                 msg.replies.count * 20);
+        Debug("%f %f %f %f\n", tview.frame.origin.x, tview.frame.origin.y, tview.frame.size.width, tview.frame.size.height);
+        
+        if (!tview)
+            tview = [[UITableView alloc] initWithFrame:frame style:UITableViewStylePlain];
+        tview.delegate = msg;
+        tview.dataSource = msg;
+        tview.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+        tview.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+        tview.backgroundColor = self.tableView.backgroundColor;
+        tview.separatorColor = self.tableView.backgroundColor;
+        tview.separatorStyle = UITableViewCellSeparatorStyleNone;
+        tview.scrollEnabled = NO;
+        
+        msg.repliesHeight = tview.frame.size.height - 0;
+        [cell.contentView addSubview:tview];
+        [tview reloadData];
+        [cell.contentView bringSubviewToFront:tview];
+        Debug("%f %f %f %f\n", tview.frame.origin.x, tview.frame.origin.y, tview.frame.size.width, tview.frame.size.height);
+    }
+}
+
+- (NSString *)customCellIdentifierForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return [NSString stringWithFormat:@"JSMessageCell_%d_%u_%d", self.msgtype, [self messageTypeForRowAtIndexPath:indexPath], [self shouldDisplayTimestampForRowAtIndexPath:indexPath]];
 }
 
 #pragma mark - Messages view data source: REQUIRED
@@ -439,6 +575,83 @@
     NSString *avatar = [self.connection avatarForEmail:msg.email];
     UIImage *image = [JSAvatarImageFactory avatarImage:[UIImage imageWithContentsOfFile:avatar] croppedToCircle:YES];
     return [[UIImageView alloc] initWithImage:image];
+}
+
+#pragma mark - mark UIScrollViewDelegate Methods
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView
+{
+    [_refreshHeaderView egoRefreshScrollViewDidScroll:scrollView];
+}
+
+- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
+{
+    [_refreshHeaderView egoRefreshScrollViewDidEndDragging:scrollView];
+}
+
+#pragma mark - EGORefreshTableHeaderDelegate Methods
+- (void)doneLoadingTableViewData
+{
+    [_refreshHeaderView egoRefreshScrollViewDataSourceDidFinishedLoading:self.tableView];
+}
+- (void)downloadMoreMessages
+{
+    switch (self.msgtype) {
+        case MSG_NONE:
+        case MSG_REPLY:
+            break;
+        case MSG_GROUP:
+        case MSG_USER:
+        {
+            NSString *url = [[self msgUrl] stringByAppendingFormat:@"?page=%d", self.next_page, nil];
+            [self.connection sendRequest:url repo:nil success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+                NSMutableArray *arr = [self paseMessageData:JSON];
+                self.next_page = (int)[[JSON objectForKey:@"next_page"] integerValue:-1];
+                long long lastID = 0;
+                if (arr.count > 0) {
+                    lastID = [[[arr objectAtIndex:(arr.count-1)] msgId] integerValue:0];
+                    for (SeafMessage *m in self.messages) {
+                        if ([m.msgId integerValue:0] > lastID)
+                            [arr addObject:m];
+                    }
+                    long off = arr.count - self.messages.count;
+                    self.messages = arr;
+                    [self.tableView reloadData];
+                    [self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:off inSection:0]
+                                          atScrollPosition:UITableViewScrollPositionBottom
+                                                  animated:NO];
+                }
+                Debug("msgs count=%lu", (unsigned long)self.messages.count);
+                [self doneLoadingTableViewData];
+            } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+                Warning("Failed to get messsages");
+                [self doneLoadingTableViewData];
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get messages", @"Failed to get message")];
+            }];
+            break;
+        }
+    }
+}
+- (void)egoRefreshTableHeaderDidTriggerRefresh:(EGORefreshTableHeaderView*)view
+{
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    if (![appdelegate checkNetworkStatus]) {
+        [self performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
+        return;
+    }
+    if (self.next_page > 0)
+        [self downloadMoreMessages];
+    else
+        [self performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
+}
+
+- (BOOL)egoRefreshTableHeaderDataSourceIsLoading:(EGORefreshTableHeaderView*)view
+{
+    return NO;
+}
+
+- (NSDate*)egoRefreshTableHeaderDataSourceLastUpdated:(EGORefreshTableHeaderView*)view
+{
+    return [NSDate date];
 }
 
 @end

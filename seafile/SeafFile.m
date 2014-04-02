@@ -163,6 +163,9 @@
          url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
          NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
          AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:downloadRequest];
+         AFSecurityPolicy *policy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModeNone];
+         policy.allowInvalidCertificates = YES;
+         operation.securityPolicy = policy;
          self.operation = operation;
          operation.outputStream = [NSOutputStream outputStreamToFileAtPath:[self downloadTempPath:self.downloadingFileOid] append:NO];
          [operation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
@@ -173,13 +176,7 @@
              Debug("error=%@",[error localizedDescription]);
              [self failedDownload:error];
          }];
-         [operation setAuthenticationAgainstProtectionSpaceBlock:^BOOL(NSURLConnection *connection, NSURLProtectionSpace *protectionSpace) {
-             return YES;
-         }];
-         [operation setAuthenticationChallengeBlock:^(NSURLConnection *connection, NSURLAuthenticationChallenge *challenge) {
-             [challenge.sender useCredential:[NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust] forAuthenticationChallenge:challenge];
-         }];
-         [operation setDownloadProgressBlock:^(NSUInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead) {
+         [operation setDownloadProgressBlock:^(NSUInteger bytesRead, NSInteger totalBytesRead, NSInteger totalBytesExpectedToRead) {
              int percent = 99;
              if (totalBytesExpectedToRead > 0)
                  percent = (int)(totalBytesRead * 100 / totalBytesExpectedToRead);
@@ -250,6 +247,9 @@
         return [self finishBlock:url];
     NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:[url stringByAppendingString:blk_id]]];
     AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:downloadRequest];
+    AFSecurityPolicy *policy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModeNone];
+    policy.allowInvalidCertificates = YES;
+    operation.securityPolicy = policy;
     self.operation = operation;
     operation.outputStream = [NSOutputStream outputStreamToFileAtPath:[self downloadTempPath:blk_id] append:NO];
     [operation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
@@ -262,13 +262,7 @@
         self.blks = nil;
         [self failedDownload:error];
     }];
-    [operation setAuthenticationAgainstProtectionSpaceBlock:^BOOL(NSURLConnection *connection, NSURLProtectionSpace *protectionSpace) {
-        return YES;
-    }];
-    [operation setAuthenticationChallengeBlock:^(NSURLConnection *connection, NSURLAuthenticationChallenge *challenge) {
-        [challenge.sender useCredential:[NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust] forAuthenticationChallenge:challenge];
-    }];
-    [operation setDownloadProgressBlock:^(NSUInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead) {
+    [operation setDownloadProgressBlock:^(NSUInteger bytesRead, NSInteger totalBytesRead, NSInteger totalBytesExpectedToRead) {
         int percent = 99;
         if (totalBytesExpectedToRead > 0)
             percent = (int)(totalBytesRead * 100 / totalBytesExpectedToRead);
@@ -312,7 +306,7 @@
          } else {
              SeafRepo *repo = [connection getRepo:self.repoId];
              repo.encrypted = [[JSON objectForKey:@"encrypted"] booleanValue:repo.encrypted];
-             repo.encVersion = [[JSON objectForKey:@"enc_version"] integerValue:repo.encVersion];
+             repo.encVersion = (int)[[JSON objectForKey:@"enc_version"] integerValue:repo.encVersion];
              self.index = 0;
              Debug("blks=%@, encver=%d\n", self.blks, repo.encVersion);
              [self performSelector:@selector(downloadBlock:) withObject:url afterDelay:0.0];

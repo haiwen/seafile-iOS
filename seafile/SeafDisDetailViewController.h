@@ -9,12 +9,12 @@
 #import <UIKit/UIKit.h>
 #import "SeafConnection.h"
 #import "JSMessagesViewController.h"
+#import "SeafMessage.h"
 
-
-@interface SeafDisDetailViewController : JSMessagesViewController <UISplitViewControllerDelegate, UIWebViewDelegate>
+@interface SeafDisDetailViewController : JSMessagesViewController <UISplitViewControllerDelegate>
 
 @property (strong, nonatomic) SeafConnection *connection;
 
-- (void)setMsgtype:(int)msgtype info:(NSDictionary *)info;
+- (void)setMsgtype:(int)msgtype info:(NSMutableDictionary *)info;
 
 @end

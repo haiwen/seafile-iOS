@@ -175,7 +175,7 @@
                                         (child->d_name[0] == '.' && child->d_name[1] == '.' && child->d_name[2] == 0)
                                         )) continue;
 
-        int folderPathLength = strlen(folderPath);
+        long folderPathLength = strlen(folderPath);
         char childPath[1024];
         stpcpy(childPath, folderPath);
         if (folderPath[folderPathLength-1] != '/'){
@@ -255,7 +255,7 @@
         while (encodes[i]) {
             encodeContent = [NSString stringWithContentsOfFile:path encoding:encodes[i] error:nil];
              if (encodeContent) {
-                Debug("use encoding %d, %d\n", i, encodes[i]);
+                Debug("use encoding %d, %ld\n", i, (unsigned long)encodes[i]);
                 break;
             }
             ++i;

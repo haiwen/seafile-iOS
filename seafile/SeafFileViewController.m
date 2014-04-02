@@ -252,7 +252,7 @@ enum {
 - (void)selectAll:(id)sender
 {
     int row;
-    int count = _directory.allItems.count;
+    long count = _directory.allItems.count;
     for (row = 0; row < count; ++row) {
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
         NSObject *entry  = [self getDentrybyIndexPath:indexPath tableView:self.tableView];
@@ -264,7 +264,7 @@ enum {
 
 - (void)selectNone:(id)sender
 {
-    int count = _directory.allItems.count;
+    long count = _directory.allItems.count;
     for (int row = 0; row < count; ++row) {
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:row inSection:0];
         [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
@@ -297,12 +297,16 @@ enum {
 {
     if(self.popoverController)
         return;
+    if (![QBImagePickerController isAccessible]) {
+        Warning("Error: Source is not accessible.");
+        [self alertWithMessage:NSLocalizedString(@"Photos is not accessible", nil)];
+        return;
+    }
     QBImagePickerController *imagePickerController = [[QBImagePickerController alloc] init];
     imagePickerController.title = NSLocalizedString(@"Photos", @"Photos");
     imagePickerController.delegate = self;
     imagePickerController.allowsMultipleSelection = YES;
-    imagePickerController.filterType = QBImagePickerFilterTypeAllAssets;
-    imagePickerController.limitsMaximumNumberOfSelection = YES;
+    imagePickerController.filterType = QBImagePickerControllerFilterTypeNone;
     imagePickerController.maximumNumberOfSelection = 20;
 
     if (IsIpad()) {
@@ -388,7 +392,7 @@ enum {
         [self showLodingView];
         self.state = STATE_LOADING;
     }
-    Debug("Upload %d", _directory.uploadItems.count);
+    Debug("Upload %lu", (unsigned long)_directory.uploadItems.count);
 
     for (SeafUploadFile *file in _directory.uploadItems) {
         file.delegate = self;
@@ -832,7 +836,7 @@ enum {
     self.state = STATE_INIT;
 }
 
-- (void)entryContentLoadingFailed:(int)errCode entry:(SeafBase *)entry;
+- (void)entryContentLoadingFailed:(long)errCode entry:(SeafBase *)entry;
 {
     if (errCode == HTTP_ERR_REPO_PASSWORD_REQUIRED) {
         NSAssert(0, @"Here should never be reached");
@@ -1082,23 +1086,24 @@ enum {
 }
 
 #pragma mark - QBImagePickerControllerDelegate
-- (void)uploadPickedMedia:(id)info
+- (void)uploadPickedAssets:(NSArray *)assets
 {
     NSMutableArray *files = [[NSMutableArray alloc] init];
+    NSMutableArray *paths = [[NSMutableArray alloc] init];
     int i = 0;
     NSString *path;
     NSString *date = [self.formatter stringFromDate:[NSDate date]];
-    for (NSDictionary *dict in info) {
+    for (ALAsset *asset in assets) {
         i++;
-        if (![@"ALAssetTypeVideo" isEqualToString:[dict objectForKey:UIImagePickerControllerMediaType]]) {
+        if (![ALAssetTypeVideo isEqualToString:[asset valueForProperty:ALAssetPropertyType]]) {
             NSString *filename = [NSString stringWithFormat:@"Photo %@-%d.jpg", date, i];
             path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
         } else {
-            NSString *ext = [[dict objectForKey:@"UIImagePickerControllerReferenceURL"] pathExtension];
+            NSString *ext = [[[asset valueForProperty:ALAssetPropertyURLs] valueForKey:[[[asset valueForProperty:ALAssetPropertyURLs] allKeys] objectAtIndex:0]] pathExtension];
             NSString *filename = [NSString stringWithFormat:@"Video %@-%d.%@", date, i, ext];
             path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
         }
-
+        [paths addObject:path];
         SeafUploadFile *file =  [self.connection getUploadfile:path];
         file.delegate = self;
         [files addObject:file];
@@ -1106,27 +1111,21 @@ enum {
     [self.directory addUploadFiles:files];
     [self.tableView reloadData];
     i = 0;
-    for (NSDictionary *dict in info) {
-        i++;
-        if (![@"ALAssetTypeVideo" isEqualToString:[dict objectForKey:UIImagePickerControllerMediaType]]) {
-            UIImage *image = [dict objectForKey:@"UIImagePickerControllerOriginalImage"];
-            NSString *filename = [NSString stringWithFormat:@"Photo %@-%d.jpg", date, i];
-            path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
+    for (ALAsset *asset in assets) {
+        path = [paths objectAtIndex:i++];
+        if (![ALAssetTypeVideo isEqualToString:[asset valueForProperty:ALAssetPropertyType]]) {
+            UIImage *image = [UIImage imageWithCGImage:[[asset defaultRepresentation] fullScreenImage]];
             [UIImageJPEGRepresentation(image, 1.0) writeToFile:path atomically:YES];
         } else {
-            NSString *ext = [[dict objectForKey:@"UIImagePickerControllerReferenceURL"] pathExtension];
-            NSString *filename = [NSString stringWithFormat:@"Video %@-%d.%@", date, i, ext];
-            path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
-            BOOL ret = [Utils writeDataToPath:path andAsset:[dict objectForKey:@"asset"]];
+            BOOL ret = [Utils writeDataToPath:path andAsset:asset];
             if (!ret)  continue;
         }
-
+        
         SeafUploadFile *file =  [self.connection getUploadfile:path];
         [SeafAppDelegate backgroundUpload:file];
     }
 }
-
-- (void)imagePickerController:(QBImagePickerController *)imagePickerController didFinishPickingMediaWithInfo:(id)info
+- (void)dismissImagePickerController:(QBImagePickerController *)imagePickerController
 {
     if (IsIpad()) {
         [self.popoverController dismissPopoverAnimated:YES];
@@ -1134,42 +1133,24 @@ enum {
     } else {
         [imagePickerController.navigationController dismissViewControllerAnimated:YES completion:NULL];
     }
-    [self performSelectorInBackground:@selector(uploadPickedMedia:) withObject:info];
 }
 
 - (void)imagePickerControllerDidCancel:(QBImagePickerController *)imagePickerController
 {
-    if (IsIpad()) {
-        [self.popoverController dismissPopoverAnimated:YES];
-        self.popoverController = nil;
-    } else {
-        [imagePickerController.navigationController dismissViewControllerAnimated:YES completion:NULL];
-    }
+    [self dismissImagePickerController:imagePickerController];
 }
 
-- (NSString *)descriptionForSelectingAllAssets:(QBImagePickerController *)imagePickerController
+- (void)imagePickerController:(QBImagePickerController *)imagePickerController didSelectAsset:(ALAsset *)asset
 {
-    return NSLocalizedString(@"Select all photos", nil);
+    [self dismissImagePickerController:imagePickerController];
+    [self performSelectorInBackground:@selector(uploadPickedAssets:) withObject:[NSArray arrayWithObject:asset]];
+
 }
 
-- (NSString *)descriptionForDeselectingAllAssets:(QBImagePickerController *)imagePickerController
+- (void)imagePickerController:(QBImagePickerController *)imagePickerController didSelectAssets:(NSArray *)assets
 {
-    return NSLocalizedString(@"Deselect all photos", nil);
-}
-
-- (NSString *)imagePickerController:(QBImagePickerController *)imagePickerController descriptionForNumberOfPhotos:(NSUInteger)numberOfPhotos
-{
-    return [NSString stringWithFormat:NSLocalizedString(@"%d photos", nil), numberOfPhotos];
-}
-
-- (NSString *)imagePickerController:(QBImagePickerController *)imagePickerController descriptionForNumberOfVideos:(NSUInteger)numberOfVideos
-{
-    return [NSString stringWithFormat:NSLocalizedString(@"%d videos", nil), numberOfVideos];
-}
-
-- (NSString *)imagePickerController:(QBImagePickerController *)imagePickerController descriptionForNumberOfPhotos:(NSUInteger)numberOfPhotos numberOfVideos:(NSUInteger)numberOfVideos
-{
-    return [NSString stringWithFormat:NSLocalizedString(@"%d photos、%d videos", nil), numberOfPhotos, numberOfVideos];
+    [self dismissImagePickerController:imagePickerController];
+    [self performSelectorInBackground:@selector(uploadPickedAssets:) withObject:assets];
 }
 
 #pragma mark - UIPopoverControllerDelegate
@@ -1181,7 +1162,7 @@ enum {
 #pragma mark - SeafFileUpdateDelegate
 - (void)updateProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent
 {
-    int index = [_directory.allItems indexOfObject:file];
+    long index = [_directory.allItems indexOfObject:file];
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
     if (res && file && [cell isKindOfClass:[SeafUploadingFileCell class]]) {
@@ -1194,7 +1175,7 @@ enum {
 #pragma mark - SeafUploadDelegate
 - (void)uploadProgress:(SeafUploadFile *)file result:(BOOL)res completeness:(int)percent
 {
-    int index = [_directory.allItems indexOfObject:file];
+    long index = [_directory.allItems indexOfObject:file];
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
     if (res && percent < 100 && [cell isKindOfClass:[SeafUploadingFileCell class]])
@@ -1266,7 +1247,7 @@ enum {
 
 - (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar
 {
-    Debug("search %@...", searchBar.text);
+    Debug("search %@", searchBar.text);
     [self setSearchState:self.searchDisplayController state:SEARCH_STATE_SEARCHING];
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Searching ...", @"Searching ...")];
     [_connection search:searchBar.text success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSMutableArray *results) {

@@ -10,6 +10,9 @@
 #import "Debug.h"
 
 @implementation SeafUploadingFileCell
+@synthesize imageView;
+@synthesize nameLabel;
+@synthesize progressView;
 
 - (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
 {

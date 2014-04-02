@@ -168,8 +168,8 @@ enum {
                                                [self.delegate connectionLinkingSuccess:self];
                                            }
                                            failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, NSData *data){
-                                               Warning("status code=%d\n", response.statusCode);
-                                               [self.delegate connectionLinkingFailed:self error:response.statusCode];
+                                               Warning("status code=%ld, error=%@\n", (long)response.statusCode, error);
+                                               [self.delegate connectionLinkingFailed:self error:(int)response.statusCode];
                                            }];
     [queue addOperation:operation];
 }
@@ -409,7 +409,7 @@ enum {
         NSMutableDictionary *dict = [info mutableCopy];
         [dict setObject:[NSString stringWithFormat:@"%d", MSG_GROUP] forKey:@"type"];
         if (fromCache)
-            [dict setObject:@"0" forKey:@"type"];
+            [dict setObject:@"0" forKey:@"msgnum"];
         else
             msgnum += [[dict objectForKey:@"msgnum"] integerValue:0];
         [groups addObject:dict];
@@ -418,7 +418,7 @@ enum {
         NSMutableDictionary *dict = [info mutableCopy];
         [dict setObject:[NSString stringWithFormat:@"%d", MSG_USER] forKey:@"type"];
         if (fromCache)
-            [dict setObject:@"0" forKey:@"type"];
+            [dict setObject:@"0" forKey:@"msgnum"];
         else
             msgnum += [[dict objectForKey:@"msgnum"] integerValue:0];
         [contacts addObject:dict];
@@ -430,7 +430,7 @@ enum {
         for (NSDictionary *info in [JSON objectForKey:@"newreplies"]) {
             NSMutableDictionary *dict = [info mutableCopy];
             [dict setObject:[NSString stringWithFormat:@"%d", MSG_REPLY] forKey:@"type"];
-            NSString *title = [NSString stringWithFormat:@"You got new replies from %@", [dict objectForKey:@"name"]];
+            NSString *title = [NSString stringWithFormat:@"New replies from %@", [dict objectForKey:@"name"]];
             [dict setObject:title forKey:@"name"];
             msgnum += [[dict objectForKey:@"msgnum"] integerValue:0];
             [self.seafReplies addObject:dict];
@@ -514,7 +514,7 @@ enum {
     NSString *platformVersion = [infoDictionary objectForKey:@"DTPlatformVersion"];
 
     NSString *form = [NSString stringWithFormat:@"deviceToken=%@&version=%@&platform=%@&pversion=%@", deviceToken.hexString, version, platform, platformVersion ];
-    Debug("info=%@, form=%@, len=%d", infoDictionary, form, deviceToken.length);
+    Debug("info=%@, form=%@, len=%lu", infoDictionary, form, (unsigned long)deviceToken.length);
     [self sendPost:@"/regdevice/" repo:nil form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
         Debug("Register success");
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {

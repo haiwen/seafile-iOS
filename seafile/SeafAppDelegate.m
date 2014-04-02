@@ -180,7 +180,7 @@
 
 - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
 {
-    Debug("token=%@, %d\n", deviceToken, deviceToken.length);
+    Debug("token=%@, %ld\n", deviceToken, (unsigned long)deviceToken.length);
     _deviceToken = deviceToken;
     if (self.deviceToken)
         [self.connection registerDevice:self.deviceToken];
@@ -464,6 +464,7 @@
             _detailVC = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
         if (!_disDetailVC)
             _disDetailVC = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DISDETAILVC"];
+        Debug("index=%d %d, %@, %@", index, TABBED_DISCUSSION, _disDetailVC, _detailVC);
         return (index == TABBED_DISCUSSION) ? (UIViewController *)_disDetailVC : _detailVC;
     }
 }

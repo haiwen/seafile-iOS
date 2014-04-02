@@ -66,14 +66,14 @@
 
 - (void)refreshTabBarItem
 {
-    int num = self.connection.newmsgnum;
+    long long num = self.connection.newmsgnum;
     UITabBarItem *tbi = nil;
     if (IsIpad()) {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         tbi = (UITabBarItem *)[appdelegate.tabbarController.tabBar.items objectAtIndex:TABBED_DISCUSSION];
     } else
         tbi = self.navigationController.tabBarItem;
-    tbi.badgeValue = num > 0 ? [NSString stringWithFormat:@"%d", num] : nil;
+    tbi.badgeValue = num > 0 ? [NSString stringWithFormat:@"%lld", num] : nil;
     [(SeafAppDelegate *)[[UIApplication sharedApplication] delegate] checkIconBadgeNumber];
 }
 
@@ -81,8 +81,11 @@
 {
     self.msgSources = [[NSMutableArray alloc] initWithArray:self.connection.seafGroups];
     [self.msgSources addObjectsFromArray:self.connection.seafContacts];
-    [self.msgSources addObjectsFromArray:self.connection.seafReplies];
-    Debug("group=%d, user=%d, reply=%d, total=%d", self.connection.seafGroups.count, self.connection.seafContacts.count, self.connection.seafReplies.count, self.msgSources.count);
+    for (NSDictionary *dict in self.connection.seafReplies) {
+        if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0)
+            [self.msgSources addObject:dict];
+    }
+    Debug("group=%lu, user=%lu, reply=%lu, total=%lu", (unsigned long)self.connection.seafGroups.count, (unsigned long)self.connection.seafContacts.count, (unsigned long)self.connection.seafReplies.count, (unsigned long)self.msgSources.count);
     [self.msgSources sortUsingComparator:(NSComparator)^NSComparisonResult(id obj1, id obj2){
         long long x = [[obj1 objectForKey:@"mtime"] integerValue:0];
         long long y = [[obj2 objectForKey:@"mtime"] integerValue:0];
@@ -108,7 +111,7 @@
         }
     }
                        failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
-                           Warning("Failed to get groups ...error=%d\n", error.code);
+                           Warning("Failed to get groups ...error=%ld\n", (long)error.code);
                            [self doneLoadingTableViewData];
                        }];
 }
@@ -123,7 +126,7 @@
         }
     }
                        failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
-                           Warning("Failed to get groups ...error=%d\n", error.code);
+                           Warning("Failed to get groups ...error=%ld\n", (long)error.code);
                            if (self.isVisible && error.code != NSURLErrorCancelled && error.code != 102) {
                                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get groups ...", @"Failed to get groups ...")];
                            }
@@ -194,7 +197,7 @@
             avatar = [self.connection avatarForEmail:[dict objectForKey:@"reply_from"]];
             break;
         default:
-            Warning(@"Unknown msg type");
+            Warning(@"Unknown msg type %@", [dict objectForKey:@"type"]);
             break;
     }
     cell.imageView.image = [JSAvatarImageFactory avatarImage:[UIImage imageWithContentsOfFile:avatar] croppedToCircle:YES];
@@ -226,8 +229,6 @@
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     NSMutableDictionary *dict = [self.msgSources objectAtIndex:indexPath.row];
     Debug("dict=%@", dict);
-    self.connection.newmsgnum -= [[dict objectForKey:@"msgnum"] integerValue:0];
-    [dict setObject:@"0" forKey:@"msgnum"];
     [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationNone];
     [self refreshTabBarItem];
     long long msgtype = [[dict objectForKey:@"type"] integerValue:-1];

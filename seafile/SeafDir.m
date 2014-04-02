@@ -123,7 +123,7 @@
                     }
                     failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
                         self.state = SEAF_DENTRY_INIT;
-                        [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
+                        [self.delegate entryContentLoadingFailed:(int)response.statusCode entry:self];
                     }];
 }
 
@@ -266,13 +266,13 @@
     [connection sendPost:requestUrl repo:self.repoId form:@"operation=mkdir"
                  success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
-         Debug("resp=%d\n", response.statusCode);
+         Debug("resp=%ld\n", (long)response.statusCode);
          [self handleResponse:response json:JSON data:data];
      }
                  failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-         Warning("resp=%d\n", response.statusCode);
-         [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
+         Warning("resp=%ld\n", (long)response.statusCode);
+         [self.delegate entryContentLoadingFailed:(int)response.statusCode entry:self];
      }];
 }
 
@@ -284,13 +284,13 @@
     [connection sendPost:requestUrl repo:self.repoId form:@"operation=create"
                  success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
-         Debug("resp=%d\n", response.statusCode);
+         Debug("resp=%ld\n", (long)response.statusCode);
          [self handleResponse:response json:JSON data:data];
      }
                  failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-         Warning("resp=%d\n", response.statusCode);
-         [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
+         Warning("resp=%ld\n", (long)response.statusCode);
+         [self.delegate entryContentLoadingFailed:(int)response.statusCode entry:self];
      }];
 }
 
@@ -311,12 +311,12 @@
     [connection sendPost:requestUrl repo:self.repoId form:form
                  success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
-         Debug("resp=%d\n", response.statusCode);
+         Debug("resp=%ld\n", (long)response.statusCode);
          [self handleResponse:response json:JSON data:data];
      }
                  failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-         Warning("resp=%d\n", response.statusCode);
+         Warning("resp=%ld\n", (long)response.statusCode);
          [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
      }];
 }
@@ -414,12 +414,12 @@
     [connection sendPost:requestUrl repo:self.repoId form:form
                  success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
-         Debug("resp=%d\n", response.statusCode);
+         Debug("resp=%ld\n", (long)response.statusCode);
          [self handleResponse:response json:JSON data:data];
      }
                  failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-         Warning("resp=%d\n", response.statusCode);
+         Warning("resp=%ld\n", (long)response.statusCode);
          [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
      }];
 }
@@ -441,12 +441,12 @@
     [connection sendPost:requestUrl repo:self.repoId form:form
                  success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
-         Debug("resp=%d\n", response.statusCode);
+         Debug("resp=%ld\n", (long)response.statusCode);
          [self handleResponse:response json:JSON data:data];
      }
                  failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-         Warning("resp=%d\n", response.statusCode);
+         Warning("resp=%ld\n", (long)response.statusCode);
          [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
      }];
 }
@@ -468,12 +468,12 @@
     [connection sendPost:requestUrl repo:self.repoId form:form
                  success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
-         Debug("resp=%d\n", response.statusCode);
+         Debug("resp=%ld\n", (long)response.statusCode);
          [self handleResponse:response json:JSON data:data];
      }
                  failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-         Warning("resp=%d\n", response.statusCode);
+         Warning("resp=%ld\n", (long)response.statusCode);
          [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
      }];
 }

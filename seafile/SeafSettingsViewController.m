@@ -125,7 +125,7 @@ enum {
             [_connection getAccountInfo:self];
     } else if (indexPath.section == 1) {
     } else if (indexPath.section == 2) {
-        _state = indexPath.row;
+        _state = (int)indexPath.row;
         switch ((indexPath.row)) {
             case CELL_INVITATION:
                 [self sendMailInApp];

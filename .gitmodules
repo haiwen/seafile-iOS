@@ -1,6 +1,6 @@
 [submodule "libs/AFNetworking"]
     path = libs/AFNetworking
-    url = git://github.com/AFNetworking/AFNetworking.git
+    url = https://github.com/AFNetworking/AFNetworking.git
     ignore = dirty
 [submodule "libs/EGOTableViewPullRefresh"]
     path = libs/EGOTableViewPullRefresh
@@ -8,7 +8,7 @@
     ignore = dirty
 [submodule "libs/QBImagePickerController"]
     path = libs/QBImagePickerController
-    url = https://github.com/haiwen/QBImagePickerController.git
+    url = https://github.com/questbeat/QBImagePickerController.git
     ignore = dirty
 [submodule "libs/REComposeViewController"]
     path = libs/REComposeViewController

@@ -34,21 +34,18 @@ static dispatch_queue_t json_request_operation_processing_queue() {
                                                       failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, NSData *data))failure
 {
     SeafJSONRequestOperation *requestOperation = [[self alloc] initWithRequest:urlRequest];
-    [requestOperation setAuthenticationAgainstProtectionSpaceBlock:^(NSURLConnection *connection, NSURLProtectionSpace *protectionSpace) {
-        return YES;
-    }];
-    [requestOperation setAuthenticationChallengeBlock:^(NSURLConnection *connection, NSURLAuthenticationChallenge *challenge) {
-        [challenge.sender useCredential:[NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust] forAuthenticationChallenge:challenge];
-    }];
+    AFSecurityPolicy *policy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModeNone];
+    policy.allowInvalidCertificates = YES;
+    requestOperation.securityPolicy = policy;
     [requestOperation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
         if (success) {
-            Debug("%d, %@\n", [operation.response statusCode], operation.request.URL);
+            Debug("%ld, %@\n", (long)[operation.response statusCode], operation.request.URL);
             success (operation.request, operation.response, responseObject, operation.responseData);
         }
     }
                                             failure:^(AFHTTPRequestOperation *operation, NSError *error) {
                                                 if (failure) {
-                                                    Warning("%@,err=%d, %@,%@\n", operation.request.URL, error.code, error.localizedDescription, [[NSString alloc] initWithData:operation.responseData encoding:NSUTF8StringEncoding]);
+                                                    Warning("%@,err=%ld, %@,%@\n", operation.request.URL, (long)error.code, error.localizedDescription, [[NSString alloc] initWithData:operation.responseData encoding:NSUTF8StringEncoding]);
                                                     failure (operation.request, operation.response, error, operation.responseData);
                                                 }
                                             }

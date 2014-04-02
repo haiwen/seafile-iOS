@@ -15,7 +15,7 @@
 - (NSString *)trimUrl;
 - (BOOL)isValidFileName;
 - (NSString *)stringEscapedForJavasacript;
-- (unsigned int) indexOf:(char) searchChar;
+- (unsigned long) indexOf:(char) searchChar;
 
 - (NSString *)navItemImgName;
 

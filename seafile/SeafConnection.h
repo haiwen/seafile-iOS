@@ -52,7 +52,7 @@ enum MSG_TYPE{
 @property (readonly) NSArray *seafContacts;
 @property (readwrite) NSMutableArray *seafReplies;
 
-@property (readwrite) int newmsgnum;
+@property (readwrite) long long newmsgnum;
 
 
 - (id)initWithUrl:(NSString *)url username:(NSString *)username;

@@ -250,7 +250,7 @@
         }
     } else {
         if (buttonIndex >= 0 && buttonIndex <=2) {
-            [self showAccountView:nil type:buttonIndex];
+            [self showAccountView:nil type:(int)buttonIndex];
         }
     }
 }

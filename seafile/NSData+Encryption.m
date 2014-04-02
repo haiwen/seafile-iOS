@@ -233,10 +233,10 @@ enc_error:
     char passwordPtr[256] = {0}; // room for terminator (unused)
     [password getCString:passwordPtr maxLength:sizeof(passwordPtr) encoding:NSUTF8StringEncoding];
     if (version < 2) {
-        [NSData deriveKey:passwordPtr inlen:password.length version:version key:key iv:iv];
+        [NSData deriveKey:passwordPtr inlen:(int)password.length version:version key:key iv:iv];
         return;
     }
-    [NSData deriveKey:passwordPtr inlen:password.length version:version key:key0 iv:iv0];
+    [NSData deriveKey:passwordPtr inlen:(int)password.length version:version key:key0 iv:iv0];
     char enc_random_key[48], dec_random_key[48];
     int outlen;
     hex_to_rawdata(encKey.UTF8String, enc_random_key, 48);
@@ -250,7 +250,7 @@ enc_error:
     [NSData generateKey:password version:version encKey:encKey key:key iv:iv];
     char *data_out = malloc(self.length);
     int outlen;
-    int ret = [NSData seafileDecrypt:data_out outlen:&outlen datain:self.bytes inlen:self.length version:version key:key iv:iv];
+    int ret = [NSData seafileDecrypt:data_out outlen:&outlen datain:self.bytes inlen:(int)self.length version:version key:key iv:iv];
     if (ret < 0) {
         free (data_out);
         return nil;
@@ -264,7 +264,7 @@ enc_error:
     [NSData generateKey:password version:version encKey:encKey key:key iv:iv];
     char *data_out;
     int outlen;
-    int ret = [NSData seafileEncrypt:&data_out outlen:&outlen datain:self.bytes inlen:self.length version:version key:key iv:iv];
+    int ret = [NSData seafileEncrypt:&data_out outlen:&outlen datain:self.bytes inlen:(int)self.length version:version key:key iv:iv];
     if (ret < 0) return nil;
     return [NSData dataWithBytesNoCopy:data_out length:outlen];
 }
@@ -276,7 +276,7 @@ enc_error:
     NSString *s = [repoId stringByAppendingString:password];
     char passwordPtr[256] = {0}; // room for terminator (unused)
     [s getCString:passwordPtr maxLength:sizeof(passwordPtr) encoding:NSUTF8StringEncoding];
-    [NSData deriveKey:passwordPtr inlen:s.length version:version key:key iv:iv];
+    [NSData deriveKey:passwordPtr inlen:(int)s.length version:version key:key iv:iv];
     if (version == 2)
         rawdata_to_hex(key, res, kCCKeySizeAES256);
     else
@@ -290,7 +290,7 @@ enc_error:
     unsigned char sha1[20];
     char hex[41];
     hex[40] = '\0';
-    CC_SHA1(self.bytes, self.length, sha1);
+    CC_SHA1(self.bytes, (int)self.length, sha1);
     rawdata_to_hex(sha1, hex, 20);
     return [NSString stringWithUTF8String:hex];
 }
@@ -299,7 +299,7 @@ enc_error:
 {
 #define HEX_MAXLEN 512
     char hex[HEX_MAXLEN*2 +1];
-    int len = self.length;
+    int len = (int)self.length;
     if (len == 0) return @"";
     if (len > HEX_MAXLEN) len = HEX_MAXLEN;
     rawdata_to_hex(self.bytes, hex, len);

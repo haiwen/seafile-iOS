@@ -9,10 +9,16 @@
 #import "JSMessage.h"
 #import "SeafConnection.h"
 
-@interface SeafMessage : JSMessage
+
+@interface SeafMessage : JSMessage<UITableViewDelegate, UITableViewDataSource>
+
+@property CGFloat repliesHeight;
 
 @property NSString *msgId;
 @property NSString *email;
+@property NSString *nickname;
+
+@property NSMutableArray *replies;
 
 - (instancetype)initWithText:(NSString *)text
                        email:(NSString *)email
@@ -20,10 +26,12 @@
                         date:(NSDate *)date
                        msgId:(NSString *)msgId;
 
+
 - (instancetype)initWithText:(NSString *)text
                        email:(NSString *)email
                         date:(NSDate *)date
-                        conn:(SeafConnection *)conn;
+                        conn:(SeafConnection *)conn
+                        type:(int)type;
 
 - (instancetype)initWithGroupMsg:(NSDictionary *)dict
                             conn:(SeafConnection *)conn;

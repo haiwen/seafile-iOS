@@ -27,7 +27,7 @@ enum SEAFBASE_STATE {
 
 @protocol SeafDentryDelegate <NSObject>
 - (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent;
-- (void)entryContentLoadingFailed:(int)errCode entry:(SeafBase *)entry;
+- (void)entryContentLoadingFailed:(long)errCode entry:(SeafBase *)entry;
 - (void)repoPasswordSet:(SeafBase *)entry WithResult:(BOOL)success;
 - (void)entryChanged:(SeafBase *)entry;
 

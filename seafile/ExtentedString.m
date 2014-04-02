@@ -68,7 +68,7 @@
     return escapedString;
 }
 
-- (unsigned int) indexOf:(char) searchChar
+- (unsigned long) indexOf:(char) searchChar
 {
     NSRange searchRange;
     searchRange.location = (unsigned int)searchChar;
