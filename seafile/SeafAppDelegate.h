@@ -16,7 +16,6 @@
 #import "SeafSettingsViewController.h"
 #import "SeafActivityViewController.h"
 #import "SeafDisMasterViewController.h"
-#import "Reachability.h"
 
 #define BAR_COLOR     [UIColor colorWithRed:240.0/256 green:128.0/256 blue:48.0/256 alpha:1.0]
 #define HEADER_COLOR     [UIColor colorWithRed:246.0/256 green:176.0/256 blue:90.0/256 alpha:1.0]
@@ -32,11 +31,7 @@ enum {
 };
 
 
-@interface SeafAppDelegate : UIResponder <UIApplicationDelegate> {
-    Reachability* internetReach;
-    Reachability* wifiReach;
-}
-
+@interface SeafAppDelegate : UIResponder <UIApplicationDelegate>
 @property (strong, nonatomic) UIWindow *window;
 
 @property (readonly, strong, nonatomic) NSManagedObjectContext *managedObjectContext;

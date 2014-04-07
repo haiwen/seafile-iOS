@@ -25,12 +25,55 @@ enum {
 #define KEY_STARREDFILES @"STARREDFILES"
 #define KEY_CONTACTS @"CONTACTS"
 
-@interface SeafConnection ()
+static SecTrustRef AFUTTrustChainForCertsInDirectory(NSString *directoryPath) {
+    NSArray *certFileNames = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:directoryPath error:nil];
+    NSMutableArray *certs  = [NSMutableArray arrayWithCapacity:[certFileNames count]];
+    for (NSString *path in certFileNames) {
+        NSData *certData = [NSData dataWithContentsOfFile:[directoryPath stringByAppendingPathComponent:path]];
+        SecCertificateRef cert = SecCertificateCreateWithData(NULL, (__bridge CFDataRef)(certData));
+        [certs addObject:(__bridge id)(cert)];
+    }
 
-@property (readwrite, strong) NSString *version;
+    SecPolicyRef policy = SecPolicyCreateBasicX509();
+    SecTrustRef trust = NULL;
+    SecTrustCreateWithCertificates((__bridge CFTypeRef)(certs), policy, &trust);
+    CFRelease(policy);
+
+    return trust;
+}
+
+static NSArray * AFCertificateTrustChainForServerTrust(SecTrustRef serverTrust) {
+    CFIndex certificateCount = SecTrustGetCertificateCount(serverTrust);
+    NSMutableArray *trustChain = [NSMutableArray arrayWithCapacity:(NSUInteger)certificateCount];
+
+    for (CFIndex i = 0; i < certificateCount; i++) {
+        SecCertificateRef certificate = SecTrustGetCertificateAtIndex(serverTrust, i);
+        [trustChain addObject:(__bridge_transfer NSData *)SecCertificateCopyData(certificate)];
+    }
+
+    return [NSArray arrayWithArray:trustChain];
+}
+
+static AFSecurityPolicy *SeafDefaultPolicy()
+{
+    AFSecurityPolicy *policy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModePublicKey];
+    policy.allowInvalidCertificates = YES;
+    NSString *serverCertDirectoryPath = [[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"certs"];
+    SecTrustRef clientTrust = AFUTTrustChainForCertsInDirectory(serverCertDirectoryPath);
+    NSArray * certificates = AFCertificateTrustChainForServerTrust(clientTrust);
+    [policy setPinnedCertificates:certificates];
+    [policy setValidatesCertificateChain:NO];
+    return policy;
+}
+
+static AFSecurityPolicy *defaultPolicy = nil;
+
+@interface SeafConnection ()<UIAlertViewDelegate>
+
 @property NSMutableSet *starredFiles;
 @property NSMutableDictionary *uploadFiles;
 @property NSDictionary *email2nickMap;
+@property NSURLAuthenticationChallenge *challenge;
 @end
 
 @implementation SeafConnection
@@ -50,8 +93,6 @@ enum {
         self.address = url;
         queue = [[NSOperationQueue alloc] init];
         _rootFolder = [[SeafRepos alloc] initWithConnection:self];
-        NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
-        self.version = [infoDictionary objectForKey:@"CFBundleVersion"];
         self.uploadFiles = [[NSMutableDictionary alloc] init];
         _info = [[NSMutableDictionary alloc] init];
         self.email2nickMap = [[NSMutableDictionary alloc] init];
@@ -151,7 +192,13 @@ enum {
     [request setHTTPMethod:@"POST"];
     [request setValue:@"application/x-www-form-urlencoded" forHTTPHeaderField:@"Content-Type"];
 
-    NSString *formString = [NSString stringWithFormat:@"username=%@&password=%@", [username escapedPostForm], [password escapedPostForm]];
+    NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
+    NSString *version = [infoDictionary objectForKey:@"CFBundleVersion"];
+    NSString *platform = @"ios";
+    NSString *platformVersion = [infoDictionary objectForKey:@"DTPlatformVersion"];
+    NSString *deviceID = [UIDevice currentDevice].identifierForVendor.UUIDString;
+    NSString *deviceName = [infoDictionary objectForKey:@"DTPlatformName"];
+    NSString *formString = [NSString stringWithFormat:@"username=%@&password=%@&platform=%@&device_id=%@&device_name=%@&client_version=%@&platform_version=%@", [username escapedPostForm], [password escapedPostForm], platform, deviceID, deviceName, version, platformVersion];
     [request setHTTPBody:[NSData dataWithBytes:[formString UTF8String] length:[formString length]]];
     SeafJSONRequestOperation *operation = [SeafJSONRequestOperation
                                            JSONRequestOperationWithRequest:request
@@ -171,6 +218,23 @@ enum {
                                                Warning("status code=%ld, error=%@\n", (long)response.statusCode, error);
                                                [self.delegate connectionLinkingFailed:self error:(int)response.statusCode];
                                            }];
+    operation.securityPolicy = [SeafConnection defaultPolicy];
+    [operation setWillSendRequestForAuthenticationChallengeBlock:^(NSURLConnection *connection, NSURLAuthenticationChallenge *challenge) {
+        if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
+            NSURLCredential *credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
+            if ([[SeafConnection defaultPolicy] evaluateServerTrust:challenge.protectionSpace.serverTrust forDomain:challenge.protectionSpace.host]) {
+                [[challenge sender] useCredential:credential forAuthenticationChallenge:challenge];
+            } else {
+                self.challenge = challenge;
+                NSString *title = [NSString stringWithFormat:NSLocalizedString(@"Seafile can't verify the identity of the website \"%@\"", nil), anAddress];
+                NSString *msg = NSLocalizedString(@"The certificate from this website is invalid. Would you like to connect to the server anyway", nil);
+                UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:msg delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", nil) otherButtonTitles:NSLocalizedString(@"OK", nil), nil];
+                alert.alertViewStyle = UIAlertViewStyleDefault;
+                [alert show];
+            }
+        } else
+            [[challenge sender] continueWithoutCredentialForAuthenticationChallenge:challenge];
+    }];
     [queue addOperation:operation];
 }
 
@@ -188,6 +252,7 @@ enum {
         }
         failure (request, response, error, JSON);
     }];
+    operation.securityPolicy = [SeafConnection defaultPolicy];
     [queue addOperation:operation];
 }
 
@@ -514,7 +579,7 @@ enum {
     NSString *platformVersion = [infoDictionary objectForKey:@"DTPlatformVersion"];
 
     NSString *form = [NSString stringWithFormat:@"deviceToken=%@&version=%@&platform=%@&pversion=%@", deviceToken.hexString, version, platform, platformVersion ];
-    Debug("info=%@, form=%@, len=%lu", infoDictionary, form, (unsigned long)deviceToken.length);
+    Debug("form=%@, len=%lu", form, (unsigned long)deviceToken.length);
     [self sendPost:@"/regdevice/" repo:nil form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
         Debug("Register success");
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
@@ -542,4 +607,31 @@ enum {
 
 }
 
+#pragma mark - UIAlertViewDelegate
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    NSURLCredential *credential = [NSURLCredential credentialForTrust:self.challenge.protectionSpace.serverTrust];
+    if (buttonIndex == alertView.cancelButtonIndex) {
+        [[self.challenge sender] cancelAuthenticationChallenge:self.challenge];
+        return;
+    } else {
+        SecCertificateRef cer = SecTrustGetCertificateAtIndex(self.challenge.protectionSpace.serverTrust, 0);
+        Debug("challenge=%@, cer=%@, %@, %@", self.challenge, self.challenge.protectionSpace, self.challenge.protectionSpace.serverTrust, cer);
+        NSData* data = (__bridge NSData*) SecCertificateCopyData(cer);
+        NSString *filename = [NSString stringWithFormat:@"%@.cer", self.challenge.protectionSpace.host];
+        NSString *path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"certs"] stringByAppendingPathComponent:filename];
+        BOOL ret = [data writeToFile:path atomically:YES];
+        Debug("path=%@, ret=%d", path, ret);
+        defaultPolicy = SeafDefaultPolicy();
+        [[self.challenge sender] useCredential:credential forAuthenticationChallenge:self.challenge];
+    }
+}
+
++ (AFSecurityPolicy *)defaultPolicy
+{
+    if (!defaultPolicy) {
+        defaultPolicy = SeafDefaultPolicy();
+    }
+    return defaultPolicy;
+}
 @end

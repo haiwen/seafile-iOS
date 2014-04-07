@@ -1096,7 +1096,8 @@ enum {
     for (ALAsset *asset in assets) {
         i++;
         if (![ALAssetTypeVideo isEqualToString:[asset valueForProperty:ALAssetPropertyType]]) {
-            NSString *filename = [NSString stringWithFormat:@"Photo %@-%d.jpg", date, i];
+            NSString *ext = [[[asset valueForProperty:ALAssetPropertyURLs] valueForKey:[[[asset valueForProperty:ALAssetPropertyURLs] allKeys] objectAtIndex:0]] pathExtension];
+            NSString *filename = [NSString stringWithFormat:@"Photo %@-%d.%@", date, i, ext];
             path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
         } else {
             NSString *ext = [[[asset valueForProperty:ALAssetPropertyURLs] valueForKey:[[[asset valueForProperty:ALAssetPropertyURLs] allKeys] objectAtIndex:0]] pathExtension];
@@ -1113,14 +1114,8 @@ enum {
     i = 0;
     for (ALAsset *asset in assets) {
         path = [paths objectAtIndex:i++];
-        if (![ALAssetTypeVideo isEqualToString:[asset valueForProperty:ALAssetPropertyType]]) {
-            UIImage *image = [UIImage imageWithCGImage:[[asset defaultRepresentation] fullScreenImage]];
-            [UIImageJPEGRepresentation(image, 1.0) writeToFile:path atomically:YES];
-        } else {
-            BOOL ret = [Utils writeDataToPath:path andAsset:asset];
-            if (!ret)  continue;
-        }
-        
+        BOOL ret = [Utils writeDataToPath:path andAsset:asset];
+        if (!ret)  continue;
         SeafUploadFile *file =  [self.connection getUploadfile:path];
         [SeafAppDelegate backgroundUpload:file];
     }

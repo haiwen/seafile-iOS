@@ -37,7 +37,6 @@
 		571D8CC31677881400F1A22C /* EGORefreshTableHeaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = 576D89E315E39ED700F2BD17 /* EGORefreshTableHeaderView.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		571D8CC61677881400F1A22C /* SeafDateFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 575753EA15EE7AE30049D720 /* SeafDateFormatter.m */; };
 		571D8CC71677881400F1A22C /* ExtentedString.m in Sources */ = {isa = PBXBuildFile; fileRef = 5760144A15FA193900FBDDEF /* ExtentedString.m */; };
-		571D8CC81677881400F1A22C /* Reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 57335CF1160D9D2500018AE8 /* Reachability.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		571D8CC91677881400F1A22C /* FailToPreview.m in Sources */ = {isa = PBXBuildFile; fileRef = 57655331161BEA40005E5327 /* FailToPreview.m */; };
 		571D8CCA1677881400F1A22C /* UIViewController+Extend.m in Sources */ = {isa = PBXBuildFile; fileRef = 57655341161D848F005E5327 /* UIViewController+Extend.m */; };
 		571D8CCB1677881400F1A22C /* DownloadingProgressView.m in Sources */ = {isa = PBXBuildFile; fileRef = 571ABF521625DF31005C9B08 /* DownloadingProgressView.m */; };
@@ -454,8 +453,6 @@
 		5732A940177894E700D806C7 /* REComposeViewController.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = REComposeViewController.bundle; sourceTree = "<group>"; };
 		5732A941177894E700D806C7 /* REComposeViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = REComposeViewController.h; sourceTree = "<group>"; };
 		5732A942177894E700D806C7 /* REComposeViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = REComposeViewController.m; sourceTree = "<group>"; };
-		57335CF0160D9D2500018AE8 /* Reachability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Reachability.h; sourceTree = "<group>"; };
-		57335CF1160D9D2500018AE8 /* Reachability.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Reachability.m; sourceTree = "<group>"; };
 		57335CF8160DA00000018AE8 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		57396B711657DCE30089F32F /* UIImage+FileType.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+FileType.m"; sourceTree = "<group>"; };
 		57396B721657DCE30089F32F /* UIImage+FileType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+FileType.h"; sourceTree = "<group>"; };
@@ -792,8 +789,6 @@
 			children = (
 				5704C6D01753A1380028F4FE /* IntelligentSplitViewController.h */,
 				5704C6D11753A1380028F4FE /* IntelligentSplitViewController.m */,
-				57335CF0160D9D2500018AE8 /* Reachability.h */,
-				57335CF1160D9D2500018AE8 /* Reachability.m */,
 				57C57BDE165FC87B006834DF /* SVProgressHUD.bundle */,
 				57C57BDC165FBB4C006834DF /* SVProgressHUD.h */,
 				57C57BDB165FBB4C006834DF /* SVProgressHUD.m */,
@@ -1855,7 +1850,6 @@
 				571D8CC61677881400F1A22C /* SeafDateFormatter.m in Sources */,
 				5732066018EB16F4003250DE /* UIImageView+AFNetworking.m in Sources */,
 				571D8CC71677881400F1A22C /* ExtentedString.m in Sources */,
-				571D8CC81677881400F1A22C /* Reachability.m in Sources */,
 				573206A418EB1CAB003250DE /* QBImagePickerThumbnailView.m in Sources */,
 				571D8CC91677881400F1A22C /* FailToPreview.m in Sources */,
 				5732069D18EB1CAB003250DE /* QBAssetsCollectionFooterView.m in Sources */,

@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "AFNetworking.h"
 
 #define HTTP_ERR_LOGIN_REUIRED                  403
 #define HTTP_ERR_LOGIN_INCORRECT_PASSWORD       400
@@ -115,5 +116,7 @@ enum MSG_TYPE{
 - (id)getCachedObj:(NSString *)key;
 - (BOOL)savetoCacheKey:(NSString *)key value:(NSString *)content;
 - (id)getCachedStarredFiles;
+
++ (AFSecurityPolicy *)defaultPolicy;
 
 @end

@@ -34,9 +34,6 @@ static dispatch_queue_t json_request_operation_processing_queue() {
                                                       failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, NSData *data))failure
 {
     SeafJSONRequestOperation *requestOperation = [[self alloc] initWithRequest:urlRequest];
-    AFSecurityPolicy *policy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModeNone];
-    policy.allowInvalidCertificates = YES;
-    requestOperation.securityPolicy = policy;
     [requestOperation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
         if (success) {
             Debug("%ld, %@\n", (long)[operation.response statusCode], operation.request.URL);

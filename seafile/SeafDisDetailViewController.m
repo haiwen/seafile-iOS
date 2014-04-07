@@ -511,7 +511,7 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
                                                 kJSTimeStampLabelHeight,
                                                 cell.avatarImageView.frame.size.width,
                                                 cell.avatarImageView.frame.size.height);
-       
+
         cell.avatarImageView.autoresizingMask = (UIViewAutoresizingFlexibleLeftMargin
                                                  | UIViewAutoresizingFlexibleRightMargin);
         cell.subtitleLabel.hidden = YES;
@@ -537,7 +537,7 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
                                  cell.contentView.frame.size.width - cell.bubbleView.frame.origin.x,
                                  msg.replies.count * 20);
         Debug("%f %f %f %f\n", tview.frame.origin.x, tview.frame.origin.y, tview.frame.size.width, tview.frame.size.height);
-        
+
         if (!tview)
             tview = [[UITableView alloc] initWithFrame:frame style:UITableViewStylePlain];
         tview.delegate = msg;
@@ -548,7 +548,7 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
         tview.separatorColor = self.tableView.backgroundColor;
         tview.separatorStyle = UITableViewCellSeparatorStyleNone;
         tview.scrollEnabled = NO;
-        
+
         msg.repliesHeight = tview.frame.size.height - 0;
         [cell.contentView addSubview:tview];
         [tview reloadData];

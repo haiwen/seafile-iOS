@@ -8,6 +8,7 @@
 
 
 #import "SeafAppDelegate.h"
+#import "AFNetworking.h"
 #import "Debug.h"
 #import "Utils.h"
 
@@ -64,12 +65,6 @@
     Debug("self.token=%@", self.deviceToken);
     if (self.deviceToken)
         [conn registerDevice:self.deviceToken];
-}
-
-- (void)reachabilityChanged:(NSNotification* )note
-{
-    Reachability* curReach = [note object];
-    NSParameterAssert([curReach isKindOfClass:[Reachability class]]);
 }
 
 - (BOOL)application:(UIApplication*)application handleOpenURL:(NSURL*)url
@@ -131,11 +126,13 @@
     // Override point for customization after application launch.
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
     NSString *version = [infoDictionary objectForKey:@"CFBundleVersion"];
-    Debug("Current app version is %@\n", version);
+    Debug("Current app version is %@\n%@\n", version, infoDictionary);
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     [userDefaults setObject:version forKey:@"VERSION"];
     [userDefaults synchronize];
     [self initTabController];
+    [[AFNetworkReachabilityManager sharedManager] startMonitoring];
+
     if (ios7)
         [[UITabBar appearance] setTintColor:[UIColor colorWithRed:238.0f/256 green:136.0f/256 blue:51.0f/255 alpha:1.0]];
     else
@@ -150,20 +147,13 @@
     self.window.rootViewController = _startNav;
     [self.window makeKeyAndVisible];
 
+    [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"certs"]];
     [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
     [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"]];
     [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"]];
     [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"]];
     [Utils checkMakeDir:[Utils applicationTempDirectory]];
     [Utils clearAllFiles:[Utils applicationTempDirectory]];
-
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reachabilityChanged:) name:kReachabilityChangedNotification object:nil];
-
-    internetReach = [Reachability reachabilityForInternetConnection];
-    [internetReach startNotifier];
-    wifiReach = [Reachability reachabilityForLocalWiFi];
-    [wifiReach startNotifier];
-    [self checkNetworkStatus];
 
     self.downloadnum = 0;
     self.uploadnum = 0;
@@ -491,14 +481,8 @@
 
 - (BOOL)checkNetworkStatus
 {
-    NetworkStatus netStatus3G = [internetReach currentReachabilityStatus];
-    BOOL connectionRequired3G = [internetReach connectionRequired];
-
-    NetworkStatus netStatusWifi = [internetReach currentReachabilityStatus];
-    BOOL connectionRequiredWifi = [internetReach connectionRequired];
-
-    if ((netStatus3G == NotReachable || connectionRequired3G)
-        && (netStatusWifi == NotReachable || connectionRequiredWifi)) {
+    NSLog(@"networj status=%@\n", [[AFNetworkReachabilityManager sharedManager] localizedNetworkReachabilityStatusString]);
+    if (![[AFNetworkReachabilityManager sharedManager] isReachable]) {
         UIAlertView *alert = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Network unavailable", @"Network unavailable")
                                                         message:nil
                                                        delegate:nil

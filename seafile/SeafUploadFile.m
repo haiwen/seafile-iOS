@@ -18,8 +18,6 @@
 #import "NSData+Encryption.h"
 #import "Debug.h"
 
-#import "SeafJSONRequestOperation.h"
-
 static NSMutableDictionary *uploadFiles = nil;
 
 
@@ -131,14 +129,12 @@ static NSMutableDictionary *uploadFiles = nil;
             [formData appendPartWithFormData:[uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"target_file"];
         else
             [formData appendPartWithFormData:[uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"parent_dir"];
-        
+
         [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
         [formData appendPartWithFileURL:[NSURL fileURLWithPath:self.lpath] name:@"file" error:nil];
     } error:nil];
     AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
-    AFSecurityPolicy *policy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModeNone];
-    policy.allowInvalidCertificates = YES;
-    operation.securityPolicy = policy;
+    operation.securityPolicy = [SeafConnection defaultPolicy];
     self.operation = operation;
     [operation setUploadProgressBlock:^(NSUInteger bytesWritten, NSInteger totalBytesWritten, NSInteger totalBytesExpectedToWrite) {
         int percent = [self percentForShow:totalBytesWritten expected:totalBytesExpectedToWrite];
@@ -203,9 +199,7 @@ static NSMutableDictionary *uploadFiles = nil;
         }
     } error:nil];
     AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
-    AFSecurityPolicy *policy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModeNone];
-    policy.allowInvalidCertificates = YES;
-    operation.securityPolicy = policy;
+    operation.securityPolicy = [SeafConnection defaultPolicy];
     [operation setUploadProgressBlock:^(NSUInteger bytesWritten, NSInteger totalBytesWritten, NSInteger totalBytesExpectedToWrite) {
         int percent = [self percentForShow:totalBytesWritten expected:totalBytesExpectedToWrite];
         [_delegate uploadProgress:self result:YES completeness:percent];
