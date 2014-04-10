@@ -98,13 +98,13 @@ enum TOOL_ITEM {
 
 - (void)edit_preview
 {
-    if ([self.ep.title isEqualToString:NSLocalizedString(@"Preview", nil)]) {
-        self.ep.title = NSLocalizedString(@"Edit", nil);
+    if ([self.ep.title isEqualToString:NSLocalizedString(@"Preview", @"Seafile")]) {
+        self.ep.title = NSLocalizedString(@"Edit", @"Seafile");
         self.egoTextView.hidden = YES;
         NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [self.egoTextView.text stringEscapedForJavasacript]];
         [self.webView stringByEvaluatingJavaScriptFromString:js];
     } else {
-        self.ep.title = NSLocalizedString(@"Preview", nil);
+        self.ep.title = NSLocalizedString(@"Preview", @"Seafile");
         self.egoTextView.hidden = NO;
         [self.egoTextView becomeFirstResponder];
     }
@@ -269,7 +269,7 @@ enum TOOL_ITEM {
     UIBarButtonItem *cancelItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancel)];
     self.navigationItem.rightBarButtonItem = cancelItem;
 
-    self.saveItem = [self getTextBarItem:NSLocalizedString(@"Save", nil) action:@selector(save) active:0];
+    self.saveItem = [self getTextBarItem:NSLocalizedString(@"Save", @"Seafile") action:@selector(save) active:0];
     [self start];
 }
 - (void)viewWillAppear:(BOOL)animated
@@ -379,7 +379,7 @@ enum TOOL_ITEM {
     NSMutableArray *litems = [[NSMutableArray alloc] init];
     [litems addObject:self.saveItem];
     if ([self IsMarkdown]) {
-        self.ep = [self getTextBarItem:NSLocalizedString(@"Preview", nil) action:@selector(edit_preview) active:0];
+        self.ep = [self getTextBarItem:NSLocalizedString(@"Preview", @"Seafile") action:@selector(edit_preview) active:0];
         [litems addObject:self.ep];
         NSURLRequest *request = [[NSURLRequest alloc] initWithURL:self.sfile.previewItemURL cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
         [self.webView loadRequest:request];

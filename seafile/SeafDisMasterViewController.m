@@ -128,7 +128,7 @@
                        failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
                            Warning("Failed to get groups ...error=%ld\n", (long)error.code);
                            if (self.isVisible && error.code != NSURLErrorCancelled && error.code != 102) {
-                               [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get groups ...", @"Failed to get groups ...")];
+                               [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get groups ...", @"Seafile")];
                            }
                            [self doneLoadingTableViewData];
                        }];

@@ -29,8 +29,8 @@ enum PREVIEW_STATE {
     PREVIEW_FAILED
 };
 
-#define SHARE_TITLE NSLocalizedString(@"How would you like to share this file?", @"How would you like to share this file?")
-#define POST_DISCUSSION NSLocalizedString(@"Post a discussion to group", @"Post a discussion to group")
+#define SHARE_TITLE NSLocalizedString(@"How would you like to share this file?", @"Seafile")
+#define POST_DISCUSSION NSLocalizedString(@"Post a discussion to group", @"Seafile")
 
 @interface SeafDetailViewController ()<UIWebViewDelegate, UIActionSheetDelegate, UIPrintInteractionControllerDelegate, MFMailComposeViewControllerDelegate, REComposeViewControllerDelegate, QLPreviewControllerDelegate, QLPreviewControllerDataSource>
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
@@ -235,7 +235,7 @@ enum PREVIEW_STATE {
     // Do any additional setup after loading the view, typically from a nib.
 
     if (!IsIpad()) {
-        UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Back", @"Back") style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
+        UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Back", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
         [self.navigationItem setLeftBarButtonItem:barButtonItem animated:YES];
     }
     self.view.autoresizesSubviews = YES;
@@ -477,7 +477,7 @@ enum PREVIEW_STATE {
     if (IsIpad())
         actionSheet = [[UIActionSheet alloc] initWithTitle:POST_DISCUSSION delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:nil ];
     else
-        actionSheet = [[UIActionSheet alloc] initWithTitle:POST_DISCUSSION delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Cancel") destructiveButtonTitle:nil otherButtonTitles:nil ];
+        actionSheet = [[UIActionSheet alloc] initWithTitle:POST_DISCUSSION delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") destructiveButtonTitle:nil otherButtonTitles:nil ];
     for (NSDictionary *grp in ((SeafFile *)self.preViewItem).groups) {
         [actionSheet addButtonWithTitle:[grp objectForKey:@"name"]];
     }
@@ -499,11 +499,11 @@ enum PREVIEW_STATE {
 - (IBAction)editFile:(id)sender
 {
     if (self.preViewItem.filesize > 10 * 1024 * 1024) {
-        [self alertWithMessage:[NSString stringWithFormat:NSLocalizedString(@"File '%@' is too large to edit", nil), self.preViewItem.name]];
+        [self alertWithMessage:[NSString stringWithFormat:NSLocalizedString(@"File '%@' is too large to edit", @"Seafile"), self.preViewItem.name]];
         return;
     }
     if (!self.preViewItem.content) {
-        [self alertWithMessage:[NSString stringWithFormat:NSLocalizedString(@"Failed to identify the coding of '%@'", nil), self.preViewItem.name]];
+        [self alertWithMessage:[NSString stringWithFormat:NSLocalizedString(@"Failed to identify the coding of '%@'", @"Seafile"), self.preViewItem.name]];
         return;
     }
     SeafTextEditorViewController *editViewController = [[SeafTextEditorViewController alloc] initWithFile:self.preViewItem];
@@ -543,7 +543,7 @@ enum PREVIEW_STATE {
     self.docController = [UIDocumentInteractionController interactionControllerWithURL:url];
     ret = [self.docController presentOpenInMenuFromBarButtonItem:self.exportItem animated:YES];
     if (ret == NO) {
-        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"There is no app which can open this type of file on this machine", @"There is no app which can open this type of file on this machine")];
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"There is no app which can open this type of file on this machine", @"Seafile")];
     }
 }
 
@@ -554,11 +554,11 @@ enum PREVIEW_STATE {
     NSMutableArray *bts = [[NSMutableArray alloc] init];
     SeafFile *file = (SeafFile *)self.preViewItem;
     if ([Utils isImageFile:file.name]) {
-        [bts addObject:NSLocalizedString(@"Save to album", @"Save to album")];
-        [bts addObject:NSLocalizedString(@"Copy image to clipboard", @"Copy image to clipboard")];
+        [bts addObject:NSLocalizedString(@"Save to album", @"Seafile")];
+        [bts addObject:NSLocalizedString(@"Copy image to clipboard", @"Seafile")];
     }
     if ([self isPrintable:file])
-        [bts addObject:NSLocalizedString(@"Print", @"Print")];
+        [bts addObject:NSLocalizedString(@"Print", @"Seafile")];
     if (bts.count == 0) {
         [self openElsewhere];
     } else {
@@ -566,11 +566,11 @@ enum PREVIEW_STATE {
         if (IsIpad())
             actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:nil ];
         else
-            actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Cancel") destructiveButtonTitle:nil otherButtonTitles:nil ];
+            actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") destructiveButtonTitle:nil otherButtonTitles:nil ];
         for (NSString *title in bts) {
             [actionSheet addButtonWithTitle:title];
         }
-        [actionSheet addButtonWithTitle:NSLocalizedString(@"Open elsewhere...", "Open elsewhere...")];
+        [actionSheet addButtonWithTitle:NSLocalizedString(@"Open elsewhere...", "Seafile")];
         [actionSheet showFromBarButtonItem:self.exportItem animated:YES];
     }
 }
@@ -580,13 +580,13 @@ enum PREVIEW_STATE {
     if (![self.preViewItem isKindOfClass:[SeafFile class]])
         return;
 
-    NSString *email = NSLocalizedString(@"Email", @"Email");
-    NSString *copy = NSLocalizedString(@"Copy Link to Clipboard", @"Copy Link to Clipboard");
+    NSString *email = NSLocalizedString(@"Email", @"Seafile");
+    NSString *copy = NSLocalizedString(@"Copy Link to Clipboard", @"Seafile");
     UIActionSheet *actionSheet;
     if (IsIpad())
         actionSheet = [[UIActionSheet alloc] initWithTitle:SHARE_TITLE delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:email, copy, nil ];
     else
-        actionSheet = [[UIActionSheet alloc] initWithTitle:SHARE_TITLE delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Cancel") destructiveButtonTitle:nil otherButtonTitles:email, copy, nil ];
+        actionSheet = [[UIActionSheet alloc] initWithTitle:SHARE_TITLE delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") destructiveButtonTitle:nil otherButtonTitles:email, copy, nil ];
 
     [actionSheet showFromBarButtonItem:self.shareItem animated:YES];
 }
@@ -597,9 +597,9 @@ enum PREVIEW_STATE {
     SeafFile *file = (__bridge SeafFile *)ctxInfo;
 
     if (error) {
-        [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Failed to save %@ to album", @"Failed to save %@ to album"), file.name]];
+        [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Failed to save %@ to album", @"Seafile"), file.name]];
     } else {
-        [SVProgressHUD showSuccessWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Success to save %@ to album", @"Success to save %@ to album"), file.name]];
+        [SVProgressHUD showSuccessWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Success to save %@ to album", @"Seafile"), file.name]];
     }
 }
 
@@ -639,7 +639,7 @@ enum PREVIEW_STATE {
         [composeViewController dismissViewControllerAnimated:YES completion:nil];
     } else if (result == REComposeResultPosted) {
         Debug("Text: %@", composeViewController.text);
-        [SVProgressHUD showWithStatus:NSLocalizedString(@"Sending...", nil)];
+        [SVProgressHUD showWithStatus:NSLocalizedString(@"Sending...", @"Seafile")];
         SeafFile *file = (SeafFile *)self.preViewItem;
         NSString *form = [NSString stringWithFormat:@"message=%@&repo_id=%@&path=%@", [composeViewController.text escapedPostForm], file.repoId, [file.path escapedPostForm]];
         NSString *url = [file->connection.address stringByAppendingFormat:API_URL"/html/discussions/%@/", _gid];
@@ -650,7 +650,7 @@ enum PREVIEW_STATE {
             NSString *js = [NSString stringWithFormat:@"addMessage(\"%@\");", [html stringEscapedForJavasacript]];
             [self.webView stringByEvaluatingJavaScriptFromString:js];
         } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to add discussion", @"Failed to add discussion") duration:1.0];
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to add discussion", @"Seafile") duration:1.0];
         }];
     }
 }
@@ -683,7 +683,7 @@ enum PREVIEW_STATE {
                 return;
 
             if (!file.shareLink) {
-                [SVProgressHUD showWithStatus:NSLocalizedString(@"Generate share link ...", @"Generate share link ...")];
+                [SVProgressHUD showWithStatus:NSLocalizedString(@"Generate share link ...", @"Seafile")];
                 [file generateShareLink:self];
             } else {
                 [self generateSharelink:file WithResult:YES];
@@ -692,19 +692,19 @@ enum PREVIEW_STATE {
     } else if ([POST_DISCUSSION isEqualToString:actionSheet.title]) {
         NSArray *groups = ((SeafFile *)self.preViewItem).groups;
         NSString *gid = [[groups objectAtIndex:bIndex] objectForKey:@"id"];
-        [self popupInputView:NSLocalizedString(@"Discussion", @"Discussion") placeholder:NSLocalizedString(@"Discussion", @"Discussion") groupid:gid];
+        [self popupInputView:NSLocalizedString(@"Discussion", @"Seafile") placeholder:NSLocalizedString(@"Discussion", @"Seafile") groupid:gid];
     } else {
         NSString *title = [actionSheet buttonTitleAtIndex:bIndex];
-        if ([NSLocalizedString(@"Open elsewhere...", @"Open elsewhere...") isEqualToString:title]) {
+        if ([NSLocalizedString(@"Open elsewhere...", @"Seafile") isEqualToString:title]) {
             [self openElsewhere];
-        } else if ([NSLocalizedString(@"Save to album", @"Save to album") isEqualToString:title]) {
+        } else if ([NSLocalizedString(@"Save to album", @"Seafile") isEqualToString:title]) {
             UIImage *img = [UIImage imageWithContentsOfFile:file.previewItemURL.path];
             UIImageWriteToSavedPhotosAlbum(img, self, @selector(thisImage:hasBeenSavedInPhotoAlbumWithError:usingContextInfo:), (void *)CFBridgingRetain(file));
-        }  else if ([NSLocalizedString(@"Copy image to clipboard", @"Copy image to clipboard") isEqualToString:title]) {
+        }  else if ([NSLocalizedString(@"Copy image to clipboard", @"Seafile") isEqualToString:title]) {
             UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
             NSData *data = [NSData dataWithContentsOfFile:file.previewItemURL.path];
             [pasteboard setData:data forPasteboardType:file.name];
-        } else if ([NSLocalizedString(@"Print", @"Print") isEqualToString:title]) {
+        } else if ([NSLocalizedString(@"Print", @"Seafile") isEqualToString:title]) {
             [self printFile:file];
         }
     }
@@ -718,10 +718,10 @@ enum PREVIEW_STATE {
 
     SeafFile *file = (SeafFile *)self.preViewItem;
     if (!success) {
-        [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Failed to generate share link of file '%@'", @"Failed to generate share link of file '%@'"), file.name]];
+        [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Failed to generate share link of file '%@'", @"Seafile"), file.name]];
         return;
     }
-    [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Generate share link success", @"Generate share link success")];
+    [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Generate share link success", @"Seafile")];
 
     if (buttonIndex == 0) {
         [self sendMailInApp];
@@ -736,11 +736,11 @@ enum PREVIEW_STATE {
 {
     Class mailClass = (NSClassFromString(@"MFMailComposeViewController"));
     if (!mailClass) {
-        [self alertWithMessage:NSLocalizedString(@"This function is not supportted yet，you can copy it to the pasteboard and send mail by yourself", @"This function is not supportted yet，you can copy it to the pasteboard and send mail by yourself")];
+        [self alertWithMessage:NSLocalizedString(@"This function is not supportted yet，you can copy it to the pasteboard and send mail by yourself", @"Seafile")];
         return;
     }
     if (![mailClass canSendMail]) {
-        [self alertWithMessage:NSLocalizedString(@"The mail account has not been set yet", @"The mail account has not been set yet")];
+        [self alertWithMessage:NSLocalizedString(@"The mail account has not been set yet", @"Seafile")];
         return;
     }
     [self displayMailPicker];
@@ -752,8 +752,8 @@ enum PREVIEW_STATE {
     mailPicker.mailComposeDelegate = self;
 
     SeafFile *file = (SeafFile *)self.preViewItem;
-    [mailPicker setSubject:[NSString stringWithFormat:NSLocalizedString(@"File '%@' is shared with you using seafile", @"File '%@' is shared with you using seafile"), file.name]];
-    NSString *emailBody = [NSString stringWithFormat:NSLocalizedString(@"Hi,<br/><br/>Here is a link to <b>'%@'</b> in my Seafile:<br/><br/> <a href=\"%@\">%@</a>\n\n", @"Hi,<br/><br/>Here is a link to <b>'%@'</b> in my Seafile:<br/><br/> <a href=\"%@\">%@</a>\n\n"), file.name, file.shareLink, file.shareLink];
+    [mailPicker setSubject:[NSString stringWithFormat:NSLocalizedString(@"File '%@' is shared with you using seafile", @"Seafile"), file.name]];
+    NSString *emailBody = [NSString stringWithFormat:NSLocalizedString(@"Hi,<br/><br/>Here is a link to <b>'%@'</b> in my Seafile:<br/><br/> <a href=\"%@\">%@</a>\n\n", @"Seafile"), file.name, file.shareLink, file.shareLink];
     [mailPicker setMessageBody:emailBody isHTML:YES];
     [self presentViewController:mailPicker animated:YES completion:nil];
 }

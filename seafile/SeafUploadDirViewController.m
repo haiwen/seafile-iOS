@@ -35,7 +35,7 @@
     if (self = [self initWithAutoNibName]) {
         self.connection = conn;
         self.ufile = ufile;
-        self.title = NSLocalizedString(@"Save to Seafile", @"Save to Seafile");
+        self.title = NSLocalizedString(@"Save to Seafile", @"Seafile");
 
         NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
         NSString *repo = [userDefaults objectForKey: [@"LAST-REPO" stringByAppendingString:conn.address]];
@@ -86,8 +86,8 @@
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeNone;
     // Uncomment the following line to preserve selection between presentations.
-    self.saveItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Save", @"Save") style:UIBarButtonItemStyleBordered target:self action:@selector(save:)];
-    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Cancel", @"Cancel") style:UIBarButtonItemStyleBordered target:self action:@selector(cancel:)];
+    self.saveItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Save", @"Seafile") style:UIBarButtonItemStyleBordered target:self action:@selector(save:)];
+    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIBarButtonItemStyleBordered target:self action:@selector(cancel:)];
     self.navigationItem.rightBarButtonItem = self.saveItem;
     self.imageVIew.image = self.ufile.image;
     self.nameLabel.text = self.ufile.name;
@@ -95,7 +95,7 @@
         [self.saveItem setEnabled:YES];
         self.dirLabel.text = [[[self.connection getRepo:self.curDir.repoId] name]stringByAppendingString:self.curDir.path];
     } else {
-        self.dirLabel.text = NSLocalizedString(@"Choose", @"Choose");
+        self.dirLabel.text = NSLocalizedString(@"Choose", @"Seafile");
         [self.saveItem setEnabled:NO];
     }
 }

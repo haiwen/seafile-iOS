@@ -143,8 +143,8 @@ enum {
                 break;
         }
     } else if (indexPath.section == 3) {
-        NSString *title = NSLocalizedString(@"Are you sure to clear all the cache ?", @"Are you sure to clear all the cache ?");
-        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:title message:nil delegate:self cancelButtonTitle:NSLocalizedString(@"NO", @"NO") otherButtonTitles:NSLocalizedString(@"YES", @"YES"), nil];
+        NSString *title = NSLocalizedString(@"Are you sure to clear all the cache ?", @"Seafile");
+        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:title message:nil delegate:self cancelButtonTitle:NSLocalizedString(@"NO", @"Seafile") otherButtonTitles:NSLocalizedString(@"YES", @"Seafile"), nil];
         [alertView show];
     }
 }
@@ -169,11 +169,11 @@ enum {
 {
     Class mailClass = NSClassFromString(@"MFMailComposeViewController");
     if (!mailClass) {
-        [self alertWithMessage:NSLocalizedString(@"This function is not supportted yet", @"This function is not supportted yet")];
+        [self alertWithMessage:NSLocalizedString(@"This function is not supportted yet", @"Seafile")];
         return;
     }
     if (![mailClass canSendMail]) {
-        [self alertWithMessage:NSLocalizedString(@"The mail account has not been set yet", @"The mail account has not been set yet")];
+        [self alertWithMessage:NSLocalizedString(@"The mail account has not been set yet", @"Seafile")];
         return;
     }
     [self displayMailPicker];
@@ -181,8 +181,8 @@ enum {
 
 - (void)configureInvitationMail:(MFMailComposeViewController *)mailPicker
 {
-    [mailPicker setSubject:[NSString stringWithFormat:NSLocalizedString(@"%@ invite you to Seafile", @"%@ invite you to Seafile"), NSFullUserName()]];
-    NSString *emailBody = [NSString stringWithFormat:NSLocalizedString(@"Hey there!<br/><br/> I've been using Seafile and thought you might like it. It is a free way to bring all you files anywhere and share them easily.<br/><br/>Go to the official website of Seafile:</br></br> <a href=\"%@\">%@</a>\n\n", @"Hey there!<br/><br/> I've been using Seafile and thought you might like it. It is a free way to bring all you files anywhere and share them easily.<br/><br/>Go to the official website of Seafile:</br></br> <a href=\"%@\">%@</a>\n\n"), SEAFILE_SITE, SEAFILE_SITE];
+    [mailPicker setSubject:[NSString stringWithFormat:NSLocalizedString(@"%@ invite you to Seafile", @"Seafile"), NSFullUserName()]];
+    NSString *emailBody = [NSString stringWithFormat:NSLocalizedString(@"Hey there!<br/><br/> I've been using Seafile and thought you might like it. It is a free way to bring all you files anywhere and share them easily.<br/><br/>Go to the official website of Seafile:</br></br> <a href=\"%@\">%@</a>\n\n", @"Seafile"), SEAFILE_SITE, SEAFILE_SITE];
 
     [mailPicker setMessageBody:emailBody isHTML:YES];
 }

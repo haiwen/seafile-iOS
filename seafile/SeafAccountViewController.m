@@ -62,19 +62,19 @@
     NSString *url = serverTextField.text;
 
     if (!url || url.length < 1) {
-        [self alertWithMessage:NSLocalizedString(@"Server must not be empty", @"Server must not be empty")];
+        [self alertWithMessage:NSLocalizedString(@"Server must not be empty", @"Seafile")];
         return;
     }
     if (![url hasPrefix:HTTP] && ![url hasPrefix:HTTPS]) {
-        [self alertWithMessage:NSLocalizedString(@"Invalid Server", @"Invalid Server")];
+        [self alertWithMessage:NSLocalizedString(@"Invalid Server", @"Seafile")];
         return;
     }
     if (!username || username.length < 1) {
-        [self alertWithMessage:NSLocalizedString(@"Username must not be empty", @"Username must not be empty")];
+        [self alertWithMessage:NSLocalizedString(@"Username must not be empty", @"Seafile")];
         return;
     }
     if (!password || password.length < 1) {
-        [self alertWithMessage:NSLocalizedString(@"Password required", @"Password required")];
+        [self alertWithMessage:NSLocalizedString(@"Password required", @"Seafile")];
         return;
     }
 
@@ -82,7 +82,7 @@
         connection = [[SeafConnection alloc] initWithUrl:url username:username];
     connection.delegate = self;
     [connection loginWithAddress:url username:username password:password];
-    [SVProgressHUD showWithStatus:NSLocalizedString(@"Connecting to server", @"Connecting to server")];
+    [SVProgressHUD showWithStatus:NSLocalizedString(@"Connecting to server", @"Seafile")];
 }
 
 - (void)viewDidLoad
@@ -106,22 +106,22 @@
         loginButton.tintColor=[UIColor whiteColor];
         cancelButton.tintColor=[UIColor whiteColor];
     }
-    self.title = NSLocalizedString(@"Seafile Account", nil);
+    self.title = NSLocalizedString(@"Seafile Account", @"Seafile");
     CGRect rect = CGRectMake(0, 0, 90, 25);
     NSString *align = ios7 ? @"  " :  @"";
     UILabel *serverLabel = [[UILabel alloc] initWithFrame:rect];
-    serverLabel.text = [align stringByAppendingString:NSLocalizedString(@"Server", @"Server")];
+    serverLabel.text = [align stringByAppendingString:NSLocalizedString(@"Server", @"Seafile")];
     serverLabel.font = [UIFont boldSystemFontOfSize:14];
     serverTextField.leftView = serverLabel;
     serverTextField.leftViewMode = UITextFieldViewModeAlways;
 
     UILabel *nameLabel = [[UILabel alloc] initWithFrame:rect];
-    nameLabel.text = [align stringByAppendingString:NSLocalizedString(@"Username", @"Username")];
+    nameLabel.text = [align stringByAppendingString:NSLocalizedString(@"Username", @"Seafile")];
     nameLabel.font = [UIFont boldSystemFontOfSize:14];
     usernameTextField.leftView = nameLabel;
     usernameTextField.leftViewMode = UITextFieldViewModeAlways;
     UILabel *passwordLabel = [[UILabel alloc] initWithFrame:rect];
-    passwordLabel.text = [align stringByAppendingString:NSLocalizedString(@"Password", @"Password")];
+    passwordLabel.text = [align stringByAppendingString:NSLocalizedString(@"Password", @"Seafile")];
     passwordLabel.font = [UIFont boldSystemFontOfSize:14];
     passwordTextField.leftView = passwordLabel;
     passwordTextField.leftViewMode = UITextFieldViewModeAlways;
@@ -176,11 +176,11 @@
 
     [SVProgressHUD dismiss];
     if (error == HTTP_ERR_LOGIN_INCORRECT_PASSWORD)
-        [self alertWithMessage:NSLocalizedString(@"Wrong username or password", nil)];
+        [self alertWithMessage:NSLocalizedString(@"Wrong username or password", @"Seafile")];
     else if (error == 0){
-        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Network unavailable", @"Network unavailable") duration:1.0];
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Network unavailable", @"Seafile") duration:1.0];
     } else {
-        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to login", nil) duration:1.0];
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to login", @"Seafile") duration:1.0];
     }
 }
 

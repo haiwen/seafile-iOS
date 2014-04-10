@@ -8,6 +8,7 @@
 
 #import "SeafAppDelegate.h"
 #import "SeafDisDetailViewController.h"
+#import "SeafRepliesHeaderView.h"
 
 #import "SeafBase.h"
 #import "SVProgressHUD.h"
@@ -17,7 +18,7 @@
 
 static const CGFloat kJSLabelPadding = 5.0f;
 static const CGFloat kJSTimeStampLabelHeight = 15.0f;
-static const CGFloat kJSSubtitleLabelHeight = 15.0f;
+
 
 @interface SeafDisDetailViewController ()<JSMessagesViewDataSource, JSMessagesViewDelegate, EGORefreshTableHeaderDelegate, UIScrollViewDelegate>
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
@@ -29,6 +30,7 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
 @property (strong, nonatomic) NSMutableDictionary *info;
 @property (readwrite, nonatomic) int msgtype;
 @property (readwrite, nonatomic) int next_page;
+@property (readwrite, nonatomic) SeafMessage *selectedMsg;
 
 
 @property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
@@ -59,12 +61,6 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
 {
     [self.loadingView stopAnimating];
 }
-
-- (UIWebView *)webview
-{
-    return (UIWebView *)self.view;
-}
-
 - (void)setConnection:(SeafConnection *)connection
 {
      _connection = connection;
@@ -86,6 +82,7 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
     [self.messageInputView.textView resignFirstResponder];
     self.messageInputView.textView.text = @"";
     self.next_page = 2;
+    self.selectedMsg = nil;
 }
 
 - (NSString *)msgUrl
@@ -110,7 +107,6 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
 - (NSMutableArray *)paseMessageData:(id)JSON
 {
     NSMutableArray *messages = [[NSMutableArray alloc] init];
-    Debug("JSON=%@", JSON);
     if (!JSON || ![JSON isKindOfClass:[NSDictionary class]])
         return messages;
     switch (self.msgtype) {
@@ -190,7 +186,7 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
                 }
             } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
                 Warning("Failed to get messsages");
-                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get messages", @"Failed to get message")];
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get messages", @"Seafile")];
                 [self dismissLoadingView];
                 self.refreshItem.enabled = YES;
             }];
@@ -211,11 +207,12 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
     // Update the user interface for the detail item.
     switch (self.msgtype) {
         case MSG_NONE:
-            self.title = NSLocalizedString(@"Message", nil);
+            self.title = NSLocalizedString(@"Message", @"Seafile");
             self.navigationItem.rightBarButtonItems = nil;
             [self setInputViewHidden:YES];
             if (self.refreshHeaderView.superview)
                 [self.refreshHeaderView removeFromSuperview];
+            self.tableView.separatorColor = self.tableView.backgroundColor;
             break;
         case MSG_GROUP:
             self.title = [self.info objectForKey:@"name"];
@@ -224,6 +221,7 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
             self.msgItem.enabled = YES;
             if (!self.refreshHeaderView.superview)
                 [self.tableView addSubview:self.refreshHeaderView];
+            self.tableView.separatorColor = [UIColor grayColor];
             break;
         case MSG_USER:
             self.title = [self.info objectForKey:@"name"];
@@ -231,6 +229,7 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
             [self setInputViewHidden:NO];
             if (!self.refreshHeaderView.superview)
                 [self.tableView addSubview:self.refreshHeaderView];
+            self.tableView.separatorColor = self.tableView.backgroundColor;
             break;
         case MSG_REPLY:
             self.title = [self.info objectForKey:@"name"];
@@ -238,6 +237,7 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
             if (self.refreshHeaderView.superview)
                 [self.refreshHeaderView removeFromSuperview];
             break;
+            self.tableView.separatorColor = self.tableView.backgroundColor;
         default:
             break;
     }
@@ -259,6 +259,7 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
 
 - (void)compose:(id)sender
 {
+    self.selectedMsg = nil;
     self.msgItem.enabled = NO;
     [self setInputViewHidden:NO];
     [self.messageInputView.textView becomeFirstResponder];
@@ -271,10 +272,12 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeNone;
     [[JSBubbleView appearance] setFont:[UIFont systemFontOfSize:16.0f]];
-    [self setBackgroundColor:[UIColor whiteColor]];
+    [super viewDidLoad];
+    self.messageInputView.textView.placeHolder = NSLocalizedString(@"New Message", "Seafile");
+    self.tableView.separatorColor = self.tableView.backgroundColor;
 
     if (!IsIpad()) {
-        UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Back", @"Back") style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
+        UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Back", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
         [self.navigationItem setLeftBarButtonItem:barButtonItem animated:YES];
     }
 
@@ -284,9 +287,7 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
     self.items = [NSArray arrayWithObjects:self.refreshItem, space, self.msgItem, nil];
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
-    self.messageInputView.textView.placeHolder = @"New Message";
 
-    [super viewDidLoad];
     if (_refreshHeaderView == nil) {
         EGORefreshTableHeaderView *view = [[EGORefreshTableHeaderView alloc] initWithFrame:CGRectMake(0.0f, 0.0f - self.tableView.bounds.size.height, self.view.frame.size.width, self.tableView.bounds.size.height)];
         view.delegate = self;
@@ -301,6 +302,7 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
     if (self.msgtype == MSG_GROUP) {
         [self setInputViewHidden:YES];
         self.msgItem.enabled = YES;
+        self.selectedMsg = nil;
     }
 }
 - (void)viewWillAppear:(BOOL)animated
@@ -329,7 +331,7 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
 
 - (void)splitViewController:(UISplitViewController *)splitController willHideViewController:(UIViewController *)viewController withBarButtonItem:(UIBarButtonItem *)barButtonItem forPopoverController:(UIPopoverController *)popoverController
 {
-    barButtonItem.title = NSLocalizedString(@"Message", @"Message");
+    barButtonItem.title = NSLocalizedString(@"Message", @"Seafile");
     [self.navigationItem setLeftBarButtonItem:barButtonItem animated:YES];
     self.masterPopoverController = popoverController;
 }
@@ -371,17 +373,16 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
 {
     return self.messages.count;
 }
+
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    CGFloat height = [super tableView:tableView heightForRowAtIndexPath:indexPath];
-    SeafMessage *msg = [self.messages objectAtIndex:indexPath.row];
-    if (msg.replies.count > 0) {
-//        height += msg.repliesHeight;
-        height += msg.replies.count * 20;
+    if (self.msgtype == MSG_USER)
+        return [super tableView:tableView heightForRowAtIndexPath:indexPath];
 
-    }
-    Debug("row=%ld, height=%f", (long)indexPath.row, height);
-    return height;
+    CGFloat width = self.tableView.frame.size.width -(kJSAvatarImageSize - 4.0f) - 10;
+    SeafMessage *msg = [self.messages objectAtIndex:indexPath.row];
+    CGFloat bubbleHeight = [JSBubbleView neededHeightForText:msg.text];
+    return kJSTimeStampLabelHeight + MAX(kJSAvatarImageSize, bubbleHeight+[msg neededHeightForReplies:width]);
 }
 
 #pragma mark - Messages view delegate: REQUIRED
@@ -398,8 +399,9 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
 
 - (void)addReply:(SeafMessage *)msg text:(NSString *)text fromSender:(NSString *)sender onDate:(NSDate *)date
 {
-    Debug("sender=%@, %@ msg=%@, %@", sender, self.sender, msg, [msg toDictionary]);
-    NSString *url = [NSString stringWithFormat:API_URL"/group/%@/msg/%@/", [self.info objectForKey:@"group_id"], msg.msgId];
+    NSString *group_id = self.msgtype == MSG_GROUP ? [self.info objectForKey:@"id"] : [self.info objectForKey:@"group_id"];
+    NSString *url = [NSString stringWithFormat:API_URL"/group/%@/msg/%@/", group_id, msg.msgId];
+    Debug("sender=%@, %@ msg=%@, group=%@ url=%@", sender, self.sender, msg, self.info, url);
     NSString *form = [NSString stringWithFormat:@"message=%@", [text escapedPostForm]];
     [self.connection sendPost:url repo:nil form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
         [SVProgressHUD dismiss];
@@ -411,17 +413,16 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
         [self finishSend];
         [self saveToCache];
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to send message", @"Failed to send message")];
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to send message", @"Seafile")];
         self.messageInputView.sendButton.enabled = YES;
     }];
 }
 - (void)didSendText:(NSString *)text fromSender:(NSString *)sender onDate:(NSDate *)date
 {
-
-    [SVProgressHUD showWithStatus:@"Sending"];
+    [SVProgressHUD showWithStatus:NSLocalizedString(@"Sending", "Seafile")];
     self.messageInputView.sendButton.enabled = NO;
-    if (NO) {
-        [self addReply:nil text:text fromSender:sender onDate:date];
+    if (self.selectedMsg) {
+        [self addReply:self.selectedMsg text:text fromSender:sender onDate:date];
         return;
     }
     SeafMessage *msg = [[SeafMessage alloc] initWithText:text email:sender date:date conn:self.connection type:self.msgtype];
@@ -437,7 +438,7 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
         [self scrollToBottomAnimated:NO];
         [self saveToCache];
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to send message", @"Failed to send message")];
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to send message", @"Seafile")];
         self.messageInputView.sendButton.enabled = YES;
     }];
 }
@@ -445,8 +446,9 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
 - (JSBubbleMessageType)messageTypeForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     SeafMessage *msg = [self.messages objectAtIndex:indexPath.row];
-    if (self.msgtype == MSG_GROUP)
+    if (self.msgtype == MSG_GROUP || self.msgtype == MSG_REPLY)
         return JSBubbleMessageTypeIncoming;
+    Debug("#%d msg email %@, sender %@:  %@, ret=%d", indexPath.row, msg.email, self.sender, msg.text, [msg.email isEqualToString:self.sender]);
     if ([msg.email isEqualToString:self.sender])
         return JSBubbleMessageTypeOutgoing;
     return JSBubbleMessageTypeIncoming;
@@ -455,12 +457,16 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
 - (UIImageView *)bubbleImageViewWithType:(JSBubbleMessageType)type
                        forRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (type == JSBubbleMessageTypeIncoming) {
+    if (self.msgtype == MSG_USER) {
+        if (type == JSBubbleMessageTypeIncoming) {
+            return [JSBubbleImageViewFactory bubbleImageViewForType:type
+                                                              color:[UIColor js_bubbleLightGrayColor]];
+        }
         return [JSBubbleImageViewFactory bubbleImageViewForType:type
-                                                          color:[UIColor js_bubbleLightGrayColor]];
+                                                          color:[UIColor js_bubbleBlueColor]];
+    } else {
+        return [[UIImageView alloc] init];
     }
-    return [JSBubbleImageViewFactory bubbleImageViewForType:type
-                                                      color:[UIColor js_bubbleBlueColor]];
 }
 
 - (JSMessageInputViewStyle)inputViewStyle
@@ -474,7 +480,45 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
 {
     return YES;
 }
+- (IBAction)comment:(id)sender
+{
+    UIButton *btn = sender;
+    CGPoint touchPoint = btn.frame.origin;
+    NSIndexPath *selectedindex = [self.tableView indexPathForRowAtPoint:touchPoint];
+    self.selectedMsg = [self.messages objectAtIndex:selectedindex.row];
+    self.msgItem.enabled = NO;
+    [self setInputViewHidden:NO];
+    [self.messageInputView.textView becomeFirstResponder];
+}
 
+- (UITableView *)setupRepliesView:(JSBubbleMessageCell *)cell msg:(SeafMessage *)msg frame:(CGRect)frame
+{
+    UITableView *tview = (UITableView *)[cell viewWithTag:100];
+    if (!tview) {
+        tview = [[UITableView alloc] initWithFrame:frame style:UITableViewStylePlain];
+        tview.tableHeaderView = [[SeafRepliesHeaderView alloc] initWithFrame:CGRectMake(0, 0, frame.size.width, REPLIES_HEADER_HEIGHT)];
+        tview.tag = 100;
+        tview.scrollEnabled = NO;
+        tview.separatorStyle = UITableViewCellSeparatorStyleNone;
+        tview.backgroundColor = self.tableView.backgroundColor;
+        tview.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+        [cell.contentView addSubview:tview];
+    } else
+        tview.frame = frame;
+
+    [cell.contentView bringSubviewToFront:tview];
+
+    SeafRepliesHeaderView *header = (SeafRepliesHeaderView *)tview.tableHeaderView;
+    header.timestamp.text = [NSDateFormatter localizedStringFromDate:msg.date
+                                                           dateStyle:NSDateFormatterMediumStyle
+                                                           timeStyle:NSDateFormatterShortStyle];
+    [header.btn addTarget:self action:@selector(comment:) forControlEvents:UIControlEventTouchUpInside];
+
+    tview.delegate = msg;
+    tview.dataSource = msg;
+    [tview reloadData];
+    return tview;
+}
 //
 //  *** Implement to customize cell further
 //
@@ -515,51 +559,25 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
         cell.avatarImageView.autoresizingMask = (UIViewAutoresizingFlexibleLeftMargin
                                                  | UIViewAutoresizingFlexibleRightMargin);
         cell.subtitleLabel.hidden = YES;
-        cell.timestampLabel.text = [NSString stringWithFormat:@"%@  %@", msg.nickname, cell.timestampLabel.text];
-        cell.timestampLabel.frame = CGRectMake(cell.bubbleView.frame.origin.x,
+        cell.timestampLabel.text = msg.nickname;
+        cell.timestampLabel.textColor = [UIColor blueColor];
+        cell.timestampLabel.textAlignment = NSTextAlignmentLeft;
+        cell.timestampLabel.frame = CGRectMake(cell.bubbleView.frame.origin.x + 10,
                                                kJSLabelPadding,
                                                cell.bubbleView.frame.size.width,
                                                kJSTimeStampLabelHeight);
         cell.timestampLabel.autoresizingMask = (UIViewAutoresizingFlexibleWidth);
-    }
-    if (msg.replies.count > 0) {
-        Debug("...row=%ld reply %lu, %@", (long)indexPath.row, (unsigned long)msg.replies.count, msg.text);
-        UITableView *tview = nil;
-        for (UIView *v in cell.contentView.subviews) {
-            if ([v isKindOfClass:[UITableView class]]) {
-                tview = (UITableView *)v;
-                break;
-            }
-        }
-        Debug("view=%@", tview);
-        CGFloat y = [super tableView:self.tableView heightForRowAtIndexPath:indexPath];
-        CGRect frame = CGRectMake(cell.bubbleView.frame.origin.x, y,
-                                 cell.contentView.frame.size.width - cell.bubbleView.frame.origin.x,
-                                 msg.replies.count * 20);
-        Debug("%f %f %f %f\n", tview.frame.origin.x, tview.frame.origin.y, tview.frame.size.width, tview.frame.size.height);
 
-        if (!tview)
-            tview = [[UITableView alloc] initWithFrame:frame style:UITableViewStylePlain];
-        tview.delegate = msg;
-        tview.dataSource = msg;
-        tview.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-        tview.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-        tview.backgroundColor = self.tableView.backgroundColor;
-        tview.separatorColor = self.tableView.backgroundColor;
-        tview.separatorStyle = UITableViewCellSeparatorStyleNone;
-        tview.scrollEnabled = NO;
-
-        msg.repliesHeight = tview.frame.size.height - 0;
-        [cell.contentView addSubview:tview];
-        [tview reloadData];
-        [cell.contentView bringSubviewToFront:tview];
-        Debug("%f %f %f %f\n", tview.frame.origin.x, tview.frame.origin.y, tview.frame.size.width, tview.frame.size.height);
+        CGFloat y = [JSBubbleView neededHeightForText:msg.text] + kJSTimeStampLabelHeight - 5;
+        CGFloat width = cell.bubbleView.frame.size.width - 10;
+        CGRect frame = CGRectMake(cell.bubbleView.frame.origin.x + 10, y, width, [msg neededHeightForReplies:width]);
+        [self setupRepliesView:cell msg:msg frame:frame];
     }
 }
 
 - (NSString *)customCellIdentifierForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    return [NSString stringWithFormat:@"JSMessageCell_%d_%u_%d", self.msgtype, [self messageTypeForRowAtIndexPath:indexPath], [self shouldDisplayTimestampForRowAtIndexPath:indexPath]];
+    return [NSString stringWithFormat:@"JSMessageCell_%d_%d", self.msgtype, [self messageTypeForRowAtIndexPath:indexPath]];
 }
 
 #pragma mark - Messages view data source: REQUIRED
@@ -625,7 +643,7 @@ static const CGFloat kJSSubtitleLabelHeight = 15.0f;
             } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
                 Warning("Failed to get messsages");
                 [self doneLoadingTableViewData];
-                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get messages", @"Failed to get message")];
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get messages", @"Seafile")];
             }];
             break;
         }

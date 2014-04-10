@@ -10,6 +10,12 @@
 #import "SeafBase.h"
 #import "Debug.h"
 
+
+#define FONT_SIZE 12.0f
+#define CELL_CONTENT_WIDTH 320.0f
+#define CELL_CONTENT_MARGIN 1.0f
+
+
 @implementation SeafMessage
 
 
@@ -85,29 +91,69 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    Debug("reply count=%ld", (unsigned long)self.replies.count);
     return self.replies.count;
 }
-- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+
+- (CGFloat)heightForMsgReply:(NSDictionary *)reply width:(float)width
 {
-    return 20;
+    NSString *nickname = [reply objectForKey:@"nickname"];
+    NSString *text = [NSString stringWithFormat:@"%@: %@", nickname, [reply objectForKey:@"msg"]];
+
+    CGSize constraint = CGSizeMake(width - (CELL_CONTENT_MARGIN * 2), 20000.0f);
+    CGSize size = [text sizeWithFont:[UIFont systemFontOfSize:FONT_SIZE] constrainedToSize:constraint lineBreakMode:NSLineBreakByWordWrapping];
+    CGFloat height = MAX(size.height, 20.0f - (CELL_CONTENT_MARGIN * 2));
+    return height + (CELL_CONTENT_MARGIN * 2);
 }
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath;
+{
+    NSDictionary *reply = [self.replies objectAtIndex:indexPath.row];
+    return [self heightForMsgReply:reply width:tableView.frame.size.width];
+}
+
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    UILabel *label = nil;
     NSString *CellIdentifier = @"SeafReplyCell";
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier];
-    }
+        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
+
+        label = [[UILabel alloc] initWithFrame:CGRectZero];
+        [label setLineBreakMode:NSLineBreakByWordWrapping];
+        [label setNumberOfLines:0];
+        [label setFont:[UIFont systemFontOfSize:FONT_SIZE]];
+        [label setTag:1];
+        label.backgroundColor = [UIColor clearColor];
+        label.textColor = [UIColor colorWithRed:0.533f green:0.573f blue:0.647f alpha:1.0f];
+        [[cell contentView] addSubview:label];
+    } else
+        label = (UILabel*)[cell viewWithTag:1];
+
     NSDictionary *reply = [self.replies objectAtIndex:indexPath.row];
     NSString *nickname = [reply objectForKey:@"nickname"];
-    cell.textLabel.text = [NSString stringWithFormat:@"%@: %@", nickname, [reply objectForKey:@"msg"]];
-    cell.textLabel.font = [UIFont boldSystemFontOfSize:12.0f];
-    cell.textLabel.textColor = [UIColor colorWithRed:0.533f green:0.573f blue:0.647f alpha:1.0f];
-    cell.textLabel.backgroundColor = [UIColor clearColor];
+    NSString *text = [NSString stringWithFormat:@"%@: %@", nickname, [reply objectForKey:@"msg"]];
+    NSMutableAttributedString *atext = [[NSMutableAttributedString alloc] initWithString:text];
+    NSDictionary *attr = [[NSDictionary alloc] initWithObjectsAndKeys:[UIColor blueColor], NSForegroundColorAttributeName, nil];
+    [atext setAttributes:attr range:NSMakeRange(0, nickname.length + 2)];
+    attr = [[NSDictionary alloc] initWithObjectsAndKeys:[UIColor darkGrayColor], NSForegroundColorAttributeName, nil];
+    [atext setAttributes:attr range:NSMakeRange(nickname.length + 2, text.length - nickname.length - 2)];
+    CGSize constraint = CGSizeMake(tableView.frame.size.width - (CELL_CONTENT_MARGIN * 2), 20000.0f);
+    CGSize size = [text sizeWithFont:[UIFont systemFontOfSize:FONT_SIZE] constrainedToSize:constraint lineBreakMode:NSLineBreakByWordWrapping];
+    label.attributedText = atext;
+    label.frame = CGRectMake(CELL_CONTENT_MARGIN, CELL_CONTENT_MARGIN, tableView.frame.size.width - (CELL_CONTENT_MARGIN*2), MAX(size.height, 20.0f - (CELL_CONTENT_MARGIN * 2)));
 
     cell.backgroundColor = tableView.backgroundColor;
     return cell;
+}
+
+- (CGFloat)neededHeightForReplies:(float)width
+{
+    float height = REPLIES_HEADER_HEIGHT;
+    for (NSDictionary *r in self.replies) {
+        height += [self heightForMsgReply:r width:width];
+    }
+    return height;
 }
 
 @end

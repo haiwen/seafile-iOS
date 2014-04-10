@@ -64,7 +64,7 @@
                          failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
                              Warning("Failed to get starred files ...\n");
                              if (self.isVisible)
-                                 [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get starred files", @"Failed to get starred files")];
+                                 [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get starred files", @"Seafile")];
                              [self doneLoadingTableViewData];
                          }];
 }
@@ -164,11 +164,11 @@
 
     NSString *cancelTitle = nil;
     if (!IsIpad())
-        cancelTitle = NSLocalizedString(@"Cancel", @"Cancel");
+        cancelTitle = NSLocalizedString(@"Cancel", @"Seafile");
     if (file.mpath)
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"Redownload", @"Redownload"), NSLocalizedString(@"Upload", @"Upload"), nil];
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"Redownload", @"Seafile"), NSLocalizedString(@"Upload", @"Seafile"), nil];
     else
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"Redownload", @"Redownload"), nil];
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"Redownload", @"Seafile"), nil];
 
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
     [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
@@ -258,7 +258,7 @@
 - (void)updateProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent
 {
     if (!res) {
-        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to uplod file", @"Failed to uplod file")];
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to uplod file", @"Seafile")];
     }
     [self refreshView];
 }

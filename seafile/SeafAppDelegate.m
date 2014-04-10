@@ -391,17 +391,17 @@
     UIViewController *discussionController = [tabs.viewControllers objectAtIndex:TABBED_DISCUSSION];
     UIViewController *accountvc = [tabs.viewControllers objectAtIndex:TABBED_ACCOUNTS];
 
-    fileController.tabBarItem.title = NSLocalizedString(@"Libraries", @"Libraries");
+    fileController.tabBarItem.title = NSLocalizedString(@"Libraries", @"Seafile");
     fileController.tabBarItem.image = [UIImage imageNamed:@"tab-home.png"];
-    starredController.tabBarItem.title = NSLocalizedString(@"Starred", @"Starred");
+    starredController.tabBarItem.title = NSLocalizedString(@"Starred", @"Seafile");
     starredController.tabBarItem.image = [UIImage imageNamed:@"tab-star.png"];
-    settingsController.tabBarItem.title = NSLocalizedString(@"Settings", @"Settings");
+    settingsController.tabBarItem.title = NSLocalizedString(@"Settings", @"Seafile");
     settingsController.tabBarItem.image = [UIImage imageNamed:@"tab-settings.png"];
-    activityController.tabBarItem.title = NSLocalizedString(@"Activity", @"Activity");
+    activityController.tabBarItem.title = NSLocalizedString(@"Activity", @"Seafile");
     activityController.tabBarItem.image = [UIImage imageNamed:@"tab-activity.png"];
-    discussionController.tabBarItem.title = NSLocalizedString(@"Message", @"Message");
+    discussionController.tabBarItem.title = NSLocalizedString(@"Message", @"Seafile");
     discussionController.tabBarItem.image = [UIImage imageNamed:@"tab-discussion.png"];
-    accountvc.tabBarItem.title = NSLocalizedString(@"Accounts", @"Accounts");
+    accountvc.tabBarItem.title = NSLocalizedString(@"Accounts", @"Seafile");
     accountvc.tabBarItem.image = [UIImage imageNamed:@"tab-account.png"];
 
     if (IsIpad()) {
@@ -481,12 +481,12 @@
 
 - (BOOL)checkNetworkStatus
 {
-    NSLog(@"networj status=%@\n", [[AFNetworkReachabilityManager sharedManager] localizedNetworkReachabilityStatusString]);
+    NSLog(@"network status=%@\n", [[AFNetworkReachabilityManager sharedManager] localizedNetworkReachabilityStatusString]);
     if (![[AFNetworkReachabilityManager sharedManager] isReachable]) {
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Network unavailable", @"Network unavailable")
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Network unavailable", @"Seafile")
                                                         message:nil
                                                        delegate:nil
-                                              cancelButtonTitle:NSLocalizedString(@"OK", @"OK")
+                                              cancelButtonTitle:NSLocalizedString(@"OK", @"Seafile")
                                               otherButtonTitles:nil];
         [alert show];
         return NO;

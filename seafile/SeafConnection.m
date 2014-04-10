@@ -226,9 +226,9 @@ static AFSecurityPolicy *defaultPolicy = nil;
                 [[challenge sender] useCredential:credential forAuthenticationChallenge:challenge];
             } else {
                 self.challenge = challenge;
-                NSString *title = [NSString stringWithFormat:NSLocalizedString(@"Seafile can't verify the identity of the website \"%@\"", nil), anAddress];
-                NSString *msg = NSLocalizedString(@"The certificate from this website is invalid. Would you like to connect to the server anyway", nil);
-                UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:msg delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", nil) otherButtonTitles:NSLocalizedString(@"OK", nil), nil];
+                NSString *title = [NSString stringWithFormat:NSLocalizedString(@"Seafile can't verify the identity of the website \"%@\"", @"Seafile"), anAddress];
+                NSString *msg = NSLocalizedString(@"The certificate from this website is invalid. Would you like to connect to the server anyway", @"Seafile");
+                UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:msg delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") otherButtonTitles:NSLocalizedString(@"OK", @"Seafile"), nil];
                 alert.alertViewStyle = UIAlertViewStyleDefault;
                 [alert show];
             }

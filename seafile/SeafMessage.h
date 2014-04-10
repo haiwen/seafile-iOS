@@ -9,6 +9,7 @@
 #import "JSMessage.h"
 #import "SeafConnection.h"
 
+#define REPLIES_HEADER_HEIGHT 20.f
 
 @interface SeafMessage : JSMessage<UITableViewDelegate, UITableViewDataSource>
 
@@ -39,5 +40,7 @@
                            conn:(SeafConnection *)conn;
 
 - (NSDictionary *)toDictionary;
+
+- (CGFloat)neededHeightForReplies:(float)width;
 
 @end

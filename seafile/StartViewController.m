@@ -65,7 +65,7 @@
         self.edgesForExtendedLayout = UIRectEdgeNone;
     [self setExtraCellLineHidden:self.tableView];
     self.title = NSLocalizedString(@"Seafile", @"Seafile");
-    UIBarButtonItem *addItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Add account", @"Add account") style:UIBarButtonItemStyleBordered target:self action:@selector(addAccount:)];
+    UIBarButtonItem *addItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Add account", @"Seafile") style:UIBarButtonItemStyleBordered target:self action:@selector(addAccount:)];
     self.navigationItem.rightBarButtonItem = addItem;
 
     NSArray *views = [[NSBundle mainBundle] loadNibNamed:@"SeafStartHeaderView" owner:self options:nil];
@@ -145,11 +145,11 @@
 {
     UIActionSheet *actionSheet;
     pressedIndex = nil;
-    NSString *privserver = NSLocalizedString(@"Private Seafile Server", @"Private Seafile Server");
+    NSString *privserver = NSLocalizedString(@"Private Seafile Server", @"Seafile");
     if (IsIpad())
         actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:privserver, @"SeaCloud.cc", @"cloud.seafile.com", nil];
     else
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Cancel") destructiveButtonTitle:nil otherButtonTitles:privserver, @"SeaCloud.cc", @"cloud.seafile.com", nil];
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") destructiveButtonTitle:nil otherButtonTitles:privserver, @"SeaCloud.cc", @"cloud.seafile.com", nil];
     [actionSheet showFromBarButtonItem:sender animated:YES];
 }
 
@@ -169,8 +169,8 @@
 {
     UIActionSheet *actionSheet;
 
-    NSString *strEdit = NSLocalizedString(@"Edit", @"Edit");
-    NSString *strDelete = NSLocalizedString(@"Delete", @"Delete");
+    NSString *strEdit = NSLocalizedString(@"Edit", @"Seafile");
+    NSString *strDelete = NSLocalizedString(@"Delete", @"Seafile");
 
     if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
         return;
@@ -181,7 +181,7 @@
     if (IsIpad())
         actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:strEdit, strDelete, nil];
     else
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Cancel")  destructiveButtonTitle:nil otherButtonTitles:strEdit, strDelete, nil];
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile")  destructiveButtonTitle:nil otherButtonTitles:strEdit, strDelete, nil];
 
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:pressedIndex];
     [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];

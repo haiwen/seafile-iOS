@@ -36,14 +36,14 @@ enum {
     STATE_MOVE,
     STATE_COPY,
 };
-#define S_PASSWORD NSLocalizedString(@"Password of this library", nil)
-#define S_MKDIR NSLocalizedString(@"New Folder", nil)
-#define S_NEWFILE NSLocalizedString(@"New File", nil)
-#define S_RENAME NSLocalizedString(@"Rename", nil)
-#define S_EDIT NSLocalizedString(@"Edit", nil)
-#define S_DELETE NSLocalizedString(@"Delete", nil)
-#define S_REDOWNLOAD NSLocalizedString(@"Redownload", nil)
-#define S_UPLOAD NSLocalizedString(@"Upload", nil)
+#define S_PASSWORD NSLocalizedString(@"Password of this library", @"Seafile")
+#define S_MKDIR NSLocalizedString(@"New Folder", @"Seafile")
+#define S_NEWFILE NSLocalizedString(@"New File", @"Seafile")
+#define S_RENAME NSLocalizedString(@"Rename", @"Seafile")
+#define S_EDIT NSLocalizedString(@"Edit", @"Seafile")
+#define S_DELETE NSLocalizedString(@"Delete", @"Seafile")
+#define S_REDOWNLOAD NSLocalizedString(@"Redownload", @"Seafile")
+#define S_UPLOAD NSLocalizedString(@"Upload", @"Seafile")
 
 
 @interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, EGORefreshTableHeaderDelegate, SeafDirDelegate, UISearchBarDelegate, UISearchDisplayDelegate>
@@ -104,7 +104,7 @@ enum {
         UIBarButtonItem *flexibleFpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:self action:nil];
         UIBarButtonItem *fixedSpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:self action:nil];
 
-        NSArray *itemsTitles = [NSArray arrayWithObjects:S_MKDIR, S_NEWFILE, NSLocalizedString(@"Copy", nil), NSLocalizedString(@"Move", nil), S_DELETE, NSLocalizedString(@"PasteTo", nil), NSLocalizedString(@"MoveTo", nil), NSLocalizedString(@"Cancel", nil), nil ];
+        NSArray *itemsTitles = [NSArray arrayWithObjects:S_MKDIR, S_NEWFILE, NSLocalizedString(@"Copy", @"Seafile"), NSLocalizedString(@"Move", @"Seafile"), S_DELETE, NSLocalizedString(@"PasteTo", @"Seafile"), NSLocalizedString(@"MoveTo", @"Seafile"), NSLocalizedString(@"Cancel", @"Seafile"), nil ];
 
         UIBarButtonItem *items[EDITOP_NUM];
         items[0] = flexibleFpaceItem;
@@ -175,7 +175,7 @@ enum {
 
     self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectZero];
     self.searchBar.searchTextPositionAdjustment = UIOffsetMake(0, 0);
-    self.searchBar.placeholder = NSLocalizedString(@"Search", @"Search");
+    self.searchBar.placeholder = NSLocalizedString(@"Search", @"Seafile");
     self.searchBar.delegate = self;
     [self.searchBar sizeToFit];
     self.strongSearchDisplayController = [[UISearchDisplayController alloc] initWithSearchBar:self.searchBar contentsController:self];
@@ -299,11 +299,11 @@ enum {
         return;
     if (![QBImagePickerController isAccessible]) {
         Warning("Error: Source is not accessible.");
-        [self alertWithMessage:NSLocalizedString(@"Photos is not accessible", nil)];
+        [self alertWithMessage:NSLocalizedString(@"Photos is not accessible", @"Seafile")];
         return;
     }
     QBImagePickerController *imagePickerController = [[QBImagePickerController alloc] init];
-    imagePickerController.title = NSLocalizedString(@"Photos", @"Photos");
+    imagePickerController.title = NSLocalizedString(@"Photos", @"Seafile");
     imagePickerController.delegate = self;
     imagePickerController.allowsMultipleSelection = YES;
     imagePickerController.filterType = QBImagePickerControllerFilterTypeNone;
@@ -342,7 +342,7 @@ enum {
 
 - (void)editSheet:(id)sender
 {
-    NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Cancel");
+    NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
     UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_NEWFILE, S_MKDIR, S_EDIT, nil];
     [actionSheet showFromBarButtonItem:self.editItem animated:YES];
 }
@@ -359,8 +359,8 @@ enum {
             self.rightItems = [NSArray arrayWithObjects: self.editItem, space, self.photoItem, nil];
             self.navigationItem.rightBarButtonItems = self.rightItems;
 
-            _selectAllItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Select All", @"Select All") style:UIBarButtonItemStylePlain target:self action:@selector(selectAll:)];
-            _selectNoneItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Select None", @"Select None") style:UIBarButtonItemStylePlain target:self action:@selector(selectNone:)];
+            _selectAllItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Select All", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(selectAll:)];
+            _selectNoneItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Select None", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(selectNone:)];
         }
     }
 }
@@ -392,7 +392,7 @@ enum {
         [self showLodingView];
         self.state = STATE_LOADING;
     }
-    Debug("Upload %lu", (unsigned long)_directory.uploadItems.count);
+    Debug("Upload %lu, state=%d", (unsigned long)_directory.uploadItems.count, self.state);
 
     for (SeafUploadFile *file in _directory.uploadItems) {
         file.delegate = self;
@@ -456,7 +456,7 @@ enum {
     if ([file isKindOfClass:[SeafUploadFile class]] || ![file hasCache])
         return;
 
-    NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Cancel");
+    NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
     if (file.mpath)
         actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, S_REDOWNLOAD, S_UPLOAD, nil];
     else
@@ -478,7 +478,7 @@ enum {
     if (![file isKindOfClass:[SeafUploadFile class]])
         return;
 
-    NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Cancel");
+    NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
     UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, nil];
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
     [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
@@ -507,12 +507,12 @@ enum {
             int utime = [[dict objectForKey:@"utime"] intValue];
             BOOL result = [[dict objectForKey:@"result"] boolValue];
             if (result)
-                cell.detailTextLabel.text = [NSString stringWithFormat:NSLocalizedString(@"%@, Uploaded %@", @"%@, Uploaded %@"), sizeStr, [SeafDateFormatter stringFromLongLong:utime]];
+                cell.detailTextLabel.text = [NSString stringWithFormat:NSLocalizedString(@"%@, Uploaded %@", @"Seafile"), sizeStr, [SeafDateFormatter stringFromLongLong:utime]];
             else {
-                cell.detailTextLabel.text = [NSString stringWithFormat:NSLocalizedString(@"%@, waiting to upload", @"%@, waiting to upload"), sizeStr];
+                cell.detailTextLabel.text = [NSString stringWithFormat:NSLocalizedString(@"%@, waiting to upload", @"Seafile"), sizeStr];
             }
         } else {
-            cell.detailTextLabel.text = [NSString stringWithFormat:NSLocalizedString(@"%@, waiting to upload", @"%@, waiting to upload"), sizeStr];
+            cell.detailTextLabel.text = [NSString stringWithFormat:NSLocalizedString(@"%@, waiting to upload", @"Seafile"), sizeStr];
         }
         c = cell;
     }
@@ -609,13 +609,13 @@ enum {
 - (void)popupSetRepoPassword
 {
     self.state = STATE_PASSWORD;
-    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:S_PASSWORD message:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", nil) otherButtonTitles:NSLocalizedString(@"OK", nil), nil];
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:S_PASSWORD message:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") otherButtonTitles:NSLocalizedString(@"OK", @"Seafile"), nil];
     alert.alertViewStyle = UIAlertViewStyleSecureTextInput;
     [alert show];
 }
 - (void)popupInputView:(NSString *)title placeholder:(NSString *)tip
 {
-    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", nil) otherButtonTitles:NSLocalizedString(@"OK", nil), nil];
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") otherButtonTitles:NSLocalizedString(@"OK", @"Seafile"), nil];
     alert.alertViewStyle = UIAlertViewStylePlainTextInput;
     UITextField *textfield = [alert textFieldAtIndex:0];
     textfield.placeholder = tip;
@@ -625,12 +625,12 @@ enum {
 - (void)popupMkdirView
 {
     self.state = STATE_MKDIR;
-    [self popupInputView:S_MKDIR placeholder:NSLocalizedString(@"New folder name", nil)];
+    [self popupInputView:S_MKDIR placeholder:NSLocalizedString(@"New folder name", @"Seafile")];
 }
 - (void)popupCreateView
 {
     self.state = STATE_CREATE;
-    [self popupInputView:S_NEWFILE placeholder:NSLocalizedString(@"New file name", nil)];
+    [self popupInputView:S_NEWFILE placeholder:NSLocalizedString(@"New file name", @"Seafile")];
 }
 - (void)popupRenameView:(NSString *)newName
 {
@@ -733,7 +733,7 @@ enum {
 
     NSString *text = nil;
     if (section == 0) {
-        text = NSLocalizedString(@"My Own Libraries", nil);
+        text = NSLocalizedString(@"My Own Libraries", @"Seafile");
     } else {
         NSArray *repos =  [[((SeafRepos *)_directory)repoGroups] objectAtIndex:section];
         SeafRepo *repo = (SeafRepo *)[repos objectAtIndex:0];
@@ -753,7 +753,7 @@ enum {
 - (void)checkPassword:(NSString *)password
 {
     [_curEntry setDelegate:self];
-    [SVProgressHUD showWithStatus:NSLocalizedString(@"Checking library password ...", nil)];
+    [SVProgressHUD showWithStatus:NSLocalizedString(@"Checking library password ...", @"Seafile")];
     if ([self.connection localDecrypt:[_curEntry repoId]])
         [_curEntry checkRepoPassword:password];
     else
@@ -771,47 +771,47 @@ enum {
         [_directory setDelegate:self];
         if ([title isEqualToString:S_PASSWORD]) {
             if (!input || input.length == 0) {
-                [self alertWithMessage:NSLocalizedString(@"Password must not be empty", nil)];
+                [self alertWithMessage:NSLocalizedString(@"Password must not be empty", @"Seafile")];
                 return;
             }
             if (input.length < 3 || input.length  > 100) {
-                [self alertWithMessage:NSLocalizedString(@"The length of password should be between 3 and 100", nil)];
+                [self alertWithMessage:NSLocalizedString(@"The length of password should be between 3 and 100", @"Seafile")];
                 return;
             }
             [self performSelector:@selector(checkPassword:) withObject:input afterDelay:0.0];
         } else if (self.state == STATE_MKDIR) {
             if (!input || input.length == 0) {
-                [self alertWithMessage:NSLocalizedString(@"Folder name must not be empty", nil)];
+                [self alertWithMessage:NSLocalizedString(@"Folder name must not be empty", @"Seafile")];
                 return;
             }
             if (![input isValidFileName]) {
-                [self alertWithMessage:NSLocalizedString(@"Folder name invalid", nil)];
+                [self alertWithMessage:NSLocalizedString(@"Folder name invalid", @"Seafile")];
                 return;
             }
             [_directory mkdir:input];
-            [SVProgressHUD showWithStatus:NSLocalizedString(@"Creating folder ...", nil)];
+            [SVProgressHUD showWithStatus:NSLocalizedString(@"Creating folder ...", @"Seafile")];
         } else if (self.state == STATE_RENAME) {
             if (!input || input.length == 0) {
-                [self alertWithMessage:NSLocalizedString(@"File name must not be empty", nil)];
+                [self alertWithMessage:NSLocalizedString(@"File name must not be empty", @"Seafile")];
                 return;
             }
             if (![input isValidFileName]) {
-                [self alertWithMessage:NSLocalizedString(@"File name invalid", nil)];
+                [self alertWithMessage:NSLocalizedString(@"File name invalid", @"Seafile")];
                 return;
             }
             [_directory renameFile:_curEntry newName:input];
-            [SVProgressHUD showWithStatus:NSLocalizedString(@"Renaming file ...", nil)];
+            [SVProgressHUD showWithStatus:NSLocalizedString(@"Renaming file ...", @"Seafile")];
         } else if (self.state == STATE_CREATE) {
             if (!input || input.length == 0) {
-                [self alertWithMessage:NSLocalizedString(@"File name must not be empty", nil)];
+                [self alertWithMessage:NSLocalizedString(@"File name must not be empty", @"Seafile")];
                 return;
             }
             if (![input isValidFileName]) {
-                [self alertWithMessage:NSLocalizedString(@"File name invalid", nil)];
+                [self alertWithMessage:NSLocalizedString(@"File name invalid", @"Seafile")];
                 return;
             }
             [_directory createFile:input];
-            [SVProgressHUD showWithStatus:NSLocalizedString(@"Creating file ...", nil)];
+            [SVProgressHUD showWithStatus:NSLocalizedString(@"Creating file ...", @"Seafile")];
         }
     }
 }
@@ -853,24 +853,24 @@ enum {
         [self doneLoadingTableViewData];
         switch (self.state) {
             case STATE_DELETE:
-                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to delete files", nil)];
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to delete files", @"Seafile")];
                 break;
             case STATE_MKDIR:
-                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to create folder", nil) duration:2.0];
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to create folder", @"Seafile") duration:2.0];
                 [self performSelector:@selector(popupMkdirView) withObject:nil afterDelay:1.0];
                 break;
             case STATE_CREATE:
-                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to create file", nil) duration:2.0];
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to create file", @"Seafile") duration:2.0];
                 [self performSelector:@selector(popupCreateView) withObject:nil afterDelay:1.0];
                 break;
             case STATE_COPY:
-                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to copy files", nil) duration:2.0];
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to copy files", @"Seafile") duration:2.0];
                 break;
             case STATE_MOVE:
-                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to move files", nil) duration:2.0];
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to move files", @"Seafile") duration:2.0];
                 break;
             case STATE_RENAME: {
-                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to rename file", nil) duration:2.0];
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to rename file", @"Seafile") duration:2.0];
                 SeafFile *file = (SeafFile *)_curEntry;
                 [self performSelector:@selector(popupRenameView:) withObject:file.name afterDelay:1.0];
                 break;
@@ -878,7 +878,7 @@ enum {
             case STATE_LOADING:
                 if (!_directory.hasCache) {
                     [self dismissLoadingView];
-                    [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load files", nil)];
+                    [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load files", @"Seafile")];
                 } else
                     [SVProgressHUD dismiss];
                 break;
@@ -902,7 +902,7 @@ enum {
         [self.navigationController pushViewController:controller animated:YES];
         [controller setDirectory:(SeafDir *)_curEntry];
     } else {
-        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Wrong library password", nil) duration:2.0];
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Wrong library password", @"Seafile") duration:2.0];
         [self performSelector:@selector(popupSetRepoPassword) withObject:nil afterDelay:1.0];
     }
 }
@@ -986,7 +986,7 @@ enum {
             }
             self.state = STATE_DELETE;
             [_directory delEntries:entries];
-            [SVProgressHUD showWithStatus:NSLocalizedString(@"Deleting files ...", nil)];
+            [SVProgressHUD showWithStatus:NSLocalizedString(@"Deleting files ...", @"Seafile")];
             break;
         }
         default:
@@ -998,7 +998,7 @@ enum {
 {
     NSArray *entries = [NSArray arrayWithObject:file];
     self.state = EDITOP_DELETE;
-    [SVProgressHUD showWithStatus:NSLocalizedString(@"Deleting file ...", nil)];
+    [SVProgressHUD showWithStatus:NSLocalizedString(@"Deleting file ...", @"Seafile")];
     [_directory delEntries:entries];
 }
 
@@ -1072,12 +1072,14 @@ enum {
     for (NSIndexPath *indexPath in idxs) {
         [entries addObject:[_directory.allItems objectAtIndex:indexPath.row]];
     }
+    Debug("_directory.delegate=%@", _directory.delegate);
+    _directory.delegate = self;
     if (self.state == STATE_COPY) {
         [_directory copyEntries:entries dstDir:dir];
-        [SVProgressHUD showWithStatus:NSLocalizedString(@"Copying files ...", nil)];
+        [SVProgressHUD showWithStatus:NSLocalizedString(@"Copying files ...", @"Seafile")];
     } else {
         [_directory moveEntries:entries dstDir:dir];
-        [SVProgressHUD showWithStatus:NSLocalizedString(@"Moving files ...", nil)];
+        [SVProgressHUD showWithStatus:NSLocalizedString(@"Moving files ...", @"Seafile")];
     }
 }
 - (void)cancelChoose:(UIViewController *)c
@@ -1184,15 +1186,15 @@ enum {
 {
     [self uploadProgress:file result:YES completeness:100];
     if (!self.isVisible) {
-        [SVProgressHUD showSuccessWithStatus:[NSString stringWithFormat:NSLocalizedString(@"File '%@' uploaded success", nil), file.name] duration:1.0];
+        [SVProgressHUD showSuccessWithStatus:[NSString stringWithFormat:NSLocalizedString(@"File '%@' uploaded success", @"Seafile"), file.name] duration:1.0];
     }
 
 }
 
 #pragma mark - Search Delegate
-#define SEARCH_STATE_INIT NSLocalizedString(@"Click \"Search\" to start", @"Click \"Search\" to start")
-#define SEARCH_STATE_SEARCHING NSLocalizedString(@"Searching", @"Searching")
-#define SEARCH_STATE_NORESULTS NSLocalizedString(@"No Results", @"No Results")
+#define SEARCH_STATE_INIT NSLocalizedString(@"Click \"Search\" to start", @"Seafile")
+#define SEARCH_STATE_SEARCHING NSLocalizedString(@"Searching", @"Seafile")
+#define SEARCH_STATE_NORESULTS NSLocalizedString(@"No Results", @"Seafile")
 
 - (void)setSearchState:(UISearchDisplayController *)controller state:(NSString *)state
 {
@@ -1244,7 +1246,7 @@ enum {
 {
     Debug("search %@", searchBar.text);
     [self setSearchState:self.searchDisplayController state:SEARCH_STATE_SEARCHING];
-    [SVProgressHUD showWithStatus:NSLocalizedString(@"Searching ...", @"Searching ...")];
+    [SVProgressHUD showWithStatus:NSLocalizedString(@"Searching ...", @"Seafile")];
     [_connection search:searchBar.text success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSMutableArray *results) {
         [SVProgressHUD dismiss];
         if (results.count == 0)
@@ -1255,9 +1257,9 @@ enum {
         }
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
         if (response.statusCode == 404) {
-            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Search is not supported on the server", @"Search is not supported on the server")];
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Search is not supported on the server", @"Seafile")];
         } else
-            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to search", @"Failed to search")];
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to search", @"Seafile")];
     }];
 }
 
