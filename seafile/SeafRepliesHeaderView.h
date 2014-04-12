@@ -12,5 +12,4 @@
 @property (nonatomic, readonly) UILabel *timestamp;
 @property (nonatomic, readonly) UIButton *btn;
 
-
 @end

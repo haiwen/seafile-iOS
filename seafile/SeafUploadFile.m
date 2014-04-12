@@ -18,7 +18,7 @@
 #import "NSData+Encryption.h"
 #import "Debug.h"
 
-static NSMutableDictionary *uploadFiles = nil;
+static NSMutableDictionary *uploadFileAttrs = nil;
 
 
 @interface SeafUploadFile ()
@@ -321,35 +321,41 @@ static NSMutableDictionary *uploadFiles = nil;
     return [content writeToFile:self.lpath atomically:YES encoding:NSUTF8StringEncoding error:nil];
 }
 
-+ (NSMutableDictionary *)uploadFiles
++ (NSMutableDictionary *)uploadFileAttrs
 {
-    if (uploadFiles == nil) {
+    if (uploadFileAttrs == nil) {
         NSString *attrsFile = [[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploadfiles.plist"];
-        uploadFiles = [[NSMutableDictionary alloc] initWithContentsOfFile:attrsFile];
-        if (!uploadFiles)
-            uploadFiles = [[NSMutableDictionary alloc] init];
+        uploadFileAttrs = [[NSMutableDictionary alloc] initWithContentsOfFile:attrsFile];
+        if (!uploadFileAttrs)
+            uploadFileAttrs = [[NSMutableDictionary alloc] init];
     }
-    return uploadFiles;
+    return uploadFileAttrs;
+}
+
++ (void)clearCache
+{
+    [Utils clearAllFiles:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"]];
+    uploadFileAttrs = [[NSMutableDictionary alloc] init];
 }
 
 - (NSDictionary *)uploadAttr
 {
-    return [[SeafUploadFile uploadFiles] objectForKey:self.lpath];
+    return [[SeafUploadFile uploadFileAttrs] objectForKey:self.lpath];
 }
 
 - (void)saveAttr:(NSMutableDictionary *)attr
 {
     NSString *attrsFile = [[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploadfiles.plist"];
     if (attr)
-        [[SeafUploadFile uploadFiles] setObject:attr forKey:self.lpath];
+        [[SeafUploadFile uploadFileAttrs] setObject:attr forKey:self.lpath];
     else
-        [[SeafUploadFile uploadFiles] removeObjectForKey:self.lpath];
-    [[SeafUploadFile uploadFiles] writeToFile:attrsFile atomically:YES];
+        [[SeafUploadFile uploadFileAttrs] removeObjectForKey:self.lpath];
+    [[SeafUploadFile uploadFileAttrs] writeToFile:attrsFile atomically:YES];
 }
 
 + (NSMutableArray *)uploadFilesForDir:(SeafDir *)dir
 {
-    NSMutableDictionary *allFiles = [SeafUploadFile uploadFiles];
+    NSMutableDictionary *allFiles = [SeafUploadFile uploadFileAttrs];
     NSMutableArray *files = [[NSMutableArray alloc] init];
     for (NSString *lpath in allFiles.allKeys) {
         NSDictionary *info = [allFiles objectForKey:lpath];

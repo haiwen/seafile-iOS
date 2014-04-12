@@ -30,7 +30,7 @@
 
     UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
     btn.showsTouchWhenHighlighted = YES;
-    [btn setImage:[UIImage imageNamed:@"addmsg2"] forState:UIControlStateNormal];
+    [btn setImage:[UIImage imageNamed:@"comment"] forState:UIControlStateNormal];
     [self addSubview:btn];
     [self bringSubviewToFront:btn];
     _timestamp = label;

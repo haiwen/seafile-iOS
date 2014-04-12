@@ -11,6 +11,7 @@
 #import "SeafAppDelegate.h"
 #import "SeafDetailViewController.h"
 #import "SeafSettingsViewController.h"
+#import "SeafAvatar.h"
 #import "UIViewController+Extend.h"
 #import "FileSizeFormatter.h"
 #import "ExtentedString.h"
@@ -68,6 +69,16 @@ enum {
     // Dispose of any resources that can be recreated.
 }
 
+- (long long)cacheSize
+{
+    long long cacheSize = [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
+    cacheSize += [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"]];
+    cacheSize += [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"]];
+    cacheSize += [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"]];
+    cacheSize += [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"avatars"]];
+    return cacheSize;
+}
+
 - (void)configureView
 {
     if (!_connection)
@@ -79,11 +90,8 @@ enum {
 
     nameCell.detailTextLabel.text = _connection.username;
     serverCell.detailTextLabel.text = [_connection.address trimUrl];
-    long long cacheSize = [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
-    cacheSize += [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"]];
-    cacheSize += [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"]];
-    cacheSize += [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"]];
 
+    long long cacheSize = [self cacheSize];
     cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:cacheSize] useBaseTen:NO];
     Debug("%@, %lld, %lld, total cache=%lld", _connection.username, _connection.usage, _connection.quota, cacheSize);
     if (_connection.quota <= 0) {
@@ -230,14 +238,15 @@ enum {
         [Utils clearAllFiles:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
         [Utils clearAllFiles:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"]];
         [Utils clearAllFiles:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"]];
-        [Utils clearAllFiles:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"]];
         [Utils clearAllFiles:[Utils applicationTempDirectory]];
-        [appdelegate deleteAllObjects:@"Directory"];
+        [SeafUploadFile clearCache];
+        [SeafAvatar clearCache];
 
-        long long cacheSize = [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
-        cacheSize += [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"]];
-        cacheSize += [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"]];
-        cacheSize += [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"]];
+        [appdelegate deleteAllObjects:@"Directory"];
+        [appdelegate deleteAllObjects:@"DownloadedFile"];
+        [appdelegate deleteAllObjects:@"SeafCacheObj"];
+
+        long long cacheSize = [self cacheSize];
         cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:cacheSize] useBaseTen:NO];
     }
 }

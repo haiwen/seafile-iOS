@@ -74,8 +74,8 @@ enum {
 + (void)finishDownload:(id<SeafDownloadDelegate>) file result:(BOOL)result;
 + (void)finishUpload:(SeafUploadFile *) file result:(BOOL)result;
 
-+ (void)backgroundUpload:(SeafUploadFile *)ufile;
-
++ (void)backgroundUpload:(SeafUploadFile *)file;
++ (void)backgroundDownload:(id<SeafDownloadDelegate>)file;
 
 - (void)checkIconBadgeNumber;
 - (void)saveAccounts;

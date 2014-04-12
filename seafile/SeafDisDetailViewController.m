@@ -16,8 +16,7 @@
 #import "ExtentedString.h"
 #import "Debug.h"
 
-static const CGFloat kJSLabelPadding = 5.0f;
-static const CGFloat kJSTimeStampLabelHeight = 15.0f;
+static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 
 
 @interface SeafDisDetailViewController ()<JSMessagesViewDataSource, JSMessagesViewDelegate, EGORefreshTableHeaderDelegate, UIScrollViewDelegate>
@@ -221,7 +220,7 @@ static const CGFloat kJSTimeStampLabelHeight = 15.0f;
             self.msgItem.enabled = YES;
             if (!self.refreshHeaderView.superview)
                 [self.tableView addSubview:self.refreshHeaderView];
-            self.tableView.separatorColor = [UIColor grayColor];
+            self.tableView.separatorColor = [UIColor colorWithRed:200.0/255 green:200.0/255 blue:200.0/255 alpha:1.0];
             break;
         case MSG_USER:
             self.title = [self.info objectForKey:@"name"];
@@ -273,6 +272,10 @@ static const CGFloat kJSTimeStampLabelHeight = 15.0f;
         self.edgesForExtendedLayout = UIRectEdgeNone;
     [[JSBubbleView appearance] setFont:[UIFont systemFontOfSize:16.0f]];
     [super viewDidLoad];
+    if ([self.tableView respondsToSelector:@selector(setSeparatorInset:)])
+        [self.tableView setSeparatorInset:UIEdgeInsetsMake(0, 0, 0, 0)];
+    self.tableView.tableFooterView = [[UIView alloc] initWithFrame:CGRectZero];
+    self.tableView.backgroundColor = [UIColor whiteColor];
     self.tableView.separatorColor = self.tableView.backgroundColor;
 
     if (!IsIpad()) {
@@ -447,7 +450,6 @@ static const CGFloat kJSTimeStampLabelHeight = 15.0f;
     SeafMessage *msg = [self.messages objectAtIndex:indexPath.row];
     if (self.msgtype == MSG_GROUP || self.msgtype == MSG_REPLY)
         return JSBubbleMessageTypeIncoming;
-    Debug("#%d msg email %@, sender %@:  %@, ret=%d", indexPath.row, msg.email, self.sender, msg.text, [msg.email isEqualToString:self.sender]);
     if ([msg.email isEqualToString:self.sender])
         return JSBubbleMessageTypeOutgoing;
     return JSBubbleMessageTypeIncoming;
@@ -481,7 +483,6 @@ static const CGFloat kJSTimeStampLabelHeight = 15.0f;
 }
 - (IBAction)comment:(id)sender
 {
-    Debug("...\n");
     UIButton *btn = sender;
     CGPoint touchPoint = btn.frame.origin;
     NSIndexPath *selectedindex = [self.tableView indexPathForRowAtPoint:touchPoint];
@@ -524,11 +525,9 @@ static const CGFloat kJSTimeStampLabelHeight = 15.0f;
 - (void)configureCell:(JSBubbleMessageCell *)cell atIndexPath:(NSIndexPath *)indexPath
 {
     if ([cell messageType] == JSBubbleMessageTypeOutgoing) {
-        cell.bubbleView.textView.textColor = [UIColor whiteColor];
-
         if ([cell.bubbleView.textView respondsToSelector:@selector(linkTextAttributes)]) {
             NSMutableDictionary *attrs = [cell.bubbleView.textView.linkTextAttributes mutableCopy];
-            [attrs setValue:[UIColor blueColor] forKey:UITextAttributeTextColor];
+            [attrs setValue:[UIColor colorWithRed:128.0/255 green:128.0/255 blue:160.0/255 alpha:1.0] forKey:UITextAttributeTextColor];
             cell.bubbleView.textView.linkTextAttributes = attrs;
         }
     }
@@ -551,7 +550,7 @@ static const CGFloat kJSTimeStampLabelHeight = 15.0f;
 
     if (self.msgtype == MSG_GROUP || self.msgtype == MSG_REPLY) {
         cell.avatarImageView.frame = CGRectMake(cell.avatarImageView.frame.origin.x,
-                                                kJSTimeStampLabelHeight,
+                                                0,
                                                 cell.avatarImageView.frame.size.width,
                                                 cell.avatarImageView.frame.size.height);
 
@@ -559,13 +558,14 @@ static const CGFloat kJSTimeStampLabelHeight = 15.0f;
                                                  | UIViewAutoresizingFlexibleRightMargin);
         cell.subtitleLabel.hidden = YES;
         cell.timestampLabel.text = msg.nickname;
-        cell.timestampLabel.textColor = [UIColor blueColor];
+        cell.timestampLabel.textColor = [UIColor colorWithRed:32.0/255 green:32.0/255 blue:32.0/255 alpha:1.0];
         cell.timestampLabel.textAlignment = NSTextAlignmentLeft;
         cell.timestampLabel.frame = CGRectMake(cell.bubbleView.frame.origin.x + 10,
-                                               kJSLabelPadding,
+                                               8,
                                                cell.bubbleView.frame.size.width,
                                                kJSTimeStampLabelHeight);
         cell.timestampLabel.autoresizingMask = (UIViewAutoresizingFlexibleWidth);
+        cell.timestampLabel.font = [UIFont boldSystemFontOfSize:16.0f];
 
         CGFloat y = [JSBubbleView neededHeightForText:msg.text] + kJSTimeStampLabelHeight - 5;
         CGFloat width = cell.bubbleView.frame.size.width - 10;
@@ -590,7 +590,8 @@ static const CGFloat kJSTimeStampLabelHeight = 15.0f;
 {
     SeafMessage *msg = [self.messages objectAtIndex:indexPath.row];
     NSString *avatar = [self.connection avatarForEmail:msg.email];
-    UIImage *image = [JSAvatarImageFactory avatarImage:[UIImage imageWithContentsOfFile:avatar] croppedToCircle:YES];
+    BOOL circle = (self.msgtype == MSG_USER);
+    UIImage *image = [JSAvatarImageFactory avatarImage:[UIImage imageWithContentsOfFile:avatar] croppedToCircle:circle];
     return [[UIImageView alloc] initWithImage:image];
 }
 

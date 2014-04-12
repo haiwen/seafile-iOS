@@ -12,7 +12,7 @@
 #import "SeafDir.h"
 #import "SeafData.h"
 #import "SeafAppDelegate.h"
-#import "SeafUserAvatar.h"
+#import "SeafAvatar.h"
 
 #import "ExtentedString.h"
 #import "NSData+Encryption.h"
@@ -68,12 +68,14 @@ static AFSecurityPolicy *SeafDefaultPolicy()
 }
 
 static AFSecurityPolicy *defaultPolicy = nil;
+static AFSecurityPolicy *publicPolicy = nil;
+
 
 @interface SeafConnection ()<UIAlertViewDelegate>
 
 @property NSMutableSet *starredFiles;
 @property NSMutableDictionary *uploadFiles;
-@property NSDictionary *email2nickMap;
+@property NSMutableDictionary *email2nickMap;
 @property NSURLAuthenticationChallenge *challenge;
 @end
 
@@ -119,8 +121,10 @@ static AFSecurityPolicy *defaultPolicy = nil;
                 [userDefaults synchronize];
             }
         }
-        if ([self authorized])
-            [self performSelector:@selector(downloadAvatars) withObject:nil afterDelay:5.0];
+        if ([self authorized]) {
+            if ([_info objectForKey:@"nickname"])
+                [self.email2nickMap setValue:[_info objectForKey:@"nickname"] forKey:self.username];
+        }
     }
     return self;
 }
@@ -221,7 +225,6 @@ static AFSecurityPolicy *defaultPolicy = nil;
                                                [userDefaults setObject:_info forKey:[NSString stringWithFormat:@"%@/%@", _address, username]];
                                                [userDefaults synchronize];
                                                [self.delegate connectionLinkingSuccess:self];
-                                               [self performSelector:@selector(downloadAvatars) withObject:nil afterDelay:5.0];
                                            }
                                            failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, NSData *data){
                                                Warning("status code=%ld, error=%@\n", (long)response.statusCode, error);
@@ -231,7 +234,11 @@ static AFSecurityPolicy *defaultPolicy = nil;
     [operation setWillSendRequestForAuthenticationChallengeBlock:^(NSURLConnection *connection, NSURLAuthenticationChallenge *challenge) {
         if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
             NSURLCredential *credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
-            if ([[SeafConnection defaultPolicy] evaluateServerTrust:challenge.protectionSpace.serverTrust forDomain:challenge.protectionSpace.host]) {
+            if ([[SeafConnection publicPolicy] evaluateServerTrust:challenge.protectionSpace.serverTrust forDomain:challenge.protectionSpace.host]) {
+                Debug("...\n");
+                [self saveCertificate:challenge];
+                [[challenge sender] useCredential:credential forAuthenticationChallenge:challenge];
+            } else if ([[SeafConnection defaultPolicy] evaluateServerTrust:challenge.protectionSpace.serverTrust forDomain:challenge.protectionSpace.host]) {
                 [[challenge sender] useCredential:credential forAuthenticationChallenge:challenge];
             } else {
                 self.challenge = challenge;
@@ -528,6 +535,7 @@ static AFSecurityPolicy *defaultPolicy = nil;
                      }
                  }
                  [self savetoCacheKey:KEY_CONTACTS value:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
+                 [self performSelector:@selector(downloadAvatars) withObject:nil afterDelay:2.0];
              }
              if (success)
                  success (response, JSON, data);
@@ -604,26 +612,32 @@ static AFSecurityPolicy *defaultPolicy = nil;
 
 - (NSString *)avatarForEmail:(NSString *)email;
 {
-    NSString *path = [SeafUserAvatar pathForUserAvatar:self username:email];
+    NSString *path = [SeafUserAvatar pathForAvatar:self username:email];
     if ([[NSFileManager defaultManager] fileExistsAtPath:path])
         return path;
     return [[NSBundle mainBundle] pathForResource:@"account" ofType:@"png"];
 }
 - (NSString *)avatarForGroup:(NSString *)gid
 {
+    NSString *path = [SeafGroupAvatar pathForAvatar:self group:gid];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:path])
+        return path;
     return [[NSBundle mainBundle] pathForResource:@"group" ofType:@"png"];
 }
 
 - (void)downloadAvatars
 {
-    if (![self authorized] || self.email2nickMap.count == 0)
+    Debug("...%@, %d, %d\n", self.address, [self authorized], self.email2nickMap.count);
+    if (![self authorized])
         return;
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     for (NSString *email in self.email2nickMap.allKeys) {
-        if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafUserAvatar pathForUserAvatar:self username:email]])
-            continue;
         SeafUserAvatar *avatar = [[SeafUserAvatar alloc] initWithConnection:self username:email];
-        [appdelegate.dfiles addObject:avatar];
+        [SeafAppDelegate backgroundDownload:avatar];
+    }
+    for (NSDictionary *dict in self.seafGroups) {
+        NSString *gid = [dict objectForKey:@"id"];
+        SeafGroupAvatar *avatar = [[SeafGroupAvatar alloc] initWithConnection:self group:gid];
+        [SeafAppDelegate backgroundDownload:avatar];
     }
 }
 
@@ -635,16 +649,21 @@ static AFSecurityPolicy *defaultPolicy = nil;
         [[self.challenge sender] cancelAuthenticationChallenge:self.challenge];
         return;
     } else {
-        SecCertificateRef cer = SecTrustGetCertificateAtIndex(self.challenge.protectionSpace.serverTrust, 0);
-        Debug("challenge=%@, cer=%@, %@, %@", self.challenge, self.challenge.protectionSpace, self.challenge.protectionSpace.serverTrust, cer);
-        NSData* data = (__bridge NSData*) SecCertificateCopyData(cer);
-        NSString *filename = [NSString stringWithFormat:@"%@.cer", self.challenge.protectionSpace.host];
-        NSString *path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"certs"] stringByAppendingPathComponent:filename];
-        BOOL ret = [data writeToFile:path atomically:YES];
-        Debug("path=%@, ret=%d", path, ret);
-        defaultPolicy = SeafDefaultPolicy();
+        [self saveCertificate:self.challenge];
         [[self.challenge sender] useCredential:credential forAuthenticationChallenge:self.challenge];
     }
+}
+
+- (void)saveCertificate:(NSURLAuthenticationChallenge *)cha
+{
+    SecCertificateRef cer = SecTrustGetCertificateAtIndex(cha.protectionSpace.serverTrust, 0);
+    Debug("challenge=%@, cer=%@, %@, %@", cha, cha.protectionSpace, cha.protectionSpace.serverTrust, cer);
+    NSData* data = (__bridge NSData*) SecCertificateCopyData(cer);
+    NSString *filename = [NSString stringWithFormat:@"%@.cer", cha.protectionSpace.host];
+    NSString *path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"certs"] stringByAppendingPathComponent:filename];
+    BOOL ret = [data writeToFile:path atomically:YES];
+    Debug("path=%@, ret=%d", path, ret);
+    defaultPolicy = SeafDefaultPolicy();
 }
 
 + (AFSecurityPolicy *)defaultPolicy
@@ -653,5 +672,13 @@ static AFSecurityPolicy *defaultPolicy = nil;
         defaultPolicy = SeafDefaultPolicy();
     }
     return defaultPolicy;
+}
++ (AFSecurityPolicy *)publicPolicy
+{
+    if (!publicPolicy) {
+        publicPolicy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModeNone];
+        publicPolicy.allowInvalidCertificates = NO;
+    }
+    return publicPolicy;
 }
 @end

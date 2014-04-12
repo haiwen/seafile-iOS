@@ -114,7 +114,6 @@ enum MSG_TYPE{
 - (NSString *)avatarForEmail:(NSString *)email;
 - (NSString *)avatarForGroup:(NSString *)gid;
 
-
 // Cache
 - (void)loadCache;
 - (id)getCachedObj:(NSString *)key;

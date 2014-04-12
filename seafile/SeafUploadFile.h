@@ -45,5 +45,6 @@
 - (void)saveAttr:(NSMutableDictionary *)attr;
 
 + (NSMutableArray *)uploadFilesForDir:(SeafDir *)dir;
++ (void)clearCache;
 
 @end

@@ -63,7 +63,7 @@
             self.discussVC.connection = conn;
         }
     }
-    Debug("self.token=%@", self.deviceToken);
+    Debug("self.devicetoken=%@", self.deviceToken);
     if (self.deviceToken)
         [conn registerDevice:self.deviceToken];
 }
@@ -551,7 +551,6 @@
     @synchronized (appdelegate) {
         appdelegate.downloadnum ++;
     }
-    //Debug("%d upload, %d download\n", appdelegate.uploadnum, appdelegate.downloadnum);
 }
 + (void)decDownloadnum
 {
@@ -623,14 +622,23 @@
     [(SeafAppDelegate *)[[UIApplication sharedApplication] delegate] finishUpload:file result:result];
 }
 
-+ (void)backgroundUpload:(SeafUploadFile *)ufile
++ (void)backgroundUpload:(SeafUploadFile *)file
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     @synchronized (appdelegate) {
-        if (![appdelegate.ufiles containsObject:ufile])
-            [appdelegate.ufiles addObject:ufile];
+        if (![appdelegate.ufiles containsObject:file])
+            [appdelegate.ufiles addObject:file];
     }
     [appdelegate tryUpload];
+}
++ (void)backgroundDownload:(id<SeafDownloadDelegate>)file
+{
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    @synchronized (appdelegate) {
+        if (![appdelegate.dfiles containsObject:file])
+            [appdelegate.dfiles addObject:file];
+    }
+    [appdelegate tryDownload];
 }
 
 - (void)deleteAllObjects:(NSString *)entityDescription

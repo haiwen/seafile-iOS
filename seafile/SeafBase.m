@@ -19,7 +19,7 @@
 @implementation NSObject (NSObjectValue)
 - (long long)integerValue:(int)defaultValue
 {
-    if ([self respondsToSelector:@selector(intValue)])
+    if ([self respondsToSelector:@selector(longLongValue)])
         return [((id)self)longLongValue];
     else
         return defaultValue;

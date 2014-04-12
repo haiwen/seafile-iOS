@@ -112,6 +112,7 @@
         self.footer.hidden = NO;
     else
         self.footer.hidden = YES;
+    [self.tableView reloadData];
 }
 
 - (void)viewWillLayoutSubviews
