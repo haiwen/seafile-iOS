@@ -25,6 +25,10 @@ enum MSG_TYPE{
 @class SeafRepo;
 @class SeafUploadFile;
 
+@protocol SeafDownloadDelegate <NSObject>
+- (void)download;
+@end
+
 @protocol SSConnectionDelegate <NSObject>
 - (void)connectionLinkingSuccess:(SeafConnection *)connection;
 - (void)connectionLinkingFailed:(SeafConnection *)connection error:(int)error;

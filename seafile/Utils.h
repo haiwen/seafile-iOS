@@ -50,5 +50,6 @@
 
 + (BOOL)writeDataToPath:(NSString*)filePath andAsset:(ALAsset*)asset;
 
++ (BOOL)fileExistsAtPath:(NSString *)path;
 
 @end

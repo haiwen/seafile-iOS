@@ -50,7 +50,7 @@
 - (void)layoutSubviews
 {
     [super layoutSubviews];
-    self.btn.frame = CGRectMake([UIScreen mainScreen].applicationFrame.size.width * 0.70f, 2, REPLIES_HEADER_HEIGHT-4, REPLIES_HEADER_HEIGHT-4);
+    self.btn.frame = CGRectMake([UIScreen mainScreen].applicationFrame.size.width * 0.70f, 0, REPLIES_HEADER_HEIGHT, REPLIES_HEADER_HEIGHT);
 }
 
 @end

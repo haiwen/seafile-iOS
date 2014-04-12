@@ -109,7 +109,7 @@ static NSMutableDictionary *uploadFiles = nil;
         [_delegate uploadSucess:self oid:oid];
     else
         [_delegate uploadProgress:self result:NO completeness:0];
-    [SeafAppDelegate decUploadnum:result];
+    [SeafAppDelegate finishUpload:self result:result];
 }
 
 - (int)percentForShow:(long long)totalBytesWritten expected:(long long)totalBytesExpectedToWrite

@@ -53,6 +53,7 @@ enum {
 @property (readwrite) SeafConnection *connection;
 
 @property (retain) NSMutableArray *ufiles;
+@property (retain) NSMutableArray *dfiles;
 
 
 - (UINavigationController *)masterNavController:(int)index;
@@ -64,14 +65,14 @@ enum {
 - (void)saveContext;
 - (NSURL *)applicationDocumentsDirectory;
 - (BOOL)checkNetworkStatus;
-- (void) deleteAllObjects: (NSString *) entityDescription;
+- (void)deleteAllObjects: (NSString *) entityDescription;
 
 + (void)incDownloadnum;
 + (void)decDownloadnum;
-
 + (void)incUploadnum;
-+ (void)decUploadnum:(BOOL)result;
 
++ (void)finishDownload:(id<SeafDownloadDelegate>) file result:(BOOL)result;
++ (void)finishUpload:(SeafUploadFile *) file result:(BOOL)result;
 
 + (void)backgroundUpload:(SeafUploadFile *)ufile;
 

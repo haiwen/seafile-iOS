@@ -273,7 +273,6 @@ static const CGFloat kJSTimeStampLabelHeight = 15.0f;
         self.edgesForExtendedLayout = UIRectEdgeNone;
     [[JSBubbleView appearance] setFont:[UIFont systemFontOfSize:16.0f]];
     [super viewDidLoad];
-    self.messageInputView.textView.placeHolder = NSLocalizedString(@"New Message", "Seafile");
     self.tableView.separatorColor = self.tableView.backgroundColor;
 
     if (!IsIpad()) {
@@ -482,6 +481,7 @@ static const CGFloat kJSTimeStampLabelHeight = 15.0f;
 }
 - (IBAction)comment:(id)sender
 {
+    Debug("...\n");
     UIButton *btn = sender;
     CGPoint touchPoint = btn.frame.origin;
     NSIndexPath *selectedindex = [self.tableView indexPathForRowAtPoint:touchPoint];
@@ -513,7 +513,6 @@ static const CGFloat kJSTimeStampLabelHeight = 15.0f;
                                                            dateStyle:NSDateFormatterMediumStyle
                                                            timeStyle:NSDateFormatterShortStyle];
     [header.btn addTarget:self action:@selector(comment:) forControlEvents:UIControlEventTouchUpInside];
-
     tview.delegate = msg;
     tview.dataSource = msg;
     [tview reloadData];

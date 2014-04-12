@@ -277,7 +277,7 @@
 - (void)downloadByBlocks
 {
     [SeafAppDelegate incDownloadnum];
-    [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@&op=downloadblks", self.repoId, [self.path escapedUrl]] repo:self.repoId success:
+    [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@&op=downloadblks", self.repoId, [self.path escapedUrl]] repo:nil success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
          if (!curId)
@@ -315,7 +315,7 @@
      }];
 }
 
-- (void)realLoadContent
+- (void)download
 {
     SeafRepo *repo = [connection getRepo:self.repoId];
     if (repo.encrypted && [connection localDecrypt:self.repoId])
@@ -337,7 +337,7 @@
     }
     if (!self.downloadingFileOid) {
         [self loadCache];
-        [self realLoadContent];
+        [self download];
     }
 }
 

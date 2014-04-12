@@ -18,7 +18,8 @@
 @property UIBackgroundTaskIdentifier bgTask;
 @property int downloadnum;
 @property int uploadnum;
-@property int uploadFailedNum;
+@property int failedNum;
+
 @property NSInteger moduleIdx;
 @property (readonly) SeafDetailViewController *detailVC;
 @property (readonly) SeafDisDetailViewController *disDetailVC;
@@ -139,6 +140,7 @@
         [[UITabBar appearance] setSelectedImageTintColor:[UIColor colorWithRed:238.0f/256 green:136.0f/256 blue:51.0f/255 alpha:1.0]];
 
     self.ufiles = [[NSMutableArray alloc] init];
+    self.dfiles = [[NSMutableArray alloc] init];
     self.conns = [[NSMutableArray alloc] init];
     [self loadAccounts];
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
@@ -147,6 +149,7 @@
     self.window.rootViewController = _startNav;
     [self.window makeKeyAndVisible];
 
+    [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"avatars"]];
     [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"certs"]];
     [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
     [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"]];
@@ -509,20 +512,36 @@
 - (void)tryUpload
 {
     if (self.ufiles.count == 0) return;
-    NSMutableArray *toupload = [[NSMutableArray alloc] init];
+    NSMutableArray *todo = [[NSMutableArray alloc] init];
     @synchronized (self) {
         NSMutableArray *arr = [self.ufiles mutableCopy];
-        for (SeafUploadFile *ufile in arr) {
-            if (self.uploadnum + toupload.count + self.uploadFailedNum >= 3) break;
-            [self.ufiles removeObject:ufile];
-            if (!ufile.uploaded) {
-                [self.ufiles addObject:ufile];
-                [toupload addObject:ufile];
+        for (SeafUploadFile *file in arr) {
+            if (self.uploadnum + todo.count + self.failedNum >= 3) break;
+            [self.ufiles removeObject:file];
+            if (!file.uploaded) {
+                [todo addObject:file];
             }
         }
     }
-    for (SeafUploadFile *ufile in toupload) {
-        [ufile upload:ufile.udir->connection repo:ufile.udir.repoId path:ufile.udir.path update:NO];
+    for (SeafUploadFile *file in todo) {
+        [file upload:file.udir->connection repo:file.udir.repoId path:file.udir.path update:NO];
+    }
+}
+
+- (void)tryDownload
+{
+    if (self.dfiles.count == 0) return;
+    NSMutableArray *todo = [[NSMutableArray alloc] init];
+    @synchronized (self) {
+        NSMutableArray *arr = [self.dfiles mutableCopy];
+        for (id<SeafDownloadDelegate> file in arr) {
+            if (self.downloadnum + todo.count + self.failedNum >= 3) break;
+            [self.dfiles removeObject:file];
+            [todo addObject:file];
+        }
+    }
+    for (id<SeafDownloadDelegate> file in todo) {
+        [file download];
     }
 }
 
@@ -552,7 +571,28 @@
     Debug("%d upload, %d download\n", appdelegate.uploadnum, appdelegate.downloadnum);
 }
 
-- (void)decUploadnum:(BOOL)result
+- (void)finishDownload:(id<SeafDownloadDelegate>) file result:(BOOL)result
+{
+    Debug("dowmload %d, result=%d", self.downloadnum, result);
+    @synchronized (self) {
+        self.downloadnum --;
+    }
+    [self checkBackgroudTask:[UIApplication sharedApplication]];
+    if (result) {
+        self.failedNum = 0;
+    } else {
+        self.failedNum ++;
+        [self.dfiles addObject:file];
+        if (self.failedNum >= 3) {
+            [self performSelector:@selector(tryDownload) withObject:nil afterDelay:10.0];
+            self.failedNum = 2;
+            return;
+        }
+    }
+    [self tryDownload];
+}
+
+- (void)finishUpload:(SeafUploadFile *)file result:(BOOL)result
 {
     Debug("upload %d, result=%d", self.uploadnum, result);
     @synchronized (self) {
@@ -560,22 +600,27 @@
     }
     [self checkBackgroudTask:[UIApplication sharedApplication]];
     if (result) {
-        self.uploadFailedNum = 0;
+        self.failedNum = 0;
     } else {
-        self.uploadFailedNum ++;
-        if (self.uploadFailedNum >= 3) {
+        self.failedNum ++;
+        [self.ufiles addObject:file];
+        if (self.failedNum >= 3) {
             [self performSelector:@selector(tryUpload) withObject:nil afterDelay:10.0];
-            self.uploadFailedNum = 2;
+            self.failedNum = 2;
             return;
         }
     }
     [self tryUpload];
-
 }
 
-+ (void)decUploadnum:(BOOL)result
++ (void)finishDownload:(id<SeafDownloadDelegate>) file result:(BOOL)result
 {
-    [(SeafAppDelegate *)[[UIApplication sharedApplication] delegate] decUploadnum:result];
+    [(SeafAppDelegate *)[[UIApplication sharedApplication] delegate] finishDownload:file result:result];
+}
+
++ (void)finishUpload:(SeafUploadFile *) file result:(BOOL)result
+{
+    [(SeafAppDelegate *)[[UIApplication sharedApplication] delegate] finishUpload:file result:result];
 }
 
 + (void)backgroundUpload:(SeafUploadFile *)ufile

@@ -12,6 +12,7 @@
 #import "SeafDir.h"
 #import "SeafData.h"
 #import "SeafAppDelegate.h"
+#import "SeafUserAvatar.h"
 
 #import "ExtentedString.h"
 #import "NSData+Encryption.h"
@@ -118,16 +119,23 @@ static AFSecurityPolicy *defaultPolicy = nil;
                 [userDefaults synchronize];
             }
         }
+        if ([self authorized])
+            [self performSelector:@selector(downloadAvatars) withObject:nil afterDelay:5.0];
     }
     return self;
 }
 
--(void)setAddress:(NSString *)address
+- (void)setAddress:(NSString *)address
 {
     if ([address hasSuffix:@"/"]) {
         _address = [address substringToIndex:address.length-1];
     } else
         _address = address;
+}
+
+- (BOOL)authorized
+{
+    return self.token != nil;
 }
 
 - (NSString *)username
@@ -213,6 +221,7 @@ static AFSecurityPolicy *defaultPolicy = nil;
                                                [userDefaults setObject:_info forKey:[NSString stringWithFormat:@"%@/%@", _address, username]];
                                                [userDefaults synchronize];
                                                [self.delegate connectionLinkingSuccess:self];
+                                               [self performSelector:@selector(downloadAvatars) withObject:nil afterDelay:5.0];
                                            }
                                            failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, NSData *data){
                                                Warning("status code=%ld, error=%@\n", (long)response.statusCode, error);
@@ -227,7 +236,7 @@ static AFSecurityPolicy *defaultPolicy = nil;
             } else {
                 self.challenge = challenge;
                 NSString *title = [NSString stringWithFormat:NSLocalizedString(@"Seafile can't verify the identity of the website \"%@\"", @"Seafile"), anAddress];
-                NSString *msg = NSLocalizedString(@"The certificate from this website is invalid. Would you like to connect to the server anyway", @"Seafile");
+                NSString *msg = NSLocalizedString(@"The certificate from this website is invalid. Would you like to connect to the server anyway?", @"Seafile");
                 UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:msg delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") otherButtonTitles:NSLocalizedString(@"OK", @"Seafile"), nil];
                 alert.alertViewStyle = UIAlertViewStyleDefault;
                 [alert show];
@@ -595,6 +604,9 @@ static AFSecurityPolicy *defaultPolicy = nil;
 
 - (NSString *)avatarForEmail:(NSString *)email;
 {
+    NSString *path = [SeafUserAvatar pathForUserAvatar:self username:email];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:path])
+        return path;
     return [[NSBundle mainBundle] pathForResource:@"account" ofType:@"png"];
 }
 - (NSString *)avatarForGroup:(NSString *)gid
@@ -604,7 +616,15 @@ static AFSecurityPolicy *defaultPolicy = nil;
 
 - (void)downloadAvatars
 {
-
+    if (![self authorized] || self.email2nickMap.count == 0)
+        return;
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    for (NSString *email in self.email2nickMap.allKeys) {
+        if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafUserAvatar pathForUserAvatar:self username:email]])
+            continue;
+        SeafUserAvatar *avatar = [[SeafUserAvatar alloc] initWithConnection:self username:email];
+        [appdelegate.dfiles addObject:avatar];
+    }
 }
 
 #pragma mark - UIAlertViewDelegate

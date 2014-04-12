@@ -24,3 +24,12 @@ static inline BOOL IsIpad()
 }
 
 #define ios7 ([[[UIDevice currentDevice] systemVersion] floatValue] >= 7)
+
+/* Additional strings for agi18n */
+#define STR_1 NSLocalizedString(@"Release to refresh...", @"Release to refresh status")
+#define STR_2 NSLocalizedString(@"Pull down to refresh...", @"Pull down to refresh status")
+#define STR_3 NSLocalizedString(@"Loading...", @"Loading Status")
+#define STR_4 NSLocalizedString(@"Last Updated: %@", nil)
+#define STR_5 NSLocalizedString(@"SEAFILE_LOC_KEY_FORMAT", @"Seafile push notification message")
+#define STR_6 NSLocalizedString(@"Send", nil)
+

@@ -7,6 +7,7 @@
 //
 
 #import <QuickLook/QuickLook.h>
+#import "SeafConnection.h"
 #import "SeafUploadFile.h"
 #import "SeafBase.h"
 #import "Utils.h"
@@ -22,7 +23,7 @@
 - (void)updateProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent;
 @end
 
-@interface SeafFile : SeafBase<QLPreviewItem, PreViewDelegate, SeafUploadDelegate>
+@interface SeafFile : SeafBase<QLPreviewItem, PreViewDelegate, SeafUploadDelegate, SeafDownloadDelegate>
 
 - (id)initWithConnection:(SeafConnection *)aConnection
                      oid:(NSString *)anId

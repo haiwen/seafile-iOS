@@ -299,7 +299,7 @@ enum {
         return;
     if (![QBImagePickerController isAccessible]) {
         Warning("Error: Source is not accessible.");
-        [self alertWithMessage:NSLocalizedString(@"Photos is not accessible", @"Seafile")];
+        [self alertWithMessage:NSLocalizedString(@"Photos are not accessible", @"Seafile")];
         return;
     }
     QBImagePickerController *imagePickerController = [[QBImagePickerController alloc] init];

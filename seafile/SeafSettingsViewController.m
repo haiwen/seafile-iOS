@@ -143,7 +143,7 @@ enum {
                 break;
         }
     } else if (indexPath.section == 3) {
-        NSString *title = NSLocalizedString(@"Are you sure to clear all the cache ?", @"Seafile");
+        NSString *title = NSLocalizedString(@"Are you sure to clear all the cache?", @"Seafile");
         UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:title message:nil delegate:self cancelButtonTitle:NSLocalizedString(@"NO", @"Seafile") otherButtonTitles:NSLocalizedString(@"YES", @"Seafile"), nil];
         [alertView show];
     }
