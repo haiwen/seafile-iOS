@@ -25,7 +25,6 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 @property (readonly) NSString *mime;
 @property (strong, readonly) NSURL *preViewURL;
 @property (strong) AFHTTPRequestOperation *operation;
-@property (nonatomic, strong) AFHTTPRequestSerializer <AFURLRequestSerialization> * requestSerializer;
 
 @end
 
@@ -37,14 +36,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 @synthesize uploading = _uploading;
 @synthesize uProgress = _uProgress;
 @synthesize preViewURL = _preViewURL;
-@synthesize requestSerializer = _requestSerializer;
 
-- (AFHTTPRequestSerializer <AFURLRequestSerialization> *)requestSerializer
-{
-    if (!_requestSerializer)
-        _requestSerializer = [AFHTTPRequestSerializer serializer];
-    return _requestSerializer;
-}
 - (id)initWithPath:(NSString *)lpath
 {
     self = [super init];
@@ -122,9 +114,9 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     return percent;
 }
 
-- (void)uploadByFile:(NSString *)surl path:(NSString *)uploadpath update:(BOOL)update
+- (void)uploadByFile:(SeafConnection *)connection url:(NSString *)surl path:(NSString *)uploadpath update:(BOOL)update
 {
-    NSMutableURLRequest *request = [self.requestSerializer multipartFormRequestWithMethod:@"POST" URLString:surl parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
+    NSMutableURLRequest *request = [[SeafConnection requestSerializer] multipartFormRequestWithMethod:@"POST" URLString:surl parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
         if (update)
             [formData appendPartWithFormData:[uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"target_file"];
         else
@@ -134,7 +126,6 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         [formData appendPartWithFileURL:[NSURL fileURLWithPath:self.lpath] name:@"file" error:nil];
     } error:nil];
     AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
-    operation.securityPolicy = [SeafConnection defaultPolicy];
     self.operation = operation;
     [operation setUploadProgressBlock:^(NSUInteger bytesWritten, NSInteger totalBytesWritten, NSInteger totalBytesExpectedToWrite) {
         int percent = [self percentForShow:totalBytesWritten expected:totalBytesExpectedToWrite];
@@ -154,7 +145,8 @@ static NSMutableDictionary *uploadFileAttrs = nil;
                                          Debug("Upload failed :%@,code=%ldd, res=%@, %@\n", error, (long)operation.response.statusCode, operation.responseData, operation.responseString);
                                          [self finishUpload:NO oid:nil];
                                      }];
-    [operation start];
+
+    [connection handleOperation:operation];
 }
 
 - (BOOL)chunkFile:(NSString *)path blockids:(NSMutableArray *)blockids paths:(NSMutableArray *)paths password:(NSString *)password repo:(SeafRepo *)repo
@@ -184,9 +176,9 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     return ret;
 }
 
-- (void)uploadByBlocks:(NSString *)surl uploadpath:(NSString *)uploadpath blocks:(NSArray *)blockids paths:(NSArray *)paths update:(BOOL)update
+- (void)uploadByBlocks:(SeafConnection *)connection url:(NSString *)surl uploadpath:(NSString *)uploadpath blocks:(NSArray *)blockids paths:(NSArray *)paths update:(BOOL)update
 {
-    NSMutableURLRequest *request = [self.requestSerializer multipartFormRequestWithMethod:@"POST" URLString:surl parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
+    NSMutableURLRequest *request = [[SeafConnection requestSerializer] multipartFormRequestWithMethod:@"POST" URLString:surl parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
         if (update)
             [formData appendPartWithFormData:[uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"target_file"];
         else {
@@ -199,7 +191,6 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         }
     } error:nil];
     AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
-    operation.securityPolicy = [SeafConnection defaultPolicy];
     [operation setUploadProgressBlock:^(NSUInteger bytesWritten, NSInteger totalBytesWritten, NSInteger totalBytesExpectedToWrite) {
         int percent = [self percentForShow:totalBytesWritten expected:totalBytesExpectedToWrite];
         [_delegate uploadProgress:self result:YES completeness:percent];
@@ -218,7 +209,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
                                          Debug("Upload failed :%@,code=%ld, res=%@, %@\n", error, (long)operation.response.statusCode, operation.responseData, operation.responseString);
                                          [self finishUpload:NO oid:nil];
                                      }];
-    [operation start];
+    [connection handleOperation:operation];
 }
 
 - (void)upload:(SeafConnection *)connection repo:(NSString *)repoId path:(NSString *)uploadpath update:(BOOL)update
@@ -245,7 +236,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     else
         upload_url = [upload_url stringByAppendingString:@"link/"];
 
-    [connection sendRequest:upload_url repo:repoId success:
+    [connection sendRequest:upload_url success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          NSString *url = JSON;
          Debug("Upload file %@ %@, %@ update=%d, byblock=%d, delegate%@\n", self.name, url, uploadpath, update, byblock, _delegate);
@@ -254,12 +245,12 @@ static NSMutableDictionary *uploadFileAttrs = nil;
              NSMutableArray *paths = [[NSMutableArray alloc] init];
              NSString *passwrod = [Utils getRepoPassword:repo.repoId];
              if ([self chunkFile:self.lpath blockids:blockids paths:paths password:passwrod repo:repo]) {
-                 [self uploadByBlocks:url uploadpath:uploadpath blocks:blockids paths:paths update:update];
+                 [self uploadByBlocks:connection url:url uploadpath:uploadpath blocks:blockids paths:paths update:update];
              } else {
                  [self finishUpload:NO oid:nil];
              }
          } else {
-             [self uploadByFile:url path:uploadpath update:update];
+             [self uploadByFile:connection url:url path:uploadpath update:update];
          }
      }
                     failure:

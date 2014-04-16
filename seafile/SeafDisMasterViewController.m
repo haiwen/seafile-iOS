@@ -231,8 +231,13 @@
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     NSMutableDictionary *dict = [self.msgSources objectAtIndex:indexPath.row];
     Debug("dict=%@", dict);
-    [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationNone];
-    [self refreshTabBarItem];
+    if (IsIpad() && self.detailViewController.msgtype == MSG_REPLY) {
+        if (dict != self.detailViewController.info)
+            [self refreshView];
+    } else {
+        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationNone];
+        [self refreshTabBarItem];
+    }
     long long msgtype = [[dict objectForKey:@"type"] integerValue:-1];
     [self.detailViewController setMsgtype:(int)msgtype info:dict];
     if (!IsIpad())    [appdelegate showDetailView:self.detailViewController];

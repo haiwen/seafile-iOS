@@ -642,8 +642,8 @@ enum PREVIEW_STATE {
         [SVProgressHUD showWithStatus:NSLocalizedString(@"Sending...", @"Seafile")];
         SeafFile *file = (SeafFile *)self.preViewItem;
         NSString *form = [NSString stringWithFormat:@"message=%@&repo_id=%@&path=%@", [composeViewController.text escapedPostForm], file.repoId, [file.path escapedPostForm]];
-        NSString *url = [file->connection.address stringByAppendingFormat:API_URL"/html/discussions/%@/", _gid];
-        [file->connection sendPost:url repo:nil form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+        NSString *url = [NSString stringWithFormat:API_URL"/html/discussions/%@/", _gid];
+        [file->connection sendPost:url form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
             [SVProgressHUD dismiss];
             [composeViewController dismissViewControllerAnimated:YES completion:nil];
             NSString *html = [JSON objectForKey:@"html"];

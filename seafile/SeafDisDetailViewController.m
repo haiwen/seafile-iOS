@@ -26,11 +26,8 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 @property (strong) NSArray *items;
 
 @property (strong, nonatomic) NSMutableArray *messages;
-@property (strong, nonatomic) NSMutableDictionary *info;
-@property (readwrite, nonatomic) int msgtype;
 @property (readwrite, nonatomic) int next_page;
 @property (readwrite, nonatomic) SeafMessage *selectedMsg;
-
 
 @property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
 @property (strong, nonatomic) IBOutlet UIActivityIndicatorView *loadingView;
@@ -38,8 +35,6 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 @end
 
 @implementation SeafDisDetailViewController
-@synthesize connection = _connection;
-@synthesize refreshHeaderView = _refreshHeaderView;
 
 #pragma mark - Managing the detail item
 
@@ -72,8 +67,8 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     if (self.masterPopoverController != nil) {
         [self.masterPopoverController dismissPopoverAnimated:YES];
     }
-    self.msgtype = msgtype;
-    self.info = info;
+    _msgtype = msgtype;
+    _info = info;
     self.messages = [[NSMutableArray alloc] init];
     [self loadCacheData];
     if (self.isViewLoaded)
@@ -168,7 +163,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         case MSG_USER:
         {
             NSString *url = [self msgUrl];
-            [self.connection sendRequest:url repo:nil success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+            [self.connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
                 [self.connection savetoCacheKey:url value:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
                 self.messages = [self paseMessageData:JSON];
                 [self.tableView reloadData];
@@ -233,10 +228,11 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         case MSG_REPLY:
             self.title = [self.info objectForKey:@"name"];
             self.navigationItem.rightBarButtonItems = [NSArray arrayWithObject:self.refreshItem];
+            [self setInputViewHidden:YES];
             if (self.refreshHeaderView.superview)
                 [self.refreshHeaderView removeFromSuperview];
-            break;
             self.tableView.separatorColor = self.tableView.backgroundColor;
+            break;
         default:
             break;
     }
@@ -262,6 +258,13 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     self.msgItem.enabled = NO;
     [self setInputViewHidden:NO];
     [self.messageInputView.textView becomeFirstResponder];
+    UIColor *color = self.messageInputView.backgroundColor;
+    CGFloat green, red, blue, alpha;
+    [color getRed:&red green:&green blue:&blue alpha:&alpha];
+    Debug("color= %f %f %f, %f", red, green, blue, alpha);
+    color = self.messageInputView.textView.backgroundColor;
+    [color getRed:&red green:&green blue:&blue alpha:&alpha];
+    Debug("color= %f %f %f, %f", red, green, blue, alpha);
 }
 
 - (void)viewDidLoad
@@ -405,7 +408,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     NSString *url = [NSString stringWithFormat:API_URL"/group/%@/msg/%@/", group_id, msg.msgId];
     Debug("sender=%@, %@ msg=%@, group=%@ url=%@", sender, self.sender, msg, self.info, url);
     NSString *form = [NSString stringWithFormat:@"message=%@", [text escapedPostForm]];
-    [self.connection sendPost:url repo:nil form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+    [self.connection sendPost:url form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
         [SVProgressHUD dismiss];
         NSString *msgId = [JSON objectForKey:@"msgid"];
         NSString *timestamp = [NSString stringWithFormat:@"%d", (int)[date timeIntervalSince1970]];
@@ -413,6 +416,8 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         [msg.replies addObject:reply];
         self.messageInputView.sendButton.enabled = YES;
         [self finishSend];
+        NSIndexPath *index = [NSIndexPath indexPathForRow:[self.messages indexOfObject:msg] inSection:0];
+        [self.tableView scrollToRowAtIndexPath:index atScrollPosition:UITableViewScrollPositionBottom animated:YES];
         [self saveToCache];
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
         [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to send message", @"Seafile")];
@@ -431,7 +436,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     Debug("sender=%@, %@ msg=%@, %@", sender, self.sender, msg, [msg toDictionary]);
     NSString *url = [self msgUrl];
     NSString *form = [NSString stringWithFormat:@"message=%@", [text escapedPostForm]];
-    [self.connection sendPost:url repo:nil form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+    [self.connection sendPost:url form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
         [SVProgressHUD dismiss];
         msg.msgId = [JSON objectForKey:@"msgid"];
         [self.messages addObject:msg];
@@ -484,12 +489,13 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 - (IBAction)comment:(id)sender
 {
     UIButton *btn = sender;
-    CGPoint touchPoint = btn.frame.origin;
+    CGPoint touchPoint = [btn convertPoint:btn.bounds.origin toView:self.tableView];
     NSIndexPath *selectedindex = [self.tableView indexPathForRowAtPoint:touchPoint];
     self.selectedMsg = [self.messages objectAtIndex:selectedindex.row];
     self.msgItem.enabled = NO;
     [self setInputViewHidden:NO];
     [self.messageInputView.textView becomeFirstResponder];
+    [self.tableView scrollToRowAtIndexPath:selectedindex atScrollPosition:UITableViewScrollPositionBottom animated:YES];
 }
 
 - (UITableView *)setupRepliesView:(JSBubbleMessageCell *)cell msg:(SeafMessage *)msg frame:(CGRect)frame
@@ -503,6 +509,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         tview.separatorStyle = UITableViewCellSeparatorStyleNone;
         tview.backgroundColor = self.tableView.backgroundColor;
         tview.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+        tview.allowsSelection = NO;
         [cell.contentView addSubview:tview];
     } else
         tview.frame = frame;
@@ -621,7 +628,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         case MSG_USER:
         {
             NSString *url = [[self msgUrl] stringByAppendingFormat:@"?page=%d", self.next_page, nil];
-            [self.connection sendRequest:url repo:nil success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+            [self.connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
                 NSMutableArray *arr = [self paseMessageData:JSON];
                 self.next_page = (int)[[JSON objectForKey:@"next_page"] integerValue:-1];
                 long long lastID = 0;

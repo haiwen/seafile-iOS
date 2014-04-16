@@ -44,19 +44,19 @@ enum MSG_TYPE{
     NSOperationQueue *queue;
 }
 
-@property (retain) NSMutableDictionary *info;
-@property (nonatomic, copy) NSString *address;
+@property (readonly, retain) NSMutableDictionary *info;
+@property (readonly, nonatomic, copy) NSString *address;
 @property (weak) id <SSConnectionDelegate> delegate;
 @property (strong) SeafRepos *rootFolder;
 @property (readonly) NSString *username;
 @property (readonly) NSString *password;
+@property (readonly) NSString *host;
 @property (readonly) long long quota;
 @property (readonly) long long usage;
-@property (readwrite, strong) NSString *token;
+@property (readonly, strong) NSString *token;
 @property (readonly) NSArray *seafGroups;
 @property (readonly) NSArray *seafContacts;
 @property (readwrite) NSMutableArray *seafReplies;
-
 @property (readwrite) long long newmsgnum;
 
 
@@ -65,20 +65,19 @@ enum MSG_TYPE{
 
 - (BOOL)localDecrypt:(NSString *)repoId;
 
-- (void)sendRequest:(NSString *)url repo:(NSString *)repoId
+- (void)sendRequest:(NSString *)url
             success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data))success
             failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure;
 
-- (void)sendDelete:(NSString *)url repo:(NSString *)repoId
+- (void)sendDelete:(NSString *)url
            success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data))success
            failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure;
 
-- (void)sendPut:(NSString *)url repo:(NSString *)repoId form:(NSString *)form
+- (void)sendPut:(NSString *)url form:(NSString *)form
         success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data))success
         failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure;
 
-
-- (void)sendPost:(NSString *)url repo:(NSString *)repoId form:(NSString *)form
+- (void)sendPost:(NSString *)url form:(NSString *)form
          success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data))success
          failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure;
 
@@ -110,6 +109,8 @@ enum MSG_TYPE{
 
 - (void)registerDevice:(NSData *)deviceToken;
 
+- (void)handleOperation:(AFHTTPRequestOperation *)operation;
+
 - (NSString *)nickForEmail:(NSString *)email;
 - (NSString *)avatarForEmail:(NSString *)email;
 - (NSString *)avatarForGroup:(NSString *)gid;
@@ -120,6 +121,6 @@ enum MSG_TYPE{
 - (BOOL)savetoCacheKey:(NSString *)key value:(NSString *)content;
 - (id)getCachedStarredFiles;
 
-+ (AFSecurityPolicy *)defaultPolicy;
++ (AFHTTPRequestSerializer <AFURLRequestSerialization> *)requestSerializer;
 
 @end

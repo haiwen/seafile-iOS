@@ -14,6 +14,8 @@
 @interface SeafDisDetailViewController : JSMessagesViewController <UISplitViewControllerDelegate>
 
 @property (strong, nonatomic) SeafConnection *connection;
+@property (readonly, strong, nonatomic) NSMutableDictionary *info;
+@property (readonly, nonatomic) int msgtype;
 
 - (void)setMsgtype:(int)msgtype info:(NSMutableDictionary *)info;
 

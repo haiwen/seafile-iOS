@@ -24,6 +24,8 @@
 @property (readonly) SeafDetailViewController *detailVC;
 @property (readonly) SeafDisDetailViewController *disDetailVC;
 @property (strong) NSArray *viewControllers;
+@property (readwrite, strong) NSString *token;
+
 @end
 
 @implementation SeafAppDelegate
@@ -572,7 +574,7 @@
 
 - (void)finishDownload:(id<SeafDownloadDelegate>) file result:(BOOL)result
 {
-    Debug("dowmload %d, result=%d", self.downloadnum, result);
+    Debug("dowmload %d, result=%d, failcnt=%d", self.downloadnum, result, self.failedNum);
     @synchronized (self) {
         self.downloadnum --;
     }

@@ -182,7 +182,7 @@
 // [{"password_need": false, "name": "test", "mtime": null, "owner": "pithier@163.com", "root": "e6098c7bfc18bb0221eac54988649ed3b884f901", "size": [7224782], "type": "repo", "id": "640fd90d-ef4e-490d-be1c-b34c24040da7", "desc": "dasdadwd"}]
 - (void)realLoadContent
 {
-    [connection sendRequest:self.url repo:nil
+    [connection sendRequest:self.url
                     success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          @synchronized(self) {

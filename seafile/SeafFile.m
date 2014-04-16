@@ -142,7 +142,7 @@
 - (void)downloadByFile
 {
     [SeafAppDelegate incDownloadnum];
-    [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@", self.repoId, [self.path escapedUrl]] repo:self.repoId success:
+    [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@", self.repoId, [self.path escapedUrl]] success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          NSString *url = JSON;
          NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
@@ -163,7 +163,6 @@
          url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
          NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
          AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:downloadRequest];
-         operation.securityPolicy = [SeafConnection defaultPolicy];
          self.operation = operation;
          operation.outputStream = [NSOutputStream outputStreamToFileAtPath:[self downloadTempPath:self.downloadingFileOid] append:NO];
          [operation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
@@ -182,7 +181,7 @@
                  percent = 99;
              [self.delegate entry:self contentUpdated:YES completeness:percent];
          }];
-         [operation start];
+         [self->connection handleOperation:operation];
      }
                     failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
@@ -245,7 +244,6 @@
         return [self finishBlock:url];
     NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:[url stringByAppendingString:blk_id]]];
     AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:downloadRequest];
-    operation.securityPolicy = [SeafConnection defaultPolicy];
     self.operation = operation;
     operation.outputStream = [NSOutputStream outputStreamToFileAtPath:[self downloadTempPath:blk_id] append:NO];
     [operation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
@@ -267,7 +265,7 @@
             percent = 99;
         [self.delegate entry:self contentUpdated:YES completeness:percent];
     }];
-    [operation start];
+    [self->connection handleOperation:operation];
 }
 
 /*
@@ -277,7 +275,7 @@
 - (void)downloadByBlocks
 {
     [SeafAppDelegate incDownloadnum];
-    [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@&op=downloadblks", self.repoId, [self.path escapedUrl]] repo:nil success:
+    [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@&op=downloadblks", self.repoId, [self.path escapedUrl]] success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
          if (!curId)
@@ -430,7 +428,7 @@
 {
     NSString *url = [NSString stringWithFormat:API_URL"/repos/%@/file/shared-link/", self.repoId];
     NSString *form = [NSString stringWithFormat:@"p=%@", [self.path escapedPostForm]];
-    [connection sendPut:url repo:self.repoId form:form
+    [connection sendPut:url form:form
                 success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          NSString *link = [[response allHeaderFields] objectForKey:@"Location"];

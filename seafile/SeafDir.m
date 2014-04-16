@@ -117,7 +117,7 @@
  */
 - (void)realLoadContent
 {
-    [connection sendRequest:self.url repo:self.repoId
+    [connection sendRequest:self.url
                     success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
                         [self handleResponse:response json:JSON data:data];
                     }
@@ -244,8 +244,7 @@
     Directory *dir = [self loadCacheObj];
     if (!dir)
         return NO;
-    NSData *data = [NSData dataWithBytes:[[dir content] UTF8String] length:[[dir content] length]];
-
+    NSData *data = [NSData dataWithBytes:dir.content.UTF8String length:[dir.content lengthOfBytesUsingEncoding:NSUTF8StringEncoding]];
     id JSON = [Utils JSONDecode:data error:&error];
     if (error) {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
@@ -263,7 +262,7 @@
     NSString *path = [self.path stringByAppendingPathComponent:newDirName];
     NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/dir/?p=%@&reloaddir=true", self.repoId, [path escapedUrl]];
 
-    [connection sendPost:requestUrl repo:self.repoId form:@"operation=mkdir"
+    [connection sendPost:requestUrl form:@"operation=mkdir"
                  success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          Debug("resp=%ld\n", (long)response.statusCode);
@@ -281,7 +280,7 @@
     NSString *path = [self.path stringByAppendingPathComponent:newFileName];
     NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@&reloaddir=true", self.repoId, [path escapedUrl]];
 
-    [connection sendPost:requestUrl repo:self.repoId form:@"operation=create"
+    [connection sendPost:requestUrl form:@"operation=create"
                  success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          Debug("resp=%ld\n", (long)response.statusCode);
@@ -308,7 +307,7 @@
         [form appendFormat:@":%@", [entry.name escapedPostForm]];
     }
 
-    [connection sendPost:requestUrl repo:self.repoId form:form
+    [connection sendPost:requestUrl form:form
                  success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          Debug("resp=%ld\n", (long)response.statusCode);
@@ -411,7 +410,7 @@
 {
     NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@&reloaddir=true", self.repoId, [sfile.path escapedUrl]];
     NSString *form = [NSString stringWithFormat:@"operation=rename&newname=%@", [newName escapedUrl]];
-    [connection sendPost:requestUrl repo:self.repoId form:form
+    [connection sendPost:requestUrl form:form
                  success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          Debug("resp=%ld\n", (long)response.statusCode);
@@ -438,7 +437,7 @@
         [form appendFormat:@":%@", [entry.name escapedPostForm]];
     }
 
-    [connection sendPost:requestUrl repo:self.repoId form:form
+    [connection sendPost:requestUrl form:form
                  success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          Debug("resp=%ld\n", (long)response.statusCode);
@@ -465,7 +464,7 @@
         [form appendFormat:@":%@", [entry.name escapedPostForm]];
     }
 
-    [connection sendPost:requestUrl repo:self.repoId form:form
+    [connection sendPost:requestUrl form:form
                  success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          Debug("resp=%ld\n", (long)response.statusCode);

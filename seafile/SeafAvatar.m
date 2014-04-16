@@ -9,6 +9,7 @@
 #import "SeafAvatar.h"
 #import "SeafAppDelegate.h"
 
+#import "ExtentedString.h"
 #import "Utils.h"
 #import "Debug.h"
 
@@ -76,7 +77,7 @@ static NSMutableDictionary *avatarAttrs = nil;
 - (void)download
 {
     [SeafAppDelegate incDownloadnum];
-    [self.connection sendRequest:self.avatarUrl repo:nil success:
+    [self.connection sendRequest:self.avatarUrl success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          if (![JSON isKindOfClass:[NSDictionary class]]) {
              [SeafAppDelegate finishDownload:self result:NO];
@@ -98,10 +99,9 @@ static NSMutableDictionary *avatarAttrs = nil;
              [SeafAppDelegate finishDownload:self result:YES];
              return;
          }
-         url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];;
+         url = [[url stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding] escapedUrlPath];;
          NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
          AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:downloadRequest];
-         operation.securityPolicy = [SeafConnection defaultPolicy];
          NSString *tmppath = [self.path stringByAppendingString:@"-tmp"];
          operation.outputStream = [NSOutputStream outputStreamToFileAtPath:tmppath append:NO];
          [operation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
@@ -116,14 +116,14 @@ static NSMutableDictionary *avatarAttrs = nil;
              [SeafAvatar saveAvatarAttrs];
              [SeafAppDelegate finishDownload:self result:YES];
          } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-             Debug("error=%@",[error localizedDescription]);
+             Debug("url=%@, error=%@",downloadRequest.URL, [error localizedDescription]);
              [SeafAppDelegate finishDownload:self result:NO];
          }];
-         [operation start];
+         [self.connection handleOperation:operation];
      }
               failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-         Warning("Failed to download avatar from %@, error=%@", self.avatarUrl, error);
+         Warning("Failed to download avatar from %@, error=%@", request.URL, error);
          [SeafAppDelegate finishDownload:self result:NO];
      }];
 }
@@ -142,8 +142,7 @@ static NSMutableDictionary *avatarAttrs = nil;
 
 + (NSString *)pathForAvatar:(SeafConnection *)conn username:(NSString *)username
 {
-    NSURL *url = [NSURL URLWithString:conn.address];
-    NSString *filename = [NSString stringWithFormat:@"%@-%@.jpg", url.host, username];
+    NSString *filename = [NSString stringWithFormat:@"%@-%@.jpg", conn.host, username];
     NSString *path = [[[Utils applicationDocumentsDirectory]stringByAppendingPathComponent:@"avatars"] stringByAppendingPathComponent:filename];
     return path;
 }
@@ -162,8 +161,7 @@ static NSMutableDictionary *avatarAttrs = nil;
 
 + (NSString *)pathForAvatar:(SeafConnection *)conn group:(NSString *)group_id
 {
-    NSURL *url = [NSURL URLWithString:conn.address];
-    NSString *filename = [NSString stringWithFormat:@"%@-%@.jpg", url.host, group_id];
+    NSString *filename = [NSString stringWithFormat:@"%@-%@.jpg", conn.host, group_id];
     NSString *path = [[[Utils applicationDocumentsDirectory]stringByAppendingPathComponent:@"avatars"] stringByAppendingPathComponent:filename];
     return path;
 }

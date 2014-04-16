@@ -31,6 +31,20 @@
 #define WWW @"http://www."
 #define WWWS @"https://www."
 
+- (NSString *)escapedUrlPath
+{
+    NSString *prefix, *path;
+    if ([self hasPrefix:HTTP]) {
+        prefix = HTTP;
+        path = [self substringFromIndex:HTTP.length];
+    } else if ([self hasPrefix:HTTPS]) {
+        prefix = HTTPS;
+        path = [self substringFromIndex:HTTPS.length];
+    } else
+        return self.escapedUrl;
+    return [prefix stringByAppendingString:path.escapedUrl];
+}
+
 - (NSString *)trimUrl
 {
     NSString *url = [self lowercaseString];

@@ -10,6 +10,7 @@
 
 @interface NSString (ExtentedString)
 
+- (NSString *)escapedUrlPath;
 - (NSString *)escapedUrl;
 - (NSString *)escapedPostForm;
 - (NSString *)trimUrl;

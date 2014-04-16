@@ -24,6 +24,7 @@
     else
         return defaultValue;
 }
+
 - (BOOL)booleanValue:(BOOL)defaultValue
 {
     if ([self respondsToSelector:@selector(boolValue)])
@@ -141,7 +142,7 @@
     }
     NSString *request_str = [NSString stringWithFormat:API_URL"/repos/%@/?op=setpassword", self.repoId];
     NSString *formString = [NSString stringWithFormat:@"password=%@", password];
-    [connection sendPost:request_str repo:self.repoId form:formString
+    [connection sendPost:request_str form:formString
                  success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
                      [Utils setRepo:self.repoId password:password];
                      [self.delegate repoPasswordSet:self WithResult:YES];
@@ -177,7 +178,7 @@
     NSString *magic = [NSData passwordMaigc:password repo:self.repoId version:version];
     NSString *request_str = [NSString stringWithFormat:API_URL"/repos/%@/?op=checkpassword", self.repoId];
     NSString *formString = [NSString stringWithFormat:@"magic=%@", [magic escapedPostForm]];
-    [connection sendPost:request_str repo:self.repoId form:formString
+    [connection sendPost:request_str form:formString
                  success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
                      [Utils setRepo:self.repoId password:password];
                      [self.delegate repoPasswordSet:self WithResult:YES];
