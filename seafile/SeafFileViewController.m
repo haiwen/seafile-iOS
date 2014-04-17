@@ -46,7 +46,7 @@ enum {
 #define S_UPLOAD NSLocalizedString(@"Upload", @"Seafile")
 
 
-@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, EGORefreshTableHeaderDelegate, SeafDirDelegate, UISearchBarDelegate, UISearchDisplayDelegate>
+@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, EGORefreshTableHeaderDelegate, SeafDirDelegate, UISearchBarDelegate, UISearchDisplayDelegate, UIAlertViewDelegate, UIActionSheetDelegate>
 - (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView;
@@ -66,6 +66,8 @@ enum {
 
 @property (retain) NSIndexPath *selectedindex;
 @property (readonly) NSArray *editToolItems;
+
+@property (strong) UIActionSheet *actionSheet;
 
 @property int state;
 
@@ -342,9 +344,14 @@ enum {
 
 - (void)editSheet:(id)sender
 {
-    NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
-    UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_NEWFILE, S_MKDIR, S_EDIT, nil];
-    [actionSheet showFromBarButtonItem:self.editItem animated:YES];
+    if (self.actionSheet) {
+        [self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
+        self.actionSheet = nil;
+    } else {
+        NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
+        self.actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_NEWFILE, S_MKDIR, S_EDIT, nil];
+        [self.actionSheet showFromBarButtonItem:self.editItem animated:YES];
+    }
 }
 
 - (void)initNavigationItems:(SeafDir *)directory
@@ -1018,6 +1025,7 @@ enum {
 #pragma mark - UIActionSheetDelegate
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
 {
+    self.actionSheet = nil;
     if (buttonIndex < 0 || buttonIndex >= actionSheet.numberOfButtons)
         return;
     SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];

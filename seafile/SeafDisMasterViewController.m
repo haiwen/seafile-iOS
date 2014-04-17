@@ -18,11 +18,16 @@
 #import "SeafCell.h"
 #import "Debug.h"
 
+#define S_ADDCONTACT NSLocalizedString(@"Add contact", @"Seafile")
 
-@interface SeafDisMasterViewController ()<EGORefreshTableHeaderDelegate, UIScrollViewDelegate>
+@interface SeafDisMasterViewController ()<EGORefreshTableHeaderDelegate, UIScrollViewDelegate, UIActionSheetDelegate>
 @property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
 @property (readwrite, nonatomic) UIView *headerView;
 @property (readwrite, nonatomic) NSMutableArray *msgSources;
+@property (readwrite, nonatomic) NSMutableArray *addditions;
+@property (strong) UIActionSheet *actionSheet;
+@property (strong) UIBarButtonItem *addItem;
+
 @end
 
 @implementation SeafDisMasterViewController
@@ -58,7 +63,24 @@
     }
     [_refreshHeaderView refreshLastUpdatedDate];
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
+    self.addItem = [self getBarItem:@"plus".navItemImgName action:@selector(addContact:)size:20];
+    self.navigationItem.rightBarButtonItem = self.addItem;
     [self startTimer];
+}
+
+- (void)addContact:(id)sender
+{
+    if (self.actionSheet) {
+        [self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
+        self.actionSheet = nil;
+    } else {
+        NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
+        self.actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_ADDCONTACT, nil];
+        for (NSDictionary *dict in self.addditions) {
+            [self.actionSheet addButtonWithTitle:[dict objectForKey:@"email"]];
+        }
+        [self.actionSheet showFromBarButtonItem:self.addItem animated:YES];
+    }
 }
 
 - (void)didReceiveMemoryWarning
@@ -78,16 +100,8 @@
     tbi.badgeValue = num > 0 ? [NSString stringWithFormat:@"%lld", num] : nil;
     [(SeafAppDelegate *)[[UIApplication sharedApplication] delegate] checkIconBadgeNumber];
 }
-
-- (void)refreshView
+- (void)reloadData
 {
-    self.msgSources = [[NSMutableArray alloc] initWithArray:self.connection.seafGroups];
-    [self.msgSources addObjectsFromArray:self.connection.seafContacts];
-    for (NSDictionary *dict in self.connection.seafReplies) {
-        if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0)
-            [self.msgSources addObject:dict];
-    }
-    Debug("group=%lu, user=%lu, reply=%lu, total=%lu", (unsigned long)self.connection.seafGroups.count, (unsigned long)self.connection.seafContacts.count, (unsigned long)self.connection.seafReplies.count, (unsigned long)self.msgSources.count);
     [self.msgSources sortUsingComparator:(NSComparator)^NSComparisonResult(id obj1, id obj2){
         long long x = [[obj1 objectForKey:@"mtime"] integerValue:0];
         long long y = [[obj2 objectForKey:@"mtime"] integerValue:0];
@@ -99,8 +113,26 @@
         }
         return (NSComparisonResult)NSOrderedSame;
     }];
-
     [self.tableView reloadData];
+}
+
+- (void)refreshView
+{
+    self.msgSources = [[NSMutableArray alloc] initWithArray:self.connection.seafGroups];
+    self.addditions = [[NSMutableArray alloc] init];
+    for (NSDictionary *dict in self.connection.seafContacts) {
+        if ([[dict objectForKey:@"mtime"] integerValue:0] > 0)
+            [self.msgSources addObject:dict];
+        else
+            [self.addditions addObject:dict];
+    }
+    for (NSDictionary *dict in self.connection.seafReplies) {
+        if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0)
+            [self.msgSources addObject:dict];
+    }
+    Debug("group=%lu, user=%lu, reply=%lu, total=%lu", (unsigned long)self.connection.seafGroups.count, (unsigned long)self.connection.seafContacts.count, (unsigned long)self.connection.seafReplies.count, (unsigned long)self.msgSources.count);
+   
+    [self reloadData];
     [self refreshTabBarItem];
 }
 
@@ -112,10 +144,10 @@
             [self doneLoadingTableViewData];
         }
     }
-                       failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
-                           Warning("Failed to get groups ...error=%ld\n", (long)error.code);
-                           [self doneLoadingTableViewData];
-                       }];
+    failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
+        Warning("Failed to get groups ...error=%ld\n", (long)error.code);
+        [self doneLoadingTableViewData];
+    }];
 }
 
 - (void)refresh:(id)sender
@@ -127,13 +159,13 @@
             [self doneLoadingTableViewData];
         }
     }
-                       failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
-                           Warning("Failed to get groups ...error=%ld\n", (long)error.code);
-                           if (self.isVisible && error.code != NSURLErrorCancelled && error.code != 102) {
-                               [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get groups ...", @"Seafile")];
-                           }
-                           [self doneLoadingTableViewData];
-                       }];
+    failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
+        Warning("Failed to get groups ...error=%ld\n", (long)error.code);
+        if (self.isVisible && error.code != NSURLErrorCancelled && error.code != 102) {
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get groups ...", @"Seafile")];
+        }
+        [self doneLoadingTableViewData];
+    }];
 }
 
 - (void)startTimer
@@ -272,7 +304,6 @@
         [self performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
         return;
     }
-
     [self refresh:nil];
 }
 
@@ -284,6 +315,62 @@
 - (NSDate*)egoRefreshTableHeaderDataSourceLastUpdated:(EGORefreshTableHeaderView*)view
 {
     return [NSDate date];
+}
+
+- (void)popupInputView:(NSString *)title placeholder:(NSString *)tip
+{
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") otherButtonTitles:NSLocalizedString(@"OK", @"Seafile"), nil];
+    alert.alertViewStyle = UIAlertViewStylePlainTextInput;
+    UITextField *textfield = [alert textFieldAtIndex:0];
+    textfield.placeholder = tip;
+    textfield.autocorrectionType = UITextAutocorrectionTypeNo;
+    [alert show];
+}
+#pragma mark - UIAlertViewDelegate
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    if (buttonIndex == alertView.cancelButtonIndex) {
+        return;
+    } else {
+        NSString *email = [alertView textFieldAtIndex:0].text;
+        if (!email || email.length < 1) {
+            [self alertWithMessage:NSLocalizedString(@"Username must not be empty", @"Seafile")];
+            return;
+        }
+        NSArray* items = [email componentsSeparatedByString:@"@"];
+        if (items.count != 2 || [[items objectAtIndex:0] length] < 1 || [[items objectAtIndex:1] length] < 1) {
+            [self alertWithMessage:NSLocalizedString(@"Invalid email", @"Seafile")];
+            return;
+        }
+        NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+        [dict setObject:[NSString stringWithFormat:@"%d", MSG_USER] forKey:@"type"];
+        [dict setObject:email forKey:@"email"];
+        [dict setObject:email forKey:@"name"];
+        NSString *timestamp = [NSString stringWithFormat:@"%d", (int)[[NSDate date] timeIntervalSince1970]];
+        [dict setObject:timestamp forKey:@"mtime"];
+        [dict setObject:@"0" forKey:@"msgnum"];
+        [self.msgSources addObject:dict];
+        [self.tableView reloadData];
+    }
+}
+#pragma mark - UIActionSheetDelegate
+- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)bIndex
+{
+    self.actionSheet = nil;
+    if (bIndex < 0 || bIndex >= actionSheet.numberOfButtons)
+        return;
+    NSString *title = [actionSheet buttonTitleAtIndex:bIndex];
+    if ([S_ADDCONTACT isEqualToString:title]) {
+        [self popupInputView:S_ADDCONTACT placeholder:NSLocalizedString(@"Email", @"Seafile")];
+    } else {
+        for (NSDictionary *dict in self.addditions) {
+            if ([title isEqualToString:[dict objectForKey:@"email"]]) {
+                [self.addditions removeObject:dict];
+                [self.msgSources addObject:dict];
+                [self reloadData];
+            }
+        }
+    }
 }
 
 @end

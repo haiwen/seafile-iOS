@@ -57,6 +57,8 @@ enum PREVIEW_STATE {
 @property (readwrite, nonatomic) bool hideMaster;
 @property (readwrite, nonatomic) NSString *gid;
 
+@property (strong) UIActionSheet *actionSheet;
+
 @end
 
 
@@ -473,15 +475,17 @@ enum PREVIEW_STATE {
 #pragma mark - file operations
 - (IBAction)comment:(id)sender
 {
-    UIActionSheet *actionSheet;
-    if (IsIpad())
-        actionSheet = [[UIActionSheet alloc] initWithTitle:POST_DISCUSSION delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:nil ];
-    else
-        actionSheet = [[UIActionSheet alloc] initWithTitle:POST_DISCUSSION delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") destructiveButtonTitle:nil otherButtonTitles:nil ];
-    for (NSDictionary *grp in ((SeafFile *)self.preViewItem).groups) {
-        [actionSheet addButtonWithTitle:[grp objectForKey:@"name"]];
+    if (self.actionSheet) {
+        [self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
+        self.actionSheet = nil;
+        return;
     }
-    [actionSheet showFromBarButtonItem:self.commentItem animated:YES];
+    NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
+    self.actionSheet = [[UIActionSheet alloc] initWithTitle:POST_DISCUSSION delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:nil ];
+    for (NSDictionary *grp in ((SeafFile *)self.preViewItem).groups) {
+        [self.actionSheet addButtonWithTitle:[grp objectForKey:@"name"]];
+    }
+    [self.actionSheet showFromBarButtonItem:self.commentItem animated:YES];
 }
 
 - (IBAction)starFile:(id)sender
@@ -551,6 +555,11 @@ enum PREVIEW_STATE {
 {
     //image :save album, copy clipboard, print
     //pdf :print
+    if (self.actionSheet) {
+        [self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
+        self.actionSheet = nil;
+        return;
+    }
     NSMutableArray *bts = [[NSMutableArray alloc] init];
     SeafFile *file = (SeafFile *)self.preViewItem;
     if ([Utils isImageFile:file.name]) {
@@ -562,16 +571,13 @@ enum PREVIEW_STATE {
     if (bts.count == 0) {
         [self openElsewhere];
     } else {
-        UIActionSheet *actionSheet;
-        if (IsIpad())
-            actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:nil ];
-        else
-            actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") destructiveButtonTitle:nil otherButtonTitles:nil ];
+        NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
+        self.actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:nil ];
         for (NSString *title in bts) {
-            [actionSheet addButtonWithTitle:title];
+            [self.actionSheet addButtonWithTitle:title];
         }
-        [actionSheet addButtonWithTitle:NSLocalizedString(@"Open elsewhere...", "Seafile")];
-        [actionSheet showFromBarButtonItem:self.exportItem animated:YES];
+        [self.actionSheet addButtonWithTitle:NSLocalizedString(@"Open elsewhere...", "Seafile")];
+        [self.actionSheet showFromBarButtonItem:self.exportItem animated:YES];
     }
 }
 
@@ -579,16 +585,20 @@ enum PREVIEW_STATE {
 {
     if (![self.preViewItem isKindOfClass:[SeafFile class]])
         return;
+    if (self.actionSheet) {
+        [self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
+        self.actionSheet = nil;
+        return;
+    }
 
     NSString *email = NSLocalizedString(@"Email", @"Seafile");
     NSString *copy = NSLocalizedString(@"Copy Link to Clipboard", @"Seafile");
-    UIActionSheet *actionSheet;
     if (IsIpad())
-        actionSheet = [[UIActionSheet alloc] initWithTitle:SHARE_TITLE delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:email, copy, nil ];
+        self.actionSheet = [[UIActionSheet alloc] initWithTitle:SHARE_TITLE delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:email, copy, nil ];
     else
-        actionSheet = [[UIActionSheet alloc] initWithTitle:SHARE_TITLE delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") destructiveButtonTitle:nil otherButtonTitles:email, copy, nil ];
+        self.actionSheet = [[UIActionSheet alloc] initWithTitle:SHARE_TITLE delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") destructiveButtonTitle:nil otherButtonTitles:email, copy, nil ];
 
-    [actionSheet showFromBarButtonItem:self.shareItem animated:YES];
+    [self.actionSheet showFromBarButtonItem:self.shareItem animated:YES];
 }
 
 - (void)thisImage:(UIImage *)image hasBeenSavedInPhotoAlbumWithError:(NSError *)error usingContextInfo:(void *)ctxInfo
@@ -672,6 +682,7 @@ enum PREVIEW_STATE {
 #pragma mark - UIActionSheetDelegate
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)bIndex
 {
+    self.actionSheet = nil;
     buttonIndex = (int)bIndex;
     if (bIndex < 0 || bIndex >= actionSheet.numberOfButtons)
         return;
