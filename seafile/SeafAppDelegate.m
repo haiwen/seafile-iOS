@@ -191,7 +191,6 @@
     for (SeafConnection *conn in self.conns) {
         badge += conn.newmsgnum;
     }
-    Debug("IconBadgeNumber=%d", badge);
     [UIApplication sharedApplication].applicationIconBadgeNumber = badge;
 }
 

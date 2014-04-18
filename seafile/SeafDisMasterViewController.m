@@ -15,7 +15,7 @@
 #import "SeafBase.h"
 #import "ExtentedString.h"
 #import "SVProgressHUD.h"
-#import "SeafCell.h"
+#import "SeafMessageCell.h"
 #import "Debug.h"
 
 #define S_ADDCONTACT NSLocalizedString(@"Add contact", @"Seafile")
@@ -131,7 +131,7 @@
             [self.msgSources addObject:dict];
     }
     Debug("group=%lu, user=%lu, reply=%lu, total=%lu", (unsigned long)self.connection.seafGroups.count, (unsigned long)self.connection.seafContacts.count, (unsigned long)self.connection.seafReplies.count, (unsigned long)self.msgSources.count);
-   
+
     [self reloadData];
     [self refreshTabBarItem];
 }
@@ -209,16 +209,18 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    NSString *CellIdentifier = @"SeafCell";
-    SeafCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+    NSString *CellIdentifier = @"SeafMessageCell";
+    SeafMessageCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
-        NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafCell" owner:self options:nil];
+        NSArray *cells = [[NSBundle mainBundle] loadNibNamed:CellIdentifier owner:self options:nil];
         cell = [cells objectAtIndex:0];
     }
     NSMutableDictionary *dict = [self.msgSources objectAtIndex:indexPath.row];
     cell.textLabel.text = [dict objectForKey:@"name"];
     long long mtime = [[dict objectForKey:@"mtime"] integerValue:0];
-    cell.detailTextLabel.text = mtime ? [NSString stringWithFormat:@"%@", [SeafDateFormatter stringFromLongLong:mtime]] : nil;
+    cell.timestampLabel.text = mtime ? [NSString stringWithFormat:@"%@", [SeafDateFormatter stringFromLongLong:mtime]] : nil;
+    cell.detailLabel.text = [[dict objectForKey:@"lastmsg"] stringValue];
+
     NSString *avatar = nil;
     switch ([[dict objectForKey:@"type"] integerValue:-1]) {
         case MSG_GROUP:
@@ -234,7 +236,7 @@
             Warning(@"Unknown msg type %@", [dict objectForKey:@"type"]);
             break;
     }
-    cell.imageView.image = [JSAvatarImageFactory avatarImage:[UIImage imageWithContentsOfFile:avatar] croppedToCircle:NO];
+    cell.imageView.image = [JSAvatarImageFactory avatarImage:[UIImage imageWithContentsOfFile:avatar] croppedToCircle:YES];
     if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0 ) {
         cell.badgeLabel.text = [NSString stringWithFormat:@"%lld", [[dict objectForKey:@"msgnum"] integerValue:0]];
         cell.badgeLabel.hidden = NO;
@@ -262,7 +264,7 @@
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     NSMutableDictionary *dict = [self.msgSources objectAtIndex:indexPath.row];
-    Debug("dict=%@", dict);
+    Debug("select %@", dict);
     if (IsIpad() && self.detailViewController.msgtype == MSG_REPLY) {
         if (dict != self.detailViewController.info)
             [self refreshView];

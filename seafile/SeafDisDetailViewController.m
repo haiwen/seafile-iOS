@@ -32,6 +32,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 @property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
 @property (strong, nonatomic) IBOutlet UIActivityIndicatorView *loadingView;
 
+@property BOOL isLoading;
 @end
 
 @implementation SeafDisDetailViewController
@@ -77,6 +78,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     self.messageInputView.textView.text = @"";
     self.next_page = 2;
     self.selectedMsg = nil;
+    self.isLoading = NO;
 }
 
 - (NSString *)msgUrl
@@ -150,7 +152,6 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
             break;
         }
     }
-    Debug("cache %lu", (unsigned long)self.messages.count);
 }
 
 - (void)downloadMessages
@@ -258,13 +259,6 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     self.msgItem.enabled = NO;
     [self setInputViewHidden:NO];
     [self.messageInputView.textView becomeFirstResponder];
-    UIColor *color = self.messageInputView.backgroundColor;
-    CGFloat green, red, blue, alpha;
-    [color getRed:&red green:&green blue:&blue alpha:&alpha];
-    Debug("color= %f %f %f, %f", red, green, blue, alpha);
-    color = self.messageInputView.textView.backgroundColor;
-    [color getRed:&red green:&green blue:&blue alpha:&alpha];
-    Debug("color= %f %f %f, %f", red, green, blue, alpha);
 }
 
 - (void)viewDidLoad
@@ -280,6 +274,14 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     self.tableView.tableFooterView = [[UIView alloc] initWithFrame:CGRectZero];
     self.tableView.backgroundColor = [UIColor whiteColor];
     self.tableView.separatorColor = self.tableView.backgroundColor;
+    [self.messageInputView.sendButton setTitleColor:BAR_COLOR forState:UIControlStateNormal];
+    [self.messageInputView.sendButton setTitleColor:BAR_COLOR forState:UIControlStateHighlighted];
+    float width = self.messageInputView.textView.frame.size.width + self.messageInputView.textView.frame.origin.x - 10;
+    self.messageInputView.textView.frame = CGRectMake(10,
+                                                      self.messageInputView.textView.frame.origin.y,
+                                                      width,
+                                                      self.messageInputView.textView.frame.size.height);
+    self.messageInputView.textView.backgroundColor = [UIColor whiteColor];
 
     if (!IsIpad()) {
         UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Back", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
@@ -464,12 +466,11 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
                        forRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if (self.msgtype == MSG_USER) {
-        if (type == JSBubbleMessageTypeIncoming) {
-            return [JSBubbleImageViewFactory bubbleImageViewForType:type
-                                                              color:[UIColor js_bubbleLightGrayColor]];
-        }
-        return [JSBubbleImageViewFactory bubbleImageViewForType:type
-                                                          color:[UIColor js_bubbleBlueColor]];
+        UIColor *color = [UIColor colorWithHue:240.0f / 360.0f
+                                    saturation:0.02f
+                                    brightness:0.97f
+                                         alpha:1.0f];
+        return [JSBubbleImageViewFactory bubbleImageViewForType:type color:color];
     } else {
         return [[UIImageView alloc] init];
     }
@@ -503,7 +504,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     UITableView *tview = (UITableView *)[cell viewWithTag:100];
     if (!tview) {
         tview = [[UITableView alloc] initWithFrame:frame style:UITableViewStylePlain];
-        tview.tableHeaderView = [[SeafRepliesHeaderView alloc] initWithFrame:CGRectMake(0, 0, frame.size.width, REPLIES_HEADER_HEIGHT)];
+        //tview.tableHeaderView = [[SeafRepliesHeaderView alloc] initWithFrame:CGRectMake(0, 0, frame.size.width, REPLIES_HEADER_HEIGHT)];
         tview.tag = 100;
         tview.scrollEnabled = NO;
         tview.separatorStyle = UITableViewCellSeparatorStyleNone;
@@ -515,17 +516,62 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         tview.frame = frame;
 
     [cell.contentView bringSubviewToFront:tview];
-
+#if 0
     SeafRepliesHeaderView *header = (SeafRepliesHeaderView *)tview.tableHeaderView;
     header.timestamp.text = [NSDateFormatter localizedStringFromDate:msg.date
                                                            dateStyle:NSDateFormatterMediumStyle
                                                            timeStyle:NSDateFormatterShortStyle];
     [header.btn addTarget:self action:@selector(comment:) forControlEvents:UIControlEventTouchUpInside];
+#endif
     tview.delegate = msg;
     tview.dataSource = msg;
     [tview reloadData];
     return tview;
 }
+
+- (void)setupHeaderView:(JSBubbleMessageCell *)cell msg:(SeafMessage *)msg width:(float)width
+{
+    UILabel *nameLabel = (UILabel *)[cell viewWithTag:101];
+    if (!nameLabel) {
+        nameLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+        nameLabel.textColor = BAR_COLOR;
+        nameLabel.textAlignment = NSTextAlignmentLeft;
+        nameLabel.font = [UIFont boldSystemFontOfSize:16.0f];
+        nameLabel.tag = 101;
+        [cell.contentView addSubview:nameLabel];
+    }
+    [cell.contentView bringSubviewToFront:nameLabel];
+    nameLabel.text = msg.nickname;
+    nameLabel.frame = CGRectMake(cell.bubbleView.frame.origin.x + 10,
+                                           8,
+                                           100,
+                                           kJSTimeStampLabelHeight);
+
+    cell.timestampLabel.text = [NSDateFormatter localizedStringFromDate:msg.date
+                                                           dateStyle:NSDateFormatterMediumStyle
+                                                           timeStyle:NSDateFormatterShortStyle];
+
+    cell.timestampLabel.textAlignment = NSTextAlignmentLeft;
+    cell.timestampLabel.frame = CGRectMake(cell.bubbleView.frame.origin.x + 110,
+                                           8,
+                                           150,
+                                           kJSTimeStampLabelHeight);
+    cell.timestampLabel.autoresizingMask = 0;
+    cell.timestampLabel.font = [UIFont boldSystemFontOfSize:12.0f];
+
+    UIButton *btn = (UIButton *)[cell viewWithTag:102];
+    if (!btn) {
+        btn = [UIButton buttonWithType:UIButtonTypeCustom];
+        btn.tag = 102;
+        btn.showsTouchWhenHighlighted = YES;
+        [btn setImage:[UIImage imageNamed:@"comment"] forState:UIControlStateNormal];
+        [btn addTarget:self action:@selector(comment:) forControlEvents:UIControlEventTouchUpInside];
+        [cell.contentView addSubview:btn];
+    }
+    btn.frame = CGRectMake(cell.bubbleView.frame.origin.x + [UIScreen mainScreen].applicationFrame.size.width * 0.70f, 8, REPLIES_HEADER_HEIGHT, REPLIES_HEADER_HEIGHT);
+    [cell.contentView bringSubviewToFront:btn];
+}
+
 //
 //  *** Implement to customize cell further
 //
@@ -538,14 +584,15 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
             cell.bubbleView.textView.linkTextAttributes = attrs;
         }
     }
+    if (self.msgtype == MSG_USER) {
+        if (cell.timestampLabel) {
+            cell.timestampLabel.textColor = [UIColor lightGrayColor];
+            cell.timestampLabel.shadowOffset = CGSizeZero;
+        }
 
-    if (cell.timestampLabel) {
-        cell.timestampLabel.textColor = [UIColor lightGrayColor];
-        cell.timestampLabel.shadowOffset = CGSizeZero;
-    }
-
-    if (cell.subtitleLabel) {
-        cell.subtitleLabel.textColor = [UIColor lightGrayColor];
+        if (cell.subtitleLabel) {
+            cell.subtitleLabel.textColor = BAR_COLOR;
+        }
     }
 
 #if TARGET_IPHONE_SIMULATOR
@@ -564,19 +611,10 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         cell.avatarImageView.autoresizingMask = (UIViewAutoresizingFlexibleLeftMargin
                                                  | UIViewAutoresizingFlexibleRightMargin);
         cell.subtitleLabel.hidden = YES;
-        cell.timestampLabel.text = msg.nickname;
-        cell.timestampLabel.textColor = [UIColor colorWithRed:32.0/255 green:32.0/255 blue:32.0/255 alpha:1.0];
-        cell.timestampLabel.textAlignment = NSTextAlignmentLeft;
-        cell.timestampLabel.frame = CGRectMake(cell.bubbleView.frame.origin.x + 10,
-                                               8,
-                                               cell.bubbleView.frame.size.width,
-                                               kJSTimeStampLabelHeight);
-        cell.timestampLabel.autoresizingMask = (UIViewAutoresizingFlexibleWidth);
-        cell.timestampLabel.font = [UIFont boldSystemFontOfSize:16.0f];
-
         CGFloat y = [JSBubbleView neededHeightForText:msg.text] + kJSTimeStampLabelHeight - 5;
         CGFloat width = cell.bubbleView.frame.size.width - 10;
         CGRect frame = CGRectMake(cell.bubbleView.frame.origin.x + 10, y, width, [msg neededHeightForReplies:width]);
+        [self setupHeaderView:cell msg:msg width:width];
         [self setupRepliesView:cell msg:msg frame:frame];
     }
 }
@@ -597,8 +635,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 {
     SeafMessage *msg = [self.messages objectAtIndex:indexPath.row];
     NSString *avatar = [self.connection avatarForEmail:msg.email];
-    BOOL circle = (self.msgtype == MSG_USER);
-    UIImage *image = [JSAvatarImageFactory avatarImage:[UIImage imageWithContentsOfFile:avatar] croppedToCircle:circle];
+    UIImage *image = [JSAvatarImageFactory avatarImage:[UIImage imageWithContentsOfFile:avatar] croppedToCircle:YES];
     return [[UIImageView alloc] initWithImage:image];
 }
 
@@ -616,6 +653,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 #pragma mark - EGORefreshTableHeaderDelegate Methods
 - (void)doneLoadingTableViewData
 {
+    self.isLoading = NO;
     [_refreshHeaderView egoRefreshScrollViewDataSourceDidFinishedLoading:self.tableView];
 }
 - (void)downloadMoreMessages
@@ -627,6 +665,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         case MSG_GROUP:
         case MSG_USER:
         {
+            self.isLoading = YES;
             NSString *url = [[self msgUrl] stringByAppendingFormat:@"?page=%d", self.next_page, nil];
             [self.connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
                 NSMutableArray *arr = [self paseMessageData:JSON];
@@ -642,7 +681,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
                     self.messages = arr;
                     [self.tableView reloadData];
                     [self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:off inSection:0]
-                                          atScrollPosition:UITableViewScrollPositionBottom
+                                          atScrollPosition:UITableViewScrollPositionTop
                                                   animated:NO];
                 }
                 Debug("msgs count=%lu", (unsigned long)self.messages.count);
@@ -671,12 +710,23 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 
 - (BOOL)egoRefreshTableHeaderDataSourceIsLoading:(EGORefreshTableHeaderView*)view
 {
-    return NO;
+    return self.isLoading;
 }
-
-- (NSDate*)egoRefreshTableHeaderDataSourceLastUpdated:(EGORefreshTableHeaderView*)view
+- (void)egoRefreshTableHeaderConfigureLabel:(UILabel*)statusLabel forState:(EGOPullRefreshState)state
 {
-    return [NSDate date];
+    switch (state) {
+        case EGOOPullRefreshPulling:
+            statusLabel.text = NSLocalizedString(@"Release to get more messages...", @"Release to get more messages");
+            break;
+        case EGOOPullRefreshNormal:
+            statusLabel.text = NSLocalizedString(@"Pull down to get more messages...", @"Pull down to get more messages");
+            break;
+        case EGOOPullRefreshLoading:
+            statusLabel.text = NSLocalizedString(@"Loading...", @"Loading Status");
+            break;
+        default:
+            break;
+    }
 }
 
 @end

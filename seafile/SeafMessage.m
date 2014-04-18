@@ -149,7 +149,7 @@
 
 - (CGFloat)neededHeightForReplies:(float)width
 {
-    float height = REPLIES_HEADER_HEIGHT;
+    float height = 5;
     for (NSDictionary *r in self.replies) {
         height += [self heightForMsgReply:r width:width];
     }
