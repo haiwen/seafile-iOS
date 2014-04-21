@@ -333,10 +333,18 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         [request setValue:[NSString stringWithFormat:@"Token %@", self.token] forHTTPHeaderField:@"Authorization"];
 
     SeafJSONRequestOperation *operation = [SeafJSONRequestOperation JSONRequestOperationWithRequest:request success:success  failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-        if (response.statusCode == HTTP_ERR_LOGIN_REUIRED && self.username && self.password) {
-            [self loginWithAddress:nil username:self.username password:self.password];
-        }
         failure (request, response, error, JSON);
+        if (response.statusCode == HTTP_ERR_LOGIN_REUIRED) {
+            @synchronized(self) {
+                if (![self authorized])
+                    return;
+                _token = nil;
+            }
+            SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+            [appdelegate.tabbarController setSelectedIndex:TABBED_ACCOUNTS];
+            [appdelegate.startVC goToDefaultAccount];
+            return;
+        }
     }];
     [self handleOperation:operation];
 }
@@ -690,7 +698,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSURLCredential *credential = [NSURLCredential credentialForTrust:self.challenge.protectionSpace.serverTrust];
     if (buttonIndex == alertView.cancelButtonIndex) {
         [[self.challenge sender] cancelAuthenticationChallenge:self.challenge];
-        return;
     } else {
         [self saveCertificate:self.challenge];
         [[self.challenge sender] useCredential:credential forAuthenticationChallenge:self.challenge];

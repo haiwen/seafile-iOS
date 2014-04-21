@@ -54,6 +54,7 @@ enum MSG_TYPE{
 @property (readonly) long long quota;
 @property (readonly) long long usage;
 @property (readonly, strong) NSString *token;
+@property (readonly) BOOL authorized;
 @property (readonly) NSArray *seafGroups;
 @property (readonly) NSArray *seafContacts;
 @property (readwrite) NSMutableArray *seafReplies;

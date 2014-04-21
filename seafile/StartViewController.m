@@ -231,7 +231,6 @@
     [self selectAccount:[appdelegate.conns objectAtIndex:indexPath.row]];
 }
 
-
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
     return IsIpad() || (interfaceOrientation == UIInterfaceOrientationPortrait);
@@ -266,7 +265,19 @@
 - (BOOL)selectAccount:(SeafConnection *)conn;
 {
     if (!conn) return NO;
-
+    if (![conn authorized]) {
+        NSString *title = NSLocalizedString(@"The token is invalid, you need to login again", @"Seafile");
+        UIAlertView *alert = [[UIAlertView alloc]initWithTitle:title
+                                                       message:nil
+                                                      delegate:self
+                                             cancelButtonTitle:@"OK"
+                                             otherButtonTitles:nil, nil];
+        alert.transform = CGAffineTransformTranslate( alert.transform, 0.0, 130.0 );
+        alert.alertViewStyle = UIAlertViewStyleDefault;
+        [alert show];
+        [self showAccountView:conn type:0];
+        return YES;
+    }
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     [userDefaults setObject:conn.address forKey:@"DEAULT-SERVER"];
     [userDefaults setObject:conn.username forKey:@"DEAULT-USER"];

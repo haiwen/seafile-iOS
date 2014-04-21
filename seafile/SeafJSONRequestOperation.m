@@ -112,13 +112,15 @@ static dispatch_queue_t json_request_operation_processing_queue() {
                 id JSON = self.responseJSON;
                 dispatch_async (dispatch_get_main_queue (), ^(void) {
                     if (self.JSONError) {
-                        if (failure) {
-                            failure (self, self.JSONError);
-                        }
+                        if (failure)   failure (self, self.JSONError);
                     } else {
-                        if (success) {
-                            success (self, JSON);
+                        int code = self.response.statusCode / 100;
+                        if (code != 2 && code != 3) {
+                            NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:self.response.statusCode userInfo:nil];
+                            if (failure)    failure (self, err);
+                            return;
                         }
+                        if (success)  success (self, JSON);
                     }
                 });
             });

@@ -19,7 +19,7 @@
 static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 
 
-@interface SeafDisDetailViewController ()<JSMessagesViewDataSource, JSMessagesViewDelegate, EGORefreshTableHeaderDelegate, UIScrollViewDelegate>
+@interface SeafDisDetailViewController ()<JSMessagesViewDataSource, JSMessagesViewDelegate, EGORefreshTableHeaderDelegate, UIScrollViewDelegate, UITextFieldDelegate, UITextViewDelegate>
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
 @property (strong) UIBarButtonItem *msgItem;
 @property (strong) UIBarButtonItem *refreshItem;
@@ -217,6 +217,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
             if (!self.refreshHeaderView.superview)
                 [self.tableView addSubview:self.refreshHeaderView];
             self.tableView.separatorColor = [UIColor colorWithRed:200.0/255 green:200.0/255 blue:200.0/255 alpha:1.0];
+            self.messageInputView.textView.returnKeyType  = UIReturnKeyDefault;
             break;
         case MSG_USER:
             self.title = [self.info objectForKey:@"name"];
@@ -225,6 +226,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
             if (!self.refreshHeaderView.superview)
                 [self.tableView addSubview:self.refreshHeaderView];
             self.tableView.separatorColor = self.tableView.backgroundColor;
+            self.messageInputView.textView.returnKeyType  = UIReturnKeySend;
             break;
         case MSG_REPLY:
             self.title = [self.info objectForKey:@"name"];
@@ -233,6 +235,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
             if (self.refreshHeaderView.superview)
                 [self.refreshHeaderView removeFromSuperview];
             self.tableView.separatorColor = self.tableView.backgroundColor;
+            self.messageInputView.textView.returnKeyType  = UIReturnKeyDefault;
             break;
         default:
             break;
@@ -511,6 +514,9 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         tview.backgroundColor = self.tableView.backgroundColor;
         tview.autoresizingMask = UIViewAutoresizingFlexibleWidth;
         tview.allowsSelection = NO;
+        UIView *lineView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, frame.size.width, 1.0f)];
+        [lineView setBackgroundColor:[UIColor lightGrayColor]];
+        tview.tableHeaderView = lineView;
         [cell.contentView addSubview:tview];
     } else
         tview.frame = frame;
@@ -615,7 +621,8 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         CGFloat width = cell.bubbleView.frame.size.width - 10;
         CGRect frame = CGRectMake(cell.bubbleView.frame.origin.x + 10, y, width, [msg neededHeightForReplies:width]);
         [self setupHeaderView:cell msg:msg width:width];
-        [self setupRepliesView:cell msg:msg frame:frame];
+        UITableView *tview = [self setupRepliesView:cell msg:msg frame:frame];
+        tview.tableHeaderView.hidden = (msg.replies.count == 0);
     }
 }
 
@@ -727,6 +734,17 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         default:
             break;
     }
+}
+
+- (BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text
+{
+    if (self.msgtype != MSG_USER)
+        return YES;
+    if([text isEqualToString:@"\n"]) {
+        [self.messageInputView.sendButton sendActionsForControlEvents: UIControlEventTouchUpInside];
+        return NO;
+    }
+    return YES;
 }
 
 @end
