@@ -52,4 +52,6 @@
 
 + (BOOL)fileExistsAtPath:(NSString *)path;
 
++ (CGSize)textSizeForText:(NSString *)txt font:(UIFont *)font width:(float)width;
+
 @end

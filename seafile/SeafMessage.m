@@ -8,6 +8,7 @@
 
 #import "SeafMessage.h"
 #import "SeafBase.h"
+#import "Utils.h"
 #import "Debug.h"
 
 
@@ -98,9 +99,7 @@
 {
     NSString *nickname = [reply objectForKey:@"nickname"];
     NSString *text = [NSString stringWithFormat:@"%@: %@", nickname, [reply objectForKey:@"msg"]];
-
-    CGSize constraint = CGSizeMake(width - (CELL_CONTENT_MARGIN * 2), 20000.0f);
-    CGSize size = [text sizeWithFont:[UIFont systemFontOfSize:FONT_SIZE] constrainedToSize:constraint lineBreakMode:NSLineBreakByWordWrapping];
+    CGSize size = [Utils textSizeForText:text font:[UIFont systemFontOfSize:FONT_SIZE] width:width];
     CGFloat height = MAX(size.height, 20.0f - (CELL_CONTENT_MARGIN * 2));
     return height + (CELL_CONTENT_MARGIN * 2);
 }

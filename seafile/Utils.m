@@ -320,4 +320,27 @@
     return [[NSFileManager defaultManager] fileExistsAtPath:path];
 }
 
++ (CGSize)textSizeForText:(NSString *)txt font:(UIFont *)font width:(float)width
+{
+    CGFloat maxWidth = width;
+    CGFloat maxHeight = 1000;
+    
+    CGSize stringSize;
+    
+    if (NSFoundationVersionNumber > NSFoundationVersionNumber_iOS_6_0) {
+        CGRect stringRect = [txt boundingRectWithSize:CGSizeMake(maxWidth, maxHeight)
+                                              options:NSStringDrawingUsesLineFragmentOrigin
+                                           attributes:@{ NSFontAttributeName : font }
+                                              context:nil];
+        
+        stringSize = CGRectIntegral(stringRect).size;
+    }
+    else {
+        stringSize = [txt sizeWithFont:font
+                     constrainedToSize:CGSizeMake(maxWidth, maxHeight)];
+    }
+    
+    return CGSizeMake(roundf(stringSize.width), roundf(stringSize.height));
+}
+
 @end

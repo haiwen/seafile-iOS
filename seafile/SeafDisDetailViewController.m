@@ -10,6 +10,8 @@
 #import "SeafDisDetailViewController.h"
 #import "SeafRepliesHeaderView.h"
 
+#import "REComposeViewController.h"
+
 #import "SeafBase.h"
 #import "SVProgressHUD.h"
 #import "UIViewController+Extend.h"
@@ -19,7 +21,7 @@
 static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 
 
-@interface SeafDisDetailViewController ()<JSMessagesViewDataSource, JSMessagesViewDelegate, EGORefreshTableHeaderDelegate, UIScrollViewDelegate, UITextFieldDelegate, UITextViewDelegate>
+@interface SeafDisDetailViewController ()<JSMessagesViewDataSource, JSMessagesViewDelegate, EGORefreshTableHeaderDelegate, UIScrollViewDelegate, UITextFieldDelegate, UITextViewDelegate, REComposeViewControllerDelegate>
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
 @property (strong) UIBarButtonItem *msgItem;
 @property (strong) UIBarButtonItem *refreshItem;
@@ -68,6 +70,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     if (self.masterPopoverController != nil) {
         [self.masterPopoverController dismissPopoverAnimated:YES];
     }
+    [self dismissLoadingView];
     _msgtype = msgtype;
     _info = info;
     self.messages = [[NSMutableArray alloc] init];
@@ -176,8 +179,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
                     [self.info setObject:@"0" forKey:@"msgnum"];
                     self.connection.newmsgnum -= newmsgnum;
                     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-                    [appdelegate.discussVC.tableView reloadData];
-                    [appdelegate.discussVC refreshTabBarItem];
+                    [appdelegate.discussVC refreshBadge];
                 }
             } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
                 Warning("Failed to get messsages");
@@ -217,7 +219,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
             if (!self.refreshHeaderView.superview)
                 [self.tableView addSubview:self.refreshHeaderView];
             self.tableView.separatorColor = [UIColor colorWithRed:200.0/255 green:200.0/255 blue:200.0/255 alpha:1.0];
-            self.messageInputView.textView.returnKeyType  = UIReturnKeyDefault;
+            self.messageInputView.textView.returnKeyType = UIReturnKeyDefault;
             break;
         case MSG_USER:
             self.title = [self.info objectForKey:@"name"];
@@ -226,7 +228,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
             if (!self.refreshHeaderView.superview)
                 [self.tableView addSubview:self.refreshHeaderView];
             self.tableView.separatorColor = self.tableView.backgroundColor;
-            self.messageInputView.textView.returnKeyType  = UIReturnKeySend;
+            self.messageInputView.textView.returnKeyType = UIReturnKeySend;
             break;
         case MSG_REPLY:
             self.title = [self.info objectForKey:@"name"];
@@ -235,7 +237,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
             if (self.refreshHeaderView.superview)
                 [self.refreshHeaderView removeFromSuperview];
             self.tableView.separatorColor = self.tableView.backgroundColor;
-            self.messageInputView.textView.returnKeyType  = UIReturnKeyDefault;
+            self.messageInputView.textView.returnKeyType = UIReturnKeyDefault;
             break;
         default:
             break;
@@ -260,8 +262,17 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 {
     self.selectedMsg = nil;
     self.msgItem.enabled = NO;
-    [self setInputViewHidden:NO];
-    [self.messageInputView.textView becomeFirstResponder];
+    //[self setInputViewHidden:NO];
+    //[self.messageInputView.textView becomeFirstResponder];
+    REComposeViewController *composeVC = [[REComposeViewController alloc] init];
+    composeVC.title = NSLocalizedString(@"Group discussion", @"Seafile");
+    composeVC.hasAttachment = NO;
+    composeVC.delegate = self;
+    composeVC.text = @"";
+    composeVC.placeholderText = NSLocalizedString(@"Add a new discussion", @"Seafile");
+    composeVC.lineWidth = 0;
+    composeVC.navigationBar.tintColor = BAR_COLOR;
+    [composeVC presentFromRootViewController];
 }
 
 - (void)viewDidLoad
@@ -285,6 +296,8 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
                                                       width,
                                                       self.messageInputView.textView.frame.size.height);
     self.messageInputView.textView.backgroundColor = [UIColor whiteColor];
+    self.messageInputView.textView.layer.borderWidth = 1.0f;
+    self.messageInputView.textView.layer.borderColor = [[UIColor grayColor] CGColor];
 
     if (!IsIpad()) {
         UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Back", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
@@ -507,7 +520,6 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     UITableView *tview = (UITableView *)[cell viewWithTag:100];
     if (!tview) {
         tview = [[UITableView alloc] initWithFrame:frame style:UITableViewStylePlain];
-        //tview.tableHeaderView = [[SeafRepliesHeaderView alloc] initWithFrame:CGRectMake(0, 0, frame.size.width, REPLIES_HEADER_HEIGHT)];
         tview.tag = 100;
         tview.scrollEnabled = NO;
         tview.separatorStyle = UITableViewCellSeparatorStyleNone;
@@ -518,17 +530,14 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         [lineView setBackgroundColor:[UIColor lightGrayColor]];
         tview.tableHeaderView = lineView;
         [cell.contentView addSubview:tview];
-    } else
+    } else {
+        tview.delegate = nil;
+        tview.dataSource = nil;
+        [tview reloadData];
         tview.frame = frame;
+    }
 
     [cell.contentView bringSubviewToFront:tview];
-#if 0
-    SeafRepliesHeaderView *header = (SeafRepliesHeaderView *)tview.tableHeaderView;
-    header.timestamp.text = [NSDateFormatter localizedStringFromDate:msg.date
-                                                           dateStyle:NSDateFormatterMediumStyle
-                                                           timeStyle:NSDateFormatterShortStyle];
-    [header.btn addTarget:self action:@selector(comment:) forControlEvents:UIControlEventTouchUpInside];
-#endif
     tview.delegate = msg;
     tview.dataSource = msg;
     [tview reloadData];
@@ -570,11 +579,11 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         btn = [UIButton buttonWithType:UIButtonTypeCustom];
         btn.tag = 102;
         btn.showsTouchWhenHighlighted = YES;
-        [btn setImage:[UIImage imageNamed:@"comment"] forState:UIControlStateNormal];
+        [btn setImage:[UIImage imageNamed:@"reply"] forState:UIControlStateNormal];
         [btn addTarget:self action:@selector(comment:) forControlEvents:UIControlEventTouchUpInside];
         [cell.contentView addSubview:btn];
     }
-    btn.frame = CGRectMake(cell.bubbleView.frame.origin.x + [UIScreen mainScreen].applicationFrame.size.width * 0.70f, 8, REPLIES_HEADER_HEIGHT, REPLIES_HEADER_HEIGHT);
+    btn.frame = CGRectMake(width, 8, REPLIES_HEADER_HEIGHT, REPLIES_HEADER_HEIGHT);
     [cell.contentView bringSubviewToFront:btn];
 }
 
@@ -619,8 +628,9 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         cell.subtitleLabel.hidden = YES;
         CGFloat y = [JSBubbleView neededHeightForText:msg.text] + kJSTimeStampLabelHeight - 5;
         CGFloat width = cell.bubbleView.frame.size.width - 10;
+        width = [UIScreen mainScreen].applicationFrame.size.width * 0.70f;
         CGRect frame = CGRectMake(cell.bubbleView.frame.origin.x + 10, y, width, [msg neededHeightForReplies:width]);
-        [self setupHeaderView:cell msg:msg width:width];
+        [self setupHeaderView:cell msg:msg width:cell.bubbleView.frame.origin.x+width];
         UITableView *tview = [self setupRepliesView:cell msg:msg frame:frame];
         tview.tableHeaderView.hidden = (msg.replies.count == 0);
     }
@@ -746,5 +756,30 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     }
     return YES;
 }
-
+#pragma mark - REComposeViewControllerDelegate
+- (void)composeViewController:(REComposeViewController *)composeViewController didFinishWithResult:(REComposeResult)result
+{
+    if (result == REComposeResultCancelled) {
+        [composeViewController dismissViewControllerAnimated:YES completion:nil];
+    } else if (result == REComposeResultPosted) {
+        Debug("Text: %@", composeViewController.text);
+        NSString *text = composeViewController.text;
+        [SVProgressHUD showWithStatus:NSLocalizedString(@"Sending...", @"Seafile")];
+        SeafMessage *msg = [[SeafMessage alloc] initWithText:text email:self.sender date:[NSDate date] conn:self.connection type:self.msgtype];
+        NSString *url = [self msgUrl];
+        NSString *form = [NSString stringWithFormat:@"message=%@", [text escapedPostForm]];
+        [self.connection sendPost:url form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+            [SVProgressHUD dismiss];
+            [composeViewController dismissViewControllerAnimated:YES completion:nil];
+            msg.msgId = [JSON objectForKey:@"msgid"];
+            [self.messages addObject:msg];
+            [self.tableView reloadData];
+            [self scrollToBottomAnimated:NO];
+            [self saveToCache];
+        } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to send message", @"Seafile")];
+            self.messageInputView.sendButton.enabled = YES;
+        }];
+    }
+}
 @end

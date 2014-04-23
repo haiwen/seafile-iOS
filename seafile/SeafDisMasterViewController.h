@@ -19,6 +19,6 @@
 @property (strong, nonatomic) SeafConnection *connection;
 
 - (void)refreshView;
-- (void)refreshTabBarItem;
+- (void)refreshBadge;
 
 @end

@@ -37,7 +37,6 @@
 - (void)awakeFromNib
 {
     if (IsIpad()) {
-        self.clearsSelectionOnViewWillAppear = NO;
         self.contentSizeForViewInPopover = CGSizeMake(320.0, 600.0);
     }
     [super awakeFromNib];
@@ -114,6 +113,15 @@
         return (NSComparisonResult)NSOrderedSame;
     }];
     [self.tableView reloadData];
+}
+
+- (void)refreshBadge
+{
+    NSIndexPath *indexPath = [self.tableView indexPathForSelectedRow];
+    SeafMessageCell *cell = (SeafMessageCell *)[self.tableView cellForRowAtIndexPath:indexPath];
+    NSMutableDictionary *dict = [self.msgSources objectAtIndex:indexPath.row];
+    [self checkCellBadge:cell info:dict];
+    [self refreshTabBarItem];
 }
 
 - (void)refreshView
@@ -206,7 +214,17 @@
 {
     return self.msgSources.count;
 }
-
+- (void)checkCellBadge:(SeafMessageCell *)cell info:(NSDictionary *)dict
+{
+    if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0 ) {
+        cell.badgeLabel.text = [NSString stringWithFormat:@"%lld", [[dict objectForKey:@"msgnum"] integerValue:0]];
+        cell.badgeLabel.hidden = NO;
+        cell.badgeImage.hidden = NO;
+    } else {
+        cell.badgeLabel.hidden = YES;
+        cell.badgeImage.hidden = YES;
+    }
+}
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     NSString *CellIdentifier = @"SeafMessageCell";
@@ -214,6 +232,8 @@
     if (cell == nil) {
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:CellIdentifier owner:self options:nil];
         cell = [cells objectAtIndex:0];
+        cell.selectedBackgroundView = [[UIView alloc] initWithFrame:cell.frame];
+        cell.selectedBackgroundView.backgroundColor = [UIColor colorWithRed:252.0/256 green:171.0/256 blue:128.0/256 alpha:1.0];
     }
     NSMutableDictionary *dict = [self.msgSources objectAtIndex:indexPath.row];
     cell.textLabel.text = [dict objectForKey:@"name"];
@@ -237,14 +257,7 @@
             break;
     }
     cell.imageView.image = [JSAvatarImageFactory avatarImage:[UIImage imageWithContentsOfFile:avatar] croppedToCircle:YES];
-    if ([[dict objectForKey:@"msgnum"] integerValue:0] > 0 ) {
-        cell.badgeLabel.text = [NSString stringWithFormat:@"%lld", [[dict objectForKey:@"msgnum"] integerValue:0]];
-        cell.badgeLabel.hidden = NO;
-        cell.badgeImage.hidden = NO;
-    } else {
-        cell.badgeLabel.hidden = YES;
-        cell.badgeImage.hidden = YES;
-    }
+    [self checkCellBadge:cell info:dict];
     return cell;
 }
 
@@ -268,11 +281,8 @@
     if (IsIpad() && self.detailViewController.msgtype == MSG_REPLY) {
         if (dict != self.detailViewController.info)
             [self refreshView];
-    } else {
-        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationNone];
-        [self refreshTabBarItem];
-    }
-    long long msgtype = [[dict objectForKey:@"type"] integerValue:-1];
+    } 
+    long long msgtype = [[dict objectForKey:@"type"] integerValue:MSG_NONE];
     [self.detailViewController setMsgtype:(int)msgtype info:dict];
     if (!IsIpad())    [appdelegate showDetailView:self.detailViewController];
 }
