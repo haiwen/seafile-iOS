@@ -812,7 +812,6 @@
 		57094B3315B9A64500F48C08 /* images */ = {
 			isa = PBXGroup;
 			children = (
-				571CFA9319076469002A58BF /* reply.png */,
 				570DFACA16A19EFD00ADD5F2 /* account.png */,
 				57A550DC177F283700E3BA9B /* addmsg.png */,
 				57C03F3817FB227100F7B575 /* addmsg2.png */,
@@ -878,6 +877,7 @@
 				57227A5B18389DB600CD28E9 /* red.png */,
 				57A550D9177F23BB00E3BA9B /* refresh.png */,
 				57C03F4017FB271100F7B575 /* refresh2.png */,
+				571CFA9319076469002A58BF /* reply.png */,
 				57A055A81644EC84006511AA /* seafile-logo.png */,
 				576D6EB41604804E000310F5 /* share.png */,
 				57C03F3D17FB271100F7B575 /* share2.png */,

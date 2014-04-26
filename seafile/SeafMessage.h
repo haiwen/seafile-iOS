@@ -15,18 +15,12 @@
 
 @property CGFloat repliesHeight;
 
+@property SeafConnection *connection;
 @property NSString *msgId;
 @property NSString *email;
 @property NSString *nickname;
 
 @property NSMutableArray *replies;
-
-- (instancetype)initWithText:(NSString *)text
-                       email:(NSString *)email
-                      sender:(NSString *)sender
-                        date:(NSDate *)date
-                       msgId:(NSString *)msgId;
-
 
 - (instancetype)initWithText:(NSString *)text
                        email:(NSString *)email

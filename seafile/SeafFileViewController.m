@@ -399,7 +399,8 @@ enum {
         [self showLodingView];
         self.state = STATE_LOADING;
     }
-    Debug("Upload %lu, state=%d", (unsigned long)_directory.uploadItems.count, self.state);
+    if (_directory.uploadItems.count > 0)
+        Debug("Upload %lu, state=%d", (unsigned long)_directory.uploadItems.count, self.state);
 
     for (SeafUploadFile *file in _directory.uploadItems) {
         file.delegate = self;

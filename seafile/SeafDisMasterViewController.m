@@ -52,7 +52,7 @@
     // Do any additional setup after loading the view, typically from a nib.
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     self.detailViewController = (SeafDisDetailViewController *)[appdelegate detailViewController:TABBED_DISCUSSION];
-    self.tableView.rowHeight = 50;
+    self.tableView.rowHeight = 52;
     self.detailViewController.connection = _connection;
     if (_refreshHeaderView == nil) {
         EGORefreshTableHeaderView *view = [[EGORefreshTableHeaderView alloc] initWithFrame:CGRectMake(0.0f, 0.0f - self.tableView.bounds.size.height, self.view.frame.size.width, self.tableView.bounds.size.height)];
@@ -200,7 +200,6 @@
 
 - (void)viewWillAppear:(BOOL)animated
 {
-    [self refreshView];
     [super viewWillAppear:animated];
 }
 
@@ -278,9 +277,8 @@
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     NSMutableDictionary *dict = [self.msgSources objectAtIndex:indexPath.row];
     Debug("select %@", dict);
-    if (IsIpad() && self.detailViewController.msgtype == MSG_REPLY) {
-        if (dict != self.detailViewController.info)
-            [self refreshView];
+    if (self.detailViewController.msgtype == MSG_REPLY && dict != self.detailViewController.info) {
+        [self refreshView];
     } 
     long long msgtype = [[dict objectForKey:@"type"] integerValue:MSG_NONE];
     [self.detailViewController setMsgtype:(int)msgtype info:dict];

@@ -103,7 +103,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     return url;
 }
 
-- (NSMutableArray *)paseMessageData:(id)JSON
+- (NSMutableArray *)parseMessageData:(id)JSON
 {
     NSMutableArray *messages = [[NSMutableArray alloc] init];
     if (!JSON || ![JSON isKindOfClass:[NSDictionary class]])
@@ -134,13 +134,10 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     [messages sortUsingComparator:^NSComparisonResult(SeafMessage *obj1, SeafMessage *obj2) {
         return [obj1.date compare:obj2.date];
     }];
+
     return messages;
 }
 
-- (void)handleMessageData:(id)JSON
-{
-    self.messages = [self paseMessageData:JSON];
-}
 - (void)loadCacheData
 {
     switch (self.msgtype) {
@@ -151,7 +148,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         case MSG_USER:
         {
             id JSON = [self.connection getCachedObj:[self msgUrl]];
-            self.messages = [self paseMessageData:JSON];
+            self.messages = [self parseMessageData:JSON];
             break;
         }
     }
@@ -169,7 +166,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
             NSString *url = [self msgUrl];
             [self.connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
                 [self.connection savetoCacheKey:url value:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
-                self.messages = [self paseMessageData:JSON];
+                self.messages = [self parseMessageData:JSON];
                 [self.tableView reloadData];
                 [self scrollToBottomAnimated:YES];
                 [self dismissLoadingView];
@@ -402,10 +399,10 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     if (self.msgtype == MSG_USER)
         return [super tableView:tableView heightForRowAtIndexPath:indexPath];
 
-    CGFloat width = self.tableView.frame.size.width -(kJSAvatarImageSize - 4.0f) - 10;
+    CGFloat width = [UIScreen mainScreen].applicationFrame.size.width * 0.70f;
     SeafMessage *msg = [self.messages objectAtIndex:indexPath.row];
     CGFloat bubbleHeight = [JSBubbleView neededHeightForText:msg.text];
-    return kJSTimeStampLabelHeight + MAX(kJSAvatarImageSize, bubbleHeight+[msg neededHeightForReplies:width]);
+    return kJSTimeStampLabelHeight + MAX(kJSAvatarImageSize, 3+bubbleHeight+[msg neededHeightForReplies:width]);
 }
 
 #pragma mark - Messages view delegate: REQUIRED
@@ -524,7 +521,6 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         tview.scrollEnabled = NO;
         tview.separatorStyle = UITableViewCellSeparatorStyleNone;
         tview.backgroundColor = self.tableView.backgroundColor;
-        tview.autoresizingMask = UIViewAutoresizingFlexibleWidth;
         tview.allowsSelection = NO;
         UIView *lineView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, frame.size.width, 1.0f)];
         [lineView setBackgroundColor:[UIColor lightGrayColor]];
@@ -546,6 +542,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 
 - (void)setupHeaderView:(JSBubbleMessageCell *)cell msg:(SeafMessage *)msg width:(float)width
 {
+    float headerY = 11.0f;
     UILabel *nameLabel = (UILabel *)[cell viewWithTag:101];
     if (!nameLabel) {
         nameLabel = [[UILabel alloc] initWithFrame:CGRectZero];
@@ -558,8 +555,8 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     [cell.contentView bringSubviewToFront:nameLabel];
     nameLabel.text = msg.nickname;
     nameLabel.frame = CGRectMake(cell.bubbleView.frame.origin.x + 10,
-                                           8,
-                                           100,
+                                           headerY,
+                                           90,
                                            kJSTimeStampLabelHeight);
 
     cell.timestampLabel.text = [NSDateFormatter localizedStringFromDate:msg.date
@@ -567,12 +564,12 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
                                                            timeStyle:NSDateFormatterShortStyle];
 
     cell.timestampLabel.textAlignment = NSTextAlignmentLeft;
-    cell.timestampLabel.frame = CGRectMake(cell.bubbleView.frame.origin.x + 110,
-                                           8,
-                                           150,
+    cell.timestampLabel.frame = CGRectMake(cell.bubbleView.frame.origin.x + 95,
+                                           headerY,
+                                           140,
                                            kJSTimeStampLabelHeight);
     cell.timestampLabel.autoresizingMask = 0;
-    cell.timestampLabel.font = [UIFont boldSystemFontOfSize:12.0f];
+    cell.timestampLabel.font = [UIFont boldSystemFontOfSize:11.0f];
 
     UIButton *btn = (UIButton *)[cell viewWithTag:102];
     if (!btn) {
@@ -581,9 +578,10 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         btn.showsTouchWhenHighlighted = YES;
         [btn setImage:[UIImage imageNamed:@"reply"] forState:UIControlStateNormal];
         [btn addTarget:self action:@selector(comment:) forControlEvents:UIControlEventTouchUpInside];
+        [btn.imageView setContentMode: UIViewContentModeCenter];
         [cell.contentView addSubview:btn];
     }
-    btn.frame = CGRectMake(width, 8, REPLIES_HEADER_HEIGHT, REPLIES_HEADER_HEIGHT);
+    btn.frame = CGRectMake(width-5, headerY-5, REPLIES_HEADER_HEIGHT+10, REPLIES_HEADER_HEIGHT+10);
     [cell.contentView bringSubviewToFront:btn];
 }
 
@@ -619,18 +617,18 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 
     if (self.msgtype == MSG_GROUP || self.msgtype == MSG_REPLY) {
         cell.avatarImageView.frame = CGRectMake(cell.avatarImageView.frame.origin.x,
-                                                0,
+                                                6.0,
                                                 cell.avatarImageView.frame.size.width,
                                                 cell.avatarImageView.frame.size.height);
 
         cell.avatarImageView.autoresizingMask = (UIViewAutoresizingFlexibleLeftMargin
                                                  | UIViewAutoresizingFlexibleRightMargin);
+        [cell.bubbleView.textView setContentInset:UIEdgeInsetsMake(3, 0, 0, 0)];
         cell.subtitleLabel.hidden = YES;
-        CGFloat y = [JSBubbleView neededHeightForText:msg.text] + kJSTimeStampLabelHeight - 5;
-        CGFloat width = cell.bubbleView.frame.size.width - 10;
-        width = [UIScreen mainScreen].applicationFrame.size.width * 0.70f;
+        CGFloat y = [JSBubbleView neededHeightForText:msg.text] + kJSTimeStampLabelHeight ;
+        CGFloat width = [UIScreen mainScreen].applicationFrame.size.width * 0.70f;
         CGRect frame = CGRectMake(cell.bubbleView.frame.origin.x + 10, y, width, [msg neededHeightForReplies:width]);
-        [self setupHeaderView:cell msg:msg width:cell.bubbleView.frame.origin.x+width];
+        [self setupHeaderView:cell msg:msg width:cell.bubbleView.frame.origin.x+15+width];
         UITableView *tview = [self setupRepliesView:cell msg:msg frame:frame];
         tview.tableHeaderView.hidden = (msg.replies.count == 0);
     }
@@ -685,7 +683,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
             self.isLoading = YES;
             NSString *url = [[self msgUrl] stringByAppendingFormat:@"?page=%d", self.next_page, nil];
             [self.connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
-                NSMutableArray *arr = [self paseMessageData:JSON];
+                NSMutableArray *arr = [self parseMessageData:JSON];
                 self.next_page = (int)[[JSON objectForKey:@"next_page"] integerValue:-1];
                 long long lastID = 0;
                 if (arr.count > 0) {
