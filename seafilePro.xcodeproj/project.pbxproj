@@ -188,7 +188,6 @@
 		5782EE771734F3A300A76338 /* pagedown.css in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE691734F3A300A76338 /* pagedown.css */; };
 		5782EE7B1734F3A300A76338 /* wmd-buttons.png in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE6B1734F3A300A76338 /* wmd-buttons.png */; };
 		5795F49B16A7266F00FF90E3 /* SeafAccountCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 5795F49916A7266E00FF90E3 /* SeafAccountCell.m */; };
-		5796D03C18F5C21D00D5AE39 /* SeafRepliesHeaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5796D03B18F5C21D00D5AE39 /* SeafRepliesHeaderView.m */; };
 		5796D03F18F78FCD00D5AE39 /* SeafAvatar.m in Sources */ = {isa = PBXBuildFile; fileRef = 5796D03E18F78FCD00D5AE39 /* SeafAvatar.m */; };
 		57A07DD418B4CB0200AF543F /* SeafTextEditorViewController_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57A07DD218B4CB0200AF543F /* SeafTextEditorViewController_iPhone.xib */; };
 		57A550DB177F23BB00E3BA9B /* refresh.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550D9177F23BB00E3BA9B /* refresh.png */; };
@@ -581,8 +580,6 @@
 		57931B531632E5DB00B462BA /* SeafUploadDirViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafUploadDirViewController.m; sourceTree = "<group>"; };
 		5795F49816A7266E00FF90E3 /* SeafAccountCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafAccountCell.h; sourceTree = "<group>"; };
 		5795F49916A7266E00FF90E3 /* SeafAccountCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafAccountCell.m; sourceTree = "<group>"; };
-		5796D03A18F5C21D00D5AE39 /* SeafRepliesHeaderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafRepliesHeaderView.h; sourceTree = "<group>"; };
-		5796D03B18F5C21D00D5AE39 /* SeafRepliesHeaderView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafRepliesHeaderView.m; sourceTree = "<group>"; };
 		5796D03D18F78FCD00D5AE39 /* SeafAvatar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafAvatar.h; sourceTree = "<group>"; };
 		5796D03E18F78FCD00D5AE39 /* SeafAvatar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafAvatar.m; sourceTree = "<group>"; };
 		57A055A51644EAD1006511AA /* tab-home.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-home.png"; sourceTree = "<group>"; };
@@ -974,8 +971,6 @@
 				57DB828F15A833FA00097CEC /* SeafFileViewController.m */,
 				576328BC190032EE009EBCB8 /* SeafMessageCell.h */,
 				576328BD190032EE009EBCB8 /* SeafMessageCell.m */,
-				5796D03A18F5C21D00D5AE39 /* SeafRepliesHeaderView.h */,
-				5796D03B18F5C21D00D5AE39 /* SeafRepliesHeaderView.m */,
 				5764C829163BF91B006AD511 /* SeafSettingsViewController.h */,
 				5764C82A163BF91B006AD511 /* SeafSettingsViewController.m */,
 				57853C8D164675CB00CE8857 /* SeafStarredFilesViewController.h */,
@@ -1854,7 +1849,6 @@
 				57D2F3C518D332AD00A52EB6 /* UIImage+JSMessagesView.m in Sources */,
 				571D8CAB1677881400F1A22C /* main.m in Sources */,
 				571D8CAC1677881400F1A22C /* SeafAppDelegate.m in Sources */,
-				5796D03C18F5C21D00D5AE39 /* SeafRepliesHeaderView.m in Sources */,
 				571D8CAD1677881400F1A22C /* SeafFileViewController.m in Sources */,
 				5796D03F18F78FCD00D5AE39 /* SeafAvatar.m in Sources */,
 				5732065C18EB16F4003250DE /* AFNetworkActivityIndicatorManager.m in Sources */,

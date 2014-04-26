@@ -279,7 +279,7 @@
     Debug("select %@", dict);
     if (self.detailViewController.msgtype == MSG_REPLY && dict != self.detailViewController.info) {
         [self refreshView];
-    } 
+    }
     long long msgtype = [[dict objectForKey:@"type"] integerValue:MSG_NONE];
     [self.detailViewController setMsgtype:(int)msgtype info:dict];
     if (!IsIpad())    [appdelegate showDetailView:self.detailViewController];

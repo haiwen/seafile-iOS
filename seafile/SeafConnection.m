@@ -678,7 +678,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)downloadAvatars
 {
-    Debug("%@, %d, %d, %@\n", self.address, [self authorized], self.email2nickMap.count, self.email2nickMap);
+    Debug("%@, %d, %ld, %@\n", self.address, [self authorized], (long)self.email2nickMap.count, self.email2nickMap);
     if (![self authorized])
         return;
     for (NSString *email in self.email2nickMap.allKeys) {

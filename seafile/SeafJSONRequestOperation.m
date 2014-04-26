@@ -114,7 +114,7 @@ static dispatch_queue_t json_request_operation_processing_queue() {
                     if (self.JSONError) {
                         if (failure)   failure (self, self.JSONError);
                     } else {
-                        int code = self.response.statusCode / 100;
+                        long code = self.response.statusCode / 100;
                         if (code != 2 && code != 3) {
                             NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:self.response.statusCode userInfo:nil];
                             if (failure)    failure (self, err);

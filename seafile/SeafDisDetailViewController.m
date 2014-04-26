@@ -8,7 +8,6 @@
 
 #import "SeafAppDelegate.h"
 #import "SeafDisDetailViewController.h"
-#import "SeafRepliesHeaderView.h"
 
 #import "REComposeViewController.h"
 
@@ -134,7 +133,6 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     [messages sortUsingComparator:^NSComparisonResult(SeafMessage *obj1, SeafMessage *obj2) {
         return [obj1.date compare:obj2.date];
     }];
-
     return messages;
 }
 
@@ -522,9 +520,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         tview.separatorStyle = UITableViewCellSeparatorStyleNone;
         tview.backgroundColor = self.tableView.backgroundColor;
         tview.allowsSelection = NO;
-        UIView *lineView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, frame.size.width, 1.0f)];
-        [lineView setBackgroundColor:[UIColor lightGrayColor]];
-        tview.tableHeaderView = lineView;
+        tview.sectionHeaderHeight = 1;
         [cell.contentView addSubview:tview];
     } else {
         tview.delegate = nil;
@@ -629,14 +625,13 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         CGFloat width = [UIScreen mainScreen].applicationFrame.size.width * 0.70f;
         CGRect frame = CGRectMake(cell.bubbleView.frame.origin.x + 10, y, width, [msg neededHeightForReplies:width]);
         [self setupHeaderView:cell msg:msg width:cell.bubbleView.frame.origin.x+15+width];
-        UITableView *tview = [self setupRepliesView:cell msg:msg frame:frame];
-        tview.tableHeaderView.hidden = (msg.replies.count == 0);
+        [self setupRepliesView:cell msg:msg frame:frame];
     }
 }
 
 - (NSString *)customCellIdentifierForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    return [NSString stringWithFormat:@"JSMessageCell_%d_%d", self.msgtype, [self messageTypeForRowAtIndexPath:indexPath]];
+    return [NSString stringWithFormat:@"JSMessageCell_%d_%ld", self.msgtype, (long)[self messageTypeForRowAtIndexPath:indexPath]];
 }
 
 #pragma mark - Messages view data source: REQUIRED
