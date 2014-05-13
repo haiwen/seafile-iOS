@@ -125,7 +125,7 @@
 - (CGFloat)heightForMsgReply:(NSDictionary *)reply width:(float)width
 {
     CGSize s = [Utils textSizeForText:[reply objectForKey:@"msg"] font:[UIFont systemFontOfSize:FONT_SIZE] width:MSGLABEL_WIDTH(width)];
-    return 45 + s.height - 15;
+    return 45 + s.height - 15 +5;
 }
 - (CGFloat)heightForMsgAtt:(NSDictionary *)att width:(float)width
 {
@@ -227,8 +227,8 @@
     float width = MSGLABEL_WIDTH(tableView.frame.size.width);
     CGSize s = [Utils textSizeForText:msgLabel.text font:msgLabel.font width:width];
     imageView.frame = CGRectMake(AVATAR_OFFSET, 3, 43.0, 43.0);
-    nameLabel.frame = CGRectMake(NAME_OFFSET, 5, width, 22.0);
-    msgLabel.frame = CGRectMake(NAME_OFFSET, 28.0, width, s.height);
+    nameLabel.frame = CGRectMake(NAME_OFFSET, 3, width, 22.0);
+    msgLabel.frame = CGRectMake(NAME_OFFSET, 25.0, width, s.height);
     return cell;
 }
 
@@ -240,6 +240,9 @@
     }
     for (NSDictionary *a in self.atts) {
         height += [self heightForMsgAtt:a width:width] + 1;
+    }
+    if (height > 0) {
+        height += 5;
     }
     return height;
 }

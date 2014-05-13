@@ -20,5 +20,6 @@
 
 - (void)refreshView;
 - (void)refreshBadge;
+- (void)updateLastMessage;
 
 @end

@@ -52,7 +52,7 @@
     // Do any additional setup after loading the view, typically from a nib.
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     self.detailViewController = (SeafDisDetailViewController *)[appdelegate detailViewController:TABBED_DISCUSSION];
-    self.tableView.rowHeight = 52;
+    self.tableView.rowHeight = 58;
     self.detailViewController.connection = _connection;
     if (_refreshHeaderView == nil) {
         EGORefreshTableHeaderView *view = [[EGORefreshTableHeaderView alloc] initWithFrame:CGRectMake(0.0f, 0.0f - self.tableView.bounds.size.height, self.view.frame.size.width, self.tableView.bounds.size.height)];
@@ -122,6 +122,14 @@
     NSMutableDictionary *dict = [self.msgSources objectAtIndex:indexPath.row];
     [self checkCellBadge:cell info:dict];
     [self refreshTabBarItem];
+}
+
+- (void)updateLastMessage
+{
+    NSIndexPath *indexPath = [self.tableView indexPathForSelectedRow];
+    SeafMessageCell *cell = (SeafMessageCell *)[self.tableView cellForRowAtIndexPath:indexPath];
+    NSMutableDictionary *dict = [self.msgSources objectAtIndex:indexPath.row];
+    cell.detailLabel.text = [[dict objectForKey:@"lastmsg"] stringValue];
 }
 
 - (void)refreshView

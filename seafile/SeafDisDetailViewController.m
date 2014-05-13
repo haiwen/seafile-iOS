@@ -214,7 +214,6 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
             if (!self.refreshHeaderView.superview)
                 [self.tableView addSubview:self.refreshHeaderView];
             self.tableView.separatorColor = [UIColor colorWithRed:200.0/255 green:200.0/255 blue:200.0/255 alpha:1.0];
-            self.messageInputView.textView.returnKeyType = UIReturnKeyDefault;
             break;
         case MSG_USER:
             self.title = [self.info objectForKey:@"name"];
@@ -223,7 +222,6 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
             if (!self.refreshHeaderView.superview)
                 [self.tableView addSubview:self.refreshHeaderView];
             self.tableView.separatorColor = self.tableView.backgroundColor;
-            self.messageInputView.textView.returnKeyType = UIReturnKeySend;
             break;
         case MSG_REPLY:
             self.title = [self.info objectForKey:@"name"];
@@ -232,7 +230,6 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
             if (self.refreshHeaderView.superview)
                 [self.refreshHeaderView removeFromSuperview];
             self.tableView.separatorColor = self.tableView.backgroundColor;
-            self.messageInputView.textView.returnKeyType = UIReturnKeyDefault;
             break;
         default:
             break;
@@ -283,6 +280,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     self.tableView.tableFooterView = [[UIView alloc] initWithFrame:CGRectZero];
     self.tableView.backgroundColor = [UIColor whiteColor];
     self.tableView.separatorColor = self.tableView.backgroundColor;
+    self.messageInputView.textView.returnKeyType = UIReturnKeySend;
     [self.messageInputView.sendButton setTitleColor:BAR_COLOR forState:UIControlStateNormal];
     [self.messageInputView.sendButton setTitleColor:BAR_COLOR forState:UIControlStateHighlighted];
     float width = self.messageInputView.textView.frame.size.width + self.messageInputView.textView.frame.origin.x - 10;
@@ -400,7 +398,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     CGFloat width = [UIScreen mainScreen].applicationFrame.size.width * 0.70f;
     SeafMessage *msg = [self.messages objectAtIndex:indexPath.row];
     CGFloat bubbleHeight = [JSBubbleView neededHeightForText:msg.text];
-    return kJSTimeStampLabelHeight + MAX(kJSAvatarImageSize, 3+bubbleHeight+[msg neededHeightForReplies:width]);
+    return 30+bubbleHeight+[msg neededHeightForReplies:width];
 }
 
 #pragma mark - Messages view delegate: REQUIRED
@@ -455,6 +453,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         [self.messages addObject:msg];
         self.messageInputView.sendButton.enabled = YES;
         [self finishSend];
+        [self updateLastMessage:text];
         [self scrollToBottomAnimated:NO];
         [self saveToCache];
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
@@ -506,6 +505,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     self.selectedMsg = [self.messages objectAtIndex:selectedindex.row];
     self.msgItem.enabled = NO;
     [self setInputViewHidden:NO];
+    self.messageInputView.textView.returnKeyType = UIReturnKeySend;
     [self.messageInputView.textView becomeFirstResponder];
     [self.tableView scrollToRowAtIndexPath:selectedindex atScrollPosition:UITableViewScrollPositionBottom animated:YES];
 }
@@ -538,7 +538,8 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 
 - (void)setupHeaderView:(JSBubbleMessageCell *)cell msg:(SeafMessage *)msg width:(float)width
 {
-    float headerY = 11.0f;
+    float headerY = 14.0f;
+    float offsetX = IsIpad() ? 60 : 46;
     UILabel *nameLabel = (UILabel *)[cell viewWithTag:101];
     if (!nameLabel) {
         nameLabel = [[UILabel alloc] initWithFrame:CGRectZero];
@@ -550,18 +551,18 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     }
     [cell.contentView bringSubviewToFront:nameLabel];
     nameLabel.text = msg.nickname;
-    nameLabel.frame = CGRectMake(cell.bubbleView.frame.origin.x + 10,
-                                           headerY,
-                                           90,
-                                           kJSTimeStampLabelHeight);
+    nameLabel.frame = CGRectMake(offsetX + 10,
+                                 headerY,
+                                 90,
+                                 kJSTimeStampLabelHeight);
 
     cell.timestampLabel.text = [NSDateFormatter localizedStringFromDate:msg.date
                                                            dateStyle:NSDateFormatterMediumStyle
                                                            timeStyle:NSDateFormatterShortStyle];
 
     cell.timestampLabel.textAlignment = NSTextAlignmentLeft;
-    cell.timestampLabel.frame = CGRectMake(cell.bubbleView.frame.origin.x + 95,
-                                           headerY,
+    cell.timestampLabel.frame = CGRectMake(offsetX + 95,
+                                           headerY+1,
                                            140,
                                            kJSTimeStampLabelHeight);
     cell.timestampLabel.autoresizingMask = 0;
@@ -577,6 +578,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         [btn.imageView setContentMode: UIViewContentModeCenter];
         [cell.contentView addSubview:btn];
     }
+    width = cell.bubbleView.frame.origin.x+15+width;
     btn.frame = CGRectMake(width-5, headerY-5, REPLIES_HEADER_HEIGHT+10, REPLIES_HEADER_HEIGHT+10);
     [cell.contentView bringSubviewToFront:btn];
 }
@@ -612,19 +614,23 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     SeafMessage *msg = [self.messages objectAtIndex:indexPath.row];
 
     if (self.msgtype == MSG_GROUP || self.msgtype == MSG_REPLY) {
-        cell.avatarImageView.frame = CGRectMake(cell.avatarImageView.frame.origin.x,
-                                                6.0,
+        float offsetX = IsIpad() ? 60 : 46;
+        float offsetIX = IsIpad() ? 5 : cell.avatarImageView.frame.origin.x;
+        float bubbleH = [JSBubbleView neededHeightForText:msg.text];
+        CGFloat y = bubbleH + kJSTimeStampLabelHeight + 5 ;
+        CGFloat width = [UIScreen mainScreen].applicationFrame.size.width * 0.70f;
+        cell.bubbleView.frame = CGRectMake(offsetX, 24, cell.bubbleView.frame.size.width, bubbleH);
+        cell.bubbleView.autoresizingMask = (UIViewAutoresizingFlexibleWidth
+                                       | UIViewAutoresizingFlexibleBottomMargin);
+        cell.avatarImageView.frame = CGRectMake(offsetIX, 6.0,
                                                 cell.avatarImageView.frame.size.width,
                                                 cell.avatarImageView.frame.size.height);
 
         cell.avatarImageView.autoresizingMask = (UIViewAutoresizingFlexibleLeftMargin
                                                  | UIViewAutoresizingFlexibleRightMargin);
-        [cell.bubbleView.textView setContentInset:UIEdgeInsetsMake(3, 0, 0, 0)];
         cell.subtitleLabel.hidden = YES;
-        CGFloat y = [JSBubbleView neededHeightForText:msg.text] + kJSTimeStampLabelHeight ;
-        CGFloat width = [UIScreen mainScreen].applicationFrame.size.width * 0.70f;
         CGRect frame = CGRectMake(cell.bubbleView.frame.origin.x + 10, y, width, [msg neededHeightForReplies:width]);
-        [self setupHeaderView:cell msg:msg width:cell.bubbleView.frame.origin.x+15+width];
+        [self setupHeaderView:cell msg:msg width:width];
         [self setupRepliesView:cell msg:msg frame:frame];
     }
 }
@@ -741,11 +747,11 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 
 - (BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text
 {
-    if (self.msgtype != MSG_USER)
-        return YES;
-    if([text isEqualToString:@"\n"]) {
-        [self.messageInputView.sendButton sendActionsForControlEvents: UIControlEventTouchUpInside];
-        return NO;
+    if (self.messageInputView.textView.returnKeyType == UIReturnKeySend) {
+        if([text isEqualToString:@"\n"]) {
+            [self.messageInputView.sendButton sendActionsForControlEvents: UIControlEventTouchUpInside];
+            return NO;
+        }
     }
     return YES;
 }
@@ -767,6 +773,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
             msg.msgId = [JSON objectForKey:@"msgid"];
             [self.messages addObject:msg];
             [self.tableView reloadData];
+            [self updateLastMessage:text];
             [self scrollToBottomAnimated:NO];
             [self saveToCache];
         } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
@@ -774,5 +781,12 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
             self.messageInputView.sendButton.enabled = YES;
         }];
     }
+}
+
+- (void)updateLastMessage:(NSString *)msg
+{
+    [self.info setObject:msg forKey:@"lastmsg"];
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    [appdelegate.discussVC updateLastMessage];
 }
 @end
