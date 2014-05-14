@@ -158,6 +158,7 @@
         @synchronized(self) {
             [self refreshView];
             [self doneLoadingTableViewData];
+            [self.connection performSelector:@selector(downloadAvatars:) withObject:[NSNumber numberWithBool:NO] afterDelay:2.0];
         }
     }
     failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
@@ -173,6 +174,7 @@
             Debug("Success to get groups ...\n");
             [self refreshView];
             [self doneLoadingTableViewData];
+            [self.connection performSelector:@selector(downloadAvatars:) withObject:[NSNumber numberWithBool:YES] afterDelay:2.0];
         }
     }
     failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
@@ -195,15 +197,16 @@
 
 - (void)tick:(NSTimer *)timer
 {
-    //if (self.connection)
-    //    [self refreshBackground:nil];
+    if (self.connection)
+        [self refreshBackground:nil];
 }
 
 - (void)setConnection:(SeafConnection *)conn
 {
     _connection = conn;
     [self.detailViewController setConnection:conn];
-    [self performSelector:@selector(refresh:) withObject:nil afterDelay:1.5f];
+    [self refreshView];
+    [self performSelector:@selector(refreshBackground:) withObject:nil afterDelay:1.5f];
 }
 
 - (void)viewWillAppear:(BOOL)animated

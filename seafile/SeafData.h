@@ -29,7 +29,6 @@
 @property (nonatomic, retain) NSString *oid;
 @property (nonatomic, retain) NSString *mpath;
 
-
 @end
 
 
@@ -39,6 +38,6 @@
 @property (nonatomic, retain) NSString *username;
 @property (nonatomic, retain) NSString *key;
 @property (nonatomic, retain) NSString *content;
-
+@property (nonatomic, retain) NSDate *timestamp;
 
 @end

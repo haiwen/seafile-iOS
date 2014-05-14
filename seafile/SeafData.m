@@ -34,5 +34,6 @@
 @dynamic username;
 @dynamic key;
 @dynamic content;
+@dynamic timestamp;
 
 @end

@@ -34,6 +34,8 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 @property (strong, nonatomic) IBOutlet UIActivityIndicatorView *loadingView;
 
 @property BOOL isLoading;
+@property NSDate *lastUpdateTime;
+
 @end
 
 @implementation SeafDisDetailViewController
@@ -141,12 +143,14 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     switch (self.msgtype) {
         case MSG_NONE:
         case MSG_REPLY:
+            self.lastUpdateTime = [NSDate dateWithTimeIntervalSince1970:0];
             break;
         case MSG_GROUP:
         case MSG_USER:
         {
             id JSON = [self.connection getCachedObj:[self msgUrl]];
             self.messages = [self parseMessageData:JSON];
+            self.lastUpdateTime = [self.connection getCachedTimestamp:[self msgUrl]];
             break;
         }
     }
@@ -163,6 +167,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         {
             NSString *url = [self msgUrl];
             [self.connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+                self.lastUpdateTime = [NSDate date];
                 [self.connection savetoCacheKey:url value:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
                 self.messages = [self parseMessageData:JSON];
                 [self.tableView reloadData];
@@ -187,6 +192,20 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     }
 }
 
+- (BOOL)cacheOutOfDate
+{
+    if (!self.lastUpdateTime) return YES;
+    NSTimeInterval val = -[self.lastUpdateTime timeIntervalSinceNow];
+    if (val > 3600) {// one hour
+        return YES;
+    }
+    long long timestamp = [[self.info objectForKey:@"mtime"] integerValue:0];
+    if ([self.lastUpdateTime compare:[NSDate dateWithTimeIntervalSince1970:timestamp]] == NSOrderedDescending) {
+        return YES;
+    }
+    return NO;
+}
+
 - (void)refreshView
 {
     Debug("type=%d, count=%lu\n", self.msgtype, (unsigned long)self.messages.count);
@@ -194,6 +213,8 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         long long newmsgnum = [[self.info objectForKey:@"msgnum"] integerValue:0];
         if (self.messages.count == 0 || newmsgnum > 0) {
             [self refresh:nil];
+        } else if ([self cacheOutOfDate]) {
+            [self downloadMessages];
         }
     }
     // Update the user interface for the detail item.
@@ -254,8 +275,6 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 {
     self.selectedMsg = nil;
     self.msgItem.enabled = NO;
-    //[self setInputViewHidden:NO];
-    //[self.messageInputView.textView becomeFirstResponder];
     REComposeViewController *composeVC = [[REComposeViewController alloc] init];
     composeVC.title = NSLocalizedString(@"Group discussion", @"Seafile");
     composeVC.hasAttachment = NO;
@@ -540,6 +559,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 {
     float headerY = 14.0f;
     float offsetX = IsIpad() ? 60 : 46;
+    float nameWidth = IsIpad() ? 150 : 90;
     UILabel *nameLabel = (UILabel *)[cell viewWithTag:101];
     if (!nameLabel) {
         nameLabel = [[UILabel alloc] initWithFrame:CGRectZero];
@@ -553,7 +573,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     nameLabel.text = msg.nickname;
     nameLabel.frame = CGRectMake(offsetX + 10,
                                  headerY,
-                                 90,
+                                 nameWidth,
                                  kJSTimeStampLabelHeight);
 
     cell.timestampLabel.text = [NSDateFormatter localizedStringFromDate:msg.date
@@ -561,7 +581,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
                                                            timeStyle:NSDateFormatterShortStyle];
 
     cell.timestampLabel.textAlignment = NSTextAlignmentLeft;
-    cell.timestampLabel.frame = CGRectMake(offsetX + 95,
+    cell.timestampLabel.frame = CGRectMake(offsetX + nameWidth +5,
                                            headerY+1,
                                            140,
                                            kJSTimeStampLabelHeight);
@@ -614,12 +634,13 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     SeafMessage *msg = [self.messages objectAtIndex:indexPath.row];
 
     if (self.msgtype == MSG_GROUP || self.msgtype == MSG_REPLY) {
+        float cellH = [self tableView:self.tableView heightForRowAtIndexPath:indexPath];
         float offsetX = IsIpad() ? 60 : 46;
         float offsetIX = IsIpad() ? 5 : cell.avatarImageView.frame.origin.x;
         float bubbleH = [JSBubbleView neededHeightForText:msg.text];
-        CGFloat y = bubbleH + kJSTimeStampLabelHeight + 5 ;
+        CGFloat y = bubbleH + kJSTimeStampLabelHeight;
         CGFloat width = [UIScreen mainScreen].applicationFrame.size.width * 0.70f;
-        cell.bubbleView.frame = CGRectMake(offsetX, 24, cell.bubbleView.frame.size.width, bubbleH);
+        cell.bubbleView.frame = CGRectMake(offsetX, 24, cell.bubbleView.frame.size.width, cellH-30);
         cell.bubbleView.autoresizingMask = (UIViewAutoresizingFlexibleWidth
                                        | UIViewAutoresizingFlexibleBottomMargin);
         cell.avatarImageView.frame = CGRectMake(offsetIX, 6.0,

@@ -112,6 +112,8 @@ enum MSG_TYPE{
 
 - (void)handleOperation:(AFHTTPRequestOperation *)operation;
 
+- (void)downloadAvatars:(NSNumber *)force;
+
 - (NSString *)nickForEmail:(NSString *)email;
 - (NSString *)avatarForEmail:(NSString *)email;
 - (NSString *)avatarForGroup:(NSString *)gid;
@@ -119,6 +121,7 @@ enum MSG_TYPE{
 // Cache
 - (void)loadCache;
 - (id)getCachedObj:(NSString *)key;
+- (id)getCachedTimestamp:(NSString *)key;
 - (BOOL)savetoCacheKey:(NSString *)key value:(NSString *)content;
 - (id)getCachedStarredFiles;
 

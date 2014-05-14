@@ -5,7 +5,7 @@
 //  Created by Wang Wei on 3/14/14.
 //  Copyright (c) 2014 Seafile. All rights reserved.
 //
-#import "JSMessagesViewController.h"
+#import "JSAvatarImageFactory.h"
 
 #import "SeafMessage.h"
 #import "SeafBase.h"
@@ -62,7 +62,7 @@
 - (instancetype)initWithGroupMsg:(NSDictionary *)dict
                             conn:(SeafConnection *)conn
 {
-    NSString *content = [dict objectForKey:@"msg"];
+    NSString *content = [[dict objectForKey:@"msg"] stringByAppendingString:@"\n\n"];
     NSString *email = [dict objectForKey:@"from_email"];
     NSString *nickname = [dict objectForKey:@"nickname"];
     long long timestamp = [[dict objectForKey:@"timestamp"] integerValue:0];
@@ -96,6 +96,11 @@
 - (BOOL)hasAtts
 {
     return self.atts && self.atts.count > 0;
+}
+
+- (BOOL)hasReplies
+{
+    return self.replies && self.replies.count > 0;
 }
 
 - (NSDictionary *)toDictionary
@@ -143,7 +148,9 @@
 }
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
 {
-    if (([self hasAtts] && section == 1) || (![self hasAtts] && section == 0)) {
+    if (![self hasReplies])
+        return nil;
+    if (([self hasAtts] && [self hasReplies] && section == 1) || (![self hasAtts] && section == 0)) {
         UIView *lineView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, tableView.frame.size.width, 1.0f)];
         [lineView setBackgroundColor:[UIColor lightGrayColor]];
         return lineView;
@@ -222,6 +229,7 @@
     NSDictionary *reply = [self.replies objectAtIndex:indexPath.row];
     NSString *avatar = [self.connection avatarForEmail:[reply objectForKey:@"from_email"]];
     imageView.image = [JSAvatarImageFactory avatarImage:[UIImage imageWithContentsOfFile:avatar] croppedToCircle:YES];
+
     nameLabel.text = [reply objectForKey:@"nickname"];
     msgLabel.text = [reply objectForKey:@"msg"];
     float width = MSGLABEL_WIDTH(tableView.frame.size.width);

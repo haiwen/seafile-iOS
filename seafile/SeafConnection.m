@@ -86,6 +86,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @property NSMutableDictionary *email2nickMap;
 @property NSURLAuthenticationChallenge *challenge;
 @property AFSecurityPolicy *policy;
+@property NSDate *avatarLastUpdate;
 @end
 
 @implementation SeafConnection
@@ -109,6 +110,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         self.uploadFiles = [[NSMutableDictionary alloc] init];
         _info = [[NSMutableDictionary alloc] init];
         self.email2nickMap = [[NSMutableDictionary alloc] init];
+        self.avatarLastUpdate = [NSDate dateWithTimeIntervalSince1970:0];
     }
     return self;
 }
@@ -418,6 +420,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     SeafCacheObj *obj = [self loadSeafCacheObj:key];
     if (!obj) {
         obj = (SeafCacheObj *)[NSEntityDescription insertNewObjectForEntityForName:@"SeafCacheObj" inManagedObjectContext:context];
+        obj.timestamp = [NSDate date];
         obj.key = key;
         obj.url = self.address;
         obj.content = content;
@@ -439,12 +442,20 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSData *data = [NSData dataWithBytes:obj.content.UTF8String length:[obj.content lengthOfBytesUsingEncoding:NSUTF8StringEncoding]];
     id JSON = [Utils JSONDecode:data error:&error];
     if (error) {
+        Warning("json error %@", data);
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         NSManagedObjectContext *context = [appdelegate managedObjectContext];
         [context deleteObject:obj];
         JSON = nil;
     }
     return JSON;
+}
+
+- (id)getCachedTimestamp:(NSString *)key
+{
+    SeafCacheObj *obj = [self loadSeafCacheObj:key];
+    if (!obj) return nil;
+    return obj.timestamp;
 }
 
 - (id)getCachedStarredFiles
@@ -586,7 +597,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                      }
                  }
                  [self savetoCacheKey:KEY_CONTACTS value:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
-                 [self performSelector:@selector(downloadAvatars) withObject:nil afterDelay:2.0];
              }
              if (success)
                  success (response, JSON, data);
@@ -641,6 +651,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)registerDevice:(NSData *)deviceToken
 {
+#if 0
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
     NSString *version = [infoDictionary objectForKey:@"CFBundleVersion"];
     NSString *platform = [infoDictionary objectForKey:@"DTPlatformName"];
@@ -653,6 +664,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
         Warning("Failed to register device");
     }];
+#endif
 }
 
 - (NSString *)nickForEmail:(NSString *)email
@@ -676,10 +688,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return [[NSBundle mainBundle] pathForResource:@"group" ofType:@"png"];
 }
 
-- (void)downloadAvatars
+- (void)downloadAvatars:(NSNumber *)force;
 {
     Debug("%@, %d, %ld, %@\n", self.address, [self authorized], (long)self.email2nickMap.count, self.email2nickMap);
     if (![self authorized])
+        return;
+    if (!force.boolValue && [self.avatarLastUpdate timeIntervalSinceNow] > -24*3600)
         return;
     for (NSString *email in self.email2nickMap.allKeys) {
         SeafUserAvatar *avatar = [[SeafUserAvatar alloc] initWithConnection:self username:email];

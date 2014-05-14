@@ -127,7 +127,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     } error:nil];
     AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
     self.operation = operation;
-    [operation setUploadProgressBlock:^(NSUInteger bytesWritten, NSInteger totalBytesWritten, NSInteger totalBytesExpectedToWrite) {
+    [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
         int percent = [self percentForShow:totalBytesWritten expected:totalBytesExpectedToWrite];
         [_delegate uploadProgress:self result:YES completeness:percent];
     }];
@@ -191,7 +191,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         }
     } error:nil];
     AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
-    [operation setUploadProgressBlock:^(NSUInteger bytesWritten, NSInteger totalBytesWritten, NSInteger totalBytesExpectedToWrite) {
+    [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
         int percent = [self percentForShow:totalBytesWritten expected:totalBytesExpectedToWrite];
         [_delegate uploadProgress:self result:YES completeness:percent];
     }];

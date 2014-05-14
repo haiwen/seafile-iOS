@@ -173,7 +173,7 @@
              Debug("error=%@",[error localizedDescription]);
              [self failedDownload:error];
          }];
-         [operation setDownloadProgressBlock:^(NSUInteger bytesRead, NSInteger totalBytesRead, NSInteger totalBytesExpectedToRead) {
+         [operation setDownloadProgressBlock:^(NSUInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead) {
              int percent = 99;
              if (totalBytesExpectedToRead > 0)
                  percent = (int)(totalBytesRead * 100 / totalBytesExpectedToRead);
@@ -256,7 +256,7 @@
         self.blks = nil;
         [self failedDownload:error];
     }];
-    [operation setDownloadProgressBlock:^(NSUInteger bytesRead, NSInteger totalBytesRead, NSInteger totalBytesExpectedToRead) {
+    [operation setDownloadProgressBlock:^(NSUInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead) {
         int percent = 99;
         if (totalBytesExpectedToRead > 0)
             percent = (int)(totalBytesRead * 100 / totalBytesExpectedToRead);
