@@ -371,6 +371,7 @@
             dict = [[NSMutableDictionary alloc] init];
         [dict setObject:self.repoId forKey:@"urepo"];
         [dict setObject:self.path forKey:@"upath"];
+        [dict setObject:[NSNumber numberWithBool:file.update] forKey:@"update"];
         [file saveAttr:dict];
         file.udir = self;
         [self.uploadItems addObject:file];

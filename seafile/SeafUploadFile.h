@@ -28,13 +28,15 @@
 @property (readonly) long long filesize;
 
 @property (readonly) BOOL uploading;
+@property (readwrite) BOOL update;
+
 @property (readonly) int uProgress;
 @property id<SeafUploadDelegate> delegate;
 
 @property (readwrite) SeafDir *udir;
 
 - (id)initWithPath:(NSString *)lpath;
-- (void)upload:(SeafConnection *)connection repo:(NSString *)repoId path:(NSString *)uploadpath update:(BOOL)update;
+- (void)upload:(SeafConnection *)connection repo:(NSString *)repoId path:(NSString *)uploadpath;
 
 - (void)removeFile;
 

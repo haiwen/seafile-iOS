@@ -525,7 +525,7 @@
         }
     }
     for (SeafUploadFile *file in todo) {
-        [file upload:file.udir->connection repo:file.udir.repoId path:file.udir.path update:NO];
+        [file upload:file.udir->connection repo:file.udir.repoId path:file.udir.path];
     }
 }
 

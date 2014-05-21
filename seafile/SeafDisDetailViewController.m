@@ -169,6 +169,8 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
             [self.connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
                 self.lastUpdateTime = [NSDate date];
                 [self.connection savetoCacheKey:url value:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
+                if (![url isEqualToString:[self msgUrl]])
+                    return;
                 self.messages = [self parseMessageData:JSON];
                 [self.tableView reloadData];
                 [self scrollToBottomAnimated:YES];
@@ -529,7 +531,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     [self.tableView scrollToRowAtIndexPath:selectedindex atScrollPosition:UITableViewScrollPositionBottom animated:YES];
 }
 
-- (UITableView *)setupRepliesView:(JSBubbleMessageCell *)cell msg:(SeafMessage *)msg frame:(CGRect)frame
+- (UITableView *)configureRepliesView:(JSBubbleMessageCell *)cell msg:(SeafMessage *)msg frame:(CGRect)frame
 {
     UITableView *tview = (UITableView *)[cell viewWithTag:100];
     if (!tview) {
@@ -555,7 +557,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     return tview;
 }
 
-- (void)setupHeaderView:(JSBubbleMessageCell *)cell msg:(SeafMessage *)msg width:(float)width
+- (void)configureHeaderView:(JSBubbleMessageCell *)cell msg:(SeafMessage *)msg width:(float)width
 {
     float headerY = 14.0f;
     float offsetX = IsIpad() ? 60 : 46;
@@ -608,13 +610,12 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 //
 - (void)configureCell:(JSBubbleMessageCell *)cell atIndexPath:(NSIndexPath *)indexPath
 {
-    if ([cell messageType] == JSBubbleMessageTypeOutgoing) {
-        if ([cell.bubbleView.textView respondsToSelector:@selector(linkTextAttributes)]) {
-            NSMutableDictionary *attrs = [cell.bubbleView.textView.linkTextAttributes mutableCopy];
-            [attrs setValue:[UIColor colorWithRed:128.0/255 green:128.0/255 blue:160.0/255 alpha:1.0] forKey:UITextAttributeTextColor];
-            cell.bubbleView.textView.linkTextAttributes = attrs;
-        }
+#if 0
+    if ([cell.bubbleView.textView respondsToSelector:@selector(linkTextAttributes)]) {
+        cell.bubbleView.textView.linkTextAttributes = @{UITextAttributeTextColor : [UIColor redColor]};
     }
+    cell.bubbleView.textView.dataDetectorTypes = UIDataDetectorTypeLink;
+#endif
     if (self.msgtype == MSG_USER) {
         if (cell.timestampLabel) {
             cell.timestampLabel.textColor = [UIColor lightGrayColor];
@@ -626,13 +627,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         }
     }
 
-#if TARGET_IPHONE_SIMULATOR
-    cell.bubbleView.textView.dataDetectorTypes = UIDataDetectorTypeNone;
-#else
-    cell.bubbleView.textView.dataDetectorTypes = UIDataDetectorTypeAll;
-#endif
     SeafMessage *msg = [self.messages objectAtIndex:indexPath.row];
-
     if (self.msgtype == MSG_GROUP || self.msgtype == MSG_REPLY) {
         float cellH = [self tableView:self.tableView heightForRowAtIndexPath:indexPath];
         float offsetX = IsIpad() ? 60 : 46;
@@ -651,8 +646,8 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
                                                  | UIViewAutoresizingFlexibleRightMargin);
         cell.subtitleLabel.hidden = YES;
         CGRect frame = CGRectMake(cell.bubbleView.frame.origin.x + 10, y, width, [msg neededHeightForReplies:width]);
-        [self setupHeaderView:cell msg:msg width:width];
-        [self setupRepliesView:cell msg:msg frame:frame];
+        [self configureHeaderView:cell msg:msg width:width];
+        [self configureRepliesView:cell msg:msg frame:frame];
     }
 }
 
@@ -705,6 +700,8 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
             self.isLoading = YES;
             NSString *url = [[self msgUrl] stringByAppendingFormat:@"?page=%d", self.next_page, nil];
             [self.connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+                if (!self.isLoading)
+                    return;
                 NSMutableArray *arr = [self parseMessageData:JSON];
                 self.next_page = (int)[[JSON objectForKey:@"next_page"] integerValue:-1];
                 long long lastID = 0;

@@ -23,6 +23,11 @@
 
 #define CELL_CONTENT_MARGIN 1.0f
 
+@interface SeafMessage()
+@property NSString *originText;
+
+@end
+
 
 @implementation SeafMessage
 
@@ -40,6 +45,7 @@
     msg.msgId = msgId;
     msg.nickname = sender;
     msg.replies = [[NSMutableArray alloc] init];
+    msg.originText = text;
     self.connection = conn;
     return msg;
 }
@@ -78,6 +84,7 @@
     }
     msg.atts = atts;
     msg.nickname = nickname;
+    msg.originText = [dict objectForKey:@"msg"];
     return msg;
 }
 
@@ -106,7 +113,7 @@
 - (NSDictionary *)toDictionary
 {
     NSString *timestamp = [NSString stringWithFormat:@"%d", (int)[self.date timeIntervalSince1970]];
-     NSMutableDictionary *dict =  [[NSMutableDictionary alloc] initWithObjectsAndKeys:self.msgId, @"msgid", self.email, @"from_email", self.nickname, @"nickname", timestamp, @"timestamp", self.text, @"msg", self.replies, @"replies", nil];
+     NSMutableDictionary *dict =  [[NSMutableDictionary alloc] initWithObjectsAndKeys:self.msgId, @"msgid", self.email, @"from_email", self.nickname, @"nickname", timestamp, @"timestamp", self.originText, @"msg", self.replies, @"replies", nil];
     if (self.replies && self.replies.count > 0)
         [dict setObject:self.replies forKey:@"replies"];
     if (self.atts && self.atts.count > 0)
@@ -117,7 +124,8 @@
 #pragma mark - Table view delegate
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    return [self hasAtts] ? 2 :1;
+    int num = [self hasReplies] ? 1 : 0;
+    return [self hasAtts] ? (num+1) : num;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section

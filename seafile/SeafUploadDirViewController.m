@@ -24,6 +24,7 @@
 @property (strong, nonatomic) IBOutlet UILabel *nameLabel;
 @property (strong, nonatomic) IBOutlet UILabel *dirLabel;
 @property (strong) UIBarButtonItem *saveItem;
+@property (strong, nonatomic) IBOutlet UISwitch *replaceSwitch;
 
 @end
 
@@ -68,7 +69,7 @@
     [userDefaults setObject:_curDir.repoId forKey:[@"LAST-REPO" stringByAppendingString:self.connection.address]];
     [userDefaults setObject:_curDir.path forKey:[@"LAST-DIR" stringByAppendingString:self.connection.address]];
     [userDefaults synchronize];
-    [appdelegate.fileVC chooseUploadDir:_curDir file:self.ufile];
+    [appdelegate.fileVC chooseUploadDir:_curDir file:self.ufile replace:NO];
 }
 
 - (void)viewWillAppear:(BOOL)animated

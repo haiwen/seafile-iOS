@@ -46,6 +46,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         _filesize = attrs.fileSize;
         _uProgress = 0;
         _uploading = NO;
+        self.update = [[self.uploadAttr objectForKey:@"update"] boolValue];
     }
     return self;
 }
@@ -212,7 +213,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     [connection handleOperation:operation];
 }
 
-- (void)upload:(SeafConnection *)connection repo:(NSString *)repoId path:(NSString *)uploadpath update:(BOOL)update
+- (void)upload:(SeafConnection *)connection repo:(NSString *)repoId path:(NSString *)uploadpath
 {
     @synchronized (self) {
         if (_uploading || self.uploaded)
@@ -227,7 +228,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     NSString *upload_url;
     SeafRepo *repo = [connection getRepo:repoId];
     BOOL byblock = (repo.encrypted && [connection localDecrypt:repoId]);
-    if (!update)
+    if (!self.update)
         upload_url = [NSString stringWithFormat:API_URL"/repos/%@/upload-", repoId];
     else
         upload_url = [NSString stringWithFormat:API_URL"/repos/%@/update-", repoId];
@@ -239,18 +240,18 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     [connection sendRequest:upload_url success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          NSString *url = JSON;
-         Debug("Upload file %@ %@, %@ update=%d, byblock=%d, delegate%@\n", self.name, url, uploadpath, update, byblock, _delegate);
+         Debug("Upload file %@ %@, %@ update=%d, byblock=%d, delegate%@\n", self.name, url, uploadpath, self.update, byblock, _delegate);
          if (byblock) {
              NSMutableArray *blockids = [[NSMutableArray alloc] init];
              NSMutableArray *paths = [[NSMutableArray alloc] init];
              NSString *passwrod = [Utils getRepoPassword:repo.repoId];
              if ([self chunkFile:self.lpath blockids:blockids paths:paths password:passwrod repo:repo]) {
-                 [self uploadByBlocks:connection url:url uploadpath:uploadpath blocks:blockids paths:paths update:update];
+                 [self uploadByBlocks:connection url:url uploadpath:uploadpath blocks:blockids paths:paths update:self.update];
              } else {
                  [self finishUpload:NO oid:nil];
              }
          } else {
-             [self uploadByFile:connection url:url path:uploadpath update:update];
+             [self uploadByFile:connection url:url path:uploadpath update:self.update];
          }
      }
                     failure:
@@ -353,6 +354,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         if ([dir.repoId isEqualToString:[info objectForKey:@"urepo"]] && [dir.path isEqualToString:[info objectForKey:@"upath"]]) {
             SeafUploadFile *file  = [dir->connection getUploadfile:lpath];
             file.udir = dir;
+            file.update = [[info objectForKey:@"update"] boolValue];
             [files addObject:file];
         }
     }

@@ -384,7 +384,9 @@
     NSString *did = self.oid;
 
     if (dfile && dfile.mpath && [[NSFileManager defaultManager] fileExistsAtPath:dfile.mpath]) {
-        self.mpath = dfile.mpath;
+        _mpath = dfile.mpath;
+        _preViewURL = nil;
+        _checkoutURL = nil;
         self.filesize = [Utils fileSizeAtPath1:self.mpath];
     }
     if (self.mpath)
@@ -557,6 +559,16 @@
     [self update:self.udelegate];
 }
 
+- (void)setMpath:(NSString *)mpath
+{
+    _mpath = mpath;
+    [self savetoCache];
+    _preViewURL = nil;
+    _checkoutURL = nil;
+    self.filesize = [Utils fileSizeAtPath1:_mpath];
+    self.mtime = [[NSDate date] timeIntervalSince1970];
+}
+
 - (BOOL)saveContent:(NSString *)content
 {
     @synchronized (self) {
@@ -571,11 +583,6 @@
         BOOL ret = [content writeToFile:newpath atomically:YES encoding:NSUTF8StringEncoding error:&error];
         if (ret) {
             self.mpath = newpath;
-            [self savetoCache];
-            _preViewURL = nil;
-            _checkoutURL = nil;
-            self.filesize = [Utils fileSizeAtPath1:self.mpath];
-            self.mtime = [[NSDate date] timeIntervalSince1970];
             [self autoupload];
         }
         return ret;
@@ -597,11 +604,6 @@
         Debug("ret=%d newpath=%@, %@\n", ret, newpath, error);
         if (ret) {
             self.mpath = newpath;
-            [self savetoCache];
-            _preViewURL = nil;
-            _checkoutURL = nil;
-            self.filesize = [Utils fileSizeAtPath1:self.mpath];
-            self.mtime = [[NSDate date] timeIntervalSince1970];
             [self autoupload];
         }
         return ret;
@@ -626,8 +628,9 @@
     if (!self.ufile) {
         self.ufile = [connection getUploadfile:self.mpath];
         self.ufile.delegate = self;
+        self.ufile.update = YES;
     }
-    [self.ufile upload:connection repo:self.repoId path:self.path update:YES];
+    [self.ufile upload:connection repo:self.repoId path:self.path];
 }
 
 - (void)deleteCache
@@ -671,7 +674,6 @@
     self.ooid = oid;
     self.oid = self.ooid;
     self.mpath = nil;
-    [self savetoCache];
     [dg updateProgress:self result:YES completeness:100];
 }
 

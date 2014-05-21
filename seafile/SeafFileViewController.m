@@ -1060,11 +1060,14 @@ enum {
     [SeafAppDelegate backgroundUpload:ufile];
 }
 
-- (void)chooseUploadDir:(SeafDir *)dir file:(id<PreViewDelegate>)ufile
+- (void)chooseUploadDir:(SeafDir *)dir file:(id<PreViewDelegate>)ufile replace:(BOOL)replace
 {
+    SeafUploadFile *uploadFile = (SeafUploadFile *)ufile;
+    uploadFile.update = replace;
     [dir addUploadFiles:[NSArray arrayWithObject:(SeafUploadFile *)ufile]];
     [NSThread detachNewThreadSelector:@selector(backgroundUpload:) toTarget:self withObject:ufile];
 }
+
 - (void)uploadFile:(SeafUploadFile *)file
 {
     file.delegate = self;

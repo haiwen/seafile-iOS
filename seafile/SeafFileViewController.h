@@ -41,6 +41,6 @@ enum {
 
 - (void)refreshView;
 - (void)uploadFile:(SeafUploadFile *)file;
-- (void)chooseUploadDir:(SeafDir *)dir file:(id<PreViewDelegate>)ufile;
+- (void)chooseUploadDir:(SeafDir *)dir file:(id<PreViewDelegate>)ufile replace:(BOOL)replace;
 
 @end
