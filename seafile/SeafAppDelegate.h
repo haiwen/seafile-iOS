@@ -49,9 +49,6 @@ enum {
 @property (retain) NSMutableArray *conns;
 @property (readwrite) SeafConnection *connection;
 
-@property (retain) NSMutableArray *ufiles;
-@property (retain) NSMutableArray *dfiles;
-
 
 - (UINavigationController *)masterNavController:(int)index;
 - (UIViewController *)detailViewController:(int)index;

@@ -69,7 +69,7 @@
     [userDefaults setObject:_curDir.repoId forKey:[@"LAST-REPO" stringByAppendingString:self.connection.address]];
     [userDefaults setObject:_curDir.path forKey:[@"LAST-DIR" stringByAppendingString:self.connection.address]];
     [userDefaults synchronize];
-    [appdelegate.fileVC chooseUploadDir:_curDir file:self.ufile replace:NO];
+    [appdelegate.fileVC chooseUploadDir:_curDir file:self.ufile replace:self.replaceSwitch.isOn];
 }
 
 - (void)viewWillAppear:(BOOL)animated

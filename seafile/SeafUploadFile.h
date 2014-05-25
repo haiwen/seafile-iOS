@@ -36,9 +36,9 @@
 @property (readwrite) SeafDir *udir;
 
 - (id)initWithPath:(NSString *)lpath;
-- (void)upload:(SeafConnection *)connection repo:(NSString *)repoId path:(NSString *)uploadpath;
+- (void)doUpload;
 
-- (void)removeFile;
+- (void)doRemove;
 
 - (BOOL)uploaded;
 

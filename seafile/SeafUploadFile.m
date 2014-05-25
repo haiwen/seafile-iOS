@@ -66,7 +66,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     return NO;
 }
 
-- (void)removeFile
+- (void)doRemove
 {
     [self.operation cancel];
     [self saveAttr:nil];
@@ -97,7 +97,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     [dict setObject:[NSNumber numberWithDouble:[[NSDate date] timeIntervalSince1970]]forKey:@"utime"];
     [dict setObject:[NSNumber numberWithBool:result] forKey:@"result"];
     [self saveAttr:dict];
-    Debug("result=%d, name=%@, _delegate=%@\n", result, self.name, _delegate);
+    Debug("result=%d, name=%@, _delegate=%@, oid=%@\n", result, self.name, _delegate, oid);
     if (result)
         [_delegate uploadSucess:self oid:oid];
     else
@@ -118,10 +118,10 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 - (void)uploadByFile:(SeafConnection *)connection url:(NSString *)surl path:(NSString *)uploadpath update:(BOOL)update
 {
     NSMutableURLRequest *request = [[SeafConnection requestSerializer] multipartFormRequestWithMethod:@"POST" URLString:surl parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
-        if (update)
-            [formData appendPartWithFormData:[uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"target_file"];
-        else
-            [formData appendPartWithFormData:[uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"parent_dir"];
+        if (update) {
+            [formData appendPartWithFormData:[@"1" dataUsingEncoding:NSUTF8StringEncoding] name:@"replace"];
+        }
+        [formData appendPartWithFormData:[uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"parent_dir"];
 
         [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
         [formData appendPartWithFileURL:[NSURL fileURLWithPath:self.lpath] name:@"file" error:nil];
@@ -139,7 +139,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
              oid = [[NSString alloc] initWithData:responseObject encoding:NSUTF8StringEncoding];
              [[NSFileManager defaultManager] linkItemAtPath:self.lpath toPath:[Utils documentPath:oid] error:nil];
          }
-         Debug("Upload success _uploading=%d, oid=%@\n", _uploading, oid);
+         Debug("Upload success _uploading=%d, update=%d, oid=%@\n", _uploading, update, oid);
          [self finishUpload:YES oid:oid];
      }
                                      failure:^(AFHTTPRequestOperation *operation, NSError *error) {
@@ -180,12 +180,11 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 - (void)uploadByBlocks:(SeafConnection *)connection url:(NSString *)surl uploadpath:(NSString *)uploadpath blocks:(NSArray *)blockids paths:(NSArray *)paths update:(BOOL)update
 {
     NSMutableURLRequest *request = [[SeafConnection requestSerializer] multipartFormRequestWithMethod:@"POST" URLString:surl parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
-        if (update)
-            [formData appendPartWithFormData:[uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"target_file"];
-        else {
-            [formData appendPartWithFormData:[uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"parent_dir"];
-            [formData appendPartWithFormData:[self.name dataUsingEncoding:NSUTF8StringEncoding] name:@"file_name"];
+        if (update) {
+            [formData appendPartWithFormData:[@"1" dataUsingEncoding:NSUTF8StringEncoding] name:@"replace"];
         }
+        [formData appendPartWithFormData:[uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"parent_dir"];
+        [formData appendPartWithFormData:[self.name dataUsingEncoding:NSUTF8StringEncoding] name:@"file_name"];
         [formData appendPartWithFormData:[[NSString stringWithFormat:@"%lld", [Utils fileSizeAtPath1:self.lpath]] dataUsingEncoding:NSUTF8StringEncoding] name:@"file_size"];
         for (NSString *path in paths) {
             [formData appendPartWithFileURL:[NSURL fileURLWithPath:path] name:@"file" error:nil];
@@ -225,13 +224,9 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:self.lpath error:nil];
     _filesize = attrs.fileSize;
     [_delegate uploadProgress:self result:YES completeness:0];
-    NSString *upload_url;
     SeafRepo *repo = [connection getRepo:repoId];
-    BOOL byblock = (repo.encrypted && [connection localDecrypt:repoId]);
-    if (!self.update)
-        upload_url = [NSString stringWithFormat:API_URL"/repos/%@/upload-", repoId];
-    else
-        upload_url = [NSString stringWithFormat:API_URL"/repos/%@/update-", repoId];
+    BOOL byblock = [connection localDecrypt:repoId];
+    NSString* upload_url = [NSString stringWithFormat:API_URL"/repos/%@/upload-", repoId];
     if (byblock)
         upload_url = [upload_url stringByAppendingString:@"blks-link/"];
     else
@@ -258,6 +253,10 @@ static NSMutableDictionary *uploadFileAttrs = nil;
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
          [self finishUpload:NO oid:nil];
      }];
+}
+- (void)doUpload
+{
+    return [self upload:self.udir->connection repo:self.udir.repoId path:self.udir.path];
 }
 
 #pragma mark - QLPreviewItem

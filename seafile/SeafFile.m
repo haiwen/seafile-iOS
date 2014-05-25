@@ -155,6 +155,7 @@
          }
          @synchronized (self) {
              if (self.downloadingFileOid) {// Already downloading
+                 Debug("Already downloading %@", self.downloadingFileOid);
                  [SeafAppDelegate decDownloadnum];
                  return;
              }
@@ -629,8 +630,10 @@
         self.ufile = [connection getUploadfile:self.mpath];
         self.ufile.delegate = self;
         self.ufile.update = YES;
+        NSString *path = [self.path stringByDeletingLastPathComponent];
+        self.ufile.udir = [[SeafDir alloc] initWithConnection:connection oid:nil repoId:self.repoId name:path.lastPathComponent path:path];
     }
-    [self.ufile upload:connection repo:self.repoId path:self.path];
+    [SeafAppDelegate backgroundUpload:self.ufile];
 }
 
 - (void)deleteCache

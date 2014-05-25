@@ -154,6 +154,7 @@
 - (void)checkRepoPasswordV2:(NSString *)password
 {
     SeafRepo *repo = [connection getRepo:self.repoId];
+    Debug("check magic %@, %@", repo.magic, password);
     if (!repo.magic || !repo.encKey) {
         [self.delegate repoPasswordSet:self WithResult:NO];
         return;

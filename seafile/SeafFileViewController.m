@@ -387,7 +387,7 @@ enum {
     self.title = directory.name;
     [_directory setDelegate:self];
     [_directory loadContent:NO];
-    Debug("%@, loading ... %d\n", _directory.path, _directory.hasCache);
+    Debug("%@, %@, loading ... %d\n", _directory.repoId, _directory.path, _directory.hasCache);
     if (![_directory isKindOfClass:[SeafRepos class]])
         self.tableView.sectionHeaderHeight = 0;
     [self refreshView];
@@ -571,7 +571,7 @@ enum {
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    NSObject *entry  = [self getDentrybyIndexPath:indexPath tableView:tableView];
+    NSObject *entry = [self getDentrybyIndexPath:indexPath tableView:tableView];
     if (tableView != self.tableView) {
         return [self getSeafFileCell:(SeafFile *)entry forTableView:tableView];
     }

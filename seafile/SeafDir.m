@@ -394,7 +394,7 @@
     for (SeafUploadFile *file in arr) {
         [self.uploadItems removeObject:file];
         [connection removeUploadfile:file];
-        [file removeFile];
+        [file doRemove];
     }
     _allItems = nil;
 }
@@ -402,7 +402,7 @@
 - (void)removeUploadFile:(SeafUploadFile *)ufile
 {
     [connection removeUploadfile:ufile];
-    [ufile removeFile];
+    [ufile doRemove];
     [self.uploadItems removeObject:ufile];
     _allItems = nil;
 }

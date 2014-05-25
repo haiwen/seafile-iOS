@@ -14,6 +14,8 @@
 
 
 @interface SeafAppDelegate () <UITabBarControllerDelegate>
+@property (retain) NSMutableArray *ufiles;
+@property (retain) NSMutableArray *dfiles;
 
 @property UIBackgroundTaskIdentifier bgTask;
 @property int downloadnum;
@@ -525,7 +527,7 @@
         }
     }
     for (SeafUploadFile *file in todo) {
-        [file upload:file.udir->connection repo:file.udir.repoId path:file.udir.path];
+        if (file.udir)   [file doUpload];
     }
 }
 
@@ -589,12 +591,12 @@
             return;
         }
     }
-    [self tryDownload];
+    [self performSelector:@selector(tryDownload) withObject:nil afterDelay:0.1];
 }
 
 - (void)finishUpload:(SeafUploadFile *)file result:(BOOL)result
 {
-    Debug("upload %d, result=%d", self.uploadnum, result);
+    Debug("upload %d, result=%d, udir=%@", self.uploadnum, result, file.udir);
     @synchronized (self) {
         self.uploadnum --;
     }
@@ -610,7 +612,7 @@
             return;
         }
     }
-    [self tryUpload];
+    [self performSelector:@selector(tryUpload) withObject:nil afterDelay:0.1];
 }
 
 + (void)finishDownload:(id<SeafDownloadDelegate>) file result:(BOOL)result
