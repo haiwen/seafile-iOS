@@ -783,6 +783,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         NSString *text = composeViewController.text;
         [SVProgressHUD showWithStatus:NSLocalizedString(@"Sending...", @"Seafile")];
         SeafMessage *msg = [[SeafMessage alloc] initWithText:text email:self.sender date:[NSDate date] conn:self.connection type:self.msgtype];
+        msg.text = [text stringByAppendingString:@"\n\n"];
         NSString *url = [self msgUrl];
         NSString *form = [NSString stringWithFormat:@"message=%@", [text escapedPostForm]];
         [self.connection sendPost:url form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {

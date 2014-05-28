@@ -313,7 +313,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                                [self.delegate connectionLinkingFailed:self error:(int)response.statusCode];
                                            }];
     operation.securityPolicy = [self policyForHost:anAddress];
-    [self handleOperation:operation];
+    [self handleOperation:operation withPolicy:nil];
 }
 
 - (void)sendRequestAsync:(NSString *)url method:(NSString *)method form:(NSString *)form

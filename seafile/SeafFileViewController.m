@@ -461,7 +461,7 @@ enum {
     if (!_selectedindex)
         return;
     SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-    if ([file isKindOfClass:[SeafUploadFile class]] || ![file hasCache])
+    if ([file isKindOfClass:[SeafUploadFile class]])
         return;
 
     NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
@@ -500,7 +500,7 @@ enum {
         SeafUploadingFileCell *cell = (SeafUploadingFileCell *)[self getCell:@"SeafUploadingFileCell" forTableView:tableView];
         cell.nameLabel.text = file.name;
         cell.imageView.image = file.image;
-        [cell.progressView setProgress:file.uProgress *1.0/100];
+        [cell.progressView setProgress:file.uProgress * 1.0/100];
         c = cell;
     } else {
         SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
