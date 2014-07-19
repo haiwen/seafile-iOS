@@ -848,6 +848,8 @@
 	<string>application/vnd.ms-excel</string>
 	<key>xls</key>
 	<string>application/vnd.ms-excel</string>
+	<key>xlsx</key>
+	<string>application/vnd.ms-excel</string>
 	<key>xlt</key>
 	<string>application/vnd.ms-excel</string>
 	<key>xlw</key>

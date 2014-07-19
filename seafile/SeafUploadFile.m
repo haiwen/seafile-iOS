@@ -256,9 +256,17 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 }
 - (void)doUpload
 {
+    [self checkAsset];
     return [self upload:self.udir->connection repo:self.udir.repoId path:self.udir.path];
 }
 
+- (void)checkAsset
+{
+    if (self.asset) {
+        [Utils writeDataToPath:self.lpath andAsset:self.asset];
+        self.asset = nil;
+    }
+}
 #pragma mark - QLPreviewItem
 - (NSString *)previewItemTitle
 {
@@ -270,6 +278,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     if (_preViewURL)
         return _preViewURL;
 
+    [self checkAsset];
     if (![self.mime hasPrefix:@"text"]) {
         _preViewURL = [NSURL fileURLWithPath:self.lpath];
     } else if ([self.mime hasSuffix:@"markdown"]) {
@@ -293,6 +302,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 - (NSURL *)checkoutURL
 {
+    [self checkAsset];
     return [NSURL fileURLWithPath:self.lpath];
 }
 
@@ -303,6 +313,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 - (NSString *)content
 {
+    [self checkAsset];
     return [Utils stringContent:self.lpath];
 }
 

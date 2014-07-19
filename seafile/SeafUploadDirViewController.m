@@ -19,7 +19,7 @@
 @interface SeafUploadDirViewController ()<SeafDirDelegate>
 @property (strong) SeafConnection *connection;
 @property (strong) SeafDir *curDir;
-@property (strong) id<PreViewDelegate> ufile;
+@property (strong) SeafUploadFile *ufile;
 @property (strong, nonatomic) IBOutlet UIImageView *imageVIew;
 @property (strong, nonatomic) IBOutlet UILabel *nameLabel;
 @property (strong, nonatomic) IBOutlet UILabel *dirLabel;

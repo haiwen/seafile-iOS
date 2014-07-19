@@ -33,6 +33,7 @@ static dispatch_queue_t json_request_operation_processing_queue() {
                                                       success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data))success
                                                       failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, NSData *data))failure
 {
+    Debug("request :%@", urlRequest.URL);
     SeafJSONRequestOperation *requestOperation = [[self alloc] initWithRequest:urlRequest];
     [requestOperation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
         if (success) {

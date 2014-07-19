@@ -31,7 +31,7 @@
 - (void)copyEntries:(NSArray *)entries dstDir:(SeafDir *)dst_dir;
 - (void)moveEntries:(NSArray *)entries dstDir:(SeafDir *)dst_dir;
 
-- (void)addUploadFiles:(NSArray *)uploadItems;
+- (void)addUploadFile:(SeafUploadFile *)file;
 - (void)removeUploadFile:(SeafUploadFile *)ufile;
 
 - (void)renameFile:(SeafFile *)sfile newName:(NSString *)newName;

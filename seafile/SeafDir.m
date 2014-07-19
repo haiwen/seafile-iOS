@@ -362,20 +362,18 @@
     return _uploadItems;
 }
 
-- (void)addUploadFiles:(NSArray *)uploadItems
+- (void)addUploadFile:(SeafUploadFile *)file
 {
-    for (SeafUploadFile *file in uploadItems) {
-        if ([self.uploadItems containsObject:file]) continue;
-        NSMutableDictionary *dict = file.uploadAttr;
-        if (!dict)
-            dict = [[NSMutableDictionary alloc] init];
-        [dict setObject:self.repoId forKey:@"urepo"];
-        [dict setObject:self.path forKey:@"upath"];
-        [dict setObject:[NSNumber numberWithBool:file.update] forKey:@"update"];
-        [file saveAttr:dict];
-        file.udir = self;
-        [self.uploadItems addObject:file];
-    }
+    if ([self.uploadItems containsObject:file]) return;
+    NSMutableDictionary *dict = file.uploadAttr;
+    if (!dict)
+        dict = [[NSMutableDictionary alloc] init];
+    [dict setObject:self.repoId forKey:@"urepo"];
+    [dict setObject:self.path forKey:@"upath"];
+    [dict setObject:[NSNumber numberWithBool:file.update] forKey:@"update"];
+    [file saveAttr:dict];
+    file.udir = self;
+    [self.uploadItems addObject:file];
     _allItems = nil;
 }
 

@@ -304,12 +304,11 @@ enum {
         [self alertWithMessage:NSLocalizedString(@"Photos are not accessible", @"Seafile")];
         return;
     }
-    QBImagePickerController *imagePickerController = [[QBImagePickerController alloc] init];
+    QBImagePickerController *imagePickerController = [SeafFileViewController defaultQBImagePickerController];
     imagePickerController.title = NSLocalizedString(@"Photos", @"Seafile");
     imagePickerController.delegate = self;
     imagePickerController.allowsMultipleSelection = YES;
     imagePickerController.filterType = QBImagePickerControllerFilterTypeNone;
-    imagePickerController.maximumNumberOfSelection = 20;
 
     if (IsIpad()) {
         UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:imagePickerController];
@@ -1060,11 +1059,11 @@ enum {
     [SeafAppDelegate backgroundUpload:ufile];
 }
 
-- (void)chooseUploadDir:(SeafDir *)dir file:(id<PreViewDelegate>)ufile replace:(BOOL)replace
+- (void)chooseUploadDir:(SeafDir *)dir file:(SeafUploadFile *)ufile replace:(BOOL)replace
 {
     SeafUploadFile *uploadFile = (SeafUploadFile *)ufile;
     uploadFile.update = replace;
-    [dir addUploadFiles:[NSArray arrayWithObject:(SeafUploadFile *)ufile]];
+    [dir addUploadFile:uploadFile];
     [NSThread detachNewThreadSelector:@selector(backgroundUpload:) toTarget:self withObject:ufile];
 }
 
@@ -1120,20 +1119,17 @@ enum {
         }
         [paths addObject:path];
         SeafUploadFile *file =  [self.connection getUploadfile:path];
+        file.asset = asset;
         file.delegate = self;
         [files addObject:file];
+        [self.directory addUploadFile:file];
     }
-    [self.directory addUploadFiles:files];
     [self.tableView reloadData];
-    i = 0;
-    for (ALAsset *asset in assets) {
-        path = [paths objectAtIndex:i++];
-        BOOL ret = [Utils writeDataToPath:path andAsset:asset];
-        if (!ret)  continue;
-        SeafUploadFile *file =  [self.connection getUploadfile:path];
+    for (SeafUploadFile *file in files) {
         [SeafAppDelegate backgroundUpload:file];
     }
 }
+
 - (void)dismissImagePickerController:(QBImagePickerController *)imagePickerController
 {
     if (IsIpad()) {
@@ -1273,6 +1269,15 @@ enum {
         } else
             [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to search", @"Seafile")];
     }];
+}
+
++(QBImagePickerController *)defaultQBImagePickerController{
+    static dispatch_once_t pred = 0;
+    static QBImagePickerController *c = nil;
+    dispatch_once(&pred, ^{
+        c = [[QBImagePickerController alloc] init];
+    });
+    return c;
 }
 
 @end

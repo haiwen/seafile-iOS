@@ -514,6 +514,7 @@
 
 - (void)tryUpload
 {
+    Debug("tryUpload %d, %d", self.uploadnum, self.ufiles.count);
     if (self.ufiles.count == 0) return;
     NSMutableArray *todo = [[NSMutableArray alloc] init];
     @synchronized (self) {
@@ -527,7 +528,9 @@
         }
     }
     for (SeafUploadFile *file in todo) {
-        if (file.udir)   [file doUpload];
+        if (file.udir) {
+            [file doUpload];
+        }
     }
 }
 
