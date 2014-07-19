@@ -244,6 +244,7 @@
         if (buttonIndex == 0) {
             [self showAccountView:[appdelegate.conns objectAtIndex:pressedIndex.row] type:0];
         } else if (buttonIndex == 1) {
+            [[appdelegate.conns objectAtIndex:pressedIndex.row] clearAccount];
             [appdelegate.conns removeObjectAtIndex:pressedIndex.row];
             [appdelegate saveAccounts];
             [self.tableView reloadData];

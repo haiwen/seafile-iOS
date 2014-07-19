@@ -134,7 +134,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             }
         }
         if ([self authorized]) {
-            Debug("address=%@, token=%@\n", self.address, self.token);
+            Debug("address=%@, email=%@, token=%@\n", self.address, self.username, self.token);
             if ([_info objectForKey:@"nickname"])
                 [self.email2nickMap setValue:[_info objectForKey:@"nickname"] forKey:self.username];
         }
@@ -193,7 +193,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 }
 - (AFSecurityPolicy *)policyForHost:(NSString *)host
 {
-    NSString *path = [self certPathForHost:[self host]];
+    NSString *path = [self certPathForHost:host];
     return SeafPolicyFromFile(path);
 }
 
@@ -216,6 +216,13 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     SeafRepo *repo = [self getRepo:repoId];
     return repo.encrypted && repo.encVersion >= 2 && repo.magic;
 }
+
+- (void)clearAccount
+{
+    NSString *path = [self certPathForHost:[self host]];
+    [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
+}
+
 - (void)handleOperation:(AFHTTPRequestOperation *)operation withPolicy:(AFSecurityPolicy *)policy
 {
     operation.securityPolicy = policy;
@@ -235,7 +242,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                         self.challenge = challenge;
                     }
                     NSString *title = [NSString stringWithFormat:NSLocalizedString(@"Seafile can't verify the identity of the website \"%@\"", @"Seafile"),  challenge.protectionSpace.host];
-                    NSString *msg = NSLocalizedString(@"The certificate from this website is invalid. Would you like to connect to the server anyway?", @"Seafile");
+                    NSString *msg = policy ? NSLocalizedString(@"The certificate from this website has been changed. Would you like to connect to the server anyway?", @"Seafile"):NSLocalizedString(@"The certificate from this website is invalid. Would you like to connect to the server anyway?", @"Seafile");
                     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:msg delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") otherButtonTitles:NSLocalizedString(@"OK", @"Seafile"), nil];
                     alert.alertViewStyle = UIAlertViewStyleDefault;
                     [alert show];
@@ -312,8 +319,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                                Warning("status code=%ld, error=%@\n", (long)response.statusCode, error);
                                                [self.delegate connectionLinkingFailed:self error:(int)response.statusCode];
                                            }];
-    operation.securityPolicy = [self policyForHost:anAddress];
-    [self handleOperation:operation withPolicy:nil];
+    [self handleOperation:operation withPolicy:operation.securityPolicy];
 }
 
 - (void)sendRequestAsync:(NSString *)url method:(NSString *)method form:(NSString *)form

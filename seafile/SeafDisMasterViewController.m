@@ -52,8 +52,8 @@
     // Do any additional setup after loading the view, typically from a nib.
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     self.detailViewController = (SeafDisDetailViewController *)[appdelegate detailViewController:TABBED_DISCUSSION];
-    self.tableView.rowHeight = 58;
     self.detailViewController.connection = _connection;
+    self.tableView.rowHeight = 58;
     if (_refreshHeaderView == nil) {
         EGORefreshTableHeaderView *view = [[EGORefreshTableHeaderView alloc] initWithFrame:CGRectMake(0.0f, 0.0f - self.tableView.bounds.size.height, self.view.frame.size.width, self.tableView.bounds.size.height)];
         view.delegate = self;
@@ -64,6 +64,7 @@
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     self.addItem = [self getBarItem:@"plus".navItemImgName action:@selector(addContact:)size:20];
     self.navigationItem.rightBarButtonItem = self.addItem;
+    self.clearsSelectionOnViewWillAppear = NO;
     [self startTimer];
 }
 
@@ -112,7 +113,15 @@
         }
         return (NSComparisonResult)NSOrderedSame;
     }];
-    [self.tableView reloadData];
+    NSIndexPath *indexPath = [self.tableView indexPathForSelectedRow];
+    if (IsIpad() && indexPath) {
+        NSDictionary *dict = [self.msgSources objectAtIndex:indexPath.row];
+        [self.tableView reloadData];
+        long row = [self.msgSources indexOfObject:dict];
+        if (row != NSNotFound)
+            [self.tableView selectRowAtIndexPath:[NSIndexPath indexPathForRow:row inSection:0] animated:NO scrollPosition:UITableViewScrollPositionNone];
+    } else
+        [self.tableView reloadData];
 }
 
 - (void)refreshBadge
@@ -367,11 +376,11 @@
         [dict setObject:[NSString stringWithFormat:@"%d", MSG_USER] forKey:@"type"];
         [dict setObject:email forKey:@"email"];
         [dict setObject:email forKey:@"name"];
-        NSString *timestamp = [NSString stringWithFormat:@"%d", (int)[[NSDate date] timeIntervalSince1970]];
+        NSString *timestamp = [NSString stringWithFormat:@"%ld", (long)[[NSDate date] timeIntervalSince1970]];
         [dict setObject:timestamp forKey:@"mtime"];
         [dict setObject:@"0" forKey:@"msgnum"];
         [self.msgSources addObject:dict];
-        [self.tableView reloadData];
+        [self reloadData];
     }
 }
 #pragma mark - UIActionSheetDelegate
