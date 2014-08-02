@@ -21,4 +21,8 @@
 
 - (void)setPreViewItems:(NSArray *)items current:(id<QLPreviewItem, PreViewDelegate>)item master:(UIViewController *)c;
 
+- (void)cancelControlHiding;
+- (void)hideControlsAfterDelay;
+- (void)toggleControls;
+
 @end

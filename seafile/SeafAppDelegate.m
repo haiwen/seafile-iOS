@@ -514,7 +514,7 @@
 
 - (void)tryUpload
 {
-    Debug("tryUpload %d, %d", self.uploadnum, self.ufiles.count);
+    Debug("tryUpload %ld %ld", (long)self.uploadnum, (long)self.ufiles.count);
     if (self.ufiles.count == 0) return;
     NSMutableArray *todo = [[NSMutableArray alloc] init];
     @synchronized (self) {

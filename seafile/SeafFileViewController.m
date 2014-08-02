@@ -498,13 +498,13 @@ enum {
     if (file.uploading) {
         SeafUploadingFileCell *cell = (SeafUploadingFileCell *)[self getCell:@"SeafUploadingFileCell" forTableView:tableView];
         cell.nameLabel.text = file.name;
-        cell.imageView.image = file.image;
+        cell.imageView.image = file.icon;
         [cell.progressView setProgress:file.uProgress * 1.0/100];
         c = cell;
     } else {
         SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
         cell.textLabel.text = file.name;
-        cell.imageView.image = file.image;
+        cell.imageView.image = file.icon;
         cell.badgeLabel.text = nil;
 
         NSString *sizeStr = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:file.filesize ] useBaseTen:NO];
@@ -535,7 +535,7 @@ enum {
     SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
     cell.textLabel.text = sfile.name;
     cell.detailTextLabel.text = sfile.detailText;
-    cell.imageView.image = sfile.image;
+    cell.imageView.image = sfile.icon;
     cell.badgeLabel.text = nil;
     if (tableView == self.tableView) {
         UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditFileMenu:)];
@@ -551,7 +551,7 @@ enum {
     SeafCell *cell = (SeafCell *)[self getCell:@"SeafDirCell" forTableView:tableView];
     cell.textLabel.text = sdir.name;
     cell.detailTextLabel.text = nil;
-    cell.imageView.image = sdir.image;
+    cell.imageView.image = sdir.icon;
     sdir.delegate = self;
     return cell;
 }
@@ -561,7 +561,7 @@ enum {
     SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
     NSString *detail = [NSString stringWithFormat:@"%@, %@", [FileSizeFormatter stringFromNumber:[NSNumber numberWithUnsignedLongLong:srepo.size ] useBaseTen:NO], [SeafDateFormatter stringFromLongLong:srepo.mtime]];
     cell.detailTextLabel.text = detail;
-    cell.imageView.image = srepo.image;
+    cell.imageView.image = srepo.icon;
     cell.textLabel.text = srepo.name;
     cell.badgeLabel.text = nil;
     srepo.delegate = self;
@@ -674,6 +674,21 @@ enum {
     return [repos objectAtIndex:[indexPath row]];
 }
 
+- (BOOL)isCurrentFileImage:(NSMutableArray **)imgs
+{
+    if (![_curEntry isKindOfClass:[SeafFile class]]
+        || ![Utils isImageFile:((SeafFile *)_curEntry).name]) {
+        return NO;
+    }
+    NSMutableArray *arr = [[NSMutableArray alloc] init];
+    for (id entry in _directory.allItems) {
+        if ([entry isKindOfClass:[SeafFile class]]
+            && [Utils isImageFile:((SeafFile *)entry).name])
+            [arr addObject:entry];
+    }
+    *imgs = arr;
+    return YES;
+}
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if (self.navigationController.topViewController != self)   return;
@@ -694,22 +709,10 @@ enum {
             SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
             [appdelegate showDetailView:self.detailViewController];
         }
-        BOOL isImage = NO;
-#if 0
-        if ([_curEntry isKindOfClass:[SeafFile class]]) {
-            if ([Utils isImageFile:((SeafFile *)_curEntry).name]) {
-                isImage = YES;
-                NSMutableArray *arr = [[NSMutableArray alloc] init];
-                for (id entry in _directory.allItems) {
-                    if ([entry isKindOfClass:[SeafFile class]]
-                        && [Utils isImageFile:((SeafFile *)entry).name])
-                        [arr addObject:entry];
-                }
-                [self.detailViewController setPreViewItems:arr current:_curEntry master:self];
-            }
-        }
-#endif
-        if (!isImage) {
+        NSMutableArray *arr = nil;
+        if ([self isCurrentFileImage:&arr]) {
+            [self.detailViewController setPreViewItems:arr current:_curEntry master:self];
+        } else {
             id<QLPreviewItem, PreViewDelegate> item = (id<QLPreviewItem, PreViewDelegate>)_curEntry;
             [self.detailViewController setPreViewItem:item master:self];
         }

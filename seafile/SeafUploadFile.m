@@ -60,6 +60,10 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 {
     return [_lpath lastPathComponent];
 }
+- (void)unload
+{
+
+}
 
 - (BOOL)editable
 {
@@ -295,9 +299,14 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     return _preViewURL;
 }
 
-- (UIImage *)image
+- (UIImage *)icon
 {
     return [UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString];
+}
+
+- (UIImage *)image
+{
+    return [UIImage imageWithContentsOfFile:self.lpath];
 }
 
 - (NSURL *)checkoutURL
@@ -315,6 +324,11 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 {
     [self checkAsset];
     return [Utils stringContent:self.lpath];
+}
+
+- (BOOL)isDownloading
+{
+    return NO;
 }
 
 - (BOOL)saveContent:(NSString *)content

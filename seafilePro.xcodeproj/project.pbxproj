@@ -198,6 +198,10 @@
 		57532C0118689616003D564B /* SeafAccountViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57532C0318689616003D564B /* SeafAccountViewController.xib */; };
 		57532C1A1868AA48003D564B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 57532C161868AA48003D564B /* Localizable.strings */; };
 		57532C1C1868AA48003D564B /* seafile-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 57DB827B15A833FA00097CEC /* seafile-Info.plist */; };
+		57535230198CD4E0000BE07B /* MWTapDetectingImageView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5753522D198CD4E0000BE07B /* MWTapDetectingImageView.m */; };
+		57535231198CD4E0000BE07B /* MWTapDetectingView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5753522F198CD4E0000BE07B /* MWTapDetectingView.m */; };
+		57535235198CD4FF000BE07B /* DACircularProgressView.m in Sources */ = {isa = PBXBuildFile; fileRef = 57535234198CD4FF000BE07B /* DACircularProgressView.m */; };
+		57535239198D6241000BE07B /* SeafPhotoView.m in Sources */ = {isa = PBXBuildFile; fileRef = 57535238198D6241000BE07B /* SeafPhotoView.m */; };
 		576328BB19003298009EBCB8 /* SeafMessageCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576328B919003298009EBCB8 /* SeafMessageCell.xib */; };
 		576328BE190032EE009EBCB8 /* SeafMessageCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 576328BD190032EE009EBCB8 /* SeafMessageCell.m */; };
 		576B99071861411700A16ED6 /* EGOTextView.m in Sources */ = {isa = PBXBuildFile; fileRef = 576B98FC1861411700A16ED6 /* EGOTextView.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
@@ -536,6 +540,14 @@
 		57532C0218689616003D564B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafAccountViewController.xib; sourceTree = "<group>"; };
 		57532C171868AA48003D564B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		57532C181868AA48003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		5753522C198CD4E0000BE07B /* MWTapDetectingImageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MWTapDetectingImageView.h; sourceTree = "<group>"; };
+		5753522D198CD4E0000BE07B /* MWTapDetectingImageView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MWTapDetectingImageView.m; sourceTree = "<group>"; };
+		5753522E198CD4E0000BE07B /* MWTapDetectingView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MWTapDetectingView.h; sourceTree = "<group>"; };
+		5753522F198CD4E0000BE07B /* MWTapDetectingView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MWTapDetectingView.m; sourceTree = "<group>"; };
+		57535233198CD4FF000BE07B /* DACircularProgressView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DACircularProgressView.h; sourceTree = "<group>"; };
+		57535234198CD4FF000BE07B /* DACircularProgressView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DACircularProgressView.m; sourceTree = "<group>"; };
+		57535237198D6241000BE07B /* SeafPhotoView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafPhotoView.h; sourceTree = "<group>"; };
+		57535238198D6241000BE07B /* SeafPhotoView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafPhotoView.m; sourceTree = "<group>"; };
 		575753E915EE7AE30049D720 /* SeafDateFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafDateFormatter.h; sourceTree = "<group>"; };
 		575753EA15EE7AE30049D720 /* SeafDateFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafDateFormatter.m; sourceTree = "<group>"; };
 		5760144915FA193900FBDDEF /* ExtentedString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExtentedString.h; sourceTree = "<group>"; };
@@ -747,6 +759,8 @@
 		5704C6CF1753A07E0028F4FE /* thirdpart */ = {
 			isa = PBXGroup;
 			children = (
+				57535232198CD4EB000BE07B /* DACircularProgress (675f395) */,
+				5753522B198CD3AD000BE07B /* MWPhotoBrowser */,
 				5704C6D01753A1380028F4FE /* IntelligentSplitViewController.h */,
 				5704C6D11753A1380028F4FE /* IntelligentSplitViewController.m */,
 				57C57BDE165FC87B006834DF /* SVProgressHUD.bundle */,
@@ -921,6 +935,8 @@
 				57DB828F15A833FA00097CEC /* SeafFileViewController.m */,
 				576328BC190032EE009EBCB8 /* SeafMessageCell.h */,
 				576328BD190032EE009EBCB8 /* SeafMessageCell.m */,
+				57535237198D6241000BE07B /* SeafPhotoView.h */,
+				57535238198D6241000BE07B /* SeafPhotoView.m */,
 				5764C829163BF91B006AD511 /* SeafSettingsViewController.h */,
 				5764C82A163BF91B006AD511 /* SeafSettingsViewController.m */,
 				57853C8D164675CB00CE8857 /* SeafStarredFilesViewController.h */,
@@ -1282,6 +1298,26 @@
 				573E35F71922847200C67671 /* message-sent.aiff */,
 			);
 			path = Sounds;
+			sourceTree = "<group>";
+		};
+		5753522B198CD3AD000BE07B /* MWPhotoBrowser */ = {
+			isa = PBXGroup;
+			children = (
+				5753522C198CD4E0000BE07B /* MWTapDetectingImageView.h */,
+				5753522D198CD4E0000BE07B /* MWTapDetectingImageView.m */,
+				5753522E198CD4E0000BE07B /* MWTapDetectingView.h */,
+				5753522F198CD4E0000BE07B /* MWTapDetectingView.m */,
+			);
+			name = MWPhotoBrowser;
+			sourceTree = "<group>";
+		};
+		57535232198CD4EB000BE07B /* DACircularProgress (675f395) */ = {
+			isa = PBXGroup;
+			children = (
+				57535233198CD4FF000BE07B /* DACircularProgressView.h */,
+				57535234198CD4FF000BE07B /* DACircularProgressView.m */,
+			);
+			name = "DACircularProgress (675f395)";
 			sourceTree = "<group>";
 		};
 		576B98FA1861411700A16ED6 /* EGOTextView */ = {
@@ -1749,6 +1785,7 @@
 				571D8CAB1677881400F1A22C /* main.m in Sources */,
 				573E359819227F1200C67671 /* QBAssetsCollectionFooterView.m in Sources */,
 				571D8CAC1677881400F1A22C /* SeafAppDelegate.m in Sources */,
+				57535230198CD4E0000BE07B /* MWTapDetectingImageView.m in Sources */,
 				571D8CAD1677881400F1A22C /* SeafFileViewController.m in Sources */,
 				5796D03F18F78FCD00D5AE39 /* SeafAvatar.m in Sources */,
 				5732065C18EB16F4003250DE /* AFNetworkActivityIndicatorManager.m in Sources */,
@@ -1820,10 +1857,12 @@
 				5775EA1217476FAD000A1765 /* SeafActivityViewController.m in Sources */,
 				573E35FC1922847200C67671 /* JSBubbleImageViewFactory.m in Sources */,
 				5732064918EB11CA003250DE /* AFURLSessionManager.m in Sources */,
+				57535239198D6241000BE07B /* SeafPhotoView.m in Sources */,
 				57A90DA118C49F97005D8A53 /* SeafDetailViewController.m in Sources */,
 				5732064318EB11CA003250DE /* AFHTTPRequestOperationManager.m in Sources */,
 				57BD9329174B0A0E00F7732F /* SeafDisMasterViewController.m in Sources */,
 				5704C6D31753A1380028F4FE /* IntelligentSplitViewController.m in Sources */,
+				57535235198CD4FF000BE07B /* DACircularProgressView.m in Sources */,
 				573E35FA1922847200C67671 /* UIImage+JSMessagesView.m in Sources */,
 				5732066218EB16F4003250DE /* UIRefreshControl+AFNetworking.m in Sources */,
 				5732A95E177894E700D806C7 /* DEComposeRuledView.m in Sources */,
@@ -1834,6 +1873,7 @@
 				5732A968177894E700D806C7 /* REComposeViewController.m in Sources */,
 				573206A718EBABAE003250DE /* SeafDisDetailViewController.m in Sources */,
 				573E36011922847200C67671 /* JSMessageInputView.m in Sources */,
+				57535231198CD4E0000BE07B /* MWTapDetectingView.m in Sources */,
 				5732066318EB16F4003250DE /* UIWebView+AFNetworking.m in Sources */,
 				576C91C4177EB43F007B50BD /* SeafDirViewController.m in Sources */,
 				5725186017AE7A6F0078CD12 /* NSData+Encryption.m in Sources */,

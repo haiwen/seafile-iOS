@@ -11,6 +11,7 @@
 
 @protocol PreViewDelegate <NSObject>
 - (UIImage *)image;
+- (UIImage *)icon;
 - (NSURL *)checkoutURL;
 - (NSString *)mime;
 - (NSString *)name;
@@ -18,6 +19,9 @@
 - (NSString *)content;
 - (long long )filesize;
 - (BOOL)saveContent:(NSString *)content;
+- (BOOL)isDownloading;
+- (void)unload;
+
 @end
 
 @interface Utils : NSObject

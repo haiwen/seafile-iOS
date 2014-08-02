@@ -51,7 +51,7 @@
 - (void)configureViewWithPrevireItem:(id<QLPreviewItem, PreViewDelegate>)item
 {
     _item = item;
-    self.imageView.image = _item.image;
+    self.imageView.image = _item.icon;
     self.nameLabel.text = _item.previewItemTitle;
 }
 

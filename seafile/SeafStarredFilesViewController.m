@@ -201,7 +201,7 @@
     sfile.udelegate = self;
     cell.textLabel.text = sfile.name;
     cell.detailTextLabel.text = sfile.detailText;
-    cell.imageView.image = sfile.image;
+    cell.imageView.image = sfile.icon;
     UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditFileMenu:)];
     [cell addGestureRecognizer:longPressGesture];
     return cell;

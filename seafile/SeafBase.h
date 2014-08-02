@@ -66,7 +66,7 @@ enum SEAFBASE_STATE {
 - (void)checkRepoPassword:(NSString *)password;
 
 - (NSString *)key;
-- (UIImage *)image;
+- (UIImage *)icon;
 - (BOOL)hasCache;
 
 @end

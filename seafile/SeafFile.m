@@ -115,6 +115,11 @@
     _preViewURL = nil;
 }
 
+- (BOOL)isDownloading
+{
+    return self.downloadingFileOid != nil;
+}
+
 - (void)finishDownload:(NSString *)ooid
 {
     [self setOoid:ooid];
@@ -122,9 +127,10 @@
     self.downloadingFileOid = nil;
     self.operation = nil;
     [SeafAppDelegate decDownloadnum];
+    BOOL updated = self.oid != self.ooid;
     self.oid = self.ooid;
     [self savetoCache];
-    [self.delegate entry:self contentUpdated:YES completeness:100];
+    [self.delegate entry:self contentUpdated:updated completeness:100];
 }
 
 - (void)failedDownload:(NSError *)error
@@ -180,7 +186,7 @@
                  percent = (int)(totalBytesRead * 100 / totalBytesExpectedToRead);
              if (percent >= 100)
                  percent = 99;
-             [self.delegate entry:self contentUpdated:YES completeness:percent];
+             [self.delegate entry:self contentUpdated:NO completeness:percent];
          }];
          [self->connection handleOperation:operation];
      }
@@ -325,6 +331,7 @@
 
 - (void)loadContent:(BOOL)force;
 {
+    Debug("force=%d hascache=%d, state=%d", force, self.hasCache, self.state);
     @synchronized (self) {
         if (self.state == SEAF_DENTRY_UPTODATE && !force && self.hasCache) {
             [self.delegate entry:self contentUpdated:NO completeness:0];
@@ -334,6 +341,7 @@
             return;
         self.state = SEAF_DENTRY_LOADING;
     }
+
     if (!self.downloadingFileOid) {
         [self loadCache];
         [self download];
@@ -545,6 +553,18 @@
 - (BOOL)editable
 {
     return [[connection getRepo:self.repoId] editable];
+}
+
+- (UIImage *)image
+{
+    NSString *path = [Utils documentPath:self.ooid];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:path])
+        return [UIImage imageWithContentsOfFile:path];
+    return nil;
+}
+- (void)unload
+{
+
 }
 
 - (NSString *)content

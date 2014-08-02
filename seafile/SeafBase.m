@@ -101,7 +101,7 @@
     return self.name;
 }
 
-- (UIImage *)image;
+- (UIImage *)icon;
 {
     return [UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString];
 }

@@ -130,7 +130,7 @@
     SeafDir *sdir = [_directory.items objectAtIndex:indexPath.row];
     cell.textLabel.text = sdir.name;
     cell.textLabel.font = [UIFont systemFontOfSize:17];
-    cell.imageView.image = sdir.image;
+    cell.imageView.image = sdir.icon;
     cell.detailTextLabel.text = nil;
     return cell;
 }

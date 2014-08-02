@@ -13,6 +13,7 @@
 #import "SeafTextEditorViewController.h"
 #import "SeafUploadFile.h"
 #import "REComposeViewController.h"
+#import "SeafPhotoView.h"
 
 #import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
@@ -29,16 +30,30 @@ enum PREVIEW_STATE {
     PREVIEW_FAILED
 };
 
+#define PADDING                  10
+#define ACTION_SHEET_OLD_ACTIONS 2000
+
 #define SHARE_TITLE NSLocalizedString(@"How would you like to share this file?", @"Seafile")
 #define POST_DISCUSSION NSLocalizedString(@"Post a discussion to group", @"Seafile")
 
-@interface SeafDetailViewController ()<UIWebViewDelegate, UIActionSheetDelegate, UIPrintInteractionControllerDelegate, MFMailComposeViewControllerDelegate, REComposeViewControllerDelegate, QLPreviewControllerDelegate, QLPreviewControllerDataSource>
+@interface SeafDetailViewController ()<UIWebViewDelegate, UIActionSheetDelegate, UIPrintInteractionControllerDelegate, MFMailComposeViewControllerDelegate, REComposeViewControllerDelegate, QLPreviewControllerDelegate, QLPreviewControllerDataSource, UIScrollViewDelegate>
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
 
 @property (retain) QLPreviewController *fileViewController;
 @property (retain) FailToPreview *failedView;
 @property (retain) DownloadingProgressView *progressView;
 @property (retain) UIWebView *webView;
+
+@property (retain, nonatomic) UIScrollView *pagingScrollView;
+@property CGRect previousLayoutBounds;
+@property BOOL performingLayout;
+@property BOOL rotating;
+@property BOOL viewIsActive;
+@property (retain) NSArray *photos;
+@property (retain) NSMutableSet *visiblePages;
+@property (retain) NSMutableSet *recycledPages;
+@property NSUInteger currentPageIndex;
+
 @property int state;
 
 @property (strong) NSArray *barItemsStar;
@@ -88,8 +103,9 @@ enum PREVIEW_STATE {
     return false;
 }
 
-- (void)checkNavItems
+- (void)updateNavigation
 {
+    self.title = self.preViewItem.previewItemTitle;
     NSMutableArray *array = [[NSMutableArray alloc] init];
     if ([self.preViewItem isKindOfClass:[SeafFile class]]) {
         if ([(SeafFile *)self.preViewItem isStarred])
@@ -124,6 +140,8 @@ enum PREVIEW_STATE {
 - (void)refreshView
 {
     NSURLRequest *request;
+    if (self.state == PREVIEW_PHOTO && !self.photos)
+        [self clearPhotosVIew];
     if (self.state != PREVIEW_PHOTO) {
         [self clearPreView];
         if (!self.preViewItem) {
@@ -144,8 +162,7 @@ enum PREVIEW_STATE {
             self.state = PREVIEW_DOWNLOADING;
         }
     }
-    self.title = self.preViewItem.previewItemTitle;
-    [self checkNavItems];
+    [self updateNavigation];
     CGRect r = CGRectMake(self.view.frame.origin.x, 0, self.view.frame.size.width, self.view.frame.size.height);
     switch (self.state) {
         case PREVIEW_DOWNLOADING:
@@ -179,6 +196,14 @@ enum PREVIEW_STATE {
             self.webView.hidden = NO;
             break;
         case PREVIEW_PHOTO:
+            Debug("Preview photo %@\n", self.preViewItem.previewItemTitle);
+            if (!self.preViewItem.isDownloading) {
+                SeafPhotoView *page = [self pageDisplayingPhoto:(SeafFile *)self.preViewItem];
+                [page displayImage];
+                if (self.preViewItem.image) {
+                    [self loadAdjacentPhotosIfNecessary:(SeafFile *)self.preViewItem];
+                }
+            }
             break;
         case PREVIEW_NONE:
             break;
@@ -193,15 +218,14 @@ enum PREVIEW_STATE {
         [self.masterPopoverController dismissPopoverAnimated:YES];
     Debug("preview %@", item.previewItemTitle);
     self.masterVc = c;
-    _preViewItem = item;
+    self.photos = nil;
+    self.preViewItem = item;
     if (IsIpad() && UIInterfaceOrientationIsLandscape(self.interfaceOrientation) && !self.hideMaster && self.masterVc) {
         if (_preViewItem == nil)
             self.navigationItem.leftBarButtonItem = nil;
         else
             self.navigationItem.leftBarButtonItem = self.fullscreenItem;
     }
-    if (self.state == PREVIEW_PHOTO)
-        self.state = PREVIEW_SUCCESS;
     if ([item isKindOfClass:[SeafFile class]]) {
         ((SeafFile *)item).delegate = self;
         [(SeafFile *)item loadContent:NO];
@@ -211,17 +235,16 @@ enum PREVIEW_STATE {
 
 - (void)setPreViewItems:(NSArray *)items current:(id<QLPreviewItem, PreViewDelegate>)item master:(UIViewController *)c
 {
-#if 0
     [self clearPreView];
+    self.masterVc = c;
+    self.photos = items;
     self.state = PREVIEW_PHOTO;
-    if ([item isKindOfClass:[SeafFile class]]) {
-        ((SeafFile *)item).delegate = self;
-        [(SeafFile *)item loadContent:NO];
-    }
-    self.fileViewController.view.frame = CGRectMake(self.view.frame.origin.x, 0, self.view.frame.size.width, self.view.frame.size.height);
-    self.fileViewController.view.hidden = NO;
-    [self.fileViewController setPreItems:items current:item];
-#endif
+    self.preViewItem = item;
+    self.currentPageIndex = [items indexOfObject:item];
+    [self.view addSubview:self.pagingScrollView];
+    [self setupPhotosView];
+    [self updateNavigation];
+    [self.view setNeedsLayout];
 }
 
 - (void)goBack:(id)sender
@@ -310,6 +333,8 @@ enum PREVIEW_STATE {
     CGRect r = CGRectMake(self.view.frame.origin.x, 0, self.view.frame.size.width, self.view.frame.size.height);
     if (self.state == PREVIEW_SUCCESS) {
         self.fileViewController.view.frame = r;
+    } else if (self.state == PREVIEW_PHOTO){
+        [self layoutVisiblePages];
     } else {
         if (self.view.subviews.count > 1) {
             UIView *v = [self.view.subviews objectAtIndex:0];
@@ -412,12 +437,20 @@ enum PREVIEW_STATE {
 
 - (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration
 {
+    _rotating = YES;
     if (IsIpad()) self.splitViewController.delegate = self;
     [super willRotateToInterfaceOrientation:toInterfaceOrientation duration:duration];
 }
 
+- (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
+    [super willAnimateRotationToInterfaceOrientation:toInterfaceOrientation duration:duration];
+    if (self.state == PREVIEW_SUCCESS)
+        [self layoutVisiblePages];
+}
+
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
+    _rotating = NO;
     if (IsIpad()) self.splitViewController.delegate = self;
     if (IsIpad() && !UIInterfaceOrientationIsLandscape(self.interfaceOrientation)) {
         if (self.hideMaster) {
@@ -459,12 +492,18 @@ enum PREVIEW_STATE {
 }
 - (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent
 {
+    if (_preViewItem != entry) return;
     if (updated || self.state == PREVIEW_DOWNLOADING)
         [self fileContentLoaded:(SeafFile *)entry result:YES completeness:percent];
+    else if (self.state == PREVIEW_PHOTO) {
+        SeafPhotoView *page = [self pageDisplayingPhoto:(SeafFile *)self.preViewItem];
+        [page setProgress:percent *1.0f/100];
+    }
 }
 
 - (void)entryContentLoadingFailed:(long)errCode entry:(SeafBase *)entry;
 {
+    if (self.preViewItem != entry) return;
     [self fileContentLoaded:(SeafFile *)entry result:NO completeness:0];
 }
 
@@ -491,13 +530,13 @@ enum PREVIEW_STATE {
 - (IBAction)starFile:(id)sender
 {
     [(SeafFile *)self.preViewItem setStarred:YES];
-    [self checkNavItems];
+    [self updateNavigation];
 }
 
 - (IBAction)unstarFile:(id)sender
 {
     [(SeafFile *)self.preViewItem setStarred:NO];
-    [self checkNavItems];
+    [self updateNavigation];
 }
 
 - (IBAction)editFile:(id)sender
@@ -537,15 +576,13 @@ enum PREVIEW_STATE {
 
 - (IBAction)openElsewhere
 {
-    BOOL ret;
     NSURL *url = [self.preViewItem checkoutURL];
-    if (!url)
-        return;
+    if (!url)   return;
 
     if (self.docController)
         [self.docController dismissMenuAnimated:NO];
     self.docController = [UIDocumentInteractionController interactionControllerWithURL:url];
-    ret = [self.docController presentOpenInMenuFromBarButtonItem:self.exportItem animated:YES];
+    BOOL ret = [self.docController presentOpenInMenuFromBarButtonItem:self.exportItem animated:YES];
     if (ret == NO) {
         [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"There is no app which can open this type of file on this machine", @"Seafile")];
     }
@@ -820,7 +857,7 @@ enum PREVIEW_STATE {
     }
     self.title = self.preViewItem.previewItemTitle;
     Debug("prevItem=%@, title=%@", prevItem, self.title);
-    [self checkNavItems];
+    [self updateNavigation];
 }
 - (void)willSelect:(id<QLPreviewItem, PreViewDelegate>)prevItem
 {
@@ -855,7 +892,267 @@ enum PREVIEW_STATE {
     if (index < 0 || index >= 1) {
         return nil;
     }
-
     return self.preViewItem;
 }
+
+#pragma -mark - pagingScrollView for photots
+
+- (CGRect)frameForPagingScrollView {
+    CGRect frame = self.view.bounds;// [[UIScreen mainScreen] bounds];
+    frame.origin.x -= PADDING;
+    frame.size.width += (2 * PADDING);
+    return CGRectIntegral(frame);
+}
+- (CGRect)frameForPageAtIndex:(NSUInteger)index {
+    // We have to use our paging scroll view's bounds, not frame, to calculate the page placement. When the device is in
+    // landscape orientation, the frame will still be in portrait because the pagingScrollView is the root view controller's
+    // view, so its frame is in window coordinate space, which is never rotated. Its bounds, however, will be in landscape
+    // because it has a rotation transform applied.
+    CGRect bounds = _pagingScrollView.bounds;
+    CGRect pageFrame = bounds;
+    pageFrame.size.width -= (2 * PADDING);
+    pageFrame.origin.x = (bounds.size.width * index) + PADDING;
+    return CGRectIntegral(pageFrame);
+}
+
+- (NSUInteger)numberOfPhotos {
+    if (!self.photos) return 0;
+    return self.photos.count;
+}
+- (CGSize)contentSizeForPagingScrollView {
+    // We have to use the paging scroll view's bounds to calculate the contentSize, for the same reason outlined above.
+    CGRect bounds = _pagingScrollView.bounds;
+    return CGSizeMake(bounds.size.width * [self numberOfPhotos], bounds.size.height);
+}
+- (CGPoint)contentOffsetForPageAtIndex:(NSUInteger)index {
+    CGFloat pageWidth = _pagingScrollView.bounds.size.width;
+    CGFloat newOffset = index * pageWidth;
+    return CGPointMake(newOffset, 0);
+}
+
+- (UIScrollView *)pagingScrollView
+{
+    if (!_pagingScrollView) {
+        CGRect pagingScrollViewFrame = [self frameForPagingScrollView];
+        _pagingScrollView = [[UIScrollView alloc] initWithFrame:pagingScrollViewFrame];
+        _pagingScrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        _pagingScrollView.pagingEnabled = YES;
+        _pagingScrollView.delegate = self;
+        _pagingScrollView.showsHorizontalScrollIndicator = NO;
+        _pagingScrollView.showsVerticalScrollIndicator = NO;
+        _pagingScrollView.backgroundColor = [UIColor blackColor];
+        _pagingScrollView.contentSize = [self contentSizeForPagingScrollView];
+        _visiblePages = [[NSMutableSet alloc] init];
+        _recycledPages = [[NSMutableSet alloc] init];
+    }
+    return _pagingScrollView;
+}
+- (BOOL)isDisplayingPageForIndex:(NSUInteger)index {
+    for (SeafPhotoView *page in _visiblePages)
+        if (page.index == index) return YES;
+    return NO;
+}
+- (SeafPhotoView *)dequeueRecycledPage {
+    SeafPhotoView *page = [_recycledPages anyObject];
+    if (page) {
+        [_recycledPages removeObject:page];
+    }
+    return page;
+}
+- (SeafPhotoView *)pageDisplayingPhoto:(id<QLPreviewItem, PreViewDelegate>)photo {
+    SeafPhotoView *thePage = nil;
+    for (SeafPhotoView *page in _visiblePages) {
+        if (page.photo == photo) {
+            thePage = page; break;
+        }
+    }
+    return thePage;
+}
+
+- (void)configurePage:(SeafPhotoView *)page forIndex:(NSUInteger)index {
+    page.frame = [self frameForPageAtIndex:index];
+    page.index = index;
+    page.photo = [self.photos objectAtIndex:index];
+}
+
+- (void)tilePages
+{
+    // Calculate which pages should be visible
+    // Ignore padding as paging bounces encroach on that
+    // and lead to false page loads
+    CGRect visibleBounds = _pagingScrollView.bounds;
+    NSInteger iFirstIndex = (NSInteger)floorf((CGRectGetMinX(visibleBounds)+PADDING*2) / CGRectGetWidth(visibleBounds));
+    NSInteger iLastIndex  = (NSInteger)floorf((CGRectGetMaxX(visibleBounds)-PADDING*2-1) / CGRectGetWidth(visibleBounds));
+    if (iFirstIndex < 0) iFirstIndex = 0;
+    if (iFirstIndex > [self numberOfPhotos] - 1) iFirstIndex = [self numberOfPhotos] - 1;
+    if (iLastIndex < 0) iLastIndex = 0;
+    if (iLastIndex > [self numberOfPhotos] - 1) iLastIndex = [self numberOfPhotos] - 1;
+
+    // Recycle no longer needed pages
+    NSInteger pageIndex;
+    for (SeafPhotoView *page in _visiblePages) {
+        pageIndex = page.index;
+        if (pageIndex < (NSUInteger)iFirstIndex || pageIndex > (NSUInteger)iLastIndex) {
+            [_recycledPages addObject:page];
+            [page prepareForReuse];
+            [page removeFromSuperview];
+            Debug("Removed page at index %lu", (unsigned long)pageIndex);
+        }
+    }
+    [_visiblePages minusSet:_recycledPages];
+    while (_recycledPages.count > 2) // Only keep 2 recycled pages
+        [_recycledPages removeObject:[_recycledPages anyObject]];
+
+    // Add missing pages
+    for (NSUInteger index = (NSUInteger)iFirstIndex; index <= (NSUInteger)iLastIndex; index++) {
+        if (![self isDisplayingPageForIndex:index]) {
+            // Add new page
+            SeafPhotoView *page = [self dequeueRecycledPage];
+            if (!page) {
+                page = [[SeafPhotoView alloc] initWithPhotoBrowser:self];
+            }
+            [_visiblePages addObject:page];
+            [self configurePage:page forIndex:index];
+            [_pagingScrollView addSubview:page];
+            Debug("Added page at index %lu subviews=%d", (unsigned long)index, _pagingScrollView.subviews.count);
+        }
+    }
+}
+
+- (void)setupPhotosView
+{
+    self.pagingScrollView.contentOffset = [self contentOffsetForPageAtIndex:self.currentPageIndex];
+    [self tilePages];
+}
+
+- (void)clearPhotosVIew
+{
+    [self.pagingScrollView removeFromSuperview];
+    _pagingScrollView = nil;
+    _photos = nil;
+    _visiblePages = nil;
+    _recycledPages = nil;
+    self.state = PREVIEW_NONE;
+}
+
+
+- (void)layoutVisiblePages
+{
+    _performingLayout = YES;
+
+    // Remember index
+    NSUInteger indexPriorToLayout = _currentPageIndex;
+
+    // Get paging scroll view frame to determine if anything needs changing
+    CGRect pagingScrollViewFrame = [self frameForPagingScrollView];
+    _pagingScrollView.frame = pagingScrollViewFrame;
+
+    // Recalculate contentSize based on current orientation
+    self.pagingScrollView.contentSize = [self contentSizeForPagingScrollView];
+    // Adjust frames and configuration of each visible page
+    for (SeafPhotoView *page in _visiblePages) {
+        NSUInteger index = page.index;
+        page.frame = [self frameForPageAtIndex:index];
+        // Adjust scales if bounds has changed since last time
+        if (!CGRectEqualToRect(_previousLayoutBounds, self.view.bounds)) {
+            // Update zooms for new bounds
+            [page setMaxMinZoomScalesForCurrentBounds];
+            _previousLayoutBounds = self.view.bounds;
+        }
+    }
+
+    // Adjust contentOffset to preserve page location based on values collected prior to location
+    _pagingScrollView.contentOffset = [self contentOffsetForPageAtIndex:indexPriorToLayout];
+    [self didStartViewingPageAtIndex:_currentPageIndex]; // initial
+
+    // Reset
+    _currentPageIndex = indexPriorToLayout;
+    _performingLayout = NO;
+}
+
+#pragma mark - UIScrollView Delegate
+// Handle page changes
+- (void)didStartViewingPageAtIndex:(NSUInteger)index {
+
+    if (![self numberOfPhotos]) {
+        // Show controls
+        [self setControlsHidden:NO animated:YES permanent:YES];
+        return;
+    }
+
+    // Release images further away than +/-1
+    NSUInteger i;
+    if (index > 0) {
+        // Release anything < index - 1
+        for (i = 0; i < index-1; i++) {
+            id<QLPreviewItem, PreViewDelegate> photo = [_photos objectAtIndex:i];
+            [photo unload];
+            Debug("Released underlying image at index %lu", (unsigned long)i);
+        }
+    }
+    if (index < [self numberOfPhotos] - 1) {
+        // Release anything > index + 1
+        for (i = index + 2; i < _photos.count; i++) {
+            id<QLPreviewItem, PreViewDelegate> photo = [_photos objectAtIndex:i];
+            [photo unload];
+            Debug("Released underlying image at index %lu", (unsigned long)i);
+        }
+    }
+
+    // Load adjacent images if needed and the photo is already
+    // loaded. Also called after photo has been loaded in background
+    if ([self.preViewItem isKindOfClass:[SeafFile class]]) {
+        SeafFile *file = (SeafFile *)self.preViewItem;
+        file.delegate = self;
+        [file loadContent:NO];
+        if ([file hasCache])
+            [self loadAdjacentPhotosIfNecessary:self.preViewItem];
+    }
+
+    // Update nav
+    [self updateNavigation];
+}
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    if (!self.isVisible || _performingLayout || _rotating) return;
+    [self tilePages];
+
+    // Calculate current page
+    CGRect visibleBounds = _pagingScrollView.bounds;
+    NSInteger index = (NSInteger)(floorf(CGRectGetMidX(visibleBounds) / CGRectGetWidth(visibleBounds)));
+    if (index < 0) index = 0;
+    if (index > [self numberOfPhotos] - 1) index = [self numberOfPhotos] - 1;
+    NSUInteger previousCurrentPage = _currentPageIndex;
+    _currentPageIndex = index;
+    self.preViewItem = [self.photos objectAtIndex:index];
+    if (_currentPageIndex != previousCurrentPage) {
+        [self didStartViewingPageAtIndex:index];
+    }
+}
+
+- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
+    // Hide controls when dragging begins
+    [self setControlsHidden:YES animated:YES permanent:NO];
+}
+
+- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
+    // Update nav when page changes
+    [self updateNavigation];
+}
+
+- (void)cancelControlHiding
+{
+}
+- (void)hideControlsAfterDelay
+{
+}
+- (void)toggleControls
+{
+
+}
+- (void)setControlsHidden:(BOOL)hidden animated:(BOOL)animated permanent:(BOOL)permanent {
+}
+- (void)loadAdjacentPhotosIfNecessary:(id<QLPreviewItem, PreViewDelegate>)photo {
+}
+
 @end

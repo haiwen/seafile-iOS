@@ -90,7 +90,7 @@
     self.saveItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Save", @"Seafile") style:UIBarButtonItemStyleBordered target:self action:@selector(save:)];
     self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIBarButtonItemStyleBordered target:self action:@selector(cancel:)];
     self.navigationItem.rightBarButtonItem = self.saveItem;
-    self.imageVIew.image = self.ufile.image;
+    self.imageVIew.image = self.ufile.icon;
     self.nameLabel.text = self.ufile.name;
     if (self.curDir) {
         [self.saveItem setEnabled:YES];
