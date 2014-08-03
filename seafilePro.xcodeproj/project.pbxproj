@@ -548,6 +548,7 @@
 		57535234198CD4FF000BE07B /* DACircularProgressView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DACircularProgressView.m; sourceTree = "<group>"; };
 		57535237198D6241000BE07B /* SeafPhotoView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafPhotoView.h; sourceTree = "<group>"; };
 		57535238198D6241000BE07B /* SeafPhotoView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafPhotoView.m; sourceTree = "<group>"; };
+		5753523A198D6857000BE07B /* SeafPreView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafPreView.h; sourceTree = "<group>"; };
 		575753E915EE7AE30049D720 /* SeafDateFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafDateFormatter.h; sourceTree = "<group>"; };
 		575753EA15EE7AE30049D720 /* SeafDateFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafDateFormatter.m; sourceTree = "<group>"; };
 		5760144915FA193900FBDDEF /* ExtentedString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExtentedString.h; sourceTree = "<group>"; };
@@ -958,6 +959,8 @@
 		5709512715B9ACF300F48C08 /* models */ = {
 			isa = PBXGroup;
 			children = (
+				5796D03D18F78FCD00D5AE39 /* SeafAvatar.h */,
+				5796D03E18F78FCD00D5AE39 /* SeafAvatar.m */,
 				5709512F15B9B6BD00F48C08 /* SeafBase.h */,
 				5709513015B9B6BD00F48C08 /* SeafBase.m */,
 				5709512915B9B6BD00F48C08 /* SeafConnection.h */,
@@ -971,16 +974,15 @@
 				57396B751657E0190089F32F /* seafile.xcdatamodeld */,
 				5709513115B9B6BD00F48C08 /* SeafJSONRequestOperation.h */,
 				5709513215B9B6BD00F48C08 /* SeafJSONRequestOperation.m */,
+				57D2F3FD18D33E7D00A52EB6 /* SeafMessage.h */,
+				57D2F3FE18D33E7D00A52EB6 /* SeafMessage.m */,
+				5753523A198D6857000BE07B /* SeafPreView.h */,
 				5709513315B9B6BD00F48C08 /* SeafRepos.h */,
 				5709513415B9B6BD00F48C08 /* SeafRepos.m */,
 				57853C931646818A00CE8857 /* SeafStarredFile.h */,
 				57853C941646818A00CE8857 /* SeafStarredFile.m */,
 				572500B416298C7C001E5C75 /* SeafUploadFile.h */,
 				572500B516298C7C001E5C75 /* SeafUploadFile.m */,
-				57D2F3FD18D33E7D00A52EB6 /* SeafMessage.h */,
-				57D2F3FE18D33E7D00A52EB6 /* SeafMessage.m */,
-				5796D03D18F78FCD00D5AE39 /* SeafAvatar.h */,
-				5796D03E18F78FCD00D5AE39 /* SeafAvatar.m */,
 			);
 			name = models;
 			sourceTree = "<group>";

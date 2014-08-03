@@ -86,7 +86,7 @@
 
 #pragma mark - Image
 
-- (void)setPhoto:(id<QLPreviewItem, PreViewDelegate>)photo
+- (void)setPhoto:(id<SeafPreView>)photo
 {
     _photo = photo;
     UIImage *img = self.photo.image;
@@ -95,8 +95,7 @@
     } else {
         // Will be loading so show loading
         [self showLoadingIndicator];
-        ((SeafFile *)self.photo).delegate = self.photoBrowser;
-        [(SeafFile *)self.photo loadContent:NO];
+        [photo load:self.photoBrowser force:NO];
     }
 }
 

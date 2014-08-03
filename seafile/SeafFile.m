@@ -23,7 +23,7 @@
 @interface SeafFile ()
 
 @property (strong, readonly) NSURL *preViewURL;
-@property (readonly) NSURL *checkoutURL;
+@property (readonly) NSURL *exportURL;
 @property (strong) NSString *downloadingFileOid;
 @property (strong) AFHTTPRequestOperation *operation;
 
@@ -34,7 +34,7 @@
 @end
 
 @implementation SeafFile
-@synthesize checkoutURL = _checkoutURL;
+@synthesize exportURL = _exportURL;
 @synthesize preViewURL = _preViewURL;
 @synthesize shareLink = _shareLink;
 @synthesize groups = _groups;
@@ -105,13 +105,13 @@
     self.ooid = nil;
     self.state = SEAF_DENTRY_INIT;
     [self loadCache];
-    [self.delegate entryChanged:self];
+    [self.delegate entry:self updated:YES progress:100];
 }
 
 - (void)setOoid:(NSString *)ooid
 {
     super.ooid = ooid;
-    _checkoutURL = nil;
+    _exportURL = nil;
     _preViewURL = nil;
 }
 
@@ -122,21 +122,21 @@
 
 - (void)finishDownload:(NSString *)ooid
 {
+    BOOL updated = ![ooid isEqualToString:self.ooid];
     [self setOoid:ooid];
     self.state = SEAF_DENTRY_UPTODATE;
     self.downloadingFileOid = nil;
     self.operation = nil;
     [SeafAppDelegate decDownloadnum];
-    BOOL updated = self.oid != self.ooid;
     self.oid = self.ooid;
     [self savetoCache];
-    [self.delegate entry:self contentUpdated:updated completeness:100];
+    [self.delegate entry:self updated:updated progress:100];
 }
 
 - (void)failedDownload:(NSError *)error
 {
     self.state = SEAF_DENTRY_INIT;
-    [self.delegate entryContentLoadingFailed:error.code entry:self];
+    [self.delegate entry:self downloadingFailed:error.code];
     self.downloadingFileOid = nil;
     self.operation = nil;
     [SeafAppDelegate decDownloadnum];
@@ -186,14 +186,14 @@
                  percent = (int)(totalBytesRead * 100 / totalBytesExpectedToRead);
              if (percent >= 100)
                  percent = 99;
-             [self.delegate entry:self contentUpdated:NO completeness:percent];
+             [self.delegate entry:self updated:NO progress:percent];
          }];
          [self->connection handleOperation:operation];
      }
                     failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
          self.state = SEAF_DENTRY_INIT;
-         [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
+         [self.delegate entry:self downloadingFailed:response.statusCode];
      }];
 }
 
@@ -270,7 +270,7 @@
         percent = (percent + self.index*100.0)/self.blks.count;
         if (percent >= 100)
             percent = 99;
-        [self.delegate entry:self contentUpdated:YES completeness:percent];
+        [self.delegate entry:self updated:YES progress:percent];
     }];
     [self->connection handleOperation:operation];
 }
@@ -316,7 +316,7 @@
                     failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
          self.state = SEAF_DENTRY_INIT;
-         [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
+         [self.delegate entry:self downloadingFailed:response.statusCode];
      }];
 }
 
@@ -329,23 +329,18 @@
         [self downloadByFile];
 }
 
-- (void)loadContent:(BOOL)force;
+- (void)realLoadContent
 {
-    Debug("force=%d hascache=%d, state=%d", force, self.hasCache, self.state);
-    @synchronized (self) {
-        if (self.state == SEAF_DENTRY_UPTODATE && !force && self.hasCache) {
-            [self.delegate entry:self contentUpdated:NO completeness:0];
-            return;
-        }
-        if (self.state == SEAF_DENTRY_LOADING)
-            return;
-        self.state = SEAF_DENTRY_LOADING;
-    }
-
-    if (!self.downloadingFileOid) {
+    if (!self.isDownloading) {
         [self loadCache];
         [self download];
     }
+}
+
+- (void)load:(id<SeafDentryDelegate>)delegate force:(BOOL)force
+{
+    self.delegate = delegate;
+    [self loadContent:NO];
 }
 
 - (BOOL)hasCache
@@ -354,6 +349,10 @@
         return YES;
     self.ooid = NO;
     return NO;
+}
+- (BOOL)isImageFile
+{
+    return [Utils isImageFile:self.name];
 }
 
 - (DownloadedFile *)loadCacheObj
@@ -395,7 +394,7 @@
     if (dfile && dfile.mpath && [[NSFileManager defaultManager] fileExistsAtPath:dfile.mpath]) {
         _mpath = dfile.mpath;
         _preViewURL = nil;
-        _checkoutURL = nil;
+        _exportURL = nil;
         self.filesize = [Utils fileSizeAtPath1:self.mpath];
     }
     if (self.mpath)
@@ -406,7 +405,6 @@
 
     if (!self.mpath && !self.ooid)
         return NO;
-    [self.delegate entry:self contentUpdated:YES completeness:100];
     return YES;
 }
 
@@ -457,15 +455,15 @@
 }
 
 #pragma mark - QLPreviewItem
-- (NSURL *)checkoutURL
+- (NSURL *)exportURL
 {
     NSError *error = nil;
-    if (_checkoutURL && [[NSFileManager defaultManager] fileExistsAtPath:_checkoutURL.path])
-        return _checkoutURL;
+    if (_exportURL && [[NSFileManager defaultManager] fileExistsAtPath:_exportURL.path])
+        return _exportURL;
 
     if (self.mpath) {
-        _checkoutURL = [NSURL fileURLWithPath:self.mpath];
-        return _checkoutURL;
+        _exportURL = [NSURL fileURLWithPath:self.mpath];
+        return _exportURL;
     }
 
     if (!self.ooid)
@@ -477,14 +475,14 @@
         NSString *tempFileName = [tempDir stringByAppendingPathComponent:self.name];
         if ([[NSFileManager defaultManager] fileExistsAtPath:tempFileName]
             || [[NSFileManager defaultManager] linkItemAtPath:[Utils documentPath:self.ooid] toPath:tempFileName error:&error]) {
-            _checkoutURL = [NSURL fileURLWithPath:tempFileName];
+            _exportURL = [NSURL fileURLWithPath:tempFileName];
         } else {
-            Warning("Copy file to checkoutURL failed:%@\n", error);
+            Warning("Copy file to exportURL failed:%@\n", error);
             self.ooid = nil;
-            _checkoutURL = nil;
+            _exportURL = nil;
         }
     }
-    return _checkoutURL;
+    return _exportURL;
 }
 
 - (NSURL *)markdownPreviewItemURL
@@ -504,7 +502,7 @@
     if (_preViewURL && [[NSFileManager defaultManager] fileExistsAtPath:_preViewURL.path])
         return _preViewURL;
 
-    _preViewURL = self.checkoutURL;
+    _preViewURL = self.exportURL;
     if (!_preViewURL)
         return nil;
 
@@ -552,7 +550,7 @@
 
 - (BOOL)editable
 {
-    return [[connection getRepo:self.repoId] editable];
+    return [[connection getRepo:self.repoId] editable] && [self.mime hasPrefix:@"text/"];
 }
 
 - (UIImage *)image
@@ -562,12 +560,13 @@
         return [UIImage imageWithContentsOfFile:path];
     return nil;
 }
+
 - (void)unload
 {
 
 }
 
-- (NSString *)content
+- (NSString *)strContent
 {
     if (self.mpath)
         return [Utils stringContent:self.mpath];
@@ -585,12 +584,12 @@
     _mpath = mpath;
     [self savetoCache];
     _preViewURL = nil;
-    _checkoutURL = nil;
+    _exportURL = nil;
     self.filesize = [Utils fileSizeAtPath1:_mpath];
     self.mtime = [[NSDate date] timeIntervalSince1970];
 }
 
-- (BOOL)saveContent:(NSString *)content
+- (BOOL)saveStrContent:(NSString *)content
 {
     @synchronized (self) {
         NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
@@ -631,7 +630,6 @@
     }
 }
 
-
 - (BOOL)isStarred
 {
     return [connection isStarred:self.repoId path:self.path];
@@ -658,7 +656,7 @@
 
 - (void)deleteCache
 {
-    _checkoutURL = nil;
+    _exportURL = nil;
     _preViewURL = nil;
     _shareLink = nil;
     [[NSFileManager defaultManager] removeItemAtPath:[Utils documentPath:self.ooid] error:nil];
@@ -682,7 +680,7 @@
 }
 
 #pragma mark - SeafUploadDelegate
-- (void)uploadProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent
+- (void)uploadProgress:(SeafFile *)file result:(BOOL)res progress:(int)percent
 {
     id<SeafFileUpdateDelegate> dg = self.udelegate;
     [dg updateProgress:self result:res completeness:percent];

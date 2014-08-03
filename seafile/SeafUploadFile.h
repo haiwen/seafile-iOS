@@ -8,20 +8,21 @@
 
 #import <Foundation/Foundation.h>
 #import <QuickLook/QuickLook.h>
+#import <AssetsLibrary/AssetsLibrary.h>
 
-#import "Utils.h"
+#import "SeafPreView.h"
 
 @class SeafConnection;
 @class SeafUploadFile;
 @class SeafDir;
 
 @protocol SeafUploadDelegate <NSObject>
-- (void)uploadProgress:(SeafUploadFile *)file result:(BOOL)res completeness:(int)percent;
+- (void)uploadProgress:(SeafUploadFile *)file result:(BOOL)res progress:(int)percent;
 - (void)uploadSucess:(SeafUploadFile *)file oid:(NSString *)oid;
 @end
 
 
-@interface SeafUploadFile : NSObject<PreViewDelegate, QLPreviewItem>
+@interface SeafUploadFile : NSObject<SeafPreView, QLPreviewItem>
 
 @property (readonly) NSString *lpath;
 @property (readonly) NSString *name;

@@ -110,7 +110,7 @@
 {
     @synchronized (self) {
         if (self.cacheLoaded) {
-            [_delegate entry:self contentUpdated:YES completeness:100];
+            [_delegate entry:self updated:YES progress:100];
             return YES;
         }
         self.cacheLoaded = YES;
@@ -120,24 +120,23 @@
 
 - (void)loadContent:(BOOL)force;
 {
+    [self loadCache];
     @synchronized (self) {
         if (self.state == SEAF_DENTRY_UPTODATE && !force) {
-            [_delegate entry:self contentUpdated:NO completeness:0];
+            [_delegate entry:self updated:NO progress:0];
             return;
         }
         if (self.state == SEAF_DENTRY_LOADING)
             return;
         self.state = SEAF_DENTRY_LOADING;
     }
-
-    [self loadCache];
     [self realLoadContent];
 }
 
 - (void)setRepoPassword:(NSString *)password
 {
     if (!self.repoId) {
-        [self.delegate repoPasswordSet:self WithResult:NO];
+        [self.delegate entry:self repoPasswordSet:NO];
         return;
     }
     NSString *request_str = [NSString stringWithFormat:API_URL"/repos/%@/?op=setpassword", self.repoId];
@@ -145,9 +144,9 @@
     [connection sendPost:request_str form:formString
                  success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
                      [Utils setRepo:self.repoId password:password];
-                     [self.delegate repoPasswordSet:self WithResult:YES];
+                     [self.delegate entry:self repoPasswordSet:YES];
                  } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-                     [self.delegate repoPasswordSet:self WithResult:NO];
+                     [self.delegate entry:self repoPasswordSet:NO];
                  } ];
 }
 
@@ -156,21 +155,21 @@
     SeafRepo *repo = [connection getRepo:self.repoId];
     Debug("check magic %@, %@", repo.magic, password);
     if (!repo.magic || !repo.encKey) {
-        [self.delegate repoPasswordSet:self WithResult:NO];
+        [self.delegate entry:self repoPasswordSet:NO];
         return;
     }
     NSString *magic = [NSData passwordMaigc:password repo:self.repoId version:2];
     if ([magic isEqualToString:repo.magic]) {
         [Utils setRepo:self.repoId password:password];
-        [self.delegate repoPasswordSet:self WithResult:YES];
+        [self.delegate entry:self repoPasswordSet:YES];
     } else
-        [self.delegate repoPasswordSet:self WithResult:NO];
+        [self.delegate entry:self repoPasswordSet:NO];
 }
 
 - (void)checkRepoPassword:(NSString *)password
 {
     if (!self.repoId) {
-        [self.delegate repoPasswordSet:self WithResult:NO];
+        [self.delegate entry:self repoPasswordSet:NO];
         return;
     }
     int version = [[connection getRepo:self.repoId] encVersion];
@@ -182,9 +181,9 @@
     [connection sendPost:request_str form:formString
                  success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
                      [Utils setRepo:self.repoId password:password];
-                     [self.delegate repoPasswordSet:self WithResult:YES];
+                     [self.delegate entry:self repoPasswordSet:YES];
                  } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-                     [self.delegate repoPasswordSet:self WithResult:NO];
+                     [self.delegate entry:self repoPasswordSet:NO];
                  } ];
 }
 

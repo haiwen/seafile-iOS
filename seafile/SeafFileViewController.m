@@ -208,13 +208,9 @@ enum {
     }
 }
 
-- (void)refreshView
+- (void)checkPreviewFileExist
 {
-    for (SeafUploadFile *file in _directory.uploadItems) {
-        file.delegate = self;
-    }
-    [self.tableView reloadData];
-    if (IsIpad() && self.detailViewController.preViewItem && [self.detailViewController.preViewItem isKindOfClass:[SeafFile class]]) {
+    if ([self.detailViewController.preViewItem isKindOfClass:[SeafFile class]]) {
         SeafFile *sfile = (SeafFile *)self.detailViewController.preViewItem;
         NSString *parent = [sfile.path stringByDeletingLastPathComponent];
         BOOL deleted = YES;
@@ -228,6 +224,16 @@ enum {
             if (deleted)
                 [self.detailViewController setPreViewItem:nil master:nil];
         }
+    }
+}
+- (void)refreshView
+{
+    for (SeafUploadFile *file in _directory.uploadItems) {
+        file.delegate = self;
+    }
+    [self.tableView reloadData];
+    if (IsIpad() && self.detailViewController.preViewItem) {
+        [self checkPreviewFileExist];
     }
     if (self.editing) {
         if (![self.tableView indexPathsForSelectedRows])
@@ -355,8 +361,7 @@ enum {
 
 - (void)initNavigationItems:(SeafDir *)directory
 {
-    if ([directory isKindOfClass:[SeafRepos class]]) {
-    } else {
+    if (![directory isKindOfClass:[SeafRepos class]]) {
         if (directory.editable) {
             self.photoItem = [self getBarItem:@"plus".navItemImgName action:@selector(addPhotos:)size:20];
             self.doneItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(editDone:)];
@@ -434,7 +439,7 @@ enum {
     if (![_directory isKindOfClass:[SeafRepos class]]) {
         return _directory.allItems.count;
     }
-    NSArray *repos =  [[((SeafRepos *)_directory)repoGroups] objectAtIndex:section];
+    NSArray *repos =  [[((SeafRepos *)_directory) repoGroups] objectAtIndex:section];
     return repos.count;
 }
 
@@ -460,8 +465,7 @@ enum {
     if (!_selectedindex)
         return;
     SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-    if ([file isKindOfClass:[SeafUploadFile class]])
-        return;
+    NSAssert([file isKindOfClass:[SeafUploadFile class]], @"fiel must be SeafFile");
 
     NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
     if (file.mpath)
@@ -482,8 +486,7 @@ enum {
     if (!_selectedindex)
         return;
     SeafUploadFile *file = (SeafUploadFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-    if (![file isKindOfClass:[SeafUploadFile class]])
-        return;
+    NSAssert([file isKindOfClass:[SeafUploadFile class]], @"fiel must be SeafFile");
 
     NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
     UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, nil];
@@ -598,9 +601,7 @@ enum {
 {
     if (tableView != self.tableView) return NO;
     NSObject *entry  = [self getDentrybyIndexPath:indexPath tableView:tableView];
-    if ([entry isKindOfClass:[SeafUploadFile class]])
-        return NO;
-    return YES;
+    return ![entry isKindOfClass:[SeafUploadFile class]];
 }
 
 - (UITableViewCellEditingStyle)tableView:(UITableView *)tableView editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -645,7 +646,7 @@ enum {
     [self popupInputView:S_RENAME placeholder:newName];
 }
 
-- (void)popupDirChooseView:(id<PreViewDelegate>)file
+- (void)popupDirChooseView:(id<SeafPreView>)file
 {
     UIViewController *controller = nil;
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
@@ -676,14 +677,15 @@ enum {
 
 - (BOOL)isCurrentFileImage:(NSMutableArray **)imgs
 {
-    if (![_curEntry isKindOfClass:[SeafFile class]]
-        || ![Utils isImageFile:((SeafFile *)_curEntry).name]) {
+    if (![_curEntry conformsToProtocol:@protocol(SeafPreView)])
         return NO;
-    }
+    id<SeafPreView> pre = (id<SeafPreView>)_curEntry;
+    if (!pre.isImageFile) return NO;
+
     NSMutableArray *arr = [[NSMutableArray alloc] init];
     for (id entry in _directory.allItems) {
-        if ([entry isKindOfClass:[SeafFile class]]
-            && [Utils isImageFile:((SeafFile *)entry).name])
+        if ([entry conformsToProtocol:@protocol(SeafPreView)]
+            && [(id<SeafPreView>)entry isImageFile])
             [arr addObject:entry];
     }
     *imgs = arr;
@@ -704,7 +706,7 @@ enum {
         return;
     }
 
-    if ([_curEntry isKindOfClass:[SeafFile class]] || [_curEntry isKindOfClass:[SeafUploadFile class]]) {
+    if ([_curEntry conformsToProtocol:@protocol(SeafPreView)]) {
         if (!IsIpad()) {
             SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
             [appdelegate showDetailView:self.detailViewController];
@@ -713,7 +715,7 @@ enum {
         if ([self isCurrentFileImage:&arr]) {
             [self.detailViewController setPreViewItems:arr current:_curEntry master:self];
         } else {
-            id<QLPreviewItem, PreViewDelegate> item = (id<QLPreviewItem, PreViewDelegate>)_curEntry;
+            id<SeafPreView> item = (id<SeafPreView>)_curEntry;
             [self.detailViewController setPreViewItem:item master:self];
         }
     } else if ([_curEntry isKindOfClass:[SeafDir class]]) {
@@ -827,12 +829,7 @@ enum {
 }
 
 #pragma mark - SeafDentryDelegate
-- (void)entryChanged:(SeafBase *)entry
-{
-    if ([entry isKindOfClass:[SeafFile class]] && entry == self.detailViewController.preViewItem)
-        [self.detailViewController entryChanged:entry];
-}
-- (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent
+- (void)entry:(SeafBase *)entry updated:(BOOL)updated progress:(int)percent
 {
     if (entry == _directory) {
         [self dismissLoadingView];
@@ -841,18 +838,18 @@ enum {
         [self refreshView];
     } else if ([entry isKindOfClass:[SeafFile class]]) {
         if (updated && entry == self.detailViewController.preViewItem)
-            [self.detailViewController entry:entry contentUpdated:updated completeness:percent];
+            [self.detailViewController entry:entry updated:updated progress:percent];
     }
     self.state = STATE_INIT;
 }
 
-- (void)entryContentLoadingFailed:(long)errCode entry:(SeafBase *)entry;
+- (void)entry:(SeafBase *)entry downloadingFailed:(NSUInteger)errCode;
 {
     if (errCode == HTTP_ERR_REPO_PASSWORD_REQUIRED) {
         NSAssert(0, @"Here should never be reached");
     }
     if ([entry isKindOfClass:[SeafFile class]]) {
-        [self.detailViewController entryContentLoadingFailed:errCode entry:entry];
+        [self.detailViewController entry:entry downloadingFailed:errCode];
         return;
     }
 
@@ -900,7 +897,7 @@ enum {
     }
 }
 
-- (void)repoPasswordSet:(SeafBase *)entry WithResult:(BOOL)success;
+- (void)entry:(SeafBase *)entry repoPasswordSet:(BOOL)success;
 {
     if (entry != _curEntry)  return;
 
@@ -1181,7 +1178,7 @@ enum {
 }
 
 #pragma mark - SeafUploadDelegate
-- (void)uploadProgress:(SeafUploadFile *)file result:(BOOL)res completeness:(int)percent
+- (void)uploadProgress:(SeafUploadFile *)file result:(BOOL)res progress:(int)percent
 {
     long index = [_directory.allItems indexOfObject:file];
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
@@ -1195,7 +1192,7 @@ enum {
 
 - (void)uploadSucess:(SeafUploadFile *)file oid:(NSString *)oid
 {
-    [self uploadProgress:file result:YES completeness:100];
+    [self uploadProgress:file result:YES progress:100];
     if (!self.isVisible) {
         [SVProgressHUD showSuccessWithStatus:[NSString stringWithFormat:NSLocalizedString(@"File '%@' uploaded success", @"Seafile"), file.name] duration:1.0];
     }

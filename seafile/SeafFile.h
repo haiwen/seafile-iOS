@@ -23,7 +23,7 @@
 - (void)updateProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent;
 @end
 
-@interface SeafFile : SeafBase<QLPreviewItem, PreViewDelegate, SeafUploadDelegate, SeafDownloadDelegate>
+@interface SeafFile : SeafBase<QLPreviewItem, SeafPreView, SeafUploadDelegate, SeafDownloadDelegate>
 
 - (id)initWithConnection:(SeafConnection *)aConnection
                      oid:(NSString *)anId

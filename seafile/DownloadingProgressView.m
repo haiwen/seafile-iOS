@@ -10,7 +10,7 @@
 #import "Debug.h"
 
 @interface DownloadingProgressView ()
-@property id<QLPreviewItem, PreViewDelegate> item;
+@property id<SeafPreView> item;
 @end
 
 @implementation DownloadingProgressView
@@ -40,7 +40,7 @@
     return self;
 }
 
-- (void)configureViewWithItem:(id<QLPreviewItem, PreViewDelegate>)item completeness:(int)percent
+- (void)configureViewWithItem:(id<QLPreviewItem, SeafPreView>)item completeness:(int)percent
 {
     if (_item != item) {
         _item = item;

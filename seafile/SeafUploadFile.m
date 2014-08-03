@@ -64,6 +64,18 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 {
 
 }
+- (BOOL)hasCache
+{
+    return YES;
+}
+- (BOOL)isImageFile
+{
+    return NO;
+}
+- (void)load:(id<SeafDentryDelegate>)delegate force:(BOOL)force
+{
+    [self checkAsset];
+}
 
 - (BOOL)editable
 {
@@ -105,7 +117,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     if (result)
         [_delegate uploadSucess:self oid:oid];
     else
-        [_delegate uploadProgress:self result:NO completeness:0];
+        [_delegate uploadProgress:self result:NO progress:0];
     [SeafAppDelegate finishUpload:self result:result];
 }
 
@@ -134,7 +146,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     self.operation = operation;
     [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
         int percent = [self percentForShow:totalBytesWritten expected:totalBytesExpectedToWrite];
-        [_delegate uploadProgress:self result:YES completeness:percent];
+        [_delegate uploadProgress:self result:YES progress:percent];
     }];
     [operation setCompletionBlockWithSuccess:
      ^(AFHTTPRequestOperation *operation, id responseObject) {
@@ -197,7 +209,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
     [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
         int percent = [self percentForShow:totalBytesWritten expected:totalBytesExpectedToWrite];
-        [_delegate uploadProgress:self result:YES completeness:percent];
+        [_delegate uploadProgress:self result:YES progress:percent];
     }];
     [operation setCompletionBlockWithSuccess:
      ^(AFHTTPRequestOperation *operation, id responseObject) {
@@ -227,7 +239,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     [SeafAppDelegate incUploadnum];
     NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:self.lpath error:nil];
     _filesize = attrs.fileSize;
-    [_delegate uploadProgress:self result:YES completeness:0];
+    [_delegate uploadProgress:self result:YES progress:0];
     SeafRepo *repo = [connection getRepo:repoId];
     BOOL byblock = [connection localDecrypt:repoId];
     NSString* upload_url = [NSString stringWithFormat:API_URL"/repos/%@/upload-", repoId];
@@ -309,7 +321,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     return [UIImage imageWithContentsOfFile:self.lpath];
 }
 
-- (NSURL *)checkoutURL
+- (NSURL *)exportURL
 {
     [self checkAsset];
     return [NSURL fileURLWithPath:self.lpath];
@@ -320,7 +332,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     return [FileMimeType mimeType:self.name];
 }
 
-- (NSString *)content
+- (NSString *)strContent
 {
     [self checkAsset];
     return [Utils stringContent:self.lpath];
@@ -331,7 +343,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     return NO;
 }
 
-- (BOOL)saveContent:(NSString *)content
+- (BOOL)saveStrContent:(NSString *)content
 {
     _preViewURL = nil;
     return [content writeToFile:self.lpath atomically:YES encoding:NSUTF8StringEncoding error:nil];

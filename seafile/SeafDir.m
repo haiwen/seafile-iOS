@@ -76,7 +76,7 @@
     }
     [self loadedItems:newItems];
     [self checkUploadFiles];
-    [self.delegate entry:self contentUpdated:YES completeness:100];
+    [self.delegate entry:self updated:YES progress:100];
     return YES;
 }
 
@@ -93,7 +93,7 @@
         } else {
             Debug("Already uptodate oid=%@, %@\n", self.ooid, curId);
             self.state = SEAF_DENTRY_UPTODATE;
-            [self.delegate entry:self contentUpdated:NO completeness:0];
+            [self.delegate entry:self updated:NO progress:0];
         }
         if (![self.oid isEqualToString:curId]) {
             self.oid = curId;
@@ -123,7 +123,7 @@
                     }
                     failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
                         self.state = SEAF_DENTRY_INIT;
-                        [self.delegate entryContentLoadingFailed:(int)response.statusCode entry:self];
+                        [self.delegate entry:self downloadingFailed:response.statusCode];
                     }];
 }
 
@@ -271,7 +271,7 @@
                  failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
          Warning("resp=%ld\n", (long)response.statusCode);
-         [self.delegate entryContentLoadingFailed:(int)response.statusCode entry:self];
+         [self.delegate entry:self downloadingFailed:response.statusCode];
      }];
 }
 
@@ -289,7 +289,7 @@
                  failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
          Warning("resp=%ld\n", (long)response.statusCode);
-         [self.delegate entryContentLoadingFailed:(int)response.statusCode entry:self];
+         [self.delegate entry:self downloadingFailed:response.statusCode];
      }];
 }
 
@@ -316,7 +316,7 @@
                  failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
          Warning("resp=%ld\n", (long)response.statusCode);
-         [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
+         [self.delegate entry:self downloadingFailed:response.statusCode];
      }];
 }
 
@@ -418,7 +418,7 @@
                  failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
          Warning("resp=%ld\n", (long)response.statusCode);
-         [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
+         [self.delegate entry:self downloadingFailed:response.statusCode];
      }];
 }
 
@@ -445,7 +445,7 @@
                  failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
          Warning("resp=%ld\n", (long)response.statusCode);
-         [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
+         [self.delegate entry:self downloadingFailed:response.statusCode];
      }];
 }
 
@@ -472,7 +472,7 @@
                  failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
          Warning("resp=%ld\n", (long)response.statusCode);
-         [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
+         [self.delegate entry:self downloadingFailed:response.statusCode];
      }];
 }
 

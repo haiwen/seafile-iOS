@@ -14,12 +14,12 @@
 
 @interface SeafDetailViewController : UIViewController <UISplitViewControllerDelegate, SeafFileDelegate, SeafDentryDelegate>
 
-@property (nonatomic) id<QLPreviewItem, PreViewDelegate> preViewItem;
+@property (nonatomic) id<SeafPreView> preViewItem;
 @property (nonatomic) UIViewController *masterVc;
 - (void)refreshView;
-- (void)setPreViewItem:(id<QLPreviewItem, PreViewDelegate>)item master:(UIViewController *)c;
+- (void)setPreViewItem:(id<SeafPreView>)item master:(UIViewController *)c;
 
-- (void)setPreViewItems:(NSArray *)items current:(id<QLPreviewItem, PreViewDelegate>)item master:(UIViewController *)c;
+- (void)setPreViewItems:(NSArray *)items current:(id<SeafPreView>)item master:(UIViewController *)c;
 
 - (void)cancelControlHiding;
 - (void)hideControlsAfterDelay;

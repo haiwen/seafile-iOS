@@ -9,7 +9,7 @@
 #import <UIKit/UIKit.h>
 #import <QuickLook/QuickLook.h>
 
-#import "Utils.h"
+#import "SeafPreView.h"
 
 
 @interface DownloadingProgressView : UIView
@@ -17,7 +17,7 @@
 @property (strong, nonatomic) IBOutlet UILabel *nameLabel;
 @property (strong, nonatomic) IBOutlet UIProgressView *progress;
 
-- (void)configureViewWithItem:(id<QLPreviewItem, PreViewDelegate>)item completeness:(int)percent;
+- (void)configureViewWithItem:(id<SeafPreView>)item completeness:(int)percent;
 
 @property (strong, nonatomic) IBOutlet UIButton *cancelBt;
 

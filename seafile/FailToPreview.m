@@ -11,7 +11,7 @@
 
 
 @interface FailToPreview ()
-@property (strong) id<QLPreviewItem, PreViewDelegate> item;
+@property (strong) id<SeafPreView> item;
 @property (strong) UIDocumentInteractionController *docController;
 @end
 
@@ -33,9 +33,8 @@
 
 - (IBAction)openElsewhere:(id)sender
 {
-    NSURL *url = [_item checkoutURL];
-    if (!url)
-        return;
+    NSURL *url = [_item exportURL];
+    if (!url) return;
     docController = [UIDocumentInteractionController interactionControllerWithURL:url];
     BOOL ret = [docController presentOpenInMenuFromRect:[((UIButton *)sender) frame] inView:self animated:YES];
     if (ret == NO) {
@@ -48,7 +47,7 @@
     }
 }
 
-- (void)configureViewWithPrevireItem:(id<QLPreviewItem, PreViewDelegate>)item
+- (void)configureViewWithPrevireItem:(id<SeafPreView>)item
 {
     _item = item;
     self.imageView.image = _item.icon;

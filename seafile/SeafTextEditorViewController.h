@@ -14,6 +14,6 @@
 
 @property (strong) SeafDetailViewController *detailViewController;
 
-- (id)initWithFile:(id<QLPreviewItem, PreViewDelegate>)file;
+- (id)initWithFile:(id<SeafPreView>)file;
 
 @end

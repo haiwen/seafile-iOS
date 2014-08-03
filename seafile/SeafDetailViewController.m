@@ -97,7 +97,7 @@ enum PREVIEW_STATE {
     NSArray *exts = [NSArray arrayWithObjects:@"pdf", @"doc", @"docx", @"jpeg", @"jpg", @"rtf", nil];
     NSString *ext = file.name.pathExtension.lowercaseString;
     if (ext && ext.length != 0 && [exts indexOfObject:ext] != NSNotFound) {
-        if ([UIPrintInteractionController canPrintURL:file.checkoutURL])
+        if ([UIPrintInteractionController canPrintURL:file.exportURL])
             return true;
     }
     return false;
@@ -108,22 +108,19 @@ enum PREVIEW_STATE {
     self.title = self.preViewItem.previewItemTitle;
     NSMutableArray *array = [[NSMutableArray alloc] init];
     if ([self.preViewItem isKindOfClass:[SeafFile class]]) {
-        if ([(SeafFile *)self.preViewItem isStarred])
+        SeafFile *sfile = (SeafFile *)self.preViewItem;
+        if ([sfile isStarred])
             [array addObjectsFromArray:self.barItemsStar];
         else
             [array addObjectsFromArray:self.barItemsUnStar];
 
-        if ([self.preViewItem checkoutURL])
-            [self.exportItem setEnabled:YES];
-        else
-            [self.exportItem setEnabled:NO];
-        if (((SeafFile *)self.preViewItem).groups.count > 0) {
+        [self.exportItem setEnabled:([self.preViewItem exportURL] != nil)];
+        if (sfile.groups.count > 0) {
             [array addObject:self.commentItem];
             [array addObject:[self getSpaceBarItem]];
         }
     }
-    if ([self.preViewItem editable] && [self previewSuccess]
-        && [self.preViewItem.mime hasPrefix:@"text/"])
+    if ([self.preViewItem editable] && [self previewSuccess])
         [array addObject:self.editItem];
     self.navigationItem.rightBarButtonItems = array;
 }
@@ -212,7 +209,7 @@ enum PREVIEW_STATE {
     }
 }
 
-- (void)setPreViewItem:(id<QLPreviewItem, PreViewDelegate>)item master:(UIViewController *)c
+- (void)setPreViewItem:(id<SeafPreView>)item master:(UIViewController *)c
 {
     if (self.masterPopoverController != nil)
         [self.masterPopoverController dismissPopoverAnimated:YES];
@@ -226,14 +223,11 @@ enum PREVIEW_STATE {
         else
             self.navigationItem.leftBarButtonItem = self.fullscreenItem;
     }
-    if ([item isKindOfClass:[SeafFile class]]) {
-        ((SeafFile *)item).delegate = self;
-        [(SeafFile *)item loadContent:NO];
-    }
+    [item load:self force:NO];
     [self refreshView];
 }
 
-- (void)setPreViewItems:(NSArray *)items current:(id<QLPreviewItem, PreViewDelegate>)item master:(UIViewController *)c
+- (void)setPreViewItems:(NSArray *)items current:(id<SeafPreView>)item master:(UIViewController *)c
 {
     [self clearPreView];
     self.masterVc = c;
@@ -486,11 +480,7 @@ enum PREVIEW_STATE {
     }
 }
 
-- (void)entryChanged:(SeafBase *)entry
-{
-    [self refreshView];
-}
-- (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent
+- (void)entry:(SeafBase *)entry updated:(BOOL)updated progress:(int)percent
 {
     if (_preViewItem != entry) return;
     if (updated || self.state == PREVIEW_DOWNLOADING)
@@ -501,13 +491,13 @@ enum PREVIEW_STATE {
     }
 }
 
-- (void)entryContentLoadingFailed:(long)errCode entry:(SeafBase *)entry;
+- (void)entry:(SeafBase *)entry downloadingFailed:(NSUInteger)errCode;
 {
     if (self.preViewItem != entry) return;
     [self fileContentLoaded:(SeafFile *)entry result:NO completeness:0];
 }
 
-- (void)repoPasswordSet:(SeafBase *)entry WithResult:(BOOL)success;
+- (void)entry:(SeafBase *)entry repoPasswordSet:(BOOL)success;
 {
 }
 
@@ -545,7 +535,7 @@ enum PREVIEW_STATE {
         [self alertWithMessage:[NSString stringWithFormat:NSLocalizedString(@"File '%@' is too large to edit", @"Seafile"), self.preViewItem.name]];
         return;
     }
-    if (!self.preViewItem.content) {
+    if (!self.preViewItem.strContent) {
         [self alertWithMessage:[NSString stringWithFormat:NSLocalizedString(@"Failed to identify the coding of '%@'", @"Seafile"), self.preViewItem.name]];
         return;
     }
@@ -565,18 +555,9 @@ enum PREVIEW_STATE {
         [self goBack:nil];
 }
 
-- (IBAction)uploadFile:(id)sender
-{
-    if ([self.preViewItem isKindOfClass:[SeafFile class]]) {
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        [((SeafFile *)self.preViewItem) update:appdelegate.fileVC];
-        [appdelegate.fileVC refreshView];
-    }
-}
-
 - (IBAction)openElsewhere
 {
-    NSURL *url = [self.preViewItem checkoutURL];
+    NSURL *url = [self.preViewItem exportURL];
     if (!url)   return;
 
     if (self.docController)
@@ -590,6 +571,8 @@ enum PREVIEW_STATE {
 
 - (IBAction)export:(id)sender
 {
+    if (![self.preViewItem isKindOfClass:[SeafFile class]]) return;
+
     //image :save album, copy clipboard, print
     //pdf :print
     if (self.actionSheet) {
@@ -597,6 +580,7 @@ enum PREVIEW_STATE {
         self.actionSheet = nil;
         return;
     }
+
     NSMutableArray *bts = [[NSMutableArray alloc] init];
     SeafFile *file = (SeafFile *)self.preViewItem;
     if ([Utils isImageFile:file.name]) {
@@ -620,8 +604,7 @@ enum PREVIEW_STATE {
 
 - (IBAction)share:(id)sender
 {
-    if (![self.preViewItem isKindOfClass:[SeafFile class]])
-        return;
+    if (![self.preViewItem isKindOfClass:[SeafFile class]]) return;
     if (self.actionSheet) {
         [self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
         self.actionSheet = nil;
@@ -653,7 +636,7 @@ enum PREVIEW_STATE {
 - (void)printFile:(SeafFile *)file
 {
     UIPrintInteractionController *pic = [UIPrintInteractionController sharedPrintController];
-    if  (pic && [UIPrintInteractionController canPrintURL:file.checkoutURL] ) {
+    if  (pic && [UIPrintInteractionController canPrintURL:file.exportURL] ) {
         pic.delegate = self;
 
         UIPrintInfo *printInfo = [UIPrintInfo printInfo];
@@ -662,7 +645,7 @@ enum PREVIEW_STATE {
         printInfo.duplex = UIPrintInfoDuplexLongEdge;
         pic.printInfo = printInfo;
         pic.showsPageRange = YES;
-        pic.printingItem = file.checkoutURL;
+        pic.printingItem = file.exportURL;
 
         void (^completionHandler)(UIPrintInteractionController *, BOOL, NSError *) =
         ^(UIPrintInteractionController *pic, BOOL completed, NSError *error) {
@@ -835,7 +818,7 @@ enum PREVIEW_STATE {
 - (void)webViewDidFinishLoad:(UIWebView *)webView
 {
     if (self.preViewItem) {
-        NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [self.preViewItem.content stringEscapedForJavasacript]];
+        NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [self.preViewItem.strContent stringEscapedForJavasacript]];
         [self.webView stringByEvaluatingJavaScriptFromString:js];
     }
 }
@@ -844,30 +827,6 @@ enum PREVIEW_STATE {
     if ([request.URL.absoluteString hasPrefix:@"file://"])
         return YES;
     return NO;
-}
-
-# pragma - PreViewSelectedDelegate
-- (void)selectItem:(id<QLPreviewItem, PreViewDelegate>)prevItem
-{
-    if (self.state != PREVIEW_PHOTO) return;
-    _preViewItem = prevItem;
-    if ([prevItem isKindOfClass:[SeafFile class]]) {
-        ((SeafFile *)prevItem).delegate = self;
-        [(SeafFile *)prevItem loadContent:NO];
-    }
-    self.title = self.preViewItem.previewItemTitle;
-    Debug("prevItem=%@, title=%@", prevItem, self.title);
-    [self updateNavigation];
-}
-- (void)willSelect:(id<QLPreviewItem, PreViewDelegate>)prevItem
-{
-    if (self.state != PREVIEW_PHOTO) return;
-    if ([prevItem isKindOfClass:[SeafFile class]])
-        [(SeafFile *)prevItem loadContent:NO];
-}
-
-- (IBAction)handleSwipe:(UISwipeGestureRecognizer*)recognizer
-{
 }
 
 - (UIBarButtonItem *)getSpaceBarItem
@@ -959,7 +918,7 @@ enum PREVIEW_STATE {
     }
     return page;
 }
-- (SeafPhotoView *)pageDisplayingPhoto:(id<QLPreviewItem, PreViewDelegate>)photo {
+- (SeafPhotoView *)pageDisplayingPhoto:(id<SeafPreView>)photo {
     SeafPhotoView *thePage = nil;
     for (SeafPhotoView *page in _visiblePages) {
         if (page.photo == photo) {
@@ -1085,29 +1044,21 @@ enum PREVIEW_STATE {
     if (index > 0) {
         // Release anything < index - 1
         for (i = 0; i < index-1; i++) {
-            id<QLPreviewItem, PreViewDelegate> photo = [_photos objectAtIndex:i];
-            [photo unload];
-            Debug("Released underlying image at index %lu", (unsigned long)i);
+            [(id<SeafPreView>)[_photos objectAtIndex:i] unload];
         }
     }
     if (index < [self numberOfPhotos] - 1) {
         // Release anything > index + 1
         for (i = index + 2; i < _photos.count; i++) {
-            id<QLPreviewItem, PreViewDelegate> photo = [_photos objectAtIndex:i];
-            [photo unload];
-            Debug("Released underlying image at index %lu", (unsigned long)i);
+            [(id<SeafPreView>)[_photos objectAtIndex:i] unload];
         }
     }
 
     // Load adjacent images if needed and the photo is already
     // loaded. Also called after photo has been loaded in background
-    if ([self.preViewItem isKindOfClass:[SeafFile class]]) {
-        SeafFile *file = (SeafFile *)self.preViewItem;
-        file.delegate = self;
-        [file loadContent:NO];
-        if ([file hasCache])
-            [self loadAdjacentPhotosIfNecessary:self.preViewItem];
-    }
+    [self.preViewItem load:self force:NO];
+    if ([self.preViewItem hasCache])
+        [self loadAdjacentPhotosIfNecessary:self.preViewItem];
 
     // Update nav
     [self updateNavigation];
@@ -1150,9 +1101,17 @@ enum PREVIEW_STATE {
 {
 
 }
-- (void)setControlsHidden:(BOOL)hidden animated:(BOOL)animated permanent:(BOOL)permanent {
+- (void)setControlsHidden:(BOOL)hidden animated:(BOOL)animated permanent:(BOOL)permanent
+{
 }
-- (void)loadAdjacentPhotosIfNecessary:(id<QLPreviewItem, PreViewDelegate>)photo {
+
+- (void)loadAdjacentPhotosIfNecessary:(id<SeafPreView>)photo
+{
+    int index = [self.photos indexOfObject:photo] + 1;
+    int num = [self numberOfPhotos];
+    if (index >= num) index = 0;
+    id<SeafPreView> next = [self.photos objectAtIndex:index];
+    [next load:self force:NO];
 }
 
 @end

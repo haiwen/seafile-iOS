@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "SeafPreView.h"
 
 @class SeafConnection;
 
@@ -25,13 +26,6 @@ enum SEAFBASE_STATE {
 
 @class SeafBase;
 
-@protocol SeafDentryDelegate <NSObject>
-- (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent;
-- (void)entryContentLoadingFailed:(long)errCode entry:(SeafBase *)entry;
-- (void)repoPasswordSet:(SeafBase *)entry WithResult:(BOOL)success;
-- (void)entryChanged:(SeafBase *)entry;
-
-@end
 
 @interface SeafBase : NSObject
 {
@@ -58,6 +52,7 @@ enum SEAFBASE_STATE {
 
 @property (weak) id <SeafDentryDelegate> delegate;
 
+- (BOOL)hasCache;
 - (BOOL)loadCache;
 - (void)loadContent:(BOOL)force;
 - (void)updateWithEntry:(SeafBase *)entry;
@@ -67,6 +62,5 @@ enum SEAFBASE_STATE {
 
 - (NSString *)key;
 - (UIImage *)icon;
-- (BOOL)hasCache;
 
 @end

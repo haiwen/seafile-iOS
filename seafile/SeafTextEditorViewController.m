@@ -37,15 +37,12 @@ enum TOOL_ITEM {
 
 @interface SeafTextEditorViewController ()<EGOTextViewDelegate>
 @property (nonatomic, retain) NSTimer *timer;
-@property BOOL currentBoldStatus;
-@property BOOL currentItalicStatus;
-@property BOOL currentUnderlineStatus;
 @property UIBarButtonItem *ep;
 @property UIBarButtonItem *saveItem;
 @property (strong, nonatomic) IBOutlet UIView *topview;
 @property (strong, nonatomic) IBOutlet UIView *seafTopview;
 
-@property id<QLPreviewItem, PreViewDelegate> sfile;
+@property id<SeafPreView> previewFile;
 @property int flags;
 
 @property float barHeight;
@@ -55,28 +52,23 @@ enum TOOL_ITEM {
 @end
 
 @implementation SeafTextEditorViewController
-@synthesize timer;
-@synthesize currentBoldStatus;
-@synthesize currentItalicStatus;
-@synthesize currentUnderlineStatus;
-@synthesize sfile;
-@synthesize flags;
 
-- (id)initWithFile:(id<QLPreviewItem, PreViewDelegate>)file
+
+- (id)initWithFile:(id<SeafPreView>)file
 {
     self = [self initWithAutoPlatformNibName];
-    self.sfile = file;
+    self.previewFile = file;
     return self;
 }
 
 - (BOOL)IsSeaf
 {
-    return [sfile.mime isEqualToString:@"text/x-seafile"];
+    return [_previewFile.mime isEqualToString:@"text/x-seafile"];
 }
 
 - (BOOL)IsMarkdown
 {
-    return [sfile.mime isEqualToString:@"text/x-markdown"];
+    return [_previewFile.mime isEqualToString:@"text/x-markdown"];
 }
 
 - (BOOL)IsRawText
@@ -210,9 +202,9 @@ enum TOOL_ITEM {
 
 - (void)updateSeafToolbar:(int)flag
 {
-    if (flag == flags)
+    if (flag == _flags)
         return;
-    flags = flag;
+    _flags = flag;
     for (UIView *v in self.seafTopview.subviews) {
         UIButton *btn = (UIButton *)v;
         btn.selected = (flag & (1 << btn.tag)) != 0;
@@ -240,7 +232,7 @@ enum TOOL_ITEM {
 - (void)save
 {
     NSString *content = [self IsSeaf] ? [self.webView stringByEvaluatingJavaScriptFromString:@"getContent()"] : self.egoTextView.text;
-    [sfile saveContent:content];
+    [_previewFile saveStrContent:content];
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [self.detailViewController refreshView];
     [appdelegate.fileVC refreshView];
@@ -291,7 +283,7 @@ enum TOOL_ITEM {
 # pragma - UIWebViewDelegate
 - (void)webViewDidFinishLoad:(UIWebView *)webView
 {
-    NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [sfile.content stringEscapedForJavasacript]];
+    NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [_previewFile.strContent stringEscapedForJavasacript]];
     [self.webView stringByEvaluatingJavaScriptFromString:js];
 }
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
@@ -375,13 +367,13 @@ enum TOOL_ITEM {
 - (void)prepareRawText
 {
     self.egoTextView.hidden = NO;
-    self.egoTextView.text = sfile.content;
+    self.egoTextView.text = _previewFile.strContent;
     NSMutableArray *litems = [[NSMutableArray alloc] init];
     [litems addObject:self.saveItem];
     if ([self IsMarkdown]) {
         self.ep = [self getTextBarItem:NSLocalizedString(@"Preview", @"Seafile") action:@selector(edit_preview) active:0];
         [litems addObject:self.ep];
-        NSURLRequest *request = [[NSURLRequest alloc] initWithURL:self.sfile.previewItemURL cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
+        NSURLRequest *request = [[NSURLRequest alloc] initWithURL:_previewFile.previewItemURL cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
         [self.webView loadRequest:request];
     }
     self.navigationItem.leftBarButtonItems = litems;

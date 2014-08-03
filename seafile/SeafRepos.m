@@ -167,7 +167,7 @@
 
     [self loadedItems:newRepos];
     [self groupingRepos];
-    [self.delegate entry:self contentUpdated:YES completeness:100];
+    [self.delegate entry:self updated:YES progress:100];
     return YES;
 }
 
@@ -194,7 +194,7 @@
                     failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
          self.state = SEAF_DENTRY_INIT;
-         [self.delegate entryContentLoadingFailed:response.statusCode entry:self];
+         [self.delegate entry:self downloadingFailed:response.statusCode];
      }];
 }
 

@@ -190,18 +190,14 @@
 }
 
 #pragma mark - SeafDentryDelegate
-- (void)entryChanged:(SeafBase *)entry
-{
-}
-
-- (void)entry:(SeafBase *)entry contentUpdated:(BOOL)updated completeness:(int)percent
+- (void)entry:(SeafBase *)entry updated:(BOOL)updated progress:(int)percent
 {
     [self doneLoadingTableViewData];
     if (updated) {
         [self.tableView reloadData];
     }
 }
-- (void)entryContentLoadingFailed:(long)errCode entry:(SeafBase *)entry
+- (void)entry:(SeafBase *)entry downloadingFailed:(NSUInteger)errCode
 {
     [self doneLoadingTableViewData];
     if ([_directory hasCache]) {
@@ -216,7 +212,7 @@
     }
 }
 
-- (void)repoPasswordSet:(SeafBase *)entry WithResult:(BOOL)success
+- (void)entry:(SeafBase *)entry repoPasswordSet:(BOOL)success
 {
     [SVProgressHUD dismiss];
     if (success) {

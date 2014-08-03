@@ -9,21 +9,6 @@
 #import <Foundation/Foundation.h>
 #import <AssetsLibrary/AssetsLibrary.h>
 
-@protocol PreViewDelegate <NSObject>
-- (UIImage *)image;
-- (UIImage *)icon;
-- (NSURL *)checkoutURL;
-- (NSString *)mime;
-- (NSString *)name;
-- (BOOL)editable;
-- (NSString *)content;
-- (long long )filesize;
-- (BOOL)saveContent:(NSString *)content;
-- (BOOL)isDownloading;
-- (void)unload;
-
-@end
-
 @interface Utils : NSObject
 
 + (NSString *)applicationDocumentsDirectory;

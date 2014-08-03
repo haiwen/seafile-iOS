@@ -15,7 +15,7 @@
 
 @interface SeafPhotoView : UIScrollView
 @property NSUInteger index;
-@property (nonatomic) id<QLPreviewItem, PreViewDelegate> photo;
+@property (nonatomic) id<SeafPreView> photo;
 
 - (id)initWithPhotoBrowser:(SeafDetailViewController *)browser;
 
