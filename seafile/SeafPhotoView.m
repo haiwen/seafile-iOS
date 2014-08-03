@@ -40,7 +40,7 @@
         // Image view
         _photoImageView = [[MWTapDetectingImageView alloc] initWithFrame:CGRectZero];
 
-        //_photoImageView.tapDelegate = self;
+        _photoImageView.tapDelegate = self;
         _photoImageView.contentMode = UIViewContentModeCenter;
         _photoImageView.backgroundColor = [UIColor blackColor];
         [self addSubview:_photoImageView];
@@ -321,30 +321,25 @@
 
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
 {
-    [_photoBrowser cancelControlHiding];
 }
 
 - (void)scrollViewWillBeginZooming:(UIScrollView *)scrollView withView:(UIView *)view
 {
     self.scrollEnabled = YES; // reset
-    [_photoBrowser cancelControlHiding];
 }
 
 - (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
 {
-    [_photoBrowser hideControlsAfterDelay];
 }
 
 #pragma mark - Tap Detection
 
 - (void)handleSingleTap:(CGPoint)touchPoint
 {
-    [_photoBrowser performSelector:@selector(toggleControls) withObject:nil afterDelay:0.2];
 }
 
 - (void)handleDoubleTap:(CGPoint)touchPoint
 {
-
     // Cancel any single tap handling
     [NSObject cancelPreviousPerformRequestsWithTarget:_photoBrowser];
 
@@ -363,9 +358,6 @@
         [self zoomToRect:CGRectMake(touchPoint.x - xsize/2, touchPoint.y - ysize/2, xsize, ysize) animated:YES];
 
     }
-
-    // Delay controls
-    [_photoBrowser hideControlsAfterDelay];
 }
 
 // Image View

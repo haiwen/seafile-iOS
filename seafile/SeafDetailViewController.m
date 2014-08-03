@@ -230,12 +230,20 @@ enum PREVIEW_STATE {
 - (void)setPreViewItems:(NSArray *)items current:(id<SeafPreView>)item master:(UIViewController *)c
 {
     [self clearPreView];
+    if (self.masterPopoverController != nil)
+        [self.masterPopoverController dismissPopoverAnimated:YES];
     self.masterVc = c;
     self.photos = items;
     self.state = PREVIEW_PHOTO;
     self.preViewItem = item;
     self.currentPageIndex = [items indexOfObject:item];
     [self.view addSubview:self.pagingScrollView];
+    if (IsIpad() && UIInterfaceOrientationIsLandscape(self.interfaceOrientation) && !self.hideMaster && self.masterVc) {
+        if (_preViewItem == nil)
+            self.navigationItem.leftBarButtonItem = nil;
+        else
+            self.navigationItem.leftBarButtonItem = self.fullscreenItem;
+    }
     [self setupPhotosView];
     [self updateNavigation];
     [self.view setNeedsLayout];
@@ -1034,8 +1042,6 @@ enum PREVIEW_STATE {
 - (void)didStartViewingPageAtIndex:(NSUInteger)index {
 
     if (![self numberOfPhotos]) {
-        // Show controls
-        [self setControlsHidden:NO animated:YES permanent:YES];
         return;
     }
 
@@ -1081,29 +1087,16 @@ enum PREVIEW_STATE {
     }
 }
 
-- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
-    // Hide controls when dragging begins
-    [self setControlsHidden:YES animated:YES permanent:NO];
+- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
+{
 }
 
-- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
+- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
+{
     // Update nav when page changes
     [self updateNavigation];
 }
 
-- (void)cancelControlHiding
-{
-}
-- (void)hideControlsAfterDelay
-{
-}
-- (void)toggleControls
-{
-
-}
-- (void)setControlsHidden:(BOOL)hidden animated:(BOOL)animated permanent:(BOOL)permanent
-{
-}
 
 - (void)loadAdjacentPhotosIfNecessary:(id<SeafPreView>)photo
 {

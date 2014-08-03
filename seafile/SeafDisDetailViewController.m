@@ -310,8 +310,8 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
                                                       width,
                                                       self.messageInputView.textView.frame.size.height);
     self.messageInputView.textView.backgroundColor = [UIColor whiteColor];
-    self.messageInputView.textView.layer.borderWidth = 1.0f;
-    self.messageInputView.textView.layer.borderColor = [[UIColor grayColor] CGColor];
+    self.messageInputView.textView.layer.borderWidth = 0.5f;
+    self.messageInputView.textView.layer.borderColor = [[UIColor lightGrayColor] CGColor];
 
     if (!IsIpad()) {
         UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Back", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];

@@ -21,8 +21,4 @@
 
 - (void)setPreViewItems:(NSArray *)items current:(id<SeafPreView>)item master:(UIViewController *)c;
 
-- (void)cancelControlHiding;
-- (void)hideControlsAfterDelay;
-- (void)toggleControls;
-
 @end
