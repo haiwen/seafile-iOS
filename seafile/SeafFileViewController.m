@@ -1281,23 +1281,12 @@ enum {
     return c;
 }
 
-- (void)setCellSelected:(BOOL)selected index:(NSUInteger)index
+- (void)photoSelectedChanged:(id<SeafPreView>)from to:(id<SeafPreView>)to;
 {
-    if (index != NSNotFound) {
-        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
-        UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
-        [cell setSelected:selected];
-    }
-}
+    int index = [_directory.allItems indexOfObject:to];
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
 
-- (void)photoSelectedChanged:(id<SeafPreView>)from to:(id<SeafPreView>)preViewItem;
-{
-    if (_selectedindex) {
-        [self.tableView deselectRowAtIndexPath:_selectedindex animated:NO];
-        _selectedindex = nil;
-    }
-    [self setCellSelected:NO index:[_directory.allItems indexOfObject:from]];
-    [self setCellSelected:YES index:[_directory.allItems indexOfObject:preViewItem]];
+    [self.tableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionMiddle];
 }
 
 @end

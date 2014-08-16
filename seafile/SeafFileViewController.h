@@ -43,6 +43,6 @@ enum {
 - (void)uploadFile:(SeafUploadFile *)file;
 - (void)chooseUploadDir:(SeafDir *)dir file:(SeafUploadFile *)ufile replace:(BOOL)replace;
 
-- (void)photoSelectedChanged:(id<SeafPreView>)preViewItem to:(id<SeafPreView>)preViewItem;
+- (void)photoSelectedChanged:(id<SeafPreView>)preViewItem to:(id<SeafPreView>)to;
 
 @end

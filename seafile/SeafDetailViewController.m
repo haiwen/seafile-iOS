@@ -404,9 +404,8 @@ enum PREVIEW_STATE {
     if (!self.masterVc) return;
     _hideMaster = hideMaster;
     [self makeTabBarHidden:hideMaster];
-    self.splitViewController.delegate = nil;
-    self.splitViewController.delegate = self;
     [self.splitViewController willRotateToInterfaceOrientation:[UIApplication sharedApplication].statusBarOrientation duration:0];
+    _rotating = NO;
     [self.splitViewController.view setNeedsLayout];
 }
 
@@ -414,8 +413,6 @@ enum PREVIEW_STATE {
 {
     self.hideMaster = YES;
     self.navigationItem.leftBarButtonItem = self.exitfsItem;
-    self.splitViewController.delegate = nil;
-    self.splitViewController.delegate = self;
 }
 
 - (IBAction)exitfullscreen:(id)sender
@@ -1111,15 +1108,15 @@ enum PREVIEW_STATE {
     [self updateNavigation];
 }
 
-
 - (void)loadAdjacentPhotosIfNecessary:(id<SeafPreView>)photo
 {
     NSUInteger index = [self.photos indexOfObject:photo] + 1;
     NSUInteger num = [self numberOfPhotos];
-    if (index >= num) index = 0;
-    id<SeafPreView> next = [self.photos objectAtIndex:index];
-    if (![next hasCache])
-        [next load:self force:NO];
+    if (index < num) {
+        id<SeafPreView> next = [self.photos objectAtIndex:index];
+        if (![next hasCache])
+            [next load:self force:NO];
+    }
 }
 
 @end

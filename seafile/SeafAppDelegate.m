@@ -404,9 +404,9 @@
     settingsController.tabBarItem.title = NSLocalizedString(@"Settings", @"Seafile");
     settingsController.tabBarItem.image = [UIImage imageNamed:@"tab-settings.png"];
     activityController.tabBarItem.title = NSLocalizedString(@"Activity", @"Seafile");
-    activityController.tabBarItem.image = [UIImage imageNamed:@"tab-activity.png"];
+    activityController.tabBarItem.image = [UIImage imageNamed:@"tab-modify.png"];
     discussionController.tabBarItem.title = NSLocalizedString(@"Message", @"Seafile");
-    discussionController.tabBarItem.image = [UIImage imageNamed:@"tab-discussion.png"];
+    discussionController.tabBarItem.image = [UIImage imageNamed:@"tab-message.png"];
     accountvc.tabBarItem.title = NSLocalizedString(@"Accounts", @"Seafile");
     accountvc.tabBarItem.image = [UIImage imageNamed:@"tab-account.png"];
 

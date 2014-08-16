@@ -184,7 +184,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
                     [appdelegate.discussVC refreshBadge];
                 }
             } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-                Warning("Failed to get messsages");
+                Warning("Failed to get messsages: %@", error);
                 [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get messages", @"Seafile")];
                 [self dismissLoadingView];
                 self.refreshItem.enabled = YES;
@@ -311,9 +311,12 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
                                                       width,
                                                       self.messageInputView.textView.frame.size.height);
     self.messageInputView.textView.backgroundColor = [UIColor whiteColor];
-    self.messageInputView.textView.layer.borderColor = [[UIColor lightGrayColor] CGColor];
+    self.messageInputView.textView.layer.borderColor = [[UIColor grayColor] CGColor];
     self.messageInputView.textView.layer.borderWidth = 1.0f;
-    self.messageInputView.textView.layer.cornerRadius = 0.8f;
+    self.messageInputView.textView.layer.cornerRadius = 4.0f;
+    self.messageInputView.textView.clipsToBounds = NO;
+    self.messageInputView.textView.layer.masksToBounds = YES;
+    self.messageInputView.textView.layer.shadowOpacity = 0.0f;
 
     if (!IsIpad()) {
         UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Back", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
@@ -606,35 +609,6 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     btn.frame = CGRectMake(width-5, headerY-5, REPLIES_HEADER_HEIGHT+10, REPLIES_HEADER_HEIGHT+10);
     [cell.contentView bringSubviewToFront:btn];
 }
-static const CGFloat kJSSubtitleLabelHeight = 15.0f;
-static const CGFloat kJSLabelPadding = 5.0f;
-
-- (void)configureUsermsgCell:(JSBubbleMessageCell *)cell forMessageType:(JSBubbleMessageType)type
-{
-    UIImageView *imageView = cell.avatarImageView;
-    CGFloat avatarX = 7.0f;
-    if (type == JSBubbleMessageTypeOutgoing) {
-        avatarX = (cell.contentView.frame.size.width - kJSAvatarImageSize - avatarX);
-    }
-
-    CGFloat avatarY = cell.contentView.frame.size.height - kJSAvatarImageSize - kJSSubtitleLabelHeight;
-    imageView.frame = CGRectMake(avatarX, avatarY, kJSAvatarImageSize, kJSAvatarImageSize);
-
-
-    CGFloat bubbleY = 14.0f;
-    CGFloat bubbleX = kJSAvatarImageSize + avatarX;
-    CGFloat offsetX = 4.0f;
-    if (type == JSBubbleMessageTypeOutgoing) {
-        offsetX = kJSAvatarImageSize+3;
-    }
-
-    CGRect frame = CGRectMake(bubbleX - offsetX,
-                              bubbleY,
-                              cell.contentView.frame.size.width - bubbleX,
-                              cell.bubbleView.frame.size.height);
-
-    cell.bubbleView.frame = frame;
-}
 
 //
 //  *** Implement to customize cell further
@@ -656,8 +630,6 @@ static const CGFloat kJSLabelPadding = 5.0f;
         if (cell.subtitleLabel) {
             cell.subtitleLabel.textColor = BAR_COLOR;
         }
-        if (!IsIpad())  return;
-        [self configureUsermsgCell:cell forMessageType:[self messageTypeForRowAtIndexPath:indexPath]];
     } else if (self.msgtype == MSG_GROUP || self.msgtype == MSG_REPLY) {
         SeafMessage *msg = [self.messages objectAtIndex:indexPath.row];
         float cellH = [self tableView:self.tableView heightForRowAtIndexPath:indexPath];
@@ -672,9 +644,8 @@ static const CGFloat kJSLabelPadding = 5.0f;
         cell.avatarImageView.frame = CGRectMake(offsetIX, 6.0,
                                                 cell.avatarImageView.frame.size.width,
                                                 cell.avatarImageView.frame.size.height);
+        cell.avatarImageView.autoresizingMask = UIViewAutoresizingFlexibleRightMargin;
 
-        cell.avatarImageView.autoresizingMask = (UIViewAutoresizingFlexibleLeftMargin
-                                                 | UIViewAutoresizingFlexibleRightMargin);
         cell.subtitleLabel.hidden = YES;
         CGRect frame = CGRectMake(cell.bubbleView.frame.origin.x + 10, y, width, [msg neededHeightForReplies:width]);
         [self configureHeaderView:cell msg:msg width:width];

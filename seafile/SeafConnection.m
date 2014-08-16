@@ -281,7 +281,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
      }];
 }
 
-
 /*
  curl -D a.txt --data "username=pithier@163.com&password=pithier" http://www.gonggeng.org/seahub/api2/auth-token/
  */
@@ -319,7 +318,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                                Warning("status code=%ld, error=%@\n", (long)response.statusCode, error);
                                                [self.delegate connectionLinkingFailed:self error:(int)response.statusCode];
                                            }];
-    [self handleOperation:operation withPolicy:operation.securityPolicy];
+    [self handleOperation:operation withPolicy:nil];
 }
 
 - (void)sendRequestAsync:(NSString *)url method:(NSString *)method form:(NSString *)form
