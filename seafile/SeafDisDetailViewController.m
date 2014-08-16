@@ -304,14 +304,16 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     self.messageInputView.textView.returnKeyType = UIReturnKeySend;
     [self.messageInputView.sendButton setTitleColor:BAR_COLOR forState:UIControlStateNormal];
     [self.messageInputView.sendButton setTitleColor:BAR_COLOR forState:UIControlStateHighlighted];
+    self.messageInputView.sendButton.titleLabel.font = [UIFont systemFontOfSize:16.0f];
     float width = self.messageInputView.textView.frame.size.width + self.messageInputView.textView.frame.origin.x - 10;
     self.messageInputView.textView.frame = CGRectMake(10,
                                                       self.messageInputView.textView.frame.origin.y,
                                                       width,
                                                       self.messageInputView.textView.frame.size.height);
     self.messageInputView.textView.backgroundColor = [UIColor whiteColor];
-    self.messageInputView.textView.layer.borderWidth = 0.5f;
     self.messageInputView.textView.layer.borderColor = [[UIColor lightGrayColor] CGColor];
+    self.messageInputView.textView.layer.borderWidth = 1.0f;
+    self.messageInputView.textView.layer.cornerRadius = 0.8f;
 
     if (!IsIpad()) {
         UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Back", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
@@ -604,6 +606,35 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     btn.frame = CGRectMake(width-5, headerY-5, REPLIES_HEADER_HEIGHT+10, REPLIES_HEADER_HEIGHT+10);
     [cell.contentView bringSubviewToFront:btn];
 }
+static const CGFloat kJSSubtitleLabelHeight = 15.0f;
+static const CGFloat kJSLabelPadding = 5.0f;
+
+- (void)configureUsermsgCell:(JSBubbleMessageCell *)cell forMessageType:(JSBubbleMessageType)type
+{
+    UIImageView *imageView = cell.avatarImageView;
+    CGFloat avatarX = 7.0f;
+    if (type == JSBubbleMessageTypeOutgoing) {
+        avatarX = (cell.contentView.frame.size.width - kJSAvatarImageSize - avatarX);
+    }
+
+    CGFloat avatarY = cell.contentView.frame.size.height - kJSAvatarImageSize - kJSSubtitleLabelHeight;
+    imageView.frame = CGRectMake(avatarX, avatarY, kJSAvatarImageSize, kJSAvatarImageSize);
+
+
+    CGFloat bubbleY = 14.0f;
+    CGFloat bubbleX = kJSAvatarImageSize + avatarX;
+    CGFloat offsetX = 4.0f;
+    if (type == JSBubbleMessageTypeOutgoing) {
+        offsetX = kJSAvatarImageSize+3;
+    }
+
+    CGRect frame = CGRectMake(bubbleX - offsetX,
+                              bubbleY,
+                              cell.contentView.frame.size.width - bubbleX,
+                              cell.bubbleView.frame.size.height);
+
+    cell.bubbleView.frame = frame;
+}
 
 //
 //  *** Implement to customize cell further
@@ -625,13 +656,13 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         if (cell.subtitleLabel) {
             cell.subtitleLabel.textColor = BAR_COLOR;
         }
-    }
-
-    SeafMessage *msg = [self.messages objectAtIndex:indexPath.row];
-    if (self.msgtype == MSG_GROUP || self.msgtype == MSG_REPLY) {
+        if (!IsIpad())  return;
+        [self configureUsermsgCell:cell forMessageType:[self messageTypeForRowAtIndexPath:indexPath]];
+    } else if (self.msgtype == MSG_GROUP || self.msgtype == MSG_REPLY) {
+        SeafMessage *msg = [self.messages objectAtIndex:indexPath.row];
         float cellH = [self tableView:self.tableView heightForRowAtIndexPath:indexPath];
         float offsetX = IsIpad() ? 60 : 46;
-        float offsetIX = IsIpad() ? 5 : cell.avatarImageView.frame.origin.x;
+        float offsetIX = IsIpad() ? 7 : cell.avatarImageView.frame.origin.x;
         float bubbleH = [JSBubbleView neededHeightForText:msg.text];
         CGFloat y = bubbleH + kJSTimeStampLabelHeight;
         CGFloat width = [UIScreen mainScreen].applicationFrame.size.width * 0.70f;

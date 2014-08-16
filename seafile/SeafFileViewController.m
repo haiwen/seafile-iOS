@@ -186,6 +186,7 @@ enum {
     self.searchDisplayController.delegate = self;
     self.tableView.tableHeaderView = self.searchBar;
     self.tableView.contentOffset = CGPointMake(0, CGRectGetHeight(self.searchBar.bounds));
+    self.tableView.allowsMultipleSelection = NO;
 
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     [self.navigationController setToolbarHidden:YES animated:NO];
@@ -1278,6 +1279,25 @@ enum {
         c = [[QBImagePickerController alloc] init];
     });
     return c;
+}
+
+- (void)setCellSelected:(BOOL)selected index:(NSUInteger)index
+{
+    if (index != NSNotFound) {
+        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
+        UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+        [cell setSelected:selected];
+    }
+}
+
+- (void)photoSelectedChanged:(id<SeafPreView>)from to:(id<SeafPreView>)preViewItem;
+{
+    if (_selectedindex) {
+        [self.tableView deselectRowAtIndexPath:_selectedindex animated:NO];
+        _selectedindex = nil;
+    }
+    [self setCellSelected:NO index:[_directory.allItems indexOfObject:from]];
+    [self setCellSelected:YES index:[_directory.allItems indexOfObject:preViewItem]];
 }
 
 @end

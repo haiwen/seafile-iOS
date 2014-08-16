@@ -14,6 +14,7 @@
 #import "SeafUploadFile.h"
 #import "REComposeViewController.h"
 #import "SeafPhotoView.h"
+#import "SeafFileViewController.h"
 
 #import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
@@ -197,7 +198,7 @@ enum PREVIEW_STATE {
             if (!self.preViewItem.isDownloading) {
                 SeafPhotoView *page = [self pageDisplayingPhoto:(SeafFile *)self.preViewItem];
                 [page displayImage];
-                if (self.preViewItem.image) {
+                if ([self.preViewItem hasCache]) {
                     [self loadAdjacentPhotosIfNecessary:(SeafFile *)self.preViewItem];
                 }
             }
@@ -501,12 +502,20 @@ enum PREVIEW_STATE {
 
 - (void)entry:(SeafBase *)entry downloadingFailed:(NSUInteger)errCode;
 {
+    Debug("Failed to download %@ : %ld ", entry.name, (long)errCode);
     if (self.preViewItem != entry) return;
-    [self fileContentLoaded:(SeafFile *)entry result:NO completeness:0];
+    if (self.state == PREVIEW_PHOTO) {
+        if (self.preViewItem.hasCache)   return;
+        [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:@"Failed to download file '%@'",self.preViewItem.previewItemTitle]];
+        SeafPhotoView *page = [self pageDisplayingPhoto:(SeafFile *)self.preViewItem];
+        [page displayImageFailure];
+    } else
+        [self fileContentLoaded:(SeafFile *)entry result:NO completeness:0];
 }
 
 - (void)entry:(SeafBase *)entry repoPasswordSet:(BOOL)success;
 {
+    Debug("Repo password set: %d", success);
 }
 
 #pragma mark - file operations
@@ -907,7 +916,7 @@ enum PREVIEW_STATE {
         _pagingScrollView.delegate = self;
         _pagingScrollView.showsHorizontalScrollIndicator = NO;
         _pagingScrollView.showsVerticalScrollIndicator = NO;
-        _pagingScrollView.backgroundColor = [UIColor blackColor];
+        _pagingScrollView.backgroundColor = [UIColor whiteColor];
         _pagingScrollView.contentSize = [self contentSizeForPagingScrollView];
         _visiblePages = [[NSMutableSet alloc] init];
         _recycledPages = [[NSMutableSet alloc] init];
@@ -981,7 +990,7 @@ enum PREVIEW_STATE {
             [_visiblePages addObject:page];
             [self configurePage:page forIndex:index];
             [_pagingScrollView addSubview:page];
-            Debug("Added page at index %lu subviews=%d", (unsigned long)index, _pagingScrollView.subviews.count);
+            Debug("Added page at index %lu subviews=%ld", (unsigned long)index, (long)_pagingScrollView.subviews.count);
         }
     }
 }
@@ -1081,9 +1090,14 @@ enum PREVIEW_STATE {
     if (index > [self numberOfPhotos] - 1) index = [self numberOfPhotos] - 1;
     NSUInteger previousCurrentPage = _currentPageIndex;
     _currentPageIndex = index;
+    id<SeafPreView> pre = self.preViewItem;
     self.preViewItem = [self.photos objectAtIndex:index];
     if (_currentPageIndex != previousCurrentPage) {
         [self didStartViewingPageAtIndex:index];
+        if (IsIpad() && [self.masterVc isKindOfClass: [SeafFileViewController class]]) {
+            SeafFileViewController *c = (SeafFileViewController *)self.masterVc;
+            [c photoSelectedChanged:pre to:self.preViewItem];
+        }
     }
 }
 
@@ -1100,11 +1114,12 @@ enum PREVIEW_STATE {
 
 - (void)loadAdjacentPhotosIfNecessary:(id<SeafPreView>)photo
 {
-    int index = [self.photos indexOfObject:photo] + 1;
-    int num = [self numberOfPhotos];
+    NSUInteger index = [self.photos indexOfObject:photo] + 1;
+    NSUInteger num = [self numberOfPhotos];
     if (index >= num) index = 0;
     id<SeafPreView> next = [self.photos objectAtIndex:index];
-    [next load:self force:NO];
+    if (![next hasCache])
+        [next load:self force:NO];
 }
 
 @end

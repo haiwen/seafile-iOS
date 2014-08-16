@@ -34,7 +34,7 @@
         _tapView = [[MWTapDetectingView alloc] initWithFrame:self.bounds];
         _tapView.tapDelegate = self;
         _tapView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-        _tapView.backgroundColor = [UIColor blackColor];
+        _tapView.backgroundColor = [UIColor whiteColor];
         [self addSubview:_tapView];
 
         // Image view
@@ -42,12 +42,14 @@
 
         _photoImageView.tapDelegate = self;
         _photoImageView.contentMode = UIViewContentModeCenter;
-        _photoImageView.backgroundColor = [UIColor blackColor];
+        _photoImageView.backgroundColor = [UIColor whiteColor];
         [self addSubview:_photoImageView];
 
         // Loading indicator
         _loadingIndicator = [[DACircularProgressView alloc] initWithFrame:CGRectMake(140.0f, 30.0f, 40.0f, 40.0f)];
         _loadingIndicator.userInteractionEnabled = NO;
+        _loadingIndicator.trackTintColor = [UIColor colorWithRed:255.0/256 green:196.0/256 blue:115.0/256 alpha:1.0];
+        _loadingIndicator.progressTintColor = [UIColor colorWithRed:236.0/256 green:114.0/256 blue:31.0/256 alpha:1.0];
         if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7")) {
             _loadingIndicator.thicknessRatio = 0.1;
             _loadingIndicator.roundedCorners = NO;
@@ -60,7 +62,7 @@
         [self addSubview:_loadingIndicator];
 
         // Setup
-        self.backgroundColor = [UIColor blackColor];
+        self.backgroundColor = [UIColor whiteColor];
         self.delegate = self;
         self.showsHorizontalScrollIndicator = NO;
         self.showsVerticalScrollIndicator = NO;
@@ -140,8 +142,8 @@
 // Image failed so just show black!
 - (void)displayImageFailure
 {
-    [self hideLoadingIndicator];
     _photoImageView.image = nil;
+    [self hideLoadingIndicator];
     if (!_loadingError) {
         _loadingError = [UIImageView new];
         _loadingError.image = [UIImage imageNamed:@"ImageError.png"];
