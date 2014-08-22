@@ -466,7 +466,7 @@ enum {
     if (!_selectedindex)
         return;
     SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-    NSAssert([file isKindOfClass:[SeafUploadFile class]], @"fiel must be SeafFile");
+    NSAssert([file isKindOfClass:[SeafFile class]], @"file must be SeafFile");
 
     NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
     if (file.mpath)
