@@ -231,7 +231,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
                 NSURLCredential *credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
                 if ([SeafDefaultPolicy() evaluateServerTrust:challenge.protectionSpace.serverTrust forDomain:challenge.protectionSpace.host]) {
-                    [self saveCertificate:challenge];
+                    [[NSFileManager defaultManager] removeItemAtPath:[self certPathForHost:[self host]] error:nil];
+                    SecCertificateRef cer = SecTrustGetCertificateAtIndex(challenge.protectionSpace.serverTrust, 0);
+                    self.policy = SeafPolicyFromCert(cer);
                     [[challenge sender] useCredential:credential forAuthenticationChallenge:challenge];
                 } else {
                     @synchronized(self) {
