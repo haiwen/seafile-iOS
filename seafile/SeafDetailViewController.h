@@ -12,7 +12,7 @@
 #import "SeafFile.h"
 
 
-@interface SeafDetailViewController : UIViewController <UISplitViewControllerDelegate, SeafFileDelegate, SeafDentryDelegate>
+@interface SeafDetailViewController : UIViewController <UISplitViewControllerDelegate, SeafShareDelegate, SeafDentryDelegate>
 
 @property (nonatomic) id<SeafPreView> preViewItem;
 @property (nonatomic) UIViewController *masterVc;

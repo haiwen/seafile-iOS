@@ -15,7 +15,7 @@
 
 @class SeafFile;
 
-@protocol SeafFileDelegate <NSObject>
+@protocol SeafShareDelegate <NSObject>
 - (void)generateSharelink:(SeafFile *)entry WithResult:(BOOL)success;
 @end
 
@@ -42,7 +42,7 @@
 @property (strong) id <SeafFileUpdateDelegate> udelegate;
 
 
-- (void)generateShareLink:(id<SeafFileDelegate>)dg;
+- (void)generateShareLink:(id<SeafShareDelegate>)dg;
 
 - (BOOL)isStarred;
 - (void)setStarred:(BOOL)starred;

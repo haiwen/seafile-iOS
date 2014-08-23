@@ -755,7 +755,7 @@ enum PREVIEW_STATE {
     }
 }
 
-#pragma mark - SeafFileDelegate
+#pragma mark - SeafShareDelegate
 - (void)generateSharelink:(SeafFile *)entry WithResult:(BOOL)success
 {
     if (entry != self.preViewItem)
@@ -769,7 +769,7 @@ enum PREVIEW_STATE {
     [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Generate share link success", @"Seafile")];
 
     if (buttonIndex == 0) {
-        [self sendMailInApp];
+        [self sendMailInApp:file.name shareLink:file.shareLink];
     } else if (buttonIndex == 1){
         UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
         [pasteboard setString:file.shareLink];
@@ -777,7 +777,7 @@ enum PREVIEW_STATE {
 }
 
 #pragma mark - sena mail inside app
-- (void)sendMailInApp
+- (void)sendMailInApp:(NSString *)name shareLink:(NSString *)shareLink
 {
     Class mailClass = (NSClassFromString(@"MFMailComposeViewController"));
     if (!mailClass) {
@@ -788,21 +788,15 @@ enum PREVIEW_STATE {
         [self alertWithMessage:NSLocalizedString(@"The mail account has not been set yet", @"Seafile")];
         return;
     }
-    [self displayMailPicker];
-}
 
-- (void)displayMailPicker
-{
     MFMailComposeViewController *mailPicker = [[MFMailComposeViewController alloc] init];
     mailPicker.mailComposeDelegate = self;
 
-    SeafFile *file = (SeafFile *)self.preViewItem;
-    [mailPicker setSubject:[NSString stringWithFormat:NSLocalizedString(@"File '%@' is shared with you using seafile", @"Seafile"), file.name]];
-    NSString *emailBody = [NSString stringWithFormat:NSLocalizedString(@"Hi,<br/><br/>Here is a link to <b>'%@'</b> in my Seafile:<br/><br/> <a href=\"%@\">%@</a>\n\n", @"Seafile"), file.name, file.shareLink, file.shareLink];
+    [mailPicker setSubject:[NSString stringWithFormat:NSLocalizedString(@"File '%@' is shared with you using seafile", @"Seafile"), name]];
+    NSString *emailBody = [NSString stringWithFormat:NSLocalizedString(@"Hi,<br/><br/>Here is a link to <b>'%@'</b> in my Seafile:<br/><br/> <a href=\"%@\">%@</a>\n\n", @"Seafile"), name, shareLink, shareLink];
     [mailPicker setMessageBody:emailBody isHTML:YES];
     [self presentViewController:mailPicker animated:YES completion:nil];
 }
-
 #pragma mark - MFMailComposeViewControllerDelegate
 - (void)mailComposeController:(MFMailComposeViewController *)controller didFinishWithResult:(MFMailComposeResult)result error:(NSError *)error
 {

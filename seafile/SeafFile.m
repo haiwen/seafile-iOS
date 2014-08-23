@@ -433,7 +433,7 @@
     return YES;
 }
 
-- (void)generateShareLink:(id<SeafFileDelegate>)dg
+- (void)generateShareLink:(id<SeafShareDelegate>)dg
 {
     NSString *url = [NSString stringWithFormat:API_URL"/repos/%@/file/shared-link/", self.repoId];
     NSString *form = [NSString stringWithFormat:@"p=%@", [self.path escapedPostForm]];

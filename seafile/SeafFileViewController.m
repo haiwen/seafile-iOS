@@ -35,6 +35,8 @@ enum {
     STATE_PASSWORD,
     STATE_MOVE,
     STATE_COPY,
+    STATE_SHARE_EMAIL,
+    STATE_SHARE_LINK,
 };
 #define S_PASSWORD NSLocalizedString(@"Password of this library", @"Seafile")
 #define S_MKDIR NSLocalizedString(@"New Folder", @"Seafile")
@@ -42,11 +44,13 @@ enum {
 #define S_RENAME NSLocalizedString(@"Rename", @"Seafile")
 #define S_EDIT NSLocalizedString(@"Edit", @"Seafile")
 #define S_DELETE NSLocalizedString(@"Delete", @"Seafile")
+#define S_SHARE_EMAIL NSLocalizedString(@"Send share link via email", @"Seafile")
+#define S_SHARE_LINK NSLocalizedString(@"Copy share link to clipboard", @"Seafile")
 #define S_REDOWNLOAD NSLocalizedString(@"Redownload", @"Seafile")
 #define S_UPLOAD NSLocalizedString(@"Upload", @"Seafile")
 
 
-@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, EGORefreshTableHeaderDelegate, SeafDirDelegate, UISearchBarDelegate, UISearchDisplayDelegate, UIAlertViewDelegate, UIActionSheetDelegate>
+@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, EGORefreshTableHeaderDelegate, SeafDirDelegate, SeafShareDelegate, UISearchBarDelegate, UISearchDisplayDelegate, UIAlertViewDelegate, UIActionSheetDelegate, MFMailComposeViewControllerDelegate>
 - (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView;
@@ -470,9 +474,9 @@ enum {
 
     NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
     if (file.mpath)
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, S_REDOWNLOAD, S_UPLOAD, nil];
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, S_REDOWNLOAD, S_UPLOAD, S_SHARE_EMAIL, S_SHARE_LINK, nil];
     else
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, S_REDOWNLOAD, S_RENAME, nil];
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, S_REDOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
 
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
     [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
@@ -1052,6 +1056,22 @@ enum {
     } else if ([S_UPLOAD isEqualToString:title]) {
         [file update:self];
         [self refreshView];
+    } else if ([S_SHARE_EMAIL isEqualToString:title]) {
+        self.state = STATE_SHARE_EMAIL;
+        if (!file.shareLink) {
+            [SVProgressHUD showWithStatus:NSLocalizedString(@"Generate share link ...", @"Seafile")];
+            [file generateShareLink:self];
+        } else {
+            [self generateSharelink:file WithResult:YES];
+        }
+    } else if ([S_SHARE_LINK isEqualToString:title]) {
+        self.state = STATE_SHARE_LINK;
+        if (!file.shareLink) {
+            [SVProgressHUD showWithStatus:NSLocalizedString(@"Generate share link ...", @"Seafile")];
+            [file generateShareLink:self];
+        } else {
+            [self generateSharelink:file WithResult:YES];
+        }
     }
 }
 
@@ -1289,4 +1309,71 @@ enum {
     [self.tableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionMiddle];
 }
 
+
+#pragma mark - SeafShareDelegate
+- (void)generateSharelink:(SeafFile *)entry WithResult:(BOOL)success
+{
+    SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
+    if (entry != file) return;
+
+    if (!success) {
+        [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Failed to generate share link of file '%@'", @"Seafile"), file.name]];
+        return;
+    }
+    [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Generate share link success", @"Seafile")];
+
+    if (self.state == STATE_SHARE_EMAIL) {
+        [self sendMailInApp:file.name shareLink:file.shareLink];
+    } else if (self.state == STATE_SHARE_LINK){
+        UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+        [pasteboard setString:file.shareLink];
+    }
+}
+
+#pragma mark - sena mail inside app
+- (void)sendMailInApp:(NSString *)name shareLink:(NSString *)shareLink
+{
+    Class mailClass = (NSClassFromString(@"MFMailComposeViewController"));
+    if (!mailClass) {
+        [self alertWithMessage:NSLocalizedString(@"This function is not supportted yet，you can copy it to the pasteboard and send mail by yourself", @"Seafile")];
+        return;
+    }
+    if (![mailClass canSendMail]) {
+        [self alertWithMessage:NSLocalizedString(@"The mail account has not been set yet", @"Seafile")];
+        return;
+    }
+
+    MFMailComposeViewController *mailPicker = [[MFMailComposeViewController alloc] init];
+    mailPicker.mailComposeDelegate = self;
+
+    [mailPicker setSubject:[NSString stringWithFormat:NSLocalizedString(@"File '%@' is shared with you using seafile", @"Seafile"), name]];
+    NSString *emailBody = [NSString stringWithFormat:NSLocalizedString(@"Hi,<br/><br/>Here is a link to <b>'%@'</b> in my Seafile:<br/><br/> <a href=\"%@\">%@</a>\n\n", @"Seafile"), name, shareLink, shareLink];
+    [mailPicker setMessageBody:emailBody isHTML:YES];
+    [self presentViewController:mailPicker animated:YES completion:nil];
+}
+
+#pragma mark - MFMailComposeViewControllerDelegate
+- (void)mailComposeController:(MFMailComposeViewController *)controller didFinishWithResult:(MFMailComposeResult)result error:(NSError *)error
+{
+    [self dismissViewControllerAnimated:YES completion:nil];
+    NSString *msg;
+    switch (result) {
+        case MFMailComposeResultCancelled:
+            msg = @"cancalled";
+            break;
+        case MFMailComposeResultSaved:
+            msg = @"saved";
+            break;
+        case MFMailComposeResultSent:
+            msg = @"sent";
+            break;
+        case MFMailComposeResultFailed:
+            msg = @"failed";
+            break;
+        default:
+            msg = @"";
+            break;
+    }
+    Debug("share file:send mail %@\n", msg);
+}
 @end
