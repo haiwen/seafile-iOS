@@ -758,8 +758,10 @@ enum PREVIEW_STATE {
 #pragma mark - SeafShareDelegate
 - (void)generateSharelink:(SeafFile *)entry WithResult:(BOOL)success
 {
-    if (entry != self.preViewItem)
+    if (entry != self.preViewItem) {
+        [SVProgressHUD dismiss];
         return;
+    }
 
     SeafFile *file = (SeafFile *)self.preViewItem;
     if (!success) {

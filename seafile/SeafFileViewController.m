@@ -1314,7 +1314,10 @@ enum {
 - (void)generateSharelink:(SeafFile *)entry WithResult:(BOOL)success
 {
     SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-    if (entry != file) return;
+    if (entry != file) {
+        [SVProgressHUD dismiss];
+        return;
+    }
 
     if (!success) {
         [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Failed to generate share link of file '%@'", @"Seafile"), file.name]];
