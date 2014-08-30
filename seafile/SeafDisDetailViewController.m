@@ -302,8 +302,10 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     self.tableView.backgroundColor = [UIColor whiteColor];
     self.tableView.separatorColor = self.tableView.backgroundColor;
     self.messageInputView.textView.returnKeyType = UIReturnKeySend;
-    [self.messageInputView.sendButton setTitleColor:BAR_COLOR forState:UIControlStateNormal];
-    [self.messageInputView.sendButton setTitleColor:BAR_COLOR forState:UIControlStateHighlighted];
+    [self.messageInputView.sendButton setTitleColor:SEAF_COLOR_DARK forState:UIControlStateNormal];
+    [self.messageInputView.sendButton setTitleColor:SEAF_COLOR_DARK forState:UIControlStateHighlighted];
+    [self.messageInputView.sendButton setTitleColor:SEAF_COLOR_LIGHT forState:UIControlStateDisabled];
+
     self.messageInputView.sendButton.titleLabel.font = [UIFont systemFontOfSize:16.0f];
     float width = self.messageInputView.textView.frame.size.width + self.messageInputView.textView.frame.origin.x - 10;
     self.messageInputView.textView.frame = CGRectMake(10,

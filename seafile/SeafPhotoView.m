@@ -48,8 +48,8 @@
         // Loading indicator
         _loadingIndicator = [[DACircularProgressView alloc] initWithFrame:CGRectMake(140.0f, 30.0f, 40.0f, 40.0f)];
         _loadingIndicator.userInteractionEnabled = NO;
-        _loadingIndicator.trackTintColor = [UIColor colorWithRed:255.0/256 green:196.0/256 blue:115.0/256 alpha:1.0];
-        _loadingIndicator.progressTintColor = [UIColor colorWithRed:236.0/256 green:114.0/256 blue:31.0/256 alpha:1.0];
+        _loadingIndicator.trackTintColor = SEAF_COLOR_LIGHT;
+        _loadingIndicator.progressTintColor = SEAF_COLOR_DARK;
         if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7")) {
             _loadingIndicator.thicknessRatio = 0.1;
             _loadingIndicator.roundedCorners = NO;
@@ -262,6 +262,7 @@
         // Disable scrolling initially until the first pinch to fix issues with swiping on an initally zoomed in photo
         self.scrollEnabled = NO;
     }
+    [self setZoomScale:self.minimumZoomScale animated:YES];
 
     // Layout
     [self setNeedsLayout];
