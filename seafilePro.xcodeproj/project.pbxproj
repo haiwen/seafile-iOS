@@ -627,6 +627,7 @@
 		5795F49916A7266E00FF90E3 /* SeafAccountCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafAccountCell.m; sourceTree = "<group>"; };
 		5796D03D18F78FCD00D5AE39 /* SeafAvatar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafAvatar.h; sourceTree = "<group>"; };
 		5796D03E18F78FCD00D5AE39 /* SeafAvatar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafAvatar.m; sourceTree = "<group>"; };
+		579E612219C1FBEA008EA307 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
 		57A055A51644EAD1006511AA /* tab-home.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-home.png"; sourceTree = "<group>"; };
 		57A055A81644EC84006511AA /* seafile-logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "seafile-logo.png"; sourceTree = "<group>"; };
 		57A07DD118B4CA4800AF543F /* NSData+Encryption.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSData+Encryption.h"; sourceTree = "<group>"; };
@@ -1969,6 +1970,7 @@
 				57E51BC619A0F355002B50C6 /* ko */,
 				57E51BC719A0F3D5002B50C6 /* it */,
 				57E51BC819A0F46E002B50C6 /* pt-PT */,
+				579E612219C1FBEA008EA307 /* ja */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
