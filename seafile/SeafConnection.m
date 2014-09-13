@@ -213,8 +213,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (BOOL)localDecrypt:(NSString *)repoId
 {
+#if 0
     SeafRepo *repo = [self getRepo:repoId];
     return repo.encrypted && repo.encVersion >= 2 && repo.magic;
+#else
+    return false;
+#endif
 }
 
 - (void)clearAccount
