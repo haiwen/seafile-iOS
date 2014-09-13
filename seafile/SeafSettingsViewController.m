@@ -11,6 +11,8 @@
 #import "SeafAppDelegate.h"
 #import "SeafDetailViewController.h"
 #import "SeafSettingsViewController.h"
+#import "SeafDirViewController.h"
+#import "SeafRepos.h"
 #import "SeafAvatar.h"
 #import "UIViewController+Extend.h"
 #import "FileSizeFormatter.h"
@@ -27,12 +29,18 @@ enum {
 #define SEAFILE_SITE @"http://www.seafile.com"
 
 
-@interface SeafSettingsViewController ()
+@interface SeafSettingsViewController ()<SeafDirDelegate>
 @property (strong, nonatomic) IBOutlet UITableViewCell *nameCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *usedspaceCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *serverCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *cacheCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *versionCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *autoSyncCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *syncRepoCell;
+
+@property UISwitch *autoSyncSwitch;
+@property BOOL autoSync;
+
 @property int state;
 
 @end
@@ -51,10 +59,19 @@ enum {
     return self;
 }
 
+- (void)autoSyncSwitchFlip:(id)sender
+{
+    _autoSync =  _autoSyncSwitch.on;
+    [_connection setAttribute:[NSNumber numberWithBool:_autoSync] forKey:@"autoSync"];
+    [_connection checkAutoSync];
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
+    _autoSyncSwitch = (UISwitch *)[self.autoSyncCell viewWithTag:100];
+    [_autoSyncSwitch addTarget:self action:@selector(autoSyncSwitchFlip:) forControlEvents:UIControlEventValueChanged];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -91,6 +108,10 @@ enum {
     nameCell.detailTextLabel.text = _connection.username;
     serverCell.detailTextLabel.text = [_connection.address trimUrl];
 
+    _autoSyncSwitch.on = self.autoSync;
+    NSString *autoSyncRepo = [[_connection getAttribute:@"autoSyncRepo"] stringValue];
+    SeafRepo *repo = [_connection getRepo:autoSyncRepo];
+    _syncRepoCell.detailTextLabel.text = repo ? repo.name : nil;
     long long cacheSize = [self cacheSize];
     cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:cacheSize] useBaseTen:NO];
     Debug("%@, %lld, %lld, total cache=%lld", _connection.username, _connection.usage, _connection.quota, cacheSize);
@@ -112,6 +133,7 @@ enum {
 - (void)setConnection:(SeafConnection *)connection
 {
     _connection = connection;
+    _autoSync = [[_connection getAttribute:@"autoSync"] booleanValue:false];
     [self.tableView reloadData];
     [_connection performSelector:@selector(getAccountInfo:) withObject:self afterDelay:1.0f];
 }
@@ -124,6 +146,15 @@ enum {
     }
 }
 
+- (void)popupRepoSelect
+{
+    SeafDirViewController *c = [[SeafDirViewController alloc] initWithSeafDir:self.connection.rootFolder delegate:self chooseRepo:true];
+    UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:c];
+    [navController setModalPresentationStyle:UIModalPresentationFormSheet];
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    [appdelegate.tabbarController presentViewController:navController animated:YES completion:nil];
+}
+
 #pragma mark - Table view delegate
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
@@ -132,7 +163,12 @@ enum {
         if (indexPath.row == 1) // Select the quota cell
             [_connection getAccountInfo:self];
     } else if (indexPath.section == 1) {
-    } else if (indexPath.section == 2) {
+        if (indexPath.row == 1) {
+            if (_autoSync) {
+                [self popupRepoSelect];
+            }
+        }
+    } else if (indexPath.section == 3) {
         _state = (int)indexPath.row;
         switch ((indexPath.row)) {
             case CELL_INVITATION:
@@ -250,5 +286,22 @@ enum {
         cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:cacheSize] useBaseTen:NO];
     }
 }
+
+#pragma mark - SeafDirDelegate
+- (void)chooseDir:(UIViewController *)c dir:(SeafDir *)dir
+{
+    [self.navigationController popToRootViewControllerAnimated:YES];
+    SeafRepo *repo = (SeafRepo *)dir;
+    _syncRepoCell.detailTextLabel.text = repo.name;
+    [self.tableView reloadData];
+    [_connection setAttribute:repo.repoId forKey:@"autoSyncRepo"];
+    [_connection checkAutoSync];
+    [c.navigationController dismissViewControllerAnimated:YES completion:nil];
+}
+- (void)cancelChoose:(UIViewController *)c
+{
+    [c.navigationController dismissViewControllerAnimated:YES completion:nil];
+}
+
 
 @end

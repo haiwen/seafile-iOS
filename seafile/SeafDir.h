@@ -35,5 +35,6 @@
 - (void)removeUploadFile:(SeafUploadFile *)ufile;
 
 - (void)renameFile:(SeafFile *)sfile newName:(NSString *)newName;
+- (void)downloadContentSuccess:(void (^)(SeafDir *dir)) success;
 
 @end

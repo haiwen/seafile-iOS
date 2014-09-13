@@ -491,7 +491,7 @@ enum {
     if (!_selectedindex)
         return;
     SeafUploadFile *file = (SeafUploadFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-    NSAssert([file isKindOfClass:[SeafUploadFile class]], @"fiel must be SeafFile");
+    NSAssert([file isKindOfClass:[SeafUploadFile class]], @"file must be SeafFile");
 
     NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
     UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, nil];
@@ -658,7 +658,7 @@ enum {
     if (file)
         controller = [[SeafUploadDirViewController alloc] initWithSeafConnection:_connection uploadFile:file];
     else
-        controller = [[SeafDirViewController alloc] initWithSeafDir:self.connection.rootFolder delegate:self];
+        controller = [[SeafDirViewController alloc] initWithSeafDir:self.connection.rootFolder delegate:self chooseRepo:false];
 
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
     [navController setModalPresentationStyle:UIModalPresentationFormSheet];

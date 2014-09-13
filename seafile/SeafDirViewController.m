@@ -22,19 +22,15 @@
 @property (strong) UIBarButtonItem *chooseItem;
 @property (strong, readonly) SeafDir *directory;
 @property (strong) id<SeafDirDelegate> delegate;
+@property (readwrite) BOOL chooseRepo;
 
 @property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
 
 @end
 
 @implementation SeafDirViewController
-@synthesize directory = _directory;
-@synthesize curDir = _curDir;
-@synthesize refreshHeaderView = _refreshHeaderView;
 
-
-
-- (id)initWithSeafDir:(SeafDir *)dir delegate:(id<SeafDirDelegate>)delegate
+- (id)initWithSeafDir:(SeafDir *)dir delegate:(id<SeafDirDelegate>)delegate chooseRepo:(BOOL)chooseRepo
 {
     if (self = [super init]) {
         self.delegate = delegate;
@@ -42,6 +38,9 @@
         _directory.delegate = self;
         [_directory loadContent:NO];
         self.tableView.delegate = self;
+        _chooseRepo = chooseRepo;
+        if (_chooseRepo)
+            [self.navigationController setToolbarHidden:YES];
     }
     return self;
 }
@@ -68,6 +67,7 @@
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIBarButtonItemStyleBordered target:self action:@selector(cancel:)];
     self.tableView.scrollEnabled = YES;
     UIBarButtonItem *flexibleFpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
+    Debug("_chooseRepo=%d", _chooseRepo);
     self.chooseItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Choose", @"Seafile") style:UIBarButtonItemStyleBordered target:self action:@selector(chooseFolder:)];
     NSArray *items = [NSArray arrayWithObjects:flexibleFpaceItem, self.chooseItem, flexibleFpaceItem, nil];
     [self setToolbarItems:items];
@@ -85,10 +85,12 @@
 - (void)viewDidAppear:(BOOL)animated
 {
     [self.navigationController setToolbarHidden:NO];
-    if ([_directory isKindOfClass:[SeafRepos class]]) {
+    if (!_chooseRepo && [_directory isKindOfClass:[SeafRepos class]]) {
         [self.chooseItem setEnabled:NO];
-    }
+    } else if (_chooseRepo)
+        [self.navigationController setToolbarHidden:YES];
 }
+
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
@@ -147,11 +149,15 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     _curDir = [_directory.items objectAtIndex:indexPath.row];
+    if (_chooseRepo) {
+        [self.delegate chooseDir:self dir:_curDir];
+        return;
+    }
     if ([_curDir isKindOfClass:[SeafRepo class]] && [(SeafRepo *)_curDir passwordRequired]) {
         [self popupSetRepoPassword];
         return;
     }
-    SeafDirViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:_curDir delegate:self.delegate];
+    SeafDirViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:_curDir delegate:self.delegate chooseRepo:false];
     [self.navigationController pushViewController:controller animated:YES];
 }
 
@@ -216,7 +222,7 @@
 {
     [SVProgressHUD dismiss];
     if (success) {
-        SeafDirViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:_curDir delegate:self.delegate];
+        SeafDirViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:_curDir delegate:self.delegate chooseRepo:false];
         [self.navigationController pushViewController:controller animated:YES];
     } else {
         [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Wrong library password", @"Seafile") duration:2.0];

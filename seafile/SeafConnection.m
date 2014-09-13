@@ -87,6 +87,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @property NSURLAuthenticationChallenge *challenge;
 @property AFSecurityPolicy *policy;
 @property NSDate *avatarLastUpdate;
+@property NSMutableDictionary *settings;
+
+@property NSTimer *autoSyncTimer;
+@property BOOL inAutoSync;
+@property ALAssetsLibrary *library;
+@property NSMutableArray *photosArray;
 @end
 
 @implementation SeafConnection
@@ -138,8 +144,34 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             if ([_info objectForKey:@"nickname"])
                 [self.email2nickMap setValue:[_info objectForKey:@"nickname"] forKey:self.username];
         }
+        [_rootFolder loadCache];
+
+        NSDictionary *settings = [[userDefaults objectForKey:[NSString stringWithFormat:@"%@/%@/settings", url, username]] mutableCopy];
+        if (settings)
+            _settings = [settings mutableCopy];
+        else
+            _settings = [[NSMutableDictionary alloc] init];
+        [self checkAutoSync];
     }
     return self;
+}
+
+- (void)saveSettings
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults setObject:_settings forKey:[NSString stringWithFormat:@"%@/%@/settings", _address, self.username]];
+    [userDefaults synchronize];
+
+}
+- (void)setAttribute:(id)anObject forKey:(id < NSCopying >)aKey
+{
+    [_settings setObject:anObject forKey:aKey];
+    [self saveSettings];
+}
+
+- (NSString *)getAttribute:(NSString *)aKey
+{
+    return [_settings objectForKey:aKey];
 }
 
 - (void)setAddress:(NSString *)address
@@ -748,4 +780,135 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         _requestSerializer = [AFHTTPRequestSerializer serializer];
     return _requestSerializer;
 }
+
+
+- (void)uploadPhotoTick:(NSTimer *)timer
+{
+    if (!_inAutoSync || !self.photosArray) {
+        [timer invalidate];
+        return;
+    }
+    NSString *autoSyncRepo = [[self getAttribute:@"autoSyncRepo"] stringValue];
+    SeafRepo *repo = [self getRepo:autoSyncRepo];
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    Debug("Current %d photos need to upload", self.photosArray.count);
+    while(self.photosArray && self.photosArray.count > 0) {
+        NSURL *url = [self.photosArray objectAtIndex:0];
+        [self.photosArray removeObject:url];
+        [self.library assetForURL:url
+                 resultBlock:^(ALAsset *asset) {
+                     NSString *filename = asset.defaultRepresentation.filename;
+                     NSString *path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
+                     SeafUploadFile *file =  [self getUploadfile:path];
+                     file.asset = asset;
+                     [repo addUploadFile:file];
+                     Debug("Add file %@ to upload list", filename);
+                     [SeafAppDelegate backgroundUpload:file];
+                 }
+                failureBlock:^(NSError *error){
+                    Debug(@"operation was not successfull!");
+                }];
+        if (appdelegate.uploadnum > 10) {
+            break;
+        }
+    }
+    if (self.photosArray && self.photosArray.count == 0) {
+        _inAutoSync = false;
+    }
+}
+
+- (BOOL)checkString:(NSString *)str inSet:(NSSet *)set
+{
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF MATCHES %@", str];
+    NSSet *filteredSet = [set filteredSetUsingPredicate:predicate];
+    return (filteredSet && filteredSet.count > 0);
+}
+
+- (void)autoUploadPhotosTo:(SeafDir *)dir
+{
+    NSMutableSet *set = [[NSMutableSet alloc] init];
+    for (SeafBase *obj in dir.allItems) {
+        [set addObject:obj.name];
+    }
+
+    self.photosArray =[[NSMutableArray alloc]init];
+    self.library = [[ALAssetsLibrary alloc] init];
+    
+    void (^assetEnumerator)(ALAsset *, NSUInteger, BOOL *) = ^(ALAsset *asset, NSUInteger index, BOOL *stop) {
+        if(asset != nil) {
+            if([[asset valueForProperty:ALAssetPropertyType] isEqualToString:ALAssetTypePhoto]) {
+                NSURL *url = (NSURL*)asset.defaultRepresentation.url;
+                NSString *filename = asset.defaultRepresentation.filename;
+                if (![self checkString:filename inSet:set])
+                    [self.photosArray addObject:url];
+            }
+        }
+    };
+    
+    void (^ assetGroupEnumerator) ( ALAssetsGroup *, BOOL *) = ^(ALAssetsGroup *group, BOOL *stop) {
+        if(group != nil) {
+            [group setAssetsFilter:[ALAssetsFilter allPhotos]];
+            [group enumerateAssetsUsingBlock:assetEnumerator];
+            Debug("Total %d photos need to be uplaoded: %d", group.numberOfAssets, self.photosArray.count);
+            NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:60
+                                                              target:self
+                                                            selector:@selector(uploadPhotoTick:)
+                                                            userInfo:nil
+                                                             repeats:YES];
+            [timer fire];
+        }
+    };
+    
+    [self.library enumerateGroupsWithTypes:ALAssetsGroupAll
+                           usingBlock:assetGroupEnumerator
+                         failureBlock:^(NSError *error) {
+                             Debug("There is an error: %@", error);
+                         }];
+}
+
+- (void)autoSyncPhotos
+{
+    NSString *autoSyncRepo = [[self getAttribute:@"autoSyncRepo"] stringValue];
+    SeafRepo *repo = [self getRepo:autoSyncRepo];
+    if (!repo) {
+        return;
+    }
+    [repo downloadContentSuccess:^(SeafDir *dir) {
+        [self autoUploadPhotosTo:repo];
+    }];
+}
+
+- (void)tick:(NSTimer *)timer
+{
+    @synchronized(self) {
+    if (_inAutoSync) return;
+        _inAutoSync = true;
+    }
+    [self autoSyncPhotos];
+}
+
+- (void)checkAutoSync
+{
+    if (!self.authorized) return;
+    BOOL autoSync = [[self getAttribute:@"autoSync"] booleanValue:false] &&
+    ([[self getAttribute:@"autoSyncRepo"] stringValue] != nil);
+    if (autoSync && !_autoSyncTimer) {
+        Debug("Start autoSync");
+        _autoSyncTimer = [NSTimer scheduledTimerWithTimeInterval:60*60
+                                                          target:self
+                                                        selector:@selector(tick:)
+                                                        userInfo:nil
+                                                         repeats:YES];
+        [_autoSyncTimer fire];
+    } else if (!autoSync && _autoSyncTimer) {
+        Debug("Stop auto Sync");
+        [_autoSyncTimer invalidate];
+        _autoSyncTimer = nil;
+        _photosArray = nil;
+        _library = nil;
+        _inAutoSync = false;
+    }
+
+}
+
 @end

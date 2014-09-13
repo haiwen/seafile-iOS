@@ -115,16 +115,23 @@
 
  [{"id": "0d6a4cc4e084fec6cde0f50d628cf4f502ced622", "type": "file", "name": "shin_SSD.pdf", "size": 1092236}, {"id": "2ac5dfb7126bea3a2038069688337bd3f64e80e2", "type": "file", "name": "FTL design exploration in reconfigurable high-performance SSD for server applications.pdf", "size": 675464}, {"id": "eee56009908153baf5cf21615cea00cba657cb0a", "type": "file", "name": "DFTL.pdf", "size": 1232088}, {"id": "97eb7fd4f9ad45c821ed3ddd662c5d2b27ab7e45", "type": "file", "name": "BPLRU a buffer management scheme for improving random writes in flash storage.pdf", "size": 1113100}, {"id": "1578adbc33c143f68c5a79b421f1d9d7f0d52bc8", "type": "file", "name": "Algorithms and Data Structures for Flash Memories.pdf", "size": 689915}, {"id": "8dd0a3be9289aea6795c1203351691fcc1373fbb", "type": "file", "name": "2006-Intel TR-Understanding the flash translation layer (FTL)specification.pdf", "size": 84054}]
  */
-- (void)realLoadContent
+- (void)downloadContentSuccess:(void (^)(SeafDir *dir)) success
 {
     [connection sendRequest:self.url
                     success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
                         [self handleResponse:response json:JSON data:data];
+                        if (success)
+                            success(self);
                     }
                     failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
                         self.state = SEAF_DENTRY_INIT;
                         [self.delegate entry:self downloadingFailed:response.statusCode];
                     }];
+}
+
+- (void)realLoadContent
+{
+    [self downloadContentSuccess:nil];
 }
 
 - (void)updateItems:(NSMutableArray *)items

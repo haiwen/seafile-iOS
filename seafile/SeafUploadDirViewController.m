@@ -109,7 +109,7 @@
 
 - (IBAction)choose:(id)sender
 {
-    SeafDirViewController *c = [[SeafDirViewController alloc] initWithSeafDir:self.connection.rootFolder delegate:self];
+    SeafDirViewController *c = [[SeafDirViewController alloc] initWithSeafDir:self.connection.rootFolder delegate:self chooseRepo:false];
     [self.navigationController pushViewController:c animated:YES];
 }
 

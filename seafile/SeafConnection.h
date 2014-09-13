@@ -126,6 +126,11 @@ enum MSG_TYPE{
 - (BOOL)savetoCacheKey:(NSString *)key value:(NSString *)content;
 - (id)getCachedStarredFiles;
 
+- (NSString *)getAttribute:(NSString *)aKey;
+- (void)setAttribute:(id)anObject forKey:(id < NSCopying >)aKey;
+
+- (void)checkAutoSync;
+
 + (AFHTTPRequestSerializer <AFURLRequestSerialization> *)requestSerializer;
 
 @end

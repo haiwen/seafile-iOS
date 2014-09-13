@@ -46,6 +46,7 @@ enum {
 @property (readonly) SeafDisMasterViewController *discussVC;
 @property (readonly) NSData *deviceToken;
 
+
 @property (retain) NSMutableArray *conns;
 @property (readwrite) SeafConnection *connection;
 
@@ -74,6 +75,8 @@ enum {
 - (void)checkIconBadgeNumber;
 - (void)saveAccounts;
 - (SeafConnection *)getConnection:(NSString *)url username:(NSString *)username;
+
+- (int)uploadnum;
 
 
 @end

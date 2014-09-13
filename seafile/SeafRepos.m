@@ -214,6 +214,7 @@
 
 - (SeafRepo *)getRepo:(NSString *)repo
 {
+    if (!repo) return nil;
     int i;
     for (i = 0; i < [self.items count]; ++i) {
         SeafRepo *r = (SeafRepo *)[self.items objectAtIndex:i];

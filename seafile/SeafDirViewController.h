@@ -17,6 +17,6 @@
 
 @interface SeafDirViewController : UITableViewController
 
-- (id)initWithSeafDir:(SeafDir *)dir delegate:(id<SeafDirDelegate>)delegate;
+- (id)initWithSeafDir:(SeafDir *)dir delegate:(id<SeafDirDelegate>)delegate chooseRepo:(BOOL)chooseRepo;
 
 @end
