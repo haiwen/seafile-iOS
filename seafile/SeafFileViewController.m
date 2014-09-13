@@ -1120,24 +1120,39 @@ enum {
 }
 
 #pragma mark - QBImagePickerControllerDelegate
+- (BOOL)filenameExist:(NSString *)filename
+{
+    NSArray *arr = _directory.allItems;
+    NSUInteger idx = [arr indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
+        NSString *name = nil;
+        if ([obj conformsToProtocol:@protocol(SeafPreView)]) {
+            name = ((id<SeafPreView>)obj).name;
+        } else if ([obj isKindOfClass:[SeafBase class]]) {
+            name = ((SeafBase *)obj).name;
+        }
+        if (name && [name isEqualToString:filename]) {
+            *stop = true;
+            return true;
+        }
+        return false;
+    }];
+    return (idx != NSNotFound);
+}
+
 - (void)uploadPickedAssets:(NSArray *)assets
 {
     NSMutableArray *files = [[NSMutableArray alloc] init];
     NSMutableArray *paths = [[NSMutableArray alloc] init];
-    int i = 0;
     NSString *path;
     NSString *date = [self.formatter stringFromDate:[NSDate date]];
     for (ALAsset *asset in assets) {
-        i++;
-        if (![ALAssetTypeVideo isEqualToString:[asset valueForProperty:ALAssetPropertyType]]) {
-            NSString *ext = [[[asset valueForProperty:ALAssetPropertyURLs] valueForKey:[[[asset valueForProperty:ALAssetPropertyURLs] allKeys] objectAtIndex:0]] pathExtension];
-            NSString *filename = [NSString stringWithFormat:@"Photo %@-%d.%@", date, i, ext];
-            path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
-        } else {
-            NSString *ext = [[[asset valueForProperty:ALAssetPropertyURLs] valueForKey:[[[asset valueForProperty:ALAssetPropertyURLs] allKeys] objectAtIndex:0]] pathExtension];
-            NSString *filename = [NSString stringWithFormat:@"Video %@-%d.%@", date, i, ext];
-            path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
+        NSString *filename = asset.defaultRepresentation.filename;
+        if ([self filenameExist:filename]) {
+            NSString *name = filename.stringByDeletingPathExtension;
+            NSString *ext = filename.pathExtension;
+            filename = [NSString stringWithFormat:@"%@-%@.%@", name, date, ext];
         }
+        path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
         [paths addObject:path];
         SeafUploadFile *file =  [self.connection getUploadfile:path];
         file.asset = asset;
