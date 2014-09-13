@@ -103,6 +103,12 @@ enum PREVIEW_STATE {
     }
     return false;
 }
+- (BOOL)isModal
+{
+    return self.presentingViewController.presentedViewController == self
+    || self.navigationController.presentingViewController.presentedViewController == self.navigationController
+    || [self.tabBarController.presentingViewController isKindOfClass:[UITabBarController class]];
+}
 
 - (void)updateNavigation
 {
@@ -137,6 +143,7 @@ enum PREVIEW_STATE {
 
 - (void)refreshView
 {
+    if (!self.isViewLoaded) return;
     NSURLRequest *request;
     if (self.state == PREVIEW_PHOTO && !self.photos)
         [self clearPhotosVIew];
@@ -160,6 +167,7 @@ enum PREVIEW_STATE {
             self.state = PREVIEW_DOWNLOADING;
         }
     }
+
     [self updateNavigation];
     CGRect r = CGRectMake(self.view.frame.origin.x, 0, self.view.frame.size.width, self.view.frame.size.height);
     switch (self.state) {
@@ -252,7 +260,10 @@ enum PREVIEW_STATE {
 
 - (void)goBack:(id)sender
 {
-    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+    if (self.isModal)
+        [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+    else
+        [self.navigationController popViewControllerAnimated:NO];
 }
 
 - (void)viewDidLoad
@@ -262,7 +273,7 @@ enum PREVIEW_STATE {
         self.edgesForExtendedLayout = UIRectEdgeNone;
     // Do any additional setup after loading the view, typically from a nib.
 
-    if (!IsIpad()) {
+    if (self.isModal) {
         UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Back", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
         [self.navigationItem setLeftBarButtonItem:barButtonItem animated:YES];
     }

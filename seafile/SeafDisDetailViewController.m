@@ -20,7 +20,7 @@
 static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 
 
-@interface SeafDisDetailViewController ()<JSMessagesViewDataSource, JSMessagesViewDelegate, EGORefreshTableHeaderDelegate, UIScrollViewDelegate, UITextFieldDelegate, UITextViewDelegate, REComposeViewControllerDelegate>
+@interface SeafDisDetailViewController ()<JSMessagesViewDataSource, JSMessagesViewDelegate, EGORefreshTableHeaderDelegate, UIScrollViewDelegate, UITextFieldDelegate, UITextViewDelegate, REComposeViewControllerDelegate, SeafMessageSelected>
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
 @property (strong) UIBarButtonItem *msgItem;
 @property (strong) UIBarButtonItem *refreshItem;
@@ -560,6 +560,8 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     [cell.contentView bringSubviewToFront:tview];
     tview.delegate = msg;
     tview.dataSource = msg;
+    msg.tableView = tview;
+    msg.delegate = self;
     [tview reloadData];
     return tview;
 }
@@ -617,9 +619,10 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 //
 - (void)configureCell:(JSBubbleMessageCell *)cell atIndexPath:(NSIndexPath *)indexPath
 {
-#if 0
+#if 1
     if ([cell.bubbleView.textView respondsToSelector:@selector(linkTextAttributes)]) {
-        cell.bubbleView.textView.linkTextAttributes = @{UITextAttributeTextColor : [UIColor redColor]};
+        cell.bubbleView.textView.linkTextAttributes = @{UITextAttributeTextColor : [UIColor blueColor],
+                                                        NSUnderlineStyleAttributeName: [NSNumber numberWithInt:NSUnderlineStyleSingle]};
     }
     cell.bubbleView.textView.dataDetectorTypes = UIDataDetectorTypeLink;
 #endif
@@ -812,4 +815,30 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [appdelegate.discussVC updateLastMessage];
 }
+
+#pragma mark - mark SeafMessageSelected Methods
+- (void)selectMessage:(SeafMessage *)msg attachIndex:(long)index;
+{
+    NSDictionary *att = [msg.atts objectAtIndex:index];
+    Debug("att=%@", att);
+    if (![@"file" isEqualToString:[att objectForKey:@"type"]])
+        return;
+    NSString *repo_id = [att objectForKey:@"repo"];
+    NSString *path = [att objectForKey:@"path"];
+
+    SeafFile *sfile = [[SeafFile alloc] initWithConnection:self.connection oid:nil repoId:repo_id name:path.lastPathComponent path:path mtime:0 size:0];
+    SeafDetailViewController *detailvc;
+    if (IsIpad()) {
+        detailvc = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
+        //[self.navigationController pushViewController:detailvc animated:YES];
+    } else {
+        detailvc = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
+
+    }
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    [appdelegate showDetailView:detailvc];
+    sfile.delegate = detailvc;
+    [detailvc setPreViewItem:sfile master:nil];
+}
+
 @end

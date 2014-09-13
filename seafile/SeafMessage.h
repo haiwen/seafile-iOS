@@ -11,6 +11,15 @@
 
 #define REPLIES_HEADER_HEIGHT 20.f
 
+@class SeafMessage;
+
+@protocol SeafMessageSelected <NSObject>
+@optional
+- (void)selectMessage:(SeafMessage *)msg attachIndex:(long)index;
+- (void)selectMessage:(SeafMessage *)msg replyIndex:(long)index;
+@end
+
+
 @interface SeafMessage : JSMessage<UITableViewDelegate, UITableViewDataSource>
 
 @property CGFloat repliesHeight;
@@ -23,6 +32,9 @@
 
 @property NSMutableArray *replies;
 @property NSArray *atts;
+
+@property UITableView *tableView;
+@property id<SeafMessageSelected> delegate;
 
 - (instancetype)initWithText:(NSString *)text
                        email:(NSString *)email

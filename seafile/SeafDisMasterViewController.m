@@ -302,7 +302,10 @@
     }
     long long msgtype = [[dict objectForKey:@"type"] integerValue:MSG_NONE];
     [self.detailViewController setMsgtype:(int)msgtype info:dict];
-    if (!IsIpad())    [appdelegate showDetailView:self.detailViewController];
+    if (!IsIpad())
+        [appdelegate showDetailView:self.detailViewController];
+    else
+        [self.detailViewController.navigationController popToRootViewControllerAnimated:NO];
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation

@@ -13,6 +13,7 @@
 #import "UIImage+FileType.h"
 #import "Utils.h"
 #import "Debug.h"
+#import "SeafAppDelegate.h"
 
 
 #define FONT_SIZE 12.0f
@@ -22,6 +23,7 @@
 #define MSGLABEL_WIDTH(_w) ((_w) - NAME_OFFSET - RIGHT_MARGIN)
 
 #define CELL_CONTENT_MARGIN 1.0f
+#define ATTACH_HEIGHT 22
 
 @interface SeafMessage()
 @property NSString *originText;
@@ -142,7 +144,18 @@
 }
 - (CGFloat)heightForMsgAtt:(NSDictionary *)att width:(float)width
 {
-    return 22;
+    return ATTACH_HEIGHT;
+}
+
+- (void)clicked:(id)sender
+{
+    CGPoint buttonPosition = [sender convertPoint:CGPointZero toView:self.tableView];
+    NSIndexPath *indexPath = [self.tableView indexPathForRowAtPoint:buttonPosition];
+    if ([self hasAtts] && indexPath.section == 0) {
+        if (self.delegate && [self.delegate respondsToSelector:@selector(selectMessage:attachIndex:)])
+            [self.delegate selectMessage:self attachIndex:indexPath.row];
+
+    }
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath;
@@ -168,7 +181,7 @@
 - (UITableViewCell *)getAttCell:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     UIImageView *imageView = nil;
-    UILabel *nameLabel = nil;
+    UIButton *btn = nil;
     NSString *CellIdentifier = @"SeafAttCell";
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
@@ -179,26 +192,32 @@
         imageView.tag = 400;
         [cell.contentView addSubview:imageView];
 
-        nameLabel = [[UILabel alloc] init];
-        nameLabel.tag = 401;
-        nameLabel.textColor = BAR_COLOR;
-        nameLabel.font = [UIFont systemFontOfSize:12.0];
-        [cell.contentView addSubview:nameLabel];
+        btn = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+        btn.tag = 401;
+        btn.showsTouchWhenHighlighted = true;
+        [btn setTitleColor: BAR_COLOR forState: UIControlStateNormal];
+        btn.titleLabel.font = [UIFont systemFontOfSize:12.0];
+        [btn setContentHorizontalAlignment:UIControlContentHorizontalAlignmentLeft];
+        [btn setTitleEdgeInsets:UIEdgeInsetsMake(0.0f, 10.0f, 0.0f, 0.0f)];
+        [cell.contentView addSubview:btn];
     } else {
         imageView = (UIImageView *)[cell viewWithTag:400];
-        nameLabel = (UILabel *)[cell viewWithTag:401];
+        btn = (UIButton *)[cell viewWithTag:401];
+        [btn removeTarget:nil action:NULL forControlEvents:UIControlEventAllEvents];
     }
 
     NSDictionary *att = [self.atts objectAtIndex:indexPath.row];
     NSString *name = [[att objectForKey:@"path"] lastPathComponent];
     NSString *mime = [FileMimeType mimeType:name];
     imageView.image = [UIImage imageForMimeType:mime ext:name.pathExtension.lowercaseString];
-    nameLabel.text = name;
     float width = MSGLABEL_WIDTH(tableView.frame.size.width);
-    imageView.frame = CGRectMake(AVATAR_OFFSET, 2, 18.0, 18.0);
-    nameLabel.frame = CGRectMake(25, 2, width, 18.0);
+    imageView.frame = CGRectMake(AVATAR_OFFSET, 2, ATTACH_HEIGHT-4, ATTACH_HEIGHT-4);
+    btn.frame = CGRectMake(25, 0, width, ATTACH_HEIGHT);
+    [btn setTitle:name forState:UIControlStateNormal];
+    [btn addTarget:self action:@selector(clicked:) forControlEvents:UIControlEventTouchUpInside];
     return cell;
 }
+
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if ([self hasAtts] && indexPath.section == 0) {

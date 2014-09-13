@@ -154,6 +154,7 @@ enum {
         path = [path stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
         Debug("repo=%@, path=%@\n", repo_id, path);
         if (path.length <= 1) return NO;
+
         SeafFile *sfile = [[SeafFile alloc] initWithConnection:self.connection oid:nil repoId:repo_id name:path.lastPathComponent path:path mtime:0 size:0];
         SeafDetailViewController *detailvc;
         if (IsIpad()) {
