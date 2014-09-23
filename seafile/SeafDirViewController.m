@@ -177,11 +177,11 @@
             return;
         }
         [_curDir setDelegate:self];
+        [SVProgressHUD showWithStatus:NSLocalizedString(@"Checking library password ...", @"Seafile")];
         if ([_directory->connection localDecrypt:_curDir.repoId])
             [_curDir checkRepoPassword:input];
         else
             [_curDir setRepoPassword:input];
-        [SVProgressHUD showWithStatus:NSLocalizedString(@"Checking library password ...", @"Seafile")];
         return;
     } else if ([alertView.title isEqualToString:TITLE_PASSWORD]) {
         [self popupSetRepoPassword];
