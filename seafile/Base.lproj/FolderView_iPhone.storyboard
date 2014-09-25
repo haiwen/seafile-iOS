@@ -398,11 +398,15 @@
                     <navigationItem key="navigationItem" title="Settings" id="aNt-9S-KAr"/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                     <connections>
+                        <outlet property="autoCameraUploadLabel" destination="1af-Tn-HYe" id="nRa-JS-TLF"/>
                         <outlet property="cacheCell" destination="h43-fm-QEc" id="9X7-z7-r69"/>
                         <outlet property="nameCell" destination="5xi-tG-aX7" id="ca7-Gk-LIC"/>
                         <outlet property="serverCell" destination="ggp-Jn-gkE" id="Xdv-ti-fV2"/>
+                        <outlet property="tellFriendCell" destination="OqU-Df-NSA" id="DYy-mj-HZh"/>
                         <outlet property="usedspaceCell" destination="hMG-4N-mUp" id="wXC-Pe-G7a"/>
                         <outlet property="versionCell" destination="zdI-jv-Dan" id="BxQ-qf-CeN"/>
+                        <outlet property="websiteCell" destination="f4C-un-RZC" id="nOi-WV-X6h"/>
+                        <outlet property="wipeCacheLabel" destination="ntG-cs-ded" id="8XQ-fK-RV0"/>
                     </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="LzM-gp-ws5" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -449,7 +453,7 @@
             </objects>
             <point key="canvasLocation" x="-1725" y="-2997"/>
         </scene>
-        <!--Seaf Activity View Controller - Activity-->
+        <!--Seaf Activity View Controller - Activities-->
         <scene sceneID="1gS-U2-JVg">
             <objects>
                 <viewController id="xZh-Ns-hDC" customClass="SeafActivityViewController" sceneMemberID="viewController">
@@ -462,7 +466,7 @@
                         </connections>
                     </view>
                     <toolbarItems/>
-                    <navigationItem key="navigationItem" title="Activity" id="FvO-2h-VgV"/>
+                    <navigationItem key="navigationItem" title="Activities" id="FvO-2h-VgV"/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dtp-ln-MQB" sceneMemberID="firstResponder"/>

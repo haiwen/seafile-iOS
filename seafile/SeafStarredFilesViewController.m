@@ -71,6 +71,8 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    self.title = NSLocalizedString(@"Starred", @"Seafile");
+
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeNone;
     if ([self.tableView respondsToSelector:@selector(setSeparatorInset:)])

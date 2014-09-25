@@ -56,8 +56,10 @@
             <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
             <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackOpaque"/>
             <connections>
+                <outlet property="errorLabel" destination="3" id="3En-4I-2pH"/>
                 <outlet property="imageView" destination="4" id="12"/>
                 <outlet property="nameLabel" destination="7" id="JdS-qk-EPa"/>
+                <outlet property="openElseBtn" destination="5" id="TGS-Hn-wjx"/>
             </connections>
         </view>
     </objects>

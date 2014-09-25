@@ -14,11 +14,6 @@
 @end
 
 @implementation DownloadingProgressView
-@synthesize imageView = _imageView;
-@synthesize nameLabel = _nameLabel;
-@synthesize progress = _progress;
-@synthesize item = _item;
-
 
 
 - (id)initWithCoder:(NSCoder *)decoder
@@ -37,6 +32,7 @@
         self.cancelBt.reversesTitleShadowWhenHighlighted = NO;
         self.cancelBt.tintColor=[UIColor whiteColor];
     }
+    _cancelBt.titleLabel.text = NSLocalizedString(@"Cancel download", @"Seafile");
     return self;
 }
 

@@ -74,6 +74,11 @@
     header.autoresizesSubviews = YES;
     header.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin| UIViewAutoresizingFlexibleRightMargin| UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleTopMargin;
     header.backgroundColor = [UIColor clearColor];
+    UILabel *welcomeLable = (UILabel *)[header viewWithTag:100];
+    UILabel *msgLabel = (UILabel *)[header viewWithTag:101];
+    welcomeLable.text = NSLocalizedString(@"Welcome to Seafile", @"Seafile");
+    msgLabel.text = NSLocalizedString(@"Choose an account to start", @"Seafile");
+
     self.tableView.tableHeaderView = header;
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 
@@ -87,6 +92,8 @@
     bt.backgroundColor = [UIColor clearColor];
     [bt.layer setBorderColor:[[UIColor grayColor] CGColor]];
     [bt setTitleColor:[UIColor colorWithRed:112/255.0 green:112/255.0 blue:112/255.0 alpha:1.0] forState:UIControlStateNormal];
+    [bt setTitle:NSLocalizedString(@"Back to Last Account", @"Seafile") forState:UIControlStateNormal];
+    bt.showsTouchWhenHighlighted = true;
     self.footer = bt;
     [self.view addSubview:bt];
     self.footer.hidden = YES;

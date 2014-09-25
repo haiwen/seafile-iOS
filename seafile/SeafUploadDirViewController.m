@@ -23,8 +23,12 @@
 @property (strong, nonatomic) IBOutlet UIImageView *imageVIew;
 @property (strong, nonatomic) IBOutlet UILabel *nameLabel;
 @property (strong, nonatomic) IBOutlet UILabel *dirLabel;
-@property (strong) UIBarButtonItem *saveItem;
 @property (strong, nonatomic) IBOutlet UISwitch *replaceSwitch;
+
+@property (strong, nonatomic) IBOutlet UILabel *replaceLabel;
+@property (strong, nonatomic) IBOutlet UILabel *destinationLabel;
+
+@property (strong) UIBarButtonItem *saveItem;
 
 @end
 
@@ -99,6 +103,8 @@
         self.dirLabel.text = NSLocalizedString(@"Choose", @"Seafile");
         [self.saveItem setEnabled:NO];
     }
+    _replaceLabel.text = NSLocalizedString(@"Replace", @"Seafile");
+    _destinationLabel.text = NSLocalizedString(@"Destination", @"Seafile");
 }
 
 - (void)didReceiveMemoryWarning

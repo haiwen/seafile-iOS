@@ -296,6 +296,8 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         self.edgesForExtendedLayout = UIRectEdgeNone;
     [[JSBubbleView appearance] setFont:[UIFont systemFontOfSize:16.0f]];
     [super viewDidLoad];
+    self.title = NSLocalizedString(@"Messages", @"Seafile");
+
     if ([self.tableView respondsToSelector:@selector(setSeparatorInset:)])
         [self.tableView setSeparatorInset:UIEdgeInsetsMake(0, 0, 0, 0)];
     self.tableView.tableFooterView = [[UIView alloc] initWithFrame:CGRectZero];

@@ -13,16 +13,18 @@
 @interface FailToPreview ()
 @property (strong) id<SeafPreView> item;
 @property (strong) UIDocumentInteractionController *docController;
+@property (strong, nonatomic) IBOutlet UILabel *errorLabel;
+@property (strong, nonatomic) IBOutlet ColorfulButton *openElseBtn;
 @end
 
 @implementation FailToPreview
-@synthesize item = _item;
-@synthesize docController;
 
 
 - (id)initWithCoder:(NSCoder *)decoder
 {
     self = [super initWithCoder:decoder];
+    _errorLabel.text = NSLocalizedString(@"Seafile does not support to preview file of this kind at the moment.", @"Seafile");
+    _openElseBtn.titleLabel.text = NSLocalizedString(@"Open in other applications", @"Seafile");
     for (UIView *v in self.subviews) {
         v.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin| UIViewAutoresizingFlexibleRightMargin| UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleTopMargin;
     }
@@ -35,8 +37,8 @@
 {
     NSURL *url = [_item exportURL];
     if (!url) return;
-    docController = [UIDocumentInteractionController interactionControllerWithURL:url];
-    BOOL ret = [docController presentOpenInMenuFromRect:[((UIButton *)sender) frame] inView:self animated:YES];
+    _docController = [UIDocumentInteractionController interactionControllerWithURL:url];
+    BOOL ret = [_docController presentOpenInMenuFromRect:[((UIButton *)sender) frame] inView:self animated:YES];
     if (ret == NO) {
         UIAlertView *alert = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"There is no app which can open this type of file on this machine", @"Seafile")
                                                         message:nil

@@ -262,13 +262,17 @@
                     </tableView>
                     <navigationItem key="navigationItem" title="Settings" id="wb3-ep-Aqm"/>
                     <connections>
+                        <outlet property="autoCameraUploadLabel" destination="M2d-2h-BoT" id="YX5-xx-hId"/>
                         <outlet property="autoSyncCell" destination="2FB-V2-2Rq" id="gan-87-Hff"/>
                         <outlet property="cacheCell" destination="czb-JY-a9K" id="hhH-Ex-rVM"/>
                         <outlet property="nameCell" destination="wTl-CF-jaE" id="Iwg-5w-Wh1"/>
                         <outlet property="serverCell" destination="oNb-DA-jMR" id="AGG-Zr-YdE"/>
                         <outlet property="syncRepoCell" destination="yvl-XV-NJi" id="MbS-5T-Odd"/>
+                        <outlet property="tellFriendCell" destination="ddX-fU-lfH" id="fcA-4m-kkZ"/>
                         <outlet property="usedspaceCell" destination="5pX-xU-4Tz" id="K2n-eG-zBo"/>
                         <outlet property="versionCell" destination="N1h-hO-sea" id="5YL-yf-XwY"/>
+                        <outlet property="websiteCell" destination="0s2-lY-e3M" id="Q0h-ri-HbT"/>
+                        <outlet property="wipeCacheLabel" destination="RGO-ir-R4l" id="3Zm-6Z-Uf3"/>
                     </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="RGF-wG-KHp" userLabel="First Responder" sceneMemberID="firstResponder"/>

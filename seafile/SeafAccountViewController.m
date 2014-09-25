@@ -22,6 +22,7 @@
 @property (strong, nonatomic) IBOutlet UITextField *passwordTextField;
 @property (strong, nonatomic) IBOutlet UIButton *loginButton;
 @property (strong, nonatomic) IBOutlet UIButton *cancelButton;
+@property (strong, nonatomic) IBOutlet UILabel *msgLabel;
 @property StartViewController *startController;
 @property SeafConnection *connection;
 @property int type;
@@ -106,6 +107,15 @@
         loginButton.tintColor=[UIColor whiteColor];
         cancelButton.tintColor=[UIColor whiteColor];
     }
+    [loginButton setTitle:NSLocalizedString(@"Login", @"Seafile") forState:UIControlStateNormal];
+    [loginButton setTitle:NSLocalizedString(@"Login", @"Seafile") forState:UIControlStateHighlighted];
+    [cancelButton setTitle:NSLocalizedString(@"Cancel", @"Seafile") forState:UIControlStateNormal];
+    [cancelButton setTitle:NSLocalizedString(@"Cancel", @"Seafile") forState:UIControlStateHighlighted];
+
+
+    _msgLabel.text = NSLocalizedString(@"For example: https://seacloud.cc or http://192.168.1.24:8000", @"Seafile");
+    serverTextField.placeholder = NSLocalizedString(@"Server, like https://seafile.cc", @"Seafile");
+
     self.title = NSLocalizedString(@"Seafile Account", @"Seafile");
     CGRect rect = CGRectMake(0, 0, 90, 25);
     NSString *align = ios7 ? @"  " :  @"";
@@ -135,6 +145,9 @@
         else if (self.type == 2)
             serverTextField.text = @"https://cloud.seafile.com";
     }
+    usernameTextField.placeholder = NSLocalizedString(@"Email", @"Seafile");
+    passwordTextField.placeholder = NSLocalizedString(@"Password", @"Seafile");
+
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 }
 

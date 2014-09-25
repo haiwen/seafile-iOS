@@ -37,6 +37,11 @@ enum {
 @property (strong, nonatomic) IBOutlet UITableViewCell *versionCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *autoSyncCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *syncRepoCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *tellFriendCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *websiteCell;
+
+@property (strong, nonatomic) IBOutlet UILabel *wipeCacheLabel;
+@property (strong, nonatomic) IBOutlet UILabel *autoCameraUploadLabel;
 
 @property UISwitch *autoSyncSwitch;
 @property BOOL autoSync;
@@ -46,9 +51,6 @@ enum {
 @end
 
 @implementation SeafSettingsViewController
-@synthesize connection = _connection;
-@synthesize nameCell, usedspaceCell, serverCell, cacheCell, versionCell;
-@synthesize state = _state;
 
 - (id)initWithStyle:(UITableViewStyle)style
 {
@@ -69,6 +71,19 @@ enum {
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    _nameCell.textLabel.text = NSLocalizedString(@"Username", @"Seafile");
+    _usedspaceCell.textLabel.text = NSLocalizedString(@"Space Used", @"Seafile");
+    _autoCameraUploadLabel.text = NSLocalizedString(@"Auto Camera Upload", @"Seafile");
+    _syncRepoCell.textLabel.text = NSLocalizedString(@"Upload Destination", @"Seafile");
+    _cacheCell.textLabel.text = NSLocalizedString(@"Local Cache", @"Seafile");
+    _tellFriendCell.textLabel.text = NSLocalizedString(@"Tell Friends about seafile", @"Seafile");
+    _websiteCell.textLabel.text = NSLocalizedString(@"Website", @"Seafile");
+    _websiteCell.detailTextLabel.text = @"www.seafile.com";
+    _serverCell.textLabel.text = NSLocalizedString(@"Server", @"Seafile");
+    _versionCell.textLabel.text = NSLocalizedString(@"Version", @"Seafile");
+    _wipeCacheLabel.text = NSLocalizedString(@"Wipe Cache", @"Seafile");
+    self.title = NSLocalizedString(@"Settings", @"Seafile");
+
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     _autoSyncSwitch = (UISwitch *)[self.autoSyncCell viewWithTag:100];
     [_autoSyncSwitch addTarget:self action:@selector(autoSyncSwitchFlip:) forControlEvents:UIControlEventValueChanged];
@@ -103,30 +118,30 @@ enum {
 
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
     NSString *version = [infoDictionary objectForKey:@"CFBundleVersion"];
-    versionCell.detailTextLabel.text = version;
+    _versionCell.detailTextLabel.text = version;
 
-    nameCell.detailTextLabel.text = _connection.username;
-    serverCell.detailTextLabel.text = [_connection.address trimUrl];
+    _nameCell.detailTextLabel.text = _connection.username;
+    _serverCell.detailTextLabel.text = [_connection.address trimUrl];
 
     _autoSyncSwitch.on = self.autoSync;
     NSString *autoSyncRepo = [[_connection getAttribute:@"autoSyncRepo"] stringValue];
     SeafRepo *repo = [_connection getRepo:autoSyncRepo];
     _syncRepoCell.detailTextLabel.text = repo ? repo.name : nil;
     long long cacheSize = [self cacheSize];
-    cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:cacheSize] useBaseTen:NO];
+    _cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:cacheSize] useBaseTen:NO];
     Debug("%@, %lld, %lld, total cache=%lld", _connection.username, _connection.usage, _connection.quota, cacheSize);
     if (_connection.quota <= 0) {
         if (_connection.usage < 0)
-            usedspaceCell.detailTextLabel.text = @"Unknown";
+            _usedspaceCell.detailTextLabel.text = @"Unknown";
         else
-            usedspaceCell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:_connection.usage] useBaseTen:NO];
+            _usedspaceCell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:_connection.usage] useBaseTen:NO];
     } else {
         float usage = 100.0 * _connection.usage/_connection.quota;
         NSString *quotaString = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:_connection.quota ] useBaseTen:NO];
         if (usage < 0)
-            usedspaceCell.detailTextLabel.text = [NSString stringWithFormat:@"? of %@", quotaString];
+            _usedspaceCell.detailTextLabel.text = [NSString stringWithFormat:@"? of %@", quotaString];
         else
-            usedspaceCell.detailTextLabel.text = [NSString stringWithFormat:@"%.2f%% of %@", usage, quotaString];
+            _usedspaceCell.detailTextLabel.text = [NSString stringWithFormat:@"%.2f%% of %@", usage, quotaString];
     }
 }
 
@@ -186,11 +201,25 @@ enum {
             default:
                 break;
         }
-    } else if (indexPath.section == 3) {
+    } else if (indexPath.section == 4) {
         NSString *title = NSLocalizedString(@"Are you sure to clear all the cache?", @"Seafile");
         UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:title message:nil delegate:self cancelButtonTitle:NSLocalizedString(@"NO", @"Seafile") otherButtonTitles:NSLocalizedString(@"YES", @"Seafile"), nil];
         [alertView show];
     }
+}
+
+- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
+{
+    NSString *sectionNames[] = {
+        NSLocalizedString(@"Account Info", @"Seafile"),
+        NSLocalizedString(@"Settings", @"Seafile"),
+        NSLocalizedString(@"Cache", @"Seafile"),
+        NSLocalizedString(@"About", @"Seafile"),
+        @"",
+    };
+    if (section < 0 || section > 4)
+        return nil;
+    return sectionNames[section];
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
@@ -283,7 +312,7 @@ enum {
         [appdelegate deleteAllObjects:@"SeafCacheObj"];
 
         long long cacheSize = [self cacheSize];
-        cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:cacheSize] useBaseTen:NO];
+        _cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:cacheSize] useBaseTen:NO];
     }
 }
 
