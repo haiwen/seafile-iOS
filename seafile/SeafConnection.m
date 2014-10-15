@@ -832,7 +832,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }
 
     self.photosArray =[[NSMutableArray alloc]init];
-    self.library = [[ALAssetsLibrary alloc] init];
 
     void (^assetEnumerator)(ALAsset *, NSUInteger, BOOL *) = ^(ALAsset *asset, NSUInteger index, BOOL *stop) {
         if(asset != nil) {
@@ -887,6 +886,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self autoSyncPhotos];
 }
 
+- (void)assetsLibraryDidChange:(NSNotification *)note
+{
+    Debug("LibraryDidChanged, start sync");
+    [self tick:_autoSyncTimer];
+}
+
 - (void)checkAutoSync
 {
     if (!self.authorized) return;
@@ -900,6 +905,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                                         userInfo:nil
                                                          repeats:YES];
         [_autoSyncTimer fire];
+        self.library = [[ALAssetsLibrary alloc] init];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(assetsLibraryDidChange:) name:ALAssetsLibraryChangedNotification object:_library];
     } else if (!autoSync && _autoSyncTimer) {
         Debug("Stop auto Sync");
         [_autoSyncTimer invalidate];

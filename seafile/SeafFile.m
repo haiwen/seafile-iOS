@@ -385,7 +385,6 @@
 
 - (BOOL)realLoadCache
 {
-    Debug("...");
     DownloadedFile *dfile = [self loadCacheObj];
     if (!self.oid)
         self.oid = dfile.oid;
