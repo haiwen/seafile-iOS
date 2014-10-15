@@ -914,6 +914,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         _photosArray = nil;
         _library = nil;
         _inAutoSync = false;
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:ALAssetsLibraryChangedNotification object:nil];
     }
 
 }
