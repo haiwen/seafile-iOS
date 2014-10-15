@@ -833,7 +833,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
     self.photosArray =[[NSMutableArray alloc]init];
     self.library = [[ALAssetsLibrary alloc] init];
-    
+
     void (^assetEnumerator)(ALAsset *, NSUInteger, BOOL *) = ^(ALAsset *asset, NSUInteger index, BOOL *stop) {
         if(asset != nil) {
             if([[asset valueForProperty:ALAssetPropertyType] isEqualToString:ALAssetTypePhoto]) {
@@ -844,7 +844,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             }
         }
     };
-    
+
     void (^ assetGroupEnumerator) ( ALAssetsGroup *, BOOL *) = ^(ALAssetsGroup *group, BOOL *stop) {
         if(group != nil) {
             [group setAssetsFilter:[ALAssetsFilter allPhotos]];
@@ -858,7 +858,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             [timer fire];
         }
     };
-    
+
     [self.library enumerateGroupsWithTypes:ALAssetsGroupAll
                            usingBlock:assetGroupEnumerator
                          failureBlock:^(NSError *error) {

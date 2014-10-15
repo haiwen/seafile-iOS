@@ -482,6 +482,27 @@ enum {
     [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
 }
 
+- (void)showEditDirMenu:(UILongPressGestureRecognizer *)gestureRecognizer
+{
+    if (self.tableView.editing == YES)
+        return;
+    UIActionSheet *actionSheet;
+    if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
+        return;
+    CGPoint touchPoint = [gestureRecognizer locationInView:self.tableView];
+    _selectedindex = [self.tableView indexPathForRowAtPoint:touchPoint];
+    if (!_selectedindex)
+        return;
+    SeafDir *dir = (SeafDir *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
+    NSAssert([dir isKindOfClass:[SeafDir class]], @"dir must be SeafDir");
+
+    NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
+    actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
+
+    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
+    [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
+}
+
 - (void)showEditUploadFileMenu:(UILongPressGestureRecognizer *)gestureRecognizer
 {
     if (self.tableView.editing || gestureRecognizer.state != UIGestureRecognizerStateBegan)
@@ -561,6 +582,10 @@ enum {
     cell.detailTextLabel.text = nil;
     cell.imageView.image = sdir.icon;
     sdir.delegate = self;
+    if (tableView == self.tableView) {
+        UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditDirMenu:)];
+        [cell addGestureRecognizer:longPressGesture];
+    }
     return cell;
 }
 
@@ -1014,6 +1039,14 @@ enum {
     [_directory delEntries:entries];
 }
 
+- (void)deleteDir:(SeafDir *)dir
+{
+    NSArray *entries = [NSArray arrayWithObject:dir];
+    self.state = EDITOP_DELETE;
+    [SVProgressHUD showWithStatus:NSLocalizedString(@"Deleting directory ...", @"Seafile")];
+    [_directory delEntries:entries];
+}
+
 - (void)redownloadFile:(SeafFile *)file
 {
     [file deleteCache];
@@ -1033,7 +1066,6 @@ enum {
     self.actionSheet = nil;
     if (buttonIndex < 0 || buttonIndex >= actionSheet.numberOfButtons)
         return;
-    SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
     NSString *title = [actionSheet buttonTitleAtIndex:buttonIndex];
     if ([S_NEWFILE isEqualToString:title]) {
         [self popupCreateView];
@@ -1042,35 +1074,44 @@ enum {
     } else if ([S_EDIT isEqualToString:title]) {
         [self editStart:nil];
     } else if ([S_DELETE isEqualToString:title]) {
-        if ([file isKindOfClass:[SeafUploadFile class]]) {
-            if (self.detailViewController.preViewItem == file)
+        SeafBase *entry = (SeafBase *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
+        if ([entry isKindOfClass:[SeafUploadFile class]]) {
+            if (self.detailViewController.preViewItem == entry)
                 self.detailViewController.preViewItem = nil;
-            [self.directory removeUploadFile:(SeafUploadFile *)file];
+            [self.directory removeUploadFile:(SeafUploadFile *)entry];
             [self.tableView reloadData];
-        } else
-            [self deleteFile:file];
+        } else if ([entry isKindOfClass:[SeafFile class]])
+            [self deleteFile:(SeafFile*)entry];
+        else if ([entry isKindOfClass:[SeafDir class]])
+            [self deleteDir: (SeafDir*)entry];{
+        }
     } else if ([S_REDOWNLOAD isEqualToString:title]) {
+        SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [self redownloadFile:file];
     } else if ([S_RENAME isEqualToString:title]) {
+        SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [self renameFile:file];
     } else if ([S_UPLOAD isEqualToString:title]) {
+        SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [file update:self];
         [self refreshView];
     } else if ([S_SHARE_EMAIL isEqualToString:title]) {
         self.state = STATE_SHARE_EMAIL;
-        if (!file.shareLink) {
+        SeafBase *entry = (SeafBase *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
+        if (!entry.shareLink) {
             [SVProgressHUD showWithStatus:NSLocalizedString(@"Generate share link ...", @"Seafile")];
-            [file generateShareLink:self];
+            [entry generateShareLink:self];
         } else {
-            [self generateSharelink:file WithResult:YES];
+            [self generateSharelink:entry WithResult:YES];
         }
     } else if ([S_SHARE_LINK isEqualToString:title]) {
         self.state = STATE_SHARE_LINK;
-        if (!file.shareLink) {
+        SeafBase *entry = (SeafBase *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
+        if (!entry.shareLink) {
             [SVProgressHUD showWithStatus:NSLocalizedString(@"Generate share link ...", @"Seafile")];
-            [file generateShareLink:self];
+            [entry generateShareLink:self];
         } else {
-            [self generateSharelink:file WithResult:YES];
+            [self generateSharelink:entry WithResult:YES];
         }
     }
 }
@@ -1326,30 +1367,33 @@ enum {
 
 
 #pragma mark - SeafShareDelegate
-- (void)generateSharelink:(SeafFile *)entry WithResult:(BOOL)success
+- (void)generateSharelink:(SeafBase *)entry WithResult:(BOOL)success
 {
-    SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-    if (entry != file) {
+    SeafBase *base = (SeafBase *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
+    if (entry != base) {
         [SVProgressHUD dismiss];
         return;
     }
 
     if (!success) {
-        [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Failed to generate share link of file '%@'", @"Seafile"), file.name]];
+        if ([entry isKindOfClass:[SeafFile class]])
+            [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Failed to generate share link of file '%@'", @"Seafile"), entry.name]];
+        else
+            [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Failed to generate share link of directory '%@'", @"Seafile"), entry.name]];
         return;
     }
     [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Generate share link success", @"Seafile")];
 
     if (self.state == STATE_SHARE_EMAIL) {
-        [self sendMailInApp:file.name shareLink:file.shareLink];
+        [self sendMailInApp:entry];
     } else if (self.state == STATE_SHARE_LINK){
         UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-        [pasteboard setString:file.shareLink];
+        [pasteboard setString:entry.shareLink];
     }
 }
 
 #pragma mark - sena mail inside app
-- (void)sendMailInApp:(NSString *)name shareLink:(NSString *)shareLink
+- (void)sendMailInApp:(SeafBase *)entry
 {
     Class mailClass = (NSClassFromString(@"MFMailComposeViewController"));
     if (!mailClass) {
@@ -1363,9 +1407,15 @@ enum {
 
     MFMailComposeViewController *mailPicker = [[MFMailComposeViewController alloc] init];
     mailPicker.mailComposeDelegate = self;
-
-    [mailPicker setSubject:[NSString stringWithFormat:NSLocalizedString(@"File '%@' is shared with you using seafile", @"Seafile"), name]];
-    NSString *emailBody = [NSString stringWithFormat:NSLocalizedString(@"Hi,<br/><br/>Here is a link to <b>'%@'</b> in my Seafile:<br/><br/> <a href=\"%@\">%@</a>\n\n", @"Seafile"), name, shareLink, shareLink];
+    NSString *emailSubject, *emailBody;
+    if ([entry isKindOfClass:[SeafFile class]]) {
+        emailSubject = [NSString stringWithFormat:NSLocalizedString(@"File '%@' is shared with you using seafile", @"Seafile"), entry.name];
+        emailBody = [NSString stringWithFormat:NSLocalizedString(@"Hi,<br/><br/>Here is a link to <b>'%@'</b> in my Seafile:<br/><br/> <a href=\"%@\">%@</a>\n\n", @"Seafile"), entry.name, entry.shareLink, entry.shareLink];
+    } else {
+        emailSubject = [NSString stringWithFormat:NSLocalizedString(@"Directory '%@' is shared with you using seafile", @"Seafile"), entry.name];
+        emailBody = [NSString stringWithFormat:NSLocalizedString(@"Hi,<br/><br/>Here is a link to directory <b>'%@'</b> in my Seafile:<br/><br/> <a href=\"%@\">%@</a>\n\n", @"Seafile"), entry.name, entry.shareLink, entry.shareLink];
+    }
+    [mailPicker setSubject:emailSubject];
     [mailPicker setMessageBody:emailBody isHTML:YES];
     [self presentViewController:mailPicker animated:YES completion:nil];
 }

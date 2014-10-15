@@ -483,4 +483,9 @@
      }];
 }
 
+- (void)generateShareLink:(id<SeafShareDelegate>)dg
+{
+    return [self generateShareLink:dg type:@"d"];
+}
+
 @end

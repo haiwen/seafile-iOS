@@ -26,6 +26,9 @@ enum SEAFBASE_STATE {
 
 @class SeafBase;
 
+@protocol SeafShareDelegate <NSObject>
+- (void)generateSharelink:(SeafBase *)entry WithResult:(BOOL)success;
+@end
 
 @interface SeafBase : NSObject
 {
@@ -52,6 +55,8 @@ enum SEAFBASE_STATE {
 
 @property (weak) id <SeafDentryDelegate> delegate;
 
+@property (readonly, copy) NSString *shareLink;
+
 - (BOOL)hasCache;
 - (BOOL)loadCache;
 - (void)loadContent:(BOOL)force;
@@ -62,5 +67,9 @@ enum SEAFBASE_STATE {
 
 - (NSString *)key;
 - (UIImage *)icon;
+
+- (void)generateShareLink:(id<SeafShareDelegate>)dg type:(NSString *)type;
+
+- (void)generateShareLink:(id<SeafShareDelegate>)dg;
 
 @end

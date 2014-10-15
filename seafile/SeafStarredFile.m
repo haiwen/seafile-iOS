@@ -43,8 +43,8 @@
 
 - (void)updateWithEntry:(SeafBase *)entry
 {
-    self.filesize = ((SeafStarredFile *)entry).filesize;
-    self.mtime = ((SeafStarredFile *)entry).mtime;
+    _filesize = ((SeafStarredFile *)entry).filesize;
+    _mtime = ((SeafStarredFile *)entry).mtime;
     [self loadCache];
 }
 

@@ -15,15 +15,15 @@
 
 @class SeafFile;
 
-@protocol SeafShareDelegate <NSObject>
-- (void)generateSharelink:(SeafFile *)entry WithResult:(BOOL)success;
-@end
-
 @protocol SeafFileUpdateDelegate <NSObject>
 - (void)updateProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent;
 @end
 
-@interface SeafFile : SeafBase<QLPreviewItem, SeafPreView, SeafUploadDelegate, SeafDownloadDelegate>
+@interface SeafFile : SeafBase<QLPreviewItem, SeafPreView, SeafUploadDelegate, SeafDownloadDelegate> {
+@protected
+    long long _filesize;
+    long long _mtime;
+}
 
 - (id)initWithConnection:(SeafConnection *)aConnection
                      oid:(NSString *)anId
@@ -35,14 +35,10 @@
 
 @property (strong, nonatomic) NSString *mpath;// For modified files
 @property (readonly) NSString *detailText;
-@property (readwrite) long long filesize;
-@property (readwrite) long long mtime;
-@property (readonly, copy) NSString *shareLink;
+@property (readonly) long long filesize;
+@property (readonly) long long mtime;
 @property (readonly) NSMutableArray *groups;
 @property (strong) id <SeafFileUpdateDelegate> udelegate;
-
-
-- (void)generateShareLink:(id<SeafShareDelegate>)dg;
 
 - (BOOL)isStarred;
 - (void)setStarred:(BOOL)starred;
