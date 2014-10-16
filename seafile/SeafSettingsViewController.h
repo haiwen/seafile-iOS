@@ -7,11 +7,10 @@
 //
 
 #import <UIKit/UIKit.h>
-#import <MessageUI/MFMailComposeViewController.h>
 
 #import "SeafConnection.h"
 
-@interface SeafSettingsViewController : UITableViewController<UIAlertViewDelegate, SSConnectionAccountDelegate, MFMailComposeViewControllerDelegate>
+@interface SeafSettingsViewController : UITableViewController<UIAlertViewDelegate, SSConnectionAccountDelegate>
 
 @property (strong, nonatomic) SeafConnection *connection;
 

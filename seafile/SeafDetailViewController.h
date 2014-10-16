@@ -7,8 +7,6 @@
 //
 
 #import <UIKit/UIKit.h>
-#import <MessageUI/MFMailComposeViewController.h>
-
 #import "SeafFile.h"
 
 

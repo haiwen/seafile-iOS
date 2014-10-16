@@ -36,7 +36,6 @@
 @implementation SeafFile
 @synthesize exportURL = _exportURL;
 @synthesize preViewURL = _preViewURL;
-@synthesize shareLink = _shareLink;
 @synthesize groups = _groups;
 
 - (id)initWithConnection:(SeafConnection *)aConnection
@@ -346,7 +345,7 @@
 {
     if (self.ooid && [[NSFileManager defaultManager] fileExistsAtPath:[Utils documentPath:self.ooid]])
         return YES;
-    self.ooid = NO;
+    self.ooid = nil;
     return NO;
 }
 - (BOOL)isImageFile
@@ -540,7 +539,7 @@
 
 - (long long)filesize
 {
-    return (self.mpath) ? [Utils fileSizeAtPath1:_mpath] : _filesize;
+    return (self.mpath) ? [Utils fileSizeAtPath1:self.mpath] : _filesize;
 }
 
 - (long long)mtime

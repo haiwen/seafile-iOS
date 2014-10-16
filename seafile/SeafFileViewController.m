@@ -56,7 +56,7 @@ enum {
 - (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView;
 
 @property (strong, nonatomic) SeafDir *directory;
-@property (strong) id curEntry;
+@property (strong) id<SeafItem> curEntry;
 @property (strong, nonatomic) IBOutlet UIActivityIndicatorView *loadingView;
 
 @property (strong) UIBarButtonItem *selectAllItem;
@@ -743,7 +743,7 @@ enum {
         }
         NSMutableArray *arr = nil;
         if ([self isCurrentFileImage:&arr]) {
-            [self.detailViewController setPreViewItems:arr current:_curEntry master:self];
+            [self.detailViewController setPreViewItems:arr current:(id<SeafPreView>)_curEntry master:self];
         } else {
             id<SeafPreView> item = (id<SeafPreView>)_curEntry;
             [self.detailViewController setPreViewItem:item master:self];
@@ -794,12 +794,15 @@ enum {
 #pragma mark - UIAlertViewDelegate
 - (void)checkPassword:(NSString *)password
 {
-    [_curEntry setDelegate:self];
+    if (![_curEntry isKindOfClass:[SeafRepo class]])
+        return;
+    SeafRepo *cur = (SeafRepo *)_curEntry;
+    [cur setDelegate:self];
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Checking library password ...", @"Seafile")];
-    if ([self.connection localDecrypt:[_curEntry repoId]])
-        [_curEntry checkRepoPassword:password];
+    if ([self.connection localDecrypt:cur.repoId])
+        [cur checkRepoPassword:password];
     else
-        [_curEntry setRepoPassword:password];
+        [cur setRepoPassword:password];
 }
 
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
@@ -841,7 +844,7 @@ enum {
                 [self alertWithMessage:NSLocalizedString(@"File name invalid", @"Seafile")];
                 return;
             }
-            [_directory renameFile:_curEntry newName:input];
+            [_directory renameFile:(SeafFile *)_curEntry newName:input];
             [SVProgressHUD showWithStatus:NSLocalizedString(@"Renaming file ...", @"Seafile")];
         } else if (self.state == STATE_CREATE) {
             if (!input || input.length == 0) {
@@ -1359,7 +1362,7 @@ enum {
 
 - (void)photoSelectedChanged:(id<SeafPreView>)from to:(id<SeafPreView>)to;
 {
-    int index = [_directory.allItems indexOfObject:to];
+    NSUInteger index = [_directory.allItems indexOfObject:to];
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
 
     [self.tableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionMiddle];
@@ -1405,8 +1408,8 @@ enum {
         return;
     }
 
-    MFMailComposeViewController *mailPicker = [[MFMailComposeViewController alloc] init];
-    mailPicker.mailComposeDelegate = self;
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    MFMailComposeViewController *mailPicker = appdelegate.globalMailComposer;    mailPicker.mailComposeDelegate = self;
     NSString *emailSubject, *emailBody;
     if ([entry isKindOfClass:[SeafFile class]]) {
         emailSubject = [NSString stringWithFormat:NSLocalizedString(@"File '%@' is shared with you using seafile", @"Seafile"), entry.name];
@@ -1423,7 +1426,6 @@ enum {
 #pragma mark - MFMailComposeViewControllerDelegate
 - (void)mailComposeController:(MFMailComposeViewController *)controller didFinishWithResult:(MFMailComposeResult)result error:(NSError *)error
 {
-    [self dismissViewControllerAnimated:YES completion:nil];
     NSString *msg;
     switch (result) {
         case MFMailComposeResultCancelled:
@@ -1443,5 +1445,9 @@ enum {
             break;
     }
     Debug("share file:send mail %@\n", msg);
+    [self dismissViewControllerAnimated:YES completion:^{
+        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+        [appdelegate cycleTheGlobalMailComposer];
+    }];
 }
 @end

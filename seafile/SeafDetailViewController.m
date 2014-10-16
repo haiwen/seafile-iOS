@@ -79,7 +79,6 @@ enum PREVIEW_STATE {
 
 
 @implementation SeafDetailViewController
-@synthesize buttonIndex;
 @synthesize fullscreenItem = _fullscreenItem;
 @synthesize exitfsItem = _exitfsItem;
 @synthesize preViewItem = _preViewItem;
@@ -635,7 +634,7 @@ enum PREVIEW_STATE {
         self.actionSheet = nil;
         return;
     }
-
+    [self.preViewItem setDelegate:self];
     NSString *email = NSLocalizedString(@"Email", @"Seafile");
     NSString *copy = NSLocalizedString(@"Copy Link to Clipboard", @"Seafile");
     if (IsIpad())
@@ -728,16 +727,15 @@ enum PREVIEW_STATE {
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)bIndex
 {
     self.actionSheet = nil;
-    buttonIndex = (int)bIndex;
     if (bIndex < 0 || bIndex >= actionSheet.numberOfButtons)
         return;
     SeafFile *file = (SeafFile *)self.preViewItem;
     if ([SHARE_TITLE isEqualToString:actionSheet.title]) {
-        if (buttonIndex == 0 || buttonIndex == 1) {
+        if (bIndex == 0 || bIndex == 1) {
             SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
             if (![appdelegate checkNetworkStatus])
                 return;
-
+            _buttonIndex = (int)bIndex;
             if (!file.shareLink) {
                 [SVProgressHUD showWithStatus:NSLocalizedString(@"Generate share link ...", @"Seafile")];
                 [file generateShareLink:self];
@@ -781,9 +779,10 @@ enum PREVIEW_STATE {
     }
     [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Generate share link success", @"Seafile")];
 
-    if (buttonIndex == 0) {
+    if (_buttonIndex == 0) {
+        Debug("file %@ sharelink;%@", file.name, file.shareLink);
         [self sendMailInApp:file.name shareLink:file.shareLink];
-    } else if (buttonIndex == 1){
+    } else if (_buttonIndex == 1){
         UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
         [pasteboard setString:file.shareLink];
     }
@@ -792,6 +791,7 @@ enum PREVIEW_STATE {
 #pragma mark - sena mail inside app
 - (void)sendMailInApp:(NSString *)name shareLink:(NSString *)shareLink
 {
+    Debug("send mail: %@", shareLink);
     Class mailClass = (NSClassFromString(@"MFMailComposeViewController"));
     if (!mailClass) {
         [self alertWithMessage:NSLocalizedString(@"This function is not supportted yet，you can copy it to the pasteboard and send mail by yourself", @"Seafile")];
@@ -801,19 +801,20 @@ enum PREVIEW_STATE {
         [self alertWithMessage:NSLocalizedString(@"The mail account has not been set yet", @"Seafile")];
         return;
     }
-
-    MFMailComposeViewController *mailPicker = [[MFMailComposeViewController alloc] init];
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    MFMailComposeViewController *mailPicker = appdelegate.globalMailComposer;
     mailPicker.mailComposeDelegate = self;
 
     [mailPicker setSubject:[NSString stringWithFormat:NSLocalizedString(@"File '%@' is shared with you using seafile", @"Seafile"), name]];
     NSString *emailBody = [NSString stringWithFormat:NSLocalizedString(@"Hi,<br/><br/>Here is a link to <b>'%@'</b> in my Seafile:<br/><br/> <a href=\"%@\">%@</a>\n\n", @"Seafile"), name, shareLink, shareLink];
     [mailPicker setMessageBody:emailBody isHTML:YES];
-    [self presentViewController:mailPicker animated:YES completion:nil];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.3 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+        [self presentViewController:mailPicker animated:YES completion:nil];
+    });
 }
 #pragma mark - MFMailComposeViewControllerDelegate
 - (void)mailComposeController:(MFMailComposeViewController *)controller didFinishWithResult:(MFMailComposeResult)result error:(NSError *)error
 {
-    [self dismissViewControllerAnimated:YES completion:nil];
     NSString *msg;
     switch (result) {
         case MFMailComposeResultCancelled:
@@ -832,6 +833,11 @@ enum PREVIEW_STATE {
             msg = @"";
             break;
     }
+    [self dismissViewControllerAnimated:YES completion:^{
+        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+        [appdelegate cycleTheGlobalMailComposer];
+    }];
+
     Debug("share file:send mail %@\n", msg);
 }
 

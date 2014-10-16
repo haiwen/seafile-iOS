@@ -165,13 +165,18 @@
     self.downloadnum = 0;
     self.uploadnum = 0;
     [Utils clearRepoPasswords];
-    [[UIApplication sharedApplication] registerForRemoteNotificationTypes:UIRemoteNotificationTypeBadge|UIRemoteNotificationTypeAlert|UIRemoteNotificationTypeSound];
+    if (ios8) {
+        [[UIApplication sharedApplication] registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:(UIUserNotificationTypeSound | UIUserNotificationTypeAlert | UIUserNotificationTypeBadge) categories:nil]];
+        [[UIApplication sharedApplication] registerForRemoteNotifications];
+    } else
+        [[UIApplication sharedApplication] registerForRemoteNotificationTypes:UIRemoteNotificationTypeBadge|UIRemoteNotificationTypeAlert|UIRemoteNotificationTypeSound];
 
     NSDictionary *dict = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
     if (dict) {
         [self application:application didReceiveRemoteNotification:dict];
     } else
         [self.startVC goToDefaultAccount];
+    [self cycleTheGlobalMailComposer];
     return YES;
 }
 
@@ -578,7 +583,7 @@
 
 - (void)finishDownload:(id<SeafDownloadDelegate>) file result:(BOOL)result
 {
-    Debug("dowmload %d, result=%d, failcnt=%d", self.downloadnum, result, self.failedNum);
+    Debug("download %d, result=%d, failcnt=%d", self.downloadnum, result, self.failedNum);
     @synchronized (self) {
         self.downloadnum --;
     }
@@ -671,6 +676,14 @@
     [nc setModalPresentationStyle:UIModalPresentationFullScreen];
     nc.navigationBar.tintColor = BAR_COLOR;
     [self.window.rootViewController presentViewController:nc animated:YES completion:nil];
+}
+
+-(void)cycleTheGlobalMailComposer
+{
+    // we are cycling the damned GlobalMailComposer... due to horrible iOS issue
+    // http://stackoverflow.com/questions/25604552/i-have-real-misunderstanding-with-mfmailcomposeviewcontroller-in-swift-ios8-in/25864182#25864182
+    _globalMailComposer = nil;
+    _globalMailComposer = [[MFMailComposeViewController alloc] init];
 }
 
 @end

@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <MessageUI/MFMailComposeViewController.h>
 
 #import "SeafConnection.h"
 #import "StartViewController.h"
@@ -44,6 +45,7 @@ enum {
 @property (readonly) SeafSettingsViewController *settingVC;
 @property (readonly) SeafActivityViewController *actvityVC;
 @property (readonly) SeafDisMasterViewController *discussVC;
+@property (readonly) MFMailComposeViewController *globalMailComposer;
 @property (readonly) NSData *deviceToken;
 
 
@@ -55,6 +57,7 @@ enum {
 - (UIViewController *)detailViewController:(int)index;
 
 - (void)showDetailView:(UIViewController *) c;
+-(void)cycleTheGlobalMailComposer;
 
 
 - (void)saveContext;
@@ -77,6 +80,5 @@ enum {
 - (SeafConnection *)getConnection:(NSString *)url username:(NSString *)username;
 
 - (int)uploadnum;
-
 
 @end

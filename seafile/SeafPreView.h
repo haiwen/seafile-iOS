@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <QuickLook/QuickLook.h>
+#import "SeafItem.h"
 
 @class SeafBase;
 
@@ -17,12 +18,11 @@
 - (void)entry:(SeafBase *)entry repoPasswordSet:(BOOL)success;
 @end
 
-@protocol SeafPreView <QLPreviewItem>
+@protocol SeafPreView <QLPreviewItem, SeafItem>
 - (UIImage *)image;
 - (UIImage *)icon;
 - (NSURL *)exportURL;
 - (NSString *)mime;
-- (NSString *)name;
 - (BOOL)editable;
 - (long long )filesize;
 - (NSString *)strContent;

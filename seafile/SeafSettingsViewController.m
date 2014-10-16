@@ -29,7 +29,7 @@ enum {
 #define SEAFILE_SITE @"http://www.seafile.com"
 
 
-@interface SeafSettingsViewController ()<SeafDirDelegate>
+@interface SeafSettingsViewController ()<SeafDirDelegate, MFMailComposeViewControllerDelegate>
 @property (strong, nonatomic) IBOutlet UITableViewCell *nameCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *usedspaceCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *serverCell;
@@ -91,8 +91,10 @@ enum {
 
 - (void)viewWillAppear:(BOOL)animated
 {
+    dispatch_async(dispatch_get_main_queue(), ^ {
+        [self configureView];
+    });
     [super viewWillAppear:animated];
-    [self configureView];
 }
 
 - (void)didReceiveMemoryWarning
@@ -143,6 +145,7 @@ enum {
         else
             _usedspaceCell.detailTextLabel.text = [NSString stringWithFormat:@"%.2f%% of %@", usage, quotaString];
     }
+    [self.tableView reloadData];
 }
 
 - (void)setConnection:(SeafConnection *)connection
@@ -157,7 +160,9 @@ enum {
 - (void)getAccountInfoResult:(BOOL)result connection:(SeafConnection *)conn
 {
     if (result && conn == _connection) {
-        [self configureView];
+        dispatch_async(dispatch_get_main_queue(), ^ {
+            [self configureView];
+        });
     }
 }
 
@@ -263,7 +268,7 @@ enum {
 - (void)displayMailPicker
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    MFMailComposeViewController *mailPicker = [[MFMailComposeViewController alloc] init];
+    MFMailComposeViewController *mailPicker = appdelegate.globalMailComposer;
     mailPicker.mailComposeDelegate = self;
     [self configureInvitationMail:mailPicker];
     [appdelegate.tabbarController presentViewController:mailPicker animated:YES completion:nil];
@@ -272,7 +277,6 @@ enum {
 #pragma mark - MFMailComposeViewControllerDelegate
 - (void)mailComposeController:(MFMailComposeViewController *)controller didFinishWithResult:(MFMailComposeResult)result error:(NSError *)error
 {
-    [self dismissViewControllerAnimated:YES completion:nil];
     NSString *msg;
     switch (result) {
         case MFMailComposeResultCancelled:
@@ -292,6 +296,10 @@ enum {
             break;
     }
     Debug("state=%d:send mail %@\n", _state, msg);
+    [self dismissViewControllerAnimated:YES completion:^{
+        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+        [appdelegate cycleTheGlobalMailComposer];
+    }];
 }
 
 #pragma mark - UIAlertViewDelegate

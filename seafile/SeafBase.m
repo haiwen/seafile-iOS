@@ -201,7 +201,7 @@
                 success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          NSString *link = [[response allHeaderFields] objectForKey:@"Location"];
-         Debug("share link = %@\n", link);
+         Debug("delegate=%@, share link = %@\n", dg, link);
          if ([link hasPrefix:@"\""])
              _shareLink = [link substringWithRange:NSMakeRange(1, link.length-2)];
          else

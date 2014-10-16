@@ -23,6 +23,8 @@
 @protected
     long long _filesize;
     long long _mtime;
+    NSString *_shareLink;
+
 }
 
 - (id)initWithConnection:(SeafConnection *)aConnection

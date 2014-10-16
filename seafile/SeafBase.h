@@ -30,7 +30,7 @@ enum SEAFBASE_STATE {
 - (void)generateSharelink:(SeafBase *)entry WithResult:(BOOL)success;
 @end
 
-@interface SeafBase : NSObject
+@interface SeafBase : NSObject<SeafItem>
 {
 @public
     SeafConnection *connection;

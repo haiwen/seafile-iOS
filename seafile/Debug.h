@@ -24,6 +24,8 @@ static inline BOOL IsIpad()
 }
 
 #define ios7 ([[[UIDevice currentDevice] systemVersion] floatValue] >= 7)
+#define ios8 ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8)
+
 
 /* Additional strings for agi18n */
 #define STR_1 NSLocalizedString(@"Release to refresh...", @"Release to refresh status")
