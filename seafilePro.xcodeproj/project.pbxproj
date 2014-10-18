@@ -222,6 +222,9 @@
 		576FFDC1186AAC80009BB81A /* SeafCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDB2186AAC80009BB81A /* SeafCell.xib */; };
 		576FFDC3186AAC80009BB81A /* SeafDirCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDB4186AAC80009BB81A /* SeafDirCell.xib */; };
 		576FFDC7186AAC80009BB81A /* SeafUploadingFileCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 576FFDB8186AAC80009BB81A /* SeafUploadingFileCell.xib */; };
+		57708BFF19F21D7600D6ACE7 /* text-directory-documents-encrypted@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57708BFD19F21D7600D6ACE7 /* text-directory-documents-encrypted@2x.png */; };
+		57708C0019F21D7600D6ACE7 /* text-directory-documents@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57708BFE19F21D7600D6ACE7 /* text-directory-documents@2x.png */; };
+		57708C0219F23CD300D6ACE7 /* tab-account@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57708C0119F23CD300D6ACE7 /* tab-account@2x.png */; };
 		5775EA1217476FAD000A1765 /* SeafActivityViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5775EA0F17476FAD000A1765 /* SeafActivityViewController.m */; };
 		5779C7BC171088D900307C36 /* view_markdown.html in Resources */ = {isa = PBXBuildFile; fileRef = 5779C7B0171088D900307C36 /* view_markdown.html */; };
 		577B6C6216AAD241008E82C2 /* tab-star.png in Resources */ = {isa = PBXBuildFile; fileRef = 577B6C6016AAD241008E82C2 /* tab-star.png */; };
@@ -255,7 +258,6 @@
 		57943C1219F027D5008423E5 /* share2@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57943BF319F027D5008423E5 /* share2@2x.png */; };
 		57943C1319F027D5008423E5 /* star@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57943BF419F027D5008423E5 /* star@2x.png */; };
 		57943C1419F027D5008423E5 /* star2@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57943BF519F027D5008423E5 /* star2@2x.png */; };
-		57943C1519F027D5008423E5 /* tab-account@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57943BF619F027D5008423E5 /* tab-account@2x.png */; };
 		57943C1619F027D5008423E5 /* tab-home@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57943BF719F027D5008423E5 /* tab-home@2x.png */; };
 		57943C1719F027D5008423E5 /* tab-message@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57943BF819F027D5008423E5 /* tab-message@2x.png */; };
 		57943C1819F027D5008423E5 /* tab-modify@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57943BF919F027D5008423E5 /* tab-modify@2x.png */; };
@@ -637,6 +639,9 @@
 		576FFDB5186AAC80009BB81A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafDirCell.xib; sourceTree = "<group>"; };
 		576FFDB7186AAC80009BB81A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafTextEditorViewController_iPad.xib; sourceTree = "<group>"; };
 		576FFDB9186AAC80009BB81A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafUploadingFileCell.xib; sourceTree = "<group>"; };
+		57708BFD19F21D7600D6ACE7 /* text-directory-documents-encrypted@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "text-directory-documents-encrypted@2x.png"; sourceTree = "<group>"; };
+		57708BFE19F21D7600D6ACE7 /* text-directory-documents@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "text-directory-documents@2x.png"; sourceTree = "<group>"; };
+		57708C0119F23CD300D6ACE7 /* tab-account@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-account@2x.png"; sourceTree = "<group>"; };
 		5775EA0E17476FAD000A1765 /* SeafActivityViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafActivityViewController.h; sourceTree = "<group>"; };
 		5775EA0F17476FAD000A1765 /* SeafActivityViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafActivityViewController.m; sourceTree = "<group>"; };
 		5779C7B0171088D900307C36 /* view_markdown.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = view_markdown.html; path = htmls/view_markdown.html; sourceTree = SOURCE_ROOT; };
@@ -680,7 +685,6 @@
 		57943BF319F027D5008423E5 /* share2@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "share2@2x.png"; sourceTree = "<group>"; };
 		57943BF419F027D5008423E5 /* star@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "star@2x.png"; sourceTree = "<group>"; };
 		57943BF519F027D5008423E5 /* star2@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "star2@2x.png"; sourceTree = "<group>"; };
-		57943BF619F027D5008423E5 /* tab-account@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-account@2x.png"; sourceTree = "<group>"; };
 		57943BF719F027D5008423E5 /* tab-home@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-home@2x.png"; sourceTree = "<group>"; };
 		57943BF819F027D5008423E5 /* tab-message@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-message@2x.png"; sourceTree = "<group>"; };
 		57943BF919F027D5008423E5 /* tab-modify@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-modify@2x.png"; sourceTree = "<group>"; };
@@ -945,7 +949,7 @@
 				57C03F3C17FB271100F7B575 /* star2.png */,
 				57943BF519F027D5008423E5 /* star2@2x.png */,
 				5704C6F51756710F0028F4FE /* tab-account.png */,
-				57943BF619F027D5008423E5 /* tab-account@2x.png */,
+				57708C0119F23CD300D6ACE7 /* tab-account@2x.png */,
 				57A055A51644EAD1006511AA /* tab-home.png */,
 				57943BF719F027D5008423E5 /* tab-home@2x.png */,
 				5704C6F71756710F0028F4FE /* tab-message.png */,
@@ -1181,6 +1185,8 @@
 		57396B7F1657E3850089F32F /* Icons */ = {
 			isa = PBXGroup;
 			children = (
+				57708BFD19F21D7600D6ACE7 /* text-directory-documents-encrypted@2x.png */,
+				57708BFE19F21D7600D6ACE7 /* text-directory-documents@2x.png */,
 				5739701D1657F8C30089F32F /* application-msword.png */,
 				5739701C1657F8C30089F32F /* application-pdf.png */,
 				5739701B1657F8C30089F32F /* application-vnd.ms-excel.png */,
@@ -1722,6 +1728,7 @@
 				571D8CEE1677881400F1A22C /* grayArrow@2x.png in Resources */,
 				57C03F5017FB271100F7B575 /* refresh2.png in Resources */,
 				57BFAAFF18BD8EA200EB1B5C /* bt-justify2.png in Resources */,
+				57708BFF19F21D7600D6ACE7 /* text-directory-documents-encrypted@2x.png in Resources */,
 				571D8CEF1677881400F1A22C /* whiteArrow.png in Resources */,
 				573E360E1922847200C67671 /* bubble-classic-selected.png in Resources */,
 				57943C1119F027D5008423E5 /* share@2x.png in Resources */,
@@ -1812,6 +1819,7 @@
 				57BFAB1418BD8EA200EB1B5C /* bt-underline.png in Resources */,
 				573E36171922847200C67671 /* bubble-classic-square-selected@2x.png in Resources */,
 				57BFAAFC18BD8EA200EB1B5C /* bt-italic.png in Resources */,
+				57708C0019F21D7600D6ACE7 /* text-directory-documents@2x.png in Resources */,
 				571D8DAB1677881400F1A22C /* application-pdf.png in Resources */,
 				571D8DAC1677881400F1A22C /* application-msword.png in Resources */,
 				571D8DAD1677881400F1A22C /* text.png in Resources */,
@@ -1825,6 +1833,7 @@
 				57BFAB1618BD8EA200EB1B5C /* bt-undo.png in Resources */,
 				571D8DB01677881400F1A22C /* SVProgressHUD.bundle in Resources */,
 				57532C0118689616003D564B /* SeafAccountViewController.xib in Resources */,
+				57708C0219F23CD300D6ACE7 /* tab-account@2x.png in Resources */,
 				570DFACC16A19EFD00ADD5F2 /* account.png in Resources */,
 				57532BD918689503003D564B /* SeafStartHeaderView.xib in Resources */,
 				573E36211922847200C67671 /* bubble-tailless@2x.png in Resources */,
@@ -1887,7 +1896,6 @@
 				57C03F4E17FB271100F7B575 /* arrowleft2.png in Resources */,
 				57A550DE177F283700E3BA9B /* addmsg.png in Resources */,
 				57943C1019F027D5008423E5 /* refresh2@2x.png in Resources */,
-				57943C1519F027D5008423E5 /* tab-account@2x.png in Resources */,
 				576FFDC3186AAC80009BB81A /* SeafDirCell.xib in Resources */,
 				57BFAB0B18BD8EA200EB1B5C /* bt-quote2.png in Resources */,
 				57943C0019F027D5008423E5 /* arrowleft@2x.png in Resources */,
@@ -2221,8 +2229,8 @@
 					"\"$(SRCROOT)/libs/ios-openssl/lib\"",
 				);
 				PRODUCT_NAME = SeafilePro;
-				PROVISIONING_PROFILE = "F261A753-0032-4554-8281-05AED834B2FA";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "F261A753-0032-4554-8281-05AED834B2FA";
+				PROVISIONING_PROFILE = "c33d2f6d-26d7-4340-8496-797a1c104b44";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "c33d2f6d-26d7-4340-8496-797a1c104b44";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
@@ -2288,8 +2296,8 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				ONLY_ACTIVE_ARCH = YES;
 				"PRIVATE_HEADERS_FOLDER_PATH[sdk=*]" = "";
-				PROVISIONING_PROFILE = "09F6B214-5D95-4B49-9E69-49A1A74ACF18";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "09F6B214-5D95-4B49-9E69-49A1A74ACF18";
+				PROVISIONING_PROFILE = "c33d2f6d-26d7-4340-8496-797a1c104b44";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "c33d2f6d-26d7-4340-8496-797a1c104b44";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

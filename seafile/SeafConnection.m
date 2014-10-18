@@ -791,7 +791,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSString *autoSyncRepo = [[self getAttribute:@"autoSyncRepo"] stringValue];
     SeafRepo *repo = [self getRepo:autoSyncRepo];
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    Debug("Current %lu photos need to upload", self.photosArray.count);
+    Debug("Current %lu photos need to upload", (unsigned long)self.photosArray.count);
     while(self.photosArray && self.photosArray.count > 0) {
         NSURL *url = [self.photosArray objectAtIndex:0];
         [self.photosArray removeObject:url];
@@ -848,7 +848,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         if(group != nil) {
             [group setAssetsFilter:[ALAssetsFilter allPhotos]];
             [group enumerateAssetsUsingBlock:assetEnumerator];
-            Debug("Total %ld photos need to be uploaded: %lu", group.numberOfAssets, (unsigned long)self.photosArray.count);
+            Debug("Total %ld photos need to be uploaded: %lu", (long)group.numberOfAssets, (unsigned long)self.photosArray.count);
             NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:60
                                                               target:self
                                                             selector:@selector(uploadPhotoTick:)
