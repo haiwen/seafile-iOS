@@ -55,6 +55,8 @@ enum MSG_TYPE{
 @property (readonly) long long usage;
 @property (readonly, strong) NSString *token;
 @property (readonly) BOOL authorized;
+@property (readwrite, nonatomic, getter=isWifiOnly) BOOL wifiOnly;
+@property (readwrite, nonatomic, getter=isAutoSync) BOOL autoSync;
 @property (readonly) NSArray *seafGroups;
 @property (readonly) NSArray *seafContacts;
 @property (readwrite) NSMutableArray *seafReplies;
@@ -130,6 +132,8 @@ enum MSG_TYPE{
 - (void)setAttribute:(id)anObject forKey:(id < NSCopying >)aKey;
 
 - (void)checkAutoSync;
+- (void)pickPhotosForUpload;
+- (void)fileUploadedSuccess:(SeafUploadFile *)ufile;
 
 + (AFHTTPRequestSerializer <AFURLRequestSerialization> *)requestSerializer;
 

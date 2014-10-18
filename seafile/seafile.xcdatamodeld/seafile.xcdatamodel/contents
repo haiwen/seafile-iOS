@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model userDefinedModelVersionIdentifier="seafile-1" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="5064" systemVersion="13C64" minimumToolsVersion="Automatic" macOSVersion="Automatic" iOSVersion="Automatic">
+<model userDefinedModelVersionIdentifier="seafile-1" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="6244" systemVersion="13F34" minimumToolsVersion="Automatic" macOSVersion="Automatic" iOSVersion="Automatic">
     <entity name="Directory" representedClassName="Directory" syncable="YES">
         <attribute name="content" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="oid" optional="YES" attributeType="String" syncable="YES"/>
@@ -22,6 +22,6 @@
     <elements>
         <element name="Directory" positionX="0" positionY="0" width="128" height="105"/>
         <element name="DownloadedFile" positionX="0" positionY="0" width="128" height="105"/>
-        <element name="SeafCacheObj" positionX="0" positionY="0" width="128" height="118"/>
+        <element name="SeafCacheObj" positionX="0" positionY="0" width="128" height="120"/>
     </elements>
 </model>

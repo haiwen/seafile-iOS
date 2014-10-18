@@ -47,6 +47,8 @@ enum {
 @property (readonly) SeafDisMasterViewController *discussVC;
 @property (readonly) MFMailComposeViewController *globalMailComposer;
 @property (readonly) NSData *deviceToken;
+@property (readonly) ALAssetsLibrary *assetsLibrary;
+
 
 
 @property (retain) NSMutableArray *conns;
@@ -75,6 +77,8 @@ enum {
 + (void)backgroundUpload:(SeafUploadFile *)file;
 + (void)backgroundDownload:(id<SeafDownloadDelegate>)file;
 + (void)removeBackgroundUpload:(SeafUploadFile *)file;
+
++ (ALAssetsLibrary *)assetsLibrary;
 
 - (void)checkIconBadgeNumber;
 - (void)saveAccounts;

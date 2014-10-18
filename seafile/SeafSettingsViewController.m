@@ -67,15 +67,13 @@ enum {
 - (void)autoSyncSwitchFlip:(id)sender
 {
     _autoSync =  _autoSyncSwitch.on;
-    [_connection setAttribute:[NSNumber numberWithBool:_autoSync] forKey:@"autoSync"];
-    [_connection checkAutoSync];
+    _connection.autoSync = _autoSync;
 }
 
 - (void)wifiOnlySwitchFlip:(id)sender
 {
     _wifiOnly = _wifiOnlySwitch.on;
-    [_connection setAttribute:[NSNumber numberWithBool:_wifiOnly] forKey:@"wifiOnly"];
-    [_connection checkAutoSync];
+    _connection.wifiOnly = _wifiOnly;
 }
 
 - (void)viewDidLoad
@@ -162,8 +160,8 @@ enum {
 - (void)setConnection:(SeafConnection *)connection
 {
     _connection = connection;
-    _autoSync = [[_connection getAttribute:@"autoSync"] booleanValue:false];
-    _wifiOnly = [[_connection getAttribute:@"wifiOnly"] booleanValue:true];
+    _autoSync = _connection.isAutoSync;
+    _wifiOnly = _connection.isWifiOnly;
     [self.tableView reloadData];
     [_connection performSelector:@selector(getAccountInfo:) withObject:self afterDelay:1.0f];
 }

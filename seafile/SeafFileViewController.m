@@ -470,7 +470,8 @@ enum {
     if (!_selectedindex)
         return;
     SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-    NSAssert([file isKindOfClass:[SeafFile class]], @"file must be SeafFile");
+    if (![file isKindOfClass:[SeafFile class]])
+        return;
 
     NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
     if (file.mpath)
@@ -512,7 +513,8 @@ enum {
     if (!_selectedindex)
         return;
     SeafUploadFile *file = (SeafUploadFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-    NSAssert([file isKindOfClass:[SeafUploadFile class]], @"file must be SeafFile");
+    if(![file isKindOfClass:[SeafUploadFile class]])
+        return;
 
     NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
     UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, nil];

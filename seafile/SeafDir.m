@@ -277,7 +277,7 @@
 {
     NSString *path = [self.path stringByAppendingPathComponent:newDirName];
     NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/dir/?p=%@&reloaddir=true", self.repoId, [path escapedUrl]];
-    
+
     [connection sendPost:requestUrl form:@"operation=mkdir"
                  success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
@@ -389,8 +389,11 @@
     [dict setObject:self.repoId forKey:@"urepo"];
     [dict setObject:self.path forKey:@"upath"];
     [dict setObject:[NSNumber numberWithBool:file.update] forKey:@"update"];
-    [file saveAttr:dict];
+    if (file.asset) {
+        [dict setObject:file.asset.defaultRepresentation.url forKey:@"assetURL"];
+    }
     file.udir = self;
+    [file saveAttr:dict];
     [self.uploadItems addObject:file];
     _allItems = nil;
 }
@@ -404,6 +407,17 @@
             BOOL result = [[dict objectForKey:@"result"] boolValue];
             if (result) {
                 [arr addObject:file];
+            } else {
+                NSURL *url = file.assetURL;
+                if (url && file.filesize == 0 && !file.asset) {
+                    [[SeafAppDelegate assetsLibrary] assetForURL:url
+                                                     resultBlock:^(ALAsset *asset) {
+                                                         file.asset = asset;
+                                                     }failureBlock:^(NSError *error) {
+                                                         [self removeUploadFile:file];
+                                                     }];
+                }
+
             }
         }
     }

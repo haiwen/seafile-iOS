@@ -42,8 +42,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     self = [super init];
     if (self) {
         _lpath = lpath;
-        NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:lpath error:nil];
-        _filesize = attrs.fileSize;
+        _filesize = [Utils fileSizeAtPath1:lpath] ;
         _uProgress = 0;
         _uploading = NO;
         self.update = [[self.uploadAttr objectForKey:@"update"] boolValue];
@@ -80,6 +79,13 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 - (BOOL)editable
 {
     return NO;
+}
+
+- (NSURL *)assetURL
+{
+    if (!_assetURL)
+        _assetURL = [self.uploadAttr objectForKey:@"assetURL"];
+    return _assetURL;
 }
 
 - (void)doRemove
@@ -280,6 +286,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 {
     if (self.asset) {
         [Utils writeDataToPath:self.lpath andAsset:self.asset];
+        _filesize = [Utils fileSizeAtPath1:self.lpath];
         self.asset = nil;
     }
 }

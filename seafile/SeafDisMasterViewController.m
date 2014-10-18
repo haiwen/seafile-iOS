@@ -169,7 +169,7 @@
         @synchronized(self) {
             [self refreshView];
             [self doneLoadingTableViewData];
-            [self.connection performSelector:@selector(downloadAvatars:) withObject:[NSNumber numberWithBool:NO] afterDelay:2.0];
+            [self.connection performSelector:@selector(downloadAvatars:) withObject:[NSNumber numberWithBool:NO] afterDelay:5.0];
         }
     }
     failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {

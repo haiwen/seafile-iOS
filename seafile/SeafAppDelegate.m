@@ -26,7 +26,7 @@
 @property (readonly) SeafDetailViewController *detailVC;
 @property (readonly) SeafDisDetailViewController *disDetailVC;
 @property (strong) NSArray *viewControllers;
-@property (readwrite, strong) NSString *token;
+@property NSTimer *autoSyncTimer;
 
 @end
 
@@ -177,7 +177,32 @@
     } else
         [self.startVC goToDefaultAccount];
     [self cycleTheGlobalMailComposer];
+    _assetsLibrary = [[ALAssetsLibrary alloc] init];
+    _autoSyncTimer = [NSTimer scheduledTimerWithTimeInterval:5*60
+                                                      target:self
+                                                    selector:@selector(tick:)
+                                                    userInfo:nil
+                                                     repeats:YES];
+    [[AFNetworkReachabilityManager sharedManager] setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
+        [self tick:_autoSyncTimer];
+    }];
     return YES;
+}
+
+- (void)tick:(NSTimer *)timer
+{
+    if (![[AFNetworkReachabilityManager sharedManager] isReachable]) {
+        return;
+    }
+    @synchronized(timer) {
+        for (SeafConnection *conn in self.conns) {
+            [conn pickPhotosForUpload];
+        }
+        if (self.uploadnum > 0)
+            [self tryUpload];
+        if (self.downloadnum > 0)
+            [self tryDownload];
+    }
 }
 
 - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
@@ -611,6 +636,7 @@
     [self checkBackgroudTask:[UIApplication sharedApplication]];
     if (result) {
         self.failedNum = 0;
+        [file.udir->connection fileUploadedSuccess:file];
     } else {
         self.failedNum ++;
         [self.ufiles addObject:file];
@@ -638,6 +664,11 @@
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     @synchronized (appdelegate) {
         [appdelegate.ufiles removeObject:file];
+
+        if (file.udir)
+            [file.udir removeUploadFile:file];
+        else
+            [file doRemove];
     }
 }
 
@@ -693,5 +724,12 @@
     _globalMailComposer = nil;
     _globalMailComposer = [[MFMailComposeViewController alloc] init];
 }
+
++ (ALAssetsLibrary *)assetsLibrary
+{
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    return appdelegate.assetsLibrary;
+}
+
 
 @end
