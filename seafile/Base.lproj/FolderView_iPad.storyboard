@@ -66,7 +66,7 @@
                                     </tableViewCell>
                                 </cells>
                             </tableViewSection>
-                            <tableViewSection headerTitle="Settings" id="6VU-ga-Nks">
+                            <tableViewSection headerTitle="Camera Upload" id="6VU-ga-Nks">
                                 <cells>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="2FB-V2-2Rq">
                                         <rect key="frame" x="0.0" y="255" width="320" height="44"/>
@@ -79,6 +79,24 @@
                                                     <rect key="frame" x="251" y="6" width="51" height="31"/>
                                                 </switch>
                                                 <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Auto Camera Upload" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="M2d-2h-BoT">
+                                                    <rect key="frame" x="17" y="11" width="185" height="21"/>
+                                                    <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                            </subviews>
+                                        </tableViewCellContentView>
+                                    </tableViewCell>
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="vqZ-oC-xdN">
+                                        <rect key="frame" x="0.0" y="255" width="320" height="44"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="vqZ-oC-xdN" id="hCJ-tZ-Ya4">
+                                            <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <switch opaque="NO" tag="100" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Yqe-zw-2jc">
+                                                    <rect key="frame" x="251" y="6" width="51" height="31"/>
+                                                </switch>
+                                                <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Wifi Only" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="dPm-WD-WPI">
                                                     <rect key="frame" x="17" y="11" width="185" height="21"/>
                                                     <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                                     <nil key="highlightedColor"/>
@@ -260,6 +278,7 @@
                     <connections>
                         <outlet property="autoCameraUploadLabel" destination="M2d-2h-BoT" id="YX5-xx-hId"/>
                         <outlet property="autoSyncCell" destination="2FB-V2-2Rq" id="gan-87-Hff"/>
+                        <outlet property="autoSyncSwitch" destination="e7r-P6-m36" id="W7u-dR-zNA"/>
                         <outlet property="cacheCell" destination="czb-JY-a9K" id="hhH-Ex-rVM"/>
                         <outlet property="nameCell" destination="wTl-CF-jaE" id="Iwg-5w-Wh1"/>
                         <outlet property="serverCell" destination="oNb-DA-jMR" id="AGG-Zr-YdE"/>
@@ -268,6 +287,8 @@
                         <outlet property="usedspaceCell" destination="5pX-xU-4Tz" id="K2n-eG-zBo"/>
                         <outlet property="versionCell" destination="N1h-hO-sea" id="5YL-yf-XwY"/>
                         <outlet property="websiteCell" destination="0s2-lY-e3M" id="Q0h-ri-HbT"/>
+                        <outlet property="wifiOnlyLabel" destination="dPm-WD-WPI" id="sha-WZ-1Ac"/>
+                        <outlet property="wifiOnlySwitch" destination="Yqe-zw-2jc" id="dAJ-qm-C4R"/>
                         <outlet property="wipeCacheLabel" destination="RGO-ir-R4l" id="3Zm-6Z-Uf3"/>
                     </connections>
                 </tableViewController>

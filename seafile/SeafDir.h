@@ -26,6 +26,7 @@
 
 - (void)loadedItems:(NSMutableArray *)items;
 - (void)mkdir:(NSString *)newDirName;
+- (void)mkdir:(NSString *)newDirName success:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir))failure;
 - (void)createFile:(NSString *)newFileName;
 - (void)delEntries:(NSArray *)entries;
 - (void)copyEntries:(NSArray *)entries dstDir:(SeafDir *)dst_dir;
@@ -35,6 +36,6 @@
 - (void)removeUploadFile:(SeafUploadFile *)ufile;
 
 - (void)renameFile:(SeafFile *)sfile newName:(NSString *)newName;
-- (void)downloadContentSuccess:(void (^)(SeafDir *dir)) success;
+- (void)downloadContentSuccess:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir))failure;
 
 @end

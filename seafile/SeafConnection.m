@@ -23,6 +23,7 @@ enum {
     FLAG_LOCAL_DECRYPT = 0x1,
 };
 
+#define CAMERA_UPLOADS_DIR @"Camera Uploads"
 #define KEY_STARREDFILES @"STARREDFILES"
 #define KEY_CONTACTS @"CONTACTS"
 
@@ -784,15 +785,28 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)uploadPhotoTick:(NSTimer *)timer
 {
+    Debug("autoSync=%d, count=%d", _inAutoSync, self.photosArray.count);
     if (!_inAutoSync || !self.photosArray) {
         [timer invalidate];
         return;
     }
+
+    BOOL wifiOnly = [[self getAttribute:@"wifiOnly"] booleanValue:true];
+    if (wifiOnly && ![[AFNetworkReachabilityManager sharedManager] isReachableViaWiFi]) {
+        Debug("wifiOnly=%d, isReachableViaWiFi=%d", wifiOnly, [[AFNetworkReachabilityManager sharedManager] isReachableViaWiFi]);
+        return;
+    }
     NSString *autoSyncRepo = [[self getAttribute:@"autoSyncRepo"] stringValue];
+    Debug("autoSyncRepo=%@", autoSyncRepo);
+    if (!autoSyncRepo)
+        return;
     SeafRepo *repo = [self getRepo:autoSyncRepo];
+    SeafDir *uploadDir = [self getCameraUploadDir:repo];
+    if (!uploadDir)
+        return;
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     Debug("Current %lu photos need to upload", (unsigned long)self.photosArray.count);
-    while(self.photosArray && self.photosArray.count > 0) {
+    while(self.photosArray && self.photosArray.count > 0 && appdelegate.uploadnum < 10) {
         NSURL *url = [self.photosArray objectAtIndex:0];
         [self.photosArray removeObject:url];
         [self.library assetForURL:url
@@ -801,19 +815,17 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                      NSString *path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
                      SeafUploadFile *file =  [self getUploadfile:path];
                      file.asset = asset;
-                     [repo addUploadFile:file];
+                     [uploadDir addUploadFile:file];
                      Debug("Add file %@ to upload list", filename);
                      [SeafAppDelegate backgroundUpload:file];
                  }
                 failureBlock:^(NSError *error){
                     Debug(@"operation was not successfull!");
                 }];
-        if (appdelegate.uploadnum > 10) {
-            break;
-        }
     }
-    if (self.photosArray && self.photosArray.count == 0) {
+    if (!self.photosArray || self.photosArray.count == 0) {
         _inAutoSync = false;
+        [timer invalidate];
     }
 }
 
@@ -826,6 +838,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)autoUploadPhotosTo:(SeafDir *)dir
 {
+    Debug("Auto Upload to %@/%@", dir.repoId, dir.path);
     NSMutableSet *set = [[NSMutableSet alloc] init];
     for (SeafBase *obj in dir.allItems) {
         [set addObject:obj.name];
@@ -849,7 +862,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             [group setAssetsFilter:[ALAssetsFilter allPhotos]];
             [group enumerateAssetsUsingBlock:assetEnumerator];
             Debug("Total %ld photos need to be uploaded: %lu", (long)group.numberOfAssets, (unsigned long)self.photosArray.count);
-            NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:60
+            NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:30
                                                               target:self
                                                             selector:@selector(uploadPhotoTick:)
                                                             userInfo:nil
@@ -862,7 +875,20 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                            usingBlock:assetGroupEnumerator
                          failureBlock:^(NSError *error) {
                              Debug("There is an error: %@", error);
+                             _inAutoSync = false;
                          }];
+}
+
+- (SeafDir *)getCameraUploadDir:(SeafDir *)dir
+{
+    SeafDir *uploadDir = nil;
+    for (SeafBase *obj in dir.items) {
+        if ([obj isKindOfClass:[SeafDir class]] && [obj.name isEqualToString:CAMERA_UPLOADS_DIR]) {
+            uploadDir = (SeafDir *)obj;
+            return uploadDir;
+        }
+    }
+    return nil;
 }
 
 - (void)autoSyncPhotos
@@ -870,10 +896,28 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSString *autoSyncRepo = [[self getAttribute:@"autoSyncRepo"] stringValue];
     SeafRepo *repo = [self getRepo:autoSyncRepo];
     if (!repo) {
+        _inAutoSync = false;
         return;
     }
     [repo downloadContentSuccess:^(SeafDir *dir) {
-        [self autoUploadPhotosTo:repo];
+        SeafDir *uploadDir = [self getCameraUploadDir:dir];
+        if (uploadDir)
+            [self autoUploadPhotosTo:uploadDir];
+        else {
+            [repo mkdir:CAMERA_UPLOADS_DIR success:^(SeafDir *dir) {
+                SeafDir *d = [self getCameraUploadDir:dir];
+                if (d) {
+                    Debug("...");
+                    [self autoUploadPhotosTo:d];
+                } else {
+                    _inAutoSync = false;
+                }
+            } failure:^(SeafDir *dir) {
+                _inAutoSync = false;
+            }];
+        }
+    } failure:^(SeafDir *dir) {
+        _inAutoSync = false;
     }];
 }
 
@@ -916,7 +960,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         _inAutoSync = false;
         [[NSNotificationCenter defaultCenter] removeObserver:self name:ALAssetsLibraryChangedNotification object:nil];
     }
-
 }
 
 @end

@@ -633,6 +633,14 @@
     [(SeafAppDelegate *)[[UIApplication sharedApplication] delegate] finishUpload:file result:result];
 }
 
++ (void)removeBackgroundUpload:(SeafUploadFile *)file
+{
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    @synchronized (appdelegate) {
+        [appdelegate.ufiles removeObject:file];
+    }
+}
+
 + (void)backgroundUpload:(SeafUploadFile *)file
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];

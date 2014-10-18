@@ -42,9 +42,12 @@ enum {
 
 @property (strong, nonatomic) IBOutlet UILabel *wipeCacheLabel;
 @property (strong, nonatomic) IBOutlet UILabel *autoCameraUploadLabel;
+@property (strong, nonatomic) IBOutlet UILabel *wifiOnlyLabel;
 
-@property UISwitch *autoSyncSwitch;
+@property (strong, nonatomic) IBOutlet UISwitch *autoSyncSwitch;
+@property (strong, nonatomic) IBOutlet UISwitch *wifiOnlySwitch;
 @property BOOL autoSync;
+@property BOOL wifiOnly;
 
 @property int state;
 
@@ -68,12 +71,20 @@ enum {
     [_connection checkAutoSync];
 }
 
+- (void)wifiOnlySwitchFlip:(id)sender
+{
+    _wifiOnly = _wifiOnlySwitch.on;
+    [_connection setAttribute:[NSNumber numberWithBool:_wifiOnly] forKey:@"wifiOnly"];
+    [_connection checkAutoSync];
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
     _nameCell.textLabel.text = NSLocalizedString(@"Username", @"Seafile");
     _usedspaceCell.textLabel.text = NSLocalizedString(@"Space Used", @"Seafile");
     _autoCameraUploadLabel.text = NSLocalizedString(@"Auto Camera Upload", @"Seafile");
+    _wifiOnlyLabel.text = NSLocalizedString(@"Wifi Only", @"Seafile");
     _syncRepoCell.textLabel.text = NSLocalizedString(@"Upload Destination", @"Seafile");
     _cacheCell.textLabel.text = NSLocalizedString(@"Local Cache", @"Seafile");
     _tellFriendCell.textLabel.text = NSLocalizedString(@"Tell Friends about seafile", @"Seafile");
@@ -85,8 +96,8 @@ enum {
     self.title = NSLocalizedString(@"Settings", @"Seafile");
 
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
-    _autoSyncSwitch = (UISwitch *)[self.autoSyncCell viewWithTag:100];
     [_autoSyncSwitch addTarget:self action:@selector(autoSyncSwitchFlip:) forControlEvents:UIControlEventValueChanged];
+    [_wifiOnlySwitch addTarget:self action:@selector(wifiOnlySwitchFlip:) forControlEvents:UIControlEventValueChanged];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -152,6 +163,7 @@ enum {
 {
     _connection = connection;
     _autoSync = [[_connection getAttribute:@"autoSync"] booleanValue:false];
+    _wifiOnly = [[_connection getAttribute:@"wifiOnly"] booleanValue:true];
     [self.tableView reloadData];
     [_connection performSelector:@selector(getAccountInfo:) withObject:self afterDelay:1.0f];
 }
@@ -183,7 +195,7 @@ enum {
         if (indexPath.row == 1) // Select the quota cell
             [_connection getAccountInfo:self];
     } else if (indexPath.section == 1) {
-        if (indexPath.row == 1) {
+        if (indexPath.row == 2) {
             if (_autoSync) {
                 [self popupRepoSelect];
             }
@@ -217,7 +229,7 @@ enum {
 {
     NSString *sectionNames[] = {
         NSLocalizedString(@"Account Info", @"Seafile"),
-        NSLocalizedString(@"Settings", @"Seafile"),
+        NSLocalizedString(@"Camera Upload", @"Seafile"),
         NSLocalizedString(@"Cache", @"Seafile"),
         NSLocalizedString(@"About", @"Seafile"),
         @"",
