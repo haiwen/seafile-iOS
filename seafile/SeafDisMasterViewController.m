@@ -53,7 +53,7 @@
         [self.tableView setSeparatorInset:UIEdgeInsetsMake(0, 0, 0, 0)];
     // Do any additional setup after loading the view, typically from a nib.
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    self.detailViewController = (SeafDisDetailViewController *)[appdelegate detailViewController:TABBED_DISCUSSION];
+    self.detailViewController = (SeafDisDetailViewController *)[appdelegate detailViewControllerAtIndex:TABBED_DISCUSSION];
     self.detailViewController.connection = _connection;
     self.tableView.rowHeight = 58;
     if (_refreshHeaderView == nil) {
@@ -302,12 +302,16 @@
     if (self.detailViewController.msgtype == MSG_REPLY && dict != self.detailViewController.info) {
         [self refreshView];
     }
+
     long long msgtype = [[dict objectForKey:@"type"] integerValue:MSG_NONE];
-    [self.detailViewController setMsgtype:(int)msgtype info:dict];
-    if (!IsIpad())
-        [appdelegate showDetailView:self.detailViewController];
-    else
+    if (!IsIpad()) {
+        self.detailViewController = appdelegate.msgDetailView;
+        [self.detailViewController setMsgtype:(int)msgtype info:dict];
+        [self.navigationController pushViewController:self.detailViewController animated:YES];
+    } else {
+        [self.detailViewController setMsgtype:(int)msgtype info:dict];
         [self.detailViewController.navigationController popToRootViewControllerAnimated:NO];
+    }
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation

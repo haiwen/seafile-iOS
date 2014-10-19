@@ -36,6 +36,9 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 @property BOOL isLoading;
 @property NSDate *lastUpdateTime;
 
+@property (strong, nonatomic) NSMutableDictionary *nextInfo;
+@property (readwrite, nonatomic) int nextMsgType;
+
 @end
 
 @implementation SeafDisDetailViewController
@@ -67,22 +70,23 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 }
 
 - (void)setMsgtype:(int)msgtype info:(NSMutableDictionary *)info
+
 {
     if (self.masterPopoverController != nil) {
         [self.masterPopoverController dismissPopoverAnimated:YES];
     }
     [self dismissLoadingView];
+    self.next_page = 2;
+    self.selectedMsg = nil;
+    self.isLoading = NO;
+    self.messages = [[NSMutableArray alloc] init];
     _msgtype = msgtype;
     _info = info;
-    self.messages = [[NSMutableArray alloc] init];
     [self loadCacheData];
     if (self.isViewLoaded)
         [self refreshView];
     [self.messageInputView.textView resignFirstResponder];
     self.messageInputView.textView.text = @"";
-    self.next_page = 2;
-    self.selectedMsg = nil;
-    self.isLoading = NO;
 }
 
 - (NSString *)msgUrl
@@ -156,7 +160,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     }
 }
 
-- (void)downloadMessages
+- (void)downloadMessages:(BOOL)background
 {
     switch (self.msgtype) {
         case MSG_NONE:
@@ -185,7 +189,8 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
                 }
             } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
                 Warning("Failed to get messsages: %@", error);
-                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get messages", @"Seafile")];
+                if (!background)
+                    [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get messages", @"Seafile")];
                 [self dismissLoadingView];
                 self.refreshItem.enabled = YES;
             }];
@@ -216,7 +221,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         if (self.messages.count == 0 || newmsgnum > 0) {
             [self refresh:nil];
         } else if ([self cacheOutOfDate]) {
-            [self downloadMessages];
+            [self downloadMessages:true];
         }
     }
     // Update the user interface for the detail item.
@@ -261,16 +266,11 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     [self scrollToBottomAnimated:NO];
 }
 
-- (void)goBack:(id)sender
-{
-    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
-}
-
 - (void)refresh:(id)sender
 {
     self.refreshItem.enabled = NO;
     [self showLodingView];
-    [self downloadMessages];
+    [self downloadMessages:false];
 }
 
 - (void)compose:(id)sender
@@ -322,11 +322,6 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     self.messageInputView.textView.layer.masksToBounds = YES;
     self.messageInputView.textView.layer.shadowOpacity = 0.0f;
 
-    if (!IsIpad()) {
-        UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Back", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
-        [self.navigationItem setLeftBarButtonItem:barButtonItem animated:YES];
-    }
-
     self.refreshItem = [self getBarItemAutoSize:@"refresh".navItemImgName action:@selector(refresh:)];
     self.msgItem = [self getBarItemAutoSize:@"addmsg".navItemImgName action:@selector(compose:)];
     UIBarButtonItem *space = [self getSpaceBarItem:16.0];
@@ -353,11 +348,11 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 }
 - (void)viewWillAppear:(BOOL)animated
 {
-    [super viewWillAppear:animated];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(handleKeyboardWillHideNotification:)
                                                  name:UIKeyboardWillHideNotification
                                                object:nil];
+    [super viewWillAppear:animated];
 }
 
 - (void)viewDidDisappear:(BOOL)animated
@@ -414,10 +409,15 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 }
 
 #pragma mark - Table view data source
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+    return 1;
+}
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return self.messages.count;
+
+    return self.messages ? self.messages.count : 0;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -832,7 +832,6 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     SeafDetailViewController *detailvc;
     if (IsIpad()) {
         detailvc = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
-        //[self.navigationController pushViewController:detailvc animated:YES];
     } else {
         detailvc = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
 

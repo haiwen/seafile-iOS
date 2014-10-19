@@ -50,17 +50,16 @@ enum {
 @property (readonly) ALAssetsLibrary *assetsLibrary;
 
 
-
 @property (retain) NSMutableArray *conns;
 @property (readwrite) SeafConnection *connection;
 
 
 - (UINavigationController *)masterNavController:(int)index;
-- (UIViewController *)detailViewController:(int)index;
+- (UIViewController *)detailViewControllerAtIndex:(int)index;
 
 - (void)showDetailView:(UIViewController *) c;
--(void)cycleTheGlobalMailComposer;
-
+- (void)cycleTheGlobalMailComposer;
+- (SeafDisDetailViewController *)msgDetailView;
 
 - (void)saveContext;
 - (NSURL *)applicationDocumentsDirectory;

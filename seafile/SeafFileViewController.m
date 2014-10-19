@@ -100,7 +100,7 @@ enum {
 - (SeafDetailViewController *)detailViewController
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    return (SeafDetailViewController *)[appdelegate detailViewController:TABBED_SEAFILE];
+    return (SeafDetailViewController *)[appdelegate detailViewControllerAtIndex:TABBED_SEAFILE];
 }
 
 - (NSArray *)editToolItems

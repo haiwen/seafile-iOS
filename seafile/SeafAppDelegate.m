@@ -8,6 +8,7 @@
 
 
 #import "SeafAppDelegate.h"
+#import "SeafDisDetailViewController.h"
 #import "AFNetworking.h"
 #import "Debug.h"
 #import "Utils.h"
@@ -25,6 +26,7 @@
 @property NSInteger moduleIdx;
 @property (readonly) SeafDetailViewController *detailVC;
 @property (readonly) SeafDisDetailViewController *disDetailVC;
+@property (readonly) UINavigationController *disDetailNav;
 @property (strong) NSArray *viewControllers;
 @property NSTimer *autoSyncTimer;
 
@@ -481,7 +483,7 @@
     return (SeafFileViewController *)[[self masterNavController:TABBED_SEAFILE] topViewController];
 }
 
-- (UIViewController *)detailViewController:(int)index
+- (UIViewController *)detailViewControllerAtIndex:(int)index
 {
     if (IsIpad()) {
         return [[[[self.viewControllers objectAtIndex:index] viewControllers] lastObject] topViewController];
@@ -709,12 +711,15 @@
     }
 }
 
-- (void)showDetailView:(UIViewController *) c
+- (SeafDisDetailViewController *)msgDetailView;
 {
-    UINavigationController *nc = [[UINavigationController alloc] initWithRootViewController:c];
-    [nc setModalPresentationStyle:UIModalPresentationFullScreen];
-    nc.navigationBar.tintColor = BAR_COLOR;
-    [self.window.rootViewController presentViewController:nc animated:YES completion:nil];
+    if (IsIpad()) {
+        _disDetailVC = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DISDETAILVC"];
+        _disDetailVC.connection = _connection;
+        return _disDetailVC;
+    } else {
+        return (SeafDisDetailViewController *)[self detailViewControllerAtIndex:TABBED_DISCUSSION];
+    }
 }
 
 -(void)cycleTheGlobalMailComposer
