@@ -67,6 +67,7 @@ enum MSG_TYPE{
 - (void)loadRepos:(id)degt;
 
 - (BOOL)localDecrypt:(NSString *)repoId;
+- (void)resetUploadedPhotos;
 - (void)clearAccount;
 
 - (void)sendRequest:(NSString *)url

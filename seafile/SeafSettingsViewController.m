@@ -27,7 +27,8 @@ enum {
 };
 
 #define SEAFILE_SITE @"http://www.seafile.com"
-
+#define MSG_RESET_UPLOADED NSLocalizedString(@"Do you want reset the uploaded photos?", @"Seafile")
+#define MSG_CLEAR_CACHE NSLocalizedString(@"Are you sure to clear all the cache?", @"Seafile")
 
 @interface SeafSettingsViewController ()<SeafDirDelegate, MFMailComposeViewControllerDelegate>
 @property (strong, nonatomic) IBOutlet UITableViewCell *nameCell;
@@ -217,7 +218,7 @@ enum {
                 break;
         }
     } else if (indexPath.section == 4) {
-        NSString *title = NSLocalizedString(@"Are you sure to clear all the cache?", @"Seafile");
+        NSString *title = MSG_CLEAR_CACHE;
         UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:title message:nil delegate:self cancelButtonTitle:NSLocalizedString(@"NO", @"Seafile") otherButtonTitles:NSLocalizedString(@"YES", @"Seafile"), nil];
         [alertView show];
     }
@@ -315,6 +316,14 @@ enum {
 #pragma mark - UIAlertViewDelegate
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
+    NSString *title = alertView.title;
+    if ([MSG_RESET_UPLOADED isEqualToString:title]) {
+        if (buttonIndex == 1) {
+            [_connection resetUploadedPhotos];
+        }
+        [_connection checkAutoSync];
+        return;
+    }
     if (buttonIndex == 1) {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         [(SeafDetailViewController *)[appdelegate detailViewControllerAtIndex:TABBED_SETTINGS] setPreViewItem:nil master:nil];
@@ -338,13 +347,22 @@ enum {
 - (void)chooseDir:(UIViewController *)c dir:(SeafDir *)dir
 {
     [self.navigationController popToRootViewControllerAnimated:YES];
+    [c.navigationController dismissViewControllerAnimated:YES completion:nil];
+    NSString *old = [_connection getAttribute:@"autoSyncRepo"];
     SeafRepo *repo = (SeafRepo *)dir;
+    if ([repo.repoId isEqualToString:old]) {
+        [_connection checkAutoSync];
+        return;
+    }
     _syncRepoCell.detailTextLabel.text = repo.name;
     [self.tableView reloadData];
     [_connection setAttribute:repo.repoId forKey:@"autoSyncRepo"];
-    [_connection checkAutoSync];
-    [c.navigationController dismissViewControllerAnimated:YES completion:nil];
+    dispatch_async(dispatch_get_main_queue(), ^ {
+        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:MSG_RESET_UPLOADED message:nil delegate:self cancelButtonTitle:NSLocalizedString(@"NO", @"Seafile") otherButtonTitles:NSLocalizedString(@"YES", @"Seafile"), nil];
+        [alertView show];
+    });
 }
+
 - (void)cancelChoose:(UIViewController *)c
 {
     [c.navigationController dismissViewControllerAnimated:YES completion:nil];

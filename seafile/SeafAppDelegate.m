@@ -711,6 +711,14 @@
     }
 }
 
+- (void)showDetailView:(UIViewController *) c
+{
+    UINavigationController *nc = [[UINavigationController alloc] initWithRootViewController:c];
+    [nc setModalPresentationStyle:UIModalPresentationFullScreen];
+    nc.navigationBar.tintColor = BAR_COLOR;
+    [self.window.rootViewController presentViewController:nc animated:YES completion:nil];
+}
+
 - (SeafDisDetailViewController *)msgDetailView;
 {
     if (IsIpad()) {

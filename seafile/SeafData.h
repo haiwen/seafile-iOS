@@ -41,3 +41,9 @@
 @property (nonatomic, retain) NSDate *timestamp;
 
 @end
+
+@interface UploadedPhotos : NSManagedObject
+@property (nonatomic, retain) NSString *username;
+@property (nonatomic, retain) NSString *server;
+@property (nonatomic, retain) NSString *url;
+@end

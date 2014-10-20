@@ -37,3 +37,11 @@
 @dynamic timestamp;
 
 @end
+
+@implementation UploadedPhotos
+
+@dynamic username;
+@dynamic server;
+@dynamic url;
+
+@end

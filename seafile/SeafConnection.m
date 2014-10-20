@@ -95,8 +95,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @property NSMutableArray *photosArray;
 @property NSMutableArray *uploadingArray;
 @property SeafDir *syncDir;
-@property (nonatomic) NSString *uploadedAttrFilePath;
-@property (nonatomic) NSMutableSet *uploadedFiles;
 @end
 
 @implementation SeafConnection
@@ -109,8 +107,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @synthesize seafGroups = _seafGroups;
 @synthesize seafContacts = _seafContacts;
 @synthesize policy = _policy;
-@synthesize uploadedAttrFilePath = _uploadedAttrFilePath;
-@synthesize uploadedFiles = _uploadedFiles;
 
 - (id)init:(NSString *)url
 {
@@ -285,6 +281,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     NSString *path = [self certPathForHost:[self host]];
     [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
+    [SeafAvatar clearCache];
 }
 
 - (void)handleOperation:(AFHTTPRequestOperation *)operation withPolicy:(AFSecurityPolicy *)policy
@@ -843,50 +840,65 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }
 }
 
-- (NSString *)uploadedAttrFilePath
-{
-    if (!_uploadedAttrFilePath) {
-        NSString *filename = [NSString stringWithFormat:@"%@-%@-ufiles.plist", self.host, self.username];
-        _uploadedAttrFilePath = [[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:filename];
-    }
-    return _uploadedAttrFilePath;
-}
-
-- (NSMutableSet *)uploadedFiles
-{
-    if (!_uploadedFiles) {
-         NSArray *arr = [[NSArray alloc] initWithContentsOfFile:self.uploadedAttrFilePath];
-        _uploadedFiles = [[NSMutableSet alloc] init];
-        [_uploadedFiles addObjectsFromArray:arr];
-    }
-    return _uploadedFiles;
-}
-
-- (void)saveUploadedFiles
-{
-    NSArray *arr = [_uploadedFiles allObjects];
-    [arr writeToFile:self.uploadedAttrFilePath atomically:YES];
-}
-
 - (void)fileUploadedSuccess:(SeafUploadFile *)ufile
 {
-    NSURL *url = ufile.assetURL;
-    if (!url) return;
-    [self.uploadedFiles addObject:url.absoluteString];
-    [self.uploadingArray removeObject:url];
-    [self saveUploadedFiles];
-}
-
-- (BOOL)checkString:(NSString *)str inSet:(NSSet *)set
-{
-    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF MATCHES %@", str];
-    NSSet *filteredSet = [set filteredSetUsingPredicate:predicate];
-    return (filteredSet && filteredSet.count > 0);
+    if (!ufile || !ufile.assetURL) return;
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    NSManagedObjectContext *context = [appdelegate managedObjectContext];
+    UploadedPhotos *obj = (UploadedPhotos *)[NSEntityDescription insertNewObjectForEntityForName:@"UploadedPhotos" inManagedObjectContext:context];
+    obj.server = self.address;
+    obj.username = self.username;
+    obj.url = ufile.assetURL.absoluteString;
+    [appdelegate saveContext];
+    [self.uploadingArray removeObject:ufile.assetURL];
 }
 
 - (BOOL)IsPhotoUploaded:(NSURL *)url
 {
-    return [self.uploadedFiles containsObject:url.absoluteString];
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    NSManagedObjectContext *context = [appdelegate managedObjectContext];
+    NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
+    [fetchRequest setEntity:[NSEntityDescription entityForName:@"UploadedPhotos" inManagedObjectContext:context]];
+    NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"url" ascending:YES selector:nil];
+    NSArray *descriptor = [NSArray arrayWithObject:sortDescriptor];
+    [fetchRequest setSortDescriptors:descriptor];
+    [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"server==%@ AND username==%@ AND url==%@", self.address, self.username, url.absoluteString]];
+    NSFetchedResultsController *controller = [[NSFetchedResultsController alloc]
+                                              initWithFetchRequest:fetchRequest
+                                              managedObjectContext:context
+                                              sectionNameKeyPath:nil
+                                              cacheName:nil];
+    NSError *error;
+    if (![controller performFetch:&error]) {
+        Warning("error: %@", error);
+        return NO;
+    }
+    NSArray *results = [controller fetchedObjects];
+    return results.count > 0;
+}
+
+- (void)resetUploadedPhotos
+{
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    NSManagedObjectContext *context = [appdelegate managedObjectContext];
+    NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
+    [fetchRequest setEntity:[NSEntityDescription entityForName:@"UploadedPhotos" inManagedObjectContext:context]];
+    NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"url" ascending:YES selector:nil];
+    NSArray *descriptor = [NSArray arrayWithObject:sortDescriptor];
+    [fetchRequest setSortDescriptors:descriptor];
+    [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"server==%@ AND username==%@", self.address, self.username]];
+    NSFetchedResultsController *controller = [[NSFetchedResultsController alloc]
+                                              initWithFetchRequest:fetchRequest
+                                              managedObjectContext:context
+                                              sectionNameKeyPath:nil
+                                              cacheName:nil];
+    NSError *error;
+    if ([controller performFetch:&error]) {
+        for (id obj in controller.fetchedObjects) {
+             [context deleteObject:obj];
+        }
+    }
+    [appdelegate saveContext];
 }
 
 - (BOOL)IsPhotoUploading:(NSURL *)url
@@ -916,7 +928,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         if(group != nil) {
             [group setAssetsFilter:[ALAssetsFilter allPhotos]];
             [group enumerateAssetsUsingBlock:assetEnumerator];
-            Debug("Group %@ total %ld photos need to be uploaded", group, (long)group.numberOfAssets);
+            Debug("Group %@ total %ld photos", group, (long)group.numberOfAssets);
         } else {
             [_photosArray addObjectsFromArray:photos];
             Debug("GroupAll Total %ld photos need to be uploaded", (unsigned long)_photosArray.count);
@@ -948,6 +960,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (void)updateUploadDir:(SeafDir *)dir
 {
     _syncDir = dir;
+    Debug("%d photos, syncdir: %@ %@", self.photosArray.count, _syncDir.repoId, _syncDir.name);
     [self pickPhotosForUpload];
 }
 - (void)checkUploadDir
@@ -958,6 +971,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         _syncDir = nil;
         return;
     }
+    Debug("upload photos to repo:%@", repo.name);
     [repo loadContent:NO];
     SeafDir *uploadDir = [self getCameraUploadDir:repo];
     if (uploadDir) {
@@ -1001,7 +1015,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(assetsLibraryDidChange:) name:ALAssetsLibraryChangedNotification object:[SeafAppDelegate assetsLibrary]];
             _photosArray = [[NSMutableArray alloc] init];
             _uploadingArray = [[NSMutableArray alloc] init];;
-            [self checkPhotos];
         } else {
             Debug("Stop auto Sync");
             _photosArray = nil;
@@ -1011,6 +1024,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }
     _inAutoSync = value;
     if (_inAutoSync) {
+        [self checkPhotos];
         [self checkUploadDir];
     }
 }

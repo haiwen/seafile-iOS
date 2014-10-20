@@ -19,9 +19,15 @@
         <attribute name="url" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="username" optional="YES" attributeType="String" syncable="YES"/>
     </entity>
+    <entity name="UploadedPhotos" syncable="YES">
+        <attribute name="server" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="url" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="username" optional="YES" attributeType="String" syncable="YES"/>
+    </entity>
     <elements>
         <element name="Directory" positionX="0" positionY="0" width="128" height="105"/>
         <element name="DownloadedFile" positionX="0" positionY="0" width="128" height="105"/>
         <element name="SeafCacheObj" positionX="0" positionY="0" width="128" height="120"/>
+        <element name="UploadedPhotos" positionX="0" positionY="36" width="128" height="90"/>
     </elements>
 </model>
