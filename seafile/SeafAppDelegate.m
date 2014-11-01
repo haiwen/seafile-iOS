@@ -514,7 +514,7 @@
 
 - (SeafDisMasterViewController *)discussVC
 {
-    return (SeafDisMasterViewController *)[[self masterNavController:TABBED_DISCUSSION] topViewController];
+    return (SeafDisMasterViewController *)[[[self masterNavController:TABBED_DISCUSSION] viewControllers] objectAtIndex:0];
 }
 
 - (BOOL)checkNetworkStatus
@@ -626,7 +626,7 @@
             return;
         }
     }
-    [self performSelector:@selector(tryDownload) withObject:nil afterDelay:0.1];
+    [self performSelector:@selector(tick:) withObject:_autoSyncTimer afterDelay:0.1];
 }
 
 - (void)finishUpload:(SeafUploadFile *)file result:(BOOL)result
@@ -638,7 +638,7 @@
     [self checkBackgroudTask:[UIApplication sharedApplication]];
     if (result) {
         self.failedNum = 0;
-        [file.udir->connection fileUploadedSuccess:file];
+        if (file.autoSync) [file.udir->connection fileUploadedSuccess:file];
     } else {
         self.failedNum ++;
         [self.ufiles addObject:file];
@@ -648,7 +648,7 @@
             return;
         }
     }
-    [self performSelector:@selector(tryUpload) withObject:nil afterDelay:0.1];
+    [self performSelector:@selector(tick:) withObject:_autoSyncTimer afterDelay:0.1];
 }
 
 + (void)finishDownload:(id<SeafDownloadDelegate>) file result:(BOOL)result
@@ -721,7 +721,7 @@
 
 - (SeafDisDetailViewController *)msgDetailView;
 {
-    if (IsIpad()) {
+    if (!IsIpad()) {
         _disDetailVC = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DISDETAILVC"];
         _disDetailVC.connection = _connection;
         return _disDetailVC;
@@ -743,6 +743,11 @@
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     return appdelegate.assetsLibrary;
 }
+- (int)uploadingnum
+{
+    return self.uploadnum + self.ufiles.count;
+}
+
 
 
 @end

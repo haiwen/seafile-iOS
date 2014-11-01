@@ -83,6 +83,6 @@ enum {
 - (void)saveAccounts;
 - (SeafConnection *)getConnection:(NSString *)url username:(NSString *)username;
 
-- (int)uploadnum;
+- (int)uploadingnum;
 
 @end

@@ -30,7 +30,7 @@
 
 @property (readonly) BOOL uploading;
 @property (readwrite) BOOL update;
-@property (readwrite) ALAsset *asset;
+@property (nonatomic, readwrite) ALAsset *asset;
 @property (readwrite, nonatomic) NSURL *assetURL;
 @property (readwrite) BOOL autoSync;
 

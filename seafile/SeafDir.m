@@ -383,18 +383,17 @@
 - (void)addUploadFile:(SeafUploadFile *)file
 {
     if ([self.uploadItems containsObject:file]) return;
-    if (!file.autoSync) {
-        NSMutableDictionary *dict = file.uploadAttr;
-        if (!dict)
-            dict = [[NSMutableDictionary alloc] init];
-        [dict setObject:self.repoId forKey:@"urepo"];
-        [dict setObject:self.path forKey:@"upath"];
-        [dict setObject:[NSNumber numberWithBool:file.update] forKey:@"update"];
-        if (file.asset) {
-            [dict setObject:file.asset.defaultRepresentation.url forKey:@"assetURL"];
-        }
-        [file saveAttr:dict];
+    NSMutableDictionary *dict = file.uploadAttr;
+    if (!dict)
+        dict = [[NSMutableDictionary alloc] init];
+    [dict setObject:self.repoId forKey:@"urepo"];
+    [dict setObject:self.path forKey:@"upath"];
+    [dict setObject:[NSNumber numberWithBool:file.update] forKey:@"update"];
+    [dict setObject:[NSNumber numberWithBool:file.autoSync] forKey:@"autoSync"];
+    if (file.asset) {
+        [dict setObject:file.asset.defaultRepresentation.url forKey:@"assetURL"];
     }
+    [file saveAttr:dict];
     file.udir = self;
     [self.uploadItems addObject:file];
     _allItems = nil;

@@ -112,6 +112,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         _uploading = NO;
         self.operation = nil;
     }
+    [SeafAppDelegate finishUpload:self result:result];
     NSMutableDictionary *dict = self.uploadAttr;
     if (!dict) {
         dict = [[NSMutableDictionary alloc] init];
@@ -126,7 +127,6 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         [_delegate uploadSucess:self oid:oid];
     else
         [_delegate uploadProgress:self result:NO progress:0];
-    [SeafAppDelegate finishUpload:self result:result];
 }
 
 - (int)percentForShow:(long long)totalBytesWritten expected:(long long)totalBytesExpectedToWrite
@@ -284,12 +284,18 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     return [self upload:self.udir->connection repo:self.udir.repoId path:self.udir.path];
 }
 
+- (void)setAsset:(ALAsset *)asset
+{
+    _asset = asset;
+    _assetURL = asset.defaultRepresentation.url;
+}
+
 - (void)checkAsset
 {
     if (self.asset) {
         [Utils writeDataToPath:self.lpath andAsset:self.asset];
         _filesize = [Utils fileSizeAtPath1:self.lpath];
-        self.asset = nil;
+        _asset = nil;
     }
 }
 #pragma mark - QLPreviewItem
@@ -392,16 +398,22 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 + (NSMutableArray *)uploadFilesForDir:(SeafDir *)dir
 {
-    NSMutableDictionary *allFiles = [SeafUploadFile uploadFileAttrs];
+    bool changed = false;
+    NSDictionary *allFiles = [[SeafUploadFile uploadFileAttrs] copy];
     NSMutableArray *files = [[NSMutableArray alloc] init];
     for (NSString *lpath in allFiles.allKeys) {
         NSDictionary *info = [allFiles objectForKey:lpath];
+        if (![Utils fileExistsAtPath:lpath]) {
+            [uploadFileAttrs removeObjectForKey:lpath];
+            Debug("Upload file %@ not exist", lpath);
+            changed = true;
+            continue;
+        }
         if ([dir.repoId isEqualToString:[info objectForKey:@"urepo"]] && [dir.path isEqualToString:[info objectForKey:@"upath"]]) {
             bool autoSync = [[info objectForKey:@"autoSync"] boolValue];
             SeafUploadFile *file  = [dir->connection getUploadfile:lpath create:!autoSync];
-            if (!file) continue;
-            if (autoSync) {
-                [file doRemove];
+            if (!file) {
+                Debug("Auto sync photos %@:%@, remove and will reupload from beginning", file.lpath, info);
                 continue;
             }
             file.udir = dir;

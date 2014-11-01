@@ -1289,14 +1289,15 @@ enum {
     if (res && percent < 100 && [cell isKindOfClass:[SeafUploadingFileCell class]])
         [((SeafUploadingFileCell *)cell).progressView setProgress:percent*1.0f/100];
     else {
-        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+        [self.tableView reloadData];
+        //[self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
     }
 }
 
 - (void)uploadSucess:(SeafUploadFile *)file oid:(NSString *)oid
 {
     [self uploadProgress:file result:YES progress:100];
-    if (!self.isVisible) {
+    if (self.isVisible) {
         [SVProgressHUD showSuccessWithStatus:[NSString stringWithFormat:NSLocalizedString(@"File '%@' uploaded success", @"Seafile"), file.name] duration:1.0];
     }
 
