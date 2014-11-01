@@ -315,7 +315,7 @@ enum {
         [self alertWithMessage:NSLocalizedString(@"Photos are not accessible", @"Seafile")];
         return;
     }
-    QBImagePickerController *imagePickerController = [SeafFileViewController defaultQBImagePickerController];
+    QBImagePickerController *imagePickerController = [[QBImagePickerController alloc] init];
     imagePickerController.title = NSLocalizedString(@"Photos", @"Seafile");
     imagePickerController.delegate = self;
     imagePickerController.allowsMultipleSelection = YES;
@@ -1227,17 +1227,37 @@ enum {
     [self dismissImagePickerController:imagePickerController];
 }
 
+- (void)transformAndUploadAssets:(NSArray *)arr
+{
+    // Load assets from URLs
+    __block NSMutableArray *assets = [NSMutableArray array];
+
+    for (ALAsset *asset in arr) {
+        NSURL *selectedAssetURL = asset.defaultRepresentation.url;
+        [[SeafAppDelegate assetsLibrary] assetForURL:selectedAssetURL
+                                         resultBlock:^(ALAsset *asset) {
+                                             // Add asset
+                                             [assets addObject:asset];
+                                             // Check if the loading finished
+                                             if (assets.count == arr.count) {
+                                                 [self performSelector:@selector(uploadPickedAssets:) withObject:assets];
+                                             }
+                                         } failureBlock:^(NSError *error) {
+                                             Debug("Error: %@", [error localizedDescription]);
+                                         }];
+    }
+}
+
 - (void)imagePickerController:(QBImagePickerController *)imagePickerController didSelectAsset:(ALAsset *)asset
 {
+    [self transformAndUploadAssets:[NSArray arrayWithObject:asset]];
     [self dismissImagePickerController:imagePickerController];
-    [self performSelectorInBackground:@selector(uploadPickedAssets:) withObject:[NSArray arrayWithObject:asset]];
-
 }
 
 - (void)imagePickerController:(QBImagePickerController *)imagePickerController didSelectAssets:(NSArray *)assets
 {
+    [self transformAndUploadAssets:assets];
     [self dismissImagePickerController:imagePickerController];
-    [self performSelectorInBackground:@selector(uploadPickedAssets:) withObject:assets];
 }
 
 #pragma mark - UIPopoverControllerDelegate
@@ -1265,6 +1285,7 @@ enum {
     long index = [_directory.allItems indexOfObject:file];
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+    if (!cell) return;
     if (res && percent < 100 && [cell isKindOfClass:[SeafUploadingFileCell class]])
         [((SeafUploadingFileCell *)cell).progressView setProgress:percent*1.0f/100];
     else {
@@ -1351,15 +1372,6 @@ enum {
         } else
             [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to search", @"Seafile")];
     }];
-}
-
-+(QBImagePickerController *)defaultQBImagePickerController{
-    static dispatch_once_t pred = 0;
-    static QBImagePickerController *c = nil;
-    dispatch_once(&pred, ^{
-        c = [[QBImagePickerController alloc] init];
-    });
-    return c;
 }
 
 - (void)photoSelectedChanged:(id<SeafPreView>)from to:(id<SeafPreView>)to;

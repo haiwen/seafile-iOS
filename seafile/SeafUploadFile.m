@@ -45,6 +45,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         _filesize = [Utils fileSizeAtPath1:lpath] ;
         _uProgress = 0;
         _uploading = NO;
+        _autoSync = NO;
         self.update = [[self.uploadAttr objectForKey:@"update"] boolValue];
     }
     return self;
@@ -118,6 +119,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     }
     [dict setObject:[NSNumber numberWithDouble:[[NSDate date] timeIntervalSince1970]]forKey:@"utime"];
     [dict setObject:[NSNumber numberWithBool:result] forKey:@"result"];
+    [dict setObject:[NSNumber numberWithBool:self.autoSync] forKey:@"autoSync"];
     [self saveAttr:dict];
     Debug("result=%d, name=%@, _delegate=%@, oid=%@\n", result, self.name, _delegate, oid);
     if (result)
@@ -395,9 +397,16 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     for (NSString *lpath in allFiles.allKeys) {
         NSDictionary *info = [allFiles objectForKey:lpath];
         if ([dir.repoId isEqualToString:[info objectForKey:@"urepo"]] && [dir.path isEqualToString:[info objectForKey:@"upath"]]) {
-            SeafUploadFile *file  = [dir->connection getUploadfile:lpath];
+            bool autoSync = [[info objectForKey:@"autoSync"] boolValue];
+            SeafUploadFile *file  = [dir->connection getUploadfile:lpath create:!autoSync];
+            if (!file) continue;
+            if (autoSync) {
+                [file doRemove];
+                continue;
+            }
             file.udir = dir;
             file.update = [[info objectForKey:@"update"] boolValue];
+            file.autoSync = autoSync;
             [files addObject:file];
         }
     }

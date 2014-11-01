@@ -106,6 +106,8 @@ enum MSG_TYPE{
 - (SeafRepo *)getRepo:(NSString *)repo;
 
 - (SeafUploadFile *)getUploadfile:(NSString *)lpath;
+- (SeafUploadFile *)getUploadfile:(NSString *)lpath create:(bool)create;
+
 - (void)removeUploadfile:(SeafUploadFile *)ufile;
 
 - (void)search:(NSString *)keyword

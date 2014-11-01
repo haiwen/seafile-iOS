@@ -32,6 +32,7 @@
 @property (readwrite) BOOL update;
 @property (readwrite) ALAsset *asset;
 @property (readwrite, nonatomic) NSURL *assetURL;
+@property (readwrite) BOOL autoSync;
 
 @property (readonly) int uProgress;
 @property id<SeafUploadDelegate> delegate;

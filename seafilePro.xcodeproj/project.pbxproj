@@ -124,16 +124,6 @@
 		5732A964177894E700D806C7 /* REComposeSheetView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A93F177894E700D806C7 /* REComposeSheetView.m */; };
 		5732A966177894E700D806C7 /* REComposeViewController.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 5732A940177894E700D806C7 /* REComposeViewController.bundle */; };
 		5732A968177894E700D806C7 /* REComposeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A942177894E700D806C7 /* REComposeViewController.m */; };
-		573E359719227F1200C67671 /* QBAssetsCollectionCheckmarkView.m in Sources */ = {isa = PBXBuildFile; fileRef = 573E358219227F1200C67671 /* QBAssetsCollectionCheckmarkView.m */; };
-		573E359819227F1200C67671 /* QBAssetsCollectionFooterView.m in Sources */ = {isa = PBXBuildFile; fileRef = 573E358419227F1200C67671 /* QBAssetsCollectionFooterView.m */; };
-		573E359919227F1200C67671 /* QBAssetsCollectionOverlayView.m in Sources */ = {isa = PBXBuildFile; fileRef = 573E358619227F1200C67671 /* QBAssetsCollectionOverlayView.m */; };
-		573E359A19227F1200C67671 /* QBAssetsCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 573E358819227F1200C67671 /* QBAssetsCollectionViewCell.m */; };
-		573E359B19227F1200C67671 /* QBAssetsCollectionViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 573E358A19227F1200C67671 /* QBAssetsCollectionViewController.m */; };
-		573E359C19227F1200C67671 /* QBAssetsCollectionViewLayout.m in Sources */ = {isa = PBXBuildFile; fileRef = 573E358C19227F1200C67671 /* QBAssetsCollectionViewLayout.m */; };
-		573E359D19227F1200C67671 /* QBImagePickerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 573E358E19227F1200C67671 /* QBImagePickerController.m */; };
-		573E359E19227F1200C67671 /* QBImagePickerGroupCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 573E359019227F1200C67671 /* QBImagePickerGroupCell.m */; };
-		573E359F19227F1200C67671 /* QBImagePickerThumbnailView.m in Sources */ = {isa = PBXBuildFile; fileRef = 573E359219227F1200C67671 /* QBImagePickerThumbnailView.m */; };
-		573E35A019227F1200C67671 /* QBImagePickerController.strings in Resources */ = {isa = PBXBuildFile; fileRef = 573E359419227F1200C67671 /* QBImagePickerController.strings */; };
 		573E35F81922847200C67671 /* NSString+JSMessagesView.m in Sources */ = {isa = PBXBuildFile; fileRef = 573E35A61922847200C67671 /* NSString+JSMessagesView.m */; };
 		573E35F91922847200C67671 /* UIColor+JSMessagesView.m in Sources */ = {isa = PBXBuildFile; fileRef = 573E35A81922847200C67671 /* UIColor+JSMessagesView.m */; };
 		573E35FA1922847200C67671 /* UIImage+JSMessagesView.m in Sources */ = {isa = PBXBuildFile; fileRef = 573E35AA1922847200C67671 /* UIImage+JSMessagesView.m */; };
@@ -227,6 +217,16 @@
 		57708C0219F23CD300D6ACE7 /* tab-account@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57708C0119F23CD300D6ACE7 /* tab-account@2x.png */; };
 		5775EA1217476FAD000A1765 /* SeafActivityViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5775EA0F17476FAD000A1765 /* SeafActivityViewController.m */; };
 		5779C7BC171088D900307C36 /* view_markdown.html in Resources */ = {isa = PBXBuildFile; fileRef = 5779C7B0171088D900307C36 /* view_markdown.html */; };
+		577AA0A419F8119A007D7CE1 /* QBAssetsCollectionCheckmarkView.m in Sources */ = {isa = PBXBuildFile; fileRef = 577AA08F19F8119A007D7CE1 /* QBAssetsCollectionCheckmarkView.m */; };
+		577AA0A519F8119A007D7CE1 /* QBAssetsCollectionFooterView.m in Sources */ = {isa = PBXBuildFile; fileRef = 577AA09119F8119A007D7CE1 /* QBAssetsCollectionFooterView.m */; };
+		577AA0A619F8119A007D7CE1 /* QBAssetsCollectionOverlayView.m in Sources */ = {isa = PBXBuildFile; fileRef = 577AA09319F8119A007D7CE1 /* QBAssetsCollectionOverlayView.m */; };
+		577AA0A719F8119A007D7CE1 /* QBAssetsCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 577AA09519F8119A007D7CE1 /* QBAssetsCollectionViewCell.m */; };
+		577AA0A819F8119A007D7CE1 /* QBAssetsCollectionViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 577AA09719F8119A007D7CE1 /* QBAssetsCollectionViewController.m */; };
+		577AA0A919F8119A007D7CE1 /* QBAssetsCollectionViewLayout.m in Sources */ = {isa = PBXBuildFile; fileRef = 577AA09919F8119A007D7CE1 /* QBAssetsCollectionViewLayout.m */; };
+		577AA0AA19F8119A007D7CE1 /* QBImagePickerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 577AA09B19F8119A007D7CE1 /* QBImagePickerController.m */; };
+		577AA0AB19F8119A007D7CE1 /* QBImagePickerGroupCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 577AA09D19F8119A007D7CE1 /* QBImagePickerGroupCell.m */; };
+		577AA0AC19F8119A007D7CE1 /* QBImagePickerThumbnailView.m in Sources */ = {isa = PBXBuildFile; fileRef = 577AA09F19F8119A007D7CE1 /* QBImagePickerThumbnailView.m */; };
+		577AA0AD19F8119A007D7CE1 /* QBImagePickerController.strings in Resources */ = {isa = PBXBuildFile; fileRef = 577AA0A119F8119A007D7CE1 /* QBImagePickerController.strings */; };
 		577B6C6216AAD241008E82C2 /* tab-star.png in Resources */ = {isa = PBXBuildFile; fileRef = 577B6C6016AAD241008E82C2 /* tab-star.png */; };
 		577B6C6616AADBA3008E82C2 /* SeafCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 577B6C6416AADBA3008E82C2 /* SeafCell.m */; };
 		5782EE6D1734F3A300A76338 /* bg.png in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE641734F3A200A76338 /* bg.png */; };
@@ -473,26 +473,6 @@
 		5739703C165800810089F32F /* text.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = text.png; sourceTree = "<group>"; };
 		5739703E1658008A0089F32F /* text-directory.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "text-directory.png"; sourceTree = "<group>"; };
 		57397040165801EE0089F32F /* text-directory-documents.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "text-directory-documents.png"; sourceTree = "<group>"; };
-		573E358119227F1200C67671 /* QBAssetsCollectionCheckmarkView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QBAssetsCollectionCheckmarkView.h; sourceTree = "<group>"; };
-		573E358219227F1200C67671 /* QBAssetsCollectionCheckmarkView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QBAssetsCollectionCheckmarkView.m; sourceTree = "<group>"; };
-		573E358319227F1200C67671 /* QBAssetsCollectionFooterView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QBAssetsCollectionFooterView.h; sourceTree = "<group>"; };
-		573E358419227F1200C67671 /* QBAssetsCollectionFooterView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QBAssetsCollectionFooterView.m; sourceTree = "<group>"; };
-		573E358519227F1200C67671 /* QBAssetsCollectionOverlayView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QBAssetsCollectionOverlayView.h; sourceTree = "<group>"; };
-		573E358619227F1200C67671 /* QBAssetsCollectionOverlayView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QBAssetsCollectionOverlayView.m; sourceTree = "<group>"; };
-		573E358719227F1200C67671 /* QBAssetsCollectionViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QBAssetsCollectionViewCell.h; sourceTree = "<group>"; };
-		573E358819227F1200C67671 /* QBAssetsCollectionViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QBAssetsCollectionViewCell.m; sourceTree = "<group>"; };
-		573E358919227F1200C67671 /* QBAssetsCollectionViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QBAssetsCollectionViewController.h; sourceTree = "<group>"; };
-		573E358A19227F1200C67671 /* QBAssetsCollectionViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QBAssetsCollectionViewController.m; sourceTree = "<group>"; };
-		573E358B19227F1200C67671 /* QBAssetsCollectionViewLayout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QBAssetsCollectionViewLayout.h; sourceTree = "<group>"; };
-		573E358C19227F1200C67671 /* QBAssetsCollectionViewLayout.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QBAssetsCollectionViewLayout.m; sourceTree = "<group>"; };
-		573E358D19227F1200C67671 /* QBImagePickerController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QBImagePickerController.h; sourceTree = "<group>"; };
-		573E358E19227F1200C67671 /* QBImagePickerController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QBImagePickerController.m; sourceTree = "<group>"; };
-		573E358F19227F1200C67671 /* QBImagePickerGroupCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QBImagePickerGroupCell.h; sourceTree = "<group>"; };
-		573E359019227F1200C67671 /* QBImagePickerGroupCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QBImagePickerGroupCell.m; sourceTree = "<group>"; };
-		573E359119227F1200C67671 /* QBImagePickerThumbnailView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QBImagePickerThumbnailView.h; sourceTree = "<group>"; };
-		573E359219227F1200C67671 /* QBImagePickerThumbnailView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QBImagePickerThumbnailView.m; sourceTree = "<group>"; };
-		573E359519227F1200C67671 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/QBImagePickerController.strings; sourceTree = "<group>"; };
-		573E359619227F1200C67671 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/QBImagePickerController.strings; sourceTree = "<group>"; };
 		573E35A51922847200C67671 /* NSString+JSMessagesView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+JSMessagesView.h"; sourceTree = "<group>"; };
 		573E35A61922847200C67671 /* NSString+JSMessagesView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+JSMessagesView.m"; sourceTree = "<group>"; };
 		573E35A71922847200C67671 /* UIColor+JSMessagesView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIColor+JSMessagesView.h"; sourceTree = "<group>"; };
@@ -645,6 +625,26 @@
 		5775EA0E17476FAD000A1765 /* SeafActivityViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafActivityViewController.h; sourceTree = "<group>"; };
 		5775EA0F17476FAD000A1765 /* SeafActivityViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafActivityViewController.m; sourceTree = "<group>"; };
 		5779C7B0171088D900307C36 /* view_markdown.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = view_markdown.html; path = htmls/view_markdown.html; sourceTree = SOURCE_ROOT; };
+		577AA08E19F8119A007D7CE1 /* QBAssetsCollectionCheckmarkView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QBAssetsCollectionCheckmarkView.h; sourceTree = "<group>"; };
+		577AA08F19F8119A007D7CE1 /* QBAssetsCollectionCheckmarkView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QBAssetsCollectionCheckmarkView.m; sourceTree = "<group>"; };
+		577AA09019F8119A007D7CE1 /* QBAssetsCollectionFooterView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QBAssetsCollectionFooterView.h; sourceTree = "<group>"; };
+		577AA09119F8119A007D7CE1 /* QBAssetsCollectionFooterView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QBAssetsCollectionFooterView.m; sourceTree = "<group>"; };
+		577AA09219F8119A007D7CE1 /* QBAssetsCollectionOverlayView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QBAssetsCollectionOverlayView.h; sourceTree = "<group>"; };
+		577AA09319F8119A007D7CE1 /* QBAssetsCollectionOverlayView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QBAssetsCollectionOverlayView.m; sourceTree = "<group>"; };
+		577AA09419F8119A007D7CE1 /* QBAssetsCollectionViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QBAssetsCollectionViewCell.h; sourceTree = "<group>"; };
+		577AA09519F8119A007D7CE1 /* QBAssetsCollectionViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QBAssetsCollectionViewCell.m; sourceTree = "<group>"; };
+		577AA09619F8119A007D7CE1 /* QBAssetsCollectionViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QBAssetsCollectionViewController.h; sourceTree = "<group>"; };
+		577AA09719F8119A007D7CE1 /* QBAssetsCollectionViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QBAssetsCollectionViewController.m; sourceTree = "<group>"; };
+		577AA09819F8119A007D7CE1 /* QBAssetsCollectionViewLayout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QBAssetsCollectionViewLayout.h; sourceTree = "<group>"; };
+		577AA09919F8119A007D7CE1 /* QBAssetsCollectionViewLayout.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QBAssetsCollectionViewLayout.m; sourceTree = "<group>"; };
+		577AA09A19F8119A007D7CE1 /* QBImagePickerController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QBImagePickerController.h; sourceTree = "<group>"; };
+		577AA09B19F8119A007D7CE1 /* QBImagePickerController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QBImagePickerController.m; sourceTree = "<group>"; };
+		577AA09C19F8119A007D7CE1 /* QBImagePickerGroupCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QBImagePickerGroupCell.h; sourceTree = "<group>"; };
+		577AA09D19F8119A007D7CE1 /* QBImagePickerGroupCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QBImagePickerGroupCell.m; sourceTree = "<group>"; };
+		577AA09E19F8119A007D7CE1 /* QBImagePickerThumbnailView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QBImagePickerThumbnailView.h; sourceTree = "<group>"; };
+		577AA09F19F8119A007D7CE1 /* QBImagePickerThumbnailView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QBImagePickerThumbnailView.m; sourceTree = "<group>"; };
+		577AA0A219F8119A007D7CE1 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/QBImagePickerController.strings; sourceTree = "<group>"; };
+		577AA0A319F8119A007D7CE1 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/QBImagePickerController.strings; sourceTree = "<group>"; };
 		577B6C6016AAD241008E82C2 /* tab-star.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-star.png"; sourceTree = "<group>"; };
 		577B6C6316AADBA3008E82C2 /* SeafCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafCell.h; sourceTree = "<group>"; };
 		577B6C6416AADBA3008E82C2 /* SeafCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafCell.m; sourceTree = "<group>"; };
@@ -972,8 +972,8 @@
 		57094B5515B9AC4A00F48C08 /* libs */ = {
 			isa = PBXGroup;
 			children = (
+				577AA08D19F8119A007D7CE1 /* QBImagePickerController */,
 				573E35A21922847200C67671 /* JSMessagesViewController */,
-				573E358019227F1200C67671 /* QBImagePickerController */,
 				576B98FA1861411700A16ED6 /* EGOTextView */,
 				5725186417AEA6E90078CD12 /* libcrypto.a */,
 				5732A934177894E700D806C7 /* REComposeViewController */,
@@ -1203,41 +1203,6 @@
 				573970001657F8BF0089F32F /* video.png */,
 			);
 			path = Icons;
-			sourceTree = "<group>";
-		};
-		573E358019227F1200C67671 /* QBImagePickerController */ = {
-			isa = PBXGroup;
-			children = (
-				573E358119227F1200C67671 /* QBAssetsCollectionCheckmarkView.h */,
-				573E358219227F1200C67671 /* QBAssetsCollectionCheckmarkView.m */,
-				573E358319227F1200C67671 /* QBAssetsCollectionFooterView.h */,
-				573E358419227F1200C67671 /* QBAssetsCollectionFooterView.m */,
-				573E358519227F1200C67671 /* QBAssetsCollectionOverlayView.h */,
-				573E358619227F1200C67671 /* QBAssetsCollectionOverlayView.m */,
-				573E358719227F1200C67671 /* QBAssetsCollectionViewCell.h */,
-				573E358819227F1200C67671 /* QBAssetsCollectionViewCell.m */,
-				573E358919227F1200C67671 /* QBAssetsCollectionViewController.h */,
-				573E358A19227F1200C67671 /* QBAssetsCollectionViewController.m */,
-				573E358B19227F1200C67671 /* QBAssetsCollectionViewLayout.h */,
-				573E358C19227F1200C67671 /* QBAssetsCollectionViewLayout.m */,
-				573E358D19227F1200C67671 /* QBImagePickerController.h */,
-				573E358E19227F1200C67671 /* QBImagePickerController.m */,
-				573E358F19227F1200C67671 /* QBImagePickerGroupCell.h */,
-				573E359019227F1200C67671 /* QBImagePickerGroupCell.m */,
-				573E359119227F1200C67671 /* QBImagePickerThumbnailView.h */,
-				573E359219227F1200C67671 /* QBImagePickerThumbnailView.m */,
-				573E359319227F1200C67671 /* Resources */,
-			);
-			name = QBImagePickerController;
-			path = QBImagePickerController/QBImagePickerController;
-			sourceTree = "<group>";
-		};
-		573E359319227F1200C67671 /* Resources */ = {
-			isa = PBXGroup;
-			children = (
-				573E359419227F1200C67671 /* QBImagePickerController.strings */,
-			);
-			path = Resources;
 			sourceTree = "<group>";
 		};
 		573E35A21922847200C67671 /* JSMessagesViewController */ = {
@@ -1500,6 +1465,41 @@
 				576D89EA15E39ED700F2BD17 /* grayArrow@2x.png */,
 				576D89EB15E39ED700F2BD17 /* whiteArrow.png */,
 				576D89EC15E39ED700F2BD17 /* whiteArrow@2x.png */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		577AA08D19F8119A007D7CE1 /* QBImagePickerController */ = {
+			isa = PBXGroup;
+			children = (
+				577AA08E19F8119A007D7CE1 /* QBAssetsCollectionCheckmarkView.h */,
+				577AA08F19F8119A007D7CE1 /* QBAssetsCollectionCheckmarkView.m */,
+				577AA09019F8119A007D7CE1 /* QBAssetsCollectionFooterView.h */,
+				577AA09119F8119A007D7CE1 /* QBAssetsCollectionFooterView.m */,
+				577AA09219F8119A007D7CE1 /* QBAssetsCollectionOverlayView.h */,
+				577AA09319F8119A007D7CE1 /* QBAssetsCollectionOverlayView.m */,
+				577AA09419F8119A007D7CE1 /* QBAssetsCollectionViewCell.h */,
+				577AA09519F8119A007D7CE1 /* QBAssetsCollectionViewCell.m */,
+				577AA09619F8119A007D7CE1 /* QBAssetsCollectionViewController.h */,
+				577AA09719F8119A007D7CE1 /* QBAssetsCollectionViewController.m */,
+				577AA09819F8119A007D7CE1 /* QBAssetsCollectionViewLayout.h */,
+				577AA09919F8119A007D7CE1 /* QBAssetsCollectionViewLayout.m */,
+				577AA09A19F8119A007D7CE1 /* QBImagePickerController.h */,
+				577AA09B19F8119A007D7CE1 /* QBImagePickerController.m */,
+				577AA09C19F8119A007D7CE1 /* QBImagePickerGroupCell.h */,
+				577AA09D19F8119A007D7CE1 /* QBImagePickerGroupCell.m */,
+				577AA09E19F8119A007D7CE1 /* QBImagePickerThumbnailView.h */,
+				577AA09F19F8119A007D7CE1 /* QBImagePickerThumbnailView.m */,
+				577AA0A019F8119A007D7CE1 /* Resources */,
+			);
+			name = QBImagePickerController;
+			path = QBImagePickerController/QBImagePickerController;
+			sourceTree = "<group>";
+		};
+		577AA0A019F8119A007D7CE1 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				577AA0A119F8119A007D7CE1 /* QBImagePickerController.strings */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -1784,6 +1784,7 @@
 				57A07DD418B4CB0200AF543F /* SeafTextEditorViewController_iPhone.xib in Resources */,
 				57BFAAF118BD8EA200EB1B5C /* bt-bold2.png in Resources */,
 				57943C0919F027D5008423E5 /* editfile2@2x.png in Resources */,
+				577AA0AD19F8119A007D7CE1 /* QBImagePickerController.strings in Resources */,
 				57BFAB1118BD8EA200EB1B5C /* bt-strikethrough2.png in Resources */,
 				57943C0A19F027D5008423E5 /* ellipsis@2x.png in Resources */,
 				576B99131861411700A16ED6 /* magnifier-ranged-lo-stemless@2x.png in Resources */,
@@ -1815,7 +1816,6 @@
 				571D8DA91677881400F1A22C /* application-vnd.ms-powerpoint.png in Resources */,
 				571D8DAA1677881400F1A22C /* application-vnd.ms-excel.png in Resources */,
 				573E360D1922847200C67671 /* bubble-classic-green@2x.png in Resources */,
-				573E35A019227F1200C67671 /* QBImagePickerController.strings in Resources */,
 				57BFAB1418BD8EA200EB1B5C /* bt-underline.png in Resources */,
 				573E36171922847200C67671 /* bubble-classic-square-selected@2x.png in Resources */,
 				57BFAAFC18BD8EA200EB1B5C /* bt-italic.png in Resources */,
@@ -1938,43 +1938,44 @@
 			buildActionMask = 2147483647;
 			files = (
 				571D8CAB1677881400F1A22C /* main.m in Sources */,
-				573E359819227F1200C67671 /* QBAssetsCollectionFooterView.m in Sources */,
 				571D8CAC1677881400F1A22C /* SeafAppDelegate.m in Sources */,
 				57535230198CD4E0000BE07B /* MWTapDetectingImageView.m in Sources */,
 				571D8CAD1677881400F1A22C /* SeafFileViewController.m in Sources */,
 				5796D03F18F78FCD00D5AE39 /* SeafAvatar.m in Sources */,
 				5732065C18EB16F4003250DE /* AFNetworkActivityIndicatorManager.m in Sources */,
-				573E359C19227F1200C67671 /* QBAssetsCollectionViewLayout.m in Sources */,
 				573E36041922847200C67671 /* JSMessageTableView.m in Sources */,
-				573E359919227F1200C67671 /* QBAssetsCollectionOverlayView.m in Sources */,
-				573E359719227F1200C67671 /* QBAssetsCollectionCheckmarkView.m in Sources */,
-				573E359F19227F1200C67671 /* QBImagePickerThumbnailView.m in Sources */,
 				571D8CB01677881400F1A22C /* AFHTTPRequestOperation.m in Sources */,
+				577AA0A719F8119A007D7CE1 /* QBAssetsCollectionViewCell.m in Sources */,
 				573E35F91922847200C67671 /* UIColor+JSMessagesView.m in Sources */,
-				573E359A19227F1200C67671 /* QBAssetsCollectionViewCell.m in Sources */,
 				571D8CB61677881400F1A22C /* AFURLConnectionOperation.m in Sources */,
 				5732064718EB11CA003250DE /* AFURLRequestSerialization.m in Sources */,
 				571D8CB91677881400F1A22C /* SeafConnection.m in Sources */,
 				571D8CBA1677881400F1A22C /* SeafDir.m in Sources */,
 				571D8CBB1677881400F1A22C /* SeafBase.m in Sources */,
+				577AA0A619F8119A007D7CE1 /* QBAssetsCollectionOverlayView.m in Sources */,
 				571D8CBC1677881400F1A22C /* SeafJSONRequestOperation.m in Sources */,
+				577AA0A419F8119A007D7CE1 /* QBAssetsCollectionCheckmarkView.m in Sources */,
 				571D8CBD1677881400F1A22C /* SeafRepos.m in Sources */,
 				571D8CBE1677881400F1A22C /* SeafData.m in Sources */,
+				577AA0A919F8119A007D7CE1 /* QBAssetsCollectionViewLayout.m in Sources */,
 				571D8CBF1677881400F1A22C /* StartViewController.m in Sources */,
 				571D8CC21677881400F1A22C /* FileSizeFormatter.m in Sources */,
 				571D8CC31677881400F1A22C /* EGORefreshTableHeaderView.m in Sources */,
+				577AA0AB19F8119A007D7CE1 /* QBImagePickerGroupCell.m in Sources */,
 				571D8CC61677881400F1A22C /* SeafDateFormatter.m in Sources */,
 				573E36031922847200C67671 /* JSMessagesViewController.m in Sources */,
 				5732066018EB16F4003250DE /* UIImageView+AFNetworking.m in Sources */,
 				573E36051922847200C67671 /* JSMessageTextView.m in Sources */,
 				571D8CC71677881400F1A22C /* ExtentedString.m in Sources */,
+				577AA0AA19F8119A007D7CE1 /* QBImagePickerController.m in Sources */,
 				573E35F81922847200C67671 /* NSString+JSMessagesView.m in Sources */,
 				573E35FB1922847200C67671 /* JSAvatarImageFactory.m in Sources */,
+				577AA0AC19F8119A007D7CE1 /* QBImagePickerThumbnailView.m in Sources */,
 				571D8CC91677881400F1A22C /* FailToPreview.m in Sources */,
 				571D8CCA1677881400F1A22C /* UIViewController+Extend.m in Sources */,
-				573E359E19227F1200C67671 /* QBImagePickerGroupCell.m in Sources */,
 				5732064618EB11CA003250DE /* AFSecurityPolicy.m in Sources */,
 				5732065D18EB16F4003250DE /* UIActivityIndicatorView+AFNetworking.m in Sources */,
+				577AA0A819F8119A007D7CE1 /* QBAssetsCollectionViewController.m in Sources */,
 				571D8CCB1677881400F1A22C /* DownloadingProgressView.m in Sources */,
 				571D8CCD1677881400F1A22C /* Utils.m in Sources */,
 				5732065F18EB16F4003250DE /* UIButton+AFNetworking.m in Sources */,
@@ -1992,20 +1993,19 @@
 				571D8CD71677881400F1A22C /* UIImage+FileType.m in Sources */,
 				571D8CD81677881400F1A22C /* seafile.xcdatamodeld in Sources */,
 				573E35FE1922847200C67671 /* JSBubbleView.m in Sources */,
-				573E359D19227F1200C67671 /* QBImagePickerController.m in Sources */,
 				573E36001922847200C67671 /* JSMessage.m in Sources */,
 				571D8CD91677881400F1A22C /* SKFileTypeImageLoader.m in Sources */,
 				571D8CDA1677881400F1A22C /* SVProgressHUD.m in Sources */,
 				573E35FF1922847200C67671 /* JSDismissiveTextView.m in Sources */,
 				571D8CDB1677881400F1A22C /* SeafFile.m in Sources */,
 				5732064818EB11CA003250DE /* AFURLResponseSerialization.m in Sources */,
-				573E359B19227F1200C67671 /* QBAssetsCollectionViewController.m in Sources */,
 				5732065E18EB16F4003250DE /* UIAlertView+AFNetworking.m in Sources */,
 				576B99071861411700A16ED6 /* EGOTextView.m in Sources */,
 				570DFAC716A15D0100ADD5F2 /* SeafAccountViewController.m in Sources */,
 				570DFAD016A1EA1B00ADD5F2 /* SeafStartHeaderView.m in Sources */,
 				576328BE190032EE009EBCB8 /* SeafMessageCell.m in Sources */,
 				5795F49B16A7266F00FF90E3 /* SeafAccountCell.m in Sources */,
+				577AA0A519F8119A007D7CE1 /* QBAssetsCollectionFooterView.m in Sources */,
 				577B6C6616AADBA3008E82C2 /* SeafCell.m in Sources */,
 				57DA26F5173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */,
 				5732066118EB16F4003250DE /* UIProgressView+AFNetworking.m in Sources */,
@@ -2044,15 +2044,6 @@
 				570AE68A187CFC66002CCDE9 /* Base */,
 			);
 			name = FailToPreview_iPhone.xib;
-			sourceTree = "<group>";
-		};
-		573E359419227F1200C67671 /* QBImagePickerController.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				573E359519227F1200C67671 /* en */,
-				573E359619227F1200C67671 /* ja */,
-			);
-			name = QBImagePickerController.strings;
 			sourceTree = "<group>";
 		};
 		57532BDB18689503003D564B /* SeafStartHeaderView.xib */ = {
@@ -2175,6 +2166,15 @@
 				576FFDB9186AAC80009BB81A /* Base */,
 			);
 			name = SeafUploadingFileCell.xib;
+			sourceTree = "<group>";
+		};
+		577AA0A119F8119A007D7CE1 /* QBImagePickerController.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				577AA0A219F8119A007D7CE1 /* en */,
+				577AA0A319F8119A007D7CE1 /* ja */,
+			);
+			name = QBImagePickerController.strings;
 			sourceTree = "<group>";
 		};
 		57A07DD218B4CB0200AF543F /* SeafTextEditorViewController_iPhone.xib */ = {

@@ -750,7 +750,8 @@ enum PREVIEW_STATE {
     } else {
         NSString *title = [actionSheet buttonTitleAtIndex:bIndex];
         if ([NSLocalizedString(@"Open elsewhere...", @"Seafile") isEqualToString:title]) {
-            [self openElsewhere];
+            [self.actionSheet dismissWithClickedButtonIndex:0 animated:NO];
+            [self performSelector:@selector(openElsewhere) withObject:nil afterDelay:0.0f];
         } else if ([NSLocalizedString(@"Save to album", @"Seafile") isEqualToString:title]) {
             UIImage *img = [UIImage imageWithContentsOfFile:file.previewItemURL.path];
             UIImageWriteToSavedPhotosAlbum(img, self, @selector(thisImage:hasBeenSavedInPhotoAlbumWithError:usingContextInfo:), (void *)CFBridgingRetain(file));

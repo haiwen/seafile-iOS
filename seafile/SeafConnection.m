@@ -682,14 +682,19 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return [self.rootFolder getRepo:repo];
 }
 
-- (SeafUploadFile *)getUploadfile:(NSString *)lpath
+- (SeafUploadFile *)getUploadfile:(NSString *)lpath create:(bool)create
 {
     SeafUploadFile *ufile = [self.uploadFiles objectForKey:lpath];
-    if (!ufile) {
+    if (!ufile && create) {
         ufile = [[SeafUploadFile alloc] initWithPath:lpath];
         [self.uploadFiles setObject:ufile forKey:lpath];
     }
     return ufile;
+}
+
+- (SeafUploadFile *)getUploadfile:(NSString *)lpath
+{
+    return [self getUploadfile:lpath create:true];
 }
 
 - (void)removeUploadfile:(SeafUploadFile *)ufile
@@ -820,7 +825,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     Debug("Current %lu photos need to upload, _syncDir=%@", (unsigned long)self.photosArray.count, _syncDir);
-    while(self.photosArray && self.photosArray.count > 0 && appdelegate.uploadnum < 10) {
+    while(self.photosArray && self.photosArray.count > 0 && appdelegate.uploadnum < 5) {
         NSURL *url = [self.photosArray objectAtIndex:0];
         [self.photosArray removeObject:url];
         [_uploadingArray addObject:url];
@@ -829,6 +834,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                      NSString *filename = asset.defaultRepresentation.filename;
                      NSString *path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
                      SeafUploadFile *file = [self getUploadfile:path];
+                     file.autoSync = true;
                      file.asset = asset;
                      [_syncDir addUploadFile:file];
                      Debug("Add file %@ to upload list: %@", filename, dir);
