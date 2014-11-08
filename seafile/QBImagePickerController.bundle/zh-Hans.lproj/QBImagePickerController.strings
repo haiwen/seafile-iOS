@@ -1,0 +1,28 @@
+
+
+/* QBImagePickerController */
+"title" = "图片";
+
+/* QBImagePickerController */
+"format_photo" = "%ld 张图片";
+
+/* QBImagePickerController */
+"format_photos" = "%ld 张图片";
+
+/* QBImagePickerController */
+"format_video" = "%ld 个视频";
+
+/* QBImagePickerController */
+"format_videos" = "%ld 个视频";
+
+/* QBImagePickerController */
+"format_photo_and_video" = "%ld 张图片，%ld 个视频";
+
+/* QBImagePickerController */
+"format_photos_and_video" = "%ld 张图片，%ld 个视频";
+
+/* QBImagePickerController */
+"format_photo_and_videos" = "%ld 张图片，%ld 个视频";
+
+/* QBImagePickerController */
+"format_photos_and_videos" = "%ld 张图片，%ld 个视频";

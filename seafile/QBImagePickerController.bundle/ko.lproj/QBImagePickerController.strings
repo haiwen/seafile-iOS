@@ -1,0 +1,28 @@
+
+
+/* QBImagePickerController */
+"title" = "Photos";
+
+/* QBImagePickerController */
+"format_photo" = "%ld Photo";
+
+/* QBImagePickerController */
+"format_photos" = "%ld Photos";
+
+/* QBImagePickerController */
+"format_video" = "%ld Video";
+
+/* QBImagePickerController */
+"format_videos" = "%ld Videos";
+
+/* QBImagePickerController */
+"format_photo_and_video" = "%ld Photo, %ld Video";
+
+/* QBImagePickerController */
+"format_photos_and_video" = "%ld Photos, %ld Video";
+
+/* QBImagePickerController */
+"format_photo_and_videos" = "%ld Photo, %ld Videos";
+
+/* QBImagePickerController */
+"format_photos_and_videos" = "%ld Photos, %ld Videos";

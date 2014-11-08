@@ -1,0 +1,28 @@
+
+
+/* QBImagePickerController */
+"title" = "アルバム";
+
+/* QBImagePickerController */
+"format_photo" = "写真: %ld枚";
+
+/* QBImagePickerController */
+"format_photos" = "写真: %ld枚";
+
+/* QBImagePickerController */
+"format_video" = "ビデオ: %ld本";
+
+/* QBImagePickerController */
+"format_videos" = "ビデオ: %ld本";
+
+/* QBImagePickerController */
+"format_photo_and_video" = "写真: %ld枚、ビデオ%ld本";
+
+/* QBImagePickerController */
+"format_photos_and_video" = "写真: %ld枚、ビデオ%ld本";
+
+/* QBImagePickerController */
+"format_photo_and_videos" = "写真: %ld枚、ビデオ%ld本";
+
+/* QBImagePickerController */
+"format_photos_and_videos" = "写真: %ld枚、ビデオ%ld本";

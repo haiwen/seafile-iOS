@@ -38,6 +38,7 @@ enum {
     STATE_SHARE_EMAIL,
     STATE_SHARE_LINK,
 };
+
 #define S_PASSWORD NSLocalizedString(@"Password of this library", @"Seafile")
 #define S_MKDIR NSLocalizedString(@"New Folder", @"Seafile")
 #define S_NEWFILE NSLocalizedString(@"New File", @"Seafile")
@@ -1188,8 +1189,6 @@ enum {
 - (void)uploadPickedAssets:(NSArray *)assets
 {
     NSMutableArray *files = [[NSMutableArray alloc] init];
-    NSMutableArray *paths = [[NSMutableArray alloc] init];
-    NSString *path;
     NSString *date = [self.formatter stringFromDate:[NSDate date]];
     for (ALAsset *asset in assets) {
         NSString *filename = asset.defaultRepresentation.filename;
@@ -1198,8 +1197,7 @@ enum {
             NSString *ext = filename.pathExtension;
             filename = [NSString stringWithFormat:@"%@-%@.%@", name, date, ext];
         }
-        path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
-        [paths addObject:path];
+        NSString *path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
         SeafUploadFile *file =  [self.connection getUploadfile:path];
         file.asset = asset;
         file.delegate = self;
@@ -1227,36 +1225,9 @@ enum {
     [self dismissImagePickerController:imagePickerController];
 }
 
-- (void)transformAndUploadAssets:(NSArray *)arr
+- (void)imagePickerController:(QBImagePickerController *)imagePickerController didSelectAssetsUrl:(NSArray *)assets
 {
-    // Load assets from URLs
-    __block NSMutableArray *assets = [NSMutableArray array];
-
-    for (ALAsset *asset in arr) {
-        NSURL *selectedAssetURL = asset.defaultRepresentation.url;
-        [[SeafAppDelegate assetsLibrary] assetForURL:selectedAssetURL
-                                         resultBlock:^(ALAsset *asset) {
-                                             // Add asset
-                                             [assets addObject:asset];
-                                             // Check if the loading finished
-                                             if (assets.count == arr.count) {
-                                                 [self performSelector:@selector(uploadPickedAssets:) withObject:assets];
-                                             }
-                                         } failureBlock:^(NSError *error) {
-                                             Debug("Error: %@", [error localizedDescription]);
-                                         }];
-    }
-}
-
-- (void)imagePickerController:(QBImagePickerController *)imagePickerController didSelectAsset:(ALAsset *)asset
-{
-    [self transformAndUploadAssets:[NSArray arrayWithObject:asset]];
-    [self dismissImagePickerController:imagePickerController];
-}
-
-- (void)imagePickerController:(QBImagePickerController *)imagePickerController didSelectAssets:(NSArray *)assets
-{
-    [self transformAndUploadAssets:assets];
+    [self performSelector:@selector(uploadPickedAssets:) withObject:assets];
     [self dismissImagePickerController:imagePickerController];
 }
 
