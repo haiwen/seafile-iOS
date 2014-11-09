@@ -62,9 +62,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIMainStoryboardFile</key>
-	<string>FolderView_iPhone</string>
+	<string>SeafStart</string>
 	<key>UIMainStoryboardFile~ipad</key>
-	<string>FolderView_iPad</string>
+	<string>SeafStart</string>
 	<key>UIPrerenderedIcon</key>
 	<true/>
 	<key>UIRequiredDeviceCapabilities</key>

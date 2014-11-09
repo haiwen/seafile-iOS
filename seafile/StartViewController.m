@@ -22,14 +22,6 @@
 @implementation StartViewController
 @synthesize pressedIndex;
 
-
-- (id)init
-{
-    if (self = [super init]) {
-    }
-    return self;
-}
-
 - (void)saveAccount:(SeafConnection *)conn
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
@@ -240,11 +232,6 @@
     [self selectAccount:[appdelegate.conns objectAtIndex:indexPath.row]];
 }
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    return IsIpad() || (interfaceOrientation == UIInterfaceOrientationPortrait);
-}
-
 #pragma mark - UIActionSheetDelegate
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
 {
@@ -321,6 +308,21 @@
 - (IBAction)goToDefaultBtclicked:(id)sender
 {
     [self goToDefaultAccount];
+}
+
+- (BOOL)shouldAutorotate
+{
+    return IsIpad();
+}
+
+- (NSUInteger)supportedInterfaceOrientations
+{
+    return (UIInterfaceOrientationMaskAll);
+}
+
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
+{
+    return IsIpad() || (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
 
 @end

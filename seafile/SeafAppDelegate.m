@@ -149,11 +149,9 @@
     self.dfiles = [[NSMutableArray alloc] init];
     self.conns = [[NSMutableArray alloc] init];
     [self loadAccounts];
-    self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-    _startNav = [[UINavigationController alloc] initWithRootViewController:self.startVC];
 
-    self.window.rootViewController = _startNav;
-    [self.window makeKeyAndVisible];
+    _startNav = (UINavigationController *)self.window.rootViewController;
+    _startVC = (StartViewController *)_startNav.topViewController;
 
     [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"avatars"]];
     [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"certs"]];
@@ -406,7 +404,7 @@
 - (BOOL)tabBarController:(UITabBarController *)tabBarController shouldSelectViewController:(UIViewController *)viewController
 {
     if (IsIpad() && [self.viewControllers indexOfObject:viewController] == TABBED_ACCOUNTS) {
-        self.window.rootViewController = self.startNav;
+        self.window.rootViewController = _startNav;
         [self.window makeKeyAndVisible];
         return NO;
     }
@@ -747,7 +745,6 @@
 {
     return self.uploadnum + self.ufiles.count;
 }
-
 
 
 @end
