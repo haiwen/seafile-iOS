@@ -11,10 +11,8 @@
 #import "SeafRepos.h"
 
 #import "SeafFile.h"
-#import "SeafConnection.h"
-#import "SeafBase.h"
 #import "SeafUploadFile.h"
-#import "SeafAppDelegate.h"
+#import "SeafGlobal.h"
 
 #import "ExtentedString.h"
 #import "Utils.h"
@@ -200,9 +198,7 @@
 
 - (Directory *)loadCacheObj
 {
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    NSManagedObjectContext *context = [appdelegate managedObjectContext];
-
+    NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
     NSFetchRequest *fetchRequest=[[NSFetchRequest alloc] init];
     [fetchRequest setEntity:[NSEntityDescription entityForName:@"Directory"
                                         inManagedObjectContext:context]];
@@ -231,8 +227,7 @@
 
 - (BOOL)savetoCache:(NSString *)content
 {
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    NSManagedObjectContext *context = [appdelegate managedObjectContext];
+    NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
     Directory *dir = [self loadCacheObj];
     if (!dir) {
         dir = (Directory *)[NSEntityDescription insertNewObjectForEntityForName:@"Directory" inManagedObjectContext:context];
@@ -245,7 +240,7 @@
         dir.content = content;
         [context updatedObjects];
     }
-    [appdelegate saveContext];
+    [[SeafGlobal sharedObject] saveContext];
     return YES;
 }
 
@@ -258,8 +253,7 @@
     NSData *data = [NSData dataWithBytes:dir.content.UTF8String length:[dir.content lengthOfBytesUsingEncoding:NSUTF8StringEncoding]];
     id JSON = [Utils JSONDecode:data error:&error];
     if (error) {
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        NSManagedObjectContext *context = [appdelegate managedObjectContext];
+        NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
         [context deleteObject:dir];
         return NO;
     }
@@ -411,12 +405,12 @@
             } else {
                 NSURL *url = file.assetURL;
                 if (url && file.filesize == 0 && !file.asset) {
-                    [[SeafAppDelegate assetsLibrary] assetForURL:url
-                                                     resultBlock:^(ALAsset *asset) {
-                                                         file.asset = asset;
-                                                     }failureBlock:^(NSError *error) {
-                                                         [self removeUploadFile:file];
-                                                     }];
+                    [[[SeafGlobal sharedObject] assetsLibrary] assetForURL:url
+                                                               resultBlock:^(ALAsset *asset) {
+                                                                   file.asset = asset;
+                                                               }failureBlock:^(NSError *error) {
+                                                                   [self removeUploadFile:file];
+                                                               }];
                 }
 
             }

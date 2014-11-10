@@ -10,7 +10,6 @@
 #import "SeafRepos.h"
 #import "SeafDir.h"
 #import "SeafConnection.h"
-#import "SeafAppDelegate.h"
 #import "ExtentedString.h"
 #import "Debug.h"
 #import "Utils.h"

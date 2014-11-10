@@ -13,7 +13,6 @@
 #import "UIImage+FileType.h"
 #import "Utils.h"
 #import "Debug.h"
-#import "SeafAppDelegate.h"
 
 
 #define FONT_SIZE 12.0f

@@ -56,11 +56,11 @@ hex_to_rawdata (const char *hex_str, char *rawdata, int n_bytes)
     }
     return 0;
 }
+#include <openssl/evp.h>
 
 @implementation NSData (Encryption)
 
 
-#include <openssl/evp.h>
 
 + (int)deriveKey:(const char *)data_in inlen:(int)in_len version:(int)version key:(unsigned char *)key iv:(unsigned char *)iv
 {

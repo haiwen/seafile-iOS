@@ -17,7 +17,7 @@
 #import "SeafSettingsViewController.h"
 #import "SeafActivityViewController.h"
 #import "SeafDisMasterViewController.h"
-
+#import "SeafGlobal.h"
 
 enum {
     TABBED_SEAFILE = 0,
@@ -32,10 +32,6 @@ enum {
 @interface SeafAppDelegate : UIResponder <UIApplicationDelegate>
 @property (strong, nonatomic) UIWindow *window;
 
-@property (readonly, strong, nonatomic) NSManagedObjectContext *managedObjectContext;
-@property (readonly, strong, nonatomic) NSManagedObjectModel *managedObjectModel;
-@property (readonly, strong, nonatomic) NSPersistentStoreCoordinator *persistentStoreCoordinator;
-
 @property (readonly) UINavigationController *startNav;
 @property (readonly) UITabBarController *tabbarController;
 
@@ -47,12 +43,9 @@ enum {
 @property (readonly) SeafDisMasterViewController *discussVC;
 @property (readonly) MFMailComposeViewController *globalMailComposer;
 @property (readonly) NSData *deviceToken;
-@property (readonly) ALAssetsLibrary *assetsLibrary;
 
 
-@property (retain) NSMutableArray *conns;
-@property (readwrite) SeafConnection *connection;
-
+- (void)selectAccount:(SeafConnection *)conn;
 
 - (UINavigationController *)masterNavController:(int)index;
 - (UIViewController *)detailViewControllerAtIndex:(int)index;
@@ -61,28 +54,7 @@ enum {
 - (void)cycleTheGlobalMailComposer;
 - (SeafDisDetailViewController *)msgDetailView;
 
-- (void)saveContext;
-- (NSURL *)applicationDocumentsDirectory;
 - (BOOL)checkNetworkStatus;
-- (void)deleteAllObjects: (NSString *) entityDescription;
-
-+ (void)incDownloadnum;
-+ (void)decDownloadnum;
-+ (void)incUploadnum;
-
-+ (void)finishDownload:(id<SeafDownloadDelegate>) file result:(BOOL)result;
-+ (void)finishUpload:(SeafUploadFile *) file result:(BOOL)result;
-
-+ (void)backgroundUpload:(SeafUploadFile *)file;
-+ (void)backgroundDownload:(id<SeafDownloadDelegate>)file;
-+ (void)removeBackgroundUpload:(SeafUploadFile *)file;
-
-+ (ALAssetsLibrary *)assetsLibrary;
-
 - (void)checkIconBadgeNumber;
-- (void)saveAccounts;
-- (SeafConnection *)getConnection:(NSString *)url username:(NSString *)username;
-
-- (int)uploadingnum;
 
 @end

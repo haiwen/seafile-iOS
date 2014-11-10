@@ -7,7 +7,8 @@
 //
 
 #import "SeafAvatar.h"
-#import "SeafAppDelegate.h"
+#import "SeafGlobal.h"
+#import "SeafBase.h"
 
 #import "ExtentedString.h"
 #import "Utils.h"
@@ -76,27 +77,27 @@ static NSMutableDictionary *avatarAttrs = nil;
 }
 - (void)download
 {
-    [SeafAppDelegate incDownloadnum];
+    [SeafGlobal.sharedObject incDownloadnum];
     [self.connection sendRequest:self.avatarUrl success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          if (![JSON isKindOfClass:[NSDictionary class]]) {
-             [SeafAppDelegate finishDownload:self result:NO];
+             [SeafGlobal.sharedObject finishDownload:self result:NO];
              return;
          }
          NSString *url = [JSON objectForKey:@"url"];
          if (!url) {
-             [SeafAppDelegate finishDownload:self result:NO];
+             [SeafGlobal.sharedObject finishDownload:self result:NO];
              return;
          }
          if([[JSON objectForKey:@"is_default"] integerValue]) {
              if ([[SeafAvatar avatarAttrs] objectForKey:self.path])
                  [[SeafAvatar avatarAttrs] removeObjectForKey:self.path];
-             [SeafAppDelegate finishDownload:self result:YES];
+             [SeafGlobal.sharedObject finishDownload:self result:YES];
              return;
          }
          if (![self modified:[[JSON objectForKey:@"mtime"] integerValue:0]]) {
              Debug("avatar not modified\n");
-             [SeafAppDelegate finishDownload:self result:YES];
+             [SeafGlobal.sharedObject finishDownload:self result:YES];
              return;
          }
          url = [[url stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding] escapedUrlPath];;
@@ -114,17 +115,17 @@ static NSMutableDictionary *avatarAttrs = nil;
              [attr setObject:[JSON objectForKey:@"mtime"] forKey:@"mtime"];
              [[SeafAvatar avatarAttrs] setObject:attr forKey:self.path];
              [SeafAvatar saveAvatarAttrs];
-             [SeafAppDelegate finishDownload:self result:YES];
+             [SeafGlobal.sharedObject finishDownload:self result:YES];
          } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
              Debug("url=%@, error=%@",downloadRequest.URL, [error localizedDescription]);
-             [SeafAppDelegate finishDownload:self result:NO];
+             [SeafGlobal.sharedObject finishDownload:self result:NO];
          }];
          [self.connection handleOperation:operation];
      }
               failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
          Warning("Failed to download avatar from %@, error=%@", request.URL, error);
-         [SeafAppDelegate finishDownload:self result:NO];
+         [SeafGlobal.sharedObject finishDownload:self result:NO];
      }];
 }
 @end

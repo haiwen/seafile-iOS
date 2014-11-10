@@ -415,7 +415,7 @@ enum {
     for (SeafUploadFile *file in _directory.uploadItems) {
         file.delegate = self;
         if (!file.uploaded && !file.uploading) {
-            [SeafAppDelegate backgroundUpload:file];
+            [[SeafGlobal sharedObject] backgroundUpload:file];
         }
     }
 }
@@ -1124,7 +1124,7 @@ enum {
 
 - (void)backgroundUpload:(SeafUploadFile *)ufile
 {
-    [SeafAppDelegate backgroundUpload:ufile];
+    [[SeafGlobal sharedObject] backgroundUpload:ufile];
 }
 
 - (void)chooseUploadDir:(SeafDir *)dir file:(SeafUploadFile *)ufile replace:(BOOL)replace
@@ -1206,7 +1206,7 @@ enum {
     }
     [self.tableView reloadData];
     for (SeafUploadFile *file in files) {
-        [SeafAppDelegate backgroundUpload:file];
+        [[SeafGlobal sharedObject] backgroundUpload:file];
     }
 }
 

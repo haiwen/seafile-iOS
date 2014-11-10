@@ -24,22 +24,21 @@
 
 - (void)saveAccount:(SeafConnection *)conn
 {
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-
+    SeafGlobal *global = [SeafGlobal sharedObject];
     BOOL exist = NO;
-    if (![appdelegate.conns containsObject:conn]) {
-        for (int i = 0; i < appdelegate.conns.count; ++i) {
-            SeafConnection *c = appdelegate.conns[i];
+    if (![global.conns containsObject:conn]) {
+        for (int i = 0; i < global.conns.count; ++i) {
+            SeafConnection *c = global.conns[i];
             if ([c.address isEqual:conn.address] && [conn.username isEqual:c.username]) {
-                appdelegate.conns[i] = conn;
+                global.conns[i] = conn;
                 exist = YES;
                 break;
             }
         }
         if (!exist)
-            [appdelegate.conns addObject:conn];
+            [global.conns addObject:conn];
     }
-    [appdelegate saveAccounts];
+    [global saveAccounts];
     [self.tableView reloadData];
 }
 
@@ -93,12 +92,11 @@
 
 - (BOOL)checkLastAccount
 {
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     NSString *server = [userDefaults objectForKey:@"DEAULT-SERVER"];
     NSString *username = [userDefaults objectForKey:@"DEAULT-USER"];
     if (server && username) {
-        SeafConnection *connection = [appdelegate getConnection:server username:username];
+        SeafConnection *connection = [[SeafGlobal sharedObject] getConnection:server username:username];
         if (connection)
             return YES;
     }
@@ -163,8 +161,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    return appdelegate.conns.count;
+    return [[[SeafGlobal sharedObject] conns] count];
 }
 
 - (void)showEditMenu:(UILongPressGestureRecognizer *)gestureRecognizer
@@ -191,15 +188,13 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-
     NSString *CellIdentifier = @"SeafAccountCell";
     SeafAccountCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:CellIdentifier owner:self options:nil];
         cell = [cells objectAtIndex:0];
     }
-    SeafConnection *conn = [appdelegate.conns objectAtIndex:indexPath.row];
+    SeafConnection *conn = [[SeafGlobal sharedObject].conns objectAtIndex:indexPath.row];
     cell.imageview.image = [UIImage imageWithContentsOfFile:[conn avatarForEmail:conn.username]];
     cell.serverLabel.text = conn.address;
     cell.emailLabel.text = conn.username;
@@ -228,21 +223,19 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    [self selectAccount:[appdelegate.conns objectAtIndex:indexPath.row]];
+    [self selectAccount:[[SeafGlobal sharedObject].conns objectAtIndex:indexPath.row]];
 }
 
 #pragma mark - UIActionSheetDelegate
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
 {
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     if (pressedIndex) {// Long press account
         if (buttonIndex == 0) {
-            [self showAccountView:[appdelegate.conns objectAtIndex:pressedIndex.row] type:0];
+            [self showAccountView:[[SeafGlobal sharedObject].conns objectAtIndex:pressedIndex.row] type:0];
         } else if (buttonIndex == 1) {
-            [[appdelegate.conns objectAtIndex:pressedIndex.row] clearAccount];
-            [appdelegate.conns removeObjectAtIndex:pressedIndex.row];
-            [appdelegate saveAccounts];
+            [[[SeafGlobal sharedObject].conns objectAtIndex:pressedIndex.row] clearAccount];
+            [[SeafGlobal sharedObject].conns removeObjectAtIndex:pressedIndex.row];
+            [[SeafGlobal sharedObject] saveAccounts];
             [self.tableView reloadData];
         }
     } else {
@@ -282,7 +275,7 @@
 
     [conn loadCache];
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    appdelegate.connection = conn;
+    [appdelegate selectAccount:conn];
     appdelegate.window.rootViewController = appdelegate.tabbarController;
     [appdelegate.window makeKeyAndVisible];
     [self performSelector:@selector(delayOP) withObject:nil afterDelay:0.01];
@@ -292,8 +285,7 @@
 - (BOOL)gotoAccount:(NSString *)username server:(NSString *)server
 {
     if (!username || !server) return NO;
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    SeafConnection *conn = [appdelegate getConnection:server username:username];
+    SeafConnection *conn = [SeafGlobal.sharedObject getConnection:server username:username];
     return [self selectAccount:conn];
 }
 

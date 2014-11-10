@@ -9,14 +9,13 @@
 #import "SeafFile.h"
 #import "SeafData.h"
 #import "SeafRepos.h"
+#import "SeafGlobal.h"
 
-#import "SeafAppDelegate.h"
 #import "FileMimeType.h"
 #import "ExtentedString.h"
 #import "FileSizeFormatter.h"
 #import "SeafDateFormatter.h"
 #import "NSData+Encryption.h"
-#import "AFHTTPRequestOperation.h"
 #import "Debug.h"
 #import "Utils.h"
 
@@ -125,7 +124,7 @@
     self.state = SEAF_DENTRY_UPTODATE;
     self.downloadingFileOid = nil;
     self.operation = nil;
-    [SeafAppDelegate decDownloadnum];
+    [SeafGlobal.sharedObject decDownloadnum];
     self.oid = self.ooid;
     [self savetoCache];
     [self.delegate entry:self updated:updated progress:100];
@@ -137,7 +136,7 @@
     [self.delegate entry:self downloadingFailed:error.code];
     self.downloadingFileOid = nil;
     self.operation = nil;
-    [SeafAppDelegate decDownloadnum];
+    [SeafGlobal.sharedObject decDownloadnum];
 }
 /*
  curl -D a.txt -H 'Cookie:sessionid=7eb567868b5df5b22b2ba2440854589c' http://127.0.0.1:8000/api/file/640fd90d-ef4e-490d-be1c-b34c24040da7/8dd0a3be9289aea6795c1203351691fcc1373fbb/
@@ -145,7 +144,7 @@
  */
 - (void)downloadByFile
 {
-    [SeafAppDelegate incDownloadnum];
+    [SeafGlobal.sharedObject incDownloadnum];
     [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@", self.repoId, [self.path escapedUrl]] success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          NSString *url = JSON;
@@ -160,7 +159,7 @@
          @synchronized (self) {
              if (self.downloadingFileOid) {// Already downloading
                  Debug("Already downloading %@", self.downloadingFileOid);
-                 [SeafAppDelegate decDownloadnum];
+                 [SeafGlobal.sharedObject decDownloadnum];
                  return;
              }
              self.downloadingFileOid = curId;
@@ -279,7 +278,7 @@
  */
 - (void)downloadByBlocks
 {
-    [SeafAppDelegate incDownloadnum];
+    [SeafGlobal.sharedObject incDownloadnum];
     [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@&op=downloadblks", self.repoId, [self.path escapedUrl]] success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
@@ -292,7 +291,7 @@
          }
          @synchronized (self) {
              if (self.downloadingFileOid) {// Already downloading
-                 [SeafAppDelegate decDownloadnum];
+                 [SeafGlobal.sharedObject decDownloadnum];
                  return;
              }
              self.downloadingFileOid = curId;
@@ -355,9 +354,7 @@
 
 - (DownloadedFile *)loadCacheObj
 {
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    NSManagedObjectContext *context = [appdelegate managedObjectContext];
-
+    NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
     NSFetchRequest *fetchRequest=[[NSFetchRequest alloc] init];
     [fetchRequest setEntity:[NSEntityDescription entityForName:@"DownloadedFile" inManagedObjectContext:context]];
     NSSortDescriptor *sortDescriptor=[[NSSortDescriptor alloc] initWithKey:@"path" ascending:YES selector:nil];
@@ -412,8 +409,7 @@
 
 - (BOOL)savetoCache
 {
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    NSManagedObjectContext *context = [appdelegate managedObjectContext];
+    NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
     DownloadedFile *dfile = [self loadCacheObj];
     if (!dfile) {
         dfile = (DownloadedFile *)[NSEntityDescription insertNewObjectForEntityForName:@"DownloadedFile" inManagedObjectContext:context];
@@ -426,7 +422,7 @@
         dfile.mpath = self.mpath;
         [context updatedObjects];
     }
-    [appdelegate saveContext];
+    [[SeafGlobal sharedObject] saveContext];
     return YES;
 }
 
@@ -641,7 +637,7 @@
         NSString *path = [self.path stringByDeletingLastPathComponent];
         self.ufile.udir = [[SeafDir alloc] initWithConnection:connection oid:nil repoId:self.repoId name:path.lastPathComponent path:path];
     }
-    [SeafAppDelegate backgroundUpload:self.ufile];
+    [SeafGlobal.sharedObject backgroundUpload:self.ufile];
 }
 
 - (void)deleteCache
@@ -665,7 +661,7 @@
         self.operation = nil;
         self.index = 0;
         self.blks = nil;
-        [SeafAppDelegate decDownloadnum];
+        [SeafGlobal.sharedObject decDownloadnum];
     }
 }
 

@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <AssetsLibrary/AssetsLibrary.h>
+#import <UIKit/UIKit.h>
 
 @interface Utils : NSObject
 

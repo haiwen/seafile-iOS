@@ -6,13 +6,18 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
+#ifdef SEAFILE_APP
+#import "SeafAppDelegate.h"
+#endif
 #import "SeafConnection.h"
 #import "SeafJSONRequestOperation.h"
 #import "SeafRepos.h"
 #import "SeafDir.h"
 #import "SeafData.h"
-#import "SeafAppDelegate.h"
 #import "SeafAvatar.h"
+#import "SeafUploadFile.h"
+#import "SeafFile.h"
+#import "SeafGlobal.h"
 
 #import "ExtentedString.h"
 #import "NSData+Encryption.h"
@@ -297,6 +302,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                     self.policy = SeafPolicyFromCert(cer);
                     [[challenge sender] useCredential:credential forAuthenticationChallenge:challenge];
                 } else {
+#ifdef SEAFILE_APP
                     @synchronized(self) {
                         if (self.challenge) {
                             [[self.challenge sender] cancelAuthenticationChallenge:self.challenge];
@@ -309,6 +315,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:msg delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") otherButtonTitles:NSLocalizedString(@"OK", @"Seafile"), nil];
                     alert.alertViewStyle = UIAlertViewStyleDefault;
                     [alert show];
+#else
+                    [[self.challenge sender] cancelAuthenticationChallenge:self.challenge];
+#endif
                 }
             } else
                 [[challenge sender] continueWithoutCredentialForAuthenticationChallenge:challenge];
@@ -410,9 +419,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                     return;
                 _token = nil;
             }
+#ifdef SEAFILE_APP
             SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
             [appdelegate.tabbarController setSelectedIndex:TABBED_ACCOUNTS];
             [appdelegate.startVC goToDefaultAccount];
+#endif
             return;
         }
     }];
@@ -456,8 +467,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 #pragma - Cache managerment
 - (SeafCacheObj *)loadSeafCacheObj:(NSString *)key
 {
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    NSManagedObjectContext *context = [appdelegate managedObjectContext];
+    NSManagedObjectContext *context = [[SeafGlobal sharedObject]
+                                       managedObjectContext];
     NSFetchRequest *fetchRequest=[[NSFetchRequest alloc] init];
     [fetchRequest setEntity:[NSEntityDescription entityForName:@"SeafCacheObj" inManagedObjectContext:context]];
     NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"url" ascending:YES selector:nil];
@@ -483,8 +494,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (BOOL)savetoCacheKey:(NSString *)key value:(NSString *)content
 {
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    NSManagedObjectContext *context = [appdelegate managedObjectContext];
+    NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
     SeafCacheObj *obj = [self loadSeafCacheObj:key];
     if (!obj) {
         obj = (SeafCacheObj *)[NSEntityDescription insertNewObjectForEntityForName:@"SeafCacheObj" inManagedObjectContext:context];
@@ -497,7 +507,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         obj.content = content;
         [context updatedObjects];
     }
-    [appdelegate saveContext];
+    [[SeafGlobal sharedObject] saveContext];
     return YES;
 }
 
@@ -511,8 +521,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     id JSON = [Utils JSONDecode:data error:&error];
     if (error) {
         Warning("json error %@", data);
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        NSManagedObjectContext *context = [appdelegate managedObjectContext];
+        NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
         [context deleteObject:obj];
         JSON = nil;
     }
@@ -770,12 +779,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         return;
     for (NSString *email in self.email2nickMap.allKeys) {
         SeafUserAvatar *avatar = [[SeafUserAvatar alloc] initWithConnection:self username:email];
-        [SeafAppDelegate backgroundDownload:avatar];
+        [SeafGlobal.sharedObject backgroundDownload:avatar];
     }
     for (NSDictionary *dict in self.seafGroups) {
         NSString *gid = [dict objectForKey:@"id"];
         SeafGroupAvatar *avatar = [[SeafGroupAvatar alloc] initWithConnection:self group:gid];
-        [SeafAppDelegate backgroundDownload:avatar];
+        [SeafGlobal.sharedObject backgroundDownload:avatar];
     }
 }
 
@@ -823,15 +832,14 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     SeafDir *dir = _syncDir;
     if (!dir) return;
 
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     Debug("Current %lu photos need to upload, _syncDir=%@", (unsigned long)self.photosArray.count, _syncDir);
 
     int count = 0;
-    while(self.photosArray && self.photosArray.count > 0 && appdelegate.uploadingnum < 5 && count++ < 5) {
+    while(self.photosArray && self.photosArray.count > 0 && [[SeafGlobal sharedObject] uploadingnum] < 5 && count++ < 5) {
         NSURL *url = [self.photosArray objectAtIndex:0];
         [self.photosArray removeObject:url];
         [_uploadingArray addObject:url];
-        [[SeafAppDelegate assetsLibrary] assetForURL:url
+        [[[SeafGlobal sharedObject] assetsLibrary] assetForURL:url
                  resultBlock:^(ALAsset *asset) {
                      NSString *filename = asset.defaultRepresentation.filename;
                      NSString *path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
@@ -840,7 +848,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                      file.asset = asset;
                      [_syncDir addUploadFile:file];
                      Debug("Add file %@ to upload list: %@", filename, dir);
-                     [SeafAppDelegate backgroundUpload:file];
+                     [[SeafGlobal sharedObject] backgroundUpload:file];
                  }
                 failureBlock:^(NSError *error){
                     Debug("operation was not successfull!");
@@ -851,20 +859,18 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (void)fileUploadedSuccess:(SeafUploadFile *)ufile
 {
     if (!ufile || !ufile.assetURL || !ufile.autoSync) return;
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    NSManagedObjectContext *context = [appdelegate managedObjectContext];
+    NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
     UploadedPhotos *obj = (UploadedPhotos *)[NSEntityDescription insertNewObjectForEntityForName:@"UploadedPhotos" inManagedObjectContext:context];
     obj.server = self.address;
     obj.username = self.username;
     obj.url = ufile.assetURL.absoluteString;
-    [appdelegate saveContext];
+    [[SeafGlobal sharedObject] saveContext];
     [self.uploadingArray removeObject:ufile.assetURL];
 }
 
 - (BOOL)IsPhotoUploaded:(NSURL *)url
 {
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    NSManagedObjectContext *context = [appdelegate managedObjectContext];
+    NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
     NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
     [fetchRequest setEntity:[NSEntityDescription entityForName:@"UploadedPhotos" inManagedObjectContext:context]];
     NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"url" ascending:YES selector:nil];
@@ -889,8 +895,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     self.uploadFiles = [[NSMutableDictionary alloc] init];
     _uploadingArray = [[NSMutableArray alloc] init];
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    NSManagedObjectContext *context = [appdelegate managedObjectContext];
+    NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
     NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
     [fetchRequest setEntity:[NSEntityDescription entityForName:@"UploadedPhotos" inManagedObjectContext:context]];
     NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"url" ascending:YES selector:nil];
@@ -908,7 +913,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
              [context deleteObject:obj];
         }
     }
-    [appdelegate saveContext];
+    [[SeafGlobal sharedObject] saveContext];
 }
 
 - (BOOL)IsPhotoUploading:(NSURL *)url
@@ -952,8 +957,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             [self pickPhotosForUpload];
         }
     };
-
-    [[SeafAppDelegate assetsLibrary] enumerateGroupsWithTypes:ALAssetsGroupSavedPhotos
+    [[[SeafGlobal sharedObject] assetsLibrary] enumerateGroupsWithTypes:ALAssetsGroupSavedPhotos
                                                    usingBlock:assetGroupEnumerator
                                                  failureBlock:^(NSError *error) {
                                                      Debug("There is an error: %@", error);
@@ -1028,7 +1032,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (_inAutoSync != value) {
         if (value) {
             Debug("Start auto sync");
-            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(assetsLibraryDidChange:) name:ALAssetsLibraryChangedNotification object:[SeafAppDelegate assetsLibrary]];
+            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(assetsLibraryDidChange:) name:ALAssetsLibraryChangedNotification object:[SeafGlobal.sharedObject assetsLibrary]];
             _photosArray = [[NSMutableArray alloc] init];
             _uploadingArray = [[NSMutableArray alloc] init];;
         } else {

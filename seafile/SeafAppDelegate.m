@@ -15,48 +15,27 @@
 
 
 @interface SeafAppDelegate () <UITabBarControllerDelegate>
-@property (retain) NSMutableArray *ufiles;
-@property (retain) NSMutableArray *dfiles;
 
 @property UIBackgroundTaskIdentifier bgTask;
-@property int downloadnum;
-@property int uploadnum;
-@property int failedNum;
 
 @property NSInteger moduleIdx;
 @property (readonly) SeafDetailViewController *detailVC;
 @property (readonly) SeafDisDetailViewController *disDetailVC;
 @property (readonly) UINavigationController *disDetailNav;
 @property (strong) NSArray *viewControllers;
-@property NSTimer *autoSyncTimer;
+@property (readwrite) SeafGlobal *global;
 
 @end
 
 @implementation SeafAppDelegate
-
-@synthesize managedObjectContext = __managedObjectContext;
-@synthesize managedObjectModel = __managedObjectModel;
-@synthesize persistentStoreCoordinator = __persistentStoreCoordinator;
-@synthesize startNav = _startNav;
 @synthesize startVC = _startVC;
-@synthesize detailVC = _detailVC;
-@synthesize disDetailVC = _disDetailVC;
 @synthesize tabbarController = _tabbarController;
 
-@synthesize connection = _connection;
-
-
-
-- (SeafConnection *)connection
-{
-    return _connection;
-}
-
-- (void)setConnection:(SeafConnection *)conn
+- (void)selectAccount:(SeafConnection *)conn;
 {
     @synchronized(self) {
-        if (_connection != conn) {
-            _connection = conn;
+        if ([[SeafGlobal sharedObject] connection] != conn) {
+            [[SeafGlobal sharedObject] setConnection: conn];
             [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
             [[self masterNavController:TABBED_STARRED] popToRootViewControllerAnimated:NO];
             [[self masterNavController:TABBED_SETTINGS] popToRootViewControllerAnimated:NO];
@@ -83,54 +62,18 @@
         if (self.window.rootViewController == self.startNav)
             if (![self.startVC goToDefaultAccount])
                 return NO;
+        ;
         [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
-        SeafUploadFile *file = [self.connection getUploadfile:to.path];
+        SeafUploadFile *file = [SeafGlobal.sharedObject.connection getUploadfile:to.path];
         [self.fileVC uploadFile:file];
     }
     return YES;
 }
 
-- (SeafConnection *)getConnection:(NSString *)url username:(NSString *)username
-{
-    SeafConnection *conn;
-    if ([url hasSuffix:@"/"])
-        url = [url substringToIndex:url.length-1];
-    for (conn in self.conns) {
-        if ([conn.address isEqual:url] && [conn.username isEqual:username])
-            return conn;
-    }
-    return nil;
-}
-
-- (void)saveAccounts
-{
-    NSMutableArray *accounts = [[NSMutableArray alloc] init];
-    for (SeafConnection *connection in self.conns) {
-        NSMutableDictionary *account = [[NSMutableDictionary alloc] init];
-        [account setObject:connection.address forKey:@"url"];
-        [account setObject:connection.username forKey:@"username"];
-        [accounts addObject:account];
-    }
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    [userDefaults setObject:accounts forKey:@"ACCOUNTS"];
-    [userDefaults synchronize];
-};
-
-- (void)loadAccounts
-{
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    NSArray *accounts = [userDefaults objectForKey:@"ACCOUNTS"];
-    for (NSDictionary *account in accounts) {
-        SeafConnection *conn = [[SeafConnection alloc] initWithUrl:[account objectForKey:@"url"] username:[account objectForKey:@"username"]];
-        if (conn.username)
-            [self.conns addObject:conn];
-    }
-    [self saveAccounts];
-}
-
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     // Override point for customization after application launch.
+    _global = [SeafGlobal sharedObject];
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
     NSString *version = [infoDictionary objectForKey:@"CFBundleVersion"];
     Debug("Current app version is %@\n%@\n", version, infoDictionary);
@@ -145,10 +88,7 @@
     else
         [[UITabBar appearance] setSelectedImageTintColor:[UIColor colorWithRed:238.0f/256 green:136.0f/256 blue:51.0f/255 alpha:1.0]];
 
-    self.ufiles = [[NSMutableArray alloc] init];
-    self.dfiles = [[NSMutableArray alloc] init];
-    self.conns = [[NSMutableArray alloc] init];
-    [self loadAccounts];
+    [[SeafGlobal sharedObject] loadAccounts];
 
     _startNav = (UINavigationController *)self.window.rootViewController;
     _startVC = (StartViewController *)_startNav.topViewController;
@@ -162,8 +102,6 @@
     [Utils checkMakeDir:[Utils applicationTempDirectory]];
     [Utils clearAllFiles:[Utils applicationTempDirectory]];
 
-    self.downloadnum = 0;
-    self.uploadnum = 0;
     [Utils clearRepoPasswords];
     if (ios8) {
         [[UIApplication sharedApplication] registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:(UIUserNotificationTypeSound | UIUserNotificationTypeAlert | UIUserNotificationTypeBadge) categories:nil]];
@@ -177,40 +115,18 @@
     } else
         [self.startVC goToDefaultAccount];
     [self cycleTheGlobalMailComposer];
-    _assetsLibrary = [[ALAssetsLibrary alloc] init];
-    _autoSyncTimer = [NSTimer scheduledTimerWithTimeInterval:5*60
-                                                      target:self
-                                                    selector:@selector(tick:)
-                                                    userInfo:nil
-                                                     repeats:YES];
-    [[AFNetworkReachabilityManager sharedManager] setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
-        [self tick:_autoSyncTimer];
-    }];
+    [[SeafGlobal sharedObject] startTimer];
     return YES;
 }
 
-- (void)tick:(NSTimer *)timer
-{
-    if (![[AFNetworkReachabilityManager sharedManager] isReachable]) {
-        return;
-    }
-    @synchronized(timer) {
-        for (SeafConnection *conn in self.conns) {
-            [conn pickPhotosForUpload];
-        }
-        if (self.uploadnum > 0)
-            [self tryUpload];
-        if (self.downloadnum > 0)
-            [self tryDownload];
-    }
-}
+
 
 - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
 {
     Debug("token=%@, %ld\n", deviceToken, (unsigned long)deviceToken.length);
     _deviceToken = deviceToken;
     if (self.deviceToken)
-        [self.connection registerDevice:self.deviceToken];
+        [SeafGlobal.sharedObject.connection registerDevice:self.deviceToken];
 }
 - (void)application:(UIApplication *)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error
 {
@@ -220,7 +136,7 @@
 - (void)checkIconBadgeNumber
 {
     int badge = 0;
-    for (SeafConnection *conn in self.conns) {
+    for (SeafConnection *conn in [[SeafGlobal sharedObject] conns]) {
         badge += conn.newmsgnum;
     }
     [UIApplication sharedApplication].applicationIconBadgeNumber = badge;
@@ -237,7 +153,7 @@
         NSString *username = [args objectAtIndex:0];
         NSString *server = [args objectAtIndex:1];
         if (badgeStr && [badgeStr intValue] > 0) {
-            SeafConnection *connection = [self getConnection:server username:username];
+            SeafConnection *connection = [[SeafGlobal sharedObject] getConnection:server username:username];
             if (!connection) return;
             connection.newmsgnum = [badgeStr intValue];
             self.window.rootViewController = self.startNav;
@@ -258,26 +174,21 @@
 {
     // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
     // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
-    if (self.uploadnum == 0 && self.downloadnum == 0)
+    if ([[SeafGlobal sharedObject] uploadingnum] == 0
+        && [[SeafGlobal sharedObject] downloadingnum] == 0)
+    {
+        if (UIBackgroundTaskInvalid != self.bgTask) {
+            [application endBackgroundTask:self.bgTask];
+            self.bgTask = UIBackgroundTaskInvalid;
+        }
         return;
+    }
     self.bgTask = [application beginBackgroundTaskWithExpirationHandler:^{
         Debug(@"Time Remain = %f", [application backgroundTimeRemaining]);
         dispatch_async(dispatch_get_main_queue(), ^{
             if (UIBackgroundTaskInvalid != self.bgTask) {
                 [application endBackgroundTask:self.bgTask];
                 self.bgTask = UIBackgroundTaskInvalid;
-#if 0
-                if (self.uploadnum != 0 || self.downloadnum != 0) {
-                    UILocalNotification* alarm = [[UILocalNotification alloc] init];
-                    if (alarm) {
-                        alarm.fireDate = [NSDate dateWithTimeIntervalSinceNow:0];
-                        alarm.timeZone = [NSTimeZone defaultTimeZone];
-                        alarm.repeatInterval = 0;
-                        alarm.alertBody = @"Time to wake up!";
-                        [[UIApplication sharedApplication] presentLocalNotificationNow:alarm];
-                    }
-                }
-#endif
             }
         });
     }];
@@ -301,105 +212,9 @@
 - (void)applicationWillTerminate:(UIApplication *)application
 {
     // Saves changes in the application's managed object context before the application terminates.
-    [self saveContext];
+    [[SeafGlobal sharedObject] saveContext];
 }
 
-- (void)saveContext
-{
-    NSError *error = nil;
-    NSManagedObjectContext *managedObjectContext = self.managedObjectContext;
-    if (managedObjectContext != nil) {
-        if ([managedObjectContext hasChanges] && ![managedObjectContext save:&error]) {
-            // Replace this implementation with code to handle the error appropriately.
-            // abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-            NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
-            abort();
-        }
-    }
-}
-
-#pragma mark - Core Data stack
-
-// Returns the managed object context for the application.
-// If the context doesn't already exist, it is created and bound to the persistent store coordinator for the application.
-- (NSManagedObjectContext *)managedObjectContext
-{
-    if (__managedObjectContext != nil) {
-        return __managedObjectContext;
-    }
-
-    NSPersistentStoreCoordinator *coordinator = [self persistentStoreCoordinator];
-    if (coordinator != nil) {
-        __managedObjectContext = [[NSManagedObjectContext alloc] init];
-        [__managedObjectContext setPersistentStoreCoordinator:coordinator];
-    }
-    return __managedObjectContext;
-}
-
-// Returns the managed object model for the application.
-// If the model doesn't already exist, it is created from the application's model.
-- (NSManagedObjectModel *)managedObjectModel
-{
-    if (__managedObjectModel != nil) {
-        return __managedObjectModel;
-    }
-    NSURL *modelURL = [[NSBundle mainBundle] URLForResource:@"seafile" withExtension:@"momd"];
-    __managedObjectModel = [[NSManagedObjectModel alloc] initWithContentsOfURL:modelURL];
-    return __managedObjectModel;
-}
-
-// Returns the persistent store coordinator for the application.
-// If the coordinator doesn't already exist, it is created and the application's store added to it.
-- (NSPersistentStoreCoordinator *)persistentStoreCoordinator
-{
-    if (__persistentStoreCoordinator != nil) {
-        return __persistentStoreCoordinator;
-    }
-    NSURL *storeURL = [[self applicationDocumentsDirectory] URLByAppendingPathComponent:@"seafile_pro.sqlite"];
-
-    NSError *error = nil;
-    __persistentStoreCoordinator = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:[self managedObjectModel]];
-    if (![__persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:storeURL options:nil error:&error]) {
-        /*
-         Replace this implementation with code to handle the error appropriately.
-
-         abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-
-         Typical reasons for an error here include:
-         * The persistent store is not accessible;
-         * The schema for the persistent store is incompatible with current managed object model.
-         Check the error message to determine what the actual problem was.
-
-
-         If the persistent store is not accessible, there is typically something wrong with the file path. Often, a file URL is pointing into the application's resources directory instead of a writeable directory.
-
-         If you encounter schema incompatibility errors during development, you can reduce their frequency by:
-         * Simply deleting the existing store:
-         [[NSFileManager defaultManager] removeItemAtURL:storeURL error:nil]
-
-         * Performing automatic lightweight migration by passing the following dictionary as the options parameter:
-         [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:YES], NSMigratePersistentStoresAutomaticallyOption, [NSNumber numberWithBool:YES], NSInferMappingModelAutomaticallyOption, nil];
-
-         Lightweight migration will only work for a limited set of schema changes; consult "Core Data Model Versioning and Data Migration Programming Guide" for details.
-
-         */
-        [[NSFileManager defaultManager] removeItemAtURL:storeURL error:nil];
-
-        if (![__persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:storeURL options:nil error:&error]) {
-            NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
-            abort();
-        }
-    }
-
-    return __persistentStoreCoordinator;
-}
-
-#pragma mark - Application's Documents directory
-// Returns the URL to the application's Documents directory.
-- (NSURL *)applicationDocumentsDirectory
-{
-    return [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
-}
 
 - (BOOL)tabBarController:(UITabBarController *)tabBarController shouldSelectViewController:(UIViewController *)viewController
 {
@@ -530,185 +345,6 @@
     return YES;
 }
 
-- (void)checkBackgroudTask:(UIApplication *)application
-{
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    //Debug("%d upload, %d download\n", appdelegate.uploadnum, appdelegate.downloadnum);
-    if (appdelegate.downloadnum != 0 || appdelegate.uploadnum != 0)
-        return;
-    if (UIBackgroundTaskInvalid != appdelegate.bgTask) {
-        [application endBackgroundTask:appdelegate.bgTask];
-        appdelegate.bgTask = UIBackgroundTaskInvalid;
-    }
-}
-
-- (void)tryUpload
-{
-    Debug("tryUpload %ld %ld", (long)self.uploadnum, (long)self.ufiles.count);
-    if (self.ufiles.count == 0) return;
-    NSMutableArray *todo = [[NSMutableArray alloc] init];
-    @synchronized (self) {
-        NSMutableArray *arr = [self.ufiles mutableCopy];
-        for (SeafUploadFile *file in arr) {
-            if (self.uploadnum + todo.count + self.failedNum >= 3) break;
-            [self.ufiles removeObject:file];
-            if (!file.uploaded) {
-                [todo addObject:file];
-            }
-        }
-    }
-    for (SeafUploadFile *file in todo) {
-        if (file.udir) {
-            [file doUpload];
-        }
-    }
-}
-
-- (void)tryDownload
-{
-    if (self.dfiles.count == 0) return;
-    NSMutableArray *todo = [[NSMutableArray alloc] init];
-    @synchronized (self) {
-        NSMutableArray *arr = [self.dfiles mutableCopy];
-        for (id<SeafDownloadDelegate> file in arr) {
-            if (self.downloadnum + todo.count + self.failedNum >= 3) break;
-            [self.dfiles removeObject:file];
-            [todo addObject:file];
-        }
-    }
-    for (id<SeafDownloadDelegate> file in todo) {
-        [file download];
-    }
-}
-
-+ (void)incDownloadnum
-{
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    @synchronized (appdelegate) {
-        appdelegate.downloadnum ++;
-    }
-}
-+ (void)decDownloadnum
-{
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    @synchronized (appdelegate) {
-        appdelegate.downloadnum --;
-    }
-    [appdelegate checkBackgroudTask:[UIApplication sharedApplication]];
-}
-
-+ (void)incUploadnum
-{
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    @synchronized (appdelegate) {
-        appdelegate.uploadnum ++;
-    }
-    Debug("%d upload, %d download\n", appdelegate.uploadnum, appdelegate.downloadnum);
-}
-
-- (void)finishDownload:(id<SeafDownloadDelegate>) file result:(BOOL)result
-{
-    Debug("download %d, result=%d, failcnt=%d", self.downloadnum, result, self.failedNum);
-    @synchronized (self) {
-        self.downloadnum --;
-    }
-    [self checkBackgroudTask:[UIApplication sharedApplication]];
-    if (result) {
-        self.failedNum = 0;
-    } else {
-        self.failedNum ++;
-        [self.dfiles addObject:file];
-        if (self.failedNum >= 3) {
-            [self performSelector:@selector(tryDownload) withObject:nil afterDelay:10.0];
-            self.failedNum = 2;
-            return;
-        }
-    }
-    [self performSelector:@selector(tick:) withObject:_autoSyncTimer afterDelay:0.1];
-}
-
-- (void)finishUpload:(SeafUploadFile *)file result:(BOOL)result
-{
-    Debug("upload %d, result=%d, udir=%@", self.uploadnum, result, file.udir);
-    @synchronized (self) {
-        self.uploadnum --;
-    }
-    [self checkBackgroudTask:[UIApplication sharedApplication]];
-    if (result) {
-        self.failedNum = 0;
-        if (file.autoSync) [file.udir->connection fileUploadedSuccess:file];
-    } else {
-        self.failedNum ++;
-        [self.ufiles addObject:file];
-        if (self.failedNum >= 3) {
-            [self performSelector:@selector(tryUpload) withObject:nil afterDelay:10.0];
-            self.failedNum = 2;
-            return;
-        }
-    }
-    [self performSelector:@selector(tick:) withObject:_autoSyncTimer afterDelay:0.1];
-}
-
-+ (void)finishDownload:(id<SeafDownloadDelegate>) file result:(BOOL)result
-{
-    [(SeafAppDelegate *)[[UIApplication sharedApplication] delegate] finishDownload:file result:result];
-}
-
-+ (void)finishUpload:(SeafUploadFile *) file result:(BOOL)result
-{
-    [(SeafAppDelegate *)[[UIApplication sharedApplication] delegate] finishUpload:file result:result];
-}
-
-+ (void)removeBackgroundUpload:(SeafUploadFile *)file
-{
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    @synchronized (appdelegate) {
-        [appdelegate.ufiles removeObject:file];
-
-        if (file.udir)
-            [file.udir removeUploadFile:file];
-        else
-            [file doRemove];
-    }
-}
-
-+ (void)backgroundUpload:(SeafUploadFile *)file
-{
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    @synchronized (appdelegate) {
-        if (![appdelegate.ufiles containsObject:file])
-            [appdelegate.ufiles addObject:file];
-    }
-    [appdelegate tryUpload];
-}
-+ (void)backgroundDownload:(id<SeafDownloadDelegate>)file
-{
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    @synchronized (appdelegate) {
-        if (![appdelegate.dfiles containsObject:file])
-            [appdelegate.dfiles addObject:file];
-    }
-    [appdelegate tryDownload];
-}
-
-- (void)deleteAllObjects:(NSString *)entityDescription
-{
-    NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
-    NSEntityDescription *entity = [NSEntityDescription entityForName:entityDescription inManagedObjectContext:__managedObjectContext];
-    [fetchRequest setEntity:entity];
-
-    NSError *error;
-    NSArray *items = [__managedObjectContext executeFetchRequest:fetchRequest error:&error];
-
-    for (NSManagedObject *managedObject in items) {
-        [__managedObjectContext deleteObject:managedObject];
-        Debug(@"%@ object deleted",entityDescription);
-    }
-    if (![__managedObjectContext save:&error]) {
-        Debug(@"Error deleting %@ - error:%@",entityDescription,error);
-    }
-}
-
 - (void)showDetailView:(UIViewController *) c
 {
     UINavigationController *nc = [[UINavigationController alloc] initWithRootViewController:c];
@@ -721,7 +357,7 @@
 {
     if (!IsIpad()) {
         _disDetailVC = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DISDETAILVC"];
-        _disDetailVC.connection = _connection;
+        _disDetailVC.connection = SeafGlobal.sharedObject.connection;;
         return _disDetailVC;
     } else {
         return (SeafDisDetailViewController *)[self detailViewControllerAtIndex:TABBED_DISCUSSION];
@@ -735,16 +371,5 @@
     _globalMailComposer = nil;
     _globalMailComposer = [[MFMailComposeViewController alloc] init];
 }
-
-+ (ALAssetsLibrary *)assetsLibrary
-{
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    return appdelegate.assetsLibrary;
-}
-- (int)uploadingnum
-{
-    return self.uploadnum + self.ufiles.count;
-}
-
 
 @end

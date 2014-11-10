@@ -18,6 +18,7 @@
 
 #define Warning(fmt, args...) NSLog(@"#%d %s:[WARNING]" fmt, __LINE__, __FUNCTION__, ##args)
 
+#ifdef SEAFILE_APP
 static inline BOOL IsIpad()
 {
     return ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad);
@@ -25,6 +26,7 @@ static inline BOOL IsIpad()
 
 #define ios7 ([[[UIDevice currentDevice] systemVersion] floatValue] >= 7)
 #define ios8 ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8)
+#endif
 
 
 /* Additional strings for agi18n */

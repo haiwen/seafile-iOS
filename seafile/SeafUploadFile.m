@@ -6,11 +6,10 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
-#import "SeafAppDelegate.h"
+#import "SeafGlobal.h"
 #import "SeafUploadFile.h"
-#import "SeafConnection.h"
-#import "AFNetworking.h"
 #import "SeafRepos.h"
+#import "Utils.h"
 
 #import "FileMimeType.h"
 #import "UIImage+FileType.h"
@@ -112,7 +111,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         _uploading = NO;
         self.operation = nil;
     }
-    [SeafAppDelegate finishUpload:self result:result];
+    [SeafGlobal.sharedObject finishUpload:self result:result];
     NSMutableDictionary *dict = self.uploadAttr;
     if (!dict) {
         dict = [[NSMutableDictionary alloc] init];
@@ -244,7 +243,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         _uploading = YES;
         _uProgress = 0;
     }
-    [SeafAppDelegate incUploadnum];
+    [SeafGlobal.sharedObject incUploadnum];
     NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:self.lpath error:nil];
     _filesize = attrs.fileSize;
     [_delegate uploadProgress:self result:YES progress:0];

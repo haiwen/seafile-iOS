@@ -334,9 +334,9 @@ enum {
         [SeafUploadFile clearCache];
         [SeafAvatar clearCache];
 
-        [appdelegate deleteAllObjects:@"Directory"];
-        [appdelegate deleteAllObjects:@"DownloadedFile"];
-        [appdelegate deleteAllObjects:@"SeafCacheObj"];
+        [[SeafGlobal sharedObject] deleteAllObjects:@"Directory"];
+        [[SeafGlobal sharedObject] deleteAllObjects:@"DownloadedFile"];
+        [[SeafGlobal sharedObject] deleteAllObjects:@"SeafCacheObj"];
 
         long long cacheSize = [self cacheSize];
         _cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:cacheSize] useBaseTen:NO];
