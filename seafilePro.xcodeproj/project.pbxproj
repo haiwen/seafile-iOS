@@ -28,34 +28,16 @@
 		571D8CAD1677881400F1A22C /* SeafFileViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DB828F15A833FA00097CEC /* SeafFileViewController.m */; };
 		571D8CB01677881400F1A22C /* AFHTTPRequestOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 57094B5B15B9AC4A00F48C08 /* AFHTTPRequestOperation.m */; };
 		571D8CB61677881400F1A22C /* AFURLConnectionOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 57094B6815B9AC4A00F48C08 /* AFURLConnectionOperation.m */; };
-		571D8CB91677881400F1A22C /* SeafConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 5709512A15B9B6BD00F48C08 /* SeafConnection.m */; };
-		571D8CBA1677881400F1A22C /* SeafDir.m in Sources */ = {isa = PBXBuildFile; fileRef = 5709512E15B9B6BD00F48C08 /* SeafDir.m */; };
-		571D8CBB1677881400F1A22C /* SeafBase.m in Sources */ = {isa = PBXBuildFile; fileRef = 5709513015B9B6BD00F48C08 /* SeafBase.m */; };
-		571D8CBC1677881400F1A22C /* SeafJSONRequestOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 5709513215B9B6BD00F48C08 /* SeafJSONRequestOperation.m */; };
-		571D8CBD1677881400F1A22C /* SeafRepos.m in Sources */ = {isa = PBXBuildFile; fileRef = 5709513415B9B6BD00F48C08 /* SeafRepos.m */; };
-		571D8CBE1677881400F1A22C /* SeafData.m in Sources */ = {isa = PBXBuildFile; fileRef = 571CE59B15C01879004CD403 /* SeafData.m */; };
 		571D8CBF1677881400F1A22C /* StartViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 572B0A7615D16C1C00798C6E /* StartViewController.m */; };
-		571D8CC21677881400F1A22C /* FileSizeFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 57F53B0515DF49EF0027140D /* FileSizeFormatter.m */; };
 		571D8CC31677881400F1A22C /* EGORefreshTableHeaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = 576D89E315E39ED700F2BD17 /* EGORefreshTableHeaderView.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
-		571D8CC61677881400F1A22C /* SeafDateFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 575753EA15EE7AE30049D720 /* SeafDateFormatter.m */; };
-		571D8CC71677881400F1A22C /* ExtentedString.m in Sources */ = {isa = PBXBuildFile; fileRef = 5760144A15FA193900FBDDEF /* ExtentedString.m */; };
 		571D8CC91677881400F1A22C /* FailToPreview.m in Sources */ = {isa = PBXBuildFile; fileRef = 57655331161BEA40005E5327 /* FailToPreview.m */; };
 		571D8CCA1677881400F1A22C /* UIViewController+Extend.m in Sources */ = {isa = PBXBuildFile; fileRef = 57655341161D848F005E5327 /* UIViewController+Extend.m */; };
 		571D8CCB1677881400F1A22C /* DownloadingProgressView.m in Sources */ = {isa = PBXBuildFile; fileRef = 571ABF521625DF31005C9B08 /* DownloadingProgressView.m */; };
-		571D8CCD1677881400F1A22C /* Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 572500B2162984B3001E5C75 /* Utils.m */; };
-		571D8CCE1677881400F1A22C /* SeafUploadFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 572500B516298C7C001E5C75 /* SeafUploadFile.m */; };
-		571D8CCF1677881400F1A22C /* FileMimeType.m in Sources */ = {isa = PBXBuildFile; fileRef = 576EE11B162F078400327EB9 /* FileMimeType.m */; };
 		571D8CD01677881400F1A22C /* SeafUploadingFileCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 57C07CE31632556600502B06 /* SeafUploadingFileCell.m */; };
 		571D8CD11677881400F1A22C /* SeafUploadDirViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57931B531632E5DB00B462BA /* SeafUploadDirViewController.m */; };
 		571D8CD21677881400F1A22C /* SeafSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5764C82A163BF91B006AD511 /* SeafSettingsViewController.m */; };
-		571D8CD31677881400F1A22C /* ColorfulButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 576069CA164558A1005C2F13 /* ColorfulButton.m */; };
 		571D8CD41677881400F1A22C /* SeafStarredFilesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57853C8E164675CB00CE8857 /* SeafStarredFilesViewController.m */; };
-		571D8CD51677881400F1A22C /* SeafStarredFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57853C941646818A00CE8857 /* SeafStarredFile.m */; };
-		571D8CD71677881400F1A22C /* UIImage+FileType.m in Sources */ = {isa = PBXBuildFile; fileRef = 57396B711657DCE30089F32F /* UIImage+FileType.m */; };
-		571D8CD81677881400F1A22C /* seafile.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 57396B751657E0190089F32F /* seafile.xcdatamodeld */; };
-		571D8CD91677881400F1A22C /* SKFileTypeImageLoader.m in Sources */ = {isa = PBXBuildFile; fileRef = 57396B781657E0900089F32F /* SKFileTypeImageLoader.m */; };
 		571D8CDA1677881400F1A22C /* SVProgressHUD.m in Sources */ = {isa = PBXBuildFile; fileRef = 57C57BDB165FBB4C006834DF /* SVProgressHUD.m */; };
-		571D8CDB1677881400F1A22C /* SeafFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 570CF8B71660B00900DFADBC /* SeafFile.m */; };
 		571D8CDD1677881400F1A22C /* MessageUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5765533D161D44A2005E5327 /* MessageUI.framework */; };
 		571D8CDE1677881400F1A22C /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57335CF8160DA00000018AE8 /* SystemConfiguration.framework */; };
 		571D8CDF1677881400F1A22C /* QuickLook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 576B9EC015DD394600802D07 /* QuickLook.framework */; };
@@ -73,7 +55,6 @@
 		571D8CEF1677881400F1A22C /* whiteArrow.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D89EB15E39ED700F2BD17 /* whiteArrow.png */; };
 		571D8CF01677881400F1A22C /* whiteArrow@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D89EC15E39ED700F2BD17 /* whiteArrow@2x.png */; };
 		571D8CFA1677881400F1A22C /* share.png in Resources */ = {isa = PBXBuildFile; fileRef = 576D6EB41604804E000310F5 /* share.png */; };
-		571D8D021677881400F1A22C /* FileMimeType.plist in Resources */ = {isa = PBXBuildFile; fileRef = 576EE11E162F0A2900327EB9 /* FileMimeType.plist */; };
 		571D8D041677881400F1A22C /* tab-settings.png in Resources */ = {isa = PBXBuildFile; fileRef = 5764C834163C3E83006AD511 /* tab-settings.png */; };
 		571D8D051677881400F1A22C /* tab-home.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A055A51644EAD1006511AA /* tab-home.png */; };
 		571D8D061677881400F1A22C /* seafile-logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A055A81644EC84006511AA /* seafile-logo.png */; };
@@ -95,7 +76,6 @@
 		571D8DB01677881400F1A22C /* SVProgressHUD.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 57C57BDE165FC87B006834DF /* SVProgressHUD.bundle */; };
 		571F5148168C80380055D69B /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 571F5147168C80380055D69B /* MobileCoreServices.framework */; };
 		57227A5D18389DB600CD28E9 /* red.png in Resources */ = {isa = PBXBuildFile; fileRef = 57227A5B18389DB600CD28E9 /* red.png */; };
-		5725186017AE7A6F0078CD12 /* NSData+Encryption.m in Sources */ = {isa = PBXBuildFile; fileRef = 5725185E17AE7A6F0078CD12 /* NSData+Encryption.m */; };
 		5725186217AE7D010078CD12 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5725186117AE7D000078CD12 /* Security.framework */; };
 		5725186617AEA6EA0078CD12 /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5725186417AEA6E90078CD12 /* libcrypto.a */; };
 		5732064318EB11CA003250DE /* AFHTTPRequestOperationManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732063618EB11CA003250DE /* AFHTTPRequestOperationManager.m */; };
@@ -240,7 +220,6 @@
 		57943C1B19F027D5008423E5 /* unstar@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57943BFC19F027D5008423E5 /* unstar@2x.png */; };
 		57943C1C19F027D5008423E5 /* unstar2@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57943BFD19F027D5008423E5 /* unstar2@2x.png */; };
 		5795F49B16A7266F00FF90E3 /* SeafAccountCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 5795F49916A7266E00FF90E3 /* SeafAccountCell.m */; };
-		5796D03F18F78FCD00D5AE39 /* SeafAvatar.m in Sources */ = {isa = PBXBuildFile; fileRef = 5796D03E18F78FCD00D5AE39 /* SeafAvatar.m */; };
 		57A550DB177F23BB00E3BA9B /* refresh.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550D9177F23BB00E3BA9B /* refresh.png */; };
 		57A550DE177F283700E3BA9B /* addmsg.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550DC177F283700E3BA9B /* addmsg.png */; };
 		57A550E1177F2C4400E3BA9B /* export.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550DF177F2C4400E3BA9B /* export.png */; };
@@ -332,44 +311,10 @@
 		57E228911A0E286200C92330 /* QBImagePickerThumbnailView.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E228781A0E286200C92330 /* QBImagePickerThumbnailView.m */; };
 		57E228B71A0E403A00C92330 /* QBImagePickerController.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 57E228B61A0E403A00C92330 /* QBImagePickerController.bundle */; };
 		57E228BE1A0F40C900C92330 /* SeafStart.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57E228BD1A0F40C900C92330 /* SeafStart.storyboard */; };
-		57E228CA1A0F4EE700C92330 /* DocumentPickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E228C91A0F4EE700C92330 /* DocumentPickerViewController.m */; };
 		57E228CC1A0F4EE700C92330 /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57E228CB1A0F4EE700C92330 /* MainInterface.storyboard */; };
 		57E228D81A0F4EE700C92330 /* FileProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E228D71A0F4EE700C92330 /* FileProvider.m */; };
 		57E228DB1A0F4EE700C92330 /* SeafProviderFileProvider.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 57E228D11A0F4EE700C92330 /* SeafProviderFileProvider.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		57E228DE1A0F4EE700C92330 /* SeafProvider.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 57E228C31A0F4EE700C92330 /* SeafProvider.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		57E228E81A0FB35200C92330 /* SeafGlobal.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E228E71A0FB35200C92330 /* SeafGlobal.m */; };
-		57E228E91A0FB35200C92330 /* SeafGlobal.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E228E71A0FB35200C92330 /* SeafGlobal.m */; };
-		57E228EA1A0FB35200C92330 /* SeafGlobal.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E228E71A0FB35200C92330 /* SeafGlobal.m */; };
-		57E228ED1A0FB85000C92330 /* SeafConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 5709512A15B9B6BD00F48C08 /* SeafConnection.m */; };
-		57E228EF1A0FBAB400C92330 /* AFHTTPRequestOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 57094B5B15B9AC4A00F48C08 /* AFHTTPRequestOperation.m */; };
-		57E228F11A0FBAB400C92330 /* AFHTTPRequestOperationManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732063618EB11CA003250DE /* AFHTTPRequestOperationManager.m */; };
-		57E228F31A0FBAB400C92330 /* AFHTTPSessionManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732063818EB11CA003250DE /* AFHTTPSessionManager.m */; };
-		57E228F61A0FBAB400C92330 /* AFNetworkReachabilityManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732063A18EB11CA003250DE /* AFNetworkReachabilityManager.m */; };
-		57E228F81A0FBAB400C92330 /* AFSecurityPolicy.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732063C18EB11CA003250DE /* AFSecurityPolicy.m */; };
-		57E228FA1A0FBAB400C92330 /* AFURLConnectionOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 57094B6815B9AC4A00F48C08 /* AFURLConnectionOperation.m */; };
-		57E228FC1A0FBAB400C92330 /* AFURLRequestSerialization.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732063E18EB11CA003250DE /* AFURLRequestSerialization.m */; };
-		57E228FE1A0FBAB400C92330 /* AFURLResponseSerialization.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732064018EB11CA003250DE /* AFURLResponseSerialization.m */; };
-		57E229001A0FBAB400C92330 /* AFURLSessionManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732064218EB11CA003250DE /* AFURLSessionManager.m */; };
-		57E229021A0FBB7000C92330 /* SeafAvatar.m in Sources */ = {isa = PBXBuildFile; fileRef = 5796D03E18F78FCD00D5AE39 /* SeafAvatar.m */; };
-		57E229041A0FBB7000C92330 /* SeafBase.m in Sources */ = {isa = PBXBuildFile; fileRef = 5709513015B9B6BD00F48C08 /* SeafBase.m */; };
-		57E229061A0FBB7000C92330 /* SeafData.m in Sources */ = {isa = PBXBuildFile; fileRef = 571CE59B15C01879004CD403 /* SeafData.m */; };
-		57E229081A0FBB7000C92330 /* SeafDir.m in Sources */ = {isa = PBXBuildFile; fileRef = 5709512E15B9B6BD00F48C08 /* SeafDir.m */; };
-		57E2290A1A0FBB7000C92330 /* SeafFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 570CF8B71660B00900DFADBC /* SeafFile.m */; };
-		57E2290C1A0FBB7000C92330 /* SeafJSONRequestOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 5709513215B9B6BD00F48C08 /* SeafJSONRequestOperation.m */; };
-		57E229111A0FBB7000C92330 /* SeafRepos.m in Sources */ = {isa = PBXBuildFile; fileRef = 5709513415B9B6BD00F48C08 /* SeafRepos.m */; };
-		57E229131A0FBB7000C92330 /* SeafStarredFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57853C941646818A00CE8857 /* SeafStarredFile.m */; };
-		57E229151A0FBB7000C92330 /* SeafUploadFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 572500B516298C7C001E5C75 /* SeafUploadFile.m */; };
-		57E229181A0FBC5F00C92330 /* NSData+Encryption.m in Sources */ = {isa = PBXBuildFile; fileRef = 5725185E17AE7A6F0078CD12 /* NSData+Encryption.m */; };
-		57E2291A1A0FBC5F00C92330 /* ColorfulButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 576069CA164558A1005C2F13 /* ColorfulButton.m */; };
-		57E2291B1A0FBC5F00C92330 /* Debug.h in Sources */ = {isa = PBXBuildFile; fileRef = 5725063C162328EB0002B040 /* Debug.h */; };
-		57E2291D1A0FBC5F00C92330 /* ExtentedString.m in Sources */ = {isa = PBXBuildFile; fileRef = 5760144A15FA193900FBDDEF /* ExtentedString.m */; };
-		57E2291F1A0FBC5F00C92330 /* FileMimeType.m in Sources */ = {isa = PBXBuildFile; fileRef = 576EE11B162F078400327EB9 /* FileMimeType.m */; };
-		57E229201A0FBC5F00C92330 /* FileMimeType.plist in Sources */ = {isa = PBXBuildFile; fileRef = 576EE11E162F0A2900327EB9 /* FileMimeType.plist */; };
-		57E229221A0FBC5F00C92330 /* FileSizeFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 57F53B0515DF49EF0027140D /* FileSizeFormatter.m */; };
-		57E229241A0FBC5F00C92330 /* SeafDateFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 575753EA15EE7AE30049D720 /* SeafDateFormatter.m */; };
-		57E229261A0FBC5F00C92330 /* SKFileTypeImageLoader.m in Sources */ = {isa = PBXBuildFile; fileRef = 57396B781657E0900089F32F /* SKFileTypeImageLoader.m */; };
-		57E229281A0FBC5F00C92330 /* UIImage+FileType.m in Sources */ = {isa = PBXBuildFile; fileRef = 57396B711657DCE30089F32F /* UIImage+FileType.m */; };
-		57E2292C1A0FBC5F00C92330 /* Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 572500B2162984B3001E5C75 /* Utils.m */; };
 		57E2292F1A0FBD1100C92330 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5725186117AE7D000078CD12 /* Security.framework */; };
 		57E229301A0FBD2100C92330 /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5725186417AEA6E90078CD12 /* libcrypto.a */; };
 		57E229311A0FBE5900C92330 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57DB827315A833FA00097CEC /* Foundation.framework */; };
@@ -382,30 +327,83 @@
 		57E229521A10FC5000C92330 /* AFURLRequestSerialization.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732063E18EB11CA003250DE /* AFURLRequestSerialization.m */; };
 		57E229541A10FC5000C92330 /* AFURLResponseSerialization.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732064018EB11CA003250DE /* AFURLResponseSerialization.m */; };
 		57E229561A10FC5000C92330 /* AFURLSessionManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732064218EB11CA003250DE /* AFURLSessionManager.m */; };
-		57E2295A1A10FC7500C92330 /* SeafBase.m in Sources */ = {isa = PBXBuildFile; fileRef = 5709513015B9B6BD00F48C08 /* SeafBase.m */; };
-		57E2295C1A10FC7500C92330 /* SeafConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 5709512A15B9B6BD00F48C08 /* SeafConnection.m */; };
-		57E2295E1A10FC7500C92330 /* SeafData.m in Sources */ = {isa = PBXBuildFile; fileRef = 571CE59B15C01879004CD403 /* SeafData.m */; };
-		57E229601A10FC7500C92330 /* SeafDir.m in Sources */ = {isa = PBXBuildFile; fileRef = 5709512E15B9B6BD00F48C08 /* SeafDir.m */; };
-		57E229621A10FC7500C92330 /* SeafFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 570CF8B71660B00900DFADBC /* SeafFile.m */; };
-		57E229641A10FC7500C92330 /* SeafJSONRequestOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 5709513215B9B6BD00F48C08 /* SeafJSONRequestOperation.m */; };
-		57E229691A10FC7500C92330 /* SeafRepos.m in Sources */ = {isa = PBXBuildFile; fileRef = 5709513415B9B6BD00F48C08 /* SeafRepos.m */; };
-		57E2296B1A10FC7500C92330 /* SeafStarredFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57853C941646818A00CE8857 /* SeafStarredFile.m */; };
-		57E2296D1A10FC7500C92330 /* SeafUploadFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 572500B516298C7C001E5C75 /* SeafUploadFile.m */; };
-		57E229701A10FCC200C92330 /* NSData+Encryption.m in Sources */ = {isa = PBXBuildFile; fileRef = 5725185E17AE7A6F0078CD12 /* NSData+Encryption.m */; };
-		57E229721A10FCC200C92330 /* ColorfulButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 576069CA164558A1005C2F13 /* ColorfulButton.m */; };
-		57E229751A10FCC200C92330 /* ExtentedString.m in Sources */ = {isa = PBXBuildFile; fileRef = 5760144A15FA193900FBDDEF /* ExtentedString.m */; };
-		57E229771A10FCC200C92330 /* FileMimeType.m in Sources */ = {isa = PBXBuildFile; fileRef = 576EE11B162F078400327EB9 /* FileMimeType.m */; };
-		57E229781A10FCC200C92330 /* FileMimeType.plist in Sources */ = {isa = PBXBuildFile; fileRef = 576EE11E162F0A2900327EB9 /* FileMimeType.plist */; };
-		57E2297A1A10FCC200C92330 /* FileSizeFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 57F53B0515DF49EF0027140D /* FileSizeFormatter.m */; };
-		57E2297C1A10FCC200C92330 /* SeafDateFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 575753EA15EE7AE30049D720 /* SeafDateFormatter.m */; };
-		57E2297E1A10FCC200C92330 /* SKFileTypeImageLoader.m in Sources */ = {isa = PBXBuildFile; fileRef = 57396B781657E0900089F32F /* SKFileTypeImageLoader.m */; };
-		57E229801A10FCC200C92330 /* UIImage+FileType.m in Sources */ = {isa = PBXBuildFile; fileRef = 57396B711657DCE30089F32F /* UIImage+FileType.m */; };
-		57E229841A10FCC200C92330 /* Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 572500B2162984B3001E5C75 /* Utils.m */; };
 		57E229851A10FDA000C92330 /* CoreData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57DB827715A833FA00097CEC /* CoreData.framework */; };
 		57E229861A10FDA500C92330 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57DB827315A833FA00097CEC /* Foundation.framework */; };
 		57E229871A10FDAF00C92330 /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5725186417AEA6E90078CD12 /* libcrypto.a */; };
-		57E229881A10FDC800C92330 /* SeafAvatar.m in Sources */ = {isa = PBXBuildFile; fileRef = 5796D03E18F78FCD00D5AE39 /* SeafAvatar.m */; };
 		57E229891A10FE2000C92330 /* AFHTTPRequestOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 57094B5B15B9AC4A00F48C08 /* AFHTTPRequestOperation.m */; };
+		57E229A31A11087500C92330 /* SeafAvatar.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E2298C1A11087500C92330 /* SeafAvatar.m */; };
+		57E229A51A11087500C92330 /* SeafAvatar.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E2298C1A11087500C92330 /* SeafAvatar.m */; };
+		57E229A61A11087500C92330 /* SeafBase.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E2298E1A11087500C92330 /* SeafBase.m */; };
+		57E229A81A11087500C92330 /* SeafBase.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E2298E1A11087500C92330 /* SeafBase.m */; };
+		57E229A91A11087500C92330 /* SeafConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229901A11087500C92330 /* SeafConnection.m */; };
+		57E229AC1A11087500C92330 /* SeafData.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229921A11087500C92330 /* SeafData.m */; };
+		57E229AE1A11087500C92330 /* SeafData.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229921A11087500C92330 /* SeafData.m */; };
+		57E229AF1A11087500C92330 /* SeafDir.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229941A11087500C92330 /* SeafDir.m */; };
+		57E229B21A11087500C92330 /* SeafFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229961A11087500C92330 /* SeafFile.m */; };
+		57E229B51A11087500C92330 /* seafile.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 57E229971A11087500C92330 /* seafile.xcdatamodeld */; };
+		57E229B71A11087500C92330 /* seafile.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 57E229971A11087500C92330 /* seafile.xcdatamodeld */; };
+		57E229B81A11087500C92330 /* SeafJSONRequestOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E2299B1A11087500C92330 /* SeafJSONRequestOperation.m */; };
+		57E229BA1A11087500C92330 /* SeafJSONRequestOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E2299B1A11087500C92330 /* SeafJSONRequestOperation.m */; };
+		57E229BB1A11087500C92330 /* SeafRepos.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E2299E1A11087500C92330 /* SeafRepos.m */; };
+		57E229C31A11087500C92330 /* SeafUploadFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229A21A11087500C92330 /* SeafUploadFile.m */; };
+		57E229DA1A1108B200C92330 /* ColorfulButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229C51A1108B200C92330 /* ColorfulButton.m */; };
+		57E229DB1A1108B200C92330 /* ExtentedString.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229C81A1108B200C92330 /* ExtentedString.m */; };
+		57E229DD1A1108B200C92330 /* ExtentedString.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229C81A1108B200C92330 /* ExtentedString.m */; };
+		57E229DE1A1108B200C92330 /* FileMimeType.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229CA1A1108B200C92330 /* FileMimeType.m */; };
+		57E229E01A1108B200C92330 /* FileMimeType.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229CA1A1108B200C92330 /* FileMimeType.m */; };
+		57E229E11A1108B200C92330 /* FileMimeType.plist in Resources */ = {isa = PBXBuildFile; fileRef = 57E229CB1A1108B200C92330 /* FileMimeType.plist */; };
+		57E229E21A1108B200C92330 /* FileMimeType.plist in Resources */ = {isa = PBXBuildFile; fileRef = 57E229CB1A1108B200C92330 /* FileMimeType.plist */; };
+		57E229E41A1108B200C92330 /* FileSizeFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229CD1A1108B200C92330 /* FileSizeFormatter.m */; };
+		57E229E71A1108B200C92330 /* NSData+Encryption.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229CF1A1108B200C92330 /* NSData+Encryption.m */; };
+		57E229E91A1108B200C92330 /* NSData+Encryption.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229CF1A1108B200C92330 /* NSData+Encryption.m */; };
+		57E229EC1A1108B200C92330 /* SeafDateFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229D11A1108B200C92330 /* SeafDateFormatter.m */; };
+		57E229F01A1108B200C92330 /* UIImage+FileType.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229D51A1108B200C92330 /* UIImage+FileType.m */; };
+		57E229F21A1108B200C92330 /* UIImage+FileType.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229D51A1108B200C92330 /* UIImage+FileType.m */; };
+		57E22A691A11093D00C92330 /* SeafGlobal.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E22A261A11093D00C92330 /* SeafGlobal.m */; };
+		57E22A6B1A11093D00C92330 /* SeafGlobal.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E22A261A11093D00C92330 /* SeafGlobal.m */; };
+		57E22A6D1A110C9B00C92330 /* DocumentPickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E228C91A0F4EE700C92330 /* DocumentPickerViewController.m */; };
+		57E22A6F1A110CA800C92330 /* SeafAvatar.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E2298C1A11087500C92330 /* SeafAvatar.m */; };
+		57E22A711A110CA800C92330 /* SeafBase.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E2298E1A11087500C92330 /* SeafBase.m */; };
+		57E22A731A110CA800C92330 /* SeafConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229901A11087500C92330 /* SeafConnection.m */; };
+		57E22A751A110CA800C92330 /* SeafData.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229921A11087500C92330 /* SeafData.m */; };
+		57E22A771A110CA800C92330 /* SeafDir.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229941A11087500C92330 /* SeafDir.m */; };
+		57E22A791A110CA800C92330 /* SeafFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229961A11087500C92330 /* SeafFile.m */; };
+		57E22A7D1A110CA800C92330 /* SeafJSONRequestOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E2299B1A11087500C92330 /* SeafJSONRequestOperation.m */; };
+		57E22A801A110CA800C92330 /* SeafRepos.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E2299E1A11087500C92330 /* SeafRepos.m */; };
+		57E22A821A110CA800C92330 /* SeafStarredFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229A01A11087500C92330 /* SeafStarredFile.m */; };
+		57E22A841A110CA800C92330 /* SeafUploadFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229A21A11087500C92330 /* SeafUploadFile.m */; };
+		57E22A861A110CD800C92330 /* ColorfulButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229C51A1108B200C92330 /* ColorfulButton.m */; };
+		57E22A891A110CD800C92330 /* ExtentedString.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229C81A1108B200C92330 /* ExtentedString.m */; };
+		57E22A8B1A110CD800C92330 /* FileMimeType.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229CA1A1108B200C92330 /* FileMimeType.m */; };
+		57E22A8E1A110CD800C92330 /* FileSizeFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229CD1A1108B200C92330 /* FileSizeFormatter.m */; };
+		57E22A901A110CD800C92330 /* NSData+Encryption.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229CF1A1108B200C92330 /* NSData+Encryption.m */; };
+		57E22A921A110CD800C92330 /* SeafDateFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229D11A1108B200C92330 /* SeafDateFormatter.m */; };
+		57E22A941A110CD800C92330 /* SKFileTypeImageLoader.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229D31A1108B200C92330 /* SKFileTypeImageLoader.m */; };
+		57E22A961A110CD800C92330 /* UIImage+FileType.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229D51A1108B200C92330 /* UIImage+FileType.m */; };
+		57E22A981A110CD800C92330 /* Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229D71A1108B200C92330 /* Utils.m */; };
+		57E22A9A1A110CD800C92330 /* SeafGlobal.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E22A261A11093D00C92330 /* SeafGlobal.m */; };
+		57E22A9B1A110D0F00C92330 /* AFHTTPRequestOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 57094B5B15B9AC4A00F48C08 /* AFHTTPRequestOperation.m */; };
+		57E22A9C1A110D0F00C92330 /* AFHTTPRequestOperationManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732063618EB11CA003250DE /* AFHTTPRequestOperationManager.m */; };
+		57E22A9D1A110D0F00C92330 /* AFHTTPSessionManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732063818EB11CA003250DE /* AFHTTPSessionManager.m */; };
+		57E22A9E1A110D0F00C92330 /* AFNetworkReachabilityManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732063A18EB11CA003250DE /* AFNetworkReachabilityManager.m */; };
+		57E22A9F1A110D0F00C92330 /* AFSecurityPolicy.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732063C18EB11CA003250DE /* AFSecurityPolicy.m */; };
+		57E22AA01A110D0F00C92330 /* AFURLConnectionOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 57094B6815B9AC4A00F48C08 /* AFURLConnectionOperation.m */; };
+		57E22AA11A110D0F00C92330 /* AFURLRequestSerialization.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732063E18EB11CA003250DE /* AFURLRequestSerialization.m */; };
+		57E22AA21A110D0F00C92330 /* AFURLResponseSerialization.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732064018EB11CA003250DE /* AFURLResponseSerialization.m */; };
+		57E22AA31A110D0F00C92330 /* AFURLSessionManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732064218EB11CA003250DE /* AFURLSessionManager.m */; };
+		57E22AA41A110D5100C92330 /* SKFileTypeImageLoader.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229D31A1108B200C92330 /* SKFileTypeImageLoader.m */; };
+		57E22AA51A110D7D00C92330 /* SeafConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229901A11087500C92330 /* SeafConnection.m */; };
+		57E22AA61A110D7D00C92330 /* SeafDir.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229941A11087500C92330 /* SeafDir.m */; };
+		57E22AA71A110D7D00C92330 /* SeafFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229961A11087500C92330 /* SeafFile.m */; };
+		57E22AA81A110D7D00C92330 /* SeafRepos.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E2299E1A11087500C92330 /* SeafRepos.m */; };
+		57E22AA91A110D7D00C92330 /* SeafStarredFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229A01A11087500C92330 /* SeafStarredFile.m */; };
+		57E22AAA1A110D9B00C92330 /* FileSizeFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229CD1A1108B200C92330 /* FileSizeFormatter.m */; };
+		57E22AAB1A110DA400C92330 /* Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229D71A1108B200C92330 /* Utils.m */; };
+		57E22AAC1A110DCD00C92330 /* SKFileTypeImageLoader.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229D31A1108B200C92330 /* SKFileTypeImageLoader.m */; };
+		57E22AAD1A110DD800C92330 /* SeafDateFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229D11A1108B200C92330 /* SeafDateFormatter.m */; };
+		57E22AAE1A110DE200C92330 /* SeafStarredFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229A01A11087500C92330 /* SeafStarredFile.m */; };
+		57E22AAF1A110DEB00C92330 /* SeafUploadFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229A21A11087500C92330 /* SeafUploadFile.m */; };
+		57E22AB01A110DFA00C92330 /* Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229D71A1108B200C92330 /* Utils.m */; };
 		57F0AAFE16D8935800364D18 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57F0AAFC16D8913600364D18 /* AssetsLibrary.framework */; };
 /* End PBXBuildFile section */
 
@@ -452,17 +450,6 @@
 		57094B6415B9AC4A00F48C08 /* AFNetworking.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AFNetworking.h; sourceTree = "<group>"; };
 		57094B6715B9AC4A00F48C08 /* AFURLConnectionOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AFURLConnectionOperation.h; sourceTree = "<group>"; };
 		57094B6815B9AC4A00F48C08 /* AFURLConnectionOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AFURLConnectionOperation.m; sourceTree = "<group>"; };
-		5709512915B9B6BD00F48C08 /* SeafConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafConnection.h; sourceTree = "<group>"; };
-		5709512A15B9B6BD00F48C08 /* SeafConnection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafConnection.m; sourceTree = "<group>"; };
-		5709512B15B9B6BD00F48C08 /* SeafFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafFile.h; sourceTree = "<group>"; };
-		5709512D15B9B6BD00F48C08 /* SeafDir.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafDir.h; sourceTree = "<group>"; };
-		5709512E15B9B6BD00F48C08 /* SeafDir.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafDir.m; sourceTree = "<group>"; };
-		5709512F15B9B6BD00F48C08 /* SeafBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafBase.h; sourceTree = "<group>"; };
-		5709513015B9B6BD00F48C08 /* SeafBase.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafBase.m; sourceTree = "<group>"; };
-		5709513115B9B6BD00F48C08 /* SeafJSONRequestOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafJSONRequestOperation.h; sourceTree = "<group>"; };
-		5709513215B9B6BD00F48C08 /* SeafJSONRequestOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafJSONRequestOperation.m; sourceTree = "<group>"; };
-		5709513315B9B6BD00F48C08 /* SeafRepos.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafRepos.h; sourceTree = "<group>"; };
-		5709513415B9B6BD00F48C08 /* SeafRepos.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafRepos.m; sourceTree = "<group>"; };
 		570A300316578B4F007D0CBF /* upload.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = upload.png; sourceTree = "<group>"; };
 		570AE68A187CFC66002CCDE9 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/FailToPreview_iPhone.xib; sourceTree = "<group>"; };
 		570B7AFA1715D657002F0E1D /* edit_file_seaf.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = edit_file_seaf.html; path = htmls/edit_file_seaf.html; sourceTree = SOURCE_ROOT; };
@@ -470,7 +457,6 @@
 		570B7AFC1715D658002F0E1D /* Markdown.Converter.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = Markdown.Converter.js; path = htmls/Markdown.Converter.js; sourceTree = SOURCE_ROOT; };
 		570B7AFD1715D658002F0E1D /* Markdown.Extra.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = Markdown.Extra.js; path = htmls/Markdown.Extra.js; sourceTree = SOURCE_ROOT; };
 		570B7B061715D866002F0E1D /* view_seaf.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = view_seaf.html; path = htmls/view_seaf.html; sourceTree = SOURCE_ROOT; };
-		570CF8B71660B00900DFADBC /* SeafFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafFile.m; sourceTree = "<group>"; };
 		570DFAC316A15D0100ADD5F2 /* SeafAccountViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafAccountViewController.h; sourceTree = "<group>"; };
 		570DFAC416A15D0100ADD5F2 /* SeafAccountViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafAccountViewController.m; sourceTree = "<group>"; };
 		570DFACA16A19EFD00ADD5F2 /* account.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = account.png; sourceTree = "<group>"; };
@@ -481,19 +467,11 @@
 		5715551C1995FCDC00D2821D /* ImageError@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ImageError@2x.png"; sourceTree = "<group>"; };
 		571ABF511625DF31005C9B08 /* DownloadingProgressView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DownloadingProgressView.h; sourceTree = "<group>"; };
 		571ABF521625DF31005C9B08 /* DownloadingProgressView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DownloadingProgressView.m; sourceTree = "<group>"; };
-		571CE59A15C01879004CD403 /* SeafData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafData.h; sourceTree = "<group>"; };
-		571CE59B15C01879004CD403 /* SeafData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafData.m; sourceTree = "<group>"; };
 		571CFA9319076469002A58BF /* reply.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = reply.png; sourceTree = "<group>"; };
 		571D8DBA1677881400F1A22C /* SeafilePro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SeafilePro.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		571D8DBD1677897D00F1A22C /* seafile-appstore-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "seafile-appstore-Info.plist"; sourceTree = "<group>"; };
 		571F5147168C80380055D69B /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = System/Library/Frameworks/MobileCoreServices.framework; sourceTree = SDKROOT; };
 		57227A5B18389DB600CD28E9 /* red.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = red.png; sourceTree = "<group>"; };
-		572500B1162984B2001E5C75 /* Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Utils.h; sourceTree = "<group>"; };
-		572500B2162984B3001E5C75 /* Utils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Utils.m; sourceTree = "<group>"; };
-		572500B416298C7C001E5C75 /* SeafUploadFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafUploadFile.h; sourceTree = "<group>"; };
-		572500B516298C7C001E5C75 /* SeafUploadFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafUploadFile.m; sourceTree = "<group>"; };
-		5725063C162328EB0002B040 /* Debug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Debug.h; sourceTree = "<group>"; };
-		5725185E17AE7A6F0078CD12 /* NSData+Encryption.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSData+Encryption.m"; sourceTree = "<group>"; };
 		5725186117AE7D000078CD12 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		5725186417AEA6E90078CD12 /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = "ios-openssl/lib/libcrypto.a"; sourceTree = "<group>"; };
 		5725F686164E5AF400A2DCC6 /* unstar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = unstar.png; sourceTree = "<group>"; };
@@ -546,11 +524,6 @@
 		5732A941177894E700D806C7 /* REComposeViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = REComposeViewController.h; sourceTree = "<group>"; };
 		5732A942177894E700D806C7 /* REComposeViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = REComposeViewController.m; sourceTree = "<group>"; };
 		57335CF8160DA00000018AE8 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
-		57396B711657DCE30089F32F /* UIImage+FileType.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+FileType.m"; sourceTree = "<group>"; };
-		57396B721657DCE30089F32F /* UIImage+FileType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+FileType.h"; sourceTree = "<group>"; };
-		57396B761657E0190089F32F /* seafile.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = seafile.xcdatamodel; sourceTree = "<group>"; };
-		57396B781657E0900089F32F /* SKFileTypeImageLoader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SKFileTypeImageLoader.m; sourceTree = "<group>"; };
-		57396B791657E0900089F32F /* SKFileTypeImageLoader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SKFileTypeImageLoader.h; sourceTree = "<group>"; };
 		57396B7E1657E3850089F32F /* FileTypeIcons.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = FileTypeIcons.plist; sourceTree = "<group>"; };
 		57396FFE1657ECDA0089F32F /* unknown-file.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "unknown-file.png"; sourceTree = "<group>"; };
 		573970001657F8BF0089F32F /* video.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = video.png; sourceTree = "<group>"; };
@@ -656,13 +629,6 @@
 		57535234198CD4FF000BE07B /* DACircularProgressView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DACircularProgressView.m; sourceTree = "<group>"; };
 		57535237198D6241000BE07B /* SeafPhotoView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafPhotoView.h; sourceTree = "<group>"; };
 		57535238198D6241000BE07B /* SeafPhotoView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafPhotoView.m; sourceTree = "<group>"; };
-		5753523A198D6857000BE07B /* SeafPreView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafPreView.h; sourceTree = "<group>"; };
-		575753E915EE7AE30049D720 /* SeafDateFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafDateFormatter.h; sourceTree = "<group>"; };
-		575753EA15EE7AE30049D720 /* SeafDateFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafDateFormatter.m; sourceTree = "<group>"; };
-		5760144915FA193900FBDDEF /* ExtentedString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExtentedString.h; sourceTree = "<group>"; };
-		5760144A15FA193900FBDDEF /* ExtentedString.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ExtentedString.m; sourceTree = "<group>"; };
-		576069CA164558A1005C2F13 /* ColorfulButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ColorfulButton.m; sourceTree = "<group>"; };
-		576069CB164558A1005C2F13 /* ColorfulButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ColorfulButton.h; sourceTree = "<group>"; };
 		576328BA19003298009EBCB8 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafMessageCell.xib; sourceTree = "<group>"; };
 		576328BC190032EE009EBCB8 /* SeafMessageCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafMessageCell.h; sourceTree = "<group>"; };
 		576328BD190032EE009EBCB8 /* SeafMessageCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafMessageCell.m; sourceTree = "<group>"; };
@@ -699,9 +665,6 @@
 		576D89EA15E39ED700F2BD17 /* grayArrow@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "grayArrow@2x.png"; sourceTree = "<group>"; };
 		576D89EB15E39ED700F2BD17 /* whiteArrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = whiteArrow.png; sourceTree = "<group>"; };
 		576D89EC15E39ED700F2BD17 /* whiteArrow@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "whiteArrow@2x.png"; sourceTree = "<group>"; };
-		576EE11A162F078400327EB9 /* FileMimeType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FileMimeType.h; sourceTree = "<group>"; };
-		576EE11B162F078400327EB9 /* FileMimeType.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FileMimeType.m; sourceTree = "<group>"; };
-		576EE11E162F0A2900327EB9 /* FileMimeType.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = FileMimeType.plist; sourceTree = "<group>"; };
 		576FFDAD186AAC80009BB81A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/DownloadingProgress_iPad.xib; sourceTree = "<group>"; };
 		576FFDAF186AAC80009BB81A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/DownloadingProgress_iPhone.xib; sourceTree = "<group>"; };
 		576FFDB1186AAC80009BB81A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafAccountCell.xib; sourceTree = "<group>"; };
@@ -726,11 +689,8 @@
 		57853C8D164675CB00CE8857 /* SeafStarredFilesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafStarredFilesViewController.h; sourceTree = "<group>"; };
 		57853C8E164675CB00CE8857 /* SeafStarredFilesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafStarredFilesViewController.m; sourceTree = "<group>"; };
 		57853C9116467A5000CE8857 /* star.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = star.png; sourceTree = "<group>"; };
-		57853C931646818A00CE8857 /* SeafStarredFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafStarredFile.h; sourceTree = "<group>"; };
-		57853C941646818A00CE8857 /* SeafStarredFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafStarredFile.m; sourceTree = "<group>"; };
 		57931B521632E5DB00B462BA /* SeafUploadDirViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafUploadDirViewController.h; sourceTree = "<group>"; };
 		57931B531632E5DB00B462BA /* SeafUploadDirViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafUploadDirViewController.m; sourceTree = "<group>"; };
-		57943BDC19EFFDC4008423E5 /* SeafItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafItem.h; sourceTree = "<group>"; };
 		57943BDD19F024D0008423E5 /* plus2@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "plus2@2x.png"; sourceTree = "<group>"; };
 		57943BDF19F027D5008423E5 /* addmsg@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "addmsg@2x.png"; sourceTree = "<group>"; };
 		57943BE019F027D5008423E5 /* addmsg2@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "addmsg2@2x.png"; sourceTree = "<group>"; };
@@ -764,12 +724,9 @@
 		57943BFD19F027D5008423E5 /* unstar2@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "unstar2@2x.png"; sourceTree = "<group>"; };
 		5795F49816A7266E00FF90E3 /* SeafAccountCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafAccountCell.h; sourceTree = "<group>"; };
 		5795F49916A7266E00FF90E3 /* SeafAccountCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafAccountCell.m; sourceTree = "<group>"; };
-		5796D03D18F78FCD00D5AE39 /* SeafAvatar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafAvatar.h; sourceTree = "<group>"; };
-		5796D03E18F78FCD00D5AE39 /* SeafAvatar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafAvatar.m; sourceTree = "<group>"; };
 		579E612219C1FBEA008EA307 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
 		57A055A51644EAD1006511AA /* tab-home.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-home.png"; sourceTree = "<group>"; };
 		57A055A81644EC84006511AA /* seafile-logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "seafile-logo.png"; sourceTree = "<group>"; };
-		57A07DD118B4CA4800AF543F /* NSData+Encryption.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSData+Encryption.h"; sourceTree = "<group>"; };
 		57A07DD318B4CB0200AF543F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafTextEditorViewController_iPhone.xib; sourceTree = "<group>"; };
 		57A550D9177F23BB00E3BA9B /* refresh.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = refresh.png; sourceTree = "<group>"; };
 		57A550DC177F283700E3BA9B /* addmsg.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = addmsg.png; sourceTree = "<group>"; };
@@ -905,14 +862,55 @@
 		57E228D61A0F4EE700C92330 /* FileProvider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FileProvider.h; sourceTree = "<group>"; };
 		57E228D71A0F4EE700C92330 /* FileProvider.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = FileProvider.m; sourceTree = "<group>"; };
 		57E228E61A0F57A400C92330 /* SeafilePro.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = SeafilePro.entitlements; path = "seafile-appstore/SeafilePro.entitlements"; sourceTree = "<group>"; };
-		57E228E71A0FB35200C92330 /* SeafGlobal.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafGlobal.m; sourceTree = "<group>"; };
-		57E228EB1A0FB39000C92330 /* SeafGlobal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafGlobal.h; sourceTree = "<group>"; };
+		57E2298B1A11087500C92330 /* SeafAvatar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafAvatar.h; path = common/SeafAvatar.h; sourceTree = SOURCE_ROOT; };
+		57E2298C1A11087500C92330 /* SeafAvatar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafAvatar.m; path = common/SeafAvatar.m; sourceTree = SOURCE_ROOT; };
+		57E2298D1A11087500C92330 /* SeafBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafBase.h; path = common/SeafBase.h; sourceTree = SOURCE_ROOT; };
+		57E2298E1A11087500C92330 /* SeafBase.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafBase.m; path = common/SeafBase.m; sourceTree = SOURCE_ROOT; };
+		57E2298F1A11087500C92330 /* SeafConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafConnection.h; path = common/SeafConnection.h; sourceTree = SOURCE_ROOT; };
+		57E229901A11087500C92330 /* SeafConnection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafConnection.m; path = common/SeafConnection.m; sourceTree = SOURCE_ROOT; };
+		57E229911A11087500C92330 /* SeafData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafData.h; path = common/SeafData.h; sourceTree = SOURCE_ROOT; };
+		57E229921A11087500C92330 /* SeafData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafData.m; path = common/SeafData.m; sourceTree = SOURCE_ROOT; };
+		57E229931A11087500C92330 /* SeafDir.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafDir.h; path = common/SeafDir.h; sourceTree = SOURCE_ROOT; };
+		57E229941A11087500C92330 /* SeafDir.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafDir.m; path = common/SeafDir.m; sourceTree = SOURCE_ROOT; };
+		57E229951A11087500C92330 /* SeafFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafFile.h; path = common/SeafFile.h; sourceTree = SOURCE_ROOT; };
+		57E229961A11087500C92330 /* SeafFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafFile.m; path = common/SeafFile.m; sourceTree = SOURCE_ROOT; };
+		57E229981A11087500C92330 /* seafile.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = seafile.xcdatamodel; sourceTree = "<group>"; };
+		57E229991A11087500C92330 /* SeafItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafItem.h; path = common/SeafItem.h; sourceTree = SOURCE_ROOT; };
+		57E2299A1A11087500C92330 /* SeafJSONRequestOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafJSONRequestOperation.h; path = common/SeafJSONRequestOperation.h; sourceTree = SOURCE_ROOT; };
+		57E2299B1A11087500C92330 /* SeafJSONRequestOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafJSONRequestOperation.m; path = common/SeafJSONRequestOperation.m; sourceTree = SOURCE_ROOT; };
+		57E2299C1A11087500C92330 /* SeafPreView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafPreView.h; path = common/SeafPreView.h; sourceTree = SOURCE_ROOT; };
+		57E2299D1A11087500C92330 /* SeafRepos.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafRepos.h; path = common/SeafRepos.h; sourceTree = SOURCE_ROOT; };
+		57E2299E1A11087500C92330 /* SeafRepos.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafRepos.m; path = common/SeafRepos.m; sourceTree = SOURCE_ROOT; };
+		57E2299F1A11087500C92330 /* SeafStarredFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafStarredFile.h; path = common/SeafStarredFile.h; sourceTree = SOURCE_ROOT; };
+		57E229A01A11087500C92330 /* SeafStarredFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafStarredFile.m; path = common/SeafStarredFile.m; sourceTree = SOURCE_ROOT; };
+		57E229A11A11087500C92330 /* SeafUploadFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafUploadFile.h; path = common/SeafUploadFile.h; sourceTree = SOURCE_ROOT; };
+		57E229A21A11087500C92330 /* SeafUploadFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafUploadFile.m; path = common/SeafUploadFile.m; sourceTree = SOURCE_ROOT; };
+		57E229C41A1108B200C92330 /* ColorfulButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ColorfulButton.h; path = common/ColorfulButton.h; sourceTree = SOURCE_ROOT; };
+		57E229C51A1108B200C92330 /* ColorfulButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ColorfulButton.m; path = common/ColorfulButton.m; sourceTree = SOURCE_ROOT; };
+		57E229C61A1108B200C92330 /* Debug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Debug.h; path = common/Debug.h; sourceTree = SOURCE_ROOT; };
+		57E229C71A1108B200C92330 /* ExtentedString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExtentedString.h; path = common/ExtentedString.h; sourceTree = SOURCE_ROOT; };
+		57E229C81A1108B200C92330 /* ExtentedString.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ExtentedString.m; path = common/ExtentedString.m; sourceTree = SOURCE_ROOT; };
+		57E229C91A1108B200C92330 /* FileMimeType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FileMimeType.h; path = common/FileMimeType.h; sourceTree = SOURCE_ROOT; };
+		57E229CA1A1108B200C92330 /* FileMimeType.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FileMimeType.m; path = common/FileMimeType.m; sourceTree = SOURCE_ROOT; };
+		57E229CB1A1108B200C92330 /* FileMimeType.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = FileMimeType.plist; path = common/FileMimeType.plist; sourceTree = SOURCE_ROOT; };
+		57E229CC1A1108B200C92330 /* FileSizeFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FileSizeFormatter.h; path = common/FileSizeFormatter.h; sourceTree = SOURCE_ROOT; };
+		57E229CD1A1108B200C92330 /* FileSizeFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FileSizeFormatter.m; path = common/FileSizeFormatter.m; sourceTree = SOURCE_ROOT; };
+		57E229CE1A1108B200C92330 /* NSData+Encryption.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSData+Encryption.h"; path = "common/NSData+Encryption.h"; sourceTree = SOURCE_ROOT; };
+		57E229CF1A1108B200C92330 /* NSData+Encryption.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSData+Encryption.m"; path = "common/NSData+Encryption.m"; sourceTree = SOURCE_ROOT; };
+		57E229D01A1108B200C92330 /* SeafDateFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafDateFormatter.h; path = common/SeafDateFormatter.h; sourceTree = SOURCE_ROOT; };
+		57E229D11A1108B200C92330 /* SeafDateFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafDateFormatter.m; path = common/SeafDateFormatter.m; sourceTree = SOURCE_ROOT; };
+		57E229D21A1108B200C92330 /* SKFileTypeImageLoader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SKFileTypeImageLoader.h; path = common/SKFileTypeImageLoader.h; sourceTree = SOURCE_ROOT; };
+		57E229D31A1108B200C92330 /* SKFileTypeImageLoader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SKFileTypeImageLoader.m; path = common/SKFileTypeImageLoader.m; sourceTree = SOURCE_ROOT; };
+		57E229D41A1108B200C92330 /* UIImage+FileType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIImage+FileType.h"; path = "common/UIImage+FileType.h"; sourceTree = SOURCE_ROOT; };
+		57E229D51A1108B200C92330 /* UIImage+FileType.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIImage+FileType.m"; path = "common/UIImage+FileType.m"; sourceTree = SOURCE_ROOT; };
+		57E229D61A1108B200C92330 /* Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Utils.h; path = common/Utils.h; sourceTree = SOURCE_ROOT; };
+		57E229D71A1108B200C92330 /* Utils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Utils.m; path = common/Utils.m; sourceTree = SOURCE_ROOT; };
+		57E22A251A11093D00C92330 /* SeafGlobal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafGlobal.h; path = common/SeafGlobal.h; sourceTree = SOURCE_ROOT; };
+		57E22A261A11093D00C92330 /* SeafGlobal.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafGlobal.m; path = common/SeafGlobal.m; sourceTree = SOURCE_ROOT; };
 		57E51BC619A0F355002B50C6 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/Localizable.strings; sourceTree = "<group>"; };
 		57E51BC719A0F3D5002B50C6 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Localizable.strings; sourceTree = "<group>"; };
 		57E51BC819A0F46E002B50C6 /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		57F0AAFC16D8913600364D18 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
-		57F53B0415DF49EF0027140D /* FileSizeFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FileSizeFormatter.h; sourceTree = "<group>"; };
-		57F53B0515DF49EF0027140D /* FileSizeFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FileSizeFormatter.m; sourceTree = "<group>"; };
 		E4F46F57187B44B200B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -1201,29 +1199,29 @@
 		5709512715B9ACF300F48C08 /* models */ = {
 			isa = PBXGroup;
 			children = (
-				5796D03D18F78FCD00D5AE39 /* SeafAvatar.h */,
-				5796D03E18F78FCD00D5AE39 /* SeafAvatar.m */,
-				5709512F15B9B6BD00F48C08 /* SeafBase.h */,
-				5709513015B9B6BD00F48C08 /* SeafBase.m */,
-				5709512915B9B6BD00F48C08 /* SeafConnection.h */,
-				5709512A15B9B6BD00F48C08 /* SeafConnection.m */,
-				571CE59A15C01879004CD403 /* SeafData.h */,
-				571CE59B15C01879004CD403 /* SeafData.m */,
-				5709512D15B9B6BD00F48C08 /* SeafDir.h */,
-				5709512E15B9B6BD00F48C08 /* SeafDir.m */,
-				5709512B15B9B6BD00F48C08 /* SeafFile.h */,
-				570CF8B71660B00900DFADBC /* SeafFile.m */,
-				57396B751657E0190089F32F /* seafile.xcdatamodeld */,
-				5709513115B9B6BD00F48C08 /* SeafJSONRequestOperation.h */,
-				5709513215B9B6BD00F48C08 /* SeafJSONRequestOperation.m */,
-				5753523A198D6857000BE07B /* SeafPreView.h */,
-				5709513315B9B6BD00F48C08 /* SeafRepos.h */,
-				5709513415B9B6BD00F48C08 /* SeafRepos.m */,
-				57853C931646818A00CE8857 /* SeafStarredFile.h */,
-				57853C941646818A00CE8857 /* SeafStarredFile.m */,
-				572500B416298C7C001E5C75 /* SeafUploadFile.h */,
-				572500B516298C7C001E5C75 /* SeafUploadFile.m */,
-				57943BDC19EFFDC4008423E5 /* SeafItem.h */,
+				57E2298B1A11087500C92330 /* SeafAvatar.h */,
+				57E2298C1A11087500C92330 /* SeafAvatar.m */,
+				57E2298D1A11087500C92330 /* SeafBase.h */,
+				57E2298E1A11087500C92330 /* SeafBase.m */,
+				57E2298F1A11087500C92330 /* SeafConnection.h */,
+				57E229901A11087500C92330 /* SeafConnection.m */,
+				57E229911A11087500C92330 /* SeafData.h */,
+				57E229921A11087500C92330 /* SeafData.m */,
+				57E229931A11087500C92330 /* SeafDir.h */,
+				57E229941A11087500C92330 /* SeafDir.m */,
+				57E229951A11087500C92330 /* SeafFile.h */,
+				57E229961A11087500C92330 /* SeafFile.m */,
+				57E229971A11087500C92330 /* seafile.xcdatamodeld */,
+				57E229991A11087500C92330 /* SeafItem.h */,
+				57E2299A1A11087500C92330 /* SeafJSONRequestOperation.h */,
+				57E2299B1A11087500C92330 /* SeafJSONRequestOperation.m */,
+				57E2299C1A11087500C92330 /* SeafPreView.h */,
+				57E2299D1A11087500C92330 /* SeafRepos.h */,
+				57E2299E1A11087500C92330 /* SeafRepos.m */,
+				57E2299F1A11087500C92330 /* SeafStarredFile.h */,
+				57E229A01A11087500C92330 /* SeafStarredFile.m */,
+				57E229A11A11087500C92330 /* SeafUploadFile.h */,
+				57E229A21A11087500C92330 /* SeafUploadFile.m */,
 			);
 			name = models;
 			sourceTree = "<group>";
@@ -1634,6 +1632,7 @@
 				57DB827015A833FA00097CEC /* Frameworks */,
 				57094B5515B9AC4A00F48C08 /* libs */,
 				57DB826E15A833FA00097CEC /* Products */,
+				57E2298A1A1106AB00C92330 /* common */,
 				57DB827915A833FA00097CEC /* seafile */,
 			);
 			sourceTree = "<group>";
@@ -1677,7 +1676,6 @@
 				57DB827A15A833FA00097CEC /* Supporting Files */,
 				5709512815B9B1B600F48C08 /* ui */,
 				5709512615B9ACDF00F48C08 /* views */,
-				57E2298A1A1106AB00C92330 /* common */,
 			);
 			path = seafile;
 			sourceTree = "<group>";
@@ -1783,35 +1781,36 @@
 			children = (
 				5709512715B9ACF300F48C08 /* models */,
 				57F53B0315DF49D00027140D /* utils */,
-				57E228E71A0FB35200C92330 /* SeafGlobal.m */,
-				57E228EB1A0FB39000C92330 /* SeafGlobal.h */,
+				57E22A251A11093D00C92330 /* SeafGlobal.h */,
+				57E22A261A11093D00C92330 /* SeafGlobal.m */,
 			);
 			name = common;
+			path = seafile;
 			sourceTree = "<group>";
 		};
 		57F53B0315DF49D00027140D /* utils */ = {
 			isa = PBXGroup;
 			children = (
-				57A07DD118B4CA4800AF543F /* NSData+Encryption.h */,
-				5725185E17AE7A6F0078CD12 /* NSData+Encryption.m */,
-				576069CB164558A1005C2F13 /* ColorfulButton.h */,
-				576069CA164558A1005C2F13 /* ColorfulButton.m */,
-				5725063C162328EB0002B040 /* Debug.h */,
-				5760144915FA193900FBDDEF /* ExtentedString.h */,
-				5760144A15FA193900FBDDEF /* ExtentedString.m */,
-				576EE11A162F078400327EB9 /* FileMimeType.h */,
-				576EE11B162F078400327EB9 /* FileMimeType.m */,
-				576EE11E162F0A2900327EB9 /* FileMimeType.plist */,
-				57F53B0415DF49EF0027140D /* FileSizeFormatter.h */,
-				57F53B0515DF49EF0027140D /* FileSizeFormatter.m */,
-				575753E915EE7AE30049D720 /* SeafDateFormatter.h */,
-				575753EA15EE7AE30049D720 /* SeafDateFormatter.m */,
-				57396B791657E0900089F32F /* SKFileTypeImageLoader.h */,
-				57396B781657E0900089F32F /* SKFileTypeImageLoader.m */,
-				57396B721657DCE30089F32F /* UIImage+FileType.h */,
-				57396B711657DCE30089F32F /* UIImage+FileType.m */,
-				572500B1162984B2001E5C75 /* Utils.h */,
-				572500B2162984B3001E5C75 /* Utils.m */,
+				57E229C41A1108B200C92330 /* ColorfulButton.h */,
+				57E229C51A1108B200C92330 /* ColorfulButton.m */,
+				57E229C61A1108B200C92330 /* Debug.h */,
+				57E229C71A1108B200C92330 /* ExtentedString.h */,
+				57E229C81A1108B200C92330 /* ExtentedString.m */,
+				57E229C91A1108B200C92330 /* FileMimeType.h */,
+				57E229CA1A1108B200C92330 /* FileMimeType.m */,
+				57E229CB1A1108B200C92330 /* FileMimeType.plist */,
+				57E229CC1A1108B200C92330 /* FileSizeFormatter.h */,
+				57E229CD1A1108B200C92330 /* FileSizeFormatter.m */,
+				57E229CE1A1108B200C92330 /* NSData+Encryption.h */,
+				57E229CF1A1108B200C92330 /* NSData+Encryption.m */,
+				57E229D01A1108B200C92330 /* SeafDateFormatter.h */,
+				57E229D11A1108B200C92330 /* SeafDateFormatter.m */,
+				57E229D21A1108B200C92330 /* SKFileTypeImageLoader.h */,
+				57E229D31A1108B200C92330 /* SKFileTypeImageLoader.m */,
+				57E229D41A1108B200C92330 /* UIImage+FileType.h */,
+				57E229D51A1108B200C92330 /* UIImage+FileType.m */,
+				57E229D61A1108B200C92330 /* Utils.h */,
+				57E229D71A1108B200C92330 /* Utils.m */,
 			);
 			name = utils;
 			sourceTree = "<group>";
@@ -1985,7 +1984,6 @@
 				573E362C1922847200C67671 /* button-photo.png in Resources */,
 				57C520FB197A3BB800970804 /* psd.png in Resources */,
 				573E362B1922847200C67671 /* send-button@2x.png in Resources */,
-				571D8D021677881400F1A22C /* FileMimeType.plist in Resources */,
 				573E36221922847200C67671 /* bubble.png in Resources */,
 				573E360C1922847200C67671 /* bubble-classic-green.png in Resources */,
 				57BFAB0F18BD8EA200EB1B5C /* bt-right2.png in Resources */,
@@ -2114,6 +2112,7 @@
 				5704C6FB1756710F0028F4FE /* tab-modify.png in Resources */,
 				5704C6FD1756710F0028F4FE /* tab-message.png in Resources */,
 				57BFAB0618BD8EA200EB1B5C /* bt-outdent.png in Resources */,
+				57E229E11A1108B200C92330 /* FileMimeType.plist in Resources */,
 				573E361C1922847200C67671 /* bubble-stroked-tailless.png in Resources */,
 				57943C1419F027D5008423E5 /* star2@2x.png in Resources */,
 				5732A966177894E700D806C7 /* REComposeViewController.bundle in Resources */,
@@ -2160,6 +2159,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				57E229E21A1108B200C92330 /* FileMimeType.plist in Resources */,
 				57E228CC1A0F4EE700C92330 /* MainInterface.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2178,47 +2178,45 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				57E22AB01A110DFA00C92330 /* Utils.m in Sources */,
+				57E22AAF1A110DEB00C92330 /* SeafUploadFile.m in Sources */,
+				57E22AAE1A110DE200C92330 /* SeafStarredFile.m in Sources */,
+				57E22AAD1A110DD800C92330 /* SeafDateFormatter.m in Sources */,
+				57E22AAC1A110DCD00C92330 /* SKFileTypeImageLoader.m in Sources */,
 				571D8CAB1677881400F1A22C /* main.m in Sources */,
 				57E2288B1A0E286200C92330 /* QBAssetsCollectionVideoIndicatorView.m in Sources */,
 				571D8CAC1677881400F1A22C /* SeafAppDelegate.m in Sources */,
 				57535230198CD4E0000BE07B /* MWTapDetectingImageView.m in Sources */,
 				57E2288A1A0E286200C92330 /* QBAssetsCollectionOverlayView.m in Sources */,
 				571D8CAD1677881400F1A22C /* SeafFileViewController.m in Sources */,
-				5796D03F18F78FCD00D5AE39 /* SeafAvatar.m in Sources */,
+				57E229A91A11087500C92330 /* SeafConnection.m in Sources */,
 				5732065C18EB16F4003250DE /* AFNetworkActivityIndicatorManager.m in Sources */,
 				573E36041922847200C67671 /* JSMessageTableView.m in Sources */,
 				571D8CB01677881400F1A22C /* AFHTTPRequestOperation.m in Sources */,
 				573E35F91922847200C67671 /* UIColor+JSMessagesView.m in Sources */,
 				571D8CB61677881400F1A22C /* AFURLConnectionOperation.m in Sources */,
 				5732064718EB11CA003250DE /* AFURLRequestSerialization.m in Sources */,
-				571D8CB91677881400F1A22C /* SeafConnection.m in Sources */,
-				571D8CBA1677881400F1A22C /* SeafDir.m in Sources */,
-				571D8CBB1677881400F1A22C /* SeafBase.m in Sources */,
-				571D8CBC1677881400F1A22C /* SeafJSONRequestOperation.m in Sources */,
-				571D8CBD1677881400F1A22C /* SeafRepos.m in Sources */,
-				571D8CBE1677881400F1A22C /* SeafData.m in Sources */,
+				57E229B81A11087500C92330 /* SeafJSONRequestOperation.m in Sources */,
+				57E229B21A11087500C92330 /* SeafFile.m in Sources */,
+				57E229BB1A11087500C92330 /* SeafRepos.m in Sources */,
 				571D8CBF1677881400F1A22C /* StartViewController.m in Sources */,
-				571D8CC21677881400F1A22C /* FileSizeFormatter.m in Sources */,
 				571D8CC31677881400F1A22C /* EGORefreshTableHeaderView.m in Sources */,
-				571D8CC61677881400F1A22C /* SeafDateFormatter.m in Sources */,
 				573E36031922847200C67671 /* JSMessagesViewController.m in Sources */,
 				5732066018EB16F4003250DE /* UIImageView+AFNetworking.m in Sources */,
+				57E229AC1A11087500C92330 /* SeafData.m in Sources */,
 				573E36051922847200C67671 /* JSMessageTextView.m in Sources */,
-				571D8CC71677881400F1A22C /* ExtentedString.m in Sources */,
 				573E35F81922847200C67671 /* NSString+JSMessagesView.m in Sources */,
-				57E228E81A0FB35200C92330 /* SeafGlobal.m in Sources */,
 				573E35FB1922847200C67671 /* JSAvatarImageFactory.m in Sources */,
 				57E2288E1A0E286200C92330 /* QBAssetsCollectionViewLayout.m in Sources */,
 				571D8CC91677881400F1A22C /* FailToPreview.m in Sources */,
 				57E228911A0E286200C92330 /* QBImagePickerThumbnailView.m in Sources */,
+				57E229A31A11087500C92330 /* SeafAvatar.m in Sources */,
 				571D8CCA1677881400F1A22C /* UIViewController+Extend.m in Sources */,
 				5732064618EB11CA003250DE /* AFSecurityPolicy.m in Sources */,
 				5732065D18EB16F4003250DE /* UIActivityIndicatorView+AFNetworking.m in Sources */,
 				571D8CCB1677881400F1A22C /* DownloadingProgressView.m in Sources */,
-				571D8CCD1677881400F1A22C /* Utils.m in Sources */,
 				5732065F18EB16F4003250DE /* UIButton+AFNetworking.m in Sources */,
-				571D8CCE1677881400F1A22C /* SeafUploadFile.m in Sources */,
-				571D8CCF1677881400F1A22C /* FileMimeType.m in Sources */,
+				57E229DE1A1108B200C92330 /* FileMimeType.m in Sources */,
 				571D8CD01677881400F1A22C /* SeafUploadingFileCell.m in Sources */,
 				5732064518EB11CA003250DE /* AFNetworkReachabilityManager.m in Sources */,
 				571D8CD11677881400F1A22C /* SeafUploadDirViewController.m in Sources */,
@@ -2227,18 +2225,15 @@
 				57E228881A0E286200C92330 /* QBAssetsCollectionCheckmarkView.m in Sources */,
 				57E2288C1A0E286200C92330 /* QBAssetsCollectionViewCell.m in Sources */,
 				57E2288D1A0E286200C92330 /* QBAssetsCollectionViewController.m in Sources */,
-				571D8CD31677881400F1A22C /* ColorfulButton.m in Sources */,
 				571D8CD41677881400F1A22C /* SeafStarredFilesViewController.m in Sources */,
 				573E35FD1922847200C67671 /* JSBubbleMessageCell.m in Sources */,
-				571D8CD51677881400F1A22C /* SeafStarredFile.m in Sources */,
-				571D8CD71677881400F1A22C /* UIImage+FileType.m in Sources */,
-				571D8CD81677881400F1A22C /* seafile.xcdatamodeld in Sources */,
 				573E35FE1922847200C67671 /* JSBubbleView.m in Sources */,
 				573E36001922847200C67671 /* JSMessage.m in Sources */,
-				571D8CD91677881400F1A22C /* SKFileTypeImageLoader.m in Sources */,
 				571D8CDA1677881400F1A22C /* SVProgressHUD.m in Sources */,
+				57E229AF1A11087500C92330 /* SeafDir.m in Sources */,
+				57E22A691A11093D00C92330 /* SeafGlobal.m in Sources */,
+				57E229E41A1108B200C92330 /* FileSizeFormatter.m in Sources */,
 				573E35FF1922847200C67671 /* JSDismissiveTextView.m in Sources */,
-				571D8CDB1677881400F1A22C /* SeafFile.m in Sources */,
 				5732064818EB11CA003250DE /* AFURLResponseSerialization.m in Sources */,
 				5732065E18EB16F4003250DE /* UIAlertView+AFNetworking.m in Sources */,
 				576B99071861411700A16ED6 /* EGOTextView.m in Sources */,
@@ -2246,14 +2241,17 @@
 				570DFAD016A1EA1B00ADD5F2 /* SeafStartHeaderView.m in Sources */,
 				576328BE190032EE009EBCB8 /* SeafMessageCell.m in Sources */,
 				5795F49B16A7266F00FF90E3 /* SeafAccountCell.m in Sources */,
+				57E229A61A11087500C92330 /* SeafBase.m in Sources */,
 				577B6C6616AADBA3008E82C2 /* SeafCell.m in Sources */,
 				57E228891A0E286200C92330 /* QBAssetsCollectionFooterView.m in Sources */,
 				57DA26F5173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */,
 				5732066118EB16F4003250DE /* UIProgressView+AFNetworking.m in Sources */,
+				57E229F01A1108B200C92330 /* UIImage+FileType.m in Sources */,
 				5775EA1217476FAD000A1765 /* SeafActivityViewController.m in Sources */,
 				573E35FC1922847200C67671 /* JSBubbleImageViewFactory.m in Sources */,
 				5732064918EB11CA003250DE /* AFURLSessionManager.m in Sources */,
 				57535239198D6241000BE07B /* SeafPhotoView.m in Sources */,
+				57E229DB1A1108B200C92330 /* ExtentedString.m in Sources */,
 				57E228901A0E286200C92330 /* QBImagePickerGroupCell.m in Sources */,
 				57A90DA118C49F97005D8A53 /* SeafDetailViewController.m in Sources */,
 				5732064318EB11CA003250DE /* AFHTTPRequestOperationManager.m in Sources */,
@@ -2265,7 +2263,9 @@
 				57E2288F1A0E286200C92330 /* QBImagePickerController.m in Sources */,
 				5732A95E177894E700D806C7 /* DEComposeRuledView.m in Sources */,
 				5732A960177894E700D806C7 /* DEComposeTextView.m in Sources */,
+				57E229B51A11087500C92330 /* seafile.xcdatamodeld in Sources */,
 				5732064418EB11CA003250DE /* AFHTTPSessionManager.m in Sources */,
+				57E229E71A1108B200C92330 /* NSData+Encryption.m in Sources */,
 				5732A962177894E700D806C7 /* REComposeBackgroundView.m in Sources */,
 				5732A964177894E700D806C7 /* REComposeSheetView.m in Sources */,
 				5732A968177894E700D806C7 /* REComposeViewController.m in Sources */,
@@ -2274,7 +2274,6 @@
 				57535231198CD4E0000BE07B /* MWTapDetectingView.m in Sources */,
 				5732066318EB16F4003250DE /* UIWebView+AFNetworking.m in Sources */,
 				576C91C4177EB43F007B50BD /* SeafDirViewController.m in Sources */,
-				5725186017AE7A6F0078CD12 /* NSData+Encryption.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2282,38 +2281,36 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				57E229181A0FBC5F00C92330 /* NSData+Encryption.m in Sources */,
-				57E2291A1A0FBC5F00C92330 /* ColorfulButton.m in Sources */,
-				57E2291B1A0FBC5F00C92330 /* Debug.h in Sources */,
-				57E2291D1A0FBC5F00C92330 /* ExtentedString.m in Sources */,
-				57E2291F1A0FBC5F00C92330 /* FileMimeType.m in Sources */,
-				57E229201A0FBC5F00C92330 /* FileMimeType.plist in Sources */,
-				57E229221A0FBC5F00C92330 /* FileSizeFormatter.m in Sources */,
-				57E229241A0FBC5F00C92330 /* SeafDateFormatter.m in Sources */,
-				57E229261A0FBC5F00C92330 /* SKFileTypeImageLoader.m in Sources */,
-				57E229281A0FBC5F00C92330 /* UIImage+FileType.m in Sources */,
-				57E2292C1A0FBC5F00C92330 /* Utils.m in Sources */,
-				57E229021A0FBB7000C92330 /* SeafAvatar.m in Sources */,
-				57E229041A0FBB7000C92330 /* SeafBase.m in Sources */,
-				57E229061A0FBB7000C92330 /* SeafData.m in Sources */,
-				57E229081A0FBB7000C92330 /* SeafDir.m in Sources */,
-				57E2290A1A0FBB7000C92330 /* SeafFile.m in Sources */,
-				57E2290C1A0FBB7000C92330 /* SeafJSONRequestOperation.m in Sources */,
-				57E229111A0FBB7000C92330 /* SeafRepos.m in Sources */,
-				57E229131A0FBB7000C92330 /* SeafStarredFile.m in Sources */,
-				57E229151A0FBB7000C92330 /* SeafUploadFile.m in Sources */,
-				57E228EF1A0FBAB400C92330 /* AFHTTPRequestOperation.m in Sources */,
-				57E228F11A0FBAB400C92330 /* AFHTTPRequestOperationManager.m in Sources */,
-				57E228F31A0FBAB400C92330 /* AFHTTPSessionManager.m in Sources */,
-				57E228F61A0FBAB400C92330 /* AFNetworkReachabilityManager.m in Sources */,
-				57E228F81A0FBAB400C92330 /* AFSecurityPolicy.m in Sources */,
-				57E228FA1A0FBAB400C92330 /* AFURLConnectionOperation.m in Sources */,
-				57E228FC1A0FBAB400C92330 /* AFURLRequestSerialization.m in Sources */,
-				57E228FE1A0FBAB400C92330 /* AFURLResponseSerialization.m in Sources */,
-				57E229001A0FBAB400C92330 /* AFURLSessionManager.m in Sources */,
-				57E228ED1A0FB85000C92330 /* SeafConnection.m in Sources */,
-				57E228CA1A0F4EE700C92330 /* DocumentPickerViewController.m in Sources */,
-				57E228E91A0FB35200C92330 /* SeafGlobal.m in Sources */,
+				57E22A9B1A110D0F00C92330 /* AFHTTPRequestOperation.m in Sources */,
+				57E22A9C1A110D0F00C92330 /* AFHTTPRequestOperationManager.m in Sources */,
+				57E22A9D1A110D0F00C92330 /* AFHTTPSessionManager.m in Sources */,
+				57E22A9E1A110D0F00C92330 /* AFNetworkReachabilityManager.m in Sources */,
+				57E22A9F1A110D0F00C92330 /* AFSecurityPolicy.m in Sources */,
+				57E22AA01A110D0F00C92330 /* AFURLConnectionOperation.m in Sources */,
+				57E22AA11A110D0F00C92330 /* AFURLRequestSerialization.m in Sources */,
+				57E22AA21A110D0F00C92330 /* AFURLResponseSerialization.m in Sources */,
+				57E22AA31A110D0F00C92330 /* AFURLSessionManager.m in Sources */,
+				57E22A861A110CD800C92330 /* ColorfulButton.m in Sources */,
+				57E22A891A110CD800C92330 /* ExtentedString.m in Sources */,
+				57E22A8B1A110CD800C92330 /* FileMimeType.m in Sources */,
+				57E22A8E1A110CD800C92330 /* FileSizeFormatter.m in Sources */,
+				57E22A901A110CD800C92330 /* NSData+Encryption.m in Sources */,
+				57E22A921A110CD800C92330 /* SeafDateFormatter.m in Sources */,
+				57E22A941A110CD800C92330 /* SKFileTypeImageLoader.m in Sources */,
+				57E22A961A110CD800C92330 /* UIImage+FileType.m in Sources */,
+				57E22A981A110CD800C92330 /* Utils.m in Sources */,
+				57E22A9A1A110CD800C92330 /* SeafGlobal.m in Sources */,
+				57E22A6F1A110CA800C92330 /* SeafAvatar.m in Sources */,
+				57E22A711A110CA800C92330 /* SeafBase.m in Sources */,
+				57E22A731A110CA800C92330 /* SeafConnection.m in Sources */,
+				57E22A751A110CA800C92330 /* SeafData.m in Sources */,
+				57E22A771A110CA800C92330 /* SeafDir.m in Sources */,
+				57E22A791A110CA800C92330 /* SeafFile.m in Sources */,
+				57E22A7D1A110CA800C92330 /* SeafJSONRequestOperation.m in Sources */,
+				57E22A801A110CA800C92330 /* SeafRepos.m in Sources */,
+				57E22A821A110CA800C92330 /* SeafStarredFile.m in Sources */,
+				57E22A841A110CA800C92330 /* SeafUploadFile.m in Sources */,
+				57E22A6D1A110C9B00C92330 /* DocumentPickerViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2321,29 +2318,28 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				57E22AAB1A110DA400C92330 /* Utils.m in Sources */,
+				57E22AAA1A110D9B00C92330 /* FileSizeFormatter.m in Sources */,
+				57E22AA51A110D7D00C92330 /* SeafConnection.m in Sources */,
+				57E22AA61A110D7D00C92330 /* SeafDir.m in Sources */,
+				57E22AA71A110D7D00C92330 /* SeafFile.m in Sources */,
+				57E22AA81A110D7D00C92330 /* SeafRepos.m in Sources */,
+				57E22AA91A110D7D00C92330 /* SeafStarredFile.m in Sources */,
+				57E22AA41A110D5100C92330 /* SKFileTypeImageLoader.m in Sources */,
 				57E229891A10FE2000C92330 /* AFHTTPRequestOperation.m in Sources */,
-				57E229881A10FDC800C92330 /* SeafAvatar.m in Sources */,
-				57E229701A10FCC200C92330 /* NSData+Encryption.m in Sources */,
-				57E229721A10FCC200C92330 /* ColorfulButton.m in Sources */,
-				57E229751A10FCC200C92330 /* ExtentedString.m in Sources */,
-				57E229771A10FCC200C92330 /* FileMimeType.m in Sources */,
-				57E229781A10FCC200C92330 /* FileMimeType.plist in Sources */,
-				57E2297A1A10FCC200C92330 /* FileSizeFormatter.m in Sources */,
-				57E2297C1A10FCC200C92330 /* SeafDateFormatter.m in Sources */,
-				57E2297E1A10FCC200C92330 /* SKFileTypeImageLoader.m in Sources */,
-				57E229801A10FCC200C92330 /* UIImage+FileType.m in Sources */,
-				57E229841A10FCC200C92330 /* Utils.m in Sources */,
-				57E2295A1A10FC7500C92330 /* SeafBase.m in Sources */,
-				57E2295C1A10FC7500C92330 /* SeafConnection.m in Sources */,
-				57E2295E1A10FC7500C92330 /* SeafData.m in Sources */,
-				57E229601A10FC7500C92330 /* SeafDir.m in Sources */,
-				57E229621A10FC7500C92330 /* SeafFile.m in Sources */,
-				57E229641A10FC7500C92330 /* SeafJSONRequestOperation.m in Sources */,
-				57E229691A10FC7500C92330 /* SeafRepos.m in Sources */,
-				57E2296B1A10FC7500C92330 /* SeafStarredFile.m in Sources */,
-				57E2296D1A10FC7500C92330 /* SeafUploadFile.m in Sources */,
+				57E229B71A11087500C92330 /* seafile.xcdatamodeld in Sources */,
+				57E229BA1A11087500C92330 /* SeafJSONRequestOperation.m in Sources */,
+				57E229A81A11087500C92330 /* SeafBase.m in Sources */,
+				57E22A6B1A11093D00C92330 /* SeafGlobal.m in Sources */,
+				57E229EC1A1108B200C92330 /* SeafDateFormatter.m in Sources */,
+				57E229A51A11087500C92330 /* SeafAvatar.m in Sources */,
+				57E229E91A1108B200C92330 /* NSData+Encryption.m in Sources */,
+				57E229E01A1108B200C92330 /* FileMimeType.m in Sources */,
+				57E229DA1A1108B200C92330 /* ColorfulButton.m in Sources */,
 				57E229471A10FC5000C92330 /* AFHTTPRequestOperationManager.m in Sources */,
 				57E229491A10FC5000C92330 /* AFHTTPSessionManager.m in Sources */,
+				57E229C31A11087500C92330 /* SeafUploadFile.m in Sources */,
+				57E229DD1A1108B200C92330 /* ExtentedString.m in Sources */,
 				57E2294C1A10FC5000C92330 /* AFNetworkReachabilityManager.m in Sources */,
 				57E2294E1A10FC5000C92330 /* AFSecurityPolicy.m in Sources */,
 				57E229501A10FC5000C92330 /* AFURLConnectionOperation.m in Sources */,
@@ -2351,7 +2347,8 @@
 				57E229541A10FC5000C92330 /* AFURLResponseSerialization.m in Sources */,
 				57E229561A10FC5000C92330 /* AFURLSessionManager.m in Sources */,
 				57E228D81A0F4EE700C92330 /* FileProvider.m in Sources */,
-				57E228EA1A0FB35200C92330 /* SeafGlobal.m in Sources */,
+				57E229AE1A11087500C92330 /* SeafData.m in Sources */,
+				57E229F21A1108B200C92330 /* UIImage+FileType.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2845,13 +2842,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCVersionGroup section */
-		57396B751657E0190089F32F /* seafile.xcdatamodeld */ = {
+		57E229971A11087500C92330 /* seafile.xcdatamodeld */ = {
 			isa = XCVersionGroup;
 			children = (
-				57396B761657E0190089F32F /* seafile.xcdatamodel */,
+				57E229981A11087500C92330 /* seafile.xcdatamodel */,
 			);
-			currentVersion = 57396B761657E0190089F32F /* seafile.xcdatamodel */;
-			path = seafile.xcdatamodeld;
+			currentVersion = 57E229981A11087500C92330 /* seafile.xcdatamodel */;
+			name = seafile.xcdatamodeld;
+			path = ../common/seafile.xcdatamodeld;
 			sourceTree = "<group>";
 			versionGroupType = wrapper.xcdatamodel;
 		};
