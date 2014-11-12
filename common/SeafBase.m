@@ -9,6 +9,7 @@
 #import "SeafBase.h"
 #import "SeafRepos.h"
 #import "SeafConnection.h"
+#import "SeafGlobal.h"
 
 #import "ExtentedString.h"
 #import "UIImage+FileType.h"
@@ -144,7 +145,7 @@
     NSString *formString = [NSString stringWithFormat:@"password=%@", password];
     [connection sendPost:request_str form:formString
                  success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
-                     [Utils setRepo:self.repoId password:password];
+                     [SeafGlobal.sharedObject setRepo:self.repoId password:password];
                      [self.delegate entry:self repoPasswordSet:YES];
                  } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
                      [self.delegate entry:self repoPasswordSet:NO];
@@ -161,7 +162,7 @@
     }
     NSString *magic = [NSData passwordMaigc:password repo:self.repoId version:2];
     if ([magic isEqualToString:repo.magic]) {
-        [Utils setRepo:self.repoId password:password];
+        [SeafGlobal.sharedObject setRepo:self.repoId password:password];
         [self.delegate entry:self repoPasswordSet:YES];
     } else
         [self.delegate entry:self repoPasswordSet:NO];
@@ -181,7 +182,7 @@
     NSString *formString = [NSString stringWithFormat:@"magic=%@", [magic escapedPostForm]];
     [connection sendPost:request_str form:formString
                  success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
-                     [Utils setRepo:self.repoId password:password];
+                     [SeafGlobal.sharedObject setRepo:self.repoId password:password];
                      [self.delegate entry:self repoPasswordSet:YES];
                  } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
                      [self.delegate entry:self repoPasswordSet:NO];

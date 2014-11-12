@@ -92,9 +92,8 @@
 
 - (BOOL)checkLastAccount
 {
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    NSString *server = [userDefaults objectForKey:@"DEAULT-SERVER"];
-    NSString *username = [userDefaults objectForKey:@"DEAULT-USER"];
+    NSString *server = [SeafGlobal.sharedObject objectForKey:@"DEAULT-SERVER"];
+    NSString *username = [SeafGlobal.sharedObject objectForKey:@"DEAULT-USER"];
     if (server && username) {
         SeafConnection *connection = [[SeafGlobal sharedObject] getConnection:server username:username];
         if (connection)
@@ -161,7 +160,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return [[[SeafGlobal sharedObject] conns] count];
+    return SeafGlobal.sharedObject.conns.count;
 }
 
 - (void)showEditMenu:(UILongPressGestureRecognizer *)gestureRecognizer
@@ -189,7 +188,7 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     NSString *CellIdentifier = @"SeafAccountCell";
-    SeafAccountCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+    SeafAccountCell *cell = [tableView dequeueReusableCellWithIdentifier:@"SeafAccountCell2"];
     if (cell == nil) {
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:CellIdentifier owner:self options:nil];
         cell = [cells objectAtIndex:0];
@@ -223,7 +222,7 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    [self selectAccount:[[SeafGlobal sharedObject].conns objectAtIndex:indexPath.row]];
+    [self selectAccount:[SeafGlobal.sharedObject.conns objectAtIndex:indexPath.row]];
 }
 
 #pragma mark - UIActionSheetDelegate
@@ -268,10 +267,9 @@
         [self showAccountView:conn type:0];
         return YES;
     }
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    [userDefaults setObject:conn.address forKey:@"DEAULT-SERVER"];
-    [userDefaults setObject:conn.username forKey:@"DEAULT-USER"];
-    [userDefaults synchronize];
+    [SeafGlobal.sharedObject setObject:conn.address forKey:@"DEAULT-SERVER"];
+    [SeafGlobal.sharedObject setObject:conn.username forKey:@"DEAULT-USER"];
+    [SeafGlobal.sharedObject synchronize];
 
     [conn loadCache];
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
@@ -291,9 +289,8 @@
 
 - (BOOL)goToDefaultAccount
 {
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    NSString *server = [userDefaults objectForKey:@"DEAULT-SERVER"];
-    NSString *username = [userDefaults objectForKey:@"DEAULT-USER"];
+    NSString *server = [SeafGlobal.sharedObject objectForKey:@"DEAULT-SERVER"];
+    NSString *username = [SeafGlobal.sharedObject objectForKey:@"DEAULT-USER"];
     return [self gotoAccount:username server:server];
 }
 

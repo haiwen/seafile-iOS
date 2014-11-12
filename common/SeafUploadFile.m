@@ -262,7 +262,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
          if (byblock) {
              NSMutableArray *blockids = [[NSMutableArray alloc] init];
              NSMutableArray *paths = [[NSMutableArray alloc] init];
-             NSString *passwrod = [Utils getRepoPassword:repo.repoId];
+             NSString *passwrod = [SeafGlobal.sharedObject getRepoPassword:repo.repoId];
              if ([self chunkFile:self.lpath blockids:blockids paths:paths password:passwrod repo:repo]) {
                  [self uploadByBlocks:connection url:url uploadpath:uploadpath blocks:blockids paths:paths update:self.update];
              } else {

@@ -79,29 +79,7 @@
     return [[NSFileManager defaultManager] copyItemAtURL:from toURL:to error:nil];
 }
 
-+ (void)setRepo:(NSString *)repoId password:(NSString *)password
-{
-    if (!password)
-        return;
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    NSMutableDictionary *repopasswds = [NSMutableDictionary dictionaryWithDictionary:(NSDictionary*)[userDefaults objectForKey:@"repopassword"]];
-    [repopasswds setObject:password forKey:repoId];
-    [userDefaults setObject:repopasswds forKey:@"repopassword"];
-    [userDefaults synchronize];
-}
 
-+ (NSString *)getRepoPassword:(NSString *)repoId
-{
-    NSDictionary *repopasswds = (NSDictionary*)[[NSUserDefaults standardUserDefaults] objectForKey:@"repopassword"];
-    return [repopasswds objectForKey:repoId];
-}
-
-+ (void)clearRepoPasswords
-{
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    [userDefaults removeObjectForKey:@"repopassword"];
-    [userDefaults synchronize];
-}
 
 + (long long)fileSizeAtPath1:(NSString*)filePath
 {

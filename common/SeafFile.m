@@ -199,7 +199,7 @@
     NSString *password = nil;
     SeafRepo *repo = [connection getRepo:self.repoId];
     if (repo.encrypted)
-        password = [Utils getRepoPassword:self.repoId];
+        password = [SeafGlobal.sharedObject getRepoPassword:self.repoId];
     NSString *tmpPath = [self downloadTempPath:self.downloadingFileOid];
     if (![[NSFileManager defaultManager] fileExistsAtPath:tmpPath])
         [[NSFileManager defaultManager] createFileAtPath:tmpPath contents: nil attributes: nil];

@@ -132,18 +132,17 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     self = [self init:url];
     if (url) {
-        NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-        NSDictionary *ainfo = [userDefaults objectForKey:[NSString stringWithFormat:@"%@/%@", url, username]];
+        NSDictionary *ainfo = [SeafGlobal.sharedObject objectForKey:[NSString stringWithFormat:@"%@/%@", url, username]];
         if (ainfo) {
             _info = [ainfo mutableCopy];
             _token = [_info objectForKey:@"token"];
         } else {
-            ainfo = [userDefaults objectForKey:url];
+            ainfo = [SeafGlobal.sharedObject objectForKey:url];
             if (ainfo) {
                 _info = [ainfo mutableCopy];
-                [userDefaults setObject:nil forKey:url];
-                [userDefaults setObject:ainfo forKey:[NSString stringWithFormat:@"%@/%@", url, username]];
-                [userDefaults synchronize];
+                [SeafGlobal.sharedObject removeObjectForKey:url];
+                [SeafGlobal.sharedObject setObject:ainfo forKey:[NSString stringWithFormat:@"%@/%@", url, username]];
+                [SeafGlobal.sharedObject synchronize];
             }
         }
         if ([self authorized]) {
@@ -153,7 +152,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         }
         [_rootFolder loadCache];
 
-        NSDictionary *settings = [[userDefaults objectForKey:[NSString stringWithFormat:@"%@/%@/settings", url, username]] mutableCopy];
+        NSDictionary *settings = [[SeafGlobal.sharedObject objectForKey:[NSString stringWithFormat:@"%@/%@/settings", url, username]] mutableCopy];
         if (settings)
             _settings = [settings mutableCopy];
         else
@@ -166,10 +165,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)saveSettings
 {
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    [userDefaults setObject:_settings forKey:[NSString stringWithFormat:@"%@/%@/settings", _address, self.username]];
-    [userDefaults synchronize];
-
+    [SeafGlobal.sharedObject setObject:_settings forKey:[NSString stringWithFormat:@"%@/%@/settings", _address, self.username]];
+    [SeafGlobal.sharedObject synchronize];
 }
 - (void)setAttribute:(id)anObject forKey:(id < NSCopying >)aKey
 {
@@ -342,9 +339,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
          [_info setObject:[account objectForKey:@"total"] forKey:@"total"];
          [_info setObject:[account objectForKey:@"usage"] forKey:@"usage"];
          [_info setObject:_address forKey:@"link"];
-         NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-         [userDefaults setObject:_info forKey:[NSString stringWithFormat:@"%@/%@", _address, self.username]];
-         [userDefaults synchronize];
+         [SeafGlobal.sharedObject setObject:_info forKey:[NSString stringWithFormat:@"%@/%@", _address, self.username]];
+         [SeafGlobal.sharedObject synchronize];
          [degt getAccountInfoResult:YES connection:self];
      }
               failure:
@@ -381,9 +377,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                                [_info setObject:password forKey:@"password"];
                                                [_info setObject:_token forKey:@"token"];
                                                [_info setObject:_address forKey:@"link"];
-                                               NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-                                               [userDefaults setObject:_info forKey:[NSString stringWithFormat:@"%@/%@", _address, username]];
-                                               [userDefaults synchronize];
+                                               [SeafGlobal.sharedObject setObject:_info forKey:[NSString stringWithFormat:@"%@/%@", _address, username]];
+                                               [SeafGlobal.sharedObject synchronize];
                                                [self.delegate connectionLinkingSuccess:self];
                                            }
                                            failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, NSData *data){

@@ -48,7 +48,6 @@
             self.discussVC.connection = conn;
         }
     }
-    Debug("self.devicetoken=%@", self.deviceToken);
     if (self.deviceToken)
         [conn registerDevice:self.deviceToken];
 }
@@ -77,9 +76,8 @@
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
     NSString *version = [infoDictionary objectForKey:@"CFBundleVersion"];
     Debug("Current app version is %@\n%@\n", version, infoDictionary);
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    [userDefaults setObject:version forKey:@"VERSION"];
-    [userDefaults synchronize];
+    [SeafGlobal.sharedObject setObject:version forKey:@"VERSION"];
+    [SeafGlobal.sharedObject synchronize];
     [self initTabController];
     [[AFNetworkReachabilityManager sharedManager] startMonitoring];
 
@@ -88,7 +86,7 @@
     else
         [[UITabBar appearance] setSelectedImageTintColor:[UIColor colorWithRed:238.0f/256 green:136.0f/256 blue:51.0f/255 alpha:1.0]];
 
-    [[SeafGlobal sharedObject] loadAccounts];
+    [SeafGlobal.sharedObject loadAccounts];
 
     _startNav = (UINavigationController *)self.window.rootViewController;
     _startVC = (StartViewController *)_startNav.topViewController;
@@ -102,7 +100,7 @@
     [Utils checkMakeDir:[Utils applicationTempDirectory]];
     [Utils clearAllFiles:[Utils applicationTempDirectory]];
 
-    [Utils clearRepoPasswords];
+    [SeafGlobal.sharedObject clearRepoPasswords];
     if (ios8) {
         [[UIApplication sharedApplication] registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:(UIUserNotificationTypeSound | UIUserNotificationTypeAlert | UIUserNotificationTypeBadge) categories:nil]];
         [[UIApplication sharedApplication] registerForRemoteNotifications];

@@ -49,6 +49,15 @@
 - (void)backgroundDownload:(id<SeafDownloadDelegate>)file;
 - (void)removeBackgroundUpload:(SeafUploadFile *)file;
 
+- (void)setObject:(id)value forKey:(NSString *)defaultName;
+- (id)objectForKey:(NSString *)defaultName;
+- (void)removeObjectForKey:(NSString *)defaultName;
+- (BOOL)synchronize;
+
+- (void)setRepo:(NSString *)repoId password:(NSString *)password;
+- (NSString *)getRepoPassword:(NSString *)repoId;
+- (void)clearRepoPasswords;
+
 
 @end
 

@@ -11,12 +11,15 @@
 #import "Utils.h"
 #import "Debug.h"
 
+#define GROUP_NAME @"group.com.seafile.seafilePro"
+
 @interface SeafGlobal()
 @property (retain) NSMutableArray *ufiles;
 @property (retain) NSMutableArray *dfiles;
 @property int downloadnum;
 @property int uploadnum;
 @property int failedNum;
+@property NSUserDefaults *storage;
 
 @property NSTimer *autoSyncTimer;
 
@@ -36,6 +39,11 @@
         _conns = [[NSMutableArray alloc] init];
         _downloadnum = 0;
         _uploadnum = 0;
+#ifndef SEAFILE_APP
+        _storage = [[NSUserDefaults alloc] initWithSuiteName:GROUP_NAME];
+#else
+        _storage = [NSUserDefaults standardUserDefaults];
+#endif
     }
     return self;
 }
@@ -45,8 +53,25 @@
     static SeafGlobal *object = nil;
     if (!object) {
         object = [[SeafGlobal alloc] init];
+        [object migrate];
     }
     return object;
+}
+
+- (void)migrateUserDefaults
+{
+    NSUserDefaults *oldDef = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *newDef = [[NSUserDefaults alloc] initWithSuiteName:GROUP_NAME];
+    NSArray *accounts = [self objectForKey:@"ACCOUNTS"];
+    if (accounts) {
+        [newDef registerDefaults:[oldDef dictionaryRepresentation]];
+        [newDef synchronize];
+    }
+}
+
+- (void)migrate
+{
+    [self migrateUserDefaults];
 }
 
 - (void)saveAccounts
@@ -58,15 +83,12 @@
         [account setObject:connection.username forKey:@"username"];
         [accounts addObject:account];
     }
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    [userDefaults setObject:accounts forKey:@"ACCOUNTS"];
-    [userDefaults synchronize];
+    [self setObject:accounts forKey:@"ACCOUNTS"];
 };
 
 - (void)loadAccounts
 {
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    NSArray *accounts = [userDefaults objectForKey:@"ACCOUNTS"];
+    NSArray *accounts = [self objectForKey:@"ACCOUNTS"];
     for (NSDictionary *account in accounts) {
         SeafConnection *conn = [[SeafConnection alloc] initWithUrl:[account objectForKey:@"url"] username:[account objectForKey:@"username"]];
         if (conn.username)
@@ -369,5 +391,46 @@
     }];
 }
 
+- (void)setObject:(id)value forKey:(NSString *)defaultName
+{
+    [_storage setObject:value forKey:defaultName];
+}
 
+- (id)objectForKey:(NSString *)defaultName
+{
+    return [_storage objectForKey:defaultName];
+}
+
+- (void)removeObjectForKey:(NSString *)defaultName
+{
+    [_storage removeObjectForKey:defaultName];
+}
+
+- (BOOL)synchronize
+{
+    return [_storage synchronize];
+}
+
+
+- (void)setRepo:(NSString *)repoId password:(NSString *)password
+{
+    if (!password)
+        return;
+    NSMutableDictionary *repopasswds = [NSMutableDictionary dictionaryWithDictionary:(NSDictionary*)[self objectForKey:@"repopassword"]];
+    [repopasswds setObject:password forKey:repoId];
+    [self setObject:repopasswds forKey:@"repopassword"];
+    [self synchronize];
+}
+
+- (NSString *)getRepoPassword:(NSString *)repoId
+{
+    NSDictionary *repopasswds = (NSDictionary*)[self objectForKey:@"repopassword"];
+    return [repopasswds objectForKey:repoId];
+}
+
+- (void)clearRepoPasswords
+{
+    [self removeObjectForKey:@"repopassword"];
+    [self synchronize];
+}
 @end

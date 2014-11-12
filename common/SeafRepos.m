@@ -10,6 +10,8 @@
 #import "SeafRepos.h"
 #import "SeafDir.h"
 #import "SeafConnection.h"
+#import "SeafGlobal.h"
+
 #import "ExtentedString.h"
 #import "Debug.h"
 #import "Utils.h"
@@ -59,7 +61,7 @@
 
 - (BOOL)passwordRequired
 {
-    if (_encrypted && ![Utils getRepoPassword:self.repoId])
+    if (_encrypted && ![SeafGlobal.sharedObject getRepoPassword:self.repoId])
         return YES;
     else
         return NO;

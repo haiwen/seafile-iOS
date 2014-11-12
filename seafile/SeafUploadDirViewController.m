@@ -42,9 +42,8 @@
         self.ufile = ufile;
         self.title = NSLocalizedString(@"Save to Seafile", @"Seafile");
 
-        NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-        NSString *repo = [userDefaults objectForKey: [@"LAST-REPO" stringByAppendingString:conn.address]];
-        NSString *path = [userDefaults objectForKey:[@"LAST-DIR" stringByAppendingString:conn.address]];
+        NSString *repo = [SeafGlobal.sharedObject objectForKey: [@"LAST-REPO" stringByAppendingString:conn.address]];
+        NSString *path = [SeafGlobal.sharedObject objectForKey:[@"LAST-DIR" stringByAppendingString:conn.address]];
         if (repo && path) {
             NSString *name = path.lastPathComponent;
             if (!name)
@@ -69,10 +68,9 @@
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [self.navigationController dismissViewControllerAnimated:YES completion:nil];
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    [userDefaults setObject:_curDir.repoId forKey:[@"LAST-REPO" stringByAppendingString:self.connection.address]];
-    [userDefaults setObject:_curDir.path forKey:[@"LAST-DIR" stringByAppendingString:self.connection.address]];
-    [userDefaults synchronize];
+    [SeafGlobal.sharedObject setObject:_curDir.repoId forKey:[@"LAST-REPO" stringByAppendingString:self.connection.address]];
+    [SeafGlobal.sharedObject setObject:_curDir.path forKey:[@"LAST-DIR" stringByAppendingString:self.connection.address]];
+    [SeafGlobal.sharedObject synchronize];
     [appdelegate.fileVC chooseUploadDir:_curDir file:self.ufile replace:self.replaceSwitch.isOn];
 }
 
