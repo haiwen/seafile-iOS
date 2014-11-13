@@ -408,14 +408,13 @@
             } else {
                 NSURL *url = file.assetURL;
                 if (url && file.filesize == 0 && !file.asset) {
-                    [[[SeafGlobal sharedObject] assetsLibrary] assetForURL:url
-                                                               resultBlock:^(ALAsset *asset) {
-                                                                   file.asset = asset;
-                                                               }failureBlock:^(NSError *error) {
-                                                                   [self removeUploadFile:file];
-                                                               }];
+                    [SeafGlobal.sharedObject  assetForURL:url
+                                              resultBlock:^(ALAsset *asset) {
+                                                  file.asset = asset;
+                                              }failureBlock:^(NSError *error) {
+                                                  [self removeUploadFile:file];
+                                              }];
                 }
-
             }
         }
     }

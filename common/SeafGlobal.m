@@ -458,4 +458,38 @@
     [self removeObjectForKey:@"repopassword"];
     [self synchronize];
 }
+
+- (void)assetForURL:(NSURL *)assetURL resultBlock:(ALAssetsLibraryAssetForURLResultBlock)resultBlock failureBlock:(ALAssetsLibraryAccessFailureBlock)failureBlock
+{
+    [self.assetsLibrary assetForURL:assetURL
+                        resultBlock:^(ALAsset *asset) {
+                            // Success #1
+                            if (asset){
+                                resultBlock(asset);
+                                
+                                // No luck, try another way
+                            } else {
+                                // Search in the Photo Stream Album
+                                [self.assetsLibrary enumerateGroupsWithTypes:ALAssetsGroupPhotoStream
+                                                                  usingBlock:^(ALAssetsGroup *group, BOOL *stop)
+                                 {
+                                     [group enumerateAssetsWithOptions:NSEnumerationReverse usingBlock:^(ALAsset *result, NSUInteger index, BOOL *stop) {
+                                         if([result.defaultRepresentation.url isEqual:assetURL])
+                                         {
+                                             resultBlock(asset);
+                                             *stop = YES;
+                                         }
+                                     }];
+                                 }
+                                                                failureBlock:^(NSError *error) {
+                                                                    failureBlock(error);
+                                                                }];
+                            }
+                            
+                        } failureBlock:^(NSError *error) {
+                            failureBlock(error);
+                        }];
+    
+}
+
 @end

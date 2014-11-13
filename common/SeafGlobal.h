@@ -63,6 +63,8 @@
 - (void)clearRepoPasswords;
 
 - (void)migrate;
+- (void)assetForURL:(NSURL *)assetURL resultBlock:(ALAssetsLibraryAssetForURLResultBlock)resultBlock failureBlock:(ALAssetsLibraryAccessFailureBlock)failureBlock;
+
 
 @end
 

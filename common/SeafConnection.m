@@ -830,20 +830,20 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         NSURL *url = [self.photosArray objectAtIndex:0];
         [self.photosArray removeObject:url];
         [_uploadingArray addObject:url];
-        [[[SeafGlobal sharedObject] assetsLibrary] assetForURL:url
-                 resultBlock:^(ALAsset *asset) {
-                     NSString *filename = asset.defaultRepresentation.filename;
-                     NSString *path = [[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
-                     SeafUploadFile *file = [self getUploadfile:path];
-                     file.autoSync = true;
-                     file.asset = asset;
-                     [_syncDir addUploadFile:file];
-                     Debug("Add file %@ to upload list: %@", filename, dir);
-                     [[SeafGlobal sharedObject] backgroundUpload:file];
-                 }
-                failureBlock:^(NSError *error){
-                    Debug("operation was not successfull!");
-                }];
+        [SeafGlobal.sharedObject assetForURL:url
+                                 resultBlock:^(ALAsset *asset) {
+                                     NSString *filename = asset.defaultRepresentation.filename;
+                                     NSString *path = [[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
+                                     SeafUploadFile *file = [self getUploadfile:path];
+                                     file.autoSync = true;
+                                     file.asset = asset;
+                                     [_syncDir addUploadFile:file];
+                                     Debug("Add file %@ to upload list: %@", filename, dir);
+                                     [[SeafGlobal sharedObject] backgroundUpload:file];
+                                 }
+                                failureBlock:^(NSError *error){
+                                    Debug("operation was not successfull!");
+                                }];
     }
 }
 
