@@ -12,9 +12,6 @@
 
 @interface Utils : NSObject
 
-+ (NSString *)applicationDocumentsDirectory;
-+ (NSString *)applicationTempDirectory;
-
 + (BOOL)checkMakeDir:(NSString *)path;
 + (void)clearAllFiles:(NSString *)path;
 + (long long)folderSizeAtPath:(NSString*)folderPath;
@@ -29,9 +26,6 @@
 + (id)JSONDecode:(NSData *)data error:(NSError **)error;
 + (NSString *)JSONEncodeDictionary:(NSDictionary *)dict;
 + (BOOL)isImageFile:(NSString *)name;
-
-+ (NSString *)documentPath:(NSString*)fileId;
-+ (NSString *)blockPath:(NSString*)blkId;
 
 + (BOOL)writeDataToPath:(NSString*)filePath andAsset:(ALAsset*)asset;
 

@@ -14,7 +14,6 @@
 
 @interface SeafGlobal : NSObject
 
-
 @property (readonly, strong, nonatomic) NSManagedObjectContext *managedObjectContext;
 @property (readonly, strong, nonatomic) NSManagedObjectModel *managedObjectModel;
 @property (readonly, strong, nonatomic) NSPersistentStoreCoordinator *persistentStoreCoordinator;
@@ -26,6 +25,11 @@
 
 
 + (SeafGlobal *)sharedObject;
+
+- (NSString *)applicationDocumentsDirectory;
+- (NSString *)applicationTempDirectory;
+- (NSString *)documentPath:(NSString*)fileId;
+- (NSString *)blockPath:(NSString*)blkId;
 
 - (void)loadAccounts;
 - (void)saveAccounts;
@@ -39,8 +43,8 @@
 - (void)incDownloadnum;
 - (void)decDownloadnum;
 - (void)incUploadnum;
-- (int)uploadingnum;
-- (int)downloadingnum;
+- (unsigned long)uploadingnum;
+- (unsigned long)downloadingnum;
 
 - (void)finishDownload:(id<SeafDownloadDelegate>) file result:(BOOL)result;
 - (void)finishUpload:(SeafUploadFile *) file result:(BOOL)result;
@@ -58,6 +62,7 @@
 - (NSString *)getRepoPassword:(NSString *)repoId;
 - (void)clearRepoPasswords;
 
+- (void)migrate;
 
 @end
 

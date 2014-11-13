@@ -160,7 +160,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
          NSString *oid = nil;
          if ([responseObject isKindOfClass:[NSData class]]) {
              oid = [[NSString alloc] initWithData:responseObject encoding:NSUTF8StringEncoding];
-             [[NSFileManager defaultManager] linkItemAtPath:self.lpath toPath:[Utils documentPath:oid] error:nil];
+             [[NSFileManager defaultManager] linkItemAtPath:self.lpath toPath:[SeafGlobal.sharedObject documentPath:oid] error:nil];
          }
          Debug("Upload success _uploading=%d, update=%d, oid=%@\n", _uploading, update, oid);
          [self finishUpload:YES oid:oid];
@@ -190,7 +190,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
             break;
         }
         NSString *blockid = [data SHA1];
-        NSString *blockpath = [Utils blockPath:blockid];
+        NSString *blockpath = [SeafGlobal.sharedObject blockPath:blockid];
         Debug("Chunk file blockid=%@, path=%@, len=%lu\n", blockid, blockpath, (unsigned long)data.length);
         [blockids addObject:blockid];
         [paths addObject:blockpath];
@@ -223,7 +223,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
          NSString *oid = nil;
          if ([responseObject isKindOfClass:[NSData class]]) {
              oid = [[NSString alloc] initWithData:responseObject encoding:NSUTF8StringEncoding];
-             [[NSFileManager defaultManager] linkItemAtPath:self.lpath toPath:[Utils documentPath:oid] error:nil];
+             [[NSFileManager defaultManager] linkItemAtPath:self.lpath toPath:[SeafGlobal.sharedObject documentPath:oid] error:nil];
          }
          Debug("Upload success _uploading=%d, oid=%@\n", _uploading, oid);
          [self finishUpload:YES oid:oid];
@@ -316,7 +316,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     } else if ([self.mime hasSuffix:@"seafile"]) {
         _preViewURL = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"view_seaf" ofType:@"html"]];
     } else {
-        NSString *encodePath = [[Utils applicationTempDirectory] stringByAppendingPathComponent:self.name];
+        NSString *encodePath = [[SeafGlobal.sharedObject applicationTempDirectory] stringByAppendingPathComponent:self.name];
         if ([Utils tryTransformEncoding:encodePath fromFile:self.lpath])
             _preViewURL = [NSURL fileURLWithPath:encodePath];
     }
@@ -366,7 +366,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 + (NSMutableDictionary *)uploadFileAttrs
 {
     if (uploadFileAttrs == nil) {
-        NSString *attrsFile = [[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploadfiles.plist"];
+        NSString *attrsFile = [[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploadfiles.plist"];
         uploadFileAttrs = [[NSMutableDictionary alloc] initWithContentsOfFile:attrsFile];
         if (!uploadFileAttrs)
             uploadFileAttrs = [[NSMutableDictionary alloc] init];
@@ -376,7 +376,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 + (void)clearCache
 {
-    [Utils clearAllFiles:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"]];
+    [Utils clearAllFiles:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"]];
     uploadFileAttrs = [[NSMutableDictionary alloc] init];
 }
 
@@ -387,7 +387,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 - (void)saveAttr:(NSMutableDictionary *)attr
 {
-    NSString *attrsFile = [[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploadfiles.plist"];
+    NSString *attrsFile = [[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploadfiles.plist"];
     if (attr)
         [[SeafUploadFile uploadFileAttrs] setObject:attr forKey:self.lpath];
     else

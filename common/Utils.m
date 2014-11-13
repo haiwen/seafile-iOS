@@ -18,16 +18,6 @@
 @implementation Utils
 
 
-+ (NSString *)applicationDocumentsDirectory
-{
-    return [[[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject] path];
-}
-
-+ (NSString *)applicationTempDirectory
-{
-    return [[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"temp"];
-}
-
 + (BOOL)addSkipBackupAttributeToItemAtPath:(NSString *)path
 {
     NSURL *url = [NSURL fileURLWithPath:path];
@@ -246,15 +236,6 @@
     return false;
 }
 
-+ (NSString *)documentPath:(NSString*)fileId
-{
-    return [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"] stringByAppendingPathComponent:fileId];
-}
-
-+ (NSString *)blockPath:(NSString*)blkId
-{
-    return [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"] stringByAppendingPathComponent:blkId];
-}
 
 + (BOOL)writeDataToPath:(NSString*)filePath andAsset:(ALAsset*)asset
 {

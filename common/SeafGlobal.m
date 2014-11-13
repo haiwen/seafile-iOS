@@ -16,9 +16,9 @@
 @interface SeafGlobal()
 @property (retain) NSMutableArray *ufiles;
 @property (retain) NSMutableArray *dfiles;
-@property int downloadnum;
-@property int uploadnum;
-@property int failedNum;
+@property unsigned long downloadnum;
+@property unsigned long uploadnum;
+@property unsigned long failedNum;
 @property NSUserDefaults *storage;
 
 @property NSTimer *autoSyncTimer;
@@ -39,11 +39,7 @@
         _conns = [[NSMutableArray alloc] init];
         _downloadnum = 0;
         _uploadnum = 0;
-#ifndef SEAFILE_APP
         _storage = [[NSUserDefaults alloc] initWithSuiteName:GROUP_NAME];
-#else
-        _storage = [NSUserDefaults standardUserDefaults];
-#endif
     }
     return self;
 }
@@ -53,9 +49,34 @@
     static SeafGlobal *object = nil;
     if (!object) {
         object = [[SeafGlobal alloc] init];
-        [object migrate];
     }
     return object;
+}
+
+- (NSURL *)applicationDocumentsDirectoryURL
+{
+    return [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
+}
+
+- (NSString *)applicationDocumentsDirectory
+{
+    return [[[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject] path];
+}
+
+- (NSString *)applicationTempDirectory
+{
+    return [[self applicationDocumentsDirectory] stringByAppendingPathComponent:@"temp"];
+}
+
+
+- (NSString *)documentPath:(NSString*)fileId
+{
+    return [[[self applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"] stringByAppendingPathComponent:fileId];
+}
+
+- (NSString *)blockPath:(NSString*)blkId
+{
+    return [[[self applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"] stringByAppendingPathComponent:blkId];
 }
 
 - (void)migrateUserDefaults
@@ -64,8 +85,12 @@
     NSUserDefaults *newDef = [[NSUserDefaults alloc] initWithSuiteName:GROUP_NAME];
     NSArray *accounts = [self objectForKey:@"ACCOUNTS"];
     if (accounts) {
-        [newDef registerDefaults:[oldDef dictionaryRepresentation]];
+        for(NSString *key in oldDef.dictionaryRepresentation) {
+            [newDef setObject:[oldDef objectForKey:key] forKey:key];
+        }
         [newDef synchronize];
+        [oldDef removeObjectForKey:@"ACCOUNTS"];
+        [oldDef synchronize];
     }
 }
 
@@ -89,8 +114,12 @@
 - (void)loadAccounts
 {
     NSArray *accounts = [self objectForKey:@"ACCOUNTS"];
+    Debug("accounts=%ld", accounts.count);
+    Debug("accounts=%@", accounts);
     for (NSDictionary *account in accounts) {
+        Debug("account=%@", account);
         SeafConnection *conn = [[SeafConnection alloc] initWithUrl:[account objectForKey:@"url"] username:[account objectForKey:@"username"]];
+        Debug("conn.username=%@", conn.username);
         if (conn.username)
             [self.conns addObject:conn];
     }
@@ -110,10 +139,6 @@
 }
 
 #pragma mark - Core Data stack
-- (NSURL *)applicationDocumentsDirectory
-{
-    return [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
-}
 
 // Returns the managed object context for the application.
 // If the context doesn't already exist, it is created and bound to the persistent store coordinator for the application.
@@ -150,7 +175,7 @@
     if (__persistentStoreCoordinator != nil) {
         return __persistentStoreCoordinator;
     }
-    NSURL *storeURL = [[self applicationDocumentsDirectory] URLByAppendingPathComponent:@"seafile_pro.sqlite"];
+    NSURL *storeURL = [[self applicationDocumentsDirectoryURL] URLByAppendingPathComponent:@"seafile_pro.sqlite"];
     
     NSError *error = nil;
     __persistentStoreCoordinator = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:[self managedObjectModel]];
@@ -242,19 +267,19 @@
     }
 }
 
-- (int)uploadingnum
+- (unsigned long)uploadingnum
 {
     return self.uploadnum + self.ufiles.count;
 }
 
-- (int)downloadingnum
+- (unsigned long)downloadingnum
 {
     return self.downloadnum + self.dfiles.count;
 }
 
 - (void)finishDownload:(id<SeafDownloadDelegate>) file result:(BOOL)result
 {
-    Debug("download %d, result=%d, failcnt=%d", self.downloadnum, result, self.failedNum);
+    Debug("download %ld, result=%d, failcnt=%ld", self.downloadnum, result, self.failedNum);
     @synchronized (self) {
         self.downloadnum --;
     }
@@ -275,7 +300,7 @@
 
 - (void)finishUpload:(SeafUploadFile *)file result:(BOOL)result
 {
-    Debug("upload %d, result=%d, udir=%@", self.uploadnum, result, file.udir);
+    Debug("upload %ld, result=%d, udir=%@", self.uploadnum, result, file.udir);
     @synchronized (self) {
         self.uploadnum --;
     }

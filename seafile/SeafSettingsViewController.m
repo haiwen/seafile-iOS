@@ -115,11 +115,11 @@ enum {
 
 - (long long)cacheSize
 {
-    long long cacheSize = [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
-    cacheSize += [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"]];
-    cacheSize += [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"]];
-    cacheSize += [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"]];
-    cacheSize += [Utils folderSizeAtPath:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"avatars"]];
+    long long cacheSize = [Utils folderSizeAtPath:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
+    cacheSize += [Utils folderSizeAtPath:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"]];
+    cacheSize += [Utils folderSizeAtPath:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"]];
+    cacheSize += [Utils folderSizeAtPath:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"]];
+    cacheSize += [Utils folderSizeAtPath:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"avatars"]];
     return cacheSize;
 }
 
@@ -327,10 +327,10 @@ enum {
     if (buttonIndex == 1) {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         [(SeafDetailViewController *)[appdelegate detailViewControllerAtIndex:TABBED_SETTINGS] setPreViewItem:nil master:nil];
-        [Utils clearAllFiles:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
-        [Utils clearAllFiles:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"]];
-        [Utils clearAllFiles:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"]];
-        [Utils clearAllFiles:[Utils applicationTempDirectory]];
+        [Utils clearAllFiles:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
+        [Utils clearAllFiles:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"]];
+        [Utils clearAllFiles:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"]];
+        [Utils clearAllFiles:[SeafGlobal.sharedObject applicationTempDirectory]];
         [SeafUploadFile clearCache];
         [SeafAvatar clearCache];
 

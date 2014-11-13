@@ -55,7 +55,7 @@
 - (BOOL)application:(UIApplication*)application handleOpenURL:(NSURL*)url
 {
     if (url != nil && [url isFileURL]) {
-        NSURL *to = [NSURL fileURLWithPath:[[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:url.lastPathComponent ]];
+        NSURL *to = [NSURL fileURLWithPath:[[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:url.lastPathComponent ]];
         Debug("Copy %@, to %@, %@, %@\n", url, to, to.absoluteString, to.path);
         [Utils copyFile:url to:to];
         if (self.window.rootViewController == self.startNav)
@@ -69,17 +69,30 @@
     return YES;
 }
 
+- (void)delayedInit
+{
+    [[AFNetworkReachabilityManager sharedManager] startMonitoring];
+    [self cycleTheGlobalMailComposer];
+    [SeafGlobal.sharedObject startTimer];
+    [SeafGlobal.sharedObject clearRepoPasswords];
+    [Utils clearAllFiles:[SeafGlobal.sharedObject applicationTempDirectory]];
+    
+    for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+        [conn checkAutoSync];
+    }
+}
+
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     // Override point for customization after application launch.
     _global = [SeafGlobal sharedObject];
+    [_global migrate];
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
     NSString *version = [infoDictionary objectForKey:@"CFBundleVersion"];
     Debug("Current app version is %@\n%@\n", version, infoDictionary);
     [SeafGlobal.sharedObject setObject:version forKey:@"VERSION"];
     [SeafGlobal.sharedObject synchronize];
     [self initTabController];
-    [[AFNetworkReachabilityManager sharedManager] startMonitoring];
 
     if (ios7)
         [[UITabBar appearance] setTintColor:[UIColor colorWithRed:238.0f/256 green:136.0f/256 blue:51.0f/255 alpha:1.0]];
@@ -91,16 +104,14 @@
     _startNav = (UINavigationController *)self.window.rootViewController;
     _startVC = (StartViewController *)_startNav.topViewController;
 
-    [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"avatars"]];
-    [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"certs"]];
-    [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
-    [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"]];
-    [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"]];
-    [Utils checkMakeDir:[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"]];
-    [Utils checkMakeDir:[Utils applicationTempDirectory]];
-    [Utils clearAllFiles:[Utils applicationTempDirectory]];
+    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"avatars"]];
+    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"certs"]];
+    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
+    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"]];
+    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"]];
+    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"]];
+    [Utils checkMakeDir:[SeafGlobal.sharedObject applicationTempDirectory]];
 
-    [SeafGlobal.sharedObject clearRepoPasswords];
     if (ios8) {
         [[UIApplication sharedApplication] registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:(UIUserNotificationTypeSound | UIUserNotificationTypeAlert | UIUserNotificationTypeBadge) categories:nil]];
         [[UIApplication sharedApplication] registerForRemoteNotifications];
@@ -112,8 +123,7 @@
         [self application:application didReceiveRemoteNotification:dict];
     } else
         [self.startVC goToDefaultAccount];
-    [self cycleTheGlobalMailComposer];
-    [[SeafGlobal sharedObject] startTimer];
+    [self performSelector:@selector(delayedInit) withObject:nil afterDelay:2.0];
     return YES;
 }
 

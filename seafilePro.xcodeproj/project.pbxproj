@@ -387,6 +387,7 @@
 		57F8CD9A1A13ADCA000F6CDC /* Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229D71A1108B200C92330 /* Utils.m */; };
 		57F8CD9B1A13ADCA000F6CDC /* SeafGlobal.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E22A261A11093D00C92330 /* SeafGlobal.m */; };
 		57F8CD9C1A13ADE1000F6CDC /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5725186417AEA6E90078CD12 /* libcrypto.a */; };
+		57F8CD9D1A13BAFB000F6CDC /* seafile.xcdatamodeld in Resources */ = {isa = PBXBuildFile; fileRef = 57E229971A11087500C92330 /* seafile.xcdatamodeld */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXBuildRule section */
@@ -2171,6 +2172,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				57F8CD9D1A13BAFB000F6CDC /* seafile.xcdatamodeld in Resources */,
 				57F8CD661A1397CB000F6CDC /* MainInterface.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -13,25 +13,16 @@
 
 
 @interface DocumentPickerViewController ()<UITableViewDataSource, UITableViewDelegate>
-@property (strong, nonatomic) IBOutlet UILabel *label;
+@property (strong, nonatomic) IBOutlet UITableView *tableView;
 @property (strong) NSArray *conns;
 @end
 
 @implementation DocumentPickerViewController
 
-- (IBAction)openDocument:(id)sender {
-    NSUserDefaults *def = [[NSUserDefaults alloc] initWithSuiteName:GROUP_NAME];
-    NSArray *arr = [def objectForKey:@"ACCOUNTS"];
-    NSURL* documentURL = [self.documentStorageURL URLByAppendingPathComponent:@"Untitled.txt"];
-    _label.text = [NSString stringWithFormat:@"%@\n%@", self.documentStorageURL.absoluteString, arr];
-    // TODO: if you do not have a corresponding file provider, you must ensure that the URL returned here is backed by a file
-    [self dismissGrantingAccessToURL:documentURL];
-}
-
 -(void)prepareForPresentationInMode:(UIDocumentPickerMode)mode {
-    // TODO: present a view controller appropriate for picker mode here
- //   [SeafGlobal.sharedObject loadAccounts];
-    _conns = [[NSArray alloc] init];
+    [SeafGlobal.sharedObject loadAccounts];
+    _conns = SeafGlobal.sharedObject.conns;
+    [self.tableView reloadData];
 }
 
 

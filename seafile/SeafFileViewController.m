@@ -1197,7 +1197,7 @@ enum {
             NSString *ext = filename.pathExtension;
             filename = [NSString stringWithFormat:@"%@-%@.%@", name, date, ext];
         }
-        NSString *path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
+        NSString *path = [[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
         SeafUploadFile *file =  [self.connection getUploadfile:path];
         file.asset = asset;
         file.delegate = self;

@@ -73,7 +73,9 @@
         [newItems addObject:newItem];
     }
     [self loadedItems:newItems];
+#ifdef SEAFILE_APP
     [self checkUploadFiles];
+#endif
     [self.delegate entry:self updated:YES progress:100];
     return YES;
 }
@@ -339,8 +341,9 @@
 
     _allItems = [[NSMutableArray alloc] init];
     [_allItems addObjectsFromArray:_items];
+#ifdef SEAFILE_APP
     [_allItems addObjectsFromArray:self.uploadItems];
-
+#endif
     if ([self checkSorted:_allItems] == NO) {
         [_allItems sortUsingComparator:(NSComparator)^NSComparisonResult(id obj1, id obj2){
             if (([obj1 class] == [SeafDir class]) || ([obj2 class] == [SeafDir class])) {

@@ -102,7 +102,7 @@
         [super willRotateToInterfaceOrientation:toOrientation duration:duration];
 
         UIViewController *master = [self.viewControllers objectAtIndex:0];
-        NSObject *theDelegate = (NSObject *)self.delegate;
+        NSObject<UISplitViewControllerDelegate> *theDelegate = (NSObject<UISplitViewControllerDelegate> *)self.delegate;
 
 
 #define YOU_DONT_FEEL_QUEAZY_ABOUT_THIS_BECAUSE_IT_PASSES_THE_APP_STORE 1
@@ -121,7 +121,7 @@
 
                 @try {
                     UIPopoverController *popover = [super valueForKey:@"_hiddenPopoverController"];
-                    [theDelegate splitViewController: self willHideViewController: master withBarButtonItem:button forPopoverController:popover];
+                    [theDelegate splitViewController: self willHideViewController:master withBarButtonItem:button forPopoverController:popover];
                 }
                 @catch (NSException * e) {
                     NSLog(@"There was a nasty error while notifyng splitviewcontrollers of an orientation change: %@", [e description]);

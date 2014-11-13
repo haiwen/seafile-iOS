@@ -150,15 +150,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             if ([_info objectForKey:@"nickname"])
                 [self.email2nickMap setValue:[_info objectForKey:@"nickname"] forKey:self.username];
         }
-        [_rootFolder loadCache];
 
         NSDictionary *settings = [[SeafGlobal.sharedObject objectForKey:[NSString stringWithFormat:@"%@/%@/settings", url, username]] mutableCopy];
         if (settings)
             _settings = [settings mutableCopy];
         else
             _settings = [[NSMutableDictionary alloc] init];
-        self.photosArray =[[NSMutableArray alloc]init];
-        [self performSelector:@selector(checkAutoSync) withObject:nil afterDelay:10.0];
     }
     return self;
 }
@@ -236,7 +233,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (NSString *)certPathForHost:(NSString *)host
 {
     NSString *filename = [NSString stringWithFormat:@"%@.cer", host];
-    NSString *path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"certs"] stringByAppendingPathComponent:filename];
+    NSString *path = [[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"certs"] stringByAppendingPathComponent:filename];
     return path;
 }
 
@@ -462,8 +459,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 #pragma - Cache managerment
 - (SeafCacheObj *)loadSeafCacheObj:(NSString *)key
 {
-    NSManagedObjectContext *context = [[SeafGlobal sharedObject]
-                                       managedObjectContext];
+    NSManagedObjectContext *context = SeafGlobal.sharedObject.managedObjectContext;
     NSFetchRequest *fetchRequest=[[NSFetchRequest alloc] init];
     [fetchRequest setEntity:[NSEntityDescription entityForName:@"SeafCacheObj" inManagedObjectContext:context]];
     NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"url" ascending:YES selector:nil];
@@ -837,7 +833,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         [[[SeafGlobal sharedObject] assetsLibrary] assetForURL:url
                  resultBlock:^(ALAsset *asset) {
                      NSString *filename = asset.defaultRepresentation.filename;
-                     NSString *path = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
+                     NSString *path = [[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
                      SeafUploadFile *file = [self getUploadfile:path];
                      file.autoSync = true;
                      file.asset = asset;
@@ -975,7 +971,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (void)updateUploadDir:(SeafDir *)dir
 {
     _syncDir = dir;
-    Debug("%d photos, syncdir: %@ %@", self.photosArray.count, _syncDir.repoId, _syncDir.name);
+    Debug("%ld photos, syncdir: %@ %@", self.photosArray.count, _syncDir.repoId, _syncDir.name);
     [self pickPhotosForUpload];
 }
 - (void)checkUploadDir

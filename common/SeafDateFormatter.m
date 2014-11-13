@@ -6,9 +6,11 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
+#import <Foundation/Foundation.h>
 #import "SeafDateFormatter.h"
 
-#define unitFlags  (NSYearCalendarUnit | NSMonthCalendarUnit |  NSDayCalendarUnit)
+#define unitFlags  (NSCalendarUnitYear | NSCalendarUnitMonth |  NSCalendarUnitDay)
+
 
 @implementation SeafDateFormatter
 static SeafDateFormatter *sharedLoaderSameDay = nil;

@@ -88,7 +88,7 @@
 
 - (NSString *)downloadTempPath:(NSString *)objId
 {
-    return [[Utils applicationTempDirectory] stringByAppendingPathComponent:objId];
+    return [[SeafGlobal.sharedObject applicationTempDirectory] stringByAppendingPathComponent:objId];
 }
 
 - (void)updateWithEntry:(SeafBase *)entry
@@ -151,7 +151,7 @@
          NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
          if (!curId)
              curId = self.oid;
-         if ([[NSFileManager defaultManager] fileExistsAtPath:[Utils documentPath:curId]]) {
+         if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject documentPath:curId]]) {
              Debug("already uptodate oid=%@, %@\n", self.ooid, curId);
              [self finishDownload:curId];
              return;
@@ -171,7 +171,7 @@
          operation.outputStream = [NSOutputStream outputStreamToFileAtPath:[self downloadTempPath:self.downloadingFileOid] append:NO];
          [operation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
              Debug("Successfully downloaded file");
-             [[NSFileManager defaultManager] moveItemAtPath:[self downloadTempPath:self.downloadingFileOid] toPath:[Utils documentPath:self.downloadingFileOid] error:nil];
+             [[NSFileManager defaultManager] moveItemAtPath:[self downloadTempPath:self.downloadingFileOid] toPath:[SeafGlobal.sharedObject documentPath:self.downloadingFileOid] error:nil];
              [self finishDownload:self.downloadingFileOid];
          } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
              Debug("error=%@",[error localizedDescription]);
@@ -206,7 +206,7 @@
     NSFileHandle *handle = [NSFileHandle fileHandleForWritingAtPath:tmpPath];
     [handle truncateFileAtOffset:0];
     for (NSString *blk_id in self.blks) {
-        NSData *data = [[NSData alloc] initWithContentsOfFile:[Utils blockPath:blk_id]];
+        NSData *data = [[NSData alloc] initWithContentsOfFile:[SeafGlobal.sharedObject blockPath:blk_id]];
         if (password)
             data = [data decrypt:password encKey:repo.encKey version:repo.encVersion];
         if (!data)
@@ -216,7 +216,7 @@
     [handle closeFile];
     if (!self.downloadingFileOid)
         return -1;
-    [[NSFileManager defaultManager] moveItemAtPath:tmpPath toPath:[Utils documentPath:self.downloadingFileOid] error:nil];
+    [[NSFileManager defaultManager] moveItemAtPath:tmpPath toPath:[SeafGlobal.sharedObject documentPath:self.downloadingFileOid] error:nil];
     return 0;
 }
 
@@ -228,7 +228,7 @@
             Debug("Faile to checkout out file %@\n", self.downloadingFileOid);
             self.index = 0;
             for (NSString *blk_id in self.blks)
-                [[NSFileManager defaultManager] removeItemAtPath:[Utils blockPath:blk_id] error:nil];
+                [[NSFileManager defaultManager] removeItemAtPath:[SeafGlobal.sharedObject blockPath:blk_id] error:nil];
             self.blks = nil;
             [self failedDownload:nil];
             return;
@@ -244,7 +244,7 @@
 - (void)downloadBlock:(NSString *)url
 {
     NSString *blk_id = [self.blks objectAtIndex:self.index];
-    if ([[NSFileManager defaultManager] fileExistsAtPath:[Utils blockPath:blk_id]])
+    if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject blockPath:blk_id]])
         return [self finishBlock:url];
     NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:[url stringByAppendingString:blk_id]]];
     AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:downloadRequest];
@@ -252,7 +252,7 @@
     operation.outputStream = [NSOutputStream outputStreamToFileAtPath:[self downloadTempPath:blk_id] append:NO];
     [operation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
         Debug("Successfully downloaded block %@\n", blk_id);
-        [[NSFileManager defaultManager] moveItemAtPath:[self downloadTempPath:blk_id] toPath:[Utils blockPath:blk_id] error:nil];
+        [[NSFileManager defaultManager] moveItemAtPath:[self downloadTempPath:blk_id] toPath:[SeafGlobal.sharedObject blockPath:blk_id] error:nil];
         [self finishBlock:url];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         Debug("error=%@",[error localizedDescription]);
@@ -284,7 +284,7 @@
          NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
          if (!curId)
              curId = self.oid;
-         if ([[NSFileManager defaultManager] fileExistsAtPath:[Utils documentPath:curId]]) {
+         if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject documentPath:curId]]) {
              Debug("already uptodate oid=%@, %@\n", self.ooid, curId);
              [self finishDownload:curId];
              return;
@@ -299,7 +299,7 @@
          NSString *url = [[JSON objectForKey:@"url"] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
          self.blks = [JSON objectForKey:@"blklist"];
          if (self.blks.count <= 0) {
-             [@"" writeToFile:[Utils documentPath:self.downloadingFileOid] atomically:YES encoding:NSUTF8StringEncoding error:nil];
+             [@"" writeToFile:[SeafGlobal.sharedObject documentPath:self.downloadingFileOid] atomically:YES encoding:NSUTF8StringEncoding error:nil];
              [self finishDownload:self.downloadingFileOid];
          } else {
              SeafRepo *repo = [connection getRepo:self.repoId];
@@ -342,7 +342,7 @@
 
 - (BOOL)hasCache
 {
-    if (self.ooid && [[NSFileManager defaultManager] fileExistsAtPath:[Utils documentPath:self.ooid]])
+    if (self.ooid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject documentPath:self.ooid]])
         return YES;
     self.ooid = nil;
     return NO;
@@ -394,7 +394,7 @@
     if (self.mpath)
         [self autoupload];
 
-    if ([[NSFileManager defaultManager] fileExistsAtPath:[Utils documentPath:did]])
+    if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject documentPath:did]])
         [self setOoid:did];
 
     if (!self.mpath && !self.ooid)
@@ -441,12 +441,12 @@
     if (!self.ooid)
         return nil;
     @synchronized (self) {
-        NSString *tempDir = [[Utils applicationTempDirectory] stringByAppendingPathComponent:self.ooid];
+        NSString *tempDir = [[SeafGlobal.sharedObject applicationTempDirectory] stringByAppendingPathComponent:self.ooid];
         if (![Utils checkMakeDir:tempDir])
             return nil;
         NSString *tempFileName = [tempDir stringByAppendingPathComponent:self.name];
         if ([[NSFileManager defaultManager] fileExistsAtPath:tempFileName]
-            || [[NSFileManager defaultManager] linkItemAtPath:[Utils documentPath:self.ooid] toPath:tempFileName error:&error]) {
+            || [[NSFileManager defaultManager] linkItemAtPath:[SeafGlobal.sharedObject documentPath:self.ooid] toPath:tempFileName error:&error]) {
             _exportURL = [NSURL fileURLWithPath:tempFileName];
         } else {
             Warning("Copy file to exportURL failed:%@\n", error);
@@ -489,11 +489,11 @@
     NSString *src = nil;
     NSString *tmpdir = nil;
     if (!self.mpath) {
-        src = [Utils documentPath:self.ooid];
-        tmpdir = [[[Utils applicationTempDirectory] stringByAppendingPathComponent:self.ooid] stringByAppendingPathComponent:@"utf16" ];
+        src = [SeafGlobal.sharedObject documentPath:self.ooid];
+        tmpdir = [[[SeafGlobal.sharedObject applicationTempDirectory] stringByAppendingPathComponent:self.ooid] stringByAppendingPathComponent:@"utf16" ];
     } else {
         src = self.mpath;
-        tmpdir = [[Utils applicationTempDirectory] stringByAppendingPathComponent:[[self.mpath stringByDeletingLastPathComponent] lastPathComponent]];
+        tmpdir = [[SeafGlobal.sharedObject applicationTempDirectory] stringByAppendingPathComponent:[[self.mpath stringByDeletingLastPathComponent] lastPathComponent]];
     }
 
     if (![Utils checkMakeDir:tmpdir])
@@ -527,7 +527,7 @@
 
 - (UIImage *)image
 {
-    NSString *path = [Utils documentPath:self.ooid];
+    NSString *path = [SeafGlobal.sharedObject documentPath:self.ooid];
     if ([[NSFileManager defaultManager] fileExistsAtPath:path])
         return [UIImage imageWithContentsOfFile:path];
     return nil;
@@ -557,7 +557,7 @@
 {
     if (self.mpath)
         return [Utils stringContent:self.mpath];
-    return [Utils stringContent:[Utils documentPath:self.ooid]];
+    return [Utils stringContent:[SeafGlobal.sharedObject documentPath:self.ooid]];
 }
 
 - (void)autoupload
@@ -580,7 +580,7 @@
     @synchronized (self) {
         NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
         [formatter setDateFormat:@"yyyy-MM-dd-HH.mm.ss"];
-        NSString *dir = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"] stringByAppendingPathComponent:[formatter stringFromDate:[NSDate date]]];
+        NSString *dir = [[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"] stringByAppendingPathComponent:[formatter stringFromDate:[NSDate date]]];
         if (![Utils checkMakeDir:dir])
             return NO;
 
@@ -600,13 +600,13 @@
     @synchronized (self) {
         NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
         [formatter setDateFormat:@"yyyy-MM-dd-HH.mm.ss"];
-        NSString *dir = [[[Utils applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"] stringByAppendingPathComponent:[formatter stringFromDate:[NSDate date]]];
+        NSString *dir = [[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"] stringByAppendingPathComponent:[formatter stringFromDate:[NSDate date]]];
         if (![Utils checkMakeDir:dir])
             return NO;
 
         NSString *newpath = [dir stringByAppendingPathComponent:self.name];
         NSError *error = nil;
-        BOOL ret = [[NSFileManager defaultManager] copyItemAtPath:[Utils documentPath:self.ooid] toPath:newpath error:&error];
+        BOOL ret = [[NSFileManager defaultManager] copyItemAtPath:[SeafGlobal.sharedObject documentPath:self.ooid] toPath:newpath error:&error];
         Debug("ret=%d newpath=%@, %@\n", ret, newpath, error);
         if (ret) {
             self.mpath = newpath;
@@ -645,8 +645,8 @@
     _exportURL = nil;
     _preViewURL = nil;
     _shareLink = nil;
-    [[NSFileManager defaultManager] removeItemAtPath:[Utils documentPath:self.ooid] error:nil];
-    NSString *tempDir = [[Utils applicationTempDirectory] stringByAppendingPathComponent:self.ooid];
+    [[NSFileManager defaultManager] removeItemAtPath:[SeafGlobal.sharedObject documentPath:self.ooid] error:nil];
+    NSString *tempDir = [[SeafGlobal.sharedObject applicationTempDirectory] stringByAppendingPathComponent:self.ooid];
     [[NSFileManager defaultManager] removeItemAtPath:tempDir error:nil];
     self.ooid = nil;
     self.state = SEAF_DENTRY_INIT;
