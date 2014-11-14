@@ -100,6 +100,8 @@
 		5732A964177894E700D806C7 /* REComposeSheetView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A93F177894E700D806C7 /* REComposeSheetView.m */; };
 		5732A966177894E700D806C7 /* REComposeViewController.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 5732A940177894E700D806C7 /* REComposeViewController.bundle */; };
 		5732A968177894E700D806C7 /* REComposeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A942177894E700D806C7 /* REComposeViewController.m */; };
+		573C3C651A15104B009675F9 /* seafile.entitlements in Resources */ = {isa = PBXBuildFile; fileRef = 573C3C641A15104B009675F9 /* seafile.entitlements */; };
+		573C3C661A161FDF009675F9 /* account.png in Resources */ = {isa = PBXBuildFile; fileRef = 570DFACA16A19EFD00ADD5F2 /* account.png */; };
 		573E35F81922847200C67671 /* NSString+JSMessagesView.m in Sources */ = {isa = PBXBuildFile; fileRef = 573E35A61922847200C67671 /* NSString+JSMessagesView.m */; };
 		573E35F91922847200C67671 /* UIColor+JSMessagesView.m in Sources */ = {isa = PBXBuildFile; fileRef = 573E35A81922847200C67671 /* UIColor+JSMessagesView.m */; };
 		573E35FA1922847200C67671 /* UIImage+JSMessagesView.m in Sources */ = {isa = PBXBuildFile; fileRef = 573E35AA1922847200C67671 /* UIImage+JSMessagesView.m */; };
@@ -332,7 +334,6 @@
 		57E22AAF1A110DEB00C92330 /* SeafUploadFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229A21A11087500C92330 /* SeafUploadFile.m */; };
 		57E22AB01A110DFA00C92330 /* Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229D71A1108B200C92330 /* Utils.m */; };
 		57E22AB11A1113B900C92330 /* ColorfulButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229C51A1108B200C92330 /* ColorfulButton.m */; };
-		57E22AB31A11170700C92330 /* seafile.entitlements in Resources */ = {isa = PBXBuildFile; fileRef = 57E22AB21A11170700C92330 /* seafile.entitlements */; };
 		57E22B3A1A126EBE00C92330 /* FolderView_iPad.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57E22AF31A12625B00C92330 /* FolderView_iPad.storyboard */; };
 		57E22B3B1A126EBE00C92330 /* FolderView_iPhone.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57E22AF51A12625B00C92330 /* FolderView_iPhone.storyboard */; };
 		57E22B411A126EBE00C92330 /* SeafStart.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57E22B031A12625B00C92330 /* SeafStart.storyboard */; };
@@ -530,6 +531,7 @@
 		5739703C165800810089F32F /* text.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = text.png; sourceTree = "<group>"; };
 		5739703E1658008A0089F32F /* text-directory.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "text-directory.png"; sourceTree = "<group>"; };
 		57397040165801EE0089F32F /* text-directory-documents.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "text-directory-documents.png"; sourceTree = "<group>"; };
+		573C3C641A15104B009675F9 /* seafile.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = seafile.entitlements; sourceTree = "<group>"; };
 		573E35A51922847200C67671 /* NSString+JSMessagesView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+JSMessagesView.h"; sourceTree = "<group>"; };
 		573E35A61922847200C67671 /* NSString+JSMessagesView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+JSMessagesView.m"; sourceTree = "<group>"; };
 		573E35A71922847200C67671 /* UIColor+JSMessagesView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIColor+JSMessagesView.h"; sourceTree = "<group>"; };
@@ -827,7 +829,6 @@
 		57E228781A0E286200C92330 /* QBImagePickerThumbnailView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QBImagePickerThumbnailView.m; sourceTree = "<group>"; };
 		57E228B61A0E403A00C92330 /* QBImagePickerController.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = QBImagePickerController.bundle; sourceTree = "<group>"; };
 		57E228BC1A0E4FC400C92330 /* seafile-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "seafile-Prefix.pch"; sourceTree = "<group>"; };
-		57E228E61A0F57A400C92330 /* SeafilePro.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = SeafilePro.entitlements; path = "seafile-appstore/SeafilePro.entitlements"; sourceTree = "<group>"; };
 		57E2298B1A11087500C92330 /* SeafAvatar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafAvatar.h; path = common/SeafAvatar.h; sourceTree = SOURCE_ROOT; };
 		57E2298C1A11087500C92330 /* SeafAvatar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafAvatar.m; path = common/SeafAvatar.m; sourceTree = SOURCE_ROOT; };
 		57E2298D1A11087500C92330 /* SeafBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafBase.h; path = common/SeafBase.h; sourceTree = SOURCE_ROOT; };
@@ -873,7 +874,6 @@
 		57E229D71A1108B200C92330 /* Utils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Utils.m; path = common/Utils.m; sourceTree = SOURCE_ROOT; };
 		57E22A251A11093D00C92330 /* SeafGlobal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafGlobal.h; path = common/SeafGlobal.h; sourceTree = SOURCE_ROOT; };
 		57E22A261A11093D00C92330 /* SeafGlobal.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafGlobal.m; path = common/SeafGlobal.m; sourceTree = SOURCE_ROOT; };
-		57E22AB21A11170700C92330 /* seafile.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = seafile.entitlements; sourceTree = "<group>"; };
 		57E22B5B1A12718D00C92330 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/DownloadingProgress_iPhone.xib; sourceTree = "<group>"; };
 		57E22B5F1A12743300C92330 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/DownloadingProgress_iPad.xib; sourceTree = "<group>"; };
 		57E22B601A12743A00C92330 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/FailToPreview_iPad.xib; sourceTree = "<group>"; };
@@ -1615,7 +1615,6 @@
 		57DB826215A833F900097CEC = {
 			isa = PBXGroup;
 			children = (
-				57E228E61A0F57A400C92330 /* SeafilePro.entitlements */,
 				57D189CE182E0A380029A797 /* Images.xcassets */,
 				57F8CD5E1A1397CB000F6CDC /* SeafProvier */,
 				57F8CD6C1A1397CB000F6CDC /* SeafProvierFileProvider */,
@@ -1673,10 +1672,10 @@
 		57DB827A15A833FA00097CEC /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				57E22AB21A11170700C92330 /* seafile.entitlements */,
 				57E228B61A0E403A00C92330 /* QBImagePickerController.bundle */,
 				57532C161868AA48003D564B /* Localizable.strings */,
 				57DB827B15A833FA00097CEC /* seafile-Info.plist */,
+				573C3C641A15104B009675F9 /* seafile.entitlements */,
 				571D8DBD1677897D00F1A22C /* seafile-appstore-Info.plist */,
 				57E228BC1A0E4FC400C92330 /* seafile-Prefix.pch */,
 				57DB827C15A833FA00097CEC /* InfoPlist.strings */,
@@ -1957,6 +1956,7 @@
 				573E36281922847200C67671 /* send-button-pressed.png in Resources */,
 				57E1E8A91737F4D3006601FE /* bootstrap-wysiwyg.js in Resources */,
 				57BFAB0A18BD8EA200EB1B5C /* bt-quote.png in Resources */,
+				573C3C651A15104B009675F9 /* seafile.entitlements in Resources */,
 				57E1E8AB1737F4D3006601FE /* bootstrap.min.js in Resources */,
 				573E36081922847200C67671 /* bubble-classic-blue.png in Resources */,
 				57E1FD91173AB85500523912 /* ios.js in Resources */,
@@ -2033,7 +2033,6 @@
 				57BFAAF118BD8EA200EB1B5C /* bt-bold2.png in Resources */,
 				57943C0919F027D5008423E5 /* editfile2@2x.png in Resources */,
 				57BFAB1118BD8EA200EB1B5C /* bt-strikethrough2.png in Resources */,
-				57E22AB31A11170700C92330 /* seafile.entitlements in Resources */,
 				57943C0A19F027D5008423E5 /* ellipsis@2x.png in Resources */,
 				576B99131861411700A16ED6 /* magnifier-ranged-lo-stemless@2x.png in Resources */,
 				57943C0319F027D5008423E5 /* arrowright2@2x.png in Resources */,
@@ -2172,6 +2171,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				573C3C661A161FDF009675F9 /* account.png in Resources */,
 				57F8CD9D1A13BAFB000F6CDC /* seafile.xcdatamodeld in Resources */,
 				57F8CD661A1397CB000F6CDC /* MainInterface.storyboard in Resources */,
 			);
@@ -2531,7 +2531,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
-				CODE_SIGN_ENTITLEMENTS = seafile/seafile.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=*]" = seafile/seafile.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
@@ -2558,7 +2557,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
-				CODE_SIGN_ENTITLEMENTS = seafile/seafile.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -2813,6 +2811,7 @@
 				57F8CD7B1A1397CC000F6CDC /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		57F8CD7C1A1397CC000F6CDC /* Build configuration list for PBXNativeTarget "SeafProvier" */ = {
 			isa = XCConfigurationList;
@@ -2821,6 +2820,7 @@
 				57F8CD7E1A1397CC000F6CDC /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 

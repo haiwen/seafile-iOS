@@ -115,12 +115,7 @@ enum {
 
 - (long long)cacheSize
 {
-    long long cacheSize = [Utils folderSizeAtPath:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
-    cacheSize += [Utils folderSizeAtPath:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"]];
-    cacheSize += [Utils folderSizeAtPath:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"]];
-    cacheSize += [Utils folderSizeAtPath:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"]];
-    cacheSize += [Utils folderSizeAtPath:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"avatars"]];
-    return cacheSize;
+    return [Utils folderSizeAtPath:[SeafGlobal.sharedObject applicationDocumentsDirectory]];
 }
 
 - (void)configureView

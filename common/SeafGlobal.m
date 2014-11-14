@@ -55,12 +55,16 @@
 
 - (NSURL *)applicationDocumentsDirectoryURL
 {
+#ifdef SEAFILE_APP_OLD
     return [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
+#else
+    return [[[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:GROUP_NAME] URLByAppendingPathComponent:@"seafile" isDirectory:true];
+#endif
 }
 
 - (NSString *)applicationDocumentsDirectory
 {
-    return [[[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject] path];
+    return [[self applicationDocumentsDirectoryURL] path];
 }
 
 - (NSString *)applicationTempDirectory
@@ -84,7 +88,7 @@
     NSUserDefaults *oldDef = [NSUserDefaults standardUserDefaults];
     NSUserDefaults *newDef = [[NSUserDefaults alloc] initWithSuiteName:GROUP_NAME];
     NSArray *accounts = [self objectForKey:@"ACCOUNTS"];
-    if (accounts) {
+    if (accounts && accounts.count > 0) {
         for(NSString *key in oldDef.dictionaryRepresentation) {
             [newDef setObject:[oldDef objectForKey:key] forKey:key];
         }
@@ -93,10 +97,36 @@
         [oldDef synchronize];
     }
 }
+- (void)migrateDocuments
+{
 
+    NSURL *oldURL = [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
+    NSURL *newURL = [[[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:GROUP_NAME] URLByAppendingPathComponent:@"seafile" isDirectory:true];
+    if ([Utils fileExistsAtPath:newURL.path])
+        return;
+
+    [Utils checkMakeDir:newURL.path];
+
+    if (!newURL) return;
+
+    NSFileManager* manager = [NSFileManager defaultManager];
+    NSEnumerator *childFilesEnumerator = [[manager subpathsAtPath:oldURL.path] objectEnumerator];
+    NSString* fileName;
+    while ((fileName = [childFilesEnumerator nextObject]) != nil){
+        NSError *error = nil;
+        NSString* src = [oldURL.path stringByAppendingPathComponent:fileName];
+        NSString* dest = [newURL.path stringByAppendingPathComponent:fileName];
+        if ([Utils fileExistsAtPath:dest]) continue;
+        [[NSFileManager defaultManager] moveItemAtPath:src toPath:dest error:&error];
+        if (error) {
+            Warning("migrate data error=%@", error);
+        }
+    }
+}
 - (void)migrate
 {
     [self migrateUserDefaults];
+    [self migrateDocuments];
 }
 
 - (void)saveAccounts
@@ -114,12 +144,8 @@
 - (void)loadAccounts
 {
     NSArray *accounts = [self objectForKey:@"ACCOUNTS"];
-    Debug("accounts=%ld", accounts.count);
-    Debug("accounts=%@", accounts);
     for (NSDictionary *account in accounts) {
-        Debug("account=%@", account);
         SeafConnection *conn = [[SeafConnection alloc] initWithUrl:[account objectForKey:@"url"] username:[account objectForKey:@"username"]];
-        Debug("conn.username=%@", conn.username);
         if (conn.username)
             [self.conns addObject:conn];
     }

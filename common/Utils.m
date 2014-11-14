@@ -98,11 +98,6 @@
     long long folderSize = 0;
     while ((fileName = [childFilesEnumerator nextObject]) != nil){
         NSString* fileAbsolutePath = [folderPath stringByAppendingPathComponent:fileName];
-        if ([self fileSizeAtPath1:fileAbsolutePath] != [self fileSizeAtPath2:fileAbsolutePath]){
-            NSLog(@"%@, %lld, %lld", fileAbsolutePath,
-                  [self fileSizeAtPath1:fileAbsolutePath],
-                  [self fileSizeAtPath2:fileAbsolutePath]);
-        }
         folderSize += [self fileSizeAtPath1:fileAbsolutePath];
     }
     return folderSize;

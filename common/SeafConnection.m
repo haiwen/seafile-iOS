@@ -971,7 +971,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (void)updateUploadDir:(SeafDir *)dir
 {
     _syncDir = dir;
-    Debug("%ld photos, syncdir: %@ %@", self.photosArray.count, _syncDir.repoId, _syncDir.name);
+    Debug("%ld photos, syncdir: %@ %@", (long)self.photosArray.count, _syncDir.repoId, _syncDir.name);
     [self pickPhotosForUpload];
 }
 - (void)checkUploadDir
