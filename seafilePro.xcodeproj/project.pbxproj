@@ -221,6 +221,7 @@
 		57943C1B19F027D5008423E5 /* unstar@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57943BFC19F027D5008423E5 /* unstar@2x.png */; };
 		57943C1C19F027D5008423E5 /* unstar2@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57943BFD19F027D5008423E5 /* unstar2@2x.png */; };
 		5795F49B16A7266F00FF90E3 /* SeafAccountCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 5795F49916A7266E00FF90E3 /* SeafAccountCell.m */; };
+		579993421A17921700ABBE17 /* SeafAccountCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 5795F49916A7266E00FF90E3 /* SeafAccountCell.m */; };
 		57A029771A16F8AD009C9D7B /* SeafProviderFileProvider.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 57A0296D1A16F8AD009C9D7B /* SeafProviderFileProvider.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		57A0297A1A16F8AD009C9D7B /* SeafProvider.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 57A0295F1A16F8AC009C9D7B /* SeafProvider.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		57A029861A16F91F009C9D7B /* DocumentPickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57A029821A16F91F009C9D7B /* DocumentPickerViewController.m */; };
@@ -280,6 +281,7 @@
 		57A029D61A170A7E009C9D7B /* text.png in Resources */ = {isa = PBXBuildFile; fileRef = 5739703C165800810089F32F /* text.png */; };
 		57A029D71A170A7E009C9D7B /* unknown-file.png in Resources */ = {isa = PBXBuildFile; fileRef = 57396FFE1657ECDA0089F32F /* unknown-file.png */; };
 		57A029D81A170A7E009C9D7B /* video.png in Resources */ = {isa = PBXBuildFile; fileRef = 573970001657F8BF0089F32F /* video.png */; };
+		57A029D91A178FAD009C9D7B /* SeafAccountCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22AF91A12625B00C92330 /* SeafAccountCell.xib */; };
 		57A550DB177F23BB00E3BA9B /* refresh.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550D9177F23BB00E3BA9B /* refresh.png */; };
 		57A550DE177F283700E3BA9B /* addmsg.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550DC177F283700E3BA9B /* addmsg.png */; };
 		57A550E1177F2C4400E3BA9B /* export.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550DF177F2C4400E3BA9B /* export.png */; };
@@ -2199,6 +2201,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				57A029D91A178FAD009C9D7B /* SeafAccountCell.xib in Resources */,
 				57A029C81A170A7E009C9D7B /* FileTypeIcons.plist in Resources */,
 				57A029C91A170A7E009C9D7B /* text-directory-documents-encrypted@2x.png in Resources */,
 				57A029CA1A170A7E009C9D7B /* text-directory-documents@2x.png in Resources */,
@@ -2344,6 +2347,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				579993421A17921700ABBE17 /* SeafAccountCell.m in Sources */,
 				57A029C61A17022B009C9D7B /* SeafGlobal.m in Sources */,
 				57A029BB1A1701EB009C9D7B /* ColorfulButton.m in Sources */,
 				57A029BC1A1701EB009C9D7B /* ExtentedString.m in Sources */,
@@ -2843,6 +2847,7 @@
 				57A0297D1A16F8AD009C9D7B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		57A0297E1A16F8AD009C9D7B /* Build configuration list for PBXNativeTarget "SeafProvider" */ = {
 			isa = XCConfigurationList;
@@ -2851,6 +2856,7 @@
 				57A029801A16F8AD009C9D7B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		57DB826715A833F900097CEC /* Build configuration list for PBXProject "seafilePro" */ = {
 			isa = XCConfigurationList;

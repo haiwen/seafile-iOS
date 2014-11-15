@@ -120,7 +120,6 @@
                         if (success)
                             success(self);
                         [self.delegate entry:self updated:YES progress:100];
-
                     }
                     failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
                         self.state = SEAF_DENTRY_INIT;

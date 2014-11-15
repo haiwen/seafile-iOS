@@ -155,7 +155,6 @@ enum {
 - (void)awakeFromNib
 {
     if (IsIpad()) {
-        self.clearsSelectionOnViewWillAppear = NO;
         self.contentSizeForViewInPopover = CGSizeMake(320.0, 600.0);
     }
     [super awakeFromNib];
@@ -171,7 +170,7 @@ enum {
     self.formatter = [[NSDateFormatter alloc] init];
     [self.formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
     self.tableView.rowHeight = 50;
-    self.clearsSelectionOnViewWillAppear = YES;
+    self.clearsSelectionOnViewWillAppear = !IsIpad();
 
     self.state = STATE_INIT;
     _refreshHeaderView = [[EGORefreshTableHeaderView alloc] initWithFrame:CGRectMake(0.0f, 0.0f - self.tableView.bounds.size.height, self.view.frame.size.width, self.tableView.bounds.size.height)];
@@ -1341,6 +1340,14 @@ enum {
     [self.tableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionMiddle];
 }
 
+- (void)updateEntryCell:(id<SeafPreView>)entry
+{
+    NSUInteger index = [_directory.allItems indexOfObject:entry];
+    if (index == NSNotFound)
+        return;
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
+    [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+}
 
 #pragma mark - SeafShareDelegate
 - (void)generateSharelink:(SeafBase *)entry WithResult:(BOOL)success

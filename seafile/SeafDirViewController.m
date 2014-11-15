@@ -201,7 +201,7 @@
 - (void)entry:(SeafBase *)entry updated:(BOOL)updated progress:(int)percent
 {
     [self doneLoadingTableViewData];
-    if (updated) {
+    if (updated && [self isViewLoaded]) {
         [self.tableView reloadData];
     }
 }

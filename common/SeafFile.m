@@ -75,15 +75,20 @@
 
 - (NSString *)detailText
 {
+    NSString *sizeStr = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:self.filesize ] useBaseTen:NO];
     if (self.mpath) {
         if (self.ufile.uploading)
-            return [NSString stringWithFormat:@"%@, uploading", [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:self.filesize ] useBaseTen:NO]];
+            return [NSString stringWithFormat:@"%@, uploading", sizeStr];
         else
-            return [NSString stringWithFormat:@"%@, modified", [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:self.filesize ] useBaseTen:NO]];
+            return [NSString stringWithFormat:@"%@, modified", sizeStr];
     } else if (!self.mtime)
-        return [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:self.filesize ] useBaseTen:NO];
+        return sizeStr;
+
+    NSString *timeStr = [SeafDateFormatter stringFromLongLong:self.mtime];
+    if ([self hasCache])
+        return [NSString stringWithFormat:@"%@, %@, cached", sizeStr, timeStr];
     else
-        return [NSString stringWithFormat:@"%@, %@", [FileSizeFormatter stringFromNumber:[NSNumber numberWithUnsignedLongLong:self.filesize ] useBaseTen:NO], [SeafDateFormatter stringFromLongLong:self.mtime]];
+        return [NSString stringWithFormat:@"%@, %@", sizeStr, timeStr];
 }
 
 - (NSString *)downloadTempPath:(NSString *)objId

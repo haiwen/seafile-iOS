@@ -9,6 +9,7 @@
 #import "DocumentPickerViewController.h"
 #import "SeafProviderFileViewController.h"
 #import "SeafConnection.h"
+#import "SeafAccountCell.h"
 #import "SeafGlobal.h"
 #import "Debug.h"
 
@@ -42,15 +43,16 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    NSString *CellIdentifier = @"SeafProviderAccountCell";
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+    NSString *CellIdentifier = @"SeafAccountCell";
+    SeafAccountCell *cell = [tableView dequeueReusableCellWithIdentifier:@"SeafAccountCell"];
     if (cell == nil) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier];
+        NSArray *cells = [[NSBundle mainBundle] loadNibNamed:CellIdentifier owner:self options:nil];
+        cell = [cells objectAtIndex:0];
     }
     SeafConnection *conn = [self.conns objectAtIndex:indexPath.row];
-    cell.imageView.image = [UIImage imageWithContentsOfFile:[conn avatarForEmail:conn.username]];
-    cell.textLabel.text = conn.address;
-    cell.detailTextLabel.text = conn.username;
+    cell.imageview.image = [UIImage imageWithContentsOfFile:[conn avatarForEmail:conn.username]];
+    cell.serverLabel.text = conn.address;
+    cell.emailLabel.text = conn.username;
     cell.accessoryType = UITableViewCellAccessoryNone;
     return cell;
 }

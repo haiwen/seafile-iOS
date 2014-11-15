@@ -189,7 +189,7 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     NSString *CellIdentifier = @"SeafAccountCell";
-    SeafAccountCell *cell = [tableView dequeueReusableCellWithIdentifier:@"SeafAccountCell2"];
+    SeafAccountCell *cell = [tableView dequeueReusableCellWithIdentifier:@"SeafAccountCell"];
     if (cell == nil) {
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:CellIdentifier owner:self options:nil];
         cell = [cells objectAtIndex:0];

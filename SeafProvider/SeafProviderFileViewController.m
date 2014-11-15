@@ -9,6 +9,8 @@
 #import "SeafProviderFileViewController.h"
 #import "SeafFile.h"
 #import "SeafRepos.h"
+#import "FileSizeFormatter.h"
+#import "SeafDateFormatter.h"
 #import "Debug.h"
 
 @interface SeafProviderFileViewController ()<SeafDentryDelegate, UIScrollViewDelegate>
@@ -35,6 +37,7 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    self.tableView.rowHeight = 50;
     self.titleLabel.text = _directory.name;
     [self.tableView reloadData];
     [self.backButton addTarget:self action:@selector(goBack:) forControlEvents:UIControlEventTouchUpInside];
@@ -107,17 +110,30 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    SeafBase *entry = [_directory.items objectAtIndex:indexPath.row];
+
     NSString *CellIdentifier = @"SeafProviderCell";
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier];
     }
     
-    SeafBase *entry = [_directory.items objectAtIndex:indexPath.row];
     cell.textLabel.text = entry.name;
     cell.textLabel.font = [UIFont systemFontOfSize:17];
+    cell.textLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
     cell.imageView.image = entry.icon;
-    cell.detailTextLabel.text = nil;
+    cell.detailTextLabel.font = [UIFont systemFontOfSize:13];
+    if ([entry isKindOfClass:[SeafRepo class]]) {
+        SeafRepo *srepo = (SeafRepo *)entry;
+        NSString *detail = [NSString stringWithFormat:@"%@, %@", [FileSizeFormatter stringFromNumber:[NSNumber numberWithUnsignedLongLong:srepo.size ] useBaseTen:NO], [SeafDateFormatter stringFromLongLong:srepo.mtime]];
+        cell.detailTextLabel.text = detail;
+    } else if ([entry isKindOfClass:[SeafDir class]]) {
+        cell.detailTextLabel.text = nil;
+    } else if ([entry isKindOfClass:[SeafFile class]]) {
+        SeafFile *sfile = (SeafFile *)entry;
+        cell.detailTextLabel.text = sfile.detailText;
+    }
+    cell.imageView.frame = CGRectMake(8, 8, 32, 32);
     return cell;
 }
 
@@ -145,7 +161,7 @@
 #pragma mark - SeafDentryDelegate
 - (void)entry:(SeafBase *)entry updated:(BOOL)updated progress:(int)percent
 {
-    if (updated) {
+    if (updated && [self isViewLoaded]) {
         [self.tableView reloadData];
     }
 }
