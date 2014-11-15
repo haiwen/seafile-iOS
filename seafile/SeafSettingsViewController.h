@@ -10,7 +10,7 @@
 
 #import "SeafConnection.h"
 
-@interface SeafSettingsViewController : UITableViewController<UIAlertViewDelegate, SSConnectionAccountDelegate>
+@interface SeafSettingsViewController : UITableViewController
 
 @property (strong, nonatomic) SeafConnection *connection;
 

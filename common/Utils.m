@@ -270,22 +270,40 @@
     CGFloat maxWidth = width;
     CGFloat maxHeight = 1000;
 
-    CGSize stringSize;
+    CGRect stringRect = [txt boundingRectWithSize:CGSizeMake(maxWidth, maxHeight)
+                                          options:NSStringDrawingUsesLineFragmentOrigin
+                                       attributes:@{ NSFontAttributeName : font }
+                                          context:nil];
 
-    if (NSFoundationVersionNumber > NSFoundationVersionNumber_iOS_6_0) {
-        CGRect stringRect = [txt boundingRectWithSize:CGSizeMake(maxWidth, maxHeight)
-                                              options:NSStringDrawingUsesLineFragmentOrigin
-                                           attributes:@{ NSFontAttributeName : font }
-                                              context:nil];
-
-        stringSize = CGRectIntegral(stringRect).size;
-    }
-    else {
-        stringSize = [txt sizeWithFont:font
-                     constrainedToSize:CGSizeMake(maxWidth, maxHeight)];
-    }
+    CGSize stringSize = CGRectIntegral(stringRect).size;
 
     return CGSizeMake(roundf(stringSize.width), roundf(stringSize.height));
+}
+
++ (void)alertWithTitle:(NSString *)title message:(NSString*)message yes:(void (^)())yes no:(void (^)())no from:(UIViewController *)c
+{
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title    message:message preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *yesAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"YES", @"Seafile") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        if (yes) yes();
+    }];
+    UIAlertAction *noAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"NO", @"Seafile") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        if (no) no();
+    }];
+
+    [alert addAction:noAction];
+    [alert addAction:yesAction];
+    [c presentViewController:alert animated:true completion:nil];
+}
+
++ (void)alertWithTitle:(NSString *)title message:(NSString*)message handler:(void (^)())handler from:(UIViewController *)c;
+{
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"Seafile") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        if (handler)
+            handler();
+    }];
+    [alert addAction:okAction];
+    [c presentViewController:alert animated:true completion:nil];
 }
 
 @end

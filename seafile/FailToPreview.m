@@ -11,10 +11,8 @@
 
 
 @interface FailToPreview ()
-@property (strong) id<SeafPreView> item;
 @property (strong) UIDocumentInteractionController *docController;
 @property (strong, nonatomic) IBOutlet UILabel *errorLabel;
-@property (strong, nonatomic) IBOutlet ColorfulButton *openElseBtn;
 @end
 
 @implementation FailToPreview
@@ -33,27 +31,10 @@
     return self;
 }
 
-- (IBAction)openElsewhere:(id)sender
-{
-    NSURL *url = [_item exportURL];
-    if (!url) return;
-    _docController = [UIDocumentInteractionController interactionControllerWithURL:url];
-    BOOL ret = [_docController presentOpenInMenuFromRect:[((UIButton *)sender) frame] inView:self animated:YES];
-    if (ret == NO) {
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"There is no app which can open this type of file on this machine", @"Seafile")
-                                                        message:nil
-                                                       delegate:nil
-                                              cancelButtonTitle:@"OK"
-                                              otherButtonTitles:nil];
-        [alert show];
-    }
-}
-
 - (void)configureViewWithPrevireItem:(id<SeafPreView>)item
 {
-    _item = item;
-    self.imageView.image = _item.icon;
-    self.nameLabel.text = _item.previewItemTitle;
+    self.imageView.image = item.icon;
+    self.nameLabel.text = item.previewItemTitle;
 }
 
 @end

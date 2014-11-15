@@ -37,7 +37,7 @@ enum {
 #define STR_5 NSLocalizedString(@"SEAFILE_LOC_KEY_FORMAT", @"Seafile push notification message")
 #define STR_6 NSLocalizedString(@"Send", nil)
 
-@interface SeafAppDelegate : UIResponder <UIApplicationDelegate>
+@interface SeafAppDelegate : UIResponder <UIApplicationDelegate, SeafConnectionDelegate>
 @property (strong, nonatomic) UIWindow *window;
 
 @property (readonly) UINavigationController *startNav;

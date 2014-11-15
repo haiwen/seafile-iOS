@@ -16,8 +16,6 @@
 
 - (void)saveAccount:(SeafConnection *)conn;
 - (BOOL)selectAccount:(SeafConnection *)conn;
-- (BOOL)goToDefaultAccount;
-
-- (BOOL)gotoAccount:(NSString *)username server:(NSString *)server;
+- (BOOL)selectDefaultAccount;
 
 @end

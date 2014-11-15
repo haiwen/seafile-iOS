@@ -225,10 +225,8 @@
 		57A0297A1A16F8AD009C9D7B /* SeafProvider.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 57A0295F1A16F8AC009C9D7B /* SeafProvider.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		57A029861A16F91F009C9D7B /* DocumentPickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57A029821A16F91F009C9D7B /* DocumentPickerViewController.m */; };
 		57A0298E1A16F935009C9D7B /* FileProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = 57A0298B1A16F935009C9D7B /* FileProvider.m */; };
-		57A0299A1A16F95D009C9D7B /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 57A029971A16F95D009C9D7B /* Info.plist */; };
 		57A0299B1A16F95D009C9D7B /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57A029981A16F95D009C9D7B /* MainInterface.storyboard */; };
 		57A0299C1A16F95D009C9D7B /* SeafProvider.entitlements in Resources */ = {isa = PBXBuildFile; fileRef = 57A029991A16F95D009C9D7B /* SeafProvider.entitlements */; };
-		57A0299F1A16F965009C9D7B /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 57A0299D1A16F965009C9D7B /* Info.plist */; };
 		57A029A01A16F965009C9D7B /* SeafProviderFileProvider.entitlements in Resources */ = {isa = PBXBuildFile; fileRef = 57A0299E1A16F965009C9D7B /* SeafProviderFileProvider.entitlements */; };
 		57A029A41A170147009C9D7B /* SeafProviderFileViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57A029A21A170147009C9D7B /* SeafProviderFileViewController.m */; };
 		57A029A51A170147009C9D7B /* SeafProviderFileViewController.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57A029A31A170147009C9D7B /* SeafProviderFileViewController.storyboard */; };
@@ -2221,7 +2219,6 @@
 				57A029C71A170A51009C9D7B /* account.png in Resources */,
 				57A029C41A1701F2009C9D7B /* FileMimeType.plist in Resources */,
 				57A029BA1A1701D2009C9D7B /* seafile.xcdatamodeld in Resources */,
-				57A0299A1A16F95D009C9D7B /* Info.plist in Resources */,
 				57A029A51A170147009C9D7B /* SeafProviderFileViewController.storyboard in Resources */,
 				57A0299B1A16F95D009C9D7B /* MainInterface.storyboard in Resources */,
 				57A0299C1A16F95D009C9D7B /* SeafProvider.entitlements in Resources */,
@@ -2233,7 +2230,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				57A029A01A16F965009C9D7B /* SeafProviderFileProvider.entitlements in Resources */,
-				57A0299F1A16F965009C9D7B /* Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

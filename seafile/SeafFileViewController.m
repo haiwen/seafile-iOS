@@ -39,7 +39,6 @@ enum {
     STATE_SHARE_LINK,
 };
 
-#define S_PASSWORD NSLocalizedString(@"Password of this library", @"Seafile")
 #define S_MKDIR NSLocalizedString(@"New Folder", @"Seafile")
 #define S_NEWFILE NSLocalizedString(@"New File", @"Seafile")
 #define S_RENAME NSLocalizedString(@"Rename", @"Seafile")
@@ -51,7 +50,7 @@ enum {
 #define S_UPLOAD NSLocalizedString(@"Upload", @"Seafile")
 
 
-@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, EGORefreshTableHeaderDelegate, SeafDirDelegate, SeafShareDelegate, UISearchBarDelegate, UISearchDisplayDelegate, UIAlertViewDelegate, UIActionSheetDelegate, MFMailComposeViewControllerDelegate>
+@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, EGORefreshTableHeaderDelegate, SeafDirDelegate, SeafShareDelegate, UISearchBarDelegate, UISearchDisplayDelegate, UIActionSheetDelegate, MFMailComposeViewControllerDelegate>
 - (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView;
@@ -647,36 +646,93 @@ enum {
     return NO;
 }
 
-- (void)popupSetRepoPassword
+- (void)popupSetRepoPassword:(SeafRepo *)repo
 {
     self.state = STATE_PASSWORD;
-    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:S_PASSWORD message:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") otherButtonTitles:NSLocalizedString(@"OK", @"Seafile"), nil];
-    alert.alertViewStyle = UIAlertViewStyleSecureTextInput;
-    [alert show];
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Password of this library", @"Seafile") message:nil preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }];
+    UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"Seafile") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        NSString *input = [[alert.textFields objectAtIndex:0] text];
+        if (!input || input.length == 0) {
+            [self alertWithMessage:NSLocalizedString(@"Password must not be empty", @"Seafile")handler:^{
+                [self popupSetRepoPassword:repo];
+            }];
+            return;
+        }
+        if (input.length < 3 || input.length  > 100) {
+            [self alertWithMessage:NSLocalizedString(@"The length of password should be between 3 and 100", @"Seafile") handler:^{
+                [self popupSetRepoPassword:repo];
+            }];
+            return;
+        }
+        [repo setDelegate:self];
+        if ([repo->connection localDecrypt:repo.repoId])
+            [repo checkRepoPassword:input];
+        else
+            [repo setRepoPassword:input];
+
+    }];
+    [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+        textField.secureTextEntry = true;
+    }];
+    [alert addAction:cancelAction];
+    [alert addAction:okAction];
+
+    [self presentViewController:alert animated:true completion:nil];
 }
-- (void)popupInputView:(NSString *)title placeholder:(NSString *)tip
-{
-    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") otherButtonTitles:NSLocalizedString(@"OK", @"Seafile"), nil];
-    alert.alertViewStyle = UIAlertViewStylePlainTextInput;
-    UITextField *textfield = [alert textFieldAtIndex:0];
-    textfield.placeholder = tip;
-    textfield.autocorrectionType = UITextAutocorrectionTypeNo;
-    [alert show];
-}
+
 - (void)popupMkdirView
 {
     self.state = STATE_MKDIR;
-    [self popupInputView:S_MKDIR placeholder:NSLocalizedString(@"New folder name", @"Seafile")];
+    _directory.delegate = self;
+    [self popupInputView:S_MKDIR placeholder:NSLocalizedString(@"New folder name", @"Seafile") handler:^(NSString *input) {
+        if (!input || input.length == 0) {
+            [self alertWithMessage:NSLocalizedString(@"Folder name must not be empty", @"Seafile")];
+            return;
+        }
+        if (![input isValidFileName]) {
+            [self alertWithMessage:NSLocalizedString(@"Folder name invalid", @"Seafile")];
+            return;
+        }
+        [_directory mkdir:input];
+        [SVProgressHUD showWithStatus:NSLocalizedString(@"Creating folder ...", @"Seafile")];
+    }];
 }
+
 - (void)popupCreateView
 {
     self.state = STATE_CREATE;
-    [self popupInputView:S_NEWFILE placeholder:NSLocalizedString(@"New file name", @"Seafile")];
+    _directory.delegate = self;
+    [self popupInputView:S_NEWFILE placeholder:NSLocalizedString(@"New file name", @"Seafile") handler:^(NSString *input) {
+        if (!input || input.length == 0) {
+            [self alertWithMessage:NSLocalizedString(@"File name must not be empty", @"Seafile")];
+            return;
+        }
+        if (![input isValidFileName]) {
+            [self alertWithMessage:NSLocalizedString(@"File name invalid", @"Seafile")];
+            return;
+        }
+        [_directory createFile:input];
+        [SVProgressHUD showWithStatus:NSLocalizedString(@"Creating file ...", @"Seafile")];
+    }];
 }
+
 - (void)popupRenameView:(NSString *)newName
 {
     self.state = STATE_RENAME;
-    [self popupInputView:S_RENAME placeholder:newName];
+    [self popupInputView:S_RENAME placeholder:newName handler:^(NSString *input) {
+        if (!input || input.length == 0) {
+            [self alertWithMessage:NSLocalizedString(@"File name must not be empty", @"Seafile")];
+            return;
+        }
+        if (![input isValidFileName]) {
+            [self alertWithMessage:NSLocalizedString(@"File name invalid", @"Seafile")];
+            return;
+        }
+        [_directory renameFile:(SeafFile *)_curEntry newName:input];
+        [SVProgressHUD showWithStatus:NSLocalizedString(@"Renaming file ...", @"Seafile")];
+    }];
 }
 
 - (void)popupDirChooseView:(id<SeafPreView>)file
@@ -724,6 +780,7 @@ enum {
     *imgs = arr;
     return YES;
 }
+
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if (self.navigationController.topViewController != self)   return;
@@ -735,7 +792,7 @@ enum {
     _curEntry = [self getDentrybyIndexPath:indexPath tableView:tableView];
     [_curEntry setDelegate:self];
     if ([_curEntry isKindOfClass:[SeafRepo class]] && [(SeafRepo *)_curEntry passwordRequired]) {
-        [self popupSetRepoPassword];
+        [self popupSetRepoPassword:_curEntry];
         return;
     }
 
@@ -792,76 +849,6 @@ enum {
     [headerView setBackgroundColor:HEADER_COLOR];
     [headerView addSubview:label];
     return headerView;
-}
-
-#pragma mark - UIAlertViewDelegate
-- (void)checkPassword:(NSString *)password
-{
-    if (![_curEntry isKindOfClass:[SeafRepo class]])
-        return;
-    SeafRepo *cur = (SeafRepo *)_curEntry;
-    [cur setDelegate:self];
-    [SVProgressHUD showWithStatus:NSLocalizedString(@"Checking library password ...", @"Seafile")];
-    if ([self.connection localDecrypt:cur.repoId])
-        [cur checkRepoPassword:password];
-    else
-        [cur setRepoPassword:password];
-}
-
-- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
-{
-    if (buttonIndex == alertView.cancelButtonIndex) {
-        self.state = STATE_INIT;
-        return;
-    } else {
-        NSString *title = alertView.title;
-        NSString *input = [alertView textFieldAtIndex:0].text;
-        [_directory setDelegate:self];
-        if ([title isEqualToString:S_PASSWORD]) {
-            if (!input || input.length == 0) {
-                [self alertWithMessage:NSLocalizedString(@"Password must not be empty", @"Seafile")];
-                return;
-            }
-            if (input.length < 3 || input.length  > 100) {
-                [self alertWithMessage:NSLocalizedString(@"The length of password should be between 3 and 100", @"Seafile")];
-                return;
-            }
-            [self performSelector:@selector(checkPassword:) withObject:input afterDelay:0.0];
-        } else if (self.state == STATE_MKDIR) {
-            if (!input || input.length == 0) {
-                [self alertWithMessage:NSLocalizedString(@"Folder name must not be empty", @"Seafile")];
-                return;
-            }
-            if (![input isValidFileName]) {
-                [self alertWithMessage:NSLocalizedString(@"Folder name invalid", @"Seafile")];
-                return;
-            }
-            [_directory mkdir:input];
-            [SVProgressHUD showWithStatus:NSLocalizedString(@"Creating folder ...", @"Seafile")];
-        } else if (self.state == STATE_RENAME) {
-            if (!input || input.length == 0) {
-                [self alertWithMessage:NSLocalizedString(@"File name must not be empty", @"Seafile")];
-                return;
-            }
-            if (![input isValidFileName]) {
-                [self alertWithMessage:NSLocalizedString(@"File name invalid", @"Seafile")];
-                return;
-            }
-            [_directory renameFile:(SeafFile *)_curEntry newName:input];
-            [SVProgressHUD showWithStatus:NSLocalizedString(@"Renaming file ...", @"Seafile")];
-        } else if (self.state == STATE_CREATE) {
-            if (!input || input.length == 0) {
-                [self alertWithMessage:NSLocalizedString(@"File name must not be empty", @"Seafile")];
-                return;
-            }
-            if (![input isValidFileName]) {
-                [self alertWithMessage:NSLocalizedString(@"File name invalid", @"Seafile")];
-                return;
-            }
-            [_directory createFile:input];
-            [SVProgressHUD showWithStatus:NSLocalizedString(@"Creating file ...", @"Seafile")];
-        }
-    }
 }
 
 #pragma mark - SeafDentryDelegate
@@ -943,10 +930,10 @@ enum {
         self.state = STATE_INIT;
         SeafFileViewController *controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
         [self.navigationController pushViewController:controller animated:YES];
-        [controller setDirectory:(SeafDir *)_curEntry];
+        [controller setDirectory:(SeafDir *)entry];
     } else {
         [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Wrong library password", @"Seafile") duration:2.0];
-        [self performSelector:@selector(popupSetRepoPassword) withObject:nil afterDelay:1.0];
+        [self performSelector:@selector(popupSetRepoPassword:) withObject:entry afterDelay:1.0];
     }
 }
 

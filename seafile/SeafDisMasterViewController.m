@@ -355,42 +355,6 @@
     return [NSDate date];
 }
 
-- (void)popupInputView:(NSString *)title placeholder:(NSString *)tip
-{
-    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") otherButtonTitles:NSLocalizedString(@"OK", @"Seafile"), nil];
-    alert.alertViewStyle = UIAlertViewStylePlainTextInput;
-    UITextField *textfield = [alert textFieldAtIndex:0];
-    textfield.placeholder = tip;
-    textfield.autocorrectionType = UITextAutocorrectionTypeNo;
-    [alert show];
-}
-#pragma mark - UIAlertViewDelegate
-- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
-{
-    if (buttonIndex == alertView.cancelButtonIndex) {
-        return;
-    } else {
-        NSString *email = [alertView textFieldAtIndex:0].text;
-        if (!email || email.length < 1) {
-            [self alertWithMessage:NSLocalizedString(@"Username must not be empty", @"Seafile")];
-            return;
-        }
-        NSArray* items = [email componentsSeparatedByString:@"@"];
-        if (items.count != 2 || [[items objectAtIndex:0] length] < 1 || [[items objectAtIndex:1] length] < 1) {
-            [self alertWithMessage:NSLocalizedString(@"Invalid email", @"Seafile")];
-            return;
-        }
-        NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-        [dict setObject:[NSString stringWithFormat:@"%d", MSG_USER] forKey:@"type"];
-        [dict setObject:email forKey:@"email"];
-        [dict setObject:email forKey:@"name"];
-        NSString *timestamp = [NSString stringWithFormat:@"%ld", (long)[[NSDate date] timeIntervalSince1970]];
-        [dict setObject:timestamp forKey:@"mtime"];
-        [dict setObject:@"0" forKey:@"msgnum"];
-        [self.msgSources addObject:dict];
-        [self reloadData];
-    }
-}
 #pragma mark - UIActionSheetDelegate
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)bIndex
 {
@@ -399,7 +363,27 @@
         return;
     NSString *title = [actionSheet buttonTitleAtIndex:bIndex];
     if ([S_ADDCONTACT isEqualToString:title]) {
-        [self popupInputView:S_ADDCONTACT placeholder:NSLocalizedString(@"Email", @"Seafile")];
+        [self popupInputView:S_ADDCONTACT placeholder:NSLocalizedString(@"Email", @"Seafile") handler:^(NSString *input) {
+            NSString *email = input;
+            if (!email || email.length < 1) {
+                [self alertWithMessage:NSLocalizedString(@"Username must not be empty", @"Seafile")];
+                return;
+            }
+            NSArray* items = [email componentsSeparatedByString:@"@"];
+            if (items.count != 2 || [[items objectAtIndex:0] length] < 1 || [[items objectAtIndex:1] length] < 1) {
+                [self alertWithMessage:NSLocalizedString(@"Invalid email", @"Seafile")];
+                return;
+            }
+            NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+            [dict setObject:[NSString stringWithFormat:@"%d", MSG_USER] forKey:@"type"];
+            [dict setObject:email forKey:@"email"];
+            [dict setObject:email forKey:@"name"];
+            NSString *timestamp = [NSString stringWithFormat:@"%ld", (long)[[NSDate date] timeIntervalSince1970]];
+            [dict setObject:timestamp forKey:@"mtime"];
+            [dict setObject:@"0" forKey:@"msgnum"];
+            [self.msgSources addObject:dict];
+            [self reloadData];
+        }];
     } else {
         for (NSDictionary *dict in self.addditions) {
             if ([title isEqualToString:[dict objectForKey:@"email"]]) {

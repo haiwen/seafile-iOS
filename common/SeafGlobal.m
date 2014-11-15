@@ -179,7 +179,7 @@
     if (__managedObjectContext != nil) {
         return __managedObjectContext;
     }
-    
+
     NSPersistentStoreCoordinator *coordinator = [self persistentStoreCoordinator];
     if (coordinator != nil) {
         __managedObjectContext = [[NSManagedObjectContext alloc] init];
@@ -208,41 +208,41 @@
         return __persistentStoreCoordinator;
     }
     NSURL *storeURL = [[self applicationDocumentsDirectoryURL] URLByAppendingPathComponent:@"seafile_pro.sqlite"];
-    
+
     NSError *error = nil;
     __persistentStoreCoordinator = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:[self managedObjectModel]];
     if (![__persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:storeURL options:nil error:&error]) {
         /*
          Replace this implementation with code to handle the error appropriately.
-         
+
          abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-         
+
          Typical reasons for an error here include:
          * The persistent store is not accessible;
          * The schema for the persistent store is incompatible with current managed object model.
          Check the error message to determine what the actual problem was.
-         
-         
+
+
          If the persistent store is not accessible, there is typically something wrong with the file path. Often, a file URL is pointing into the application's resources directory instead of a writeable directory.
-         
+
          If you encounter schema incompatibility errors during development, you can reduce their frequency by:
          * Simply deleting the existing store:
          [[NSFileManager defaultManager] removeItemAtURL:storeURL error:nil]
-         
+
          * Performing automatic lightweight migration by passing the following dictionary as the options parameter:
          [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:YES], NSMigratePersistentStoresAutomaticallyOption, [NSNumber numberWithBool:YES], NSInferMappingModelAutomaticallyOption, nil];
-         
+
          Lightweight migration will only work for a limited set of schema changes; consult "Core Data Model Versioning and Data Migration Programming Guide" for details.
-         
+
          */
         [[NSFileManager defaultManager] removeItemAtURL:storeURL error:nil];
-        
+
         if (![__persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:storeURL options:nil error:&error]) {
             NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
             abort();
         }
     }
-    
+
     return __persistentStoreCoordinator;
 }
 
@@ -266,10 +266,10 @@
     NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
     NSEntityDescription *entity = [NSEntityDescription entityForName:entityDescription inManagedObjectContext:__managedObjectContext];
     [fetchRequest setEntity:entity];
-    
+
     NSError *error;
     NSArray *items = [__managedObjectContext executeFetchRequest:fetchRequest error:&error];
-    
+
     for (NSManagedObject *managedObject in items) {
         [__managedObjectContext deleteObject:managedObject];
         Debug(@"%@ object deleted",entityDescription);
@@ -395,7 +395,7 @@
 {
     @synchronized (self) {
         [self.ufiles removeObject:file];
-        
+
         if (file.udir)
             [file.udir removeUploadFile:file];
         else
@@ -498,7 +498,7 @@
                             // Success #1
                             if (asset){
                                 resultBlock(asset);
-                                
+
                                 // No luck, try another way
                             } else {
                                 // Search in the Photo Stream Album
@@ -517,11 +517,11 @@
                                                                     failureBlock(error);
                                                                 }];
                             }
-                            
+
                         } failureBlock:^(NSError *error) {
                             failureBlock(error);
                         }];
-    
+
 }
 
 @end

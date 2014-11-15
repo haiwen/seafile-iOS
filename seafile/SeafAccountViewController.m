@@ -51,7 +51,7 @@
 
 - (IBAction)cancel:(id)sender
 {
-    connection.delegate = nil;
+    connection.loginDelegate = nil;
     [SVProgressHUD dismiss];
     [self dismissViewControllerAnimated:YES completion:nil];
 }
@@ -81,7 +81,7 @@
 
     if (!self.connection)
         connection = [[SeafConnection alloc] initWithUrl:url username:username];
-    connection.delegate = self;
+    connection.loginDelegate = self;
     [connection loginWithAddress:url username:username password:password];
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Connecting to server", @"Seafile")];
 }
@@ -168,8 +168,8 @@
     [super viewDidUnload];
 }
 
-#pragma mark - SSConnectionDelegate
-- (void)connectionLinkingSuccess:(SeafConnection *)conn
+#pragma mark - SeafLoginDelegate
+- (void)loginSuccess:(SeafConnection *)conn
 {
     if (conn != connection)
         return;
@@ -177,11 +177,12 @@
     [SVProgressHUD dismiss];
     conn.rootFolder = [[SeafRepos alloc] initWithConnection:conn];
     [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+    connection.loginDelegate = nil;
     [startController saveAccount:connection];
     [startController selectAccount:connection];
 }
 
-- (void)connectionLinkingFailed:(SeafConnection *)conn error:(int)error
+- (void)loginFailed:(SeafConnection *)conn error:(int)error
 {
     Debug("%@, error=%d\n", conn.address, error);
     if (conn != connection)
@@ -195,6 +196,11 @@
     } else {
         [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to login", @"Seafile") duration:1.0];
     }
+}
+
+- (UIViewController *)rootViewController
+{
+    return startController;
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField

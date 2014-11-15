@@ -14,7 +14,7 @@
 @interface FailToPreview : UIView
 @property (strong, nonatomic) IBOutlet UIImageView *imageView;
 @property (strong, nonatomic) IBOutlet UILabel *nameLabel;
-- (IBAction)openElsewhere:(id)sender;
+@property (strong, nonatomic) IBOutlet ColorfulButton *openElseBtn;
 
 - (void)configureViewWithPrevireItem:(id<SeafPreView>)item;
 

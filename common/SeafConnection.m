@@ -6,9 +6,6 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
-#ifdef SEAFILE_APP
-#import "SeafAppDelegate.h"
-#endif
 #import "SeafConnection.h"
 #import "SeafJSONRequestOperation.h"
 #import "SeafRepos.h"
@@ -85,7 +82,7 @@ static AFSecurityPolicy *SeafDefaultPolicy()
 }
 
 static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
-@interface SeafConnection ()<UIAlertViewDelegate>
+@interface SeafConnection ()
 
 @property NSMutableSet *starredFiles;
 @property NSMutableDictionary *uploadFiles;
@@ -106,7 +103,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @synthesize address = _address;
 @synthesize info = _info;
 @synthesize token = _token;
-@synthesize delegate = _delegate;
+@synthesize loginDelegate = _loginDelegate;
 @synthesize rootFolder = _rootFolder;
 @synthesize starredFiles = _starredFiles;
 @synthesize seafGroups = _seafGroups;
@@ -296,7 +293,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                     self.policy = SeafPolicyFromCert(cer);
                     [[challenge sender] useCredential:credential forAuthenticationChallenge:challenge];
                 } else {
-#ifdef SEAFILE_APP
                     @synchronized(self) {
                         if (self.challenge) {
                             [[self.challenge sender] cancelAuthenticationChallenge:self.challenge];
@@ -304,14 +300,21 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                         }
                         self.challenge = challenge;
                     }
-                    NSString *title = [NSString stringWithFormat:NSLocalizedString(@"Seafile can't verify the identity of the website \"%@\"", @"Seafile"),  challenge.protectionSpace.host];
+                    if (!self.delegate) {
+                        [[self.challenge sender] cancelAuthenticationChallenge:self.challenge];
+                        self.challenge = nil;
+                        return;
+                    }
+                    NSString *title = [NSString stringWithFormat:NSLocalizedString(@"Seafile can't verify the identity of the website \"%@\"", @"Seafile"), challenge.protectionSpace.host];
                     NSString *msg = policy ? NSLocalizedString(@"The certificate from this website has been changed. Would you like to connect to the server anyway?", @"Seafile"):NSLocalizedString(@"The certificate from this website is invalid. Would you like to connect to the server anyway?", @"Seafile");
-                    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:msg delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") otherButtonTitles:NSLocalizedString(@"OK", @"Seafile"), nil];
-                    alert.alertViewStyle = UIAlertViewStyleDefault;
-                    [alert show];
-#else
-                    [[self.challenge sender] cancelAuthenticationChallenge:self.challenge];
-#endif
+                    [Utils alertWithTitle:title message:msg yes:^{
+                        [self saveCertificate:self.challenge];
+                        [[self.challenge sender] useCredential:credential forAuthenticationChallenge:self.challenge];
+                        self.challenge = nil;
+                    } no:^{
+                        [[self.challenge sender] cancelAuthenticationChallenge:self.challenge];
+                        self.challenge = nil;
+                    } from:[self.delegate rootViewController]];
                 }
             } else
                 [[challenge sender] continueWithoutCredentialForAuthenticationChallenge:challenge];
@@ -325,7 +328,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self handleOperation:operation withPolicy:self.policy];
 }
 
-- (void)getAccountInfo:(id<SSConnectionAccountDelegate>)degt
+- (void)getAccountInfo:(void (^)(bool result, SeafConnection *conn))handler
 {
     [self sendRequest:API_URL"/account/info/"
               success:
@@ -338,11 +341,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
          [_info setObject:_address forKey:@"link"];
          [SeafGlobal.sharedObject setObject:_info forKey:[NSString stringWithFormat:@"%@/%@", _address, self.username]];
          [SeafGlobal.sharedObject synchronize];
-         [degt getAccountInfoResult:YES connection:self];
+         if (handler) handler(true, self);
      }
               failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-         [degt getAccountInfoResult:NO connection:self];
+         if (handler) handler(false, self);
      }];
 }
 
@@ -376,11 +379,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                                [_info setObject:_address forKey:@"link"];
                                                [SeafGlobal.sharedObject setObject:_info forKey:[NSString stringWithFormat:@"%@/%@", _address, username]];
                                                [SeafGlobal.sharedObject synchronize];
-                                               [self.delegate connectionLinkingSuccess:self];
+                                               [self.loginDelegate loginSuccess:self];
                                            }
                                            failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, NSData *data){
                                                Warning("status code=%ld, error=%@\n", (long)response.statusCode, error);
-                                               [self.delegate connectionLinkingFailed:self error:(int)response.statusCode];
+                                               [self.loginDelegate loginFailed:self error:(int)response.statusCode];
                                            }];
     [self handleOperation:operation withPolicy:nil];
 }
@@ -411,11 +414,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                     return;
                 _token = nil;
             }
-#ifdef SEAFILE_APP
-            SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-            [appdelegate.tabbarController setSelectedIndex:TABBED_ACCOUNTS];
-            [appdelegate.startVC goToDefaultAccount];  
-#endif
+            if (self.delegate)
+                [self.delegate loginRequired:self];
             return;
         }
     }];
@@ -777,19 +777,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         SeafGroupAvatar *avatar = [[SeafGroupAvatar alloc] initWithConnection:self group:gid];
         [SeafGlobal.sharedObject backgroundDownload:avatar];
     }
-}
-
-#pragma mark - UIAlertViewDelegate
-- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
-{
-    NSURLCredential *credential = [NSURLCredential credentialForTrust:self.challenge.protectionSpace.serverTrust];
-    if (buttonIndex == alertView.cancelButtonIndex) {
-        [[self.challenge sender] cancelAuthenticationChallenge:self.challenge];
-    } else {
-        [self saveCertificate:self.challenge];
-        [[self.challenge sender] useCredential:credential forAuthenticationChallenge:self.challenge];
-    }
-    self.challenge = nil;
 }
 
 - (void)saveCertificate:(NSURLAuthenticationChallenge *)cha

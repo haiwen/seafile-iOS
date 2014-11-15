@@ -313,6 +313,8 @@ enum PREVIEW_STATE {
     [self.view addSubview:self.fileViewController.view];
     [self.view addSubview:self.webView];
 
+    [self.failedView.openElseBtn addTarget:self action:@selector(openElsewhere:) forControlEvents:UIControlEventTouchUpInside];
+
     self.state = PREVIEW_NONE;
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
@@ -579,7 +581,7 @@ enum PREVIEW_STATE {
         [self goBack:nil];
 }
 
-- (IBAction)openElsewhere
+- (IBAction)openElsewhere:(id)sender
 {
     NSURL *url = [self.preViewItem exportURL];
     if (!url)   return;
@@ -614,7 +616,7 @@ enum PREVIEW_STATE {
     if ([self isPrintable:file])
         [bts addObject:NSLocalizedString(@"Print", @"Seafile")];
     if (bts.count == 0) {
-        [self openElsewhere];
+        [self openElsewhere:nil];
     } else {
         NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
         self.actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:nil ];
@@ -751,7 +753,7 @@ enum PREVIEW_STATE {
         NSString *title = [actionSheet buttonTitleAtIndex:bIndex];
         if ([NSLocalizedString(@"Open elsewhere...", @"Seafile") isEqualToString:title]) {
             [self.actionSheet dismissWithClickedButtonIndex:0 animated:NO];
-            [self performSelector:@selector(openElsewhere) withObject:nil afterDelay:0.0f];
+            [self performSelector:@selector(openElsewhere:) withObject:nil afterDelay:0.0f];
         } else if ([NSLocalizedString(@"Save to album", @"Seafile") isEqualToString:title]) {
             UIImage *img = [UIImage imageWithContentsOfFile:file.previewItemURL.path];
             UIImageWriteToSavedPhotosAlbum(img, self, @selector(thisImage:hasBeenSavedInPhotoAlbumWithError:usingContextInfo:), (void *)CFBridgingRetain(file));

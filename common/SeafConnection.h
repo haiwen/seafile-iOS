@@ -29,14 +29,16 @@ enum MSG_TYPE{
 - (void)download;
 @end
 
-@protocol SSConnectionDelegate <NSObject>
-- (void)connectionLinkingSuccess:(SeafConnection *)connection;
-- (void)connectionLinkingFailed:(SeafConnection *)connection error:(int)error;
+@protocol SeafLoginDelegate <NSObject>
+- (void)loginSuccess:(SeafConnection *)connection;
+- (void)loginFailed:(SeafConnection *)connection error:(int)error;
 @end
 
-@protocol SSConnectionAccountDelegate <NSObject>
-- (void)getAccountInfoResult:(BOOL)result connection:(SeafConnection *)conn;
+@protocol SeafConnectionDelegate <NSObject>
+- (void)loginRequired:(SeafConnection *)connection;
+- (UIViewController *)rootViewController;
 @end
+
 
 @interface SeafConnection : NSObject
 {
@@ -46,7 +48,8 @@ enum MSG_TYPE{
 
 @property (readonly, retain) NSMutableDictionary *info;
 @property (readonly, nonatomic, copy) NSString *address;
-@property (weak) id <SSConnectionDelegate> delegate;
+@property (weak) id <SeafLoginDelegate> loginDelegate;
+@property (weak) id <SeafConnectionDelegate> delegate;
 @property (strong) SeafRepos *rootFolder;
 @property (readonly) NSString *username;
 @property (readonly) NSString *password;
@@ -88,8 +91,7 @@ enum MSG_TYPE{
 
 - (void)loginWithAddress:(NSString *)anAddress username:(NSString *)username password:(NSString *)password;
 
-- (void)getAccountInfo:(id<SSConnectionAccountDelegate>)degt;
-
+- (void)getAccountInfo:(void (^)(bool result, SeafConnection *conn))handler;
 
 - (void)getStarredFiles:(void (^)(NSHTTPURLResponse *response, id JSON, NSData *data))success
                 failure:(void (^)(NSHTTPURLResponse *response, NSError *error, id JSON))failure;

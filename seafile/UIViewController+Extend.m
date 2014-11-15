@@ -7,6 +7,7 @@
 //
 
 #import "UIViewController+Extend.h"
+#import "Utils.h"
 
 @implementation UIViewController (Extend)
 
@@ -39,17 +40,39 @@
     return [self initWithNibName:[NSString stringWithFormat:@"%@_%@_%@", className, plaformSuffix, lang] bundle:nil];
 }
 
-- (void)alertWithMessage:(NSString*)message;
+- (void)alertWithMessage:(NSString*)message handler:(void (^)())handler;
 {
-    UIAlertView *alert = [[UIAlertView alloc]initWithTitle:message
-                                                   message:nil
-                                                  delegate:self
-                                         cancelButtonTitle:@"OK"
-                                         otherButtonTitles:nil, nil];
-    alert.transform = CGAffineTransformTranslate( alert.transform, 0.0, 130.0 );
-    alert.alertViewStyle = UIAlertViewStyleDefault;
+    [Utils alertWithTitle:message message:nil handler:handler from:self];
+}
 
-    [alert show];
+- (void)alertWithMessage:(NSString*)message
+{
+    [self alertWithMessage:message handler:nil];
+}
+
+- (void)alertWithMessage:(NSString*)message yes:(void (^)())yes no:(void (^)())no;
+{
+    [Utils alertWithTitle:message message:nil yes:yes no:no from:self];
+}
+
+- (void)popupInputView:(NSString *)title placeholder:(NSString *)tip handler:(void (^)(NSString *input))handler
+{
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }];
+    UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"Seafile") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        NSString *input = [[alert.textFields objectAtIndex:0] text];
+        if (handler)
+            handler(input);
+    }];
+    [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+        textField.placeholder = tip;
+        textField.autocorrectionType = UITextAutocorrectionTypeNo;
+    }];
+    [alert addAction:cancelAction];
+    [alert addAction:okAction];
+
+    [self presentViewController:alert animated:true completion:nil];
 }
 
 - (UIBarButtonItem *)getBarItem:(NSString *)imageName action:(SEL)action size:(float)size;

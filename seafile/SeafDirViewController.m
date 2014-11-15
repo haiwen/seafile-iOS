@@ -17,7 +17,7 @@
 
 #define TITLE_PASSWORD @"Password of this library"
 
-@interface SeafDirViewController ()<SeafDentryDelegate, UIAlertViewDelegate, EGORefreshTableHeaderDelegate, UIScrollViewDelegate>
+@interface SeafDirViewController ()<SeafDentryDelegate, EGORefreshTableHeaderDelegate, UIScrollViewDelegate>
 @property (strong) SeafDir *curDir;
 @property (strong) UIBarButtonItem *chooseItem;
 @property (strong, readonly) SeafDir *directory;
@@ -154,45 +154,47 @@
         return;
     }
     if ([_curDir isKindOfClass:[SeafRepo class]] && [(SeafRepo *)_curDir passwordRequired]) {
-        [self popupSetRepoPassword];
+        [self popupSetRepoPassword:(SeafRepo *)_curDir];
         return;
     }
     SeafDirViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:_curDir delegate:self.delegate chooseRepo:false];
     [self.navigationController pushViewController:controller animated:YES];
 }
 
-
-#pragma mark - UIAlertViewDelegate
-- (void)alertView:(UIAlertView *)alertView willDismissWithButtonIndex:(NSInteger)buttonIndex
+- (void)popupSetRepoPassword:(SeafRepo *)repo
 {
-    if (buttonIndex != alertView.cancelButtonIndex) {
-        UITextField *textfiled = [alertView textFieldAtIndex:0];
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Password of this library", @"Seafile") message:nil preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }];
+    UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"Seafile") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        UITextField *textfiled = [alert.textFields objectAtIndex:0];
         NSString *input = textfiled.text;
-        if (!input) {
-             [self alertWithMessage:NSLocalizedString(@"Password must not be empty", @"Seafile")];
+        if (!input || input.length == 0) {
+            [self alertWithMessage:NSLocalizedString(@"Password must not be empty", @"Seafile")handler:^{
+                [self popupSetRepoPassword:repo];
+            }];
             return;
         }
         if (input.length < 3 || input.length  > 100) {
-             [self alertWithMessage:NSLocalizedString(@"The length of password should be between 3 and 100", @"Seafile")];
+            [self alertWithMessage:NSLocalizedString(@"The length of password should be between 3 and 100", @"Seafile") handler:^{
+                [self popupSetRepoPassword:repo];
+            }];
             return;
         }
-        [_curDir setDelegate:self];
-        [SVProgressHUD showWithStatus:NSLocalizedString(@"Checking library password ...", @"Seafile")];
-        if ([_directory->connection localDecrypt:_curDir.repoId])
-            [_curDir checkRepoPassword:input];
+        [repo setDelegate:self];
+        if ([repo->connection localDecrypt:repo.repoId])
+            [repo checkRepoPassword:input];
         else
-            [_curDir setRepoPassword:input];
-        return;
-    } else if ([alertView.title isEqualToString:TITLE_PASSWORD]) {
-        [self popupSetRepoPassword];
-    }
-}
+            [repo setRepoPassword:input];
 
-- (void)popupSetRepoPassword
-{
-    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Password of this library", @"Seafile") message:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") otherButtonTitles:NSLocalizedString(@"OK", @"Seafile"), nil];
-    alert.alertViewStyle = UIAlertViewStyleSecureTextInput;
-    [alert show];
+    }];
+    [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+        textField.secureTextEntry = true;
+    }];
+    [alert addAction:cancelAction];
+    [alert addAction:okAction];
+
+    [self presentViewController:alert animated:true completion:nil];
 }
 
 #pragma mark - SeafDentryDelegate
@@ -226,7 +228,7 @@
         [self.navigationController pushViewController:controller animated:YES];
     } else {
         [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Wrong library password", @"Seafile") duration:2.0];
-        [self performSelector:@selector(popupSetRepoPassword) withObject:nil afterDelay:1.0];
+        [self performSelector:@selector(popupSetRepoPassword:) withObject:entry afterDelay:1.0];
     }
 }
 

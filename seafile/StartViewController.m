@@ -10,7 +10,8 @@
 #import "SeafAccountViewController.h"
 #import "SeafAppDelegate.h"
 #import "SeafAccountCell.h"
-
+#import "UIViewController+Extend.h"
+#import "ColorfulButton.h"
 #import "Debug.h"
 
 
@@ -256,15 +257,9 @@
     if (!conn) return NO;
     if (![conn authorized]) {
         NSString *title = NSLocalizedString(@"The token is invalid, you need to login again", @"Seafile");
-        UIAlertView *alert = [[UIAlertView alloc]initWithTitle:title
-                                                       message:nil
-                                                      delegate:self
-                                             cancelButtonTitle:@"OK"
-                                             otherButtonTitles:nil, nil];
-        alert.transform = CGAffineTransformTranslate( alert.transform, 0.0, 130.0 );
-        alert.alertViewStyle = UIAlertViewStyleDefault;
-        [alert show];
-        [self showAccountView:conn type:0];
+        [self alertWithMessage:title handler:^{
+            [self showAccountView:conn type:0];
+        }];
         return YES;
     }
     [SeafGlobal.sharedObject setObject:conn.address forKey:@"DEAULT-SERVER"];
@@ -287,7 +282,7 @@
     return [self selectAccount:conn];
 }
 
-- (BOOL)goToDefaultAccount
+- (BOOL)selectDefaultAccount
 {
     NSString *server = [SeafGlobal.sharedObject objectForKey:@"DEAULT-SERVER"];
     NSString *username = [SeafGlobal.sharedObject objectForKey:@"DEAULT-USER"];
@@ -296,7 +291,7 @@
 
 - (IBAction)goToDefaultBtclicked:(id)sender
 {
-    [self goToDefaultAccount];
+    [self selectDefaultAccount];
 }
 
 - (BOOL)shouldAutorotate

@@ -15,6 +15,11 @@
 - (id)initWithAutoPlatformLangNibName:(NSString *)lang;
 
 - (void)alertWithMessage:(NSString*)message;
+- (void)alertWithMessage:(NSString*)message handler:(void (^)())handler;
+- (void)alertWithMessage:(NSString*)message yes:(void (^)())yes no:(void (^)())no;
+
+- (void)popupInputView:(NSString *)title placeholder:(NSString *)tip handler:(void (^)(NSString *input))handler;
+
 - (UIBarButtonItem *)getBarItem:(NSString *)imageName action:(SEL)action size:(float)size;
 
 - (UIBarButtonItem *)getBarItemAutoSize:(NSString *)imageName action:(SEL)action;

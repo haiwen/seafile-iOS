@@ -9,7 +9,7 @@
 #import <UIKit/UIKit.h>
 #import "StartViewController.h"
 
-@interface SeafAccountViewController : UIViewController<SSConnectionDelegate, UITextFieldDelegate>
+@interface SeafAccountViewController : UIViewController<SeafLoginDelegate, UITextFieldDelegate>
 
 - (id)initWithController:(StartViewController *)controller connection: (SeafConnection *)conn type:(int)type;
 

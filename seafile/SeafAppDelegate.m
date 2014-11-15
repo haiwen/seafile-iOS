@@ -59,7 +59,7 @@
         Debug("Copy %@, to %@, %@, %@\n", url, to, to.absoluteString, to.path);
         [Utils copyFile:url to:to];
         if (self.window.rootViewController == self.startNav)
-            if (![self.startVC goToDefaultAccount])
+            if (![self.startVC selectDefaultAccount])
                 return NO;
         ;
         [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
@@ -76,7 +76,7 @@
     [SeafGlobal.sharedObject startTimer];
     [SeafGlobal.sharedObject clearRepoPasswords];
     [Utils clearAllFiles:[SeafGlobal.sharedObject applicationTempDirectory]];
-    
+
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
         [conn checkAutoSync];
     }
@@ -122,7 +122,7 @@
     if (dict) {
         [self application:application didReceiveRemoteNotification:dict];
     } else
-        [self.startVC goToDefaultAccount];
+        [self.startVC selectDefaultAccount];
     [self performSelector:@selector(delayedInit) withObject:nil afterDelay:2.0];
     return YES;
 }
@@ -379,5 +379,17 @@
     _globalMailComposer = nil;
     _globalMailComposer = [[MFMailComposeViewController alloc] init];
 }
+
+- (void)loginRequired:(SeafConnection *)connection
+{
+    [self.tabbarController setSelectedIndex:TABBED_ACCOUNTS];
+    [self.startVC performSelector:@selector(selectAccount:) withObject:connection afterDelay:0.5f];
+}
+
+- (UIViewController *)rootViewController
+{
+    return self.window.rootViewController;
+}
+
 
 @end

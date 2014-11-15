@@ -33,4 +33,7 @@
 
 + (CGSize)textSizeForText:(NSString *)txt font:(UIFont *)font width:(float)width;
 
++ (void)alertWithTitle:(NSString *)title message:(NSString*)message yes:(void (^)())yes no:(void (^)())no from:(UIViewController *)c;
++ (void)alertWithTitle:(NSString *)title message:(NSString*)message handler:(void (^)())handler from:(UIViewController *)c;
+
 @end

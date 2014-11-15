@@ -159,22 +159,17 @@ enum {
     _autoSync = _connection.isAutoSync;
     _wifiOnly = _connection.isWifiOnly;
     [self.tableView reloadData];
-    [_connection performSelector:@selector(getAccountInfo:) withObject:self afterDelay:1.0f];
-}
-
-#pragma mark - SSConnectionAccountDelegate
-- (void)getAccountInfoResult:(BOOL)result connection:(SeafConnection *)conn
-{
-    if (result && conn == _connection) {
-        dispatch_async(dispatch_get_main_queue(), ^ {
-            [self configureView];
-        });
-    }
+    [_connection getAccountInfo:^(bool result, SeafConnection *conn) {
+        if (result && conn == self.connection) {
+            dispatch_async(dispatch_get_main_queue(), ^ {
+                [self configureView];
+            });
+        }
+    }];
 }
 
 - (void)popupRepoSelect
 {
-    Debug("...");
     SeafDirViewController *c = [[SeafDirViewController alloc] initWithSeafDir:self.connection.rootFolder delegate:self chooseRepo:true];
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:c];
     [navController setModalPresentationStyle:UIModalPresentationFormSheet];
@@ -188,10 +183,15 @@ enum {
     [self.tableView deselectRowAtIndexPath:[self.tableView indexPathForSelectedRow] animated:NO];
     if (indexPath.section == 0) {
         if (indexPath.row == 1) // Select the quota cell
-            [_connection getAccountInfo:self];
+            [_connection getAccountInfo:^(bool result, SeafConnection *conn) {
+                if (result && conn == self.connection) {
+                    dispatch_async(dispatch_get_main_queue(), ^ {
+                        [self configureView];
+                    });
+                }
+            }];
     } else if (indexPath.section == 1) {
         if (indexPath.row == 2) {
-            Debug("..._autoSyncSwitch.on=%d, conn=%d", _autoSyncSwitch.on, _connection.autoSync);
             if (_autoSync) {
                 [self popupRepoSelect];
             }
@@ -215,9 +215,25 @@ enum {
                 break;
         }
     } else if (indexPath.section == 4) {
-        NSString *title = MSG_CLEAR_CACHE;
-        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:title message:nil delegate:self cancelButtonTitle:NSLocalizedString(@"NO", @"Seafile") otherButtonTitles:NSLocalizedString(@"YES", @"Seafile"), nil];
-        [alertView show];
+        [self alertWithMessage:MSG_CLEAR_CACHE yes:^{
+            SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+            [(SeafDetailViewController *)[appdelegate detailViewControllerAtIndex:TABBED_SETTINGS] setPreViewItem:nil master:nil];
+            [Utils clearAllFiles:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
+            [Utils clearAllFiles:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"]];
+            [Utils clearAllFiles:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"]];
+
+            [Utils clearAllFiles:[SeafGlobal.sharedObject applicationTempDirectory]];
+            [SeafUploadFile clearCache];
+            [SeafAvatar clearCache];
+
+            [[SeafGlobal sharedObject] deleteAllObjects:@"Directory"];
+            [[SeafGlobal sharedObject] deleteAllObjects:@"DownloadedFile"];
+            [[SeafGlobal sharedObject] deleteAllObjects:@"SeafCacheObj"];
+
+            long long cacheSize = [self cacheSize];
+            _cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:cacheSize] useBaseTen:NO];
+
+        } no:nil];
     }
 }
 
@@ -310,36 +326,6 @@ enum {
     }];
 }
 
-#pragma mark - UIAlertViewDelegate
-- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
-{
-    NSString *title = alertView.title;
-    if ([MSG_RESET_UPLOADED isEqualToString:title]) {
-        if (buttonIndex == 1) {
-            [_connection resetUploadedPhotos];
-        }
-        [_connection checkAutoSync];
-        return;
-    }
-    if (buttonIndex == 1) {
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        [(SeafDetailViewController *)[appdelegate detailViewControllerAtIndex:TABBED_SETTINGS] setPreViewItem:nil master:nil];
-        [Utils clearAllFiles:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
-        [Utils clearAllFiles:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"]];
-        [Utils clearAllFiles:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"]];
-        [Utils clearAllFiles:[SeafGlobal.sharedObject applicationTempDirectory]];
-        [SeafUploadFile clearCache];
-        [SeafAvatar clearCache];
-
-        [[SeafGlobal sharedObject] deleteAllObjects:@"Directory"];
-        [[SeafGlobal sharedObject] deleteAllObjects:@"DownloadedFile"];
-        [[SeafGlobal sharedObject] deleteAllObjects:@"SeafCacheObj"];
-
-        long long cacheSize = [self cacheSize];
-        _cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:cacheSize] useBaseTen:NO];
-    }
-}
-
 #pragma mark - SeafDirDelegate
 - (void)chooseDir:(UIViewController *)c dir:(SeafDir *)dir
 {
@@ -354,8 +340,12 @@ enum {
     [self.tableView reloadData];
     [_connection setAttribute:repo.repoId forKey:@"autoSyncRepo"];
     dispatch_async(dispatch_get_main_queue(), ^ {
-        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:MSG_RESET_UPLOADED message:nil delegate:self cancelButtonTitle:NSLocalizedString(@"NO", @"Seafile") otherButtonTitles:NSLocalizedString(@"YES", @"Seafile"), nil];
-        [alertView show];
+        [self alertWithMessage:MSG_RESET_UPLOADED yes:^{
+            [_connection resetUploadedPhotos];
+            [_connection checkAutoSync];
+        } no:^{
+            [_connection checkAutoSync];
+        }];
     });
 }
 
@@ -363,6 +353,5 @@ enum {
 {
     [c.navigationController dismissViewControllerAnimated:YES completion:nil];
 }
-
 
 @end

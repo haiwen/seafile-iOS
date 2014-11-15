@@ -55,6 +55,7 @@
     [alert addAction:cancelAction];
     [self presentViewController:alert animated:true completion:nil];
 }
+
 - (void)popupSetRepoPassword:(SeafRepo *)repo
 {
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Password of this library", @"Seafile") message:nil preferredStyle:UIAlertControllerStyleAlert];
@@ -135,10 +136,8 @@
         Debug("select file: %@", entry.name);
         [self.root dismissGrantingAccessToURL:[(SeafFile *)entry exportURL]];
     } else if ([entry isKindOfClass:[SeafRepo class]] && [(SeafRepo *)entry passwordRequired]) {
-        Debug("...");
         [self popupSetRepoPassword:(SeafRepo *)entry];
     } else if ([entry isKindOfClass:[SeafDir class]]) {
-        Debug("...");
         [self pushViewControllerDir:(SeafDir *)entry];
     }
 }
