@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6245" systemVersion="13F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" initialViewController="C9i-QL-0hc">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6250" systemVersion="13F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" initialViewController="C9i-QL-0hc">
     <dependencies>
-        <deployment version="1536" defaultVersion="1536" identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6238"/>
+        <deployment version="1536" identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6244"/>
     </dependencies>
     <scenes>
         <!--Tab Bar Controller-->
@@ -419,9 +419,12 @@
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                     <connections>
                         <outlet property="autoCameraUploadLabel" destination="1af-Tn-HYe" id="nRa-JS-TLF"/>
+                        <outlet property="autoSyncCell" destination="tQe-1X-cwE" id="xwk-z6-NFa"/>
+                        <outlet property="autoSyncSwitch" destination="JZc-TU-fcn" id="NT3-J8-O1a"/>
                         <outlet property="cacheCell" destination="h43-fm-QEc" id="9X7-z7-r69"/>
                         <outlet property="nameCell" destination="5xi-tG-aX7" id="ca7-Gk-LIC"/>
                         <outlet property="serverCell" destination="ggp-Jn-gkE" id="Xdv-ti-fV2"/>
+                        <outlet property="syncRepoCell" destination="c9x-M1-SOm" id="VDB-S3-dIj"/>
                         <outlet property="tellFriendCell" destination="OqU-Df-NSA" id="DYy-mj-HZh"/>
                         <outlet property="usedspaceCell" destination="hMG-4N-mUp" id="wXC-Pe-G7a"/>
                         <outlet property="versionCell" destination="zdI-jv-Dan" id="BxQ-qf-CeN"/>

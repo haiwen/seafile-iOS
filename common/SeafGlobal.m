@@ -96,6 +96,8 @@
         [oldDef removeObjectForKey:@"ACCOUNTS"];
         [oldDef synchronize];
     }
+    Debug("accounts:%@\n%@", oldDef.dictionaryRepresentation, newDef.dictionaryRepresentation);
+
 }
 - (void)migrateDocuments
 {
@@ -138,17 +140,21 @@
         [account setObject:connection.username forKey:@"username"];
         [accounts addObject:account];
     }
+    Debug("accounts:%@", accounts);
     [self setObject:accounts forKey:@"ACCOUNTS"];
 };
 
 - (void)loadAccounts
 {
+    NSMutableArray *connections = [[NSMutableArray alloc] init];
     NSArray *accounts = [self objectForKey:@"ACCOUNTS"];
+    Debug("accounts:%@", accounts);
     for (NSDictionary *account in accounts) {
         SeafConnection *conn = [[SeafConnection alloc] initWithUrl:[account objectForKey:@"url"] username:[account objectForKey:@"username"]];
         if (conn.username)
-            [self.conns addObject:conn];
+            [connections addObject:conn];
     }
+    self.conns = connections;
     [self saveAccounts];
 }
 

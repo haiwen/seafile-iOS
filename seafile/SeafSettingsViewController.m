@@ -174,6 +174,7 @@ enum {
 
 - (void)popupRepoSelect
 {
+    Debug("...");
     SeafDirViewController *c = [[SeafDirViewController alloc] initWithSeafDir:self.connection.rootFolder delegate:self chooseRepo:true];
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:c];
     [navController setModalPresentationStyle:UIModalPresentationFormSheet];
@@ -190,6 +191,7 @@ enum {
             [_connection getAccountInfo:self];
     } else if (indexPath.section == 1) {
         if (indexPath.row == 2) {
+            Debug("..._autoSyncSwitch.on=%d, conn=%d", _autoSyncSwitch.on, _connection.autoSync);
             if (_autoSync) {
                 [self popupRepoSelect];
             }
@@ -341,7 +343,6 @@ enum {
 #pragma mark - SeafDirDelegate
 - (void)chooseDir:(UIViewController *)c dir:(SeafDir *)dir
 {
-    [self.navigationController popToRootViewControllerAnimated:YES];
     [c.navigationController dismissViewControllerAnimated:YES completion:nil];
     NSString *old = [_connection getAttribute:@"autoSyncRepo"];
     SeafRepo *repo = (SeafRepo *)dir;

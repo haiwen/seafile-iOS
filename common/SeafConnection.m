@@ -414,7 +414,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 #ifdef SEAFILE_APP
             SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
             [appdelegate.tabbarController setSelectedIndex:TABBED_ACCOUNTS];
-            [appdelegate.startVC goToDefaultAccount];
+            [appdelegate.startVC goToDefaultAccount];  
 #endif
             return;
         }

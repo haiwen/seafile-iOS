@@ -1,12 +1,13 @@
 //
 //  DocumentPickerViewController.m
-//  SeafProvier
+//  SeafProvider
 //
 //  Created by Wang Wei on 11/12/14.
 //  Copyright (c) 2014 Seafile. All rights reserved.
 //
 
 #import "DocumentPickerViewController.h"
+#import "SeafProviderFileViewController.h"
 #import "SeafConnection.h"
 #import "SeafGlobal.h"
 #import "Debug.h"
@@ -19,12 +20,14 @@
 
 @implementation DocumentPickerViewController
 
--(void)prepareForPresentationInMode:(UIDocumentPickerMode)mode {
+-(void)prepareForPresentationInMode:(UIDocumentPickerMode)mode
+{
+    Debug("mode=%d", mode);
     [SeafGlobal.sharedObject loadAccounts];
     _conns = SeafGlobal.sharedObject.conns;
+    self.tableView.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
     [self.tableView reloadData];
 }
-
 
 #pragma mark - Table view data source
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
@@ -67,25 +70,27 @@
     return UITableViewCellEditingStyleNone;
 }
 
-- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
-{
-    NSString *text = [NSString stringWithFormat:@"%ld accounts", self.conns.count];
-    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
-    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 3, tableView.bounds.size.width - 10, 18)];
-    label.text = text;
-    label.textColor = [UIColor whiteColor];
-    label.backgroundColor = [UIColor clearColor];
-    [headerView setBackgroundColor:HEADER_COLOR];
-    [headerView addSubview:label];
-
-    return headerView;
-}
-
-
 #pragma mark - Table view delegate
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    Debug("...");
+    SeafConnection *conn = [SeafGlobal.sharedObject.conns objectAtIndex:indexPath.row];
+    [self pushViewControllerDir:(SeafDir *)conn.rootFolder];
+}
+
+- (void)pushViewControllerDir:(SeafDir *)dir
+{
+    SeafProviderFileViewController *controller = [[UIStoryboard storyboardWithName:@"SeafProviderFileViewController" bundle:nil] instantiateViewControllerWithIdentifier:@"SeafProviderFileViewController"];
+    controller.directory = dir;
+    controller.root = self;
+    controller.view.frame = CGRectMake(self.view.frame.size.width, self.view.frame.origin.y, self.view.frame.size.width, self.view.frame.size.height);
+
+    [self addChildViewController:controller];
+    [controller didMoveToParentViewController:self];
+    [self.view addSubview:controller.view];
+    [UIView animateWithDuration:0.5f delay:0.f options:0 animations:^{
+        controller.view.frame = self.view.frame;
+    } completion:^(BOOL finished) {
+    }];
 }
 
 @end
