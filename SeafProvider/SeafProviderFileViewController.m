@@ -13,27 +13,28 @@
 #import "SeafDateFormatter.h"
 #import "Debug.h"
 
-@interface SeafProviderFileViewController ()<SeafDentryDelegate, UIScrollViewDelegate>
+@interface SeafProviderFileViewController ()<SeafDentryDelegate, SeafUploadDelegate, UIScrollViewDelegate>
+@property (strong, nonatomic) IBOutlet UIButton *chooseButton;
 @property (strong, nonatomic) IBOutlet UIButton *backButton;
 @property (strong, nonatomic) IBOutlet UILabel *titleLabel;
+@property (strong, nonatomic) IBOutlet UIActivityIndicatorView *loadingView;
+
+
 @property (strong, nonatomic) UIProgressView* progressView;
 @property (strong) UIAlertController *alert;
 @property (strong) SeafFile *sfile;
+@property (strong) SeafUploadFile *ufile;
+@property (strong) NSArray *items;
 @end
 
 @implementation SeafProviderFileViewController
 
-- (IBAction)goBack:(id)sender
+- (NSFileCoordinator *)fileCoordinator
 {
-    [self popViewController];
-}
-
-- (NSFileCoordinator *)fileCoordinator {
     NSFileCoordinator *fileCoordinator = [[NSFileCoordinator alloc] init];
     [fileCoordinator setPurposeIdentifier:@"com.seafile.seafilePro"];
     return fileCoordinator;
 }
-
 
 - (void)setDirectory:(SeafDir *)directory
 {
@@ -51,19 +52,62 @@
     return _progressView;
 }
 
+- (void)refreshView
+{
+    self.titleLabel.text = _directory.name;
+    if (self.root.documentPickerMode == UIDocumentPickerModeImport
+        || self.root.documentPickerMode == UIDocumentPickerModeOpen) {
+        self.items = _directory.items;
+        self.chooseButton.hidden = true;
+    } else {
+        NSMutableArray *arr = [[NSMutableArray alloc] init];
+        for (SeafBase *entry in _directory.items) {
+            if ([entry isKindOfClass:[SeafDir class]])
+                [arr addObject:entry];
+        }
+        self.items = arr;
+        self.chooseButton.hidden = [_directory isKindOfClass:[SeafRepos class]];
+    }
+    if (_directory && !_directory.hasCache) {
+        [self showLodingView];
+    } else {
+        [self dismissLoadingView];
+    }
+
+    if ([self isViewLoaded])
+        [self.tableView reloadData];
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
     self.tableView.rowHeight = 50;
-    self.titleLabel.text = _directory.name;
-    [self.tableView reloadData];
-    [self.backButton addTarget:self action:@selector(goBack:) forControlEvents:UIControlEventTouchUpInside];
+    self.tableView.sectionHeaderHeight = 1;
+    [self refreshView];
 }
 
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
+}
+
+- (void)showLodingView
+{
+    if (!self.loadingView) {
+        self.loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+        self.loadingView.color = [UIColor darkTextColor];
+        self.loadingView.hidesWhenStopped = YES;
+        [self.tableView addSubview:self.loadingView];
+    }
+    self.loadingView.center = self.view.center;
+    self.loadingView.frame = CGRectMake(self.loadingView.frame.origin.x, (self.view.frame.size.height-self.loadingView.frame.size.height)/2, self.loadingView.frame.size.width, self.loadingView.frame.size.height);
+    [self.loadingView startAnimating];
+}
+
+- (void)dismissLoadingView
+{
+    [self.loadingView stopAnimating];
 }
 
 - (void)alertWithMessage:(NSString*)message handler:(void (^)())handler;
@@ -74,6 +118,45 @@
     }];
     [alert addAction:cancelAction];
     [self presentViewController:alert animated:true completion:nil];
+}
+
+- (IBAction)goBack:(id)sender
+{
+    [self popViewController];
+}
+
+- (void)showUploadProgress:(SeafUploadFile *)file
+{
+    self.alert = [UIAlertController alertControllerWithTitle:file.name message:nil preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [file doRemove];
+    }];
+    self.ufile = file;
+    [self.alert addAction:cancelAction];
+    [self presentViewController:self.alert animated:true completion:^{
+        self.progressView.progress = 0.f;
+        CGRect r = self.alert.view.frame;
+        self.progressView.frame = CGRectMake(20, r.size.height-45, r.size.width - 40, 20);
+        [self.alert.view addSubview:self.progressView];
+        [self.ufile doUpload];
+    }];
+}
+
+- (IBAction)chooseCurrentDir:(id)sender
+{
+    NSURL *url = [self.root.documentStorageURL URLByAppendingPathComponent:self.root.originalURL.lastPathComponent];
+    [self.fileCoordinator coordinateWritingItemAtURL:url options:NSFileCoordinatorWritingForDeleting error:NULL byAccessor:^(NSURL *newURL) {
+        NSError *error = nil;
+        [[NSFileManager defaultManager] copyItemAtURL:self.root.originalURL toURL:newURL error:&error];
+        if (!error) {
+            Warning("Failed to copy file:%@, error=%@", self.root.originalURL, [error localizedDescription]);
+            return;
+        }
+        SeafUploadFile *ufile = [[SeafUploadFile alloc] initWithPath:newURL.path];
+        ufile.delegate = self;
+        ufile.udir = _directory;
+        [self showUploadProgress:ufile];
+    }];
 }
 
 - (void)popupSetRepoPassword:(SeafRepo *)repo
@@ -122,12 +205,19 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return _directory.items.count;
+    return self.items.count;
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
+{
+    UIView *lineView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, tableView.frame.size.width, 1.0f)];
+    [lineView setBackgroundColor:[UIColor lightGrayColor]];
+    return lineView;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    SeafBase *entry = [_directory.items objectAtIndex:indexPath.row];
+    SeafBase *entry = [self.items objectAtIndex:indexPath.row];
 
     NSString *CellIdentifier = @"SeafProviderCell";
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
@@ -181,7 +271,7 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    SeafBase *entry = [_directory.items objectAtIndex:indexPath.row];
+    SeafBase *entry = [self.items objectAtIndex:indexPath.row];
     if ([entry isKindOfClass:[SeafFile class]]) {
         SeafFile *file = (SeafFile *)entry;
         if (![file hasCache]) {
@@ -214,7 +304,7 @@
         return;
 
     if (_directory == entry)
-        [self.tableView reloadData];
+        [self refreshView];
     else {
         if (entry != self.sfile) return;
         NSUInteger index = [_directory.allItems indexOfObject:entry];
@@ -261,6 +351,26 @@
         //[SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Wrong library password", @"Seafile") duration:2.0];
         [self performSelector:@selector(popupSetRepoPassword:) withObject:entry afterDelay:1.0];
     }
+}
+
+#pragma mark - SeafUploadDelegate
+- (void)uploadProgress:(SeafUploadFile *)file result:(BOOL)res progress:(int)percent
+{
+    if (self.ufile != file) return;
+    if (res) {
+        self.progressView.progress = percent * 1.0f/100.f;
+    } else {
+        Warning("Failed to upload file");
+        [self alertWithMessage:NSLocalizedString(@"Failed to uplod file", @"Seafile") handler:nil];
+    }
+}
+
+- (void)uploadSucess:(SeafUploadFile *)file oid:(NSString *)oid
+{
+    if (self.ufile != file) return;
+    [self.alert dismissViewControllerAnimated:NO completion:^{
+        [self.root dismissGrantingAccessToURL:[NSURL URLWithString:file.lpath]];
+    }];
 }
 
 - (void)pushViewControllerDir:(SeafDir *)dir

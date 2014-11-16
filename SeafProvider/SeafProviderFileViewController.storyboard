@@ -2,6 +2,7 @@
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6250" systemVersion="13F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6244"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <scenes>
         <!--Seaf Provider File View Controller-->
@@ -16,23 +17,81 @@
                             <rect key="frame" x="0.0" y="0.0" width="300" height="44"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             <subviews>
-                                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1H2-8d-kee">
+                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1H2-8d-kee">
                                     <rect key="frame" x="8" y="8" width="35" height="30"/>
+                                    <constraints>
+                                        <constraint firstAttribute="width" constant="35" id="7Df-TY-nhX"/>
+                                    </constraints>
                                     <state key="normal" title="Back">
                                         <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                     </state>
+                                    <connections>
+                                        <action selector="goBack:" destination="EOo-vF-PIq" eventType="touchUpInside" id="aSM-K9-IWf"/>
+                                    </connections>
                                 </button>
-                                <label opaque="NO" userInteractionEnabled="NO" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="LP0-fA-PDq">
-                                    <rect key="frame" x="59" y="12" width="180" height="21"/>
+                                <label opaque="NO" userInteractionEnabled="NO" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="LP0-fA-PDq">
+                                    <rect key="frame" x="63" y="11" width="174" height="21"/>
+                                    <constraints>
+                                        <constraint firstAttribute="width" constant="169" id="5Ee-y6-0Cz"/>
+                                    </constraints>
                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                     <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                     <nil key="highlightedColor"/>
+                                    <variation key="default">
+                                        <mask key="constraints">
+                                            <exclude reference="5Ee-y6-0Cz"/>
+                                        </mask>
+                                    </variation>
                                 </label>
+                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="oRZ-5p-Zfm">
+                                    <rect key="frame" x="242" y="7" width="50" height="30"/>
+                                    <state key="normal" title="Upload">
+                                        <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                    </state>
+                                    <connections>
+                                        <action selector="chooseCurrentDir:" destination="EOo-vF-PIq" eventType="touchUpInside" id="red-hB-g3g"/>
+                                    </connections>
+                                </button>
                             </subviews>
                             <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                            <constraints>
+                                <constraint firstItem="oRZ-5p-Zfm" firstAttribute="leading" secondItem="LP0-fA-PDq" secondAttribute="trailing" constant="5" id="43e-OL-3gh"/>
+                                <constraint firstAttribute="centerY" secondItem="LP0-fA-PDq" secondAttribute="centerY" id="43q-uA-i6J"/>
+                                <constraint firstAttribute="centerY" secondItem="1H2-8d-kee" secondAttribute="centerY" id="78W-r3-Jfs"/>
+                                <constraint firstAttribute="centerY" secondItem="1H2-8d-kee" secondAttribute="centerY" constant="-1" id="C4l-Hx-MAY"/>
+                                <constraint firstAttribute="centerY" secondItem="oRZ-5p-Zfm" secondAttribute="centerY" id="F0F-QQ-nAX"/>
+                                <constraint firstItem="oRZ-5p-Zfm" firstAttribute="leading" secondItem="LP0-fA-PDq" secondAttribute="trailing" constant="5" id="GIu-DM-fAV"/>
+                                <constraint firstAttribute="centerY" secondItem="oRZ-5p-Zfm" secondAttribute="centerY" id="Jy6-4q-JJP"/>
+                                <constraint firstAttribute="trailing" secondItem="oRZ-5p-Zfm" secondAttribute="trailing" constant="8" id="QFw-Rg-w82"/>
+                                <constraint firstAttribute="centerX" secondItem="LP0-fA-PDq" secondAttribute="centerX" id="Rox-db-Tcd"/>
+                                <constraint firstItem="oRZ-5p-Zfm" firstAttribute="leading" secondItem="LP0-fA-PDq" secondAttribute="trailing" constant="5" id="VaG-5X-adz"/>
+                                <constraint firstItem="1H2-8d-kee" firstAttribute="leading" secondItem="jzG-SA-pan" secondAttribute="leadingMargin" id="bPB-m2-WGv"/>
+                                <constraint firstItem="LP0-fA-PDq" firstAttribute="baseline" secondItem="oRZ-5p-Zfm" secondAttribute="baseline" id="e5z-yr-546"/>
+                                <constraint firstItem="LP0-fA-PDq" firstAttribute="leading" secondItem="1H2-8d-kee" secondAttribute="trailing" constant="20" id="f2y-l8-M35"/>
+                                <constraint firstItem="LP0-fA-PDq" firstAttribute="centerY" secondItem="jzG-SA-pan" secondAttribute="centerY" id="g82-FM-0kn"/>
+                                <constraint firstItem="oRZ-5p-Zfm" firstAttribute="leading" secondItem="LP0-fA-PDq" secondAttribute="trailing" constant="15" id="kCP-W9-xgb"/>
+                                <constraint firstItem="oRZ-5p-Zfm" firstAttribute="leading" secondItem="LP0-fA-PDq" secondAttribute="trailing" constant="5" id="kyg-av-foT"/>
+                                <constraint firstItem="oRZ-5p-Zfm" firstAttribute="leading" secondItem="LP0-fA-PDq" secondAttribute="trailing" constant="5" id="p7n-cY-CVn"/>
+                                <constraint firstItem="LP0-fA-PDq" firstAttribute="baseline" secondItem="1H2-8d-kee" secondAttribute="baseline" id="suU-Zb-GmU"/>
+                                <constraint firstAttribute="centerX" secondItem="LP0-fA-PDq" secondAttribute="centerX" id="syv-Li-itR"/>
+                                <constraint firstItem="LP0-fA-PDq" firstAttribute="leading" secondItem="1H2-8d-kee" secondAttribute="trailing" constant="20" id="y69-1F-2td"/>
+                                <constraint firstItem="LP0-fA-PDq" firstAttribute="leading" secondItem="jzG-SA-pan" secondAttribute="leading" constant="63" id="y7A-m4-LcE"/>
+                            </constraints>
+                            <variation key="default">
+                                <mask key="constraints">
+                                    <exclude reference="78W-r3-Jfs"/>
+                                    <exclude reference="e5z-yr-546"/>
+                                    <exclude reference="f2y-l8-M35"/>
+                                    <exclude reference="g82-FM-0kn"/>
+                                    <exclude reference="suU-Zb-GmU"/>
+                                    <exclude reference="syv-Li-itR"/>
+                                    <exclude reference="y7A-m4-LcE"/>
+                                    <exclude reference="kCP-W9-xgb"/>
+                                </mask>
+                            </variation>
                         </view>
                         <prototypes>
-                            <tableViewCell contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" reuseIdentifier="SeafCell" id="wJ1-W9-cUq" customClass="SeafCell">
+                            <tableViewCell contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" reuseIdentifier="SeafProviderCell" id="wJ1-W9-cUq">
                                 <autoresizingMask key="autoresizingMask"/>
                                 <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="wJ1-W9-cUq" id="sjD-dX-WES">
                                     <autoresizingMask key="autoresizingMask"/>
@@ -48,12 +107,13 @@
                     <size key="freeformSize" width="300" height="400"/>
                     <connections>
                         <outlet property="backButton" destination="1H2-8d-kee" id="iJh-dk-ebv"/>
+                        <outlet property="chooseButton" destination="oRZ-5p-Zfm" id="B8M-El-OAT"/>
                         <outlet property="titleLabel" destination="LP0-fA-PDq" id="z3d-A0-x9z"/>
                     </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="MRP-uS-ieH" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="56" y="54"/>
+            <point key="canvasLocation" x="94" y="52"/>
         </scene>
     </scenes>
 </document>

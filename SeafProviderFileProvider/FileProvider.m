@@ -41,20 +41,16 @@
 
 - (void)providePlaceholderAtURL:(NSURL *)url completionHandler:(void (^)(NSError *error))completionHandler {
 
-    // Should call + writePlaceholderAtURL:withMetadata:error: with the placeholder URL, then call the completion handler with the error if applicable.
-    NSString* fileName = [url lastPathComponent];
+    NSError* error = nil;
+    BOOL isDirectory = false;
+    Debug("url=%@", url);
     
-    NSURL *placeholderURL = [NSFileProviderExtension placeholderURLForURL:[self.documentStorageURL URLByAppendingPathComponent:fileName]];
-    
-    NSUInteger fileSize = 0;
-    // TODO: get file size for file at <url> from model
-    
-    [self.fileCoordinator coordinateWritingItemAtURL:placeholderURL options:0 error:NULL byAccessor:^(NSURL *newURL) {
-        NSDictionary* metadata = @{ NSURLFileSizeKey : @(fileSize)};
-        [NSFileProviderExtension writePlaceholderAtURL:placeholderURL withMetadata:metadata error:NULL];
-    }];
+    if (![[NSFileManager defaultManager] fileExistsAtPath:url.path isDirectory:&isDirectory]
+        || isDirectory) {
+        error = [NSError errorWithDomain:NSPOSIXErrorDomain code:-1 userInfo:nil];
+    }
     if (completionHandler) {
-        completionHandler(nil);
+        completionHandler(error);
     }
 }
 
@@ -62,11 +58,14 @@
     NSError* error = nil;
     BOOL isDirectory = false;
     Debug("url=%@", url);
+
     if (![[NSFileManager defaultManager] fileExistsAtPath:url.path isDirectory:&isDirectory]
         || isDirectory) {
         error = [NSError errorWithDomain:NSPOSIXErrorDomain code:-1 userInfo:nil];
     }
-    completionHandler(error);
+    if (completionHandler) {
+        completionHandler(error);
+    }
 }
 
 - (void)itemChangedAtURL:(NSURL *)url {
