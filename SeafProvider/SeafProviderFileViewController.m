@@ -16,7 +16,9 @@
 @interface SeafProviderFileViewController ()<SeafDentryDelegate, UIScrollViewDelegate>
 @property (strong, nonatomic) IBOutlet UIButton *backButton;
 @property (strong, nonatomic) IBOutlet UILabel *titleLabel;
-
+@property (strong, nonatomic) UIProgressView* progressView;
+@property (strong) UIAlertController *alert;
+@property (strong) SeafFile *sfile;
 @end
 
 @implementation SeafProviderFileViewController
@@ -26,12 +28,27 @@
     [self popViewController];
 }
 
+- (NSFileCoordinator *)fileCoordinator {
+    NSFileCoordinator *fileCoordinator = [[NSFileCoordinator alloc] init];
+    [fileCoordinator setPurposeIdentifier:@"com.seafile.seafilePro"];
+    return fileCoordinator;
+}
+
+
 - (void)setDirectory:(SeafDir *)directory
 {
     _directory = directory;
     _directory.delegate = self;
     [_directory loadContent:true];
     self.titleLabel.text = _directory.name;
+}
+
+- (UIProgressView *)progressView
+{
+    if (!_progressView) {
+        _progressView = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleBar];
+    }
+    return _progressView;
 }
 
 - (void)viewDidLoad
@@ -117,7 +134,7 @@
     if (cell == nil) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier];
     }
-    
+
     cell.textLabel.text = entry.name;
     cell.textLabel.font = [UIFont systemFontOfSize:17];
     cell.textLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
@@ -145,12 +162,44 @@
 
 #pragma mark - Table view delegate
 
+- (void)showDownloadProgress:(SeafFile *)file
+{
+    self.alert = [UIAlertController alertControllerWithTitle:file.name message:nil preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [file cancelDownload];
+    }];
+    self.sfile = file;
+    [self.alert addAction:cancelAction];
+    [self presentViewController:self.alert animated:true completion:^{
+        self.progressView.progress = 0.f;
+        CGRect r = self.alert.view.frame;
+        self.progressView.frame = CGRectMake(20, r.size.height-45, r.size.width - 40, 20);
+        [self.alert.view addSubview:self.progressView];
+        [file load:self force:NO];
+    }];
+}
+
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     SeafBase *entry = [_directory.items objectAtIndex:indexPath.row];
     if ([entry isKindOfClass:[SeafFile class]]) {
-        Debug("select file: %@", entry.name);
-        [self.root dismissGrantingAccessToURL:[(SeafFile *)entry exportURL]];
+        SeafFile *file = (SeafFile *)entry;
+        if (![file hasCache]) {
+            [self showDownloadProgress:file];
+            return;
+        }
+        if (self.root.documentPickerMode == UIDocumentPickerModeImport
+            || self.root.documentPickerMode == UIDocumentPickerModeOpen) {
+            NSURL *exportURL = [file exportURL];
+            NSURL *url = [self.root.documentStorageURL URLByAppendingPathComponent:exportURL.lastPathComponent];
+            [self.fileCoordinator coordinateWritingItemAtURL:url options:NSFileCoordinatorWritingForDeleting error:NULL byAccessor:^(NSURL *newURL) {
+                NSError *error = nil;
+                [[NSFileManager defaultManager] copyItemAtURL:exportURL toURL:newURL error:&error];
+                if (!error) {
+                    [self.root dismissGrantingAccessToURL:newURL];
+                }
+            }];
+        }
     } else if ([entry isKindOfClass:[SeafRepo class]] && [(SeafRepo *)entry passwordRequired]) {
         [self popupSetRepoPassword:(SeafRepo *)entry];
     } else if ([entry isKindOfClass:[SeafDir class]]) {
@@ -161,19 +210,46 @@
 #pragma mark - SeafDentryDelegate
 - (void)entry:(SeafBase *)entry updated:(BOOL)updated progress:(int)percent
 {
-    if (updated && [self isViewLoaded]) {
+    if (!updated || ![self isViewLoaded])
+        return;
+
+    if (_directory == entry)
         [self.tableView reloadData];
+    else {
+        if (entry != self.sfile) return;
+        NSUInteger index = [_directory.allItems indexOfObject:entry];
+        if (index == NSNotFound)
+            return;
+        self.progressView.progress = percent * 1.0f/100.f;
+        if (percent == 100) {
+            [self.alert dismissViewControllerAnimated:NO completion:^{
+                NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
+                [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+            }];
+        }
     }
 }
 - (void)entry:(SeafBase *)entry downloadingFailed:(NSUInteger)errCode
 {
-    if ([_directory hasCache]) {
-        return;
+    if (_directory == entry) {
+        if ([_directory hasCache])
+            return;
+
+        //[SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load content of the directory", @"Seafile")];
+        Warning("Failed to load directory content %@\n", entry.name);
+    } else {
+        if (entry != self.sfile) return;
+        [self.alert dismissViewControllerAnimated:NO completion:^{
+            NSUInteger index = [_directory.allItems indexOfObject:entry];
+            if (index == NSNotFound)
+                return;
+            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
+            [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+            Warning("Failed to download file %@\n", entry.name);
+            NSString *msg = [NSString stringWithFormat:@"Failed to download file '%@'", entry.name];
+            [self alertWithMessage:msg handler:nil];
+        }];
     }
-    
-    //[SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load content of the directory", @"Seafile")];
-    //[self.tableView reloadData];
-    Warning("Failed to load directory content %@\n", _directory.name);
 }
 
 - (void)entry:(SeafBase *)entry repoPasswordSet:(BOOL)success

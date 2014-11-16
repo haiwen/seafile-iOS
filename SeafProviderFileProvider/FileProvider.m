@@ -8,6 +8,7 @@
 
 #import "FileProvider.h"
 #import <UIKit/UIKit.h>
+#import "Debug.h"
 
 @interface FileProvider ()
 
@@ -33,7 +34,13 @@
     return self;
 }
 
+- (NSString *)providerIdentifier
+{
+    return @"com.seafile.seafilePro";
+}
+
 - (void)providePlaceholderAtURL:(NSURL *)url completionHandler:(void (^)(NSError *error))completionHandler {
+
     // Should call + writePlaceholderAtURL:withMetadata:error: with the placeholder URL, then call the completion handler with the error if applicable.
     NSString* fileName = [url lastPathComponent];
     
@@ -43,7 +50,6 @@
     // TODO: get file size for file at <url> from model
     
     [self.fileCoordinator coordinateWritingItemAtURL:placeholderURL options:0 error:NULL byAccessor:^(NSURL *newURL) {
-        
         NSDictionary* metadata = @{ NSURLFileSizeKey : @(fileSize)};
         [NSFileProviderExtension writePlaceholderAtURL:placeholderURL withMetadata:metadata error:NULL];
     }];
@@ -53,25 +59,18 @@
 }
 
 - (void)startProvidingItemAtURL:(NSURL *)url completionHandler:(void (^)(NSError *))completionHandler {
-    // Should ensure that the actual file is in the position returned by URLForItemWithIdentifier:, then call the completion handler
     NSError* error = nil;
-    __block NSError* fileError = nil;
-    
-    NSData * fileData = [NSData data];
-    // TODO: get the contents of file at <url> from model
-    
-    [self.fileCoordinator coordinateWritingItemAtURL:url options:0 error:&error byAccessor:^(NSURL *newURL) {
-        [fileData writeToURL:newURL options:0 error:&fileError];
-    }];
-    if (error!=nil) {
-        completionHandler(error);
-    } else {
-        completionHandler(fileError);
+    BOOL isDirectory = false;
+    Debug("url=%@", url);
+    if (![[NSFileManager defaultManager] fileExistsAtPath:url.path isDirectory:&isDirectory]
+        || isDirectory) {
+        error = [NSError errorWithDomain:NSPOSIXErrorDomain code:-1 userInfo:nil];
     }
+    completionHandler(error);
 }
 
-
 - (void)itemChangedAtURL:(NSURL *)url {
+
     // Called at some point after the file has changed; the provider may then trigger an upload
     
     // TODO: mark file at <url> as needing an update in the model; kick off update process

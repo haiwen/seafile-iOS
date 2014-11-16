@@ -48,6 +48,7 @@
 - (void)update:(id<SeafFileUpdateDelegate>)dg;
 - (void)cancelDownload;
 
+- (NSURL *)extensionExportURL:(NSURL *)baseDir;
 
 - (BOOL)testupload;
 

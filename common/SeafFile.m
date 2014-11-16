@@ -175,11 +175,11 @@
          self.operation = operation;
          operation.outputStream = [NSOutputStream outputStreamToFileAtPath:[self downloadTempPath:self.downloadingFileOid] append:NO];
          [operation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
-             Debug("Successfully downloaded file");
+             Debug("Successfully downloaded file:%@", self.name);
              [[NSFileManager defaultManager] moveItemAtPath:[self downloadTempPath:self.downloadingFileOid] toPath:[SeafGlobal.sharedObject documentPath:self.downloadingFileOid] error:nil];
              [self finishDownload:self.downloadingFileOid];
          } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-             Debug("error=%@",[error localizedDescription]);
+             Debug("download %@, error=%@", self.name,[error localizedDescription]);
              [self failedDownload:error];
          }];
          [operation setDownloadProgressBlock:^(NSUInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead) {
@@ -460,6 +460,30 @@
         }
     }
     return _exportURL;
+}
+
+- (NSURL *)extensionExportURL:(NSURL *)baseDir
+{
+    if (!self.ooid)
+        return nil;
+    NSURL *origin = nil;
+    if (self.mpath) {
+        origin = [NSURL fileURLWithPath:self.mpath];
+    } else {
+        if (!self.ooid || ! [Utils fileExistsAtPath:[SeafGlobal.sharedObject documentPath:self.ooid]])
+            return nil;
+        origin = [NSURL fileURLWithPath:[SeafGlobal.sharedObject documentPath:self.ooid]];
+    }
+    NSError *error = nil;
+    NSURL *destDir = [baseDir URLByAppendingPathComponent:self.ooid isDirectory:true];
+    NSURL *destFileName = [destDir URLByAppendingPathComponent:self.name];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:destFileName.path])
+        [[NSFileManager defaultManager] removeItemAtURL:destFileName error:&error];
+    if (error) return nil;
+    [Utils checkMakeDir:destDir.path];
+    [[NSFileManager defaultManager] linkItemAtURL:origin toURL:destFileName error:&error];
+    if (error) return nil;
+    return destFileName;
 }
 
 - (NSURL *)markdownPreviewItemURL

@@ -75,7 +75,8 @@
 
 - (NSString *)documentPath:(NSString*)fileId
 {
-    return [[[self applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"] stringByAppendingPathComponent:fileId];
+    NSString *s = [[[self applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"] stringByAppendingPathComponent:fileId];
+    return s;
 }
 
 - (NSString *)blockPath:(NSString*)blkId

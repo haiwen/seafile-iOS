@@ -23,7 +23,6 @@
 
 -(void)prepareForPresentationInMode:(UIDocumentPickerMode)mode
 {
-    Debug("mode=%lu", (long)mode);
     [SeafGlobal.sharedObject loadAccounts];
     _conns = SeafGlobal.sharedObject.conns;
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
