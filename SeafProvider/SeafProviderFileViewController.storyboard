@@ -17,10 +17,10 @@
                             <rect key="frame" x="0.0" y="0.0" width="300" height="44"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             <subviews>
-                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1H2-8d-kee">
-                                    <rect key="frame" x="8" y="8" width="35" height="30"/>
+                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1H2-8d-kee">
+                                    <rect key="frame" x="8" y="8" width="39" height="30"/>
                                     <constraints>
-                                        <constraint firstAttribute="width" constant="35" id="7Df-TY-nhX"/>
+                                        <constraint firstAttribute="width" constant="39" id="7Df-TY-nhX"/>
                                     </constraints>
                                     <state key="normal" title="Back">
                                         <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
@@ -30,7 +30,7 @@
                                     </connections>
                                 </button>
                                 <label opaque="NO" userInteractionEnabled="NO" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="LP0-fA-PDq">
-                                    <rect key="frame" x="63" y="11" width="174" height="21"/>
+                                    <rect key="frame" x="67" y="11" width="166" height="21"/>
                                     <constraints>
                                         <constraint firstAttribute="width" constant="169" id="5Ee-y6-0Cz"/>
                                     </constraints>
@@ -43,9 +43,9 @@
                                         </mask>
                                     </variation>
                                 </label>
-                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="oRZ-5p-Zfm">
+                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="right" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="oRZ-5p-Zfm">
                                     <rect key="frame" x="242" y="7" width="50" height="30"/>
-                                    <state key="normal" title="Upload">
+                                    <state key="normal" title="Save">
                                         <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                     </state>
                                     <connections>
@@ -55,23 +55,23 @@
                             </subviews>
                             <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                             <constraints>
-                                <constraint firstItem="oRZ-5p-Zfm" firstAttribute="leading" secondItem="LP0-fA-PDq" secondAttribute="trailing" constant="5" id="43e-OL-3gh"/>
+                                <constraint firstItem="oRZ-5p-Zfm" firstAttribute="leading" secondItem="LP0-fA-PDq" secondAttribute="trailing" constant="9" id="43e-OL-3gh"/>
                                 <constraint firstAttribute="centerY" secondItem="LP0-fA-PDq" secondAttribute="centerY" id="43q-uA-i6J"/>
                                 <constraint firstAttribute="centerY" secondItem="1H2-8d-kee" secondAttribute="centerY" id="78W-r3-Jfs"/>
                                 <constraint firstAttribute="centerY" secondItem="1H2-8d-kee" secondAttribute="centerY" constant="-1" id="C4l-Hx-MAY"/>
                                 <constraint firstAttribute="centerY" secondItem="oRZ-5p-Zfm" secondAttribute="centerY" id="F0F-QQ-nAX"/>
-                                <constraint firstItem="oRZ-5p-Zfm" firstAttribute="leading" secondItem="LP0-fA-PDq" secondAttribute="trailing" constant="5" id="GIu-DM-fAV"/>
+                                <constraint firstItem="oRZ-5p-Zfm" firstAttribute="leading" secondItem="LP0-fA-PDq" secondAttribute="trailing" constant="9" id="GIu-DM-fAV"/>
                                 <constraint firstAttribute="centerY" secondItem="oRZ-5p-Zfm" secondAttribute="centerY" id="Jy6-4q-JJP"/>
                                 <constraint firstAttribute="trailing" secondItem="oRZ-5p-Zfm" secondAttribute="trailing" constant="8" id="QFw-Rg-w82"/>
                                 <constraint firstAttribute="centerX" secondItem="LP0-fA-PDq" secondAttribute="centerX" id="Rox-db-Tcd"/>
-                                <constraint firstItem="oRZ-5p-Zfm" firstAttribute="leading" secondItem="LP0-fA-PDq" secondAttribute="trailing" constant="5" id="VaG-5X-adz"/>
+                                <constraint firstItem="oRZ-5p-Zfm" firstAttribute="leading" secondItem="LP0-fA-PDq" secondAttribute="trailing" constant="9" id="VaG-5X-adz"/>
                                 <constraint firstItem="1H2-8d-kee" firstAttribute="leading" secondItem="jzG-SA-pan" secondAttribute="leadingMargin" id="bPB-m2-WGv"/>
                                 <constraint firstItem="LP0-fA-PDq" firstAttribute="baseline" secondItem="oRZ-5p-Zfm" secondAttribute="baseline" id="e5z-yr-546"/>
                                 <constraint firstItem="LP0-fA-PDq" firstAttribute="leading" secondItem="1H2-8d-kee" secondAttribute="trailing" constant="20" id="f2y-l8-M35"/>
                                 <constraint firstItem="LP0-fA-PDq" firstAttribute="centerY" secondItem="jzG-SA-pan" secondAttribute="centerY" id="g82-FM-0kn"/>
                                 <constraint firstItem="oRZ-5p-Zfm" firstAttribute="leading" secondItem="LP0-fA-PDq" secondAttribute="trailing" constant="15" id="kCP-W9-xgb"/>
-                                <constraint firstItem="oRZ-5p-Zfm" firstAttribute="leading" secondItem="LP0-fA-PDq" secondAttribute="trailing" constant="5" id="kyg-av-foT"/>
-                                <constraint firstItem="oRZ-5p-Zfm" firstAttribute="leading" secondItem="LP0-fA-PDq" secondAttribute="trailing" constant="5" id="p7n-cY-CVn"/>
+                                <constraint firstItem="oRZ-5p-Zfm" firstAttribute="leading" secondItem="LP0-fA-PDq" secondAttribute="trailing" constant="9" id="kyg-av-foT"/>
+                                <constraint firstItem="oRZ-5p-Zfm" firstAttribute="leading" secondItem="LP0-fA-PDq" secondAttribute="trailing" constant="9" id="p7n-cY-CVn"/>
                                 <constraint firstItem="LP0-fA-PDq" firstAttribute="baseline" secondItem="1H2-8d-kee" secondAttribute="baseline" id="suU-Zb-GmU"/>
                                 <constraint firstAttribute="centerX" secondItem="LP0-fA-PDq" secondAttribute="centerX" id="syv-Li-itR"/>
                                 <constraint firstItem="LP0-fA-PDq" firstAttribute="leading" secondItem="1H2-8d-kee" secondAttribute="trailing" constant="20" id="y69-1F-2td"/>
@@ -113,7 +113,7 @@
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="MRP-uS-ieH" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="94" y="52"/>
+            <point key="canvasLocation" x="63" y="53"/>
         </scene>
     </scenes>
 </document>

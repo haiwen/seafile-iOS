@@ -188,10 +188,10 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    NSString *CellIdentifier = @"SeafAccountCell";
-    SeafAccountCell *cell = [tableView dequeueReusableCellWithIdentifier:@"SeafAccountCell"];
+    NSString *CellIdentifier = @"SeafileAccountCell";
+    SeafAccountCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
-        NSArray *cells = [[NSBundle mainBundle] loadNibNamed:CellIdentifier owner:self options:nil];
+        NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafAccountCell" owner:self options:nil];
         cell = [cells objectAtIndex:0];
     }
     SeafConnection *conn = [[SeafGlobal sharedObject].conns objectAtIndex:indexPath.row];

@@ -19,7 +19,6 @@
 @property (strong, nonatomic) IBOutlet UILabel *titleLabel;
 @property (strong, nonatomic) IBOutlet UIActivityIndicatorView *loadingView;
 
-
 @property (strong, nonatomic) UIProgressView* progressView;
 @property (strong) UIAlertController *alert;
 @property (strong) SeafFile *sfile;
@@ -73,6 +72,10 @@
     } else {
         [self dismissLoadingView];
     }
+    if (self.chooseButton.hidden)
+        self.tableView.sectionHeaderHeight = 1;
+    else
+        self.tableView.sectionHeaderHeight = 22;
 
     if ([self isViewLoaded])
         [self.tableView reloadData];
@@ -82,7 +85,6 @@
 {
     [super viewDidLoad];
     self.tableView.rowHeight = 50;
-    self.tableView.sectionHeaderHeight = 1;
     [self refreshView];
 }
 
@@ -210,9 +212,20 @@
 
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
 {
-    UIView *lineView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, tableView.frame.size.width, 1.0f)];
-    [lineView setBackgroundColor:[UIColor lightGrayColor]];
-    return lineView;
+    if (self.chooseButton.hidden) {
+        UIView *lineView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, tableView.frame.size.width, 1.0f)];
+        [lineView setBackgroundColor:[UIColor lightGrayColor]];
+        return lineView;
+    } else {
+        UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
+        UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 3, tableView.bounds.size.width - 10, 18)];
+        label.text = @"Save Destination";
+        label.textColor = [UIColor whiteColor];
+        label.backgroundColor = [UIColor clearColor];
+        [headerView setBackgroundColor:HEADER_COLOR];
+        [headerView addSubview:label];
+        return headerView;
+    }
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
