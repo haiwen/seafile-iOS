@@ -61,15 +61,34 @@
     }
 }
 
-+ (int)copyFile:(NSURL *)from to:(NSURL *)to
++ (NSURL *)copyFile:(NSURL *)from to:(NSURL *)to
 {
-    if ([[NSFileManager defaultManager] fileExistsAtPath:to.path]) {
-        [[NSFileManager defaultManager] removeItemAtURL:to error:nil];
+    NSFileManager* fm = [NSFileManager defaultManager];
+    if (![fm fileExistsAtPath:to.path]) {
+        if ([fm copyItemAtURL:from toURL:to error:nil])
+            return to;
+        else
+            return nil;
     }
-    return [[NSFileManager defaultManager] copyItemAtURL:from toURL:to error:nil];
+
+    NSString *base = to.path.stringByDeletingPathExtension;
+    NSString *suffix = to.pathExtension;
+    NSString *testPath = nil;
+    int maxIterations = 999;
+    for (int i = 1; i <= maxIterations; i++) {
+        if (suffix && suffix.length > 0)
+            testPath = [NSString stringWithFormat:@"%@-%d.%@", base, i, suffix];
+        else
+            testPath = [NSString stringWithFormat:@"%@-%d", base, i];
+
+        if ([fm fileExistsAtPath:testPath])
+            continue;
+        if ([fm copyItemAtPath:from.path toPath:testPath error:nil]) {
+            return [NSURL fileURLWithPath:testPath];
+        }
+    }
+    return nil;
 }
-
-
 
 + (long long)fileSizeAtPath1:(NSString*)filePath
 {

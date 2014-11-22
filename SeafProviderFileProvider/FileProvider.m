@@ -6,8 +6,10 @@
 //  Copyright (c) 2014 Seafile. All rights reserved.
 //
 
-#import "FileProvider.h"
 #import <UIKit/UIKit.h>
+#import "FileProvider.h"
+#import "SeafGlobal.h"
+#import "SeafFile.h"
 #import "Debug.h"
 
 @interface FileProvider ()
@@ -73,7 +75,17 @@
     // Called at some point after the file has changed; the provider may then trigger an upload
     
     // TODO: mark file at <url> as needing an update in the model; kick off update process
-    NSLog(@"Item changed at URL %@", url);
+    NSString *key = [NSString stringWithFormat:@"EXPORTED/%@", url.lastPathComponent];
+    NSDictionary *dict = [SeafGlobal.sharedObject objectForKey:key];
+    Debug("Item changed at URL %@, dict:%@", url, dict);
+    if (!dict)
+        return;
+    if (SeafGlobal.sharedObject.conns.count == 0)
+        [SeafGlobal.sharedObject loadAccounts];
+    SeafConnection *conn = [SeafGlobal.sharedObject getConnection:[dict objectForKey:@"conn_url"] username:[dict objectForKey: @"conn_username"]];
+    NSString *path = [dict objectForKey:@"path"];
+    SeafFile *file =   [[SeafFile alloc] initWithConnection:conn oid:[dict objectForKey:@"id"] repoId:[dict objectForKey:@"repoid"] name:path.lastPathComponent path:path mtime:[[dict objectForKey:@"mtime"] integerValue:0] size:[[dict objectForKey:@"size"] integerValue:0]];
+    [file itemChangedAtURL:url];
 }
 
 - (void)stopProvidingItemAtURL:(NSURL *)url {
@@ -82,6 +94,8 @@
     
     [self.fileCoordinator coordinateWritingItemAtURL:url options:NSFileCoordinatorWritingForDeleting error:NULL byAccessor:^(NSURL *newURL) {
         [[NSFileManager defaultManager] removeItemAtURL:newURL error:NULL];
+        [SeafGlobal.sharedObject removeObjectForKey:newURL.path];
+        [SeafGlobal.sharedObject synchronize];
     }];
     [self providePlaceholderAtURL:url completionHandler:NULL];
 }

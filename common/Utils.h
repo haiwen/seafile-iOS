@@ -15,7 +15,7 @@
 + (BOOL)checkMakeDir:(NSString *)path;
 + (void)clearAllFiles:(NSString *)path;
 + (long long)folderSizeAtPath:(NSString*)folderPath;
-+ (int)copyFile:(NSURL *)from to:(NSURL *)to;
++ (NSURL *)copyFile:(NSURL *)from to:(NSURL *)to;
 
 + (long long)fileSizeAtPath1:(NSString*)filePath;
 

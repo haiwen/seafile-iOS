@@ -9,8 +9,10 @@
 #import "SeafProviderFileViewController.h"
 #import "SeafFile.h"
 #import "SeafRepos.h"
+#import "SeafGlobal.h"
 #import "FileSizeFormatter.h"
 #import "SeafDateFormatter.h"
+#import "Utils.h"
 #import "Debug.h"
 
 @interface SeafProviderFileViewController ()<SeafDentryDelegate, SeafUploadDelegate, UIScrollViewDelegate>
@@ -116,7 +118,8 @@
 {
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:message message:nil preferredStyle:UIAlertControllerStyleAlert];
     UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"Seafile") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        handler();
+        if (handler)
+            handler();
     }];
     [alert addAction:cancelAction];
     [self presentViewController:alert animated:true completion:nil];
@@ -147,14 +150,13 @@
 - (IBAction)chooseCurrentDir:(id)sender
 {
     NSURL *url = [self.root.documentStorageURL URLByAppendingPathComponent:self.root.originalURL.lastPathComponent];
-    [self.fileCoordinator coordinateWritingItemAtURL:url options:NSFileCoordinatorWritingForDeleting error:NULL byAccessor:^(NSURL *newURL) {
-        NSError *error = nil;
-        [[NSFileManager defaultManager] copyItemAtURL:self.root.originalURL toURL:newURL error:&error];
-        if (!error) {
-            Warning("Failed to copy file:%@, error=%@", self.root.originalURL, [error localizedDescription]);
+    [self.fileCoordinator coordinateWritingItemAtURL:url options:0 error:NULL byAccessor:^(NSURL *newURL) {
+        NSURL *realURL = [Utils copyFile:self.root.originalURL to:newURL];
+        if (!realURL) {
+            Warning("Failed to copy file:%@", self.root.originalURL);
             return;
         }
-        SeafUploadFile *ufile = [[SeafUploadFile alloc] initWithPath:newURL.path];
+        SeafUploadFile *ufile = [[SeafUploadFile alloc] initWithPath:realURL.path];
         ufile.delegate = self;
         ufile.udir = _directory;
         [self showUploadProgress:ufile];
@@ -294,12 +296,19 @@
         if (self.root.documentPickerMode == UIDocumentPickerModeImport
             || self.root.documentPickerMode == UIDocumentPickerModeOpen) {
             NSURL *exportURL = [file exportURL];
+            Debug("file exportURL:%@", exportURL);
             NSURL *url = [self.root.documentStorageURL URLByAppendingPathComponent:exportURL.lastPathComponent];
-            [self.fileCoordinator coordinateWritingItemAtURL:url options:NSFileCoordinatorWritingForDeleting error:NULL byAccessor:^(NSURL *newURL) {
-                NSError *error = nil;
-                [[NSFileManager defaultManager] copyItemAtURL:exportURL toURL:newURL error:&error];
-                if (!error) {
-                    [self.root dismissGrantingAccessToURL:newURL];
+            [self.fileCoordinator coordinateWritingItemAtURL:url options:0 error:NULL byAccessor:^(NSURL *newURL) {
+                NSURL *realURL = [Utils copyFile:exportURL to:newURL];
+                if (realURL) {
+                    if (self.root.documentPickerMode == UIDocumentPickerModeOpen) {
+                        NSString *key = [NSString stringWithFormat:@"EXPORTED/%@", realURL.lastPathComponent];
+                        [SeafGlobal.sharedObject setObject:file.toDict forKey:key];
+                        [SeafGlobal.sharedObject synchronize];
+                    }
+                    [self.root dismissGrantingAccessToURL:realURL];
+                } else {
+                    Warning("Failed to copy file %@", file.name);
                 }
             }];
         }
@@ -392,7 +401,11 @@
     controller.directory = dir;
     controller.root = self.root;
     controller.view.frame = CGRectMake(self.view.frame.size.width, self.view.frame.origin.y, self.view.frame.size.width, self.view.frame.size.height);
-    [self addChildViewController:controller];
+    @synchronized (self) {
+        if (self.childViewControllers.count > 0)
+            return;
+        [self addChildViewController:controller];
+    }
     [controller didMoveToParentViewController:self];
     [self.view addSubview:controller.view];
 

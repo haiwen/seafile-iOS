@@ -462,30 +462,6 @@
     return _exportURL;
 }
 
-- (NSURL *)extensionExportURL:(NSURL *)baseDir
-{
-    if (!self.ooid)
-        return nil;
-    NSURL *origin = nil;
-    if (self.mpath) {
-        origin = [NSURL fileURLWithPath:self.mpath];
-    } else {
-        if (!self.ooid || ! [Utils fileExistsAtPath:[SeafGlobal.sharedObject documentPath:self.ooid]])
-            return nil;
-        origin = [NSURL fileURLWithPath:[SeafGlobal.sharedObject documentPath:self.ooid]];
-    }
-    NSError *error = nil;
-    NSURL *destDir = [baseDir URLByAppendingPathComponent:self.ooid isDirectory:true];
-    NSURL *destFileName = [destDir URLByAppendingPathComponent:self.name];
-    if ([[NSFileManager defaultManager] fileExistsAtPath:destFileName.path])
-        [[NSFileManager defaultManager] removeItemAtURL:destFileName error:&error];
-    if (error) return nil;
-    [Utils checkMakeDir:destDir.path];
-    [[NSFileManager defaultManager] linkItemAtURL:origin toURL:destFileName error:&error];
-    if (error) return nil;
-    return destFileName;
-}
-
 - (NSURL *)markdownPreviewItemURL
 {
     _preViewURL = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"view_markdown" ofType:@"html"]];
@@ -597,52 +573,78 @@
 
 - (void)setMpath:(NSString *)mpath
 {
-    _mpath = mpath;
-    [self savetoCache];
-    _preViewURL = nil;
-    _exportURL = nil;
+    @synchronized (self) {
+        _mpath = mpath;
+        [self savetoCache];
+        _preViewURL = nil;
+        _exportURL = nil;
+    }
     Debug("filesize=%lld mtime=%lld", self.filesize, self.mtime);
 }
 
 - (BOOL)saveStrContent:(NSString *)content
 {
-    @synchronized (self) {
-        NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-        [formatter setDateFormat:@"yyyy-MM-dd-HH.mm.ss"];
-        NSString *dir = [[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"] stringByAppendingPathComponent:[formatter stringFromDate:[NSDate date]]];
-        if (![Utils checkMakeDir:dir])
-            return NO;
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"yyyy-MM-dd-HH.mm.ss"];
+    NSString *dir = [[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"] stringByAppendingPathComponent:[formatter stringFromDate:[NSDate date]]];
+    if (![Utils checkMakeDir:dir])
+        return NO;
 
-        NSString *newpath = [dir stringByAppendingPathComponent:self.name];
-        NSError *error = nil;
-        BOOL ret = [content writeToFile:newpath atomically:YES encoding:NSUTF8StringEncoding error:&error];
-        if (ret) {
-            self.mpath = newpath;
-            [self autoupload];
-        }
-        return ret;
+    NSString *newpath = [dir stringByAppendingPathComponent:self.name];
+    NSError *error = nil;
+
+    BOOL ret = [content writeToFile:newpath atomically:YES encoding:NSUTF8StringEncoding error:&error];
+    if (ret) {
+        self.mpath = newpath;
+        [self autoupload];
     }
+    return ret;
+}
+
+- (BOOL)itemChangedAtURL:(NSURL *)url
+{
+    Debug("file %@ changed:%@, repo:%@, account:%@ %@", self.name, url, self.repoId, connection.address, connection.username);
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"yyyy-MM-dd-HH.mm.ss"];
+    NSString *dir = [[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"] stringByAppendingPathComponent:[formatter stringFromDate:[NSDate date]]];
+    if (![Utils checkMakeDir:dir])
+        return NO;
+    NSString *newpath = [dir stringByAppendingPathComponent:self.name];
+    NSError *error = nil;
+
+    BOOL ret = [[NSFileManager defaultManager] linkItemAtPath:url.path toPath:newpath error:&error];
+    if (ret) {
+        self.mpath = newpath;
+        [self autoupload];
+    }
+    return ret;
+}
+
+- (NSDictionary *)toDict
+{
+    NSDictionary *dict = [NSDictionary dictionaryWithObjectsAndKeys:connection.address, @"conn_url",  connection.username, @"conn_username",
+                          self.oid, @"id", self.repoId, @"repoid", self.path, @"path", [NSNumber numberWithLongLong:self.mtime ], @"mtime", [NSNumber numberWithLongLong:self.filesize], @"size", nil];
+    Debug("dict=%@", dict);
+    return dict;
 }
 
 - (BOOL)testupload
 {
-    @synchronized (self) {
-        NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-        [formatter setDateFormat:@"yyyy-MM-dd-HH.mm.ss"];
-        NSString *dir = [[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"] stringByAppendingPathComponent:[formatter stringFromDate:[NSDate date]]];
-        if (![Utils checkMakeDir:dir])
-            return NO;
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"yyyy-MM-dd-HH.mm.ss"];
+    NSString *dir = [[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"] stringByAppendingPathComponent:[formatter stringFromDate:[NSDate date]]];
+    if (![Utils checkMakeDir:dir])
+        return NO;
+    NSString *newpath = [dir stringByAppendingPathComponent:self.name];
+    NSError *error = nil;
 
-        NSString *newpath = [dir stringByAppendingPathComponent:self.name];
-        NSError *error = nil;
-        BOOL ret = [[NSFileManager defaultManager] copyItemAtPath:[SeafGlobal.sharedObject documentPath:self.ooid] toPath:newpath error:&error];
-        Debug("ret=%d newpath=%@, %@\n", ret, newpath, error);
-        if (ret) {
-            self.mpath = newpath;
-            [self autoupload];
-        }
-        return ret;
+    BOOL ret = [[NSFileManager defaultManager] copyItemAtPath:[SeafGlobal.sharedObject documentPath:self.ooid] toPath:newpath error:&error];
+    Debug("ret=%d newpath=%@, %@\n", ret, newpath, error);
+    if (ret) {
+        self.mpath = newpath;
+        [self autoupload];
     }
+    return ret;
 }
 
 - (BOOL)isStarred

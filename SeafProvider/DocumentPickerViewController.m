@@ -84,8 +84,11 @@
     controller.directory = dir;
     controller.root = self;
     controller.view.frame = CGRectMake(self.view.frame.size.width, self.view.frame.origin.y, self.view.frame.size.width, self.view.frame.size.height);
-
-    [self addChildViewController:controller];
+    @synchronized (self) {
+        if (self.childViewControllers.count > 0)
+            return;
+        [self addChildViewController:controller];
+    }
     [controller didMoveToParentViewController:self];
     [self.view addSubview:controller.view];
     [UIView animateWithDuration:0.5f delay:0.f options:0 animations:^{

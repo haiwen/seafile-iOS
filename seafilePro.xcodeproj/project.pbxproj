@@ -221,7 +221,6 @@
 		57943C1B19F027D5008423E5 /* unstar@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57943BFC19F027D5008423E5 /* unstar@2x.png */; };
 		57943C1C19F027D5008423E5 /* unstar2@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57943BFD19F027D5008423E5 /* unstar2@2x.png */; };
 		5795F49B16A7266F00FF90E3 /* SeafAccountCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 5795F49916A7266E00FF90E3 /* SeafAccountCell.m */; };
-		579993421A17921700ABBE17 /* SeafAccountCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 5795F49916A7266E00FF90E3 /* SeafAccountCell.m */; };
 		57A029771A16F8AD009C9D7B /* SeafProviderFileProvider.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 57A0296D1A16F8AD009C9D7B /* SeafProviderFileProvider.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		57A0297A1A16F8AD009C9D7B /* SeafProvider.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 57A0295F1A16F8AC009C9D7B /* SeafProvider.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		57A029861A16F91F009C9D7B /* DocumentPickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57A029821A16F91F009C9D7B /* DocumentPickerViewController.m */; };
@@ -281,7 +280,34 @@
 		57A029D61A170A7E009C9D7B /* text.png in Resources */ = {isa = PBXBuildFile; fileRef = 5739703C165800810089F32F /* text.png */; };
 		57A029D71A170A7E009C9D7B /* unknown-file.png in Resources */ = {isa = PBXBuildFile; fileRef = 57396FFE1657ECDA0089F32F /* unknown-file.png */; };
 		57A029D81A170A7E009C9D7B /* video.png in Resources */ = {isa = PBXBuildFile; fileRef = 573970001657F8BF0089F32F /* video.png */; };
-		57A029D91A178FAD009C9D7B /* SeafAccountCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22AF91A12625B00C92330 /* SeafAccountCell.xib */; };
+		57A192151A208F0900985F77 /* SeafAccountCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 5795F49916A7266E00FF90E3 /* SeafAccountCell.m */; };
+		57A192161A208F1600985F77 /* SeafAccountCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22AF91A12625B00C92330 /* SeafAccountCell.xib */; };
+		57A192171A208F3200985F77 /* SeafAvatar.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E2298C1A11087500C92330 /* SeafAvatar.m */; };
+		57A192181A208F3200985F77 /* SeafBase.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E2298E1A11087500C92330 /* SeafBase.m */; };
+		57A192191A208F3200985F77 /* SeafConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229901A11087500C92330 /* SeafConnection.m */; };
+		57A1921A1A208F3200985F77 /* SeafData.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229921A11087500C92330 /* SeafData.m */; };
+		57A1921B1A208F3200985F77 /* SeafDir.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229941A11087500C92330 /* SeafDir.m */; };
+		57A1921C1A208F3200985F77 /* SeafFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229961A11087500C92330 /* SeafFile.m */; };
+		57A1921D1A208F3200985F77 /* seafile.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 57E229971A11087500C92330 /* seafile.xcdatamodeld */; };
+		57A1921E1A208F3200985F77 /* SeafJSONRequestOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E2299B1A11087500C92330 /* SeafJSONRequestOperation.m */; };
+		57A1921F1A208F3200985F77 /* SeafRepos.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E2299E1A11087500C92330 /* SeafRepos.m */; };
+		57A192201A208F3200985F77 /* SeafStarredFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229A01A11087500C92330 /* SeafStarredFile.m */; };
+		57A192211A208F3200985F77 /* SeafUploadFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229A21A11087500C92330 /* SeafUploadFile.m */; };
+		57A192221A208F4D00985F77 /* seafile.xcdatamodeld in Resources */ = {isa = PBXBuildFile; fileRef = 57E229971A11087500C92330 /* seafile.xcdatamodeld */; };
+		57A192231A208F7E00985F77 /* AFHTTPRequestOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 57094B5B15B9AC4A00F48C08 /* AFHTTPRequestOperation.m */; };
+		57A192241A208F7E00985F77 /* AFHTTPRequestOperationManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732063618EB11CA003250DE /* AFHTTPRequestOperationManager.m */; };
+		57A192251A208F7E00985F77 /* AFHTTPSessionManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732063818EB11CA003250DE /* AFHTTPSessionManager.m */; };
+		57A192261A208F7E00985F77 /* AFNetworkReachabilityManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732063A18EB11CA003250DE /* AFNetworkReachabilityManager.m */; };
+		57A192271A208F7E00985F77 /* AFSecurityPolicy.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732063C18EB11CA003250DE /* AFSecurityPolicy.m */; };
+		57A192281A208F7E00985F77 /* AFURLConnectionOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 57094B6815B9AC4A00F48C08 /* AFURLConnectionOperation.m */; };
+		57A192291A208F7E00985F77 /* AFURLRequestSerialization.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732063E18EB11CA003250DE /* AFURLRequestSerialization.m */; };
+		57A1922A1A208F7E00985F77 /* AFURLResponseSerialization.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732064018EB11CA003250DE /* AFURLResponseSerialization.m */; };
+		57A1922B1A208F7E00985F77 /* AFURLSessionManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732064218EB11CA003250DE /* AFURLSessionManager.m */; };
+		57A1922C1A208F9600985F77 /* SeafGlobal.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E22A261A11093D00C92330 /* SeafGlobal.m */; };
+		57A1922D1A208FA000985F77 /* SeafDateFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229D11A1108B200C92330 /* SeafDateFormatter.m */; };
+		57A1922E1A208FAD00985F77 /* FileMimeType.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229CA1A1108B200C92330 /* FileMimeType.m */; };
+		57A1922F1A208FBD00985F77 /* FileSizeFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229CD1A1108B200C92330 /* FileSizeFormatter.m */; };
+		57A192301A208FC700985F77 /* Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229D71A1108B200C92330 /* Utils.m */; };
 		57A550DB177F23BB00E3BA9B /* refresh.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550D9177F23BB00E3BA9B /* refresh.png */; };
 		57A550DE177F283700E3BA9B /* addmsg.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550DC177F283700E3BA9B /* addmsg.png */; };
 		57A550E1177F2C4400E3BA9B /* export.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550DF177F2C4400E3BA9B /* export.png */; };
@@ -2201,7 +2227,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				57A029D91A178FAD009C9D7B /* SeafAccountCell.xib in Resources */,
+				57A192161A208F1600985F77 /* SeafAccountCell.xib in Resources */,
 				57A029C81A170A7E009C9D7B /* FileTypeIcons.plist in Resources */,
 				57A029C91A170A7E009C9D7B /* text-directory-documents-encrypted@2x.png in Resources */,
 				57A029CA1A170A7E009C9D7B /* text-directory-documents@2x.png in Resources */,
@@ -2232,6 +2258,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				57A192221A208F4D00985F77 /* seafile.xcdatamodeld in Resources */,
 				57A029A01A16F965009C9D7B /* SeafProviderFileProvider.entitlements in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2347,7 +2374,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				579993421A17921700ABBE17 /* SeafAccountCell.m in Sources */,
+				57A192151A208F0900985F77 /* SeafAccountCell.m in Sources */,
 				57A029C61A17022B009C9D7B /* SeafGlobal.m in Sources */,
 				57A029BB1A1701EB009C9D7B /* ColorfulButton.m in Sources */,
 				57A029BC1A1701EB009C9D7B /* ExtentedString.m in Sources */,
@@ -2386,6 +2413,31 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				57A192301A208FC700985F77 /* Utils.m in Sources */,
+				57A1922F1A208FBD00985F77 /* FileSizeFormatter.m in Sources */,
+				57A1922E1A208FAD00985F77 /* FileMimeType.m in Sources */,
+				57A1922D1A208FA000985F77 /* SeafDateFormatter.m in Sources */,
+				57A1922C1A208F9600985F77 /* SeafGlobal.m in Sources */,
+				57A192231A208F7E00985F77 /* AFHTTPRequestOperation.m in Sources */,
+				57A192241A208F7E00985F77 /* AFHTTPRequestOperationManager.m in Sources */,
+				57A192251A208F7E00985F77 /* AFHTTPSessionManager.m in Sources */,
+				57A192261A208F7E00985F77 /* AFNetworkReachabilityManager.m in Sources */,
+				57A192271A208F7E00985F77 /* AFSecurityPolicy.m in Sources */,
+				57A192281A208F7E00985F77 /* AFURLConnectionOperation.m in Sources */,
+				57A192291A208F7E00985F77 /* AFURLRequestSerialization.m in Sources */,
+				57A1922A1A208F7E00985F77 /* AFURLResponseSerialization.m in Sources */,
+				57A1922B1A208F7E00985F77 /* AFURLSessionManager.m in Sources */,
+				57A192171A208F3200985F77 /* SeafAvatar.m in Sources */,
+				57A192181A208F3200985F77 /* SeafBase.m in Sources */,
+				57A192191A208F3200985F77 /* SeafConnection.m in Sources */,
+				57A1921A1A208F3200985F77 /* SeafData.m in Sources */,
+				57A1921B1A208F3200985F77 /* SeafDir.m in Sources */,
+				57A1921C1A208F3200985F77 /* SeafFile.m in Sources */,
+				57A1921D1A208F3200985F77 /* seafile.xcdatamodeld in Sources */,
+				57A1921E1A208F3200985F77 /* SeafJSONRequestOperation.m in Sources */,
+				57A1921F1A208F3200985F77 /* SeafRepos.m in Sources */,
+				57A192201A208F3200985F77 /* SeafStarredFile.m in Sources */,
+				57A192211A208F3200985F77 /* SeafUploadFile.m in Sources */,
 				57A0298E1A16F935009C9D7B /* FileProvider.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

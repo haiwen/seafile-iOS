@@ -47,9 +47,7 @@
 - (void)deleteCache;
 - (void)update:(id<SeafFileUpdateDelegate>)dg;
 - (void)cancelDownload;
-
-- (NSURL *)extensionExportURL:(NSURL *)baseDir;
-
-- (BOOL)testupload;
+- (BOOL)itemChangedAtURL:(NSURL *)url;
+- (NSDictionary *)toDict;
 
 @end
