@@ -35,6 +35,7 @@
 {
     @synchronized(self) {
         if ([[SeafGlobal sharedObject] connection] != conn) {
+            conn.delegate = self;
             [[SeafGlobal sharedObject] setConnection: conn];
             [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
             [[self masterNavController:TABBED_STARRED] popToRootViewControllerAnimated:NO];
@@ -380,6 +381,7 @@
     _globalMailComposer = [[MFMailComposeViewController alloc] init];
 }
 
+#pragma - SeafConnectionDelegate
 - (void)loginRequired:(SeafConnection *)connection
 {
     [self.tabbarController setSelectedIndex:TABBED_ACCOUNTS];
@@ -390,6 +392,5 @@
 {
     return self.window.rootViewController;
 }
-
 
 @end

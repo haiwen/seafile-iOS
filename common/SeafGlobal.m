@@ -156,7 +156,6 @@
             [connections addObject:conn];
     }
     self.conns = connections;
-    [self saveAccounts];
 }
 
 - (SeafConnection *)getConnection:(NSString *)url username:(NSString *)username

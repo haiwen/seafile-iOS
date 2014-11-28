@@ -51,7 +51,6 @@
         self.downloadingFileOid = nil;
         self.operation = nil;
     }
-    [self loadCache];
     return self;
 }
 
@@ -387,6 +386,8 @@
 - (BOOL)realLoadCache
 {
     DownloadedFile *dfile = [self loadCacheObj];
+    if (!dfile)
+        return NO;
     if (!self.oid)
         self.oid = dfile.oid;
     NSString *did = self.oid;

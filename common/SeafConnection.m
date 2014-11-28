@@ -711,6 +711,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         NSMutableArray *results = [[NSMutableArray alloc] init];
         for (NSDictionary *itemInfo in [JSON objectForKey:@"results"]) {
             if ([itemInfo objectForKey:@"name"] == [NSNull null]) continue;
+            if ([[itemInfo objectForKey:@"is_dir"] integerValue]) continue;
             NSString *oid = [itemInfo objectForKey:@"oid"];
             NSString *repoId = [itemInfo objectForKey:@"repo_id"];
             NSString *name = [itemInfo objectForKey:@"name"];

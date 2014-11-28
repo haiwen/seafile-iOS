@@ -16,7 +16,7 @@
 #define HTTP @"http://"
 #define HTTPS @"https://"
 
-@interface SeafAccountViewController ()
+@interface SeafAccountViewController ()<SeafConnectionDelegate>
 @property (strong, nonatomic) IBOutlet UITextField *serverTextField;
 @property (strong, nonatomic) IBOutlet UITextField *usernameTextField;
 @property (strong, nonatomic) IBOutlet UITextField *passwordTextField;
@@ -82,6 +82,7 @@
     if (!self.connection)
         connection = [[SeafConnection alloc] initWithUrl:url username:username];
     connection.loginDelegate = self;
+    connection.delegate = self;
     [connection loginWithAddress:url username:username password:password];
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Connecting to server", @"Seafile")];
 }
@@ -198,11 +199,6 @@
     }
 }
 
-- (UIViewController *)rootViewController
-{
-    return startController;
-}
-
 - (BOOL)textFieldShouldReturn:(UITextField *)textField
 {
     if (textField == self.serverTextField) {
@@ -219,6 +215,16 @@
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
     return IsIpad() || (interfaceOrientation == UIInterfaceOrientationPortrait);
+}
+
+#pragma - SeafConnectionDelegate
+- (void)loginRequired:(SeafConnection *)connection
+{
+}
+
+- (UIViewController *)rootViewController
+{
+    return self;
 }
 
 @end

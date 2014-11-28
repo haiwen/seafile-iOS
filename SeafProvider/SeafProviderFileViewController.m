@@ -26,6 +26,7 @@
 @property (strong) SeafFile *sfile;
 @property (strong) SeafUploadFile *ufile;
 @property (strong) NSArray *items;
+@property BOOL clearall;
 @end
 
 @implementation SeafProviderFileViewController
@@ -69,24 +70,27 @@
         self.items = arr;
         self.chooseButton.hidden = [_directory isKindOfClass:[SeafRepos class]];
     }
-    if (_directory && !_directory.hasCache) {
-        [self showLodingView];
-    } else {
-        [self dismissLoadingView];
-    }
+
     if (self.chooseButton.hidden)
         self.tableView.sectionHeaderHeight = 1;
     else
         self.tableView.sectionHeaderHeight = 22;
 
-    if ([self isViewLoaded])
+    if ([self isViewLoaded]) {
         [self.tableView reloadData];
+        if (_directory && !_directory.hasCache) {
+            [self showLodingView];
+        } else {
+            [self dismissLoadingView];
+        }
+    }
 }
 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
     self.tableView.rowHeight = 50;
+    _clearall = false;
     [self refreshView];
 }
 
@@ -105,8 +109,16 @@
         [self.tableView addSubview:self.loadingView];
     }
     self.loadingView.center = self.view.center;
-    self.loadingView.frame = CGRectMake(self.loadingView.frame.origin.x, (self.view.frame.size.height-self.loadingView.frame.size.height)/2, self.loadingView.frame.size.width, self.loadingView.frame.size.height);
-    [self.loadingView startAnimating];
+    self.loadingView.frame = CGRectMake((self.view.frame.size.width-self.loadingView.frame.size.width)/2, (self.view.frame.size.height-self.loadingView.frame.size.height)/2, self.loadingView.frame.size.width, self.loadingView.frame.size.height);
+    if (![self.loadingView isAnimating])
+        [self.loadingView startAnimating];
+}
+
+- (void)viewDidAppear:(BOOL)animated
+{
+    if (self.loadingView && [self.loadingView isAnimating]) {
+        self.loadingView.frame = CGRectMake((self.view.frame.size.width-self.loadingView.frame.size.width)/2, (self.view.frame.size.height-self.loadingView.frame.size.height)/2, self.loadingView.frame.size.width, self.loadingView.frame.size.height);
+    }
 }
 
 - (void)dismissLoadingView
@@ -199,12 +211,17 @@
     [self presentViewController:alert animated:true completion:nil];
 }
 
+- (void)reloadTable:(BOOL)clearall
+{
+    _clearall = clearall;
+    [self.tableView reloadData];
+}
 
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    return 1;
+    return _clearall ? 0 : 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
@@ -233,8 +250,7 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     SeafBase *entry = [self.items objectAtIndex:indexPath.row];
-
-    NSString *CellIdentifier = @"SeafProviderCell";
+    NSString *CellIdentifier = @"SeafProviderCell2";
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier];
@@ -255,7 +271,7 @@
         SeafFile *sfile = (SeafFile *)entry;
         cell.detailTextLabel.text = sfile.detailText;
     }
-    cell.imageView.frame = CGRectMake(8, 8, 32, 32);
+    cell.imageView.frame = CGRectMake(8, 8, 28, 28);
     return cell;
 }
 
@@ -347,7 +363,6 @@
         if ([_directory hasCache])
             return;
 
-        //[SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load content of the directory", @"Seafile")];
         Warning("Failed to load directory content %@\n", entry.name);
     } else {
         if (entry != self.sfile) return;
@@ -366,11 +381,9 @@
 
 - (void)entry:(SeafBase *)entry repoPasswordSet:(BOOL)success
 {
-    //[SVProgressHUD dismiss];
     if (success) {
         [self pushViewControllerDir:(SeafDir *)entry];
     } else {
-        //[SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Wrong library password", @"Seafile") duration:2.0];
         [self performSelector:@selector(popupSetRepoPassword:) withObject:entry afterDelay:1.0];
     }
 }
@@ -408,23 +421,27 @@
     }
     [controller didMoveToParentViewController:self];
     [self.view addSubview:controller.view];
+    [self.view bringSubviewToFront:controller.view];
 
     [UIView animateWithDuration:0.5f delay:0.f options:0 animations:^{
         controller.view.frame = self.view.frame;
     } completion:^(BOOL finished) {
+        [self reloadTable:true];
     }];
 }
 
 - (void)popViewController
 {
+    if ([self.parentViewController isKindOfClass:[SeafProviderFileViewController class]])
+        [(SeafProviderFileViewController *)self.parentViewController reloadTable:false];
     [UIView animateWithDuration:0.5
                      animations:^{
                          self.view.frame = CGRectMake(self.view.frame.size.width, self.view.frame.origin.y, self.view.frame.size.width, self.view.frame.size.height);
                      }
                      completion:^(BOOL finished){
                          [self willMoveToParentViewController:self.parentViewController];
-                         [self.view removeFromSuperview];
                          [self removeFromParentViewController];
+                         [self.view removeFromSuperview];
                      }];
 }
 
