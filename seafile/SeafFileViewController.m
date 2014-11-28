@@ -885,21 +885,21 @@ enum {
                 [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to delete files", @"Seafile")];
                 break;
             case STATE_MKDIR:
-                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to create folder", @"Seafile") duration:2.0];
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to create folder", @"Seafile")];
                 [self performSelector:@selector(popupMkdirView) withObject:nil afterDelay:1.0];
                 break;
             case STATE_CREATE:
-                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to create file", @"Seafile") duration:2.0];
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to create file", @"Seafile")];
                 [self performSelector:@selector(popupCreateView) withObject:nil afterDelay:1.0];
                 break;
             case STATE_COPY:
-                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to copy files", @"Seafile") duration:2.0];
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to copy files", @"Seafile")];
                 break;
             case STATE_MOVE:
-                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to move files", @"Seafile") duration:2.0];
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to move files", @"Seafile")];
                 break;
             case STATE_RENAME: {
-                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to rename file", @"Seafile") duration:2.0];
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to rename file", @"Seafile")];
                 SeafFile *file = (SeafFile *)_curEntry;
                 [self performSelector:@selector(popupRenameView:) withObject:file.name afterDelay:1.0];
                 break;
@@ -931,7 +931,7 @@ enum {
         [self.navigationController pushViewController:controller animated:YES];
         [controller setDirectory:(SeafDir *)entry];
     } else {
-        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Wrong library password", @"Seafile") duration:2.0];
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Wrong library password", @"Seafile")];
         [self performSelector:@selector(popupSetRepoPassword:) withObject:entry afterDelay:1.0];
     }
 }
@@ -1255,7 +1255,7 @@ enum {
 {
     [self uploadProgress:file result:YES progress:100];
     if (self.isVisible) {
-        [SVProgressHUD showSuccessWithStatus:[NSString stringWithFormat:NSLocalizedString(@"File '%@' uploaded success", @"Seafile"), file.name] duration:1.0];
+        [SVProgressHUD showSuccessWithStatus:[NSString stringWithFormat:NSLocalizedString(@"File '%@' uploaded success", @"Seafile"), file.name]];
     }
 
 }

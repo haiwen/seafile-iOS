@@ -127,7 +127,7 @@ enum {
     Debug("error=%@\n", error);
     [self dismissLoadingView];
     if (error.code != NSURLErrorCancelled && error.code != 102)
-        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load activities", @"Seafile") duration:1.0];
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load activities", @"Seafile")];
     self.state = ACTIVITY_END;
 }
 

@@ -712,7 +712,7 @@ enum PREVIEW_STATE {
             NSString *js = [NSString stringWithFormat:@"addMessage(\"%@\");", [html stringEscapedForJavasacript]];
             [self.webView stringByEvaluatingJavaScriptFromString:js];
         } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to add discussion", @"Seafile") duration:1.0];
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to add discussion", @"Seafile")];
         }];
     }
 }

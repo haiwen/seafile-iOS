@@ -37,7 +37,6 @@
 		571D8CD11677881400F1A22C /* SeafUploadDirViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57931B531632E5DB00B462BA /* SeafUploadDirViewController.m */; };
 		571D8CD21677881400F1A22C /* SeafSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5764C82A163BF91B006AD511 /* SeafSettingsViewController.m */; };
 		571D8CD41677881400F1A22C /* SeafStarredFilesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57853C8E164675CB00CE8857 /* SeafStarredFilesViewController.m */; };
-		571D8CDA1677881400F1A22C /* SVProgressHUD.m in Sources */ = {isa = PBXBuildFile; fileRef = 57C57BDB165FBB4C006834DF /* SVProgressHUD.m */; };
 		571D8CDD1677881400F1A22C /* MessageUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5765533D161D44A2005E5327 /* MessageUI.framework */; };
 		571D8CDE1677881400F1A22C /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57335CF8160DA00000018AE8 /* SystemConfiguration.framework */; };
 		571D8CDF1677881400F1A22C /* QuickLook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 576B9EC015DD394600802D07 /* QuickLook.framework */; };
@@ -73,7 +72,6 @@
 		571D8DAD1677881400F1A22C /* text.png in Resources */ = {isa = PBXBuildFile; fileRef = 5739703C165800810089F32F /* text.png */; };
 		571D8DAE1677881400F1A22C /* text-directory.png in Resources */ = {isa = PBXBuildFile; fileRef = 5739703E1658008A0089F32F /* text-directory.png */; };
 		571D8DAF1677881400F1A22C /* text-directory-documents.png in Resources */ = {isa = PBXBuildFile; fileRef = 57397040165801EE0089F32F /* text-directory-documents.png */; };
-		571D8DB01677881400F1A22C /* SVProgressHUD.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 57C57BDE165FC87B006834DF /* SVProgressHUD.bundle */; };
 		571F5148168C80380055D69B /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 571F5147168C80380055D69B /* MobileCoreServices.framework */; };
 		57227A5D18389DB600CD28E9 /* red.png in Resources */ = {isa = PBXBuildFile; fileRef = 57227A5B18389DB600CD28E9 /* red.png */; };
 		5725186217AE7D010078CD12 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5725186117AE7D000078CD12 /* Security.framework */; };
@@ -320,6 +318,9 @@
 		57A95E5F18369E5A009D268A /* ellipsis.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A95E5C18369E5A009D268A /* ellipsis.png */; };
 		57A95E6118369E5A009D268A /* ellipsis2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A95E5D18369E5A009D268A /* ellipsis2.png */; };
 		57ABE5FB187925B300145FE3 /* CoreText.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 576B9918186142EC00A16ED6 /* CoreText.framework */; };
+		57ACEEA51A28AD5D0053A94A /* MBProgressHUD.m in Sources */ = {isa = PBXBuildFile; fileRef = 57ACEE871A28AD5D0053A94A /* MBProgressHUD.m */; };
+		57ACEED91A28B1BF0053A94A /* SVProgressHUD.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 57ACEEC71A28B1BF0053A94A /* SVProgressHUD.bundle */; };
+		57ACEEDA1A28B1BF0053A94A /* SVProgressHUD.m in Sources */ = {isa = PBXBuildFile; fileRef = 57ACEEC91A28B1BF0053A94A /* SVProgressHUD.m */; };
 		57BD9329174B0A0E00F7732F /* SeafDisMasterViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BD9321174B0A0E00F7732F /* SeafDisMasterViewController.m */; };
 		57BD932C174DD86D00F7732F /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = 57BD932A174DD86D00F7732F /* index.html */; };
 		57BD932F174DDA8700F7732F /* group.png in Resources */ = {isa = PBXBuildFile; fileRef = 57BD932D174DDA8700F7732F /* group.png */; };
@@ -783,6 +784,11 @@
 		57A95E5718369147009D268A /* close2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = close2.png; sourceTree = "<group>"; };
 		57A95E5C18369E5A009D268A /* ellipsis.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ellipsis.png; sourceTree = "<group>"; };
 		57A95E5D18369E5A009D268A /* ellipsis2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ellipsis2.png; sourceTree = "<group>"; };
+		57ACEE861A28AD5D0053A94A /* MBProgressHUD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MBProgressHUD.h; sourceTree = "<group>"; };
+		57ACEE871A28AD5D0053A94A /* MBProgressHUD.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MBProgressHUD.m; sourceTree = "<group>"; };
+		57ACEEC71A28B1BF0053A94A /* SVProgressHUD.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = SVProgressHUD.bundle; sourceTree = "<group>"; };
+		57ACEEC81A28B1BF0053A94A /* SVProgressHUD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVProgressHUD.h; sourceTree = "<group>"; };
+		57ACEEC91A28B1BF0053A94A /* SVProgressHUD.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVProgressHUD.m; sourceTree = "<group>"; };
 		57AE699418C1C0A200AEBF8B /* ca */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ca; path = ca.lproj/Localizable.strings; sourceTree = "<group>"; };
 		57B66EAF15BA513E00C2B41B /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		57BD931E174B0A0E00F7732F /* SeafDisDetailViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafDisDetailViewController.h; sourceTree = "<group>"; };
@@ -847,9 +853,6 @@
 		57C07CE31632556600502B06 /* SeafUploadingFileCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafUploadingFileCell.m; sourceTree = "<group>"; };
 		57C520F8197A3BB800970804 /* css.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = css.png; sourceTree = "<group>"; };
 		57C520F9197A3BB800970804 /* psd.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = psd.png; sourceTree = "<group>"; };
-		57C57BDB165FBB4C006834DF /* SVProgressHUD.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVProgressHUD.m; sourceTree = "<group>"; };
-		57C57BDC165FBB4C006834DF /* SVProgressHUD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVProgressHUD.h; sourceTree = "<group>"; };
-		57C57BDE165FC87B006834DF /* SVProgressHUD.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = SVProgressHUD.bundle; sourceTree = "<group>"; };
 		57D0AD3617914E7900D741BE /* mobile.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; name = mobile.css; path = htmls/mobile.css; sourceTree = SOURCE_ROOT; };
 		57D189CE182E0A380029A797 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = "seafile-appstore/Images.xcassets"; sourceTree = "<group>"; };
 		57D2F3FD18D33E7D00A52EB6 /* SeafMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafMessage.h; sourceTree = "<group>"; };
@@ -1009,9 +1012,6 @@
 				5753522B198CD3AD000BE07B /* MWPhotoBrowser */,
 				5704C6D01753A1380028F4FE /* IntelligentSplitViewController.h */,
 				5704C6D11753A1380028F4FE /* IntelligentSplitViewController.m */,
-				57C57BDE165FC87B006834DF /* SVProgressHUD.bundle */,
-				57C57BDC165FBB4C006834DF /* SVProgressHUD.h */,
-				57C57BDB165FBB4C006834DF /* SVProgressHUD.m */,
 			);
 			name = thirdpart;
 			sourceTree = "<group>";
@@ -1140,6 +1140,8 @@
 		57094B5515B9AC4A00F48C08 /* libs */ = {
 			isa = PBXGroup;
 			children = (
+				57ACEEB01A28B1BE0053A94A /* SVProgressHUD */,
+				57ACEE641A28AD5D0053A94A /* MBProgressHUD */,
 				57E228461A0E286100C92330 /* QBImagePickerController */,
 				573E35A21922847200C67671 /* JSMessagesViewController */,
 				576B98FA1861411700A16ED6 /* EGOTextView */,
@@ -1707,6 +1709,33 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
+		57ACEE641A28AD5D0053A94A /* MBProgressHUD */ = {
+			isa = PBXGroup;
+			children = (
+				57ACEE861A28AD5D0053A94A /* MBProgressHUD.h */,
+				57ACEE871A28AD5D0053A94A /* MBProgressHUD.m */,
+			);
+			path = MBProgressHUD;
+			sourceTree = "<group>";
+		};
+		57ACEEB01A28B1BE0053A94A /* SVProgressHUD */ = {
+			isa = PBXGroup;
+			children = (
+				57ACEEC51A28B1BF0053A94A /* SVProgressHUD */,
+			);
+			path = SVProgressHUD;
+			sourceTree = "<group>";
+		};
+		57ACEEC51A28B1BF0053A94A /* SVProgressHUD */ = {
+			isa = PBXGroup;
+			children = (
+				57ACEEC71A28B1BF0053A94A /* SVProgressHUD.bundle */,
+				57ACEEC81A28B1BF0053A94A /* SVProgressHUD.h */,
+				57ACEEC91A28B1BF0053A94A /* SVProgressHUD.m */,
+			);
+			path = SVProgressHUD;
+			sourceTree = "<group>";
+		};
 		57DB826215A833F900097CEC = {
 			isa = PBXGroup;
 			children = (
@@ -2020,6 +2049,7 @@
 				57E1FD93173AB85500523912 /* jquery.hotkeys.js in Resources */,
 				5782EE751734F3A300A76338 /* Markdown.Editor.js in Resources */,
 				573E36311922847200C67671 /* message-sent.aiff in Resources */,
+				57ACEED91A28B1BF0053A94A /* SVProgressHUD.bundle in Resources */,
 				57943C0619F027D5008423E5 /* close@2x.png in Resources */,
 				573E36261922847200C67671 /* input-field-cover.png in Resources */,
 				573E36061922847200C67671 /* avatar-placeholder.png in Resources */,
@@ -2134,7 +2164,6 @@
 				57BFAB0418BD8EA200EB1B5C /* bt-ol.png in Resources */,
 				57A95E5B18369147009D268A /* close2.png in Resources */,
 				57BFAB1618BD8EA200EB1B5C /* bt-undo.png in Resources */,
-				571D8DB01677881400F1A22C /* SVProgressHUD.bundle in Resources */,
 				57708C0219F23CD300D6ACE7 /* tab-account@2x.png in Resources */,
 				570DFACC16A19EFD00ADD5F2 /* account.png in Resources */,
 				573E36211922847200C67671 /* bubble-tailless@2x.png in Resources */,
@@ -2316,13 +2345,13 @@
 				57D2F3FF18D33E7D00A52EB6 /* SeafMessage.m in Sources */,
 				571D8CD21677881400F1A22C /* SeafSettingsViewController.m in Sources */,
 				57E228881A0E286200C92330 /* QBAssetsCollectionCheckmarkView.m in Sources */,
+				57ACEEA51A28AD5D0053A94A /* MBProgressHUD.m in Sources */,
 				57E2288C1A0E286200C92330 /* QBAssetsCollectionViewCell.m in Sources */,
 				57E2288D1A0E286200C92330 /* QBAssetsCollectionViewController.m in Sources */,
 				571D8CD41677881400F1A22C /* SeafStarredFilesViewController.m in Sources */,
 				573E35FD1922847200C67671 /* JSBubbleMessageCell.m in Sources */,
 				573E35FE1922847200C67671 /* JSBubbleView.m in Sources */,
 				573E36001922847200C67671 /* JSMessage.m in Sources */,
-				571D8CDA1677881400F1A22C /* SVProgressHUD.m in Sources */,
 				57E229AF1A11087500C92330 /* SeafDir.m in Sources */,
 				57E22A691A11093D00C92330 /* SeafGlobal.m in Sources */,
 				57E229E41A1108B200C92330 /* FileSizeFormatter.m in Sources */,
@@ -2362,6 +2391,7 @@
 				5732A962177894E700D806C7 /* REComposeBackgroundView.m in Sources */,
 				5732A964177894E700D806C7 /* REComposeSheetView.m in Sources */,
 				5732A968177894E700D806C7 /* REComposeViewController.m in Sources */,
+				57ACEEDA1A28B1BF0053A94A /* SVProgressHUD.m in Sources */,
 				573206A718EBABAE003250DE /* SeafDisDetailViewController.m in Sources */,
 				573E36011922847200C67671 /* JSMessageInputView.m in Sources */,
 				57535231198CD4E0000BE07B /* MWTapDetectingView.m in Sources */,

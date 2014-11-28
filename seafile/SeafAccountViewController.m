@@ -193,9 +193,9 @@
     if (error == HTTP_ERR_LOGIN_INCORRECT_PASSWORD)
         [self alertWithMessage:NSLocalizedString(@"Wrong username or password", @"Seafile")];
     else if (error == 0){
-        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Network unavailable", @"Seafile") duration:1.0];
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Network unavailable", @"Seafile")];
     } else {
-        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to login", @"Seafile") duration:1.0];
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to login", @"Seafile")];
     }
 }
 
