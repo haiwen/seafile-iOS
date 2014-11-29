@@ -50,6 +50,7 @@
         _filesize = size;
         self.downloadingFileOid = nil;
         self.operation = nil;
+        [self loadCache];
     }
     return self;
 }
@@ -77,15 +78,15 @@
     NSString *sizeStr = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:self.filesize ] useBaseTen:NO];
     if (self.mpath) {
         if (self.ufile.uploading)
-            return [NSString stringWithFormat:@"%@, uploading", sizeStr];
+            return [NSString stringWithFormat:NSLocalizedString(@"%@, uploading", @"Seafile"), sizeStr];
         else
-            return [NSString stringWithFormat:@"%@, modified", sizeStr];
+            return [NSString stringWithFormat:NSLocalizedString(@"%@, modified", @"Seafile"), sizeStr];
     } else if (!self.mtime)
         return sizeStr;
 
     NSString *timeStr = [SeafDateFormatter stringFromLongLong:self.mtime];
     if ([self hasCache])
-        return [NSString stringWithFormat:@"%@, %@, cached", sizeStr, timeStr];
+        return [NSString stringWithFormat:NSLocalizedString(@"%@, %@, cached", @"Seafile"), sizeStr, timeStr];
     else
         return [NSString stringWithFormat:@"%@, %@", sizeStr, timeStr];
 }

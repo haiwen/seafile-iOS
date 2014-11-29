@@ -176,6 +176,7 @@
             }];
             return;
         }
+        [SVProgressHUD showWithStatus:NSLocalizedString(@"Checking library password ...", @"Seafile")];
         [repo setDelegate:self];
         if ([repo->connection localDecrypt:repo.repoId])
             [repo checkRepoPassword:input];

@@ -138,7 +138,8 @@
 
 - (void)showUploadProgress:(SeafUploadFile *)file
 {
-    self.alert = [UIAlertController alertControllerWithTitle:file.name message:nil preferredStyle:UIAlertControllerStyleAlert];
+    NSString *title = [NSString stringWithFormat: @"Uploading %@", file.name];
+    self.alert = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleAlert];
     UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         [file doRemove];
     }];
@@ -266,7 +267,8 @@
 
 - (void)showDownloadProgress:(SeafFile *)file
 {
-    self.alert = [UIAlertController alertControllerWithTitle:file.name message:nil preferredStyle:UIAlertControllerStyleAlert];
+    NSString *title = [NSString stringWithFormat: @"Downloading %@", file.name];
+    self.alert = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleAlert];
     UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         [file cancelDownload];
     }];
@@ -319,12 +321,13 @@
 #pragma mark - SeafDentryDelegate
 - (void)entry:(SeafBase *)entry updated:(BOOL)updated progress:(int)percent
 {
-    if (!updated || ![self isViewLoaded])
+    if (![self isViewLoaded])
         return;
 
-    if (_directory == entry)
-        [self refreshView];
-    else {
+    if (_directory == entry) {
+        if (updated && percent == 100)
+            [self refreshView];
+    } else {
         if (entry != self.sfile) return;
         NSUInteger index = [_directory.allItems indexOfObject:entry];
         if (index == NSNotFound)
@@ -333,7 +336,8 @@
         if (percent == 100) {
             [self.alert dismissViewControllerAnimated:NO completion:^{
                 NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
-                [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+                //[self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+                [self tableView:self.tableView didSelectRowAtIndexPath:indexPath];
             }];
         }
     }
