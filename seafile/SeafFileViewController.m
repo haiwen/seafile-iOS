@@ -1197,12 +1197,12 @@ enum {
     }
 }
 
-- (void)imagePickerControllerDidCancel:(QBImagePickerController *)imagePickerController
+- (void)qb_imagePickerControllerDidCancel:(QBImagePickerController *)imagePickerController
 {
     [self dismissImagePickerController:imagePickerController];
 }
 
-- (void)imagePickerController:(QBImagePickerController *)imagePickerController didSelectAssetsUrl:(NSArray *)assets
+- (void)qb_imagePickerController:(QBImagePickerController *)imagePickerController didSelectAssets:(NSArray *)assets
 {
     [self performSelector:@selector(uploadPickedAssets:) withObject:assets];
     [self dismissImagePickerController:imagePickerController];
