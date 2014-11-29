@@ -6,15 +6,16 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
+#import "SVProgressHUD.h"
+#import "AFNetworking.h"
 
 #import "SeafAppDelegate.h"
 #import "SeafDisDetailViewController.h"
-#import "AFNetworking.h"
 #import "Debug.h"
 #import "Utils.h"
 
 
-@interface SeafAppDelegate () <UITabBarControllerDelegate>
+@interface SeafAppDelegate () <UITabBarControllerDelegate, UIAlertViewDelegate>
 
 @property UIBackgroundTaskIdentifier bgTask;
 
@@ -25,6 +26,8 @@
 @property (strong) NSArray *viewControllers;
 @property (readwrite) SeafGlobal *global;
 
+@property (strong) void (^handler_ok)();
+@property (strong) void (^handler_cancel)();
 @end
 
 @implementation SeafAppDelegate
@@ -72,6 +75,12 @@
 
 - (void)delayedInit
 {
+    NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
+    NSString *version = [infoDictionary objectForKey:@"CFBundleVersion"];
+    Debug("Current app version is %@\n%@\n", version, infoDictionary);
+    [SeafGlobal.sharedObject setObject:version forKey:@"VERSION"];
+    [SeafGlobal.sharedObject synchronize];
+
     [[AFNetworkReachabilityManager sharedManager] startMonitoring];
     [self cycleTheGlobalMailComposer];
     [SeafGlobal.sharedObject startTimer];
@@ -81,18 +90,13 @@
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
         [conn checkAutoSync];
     }
+    [SVProgressHUD setBackgroundColor:[UIColor colorWithRed:250.0/256 green:250.0/256 blue:250.0/256 alpha:1.0]];
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    // Override point for customization after application launch.
     _global = [SeafGlobal sharedObject];
     [_global migrate];
-    NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
-    NSString *version = [infoDictionary objectForKey:@"CFBundleVersion"];
-    Debug("Current app version is %@\n%@\n", version, infoDictionary);
-    [SeafGlobal.sharedObject setObject:version forKey:@"VERSION"];
-    [SeafGlobal.sharedObject synchronize];
     [self initTabController];
 
     if (ios7)
@@ -388,9 +392,29 @@
     [self.startVC performSelector:@selector(selectAccount:) withObject:connection afterDelay:0.5f];
 }
 
-- (UIViewController *)rootViewController
+- (void)continueWithInvalidCert:(NSString *)title message:(NSString*)message yes:(void (^)())yes no:(void (^)())no
 {
-    return self.window.rootViewController;
+    if (ios8)
+        [Utils alertWithTitle:title message:message yes:yes no:no from:self.window.rootViewController];
+    else {
+        self.handler_ok = yes;
+        self.handler_cancel = no;
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:message delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") otherButtonTitles:NSLocalizedString(@"OK", @"Seafile"), nil];
+        alert.alertViewStyle = UIAlertViewStyleDefault;
+        [alert show];
+    }
 }
+#pragma mark - UIAlertViewDelegate
 
+- (void)alertView:(UIAlertView *)alertView willDismissWithButtonIndex:(NSInteger)buttonIndex
+{
+    if (buttonIndex != alertView.cancelButtonIndex) {
+        if (self.handler_ok) {
+            self.handler_ok();
+        }
+    } else {
+        if (self.handler_cancel)
+            self.handler_cancel();
+    }
+}
 @end

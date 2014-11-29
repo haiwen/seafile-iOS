@@ -63,19 +63,19 @@
     NSString *url = serverTextField.text;
 
     if (!url || url.length < 1) {
-        [self alertWithMessage:NSLocalizedString(@"Server must not be empty", @"Seafile")];
+        [self alertWithTitle:NSLocalizedString(@"Server must not be empty", @"Seafile")];
         return;
     }
     if (![url hasPrefix:HTTP] && ![url hasPrefix:HTTPS]) {
-        [self alertWithMessage:NSLocalizedString(@"Invalid Server", @"Seafile")];
+        [self alertWithTitle:NSLocalizedString(@"Invalid Server", @"Seafile")];
         return;
     }
     if (!username || username.length < 1) {
-        [self alertWithMessage:NSLocalizedString(@"Username must not be empty", @"Seafile")];
+        [self alertWithTitle:NSLocalizedString(@"Username must not be empty", @"Seafile")];
         return;
     }
     if (!password || password.length < 1) {
-        [self alertWithMessage:NSLocalizedString(@"Password required", @"Seafile")];
+        [self alertWithTitle:NSLocalizedString(@"Password required", @"Seafile")];
         return;
     }
 
@@ -145,6 +145,11 @@
             serverTextField.text = @"https://seacloud.cc";
         else if (self.type == 2)
             serverTextField.text = @"https://cloud.seafile.com";
+        else {
+            serverTextField.text = @"https://dev.seafile.com/seahub/";
+            usernameTextField.text = @"demo@seafile.com";
+            passwordTextField.text = @"demo";
+        }
     }
     usernameTextField.placeholder = NSLocalizedString(@"Email", @"Seafile");
     passwordTextField.placeholder = NSLocalizedString(@"Password", @"Seafile");
@@ -191,7 +196,7 @@
 
     [SVProgressHUD dismiss];
     if (error == HTTP_ERR_LOGIN_INCORRECT_PASSWORD)
-        [self alertWithMessage:NSLocalizedString(@"Wrong username or password", @"Seafile")];
+        [self alertWithTitle:NSLocalizedString(@"Wrong username or password", @"Seafile")];
     else if (error == 0){
         [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Network unavailable", @"Seafile")];
     } else {
@@ -222,9 +227,9 @@
 {
 }
 
-- (UIViewController *)rootViewController
+- (void)continueWithInvalidCert:(NSString *)title message:(NSString*)message yes:(void (^)())yes no:(void (^)())no
 {
-    return self;
+    [self alertWithTitle:title message:message yes:yes no:no];
 }
 
 @end

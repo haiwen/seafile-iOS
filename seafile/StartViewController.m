@@ -150,7 +150,10 @@
         actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:privserver, @"SeaCloud.cc", @"cloud.seafile.com", nil];
     else
         actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") destructiveButtonTitle:nil otherButtonTitles:privserver, @"SeaCloud.cc", @"cloud.seafile.com", nil];
-    [actionSheet showFromBarButtonItem:sender animated:YES];
+    if (IsIpad())
+        [actionSheet showFromBarButtonItem:sender animated:YES];
+    else
+        [actionSheet showInView:[UIApplication sharedApplication].keyWindow];
 }
 
 #pragma mark - Table view data source
@@ -257,7 +260,7 @@
     if (!conn) return NO;
     if (![conn authorized]) {
         NSString *title = NSLocalizedString(@"The token is invalid, you need to login again", @"Seafile");
-        [self alertWithMessage:title handler:^{
+        [self alertWithTitle:title handler:^{
             [self showAccountView:conn type:0];
         }];
         return YES;

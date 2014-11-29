@@ -36,7 +36,7 @@ enum MSG_TYPE{
 
 @protocol SeafConnectionDelegate <NSObject>
 - (void)loginRequired:(SeafConnection *)connection;
-- (UIViewController *)rootViewController;
+- (void)continueWithInvalidCert:(NSString *)title message:(NSString*)message yes:(void (^)())yes no:(void (^)())no;
 @end
 
 

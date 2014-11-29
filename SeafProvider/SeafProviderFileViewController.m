@@ -126,15 +126,9 @@
     [self.loadingView stopAnimating];
 }
 
-- (void)alertWithMessage:(NSString*)message handler:(void (^)())handler;
+- (void)alertWithTitle:(NSString*)message handler:(void (^)())handler
 {
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:message message:nil preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"Seafile") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        if (handler)
-            handler();
-    }];
-    [alert addAction:cancelAction];
-    [self presentViewController:alert animated:true completion:nil];
+    [Utils alertWithTitle:message message:nil handler:handler from:self];
 }
 
 - (IBAction)goBack:(id)sender
@@ -177,20 +171,15 @@
 
 - (void)popupSetRepoPassword:(SeafRepo *)repo
 {
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Password of this library", @"Seafile") message:nil preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-    }];
-    UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"Seafile") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        UITextField *textfiled = [alert.textFields objectAtIndex:0];
-        NSString *input = textfiled.text;
+    [Utils popupInputView:NSLocalizedString(@"Password of this library", @"Seafile") placeholder:nil secure:true handler:^(NSString *input) {
         if (!input || input.length == 0) {
-            [self alertWithMessage:NSLocalizedString(@"Password must not be empty", @"Seafile")handler:^{
+            [self alertWithTitle:NSLocalizedString(@"Password must not be empty", @"Seafile")handler:^{
                 [self popupSetRepoPassword:repo];
             }];
             return;
         }
         if (input.length < 3 || input.length  > 100) {
-            [self alertWithMessage:NSLocalizedString(@"The length of password should be between 3 and 100", @"Seafile") handler:^{
+            [self alertWithTitle:NSLocalizedString(@"The length of password should be between 3 and 100", @"Seafile") handler:^{
                 [self popupSetRepoPassword:repo];
             }];
             return;
@@ -200,15 +189,7 @@
             [repo checkRepoPassword:input];
         else
             [repo setRepoPassword:input];
-
-    }];
-    [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
-        textField.secureTextEntry = true;
-    }];
-    [alert addAction:cancelAction];
-    [alert addAction:okAction];
-
-    [self presentViewController:alert animated:true completion:nil];
+    } from:self];
 }
 
 - (void)reloadTable:(BOOL)clearall
@@ -374,7 +355,7 @@
             [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
             Warning("Failed to download file %@\n", entry.name);
             NSString *msg = [NSString stringWithFormat:@"Failed to download file '%@'", entry.name];
-            [self alertWithMessage:msg handler:nil];
+            [self alertWithTitle:msg handler:nil];
         }];
     }
 }
@@ -396,7 +377,7 @@
         self.progressView.progress = percent * 1.0f/100.f;
     } else {
         Warning("Failed to upload file");
-        [self alertWithMessage:NSLocalizedString(@"Failed to uplod file", @"Seafile") handler:nil];
+        [self alertWithTitle:NSLocalizedString(@"Failed to uplod file", @"Seafile") handler:nil];
     }
 }
 

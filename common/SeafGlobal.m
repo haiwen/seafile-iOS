@@ -55,11 +55,7 @@
 
 - (NSURL *)applicationDocumentsDirectoryURL
 {
-#ifdef SEAFILE_APP_OLD
-    return [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
-#else
     return [[[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:GROUP_NAME] URLByAppendingPathComponent:@"seafile" isDirectory:true];
-#endif
 }
 
 - (NSString *)applicationDocumentsDirectory
@@ -88,7 +84,7 @@
 {
     NSUserDefaults *oldDef = [NSUserDefaults standardUserDefaults];
     NSUserDefaults *newDef = [[NSUserDefaults alloc] initWithSuiteName:GROUP_NAME];
-    NSArray *accounts = [self objectForKey:@"ACCOUNTS"];
+    NSArray *accounts = [oldDef objectForKey:@"ACCOUNTS"];
     if (accounts && accounts.count > 0) {
         for(NSString *key in oldDef.dictionaryRepresentation) {
             [newDef setObject:[oldDef objectForKey:key] forKey:key];
@@ -97,7 +93,7 @@
         [oldDef removeObjectForKey:@"ACCOUNTS"];
         [oldDef synchronize];
     }
-    Debug("accounts:%@\n%@", oldDef.dictionaryRepresentation, newDef.dictionaryRepresentation);
+    Debug("accounts:%@\new:%@", oldDef.dictionaryRepresentation, newDef.dictionaryRepresentation);
 
 }
 - (void)migrateDocuments
@@ -521,7 +517,6 @@
                         } failureBlock:^(NSError *error) {
                             failureBlock(error);
                         }];
-
 }
 
 @end

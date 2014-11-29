@@ -8,17 +8,20 @@
 
 #import <UIKit/UIKit.h>
 
-@interface UIViewController (Extend)
+@interface UIViewController (Extend)<UIAlertViewDelegate>
+@property void (^handler_ok)();
+@property void (^handler_cancel)();
+@property void (^handler_input)(NSString *input);
 
 - (id)initWithAutoNibName;
 - (id)initWithAutoPlatformNibName;
 - (id)initWithAutoPlatformLangNibName:(NSString *)lang;
 
-- (void)alertWithMessage:(NSString*)message;
-- (void)alertWithMessage:(NSString*)message handler:(void (^)())handler;
-- (void)alertWithMessage:(NSString*)message yes:(void (^)())yes no:(void (^)())no;
+- (void)alertWithTitle:(NSString*)title;
+- (void)alertWithTitle:(NSString*)title handler:(void (^)())handler;
+- (void)alertWithTitle:(NSString *)title message:(NSString*)message yes:(void (^)())yes no:(void (^)())no;
 
-- (void)popupInputView:(NSString *)title placeholder:(NSString *)tip handler:(void (^)(NSString *input))handler;
+- (void)popupInputView:(NSString *)title placeholder:(NSString *)tip secure:(BOOL)secure handler:(void (^)(NSString *input))handler;
 
 - (UIBarButtonItem *)getBarItem:(NSString *)imageName action:(SEL)action size:(float)size;
 

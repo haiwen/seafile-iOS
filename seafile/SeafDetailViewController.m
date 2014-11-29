@@ -546,7 +546,10 @@ enum PREVIEW_STATE {
     for (NSDictionary *grp in ((SeafFile *)self.preViewItem).groups) {
         [self.actionSheet addButtonWithTitle:[grp objectForKey:@"name"]];
     }
-    [self.actionSheet showFromBarButtonItem:self.commentItem animated:YES];
+    if (IsIpad())
+        [self.actionSheet showFromBarButtonItem:self.commentItem animated:YES];
+    else
+        [self.actionSheet showInView:[UIApplication sharedApplication].keyWindow];
 }
 
 - (IBAction)starFile:(id)sender
@@ -564,11 +567,11 @@ enum PREVIEW_STATE {
 - (IBAction)editFile:(id)sender
 {
     if (self.preViewItem.filesize > 10 * 1024 * 1024) {
-        [self alertWithMessage:[NSString stringWithFormat:NSLocalizedString(@"File '%@' is too large to edit", @"Seafile"), self.preViewItem.name]];
+        [self alertWithTitle:[NSString stringWithFormat:NSLocalizedString(@"File '%@' is too large to edit", @"Seafile"), self.preViewItem.name]];
         return;
     }
     if (!self.preViewItem.strContent) {
-        [self alertWithMessage:[NSString stringWithFormat:NSLocalizedString(@"Failed to identify the coding of '%@'", @"Seafile"), self.preViewItem.name]];
+        [self alertWithTitle:[NSString stringWithFormat:NSLocalizedString(@"Failed to identify the coding of '%@'", @"Seafile"), self.preViewItem.name]];
         return;
     }
     SeafTextEditorViewController *editViewController = [[SeafTextEditorViewController alloc] initWithFile:self.preViewItem];
@@ -630,7 +633,10 @@ enum PREVIEW_STATE {
             [self.actionSheet addButtonWithTitle:title];
         }
         [self.actionSheet addButtonWithTitle:NSLocalizedString(@"Open elsewhere...", "Seafile")];
-        [self.actionSheet showFromBarButtonItem:self.exportItem animated:YES];
+        if (IsIpad())
+            [self.actionSheet showFromBarButtonItem:self.exportItem animated:YES];
+        else
+            [self.actionSheet showInView:[UIApplication sharedApplication].keyWindow];
     }
 }
 
@@ -649,8 +655,10 @@ enum PREVIEW_STATE {
         self.actionSheet = [[UIActionSheet alloc] initWithTitle:SHARE_TITLE delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:email, copy, nil ];
     else
         self.actionSheet = [[UIActionSheet alloc] initWithTitle:SHARE_TITLE delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") destructiveButtonTitle:nil otherButtonTitles:email, copy, nil ];
-
-    [self.actionSheet showFromBarButtonItem:self.shareItem animated:YES];
+    if (IsIpad())
+        [self.actionSheet showFromBarButtonItem:self.shareItem animated:YES];
+    else
+        [self.actionSheet showInView:[UIApplication sharedApplication].keyWindow];
 }
 
 - (void)thisImage:(UIImage *)image hasBeenSavedInPhotoAlbumWithError:(NSError *)error usingContextInfo:(void *)ctxInfo
@@ -803,11 +811,11 @@ enum PREVIEW_STATE {
     Debug("send mail: %@", shareLink);
     Class mailClass = (NSClassFromString(@"MFMailComposeViewController"));
     if (!mailClass) {
-        [self alertWithMessage:NSLocalizedString(@"This function is not supportted yet，you can copy it to the pasteboard and send mail by yourself", @"Seafile")];
+        [self alertWithTitle:NSLocalizedString(@"This function is not supportted yet，you can copy it to the pasteboard and send mail by yourself", @"Seafile")];
         return;
     }
     if (![mailClass canSendMail]) {
-        [self alertWithMessage:NSLocalizedString(@"The mail account has not been set yet", @"Seafile")];
+        [self alertWithTitle:NSLocalizedString(@"The mail account has not been set yet", @"Seafile")];
         return;
     }
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];

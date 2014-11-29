@@ -215,7 +215,7 @@ enum {
                 break;
         }
     } else if (indexPath.section == 4) {
-        [self alertWithMessage:MSG_CLEAR_CACHE yes:^{
+        [self alertWithTitle:MSG_CLEAR_CACHE message:nil yes:^{
             SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
             [(SeafDetailViewController *)[appdelegate detailViewControllerAtIndex:TABBED_SETTINGS] setPreViewItem:nil master:nil];
             [Utils clearAllFiles:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
@@ -271,11 +271,11 @@ enum {
 {
     Class mailClass = NSClassFromString(@"MFMailComposeViewController");
     if (!mailClass) {
-        [self alertWithMessage:NSLocalizedString(@"This function is not supportted yet", @"Seafile")];
+        [self alertWithTitle:NSLocalizedString(@"This function is not supportted yet", @"Seafile")];
         return;
     }
     if (![mailClass canSendMail]) {
-        [self alertWithMessage:NSLocalizedString(@"The mail account has not been set yet", @"Seafile")];
+        [self alertWithTitle:NSLocalizedString(@"The mail account has not been set yet", @"Seafile")];
         return;
     }
     [self displayMailPicker];
@@ -340,7 +340,7 @@ enum {
     [self.tableView reloadData];
     [_connection setAttribute:repo.repoId forKey:@"autoSyncRepo"];
     dispatch_async(dispatch_get_main_queue(), ^ {
-        [self alertWithMessage:MSG_RESET_UPLOADED yes:^{
+        [self alertWithTitle:MSG_RESET_UPLOADED message:nil yes:^{
             [_connection resetUploadedPhotos];
             [_connection checkAutoSync];
         } no:^{

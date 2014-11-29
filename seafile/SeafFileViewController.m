@@ -311,7 +311,7 @@ enum {
         return;
     if (![QBImagePickerController isAccessible]) {
         Warning("Error: Source is not accessible.");
-        [self alertWithMessage:NSLocalizedString(@"Photos are not accessible", @"Seafile")];
+        [self alertWithTitle:NSLocalizedString(@"Photos are not accessible", @"Seafile")];
         return;
     }
     QBImagePickerController *imagePickerController = [[QBImagePickerController alloc] init];
@@ -359,7 +359,10 @@ enum {
     } else {
         NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
         self.actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_NEWFILE, S_MKDIR, S_EDIT, nil];
-        [self.actionSheet showFromBarButtonItem:self.editItem animated:YES];
+        if (IsIpad())
+            [self.actionSheet showFromBarButtonItem:self.editItem animated:YES];
+        else
+            [self.actionSheet showInView:[UIApplication sharedApplication].keyWindow];
     }
 }
 
@@ -648,19 +651,15 @@ enum {
 - (void)popupSetRepoPassword:(SeafRepo *)repo
 {
     self.state = STATE_PASSWORD;
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Password of this library", @"Seafile") message:nil preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-    }];
-    UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"Seafile") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        NSString *input = [[alert.textFields objectAtIndex:0] text];
+    [self popupInputView:NSLocalizedString(@"Password of this library", @"Seafile") placeholder:nil secure:true handler:^(NSString *input) {
         if (!input || input.length == 0) {
-            [self alertWithMessage:NSLocalizedString(@"Password must not be empty", @"Seafile")handler:^{
+            [self alertWithTitle:NSLocalizedString(@"Password must not be empty", @"Seafile")handler:^{
                 [self popupSetRepoPassword:repo];
             }];
             return;
         }
         if (input.length < 3 || input.length  > 100) {
-            [self alertWithMessage:NSLocalizedString(@"The length of password should be between 3 and 100", @"Seafile") handler:^{
+            [self alertWithTitle:NSLocalizedString(@"The length of password should be between 3 and 100", @"Seafile") handler:^{
                 [self popupSetRepoPassword:repo];
             }];
             return;
@@ -670,28 +669,20 @@ enum {
             [repo checkRepoPassword:input];
         else
             [repo setRepoPassword:input];
-
     }];
-    [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
-        textField.secureTextEntry = true;
-    }];
-    [alert addAction:cancelAction];
-    [alert addAction:okAction];
-
-    [self presentViewController:alert animated:true completion:nil];
 }
 
 - (void)popupMkdirView
 {
     self.state = STATE_MKDIR;
     _directory.delegate = self;
-    [self popupInputView:S_MKDIR placeholder:NSLocalizedString(@"New folder name", @"Seafile") handler:^(NSString *input) {
+    [self popupInputView:S_MKDIR placeholder:NSLocalizedString(@"New folder name", @"Seafile") secure:false handler:^(NSString *input) {
         if (!input || input.length == 0) {
-            [self alertWithMessage:NSLocalizedString(@"Folder name must not be empty", @"Seafile")];
+            [self alertWithTitle:NSLocalizedString(@"Folder name must not be empty", @"Seafile")];
             return;
         }
         if (![input isValidFileName]) {
-            [self alertWithMessage:NSLocalizedString(@"Folder name invalid", @"Seafile")];
+            [self alertWithTitle:NSLocalizedString(@"Folder name invalid", @"Seafile")];
             return;
         }
         [_directory mkdir:input];
@@ -703,13 +694,13 @@ enum {
 {
     self.state = STATE_CREATE;
     _directory.delegate = self;
-    [self popupInputView:S_NEWFILE placeholder:NSLocalizedString(@"New file name", @"Seafile") handler:^(NSString *input) {
+    [self popupInputView:S_NEWFILE placeholder:NSLocalizedString(@"New file name", @"Seafile") secure:false handler:^(NSString *input) {
         if (!input || input.length == 0) {
-            [self alertWithMessage:NSLocalizedString(@"File name must not be empty", @"Seafile")];
+            [self alertWithTitle:NSLocalizedString(@"File name must not be empty", @"Seafile")];
             return;
         }
         if (![input isValidFileName]) {
-            [self alertWithMessage:NSLocalizedString(@"File name invalid", @"Seafile")];
+            [self alertWithTitle:NSLocalizedString(@"File name invalid", @"Seafile")];
             return;
         }
         [_directory createFile:input];
@@ -720,13 +711,13 @@ enum {
 - (void)popupRenameView:(NSString *)newName
 {
     self.state = STATE_RENAME;
-    [self popupInputView:S_RENAME placeholder:newName handler:^(NSString *input) {
+    [self popupInputView:S_RENAME placeholder:newName secure:false handler:^(NSString *input) {
         if (!input || input.length == 0) {
-            [self alertWithMessage:NSLocalizedString(@"File name must not be empty", @"Seafile")];
+            [self alertWithTitle:NSLocalizedString(@"File name must not be empty", @"Seafile")];
             return;
         }
         if (![input isValidFileName]) {
-            [self alertWithMessage:NSLocalizedString(@"File name invalid", @"Seafile")];
+            [self alertWithTitle:NSLocalizedString(@"File name invalid", @"Seafile")];
             return;
         }
         [_directory renameFile:(SeafFile *)_curEntry newName:input];
@@ -1380,11 +1371,11 @@ enum {
 {
     Class mailClass = (NSClassFromString(@"MFMailComposeViewController"));
     if (!mailClass) {
-        [self alertWithMessage:NSLocalizedString(@"This function is not supportted yet，you can copy it to the pasteboard and send mail by yourself", @"Seafile")];
+        [self alertWithTitle:NSLocalizedString(@"This function is not supportted yet，you can copy it to the pasteboard and send mail by yourself", @"Seafile")];
         return;
     }
     if (![mailClass canSendMail]) {
-        [self alertWithMessage:NSLocalizedString(@"The mail account has not been set yet", @"Seafile")];
+        [self alertWithTitle:NSLocalizedString(@"The mail account has not been set yet", @"Seafile")];
         return;
     }
 

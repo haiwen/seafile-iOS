@@ -6,10 +6,30 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
+#import <objc/runtime.h>
 #import "UIViewController+Extend.h"
 #import "Utils.h"
+#import "Debug.h"
+
+#define ADD_DYNAMIC_PROPERTY(PROPERTY_TYPE,PROPERTY_NAME,SETTER_NAME) \
+@dynamic PROPERTY_NAME ; \
+static char kProperty##PROPERTY_NAME; \
+- ( PROPERTY_TYPE ) PROPERTY_NAME \
+{ \
+return ( PROPERTY_TYPE ) objc_getAssociatedObject(self, &(kProperty##PROPERTY_NAME ) ); \
+} \
+\
+- (void) SETTER_NAME :( PROPERTY_TYPE ) PROPERTY_NAME \
+{ \
+objc_setAssociatedObject(self, &kProperty##PROPERTY_NAME , PROPERTY_NAME , OBJC_ASSOCIATION_RETAIN); \
+} \
 
 @implementation UIViewController (Extend)
+
+ADD_DYNAMIC_PROPERTY(void (^)(),handler_ok,setHandler_ok);
+ADD_DYNAMIC_PROPERTY(void (^)(),handler_cancel,setHandler_cancel);
+ADD_DYNAMIC_PROPERTY(void (^)(NSString *),handler_input,setHandler_input);
+
 
 - (id)initWithAutoNibName
 {
@@ -40,39 +60,59 @@
     return [self initWithNibName:[NSString stringWithFormat:@"%@_%@_%@", className, plaformSuffix, lang] bundle:nil];
 }
 
-- (void)alertWithMessage:(NSString*)message handler:(void (^)())handler;
+- (void)alertWithTitle:(NSString*)title handler:(void (^)())handler;
 {
-    [Utils alertWithTitle:message message:nil handler:handler from:self];
+    if (ios8)
+        [Utils alertWithTitle:title message:nil handler:handler from:self];
+    else {
+        self.handler_ok = nil;
+        self.handler_cancel = handler;
+        self.handler_input = nil;
+        UIAlertView *alert = [[UIAlertView alloc]initWithTitle:title
+                                                       message:nil
+                                                      delegate:self
+                                             cancelButtonTitle:@"OK"
+                                             otherButtonTitles:nil, nil];
+        alert.transform = CGAffineTransformTranslate( alert.transform, 0.0, 130.0 );
+        alert.alertViewStyle = UIAlertViewStyleDefault;
+        [alert show];
+    }
 }
 
-- (void)alertWithMessage:(NSString*)message
+- (void)alertWithTitle:(NSString*)title
 {
-    [self alertWithMessage:message handler:nil];
+    [self alertWithTitle:title handler:nil];
 }
 
-- (void)alertWithMessage:(NSString*)message yes:(void (^)())yes no:(void (^)())no;
+- (void)alertWithTitle:(NSString *)title message:(NSString*)message yes:(void (^)())yes no:(void (^)())no
 {
-    [Utils alertWithTitle:message message:nil yes:yes no:no from:self];
+    if (ios8)
+        [Utils alertWithTitle:title message:message yes:yes no:no from:self];
+    else {
+        self.handler_ok = yes;
+        self.handler_cancel = no;
+        self.handler_input = nil;
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:message delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") otherButtonTitles:NSLocalizedString(@"OK", @"Seafile"), nil];
+        alert.alertViewStyle = UIAlertViewStyleDefault;
+        [alert show];
+    }
 }
 
-- (void)popupInputView:(NSString *)title placeholder:(NSString *)tip handler:(void (^)(NSString *input))handler
+- (void)popupInputView:(NSString *)title placeholder:(NSString *)tip secure:(BOOL)secure handler:(void (^)(NSString *input))handler
 {
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-    }];
-    UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"Seafile") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        NSString *input = [[alert.textFields objectAtIndex:0] text];
-        if (handler)
-            handler(input);
-    }];
-    [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
-        textField.placeholder = tip;
-        textField.autocorrectionType = UITextAutocorrectionTypeNo;
-    }];
-    [alert addAction:cancelAction];
-    [alert addAction:okAction];
-
-    [self presentViewController:alert animated:true completion:nil];
+    if (ios8)
+        [Utils popupInputView:title placeholder:tip secure:secure handler:handler from:self];
+    else {
+        self.handler_ok = nil;
+        self.handler_cancel = nil;
+        self.handler_input = handler;
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") otherButtonTitles:NSLocalizedString(@"OK", @"Seafile"), nil];
+        if (secure)
+            alert.alertViewStyle = UIAlertViewStyleSecureTextInput;
+        else
+            alert.alertViewStyle = UIAlertViewStylePlainTextInput;
+        [alert show];
+    }
 }
 
 - (UIBarButtonItem *)getBarItem:(NSString *)imageName action:(SEL)action size:(float)size;
@@ -103,4 +143,23 @@
 {
     return [self isViewLoaded] && self.view.window;
 }
+
+#pragma mark - UIAlertViewDelegate
+
+- (void)alertView:(UIAlertView *)alertView willDismissWithButtonIndex:(NSInteger)buttonIndex
+{
+    if (buttonIndex != alertView.cancelButtonIndex) {
+        if (self.handler_ok) {
+            self.handler_ok();
+        } else if (self.handler_input) {
+            UITextField *textfiled = [alertView textFieldAtIndex:0];
+            NSString *input = textfiled.text;
+            self.handler_input(input);
+        }
+    } else {
+        if (self.handler_cancel)
+            self.handler_cancel();
+    }
+}
+
 @end

@@ -163,20 +163,15 @@
 
 - (void)popupSetRepoPassword:(SeafRepo *)repo
 {
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Password of this library", @"Seafile") message:nil preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-    }];
-    UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"Seafile") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        UITextField *textfiled = [alert.textFields objectAtIndex:0];
-        NSString *input = textfiled.text;
+    [self popupInputView:NSLocalizedString(@"Password of this library", @"Seafile") placeholder:nil secure:true handler:^(NSString *input) {
         if (!input || input.length == 0) {
-            [self alertWithMessage:NSLocalizedString(@"Password must not be empty", @"Seafile")handler:^{
+            [self alertWithTitle:NSLocalizedString(@"Password must not be empty", @"Seafile")handler:^{
                 [self popupSetRepoPassword:repo];
             }];
             return;
         }
         if (input.length < 3 || input.length  > 100) {
-            [self alertWithMessage:NSLocalizedString(@"The length of password should be between 3 and 100", @"Seafile") handler:^{
+            [self alertWithTitle:NSLocalizedString(@"The length of password should be between 3 and 100", @"Seafile") handler:^{
                 [self popupSetRepoPassword:repo];
             }];
             return;
@@ -186,15 +181,7 @@
             [repo checkRepoPassword:input];
         else
             [repo setRepoPassword:input];
-
     }];
-    [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
-        textField.secureTextEntry = true;
-    }];
-    [alert addAction:cancelAction];
-    [alert addAction:okAction];
-
-    [self presentViewController:alert animated:true completion:nil];
 }
 
 #pragma mark - SeafDentryDelegate

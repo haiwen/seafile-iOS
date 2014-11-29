@@ -81,7 +81,10 @@
         for (NSDictionary *dict in self.addditions) {
             [self.actionSheet addButtonWithTitle:[dict objectForKey:@"email"]];
         }
-        [self.actionSheet showFromBarButtonItem:self.addItem animated:YES];
+        if (IsIpad())
+            [self.actionSheet showFromBarButtonItem:self.addItem animated:YES];
+        else
+            [self.actionSheet showInView:[UIApplication sharedApplication].keyWindow];
     }
 }
 
@@ -363,15 +366,15 @@
         return;
     NSString *title = [actionSheet buttonTitleAtIndex:bIndex];
     if ([S_ADDCONTACT isEqualToString:title]) {
-        [self popupInputView:S_ADDCONTACT placeholder:NSLocalizedString(@"Email", @"Seafile") handler:^(NSString *input) {
+        [self popupInputView:S_ADDCONTACT placeholder:NSLocalizedString(@"Email", @"Seafile") secure:false handler:^(NSString *input) {
             NSString *email = input;
             if (!email || email.length < 1) {
-                [self alertWithMessage:NSLocalizedString(@"Username must not be empty", @"Seafile")];
+                [self alertWithTitle:NSLocalizedString(@"Username must not be empty", @"Seafile")];
                 return;
             }
             NSArray* items = [email componentsSeparatedByString:@"@"];
             if (items.count != 2 || [[items objectAtIndex:0] length] < 1 || [[items objectAtIndex:1] length] < 1) {
-                [self alertWithMessage:NSLocalizedString(@"Invalid email", @"Seafile")];
+                [self alertWithTitle:NSLocalizedString(@"Invalid email", @"Seafile")];
                 return;
             }
             NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];

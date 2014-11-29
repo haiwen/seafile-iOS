@@ -287,6 +287,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         [operation setWillSendRequestForAuthenticationChallengeBlock:^(NSURLConnection *connection, NSURLAuthenticationChallenge *challenge) {
             if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
                 NSURLCredential *credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
+
                 if ([SeafDefaultPolicy() evaluateServerTrust:challenge.protectionSpace.serverTrust forDomain:challenge.protectionSpace.host]) {
                     [[NSFileManager defaultManager] removeItemAtPath:[self certPathForHost:[self host]] error:nil];
                     SecCertificateRef cer = SecTrustGetCertificateAtIndex(challenge.protectionSpace.serverTrust, 0);
@@ -300,21 +301,23 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                         }
                         self.challenge = challenge;
                     }
+
                     if (!self.delegate) {
                         [[self.challenge sender] cancelAuthenticationChallenge:self.challenge];
                         self.challenge = nil;
                         return;
+                    } else {
+                        NSString *title = [NSString stringWithFormat:NSLocalizedString(@"Seafile can't verify the identity of the website \"%@\"", @"Seafile"), challenge.protectionSpace.host];
+                        NSString *msg = policy ? NSLocalizedString(@"The certificate from this website has been changed. Would you like to connect to the server anyway?", @"Seafile"):NSLocalizedString(@"The certificate from this website is invalid. Would you like to connect to the server anyway?", @"Seafile");
+                        [self.delegate continueWithInvalidCert:title message:msg yes:^{
+                            [self saveCertificate:self.challenge];
+                            [[self.challenge sender] useCredential:credential forAuthenticationChallenge:self.challenge];
+                            self.challenge = nil;
+                        } no:^{
+                            [[self.challenge sender] cancelAuthenticationChallenge:self.challenge];
+                            self.challenge = nil;
+                        }];
                     }
-                    NSString *title = [NSString stringWithFormat:NSLocalizedString(@"Seafile can't verify the identity of the website \"%@\"", @"Seafile"), challenge.protectionSpace.host];
-                    NSString *msg = policy ? NSLocalizedString(@"The certificate from this website has been changed. Would you like to connect to the server anyway?", @"Seafile"):NSLocalizedString(@"The certificate from this website is invalid. Would you like to connect to the server anyway?", @"Seafile");
-                    [Utils alertWithTitle:title message:msg yes:^{
-                        [self saveCertificate:self.challenge];
-                        [[self.challenge sender] useCredential:credential forAuthenticationChallenge:self.challenge];
-                        self.challenge = nil;
-                    } no:^{
-                        [[self.challenge sender] cancelAuthenticationChallenge:self.challenge];
-                        self.challenge = nil;
-                    } from:[self.delegate rootViewController]];
                 }
             } else
                 [[challenge sender] continueWithoutCredentialForAuthenticationChallenge:challenge];
