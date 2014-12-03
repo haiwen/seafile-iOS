@@ -263,7 +263,7 @@
 - (void)updateProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent
 {
     if (!res) {
-        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to uplod file", @"Seafile")];
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to upload file", @"Seafile")];
     }
     [self refreshView];
 }
