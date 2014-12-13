@@ -5,3 +5,4 @@ seafilePro.xcodeproj/xcuserdata
 *~
 *.bak
 .DS_Store
+libs/SVProgressHUD/

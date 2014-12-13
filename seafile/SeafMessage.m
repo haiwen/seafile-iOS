@@ -205,15 +205,18 @@
         [btn removeTarget:nil action:NULL forControlEvents:UIControlEventAllEvents];
     }
 
-    NSDictionary *att = [self.atts objectAtIndex:indexPath.row];
-    NSString *name = [[att objectForKey:@"path"] lastPathComponent];
-    NSString *mime = [FileMimeType mimeType:name];
-    imageView.image = [UIImage imageForMimeType:mime ext:name.pathExtension.lowercaseString];
-    float width = MSGLABEL_WIDTH(tableView.frame.size.width);
-    imageView.frame = CGRectMake(AVATAR_OFFSET, 2, ATTACH_HEIGHT-4, ATTACH_HEIGHT-4);
-    btn.frame = CGRectMake(25, 0, width, ATTACH_HEIGHT);
-    [btn setTitle:name forState:UIControlStateNormal];
-    [btn addTarget:self action:@selector(clicked:) forControlEvents:UIControlEventTouchUpInside];
+    @try {
+        NSDictionary *att = [self.atts objectAtIndex:indexPath.row];
+        NSString *name = [[att objectForKey:@"path"] lastPathComponent];
+        NSString *mime = [FileMimeType mimeType:name];
+        imageView.image = [UIImage imageForMimeType:mime ext:name.pathExtension.lowercaseString];
+        float width = MSGLABEL_WIDTH(tableView.frame.size.width);
+        imageView.frame = CGRectMake(AVATAR_OFFSET, 2, ATTACH_HEIGHT-4, ATTACH_HEIGHT-4);
+        btn.frame = CGRectMake(25, 0, width, ATTACH_HEIGHT);
+        [btn setTitle:name forState:UIControlStateNormal];
+        [btn addTarget:self action:@selector(clicked:) forControlEvents:UIControlEventTouchUpInside];
+    } @catch(NSException *exception) {
+    }
     return cell;
 }
 
@@ -252,17 +255,20 @@
         nameLabel = (UILabel *)[cell viewWithTag:301];
         msgLabel = (UILabel *)[cell viewWithTag:302];
     }
-    NSDictionary *reply = [self.replies objectAtIndex:indexPath.row];
-    NSString *avatar = [self.connection avatarForEmail:[reply objectForKey:@"from_email"]];
-    imageView.image = [JSAvatarImageFactory avatarImage:[UIImage imageWithContentsOfFile:avatar] croppedToCircle:YES];
+    @try {
+        NSDictionary *reply = [self.replies objectAtIndex:indexPath.row];
+        NSString *avatar = [self.connection avatarForEmail:[reply objectForKey:@"from_email"]];
+        imageView.image = [JSAvatarImageFactory avatarImage:[UIImage imageWithContentsOfFile:avatar] croppedToCircle:YES];
 
-    nameLabel.text = [reply objectForKey:@"nickname"];
-    msgLabel.text = [reply objectForKey:@"msg"];
-    float width = MSGLABEL_WIDTH(tableView.frame.size.width);
-    CGSize s = [Utils textSizeForText:msgLabel.text font:msgLabel.font width:width];
-    imageView.frame = CGRectMake(AVATAR_OFFSET, 3, 43.0, 43.0);
-    nameLabel.frame = CGRectMake(NAME_OFFSET, 3, width, 22.0);
-    msgLabel.frame = CGRectMake(NAME_OFFSET, 25.0, width, s.height);
+        nameLabel.text = [reply objectForKey:@"nickname"];
+        msgLabel.text = [reply objectForKey:@"msg"];
+        float width = MSGLABEL_WIDTH(tableView.frame.size.width);
+        CGSize s = [Utils textSizeForText:msgLabel.text font:msgLabel.font width:width];
+        imageView.frame = CGRectMake(AVATAR_OFFSET, 3, 43.0, 43.0);
+        nameLabel.frame = CGRectMake(NAME_OFFSET, 3, width, 22.0);
+        msgLabel.frame = CGRectMake(NAME_OFFSET, 25.0, width, s.height);
+    } @catch(NSException *exception) {
+    }
     return cell;
 }
 

@@ -291,7 +291,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 - (void)checkAsset
 {
-    if (self.asset) {
+    if (_asset) {
         [Utils writeDataToPath:self.lpath andAsset:self.asset];
         _filesize = [Utils fileSizeAtPath1:self.lpath];
         _asset = nil;

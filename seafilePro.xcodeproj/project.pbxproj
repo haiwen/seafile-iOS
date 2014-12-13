@@ -318,7 +318,6 @@
 		57A95E5F18369E5A009D268A /* ellipsis.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A95E5C18369E5A009D268A /* ellipsis.png */; };
 		57A95E6118369E5A009D268A /* ellipsis2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A95E5D18369E5A009D268A /* ellipsis2.png */; };
 		57ABE5FB187925B300145FE3 /* CoreText.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 576B9918186142EC00A16ED6 /* CoreText.framework */; };
-		57ACEEA51A28AD5D0053A94A /* MBProgressHUD.m in Sources */ = {isa = PBXBuildFile; fileRef = 57ACEE871A28AD5D0053A94A /* MBProgressHUD.m */; };
 		57ACEED91A28B1BF0053A94A /* SVProgressHUD.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 57ACEEC71A28B1BF0053A94A /* SVProgressHUD.bundle */; };
 		57ACEEDA1A28B1BF0053A94A /* SVProgressHUD.m in Sources */ = {isa = PBXBuildFile; fileRef = 57ACEEC91A28B1BF0053A94A /* SVProgressHUD.m */; };
 		57BD9329174B0A0E00F7732F /* SeafDisMasterViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57BD9321174B0A0E00F7732F /* SeafDisMasterViewController.m */; };
@@ -2345,7 +2344,6 @@
 				57D2F3FF18D33E7D00A52EB6 /* SeafMessage.m in Sources */,
 				571D8CD21677881400F1A22C /* SeafSettingsViewController.m in Sources */,
 				57E228881A0E286200C92330 /* QBAssetsCollectionCheckmarkView.m in Sources */,
-				57ACEEA51A28AD5D0053A94A /* MBProgressHUD.m in Sources */,
 				57E2288C1A0E286200C92330 /* QBAssetsCollectionViewCell.m in Sources */,
 				57E2288D1A0E286200C92330 /* QBAssetsCollectionViewController.m in Sources */,
 				571D8CD41677881400F1A22C /* SeafStarredFilesViewController.m in Sources */,
@@ -2722,8 +2720,8 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CODE_SIGN_ENTITLEMENTS = SeafProviderFileProvider/SeafProviderFileProvider.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -2735,7 +2733,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "9e519841-17b7-4007-ac86-6894e3d962ad";
+				PROVISIONING_PROFILE = "087be506-0e5c-4625-8c8d-3aebeedd55d3";
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -2869,8 +2867,8 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				ONLY_ACTIVE_ARCH = YES;
 				"PRIVATE_HEADERS_FOLDER_PATH[sdk=*]" = "";
-				PROVISIONING_PROFILE = "2c7bc044-3182-4005-b0e0-222b4721be41";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "2c7bc044-3182-4005-b0e0-222b4721be41";
+				PROVISIONING_PROFILE = "087be506-0e5c-4625-8c8d-3aebeedd55d3";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "087be506-0e5c-4625-8c8d-3aebeedd55d3";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

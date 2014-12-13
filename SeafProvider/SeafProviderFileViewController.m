@@ -231,13 +231,17 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    SeafBase *entry = [self.items objectAtIndex:indexPath.row];
     NSString *CellIdentifier = @"SeafProviderCell2";
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier];
     }
-
+    SeafBase *entry;
+    @try {
+        entry = [self.items objectAtIndex:indexPath.row];
+    } @catch(NSException *exception) {
+        return cell;
+    }
     cell.textLabel.text = entry.name;
     cell.textLabel.font = [UIFont systemFontOfSize:17];
     cell.textLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
@@ -285,7 +289,13 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    SeafBase *entry = [self.items objectAtIndex:indexPath.row];
+    SeafBase *entry;
+    @try {
+        entry = [self.items objectAtIndex:indexPath.row];
+    } @catch(NSException *exception) {
+        [self performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
+        return;
+    }
     if ([entry isKindOfClass:[SeafFile class]]) {
         SeafFile *file = (SeafFile *)entry;
         if (![file hasCache]) {

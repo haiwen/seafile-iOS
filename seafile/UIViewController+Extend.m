@@ -86,9 +86,9 @@ ADD_DYNAMIC_PROPERTY(void (^)(NSString *),handler_input,setHandler_input);
 
 - (void)alertWithTitle:(NSString *)title message:(NSString*)message yes:(void (^)())yes no:(void (^)())no
 {
-    if (ios8)
+    if (ios8) {
         [Utils alertWithTitle:title message:message yes:yes no:no from:self];
-    else {
+    } else {
         self.handler_ok = yes;
         self.handler_cancel = no;
         self.handler_input = nil;
@@ -100,9 +100,9 @@ ADD_DYNAMIC_PROPERTY(void (^)(NSString *),handler_input,setHandler_input);
 
 - (void)popupInputView:(NSString *)title placeholder:(NSString *)tip secure:(BOOL)secure handler:(void (^)(NSString *input))handler
 {
-    if (ios8)
+    if (ios8) {
         [Utils popupInputView:title placeholder:tip secure:secure handler:handler from:self];
-    else {
+    } else {
         self.handler_ok = nil;
         self.handler_cancel = nil;
         self.handler_input = handler;

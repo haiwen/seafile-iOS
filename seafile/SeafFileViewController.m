@@ -497,7 +497,8 @@ enum {
     if (!_selectedindex)
         return;
     SeafDir *dir = (SeafDir *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-    NSAssert([dir isKindOfClass:[SeafDir class]], @"dir must be SeafDir");
+    if (![dir isKindOfClass:[SeafDir class]])
+          return;
 
     NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
     actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
@@ -608,6 +609,9 @@ enum {
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     NSObject *entry = [self getDentrybyIndexPath:indexPath tableView:tableView];
+    if (!entry) {
+        return [[UITableViewCell alloc] init];
+    }
     if (tableView != self.tableView) {
         return [self getSeafFileCell:(SeafFile *)entry forTableView:tableView];
     }
@@ -747,12 +751,16 @@ enum {
 - (SeafBase *)getDentrybyIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView
 {
     if (!indexPath) return nil;
-    if (tableView != self.tableView) {
-        return [self.searchResults objectAtIndex:indexPath.row];
-    } else if (![_directory isKindOfClass:[SeafRepos class]])
-        return [_directory.allItems objectAtIndex:[indexPath row]];
-    NSArray *repos = [[((SeafRepos *)_directory)repoGroups] objectAtIndex:[indexPath section]];
-    return [repos objectAtIndex:[indexPath row]];
+    @try {
+        if (tableView != self.tableView) {
+            return [self.searchResults objectAtIndex:indexPath.row];
+        } else if (![_directory isKindOfClass:[SeafRepos class]])
+            return [_directory.allItems objectAtIndex:[indexPath row]];
+        NSArray *repos = [[((SeafRepos *)_directory)repoGroups] objectAtIndex:[indexPath section]];
+        return [repos objectAtIndex:[indexPath row]];
+    } @catch(NSException *exception) {
+        return nil;
+    }
 }
 
 - (BOOL)isCurrentFileImage:(NSMutableArray **)imgs
@@ -781,6 +789,10 @@ enum {
         return;
     }
     _curEntry = [self getDentrybyIndexPath:indexPath tableView:tableView];
+    if (!_curEntry) {
+        [self performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
+        return;
+    }
     [_curEntry setDelegate:self];
     if ([_curEntry isKindOfClass:[SeafRepo class]] && [(SeafRepo *)_curEntry passwordRequired]) {
         [self popupSetRepoPassword:_curEntry];
@@ -868,8 +880,7 @@ enum {
     }
 
     NSCAssert([entry isKindOfClass:[SeafDir class]], @"entry must be SeafDir");
-    SeafDir *folder = (SeafDir *)entry;
-    Debug("%@,%@, %@\n", folder.path, folder.repoId, _directory.path);
+    Debug("%@,%@, %@\n", entry.path, entry.repoId, _directory.path);
     if (entry == _directory) {
         [self doneLoadingTableViewData];
         switch (self.state) {
@@ -916,8 +927,8 @@ enum {
     if (entry != _curEntry)  return;
 
     NSAssert([entry isKindOfClass:[SeafRepo class]], @"entry must be a repo\n");
-    [SVProgressHUD dismiss];
     if (success) {
+        [SVProgressHUD dismiss];
         self.state = STATE_INIT;
         SeafFileViewController *controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
         [self.navigationController pushViewController:controller animated:YES];

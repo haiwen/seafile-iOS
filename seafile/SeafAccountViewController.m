@@ -180,6 +180,7 @@
     if (conn != connection)
         return;
 
+    Debug("login success");
     [SVProgressHUD dismiss];
     conn.rootFolder = [[SeafRepos alloc] initWithConnection:conn];
     [self.navigationController dismissViewControllerAnimated:YES completion:nil];
@@ -194,10 +195,10 @@
     if (conn != connection)
         return;
 
-    [SVProgressHUD dismiss];
-    if (error == HTTP_ERR_LOGIN_INCORRECT_PASSWORD)
+    if (error == HTTP_ERR_LOGIN_INCORRECT_PASSWORD) {
+        [SVProgressHUD dismiss];
         [self alertWithTitle:NSLocalizedString(@"Wrong username or password", @"Seafile")];
-    else if (error == 0){
+    } else if (error == 0){
         [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Network unavailable", @"Seafile")];
     } else {
         [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to login", @"Seafile")];

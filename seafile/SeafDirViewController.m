@@ -129,11 +129,14 @@
         cell = [cells objectAtIndex:0];
     }
 
-    SeafDir *sdir = [_directory.items objectAtIndex:indexPath.row];
-    cell.textLabel.text = sdir.name;
-    cell.textLabel.font = [UIFont systemFontOfSize:17];
-    cell.imageView.image = sdir.icon;
-    cell.detailTextLabel.text = nil;
+    @try {
+        SeafDir *sdir = [_directory.items objectAtIndex:indexPath.row];
+        cell.textLabel.text = sdir.name;
+        cell.textLabel.font = [UIFont systemFontOfSize:17];
+        cell.imageView.image = sdir.icon;
+        cell.detailTextLabel.text = nil;
+    } @catch(NSException *exception) {
+    }
     return cell;
 }
 
@@ -148,7 +151,14 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    _curDir = [_directory.items objectAtIndex:indexPath.row];
+    @try {
+        _curDir = [_directory.items objectAtIndex:indexPath.row];
+    } @catch(NSException *exception) {
+        [self performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
+        return;
+    }
+    if (![_curDir isKindOfClass:[SeafDir class]])
+        return;
     if (_chooseRepo) {
         [self.delegate chooseDir:self dir:_curDir];
         return;
@@ -210,8 +220,8 @@
 
 - (void)entry:(SeafBase *)entry repoPasswordSet:(BOOL)success
 {
-    [SVProgressHUD dismiss];
     if (success) {
+        [SVProgressHUD dismiss];
         SeafDirViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:_curDir delegate:self.delegate chooseRepo:false];
         [self.navigationController pushViewController:controller animated:YES];
     } else {

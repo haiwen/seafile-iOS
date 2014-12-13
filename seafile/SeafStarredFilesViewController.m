@@ -200,7 +200,12 @@
         cell = [cells objectAtIndex:0];
     }
     ((SeafCell *)cell).badgeLabel.text = nil;
-    SeafStarredFile *sfile = [_starredFiles objectAtIndex:indexPath.row];
+    SeafStarredFile *sfile;
+    @try {
+        sfile = [_starredFiles objectAtIndex:indexPath.row];
+    } @catch(NSException *exception) {
+        return cell;
+    }
     sfile.udelegate = self;
     cell.textLabel.text = sfile.name;
     cell.detailTextLabel.text = sfile.detailText;
@@ -214,7 +219,13 @@
 #pragma mark - Table view delegate
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    SeafStarredFile *sfile = [_starredFiles objectAtIndex:indexPath.row];
+    SeafStarredFile *sfile;
+    @try {
+        sfile = [_starredFiles objectAtIndex:indexPath.row];
+    } @catch(NSException *exception) {
+        [self performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
+        return;
+    }
     if (!IsIpad()) {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         [appdelegate showDetailView:self.detailViewController];

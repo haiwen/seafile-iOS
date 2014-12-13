@@ -132,6 +132,7 @@
 - (void)refreshBadge
 {
     NSIndexPath *indexPath = [self.tableView indexPathForSelectedRow];
+    if (!indexPath) return;
     SeafMessageCell *cell = (SeafMessageCell *)[self.tableView cellForRowAtIndexPath:indexPath];
     NSMutableDictionary *dict = [self.msgSources objectAtIndex:indexPath.row];
     [self checkCellBadge:cell info:dict];
@@ -258,7 +259,12 @@
         cell.selectedBackgroundView = [[UIView alloc] initWithFrame:cell.frame];
         cell.selectedBackgroundView.backgroundColor = [UIColor colorWithRed:252.0/256 green:171.0/256 blue:128.0/256 alpha:1.0];
     }
-    NSMutableDictionary *dict = [self.msgSources objectAtIndex:indexPath.row];
+    NSMutableDictionary *dict = nil;
+    @try {
+        dict = [self.msgSources objectAtIndex:indexPath.row];
+    } @catch(NSException *exception) {
+        return cell;
+    }
     cell.textLabel.text = [dict objectForKey:@"name"];
     long long mtime = [[dict objectForKey:@"mtime"] integerValue:0];
     cell.timestampLabel.text = mtime ? [NSString stringWithFormat:@"%@", [SeafDateFormatter stringFromLongLong:mtime]] : nil;
@@ -299,7 +305,13 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    NSMutableDictionary *dict = [self.msgSources objectAtIndex:indexPath.row];
+    NSMutableDictionary *dict;
+    @try {
+        dict = [self.msgSources objectAtIndex:indexPath.row];
+    } @catch(NSException *exception) {
+        [self performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
+        return;
+    }
     Debug("select %@", dict);
     if (self.detailViewController.msgtype == MSG_REPLY && dict != self.detailViewController.info) {
         [self refreshView];

@@ -805,21 +805,19 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)pickPhotosForUpload
 {
-    if (!_inAutoSync || !_syncDir || !self.photosArray || self.photosArray.count == 0) return;
-
+    SeafDir *dir = _syncDir;
+    if (!_inAutoSync || !dir || !self.photosArray || self.photosArray.count == 0) return;
     if (self.wifiOnly && ![[AFNetworkReachabilityManager sharedManager] isReachableViaWiFi]) {
         Debug("wifiOnly=%d, isReachableViaWiFi=%d", self.wifiOnly, [[AFNetworkReachabilityManager sharedManager] isReachableViaWiFi]);
         return;
     }
-    SeafDir *dir = _syncDir;
-    if (!dir) return;
 
-    Debug("Current %lu photos need to upload, _syncDir=%@", (unsigned long)self.photosArray.count, _syncDir);
+    Debug("Current %ld photos need to upload, dir=%@", (long)self.photosArray.count, dir);
 
     int count = 0;
-    while(self.photosArray && self.photosArray.count > 0 && [[SeafGlobal sharedObject] uploadingnum] < 5 && count++ < 5) {
-        NSURL *url = [self.photosArray objectAtIndex:0];
-        [self.photosArray removeObject:url];
+    while ([[SeafGlobal sharedObject] uploadingnum] < 5 && count++ < 5) {
+        NSURL *url = [self popUploadPhoto];
+        if (!url) break;
         [_uploadingArray addObject:url];
         [SeafGlobal.sharedObject assetForURL:url
                                  resultBlock:^(ALAsset *asset) {
@@ -828,7 +826,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                      SeafUploadFile *file = [self getUploadfile:path];
                                      file.autoSync = true;
                                      file.asset = asset;
-                                     [_syncDir addUploadFile:file];
+                                     file.udir = dir;
                                      Debug("Add file %@ to upload list: %@", filename, dir);
                                      [[SeafGlobal sharedObject] backgroundUpload:file];
                                  }
@@ -848,6 +846,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     obj.url = ufile.assetURL.absoluteString;
     [[SeafGlobal sharedObject] saveContext];
     [self.uploadingArray removeObject:ufile.assetURL];
+    [ufile doRemove];
 }
 
 - (BOOL)IsPhotoUploaded:(NSURL *)url
@@ -902,6 +901,19 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     return [self.photosArray indexOfObject:url] != NSNotFound || [self.uploadingArray indexOfObject:url] != NSNotFound;
 }
+- (void)addUploadPhoto:(NSURL *)url{
+    @synchronized(self) {
+        [_photosArray addObject:url];
+    }
+}
+- (NSURL *)popUploadPhoto{
+    @synchronized(self) {
+        if (!self.photosArray || self.photosArray.count == 0) return nil;
+        NSURL *url = [self.photosArray objectAtIndex:0];
+        [self.photosArray removeObject:url];
+        return url;
+    }
+}
 
 - (void)checkPhotos
 {
@@ -930,11 +942,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             for (NSURL *url in photos) {
                 if (![self IsPhotoUploaded:url] && ![self IsPhotoUploading:url]) {
                     NSLog(@"UPLOAD-URL:%@", url);
-                    [_photosArray addObject:url];
+                    [self addUploadPhoto:url];
                 }
             }
 
-            Debug("GroupAll Total %ld photos need to be uploaded", (unsigned long)_photosArray.count);
+            Debug("GroupAll Total %ld photos need to upload", (long)_photosArray.count);
             _inCheckPhotoss = false;
             [self pickPhotosForUpload];
         }
@@ -1021,6 +1033,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             Debug("Stop auto Sync");
             _photosArray = nil;
             _inCheckPhotoss = false;
+            [SeafGlobal.sharedObject clearAutoSyncPhotos:self];
             [[NSNotificationCenter defaultCenter] removeObserver:self name:ALAssetsLibraryChangedNotification object:nil];
         }
     }

@@ -226,7 +226,12 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    [self selectAccount:[SeafGlobal.sharedObject.conns objectAtIndex:indexPath.row]];
+    @try {
+        SeafConnection *conn = [SeafGlobal.sharedObject.conns objectAtIndex:indexPath.row];
+        [self selectAccount:conn];
+    } @catch(NSException *exception) {
+        [self performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
+    }
 }
 
 #pragma mark - UIActionSheetDelegate

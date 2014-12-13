@@ -399,6 +399,24 @@
     }
 }
 
+- (void)clearAutoSyncPhotos:(SeafConnection *)conn
+{
+    NSMutableArray *arr = [[NSMutableArray alloc] init];
+    @synchronized (self) {
+        for (SeafUploadFile *ufile in _ufiles) {
+            if (ufile.autoSync && ufile.udir->connection == conn) {
+                [arr addObject:ufile];
+            }
+        }
+        for (SeafUploadFile *ufile in arr) {
+            if (ufile.autoSync) {
+                [_ufiles removeObject:ufile];
+                [ufile doRemove];
+            }
+        }
+    }
+}
+
 - (void)backgroundUpload:(SeafUploadFile *)file
 {
     @synchronized (self) {
