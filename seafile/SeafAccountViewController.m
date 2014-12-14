@@ -145,11 +145,6 @@
             serverTextField.text = @"https://seacloud.cc";
         else if (self.type == 2)
             serverTextField.text = @"https://cloud.seafile.com";
-        else {
-            serverTextField.text = @"https://dev.seafile.com/seahub/";
-            usernameTextField.text = @"demo@seafile.com";
-            passwordTextField.text = @"demo";
-        }
     }
     usernameTextField.placeholder = NSLocalizedString(@"Email", @"Seafile");
     passwordTextField.placeholder = NSLocalizedString(@"Password", @"Seafile");
