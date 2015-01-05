@@ -152,6 +152,25 @@
     //[self performSelector:@selector(refresh:) withObject:nil afterDelay:1.0f];
 }
 
+- (void)showAlertWithAction:(NSArray *)arr fromRect:(CGRect)rect
+{
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    for (NSString *title in arr) {
+        UIAlertAction *action = [UIAlertAction actionWithTitle:title style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [self handleAction:title];
+        }];
+        [alert addAction:action];
+    }
+    if (!IsIpad()){
+        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        }];
+        [alert addAction:cancelAction];
+    }
+    alert.popoverPresentationController.sourceView = self.view;
+    alert.popoverPresentationController.sourceRect = rect;
+    [self presentViewController:alert animated:true completion:nil];
+}
+
 - (void)showEditFileMenu:(UILongPressGestureRecognizer *)gestureRecognizer
 {
     UIActionSheet *actionSheet;
@@ -167,16 +186,19 @@
     if (![file hasCache])
         return;
 
-    NSString *cancelTitle = nil;
-    if (!IsIpad())
-        cancelTitle = NSLocalizedString(@"Cancel", @"Seafile");
-    if (file.mpath)
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"Redownload", @"Seafile"), NSLocalizedString(@"Upload", @"Seafile"), nil];
-    else
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"Redownload", @"Seafile"), nil];
-
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
-    [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
+    NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
+    if (ios8) {
+        NSMutableArray *arr = [[NSMutableArray alloc] initWithObjects:S_REDOWNLOAD, nil];
+        if (file.mpath) [arr addObject:S_UPLOAD];
+        [self showAlertWithAction:arr fromRect:cell.frame];
+    } else {
+        if (file.mpath)
+            actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_REDOWNLOAD, S_UPLOAD, nil];
+        else
+            actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_REDOWNLOAD, nil];
+        [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
+    }
 }
 
 #pragma mark - Table view data source
@@ -259,15 +281,23 @@
     [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
 }
 
-- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
+- (void)handleAction:(NSString *)title
 {
     SeafFile *file = (SeafFile *)[_starredFiles objectAtIndex:_selectedindex.row];
-    if (buttonIndex == 0) {
+    if ([S_REDOWNLOAD isEqualToString:title]) {
         [self redownloadFile:file];
-    } else if (buttonIndex == 1)  {
+    } else if ([S_UPLOAD isEqualToString:title]) {
         [file update:self];
         [self refreshView];
     }
+}
+
+- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    if (buttonIndex < 0 || buttonIndex >= actionSheet.numberOfButtons)
+        return;
+    NSString *title = [actionSheet buttonTitleAtIndex:buttonIndex];
+    [self handleAction:title];
 }
 
 #pragma mark - SeafFileUpdateDelegate

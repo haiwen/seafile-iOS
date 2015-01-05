@@ -22,6 +22,16 @@ enum {
     EDITOP_NUM,
 };
 
+#define S_MKDIR NSLocalizedString(@"New Folder", @"Seafile")
+#define S_NEWFILE NSLocalizedString(@"New File", @"Seafile")
+#define S_RENAME NSLocalizedString(@"Rename", @"Seafile")
+#define S_EDIT NSLocalizedString(@"Edit", @"Seafile")
+#define S_DELETE NSLocalizedString(@"Delete", @"Seafile")
+#define S_SHARE_EMAIL NSLocalizedString(@"Send share link via email", @"Seafile")
+#define S_SHARE_LINK NSLocalizedString(@"Copy share link to clipboard", @"Seafile")
+#define S_REDOWNLOAD NSLocalizedString(@"Redownload", @"Seafile")
+#define S_UPLOAD NSLocalizedString(@"Upload", @"Seafile")
+
 
 @class SeafDetailViewController;
 

@@ -70,21 +70,48 @@
     [self startTimer];
 }
 
+- (void)showAlertWithAction:(NSArray *)arr fromRect:(CGRect)rect
+{
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    for (NSString *title in arr) {
+        UIAlertAction *action = [UIAlertAction actionWithTitle:title style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [self handleAction:title];
+        }];
+        [alert addAction:action];
+    }
+    if (!IsIpad()){
+        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        }];
+        [alert addAction:cancelAction];
+    }
+    alert.popoverPresentationController.sourceView = self.view;
+    alert.popoverPresentationController.sourceRect = rect;
+    [self presentViewController:alert animated:true completion:nil];
+}
+
 - (void)addContact:(id)sender
 {
-    if (self.actionSheet) {
-        [self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
-        self.actionSheet = nil;
-    } else {
-        NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
-        self.actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_ADDCONTACT, nil];
+    if (ios8) {
+        NSMutableArray *arr = [[NSMutableArray alloc] initWithObjects:S_ADDCONTACT, nil];
         for (NSDictionary *dict in self.addditions) {
-            [self.actionSheet addButtonWithTitle:[dict objectForKey:@"email"]];
+            [arr addObject:[dict objectForKey:@"email"]];
         }
-        if (IsIpad())
-            [self.actionSheet showFromBarButtonItem:self.addItem animated:YES];
-        else
-            [self.actionSheet showInView:[UIApplication sharedApplication].keyWindow];
+        [self showAlertWithAction:arr fromRect:self.addItem.customView.frame];
+    } else {
+        if (self.actionSheet) {
+            [self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
+            self.actionSheet = nil;
+        } else {
+            NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
+            self.actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_ADDCONTACT, nil];
+            for (NSDictionary *dict in self.addditions) {
+                [self.actionSheet addButtonWithTitle:[dict objectForKey:@"email"]];
+            }
+            if (IsIpad())
+                [self.actionSheet showFromBarButtonItem:self.addItem animated:YES];
+            else
+                [self.actionSheet showInView:[UIApplication sharedApplication].keyWindow];
+        }
     }
 }
 
@@ -371,12 +398,8 @@
 }
 
 #pragma mark - UIActionSheetDelegate
-- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)bIndex
+- (void)handleAction:(NSString *)title
 {
-    self.actionSheet = nil;
-    if (bIndex < 0 || bIndex >= actionSheet.numberOfButtons)
-        return;
-    NSString *title = [actionSheet buttonTitleAtIndex:bIndex];
     if ([S_ADDCONTACT isEqualToString:title]) {
         [self popupInputView:S_ADDCONTACT placeholder:NSLocalizedString(@"Email", @"Seafile") secure:false handler:^(NSString *input) {
             NSString *email = input;
@@ -400,14 +423,25 @@
             [self reloadData];
         }];
     } else {
+        NSDictionary *selected = nil;
         for (NSDictionary *dict in self.addditions) {
             if ([title isEqualToString:[dict objectForKey:@"email"]]) {
-                [self.addditions removeObject:dict];
+                selected = dict;
                 [self.msgSources addObject:dict];
                 [self reloadData];
             }
         }
+        if (selected)
+            [self.addditions removeObject:selected];
     }
+}
+- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)bIndex
+{
+    self.actionSheet = nil;
+    if (bIndex < 0 || bIndex >= actionSheet.numberOfButtons)
+        return;
+    NSString *title = [actionSheet buttonTitleAtIndex:bIndex];
+    [self handleAction:title];
 }
 
 @end

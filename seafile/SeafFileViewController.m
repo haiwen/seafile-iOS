@@ -39,16 +39,6 @@ enum {
     STATE_SHARE_LINK,
 };
 
-#define S_MKDIR NSLocalizedString(@"New Folder", @"Seafile")
-#define S_NEWFILE NSLocalizedString(@"New File", @"Seafile")
-#define S_RENAME NSLocalizedString(@"Rename", @"Seafile")
-#define S_EDIT NSLocalizedString(@"Edit", @"Seafile")
-#define S_DELETE NSLocalizedString(@"Delete", @"Seafile")
-#define S_SHARE_EMAIL NSLocalizedString(@"Send share link via email", @"Seafile")
-#define S_SHARE_LINK NSLocalizedString(@"Copy share link to clipboard", @"Seafile")
-#define S_REDOWNLOAD NSLocalizedString(@"Redownload", @"Seafile")
-#define S_UPLOAD NSLocalizedString(@"Upload", @"Seafile")
-
 
 @interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, EGORefreshTableHeaderDelegate, SeafDirDelegate, SeafShareDelegate, UISearchBarDelegate, UISearchDisplayDelegate, UIActionSheetDelegate, MFMailComposeViewControllerDelegate>
 - (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView;
@@ -353,16 +343,20 @@ enum {
 
 - (void)editSheet:(id)sender
 {
-    if (self.actionSheet) {
-        [self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
-        self.actionSheet = nil;
+    if (ios8) {
+        [self showAlertWithAction:[NSArray arrayWithObjects:S_NEWFILE, S_MKDIR, S_EDIT, nil] fromRect:self.editItem.customView.frame];
     } else {
-        NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
-        self.actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_NEWFILE, S_MKDIR, S_EDIT, nil];
-        if (IsIpad())
-            [self.actionSheet showFromBarButtonItem:self.editItem animated:YES];
-        else
-            [self.actionSheet showInView:[UIApplication sharedApplication].keyWindow];
+        if (self.actionSheet) {
+            [self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
+            self.actionSheet = nil;
+        } else {
+            NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
+            self.actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_NEWFILE, S_MKDIR, S_EDIT, nil];
+            if (IsIpad())
+                [self.actionSheet showFromBarButtonItem:self.editItem animated:YES];
+            else
+                [self.actionSheet showInView:[UIApplication sharedApplication].keyWindow];
+        }
     }
 }
 
@@ -460,6 +454,25 @@ enum {
     return cell;
 }
 
+- (void)showAlertWithAction:(NSArray *)arr fromRect:(CGRect)rect
+{
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    for (NSString *title in arr) {
+        UIAlertAction *action = [UIAlertAction actionWithTitle:title style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [self handleAction:title];
+        }];
+        [alert addAction:action];
+    }
+    if (!IsIpad()){
+        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        }];
+        [alert addAction:cancelAction];
+    }
+    alert.popoverPresentationController.sourceView = self.view;
+    alert.popoverPresentationController.sourceRect = rect;
+    [self presentViewController:alert animated:true completion:nil];
+}
+
 - (void)showEditFileMenu:(UILongPressGestureRecognizer *)gestureRecognizer
 {
     if (self.tableView.editing == YES)
@@ -467,29 +480,33 @@ enum {
     UIActionSheet *actionSheet;
     if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
         return;
+
     CGPoint touchPoint = [gestureRecognizer locationInView:self.tableView];
     _selectedindex = [self.tableView indexPathForRowAtPoint:touchPoint];
     if (!_selectedindex)
         return;
     SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
+
     if (![file isKindOfClass:[SeafFile class]])
         return;
 
-    NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
-    if (file.mpath)
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, S_REDOWNLOAD, S_UPLOAD, S_SHARE_EMAIL, S_SHARE_LINK, nil];
-    else
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, S_REDOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
-
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
-    [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
+    if (ios8) {
+        [self showAlertWithAction:[NSArray arrayWithObjects:S_DELETE, S_REDOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil] fromRect:cell.frame];
+    } else {
+        NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
+        if (file.mpath)
+            actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, S_REDOWNLOAD, S_UPLOAD, S_SHARE_EMAIL, S_SHARE_LINK, nil];
+        else
+            actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, S_REDOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
+        [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
+    }
 }
 
 - (void)showEditDirMenu:(UILongPressGestureRecognizer *)gestureRecognizer
 {
     if (self.tableView.editing == YES)
         return;
-    UIActionSheet *actionSheet;
     if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
         return;
     CGPoint touchPoint = [gestureRecognizer locationInView:self.tableView];
@@ -500,11 +517,14 @@ enum {
     if (![dir isKindOfClass:[SeafDir class]])
           return;
 
-    NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
-    actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
-
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
-    [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
+    if (ios8) {
+        [self showAlertWithAction:[NSArray arrayWithObjects:S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil] fromRect:cell.frame];
+    } else {
+        NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
+        UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
+        [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
+    }
 }
 
 - (void)showEditUploadFileMenu:(UILongPressGestureRecognizer *)gestureRecognizer
@@ -519,10 +539,14 @@ enum {
     if(![file isKindOfClass:[SeafUploadFile class]])
         return;
 
-    NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
-    UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, nil];
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
-    [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
+    if (ios8) {
+        [self showAlertWithAction:[NSArray arrayWithObjects:S_DELETE, nil] fromRect:cell.frame];
+    } else {
+        NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
+        UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, nil];
+        [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
+    }
 }
 
 - (UITableViewCell *)getSeafUploadFileCell:(SeafUploadFile *)file forTableView:(UITableView *)tableView
@@ -1056,12 +1080,8 @@ enum {
 }
 
 #pragma mark - UIActionSheetDelegate
-- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
+- (void)handleAction:(NSString *)title
 {
-    self.actionSheet = nil;
-    if (buttonIndex < 0 || buttonIndex >= actionSheet.numberOfButtons)
-        return;
-    NSString *title = [actionSheet buttonTitleAtIndex:buttonIndex];
     if ([S_NEWFILE isEqualToString:title]) {
         [self popupCreateView];
     } else if ([S_MKDIR isEqualToString:title]) {
@@ -1079,7 +1099,7 @@ enum {
             [self deleteFile:(SeafFile*)entry];
         else if ([entry isKindOfClass:[SeafDir class]])
             [self deleteDir: (SeafDir*)entry];{
-        }
+            }
     } else if ([S_REDOWNLOAD isEqualToString:title]) {
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [self redownloadFile:file];
@@ -1109,6 +1129,15 @@ enum {
             [self generateSharelink:entry WithResult:YES];
         }
     }
+}
+
+- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    self.actionSheet = nil;
+    if (buttonIndex < 0 || buttonIndex >= actionSheet.numberOfButtons)
+        return;
+    NSString *title = [actionSheet buttonTitleAtIndex:buttonIndex];
+    [self handleAction:title];
 }
 
 - (void)backgroundUpload:(SeafUploadFile *)ufile
