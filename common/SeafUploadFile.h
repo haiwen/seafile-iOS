@@ -43,7 +43,7 @@
 - (void)doUpload;
 
 - (void)doRemove;
-
+- (BOOL)canUpload;
 - (BOOL)uploaded;
 
 - (NSString *)key;

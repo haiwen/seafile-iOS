@@ -357,6 +357,7 @@
         NSMutableArray *arr = [self.ufiles mutableCopy];
         for (SeafUploadFile *file in arr) {
             if (self.uploadnum + todo.count + self.failedNum >= 3) break;
+            if (!file.canUpload) continue;
             [self.ufiles removeObject:file];
             if (!file.uploaded) {
                 [todo addObject:file];

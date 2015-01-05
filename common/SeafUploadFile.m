@@ -277,6 +277,15 @@ static NSMutableDictionary *uploadFileAttrs = nil;
          [self finishUpload:NO oid:nil];
      }];
 }
+
+- (BOOL)canUpload
+{
+    if (self.autoSync && _udir->connection.wifiOnly)
+        return [[AFNetworkReachabilityManager sharedManager] isReachableViaWiFi];
+    else
+        return [[AFNetworkReachabilityManager sharedManager] isReachable];
+}
+
 - (void)doUpload
 {
     [self checkAsset];

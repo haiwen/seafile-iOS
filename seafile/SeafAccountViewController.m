@@ -58,6 +58,9 @@
 
 - (IBAction)login:(id)sender
 {
+    [usernameTextField resignFirstResponder];
+    [serverTextField resignFirstResponder];
+    [passwordTextField resignFirstResponder];
     NSString *username = usernameTextField.text;
     NSString *password = passwordTextField.text;
     NSString *url = serverTextField.text;
@@ -78,7 +81,8 @@
         [self alertWithTitle:NSLocalizedString(@"Password required", @"Seafile")];
         return;
     }
-
+    if ([url hasSuffix:@"/"])
+        url = [url substringToIndex:url.length-1];
     if (!self.connection)
         connection = [[SeafConnection alloc] initWithUrl:url username:username];
     connection.loginDelegate = self;
@@ -145,6 +149,13 @@
             serverTextField.text = @"https://seacloud.cc";
         else if (self.type == 2)
             serverTextField.text = @"https://cloud.seafile.com";
+        else {
+#if DEBUG
+            serverTextField.text = @"https://dev.seafile.com/seahub/";
+            usernameTextField.text = @"demo@seafile.com";
+            passwordTextField.text = @"demo";
+#endif
+        }
     }
     usernameTextField.placeholder = NSLocalizedString(@"Email", @"Seafile");
     passwordTextField.placeholder = NSLocalizedString(@"Password", @"Seafile");

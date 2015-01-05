@@ -310,8 +310,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                         NSString *title = [NSString stringWithFormat:NSLocalizedString(@"Seafile can't verify the identity of the website \"%@\"", @"Seafile"), challenge.protectionSpace.host];
                         NSString *msg = policy ? NSLocalizedString(@"The certificate from this website has been changed. Would you like to connect to the server anyway?", @"Seafile"):NSLocalizedString(@"The certificate from this website is invalid. Would you like to connect to the server anyway?", @"Seafile");
                         [self.delegate continueWithInvalidCert:title message:msg yes:^{
+                            [self.challenge.sender useCredential:[NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust] forAuthenticationChallenge:self.challenge];
                             [self saveCertificate:self.challenge];
-                            [[self.challenge sender] useCredential:credential forAuthenticationChallenge:self.challenge];
                             self.challenge = nil;
                         } no:^{
                             [[self.challenge sender] cancelAuthenticationChallenge:self.challenge];
@@ -319,8 +319,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                         }];
                     }
                 }
-            } else
+            } else {
                 [[challenge sender] continueWithoutCredentialForAuthenticationChallenge:challenge];
+            }
         }];
     }
     [queue addOperation:operation];
@@ -801,7 +802,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         _requestSerializer = [AFHTTPRequestSerializer serializer];
     return _requestSerializer;
 }
-
 
 - (void)pickPhotosForUpload
 {
