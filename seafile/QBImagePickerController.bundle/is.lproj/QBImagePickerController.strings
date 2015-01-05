@@ -1,0 +1,28 @@
+
+
+/* QBImagePickerController */
+"title" = "Myndir";
+
+/* QBImagePickerController */
+"format_photo" = "%ld Mynd";
+
+/* QBImagePickerController */
+"format_photos" = "%ld Myndir";
+
+/* QBImagePickerController */
+"format_video" = "%ld Vídeó";
+
+/* QBImagePickerController */
+"format_videos" = "%ld Vídeó";
+
+/* QBImagePickerController */
+"format_photo_and_video" = "%ld Mynd, %ld Vídeó";
+
+/* QBImagePickerController */
+"format_photos_and_video" = "%ld Myndir, %ld Vídeó";
+
+/* QBImagePickerController */
+"format_photo_and_videos" = "%ld Mynd, %ld Vídeó";
+
+/* QBImagePickerController */
+"format_photos_and_videos" = "%ld Myndir, %ld Vídeó";

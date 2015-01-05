@@ -1,0 +1,28 @@
+
+
+/* QBImagePickerController */
+"title" = "Fotoğraflar";
+
+/* QBImagePickerController */
+"format_photo" = "%ld Fotoğraf";
+
+/* QBImagePickerController */
+"format_photos" = "%ld Fotoğraflar";
+
+/* QBImagePickerController */
+"format_video" = "%ld Video";
+
+/* QBImagePickerController */
+"format_videos" = "%ld Videolar";
+
+/* QBImagePickerController */
+"format_photo_and_video" = "%ld Fotoğraf, %ld Video";
+
+/* QBImagePickerController */
+"format_photos_and_video" = "%ld Fotoğraflar, %ld Video";
+
+/* QBImagePickerController */
+"format_photo_and_videos" = "%ld Fotoğraf, %ld Videolar";
+
+/* QBImagePickerController */
+"format_photos_and_videos" = "%ld Fotoğraflar, %ld Videolar";

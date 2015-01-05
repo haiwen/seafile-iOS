@@ -1,28 +1,28 @@
 
 
 /* QBImagePickerController */
-"title" = "Photos";
+"title" = "Fényképek";
 
 /* QBImagePickerController */
-"format_photo" = "%ld Photo";
+"format_photo" = "%ld fénykép";
 
 /* QBImagePickerController */
-"format_photos" = "%ld Photos";
+"format_photos" = "%ld fényképek";
 
 /* QBImagePickerController */
-"format_video" = "%ld Video";
+"format_video" = "%ld videó";
 
 /* QBImagePickerController */
-"format_videos" = "%ld Videos";
+"format_videos" = "%ld videók";
 
 /* QBImagePickerController */
-"format_photo_and_video" = "%ld Photo, %ld Video";
+"format_photo_and_video" = "%ld fénykék, %ld videó";
 
 /* QBImagePickerController */
-"format_photos_and_video" = "%ld Photos, %ld Video";
+"format_photos_and_video" = "%ld fényképek, %ld videó";
 
 /* QBImagePickerController */
-"format_photo_and_videos" = "%ld Photo, %ld Videos";
+"format_photo_and_videos" = " %ld fénykép, %ld videók";
 
 /* QBImagePickerController */
-"format_photos_and_videos" = "%ld Photos, %ld Videos";
+"format_photos_and_videos" = "%ld fényképek, %ld videók";

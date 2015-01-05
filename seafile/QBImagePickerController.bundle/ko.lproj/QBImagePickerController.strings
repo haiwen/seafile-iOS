@@ -1,28 +1,28 @@
 
 
 /* QBImagePickerController */
-"title" = "Photos";
+"title" = "사진";
 
 /* QBImagePickerController */
-"format_photo" = "%ld Photo";
+"format_photo" = "사진 %ld개";
 
 /* QBImagePickerController */
-"format_photos" = "%ld Photos";
+"format_photos" = "사진 %ld개";
 
 /* QBImagePickerController */
-"format_video" = "%ld Video";
+"format_video" = "동영상 %ld개";
 
 /* QBImagePickerController */
-"format_videos" = "%ld Videos";
+"format_videos" = "동영상 %ld개";
 
 /* QBImagePickerController */
-"format_photo_and_video" = "%ld Photo, %ld Video";
+"format_photo_and_video" = "사진 %ld개, 동영상 %ld개";
 
 /* QBImagePickerController */
-"format_photos_and_video" = "%ld Photos, %ld Video";
+"format_photos_and_video" = "사진 %ld개, 동영상 %ld개";
 
 /* QBImagePickerController */
-"format_photo_and_videos" = "%ld Photo, %ld Videos";
+"format_photo_and_videos" = "사진 %ld개, 동영상 %ld개";
 
 /* QBImagePickerController */
-"format_photos_and_videos" = "%ld Photos, %ld Videos";
+"format_photos_and_videos" = "사진 %ld개, 동영상 %ld개";

@@ -1,13 +1,13 @@
 
 
 /* QBImagePickerController */
-"title" = "Photos";
+"title" = "Fotos";
 
 /* QBImagePickerController */
-"format_photo" = "%ld Photo";
+"format_photo" = "%ld Foto";
 
 /* QBImagePickerController */
-"format_photos" = "%ld Photos";
+"format_photos" = "%ld Fotos";
 
 /* QBImagePickerController */
 "format_video" = "%ld Video";
@@ -16,13 +16,13 @@
 "format_videos" = "%ld Videos";
 
 /* QBImagePickerController */
-"format_photo_and_video" = "%ld Photo, %ld Video";
+"format_photo_and_video" = "%ld Foto, %ld Video";
 
 /* QBImagePickerController */
-"format_photos_and_video" = "%ld Photos, %ld Video";
+"format_photos_and_video" = "%ld Fotos, %ld Video";
 
 /* QBImagePickerController */
-"format_photo_and_videos" = "%ld Photo, %ld Videos";
+"format_photo_and_videos" = "%ld Foto, %ld Videos";
 
 /* QBImagePickerController */
-"format_photos_and_videos" = "%ld Photos, %ld Videos";
+"format_photos_and_videos" = "%ld Fotos, %ld Videos";
