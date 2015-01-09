@@ -67,8 +67,27 @@ enum {
 
 - (void)autoSyncSwitchFlip:(id)sender
 {
-    _autoSync =  _autoSyncSwitch.on;
-    _connection.autoSync = _autoSync;
+    if (_autoSyncSwitch.on) {
+        if([ALAssetsLibrary authorizationStatus] == ALAuthorizationStatusNotDetermined) {
+            ALAssetsLibrary *assetLibrary = [[ALAssetsLibrary alloc] init];
+            /*
+             Enumerating assets or groups of assets in the library will present a consent dialog to the user.
+             */
+            [assetLibrary enumerateGroupsWithTypes:ALAssetsGroupAll usingBlock:^(ALAssetsGroup *group, BOOL *stop) {
+                _autoSync =  _autoSyncSwitch.on;
+                _connection.autoSync = _autoSync;
+            } failureBlock:^(NSError *error) {
+                _autoSyncSwitch.on = false;
+            }];
+        } else if([ALAssetsLibrary authorizationStatus] == ALAuthorizationStatusRestricted ||
+                  [ALAssetsLibrary authorizationStatus] == ALAuthorizationStatusDenied) {
+            [self alertWithTitle:@"This app does not have access to your photos and videos." message:@"You can enable access in Privacy Settings"];
+            _autoSyncSwitch.on = false;
+        } else if([ALAssetsLibrary authorizationStatus] == ALAuthorizationStatusAuthorized) {
+            _autoSync =  _autoSyncSwitch.on;
+            _connection.autoSync = _autoSync;
+        }
+    }
 }
 
 - (void)wifiOnlySwitchFlip:(id)sender
@@ -129,8 +148,9 @@ enum {
 
     _nameCell.detailTextLabel.text = _connection.username;
     _serverCell.detailTextLabel.text = [_connection.address trimUrl];
-
     _autoSyncSwitch.on = self.autoSync;
+    if (self.autoSync)
+        [self autoSyncSwitchFlip:nil];
     NSString *autoSyncRepo = [[_connection getAttribute:@"autoSyncRepo"] stringValue];
     SeafRepo *repo = [_connection getRepo:autoSyncRepo];
     _syncRepoCell.detailTextLabel.text = repo ? repo.name : nil;

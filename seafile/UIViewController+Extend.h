@@ -18,6 +18,7 @@
 - (id)initWithAutoPlatformLangNibName:(NSString *)lang;
 
 - (void)alertWithTitle:(NSString*)title;
+- (void)alertWithTitle:(NSString*)title message:(NSString*)message;
 - (void)alertWithTitle:(NSString*)title handler:(void (^)())handler;
 - (void)alertWithTitle:(NSString *)title message:(NSString*)message yes:(void (^)())yes no:(void (^)())no;
 

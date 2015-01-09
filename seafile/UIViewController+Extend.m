@@ -60,16 +60,16 @@ ADD_DYNAMIC_PROPERTY(void (^)(NSString *),handler_input,setHandler_input);
     return [self initWithNibName:[NSString stringWithFormat:@"%@_%@_%@", className, plaformSuffix, lang] bundle:nil];
 }
 
-- (void)alertWithTitle:(NSString*)title handler:(void (^)())handler;
+- (void)alertWithTitle:(NSString*)title message:(NSString*)message handler:(void (^)())handler;
 {
     if (ios8)
-        [Utils alertWithTitle:title message:nil handler:handler from:self];
+        [Utils alertWithTitle:title message:message handler:handler from:self];
     else {
         self.handler_ok = nil;
         self.handler_cancel = handler;
         self.handler_input = nil;
         UIAlertView *alert = [[UIAlertView alloc]initWithTitle:title
-                                                       message:nil
+                                                       message:message
                                                       delegate:self
                                              cancelButtonTitle:@"OK"
                                              otherButtonTitles:nil, nil];
@@ -79,10 +79,21 @@ ADD_DYNAMIC_PROPERTY(void (^)(NSString *),handler_input,setHandler_input);
     }
 }
 
+- (void)alertWithTitle:(NSString*)title message:(NSString*)message
+{
+    [self alertWithTitle:title message:message handler:nil];
+}
+
 - (void)alertWithTitle:(NSString*)title
 {
-    [self alertWithTitle:title handler:nil];
+    [self alertWithTitle:title message:nil];
 }
+
+- (void)alertWithTitle:(NSString*)title handler:(void (^)())handler
+{
+    [self alertWithTitle:title message:nil handler:handler];
+}
+
 
 - (void)alertWithTitle:(NSString *)title message:(NSString*)message yes:(void (^)())yes no:(void (^)())no
 {
