@@ -1022,6 +1022,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (void)checkAutoSync
 {
     if (!self.authorized) return;
+    if (self.isAutoSync && [ALAssetsLibrary authorizationStatus] != ALAuthorizationStatusAuthorized) {
+        self.autoSync = false;
+        return;
+    }
+
     BOOL value = self.isAutoSync && ([[self getAttribute:@"autoSyncRepo"] stringValue] != nil);
     if (_inAutoSync != value) {
         if (value) {

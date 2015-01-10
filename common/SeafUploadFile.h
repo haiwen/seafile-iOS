@@ -48,9 +48,10 @@
 
 - (NSString *)key;
 - (NSMutableDictionary *)uploadAttr;
-- (void)saveAttr:(NSMutableDictionary *)attr;
+- (BOOL)saveAttr:(NSMutableDictionary *)attr flush:(BOOL)flush;
 
 + (NSMutableArray *)uploadFilesForDir:(SeafDir *)dir;
++ (BOOL)saveAttrs;
 + (void)clearCache;
 
 @end

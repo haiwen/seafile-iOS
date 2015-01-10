@@ -81,10 +81,10 @@ enum {
             }];
         } else if([ALAssetsLibrary authorizationStatus] == ALAuthorizationStatusRestricted ||
                   [ALAssetsLibrary authorizationStatus] == ALAuthorizationStatusDenied) {
-            [self alertWithTitle:@"This app does not have access to your photos and videos." message:@"You can enable access in Privacy Settings"];
+            [self alertWithTitle:NSLocalizedString(@"This app does not have access to your photos and videos.", @"Seafile") message:NSLocalizedString(@"You can enable access in Privacy Settings", @"Seafile")];
             _autoSyncSwitch.on = false;
         } else if([ALAssetsLibrary authorizationStatus] == ALAuthorizationStatusAuthorized) {
-            _autoSync =  _autoSyncSwitch.on;
+            _autoSync = _autoSyncSwitch.on;
             _connection.autoSync = _autoSync;
         }
     }

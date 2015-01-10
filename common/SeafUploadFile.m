@@ -91,7 +91,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 - (void)doRemove
 {
     [self.operation cancel];
-    [self saveAttr:nil];
+    [self saveAttr:nil flush:true];
     [[NSFileManager defaultManager] removeItemAtPath:self.lpath error:nil];
 }
 
@@ -120,7 +120,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     [dict setObject:[NSNumber numberWithDouble:[[NSDate date] timeIntervalSince1970]]forKey:@"utime"];
     [dict setObject:[NSNumber numberWithBool:result] forKey:@"result"];
     [dict setObject:[NSNumber numberWithBool:self.autoSync] forKey:@"autoSync"];
-    [self saveAttr:dict];
+    [self saveAttr:dict flush:true];
     Debug("result=%d, name=%@, _delegate=%@, oid=%@\n", result, self.name, _delegate, oid);
     if (result)
         [_delegate uploadSucess:self oid:oid];
@@ -383,6 +383,12 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     return uploadFileAttrs;
 }
 
++ (BOOL)saveAttrs
+{
+    NSString *attrsFile = [[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploadfiles.plist"];
+    return [[SeafUploadFile uploadFileAttrs] writeToFile:attrsFile atomically:true];
+}
+
 + (void)clearCache
 {
     [Utils clearAllFiles:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"]];
@@ -394,14 +400,13 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     return [[SeafUploadFile uploadFileAttrs] objectForKey:self.lpath];
 }
 
-- (void)saveAttr:(NSMutableDictionary *)attr
+- (BOOL)saveAttr:(NSMutableDictionary *)attr flush:(BOOL)flush
 {
-    NSString *attrsFile = [[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploadfiles.plist"];
     if (attr)
         [[SeafUploadFile uploadFileAttrs] setObject:attr forKey:self.lpath];
     else
         [[SeafUploadFile uploadFileAttrs] removeObjectForKey:self.lpath];
-    [[SeafUploadFile uploadFileAttrs] writeToFile:attrsFile atomically:YES];
+    return !flush || [SeafUploadFile saveAttrs];
 }
 
 + (NSMutableArray *)uploadFilesForDir:(SeafDir *)dir
@@ -419,9 +424,11 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         }
         if ([dir.repoId isEqualToString:[info objectForKey:@"urepo"]] && [dir.path isEqualToString:[info objectForKey:@"upath"]]) {
             bool autoSync = [[info objectForKey:@"autoSync"] boolValue];
-            SeafUploadFile *file  = [dir->connection getUploadfile:lpath create:!autoSync];
-            if (!file) {
+            SeafUploadFile *file = [dir->connection getUploadfile:lpath create:!autoSync];
+            if (!file || (!file.asset && file.filesize == 0)) {
                 Debug("Auto sync photos %@:%@, remove and will reupload from beginning", file.lpath, info);
+                [uploadFileAttrs removeObjectForKey:lpath];
+                changed = true;
                 continue;
             }
             file.udir = dir;
@@ -430,6 +437,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
             [files addObject:file];
         }
     }
+    if (changed) [SeafUploadFile saveAttrs];
     return files;
 }
 

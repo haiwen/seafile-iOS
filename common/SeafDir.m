@@ -365,14 +365,15 @@
 
 - (NSMutableArray *)uploadItems
 {
-    if (!_uploadItems)
+    if (self.path && !_uploadItems)
         _uploadItems = [SeafUploadFile uploadFilesForDir:self];
+
     if (!_uploadItems)
         _uploadItems = [[NSMutableArray alloc] init];
     return _uploadItems;
 }
 
-- (void)addUploadFile:(SeafUploadFile *)file
+- (void)addUploadFile:(SeafUploadFile *)file flush:(BOOL)flush;
 {
     if ([self.uploadItems containsObject:file]) return;
     NSMutableDictionary *dict = file.uploadAttr;
@@ -383,10 +384,10 @@
     [dict setObject:[NSNumber numberWithBool:file.update] forKey:@"update"];
     [dict setObject:[NSNumber numberWithBool:file.autoSync] forKey:@"autoSync"];
     if (file.asset) {
-        [dict setObject:file.asset.defaultRepresentation.url forKey:@"assetURL"];
+        [dict setObject:file.asset.defaultRepresentation.url.absoluteString forKey:@"assetURL"];
     }
-    [file saveAttr:dict];
     file.udir = self;
+    [file saveAttr:dict flush:flush];
     [self.uploadItems addObject:file];
     _allItems = nil;
 }
@@ -400,16 +401,6 @@
             BOOL result = [[dict objectForKey:@"result"] boolValue];
             if (result) {
                 [arr addObject:file];
-            } else {
-                NSURL *url = file.assetURL;
-                if (url && file.filesize == 0 && !file.asset) {
-                    [SeafGlobal.sharedObject  assetForURL:url
-                                              resultBlock:^(ALAsset *asset) {
-                                                  file.asset = asset;
-                                              }failureBlock:^(NSError *error) {
-                                                  [self removeUploadFile:file];
-                                              }];
-                }
             }
         }
     }

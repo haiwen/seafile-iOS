@@ -365,9 +365,7 @@
         }
     }
     for (SeafUploadFile *file in todo) {
-        if (file.udir) {
-            [file doUpload];
-        }
+        if (file.udir) [file doUpload];
     }
 }
 

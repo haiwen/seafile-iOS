@@ -1149,7 +1149,7 @@ enum {
 {
     SeafUploadFile *uploadFile = (SeafUploadFile *)ufile;
     uploadFile.update = replace;
-    [dir addUploadFile:uploadFile];
+    [dir addUploadFile:uploadFile flush:true];
     [NSThread detachNewThreadSelector:@selector(backgroundUpload:) toTarget:self withObject:ufile];
 }
 
@@ -1220,11 +1220,28 @@ enum {
         file.asset = asset;
         file.delegate = self;
         [files addObject:file];
-        [self.directory addUploadFile:file];
+        [self.directory addUploadFile:file flush:false];
     }
     [self.tableView reloadData];
     for (SeafUploadFile *file in files) {
         [[SeafGlobal sharedObject] backgroundUpload:file];
+    }
+    [SeafUploadFile saveAttrs];
+}
+
+- (void)uploadPickedAssetsUrl:(NSArray *)urls
+{
+    if (urls.count == 0) return;
+    NSMutableArray *assets = [[NSMutableArray alloc] init];
+    NSURL *last = [urls objectAtIndex:urls.count-1];
+    for (NSURL *url in urls) {
+        [SeafGlobal.sharedObject assetForURL:url
+                                  resultBlock:^(ALAsset *asset) {
+                                      [assets addObject:asset];
+                                      if (url == last) [self uploadPickedAssets:assets];
+                                  } failureBlock:^(NSError *error) {
+                                      if (url == last) [self uploadPickedAssets:assets];
+                                  }];
     }
 }
 
@@ -1245,7 +1262,12 @@ enum {
 
 - (void)qb_imagePickerController:(QBImagePickerController *)imagePickerController didSelectAssets:(NSArray *)assets
 {
-    [self performSelector:@selector(uploadPickedAssets:) withObject:assets];
+    if (assets.count == 0) return;
+    NSMutableArray *urls = [[NSMutableArray alloc] init];
+    for (ALAsset *asset in assets) {
+        [urls addObject:asset.defaultRepresentation.url];
+    }
+    [self uploadPickedAssetsUrl:urls];
     [self dismissImagePickerController:imagePickerController];
 }
 

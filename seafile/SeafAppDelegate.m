@@ -80,8 +80,6 @@
     Debug("Current app version is %@\n%@\n", version, infoDictionary);
     [SeafGlobal.sharedObject setObject:version forKey:@"VERSION"];
     [SeafGlobal.sharedObject synchronize];
-
-    [[AFNetworkReachabilityManager sharedManager] startMonitoring];
     [self cycleTheGlobalMailComposer];
     [SeafGlobal.sharedObject startTimer];
     [SeafGlobal.sharedObject clearRepoPasswords];
@@ -128,6 +126,8 @@
         [self application:application didReceiveRemoteNotification:dict];
     } else
         [self.startVC selectDefaultAccount];
+    [[AFNetworkReachabilityManager sharedManager] startMonitoring];
+
     [self performSelector:@selector(delayedInit) withObject:nil afterDelay:2.0];
     return YES;
 }
