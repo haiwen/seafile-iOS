@@ -2681,7 +2681,7 @@
 				GCC_PREFIX_HEADER = "seafile/seafile-Prefix.pch";
 				HEADER_SEARCH_PATHS = "libs/ios-openssl/include/";
 				INFOPLIST_FILE = "seafile/seafile-appstore-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/libs/ios-openssl/lib\"",
@@ -2706,7 +2706,7 @@
 				GCC_PREFIX_HEADER = "seafile/seafile-Prefix.pch";
 				HEADER_SEARCH_PATHS = "libs/ios-openssl/include/";
 				INFOPLIST_FILE = "seafile/seafile-appstore-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/libs/ios-openssl/lib\"",
