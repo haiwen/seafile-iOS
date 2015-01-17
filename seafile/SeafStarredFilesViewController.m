@@ -255,11 +255,6 @@
     [self.detailViewController setPreViewItem:sfile master:self];
 }
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    return YES;
-}
-
 #pragma mark - SeafStarFileDelegate
 - (void)fileStateChanged:(BOOL)starred file:(SeafStarredFile *)sfile
 {

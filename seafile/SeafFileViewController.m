@@ -145,7 +145,7 @@ enum {
 - (void)awakeFromNib
 {
     if (IsIpad()) {
-        self.contentSizeForViewInPopover = CGSizeMake(320.0, 600.0);
+        self.preferredContentSize = CGSizeMake(320.0, 600.0);
     }
     [super awakeFromNib];
 }
@@ -244,11 +244,6 @@ enum {
     _refreshHeaderView = nil;
     _directory = nil;
     _curEntry = nil;
-}
-
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    return YES;
 }
 
 - (void)selectAll:(id)sender

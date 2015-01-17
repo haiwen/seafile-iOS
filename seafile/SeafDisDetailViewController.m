@@ -384,11 +384,6 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     self.masterPopoverController = nil;
 }
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    return IsIpad() || (interfaceOrientation == UIInterfaceOrientationPortrait);
-}
-
 - (void)setInputViewHidden:(BOOL)hidden
 {
     if (self.messageInputView.hidden == hidden)
@@ -623,7 +618,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 {
 #if 1
     if ([cell.bubbleView.textView respondsToSelector:@selector(linkTextAttributes)]) {
-        cell.bubbleView.textView.linkTextAttributes = @{UITextAttributeTextColor : [UIColor blueColor],
+        cell.bubbleView.textView.linkTextAttributes = @{NSForegroundColorAttributeName : [UIColor blueColor],
                                                         NSUnderlineStyleAttributeName: [NSNumber numberWithInt:NSUnderlineStyleSingle]};
     }
     cell.bubbleView.textView.dataDetectorTypes = UIDataDetectorTypeLink;

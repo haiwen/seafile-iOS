@@ -37,7 +37,7 @@
 - (void)awakeFromNib
 {
     if (IsIpad()) {
-        self.contentSizeForViewInPopover = CGSizeMake(320.0, 600.0);
+        self.preferredContentSize = CGSizeMake(320.0, 600.0);
     }
     [super awakeFromNib];
 }
@@ -353,11 +353,6 @@
         [self.detailViewController setMsgtype:(int)msgtype info:dict];
         [self.detailViewController.navigationController popToRootViewControllerAnimated:NO];
     }
-}
-
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    return IsIpad() || (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
 
 - (void)doneLoadingTableViewData

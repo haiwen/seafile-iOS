@@ -129,12 +129,6 @@
     [self.navigationController popToRootViewControllerAnimated:YES];
 }
 
-
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    return YES;
-}
-
 - (void)viewDidUnload
 {
     [self setImageVIew:nil];

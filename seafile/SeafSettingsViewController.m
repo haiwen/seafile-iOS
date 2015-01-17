@@ -271,11 +271,6 @@ enum {
     return sectionNames[section];
 }
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    return YES;
-}
-
 - (void)viewDidUnload {
     [self setNameCell:nil];
     [self setUsedspaceCell:nil];

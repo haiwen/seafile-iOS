@@ -334,11 +334,6 @@ enum PREVIEW_STATE {
     self.webView = nil;
 }
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    return IsIpad() || (interfaceOrientation == UIInterfaceOrientationPortrait);
-}
-
 - (void)viewWillLayoutSubviews
 {
     [super viewWillLayoutSubviews];

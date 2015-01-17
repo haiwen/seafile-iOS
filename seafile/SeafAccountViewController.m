@@ -41,7 +41,7 @@
 
 - (id)initWithController:(StartViewController *)controller connection: (SeafConnection *)conn type:(int)atype
 {
-    if (self = [super initWithAutoNibName]) {
+    if (self = [super initWithAutoPlatformNibName]) {
         self.startController = controller;
         self.connection = conn;
         self.type = atype;
@@ -95,6 +95,8 @@
 {
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
+    if([self respondsToSelector:@selector(edgesForExtendedLayout)])
+        self.edgesForExtendedLayout = UIRectEdgeNone;
     for (UIView *v in self.view.subviews) {
         v.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin| UIViewAutoresizingFlexibleRightMargin
         | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
@@ -222,11 +224,6 @@
         [self login:nil];
     }
     return YES;
-}
-
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    return IsIpad() || (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
 
 #pragma - SeafConnectionDelegate

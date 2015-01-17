@@ -105,10 +105,7 @@
 
 - (void)viewWillAppear:(BOOL)animated
 {
-    if (IsIpad() && [self checkLastAccount])
-        self.footer.hidden = NO;
-    else
-        self.footer.hidden = YES;
+    self.footer.hidden = !(IsIpad() && [self checkLastAccount]);
     [self.tableView reloadData];
 }
 
@@ -304,17 +301,12 @@
 
 - (BOOL)shouldAutorotate
 {
-    return IsIpad();
+    return YES;
 }
 
 - (NSUInteger)supportedInterfaceOrientations
 {
     return (UIInterfaceOrientationMaskAll);
-}
-
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    return IsIpad() || (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
 
 @end
