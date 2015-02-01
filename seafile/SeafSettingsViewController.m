@@ -105,7 +105,7 @@ enum {
     _wifiOnlyLabel.text = NSLocalizedString(@"Wifi Only", @"Seafile");
     _syncRepoCell.textLabel.text = NSLocalizedString(@"Upload Destination", @"Seafile");
     _cacheCell.textLabel.text = NSLocalizedString(@"Local Cache", @"Seafile");
-    _tellFriendCell.textLabel.text = NSLocalizedString(@"Tell Friends about seafile", @"Seafile");
+    _tellFriendCell.textLabel.text = [NSString stringWithFormat:NSLocalizedString(@"Tell Friends about %@", @"Seafile"), APP_NAME];
     _websiteCell.textLabel.text = NSLocalizedString(@"Website", @"Seafile");
     _websiteCell.detailTextLabel.text = @"www.seafile.com";
     _serverCell.textLabel.text = NSLocalizedString(@"Server", @"Seafile");
@@ -298,8 +298,8 @@ enum {
 
 - (void)configureInvitationMail:(MFMailComposeViewController *)mailPicker
 {
-    [mailPicker setSubject:[NSString stringWithFormat:NSLocalizedString(@"%@ invite you to Seafile", @"Seafile"), NSFullUserName()]];
-    NSString *emailBody = [NSString stringWithFormat:NSLocalizedString(@"Hey there!<br/><br/> I've been using Seafile and thought you might like it. It is a free way to bring all you files anywhere and share them easily.<br/><br/>Go to the official website of Seafile:</br></br> <a href=\"%@\">%@</a>\n\n", @"Seafile"), SEAFILE_SITE, SEAFILE_SITE];
+    [mailPicker setSubject:[NSString stringWithFormat:NSLocalizedString(@"%@ invite you to %@", @"Seafile"), NSFullUserName(), APP_NAME]];
+    NSString *emailBody = [NSString stringWithFormat:NSLocalizedString(@"Hey there!<br/><br/> I've been using %@ and thought you might like it. It is a free way to bring all you files anywhere and share them easily.<br/><br/>Go to the official website of %@:</br></br> <a href=\"%@\">%@</a>\n\n", @"Seafile"), APP_NAME, APP_NAME, SEAFILE_SITE, SEAFILE_SITE];
 
     [mailPicker setMessageBody:emailBody isHTML:YES];
 }

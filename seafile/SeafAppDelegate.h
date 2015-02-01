@@ -36,7 +36,7 @@ enum {
 #define STR_4 NSLocalizedString(@"Last Updated: %@", nil)
 #define STR_5 NSLocalizedString(@"SEAFILE_LOC_KEY_FORMAT", @"Seafile push notification message")
 #define STR_6 NSLocalizedString(@"Send", nil)
-#define STR_7 NSLocalizedString(@"Seafile can't verify the identity of the website \"%@\"", @"Seafile"), challenge.protectionSpace.host];
+#define STR_7 NSLocalizedString(@"%@ can't verify the identity of the website \"%@\"", @"Seafile"), challenge.protectionSpace.host];
 #define STR_8 NSLocalizedString(@"The certificate from this website has been changed. Would you like to connect to the server anyway?", @"Seafile")
 #define STR_9 NSLocalizedString(@"The certificate from this website is invalid. Would you like to connect to the server anyway?", @"Seafile");
 #define STR_10 NSLocalizedString(@"%@, uploading", @"Seafile")

@@ -1441,11 +1441,11 @@ enum {
     MFMailComposeViewController *mailPicker = appdelegate.globalMailComposer;    mailPicker.mailComposeDelegate = self;
     NSString *emailSubject, *emailBody;
     if ([entry isKindOfClass:[SeafFile class]]) {
-        emailSubject = [NSString stringWithFormat:NSLocalizedString(@"File '%@' is shared with you using seafile", @"Seafile"), entry.name];
-        emailBody = [NSString stringWithFormat:NSLocalizedString(@"Hi,<br/><br/>Here is a link to <b>'%@'</b> in my Seafile:<br/><br/> <a href=\"%@\">%@</a>\n\n", @"Seafile"), entry.name, entry.shareLink, entry.shareLink];
+        emailSubject = [NSString stringWithFormat:NSLocalizedString(@"File '%@' is shared with you using %@", @"Seafile"), entry.name, APP_NAME];
+        emailBody = [NSString stringWithFormat:NSLocalizedString(@"Hi,<br/><br/>Here is a link to <b>'%@'</b> in my %@:<br/><br/> <a href=\"%@\">%@</a>\n\n", @"Seafile"), entry.name, APP_NAME, entry.shareLink, entry.shareLink];
     } else {
-        emailSubject = [NSString stringWithFormat:NSLocalizedString(@"Directory '%@' is shared with you using seafile", @"Seafile"), entry.name];
-        emailBody = [NSString stringWithFormat:NSLocalizedString(@"Hi,<br/><br/>Here is a link to directory <b>'%@'</b> in my Seafile:<br/><br/> <a href=\"%@\">%@</a>\n\n", @"Seafile"), entry.name, entry.shareLink, entry.shareLink];
+        emailSubject = [NSString stringWithFormat:NSLocalizedString(@"Directory '%@' is shared with you using %@", @"Seafile"), entry.name, APP_NAME];
+        emailBody = [NSString stringWithFormat:NSLocalizedString(@"Hi,<br/><br/>Here is a link to directory <b>'%@'</b> in my %@:<br/><br/> <a href=\"%@\">%@</a>\n\n", @"Seafile"), entry.name, APP_NAME, entry.shareLink, entry.shareLink];
     }
     [mailPicker setSubject:emailSubject];
     [mailPicker setMessageBody:emailBody isHTML:YES];

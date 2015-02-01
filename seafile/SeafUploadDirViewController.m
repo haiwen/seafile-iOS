@@ -40,7 +40,7 @@
     if (self = [self initWithAutoNibName]) {
         self.connection = conn;
         self.ufile = ufile;
-        self.title = NSLocalizedString(@"Save to Seafile", @"Seafile");
+        self.title = [NSString stringWithFormat:NSLocalizedString(@"Save to %@", @"Seafile"), APP_NAME];
 
         NSString *repo = [SeafGlobal.sharedObject objectForKey: [@"LAST-REPO" stringByAppendingString:conn.address]];
         NSString *path = [SeafGlobal.sharedObject objectForKey:[@"LAST-DIR" stringByAppendingString:conn.address]];

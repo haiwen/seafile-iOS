@@ -21,7 +21,7 @@
 - (id)initWithCoder:(NSCoder *)decoder
 {
     self = [super initWithCoder:decoder];
-    _errorLabel.text = NSLocalizedString(@"Seafile does not support to preview file of this kind at the moment.", @"Seafile");
+    _errorLabel.text = [NSString stringWithFormat:NSLocalizedString(@"%@ does not support to preview file of this kind at the moment.", @"Seafile"), APP_NAME];
     _openElseBtn.titleLabel.text = NSLocalizedString(@"Open in other applications", @"Seafile");
     for (UIView *v in self.subviews) {
         v.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin| UIViewAutoresizingFlexibleRightMargin| UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleTopMargin;

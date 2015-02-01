@@ -143,7 +143,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             }
         }
         if ([self authorized]) {
-            Debug("address=%@, email=%@, token=%@\n", self.address, self.username, self.token);
             if ([_info objectForKey:@"nickname"])
                 [self.email2nickMap setValue:[_info objectForKey:@"nickname"] forKey:self.username];
         }
@@ -275,6 +274,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)clearAccount
 {
+    [SeafGlobal.sharedObject removeObjectForKey:_address];
+    [SeafGlobal.sharedObject removeObjectForKey:[NSString stringWithFormat:@"%@/%@", _address, self.username]];
+    [SeafGlobal.sharedObject synchronize];
     NSString *path = [self certPathForHost:[self host]];
     [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
     [SeafAvatar clearCache];
@@ -307,11 +309,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                         self.challenge = nil;
                         return;
                     } else {
-                        NSString *title = [NSString stringWithFormat:NSLocalizedString(@"Seafile can't verify the identity of the website \"%@\"", @"Seafile"), challenge.protectionSpace.host];
+                        NSString *title = [NSString stringWithFormat:NSLocalizedString(@"%@ can't verify the identity of the website \"%@\"", @"Seafile"), APP_NAME, challenge.protectionSpace.host];
                         NSString *msg = policy ? NSLocalizedString(@"The certificate from this website has been changed. Would you like to connect to the server anyway?", @"Seafile"):NSLocalizedString(@"The certificate from this website is invalid. Would you like to connect to the server anyway?", @"Seafile");
                         [self.delegate continueWithInvalidCert:title message:msg yes:^{
-                            [self.challenge.sender useCredential:[NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust] forAuthenticationChallenge:self.challenge];
                             [self saveCertificate:self.challenge];
+                            [self.challenge.sender useCredential:[NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust] forAuthenticationChallenge:self.challenge];
                             self.challenge = nil;
                         } no:^{
                             [[self.challenge sender] cancelAuthenticationChallenge:self.challenge];

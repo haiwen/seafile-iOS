@@ -123,7 +123,7 @@
     _msgLabel.text = NSLocalizedString(@"For example: https://seacloud.cc or http://192.168.1.24:8000", @"Seafile");
     serverTextField.placeholder = NSLocalizedString(@"Server, like https://seafile.cc", @"Seafile");
 
-    self.title = NSLocalizedString(@"Seafile Account", @"Seafile");
+    self.title = [NSString stringWithFormat:NSLocalizedString(@"%@ Account", @"Seafile"), APP_NAME];
     CGRect rect = CGRectMake(0, 0, 90, 25);
     NSString *align = ios7 ? @"  " :  @"";
     UILabel *serverLabel = [[UILabel alloc] initWithFrame:rect];

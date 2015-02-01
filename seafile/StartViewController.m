@@ -56,7 +56,7 @@
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeNone;
     [self setExtraCellLineHidden:self.tableView];
-    self.title = NSLocalizedString(@"Seafile", @"Seafile");
+    self.title = APP_NAME;
     UIBarButtonItem *addItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Add account", @"Seafile") style:UIBarButtonItemStyleBordered target:self action:@selector(addAccount:)];
     self.navigationItem.rightBarButtonItem = addItem;
 
@@ -68,7 +68,7 @@
     header.backgroundColor = [UIColor clearColor];
     UILabel *welcomeLable = (UILabel *)[header viewWithTag:100];
     UILabel *msgLabel = (UILabel *)[header viewWithTag:101];
-    welcomeLable.text = NSLocalizedString(@"Welcome to Seafile", @"Seafile");
+    welcomeLable.text = [NSString stringWithFormat:NSLocalizedString(@"Welcome to %@", @"Seafile"), APP_NAME];
     msgLabel.text = NSLocalizedString(@"Choose an account to start", @"Seafile");
 
     self.tableView.tableHeaderView = header;
@@ -142,7 +142,7 @@
 {
     UIActionSheet *actionSheet;
     pressedIndex = nil;
-    NSString *privserver = NSLocalizedString(@"Private Seafile Server", @"Seafile");
+    NSString *privserver = [NSString stringWithFormat:NSLocalizedString(@"Private %@ Server", @"Seafile"), APP_NAME];
     if (IsIpad())
         actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:privserver, @"SeaCloud.cc", @"cloud.seafile.com", nil];
     else
@@ -235,6 +235,7 @@
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
 {
     if (pressedIndex) {// Long press account
+        if (pressedIndex.row >= SeafGlobal.sharedObject.conns.count) return;
         if (buttonIndex == 0) {
             [self showAccountView:[[SeafGlobal sharedObject].conns objectAtIndex:pressedIndex.row] type:0];
         } else if (buttonIndex == 1) {

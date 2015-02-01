@@ -40,6 +40,7 @@
         _downloadnum = 0;
         _uploadnum = 0;
         _storage = [[NSUserDefaults alloc] initWithSuiteName:GROUP_NAME];
+        Debug("applicationDocumentsDirectoryURL=%@",  self.applicationDocumentsDirectoryURL);
     }
     return self;
 }
@@ -93,7 +94,7 @@
         [oldDef removeObjectForKey:@"ACCOUNTS"];
         [oldDef synchronize];
     }
-    Debug("accounts:%@\new:%@", oldDef.dictionaryRepresentation, newDef.dictionaryRepresentation);
+    Debug("accounts:%@\nnew:%@", oldDef.dictionaryRepresentation, newDef.dictionaryRepresentation);
 
 }
 - (void)migrateDocuments
