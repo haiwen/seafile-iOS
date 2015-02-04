@@ -24,8 +24,7 @@
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="4">
                         <rect key="frame" x="8" y="8" width="32" height="32"/>
                         <constraints>
-                            <constraint firstAttribute="height" constant="32" id="IKb-zh-Rba"/>
-                            <constraint firstAttribute="width" constant="32" id="cfd-ri-mGY"/>
+                            <constraint firstAttribute="width" constant="32" id="RIP-FL-6N5"/>
                         </constraints>
                     </imageView>
                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="25">
@@ -36,17 +35,16 @@
                     </label>
                 </subviews>
                 <constraints>
-                    <constraint firstAttribute="trailingMargin" secondItem="25" secondAttribute="trailing" constant="43" id="4Zv-ql-hae"/>
-                    <constraint firstItem="25" firstAttribute="leading" secondItem="4" secondAttribute="trailing" constant="10" id="5Zh-YS-5AU"/>
-                    <constraint firstItem="4" firstAttribute="leading" secondItem="jlK-iz-38C" secondAttribute="leadingMargin" id="DGl-8b-6db"/>
-                    <constraint firstItem="25" firstAttribute="centerX" secondItem="jlK-iz-38C" secondAttribute="centerX" id="MhU-JM-Efo"/>
-                    <constraint firstItem="3" firstAttribute="leading" secondItem="4" secondAttribute="trailing" constant="8" symbolic="YES" id="OSk-8s-1h6"/>
-                    <constraint firstItem="4" firstAttribute="centerY" secondItem="jlK-iz-38C" secondAttribute="centerY" id="Wss-J7-ujh"/>
-                    <constraint firstAttribute="bottomMargin" secondItem="25" secondAttribute="bottom" constant="-6" id="bgp-VG-hby"/>
-                    <constraint firstItem="4" firstAttribute="top" secondItem="jlK-iz-38C" secondAttribute="topMargin" id="cLh-qa-P0v"/>
-                    <constraint firstAttribute="trailingMargin" secondItem="3" secondAttribute="trailing" constant="45" id="rCV-6w-aPV"/>
-                    <constraint firstItem="4" firstAttribute="centerY" secondItem="3" secondAttribute="centerY" id="tWl-qJ-CDu"/>
-                    <constraint firstItem="25" firstAttribute="top" secondItem="jlK-iz-38C" secondAttribute="topMargin" constant="24" id="wrq-Fc-mgD"/>
+                    <constraint firstItem="25" firstAttribute="leading" secondItem="4" secondAttribute="trailing" constant="10" id="3cg-YK-aCv"/>
+                    <constraint firstItem="3" firstAttribute="leading" secondItem="4" secondAttribute="trailing" constant="8" symbolic="YES" id="EDN-2q-VAq"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="3" secondAttribute="trailing" constant="45" id="IKv-Ba-rLT"/>
+                    <constraint firstItem="4" firstAttribute="centerY" secondItem="3" secondAttribute="centerY" id="SDh-uy-xvO"/>
+                    <constraint firstItem="4" firstAttribute="centerY" secondItem="jlK-iz-38C" secondAttribute="centerY" id="V2U-Gy-2Na"/>
+                    <constraint firstItem="4" firstAttribute="leading" secondItem="jlK-iz-38C" secondAttribute="leadingMargin" id="VgW-a0-jx4"/>
+                    <constraint firstItem="25" firstAttribute="top" secondItem="jlK-iz-38C" secondAttribute="topMargin" constant="24" id="YWW-hF-Izg"/>
+                    <constraint firstItem="4" firstAttribute="top" secondItem="jlK-iz-38C" secondAttribute="topMargin" id="bGj-4Z-PmV"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="25" secondAttribute="trailing" constant="43" id="vAs-EZ-4ZY"/>
+                    <constraint firstAttribute="bottomMargin" secondItem="25" secondAttribute="bottom" constant="-6" id="vw4-QI-JNV"/>
                 </constraints>
             </tableViewCellContentView>
             <connections>
