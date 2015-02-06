@@ -66,7 +66,6 @@
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     self.addItem = [self getBarItem:@"plus".navItemImgName action:@selector(addContact:)size:20];
     self.navigationItem.rightBarButtonItem = self.addItem;
-    self.clearsSelectionOnViewWillAppear = NO;
     [self startTimer];
 }
 

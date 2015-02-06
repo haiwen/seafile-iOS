@@ -160,7 +160,6 @@ enum {
     self.formatter = [[NSDateFormatter alloc] init];
     [self.formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
     self.tableView.rowHeight = 50;
-    self.clearsSelectionOnViewWillAppear = !IsIpad();
 
     self.state = STATE_INIT;
     _refreshHeaderView = [[EGORefreshTableHeaderView alloc] initWithFrame:CGRectMake(0.0f, 0.0f - self.tableView.bounds.size.height, self.view.frame.size.width, self.tableView.bounds.size.height)];

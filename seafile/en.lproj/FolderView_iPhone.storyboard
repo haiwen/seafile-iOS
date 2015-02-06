@@ -51,7 +51,7 @@
         <!--Seaf File View Controller-->
         <scene sceneID="UbQ-9W-oFk">
             <objects>
-                <tableViewController storyboardIdentifier="FILEMASTERVC" clearsSelectionOnViewWillAppear="NO" id="ZeC-X3-lth" customClass="SeafFileViewController" sceneMemberID="viewController">
+                <tableViewController storyboardIdentifier="FILEMASTERVC" id="ZeC-X3-lth" customClass="SeafFileViewController" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" allowsSelectionDuringEditing="YES" allowsMultipleSelectionDuringEditing="YES" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="zZ4-Jf-wgM">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="524"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -523,7 +523,7 @@
         <!--Message-->
         <scene sceneID="P5F-l7-Lh4">
             <objects>
-                <tableViewController storyboardIdentifier="DISMASTERVC" clearsSelectionOnViewWillAppear="NO" id="geg-qC-dkP" customClass="SeafDisMasterViewController" sceneMemberID="viewController">
+                <tableViewController storyboardIdentifier="DISMASTERVC" id="geg-qC-dkP" customClass="SeafDisMasterViewController" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" allowsSelectionDuringEditing="YES" allowsMultipleSelectionDuringEditing="YES" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="iUw-wv-V04">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
