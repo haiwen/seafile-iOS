@@ -881,6 +881,16 @@ enum {
         [self doneLoadingTableViewData];
         [self refreshView];
     } else if ([entry isKindOfClass:[SeafFile class]]) {
+        if (percent == 100) {
+            int row = [_directory.allItems indexOfObject:entry];
+            if (row != NSNotFound) {
+                @try {
+                    NSIndexPath *index = [NSIndexPath indexPathForRow:row inSection:0];
+                    [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:index] withRowAnimation:UITableViewRowAnimationNone];
+                } @catch(NSException *exception) {
+                }
+            }
+        }
         if (updated && entry == self.detailViewController.preViewItem)
             [self.detailViewController entry:entry updated:updated progress:percent];
     }

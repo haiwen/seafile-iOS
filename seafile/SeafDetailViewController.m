@@ -217,7 +217,7 @@ enum PREVIEW_STATE {
     }
 }
 
-- (void)setPreViewItem:(id<SeafPreView>)item master:(UIViewController *)c
+- (void)setPreViewItem:(id<SeafPreView>)item master:(UIViewController<SeafDentryDelegate> *)c
 {
     if (self.masterPopoverController != nil)
         [self.masterPopoverController dismissPopoverAnimated:YES];
@@ -231,11 +231,11 @@ enum PREVIEW_STATE {
         else
             self.navigationItem.leftBarButtonItem = self.fullscreenItem;
     }
-    [item load:self force:NO];
+    [item load:self.masterVc force:NO];
     [self refreshView];
 }
 
-- (void)setPreViewItems:(NSArray *)items current:(id<SeafPreView>)item master:(UIViewController *)c
+- (void)setPreViewItems:(NSArray *)items current:(id<SeafPreView>)item master:(UIViewController<SeafDentryDelegate> *)c
 {
     [self clearPreView];
     if (self.masterPopoverController != nil)
@@ -1093,7 +1093,7 @@ enum PREVIEW_STATE {
 
     // Load adjacent images if needed and the photo is already
     // loaded. Also called after photo has been loaded in background
-    [self.preViewItem load:self force:NO];
+    [self.preViewItem load:self.masterVc force:NO];
     if ([self.preViewItem hasCache])
         [self loadAdjacentPhotosIfNecessary:self.preViewItem];
 
@@ -1140,7 +1140,7 @@ enum PREVIEW_STATE {
     if (index < num) {
         id<SeafPreView> next = [self.photos objectAtIndex:index];
         if (![next hasCache])
-            [next load:self force:NO];
+            [next load:self.masterVc force:NO];
     }
 }
 

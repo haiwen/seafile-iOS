@@ -13,10 +13,10 @@
 @interface SeafDetailViewController : UIViewController <UISplitViewControllerDelegate, SeafShareDelegate, SeafDentryDelegate>
 
 @property (nonatomic) id<SeafPreView> preViewItem;
-@property (nonatomic) UIViewController *masterVc;
+@property (nonatomic) UIViewController<SeafDentryDelegate> *masterVc;
 - (void)refreshView;
-- (void)setPreViewItem:(id<SeafPreView>)item master:(UIViewController *)c;
+- (void)setPreViewItem:(id<SeafPreView>)item master:(UIViewController<SeafDentryDelegate> *)c;
 
-- (void)setPreViewItems:(NSArray *)items current:(id<SeafPreView>)item master:(UIViewController *)c;
+- (void)setPreViewItems:(NSArray *)items current:(id<SeafPreView>)item master:(UIViewController<SeafDentryDelegate> *)c;
 
 @end

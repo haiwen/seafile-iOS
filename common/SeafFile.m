@@ -357,6 +357,12 @@
     return [Utils isImageFile:self.name];
 }
 
+- (UIImage *)icon;
+{
+    UIImage *img = [self isImageFile] ? self.image : nil;
+    return img ? img : [super icon];
+}
+
 - (DownloadedFile *)loadCacheObj
 {
     NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
