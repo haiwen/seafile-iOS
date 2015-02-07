@@ -56,7 +56,7 @@
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeNone;
     [self setExtraCellLineHidden:self.tableView];
-    self.title = APP_NAME;
+    self.title = NSLocalizedString(@"Accounts", @"Seafile");;
     UIBarButtonItem *addItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Add account", @"Seafile") style:UIBarButtonItemStyleBordered target:self action:@selector(addAccount:)];
     self.navigationItem.rightBarButtonItem = addItem;
 

@@ -489,13 +489,7 @@ enum PREVIEW_STATE {
         [self setPreViewItem:nil master:nil];
     } else {
         [self.progressView configureViewWithItem:self.preViewItem completeness:percent];
-        if (percent == 100) {
-            [self refreshView];
-            if ([self.masterVc isKindOfClass: [SeafFileViewController class]]) {
-                SeafFileViewController *c = (SeafFileViewController *)self.masterVc;
-                [c updateEntryCell:_preViewItem];
-            }
-        }
+        if (percent == 100) [self refreshView];
     }
 }
 

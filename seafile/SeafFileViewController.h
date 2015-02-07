@@ -54,6 +54,5 @@ enum {
 - (void)chooseUploadDir:(SeafDir *)dir file:(SeafUploadFile *)ufile replace:(BOOL)replace;
 
 - (void)photoSelectedChanged:(id<SeafPreView>)preViewItem to:(id<SeafPreView>)to;
-- (void)updateEntryCell:(id<SeafPreView>)entry;
 
 @end

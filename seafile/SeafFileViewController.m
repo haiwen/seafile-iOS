@@ -884,17 +884,8 @@ enum {
         [self doneLoadingTableViewData];
         if (updated)  [self refreshView];
     } else if ([entry isKindOfClass:[SeafFile class]]) {
-        if (percent == 100) {
-            int row = [_directory.allItems indexOfObject:entry];
-            if (row != NSNotFound) {
-                @try {
-                    NSIndexPath *index = [NSIndexPath indexPathForRow:row inSection:0];
-                    [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:index] withRowAnimation:UITableViewRowAnimationNone];
-                } @catch(NSException *exception) {
-                }
-            }
-        }
-        if (updated && entry == self.detailViewController.preViewItem)
+        if (percent == 100) [self updateEntryCell:(SeafFile *)entry];
+        if (entry == self.detailViewController.preViewItem)
             [self.detailViewController entry:entry updated:updated progress:percent];
     }
     self.state = STATE_INIT;
@@ -911,7 +902,7 @@ enum {
     }
 
     NSCAssert([entry isKindOfClass:[SeafDir class]], @"entry must be SeafDir");
-    Debug("%@,%@, %@\n", entry.path, entry.repoId, _directory.path);
+    Debug("state=%d %@,%@, %@\n", self.state, entry.path, entry.repoId, _directory.path);
     if (entry == _directory) {
         [self doneLoadingTableViewData];
         switch (self.state) {
@@ -1060,7 +1051,7 @@ enum {
 - (void)deleteFile:(SeafFile *)file
 {
     NSArray *entries = [NSArray arrayWithObject:file];
-    self.state = EDITOP_DELETE;
+    self.state = STATE_DELETE;
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Deleting file ...", @"Seafile")];
     [_directory delEntries:entries];
 }
@@ -1068,7 +1059,7 @@ enum {
 - (void)deleteDir:(SeafDir *)dir
 {
     NSArray *entries = [NSArray arrayWithObject:dir];
-    self.state = EDITOP_DELETE;
+    self.state = STATE_DELETE;
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Deleting directory ...", @"Seafile")];
     [_directory delEntries:entries];
 }
@@ -1105,8 +1096,7 @@ enum {
         } else if ([entry isKindOfClass:[SeafFile class]])
             [self deleteFile:(SeafFile*)entry];
         else if ([entry isKindOfClass:[SeafDir class]])
-            [self deleteDir: (SeafDir*)entry];{
-            }
+            [self deleteDir: (SeafDir*)entry];
     } else if ([S_REDOWNLOAD isEqualToString:title]) {
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [self redownloadFile:file];
@@ -1401,13 +1391,20 @@ enum {
     [self.tableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionMiddle];
 }
 
-- (void)updateEntryCell:(id<SeafPreView>)entry
+- (void)updateEntryCell:(SeafFile *)entry
 {
     NSUInteger index = [_directory.allItems indexOfObject:entry];
     if (index == NSNotFound)
         return;
-    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
-    [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+    @try {
+        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
+        UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+        if (cell){
+            cell.detailTextLabel.text = entry.detailText;
+            cell.imageView.image = entry.icon;
+        }
+    } @catch(NSException *exception) {
+    }
 }
 
 #pragma mark - SeafShareDelegate

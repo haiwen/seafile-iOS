@@ -189,7 +189,7 @@
                  percent = (int)(totalBytesRead * 100 / totalBytesExpectedToRead);
              if (percent >= 100)
                  percent = 99;
-             [self.delegate entry:self updated:NO progress:percent];
+             [self.delegate entry:self updated:false progress:percent];
          }];
          [self->connection handleOperation:operation];
      }

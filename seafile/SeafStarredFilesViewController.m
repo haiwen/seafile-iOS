@@ -254,21 +254,29 @@
     [self.detailViewController setPreViewItem:sfile master:self];
 }
 
+- (void)updateEntryCell:(SeafFile *)entry
+{
+    NSUInteger index = [_starredFiles indexOfObject:entry];
+    if (index == NSNotFound)
+        return;
+
+    @try {
+        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
+        UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+        if (cell){
+            cell.detailTextLabel.text = entry.detailText;
+            cell.imageView.image = entry.icon;
+        }
+    } @catch(NSException *exception) {
+    }
+}
+
 #pragma mark - SeafDentryDelegate
 - (void)entry:(SeafBase *)entry updated:(BOOL)updated progress:(int)percent
 {
     if ([entry isKindOfClass:[SeafFile class]]) {
-        if (percent == 100) {
-            int row = [_starredFiles indexOfObject:entry];
-            if (row != NSNotFound) {
-                @try {
-                    NSIndexPath *index = [NSIndexPath indexPathForRow:row inSection:0];
-                    [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:index] withRowAnimation:UITableViewRowAnimationNone];
-                } @catch(NSException *exception) {
-                }
-            }
-        }
-        if (updated && entry == self.detailViewController.preViewItem)
+        if (percent == 100)  [self updateEntryCell:(SeafFile *)entry];
+        if (entry == self.detailViewController.preViewItem)
             [self.detailViewController entry:entry updated:updated progress:percent];
     }
 }
