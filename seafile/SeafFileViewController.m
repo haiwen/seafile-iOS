@@ -1231,7 +1231,7 @@ enum {
     for (NSURL *url in urls) {
         [SeafGlobal.sharedObject assetForURL:url
                                   resultBlock:^(ALAsset *asset) {
-                                      [assets addObject:asset];
+                                      if (assets) [assets addObject:asset];
                                       if (url == last) [self uploadPickedAssets:assets];
                                   } failureBlock:^(NSError *error) {
                                       if (url == last) [self uploadPickedAssets:assets];

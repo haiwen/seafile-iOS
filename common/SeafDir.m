@@ -117,6 +117,7 @@
     [connection sendRequest:self.url
                     success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
                         [self handleResponse:response json:JSON data:data];
+                        _uploadItems = nil;
                         if (success)
                             success(self);
                         [self.delegate entry:self updated:YES progress:100];
@@ -358,7 +359,6 @@
 
 - (void)loadContent:(BOOL)force;
 {
-    _uploadItems = nil;
     _allItems = nil;
     [super loadContent:force];
 }

@@ -517,12 +517,10 @@
                             } else {
                                 // Search in the Photo Stream Album
                                 [self.assetsLibrary enumerateGroupsWithTypes:ALAssetsGroupPhotoStream
-                                                                  usingBlock:^(ALAssetsGroup *group, BOOL *stop)
-                                 {
+                                                                  usingBlock:^(ALAssetsGroup *group, BOOL *stop) {
                                      [group enumerateAssetsWithOptions:NSEnumerationReverse usingBlock:^(ALAsset *result, NSUInteger index, BOOL *stop) {
-                                         if([result.defaultRepresentation.url isEqual:assetURL])
-                                         {
-                                             resultBlock(asset);
+                                         if([result.defaultRepresentation.url isEqual:assetURL]) {
+                                             resultBlock(result);
                                              *stop = YES;
                                          }
                                      }];
