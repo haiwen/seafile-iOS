@@ -231,7 +231,7 @@ enum PREVIEW_STATE {
         else
             self.navigationItem.leftBarButtonItem = self.fullscreenItem;
     }
-    [item load:self.masterVc force:NO];
+    [item load:(self.masterVc?self.masterVc:self) force:NO];
     [self refreshView];
 }
 
@@ -1087,7 +1087,7 @@ enum PREVIEW_STATE {
 
     // Load adjacent images if needed and the photo is already
     // loaded. Also called after photo has been loaded in background
-    [self.preViewItem load:self.masterVc force:NO];
+    [self.preViewItem load:(self.masterVc?self.masterVc:self) force:NO];
     if ([self.preViewItem hasCache])
         [self loadAdjacentPhotosIfNecessary:self.preViewItem];
 
@@ -1134,7 +1134,7 @@ enum PREVIEW_STATE {
     if (index < num) {
         id<SeafPreView> next = [self.photos objectAtIndex:index];
         if (![next hasCache])
-            [next load:self.masterVc force:NO];
+            [next load:(self.masterVc?self.masterVc:self) force:NO];
     }
 }
 
