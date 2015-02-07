@@ -347,4 +347,23 @@
     [c presentViewController:alert animated:true completion:nil];
 }
 
++ (UIImage *)reSizeImage:(UIImage *)image toSquare:(float)length
+{
+    CGSize reSize;
+    CGSize size = image.size;
+    if (size.height > size.width) {
+        reSize = CGSizeMake(length * size.width / size.height, length);
+    } else {
+        reSize = CGSizeMake(length, length * size.height / size.width);
+    }
+
+    UIGraphicsBeginImageContext(CGSizeMake(reSize.width, reSize.height));
+    [image drawInRect:CGRectMake(0, 0, reSize.width, reSize.height)];
+    UIImage *reSizeImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+
+    return reSizeImage;
+}
+
+
 @end

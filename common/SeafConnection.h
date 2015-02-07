@@ -24,6 +24,7 @@ enum MSG_TYPE{
 @class SeafRepos;
 @class SeafRepo;
 @class SeafUploadFile;
+@class SeafDir;
 
 @protocol SeafDownloadDelegate <NSObject>
 - (void)download;
@@ -139,6 +140,8 @@ enum MSG_TYPE{
 - (void)checkAutoSync;
 - (void)pickPhotosForUpload;
 - (void)fileUploadedSuccess:(SeafUploadFile *)ufile;
+
+- (void)checkAutoSyncDir:(SeafDir *)dir;
 
 + (AFHTTPRequestSerializer <AFURLRequestSerialization> *)requestSerializer;
 

@@ -254,6 +254,38 @@
     [self.detailViewController setPreViewItem:sfile master:self];
 }
 
+#pragma mark - SeafDentryDelegate
+- (void)entry:(SeafBase *)entry updated:(BOOL)updated progress:(int)percent
+{
+    if ([entry isKindOfClass:[SeafFile class]]) {
+        if (percent == 100) {
+            int row = [_starredFiles indexOfObject:entry];
+            if (row != NSNotFound) {
+                @try {
+                    NSIndexPath *index = [NSIndexPath indexPathForRow:row inSection:0];
+                    [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:index] withRowAnimation:UITableViewRowAnimationNone];
+                } @catch(NSException *exception) {
+                }
+            }
+        }
+        if (updated && entry == self.detailViewController.preViewItem)
+            [self.detailViewController entry:entry updated:updated progress:percent];
+    }
+}
+
+- (void)entry:(SeafBase *)entry downloadingFailed:(NSUInteger)errCode;
+{
+    if ([entry isKindOfClass:[SeafFile class]]) {
+        [self.detailViewController entry:entry downloadingFailed:errCode];
+        return;
+    }
+}
+
+- (void)entry:(SeafBase *)entry repoPasswordSet:(BOOL)success;
+{
+}
+
+
 #pragma mark - SeafStarFileDelegate
 - (void)fileStateChanged:(BOOL)starred file:(SeafStarredFile *)sfile
 {

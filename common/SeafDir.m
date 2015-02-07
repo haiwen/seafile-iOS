@@ -73,20 +73,20 @@
         [newItems addObject:newItem];
     }
     [self loadedItems:newItems];
-    [self.delegate entry:self updated:YES progress:100];
     return YES;
 }
 
 - (void)handleResponse:(NSHTTPURLResponse *)response json:(id)JSON data:(NSData *)data
 {
+    [self checkUploadFiles];
     @synchronized(self) {
         self.state = SEAF_DENTRY_UPTODATE;
         NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
-        if (!curId)
-            curId = self.oid;
+        if (!curId) curId = self.oid;
         if ([self handleData:curId data:JSON]) {
             self.ooid = curId;
             [self savetoCache:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
+            [self.delegate entry:self updated:true progress:100];
         } else {
             Debug("Already uptodate oid=%@, %@\n", self.ooid, curId);
             self.state = SEAF_DENTRY_UPTODATE;
@@ -117,10 +117,8 @@
     [connection sendRequest:self.url
                     success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
                         [self handleResponse:response json:JSON data:data];
-                        _uploadItems = nil;
                         if (success)
                             success(self);
-                        [self.delegate entry:self updated:YES progress:100];
                     }
                     failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
                         self.state = SEAF_DENTRY_INIT;
@@ -257,7 +255,8 @@
         return NO;
     }
 
-    [self handleData:dir.oid data:JSON];
+    BOOL updated = [self handleData:dir.oid data:JSON];
+    [self.delegate entry:self updated:updated progress:100];
     return YES;
 }
 
@@ -336,7 +335,6 @@
     if (_allItems)
         return _allItems;
 
-    [self checkUploadFiles];
     _allItems = [[NSMutableArray alloc] init];
     [_allItems addObjectsFromArray:_items];
     [_allItems addObjectsFromArray:self.uploadItems];
@@ -390,6 +388,7 @@
     [file saveAttr:dict flush:flush];
     [self.uploadItems addObject:file];
     _allItems = nil;
+    [self.delegate entry:self updated:true progress:100];
 }
 
 - (void)checkUploadFiles

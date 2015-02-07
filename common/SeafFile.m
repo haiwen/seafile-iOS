@@ -75,20 +75,21 @@
 
 - (NSString *)detailText
 {
-    NSString *sizeStr = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:self.filesize ] useBaseTen:NO];
+    NSString *str = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:self.filesize ] useBaseTen:NO];
     if (self.mpath) {
         if (self.ufile.uploading)
-            return [NSString stringWithFormat:NSLocalizedString(@"%@, uploading", @"Seafile"), sizeStr];
+            return [str stringByAppendingFormat:@", %@", NSLocalizedString(@"uploading", @"Seafile")];
         else
-            return [NSString stringWithFormat:NSLocalizedString(@"%@, modified", @"Seafile"), sizeStr];
-    } else if (!self.mtime)
-        return sizeStr;
-
-    NSString *timeStr = [SeafDateFormatter stringFromLongLong:self.mtime];
+            return [str stringByAppendingFormat:@", %@", NSLocalizedString(@"modified", @"Seafile")];
+    }
+    if (self.mtime) {
+        NSString *timeStr = [SeafDateFormatter stringFromLongLong:self.mtime];
+        str = [str stringByAppendingFormat:@", %@", timeStr];
+    }
     if ([self hasCache])
-        return [NSString stringWithFormat:NSLocalizedString(@"%@, %@, cached", @"Seafile"), sizeStr, timeStr];
-    else
-        return [NSString stringWithFormat:@"%@, %@", sizeStr, timeStr];
+        return [str stringByAppendingFormat:@", %@", NSLocalizedString(@"cached", @"Seafile")];
+
+    return str;
 }
 
 - (NSString *)downloadTempPath:(NSString *)objId
@@ -360,7 +361,7 @@
 - (UIImage *)icon;
 {
     UIImage *img = [self isImageFile] ? self.image : nil;
-    return img ? img : [super icon];
+    return img ? [Utils reSizeImage:img toSquare:32.0f] : [super icon];
 }
 
 - (DownloadedFile *)loadCacheObj
@@ -392,9 +393,12 @@
 
 - (BOOL)realLoadCache
 {
+    if (self.oid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject documentPath:self.oid]]) {
+        [self setOoid:self.oid];
+    }
     DownloadedFile *dfile = [self loadCacheObj];
     if (!dfile)
-        return NO;
+        return (!self.ooid);
     if (!self.oid)
         self.oid = dfile.oid;
     NSString *did = self.oid;
@@ -407,7 +411,7 @@
     if (self.mpath)
         [self autoupload];
 
-    if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject documentPath:did]])
+    if (!self.ooid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject documentPath:did]])
         [self setOoid:did];
 
     if (!self.mpath && !self.ooid)

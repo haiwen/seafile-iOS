@@ -59,18 +59,22 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 {
     return [_lpath lastPathComponent];
 }
+
 - (void)unload
 {
 
 }
+
 - (BOOL)hasCache
 {
     return YES;
 }
+
 - (BOOL)isImageFile
 {
-    return NO;
+    return [Utils isImageFile:self.name];
 }
+
 - (void)load:(id<SeafDentryDelegate>)delegate force:(BOOL)force
 {
     [self checkAsset];
@@ -334,13 +338,19 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     return _preViewURL;
 }
 
-- (UIImage *)icon
+- (UIImage *)icon;
 {
-    return [UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString];
+    if (_asset)
+        return [UIImage imageWithCGImage:_asset.thumbnail];
+
+    UIImage *img = [self isImageFile] ? self.image : nil;
+    return img ? [Utils reSizeImage:img toSquare:32.0f] : [UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString];
 }
 
 - (UIImage *)image
 {
+    if (_asset)
+        return [UIImage imageWithCGImage:_asset.defaultRepresentation.fullResolutionImage];
     return [UIImage imageWithContentsOfFile:self.lpath];
 }
 

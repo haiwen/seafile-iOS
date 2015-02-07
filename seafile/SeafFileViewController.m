@@ -384,12 +384,13 @@ enum {
     _connection = directory->connection;
     _directory = directory;
     self.title = directory.name;
-    [_directory setDelegate:self];
     [_directory loadContent:NO];
     Debug("%@, %@, loading ... %d\n", _directory.repoId, _directory.path, _directory.hasCache);
     if (![_directory isKindOfClass:[SeafRepos class]])
         self.tableView.sectionHeaderHeight = 0;
+    [_connection checkAutoSyncDir:_directory];
     [self refreshView];
+    [_directory setDelegate:self];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -398,8 +399,10 @@ enum {
         [self showLodingView];
         self.state = STATE_LOADING;
     }
+#if DEBUG
     if (_directory.uploadItems.count > 0)
         Debug("Upload %lu, state=%d", (unsigned long)_directory.uploadItems.count, self.state);
+#endif
 
     for (SeafUploadFile *file in _directory.uploadItems) {
         file.delegate = self;
@@ -879,7 +882,7 @@ enum {
         [self dismissLoadingView];
         [SVProgressHUD dismiss];
         [self doneLoadingTableViewData];
-        [self refreshView];
+        if (updated)  [self refreshView];
     } else if ([entry isKindOfClass:[SeafFile class]]) {
         if (percent == 100) {
             int row = [_directory.allItems indexOfObject:entry];
@@ -1113,7 +1116,7 @@ enum {
     } else if ([S_UPLOAD isEqualToString:title]) {
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [file update:self];
-        [self refreshView];
+        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:_selectedindex] withRowAnimation:UITableViewRowAnimationNone];
     } else if ([S_SHARE_EMAIL isEqualToString:title]) {
         self.state = STATE_SHARE_EMAIL;
         SeafBase *entry = (SeafBase *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];

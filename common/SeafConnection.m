@@ -828,7 +828,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                      SeafUploadFile *file = [self getUploadfile:path];
                                      file.autoSync = true;
                                      file.asset = asset;
-                                     file.udir = dir;
+                                     [dir addUploadFile:file flush:false];
                                      Debug("Add file %@ to upload list: %@", filename, dir);
                                      [[SeafGlobal sharedObject] backgroundUpload:file];
                                  }
@@ -848,7 +848,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     obj.url = ufile.assetURL.absoluteString;
     [[SeafGlobal sharedObject] saveContext];
     [self.uploadingArray removeObject:ufile.assetURL];
-    [ufile doRemove];
+    if (!ufile.delegate) [ufile doRemove];
 }
 
 - (BOOL)IsPhotoUploaded:(NSURL *)url
@@ -948,7 +948,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                 }
             }
 
-            Debug("GroupAll Total %ld photos need to upload", (long)_photosArray.count);
+            Debug("GroupAll Total %ld photos need to upload.", (long)_photosArray.count);
             _inCheckPhotoss = false;
             [self pickPhotosForUpload];
         }
@@ -973,12 +973,23 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return nil;
 }
 
+- (void)checkAutoSyncDir:(SeafDir *)dir
+{
+    @synchronized(self) {
+        if (_syncDir && [_syncDir.repoId isEqualToString:dir.repoId] && [_syncDir.path isEqualToString:dir.path])
+            _syncDir = dir;
+    }
+}
+
 - (void)updateUploadDir:(SeafDir *)dir
 {
+    if (_syncDir && [_syncDir.repoId isEqualToString:dir.repoId] && [_syncDir.path isEqualToString:dir.path])
+        return;
     _syncDir = dir;
     Debug("%ld photos, syncdir: %@ %@", (long)self.photosArray.count, _syncDir.repoId, _syncDir.name);
     [self pickPhotosForUpload];
 }
+
 - (void)checkUploadDir
 {
     NSString *autoSyncRepo = [[self getAttribute:@"autoSyncRepo"] stringValue];
@@ -987,7 +998,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         _syncDir = nil;
         return;
     }
-    Debug("upload photos to repo:%@", repo.name);
     [repo loadContent:NO];
     SeafDir *uploadDir = [self getCameraUploadDir:repo];
     if (uploadDir) {
@@ -1048,11 +1058,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (_inAutoSync) {
         _syncDir = nil;
         [self checkPhotos];
-#if DEBUG
         float delay = 10.0f;
-#else
-        float delay = 20.0f;
-#endif
         [self performSelector:@selector(checkUploadDir) withObject:nil afterDelay:delay];
     }
 }
