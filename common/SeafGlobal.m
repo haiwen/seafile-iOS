@@ -11,7 +11,6 @@
 #import "Utils.h"
 #import "Debug.h"
 
-#define GROUP_NAME @"group.com.seafile.seafilePro"
 
 @interface SeafGlobal()
 @property (retain) NSMutableArray *ufiles;

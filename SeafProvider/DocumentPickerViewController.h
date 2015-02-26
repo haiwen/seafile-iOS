@@ -9,7 +9,6 @@
 #import <UIKit/UIKit.h>
 #import "SeafDir.h"
 
-#define GROUP_NAME @"group.com.seafile.seafilePro"
 
 @interface DocumentPickerViewController : UIDocumentPickerExtensionViewController
 

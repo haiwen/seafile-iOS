@@ -38,7 +38,7 @@
 
 - (NSString *)providerIdentifier
 {
-    return @"com.seafile.seafilePro";
+    return APP_ID;
 }
 
 - (void)providePlaceholderAtURL:(NSURL *)url completionHandler:(void (^)(NSError *error))completionHandler {

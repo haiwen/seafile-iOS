@@ -10,6 +10,9 @@
 
 #define APP_NAME @"Seafile"
 
+#define GROUP_NAME @"group.com.seafile.seafilePro"
+#define APP_ID @"com.seafile.seafilePro"
+
 #define API_URL  @"/api2"
 #if DEBUG
 #define Debug(fmt, args...) NSLog(@"#%d %s:" fmt, __LINE__, __FUNCTION__, ##args)
