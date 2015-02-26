@@ -146,10 +146,7 @@
 - (IBAction)addAccount:(id)sender
 {
     pressedIndex = nil;
-    NSString *privserver = NSLocalizedString(@"Other Server", @"Seafile");
-    UIActionSheet * actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:actionSheetCancelTitle() destructiveButtonTitle:nil otherButtonTitles:SERVER_SEACLOUD_NAME, SERVER_CLOUD_NAME, SERVER_SHIB_NAME, privserver, nil];
-
-   [SeafAppDelegate showActionSheet:actionSheet fromBarButtonItem:sender];
+    [self showAccountView:nil type:ACCOUNT_OTHER];
 }
 
 #pragma mark - Table view data source

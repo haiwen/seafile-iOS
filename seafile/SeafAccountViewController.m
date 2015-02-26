@@ -145,6 +145,8 @@
     [loginButton setTitle:NSLocalizedString(@"Login", @"Seafile") forState:UIControlStateNormal];
     [loginButton setTitle:NSLocalizedString(@"Login", @"Seafile") forState:UIControlStateHighlighted];
 
+    _msgLabel.text = [APP_NAME stringByAppendingFormat:@" %@", NSLocalizedString(@"Server", @"Seafile")];
+    serverTextField.enabled = false;
     serverTextField.placeholder = NSLocalizedString(@"Server, like https://seafile.cc", @"Seafile");
     CGRect rect = CGRectMake(0, 0, 90, 25);
     NSString *align = ios7 ? @"  " :  @"";
@@ -185,10 +187,11 @@
             break;
         case ACCOUNT_OTHER:{
 #if DEBUG
-            serverTextField.text = @"https://dev.seafile.com/seahub/";
-            usernameTextField.text = @"demo@seafile.com";
-            passwordTextField.text = @"demo";
+            //serverTextField.text = @"https://dev.seafile.com/seahub/";
+            //usernameTextField.text = @"demo@seafile.com";
+            //passwordTextField.text = @"demo";
 #endif
+            serverTextField.text = @"https://horizonbase.ch";
         }
             break;
         case ACCOUNT_SHIBBOLETH:
@@ -207,6 +210,8 @@
         usernameTextField.enabled = false;
     }
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
+    self.serverTextField.hidden = true;
+    self.msgLabel.hidden = true;
 }
 
 - (void)didReceiveMemoryWarning

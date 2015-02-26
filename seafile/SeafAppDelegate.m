@@ -123,9 +123,9 @@
     [self initTabController];
 
     if (ios7)
-        [[UITabBar appearance] setTintColor:[UIColor colorWithRed:238.0f/256 green:136.0f/256 blue:51.0f/255 alpha:1.0]];
+        [[UITabBar appearance] setTintColor:SEAF_COLOR_DARK];
     else
-        [[UITabBar appearance] setSelectedImageTintColor:[UIColor colorWithRed:238.0f/256 green:136.0f/256 blue:51.0f/255 alpha:1.0]];
+        [[UITabBar appearance] setSelectedImageTintColor:SEAF_COLOR_DARK];
 
     [SeafGlobal.sharedObject loadAccounts];
 
