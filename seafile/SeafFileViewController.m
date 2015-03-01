@@ -395,6 +395,7 @@ enum {
 
 - (void)viewWillAppear:(BOOL)animated
 {
+    [super viewWillAppear:animated];
     if (!_directory.hasCache) {
         [self showLodingView];
         self.state = STATE_LOADING;

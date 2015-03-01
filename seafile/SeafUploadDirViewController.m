@@ -81,6 +81,8 @@
         [self.saveItem setEnabled:YES];
     else
         [self.saveItem setEnabled:NO];
+
+    [super viewWillAppear:animated];
 }
 
 - (void)viewDidLoad

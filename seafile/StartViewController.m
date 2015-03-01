@@ -107,6 +107,7 @@
 {
     self.footer.hidden = !(IsIpad() && [self checkLastAccount]);
     [self.tableView reloadData];
+    [super viewWillAppear:animated];
 }
 
 - (void)viewWillLayoutSubviews
