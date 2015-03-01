@@ -370,10 +370,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
     NSString *version = [infoDictionary objectForKey:@"CFBundleVersion"];
     NSString *platform = @"ios";
+    NSString *platformName = [infoDictionary objectForKey:@"DTPlatformName"];
     NSString *platformVersion = [infoDictionary objectForKey:@"DTPlatformVersion"];
     NSString *deviceID = [UIDevice currentDevice].identifierForVendor.UUIDString;
-    NSString *deviceName = [infoDictionary objectForKey:@"DTPlatformName"];
-    NSString *formString = [NSString stringWithFormat:@"username=%@&password=%@&platform=%@&device_id=%@&device_name=%@&client_version=%@&platform_version=%@", [username escapedPostForm], [password escapedPostForm], platform, deviceID, deviceName, version, platformVersion];
+    NSString *deviceName = UIDevice.currentDevice.name;
+
+    NSString *formString = [NSString stringWithFormat:@"username=%@&password=%@&platform=%@&platformName=%@&device_id=%@&device_name=%@&client_version=%@&platform_version=%@", username.escapedPostForm, password.escapedPostForm, platform.escapedPostForm, platformName.escapedPostForm, deviceID.escapedPostForm, deviceName.escapedPostForm, version.escapedPostForm, platformVersion.escapedPostForm];
     [request setHTTPBody:[NSData dataWithBytes:formString.UTF8String length:[formString lengthOfBytesUsingEncoding:NSUTF8StringEncoding]]];
     SeafJSONRequestOperation *operation = [SeafJSONRequestOperation
                                            JSONRequestOperationWithRequest:request                                       success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
