@@ -143,6 +143,8 @@ enum MSG_TYPE{
 
 - (void)checkAutoSyncDir:(SeafDir *)dir;
 
+- (NSUInteger)photosInSyncing;
+
 + (AFHTTPRequestSerializer <AFURLRequestSerialization> *)requestSerializer;
 
 @end

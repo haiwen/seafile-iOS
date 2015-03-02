@@ -147,7 +147,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                 [self.email2nickMap setValue:[_info objectForKey:@"nickname"] forKey:self.username];
         }
 
-        NSDictionary *settings = [[SeafGlobal.sharedObject objectForKey:[NSString stringWithFormat:@"%@/%@/settings", url, username]] mutableCopy];
+        NSDictionary *settings = [SeafGlobal.sharedObject objectForKey:[NSString stringWithFormat:@"%@/%@/settings", url, username]];
         if (settings)
             _settings = [settings mutableCopy];
         else
@@ -161,6 +161,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [SeafGlobal.sharedObject setObject:_settings forKey:[NSString stringWithFormat:@"%@/%@/settings", _address, self.username]];
     [SeafGlobal.sharedObject synchronize];
 }
+
 - (void)setAttribute:(id)anObject forKey:(id < NSCopying >)aKey
 {
     [_settings setObject:anObject forKey:aKey];
@@ -831,7 +832,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                      file.autoSync = true;
                                      file.asset = asset;
                                      [dir addUploadFile:file flush:false];
-                                     Debug("Add file %@ to upload list: %@", filename, dir);
+                                     Debug("Add file %@ to upload list: %@", filename, dir.path);
                                      [[SeafGlobal sharedObject] backgroundUpload:file];
                                  }
                                 failureBlock:^(NSError *error){
@@ -941,11 +942,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         if(group != nil) {
             [group setAssetsFilter:[ALAssetsFilter allPhotos]];
             [group enumerateAssetsUsingBlock:assetEnumerator];
-            Debug("Group %@ total %ld photos", group, (long)group.numberOfAssets);
+            Debug("Group %@, total %ld photos", group, (long)group.numberOfAssets);
         } else {
             for (NSURL *url in photos) {
                 if (![self IsPhotoUploaded:url] && ![self IsPhotoUploading:url]) {
-                    NSLog(@"UPLOAD-URL:%@", url);
+                    Debug(@"UPLOAD-URL:%@", url);
                     [self addUploadPhoto:url];
                 }
             }
@@ -982,6 +983,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             _syncDir = dir;
     }
 }
+
+- (NSUInteger)photosInSyncing
+{
+    return _photosArray.count + _uploadingArray.count;
+}
+
 
 - (void)updateUploadDir:(SeafDir *)dir
 {
@@ -1059,6 +1066,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     _inAutoSync = value;
     if (_inAutoSync) {
         _syncDir = nil;
+        Debug("start auto sync, check photos");
         [self checkPhotos];
         float delay = 10.0f;
         [self performSelector:@selector(checkUploadDir) withObject:nil afterDelay:delay];

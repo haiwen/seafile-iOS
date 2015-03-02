@@ -328,7 +328,7 @@
 
 - (void)finishUpload:(SeafUploadFile *)file result:(BOOL)result
 {
-    Debug("upload %ld, result=%d, udir=%@", self.uploadnum, result, file.udir);
+    Debug("upload %ld, result=%d, file=%@, udir=%@", self.uploadnum, result, file.lpath, file.udir.path);
     @synchronized (self) {
         self.uploadnum --;
     }
@@ -480,7 +480,6 @@
 {
     return [_storage synchronize];
 }
-
 
 - (void)setRepo:(NSString *)repoId password:(NSString *)password
 {

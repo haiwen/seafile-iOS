@@ -87,6 +87,13 @@ enum {
             _autoSync = _autoSyncSwitch.on;
             _connection.autoSync = _autoSync;
         }
+    } else {
+        _autoSync = _autoSyncSwitch.on;
+        _connection.autoSync = _autoSync;
+        _syncRepoCell.detailTextLabel.text = @"";
+        [self.tableView reloadData];
+        [_connection setAttribute:@"" forKey:@"autoSyncRepo"];
+
     }
 }
 
