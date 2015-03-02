@@ -251,7 +251,7 @@
 }
 
 
-+ (BOOL)writeDataToPath:(NSString*)filePath andAsset:(ALAsset*)asset
++ (BOOL)writeDataToPathNoMeta:(NSString*)filePath andAsset:(ALAsset*)asset
 {
     [[NSFileManager defaultManager] createFileAtPath:filePath contents:nil attributes:nil];
     NSFileHandle *handle = [NSFileHandle fileHandleForWritingAtPath:filePath];
@@ -277,6 +277,24 @@
 
     free(buffer);
     return YES;
+}
+
++ (BOOL)writeDataToPathWithMeta:(NSString*)filePath andAsset:(ALAsset*)asset
+{
+    ALAssetRepresentation *defaultRep = asset.defaultRepresentation;
+    UIImage *image = [UIImage imageWithCGImage:defaultRep.fullScreenImage];
+
+    NSData *currentImageData = UIImageJPEGRepresentation(image, 1.0);
+    [currentImageData writeToFile:filePath atomically:YES];
+    return YES;
+}
+
++ (BOOL)writeDataToPath:(NSString*)filePath andAsset:(ALAsset*)asset
+{
+    NSString *ext = filePath.pathExtension.lowercaseString;
+    if ([@"jpg" isEqualToString:ext] || [@"jpeg" isEqualToString:ext])
+        return [Utils writeDataToPathWithMeta:filePath andAsset:asset];
+    return [Utils writeDataToPathNoMeta:filePath andAsset:asset];
 }
 
 + (BOOL)fileExistsAtPath:(NSString *)path

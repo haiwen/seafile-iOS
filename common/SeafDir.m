@@ -413,6 +413,7 @@
 
 - (void)removeUploadFile:(SeafUploadFile *)ufile
 {
+    [SeafGlobal.sharedObject removeBackgroundUpload:ufile];
     [connection removeUploadfile:ufile];
     [ufile doRemove];
     [self.uploadItems removeObject:ufile];
