@@ -149,7 +149,6 @@ static NSMutableDictionary *uploadFileAttrs = nil;
             [formData appendPartWithFormData:[@"1" dataUsingEncoding:NSUTF8StringEncoding] name:@"replace"];
         }
         [formData appendPartWithFormData:[uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"parent_dir"];
-
         [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
         [formData appendPartWithFileURL:[NSURL fileURLWithPath:self.lpath] name:@"file" error:nil];
     } error:nil];
@@ -166,7 +165,6 @@ static NSMutableDictionary *uploadFileAttrs = nil;
              oid = [[NSString alloc] initWithData:responseObject encoding:NSUTF8StringEncoding];
              [[NSFileManager defaultManager] linkItemAtPath:self.lpath toPath:[SeafGlobal.sharedObject documentPath:oid] error:nil];
          }
-         Debug("Upload success _uploading=%d, update=%d, oid=%@\n", _uploading, update, oid);
          [self finishUpload:YES oid:oid];
      }
                                      failure:^(AFHTTPRequestOperation *operation, NSError *error) {
@@ -436,7 +434,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
             bool autoSync = [[info objectForKey:@"autoSync"] boolValue];
             SeafUploadFile *file = [dir->connection getUploadfile:lpath create:!autoSync];
             if (!file || (!file.asset && file.filesize == 0)) {
-                Debug("Auto sync photos %@:%@, remove and will reupload from beginning", file.lpath, info);
+                Debug("Auto sync photos %@:%@, remove it and will reupload from beginning", file.lpath, info);
                 [uploadFileAttrs removeObjectForKey:lpath];
                 changed = true;
                 continue;

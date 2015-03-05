@@ -30,6 +30,11 @@ enum MSG_TYPE{
 - (void)download;
 @end
 
+
+@protocol SeafPhotoSyncWatcherDelegate <NSObject>
+- (void)photoSyncChanged:(long)remain;
+@end
+
 @protocol SeafLoginDelegate <NSObject>
 - (void)loginSuccess:(SeafConnection *)connection;
 - (void)loginFailed:(SeafConnection *)connection error:(int)error;
@@ -65,6 +70,7 @@ enum MSG_TYPE{
 @property (readonly) NSArray *seafContacts;
 @property (readwrite) NSMutableArray *seafReplies;
 @property (readwrite) long long newmsgnum;
+@property (weak) id<SeafPhotoSyncWatcherDelegate> photSyncWatcher;
 
 
 - (id)initWithUrl:(NSString *)url username:(NSString *)username;
@@ -141,9 +147,10 @@ enum MSG_TYPE{
 - (void)pickPhotosForUpload;
 - (void)fileUploadedSuccess:(SeafUploadFile *)ufile;
 
-- (void)checkAutoSyncDir:(SeafDir *)dir;
+- (void)checkSyncDst:(SeafDir *)dir;
 
 - (NSUInteger)photosInSyncing;
+- (void)assetsLibraryDidChange:(NSNotification *)note;
 
 + (AFHTTPRequestSerializer <AFURLRequestSerialization> *)requestSerializer;
 

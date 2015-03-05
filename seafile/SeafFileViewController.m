@@ -388,7 +388,7 @@ enum {
     Debug("%@, %@, loading ... %d\n", _directory.repoId, _directory.path, _directory.hasCache);
     if (![_directory isKindOfClass:[SeafRepos class]])
         self.tableView.sectionHeaderHeight = 0;
-    [_connection checkAutoSyncDir:_directory];
+    [_connection checkSyncDst:_directory];
     [self refreshView];
     [_directory setDelegate:self];
 }

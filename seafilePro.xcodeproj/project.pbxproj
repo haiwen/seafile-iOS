@@ -183,6 +183,7 @@
 		5779C7BC171088D900307C36 /* view_markdown.html in Resources */ = {isa = PBXBuildFile; fileRef = 5779C7B0171088D900307C36 /* view_markdown.html */; };
 		577B6C6216AAD241008E82C2 /* tab-star.png in Resources */ = {isa = PBXBuildFile; fileRef = 577B6C6016AAD241008E82C2 /* tab-star.png */; };
 		577B6C6616AADBA3008E82C2 /* SeafCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 577B6C6416AADBA3008E82C2 /* SeafCell.m */; };
+		57814AF81AA8B55000D1D5D8 /* Photos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57814AF71AA8B55000D1D5D8 /* Photos.framework */; };
 		5782EE6D1734F3A300A76338 /* bg.png in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE641734F3A200A76338 /* bg.png */; };
 		5782EE711734F3A300A76338 /* jquery-ui-1.8.16.custom.css in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE661734F3A200A76338 /* jquery-ui-1.8.16.custom.css */; };
 		5782EE751734F3A300A76338 /* Markdown.Editor.js in Resources */ = {isa = PBXBuildFile; fileRef = 5782EE681734F3A300A76338 /* Markdown.Editor.js */; };
@@ -717,6 +718,7 @@
 		577B6C6016AAD241008E82C2 /* tab-star.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-star.png"; sourceTree = "<group>"; };
 		577B6C6316AADBA3008E82C2 /* SeafCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafCell.h; sourceTree = "<group>"; };
 		577B6C6416AADBA3008E82C2 /* SeafCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafCell.m; sourceTree = "<group>"; };
+		57814AF71AA8B55000D1D5D8 /* Photos.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Photos.framework; path = System/Library/Frameworks/Photos.framework; sourceTree = SDKROOT; };
 		5782EE641734F3A200A76338 /* bg.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = bg.png; path = htmls/bg.png; sourceTree = SOURCE_ROOT; };
 		5782EE661734F3A200A76338 /* jquery-ui-1.8.16.custom.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; name = "jquery-ui-1.8.16.custom.css"; path = "htmls/jquery-ui-1.8.16.custom.css"; sourceTree = SOURCE_ROOT; };
 		5782EE681734F3A300A76338 /* Markdown.Editor.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = Markdown.Editor.js; path = htmls/Markdown.Editor.js; sourceTree = SOURCE_ROOT; };
@@ -975,6 +977,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				57814AF81AA8B55000D1D5D8 /* Photos.framework in Frameworks */,
 				57ABE5FB187925B300145FE3 /* CoreText.framework in Frameworks */,
 				5725186217AE7D010078CD12 /* Security.framework in Frameworks */,
 				57F0AAFE16D8935800364D18 /* AssetsLibrary.framework in Frameworks */,
@@ -1768,6 +1771,7 @@
 		57DB827015A833FA00097CEC /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				57814AF71AA8B55000D1D5D8 /* Photos.framework */,
 				57F0AAFC16D8913600364D18 /* AssetsLibrary.framework */,
 				57DB827715A833FA00097CEC /* CoreData.framework */,
 				57DB827515A833FA00097CEC /* CoreGraphics.framework */,

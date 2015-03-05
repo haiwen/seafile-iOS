@@ -652,7 +652,6 @@ enum PREVIEW_STATE {
 
 - (void)thisImage:(UIImage *)image hasBeenSavedInPhotoAlbumWithError:(NSError *)error usingContextInfo:(void *)ctxInfo
 {
-    Debug("error=%@\n", error);
     SeafFile *file = (__bridge SeafFile *)ctxInfo;
 
     if (error) {

@@ -335,7 +335,9 @@
 
     if (result) {
         self.failedNum = 0;
-        if (file.autoSync) [file.udir->connection fileUploadedSuccess:file];
+        if (file.autoSync) {
+            [file.udir->connection fileUploadedSuccess:file];
+        }
     } else {
         self.failedNum ++;
         [self.ufiles addObject:file];
@@ -390,11 +392,6 @@
 {
     @synchronized (self) {
         [self.ufiles removeObject:file];
-
-        if (file.udir)
-            [file.udir removeUploadFile:file];
-        else
-            [file doRemove];
     }
 }
 

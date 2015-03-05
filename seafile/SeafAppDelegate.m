@@ -6,16 +6,17 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
-#import "SVProgressHUD.h"
-#import "AFNetworking.h"
+#import <Photos/Photos.h>
 
 #import "SeafAppDelegate.h"
 #import "SeafDisDetailViewController.h"
+#import "SVProgressHUD.h"
+#import "AFNetworking.h"
 #import "Debug.h"
 #import "Utils.h"
 
 
-@interface SeafAppDelegate () <UITabBarControllerDelegate, UIAlertViewDelegate>
+@interface SeafAppDelegate () <UITabBarControllerDelegate, UIAlertViewDelegate, PHPhotoLibraryChangeObserver>
 
 @property UIBackgroundTaskIdentifier bgTask;
 
@@ -73,6 +74,14 @@
     return YES;
 }
 
+- (void)handleAssetChangedNotifiation:(NSNotification *)notification
+{
+    Debug("LibraryDidChanged, start sync photos");
+    for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+        [conn assetsLibraryDidChange:notification];
+    }
+}
+
 - (void)delayedInit
 {
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
@@ -89,6 +98,11 @@
         [conn checkAutoSync];
     }
     [SVProgressHUD setBackgroundColor:[UIColor colorWithRed:250.0/256 green:250.0/256 blue:250.0/256 alpha:1.0]];
+    if (ios8)
+         [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
+    else
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleAssetChangedNotifiation:) name:ALAssetsLibraryChangedNotification object:SeafGlobal.sharedObject.assetsLibrary];
+
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
@@ -209,6 +223,7 @@
 
 - (void)applicationWillEnterForeground:(UIApplication *)application
 {
+    Debug("Seafile will enter foreground");
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
 }
 
@@ -216,6 +231,7 @@
 {
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
     [application cancelAllLocalNotifications];
+
     if (UIBackgroundTaskInvalid != self.bgTask) {
         [application endBackgroundTask:self.bgTask];
         self.bgTask = UIBackgroundTaskInvalid;
@@ -404,8 +420,8 @@
         [alert show];
     }
 }
-#pragma mark - UIAlertViewDelegate
 
+#pragma mark - UIAlertViewDelegate
 - (void)alertView:(UIAlertView *)alertView willDismissWithButtonIndex:(NSInteger)buttonIndex
 {
     if (buttonIndex != alertView.cancelButtonIndex) {
@@ -417,4 +433,15 @@
             self.handler_cancel();
     }
 }
+
+#pragma mark - PHPhotoLibraryChangeObserver
+- (void)photoLibraryDidChange:(PHChange *)changeInstance
+{
+    Debug("Photos library changed.");
+    // Call might come on any background queue. Re-dispatch to the main queue to handle it.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self handleAssetChangedNotifiation:nil];
+    });
+}
+
 @end

@@ -30,7 +30,7 @@ enum {
 #define MSG_RESET_UPLOADED NSLocalizedString(@"Do you want reset the uploaded photos?", @"Seafile")
 #define MSG_CLEAR_CACHE NSLocalizedString(@"Are you sure to clear all the cache?", @"Seafile")
 
-@interface SeafSettingsViewController ()<SeafDirDelegate, MFMailComposeViewControllerDelegate>
+@interface SeafSettingsViewController ()<SeafDirDelegate, SeafPhotoSyncWatcherDelegate, MFMailComposeViewControllerDelegate>
 @property (strong, nonatomic) IBOutlet UITableViewCell *nameCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *usedspaceCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *serverCell;
@@ -50,6 +50,7 @@ enum {
 @property BOOL autoSync;
 @property BOOL wifiOnly;
 
+@property (nonatomic) BOOL inAutoSync;
 @property int state;
 
 @end
@@ -63,6 +64,12 @@ enum {
         // Custom initialization
     }
     return self;
+}
+
+- (BOOL)inAutoSync
+{
+    NSString *repo = _syncRepoCell.detailTextLabel.text;
+    return _autoSync && repo && repo.length > 0;
 }
 
 - (void)autoSyncSwitchFlip:(id)sender
@@ -123,7 +130,7 @@ enum {
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     [_autoSyncSwitch addTarget:self action:@selector(autoSyncSwitchFlip:) forControlEvents:UIControlEventValueChanged];
     [_wifiOnlySwitch addTarget:self action:@selector(wifiOnlySwitchFlip:) forControlEvents:UIControlEventValueChanged];
-}
+    }
 
 - (void)viewWillAppear:(BOOL)animated
 {
@@ -190,6 +197,7 @@ enum {
         if (result && conn == self.connection) {
             dispatch_async(dispatch_get_main_queue(), ^ {
                 [self configureView];
+                _connection.photSyncWatcher = self;
             });
         }
     }];
@@ -275,6 +283,9 @@ enum {
     };
     if (section < 0 || section > 4)
         return nil;
+    if (section == 1 && self.inAutoSync) {
+        return [NSString stringWithFormat:@"%@  %ld photos remained", sectionNames[section], (long)_connection.photosInSyncing];
+    }
     return sectionNames[section];
 }
 
@@ -358,15 +369,18 @@ enum {
         [_connection checkAutoSync];
         return;
     }
-    _syncRepoCell.detailTextLabel.text = repo.name;
-    [self.tableView reloadData];
+
     [_connection setAttribute:repo.repoId forKey:@"autoSyncRepo"];
     dispatch_async(dispatch_get_main_queue(), ^ {
         [self alertWithTitle:MSG_RESET_UPLOADED message:nil yes:^{
             [_connection resetUploadedPhotos];
             [_connection checkAutoSync];
+            _syncRepoCell.detailTextLabel.text = repo.name;
+            [self.tableView reloadData];
         } no:^{
             [_connection checkAutoSync];
+            _syncRepoCell.detailTextLabel.text = repo.name;
+            [self.tableView reloadData];
         }];
     });
 }
@@ -374,6 +388,14 @@ enum {
 - (void)cancelChoose:(UIViewController *)c
 {
     [c.navigationController dismissViewControllerAnimated:YES completion:nil];
+}
+
+#pragma mark - SeafPhotoSyncWatcherDelegate
+- (void)photoSyncChanged:(long)remain
+{
+    Debug("%ld photos remained to uplaod", remain);
+    if (self.isVisible)
+        [self.tableView reloadData];
 }
 
 @end

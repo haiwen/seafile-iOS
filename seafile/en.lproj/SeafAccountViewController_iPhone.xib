@@ -90,7 +90,6 @@
             <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
             <color key="tintColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
             <constraints>
-                <constraint firstAttribute="centerX" secondItem="4" secondAttribute="centerX" id="30Z-zz-oet"/>
                 <constraint firstItem="4" firstAttribute="top" secondItem="2" secondAttribute="topMargin" multiplier="0.1" priority="100" constant="10" id="H8I-R8-e5F"/>
                 <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="4" secondAttribute="bottomMargin" constant="100" id="Rl5-ef-ybH"/>
                 <constraint firstItem="4" firstAttribute="centerX" secondItem="2" secondAttribute="centerX" id="W6E-Gz-eIZ"/>

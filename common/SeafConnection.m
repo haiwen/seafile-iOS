@@ -153,6 +153,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         else
             _settings = [[NSMutableDictionary alloc] init];
     }
+
     return self;
 }
 
@@ -203,6 +204,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)setAutoSync:(BOOL)autoSync
 {
+    if (self.isAutoSync == autoSync) return;
     [self setAttribute:[NSNumber numberWithBool:autoSync] forKey:@"autoSync"];
     [self checkAutoSync];
 }
@@ -817,7 +819,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         return;
     }
 
-    Debug("Current %ld photos need to upload, dir=%@", (long)self.photosArray.count, dir);
+    Debug("Current %ld photos need to upload, dir=%@", (long)self.photosArray.count, dir.path);
 
     int count = 0;
     while ([[SeafGlobal sharedObject] uploadingnum] < 5 && count++ < 5) {
@@ -852,6 +854,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [[SeafGlobal sharedObject] saveContext];
     [self.uploadingArray removeObject:ufile.assetURL];
     if (!ufile.delegate) [ufile doRemove];
+    if (_photSyncWatcher) [_photSyncWatcher photoSyncChanged:self.photosInSyncing];
 }
 
 - (BOOL)IsPhotoUploaded:(NSURL *)url
@@ -946,12 +949,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         } else {
             for (NSURL *url in photos) {
                 if (![self IsPhotoUploaded:url] && ![self IsPhotoUploading:url]) {
-                    Debug(@"UPLOAD-URL:%@", url);
                     [self addUploadPhoto:url];
                 }
             }
-
             Debug("GroupAll Total %ld photos need to upload.", (long)_photosArray.count);
+            if (_photSyncWatcher) [_photSyncWatcher photoSyncChanged:self.photosInSyncing];
             _inCheckPhotoss = false;
             [self pickPhotosForUpload];
         }
@@ -976,7 +978,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return nil;
 }
 
-- (void)checkAutoSyncDir:(SeafDir *)dir
+- (void)checkSyncDst:(SeafDir *)dir
 {
     @synchronized(self) {
         if (_syncDir && [_syncDir.repoId isEqualToString:dir.repoId] && [_syncDir.path isEqualToString:dir.path])
@@ -995,7 +997,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (_syncDir && [_syncDir.repoId isEqualToString:dir.repoId] && [_syncDir.path isEqualToString:dir.path])
         return;
     _syncDir = dir;
-    Debug("%ld photos, syncdir: %@ %@", (long)self.photosArray.count, _syncDir.repoId, _syncDir.name);
+    Debug("%ld photos remained, syncdir: %@ %@", (long)self.photosArray.count, _syncDir.repoId, _syncDir.name);
     [self pickPhotosForUpload];
 }
 
@@ -1035,7 +1037,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (void)assetsLibraryDidChange:(NSNotification *)note
 {
     if (_inAutoSync) {
-        Debug("LibraryDidChanged, start sync photos");
+        Debug("LibraryDidChanged, start sync photos to server %@", _address);
         [self checkPhotos];
     }
 }
@@ -1051,22 +1053,20 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     BOOL value = self.isAutoSync && ([[self getAttribute:@"autoSyncRepo"] stringValue] != nil);
     if (_inAutoSync != value) {
         if (value) {
-            Debug("Start auto sync");
-            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(assetsLibraryDidChange:) name:ALAssetsLibraryChangedNotification object:[SeafGlobal.sharedObject assetsLibrary]];
+            Debug("Start auto sync for server %@", _address);
             _photosArray = [[NSMutableArray alloc] init];
             _uploadingArray = [[NSMutableArray alloc] init];;
         } else {
-            Debug("Stop auto Sync");
+            Debug("Stop auto Sync for server %@", _address);
             _photosArray = nil;
             _inCheckPhotoss = false;
             [SeafGlobal.sharedObject clearAutoSyncPhotos:self];
-            [[NSNotificationCenter defaultCenter] removeObserver:self name:ALAssetsLibraryChangedNotification object:nil];
         }
     }
     _inAutoSync = value;
     if (_inAutoSync) {
         _syncDir = nil;
-        Debug("start auto sync, check photos");
+        Debug("start auto sync, check photos for server %@", _address);
         [self checkPhotos];
         float delay = 10.0f;
         [self performSelector:@selector(checkUploadDir) withObject:nil afterDelay:delay];
