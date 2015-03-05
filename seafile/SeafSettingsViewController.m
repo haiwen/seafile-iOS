@@ -284,7 +284,8 @@ enum {
     if (section < 0 || section > 4)
         return nil;
     if (section == 1 && self.inAutoSync) {
-        return [NSString stringWithFormat:@"%@  %ld photos remained", sectionNames[section], (long)_connection.photosInSyncing];
+        NSString *str = [NSString stringWithFormat:NSLocalizedString(@"%ld photos remained", @"Seafile"), (long)_connection.photosInSyncing];
+        return [sectionNames[section] stringByAppendingFormat:@"  %@", str];
     }
     return sectionNames[section];
 }
