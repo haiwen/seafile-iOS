@@ -25,6 +25,7 @@
 @property (readonly) NSURL *exportURL;
 @property (strong) NSString *downloadingFileOid;
 @property (strong) AFHTTPRequestOperation *operation;
+@property (nonatomic, strong) UIImage *icon;
 
 @property (strong) SeafUploadFile *ufile;
 @property (strong) NSArray *blks;
@@ -50,7 +51,7 @@
         _filesize = size;
         self.downloadingFileOid = nil;
         self.operation = nil;
-        [self loadCache];
+        [self realLoadCache];
     }
     return self;
 }
@@ -353,15 +354,35 @@
     self.ooid = nil;
     return NO;
 }
+
 - (BOOL)isImageFile
 {
     return [Utils isImageFile:self.name];
 }
 
+- (void)generateIconBackground
+{
+    @synchronized(self) {
+        if (_icon) return;
+        if (self.image) {
+            _icon = [Utils reSizeImage:self.image toSquare:32.0f];
+        }
+    }
+    dispatch_time_t time = dispatch_time(DISPATCH_TIME_NOW, 0.5);
+    dispatch_after(time, dispatch_get_main_queue(), ^(void){
+        [self.delegate entry:self updated:true progress:100];
+    });
+}
+
 - (UIImage *)icon;
 {
-    UIImage *img = [self isImageFile] ? self.image : nil;
-    return img ? [Utils reSizeImage:img toSquare:32.0f] : [super icon];
+    if (!_icon) {
+        if (self.isImageFile && self.hasCache) {
+            [self performSelectorInBackground:@selector(generateIconBackground) withObject:nil];
+        }
+        return [super icon];
+    }
+    return _icon;
 }
 
 - (DownloadedFile *)loadCacheObj

@@ -125,7 +125,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     [dict setObject:[NSNumber numberWithBool:result] forKey:@"result"];
     [dict setObject:[NSNumber numberWithBool:self.autoSync] forKey:@"autoSync"];
     [self saveAttr:dict flush:true];
-    Debug("result=%d, name=%@, _delegate=%@, oid=%@\n", result, self.name, _delegate, oid);
+    Debug("result=%d, name=%@, delegate=%@, oid=%@\n", result, self.name, _delegate, oid);
     if (result)
         [_delegate uploadSucess:self oid:oid];
     else

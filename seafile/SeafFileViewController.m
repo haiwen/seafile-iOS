@@ -631,9 +631,8 @@ enum {
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     NSObject *entry = [self getDentrybyIndexPath:indexPath tableView:tableView];
-    if (!entry) {
-        return [[UITableViewCell alloc] init];
-    }
+    if (!entry) return [[UITableViewCell alloc] init];
+
     if (tableView != self.tableView) {
         return [self getSeafFileCell:(SeafFile *)entry forTableView:tableView];
     }
@@ -884,12 +883,12 @@ enum {
         [SVProgressHUD dismiss];
         [self doneLoadingTableViewData];
         if (updated)  [self refreshView];
+        self.state = STATE_INIT;
     } else if ([entry isKindOfClass:[SeafFile class]]) {
         if (percent == 100) [self updateEntryCell:(SeafFile *)entry];
         if (entry == self.detailViewController.preViewItem)
             [self.detailViewController entry:entry updated:updated progress:percent];
     }
-    self.state = STATE_INIT;
 }
 
 - (void)entry:(SeafBase *)entry downloadingFailed:(NSUInteger)errCode;
@@ -1278,14 +1277,19 @@ enum {
 #pragma mark - SeafFileUpdateDelegate
 - (void)updateProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent
 {
-    long index = [_directory.allItems indexOfObject:file];
-    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
-    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
-    if (res && file && [cell isKindOfClass:[SeafUploadingFileCell class]]) {
-        [((SeafUploadingFileCell *)cell).progressView setProgress:percent*1.0f/100];
+    NSUInteger index = [_directory.allItems indexOfObject:file];
+    if (index == NSNotFound)
         return;
+    @try {
+        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
+        UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+        if (res && [cell isKindOfClass:[SeafUploadingFileCell class]]) {
+            [((SeafUploadingFileCell *)cell).progressView setProgress:percent*1.0f/100];
+            return;
+        } else
+            [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic ];
+    } @catch(NSException *exception) {
     }
-    [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic ];
 }
 
 #pragma mark - SeafUploadDelegate
@@ -1394,6 +1398,7 @@ enum {
 
 - (void)updateEntryCell:(SeafFile *)entry
 {
+    if (!self.isVisible) return;
     NSUInteger index = [_directory.allItems indexOfObject:entry];
     if (index == NSNotFound)
         return;

@@ -231,7 +231,7 @@ enum PREVIEW_STATE {
         else
             self.navigationItem.leftBarButtonItem = self.fullscreenItem;
     }
-    [item load:(self.masterVc?self.masterVc:self) force:NO];
+    [item load:(self.masterVc ? self.masterVc:self) force:NO];
     [self refreshView];
 }
 
@@ -878,7 +878,6 @@ enum PREVIEW_STATE {
 
 - (id <QLPreviewItem>)previewController:(QLPreviewController *)controller previewItemAtIndex:(NSInteger)index;
 {
-    Debug("index=%ld", (long)index);
     if (!ios7 && index < 0) index = 0;
     if (index < 0 || index >= 1) {
         return nil;

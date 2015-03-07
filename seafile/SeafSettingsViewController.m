@@ -284,8 +284,8 @@ enum {
     if (section < 0 || section > 4)
         return nil;
     if (section == 1 && self.inAutoSync) {
-        NSString *str = [NSString stringWithFormat:NSLocalizedString(@"%ld photos remained", @"Seafile"), (long)_connection.photosInSyncing];
-        return [sectionNames[section] stringByAppendingFormat:@"  %@", str];
+        NSString *str = [NSString stringWithFormat:NSLocalizedString(@"%ld photos remain", @"Seafile"), (long)_connection.photosInSyncing];
+        return [sectionNames[section] stringByAppendingFormat:@"\t %@", str];
     }
     return sectionNames[section];
 }
@@ -394,7 +394,7 @@ enum {
 #pragma mark - SeafPhotoSyncWatcherDelegate
 - (void)photoSyncChanged:(long)remain
 {
-    Debug("%ld photos remained to uplaod", remain);
+    Debug("%ld photos remain to uplaod", remain);
     if (self.isVisible)
         [self.tableView reloadData];
 }

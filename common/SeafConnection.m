@@ -997,7 +997,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (_syncDir && [_syncDir.repoId isEqualToString:dir.repoId] && [_syncDir.path isEqualToString:dir.path])
         return;
     _syncDir = dir;
-    Debug("%ld photos remained, syncdir: %@ %@", (long)self.photosArray.count, _syncDir.repoId, _syncDir.name);
+    Debug("%ld photos remain, syncdir: %@ %@", (long)self.photosArray.count, _syncDir.repoId, _syncDir.name);
     [self pickPhotosForUpload];
 }
 

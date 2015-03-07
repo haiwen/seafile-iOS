@@ -817,7 +817,6 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
 - (void)selectMessage:(SeafMessage *)msg attachIndex:(long)index;
 {
     NSDictionary *att = [msg.atts objectAtIndex:index];
-    Debug("att=%@", att);
     if (![@"file" isEqualToString:[att objectForKey:@"type"]])
         return;
     NSString *repo_id = [att objectForKey:@"repo"];
