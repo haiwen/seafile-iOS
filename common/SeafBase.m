@@ -120,6 +120,10 @@
     return [self realLoadCache];
 }
 
+- (void)clearCache
+{
+}
+
 - (void)loadContent:(BOOL)force;
 {
     [self loadCache];

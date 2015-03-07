@@ -263,7 +263,7 @@
     NSEntityDescription *entity = [NSEntityDescription entityForName:entityDescription inManagedObjectContext:__managedObjectContext];
     [fetchRequest setEntity:entity];
 
-    NSError *error;
+    NSError *error = nil;
     NSArray *items = [__managedObjectContext executeFetchRequest:fetchRequest error:&error];
 
     for (NSManagedObject *managedObject in items) {

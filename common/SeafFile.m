@@ -458,10 +458,19 @@
     } else {
         dfile.oid = self.ooid;
         dfile.mpath = self.mpath;
-        [context updatedObjects];
     }
     [[SeafGlobal sharedObject] saveContext];
     return YES;
+}
+
+- (void)clearCache
+{
+    NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
+    DownloadedFile *dfile = [self loadCacheObj];
+    if (dfile) {
+        [context deleteObject:dfile];
+        [[SeafGlobal sharedObject] saveContext];
+    }
 }
 
 #pragma mark - QLPreviewItem

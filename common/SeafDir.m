@@ -193,6 +193,17 @@
     [self updateItems:items];
 }
 
+- (void)clearCache
+{
+    NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
+    Directory *dir = [self loadCacheObj];
+    if (dir) {
+        Debug("Delete directory %@ cache.", self.path);
+        [context deleteObject:dir];
+        [[SeafGlobal sharedObject] saveContext];
+    }
+}
+
 - (Directory *)loadCacheObj
 {
     NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
@@ -200,7 +211,7 @@
     [fetchRequest setEntity:[NSEntityDescription entityForName:@"Directory"
                                         inManagedObjectContext:context]];
     NSSortDescriptor *sortDescriptor=[[NSSortDescriptor alloc] initWithKey:@"path" ascending:YES selector:nil];
-    NSArray *descriptor=[NSArray arrayWithObject:sortDescriptor];
+    NSArray *descriptor = [NSArray arrayWithObject:sortDescriptor];
     [fetchRequest setSortDescriptors:descriptor];
 
     [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"repoid==%@ AND path==%@", self.repoId, self.path]];
@@ -235,7 +246,6 @@
     } else {
         dir.oid = self.ooid;
         dir.content = content;
-        [context updatedObjects];
     }
     [[SeafGlobal sharedObject] saveContext];
     return YES;
@@ -322,6 +332,10 @@
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          Debug("resp=%ld\n", (long)response.statusCode);
          [self handleResponse:response json:JSON data:data];
+         for (int i = 0; i < entries.count; ++i) {
+             SeafBase *entry = [entries objectAtIndex:i];
+             [entry clearCache];
+         }
      }
                  failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {

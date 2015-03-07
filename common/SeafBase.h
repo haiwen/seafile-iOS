@@ -59,6 +59,8 @@ enum SEAFBASE_STATE {
 
 - (BOOL)hasCache;
 - (BOOL)loadCache;
+- (void)clearCache;
+
 - (void)loadContent:(BOOL)force;
 - (void)updateWithEntry:(SeafBase *)entry;
 

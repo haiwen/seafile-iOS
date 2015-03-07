@@ -507,7 +507,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         obj.username = self.username;
     } else {
         obj.content = content;
-        [context updatedObjects];
     }
     [[SeafGlobal sharedObject] saveContext];
     return YES;

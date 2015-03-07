@@ -385,7 +385,7 @@ enum {
     _directory = directory;
     self.title = directory.name;
     [_directory loadContent:NO];
-    Debug("%@, %@, loading ... %d\n", _directory.repoId, _directory.path, _directory.hasCache);
+    Debug("%@, %@, loading ... %d %@\n", _directory.repoId, _directory.path, _directory.hasCache, _directory.ooid);
     if (![_directory isKindOfClass:[SeafRepos class]])
         self.tableView.sectionHeaderHeight = 0;
     [_connection checkSyncDst:_directory];
