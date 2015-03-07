@@ -822,7 +822,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     Debug("Current %ld photos need to upload, dir=%@", (long)self.photosArray.count, dir.path);
 
     int count = 0;
-    while ([[SeafGlobal sharedObject] uploadingnum] < 5 && count++ < 5) {
+    while (_uploadingArray.count < 5 && count++ < 5) {
         NSURL *url = [self popUploadPhoto];
         if (!url) break;
         [_uploadingArray addObject:url];
@@ -838,7 +838,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                      [[SeafGlobal sharedObject] backgroundUpload:file];
                                  }
                                 failureBlock:^(NSError *error){
-                                    Debug("operation was not successfull!");
+                                    Debug("!!!!Can not find asset:%@ !", url);
+                                    [_uploadingArray removeObject:url];
                                 }];
     }
 }
@@ -852,8 +853,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     obj.username = self.username;
     obj.url = ufile.assetURL.absoluteString;
     [[SeafGlobal sharedObject] saveContext];
-    [self.uploadingArray removeObject:ufile.assetURL];
-    if (!ufile.delegate) [ufile doRemove];
+    [_uploadingArray removeObject:ufile.assetURL];
+    if (!ufile.delegate) [ufile.udir removeUploadFile:ufile];
     if (_photSyncWatcher) [_photSyncWatcher photoSyncChanged:self.photosInSyncing];
 }
 

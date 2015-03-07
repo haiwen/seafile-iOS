@@ -284,8 +284,19 @@ enum {
     if (section < 0 || section > 4)
         return nil;
     if (section == 1 && self.inAutoSync) {
-        NSString *str = [NSString stringWithFormat:NSLocalizedString(@"%ld photos remain", @"Seafile"), (long)_connection.photosInSyncing];
-        return [sectionNames[section] stringByAppendingFormat:@"\t %@", str];
+        int num = _connection.photosInSyncing;
+        NSString *remainStr = @"";
+        if (num == 0) {
+            remainStr = NSLocalizedString(@"All photos synced", @"Seafile");
+        } else if (num == 1) {
+            remainStr = NSLocalizedString(@"1 photo remain", @"Seafile");
+        } else {
+            remainStr = [NSString stringWithFormat:NSLocalizedString(@"%ld photos remain", @"Seafile"), num];
+        }
+#if DEBUG
+        remainStr = [remainStr stringByAppendingFormat:@"   uploading:%ld", (long)SeafGlobal.sharedObject.uploadingnum];
+#endif
+        return [sectionNames[section] stringByAppendingFormat:@"\t %@", remainStr];
     }
     return sectionNames[section];
 }

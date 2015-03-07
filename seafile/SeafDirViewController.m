@@ -58,6 +58,8 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    self.tableView.rowHeight = 50;
+
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeNone;
     if ([self.directory isKindOfClass:[SeafRepos class]]) {
@@ -67,7 +69,6 @@
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIBarButtonItemStyleBordered target:self action:@selector(cancel:)];
     self.tableView.scrollEnabled = YES;
     UIBarButtonItem *flexibleFpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
-    Debug("_chooseRepo=%d", _chooseRepo);
     self.chooseItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Choose", @"Seafile") style:UIBarButtonItemStyleBordered target:self action:@selector(chooseFolder:)];
     NSArray *items = [NSArray arrayWithObjects:flexibleFpaceItem, self.chooseItem, flexibleFpaceItem, nil];
     [self setToolbarItems:items];

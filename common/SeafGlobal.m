@@ -352,7 +352,7 @@
 
 - (void)tryUpload
 {
-    Debug("tryUpload %ld %ld", (long)self.uploadnum, (long)self.ufiles.count);
+    Debug("tryUpload uploading:%ld left:%ld", (long)self.uploadnum, (long)self.ufiles.count);
     if (self.ufiles.count == 0) return;
     NSMutableArray *todo = [[NSMutableArray alloc] init];
     @synchronized (self) {
@@ -405,10 +405,7 @@
             }
         }
         for (SeafUploadFile *ufile in arr) {
-            if (ufile.autoSync) {
-                [_ufiles removeObject:ufile];
-                [ufile doRemove];
-            }
+            [ufile.udir removeUploadFile:ufile];
         }
     }
 }
@@ -418,6 +415,8 @@
     @synchronized (self) {
         if (![_ufiles containsObject:file])
             [_ufiles addObject:file];
+        else
+            Debug("upload file %@ already exist", file.name);
     }
     [self tryUpload];
 }

@@ -404,11 +404,8 @@
         }
     }
     for (SeafUploadFile *file in arr) {
-        [self.uploadItems removeObject:file];
-        [connection removeUploadfile:file];
-        [file doRemove];
+        [self removeUploadFile:file];
     }
-    _allItems = nil;
 }
 
 - (void)removeUploadFile:(SeafUploadFile *)ufile

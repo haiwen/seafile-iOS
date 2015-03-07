@@ -400,17 +400,21 @@ enum {
         [self showLodingView];
         self.state = STATE_LOADING;
     }
+    [_connection checkSyncDst:_directory];
 #if DEBUG
     if (_directory.uploadItems.count > 0)
         Debug("Upload %lu, state=%d", (unsigned long)_directory.uploadItems.count, self.state);
 #endif
-
-    for (SeafUploadFile *file in _directory.uploadItems) {
-        file.delegate = self;
-        if (!file.uploaded && !file.uploading) {
-            [[SeafGlobal sharedObject] backgroundUpload:file];
+    dispatch_time_t time = dispatch_time(DISPATCH_TIME_NOW, 0.5);
+    dispatch_after(time, dispatch_get_main_queue(), ^(void){
+        for (SeafUploadFile *file in _directory.uploadItems) {
+            file.delegate = self;
+            if (!file.uploaded && !file.uploading) {
+                Debug("background upload %@", file.name);
+                [[SeafGlobal sharedObject] backgroundUpload:file];
+            }
         }
-    }
+    });
 }
 
 - (void)viewWillDisappear:(BOOL)animated
