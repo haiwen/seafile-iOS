@@ -289,7 +289,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)handleOperation:(AFHTTPRequestOperation *)operation withPolicy:(AFSecurityPolicy *)policy
 {
-    operation.securityPolicy = policy;
+    if (SeafGlobal.sharedObject.allowInvalidCert) {
+        operation.securityPolicy = AFSecurityPolicy.defaultPolicy;
+        operation.securityPolicy.allowInvalidCertificates = true;
+    } else
+        operation.securityPolicy = policy;
     if (!operation.securityPolicy) {
         [operation setWillSendRequestForAuthenticationChallengeBlock:^(NSURLConnection *connection, NSURLAuthenticationChallenge *challenge) {
             if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {

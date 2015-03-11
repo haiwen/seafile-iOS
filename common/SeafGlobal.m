@@ -39,9 +39,29 @@
         _downloadnum = 0;
         _uploadnum = 0;
         _storage = [[NSUserDefaults alloc] initWithSuiteName:GROUP_NAME];
+        [self checkSettings];
         Debug("applicationDocumentsDirectoryURL=%@",  self.applicationDocumentsDirectoryURL);
     }
     return self;
+}
+
+- (void)checkSettings
+{
+    NSUserDefaults * standardUserDefaults = [NSUserDefaults standardUserDefaults];
+    id obj = [standardUserDefaults objectForKey:@"allow_invalid_cert"];
+    if (!obj)
+        [self registerDefaultsFromSettingsBundle];
+}
+
+- (void)loadSettings:(NSUserDefaults *)standardUserDefaults
+{
+    _allowInvalidCert = [standardUserDefaults boolForKey:@"allow_invalid_cert"];
+}
+
+- (void)defaultsChanged:(NSNotification *)notification
+{
+    NSUserDefaults *standardUserDefaults = (NSUserDefaults *)[notification object];
+    [self loadSettings:standardUserDefaults];
 }
 
 + (SeafGlobal *)sharedObject
@@ -78,6 +98,43 @@
 - (NSString *)blockPath:(NSString*)blkId
 {
     return [[[self applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"] stringByAppendingPathComponent:blkId];
+}
+
+- (void)registerDefaultsFromSettingsBundle
+{
+    Debug("Registering default values from Settings.bundle");
+    NSUserDefaults * defs = [NSUserDefaults standardUserDefaults];
+    [defs synchronize];
+    
+    NSString *settingsBundle = [[NSBundle mainBundle] pathForResource:@"Settings" ofType:@"bundle"];
+    if(!settingsBundle) {
+        Debug("Could not find Settings.bundle");
+        return;
+    }
+    
+    NSDictionary *settings = [NSDictionary dictionaryWithContentsOfFile:[settingsBundle stringByAppendingPathComponent:@"Root.plist"]];
+    NSArray *preferences = [settings objectForKey:@"PreferenceSpecifiers"];
+    NSMutableDictionary *defaultsToRegister = [[NSMutableDictionary alloc] initWithCapacity:[preferences count]];
+    
+    for (NSDictionary *prefSpecification in preferences) {
+        NSString *key = [prefSpecification objectForKey:@"Key"];
+        if (key) {
+            // check if value readable in userDefaults
+            id currentObject = [defs objectForKey:key];
+            if (currentObject == nil) {
+                // not readable: set value from Settings.bundle
+                id objectToSet = [prefSpecification objectForKey:@"DefaultValue"];
+                [defaultsToRegister setObject:objectToSet forKey:key];
+                Debug("Setting object %@ for key %@", objectToSet, key);
+            } else {
+                // already readable: don't touch
+                Debug("Key %@ is readable (value: %@), nothing written to defaults.", key, currentObject);
+            }
+        }
+    }
+    
+    [defs registerDefaults:defaultsToRegister];
+    [defs synchronize];
 }
 
 - (void)migrateUserDefaults
@@ -143,6 +200,15 @@
 
 - (void)loadAccounts
 {
+    NSUserDefaults * standardUserDefaults = [NSUserDefaults standardUserDefaults];
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    [center addObserver:self
+               selector:@selector(defaultsChanged:)
+                   name:NSUserDefaultsDidChangeNotification
+                 object:standardUserDefaults];
+    [self loadSettings:standardUserDefaults];
+    Debug("allowInvalidCert=%d", _allowInvalidCert);
+
     NSMutableArray *connections = [[NSMutableArray alloc] init];
     NSArray *accounts = [self objectForKey:@"ACCOUNTS"];
     Debug("accounts:%@", accounts);

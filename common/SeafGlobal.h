@@ -20,6 +20,8 @@
 
 @property (readonly) ALAssetsLibrary *assetsLibrary;
 
+@property (readonly) BOOL allowInvalidCert;
+
 @property (retain) NSMutableArray *conns;
 @property (readwrite) SeafConnection *connection;
 
@@ -30,6 +32,8 @@
 - (NSString *)applicationTempDirectory;
 - (NSString *)documentPath:(NSString*)fileId;
 - (NSString *)blockPath:(NSString*)blkId;
+
+- (void)loadSettings:(NSUserDefaults *)standardUserDefaults;
 
 - (void)loadAccounts;
 - (void)saveAccounts;
