@@ -5,6 +5,7 @@
 //  Created by Wang Wei on 10/11/12.
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
+#import <AssertMacros.h>
 
 #import "SeafConnection.h"
 #import "SeafJSONRequestOperation.h"
@@ -71,14 +72,15 @@ static AFSecurityPolicy *SeafPolicyFromFile(NSString *path)
     return SeafPolicyFromCert(cert);
 }
 
-static AFSecurityPolicy *defaultPolicy = nil;
-static AFSecurityPolicy *SeafDefaultPolicy()
-{
-    if (!defaultPolicy) {
-        defaultPolicy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModeNone];
-        defaultPolicy.allowInvalidCertificates = NO;
-    }
-    return defaultPolicy;
+static BOOL SeafServerTrustIsValid(SecTrustRef serverTrust) {
+    BOOL isValid = NO;
+    SecTrustResultType result;
+    __Require_noErr_Quiet(SecTrustEvaluate(serverTrust, &result), _out);
+    
+    isValid = (result == kSecTrustResultUnspecified || result == kSecTrustResultProceed);
+    
+_out:
+    return isValid;
 }
 
 static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
@@ -292,7 +294,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         [operation setWillSendRequestForAuthenticationChallengeBlock:^(NSURLConnection *connection, NSURLAuthenticationChallenge *challenge) {
             if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
                 NSURLCredential *credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
-                if ([SeafDefaultPolicy() evaluateServerTrust:challenge.protectionSpace.serverTrust forDomain:challenge.protectionSpace.host]) {
+                if (SeafServerTrustIsValid(challenge.protectionSpace.serverTrust)) {
                     [[NSFileManager defaultManager] removeItemAtPath:[self certPathForHost:[self host]] error:nil];
                     SecCertificateRef cer = SecTrustGetCertificateAtIndex(challenge.protectionSpace.serverTrust, 0);
                     self.policy = SeafPolicyFromCert(cer);
