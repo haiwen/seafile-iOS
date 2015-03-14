@@ -79,7 +79,7 @@ static NSMutableDictionary *avatarAttrs = nil;
 {
     [SeafGlobal.sharedObject incDownloadnum];
     [self.connection sendRequest:self.avatarUrl success:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          if (![JSON isKindOfClass:[NSDictionary class]]) {
              [SeafGlobal.sharedObject finishDownload:self result:NO];
              return;
@@ -125,7 +125,7 @@ static NSMutableDictionary *avatarAttrs = nil;
          [task resume];
      }
               failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
          Warning("Failed to download avatar from %@, error=%@", request.URL, error);
          [SeafGlobal.sharedObject finishDownload:self result:NO];
      }];

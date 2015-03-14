@@ -76,7 +76,7 @@
     return YES;
 }
 
-- (void)handleResponse:(NSHTTPURLResponse *)response json:(id)JSON data:(NSData *)data
+- (void)handleResponse:(NSHTTPURLResponse *)response json:(id)JSON
 {
     [self checkUploadFiles];
     @synchronized(self) {
@@ -85,6 +85,7 @@
         if (!curId) curId = self.oid;
         if ([self handleData:curId data:JSON]) {
             self.ooid = curId;
+            NSData *data = [Utils JSONEncode:JSON];
             [self savetoCache:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
             [self.delegate entry:self updated:true progress:100];
         } else {
@@ -115,12 +116,12 @@
 - (void)downloadContentSuccess:(void (^)(SeafDir *dir)) success failure:(void (^)(SeafDir *dir))failure
 {
     [connection sendRequest:self.url
-                    success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
-                        [self handleResponse:response json:JSON data:data];
+                    success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+                        [self handleResponse:response json:JSON];
                         if (success)
                             success(self);
                     }
-                    failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+                    failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
                         self.state = SEAF_DENTRY_INIT;
                         if (failure)
                             failure(self);
@@ -282,13 +283,13 @@
 
     [connection sendPost:requestUrl form:@"operation=mkdir"
                  success:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          Debug("resp=%ld\n", (long)response.statusCode);
-         [self handleResponse:response json:JSON data:data];
+         [self handleResponse:response json:JSON];
          if (success) success(self);
      }
                  failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
          Warning("resp=%ld\n", (long)response.statusCode);
          [self.delegate entry:self downloadingFailed:response.statusCode];
          if (failure) failure(self);
@@ -302,12 +303,12 @@
 
     [connection sendPost:requestUrl form:@"operation=create"
                  success:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          Debug("resp=%ld\n", (long)response.statusCode);
-         [self handleResponse:response json:JSON data:data];
+         [self handleResponse:response json:JSON];
      }
                  failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
          Warning("resp=%ld\n", (long)response.statusCode);
          [self.delegate entry:self downloadingFailed:response.statusCode];
      }];
@@ -329,16 +330,16 @@
 
     [connection sendPost:requestUrl form:form
                  success:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          Debug("resp=%ld\n", (long)response.statusCode);
-         [self handleResponse:response json:JSON data:data];
+         [self handleResponse:response json:JSON];
          for (int i = 0; i < entries.count; ++i) {
              SeafBase *entry = [entries objectAtIndex:i];
              [entry clearCache];
          }
      }
                  failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
          Warning("resp=%ld\n", (long)response.statusCode);
          [self.delegate entry:self downloadingFailed:response.statusCode];
      }];
@@ -437,12 +438,12 @@
     NSString *form = [NSString stringWithFormat:@"operation=rename&newname=%@", [newName escapedUrl]];
     [connection sendPost:requestUrl form:form
                  success:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          Debug("resp=%ld\n", (long)response.statusCode);
-         [self handleResponse:response json:JSON data:data];
+         [self handleResponse:response json:JSON];
      }
                  failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
          Warning("resp=%ld\n", (long)response.statusCode);
          [self.delegate entry:self downloadingFailed:response.statusCode];
      }];
@@ -464,12 +465,12 @@
 
     [connection sendPost:requestUrl form:form
                  success:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          Debug("resp=%ld\n", (long)response.statusCode);
-         [self handleResponse:response json:JSON data:data];
+         [self handleResponse:response json:JSON];
      }
                  failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
          Warning("resp=%ld\n", (long)response.statusCode);
          [self.delegate entry:self downloadingFailed:response.statusCode];
      }];
@@ -491,12 +492,12 @@
 
     [connection sendPost:requestUrl form:form
                  success:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          Debug("resp=%ld\n", (long)response.statusCode);
-         [self handleResponse:response json:JSON data:data];
+         [self handleResponse:response json:JSON];
      }
                  failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
          Warning("resp=%ld\n", (long)response.statusCode);
          [self.delegate entry:self downloadingFailed:response.statusCode];
      }];

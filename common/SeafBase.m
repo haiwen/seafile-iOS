@@ -148,12 +148,12 @@
     NSString *request_str = [NSString stringWithFormat:API_URL"/repos/%@/?op=setpassword", self.repoId];
     NSString *formString = [NSString stringWithFormat:@"password=%@", password];
     [connection sendPost:request_str form:formString
-                 success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+                 success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
                      [SeafGlobal.sharedObject setRepo:self.repoId password:password];
                      [self.delegate entry:self repoPasswordSet:YES];
-                 } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+                 } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
                      [self.delegate entry:self repoPasswordSet:NO];
-                 } ];
+                 }];
 }
 
 - (void)checkRepoPasswordV2:(NSString *)password
@@ -185,10 +185,10 @@
     NSString *request_str = [NSString stringWithFormat:API_URL"/repos/%@/?op=checkpassword", self.repoId];
     NSString *formString = [NSString stringWithFormat:@"magic=%@", [magic escapedPostForm]];
     [connection sendPost:request_str form:formString
-                 success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+                 success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
                      [SeafGlobal.sharedObject setRepo:self.repoId password:password];
                      [self.delegate entry:self repoPasswordSet:YES];
-                 } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+                 } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
                      [self.delegate entry:self repoPasswordSet:NO];
                  } ];
 }
@@ -204,7 +204,7 @@
     NSString *form = [NSString stringWithFormat:@"p=%@&type=%@", [self.path escapedPostForm], type];
     [connection sendPut:url form:form
                 success:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          NSString *link = [[response allHeaderFields] objectForKey:@"Location"];
          Debug("delegate=%@, share link = %@\n", dg, link);
          if ([link hasPrefix:@"\""])
@@ -214,7 +214,7 @@
          [dg generateSharelink:self WithResult:YES];
      }
                 failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
          [dg generateSharelink:self WithResult:NO];
      }];
 }

@@ -152,7 +152,7 @@
 {
     [SeafGlobal.sharedObject incDownloadnum];
     [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@", self.repoId, [self.path escapedUrl]] success:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          NSString *url = JSON;
          NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
          if (!curId)
@@ -196,7 +196,7 @@
          [_task resume];
      }
                     failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
          self.state = SEAF_DENTRY_INIT;
          [self.delegate entry:self downloadingFailed:response.statusCode];
      }];
@@ -303,7 +303,7 @@
 {
     [SeafGlobal.sharedObject incDownloadnum];
     [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@&op=downloadblks", self.repoId, [self.path escapedUrl]] success:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
          if (!curId)
              curId = self.oid;
@@ -334,7 +334,7 @@
          }
      }
                     failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
          self.state = SEAF_DENTRY_INIT;
          [self.delegate entry:self downloadingFailed:response.statusCode];
      }];

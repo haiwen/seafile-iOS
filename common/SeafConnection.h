@@ -79,31 +79,35 @@ enum MSG_TYPE{
 - (void)clearAccount;
 
 - (void)sendRequest:(NSString *)url
-            success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data))success
-            failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure;
+            success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
+            failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure;
 
 - (void)sendDelete:(NSString *)url
-           success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data))success
-           failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure;
+           success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
+           failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure;
 
 - (void)sendPut:(NSString *)url form:(NSString *)form
-        success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data))success
-        failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure;
+        success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
+        failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure;
 
 - (void)sendPost:(NSString *)url form:(NSString *)form
-         success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data))success
-         failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure;
+         success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
+         failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure;
 
 - (void)loginWithAddress:(NSString *)anAddress username:(NSString *)username password:(NSString *)password;
 
 - (void)getAccountInfo:(void (^)(bool result, SeafConnection *conn))handler;
 
-- (void)getStarredFiles:(void (^)(NSHTTPURLResponse *response, id JSON, NSData *data))success
-                failure:(void (^)(NSHTTPURLResponse *response, NSError *error, id JSON))failure;
+- (void)getStarredFiles:(void (^)(NSHTTPURLResponse *response, id JSON))success
+                failure:(void (^)(NSHTTPURLResponse *response, NSError *error))failure;
 
 
-- (void)getSeafGroupAndContacts:(void (^)(NSHTTPURLResponse *response, id JSON, NSData *data))success
-                        failure:(void (^)(NSHTTPURLResponse *response, NSError *error, id JSON))failure;
+- (void)getSeafGroupAndContacts:(void (^)(NSHTTPURLResponse *response, id JSON))success
+                        failure:(void (^)(NSHTTPURLResponse *response, NSError *error))failure;
+
+- (void)search:(NSString *)keyword
+       success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSMutableArray *results))success
+       failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure;
 
 
 - (BOOL)isStarred:(NSString *)repo path:(NSString *)path;
@@ -117,9 +121,7 @@ enum MSG_TYPE{
 
 - (void)removeUploadfile:(SeafUploadFile *)ufile;
 
-- (void)search:(NSString *)keyword
-       success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSMutableArray *results))success
-       failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure;
+
 
 - (void)registerDevice:(NSData *)deviceToken;
 

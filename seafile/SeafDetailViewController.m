@@ -705,13 +705,13 @@ enum PREVIEW_STATE {
         SeafFile *file = (SeafFile *)self.preViewItem;
         NSString *form = [NSString stringWithFormat:@"message=%@&repo_id=%@&path=%@", [composeViewController.text escapedPostForm], file.repoId, [file.path escapedPostForm]];
         NSString *url = [NSString stringWithFormat:API_URL"/html/discussions/%@/", _gid];
-        [file->connection sendPost:url form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+        [file->connection sendPost:url form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
             [SVProgressHUD dismiss];
             [composeViewController dismissViewControllerAnimated:YES completion:nil];
             NSString *html = [JSON objectForKey:@"html"];
             NSString *js = [NSString stringWithFormat:@"addMessage(\"%@\");", [html stringEscapedForJavasacript]];
             [self.webView stringByEvaluatingJavaScriptFromString:js];
-        } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
             [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to add discussion", @"Seafile")];
         }];
     }

@@ -1387,7 +1387,7 @@ enum {
             self.searchResults = results;
             [self.searchDisplayController.searchResultsTableView reloadData];
         }
-    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
         if (response.statusCode == 404) {
             [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Search is not supported on the server", @"Seafile")];
         } else

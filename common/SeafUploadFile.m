@@ -251,7 +251,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
     upload_url = [upload_url stringByAppendingFormat:@"?p=%@", uploadpath.escapedUrl];
     [connection sendRequest:upload_url success:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          NSString *url = JSON;
          Debug("Upload file %@ %@, %@ update=%d, byblock=%d, delegate%@\n", self.name, url, uploadpath, self.update, byblock, _delegate);
          if (byblock) {
@@ -268,7 +268,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
          }
      }
                     failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
          [self finishUpload:NO oid:nil];
      }];
 }

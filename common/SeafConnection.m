@@ -308,7 +308,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     [self sendRequest:API_URL"/account/info/"
               success:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          NSDictionary *account = JSON;
          Debug("account detail:%@", account);
          [self.email2nickMap setValue:[account objectForKey:@"nickname"] forKey:self.username];
@@ -320,7 +320,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
          if (handler) handler(true, self);
      }
               failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
          if (handler) handler(false, self);
      }];
 }
@@ -421,8 +421,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 }
 
 - (void)sendRequestAsync:(NSString *)url method:(NSString *)method form:(NSString *)form
-                 success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data))success
-                 failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure
+                 success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
+                 failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure
 {
     NSString *absoluteUrl;
     absoluteUrl = [url hasPrefix:@"http"] ? url : [_address stringByAppendingString:url];
@@ -442,7 +442,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
         if (error) {
             Warning("Error: %@, resp=%@", error, responseObject);
-            failure (request, resp, error, responseObject);
+            failure (request, resp, error);
             if (resp.statusCode == HTTP_ERR_LOGIN_REUIRED) {
                 @synchronized(self) {
                     if (![self authorized])   return;
@@ -451,36 +451,36 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                 if (self.delegate) [self.delegate loginRequired:self];
             }
         } else {
-            success(request, resp, responseObject, [Utils JSONEncode:responseObject]);
+            success(request, resp, responseObject);
         }
     }];
     [task resume];
 }
 
 - (void)sendRequest:(NSString *)url
-            success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data))success
-            failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure
+            success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
+            failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure
 {
     [self sendRequestAsync:url method:@"GET" form:nil success:success failure:failure];
 }
 
 - (void)sendDelete:(NSString *)url
-           success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data))success
-           failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure
+           success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
+           failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure
 {
     [self sendRequestAsync:url method:@"DELETE" form:nil success:success failure:failure];
 }
 
 - (void)sendPut:(NSString *)url form:(NSString *)form
-        success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data))success
-        failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure;
+        success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
+        failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure
 {
     [self sendRequestAsync:url method:@"PUT" form:form success:success failure:failure];
 }
 
 - (void)sendPost:(NSString *)url form:(NSString *)form
-         success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data))success
-         failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure
+         success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
+         failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure
 {
     [self sendRequestAsync:url method:@"POST" form:form success:success failure:failure];
 }
@@ -580,24 +580,25 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self handleStarredData:[self getCachedObj:KEY_STARREDFILES]];
 }
 
-- (void)getStarredFiles:(void (^)(NSHTTPURLResponse *response, id JSON, NSData *data))success
-                failure:(void (^)(NSHTTPURLResponse *response, NSError *error, id JSON))failure
+- (void)getStarredFiles:(void (^)(NSHTTPURLResponse *response, id JSON))success
+                failure:(void (^)(NSHTTPURLResponse *response, NSError *error))failure
 {
     [self sendRequest:API_URL"/starredfiles/"
               success:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          @synchronized(self) {
              Debug("Success to get starred files ...\n");
              [self handleStarredData:JSON];
+             NSData *data = [Utils JSONEncode:JSON];
              [self savetoCacheKey:KEY_STARREDFILES value:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
              if (success)
-                 success (response, JSON, data);
+                 success (response, JSON);
          }
      }
               failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
          if (failure)
-             failure (response, error, JSON);
+             failure (response, error);
      }];
 }
 
@@ -618,11 +619,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         NSString *url = [NSString stringWithFormat:API_URL"/starredfiles/"];
         [self sendPost:url form:form
                success:
-         ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+         ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
              Debug("Success to star file %@, %@\n", repo, path);
          }
                failure:
-         ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+         ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
              Warning("Failed to star file %@, %@\n", repo, path);
          }];
     } else {
@@ -630,11 +631,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         NSString *url = [NSString stringWithFormat:API_URL"/starredfiles/?repo_id=%@&p=%@", repo, path.escapedUrl];
         [self sendDelete:url
                success:
-         ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+         ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
              Debug("Success to unstar file %@, %@\n", repo, path);
          }
                failure:
-         ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+         ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
              Warning("Failed to unstar file %@, %@\n", repo, path);
          }];
     }
@@ -685,12 +686,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return YES;
 }
 
-- (void)getSeafGroupAndContacts:(void (^)(NSHTTPURLResponse *response, id JSON, NSData *data))success
-                        failure:(void (^)(NSHTTPURLResponse *response, NSError *error, id JSON))failure
+- (void)getSeafGroupAndContacts:(void (^)(NSHTTPURLResponse *response, id JSON))success
+                        failure:(void (^)(NSHTTPURLResponse *response, NSError *error))failure
 {
     [self sendRequest:API_URL"/groupandcontacts/"
               success:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          @synchronized(self) {
              if ([self handleGroupsData:JSON fromCache:NO]) {
                  for (NSDictionary *c in self.seafContacts) {
@@ -698,16 +699,17 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                          [self.email2nickMap setValue:[c objectForKey:@"name"] forKey:[c objectForKey:@"email"]];
                      }
                  }
+                 NSData *data = [Utils JSONEncode:JSON];
                  [self savetoCacheKey:KEY_CONTACTS value:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
              }
              if (success)
-                 success (response, JSON, data);
+                 success (response, JSON);
          }
      }
               failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
          if (failure)
-             failure (response, error, JSON);
+             failure (response, error);
      }];
 }
 
@@ -738,10 +740,10 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)search:(NSString *)keyword
        success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSMutableArray *results))success
-       failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure
+       failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure
 {
     NSString *url = [NSString stringWithFormat:API_URL"/search/?q=%@&per_page=100", [keyword escapedUrl]];
-    [self sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+    [self sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
         NSMutableArray *results = [[NSMutableArray alloc] init];
         for (NSDictionary *itemInfo in [JSON objectForKey:@"results"]) {
             if ([itemInfo objectForKey:@"name"] == [NSNull null]) continue;

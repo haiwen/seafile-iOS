@@ -185,15 +185,17 @@
 {
     [connection sendRequest:self.url
                     success:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          @synchronized(self) {
              self.state = SEAF_DENTRY_UPTODATE;
-             if ([self handleData:JSON])
+             if ([self handleData:JSON]) {
+                 NSData *data = [Utils JSONEncode:JSON];
                  [self->connection savetoCacheKey:KEY_REPOS value:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
+             }
          }
      }
                     failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
          self.state = SEAF_DENTRY_INIT;
          [self.delegate entry:self downloadingFailed:response.statusCode];
      }];

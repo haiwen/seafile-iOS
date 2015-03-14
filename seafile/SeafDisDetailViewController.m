@@ -170,8 +170,9 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         case MSG_USER:
         {
             NSString *url = [self msgUrl];
-            [self.connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+            [self.connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
                 self.lastUpdateTime = [NSDate date];
+                NSData *data = [Utils JSONEncode:JSON];
                 [self.connection savetoCacheKey:url value:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
                 if (![url isEqualToString:[self msgUrl]])
                     return;
@@ -187,7 +188,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
                     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
                     [appdelegate.discussVC refreshBadge];
                 }
-            } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+            } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
                 Warning("Failed to get messsages: %@", error);
                 if (!background)
                     [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get messages", @"Seafile")];
@@ -444,7 +445,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     NSString *url = [NSString stringWithFormat:API_URL"/group/%@/msg/%@/", group_id, msg.msgId];
     Debug("sender=%@, %@ msg=%@, group=%@ url=%@", sender, self.sender, msg, self.info, url);
     NSString *form = [NSString stringWithFormat:@"message=%@", [text escapedPostForm]];
-    [self.connection sendPost:url form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+    [self.connection sendPost:url form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
         [SVProgressHUD dismiss];
         NSString *msgId = [JSON objectForKey:@"msgid"];
         NSString *timestamp = [NSString stringWithFormat:@"%d", (int)[date timeIntervalSince1970]];
@@ -455,7 +456,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         NSIndexPath *index = [NSIndexPath indexPathForRow:[self.messages indexOfObject:msg] inSection:0];
         [self.tableView scrollToRowAtIndexPath:index atScrollPosition:UITableViewScrollPositionBottom animated:YES];
         [self saveToCache];
-    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
         [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to send message", @"Seafile")];
         self.messageInputView.sendButton.enabled = YES;
     }];
@@ -472,7 +473,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
     Debug("sender=%@, %@ msg=%@, %@", sender, self.sender, msg, [msg toDictionary]);
     NSString *url = [self msgUrl];
     NSString *form = [NSString stringWithFormat:@"message=%@", [text escapedPostForm]];
-    [self.connection sendPost:url form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+    [self.connection sendPost:url form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
         [SVProgressHUD dismiss];
         msg.msgId = [JSON objectForKey:@"msgid"];
         [self.messages addObject:msg];
@@ -481,7 +482,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         [self updateLastMessage:text];
         [self scrollToBottomAnimated:NO];
         [self saveToCache];
-    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
         [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to send message", @"Seafile")];
         self.messageInputView.sendButton.enabled = YES;
     }];
@@ -703,7 +704,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         {
             self.isLoading = YES;
             NSString *url = [[self msgUrl] stringByAppendingFormat:@"?page=%d", self.next_page, nil];
-            [self.connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+            [self.connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
                 if (!self.isLoading)
                     return;
                 NSMutableArray *arr = [self parseMessageData:JSON];
@@ -724,7 +725,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
                 }
                 Debug("msgs count=%lu", (unsigned long)self.messages.count);
                 [self doneLoadingTableViewData];
-            } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+            } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
                 Warning("Failed to get messsages");
                 [self doneLoadingTableViewData];
                 [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get messages", @"Seafile")];
@@ -790,7 +791,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
         msg.text = [text stringByAppendingString:@"\n\n"];
         NSString *url = [self msgUrl];
         NSString *form = [NSString stringWithFormat:@"message=%@", [text escapedPostForm]];
-        [self.connection sendPost:url form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
+        [self.connection sendPost:url form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
             [SVProgressHUD dismiss];
             [composeViewController dismissViewControllerAnimated:YES completion:nil];
             msg.msgId = [JSON objectForKey:@"msgid"];
@@ -799,7 +800,7 @@ static const CGFloat kJSTimeStampLabelHeight = 20.0f;
             [self updateLastMessage:text];
             [self scrollToBottomAnimated:NO];
             [self saveToCache];
-        } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
             [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to send message", @"Seafile")];
             self.messageInputView.sendButton.enabled = YES;
         }];

@@ -53,7 +53,7 @@
 
 - (void)refresh:(id)sender
 {
-    [_connection getStarredFiles:^(NSHTTPURLResponse *response, id JSON, NSData *data) {
+    [_connection getStarredFiles:^(NSHTTPURLResponse *response, id JSON) {
         @synchronized(self) {
             Debug("Success to get starred files ...\n");
             [self doneLoadingTableViewData];
@@ -61,7 +61,7 @@
             [self.tableView reloadData];
         }
     }
-                         failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
+                         failure:^(NSHTTPURLResponse *response, NSError *error) {
                              Warning("Failed to get starred files ...\n");
                              if (self.isVisible)
                                  [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get starred files", @"Seafile")];

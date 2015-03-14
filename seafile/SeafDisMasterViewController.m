@@ -195,13 +195,13 @@
 
 - (void)refreshBackground:(id)sender
 {
-    [_connection getSeafGroupAndContacts:^(NSHTTPURLResponse *response, id JSON, NSData *data) {
+    [_connection getSeafGroupAndContacts:^(NSHTTPURLResponse *response, id JSON) {
         @synchronized(self) {
             [self refreshView];
             [self doneLoadingTableViewData];
         }
     }
-    failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
+    failure:^(NSHTTPURLResponse *response, NSError *error) {
         Warning("Failed to get groups ...error=%ld\n", (long)error.code);
         [self doneLoadingTableViewData];
     }];
@@ -209,7 +209,7 @@
 
 - (void)refresh:(id)sender
 {
-    [_connection getSeafGroupAndContacts:^(NSHTTPURLResponse *response, id JSON, NSData *data) {
+    [_connection getSeafGroupAndContacts:^(NSHTTPURLResponse *response, id JSON) {
         @synchronized(self) {
             Debug("Success to get groups ...\n");
             [self refreshView];
@@ -217,7 +217,7 @@
             [self.connection performSelector:@selector(downloadAvatars:) withObject:[NSNumber numberWithBool:YES] afterDelay:2.0];
         }
     }
-    failure:^(NSHTTPURLResponse *response, NSError *error, id JSON) {
+    failure:^(NSHTTPURLResponse *response, NSError *error) {
         Warning("Failed to get groups ...error=%ld\n", (long)error.code);
         if (self.isVisible && error.code != NSURLErrorCancelled && error.code != 102) {
             [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get groups ...", @"Seafile")];
