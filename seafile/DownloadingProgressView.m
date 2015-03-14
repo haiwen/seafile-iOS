@@ -43,7 +43,9 @@
         self.imageView.image = item.icon;
         self.nameLabel.text = item.previewItemTitle;
     }
-    _progress.progress = percent * 1.0f/100;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        _progress.progress = percent * 1.0f/100;
+    });
 }
 
 

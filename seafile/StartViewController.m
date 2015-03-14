@@ -228,7 +228,7 @@
         SeafConnection *conn = [SeafGlobal.sharedObject.conns objectAtIndex:indexPath.row];
         [self selectAccount:conn];
     } @catch(NSException *exception) {
-        [self performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
+        [self.tableView performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
     }
 }
 

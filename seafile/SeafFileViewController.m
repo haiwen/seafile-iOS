@@ -1288,8 +1288,9 @@ enum {
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
         UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
         if (res && [cell isKindOfClass:[SeafUploadingFileCell class]]) {
-            [((SeafUploadingFileCell *)cell).progressView setProgress:percent*1.0f/100];
-            return;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [((SeafUploadingFileCell *)cell).progressView setProgress:percent*1.0f/100];
+            });
         } else
             [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic ];
     } @catch(NSException *exception) {
@@ -1303,9 +1304,11 @@ enum {
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
     if (!cell) return;
-    if (res && percent < 100 && [cell isKindOfClass:[SeafUploadingFileCell class]])
-        [((SeafUploadingFileCell *)cell).progressView setProgress:percent*1.0f/100];
-    else {
+    if (res && percent < 100 && [cell isKindOfClass:[SeafUploadingFileCell class]]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [((SeafUploadingFileCell *)cell).progressView setProgress:percent*1.0f/100];
+        });
+    } else {
         [self.tableView reloadData];
         //[self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
     }

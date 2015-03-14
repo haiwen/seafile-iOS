@@ -197,7 +197,7 @@
     [startController selectAccount:connection];
 }
 
-- (void)loginFailed:(SeafConnection *)conn error:(int)error
+- (void)loginFailed:(SeafConnection *)conn error:(NSInteger)error
 {
     Debug("%@, error=%d\n", conn.address, error);
     if (conn != connection)

@@ -23,6 +23,7 @@
 
 + (NSString *)stringContent:(NSString *)path;
 
++ (NSData *)JSONEncode:(id)obj;
 + (id)JSONDecode:(NSData *)data error:(NSError **)error;
 + (NSString *)JSONEncodeDictionary:(NSDictionary *)dict;
 + (BOOL)isImageFile:(NSString *)name;

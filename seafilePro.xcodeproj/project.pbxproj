@@ -248,7 +248,6 @@
 		57A029B31A1701C5009C9D7B /* SeafData.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229921A11087500C92330 /* SeafData.m */; };
 		57A029B41A1701C5009C9D7B /* SeafDir.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229941A11087500C92330 /* SeafDir.m */; };
 		57A029B51A1701C5009C9D7B /* SeafFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229961A11087500C92330 /* SeafFile.m */; };
-		57A029B61A1701C5009C9D7B /* SeafJSONRequestOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E2299B1A11087500C92330 /* SeafJSONRequestOperation.m */; };
 		57A029B71A1701C5009C9D7B /* SeafRepos.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E2299E1A11087500C92330 /* SeafRepos.m */; };
 		57A029B81A1701C5009C9D7B /* SeafStarredFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229A01A11087500C92330 /* SeafStarredFile.m */; };
 		57A029B91A1701C5009C9D7B /* SeafUploadFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229A21A11087500C92330 /* SeafUploadFile.m */; };
@@ -292,7 +291,6 @@
 		57A1921B1A208F3200985F77 /* SeafDir.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229941A11087500C92330 /* SeafDir.m */; };
 		57A1921C1A208F3200985F77 /* SeafFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229961A11087500C92330 /* SeafFile.m */; };
 		57A1921D1A208F3200985F77 /* seafile.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 57E229971A11087500C92330 /* seafile.xcdatamodeld */; };
-		57A1921E1A208F3200985F77 /* SeafJSONRequestOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E2299B1A11087500C92330 /* SeafJSONRequestOperation.m */; };
 		57A1921F1A208F3200985F77 /* SeafRepos.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E2299E1A11087500C92330 /* SeafRepos.m */; };
 		57A192201A208F3200985F77 /* SeafStarredFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229A01A11087500C92330 /* SeafStarredFile.m */; };
 		57A192211A208F3200985F77 /* SeafUploadFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229A21A11087500C92330 /* SeafUploadFile.m */; };
@@ -410,7 +408,6 @@
 		57E229AF1A11087500C92330 /* SeafDir.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229941A11087500C92330 /* SeafDir.m */; };
 		57E229B21A11087500C92330 /* SeafFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229961A11087500C92330 /* SeafFile.m */; };
 		57E229B51A11087500C92330 /* seafile.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 57E229971A11087500C92330 /* seafile.xcdatamodeld */; };
-		57E229B81A11087500C92330 /* SeafJSONRequestOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E2299B1A11087500C92330 /* SeafJSONRequestOperation.m */; };
 		57E229BB1A11087500C92330 /* SeafRepos.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E2299E1A11087500C92330 /* SeafRepos.m */; };
 		57E229DB1A1108B200C92330 /* ExtentedString.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229C81A1108B200C92330 /* ExtentedString.m */; };
 		57E229DE1A1108B200C92330 /* FileMimeType.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229CA1A1108B200C92330 /* FileMimeType.m */; };
@@ -920,8 +917,6 @@
 		57E229961A11087500C92330 /* SeafFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafFile.m; path = common/SeafFile.m; sourceTree = SOURCE_ROOT; };
 		57E229981A11087500C92330 /* seafile.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = seafile.xcdatamodel; sourceTree = "<group>"; };
 		57E229991A11087500C92330 /* SeafItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafItem.h; path = common/SeafItem.h; sourceTree = SOURCE_ROOT; };
-		57E2299A1A11087500C92330 /* SeafJSONRequestOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafJSONRequestOperation.h; path = common/SeafJSONRequestOperation.h; sourceTree = SOURCE_ROOT; };
-		57E2299B1A11087500C92330 /* SeafJSONRequestOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafJSONRequestOperation.m; path = common/SeafJSONRequestOperation.m; sourceTree = SOURCE_ROOT; };
 		57E2299C1A11087500C92330 /* SeafPreView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafPreView.h; path = common/SeafPreView.h; sourceTree = SOURCE_ROOT; };
 		57E2299D1A11087500C92330 /* SeafRepos.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafRepos.h; path = common/SeafRepos.h; sourceTree = SOURCE_ROOT; };
 		57E2299E1A11087500C92330 /* SeafRepos.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafRepos.m; path = common/SeafRepos.m; sourceTree = SOURCE_ROOT; };
@@ -1269,8 +1264,6 @@
 				57E229961A11087500C92330 /* SeafFile.m */,
 				57E229971A11087500C92330 /* seafile.xcdatamodeld */,
 				57E229991A11087500C92330 /* SeafItem.h */,
-				57E2299A1A11087500C92330 /* SeafJSONRequestOperation.h */,
-				57E2299B1A11087500C92330 /* SeafJSONRequestOperation.m */,
 				57E2299C1A11087500C92330 /* SeafPreView.h */,
 				57E2299D1A11087500C92330 /* SeafRepos.h */,
 				57E2299E1A11087500C92330 /* SeafRepos.m */,
@@ -2339,7 +2332,6 @@
 				573E35F91922847200C67671 /* UIColor+JSMessagesView.m in Sources */,
 				571D8CB61677881400F1A22C /* AFURLConnectionOperation.m in Sources */,
 				5732064718EB11CA003250DE /* AFURLRequestSerialization.m in Sources */,
-				57E229B81A11087500C92330 /* SeafJSONRequestOperation.m in Sources */,
 				57E229B21A11087500C92330 /* SeafFile.m in Sources */,
 				57E229BB1A11087500C92330 /* SeafRepos.m in Sources */,
 				571D8CBF1677881400F1A22C /* StartViewController.m in Sources */,
@@ -2441,7 +2433,6 @@
 				57A029B31A1701C5009C9D7B /* SeafData.m in Sources */,
 				57A029B41A1701C5009C9D7B /* SeafDir.m in Sources */,
 				57A029B51A1701C5009C9D7B /* SeafFile.m in Sources */,
-				57A029B61A1701C5009C9D7B /* SeafJSONRequestOperation.m in Sources */,
 				57A029B71A1701C5009C9D7B /* SeafRepos.m in Sources */,
 				57A029B81A1701C5009C9D7B /* SeafStarredFile.m in Sources */,
 				57A029B91A1701C5009C9D7B /* SeafUploadFile.m in Sources */,
@@ -2484,7 +2475,6 @@
 				57A1921B1A208F3200985F77 /* SeafDir.m in Sources */,
 				57A1921C1A208F3200985F77 /* SeafFile.m in Sources */,
 				57A1921D1A208F3200985F77 /* seafile.xcdatamodeld in Sources */,
-				57A1921E1A208F3200985F77 /* SeafJSONRequestOperation.m in Sources */,
 				57A1921F1A208F3200985F77 /* SeafRepos.m in Sources */,
 				57A192201A208F3200985F77 /* SeafStarredFile.m in Sources */,
 				57A192211A208F3200985F77 /* SeafUploadFile.m in Sources */,
@@ -2790,7 +2780,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE = "9e519841-17b7-4007-ac86-6894e3d962ad";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "9e519841-17b7-4007-ac86-6894e3d962ad";
 				SKIP_INSTALL = YES;
 			};
@@ -2827,7 +2817,8 @@
 				);
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE = "7783b29f-c366-4ee1-886c-b2a0740c8585";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "7783b29f-c366-4ee1-886c-b2a0740c8585";
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -2934,8 +2925,8 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
-				PROVISIONING_PROFILE = "77ceea69-5b97-499f-a2d1-23c0190d055e";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "77ceea69-5b97-499f-a2d1-23c0190d055e";
+				PROVISIONING_PROFILE = "c79116a6-3a21-4eb1-8226-9b37a89d9aab";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "9e519841-17b7-4007-ac86-6894e3d962ad";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;

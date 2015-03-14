@@ -102,25 +102,27 @@ static NSMutableDictionary *avatarAttrs = nil;
          }
          url = [[url stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding] escapedUrlPath];;
          NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
-         AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:downloadRequest];
-         NSString *tmppath = [self.path stringByAppendingString:@"-tmp"];
-         operation.outputStream = [NSOutputStream outputStreamToFileAtPath:tmppath append:NO];
-         [operation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
-             Debug("Successfully downloaded avatar");
-             [[NSFileManager defaultManager] removeItemAtPath:self.path error:nil];
-             [[NSFileManager defaultManager] moveItemAtPath:tmppath toPath:self.path error:nil];
-             NSMutableDictionary *attr = [[SeafAvatar avatarAttrs] objectForKey:self.path];
-             if (!attr)
-                 attr = [[NSMutableDictionary  alloc] init];
-             [attr setObject:[JSON objectForKey:@"mtime"] forKey:@"mtime"];
-             [[SeafAvatar avatarAttrs] setObject:attr forKey:self.path];
-             [SeafAvatar saveAvatarAttrs];
-             [SeafGlobal.sharedObject finishDownload:self result:YES];
-         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-             Debug("url=%@, error=%@",downloadRequest.URL, [error localizedDescription]);
-             [SeafGlobal.sharedObject finishDownload:self result:NO];
+         NSURLSessionDownloadTask *task = [_connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:nil destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
+             return [NSURL fileURLWithPath:self.path];
+         } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
+             if (error) {
+                 Debug("Failed to download avatar url=%@, error=%@",downloadRequest.URL, [error localizedDescription]);
+                 [SeafGlobal.sharedObject finishDownload:self result:NO];
+             } else {
+                 Debug("Successfully downloaded avatar: %@ from %@", filePath, url);
+                 if (![filePath.path isEqualToString:self.path]) {
+                     [[NSFileManager defaultManager] removeItemAtPath:self.path error:nil];
+                     [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:self.path error:nil];
+                 }
+                 NSMutableDictionary *attr = [[SeafAvatar avatarAttrs] objectForKey:self.path];
+                 if (!attr) attr = [[NSMutableDictionary alloc] init];
+                 [attr setObject:[JSON objectForKey:@"mtime"] forKey:@"mtime"];
+                 [[SeafAvatar avatarAttrs] setObject:attr forKey:self.path];
+                 [SeafAvatar saveAvatarAttrs];
+                 [SeafGlobal.sharedObject finishDownload:self result:YES];
+             }
          }];
-         [self.connection handleOperation:operation];
+         [task resume];
      }
               failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {

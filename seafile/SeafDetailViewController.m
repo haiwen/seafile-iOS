@@ -221,7 +221,7 @@ enum PREVIEW_STATE {
 {
     if (self.masterPopoverController != nil)
         [self.masterPopoverController dismissPopoverAnimated:YES];
-    Debug("preview %@", item.previewItemTitle);
+    if (item) Debug("preview %@", item.previewItemTitle);
     self.masterVc = c;
     self.photos = nil;
     self.preViewItem = item;
@@ -480,10 +480,12 @@ enum PREVIEW_STATE {
 - (void)fileContentLoaded :(SeafFile *)file result:(BOOL)res completeness:(int)percent
 {
     if (_preViewItem != file) return;
+
     if (self.state != PREVIEW_DOWNLOADING) {
         [self refreshView];
         return;
     }
+
     if (!res) {
         [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:@"Failed to download file '%@'",self.preViewItem.previewItemTitle]];
         [self setPreViewItem:nil master:nil];
@@ -500,7 +502,9 @@ enum PREVIEW_STATE {
         [self fileContentLoaded:(SeafFile *)entry result:YES completeness:percent];
     else if (self.state == PREVIEW_PHOTO) {
         SeafPhotoView *page = [self pageDisplayingPhoto:(SeafFile *)self.preViewItem];
-        [page setProgress:percent *1.0f/100];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [page setProgress:percent *1.0f/100];
+        });
     }
 }
 

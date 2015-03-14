@@ -37,7 +37,7 @@ enum MSG_TYPE{
 
 @protocol SeafLoginDelegate <NSObject>
 - (void)loginSuccess:(SeafConnection *)connection;
-- (void)loginFailed:(SeafConnection *)connection error:(int)error;
+- (void)loginFailed:(SeafConnection *)connection error:(NSInteger)error;
 @end
 
 @protocol SeafConnectionDelegate <NSObject>
@@ -47,16 +47,14 @@ enum MSG_TYPE{
 
 
 @interface SeafConnection : NSObject
-{
-@private
-    NSOperationQueue *queue;
-}
+
 
 @property (readonly, retain) NSMutableDictionary *info;
 @property (readonly, nonatomic, copy) NSString *address;
 @property (weak) id <SeafLoginDelegate> loginDelegate;
 @property (weak) id <SeafConnectionDelegate> delegate;
 @property (strong) SeafRepos *rootFolder;
+@property (readonly) AFHTTPSessionManager *sessionMgr;
 @property (readonly) NSString *username;
 @property (readonly) NSString *password;
 @property (readonly) NSString *host;
@@ -124,8 +122,6 @@ enum MSG_TYPE{
        failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON))failure;
 
 - (void)registerDevice:(NSData *)deviceToken;
-
-- (void)handleOperation:(AFHTTPRequestOperation *)operation;
 
 - (void)downloadAvatars:(NSNumber *)force;
 

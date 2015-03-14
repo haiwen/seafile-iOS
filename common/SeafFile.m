@@ -5,7 +5,7 @@
 //  Created by Wang Wei on 10/11/12.
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
-
+#import <Foundation/Foundation.h>
 #import "SeafFile.h"
 #import "SeafData.h"
 #import "SeafRepos.h"
@@ -19,14 +19,13 @@
 #import "Debug.h"
 #import "Utils.h"
 
-@interface SeafFile ()
+@interface SeafFile()
 
 @property (strong, readonly) NSURL *preViewURL;
 @property (readonly) NSURL *exportURL;
 @property (strong) NSString *downloadingFileOid;
-@property (strong) AFHTTPRequestOperation *operation;
 @property (nonatomic, strong) UIImage *icon;
-
+@property NSURLSessionDownloadTask *task;
 @property (strong) SeafUploadFile *ufile;
 @property (strong) NSArray *blks;
 @property int index;
@@ -50,7 +49,7 @@
         _mtime = mtime;
         _filesize = size;
         self.downloadingFileOid = nil;
-        self.operation = nil;
+        self.task = nil;
         [self realLoadCache];
     }
     return self;
@@ -130,7 +129,7 @@
     [self setOoid:ooid];
     self.state = SEAF_DENTRY_UPTODATE;
     self.downloadingFileOid = nil;
-    self.operation = nil;
+    self.task = nil;
     [SeafGlobal.sharedObject decDownloadnum];
     self.oid = self.ooid;
     [self savetoCache];
@@ -142,7 +141,7 @@
     self.state = SEAF_DENTRY_INIT;
     [self.delegate entry:self downloadingFailed:error.code];
     self.downloadingFileOid = nil;
-    self.operation = nil;
+    self.task = nil;
     [SeafGlobal.sharedObject decDownloadnum];
 }
 /*
@@ -159,7 +158,7 @@
          if (!curId)
              curId = self.oid;
          if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject documentPath:curId]]) {
-             Debug("already uptodate oid=%@, %@\n", self.ooid, curId);
+             Debug("already uptodate oid=%@\n", self.ooid);
              [self finishDownload:curId];
              return;
          }
@@ -173,32 +172,47 @@
          }
          url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
          NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
-         AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:downloadRequest];
-         self.operation = operation;
-         operation.outputStream = [NSOutputStream outputStreamToFileAtPath:[self downloadTempPath:self.downloadingFileOid] append:NO];
-         [operation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
-             Debug("Successfully downloaded file:%@", self.name);
-             [[NSFileManager defaultManager] moveItemAtPath:[self downloadTempPath:self.downloadingFileOid] toPath:[SeafGlobal.sharedObject documentPath:self.downloadingFileOid] error:nil];
-             [self finishDownload:self.downloadingFileOid];
-         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-             Debug("download %@, error=%@", self.name,[error localizedDescription]);
-             [self failedDownload:error];
+         NSProgress *progress = nil;
+         NSString *target = [SeafGlobal.sharedObject documentPath:self.downloadingFileOid];
+         _task = [connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:&progress destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
+             return [NSURL fileURLWithPath:target];
+         } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
+             if (error) {
+                 Debug("download %@, error=%@", self.name,[error localizedDescription]);
+                 [self failedDownload:error];
+             } else {
+                 Debug("Successfully downloaded file:%@", self.name);
+                 if (![filePath.path isEqualToString:target]) {
+                     [[NSFileManager defaultManager] removeItemAtPath:target error:nil];
+                     [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
+                 }
+                 [self finishDownload:self.downloadingFileOid];
+            }
          }];
-         [operation setDownloadProgressBlock:^(NSUInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead) {
-             int percent = 99;
-             if (totalBytesExpectedToRead > 0)
-                 percent = (int)(totalBytesRead * 100 / totalBytesExpectedToRead);
-             if (percent >= 100)
-                 percent = 99;
-             [self.delegate entry:self updated:false progress:percent];
-         }];
-         [self->connection handleOperation:operation];
+         [progress addObserver:self
+                    forKeyPath:@"fractionCompleted"
+                       options:NSKeyValueObservingOptionNew
+                       context:NULL];
+         [_task resume];
      }
                     failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
          self.state = SEAF_DENTRY_INIT;
          [self.delegate entry:self downloadingFailed:response.statusCode];
      }];
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+{
+    if (!self.downloadingFileOid || ![keyPath isEqualToString:@"fractionCompleted"] || ![object isKindOfClass:[NSProgress class]]) return;
+    NSProgress *progress = (NSProgress *)object;
+    int percent = 0;
+    if (self.blks) {
+        percent = MIN((progress.fractionCompleted + self.index) *100.0f/self.blks.count, 99);
+    } else {
+        percent = MIN(progress.fractionCompleted * 100, 99);
+    }
+    [self.delegate entry:self updated:false progress:percent];
 }
 
 - (int)checkoutFile
@@ -254,29 +268,31 @@
     if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject blockPath:blk_id]])
         return [self finishBlock:url];
     NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:[url stringByAppendingString:blk_id]]];
-    AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:downloadRequest];
-    self.operation = operation;
-    operation.outputStream = [NSOutputStream outputStreamToFileAtPath:[self downloadTempPath:blk_id] append:NO];
-    [operation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
-        Debug("Successfully downloaded block %@\n", blk_id);
-        [[NSFileManager defaultManager] moveItemAtPath:[self downloadTempPath:blk_id] toPath:[SeafGlobal.sharedObject blockPath:blk_id] error:nil];
-        [self finishBlock:url];
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        Debug("error=%@",[error localizedDescription]);
-        self.index = 0;
-        self.blks = nil;
-        [self failedDownload:error];
+    NSProgress *progress = nil;
+    NSString *target = [SeafGlobal.sharedObject blockPath:blk_id];
+    NSURLSessionDownloadTask *task = [connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:&progress destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
+        return [NSURL fileURLWithPath:target];
+    } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
+        if (error) {
+            Debug("error=%@", error);
+            self.index = 0;
+            self.blks = nil;
+            [self failedDownload:error];
+        } else {
+            Debug("Successfully downloaded file:%@", self.name);
+            if (![filePath.path isEqualToString:target]) {
+                [[NSFileManager defaultManager] removeItemAtPath:target error:nil];
+                [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
+            }
+            [self finishBlock:url];
+        }
     }];
-    [operation setDownloadProgressBlock:^(NSUInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead) {
-        int percent = 99;
-        if (totalBytesExpectedToRead > 0)
-            percent = (int)(totalBytesRead * 100 / totalBytesExpectedToRead);
-        percent = (percent + self.index*100.0)/self.blks.count;
-        if (percent >= 100)
-            percent = 99;
-        [self.delegate entry:self updated:YES progress:percent];
-    }];
-    [self->connection handleOperation:operation];
+
+    [progress addObserver:self
+               forKeyPath:@"fractionCompleted"
+                  options:NSKeyValueObservingOptionNew
+                  context:NULL];
+    [task resume];
 }
 
 /*
@@ -292,7 +308,7 @@
          if (!curId)
              curId = self.oid;
          if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject documentPath:curId]]) {
-             Debug("already uptodate oid=%@, %@\n", self.ooid, curId);
+             Debug("already uptodate oid=%@\n", self.ooid);
              [self finishDownload:curId];
              return;
          }
@@ -326,8 +342,7 @@
 
 - (void)download
 {
-    SeafRepo *repo = [connection getRepo:self.repoId];
-    if (repo.encrypted && [connection localDecrypt:self.repoId])
+    if (true)
         [self downloadByBlocks];
     else
         [self downloadByFile];
@@ -730,8 +745,8 @@
     if (self.downloadingFileOid) {
         self.state = SEAF_DENTRY_INIT;
         self.downloadingFileOid = nil;
-        [self.operation cancel];
-        self.operation = nil;
+        [self.task cancel];
+        _task = nil;
         self.index = 0;
         self.blks = nil;
         [SeafGlobal.sharedObject decDownloadnum];

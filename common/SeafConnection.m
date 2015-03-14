@@ -8,7 +8,6 @@
 #import <AssertMacros.h>
 
 #import "SeafConnection.h"
-#import "SeafJSONRequestOperation.h"
 #import "SeafRepos.h"
 #import "SeafDir.h"
 #import "SeafData.h"
@@ -65,8 +64,10 @@ static AFSecurityPolicy *SeafPolicyFromCert(SecCertificateRef cert)
 }
 static AFSecurityPolicy *SeafPolicyFromFile(NSString *path)
 {
-    if (![[NSFileManager defaultManager] fileExistsAtPath:path])
+    if (![[NSFileManager defaultManager] fileExistsAtPath:path]) {
+        Warning("cert file %@ not exist", path);
         return nil;
+    }
     NSData *certData = [NSData dataWithContentsOfFile:path];
     SecCertificateRef cert = SecCertificateCreateWithData(NULL, (__bridge CFDataRef)(certData));
     return SeafPolicyFromCert(cert);
@@ -76,9 +77,9 @@ static BOOL SeafServerTrustIsValid(SecTrustRef serverTrust) {
     BOOL isValid = NO;
     SecTrustResultType result;
     __Require_noErr_Quiet(SecTrustEvaluate(serverTrust, &result), _out);
-    
+
     isValid = (result == kSecTrustResultUnspecified || result == kSecTrustResultProceed);
-    
+
 _out:
     return isValid;
 }
@@ -89,7 +90,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @property NSMutableSet *starredFiles;
 @property NSMutableDictionary *uploadFiles;
 @property NSMutableDictionary *email2nickMap;
-@property NSURLAuthenticationChallenge *challenge;
+@property NSConditionLock *condLock;
 @property AFSecurityPolicy *policy;
 @property NSDate *avatarLastUpdate;
 @property NSMutableDictionary *settings;
@@ -116,13 +117,16 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     if (self = [super init]) {
         self.address = url;
-        queue = [[NSOperationQueue alloc] init];
         _rootFolder = [[SeafRepos alloc] initWithConnection:self];
         self.uploadFiles = [[NSMutableDictionary alloc] init];
         _info = [[NSMutableDictionary alloc] init];
         _email2nickMap = [[NSMutableDictionary alloc] init];
         _avatarLastUpdate = [NSDate dateWithTimeIntervalSince1970:0];
         _syncDir = nil;
+        NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
+        _sessionMgr = [[AFHTTPSessionManager alloc] initWithSessionConfiguration:configuration];
+        _sessionMgr.responseSerializer = [AFJSONResponseSerializer serializerWithReadingOptions:NSJSONReadingAllowFragments];
+        self.policy = [self policyForHost:[self host]];
     }
     return self;
 }
@@ -255,16 +259,29 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (AFSecurityPolicy *)policy
 {
-    @synchronized(self) {
-        if (!_policy)
-            _policy = [self policyForHost:[self host]];
-    }
     return _policy;
 }
 
 - (void)setPolicy:(AFSecurityPolicy *)policy
 {
     _policy = policy;
+    _sessionMgr.securityPolicy = _policy;
+    if (!_policy) {
+        [_sessionMgr setSessionDidReceiveAuthenticationChallengeBlock:^NSURLSessionAuthChallengeDisposition(NSURLSession *session, NSURLAuthenticationChallenge *challenge, NSURLCredential *__autoreleasing *credential) {
+            if (SeafGlobal.sharedObject.allowInvalidCert) return NSURLSessionAuthChallengeUseCredential;
+            if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
+                *credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
+                if (SeafServerTrustIsValid(challenge.protectionSpace.serverTrust)) {
+                    return NSURLSessionAuthChallengeUseCredential;
+                } else {
+                    return NSURLSessionAuthChallengeCancelAuthenticationChallenge;
+                }
+            }
+            return NSURLSessionAuthChallengePerformDefaultHandling;
+        }];
+    } else {
+        [_sessionMgr setSessionDidReceiveAuthenticationChallengeBlock:nil];
+    }
 }
 
 - (BOOL)localDecrypt:(NSString *)repoId
@@ -285,59 +302,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSString *path = [self certPathForHost:[self host]];
     [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
     [SeafAvatar clearCache];
-}
-
-- (void)handleOperation:(AFHTTPRequestOperation *)operation withPolicy:(AFSecurityPolicy *)policy
-{
-    if (SeafGlobal.sharedObject.allowInvalidCert) {
-        operation.securityPolicy = AFSecurityPolicy.defaultPolicy;
-        operation.securityPolicy.allowInvalidCertificates = true;
-    } else
-        operation.securityPolicy = policy;
-    if (!operation.securityPolicy) {
-        [operation setWillSendRequestForAuthenticationChallengeBlock:^(NSURLConnection *connection, NSURLAuthenticationChallenge *challenge) {
-            if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
-                NSURLCredential *credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
-                if (SeafServerTrustIsValid(challenge.protectionSpace.serverTrust)) {
-                    [[NSFileManager defaultManager] removeItemAtPath:[self certPathForHost:[self host]] error:nil];
-                    SecCertificateRef cer = SecTrustGetCertificateAtIndex(challenge.protectionSpace.serverTrust, 0);
-                    self.policy = SeafPolicyFromCert(cer);
-                    [challenge.sender useCredential:credential forAuthenticationChallenge:challenge];
-                } else {
-                    if (!self.delegate) {
-                        [self.challenge.sender cancelAuthenticationChallenge:self.challenge];
-                        return;
-                    }
-                    @synchronized(self) {
-                        if (self.challenge) {
-                            [[self.challenge sender] cancelAuthenticationChallenge:self.challenge];
-                            return;
-                        }
-                        self.challenge = challenge;
-                    }
-
-                    NSString *title = [NSString stringWithFormat:NSLocalizedString(@"%@ can't verify the identity of the website \"%@\"", @"Seafile"), APP_NAME, challenge.protectionSpace.host];
-                    NSString *msg = policy ? NSLocalizedString(@"The certificate from this website has been changed. Would you like to connect to the server anyway?", @"Seafile"):NSLocalizedString(@"The certificate from this website is invalid. Would you like to connect to the server anyway?", @"Seafile");
-                    [self.delegate continueWithInvalidCert:title message:msg yes:^{
-                        [self saveCertificate:self.challenge];
-                        [self.challenge.sender useCredential:[NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust] forAuthenticationChallenge:self.challenge];
-                        self.challenge = nil;
-                    } no:^{
-                        [[self.challenge sender] cancelAuthenticationChallenge:self.challenge];
-                        self.challenge = nil;
-                    }];
-                }
-            } else {
-                [challenge.sender continueWithoutCredentialForAuthenticationChallenge:challenge];
-            }
-        }];
-    }
-    [queue addOperation:operation];
-}
-
-- (void)handleOperation:(AFHTTPRequestOperation *)operation
-{
-    [self handleOperation:operation withPolicy:self.policy];
 }
 
 - (void)getAccountInfo:(void (^)(bool result, SeafConnection *conn))handler
@@ -361,10 +325,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
      }];
 }
 
-- (SeafJSONRequestOperation *)loginOperation:(NSString *)anAddress username:(NSString *)username password:(NSString *)password
+- (NSMutableURLRequest *)loginRequest:(NSString *)url username:(NSString *)username password:(NSString *)password
 
 {
-    NSString *url = anAddress ? anAddress : _address;
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:[url stringByAppendingString:API_URL"/auth-token/"]]];
     [request setHTTPMethod:@"POST"];
     [request setValue:@"application/x-www-form-urlencoded; charset=UTF-8" forHTTPHeaderField:@"Content-Type"];
@@ -378,29 +341,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
     NSString *formString = [NSString stringWithFormat:@"username=%@&password=%@&platform=%@&platformName=%@&device_id=%@&device_name=%@&client_version=%@&platform_version=%@", username.escapedPostForm, password.escapedPostForm, platform.escapedPostForm, platformName.escapedPostForm, deviceID.escapedPostForm, deviceName.escapedPostForm, version.escapedPostForm, platformVersion.escapedPostForm];
     [request setHTTPBody:[NSData dataWithBytes:formString.UTF8String length:[formString lengthOfBytesUsingEncoding:NSUTF8StringEncoding]]];
-
-    return [SeafJSONRequestOperation
-            JSONRequestOperationWithRequest:request                                       success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
-                self.address = url;
-                _token = [JSON objectForKey:@"token"];
-                [_info setObject:username forKey:@"username"];
-                [_info setObject:password forKey:@"password"];
-                [_info setObject:_token forKey:@"token"];
-                [_info setObject:_address forKey:@"link"];
-                [SeafGlobal.sharedObject setObject:_info forKey:[NSString stringWithFormat:@"%@/%@", _address, username]];
-                [SeafGlobal.sharedObject synchronize];
-                [self.loginDelegate loginSuccess:self];
-            }
-            failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, NSData *data){
-                Warning("status code=%ld, error=%@\n", (long)response.statusCode, error);
-                /*
-                if (error.code == NSURLErrorSecureConnectionFailed) {
-                    SeafJSONRequestOperation *op = [self loginOperation:anAddress username:username password:password];
-                    [self handleOperation:op withPolicy:self.policy];
-                } else
-                 */
-                [self.loginDelegate loginFailed:self error:(int)response.statusCode];
-            }];
+    return request;
 }
 
 /*
@@ -408,8 +349,75 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
  */
 - (void)loginWithAddress:(NSString *)anAddress username:(NSString *)username password:(NSString *)password
 {
-    SeafJSONRequestOperation *operation = [self loginOperation:anAddress username:username password:password];
-    [self handleOperation:operation withPolicy:nil];
+    NSString *url = anAddress ? anAddress : _address;
+    NSMutableURLRequest *request = [self loginRequest:url username:username password:password];
+    NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
+    //configuration.TLSMaximumSupportedProtocol = kTLSProtocol12;
+    //configuration.TLSMinimumSupportedProtocol = kTLSProtocol12;
+
+    AFURLSessionManager *manager = [[AFURLSessionManager alloc] initWithSessionConfiguration:configuration];
+    manager.responseSerializer = [AFJSONResponseSerializer serializer];
+    NSURLSessionDataTask *dataTask = [manager dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
+        if (error) {
+            Warning("Error: %@", error);
+            [self.loginDelegate loginFailed:self error:((NSHTTPURLResponse *)response).statusCode];
+        } else {
+            _address = url;
+            _token = [responseObject objectForKey:@"token"];
+            [_info setObject:username forKey:@"username"];
+            [_info setObject:password forKey:@"password"];
+            [_info setObject:_token forKey:@"token"];
+            [_info setObject:_address forKey:@"link"];
+            [SeafGlobal.sharedObject setObject:_info forKey:[NSString stringWithFormat:@"%@/%@", _address, username]];
+            [SeafGlobal.sharedObject synchronize];
+            [self.loginDelegate loginSuccess:self];
+        }
+    }];
+
+    [manager setSessionDidReceiveAuthenticationChallengeBlock:^NSURLSessionAuthChallengeDisposition(NSURLSession *session, NSURLAuthenticationChallenge *challenge, NSURLCredential *__autoreleasing *credential) {
+        if (SeafGlobal.sharedObject.allowInvalidCert) return NSURLSessionAuthChallengeUseCredential;
+
+        if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
+            *credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
+            if (SeafServerTrustIsValid(challenge.protectionSpace.serverTrust)) {
+                [[NSFileManager defaultManager] removeItemAtPath:[self certPathForHost:self.host] error:nil];
+                SecCertificateRef cer = SecTrustGetCertificateAtIndex(challenge.protectionSpace.serverTrust, 0);
+                self.policy = SeafPolicyFromCert(cer);
+                return NSURLSessionAuthChallengeUseCredential;
+            } else {
+                if (!self.delegate) return NSURLSessionAuthChallengeCancelAuthenticationChallenge;
+                @synchronized(self) {
+                    if (self.condLock)
+                        return NSURLSessionAuthChallengeCancelAuthenticationChallenge;
+                    self.condLock = [[NSConditionLock alloc] initWithCondition:false];;
+                }
+
+                NSString *title = [NSString stringWithFormat:NSLocalizedString(@"%@ can't verify the identity of the website \"%@\"", @"Seafile"), APP_NAME, challenge.protectionSpace.host];
+                NSString *msg = NSLocalizedString(@"The certificate from this website is invalid. Would you like to connect to the server anyway?", @"Seafile");
+
+                NSConditionLock *lock = self.condLock;
+                __block NSURLSessionAuthChallengeDisposition dis;
+                [self.delegate continueWithInvalidCert:title message:msg yes:^{
+                    [self saveCertificate:challenge];
+                    dis = NSURLSessionAuthChallengeUseCredential;
+                    [self.condLock lock];
+                    [self.condLock unlockWithCondition:true];
+                } no:^{
+                    dis = NSURLSessionAuthChallengeCancelAuthenticationChallenge;
+                    [self.condLock lock];
+                    [self.condLock unlockWithCondition:true];
+
+                }];
+                [lock lockWhenCondition:true];
+                [lock unlock];
+                self.condLock = nil;
+                return dis;
+            }
+        }
+        return NSURLSessionAuthChallengePerformDefaultHandling;
+    }];
+    [dataTask resume];
+
 }
 
 - (void)sendRequestAsync:(NSString *)url method:(NSString *)method form:(NSString *)form
@@ -430,20 +438,23 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (self.token)
         [request setValue:[NSString stringWithFormat:@"Token %@", self.token] forHTTPHeaderField:@"Authorization"];
 
-    SeafJSONRequestOperation *operation = [SeafJSONRequestOperation JSONRequestOperationWithRequest:request success:success  failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
-        failure (request, response, error, JSON);
-        if (response.statusCode == HTTP_ERR_LOGIN_REUIRED) {
-            @synchronized(self) {
-                if (![self authorized])
-                    return;
-                _token = nil;
+    NSURLSessionDataTask *task = [_sessionMgr dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
+        NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
+        if (error) {
+            Warning("Error: %@, resp=%@", error, responseObject);
+            failure (request, resp, error, responseObject);
+            if (resp.statusCode == HTTP_ERR_LOGIN_REUIRED) {
+                @synchronized(self) {
+                    if (![self authorized])   return;
+                    _token = nil;
+                }
+                if (self.delegate) [self.delegate loginRequired:self];
             }
-            if (self.delegate)
-                [self.delegate loginRequired:self];
-            return;
+        } else {
+            success(request, resp, responseObject, [Utils JSONEncode:responseObject]);
         }
     }];
-    [self handleOperation:operation];
+    [task resume];
 }
 
 - (void)sendRequest:(NSString *)url

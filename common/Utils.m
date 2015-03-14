@@ -185,13 +185,29 @@
         Warning("Parse json error:%@, %@\n", *error, [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
     return ret;
 }
+
++ (NSData *)JSONEncode:(id)obj
+{
+    if ([obj isKindOfClass:[NSString class]]) {
+        return [(NSString *)obj dataUsingEncoding:NSUTF8StringEncoding];
+    }
+    NSError *error = nil;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:obj
+                                                       options:(NSJSONWritingOptions)0
+                                                         error:&error];
+    if (!jsonData) {
+        Warning("Failed to encode Dictionary, error: %@", error.localizedDescription);
+    }
+    return jsonData;
+}
+
 + (NSString *)JSONEncodeDictionary:(NSDictionary *)dict
 {
     NSError *error;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dict
                                                        options:(NSJSONWritingOptions)0
                                                          error:&error];
-    if (! jsonData) {
+    if (!jsonData) {
         Warning("Failed to encode Dictionary, error: %@", error.localizedDescription);
         return @"{}";
     } else {

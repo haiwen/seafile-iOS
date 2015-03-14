@@ -23,18 +23,11 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 @interface SeafUploadFile ()
 @property (readonly) NSString *mime;
 @property (strong, readonly) NSURL *preViewURL;
-@property (strong) AFHTTPRequestOperation *operation;
-
+@property (strong) NSURLSessionUploadTask *task;
 @end
 
 @implementation SeafUploadFile
 
-@synthesize lpath = _lpath;
-@synthesize filesize = _filesize;
-@synthesize delegate = _delegate;
-@synthesize uploading = _uploading;
-@synthesize uProgress = _uProgress;
-@synthesize preViewURL = _preViewURL;
 
 - (id)initWithPath:(NSString *)lpath
 {
@@ -94,7 +87,8 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 - (void)doRemove
 {
-    [self.operation cancel];
+    [self.task cancel];
+    self.task = nil;
     [self saveAttr:nil flush:true];
     [[NSFileManager defaultManager] removeItemAtPath:self.lpath error:nil];
 }
@@ -113,7 +107,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         if (!_uploading)
             return;
         _uploading = NO;
-        self.operation = nil;
+        self.task = nil;
     }
     [SeafGlobal.sharedObject finishUpload:self result:result];
     NSMutableDictionary *dict = self.uploadAttr;
@@ -142,6 +136,34 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     return percent;
 }
 
+- (void)uploadRequest:(NSMutableURLRequest *)request withConnection:(SeafConnection *)connection
+{
+    NSProgress *progress = nil;
+    _task = [connection.sessionMgr uploadTaskWithStreamedRequest:request progress:&progress completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
+        NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
+        if (error && resp.statusCode == 200) {
+            // TODO This a bug in seafile http server: Request failed: unacceptable content-type: (null)
+            NSData *data = [error.userInfo objectForKey:@"com.alamofire.serialization.response.error.data"];
+            responseObject = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+            error = nil;
+        }
+        if (error) {
+            Debug("Upload failed :%@,code=%ldd, res=%@\n", error, (long)resp.statusCode, responseObject);
+            [self finishUpload:NO oid:nil];
+        } else {
+            Debug("Successfully upload file:%@", self.name);
+            NSString *oid = responseObject;
+            [[NSFileManager defaultManager] linkItemAtPath:self.lpath toPath:[SeafGlobal.sharedObject documentPath:oid] error:nil];
+            [self finishUpload:YES oid:oid];
+        }
+    }];
+
+    [progress addObserver:self
+               forKeyPath:@"fractionCompleted"
+                  options:NSKeyValueObservingOptionNew
+                  context:NULL];
+    [_task resume];
+}
 - (void)uploadByFile:(SeafConnection *)connection url:(NSString *)surl path:(NSString *)uploadpath update:(BOOL)update
 {
     NSMutableURLRequest *request = [[SeafConnection requestSerializer] multipartFormRequestWithMethod:@"POST" URLString:surl parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
@@ -152,27 +174,15 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
         [formData appendPartWithFileURL:[NSURL fileURLWithPath:self.lpath] name:@"file" error:nil];
     } error:nil];
-    AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
-    self.operation = operation;
-    [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
-        int percent = [self percentForShow:totalBytesWritten expected:totalBytesExpectedToWrite];
-        [_delegate uploadProgress:self result:YES progress:percent];
-    }];
-    [operation setCompletionBlockWithSuccess:
-     ^(AFHTTPRequestOperation *operation, id responseObject) {
-         NSString *oid = nil;
-         if ([responseObject isKindOfClass:[NSData class]]) {
-             oid = [[NSString alloc] initWithData:responseObject encoding:NSUTF8StringEncoding];
-             [[NSFileManager defaultManager] linkItemAtPath:self.lpath toPath:[SeafGlobal.sharedObject documentPath:oid] error:nil];
-         }
-         [self finishUpload:YES oid:oid];
-     }
-                                     failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-                                         Debug("Upload failed :%@,code=%ldd, res=%@, %@\n", error, (long)operation.response.statusCode, operation.responseData, operation.responseString);
-                                         [self finishUpload:NO oid:nil];
-                                     }];
+    [self uploadRequest:request withConnection:connection];
+}
 
-    [connection handleOperation:operation];
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+{
+    if (![keyPath isEqualToString:@"fractionCompleted"] || ![object isKindOfClass:[NSProgress class]]) return;
+    NSProgress *progress = (NSProgress *)object;
+    int percent = MIN(progress.fractionCompleted * 100, 99);
+    [_delegate uploadProgress:self result:YES progress:percent];
 }
 
 - (BOOL)chunkFile:(NSString *)path blockids:(NSMutableArray *)blockids paths:(NSMutableArray *)paths password:(NSString *)password repo:(SeafRepo *)repo
@@ -215,26 +225,8 @@ static NSMutableDictionary *uploadFileAttrs = nil;
             [formData appendPartWithFileURL:[NSURL fileURLWithPath:path] name:@"file" error:nil];
         }
     } error:nil];
-    AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
-    [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
-        int percent = [self percentForShow:totalBytesWritten expected:totalBytesExpectedToWrite];
-        [_delegate uploadProgress:self result:YES progress:percent];
-    }];
-    [operation setCompletionBlockWithSuccess:
-     ^(AFHTTPRequestOperation *operation, id responseObject) {
-         NSString *oid = nil;
-         if ([responseObject isKindOfClass:[NSData class]]) {
-             oid = [[NSString alloc] initWithData:responseObject encoding:NSUTF8StringEncoding];
-             [[NSFileManager defaultManager] linkItemAtPath:self.lpath toPath:[SeafGlobal.sharedObject documentPath:oid] error:nil];
-         }
-         Debug("Upload success _uploading=%d, oid=%@\n", _uploading, oid);
-         [self finishUpload:YES oid:oid];
-     }
-                                     failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-                                         Debug("Upload failed :%@,code=%ld, res=%@, %@\n", error, (long)operation.response.statusCode, operation.responseData, operation.responseString);
-                                         [self finishUpload:NO oid:nil];
-                                     }];
-    [connection handleOperation:operation];
+
+    [self uploadRequest:request withConnection:connection];
 }
 
 - (void)upload:(SeafConnection *)connection repo:(NSString *)repoId path:(NSString *)uploadpath
@@ -257,6 +249,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     else
         upload_url = [upload_url stringByAppendingString:@"link/"];
 
+    upload_url = [upload_url stringByAppendingFormat:@"?p=%@", uploadpath.escapedUrl];
     [connection sendRequest:upload_url success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSData *data) {
          NSString *url = JSON;
