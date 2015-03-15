@@ -42,19 +42,18 @@
 - (void)startTimer;
 
 - (void)saveContext;
-- (void)deleteAllObjects: (NSString *) entityDescription;
+- (void)deleteAllObjects: (NSString *)entityDescription;
 
 - (void)incDownloadnum;
 - (void)decDownloadnum;
-- (void)incUploadnum;
 - (unsigned long)uploadingnum;
 - (unsigned long)downloadingnum;
 
-- (void)finishDownload:(id<SeafDownloadDelegate>) file result:(BOOL)result;
-- (void)finishUpload:(SeafUploadFile *) file result:(BOOL)result;
+- (void)finishDownload:(id<SeafDownloadDelegate>)file result:(BOOL)result;
+- (void)finishUpload:(SeafUploadFile *)file result:(BOOL)result;
 
-- (void)backgroundUpload:(SeafUploadFile *)file;
-- (void)backgroundDownload:(id<SeafDownloadDelegate>)file;
+- (void)addUploadTask:(SeafUploadFile *)file;
+- (void)addDownloadTask:(id<SeafDownloadDelegate>)file;
 - (void)removeBackgroundUpload:(SeafUploadFile *)file;
 - (void)clearAutoSyncPhotos:(SeafConnection *)conn;
 

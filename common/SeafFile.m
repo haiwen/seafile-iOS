@@ -342,7 +342,7 @@
 
 - (void)download
 {
-    if (true)
+    if (false)
         [self downloadByBlocks];
     else
         [self downloadByFile];
@@ -725,7 +725,7 @@
         NSString *path = [self.path stringByDeletingLastPathComponent];
         self.ufile.udir = [[SeafDir alloc] initWithConnection:connection oid:nil repoId:self.repoId name:path.lastPathComponent path:path];
     }
-    [SeafGlobal.sharedObject backgroundUpload:self.ufile];
+    [SeafGlobal.sharedObject addUploadTask:self.ufile];
 }
 
 - (void)deleteCache
@@ -768,6 +768,8 @@
     self.state = SEAF_DENTRY_INIT;
     self.ooid = oid;
     self.oid = self.ooid;
+    _filesize = self.filesize;
+    _mtime = self.mtime;
     self.mpath = nil;
     [dg updateProgress:self result:YES completeness:100];
 }

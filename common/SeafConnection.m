@@ -124,6 +124,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         _avatarLastUpdate = [NSDate dateWithTimeIntervalSince1970:0];
         _syncDir = nil;
         NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
+        //configuration.TLSMaximumSupportedProtocol = kTLSProtocol11;
+        configuration.TLSMinimumSupportedProtocol = kTLSProtocol1;
         _sessionMgr = [[AFHTTPSessionManager alloc] initWithSessionConfiguration:configuration];
         _sessionMgr.responseSerializer = [AFJSONResponseSerializer serializerWithReadingOptions:NSJSONReadingAllowFragments];
         self.policy = [self policyForHost:[self host]];
@@ -352,8 +354,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSString *url = anAddress ? anAddress : _address;
     NSMutableURLRequest *request = [self loginRequest:url username:username password:password];
     NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
-    //configuration.TLSMaximumSupportedProtocol = kTLSProtocol12;
-    //configuration.TLSMinimumSupportedProtocol = kTLSProtocol12;
+    configuration.TLSMinimumSupportedProtocol = kTLSProtocol1;
 
     AFURLSessionManager *manager = [[AFURLSessionManager alloc] initWithSessionConfiguration:configuration];
     manager.responseSerializer = [AFJSONResponseSerializer serializer];
@@ -807,12 +808,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         return;
     for (NSString *email in self.email2nickMap.allKeys) {
         SeafUserAvatar *avatar = [[SeafUserAvatar alloc] initWithConnection:self username:email];
-        [SeafGlobal.sharedObject backgroundDownload:avatar];
+        [SeafGlobal.sharedObject addDownloadTask:avatar];
     }
     for (NSDictionary *dict in self.seafGroups) {
         NSString *gid = [dict objectForKey:@"id"];
         SeafGroupAvatar *avatar = [[SeafGroupAvatar alloc] initWithConnection:self group:gid];
-        [SeafGlobal.sharedObject backgroundDownload:avatar];
+        [SeafGlobal.sharedObject addDownloadTask:avatar];
     }
 }
 
@@ -860,7 +861,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                      file.asset = asset;
                                      [dir addUploadFile:file flush:false];
                                      Debug("Add file %@ to upload list: %@", filename, dir.path);
-                                     [[SeafGlobal sharedObject] backgroundUpload:file];
+                                     [SeafGlobal.sharedObject addUploadTask:file];
                                  }
                                 failureBlock:^(NSError *error){
                                     Debug("!!!!Can not find asset:%@ !", url);

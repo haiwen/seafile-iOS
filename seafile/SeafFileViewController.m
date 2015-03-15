@@ -411,7 +411,7 @@ enum {
             file.delegate = self;
             if (!file.uploaded && !file.uploading) {
                 Debug("background upload %@", file.name);
-                [[SeafGlobal sharedObject] backgroundUpload:file];
+                [[SeafGlobal sharedObject] addUploadTask:file];
             }
         }
     });
@@ -1143,7 +1143,7 @@ enum {
 
 - (void)backgroundUpload:(SeafUploadFile *)ufile
 {
-    [[SeafGlobal sharedObject] backgroundUpload:ufile];
+    [[SeafGlobal sharedObject] addUploadTask:ufile];
 }
 
 - (void)chooseUploadDir:(SeafDir *)dir file:(SeafUploadFile *)ufile replace:(BOOL)replace
@@ -1225,7 +1225,7 @@ enum {
     }
     [self.tableView reloadData];
     for (SeafUploadFile *file in files) {
-        [[SeafGlobal sharedObject] backgroundUpload:file];
+        [[SeafGlobal sharedObject] addUploadTask:file];
     }
     [SeafUploadFile saveAttrs];
 }

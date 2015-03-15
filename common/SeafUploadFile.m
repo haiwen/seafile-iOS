@@ -126,18 +126,12 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         [_delegate uploadProgress:self result:NO progress:0];
 }
 
-- (int)percentForShow:(long long)totalBytesWritten expected:(long long)totalBytesExpectedToWrite
-{
-    int percent = 99;
-    if (totalBytesExpectedToWrite > 0)
-        percent = (int)(totalBytesWritten * 100 / totalBytesExpectedToWrite);
-    if (percent >= 100)
-        percent = 99;
-    return percent;
-}
-
 - (void)uploadRequest:(NSMutableURLRequest *)request withConnection:(SeafConnection *)connection
 {
+    if (![[NSFileManager defaultManager] fileExistsAtPath:self.lpath]) {
+        Debug("Upload failed: local file %@ not exist\n", self.lpath);
+        [self finishUpload:NO oid:nil];
+    }
     NSProgress *progress = nil;
     _task = [connection.sessionMgr uploadTaskWithStreamedRequest:request progress:&progress completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
         NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
@@ -237,7 +231,6 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         _uploading = YES;
         _uProgress = 0;
     }
-    [SeafGlobal.sharedObject incUploadnum];
     NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:self.lpath error:nil];
     _filesize = attrs.fileSize;
     [_delegate uploadProgress:self result:YES progress:0];

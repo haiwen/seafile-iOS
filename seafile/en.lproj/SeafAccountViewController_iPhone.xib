@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="6250" systemVersion="13F34" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="6751" systemVersion="14C109" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6244"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6736"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="Constraints with non-1.0 multipliers" minToolsVersion="5.1"/>
     </dependencies>
@@ -93,7 +93,6 @@
                 <constraint firstItem="4" firstAttribute="top" secondItem="2" secondAttribute="topMargin" multiplier="0.1" priority="100" constant="10" id="H8I-R8-e5F"/>
                 <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="4" secondAttribute="bottomMargin" constant="100" id="Rl5-ef-ybH"/>
                 <constraint firstItem="4" firstAttribute="centerX" secondItem="2" secondAttribute="centerX" id="W6E-Gz-eIZ"/>
-                <constraint firstAttribute="centerX" secondItem="4" secondAttribute="centerX" id="hip-nn-Pzb"/>
                 <constraint firstItem="4" firstAttribute="leading" secondItem="2" secondAttribute="leading" priority="250" constant="19" id="u8h-pU-jbh"/>
             </constraints>
             <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackOpaque"/>

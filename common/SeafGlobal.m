@@ -15,8 +15,8 @@
 @interface SeafGlobal()
 @property (retain) NSMutableArray *ufiles;
 @property (retain) NSMutableArray *dfiles;
+@property (retain) NSMutableArray *uploadingfiles;
 @property unsigned long downloadnum;
-@property unsigned long uploadnum;
 @property unsigned long failedNum;
 @property NSUserDefaults *storage;
 
@@ -35,9 +35,9 @@
         _assetsLibrary = [[ALAssetsLibrary alloc] init];
         _ufiles = [[NSMutableArray alloc] init];
         _dfiles = [[NSMutableArray alloc] init];
+        _uploadingfiles = [[NSMutableArray alloc] init];
         _conns = [[NSMutableArray alloc] init];
         _downloadnum = 0;
-        _uploadnum = 0;
         _storage = [[NSUserDefaults alloc] initWithSuiteName:GROUP_NAME];
         [self checkSettings];
         Debug("applicationDocumentsDirectoryURL=%@",  self.applicationDocumentsDirectoryURL);
@@ -354,16 +354,9 @@
     }
 }
 
-- (void)incUploadnum
-{
-    @synchronized (self) {
-        _uploadnum ++;
-    }
-}
-
 - (unsigned long)uploadingnum
 {
-    return self.uploadnum + self.ufiles.count;
+    return self.uploadingfiles.count + self.ufiles.count;
 }
 
 - (unsigned long)downloadingnum
@@ -394,9 +387,9 @@
 
 - (void)finishUpload:(SeafUploadFile *)file result:(BOOL)result
 {
-    Debug("upload %ld, result=%d, file=%@, udir=%@", self.uploadnum, result, file.lpath, file.udir.path);
+    Debug("upload %ld, result=%d, file=%@, udir=%@", (long)self.uploadingfiles.count, result, file.lpath, file.udir.path);
     @synchronized (self) {
-        self.uploadnum --;
+        [self.uploadingfiles removeObject:file];
     }
 
     if (result) {
@@ -418,13 +411,13 @@
 
 - (void)tryUpload
 {
-    Debug("tryUpload uploading:%ld left:%ld", (long)self.uploadnum, (long)self.ufiles.count);
+    Debug("tryUpload uploading:%ld left:%ld", (long)self.uploadingfiles.count, (long)self.ufiles.count);
     if (self.ufiles.count == 0) return;
     NSMutableArray *todo = [[NSMutableArray alloc] init];
     @synchronized (self) {
         NSMutableArray *arr = [self.ufiles mutableCopy];
         for (SeafUploadFile *file in arr) {
-            if (self.uploadnum + todo.count + self.failedNum >= 3) break;
+            if (self.uploadingfiles.count + todo.count + self.failedNum >= 3) break;
             if (!file.canUpload) continue;
             [self.ufiles removeObject:file];
             if (!file.uploaded) {
@@ -433,7 +426,12 @@
         }
     }
     for (SeafUploadFile *file in todo) {
-        if (file.udir) [file doUpload];
+        if (!file.udir) continue;
+
+        [file doUpload];
+        @synchronized (self) {
+            [self.uploadingfiles addObject:file];
+        }
     }
 }
 
@@ -470,23 +468,28 @@
                 [arr addObject:ufile];
             }
         }
-        for (SeafUploadFile *ufile in arr) {
-            [ufile.udir removeUploadFile:ufile];
+        for (SeafUploadFile *ufile in _uploadingfiles) {
+            if (ufile.autoSync && ufile.udir->connection == conn) {
+                [arr addObject:ufile];
+            }
         }
+    }
+    for (SeafUploadFile *ufile in arr) {
+        [ufile.udir removeUploadFile:ufile];
     }
 }
 
-- (void)backgroundUpload:(SeafUploadFile *)file
+- (void)addUploadTask:(SeafUploadFile *)file
 {
     @synchronized (self) {
-        if (![_ufiles containsObject:file])
+        if (![_ufiles containsObject:file] && ![_uploadingfiles containsObject:file])
             [_ufiles addObject:file];
         else
-            Debug("upload file %@ already exist", file.name);
+            Debug("upload task file %@ already exist", file.name);
     }
     [self tryUpload];
 }
-- (void)backgroundDownload:(id<SeafDownloadDelegate>)file
+- (void)addDownloadTask:(id<SeafDownloadDelegate>)file
 {
     @synchronized (self) {
         if (![_dfiles containsObject:file])
@@ -504,9 +507,9 @@
         for (SeafConnection *conn in self.conns) {
             [conn pickPhotosForUpload];
         }
-        if (self.uploadnum > 0)
+        if (self.ufiles.count > 0)
             [self tryUpload];
-        if (self.downloadnum > 0)
+        if (self.dfiles.count > 0)
             [self tryDownload];
     }
 }
