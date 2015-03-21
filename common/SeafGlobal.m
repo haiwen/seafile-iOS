@@ -334,7 +334,6 @@
 
     for (NSManagedObject *managedObject in items) {
         [__managedObjectContext deleteObject:managedObject];
-        Debug(@"%@ object deleted",entityDescription);
     }
     if (![__managedObjectContext save:&error]) {
         Debug(@"Error deleting %@ - error:%@",entityDescription,error);

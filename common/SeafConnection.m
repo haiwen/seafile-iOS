@@ -124,7 +124,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         _avatarLastUpdate = [NSDate dateWithTimeIntervalSince1970:0];
         _syncDir = nil;
         NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
-        //configuration.TLSMaximumSupportedProtocol = kTLSProtocol11;
+        //configuration.TLSMaximumSupportedProtocol = kTLSProtocol12;
         configuration.TLSMinimumSupportedProtocol = kTLSProtocol1;
         _sessionMgr = [[AFHTTPSessionManager alloc] initWithSessionConfiguration:configuration];
         _sessionMgr.responseSerializer = [AFJSONResponseSerializer serializerWithReadingOptions:NSJSONReadingAllowFragments];

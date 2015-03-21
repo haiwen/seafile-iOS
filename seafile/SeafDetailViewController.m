@@ -491,16 +491,18 @@ enum PREVIEW_STATE {
         [self setPreViewItem:nil master:nil];
     } else {
         [self.progressView configureViewWithItem:self.preViewItem completeness:percent];
-        if (percent == 100) [self refreshView];
+        if (percent == 100){
+            [self refreshView];
+        }
     }
 }
 
 - (void)entry:(SeafBase *)entry updated:(BOOL)updated progress:(int)percent
 {
     if (_preViewItem != entry) return;
-    if (updated || self.state == PREVIEW_DOWNLOADING)
+    if (updated || self.state == PREVIEW_DOWNLOADING) {
         [self fileContentLoaded:(SeafFile *)entry result:YES completeness:percent];
-    else if (self.state == PREVIEW_PHOTO) {
+    } else if (self.state == PREVIEW_PHOTO) {
         SeafPhotoView *page = [self pageDisplayingPhoto:(SeafFile *)self.preViewItem];
         dispatch_async(dispatch_get_main_queue(), ^{
             [page setProgress:percent *1.0f/100];

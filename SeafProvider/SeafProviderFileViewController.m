@@ -157,6 +157,7 @@
 - (IBAction)chooseCurrentDir:(id)sender
 {
     NSURL *url = [self.root.documentStorageURL URLByAppendingPathComponent:self.root.originalURL.lastPathComponent];
+    Debug("Upload file: %@ to %@", url, _directory.path);
     [self.fileCoordinator coordinateWritingItemAtURL:url options:0 error:NULL byAccessor:^(NSURL *newURL) {
         NSURL *realURL = [Utils copyFile:self.root.originalURL to:newURL];
         if (!realURL) {
@@ -390,7 +391,7 @@
     if (res) {
         self.progressView.progress = percent * 1.0f/100.f;
     } else {
-        Warning("Failed to upload file");
+        Warning("Failed to upload file %@", file.name);
         [self alertWithTitle:NSLocalizedString(@"Failed to uplod file", @"Seafile") handler:nil];
     }
 }

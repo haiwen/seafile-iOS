@@ -385,7 +385,7 @@
     }
     dispatch_time_t time = dispatch_time(DISPATCH_TIME_NOW, 0.5);
     dispatch_after(time, dispatch_get_main_queue(), ^(void){
-        [self.delegate entry:self updated:true progress:100];
+        [self.delegate entry:self updated:false progress:100];
     });
 }
 
