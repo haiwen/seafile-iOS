@@ -50,7 +50,6 @@ enum {
 @property BOOL autoSync;
 @property BOOL wifiOnly;
 
-@property (nonatomic) BOOL inAutoSync;
 @property int state;
 
 @end
@@ -64,12 +63,6 @@ enum {
         // Custom initialization
     }
     return self;
-}
-
-- (BOOL)inAutoSync
-{
-    NSString *repo = _syncRepoCell.detailTextLabel.text;
-    return _autoSync && repo && repo.length > 0;
 }
 
 - (void)autoSyncSwitchFlip:(id)sender
@@ -283,7 +276,7 @@ enum {
     };
     if (section < 0 || section > 4)
         return nil;
-    if (section == 1 && self.inAutoSync) {
+    if (section == 1 && _connection.inAutoSync) {
         int num = _connection.photosInSyncing;
         NSString *remainStr = @"";
         if (num == 0) {
@@ -378,18 +371,19 @@ enum {
     NSString *old = [_connection getAttribute:@"autoSyncRepo"];
     SeafRepo *repo = (SeafRepo *)dir;
     if ([repo.repoId isEqualToString:old]) {
-        [_connection checkAutoSync];
+        [_connection checkPhotoChanges:nil];
         return;
     }
 
-    [_connection setAttribute:repo.repoId forKey:@"autoSyncRepo"];
     dispatch_async(dispatch_get_main_queue(), ^ {
         [self alertWithTitle:MSG_RESET_UPLOADED message:nil yes:^{
             [_connection resetUploadedPhotos];
+            [_connection setAttribute:repo.repoId forKey:@"autoSyncRepo"];
             [_connection checkAutoSync];
             _syncRepoCell.detailTextLabel.text = repo.name;
             [self.tableView reloadData];
         } no:^{
+            [_connection setAttribute:repo.repoId forKey:@"autoSyncRepo"];
             [_connection checkAutoSync];
             _syncRepoCell.detailTextLabel.text = repo.name;
             [self.tableView reloadData];

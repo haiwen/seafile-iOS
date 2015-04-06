@@ -69,6 +69,7 @@ enum MSG_TYPE{
 @property (readwrite) NSMutableArray *seafReplies;
 @property (readwrite) long long newmsgnum;
 @property (weak) id<SeafPhotoSyncWatcherDelegate> photSyncWatcher;
+@property (readonly) BOOL inAutoSync;
 
 
 - (id)initWithUrl:(NSString *)url username:(NSString *)username;
@@ -121,8 +122,6 @@ enum MSG_TYPE{
 
 - (void)removeUploadfile:(SeafUploadFile *)ufile;
 
-
-
 - (void)registerDevice:(NSData *)deviceToken;
 
 - (void)downloadAvatars:(NSNumber *)force;
@@ -145,10 +144,9 @@ enum MSG_TYPE{
 - (void)pickPhotosForUpload;
 - (void)fileUploadedSuccess:(SeafUploadFile *)ufile;
 
-- (void)checkSyncDst:(SeafDir *)dir;
-
 - (NSUInteger)photosInSyncing;
-- (void)assetsLibraryDidChange:(NSNotification *)note;
+- (void)checkSyncDst:(SeafDir *)dir;
+- (void)checkPhotoChanges:(NSNotification *)note;
 
 + (AFHTTPRequestSerializer <AFURLRequestSerialization> *)requestSerializer;
 

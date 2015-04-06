@@ -61,6 +61,8 @@
 	<string>1.9.7</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+	<array/>
 	<key>UIMainStoryboardFile</key>
 	<string>SeafStart</string>
 	<key>UIMainStoryboardFile~ipad</key>

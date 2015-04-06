@@ -96,7 +96,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @property NSMutableDictionary *settings;
 
 @property BOOL inCheckPhotoss;
-@property BOOL inAutoSync;
 @property NSMutableArray *photosArray;
 @property NSMutableArray *uploadingArray;
 @property SeafDir *syncDir;
@@ -214,7 +213,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     if (self.isAutoSync == autoSync) return;
     [self setAttribute:[NSNumber numberWithBool:autoSync] forKey:@"autoSync"];
-    [self checkAutoSync];
 }
 
 - (NSString *)username
@@ -952,6 +950,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)checkPhotos
 {
+    if (!_inAutoSync) return;
     @synchronized(self) {
         if (_inCheckPhotoss) return;
         _inCheckPhotoss = true;
@@ -1061,10 +1060,10 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }];
 }
 
-- (void)assetsLibraryDidChange:(NSNotification *)note
+- (void)checkPhotoChanges:(NSNotification *)note
 {
     if (_inAutoSync) {
-        Debug("LibraryDidChanged, start sync photos to server %@", _address);
+        Debug("Check photos for server %@", _address);
         [self checkPhotos];
     }
 }

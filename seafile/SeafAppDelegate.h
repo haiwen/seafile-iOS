@@ -28,6 +28,11 @@ enum {
     TABBED_ACCOUNTS,
 };
 
+@protocol SeafBackgroundMonitor <NSObject>
+- (void)enterBackground;
+- (void)enterForeground;
+@end
+
 
 /* Additional strings for agi18n */
 #define STR_1 NSLocalizedString(@"Release to refresh...", @"Release to refresh status")
@@ -70,5 +75,9 @@ enum {
 
 - (BOOL)checkNetworkStatus;
 - (void)checkIconBadgeNumber;
+
+
+
+- (void)addBackgroundMonitor:(id<SeafBackgroundMonitor>)monitor;
 
 @end

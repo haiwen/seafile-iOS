@@ -20,13 +20,14 @@
 
 #define S_ADDCONTACT NSLocalizedString(@"Add contact", @"Seafile")
 
-@interface SeafDisMasterViewController ()<EGORefreshTableHeaderDelegate, UIScrollViewDelegate, UIActionSheetDelegate>
+@interface SeafDisMasterViewController ()<EGORefreshTableHeaderDelegate, UIScrollViewDelegate, UIActionSheetDelegate, SeafBackgroundMonitor>
 @property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
 @property (readwrite, nonatomic) UIView *headerView;
 @property (readwrite, nonatomic) NSMutableArray *msgSources;
 @property (readwrite, nonatomic) NSMutableArray *addditions;
 @property (strong) UIActionSheet *actionSheet;
 @property (strong) UIBarButtonItem *addItem;
+@property (strong) NSTimer *timer;
 
 @end
 
@@ -66,7 +67,7 @@
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     self.addItem = [self getBarItem:@"plus".navItemImgName action:@selector(addContact:)size:20];
     self.navigationItem.rightBarButtonItem = self.addItem;
-    [self startTimer];
+    [appdelegate addBackgroundMonitor:self];
 }
 
 - (void)showAlertWithAction:(NSArray *)arr fromRect:(CGRect)rect
@@ -228,11 +229,22 @@
 
 - (void)startTimer
 {
-    [NSTimer scheduledTimerWithTimeInterval:5*60
+    Debug("Start timer");
+    if (_timer != nil)
+        [_timer invalidate];
+    _timer = [NSTimer scheduledTimerWithTimeInterval:5 * 60
                                      target:self
                                    selector:@selector(tick:)
                                    userInfo:nil
                                     repeats:YES];
+}
+
+- (void)stopTimer
+{
+    Debug("Stop timer");
+    if (_timer != nil)
+        [_timer invalidate];
+    _timer = nil;
 }
 
 - (void)tick:(NSTimer *)timer
@@ -436,6 +448,16 @@
         return;
     NSString *title = [actionSheet buttonTitleAtIndex:bIndex];
     [self handleAction:title];
+}
+
+#pragma -mark SeafBackgroundMonitor
+- (void)enterBackground
+{
+    [self stopTimer];
+}
+- (void)enterForeground
+{
+    [self startTimer];
 }
 
 @end

@@ -29,11 +29,22 @@
 
 @property (strong) void (^handler_ok)();
 @property (strong) void (^handler_cancel)();
+@property (strong, nonatomic) dispatch_block_t expirationHandler;
+@property BOOL background;
+@property (strong) NSMutableArray *monitors;
 @end
 
 @implementation SeafAppDelegate
 @synthesize startVC = _startVC;
 @synthesize tabbarController = _tabbarController;
+
+- (BOOL)shouldContinue
+{
+    for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+        if (conn.inAutoSync) return true;
+    }
+    return SeafGlobal.sharedObject.uploadingnum != 0 || SeafGlobal.sharedObject.downloadingnum != 0;
+}
 
 - (void)selectAccount:(SeafConnection *)conn;
 {
@@ -74,11 +85,11 @@
     return YES;
 }
 
-- (void)handleAssetChangedNotifiation:(NSNotification *)notification
+- (void)checkPhotoChanges:(NSNotification *)notification
 {
-    Debug("LibraryDidChanged, start sync photos");
+    Debug("Start check photos changes.");
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
-        [conn assetsLibraryDidChange:notification];
+        [conn checkPhotoChanges:notification];
     }
 }
 
@@ -101,7 +112,7 @@
     if (ios8)
          [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
     else
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleAssetChangedNotifiation:) name:ALAssetsLibraryChangedNotification object:SeafGlobal.sharedObject.assetsLibrary];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(checkPhotoChanges:) name:ALAssetsLibraryChangedNotification object:SeafGlobal.sharedObject.assetsLibrary];
 
 }
 
@@ -118,6 +129,7 @@
 
     [SeafGlobal.sharedObject loadAccounts];
 
+    _monitors = [[NSMutableArray alloc] init];
     _startNav = (UINavigationController *)self.window.rootViewController;
     _startVC = (StartViewController *)_startNav.topViewController;
 
@@ -142,11 +154,36 @@
         [self.startVC selectDefaultAccount];
     [[AFNetworkReachabilityManager sharedManager] startMonitoring];
 
+    self.bgTask = UIBackgroundTaskInvalid;
+    self.expirationHandler = ^{
+        Debug("Expired, Time Remain = %f, restart background task.", [application backgroundTimeRemaining]);
+        [self startBackgroundTask];
+    };
+
     [self performSelector:@selector(delayedInit) withObject:nil afterDelay:2.0];
     return YES;
 }
 
+- (void)enterBackground
+{
+    Debug("Enter background");
+    self.background = YES;
+    [self startBackgroundTask];
+}
 
+- (void)startBackgroundTask
+{
+    // Start the long-running task.
+    Debug("start background task");
+    UIApplication* app = [UIApplication sharedApplication];
+    if (UIBackgroundTaskInvalid != self.bgTask) {
+        [app endBackgroundTask:self.bgTask];
+        self.bgTask = UIBackgroundTaskInvalid;
+    }
+    if (!self.shouldContinue) return;
+
+    self.bgTask = [app beginBackgroundTaskWithExpirationHandler:self.expirationHandler];
+}
 
 - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
 {
@@ -199,26 +236,10 @@
 
 - (void)applicationDidEnterBackground:(UIApplication *)application
 {
-    // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
-    // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
-    if ([[SeafGlobal sharedObject] uploadingnum] == 0
-        && [[SeafGlobal sharedObject] downloadingnum] == 0)
-    {
-        if (UIBackgroundTaskInvalid != self.bgTask) {
-            [application endBackgroundTask:self.bgTask];
-            self.bgTask = UIBackgroundTaskInvalid;
-        }
-        return;
+    [self enterBackground];
+    for (id <SeafBackgroundMonitor> monitor in _monitors) {
+        [monitor enterBackground];
     }
-    self.bgTask = [application beginBackgroundTaskWithExpirationHandler:^{
-        Debug(@"Time Remain = %f", [application backgroundTimeRemaining]);
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (UIBackgroundTaskInvalid != self.bgTask) {
-                [application endBackgroundTask:self.bgTask];
-                self.bgTask = UIBackgroundTaskInvalid;
-            }
-        });
-    }];
 }
 
 - (void)applicationWillEnterForeground:(UIApplication *)application
@@ -226,18 +247,19 @@
     Debug("Seafile will enter foreground");
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
     [SeafGlobal.sharedObject loadSettings:[NSUserDefaults standardUserDefaults]];
+    [self checkPhotoChanges:nil];
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
     [application cancelAllLocalNotifications];
-
-    if (UIBackgroundTaskInvalid != self.bgTask) {
-        [application endBackgroundTask:self.bgTask];
-        self.bgTask = UIBackgroundTaskInvalid;
+    self.background = false;
+    for (id <SeafBackgroundMonitor> monitor in _monitors) {
+        [monitor enterForeground];
     }
 }
+
 
 - (void)applicationWillTerminate:(UIApplication *)application
 {
@@ -441,8 +463,13 @@
     Debug("Photos library changed.");
     // Call might come on any background queue. Re-dispatch to the main queue to handle it.
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self handleAssetChangedNotifiation:nil];
+        [self checkPhotoChanges:nil];
     });
+}
+
+- (void)addBackgroundMonitor:(id<SeafBackgroundMonitor>)monitor
+{
+    [_monitors addObject:monitor];
 }
 
 @end

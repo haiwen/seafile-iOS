@@ -36,7 +36,6 @@ enum TOOL_ITEM {
 };
 
 @interface SeafTextEditorViewController ()<EGOTextViewDelegate>
-@property (nonatomic, retain) NSTimer *timer;
 @property UIBarButtonItem *ep;
 @property UIBarButtonItem *saveItem;
 @property (strong, nonatomic) IBOutlet UIView *topview;
@@ -386,8 +385,6 @@ enum TOOL_ITEM {
     self.navigationItem.leftBarButtonItem = self.saveItem;
     self.egoTextView.hidden = YES;;
     NSString *path = [[NSBundle mainBundle] pathForResource:@"edit_file_seaf" ofType:@"html"];
-    //timer = [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(checkBtState:) userInfo:nil repeats:YES];
-
     NSURL *url = [NSURL fileURLWithPath:path];
     NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 3];
     [(UIWebView *)self.view loadRequest: request];
