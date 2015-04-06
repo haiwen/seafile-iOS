@@ -15,6 +15,8 @@
 #import <dirent.h>
 #import <sys/xattr.h>
 
+#import "UIImage+fixOrientation.h"
+
 @implementation Utils
 
 
@@ -298,9 +300,8 @@
 + (BOOL)writeDataToPathWithMeta:(NSString*)filePath andAsset:(ALAsset*)asset
 {
     ALAssetRepresentation *defaultRep = asset.defaultRepresentation;
-    UIImage *image = [UIImage imageWithCGImage:defaultRep.fullScreenImage];
-
-    NSData *currentImageData = UIImageJPEGRepresentation(image, 1.0);
+    UIImage *image = [UIImage imageWithCGImage:defaultRep.fullResolutionImage scale:defaultRep.scale orientation:(UIImageOrientation)defaultRep.orientation];
+    NSData *currentImageData = UIImageJPEGRepresentation(image.fixOrientation, 1.0);
     [currentImageData writeToFile:filePath atomically:YES];
     return YES;
 }
