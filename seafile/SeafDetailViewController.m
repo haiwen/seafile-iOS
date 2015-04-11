@@ -143,7 +143,7 @@ enum PREVIEW_STATE {
 - (void)refreshView
 {
     if (!self.isViewLoaded) return;
-    NSURLRequest *request;
+    NSURLRequest *request = nil;
     if (self.state == PREVIEW_PHOTO && !self.photos)
         [self clearPhotosVIew];
     if (self.state != PREVIEW_PHOTO) {
