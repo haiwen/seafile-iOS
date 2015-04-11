@@ -26,6 +26,7 @@
 @property (strong) NSString *downloadingFileOid;
 @property (nonatomic, strong) UIImage *icon;
 @property NSURLSessionDownloadTask *task;
+@property (strong) NSProgress *progress;
 @property (strong) SeafUploadFile *ufile;
 @property (strong) NSArray *blks;
 @property int index;
@@ -123,14 +124,25 @@
     return self.downloadingFileOid != nil;
 }
 
-- (void)finishDownload:(NSString *)ooid
+- (void)finishDownload
 {
-    BOOL updated = ![ooid isEqualToString:self.ooid];
-    [self setOoid:ooid];
-    self.state = SEAF_DENTRY_UPTODATE;
+    if (_progress) {
+        [_progress removeObserver:self
+                       forKeyPath:@"fractionCompleted"
+                          context:NULL];
+        _progress = nil;
+    }
     self.downloadingFileOid = nil;
     self.task = nil;
     [SeafGlobal.sharedObject decDownloadnum];
+}
+
+- (void)finishDownload:(NSString *)ooid
+{
+    [self finishDownload];
+    BOOL updated = ![ooid isEqualToString:self.ooid];
+    [self setOoid:ooid];
+    self.state = SEAF_DENTRY_UPTODATE;
     self.oid = self.ooid;
     [self savetoCache];
     [self.delegate entry:self updated:updated progress:100];
@@ -138,11 +150,10 @@
 
 - (void)failedDownload:(NSError *)error
 {
+    [self finishDownload];
     self.state = SEAF_DENTRY_INIT;
     [self.delegate entry:self downloadingFailed:error.code];
-    self.downloadingFileOid = nil;
-    self.task = nil;
-    [SeafGlobal.sharedObject decDownloadnum];
+
 }
 /*
  curl -D a.txt -H 'Cookie:sessionid=7eb567868b5df5b22b2ba2440854589c' http://127.0.0.1:8000/api/file/640fd90d-ef4e-490d-be1c-b34c24040da7/8dd0a3be9289aea6795c1203351691fcc1373fbb/
@@ -189,7 +200,8 @@
                  [self finishDownload:self.downloadingFileOid];
             }
          }];
-         [progress addObserver:self
+         _progress = progress;
+         [_progress addObserver:self
                     forKeyPath:@"fractionCompleted"
                        options:NSKeyValueObservingOptionNew
                        context:NULL];
@@ -287,8 +299,8 @@
             [self finishBlock:url];
         }
     }];
-
-    [progress addObserver:self
+    _progress = progress;
+    [_progress addObserver:self
                forKeyPath:@"fractionCompleted"
                   options:NSKeyValueObservingOptionNew
                   context:NULL];

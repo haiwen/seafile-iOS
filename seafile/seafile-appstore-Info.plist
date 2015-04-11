@@ -62,7 +62,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIBackgroundModes</key>
-	<array/>
+	<array>
+		<string>fetch</string>
+	</array>
 	<key>UIMainStoryboardFile</key>
 	<string>SeafStart</string>
 	<key>UIMainStoryboardFile~ipad</key>

@@ -155,9 +155,10 @@
     [[AFNetworkReachabilityManager sharedManager] startMonitoring];
 
     self.bgTask = UIBackgroundTaskInvalid;
+    __weak typeof(self) weakSelf = self;
     self.expirationHandler = ^{
         Debug("Expired, Time Remain = %f, restart background task.", [application backgroundTimeRemaining]);
-        [self startBackgroundTask];
+        [weakSelf startBackgroundTask];
     };
 
     [self performSelector:@selector(delayedInit) withObject:nil afterDelay:2.0];

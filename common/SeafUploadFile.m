@@ -24,6 +24,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 @property (readonly) NSString *mime;
 @property (strong, readonly) NSURL *preViewURL;
 @property (strong) NSURLSessionUploadTask *task;
+@property (strong) NSProgress *progress;
 @end
 
 @implementation SeafUploadFile
@@ -104,10 +105,15 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 - (void)finishUpload:(BOOL)result oid:(NSString *)oid
 {
     @synchronized(self) {
-        if (!_uploading)
-            return;
+        if (!_uploading) return;
         _uploading = NO;
         self.task = nil;
+        if (_progress) {
+            [_progress removeObserver:self
+                           forKeyPath:@"fractionCompleted"
+                              context:NULL];
+            _progress = nil;
+        }
     }
     [SeafGlobal.sharedObject finishUpload:self result:result];
     NSMutableDictionary *dict = self.uploadAttr;
@@ -152,7 +158,8 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         }
     }];
 
-    [progress addObserver:self
+    _progress =progress;
+    [_progress addObserver:self
                forKeyPath:@"fractionCompleted"
                   options:NSKeyValueObservingOptionNew
                   context:NULL];

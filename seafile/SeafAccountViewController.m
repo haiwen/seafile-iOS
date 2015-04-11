@@ -199,7 +199,7 @@
 
 - (void)loginFailed:(SeafConnection *)conn error:(NSInteger)error
 {
-    Debug("%@, error=%d\n", conn.address, error);
+    Debug("%@, error=%ld\n", conn.address, (long)error);
     if (conn != connection)
         return;
 

@@ -1971,7 +1971,7 @@
 			isa = PBXProject;
 			attributes = {
 				CLASSPREFIX = Seaf;
-				LastUpgradeCheck = 0600;
+				LastUpgradeCheck = 0630;
 				ORGANIZATIONNAME = Seafile;
 				TargetAttributes = {
 					571D8CA91677881400F1A22C = {
@@ -2708,7 +2708,6 @@
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				"CODE_SIGN_ENTITLEMENTS[sdk=*]" = seafile/seafile.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "seafile/seafile-Prefix.pch";
 				HEADER_SEARCH_PATHS = "libs/ios-openssl/include/";
@@ -2719,8 +2718,8 @@
 					"\"$(SRCROOT)/libs/ios-openssl/lib\"",
 				);
 				PRODUCT_NAME = SeafilePro;
-				PROVISIONING_PROFILE = "d2380a5d-6268-427e-b53b-5951a8ab1019";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "d2380a5d-6268-427e-b53b-5951a8ab1019";
+				PROVISIONING_PROFILE = "f4764f9d-9b60-47c7-ae14-cdd4dbc62a46";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "f4764f9d-9b60-47c7-ae14-cdd4dbc62a46";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
@@ -2774,7 +2773,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "087be506-0e5c-4625-8c8d-3aebeedd55d3";
+				PROVISIONING_PROFILE = "1dc2ebee-f558-4817-82a7-76c8e870390b";
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -2798,8 +2797,8 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "9e519841-17b7-4007-ac86-6894e3d962ad";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "9e519841-17b7-4007-ac86-6894e3d962ad";
+				PROVISIONING_PROFILE = "d699bdca-4d58-49b8-ac4b-e49bd0d2539a";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "d699bdca-4d58-49b8-ac4b-e49bd0d2539a";
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
@@ -2813,8 +2812,8 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CODE_SIGN_ENTITLEMENTS = SeafProvider/SeafProvider.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -2835,8 +2834,8 @@
 				);
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "7783b29f-c366-4ee1-886c-b2a0740c8585";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "7783b29f-c366-4ee1-886c-b2a0740c8585";
+				PROVISIONING_PROFILE = "ae730d54-f8bb-42c8-a317-90945f95526d";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "ae730d54-f8bb-42c8-a317-90945f95526d";
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -2892,6 +2891,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -2909,8 +2909,8 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				ONLY_ACTIVE_ARCH = YES;
 				"PRIVATE_HEADERS_FOLDER_PATH[sdk=*]" = "";
-				PROVISIONING_PROFILE = "087be506-0e5c-4625-8c8d-3aebeedd55d3";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "087be506-0e5c-4625-8c8d-3aebeedd55d3";
+				PROVISIONING_PROFILE = "f4764f9d-9b60-47c7-ae14-cdd4dbc62a46";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "f4764f9d-9b60-47c7-ae14-cdd4dbc62a46";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -2933,6 +2933,7 @@
 				COPY_PHASE_STRIP = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = "AF_APP_EXTENSIONS=1";
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -2943,8 +2944,8 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
-				PROVISIONING_PROFILE = "c79116a6-3a21-4eb1-8226-9b37a89d9aab";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "9e519841-17b7-4007-ac86-6894e3d962ad";
+				PROVISIONING_PROFILE = "77ceea69-5b97-499f-a2d1-23c0190d055e";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "77ceea69-5b97-499f-a2d1-23c0190d055e";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;

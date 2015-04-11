@@ -277,7 +277,7 @@ enum {
     if (section < 0 || section > 4)
         return nil;
     if (section == 1 && _connection.inAutoSync) {
-        int num = _connection.photosInSyncing;
+        NSUInteger num = _connection.photosInSyncing;
         NSString *remainStr = @"";
         if (num == 0) {
             remainStr = NSLocalizedString(@"All photos synced", @"Seafile");
