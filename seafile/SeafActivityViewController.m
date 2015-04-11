@@ -138,6 +138,7 @@ enum {
     if ([urlStr hasPrefix:@"file://"] || [urlStr isEqualToString:self.url] || [@"about:blank" isEqualToString:urlStr]) {
         return YES;
     } else if ([urlStr hasPrefix:@"api://"]) {
+        if (!self.navigationController.viewControllers.count == 1) return NO;
         NSString *path = @"/";
         NSRange range;
         NSRange foundRange = [urlStr rangeOfString:@"/repo/" options:NSCaseInsensitiveSearch];
@@ -159,14 +160,17 @@ enum {
         SeafDetailViewController *detailvc;
         if (IsIpad()) {
             detailvc = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
-            [self.navigationController pushViewController:detailvc animated:YES];
         } else {
             detailvc = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
-            SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-            [appdelegate showDetailView:detailvc];
         }
-        sfile.delegate = detailvc;
-        [detailvc setPreViewItem:sfile master:nil];
+
+        @synchronized(self.navigationController) {
+            if (self.navigationController.viewControllers.count == 1) {
+                [self.navigationController pushViewController:detailvc animated:YES];
+                sfile.delegate = detailvc;
+                [detailvc setPreViewItem:sfile master:nil];
+            }
+        }
     }
     return NO;
 }
