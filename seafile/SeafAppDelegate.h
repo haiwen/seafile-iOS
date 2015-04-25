@@ -70,9 +70,6 @@ enum {
 - (void)cycleTheGlobalMailComposer;
 
 - (BOOL)checkNetworkStatus;
-- (void)checkIconBadgeNumber;
-
-
 
 - (void)addBackgroundMonitor:(id<SeafBackgroundMonitor>)monitor;
 

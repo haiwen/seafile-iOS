@@ -296,6 +296,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [SeafAvatar clearCache];
 }
 
+- (void)saveAccountInfo
+{
+    [SeafGlobal.sharedObject setObject:_info forKey:[NSString stringWithFormat:@"%@/%@", _address, self.username]];
+    [SeafGlobal.sharedObject synchronize];
+
+}
 - (void)getAccountInfo:(void (^)(bool result, SeafConnection *conn))handler
 {
     [self sendRequest:API_URL"/account/info/"
@@ -306,8 +312,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
          [_info setObject:[account objectForKey:@"total"] forKey:@"total"];
          [_info setObject:[account objectForKey:@"usage"] forKey:@"usage"];
          [_info setObject:_address forKey:@"link"];
-         [SeafGlobal.sharedObject setObject:_info forKey:[NSString stringWithFormat:@"%@/%@", _address, self.username]];
-         [SeafGlobal.sharedObject synchronize];
+         [self saveAccountInfo];
          if (handler) handler(true, self);
      }
               failure:
@@ -358,8 +363,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             [_info setObject:password forKey:@"password"];
             [_info setObject:_token forKey:@"token"];
             [_info setObject:_address forKey:@"link"];
-            [SeafGlobal.sharedObject setObject:_info forKey:[NSString stringWithFormat:@"%@/%@", _address, username]];
-            [SeafGlobal.sharedObject synchronize];
+            [self saveAccountInfo];
             [self downloadAvatar:true];
             [self.loginDelegate loginSuccess:self];
         }
@@ -437,12 +441,14 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSURLSessionDataTask *task = [_sessionMgr dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
         NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
         if (error) {
-            Warning("Error: %@, resp=%@", error, responseObject);
+            Warning("Error: %@, token=%@, resp=%@, delegate=%@", error, _token, responseObject, self.delegate);
             failure (request, resp, error);
-            if (resp.statusCode == HTTP_ERR_LOGIN_REUIRED) {
+            if (resp.statusCode == HTTP_ERR_UNAUTHORIZED) {
                 @synchronized(self) {
                     if (![self authorized])   return;
                     _token = nil;
+                    [_info removeObjectForKey:@"token"];
+                    [self saveAccountInfo];
                 }
                 if (self.delegate) [self.delegate loginRequired:self];
             }

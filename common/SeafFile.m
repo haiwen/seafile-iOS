@@ -225,7 +225,6 @@
             if (error) {
                 Debug("Failed to download thumb %@, error=%@", self.name, error.localizedDescription);
             } else {
-                Debug("Successfully downloaded file thumb:%@", self.name);
                 if (![filePath.path isEqualToString:target]) {
                     [[NSFileManager defaultManager] removeItemAtPath:target error:nil];
                     [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];

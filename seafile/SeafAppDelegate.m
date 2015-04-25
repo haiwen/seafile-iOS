@@ -46,9 +46,9 @@
 
 - (void)selectAccount:(SeafConnection *)conn;
 {
+    conn.delegate = self;
     @synchronized(self) {
         if ([[SeafGlobal sharedObject] connection] != conn) {
-            conn.delegate = self;
             [[SeafGlobal sharedObject] setConnection: conn];
             [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
             [[self masterNavController:TABBED_STARRED] popToRootViewControllerAnimated:NO];
@@ -392,8 +392,12 @@
 #pragma - SeafConnectionDelegate
 - (void)loginRequired:(SeafConnection *)connection
 {
-    [self.tabbarController setSelectedIndex:TABBED_ACCOUNTS];
-    [self.startVC performSelector:@selector(selectAccount:) withObject:connection afterDelay:0.5f];
+    Debug("Token expired, should login again.");
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5), dispatch_get_main_queue(), ^(void){
+        self.window.rootViewController = _startNav;
+        [self.window makeKeyAndVisible];
+        [self.startVC performSelector:@selector(selectAccount:) withObject:connection afterDelay:0.5f];
+    });
 }
 
 - (void)continueWithInvalidCert:(NSString *)title message:(NSString*)message yes:(void (^)())yes no:(void (^)())no

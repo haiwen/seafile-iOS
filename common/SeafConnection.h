@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "AFNetworking.h"
 
-#define HTTP_ERR_LOGIN_REUIRED                  403
+#define HTTP_ERR_UNAUTHORIZED                   401
 #define HTTP_ERR_LOGIN_INCORRECT_PASSWORD       400
 #define HTTP_ERR_REPO_PASSWORD_REQUIRED         440
 
