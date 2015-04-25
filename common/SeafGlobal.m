@@ -112,7 +112,7 @@
 {
     return [self.applicationDocumentsDirectory stringByAppendingPathComponent:BLOCKS_DIR];
 }
-- (NSString *)applicationTempDirectory
+- (NSString *)tempDir
 {
     return [[self applicationDocumentsDirectory] stringByAppendingPathComponent:TEMP_DIR];
 }

@@ -79,6 +79,8 @@ enum MSG_TYPE{
 - (void)resetUploadedPhotos;
 - (void)clearAccount;
 
+- (NSURLRequest *)buildRequest:(NSString *)url method:(NSString *)method form:(NSString *)form;
+
 - (void)sendRequest:(NSString *)url
             success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
             failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure;

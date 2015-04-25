@@ -26,6 +26,7 @@
 @property (strong) NSString *downloadingFileOid;
 @property (nonatomic, strong) UIImage *icon;
 @property NSURLSessionDownloadTask *task;
+@property NSURLSessionDownloadTask *thumbtask;
 @property (strong) NSProgress *progress;
 @property (strong) SeafUploadFile *ufile;
 @property (strong) NSArray *blks;
@@ -95,9 +96,14 @@
 
 - (NSString *)downloadTempPath:(NSString *)objId
 {
-    return [[SeafGlobal.sharedObject applicationTempDirectory] stringByAppendingPathComponent:objId];
+    return [SeafGlobal.sharedObject.tempDir stringByAppendingPathComponent:objId];
 }
 
+- (NSString *)thumbPath: (NSString *)objId
+{
+    if (!self.oid) return nil;
+    return [SeafGlobal.sharedObject.thumbsDir stringByAppendingPathComponent:self.oid];
+}
 - (void)updateWithEntry:(SeafBase *)entry
 {
     SeafFile *file = (SeafFile *)entry;
@@ -153,7 +159,18 @@
     [self finishDownload];
     self.state = SEAF_DENTRY_INIT;
     [self.delegate entry:self downloadingFailed:error.code];
+}
 
+- (void)finishDownloadThumb:(BOOL)success
+{
+    _thumbtask = nil;
+    if (success) {
+        _icon = nil;
+        [self.delegate entry:self updated:false progress:100];
+    } else if (!_icon && self.image) {
+        _icon = [Utils reSizeImage:self.image toSquare:THUMB_SIZE];
+        [self.delegate entry:self updated:false progress:100];
+    }
 }
 /*
  curl -D a.txt -H 'Cookie:sessionid=7eb567868b5df5b22b2ba2440854589c' http://127.0.0.1:8000/api/file/640fd90d-ef4e-490d-be1c-b34c24040da7/8dd0a3be9289aea6795c1203351691fcc1373fbb/
@@ -212,6 +229,31 @@
          self.state = SEAF_DENTRY_INIT;
          [self.delegate entry:self downloadingFailed:response.statusCode];
      }];
+}
+
+- (void)downloadThumb
+{
+    NSString *thumburl = [NSString stringWithFormat:API_URL"/repos/%@/thumbnail/?size=%d&p=%@", self.repoId, THUMB_SIZE, self.path.escapedUrl];
+    NSURLRequest *downloadRequest = [connection buildRequest:thumburl method:@"GET" form:nil];
+    NSString *target = [self thumbPath:self.oid];
+    @synchronized (self) {
+        if (_thumbtask) return;
+        _thumbtask = [connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:nil destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
+            return [NSURL fileURLWithPath:target];
+        } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
+            if (error) {
+                Debug("Failed to download thumb %@, error=%@", self.name, error.localizedDescription);
+            } else {
+                Debug("Successfully downloaded file thumb:%@", self.name);
+                if (![filePath.path isEqualToString:target]) {
+                    [[NSFileManager defaultManager] removeItemAtPath:target error:nil];
+                    [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
+                }
+            }
+            [self finishDownloadThumb:!error];
+        }];
+    }
+    [_thumbtask resume];
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
@@ -387,25 +429,18 @@
     return [Utils isImageFile:self.name];
 }
 
-- (void)generateIconBackground
-{
-    @synchronized(self) {
-        if (_icon) return;
-        if (self.image) {
-            _icon = [Utils reSizeImage:self.image toSquare:32.0f];
-        }
-    }
-    dispatch_time_t time = dispatch_time(DISPATCH_TIME_NOW, 0.5);
-    dispatch_after(time, dispatch_get_main_queue(), ^(void){
-        [self.delegate entry:self updated:false progress:100];
-    });
-}
-
 - (UIImage *)icon;
 {
     if (!_icon) {
-        if (self.isImageFile && self.hasCache) {
-            [self performSelectorInBackground:@selector(generateIconBackground) withObject:nil];
+        if (self.isImageFile && self.oid) {
+            NSString *thumbpath = [self thumbPath:self.oid];
+            if (thumbpath && [Utils fileExistsAtPath:thumbpath]) {
+                Debug("ICON: %@", thumbpath);
+                _icon = [UIImage imageWithContentsOfFile:thumbpath];
+                return _icon;
+            } else {
+                [self downloadThumb];
+            }
         }
         return [super icon];
     }
@@ -515,7 +550,7 @@
     if (!self.ooid)
         return nil;
     @synchronized (self) {
-        NSString *tempDir = [[SeafGlobal.sharedObject applicationTempDirectory] stringByAppendingPathComponent:self.ooid];
+        NSString *tempDir = [SeafGlobal.sharedObject.tempDir stringByAppendingPathComponent:self.ooid];
         if (![Utils checkMakeDir:tempDir])
             return nil;
         NSString *tempFileName = [tempDir stringByAppendingPathComponent:self.name];
@@ -564,10 +599,10 @@
     NSString *tmpdir = nil;
     if (!self.mpath) {
         src = [SeafGlobal.sharedObject documentPath:self.ooid];
-        tmpdir = [[[SeafGlobal.sharedObject applicationTempDirectory] stringByAppendingPathComponent:self.ooid] stringByAppendingPathComponent:@"utf16" ];
+        tmpdir = [[SeafGlobal.sharedObject.tempDir stringByAppendingPathComponent:self.ooid] stringByAppendingPathComponent:@"utf16" ];
     } else {
         src = self.mpath;
-        tmpdir = [[SeafGlobal.sharedObject applicationTempDirectory] stringByAppendingPathComponent:[[self.mpath stringByDeletingLastPathComponent] lastPathComponent]];
+        tmpdir = [SeafGlobal.sharedObject.tempDir stringByAppendingPathComponent:[[self.mpath stringByDeletingLastPathComponent] lastPathComponent]];
     }
 
     if (![Utils checkMakeDir:tmpdir])
@@ -746,7 +781,7 @@
     _preViewURL = nil;
     _shareLink = nil;
     [[NSFileManager defaultManager] removeItemAtPath:[SeafGlobal.sharedObject documentPath:self.ooid] error:nil];
-    NSString *tempDir = [[SeafGlobal.sharedObject applicationTempDirectory] stringByAppendingPathComponent:self.ooid];
+    NSString *tempDir = [SeafGlobal.sharedObject.tempDir stringByAppendingPathComponent:self.ooid];
     [[NSFileManager defaultManager] removeItemAtPath:tempDir error:nil];
     self.ooid = nil;
     self.state = SEAF_DENTRY_INIT;

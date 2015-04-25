@@ -103,7 +103,7 @@
     [self cycleTheGlobalMailComposer];
     [SeafGlobal.sharedObject startTimer];
     [SeafGlobal.sharedObject clearRepoPasswords];
-    [Utils clearAllFiles:[SeafGlobal.sharedObject applicationTempDirectory]];
+    [Utils clearAllFiles:SeafGlobal.sharedObject.tempDir];
 
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
         [conn checkAutoSync];
@@ -141,7 +141,7 @@
     [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:EDIT_DIR]];
     [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:THUMB_DIR]];
 
-    [Utils checkMakeDir:[SeafGlobal.sharedObject applicationTempDirectory]];
+    [Utils checkMakeDir:SeafGlobal.sharedObject.tempDir];
 
     if (ios8) {
         [[UIApplication sharedApplication] registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:(UIUserNotificationTypeSound | UIUserNotificationTypeAlert | UIUserNotificationTypeBadge) categories:nil]];

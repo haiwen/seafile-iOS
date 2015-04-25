@@ -249,8 +249,8 @@ enum {
             [Utils clearAllFiles:SeafGlobal.sharedObject.objectsDir];
             [Utils clearAllFiles:SeafGlobal.sharedObject.blocksDir];
             [Utils clearAllFiles:SeafGlobal.sharedObject.editDir];
-
-            [Utils clearAllFiles:[SeafGlobal.sharedObject applicationTempDirectory]];
+            [Utils clearAllFiles:SeafGlobal.sharedObject.thumbsDir];
+            [Utils clearAllFiles:SeafGlobal.sharedObject.tempDir];
             [SeafUploadFile clearCache];
             [SeafAvatar clearCache];
 

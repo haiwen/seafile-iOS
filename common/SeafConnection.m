@@ -416,15 +416,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         return NSURLSessionAuthChallengePerformDefaultHandling;
     }];
     [dataTask resume];
-
 }
 
-- (void)sendRequestAsync:(NSString *)url method:(NSString *)method form:(NSString *)form
-                 success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
-                 failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure
+- (NSURLRequest *)buildRequest:(NSString *)url method:(NSString *)method form:(NSString *)form
 {
-    NSString *absoluteUrl;
-    absoluteUrl = [url hasPrefix:@"http"] ? url : [_address stringByAppendingString:url];
+    NSString *absoluteUrl = [url hasPrefix:@"http"] ? url : [_address stringByAppendingString:url];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:absoluteUrl]];
     [request setTimeoutInterval:30.0f];
     [request setHTTPMethod:method];
@@ -437,6 +433,15 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (self.token)
         [request setValue:[NSString stringWithFormat:@"Token %@", self.token] forHTTPHeaderField:@"Authorization"];
 
+    Debug("Request: %@", request.URL);
+    return request;
+}
+
+- (void)sendRequestAsync:(NSString *)url method:(NSString *)method form:(NSString *)form
+                 success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
+                 failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure
+{
+    NSURLRequest *request = [self buildRequest:url method:method form:form];
     NSURLSessionDataTask *task = [_sessionMgr dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
         NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
         if (error) {

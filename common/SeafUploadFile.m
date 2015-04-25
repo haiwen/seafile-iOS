@@ -320,7 +320,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     } else if ([self.mime hasSuffix:@"seafile"]) {
         _preViewURL = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"view_seaf" ofType:@"html"]];
     } else {
-        NSString *encodePath = [[SeafGlobal.sharedObject applicationTempDirectory] stringByAppendingPathComponent:self.name];
+        NSString *encodePath = [SeafGlobal.sharedObject.tempDir stringByAppendingPathComponent:self.name];
         if ([Utils tryTransformEncoding:encodePath fromFile:self.lpath])
             _preViewURL = [NSURL fileURLWithPath:encodePath];
     }

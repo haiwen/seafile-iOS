@@ -21,6 +21,7 @@
 #define THUMB_DIR @"thumb"
 #define TEMP_DIR @"temp"
 
+#define THUMB_SIZE 32
 
 @interface SeafGlobal : NSObject
 
@@ -39,7 +40,7 @@
 + (SeafGlobal *)sharedObject;
 
 - (NSString *)applicationDocumentsDirectory;
-- (NSString *)applicationTempDirectory;
+- (NSString *)tempDir;
 - (NSString *)uploadsDir;
 - (NSString *)avatarsDir;
 - (NSString *)certsDir;
