@@ -246,9 +246,9 @@ enum {
         [self alertWithTitle:MSG_CLEAR_CACHE message:nil yes:^{
             SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
             [(SeafDetailViewController *)[appdelegate detailViewControllerAtIndex:TABBED_SETTINGS] setPreViewItem:nil master:nil];
-            [Utils clearAllFiles:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
-            [Utils clearAllFiles:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"]];
-            [Utils clearAllFiles:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"]];
+            [Utils clearAllFiles:SeafGlobal.sharedObject.objectsDir];
+            [Utils clearAllFiles:SeafGlobal.sharedObject.blocksDir];
+            [Utils clearAllFiles:SeafGlobal.sharedObject.editDir];
 
             [Utils clearAllFiles:[SeafGlobal.sharedObject applicationTempDirectory]];
             [SeafUploadFile clearCache];

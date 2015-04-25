@@ -83,21 +83,48 @@
     return [[self applicationDocumentsDirectoryURL] path];
 }
 
-- (NSString *)applicationTempDirectory
+- (NSString *)uploadsDir
 {
-    return [[self applicationDocumentsDirectory] stringByAppendingPathComponent:@"temp"];
+    return [self.applicationDocumentsDirectory stringByAppendingPathComponent:UPLOADS_DIR];
 }
 
+- (NSString *)avatarsDir
+{
+    return [self.applicationDocumentsDirectory stringByAppendingPathComponent:AVATARS_DIR];
+}
+- (NSString *)certsDir
+{
+    return [self.applicationDocumentsDirectory stringByAppendingPathComponent:CERTS_DIR];
+}
+- (NSString *)editDir
+{
+    return [self.applicationDocumentsDirectory stringByAppendingPathComponent:EDIT_DIR];
+}
+- (NSString *)thumbsDir
+{
+    return [self.applicationDocumentsDirectory stringByAppendingPathComponent:THUMB_DIR];
+}
+- (NSString *)objectsDir
+{
+    return [self.applicationDocumentsDirectory stringByAppendingPathComponent:OBJECTS_DIR];
+}
+- (NSString *)blocksDir
+{
+    return [self.applicationDocumentsDirectory stringByAppendingPathComponent:BLOCKS_DIR];
+}
+- (NSString *)applicationTempDirectory
+{
+    return [[self applicationDocumentsDirectory] stringByAppendingPathComponent:TEMP_DIR];
+}
 
 - (NSString *)documentPath:(NSString*)fileId
 {
-    NSString *s = [[[self applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"] stringByAppendingPathComponent:fileId];
-    return s;
+    return[self.objectsDir stringByAppendingPathComponent:fileId];
 }
 
 - (NSString *)blockPath:(NSString*)blkId
 {
-    return [[[self applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"] stringByAppendingPathComponent:blkId];
+    return [self.blocksDir stringByAppendingPathComponent:blkId];
 }
 
 - (void)registerDefaultsFromSettingsBundle

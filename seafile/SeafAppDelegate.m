@@ -71,7 +71,7 @@
 - (BOOL)application:(UIApplication*)application handleOpenURL:(NSURL*)url
 {
     if (url != nil && [url isFileURL]) {
-        NSURL *to = [NSURL fileURLWithPath:[[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:url.lastPathComponent ]];
+        NSURL *to = [NSURL fileURLWithPath:[SeafGlobal.sharedObject.uploadsDir stringByAppendingPathComponent:url.lastPathComponent]];
         Debug("Copy %@, to %@, %@, %@\n", url, to, to.absoluteString, to.path);
         [Utils copyFile:url to:to];
         if (self.window.rootViewController == self.startNav)
@@ -133,12 +133,14 @@
     _startNav = (UINavigationController *)self.window.rootViewController;
     _startVC = (StartViewController *)_startNav.topViewController;
 
-    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"avatars"]];
-    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"certs"]];
-    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"objects"]];
-    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"blocks"]];
-    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"]];
-    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"]];
+    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:OBJECTS_DIR]];
+    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:AVATARS_DIR]];
+    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:CERTS_DIR]];
+    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:BLOCKS_DIR]];
+    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:UPLOADS_DIR]];
+    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:EDIT_DIR]];
+    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:THUMB_DIR]];
+
     [Utils checkMakeDir:[SeafGlobal.sharedObject applicationTempDirectory]];
 
     if (ios8) {

@@ -655,7 +655,7 @@
 {
     NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
     [formatter setDateFormat:@"yyyy-MM-dd-HH.mm.ss"];
-    NSString *dir = [[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"] stringByAppendingPathComponent:[formatter stringFromDate:[NSDate date]]];
+    NSString *dir = [SeafGlobal.sharedObject.editDir stringByAppendingPathComponent:[formatter stringFromDate:[NSDate date]]];
     if (![Utils checkMakeDir:dir])
         return NO;
 
@@ -675,7 +675,7 @@
     Debug("file %@ changed:%@, repo:%@, account:%@ %@", self.name, url, self.repoId, connection.address, connection.username);
     NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
     [formatter setDateFormat:@"yyyy-MM-dd-HH.mm.ss"];
-    NSString *dir = [[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"] stringByAppendingPathComponent:[formatter stringFromDate:[NSDate date]]];
+    NSString *dir = [SeafGlobal.sharedObject.editDir stringByAppendingPathComponent:[formatter stringFromDate:[NSDate date]]];
     if (![Utils checkMakeDir:dir])
         return NO;
     NSString *newpath = [dir stringByAppendingPathComponent:self.name];
@@ -701,7 +701,7 @@
 {
     NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
     [formatter setDateFormat:@"yyyy-MM-dd-HH.mm.ss"];
-    NSString *dir = [[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"edit"] stringByAppendingPathComponent:[formatter stringFromDate:[NSDate date]]];
+    NSString *dir = [SeafGlobal.sharedObject.editDir stringByAppendingPathComponent:[formatter stringFromDate:[NSDate date]]];
     if (![Utils checkMakeDir:dir])
         return NO;
     NSString *newpath = [dir stringByAppendingPathComponent:self.name];

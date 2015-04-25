@@ -12,6 +12,16 @@
 #import <AssetsLibrary/AssetsLibrary.h>
 #import "SeafConnection.h"
 
+#define OBJECTS_DIR @"objects"
+#define AVATARS_DIR @"avatars"
+#define CERTS_DIR @"certs"
+#define BLOCKS_DIR @"blocks"
+#define UPLOADS_DIR @"uploads"
+#define EDIT_DIR @"edit"
+#define THUMB_DIR @"thumb"
+#define TEMP_DIR @"temp"
+
+
 @interface SeafGlobal : NSObject
 
 @property (readonly, strong, nonatomic) NSManagedObjectContext *managedObjectContext;
@@ -30,6 +40,15 @@
 
 - (NSString *)applicationDocumentsDirectory;
 - (NSString *)applicationTempDirectory;
+- (NSString *)uploadsDir;
+- (NSString *)avatarsDir;
+- (NSString *)certsDir;
+- (NSString *)editDir;
+- (NSString *)thumbsDir;
+- (NSString *)objectsDir;
+- (NSString *)blocksDir;
+
+
 - (NSString *)documentPath:(NSString*)fileId;
 - (NSString *)blockPath:(NSString*)blkId;
 

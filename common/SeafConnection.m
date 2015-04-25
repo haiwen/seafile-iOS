@@ -238,7 +238,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (NSString *)certPathForHost:(NSString *)host
 {
     NSString *filename = [NSString stringWithFormat:@"%@.cer", host];
-    NSString *path = [[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"certs"] stringByAppendingPathComponent:filename];
+    NSString *path = [SeafGlobal.sharedObject.certsDir stringByAppendingPathComponent:filename];
     return path;
 }
 
@@ -853,7 +853,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         [SeafGlobal.sharedObject assetForURL:url
                                  resultBlock:^(ALAsset *asset) {
                                      NSString *filename = asset.defaultRepresentation.filename;
-                                     NSString *path = [[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploads"] stringByAppendingPathComponent:filename];
+                                     NSString *path = [SeafGlobal.sharedObject.uploadsDir stringByAppendingPathComponent:filename];
                                      SeafUploadFile *file = [self getUploadfile:path];
                                      file.autoSync = true;
                                      file.asset = asset;

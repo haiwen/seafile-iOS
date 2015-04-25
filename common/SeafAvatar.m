@@ -38,7 +38,7 @@ static NSMutableDictionary *avatarAttrs = nil;
 + (NSMutableDictionary *)avatarAttrs
 {
     if (avatarAttrs == nil) {
-        NSString *attrsFile = [[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"avatars"] stringByAppendingPathComponent:@"avatars.plist"];
+        NSString *attrsFile = [SeafGlobal.sharedObject.avatarsDir stringByAppendingPathComponent:@"avatars.plist"];
         avatarAttrs = [[NSMutableDictionary alloc] initWithContentsOfFile:attrsFile];
         if (!avatarAttrs)
             avatarAttrs = [[NSMutableDictionary alloc] init];
@@ -47,13 +47,13 @@ static NSMutableDictionary *avatarAttrs = nil;
 }
 + (void)saveAvatarAttrs
 {
-    NSString *attrsFile = [[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"avatars"] stringByAppendingPathComponent:@"avatars.plist"];
+    NSString *attrsFile = [SeafGlobal.sharedObject.avatarsDir stringByAppendingPathComponent:@"avatars.plist"];
     [[SeafAvatar avatarAttrs] writeToFile:attrsFile atomically:YES];
 }
 
 + (void)clearCache
 {
-    [Utils clearAllFiles:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"avatars"]];
+    [Utils clearAllFiles:[SeafGlobal.sharedObject.avatarsDir stringByAppendingPathComponent:@"avatars.plist"]];
     avatarAttrs = [[NSMutableDictionary alloc] init];
 }
 
@@ -146,7 +146,7 @@ static NSMutableDictionary *avatarAttrs = nil;
 + (NSString *)pathForAvatar:(SeafConnection *)conn username:(NSString *)username
 {
     NSString *filename = [NSString stringWithFormat:@"%@-%@.jpg", conn.host, username];
-    NSString *path = [[[SeafGlobal.sharedObject applicationDocumentsDirectory]stringByAppendingPathComponent:@"avatars"] stringByAppendingPathComponent:filename];
+    NSString *path = [SeafGlobal.sharedObject.avatarsDir stringByAppendingPathComponent:filename];
     return path;
 }
 
@@ -165,7 +165,7 @@ static NSMutableDictionary *avatarAttrs = nil;
 + (NSString *)pathForAvatar:(SeafConnection *)conn group:(NSString *)group_id
 {
     NSString *filename = [NSString stringWithFormat:@"%@-%@.jpg", conn.host, group_id];
-    NSString *path = [[[SeafGlobal.sharedObject applicationDocumentsDirectory]stringByAppendingPathComponent:@"avatars"] stringByAppendingPathComponent:filename];
+    NSString *path = [SeafGlobal.sharedObject.avatarsDir stringByAppendingPathComponent:filename];
     return path;
 }
 
