@@ -23,10 +23,3 @@
 
 @end
 
-@interface SeafGroupAvatar : SeafAvatar
-- (id)initWithConnection:(SeafConnection *)aConnection group:(NSString *)group_id
-;
-
-+ (NSString *)pathForAvatar:(SeafConnection *)conn group:(NSString *)group_id;
-
-@end

@@ -49,7 +49,7 @@
         cell = [cells objectAtIndex:0];
     }
     SeafConnection *conn = [self.conns objectAtIndex:indexPath.row];
-    cell.imageview.image = [UIImage imageWithContentsOfFile:[conn avatarForEmail:conn.username]];
+    cell.imageview.image = [UIImage imageWithContentsOfFile:conn.avatar];
     cell.serverLabel.text = conn.address;
     cell.emailLabel.text = conn.username;
     cell.accessoryType = UITableViewCellAccessoryNone;

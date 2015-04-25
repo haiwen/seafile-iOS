@@ -136,7 +136,6 @@ static NSMutableDictionary *avatarAttrs = nil;
 @implementation SeafUserAvatar
 - (id)initWithConnection:(SeafConnection *)aConnection username:(NSString *)username
 {
-
     NSString *url = [NSString stringWithFormat:API_URL"/avatars/user/%@/resized/%d/", username, 80];
     NSString *path = [SeafUserAvatar pathForAvatar:aConnection username:username];
     self = [super initWithConnection:aConnection from:url toPath:path];
@@ -152,22 +151,4 @@ static NSMutableDictionary *avatarAttrs = nil;
 
 @end
 
-
-@implementation SeafGroupAvatar
-- (id)initWithConnection:(SeafConnection *)aConnection group:(NSString *)group_id
-{
-    NSString *url = [NSString stringWithFormat:API_URL"/avatars/group/%@/resized/%d/", group_id, 80];
-    NSString *path = [SeafGroupAvatar pathForAvatar:aConnection group:group_id];
-    self = [super initWithConnection:aConnection from:url toPath:path];
-    return self;
-}
-
-+ (NSString *)pathForAvatar:(SeafConnection *)conn group:(NSString *)group_id
-{
-    NSString *filename = [NSString stringWithFormat:@"%@-%@.jpg", conn.host, group_id];
-    NSString *path = [SeafGlobal.sharedObject.avatarsDir stringByAppendingPathComponent:filename];
-    return path;
-}
-
-@end
 

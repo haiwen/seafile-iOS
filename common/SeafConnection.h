@@ -64,12 +64,9 @@ enum MSG_TYPE{
 @property (readonly) BOOL authorized;
 @property (readwrite, nonatomic, getter=isWifiOnly) BOOL wifiOnly;
 @property (readwrite, nonatomic, getter=isAutoSync) BOOL autoSync;
-@property (readonly) NSArray *seafGroups;
-@property (readonly) NSArray *seafContacts;
-@property (readwrite) NSMutableArray *seafReplies;
-@property (readwrite) long long newmsgnum;
 @property (weak) id<SeafPhotoSyncWatcherDelegate> photSyncWatcher;
 @property (readonly) BOOL inAutoSync;
+@property (readonly) NSString *avatar;
 
 
 - (id)initWithUrl:(NSString *)url username:(NSString *)username;
@@ -104,10 +101,6 @@ enum MSG_TYPE{
 - (void)getStarredFiles:(void (^)(NSHTTPURLResponse *response, id JSON))success
                 failure:(void (^)(NSHTTPURLResponse *response, NSError *error))failure;
 
-
-- (void)getSeafGroupAndContacts:(void (^)(NSHTTPURLResponse *response, id JSON))success
-                        failure:(void (^)(NSHTTPURLResponse *response, NSError *error))failure;
-
 - (void)search:(NSString *)keyword
        success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSMutableArray *results))success
        failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure;
@@ -125,12 +118,6 @@ enum MSG_TYPE{
 - (void)removeUploadfile:(SeafUploadFile *)ufile;
 
 - (void)registerDevice:(NSData *)deviceToken;
-
-- (void)downloadAvatars:(NSNumber *)force;
-
-- (NSString *)nickForEmail:(NSString *)email;
-- (NSString *)avatarForEmail:(NSString *)email;
-- (NSString *)avatarForGroup:(NSString *)gid;
 
 // Cache
 - (void)loadCache;

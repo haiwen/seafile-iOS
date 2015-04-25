@@ -20,9 +20,6 @@
 [submodule "libs/EGOTextView"]
     path = libs/EGOTextView
     url=https://github.com/haiwen/EGOTextView.git
-[submodule "libs/MessagesTableViewController"]
-    path = libs/MessagesTableViewController
-    url = https://github.com/haiwen/JSQMessagesViewController.git
 [submodule "libs/SVProgressHUD"]
 	path = libs/SVProgressHUD
 	url = https://github.com/TransitApp/SVProgressHUD

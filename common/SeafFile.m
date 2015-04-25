@@ -435,7 +435,6 @@
         if (self.isImageFile && self.oid) {
             NSString *thumbpath = [self thumbPath:self.oid];
             if (thumbpath && [Utils fileExistsAtPath:thumbpath]) {
-                Debug("ICON: %@", thumbpath);
                 _icon = [UIImage imageWithContentsOfFile:thumbpath];
                 return _icon;
             } else {

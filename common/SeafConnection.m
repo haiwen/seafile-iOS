@@ -89,7 +89,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 @property NSMutableSet *starredFiles;
 @property NSMutableDictionary *uploadFiles;
-@property NSMutableDictionary *email2nickMap;
 @property NSConditionLock *condLock;
 @property AFSecurityPolicy *policy;
 @property NSDate *avatarLastUpdate;
@@ -108,8 +107,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @synthesize loginDelegate = _loginDelegate;
 @synthesize rootFolder = _rootFolder;
 @synthesize starredFiles = _starredFiles;
-@synthesize seafGroups = _seafGroups;
-@synthesize seafContacts = _seafContacts;
 @synthesize policy = _policy;
 
 - (id)init:(NSString *)url
@@ -119,7 +116,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         _rootFolder = [[SeafRepos alloc] initWithConnection:self];
         self.uploadFiles = [[NSMutableDictionary alloc] init];
         _info = [[NSMutableDictionary alloc] init];
-        _email2nickMap = [[NSMutableDictionary alloc] init];
         _avatarLastUpdate = [NSDate dateWithTimeIntervalSince1970:0];
         _syncDir = nil;
         NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
@@ -148,10 +144,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                 [SeafGlobal.sharedObject setObject:ainfo forKey:[NSString stringWithFormat:@"%@/%@", url, username]];
                 [SeafGlobal.sharedObject synchronize];
             }
-        }
-        if ([self authorized]) {
-            if ([_info objectForKey:@"nickname"])
-                [self.email2nickMap setValue:[_info objectForKey:@"nickname"] forKey:self.username];
         }
 
         NSDictionary *settings = [SeafGlobal.sharedObject objectForKey:[NSString stringWithFormat:@"%@/%@/settings", url, username]];
@@ -311,7 +303,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          NSDictionary *account = JSON;
          Debug("account detail:%@", account);
-         [self.email2nickMap setValue:[account objectForKey:@"nickname"] forKey:self.username];
          [_info setObject:[account objectForKey:@"total"] forKey:@"total"];
          [_info setObject:[account objectForKey:@"usage"] forKey:@"usage"];
          [_info setObject:_address forKey:@"link"];
@@ -369,6 +360,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             [_info setObject:_address forKey:@"link"];
             [SeafGlobal.sharedObject setObject:_info forKey:[NSString stringWithFormat:@"%@/%@", _address, username]];
             [SeafGlobal.sharedObject synchronize];
+            [self downloadAvatar:true];
             [self.loginDelegate loginSuccess:self];
         }
     }];
@@ -580,7 +572,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)loadCache
 {
-    [self handleGroupsData:[self getCachedObj:KEY_CONTACTS] fromCache:YES];
     [self handleStarredData:[self getCachedObj:KEY_STARREDFILES]];
 }
 
@@ -647,76 +638,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return YES;
 }
 
-- (BOOL)handleGroupsData:(id)JSON fromCache:(BOOL)fromCache
-{
-    int msgnum = 0;
-    if (!JSON) return YES;
-    NSMutableArray *contacts = [[NSMutableArray alloc] init];
-    NSMutableArray *groups = [[NSMutableArray alloc] init];
-    if (![JSON isKindOfClass:[NSDictionary class]])
-        return NO;
-    for (NSDictionary *info in [JSON objectForKey:@"groups"]) {
-        NSMutableDictionary *dict = [info mutableCopy];
-        [dict setObject:[NSString stringWithFormat:@"%d", MSG_GROUP] forKey:@"type"];
-        if (fromCache)
-            [dict setObject:@"0" forKey:@"msgnum"];
-        else
-            msgnum += [[dict objectForKey:@"msgnum"] integerValue:0];
-        [groups addObject:dict];
-    }
-    for (NSDictionary *info in [JSON objectForKey:@"contacts"]) {
-        NSMutableDictionary *dict = [info mutableCopy];
-        [dict setObject:[NSString stringWithFormat:@"%d", MSG_USER] forKey:@"type"];
-        if (fromCache)
-            [dict setObject:@"0" forKey:@"msgnum"];
-        else
-            msgnum += [[dict objectForKey:@"msgnum"] integerValue:0];
-        [contacts addObject:dict];
-    }
-    _seafGroups = groups;
-    _seafContacts = contacts;
-    self.seafReplies = [[NSMutableArray alloc] init];
-    if (!fromCache) {
-        for (NSDictionary *info in [JSON objectForKey:@"newreplies"]) {
-            NSMutableDictionary *dict = [info mutableCopy];
-            [dict setObject:[NSString stringWithFormat:@"%d", MSG_REPLY] forKey:@"type"];
-            NSString *title = [NSString stringWithFormat:@"New replies from %@", [dict objectForKey:@"name"]];
-            [dict setObject:title forKey:@"name"];
-            msgnum += [[dict objectForKey:@"msgnum"] integerValue:0];
-            [self.seafReplies addObject:dict];
-        }
-    }
-    self.newmsgnum = msgnum;
-    return YES;
-}
-
-- (void)getSeafGroupAndContacts:(void (^)(NSHTTPURLResponse *response, id JSON))success
-                        failure:(void (^)(NSHTTPURLResponse *response, NSError *error))failure
-{
-    [self sendRequest:API_URL"/groupandcontacts/"
-              success:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-         @synchronized(self) {
-             if ([self handleGroupsData:JSON fromCache:NO]) {
-                 for (NSDictionary *c in self.seafContacts) {
-                     if ([c objectForKey:@"name"] && [c objectForKey:@"email"]) {
-                         [self.email2nickMap setValue:[c objectForKey:@"name"] forKey:[c objectForKey:@"email"]];
-                     }
-                 }
-                 NSData *data = [Utils JSONEncode:JSON];
-                 [self savetoCacheKey:KEY_CONTACTS value:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
-             }
-             if (success)
-                 success (response, JSON);
-         }
-     }
-              failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
-         if (failure)
-             failure (response, error);
-     }];
-}
-
 - (SeafRepo *)getRepo:(NSString *)repo
 {
     return [self.rootFolder getRepo:repo];
@@ -781,43 +702,32 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 #endif
 }
 
-- (NSString *)nickForEmail:(NSString *)email
+- (NSString *)realAvatar
 {
-    NSString *nickname = [self.email2nickMap objectForKey:email];
-    return nickname ? nickname : email;
-}
-
-- (NSString *)avatarForEmail:(NSString *)email;
-{
-    NSString *path = [SeafUserAvatar pathForAvatar:self username:email];
+    NSString *path = [SeafUserAvatar pathForAvatar:self username:self.username];
     if ([[NSFileManager defaultManager] fileExistsAtPath:path])
         return path;
+    return nil;
+}
+
+- (NSString *)avatar
+{
+    NSString *path = self.realAvatar;
+    if (path) return path;
+    [self downloadAvatar:false];
     return [[NSBundle mainBundle] pathForResource:@"account" ofType:@"png"];
 }
-- (NSString *)avatarForGroup:(NSString *)gid
-{
-    NSString *path = [SeafGroupAvatar pathForAvatar:self group:gid];
-    if ([[NSFileManager defaultManager] fileExistsAtPath:path])
-        return path;
-    return [[NSBundle mainBundle] pathForResource:@"group" ofType:@"png"];
-}
 
-- (void)downloadAvatars:(NSNumber *)force;
+- (void)downloadAvatar:(BOOL)force;
 {
-    Debug("%@, %d, %ld, %@\n", self.address, [self authorized], (long)self.email2nickMap.count, self.email2nickMap);
+    Debug("%@, %d\n", self.address, [self authorized]);
     if (![self authorized])
         return;
-    if (!force.boolValue && [self.avatarLastUpdate timeIntervalSinceNow] > -24*3600)
+    if (!force && self.realAvatar && [self.avatarLastUpdate timeIntervalSinceNow] > -24*3600)
         return;
-    for (NSString *email in self.email2nickMap.allKeys) {
-        SeafUserAvatar *avatar = [[SeafUserAvatar alloc] initWithConnection:self username:email];
-        [SeafGlobal.sharedObject addDownloadTask:avatar];
-    }
-    for (NSDictionary *dict in self.seafGroups) {
-        NSString *gid = [dict objectForKey:@"id"];
-        SeafGroupAvatar *avatar = [[SeafGroupAvatar alloc] initWithConnection:self group:gid];
-        [SeafGlobal.sharedObject addDownloadTask:avatar];
-    }
+    SeafUserAvatar *avatar = [[SeafUserAvatar alloc] initWithConnection:self username:self.username];
+    [SeafGlobal.sharedObject addDownloadTask:avatar];
+    self.avatarLastUpdate = [NSDate date];
 }
 
 - (void)saveCertificate:(NSURLAuthenticationChallenge *)cha

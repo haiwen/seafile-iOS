@@ -16,14 +16,12 @@
 #import "SeafDetailViewController.h"
 #import "SeafSettingsViewController.h"
 #import "SeafActivityViewController.h"
-#import "SeafDisMasterViewController.h"
 #import "SeafGlobal.h"
 
 enum {
     TABBED_SEAFILE = 0,
     TABBED_STARRED,
     TABBED_ACTIVITY,
-    TABBED_DISCUSSION,
     TABBED_SETTINGS,
     TABBED_ACCOUNTS,
 };
@@ -59,7 +57,6 @@ enum {
 @property (readonly) SeafStarredFilesViewController *starredVC;
 @property (readonly) SeafSettingsViewController *settingVC;
 @property (readonly) SeafActivityViewController *actvityVC;
-@property (readonly) SeafDisMasterViewController *discussVC;
 @property (readonly) MFMailComposeViewController *globalMailComposer;
 @property (readonly) NSData *deviceToken;
 
@@ -71,7 +68,6 @@ enum {
 
 - (void)showDetailView:(UIViewController *) c;
 - (void)cycleTheGlobalMailComposer;
-- (SeafDisDetailViewController *)msgDetailView;
 
 - (BOOL)checkNetworkStatus;
 - (void)checkIconBadgeNumber;

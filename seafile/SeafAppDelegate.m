@@ -9,7 +9,6 @@
 #import <Photos/Photos.h>
 
 #import "SeafAppDelegate.h"
-#import "SeafDisDetailViewController.h"
 #import "SVProgressHUD.h"
 #import "AFNetworking.h"
 #import "Debug.h"
@@ -22,7 +21,6 @@
 
 @property NSInteger moduleIdx;
 @property (readonly) SeafDetailViewController *detailVC;
-@property (readonly) SeafDisDetailViewController *disDetailVC;
 @property (readonly) UINavigationController *disDetailNav;
 @property (strong) NSArray *viewControllers;
 @property (readwrite) SeafGlobal *global;
@@ -56,12 +54,10 @@
             [[self masterNavController:TABBED_STARRED] popToRootViewControllerAnimated:NO];
             [[self masterNavController:TABBED_SETTINGS] popToRootViewControllerAnimated:NO];
             [[self masterNavController:TABBED_ACTIVITY] popToRootViewControllerAnimated:NO];
-            [[self masterNavController:TABBED_DISCUSSION] popToRootViewControllerAnimated:NO];
             self.fileVC.connection = conn;
             self.starredVC.connection = conn;
             self.settingVC.connection = conn;
             self.actvityVC.connection = conn;
-            self.discussVC.connection = conn;
         }
     }
     if (self.deviceToken)
@@ -200,15 +196,6 @@
     Debug("error=%@", error);
 }
 
-- (void)checkIconBadgeNumber
-{
-    int badge = 0;
-    for (SeafConnection *conn in [[SeafGlobal sharedObject] conns]) {
-        badge += conn.newmsgnum;
-    }
-    [UIApplication sharedApplication].applicationIconBadgeNumber = badge;
-}
-
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
 {
     NSString *status = [NSString stringWithFormat:@"Notification received:\n%@",[userInfo description]];
@@ -222,13 +209,11 @@
         if (badgeStr && [badgeStr intValue] > 0) {
             SeafConnection *connection = [[SeafGlobal sharedObject] getConnection:server username:username];
             if (!connection) return;
-            connection.newmsgnum = [badgeStr intValue];
             self.window.rootViewController = self.startNav;
             [self.window makeKeyAndVisible];
             [self.startVC selectAccount:connection];
         }
     }
-    [self checkIconBadgeNumber];
 }
 
 - (void)applicationWillResignActive:(UIApplication *)application
@@ -294,7 +279,6 @@
     UIViewController *starredController = [tabs.viewControllers objectAtIndex:TABBED_STARRED];
     UIViewController *settingsController = [tabs.viewControllers objectAtIndex:TABBED_SETTINGS];
     UINavigationController *activityController = [tabs.viewControllers objectAtIndex:TABBED_ACTIVITY];
-    UIViewController *discussionController = [tabs.viewControllers objectAtIndex:TABBED_DISCUSSION];
     UIViewController *accountvc = [tabs.viewControllers objectAtIndex:TABBED_ACCOUNTS];
 
     fileController.tabBarItem.title = NSLocalizedString(@"Libraries", @"Seafile");
@@ -305,8 +289,6 @@
     settingsController.tabBarItem.image = [UIImage imageNamed:@"tab-settings.png"];
     activityController.tabBarItem.title = NSLocalizedString(@"Activity", @"Seafile");
     activityController.tabBarItem.image = [UIImage imageNamed:@"tab-modify.png"];
-    discussionController.tabBarItem.title = NSLocalizedString(@"Message", @"Seafile");
-    discussionController.tabBarItem.image = [UIImage imageNamed:@"tab-message.png"];
     accountvc.tabBarItem.title = NSLocalizedString(@"Accounts", @"Seafile");
     accountvc.tabBarItem.image = [UIImage imageNamed:@"tab-account.png"];
 
@@ -314,7 +296,6 @@
         ((UISplitViewController *)fileController).delegate = (id)[[((UISplitViewController *)fileController).viewControllers lastObject] topViewController];
         ((UISplitViewController *)starredController).delegate = (id)[[((UISplitViewController *)starredController).viewControllers lastObject] topViewController];
         ((UISplitViewController *)settingsController).delegate = (id)[[((UISplitViewController *)settingsController).viewControllers lastObject] topViewController];
-        ((UISplitViewController *)discussionController).delegate = (id)[[((UISplitViewController *)discussionController).viewControllers lastObject] topViewController];
     }
     self.viewControllers = [NSArray arrayWithArray:tabs.viewControllers];
     _tabbarController = tabs;
@@ -358,10 +339,7 @@
     } else {
         if (!_detailVC)
             _detailVC = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
-        if (!_disDetailVC)
-            _disDetailVC = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DISDETAILVC"];
-        Debug("index=%d %d, %@, %@", index, TABBED_DISCUSSION, _disDetailVC, _detailVC);
-        return (index == TABBED_DISCUSSION) ? (UIViewController *)_disDetailVC : _detailVC;
+        return _detailVC;
     }
 }
 
@@ -378,11 +356,6 @@
 - (SeafActivityViewController *)actvityVC
 {
     return (SeafActivityViewController *)[[self.viewControllers objectAtIndex:TABBED_ACTIVITY] topViewController];
-}
-
-- (SeafDisMasterViewController *)discussVC
-{
-    return (SeafDisMasterViewController *)[[[self masterNavController:TABBED_DISCUSSION] viewControllers] objectAtIndex:0];
 }
 
 - (BOOL)checkNetworkStatus
@@ -406,17 +379,6 @@
     [nc setModalPresentationStyle:UIModalPresentationFullScreen];
     nc.navigationBar.tintColor = BAR_COLOR;
     [self.window.rootViewController presentViewController:nc animated:YES completion:nil];
-}
-
-- (SeafDisDetailViewController *)msgDetailView;
-{
-    if (!IsIpad()) {
-        _disDetailVC = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DISDETAILVC"];
-        _disDetailVC.connection = SeafGlobal.sharedObject.connection;;
-        return _disDetailVC;
-    } else {
-        return (SeafDisDetailViewController *)[self detailViewControllerAtIndex:TABBED_DISCUSSION];
-    }
 }
 
 -(void)cycleTheGlobalMailComposer
