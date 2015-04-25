@@ -37,7 +37,6 @@
 @implementation SeafFile
 @synthesize exportURL = _exportURL;
 @synthesize preViewURL = _preViewURL;
-@synthesize groups = _groups;
 
 - (id)initWithConnection:(SeafConnection *)aConnection
                      oid:(NSString *)anId
@@ -55,24 +54,6 @@
         [self realLoadCache];
     }
     return self;
-}
-
-- (NSArray *)groups
-{
-    if (!_groups) {
-        _groups = [[NSMutableArray alloc] init];
-        for (SeafRepo *r in connection.rootFolder.items) {
-            if ([r.repoId isEqualToString:self.repoId] && [r.repoType isEqualToString:@"grepo"]) {
-                NSMutableDictionary *d = [[NSMutableDictionary alloc] init];
-                [d setObject:r.owner forKey:@"name"];
-                if (!r.gid)
-                    continue;
-                [d setObject:r.gid forKey:@"id"];
-                [_groups addObject:d];
-            }
-        }
-    }
-    return _groups;
 }
 
 - (NSString *)detailText

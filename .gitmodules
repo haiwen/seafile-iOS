@@ -10,10 +10,6 @@
     path = libs/QBImagePickerController
     url = https://github.com/haiwen/QBImagePickerController.git
     ignore = dirty
-[submodule "libs/REComposeViewController"]
-    path = libs/REComposeViewController
-    url = https://github.com/haiwen/REComposeViewController.git
-    ignore = dirty
 [submodule "libs/ios-openssl"]
     path = libs/ios-openssl
     url=https://github.com/st3fan/ios-openssl.git

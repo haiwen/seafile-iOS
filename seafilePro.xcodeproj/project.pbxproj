@@ -91,12 +91,6 @@
 		5732066118EB16F4003250DE /* UIProgressView+AFNetworking.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732065718EB16F4003250DE /* UIProgressView+AFNetworking.m */; };
 		5732066218EB16F4003250DE /* UIRefreshControl+AFNetworking.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732065918EB16F4003250DE /* UIRefreshControl+AFNetworking.m */; };
 		5732066318EB16F4003250DE /* UIWebView+AFNetworking.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732065B18EB16F4003250DE /* UIWebView+AFNetworking.m */; };
-		5732A95E177894E700D806C7 /* DEComposeRuledView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A939177894E700D806C7 /* DEComposeRuledView.m */; };
-		5732A960177894E700D806C7 /* DEComposeTextView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A93B177894E700D806C7 /* DEComposeTextView.m */; };
-		5732A962177894E700D806C7 /* REComposeBackgroundView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A93D177894E700D806C7 /* REComposeBackgroundView.m */; };
-		5732A964177894E700D806C7 /* REComposeSheetView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A93F177894E700D806C7 /* REComposeSheetView.m */; };
-		5732A966177894E700D806C7 /* REComposeViewController.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 5732A940177894E700D806C7 /* REComposeViewController.bundle */; };
-		5732A968177894E700D806C7 /* REComposeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5732A942177894E700D806C7 /* REComposeViewController.m */; };
 		573C3C651A15104B009675F9 /* seafile.entitlements in Resources */ = {isa = PBXBuildFile; fileRef = 573C3C641A15104B009675F9 /* seafile.entitlements */; };
 		573F4AAC1788763500F096D3 /* arrowleft.png in Resources */ = {isa = PBXBuildFile; fileRef = 573F4AA91788763500F096D3 /* arrowleft.png */; };
 		573F4AAE1788763500F096D3 /* arrowright.png in Resources */ = {isa = PBXBuildFile; fileRef = 573F4AAA1788763500F096D3 /* arrowright.png */; };
@@ -502,17 +496,6 @@
 		5732065918EB16F4003250DE /* UIRefreshControl+AFNetworking.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIRefreshControl+AFNetworking.m"; sourceTree = "<group>"; };
 		5732065A18EB16F4003250DE /* UIWebView+AFNetworking.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIWebView+AFNetworking.h"; sourceTree = "<group>"; };
 		5732065B18EB16F4003250DE /* UIWebView+AFNetworking.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIWebView+AFNetworking.m"; sourceTree = "<group>"; };
-		5732A938177894E700D806C7 /* DEComposeRuledView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DEComposeRuledView.h; sourceTree = "<group>"; };
-		5732A939177894E700D806C7 /* DEComposeRuledView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DEComposeRuledView.m; sourceTree = "<group>"; };
-		5732A93A177894E700D806C7 /* DEComposeTextView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DEComposeTextView.h; sourceTree = "<group>"; };
-		5732A93B177894E700D806C7 /* DEComposeTextView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DEComposeTextView.m; sourceTree = "<group>"; };
-		5732A93C177894E700D806C7 /* REComposeBackgroundView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = REComposeBackgroundView.h; sourceTree = "<group>"; };
-		5732A93D177894E700D806C7 /* REComposeBackgroundView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = REComposeBackgroundView.m; sourceTree = "<group>"; };
-		5732A93E177894E700D806C7 /* REComposeSheetView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = REComposeSheetView.h; sourceTree = "<group>"; };
-		5732A93F177894E700D806C7 /* REComposeSheetView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = REComposeSheetView.m; sourceTree = "<group>"; };
-		5732A940177894E700D806C7 /* REComposeViewController.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = REComposeViewController.bundle; sourceTree = "<group>"; };
-		5732A941177894E700D806C7 /* REComposeViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = REComposeViewController.h; sourceTree = "<group>"; };
-		5732A942177894E700D806C7 /* REComposeViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = REComposeViewController.m; sourceTree = "<group>"; };
 		57335CF8160DA00000018AE8 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		57396B7E1657E3850089F32F /* FileTypeIcons.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = FileTypeIcons.plist; sourceTree = "<group>"; };
 		57396FFE1657ECDA0089F32F /* unknown-file.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "unknown-file.png"; sourceTree = "<group>"; };
@@ -1011,7 +994,6 @@
 				57E228461A0E286100C92330 /* QBImagePickerController */,
 				576B98FA1861411700A16ED6 /* EGOTextView */,
 				5725186417AEA6E90078CD12 /* libcrypto.a */,
-				5732A934177894E700D806C7 /* REComposeViewController */,
 				576D89DF15E39ED700F2BD17 /* EGOTableViewPullRefresh */,
 				57094B5615B9AC4A00F48C08 /* AFNetworking */,
 			);
@@ -1173,32 +1155,6 @@
 				5732065B18EB16F4003250DE /* UIWebView+AFNetworking.m */,
 			);
 			path = "UIKit+AFNetworking";
-			sourceTree = "<group>";
-		};
-		5732A934177894E700D806C7 /* REComposeViewController */ = {
-			isa = PBXGroup;
-			children = (
-				5732A937177894E700D806C7 /* REComposeViewController */,
-			);
-			path = REComposeViewController;
-			sourceTree = "<group>";
-		};
-		5732A937177894E700D806C7 /* REComposeViewController */ = {
-			isa = PBXGroup;
-			children = (
-				5732A938177894E700D806C7 /* DEComposeRuledView.h */,
-				5732A939177894E700D806C7 /* DEComposeRuledView.m */,
-				5732A93A177894E700D806C7 /* DEComposeTextView.h */,
-				5732A93B177894E700D806C7 /* DEComposeTextView.m */,
-				5732A93C177894E700D806C7 /* REComposeBackgroundView.h */,
-				5732A93D177894E700D806C7 /* REComposeBackgroundView.m */,
-				5732A93E177894E700D806C7 /* REComposeSheetView.h */,
-				5732A93F177894E700D806C7 /* REComposeSheetView.m */,
-				5732A940177894E700D806C7 /* REComposeViewController.bundle */,
-				5732A941177894E700D806C7 /* REComposeViewController.h */,
-				5732A942177894E700D806C7 /* REComposeViewController.m */,
-			);
-			path = REComposeViewController;
 			sourceTree = "<group>";
 		};
 		57396B7D1657E3850089F32F /* Resources */ = {
@@ -1858,7 +1814,6 @@
 				57BFAB0618BD8EA200EB1B5C /* bt-outdent.png in Resources */,
 				57E229E11A1108B200C92330 /* FileMimeType.plist in Resources */,
 				57943C1419F027D5008423E5 /* star2@2x.png in Resources */,
-				5732A966177894E700D806C7 /* REComposeViewController.bundle in Resources */,
 				57943C0F19F027D5008423E5 /* refresh@2x.png in Resources */,
 				57A550DB177F23BB00E3BA9B /* refresh.png in Resources */,
 				57BFAAF818BD8EA200EB1B5C /* bt-image.png in Resources */,
@@ -2007,14 +1962,9 @@
 				57535235198CD4FF000BE07B /* DACircularProgressView.m in Sources */,
 				5732066218EB16F4003250DE /* UIRefreshControl+AFNetworking.m in Sources */,
 				57E2288F1A0E286200C92330 /* QBImagePickerController.m in Sources */,
-				5732A95E177894E700D806C7 /* DEComposeRuledView.m in Sources */,
-				5732A960177894E700D806C7 /* DEComposeTextView.m in Sources */,
 				57E229B51A11087500C92330 /* seafile.xcdatamodeld in Sources */,
 				5732064418EB11CA003250DE /* AFHTTPSessionManager.m in Sources */,
 				57E229E71A1108B200C92330 /* NSData+Encryption.m in Sources */,
-				5732A962177894E700D806C7 /* REComposeBackgroundView.m in Sources */,
-				5732A964177894E700D806C7 /* REComposeSheetView.m in Sources */,
-				5732A968177894E700D806C7 /* REComposeViewController.m in Sources */,
 				57ACEEDA1A28B1BF0053A94A /* SVProgressHUD.m in Sources */,
 				57535231198CD4E0000BE07B /* MWTapDetectingView.m in Sources */,
 				5732066318EB16F4003250DE /* UIWebView+AFNetworking.m in Sources */,

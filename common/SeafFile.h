@@ -39,7 +39,6 @@
 @property (readonly) NSString *detailText;
 @property (readonly) long long filesize;
 @property (readonly) long long mtime;
-@property (readonly) NSMutableArray *groups;
 @property (strong) id <SeafFileUpdateDelegate> udelegate;
 
 - (BOOL)isStarred;
