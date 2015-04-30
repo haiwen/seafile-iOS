@@ -89,12 +89,13 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 @property NSMutableSet *starredFiles;
 @property NSMutableDictionary *uploadFiles;
-@property NSConditionLock *condLock;
 @property AFSecurityPolicy *policy;
 @property NSDate *avatarLastUpdate;
 @property NSMutableDictionary *settings;
 
 @property BOOL inCheckPhotoss;
+@property BOOL inCheckCert;
+
 @property NSMutableArray *photosArray;
 @property NSMutableArray *uploadingArray;
 @property SeafDir *syncDir;
@@ -108,6 +109,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @synthesize rootFolder = _rootFolder;
 @synthesize starredFiles = _starredFiles;
 @synthesize policy = _policy;
+@synthesize loginMgr = _loginMgr;
 
 - (id)init:(NSString *)url
 {
@@ -249,6 +251,43 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return SeafPolicyFromFile(path);
 }
 
+- (AFHTTPSessionManager *)loginMgr
+{
+    NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
+    configuration.TLSMinimumSupportedProtocol = kTLSProtocol1;
+
+    AFHTTPSessionManager *manager = [[AFHTTPSessionManager alloc] initWithSessionConfiguration:configuration];
+    [manager setSessionDidReceiveAuthenticationChallengeBlock:^NSURLSessionAuthChallengeDisposition(NSURLSession *session, NSURLAuthenticationChallenge *challenge, NSURLCredential *__autoreleasing *credential) {
+        if (SeafGlobal.sharedObject.allowInvalidCert) return NSURLSessionAuthChallengeUseCredential;
+
+        if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
+            *credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
+            if (SeafServerTrustIsValid(challenge.protectionSpace.serverTrust)) {
+                [[NSFileManager defaultManager] removeItemAtPath:[self certPathForHost:self.host] error:nil];
+                SecCertificateRef cer = SecTrustGetCertificateAtIndex(challenge.protectionSpace.serverTrust, 0);
+                self.policy = SeafPolicyFromCert(cer);
+                return NSURLSessionAuthChallengeUseCredential;
+            } else {
+                if (!self.delegate) return NSURLSessionAuthChallengeCancelAuthenticationChallenge;
+                @synchronized(self) {
+                    if (self.inCheckCert)
+                        return NSURLSessionAuthChallengeCancelAuthenticationChallenge;
+                    self.inCheckCert = true;
+                }
+                BOOL yes = [self.delegate continueWithInvalidCert:challenge.protectionSpace];
+                NSURLSessionAuthChallengeDisposition dis = yes?NSURLSessionAuthChallengeUseCredential: NSURLSessionAuthChallengeCancelAuthenticationChallenge;
+                if (yes)
+                    [self saveCertificate:challenge.protectionSpace];
+
+                self.inCheckCert = false;
+                return dis;
+            }
+        }
+        return NSURLSessionAuthChallengePerformDefaultHandling;
+    }];
+    return manager;
+}
+
 - (AFSecurityPolicy *)policy
 {
     return _policy;
@@ -347,12 +386,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     NSString *url = anAddress ? anAddress : _address;
     NSMutableURLRequest *request = [self loginRequest:url username:username password:password];
-    NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
-    configuration.TLSMinimumSupportedProtocol = kTLSProtocol1;
+    self.loginMgr.responseSerializer = [AFJSONResponseSerializer serializer];
 
-    AFURLSessionManager *manager = [[AFURLSessionManager alloc] initWithSessionConfiguration:configuration];
-    manager.responseSerializer = [AFJSONResponseSerializer serializer];
-    NSURLSessionDataTask *dataTask = [manager dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
+    NSURLSessionDataTask *dataTask = [self.loginMgr dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
         if (error) {
             Warning("Error: %@", error);
             [self.loginDelegate loginFailed:self error:((NSHTTPURLResponse *)response).statusCode];
@@ -369,48 +405,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         }
     }];
 
-    [manager setSessionDidReceiveAuthenticationChallengeBlock:^NSURLSessionAuthChallengeDisposition(NSURLSession *session, NSURLAuthenticationChallenge *challenge, NSURLCredential *__autoreleasing *credential) {
-        if (SeafGlobal.sharedObject.allowInvalidCert) return NSURLSessionAuthChallengeUseCredential;
-
-        if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
-            *credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
-            if (SeafServerTrustIsValid(challenge.protectionSpace.serverTrust)) {
-                [[NSFileManager defaultManager] removeItemAtPath:[self certPathForHost:self.host] error:nil];
-                SecCertificateRef cer = SecTrustGetCertificateAtIndex(challenge.protectionSpace.serverTrust, 0);
-                self.policy = SeafPolicyFromCert(cer);
-                return NSURLSessionAuthChallengeUseCredential;
-            } else {
-                if (!self.delegate) return NSURLSessionAuthChallengeCancelAuthenticationChallenge;
-                @synchronized(self) {
-                    if (self.condLock)
-                        return NSURLSessionAuthChallengeCancelAuthenticationChallenge;
-                    self.condLock = [[NSConditionLock alloc] initWithCondition:false];;
-                }
-
-                NSString *title = [NSString stringWithFormat:NSLocalizedString(@"%@ can't verify the identity of the website \"%@\"", @"Seafile"), APP_NAME, challenge.protectionSpace.host];
-                NSString *msg = NSLocalizedString(@"The certificate from this website is invalid. Would you like to connect to the server anyway?", @"Seafile");
-
-                NSConditionLock *lock = self.condLock;
-                __block NSURLSessionAuthChallengeDisposition dis;
-                [self.delegate continueWithInvalidCert:title message:msg yes:^{
-                    [self saveCertificate:challenge];
-                    dis = NSURLSessionAuthChallengeUseCredential;
-                    [self.condLock lock];
-                    [self.condLock unlockWithCondition:true];
-                } no:^{
-                    dis = NSURLSessionAuthChallengeCancelAuthenticationChallenge;
-                    [self.condLock lock];
-                    [self.condLock unlockWithCondition:true];
-
-                }];
-                [lock lockWhenCondition:true];
-                [lock unlock];
-                self.condLock = nil;
-                return dis;
-            }
-        }
-        return NSURLSessionAuthChallengePerformDefaultHandling;
-    }];
     [dataTask resume];
 }
 
@@ -736,11 +730,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     self.avatarLastUpdate = [NSDate date];
 }
 
-- (void)saveCertificate:(NSURLAuthenticationChallenge *)cha
+- (void)saveCertificate:(NSURLProtectionSpace *)protectionSpace
 {
-    SecCertificateRef cer = SecTrustGetCertificateAtIndex(cha.protectionSpace.serverTrust, 0);
+    SecCertificateRef cer = SecTrustGetCertificateAtIndex(protectionSpace.serverTrust, 0);
     NSData* data = (__bridge NSData*) SecCertificateCopyData(cer);
-    NSString *path = [self certPathForHost:cha.protectionSpace.host];
+    NSString *path = [self certPathForHost:protectionSpace.host];
     BOOL ret = [data writeToFile:path atomically:YES];
     if (!ret) {
         Warning("Failed to save certificate to %@", path);

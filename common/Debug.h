@@ -15,7 +15,7 @@
 
 #define API_URL  @"/api2"
 #if DEBUG
-#define Debug(fmt, args...) NSLog(@"#%d %s:" fmt, __LINE__, __FUNCTION__, ##args)
+#define Debug(fmt, args...) NSLog(@"#%d %s %@:" fmt, __LINE__, __FUNCTION__, [NSThread currentThread], ##args)
 #else
 #define Debug(fmt, args...) do{}while(0)
 #endif

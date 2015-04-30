@@ -109,7 +109,6 @@
          [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
     else
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(checkPhotoChanges:) name:ALAssetsLibraryChangedNotification object:SeafGlobal.sharedObject.assetsLibrary];
-
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
@@ -400,10 +399,17 @@
     });
 }
 
-- (void)continueWithInvalidCert:(NSString *)title message:(NSString*)message yes:(void (^)())yes no:(void (^)())no
+- (void)continueWithInvalidCert:(NSURLProtectionSpace *)protectionSpace yes:(void (^)())yes no:(void (^)())no
 {
+    NSString *title = [NSString stringWithFormat:NSLocalizedString(@"%@ can't verify the identity of the website \"%@\"", @"Seafile"), APP_NAME, protectionSpace.host];
+    NSString *message = NSLocalizedString(@"The certificate from this website is invalid. Would you like to connect to the server anyway?", @"Seafile");
+
+    UIViewController *c = self.window.rootViewController;
+    if (self.window.rootViewController.presentedViewController) {
+        c = self.window.rootViewController.presentedViewController;
+    }
     if (ios8)
-        [Utils alertWithTitle:title message:message yes:yes no:no from:self.window.rootViewController];
+        [Utils alertWithTitle:title message:message yes:yes no:no from:c];
     else {
         self.handler_ok = yes;
         self.handler_cancel = no;
@@ -411,6 +417,23 @@
         alert.alertViewStyle = UIAlertViewStyleDefault;
         [alert show];
     }
+}
+- (BOOL)continueWithInvalidCert:(NSURLProtectionSpace *)protectionSpace
+{
+    __block BOOL ret = false;
+
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    [self continueWithInvalidCert:protectionSpace yes:^{
+        ret = true;
+        dispatch_semaphore_signal(semaphore);
+    } no:^{
+        ret = false;
+        dispatch_semaphore_signal(semaphore);
+    }];
+
+    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+
+    return ret;
 }
 
 #pragma mark - UIAlertViewDelegate
@@ -440,5 +463,6 @@
 {
     [_monitors addObject:monitor];
 }
+
 
 @end

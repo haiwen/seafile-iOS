@@ -42,7 +42,9 @@ enum MSG_TYPE{
 
 @protocol SeafConnectionDelegate <NSObject>
 - (void)loginRequired:(SeafConnection *)connection;
-- (void)continueWithInvalidCert:(NSString *)title message:(NSString*)message yes:(void (^)())yes no:(void (^)())no;
+- (void)continueWithInvalidCert:(NSURLProtectionSpace *)protectionSpace yes:(void (^)())yes no:(void (^)())no;
+- (BOOL)continueWithInvalidCert:(NSURLProtectionSpace *)protectionSpace;
+
 @end
 
 
@@ -55,6 +57,7 @@ enum MSG_TYPE{
 @property (weak) id <SeafConnectionDelegate> delegate;
 @property (strong) SeafRepos *rootFolder;
 @property (readonly) AFHTTPSessionManager *sessionMgr;
+@property (readonly) AFHTTPSessionManager *loginMgr;
 @property (readonly) NSString *username;
 @property (readonly) NSString *password;
 @property (readonly) NSString *host;
@@ -69,6 +72,7 @@ enum MSG_TYPE{
 @property (readonly) NSString *avatar;
 
 
+- (id)init:(NSString *)url;
 - (id)initWithUrl:(NSString *)url username:(NSString *)username;
 - (void)loadRepos:(id)degt;
 

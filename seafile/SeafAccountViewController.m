@@ -8,6 +8,7 @@
 
 #import "SeafAppDelegate.h"
 #import "SeafAccountViewController.h"
+#import "SeafShibbolethViewController.h"
 #import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
 #import "SeafRepos.h"
@@ -16,12 +17,12 @@
 #define HTTP @"http://"
 #define HTTPS @"https://"
 
-@interface SeafAccountViewController ()<SeafConnectionDelegate>
+@interface SeafAccountViewController ()<SeafLoginDelegate>
 @property (strong, nonatomic) IBOutlet UITextField *serverTextField;
 @property (strong, nonatomic) IBOutlet UITextField *usernameTextField;
 @property (strong, nonatomic) IBOutlet UITextField *passwordTextField;
 @property (strong, nonatomic) IBOutlet UIButton *loginButton;
-@property (strong, nonatomic) IBOutlet UIButton *cancelButton;
+@property (strong, nonatomic) IBOutlet UIButton *shibButton;
 @property (strong, nonatomic) IBOutlet UILabel *msgLabel;
 @property StartViewController *startController;
 @property SeafConnection *connection;
@@ -30,7 +31,7 @@
 
 @implementation SeafAccountViewController
 @synthesize loginButton;
-@synthesize cancelButton;
+@synthesize shibButton;
 @synthesize serverTextField;
 @synthesize usernameTextField;
 @synthesize passwordTextField;
@@ -54,6 +55,24 @@
     connection.loginDelegate = nil;
     [SVProgressHUD dismiss];
     [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (IBAction)shibboleth:(id)sender
+{
+    NSString *url = serverTextField.text;
+    if (!url || url.length < 1) {
+        [self alertWithTitle:NSLocalizedString(@"Server must not be empty", @"Seafile")];
+        return;
+    }
+    if (![url hasPrefix:HTTP] && ![url hasPrefix:HTTPS]) {
+        [self alertWithTitle:NSLocalizedString(@"Invalid Server", @"Seafile")];
+        return;
+    }
+    SeafConnection *conn = [[SeafConnection alloc] init:url];
+    conn.loginDelegate = self;
+    conn.delegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    SeafShibbolethViewController *c = [[SeafShibbolethViewController alloc] init:conn];
+    [self.navigationController pushViewController:c animated:true];
 }
 
 - (IBAction)login:(id)sender
@@ -86,7 +105,7 @@
     if (!self.connection)
         connection = [[SeafConnection alloc] initWithUrl:url username:username];
     connection.loginDelegate = self;
-    connection.delegate = self;
+    connection.delegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [connection loginWithAddress:url username:username password:password];
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Connecting to server", @"Seafile")];
 }
@@ -101,23 +120,26 @@
         v.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin| UIViewAutoresizingFlexibleRightMargin
         | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
     }
+    UIBarButtonItem *cancelItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancel:)];
+    self.navigationItem.leftBarButtonItem = cancelItem;
+
     if (ios7) {
         loginButton.layer.borderColor = [[UIColor lightGrayColor] CGColor];
         loginButton.layer.borderWidth = 0.5f;
         loginButton.layer.cornerRadius = 5.0f;
-        cancelButton.layer.borderColor = [[UIColor lightGrayColor] CGColor];
-        cancelButton.layer.borderWidth = 0.5f;
-        cancelButton.layer.cornerRadius = 5.0f;
+        shibButton.layer.borderColor = [[UIColor lightGrayColor] CGColor];
+        shibButton.layer.borderWidth = 0.5f;
+        shibButton.layer.cornerRadius = 5.0f;
     } else {
         loginButton.reversesTitleShadowWhenHighlighted = NO;
-        cancelButton.reversesTitleShadowWhenHighlighted = NO;
+        shibButton.reversesTitleShadowWhenHighlighted = NO;
         loginButton.tintColor=[UIColor whiteColor];
-        cancelButton.tintColor=[UIColor whiteColor];
+        shibButton.tintColor=[UIColor whiteColor];
     }
     [loginButton setTitle:NSLocalizedString(@"Login", @"Seafile") forState:UIControlStateNormal];
     [loginButton setTitle:NSLocalizedString(@"Login", @"Seafile") forState:UIControlStateHighlighted];
-    [cancelButton setTitle:NSLocalizedString(@"Cancel", @"Seafile") forState:UIControlStateNormal];
-    [cancelButton setTitle:NSLocalizedString(@"Cancel", @"Seafile") forState:UIControlStateHighlighted];
+    [shibButton setTitle:NSLocalizedString(@"Shibboleth", @"Seafile") forState:UIControlStateNormal];
+    [shibButton setTitle:NSLocalizedString(@"Shibboleth", @"Seafile") forState:UIControlStateHighlighted];
 
 
     _msgLabel.text = NSLocalizedString(@"For example: https://seacloud.cc or http://192.168.1.24:8000", @"Seafile");
@@ -153,7 +175,7 @@
             serverTextField.text = @"https://cloud.seafile.com";
         else {
 #if DEBUG
-            serverTextField.text = @"https://dev.seafile.com/seahub/";
+            serverTextField.text = @"https://dev2.seafile.com/seahub/";
             usernameTextField.text = @"demo@seafile.com";
             passwordTextField.text = @"demo";
 #endif
@@ -178,7 +200,7 @@
     [self setUsernameTextField:nil];
     [self setPasswordTextField:nil];
     [self setLoginButton:nil];
-    [self setCancelButton:nil];
+    [self setShibButton:nil];
     [super viewDidUnload];
 }
 
@@ -222,16 +244,6 @@
         [self login:nil];
     }
     return YES;
-}
-
-#pragma - SeafConnectionDelegate
-- (void)loginRequired:(SeafConnection *)connection
-{
-}
-
-- (void)continueWithInvalidCert:(NSString *)title message:(NSString*)message yes:(void (^)())yes no:(void (^)())no
-{
-    [self alertWithTitle:title message:message yes:yes no:no];
 }
 
 @end
