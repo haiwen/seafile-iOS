@@ -25,6 +25,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 @property (strong, readonly) NSURL *preViewURL;
 @property (strong) NSURLSessionUploadTask *task;
 @property (strong) NSProgress *progress;
+@property long long mtime;
 @end
 
 @implementation SeafUploadFile
@@ -40,6 +41,11 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         _uploading = NO;
         _autoSync = NO;
         self.update = [[self.uploadAttr objectForKey:@"update"] boolValue];
+        if ([self.uploadAttr objectForKey:@"mtime"] != nil) {
+            self.mtime = [[self.uploadAttr objectForKey:@"mtime"] longLongValue];
+        } else {
+            self.mtime = [[NSDate date] timeIntervalSince1970];
+        }
     }
     return self;
 }
@@ -122,6 +128,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         [dict setObject:self.name forKey:@"name"];
     }
     [dict setObject:[NSNumber numberWithDouble:[[NSDate date] timeIntervalSince1970]]forKey:@"utime"];
+    [dict setObject:[NSNumber numberWithLongLong:self.mtime] forKey:@"mtime"];
     [dict setObject:[NSNumber numberWithBool:result] forKey:@"result"];
     [dict setObject:[NSNumber numberWithBool:self.autoSync] forKey:@"autoSync"];
     [self saveAttr:dict flush:true];

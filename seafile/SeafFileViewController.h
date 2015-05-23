@@ -24,6 +24,9 @@ enum {
 
 #define S_MKDIR NSLocalizedString(@"New Folder", @"Seafile")
 #define S_NEWFILE NSLocalizedString(@"New File", @"Seafile")
+#define S_SORT_NAME NSLocalizedString(@"Sort By Name", @"Seafile")
+#define S_SORT_MTIME NSLocalizedString(@"Sort By Last Modifed Time", @"Seafile")
+
 #define S_RENAME NSLocalizedString(@"Rename", @"Seafile")
 #define S_EDIT NSLocalizedString(@"Edit", @"Seafile")
 #define S_DELETE NSLocalizedString(@"Delete", @"Seafile")

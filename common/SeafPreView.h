@@ -31,6 +31,8 @@
 - (void)unload;
 - (BOOL)hasCache;
 - (BOOL)isImageFile;
+- (long long) mtime;
+
 
 - (void)load:(id<SeafDentryDelegate>)delegate force:(BOOL)force;
 @end

@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "SeafDateFormatter.h"
+#import "Debug.h"
 
 #define unitFlags  (NSCalendarUnitYear | NSCalendarUnitMonth |  NSCalendarUnitDay)
 
@@ -22,7 +23,7 @@ static SeafDateFormatter *sharedLoader = nil;
 {
     if (sharedLoader == nil) {
         sharedLoader = [[SeafDateFormatter alloc] init];
-        [sharedLoader setDateFormat:@"MMM d"];
+        [sharedLoader setDateFormat:@"MMM d yyyy"];
     }
     return sharedLoader;
 }
@@ -40,7 +41,7 @@ static SeafDateFormatter *sharedLoader = nil;
 {
     if (sharedLoaderSameYear == nil) {
         sharedLoaderSameYear = [[SeafDateFormatter alloc] init];
-        [sharedLoaderSameYear setDateFormat:@"MMM d yyyy"];
+        [sharedLoaderSameYear setDateFormat:@"MMM d"];
     }
     return sharedLoaderSameYear;
 }
@@ -51,8 +52,8 @@ static SeafDateFormatter *sharedLoader = nil;
     NSCalendar* calendar = [NSCalendar currentCalendar];
     NSDateComponents* comp1 = [calendar components:unitFlags fromDate:date];
     NSDateComponents* comp2 = [calendar components:unitFlags fromDate:[NSDate date]];
-    BOOL sameYear = [comp1 day] == [comp2 day];
-    BOOL sameDay = sameYear &&  ([comp1 month] == [comp2 month]) && ([comp1 year]  == [comp2 year]);
+    BOOL sameYear = [comp1 year] == [comp2 year];
+    BOOL sameDay = sameYear &&  ([comp1 month] == [comp2 month]) && ([comp1 day]  == [comp2 day]);
     if (sameDay)
         return [[SeafDateFormatter sharedLoaderSameDay] stringFromDate:date];
     else if(sameYear)

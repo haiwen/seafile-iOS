@@ -11,6 +11,7 @@
 #import <CoreData/CoreData.h>
 #import <AssetsLibrary/AssetsLibrary.h>
 #import "SeafConnection.h"
+#import "SeafPreView.h"
 
 #define OBJECTS_DIR @"objects"
 #define AVATARS_DIR @"avatars"
@@ -90,6 +91,7 @@
 - (void)migrate;
 - (void)assetForURL:(NSURL *)assetURL resultBlock:(ALAssetsLibraryAssetForURLResultBlock)resultBlock failureBlock:(ALAssetsLibraryAccessFailureBlock)failureBlock;
 
+- (NSComparisonResult)compare:(id<SeafPreView>)item with:(id<SeafPreView>)other;
 
 @end
 

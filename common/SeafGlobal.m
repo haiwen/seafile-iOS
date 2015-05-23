@@ -630,4 +630,13 @@
                         }];
 }
 
+- (NSComparisonResult)compare:(id<SeafPreView>)obj1 with:(id<SeafPreView>)obj2
+{
+    NSString *key = [SeafGlobal.sharedObject objectForKey:@"SORT_KEY"];
+    if ([@"MTIME" caseInsensitiveCompare:key] == NSOrderedSame) {
+        return [[NSNumber numberWithLongLong:obj1.mtime] compare:[NSNumber numberWithLongLong:obj2.mtime]];
+    }
+    return [obj1.name caseInsensitiveCompare:obj2.name];
+}
+
 @end

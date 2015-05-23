@@ -18,6 +18,24 @@
 #import "Utils.h"
 #import "Debug.h"
 
+
+static NSComparator CMP = ^(id obj1, id obj2) {
+    if (([obj1 class] == [SeafDir class]) && ([obj2 class] == [SeafDir class])) {
+        return [[(SeafDir *)obj1 name] caseInsensitiveCompare:[(SeafDir *)obj2 name]];
+    } else if (([obj1 class] == [SeafDir class]) || ([obj2 class] == [SeafDir class])) {
+        if ([obj1 isKindOfClass:[SeafDir class]]) {
+            return NSOrderedAscending;
+        } else {
+            return NSOrderedDescending;
+        }
+    } else {
+        if ([obj1 conformsToProtocol:@protocol(SeafPreView)] && [obj2 conformsToProtocol:@protocol(SeafPreView)]) {
+            return [SeafGlobal.sharedObject compare:obj1 with:obj2];
+        }
+    }
+    return NSOrderedSame;
+};
+
 @interface SeafDir ()
 
 @end
@@ -162,35 +180,30 @@
 {
     int i;
     for (i = 1; i < [items count]; ++i) {
-        SeafBase *obj1 = (SeafBase*)[items objectAtIndex:i-1];
-        SeafBase *obj2 = (SeafBase*)[items objectAtIndex:i];
-        if ([obj1 class] == [obj2 class]) {
-            if ([obj1.key caseInsensitiveCompare:obj2.key] != NSOrderedAscending)
-                return NO;
-        } else {
-            if (![obj1 isKindOfClass:[SeafDir class]])
-                return NO;
-        }
+        id obj1 = (SeafBase*)[items objectAtIndex:i-1];
+        id obj2 = (SeafBase*)[items objectAtIndex:i];
+        if (CMP(obj1, obj2) == NSOrderedDescending)
+            return NO;
     }
     return YES;
 }
 
-- (void)loadedItems:(NSMutableArray *)items
+- (void)sortItems:(NSMutableArray *)items
 {
     if ([self checkSorted:items] == NO) {
-        [items sortUsingComparator:(NSComparator)^NSComparisonResult(id obj1, id obj2){
-            if ([obj1 class]==[obj2 class]) {
-                return [((SeafBase*)obj1).key caseInsensitiveCompare:((SeafBase*)obj2).key];
-            } else {
-                if ([obj1 isKindOfClass:[SeafDir class]]) {
-                    return NSOrderedAscending;
-                } else {
-                    return NSOrderedDescending;
-                }
-            }
-            return NSOrderedSame;
-        }];
+        [items sortUsingComparator:CMP];
     }
+}
+
+- (void)reSortItems
+{
+    _allItems = nil;
+    [self sortItems:_items];
+}
+
+- (void)loadedItems:(NSMutableArray *)items
+{
+    [self sortItems:items];
     [self updateItems:items];
 }
 
@@ -354,18 +367,7 @@
     [_allItems addObjectsFromArray:_items];
     [_allItems addObjectsFromArray:self.uploadItems];
     if ([self checkSorted:_allItems] == NO) {
-        [_allItems sortUsingComparator:(NSComparator)^NSComparisonResult(id obj1, id obj2){
-            if (([obj1 class] == [SeafDir class]) || ([obj2 class] == [SeafDir class])) {
-                if ([obj1 isKindOfClass:[SeafDir class]]) {
-                    return NSOrderedAscending;
-                } else {
-                    return NSOrderedDescending;
-                }
-            } else {
-                return [[obj1 key] caseInsensitiveCompare:[obj2 key]];
-            }
-            return NSOrderedSame;
-        }];
+        [_allItems sortUsingComparator:CMP];
     }
     return _allItems;
 }
