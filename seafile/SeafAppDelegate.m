@@ -113,6 +113,7 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+    Debug("%@", [[NSBundle mainBundle] infoDictionary]);
     _global = [SeafGlobal sharedObject];
     [_global migrate];
     [self initTabController];
@@ -418,24 +419,24 @@
         [alert show];
     }
 }
+
 - (BOOL)continueWithInvalidCert:(NSURLProtectionSpace *)protectionSpace
 {
     __block BOOL ret = false;
-
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    [self continueWithInvalidCert:protectionSpace yes:^{
-        ret = true;
-        dispatch_semaphore_signal(semaphore);
-    } no:^{
-        ret = false;
-        dispatch_semaphore_signal(semaphore);
-    }];
-
+    dispatch_block_t block = ^{
+        [self continueWithInvalidCert:protectionSpace yes:^{
+            ret = true;
+            dispatch_semaphore_signal(semaphore);
+        } no:^{
+            ret = false;
+            dispatch_semaphore_signal(semaphore);
+        }];
+    };
+    block();
     dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
-
     return ret;
 }
-
 #pragma mark - UIAlertViewDelegate
 - (void)alertView:(UIAlertView *)alertView willDismissWithButtonIndex:(NSInteger)buttonIndex
 {

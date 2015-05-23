@@ -10,7 +10,7 @@
 
 @interface SeafShibbolethViewController : UIViewController
 
-- (id)init:(SeafConnection *)conn;
+- (id)init:(SeafConnection *)sconn;
 - (void)start;
 
 @end

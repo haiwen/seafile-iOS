@@ -72,5 +72,6 @@ enum {
 - (BOOL)checkNetworkStatus;
 
 - (void)addBackgroundMonitor:(id<SeafBackgroundMonitor>)monitor;
+- (void)continueWithInvalidCert:(NSURLProtectionSpace *)protectionSpace yes:(void (^)())yes no:(void (^)())no;
 
 @end

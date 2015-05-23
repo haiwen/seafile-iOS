@@ -42,7 +42,6 @@ enum MSG_TYPE{
 
 @protocol SeafConnectionDelegate <NSObject>
 - (void)loginRequired:(SeafConnection *)connection;
-- (void)continueWithInvalidCert:(NSURLProtectionSpace *)protectionSpace yes:(void (^)())yes no:(void (^)())no;
 - (BOOL)continueWithInvalidCert:(NSURLProtectionSpace *)protectionSpace;
 
 @end
@@ -52,7 +51,7 @@ enum MSG_TYPE{
 
 
 @property (readonly, retain) NSMutableDictionary *info;
-@property (readonly, nonatomic, copy) NSString *address;
+@property (readwrite, nonatomic, copy) NSString *address;
 @property (weak) id <SeafLoginDelegate> loginDelegate;
 @property (weak) id <SeafConnectionDelegate> delegate;
 @property (strong) SeafRepos *rootFolder;
@@ -98,7 +97,8 @@ enum MSG_TYPE{
          success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
          failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure;
 
-- (void)loginWithAddress:(NSString *)anAddress username:(NSString *)username password:(NSString *)password;
+- (void)loginWithUsername:(NSString *)username password:(NSString *)password;
+-(void)setToken:(NSString *)token forUser:(NSString *)username;
 
 - (void)getAccountInfo:(void (^)(bool result, SeafConnection *conn))handler;
 

@@ -263,9 +263,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
             *credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
             if (SeafServerTrustIsValid(challenge.protectionSpace.serverTrust)) {
-                [[NSFileManager defaultManager] removeItemAtPath:[self certPathForHost:self.host] error:nil];
-                SecCertificateRef cer = SecTrustGetCertificateAtIndex(challenge.protectionSpace.serverTrust, 0);
-                self.policy = SeafPolicyFromCert(cer);
+                [[NSFileManager defaultManager] removeItemAtPath:[self certPathForHost:challenge.protectionSpace.host] error:nil];
+                if ([challenge.protectionSpace.host isEqualToString:self.host]) {
+                    SecCertificateRef cer = SecTrustGetCertificateAtIndex(challenge.protectionSpace.serverTrust, 0);
+                    self.policy = SeafPolicyFromCert(cer);
+                }
                 return NSURLSessionAuthChallengeUseCredential;
             } else {
                 if (!self.delegate) return NSURLSessionAuthChallengeCancelAuthenticationChallenge;
@@ -379,29 +381,34 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return request;
 }
 
+-(void)setToken:(NSString *)token forUser:(NSString *)username
+{
+    _token = token;
+    [_info setObject:username forKey:@"username"];
+    [_info setObject:_token forKey:@"token"];
+    [_info setObject:_address forKey:@"link"];
+    [self saveAccountInfo];
+    [self downloadAvatar:true];
+    [self.loginDelegate loginSuccess:self];
+}
+
 /*
  curl -D a.txt --data "username=pithier@163.com&password=pithier" http://www.gonggeng.org/seahub/api2/auth-token/
  */
-- (void)loginWithAddress:(NSString *)anAddress username:(NSString *)username password:(NSString *)password
+- (void)loginWithUsername:(NSString *)username password:(NSString *)password
 {
-    NSString *url = anAddress ? anAddress : _address;
+    NSString *url = _address;
     NSMutableURLRequest *request = [self loginRequest:url username:username password:password];
-    self.loginMgr.responseSerializer = [AFJSONResponseSerializer serializer];
+    AFHTTPSessionManager *manager = self.loginMgr;
+    manager.responseSerializer = [AFJSONResponseSerializer serializer];
 
-    NSURLSessionDataTask *dataTask = [self.loginMgr dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
+    NSURLSessionDataTask *dataTask = [manager dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
         if (error) {
             Warning("Error: %@", error);
             [self.loginDelegate loginFailed:self error:((NSHTTPURLResponse *)response).statusCode];
         } else {
-            _address = url;
-            _token = [responseObject objectForKey:@"token"];
-            [_info setObject:username forKey:@"username"];
             [_info setObject:password forKey:@"password"];
-            [_info setObject:_token forKey:@"token"];
-            [_info setObject:_address forKey:@"link"];
-            [self saveAccountInfo];
-            [self downloadAvatar:true];
-            [self.loginDelegate loginSuccess:self];
+            [self setToken:[responseObject objectForKey:@"token"] forUser:username];
         }
     }];
 
@@ -724,6 +731,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (![self authorized])
         return;
     if (!force && self.realAvatar && [self.avatarLastUpdate timeIntervalSinceNow] > -24*3600)
+        return;
+    if (!force && [self.avatarLastUpdate timeIntervalSinceNow] > -300)
         return;
     SeafUserAvatar *avatar = [[SeafUserAvatar alloc] initWithConnection:self username:self.username];
     [SeafGlobal.sharedObject addDownloadTask:avatar];

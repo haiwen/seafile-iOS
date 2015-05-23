@@ -68,10 +68,16 @@
         [self alertWithTitle:NSLocalizedString(@"Invalid Server", @"Seafile")];
         return;
     }
-    SeafConnection *conn = [[SeafConnection alloc] init:url];
-    conn.loginDelegate = self;
-    conn.delegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    SeafShibbolethViewController *c = [[SeafShibbolethViewController alloc] init:conn];
+    if ([url hasSuffix:@"/"])
+        url = [url substringToIndex:url.length-1];
+    if (!self.connection)
+        connection = [[SeafConnection alloc] init:url];
+    if (![url isEqualToString:connection.address]) {
+        connection.address = url;
+    }
+    connection.loginDelegate = self;
+    connection.delegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    SeafShibbolethViewController *c = [[SeafShibbolethViewController alloc] init:connection];
     [self.navigationController pushViewController:c animated:true];
 }
 
@@ -103,10 +109,13 @@
     if ([url hasSuffix:@"/"])
         url = [url substringToIndex:url.length-1];
     if (!self.connection)
-        connection = [[SeafConnection alloc] initWithUrl:url username:username];
+        connection = [[SeafConnection alloc] init:url];
+    if (![url isEqualToString:connection.address]) {
+        connection.address = url;
+    }
     connection.loginDelegate = self;
     connection.delegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    [connection loginWithAddress:url username:username password:password];
+    [connection loginWithUsername:username password:password];
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Connecting to server", @"Seafile")];
 }
 
@@ -168,6 +177,8 @@
         serverTextField.text = connection.address;
         usernameTextField.text = connection.username;
         passwordTextField.text = connection.password;
+        serverTextField.enabled = false;
+        usernameTextField.enabled = false;
     } else {
         if (self.type == 1)
             serverTextField.text = @"https://seacloud.cc";
@@ -212,9 +223,8 @@
 
     Debug("login success");
     [SVProgressHUD dismiss];
-    conn.rootFolder = [[SeafRepos alloc] initWithConnection:conn];
-    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
     connection.loginDelegate = nil;
+    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
     [startController saveAccount:connection];
     [startController selectAccount:connection];
 }
