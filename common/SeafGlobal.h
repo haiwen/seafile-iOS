@@ -78,6 +78,7 @@
 - (void)removeBackgroundUpload:(SeafUploadFile *)file;
 - (void)removeBackgroundDownload:(id<SeafDownloadDelegate>)file;
 - (void)clearAutoSyncPhotos:(SeafConnection *)conn;
+- (void)clearAutoSyncVideos:(SeafConnection *)conn;
 
 - (void)setObject:(id)value forKey:(NSString *)defaultName;
 - (id)objectForKey:(NSString *)defaultName;

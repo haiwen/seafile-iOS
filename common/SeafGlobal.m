@@ -482,6 +482,7 @@
 {
     @synchronized (self) {
         [self.ufiles removeObject:file];
+        [self.uploadingfiles removeObject:file];
     }
 }
 
@@ -491,6 +492,7 @@
         [self.dfiles removeObject:file];
     }
 }
+
 - (void)clearAutoSyncPhotos:(SeafConnection *)conn
 {
     NSMutableArray *arr = [[NSMutableArray alloc] init];
@@ -502,6 +504,26 @@
         }
         for (SeafUploadFile *ufile in _uploadingfiles) {
             if (ufile.autoSync && ufile.udir->connection == conn) {
+                [arr addObject:ufile];
+            }
+        }
+    }
+    for (SeafUploadFile *ufile in arr) {
+        [ufile.udir removeUploadFile:ufile];
+    }
+}
+
+- (void)clearAutoSyncVideos:(SeafConnection *)conn
+{
+    NSMutableArray *arr = [[NSMutableArray alloc] init];
+    @synchronized (self) {
+        for (SeafUploadFile *ufile in _ufiles) {
+            if (ufile.autoSync && ufile.udir->connection == conn && !ufile.isImageFile) {
+                [arr addObject:ufile];
+            }
+        }
+        for (SeafUploadFile *ufile in _uploadingfiles) {
+            if (ufile.autoSync && ufile.udir->connection == conn && !ufile.isImageFile) {
                 [arr addObject:ufile];
             }
         }

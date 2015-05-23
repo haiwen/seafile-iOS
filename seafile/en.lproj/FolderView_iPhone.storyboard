@@ -221,6 +221,24 @@
                                             </subviews>
                                         </tableViewCellContentView>
                                     </tableViewCell>
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="03k-Un-4sU">
+                                        <rect key="frame" x="0.0" y="245" width="320" height="44"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="03k-Un-4sU" id="BB0-K9-y9C">
+                                            <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <switch opaque="NO" tag="100" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fFZ-gz-Sso">
+                                                    <rect key="frame" x="258" y="6" width="51" height="31"/>
+                                                </switch>
+                                                <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Upload Videos" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Kcw-kJ-pcF">
+                                                    <rect key="frame" x="17" y="11" width="185" height="21"/>
+                                                    <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                            </subviews>
+                                        </tableViewCellContentView>
+                                    </tableViewCell>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="46K-Xc-8ve">
                                         <rect key="frame" x="0.0" y="289" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
@@ -422,6 +440,9 @@
                         <outlet property="tellFriendCell" destination="OqU-Df-NSA" id="DYy-mj-HZh"/>
                         <outlet property="usedspaceCell" destination="hMG-4N-mUp" id="wXC-Pe-G7a"/>
                         <outlet property="versionCell" destination="zdI-jv-Dan" id="BxQ-qf-CeN"/>
+                        <outlet property="videoSyncCell" destination="03k-Un-4sU" id="ZbO-QL-zOh"/>
+                        <outlet property="videoSyncLabel" destination="Kcw-kJ-pcF" id="7cJ-J4-Nhb"/>
+                        <outlet property="videoSyncSwitch" destination="fFZ-gz-Sso" id="0vn-bY-MRV"/>
                         <outlet property="websiteCell" destination="f4C-un-RZC" id="nOi-WV-X6h"/>
                         <outlet property="wifiOnlyLabel" destination="5rP-cB-Wm0" id="cct-Db-dJa"/>
                         <outlet property="wifiOnlySwitch" destination="EII-rv-WS4" id="LcC-Y3-z9u"/>

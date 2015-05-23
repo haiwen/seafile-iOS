@@ -203,10 +203,21 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return [[self getAttribute:@"autoSync"] booleanValue:true];
 }
 
+- (BOOL)isVideoSync
+{
+    return [[self getAttribute:@"videoSync"] booleanValue:true];
+}
+
 - (void)setAutoSync:(BOOL)autoSync
 {
     if (self.isAutoSync == autoSync) return;
     [self setAttribute:[NSNumber numberWithBool:autoSync] forKey:@"autoSync"];
+}
+
+- (void)setVideoSync:(BOOL)videoSync
+{
+    if (self.isVideoSync == videoSync) return;
+    [self setAttribute:[NSNumber numberWithBool:videoSync] forKey:@"videoSync"];
 }
 
 - (NSString *)username
@@ -773,7 +784,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     while (_uploadingArray.count < 5 && count++ < 5) {
         NSURL *url = [self popUploadPhoto];
         if (!url) break;
-        [_uploadingArray addObject:url];
+        [self addUploadingPhoto:url];
         [SeafGlobal.sharedObject assetForURL:url
                                  resultBlock:^(ALAsset *asset) {
                                      NSString *filename = asset.defaultRepresentation.filename;
@@ -787,7 +798,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                  }
                                 failureBlock:^(NSError *error){
                                     Debug("!!!!Can not find asset:%@ !", url);
-                                    [_uploadingArray removeObject:url];
+                                    [self removeUploadingPhoto:url];
                                 }];
     }
 }
@@ -801,7 +812,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     obj.username = self.username;
     obj.url = ufile.assetURL.absoluteString;
     [[SeafGlobal sharedObject] saveContext];
-    [_uploadingArray removeObject:ufile.assetURL];
+    [self removeUploadingPhoto:ufile.assetURL];
     if (!ufile.delegate) [ufile.udir removeUploadFile:ufile];
     if (_photSyncWatcher) [_photSyncWatcher photoSyncChanged:self.photosInSyncing];
 }
@@ -858,18 +869,47 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     return [self.photosArray indexOfObject:url] != NSNotFound || [self.uploadingArray indexOfObject:url] != NSNotFound;
 }
-- (void)addUploadPhoto:(NSURL *)url{
-    @synchronized(self) {
+
+- (void)addUploadingPhoto:(NSURL *)url {
+    @synchronized(_uploadingArray) {
+        [_uploadingArray addObject:url];
+    }
+}
+
+- (void)removeUploadingPhoto:(NSURL *)url {
+    @synchronized(_uploadingArray) {
+        [_uploadingArray removeObject:url];
+    }
+}
+- (void)addUploadPhoto:(NSURL *)url {
+    @synchronized(_photosArray) {
         [_photosArray addObject:url];
     }
 }
 - (NSURL *)popUploadPhoto{
-    @synchronized(self) {
+    @synchronized(_photosArray) {
         if (!self.photosArray || self.photosArray.count == 0) return nil;
         NSURL *url = [self.photosArray objectAtIndex:0];
         [self.photosArray removeObject:url];
         return url;
     }
+}
+
+- (NSURL *)uploadURLForAsset:(ALAsset *)asset
+{
+    if (!asset)
+        return nil;
+    NSURL *url = (NSURL*)asset.defaultRepresentation.url;
+    Debug("url=%@, type=%@", url, [asset valueForProperty:ALAssetPropertyType]);
+    if ([self IsPhotoUploaded:url] || [self IsPhotoUploading:url])
+        return nil;
+
+    if([[asset valueForProperty:ALAssetPropertyType] isEqualToString:ALAssetTypePhoto])
+        return url;
+
+    if(self.isVideoSync && [[asset valueForProperty:ALAssetPropertyType] isEqualToString:ALAssetTypeVideo])
+        return url;
+    return nil;
 }
 
 - (void)checkPhotos
@@ -881,19 +921,14 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }
     NSMutableArray *photos = [[NSMutableArray alloc] init];
     void (^assetEnumerator)(ALAsset *, NSUInteger, BOOL *) = ^(ALAsset *asset, NSUInteger index, BOOL *stop) {
-        if(asset != nil) {
-            if([[asset valueForProperty:ALAssetPropertyType] isEqualToString:ALAssetTypePhoto]) {
-                NSURL *url = (NSURL*)asset.defaultRepresentation.url;
-                if (![self IsPhotoUploaded:url] && ![self IsPhotoUploading:url]) {
-                    [photos addObject:url];
-                }
-            }
-        }
+        NSURL *url = [self uploadURLForAsset:asset];
+        if (url)
+            [photos addObject:url];
     };
 
     void (^ assetGroupEnumerator) ( ALAssetsGroup *, BOOL *) = ^(ALAssetsGroup *group, BOOL *stop) {
         if(group != nil) {
-            [group setAssetsFilter:[ALAssetsFilter allPhotos]];
+            [group setAssetsFilter:[ALAssetsFilter allAssets]];
             [group enumerateAssetsUsingBlock:assetEnumerator];
             Debug("Group %@, total %ld photos", group, (long)group.numberOfAssets);
         } else {
@@ -1017,10 +1052,29 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (_inAutoSync) {
         _syncDir = nil;
         Debug("start auto sync, check photos for server %@", _address);
+        if (!self.videoSync) [self clearUploadingVideos];
         [self checkPhotos];
         float delay = 10.0f;
         [self performSelector:@selector(checkUploadDir) withObject:nil afterDelay:delay];
     }
 }
 
+- (void)removeVideosFromArray:(NSMutableArray *)arr {
+    @synchronized(arr) {
+        NSMutableArray *videos = [[NSMutableArray alloc] init];
+        for (NSURL *url in arr) {
+            NSString *ext;
+            if (![Utils isImageExt:ext])
+                [videos addObject:url];
+        }
+        [arr removeObjectsInArray:videos];
+    }
+}
+
+- (void)clearUploadingVideos
+{
+    [SeafGlobal.sharedObject clearAutoSyncVideos:self];
+    [self removeVideosFromArray:_photosArray];
+    [self removeVideosFromArray:_uploadingArray];
+}
 @end

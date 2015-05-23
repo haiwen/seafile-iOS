@@ -40,15 +40,19 @@ enum {
 @property (strong, nonatomic) IBOutlet UITableViewCell *syncRepoCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *tellFriendCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *websiteCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *videoSyncCell;
 
 @property (strong, nonatomic) IBOutlet UILabel *wipeCacheLabel;
 @property (strong, nonatomic) IBOutlet UILabel *autoCameraUploadLabel;
 @property (strong, nonatomic) IBOutlet UILabel *wifiOnlyLabel;
+@property (strong, nonatomic) IBOutlet UILabel *videoSyncLabel;
 
 @property (strong, nonatomic) IBOutlet UISwitch *autoSyncSwitch;
 @property (strong, nonatomic) IBOutlet UISwitch *wifiOnlySwitch;
+@property (strong, nonatomic) IBOutlet UISwitch *videoSyncSwitch;
 @property BOOL autoSync;
 @property BOOL wifiOnly;
+@property BOOL videoSync;
 
 @property int state;
 
@@ -103,12 +107,20 @@ enum {
     _connection.wifiOnly = _wifiOnly;
 }
 
+- (void)videoSyncSwitchFlip:(id)sender
+{
+    _videoSync = _videoSyncSwitch.on;
+    _connection.videoSync = _videoSync;
+    [_connection checkAutoSync];
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
     _nameCell.textLabel.text = NSLocalizedString(@"Username", @"Seafile");
     _usedspaceCell.textLabel.text = NSLocalizedString(@"Space Used", @"Seafile");
     _autoCameraUploadLabel.text = NSLocalizedString(@"Auto Camera Upload", @"Seafile");
+    _videoSyncLabel.text = NSLocalizedString(@"Upload Videos", @"Seafile");
     _wifiOnlyLabel.text = NSLocalizedString(@"Wifi Only", @"Seafile");
     _syncRepoCell.textLabel.text = NSLocalizedString(@"Upload Destination", @"Seafile");
     _cacheCell.textLabel.text = NSLocalizedString(@"Local Cache", @"Seafile");
@@ -123,7 +135,8 @@ enum {
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     [_autoSyncSwitch addTarget:self action:@selector(autoSyncSwitchFlip:) forControlEvents:UIControlEventValueChanged];
     [_wifiOnlySwitch addTarget:self action:@selector(wifiOnlySwitchFlip:) forControlEvents:UIControlEventValueChanged];
-    }
+    [_videoSyncSwitch addTarget:self action:@selector(videoSyncSwitchFlip:) forControlEvents:UIControlEventValueChanged];
+}
 
 - (void)viewWillAppear:(BOOL)animated
 {
@@ -158,6 +171,8 @@ enum {
     _autoSyncSwitch.on = self.autoSync;
     if (self.autoSync)
         [self autoSyncSwitchFlip:nil];
+    _wifiOnlySwitch.on = self.wifiOnly;
+    _videoSyncSwitch.on = self.videoSync;
     NSString *autoSyncRepo = [[_connection getAttribute:@"autoSyncRepo"] stringValue];
     SeafRepo *repo = [_connection getRepo:autoSyncRepo];
     _syncRepoCell.detailTextLabel.text = repo ? repo.name : nil;
@@ -185,6 +200,7 @@ enum {
     _connection = connection;
     _autoSync = _connection.isAutoSync;
     _wifiOnly = _connection.isWifiOnly;
+    _videoSync = _connection.videoSync;
     [self.tableView reloadData];
     [_connection getAccountInfo:^(bool result, SeafConnection *conn) {
         if (result && conn == self.connection) {

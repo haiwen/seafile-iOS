@@ -257,13 +257,19 @@
 
 + (BOOL)isImageFile:(NSString *)name
 {
-    static NSString *imgexts[] = {@"tif", @"tiff", @"jpg", @"jpeg", @"gif", @"png", @"bmp", @"ico", nil};
     NSString *ext = name.pathExtension.lowercaseString;
-    if (ext && ext.length != 0) {
-        for (int i = 0; imgexts[i]; ++i) {
-            if ([imgexts[i] isEqualToString:ext])
-                return true;
-        }
+    return [Utils isImageExt:ext];
+}
+
++ (BOOL)isImageExt:(NSString *)ext
+{
+    static NSString *imgexts[] = {@"tif", @"tiff", @"jpg", @"jpeg", @"gif", @"png", @"bmp", @"ico", nil};
+    if (!ext || ext.length != 0)
+        return false;
+
+    for (int i = 0; imgexts[i]; ++i) {
+        if ([imgexts[i] isEqualToString:ext])
+            return true;
     }
     return false;
 }

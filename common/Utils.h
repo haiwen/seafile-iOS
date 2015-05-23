@@ -27,6 +27,7 @@
 + (id)JSONDecode:(NSData *)data error:(NSError **)error;
 + (NSString *)JSONEncodeDictionary:(NSDictionary *)dict;
 + (BOOL)isImageFile:(NSString *)name;
++ (BOOL)isImageExt:(NSString *)ext;
 
 + (BOOL)writeDataToPath:(NSString*)filePath andAsset:(ALAsset*)asset;
 
