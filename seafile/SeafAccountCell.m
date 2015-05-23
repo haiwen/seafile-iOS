@@ -7,6 +7,7 @@
 //
 
 #import "SeafAccountCell.h"
+#import "Debug.h"
 
 @implementation SeafAccountCell
 
@@ -26,4 +27,18 @@
     // Configure the view for the selected state
 }
 
+- (void)layoutSubviews
+{
+    [super layoutSubviews];
+    if (!IsIpad())
+        return;
+    float indentPoints = (self.frame.size.width - 400)/2;
+    self.contentView.frame = CGRectMake(
+                                        indentPoints,
+                                        self.contentView.frame.origin.y,
+                                        self.contentView.frame.size.width - indentPoints,
+                                        self.contentView.frame.size.height
+                                        );
+    self.separatorInset = UIEdgeInsetsMake(0, indentPoints + 15, 0, indentPoints + 30);
+}
 @end

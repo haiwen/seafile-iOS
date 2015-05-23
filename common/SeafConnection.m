@@ -732,7 +732,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         return;
     if (!force && self.realAvatar && [self.avatarLastUpdate timeIntervalSinceNow] > -24*3600)
         return;
-    if (!force && [self.avatarLastUpdate timeIntervalSinceNow] > -300)
+    if (!force && [self.avatarLastUpdate timeIntervalSinceNow] > -300.0f)
         return;
     SeafUserAvatar *avatar = [[SeafUserAvatar alloc] initWithConnection:self username:self.username];
     [SeafGlobal.sharedObject addDownloadTask:avatar];

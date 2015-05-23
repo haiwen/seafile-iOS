@@ -485,6 +485,12 @@
     }
 }
 
+- (void)removeBackgroundDownload:(id<SeafDownloadDelegate>)file
+{
+    @synchronized (self) {
+        [self.dfiles removeObject:file];
+    }
+}
 - (void)clearAutoSyncPhotos:(SeafConnection *)conn
 {
     NSMutableArray *arr = [[NSMutableArray alloc] init];
