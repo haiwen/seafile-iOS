@@ -145,9 +145,9 @@
     pressedIndex = nil;
     NSString *privserver = [NSString stringWithFormat:NSLocalizedString(@"Private %@ Server", @"Seafile"), APP_NAME];
     if (IsIpad())
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:privserver, @"SeaCloud.cc", @"cloud.seafile.com", nil];
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:privserver, @"SeaCloud.cc", @"cloud.seafile.com", @"Shibboleth", nil];
     else
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") destructiveButtonTitle:nil otherButtonTitles:privserver, @"SeaCloud.cc", @"cloud.seafile.com", nil];
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") destructiveButtonTitle:nil otherButtonTitles:privserver, @"SeaCloud.cc", @"cloud.seafile.com", @"Shibboleth", nil];
     if (IsIpad())
         [actionSheet showFromBarButtonItem:sender animated:YES];
     else
@@ -246,7 +246,7 @@
             [self.tableView reloadData];
         }
     } else {
-        if (buttonIndex >= 0 && buttonIndex <=2) {
+        if (buttonIndex >= 0 && buttonIndex <= ACCOUNT_SHIBBOLETH) {
             [self showAccountView:nil type:(int)buttonIndex];
         }
     }

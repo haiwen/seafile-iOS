@@ -2263,7 +2263,7 @@
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CLANG_ENABLE_MODULES = YES;
 				"CODE_SIGN_ENTITLEMENTS[sdk=*]" = seafile/seafile.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
+				CODE_SIGN_IDENTITY = "iPhone Developer: 维 王 (FSQ2Q3BNVK)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "seafile/seafile-Prefix.pch";
 				HEADER_SEARCH_PATHS = "libs/ios-openssl/include/";
@@ -2300,8 +2300,8 @@
 					"\"$(SRCROOT)/libs/ios-openssl/lib\"",
 				);
 				PRODUCT_NAME = SeafilePro;
-				PROVISIONING_PROFILE = "77ceea69-5b97-499f-a2d1-23c0190d055e";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "77ceea69-5b97-499f-a2d1-23c0190d055e";
+				PROVISIONING_PROFILE = "e373c322-3652-4027-b6f0-0880f2bd9c9d";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "e373c322-3652-4027-b6f0-0880f2bd9c9d";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
@@ -2317,8 +2317,8 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CODE_SIGN_ENTITLEMENTS = SeafProviderFileProvider/SeafProviderFileProvider.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: 维 王 (FSQ2Q3BNVK)";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -2354,8 +2354,8 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "d699bdca-4d58-49b8-ac4b-e49bd0d2539a";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "d699bdca-4d58-49b8-ac4b-e49bd0d2539a";
+				PROVISIONING_PROFILE = "e373c322-3652-4027-b6f0-0880f2bd9c9d";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "e373c322-3652-4027-b6f0-0880f2bd9c9d";
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
@@ -2369,8 +2369,8 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CODE_SIGN_ENTITLEMENTS = SeafProvider/SeafProvider.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
+				CODE_SIGN_IDENTITY = "iPhone Developer: 维 王 (FSQ2Q3BNVK)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: 维 王 (FSQ2Q3BNVK)";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -2425,7 +2425,7 @@
 				);
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "c79116a6-3a21-4eb1-8226-9b37a89d9aab";
+				PROVISIONING_PROFILE = "e373c322-3652-4027-b6f0-0880f2bd9c9d";
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
@@ -2442,8 +2442,8 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
+				CODE_SIGN_IDENTITY = "iPhone Developer: 维 王 (FSQ2Q3BNVK)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: 维 王 (FSQ2Q3BNVK)";
 				COPY_PHASE_STRIP = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -2466,8 +2466,8 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				ONLY_ACTIVE_ARCH = YES;
 				"PRIVATE_HEADERS_FOLDER_PATH[sdk=*]" = "";
-				PROVISIONING_PROFILE = "f4764f9d-9b60-47c7-ae14-cdd4dbc62a46";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "f4764f9d-9b60-47c7-ae14-cdd4dbc62a46";
+				PROVISIONING_PROFILE = "1dc2ebee-f558-4817-82a7-76c8e870390b";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "1dc2ebee-f558-4817-82a7-76c8e870390b";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -2501,8 +2501,8 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
-				PROVISIONING_PROFILE = "77ceea69-5b97-499f-a2d1-23c0190d055e";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "77ceea69-5b97-499f-a2d1-23c0190d055e";
+				PROVISIONING_PROFILE = "e373c322-3652-4027-b6f0-0880f2bd9c9d";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "e373c322-3652-4027-b6f0-0880f2bd9c9d";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
