@@ -264,7 +264,7 @@
 + (BOOL)isImageExt:(NSString *)ext
 {
     static NSString *imgexts[] = {@"tif", @"tiff", @"jpg", @"jpeg", @"gif", @"png", @"bmp", @"ico", nil};
-    if (!ext || ext.length != 0)
+    if (!ext || ext.length == 0)
         return false;
 
     for (int i = 0; imgexts[i]; ++i) {

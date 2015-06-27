@@ -247,6 +247,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return path;
 }
 
+- (BOOL)isShibboleth
+{
+    return [[_info objectForKey:@"isshibboleth"] boolValue];
+}
+
 - (long long)quota
 {
     return [[_info objectForKey:@"total"] integerValue:0];
@@ -392,12 +397,13 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return request;
 }
 
--(void)setToken:(NSString *)token forUser:(NSString *)username
+-(void)setToken:(NSString *)token forUser:(NSString *)username isShib:(BOOL)isshib
 {
     _token = token;
     [_info setObject:username forKey:@"username"];
     [_info setObject:_token forKey:@"token"];
     [_info setObject:_address forKey:@"link"];
+    [_info setObject:[NSNumber numberWithBool:isshib] forKey:@"isshibboleth"];
     [self saveAccountInfo];
     [self downloadAvatar:true];
     [self.loginDelegate loginSuccess:self];
@@ -419,7 +425,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             [self.loginDelegate loginFailed:self error:((NSHTTPURLResponse *)response).statusCode];
         } else {
             [_info setObject:password forKey:@"password"];
-            [self setToken:[responseObject objectForKey:@"token"] forUser:username];
+            [self setToken:[responseObject objectForKey:@"token"] forUser:username isShib:false];
         }
     }];
 

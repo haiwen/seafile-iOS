@@ -22,7 +22,6 @@
 @property (strong, nonatomic) IBOutlet UITextField *usernameTextField;
 @property (strong, nonatomic) IBOutlet UITextField *passwordTextField;
 @property (strong, nonatomic) IBOutlet UIButton *loginButton;
-@property (strong, nonatomic) IBOutlet UIButton *cancelButton;
 @property (strong, nonatomic) IBOutlet UILabel *msgLabel;
 @property StartViewController *startController;
 @property SeafConnection *connection;
@@ -31,7 +30,6 @@
 
 @implementation SeafAccountViewController
 @synthesize loginButton;
-@synthesize cancelButton;
 @synthesize serverTextField;
 @synthesize usernameTextField;
 @synthesize passwordTextField;
@@ -139,25 +137,15 @@
         loginButton.layer.borderColor = [[UIColor lightGrayColor] CGColor];
         loginButton.layer.borderWidth = 0.5f;
         loginButton.layer.cornerRadius = 5.0f;
-        cancelButton.layer.borderColor = [[UIColor lightGrayColor] CGColor];
-        cancelButton.layer.borderWidth = 0.5f;
-        cancelButton.layer.cornerRadius = 5.0f;
+
     } else {
         loginButton.reversesTitleShadowWhenHighlighted = NO;
-        cancelButton.reversesTitleShadowWhenHighlighted = NO;
         loginButton.tintColor=[UIColor whiteColor];
-        cancelButton.tintColor=[UIColor whiteColor];
     }
     [loginButton setTitle:NSLocalizedString(@"Login", @"Seafile") forState:UIControlStateNormal];
     [loginButton setTitle:NSLocalizedString(@"Login", @"Seafile") forState:UIControlStateHighlighted];
-    [cancelButton setTitle:NSLocalizedString(@"Cancel", @"Seafile") forState:UIControlStateNormal];
-    [cancelButton setTitle:NSLocalizedString(@"Cancel", @"Seafile") forState:UIControlStateHighlighted];
 
-
-    _msgLabel.text = NSLocalizedString(@"For example: https://seacloud.cc or http://192.168.1.24:8000", @"Seafile");
     serverTextField.placeholder = NSLocalizedString(@"Server, like https://seafile.cc", @"Seafile");
-
-    self.title = [APP_NAME stringByAppendingFormat:@" %@", NSLocalizedString(@"Account", @"Seafile")];
     CGRect rect = CGRectMake(0, 0, 90, 25);
     NSString *align = ios7 ? @"  " :  @"";
     UILabel *serverLabel = [[UILabel alloc] initWithFrame:rect];
@@ -166,53 +154,58 @@
     serverTextField.leftView = serverLabel;
     serverTextField.leftViewMode = UITextFieldViewModeAlways;
 
-    UILabel *nameLabel = [[UILabel alloc] initWithFrame:rect];
-    nameLabel.text = [align stringByAppendingString:NSLocalizedString(@"Username", @"Seafile")];
-    nameLabel.font = [UIFont boldSystemFontOfSize:14];
-    usernameTextField.leftView = nameLabel;
-    usernameTextField.leftViewMode = UITextFieldViewModeAlways;
-    UILabel *passwordLabel = [[UILabel alloc] initWithFrame:rect];
-    passwordLabel.text = [align stringByAppendingString:NSLocalizedString(@"Password", @"Seafile")];
-    passwordLabel.font = [UIFont boldSystemFontOfSize:14];
-    passwordTextField.leftView = passwordLabel;
-    passwordTextField.leftViewMode = UITextFieldViewModeAlways;
-    usernameTextField.hidden = false;
-    passwordTextField.hidden = false;
+    if (self.type != ACCOUNT_SHIBBOLETH) {
+        _msgLabel.text = NSLocalizedString(@"For example: https://seacloud.cc or http://192.168.1.24:8000", @"Seafile");
+        self.title = [APP_NAME stringByAppendingFormat:@" %@", NSLocalizedString(@"Account", @"Seafile")];
+        UILabel *nameLabel = [[UILabel alloc] initWithFrame:rect];
+        nameLabel.text = [align stringByAppendingString:NSLocalizedString(@"Username", @"Seafile")];
+        nameLabel.font = [UIFont boldSystemFontOfSize:14];
+        usernameTextField.leftView = nameLabel;
+        usernameTextField.leftViewMode = UITextFieldViewModeAlways;
+        UILabel *passwordLabel = [[UILabel alloc] initWithFrame:rect];
+        passwordLabel.text = [align stringByAppendingString:NSLocalizedString(@"Password", @"Seafile")];
+        passwordLabel.font = [UIFont boldSystemFontOfSize:14];
+        passwordTextField.leftView = passwordLabel;
+        passwordTextField.leftViewMode = UITextFieldViewModeAlways;
+        usernameTextField.placeholder = NSLocalizedString(@"Email", @"Seafile");
+        passwordTextField.placeholder = NSLocalizedString(@"Password", @"Seafile");
+    } else {
+        self.title = NSLocalizedString(@"Shibboleth Login", @"Seafile");
+        [usernameTextField removeFromSuperview];
+        [passwordTextField removeFromSuperview];
+        [_msgLabel removeFromSuperview];
+    }
+    
+    switch (self.type) {
+        case ACCOUNT_SEACLOUD:
+            serverTextField.text = @"https://seacloud.cc";
+            break;
+        case ACCOUNT_CLOUD:
+            serverTextField.text = @"https://cloud.seafile.com";
+            break;
+        case ACCOUNT_PRIVATE:{
+#if DEBUG
+            serverTextField.text = @"https://dev.seafile.com/seahub/";
+            usernameTextField.text = @"demo@seafile.com";
+            passwordTextField.text = @"demo";
+#endif
+        }
+            break;
+        case ACCOUNT_SHIBBOLETH:
+#if DEBUG
+            serverTextField.text = @"https://dev2.seafile.com/seahub/";
+#endif
+            break;
+        default:
+            break;
+    }
     if (self.connection) {
         serverTextField.text = connection.address;
         usernameTextField.text = connection.username;
         passwordTextField.text = connection.password;
         serverTextField.enabled = false;
         usernameTextField.enabled = false;
-    } else {
-        switch (self.type) {
-            case ACCOUNT_SEACLOUD:
-                serverTextField.text = @"https://seacloud.cc";
-                break;
-            case ACCOUNT_CLOUD:
-                serverTextField.text = @"https://cloud.seafile.com";
-                break;
-            case ACCOUNT_PRIVATE:{
-#if DEBUG
-                serverTextField.text = @"https://dev.seafile.com/seahub/";
-                usernameTextField.text = @"demo@seafile.com";
-                passwordTextField.text = @"demo";
-#endif
-            }
-                break;
-            case ACCOUNT_SHIBBOLETH:
-                [usernameTextField removeFromSuperview];
-                [passwordTextField removeFromSuperview];
-                //usernameTextField.hidden = true;
-                //passwordTextField.hidden = true;
-                break;
-            default:
-                break;
-        }
     }
-    usernameTextField.placeholder = NSLocalizedString(@"Email", @"Seafile");
-    passwordTextField.placeholder = NSLocalizedString(@"Password", @"Seafile");
-
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 }
 
@@ -229,7 +222,6 @@
     [self setUsernameTextField:nil];
     [self setPasswordTextField:nil];
     [self setLoginButton:nil];
-    [self setCancelButton:nil];
     [super viewDidUnload];
 }
 

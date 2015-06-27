@@ -214,6 +214,7 @@
 
 - (void)downloadThumb
 {
+    Debug("...");
     NSString *thumburl = [NSString stringWithFormat:API_URL"/repos/%@/thumbnail/?size=%d&p=%@", self.repoId, THUMB_SIZE, self.path.escapedUrl];
     NSURLRequest *downloadRequest = [connection buildRequest:thumburl method:@"GET" form:nil];
     NSString *target = [self thumbPath:self.oid];
@@ -411,19 +412,17 @@
 
 - (UIImage *)icon;
 {
-    if (!_icon) {
-        if (self.isImageFile && self.oid) {
-            NSString *thumbpath = [self thumbPath:self.oid];
-            if (thumbpath && [Utils fileExistsAtPath:thumbpath]) {
-                _icon = [UIImage imageWithContentsOfFile:thumbpath];
-                return _icon;
-            } else {
-                [self downloadThumb];
-            }
+    if (_icon) return _icon;
+    if (self.isImageFile && self.oid) {
+        NSString *thumbpath = [self thumbPath:self.oid];
+        if (thumbpath && [Utils fileExistsAtPath:thumbpath]) {
+            _icon = [UIImage imageWithContentsOfFile:thumbpath];
+            return _icon;
+        } else {
+            [self downloadThumb];
         }
-        return [super icon];
     }
-    return _icon;
+    return [super icon];
 }
 
 - (DownloadedFile *)loadCacheObj

@@ -238,7 +238,9 @@
     if (pressedIndex) {// Long press account
         if (pressedIndex.row >= SeafGlobal.sharedObject.conns.count) return;
         if (buttonIndex == 0) {
-            [self showAccountView:[[SeafGlobal sharedObject].conns objectAtIndex:pressedIndex.row] type:0];
+            SeafConnection *conn = [[SeafGlobal sharedObject].conns objectAtIndex:pressedIndex.row];
+            int type = conn.isShibboleth ? ACCOUNT_SHIBBOLETH : ACCOUNT_PRIVATE;
+            [self showAccountView:conn type:type];
         } else if (buttonIndex == 1) {
             [[[SeafGlobal sharedObject].conns objectAtIndex:pressedIndex.row] clearAccount];
             [[SeafGlobal sharedObject].conns removeObjectAtIndex:pressedIndex.row];

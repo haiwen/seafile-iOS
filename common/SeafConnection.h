@@ -60,6 +60,7 @@ enum MSG_TYPE{
 @property (readonly) NSString *username;
 @property (readonly) NSString *password;
 @property (readonly) NSString *host;
+@property (readonly) BOOL isShibboleth;
 @property (readonly) long long quota;
 @property (readonly) long long usage;
 @property (readonly, strong) NSString *token;
@@ -99,7 +100,7 @@ enum MSG_TYPE{
          failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure;
 
 - (void)loginWithUsername:(NSString *)username password:(NSString *)password;
--(void)setToken:(NSString *)token forUser:(NSString *)username;
+-(void)setToken:(NSString *)token forUser:(NSString *)username isShib:(BOOL)isshib;
 
 - (void)getAccountInfo:(void (^)(bool result, SeafConnection *conn))handler;
 
