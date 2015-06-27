@@ -338,7 +338,7 @@ enum {
 - (void)editSheet:(id)sender
 {
     if (ios8) {
-        [self showAlertWithAction:[NSArray arrayWithObjects:S_NEWFILE, S_MKDIR, S_EDIT, S_SORT_NAME, S_SORT_MTIME, nil] fromRect:self.editItem.customView.frame];
+        [self showAlertWithAction:[NSArray arrayWithObjects:S_NEWFILE, S_MKDIR, S_EDIT, S_SORT_NAME, S_SORT_MTIME, nil] fromBarItem:self.editItem];
     } else {
         if (self.actionSheet) {
             [self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
@@ -472,6 +472,26 @@ enum {
     }
     alert.popoverPresentationController.sourceView = self.view;
     alert.popoverPresentationController.sourceRect = rect;
+    [self presentViewController:alert animated:true completion:nil];
+}
+
+
+- (void)showAlertWithAction:(NSArray *)arr fromBarItem:(UIBarButtonItem *)item
+{
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    for (NSString *title in arr) {
+        UIAlertAction *action = [UIAlertAction actionWithTitle:title style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [self handleAction:title];
+        }];
+        [alert addAction:action];
+    }
+    if (!IsIpad()){
+        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        }];
+        [alert addAction:cancelAction];
+    }
+    alert.popoverPresentationController.sourceView = self.view;
+    alert.popoverPresentationController.barButtonItem = item;
     [self presentViewController:alert animated:true completion:nil];
 }
 
@@ -1133,16 +1153,16 @@ enum {
         NSString *key = [SeafGlobal.sharedObject objectForKey:@"SORT_KEY"];
         if ([@"NAME" caseInsensitiveCompare:key] != NSOrderedSame) {
             [SeafGlobal.sharedObject setObject:@"NAME" forKey:@"SORT_KEY"];
-            [_directory reSortItems];
-            [self.tableView reloadData];
         }
+        [_directory reSortItems];
+        [self.tableView reloadData];
     } else if ([S_SORT_MTIME isEqualToString:title]) {
         NSString *key = [SeafGlobal.sharedObject objectForKey:@"SORT_KEY"];
         if ([@"MTIME" caseInsensitiveCompare:key] != NSOrderedSame) {
             [SeafGlobal.sharedObject setObject:@"MTIME" forKey:@"SORT_KEY"];
-            [_directory reSortItems];
-            [self.tableView reloadData];
         }
+        [_directory reSortItems];
+        [self.tableView reloadData];
     }
 }
 
