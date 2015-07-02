@@ -655,6 +655,7 @@
 		57ACEEC71A28B1BF0053A94A /* SVProgressHUD.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = SVProgressHUD.bundle; sourceTree = "<group>"; };
 		57ACEEC81A28B1BF0053A94A /* SVProgressHUD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVProgressHUD.h; sourceTree = "<group>"; };
 		57ACEEC91A28B1BF0053A94A /* SVProgressHUD.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVProgressHUD.m; sourceTree = "<group>"; };
+		57AE2ECD1B45663E003F1672 /* nb */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nb; path = nb.lproj/Localizable.strings; sourceTree = "<group>"; };
 		57AE699418C1C0A200AEBF8B /* ca */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ca; path = ca.lproj/Localizable.strings; sourceTree = "<group>"; };
 		57B66EAF15BA513E00C2B41B /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		57BD932A174DD86D00F7732F /* index.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = index.html; path = htmls/index.html; sourceTree = SOURCE_ROOT; };
@@ -1647,6 +1648,7 @@
 				tr,
 				is,
 				cs,
+				nb,
 			);
 			mainGroup = 57DB826215A833F900097CEC;
 			productRefGroup = 57DB826E15A833FA00097CEC /* Products */;
@@ -2128,6 +2130,7 @@
 				571B845B1A5AF10C00E92BF7 /* tr */,
 				571B845C1A5AF14200E92BF7 /* is */,
 				57E2FEA21ABD544900BCD7F5 /* cs */,
+				57AE2ECD1B45663E003F1672 /* nb */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
