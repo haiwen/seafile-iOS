@@ -65,8 +65,6 @@
 	<array>
 		<string>fetch</string>
 	</array>
-	<key>UILaunchStoryboardName</key>
-	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>SeafStart</string>
 	<key>UIMainStoryboardFile~ipad</key>
