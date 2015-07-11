@@ -15,6 +15,13 @@ enum ACCOUNT_TYPE {
     ACCOUNT_SHIBBOLETH,
 };
 
+#define SERVER_SEACLOUD         @"https://seacloud.cc"
+#define SERVER_CLOUD            @"https://cloud.seafile.de"
+
+#define SERVER_SEACLOUD_NAME    @"SeaCloud.cc"
+#define SERVER_CLOUD_NAME       @"cloud.seafile.de"
+#define SERVER_SHIB_NAME        @"Shibboleth"
+
 @interface SeafAccountViewController : UIViewController<UITextFieldDelegate>
 
 - (id)initWithController:(StartViewController *)controller connection: (SeafConnection *)conn type:(int)type;

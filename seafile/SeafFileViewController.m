@@ -100,7 +100,7 @@ enum {
         UIBarButtonItem *flexibleFpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:self action:nil];
         UIBarButtonItem *fixedSpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:self action:nil];
 
-        NSArray *itemsTitles = [NSArray arrayWithObjects:S_MKDIR, S_NEWFILE, NSLocalizedString(@"Copy", @"Seafile"), NSLocalizedString(@"Move", @"Seafile"), S_DELETE, NSLocalizedString(@"PasteTo", @"Seafile"), NSLocalizedString(@"MoveTo", @"Seafile"), NSLocalizedString(@"Cancel", @"Seafile"), nil ];
+        NSArray *itemsTitles = [NSArray arrayWithObjects:S_MKDIR, S_NEWFILE, NSLocalizedString(@"Copy", @"Seafile"), NSLocalizedString(@"Move", @"Seafile"), S_DELETE, NSLocalizedString(@"PasteTo", @"Seafile"), NSLocalizedString(@"MoveTo", @"Seafile"), STR_CANCEL, nil ];
 
         UIBarButtonItem *items[EDITOP_NUM];
         items[0] = flexibleFpaceItem;
@@ -337,21 +337,8 @@ enum {
 
 - (void)editSheet:(id)sender
 {
-    if (ios8) {
-        [self showAlertWithAction:[NSArray arrayWithObjects:S_NEWFILE, S_MKDIR, S_EDIT, S_SORT_NAME, S_SORT_MTIME, nil] fromBarItem:self.editItem];
-    } else {
-        if (self.actionSheet) {
-            [self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
-            self.actionSheet = nil;
-        } else {
-            NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
-            self.actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_NEWFILE, S_MKDIR, S_EDIT, S_SORT_NAME, S_SORT_MTIME, nil];
-            if (IsIpad())
-                [self.actionSheet showFromBarButtonItem:self.editItem animated:YES];
-            else
-                [self.actionSheet showInView:[UIApplication sharedApplication].keyWindow];
-        }
-    }
+    NSArray *titles = [NSArray arrayWithObjects:S_NEWFILE, S_MKDIR, S_EDIT, S_SORT_NAME, S_SORT_MTIME, nil];
+    [self showAlertWithAction:titles fromBarItem:self.editItem withTitle:nil];
 }
 
 - (void)initNavigationItems:(SeafDir *)directory
@@ -456,50 +443,70 @@ enum {
     return cell;
 }
 
-- (void)showAlertWithAction:(NSArray *)arr fromRect:(CGRect)rect
+- (UIAlertController *)generateAction:(NSArray *)arr withTitle:(NSString *)title
 {
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
-    for (NSString *title in arr) {
-        UIAlertAction *action = [UIAlertAction actionWithTitle:title style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            [self handleAction:title];
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    for (NSString *name in arr) {
+        UIAlertAction *action = [UIAlertAction actionWithTitle:name style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [self handleAction:name];
         }];
         [alert addAction:action];
     }
     if (!IsIpad()){
-        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         }];
         [alert addAction:cancelAction];
     }
-    alert.popoverPresentationController.sourceView = self.view;
-    alert.popoverPresentationController.sourceRect = rect;
-    [self presentViewController:alert animated:true completion:nil];
+    return alert;
 }
 
-
-- (void)showAlertWithAction:(NSArray *)arr fromBarItem:(UIBarButtonItem *)item
+- (void)showAlertWithAction:(NSArray *)arr fromRect:(CGRect)rect inView:(UIView *)view withTitle:(NSString *)title
 {
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
-    for (NSString *title in arr) {
-        UIAlertAction *action = [UIAlertAction actionWithTitle:title style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            [self handleAction:title];
-        }];
-        [alert addAction:action];
+    if (ios8) {
+        UIAlertController *alert = [self generateAction:arr withTitle:title];
+        alert.popoverPresentationController.sourceView = self.view;
+        alert.popoverPresentationController.sourceRect = rect;
+        [self presentViewController:alert animated:true completion:nil];
+    } else {
+        if (self.actionSheet) {
+            [self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
+            self.actionSheet = nil;
+        }
+        self.actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:actionSheetCancelTitle() destructiveButtonTitle:nil otherButtonTitles:nil];
+        for (NSString *title in arr) {
+            [self.actionSheet addButtonWithTitle:title];
+        }
+        [self.actionSheet showFromRect:rect inView:view animated:YES];
     }
-    if (!IsIpad()){
-        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        }];
-        [alert addAction:cancelAction];
+}
+
+- (void)showAlertWithAction:(NSArray *)arr fromBarItem:(UIBarButtonItem *)item withTitle:(NSString *)title
+{
+    if (ios8) {
+        UIAlertController *alert = [self generateAction:arr withTitle:title];
+        alert.popoverPresentationController.sourceView = self.view;
+        alert.popoverPresentationController.barButtonItem = item;
+        [self presentViewController:alert animated:true completion:nil];
+    }  else {
+        if (self.actionSheet) {
+            [self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
+            self.actionSheet = nil;
+        }
+        self.actionSheet = [[UIActionSheet alloc] initWithTitle:title delegate:self cancelButtonTitle:actionSheetCancelTitle() destructiveButtonTitle:nil otherButtonTitles:nil];
+        for (NSString *title in arr) {
+            [self.actionSheet addButtonWithTitle:title];
+        }
+        if (IsIpad())
+            [self.actionSheet showFromBarButtonItem:item animated:YES];
+        else
+            [self.actionSheet showInView:[UIApplication sharedApplication].keyWindow];
     }
-    alert.popoverPresentationController.sourceView = self.view;
-    alert.popoverPresentationController.barButtonItem = item;
-    [self presentViewController:alert animated:true completion:nil];
 }
 
 - (void)showEditFileMenu:(UILongPressGestureRecognizer *)gestureRecognizer
 {
     if (self.tableView.editing == YES)
         return;
-    UIActionSheet *actionSheet;
     if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
         return;
 
@@ -513,16 +520,12 @@ enum {
         return;
 
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
-    if (ios8) {
-        [self showAlertWithAction:[NSArray arrayWithObjects:S_DELETE, S_REDOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil] fromRect:cell.frame];
-    } else {
-        NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
-        if (file.mpath)
-            actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, S_REDOWNLOAD, S_UPLOAD, S_SHARE_EMAIL, S_SHARE_LINK, nil];
-        else
-            actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, S_REDOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
-        [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
-    }
+    NSArray *titles;
+    if (file.mpath)
+        titles = [NSArray arrayWithObjects:S_DELETE, S_UPLOAD, S_SHARE_EMAIL, S_SHARE_LINK, nil];
+    else
+        titles = [NSArray arrayWithObjects:S_DELETE, S_REDOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
+    [self showAlertWithAction:[NSArray arrayWithObjects:S_DELETE, S_REDOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
 }
 
 - (void)showEditDirMenu:(UILongPressGestureRecognizer *)gestureRecognizer
@@ -540,13 +543,7 @@ enum {
           return;
 
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
-    if (ios8) {
-        [self showAlertWithAction:[NSArray arrayWithObjects:S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil] fromRect:cell.frame];
-    } else {
-        NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
-        UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
-        [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
-    }
+    [self showAlertWithAction:[NSArray arrayWithObjects:S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
 }
 
 - (void)showEditUploadFileMenu:(UILongPressGestureRecognizer *)gestureRecognizer
@@ -562,13 +559,7 @@ enum {
         return;
 
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
-    if (ios8) {
-        [self showAlertWithAction:[NSArray arrayWithObjects:S_DELETE, nil] fromRect:cell.frame];
-    } else {
-        NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
-        UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_DELETE, nil];
-        [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
-    }
+    [self showAlertWithAction:[NSArray arrayWithObjects:S_DELETE, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
 }
 
 - (UITableViewCell *)getSeafUploadFileCell:(SeafUploadFile *)file forTableView:(UITableView *)tableView
@@ -1095,6 +1086,12 @@ enum {
     [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
 }
 
+- (void)downloadDir:(SeafDir *)dir
+{
+    Debug("download dir: %@ %@", dir.repoId, dir.path);
+    //TODO
+}
+
 - (void)renameFile:(SeafFile *)file
 {
     _curEntry = file;
@@ -1121,6 +1118,10 @@ enum {
             [self deleteFile:(SeafFile*)entry];
         else if ([entry isKindOfClass:[SeafDir class]])
             [self deleteDir: (SeafDir*)entry];
+    } else if ([S_DOWNLOAD isEqualToString:title]) {
+        SeafDir *dir = (SeafDir *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
+        if ([dir isKindOfClass:[SeafDir class]])
+            [self downloadDir:dir];
     } else if ([S_REDOWNLOAD isEqualToString:title]) {
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [self redownloadFile:file];
@@ -1220,36 +1221,28 @@ enum {
 }
 
 #pragma mark - QBImagePickerControllerDelegate
-- (BOOL)filenameExist:(NSString *)filename
+- (void)uploadPickedAssets:(NSArray *)assets
 {
-    NSArray *arr = _directory.allItems;
-    NSUInteger idx = [arr indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
+    NSMutableSet *nameSet = [[NSMutableSet alloc] init];
+    for (id obj in _directory.allItems) {
         NSString *name = nil;
         if ([obj conformsToProtocol:@protocol(SeafPreView)]) {
             name = ((id<SeafPreView>)obj).name;
         } else if ([obj isKindOfClass:[SeafBase class]]) {
             name = ((SeafBase *)obj).name;
         }
-        if (name && [name isEqualToString:filename]) {
-            *stop = true;
-            return true;
-        }
-        return false;
-    }];
-    return (idx != NSNotFound);
-}
-
-- (void)uploadPickedAssets:(NSArray *)assets
-{
+        [nameSet addObject:name];
+    }
     NSMutableArray *files = [[NSMutableArray alloc] init];
     NSString *date = [self.formatter stringFromDate:[NSDate date]];
     for (ALAsset *asset in assets) {
         NSString *filename = asset.defaultRepresentation.filename;
-        if ([self filenameExist:filename]) {
+        if ([nameSet containsObject:filename]) {
             NSString *name = filename.stringByDeletingPathExtension;
             NSString *ext = filename.pathExtension;
             filename = [NSString stringWithFormat:@"%@-%@.%@", name, date, ext];
         }
+        [nameSet addObject:filename];
         NSString *path = [SeafGlobal.sharedObject.uploadsDir stringByAppendingPathComponent:filename];
         SeafUploadFile *file =  [self.connection getUploadfile:path];
         file.asset = asset;
@@ -1334,17 +1327,22 @@ enum {
 #pragma mark - SeafUploadDelegate
 - (void)uploadProgress:(SeafUploadFile *)file result:(BOOL)res progress:(int)percent
 {
-    long index = [_directory.allItems indexOfObject:file];
-    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
-    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+    NSIndexPath *indexPath = nil;
+    UITableViewCell *cell = nil;
+    @try {
+        long index = [_directory.allItems indexOfObject:file];
+        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
+        cell = [self.tableView cellForRowAtIndexPath:indexPath];
+    } @catch(NSException *exception) {
+    }
     if (!cell) return;
+
     if (res && percent < 100 && [cell isKindOfClass:[SeafUploadingFileCell class]]) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [((SeafUploadingFileCell *)cell).progressView setProgress:percent*1.0f/100];
         });
     } else {
-        [self.tableView reloadData];
-        //[self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
     }
 }
 

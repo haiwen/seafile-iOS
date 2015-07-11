@@ -141,17 +141,10 @@
 
 - (IBAction)addAccount:(id)sender
 {
-    UIActionSheet *actionSheet;
     pressedIndex = nil;
     NSString *privserver = [NSString stringWithFormat:NSLocalizedString(@"Private %@ Server", @"Seafile"), APP_NAME];
-    if (IsIpad())
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:privserver, @"SeaCloud.cc", @"cloud.seafile.com", @"Shibboleth", nil];
-    else
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") destructiveButtonTitle:nil otherButtonTitles:privserver, @"SeaCloud.cc", @"cloud.seafile.com", @"Shibboleth", nil];
-    if (IsIpad())
-        [actionSheet showFromBarButtonItem:sender animated:YES];
-    else
-        [actionSheet showInView:[UIApplication sharedApplication].keyWindow];
+    UIActionSheet * actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:actionSheetCancelTitle() destructiveButtonTitle:nil otherButtonTitles:privserver, SERVER_SEACLOUD_NAME, SERVER_CLOUD_NAME, SERVER_SHIB_NAME, nil];
+    [SeafAppDelegate showActionSheet:actionSheet fromBarButtonItem:sender];
 }
 
 #pragma mark - Table view data source
@@ -178,10 +171,8 @@
     pressedIndex = [self.tableView indexPathForRowAtPoint:touchPoint];
     if (!pressedIndex)
         return;
-    if (IsIpad())
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:strEdit, strDelete, nil];
-    else
-        actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile")  destructiveButtonTitle:nil otherButtonTitles:strEdit, strDelete, nil];
+
+    actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:actionSheetCancelTitle() destructiveButtonTitle:nil otherButtonTitles:strEdit, strDelete, nil];
 
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:pressedIndex];
     [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];

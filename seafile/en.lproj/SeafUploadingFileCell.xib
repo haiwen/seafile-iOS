@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="7531" systemVersion="14C109" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="7706" systemVersion="14D136" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="7520"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="7703"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <objects>
@@ -19,15 +19,15 @@
                         <rect key="frame" x="48" y="7" width="217" height="20"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="20" id="gwc-WB-R4t"/>
-                            <constraint firstAttribute="width" constant="217" id="iVt-H1-35R"/>
                         </constraints>
                         <fontDescription key="fontDescription" type="system" pointSize="18"/>
                         <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                         <color key="highlightedColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </label>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="4">
-                        <rect key="frame" x="8" y="8" width="32" height="32"/>
+                        <rect key="frame" x="8" y="9" width="32" height="32"/>
                         <constraints>
+                            <constraint firstAttribute="height" constant="32" id="Rzi-1l-D0L"/>
                             <constraint firstAttribute="width" constant="32" id="d7S-Sx-xHD"/>
                         </constraints>
                     </imageView>
@@ -37,12 +37,12 @@
                 </subviews>
                 <constraints>
                     <constraint firstItem="20" firstAttribute="top" secondItem="3" secondAttribute="bottom" constant="8" symbolic="YES" id="0Zc-0D-eVx"/>
-                    <constraint firstItem="4" firstAttribute="top" secondItem="Ekz-MA-w9u" secondAttribute="topMargin" id="1nu-i1-ux7"/>
                     <constraint firstAttribute="bottomMargin" secondItem="20" secondAttribute="bottom" constant="4" id="Ijp-QX-MFT"/>
+                    <constraint firstItem="4" firstAttribute="leading" secondItem="Ekz-MA-w9u" secondAttribute="leading" constant="8" id="Kwp-jy-fWQ"/>
                     <constraint firstItem="20" firstAttribute="leading" secondItem="3" secondAttribute="leading" id="MP7-qs-yls"/>
-                    <constraint firstItem="20" firstAttribute="leading" secondItem="4" secondAttribute="trailing" constant="8" symbolic="YES" id="TaJ-nL-Ej2"/>
+                    <constraint firstAttribute="trailing" secondItem="3" secondAttribute="trailing" constant="55" id="Sko-3z-8at"/>
                     <constraint firstItem="4" firstAttribute="centerY" secondItem="Ekz-MA-w9u" secondAttribute="centerY" id="YhJ-qC-bex"/>
-                    <constraint firstItem="4" firstAttribute="leading" secondItem="Ekz-MA-w9u" secondAttribute="leadingMargin" id="rgH-TM-Rl3"/>
+                    <constraint firstItem="3" firstAttribute="leading" secondItem="4" secondAttribute="trailing" constant="8" id="Zt3-xc-DG8"/>
                     <constraint firstItem="20" firstAttribute="trailing" secondItem="3" secondAttribute="trailing" id="xbN-x7-hYh"/>
                 </constraints>
             </tableViewCellContentView>
@@ -51,7 +51,7 @@
                 <outlet property="nameLabel" destination="3" id="19"/>
                 <outlet property="progressView" destination="20" id="21"/>
             </connections>
-            <point key="canvasLocation" x="211" y="223"/>
+            <point key="canvasLocation" x="182" y="223"/>
         </tableViewCell>
     </objects>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">

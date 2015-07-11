@@ -27,6 +27,7 @@
 @property (retain) NSIndexPath *selectedindex;
 
 @property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
+@property (strong) UIActionSheet *actionSheet;
 
 @end
 
@@ -151,7 +152,8 @@
     //[self performSelector:@selector(refresh:) withObject:nil afterDelay:1.0f];
 }
 
-- (void)showAlertWithAction:(NSArray *)arr fromRect:(CGRect)rect
+
+- (UIAlertController *)generateAction:(NSArray *)arr
 {
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     for (NSString *title in arr) {
@@ -161,18 +163,35 @@
         [alert addAction:action];
     }
     if (!IsIpad()){
-        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
         }];
         [alert addAction:cancelAction];
     }
-    alert.popoverPresentationController.sourceView = self.view;
-    alert.popoverPresentationController.sourceRect = rect;
-    [self presentViewController:alert animated:true completion:nil];
+    return alert;
+}
+
+- (void)showAlertWithAction:(NSArray *)arr fromRect:(CGRect)rect inView:(UIView *)view
+{
+    if (ios8) {
+        UIAlertController *alert = [self generateAction:arr];
+        alert.popoverPresentationController.sourceView = self.view;
+        alert.popoverPresentationController.sourceRect = rect;
+        [self presentViewController:alert animated:true completion:nil];
+    } else {
+        if (self.actionSheet) {
+            [self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
+            self.actionSheet = nil;
+        }
+        self.actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:actionSheetCancelTitle() destructiveButtonTitle:nil otherButtonTitles:nil];
+        for (NSString *title in arr) {
+            [self.actionSheet addButtonWithTitle:title];
+        }
+        [self.actionSheet showFromRect:rect inView:view animated:YES];
+    }
 }
 
 - (void)showEditFileMenu:(UILongPressGestureRecognizer *)gestureRecognizer
 {
-    UIActionSheet *actionSheet;
     if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
         return;
 
@@ -186,18 +205,10 @@
         return;
 
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
-    NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
-    if (ios8) {
-        NSMutableArray *arr = [[NSMutableArray alloc] initWithObjects:S_REDOWNLOAD, nil];
-        if (file.mpath) [arr addObject:S_UPLOAD];
-        [self showAlertWithAction:arr fromRect:cell.frame];
-    } else {
-        if (file.mpath)
-            actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_REDOWNLOAD, S_UPLOAD, nil];
-        else
-            actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:S_REDOWNLOAD, nil];
-        [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
-    }
+    NSArray *titles;
+    if (file.mpath) titles = [NSArray arrayWithObjects:S_UPLOAD, nil];
+    else titles = [NSArray arrayWithObjects:S_REDOWNLOAD, nil];
+    [self showAlertWithAction:titles fromRect:cell.frame inView:self.tableView];
 }
 
 #pragma mark - Table view data source

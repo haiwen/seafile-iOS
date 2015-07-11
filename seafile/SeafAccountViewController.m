@@ -178,10 +178,10 @@
 
     switch (self.type) {
         case ACCOUNT_SEACLOUD:
-            serverTextField.text = @"https://seacloud.cc";
+            serverTextField.text = SERVER_SEACLOUD;
             break;
         case ACCOUNT_CLOUD:
-            serverTextField.text = @"https://cloud.seafile.com";
+            serverTextField.text = SERVER_CLOUD;
             break;
         case ACCOUNT_PRIVATE:{
 #if DEBUG

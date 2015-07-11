@@ -66,7 +66,7 @@
         [self.navigationItem setHidesBackButton:YES];
     } else
         [self.navigationItem setHidesBackButton:NO];
-    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIBarButtonItemStyleBordered target:self action:@selector(cancel:)];
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:STR_CANCEL style:UIBarButtonItemStyleBordered target:self action:@selector(cancel:)];
     self.tableView.scrollEnabled = YES;
     UIBarButtonItem *flexibleFpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
     self.chooseItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Choose", @"Seafile") style:UIBarButtonItemStyleBordered target:self action:@selector(chooseFolder:)];

@@ -30,6 +30,11 @@ enum PREVIEW_STATE {
     PREVIEW_FAILED
 };
 
+enum SHARE_STATUS {
+    SHARE_BY_MAIL = 0,
+    SHARE_BY_LINK = 1
+};
+
 #define PADDING                  10
 #define ACTION_SHEET_OLD_ACTIONS 2000
 
@@ -66,7 +71,7 @@ enum PREVIEW_STATE {
 @property (strong, nonatomic) UIBarButtonItem *leftItem;
 
 @property (strong) UIDocumentInteractionController *docController;
-@property int buttonIndex;
+@property int shareStatus;
 @property (readwrite, nonatomic) bool hideMaster;
 @property (readwrite, nonatomic) NSString *gid;
 
@@ -550,7 +555,6 @@ enum PREVIEW_STATE {
     [self presentViewController:navController animated:YES completion:nil];
 }
 
-
 - (IBAction)cancelDownload:(id)sender
 {
     [(SeafFile *)self.preViewItem cancelDownload];
@@ -573,18 +577,52 @@ enum PREVIEW_STATE {
     }
 }
 
+- (UIAlertController *)generateAction:(NSArray *)arr withTitle:(NSString *)title
+{
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    for (NSString *name in arr) {
+        UIAlertAction *action = [UIAlertAction actionWithTitle:name style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [self handleAction:name];
+        }];
+        [alert addAction:action];
+    }
+    if (!IsIpad()){
+        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        }];
+        [alert addAction:cancelAction];
+    }
+    return alert;
+}
+
+- (void)showAlertWithAction:(NSArray *)arr fromBarItem:(UIBarButtonItem *)item withTitle:(NSString *)title
+{
+    if (ios8) {
+        UIAlertController *alert = [self generateAction:arr withTitle:title];
+        alert.popoverPresentationController.sourceView = self.view;
+        alert.popoverPresentationController.barButtonItem = item;
+        [self presentViewController:alert animated:true completion:nil];
+    }  else {
+        if (self.actionSheet) {
+            [self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
+            self.actionSheet = nil;
+        }
+        self.actionSheet = [[UIActionSheet alloc] initWithTitle:title delegate:self cancelButtonTitle:actionSheetCancelTitle() destructiveButtonTitle:nil otherButtonTitles:nil];
+        for (NSString *title in arr) {
+            [self.actionSheet addButtonWithTitle:title];
+        }
+        if (IsIpad())
+            [self.actionSheet showFromBarButtonItem:item animated:YES];
+        else
+            [self.actionSheet showInView:[UIApplication sharedApplication].keyWindow];
+    }
+}
+
 - (IBAction)export:(id)sender
 {
     if (![self.preViewItem isKindOfClass:[SeafFile class]]) return;
 
     //image :save album, copy clipboard, print
     //pdf :print
-    if (self.actionSheet) {
-        [self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
-        self.actionSheet = nil;
-        return;
-    }
-
     NSMutableArray *bts = [[NSMutableArray alloc] init];
     SeafFile *file = (SeafFile *)self.preViewItem;
     if ([Utils isImageFile:file.name]) {
@@ -596,38 +634,18 @@ enum PREVIEW_STATE {
     if (bts.count == 0) {
         [self openElsewhere:nil];
     } else {
-        NSString *cancelTitle = IsIpad() ? nil : NSLocalizedString(@"Cancel", @"Seafile");
-        self.actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:cancelTitle destructiveButtonTitle:nil otherButtonTitles:nil ];
-        for (NSString *title in bts) {
-            [self.actionSheet addButtonWithTitle:title];
-        }
-        [self.actionSheet addButtonWithTitle:NSLocalizedString(@"Open elsewhere...", "Seafile")];
-        if (IsIpad())
-            [self.actionSheet showFromBarButtonItem:self.exportItem animated:YES];
-        else
-            [self.actionSheet showInView:[UIApplication sharedApplication].keyWindow];
+        [bts addObject:NSLocalizedString(@"Open elsewhere...", "Seafile")];
+        [self showAlertWithAction:bts fromBarItem:self.exportItem withTitle:nil];
     }
 }
 
 - (IBAction)share:(id)sender
 {
     if (![self.preViewItem isKindOfClass:[SeafFile class]]) return;
-    if (self.actionSheet) {
-        [self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
-        self.actionSheet = nil;
-        return;
-    }
     [self.preViewItem setDelegate:self];
     NSString *email = NSLocalizedString(@"Email", @"Seafile");
     NSString *copy = NSLocalizedString(@"Copy Link to Clipboard", @"Seafile");
-    if (IsIpad())
-        self.actionSheet = [[UIActionSheet alloc] initWithTitle:SHARE_TITLE delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:email, copy, nil ];
-    else
-        self.actionSheet = [[UIActionSheet alloc] initWithTitle:SHARE_TITLE delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") destructiveButtonTitle:nil otherButtonTitles:email, copy, nil ];
-    if (IsIpad())
-        [self.actionSheet showFromBarButtonItem:self.shareItem animated:YES];
-    else
-        [self.actionSheet showInView:[UIApplication sharedApplication].keyWindow];
+    [self showAlertWithAction:[NSArray arrayWithObjects:email, copy, nil] fromBarItem:self.shareItem withTitle:SHARE_TITLE];
 }
 
 - (void)thisImage:(UIImage *)image hasBeenSavedInPhotoAlbumWithError:(NSError *)error usingContextInfo:(void *)ctxInfo
@@ -671,41 +689,50 @@ enum PREVIEW_STATE {
 }
 
 #pragma mark - UIActionSheetDelegate
+- (void)handleAction:(NSString *)title
+{
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    SeafFile *file = (SeafFile *)self.preViewItem;
+    if ([NSLocalizedString(@"Open elsewhere...", @"Seafile") isEqualToString:title]) {
+        if (self.actionSheet)[self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
+        [self performSelector:@selector(openElsewhere:) withObject:nil afterDelay:0.0f];
+    } else if ([NSLocalizedString(@"Save to album", @"Seafile") isEqualToString:title]) {
+        UIImage *img = [UIImage imageWithContentsOfFile:file.previewItemURL.path];
+        UIImageWriteToSavedPhotosAlbum(img, self, @selector(thisImage:hasBeenSavedInPhotoAlbumWithError:usingContextInfo:), (void *)CFBridgingRetain(file));
+    }  else if ([NSLocalizedString(@"Copy image to clipboard", @"Seafile") isEqualToString:title]) {
+        UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+        NSData *data = [NSData dataWithContentsOfFile:file.previewItemURL.path];
+        [pasteboard setData:data forPasteboardType:file.name];
+    } else if ([NSLocalizedString(@"Print", @"Seafile") isEqualToString:title]) {
+        [self printFile:file];
+    } else if ([NSLocalizedString(@"Email", @"Seafile") isEqualToString:title]
+               || [NSLocalizedString(@"Copy Link to Clipboard", @"Seafile") isEqualToString:title]) {
+        if (![appdelegate checkNetworkStatus])
+            return;
+        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+        if (![appdelegate checkNetworkStatus])
+            return;
+
+        if ([NSLocalizedString(@"Email", @"Seafile") isEqualToString:title])
+            _shareStatus = SHARE_BY_MAIL;
+        else
+            _shareStatus = SHARE_BY_LINK;
+        if (!file.shareLink) {
+            [SVProgressHUD showWithStatus:NSLocalizedString(@"Generate share link ...", @"Seafile")];
+            [file generateShareLink:self];
+        } else {
+            [self generateSharelink:file WithResult:YES];
+        }
+    }
+}
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)bIndex
 {
     self.actionSheet = nil;
     if (bIndex < 0 || bIndex >= actionSheet.numberOfButtons)
         return;
-    SeafFile *file = (SeafFile *)self.preViewItem;
-    if ([SHARE_TITLE isEqualToString:actionSheet.title]) {
-        if (bIndex == 0 || bIndex == 1) {
-            SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-            if (![appdelegate checkNetworkStatus])
-                return;
-            _buttonIndex = (int)bIndex;
-            if (!file.shareLink) {
-                [SVProgressHUD showWithStatus:NSLocalizedString(@"Generate share link ...", @"Seafile")];
-                [file generateShareLink:self];
-            } else {
-                [self generateSharelink:file WithResult:YES];
-            }
-        }
-    } else {
-        NSString *title = [actionSheet buttonTitleAtIndex:bIndex];
-        if ([NSLocalizedString(@"Open elsewhere...", @"Seafile") isEqualToString:title]) {
-            [self.actionSheet dismissWithClickedButtonIndex:0 animated:NO];
-            [self performSelector:@selector(openElsewhere:) withObject:nil afterDelay:0.0f];
-        } else if ([NSLocalizedString(@"Save to album", @"Seafile") isEqualToString:title]) {
-            UIImage *img = [UIImage imageWithContentsOfFile:file.previewItemURL.path];
-            UIImageWriteToSavedPhotosAlbum(img, self, @selector(thisImage:hasBeenSavedInPhotoAlbumWithError:usingContextInfo:), (void *)CFBridgingRetain(file));
-        }  else if ([NSLocalizedString(@"Copy image to clipboard", @"Seafile") isEqualToString:title]) {
-            UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-            NSData *data = [NSData dataWithContentsOfFile:file.previewItemURL.path];
-            [pasteboard setData:data forPasteboardType:file.name];
-        } else if ([NSLocalizedString(@"Print", @"Seafile") isEqualToString:title]) {
-            [self printFile:file];
-        }
-    }
+
+    NSString *title = [actionSheet buttonTitleAtIndex:bIndex];
+    [self handleAction:title];
 }
 
 #pragma mark - SeafShareDelegate
@@ -722,11 +749,11 @@ enum PREVIEW_STATE {
         return;
     }
     [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Generate share link success", @"Seafile")];
+    Debug("file %@ sharelink;%@", file.name, file.shareLink);
 
-    if (_buttonIndex == 0) {
-        Debug("file %@ sharelink;%@", file.name, file.shareLink);
+    if (_shareStatus == SHARE_BY_MAIL) {
         [self sendMailInApp:file.name shareLink:file.shareLink];
-    } else if (_buttonIndex == 1){
+    } else if (_shareStatus == SHARE_BY_LINK){
         UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
         [pasteboard setString:file.shareLink];
     }
@@ -802,9 +829,7 @@ enum PREVIEW_STATE {
 
 - (UIBarButtonItem *)getSpaceBarItem
 {
-    float spacewidth = 20.0;
-    if (!IsIpad())
-        spacewidth = 10.0;
+    float spacewidth = IsIpad() ? 20.0f : 10.0f;
     UIBarButtonItem *space = [self getSpaceBarItem:spacewidth];
     return space;
 }

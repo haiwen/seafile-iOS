@@ -414,7 +414,7 @@
     else {
         self.handler_ok = yes;
         self.handler_cancel = no;
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:message delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Seafile") otherButtonTitles:NSLocalizedString(@"OK", @"Seafile"), nil];
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:message delegate:self cancelButtonTitle:STR_CANCEL otherButtonTitles:NSLocalizedString(@"OK", @"Seafile"), nil];
         alert.alertViewStyle = UIAlertViewStyleDefault;
         [alert show];
     }
@@ -465,5 +465,13 @@
     [_monitors addObject:monitor];
 }
 
+
++ (void)showActionSheet:(UIActionSheet *)actionSheet fromBarButtonItem:(UIBarButtonItem *)item
+{
+    if (IsIpad())
+        [actionSheet showFromBarButtonItem:item animated:YES];
+    else
+        [actionSheet showInView:[UIApplication sharedApplication].keyWindow];
+}
 
 @end

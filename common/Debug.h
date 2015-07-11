@@ -22,9 +22,15 @@
 
 #define Warning(fmt, args...) NSLog(@"#%d %s:[WARNING]" fmt, __LINE__, __FUNCTION__, ##args)
 
+#define STR_CANCEL NSLocalizedString(@"Cancel", @"Seafile")
 static inline BOOL IsIpad()
 {
     return ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad);
+}
+
+static inline NSString *actionSheetCancelTitle()
+{
+    return IsIpad() ? nil : STR_CANCEL;
 }
 
 #define ios7 ([[[UIDevice currentDevice] systemVersion] floatValue] >= 7)

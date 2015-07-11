@@ -74,4 +74,6 @@ enum {
 - (void)addBackgroundMonitor:(id<SeafBackgroundMonitor>)monitor;
 - (void)continueWithInvalidCert:(NSURLProtectionSpace *)protectionSpace yes:(void (^)())yes no:(void (^)())no;
 
++ (void)showActionSheet:(UIActionSheet *)sheet fromBarButtonItem:(UIBarButtonItem *)item;
+
 @end
