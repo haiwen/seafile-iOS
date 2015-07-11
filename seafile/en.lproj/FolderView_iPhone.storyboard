@@ -202,7 +202,7 @@
                                     </tableViewCell>
                                 </cells>
                             </tableViewSection>
-                            <tableViewSection headerTitle="Settings" id="Jqe-xW-fST">
+                            <tableViewSection headerTitle="Auto Camera Upload" id="Jqe-xW-fST">
                                 <cells>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="tQe-1X-cwE">
                                         <rect key="frame" x="0.0" y="245" width="320" height="44"/>

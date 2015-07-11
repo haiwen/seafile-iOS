@@ -9,10 +9,10 @@
 #import <UIKit/UIKit.h>
 #import "StartViewController.h"
 enum ACCOUNT_TYPE {
-    ACCOUNT_PRIVATE = 0,
-    ACCOUNT_SEACLOUD,
+    ACCOUNT_SEACLOUD = 0,
     ACCOUNT_CLOUD,
     ACCOUNT_SHIBBOLETH,
+    ACCOUNT_OTHER,
 };
 
 #define SERVER_SEACLOUD         @"https://seacloud.cc"

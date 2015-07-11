@@ -285,7 +285,7 @@ enum {
 {
     NSString *sectionNames[] = {
         NSLocalizedString(@"Account Info", @"Seafile"),
-        NSLocalizedString(@"Camera Upload", @"Seafile"),
+        NSLocalizedString(@"Auto Camera Upload", @"Seafile"),
         NSLocalizedString(@"Cache", @"Seafile"),
         NSLocalizedString(@"About", @"Seafile"),
         @"",

@@ -142,8 +142,8 @@
 - (IBAction)addAccount:(id)sender
 {
     pressedIndex = nil;
-    NSString *privserver = [NSString stringWithFormat:NSLocalizedString(@"Private %@ Server", @"Seafile"), APP_NAME];
-    UIActionSheet * actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:actionSheetCancelTitle() destructiveButtonTitle:nil otherButtonTitles:privserver, SERVER_SEACLOUD_NAME, SERVER_CLOUD_NAME, SERVER_SHIB_NAME, nil];
+    NSString *privserver = [NSString stringWithFormat:NSLocalizedString(@"Other %@ Server", @"Seafile"), APP_NAME];
+    UIActionSheet * actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:actionSheetCancelTitle() destructiveButtonTitle:nil otherButtonTitles:SERVER_SEACLOUD_NAME, SERVER_CLOUD_NAME, SERVER_SHIB_NAME, privserver, nil];
     [SeafAppDelegate showActionSheet:actionSheet fromBarButtonItem:sender];
 }
 
@@ -230,7 +230,7 @@
         if (pressedIndex.row >= SeafGlobal.sharedObject.conns.count) return;
         if (buttonIndex == 0) {
             SeafConnection *conn = [[SeafGlobal sharedObject].conns objectAtIndex:pressedIndex.row];
-            int type = conn.isShibboleth ? ACCOUNT_SHIBBOLETH : ACCOUNT_PRIVATE;
+            int type = conn.isShibboleth ? ACCOUNT_SHIBBOLETH : ACCOUNT_OTHER;
             [self showAccountView:conn type:type];
         } else if (buttonIndex == 1) {
             [[[SeafGlobal sharedObject].conns objectAtIndex:pressedIndex.row] clearAccount];
@@ -239,7 +239,7 @@
             [self.tableView reloadData];
         }
     } else {
-        if (buttonIndex >= 0 && buttonIndex <= ACCOUNT_SHIBBOLETH) {
+        if (buttonIndex >= 0 && buttonIndex <= ACCOUNT_OTHER) {
             [self showAccountView:nil type:(int)buttonIndex];
         }
     }
@@ -258,7 +258,7 @@
     if (![conn authorized]) {
         NSString *title = NSLocalizedString(@"The token is invalid, you need to login again", @"Seafile");
         [self alertWithTitle:title handler:^{
-            [self showAccountView:conn type:0];
+            [self showAccountView:conn type:ACCOUNT_OTHER];
         }];
         return YES;
     }

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="7531" systemVersion="14C109" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" initialViewController="cyW-Je-Rn4">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="7706" systemVersion="14D136" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" initialViewController="cyW-Je-Rn4">
     <dependencies>
         <deployment version="1536" identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="7520"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="7703"/>
     </dependencies>
     <scenes>
         <!--Settings-->
@@ -278,14 +278,22 @@
                                             <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
-                                                <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Wipe Cache" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" translatesAutoresizingMaskIntoConstraints="NO" id="RGO-ir-R4l">
-                                                    <rect key="frame" x="115" y="4" width="111" height="32"/>
+                                                <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Wipe Cache" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" translatesAutoresizingMaskIntoConstraints="NO" id="RGO-ir-R4l">
+                                                    <rect key="frame" x="0.0" y="4" width="320" height="32"/>
+                                                    <constraints>
+                                                        <constraint firstAttribute="height" constant="32" id="rWB-Uy-fgE"/>
+                                                    </constraints>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
                                             </subviews>
                                             <color key="backgroundColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                            <constraints>
+                                                <constraint firstAttribute="trailing" secondItem="RGO-ir-R4l" secondAttribute="trailing" id="KY8-y4-Paa"/>
+                                                <constraint firstItem="RGO-ir-R4l" firstAttribute="leading" secondItem="OJP-cu-MgL" secondAttribute="leading" id="jkY-Vz-SrP"/>
+                                                <constraint firstItem="RGO-ir-R4l" firstAttribute="top" secondItem="OJP-cu-MgL" secondAttribute="top" constant="4" id="vGq-aA-CgR"/>
+                                            </constraints>
                                         </tableViewCellContentView>
                                     </tableViewCell>
                                 </cells>
@@ -293,6 +301,7 @@
                         </sections>
                     </tableView>
                     <navigationItem key="navigationItem" title="Settings" id="wb3-ep-Aqm"/>
+                    <nil key="simulatedBottomBarMetrics"/>
                     <connections>
                         <outlet property="autoCameraUploadLabel" destination="M2d-2h-BoT" id="YX5-xx-hId"/>
                         <outlet property="autoSyncCell" destination="2FB-V2-2Rq" id="gan-87-Hff"/>

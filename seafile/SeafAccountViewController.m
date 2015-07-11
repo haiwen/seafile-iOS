@@ -183,7 +183,7 @@
         case ACCOUNT_CLOUD:
             serverTextField.text = SERVER_CLOUD;
             break;
-        case ACCOUNT_PRIVATE:{
+        case ACCOUNT_OTHER:{
 #if DEBUG
             serverTextField.text = @"https://dev.seafile.com/seahub/";
             usernameTextField.text = @"demo@seafile.com";
