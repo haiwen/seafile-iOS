@@ -402,6 +402,8 @@ enum {
             }
         }
     });
+    if ([self isViewLoaded])
+       [_directory loadContent:true];
 }
 
 - (void)viewWillDisappear:(BOOL)animated
