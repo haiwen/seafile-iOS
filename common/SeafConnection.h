@@ -145,6 +145,7 @@ enum MSG_TYPE{
 
 - (void)setRepo:(NSString *)repoId password:(NSString *)password;
 - (NSString *)getRepoPassword:(NSString *)repoId;
+- (void)downloadDir:(SeafDir *)dir;
 
 + (AFHTTPRequestSerializer <AFURLRequestSerialization> *)requestSerializer;
 

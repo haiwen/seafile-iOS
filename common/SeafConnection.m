@@ -1106,4 +1106,23 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self removeVideosFromArray:_photosArray];
     [self removeVideosFromArray:_uploadingArray];
 }
+
+- (void)downloadDir:(SeafDir *)dir
+{
+    [dir downloadContentSuccess:^(SeafDir *dir) {
+        for (SeafBase *item in dir.items) {
+            if ([item isKindOfClass:[SeafFile class]]) {
+                SeafFile *file = (SeafFile *)item;
+                Debug("download file: %@, %@", item.repoId, item.path );
+                [SeafGlobal.sharedObject addDownloadTask:file];
+            } else if ([item isKindOfClass:[SeafDir class]]) {
+                Debug("download dir: %@, %@", item.repoId, item.path );
+                [self downloadDir:(SeafDir *)item];
+            }
+        }
+    } failure:^(SeafDir *dir) {
+        Warning("Failed to download dir: %@ %@", dir.repoId, dir.path);
+    }];
+}
+
 @end

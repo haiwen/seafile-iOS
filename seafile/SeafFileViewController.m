@@ -543,7 +543,7 @@ enum {
           return;
 
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
-    [self showAlertWithAction:[NSArray arrayWithObjects:S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
+    [self showAlertWithAction:[NSArray arrayWithObjects:S_DELETE, S_DOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
 }
 
 - (void)showEditUploadFileMenu:(UILongPressGestureRecognizer *)gestureRecognizer
@@ -1092,7 +1092,7 @@ enum {
 - (void)downloadDir:(SeafDir *)dir
 {
     Debug("download dir: %@ %@", dir.repoId, dir.path);
-    //TODO
+    [_connection performSelectorInBackground:@selector(downloadDir:) withObject:dir];
 }
 
 - (void)renameFile:(SeafFile *)file
