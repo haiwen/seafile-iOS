@@ -61,7 +61,7 @@
 
 - (BOOL)passwordRequired
 {
-    if (_encrypted && ![SeafGlobal.sharedObject getRepoPassword:self.repoId])
+    if (_encrypted && ![connection getRepoPassword:self.repoId])
         return YES;
     else
         return NO;

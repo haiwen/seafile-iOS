@@ -85,10 +85,6 @@
 - (void)removeObjectForKey:(NSString *)defaultName;
 - (BOOL)synchronize;
 
-- (void)setRepo:(NSString *)repoId password:(NSString *)password;
-- (NSString *)getRepoPassword:(NSString *)repoId;
-- (void)clearRepoPasswords;
-
 - (void)migrate;
 - (void)assetForURL:(NSURL *)assetURL resultBlock:(ALAssetsLibraryAssetForURLResultBlock)resultBlock failureBlock:(ALAssetsLibraryAccessFailureBlock)failureBlock;
 

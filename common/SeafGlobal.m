@@ -600,28 +600,6 @@
     return [_storage synchronize];
 }
 
-- (void)setRepo:(NSString *)repoId password:(NSString *)password
-{
-    if (!password)
-        return;
-    NSMutableDictionary *repopasswds = [NSMutableDictionary dictionaryWithDictionary:(NSDictionary*)[self objectForKey:@"repopassword"]];
-    [repopasswds setObject:password forKey:repoId];
-    [self setObject:repopasswds forKey:@"repopassword"];
-    [self synchronize];
-}
-
-- (NSString *)getRepoPassword:(NSString *)repoId
-{
-    NSDictionary *repopasswds = (NSDictionary*)[self objectForKey:@"repopassword"];
-    return [repopasswds objectForKey:repoId];
-}
-
-- (void)clearRepoPasswords
-{
-    [self removeObjectForKey:@"repopassword"];
-    [self synchronize];
-}
-
 - (void)assetForURL:(NSURL *)assetURL resultBlock:(ALAssetsLibraryAssetForURLResultBlock)resultBlock failureBlock:(ALAssetsLibraryAccessFailureBlock)failureBlock
 {
     [self.assetsLibrary assetForURL:assetURL

@@ -143,6 +143,9 @@ enum MSG_TYPE{
 - (void)checkSyncDst:(SeafDir *)dir;
 - (void)checkPhotoChanges:(NSNotification *)note;
 
+- (void)setRepo:(NSString *)repoId password:(NSString *)password;
+- (NSString *)getRepoPassword:(NSString *)repoId;
+
 + (AFHTTPRequestSerializer <AFURLRequestSerialization> *)requestSerializer;
 
 @end

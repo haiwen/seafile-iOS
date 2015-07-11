@@ -261,6 +261,29 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     return [[_info objectForKey:@"usage"] integerValue:-1];
 }
+- (void)setRepo:(NSString *)repoId password:(NSString *)password
+{
+    if (!password)
+        return;
+    Debug("set repo %@ password %@", repoId, password);
+    NSMutableDictionary *repopasswds = [NSMutableDictionary dictionaryWithDictionary:(NSDictionary*)[_info objectForKey:@"repopassword"]];
+    if (!repopasswds) {
+        repopasswds = [[NSMutableDictionary alloc] init];
+    }
+    [repopasswds setObject:password forKey:repoId];
+    [_info setObject:repopasswds forKey:@"repopassword"];
+    [self saveAccountInfo];
+}
+
+- (NSString *)getRepoPassword:(NSString *)repoId
+{
+    NSDictionary *repopasswds = (NSDictionary*)[_info objectForKey:@"repopassword"];
+    Debug("get repo %@ password %@", repoId, repopasswds);
+    if (repopasswds)
+        return [repopasswds objectForKey:repoId];
+    return nil;
+}
+
 - (AFSecurityPolicy *)policyForHost:(NSString *)host
 {
     NSString *path = [self certPathForHost:host];

@@ -98,7 +98,6 @@
     [SeafGlobal.sharedObject synchronize];
     [self cycleTheGlobalMailComposer];
     [SeafGlobal.sharedObject startTimer];
-    [SeafGlobal.sharedObject clearRepoPasswords];
     [Utils clearAllFiles:SeafGlobal.sharedObject.tempDir];
 
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
