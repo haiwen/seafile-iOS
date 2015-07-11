@@ -322,6 +322,10 @@
 		57C03F5817FB271100F7B575 /* checkmask2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57C03F4417FB271100F7B575 /* checkmask2.png */; };
 		57C520FA197A3BB800970804 /* css.png in Resources */ = {isa = PBXBuildFile; fileRef = 57C520F8197A3BB800970804 /* css.png */; };
 		57C520FB197A3BB800970804 /* psd.png in Resources */ = {isa = PBXBuildFile; fileRef = 57C520F9197A3BB800970804 /* psd.png */; };
+		57CD9B841B5121CC00D1CC6B /* delete2@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57CD9B801B5121CC00D1CC6B /* delete2@2x.png */; };
+		57CD9B851B5121CC00D1CC6B /* delete2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57CD9B811B5121CC00D1CC6B /* delete2.png */; };
+		57CD9B861B5121CC00D1CC6B /* delete@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57CD9B821B5121CC00D1CC6B /* delete@2x.png */; };
+		57CD9B871B5121CC00D1CC6B /* delete.png in Resources */ = {isa = PBXBuildFile; fileRef = 57CD9B831B5121CC00D1CC6B /* delete.png */; };
 		57D0AD3817914E7900D741BE /* mobile.css in Resources */ = {isa = PBXBuildFile; fileRef = 57D0AD3617914E7900D741BE /* mobile.css */; };
 		57D189D0182E0A380029A797 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 57D189CE182E0A380029A797 /* Images.xcassets */; };
 		57DA26F5173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DA26F3173E6DFC0003BA31 /* SeafTextEditorViewController.m */; };
@@ -715,6 +719,10 @@
 		57C07CE31632556600502B06 /* SeafUploadingFileCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafUploadingFileCell.m; sourceTree = "<group>"; };
 		57C520F8197A3BB800970804 /* css.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = css.png; sourceTree = "<group>"; };
 		57C520F9197A3BB800970804 /* psd.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = psd.png; sourceTree = "<group>"; };
+		57CD9B801B5121CC00D1CC6B /* delete2@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "delete2@2x.png"; sourceTree = "<group>"; };
+		57CD9B811B5121CC00D1CC6B /* delete2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = delete2.png; sourceTree = "<group>"; };
+		57CD9B821B5121CC00D1CC6B /* delete@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "delete@2x.png"; sourceTree = "<group>"; };
+		57CD9B831B5121CC00D1CC6B /* delete.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = delete.png; sourceTree = "<group>"; };
 		57D0AD3617914E7900D741BE /* mobile.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; name = mobile.css; path = htmls/mobile.css; sourceTree = SOURCE_ROOT; };
 		57D189CE182E0A380029A797 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = "seafile-appstore/Images.xcassets"; sourceTree = "<group>"; };
 		57DA26F3173E6DFC0003BA31 /* SeafTextEditorViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafTextEditorViewController.m; sourceTree = "<group>"; };
@@ -877,6 +885,10 @@
 		57094B3315B9A64500F48C08 /* images */ = {
 			isa = PBXGroup;
 			children = (
+				57CD9B801B5121CC00D1CC6B /* delete2@2x.png */,
+				57CD9B811B5121CC00D1CC6B /* delete2.png */,
+				57CD9B821B5121CC00D1CC6B /* delete@2x.png */,
+				57CD9B831B5121CC00D1CC6B /* delete.png */,
 				570DFACA16A19EFD00ADD5F2 /* account.png */,
 				57A550DC177F283700E3BA9B /* addmsg.png */,
 				57943BDF19F027D5008423E5 /* addmsg@2x.png */,
@@ -1682,12 +1694,14 @@
 				57E22B3B1A126EBE00C92330 /* FolderView_iPhone.storyboard in Resources */,
 				57E22B411A126EBE00C92330 /* SeafStart.storyboard in Resources */,
 				57BFAAF718BD8EA200EB1B5C /* bt-equal2.png in Resources */,
+				57CD9B841B5121CC00D1CC6B /* delete2@2x.png in Resources */,
 				57BFAAF218BD8EA200EB1B5C /* bt-center.png in Resources */,
 				57943C1719F027D5008423E5 /* tab-message@2x.png in Resources */,
 				57BFAB0018BD8EA200EB1B5C /* bt-left.png in Resources */,
 				57E1E8A91737F4D3006601FE /* bootstrap-wysiwyg.js in Resources */,
 				57BFAB0A18BD8EA200EB1B5C /* bt-quote.png in Resources */,
 				573C3C651A15104B009675F9 /* seafile.entitlements in Resources */,
+				57CD9B861B5121CC00D1CC6B /* delete@2x.png in Resources */,
 				57E1E8AB1737F4D3006601FE /* bootstrap.min.js in Resources */,
 				57E1FD91173AB85500523912 /* ios.js in Resources */,
 				57BFAAF918BD8EA200EB1B5C /* bt-image2.png in Resources */,
@@ -1699,6 +1713,7 @@
 				571D8CE91677881400F1A22C /* blackArrow.png in Resources */,
 				574DF02C1AF2863E0044FE06 /* SeafShibbolethViewController.xib in Resources */,
 				571D8CEA1677881400F1A22C /* blackArrow@2x.png in Resources */,
+				57CD9B851B5121CC00D1CC6B /* delete2.png in Resources */,
 				571D8CEB1677881400F1A22C /* blueArrow.png in Resources */,
 				57943C0D19F027D5008423E5 /* export2@2x.png in Resources */,
 				571D8CEC1677881400F1A22C /* blueArrow@2x.png in Resources */,
@@ -1740,6 +1755,7 @@
 				57D189D0182E0A380029A797 /* Images.xcassets in Resources */,
 				570B7B011715D658002F0E1D /* jq.min.js in Resources */,
 				57BFAB0518BD8EA200EB1B5C /* bt-ol2.png in Resources */,
+				57CD9B871B5121CC00D1CC6B /* delete.png in Resources */,
 				570B7B031715D658002F0E1D /* Markdown.Converter.js in Resources */,
 				57943C0B19F027D5008423E5 /* ellipsis2@2x.png in Resources */,
 				570B7B051715D658002F0E1D /* Markdown.Extra.js in Resources */,

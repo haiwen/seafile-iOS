@@ -897,6 +897,9 @@ enum {
         [self dismissLoadingView];
         [SVProgressHUD dismiss];
         [self doneLoadingTableViewData];
+        if (self.state == STATE_DELETE && !IsIpad()) {
+            [self.detailViewController goBack:nil];
+        }
         if (updated)  [self refreshView];
         self.state = STATE_INIT;
     } else if ([entry isKindOfClass:[SeafFile class]]) {
