@@ -56,6 +56,7 @@ enum {
 
 @property int state;
 
+@property NSString *version;
 @end
 
 @implementation SeafSettingsViewController
@@ -97,7 +98,6 @@ enum {
         _syncRepoCell.detailTextLabel.text = @"";
         [self.tableView reloadData];
         [_connection setAttribute:@"" forKey:@"autoSyncRepo"];
-
     }
 }
 
@@ -136,14 +136,18 @@ enum {
     [_autoSyncSwitch addTarget:self action:@selector(autoSyncSwitchFlip:) forControlEvents:UIControlEventValueChanged];
     [_wifiOnlySwitch addTarget:self action:@selector(wifiOnlySwitchFlip:) forControlEvents:UIControlEventValueChanged];
     [_videoSyncSwitch addTarget:self action:@selector(videoSyncSwitchFlip:) forControlEvents:UIControlEventValueChanged];
+
+    NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
+    _version = [infoDictionary objectForKey:@"CFBundleShortVersionString"];
+    _versionCell.detailTextLabel.text = _version;
 }
 
-- (void)viewWillAppear:(BOOL)animated
+- (void)viewDidAppear:(BOOL)animated
 {
+    [super viewWillAppear:animated];
     dispatch_async(dispatch_get_main_queue(), ^ {
         [self configureView];
     });
-    [super viewWillAppear:animated];
 }
 
 - (void)didReceiveMemoryWarning
@@ -161,10 +165,6 @@ enum {
 {
     if (!_connection)
         return;
-
-    NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
-    NSString *version = [infoDictionary objectForKey:@"CFBundleVersion"];
-    _versionCell.detailTextLabel.text = version;
 
     _nameCell.detailTextLabel.text = _connection.username;
     _serverCell.detailTextLabel.text = [_connection.address trimUrl];

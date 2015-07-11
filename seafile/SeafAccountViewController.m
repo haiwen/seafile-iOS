@@ -175,7 +175,7 @@
         [passwordTextField removeFromSuperview];
         [_msgLabel removeFromSuperview];
     }
-    
+
     switch (self.type) {
         case ACCOUNT_SEACLOUD:
             serverTextField.text = @"https://seacloud.cc";
