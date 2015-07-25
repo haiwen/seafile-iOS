@@ -153,6 +153,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             _settings = [settings mutableCopy];
         else
             _settings = [[NSMutableDictionary alloc] init];
+        [_info removeObjectForKey:@"repopassword"];
     }
 
     return self;
