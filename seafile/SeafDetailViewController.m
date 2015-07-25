@@ -521,11 +521,6 @@ enum SHARE_STATUS {
         [self fileContentLoaded:(SeafFile *)entry result:NO completeness:0];
 }
 
-- (void)entry:(SeafBase *)entry repoPasswordSet:(BOOL)success;
-{
-    Debug("Repo password set: %d", success);
-}
-
 #pragma mark - file operations
 - (IBAction)delete:(id)sender
 {

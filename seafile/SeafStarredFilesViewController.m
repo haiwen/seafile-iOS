@@ -301,11 +301,6 @@
     }
 }
 
-- (void)entry:(SeafBase *)entry repoPasswordSet:(BOOL)success;
-{
-}
-
-
 #pragma mark - SeafStarFileDelegate
 - (void)fileStateChanged:(BOOL)starred file:(SeafStarredFile *)sfile
 {

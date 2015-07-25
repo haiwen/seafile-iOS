@@ -17,7 +17,7 @@
 
 #define TITLE_PASSWORD @"Password of this library"
 
-@interface SeafDirViewController ()<SeafDentryDelegate, EGORefreshTableHeaderDelegate, UIScrollViewDelegate>
+@interface SeafDirViewController ()<SeafDentryDelegate, SeafRepoPasswordDelegate, EGORefreshTableHeaderDelegate, UIScrollViewDelegate>
 @property (strong) SeafDir *curDir;
 @property (strong) UIBarButtonItem *chooseItem;
 @property (strong, readonly) SeafDir *directory;
@@ -190,9 +190,9 @@
         [SVProgressHUD showWithStatus:NSLocalizedString(@"Checking library password ...", @"Seafile")];
         [repo setDelegate:self];
         if ([repo->connection localDecrypt:repo.repoId])
-            [repo checkRepoPassword:input];
+            [repo checkRepoPassword:input delegate:self];
         else
-            [repo setRepoPassword:input];
+            [repo setRepoPassword:input delegate:self];
     }];
 }
 
@@ -219,9 +219,9 @@
     }
 }
 
-- (void)entry:(SeafBase *)entry repoPasswordSet:(BOOL)success
+- (void)entry:(SeafBase *)entry repoPasswordSet:(int)ret
 {
-    if (success) {
+    if (ret == RET_SUCCESS) {
         [SVProgressHUD dismiss];
         SeafDirViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:_curDir delegate:self.delegate chooseRepo:false];
         [self.navigationController pushViewController:controller animated:YES];

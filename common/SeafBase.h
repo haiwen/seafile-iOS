@@ -64,8 +64,11 @@ enum SEAFBASE_STATE {
 - (void)loadContent:(BOOL)force;
 - (void)updateWithEntry:(SeafBase *)entry;
 
-- (void)setRepoPassword:(NSString *)password;
-- (void)checkRepoPassword:(NSString *)password;
+- (void)setRepoPassword:(NSString *)password delegate:(id<SeafRepoPasswordDelegate>)del;
+- (void)checkRepoPassword:(NSString *)password delegate:(id<SeafRepoPasswordDelegate>)del;
+- (void)setRepoPassword:(NSString *)password block:(void(^)(SeafBase *entry, int ret))block;
+- (void)checkRepoPassword:(NSString *)password block:(void(^)(SeafBase *entry, int ret))block;
+
 
 - (NSString *)key;
 - (UIImage *)icon;

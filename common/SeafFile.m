@@ -188,7 +188,7 @@
              return [NSURL fileURLWithPath:target];
          } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
              if (error) {
-                 Debug("download %@, error=%@, %ld", self.name, [error localizedDescription], ((NSHTTPURLResponse *)response).statusCode);
+                 Debug("download %@, error=%@, %ld", self.name, [error localizedDescription], (long)((NSHTTPURLResponse *)response).statusCode);
                  [self failedDownload:error];
              } else {
                  Debug("Successfully downloaded file:%@, %@", self.name, downloadRequest.URL);
@@ -207,7 +207,7 @@
          [_task resume];
      }
                     failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          self.state = SEAF_DENTRY_INIT;
          [self.delegate entry:self downloadingFailed:response.statusCode];
      }];
@@ -369,7 +369,7 @@
          }
      }
                     failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          self.state = SEAF_DENTRY_INIT;
          [self.delegate entry:self downloadingFailed:response.statusCode];
      }];

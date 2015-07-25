@@ -125,7 +125,7 @@ static NSMutableDictionary *avatarAttrs = nil;
          [task resume];
      }
               failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          Warning("Failed to download avatar from %@", request.URL);
          [SeafGlobal.sharedObject finishDownload:self result:NO];
          [SeafGlobal.sharedObject removeBackgroundDownload:self];

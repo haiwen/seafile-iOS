@@ -139,7 +139,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
                         if (success)
                             success(self);
                     }
-                    failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+                    failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
                         self.state = SEAF_DENTRY_INIT;
                         if (failure)
                             failure(self);
@@ -302,7 +302,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
          if (success) success(self);
      }
                  failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          Warning("resp=%ld\n", (long)response.statusCode);
          [self.delegate entry:self downloadingFailed:response.statusCode];
          if (failure) failure(self);
@@ -321,7 +321,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
          [self handleResponse:response json:JSON];
      }
                  failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          Warning("resp=%ld\n", (long)response.statusCode);
          [self.delegate entry:self downloadingFailed:response.statusCode];
      }];
@@ -352,7 +352,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
          }
      }
                  failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          Warning("resp=%ld\n", (long)response.statusCode);
          [self.delegate entry:self downloadingFailed:response.statusCode];
      }];
@@ -445,7 +445,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
          [self handleResponse:response json:JSON];
      }
                  failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          Warning("resp=%ld\n", (long)response.statusCode);
          [self.delegate entry:self downloadingFailed:response.statusCode];
      }];
@@ -472,7 +472,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
          [self handleResponse:response json:JSON];
      }
                  failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          Warning("resp=%ld\n", (long)response.statusCode);
          [self.delegate entry:self downloadingFailed:response.statusCode];
      }];
@@ -499,7 +499,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
          [self handleResponse:response json:JSON];
      }
                  failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          Warning("resp=%ld\n", (long)response.statusCode);
          [self.delegate entry:self downloadingFailed:response.statusCode];
      }];

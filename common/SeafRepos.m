@@ -195,7 +195,7 @@
          }
      }
                     failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          self.state = SEAF_DENTRY_INIT;
          [self.delegate entry:self downloadingFailed:response.statusCode];
      }];

@@ -153,7 +153,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             _settings = [settings mutableCopy];
         else
             _settings = [[NSMutableDictionary alloc] init];
-        [_info removeObjectForKey:@"repopassword"];
     }
 
     return self;
@@ -400,7 +399,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
          if (handler) handler(true, self);
      }
               failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          if (handler) handler(false, self);
      }];
 }
@@ -449,7 +448,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSURLSessionDataTask *dataTask = [manager dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
         if (error) {
             Warning("Error: %@", error);
-            [self.loginDelegate loginFailed:self error:((NSHTTPURLResponse *)response).statusCode];
+            [self.loginDelegate loginFailed:self error:error code:((NSHTTPURLResponse *)response).statusCode];
         } else {
             [_info setObject:password forKey:@"password"];
             [self setToken:[responseObject objectForKey:@"token"] forUser:username isShib:false];
@@ -480,14 +479,14 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)sendRequestAsync:(NSString *)url method:(NSString *)method form:(NSString *)form
                  success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
-                 failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure
+                 failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure
 {
     NSURLRequest *request = [self buildRequest:url method:method form:form];
     NSURLSessionDataTask *task = [_sessionMgr dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
         NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
         if (error) {
             Warning("Error: %@, token=%@, resp=%@, delegate=%@", error, _token, responseObject, self.delegate);
-            failure (request, resp, error);
+            failure (request, resp, responseObject, error);
             if (resp.statusCode == HTTP_ERR_UNAUTHORIZED) {
                 @synchronized(self) {
                     if (![self authorized])   return;
@@ -506,28 +505,28 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)sendRequest:(NSString *)url
             success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
-            failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure
+            failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure
 {
     [self sendRequestAsync:url method:@"GET" form:nil success:success failure:failure];
 }
 
 - (void)sendDelete:(NSString *)url
            success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
-           failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure
+           failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure
 {
     [self sendRequestAsync:url method:@"DELETE" form:nil success:success failure:failure];
 }
 
 - (void)sendPut:(NSString *)url form:(NSString *)form
         success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
-        failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure
+        failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure
 {
     [self sendRequestAsync:url method:@"PUT" form:form success:success failure:failure];
 }
 
 - (void)sendPost:(NSString *)url form:(NSString *)form
          success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
-         failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure
+         failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure
 {
     [self sendRequestAsync:url method:@"POST" form:form success:success failure:failure];
 }
@@ -642,7 +641,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
          }
      }
               failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          if (failure)
              failure (response, error);
      }];
@@ -669,7 +668,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
              Debug("Success to star file %@, %@\n", repo, path);
          }
                failure:
-         ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+         ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
              Warning("Failed to star file %@, %@\n", repo, path);
          }];
     } else {
@@ -681,7 +680,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
              Debug("Success to unstar file %@, %@\n", repo, path);
          }
                failure:
-         ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+         ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
              Warning("Failed to unstar file %@, %@\n", repo, path);
          }];
     }
@@ -716,7 +715,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)search:(NSString *)keyword
        success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSMutableArray *results))success
-       failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure
+       failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure
 {
     NSString *url = [NSString stringWithFormat:API_URL"/search/?q=%@&per_page=100", [keyword escapedUrl]];
     [self sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
@@ -1127,6 +1126,32 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     } failure:^(SeafDir *dir) {
         Warning("Failed to download dir: %@ %@", dir.repoId, dir.path);
     }];
+}
+
+- (void)refreshRepoPassowrds
+{
+     NSDictionary *repopasswds = [_info objectForKey:@"repopassword"];
+    if (repopasswds == nil)
+        return;
+    for (NSString *key in repopasswds) {
+        NSString *repoId = key;
+        Debug("refresh repo %@ password", repoId);
+        SeafRepo *repo = [self getRepo:repoId];
+        if (!repo) continue;
+        id block = ^(SeafBase *entry, int ret) {
+            if (ret == RET_WRONG_PASSWORD) {
+                Debug("Repo password incorrect, clear password.");
+                [self setRepo:repoId password:nil];
+            }
+        };
+
+        NSString *password = [repopasswds objectForKey:repoId];
+        if ([repo->connection localDecrypt:repo.repoId]) {
+            [repo checkRepoPassword:password block:block];
+        } else {
+            [repo setRepoPassword:password block:block];
+        }
+    }
 }
 
 @end

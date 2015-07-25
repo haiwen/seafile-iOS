@@ -554,12 +554,23 @@
 
 - (void)tick:(NSTimer *)timer
 {
+#define UPDATE_INTERVAL 180
+    Debug("...");
+    static double lastUpdate = 0;
     if (![[AFNetworkReachabilityManager sharedManager] isReachable]) {
         return;
     }
     @synchronized(timer) {
         for (SeafConnection *conn in self.conns) {
             [conn pickPhotosForUpload];
+
+        }
+        double cur = [[NSDate date] timeIntervalSince1970];
+        if (cur - lastUpdate > UPDATE_INTERVAL) {
+            Debug("%fs has passed, refreshRepoPassowrds", cur - lastUpdate);
+            lastUpdate = cur;
+            for (SeafConnection *conn in self.conns)
+                [conn refreshRepoPassowrds];
         }
         if (self.ufiles.count > 0)
             [self tryUpload];
@@ -570,6 +581,8 @@
 
 - (void)startTimer
 {
+    Debug("Start timer.");
+    [self tick:nil];
     _autoSyncTimer = [NSTimer scheduledTimerWithTimeInterval:5*60
                                                       target:self
                                                     selector:@selector(tick:)

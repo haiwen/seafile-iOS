@@ -37,7 +37,7 @@ enum MSG_TYPE{
 
 @protocol SeafLoginDelegate <NSObject>
 - (void)loginSuccess:(SeafConnection *)connection;
-- (void)loginFailed:(SeafConnection *)connection error:(NSInteger)error;
+- (void)loginFailed:(SeafConnection *)connection error:(NSError *)error code:(NSInteger)errorCode;
 @end
 
 @protocol SeafConnectionDelegate <NSObject>
@@ -85,19 +85,19 @@ enum MSG_TYPE{
 
 - (void)sendRequest:(NSString *)url
             success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
-            failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure;
+            failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure;
 
 - (void)sendDelete:(NSString *)url
            success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
-           failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure;
+           failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure;
 
 - (void)sendPut:(NSString *)url form:(NSString *)form
         success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
-        failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure;
+        failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure;
 
 - (void)sendPost:(NSString *)url form:(NSString *)form
          success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
-         failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure;
+         failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure;
 
 - (void)loginWithUsername:(NSString *)username password:(NSString *)password;
 -(void)setToken:(NSString *)token forUser:(NSString *)username isShib:(BOOL)isshib;
@@ -109,7 +109,7 @@ enum MSG_TYPE{
 
 - (void)search:(NSString *)keyword
        success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSMutableArray *results))success
-       failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure;
+       failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure;
 
 
 - (BOOL)isStarred:(NSString *)repo path:(NSString *)path;
@@ -147,6 +147,7 @@ enum MSG_TYPE{
 - (NSString *)getRepoPassword:(NSString *)repoId;
 - (void)downloadDir:(SeafDir *)dir;
 
+- (void)refreshRepoPassowrds;
 + (AFHTTPRequestSerializer <AFURLRequestSerialization> *)requestSerializer;
 
 @end

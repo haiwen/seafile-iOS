@@ -239,17 +239,18 @@
     [startController selectAccount:connection];
 }
 
-- (void)loginFailed:(SeafConnection *)conn error:(NSInteger)error
+- (void)loginFailed:(SeafConnection *)conn error:(NSError *)error code:(NSInteger)errorCode
 {
     Debug("%@, error=%ld\n", conn.address, (long)error);
     if (conn != connection)
         return;
 
-    if (error == HTTP_ERR_LOGIN_INCORRECT_PASSWORD) {
+    if (errorCode == HTTP_ERR_LOGIN_INCORRECT_PASSWORD) {
         [SVProgressHUD dismiss];
         [self alertWithTitle:NSLocalizedString(@"Wrong username or password", @"Seafile")];
     } else {
-        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to login", @"Seafile")];
+        NSString *msg = NSLocalizedString(@"Failed to login", @"Seafile");
+        [SVProgressHUD showErrorWithStatus:[msg stringByAppendingFormat:@": %ld %@", (long)errorCode, error.localizedDescription]];
     }
 }
 

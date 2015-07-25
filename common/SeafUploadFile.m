@@ -275,7 +275,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
          }
      }
                     failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          [self finishUpload:NO oid:nil];
      }];
 }

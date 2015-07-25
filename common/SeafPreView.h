@@ -12,11 +12,22 @@
 
 @class SeafBase;
 
-@protocol SeafDentryDelegate <NSObject>
+enum SET_REPO_PASSWORD_RET {
+    RET_SUCCESS,
+    RET_WRONG_PASSWORD,
+    RET_FAILED,
+};
+
+@protocol SeafRepoPasswordDelegate <NSObject>
+- (void)entry:(SeafBase *)entry repoPasswordSet:(int)ret;
+@end
+
+@protocol SeafDentryDelegate
 - (void)entry:(SeafBase *)entry updated:(BOOL)updated progress:(int)percent;
 - (void)entry:(SeafBase *)entry downloadingFailed:(NSUInteger)errCode;
-- (void)entry:(SeafBase *)entry repoPasswordSet:(BOOL)success;
 @end
+
+
 
 @protocol SeafPreView <QLPreviewItem, SeafItem>
 - (UIImage *)image;

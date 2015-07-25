@@ -40,7 +40,7 @@ enum {
 };
 
 
-@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, EGORefreshTableHeaderDelegate, SeafDirDelegate, SeafShareDelegate, UISearchBarDelegate, UISearchDisplayDelegate, UIActionSheetDelegate, MFMailComposeViewControllerDelegate>
+@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, EGORefreshTableHeaderDelegate, SeafDirDelegate, SeafShareDelegate, SeafRepoPasswordDelegate, UISearchBarDelegate, UISearchDisplayDelegate, UIActionSheetDelegate, MFMailComposeViewControllerDelegate>
 - (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView;
@@ -734,9 +734,9 @@ enum {
         [SVProgressHUD showWithStatus:NSLocalizedString(@"Checking library password ...", @"Seafile")];
         [repo setDelegate:self];
         if ([repo->connection localDecrypt:repo.repoId])
-            [repo checkRepoPassword:input];
+            [repo checkRepoPassword:input delegate:self];
         else
-            [repo setRepoPassword:input];
+            [repo setRepoPassword:input delegate:self];
     }];
 }
 
@@ -988,12 +988,12 @@ enum {
     }
 }
 
-- (void)entry:(SeafBase *)entry repoPasswordSet:(BOOL)success;
+- (void)entry:(SeafBase *)entry repoPasswordSet:(int)ret;
 {
     if (entry != _curEntry)  return;
 
     NSAssert([entry isKindOfClass:[SeafRepo class]], @"entry must be a repo\n");
-    if (success) {
+    if (ret == RET_SUCCESS) {
         [SVProgressHUD dismiss];
         self.state = STATE_INIT;
         SeafFileViewController *controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
@@ -1452,7 +1452,7 @@ enum {
             self.searchResults = results;
             [self.searchDisplayController.searchResultsTableView reloadData];
         }
-    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
         if (response.statusCode == 404) {
             [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Search is not supported on the server", @"Seafile")];
         } else
