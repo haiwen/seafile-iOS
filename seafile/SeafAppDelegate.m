@@ -35,6 +35,7 @@
 @implementation SeafAppDelegate
 @synthesize startVC = _startVC;
 @synthesize tabbarController = _tabbarController;
+@synthesize globalMailComposer = _globalMailComposer;
 
 - (BOOL)shouldContinue
 {
@@ -96,7 +97,6 @@
     Debug("Current app version is %@\n%@\n", version, infoDictionary);
     [SeafGlobal.sharedObject setObject:version forKey:@"VERSION"];
     [SeafGlobal.sharedObject synchronize];
-    [self cycleTheGlobalMailComposer];
     [SeafGlobal.sharedObject startTimer];
     [Utils clearAllFiles:SeafGlobal.sharedObject.tempDir];
 
@@ -380,6 +380,12 @@
     [self.window.rootViewController presentViewController:nc animated:YES completion:nil];
 }
 
+- (MFMailComposeViewController *)globalMailComposer
+{
+    if (_globalMailComposer == nil);
+        [self cycleTheGlobalMailComposer];
+    return _globalMailComposer;
+}
 -(void)cycleTheGlobalMailComposer
 {
     // we are cycling the damned GlobalMailComposer... due to horrible iOS issue
