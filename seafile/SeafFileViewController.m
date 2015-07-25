@@ -548,6 +548,25 @@ enum {
     [self showAlertWithAction:[NSArray arrayWithObjects:S_DELETE, S_DOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
 }
 
+- (void)showEditRepoMenu:(UILongPressGestureRecognizer *)gestureRecognizer
+{
+    if (self.tableView.editing == YES)
+        return;
+    if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
+        return;
+    CGPoint touchPoint = [gestureRecognizer locationInView:self.tableView];
+    _selectedindex = [self.tableView indexPathForRowAtPoint:touchPoint];
+    if (!_selectedindex)
+        return;
+    SeafRepo *repo = (SeafRepo *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
+    if (![repo isKindOfClass:[SeafRepo class]])
+        return;
+    if (!repo.encrypted)
+        return;
+    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
+    [self showAlertWithAction:[NSArray arrayWithObjects:S_RESET_PASSWORD, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
+}
+
 - (void)showEditUploadFileMenu:(UILongPressGestureRecognizer *)gestureRecognizer
 {
     if (self.tableView.editing || gestureRecognizer.state != UIGestureRecognizerStateBegan)
@@ -642,6 +661,11 @@ enum {
     cell.textLabel.text = srepo.name;
     cell.badgeLabel.text = nil;
     srepo.delegate = self;
+    if (tableView == self.tableView && srepo.encrypted) {
+        UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditRepoMenu:)];
+        [cell addGestureRecognizer:longPressGesture];
+    }
+
     return cell;
 }
 
@@ -692,6 +716,7 @@ enum {
 
 - (void)popupSetRepoPassword:(SeafRepo *)repo
 {
+    [repo setDelegate:self];
     self.state = STATE_PASSWORD;
     [self popupInputView:NSLocalizedString(@"Password of this library", @"Seafile") placeholder:nil secure:true handler:^(NSString *input) {
         if (!input || input.length == 0) {
@@ -831,12 +856,11 @@ enum {
         [self performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
         return;
     }
-    [_curEntry setDelegate:self];
     if ([_curEntry isKindOfClass:[SeafRepo class]] && [(SeafRepo *)_curEntry passwordRequired]) {
         [self popupSetRepoPassword:_curEntry];
         return;
     }
-
+    [_curEntry setDelegate:self];
     if ([_curEntry conformsToProtocol:@protocol(SeafPreView)]) {
         if (!IsIpad()) {
             SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
@@ -1169,6 +1193,10 @@ enum {
         }
         [_directory reSortItems];
         [self.tableView reloadData];
+    } else if ([S_RESET_PASSWORD isEqualToString:title]) {
+        SeafRepo *repo = (SeafRepo *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
+        [repo->connection setRepo:repo.repoId password:nil];
+        [self popupSetRepoPassword:repo];
     }
 }
 

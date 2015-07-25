@@ -153,6 +153,7 @@
         [self.delegate entry:self updated:false progress:100];
     }
 }
+
 /*
  curl -D a.txt -H 'Cookie:sessionid=7eb567868b5df5b22b2ba2440854589c' http://127.0.0.1:8000/api/file/640fd90d-ef4e-490d-be1c-b34c24040da7/8dd0a3be9289aea6795c1203351691fcc1373fbb/
 
@@ -187,10 +188,10 @@
              return [NSURL fileURLWithPath:target];
          } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
              if (error) {
-                 Debug("download %@, error=%@", self.name,[error localizedDescription]);
+                 Debug("download %@, error=%@, %ld", self.name, [error localizedDescription], ((NSHTTPURLResponse *)response).statusCode);
                  [self failedDownload:error];
              } else {
-                 Debug("Successfully downloaded file:%@", self.name);
+                 Debug("Successfully downloaded file:%@, %@", self.name, downloadRequest.URL);
                  if (![filePath.path isEqualToString:target]) {
                      [[NSFileManager defaultManager] removeItemAtPath:target error:nil];
                      [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
@@ -214,7 +215,6 @@
 
 - (void)downloadThumb
 {
-    Debug("...");
     NSString *thumburl = [NSString stringWithFormat:API_URL"/repos/%@/thumbnail/?size=%d&p=%@", self.repoId, THUMB_SIZE, self.path.escapedUrl];
     NSURLRequest *downloadRequest = [connection buildRequest:thumburl method:@"GET" form:nil];
     NSString *target = [self thumbPath:self.oid];

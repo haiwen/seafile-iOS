@@ -263,14 +263,16 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 }
 - (void)setRepo:(NSString *)repoId password:(NSString *)password
 {
-    if (!password)
-        return;
     Debug("set repo %@ password %@", repoId, password);
     NSMutableDictionary *repopasswds = [NSMutableDictionary dictionaryWithDictionary:(NSDictionary*)[_info objectForKey:@"repopassword"]];
     if (!repopasswds) {
         repopasswds = [[NSMutableDictionary alloc] init];
     }
-    [repopasswds setObject:password forKey:repoId];
+    if (password)
+        [repopasswds setObject:password forKey:repoId];
+    else
+        [repopasswds removeObjectForKey:repoId];
+
     [_info setObject:repopasswds forKey:@"repopassword"];
     [self saveAccountInfo];
 }
@@ -360,6 +362,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
 #if 0
     SeafRepo *repo = [self getRepo:repoId];
+    Debug("local encrpt %d %d", repo.encrypted, repo.encVersion);
     return repo.encrypted && repo.encVersion >= 2 && repo.magic;
 #else
     return false;

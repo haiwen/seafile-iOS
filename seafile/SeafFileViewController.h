@@ -35,6 +35,7 @@ enum {
 #define S_SHARE_LINK NSLocalizedString(@"Copy share link to clipboard", @"Seafile")
 #define S_REDOWNLOAD NSLocalizedString(@"Redownload", @"Seafile")
 #define S_UPLOAD NSLocalizedString(@"Upload", @"Seafile")
+#define S_RESET_PASSWORD NSLocalizedString(@"Reset repo password", @"Seafile")
 
 
 @class SeafDetailViewController;
