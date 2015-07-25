@@ -235,7 +235,7 @@ enum {
                 }
             }];
     } else if (indexPath.section == 1) {
-        if (indexPath.row == 2) {
+        if (indexPath.row == 3) {
             if (_autoSync) {
                 [self popupRepoSelect];
             }
