@@ -329,6 +329,13 @@
     }
 }
 
+- (void)reloadIndex:(NSIndexPath *)indexPath
+{
+    if (indexPath)
+        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+    else
+        [self.tableView reloadData];
+}
 #pragma mark - SeafDentryDelegate
 - (void)entry:(SeafBase *)entry updated:(BOOL)updated progress:(int)percent
 {

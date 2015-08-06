@@ -1127,7 +1127,14 @@ enum {
     [self popupRenameView:file.name];
 }
 
-#pragma mark - UIActionSheetDelegate
+- (void)reloadIndex:(NSIndexPath *)indexPath
+{
+    if (indexPath)
+        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+    else
+        [self.tableView reloadData];
+}
+ #pragma mark - UIActionSheetDelegate
 - (void)handleAction:(NSString *)title
 {
     if ([S_NEWFILE isEqualToString:title]) {
@@ -1160,7 +1167,7 @@ enum {
     } else if ([S_UPLOAD isEqualToString:title]) {
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [file update:self];
-        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:_selectedindex] withRowAnimation:UITableViewRowAnimationNone];
+        [self reloadIndex:_selectedindex];
     } else if ([S_SHARE_EMAIL isEqualToString:title]) {
         self.state = STATE_SHARE_EMAIL;
         SeafBase *entry = (SeafBase *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
@@ -1352,7 +1359,7 @@ enum {
                 [((SeafUploadingFileCell *)cell).progressView setProgress:percent*1.0f/100];
             });
         } else
-            [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic ];
+            [self reloadIndex:indexPath];
     } @catch(NSException *exception) {
     }
 }
@@ -1364,7 +1371,7 @@ enum {
     UITableViewCell *cell = nil;
     @try {
         long index = [_directory.allItems indexOfObject:file];
-        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
+        indexPath = [NSIndexPath indexPathForRow:index inSection:0];
         cell = [self.tableView cellForRowAtIndexPath:indexPath];
     } @catch(NSException *exception) {
     }
@@ -1375,7 +1382,7 @@ enum {
             [((SeafUploadingFileCell *)cell).progressView setProgress:percent*1.0f/100];
         });
     } else {
-        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+        [self reloadIndex:indexPath];
     }
 }
 
