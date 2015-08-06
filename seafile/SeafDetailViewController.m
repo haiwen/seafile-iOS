@@ -144,6 +144,7 @@ enum SHARE_STATUS {
     NSURLRequest *request = nil;
     if (self.state == PREVIEW_PHOTO && !self.photos)
         [self clearPhotosVIew];
+
     if (self.state != PREVIEW_PHOTO) {
         [self clearPreView];
         if (!self.preViewItem) {
@@ -236,11 +237,13 @@ enum SHARE_STATUS {
 - (void)setPreViewItems:(NSArray *)items current:(id<SeafPreView>)item master:(UIViewController<SeafDentryDelegate> *)c
 {
     [self clearPreView];
+    Debug("Preview photos");
     if (self.masterPopoverController != nil)
         [self.masterPopoverController dismissPopoverAnimated:YES];
     self.masterVc = c;
     self.photos = items;
     self.state = PREVIEW_PHOTO;
+    Debug("Preview photos PREVIEW_PHOTO: %d", self.state);
     self.preViewItem = item;
     self.currentPageIndex = [items indexOfObject:item];
     [self.view addSubview:self.pagingScrollView];
@@ -313,7 +316,6 @@ enum SHARE_STATUS {
 
     [self.failedView.openElseBtn addTarget:self action:@selector(openElsewhere:) forControlEvents:UIControlEventTouchUpInside];
 
-    self.state = PREVIEW_NONE;
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
     self.navigationController.navigationBar.tintColor = BAR_COLOR;

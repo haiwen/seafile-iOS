@@ -445,6 +445,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     AFHTTPSessionManager *manager = self.loginMgr;
     manager.responseSerializer = [AFJSONResponseSerializer serializer];
 
+    Debug("Login: %@", url);
     NSURLSessionDataTask *dataTask = [manager dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
         if (error) {
             Warning("Error: %@", error);

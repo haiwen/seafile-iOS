@@ -555,7 +555,6 @@
 - (void)tick:(NSTimer *)timer
 {
 #define UPDATE_INTERVAL 180
-    Debug("...");
     static double lastUpdate = 0;
     if (![[AFNetworkReachabilityManager sharedManager] isReachable]) {
         return;
