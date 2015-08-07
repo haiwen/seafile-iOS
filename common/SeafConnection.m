@@ -303,7 +303,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
         if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
             *credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
-            if (SeafServerTrustIsValid(challenge.protectionSpace.serverTrust)) {
+            BOOL valid = SeafServerTrustIsValid(challenge.protectionSpace.serverTrust);
+            Debug("Server cert is valid: %d, delegate=%@, inCheckCert=%d", valid, self.delegate, self.inCheckCert);
+            if (valid) {
                 [[NSFileManager defaultManager] removeItemAtPath:[self certPathForHost:challenge.protectionSpace.host] error:nil];
                 if ([challenge.protectionSpace.host isEqualToString:self.host]) {
                     SecCertificateRef cer = SecTrustGetCertificateAtIndex(challenge.protectionSpace.serverTrust, 0);

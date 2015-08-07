@@ -414,14 +414,18 @@
     if (self.window.rootViewController.presentedViewController) {
         c = self.window.rootViewController.presentedViewController;
     }
+
     if (ios8)
         [Utils alertWithTitle:title message:message yes:yes no:no from:c];
     else {
-        self.handler_ok = yes;
-        self.handler_cancel = no;
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:message delegate:self cancelButtonTitle:STR_CANCEL otherButtonTitles:NSLocalizedString(@"OK", @"Seafile"), nil];
-        alert.alertViewStyle = UIAlertViewStyleDefault;
-        [alert show];
+        [SVProgressHUD dismiss];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.handler_ok = yes;
+            self.handler_cancel = no;
+            UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:message delegate:self cancelButtonTitle:STR_CANCEL otherButtonTitles:NSLocalizedString(@"OK", @"Seafile"), nil];
+            alert.alertViewStyle = UIAlertViewStyleDefault;
+            [alert show];
+        });
     }
 }
 
@@ -440,6 +444,7 @@
     };
     block();
     dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+
     return ret;
 }
 #pragma mark - UIAlertViewDelegate
