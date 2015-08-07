@@ -158,9 +158,10 @@ static NSMutableDictionary *uploadFileAttrs = nil;
             Debug("Upload failed :%@,code=%ldd, res=%@\n", error, (long)resp.statusCode, responseObject);
             [self finishUpload:NO oid:nil];
         } else {
-            Debug("Successfully upload file:%@", self.name);
+            Debug("Successfully upload file:%@ autosync:%d", self.name, _autoSync);
             NSString *oid = responseObject;
-            [[NSFileManager defaultManager] linkItemAtPath:self.lpath toPath:[SeafGlobal.sharedObject documentPath:oid] error:nil];
+            if (!_autoSync)
+                [[NSFileManager defaultManager] linkItemAtPath:self.lpath toPath:[SeafGlobal.sharedObject documentPath:oid] error:nil];
             [self finishUpload:YES oid:oid];
         }
     }];
