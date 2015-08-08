@@ -1354,10 +1354,9 @@ enum {
 #pragma mark - SeafFileUpdateDelegate
 - (void)updateProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent
 {
-    NSUInteger index = [_directory.allItems indexOfObject:file];
-    if (index == NSNotFound)
-        return;
     @try {
+        NSUInteger index = [_directory.allItems indexOfObject:file];
+        if (index == NSNotFound)  return;
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
         UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
         if (res && cell) {
@@ -1381,6 +1380,7 @@ enum {
     UITableViewCell *cell = nil;
     @try {
         long index = [_directory.allItems indexOfObject:file];
+        if (index == NSNotFound) return;
         indexPath = [NSIndexPath indexPathForRow:index inSection:0];
         cell = [self.tableView cellForRowAtIndexPath:indexPath];
     } @catch(NSException *exception) {

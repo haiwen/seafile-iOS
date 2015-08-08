@@ -2297,8 +2297,8 @@
 					"\"$(SRCROOT)/libs/ios-openssl/lib\"",
 				);
 				PRODUCT_NAME = SeafilePro;
-				PROVISIONING_PROFILE = "d47665aa-f178-4316-bbe4-97ca0fe6b9c6";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "d47665aa-f178-4316-bbe4-97ca0fe6b9c6";
+				PROVISIONING_PROFILE = "4105b572-8852-441a-b20f-84b68341a27b";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "4105b572-8852-441a-b20f-84b68341a27b";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
@@ -2353,7 +2353,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "1df37f29-c682-4d65-9da4-271fa5eff6fe";
+				PROVISIONING_PROFILE = "2ee3accf-66c9-4cab-9b4f-7d942094de4f";
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -2415,8 +2415,8 @@
 				);
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "6cfff902-2e17-40db-8f92-3e2219e09b18";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "6cfff902-2e17-40db-8f92-3e2219e09b18";
+				PROVISIONING_PROFILE = "0de8678c-6cba-47e5-a4fd-9f472ced027b";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "0de8678c-6cba-47e5-a4fd-9f472ced027b";
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -2492,8 +2492,8 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				ONLY_ACTIVE_ARCH = YES;
 				"PRIVATE_HEADERS_FOLDER_PATH[sdk=*]" = "";
-				PROVISIONING_PROFILE = "1df37f29-c682-4d65-9da4-271fa5eff6fe";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "1df37f29-c682-4d65-9da4-271fa5eff6fe";
+				PROVISIONING_PROFILE = "2ee3accf-66c9-4cab-9b4f-7d942094de4f";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "0de8678c-6cba-47e5-a4fd-9f472ced027b";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
