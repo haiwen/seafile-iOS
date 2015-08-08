@@ -94,10 +94,16 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 - (void)doRemove
 {
+    self.udir = nil;
     [self.task cancel];
     self.task = nil;
     [self saveAttr:nil flush:true];
     [[NSFileManager defaultManager] removeItemAtPath:self.lpath error:nil];
+}
+
+- (BOOL)removed
+{
+    return !_udir;
 }
 
 - (BOOL)uploaded
@@ -122,16 +128,18 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         }
     }
     [SeafGlobal.sharedObject finishUpload:self result:result];
-    NSMutableDictionary *dict = self.uploadAttr;
-    if (!dict) {
-        dict = [[NSMutableDictionary alloc] init];
-        [dict setObject:self.name forKey:@"name"];
+    if (!self.removed) {
+        NSMutableDictionary *dict = self.uploadAttr;
+        if (!dict) {
+            dict = [[NSMutableDictionary alloc] init];
+            [dict setObject:self.name forKey:@"name"];
+        }
+        [dict setObject:[NSNumber numberWithDouble:[[NSDate date] timeIntervalSince1970]]forKey:@"utime"];
+        [dict setObject:[NSNumber numberWithLongLong:self.mtime] forKey:@"mtime"];
+        [dict setObject:[NSNumber numberWithBool:result] forKey:@"result"];
+        [dict setObject:[NSNumber numberWithBool:self.autoSync] forKey:@"autoSync"];
+        [self saveAttr:dict flush:true];
     }
-    [dict setObject:[NSNumber numberWithDouble:[[NSDate date] timeIntervalSince1970]]forKey:@"utime"];
-    [dict setObject:[NSNumber numberWithLongLong:self.mtime] forKey:@"mtime"];
-    [dict setObject:[NSNumber numberWithBool:result] forKey:@"result"];
-    [dict setObject:[NSNumber numberWithBool:self.autoSync] forKey:@"autoSync"];
-    [self saveAttr:dict flush:true];
     Debug("result=%d, name=%@, delegate=%@, oid=%@\n", result, self.name, _delegate, oid);
     if (result)
         [_delegate uploadSucess:self oid:oid];
@@ -158,8 +166,9 @@ static NSMutableDictionary *uploadFileAttrs = nil;
             Debug("Upload failed :%@,code=%ldd, res=%@\n", error, (long)resp.statusCode, responseObject);
             [self finishUpload:NO oid:nil];
         } else {
-            Debug("Successfully upload file:%@ autosync:%d", self.name, _autoSync);
             NSString *oid = responseObject;
+            if (!oid || oid.length < 1) oid = [[NSUUID UUID] UUIDString];
+            Debug("Successfully upload file:%@ autosync:%d oid=%@", self.name, _autoSync, oid);
             if (!_autoSync)
                 [[NSFileManager defaultManager] linkItemAtPath:self.lpath toPath:[SeafGlobal.sharedObject documentPath:oid] error:nil];
             [self finishUpload:YES oid:oid];
@@ -283,6 +292,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 - (BOOL)canUpload
 {
+    if (!_udir) return false;
     if (self.autoSync && _udir->connection.wifiOnly)
         return [[AFNetworkReachabilityManager sharedManager] isReachableViaWiFi];
     else

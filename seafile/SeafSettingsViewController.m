@@ -98,6 +98,7 @@ enum {
         _syncRepoCell.detailTextLabel.text = @"";
         [self.tableView reloadData];
         [_connection setAttribute:@"" forKey:@"autoSyncRepo"];
+        [_connection checkAutoSync];
     }
 }
 
@@ -176,6 +177,7 @@ enum {
     NSString *autoSyncRepo = [[_connection getAttribute:@"autoSyncRepo"] stringValue];
     SeafRepo *repo = [_connection getRepo:autoSyncRepo];
     _syncRepoCell.detailTextLabel.text = repo ? repo.name : nil;
+
     long long cacheSize = [self cacheSize];
     _cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:cacheSize] useBaseTen:NO];
     Debug("%@, %lld, %lld, total cache=%lld", _connection.username, _connection.usage, _connection.quota, cacheSize);
@@ -303,7 +305,7 @@ enum {
             remainStr = [NSString stringWithFormat:NSLocalizedString(@"%ld photos remain", @"Seafile"), num];
         }
 #if DEBUG
-        remainStr = [remainStr stringByAppendingFormat:@"   uploading:%ld", (long)SeafGlobal.sharedObject.uploadingnum];
+        remainStr = [remainStr stringByAppendingFormat:@"  U:%ld D:%ld", (long)SeafGlobal.sharedObject.uploadingnum, (long)SeafGlobal.sharedObject.downloadingnum];
 #endif
         return [sectionNames[section] stringByAppendingFormat:@"\t %@", remainStr];
     }

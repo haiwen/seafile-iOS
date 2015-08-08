@@ -107,7 +107,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
             [self savetoCache:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
             [self.delegate entry:self updated:true progress:100];
         } else {
-            Debug("Already uptodate oid=%@\n", self.ooid);
+            Debug("Already uptodate oid=%@, path=%@\n", self.ooid, self.path);
             self.state = SEAF_DENTRY_UPTODATE;
             [self.delegate entry:self updated:NO progress:0];
         }

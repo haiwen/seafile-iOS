@@ -840,6 +840,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)fileUploadedSuccess:(SeafUploadFile *)ufile
 {
+    if (!_inAutoSync) return;
     if (!ufile || !ufile.assetURL || !ufile.autoSync) return;
     NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
     UploadedPhotos *obj = (UploadedPhotos *)[NSEntityDescription insertNewObjectForEntityForName:@"UploadedPhotos" inManagedObjectContext:context];
@@ -935,7 +936,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (!asset)
         return nil;
     NSURL *url = (NSURL*)asset.defaultRepresentation.url;
-    Debug("url=%@, type=%@", url, [asset valueForProperty:ALAssetPropertyType]);
+    Debug("url=%@, type=%@ %d %d", url, [asset valueForProperty:ALAssetPropertyType], [self IsPhotoUploaded:url], [self IsPhotoUploading:url]);
     if ([self IsPhotoUploaded:url] || [self IsPhotoUploading:url])
         return nil;
 
@@ -1080,6 +1081,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             Debug("Stop auto Sync for server %@", _address);
             _photosArray = nil;
             _inCheckPhotoss = false;
+            _uploadingArray = nil;
             [SeafGlobal.sharedObject clearAutoSyncPhotos:self];
         }
     }

@@ -283,12 +283,12 @@ enum SHARE_STATUS {
     self.editItem = [self getBarItem:@"editfile".navItemImgName action:@selector(editFile:)size:18];
     self.exportItem = [self getBarItemAutoSize:@"export".navItemImgName action:@selector(export:)];
     self.shareItem = [self getBarItemAutoSize:@"share".navItemImgName action:@selector(share:)];
-    UIBarButtonItem *deleteItem = [self getBarItemAutoSize:@"delete".navItemImgName action:@selector(delete:)];
+    //UIBarButtonItem *deleteItem = [self getBarItemAutoSize:@"delete".navItemImgName action:@selector(delete:)];
     UIBarButtonItem *starItem = [self getBarItem:@"star".navItemImgName action:@selector(unstarFile:)size:24];
     UIBarButtonItem *unstarItem = [self getBarItem:@"unstar".navItemImgName action:@selector(starFile:)size:24];
     UIBarButtonItem *space = [self getSpaceBarItem];
-    self.barItemsStar  = [NSArray arrayWithObjects:self.exportItem, space, self.shareItem, space, starItem, space, deleteItem, space, nil];
-    self.barItemsUnStar  = [NSArray arrayWithObjects:self.exportItem, space, self.shareItem, space, unstarItem, space, deleteItem, space, nil];
+    self.barItemsStar  = [NSArray arrayWithObjects:self.exportItem, space, self.shareItem, space, starItem, space, nil];
+    self.barItemsUnStar  = [NSArray arrayWithObjects:self.exportItem, space, self.shareItem, space, unstarItem, space, nil];
 
     if(IsIpad()) {
         NSArray *views = [[NSBundle mainBundle] loadNibNamed:@"FailToPreview_iPad" owner:self options:nil];

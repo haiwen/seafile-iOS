@@ -52,7 +52,7 @@
 
 - (NSString *)pingUrl
 {
-    return[_sconn.address stringByAppendingString:@"/api2/ping/"];
+    return [_sconn.address stringByAppendingString:@"/api2/ping/"];
 }
 
 - (UIWebView *)webView

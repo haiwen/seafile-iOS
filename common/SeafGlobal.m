@@ -373,12 +373,6 @@
         _downloadnum ++;
     }
 }
-- (void)decDownloadnum
-{
-    @synchronized (self) {
-        _downloadnum --;
-    }
-}
 
 - (unsigned long)uploadingnum
 {
@@ -425,7 +419,10 @@
         }
     } else {
         self.failedNum ++;
-        [self.ufiles addObject:file];
+        if (!file.removed) {
+            [self.ufiles addObject:file];
+        } else
+            Debug("Upload file %@ removed.", file.name);
         if (self.failedNum >= 3) {
             [self performSelector:@selector(tryUpload) withObject:nil afterDelay:10.0];
             self.failedNum = 2;
@@ -508,6 +505,7 @@
             }
         }
     }
+    Debug("clear %ld photos", (long)arr.count);
     for (SeafUploadFile *ufile in arr) {
         [ufile.udir removeUploadFile:ufile];
     }
@@ -539,7 +537,7 @@
         if (![_ufiles containsObject:file] && ![_uploadingfiles containsObject:file])
             [_ufiles addObject:file];
         else
-            Debug("upload task file %@ already exist", file.name);
+            Warning("upload task file %@ already exist", file.name);
     }
     [self tryUpload];
 }

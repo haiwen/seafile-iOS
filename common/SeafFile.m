@@ -59,16 +59,17 @@
 - (NSString *)detailText
 {
     NSString *str = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:self.filesize ] useBaseTen:NO];
+    if (self.mtime) {
+        NSString *timeStr = [SeafDateFormatter stringFromLongLong:self.mtime];
+        str = [str stringByAppendingFormat:@", %@", timeStr];
+    }
     if (self.mpath) {
         if (self.ufile.uploading)
             return [str stringByAppendingFormat:@", %@", NSLocalizedString(@"uploading", @"Seafile")];
         else
             return [str stringByAppendingFormat:@", %@", NSLocalizedString(@"modified", @"Seafile")];
     }
-    if (self.mtime) {
-        NSString *timeStr = [SeafDateFormatter stringFromLongLong:self.mtime];
-        str = [str stringByAppendingFormat:@", %@", timeStr];
-    }
+
     if ([self hasCache])
         return [str stringByAppendingFormat:@", %@", NSLocalizedString(@"cached", @"Seafile")];
 
@@ -93,7 +94,6 @@
     [super updateWithEntry:entry];
     _filesize = file.filesize;
     _mtime = file.mtime;
-    self.ooid = nil;
     self.state = SEAF_DENTRY_INIT;
     [self loadCache];
     [self.delegate entry:self updated:YES progress:100];
@@ -111,7 +111,7 @@
     return self.downloadingFileOid != nil;
 }
 
-- (void)finishDownload
+- (void)clearDownloadContext
 {
     if (_progress) {
         [_progress removeObserver:self
@@ -121,12 +121,12 @@
     }
     self.downloadingFileOid = nil;
     self.task = nil;
-    [SeafGlobal.sharedObject decDownloadnum];
 }
 
 - (void)finishDownload:(NSString *)ooid
 {
-    [self finishDownload];
+    [self clearDownloadContext];
+    [SeafGlobal.sharedObject finishDownload:self result:true];
     BOOL updated = ![ooid isEqualToString:self.ooid];
     [self setOoid:ooid];
     self.state = SEAF_DENTRY_UPTODATE;
@@ -137,7 +137,8 @@
 
 - (void)failedDownload:(NSError *)error
 {
-    [self finishDownload];
+    [self clearDownloadContext];
+    [SeafGlobal.sharedObject finishDownload:self result:false];
     self.state = SEAF_DENTRY_INIT;
     [self.delegate entry:self downloadingFailed:error.code];
 }
@@ -175,7 +176,7 @@
          @synchronized (self) {
              if (self.downloadingFileOid) {// Already downloading
                  Debug("Already downloading %@", self.downloadingFileOid);
-                 [SeafGlobal.sharedObject decDownloadnum];
+                 [SeafGlobal.sharedObject finishDownload:self result:true];
                  return;
              }
              self.downloadingFileOid = curId;
@@ -191,7 +192,7 @@
                  Debug("download %@, error=%@, %ld", self.name, [error localizedDescription], (long)((NSHTTPURLResponse *)response).statusCode);
                  [self failedDownload:error];
              } else {
-                 Debug("Successfully downloaded file:%@, %@", self.name, downloadRequest.URL);
+                 Debug("Successfully downloaded file:%@, %@ %@", self.name, downloadRequest.URL, self.downloadingFileOid);
                  if (![filePath.path isEqualToString:target]) {
                      [[NSFileManager defaultManager] removeItemAtPath:target error:nil];
                      [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
@@ -349,7 +350,7 @@
          }
          @synchronized (self) {
              if (self.downloadingFileOid) {// Already downloading
-                 [SeafGlobal.sharedObject decDownloadnum];
+                 [SeafGlobal.sharedObject finishDownload:self result:true];
                  return;
              }
              self.downloadingFileOid = curId;
@@ -655,13 +656,13 @@
 
 - (void)setMpath:(NSString *)mpath
 {
+    Debug("filesize=%lld mtime=%lld, mpath=%@", self.filesize, self.mtime, mpath);
     @synchronized (self) {
         _mpath = mpath;
         [self savetoCache];
         _preViewURL = nil;
         _exportURL = nil;
     }
-    Debug("filesize=%lld mtime=%lld", self.filesize, self.mtime);
 }
 
 - (BOOL)saveStrContent:(NSString *)content
@@ -774,7 +775,7 @@
         _task = nil;
         self.index = 0;
         self.blks = nil;
-        [SeafGlobal.sharedObject decDownloadnum];
+        [SeafGlobal.sharedObject finishDownload:self result:true];
     }
 }
 

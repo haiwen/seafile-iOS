@@ -622,17 +622,22 @@ enum {
     return c;
 }
 
-- (SeafCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView
+- (void)updateCellContent:(SeafCell *)cell file:(SeafFile *)sfile
 {
-    SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
     cell.textLabel.text = sfile.name;
     cell.detailTextLabel.text = sfile.detailText;
     cell.imageView.image = sfile.icon;
     cell.badgeLabel.text = nil;
+}
+
+- (SeafCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView
+{
+    SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
     if (tableView == self.tableView) {
         UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditFileMenu:)];
         [cell addGestureRecognizer:longPressGesture];
     }
+    [self updateCellContent:cell file:sfile];
     sfile.delegate = self;
     sfile.udelegate = self;
     return cell;
@@ -1118,6 +1123,7 @@ enum {
 - (void)downloadDir:(SeafDir *)dir
 {
     Debug("download dir: %@ %@", dir.repoId, dir.path);
+    [SVProgressHUD showSuccessWithStatus:[NSLocalizedString(@"Start to download folder in background: ", @"Seafile") stringByAppendingString:dir.name]];
     [_connection performSelectorInBackground:@selector(downloadDir:) withObject:dir];
 }
 
@@ -1129,9 +1135,9 @@ enum {
 
 - (void)reloadIndex:(NSIndexPath *)indexPath
 {
-    if (indexPath)
-        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
-    else
+    if (indexPath) {
+        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationNone];
+    } else
         [self.tableView reloadData];
 }
  #pragma mark - UIActionSheetDelegate
@@ -1354,10 +1360,14 @@ enum {
     @try {
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
         UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
-        if (res && [cell isKindOfClass:[SeafUploadingFileCell class]]) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [((SeafUploadingFileCell *)cell).progressView setProgress:percent*1.0f/100];
-            });
+        if (res && cell) {
+            if ([cell isKindOfClass:[SeafUploadingFileCell class]]) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [((SeafUploadingFileCell *)cell).progressView setProgress:percent*1.0f/100];
+                });
+            } else {
+                [self updateCellContent:(SeafCell *)cell file:file];
+            }
         } else
             [self reloadIndex:indexPath];
     } @catch(NSException *exception) {
