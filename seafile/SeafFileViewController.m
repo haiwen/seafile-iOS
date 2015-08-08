@@ -1123,7 +1123,7 @@ enum {
 - (void)downloadDir:(SeafDir *)dir
 {
     Debug("download dir: %@ %@", dir.repoId, dir.path);
-    [SVProgressHUD showSuccessWithStatus:[NSLocalizedString(@"Start to download folder in background: ", @"Seafile") stringByAppendingString:dir.name]];
+    [SVProgressHUD showSuccessWithStatus:[NSLocalizedString(@"Start to download folder: ", @"Seafile") stringByAppendingString:dir.name]];
     [_connection performSelectorInBackground:@selector(downloadDir:) withObject:dir];
 }
 
