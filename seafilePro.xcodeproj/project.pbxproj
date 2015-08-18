@@ -102,7 +102,6 @@
 		57532C1C1868AA48003D564B /* seafile-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 57DB827B15A833FA00097CEC /* seafile-Info.plist */; };
 		57535230198CD4E0000BE07B /* MWTapDetectingImageView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5753522D198CD4E0000BE07B /* MWTapDetectingImageView.m */; };
 		57535231198CD4E0000BE07B /* MWTapDetectingView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5753522F198CD4E0000BE07B /* MWTapDetectingView.m */; };
-		57535235198CD4FF000BE07B /* DACircularProgressView.m in Sources */ = {isa = PBXBuildFile; fileRef = 57535234198CD4FF000BE07B /* DACircularProgressView.m */; };
 		57535239198D6241000BE07B /* SeafPhotoView.m in Sources */ = {isa = PBXBuildFile; fileRef = 57535238198D6241000BE07B /* SeafPhotoView.m */; };
 		5757DCCD1AEBCF1600BC0426 /* SeafShibbolethViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5757DCCB1AEBCF1600BC0426 /* SeafShibbolethViewController.m */; };
 		576B99071861411700A16ED6 /* EGOTextView.m in Sources */ = {isa = PBXBuildFile; fileRef = 576B98FC1861411700A16ED6 /* EGOTextView.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
@@ -118,6 +117,8 @@
 		57708BFF19F21D7600D6ACE7 /* text-directory-documents-encrypted@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57708BFD19F21D7600D6ACE7 /* text-directory-documents-encrypted@2x.png */; };
 		57708C0019F21D7600D6ACE7 /* text-directory-documents@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57708BFE19F21D7600D6ACE7 /* text-directory-documents@2x.png */; };
 		57708C0219F23CD300D6ACE7 /* tab-account@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57708C0119F23CD300D6ACE7 /* tab-account@2x.png */; };
+		577439641B836E5700F9ADC1 /* DACircularProgressView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5774394B1B836E5700F9ADC1 /* DACircularProgressView.m */; };
+		577439651B836E5700F9ADC1 /* DALabeledCircularProgressView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5774394D1B836E5700F9ADC1 /* DALabeledCircularProgressView.m */; };
 		5775EA1217476FAD000A1765 /* SeafActivityViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5775EA0F17476FAD000A1765 /* SeafActivityViewController.m */; };
 		5779C7BC171088D900307C36 /* view_markdown.html in Resources */ = {isa = PBXBuildFile; fileRef = 5779C7B0171088D900307C36 /* view_markdown.html */; };
 		577B6C6216AAD241008E82C2 /* tab-star.png in Resources */ = {isa = PBXBuildFile; fileRef = 577B6C6016AAD241008E82C2 /* tab-star.png */; };
@@ -531,8 +532,6 @@
 		5753522D198CD4E0000BE07B /* MWTapDetectingImageView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MWTapDetectingImageView.m; sourceTree = "<group>"; };
 		5753522E198CD4E0000BE07B /* MWTapDetectingView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MWTapDetectingView.h; sourceTree = "<group>"; };
 		5753522F198CD4E0000BE07B /* MWTapDetectingView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MWTapDetectingView.m; sourceTree = "<group>"; };
-		57535233198CD4FF000BE07B /* DACircularProgressView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DACircularProgressView.h; sourceTree = "<group>"; };
-		57535234198CD4FF000BE07B /* DACircularProgressView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DACircularProgressView.m; sourceTree = "<group>"; };
 		57535237198D6241000BE07B /* SeafPhotoView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafPhotoView.h; sourceTree = "<group>"; };
 		57535238198D6241000BE07B /* SeafPhotoView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafPhotoView.m; sourceTree = "<group>"; };
 		5757DCCA1AEBCF1600BC0426 /* SeafShibbolethViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafShibbolethViewController.h; sourceTree = "<group>"; };
@@ -573,6 +572,10 @@
 		57708BFD19F21D7600D6ACE7 /* text-directory-documents-encrypted@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "text-directory-documents-encrypted@2x.png"; sourceTree = "<group>"; };
 		57708BFE19F21D7600D6ACE7 /* text-directory-documents@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "text-directory-documents@2x.png"; sourceTree = "<group>"; };
 		57708C0119F23CD300D6ACE7 /* tab-account@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-account@2x.png"; sourceTree = "<group>"; };
+		5774394A1B836E5700F9ADC1 /* DACircularProgressView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DACircularProgressView.h; sourceTree = "<group>"; };
+		5774394B1B836E5700F9ADC1 /* DACircularProgressView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DACircularProgressView.m; sourceTree = "<group>"; };
+		5774394C1B836E5700F9ADC1 /* DALabeledCircularProgressView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DALabeledCircularProgressView.h; sourceTree = "<group>"; };
+		5774394D1B836E5700F9ADC1 /* DALabeledCircularProgressView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DALabeledCircularProgressView.m; sourceTree = "<group>"; };
 		5775EA0E17476FAD000A1765 /* SeafActivityViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafActivityViewController.h; sourceTree = "<group>"; };
 		5775EA0F17476FAD000A1765 /* SeafActivityViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafActivityViewController.m; sourceTree = "<group>"; };
 		5779C7B0171088D900307C36 /* view_markdown.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = view_markdown.html; path = htmls/view_markdown.html; sourceTree = SOURCE_ROOT; };
@@ -874,7 +877,6 @@
 		5704C6CF1753A07E0028F4FE /* thirdpart */ = {
 			isa = PBXGroup;
 			children = (
-				57535232198CD4EB000BE07B /* DACircularProgress (675f395) */,
 				5753522B198CD3AD000BE07B /* MWPhotoBrowser */,
 				5704C6D01753A1380028F4FE /* IntelligentSplitViewController.h */,
 				5704C6D11753A1380028F4FE /* IntelligentSplitViewController.m */,
@@ -1010,6 +1012,7 @@
 		57094B5515B9AC4A00F48C08 /* libs */ = {
 			isa = PBXGroup;
 			children = (
+				577439471B836E5700F9ADC1 /* DACircularProgress */,
 				57ACEEB01A28B1BE0053A94A /* SVProgressHUD */,
 				57E228461A0E286100C92330 /* QBImagePickerController */,
 				576B98FA1861411700A16ED6 /* EGOTextView */,
@@ -1223,15 +1226,6 @@
 			name = MWPhotoBrowser;
 			sourceTree = "<group>";
 		};
-		57535232198CD4EB000BE07B /* DACircularProgress (675f395) */ = {
-			isa = PBXGroup;
-			children = (
-				57535233198CD4FF000BE07B /* DACircularProgressView.h */,
-				57535234198CD4FF000BE07B /* DACircularProgressView.m */,
-			);
-			name = "DACircularProgress (675f395)";
-			sourceTree = "<group>";
-		};
 		576B98FA1861411700A16ED6 /* EGOTextView */ = {
 			isa = PBXGroup;
 			children = (
@@ -1298,6 +1292,25 @@
 				576D89EC15E39ED700F2BD17 /* whiteArrow@2x.png */,
 			);
 			path = Resources;
+			sourceTree = "<group>";
+		};
+		577439471B836E5700F9ADC1 /* DACircularProgress */ = {
+			isa = PBXGroup;
+			children = (
+				577439491B836E5700F9ADC1 /* DACircularProgress */,
+			);
+			path = DACircularProgress;
+			sourceTree = "<group>";
+		};
+		577439491B836E5700F9ADC1 /* DACircularProgress */ = {
+			isa = PBXGroup;
+			children = (
+				5774394A1B836E5700F9ADC1 /* DACircularProgressView.h */,
+				5774394B1B836E5700F9ADC1 /* DACircularProgressView.m */,
+				5774394C1B836E5700F9ADC1 /* DALabeledCircularProgressView.h */,
+				5774394D1B836E5700F9ADC1 /* DALabeledCircularProgressView.m */,
+			);
+			path = DACircularProgress;
 			sourceTree = "<group>";
 		};
 		5782EE631734F37B00A76338 /* htmls */ = {
@@ -1950,6 +1963,7 @@
 				57E229AC1A11087500C92330 /* SeafData.m in Sources */,
 				57E2288E1A0E286200C92330 /* QBAssetsCollectionViewLayout.m in Sources */,
 				571D8CC91677881400F1A22C /* FailToPreview.m in Sources */,
+				577439641B836E5700F9ADC1 /* DACircularProgressView.m in Sources */,
 				57E228911A0E286200C92330 /* QBImagePickerThumbnailView.m in Sources */,
 				57E229A31A11087500C92330 /* SeafAvatar.m in Sources */,
 				571D8CCA1677881400F1A22C /* UIViewController+Extend.m in Sources */,
@@ -1967,6 +1981,7 @@
 				57E2288C1A0E286200C92330 /* QBAssetsCollectionViewCell.m in Sources */,
 				57E2288D1A0E286200C92330 /* QBAssetsCollectionViewController.m in Sources */,
 				571D8CD41677881400F1A22C /* SeafStarredFilesViewController.m in Sources */,
+				577439651B836E5700F9ADC1 /* DALabeledCircularProgressView.m in Sources */,
 				57E229AF1A11087500C92330 /* SeafDir.m in Sources */,
 				57E22A691A11093D00C92330 /* SeafGlobal.m in Sources */,
 				57E229E41A1108B200C92330 /* FileSizeFormatter.m in Sources */,
@@ -1991,7 +2006,6 @@
 				57A90DA118C49F97005D8A53 /* SeafDetailViewController.m in Sources */,
 				5732064318EB11CA003250DE /* AFHTTPRequestOperationManager.m in Sources */,
 				5704C6D31753A1380028F4FE /* IntelligentSplitViewController.m in Sources */,
-				57535235198CD4FF000BE07B /* DACircularProgressView.m in Sources */,
 				5732066218EB16F4003250DE /* UIRefreshControl+AFNetworking.m in Sources */,
 				57E2288F1A0E286200C92330 /* QBImagePickerController.m in Sources */,
 				57E229B51A11087500C92330 /* seafile.xcdatamodeld in Sources */,

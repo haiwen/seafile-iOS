@@ -234,6 +234,10 @@ enum {
         else
             [self noneSelected:NO];
     }
+    if (!_directory.hasCache) {
+        [self showLodingView];
+        self.state = STATE_LOADING;
+    }
 }
 
 - (void)viewDidUnload
@@ -383,10 +387,6 @@ enum {
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    if (!_directory.hasCache) {
-        [self showLodingView];
-        self.state = STATE_LOADING;
-    }
     [_connection checkSyncDst:_directory];
 #if DEBUG
     if (_directory.uploadItems.count > 0)

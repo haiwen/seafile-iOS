@@ -204,9 +204,7 @@ enum SHARE_STATUS {
             if (!self.preViewItem.isDownloading) {
                 SeafPhotoView *page = [self pageDisplayingPhoto:(SeafFile *)self.preViewItem];
                 [page displayImage];
-                if ([self.preViewItem hasCache]) {
-                    [self loadAdjacentPhotosIfNecessary:(SeafFile *)self.preViewItem];
-                }
+                [self loadAdjacentPhotosIfNecessary:(SeafFile *)self.preViewItem];
             }
             break;
         case PREVIEW_NONE:
@@ -939,13 +937,14 @@ enum SHARE_STATUS {
     // Calculate which pages should be visible
     // Ignore padding as paging bounces encroach on that
     // and lead to false page loads
-    CGRect visibleBounds = _pagingScrollView.bounds;
-    NSInteger iFirstIndex = (NSInteger)floorf((CGRectGetMinX(visibleBounds)+PADDING*2) / CGRectGetWidth(visibleBounds));
-    NSInteger iLastIndex  = (NSInteger)floorf((CGRectGetMaxX(visibleBounds)-PADDING*2-1) / CGRectGetWidth(visibleBounds));
-    if (iFirstIndex < 0) iFirstIndex = 0;
-    if (iFirstIndex > [self numberOfPhotos] - 1) iFirstIndex = [self numberOfPhotos] - 1;
-    if (iLastIndex < 0) iLastIndex = 0;
-    if (iLastIndex > [self numberOfPhotos] - 1) iLastIndex = [self numberOfPhotos] - 1;
+    NSInteger iFirstIndex = _currentPageIndex - 2;
+    NSInteger iLastIndex  = _currentPageIndex + 2;
+    long lastIndex = [self numberOfPhotos] - 1;
+    iFirstIndex = MAX(iFirstIndex, 0);
+    iFirstIndex = MIN(iFirstIndex, lastIndex);
+
+    iLastIndex = MAX(iLastIndex, 0);
+    iLastIndex = MIN(iLastIndex, lastIndex);
 
     // Recycle no longer needed pages
     NSInteger pageIndex;
@@ -955,7 +954,7 @@ enum SHARE_STATUS {
             [_recycledPages addObject:page];
             [page prepareForReuse];
             [page removeFromSuperview];
-            Debug("Removed page at index %lu", (unsigned long)pageIndex);
+            Debug("Removed page at index %ld not in range(%ld, %ld)", (long)pageIndex, iFirstIndex, iLastIndex);
         }
     }
     [_visiblePages minusSet:_recycledPages];
@@ -1098,10 +1097,12 @@ enum SHARE_STATUS {
 {
     NSUInteger index = [self.photos indexOfObject:photo] + 1;
     NSUInteger num = [self numberOfPhotos];
-    if (index < num) {
-        id<SeafPreView> next = [self.photos objectAtIndex:index];
-        if (![next hasCache])
-            [next load:(self.masterVc?self.masterVc:self) force:NO];
+    for (NSUInteger i = index; i < num && i < index + 3; ++i) {
+        id<SeafPreView> next = [self.photos objectAtIndex:i];
+        Debug("Preload photo: %@", next.name);
+        if (![next hasCache]) {
+            [next load:(self.masterVc ? self.masterVc:self) force:NO];
+        }
     }
 }
 

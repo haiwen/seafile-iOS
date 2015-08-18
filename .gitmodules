@@ -19,3 +19,6 @@
 [submodule "libs/SVProgressHUD"]
 	path = libs/SVProgressHUD
 	url = https://github.com/TransitApp/SVProgressHUD
+[submodule "libs/DACircularProgress"]
+	path = libs/DACircularProgress
+	url = https://github.com/danielamitay/DACircularProgress

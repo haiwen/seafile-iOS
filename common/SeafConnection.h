@@ -28,6 +28,7 @@ enum MSG_TYPE{
 
 @protocol SeafDownloadDelegate <NSObject>
 - (void)download;
+- (NSString *)name;
 @end
 
 

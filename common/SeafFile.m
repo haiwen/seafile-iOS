@@ -169,7 +169,7 @@
          if (!curId)
              curId = self.oid;
          if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject documentPath:curId]]) {
-             Debug("already uptodate oid=%@\n", self.ooid);
+             Debug("file %@ already uptodate oid=%@\n", self.name, self.ooid);
              [self finishDownload:curId];
              return;
          }
@@ -389,6 +389,8 @@
     if (!self.isDownloading) {
         [self loadCache];
         [self download];
+    } else {
+        Debug("File %@ is already donwloading.", self.name);
     }
 }
 

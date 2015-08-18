@@ -384,9 +384,9 @@
     return self.downloadnum + self.dfiles.count;
 }
 
-- (void)finishDownload:(id<SeafDownloadDelegate>) file result:(BOOL)result
+- (void)finishDownload:(id<SeafDownloadDelegate>)file result:(BOOL)result
 {
-    Debug("download %ld, result=%d, failcnt=%ld", self.downloadnum, result, self.failedNum);
+    Debug("file %@ download %ld, result=%d, failcnt=%ld", file.name, self.downloadnum, result, self.failedNum);
     @synchronized (self) {
         self.downloadnum --;
     }

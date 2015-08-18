@@ -57,6 +57,11 @@ static NSMutableDictionary *avatarAttrs = nil;
     avatarAttrs = [[NSMutableDictionary alloc] init];
 }
 
+- (NSString *)name
+{
+    return self.path.lastPathComponent;
+}
+
 - (NSMutableDictionary *)attrs
 {
     NSMutableDictionary *dict = [[SeafAvatar avatarAttrs] objectForKey:self.path];
