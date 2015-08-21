@@ -160,7 +160,7 @@
                              ret = RET_WRONG_PASSWORD;
                          }
                      }
-                     if (block)  block(self, RET_FAILED);
+                     if (block)  block(self, ret);
                  }];
 }
 - (void)setRepoPassword:(NSString *)password delegate:(id<SeafRepoPasswordDelegate>)del

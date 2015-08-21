@@ -516,11 +516,10 @@ enum {
     _selectedindex = [self.tableView indexPathForRowAtPoint:touchPoint];
     if (!_selectedindex)
         return;
-    SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-
-    if (![file isKindOfClass:[SeafFile class]])
+    id entry = [self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
+    if (![entry isKindOfClass:[SeafFile class]])
         return;
-
+    SeafFile *file = (SeafFile *)entry;
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
     NSArray *titles;
     if (file.mpath)

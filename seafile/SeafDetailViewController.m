@@ -954,7 +954,7 @@ enum SHARE_STATUS {
             [_recycledPages addObject:page];
             [page prepareForReuse];
             [page removeFromSuperview];
-            Debug("Removed page at index %ld not in range(%ld, %ld)", (long)pageIndex, iFirstIndex, iLastIndex);
+            Debug("Removed page at index %ld not in range(%ld, %ld)", (long)pageIndex, (long)iFirstIndex, (long)iLastIndex);
         }
     }
     [_visiblePages minusSet:_recycledPages];

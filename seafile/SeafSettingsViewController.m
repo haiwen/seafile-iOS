@@ -308,6 +308,11 @@ enum {
         remainStr = [remainStr stringByAppendingFormat:@"  U:%ld D:%ld", (long)SeafGlobal.sharedObject.uploadingnum, (long)SeafGlobal.sharedObject.downloadingnum];
 #endif
         return [sectionNames[section] stringByAppendingFormat:@"\t %@", remainStr];
+    } else {
+#if DEBUG
+        NSString *remainStr = [NSString stringWithFormat:@"  U:%ld D:%ld", (long)SeafGlobal.sharedObject.uploadingnum, (long)SeafGlobal.sharedObject.downloadingnum];
+        return [sectionNames[section] stringByAppendingFormat:@"\t %@", remainStr];
+#endif
     }
     return sectionNames[section];
 }

@@ -7,6 +7,8 @@
 //
 
 
+#include <ImageIO/ImageIO.h>
+
 #import "Utils.h"
 #import "Debug.h"
 #import "ExtentedString.h"
@@ -306,9 +308,33 @@
 + (BOOL)writeDataToPathWithMeta:(NSString*)filePath andAsset:(ALAsset*)asset
 {
     ALAssetRepresentation *defaultRep = asset.defaultRepresentation;
-    UIImage *image = [UIImage imageWithCGImage:defaultRep.fullResolutionImage scale:defaultRep.scale orientation:(UIImageOrientation)defaultRep.orientation];
-    NSData *currentImageData = UIImageJPEGRepresentation(image.fixOrientation, 1.0);
-    [currentImageData writeToFile:filePath atomically:YES];
+    CGImageRef cgimg = [defaultRep CGImageWithOptions:defaultRep.metadata];
+    UIImage *image = [UIImage imageWithCGImage:cgimg];
+    NSData *currentImageData = UIImageJPEGRepresentation(image, 1.0);
+    CGImageSourceRef source = CGImageSourceCreateWithData((CFDataRef)currentImageData, NULL);
+    CFStringRef UTI = CGImageSourceGetType(source); //this is the type of image (e.g., public.jpeg)
+
+    //this will be the data CGImageDestinationRef will write into
+    NSMutableData *dest_data = [NSMutableData data];
+
+    CGImageDestinationRef destination = CGImageDestinationCreateWithData((CFMutableDataRef)dest_data,UTI,1,NULL);
+    if(!destination) {
+        Debug("***Could not create image destination ***");
+        return false;
+    }
+
+    //add the image contained in the image source to the destination, overidding the old metadata with our modified metadata
+    CGImageDestinationAddImageFromSource(destination,source,0, (CFDictionaryRef)defaultRep.metadata);
+
+    //tell the destination to write the image data and metadata into our data object.
+    //It will return false if something goes wrong
+    BOOL success = CGImageDestinationFinalize(destination);
+    if(!success) {
+        Debug(@"***Could not create data from image destination ***");
+        return false;
+    }
+
+    [dest_data writeToFile:filePath atomically:YES];
     return YES;
 }
 
