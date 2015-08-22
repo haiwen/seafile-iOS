@@ -216,7 +216,8 @@
 
 - (void)downloadThumb
 {
-    NSString *thumburl = [NSString stringWithFormat:API_URL"/repos/%@/thumbnail/?size=%d&p=%@", self.repoId, THUMB_SIZE, self.path.escapedUrl];
+    int size = THUMB_SIZE * (int)[[UIScreen mainScreen] scale];
+    NSString *thumburl = [NSString stringWithFormat:API_URL"/repos/%@/thumbnail/?size=%d&p=%@", self.repoId, size, self.path.escapedUrl];
     NSURLRequest *downloadRequest = [connection buildRequest:thumburl method:@"GET" form:nil];
     NSString *target = [self thumbPath:self.oid];
     @synchronized (self) {
