@@ -872,7 +872,7 @@ enum {
         }
         NSMutableArray *arr = nil;
         if ([self isCurrentFileImage:&arr]) {
-            [self.detailViewController setPreViewItems:arr current:(id<SeafPreView>)_curEntry master:self];
+            [self.detailViewController setPreViewPhotos:arr current:(id<SeafPreView>)_curEntry master:self];
         } else {
             id<SeafPreView> item = (id<SeafPreView>)_curEntry;
             [self.detailViewController setPreViewItem:item master:self];

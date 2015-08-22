@@ -17,7 +17,7 @@
 - (void)refreshView;
 - (void)setPreViewItem:(id<SeafPreView>)item master:(UIViewController<SeafDentryDelegate> *)c;
 
-- (void)setPreViewItems:(NSArray *)items current:(id<SeafPreView>)item master:(UIViewController<SeafDentryDelegate> *)c;
+- (void)setPreViewPhotos:(NSArray *)items current:(id<SeafPreView>)item master:(UIViewController<SeafDentryDelegate> *)c;
 
 - (void)goBack:(id)sender;
 

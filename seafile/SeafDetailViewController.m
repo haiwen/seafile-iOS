@@ -232,7 +232,7 @@ enum SHARE_STATUS {
     [self refreshView];
 }
 
-- (void)setPreViewItems:(NSArray *)items current:(id<SeafPreView>)item master:(UIViewController<SeafDentryDelegate> *)c
+- (void)setPreViewPhotos:(NSArray *)items current:(id<SeafPreView>)item master:(UIViewController<SeafDentryDelegate> *)c
 {
     [self clearPreView];
     Debug("Preview photos");
@@ -478,7 +478,6 @@ enum SHARE_STATUS {
 - (void)fileContentLoaded :(SeafFile *)file result:(BOOL)res completeness:(int)percent
 {
     if (_preViewItem != file) return;
-
     if (self.state != PREVIEW_DOWNLOADING) {
         [self refreshView];
         return;
@@ -497,14 +496,15 @@ enum SHARE_STATUS {
 
 - (void)entry:(SeafBase *)entry updated:(BOOL)updated progress:(int)percent
 {
-    if (_preViewItem != entry) return;
     if (updated || self.state == PREVIEW_DOWNLOADING) {
         [self fileContentLoaded:(SeafFile *)entry result:YES completeness:percent];
     } else if (self.state == PREVIEW_PHOTO) {
-        SeafPhotoView *page = [self pageDisplayingPhoto:(SeafFile *)self.preViewItem];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [page setProgress:percent *1.0f/100];
-        });
+        SeafPhotoView *page = [self pageDisplayingPhoto:(SeafFile *)entry];
+        if (page) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [page setProgress:percent *1.0f/100];
+            });
+        }
     }
 }
 
@@ -1031,7 +1031,6 @@ enum SHARE_STATUS {
 #pragma mark - UIScrollView Delegate
 // Handle page changes
 - (void)didStartViewingPageAtIndex:(NSUInteger)index {
-
     if (![self numberOfPhotos]) {
         return;
     }
@@ -1054,9 +1053,11 @@ enum SHARE_STATUS {
     // Load adjacent images if needed and the photo is already
     // loaded. Also called after photo has been loaded in background
     [self.preViewItem load:(self.masterVc?self.masterVc:self) force:NO];
-    if ([self.preViewItem hasCache])
+    if ([self.preViewItem hasCache]) {
+        SeafPhotoView *page = [self pageDisplayingPhoto:(SeafFile *)self.preViewItem];
+        [page displayImage];
         [self loadAdjacentPhotosIfNecessary:self.preViewItem];
-
+    }
     // Update nav
     [self updateNavigation];
 }
