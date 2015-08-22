@@ -26,11 +26,26 @@ enum {
     CELL_VERSION,
 };
 
+enum {
+    SECTION_ACCOUNT = 0,
+    SECTION_CAMERA,
+    SECTION_CACHE,
+    SECTION_ABOUT,
+    SECTION_WIPECACHE,
+};
+enum CAMERA_CELL{
+    CELL_AUTO = 0,
+    CELL_VIDEOS,
+    CELL_WIFIONLY,
+    CELL_BACKGROUND,
+    CELL_DESTINATION,
+};;
+
 #define SEAFILE_SITE @"http://www.seafile.com"
 #define MSG_RESET_UPLOADED NSLocalizedString(@"Do you want reset the uploaded photos?", @"Seafile")
 #define MSG_CLEAR_CACHE NSLocalizedString(@"Are you sure to clear all the cache?", @"Seafile")
 
-@interface SeafSettingsViewController ()<SeafDirDelegate, SeafPhotoSyncWatcherDelegate, MFMailComposeViewControllerDelegate>
+@interface SeafSettingsViewController ()<SeafDirDelegate, SeafPhotoSyncWatcherDelegate, MFMailComposeViewControllerDelegate, CLLocationManagerDelegate>
 @property (strong, nonatomic) IBOutlet UITableViewCell *nameCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *usedspaceCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *serverCell;
@@ -41,18 +56,20 @@ enum {
 @property (strong, nonatomic) IBOutlet UITableViewCell *tellFriendCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *websiteCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *videoSyncCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *backgroundSyncCell;
 
 @property (strong, nonatomic) IBOutlet UILabel *wipeCacheLabel;
 @property (strong, nonatomic) IBOutlet UILabel *autoCameraUploadLabel;
 @property (strong, nonatomic) IBOutlet UILabel *wifiOnlyLabel;
 @property (strong, nonatomic) IBOutlet UILabel *videoSyncLabel;
+@property (strong, nonatomic) IBOutlet UILabel *backgroundSyncLable;
 
 @property (strong, nonatomic) IBOutlet UISwitch *autoSyncSwitch;
 @property (strong, nonatomic) IBOutlet UISwitch *wifiOnlySwitch;
 @property (strong, nonatomic) IBOutlet UISwitch *videoSyncSwitch;
-@property BOOL autoSync;
-@property BOOL wifiOnly;
-@property BOOL videoSync;
+@property (strong, nonatomic) IBOutlet UISwitch *backgroundSyncSwitch;
+
+@property (strong, nonatomic) CLLocationManager *locationManager;
 
 @property int state;
 
@@ -70,49 +87,127 @@ enum {
     return self;
 }
 
+- (BOOL)autoSync
+{
+    return _connection.autoSync;
+}
+
+- (BOOL)wifiOnly
+{
+    return _connection.wifiOnly;
+}
+
+- (BOOL)videoSync
+{
+    return _connection.videoSync;
+}
+
+- (BOOL)backgroundSync
+{
+    return _connection.backgroundSync;
+}
+
+- (void)setAutoSync:(BOOL)autoSync
+{
+    _connection.autoSync = autoSync;
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    [appdelegate checkBackgroundUploadStatus];
+}
+
+- (void)setVideoSync:(BOOL)videoSync
+{
+    _connection.videoSync = videoSync;
+}
+
+- (void)setWifiOnly:(BOOL)wifiOnly
+{
+    _connection.wifiOnly = wifiOnly;
+}
+
+- (void)setBackgroundSync:(BOOL)backgroundSync
+{
+    _connection.backgroundSync = backgroundSync;
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    [appdelegate checkBackgroundUploadStatus];
+}
+
+- (void)checkPhotoLibraryAuthorizationStatus
+{
+    if([ALAssetsLibrary authorizationStatus] == ALAuthorizationStatusNotDetermined) {
+        ALAssetsLibrary *assetLibrary = [[ALAssetsLibrary alloc] init];
+        /*
+         Enumerating assets or groups of assets in the library will present a consent dialog to the user.
+         */
+        [assetLibrary enumerateGroupsWithTypes:ALAssetsGroupAll usingBlock:^(ALAssetsGroup *group, BOOL *stop) {
+            self.autoSync =  _autoSyncSwitch.on;
+            *stop = true;
+        } failureBlock:^(NSError *error) {
+            _autoSyncSwitch.on = false;
+        }];
+    } else if([ALAssetsLibrary authorizationStatus] == ALAuthorizationStatusRestricted ||
+              [ALAssetsLibrary authorizationStatus] == ALAuthorizationStatusDenied) {
+        [self alertWithTitle:NSLocalizedString(@"This app does not have access to your photos and videos.", @"Seafile") message:NSLocalizedString(@"You can enable access in Privacy Settings", @"Seafile")];
+        _autoSyncSwitch.on = false;
+    } else if([ALAssetsLibrary authorizationStatus] == ALAuthorizationStatusAuthorized) {
+        self.autoSync = _autoSyncSwitch.on;
+    }
+}
+
 - (void)autoSyncSwitchFlip:(id)sender
 {
     if (_autoSyncSwitch.on) {
-        if([ALAssetsLibrary authorizationStatus] == ALAuthorizationStatusNotDetermined) {
-            ALAssetsLibrary *assetLibrary = [[ALAssetsLibrary alloc] init];
-            /*
-             Enumerating assets or groups of assets in the library will present a consent dialog to the user.
-             */
-            [assetLibrary enumerateGroupsWithTypes:ALAssetsGroupAll usingBlock:^(ALAssetsGroup *group, BOOL *stop) {
-                _autoSync =  _autoSyncSwitch.on;
-                _connection.autoSync = _autoSync;
-            } failureBlock:^(NSError *error) {
-                _autoSyncSwitch.on = false;
-            }];
-        } else if([ALAssetsLibrary authorizationStatus] == ALAuthorizationStatusRestricted ||
-                  [ALAssetsLibrary authorizationStatus] == ALAuthorizationStatusDenied) {
-            [self alertWithTitle:NSLocalizedString(@"This app does not have access to your photos and videos.", @"Seafile") message:NSLocalizedString(@"You can enable access in Privacy Settings", @"Seafile")];
-            _autoSyncSwitch.on = false;
-        } else if([ALAssetsLibrary authorizationStatus] == ALAuthorizationStatusAuthorized) {
-            _autoSync = _autoSyncSwitch.on;
-            _connection.autoSync = _autoSync;
-        }
+        [self checkPhotoLibraryAuthorizationStatus];
     } else {
-        _autoSync = _autoSyncSwitch.on;
-        _connection.autoSync = _autoSync;
+        self.autoSync = _autoSyncSwitch.on;
         _syncRepoCell.detailTextLabel.text = @"";
         [self.tableView reloadData];
-        [_connection setAttribute:@"" forKey:@"autoSyncRepo"];
+        _connection.autoSyncRepo = nil;
         [_connection checkAutoSync];
     }
 }
 
 - (void)wifiOnlySwitchFlip:(id)sender
 {
-    _wifiOnly = _wifiOnlySwitch.on;
-    _connection.wifiOnly = _wifiOnly;
+    self.wifiOnly = _wifiOnlySwitch.on;
 }
 
 - (void)videoSyncSwitchFlip:(id)sender
 {
-    _videoSync = _videoSyncSwitch.on;
-    _connection.videoSync = _videoSync;
-    [_connection checkAutoSync];
+    self.videoSync = _videoSyncSwitch.on;
+    [_connection checkPhotoChanges:nil];
+}
+
+- (CLLocationManager *)locationManager {
+    if (!_locationManager) {
+        _locationManager = [[CLLocationManager alloc] init];
+        _locationManager.delegate = self;
+    }
+    return _locationManager;
+}
+- (void)backgroundSyncSwitchFlip:(id)sender
+{
+    Debug("_backgroundSyncSwitch status:%d", _backgroundSyncSwitch.on);
+    if (!_backgroundSyncSwitch.on) {
+        self.backgroundSync = _backgroundSyncSwitch.on;
+        return;
+    }
+    CLAuthorizationStatus status = [CLLocationManager authorizationStatus];
+    Debug("AuthorizationStatus: %d", status);
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    if (status == kCLAuthorizationStatusNotDetermined) {
+        if (ios8) {
+            [self.locationManager requestAlwaysAuthorization];
+        } else {
+            [appdelegate startSignificantChangeUpdates];
+        }
+        return;
+    }
+    if (status != kCLAuthorizationStatusAuthorizedAlways && status != kCLAuthorizationStatusAuthorized) {
+        [self alertWithTitle:NSLocalizedString(@"This app does not have access to your location service.", @"Seafile") message:NSLocalizedString(@"You can enable access in Privacy Settings", @"Seafile")];
+        _backgroundSyncSwitch.on = false;
+    } else {
+        self.backgroundSync = true;
+    }
 }
 
 - (void)viewDidLoad
@@ -123,6 +218,8 @@ enum {
     _autoCameraUploadLabel.text = NSLocalizedString(@"Auto Camera Upload", @"Seafile");
     _videoSyncLabel.text = NSLocalizedString(@"Upload Videos", @"Seafile");
     _wifiOnlyLabel.text = NSLocalizedString(@"Wifi Only", @"Seafile");
+    _backgroundSyncLable.text = NSLocalizedString(@"Background Upload", @"Seafile");
+
     _syncRepoCell.textLabel.text = NSLocalizedString(@"Upload Destination", @"Seafile");
     _cacheCell.textLabel.text = NSLocalizedString(@"Local Cache", @"Seafile");
     _tellFriendCell.textLabel.text = [NSString stringWithFormat:NSLocalizedString(@"Tell Friends about %@", @"Seafile"), APP_NAME];
@@ -137,6 +234,7 @@ enum {
     [_autoSyncSwitch addTarget:self action:@selector(autoSyncSwitchFlip:) forControlEvents:UIControlEventValueChanged];
     [_wifiOnlySwitch addTarget:self action:@selector(wifiOnlySwitchFlip:) forControlEvents:UIControlEventValueChanged];
     [_videoSyncSwitch addTarget:self action:@selector(videoSyncSwitchFlip:) forControlEvents:UIControlEventValueChanged];
+    [_backgroundSyncSwitch addTarget:self action:@selector(backgroundSyncSwitchFlip:) forControlEvents:UIControlEventValueChanged];
 
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
     _version = [infoDictionary objectForKey:@"CFBundleShortVersionString"];
@@ -171,11 +269,11 @@ enum {
     _serverCell.detailTextLabel.text = [_connection.address trimUrl];
     _autoSyncSwitch.on = self.autoSync;
     if (self.autoSync)
-        [self autoSyncSwitchFlip:nil];
+        [self checkPhotoLibraryAuthorizationStatus];
     _wifiOnlySwitch.on = self.wifiOnly;
     _videoSyncSwitch.on = self.videoSync;
-    NSString *autoSyncRepo = [[_connection getAttribute:@"autoSyncRepo"] stringValue];
-    SeafRepo *repo = [_connection getRepo:autoSyncRepo];
+    _backgroundSyncSwitch.on = self.backgroundSync;
+    SeafRepo *repo = [_connection getRepo:_connection.autoSyncRepo];
     _syncRepoCell.detailTextLabel.text = repo ? repo.name : nil;
 
     long long cacheSize = [self cacheSize];
@@ -200,9 +298,6 @@ enum {
 - (void)setConnection:(SeafConnection *)connection
 {
     _connection = connection;
-    _autoSync = _connection.isAutoSync;
-    _wifiOnly = _connection.isWifiOnly;
-    _videoSync = _connection.videoSync;
     [self.tableView reloadData];
     [_connection getAccountInfo:^(bool result, SeafConnection *conn) {
         if (result && conn == self.connection) {
@@ -227,7 +322,7 @@ enum {
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     [self.tableView deselectRowAtIndexPath:[self.tableView indexPathForSelectedRow] animated:NO];
-    if (indexPath.section == 0) {
+    if (indexPath.section == SECTION_ACCOUNT) {
         if (indexPath.row == 1) // Select the quota cell
             [_connection getAccountInfo:^(bool result, SeafConnection *conn) {
                 if (result && conn == self.connection) {
@@ -236,13 +331,11 @@ enum {
                     });
                 }
             }];
-    } else if (indexPath.section == 1) {
-        if (indexPath.row == 3) {
-            if (_autoSync) {
-                [self popupRepoSelect];
-            }
+    } else if (indexPath.section == SECTION_CAMERA) {
+        if (indexPath.row == CELL_DESTINATION && self.autoSync) {
+            [self popupRepoSelect];
         }
-    } else if (indexPath.section == 3) {
+    } else if (indexPath.section == SECTION_ABOUT) {
         _state = (int)indexPath.row;
         switch ((indexPath.row)) {
             case CELL_INVITATION:
@@ -260,7 +353,7 @@ enum {
             default:
                 break;
         }
-    } else if (indexPath.section == 4) {
+    } else if (indexPath.section == SECTION_WIPECACHE) {
         [self alertWithTitle:MSG_CLEAR_CACHE message:nil yes:^{
             SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
             [(SeafDetailViewController *)[appdelegate detailViewControllerAtIndex:TABBED_SETTINGS] setPreViewItem:nil master:nil];
@@ -292,9 +385,9 @@ enum {
         NSLocalizedString(@"About", @"Seafile"),
         @"",
     };
-    if (section < 0 || section > 4)
+    if (section < SECTION_ACCOUNT || section > SECTION_WIPECACHE)
         return nil;
-    if (section == 1 && _connection.inAutoSync) {
+    if (section == SECTION_CAMERA && _connection.inAutoSync) {
         NSUInteger num = _connection.photosInSyncing;
         NSString *remainStr = @"";
         if (num == 0) {
@@ -308,12 +401,13 @@ enum {
         remainStr = [remainStr stringByAppendingFormat:@"  U:%ld D:%ld", (long)SeafGlobal.sharedObject.uploadingnum, (long)SeafGlobal.sharedObject.downloadingnum];
 #endif
         return [sectionNames[section] stringByAppendingFormat:@"\t %@", remainStr];
-    } else {
+    }
 #if DEBUG
+    else if (section == SECTION_CAMERA) {
         NSString *remainStr = [NSString stringWithFormat:@"  U:%ld D:%ld", (long)SeafGlobal.sharedObject.uploadingnum, (long)SeafGlobal.sharedObject.downloadingnum];
         return [sectionNames[section] stringByAppendingFormat:@"\t %@", remainStr];
-#endif
     }
+#endif
     return sectionNames[section];
 }
 
@@ -388,10 +482,20 @@ enum {
 }
 
 #pragma mark - SeafDirDelegate
+- (void)setSyncRepo:(SeafRepo *)repo
+{
+    _connection.autoSyncRepo = repo.repoId;
+    _syncRepoCell.detailTextLabel.text = repo.name;
+    [_connection checkAutoSync];
+    [self.tableView reloadData];
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    [appdelegate checkBackgroundUploadStatus];
+}
+
 - (void)chooseDir:(UIViewController *)c dir:(SeafDir *)dir
 {
     [c.navigationController dismissViewControllerAnimated:YES completion:nil];
-    NSString *old = [_connection getAttribute:@"autoSyncRepo"];
+    NSString *old = _connection.autoSyncRepo;
     SeafRepo *repo = (SeafRepo *)dir;
     if ([repo.repoId isEqualToString:old]) {
         [_connection checkPhotoChanges:nil];
@@ -401,15 +505,9 @@ enum {
     dispatch_async(dispatch_get_main_queue(), ^ {
         [self alertWithTitle:MSG_RESET_UPLOADED message:nil yes:^{
             [_connection resetUploadedPhotos];
-            [_connection setAttribute:repo.repoId forKey:@"autoSyncRepo"];
-            [_connection checkAutoSync];
-            _syncRepoCell.detailTextLabel.text = repo.name;
-            [self.tableView reloadData];
+            [self setSyncRepo:repo];
         } no:^{
-            [_connection setAttribute:repo.repoId forKey:@"autoSyncRepo"];
-            [_connection checkAutoSync];
-            _syncRepoCell.detailTextLabel.text = repo.name;
-            [self.tableView reloadData];
+            [self setSyncRepo:repo];
         }];
     });
 }
@@ -425,6 +523,19 @@ enum {
     Debug("%ld photos remain to uplaod", remain);
     if (self.isVisible)
         [self.tableView reloadData];
+}
+
+#pragma mark - CLLocationManagerDelegate
+
+- (void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status
+{
+    Debug("AuthorizationStatus: %d", status);
+    if (status != kCLAuthorizationStatusAuthorizedAlways && status != kCLAuthorizationStatusAuthorized) {
+        _backgroundSyncSwitch.on = false;
+    } else {
+        _backgroundSyncSwitch.on = true;
+        self.backgroundSync = true;
+    }
 }
 
 @end

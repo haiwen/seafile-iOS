@@ -166,7 +166,10 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)setAttribute:(id)anObject forKey:(id < NSCopying >)aKey
 {
-    [_settings setObject:anObject forKey:aKey];
+    if (anObject)
+        [_settings setObject:anObject forKey:aKey];
+    else
+        [_settings removeObjectForKey:aKey];
     [self saveSettings];
 }
 
@@ -193,11 +196,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return [[self getAttribute:@"wifiOnly"] booleanValue:true];
 }
 
-- (void)setWifiOnly:(BOOL)wifiOnly
-{
-    [self setAttribute:[NSNumber numberWithBool:wifiOnly] forKey:@"wifiOnly"];
-}
-
 - (BOOL)isAutoSync
 {
     return [[self getAttribute:@"autoSync"] booleanValue:true];
@@ -206,6 +204,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (BOOL)isVideoSync
 {
     return [[self getAttribute:@"videoSync"] booleanValue:true];
+}
+
+- (BOOL)isBackgroundSync
+{
+    return [[self getAttribute:@"backgroundSync"] booleanValue:true];
 }
 
 - (void)setAutoSync:(BOOL)autoSync
@@ -218,6 +221,28 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     if (self.isVideoSync == videoSync) return;
     [self setAttribute:[NSNumber numberWithBool:videoSync] forKey:@"videoSync"];
+}
+
+- (void)setWifiOnly:(BOOL)wifiOnly
+{
+    if (self.wifiOnly == wifiOnly) return;
+    [self setAttribute:[NSNumber numberWithBool:wifiOnly] forKey:@"wifiOnly"];
+}
+
+- (void)setBackgroundSync:(BOOL)backgroundSync
+{
+    if (self.backgroundSync == backgroundSync) return;
+    [self setAttribute:[NSNumber numberWithBool:backgroundSync] forKey:@"backgroundSync"];
+}
+
+- (NSString *)autoSyncRepo
+{
+    return [[self getAttribute:@"autoSyncRepo"] stringValue];
+}
+
+- (void)setAutoSyncRepo:(NSString *)repoId
+{
+    [self setAttribute:repoId forKey:@"autoSyncRepo"];
 }
 
 - (NSString *)username
@@ -936,7 +961,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (!asset)
         return nil;
     NSURL *url = (NSURL*)asset.defaultRepresentation.url;
-    Debug("url=%@, type=%@ %d %d", url, [asset valueForProperty:ALAssetPropertyType], [self IsPhotoUploaded:url], [self IsPhotoUploading:url]);
     if ([self IsPhotoUploaded:url] || [self IsPhotoUploading:url])
         return nil;
 
@@ -951,6 +975,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (void)checkPhotos
 {
     if (!_inAutoSync) return;
+    Debug("Check photos for server %@", _address);
+    if (!self.videoSync) [self clearUploadingVideos];
+
     @synchronized(self) {
         if (_inCheckPhotoss) return;
         _inCheckPhotoss = true;
@@ -1012,7 +1039,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return _photosArray.count + _uploadingArray.count;
 }
 
-
 - (void)updateUploadDir:(SeafDir *)dir
 {
     if (_syncDir && [_syncDir.repoId isEqualToString:dir.repoId] && [_syncDir.path isEqualToString:dir.path])
@@ -1057,10 +1083,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)checkPhotoChanges:(NSNotification *)note
 {
-    if (_inAutoSync) {
-        Debug("Check photos for server %@", _address);
-        [self checkPhotos];
-    }
+    [self checkPhotos];
 }
 
 - (void)checkAutoSync
@@ -1089,10 +1112,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (_inAutoSync) {
         _syncDir = nil;
         Debug("start auto sync, check photos for server %@", _address);
-        if (!self.videoSync) [self clearUploadingVideos];
+        [self checkUploadDir];
         [self checkPhotos];
-        float delay = 10.0f;
-        [self performSelector:@selector(checkUploadDir) withObject:nil afterDelay:delay];
     }
 }
 

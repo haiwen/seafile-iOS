@@ -69,6 +69,9 @@ enum MSG_TYPE{
 @property (readwrite, nonatomic, getter=isWifiOnly) BOOL wifiOnly;
 @property (readwrite, nonatomic, getter=isAutoSync) BOOL autoSync;
 @property (readwrite, nonatomic, getter=isVideoSync) BOOL videoSync;
+@property (readwrite, nonatomic, getter=isBackgroundSync) BOOL backgroundSync;
+@property (readwrite, nonatomic) NSString *autoSyncRepo;
+
 @property (weak) id<SeafPhotoSyncWatcherDelegate> photSyncWatcher;
 @property (readonly) BOOL inAutoSync;
 @property (readonly) NSString *avatar;

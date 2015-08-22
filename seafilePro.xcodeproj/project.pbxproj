@@ -99,7 +99,6 @@
 		573F4AAE1788763500F096D3 /* arrowright.png in Resources */ = {isa = PBXBuildFile; fileRef = 573F4AAA1788763500F096D3 /* arrowright.png */; };
 		574DF02C1AF2863E0044FE06 /* SeafShibbolethViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 574DF02A1AF2863E0044FE06 /* SeafShibbolethViewController.xib */; };
 		57532C1A1868AA48003D564B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 57532C161868AA48003D564B /* Localizable.strings */; };
-		57532C1C1868AA48003D564B /* seafile-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 57DB827B15A833FA00097CEC /* seafile-Info.plist */; };
 		57535230198CD4E0000BE07B /* MWTapDetectingImageView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5753522D198CD4E0000BE07B /* MWTapDetectingImageView.m */; };
 		57535231198CD4E0000BE07B /* MWTapDetectingView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5753522F198CD4E0000BE07B /* MWTapDetectingView.m */; };
 		57535239198D6241000BE07B /* SeafPhotoView.m in Sources */ = {isa = PBXBuildFile; fileRef = 57535238198D6241000BE07B /* SeafPhotoView.m */; };
@@ -374,6 +373,7 @@
 		57F1438F1B8859C4009C1BC8 /* SeafJSONResponseSerializer.m in Sources */ = {isa = PBXBuildFile; fileRef = 57F1438E1B8859C4009C1BC8 /* SeafJSONResponseSerializer.m */; };
 		57F143901B8859C4009C1BC8 /* SeafJSONResponseSerializer.m in Sources */ = {isa = PBXBuildFile; fileRef = 57F1438E1B8859C4009C1BC8 /* SeafJSONResponseSerializer.m */; };
 		57F143911B8859C4009C1BC8 /* SeafJSONResponseSerializer.m in Sources */ = {isa = PBXBuildFile; fileRef = 57F1438E1B8859C4009C1BC8 /* SeafJSONResponseSerializer.m */; };
+		57F143931B886B96009C1BC8 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57F143921B886B96009C1BC8 /* CoreLocation.framework */; };
 		57F8CD211A127566000F6CDC /* DownloadingProgress_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22B501A12712500C92330 /* DownloadingProgress_iPhone.xib */; };
 		57F8CD221A127566000F6CDC /* DownloadingProgress_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22B251A12647800C92330 /* DownloadingProgress_iPad.xib */; };
 		57F8CD231A127566000F6CDC /* FailToPreview_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22AEF1A12625B00C92330 /* FailToPreview_iPad.xib */; };
@@ -468,7 +468,6 @@
 		571B845C1A5AF14200E92BF7 /* is */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = is; path = is.lproj/Localizable.strings; sourceTree = "<group>"; };
 		571CFA9319076469002A58BF /* reply.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = reply.png; sourceTree = "<group>"; };
 		571D8DBA1677881400F1A22C /* SeafilePro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SeafilePro.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		571D8DBD1677897D00F1A22C /* seafile-appstore-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "seafile-appstore-Info.plist"; sourceTree = "<group>"; };
 		571F5147168C80380055D69B /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = System/Library/Frameworks/MobileCoreServices.framework; sourceTree = SDKROOT; };
 		57227A5B18389DB600CD28E9 /* red.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = red.png; sourceTree = "<group>"; };
 		5725186117AE7D000078CD12 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
@@ -738,7 +737,6 @@
 		57DB827315A833FA00097CEC /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		57DB827515A833FA00097CEC /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		57DB827715A833FA00097CEC /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
-		57DB827B15A833FA00097CEC /* seafile-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "seafile-Info.plist"; sourceTree = "<group>"; };
 		57DB827F15A833FA00097CEC /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		57DB828315A833FA00097CEC /* SeafAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafAppDelegate.m; sourceTree = "<group>"; };
 		57DB828E15A833FA00097CEC /* SeafFileViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafFileViewController.h; sourceTree = "<group>"; };
@@ -831,6 +829,7 @@
 		57F0AAFC16D8913600364D18 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
 		57F1438D1B8859C4009C1BC8 /* SeafJSONResponseSerializer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafJSONResponseSerializer.h; path = common/SeafJSONResponseSerializer.h; sourceTree = SOURCE_ROOT; };
 		57F1438E1B8859C4009C1BC8 /* SeafJSONResponseSerializer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafJSONResponseSerializer.m; path = common/SeafJSONResponseSerializer.m; sourceTree = SOURCE_ROOT; };
+		57F143921B886B96009C1BC8 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
 		57F8CD1A1A127531000F6CDC /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/SeafStart.storyboard; sourceTree = "<group>"; };
 		57F8CD1B1A127536000F6CDC /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/SeafStartFooterView.xib; sourceTree = "<group>"; };
 		57F8CD1C1A12753A000F6CDC /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/SeafStartHeaderView.xib; sourceTree = "<group>"; };
@@ -846,6 +845,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				57F143931B886B96009C1BC8 /* CoreLocation.framework in Frameworks */,
 				57814AF81AA8B55000D1D5D8 /* Photos.framework in Frameworks */,
 				57ABE5FB187925B300145FE3 /* CoreText.framework in Frameworks */,
 				5725186217AE7D010078CD12 /* Security.framework in Frameworks */,
@@ -1434,6 +1434,7 @@
 		57DB827015A833FA00097CEC /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				57F143921B886B96009C1BC8 /* CoreLocation.framework */,
 				57814AF71AA8B55000D1D5D8 /* Photos.framework */,
 				57F0AAFC16D8913600364D18 /* AssetsLibrary.framework */,
 				57DB827715A833FA00097CEC /* CoreData.framework */,
@@ -1471,9 +1472,7 @@
 				57124BEA1B3EA6EA00075EAE /* LaunchScreen.png */,
 				57E228B61A0E403A00C92330 /* QBImagePickerController.bundle */,
 				57532C161868AA48003D564B /* Localizable.strings */,
-				57DB827B15A833FA00097CEC /* seafile-Info.plist */,
 				573C3C641A15104B009675F9 /* seafile.entitlements */,
-				571D8DBD1677897D00F1A22C /* seafile-appstore-Info.plist */,
 				57E228BC1A0E4FC400C92330 /* seafile-Prefix.pch */,
 				57DB827C15A833FA00097CEC /* InfoPlist.strings */,
 				57DB827F15A833FA00097CEC /* main.m */,
@@ -1858,7 +1857,6 @@
 				57A95E6118369E5A009D268A /* ellipsis2.png in Resources */,
 				57C03F4817FB271100F7B575 /* star2.png in Resources */,
 				576B99151861411700A16ED6 /* magnifier-ranged-lo@2x.png in Resources */,
-				57532C1C1868AA48003D564B /* seafile-Info.plist in Resources */,
 				57BFAAF018BD8EA200EB1B5C /* bt-bold.png in Resources */,
 				57BD932C174DD86D00F7732F /* index.html in Resources */,
 				57BD932F174DDA8700F7732F /* group.png in Resources */,

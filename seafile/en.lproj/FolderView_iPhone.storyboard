@@ -285,6 +285,33 @@
                                             </constraints>
                                         </tableViewCellContentView>
                                     </tableViewCell>
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="vBl-0m-7Oo">
+                                        <rect key="frame" x="0.0" y="289" width="320" height="44"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="vBl-0m-7Oo" id="lx7-jl-qiU">
+                                            <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <switch opaque="NO" tag="100" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="GiP-GK-ztk">
+                                                    <rect key="frame" x="258" y="6" width="51" height="31"/>
+                                                </switch>
+                                                <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Background Uploading" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="BvI-L7-dN7">
+                                                    <rect key="frame" x="8" y="11" width="185" height="21"/>
+                                                    <constraints>
+                                                        <constraint firstAttribute="width" constant="185" id="mlq-cG-o3o"/>
+                                                    </constraints>
+                                                    <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                            </subviews>
+                                            <constraints>
+                                                <constraint firstItem="BvI-L7-dN7" firstAttribute="leading" secondItem="lx7-jl-qiU" secondAttribute="leadingMargin" id="6Va-i1-ap9"/>
+                                                <constraint firstItem="GiP-GK-ztk" firstAttribute="centerY" secondItem="BvI-L7-dN7" secondAttribute="centerY" id="RdT-9m-7jQ"/>
+                                                <constraint firstAttribute="trailing" secondItem="GiP-GK-ztk" secondAttribute="trailing" constant="13" id="UBV-sn-j9F"/>
+                                                <constraint firstItem="GiP-GK-ztk" firstAttribute="centerY" secondItem="lx7-jl-qiU" secondAttribute="centerY" id="oSm-vL-o6R"/>
+                                            </constraints>
+                                        </tableViewCellContentView>
+                                    </tableViewCell>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="nQJ-Pj-FuA" detailTextLabel="YZ4-lx-5st" style="IBUITableViewCellStyleValue1" id="c9x-M1-SOm">
                                         <rect key="frame" x="0.0" y="333" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
@@ -468,6 +495,9 @@
                         <outlet property="autoCameraUploadLabel" destination="1af-Tn-HYe" id="nRa-JS-TLF"/>
                         <outlet property="autoSyncCell" destination="tQe-1X-cwE" id="xwk-z6-NFa"/>
                         <outlet property="autoSyncSwitch" destination="JZc-TU-fcn" id="NT3-J8-O1a"/>
+                        <outlet property="backgroundSyncCell" destination="vBl-0m-7Oo" id="hvl-dF-fqL"/>
+                        <outlet property="backgroundSyncLable" destination="BvI-L7-dN7" id="uhB-o2-7KF"/>
+                        <outlet property="backgroundSyncSwitch" destination="GiP-GK-ztk" id="32y-aC-7WO"/>
                         <outlet property="cacheCell" destination="h43-fm-QEc" id="9X7-z7-r69"/>
                         <outlet property="nameCell" destination="5xi-tG-aX7" id="ca7-Gk-LIC"/>
                         <outlet property="serverCell" destination="ggp-Jn-gkE" id="Xdv-ti-fV2"/>

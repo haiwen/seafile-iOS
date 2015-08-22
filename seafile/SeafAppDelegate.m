@@ -15,7 +15,7 @@
 #import "Utils.h"
 
 
-@interface SeafAppDelegate () <UITabBarControllerDelegate, UIAlertViewDelegate, PHPhotoLibraryChangeObserver>
+@interface SeafAppDelegate () <UITabBarControllerDelegate, UIAlertViewDelegate, PHPhotoLibraryChangeObserver, CLLocationManagerDelegate>
 
 @property UIBackgroundTaskIdentifier bgTask;
 
@@ -30,6 +30,8 @@
 @property (strong, nonatomic) dispatch_block_t expirationHandler;
 @property BOOL background;
 @property (strong) NSMutableArray *monitors;
+@property (readwrite) CLLocationManager *locationManager;
+
 @end
 
 @implementation SeafAppDelegate
@@ -107,6 +109,7 @@
          [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
     else
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(checkPhotoChanges:) name:ALAssetsLibraryChangedNotification object:SeafGlobal.sharedObject.assetsLibrary];
+    [self checkBackgroundUploadStatus];
     [SeafGlobal.sharedObject synchronize];
 }
 
@@ -144,6 +147,10 @@
     } else
         [[UIApplication sharedApplication] registerForRemoteNotificationTypes:UIRemoteNotificationTypeBadge|UIRemoteNotificationTypeAlert|UIRemoteNotificationTypeSound];
 
+    NSDictionary *locationOptions = [launchOptions objectForKey:UIApplicationLaunchOptionsLocationKey];
+    if (locationOptions) {
+        Debug("Location: %@", locationOptions);
+    }
     NSDictionary *dict = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
     if (dict) {
         [self application:application didReceiveRemoteNotification:dict];
@@ -158,7 +165,7 @@
         [weakSelf startBackgroundTask];
     };
 
-    [self performSelector:@selector(delayedInit) withObject:nil afterDelay:2.0];
+    [self performSelector:@selector(delayedInit) withObject:nil afterDelay:1.0];
     return YES;
 }
 
@@ -482,6 +489,48 @@
         [actionSheet showFromBarButtonItem:item animated:YES];
     else
         [actionSheet showInView:[UIApplication sharedApplication].keyWindow];
+}
+
+#pragma mark - CLLocationManagerDelegate
+- (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations
+{
+    Debug("Location updated: %@", locations);
+}
+
+- (void)startSignificantChangeUpdates
+{
+    Debug("_locationManager=%@", _locationManager);
+    if (nil == _locationManager) {
+        Debug("START");
+        _locationManager = [[CLLocationManager alloc] init];
+        _locationManager.delegate = self;
+        [_locationManager startMonitoringSignificantLocationChanges];
+    }
+}
+- (void)stopSignificantChangeUpdates
+{
+    if (_locationManager) {
+        Debug("STOP");
+        [_locationManager stopMonitoringSignificantLocationChanges];
+        _locationManager = nil;
+    }
+}
+
+- (void)checkBackgroundUploadStatus
+{
+    BOOL needLocationService = false;
+    for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+        if (conn.autoSync && conn.backgroundSync && conn.autoSyncRepo.length > 0) {
+            Debug("account %@ %@ (%d %d %@) need location service", conn.address, conn.username, conn.autoSync, conn.backgroundSync, conn.autoSyncRepo);
+            needLocationService = true;
+        }
+    }
+    Debug("needLocationService: %d", needLocationService);
+    if (needLocationService) {
+        [self startSignificantChangeUpdates];
+    } else {
+        [self stopSignificantChangeUpdates];
+    }
 }
 
 @end

@@ -8,6 +8,7 @@
 
 #import <UIKit/UIKit.h>
 #import <MessageUI/MFMailComposeViewController.h>
+#import <CoreLocation/CoreLocation.h>
 
 #import "SeafConnection.h"
 #import "StartViewController.h"
@@ -73,6 +74,10 @@ enum {
 
 - (void)addBackgroundMonitor:(id<SeafBackgroundMonitor>)monitor;
 - (void)continueWithInvalidCert:(NSURLProtectionSpace *)protectionSpace yes:(void (^)())yes no:(void (^)())no;
+
+- (void)startSignificantChangeUpdates;
+- (void)stopSignificantChangeUpdates;
+- (void)checkBackgroundUploadStatus;
 
 + (void)showActionSheet:(UIActionSheet *)sheet fromBarButtonItem:(UIBarButtonItem *)item;
 
