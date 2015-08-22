@@ -96,7 +96,6 @@
     NSString *version = [infoDictionary objectForKey:@"CFBundleVersion"];
     Debug("Current app version is %@\n%@\n", version, infoDictionary);
     [SeafGlobal.sharedObject setObject:version forKey:@"VERSION"];
-    [SeafGlobal.sharedObject synchronize];
     [SeafGlobal.sharedObject startTimer];
     [Utils clearAllFiles:SeafGlobal.sharedObject.tempDir];
 
@@ -108,6 +107,7 @@
          [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
     else
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(checkPhotoChanges:) name:ALAssetsLibraryChangedNotification object:SeafGlobal.sharedObject.assetsLibrary];
+    [SeafGlobal.sharedObject synchronize];
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions

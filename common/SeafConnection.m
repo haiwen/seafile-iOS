@@ -65,7 +65,7 @@ static AFSecurityPolicy *SeafPolicyFromCert(SecCertificateRef cert)
 static AFSecurityPolicy *SeafPolicyFromFile(NSString *path)
 {
     if (![[NSFileManager defaultManager] fileExistsAtPath:path]) {
-        Warning("cert file %@ not exist", path);
+        Debug("cert file %@ not exist", path);
         return nil;
     }
     NSData *certData = [NSData dataWithContentsOfFile:path];

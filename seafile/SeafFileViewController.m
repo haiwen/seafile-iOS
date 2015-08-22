@@ -341,7 +341,7 @@ enum {
 
 - (void)editSheet:(id)sender
 {
-    NSArray *titles = [NSArray arrayWithObjects:S_NEWFILE, S_MKDIR, S_EDIT, S_SORT_NAME, S_SORT_MTIME, nil];
+    NSArray *titles = [NSArray arrayWithObjects:S_DOWNLOAD, S_PHOTOS_ALBUM, S_EDIT, S_NEWFILE, S_MKDIR, S_SORT_NAME, S_SORT_MTIME, nil];
     [self showAlertWithAction:titles fromBarItem:self.editItem withTitle:nil];
 }
 
@@ -544,7 +544,7 @@ enum {
           return;
 
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
-    [self showAlertWithAction:[NSArray arrayWithObjects:S_DELETE, S_DOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
+    [self showAlertWithAction:[NSArray arrayWithObjects:S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
 }
 
 - (void)showEditRepoMenu:(UILongPressGestureRecognizer *)gestureRecognizer
@@ -1126,6 +1126,29 @@ enum {
     [_connection performSelectorInBackground:@selector(downloadDir:) withObject:dir];
 }
 
+- (void)savePhotosToAlbum
+{
+    for (id entry in _directory.allItems) {
+        if (![entry isKindOfClass:[SeafFile class]]) continue;
+        SeafFile *file = (SeafFile *)entry;
+        if (!file.isImageFile) continue;
+        NSString *path = file.cachePath;
+        if (!path) continue;
+        Debug("Save file %@ %@ to album", file.name, path);
+        UIImage *img = [UIImage imageWithContentsOfFile:path];
+        UIImageWriteToSavedPhotosAlbum(img, self, @selector(thisImage:hasBeenSavedInPhotoAlbumWithError:usingContextInfo:), (void *)CFBridgingRetain(file));
+    }
+    [SVProgressHUD showSuccessWithStatus:S_PHOTOS_ALBUM];
+}
+
+- (void)thisImage:(UIImage *)image hasBeenSavedInPhotoAlbumWithError:(NSError *)error usingContextInfo:(void *)ctxInfo
+{
+    if (error) {
+        SeafFile *file = (__bridge SeafFile *)ctxInfo;
+        [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Failed to save %@ to album", @"Seafile"), file.name]];
+    }
+}
+
 - (void)renameFile:(SeafFile *)file
 {
     _curEntry = file;
@@ -1146,6 +1169,10 @@ enum {
         [self popupCreateView];
     } else if ([S_MKDIR isEqualToString:title]) {
         [self popupMkdirView];
+    } else if ([S_DOWNLOAD isEqualToString:title]) {
+        [self downloadDir:_directory];
+    } else if ([S_PHOTOS_ALBUM isEqualToString:title]) {
+        [self savePhotosToAlbum];
     } else if ([S_EDIT isEqualToString:title]) {
         [self editStart:nil];
     } else if ([S_DELETE isEqualToString:title]) {
@@ -1159,10 +1186,6 @@ enum {
             [self deleteFile:(SeafFile*)entry];
         else if ([entry isKindOfClass:[SeafDir class]])
             [self deleteDir: (SeafDir*)entry];
-    } else if ([S_DOWNLOAD isEqualToString:title]) {
-        SeafDir *dir = (SeafDir *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-        if ([dir isKindOfClass:[SeafDir class]])
-            [self downloadDir:dir];
     } else if ([S_REDOWNLOAD isEqualToString:title]) {
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [self redownloadFile:file];

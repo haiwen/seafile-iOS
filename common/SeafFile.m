@@ -645,9 +645,16 @@
 
 - (NSString *)strContent
 {
+    return [Utils stringContent:self.cachePath];
+}
+
+- (NSString *)cachePath
+{
     if (self.mpath)
-        return [Utils stringContent:self.mpath];
-    return [Utils stringContent:[SeafGlobal.sharedObject documentPath:self.ooid]];
+        return self.mpath;
+    if (self.ooid)
+        return [SeafGlobal.sharedObject documentPath:self.ooid];
+    return nil;
 }
 
 - (void)autoupload

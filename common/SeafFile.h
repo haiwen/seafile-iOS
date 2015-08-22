@@ -49,4 +49,5 @@
 - (BOOL)itemChangedAtURL:(NSURL *)url;
 - (NSDictionary *)toDict;
 
+- (NSString *)cachePath;
 @end
