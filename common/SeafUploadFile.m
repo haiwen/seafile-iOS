@@ -154,21 +154,25 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         [self finishUpload:NO oid:nil];
     }
     NSProgress *progress = nil;
+    connection.sessionMgr.responseSerializer = [AFJSONResponseSerializer serializerWithReadingOptions:NSJSONReadingAllowFragments];
     _task = [connection.sessionMgr uploadTaskWithStreamedRequest:request progress:&progress completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
         NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
         if (error && resp.statusCode == 200) {
-            // TODO This a bug in seafile http server: Request failed: unacceptable content-type: (null)
-            NSData *data = [error.userInfo objectForKey:@"com.alamofire.serialization.response.error.data"];
-            responseObject = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+            Debug("Error:%@, %@, %@", error, response, error.userInfo);
             error = nil;
         }
         if (error) {
             Debug("Upload failed :%@,code=%ldd, res=%@\n", error, (long)resp.statusCode, responseObject);
             [self finishUpload:NO oid:nil];
         } else {
-            NSString *oid = responseObject;
+            NSString *oid = nil;
+            if ([responseObject isKindOfClass:[NSArray class]]) {
+                oid = [[responseObject objectAtIndex:0] objectForKey:@"id"];
+            } else if ([responseObject isKindOfClass:[NSDictionary class]]) {
+                oid = [responseObject objectForKey:@"id"];
+            }
             if (!oid || oid.length < 1) oid = [[NSUUID UUID] UUIDString];
-            Debug("Successfully upload file:%@ autosync:%d oid=%@", self.name, _autoSync, oid);
+            Debug("Successfully upload file:%@ autosync:%d oid=%@, responseObject=%@", self.name, _autoSync, oid, responseObject);
             if (!_autoSync)
                 [[NSFileManager defaultManager] linkItemAtPath:self.lpath toPath:[SeafGlobal.sharedObject documentPath:oid] error:nil];
             [self finishUpload:YES oid:oid];
@@ -182,6 +186,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
                   context:NULL];
     [_task resume];
 }
+
 - (void)uploadByFile:(SeafConnection *)connection url:(NSString *)surl path:(NSString *)uploadpath update:(BOOL)update
 {
     NSMutableURLRequest *request = [[SeafConnection requestSerializer] multipartFormRequestWithMethod:@"POST" URLString:surl parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
@@ -281,6 +286,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
                  [self finishUpload:NO oid:nil];
              }
          } else {
+             url = [url stringByAppendingString:@"?ret-json=true"];
              [self uploadByFile:connection url:url path:uploadpath update:self.update];
          }
      }
