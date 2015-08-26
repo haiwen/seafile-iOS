@@ -539,6 +539,8 @@
 		57535238198D6241000BE07B /* SeafPhotoView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafPhotoView.m; sourceTree = "<group>"; };
 		5757DCCA1AEBCF1600BC0426 /* SeafShibbolethViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafShibbolethViewController.h; sourceTree = "<group>"; };
 		5757DCCB1AEBCF1600BC0426 /* SeafShibbolethViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafShibbolethViewController.m; sourceTree = "<group>"; };
+		57642A361B8E057000C32B92 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
+		57642A371B8E062800C32B92 /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		5764C829163BF91B006AD511 /* SeafSettingsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafSettingsViewController.h; sourceTree = "<group>"; };
 		5764C82A163BF91B006AD511 /* SeafSettingsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafSettingsViewController.m; sourceTree = "<group>"; };
 		5764C834163C3E83006AD511 /* tab-settings.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-settings.png"; sourceTree = "<group>"; };
@@ -1678,6 +1680,8 @@
 				is,
 				cs,
 				nb,
+				es,
+				"pt-BR",
 			);
 			mainGroup = 57DB826215A833F900097CEC;
 			productRefGroup = 57DB826E15A833FA00097CEC /* Products */;
@@ -2159,6 +2163,8 @@
 				571B845C1A5AF14200E92BF7 /* is */,
 				57E2FEA21ABD544900BCD7F5 /* cs */,
 				57AE2ECD1B45663E003F1672 /* nb */,
+				57642A361B8E057000C32B92 /* es */,
+				57642A371B8E062800C32B92 /* pt-BR */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
