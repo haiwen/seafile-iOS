@@ -146,7 +146,7 @@
         return;
     }
     NSString *request_str = [NSString stringWithFormat:API_URL"/repos/%@/?op=setpassword", self.repoId];
-    NSString *formString = [NSString stringWithFormat:@"password=%@", password];
+    NSString *formString = [NSString stringWithFormat:@"password=%@", password.escapedPostForm];
     [connection sendPost:request_str form:formString
                  success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
                      Debug("Set repo %@ password success.", self.repoId);
