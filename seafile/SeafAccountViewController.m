@@ -202,7 +202,7 @@
     if (self.connection) {
         serverTextField.text = connection.address;
         usernameTextField.text = connection.username;
-        passwordTextField.text = connection.password;
+        passwordTextField.text = nil;
         serverTextField.enabled = false;
         usernameTextField.enabled = false;
     }
