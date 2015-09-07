@@ -109,6 +109,8 @@ enum CAMERA_CELL{
 
 - (void)setAutoSync:(BOOL)autoSync
 {
+    if (_connection.autoSync == autoSync)
+        return;
     _connection.autoSync = autoSync;
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [appdelegate checkBackgroundUploadStatus];
@@ -139,7 +141,7 @@ enum CAMERA_CELL{
          Enumerating assets or groups of assets in the library will present a consent dialog to the user.
          */
         [assetLibrary enumerateGroupsWithTypes:ALAssetsGroupAll usingBlock:^(ALAssetsGroup *group, BOOL *stop) {
-            self.autoSync =  _autoSyncSwitch.on;
+            self.autoSync = _autoSyncSwitch.on;
             *stop = true;
         } failureBlock:^(NSError *error) {
             _autoSyncSwitch.on = false;
@@ -162,7 +164,7 @@ enum CAMERA_CELL{
         _syncRepoCell.detailTextLabel.text = @"";
         [self.tableView reloadData];
         _connection.autoSyncRepo = nil;
-        [_connection checkAutoSync];
+        [_connection performSelectorInBackground:@selector(checkAutoSync) withObject:nil];
     }
 }
 
@@ -486,7 +488,7 @@ enum CAMERA_CELL{
 {
     _connection.autoSyncRepo = repo.repoId;
     _syncRepoCell.detailTextLabel.text = repo.name;
-    [_connection checkAutoSync];
+    [_connection performSelectorInBackground:@selector(checkAutoSync) withObject:nil];
     [self.tableView reloadData];
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [appdelegate checkBackgroundUploadStatus];

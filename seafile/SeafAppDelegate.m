@@ -95,7 +95,7 @@
 - (void)delayedInit
 {
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
-    NSString *version = [infoDictionary objectForKey:@"CFBundleVersion"];
+    NSString *version = [infoDictionary objectForKey:@"CFBundleShortVersionString"];
     Debug("Current app version is %@\n%@\n", version, infoDictionary);
     [SeafGlobal.sharedObject setObject:version forKey:@"VERSION"];
     [SeafGlobal.sharedObject startTimer];
@@ -165,7 +165,7 @@
         [weakSelf startBackgroundTask];
     };
 
-    [self performSelector:@selector(delayedInit) withObject:nil afterDelay:1.0];
+    [self performSelectorInBackground:@selector(delayedInit) withObject:nil];
     return YES;
 }
 
