@@ -217,7 +217,7 @@ enum CAMERA_CELL{
     [super viewDidLoad];
     _nameCell.textLabel.text = NSLocalizedString(@"Username", @"Seafile");
     _usedspaceCell.textLabel.text = NSLocalizedString(@"Space Used", @"Seafile");
-    _autoCameraUploadLabel.text = NSLocalizedString(@"Auto Camera Upload", @"Seafile");
+    _autoCameraUploadLabel.text = NSLocalizedString(@"Auto Upload", @"Seafile");
     _videoSyncLabel.text = NSLocalizedString(@"Upload Videos", @"Seafile");
     _wifiOnlyLabel.text = NSLocalizedString(@"Wifi Only", @"Seafile");
     _backgroundSyncLable.text = NSLocalizedString(@"Background Upload", @"Seafile");
@@ -382,7 +382,7 @@ enum CAMERA_CELL{
 {
     NSString *sectionNames[] = {
         NSLocalizedString(@"Account Info", @"Seafile"),
-        NSLocalizedString(@"Auto Camera Upload", @"Seafile"),
+        NSLocalizedString(@"Camera Upload", @"Seafile"),
         NSLocalizedString(@"Cache", @"Seafile"),
         NSLocalizedString(@"About", @"Seafile"),
         @"",
