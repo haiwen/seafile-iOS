@@ -256,7 +256,6 @@ enum TOOL_ITEM {
     view.delegate = self;
     [self.view addSubview:view];
     self.egoTextView = view;
-    [view becomeFirstResponder];
     UIBarButtonItem *cancelItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancel)];
     self.navigationItem.rightBarButtonItem = cancelItem;
 
@@ -377,7 +376,7 @@ enum TOOL_ITEM {
         [self.webView loadRequest:request];
     }
     self.navigationItem.leftBarButtonItems = litems;
-    [self.egoTextView becomeFirstResponder];
+    self.egoTextView.selectedRange = (NSRange) {0, 0};
 }
 
 - (void)prepareSeaf
