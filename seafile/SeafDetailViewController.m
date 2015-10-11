@@ -241,7 +241,7 @@ enum SHARE_STATUS {
     self.masterVc = c;
     self.photos = items;
     self.state = PREVIEW_PHOTO;
-    Debug("Preview photos PREVIEW_PHOTO: %d", self.state);
+    Debug("Preview photos PREVIEW_PHOTO: %d, %@ hasCache:%d", self.state, [item name], [item hasCache]);
     self.preViewItem = item;
     self.currentPageIndex = [items indexOfObject:item];
     [self.view addSubview:self.pagingScrollView];

@@ -959,7 +959,7 @@ enum {
     }
 
     NSCAssert([entry isKindOfClass:[SeafDir class]], @"entry must be SeafDir");
-    Debug("state=%d %@,%@, %@\n", self.state, entry.path, entry.repoId, _directory.path);
+    Debug("state=%d %@,%@, %@\n", self.state, entry.path, entry.name, _directory.path);
     if (entry == _directory) {
         [self doneLoadingTableViewData];
         switch (self.state) {

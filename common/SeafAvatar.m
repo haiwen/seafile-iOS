@@ -53,7 +53,7 @@ static NSMutableDictionary *avatarAttrs = nil;
 
 + (void)clearCache
 {
-    [Utils clearAllFiles:[SeafGlobal.sharedObject.avatarsDir stringByAppendingPathComponent:@"avatars.plist"]];
+    [[NSFileManager defaultManager] removeItemAtPath:[SeafGlobal.sharedObject.avatarsDir stringByAppendingPathComponent:@"avatars.plist"] error:nil];
     avatarAttrs = [[NSMutableDictionary alloc] init];
 }
 

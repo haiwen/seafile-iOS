@@ -119,9 +119,9 @@
 
 - (void)loadContent:(BOOL)force;
 {
-    [self loadCache];
+    BOOL hasCache = [self loadCache];
     @synchronized (self) {
-        if (self.state == SEAF_DENTRY_UPTODATE && !force) {
+        if (hasCache && !force) {
             [_delegate entry:self updated:NO progress:0];
             return;
         }

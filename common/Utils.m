@@ -56,7 +56,7 @@
     NSError *error;
     NSArray *dirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:path error:&error];
     if (!dirContents) {
-        Warning("unable to get the contents of temporary directory\n");
+        Warning("unable to get the contents of directory: %@, error: %@", path, error);
         return;
     }
 

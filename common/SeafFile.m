@@ -192,8 +192,9 @@
                  Debug("download %@, error=%@, %ld", self.name, [error localizedDescription], (long)((NSHTTPURLResponse *)response).statusCode);
                  [self failedDownload:error];
              } else {
-                 Debug("Successfully downloaded file:%@, %@ %@", self.name, downloadRequest.URL, self.downloadingFileOid);
+                 Debug("Successfully downloaded file:%@, %@ oid=%@", self.name, downloadRequest.URL, self.downloadingFileOid);
                  if (![filePath.path isEqualToString:target]) {
+                     Debug("target=%@, filePath=%@", target, filePath.path);
                      [[NSFileManager defaultManager] removeItemAtPath:target error:nil];
                      [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
                  }
@@ -406,6 +407,8 @@
     if (self.ooid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject documentPath:self.ooid]])
         return YES;
     self.ooid = nil;
+    _preViewURL = nil;
+    _exportURL = nil;
     return NO;
 }
 
@@ -458,26 +461,45 @@
 
 - (BOOL)realLoadCache
 {
-    if (self.oid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject documentPath:self.oid]]) {
-        [self setOoid:self.oid];
-    }
+    BOOL changed = false;
     DownloadedFile *dfile = [self loadCacheObj];
-    if (!dfile)
-        return (!self.ooid);
-    if (!self.oid)
-        self.oid = dfile.oid;
-    NSString *did = self.oid;
-
-    if (dfile && dfile.mpath && [[NSFileManager defaultManager] fileExistsAtPath:dfile.mpath]) {
-        _mpath = dfile.mpath;
-        _preViewURL = nil;
-        _exportURL = nil;
+    if (!dfile) {
+        if (self.oid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject documentPath:self.oid]]) {
+            if (![self.oid isEqualToString:self.ooid])
+            [self setOoid:self.oid];
+        }
+        return [self hasCache];
     }
+
+    if (dfile.mpath && [[NSFileManager defaultManager] fileExistsAtPath:dfile.mpath]) {
+        if (!_mpath || ![_mpath isEqualToString:dfile.mpath]) {
+            _mpath = dfile.mpath;
+            _preViewURL = nil;
+            _exportURL = nil;
+        } else
+            _mpath = nil;
+    }
+    if (dfile.oid) {
+        if (![[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject documentPath:dfile.oid]]) {
+            dfile.oid = nil;
+            changed = true;
+        } else if (!self.ooid || ![self.ooid isEqualToString:dfile.oid])
+            [self setOoid:dfile.oid];
+    }
+
+    if (self.oid && ![self.oid isEqualToString:self.ooid] && [[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject documentPath:self.oid]]) {
+        [self setOoid:self.oid];
+        dfile.oid = self.oid;
+        changed = true;
+    }
+    if (self.ooid && ![[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject documentPath:self.ooid]]) {
+        [self setOoid:nil];
+    }
+    if (changed)
+        [[SeafGlobal sharedObject] saveContext];
+
     if (self.mpath)
         [self autoupload];
-
-    if (!self.ooid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject documentPath:did]])
-        [self setOoid:did];
 
     if (!self.mpath && !self.ooid)
         return NO;
@@ -529,7 +551,7 @@
         return _exportURL;
     }
 
-    if (!self.ooid)
+    if (![self hasCache])
         return nil;
     @synchronized (self) {
         NSString *tempDir = [SeafGlobal.sharedObject.tempDir stringByAppendingPathComponent:self.ooid];
@@ -688,7 +710,7 @@
 
     BOOL ret = [content writeToFile:newpath atomically:YES encoding:NSUTF8StringEncoding error:&error];
     if (ret) {
-        self.mpath = newpath;
+        [self setMpath:newpath];
         [self autoupload];
     }
     return ret;
