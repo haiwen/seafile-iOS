@@ -92,12 +92,14 @@
     // Called after the last claim to the file has been released. At this point, it is safe for the file provider to remove the content file.
     // Care should be taken that the corresponding placeholder file stays behind after the content file has been deleted.
     
-    [self.fileCoordinator coordinateWritingItemAtURL:url options:NSFileCoordinatorWritingForDeleting error:NULL byAccessor:^(NSURL *newURL) {
-        [[NSFileManager defaultManager] removeItemAtURL:newURL error:NULL];
+    [self.fileCoordinator coordinateWritingItemAtURL:url options:NSFileCoordinatorWritingForDeleting error:nil byAccessor:^(NSURL *newURL) {
+        [[NSFileManager defaultManager] removeItemAtURL:newURL error:nil];
         [SeafGlobal.sharedObject removeObjectForKey:newURL.path];
         [SeafGlobal.sharedObject synchronize];
     }];
-    [self providePlaceholderAtURL:url completionHandler:NULL];
+    [self providePlaceholderAtURL:url completionHandler:^(NSError *error){
+        Debug("url=%@, error=%@", url, error);
+    }];
 }
 
 @end

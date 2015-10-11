@@ -44,7 +44,6 @@
 
 
 @interface SeafBase ()
-@property BOOL cacheLoaded;
 @end
 
 @implementation SeafBase
@@ -52,7 +51,6 @@
 @synthesize delegate = _delegate;
 @synthesize ooid = _ooid;
 @synthesize state;
-@synthesize cacheLoaded;
 
 
 - (id)initWithConnection:(SeafConnection *)aConnection
@@ -71,7 +69,6 @@
         _mime = aMime;
         _ooid = nil;
         _shareLink = nil;
-        self.cacheLoaded = NO;
         self.state = SEAF_DENTRY_INIT;
     }
     return self;
@@ -110,14 +107,10 @@
 
 - (BOOL)loadCache
 {
-    @synchronized (self) {
-        if (self.cacheLoaded) {
-            [_delegate entry:self updated:YES progress:100];
-            return YES;
-        }
-        self.cacheLoaded = YES;
+    if (!self.hasCache) {
+        return [self realLoadCache];
     }
-    return [self realLoadCache];
+    return false;
 }
 
 - (void)clearCache

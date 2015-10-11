@@ -46,7 +46,7 @@
 	<key>CFBundleIcons~ipad</key>
 	<dict/>
 	<key>CFBundleIdentifier</key>
-	<string>com.seafile.seafilePro</string>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -63,6 +63,12 @@
 	<true/>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>Seafile can periodically start Camera Upload when your location changes</string>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+      <!--Include to allow all connections (DANGER)-->
+      <key>NSAllowsArbitraryLoads</key>
+      <true/>
+    </dict>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>

@@ -66,7 +66,7 @@ enum {
         [self.navigationController popToRootViewControllerAnimated:NO];
     self.state = ACTIVITY_INIT;
     self.webview.delegate = nil;
-    [self.webview loadHTMLString:nil baseURL:nil];
+    [self.webview loadHTMLString:@"" baseURL:nil];
     _connection = connection;
     _url = [_connection.address stringByAppendingString:API_URL"/html/events/"];
 }

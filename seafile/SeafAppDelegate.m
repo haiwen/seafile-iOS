@@ -63,8 +63,10 @@
             self.actvityVC.connection = conn;
         }
     }
+#if !(TARGET_IPHONE_SIMULATOR)
     if (self.deviceToken)
         [conn registerDevice:self.deviceToken];
+#endif
 }
 
 - (BOOL)application:(UIApplication*)application handleOpenURL:(NSURL*)url
@@ -76,7 +78,7 @@
         if (self.window.rootViewController == self.startNav)
             if (![self.startVC selectDefaultAccount])
                 return NO;
-        ;
+
         [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
         SeafUploadFile *file = [SeafGlobal.sharedObject.connection getUploadfile:to.path];
         [self.fileVC uploadFile:file];
@@ -141,11 +143,13 @@
 
     [Utils checkMakeDir:SeafGlobal.sharedObject.tempDir];
 
+#if !(TARGET_IPHONE_SIMULATOR)
     if (ios8) {
         [[UIApplication sharedApplication] registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:(UIUserNotificationTypeSound | UIUserNotificationTypeAlert | UIUserNotificationTypeBadge) categories:nil]];
         [[UIApplication sharedApplication] registerForRemoteNotifications];
     } else
         [[UIApplication sharedApplication] registerForRemoteNotificationTypes:UIRemoteNotificationTypeBadge|UIRemoteNotificationTypeAlert|UIRemoteNotificationTypeSound];
+#endif
 
     NSDictionary *locationOptions = [launchOptions objectForKey:UIApplicationLaunchOptionsLocationKey];
     if (locationOptions) {
@@ -389,7 +393,7 @@
 
 - (MFMailComposeViewController *)globalMailComposer
 {
-    if (_globalMailComposer == nil);
+    if (_globalMailComposer == nil)
         [self cycleTheGlobalMailComposer];
     return _globalMailComposer;
 }

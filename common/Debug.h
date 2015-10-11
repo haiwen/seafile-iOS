@@ -35,6 +35,7 @@ static inline NSString *actionSheetCancelTitle()
 
 #define ios7 ([[[UIDevice currentDevice] systemVersion] floatValue] >= 7)
 #define ios8 ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8)
+#define ios9 ([[[UIDevice currentDevice] systemVersion] floatValue] >= 9)
 
 
 #define BAR_COLOR     [UIColor colorWithRed:240.0/256 green:128.0/256 blue:48.0/256 alpha:1.0]

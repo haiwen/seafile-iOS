@@ -59,7 +59,6 @@ static AFSecurityPolicy *SeafPolicyFromCert(SecCertificateRef cert)
     SecTrustRef clientTrust = AFUTTrustWithCertificate(cert);
     NSArray * certificates = AFCertificateTrustChainForServerTrust(clientTrust);
     [policy setPinnedCertificates:certificates];
-    [policy setValidatesCertificateChain:NO];
     return policy;
 }
 static AFSecurityPolicy *SeafPolicyFromFile(NSString *path)
@@ -324,6 +323,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
     AFHTTPSessionManager *manager = [[AFHTTPSessionManager alloc] initWithSessionConfiguration:configuration];
     [manager setSessionDidReceiveAuthenticationChallengeBlock:^NSURLSessionAuthChallengeDisposition(NSURLSession *session, NSURLAuthenticationChallenge *challenge, NSURLCredential *__autoreleasing *credential) {
+        *credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
         if (SeafGlobal.sharedObject.allowInvalidCert) return NSURLSessionAuthChallengeUseCredential;
 
         if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
@@ -513,7 +513,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSURLSessionDataTask *task = [_sessionMgr dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
         NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
         if (error) {
-            Warning("Error: %@, token=%@, resp=%@, delegate=%@", error, _token, responseObject, self.delegate);
+            Warning("Error: %@, token=%@, resp=%@, delegate=%@, url=%@", error, _token, responseObject, self.delegate, url);
             failure (request, resp, responseObject, error);
             if (resp.statusCode == HTTP_ERR_UNAUTHORIZED) {
                 @synchronized(self) {

@@ -130,10 +130,9 @@ enum {
         self.loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
         self.loadingView.color = [UIColor darkTextColor];
         self.loadingView.hidesWhenStopped = YES;
-        [self.tableView addSubview:self.loadingView];
+        [self.view addSubview:self.loadingView];
     }
     self.loadingView.center = self.view.center;
-    self.loadingView.frame = CGRectMake(self.loadingView.frame.origin.x, (self.view.frame.size.height-self.loadingView.frame.size.height)/2, self.loadingView.frame.size.width, self.loadingView.frame.size.height);
     [self.loadingView startAnimating];
 }
 
@@ -235,6 +234,7 @@ enum {
             [self noneSelected:NO];
     }
     if (!_directory.hasCache) {
+        Debug("no cache, load from server.");
         [self showLodingView];
         self.state = STATE_LOADING;
     }
@@ -376,12 +376,20 @@ enum {
     _directory = directory;
     self.title = directory.name;
     [_directory loadContent:NO];
-    Debug("%@, %@, loading ... %d %@\n", _directory.repoId, _directory.path, _directory.hasCache, _directory.ooid);
+    Debug("%@, %@, %@, loading ... %d %@\n", _directory.repoId, _directory.name, _directory.path, _directory.hasCache, _directory.ooid);
     if (![_directory isKindOfClass:[SeafRepos class]])
         self.tableView.sectionHeaderHeight = 0;
     [_connection checkSyncDst:_directory];
+
     [self refreshView];
     [_directory setDelegate:self];
+}
+
+- (void)viewWillLayoutSubviews {
+    [super viewWillLayoutSubviews];
+    CGRect viewBounds = self.view.bounds;
+    if (self.loadingView.isAnimating)
+        self.loadingView.center = CGPointMake(CGRectGetMidX(viewBounds), CGRectGetMidY(viewBounds));
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -930,6 +938,7 @@ enum {
         if (self.state == STATE_DELETE && !IsIpad()) {
             [self.detailViewController goBack:nil];
         }
+
         if (updated)  [self refreshView];
         self.state = STATE_INIT;
     } else if ([entry isKindOfClass:[SeafFile class]]) {
