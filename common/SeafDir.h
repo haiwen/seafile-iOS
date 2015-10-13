@@ -24,6 +24,8 @@
 
 @property (readonly) BOOL editable;
 
+- (void)unload;
+
 - (void)loadedItems:(NSMutableArray *)items;
 - (void)mkdir:(NSString *)newDirName;
 - (void)mkdir:(NSString *)newDirName success:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir))failure;

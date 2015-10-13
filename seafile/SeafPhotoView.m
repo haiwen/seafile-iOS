@@ -93,16 +93,19 @@
     _photo = photo;
     UIImage *img = self.photo.image;
     if (img) {
-        [self displayImage];
+        [self displayImage: img];
     } else {
         // Will be loading so show loading
         [self showLoadingIndicator];
         [photo load:self.photoBrowser force:NO];
     }
 }
-
-// Get and display image
 - (void)displayImage
+{
+    [self displayImage:self.photo.image];
+}
+// Get and display image
+- (void)displayImage:(UIImage *)img
 {
     if (_photo && _photoImageView.image == nil) {
 
@@ -113,7 +116,6 @@
         self.contentSize = CGSizeMake(0, 0);
 
         // Get image from browser as it handles ordering of fetching
-        UIImage *img = self.photo.image;
         if (img) {
             // Hide indicator
             [self hideLoadingIndicator];

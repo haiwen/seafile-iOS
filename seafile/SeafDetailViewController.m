@@ -332,6 +332,13 @@ enum SHARE_STATUS {
     self.webView = nil;
 }
 
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    if (_visiblePages)
+        [self tilePagesWithRange:0 post:0];
+}
+
 - (void)viewWillLayoutSubviews
 {
     [super viewWillLayoutSubviews];
@@ -934,11 +941,16 @@ enum SHARE_STATUS {
 
 - (void)tilePages
 {
+    [self tilePagesWithRange:1 post:2];
+}
+
+- (void)tilePagesWithRange:(int)pre post:(int)post
+{
     // Calculate which pages should be visible
     // Ignore padding as paging bounces encroach on that
     // and lead to false page loads
-    NSInteger iFirstIndex = _currentPageIndex - 2;
-    NSInteger iLastIndex  = _currentPageIndex + 2;
+    NSInteger iFirstIndex = _currentPageIndex - pre;
+    NSInteger iLastIndex  = _currentPageIndex + post;
     long lastIndex = [self numberOfPhotos] - 1;
     iFirstIndex = MAX(iFirstIndex, 0);
     iFirstIndex = MIN(iFirstIndex, lastIndex);
@@ -972,7 +984,7 @@ enum SHARE_STATUS {
             [_visiblePages addObject:page];
             [self configurePage:page forIndex:index];
             [_pagingScrollView addSubview:page];
-            Debug("Added page at index %lu subviews=%ld", (unsigned long)index, (long)_pagingScrollView.subviews.count);
+            Debug("Added page at index %lu subviews count:%ld", (unsigned long)index, (long)_pagingScrollView.subviews.count);
         }
     }
 }
@@ -992,7 +1004,6 @@ enum SHARE_STATUS {
     _recycledPages = nil;
     self.state = PREVIEW_NONE;
 }
-
 
 - (void)layoutVisiblePages
 {
@@ -1100,7 +1111,7 @@ enum SHARE_STATUS {
     NSUInteger num = [self numberOfPhotos];
     for (NSUInteger i = index; i < num && i < index + 3; ++i) {
         id<SeafPreView> next = [self.photos objectAtIndex:i];
-        Debug("Preload photo: %@", next.name);
+        Debug("Preload photo: %@, cache:%d", next.name, [next hasCache]);
         if (![next hasCache]) {
             [next load:(self.masterVc ? self.masterVc:self) force:NO];
         }

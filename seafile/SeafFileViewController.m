@@ -242,11 +242,18 @@ enum {
 
 - (void)viewDidUnload
 {
-    [self setLoadingView:nil];
     [super viewDidUnload];
+    [self setLoadingView:nil];
     _refreshHeaderView = nil;
     _directory = nil;
     _curEntry = nil;
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    if (!self.isVisible)
+        [_directory unload];
 }
 
 - (void)selectAll:(id)sender

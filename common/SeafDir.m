@@ -61,6 +61,15 @@ static NSComparator CMP = ^(id obj1, id obj2) {
     return [[connection getRepo:self.repoId] editable];
 }
 
+- (void)unload
+{
+    self.ooid = nil;
+    _items = nil;
+    _allItems = nil;
+    _uploadItems = nil;
+    self.state = SEAF_DENTRY_INIT;
+}
+
 - (BOOL)handleData:(NSString *)oid data:(id)JSON
 {
     @synchronized(self) {

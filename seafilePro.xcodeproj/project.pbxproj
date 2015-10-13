@@ -248,9 +248,6 @@
 		57A1922E1A208FAD00985F77 /* FileMimeType.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229CA1A1108B200C92330 /* FileMimeType.m */; };
 		57A1922F1A208FBD00985F77 /* FileSizeFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229CD1A1108B200C92330 /* FileSizeFormatter.m */; };
 		57A192301A208FC700985F77 /* Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229D71A1108B200C92330 /* Utils.m */; };
-		57A340BB1AD26D9900E0C557 /* UIImage+fixOrientation.m in Sources */ = {isa = PBXBuildFile; fileRef = 57A340B91AD26D9900E0C557 /* UIImage+fixOrientation.m */; };
-		57A340BC1AD26D9900E0C557 /* UIImage+fixOrientation.m in Sources */ = {isa = PBXBuildFile; fileRef = 57A340B91AD26D9900E0C557 /* UIImage+fixOrientation.m */; };
-		57A340BD1AD26D9900E0C557 /* UIImage+fixOrientation.m in Sources */ = {isa = PBXBuildFile; fileRef = 57A340B91AD26D9900E0C557 /* UIImage+fixOrientation.m */; };
 		57A550DB177F23BB00E3BA9B /* refresh.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550D9177F23BB00E3BA9B /* refresh.png */; };
 		57A550DE177F283700E3BA9B /* addmsg.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550DC177F283700E3BA9B /* addmsg.png */; };
 		57A550E1177F2C4400E3BA9B /* export.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550DF177F2C4400E3BA9B /* export.png */; };
@@ -648,8 +645,6 @@
 		57A029A31A170147009C9D7B /* SeafProviderFileViewController.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = SeafProviderFileViewController.storyboard; sourceTree = "<group>"; };
 		57A055A51644EAD1006511AA /* tab-home.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-home.png"; sourceTree = "<group>"; };
 		57A055A81644EC84006511AA /* seafile-logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "seafile-logo.png"; sourceTree = "<group>"; };
-		57A340B91AD26D9900E0C557 /* UIImage+fixOrientation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIImage+fixOrientation.m"; path = "common/UIImage+fixOrientation.m"; sourceTree = SOURCE_ROOT; };
-		57A340BA1AD26D9900E0C557 /* UIImage+fixOrientation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIImage+fixOrientation.h"; path = "common/UIImage+fixOrientation.h"; sourceTree = SOURCE_ROOT; };
 		57A550D9177F23BB00E3BA9B /* refresh.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = refresh.png; sourceTree = "<group>"; };
 		57A550DC177F283700E3BA9B /* addmsg.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = addmsg.png; sourceTree = "<group>"; };
 		57A550DF177F2C4400E3BA9B /* export.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = export.png; sourceTree = "<group>"; };
@@ -1557,8 +1552,6 @@
 				57E229D31A1108B200C92330 /* SKFileTypeImageLoader.m */,
 				57E229D41A1108B200C92330 /* UIImage+FileType.h */,
 				57E229D51A1108B200C92330 /* UIImage+FileType.m */,
-				57A340BA1AD26D9900E0C557 /* UIImage+fixOrientation.h */,
-				57A340B91AD26D9900E0C557 /* UIImage+fixOrientation.m */,
 				57E229D61A1108B200C92330 /* Utils.h */,
 				57E229D71A1108B200C92330 /* Utils.m */,
 			);
@@ -1983,7 +1976,6 @@
 				5732065F18EB16F4003250DE /* UIButton+AFNetworking.m in Sources */,
 				57E229DE1A1108B200C92330 /* FileMimeType.m in Sources */,
 				571D8CD01677881400F1A22C /* SeafUploadingFileCell.m in Sources */,
-				57A340BB1AD26D9900E0C557 /* UIImage+fixOrientation.m in Sources */,
 				5732064518EB11CA003250DE /* AFNetworkReachabilityManager.m in Sources */,
 				571D8CD11677881400F1A22C /* SeafUploadDirViewController.m in Sources */,
 				571D8CD21677881400F1A22C /* SeafSettingsViewController.m in Sources */,
@@ -2050,7 +2042,6 @@
 				57A029B41A1701C5009C9D7B /* SeafDir.m in Sources */,
 				57A029B51A1701C5009C9D7B /* SeafFile.m in Sources */,
 				57A029B71A1701C5009C9D7B /* SeafRepos.m in Sources */,
-				57A340BC1AD26D9900E0C557 /* UIImage+fixOrientation.m in Sources */,
 				57A029B81A1701C5009C9D7B /* SeafStarredFile.m in Sources */,
 				57A029B91A1701C5009C9D7B /* SeafUploadFile.m in Sources */,
 				57F143901B8859C4009C1BC8 /* SeafJSONResponseSerializer.m in Sources */,
@@ -2081,7 +2072,6 @@
 				57A192231A208F7E00985F77 /* AFHTTPRequestOperation.m in Sources */,
 				57A192241A208F7E00985F77 /* AFHTTPRequestOperationManager.m in Sources */,
 				57A192251A208F7E00985F77 /* AFHTTPSessionManager.m in Sources */,
-				57A340BD1AD26D9900E0C557 /* UIImage+fixOrientation.m in Sources */,
 				57A192261A208F7E00985F77 /* AFNetworkReachabilityManager.m in Sources */,
 				57A192271A208F7E00985F77 /* AFSecurityPolicy.m in Sources */,
 				57A192281A208F7E00985F77 /* AFURLConnectionOperation.m in Sources */,
@@ -2381,7 +2371,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				INFOPLIST_FILE = SeafProviderFileProvider/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";
@@ -2408,7 +2398,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				INFOPLIST_FILE = SeafProviderFileProvider/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";

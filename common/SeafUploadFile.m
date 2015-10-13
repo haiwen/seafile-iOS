@@ -319,8 +319,11 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 - (void)checkAsset
 {
+    NSMutableDictionary *dict = [SeafUploadFile uploadFileAttrs];
     if (_asset) {
-        [Utils writeDataToPath:self.lpath andAsset:self.asset];
+        @synchronized(dict) {
+            [Utils writeDataToPath:self.lpath andAsset:self.asset];
+        }
         _filesize = [Utils fileSizeAtPath1:self.lpath];
         _asset = nil;
     }
@@ -382,7 +385,6 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 - (NSString *)strContent
 {
-    [self checkAsset];
     return [Utils stringContent:self.lpath];
 }
 
@@ -399,12 +401,13 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 + (NSMutableDictionary *)uploadFileAttrs
 {
-    if (uploadFileAttrs == nil) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
         NSString *attrsFile = [[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploadfiles.plist"];
         uploadFileAttrs = [[NSMutableDictionary alloc] initWithContentsOfFile:attrsFile];
         if (!uploadFileAttrs)
             uploadFileAttrs = [[NSMutableDictionary alloc] init];
-    }
+    });
     return uploadFileAttrs;
 }
 
