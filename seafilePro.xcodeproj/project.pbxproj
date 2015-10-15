@@ -367,9 +367,6 @@
 		57E22B3B1A126EBE00C92330 /* FolderView_iPhone.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57E22AF51A12625B00C92330 /* FolderView_iPhone.storyboard */; };
 		57E22B411A126EBE00C92330 /* SeafStart.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57E22B031A12625B00C92330 /* SeafStart.storyboard */; };
 		57F0AAFE16D8935800364D18 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57F0AAFC16D8913600364D18 /* AssetsLibrary.framework */; };
-		57F1438F1B8859C4009C1BC8 /* SeafJSONResponseSerializer.m in Sources */ = {isa = PBXBuildFile; fileRef = 57F1438E1B8859C4009C1BC8 /* SeafJSONResponseSerializer.m */; };
-		57F143901B8859C4009C1BC8 /* SeafJSONResponseSerializer.m in Sources */ = {isa = PBXBuildFile; fileRef = 57F1438E1B8859C4009C1BC8 /* SeafJSONResponseSerializer.m */; };
-		57F143911B8859C4009C1BC8 /* SeafJSONResponseSerializer.m in Sources */ = {isa = PBXBuildFile; fileRef = 57F1438E1B8859C4009C1BC8 /* SeafJSONResponseSerializer.m */; };
 		57F143931B886B96009C1BC8 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57F143921B886B96009C1BC8 /* CoreLocation.framework */; };
 		57F8CD211A127566000F6CDC /* DownloadingProgress_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22B501A12712500C92330 /* DownloadingProgress_iPhone.xib */; };
 		57F8CD221A127566000F6CDC /* DownloadingProgress_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22B251A12647800C92330 /* DownloadingProgress_iPad.xib */; };
@@ -822,8 +819,6 @@
 		57E51BC719A0F3D5002B50C6 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Localizable.strings; sourceTree = "<group>"; };
 		57E51BC819A0F46E002B50C6 /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		57F0AAFC16D8913600364D18 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
-		57F1438D1B8859C4009C1BC8 /* SeafJSONResponseSerializer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafJSONResponseSerializer.h; path = common/SeafJSONResponseSerializer.h; sourceTree = SOURCE_ROOT; };
-		57F1438E1B8859C4009C1BC8 /* SeafJSONResponseSerializer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafJSONResponseSerializer.m; path = common/SeafJSONResponseSerializer.m; sourceTree = SOURCE_ROOT; };
 		57F143921B886B96009C1BC8 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
 		57F8CD1A1A127531000F6CDC /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/SeafStart.storyboard; sourceTree = "<group>"; };
 		57F8CD1B1A127536000F6CDC /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/SeafStartFooterView.xib; sourceTree = "<group>"; };
@@ -1131,8 +1126,6 @@
 				57E229A01A11087500C92330 /* SeafStarredFile.m */,
 				57E229A11A11087500C92330 /* SeafUploadFile.h */,
 				57E229A21A11087500C92330 /* SeafUploadFile.m */,
-				57F1438D1B8859C4009C1BC8 /* SeafJSONResponseSerializer.h */,
-				57F1438E1B8859C4009C1BC8 /* SeafJSONResponseSerializer.m */,
 			);
 			name = models;
 			sourceTree = "<group>";
@@ -1947,7 +1940,6 @@
 				57E22AAD1A110DD800C92330 /* SeafDateFormatter.m in Sources */,
 				57E22AAC1A110DCD00C92330 /* SKFileTypeImageLoader.m in Sources */,
 				571D8CAB1677881400F1A22C /* main.m in Sources */,
-				57F1438F1B8859C4009C1BC8 /* SeafJSONResponseSerializer.m in Sources */,
 				57E2288B1A0E286200C92330 /* QBAssetsCollectionVideoIndicatorView.m in Sources */,
 				571D8CAC1677881400F1A22C /* SeafAppDelegate.m in Sources */,
 				57535230198CD4E0000BE07B /* MWTapDetectingImageView.m in Sources */,
@@ -2044,7 +2036,6 @@
 				57A029B71A1701C5009C9D7B /* SeafRepos.m in Sources */,
 				57A029B81A1701C5009C9D7B /* SeafStarredFile.m in Sources */,
 				57A029B91A1701C5009C9D7B /* SeafUploadFile.m in Sources */,
-				57F143901B8859C4009C1BC8 /* SeafJSONResponseSerializer.m in Sources */,
 				57A029A61A170173009C9D7B /* AFHTTPRequestOperation.m in Sources */,
 				57A029A71A170173009C9D7B /* AFHTTPRequestOperationManager.m in Sources */,
 				57A029A81A170173009C9D7B /* AFHTTPSessionManager.m in Sources */,
@@ -2064,7 +2055,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				57A192301A208FC700985F77 /* Utils.m in Sources */,
-				57F143911B8859C4009C1BC8 /* SeafJSONResponseSerializer.m in Sources */,
 				57A1922F1A208FBD00985F77 /* FileSizeFormatter.m in Sources */,
 				57A1922E1A208FAD00985F77 /* FileMimeType.m in Sources */,
 				57A1922D1A208FA000985F77 /* SeafDateFormatter.m in Sources */,
