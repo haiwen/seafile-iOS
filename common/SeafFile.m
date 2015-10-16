@@ -640,9 +640,19 @@
 
 - (UIImage *)image
 {
+    const int MAX_SIZE = 1024;
     NSString *path = [SeafGlobal.sharedObject documentPath:self.ooid];
-    if ([[NSFileManager defaultManager] fileExistsAtPath:path])
-        return [UIImage imageWithContentsOfFile:path];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
+        UIImage *image = [UIImage imageWithContentsOfFile:path];
+        CGRect screenRect = [[UIScreen mainScreen] bounds];
+        Debug("... image: %f %f, %f %f", image.size.width, image.size.height, screenRect.size.width, screenRect.size.height);
+        if (image.size.width > MAX_SIZE || image.size.height > MAX_SIZE) {
+            UIImage *img =  [Utils reSizeImage:image toSquare:MAX_SIZE];
+            Debug("... img: %f %f, %f %f", img.size.width, img.size.height, screenRect.size.width, screenRect.size.height);
+            return img;
+        }
+        return image;
+    }
     return nil;
 }
 
