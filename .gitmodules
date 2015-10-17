@@ -1,24 +1,8 @@
-[submodule "libs/AFNetworking"]
-    path = libs/AFNetworking
-    url = https://github.com/AFNetworking/AFNetworking.git
-    ignore = dirty
-[submodule "libs/EGOTableViewPullRefresh"]
-    path = libs/EGOTableViewPullRefresh
-    url=https://github.com/haiwen/EGOTableViewPullRefresh.git
-    ignore = dirty
 [submodule "libs/QBImagePickerController"]
     path = libs/QBImagePickerController
     url = https://github.com/haiwen/QBImagePickerController.git
     ignore = dirty
-[submodule "libs/ios-openssl"]
-    path = libs/ios-openssl
-    url=https://github.com/st3fan/ios-openssl.git
 [submodule "libs/EGOTextView"]
     path = libs/EGOTextView
     url=https://github.com/haiwen/EGOTextView.git
-[submodule "libs/SVProgressHUD"]
-	path = libs/SVProgressHUD
-	url = https://github.com/TransitApp/SVProgressHUD
-[submodule "libs/DACircularProgress"]
-	path = libs/DACircularProgress
-	url = https://github.com/danielamitay/DACircularProgress
+

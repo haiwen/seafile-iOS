@@ -13,7 +13,8 @@ Follow these steps :
 	cd seafile-iOS
 	git submodule init
 	git submodule update
-	open seafilePro.xcodeproj
+    pod install
+    open seafilePro.xcworkspace
 
 Then you can run seafile in xcode simulator.
 

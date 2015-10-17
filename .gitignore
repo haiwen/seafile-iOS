@@ -5,3 +5,6 @@ seafilePro.xcodeproj/xcuserdata
 *~
 *.bak
 .DS_Store
+Pods
+seafilePro.xcworkspace/
+*.ipa
