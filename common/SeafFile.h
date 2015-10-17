@@ -45,7 +45,7 @@
 - (void)setStarred:(BOOL)starred;
 - (void)deleteCache;
 - (void)update:(id<SeafFileUpdateDelegate>)dg;
-- (void)cancelDownload;
+- (void)cancelAnyLoading;
 - (BOOL)itemChangedAtURL:(NSURL *)url;
 - (NSDictionary *)toDict;
 

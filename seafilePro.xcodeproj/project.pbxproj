@@ -74,9 +74,6 @@
 		573F4AAE1788763500F096D3 /* arrowright.png in Resources */ = {isa = PBXBuildFile; fileRef = 573F4AAA1788763500F096D3 /* arrowright.png */; };
 		574DF02C1AF2863E0044FE06 /* SeafShibbolethViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 574DF02A1AF2863E0044FE06 /* SeafShibbolethViewController.xib */; };
 		57532C1A1868AA48003D564B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 57532C161868AA48003D564B /* Localizable.strings */; };
-		57535230198CD4E0000BE07B /* MWTapDetectingImageView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5753522D198CD4E0000BE07B /* MWTapDetectingImageView.m */; };
-		57535231198CD4E0000BE07B /* MWTapDetectingView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5753522F198CD4E0000BE07B /* MWTapDetectingView.m */; };
-		57535239198D6241000BE07B /* SeafPhotoView.m in Sources */ = {isa = PBXBuildFile; fileRef = 57535238198D6241000BE07B /* SeafPhotoView.m */; };
 		5757DCCD1AEBCF1600BC0426 /* SeafShibbolethViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5757DCCB1AEBCF1600BC0426 /* SeafShibbolethViewController.m */; };
 		576B99071861411700A16ED6 /* EGOTextView.m in Sources */ = {isa = PBXBuildFile; fileRef = 576B98FC1861411700A16ED6 /* EGOTextView.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		576B99091861411700A16ED6 /* drag-dot@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 576B98FE1861411700A16ED6 /* drag-dot@2x.png */; };
@@ -277,6 +274,7 @@
 		57CD9B871B5121CC00D1CC6B /* delete.png in Resources */ = {isa = PBXBuildFile; fileRef = 57CD9B831B5121CC00D1CC6B /* delete.png */; };
 		57D0AD3817914E7900D741BE /* mobile.css in Resources */ = {isa = PBXBuildFile; fileRef = 57D0AD3617914E7900D741BE /* mobile.css */; };
 		57D189D0182E0A380029A797 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 57D189CE182E0A380029A797 /* Images.xcassets */; };
+		57D5F81A1BD2336B006BAD7B /* SeafPhoto.m in Sources */ = {isa = PBXBuildFile; fileRef = 57D5F8191BD2336B006BAD7B /* SeafPhoto.m */; settings = {ASSET_TAGS = (); }; };
 		57DA26F5173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DA26F3173E6DFC0003BA31 /* SeafTextEditorViewController.m */; };
 		57E1E8A91737F4D3006601FE /* bootstrap-wysiwyg.js in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E8A51737F4D3006601FE /* bootstrap-wysiwyg.js */; };
 		57E1E8AB1737F4D3006601FE /* bootstrap.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E8A61737F4D3006601FE /* bootstrap.min.js */; };
@@ -444,12 +442,6 @@
 		5752494D18C6EA7700352647 /* hu */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hu; path = hu.lproj/Localizable.strings; sourceTree = "<group>"; };
 		57532C171868AA48003D564B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		57532C181868AA48003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
-		5753522C198CD4E0000BE07B /* MWTapDetectingImageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MWTapDetectingImageView.h; sourceTree = "<group>"; };
-		5753522D198CD4E0000BE07B /* MWTapDetectingImageView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MWTapDetectingImageView.m; sourceTree = "<group>"; };
-		5753522E198CD4E0000BE07B /* MWTapDetectingView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MWTapDetectingView.h; sourceTree = "<group>"; };
-		5753522F198CD4E0000BE07B /* MWTapDetectingView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MWTapDetectingView.m; sourceTree = "<group>"; };
-		57535237198D6241000BE07B /* SeafPhotoView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafPhotoView.h; sourceTree = "<group>"; };
-		57535238198D6241000BE07B /* SeafPhotoView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafPhotoView.m; sourceTree = "<group>"; };
 		5757DCCA1AEBCF1600BC0426 /* SeafShibbolethViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafShibbolethViewController.h; sourceTree = "<group>"; };
 		5757DCCB1AEBCF1600BC0426 /* SeafShibbolethViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafShibbolethViewController.m; sourceTree = "<group>"; };
 		57642A361B8E057000C32B92 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -627,6 +619,8 @@
 		57CD9B831B5121CC00D1CC6B /* delete.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = delete.png; sourceTree = "<group>"; };
 		57D0AD3617914E7900D741BE /* mobile.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; name = mobile.css; path = htmls/mobile.css; sourceTree = SOURCE_ROOT; };
 		57D189CE182E0A380029A797 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = "seafile-appstore/Images.xcassets"; sourceTree = "<group>"; };
+		57D5F8191BD2336B006BAD7B /* SeafPhoto.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafPhoto.m; path = ../SeafPhoto.m; sourceTree = "<group>"; };
+		57D5F81B1BD23389006BAD7B /* SeafPhoto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafPhoto.h; sourceTree = "<group>"; };
 		57DA26F3173E6DFC0003BA31 /* SeafTextEditorViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafTextEditorViewController.m; sourceTree = "<group>"; };
 		57DB827115A833FA00097CEC /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		57DB827315A833FA00097CEC /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -783,7 +777,6 @@
 		5704C6CF1753A07E0028F4FE /* thirdpart */ = {
 			isa = PBXGroup;
 			children = (
-				5753522B198CD3AD000BE07B /* MWPhotoBrowser */,
 				5704C6D01753A1380028F4FE /* IntelligentSplitViewController.h */,
 				5704C6D11753A1380028F4FE /* IntelligentSplitViewController.m */,
 			);
@@ -947,8 +940,8 @@
 				576C91C2177EB43F007B50BD /* SeafDirViewController.m */,
 				57DB828E15A833FA00097CEC /* SeafFileViewController.h */,
 				57DB828F15A833FA00097CEC /* SeafFileViewController.m */,
-				57535237198D6241000BE07B /* SeafPhotoView.h */,
-				57535238198D6241000BE07B /* SeafPhotoView.m */,
+				57D5F81B1BD23389006BAD7B /* SeafPhoto.h */,
+				57D5F8191BD2336B006BAD7B /* SeafPhoto.m */,
 				5764C829163BF91B006AD511 /* SeafSettingsViewController.h */,
 				5764C82A163BF91B006AD511 /* SeafSettingsViewController.m */,
 				5757DCCA1AEBCF1600BC0426 /* SeafShibbolethViewController.h */,
@@ -1055,17 +1048,6 @@
 				573970001657F8BF0089F32F /* video.png */,
 			);
 			path = Icons;
-			sourceTree = "<group>";
-		};
-		5753522B198CD3AD000BE07B /* MWPhotoBrowser */ = {
-			isa = PBXGroup;
-			children = (
-				5753522C198CD4E0000BE07B /* MWTapDetectingImageView.h */,
-				5753522D198CD4E0000BE07B /* MWTapDetectingImageView.m */,
-				5753522E198CD4E0000BE07B /* MWTapDetectingView.h */,
-				5753522F198CD4E0000BE07B /* MWTapDetectingView.m */,
-			);
-			name = MWPhotoBrowser;
 			sourceTree = "<group>";
 		};
 		576B98FA1861411700A16ED6 /* EGOTextView */ = {
@@ -1863,7 +1845,6 @@
 				571D8CAB1677881400F1A22C /* main.m in Sources */,
 				57E2288B1A0E286200C92330 /* QBAssetsCollectionVideoIndicatorView.m in Sources */,
 				571D8CAC1677881400F1A22C /* SeafAppDelegate.m in Sources */,
-				57535230198CD4E0000BE07B /* MWTapDetectingImageView.m in Sources */,
 				57E2288A1A0E286200C92330 /* QBAssetsCollectionOverlayView.m in Sources */,
 				571D8CAD1677881400F1A22C /* SeafFileViewController.m in Sources */,
 				57E229A91A11087500C92330 /* SeafConnection.m in Sources */,
@@ -1874,6 +1855,7 @@
 				57E2288E1A0E286200C92330 /* QBAssetsCollectionViewLayout.m in Sources */,
 				571D8CC91677881400F1A22C /* FailToPreview.m in Sources */,
 				57E228911A0E286200C92330 /* QBImagePickerThumbnailView.m in Sources */,
+				57D5F81A1BD2336B006BAD7B /* SeafPhoto.m in Sources */,
 				57E229A31A11087500C92330 /* SeafAvatar.m in Sources */,
 				571D8CCA1677881400F1A22C /* UIViewController+Extend.m in Sources */,
 				571D8CCB1677881400F1A22C /* DownloadingProgressView.m in Sources */,
@@ -1899,7 +1881,6 @@
 				57E229F01A1108B200C92330 /* UIImage+FileType.m in Sources */,
 				5757DCCD1AEBCF1600BC0426 /* SeafShibbolethViewController.m in Sources */,
 				5775EA1217476FAD000A1765 /* SeafActivityViewController.m in Sources */,
-				57535239198D6241000BE07B /* SeafPhotoView.m in Sources */,
 				57E229DB1A1108B200C92330 /* ExtentedString.m in Sources */,
 				57E228901A0E286200C92330 /* QBImagePickerGroupCell.m in Sources */,
 				57A90DA118C49F97005D8A53 /* SeafDetailViewController.m in Sources */,
@@ -1907,7 +1888,6 @@
 				57E2288F1A0E286200C92330 /* QBImagePickerController.m in Sources */,
 				57E229B51A11087500C92330 /* seafile.xcdatamodeld in Sources */,
 				57E229E71A1108B200C92330 /* NSData+Encryption.m in Sources */,
-				57535231198CD4E0000BE07B /* MWTapDetectingView.m in Sources */,
 				576C91C4177EB43F007B50BD /* SeafDirViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

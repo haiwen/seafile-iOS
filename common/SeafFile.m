@@ -398,7 +398,8 @@
 
 - (void)load:(id<SeafDentryDelegate>)delegate force:(BOOL)force
 {
-    self.delegate = delegate;
+    if (delegate != nil)
+        self.delegate = delegate;
     [self loadContent:NO];
 }
 
@@ -644,11 +645,8 @@
     NSString *path = [SeafGlobal.sharedObject documentPath:self.ooid];
     if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
         UIImage *image = [UIImage imageWithContentsOfFile:path];
-        CGRect screenRect = [[UIScreen mainScreen] bounds];
-        Debug("... image: %f %f, %f %f", image.size.width, image.size.height, screenRect.size.width, screenRect.size.height);
         if (image.size.width > MAX_SIZE || image.size.height > MAX_SIZE) {
             UIImage *img =  [Utils reSizeImage:image toSquare:MAX_SIZE];
-            Debug("... img: %f %f, %f %f", img.size.width, img.size.height, screenRect.size.width, screenRect.size.height);
             return img;
         }
         return image;
@@ -808,7 +806,7 @@
     self.state = SEAF_DENTRY_INIT;
 }
 
-- (void)cancelDownload
+- (void)cancelAnyLoading
 {
     if (self.downloadingFileOid) {
         self.state = SEAF_DENTRY_INIT;

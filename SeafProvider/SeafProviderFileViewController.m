@@ -275,7 +275,7 @@
     NSString *title = [NSString stringWithFormat: @"Downloading %@", file.name];
     self.alert = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleAlert];
     UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        [file cancelDownload];
+        [file cancelAnyLoading];
     }];
     self.sfile = file;
     [self.alert addAction:cancelAction];

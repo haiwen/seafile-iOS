@@ -43,6 +43,7 @@ enum SET_REPO_PASSWORD_RET {
 - (BOOL)hasCache;
 - (BOOL)isImageFile;
 - (long long) mtime;
+- (void)cancelAnyLoading;
 
 
 - (void)load:(id<SeafDentryDelegate>)delegate force:(BOOL)force;

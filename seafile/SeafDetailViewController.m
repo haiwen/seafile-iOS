@@ -14,7 +14,9 @@
 #import "SeafUploadFile.h"
 #import "SeafPhotoView.h"
 #import "SeafFileViewController.h"
+#import <MWPhotoBrowser.h>
 
+#import "SeafPhoto.h"
 #import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
 #import "ExtentedString.h"
@@ -40,22 +42,18 @@ enum SHARE_STATUS {
 
 #define SHARE_TITLE NSLocalizedString(@"How would you like to share this file?", @"Seafile")
 
-@interface SeafDetailViewController ()<UIWebViewDelegate, UIActionSheetDelegate, UIPrintInteractionControllerDelegate, MFMailComposeViewControllerDelegate, QLPreviewControllerDelegate, QLPreviewControllerDataSource, UIScrollViewDelegate>
+@interface SeafDetailViewController ()<UIWebViewDelegate, UIActionSheetDelegate, UIPrintInteractionControllerDelegate, MFMailComposeViewControllerDelegate, QLPreviewControllerDelegate, QLPreviewControllerDataSource, MWPhotoBrowserDelegate>
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
 
 @property (retain) QLPreviewController *fileViewController;
 @property (retain) FailToPreview *failedView;
 @property (retain) DownloadingProgressView *progressView;
 @property (retain) UIWebView *webView;
+@property (retain, nonatomic) MWPhotoBrowser *mwPhotoBrowser;
 
-@property (retain, nonatomic) UIScrollView *pagingScrollView;
-@property CGRect previousLayoutBounds;
 @property BOOL performingLayout;
 @property BOOL rotating;
-@property BOOL viewIsActive;
 @property (retain) NSArray *photos;
-@property (retain) NSMutableSet *visiblePages;
-@property (retain) NSMutableSet *recycledPages;
 @property NSUInteger currentPageIndex;
 
 @property int state;
@@ -73,7 +71,6 @@ enum SHARE_STATUS {
 @property (strong) UIDocumentInteractionController *docController;
 @property int shareStatus;
 @property (readwrite, nonatomic) bool hideMaster;
-@property (readwrite, nonatomic) NSString *gid;
 
 @property (strong) UIActionSheet *actionSheet;
 
@@ -81,11 +78,6 @@ enum SHARE_STATUS {
 
 
 @implementation SeafDetailViewController
-@synthesize fullscreenItem = _fullscreenItem;
-@synthesize exitfsItem = _exitfsItem;
-@synthesize preViewItem = _preViewItem;
-@synthesize hideMaster = _hideMaster;
-@synthesize gid = _gid;
 
 
 #pragma mark - Managing the detail item
@@ -136,6 +128,7 @@ enum SHARE_STATUS {
     self.fileViewController.view.hidden = YES;
     self.webView.hidden = YES;
     [self.webView loadHTMLString:@"" baseURL:nil];
+    [self clearPhotosVIew];
 }
 
 - (void)refreshView
@@ -201,11 +194,7 @@ enum SHARE_STATUS {
             break;
         case PREVIEW_PHOTO:
             Debug("Preview photo %@\n", self.preViewItem.previewItemTitle);
-            if (!self.preViewItem.isDownloading) {
-                SeafPhotoView *page = [self pageDisplayingPhoto:(SeafFile *)self.preViewItem];
-                [page displayImage];
-                [self loadAdjacentPhotosIfNecessary:(SeafFile *)self.preViewItem];
-            }
+            self.mwPhotoBrowser.view.frame = r;
             break;
         case PREVIEW_NONE:
             break;
@@ -239,19 +228,25 @@ enum SHARE_STATUS {
     if (self.masterPopoverController != nil)
         [self.masterPopoverController dismissPopoverAnimated:YES];
     self.masterVc = c;
-    self.photos = items;
+    NSMutableArray *seafPhotos = [[NSMutableArray alloc] init];
+    for (id<SeafPreView> file in items) {
+        [file setDelegate:(self.masterVc ? self.masterVc:self)];
+        [seafPhotos addObject:[[SeafPhoto alloc] initWithSeafPreviewIem: file]];
+    }
+    self.photos = seafPhotos;
     self.state = PREVIEW_PHOTO;
     Debug("Preview photos PREVIEW_PHOTO: %d, %@ hasCache:%d", self.state, [item name], [item hasCache]);
     self.preViewItem = item;
     self.currentPageIndex = [items indexOfObject:item];
-    [self.view addSubview:self.pagingScrollView];
+    [self.view addSubview:self.mwPhotoBrowser.view];
+    self.mwPhotoBrowser.view.frame = CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height);
+    [self.mwPhotoBrowser setCurrentPhotoIndex:self.currentPageIndex];
     if (IsIpad() && UIInterfaceOrientationIsLandscape(self.interfaceOrientation) && !self.hideMaster && self.masterVc) {
         if (_preViewItem == nil)
             self.navigationItem.leftBarButtonItem = nil;
         else
             self.navigationItem.leftBarButtonItem = self.fullscreenItem;
     }
-    [self setupPhotosView];
     [self updateNavigation];
     [self.view setNeedsLayout];
 }
@@ -335,8 +330,6 @@ enum SHARE_STATUS {
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
-    if (_visiblePages)
-        [self tilePagesWithRange:0 post:0];
 }
 
 - (void)viewWillLayoutSubviews
@@ -349,7 +342,7 @@ enum SHARE_STATUS {
     if (self.state == PREVIEW_SUCCESS) {
         self.fileViewController.view.frame = r;
     } else if (self.state == PREVIEW_PHOTO){
-        [self layoutVisiblePages];
+        self.mwPhotoBrowser.view.frame = r;
     } else {
         if (self.view.subviews.count > 1) {
             UIView *v = [self.view.subviews objectAtIndex:0];
@@ -456,8 +449,6 @@ enum SHARE_STATUS {
 
 - (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
     [super willAnimateRotationToInterfaceOrientation:toInterfaceOrientation duration:duration];
-    if (self.state == PREVIEW_SUCCESS)
-        [self layoutVisiblePages];
 }
 
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
@@ -503,16 +494,15 @@ enum SHARE_STATUS {
 
 - (void)entry:(SeafBase *)entry updated:(BOOL)updated progress:(int)percent
 {
-    if (updated || self.state == PREVIEW_DOWNLOADING) {
-        [self fileContentLoaded:(SeafFile *)entry result:YES completeness:percent];
-    } else if (self.state == PREVIEW_PHOTO) {
-        SeafPhotoView *page = [self pageDisplayingPhoto:(SeafFile *)entry];
-        if (page) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [page setProgress:percent *1.0f/100];
-            });
-        }
-    }
+     if (self.state == PREVIEW_PHOTO) {
+        SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
+        if (percent == 100) {
+            [photo complete:nil updated:updated];
+        } else
+            [photo setProgress:percent*1.0f/100];
+     } else if (self.state == PREVIEW_DOWNLOADING) {
+         [self fileContentLoaded:(SeafFile *)entry result:YES completeness:percent];
+     }
 }
 
 - (void)entry:(SeafBase *)entry downloadingFailed:(NSUInteger)errCode;
@@ -522,8 +512,9 @@ enum SHARE_STATUS {
     if (self.state == PREVIEW_PHOTO) {
         if (self.preViewItem.hasCache)   return;
         [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:@"Failed to download file '%@'",self.preViewItem.previewItemTitle]];
-        SeafPhotoView *page = [self pageDisplayingPhoto:(SeafFile *)self.preViewItem];
-        [page displayImageFailure];
+        SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
+        NSError *error = [NSError errorWithDomain:[NSString stringWithFormat:@"Failed to download file '%@'",self.preViewItem.previewItemTitle] code:-1 userInfo:nil];
+        [photo complete:error updated:false];
     } else
         [self fileContentLoaded:(SeafFile *)entry result:NO completeness:0];
 }
@@ -567,7 +558,7 @@ enum SHARE_STATUS {
 
 - (IBAction)cancelDownload:(id)sender
 {
-    [(SeafFile *)self.preViewItem cancelDownload];
+    [(SeafFile *)self.preViewItem cancelAnyLoading];
     [self setPreViewItem:nil master:nil];
     if (!IsIpad())
         [self goBack:nil];
@@ -859,252 +850,46 @@ enum SHARE_STATUS {
     return self.preViewItem;
 }
 
-#pragma -mark - pagingScrollView for photots
-
-- (CGRect)frameForPagingScrollView {
-    CGRect frame = self.view.bounds;// [[UIScreen mainScreen] bounds];
-    frame.origin.x -= PADDING;
-    frame.size.width += (2 * PADDING);
-    return CGRectIntegral(frame);
-}
-- (CGRect)frameForPageAtIndex:(NSUInteger)index {
-    // We have to use our paging scroll view's bounds, not frame, to calculate the page placement. When the device is in
-    // landscape orientation, the frame will still be in portrait because the pagingScrollView is the root view controller's
-    // view, so its frame is in window coordinate space, which is never rotated. Its bounds, however, will be in landscape
-    // because it has a rotation transform applied.
-    CGRect bounds = _pagingScrollView.bounds;
-    CGRect pageFrame = bounds;
-    pageFrame.size.width -= (2 * PADDING);
-    pageFrame.origin.x = (bounds.size.width * index) + PADDING;
-    return CGRectIntegral(pageFrame);
-}
-
 - (NSUInteger)numberOfPhotos {
     if (!self.photos) return 0;
     return self.photos.count;
 }
-- (CGSize)contentSizeForPagingScrollView {
-    // We have to use the paging scroll view's bounds to calculate the contentSize, for the same reason outlined above.
-    CGRect bounds = _pagingScrollView.bounds;
-    return CGSizeMake(bounds.size.width * [self numberOfPhotos], bounds.size.height);
-}
-- (CGPoint)contentOffsetForPageAtIndex:(NSUInteger)index {
-    CGFloat pageWidth = _pagingScrollView.bounds.size.width;
-    CGFloat newOffset = index * pageWidth;
-    return CGPointMake(newOffset, 0);
+
+- (MWPhotoBrowser *)mwPhotoBrowser
+{
+    if (!_mwPhotoBrowser) {
+        _mwPhotoBrowser = [[MWPhotoBrowser alloc] initWithDelegate:self];
+        _mwPhotoBrowser.displayActionButton = false;
+        _mwPhotoBrowser.displayNavArrows = true;
+        _mwPhotoBrowser.displaySelectionButtons = false;
+        _mwPhotoBrowser.alwaysShowControls = false;
+        _mwPhotoBrowser.zoomPhotosToFill = YES;
+        _mwPhotoBrowser.enableGrid = true;
+        _mwPhotoBrowser.startOnGrid = false;
+        _mwPhotoBrowser.enableSwipeToDismiss = true;
+        _mwPhotoBrowser.autoPlayOnAppear = true;
+    }
+    return _mwPhotoBrowser;
 }
 
-- (UIScrollView *)pagingScrollView
-{
-    if (!_pagingScrollView) {
-        CGRect pagingScrollViewFrame = [self frameForPagingScrollView];
-        _pagingScrollView = [[UIScrollView alloc] initWithFrame:pagingScrollViewFrame];
-        _pagingScrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-        _pagingScrollView.pagingEnabled = YES;
-        _pagingScrollView.delegate = self;
-        _pagingScrollView.showsHorizontalScrollIndicator = NO;
-        _pagingScrollView.showsVerticalScrollIndicator = NO;
-        _pagingScrollView.backgroundColor = [UIColor whiteColor];
-        _pagingScrollView.contentSize = [self contentSizeForPagingScrollView];
-        _visiblePages = [[NSMutableSet alloc] init];
-        _recycledPages = [[NSMutableSet alloc] init];
-    }
-    return _pagingScrollView;
-}
-- (BOOL)isDisplayingPageForIndex:(NSUInteger)index {
-    for (SeafPhotoView *page in _visiblePages)
-        if (page.index == index) return YES;
-    return NO;
-}
-- (SeafPhotoView *)dequeueRecycledPage {
-    SeafPhotoView *page = [_recycledPages anyObject];
-    if (page) {
-        [_recycledPages removeObject:page];
-    }
-    return page;
-}
-- (SeafPhotoView *)pageDisplayingPhoto:(id<SeafPreView>)photo {
-    SeafPhotoView *thePage = nil;
-    for (SeafPhotoView *page in _visiblePages) {
-        if (page.photo == photo) {
-            thePage = page; break;
+- (SeafPhoto *)getSeafPhoto:(id<SeafPreView>)photo {
+    for (SeafPhoto *sphoto in _photos) {
+        if (sphoto.file == photo) {
+            return sphoto;
         }
     }
-    return thePage;
-}
-
-- (void)configurePage:(SeafPhotoView *)page forIndex:(NSUInteger)index {
-    page.frame = [self frameForPageAtIndex:index];
-    page.index = index;
-    page.photo = [self.photos objectAtIndex:index];
-}
-
-- (void)tilePages
-{
-    [self tilePagesWithRange:1 post:2];
-}
-
-- (void)tilePagesWithRange:(int)pre post:(int)post
-{
-    // Calculate which pages should be visible
-    // Ignore padding as paging bounces encroach on that
-    // and lead to false page loads
-    NSInteger iFirstIndex = _currentPageIndex - pre;
-    NSInteger iLastIndex  = _currentPageIndex + post;
-    long lastIndex = [self numberOfPhotos] - 1;
-    iFirstIndex = MAX(iFirstIndex, 0);
-    iFirstIndex = MIN(iFirstIndex, lastIndex);
-
-    iLastIndex = MAX(iLastIndex, 0);
-    iLastIndex = MIN(iLastIndex, lastIndex);
-
-    // Recycle no longer needed pages
-    NSInteger pageIndex;
-    for (SeafPhotoView *page in _visiblePages) {
-        pageIndex = page.index;
-        if (pageIndex < (NSUInteger)iFirstIndex || pageIndex > (NSUInteger)iLastIndex) {
-            [_recycledPages addObject:page];
-            [page prepareForReuse];
-            [page removeFromSuperview];
-            Debug("Removed page at index %ld not in range(%ld, %ld)", (long)pageIndex, (long)iFirstIndex, (long)iLastIndex);
-        }
-    }
-    [_visiblePages minusSet:_recycledPages];
-    while (_recycledPages.count > 2) // Only keep 2 recycled pages
-        [_recycledPages removeObject:[_recycledPages anyObject]];
-
-    // Add missing pages
-    for (NSUInteger index = (NSUInteger)iFirstIndex; index <= (NSUInteger)iLastIndex; index++) {
-        if (![self isDisplayingPageForIndex:index]) {
-            // Add new page
-            SeafPhotoView *page = [self dequeueRecycledPage];
-            if (!page) {
-                page = [[SeafPhotoView alloc] initWithPhotoBrowser:self];
-            }
-            [_visiblePages addObject:page];
-            [self configurePage:page forIndex:index];
-            [_pagingScrollView addSubview:page];
-            Debug("Added page at index %lu subviews count:%ld", (unsigned long)index, (long)_pagingScrollView.subviews.count);
-        }
-    }
-}
-
-- (void)setupPhotosView
-{
-    self.pagingScrollView.contentOffset = [self contentOffsetForPageAtIndex:self.currentPageIndex];
-    [self tilePages];
+    return nil;
 }
 
 - (void)clearPhotosVIew
 {
-    [self.pagingScrollView removeFromSuperview];
-    _pagingScrollView = nil;
+    [_mwPhotoBrowser.view removeFromSuperview];
     _photos = nil;
-    _visiblePages = nil;
-    _recycledPages = nil;
     self.state = PREVIEW_NONE;
 }
 
-- (void)layoutVisiblePages
-{
-    _performingLayout = YES;
-
-    // Remember index
-    NSUInteger indexPriorToLayout = _currentPageIndex;
-
-    // Get paging scroll view frame to determine if anything needs changing
-    CGRect pagingScrollViewFrame = [self frameForPagingScrollView];
-    _pagingScrollView.frame = pagingScrollViewFrame;
-
-    // Recalculate contentSize based on current orientation
-    self.pagingScrollView.contentSize = [self contentSizeForPagingScrollView];
-    // Adjust frames and configuration of each visible page
-    for (SeafPhotoView *page in _visiblePages) {
-        NSUInteger index = page.index;
-        page.frame = [self frameForPageAtIndex:index];
-        // Adjust scales if bounds has changed since last time
-        if (!CGRectEqualToRect(_previousLayoutBounds, self.view.bounds)) {
-            // Update zooms for new bounds
-            [page setMaxMinZoomScalesForCurrentBounds];
-            _previousLayoutBounds = self.view.bounds;
-        }
-    }
-
-    // Adjust contentOffset to preserve page location based on values collected prior to location
-    _pagingScrollView.contentOffset = [self contentOffsetForPageAtIndex:indexPriorToLayout];
-    [self didStartViewingPageAtIndex:_currentPageIndex]; // initial
-
-    // Reset
-    _currentPageIndex = indexPriorToLayout;
-    _performingLayout = NO;
-}
 
 #pragma mark - UIScrollView Delegate
-// Handle page changes
-- (void)didStartViewingPageAtIndex:(NSUInteger)index {
-    if (![self numberOfPhotos]) {
-        return;
-    }
-
-    // Release images further away than +/-1
-    NSUInteger i;
-    if (index > 0) {
-        // Release anything < index - 1
-        for (i = 0; i < index-1; i++) {
-            [(id<SeafPreView>)[_photos objectAtIndex:i] unload];
-        }
-    }
-    if (index < [self numberOfPhotos] - 1) {
-        // Release anything > index + 1
-        for (i = index + 2; i < _photos.count; i++) {
-            [(id<SeafPreView>)[_photos objectAtIndex:i] unload];
-        }
-    }
-
-    // Load adjacent images if needed and the photo is already
-    // loaded. Also called after photo has been loaded in background
-    [self.preViewItem load:(self.masterVc?self.masterVc:self) force:NO];
-    if ([self.preViewItem hasCache]) {
-        SeafPhotoView *page = [self pageDisplayingPhoto:(SeafFile *)self.preViewItem];
-        [page displayImage];
-        [self loadAdjacentPhotosIfNecessary:self.preViewItem];
-    }
-    // Update nav
-    [self updateNavigation];
-}
-
-- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
-    if (!self.isVisible || _performingLayout || _rotating) return;
-    [self tilePages];
-
-    // Calculate current page
-    CGRect visibleBounds = _pagingScrollView.bounds;
-    NSInteger index = (NSInteger)(floorf(CGRectGetMidX(visibleBounds) / CGRectGetWidth(visibleBounds)));
-    if (index < 0) index = 0;
-    if (index > [self numberOfPhotos] - 1) index = [self numberOfPhotos] - 1;
-    NSUInteger previousCurrentPage = _currentPageIndex;
-    _currentPageIndex = index;
-    id<SeafPreView> pre = self.preViewItem;
-    self.preViewItem = [self.photos objectAtIndex:index];
-    if (_currentPageIndex != previousCurrentPage) {
-        [self didStartViewingPageAtIndex:index];
-        if (IsIpad() && [self.masterVc isKindOfClass: [SeafFileViewController class]]) {
-            SeafFileViewController *c = (SeafFileViewController *)self.masterVc;
-            [c photoSelectedChanged:pre to:self.preViewItem];
-        }
-    }
-}
-
-- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
-{
-}
-
-- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
-{
-    // Update nav when page changes
-    [self updateNavigation];
-}
-
 - (void)loadAdjacentPhotosIfNecessary:(id<SeafPreView>)photo
 {
     NSUInteger index = [self.photos indexOfObject:photo] + 1;
@@ -1116,6 +901,39 @@ enum SHARE_STATUS {
             [next load:(self.masterVc ? self.masterVc:self) force:NO];
         }
     }
+}
+
+#pragma mark - MWPhotoBrowserDelegate
+- (NSUInteger)numberOfPhotosInPhotoBrowser:(MWPhotoBrowser *)photoBrowser {
+    return _photos.count;
+}
+
+- (id <MWPhoto>)photoBrowser:(MWPhotoBrowser *)photoBrowser photoAtIndex:(NSUInteger)index {
+    if (index < _photos.count)
+        return [_photos objectAtIndex:index];
+    return nil;
+}
+
+- (NSString *)photoBrowser:(MWPhotoBrowser *)photoBrowser titleForPhotoAtIndex:(NSUInteger)index
+{
+    SeafPhoto *photo = [_photos objectAtIndex:index];
+    return photo.file.name;
+}
+- (void)photoBrowser:(MWPhotoBrowser *)photoBrowser didDisplayPhotoAtIndex:(NSUInteger)index
+{
+    if (index >= self.photos.count)
+        return;
+    NSUInteger previousCurrentPage = _currentPageIndex;
+    _currentPageIndex = index;
+    id<SeafPreView> pre = self.preViewItem;
+    self.preViewItem = [[self.photos objectAtIndex:index] file];
+    if (_currentPageIndex != previousCurrentPage) {
+        if (IsIpad() && [self.masterVc isKindOfClass: [SeafFileViewController class]]) {
+            SeafFileViewController *c = (SeafFileViewController *)self.masterVc;
+            [c photoSelectedChanged:pre to:self.preViewItem];
+        }
+    }
+    [self updateNavigation];
 }
 
 @end

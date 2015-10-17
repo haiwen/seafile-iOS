@@ -950,8 +950,7 @@ enum {
         self.state = STATE_INIT;
     } else if ([entry isKindOfClass:[SeafFile class]]) {
         if (percent == 100) [self updateEntryCell:(SeafFile *)entry];
-        if (entry == self.detailViewController.preViewItem)
-            [self.detailViewController entry:entry updated:updated progress:percent];
+        [self.detailViewController entry:entry updated:updated progress:percent];
     }
 }
 

@@ -8,6 +8,7 @@ end
 
 target :"seafile-appstore" do
   pod 'EGOTableViewPullRefresh', '~> 0.1.0'
+  pod 'MWPhotoBrowser', '~> 2.1.1'
   shared
 end
 

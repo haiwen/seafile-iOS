@@ -65,6 +65,11 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 }
 
+- (void)cancelAnyLoading
+{
+
+}
+
 - (BOOL)hasCache
 {
     return YES;
