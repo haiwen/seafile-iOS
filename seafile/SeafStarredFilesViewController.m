@@ -284,21 +284,19 @@
 }
 
 #pragma mark - SeafDentryDelegate
-- (void)entry:(SeafBase *)entry updated:(BOOL)updated progress:(int)percent
+- (void)download:(SeafBase *)entry progress:(float)progress
 {
-    if ([entry isKindOfClass:[SeafFile class]]) {
-        if (percent == 100)  [self updateEntryCell:(SeafFile *)entry];
-        if (entry == self.detailViewController.preViewItem)
-            [self.detailViewController entry:entry updated:updated progress:percent];
-    }
+    [self.detailViewController download:entry progress:progress];
 }
-
-- (void)entry:(SeafBase *)entry downloadingFailed:(NSUInteger)errCode;
+- (void)download:(SeafBase *)entry complete:(BOOL)updated
 {
-    if ([entry isKindOfClass:[SeafFile class]]) {
-        [self.detailViewController entry:entry downloadingFailed:errCode];
-        return;
-    }
+    [self updateEntryCell:(SeafFile *)entry];
+}
+- (void)download:(SeafBase *)entry failed:(NSError *)error
+{
+    if (![entry isKindOfClass:[SeafFile class]])
+        return
+    [self.detailViewController download:entry failed:error];
 }
 
 #pragma mark - SeafStarFileDelegate

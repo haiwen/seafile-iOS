@@ -936,9 +936,20 @@ enum {
 }
 
 #pragma mark - SeafDentryDelegate
-- (void)entry:(SeafBase *)entry updated:(BOOL)updated progress:(int)percent
+- (void)download:(SeafBase *)entry progress:(float)progress
 {
-    if (entry == _directory) {
+    
+    if ([entry isKindOfClass:[SeafFile class]]) {
+        [self.detailViewController download:entry progress:progress];
+    }
+}
+
+- (void)download:(SeafBase *)entry complete:(BOOL)updated
+{
+    if ([entry isKindOfClass:[SeafFile class]]) {
+        [self updateEntryCell:(SeafFile *)entry];
+        [self.detailViewController download:entry complete:updated];
+    } else if (entry == _directory) {
         [self dismissLoadingView];
         [SVProgressHUD dismiss];
         [self doneLoadingTableViewData];
@@ -948,22 +959,16 @@ enum {
 
         if (updated)  [self refreshView];
         self.state = STATE_INIT;
-    } else if ([entry isKindOfClass:[SeafFile class]]) {
-        if (percent == 100) [self updateEntryCell:(SeafFile *)entry];
-        [self.detailViewController entry:entry updated:updated progress:percent];
     }
 }
 
-- (void)entry:(SeafBase *)entry downloadingFailed:(NSUInteger)errCode;
+- (void)download:(SeafBase *)entry failed:(NSError *)error
 {
-    if (errCode == HTTP_ERR_REPO_PASSWORD_REQUIRED) {
-        NSAssert(0, @"Here should never be reached");
-    }
     if ([entry isKindOfClass:[SeafFile class]]) {
-        [self.detailViewController entry:entry downloadingFailed:errCode];
+        [self.detailViewController download:entry failed:error];
         return;
     }
-
+    
     NSCAssert([entry isKindOfClass:[SeafDir class]], @"entry must be SeafDir");
     Debug("state=%d %@,%@, %@\n", self.state, entry.path, entry.name, _directory.path);
     if (entry == _directory) {

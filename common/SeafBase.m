@@ -122,7 +122,7 @@
     BOOL hasCache = [self loadCache];
     @synchronized (self) {
         if (hasCache && !force) {
-            [_delegate entry:self updated:NO progress:0];
+            [_delegate download:self complete:false];
             return;
         }
         if (self.state == SEAF_DENTRY_LOADING)

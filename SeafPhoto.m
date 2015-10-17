@@ -94,7 +94,7 @@
                           self, @"photo", nil];
     [[NSNotificationCenter defaultCenter] postNotificationName:MWPHOTO_PROGRESS_NOTIFICATION object:dict];
 }
-- (void)complete:(NSError *)error updated:(BOOL)updated
+- (void)complete:(BOOL)updated error:(NSError *)error
 {
     if (error) {
         Debug("failed to download image: %@", error);

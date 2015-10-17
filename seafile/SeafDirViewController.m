@@ -197,26 +197,27 @@
 }
 
 #pragma mark - SeafDentryDelegate
-- (void)entry:(SeafBase *)entry updated:(BOOL)updated progress:(int)percent
+- (void)download:(SeafBase *)entry progress:(float)progress
+{
+    
+}
+- (void)download:(SeafBase *)entry complete:(BOOL)updated
 {
     [self doneLoadingTableViewData];
     if (updated && [self isViewLoaded]) {
         [self.tableView reloadData];
     }
 }
-- (void)entry:(SeafBase *)entry downloadingFailed:(NSUInteger)errCode
+
+- (void)download:(SeafBase *)entry failed:(NSError *)error
 {
     [self doneLoadingTableViewData];
-    if ([_directory hasCache]) {
+    if ([_directory hasCache])
         return;
-    }
-    if (errCode == HTTP_ERR_REPO_PASSWORD_REQUIRED) {
-        NSAssert(0, @"Here should never be reached");
-    } else {
-        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load content of the directory", @"Seafile")];
-        [self.tableView reloadData];
-        Warning("Failed to load directory content %@\n", _directory.name);
-    }
+    
+    [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load content of the directory", @"Seafile")];
+    [self.tableView reloadData];
+    Warning("Failed to load directory content %@\n", _directory.name);
 }
 
 - (void)entry:(SeafBase *)entry repoPasswordSet:(int)ret

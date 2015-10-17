@@ -23,8 +23,9 @@ enum SET_REPO_PASSWORD_RET {
 @end
 
 @protocol SeafDentryDelegate
-- (void)entry:(SeafBase *)entry updated:(BOOL)updated progress:(int)percent;
-- (void)entry:(SeafBase *)entry downloadingFailed:(NSUInteger)errCode;
+- (void)download:(SeafBase *)entry progress:(float)progress;
+- (void)download:(SeafBase *)entry complete:(BOOL)updated;
+- (void)download:(SeafBase *)entry failed:(NSError *)error;
 @end
 
 

@@ -114,11 +114,11 @@ static NSComparator CMP = ^(id obj1, id obj2) {
             self.ooid = curId;
             NSData *data = [Utils JSONEncode:JSON];
             [self savetoCache:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
-            [self.delegate entry:self updated:true progress:100];
+            [self.delegate download:self complete:true];
         } else {
             Debug("Already uptodate oid=%@, path=%@\n", self.ooid, self.path);
             self.state = SEAF_DENTRY_UPTODATE;
-            [self.delegate entry:self updated:NO progress:0];
+            [self.delegate download:self complete:false];
         }
         if (![self.oid isEqualToString:curId]) {
             self.oid = curId;
@@ -152,7 +152,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
                         self.state = SEAF_DENTRY_INIT;
                         if (failure)
                             failure(self);
-                        [self.delegate entry:self downloadingFailed:response.statusCode];
+                        [self.delegate download:self failed:error];
                     }];
 }
 
@@ -289,7 +289,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
     }
 
     BOOL updated = [self handleData:dir.oid data:JSON];
-    [self.delegate entry:self updated:updated progress:100];
+    [self.delegate download:self complete:updated];
     return YES;
 }
 
@@ -313,7 +313,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
                  failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          Warning("resp=%ld\n", (long)response.statusCode);
-         [self.delegate entry:self downloadingFailed:response.statusCode];
+         [self.delegate download:self failed:error];
          if (failure) failure(self);
      }];
 }
@@ -332,7 +332,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
                  failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          Warning("resp=%ld\n", (long)response.statusCode);
-         [self.delegate entry:self downloadingFailed:response.statusCode];
+         [self.delegate download:self failed:error];
      }];
 }
 
@@ -363,7 +363,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
                  failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          Warning("resp=%ld\n", (long)response.statusCode);
-         [self.delegate entry:self downloadingFailed:response.statusCode];
+         [self.delegate download:self failed:error];
      }];
 }
 
@@ -414,7 +414,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
     [file saveAttr:dict flush:flush];
     [self.uploadItems addObject:file];
     _allItems = nil;
-    [self.delegate entry:self updated:true progress:100];
+    [self.delegate download:self complete:true];
 }
 
 - (void)checkUploadFiles
@@ -456,7 +456,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
                  failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          Warning("resp=%ld\n", (long)response.statusCode);
-         [self.delegate entry:self downloadingFailed:response.statusCode];
+         [self.delegate download:self failed:error];
      }];
 }
 
@@ -483,7 +483,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
                  failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          Warning("resp=%ld\n", (long)response.statusCode);
-         [self.delegate entry:self downloadingFailed:response.statusCode];
+         [self.delegate download:self failed:error];
      }];
 }
 
@@ -510,7 +510,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
                  failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          Warning("resp=%ld\n", (long)response.statusCode);
-         [self.delegate entry:self downloadingFailed:response.statusCode];
+         [self.delegate download:self failed:error];
      }];
 }
 

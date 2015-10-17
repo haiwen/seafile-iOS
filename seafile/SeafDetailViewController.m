@@ -166,7 +166,7 @@ enum SHARE_STATUS {
             Debug (@"DownLoading file %@\n", self.preViewItem.previewItemTitle);
             self.progressView.frame = r;
             self.progressView.hidden = NO;
-            [self.progressView configureViewWithItem:self.preViewItem completeness:0];
+            [self.progressView configureViewWithItem:self.preViewItem progress:0];
             break;
         case PREVIEW_FAILED:
             Debug ("Can not preview file %@ %@\n", self.preViewItem.previewItemTitle, self.preViewItem.previewItemURL);
@@ -473,50 +473,55 @@ enum SHARE_STATUS {
 }
 
 #pragma mark - SeafDentryDelegate
-- (void)fileContentLoaded :(SeafFile *)file result:(BOOL)res completeness:(int)percent
+- (void)download:(SeafBase *)entry progress:(float)progress
 {
-    if (_preViewItem != file) return;
-    if (self.state != PREVIEW_DOWNLOADING) {
-        [self refreshView];
+    if (self.state == PREVIEW_PHOTO) {
+        SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
+        if (photo == nil) return;
+        [photo setProgress:progress];
         return;
     }
-
-    if (!res) {
-        [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:@"Failed to download file '%@'",self.preViewItem.previewItemTitle]];
-        [self setPreViewItem:nil master:nil];
-    } else {
-        [self.progressView configureViewWithItem:self.preViewItem completeness:percent];
-        if (percent == 100){
-            [self refreshView];
-        }
-    }
-}
-
-- (void)entry:(SeafBase *)entry updated:(BOOL)updated progress:(int)percent
-{
-     if (self.state == PREVIEW_PHOTO) {
-        SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
-        if (percent == 100) {
-            [photo complete:nil updated:updated];
-        } else
-            [photo setProgress:percent*1.0f/100];
-     } else if (self.state == PREVIEW_DOWNLOADING) {
-         [self fileContentLoaded:(SeafFile *)entry result:YES completeness:percent];
-     }
-}
-
-- (void)entry:(SeafBase *)entry downloadingFailed:(NSUInteger)errCode;
-{
-    Debug("Failed to download %@ : %ld ", entry.name, (long)errCode);
-    if (self.preViewItem != entry) return;
-    if (self.state == PREVIEW_PHOTO) {
-        if (self.preViewItem.hasCache)   return;
-        [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:@"Failed to download file '%@'",self.preViewItem.previewItemTitle]];
-        SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
-        NSError *error = [NSError errorWithDomain:[NSString stringWithFormat:@"Failed to download file '%@'",self.preViewItem.previewItemTitle] code:-1 userInfo:nil];
-        [photo complete:error updated:false];
+    if (_preViewItem != entry) return;
+    if (self.state != PREVIEW_DOWNLOADING) {
+        [self refreshView];
     } else
-        [self fileContentLoaded:(SeafFile *)entry result:NO completeness:0];
+        [self.progressView configureViewWithItem:self.preViewItem progress:progress];
+}
+
+- (void)download:(SeafBase *)entry complete:(BOOL)updated
+{
+    if (self.state == PREVIEW_PHOTO) {
+        SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
+        if (photo == nil)
+            return;
+        [photo complete:updated error:nil];
+        return;
+    }
+    if (_preViewItem != entry) return;
+    [self refreshView];
+}
+- (void)download:(SeafBase *)entry failed:(NSError *)error
+{
+    Debug("Failed to download %@ : %@ ", entry.name, error);
+    if (self.state == PREVIEW_PHOTO) {
+        SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
+        if (photo == nil) return;
+        [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:@"Failed to download file '%@'",self.preViewItem.previewItemTitle]];
+        NSError *error = [NSError errorWithDomain:[NSString stringWithFormat:@"Failed to download file '%@'",self.preViewItem.previewItemTitle] code:-1 userInfo:nil];
+        [photo complete:false error:error];
+        return;
+    }
+    if (self.preViewItem != entry || self.preViewItem.hasCache)
+        return;
+    Debug("...");
+
+    [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:@"Failed to download file '%@'", self.preViewItem.previewItemTitle]];
+    [self setPreViewItem:nil master:nil];
+    /* TODO
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5), dispatch_get_main_queue(),  ^{
+        Debug("...");
+        [self setPreViewItem:nil master:nil];
+    });*/
 }
 
 #pragma mark - file operations

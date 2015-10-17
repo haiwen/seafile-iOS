@@ -36,7 +36,7 @@
     return self;
 }
 
-- (void)configureViewWithItem:(id<QLPreviewItem, SeafPreView>)item completeness:(int)percent
+- (void)configureViewWithItem:(id<QLPreviewItem, SeafPreView>)item progress:(float)progress
 {
     if (_item != item) {
         _item = item;
@@ -44,7 +44,7 @@
         self.nameLabel.text = item.previewItemTitle;
     }
     dispatch_async(dispatch_get_main_queue(), ^{
-        _progress.progress = percent * 1.0f/100;
+        _progress.progress = progress;
     });
 }
 

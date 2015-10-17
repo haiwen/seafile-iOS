@@ -15,5 +15,5 @@
 - (id)initWithSeafPreviewIem:(id<SeafPreView>)file;
 
 - (void)setProgress: (float)progress;
-- (void)complete:(NSError *)error updated:(BOOL)updated;
+- (void)complete:(BOOL)updated error:(NSError *)error;
 @end

@@ -337,49 +337,54 @@
         [self.tableView reloadData];
 }
 #pragma mark - SeafDentryDelegate
-- (void)entry:(SeafBase *)entry updated:(BOOL)updated progress:(int)percent
+- (void)download:(SeafBase *)entry progress:(float)progress
 {
     if (![self isViewLoaded])
         return;
-
+    if (entry != self.sfile)
+        return;
+    
+    NSUInteger index = [_directory.allItems indexOfObject:entry];
+    if (index == NSNotFound)
+        return;
+    self.progressView.progress = progress;
+}
+- (void)download:(SeafBase *)entry complete:(BOOL)updated
+{
+    if (![self isViewLoaded])
+        return;
+    if (_directory == entry)
+        [self refreshView];
+    if (entry != self.sfile)
+        return;
+    NSUInteger index = [_directory.allItems indexOfObject:entry];
+    if (index == NSNotFound)
+        return;
+    [self.alert dismissViewControllerAnimated:NO completion:^{
+        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
+        //[self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+        [self tableView:self.tableView didSelectRowAtIndexPath:indexPath];
+    }];
+}
+- (void)download:(SeafBase *)entry failed:(NSError *)error
+{
     if (_directory == entry) {
-        if (updated && percent == 100)
-            [self refreshView];
-    } else {
-        if (entry != self.sfile) return;
+        Warning("Failed to load directory content %@\n", entry.name);
+        if ([_directory hasCache])
+            return;
+    }
+    if (entry != self.sfile) return;
+
+    [self.alert dismissViewControllerAnimated:NO completion:^{
         NSUInteger index = [_directory.allItems indexOfObject:entry];
         if (index == NSNotFound)
             return;
-        self.progressView.progress = percent * 1.0f/100.f;
-        if (percent == 100) {
-            [self.alert dismissViewControllerAnimated:NO completion:^{
-                NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
-                //[self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
-                [self tableView:self.tableView didSelectRowAtIndexPath:indexPath];
-            }];
-        }
-    }
-}
-- (void)entry:(SeafBase *)entry downloadingFailed:(NSUInteger)errCode
-{
-    if (_directory == entry) {
-        if ([_directory hasCache])
-            return;
-
-        Warning("Failed to load directory content %@\n", entry.name);
-    } else {
-        if (entry != self.sfile) return;
-        [self.alert dismissViewControllerAnimated:NO completion:^{
-            NSUInteger index = [_directory.allItems indexOfObject:entry];
-            if (index == NSNotFound)
-                return;
-            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
-            [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
-            Warning("Failed to download file %@\n", entry.name);
-            NSString *msg = [NSString stringWithFormat:@"Failed to download file '%@'", entry.name];
-            [self alertWithTitle:msg handler:nil];
-        }];
-    }
+        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
+        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+        Warning("Failed to download file %@\n", entry.name);
+        NSString *msg = [NSString stringWithFormat:@"Failed to download file '%@'", entry.name];
+        [self alertWithTitle:msg handler:nil];
+    }];
 }
 
 - (void)entry:(SeafBase *)entry repoPasswordSet:(int)ret

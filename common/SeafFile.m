@@ -96,7 +96,7 @@
     _mtime = file.mtime;
     self.state = SEAF_DENTRY_INIT;
     [self loadCache];
-    [self.delegate entry:self updated:YES progress:100];
+    [self.delegate download:self complete:true];
 }
 
 - (void)setOoid:(NSString *)ooid
@@ -132,7 +132,7 @@
     self.state = SEAF_DENTRY_UPTODATE;
     self.oid = self.ooid;
     [self savetoCache];
-    [self.delegate entry:self updated:updated progress:100];
+    [self.delegate download:self complete:updated];
 }
 
 - (void)failedDownload:(NSError *)error
@@ -140,7 +140,7 @@
     [self clearDownloadContext];
     [SeafGlobal.sharedObject finishDownload:self result:false];
     self.state = SEAF_DENTRY_INIT;
-    [self.delegate entry:self downloadingFailed:error.code];
+    [self.delegate download:self failed:error];
 }
 
 - (void)finishDownloadThumb:(BOOL)success
@@ -148,10 +148,10 @@
     _thumbtask = nil;
     if (success) {
         _icon = nil;
-        [self.delegate entry:self updated:false progress:100];
+        [self.delegate download:self complete:false];
     } else if (!_icon && self.image) {
         _icon = [Utils reSizeImage:self.image toSquare:THUMB_SIZE];
-        [self.delegate entry:self updated:false progress:100];
+        [self.delegate download:self complete:false];
     }
 }
 
@@ -211,7 +211,7 @@
                     failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          self.state = SEAF_DENTRY_INIT;
-         [self.delegate entry:self downloadingFailed:response.statusCode];
+         [self.delegate download:self failed:error];
      }];
 }
 
@@ -244,13 +244,13 @@
 {
     if (!self.downloadingFileOid || ![keyPath isEqualToString:@"fractionCompleted"] || ![object isKindOfClass:[NSProgress class]]) return;
     NSProgress *progress = (NSProgress *)object;
-    int percent = 0;
+    float percent;
     if (self.blks) {
-        percent = MIN((progress.fractionCompleted + self.index) *100.0f/self.blks.count, 99);
+        percent = (progress.fractionCompleted + self.index) *1.0f/self.blks.count;
     } else {
-        percent = MIN(progress.fractionCompleted * 100, 99);
+        percent = progress.fractionCompleted;
     }
-    [self.delegate entry:self updated:false progress:percent];
+    [self.delegate download:self progress:percent];
 }
 
 - (int)checkoutFile
@@ -289,7 +289,8 @@
             for (NSString *blk_id in self.blks)
                 [[NSFileManager defaultManager] removeItemAtPath:[SeafGlobal.sharedObject blockPath:blk_id] error:nil];
             self.blks = nil;
-            [self failedDownload:nil];
+            NSError *error = [NSError errorWithDomain:@"Faile to checkout out file" code:-1 userInfo:nil];
+            [self failedDownload:error];
             return;
         }
         [self finishDownload:self.downloadingFileOid];
@@ -374,7 +375,7 @@
                     failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          self.state = SEAF_DENTRY_INIT;
-         [self.delegate entry:self downloadingFailed:response.statusCode];
+         [self.delegate download:self failed:error];
      }];
 }
 

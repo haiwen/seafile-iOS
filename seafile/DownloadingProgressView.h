@@ -17,7 +17,7 @@
 @property (strong, nonatomic) IBOutlet UILabel *nameLabel;
 @property (strong, nonatomic) IBOutlet UIProgressView *progress;
 
-- (void)configureViewWithItem:(id<SeafPreView>)item completeness:(int)percent;
+- (void)configureViewWithItem:(id<QLPreviewItem, SeafPreView>)item progress:(float)progress;
 
 @property (strong, nonatomic) IBOutlet UIButton *cancelBt;
 
