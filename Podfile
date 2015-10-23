@@ -7,8 +7,8 @@ end
 
 target :"seafile-appstore" do
   pod 'EGOTableViewPullRefresh', '~> 0.1.0'
-  pod 'MWPhotoBrowser', '~> 2.1.1'
   pod 'SVProgressHUD', '~> 1.1.3'
+  pod 'MWPhotoBrowser', :git => 'https://github.com/haiwen/MWPhotoBrowser.git', :branch => 'dev'
   shared
 end
 

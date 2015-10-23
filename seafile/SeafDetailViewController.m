@@ -475,13 +475,14 @@ enum SHARE_STATUS {
 #pragma mark - SeafDentryDelegate
 - (void)download:(SeafBase *)entry progress:(float)progress
 {
+    if (_preViewItem != entry) return;
+
     if (self.state == PREVIEW_PHOTO) {
         SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
         if (photo == nil) return;
         [photo setProgress:progress];
         return;
     }
-    if (_preViewItem != entry) return;
     if (self.state != PREVIEW_DOWNLOADING) {
         [self refreshView];
     } else
@@ -513,15 +514,9 @@ enum SHARE_STATUS {
     }
     if (self.preViewItem != entry || self.preViewItem.hasCache)
         return;
-    Debug("...");
 
     [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:@"Failed to download file '%@'", self.preViewItem.previewItemTitle]];
     [self setPreViewItem:nil master:nil];
-    /* TODO
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5), dispatch_get_main_queue(),  ^{
-        Debug("...");
-        [self setPreViewItem:nil master:nil];
-    });*/
 }
 
 #pragma mark - file operations
@@ -865,14 +860,16 @@ enum SHARE_STATUS {
     if (!_mwPhotoBrowser) {
         _mwPhotoBrowser = [[MWPhotoBrowser alloc] initWithDelegate:self];
         _mwPhotoBrowser.displayActionButton = false;
-        _mwPhotoBrowser.displayNavArrows = true;
+        _mwPhotoBrowser.displayNavArrows = false;
         _mwPhotoBrowser.displaySelectionButtons = false;
         _mwPhotoBrowser.alwaysShowControls = false;
         _mwPhotoBrowser.zoomPhotosToFill = YES;
         _mwPhotoBrowser.enableGrid = true;
         _mwPhotoBrowser.startOnGrid = false;
         _mwPhotoBrowser.enableSwipeToDismiss = true;
-        _mwPhotoBrowser.autoPlayOnAppear = true;
+        _mwPhotoBrowser.backgroundColor = [UIColor whiteColor];
+        _mwPhotoBrowser.trackTintColor = SEAF_COLOR_LIGHT;
+        _mwPhotoBrowser.progressColor = SEAF_COLOR_DARK;
     }
     return _mwPhotoBrowser;
 }
