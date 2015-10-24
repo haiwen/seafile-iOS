@@ -54,21 +54,20 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.1.2</string>
+	<string>2.1.3</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>Seafile can periodically start Camera Upload when your location changes</string>
-    <key>NSAppTransportSecurity</key>
-    <dict>
-      <!--Include to allow all connections (DANGER)-->
-      <key>NSAllowsArbitraryLoads</key>
-      <true/>
-    </dict>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
