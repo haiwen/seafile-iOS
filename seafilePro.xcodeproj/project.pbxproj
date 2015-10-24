@@ -2166,8 +2166,8 @@
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro;
 				PRODUCT_NAME = SeafilePro;
-				PROVISIONING_PROFILE = "e12163e8-87dc-4fc6-a30b-aa054cb3eb9b";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "e12163e8-87dc-4fc6-a30b-aa054cb3eb9b";
+				PROVISIONING_PROFILE = "60b6abe4-52cf-4893-800f-7a586a0a0bcb";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "60b6abe4-52cf-4893-800f-7a586a0a0bcb";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
@@ -2226,7 +2226,7 @@
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "f28cb229-ecbb-4f29-88f6-3959b0d152dc";
+				PROVISIONING_PROFILE = "ddcbea8a-447a-4214-bb62-46ee0af6e24f";
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -2288,8 +2288,8 @@
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "9ca34892-add4-4cf8-8874-f922682c8fee";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "9ca34892-add4-4cf8-8874-f922682c8fee";
+				PROVISIONING_PROFILE = "c99c91b4-222c-4d2e-abc2-b60e0fa85713";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "c99c91b4-222c-4d2e-abc2-b60e0fa85713";
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -2363,8 +2363,8 @@
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "";
 				"PRIVATE_HEADERS_FOLDER_PATH[sdk=*]" = "";
-				PROVISIONING_PROFILE = "f28cb229-ecbb-4f29-88f6-3959b0d152dc";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "f28cb229-ecbb-4f29-88f6-3959b0d152dc";
+				PROVISIONING_PROFILE = "c99c91b4-222c-4d2e-abc2-b60e0fa85713";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "c99c91b4-222c-4d2e-abc2-b60e0fa85713";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
