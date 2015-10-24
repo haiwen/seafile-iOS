@@ -187,10 +187,7 @@
             return;
         }
         [repo setDelegate:self];
-        if ([repo->connection localDecrypt:repo.repoId])
-            [repo checkRepoPassword:input delegate:self];
-        else
-            [repo setRepoPassword:input delegate:self];
+        [repo checkOrSetRepoPassword:input delegate:self];
     } from:self];
 }
 

@@ -298,27 +298,28 @@
         self.blks = nil;
         return;
     }
-    [self performSelector:@selector(downloadBlock:) withObject:url afterDelay:0.0];
+    [self performSelector:@selector(downloadBlocks:) withObject:url afterDelay:0.0];
 }
 
-- (void)downloadBlock:(NSString *)url
+- (void)downloadBlocks:(NSString *)url
 {
     NSString *blk_id = [self.blks objectAtIndex:self.index];
     if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject blockPath:blk_id]])
         return [self finishBlock:url];
     NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:[url stringByAppendingString:blk_id]]];
+    Debug("URL: %@", downloadRequest.URL);
     NSProgress *progress = nil;
     NSString *target = [SeafGlobal.sharedObject blockPath:blk_id];
     NSURLSessionDownloadTask *task = [connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:&progress destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
         return [NSURL fileURLWithPath:target];
     } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
         if (error) {
-            Debug("error=%@", error);
+            Warning("error=%@", error);
             self.index = 0;
             self.blks = nil;
             [self failedDownload:error];
         } else {
-            Debug("Successfully downloaded file:%@", self.name);
+            Debug("Successfully downloaded file %@ block:%@", self.name, blk_id);
             if (![filePath.path isEqualToString:target]) {
                 [[NSFileManager defaultManager] removeItemAtPath:target error:nil];
                 [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
@@ -368,8 +369,8 @@
              repo.encrypted = [[JSON objectForKey:@"encrypted"] booleanValue:repo.encrypted];
              repo.encVersion = (int)[[JSON objectForKey:@"enc_version"] integerValue:repo.encVersion];
              self.index = 0;
-             Debug("blks=%@, encver=%d\n", self.blks, repo.encVersion);
-             [self performSelector:@selector(downloadBlock:) withObject:url afterDelay:0.0];
+             Debug("blks=%@, encversion=%d, url=%@\n", self.blks, repo.encVersion, url);
+             [self performSelector:@selector(downloadBlocks:) withObject:url afterDelay:0.0];
          }
      }
                     failure:
@@ -381,7 +382,8 @@
 
 - (void)download
 {
-    if (false)
+    Debug("Local decrypt: %d", self.localDecrypt);
+    if (self.localDecrypt)
         [self downloadByBlocks];
     else
         [self downloadByFile];

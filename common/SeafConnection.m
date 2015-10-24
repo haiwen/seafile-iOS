@@ -304,7 +304,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (NSString *)getRepoPassword:(NSString *)repoId
 {
     NSDictionary *repopasswds = (NSDictionary*)[_info objectForKey:@"repopassword"];
-    Debug("get repo %@ password %@", repoId, repopasswds);
     if (repopasswds)
         return [repopasswds objectForKey:repoId];
     return nil;
@@ -387,13 +386,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (BOOL)localDecrypt:(NSString *)repoId
 {
-#if 0
     SeafRepo *repo = [self getRepo:repoId];
-    Debug("local encrpt %d %d", repo.encrypted, repo.encVersion);
-    return repo.encrypted && repo.encVersion >= 2 && repo.magic;
-#else
-    return false;
-#endif
+    return repo.localDecrypt;
 }
 
 - (void)clearAccount
@@ -536,6 +530,13 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure
 {
     [self sendRequestAsync:url method:@"GET" form:nil success:success failure:failure];
+}
+
+- (void)sendOptions:(NSString *)url
+            success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
+            failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure
+{
+    [self sendRequestAsync:url method:@"OPTIONS" form:nil success:success failure:failure];
 }
 
 - (void)sendDelete:(NSString *)url
@@ -1172,11 +1173,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         };
 
         NSString *password = [repopasswds objectForKey:repoId];
-        if ([repo->connection localDecrypt:repo.repoId]) {
-            [repo checkRepoPassword:password block:block];
-        } else {
-            [repo setRepoPassword:password block:block];
-        }
+        [repo checkOrSetRepoPassword:password block:block];
     }
 }
 - (void)clearRepoPasswords

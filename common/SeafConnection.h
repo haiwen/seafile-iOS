@@ -103,6 +103,10 @@ enum MSG_TYPE{
          success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
          failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure;
 
+- (void)sendOptions:(NSString *)url
+            success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
+            failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure;
+
 - (void)loginWithUsername:(NSString *)username password:(NSString *)password;
 -(void)setToken:(NSString *)token forUser:(NSString *)username isShib:(BOOL)isshib;
 

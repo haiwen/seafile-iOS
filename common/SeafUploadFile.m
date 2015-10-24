@@ -200,7 +200,9 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         }
         [formData appendPartWithFormData:[uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"parent_dir"];
         [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
-        [formData appendPartWithFileURL:[NSURL fileURLWithPath:self.lpath] name:@"file" error:nil];
+        NSError *error = nil;
+        [formData appendPartWithFileURL:[NSURL fileURLWithPath:self.lpath] name:@"file" error:&error];
+        Debug("error: %@", error);
     } error:nil];
     [self uploadRequest:request withConnection:connection];
 }
@@ -249,6 +251,9 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         [formData appendPartWithFormData:[uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"parent_dir"];
         [formData appendPartWithFormData:[self.name dataUsingEncoding:NSUTF8StringEncoding] name:@"file_name"];
         [formData appendPartWithFormData:[[NSString stringWithFormat:@"%lld", [Utils fileSizeAtPath1:self.lpath]] dataUsingEncoding:NSUTF8StringEncoding] name:@"file_size"];
+        [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
+
+        Debug("surl:%@ parent_dir:%@", surl, uploadpath);
         for (NSString *path in paths) {
             [formData appendPartWithFileURL:[NSURL fileURLWithPath:path] name:@"file" error:nil];
         }
@@ -269,7 +274,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     _filesize = attrs.fileSize;
     [_delegate uploadProgress:self result:YES progress:0];
     SeafRepo *repo = [connection getRepo:repoId];
-    BOOL byblock = [connection localDecrypt:repoId];
+    BOOL byblock = repo.localDecrypt;
     NSString* upload_url = [NSString stringWithFormat:API_URL"/repos/%@/upload-", repoId];
     if (byblock)
         upload_url = [upload_url stringByAppendingString:@"blks-link/"];
@@ -279,7 +284,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     upload_url = [upload_url stringByAppendingFormat:@"?p=%@", uploadpath.escapedUrl];
     [connection sendRequest:upload_url success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-         NSString *url = JSON;
+         NSString *url = [JSON stringByAppendingString:@"?ret-json=true"];
          Debug("Upload file %@ %@, %@ update=%d, byblock=%d, delegate%@\n", self.name, url, uploadpath, self.update, byblock, _delegate);
          if (byblock) {
              NSMutableArray *blockids = [[NSMutableArray alloc] init];
@@ -291,7 +296,6 @@ static NSMutableDictionary *uploadFileAttrs = nil;
                  [self finishUpload:NO oid:nil];
              }
          } else {
-             url = [url stringByAppendingString:@"?ret-json=true"];
              [self uploadByFile:connection url:url path:uploadpath update:self.update];
          }
      }
