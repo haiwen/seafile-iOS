@@ -199,7 +199,7 @@
 #pragma mark - SeafDentryDelegate
 - (void)download:(SeafBase *)entry progress:(float)progress
 {
-    
+
 }
 - (void)download:(SeafBase *)entry complete:(BOOL)updated
 {
@@ -214,7 +214,7 @@
     [self doneLoadingTableViewData];
     if ([_directory hasCache])
         return;
-    
+
     [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load content of the directory", @"Seafile")];
     [self.tableView reloadData];
     Warning("Failed to load directory content %@\n", _directory.name);

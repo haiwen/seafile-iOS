@@ -73,6 +73,8 @@
 		573F4AAC1788763500F096D3 /* arrowleft.png in Resources */ = {isa = PBXBuildFile; fileRef = 573F4AA91788763500F096D3 /* arrowleft.png */; };
 		573F4AAE1788763500F096D3 /* arrowright.png in Resources */ = {isa = PBXBuildFile; fileRef = 573F4AAA1788763500F096D3 /* arrowright.png */; };
 		574DF02C1AF2863E0044FE06 /* SeafShibbolethViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 574DF02A1AF2863E0044FE06 /* SeafShibbolethViewController.xib */; };
+		574F61F71BDB5DB300014EBA /* SeafButtonCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 574F61F51BDB5DB300014EBA /* SeafButtonCell.m */; settings = {ASSET_TAGS = (); }; };
+		574F61F81BDB5DB300014EBA /* SeafButtonCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 574F61F61BDB5DB300014EBA /* SeafButtonCell.xib */; settings = {ASSET_TAGS = (); }; };
 		57532C1A1868AA48003D564B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 57532C161868AA48003D564B /* Localizable.strings */; };
 		5757DCCD1AEBCF1600BC0426 /* SeafShibbolethViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5757DCCB1AEBCF1600BC0426 /* SeafShibbolethViewController.m */; };
 		576B99071861411700A16ED6 /* EGOTextView.m in Sources */ = {isa = PBXBuildFile; fileRef = 576B98FC1861411700A16ED6 /* EGOTextView.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
@@ -439,6 +441,9 @@
 		573F4AAA1788763500F096D3 /* arrowright.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = arrowright.png; sourceTree = "<group>"; };
 		574456821774922B00EA46A6 /* SeafAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafAppDelegate.h; sourceTree = "<group>"; };
 		574DF02B1AF2863E0044FE06 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/SeafShibbolethViewController.xib; sourceTree = "<group>"; };
+		574F61F41BDB5DB300014EBA /* SeafButtonCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafButtonCell.h; sourceTree = "<group>"; };
+		574F61F51BDB5DB300014EBA /* SeafButtonCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafButtonCell.m; sourceTree = "<group>"; };
+		574F61F61BDB5DB300014EBA /* SeafButtonCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafButtonCell.xib; sourceTree = "<group>"; };
 		5752494D18C6EA7700352647 /* hu */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hu; path = hu.lproj/Localizable.strings; sourceTree = "<group>"; };
 		57532C171868AA48003D564B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		57532C181868AA48003D564B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
@@ -960,6 +965,8 @@
 				572B0A7615D16C1C00798C6E /* StartViewController.m */,
 				57655340161D83CF005E5327 /* UIViewController+Extend.h */,
 				57655341161D848F005E5327 /* UIViewController+Extend.m */,
+				574F61F41BDB5DB300014EBA /* SeafButtonCell.h */,
+				574F61F51BDB5DB300014EBA /* SeafButtonCell.m */,
 			);
 			name = views;
 			sourceTree = "<group>";
@@ -1014,6 +1021,7 @@
 				57E22B0B1A12625B00C92330 /* SeafTextEditorViewController_iPhone.xib */,
 				57E22B0D1A12625C00C92330 /* SeafUploadDirViewController.xib */,
 				57E22B0F1A12625C00C92330 /* SeafUploadingFileCell.xib */,
+				574F61F61BDB5DB300014EBA /* SeafButtonCell.xib */,
 			);
 			name = ui;
 			sourceTree = "<group>";
@@ -1637,6 +1645,7 @@
 				57BFAAEF18BD8EA200EB1B5C /* bt-asterisk2.png in Resources */,
 				57BFAAFA18BD8EA200EB1B5C /* bt-indent.png in Resources */,
 				57A550EA177F311700E3BA9B /* plus.png in Resources */,
+				574F61F81BDB5DB300014EBA /* SeafButtonCell.xib in Resources */,
 				57943C0E19F027D5008423E5 /* plus@2x.png in Resources */,
 				57E228B71A0E403A00C92330 /* QBImagePickerController.bundle in Resources */,
 				57BFAAFE18BD8EA200EB1B5C /* bt-justify.png in Resources */,
@@ -1838,6 +1847,7 @@
 			files = (
 				57E22AB11A1113B900C92330 /* ColorfulButton.m in Sources */,
 				57E22AB01A110DFA00C92330 /* Utils.m in Sources */,
+				574F61F71BDB5DB300014EBA /* SeafButtonCell.m in Sources */,
 				57E22AAF1A110DEB00C92330 /* SeafUploadFile.m in Sources */,
 				57E22AAE1A110DE200C92330 /* SeafStarredFile.m in Sources */,
 				57E22AAD1A110DD800C92330 /* SeafDateFormatter.m in Sources */,

@@ -1179,5 +1179,13 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         }
     }
 }
+- (void)clearRepoPasswords
+{
+    NSDictionary *repopasswds = [_info objectForKey:@"repopassword"];
+    if (repopasswds == nil)
+        return;
+    [_info setObject:[[NSDictionary alloc] init] forKey:@"repopassword"];
+    [self saveAccountInfo];
+}
 
 @end

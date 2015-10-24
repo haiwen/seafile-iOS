@@ -12,6 +12,7 @@
 #import "SeafAccountCell.h"
 #import "UIViewController+Extend.h"
 #import "ColorfulButton.h"
+#import "SeafButtonCell.h"
 #import "Debug.h"
 
 
@@ -57,8 +58,6 @@
         self.edgesForExtendedLayout = UIRectEdgeNone;
     [self setExtraCellLineHidden:self.tableView];
     self.title = NSLocalizedString(@"Accounts", @"Seafile");;
-    UIBarButtonItem *addItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Add account", @"Seafile") style:UIBarButtonItemStyleBordered target:self action:@selector(addAccount:)];
-    self.navigationItem.rightBarButtonItem = addItem;
 
     NSArray *views = [[NSBundle mainBundle] loadNibNamed:@"SeafStartHeaderView" owner:self options:nil];
     UIView *header = [views objectAtIndex:0];
@@ -72,10 +71,10 @@
     msgLabel.text = NSLocalizedString(@"Choose an account to start", @"Seafile");
 
     self.tableView.tableHeaderView = header;
+    self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 
     views = [[NSBundle mainBundle] loadNibNamed:@"SeafStartFooterView" owner:self options:nil];
-
     ColorfulButton *bt = [views objectAtIndex:0];
     [bt addTarget:self action:@selector(goToDefaultBtclicked:) forControlEvents:UIControlEventTouchUpInside];
     bt.layer.cornerRadius = 0;
@@ -139,23 +138,31 @@
     });
 }
 
-- (IBAction)addAccount:(id)sender
+- (IBAction)addAccount:(UIButton *)sender
 {
     pressedIndex = nil;
     NSString *privserver = NSLocalizedString(@"Other Server", @"Seafile");
     UIActionSheet * actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:actionSheetCancelTitle() destructiveButtonTitle:nil otherButtonTitles:SERVER_SEACLOUD_NAME, SERVER_CLOUD_NAME, SERVER_SHIB_NAME, privserver, nil];
-    [SeafAppDelegate showActionSheet:actionSheet fromBarButtonItem:sender];
+
+    if (IsIpad())
+        [actionSheet showFromRect:sender.frame inView:sender animated:true];
+    else
+        [actionSheet showInView:[UIApplication sharedApplication].keyWindow];
+    return;
 }
 
 #pragma mark - Table view data source
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    return 1;
+    return 2;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return SeafGlobal.sharedObject.conns.count;
+    if (section == 0)
+        return SeafGlobal.sharedObject.conns.count;
+    else
+        return 1;
 }
 
 - (void)showEditMenu:(UILongPressGestureRecognizer *)gestureRecognizer
@@ -178,8 +185,30 @@
     [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
 }
 
+- (UITableViewCell *)getAddAccountCell:(UITableView *)tableView
+{
+    NSString *CellIdentifier = @"SeafButtonCell";
+    SeafButtonCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+    if (cell == nil) {
+        NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafButtonCell" owner:self options:nil];
+        cell = [cells objectAtIndex:0];
+    }
+    [cell.button setTitle:NSLocalizedString(@"Add account", @"Seafile") forState:UIControlStateNormal];
+    [cell.button setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    cell.button.backgroundColor = SEAF_COLOR_DARK;
+    cell.button.bounds = CGRectMake(0, 0, 339, 64);
+    cell.button.layer.cornerRadius = 1;
+    cell.button.clipsToBounds = YES;
+    [cell.button addTarget:self action:@selector(addAccount:) forControlEvents:UIControlEventTouchUpInside];
+
+    return cell;
+}
+
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    if (indexPath.section == 1) {
+        return [self getAddAccountCell:tableView];
+    }
     NSString *CellIdentifier = @"SeafileAccountCell";
     SeafAccountCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
@@ -215,6 +244,9 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    if (indexPath.section == 1)
+        return;
+
     @try {
         SeafConnection *conn = [SeafGlobal.sharedObject.conns objectAtIndex:indexPath.row];
         [self selectAccount:conn];

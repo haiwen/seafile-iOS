@@ -611,10 +611,7 @@ enum SHARE_STATUS {
         for (NSString *title in arr) {
             [self.actionSheet addButtonWithTitle:title];
         }
-        if (IsIpad())
-            [self.actionSheet showFromBarButtonItem:item animated:YES];
-        else
-            [self.actionSheet showInView:[UIApplication sharedApplication].keyWindow];
+        [SeafAppDelegate showActionSheet:self.actionSheet fromBarButtonItem:item];
     }
 }
 

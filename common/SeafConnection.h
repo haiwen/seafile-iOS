@@ -152,6 +152,8 @@ enum MSG_TYPE{
 - (void)downloadDir:(SeafDir *)dir;
 
 - (void)refreshRepoPassowrds;
+- (void)clearRepoPasswords;
+
 + (AFHTTPRequestSerializer <AFURLRequestSerialization> *)requestSerializer;
 
 @end

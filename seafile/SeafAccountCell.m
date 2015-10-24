@@ -30,9 +30,7 @@
 - (void)layoutSubviews
 {
     [super layoutSubviews];
-    if (!IsIpad())
-        return;
-    float indentPoints = (self.frame.size.width - 400)/2;
+    float indentPoints = (self.frame.size.width - 320)/2;
     self.contentView.frame = CGRectMake(
                                         indentPoints,
                                         self.contentView.frame.origin.y,

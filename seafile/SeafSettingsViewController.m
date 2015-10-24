@@ -30,6 +30,7 @@ enum {
     SECTION_ACCOUNT = 0,
     SECTION_CAMERA,
     SECTION_CACHE,
+    SECTION_ENC,
     SECTION_ABOUT,
     SECTION_WIPECACHE,
 };
@@ -39,7 +40,11 @@ enum CAMERA_CELL{
     CELL_WIFIONLY,
     CELL_BACKGROUND,
     CELL_DESTINATION,
-};;
+};
+
+enum ENC_LIBRARIES{
+    CELL_CLEAR_PASSWORD = 0,
+};
 
 #define SEAFILE_SITE @"http://www.seafile.com"
 #define MSG_RESET_UPLOADED NSLocalizedString(@"Do you want reset the uploaded photos?", @"Seafile")
@@ -57,6 +62,7 @@ enum CAMERA_CELL{
 @property (strong, nonatomic) IBOutlet UITableViewCell *websiteCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *videoSyncCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *backgroundSyncCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *clearEncRepoPasswordCell;
 
 @property (strong, nonatomic) IBOutlet UILabel *wipeCacheLabel;
 @property (strong, nonatomic) IBOutlet UILabel *autoCameraUploadLabel;
@@ -230,6 +236,7 @@ enum CAMERA_CELL{
     _serverCell.textLabel.text = NSLocalizedString(@"Server", @"Seafile");
     _versionCell.textLabel.text = NSLocalizedString(@"Version", @"Seafile");
     _wipeCacheLabel.text = NSLocalizedString(@"Wipe Cache", @"Seafile");
+    _clearEncRepoPasswordCell.textLabel.text = NSLocalizedString(@"Clear remembered passwords", @"Seafile");
     self.title = NSLocalizedString(@"Settings", @"Seafile");
 
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
@@ -337,6 +344,10 @@ enum CAMERA_CELL{
         if (indexPath.row == CELL_DESTINATION && self.autoSync) {
             [self popupRepoSelect];
         }
+    } else if (indexPath.section == SECTION_ENC) {
+        if (indexPath.row == CELL_CLEAR_PASSWORD) {
+            [_connection clearRepoPasswords];
+        }
     } else if (indexPath.section == SECTION_ABOUT) {
         _state = (int)indexPath.row;
         switch ((indexPath.row)) {
@@ -384,6 +395,7 @@ enum CAMERA_CELL{
         NSLocalizedString(@"Account Info", @"Seafile"),
         NSLocalizedString(@"Camera Upload", @"Seafile"),
         NSLocalizedString(@"Cache", @"Seafile"),
+        NSLocalizedString(@"Encrypted Libraries", @"Seafile"),
         NSLocalizedString(@"About", @"Seafile"),
         @"",
     };

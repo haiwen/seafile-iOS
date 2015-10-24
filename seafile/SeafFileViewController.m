@@ -513,10 +513,7 @@ enum {
         for (NSString *title in arr) {
             [self.actionSheet addButtonWithTitle:title];
         }
-        if (IsIpad())
-            [self.actionSheet showFromBarButtonItem:item animated:YES];
-        else
-            [self.actionSheet showInView:[UIApplication sharedApplication].keyWindow];
+        [SeafAppDelegate showActionSheet:self.actionSheet fromBarButtonItem:item];
     }
 }
 
@@ -938,7 +935,7 @@ enum {
 #pragma mark - SeafDentryDelegate
 - (void)download:(SeafBase *)entry progress:(float)progress
 {
-    
+
     if ([entry isKindOfClass:[SeafFile class]]) {
         [self.detailViewController download:entry progress:progress];
     }
@@ -968,7 +965,7 @@ enum {
         [self.detailViewController download:entry failed:error];
         return;
     }
-    
+
     NSCAssert([entry isKindOfClass:[SeafDir class]], @"entry must be SeafDir");
     Debug("state=%d %@,%@, %@\n", self.state, entry.path, entry.name, _directory.path);
     if (entry == _directory) {
