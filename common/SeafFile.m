@@ -642,17 +642,8 @@
 
 - (UIImage *)image
 {
-    const int MAX_SIZE = 1024;
     NSString *path = [SeafGlobal.sharedObject documentPath:self.ooid];
-    if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
-        UIImage *image = [UIImage imageWithContentsOfFile:path];
-        if (image.size.width > MAX_SIZE || image.size.height > MAX_SIZE) {
-            UIImage *img =  [Utils reSizeImage:image toSquare:MAX_SIZE];
-            return img;
-        }
-        return image;
-    }
-    return nil;
+    return [Utils imageFromPath:path withMaxSize:IMAGE_MAX_SIZE];
 }
 
 - (long long)filesize

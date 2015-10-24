@@ -374,7 +374,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 {
     if (_asset)
         return [UIImage imageWithCGImage:_asset.defaultRepresentation.fullResolutionImage];
-    return [UIImage imageWithContentsOfFile:self.lpath];
+    return [Utils imageFromPath:self.lpath withMaxSize:IMAGE_MAX_SIZE];
 }
 
 - (NSURL *)exportURL

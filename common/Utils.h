@@ -10,6 +10,7 @@
 #import <AssetsLibrary/AssetsLibrary.h>
 #import <UIKit/UIKit.h>
 
+#define IMAGE_MAX_SIZE 2048
 @interface Utils : NSObject
 
 + (BOOL)checkMakeDir:(NSString *)path;
@@ -40,5 +41,7 @@
 + (void)popupInputView:(NSString *)title placeholder:(NSString *)tip secure:(BOOL)secure handler:(void (^)(NSString *input))handler from:(UIViewController *)c;
 
 + (UIImage *)reSizeImage:(UIImage *)image toSquare:(float)length;
+
++ (UIImage *)imageFromPath:(NSString *)path withMaxSize:(float)length;
 
 @end
