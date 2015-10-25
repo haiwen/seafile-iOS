@@ -240,6 +240,7 @@ enum SHARE_STATUS {
     self.currentPageIndex = [items indexOfObject:item];
     [self.view addSubview:self.mwPhotoBrowser.view];
     self.mwPhotoBrowser.view.frame = CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height);
+    [self.mwPhotoBrowser viewDidAppear:false];
     [self.mwPhotoBrowser setCurrentPhotoIndex:self.currentPageIndex];
     if (IsIpad() && UIInterfaceOrientationIsLandscape(self.interfaceOrientation) && !self.hideMaster && self.masterVc) {
         if (_preViewItem == nil)

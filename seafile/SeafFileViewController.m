@@ -935,7 +935,6 @@ enum {
 #pragma mark - SeafDentryDelegate
 - (void)download:(SeafBase *)entry progress:(float)progress
 {
-
     if ([entry isKindOfClass:[SeafFile class]]) {
         [self.detailViewController download:entry progress:progress];
     }
@@ -1526,7 +1525,6 @@ enum {
 
 - (void)updateEntryCell:(SeafFile *)entry
 {
-    if (!self.isVisible) return;
     NSUInteger index = [_directory.allItems indexOfObject:entry];
     if (index == NSNotFound)
         return;
