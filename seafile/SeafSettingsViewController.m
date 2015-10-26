@@ -7,6 +7,7 @@
 //
 
 #import <QuartzCore/QuartzCore.h>
+#import <SVProgressHUD.h>
 
 #import "SeafAppDelegate.h"
 #import "SeafDetailViewController.h"
@@ -347,6 +348,7 @@ enum ENC_LIBRARIES{
     } else if (indexPath.section == SECTION_ENC) {
         if (indexPath.row == CELL_CLEAR_PASSWORD) {
             [_connection clearRepoPasswords];
+            [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Clear libraries passwords successfully.", @"Seafile")];
         }
     } else if (indexPath.section == SECTION_ABOUT) {
         _state = (int)indexPath.row;

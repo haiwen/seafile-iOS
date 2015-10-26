@@ -88,6 +88,9 @@
     self.footer = bt;
     [self.view addSubview:bt];
     self.footer.hidden = YES;
+    self.tableView.sectionHeaderHeight = 20;
+    [self.tableView reloadData];
+
 }
 
 - (BOOL)checkLastAccount
@@ -238,6 +241,11 @@
 - (UITableViewCellEditingStyle)tableView:(UITableView *)tableView editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     return UITableViewCellEditingStyleNone;
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
+{
+    return [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 20)];
 }
 
 #pragma mark - Table view delegate
