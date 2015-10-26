@@ -58,7 +58,9 @@
         self.edgesForExtendedLayout = UIRectEdgeNone;
     [self setExtraCellLineHidden:self.tableView];
     self.title = NSLocalizedString(@"Accounts", @"Seafile");;
-
+    UIBarButtonItem *addItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Add account", @"Seafile") style:UIBarButtonItemStyleBordered target:self action:@selector(addAccount:)];
+    self.navigationItem.rightBarButtonItem = addItem;
+    
     NSArray *views = [[NSBundle mainBundle] loadNibNamed:@"SeafStartHeaderView" owner:self options:nil];
     UIView *header = [views objectAtIndex:0];
     header.frame = CGRectMake(0,0, self.tableView.frame.size.width, 100);
@@ -141,23 +143,19 @@
     });
 }
 
-- (IBAction)addAccount:(UIButton *)sender
+- (IBAction)addAccount:(id)sender
 {
     pressedIndex = nil;
     NSString *privserver = NSLocalizedString(@"Other Server", @"Seafile");
     UIActionSheet * actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:actionSheetCancelTitle() destructiveButtonTitle:nil otherButtonTitles:SERVER_SEACLOUD_NAME, SERVER_CLOUD_NAME, SERVER_SHIB_NAME, privserver, nil];
 
-    if (IsIpad())
-        [actionSheet showFromRect:sender.frame inView:sender animated:true];
-    else
-        [actionSheet showInView:[UIApplication sharedApplication].keyWindow];
-    return;
+   [SeafAppDelegate showActionSheet:actionSheet fromBarButtonItem:sender];
 }
 
 #pragma mark - Table view data source
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    return 2;
+    return 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
