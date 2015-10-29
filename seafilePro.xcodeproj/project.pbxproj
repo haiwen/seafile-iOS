@@ -73,8 +73,8 @@
 		573F4AAC1788763500F096D3 /* arrowleft.png in Resources */ = {isa = PBXBuildFile; fileRef = 573F4AA91788763500F096D3 /* arrowleft.png */; };
 		573F4AAE1788763500F096D3 /* arrowright.png in Resources */ = {isa = PBXBuildFile; fileRef = 573F4AAA1788763500F096D3 /* arrowright.png */; };
 		574DF02C1AF2863E0044FE06 /* SeafShibbolethViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 574DF02A1AF2863E0044FE06 /* SeafShibbolethViewController.xib */; };
-		574F61F71BDB5DB300014EBA /* SeafButtonCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 574F61F51BDB5DB300014EBA /* SeafButtonCell.m */; settings = {ASSET_TAGS = (); }; };
-		574F61F81BDB5DB300014EBA /* SeafButtonCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 574F61F61BDB5DB300014EBA /* SeafButtonCell.xib */; settings = {ASSET_TAGS = (); }; };
+		574F61F71BDB5DB300014EBA /* SeafButtonCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 574F61F51BDB5DB300014EBA /* SeafButtonCell.m */; };
+		574F61F81BDB5DB300014EBA /* SeafButtonCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 574F61F61BDB5DB300014EBA /* SeafButtonCell.xib */; };
 		57532C1A1868AA48003D564B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 57532C161868AA48003D564B /* Localizable.strings */; };
 		5757DCCD1AEBCF1600BC0426 /* SeafShibbolethViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5757DCCB1AEBCF1600BC0426 /* SeafShibbolethViewController.m */; };
 		576B99071861411700A16ED6 /* EGOTextView.m in Sources */ = {isa = PBXBuildFile; fileRef = 576B98FC1861411700A16ED6 /* EGOTextView.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
@@ -276,7 +276,7 @@
 		57CD9B871B5121CC00D1CC6B /* delete.png in Resources */ = {isa = PBXBuildFile; fileRef = 57CD9B831B5121CC00D1CC6B /* delete.png */; };
 		57D0AD3817914E7900D741BE /* mobile.css in Resources */ = {isa = PBXBuildFile; fileRef = 57D0AD3617914E7900D741BE /* mobile.css */; };
 		57D189D0182E0A380029A797 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 57D189CE182E0A380029A797 /* Images.xcassets */; };
-		57D5F81A1BD2336B006BAD7B /* SeafPhoto.m in Sources */ = {isa = PBXBuildFile; fileRef = 57D5F8191BD2336B006BAD7B /* SeafPhoto.m */; settings = {ASSET_TAGS = (); }; };
+		57D5F81A1BD2336B006BAD7B /* SeafPhoto.m in Sources */ = {isa = PBXBuildFile; fileRef = 57D5F8191BD2336B006BAD7B /* SeafPhoto.m */; };
 		57DA26F5173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DA26F3173E6DFC0003BA31 /* SeafTextEditorViewController.m */; };
 		57E1E8A91737F4D3006601FE /* bootstrap-wysiwyg.js in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E8A51737F4D3006601FE /* bootstrap-wysiwyg.js */; };
 		57E1E8AB1737F4D3006601FE /* bootstrap.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E8A61737F4D3006601FE /* bootstrap.min.js */; };
@@ -1361,6 +1361,7 @@
 				57A0295D1A16F8AC009C9D7B /* Resources */,
 				1294A817B437770A0EDF9C7B /* Embed Pods Frameworks */,
 				1C8919A15E0B111CAB761074 /* Copy Pods Resources */,
+				571617B61BE2695A00792316 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -1381,6 +1382,7 @@
 				57A0296B1A16F8AD009C9D7B /* Resources */,
 				D27E95FD11ED4AD78871ACB1 /* Embed Pods Frameworks */,
 				AAA495551CD2DEAE3C789149 /* Copy Pods Resources */,
+				571617B71BE2696800792316 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -1762,6 +1764,32 @@
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
+		};
+		571617B61BE2695A00792316 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cd \"${CONFIGURATION_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/\"\nif [[ -d \"Frameworks\" ]]; then\nrm -fr Frameworks\nfi";
+		};
+		571617B71BE2696800792316 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cd \"${CONFIGURATION_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/\"\nif [[ -d \"Frameworks\" ]]; then\nrm -fr Frameworks\nfi";
 		};
 		6CE4B3B8DF0B082D27007FF6 /* Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -2168,6 +2196,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				"CODE_SIGN_ENTITLEMENTS[sdk=*]" = seafile/seafile.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
+				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "seafile/seafile-Prefix.pch";
 				HEADER_SEARCH_PATHS = "$(inherited)";
@@ -2193,6 +2222,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Distribution: Seafile Inc. (55LCTZ5354)";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Seafile Inc. (55LCTZ5354)";
+				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "seafile/seafile-Prefix.pch";
 				HEADER_SEARCH_PATHS = "$(inherited)";
@@ -2231,7 +2261,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = SeafProviderFileProvider/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";
@@ -2260,7 +2290,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = SeafProviderFileProvider/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";
@@ -2292,7 +2322,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = SeafProvider/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MTL_ENABLE_DEBUG_INFO = YES;
@@ -2323,7 +2353,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = SeafProvider/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MTL_ENABLE_DEBUG_INFO = NO;
