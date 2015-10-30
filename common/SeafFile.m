@@ -29,7 +29,7 @@
 @property NSURLSessionDownloadTask *thumbtask;
 @property (strong) NSProgress *progress;
 @property (strong) SeafUploadFile *ufile;
-@property (strong) NSArray *blks;
+@property (strong) NSArray *blkids;
 @property int index;
 
 @end
@@ -125,6 +125,8 @@
 
 - (void)finishDownload:(NSString *)ooid
 {
+    self.index = 0;
+    self.blkids = nil;
     [self clearDownloadContext];
     [SeafGlobal.sharedObject finishDownload:self result:true];
     BOOL updated = ![ooid isEqualToString:self.ooid];
@@ -137,6 +139,8 @@
 
 - (void)failedDownload:(NSError *)error
 {
+    self.index = 0;
+    self.blkids = nil;
     [self clearDownloadContext];
     [SeafGlobal.sharedObject finishDownload:self result:false];
     self.state = SEAF_DENTRY_INIT;
@@ -245,8 +249,8 @@
     if (!self.downloadingFileOid || ![keyPath isEqualToString:@"fractionCompleted"] || ![object isKindOfClass:[NSProgress class]]) return;
     NSProgress *progress = (NSProgress *)object;
     float percent;
-    if (self.blks) {
-        percent = (progress.fractionCompleted + self.index) *1.0f/self.blks.count;
+    if (self.blkids) {
+        percent = (progress.fractionCompleted + self.index) *1.0f/self.blkids.count;
     } else {
         percent = progress.fractionCompleted;
     }
@@ -264,7 +268,7 @@
         [[NSFileManager defaultManager] createFileAtPath:tmpPath contents: nil attributes: nil];
     NSFileHandle *handle = [NSFileHandle fileHandleForWritingAtPath:tmpPath];
     [handle truncateFileAtOffset:0];
-    for (NSString *blk_id in self.blks) {
+    for (NSString *blk_id in self.blkids) {
         NSData *data = [[NSData alloc] initWithContentsOfFile:[SeafGlobal.sharedObject blockPath:blk_id]];
         if (password)
             data = [data decrypt:password encKey:repo.encKey version:repo.encVersion];
@@ -279,34 +283,28 @@
     return 0;
 }
 
-- (void)finishBlock:(NSString *)url
+- (void)finishBlock:(NSString *)blkid
 {
     self.index ++;
-    if (self.index >= self.blks.count) {
+    if (self.index >= self.blkids.count) {
         if ([self checkoutFile] < 0) {
             Debug("Faile to checkout out file %@\n", self.downloadingFileOid);
             self.index = 0;
-            for (NSString *blk_id in self.blks)
+            for (NSString *blk_id in self.blkids)
                 [[NSFileManager defaultManager] removeItemAtPath:[SeafGlobal.sharedObject blockPath:blk_id] error:nil];
-            self.blks = nil;
             NSError *error = [NSError errorWithDomain:@"Faile to checkout out file" code:-1 userInfo:nil];
             [self failedDownload:error];
             return;
         }
         [self finishDownload:self.downloadingFileOid];
-        self.index = 0;
-        self.blks = nil;
         return;
     }
-    [self performSelector:@selector(downloadBlocks:) withObject:url afterDelay:0.0];
+    [self performSelector:@selector(downloadBlocks) withObject:nil afterDelay:0.0];
 }
 
-- (void)downloadBlocks:(NSString *)url
+- (void)donwloadBlock:(NSString *)blk_id fromUrl:(NSString *)url
 {
-    NSString *blk_id = [self.blks objectAtIndex:self.index];
-    if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject blockPath:blk_id]])
-        return [self finishBlock:url];
-    NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:[url stringByAppendingString:blk_id]]];
+    NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
     Debug("URL: %@", downloadRequest.URL);
     NSProgress *progress = nil;
     NSString *target = [SeafGlobal.sharedObject blockPath:blk_id];
@@ -315,8 +313,6 @@
     } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
         if (error) {
             Warning("error=%@", error);
-            self.index = 0;
-            self.blks = nil;
             [self failedDownload:error];
         } else {
             Debug("Successfully downloaded file %@ block:%@", self.name, blk_id);
@@ -324,16 +320,34 @@
                 [[NSFileManager defaultManager] removeItemAtPath:target error:nil];
                 [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
             }
-            [self finishBlock:url];
+            [self finishBlock:blk_id];
         }
     }];
     _progress = progress;
     [_progress addObserver:self
-               forKeyPath:@"fractionCompleted"
-                  options:NSKeyValueObservingOptionNew
-                  context:NULL];
+                forKeyPath:@"fractionCompleted"
+                   options:NSKeyValueObservingOptionNew
+                   context:NULL];
     [task resume];
 }
+- (void)downloadBlocks
+{
+    NSString *blk_id = [self.blkids objectAtIndex:self.index];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject blockPath:blk_id]])
+        return [self finishBlock:blk_id];
+    
+    NSString *link = [NSString stringWithFormat:API_URL"/repos/%@/file/%@/downloadblk/%@/", self.repoId, self.downloadingFileOid, blk_id];
+    Debug("link=%@", link);
+    [connection sendRequest:link success:
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+         NSString *url = JSON;
+         [self donwloadBlock:blk_id fromUrl:url];
+     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
+         Warning("error=%@", error);
+         [self failedDownload:error];
+     }];
+}
+
 
 /*
  curl -D a.txt -H 'Cookie:sessionid=7eb567868b5df5b22b2ba2440854589c' http://127.0.0.1:8000/api/file/640fd90d-ef4e-490d-be1c-b34c24040da7/8dd0a3be9289aea6795c1203351691fcc1373fbb/
@@ -344,9 +358,7 @@
     [SeafGlobal.sharedObject incDownloadnum];
     [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@&op=downloadblks", self.repoId, [self.path escapedUrl]] success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-         NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
-         if (!curId)
-             curId = self.oid;
+         NSString *curId = [JSON objectForKey:@"file_id"];
          if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject documentPath:curId]]) {
              Debug("already uptodate oid=%@\n", self.ooid);
              [self finishDownload:curId];
@@ -359,9 +371,8 @@
              }
              self.downloadingFileOid = curId;
          }
-         NSString *url = [[JSON objectForKey:@"url"] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-         self.blks = [JSON objectForKey:@"blklist"];
-         if (self.blks.count <= 0) {
+         self.blkids = [JSON objectForKey:@"blklist"];
+         if (self.blkids.count <= 0) {
              [@"" writeToFile:[SeafGlobal.sharedObject documentPath:self.downloadingFileOid] atomically:YES encoding:NSUTF8StringEncoding error:nil];
              [self finishDownload:self.downloadingFileOid];
          } else {
@@ -369,8 +380,8 @@
              repo.encrypted = [[JSON objectForKey:@"encrypted"] booleanValue:repo.encrypted];
              repo.encVersion = (int)[[JSON objectForKey:@"enc_version"] integerValue:repo.encVersion];
              self.index = 0;
-             Debug("blks=%@, encversion=%d, url=%@\n", self.blks, repo.encVersion, url);
-             [self performSelector:@selector(downloadBlocks:) withObject:url afterDelay:0.0];
+             Debug("blks=%@, encversion=%d\n", self.blkids, repo.encVersion);
+             [self downloadBlocks];
          }
      }
                     failure:
@@ -808,7 +819,7 @@
         [self.task cancel];
         _task = nil;
         self.index = 0;
-        self.blks = nil;
+        self.blkids = nil;
         [SeafGlobal.sharedObject finishDownload:self result:true];
     }
 }
