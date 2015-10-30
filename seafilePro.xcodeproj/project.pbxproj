@@ -2196,7 +2196,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				"CODE_SIGN_ENTITLEMENTS[sdk=*]" = seafile/seafile.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
-				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
+				EMBEDDED_CONTENT_CONTAINS_SWIFT = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "seafile/seafile-Prefix.pch";
 				HEADER_SEARCH_PATHS = "$(inherited)";
@@ -2222,7 +2222,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Distribution: Seafile Inc. (55LCTZ5354)";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Seafile Inc. (55LCTZ5354)";
-				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
+				EMBEDDED_CONTENT_CONTAINS_SWIFT = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "seafile/seafile-Prefix.pch";
 				HEADER_SEARCH_PATHS = "$(inherited)";
