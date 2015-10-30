@@ -6,19 +6,19 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
+#import <MWPhotoBrowser.h>
+#import <SVProgressHUD.h>
+
 #import "SeafAppDelegate.h"
 #import "SeafDetailViewController.h"
 #import "FailToPreview.h"
 #import "DownloadingProgressView.h"
 #import "SeafTextEditorViewController.h"
 #import "SeafUploadFile.h"
-#import "SeafPhotoView.h"
 #import "SeafFileViewController.h"
-#import <MWPhotoBrowser.h>
 
 #import "SeafPhoto.h"
 #import "UIViewController+Extend.h"
-#import "SVProgressHUD.h"
 #import "ExtentedString.h"
 #import "Debug.h"
 
