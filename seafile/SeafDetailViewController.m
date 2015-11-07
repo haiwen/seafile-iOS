@@ -868,6 +868,7 @@ enum SHARE_STATUS {
         _mwPhotoBrowser.backgroundColor = [UIColor whiteColor];
         _mwPhotoBrowser.trackTintColor = SEAF_COLOR_LIGHT;
         _mwPhotoBrowser.progressColor = SEAF_COLOR_DARK;
+        _mwPhotoBrowser.preLoadNum = 3;
     }
     return _mwPhotoBrowser;
 }
