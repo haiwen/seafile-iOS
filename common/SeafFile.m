@@ -336,7 +336,7 @@
     if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject blockPath:blk_id]])
         return [self finishBlock:blk_id];
     
-    NSString *link = [NSString stringWithFormat:API_URL"/repos/%@/file/%@/downloadblk/%@/", self.repoId, self.downloadingFileOid, blk_id];
+    NSString *link = [NSString stringWithFormat:API_URL"/repos/%@/files/%@/blks/%@/download-link/", self.repoId, self.downloadingFileOid, blk_id];
     Debug("link=%@", link);
     [connection sendRequest:link success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
