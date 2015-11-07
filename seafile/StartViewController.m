@@ -58,8 +58,6 @@
         self.edgesForExtendedLayout = UIRectEdgeNone;
     [self setExtraCellLineHidden:self.tableView];
     self.title = NSLocalizedString(@"Accounts", @"Seafile");;
-    UIBarButtonItem *addItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Add account", @"Seafile") style:UIBarButtonItemStyleBordered target:self action:@selector(addAccount:)];
-    self.navigationItem.rightBarButtonItem = addItem;
     
     NSArray *views = [[NSBundle mainBundle] loadNibNamed:@"SeafStartHeaderView" owner:self options:nil];
     UIView *header = [views objectAtIndex:0];
@@ -149,13 +147,13 @@
     NSString *privserver = NSLocalizedString(@"Other Server", @"Seafile");
     UIActionSheet * actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:actionSheetCancelTitle() destructiveButtonTitle:nil otherButtonTitles:SERVER_SEACLOUD_NAME, SERVER_CLOUD_NAME, SERVER_SHIB_NAME, privserver, nil];
 
-   [SeafAppDelegate showActionSheet:actionSheet fromBarButtonItem:sender];
+    [actionSheet showInView:self.tableView];
 }
 
 #pragma mark - Table view data source
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    return 1;
+    return 2;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
@@ -200,6 +198,7 @@
     cell.button.bounds = CGRectMake(0, 0, 339, 64);
     cell.button.layer.cornerRadius = 1;
     cell.button.clipsToBounds = YES;
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
     [cell.button addTarget:self action:@selector(addAccount:) forControlEvents:UIControlEventTouchUpInside];
 
     return cell;
