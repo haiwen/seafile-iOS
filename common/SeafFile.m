@@ -51,7 +51,6 @@
         _filesize = size;
         self.downloadingFileOid = nil;
         self.task = nil;
-        [self realLoadCache];
     }
     return self;
 }
@@ -701,7 +700,7 @@
 
 - (void)setMpath:(NSString *)mpath
 {
-    Debug("filesize=%lld mtime=%lld, mpath=%@", self.filesize, self.mtime, mpath);
+    //Debug("filesize=%lld mtime=%lld, mpath=%@", self.filesize, self.mtime, mpath);
     @synchronized (self) {
         _mpath = mpath;
         [self savetoCache];
@@ -833,6 +832,7 @@
 
 - (void)uploadSucess:(SeafUploadFile *)file oid:(NSString *)oid
 {
+    Debug("%@ file %@ upload success oid: %@, %@", self, self.name, oid, self.udelegate);
     id<SeafFileUpdateDelegate> dg = self.udelegate;
     self.ufile = nil;
     self.udelegate = nil;

@@ -84,7 +84,7 @@
         [SeafGlobal.sharedObject loadAccounts];
     SeafConnection *conn = [SeafGlobal.sharedObject getConnection:[dict objectForKey:@"conn_url"] username:[dict objectForKey: @"conn_username"]];
     NSString *path = [dict objectForKey:@"path"];
-    SeafFile *file =   [[SeafFile alloc] initWithConnection:conn oid:[dict objectForKey:@"id"] repoId:[dict objectForKey:@"repoid"] name:path.lastPathComponent path:path mtime:[[dict objectForKey:@"mtime"] integerValue:0] size:[[dict objectForKey:@"size"] integerValue:0]];
+    SeafFile *file = [[SeafFile alloc] initWithConnection:conn oid:[dict objectForKey:@"id"] repoId:[dict objectForKey:@"repoid"] name:path.lastPathComponent path:path mtime:[[dict objectForKey:@"mtime"] integerValue:0] size:[[dict objectForKey:@"size"] integerValue:0]];
     [file itemChangedAtURL:url];
 }
 

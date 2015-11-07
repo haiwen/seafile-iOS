@@ -413,7 +413,7 @@ enum {
     if (_directory.uploadItems.count > 0)
         Debug("Upload %lu, state=%d", (unsigned long)_directory.uploadItems.count, self.state);
 #endif
-    dispatch_time_t time = dispatch_time(DISPATCH_TIME_NOW, 0.5);
+    dispatch_time_t time = dispatch_time(DISPATCH_TIME_NOW, 1);
     dispatch_after(time, dispatch_get_main_queue(), ^(void){
         for (SeafUploadFile *file in _directory.uploadItems) {
             file.delegate = self;
@@ -422,9 +422,9 @@ enum {
                 [[SeafGlobal sharedObject] addUploadTask:file];
             }
         }
+        if ([self isViewLoaded])
+            [_directory loadContent:true];
     });
-    if ([self isViewLoaded])
-       [_directory loadContent:true];
 }
 
 - (void)viewWillDisappear:(BOOL)animated
@@ -876,7 +876,7 @@ enum {
         return;
     }
     if ([_curEntry isKindOfClass:[SeafRepo class]] && [(SeafRepo *)_curEntry passwordRequired]) {
-        [self popupSetRepoPassword:_curEntry];
+        [self popupSetRepoPassword:(SeafRepo *)_curEntry];
         return;
     }
     [_curEntry setDelegate:self];
@@ -1292,7 +1292,6 @@ enum {
     for (NSIndexPath *indexPath in idxs) {
         [entries addObject:[_directory.allItems objectAtIndex:indexPath.row]];
     }
-    Debug("_directory.delegate=%@", _directory.delegate);
     _directory.delegate = self;
     if (self.state == STATE_COPY) {
         [_directory copyEntries:entries dstDir:dir];

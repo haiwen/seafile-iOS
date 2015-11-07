@@ -37,7 +37,7 @@
 
 
 @property (readonly) int uProgress;
-@property id<SeafUploadDelegate> delegate;
+@property (nonatomic) id<SeafUploadDelegate> delegate;
 
 @property (readwrite) SeafDir *udir;
 

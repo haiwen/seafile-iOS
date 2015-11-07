@@ -30,7 +30,6 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 @implementation SeafUploadFile
 
-
 - (id)initWithPath:(NSString *)lpath
 {
     self = [super init];
@@ -202,7 +201,8 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
         NSError *error = nil;
         [formData appendPartWithFileURL:[NSURL fileURLWithPath:self.lpath] name:@"file" error:&error];
-        Debug("error: %@", error);
+        if (error != nil)
+            Debug("error: %@", error);
     } error:nil];
     [self uploadRequest:request withConnection:connection];
 }

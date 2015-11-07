@@ -329,7 +329,7 @@
     }
     CFRelease(destination);
     CFRelease(source);
-    //CFRelease(cgimg);
+    CFRelease(cgimg);
     return success;
 }
 
