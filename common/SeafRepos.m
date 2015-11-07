@@ -118,11 +118,6 @@
     return self;
 }
 
-- (BOOL)checkSorted:(NSArray *)items
-{
-    return YES;
-}
-
 - (void)groupingRepos
 {
     int i;
@@ -147,6 +142,7 @@
     if (repoGroup.count > 0) {
         [_repoGroups addObject:repoGroup];
     }
+    [self reSortItems];
 }
 
 - (BOOL)handleData:(id)JSON
@@ -235,6 +231,13 @@
             return r;
     }
     return nil;
+}
+
+- (void)reSortItems
+{
+    for (NSMutableArray *repoGroup in _repoGroups) {
+        [self sortItems:repoGroup];
+    }
 }
 
 @end

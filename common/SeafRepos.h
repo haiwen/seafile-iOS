@@ -8,7 +8,7 @@
 
 #import "SeafDir.h"
 
-@interface SeafRepo : SeafDir
+@interface SeafRepo : SeafDir<SeafSortable>
 @property (readonly) NSString *repoType;
 @property (readonly, copy) NSString *desc;
 @property (readonly, copy) NSString *owner;

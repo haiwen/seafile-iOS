@@ -87,7 +87,7 @@
 - (void)migrate;
 - (void)assetForURL:(NSURL *)assetURL resultBlock:(ALAssetsLibraryAssetForURLResultBlock)resultBlock failureBlock:(ALAssetsLibraryAccessFailureBlock)failureBlock;
 
-- (NSComparisonResult)compare:(id<SeafPreView>)item with:(id<SeafPreView>)other;
+- (NSComparisonResult)compare:(id<SeafSortable>)obj1 with:(id<SeafSortable>)obj2;
 
 @end
 

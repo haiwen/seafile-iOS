@@ -38,6 +38,7 @@
 - (void)removeUploadFile:(SeafUploadFile *)ufile;
 
 - (void)reSortItems;
+- (void)sortItems:(NSMutableArray *)items;
 - (void)renameFile:(SeafFile *)sfile newName:(NSString *)newName;
 - (void)downloadContentSuccess:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir))failure;
 

@@ -28,9 +28,13 @@ enum SET_REPO_PASSWORD_RET {
 - (void)download:(SeafBase *)entry failed:(NSError *)error;
 @end
 
+@protocol SeafSortable
+- (NSString *)name;
+- (long long)mtime;
+@end
 
 
-@protocol SeafPreView <QLPreviewItem, SeafItem>
+@protocol SeafPreView <QLPreviewItem, SeafItem, SeafSortable>
 - (UIImage *)image;
 - (UIImage *)icon;
 - (NSURL *)exportURL;

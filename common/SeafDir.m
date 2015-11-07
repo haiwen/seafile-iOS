@@ -20,17 +20,15 @@
 
 
 static NSComparator CMP = ^(id obj1, id obj2) {
-    if (([obj1 class] == [SeafDir class]) && ([obj2 class] == [SeafDir class])) {
+    if ([obj1 conformsToProtocol:@protocol(SeafSortable)] && [obj2 conformsToProtocol:@protocol(SeafSortable)]) {
+        return [SeafGlobal.sharedObject compare:obj1 with:obj2];
+    } else if ([obj1 isKindOfClass:[SeafDir class]] && [obj2 isKindOfClass:[SeafDir class]]) {
         return [[(SeafDir *)obj1 name] caseInsensitiveCompare:[(SeafDir *)obj2 name]];
-    } else if (([obj1 class] == [SeafDir class]) || ([obj2 class] == [SeafDir class])) {
+    } else if ([obj1 isKindOfClass:[SeafDir class]] || [obj2 isKindOfClass:[SeafDir class]]) {
         if ([obj1 isKindOfClass:[SeafDir class]]) {
             return NSOrderedAscending;
         } else {
             return NSOrderedDescending;
-        }
-    } else {
-        if ([obj1 conformsToProtocol:@protocol(SeafPreView)] && [obj2 conformsToProtocol:@protocol(SeafPreView)]) {
-            return [SeafGlobal.sharedObject compare:obj1 with:obj2];
         }
     }
     return NSOrderedSame;
@@ -189,8 +187,8 @@ static NSComparator CMP = ^(id obj1, id obj2) {
 {
     int i;
     for (i = 1; i < [items count]; ++i) {
-        id obj1 = (SeafBase*)[items objectAtIndex:i-1];
-        id obj2 = (SeafBase*)[items objectAtIndex:i];
+        id obj1 = [items objectAtIndex:i-1];
+        id obj2 = [items objectAtIndex:i];
         if (CMP(obj1, obj2) == NSOrderedDescending)
             return NO;
     }
@@ -207,12 +205,10 @@ static NSComparator CMP = ^(id obj1, id obj2) {
 - (void)reSortItems
 {
     _allItems = nil;
-    [self sortItems:_items];
 }
 
 - (void)loadedItems:(NSMutableArray *)items
 {
-    [self sortItems:items];
     [self updateItems:items];
 }
 
