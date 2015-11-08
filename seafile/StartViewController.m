@@ -16,13 +16,11 @@
 #import "Debug.h"
 
 
-@interface StartViewController ()
-@property (retain) NSIndexPath *pressedIndex;
+@interface StartViewController ()<SWTableViewCellDelegate>
 @property (retain) ColorfulButton *footer;
 @end
 
 @implementation StartViewController
-@synthesize pressedIndex;
 
 - (void)saveAccount:(SeafConnection *)conn
 {
@@ -54,6 +52,8 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    [self.tableView registerNib:[UINib nibWithNibName:@"SeafAccountCell" bundle:nil] forCellReuseIdentifier:@"SeafAccountCell"];
+
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeNone;
     [self setExtraCellLineHidden:self.tableView];
@@ -143,7 +143,6 @@
 
 - (IBAction)addAccount:(id)sender
 {
-    pressedIndex = nil;
     NSString *privserver = NSLocalizedString(@"Other Server", @"Seafile");
     UIActionSheet * actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:actionSheetCancelTitle() destructiveButtonTitle:nil otherButtonTitles:SERVER_SEACLOUD_NAME, SERVER_CLOUD_NAME, SERVER_SHIB_NAME, privserver, nil];
 
@@ -162,26 +161,6 @@
         return SeafGlobal.sharedObject.conns.count;
     else
         return 1;
-}
-
-- (void)showEditMenu:(UILongPressGestureRecognizer *)gestureRecognizer
-{
-    UIActionSheet *actionSheet;
-
-    NSString *strEdit = NSLocalizedString(@"Edit", @"Seafile");
-    NSString *strDelete = NSLocalizedString(@"Delete", @"Seafile");
-
-    if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
-        return;
-    CGPoint touchPoint = [gestureRecognizer locationInView:self.tableView];
-    pressedIndex = [self.tableView indexPathForRowAtPoint:touchPoint];
-    if (!pressedIndex)
-        return;
-
-    actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:actionSheetCancelTitle() destructiveButtonTitle:nil otherButtonTitles:strEdit, strDelete, nil];
-
-    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:pressedIndex];
-    [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
 }
 
 - (UITableViewCell *)getAddAccountCell:(UITableView *)tableView
@@ -209,7 +188,7 @@
     if (indexPath.section == 1) {
         return [self getAddAccountCell:tableView];
     }
-    NSString *CellIdentifier = @"SeafileAccountCell";
+    NSString *CellIdentifier = @"SeafAccountCell";
     SeafAccountCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafAccountCell" owner:self options:nil];
@@ -219,9 +198,10 @@
     cell.imageview.image = [UIImage imageWithContentsOfFile:conn.avatar];
     cell.serverLabel.text = conn.address;
     cell.emailLabel.text = conn.username;
-    cell.accessoryType = UITableViewCellAccessoryNone;
-    UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditMenu:)];
-    [cell addGestureRecognizer:longPressGesture];
+    //cell.accessoryType = UITableViewCellAccessoryNone;
+    cell.contentView.backgroundColor = [UIColor whiteColor];
+    cell.rightUtilityButtons = self.rightButtons;
+    cell.delegate = self;
     return cell;
 }
 
@@ -263,22 +243,8 @@
 #pragma mark - UIActionSheetDelegate
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
 {
-    if (pressedIndex) {// Long press account
-        if (pressedIndex.row >= SeafGlobal.sharedObject.conns.count) return;
-        if (buttonIndex == 0) {
-            SeafConnection *conn = [[SeafGlobal sharedObject].conns objectAtIndex:pressedIndex.row];
-            int type = conn.isShibboleth ? ACCOUNT_SHIBBOLETH : ACCOUNT_OTHER;
-            [self showAccountView:conn type:type];
-        } else if (buttonIndex == 1) {
-            [[[SeafGlobal sharedObject].conns objectAtIndex:pressedIndex.row] clearAccount];
-            [[SeafGlobal sharedObject].conns removeObjectAtIndex:pressedIndex.row];
-            [[SeafGlobal sharedObject] saveAccounts];
-            [self.tableView reloadData];
-        }
-    } else {
-        if (buttonIndex >= 0 && buttonIndex <= ACCOUNT_OTHER) {
-            [self showAccountView:nil type:(int)buttonIndex];
-        }
+    if (buttonIndex >= 0 && buttonIndex <= ACCOUNT_OTHER) {
+        [self showAccountView:nil type:(int)buttonIndex];
     }
 }
 
@@ -341,4 +307,35 @@
     return (UIInterfaceOrientationMaskAll);
 }
 
+#pragma mark - SWTableViewCellDelegate
+- (void)swipeableTableViewCell:(SWTableViewCell *)cell didTriggerRightUtilityButtonWithIndex:(NSInteger)index
+{
+    NSIndexPath *pressedIndex = [self.tableView indexPathForCell:cell];
+    if (!pressedIndex)
+        return;
+
+    if (index == 0) {//Edit
+        SeafConnection *conn = [[SeafGlobal sharedObject].conns objectAtIndex:pressedIndex.row];
+        int type = conn.isShibboleth ? ACCOUNT_SHIBBOLETH : ACCOUNT_OTHER;
+        [self showAccountView:conn type:type];
+    } else if (index == 1) { //Delete
+        [[[SeafGlobal sharedObject].conns objectAtIndex:pressedIndex.row] clearAccount];
+        [[SeafGlobal sharedObject].conns removeObjectAtIndex:pressedIndex.row];
+        [[SeafGlobal sharedObject] saveAccounts];
+        [self.tableView reloadData];
+    }
+}
+
+- (NSArray *)rightButtons
+{
+    NSMutableArray *rightUtilityButtons = [NSMutableArray new];
+    [rightUtilityButtons sw_addUtilityButtonWithColor:
+     [UIColor colorWithRed:0.78f green:0.78f blue:0.8f alpha:1.0]
+                                                title:S_EDIT];
+    [rightUtilityButtons sw_addUtilityButtonWithColor:
+     [UIColor colorWithRed:1.0f green:0.231f blue:0.188 alpha:1.0f]
+                                                title:S_DELETE];
+
+    return rightUtilityButtons;
+}
 @end

@@ -27,16 +27,14 @@
     // Configure the view for the selected state
 }
 
-- (void)layoutSubviews
+- (void)setFrame:(CGRect)frame
 {
-    [super layoutSubviews];
-    float indentPoints = (self.frame.size.width - 320)/2;
-    self.contentView.frame = CGRectMake(
-                                        indentPoints,
-                                        self.contentView.frame.origin.y,
-                                        self.contentView.frame.size.width - indentPoints,
-                                        self.contentView.frame.size.height
-                                        );
-    self.separatorInset = UIEdgeInsetsMake(0, indentPoints + 15, 0, indentPoints + 30);
+    int width = MIN(340, frame.size.width);
+    float inset = (frame.size.width - width)/2;
+    frame.origin.x += inset;
+    frame.size.width = width;
+    [super setFrame:frame];
+
 }
+
 @end

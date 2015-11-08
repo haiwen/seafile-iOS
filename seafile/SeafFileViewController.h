@@ -30,6 +30,7 @@ enum {
 #define S_RENAME NSLocalizedString(@"Rename", @"Seafile")
 #define S_EDIT NSLocalizedString(@"Edit", @"Seafile")
 #define S_DELETE NSLocalizedString(@"Delete", @"Seafile")
+#define S_MORE NSLocalizedString(@"More", @"Seafile")
 #define S_DOWNLOAD NSLocalizedString(@"Download", @"Seafile")
 #define S_PHOTOS_ALBUM NSLocalizedString(@"Save all photos to album", @"Seafile")
 #define S_SHARE_EMAIL NSLocalizedString(@"Send share link via email", @"Seafile")
@@ -37,6 +38,7 @@ enum {
 #define S_REDOWNLOAD NSLocalizedString(@"Redownload", @"Seafile")
 #define S_UPLOAD NSLocalizedString(@"Upload", @"Seafile")
 #define S_RESET_PASSWORD NSLocalizedString(@"Reset repo password", @"Seafile")
+#define S_CLEAR_REPO_PASSWORD NSLocalizedString(@"Clear password", @"Seafile")
 
 
 @class SeafDetailViewController;

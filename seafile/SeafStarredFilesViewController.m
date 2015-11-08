@@ -21,13 +21,12 @@
 #import "Utils.h"
 #import "Debug.h"
 
-@interface SeafStarredFilesViewController ()<EGORefreshTableHeaderDelegate, UIScrollViewDelegate>
+@interface SeafStarredFilesViewController ()<EGORefreshTableHeaderDelegate, SWTableViewCellDelegate, UIScrollViewDelegate>
 @property NSMutableArray *starredFiles;
 @property (readonly) SeafDetailViewController *detailViewController;
 @property (retain) NSIndexPath *selectedindex;
 
 @property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
-@property (strong) UIActionSheet *actionSheet;
 
 @end
 
@@ -150,66 +149,6 @@
     [self.detailViewController setPreViewItem:nil master:nil];
     [self loadCache];
     [self.tableView reloadData];
-    //[self performSelector:@selector(refresh:) withObject:nil afterDelay:1.0f];
-}
-
-
-- (UIAlertController *)generateAction:(NSArray *)arr
-{
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
-    for (NSString *title in arr) {
-        UIAlertAction *action = [UIAlertAction actionWithTitle:title style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            [self handleAction:title];
-        }];
-        [alert addAction:action];
-    }
-    if (!IsIpad()){
-        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        }];
-        [alert addAction:cancelAction];
-    }
-    return alert;
-}
-
-- (void)showAlertWithAction:(NSArray *)arr fromRect:(CGRect)rect inView:(UIView *)view
-{
-    if (ios8) {
-        UIAlertController *alert = [self generateAction:arr];
-        alert.popoverPresentationController.sourceView = self.view;
-        alert.popoverPresentationController.sourceRect = rect;
-        [self presentViewController:alert animated:true completion:nil];
-    } else {
-        if (self.actionSheet) {
-            [self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
-            self.actionSheet = nil;
-        }
-        self.actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:actionSheetCancelTitle() destructiveButtonTitle:nil otherButtonTitles:nil];
-        for (NSString *title in arr) {
-            [self.actionSheet addButtonWithTitle:title];
-        }
-        [self.actionSheet showFromRect:rect inView:view animated:YES];
-    }
-}
-
-- (void)showEditFileMenu:(UILongPressGestureRecognizer *)gestureRecognizer
-{
-    if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
-        return;
-
-    CGPoint touchPoint = [gestureRecognizer locationInView:self.tableView];
-    _selectedindex = [self.tableView indexPathForRowAtPoint:touchPoint];
-    if (!_selectedindex)
-        return;
-
-    SeafFile *file = (SeafFile *)[_starredFiles objectAtIndex:_selectedindex.row];
-    if (![file hasCache])
-        return;
-
-    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
-    NSArray *titles;
-    if (file.mpath) titles = [NSArray arrayWithObjects:S_UPLOAD, nil];
-    else titles = [NSArray arrayWithObjects:S_REDOWNLOAD, nil];
-    [self showAlertWithAction:titles fromRect:cell.frame inView:self.tableView];
 }
 
 #pragma mark - Table view data source
@@ -227,12 +166,12 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     NSString *CellIdentifier = @"SeafCell";
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+    SeafCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafCell" owner:self options:nil];
         cell = [cells objectAtIndex:0];
     }
-    ((SeafCell *)cell).badgeLabel.text = nil;
+    cell.badgeLabel.text = nil;
     SeafStarredFile *sfile;
     @try {
         sfile = [_starredFiles objectAtIndex:indexPath.row];
@@ -243,8 +182,13 @@
     cell.textLabel.text = sfile.name;
     cell.detailTextLabel.text = sfile.detailText;
     cell.imageView.image = sfile.icon;
-    UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditFileMenu:)];
-    [cell addGestureRecognizer:longPressGesture];
+    if (tableView == self.tableView) {
+        cell.rightUtilityButtons = [self rightButtonsForFile:sfile];
+        cell.delegate = self;
+    } else {
+        cell.rightUtilityButtons = nil;
+        cell.delegate = nil;
+    }
     return cell;
 }
 
@@ -291,6 +235,7 @@
 - (void)download:(SeafBase *)entry complete:(BOOL)updated
 {
     [self updateEntryCell:(SeafFile *)entry];
+    [self.detailViewController download:entry complete:updated];
 }
 - (void)download:(SeafBase *)entry failed:(NSError *)error
 {
@@ -310,33 +255,6 @@
     }
 
     [self.tableView reloadData];
-}
-
-#pragma mark - UIActionSheetDelegate
-- (void)redownloadFile:(SeafFile *)file
-{
-    [file deleteCache];
-    [self.detailViewController setPreViewItem:nil master:nil];
-    [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
-}
-
-- (void)handleAction:(NSString *)title
-{
-    SeafFile *file = (SeafFile *)[_starredFiles objectAtIndex:_selectedindex.row];
-    if ([S_REDOWNLOAD isEqualToString:title]) {
-        [self redownloadFile:file];
-    } else if ([S_UPLOAD isEqualToString:title]) {
-        [file update:self];
-        [self refreshView];
-    }
-}
-
-- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
-{
-    if (buttonIndex < 0 || buttonIndex >= actionSheet.numberOfButtons)
-        return;
-    NSString *title = [actionSheet buttonTitleAtIndex:buttonIndex];
-    [self handleAction:title];
 }
 
 #pragma mark - SeafFileUpdateDelegate
@@ -384,6 +302,43 @@
 - (NSDate*)egoRefreshTableHeaderDataSourceLastUpdated:(EGORefreshTableHeaderView*)view
 {
     return [NSDate date];
+}
+
+#pragma mark - SWTableViewCellDelegate
+- (void)redownloadFile:(SeafFile *)file
+{
+    [file deleteCache];
+    [self.detailViewController setPreViewItem:nil master:nil];
+    [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
+}
+
+- (void)swipeableTableViewCell:(SWTableViewCell *)cell didTriggerRightUtilityButtonWithIndex:(NSInteger)index
+{
+    _selectedindex = [self.tableView indexPathForCell:cell];
+    if (!_selectedindex)
+        return;
+    SeafFile *file = (SeafFile *)[_starredFiles objectAtIndex:_selectedindex.row];
+    if (file.mpath) {
+        [file update:self];
+        [self refreshView];
+    } else {
+        [self redownloadFile:file];
+    }
+    [cell hideUtilityButtonsAnimated:true];
+}
+- (NSArray *)rightButtonsForFile:(SeafStarredFile *)file
+{
+    NSMutableArray *rightUtilityButtons = [NSMutableArray new];
+    NSString *title;
+    if (file.mpath)
+        title = S_UPLOAD;
+    else
+        title = S_REDOWNLOAD;
+
+    [rightUtilityButtons sw_addUtilityButtonWithColor:
+     [UIColor colorWithRed:0.78f green:0.78f blue:0.8f alpha:1.0]
+                                                title:title];
+    return rightUtilityButtons;
 }
 
 @end

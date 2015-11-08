@@ -195,7 +195,7 @@
                  Debug("download %@, error=%@, %ld", self.name, [error localizedDescription], (long)((NSHTTPURLResponse *)response).statusCode);
                  [self failedDownload:error];
              } else {
-                 Debug("Successfully downloaded file:%@, %@ oid=%@", self.name, downloadRequest.URL, self.downloadingFileOid);
+                 Debug("Successfully downloaded file:%@, %@ oid=%@, delegate=%@", self.name, downloadRequest.URL, self.downloadingFileOid, self.delegate);
                  if (![filePath.path isEqualToString:target]) {
                      Debug("target=%@, filePath=%@", target, filePath.path);
                      [[NSFileManager defaultManager] removeItemAtPath:target error:nil];

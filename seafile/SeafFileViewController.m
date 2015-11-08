@@ -40,7 +40,7 @@ enum {
 };
 
 
-@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, EGORefreshTableHeaderDelegate, SeafDirDelegate, SeafShareDelegate, SeafRepoPasswordDelegate, UISearchBarDelegate, UISearchDisplayDelegate, UIActionSheetDelegate, MFMailComposeViewControllerDelegate>
+@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, EGORefreshTableHeaderDelegate, SeafDirDelegate, SeafShareDelegate, SeafRepoPasswordDelegate, UISearchBarDelegate, UISearchDisplayDelegate, UIActionSheetDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate>
 - (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView;
@@ -458,10 +458,17 @@ enum {
 
 - (UITableViewCell *)getCell:(NSString *)CellIdentifier forTableView:(UITableView *)tableView
 {
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+    SWTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:CellIdentifier owner:self options:nil];
         cell = [cells objectAtIndex:0];
+    } else {
+        cell.rightUtilityButtons = nil;
+        cell.delegate = nil;
+    }
+    if (tableView == self.tableView) {
+        cell.rightUtilityButtons = [self rightButtons];
+        cell.delegate = self;
     }
     return cell;
 }
@@ -522,88 +529,47 @@ enum {
         [SeafAppDelegate showActionSheet:self.actionSheet fromBarButtonItem:item];
     }
 }
-
-- (void)showEditFileMenu:(UILongPressGestureRecognizer *)gestureRecognizer
+- (void)showActionSheetForCell:(UITableViewCell *)cell
 {
-    if (self.tableView.editing == YES)
-        return;
-    if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
-        return;
-
-    CGPoint touchPoint = [gestureRecognizer locationInView:self.tableView];
-    _selectedindex = [self.tableView indexPathForRowAtPoint:touchPoint];
-    if (!_selectedindex)
-        return;
     id entry = [self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-    if (![entry isKindOfClass:[SeafFile class]])
-        return;
-    SeafFile *file = (SeafFile *)entry;
-    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
-    NSArray *titles;
-    if (file.mpath)
-        titles = [NSArray arrayWithObjects:S_DELETE, S_UPLOAD, S_SHARE_EMAIL, S_SHARE_LINK, nil];
-    else
-        titles = [NSArray arrayWithObjects:S_DELETE, S_REDOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
-    [self showAlertWithAction:[NSArray arrayWithObjects:S_DELETE, S_REDOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
+    if ([entry isKindOfClass:[SeafRepo class]]) {
+        SeafRepo *repo = (SeafRepo *)entry;
+        if (!repo.encrypted)
+            return;
+        [self showAlertWithAction:[NSArray arrayWithObjects:S_RESET_PASSWORD, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
+    } else if ([entry isKindOfClass:[SeafDir class]]) {
+        [self showAlertWithAction:[NSArray arrayWithObjects:S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
+    } else if ([entry isKindOfClass:[SeafFile class]]) {
+        SeafFile *file = (SeafFile *)entry;
+        NSArray *titles;
+        if (file.mpath)
+            titles = [NSArray arrayWithObjects:S_DELETE, S_UPLOAD, S_SHARE_EMAIL, S_SHARE_LINK, nil];
+        else
+            titles = [NSArray arrayWithObjects:S_DELETE, S_REDOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
+        [self showAlertWithAction:[NSArray arrayWithObjects:S_DELETE, S_REDOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
+    } else if ([entry isKindOfClass:[SeafUploadFile class]]) {
+        [self showAlertWithAction:[NSArray arrayWithObjects:S_DELETE, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
+    }
 }
-
-- (void)showEditDirMenu:(UILongPressGestureRecognizer *)gestureRecognizer
+- (void)showEditMenu:(UILongPressGestureRecognizer *)gestureRecognizer
 {
     if (self.tableView.editing == YES)
         return;
     if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
         return;
+
     CGPoint touchPoint = [gestureRecognizer locationInView:self.tableView];
     _selectedindex = [self.tableView indexPathForRowAtPoint:touchPoint];
     if (!_selectedindex)
         return;
-    SeafDir *dir = (SeafDir *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-    if (![dir isKindOfClass:[SeafDir class]])
-          return;
-
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
-    [self showAlertWithAction:[NSArray arrayWithObjects:S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
-}
-
-- (void)showEditRepoMenu:(UILongPressGestureRecognizer *)gestureRecognizer
-{
-    if (self.tableView.editing == YES)
-        return;
-    if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
-        return;
-    CGPoint touchPoint = [gestureRecognizer locationInView:self.tableView];
-    _selectedindex = [self.tableView indexPathForRowAtPoint:touchPoint];
-    if (!_selectedindex)
-        return;
-    SeafRepo *repo = (SeafRepo *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-    if (![repo isKindOfClass:[SeafRepo class]])
-        return;
-    if (!repo.encrypted)
-        return;
-    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
-    [self showAlertWithAction:[NSArray arrayWithObjects:S_RESET_PASSWORD, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
-}
-
-- (void)showEditUploadFileMenu:(UILongPressGestureRecognizer *)gestureRecognizer
-{
-    if (self.tableView.editing || gestureRecognizer.state != UIGestureRecognizerStateBegan)
-        return;
-    CGPoint touchPoint = [gestureRecognizer locationInView:self.tableView];
-    _selectedindex = [self.tableView indexPathForRowAtPoint:touchPoint];
-    if (!_selectedindex)
-        return;
-    SeafUploadFile *file = (SeafUploadFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-    if(![file isKindOfClass:[SeafUploadFile class]])
-        return;
-
-    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
-    [self showAlertWithAction:[NSArray arrayWithObjects:S_DELETE, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
+    [self showActionSheetForCell:cell];
 }
 
 - (UITableViewCell *)getSeafUploadFileCell:(SeafUploadFile *)file forTableView:(UITableView *)tableView
 {
     file.delegate = self;
-    UITableViewCell *c;
+    SWTableViewCell *c;
     if (file.uploading) {
         SeafUploadingFileCell *cell = (SeafUploadingFileCell *)[self getCell:@"SeafUploadingFileCell" forTableView:tableView];
         cell.nameLabel.text = file.name;
@@ -632,10 +598,6 @@ enum {
         }
         c = cell;
     }
-    if (tableView == self.tableView) {
-        UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditUploadFileMenu:)];
-        [c addGestureRecognizer:longPressGesture];
-    }
     return c;
 }
 
@@ -650,10 +612,6 @@ enum {
 - (SeafCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView
 {
     SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
-    if (tableView == self.tableView) {
-        UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditFileMenu:)];
-        [cell addGestureRecognizer:longPressGesture];
-    }
     [self updateCellContent:cell file:sfile];
     sfile.delegate = self;
     sfile.udelegate = self;
@@ -667,10 +625,6 @@ enum {
     cell.detailTextLabel.text = nil;
     cell.imageView.image = sdir.icon;
     sdir.delegate = self;
-    if (tableView == self.tableView) {
-        UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditDirMenu:)];
-        [cell addGestureRecognizer:longPressGesture];
-    }
     return cell;
 }
 
@@ -684,8 +638,9 @@ enum {
     cell.badgeLabel.text = nil;
     srepo.delegate = self;
     if (tableView == self.tableView && srepo.encrypted) {
-        UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditRepoMenu:)];
-        [cell addGestureRecognizer:longPressGesture];
+        [cell setRightUtilityButtons:[self repoButtons] WithButtonWidth:100];
+    } else {
+        cell.rightUtilityButtons = nil;
     }
 
     return cell;
@@ -1181,7 +1136,19 @@ enum {
     } else
         [self.tableView reloadData];
 }
- #pragma mark - UIActionSheetDelegate
+#pragma mark - UIActionSheetDelegate
+- (void)deleteEntry:(id)entry
+{
+    if ([entry isKindOfClass:[SeafUploadFile class]]) {
+        if (self.detailViewController.preViewItem == entry)
+            self.detailViewController.preViewItem = nil;
+        [self.directory removeUploadFile:(SeafUploadFile *)entry];
+        [self.tableView reloadData];
+    } else if ([entry isKindOfClass:[SeafFile class]])
+        [self deleteFile:(SeafFile*)entry];
+    else if ([entry isKindOfClass:[SeafDir class]])
+        [self deleteDir: (SeafDir*)entry];
+}
 - (void)handleAction:(NSString *)title
 {
     if ([S_NEWFILE isEqualToString:title]) {
@@ -1196,15 +1163,7 @@ enum {
         [self editStart:nil];
     } else if ([S_DELETE isEqualToString:title]) {
         SeafBase *entry = (SeafBase *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-        if ([entry isKindOfClass:[SeafUploadFile class]]) {
-            if (self.detailViewController.preViewItem == entry)
-                self.detailViewController.preViewItem = nil;
-            [self.directory removeUploadFile:(SeafUploadFile *)entry];
-            [self.tableView reloadData];
-        } else if ([entry isKindOfClass:[SeafFile class]])
-            [self deleteFile:(SeafFile*)entry];
-        else if ([entry isKindOfClass:[SeafDir class]])
-            [self deleteDir: (SeafDir*)entry];
+        [self deleteEntry:entry];
     } else if ([S_REDOWNLOAD isEqualToString:title]) {
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [self redownloadFile:file];
@@ -1621,5 +1580,46 @@ enum {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         [appdelegate cycleTheGlobalMailComposer];
     }];
+}
+
+#pragma mark - SWTableViewCellDelegate
+- (void)swipeableTableViewCell:(SWTableViewCell *)cell didTriggerRightUtilityButtonWithIndex:(NSInteger)index
+{
+    _selectedindex = [self.tableView indexPathForCell:cell];
+    if (!_selectedindex)
+        return;
+    SeafBase *base = (SeafBase *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
+    if (index == 0)
+        if ([base isKindOfClass:[SeafRepo class]]) {
+            SeafRepo *repo = (SeafRepo *)base;
+            [repo->connection setRepo:repo.repoId password:nil];
+            [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Clear library password successfully.", @"Seafile")];
+            [cell hideUtilityButtonsAnimated:true];
+        } else
+            [self showActionSheetForCell:cell];
+    else {
+        [self deleteEntry:base];
+    }
+}
+- (NSArray *)rightButtons
+{
+    NSMutableArray *rightUtilityButtons = [NSMutableArray new];
+    [rightUtilityButtons sw_addUtilityButtonWithColor:
+     [UIColor colorWithRed:0.78f green:0.78f blue:0.8f alpha:1.0]
+                                                title:S_MORE];
+    [rightUtilityButtons sw_addUtilityButtonWithColor:
+     [UIColor colorWithRed:1.0f green:0.231f blue:0.188 alpha:1.0f]
+                                                title:S_DELETE];
+
+    return rightUtilityButtons;
+}
+
+- (NSArray *)repoButtons
+{
+    NSMutableArray *rightUtilityButtons = [NSMutableArray new];
+    [rightUtilityButtons sw_addUtilityButtonWithColor:
+     [UIColor colorWithRed:0.78f green:0.78f blue:0.8f alpha:1.0]
+                                                title:S_CLEAR_REPO_PASSWORD];
+    return rightUtilityButtons;
 }
 @end

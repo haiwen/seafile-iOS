@@ -37,6 +37,9 @@
     if (_loadingInProgress) return;
     _loadingInProgress = YES;
     @try {
+        if ([_file hasCache] && !_underlyingImage)
+            self.underlyingImage = _file.image;
+
         if (self.underlyingImage) {
             [self imageLoadingComplete];
         } else {

@@ -7,8 +7,9 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <SWTableViewCell.h>
 
-@interface SeafAccountCell : UITableViewCell
+@interface SeafAccountCell : SWTableViewCell
 @property (strong, nonatomic) IBOutlet UILabel *serverLabel;
 @property (strong, nonatomic) IBOutlet UILabel *emailLabel;
 @property (strong, nonatomic) IBOutlet UIImageView *imageview;
