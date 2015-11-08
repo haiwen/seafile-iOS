@@ -224,7 +224,7 @@ enum SHARE_STATUS {
 - (void)setPreViewPhotos:(NSArray *)items current:(id<SeafPreView>)item master:(UIViewController<SeafDentryDelegate> *)c
 {
     [self clearPreView];
-    Debug("Preview photos");
+    Debug("Preview photos %d", items.count);
     if (self.masterPopoverController != nil)
         [self.masterPopoverController dismissPopoverAnimated:YES];
     self.masterVc = c;
@@ -238,6 +238,7 @@ enum SHARE_STATUS {
     Debug("Preview photos PREVIEW_PHOTO: %d, %@ hasCache:%d", self.state, [item name], [item hasCache]);
     self.preViewItem = item;
     self.currentPageIndex = [items indexOfObject:item];
+    [self.mwPhotoBrowser reloadData];
     [self.view addSubview:self.mwPhotoBrowser.view];
     self.mwPhotoBrowser.view.frame = CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height);
     [self.mwPhotoBrowser viewDidAppear:false];
