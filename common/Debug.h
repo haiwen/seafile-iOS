@@ -10,8 +10,8 @@
 
 #define APP_NAME @"Horizonbase"
 
-#define GROUP_NAME @"group.com.horizonbase.horizonbase"
-#define APP_ID @"com.horizonbase.horizonbase"
+#define GROUP_NAME @"group.com.horizonbase.horizonbase2"
+#define APP_ID @"com.horizonbase.horizonbase2"
 
 #define API_URL  @"/api2"
 #if DEBUG

@@ -1404,7 +1404,7 @@
 				ORGANIZATIONNAME = Seafile;
 				TargetAttributes = {
 					571D8CA91677881400F1A22C = {
-						DevelopmentTeam = 55LCTZ5354;
+						DevelopmentTeam = 8HJZ589844;
 						SystemCapabilities = {
 							com.apple.ApplicationGroups.iOS = {
 								enabled = 1;
@@ -1419,11 +1419,11 @@
 					};
 					57A0295E1A16F8AC009C9D7B = {
 						CreatedOnToolsVersion = 6.1;
-						DevelopmentTeam = 55LCTZ5354;
+						DevelopmentTeam = 8HJZ589844;
 					};
 					57A0296C1A16F8AD009C9D7B = {
 						CreatedOnToolsVersion = 6.1;
-						DevelopmentTeam = 55LCTZ5354;
+						DevelopmentTeam = 8HJZ589844;
 					};
 				};
 			};
@@ -2196,8 +2196,8 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = seafile/seafile.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=*]" = seafile/seafile.entitlements;
-				CODE_SIGN_IDENTITY = "";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				EMBEDDED_CONTENT_CONTAINS_SWIFT = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "seafile/seafile-Prefix.pch";
@@ -2208,7 +2208,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.horizonbase.horizonbase;
 				PRODUCT_NAME = Horizonbase;
 				PROVISIONING_PROFILE = "";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "04a3f922-209c-48cc-b04e-411282132612";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
@@ -2224,8 +2224,8 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = seafile/seafile.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=*]" = seafile/seafile.entitlements;
-				CODE_SIGN_IDENTITY = "";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				CODE_SIGN_IDENTITY = "iPhone Distribution: Mike Becker (8HJZ589844)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Mike Becker (8HJZ589844)";
 				EMBEDDED_CONTENT_CONTAINS_SWIFT = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "seafile/seafile-Prefix.pch";
@@ -2235,8 +2235,8 @@
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.horizonbase.horizonbase;
 				PRODUCT_NAME = Horizonbase;
-				PROVISIONING_PROFILE = "";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "25de092d-173a-4e73-b2aa-21e402542c2b";
+				PROVISIONING_PROFILE = "90b835f2-2bd7-47a8-889a-86fd1903fa33";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "90b835f2-2bd7-47a8-889a-86fd1903fa33";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
@@ -2299,8 +2299,8 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.horizonbase.horizonbase.SeafProviderFileProvider;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "56954027-b8bf-4f1f-affc-1ecab1bff58d";
+				PROVISIONING_PROFILE = "eaa32520-8880-4823-9551-ee87c7d58cb4";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "eaa32520-8880-4823-9551-ee87c7d58cb4";
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
@@ -2317,8 +2317,8 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CODE_SIGN_ENTITLEMENTS = SeafProvider/SeafProvider.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -2350,8 +2350,8 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CODE_SIGN_ENTITLEMENTS = SeafProvider/SeafProvider.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Distribution: Seafile Inc. (55LCTZ5354)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Seafile Inc. (55LCTZ5354)";
+				CODE_SIGN_IDENTITY = "iPhone Distribution: Mike Becker (8HJZ589844)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Mike Becker (JYDJX3DDZ8)";
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
@@ -2363,7 +2363,8 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.horizonbase.horizonbase.SeafProvider;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE = "a25a7413-8f74-49fd-bbbe-c7251377dc8d";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "a25a7413-8f74-49fd-bbbe-c7251377dc8d";
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
@@ -2407,9 +2408,9 @@
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "";
 				"PRIVATE_HEADERS_FOLDER_PATH[sdk=*]" = "";
-				PROVISIONING_PROFILE = "04a3f922-209c-48cc-b04e-411282132612";
-				"PROVISIONING_PROFILE[sdk=*]" = "04a3f922-209c-48cc-b04e-411282132612";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "56954027-b8bf-4f1f-affc-1ecab1bff58d";
+				PROVISIONING_PROFILE = "";
+				"PROVISIONING_PROFILE[sdk=*]" = "";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -2427,8 +2428,8 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				CODE_SIGN_IDENTITY = "iPhone Distribution: Mike Becker (8HJZ589844)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Mike Becker (8HJZ589844)";
 				COPY_PHASE_STRIP = YES;
 				ENABLE_BITCODE = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -2444,8 +2445,8 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
-				PROVISIONING_PROFILE = "04a3f922-209c-48cc-b04e-411282132612";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "04a3f922-209c-48cc-b04e-411282132612";
+				PROVISIONING_PROFILE = "eaa32520-8880-4823-9551-ee87c7d58cb4";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "eaa32520-8880-4823-9551-ee87c7d58cb4";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
