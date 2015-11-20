@@ -400,14 +400,14 @@ enum {
 
 - (void)viewWillLayoutSubviews {
     [super viewWillLayoutSubviews];
-    CGRect viewBounds = self.view.bounds;
-    if (self.loadingView.isAnimating)
+    if (self.loadingView.isAnimating) {
+        CGRect viewBounds = self.view.bounds;
         self.loadingView.center = CGPointMake(CGRectGetMidX(viewBounds), CGRectGetMidY(viewBounds));
+    }
 }
 
-- (void)viewWillAppear:(BOOL)animated
+- (void)checkUploadfiles
 {
-    [super viewWillAppear:animated];
     [_connection checkSyncDst:_directory];
 #if DEBUG
     if (_directory.uploadItems.count > 0)
@@ -425,6 +425,12 @@ enum {
         if ([self isViewLoaded])
             [_directory loadContent:true];
     });
+
+}
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    [self performSelectorInBackground:@selector(checkUploadfiles) withObject:nil];
 }
 
 - (void)viewWillDisappear:(BOOL)animated
@@ -611,6 +617,7 @@ enum {
 
 - (SeafCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView
 {
+    [sfile loadCache];
     SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
     [self updateCellContent:cell file:sfile];
     sfile.delegate = self;
@@ -912,6 +919,7 @@ enum {
         }
 
         if (updated)  [self refreshView];
+        else [self.tableView reloadData];
         self.state = STATE_INIT;
     }
 }
@@ -1622,4 +1630,5 @@ enum {
                                                 title:S_CLEAR_REPO_PASSWORD];
     return rightUtilityButtons;
 }
+
 @end

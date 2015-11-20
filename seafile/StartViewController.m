@@ -188,20 +188,15 @@
     if (indexPath.section == 1) {
         return [self getAddAccountCell:tableView];
     }
-    NSString *CellIdentifier = @"SeafAccountCell";
-    SeafAccountCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-    if (cell == nil) {
-        NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafAccountCell" owner:self options:nil];
-        cell = [cells objectAtIndex:0];
-    }
+    SeafAccountCell *cell = [SeafAccountCell getInstance:tableView WithOwner:self];
     SeafConnection *conn = [[SeafGlobal sharedObject].conns objectAtIndex:indexPath.row];
     cell.imageview.image = [UIImage imageWithContentsOfFile:conn.avatar];
     cell.serverLabel.text = conn.address;
     cell.emailLabel.text = conn.username;
-    //cell.accessoryType = UITableViewCellAccessoryNone;
-    cell.contentView.backgroundColor = [UIColor whiteColor];
     cell.rightUtilityButtons = self.rightButtons;
     cell.delegate = self;
+    cell.imageview.layer.cornerRadius = 20;
+    cell.imageview.clipsToBounds = YES;
     return cell;
 }
 

@@ -89,5 +89,7 @@
 
 - (NSComparisonResult)compare:(id<SeafSortable>)obj1 with:(id<SeafSortable>)obj2;
 
+- (UIImage *)imageFromPath:(NSString *)path withMaxSize:(float)length cachePath:(NSString *)cachePath;
+
 @end
 

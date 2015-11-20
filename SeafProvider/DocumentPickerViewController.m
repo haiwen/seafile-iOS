@@ -42,17 +42,13 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    NSString *CellIdentifier = @"SeafAccountCell";
-    SeafAccountCell *cell = [tableView dequeueReusableCellWithIdentifier:@"SeafAccountCell"];
-    if (cell == nil) {
-        NSArray *cells = [[NSBundle mainBundle] loadNibNamed:CellIdentifier owner:self options:nil];
-        cell = [cells objectAtIndex:0];
-    }
+    SeafAccountCell *cell = [SeafAccountCell getInstance:tableView WithOwner:self];
     SeafConnection *conn = [self.conns objectAtIndex:indexPath.row];
     cell.imageview.image = [UIImage imageWithContentsOfFile:conn.avatar];
     cell.serverLabel.text = conn.address;
     cell.emailLabel.text = conn.username;
-    cell.accessoryType = UITableViewCellAccessoryNone;
+    cell.imageview.layer.cornerRadius = 20;
+    cell.imageview.clipsToBounds = YES;
     return cell;
 }
 

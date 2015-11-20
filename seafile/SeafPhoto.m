@@ -22,10 +22,20 @@
 - (id)initWithSeafPreviewIem:(id<SeafPreView>)file {
     if ((self = [super init])) {
         _file = file;
-        if ([_file hasCache])
-            _underlyingImage = _file.image;
     }
     return self;
+}
+
+- (void)loadCache
+{
+    @synchronized(_file) {
+        if (!_underlyingImage && [_file hasCache]) {
+            self.underlyingImage = _file.image;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self imageLoadingComplete];
+            });
+        }
+    }
 }
 
 - (UIImage *)underlyingImage {
@@ -37,11 +47,10 @@
     if (_loadingInProgress) return;
     _loadingInProgress = YES;
     @try {
-        if ([_file hasCache] && !_underlyingImage)
-            self.underlyingImage = _file.image;
-
-        if (self.underlyingImage) {
+        if (_underlyingImage) {
             [self imageLoadingComplete];
+        } else if (!_underlyingImage && [_file hasCache]) {
+            [self performSelectorInBackground:@selector(loadCache) withObject:nil];
         } else {
             [self performLoadUnderlyingImageAndNotify];
         }
@@ -57,12 +66,7 @@
 
 // Set the underlyingImage
 - (void)performLoadUnderlyingImageAndNotify {
-    if ([_file hasCache]) {
-        self.underlyingImage = _file.image;
-        [self imageLoadingComplete];
-    } else {
-        [_file load:nil force: false];
-    }
+    [_file load:nil force: false];
 }
 
 

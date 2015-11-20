@@ -331,7 +331,11 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     NSMutableDictionary *dict = [SeafUploadFile uploadFileAttrs];
     if (_asset) {
         @synchronized(dict) {
-            [Utils writeDataToPath:self.lpath andAsset:self.asset];
+            BOOL ret = [Utils writeDataToPath:self.lpath andAsset:self.asset];
+            if (!ret) {
+                [self finishUpload:false oid:nil];
+                return;
+            }
         }
         _filesize = [Utils fileSizeAtPath1:self.lpath];
         _asset = nil;
@@ -378,7 +382,10 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 {
     if (_asset)
         return [UIImage imageWithCGImage:_asset.defaultRepresentation.fullResolutionImage];
-    return [Utils imageFromPath:self.lpath withMaxSize:IMAGE_MAX_SIZE];
+
+    NSString *name = [@"cacheimage-ufile-" stringByAppendingString:self.name];
+    NSString *cachePath = [[SeafGlobal.sharedObject tempDir] stringByAppendingPathComponent:name];
+    return [SeafGlobal.sharedObject imageFromPath:self.lpath withMaxSize:IMAGE_MAX_SIZE cachePath:cachePath];
 }
 
 - (NSURL *)exportURL

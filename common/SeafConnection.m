@@ -835,7 +835,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     SeafDir *dir = _syncDir;
     if (!_inAutoSync || !dir || !self.photosArray || self.photosArray.count == 0) return;
     if (self.wifiOnly && ![[AFNetworkReachabilityManager sharedManager] isReachableViaWiFi]) {
-        Debug("wifiOnly=%d, isReachableViaWiFi=%d", self.wifiOnly, [[AFNetworkReachabilityManager sharedManager] isReachableViaWiFi]);
+        Debug("wifiOnly=%d, isReachableViaWiFi=%d, for server %@", self.wifiOnly, [[AFNetworkReachabilityManager sharedManager] isReachableViaWiFi], _address);
         return;
     }
 
@@ -994,14 +994,14 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         if(group != nil) {
             [group setAssetsFilter:[ALAssetsFilter allAssets]];
             [group enumerateAssetsUsingBlock:assetEnumerator];
-            Debug("Group %@, total %ld photos", group, (long)group.numberOfAssets);
+            Debug("Group %@, total %ld photos for server:%@", group, (long)group.numberOfAssets, _address);
         } else {
             for (NSURL *url in photos) {
                 if (![self IsPhotoUploaded:url] && ![self IsPhotoUploading:url]) {
                     [self addUploadPhoto:url];
                 }
             }
-            Debug("GroupAll Total %ld photos need to upload.", (long)_photosArray.count);
+            Debug("GroupAll Total %ld photos need to upload: %@", (long)_photosArray.count, _address);
             if (_photSyncWatcher) [_photSyncWatcher photoSyncChanged:self.photosInSyncing];
             _inCheckPhotoss = false;
             [self pickPhotosForUpload];

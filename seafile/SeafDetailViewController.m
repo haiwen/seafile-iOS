@@ -849,11 +849,6 @@ enum SHARE_STATUS {
     return self.preViewItem;
 }
 
-- (NSUInteger)numberOfPhotos {
-    if (!self.photos) return 0;
-    return self.photos.count;
-}
-
 - (MWPhotoBrowser *)mwPhotoBrowser
 {
     if (!_mwPhotoBrowser) {
@@ -890,29 +885,16 @@ enum SHARE_STATUS {
     self.state = PREVIEW_NONE;
 }
 
-
-#pragma mark - UIScrollView Delegate
-- (void)loadAdjacentPhotosIfNecessary:(id<SeafPreView>)photo
-{
-    NSUInteger index = [self.photos indexOfObject:photo] + 1;
-    NSUInteger num = [self numberOfPhotos];
-    for (NSUInteger i = index; i < num && i < index + 3; ++i) {
-        id<SeafPreView> next = [self.photos objectAtIndex:i];
-        Debug("Preload photo: %@, cache:%d", next.name, [next hasCache]);
-        if (![next hasCache]) {
-            [next load:(self.masterVc ? self.masterVc:self) force:NO];
-        }
-    }
-}
-
 #pragma mark - MWPhotoBrowserDelegate
 - (NSUInteger)numberOfPhotosInPhotoBrowser:(MWPhotoBrowser *)photoBrowser {
-    return _photos.count;
+    if (!self.photos) return 0;
+    return self.photos.count;
 }
 
 - (id <MWPhoto>)photoBrowser:(MWPhotoBrowser *)photoBrowser photoAtIndex:(NSUInteger)index {
-    if (index < _photos.count)
-        return [_photos objectAtIndex:index];
+    if (index < self.photos.count) {
+        return [self.photos objectAtIndex:index];
+    }
     return nil;
 }
 

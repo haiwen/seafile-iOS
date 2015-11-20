@@ -42,6 +42,4 @@
 
 + (UIImage *)reSizeImage:(UIImage *)image toSquare:(float)length;
 
-+ (UIImage *)imageFromPath:(NSString *)path withMaxSize:(float)length;
-
 @end

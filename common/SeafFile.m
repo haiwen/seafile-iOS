@@ -655,7 +655,9 @@
 - (UIImage *)image
 {
     NSString *path = [SeafGlobal.sharedObject documentPath:self.ooid];
-    return [Utils imageFromPath:path withMaxSize:IMAGE_MAX_SIZE];
+    NSString *name = [@"cacheimage-" stringByAppendingString:self.ooid];
+    NSString *cachePath = [[SeafGlobal.sharedObject tempDir] stringByAppendingPathComponent:name];
+    return [SeafGlobal.sharedObject imageFromPath:path withMaxSize:IMAGE_MAX_SIZE cachePath:cachePath];
 }
 
 - (long long)filesize

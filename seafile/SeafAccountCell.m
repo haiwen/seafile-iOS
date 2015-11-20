@@ -5,7 +5,6 @@
 //  Created by Wang Wei on 1/17/13.
 //  Copyright (c) 2013 Seafile Ltd. All rights reserved.
 //
-
 #import "SeafAccountCell.h"
 #import "Debug.h"
 
@@ -34,7 +33,19 @@
     frame.origin.x += inset;
     frame.size.width = width;
     [super setFrame:frame];
+}
 
++ (SeafAccountCell *)getInstance:(UITableView *)tableView WithOwner:(id)owner
+{
+    NSString *CellIdentifier = @"SeafAccountCell";
+    SeafAccountCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+    if (cell == nil) {
+        NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafAccountCell" owner:owner options:nil];
+        cell = [cells objectAtIndex:0];
+    }
+    cell.contentView.backgroundColor = [UIColor whiteColor];
+    cell.accessoryType = UITableViewCellAccessoryNone;
+    return cell;
 }
 
 @end

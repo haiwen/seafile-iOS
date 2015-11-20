@@ -97,7 +97,7 @@
 
 - (BOOL)localDecrypt
 {
-#if 1
+#if 0
     //Debug("localDecrypt %d version:%d, magic:%@", self.encrypted, self.encVersion, self.magic);
     return self.encrypted && self.encVersion >= 2 && self.magic;
 #else

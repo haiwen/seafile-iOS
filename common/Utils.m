@@ -329,7 +329,6 @@
     }
     CFRelease(destination);
     CFRelease(source);
-    CFRelease(cgimg);
     return success;
 }
 
@@ -425,21 +424,6 @@
     UIGraphicsEndImageContext();
 
     return reSizeImage;
-}
-
-+ (UIImage *)imageFromPath:(NSString *)path withMaxSize:(float)length
-{
-    const int MAX_SIZE = 2048;
-    if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
-        UIImage *image = [UIImage imageWithContentsOfFile:path];
-        if (image.size.width > MAX_SIZE || image.size.height > MAX_SIZE) {
-            UIImage *img =  [Utils reSizeImage:image toSquare:MAX_SIZE];
-            return img;
-        }
-        return image;
-    }
-    return nil;
-
 }
 
 @end

@@ -14,4 +14,6 @@
 @property (strong, nonatomic) IBOutlet UILabel *emailLabel;
 @property (strong, nonatomic) IBOutlet UIImageView *imageview;
 
++ (SeafAccountCell *)getInstance:(UITableView *)tableView WithOwner:(id)owner;
+
 @end
