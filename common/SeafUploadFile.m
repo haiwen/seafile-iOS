@@ -369,13 +369,18 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     return _preViewURL;
 }
 
-- (UIImage *)icon;
+- (UIImage *)icon
 {
     if (_asset)
         return [UIImage imageWithCGImage:_asset.thumbnail];
 
     UIImage *img = [self isImageFile] ? self.image : nil;
     return img ? [Utils reSizeImage:img toSquare:32.0f] : [UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString];
+}
+
+- (UIImage *)thumb
+{
+    return [self icon];
 }
 
 - (UIImage *)image

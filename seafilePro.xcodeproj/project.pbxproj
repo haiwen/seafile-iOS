@@ -320,6 +320,7 @@
 		57E22B411A126EBE00C92330 /* SeafStart.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57E22B031A12625B00C92330 /* SeafStart.storyboard */; };
 		57F0AAFE16D8935800364D18 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57F0AAFC16D8913600364D18 /* AssetsLibrary.framework */; };
 		57F143931B886B96009C1BC8 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57F143921B886B96009C1BC8 /* CoreLocation.framework */; };
+		57F476EC1C00623300047395 /* SeafThumb.m in Sources */ = {isa = PBXBuildFile; fileRef = 57F476EB1C00623300047395 /* SeafThumb.m */; };
 		57F8CD211A127566000F6CDC /* DownloadingProgress_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22B501A12712500C92330 /* DownloadingProgress_iPhone.xib */; };
 		57F8CD221A127566000F6CDC /* DownloadingProgress_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22B251A12647800C92330 /* DownloadingProgress_iPad.xib */; };
 		57F8CD231A127566000F6CDC /* FailToPreview_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22AEF1A12625B00C92330 /* FailToPreview_iPad.xib */; };
@@ -722,6 +723,8 @@
 		57E51BC819A0F46E002B50C6 /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		57F0AAFC16D8913600364D18 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
 		57F143921B886B96009C1BC8 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
+		57F476EA1C00623300047395 /* SeafThumb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafThumb.h; sourceTree = "<group>"; };
+		57F476EB1C00623300047395 /* SeafThumb.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafThumb.m; sourceTree = "<group>"; };
 		57F8CD1A1A127531000F6CDC /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/SeafStart.storyboard; sourceTree = "<group>"; };
 		57F8CD1B1A127536000F6CDC /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/SeafStartFooterView.xib; sourceTree = "<group>"; };
 		57F8CD1C1A12753A000F6CDC /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/SeafStartHeaderView.xib; sourceTree = "<group>"; };
@@ -959,6 +962,8 @@
 				570DFACE16A1EA1A00ADD5F2 /* SeafStartHeaderView.m */,
 				57E1E89B1737ED0F006601FE /* SeafTextEditorViewController.h */,
 				57DA26F3173E6DFC0003BA31 /* SeafTextEditorViewController.m */,
+				57F476EA1C00623300047395 /* SeafThumb.h */,
+				57F476EB1C00623300047395 /* SeafThumb.m */,
 				57931B521632E5DB00B462BA /* SeafUploadDirViewController.h */,
 				57931B531632E5DB00B462BA /* SeafUploadDirViewController.m */,
 				57C07CE21632556600502B06 /* SeafUploadingFileCell.h */,
@@ -1926,6 +1931,7 @@
 				57E2288F1A0E286200C92330 /* QBImagePickerController.m in Sources */,
 				57E229B51A11087500C92330 /* seafile.xcdatamodeld in Sources */,
 				57E229E71A1108B200C92330 /* NSData+Encryption.m in Sources */,
+				57F476EC1C00623300047395 /* SeafThumb.m in Sources */,
 				576C91C4177EB43F007B50BD /* SeafDirViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

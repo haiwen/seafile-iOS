@@ -5,6 +5,7 @@
 //  Created by Wei Wang on 7/7/12.
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
+#import <MWPhotoBrowser.h>
 
 #import "SeafAppDelegate.h"
 #import "SeafFileViewController.h"
@@ -15,6 +16,8 @@
 #import "SeafRepos.h"
 #import "SeafCell.h"
 #import "SeafUploadingFileCell.h"
+#import "SeafPhoto.h"
+#import "SeafThumb.h"
 
 #import "FileSizeFormatter.h"
 #import "SeafDateFormatter.h"
@@ -40,7 +43,7 @@ enum {
 };
 
 
-@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, EGORefreshTableHeaderDelegate, SeafDirDelegate, SeafShareDelegate, SeafRepoPasswordDelegate, UISearchBarDelegate, UISearchDisplayDelegate, UIActionSheetDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate>
+@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, EGORefreshTableHeaderDelegate, SeafDirDelegate, SeafShareDelegate, SeafRepoPasswordDelegate, UISearchBarDelegate, UISearchDisplayDelegate, UIActionSheetDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate, MWPhotoBrowserDelegate>
 - (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView;
@@ -72,6 +75,9 @@ enum {
 @property(nonatomic, strong) UISearchDisplayController *strongSearchDisplayController;
 
 @property (strong) NSMutableArray *searchResults;
+
+@property (strong, retain) NSArray *photos;
+@property (strong, retain) NSArray *thumbs;
 
 @end
 
@@ -349,10 +355,12 @@ enum {
 - (void)editSheet:(id)sender
 {
     NSArray *titles = nil;
-    if (_directory.editable) {
-        titles = [NSArray arrayWithObjects:S_DOWNLOAD, S_PHOTOS_ALBUM, S_EDIT, S_NEWFILE, S_MKDIR, S_SORT_NAME, S_SORT_MTIME, nil];
-    } else {
+    if ([_directory isKindOfClass:[SeafRepos class]]) {
         titles = [NSArray arrayWithObjects:S_SORT_NAME, S_SORT_MTIME, nil];
+    } else if (_directory.editable) {
+        titles = [NSArray arrayWithObjects:S_DOWNLOAD, S_PHOTOS_ALBUM, S_PHOTOS_BROWSER, S_EDIT, S_NEWFILE, S_MKDIR, S_SORT_NAME, S_SORT_MTIME, nil];
+    } else {
+        titles = [NSArray arrayWithObjects:S_SORT_NAME, S_SORT_MTIME, S_PHOTOS_ALBUM, S_PHOTOS_BROWSER, nil];
     }
     [self showAlertWithAction:titles fromBarItem:self.editItem withTitle:nil];
 }
@@ -898,18 +906,36 @@ enum {
 }
 
 #pragma mark - SeafDentryDelegate
+- (SeafPhoto *)getSeafPhoto:(id<SeafPreView>)photo {
+    if (!self.photos || ![photo isImageFile])
+        return nil;
+    for (SeafPhoto *sphoto in self.photos) {
+        if (sphoto.file == photo) {
+            return sphoto;
+        }
+    }
+    return nil;
+}
+
 - (void)download:(SeafBase *)entry progress:(float)progress
 {
     if ([entry isKindOfClass:[SeafFile class]]) {
         [self.detailViewController download:entry progress:progress];
+        SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
+        if (photo != nil)
+            [photo setProgress:progress];
     }
 }
 
 - (void)download:(SeafBase *)entry complete:(BOOL)updated
 {
     if ([entry isKindOfClass:[SeafFile class]]) {
-        [self updateEntryCell:(SeafFile *)entry];
-        [self.detailViewController download:entry complete:updated];
+        SeafFile *file = (SeafFile *)entry;
+        [self updateEntryCell:file];
+        [self.detailViewController download:file complete:updated];
+        SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
+        if (photo != nil)
+            [photo complete:updated error:nil];
     } else if (entry == _directory) {
         [self dismissLoadingView];
         [SVProgressHUD dismiss];
@@ -929,6 +955,10 @@ enum {
 {
     if ([entry isKindOfClass:[SeafFile class]]) {
         [self.detailViewController download:entry failed:error];
+        SeafFile *file = (SeafFile *)entry;
+        SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
+        if (photo != nil)
+            [photo complete:false error:error];
         return;
     }
 
@@ -1124,6 +1154,39 @@ enum {
     [SVProgressHUD showSuccessWithStatus:S_PHOTOS_ALBUM];
 }
 
+- (void)browserAllPhotos
+{
+    MWPhotoBrowser *_mwPhotoBrowser = [[MWPhotoBrowser alloc] initWithDelegate:self];
+    _mwPhotoBrowser.displayActionButton = false;
+    _mwPhotoBrowser.displayNavArrows = true;
+    _mwPhotoBrowser.displaySelectionButtons = false;
+    _mwPhotoBrowser.alwaysShowControls = false;
+    _mwPhotoBrowser.zoomPhotosToFill = YES;
+    _mwPhotoBrowser.enableGrid = true;
+    _mwPhotoBrowser.startOnGrid = true;
+    _mwPhotoBrowser.enableSwipeToDismiss = false;
+    _mwPhotoBrowser.preLoadNum = 3;
+
+    NSMutableArray *seafPhotos = [[NSMutableArray alloc] init];
+    NSMutableArray *seafThumbs = [[NSMutableArray alloc] init];
+
+    for (id entry in _directory.allItems) {
+        if ([entry conformsToProtocol:@protocol(SeafPreView)]
+            && [(id<SeafPreView>)entry isImageFile]) {
+            id<SeafPreView> file = entry;
+            [file setDelegate:self];
+            [seafPhotos addObject:[[SeafPhoto alloc] initWithSeafPreviewIem:entry]];
+            [seafThumbs addObject:[[SeafThumb alloc] initWithSeafPreviewIem:entry]];
+        }
+    }
+    self.photos = seafPhotos;
+    self.thumbs = seafThumbs;
+
+    UINavigationController *nc = [[UINavigationController alloc] initWithRootViewController:_mwPhotoBrowser];
+    nc.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
+    [self presentViewController:nc animated:YES completion:nil];
+}
+
 - (void)thisImage:(UIImage *)image hasBeenSavedInPhotoAlbumWithError:(NSError *)error usingContextInfo:(void *)ctxInfo
 {
     if (error) {
@@ -1168,6 +1231,8 @@ enum {
         [self downloadDir:_directory];
     } else if ([S_PHOTOS_ALBUM isEqualToString:title]) {
         [self savePhotosToAlbum];
+    } else if ([S_PHOTOS_BROWSER isEqualToString:title]) {
+        [self browserAllPhotos];
     } else if ([S_EDIT isEqualToString:title]) {
         [self editStart:nil];
     } else if ([S_DELETE isEqualToString:title]) {
@@ -1630,6 +1695,42 @@ enum {
      [UIColor colorWithRed:0.78f green:0.78f blue:0.8f alpha:1.0]
                                                 title:S_CLEAR_REPO_PASSWORD];
     return rightUtilityButtons;
+}
+#pragma mark - MWPhotoBrowserDelegate
+- (NSUInteger)numberOfPhotosInPhotoBrowser:(MWPhotoBrowser *)photoBrowser {
+    if (!self.photos) return 0;
+    return self.photos.count;
+}
+
+- (id <MWPhoto>)photoBrowser:(MWPhotoBrowser *)photoBrowser photoAtIndex:(NSUInteger)index {
+    if (index < self.photos.count) {
+        return [self.photos objectAtIndex:index];
+    }
+    return nil;
+}
+
+- (NSString *)photoBrowser:(MWPhotoBrowser *)photoBrowser titleForPhotoAtIndex:(NSUInteger)index
+{
+    if (index < self.photos.count) {
+        SeafPhoto *photo = [self.photos objectAtIndex:index];
+        return photo.file.name;
+    } else {
+        Warning("index %d out of bound %d, %@", index, self.photos.count, self.photos);
+        return nil;
+    }
+}
+- (id <MWPhoto>)photoBrowser:(MWPhotoBrowser *)photoBrowser thumbPhotoAtIndex:(NSUInteger)index
+{
+    if (index < self.thumbs.count)
+        return [self.thumbs objectAtIndex:index];
+    return nil;
+}
+
+- (void)photoBrowserDidFinishModalPresentation:(MWPhotoBrowser *)photoBrowser
+{
+    [photoBrowser dismissViewControllerAnimated:YES completion:nil];
+    self.photos = nil;
+    self.thumbs = nil;
 }
 
 @end

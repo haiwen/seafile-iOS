@@ -36,6 +36,7 @@ enum SET_REPO_PASSWORD_RET {
 
 @protocol SeafPreView <QLPreviewItem, SeafItem, SeafSortable>
 - (UIImage *)image;
+- (UIImage *)thumb;
 - (UIImage *)icon;
 - (NSURL *)exportURL;
 - (NSString *)mime;

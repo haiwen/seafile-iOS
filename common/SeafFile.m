@@ -19,18 +19,24 @@
 #import "Debug.h"
 #import "Utils.h"
 
+typedef void (^SeafThumbCompleteBlock)(BOOL ret);
+
+
 @interface SeafFile()
 
 @property (strong, readonly) NSURL *preViewURL;
 @property (readonly) NSURL *exportURL;
 @property (strong) NSString *downloadingFileOid;
 @property (nonatomic, strong) UIImage *icon;
+@property (nonatomic, strong) UIImage *thumb;
 @property NSURLSessionDownloadTask *task;
 @property NSURLSessionDownloadTask *thumbtask;
 @property (strong) NSProgress *progress;
 @property (strong) SeafUploadFile *ufile;
 @property (strong) NSArray *blkids;
 @property int index;
+
+@property (readwrite, nonatomic, copy) SeafThumbCompleteBlock thumbCompleteBlock;
 
 @end
 
@@ -148,6 +154,9 @@
 
 - (void)finishDownloadThumb:(BOOL)success
 {
+    if (self.thumbCompleteBlock)
+        self.thumbCompleteBlock(success);
+
     _thumbtask = nil;
     if (success) {
         _icon = nil;
@@ -218,6 +227,11 @@
      }];
 }
 
+- (void)setThumbCompleteBlock:(nullable void (^)(BOOL ret))block
+{
+    _thumbCompleteBlock = block;
+}
+
 - (void)downloadThumb
 {
     int size = THUMB_SIZE * (int)[[UIScreen mainScreen] scale];
@@ -226,6 +240,10 @@
     NSString *target = [self thumbPath:self.oid];
     @synchronized (self) {
         if (_thumbtask) return;
+        if (self.thumb) {
+            [self finishDownloadThumb:true];
+            return;
+        }
         _thumbtask = [connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:nil destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
             return [NSURL fileURLWithPath:target];
         } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
@@ -334,7 +352,7 @@
     NSString *blk_id = [self.blkids objectAtIndex:self.index];
     if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject blockPath:blk_id]])
         return [self finishBlock:blk_id];
-    
+
     NSString *link = [NSString stringWithFormat:API_URL"/repos/%@/files/%@/blks/%@/download-link/", self.repoId, self.downloadingFileOid, blk_id];
     Debug("link=%@", link);
     [connection sendRequest:link success:
@@ -430,19 +448,29 @@
     return [Utils isImageFile:self.name];
 }
 
-- (UIImage *)icon;
+- (UIImage *)icon
 {
     if (_icon) return _icon;
     if (self.isImageFile && self.oid) {
-        NSString *thumbpath = [self thumbPath:self.oid];
-        if (thumbpath && [Utils fileExistsAtPath:thumbpath]) {
-            _icon = [UIImage imageWithContentsOfFile:thumbpath];
-            return _icon;
-        } else {
-            [self downloadThumb];
-        }
+        UIImage *img = [self thumb];
+        if (img)
+            return _thumb;
+        else
+            [self performSelectorInBackground:@selector(downloadThumb) withObject:nil];
     }
     return [super icon];
+}
+
+- (UIImage *)thumb
+{
+    if (_thumb)
+        return _thumb;
+
+    NSString *thumbpath = [self thumbPath:self.oid];
+    if (thumbpath && [Utils fileExistsAtPath:thumbpath]) {
+        _thumb = [UIImage imageWithContentsOfFile:thumbpath];
+    }
+    return _thumb;
 }
 
 - (DownloadedFile *)loadCacheObj
@@ -653,6 +681,8 @@
 
 - (UIImage *)image
 {
+    if (!self.ooid)
+        return nil;
     NSString *path = [SeafGlobal.sharedObject documentPath:self.ooid];
     NSString *name = [@"cacheimage-" stringByAppendingString:self.ooid];
     NSString *cachePath = [[SeafGlobal.sharedObject tempDir] stringByAppendingPathComponent:name];

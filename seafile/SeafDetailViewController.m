@@ -480,8 +480,8 @@ enum SHARE_STATUS {
 
     if (self.state == PREVIEW_PHOTO) {
         SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
-        if (photo == nil) return;
-        [photo setProgress:progress];
+        if (photo != nil)
+            [photo setProgress:progress];
         return;
     }
     if (self.state != PREVIEW_DOWNLOADING) {

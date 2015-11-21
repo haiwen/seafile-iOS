@@ -50,4 +50,7 @@
 - (NSDictionary *)toDict;
 
 - (NSString *)cachePath;
+
+- (void)setThumbCompleteBlock:(nullable void (^)(BOOL ret))block;
+- (void)downloadThumb;
 @end
