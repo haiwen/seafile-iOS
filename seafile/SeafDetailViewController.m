@@ -224,7 +224,6 @@ enum SHARE_STATUS {
 - (void)setPreViewPhotos:(NSArray *)items current:(id<SeafPreView>)item master:(UIViewController<SeafDentryDelegate> *)c
 {
     [self clearPreView];
-    Debug("Preview photos %d", items.count);
     if (self.masterPopoverController != nil)
         [self.masterPopoverController dismissPopoverAnimated:YES];
     self.masterVc = c;
@@ -384,12 +383,12 @@ enum SHARE_STATUS {
 {
     // Custom code to hide TabBar
     UITabBarController *tabBarController = self.splitViewController.tabBarController;
-    if ( [tabBarController.view.subviews count] < 2 ) {
+    if ([tabBarController.view.subviews count] < 2) {
         return;
     }
 
     UIView *contentView;
-    if ( [[tabBarController.view.subviews objectAtIndex:0] isKindOfClass:[UITabBar class]] ) {
+    if ([[tabBarController.view.subviews objectAtIndex:0] isKindOfClass:[UITabBar class]]) {
         contentView = [tabBarController.view.subviews objectAtIndex:1];
     } else {
         contentView = [tabBarController.view.subviews objectAtIndex:0];
@@ -900,13 +899,18 @@ enum SHARE_STATUS {
 
 - (NSString *)photoBrowser:(MWPhotoBrowser *)photoBrowser titleForPhotoAtIndex:(NSUInteger)index
 {
-    SeafPhoto *photo = [_photos objectAtIndex:index];
-    return photo.file.name;
+    if (index < self.photos.count) {
+        SeafPhoto *photo = [self.photos objectAtIndex:index];
+        return photo.file.name;
+    } else {
+        Warning("index %d out of bound %d", index, self.photos.count);
+        return nil;
+    }
 }
+
 - (void)photoBrowser:(MWPhotoBrowser *)photoBrowser didDisplayPhotoAtIndex:(NSUInteger)index
 {
-    if (index >= self.photos.count)
-        return;
+    if (index >= self.photos.count) return;
     NSUInteger previousCurrentPage = _currentPageIndex;
     _currentPageIndex = index;
     id<SeafPreView> pre = self.preViewItem;

@@ -47,7 +47,7 @@
     cell.imageview.image = [UIImage imageWithContentsOfFile:conn.avatar];
     cell.serverLabel.text = conn.address;
     cell.emailLabel.text = conn.username;
-    cell.imageview.layer.cornerRadius = 20;
+    cell.imageview.layer.cornerRadius = 5;
     cell.imageview.clipsToBounds = YES;
     return cell;
 }

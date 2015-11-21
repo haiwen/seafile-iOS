@@ -195,7 +195,7 @@
     cell.emailLabel.text = conn.username;
     cell.rightUtilityButtons = self.rightButtons;
     cell.delegate = self;
-    cell.imageview.layer.cornerRadius = 20;
+    cell.imageview.layer.cornerRadius = 5;
     cell.imageview.clipsToBounds = YES;
     return cell;
 }

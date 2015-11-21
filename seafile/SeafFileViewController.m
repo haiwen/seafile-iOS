@@ -918,6 +918,7 @@ enum {
             [self.detailViewController goBack:nil];
         }
 
+        [self dismissLoadingView];
         if (updated)  [self refreshView];
         else [self.tableView reloadData];
         self.state = STATE_INIT;

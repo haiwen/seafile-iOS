@@ -392,7 +392,6 @@
 
 - (void)download
 {
-    Debug("Local decrypt: %d", self.localDecrypt);
     if (self.localDecrypt)
         [self downloadByBlocks];
     else
