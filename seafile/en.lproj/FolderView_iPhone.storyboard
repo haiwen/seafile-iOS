@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="9059" systemVersion="15A284" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" initialViewController="IwU-Z8-46U">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="9059" systemVersion="15B42" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" initialViewController="IwU-Z8-46U">
     <dependencies>
         <deployment version="1792" identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="9049"/>
@@ -236,7 +236,7 @@
                                                     <animations/>
                                                 </switch>
                                                 <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Auto Upload" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="1af-Tn-HYe">
-                                                    <rect key="frame" x="8" y="11" width="185" height="21"/>
+                                                    <rect key="frame" x="15" y="11" width="185" height="21"/>
                                                     <animations/>
                                                     <constraints>
                                                         <constraint firstAttribute="width" constant="185" id="Tjq-jy-inJ"/>
@@ -248,7 +248,7 @@
                                             <animations/>
                                             <constraints>
                                                 <constraint firstItem="1af-Tn-HYe" firstAttribute="centerY" secondItem="Mca-LK-BJW" secondAttribute="centerY" id="IZm-ce-BT8"/>
-                                                <constraint firstItem="1af-Tn-HYe" firstAttribute="leading" secondItem="Mca-LK-BJW" secondAttribute="leadingMargin" id="kY2-O2-box"/>
+                                                <constraint firstItem="1af-Tn-HYe" firstAttribute="leading" secondItem="Mca-LK-BJW" secondAttribute="leadingMargin" constant="7" id="kY2-O2-box"/>
                                                 <constraint firstAttribute="trailing" secondItem="JZc-TU-fcn" secondAttribute="trailing" constant="13" id="z18-KV-kXM"/>
                                                 <constraint firstItem="1af-Tn-HYe" firstAttribute="top" secondItem="JZc-TU-fcn" secondAttribute="top" constant="5" id="zE7-7c-ZbV"/>
                                             </constraints>
@@ -267,7 +267,7 @@
                                                     <animations/>
                                                 </switch>
                                                 <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Upload Videos" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Kcw-kJ-pcF">
-                                                    <rect key="frame" x="8" y="11" width="185" height="21"/>
+                                                    <rect key="frame" x="15" y="11" width="185" height="21"/>
                                                     <animations/>
                                                     <constraints>
                                                         <constraint firstAttribute="width" constant="185" id="hpG-rg-Sbd"/>
@@ -280,7 +280,7 @@
                                             <constraints>
                                                 <constraint firstItem="fFZ-gz-Sso" firstAttribute="centerY" secondItem="Kcw-kJ-pcF" secondAttribute="centerY" id="HdB-Hj-5TB"/>
                                                 <constraint firstItem="fFZ-gz-Sso" firstAttribute="centerY" secondItem="BB0-K9-y9C" secondAttribute="centerY" id="QLA-zO-wda"/>
-                                                <constraint firstItem="Kcw-kJ-pcF" firstAttribute="leading" secondItem="BB0-K9-y9C" secondAttribute="leadingMargin" id="RGQ-Td-F3E"/>
+                                                <constraint firstItem="Kcw-kJ-pcF" firstAttribute="leading" secondItem="BB0-K9-y9C" secondAttribute="leadingMargin" constant="7" id="RGQ-Td-F3E"/>
                                                 <constraint firstAttribute="trailing" secondItem="fFZ-gz-Sso" secondAttribute="trailing" constant="13" id="Z3m-uP-BaB"/>
                                             </constraints>
                                         </tableViewCellContentView>
@@ -298,7 +298,7 @@
                                                     <animations/>
                                                 </switch>
                                                 <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Wifi Only" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5rP-cB-Wm0">
-                                                    <rect key="frame" x="8" y="11" width="185" height="21"/>
+                                                    <rect key="frame" x="15" y="11" width="185" height="21"/>
                                                     <animations/>
                                                     <constraints>
                                                         <constraint firstAttribute="width" constant="185" id="2Ag-sg-23x"/>
@@ -311,7 +311,7 @@
                                             <constraints>
                                                 <constraint firstItem="EII-rv-WS4" firstAttribute="centerY" secondItem="5rP-cB-Wm0" secondAttribute="centerY" id="2Lz-qz-D80"/>
                                                 <constraint firstItem="EII-rv-WS4" firstAttribute="centerY" secondItem="Tjg-fs-8RU" secondAttribute="centerY" id="GKm-My-Lkp"/>
-                                                <constraint firstItem="5rP-cB-Wm0" firstAttribute="leading" secondItem="Tjg-fs-8RU" secondAttribute="leadingMargin" id="JFP-xR-zOu"/>
+                                                <constraint firstItem="5rP-cB-Wm0" firstAttribute="leading" secondItem="Tjg-fs-8RU" secondAttribute="leadingMargin" constant="7" id="JFP-xR-zOu"/>
                                                 <constraint firstAttribute="trailing" secondItem="EII-rv-WS4" secondAttribute="trailing" constant="13" id="S3J-ft-YDT"/>
                                             </constraints>
                                         </tableViewCellContentView>
@@ -329,7 +329,7 @@
                                                     <animations/>
                                                 </switch>
                                                 <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Background Upload" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="BvI-L7-dN7">
-                                                    <rect key="frame" x="8" y="11" width="185" height="21"/>
+                                                    <rect key="frame" x="15" y="11" width="185" height="21"/>
                                                     <animations/>
                                                     <constraints>
                                                         <constraint firstAttribute="width" constant="185" id="mlq-cG-o3o"/>
@@ -340,7 +340,7 @@
                                             </subviews>
                                             <animations/>
                                             <constraints>
-                                                <constraint firstItem="BvI-L7-dN7" firstAttribute="leading" secondItem="lx7-jl-qiU" secondAttribute="leadingMargin" id="6Va-i1-ap9"/>
+                                                <constraint firstItem="BvI-L7-dN7" firstAttribute="leading" secondItem="lx7-jl-qiU" secondAttribute="leadingMargin" constant="7" id="6Va-i1-ap9"/>
                                                 <constraint firstItem="GiP-GK-ztk" firstAttribute="centerY" secondItem="BvI-L7-dN7" secondAttribute="centerY" id="RdT-9m-7jQ"/>
                                                 <constraint firstAttribute="trailing" secondItem="GiP-GK-ztk" secondAttribute="trailing" constant="13" id="UBV-sn-j9F"/>
                                                 <constraint firstItem="GiP-GK-ztk" firstAttribute="centerY" secondItem="lx7-jl-qiU" secondAttribute="centerY" id="oSm-vL-o6R"/>

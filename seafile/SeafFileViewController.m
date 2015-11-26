@@ -358,9 +358,9 @@ enum {
     if ([_directory isKindOfClass:[SeafRepos class]]) {
         titles = [NSArray arrayWithObjects:S_SORT_NAME, S_SORT_MTIME, nil];
     } else if (_directory.editable) {
-        titles = [NSArray arrayWithObjects:S_DOWNLOAD, S_PHOTOS_ALBUM, S_PHOTOS_BROWSER, S_EDIT, S_NEWFILE, S_MKDIR, S_SORT_NAME, S_SORT_MTIME, nil];
+        titles = [NSArray arrayWithObjects:S_DOWNLOAD, S_PHOTOS_ALBUM, S_EDIT, S_NEWFILE, S_MKDIR, S_SORT_NAME, S_SORT_MTIME, nil];
     } else {
-        titles = [NSArray arrayWithObjects:S_SORT_NAME, S_SORT_MTIME, S_PHOTOS_ALBUM, S_PHOTOS_BROWSER, nil];
+        titles = [NSArray arrayWithObjects:S_SORT_NAME, S_SORT_MTIME, S_PHOTOS_ALBUM, nil];
     }
     [self showAlertWithAction:titles fromBarItem:self.editItem withTitle:nil];
 }

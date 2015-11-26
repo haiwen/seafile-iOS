@@ -176,6 +176,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     [SeafGlobal.sharedObject incDownloadnum];
     [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@", self.repoId, [self.path escapedUrl]] success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+         Debug("Download file from file server url: %@", JSON);
          NSString *url = JSON;
          NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
          if (!curId)
@@ -194,7 +195,8 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
              self.downloadingFileOid = curId;
          }
          url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-         NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
+         NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:DEFAULT_TIMEOUT];
+         Debug("Download file %@ %@", self.name, url);
          NSProgress *progress = nil;
          NSString *target = [SeafGlobal.sharedObject documentPath:self.downloadingFileOid];
          _task = [connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:&progress destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {

@@ -239,8 +239,6 @@
 }
 - (void)download:(SeafBase *)entry failed:(NSError *)error
 {
-    if (![entry isKindOfClass:[SeafFile class]])
-        return
     [self.detailViewController download:entry failed:error];
 }
 

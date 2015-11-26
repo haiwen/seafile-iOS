@@ -484,7 +484,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     NSString *absoluteUrl = [url hasPrefix:@"http"] ? url : [_address stringByAppendingString:url];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:absoluteUrl]];
-    [request setTimeoutInterval:30.0f];
+    [request setTimeoutInterval:DEFAULT_TIMEOUT];
     [request setHTTPMethod:method];
     if (form) {
         [request setValue:@"application/x-www-form-urlencoded; charset=UTF-8" forHTTPHeaderField:@"Content-Type"];

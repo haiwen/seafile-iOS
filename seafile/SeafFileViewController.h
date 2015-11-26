@@ -33,7 +33,7 @@ enum {
 #define S_MORE NSLocalizedString(@"More", @"Seafile")
 #define S_DOWNLOAD NSLocalizedString(@"Download", @"Seafile")
 #define S_PHOTOS_ALBUM NSLocalizedString(@"Save all photos to album", @"Seafile")
-#define S_PHOTOS_BROWSER NSLocalizedString(@"Browser all photos", @"Seafile")
+#define S_PHOTOS_BROWSER NSLocalizedString(@"Open photo browser", @"Seafile")
 
 #define S_SHARE_EMAIL NSLocalizedString(@"Send share link via email", @"Seafile")
 #define S_SHARE_LINK NSLocalizedString(@"Copy share link to clipboard", @"Seafile")
