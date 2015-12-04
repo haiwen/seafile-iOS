@@ -78,6 +78,7 @@ enum {
 
 @property (strong, retain) NSArray *photos;
 @property (strong, retain) NSArray *thumbs;
+@property BOOL inPhotoBrowser;
 
 @end
 
@@ -224,8 +225,29 @@ enum {
         }
     }
 }
+
+- (void)initSeafPhotos
+{
+    NSMutableArray *seafPhotos = [[NSMutableArray alloc] init];
+    NSMutableArray *seafThumbs = [[NSMutableArray alloc] init];
+    
+    for (id entry in _directory.allItems) {
+        if ([entry conformsToProtocol:@protocol(SeafPreView)]
+            && [(id<SeafPreView>)entry isImageFile]) {
+            id<SeafPreView> file = entry;
+            [file setDelegate:self];
+            [seafPhotos addObject:[[SeafPhoto alloc] initWithSeafPreviewIem:entry]];
+            [seafThumbs addObject:[[SeafThumb alloc] initWithSeafPreviewIem:entry]];
+        }
+    }
+    self.photos = seafPhotos;
+    self.thumbs = seafThumbs;
+    Debug("... photos count: %ld", self.photos.count);
+}
+
 - (void)refreshView
 {
+    [self initSeafPhotos];
     for (SeafUploadFile *file in _directory.uploadItems) {
         file.delegate = self;
     }
@@ -354,13 +376,15 @@ enum {
 
 - (void)editSheet:(id)sender
 {
-    NSArray *titles = nil;
+    NSMutableArray *titles = nil;
     if ([_directory isKindOfClass:[SeafRepos class]]) {
-        titles = [NSArray arrayWithObjects:S_SORT_NAME, S_SORT_MTIME, nil];
+        titles = [NSMutableArray arrayWithObjects:S_SORT_NAME, S_SORT_MTIME, nil];
     } else if (_directory.editable) {
-        titles = [NSArray arrayWithObjects:S_DOWNLOAD, S_PHOTOS_ALBUM, S_EDIT, S_NEWFILE, S_MKDIR, S_SORT_NAME, S_SORT_MTIME, nil];
+        titles = [NSMutableArray arrayWithObjects:S_DOWNLOAD, S_EDIT, S_NEWFILE, S_MKDIR, S_SORT_NAME, S_SORT_MTIME, S_PHOTOS_ALBUM, nil];
+        if (self.photos.count >= 3) [titles addObject:S_PHOTOS_BROWSER];
     } else {
-        titles = [NSArray arrayWithObjects:S_SORT_NAME, S_SORT_MTIME, S_PHOTOS_ALBUM, nil];
+        titles = [NSMutableArray arrayWithObjects:S_SORT_NAME, S_SORT_MTIME, S_PHOTOS_ALBUM, nil];
+        if (self.photos.count >= 3) [titles addObject:S_PHOTOS_BROWSER];
     }
     [self showAlertWithAction:titles fromBarItem:self.editItem withTitle:nil];
 }
@@ -907,7 +931,7 @@ enum {
 
 #pragma mark - SeafDentryDelegate
 - (SeafPhoto *)getSeafPhoto:(id<SeafPreView>)photo {
-    if (!self.photos || ![photo isImageFile])
+    if (!self.inPhotoBrowser || ![photo isImageFile])
         return nil;
     for (SeafPhoto *sphoto in self.photos) {
         if (sphoto.file == photo) {
@@ -1167,20 +1191,7 @@ enum {
     _mwPhotoBrowser.enableSwipeToDismiss = false;
     _mwPhotoBrowser.preLoadNum = 3;
 
-    NSMutableArray *seafPhotos = [[NSMutableArray alloc] init];
-    NSMutableArray *seafThumbs = [[NSMutableArray alloc] init];
-
-    for (id entry in _directory.allItems) {
-        if ([entry conformsToProtocol:@protocol(SeafPreView)]
-            && [(id<SeafPreView>)entry isImageFile]) {
-            id<SeafPreView> file = entry;
-            [file setDelegate:self];
-            [seafPhotos addObject:[[SeafPhoto alloc] initWithSeafPreviewIem:entry]];
-            [seafThumbs addObject:[[SeafThumb alloc] initWithSeafPreviewIem:entry]];
-        }
-    }
-    self.photos = seafPhotos;
-    self.thumbs = seafThumbs;
+    self.inPhotoBrowser = true;
 
     UINavigationController *nc = [[UINavigationController alloc] initWithRootViewController:_mwPhotoBrowser];
     nc.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
@@ -1729,8 +1740,7 @@ enum {
 - (void)photoBrowserDidFinishModalPresentation:(MWPhotoBrowser *)photoBrowser
 {
     [photoBrowser dismissViewControllerAnimated:YES completion:nil];
-    self.photos = nil;
-    self.thumbs = nil;
+    self.inPhotoBrowser = false;
 }
 
 @end
