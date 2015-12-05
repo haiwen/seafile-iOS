@@ -242,7 +242,6 @@ enum {
     }
     self.photos = seafPhotos;
     self.thumbs = seafThumbs;
-    Debug("... photos count: %ld", self.photos.count);
 }
 
 - (void)refreshView

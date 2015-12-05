@@ -153,7 +153,10 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         else
             _settings = [[NSMutableDictionary alloc] init];
     }
-
+    if (self.autoClearRepoPasswd) {
+        Debug("Clear repo apsswords for %@ %@", url, username);
+        [self clearRepoPasswords];
+    }
     return self;
 }
 
@@ -210,6 +213,17 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return [[self getAttribute:@"backgroundSync"] booleanValue:true];
 }
 
+- (BOOL)autoClearRepoPasswd
+{
+    return [[self getAttribute:@"autoClearRepoPasswd"] booleanValue:false];
+}
+
+- (void)setAutoClearRepoPasswd:(BOOL)autoClearRepoPasswd
+{
+    if (self.autoClearRepoPasswd == autoClearRepoPasswd) return;
+    [self setAttribute:[NSNumber numberWithBool:autoClearRepoPasswd] forKey:@"autoClearRepoPasswd"];
+
+}
 - (void)setAutoSync:(BOOL)autoSync
 {
     if (self.isAutoSync == autoSync) return;
