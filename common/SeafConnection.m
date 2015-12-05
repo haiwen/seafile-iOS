@@ -489,7 +489,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
     Debug("Login: %@ %@", url, username);
     NSURLSessionDataTask *dataTask = [manager dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
-        Debug("....responseObject: %@", responseObject);
         if (error) {
             Warning("Error: %@", error);
             [self.loginDelegate loginFailed:self error:error code:((NSHTTPURLResponse *)response).statusCode];

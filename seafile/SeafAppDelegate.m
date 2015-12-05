@@ -86,6 +86,37 @@
     return YES;
 }
 
+
+- (BOOL)application:(UIApplication *)application
+            openURL:(NSURL *)url
+  sourceApplication:(NSString *)sourceApplication
+         annotation:(id)annotation
+{
+    Debug("Calling Application Bundle ID: %@, url: %@", sourceApplication, url);
+    if (![@"seafile" isEqualToString:url.scheme]) {
+        Warning("Unknown scheme %@", url.scheme);
+    }
+    NSDictionary *dict = [Utils queryToDict:url.query];
+    NSString *repoId = [dict objectForKey:@"repo_id"];
+    NSString *path = [dict objectForKey:@"path"];
+    if (repoId == nil || path == nil) {
+        Warning("Invalid url: %@", url);
+        return false;
+    }
+    if (![self.startVC selectDefaultAccount])
+        return false;
+
+    SeafConnection *conn = [[SeafGlobal sharedObject] connection];
+    SeafStarredFile *sfile = [[SeafStarredFile alloc] initWithConnection:conn repo:repoId path:path mtime:0 size:0 org:0];
+    [conn setStarred:true repo:repoId path:path];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5), dispatch_get_main_queue(), ^(void){
+        [self.tabbarController setSelectedIndex:TABBED_STARRED];
+        [self.starredVC performSelector:@selector(selectFile:) withObject:sfile afterDelay:0.5];
+    });
+    return true;
+}
+
+
 - (void)checkPhotoChanges:(NSNotification *)notification
 {
     Debug("Start check photos changes.");

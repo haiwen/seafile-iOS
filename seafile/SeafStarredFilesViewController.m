@@ -192,6 +192,15 @@
     return cell;
 }
 
+- (void)selectFile:(SeafStarredFile *)sfile
+{
+    Debug("Select file %@", sfile);
+    if (!IsIpad()) {
+        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+        [appdelegate showDetailView:self.detailViewController];
+    }
+    [self.detailViewController setPreViewItem:sfile master:self];
+}
 
 #pragma mark - Table view delegate
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
@@ -199,15 +208,11 @@
     SeafStarredFile *sfile;
     @try {
         sfile = [_starredFiles objectAtIndex:indexPath.row];
+        [self selectFile:sfile];
     } @catch(NSException *exception) {
         [self performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
         return;
     }
-    if (!IsIpad()) {
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        [appdelegate showDetailView:self.detailViewController];
-    }
-    [self.detailViewController setPreViewItem:sfile master:self];
 }
 
 - (void)updateEntryCell:(SeafFile *)entry

@@ -42,4 +42,5 @@
 
 + (UIImage *)reSizeImage:(UIImage *)image toSquare:(float)length;
 
++ (NSDictionary *)queryToDict:(NSString *)query;
 @end

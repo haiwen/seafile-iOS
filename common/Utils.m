@@ -432,4 +432,16 @@
     return reSizeImage;
 }
 
++ (NSDictionary *)queryToDict:(NSString *)query
+{
+    NSArray *components = [query componentsSeparatedByString:@"&"];
+    NSMutableDictionary *parameters = [[NSMutableDictionary alloc] init];
+    for (NSString *component in components) {
+        NSArray *subcomponents = [component componentsSeparatedByString:@"="];
+        [parameters setObject:[[subcomponents objectAtIndex:1] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]
+                       forKey:[[subcomponents objectAtIndex:0] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
+    }
+    return parameters;
+}
+
 @end

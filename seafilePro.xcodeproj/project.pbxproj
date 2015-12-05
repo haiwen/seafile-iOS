@@ -277,6 +277,7 @@
 		57CD9B871B5121CC00D1CC6B /* delete.png in Resources */ = {isa = PBXBuildFile; fileRef = 57CD9B831B5121CC00D1CC6B /* delete.png */; };
 		57D0AD3817914E7900D741BE /* mobile.css in Resources */ = {isa = PBXBuildFile; fileRef = 57D0AD3617914E7900D741BE /* mobile.css */; };
 		57D189D0182E0A380029A797 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 57D189CE182E0A380029A797 /* Images.xcassets */; };
+		57D822F61C12B80A008947FC /* seafile-appstore-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 57D822F51C12B80A008947FC /* seafile-appstore-Info.plist */; };
 		57DA26F5173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DA26F3173E6DFC0003BA31 /* SeafTextEditorViewController.m */; };
 		57E1E8A91737F4D3006601FE /* bootstrap-wysiwyg.js in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E8A51737F4D3006601FE /* bootstrap-wysiwyg.js */; };
 		57E1E8AB1737F4D3006601FE /* bootstrap.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E8A61737F4D3006601FE /* bootstrap.min.js */; };
@@ -627,6 +628,7 @@
 		57D0AD3617914E7900D741BE /* mobile.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; name = mobile.css; path = htmls/mobile.css; sourceTree = SOURCE_ROOT; };
 		57D189CE182E0A380029A797 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = "seafile-appstore/Images.xcassets"; sourceTree = "<group>"; };
 		57D5F81B1BD23389006BAD7B /* SeafPhoto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafPhoto.h; sourceTree = "<group>"; };
+		57D822F51C12B80A008947FC /* seafile-appstore-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "seafile-appstore-Info.plist"; sourceTree = "<group>"; };
 		57DA26F3173E6DFC0003BA31 /* SeafTextEditorViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafTextEditorViewController.m; sourceTree = "<group>"; };
 		57DB827115A833FA00097CEC /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		57DB827315A833FA00097CEC /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -1222,6 +1224,7 @@
 		57DB827A15A833FA00097CEC /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				57D822F51C12B80A008947FC /* seafile-appstore-Info.plist */,
 				57124BEA1B3EA6EA00075EAE /* LaunchScreen.png */,
 				57E228B61A0E403A00C92330 /* QBImagePickerController.bundle */,
 				57532C161868AA48003D564B /* Localizable.strings */,
@@ -1656,6 +1659,7 @@
 				57943C0E19F027D5008423E5 /* plus@2x.png in Resources */,
 				57E228B71A0E403A00C92330 /* QBImagePickerController.bundle in Resources */,
 				57BFAAFE18BD8EA200EB1B5C /* bt-justify.png in Resources */,
+				57D822F61C12B80A008947FC /* seafile-appstore-Info.plist in Resources */,
 				573F4AAC1788763500F096D3 /* arrowleft.png in Resources */,
 				573F4AAE1788763500F096D3 /* arrowright.png in Resources */,
 				57943C0519F027D5008423E5 /* checkmask2@2x.png in Resources */,

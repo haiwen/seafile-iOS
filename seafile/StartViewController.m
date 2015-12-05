@@ -267,9 +267,11 @@
     [conn loadCache];
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [appdelegate selectAccount:conn];
-    appdelegate.window.rootViewController = appdelegate.tabbarController;
-    [appdelegate.window makeKeyAndVisible];
-    [self performSelector:@selector(delayOP) withObject:nil afterDelay:0.01];
+    if (appdelegate.window.rootViewController != appdelegate.tabbarController) {
+        appdelegate.window.rootViewController = appdelegate.tabbarController;
+        [appdelegate.window makeKeyAndVisible];
+        [self performSelector:@selector(delayOP) withObject:nil afterDelay:0.01];
+    }
     return YES;
 }
 

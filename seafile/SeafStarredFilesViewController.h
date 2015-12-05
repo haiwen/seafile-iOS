@@ -16,5 +16,6 @@
 @property (strong, nonatomic) SeafConnection *connection;
 
 - (void)refreshView;
+- (void)selectFile:(SeafStarredFile *)sfile;
 
 @end
