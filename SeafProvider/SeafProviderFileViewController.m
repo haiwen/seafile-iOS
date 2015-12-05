@@ -328,10 +328,18 @@
 
 - (void)reloadIndex:(NSIndexPath *)indexPath
 {
-    if (indexPath)
-        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
-    else
-        [self.tableView reloadData];
+    @try {
+        if (indexPath)
+            [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+        else
+            [self.tableView reloadData];
+    }
+    @catch (NSException *exception) {
+        Debug("Exception while reload inedx %@: %@", indexPath, exception);
+    }
+    @finally {
+    }
+
 }
 #pragma mark - SeafDentryDelegate
 - (void)download:(SeafBase *)entry progress:(float)progress

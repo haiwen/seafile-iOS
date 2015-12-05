@@ -776,7 +776,8 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     if (ret) {
         self.mpath = newpath;
         [self autoupload];
-    }
+    } else
+        Warning("Failed to copy file %@ to %@: %@", url, newpath, error);
     return ret;
 }
 

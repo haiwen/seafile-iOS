@@ -12,6 +12,17 @@
 #import "Debug.h"
 
 
+static NSError * NewNSErrorFromException(NSException * exc) {
+    NSMutableDictionary * info = [NSMutableDictionary dictionary];
+    [info setValue:exc.name forKey:@"SeafExceptionName"];
+    [info setValue:exc.reason forKey:@"SeafExceptionReason"];
+    [info setValue:exc.callStackReturnAddresses forKey:@"SeafExceptionCallStackReturnAddresses"];
+    [info setValue:exc.callStackSymbols forKey:@"SeafExceptionCallStackSymbols"];
+    [info setValue:exc.userInfo forKey:@"SeafExceptionUserInfo"];
+    
+    return [[NSError alloc] initWithDomain:@"seafile" code:-1 userInfo:info];
+}
+
 @interface SeafGlobal()
 @property (retain) NSMutableArray *ufiles;
 @property (retain) NSMutableArray *dfiles;
@@ -624,9 +635,17 @@
                                 [self.assetsLibrary enumerateGroupsWithTypes:ALAssetsGroupPhotoStream
                                                                   usingBlock:^(ALAssetsGroup *group, BOOL *stop) {
                                      [group enumerateAssetsWithOptions:NSEnumerationReverse usingBlock:^(ALAsset *result, NSUInteger index, BOOL *stop) {
-                                         if([result.defaultRepresentation.url isEqual:assetURL]) {
-                                             resultBlock(result);
-                                             *stop = YES;
+                                         @try {
+                                             if([result.defaultRepresentation.url isEqual:assetURL]) {
+                                                 resultBlock(result);
+                                                 *stop = YES;
+                                             }
+                                         }
+                                         @catch (NSException *exception) {
+                                             Warning("Failed to get asset url:%@, %@", assetURL, result);
+                                             failureBlock(NewNSErrorFromException(exception));
+                                         }
+                                         @finally {
                                          }
                                      }];
                                  }

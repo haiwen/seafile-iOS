@@ -82,9 +82,15 @@
         return;
     if (SeafGlobal.sharedObject.conns.count == 0)
         [SeafGlobal.sharedObject loadAccounts];
-    SeafConnection *conn = [SeafGlobal.sharedObject getConnection:[dict objectForKey:@"conn_url"] username:[dict objectForKey: @"conn_username"]];
+    NSString *connUrl = [dict objectForKey:@"conn_url"];
+    NSString *username = [dict objectForKey: @"conn_username"];
     NSString *path = [dict objectForKey:@"path"];
-    SeafFile *file = [[SeafFile alloc] initWithConnection:conn oid:[dict objectForKey:@"id"] repoId:[dict objectForKey:@"repoid"] name:path.lastPathComponent path:path mtime:[[dict objectForKey:@"mtime"] integerValue:0] size:[[dict objectForKey:@"size"] integerValue:0]];
+    NSString *repoId = [dict objectForKey:@"repoid"];
+    if (!connUrl || !username || !path || !repoId)
+        return;
+    SeafConnection *conn = [SeafGlobal.sharedObject getConnection:connUrl username:username];
+    if (!conn) return;
+    SeafFile *file = [[SeafFile alloc] initWithConnection:conn oid:[dict objectForKey:@"id"] repoId:repoId name:path.lastPathComponent path:path mtime:[[dict objectForKey:@"mtime"] integerValue:0] size:[[dict objectForKey:@"size"] integerValue:0]];
     [file itemChangedAtURL:url];
 }
 
