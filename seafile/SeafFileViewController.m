@@ -979,7 +979,7 @@ enum {
     if ([entry isKindOfClass:[SeafFile class]]) {
         [self.detailViewController download:entry failed:error];
         SeafFile *file = (SeafFile *)entry;
-        SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
+        SeafPhoto *photo = [self getSeafPhoto:file];
         if (photo != nil)
             [photo complete:false error:error];
         return;

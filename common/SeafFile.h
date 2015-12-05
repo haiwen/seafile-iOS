@@ -16,7 +16,7 @@
 @class SeafFile;
 
 @protocol SeafFileUpdateDelegate <NSObject>
-- (void)updateProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent;
+- (void)updateProgress:(nonnull SeafFile * )file result:(BOOL)res completeness:(int)percent;
 @end
 
 @interface SeafFile : SeafBase<QLPreviewItem, SeafPreView, SeafUploadDelegate, SeafDownloadDelegate> {
@@ -27,29 +27,29 @@
 
 }
 
-- (id)initWithConnection:(SeafConnection *)aConnection
-                     oid:(NSString *)anId
-                  repoId:(NSString *)aRepoId
-                    name:(NSString *)aName
-                    path:(NSString *)aPath
+- (nonnull id)initWithConnection:(nonnull SeafConnection *)aConnection
+                     oid:(nullable NSString *)anId
+                  repoId:(nonnull NSString *)aRepoId
+                    name:(nonnull NSString *)aName
+                    path:(nonnull NSString *)aPath
                    mtime:(long long)mtime
                     size:(unsigned long long)size;
 
-@property (strong, nonatomic) NSString *mpath;// For modified files
-@property (readonly) NSString *detailText;
+@property (strong, nonatomic, nullable) NSString *mpath;// For modified files
+@property (readonly, nullable) NSString *detailText;
 @property (readonly) long long filesize;
 @property (readonly) long long mtime;
-@property (strong) id <SeafFileUpdateDelegate> udelegate;
+@property (strong, nullable) id <SeafFileUpdateDelegate> udelegate;
 
 - (BOOL)isStarred;
 - (void)setStarred:(BOOL)starred;
 - (void)deleteCache;
-- (void)update:(id<SeafFileUpdateDelegate>)dg;
+- (void)update:(nullable id<SeafFileUpdateDelegate>)dg;
 - (void)cancelAnyLoading;
-- (BOOL)itemChangedAtURL:(NSURL *)url;
-- (NSDictionary *)toDict;
+- (BOOL)itemChangedAtURL:(nonnull NSURL *)url;
+- (nonnull NSDictionary *)toDict;
 
-- (NSString *)cachePath;
+- (nullable NSString *)cachePath;
 
 - (void)setThumbCompleteBlock:(nullable void (^)(BOOL ret))block;
 - (void)downloadThumb;
