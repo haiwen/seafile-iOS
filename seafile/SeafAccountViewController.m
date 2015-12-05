@@ -167,7 +167,7 @@
         passwordLabel.font = [UIFont boldSystemFontOfSize:14];
         passwordTextField.leftView = passwordLabel;
         passwordTextField.leftViewMode = UITextFieldViewModeAlways;
-        usernameTextField.placeholder = NSLocalizedString(@"Email", @"Seafile");
+        usernameTextField.placeholder = NSLocalizedString(@"Email or Username", @"Seafile");
         passwordTextField.placeholder = NSLocalizedString(@"Password", @"Seafile");
     } else {
         self.title = NSLocalizedString(@"Shibboleth Login", @"Seafile");

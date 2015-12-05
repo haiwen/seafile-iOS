@@ -372,7 +372,9 @@
 
     [alert addAction:noAction];
     [alert addAction:yesAction];
-    [c presentViewController:alert animated:true completion:nil];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [c presentViewController:alert animated:true completion:nil];
+    });
 }
 
 + (void)alertWithTitle:(NSString *)title message:(NSString*)message handler:(void (^)())handler from:(UIViewController *)c
@@ -383,7 +385,9 @@
             handler();
     }];
     [alert addAction:okAction];
-    [c presentViewController:alert animated:true completion:nil];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [c presentViewController:alert animated:true completion:nil];
+    });
 }
 
 + (void)popupInputView:(NSString *)title placeholder:(NSString *)tip secure:(BOOL)secure handler:(void (^)(NSString *input))handler from:(UIViewController *)c
@@ -405,7 +409,9 @@
     [alert addAction:cancelAction];
     [alert addAction:okAction];
 
-    [c presentViewController:alert animated:true completion:nil];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [c presentViewController:alert animated:true completion:nil];
+    });
 }
 
 + (UIImage *)reSizeImage:(UIImage *)image toSquare:(float)length

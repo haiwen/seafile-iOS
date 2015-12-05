@@ -427,9 +427,16 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          NSDictionary *account = JSON;
          Debug("account detail:%@", account);
+         NSString *oldUsername = self.username;
+         NSString *newUsername = [account objectForKey:@"email"];
+         [_info setObject:[account objectForKey:@"total"] forKey:@"total"];
          [_info setObject:[account objectForKey:@"total"] forKey:@"total"];
          [_info setObject:[account objectForKey:@"usage"] forKey:@"usage"];
          [_info setObject:_address forKey:@"link"];
+         if (![oldUsername isEqualToString:newUsername]) {
+             [SeafGlobal.sharedObject removeObjectForKey:[NSString stringWithFormat:@"%@/%@", _address, self.username]];
+             [_info setObject:newUsername forKey:@"username"];
+         }
          [self saveAccountInfo];
          if (handler) handler(true, self);
      }
@@ -480,8 +487,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     AFHTTPSessionManager *manager = self.loginMgr;
     manager.responseSerializer = [AFJSONResponseSerializer serializer];
 
-    Debug("Login: %@", url);
+    Debug("Login: %@ %@", url, username);
     NSURLSessionDataTask *dataTask = [manager dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
+        Debug("....responseObject: %@", responseObject);
         if (error) {
             Warning("Error: %@", error);
             [self.loginDelegate loginFailed:self error:error code:((NSHTTPURLResponse *)response).statusCode];
