@@ -45,6 +45,7 @@
     }
     cell.contentView.backgroundColor = [UIColor whiteColor];
     cell.accessoryType = UITableViewCellAccessoryNone;
+    //cell.selectionStyle = UITableViewCellSelectionStyleGray;
     return cell;
 }
 
