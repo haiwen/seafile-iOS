@@ -903,7 +903,7 @@ enum SHARE_STATUS {
         SeafPhoto *photo = [self.photos objectAtIndex:index];
         return photo.file.name;
     } else {
-        Warning("index %d out of bound %d", index, self.photos.count);
+        Warning("index %lu out of bound %lu", (unsigned long)index, (unsigned long)self.photos.count);
         return nil;
     }
 }

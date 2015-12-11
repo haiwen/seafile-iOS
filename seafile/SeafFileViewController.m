@@ -1725,7 +1725,7 @@ enum {
         SeafPhoto *photo = [self.photos objectAtIndex:index];
         return photo.file.name;
     } else {
-        Warning("index %d out of bound %d, %@", index, self.photos.count, self.photos);
+        Warning("index %lu out of bound %lu, %@", (unsigned long)index, (unsigned long)self.photos.count, self.photos);
         return nil;
     }
 }

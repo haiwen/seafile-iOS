@@ -22,7 +22,7 @@
 #define THUMB_DIR @"thumb"
 #define TEMP_DIR @"temp"
 
-#define THUMB_SIZE 64
+#define THUMB_SIZE 96
 
 @interface SeafGlobal : NSObject
 

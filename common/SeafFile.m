@@ -89,7 +89,8 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 - (NSString *)thumbPath: (NSString *)objId
 {
     if (!self.oid) return nil;
-    return [SeafGlobal.sharedObject.thumbsDir stringByAppendingPathComponent:self.oid];
+    int size = THUMB_SIZE * (int)[[UIScreen mainScreen] scale];
+    return [SeafGlobal.sharedObject.thumbsDir stringByAppendingFormat:@"%@-%d", objId, size];
 }
 - (void)updateWithEntry:(SeafBase *)entry
 {
