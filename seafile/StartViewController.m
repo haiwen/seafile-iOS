@@ -107,7 +107,7 @@
 
 - (void)viewWillAppear:(BOOL)animated
 {
-    self.footer.hidden = !(IsIpad() && [self checkLastAccount]);
+    self.footer.hidden = !([self checkLastAccount]);
     [self.tableView reloadData];
     [super viewWillAppear:animated];
 }
@@ -116,11 +116,8 @@
 {
     [super viewWillLayoutSubviews];
     ColorfulButton *bt = self.footer;
-    if (IsIpad()) {
-        bt.frame = CGRectMake(self.view.frame.origin.x-1, self.view.frame.size.height-57, self.tableView.frame.size.width+2, 58);
-        bt.backgroundColor = [UIColor colorWithRed:227.0/255.0 green:227.0/255.0 blue:227.0/255.0 alpha:1.0];
-    } else
-        bt.frame = CGRectMake(self.view.frame.origin.x-1, self.view.frame.size.height-51, self.tableView.frame.size.width+2, 52);
+    bt.frame = CGRectMake(self.view.frame.origin.x-1, self.view.frame.size.height-57, self.tableView.frame.size.width+2, 58);
+    bt.backgroundColor = [UIColor colorWithRed:227.0/255.0 green:227.0/255.0 blue:227.0/255.0 alpha:1.0];
     [bt.layer setBorderColor:[[UIColor grayColor] CGColor]];
 }
 
