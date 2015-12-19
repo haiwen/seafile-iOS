@@ -95,7 +95,7 @@
     _encrypted = repo.encrypted;
 }
 
-- (BOOL)localDecrypt
+- (BOOL)canLocalDecrypt
 {
 #if 1
     //Debug("localDecrypt %d version:%d, magic:%@", self.encrypted, self.encVersion, self.magic);

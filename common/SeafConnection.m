@@ -218,6 +218,17 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return [[self getAttribute:@"autoClearRepoPasswd"] booleanValue:false];
 }
 
+- (BOOL)localDecryption
+{
+    return [[self getAttribute:@"localDecryption"] booleanValue:false];
+}
+
+- (void)setLocalDecryption:(BOOL)localDecryption
+{
+    if (self.localDecryption == localDecryption) return;
+    [self setAttribute:[NSNumber numberWithBool:localDecryption] forKey:@"localDecryption"];
+}
+
 - (void)setAutoClearRepoPasswd:(BOOL)autoClearRepoPasswd
 {
     if (self.autoClearRepoPasswd == autoClearRepoPasswd) return;
@@ -400,8 +411,10 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (BOOL)localDecrypt:(NSString *)repoId
 {
+    if (!self.localDecryption)
+        return false;
     SeafRepo *repo = [self getRepo:repoId];
-    return repo.localDecrypt;
+    return [repo canLocalDecrypt];
 }
 
 - (BOOL)isEncrypted:(NSString *)repoId

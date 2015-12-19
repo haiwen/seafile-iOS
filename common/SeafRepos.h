@@ -21,6 +21,9 @@
 @property (readonly) unsigned long long size;
 @property (readonly) long long mtime;
 @property (readonly) NSString *gid;
+
+- (BOOL)canLocalDecrypt;
+
 @end
 
 

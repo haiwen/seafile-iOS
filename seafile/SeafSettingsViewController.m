@@ -71,12 +71,14 @@ enum ENC_LIBRARIES{
 @property (strong, nonatomic) IBOutlet UILabel *videoSyncLabel;
 @property (strong, nonatomic) IBOutlet UILabel *backgroundSyncLable;
 @property (strong, nonatomic) IBOutlet UILabel *autoClearPasswdLabel;
+@property (strong, nonatomic) IBOutlet UILabel *localDecryLabel;
 
 @property (strong, nonatomic) IBOutlet UISwitch *autoSyncSwitch;
 @property (strong, nonatomic) IBOutlet UISwitch *wifiOnlySwitch;
 @property (strong, nonatomic) IBOutlet UISwitch *videoSyncSwitch;
 @property (strong, nonatomic) IBOutlet UISwitch *backgroundSyncSwitch;
 @property (strong, nonatomic) IBOutlet UISwitch *autoClearPasswdSwitch;
+@property (strong, nonatomic) IBOutlet UISwitch *localDecrySwitch;
 
 @property (strong, nonatomic) CLLocationManager *locationManager;
 
@@ -200,6 +202,10 @@ enum ENC_LIBRARIES{
     _connection.autoClearRepoPasswd = _autoClearPasswdSwitch.on;
 }
 
+- (IBAction)localDecryptionSwtichFlip:(id)sender {
+    _connection.localDecryption = _localDecrySwitch.on;
+}
+
 - (void)backgroundSyncSwitchFlip:(id)sender
 {
     Debug("_backgroundSyncSwitch status:%d", _backgroundSyncSwitch.on);
@@ -236,7 +242,8 @@ enum ENC_LIBRARIES{
     _wifiOnlyLabel.text = NSLocalizedString(@"Wifi Only", @"Seafile");
     _backgroundSyncLable.text = NSLocalizedString(@"Background Upload", @"Seafile");
     _autoClearPasswdLabel.text = NSLocalizedString(@"Auto clear passwords", @"Auto cleay library password");
-
+    _localDecryLabel.text = NSLocalizedString(@"Local Decryption", @"Local Decryption");
+    
     _syncRepoCell.textLabel.text = NSLocalizedString(@"Upload Destination", @"Seafile");
     _cacheCell.textLabel.text = NSLocalizedString(@"Local Cache", @"Seafile");
     _tellFriendCell.textLabel.text = [NSString stringWithFormat:NSLocalizedString(@"Tell Friends about %@", @"Seafile"), APP_NAME];
@@ -254,6 +261,7 @@ enum ENC_LIBRARIES{
     [_videoSyncSwitch addTarget:self action:@selector(videoSyncSwitchFlip:) forControlEvents:UIControlEventValueChanged];
     [_backgroundSyncSwitch addTarget:self action:@selector(backgroundSyncSwitchFlip:) forControlEvents:UIControlEventValueChanged];
     [_autoClearPasswdSwitch addTarget:self action:@selector(autoClearPasswdSwtichFlip:) forControlEvents:UIControlEventValueChanged];
+    [_localDecrySwitch addTarget:self action:@selector(localDecryptionSwtichFlip:) forControlEvents:UIControlEventValueChanged];
 
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
     _version = [infoDictionary objectForKey:@"CFBundleShortVersionString"];
@@ -295,6 +303,7 @@ enum ENC_LIBRARIES{
     SeafRepo *repo = [_connection getRepo:_connection.autoSyncRepo];
     _syncRepoCell.detailTextLabel.text = repo ? repo.name : nil;
     _autoClearPasswdSwitch.on = _connection.autoClearRepoPasswd;
+    _localDecrySwitch.on = _connection.localDecryption;
 
     long long cacheSize = [self cacheSize];
     _cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:cacheSize] useBaseTen:NO];

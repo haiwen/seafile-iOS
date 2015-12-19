@@ -73,6 +73,7 @@ enum MSG_TYPE{
 @property (readwrite, nonatomic, getter=isBackgroundSync) BOOL backgroundSync;
 @property (readwrite, nonatomic) NSString *autoSyncRepo;
 @property (readwrite, nonatomic) BOOL autoClearRepoPasswd;
+@property (readwrite, nonatomic) BOOL localDecryption;
 
 
 @property (weak) id<SeafPhotoSyncWatcherDelegate> photSyncWatcher;
