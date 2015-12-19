@@ -549,6 +549,8 @@ enum SHARE_STATUS {
     if ([Utils isImageFile:file.name]) {
         [bts addObject:NSLocalizedString(@"Save to album", @"Seafile")];
         [bts addObject:NSLocalizedString(@"Copy image to clipboard", @"Seafile")];
+    } else if ([Utils isVideoFile:file.name]) {
+        [bts addObject:NSLocalizedString(@"Save to album", @"Seafile")];
     }
     if ([self isPrintable:file])
         [bts addObject:NSLocalizedString(@"Print", @"Seafile")];
@@ -569,15 +571,24 @@ enum SHARE_STATUS {
     [self showAlertWithAction:[NSArray arrayWithObjects:email, copy, nil] fromBarItem:self.shareItem withTitle:SHARE_TITLE];
 }
 
-- (void)thisImage:(UIImage *)image hasBeenSavedInPhotoAlbumWithError:(NSError *)error usingContextInfo:(void *)ctxInfo
+- (void)savedToPhotoAlbumWithError:(NSError *)error file:(SeafFile *)file
 {
-    SeafFile *file = (__bridge SeafFile *)ctxInfo;
-
     if (error) {
         [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Failed to save %@ to album", @"Seafile"), file.name]];
     } else {
         [SVProgressHUD showSuccessWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Success to save %@ to album", @"Seafile"), file.name]];
     }
+}
+- (void)thisImage:(UIImage *)image hasBeenSavedInPhotoAlbumWithError:(NSError *)error usingContextInfo:(void *)ctxInfo
+{
+    SeafFile *file = (__bridge SeafFile *)ctxInfo;
+    [self savedToPhotoAlbumWithError:error file:file];
+}
+
+- (void)video: (NSString *)videoPath didFinishSavingWithError:(NSError *)error contextInfo:(void *)ctxInfo
+{
+    SeafFile *file = (__bridge SeafFile *)ctxInfo;
+    [self savedToPhotoAlbumWithError:error file:file];
 }
 
 - (void)printFile:(SeafFile *)file
@@ -618,8 +629,12 @@ enum SHARE_STATUS {
         if (self.actionSheet)[self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
         [self performSelector:@selector(openElsewhere:) withObject:nil afterDelay:0.0f];
     } else if ([NSLocalizedString(@"Save to album", @"Seafile") isEqualToString:title]) {
-        UIImage *img = [UIImage imageWithContentsOfFile:file.previewItemURL.path];
-        UIImageWriteToSavedPhotosAlbum(img, self, @selector(thisImage:hasBeenSavedInPhotoAlbumWithError:usingContextInfo:), (void *)CFBridgingRetain(file));
+        if ([Utils isImageFile:file.name]) {
+            UIImage *img = [UIImage imageWithContentsOfFile:file.previewItemURL.path];
+            UIImageWriteToSavedPhotosAlbum(img, self, @selector(thisImage:hasBeenSavedInPhotoAlbumWithError:usingContextInfo:), (void *)CFBridgingRetain(file));
+        } else {
+            UISaveVideoAtPathToSavedPhotosAlbum(file.previewItemURL.path, self, @selector(video:didFinishSavingWithError:contextInfo:), (void *)CFBridgingRetain(file));
+        }
     }  else if ([NSLocalizedString(@"Copy image to clipboard", @"Seafile") isEqualToString:title]) {
         UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
         NSData *data = [NSData dataWithContentsOfFile:file.previewItemURL.path];

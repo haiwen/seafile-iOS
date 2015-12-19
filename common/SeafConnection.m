@@ -1143,8 +1143,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     @synchronized(arr) {
         NSMutableArray *videos = [[NSMutableArray alloc] init];
         for (NSURL *url in arr) {
-            NSString *ext;
-            if (![Utils isImageExt:ext])
+            if (![Utils isVideoExt:url.pathExtension])
                 [videos addObject:url];
         }
         [arr removeObjectsInArray:videos];

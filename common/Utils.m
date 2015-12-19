@@ -257,23 +257,34 @@
 
 + (BOOL)isImageFile:(NSString *)name
 {
+    static NSString *imgexts[] = {@"tif", @"tiff", @"jpg", @"jpeg", @"gif", @"png", @"bmp", @"ico", nil};
     NSString *ext = name.pathExtension.lowercaseString;
-    return [Utils isImageExt:ext];
+    return [Utils isExt:ext In:imgexts];
 }
 
-+ (BOOL)isImageExt:(NSString *)ext
++ (BOOL)isVideoFile:(NSString *)name
 {
-    static NSString *imgexts[] = {@"tif", @"tiff", @"jpg", @"jpeg", @"gif", @"png", @"bmp", @"ico", nil};
+    return [Utils isVideoExt:name.pathExtension.lowercaseString];
+}
+
++ (BOOL)isVideoExt:(NSString *)ext
+{
+    static NSString *videoexts[] = {@"mp4", @"mov", @"m4v", nil};
+    return [Utils isExt:ext In:videoexts];
+}
+
+
++ (BOOL)isExt:(NSString *)ext In:(__strong NSString *[])exts
+{
     if (!ext || ext.length == 0)
         return false;
 
-    for (int i = 0; imgexts[i]; ++i) {
-        if ([imgexts[i] isEqualToString:ext])
+    for (int i = 0; exts[i]; ++i) {
+        if ([exts[i] isEqualToString:ext])
             return true;
     }
     return false;
 }
-
 
 + (BOOL)writeDataToPathNoMeta:(NSString*)filePath andAsset:(ALAsset*)asset
 {

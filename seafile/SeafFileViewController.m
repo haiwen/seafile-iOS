@@ -230,7 +230,7 @@ enum {
 {
     NSMutableArray *seafPhotos = [[NSMutableArray alloc] init];
     NSMutableArray *seafThumbs = [[NSMutableArray alloc] init];
-    
+
     for (id entry in _directory.allItems) {
         if ([entry conformsToProtocol:@protocol(SeafPreView)]
             && [(id<SeafPreView>)entry isImageFile]) {

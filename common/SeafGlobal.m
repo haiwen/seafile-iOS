@@ -19,7 +19,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     [info setValue:exc.callStackReturnAddresses forKey:@"SeafExceptionCallStackReturnAddresses"];
     [info setValue:exc.callStackSymbols forKey:@"SeafExceptionCallStackSymbols"];
     [info setValue:exc.userInfo forKey:@"SeafExceptionUserInfo"];
-    
+
     return [[NSError alloc] initWithDomain:@"seafile" code:-1 userInfo:info];
 }
 
