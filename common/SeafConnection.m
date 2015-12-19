@@ -404,6 +404,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return repo.localDecrypt;
 }
 
+- (BOOL)isEncrypted:(NSString *)repoId
+{
+    SeafRepo *repo = [self getRepo:repoId];
+    return repo.encrypted;
+}
+
 - (void)clearAccount
 {
     [SeafGlobal.sharedObject removeObjectForKey:_address];

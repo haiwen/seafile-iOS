@@ -218,7 +218,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 - (BOOL)chunkFile:(NSString *)path blockids:(NSMutableArray *)blockids paths:(NSMutableArray *)paths password:(NSString *)password repo:(SeafRepo *)repo
 {
     BOOL ret = YES;
-    int CHUNK_LENGTH = 1024*1024;
+    int CHUNK_LENGTH = 2*1024*1024;
     NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath:path];
     if (!fileHandle)
         return NO;

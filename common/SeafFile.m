@@ -455,13 +455,23 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 {
     if (_icon) return _icon;
     if (self.isImageFile && self.oid) {
-        UIImage *img = [self thumb];
-        if (img)
-            return _thumb;
-        else
-            [self performSelectorInBackground:@selector(downloadThumb) withObject:nil];
+        if (![connection isEncrypted:self.repoId]) {
+            UIImage *img = [self thumb];
+            if (img)
+                return _thumb;
+            else
+                [self performSelectorInBackground:@selector(downloadThumb) withObject:nil];
+        } else if (self.image) {
+            [self performSelectorInBackground:@selector(genThumb) withObject:nil];
+        }
     }
     return [super icon];
+}
+
+- (void)genThumb
+{
+    _icon = [Utils reSizeImage:self.image toSquare:THUMB_SIZE];
+    [self.delegate download:self complete:false];
 }
 
 - (UIImage *)thumb

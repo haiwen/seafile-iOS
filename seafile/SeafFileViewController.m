@@ -1570,18 +1570,20 @@ enum {
 
 - (void)updateEntryCell:(SeafFile *)entry
 {
-    NSUInteger index = [_directory.allItems indexOfObject:entry];
-    if (index == NSNotFound)
-        return;
-    @try {
-        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
-        UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
-        if (cell){
-            cell.detailTextLabel.text = entry.detailText;
-            cell.imageView.image = entry.icon;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSUInteger index = [_directory.allItems indexOfObject:entry];
+        if (index == NSNotFound)
+            return;
+        @try {
+            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
+            UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+            if (cell){
+                cell.detailTextLabel.text = entry.detailText;
+                cell.imageView.image = entry.icon;
+            }
+        } @catch(NSException *exception) {
         }
-    } @catch(NSException *exception) {
-    }
+    });
 }
 
 #pragma mark - SeafShareDelegate
