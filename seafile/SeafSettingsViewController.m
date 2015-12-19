@@ -332,10 +332,7 @@ enum ENC_LIBRARIES{
 - (void)popupRepoSelect
 {
     SeafDirViewController *c = [[SeafDirViewController alloc] initWithSeafDir:self.connection.rootFolder delegate:self chooseRepo:true];
-    UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:c];
-    [navController setModalPresentationStyle:UIModalPresentationFormSheet];
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    [appdelegate.tabbarController presentViewController:navController animated:YES completion:nil];
+    [self.navigationController pushViewController:c animated:true];
 }
 
 #pragma mark - Table view delegate
@@ -520,7 +517,11 @@ enum ENC_LIBRARIES{
 
 - (void)chooseDir:(UIViewController *)c dir:(SeafDir *)dir
 {
-    [c.navigationController dismissViewControllerAnimated:YES completion:nil];
+    if (c.navigationController == self.navigationController) {
+        [self.navigationController popToRootViewControllerAnimated:true];
+    } else {
+        [c.navigationController dismissViewControllerAnimated:YES completion:nil];
+    }
     NSString *old = _connection.autoSyncRepo;
     SeafRepo *repo = (SeafRepo *)dir;
     if ([repo.repoId isEqualToString:old]) {
