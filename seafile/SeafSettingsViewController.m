@@ -541,7 +541,11 @@ enum ENC_LIBRARIES{
 
 - (void)cancelChoose:(UIViewController *)c
 {
-    [c.navigationController dismissViewControllerAnimated:YES completion:nil];
+    if (c.navigationController == self.navigationController) {
+        [self.navigationController popToRootViewControllerAnimated:true];
+    } else {
+        [c.navigationController dismissViewControllerAnimated:YES completion:nil];
+    }
 }
 
 #pragma mark - SeafPhotoSyncWatcherDelegate
