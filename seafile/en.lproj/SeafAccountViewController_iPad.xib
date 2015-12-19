@@ -7,6 +7,7 @@
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="SeafAccountViewController">
             <connections>
+                <outlet property="httpsLabel" destination="2K6-1h-EqF" id="z6S-yh-KVi"/>
                 <outlet property="httpsSwitch" destination="85z-9D-LEw" id="hGR-8B-XIz"/>
                 <outlet property="loginButton" destination="ggd-Li-Grh" id="mhb-cE-VAk"/>
                 <outlet property="msgLabel" destination="fUE-3E-3bS" id="PCk-DC-Jfw"/>
@@ -78,7 +79,7 @@
                             </connections>
                         </switch>
                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="2K6-1h-EqF">
-                            <rect key="frame" x="104" y="13" width="0.0" height="0.0"/>
+                            <rect key="frame" x="57" y="11" width="65" height="26"/>
                             <fontDescription key="fontDescription" type="system" pointSize="17"/>
                             <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                             <nil key="highlightedColor"/>

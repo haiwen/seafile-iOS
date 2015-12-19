@@ -24,6 +24,7 @@
 @property (strong, nonatomic) IBOutlet UIButton *loginButton;
 @property (strong, nonatomic) IBOutlet UILabel *msgLabel;
 @property (strong, nonatomic) IBOutlet UISwitch *httpsSwitch;
+@property (strong, nonatomic) IBOutlet UILabel *httpsLabel;
 @property StartViewController *startController;
 @property SeafConnection *connection;
 @property int type;
@@ -175,6 +176,7 @@
     [loginButton setTitle:NSLocalizedString(@"Login", @"Seafile") forState:UIControlStateNormal];
     [loginButton setTitle:NSLocalizedString(@"Login", @"Seafile") forState:UIControlStateHighlighted];
 
+    _httpsLabel.text = @"https";
     serverTextField.clearButtonMode = UITextFieldViewModeNever;
     serverTextField.placeholder = NSLocalizedString(@"Server, like https://seafile.cc", @"Seafile");
     if (self.type != ACCOUNT_SHIBBOLETH) {
@@ -289,6 +291,8 @@
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
 {
+    if (textField != serverTextField)
+        return true;
     BOOL https = _httpsSwitch.on;
     NSString *prefix = https ? HTTPS: HTTP;
     NSRange substringRange = NSMakeRange(0, prefix.length);
