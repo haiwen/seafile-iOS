@@ -299,7 +299,7 @@
 
 - (BOOL)tabBarController:(UITabBarController *)tabBarController shouldSelectViewController:(UIViewController *)viewController
 {
-    if (IsIpad() && [self.viewControllers indexOfObject:viewController] == TABBED_ACCOUNTS) {
+    if ([self.viewControllers indexOfObject:viewController] == TABBED_ACCOUNTS) {
         self.window.rootViewController = _startNav;
         [self.window makeKeyAndVisible];
         return NO;

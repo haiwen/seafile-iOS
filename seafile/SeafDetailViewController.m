@@ -64,8 +64,6 @@ enum SHARE_STATUS {
 @property (strong) UIBarButtonItem *exportItem;
 @property (strong) UIBarButtonItem *shareItem;
 
-@property (strong, nonatomic) UIBarButtonItem *fullscreenItem;
-@property (strong, nonatomic) UIBarButtonItem *exitfsItem;
 @property (strong, nonatomic) UIBarButtonItem *leftItem;
 
 @property (strong) UIDocumentInteractionController *docController;
@@ -211,12 +209,6 @@ enum SHARE_STATUS {
     self.masterVc = c;
     self.photos = nil;
     self.preViewItem = item;
-    if (IsIpad() && UIInterfaceOrientationIsLandscape(self.interfaceOrientation) && !self.hideMaster && self.masterVc) {
-        if (_preViewItem == nil)
-            self.navigationItem.leftBarButtonItem = nil;
-        else
-            self.navigationItem.leftBarButtonItem = self.fullscreenItem;
-    }
     [item load:(self.masterVc ? self.masterVc:self) force:NO];
     [self refreshView];
 }
@@ -242,12 +234,6 @@ enum SHARE_STATUS {
     self.mwPhotoBrowser.view.frame = CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height);
     [self.mwPhotoBrowser viewDidAppear:false];
     [self.mwPhotoBrowser setCurrentPhotoIndex:self.currentPageIndex];
-    if (IsIpad() && UIInterfaceOrientationIsLandscape(self.interfaceOrientation) && !self.hideMaster && self.masterVc) {
-        if (_preViewItem == nil)
-            self.navigationItem.leftBarButtonItem = nil;
-        else
-            self.navigationItem.leftBarButtonItem = self.fullscreenItem;
-    }
     [self updateNavigation];
     [self.view setNeedsLayout];
 }
@@ -367,8 +353,6 @@ enum SHARE_STATUS {
     self.leftItem = barButtonItem;
     [self.navigationItem setLeftBarButtonItem:nil animated:YES];
     self.masterPopoverController = nil;
-    if (_preViewItem)
-        [self.navigationItem setLeftBarButtonItem:self.fullscreenItem animated:YES];
 }
 
 - (BOOL)splitViewController:(UISplitViewController *)svc shouldHideViewController:(UIViewController *)vc inOrientation:(UIInterfaceOrientation)orientation
@@ -377,68 +361,6 @@ enum SHARE_STATUS {
         return self.hideMaster;
     else
         return YES;
-}
-
--(void)makeTabBarHidden:(BOOL)hide
-{
-    // Custom code to hide TabBar
-    UITabBarController *tabBarController = self.splitViewController.tabBarController;
-    if ([tabBarController.view.subviews count] < 2) {
-        return;
-    }
-
-    UIView *contentView;
-    if ([[tabBarController.view.subviews objectAtIndex:0] isKindOfClass:[UITabBar class]]) {
-        contentView = [tabBarController.view.subviews objectAtIndex:1];
-    } else {
-        contentView = [tabBarController.view.subviews objectAtIndex:0];
-    }
-
-    if (hide) {
-        contentView.frame = tabBarController.view.bounds;
-    } else {
-        contentView.frame = CGRectMake(tabBarController.view.bounds.origin.x,
-                                       tabBarController.view.bounds.origin.y,
-                                       tabBarController.view.bounds.size.width,
-                                       tabBarController.view.bounds.size.height - tabBarController.tabBar.frame.size.height);
-    }
-    tabBarController.tabBar.hidden = hide;
-}
-
-- (void)setHideMaster:(bool)hideMaster
-{
-    if (!self.masterVc) return;
-    _hideMaster = hideMaster;
-    [self makeTabBarHidden:hideMaster];
-    [self.splitViewController willRotateToInterfaceOrientation:[UIApplication sharedApplication].statusBarOrientation duration:0];
-    _rotating = NO;
-    [self.splitViewController.view setNeedsLayout];
-}
-
-- (IBAction)fullscreen:(id)sender
-{
-    self.hideMaster = YES;
-    self.navigationItem.leftBarButtonItem = self.exitfsItem;
-}
-
-- (IBAction)exitfullscreen:(id)sender
-{
-    self.hideMaster = NO;
-    self.navigationItem.leftBarButtonItem = self.fullscreenItem;
-}
-
-- (UIBarButtonItem *)fullscreenItem
-{
-    if (!_fullscreenItem)
-        _fullscreenItem = [self getBarItem:@"arrowleft".navItemImgName action:@selector(fullscreen:) size:22];
-    return _fullscreenItem;
-}
-
-- (UIBarButtonItem *)exitfsItem
-{
-    if (!_exitfsItem)
-        _exitfsItem = [self getBarItem:@"arrowright".navItemImgName action:@selector(exitfullscreen:) size:22];
-    return _exitfsItem;
 }
 
 - (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration
