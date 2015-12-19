@@ -438,6 +438,8 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (BOOL)hasCache
 {
+    if (self.mpath && [[NSFileManager defaultManager] fileExistsAtPath:self.mpath])
+        return true;
     if (self.ooid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject documentPath:self.ooid]])
         return YES;
     self.ooid = nil;
@@ -515,14 +517,16 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (BOOL)realLoadCache
 {
-    BOOL changed = false;
     DownloadedFile *dfile = [self loadCacheObj];
     if (!dfile) {
         if (self.oid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject documentPath:self.oid]]) {
             if (![self.oid isEqualToString:self.ooid])
-            [self setOoid:self.oid];
+                [self setOoid:self.oid];
+            return true;
+        } else {
+            [self setOoid:nil];
+            return false;
         }
-        return [self hasCache];
     }
 
     if (dfile.mpath && [[NSFileManager defaultManager] fileExistsAtPath:dfile.mpath]) {
@@ -530,34 +534,21 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
             _mpath = dfile.mpath;
             _preViewURL = nil;
             _exportURL = nil;
-        } else
-            _mpath = nil;
-    }
-    if (dfile.oid) {
-        if (![[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject documentPath:dfile.oid]]) {
-            dfile.oid = nil;
-            changed = true;
-        } else if (!self.ooid || ![self.ooid isEqualToString:dfile.oid])
-            [self setOoid:dfile.oid];
-    }
-
-    if (self.oid && ![self.oid isEqualToString:self.ooid] && [[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject documentPath:self.oid]]) {
-        [self setOoid:self.oid];
-        dfile.oid = self.oid;
-        changed = true;
-    }
-    if (self.ooid && ![[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject documentPath:self.ooid]]) {
-        [self setOoid:nil];
-    }
-    if (changed)
-        [[SeafGlobal sharedObject] saveContext];
-
-    if (self.mpath)
+        }
         [self autoupload];
+    }
+    if (!self.oid && dfile) self.oid = dfile.oid;
 
-    if (!self.mpath && !self.ooid)
-        return NO;
-    return YES;
+    if (self.oid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject documentPath:self.oid]]) {
+        if (![self.oid isEqualToString:self.ooid])
+            [self setOoid:self.oid];
+        return true;
+    } else if (self.mpath) {
+        return true;
+    } else {
+        [self setOoid:nil];
+        return false;
+    }
 }
 
 - (BOOL)loadCache
