@@ -277,7 +277,6 @@
 		57CD9B871B5121CC00D1CC6B /* delete.png in Resources */ = {isa = PBXBuildFile; fileRef = 57CD9B831B5121CC00D1CC6B /* delete.png */; };
 		57D0AD3817914E7900D741BE /* mobile.css in Resources */ = {isa = PBXBuildFile; fileRef = 57D0AD3617914E7900D741BE /* mobile.css */; };
 		57D189D0182E0A380029A797 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 57D189CE182E0A380029A797 /* Images.xcassets */; };
-		57D822F61C12B80A008947FC /* seafile-appstore-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 57D822F51C12B80A008947FC /* seafile-appstore-Info.plist */; };
 		57DA26F5173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DA26F3173E6DFC0003BA31 /* SeafTextEditorViewController.m */; };
 		57E1E8A91737F4D3006601FE /* bootstrap-wysiwyg.js in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E8A51737F4D3006601FE /* bootstrap-wysiwyg.js */; };
 		57E1E8AB1737F4D3006601FE /* bootstrap.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 57E1E8A61737F4D3006601FE /* bootstrap.min.js */; };
@@ -1659,7 +1658,6 @@
 				57943C0E19F027D5008423E5 /* plus@2x.png in Resources */,
 				57E228B71A0E403A00C92330 /* QBImagePickerController.bundle in Resources */,
 				57BFAAFE18BD8EA200EB1B5C /* bt-justify.png in Resources */,
-				57D822F61C12B80A008947FC /* seafile-appstore-Info.plist in Resources */,
 				573F4AAC1788763500F096D3 /* arrowleft.png in Resources */,
 				573F4AAE1788763500F096D3 /* arrowright.png in Resources */,
 				57943C0519F027D5008423E5 /* checkmask2@2x.png in Resources */,
