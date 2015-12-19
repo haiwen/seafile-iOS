@@ -22,7 +22,7 @@ enum ACCOUNT_TYPE {
 #define SERVER_CLOUD_NAME       @"app.seafile.de"
 #define SERVER_SHIB_NAME        @"Shibboleth"
 
-@interface SeafAccountViewController : UIViewController<UITextFieldDelegate>
+@interface SeafAccountViewController : UIViewController
 
 - (id)initWithController:(StartViewController *)controller connection: (SeafConnection *)conn type:(int)type;
 

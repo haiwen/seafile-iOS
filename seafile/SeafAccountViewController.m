@@ -17,12 +17,13 @@
 #define HTTP @"http://"
 #define HTTPS @"https://"
 
-@interface SeafAccountViewController ()<SeafLoginDelegate>
+@interface SeafAccountViewController ()<SeafLoginDelegate, UITextFieldDelegate>
 @property (strong, nonatomic) IBOutlet UITextField *serverTextField;
 @property (strong, nonatomic) IBOutlet UITextField *usernameTextField;
 @property (strong, nonatomic) IBOutlet UITextField *passwordTextField;
 @property (strong, nonatomic) IBOutlet UIButton *loginButton;
 @property (strong, nonatomic) IBOutlet UILabel *msgLabel;
+@property (strong, nonatomic) IBOutlet UISwitch *httpsSwitch;
 @property StartViewController *startController;
 @property SeafConnection *connection;
 @property int type;
@@ -53,6 +54,18 @@
     connection.loginDelegate = nil;
     [SVProgressHUD dismiss];
     [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (IBAction)httpsSwitchFlip:(id)sender
+{
+    BOOL https = _httpsSwitch.on;
+    BOOL cur = [serverTextField.text hasPrefix:HTTPS];
+    if (cur == https) return;
+    if (https) {
+        serverTextField.text = [HTTPS stringByAppendingString:[serverTextField.text substringFromIndex:HTTP.length]];
+    } else {
+        serverTextField.text = [HTTP stringByAppendingString:[serverTextField.text substringFromIndex:HTTPS.length]];
+    }
 }
 
 - (IBAction)shibboleth:(id)sender
@@ -120,6 +133,23 @@
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Connecting to server", @"Seafile")];
 }
 
+- (CGSize)getSizeForText:(NSString *)text maxWidth:(CGFloat)width font:(UIFont*)font  {
+    CGSize constraintSize;
+    constraintSize.height = MAXFLOAT;
+    constraintSize.width = width;
+    NSDictionary *attributesDictionary = [NSDictionary dictionaryWithObjectsAndKeys:
+                                          font, NSFontAttributeName,
+                                          nil];
+
+    CGRect frame = [text boundingRectWithSize:constraintSize
+                                      options:NSStringDrawingUsesLineFragmentOrigin
+                                   attributes:attributesDictionary
+                                      context:nil];
+
+    CGSize stringSize = frame.size;
+    return stringSize;
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
@@ -145,28 +175,11 @@
     [loginButton setTitle:NSLocalizedString(@"Login", @"Seafile") forState:UIControlStateNormal];
     [loginButton setTitle:NSLocalizedString(@"Login", @"Seafile") forState:UIControlStateHighlighted];
 
+    serverTextField.clearButtonMode = UITextFieldViewModeNever;
     serverTextField.placeholder = NSLocalizedString(@"Server, like https://seafile.cc", @"Seafile");
-    CGRect rect = CGRectMake(0, 0, 90, 25);
-    NSString *align = ios7 ? @"  " :  @"";
-    UILabel *serverLabel = [[UILabel alloc] initWithFrame:rect];
-    serverLabel.text = [align stringByAppendingString:NSLocalizedString(@"Server", @"Seafile")];
-    serverLabel.font = [UIFont boldSystemFontOfSize:14];
-    serverTextField.leftView = serverLabel;
-    serverTextField.leftViewMode = UITextFieldViewModeAlways;
-
     if (self.type != ACCOUNT_SHIBBOLETH) {
         _msgLabel.text = NSLocalizedString(@"For example: https://seacloud.cc or http://192.168.1.24:8000", @"Seafile");
         self.title = [APP_NAME stringByAppendingFormat:@" %@", NSLocalizedString(@"Account", @"Seafile")];
-        UILabel *nameLabel = [[UILabel alloc] initWithFrame:rect];
-        nameLabel.text = [align stringByAppendingString:NSLocalizedString(@"Username", @"Seafile")];
-        nameLabel.font = [UIFont boldSystemFontOfSize:14];
-        usernameTextField.leftView = nameLabel;
-        usernameTextField.leftViewMode = UITextFieldViewModeAlways;
-        UILabel *passwordLabel = [[UILabel alloc] initWithFrame:rect];
-        passwordLabel.text = [align stringByAppendingString:NSLocalizedString(@"Password", @"Seafile")];
-        passwordLabel.font = [UIFont boldSystemFontOfSize:14];
-        passwordTextField.leftView = passwordLabel;
-        passwordTextField.leftViewMode = UITextFieldViewModeAlways;
         usernameTextField.placeholder = NSLocalizedString(@"Email or Username", @"Seafile");
         passwordTextField.placeholder = NSLocalizedString(@"Password", @"Seafile");
     } else {
@@ -175,7 +188,8 @@
         [passwordTextField removeFromSuperview];
         [_msgLabel removeFromSuperview];
     }
-
+    BOOL https = true;
+    _httpsSwitch.on = true;
     switch (self.type) {
         case ACCOUNT_SEACLOUD:
             serverTextField.text = SERVER_SEACLOUD;
@@ -188,6 +202,8 @@
             serverTextField.text = @"https://dev.seafile.com/seahub/";
             usernameTextField.text = @"demo@seafile.com";
             passwordTextField.text = @"demo";
+#else
+            serverTextField.text = HTTPS;
 #endif
         }
             break;
@@ -200,12 +216,16 @@
             break;
     }
     if (self.connection) {
+        https = [connection.address hasPrefix:HTTPS];
+        _httpsSwitch.on = https;
         serverTextField.text = connection.address;
         usernameTextField.text = connection.username;
         passwordTextField.text = nil;
         serverTextField.enabled = false;
         usernameTextField.enabled = false;
+        _httpsSwitch.enabled = false;
     }
+    [self.serverTextField setDelegate:self];
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 }
 
@@ -264,6 +284,19 @@
         [self.passwordTextField resignFirstResponder];
         [self login:nil];
     }
+    return YES;
+}
+
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
+{
+    BOOL https = _httpsSwitch.on;
+    NSString *prefix = https ? HTTPS: HTTP;
+    NSRange substringRange = NSMakeRange(0, prefix.length);
+
+    if (range.location >= substringRange.location && range.location < substringRange.location + substringRange.length) {
+        return NO;
+    }
+
     return YES;
 }
 
