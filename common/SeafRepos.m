@@ -93,6 +93,8 @@
     _size = repo.size;
     _owner = repo.owner;
     _encrypted = repo.encrypted;
+    _mtime = repo.mtime;
+    _encVersion = repo.encVersion;
 }
 
 - (BOOL)canLocalDecrypt
