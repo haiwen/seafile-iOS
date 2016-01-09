@@ -69,33 +69,8 @@
 #endif
 }
 
-- (BOOL)application:(UIApplication*)application handleOpenURL:(NSURL*)url
+- (BOOL)openSeafileURL:(NSURL*)url
 {
-    if (url != nil && [url isFileURL]) {
-        NSURL *to = [NSURL fileURLWithPath:[SeafGlobal.sharedObject.uploadsDir stringByAppendingPathComponent:url.lastPathComponent]];
-        Debug("Copy %@, to %@, %@, %@\n", url, to, to.absoluteString, to.path);
-        [Utils copyFile:url to:to];
-        if (self.window.rootViewController == self.startNav)
-            if (![self.startVC selectDefaultAccount])
-                return NO;
-
-        [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
-        SeafUploadFile *file = [SeafGlobal.sharedObject.connection getUploadfile:to.path];
-        [self.fileVC uploadFile:file];
-    }
-    return YES;
-}
-
-
-- (BOOL)application:(UIApplication *)application
-            openURL:(NSURL *)url
-  sourceApplication:(NSString *)sourceApplication
-         annotation:(id)annotation
-{
-    Debug("Calling Application Bundle ID: %@, url: %@", sourceApplication, url);
-    if (![@"seafile" isEqualToString:url.scheme]) {
-        Warning("Unknown scheme %@", url.scheme);
-    }
     NSDictionary *dict = [Utils queryToDict:url.query];
     NSString *repoId = [dict objectForKey:@"repo_id"];
     NSString *path = [dict objectForKey:@"path"];
@@ -114,6 +89,48 @@
         [self.starredVC performSelector:@selector(selectFile:) withObject:sfile afterDelay:0.5];
     });
     return true;
+}
+
+- (BOOL)openFileURL:(NSURL*)url
+{
+    NSURL *to = [NSURL fileURLWithPath:[SeafGlobal.sharedObject.uploadsDir stringByAppendingPathComponent:url.lastPathComponent]];
+    Debug("Copy %@, to %@, %@, %@\n", url, to, to.absoluteString, to.path);
+    [Utils copyFile:url to:to];
+    if (self.window.rootViewController == self.startNav)
+        if (![self.startVC selectDefaultAccount])
+            return NO;
+
+    [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
+    SeafUploadFile *file = [SeafGlobal.sharedObject.connection getUploadfile:to.path];
+    [self.fileVC uploadFile:file];
+    return true;
+}
+
+- (BOOL)openURL:(NSURL*)url
+{
+    if (!url) return false;
+    if ([@"seafile" isEqualToString:url.scheme]) {
+        return [self openSeafileURL:url];
+    } else if (url != nil && [url isFileURL]) {
+        return [self openFileURL: url];
+    }
+    Warning("Unknown scheme %@", url);
+    return false;
+}
+- (BOOL)application:(UIApplication*)application handleOpenURL:(NSURL*)url
+{
+    Debug("handleOpenURL: %@", url);
+    return [self openURL:url];
+}
+
+
+- (BOOL)application:(UIApplication *)application
+            openURL:(NSURL *)url
+  sourceApplication:(NSString *)sourceApplication
+         annotation:(id)annotation
+{
+    Debug("Calling Application Bundle ID: %@, url: %@", sourceApplication, url);
+    return [self openURL:url];
 }
 
 

@@ -243,7 +243,7 @@ enum ENC_LIBRARIES{
     _backgroundSyncLable.text = NSLocalizedString(@"Background Upload", @"Seafile");
     _autoClearPasswdLabel.text = NSLocalizedString(@"Auto clear passwords", @"Auto cleay library password");
     _localDecryLabel.text = NSLocalizedString(@"Local decryption", @"Local decryption");
-    
+
     _syncRepoCell.textLabel.text = NSLocalizedString(@"Upload Destination", @"Seafile");
     _cacheCell.textLabel.text = NSLocalizedString(@"Local Cache", @"Seafile");
     _tellFriendCell.textLabel.text = [NSString stringWithFormat:NSLocalizedString(@"Tell Friends about %@", @"Seafile"), APP_NAME];
