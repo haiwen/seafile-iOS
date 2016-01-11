@@ -136,12 +136,12 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         NSMutableDictionary *dict = self.uploadAttr;
         if (!dict) {
             dict = [[NSMutableDictionary alloc] init];
-            [dict setObject:self.name forKey:@"name"];
+            [Utils dict:dict setObject:self.name forKey:@"name"];
         }
-        [dict setObject:[NSNumber numberWithDouble:[[NSDate date] timeIntervalSince1970]]forKey:@"utime"];
-        [dict setObject:[NSNumber numberWithLongLong:self.mtime] forKey:@"mtime"];
-        [dict setObject:[NSNumber numberWithBool:result] forKey:@"result"];
-        [dict setObject:[NSNumber numberWithBool:self.autoSync] forKey:@"autoSync"];
+        [Utils dict:dict setObject:[NSNumber numberWithDouble:[[NSDate date] timeIntervalSince1970]]forKey:@"utime"];
+        [Utils dict:dict setObject:[NSNumber numberWithLongLong:self.mtime] forKey:@"mtime"];
+        [Utils dict:dict setObject:[NSNumber numberWithBool:result] forKey:@"result"];
+        [Utils dict:dict setObject:[NSNumber numberWithBool:self.autoSync] forKey:@"autoSync"];
         [self saveAttr:dict flush:true];
     }
     Debug("result=%d, name=%@, delegate=%@, oid=%@\n", result, self.name, _delegate, oid);
@@ -451,10 +451,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 - (BOOL)saveAttr:(NSMutableDictionary *)attr flush:(BOOL)flush
 {
-    if (attr)
-        [[SeafUploadFile uploadFileAttrs] setObject:attr forKey:self.lpath];
-    else
-        [[SeafUploadFile uploadFileAttrs] removeObjectForKey:self.lpath];
+    [Utils dict:[SeafUploadFile uploadFileAttrs] setObject:attr forKey:self.lpath];
     return !flush || [SeafUploadFile saveAttrs];
 }
 

@@ -45,4 +45,5 @@
 + (UIImage *)reSizeImage:(UIImage *)image toSquare:(float)length;
 
 + (NSDictionary *)queryToDict:(NSString *)query;
++ (void)dict:(NSMutableDictionary *)dict setObject:(id)value forKey:(NSString *)defaultName;
 @end

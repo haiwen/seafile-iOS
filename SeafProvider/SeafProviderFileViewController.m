@@ -329,9 +329,11 @@
 - (void)reloadIndex:(NSIndexPath *)indexPath
 {
     @try {
-        if (indexPath)
-            [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
-        else
+        if (indexPath) {
+            UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+            if (cell)
+                [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+        } else
             [self.tableView reloadData];
     }
     @catch (NSException *exception) {
@@ -385,7 +387,9 @@
         if (index == NSNotFound)
             return;
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
-        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+        UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+        if (cell)
+            [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
         Warning("Failed to download file %@\n", entry.name);
         NSString *msg = [NSString stringWithFormat:@"Failed to download file '%@'", entry.name];
         [self alertWithTitle:msg handler:nil];

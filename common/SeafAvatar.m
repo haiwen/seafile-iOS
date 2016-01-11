@@ -122,7 +122,7 @@ static NSMutableDictionary *avatarAttrs = nil;
                  NSMutableDictionary *attr = [[SeafAvatar avatarAttrs] objectForKey:self.path];
                  if (!attr) attr = [[NSMutableDictionary alloc] init];
                  [attr setObject:[JSON objectForKey:@"mtime"] forKey:@"mtime"];
-                 [[SeafAvatar avatarAttrs] setObject:attr forKey:self.path];
+                 [self saveAttrs:attr];
                  [SeafAvatar saveAvatarAttrs];
                  [SeafGlobal.sharedObject finishDownload:self result:YES];
              }

@@ -1224,7 +1224,9 @@ enum {
 - (void)reloadIndex:(NSIndexPath *)indexPath
 {
     if (indexPath) {
-        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationNone];
+        UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+        if (cell)
+            [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationNone];
     } else
         [self.tableView reloadData];
 }
@@ -1389,11 +1391,11 @@ enum {
         [files addObject:file];
         [self.directory addUploadFile:file flush:false];
     }
+    [SeafUploadFile saveAttrs];
     [self.tableView reloadData];
     for (SeafUploadFile *file in files) {
         [[SeafGlobal sharedObject] addUploadTask:file];
     }
-    [SeafUploadFile saveAttrs];
 }
 
 - (void)uploadPickedAssetsUrl:(NSArray *)urls

@@ -198,7 +198,13 @@ static NSComparator CMP = ^(id obj1, id obj2) {
 - (void)sortItems:(NSMutableArray *)items
 {
     if ([self checkSorted:items] == NO) {
-        [items sortUsingComparator:CMP];
+        @try {
+            [items sortUsingComparator:CMP];
+        }
+        @catch (NSException *exception) {
+        }
+        @finally {
+        }
     }
 }
 
@@ -371,9 +377,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
     _allItems = [[NSMutableArray alloc] init];
     [_allItems addObjectsFromArray:_items];
     [_allItems addObjectsFromArray:self.uploadItems];
-    if ([self checkSorted:_allItems] == NO) {
-        [_allItems sortUsingComparator:CMP];
-    }
+    [self sortItems:_allItems];
     return _allItems;
 }
 
@@ -399,12 +403,12 @@ static NSComparator CMP = ^(id obj1, id obj2) {
     NSMutableDictionary *dict = file.uploadAttr;
     if (!dict)
         dict = [[NSMutableDictionary alloc] init];
-    [dict setObject:self.repoId forKey:@"urepo"];
-    [dict setObject:self.path forKey:@"upath"];
-    [dict setObject:[NSNumber numberWithBool:file.update] forKey:@"update"];
-    [dict setObject:[NSNumber numberWithBool:file.autoSync] forKey:@"autoSync"];
+    [Utils dict:dict setObject:self.repoId forKey:@"urepo"];
+    [Utils dict:dict setObject:self.path forKey:@"upath"];
+    [Utils dict:dict setObject:[NSNumber numberWithBool:file.update] forKey:@"update"];
+    [Utils dict:dict setObject:[NSNumber numberWithBool:file.autoSync] forKey:@"autoSync"];
     if (file.asset) {
-        [dict setObject:file.asset.defaultRepresentation.url.absoluteString forKey:@"assetURL"];
+        [Utils dict:dict setObject:file.asset.defaultRepresentation.url.absoluteString forKey:@"assetURL"];
     }
     file.udir = self;
     [file saveAttr:dict flush:flush];
