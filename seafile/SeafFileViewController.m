@@ -471,6 +471,13 @@ enum {
         self.popoverController = nil;
     }
 }
+
+- (void)viewDidAppear:(BOOL)animated
+{
+    if ([_directory hasCache])
+        [SeafAppDelegate checkOpenLink:self];
+}
+
 #pragma mark - Table View
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
@@ -968,8 +975,11 @@ enum {
         }
 
         [self dismissLoadingView];
-        if (updated)  [self refreshView];
-        else [self.tableView reloadData];
+        if (updated) {
+            [self refreshView];
+            [SeafAppDelegate checkOpenLink:self];
+        } else
+            [self.tableView reloadData];
         self.state = STATE_INIT;
     }
 }
@@ -1742,6 +1752,47 @@ enum {
 {
     [photoBrowser dismissViewControllerAnimated:YES completion:nil];
     self.inPhotoBrowser = false;
+}
+
+- (BOOL)goTo:(NSString *)repo path:(NSString *)path
+{
+    if (![_directory hasCache] || !self.isVisible)
+        return TRUE;
+    Debug("repo: %@, path: %@, current: %@", repo, path, _directory.path);
+    if ([self.directory isKindOfClass:[SeafRepos class]]) {
+        for (int i = 0; i < ((SeafRepos *)_directory).repoGroups.count; ++i) {
+            NSArray *repos = [((SeafRepos *)_directory).repoGroups objectAtIndex:i];
+            for (int j = 0; j < repos.count; ++j) {
+                SeafRepo *r = [repos objectAtIndex:j];
+                if ([r.repoId isEqualToString:repo]) {
+                    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:j inSection:i];
+                    [self.tableView selectRowAtIndexPath:indexPath animated:true scrollPosition:UITableViewScrollPositionMiddle];
+                    [self tableView:self.tableView didSelectRowAtIndexPath:indexPath];
+                    return TRUE;
+                }
+            }
+        }
+        Debug("Repo %@ not found.", repo);
+    } else {
+        if ([@"/" isEqualToString:path])
+            return FALSE;
+        for (int i = 0; i < _directory.allItems.count; ++i) {
+            SeafBase *b = [_directory.allItems objectAtIndex:i];
+            NSString *p = b.path;
+            if ([b isKindOfClass:[SeafDir class]]) {
+                p = [p stringByAppendingString:@"/"];
+            }
+            BOOL found = [b.path isEqualToString:path];
+            if (found || [path hasPrefix:p]) {
+                NSIndexPath *indexPath = [NSIndexPath indexPathForRow:i inSection:0];
+                [self.tableView selectRowAtIndexPath:indexPath animated:true scrollPosition:UITableViewScrollPositionMiddle];
+                [self tableView:self.tableView didSelectRowAtIndexPath:indexPath];
+                return found;
+            }
+        }
+        Debug("file %@/%@ not found", repo, path);
+    }
+    return FALSE;
 }
 
 @end

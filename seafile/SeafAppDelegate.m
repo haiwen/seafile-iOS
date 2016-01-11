@@ -32,6 +32,9 @@
 @property (strong) NSMutableArray *monitors;
 @property (readwrite) CLLocationManager *locationManager;
 
+@property (retain) NSString *gotoRepo;
+@property (retain) NSString *gotoPath;
+
 @end
 
 @implementation SeafAppDelegate
@@ -78,15 +81,12 @@
         Warning("Invalid url: %@", url);
         return false;
     }
+
     if (![self.startVC selectDefaultAccount])
         return false;
 
-    SeafConnection *conn = [[SeafGlobal sharedObject] connection];
-    SeafStarredFile *sfile = [[SeafStarredFile alloc] initWithConnection:conn repo:repoId path:path mtime:0 size:0 org:0];
-    [conn setStarred:true repo:repoId path:path];
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5), dispatch_get_main_queue(), ^(void){
-        [self.tabbarController setSelectedIndex:TABBED_STARRED];
-        [self.starredVC performSelector:@selector(selectFile:) withObject:sfile afterDelay:0.5];
+        [self openFile:repoId path:path];
     });
     return true;
 }
@@ -583,6 +583,45 @@
     } else {
         [self stopSignificantChangeUpdates];
     }
+}
+
+- (void)openFile:(NSString *)repo path:(NSString *)path
+{
+    [SeafGlobal.sharedObject setObject:repo forKey:@"SEAFILE-OPEN-REPO"];
+    [SeafGlobal.sharedObject setObject:path forKey:@"SEAFILE-OPEN-PATH"];
+
+    Debug("open file %@ %@", repo, path);
+    self.gotoRepo = repo;
+    self.gotoPath = path;
+    if (self.tabbarController.selectedIndex != TABBED_SEAFILE)
+        [self.tabbarController setSelectedIndex:TABBED_SEAFILE];
+    NSArray *arr = [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
+    if (arr.count == 0)
+        [SeafAppDelegate checkOpenLink:self.fileVC];
+}
+
+- (void)endGoto
+{
+    self.gotoRepo = nil;
+    self.gotoPath = nil;
+}
+
+- (void)checkOpenLink:(SeafFileViewController *)c
+{
+    if (!self.gotoRepo || !self.gotoPath)
+        return;
+    Debug("open file %@ %@", self.gotoPath, self.gotoPath);
+    if (![c goTo:self.gotoRepo path:self.gotoPath]) {
+        [self endGoto];
+    }
+}
+
++ (void)checkOpenLink:(SeafFileViewController *)c
+{
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5), dispatch_get_main_queue(), ^(void){
+        [appdelegate checkOpenLink:c];
+    });
 }
 
 @end

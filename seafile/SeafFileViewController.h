@@ -66,4 +66,6 @@ enum {
 
 - (void)photoSelectedChanged:(id<SeafPreView>)preViewItem to:(id<SeafPreView>)to;
 
+- (BOOL)goTo:(NSString *)repo path:(NSString *)path;
+
 @end

@@ -80,5 +80,6 @@ enum {
 - (void)checkBackgroundUploadStatus;
 
 + (void)showActionSheet:(UIActionSheet *)sheet fromBarButtonItem:(UIBarButtonItem *)item;
++ (void)checkOpenLink:(SeafFileViewController *)c;
 
 @end
