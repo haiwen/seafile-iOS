@@ -1223,13 +1223,16 @@ enum {
 
 - (void)reloadIndex:(NSIndexPath *)indexPath
 {
-    if (indexPath) {
-        UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
-        if (cell)
-            [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationNone];
-    } else
-        [self.tableView reloadData];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (indexPath) {
+            UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+            if (cell)
+                [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationNone];
+        } else
+            [self.tableView reloadData];
+    });
 }
+
 #pragma mark - UIActionSheetDelegate
 - (void)deleteEntry:(id)entry
 {
@@ -1471,24 +1474,24 @@ enum {
 #pragma mark - SeafUploadDelegate
 - (void)uploadProgress:(SeafUploadFile *)file result:(BOOL)res progress:(int)percent
 {
-    NSIndexPath *indexPath = nil;
-    UITableViewCell *cell = nil;
-    @try {
-        long index = [_directory.allItems indexOfObject:file];
-        if (index == NSNotFound) return;
-        indexPath = [NSIndexPath indexPathForRow:index inSection:0];
-        cell = [self.tableView cellForRowAtIndexPath:indexPath];
-    } @catch(NSException *exception) {
-    }
-    if (!cell) return;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSIndexPath *indexPath = nil;
+        UITableViewCell *cell = nil;
+        @try {
+            long index = [_directory.allItems indexOfObject:file];
+            if (index == NSNotFound) return;
+            indexPath = [NSIndexPath indexPathForRow:index inSection:0];
+            cell = [self.tableView cellForRowAtIndexPath:indexPath];
+        } @catch(NSException *exception) {
+        }
+        if (!cell) return;
 
-    if (res && percent < 100 && [cell isKindOfClass:[SeafUploadingFileCell class]]) {
-        dispatch_async(dispatch_get_main_queue(), ^{
+        if (res && percent < 100 && [cell isKindOfClass:[SeafUploadingFileCell class]]) {
             [((SeafUploadingFileCell *)cell).progressView setProgress:percent*1.0f/100];
-        });
-    } else {
-        [self reloadIndex:indexPath];
-    }
+        } else {
+            [self reloadIndex:indexPath];
+        }
+    });
 }
 
 - (void)uploadSucess:(SeafUploadFile *)file oid:(NSString *)oid
