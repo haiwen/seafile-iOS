@@ -42,7 +42,7 @@
                             </connections>
                         </textField>
                         <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Server, like https://seafile.cc" minimumFontSize="17" clearButtonMode="whileEditing" translatesAutoresizingMaskIntoConstraints="NO" id="7">
-                            <rect key="frame" x="0.0" y="41" width="370" height="30"/>
+                            <rect key="frame" x="0.0" y="37" width="370" height="30"/>
                             <constraints>
                                 <constraint firstAttribute="width" constant="370" id="1TW-D0-pY5"/>
                             </constraints>
@@ -53,7 +53,7 @@
                             </connections>
                         </textField>
                         <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="For example: https://seacloud.cc or http://192.168.1.24:8000" lineBreakMode="wordWrap" numberOfLines="2" baselineAdjustment="alignBaselines" highlighted="YES" adjustsFontSizeToFit="NO" preferredMaxLayoutWidth="363" translatesAutoresizingMaskIntoConstraints="NO" id="fUE-3E-3bS">
-                            <rect key="frame" x="7" y="67" width="363" height="46"/>
+                            <rect key="frame" x="7" y="65" width="363" height="46"/>
                             <fontDescription key="fontDescription" type="system" pointSize="15"/>
                             <color key="textColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
                             <nil key="highlightedColor"/>
@@ -64,7 +64,7 @@
                                 <constraint firstAttribute="height" constant="30" id="MdS-lR-XcS"/>
                             </constraints>
                             <fontDescription key="fontDescription" type="system" pointSize="16"/>
-                            <color key="tintColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
+                            <color key="tintColor" red="0.93725490199999995" green="0.93725490199999995" blue="0.95686274510000002" alpha="1" colorSpace="calibratedRGB"/>
                             <state key="normal" title="Login">
                                 <color key="titleColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
                             </state>
@@ -73,15 +73,15 @@
                             </connections>
                         </button>
                         <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="85z-9D-LEw">
-                            <rect key="frame" x="0.0" y="8" width="51" height="31"/>
+                            <rect key="frame" x="0.0" y="2" width="51" height="31"/>
                             <connections>
                                 <action selector="httpsSwitchFlip:" destination="-1" eventType="touchUpInside" id="WxY-Yd-fkf"/>
                             </connections>
                         </switch>
                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="2K6-1h-EqF">
-                            <rect key="frame" x="57" y="11" width="65" height="26"/>
+                            <rect key="frame" x="57" y="5" width="65" height="26"/>
                             <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                            <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                            <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                             <nil key="highlightedColor"/>
                         </label>
                     </subviews>
@@ -104,15 +104,15 @@
                         <constraint firstItem="fUE-3E-3bS" firstAttribute="trailing" secondItem="9" secondAttribute="trailing" id="Y2T-AR-bRX"/>
                         <constraint firstItem="7" firstAttribute="leading" secondItem="4" secondAttribute="leading" id="ar9-yi-sKt"/>
                         <constraint firstItem="7" firstAttribute="leading" secondItem="ggd-Li-Grh" secondAttribute="leading" id="e5W-Fb-tbz"/>
-                        <constraint firstItem="7" firstAttribute="top" secondItem="4" secondAttribute="top" constant="41" id="fyl-6e-pzl"/>
+                        <constraint firstItem="7" firstAttribute="top" secondItem="4" secondAttribute="top" constant="37" id="fyl-6e-pzl"/>
                         <constraint firstItem="8" firstAttribute="top" secondItem="9" secondAttribute="bottom" constant="8" symbolic="YES" id="jvM-Pb-nbe"/>
-                        <constraint firstItem="9" firstAttribute="top" secondItem="7" secondAttribute="bottom" constant="44" id="mtI-su-jFW"/>
-                        <constraint firstItem="9" firstAttribute="top" secondItem="fUE-3E-3bS" secondAttribute="bottom" constant="2" id="nKx-NU-lpj"/>
+                        <constraint firstItem="9" firstAttribute="top" secondItem="7" secondAttribute="bottom" constant="48" id="mtI-su-jFW"/>
+                        <constraint firstItem="9" firstAttribute="top" secondItem="fUE-3E-3bS" secondAttribute="bottom" constant="4" id="nKx-NU-lpj"/>
                         <constraint firstItem="fUE-3E-3bS" firstAttribute="trailing" secondItem="8" secondAttribute="trailing" id="ozA-zw-uCV"/>
                         <constraint firstItem="9" firstAttribute="width" secondItem="7" secondAttribute="width" id="ozU-xi-qn2"/>
                         <constraint firstItem="9" firstAttribute="trailing" secondItem="fUE-3E-3bS" secondAttribute="trailing" id="wdU-TV-NUO"/>
                         <constraint firstAttribute="trailing" secondItem="8" secondAttribute="trailing" id="xGg-FX-QX9"/>
-                        <constraint firstItem="fUE-3E-3bS" firstAttribute="top" secondItem="4" secondAttribute="top" constant="67" id="xRg-8h-JCx"/>
+                        <constraint firstItem="fUE-3E-3bS" firstAttribute="top" secondItem="4" secondAttribute="top" constant="65" id="xRg-8h-JCx"/>
                     </constraints>
                 </view>
             </subviews>
