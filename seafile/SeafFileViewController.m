@@ -1472,7 +1472,7 @@ enum {
 }
 
 #pragma mark - SeafUploadDelegate
-- (void)uploadProgress:(SeafUploadFile *)file result:(BOOL)res progress:(int)percent
+- (void)updateFileCell:(SeafUploadFile *)file result:(BOOL)res progress:(int)percent completed:(BOOL)completed
 {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSIndexPath *indexPath = nil;
@@ -1486,21 +1486,24 @@ enum {
         }
         if (!cell) return;
 
-        if (res && percent < 100 && [cell isKindOfClass:[SeafUploadingFileCell class]]) {
+        if (!completed && res && [cell isKindOfClass:[SeafUploadingFileCell class]]) {
             [((SeafUploadingFileCell *)cell).progressView setProgress:percent*1.0f/100];
         } else {
             [self reloadIndex:indexPath];
         }
     });
 }
+- (void)uploadProgress:(SeafUploadFile *)file result:(BOOL)res progress:(int)percent
+{
+    [self updateFileCell:file result:res progress:percent completed:YES];
+}
 
 - (void)uploadSucess:(SeafUploadFile *)file oid:(NSString *)oid
 {
-    [self uploadProgress:file result:YES progress:100];
+    [self updateFileCell:file result:YES progress:100 completed:YES];
     if (self.isVisible) {
         [SVProgressHUD showSuccessWithStatus:[NSString stringWithFormat:NSLocalizedString(@"File '%@' uploaded success", @"Seafile"), file.name]];
     }
-
 }
 
 #pragma mark - Search Delegate

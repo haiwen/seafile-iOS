@@ -11,6 +11,7 @@
 #import <AssetsLibrary/AssetsLibrary.h>
 
 #import "SeafPreView.h"
+#define LARGE_FILE_SIZE 10*1024*1024
 
 @class SeafConnection;
 @class SeafUploadFile;
