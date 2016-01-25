@@ -1794,12 +1794,13 @@ enum {
             if ([b isKindOfClass:[SeafDir class]]) {
                 p = [p stringByAppendingString:@"/"];
             }
-            BOOL found = [b.path isEqualToString:path];
+            BOOL found = [p isEqualToString:path];
             if (found || [path hasPrefix:p]) {
+                Debug("found=%d, path:%@, p:%@", found, path, p);
                 NSIndexPath *indexPath = [NSIndexPath indexPathForRow:i inSection:0];
                 [self.tableView selectRowAtIndexPath:indexPath animated:true scrollPosition:UITableViewScrollPositionMiddle];
                 [self tableView:self.tableView didSelectRowAtIndexPath:indexPath];
-                return found;
+                return !found;
             }
         }
         Debug("file %@/%@ not found", repo, path);

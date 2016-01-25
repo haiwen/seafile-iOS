@@ -610,8 +610,9 @@
 {
     if (!self.gotoRepo || !self.gotoPath)
         return;
-    Debug("open file %@ %@", self.gotoPath, self.gotoPath);
+    Debug("open file %@ %@", self.gotoRepo, self.gotoPath);
     if (![c goTo:self.gotoRepo path:self.gotoPath]) {
+        Debug("Stop open file %@ %@", self.gotoRepo, self.gotoPath);
         [self endGoto];
     }
 }
