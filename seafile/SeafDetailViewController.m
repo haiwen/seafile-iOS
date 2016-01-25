@@ -633,6 +633,7 @@ enum SHARE_STATUS {
             UIImage *img = [UIImage imageWithContentsOfFile:file.previewItemURL.path];
             UIImageWriteToSavedPhotosAlbum(img, self, @selector(thisImage:hasBeenSavedInPhotoAlbumWithError:usingContextInfo:), (void *)CFBridgingRetain(file));
         } else {
+            Debug("Save video %@ to album", file.previewItemURL.path);
             UISaveVideoAtPathToSavedPhotosAlbum(file.previewItemURL.path, self, @selector(video:didFinishSavingWithError:contextInfo:), (void *)CFBridgingRetain(file));
         }
     }  else if ([NSLocalizedString(@"Copy image to clipboard", @"Seafile") isEqualToString:title]) {

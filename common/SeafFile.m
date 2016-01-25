@@ -237,6 +237,8 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (void)downloadThumb
 {
+    SeafRepo *repo = [connection getRepo:self.repoId];
+    if (repo.encrypted) return;
     int size = THUMB_SIZE * (int)[[UIScreen mainScreen] scale];
     NSString *thumburl = [NSString stringWithFormat:API_URL"/repos/%@/thumbnail/?size=%d&p=%@", self.repoId, size, self.path.escapedUrl];
     NSURLRequest *downloadRequest = [connection buildRequest:thumburl method:@"GET" form:nil];

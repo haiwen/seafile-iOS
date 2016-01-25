@@ -1236,6 +1236,7 @@ enum {
 #pragma mark - UIActionSheetDelegate
 - (void)deleteEntry:(id)entry
 {
+    self.state = STATE_DELETE;
     if ([entry isKindOfClass:[SeafUploadFile class]]) {
         if (self.detailViewController.preViewItem == entry)
             self.detailViewController.preViewItem = nil;
@@ -1381,6 +1382,7 @@ enum {
     NSString *date = [self.formatter stringFromDate:[NSDate date]];
     for (ALAsset *asset in assets) {
         NSString *filename = asset.defaultRepresentation.filename;
+        Debug("Upload picked file : %@", filename);
         if ([nameSet containsObject:filename]) {
             NSString *name = filename.stringByDeletingPathExtension;
             NSString *ext = filename.pathExtension;
@@ -1693,15 +1695,16 @@ enum {
     if (!_selectedindex)
         return;
     SeafBase *base = (SeafBase *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-    if (index == 0)
+    if (index == 0) {
         if ([base isKindOfClass:[SeafRepo class]]) {
             SeafRepo *repo = (SeafRepo *)base;
             [repo->connection setRepo:repo.repoId password:nil];
             [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Clear library password successfully.", @"Seafile")];
-            [cell hideUtilityButtonsAnimated:true];
         } else
             [self showActionSheetForCell:cell];
-    else {
+        [cell hideUtilityButtonsAnimated:true];
+        [self.tableView selectRowAtIndexPath:_selectedindex animated:true scrollPosition:UITableViewScrollPositionNone];
+    } else {
         [self deleteEntry:base];
     }
 }
@@ -1781,6 +1784,7 @@ enum {
             }
         }
         Debug("Repo %@ not found.", repo);
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to find library", @"Seafile")];
     } else {
         if ([@"/" isEqualToString:path])
             return FALSE;
@@ -1799,6 +1803,7 @@ enum {
             }
         }
         Debug("file %@/%@ not found", repo, path);
+        [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Failed to find %@", @"Seafile"), path]];
     }
     return FALSE;
 }
