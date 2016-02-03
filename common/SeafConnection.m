@@ -72,7 +72,7 @@ static AFSecurityPolicy *SeafPolicyFromFile(NSString *path)
     return SeafPolicyFromCert(cert);
 }
 
-static BOOL SeafServerTrustIsValid(SecTrustRef serverTrust) {
+BOOL SeafServerTrustIsValid(SecTrustRef serverTrust) {
     BOOL isValid = NO;
     SecTrustResultType result;
     __Require_noErr_Quiet(SecTrustEvaluate(serverTrust, &result), _out);
@@ -859,8 +859,10 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     BOOL ret = [data writeToFile:path atomically:YES];
     if (!ret) {
         Warning("Failed to save certificate to %@", path);
-    } else
+    } else {
+        Debug("Save cert for %@ to %@", protectionSpace.host, path);
         self.policy = SeafPolicyFromCert(cer);
+    }
 }
 
 + (AFHTTPRequestSerializer <AFURLRequestSerialization> *)requestSerializer

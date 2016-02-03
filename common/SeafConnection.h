@@ -27,6 +27,8 @@ enum MSG_TYPE{
 @class SeafUploadFile;
 @class SeafDir;
 
+BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
+
 @protocol SeafDownloadDelegate <NSObject>
 - (void)download;
 - (NSString *)name;

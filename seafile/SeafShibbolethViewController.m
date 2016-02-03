@@ -14,11 +14,12 @@
 
 #import "Debug.h"
 
-@interface SeafShibbolethViewController ()<UIWebViewDelegate>
+@interface SeafShibbolethViewController ()<UIWebViewDelegate, NSURLConnectionDelegate>
 
 @property (strong) SeafConnection *sconn;
 @property (strong) NSURLRequest *FailedRequest;
 @property (strong) NSURLConnection *conn;
+@property BOOL authenticated;
 
 @end
 
@@ -46,7 +47,6 @@
         platformVersion = @"8.0";
     }
     NSString *url = [_sconn.address stringByAppendingFormat:@"/shib-login/?shib_platform_version=%@&shib_device_name=%@&shib_platform=%@&shib_device_id=%@&shib_client_version=%@", platformVersion.escapedUrl, deviceName.escapedUrl, platform.escapedUrl, deviceID.escapedUrl, version.escapedUrl];
-    Debug("shibbolethUrl: %@", url);
     return url;
 }
 
@@ -73,10 +73,13 @@
 - (void)start
 {
     if ([_sconn.address hasPrefix:@"http://"]) {
+        _authenticated = true;
         NSURLRequest *request = [[NSURLRequest alloc] initWithURL:[NSURL URLWithString:self.shibbolethUrl]];
         [self.webView loadRequest:request];
     } else {
+        _authenticated = false;
         NSURLRequest *request = [[NSURLRequest alloc] initWithURL:[NSURL URLWithString:self.pingUrl]];
+        Debug("Ping %@", self.pingUrl);
         [self loadRequestBackground:request];
     }
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Connecting to server", @"Seafile")];
@@ -91,7 +94,9 @@
             [SVProgressHUD dismiss];
             Warning("Error: %@", error);
         } else {
-            NSMutableURLRequest *r = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:self.shibbolethUrl]];
+            NSString *url = self.shibbolethUrl;
+            Debug("Send request: %@", url);
+            NSMutableURLRequest *r = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:url]];
             r.HTTPShouldHandleCookies = true;
             [self.webView loadRequest:r];
         }
@@ -133,10 +138,38 @@
     [SVProgressHUD dismiss];
 }
 
--(BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
-{
-    Debug("load request: %@", request.URL);
-    return true;
+-(BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType {
+    BOOL result = _authenticated;
+    if (!_authenticated) {
+        _FailedRequest = request;
+        self.conn = [[NSURLConnection alloc] initWithRequest:request delegate:self];
+    }
+    Debug("load request: %@, %d", request.URL, result);
+    return result;
 }
 
+-(void)connection:(NSURLConnection *)connection willSendRequestForAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge {
+    if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
+        NSURL* baseURL = [NSURL URLWithString:self.shibbolethUrl];
+        if ([challenge.protectionSpace.host isEqualToString:baseURL.host] || SeafServerTrustIsValid(challenge.protectionSpace.serverTrust)) {
+            NSLog(@"trusting connection to host %@", challenge.protectionSpace.host);
+            [challenge.sender useCredential:[NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust] forAuthenticationChallenge:challenge];
+        } else {
+            NSLog(@"Not trusting connection to host %@", challenge.protectionSpace.host);
+        }
+    }
+    [challenge.sender continueWithoutCredentialForAuthenticationChallenge:challenge];
+}
+
+-(void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)pResponse {
+    _authenticated = YES;
+    [connection cancel];
+    [self.webView loadRequest:_FailedRequest];
+}
+
+- (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error
+{
+    Warning("Failed to load request: %@", error);
+    [SVProgressHUD dismiss];
+}
 @end
