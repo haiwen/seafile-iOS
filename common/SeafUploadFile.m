@@ -396,13 +396,13 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     _filesize = attrs.fileSize;
     [_delegate uploadProgress:self result:YES progress:0];
     SeafRepo *repo = [connection getRepo:repoId];
-
+#if 0
     if (_filesize > LARGE_FILE_SIZE && (!repo.encrypted || [repo canLocalDecrypt])) {
         Debug("upload by block.");
         [self uploadLargeFileByBlocks:repo path:uploadpath];
         return;
     }
-
+#endif
     BOOL byblock = repo.localDecrypt;
     NSString* upload_url = [NSString stringWithFormat:API_URL"/repos/%@/upload-", repoId];
     if (byblock)

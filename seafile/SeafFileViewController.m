@@ -1497,7 +1497,7 @@ enum {
 }
 - (void)uploadProgress:(SeafUploadFile *)file result:(BOOL)res progress:(int)percent
 {
-    [self updateFileCell:file result:res progress:percent completed:YES];
+    [self updateFileCell:file result:res progress:percent completed:false];
 }
 
 - (void)uploadSucess:(SeafUploadFile *)file oid:(NSString *)oid
