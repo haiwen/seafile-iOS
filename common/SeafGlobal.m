@@ -32,6 +32,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 @property NSUserDefaults *storage;
 
 @property NSTimer *autoSyncTimer;
+@property (readonly) NSURL *applicationDocumentsDirectoryURL;
 
 @end
 
@@ -39,6 +40,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 @synthesize managedObjectContext = __managedObjectContext;
 @synthesize managedObjectModel = __managedObjectModel;
 @synthesize persistentStoreCoordinator = __persistentStoreCoordinator;
+@synthesize applicationDocumentsDirectoryURL = _applicationDocumentsDirectoryURL;
 
 -(id)init
 {
@@ -86,7 +88,10 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 
 - (NSURL *)applicationDocumentsDirectoryURL
 {
-    return [[[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:GROUP_NAME] URLByAppendingPathComponent:@"seafile" isDirectory:true];
+    if (!_applicationDocumentsDirectoryURL) {
+        _applicationDocumentsDirectoryURL = [[[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:GROUP_NAME] URLByAppendingPathComponent:@"seafile" isDirectory:true];
+    }
+    return _applicationDocumentsDirectoryURL;
 }
 
 - (NSString *)applicationDocumentsDirectory

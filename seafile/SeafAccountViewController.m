@@ -212,6 +212,8 @@
         case ACCOUNT_SHIBBOLETH:
 #if DEBUG
             serverTextField.text = @"https://dev2.seafile.com/seahub/";
+#else
+            serverTextField.text = HTTPS;
 #endif
             break;
         default:
