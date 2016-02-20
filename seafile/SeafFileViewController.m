@@ -382,7 +382,7 @@ enum {
         titles = [NSMutableArray arrayWithObjects:S_DOWNLOAD, S_EDIT, S_NEWFILE, S_MKDIR, S_SORT_NAME, S_SORT_MTIME, S_PHOTOS_ALBUM, nil];
         if (self.photos.count >= 3) [titles addObject:S_PHOTOS_BROWSER];
     } else {
-        titles = [NSMutableArray arrayWithObjects:S_SORT_NAME, S_SORT_MTIME, S_PHOTOS_ALBUM, nil];
+        titles = [NSMutableArray arrayWithObjects:S_DOWNLOAD, S_SORT_NAME, S_SORT_MTIME, S_PHOTOS_ALBUM, nil];
         if (self.photos.count >= 3) [titles addObject:S_PHOTOS_BROWSER];
     }
     [self showAlertWithAction:titles fromBarItem:self.editItem withTitle:nil];
@@ -676,7 +676,10 @@ enum {
 - (SeafCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView
 {
     SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
-    NSString *detail = [NSString stringWithFormat:@"%@, %@", [FileSizeFormatter stringFromNumber:[NSNumber numberWithUnsignedLongLong:srepo.size ] useBaseTen:NO], [SeafDateFormatter stringFromLongLong:srepo.mtime]];
+    NSString *detail = [SeafDateFormatter stringFromLongLong:srepo.mtime];
+    if ([SHARE_REPO isEqualToString:srepo.type]) {
+        detail = [detail stringByAppendingFormat:@", %@", srepo.owner];
+    }
     cell.detailTextLabel.text = detail;
     cell.imageView.image = srepo.icon;
     cell.textLabel.text = srepo.name;
@@ -923,7 +926,13 @@ enum {
     } else {
         NSArray *repos =  [[((SeafRepos *)_directory)repoGroups] objectAtIndex:section];
         SeafRepo *repo = (SeafRepo *)[repos objectAtIndex:0];
-        text = repo ? repo.owner: @"";
+        if (!repo) {
+            text = @"";
+        } else if ([repo.type isEqualToString:SHARE_REPO]) {
+            text = NSLocalizedString(@"Shared Libraries", @"Seafile");
+        } else {
+            text = repo.owner;
+        }
     }
     UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
     UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 3, tableView.bounds.size.width - 10, 18)];
@@ -1692,6 +1701,10 @@ enum {
     }];
 }
 
+- (void)hideCellButton:(SWTableViewCell *)cell
+{
+    [cell hideUtilityButtonsAnimated:true];
+}
 #pragma mark - SWTableViewCellDelegate
 - (void)swipeableTableViewCell:(SWTableViewCell *)cell didTriggerRightUtilityButtonWithIndex:(NSInteger)index
 {
@@ -1700,13 +1713,13 @@ enum {
         return;
     SeafBase *base = (SeafBase *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
     if (index == 0) {
+        [self performSelector:@selector(hideCellButton:) withObject:cell afterDelay:0.1f];
         if ([base isKindOfClass:[SeafRepo class]]) {
             SeafRepo *repo = (SeafRepo *)base;
             [repo->connection setRepo:repo.repoId password:nil];
             [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Clear library password successfully.", @"Seafile")];
         } else
             [self showActionSheetForCell:cell];
-        [cell hideUtilityButtonsAnimated:true];
         [self.tableView selectRowAtIndexPath:_selectedindex animated:true scrollPosition:UITableViewScrollPositionNone];
     } else {
         [self deleteEntry:base];

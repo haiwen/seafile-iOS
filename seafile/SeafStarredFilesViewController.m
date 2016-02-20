@@ -315,6 +315,10 @@
     [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
 }
 
+- (void)hideCellButton:(SWTableViewCell *)cell
+{
+    [cell hideUtilityButtonsAnimated:true];
+}
 - (void)swipeableTableViewCell:(SWTableViewCell *)cell didTriggerRightUtilityButtonWithIndex:(NSInteger)index
 {
     _selectedindex = [self.tableView indexPathForCell:cell];
@@ -327,7 +331,7 @@
     } else {
         [self redownloadFile:file];
     }
-    [cell hideUtilityButtonsAnimated:true];
+    [self performSelector:@selector(hideCellButton:) withObject:cell afterDelay:0.1f];
 }
 - (NSArray *)rightButtonsForFile:(SeafStarredFile *)file
 {

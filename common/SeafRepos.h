@@ -8,6 +8,8 @@
 
 #import "SeafDir.h"
 
+#define SHARE_REPO @"srepo"
+
 @interface SeafRepo : SeafDir<SeafSortable>
 @property (readonly) NSString *repoType;
 @property (readonly, copy) NSString *desc;
@@ -20,7 +22,7 @@
 @property (readwrite) int encVersion;
 @property (readonly) unsigned long long size;
 @property (readonly) long long mtime;
-@property (readonly) NSString *gid;
+@property (readonly) NSString *type;
 
 - (BOOL)canLocalDecrypt;
 
