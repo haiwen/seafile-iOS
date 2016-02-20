@@ -26,18 +26,22 @@
     // Configure the view for the selected state
 }
 
-- (void)setFrame:(CGRect)frame
+- (void)layoutSubviews
 {
-    int width = MIN(340, frame.size.width);
-    float inset = (frame.size.width - width)/2;
-    frame.origin.x += inset;
-    frame.size.width = width;
-    [super setFrame:frame];
+    [super layoutSubviews];
+    float indentPoints = (self.frame.size.width - 320)/2;
+    self.contentView.frame = CGRectMake(
+                                        indentPoints,
+                                        self.contentView.frame.origin.y,
+                                        self.contentView.frame.size.width - indentPoints,
+                                        self.contentView.frame.size.height
+                                        );
+    self.separatorInset = UIEdgeInsetsMake(0, indentPoints + 15, 0, indentPoints + 30);
 }
 
 + (SeafAccountCell *)getInstance:(UITableView *)tableView WithOwner:(id)owner
 {
-    NSString *CellIdentifier = @"SeafAccountCell";
+    NSString *CellIdentifier = @"SeafAccountCell2";
     SeafAccountCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafAccountCell" owner:owner options:nil];

@@ -15,7 +15,6 @@ end
 
 
 target :"SeafProvider" do
-  pod 'SWTableViewCell', :git => 'https://github.com/haiwen/SWTableViewCell.git', :branch => 'master'
   shared
 end
 
