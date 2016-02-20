@@ -149,7 +149,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 - (id)getCachedStarredFiles;
 
 - (NSString *)getAttribute:(NSString *)aKey;
-- (void)setAttribute:(id)anObject forKey:(id < NSCopying >)aKey;
+- (void)setAttribute:(id)anObject forKey:(NSString *)aKey;
 
 - (void)checkAutoSync;
 - (void)pickPhotosForUpload;

@@ -31,8 +31,8 @@
 
 @property (readonly) BOOL uploading;
 @property (readwrite) BOOL update;
-@property (nonatomic, readwrite) ALAsset *asset;
-@property (readwrite, nonatomic) NSURL *assetURL;
+@property (nonatomic, readonly) ALAsset *asset;
+@property (nonatomic, readonly) NSURL *assetURL;
 @property (readwrite) BOOL autoSync;
 @property (readonly) BOOL removed;
 
@@ -43,6 +43,8 @@
 @property (readwrite) SeafDir *udir;
 
 - (id)initWithPath:(NSString *)lpath;
+
+- (void)setAsset:(ALAsset *)asset url:(NSURL *)url;
 - (void)doUpload;
 
 - (void)doRemove;

@@ -154,7 +154,6 @@
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
         [conn checkAutoSync];
     }
-    [SVProgressHUD setBackgroundColor:[UIColor colorWithRed:250.0/256 green:250.0/256 blue:250.0/256 alpha:1.0]];
     if (ios8)
          [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
     else
@@ -216,6 +215,8 @@
         Debug("Expired, Time Remain = %f, restart background task.", [application backgroundTimeRemaining]);
         [weakSelf startBackgroundTask];
     };
+
+    [SVProgressHUD setBackgroundColor:[UIColor colorWithRed:250.0/256 green:250.0/256 blue:250.0/256 alpha:1.0]];
 
     [self performSelectorInBackground:@selector(delayedInit) withObject:nil];
     return YES;

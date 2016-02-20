@@ -459,9 +459,11 @@
 {
     if (!defaultName || !dict)
         return;
-    if (!value)
-        [dict removeObjectForKey:defaultName];
-    else
-        [dict setObject:value forKey:defaultName];
+    @synchronized(dict) {
+        if (!value)
+            [dict removeObjectForKey:defaultName];
+        else
+            [dict setObject:value forKey:defaultName];
+    }
 }
 @end

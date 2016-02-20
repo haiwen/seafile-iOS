@@ -18,10 +18,9 @@
                     name:(NSString *)aName
                     path:(NSString *)aPath;
 
-@property (readonly, copy) NSMutableArray *allItems;
-@property (readonly, copy) NSMutableArray *items;
+@property (readonly, copy) NSArray *allItems;
+@property (readonly, copy) NSArray *items;
 @property (readonly, nonatomic) NSMutableArray *uploadItems;
-
 @property (readonly) BOOL editable;
 
 - (void)unload;

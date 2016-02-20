@@ -57,15 +57,20 @@
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
+- (NSString *)replaceString:(NSString *)str prefix:(NSString *)prefix withString:(NSString *)target
+{
+    return [str stringByReplacingOccurrencesOfString:prefix withString:target options:0 range:NSMakeRange(0, prefix.length)];
+}
+
 - (IBAction)httpsSwitchFlip:(id)sender
 {
     BOOL https = _httpsSwitch.on;
     BOOL cur = [serverTextField.text hasPrefix:HTTPS];
     if (cur == https) return;
     if (https) {
-        serverTextField.text = [HTTPS stringByAppendingString:[serverTextField.text substringFromIndex:HTTP.length]];
+        serverTextField.text = [self replaceString:serverTextField.text prefix:HTTP withString:HTTPS];
     } else {
-        serverTextField.text = [HTTP stringByAppendingString:[serverTextField.text substringFromIndex:HTTPS.length]];
+        serverTextField.text = [self replaceString:serverTextField.text prefix:HTTPS withString:HTTP];
     }
 }
 

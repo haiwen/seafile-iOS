@@ -166,12 +166,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [SeafGlobal.sharedObject synchronize];
 }
 
-- (void)setAttribute:(id)anObject forKey:(id < NSCopying >)aKey
+- (void)setAttribute:(id)anObject forKey:(NSString *)aKey
 {
-    if (anObject)
-        [_settings setObject:anObject forKey:aKey];
-    else
-        [_settings removeObjectForKey:aKey];
+    [Utils dict:_settings setObject:anObject forKey:aKey];
     [self saveSettings];
 }
 
@@ -317,12 +314,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (!repopasswds) {
         repopasswds = [[NSMutableDictionary alloc] init];
     }
-    if (password)
-        [repopasswds setObject:password forKey:repoId];
-    else
-        [repopasswds removeObjectForKey:repoId];
-
-    [_info setObject:repopasswds forKey:@"repopassword"];
+    [Utils dict:repopasswds setObject:password forKey:repoId];
+    [Utils dict:_info setObject:repopasswds forKey:@"repopassword"];
     [self saveAccountInfo];
 }
 
@@ -448,13 +441,13 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
          Debug("account detail:%@", account);
          NSString *oldUsername = self.username;
          NSString *newUsername = [account objectForKey:@"email"];
-         [_info setObject:[account objectForKey:@"total"] forKey:@"total"];
-         [_info setObject:[account objectForKey:@"total"] forKey:@"total"];
-         [_info setObject:[account objectForKey:@"usage"] forKey:@"usage"];
-         [_info setObject:_address forKey:@"link"];
+         [Utils dict:_info setObject:[account objectForKey:@"total"] forKey:@"total"];
+         [Utils dict:_info setObject:[account objectForKey:@"total"] forKey:@"total"];
+         [Utils dict:_info setObject:[account objectForKey:@"usage"] forKey:@"usage"];
+         [Utils dict:_info setObject:_address forKey:@"link"];
          if (![oldUsername isEqualToString:newUsername]) {
              [SeafGlobal.sharedObject removeObjectForKey:[NSString stringWithFormat:@"%@/%@", _address, self.username]];
-             [_info setObject:newUsername forKey:@"username"];
+             [Utils dict:_info setObject:newUsername forKey:@"username"];
          }
          [self saveAccountInfo];
          if (handler) handler(true, self);
@@ -487,10 +480,10 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 -(void)setToken:(NSString *)token forUser:(NSString *)username isShib:(BOOL)isshib
 {
     _token = token;
-    [_info setObject:username forKey:@"username"];
-    [_info setObject:_token forKey:@"token"];
-    [_info setObject:_address forKey:@"link"];
-    [_info setObject:[NSNumber numberWithBool:isshib] forKey:@"isshibboleth"];
+    [Utils dict:_info setObject:username forKey:@"username"];
+    [Utils dict:_info setObject:token forKey:@"token"];
+    [Utils dict:_info setObject:_address forKey:@"link"];
+    [Utils dict:_info setObject:[NSNumber numberWithBool:isshib] forKey:@"isshibboleth"];
     [self saveAccountInfo];
     [self downloadAvatar:true];
     [self.loginDelegate loginSuccess:self];
@@ -512,7 +505,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             Warning("Error: %@", error);
             [self.loginDelegate loginFailed:self error:error code:((NSHTTPURLResponse *)response).statusCode];
         } else {
-            [_info setObject:password forKey:@"password"];
+            [Utils dict:_info setObject:password forKey:@"password"];
             [self setToken:[responseObject objectForKey:@"token"] forUser:username isShib:false];
         }
     }];
@@ -764,10 +757,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (SeafUploadFile *)getUploadfile:(NSString *)lpath create:(bool)create
 {
+    if (!lpath) return nil;
     SeafUploadFile *ufile = [self.uploadFiles objectForKey:lpath];
     if (!ufile && create) {
         ufile = [[SeafUploadFile alloc] initWithPath:lpath];
-        [self.uploadFiles setObject:ufile forKey:lpath];
+        [Utils dict:self.uploadFiles setObject:ufile forKey:lpath];
     }
     return ufile;
 }
@@ -892,9 +886,14 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                  resultBlock:^(ALAsset *asset) {
                                      NSString *filename = asset.defaultRepresentation.filename;
                                      NSString *path = [SeafGlobal.sharedObject.uploadsDir stringByAppendingPathComponent:filename];
+                                     if (!path) return;
                                      SeafUploadFile *file = [self getUploadfile:path];
+                                     if (!file) {
+                                         Warning("Failed to init upload file: %@", path);
+                                         return;
+                                     }
                                      file.autoSync = true;
-                                     file.asset = asset;
+                                     [file setAsset:asset url:url];
                                      [dir addUploadFile:file flush:false];
                                      Debug("Add file %@ to upload list: %@", filename, dir.path);
                                      [SeafGlobal.sharedObject addUploadTask:file];
@@ -971,7 +970,13 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (BOOL)IsPhotoUploading:(NSURL *)url
 {
-    return [self.photosArray indexOfObject:url] != NSNotFound || [self.uploadingArray indexOfObject:url] != NSNotFound;
+    @synchronized(_photosArray) {
+        if ([_photosArray containsObject:url]) return true;
+    }
+    @synchronized(_uploadingArray) {
+        if ([_uploadingArray containsObject:url]) return true;
+    }
+    return false;
 }
 
 - (void)addUploadingPhoto:(NSURL *)url {
@@ -1222,7 +1227,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSDictionary *repopasswds = [_info objectForKey:@"repopassword"];
     if (repopasswds == nil)
         return;
-    [_info setObject:[[NSDictionary alloc] init] forKey:@"repopassword"];
+    [Utils dict:_info setObject:[[NSDictionary alloc] init] forKey:@"repopassword"];
     [self saveAccountInfo];
 }
 

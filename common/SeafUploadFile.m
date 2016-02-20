@@ -36,6 +36,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 @end
 
 @implementation SeafUploadFile
+@synthesize assetURL = _assetURL;
 
 - (id)initWithPath:(NSString *)lpath
 {
@@ -448,10 +449,10 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     return [self upload:self.udir->connection repo:self.udir.repoId path:self.udir.path];
 }
 
-- (void)setAsset:(ALAsset *)asset
+- (void)setAsset:(ALAsset *)asset url:(NSURL *)url
 {
     _asset = asset;
-    _assetURL = asset.defaultRepresentation.url;
+    _assetURL = url;
 }
 
 - (void)checkAsset

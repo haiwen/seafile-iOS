@@ -35,6 +35,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
 };
 
 @interface SeafDir ()
+@property NSObject *uploadLock;
 
 @end
 
@@ -51,6 +52,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
                     path:(NSString *)aPath
 {
     self = [super initWithConnection:aConnection oid:anId repoId:aRepoId name:aName path:aPath mime:@"text/directory"];
+    _uploadLock = [[NSObject alloc] init];
     return self;
 }
 
@@ -166,8 +168,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
         _items = items;
     else {
         NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-        for (i = 0; i < [_items count]; ++i) {
-            SeafBase *obj = (SeafBase*)[_items objectAtIndex:i];
+        for (SeafBase *obj in _items) {
             [dict setObject:obj forKey:[obj key]];
         }
         for (i = 0; i < [items count]; ++i) {
@@ -369,15 +370,18 @@ static NSComparator CMP = ^(id obj1, id obj2) {
      }];
 }
 
-- (NSMutableArray *)allItems
+- (NSArray *)allItems
 {
     if (_allItems)
         return _allItems;
 
-    _allItems = [[NSMutableArray alloc] init];
-    [_allItems addObjectsFromArray:_items];
-    [_allItems addObjectsFromArray:self.uploadItems];
-    [self sortItems:_allItems];
+    NSMutableArray *arr = [[NSMutableArray alloc] init];
+    [arr addObjectsFromArray:_items];
+     @synchronized(_uploadLock) {
+    [arr addObjectsFromArray:self.uploadItems];
+     }
+    [self sortItems:arr];
+    _allItems = arr;
     return _allItems;
 }
 
@@ -399,7 +403,9 @@ static NSComparator CMP = ^(id obj1, id obj2) {
 
 - (void)addUploadFile:(SeafUploadFile *)file flush:(BOOL)flush;
 {
-    if ([self.uploadItems containsObject:file]) return;
+    @synchronized(_uploadLock) {
+        if ([self.uploadItems containsObject:file]) return;
+    }
     NSMutableDictionary *dict = file.uploadAttr;
     if (!dict)
         dict = [[NSMutableDictionary alloc] init];
@@ -412,20 +418,25 @@ static NSComparator CMP = ^(id obj1, id obj2) {
     }
     file.udir = self;
     [file saveAttr:dict flush:flush];
-    [self.uploadItems addObject:file];
+    @synchronized(_uploadLock) {
+        [self.uploadItems addObject:file];
+    }
     _allItems = nil;
-    [self.delegate download:self complete:true];
+    if (!file.autoSync)
+        [self.delegate download:self complete:true];
 }
 
 - (void)checkUploadFiles
 {
     NSMutableArray *arr = [[NSMutableArray alloc] init];
-    for (SeafUploadFile *file in self.uploadItems) {
-        NSMutableDictionary *dict = file.uploadAttr;
-        if (dict) {
-            BOOL result = [[dict objectForKey:@"result"] boolValue];
-            if (result) {
-                [arr addObject:file];
+    @synchronized(_uploadLock) {
+        for (SeafUploadFile *file in self.uploadItems) {
+            NSMutableDictionary *dict = file.uploadAttr;
+            if (dict) {
+                BOOL result = [[dict objectForKey:@"result"] boolValue];
+                if (result) {
+                    [arr addObject:file];
+                }
             }
         }
     }
@@ -439,7 +450,9 @@ static NSComparator CMP = ^(id obj1, id obj2) {
     [SeafGlobal.sharedObject removeBackgroundUpload:ufile];
     [connection removeUploadfile:ufile];
     [ufile doRemove];
-    [self.uploadItems removeObject:ufile];
+    @synchronized(_uploadLock) {
+        [self.uploadItems removeObject:ufile];
+    }
     _allItems = nil;
 }
 

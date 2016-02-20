@@ -1226,8 +1226,12 @@ enum {
     dispatch_async(dispatch_get_main_queue(), ^{
         if (indexPath) {
             UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
-            if (cell)
+            if (!cell) return;
+            @try {
                 [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationNone];
+            } @catch(NSException *exception) {
+                Warning("Failed to reload cell %@: %@", indexPath, exception);
+            }
         } else
             [self.tableView reloadData];
     });
@@ -1391,7 +1395,7 @@ enum {
         [nameSet addObject:filename];
         NSString *path = [SeafGlobal.sharedObject.uploadsDir stringByAppendingPathComponent:filename];
         SeafUploadFile *file =  [self.connection getUploadfile:path];
-        file.asset = asset;
+        [file setAsset:asset url:asset.defaultRepresentation.url];
         file.delegate = self;
         [files addObject:file];
         [self.directory addUploadFile:file flush:false];

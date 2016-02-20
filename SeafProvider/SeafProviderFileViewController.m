@@ -328,21 +328,20 @@
 
 - (void)reloadIndex:(NSIndexPath *)indexPath
 {
-    @try {
+    dispatch_async(dispatch_get_main_queue(), ^{
         if (indexPath) {
             UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
-            if (cell)
-                [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+            if (!cell) return;
+            @try {
+                [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationNone];
+            } @catch(NSException *exception) {
+                Warning("Failed to reload cell %@: %@", indexPath, exception);
+            }
         } else
             [self.tableView reloadData];
-    }
-    @catch (NSException *exception) {
-        Debug("Exception while reload inedx %@: %@", indexPath, exception);
-    }
-    @finally {
-    }
-
+    });
 }
+
 #pragma mark - SeafDentryDelegate
 - (void)download:(SeafBase *)entry progress:(float)progress
 {
@@ -384,12 +383,9 @@
 
     [self.alert dismissViewControllerAnimated:NO completion:^{
         NSUInteger index = [_directory.allItems indexOfObject:entry];
-        if (index == NSNotFound)
-            return;
+        if (index == NSNotFound) return;
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
-        UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
-        if (cell)
-            [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+        [self reloadIndex:indexPath];
         Warning("Failed to download file %@\n", entry.name);
         NSString *msg = [NSString stringWithFormat:@"Failed to download file '%@'", entry.name];
         [self alertWithTitle:msg handler:nil];
