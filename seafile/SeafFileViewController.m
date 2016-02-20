@@ -61,6 +61,7 @@ enum {
 
 @property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
 
+@property (retain) SWTableViewCell *selectedCell;
 @property (retain) NSIndexPath *selectedindex;
 @property (readonly) NSArray *editToolItems;
 
@@ -89,6 +90,8 @@ enum {
 @synthesize curEntry = _curEntry;
 @synthesize selectAllItem = _selectAllItem, selectNoneItem = _selectNoneItem;
 @synthesize selectedindex = _selectedindex;
+@synthesize selectedCell = _selectedCell;
+
 @synthesize editToolItems = _editToolItems;
 
 @synthesize popoverController;
@@ -578,9 +581,8 @@ enum {
     id entry = [self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
     if ([entry isKindOfClass:[SeafRepo class]]) {
         SeafRepo *repo = (SeafRepo *)entry;
-        if (!repo.encrypted)
-            return;
-        [self showAlertWithAction:[NSArray arrayWithObjects:S_RESET_PASSWORD, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
+        if (repo.encrypted)
+            [self showAlertWithAction:[NSArray arrayWithObjects:S_RESET_PASSWORD, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
     } else if ([entry isKindOfClass:[SeafDir class]]) {
         [self showAlertWithAction:[NSArray arrayWithObjects:S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
     } else if ([entry isKindOfClass:[SeafFile class]]) {
@@ -595,6 +597,7 @@ enum {
         [self showAlertWithAction:[NSArray arrayWithObjects:S_DELETE, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
     }
 }
+
 - (void)showEditMenu:(UILongPressGestureRecognizer *)gestureRecognizer
 {
     if (self.tableView.editing == YES)
@@ -929,7 +932,7 @@ enum {
         if (!repo) {
             text = @"";
         } else if ([repo.type isEqualToString:SHARE_REPO]) {
-            text = NSLocalizedString(@"Shared Libraries", @"Seafile");
+            text = NSLocalizedString(@"Private Shares", @"Seafile");
         } else {
             text = repo.owner;
         }
@@ -1262,6 +1265,12 @@ enum {
 }
 - (void)handleAction:(NSString *)title
 {
+    Debug("handle action title:%@, %@", title, _selectedCell);
+    if (_selectedCell) {
+        [self hideCellButton:_selectedCell];
+        _selectedCell = nil;
+    }
+
     if ([S_NEWFILE isEqualToString:title]) {
         [self popupCreateView];
     } else if ([S_MKDIR isEqualToString:title]) {
@@ -1705,6 +1714,7 @@ enum {
 {
     [cell hideUtilityButtonsAnimated:true];
 }
+
 #pragma mark - SWTableViewCellDelegate
 - (void)swipeableTableViewCell:(SWTableViewCell *)cell didTriggerRightUtilityButtonWithIndex:(NSInteger)index
 {
@@ -1713,13 +1723,15 @@ enum {
         return;
     SeafBase *base = (SeafBase *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
     if (index == 0) {
-        [self performSelector:@selector(hideCellButton:) withObject:cell afterDelay:0.1f];
         if ([base isKindOfClass:[SeafRepo class]]) {
             SeafRepo *repo = (SeafRepo *)base;
             [repo->connection setRepo:repo.repoId password:nil];
             [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Clear library password successfully.", @"Seafile")];
-        } else
+            [self performSelector:@selector(hideCellButton:) withObject:cell afterDelay:0.1f];
+        } else {
+            _selectedCell = cell;
             [self showActionSheetForCell:cell];
+        }
         [self.tableView selectRowAtIndexPath:_selectedindex animated:true scrollPosition:UITableViewScrollPositionNone];
     } else {
         [self deleteEntry:base];
