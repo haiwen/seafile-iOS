@@ -1367,8 +1367,8 @@
 				57A0295C1A16F8AC009C9D7B /* Frameworks */,
 				57A0295D1A16F8AC009C9D7B /* Resources */,
 				1C8919A15E0B111CAB761074 /* Copy Pods Resources */,
-				571617B61BE2695A00792316 /* ShellScript */,
 				4D3C9D5F418051662464B1D2 /* Embed Pods Frameworks */,
+				571617B61BE2695A00792316 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -1388,8 +1388,8 @@
 				57A0296A1A16F8AD009C9D7B /* Frameworks */,
 				57A0296B1A16F8AD009C9D7B /* Resources */,
 				AAA495551CD2DEAE3C789149 /* Copy Pods Resources */,
-				571617B71BE2696800792316 /* ShellScript */,
 				7850F350BE78F6FF03EC7880 /* Embed Pods Frameworks */,
+				571617B71BE2696800792316 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -2263,6 +2263,7 @@
 				CODE_SIGN_ENTITLEMENTS = SeafProviderFileProvider/SeafProviderFileProvider.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				EMBEDDED_CONTENT_CONTAINS_SWIFT = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -2272,7 +2273,7 @@
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = SeafProviderFileProvider/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../Frameworks";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -2295,13 +2296,14 @@
 				CODE_SIGN_ENTITLEMENTS = SeafProviderFileProvider/SeafProviderFileProvider.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Distribution: Seafile Inc. (55LCTZ5354)";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Seafile Inc. (55LCTZ5354)";
+				EMBEDDED_CONTENT_CONTAINS_SWIFT = NO;
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = SeafProviderFileProvider/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../Frameworks";
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -2324,6 +2326,7 @@
 				CODE_SIGN_ENTITLEMENTS = SeafProvider/SeafProvider.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				EMBEDDED_CONTENT_CONTAINS_SWIFT = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -2333,7 +2336,7 @@
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = SeafProvider/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";
@@ -2358,13 +2361,14 @@
 				CODE_SIGN_ENTITLEMENTS = SeafProvider/SeafProvider.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Distribution: Seafile Inc. (55LCTZ5354)";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Seafile Inc. (55LCTZ5354)";
+				EMBEDDED_CONTENT_CONTAINS_SWIFT = NO;
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = SeafProvider/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";
@@ -2389,6 +2393,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
 				COPY_PHASE_STRIP = NO;
+				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				ENABLE_BITCODE = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -2435,6 +2440,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution: Seafile Inc. (55LCTZ5354)";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Seafile Inc. (55LCTZ5354)";
 				COPY_PHASE_STRIP = YES;
+				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				ENABLE_BITCODE = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
