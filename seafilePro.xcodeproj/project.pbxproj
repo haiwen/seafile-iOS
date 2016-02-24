@@ -1344,6 +1344,7 @@
 				571D8CE51677881400F1A22C /* Resources */,
 				57E228E51A0F4EE700C92330 /* Embed App Extensions */,
 				A34082320434E8B91F05FBA0 /* Copy Pods Resources */,
+				66AB9F6F2F69F4A10AB83F05 /* Embed Pods Frameworks */,
 			);
 			buildRules = (
 				57E22B341A126D6A00C92330 /* PBXBuildRule */,
@@ -1367,6 +1368,7 @@
 				57A0295D1A16F8AC009C9D7B /* Resources */,
 				1C8919A15E0B111CAB761074 /* Copy Pods Resources */,
 				571617B61BE2695A00792316 /* ShellScript */,
+				4D3C9D5F418051662464B1D2 /* Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -1387,6 +1389,7 @@
 				57A0296B1A16F8AD009C9D7B /* Resources */,
 				AAA495551CD2DEAE3C789149 /* Copy Pods Resources */,
 				571617B71BE2696800792316 /* ShellScript */,
+				7850F350BE78F6FF03EC7880 /* Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -1739,6 +1742,21 @@
 			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
+		4D3C9D5F418051662464B1D2 /* Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Embed Pods Frameworks";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-SeafProvider/Pods-SeafProvider-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		54CD272E763AE7266FCA4B65 /* Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -1779,6 +1797,36 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "cd \"${CONFIGURATION_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/\"\nif [[ -d \"Frameworks\" ]]; then\nrm -fr Frameworks\nfi";
+		};
+		66AB9F6F2F69F4A10AB83F05 /* Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Embed Pods Frameworks";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-seafile-appstore/Pods-seafile-appstore-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		7850F350BE78F6FF03EC7880 /* Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Embed Pods Frameworks";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-SeafProviderFileProvider/Pods-SeafProviderFileProvider-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
 		};
 		7B6906EF1EA468EF21D62B57 /* Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
