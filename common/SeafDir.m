@@ -36,6 +36,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
 
 @interface SeafDir ()
 @property NSObject *uploadLock;
+@property (readonly, nonatomic) NSMutableArray *uploadItems;
 
 @end
 
@@ -378,7 +379,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
     NSMutableArray *arr = [[NSMutableArray alloc] init];
     [arr addObjectsFromArray:_items];
      @synchronized(_uploadLock) {
-    [arr addObjectsFromArray:self.uploadItems];
+         [arr addObjectsFromArray:self.uploadItems];
      }
     [self sortItems:arr];
     _allItems = arr;
@@ -399,6 +400,13 @@ static NSComparator CMP = ^(id obj1, id obj2) {
     if (!_uploadItems)
         _uploadItems = [[NSMutableArray alloc] init];
     return _uploadItems;
+}
+
+- (NSArray *)uploadFiles
+{
+    @synchronized(_uploadLock) {
+        return [NSArray arrayWithArray: self.uploadItems];
+    }
 }
 
 - (void)addUploadFile:(SeafUploadFile *)file flush:(BOOL)flush;

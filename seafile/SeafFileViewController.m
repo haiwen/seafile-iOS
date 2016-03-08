@@ -231,8 +231,8 @@ enum {
 
 - (void)initSeafPhotos
 {
-    NSMutableArray *seafPhotos = [[NSMutableArray alloc] init];
-    NSMutableArray *seafThumbs = [[NSMutableArray alloc] init];
+    NSMutableArray *seafPhotos = [NSMutableArray array];
+    NSMutableArray *seafThumbs = [NSMutableArray array];
 
     for (id entry in _directory.allItems) {
         if ([entry conformsToProtocol:@protocol(SeafPreView)]
@@ -243,14 +243,14 @@ enum {
             [seafThumbs addObject:[[SeafThumb alloc] initWithSeafPreviewIem:entry]];
         }
     }
-    self.photos = seafPhotos;
-    self.thumbs = seafThumbs;
+    self.photos = [NSArray arrayWithArray:seafPhotos];
+    self.thumbs = [NSArray arrayWithArray:seafThumbs];
 }
 
 - (void)refreshView
 {
     [self initSeafPhotos];
-    for (SeafUploadFile *file in _directory.uploadItems) {
+    for (SeafUploadFile *file in _directory.uploadFiles) {
         file.delegate = self;
     }
     [self.tableView reloadData];
@@ -443,13 +443,14 @@ enum {
 - (void)checkUploadfiles
 {
     [_connection checkSyncDst:_directory];
+    NSArray *uploadFiles = _directory.uploadFiles;
 #if DEBUG
-    if (_directory.uploadItems.count > 0)
-        Debug("Upload %lu, state=%d", (unsigned long)_directory.uploadItems.count, self.state);
+    if (uploadFiles.count > 0)
+        Debug("Upload %lu, state=%d", (unsigned long)uploadFiles.count, self.state);
 #endif
     dispatch_time_t time = dispatch_time(DISPATCH_TIME_NOW, 1);
     dispatch_after(time, dispatch_get_main_queue(), ^(void){
-        for (SeafUploadFile *file in _directory.uploadItems) {
+        for (SeafUploadFile *file in uploadFiles) {
             file.delegate = self;
             if (!file.uploaded && !file.uploading) {
                 Debug("background upload %@", file.name);
@@ -1461,7 +1462,11 @@ enum {
     if (assets.count == 0) return;
     NSMutableArray *urls = [[NSMutableArray alloc] init];
     for (ALAsset *asset in assets) {
-        [urls addObject:asset.defaultRepresentation.url];
+        NSURL *url = asset.defaultRepresentation.url;
+        if (url)
+            [urls addObject:url];
+        else
+            Warning("Failed to get asset url %@", asset);
     }
     [self uploadPickedAssetsUrl:urls];
     [self dismissImagePickerController:imagePickerController];

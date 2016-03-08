@@ -20,7 +20,7 @@
 
 @property (readonly, copy) NSArray *allItems;
 @property (readonly, copy) NSArray *items;
-@property (readonly, nonatomic) NSMutableArray *uploadItems;
+@property (readonly) NSArray *uploadFiles;
 @property (readonly) BOOL editable;
 
 - (void)unload;
