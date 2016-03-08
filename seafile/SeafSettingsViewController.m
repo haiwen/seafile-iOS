@@ -146,6 +146,8 @@ enum ENC_LIBRARIES{
 
 - (void)checkPhotoLibraryAuthorizationStatus
 {
+    Debug("Current AuthorizationStatus:%ld", [ALAssetsLibrary authorizationStatus]);
+
     if([ALAssetsLibrary authorizationStatus] == ALAuthorizationStatusNotDetermined) {
         ALAssetsLibrary *assetLibrary = [[ALAssetsLibrary alloc] init];
         /*
@@ -173,8 +175,8 @@ enum ENC_LIBRARIES{
     } else {
         self.autoSync = _autoSyncSwitch.on;
         _syncRepoCell.detailTextLabel.text = @"";
-        [self.tableView reloadData];
         _connection.autoSyncRepo = nil;
+        [self.tableView reloadData];
         [_connection performSelectorInBackground:@selector(checkAutoSync) withObject:nil];
     }
 }
@@ -358,6 +360,7 @@ enum ENC_LIBRARIES{
                 }
             }];
     } else if (indexPath.section == SECTION_CAMERA) {
+        Debug("selected %ld, autoSync: %d", indexPath.row, self.autoSync);
         if (indexPath.row == CELL_DESTINATION && self.autoSync) {
             [self popupRepoSelect];
         }

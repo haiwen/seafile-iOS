@@ -125,6 +125,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         _sessionMgr = [[AFHTTPSessionManager alloc] initWithSessionConfiguration:configuration];
         _sessionMgr.responseSerializer = [AFJSONResponseSerializer serializerWithReadingOptions:NSJSONReadingAllowFragments];
         self.policy = [self policyForHost:[self host]];
+        _settings = [[NSMutableDictionary alloc] init];
     }
     return self;
 }
