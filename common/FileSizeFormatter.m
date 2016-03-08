@@ -52,11 +52,11 @@ static FileSizeFormatter *sharedLoader = nil;
     return [[FileSizeFormatter sharedLoader] stringFromNumber:number useBaseTen:useBaseTen];
 }
 
-+ (NSString *)stringFromInt:(int)number
++ (NSString *)stringFromLongLong:(long long)number
 {
     if (number < 0)
         return @"?";
-    return [[FileSizeFormatter sharedLoader] stringFromNumber:[NSNumber numberWithInt:number] useBaseTen:NO];
+    return [[FileSizeFormatter sharedLoader] stringFromNumber:[NSNumber numberWithLongLong:number] useBaseTen:true];
 }
 
 @end

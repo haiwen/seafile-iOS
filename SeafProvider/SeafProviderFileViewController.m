@@ -247,7 +247,7 @@
     cell.detailTextLabel.font = [UIFont systemFontOfSize:13];
     if ([entry isKindOfClass:[SeafRepo class]]) {
         SeafRepo *srepo = (SeafRepo *)entry;
-        NSString *detail = [NSString stringWithFormat:@"%@, %@", [FileSizeFormatter stringFromNumber:[NSNumber numberWithUnsignedLongLong:srepo.size ] useBaseTen:NO], [SeafDateFormatter stringFromLongLong:srepo.mtime]];
+        NSString *detail = [NSString stringWithFormat:@"%@, %@", [FileSizeFormatter stringFromLongLong:srepo.size], [SeafDateFormatter stringFromLongLong:srepo.mtime]];
         cell.detailTextLabel.text = detail;
     } else if ([entry isKindOfClass:[SeafDir class]]) {
         cell.detailTextLabel.text = nil;

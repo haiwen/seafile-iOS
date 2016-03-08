@@ -10,9 +10,9 @@
 
 @interface FileSizeFormatter : NSNumberFormatter
 
-/** Flag signaling whether to calculate file size in binary units (1024) or base ten units (1000).  Default is binary units. */
+/** Flag signaling whether to calculate file size in binary units (1024) or base ten units (1000).  Default is base ten units. */
 + (NSString *)stringFromNumber:(NSNumber *)number useBaseTen:(BOOL)useBaseTen;
 
-+ (NSString *)stringFromInt:(int)number;
++ (NSString *)stringFromLongLong:(long long)number;
 
 @end

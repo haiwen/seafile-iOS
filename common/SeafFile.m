@@ -63,7 +63,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (NSString *)detailText
 {
-    NSString *str = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:self.filesize ] useBaseTen:NO];
+    NSString *str = [FileSizeFormatter stringFromLongLong:self.filesize];
     if (self.mtime) {
         NSString *timeStr = [SeafDateFormatter stringFromLongLong:self.mtime];
         str = [str stringByAppendingFormat:@", %@", timeStr];

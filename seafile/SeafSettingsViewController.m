@@ -306,16 +306,16 @@ enum ENC_LIBRARIES{
     _localDecrySwitch.on = _connection.localDecryption;
 
     long long cacheSize = [self cacheSize];
-    _cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:cacheSize] useBaseTen:NO];
+    _cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromLongLong:cacheSize];
     Debug("%@, %lld, %lld, total cache=%lld", _connection.username, _connection.usage, _connection.quota, cacheSize);
     if (_connection.quota <= 0) {
         if (_connection.usage < 0)
             _usedspaceCell.detailTextLabel.text = @"Unknown";
         else
-            _usedspaceCell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:_connection.usage] useBaseTen:NO];
+            _usedspaceCell.detailTextLabel.text = [FileSizeFormatter stringFromLongLong:_connection.usage];
     } else {
         float usage = 100.0 * _connection.usage/_connection.quota;
-        NSString *quotaString = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:_connection.quota ] useBaseTen:NO];
+        NSString *quotaString = [FileSizeFormatter stringFromLongLong:_connection.quota];
         if (usage < 0)
             _usedspaceCell.detailTextLabel.text = [NSString stringWithFormat:@"? of %@", quotaString];
         else
@@ -401,8 +401,7 @@ enum ENC_LIBRARIES{
             [[SeafGlobal sharedObject] deleteAllObjects:@"SeafCacheObj"];
 
             long long cacheSize = [self cacheSize];
-            _cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:cacheSize] useBaseTen:NO];
-
+            _cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromLongLong:cacheSize];
         } no:nil];
     }
 }

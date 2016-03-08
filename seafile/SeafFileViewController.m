@@ -629,7 +629,7 @@ enum {
         cell.imageView.image = file.icon;
         cell.badgeLabel.text = nil;
 
-        NSString *sizeStr = [FileSizeFormatter stringFromNumber:[NSNumber numberWithLongLong:file.filesize ] useBaseTen:NO];
+        NSString *sizeStr = [FileSizeFormatter stringFromLongLong:file.filesize];
         NSDictionary *dict = [file uploadAttr];
         cell.accessoryView = nil;
         if (dict) {
