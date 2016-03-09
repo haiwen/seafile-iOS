@@ -651,12 +651,10 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     NSString *tmpdir = nil;
     if (!self.mpath) {
         src = [SeafGlobal.sharedObject documentPath:self.ooid];
-        tmpdir = [[SeafGlobal.sharedObject.tempDir stringByAppendingPathComponent:self.ooid] stringByAppendingPathComponent:@"utf16" ];
     } else {
         src = self.mpath;
-        tmpdir = [SeafGlobal.sharedObject.tempDir stringByAppendingPathComponent:[[self.mpath stringByDeletingLastPathComponent] lastPathComponent]];
     }
-
+    tmpdir = [SeafGlobal.sharedObject uniqueDirUnder:SeafGlobal.sharedObject.tempDir];
     if (![Utils checkMakeDir:tmpdir])
         return _preViewURL;
 
@@ -749,15 +747,12 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (BOOL)saveStrContent:(NSString *)content
 {
-    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-    [formatter setDateFormat:@"yyyy-MM-dd-HH.mm.ss"];
-    NSString *dir = [SeafGlobal.sharedObject.editDir stringByAppendingPathComponent:[formatter stringFromDate:[NSDate date]]];
+    NSString *dir = [SeafGlobal.sharedObject uniqueDirUnder:SeafGlobal.sharedObject.editDir];
     if (![Utils checkMakeDir:dir])
         return NO;
 
     NSString *newpath = [dir stringByAppendingPathComponent:self.name];
     NSError *error = nil;
-
     BOOL ret = [content writeToFile:newpath atomically:YES encoding:NSUTF8StringEncoding error:&error];
     if (ret) {
         [self setMpath:newpath];
@@ -769,17 +764,15 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 - (BOOL)itemChangedAtURL:(NSURL *)url
 {
     Debug("file %@ changed:%@, repo:%@, account:%@ %@", self.name, url, self.repoId, connection.address, connection.username);
-    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-    [formatter setDateFormat:@"yyyy-MM-dd-HH.mm.ss"];
-    NSString *dir = [SeafGlobal.sharedObject.editDir stringByAppendingPathComponent:[formatter stringFromDate:[NSDate date]]];
+    NSString *dir = [SeafGlobal.sharedObject uniqueDirUnder:SeafGlobal.sharedObject.editDir];
     if (![Utils checkMakeDir:dir])
         return NO;
+
     NSString *newpath = [dir stringByAppendingPathComponent:self.name];
     NSError *error = nil;
-
     BOOL ret = [[NSFileManager defaultManager] linkItemAtPath:url.path toPath:newpath error:&error];
     if (ret) {
-        self.mpath = newpath;
+        [self setMpath:newpath];
         [self autoupload];
     } else
         Warning("Failed to copy file %@ to %@: %@", url, newpath, error);
@@ -796,9 +789,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (BOOL)testupload
 {
-    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-    [formatter setDateFormat:@"yyyy-MM-dd-HH.mm.ss"];
-    NSString *dir = [SeafGlobal.sharedObject.editDir stringByAppendingPathComponent:[formatter stringFromDate:[NSDate date]]];
+    NSString *dir = [SeafGlobal.sharedObject uniqueDirUnder:SeafGlobal.sharedObject.editDir];
     if (![Utils checkMakeDir:dir])
         return NO;
     NSString *newpath = [dir stringByAppendingPathComponent:self.name];
@@ -807,7 +798,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     BOOL ret = [[NSFileManager defaultManager] copyItemAtPath:[SeafGlobal.sharedObject documentPath:self.ooid] toPath:newpath error:&error];
     Debug("ret=%d newpath=%@, %@\n", ret, newpath, error);
     if (ret) {
-        self.mpath = newpath;
+        [self setMpath:newpath];
         [self autoupload];
     }
     return ret;
@@ -880,7 +871,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     self.oid = self.ooid;
     _filesize = self.filesize;
     _mtime = self.mtime;
-    self.mpath = nil;
+    [self setMpath:nil];
     [dg updateProgress:self result:YES completeness:100];
 }
 

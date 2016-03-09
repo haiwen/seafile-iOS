@@ -11,7 +11,7 @@
 #import "Utils.h"
 #import "Debug.h"
 
-
+/*
 static NSError * NewNSErrorFromException(NSException * exc) {
     NSMutableDictionary * info = [NSMutableDictionary dictionary];
     [info setValue:exc.name forKey:@"SeafExceptionName"];
@@ -22,6 +22,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 
     return [[NSError alloc] initWithDomain:@"seafile" code:-1 userInfo:info];
 }
+*/
 
 @interface SeafGlobal()
 @property (retain) NSMutableArray *ufiles;
@@ -699,5 +700,20 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     }
     return nil;
 }
+
+- (NSString *)uniqueDirUnder:(NSString *)dir identify:(NSString *)identify
+{
+    return [dir stringByAppendingPathComponent:identify];
+}
+
+- (NSString *)uniqueDirUnder:(NSString *)dir
+{
+    return [self uniqueDirUnder:dir identify:[[NSUUID UUID] UUIDString]];
+}
+- (NSString *)uniqueUploadDir
+{
+    return [self uniqueDirUnder:self.uploadsDir identify:[[NSUUID UUID] UUIDString]];
+}
+
 
 @end

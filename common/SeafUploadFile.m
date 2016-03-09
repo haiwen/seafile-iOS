@@ -104,11 +104,14 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 - (void)doRemove
 {
+    Debug("Remove uploadFile: %@", self.lpath);
     self.udir = nil;
     [self.task cancel];
     self.task = nil;
     [self saveAttr:nil flush:true];
-    [[NSFileManager defaultManager] removeItemAtPath:self.lpath error:nil];
+    [Utils removeFile:self.lpath];
+    if (!self.autoSync)
+        [Utils removeDirIfEmpty:[self.lpath stringByDeletingLastPathComponent]];
 }
 
 - (BOOL)removed
@@ -600,10 +603,14 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         if ([dir.repoId isEqualToString:[info objectForKey:@"urepo"]] && [dir.path isEqualToString:[info objectForKey:@"upath"]]) {
             bool autoSync = [[info objectForKey:@"autoSync"] boolValue];
             SeafUploadFile *file = [dir->connection getUploadfile:lpath create:!autoSync];
-            if (!file || (!file.asset && file.filesize == 0)) {
+            if (!file || !file.asset) {
                 Debug("Auto sync photos %@:%@, remove it and will reupload from beginning", file.lpath, info);
-                [uploadFileAttrs removeObjectForKey:lpath];
-                changed = true;
+                if (file)
+                    [file doRemove];
+                else {
+                    [uploadFileAttrs removeObjectForKey:lpath];
+                    changed = true;
+                }
                 continue;
             }
             file.udir = dir;

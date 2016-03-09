@@ -98,6 +98,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @property NSMutableArray *photosArray;
 @property NSMutableArray *uploadingArray;
 @property SeafDir *syncDir;
+@property (readonly) NSString *localUploadDir;
+
 @end
 
 @implementation SeafConnection
@@ -109,6 +111,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @synthesize starredFiles = _starredFiles;
 @synthesize policy = _policy;
 @synthesize loginMgr = _loginMgr;
+@synthesize localUploadDir = _localUploadDir;
 
 - (id)init:(NSString *)url
 {
@@ -161,6 +164,20 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return self;
 }
 
+- (NSString *)localUploadDir
+{
+    if (!_localUploadDir) {
+        _localUploadDir = [self getAttribute:@"UPLOAD_CACHE_DIR"];
+        if (!_localUploadDir) {
+            _localUploadDir = [SeafGlobal.sharedObject uniqueUploadDir];
+            [self setAttribute:_localUploadDir forKey:@"UPLOAD_CACHE_DIR"];
+        }
+        [Utils checkMakeDir:_localUploadDir];
+    }
+   
+    return _localUploadDir;
+}
+ 
 - (void)saveSettings
 {
     [SeafGlobal.sharedObject setObject:_settings forKey:[NSString stringWithFormat:@"%@/%@/settings", _address, self.username]];
@@ -417,6 +434,14 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return repo.encrypted;
 }
 
+- (void)clearUploadCache
+{
+    if (_localUploadDir) {
+        [Utils clearAllFiles:_localUploadDir];
+        [[NSFileManager defaultManager] removeItemAtPath:_localUploadDir error:nil];
+        _localUploadDir = nil;
+    }
+}
 - (void)clearAccount
 {
     [SeafGlobal.sharedObject removeObjectForKey:_address];
@@ -425,6 +450,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSString *path = [self certPathForHost:[self host]];
     [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
     [SeafAvatar clearCache];
+    [self clearUploadCache];
 }
 
 - (void)saveAccountInfo
@@ -886,8 +912,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         [SeafGlobal.sharedObject assetForURL:url
                                  resultBlock:^(ALAsset *asset) {
                                      NSString *filename = asset.defaultRepresentation.filename;
-                                     NSString *path = [SeafGlobal.sharedObject.uploadsDir stringByAppendingPathComponent:filename];
-                                     if (!path) return;
+                                     if (!filename) {
+                                         Warning("Failed to get asset name: %@", asset);
+                                         return;
+                                     }
+                                     NSString *path = [self.localUploadDir stringByAppendingPathComponent:filename];
                                      SeafUploadFile *file = [self getUploadfile:path];
                                      if (!file) {
                                          Warning("Failed to init upload file: %@", path);
@@ -1155,6 +1184,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             _inCheckPhotoss = false;
             _uploadingArray = nil;
             [SeafGlobal.sharedObject clearAutoSyncPhotos:self];
+            [self clearUploadCache];
         }
     }
     _inAutoSync = value;

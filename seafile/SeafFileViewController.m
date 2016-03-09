@@ -1403,6 +1403,7 @@ enum {
     }
     NSMutableArray *files = [[NSMutableArray alloc] init];
     NSString *date = [self.formatter stringFromDate:[NSDate date]];
+    NSString *uploadDir = [SeafGlobal.sharedObject uniqueUploadDir];
     for (ALAsset *asset in assets) {
         NSString *filename = asset.defaultRepresentation.filename;
         Debug("Upload picked file : %@", filename);
@@ -1412,7 +1413,7 @@ enum {
             filename = [NSString stringWithFormat:@"%@-%@.%@", name, date, ext];
         }
         [nameSet addObject:filename];
-        NSString *path = [SeafGlobal.sharedObject.uploadsDir stringByAppendingPathComponent:filename];
+        NSString *path = [uploadDir stringByAppendingPathComponent:filename];
         SeafUploadFile *file =  [self.connection getUploadfile:path];
         [file setAsset:asset url:asset.defaultRepresentation.url];
         file.delegate = self;

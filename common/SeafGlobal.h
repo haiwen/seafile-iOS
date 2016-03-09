@@ -91,5 +91,8 @@
 
 - (UIImage *)imageFromPath:(NSString *)path withMaxSize:(float)length cachePath:(NSString *)cachePath;
 
+- (NSString *)uniqueDirUnder:(NSString *)dir;
+- (NSString *)uniqueUploadDir;
+
 @end
 

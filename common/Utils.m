@@ -63,6 +63,24 @@
     }
 }
 
++ (void)removeFile:(NSString *)path
+{
+    [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
+}
+
++ (void)removeDirIfEmpty:(NSString *)path
+{
+    NSError *error;
+    NSArray *dirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:path error:&error];
+    if (!dirContents) {
+        Warning("unable to get the contents of directory: %@, error: %@", path, error);
+        return;
+    }
+    if (dirContents.count == 0) {
+        [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
+    }
+}
+
 + (NSURL *)copyFile:(NSURL *)from to:(NSURL *)to
 {
     NSFileManager* fm = [NSFileManager defaultManager];
@@ -345,6 +363,7 @@
 
 + (BOOL)writeDataToPath:(NSString*)filePath andAsset:(ALAsset*)asset
 {
+    [Utils checkMakeDir:[filePath stringByDeletingLastPathComponent]];
     NSString *ext = filePath.pathExtension.lowercaseString;
     if ([@"jpg" isEqualToString:ext] || [@"jpeg" isEqualToString:ext])
         return [Utils writeDataToPathWithMeta:filePath andAsset:asset];

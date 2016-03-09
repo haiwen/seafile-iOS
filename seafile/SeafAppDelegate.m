@@ -93,8 +93,10 @@
 
 - (BOOL)openFileURL:(NSURL*)url
 {
-    NSURL *to = [NSURL fileURLWithPath:[SeafGlobal.sharedObject.uploadsDir stringByAppendingPathComponent:url.lastPathComponent]];
+    NSString *uploadDir = [SeafGlobal.sharedObject uniqueUploadDir];
+    NSURL *to = [NSURL fileURLWithPath:[uploadDir stringByAppendingPathComponent:url.lastPathComponent]];
     Debug("Copy %@, to %@, %@, %@\n", url, to, to.absoluteString, to.path);
+    [Utils checkMakeDir:uploadDir];
     [Utils copyFile:url to:to];
     if (self.window.rootViewController == self.startNav)
         if (![self.startVC selectDefaultAccount])
