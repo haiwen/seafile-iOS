@@ -15,11 +15,13 @@
 
 + (BOOL)checkMakeDir:(NSString *)path;
 + (void)clearAllFiles:(NSString *)path;
-+ (void)removeFile:(NSString *)path;
++ (BOOL)removeFile:(NSString *)path;
 + (void)removeDirIfEmpty:(NSString *)path;
 
 + (long long)folderSizeAtPath:(NSString*)folderPath;
 + (NSURL *)copyFile:(NSURL *)from to:(NSURL *)to;
++ (BOOL)linkFileAtURL:(NSURL *)from to:(NSURL *)to;
++ (BOOL)linkFileAtPath:(NSString *)from to:(NSString *)to;
 
 + (long long)fileSizeAtPath1:(NSString*)filePath;
 

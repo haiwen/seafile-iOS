@@ -41,4 +41,5 @@
 - (void)renameFile:(SeafFile *)sfile newName:(NSString *)newName;
 - (void)downloadContentSuccess:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir))failure;
 
+- (BOOL)itemExist:(NSString *)name;
 @end

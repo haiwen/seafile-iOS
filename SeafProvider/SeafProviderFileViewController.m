@@ -131,6 +131,11 @@
     [Utils alertWithTitle:message message:nil handler:handler from:self];
 }
 
+- (void)alertWithTitle:(NSString *)title message:(NSString*)message yes:(void (^)())yes no:(void (^)())no
+{
+    [Utils alertWithTitle:title message:message yes:yes no:no from:self];
+}
+
 - (IBAction)goBack:(id)sender
 {
     [self popViewController];
@@ -138,6 +143,7 @@
 
 - (void)showUploadProgress:(SeafUploadFile *)file
 {
+    Debug("Uploading file %@", file.lpath);
     NSString *title = [NSString stringWithFormat: @"Uploading %@", file.name];
     self.alert = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleAlert];
     UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
@@ -154,21 +160,40 @@
     }];
 }
 
-- (IBAction)chooseCurrentDir:(id)sender
+- (void)uploadFile:(NSURL *)url overwrite:(BOOL)overwrite
 {
-    NSURL *url = [self.root.documentStorageURL URLByAppendingPathComponent:self.root.originalURL.lastPathComponent];
-    Debug("Upload file: %@ to %@", url, _directory.path);
+    Debug("Upload file: %@ to %@, overwrite=%d", url, _directory.path, overwrite);
     [self.fileCoordinator coordinateWritingItemAtURL:url options:0 error:NULL byAccessor:^(NSURL *newURL) {
-        NSURL *realURL = [Utils copyFile:self.root.originalURL to:newURL];
-        if (!realURL) {
+        [Utils removeFile:url.path];
+        BOOL ret = [Utils linkFileAtURL:self.root.originalURL to:newURL];
+        Debug("newURL: %@, url: %@, ret:%d", newURL, url, ret);
+        if (!ret) {
             Warning("Failed to copy file:%@", self.root.originalURL);
             return;
         }
-        SeafUploadFile *ufile = [[SeafUploadFile alloc] initWithPath:realURL.path];
+        SeafUploadFile *ufile = [[SeafUploadFile alloc] initWithPath:newURL.path];
+        [ufile saveAttr:nil flush:false];
         ufile.delegate = self;
         ufile.udir = _directory;
+        ufile.overwrite = overwrite;
+        Debug("file %@ %d %d removed=%d", ufile.lpath, ufile.uploading, ufile.uploaded, ufile.removed);
         [self showUploadProgress:ufile];
     }];
+}
+
+- (IBAction)chooseCurrentDir:(id)sender
+{
+    NSString *name = self.root.originalURL.lastPathComponent;
+    if ([_directory itemExist:name]) {
+        NSString *title = NSLocalizedString(@"There are files with the same name alreay exist, do you want to overwrite?", @"Seafile");
+        NSString *message = nil;
+        NSURL *url = [self.root.documentStorageURL URLByAppendingPathComponent:self.root.originalURL.lastPathComponent];
+        [self alertWithTitle:title message:message yes:^{
+            [self uploadFile:url overwrite:true];
+        } no:^{
+            [self uploadFile:url overwrite:false];
+        }];
+    }
 }
 
 - (void)popupSetRepoPassword:(SeafRepo *)repo
@@ -269,6 +294,7 @@
 
 - (void)showDownloadProgress:(SeafFile *)file
 {
+    Debug("Download file %@, cached:%d", file.path, [file hasCache]);
     NSString *title = [NSString stringWithFormat: @"Downloading %@", file.name];
     self.alert = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleAlert];
     UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
@@ -281,6 +307,7 @@
         CGRect r = self.alert.view.frame;
         self.progressView.frame = CGRectMake(20, r.size.height-45, r.size.width - 40, 20);
         [self.alert.view addSubview:self.progressView];
+        Debug("Start to download file: %@", file.path);
         [file load:self force:NO];
     }];
 }
@@ -296,6 +323,7 @@
     }
     if ([entry isKindOfClass:[SeafFile class]]) {
         SeafFile *file = (SeafFile *)entry;
+        [entry loadCache];
         if (![file hasCache]) {
             [self showDownloadProgress:file];
             return;
@@ -303,17 +331,19 @@
         if (self.root.documentPickerMode == UIDocumentPickerModeImport
             || self.root.documentPickerMode == UIDocumentPickerModeOpen) {
             NSURL *exportURL = [file exportURL];
-            Debug("file exportURL:%@", exportURL);
             NSURL *url = [self.root.documentStorageURL URLByAppendingPathComponent:exportURL.lastPathComponent];
+            Debug("file exportURL:%@, url:%@", exportURL, url);
             [self.fileCoordinator coordinateWritingItemAtURL:url options:0 error:NULL byAccessor:^(NSURL *newURL) {
-                NSURL *realURL = [Utils copyFile:exportURL to:newURL];
-                if (realURL) {
+                [Utils removeFile:newURL.path];
+                BOOL ret = [Utils linkFileAtURL:exportURL to:newURL];
+                Debug("newURL: %@, ret: %d", newURL, ret);
+                if (ret) {
                     if (self.root.documentPickerMode == UIDocumentPickerModeOpen) {
-                        NSString *key = [NSString stringWithFormat:@"EXPORTED/%@", realURL.lastPathComponent];
+                        NSString *key = [NSString stringWithFormat:@"EXPORTED/%@", newURL.lastPathComponent];
                         [SeafGlobal.sharedObject setObject:file.toDict forKey:key];
                         [SeafGlobal.sharedObject synchronize];
                     }
-                    [self.root dismissGrantingAccessToURL:realURL];
+                    [self.root dismissGrantingAccessToURL:newURL];
                 } else {
                     Warning("Failed to copy file %@", file.name);
                 }
@@ -345,15 +375,15 @@
 #pragma mark - SeafDentryDelegate
 - (void)download:(SeafBase *)entry progress:(float)progress
 {
-    if (![self isViewLoaded])
-        return;
-    if (entry != self.sfile)
+    if (![self isViewLoaded] || entry != self.sfile)
         return;
     
     NSUInteger index = [_directory.allItems indexOfObject:entry];
     if (index == NSNotFound)
         return;
-    self.progressView.progress = progress;
+    dispatch_after(0, dispatch_get_main_queue(), ^{
+        self.progressView.progress = progress;
+    });
 }
 - (void)download:(SeafBase *)entry complete:(BOOL)updated
 {
@@ -366,12 +396,15 @@
     NSUInteger index = [_directory.allItems indexOfObject:entry];
     if (index == NSNotFound)
         return;
-    [self.alert dismissViewControllerAnimated:NO completion:^{
-        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
-        //[self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
-        [self tableView:self.tableView didSelectRowAtIndexPath:indexPath];
-    }];
+    dispatch_after(0, dispatch_get_main_queue(), ^{
+        Debug("Successfully download %@", entry.path);
+        [self.alert dismissViewControllerAnimated:NO completion:^{
+            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
+            [self tableView:self.tableView didSelectRowAtIndexPath:indexPath];
+        }];
+    });
 }
+
 - (void)download:(SeafBase *)entry failed:(NSError *)error
 {
     if (_directory == entry) {
@@ -381,15 +414,17 @@
     }
     if (entry != self.sfile) return;
 
-    [self.alert dismissViewControllerAnimated:NO completion:^{
-        NSUInteger index = [_directory.allItems indexOfObject:entry];
-        if (index == NSNotFound) return;
-        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
-        [self reloadIndex:indexPath];
-        Warning("Failed to download file %@\n", entry.name);
-        NSString *msg = [NSString stringWithFormat:@"Failed to download file '%@'", entry.name];
-        [self alertWithTitle:msg handler:nil];
-    }];
+    dispatch_after(0, dispatch_get_main_queue(), ^{
+        [self.alert dismissViewControllerAnimated:NO completion:^{
+            NSUInteger index = [_directory.allItems indexOfObject:entry];
+            if (index == NSNotFound) return;
+            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
+            [self reloadIndex:indexPath];
+            Warning("Failed to download file %@\n", entry.name);
+            NSString *msg = [NSString stringWithFormat:@"Failed to download file '%@'", entry.name];
+            [self alertWithTitle:msg handler:nil];
+        }];
+    });
 }
 
 - (void)entry:(SeafBase *)entry repoPasswordSet:(int)ret
@@ -406,7 +441,9 @@
 {
     if (self.ufile != file) return;
     if (res) {
-        self.progressView.progress = percent * 1.0f/100.f;
+        dispatch_after(0, dispatch_get_main_queue(), ^{
+            self.progressView.progress = percent * 1.0f/100.f;
+        });
     } else {
         Warning("Failed to upload file %@", file.name);
         [self alertWithTitle:NSLocalizedString(@"Failed to uplod file", @"Seafile") handler:nil];
@@ -416,9 +453,12 @@
 - (void)uploadSucess:(SeafUploadFile *)file oid:(NSString *)oid
 {
     if (self.ufile != file) return;
-    [self.alert dismissViewControllerAnimated:NO completion:^{
-        [self.root dismissGrantingAccessToURL:[NSURL URLWithString:file.lpath]];
-    }];
+    [self.ufile doRemove];
+    dispatch_after(0, dispatch_get_main_queue(), ^{
+        [self.alert dismissViewControllerAnimated:NO completion:^{
+            [self.root dismissGrantingAccessToURL:[NSURL URLWithString:file.lpath]];
+        }];
+    });
 }
 
 - (void)pushViewControllerDir:(SeafDir *)dir

@@ -590,7 +590,6 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 #pragma mark - QLPreviewItem
 - (NSURL *)exportURL
 {
-    NSError *error = nil;
     if (_exportURL && [[NSFileManager defaultManager] fileExistsAtPath:_exportURL.path])
         return _exportURL;
 
@@ -606,11 +605,12 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
         if (![Utils checkMakeDir:tempDir])
             return nil;
         NSString *tempFileName = [tempDir stringByAppendingPathComponent:self.name];
-        if ([[NSFileManager defaultManager] fileExistsAtPath:tempFileName]
-            || [[NSFileManager defaultManager] linkItemAtPath:[SeafGlobal.sharedObject documentPath:self.ooid] toPath:tempFileName error:&error]) {
+        Debug("File exists at %@, %d", tempFileName, [Utils fileExistsAtPath:tempFileName]);
+        if ([Utils fileExistsAtPath:tempFileName]
+            || [Utils linkFileAtPath:[SeafGlobal.sharedObject documentPath:self.ooid] to:tempFileName]) {
             _exportURL = [NSURL fileURLWithPath:tempFileName];
         } else {
-            Warning("Copy file to exportURL failed:%@\n", error);
+            Warning("Copy file to exportURL failed.\n");
             self.ooid = nil;
             _exportURL = nil;
         }
@@ -632,7 +632,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (NSURL *)previewItemURL
 {
-    if (_preViewURL && [[NSFileManager defaultManager] fileExistsAtPath:_preViewURL.path])
+    if (_preViewURL && [Utils fileExistsAtPath:_preViewURL.path])
         return _preViewURL;
 
     _preViewURL = self.exportURL;
@@ -660,7 +660,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
     NSString *dst = [tmpdir stringByAppendingPathComponent:self.name];
     @synchronized (self) {
-        if ([[NSFileManager defaultManager] fileExistsAtPath:dst]
+        if ([Utils fileExistsAtPath:dst]
             || [Utils tryTransformEncoding:dst fromFile:src]) {
             _preViewURL = [NSURL fileURLWithPath:dst];
         }

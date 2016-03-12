@@ -63,9 +63,13 @@
     }
 }
 
-+ (void)removeFile:(NSString *)path
++ (BOOL)removeFile:(NSString *)path
 {
-    [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
+    NSError *error = nil;
+    BOOL ret = [[NSFileManager defaultManager] removeItemAtPath:path error:&error];
+    if (!ret)
+        Warning("Failed to remove file %@: %@", path, error);
+    return ret;
 }
 
 + (void)removeDirIfEmpty:(NSString *)path
@@ -108,6 +112,23 @@
         }
     }
     return nil;
+}
+
++ (BOOL)linkFileAtURL:(NSURL *)from to:(NSURL *)to
+{
+    return [Utils linkFileAtPath:from.path to:to.path];
+}
+
++ (BOOL)linkFileAtPath:(NSString *)from to:(NSString *)to
+{
+    NSError *error = nil;
+    NSFileManager* fm = [NSFileManager defaultManager];
+    if ([fm fileExistsAtPath:to]
+        || ![[NSFileManager defaultManager] linkItemAtPath:from toPath:to error:&error]) {
+        Warning("Failed to link file from %@ to %@: %@\n", from, to, error);
+        return false;
+    }
+    return true;
 }
 
 + (long long)fileSizeAtPath1:(NSString*)filePath

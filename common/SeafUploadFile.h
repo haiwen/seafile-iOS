@@ -36,7 +36,6 @@
 @property (readwrite) BOOL autoSync;
 @property (readonly) BOOL removed;
 
-
 @property (readonly) int uProgress;
 @property (nonatomic) id<SeafUploadDelegate> delegate;
 

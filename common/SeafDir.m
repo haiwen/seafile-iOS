@@ -386,6 +386,15 @@ static NSComparator CMP = ^(id obj1, id obj2) {
     return _allItems;
 }
 
+- (BOOL)itemExist:(NSString *)name
+{
+    for (SeafBase *entry in _items) {
+        if ([name isEqualToString:entry.name])
+            return true;
+    }
+    return false;
+}
+
 - (void)loadContent:(BOOL)force;
 {
     _allItems = nil;
