@@ -62,7 +62,7 @@ enum {
 - (void)refreshView;
 - (void)uploadFile:(SeafUploadFile *)file;
 - (void)deleteFile:(SeafFile *)file;
-- (void)chooseUploadDir:(SeafDir *)dir file:(SeafUploadFile *)ufile replace:(BOOL)replace;
+- (void)uploadFile:(SeafUploadFile *)ufile toDir:(SeafDir *)dir overwrite:(BOOL)overwrite;
 
 - (void)photoSelectedChanged:(id<SeafPreView>)preViewItem to:(id<SeafPreView>)to;
 

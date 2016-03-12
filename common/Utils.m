@@ -85,33 +85,16 @@
     }
 }
 
-+ (NSURL *)copyFile:(NSURL *)from to:(NSURL *)to
++ (BOOL)copyFile:(NSURL *)from to:(NSURL *)to
 {
+    NSError *error = nil;
     NSFileManager* fm = [NSFileManager defaultManager];
-    if (![fm fileExistsAtPath:to.path]) {
-        if ([fm copyItemAtURL:from toURL:to error:nil])
-            return to;
-        else
-            return nil;
+    if ([fm fileExistsAtPath:to.path]
+        || ![[NSFileManager defaultManager] copyItemAtURL:from toURL:to error:&error]) {
+        Warning("Failed to link file from %@ to %@: %@\n", from, to, error);
+        return false;
     }
-
-    NSString *base = to.path.stringByDeletingPathExtension;
-    NSString *suffix = to.pathExtension;
-    NSString *testPath = nil;
-    int maxIterations = 999;
-    for (int i = 1; i <= maxIterations; i++) {
-        if (suffix && suffix.length > 0)
-            testPath = [NSString stringWithFormat:@"%@-%d.%@", base, i, suffix];
-        else
-            testPath = [NSString stringWithFormat:@"%@-%d", base, i];
-
-        if ([fm fileExistsAtPath:testPath])
-            continue;
-        if ([fm copyItemAtPath:from.path toPath:testPath error:nil]) {
-            return [NSURL fileURLWithPath:testPath];
-        }
-    }
-    return nil;
+    return true;
 }
 
 + (BOOL)linkFileAtURL:(NSURL *)from to:(NSURL *)to

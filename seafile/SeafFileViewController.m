@@ -10,7 +10,6 @@
 #import "SeafAppDelegate.h"
 #import "SeafFileViewController.h"
 #import "SeafDetailViewController.h"
-#import "SeafUploadDirViewController.h"
 #import "SeafDirViewController.h"
 #import "SeafFile.h"
 #import "SeafRepos.h"
@@ -80,6 +79,8 @@ enum {
 @property (strong, retain) NSArray *photos;
 @property (strong, retain) NSArray *thumbs;
 @property BOOL inPhotoBrowser;
+
+@property SeafUploadFile *ufile;
 
 @end
 
@@ -819,15 +820,12 @@ enum {
     }];
 }
 
-- (void)popupDirChooseView:(id<SeafPreView>)file
+- (void)popupDirChooseView:(SeafUploadFile *)file
 {
-    UIViewController *controller = nil;
+    self.ufile = file;
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    if (file)
-        controller = [[SeafUploadDirViewController alloc] initWithSeafConnection:_connection uploadFile:file];
-    else
-        controller = [[SeafDirViewController alloc] initWithSeafDir:self.connection.rootFolder delegate:self chooseRepo:false];
-
+    UIViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:self.connection.rootFolder delegate:self chooseRepo:false];
+    
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
     [navController setModalPresentationStyle:UIModalPresentationFormSheet];
     [appdelegate.tabbarController presentViewController:navController animated:YES completion:nil];
@@ -1350,12 +1348,23 @@ enum {
     [[SeafGlobal sharedObject] addUploadTask:ufile];
 }
 
-- (void)chooseUploadDir:(SeafDir *)dir file:(SeafUploadFile *)ufile replace:(BOOL)replace
+- (void)uploadFile:(SeafUploadFile *)ufile toDir:(SeafDir *)dir overwrite:(BOOL)overwrite
 {
-    SeafUploadFile *uploadFile = (SeafUploadFile *)ufile;
-    uploadFile.overwrite = replace;
-    [dir addUploadFile:uploadFile flush:true];
+    ufile.overwrite = overwrite;
+    [dir addUploadFile:ufile flush:true];
     [NSThread detachNewThreadSelector:@selector(backgroundUpload:) toTarget:self withObject:ufile];
+}
+
+- (void)uploadFile:(SeafUploadFile *)ufile toDor:(SeafDir *)dir
+{
+    if ([dir nameExist:ufile.name]) {
+        [self alertWithTitle:STR_13 message:nil yes:^{
+            [self uploadFile:ufile toDir:dir overwrite:true];
+        } no:^{
+            [self uploadFile:ufile toDir:dir overwrite:false];
+        }];
+    } else
+        [self uploadFile:ufile toDir:dir overwrite:false];
 }
 
 - (void)uploadFile:(SeafUploadFile *)file
@@ -1368,6 +1377,9 @@ enum {
 - (void)chooseDir:(UIViewController *)c dir:(SeafDir *)dir
 {
     [c.navigationController dismissViewControllerAnimated:YES completion:nil];
+    if (self.ufile) {
+        return [self uploadFile:self.ufile toDor:dir];
+    }
     NSArray *idxs = [self.tableView indexPathsForSelectedRows];
     if (!idxs) return;
     NSMutableArray *entries = [[NSMutableArray alloc] init];
@@ -1483,14 +1495,13 @@ enum {
     }
     [self dismissImagePickerController:imagePickerController];
     if (duplicated) {
-        NSString *title = NSLocalizedString(@"There are files with the same name alreay exist, do you want to overwrite?", @"Seafile");
-        NSString *message = nil;
-        [self alertWithTitle:title message:message yes:^{
+        [self alertWithTitle:STR_13 message:nil yes:^{
             [self uploadPickedAssetsUrl:urls overwrite:true];
         } no:^{
             [self uploadPickedAssetsUrl:urls overwrite:false];
         }];
-    }
+    } else
+        [self uploadPickedAssetsUrl:urls overwrite:false];
 }
 
 #pragma mark - UIPopoverControllerDelegate

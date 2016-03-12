@@ -390,6 +390,8 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 - (void)upload:(SeafConnection *)connection repo:(NSString *)repoId path:(NSString *)uploadpath
 {
+    if (![Utils fileExistsAtPath:self.lpath])
+        return;
     @synchronized (self) {
         if (_uploading || self.uploaded)
             return;

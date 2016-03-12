@@ -184,16 +184,17 @@
 - (IBAction)chooseCurrentDir:(id)sender
 {
     NSString *name = self.root.originalURL.lastPathComponent;
-    if ([_directory itemExist:name]) {
+    NSURL *url = [self.root.documentStorageURL URLByAppendingPathComponent:self.root.originalURL.lastPathComponent];
+    if ([_directory nameExist:name]) {
         NSString *title = NSLocalizedString(@"There are files with the same name alreay exist, do you want to overwrite?", @"Seafile");
         NSString *message = nil;
-        NSURL *url = [self.root.documentStorageURL URLByAppendingPathComponent:self.root.originalURL.lastPathComponent];
         [self alertWithTitle:title message:message yes:^{
             [self uploadFile:url overwrite:true];
         } no:^{
             [self uploadFile:url overwrite:false];
         }];
-    }
+    } else
+        [self uploadFile:url overwrite:false];
 }
 
 - (void)popupSetRepoPassword:(SeafRepo *)repo

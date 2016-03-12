@@ -13,13 +13,14 @@
 #define IMAGE_MAX_SIZE 2048
 @interface Utils : NSObject
 
++ (BOOL)fileExistsAtPath:(NSString *)path;
 + (BOOL)checkMakeDir:(NSString *)path;
 + (void)clearAllFiles:(NSString *)path;
 + (BOOL)removeFile:(NSString *)path;
 + (void)removeDirIfEmpty:(NSString *)path;
 
 + (long long)folderSizeAtPath:(NSString*)folderPath;
-+ (NSURL *)copyFile:(NSURL *)from to:(NSURL *)to;
++ (BOOL)copyFile:(NSURL *)from to:(NSURL *)to;
 + (BOOL)linkFileAtURL:(NSURL *)from to:(NSURL *)to;
 + (BOOL)linkFileAtPath:(NSString *)from to:(NSString *)to;
 
@@ -39,7 +40,6 @@
 
 + (BOOL)writeDataToPath:(NSString*)filePath andAsset:(ALAsset*)asset;
 
-+ (BOOL)fileExistsAtPath:(NSString *)path;
 
 + (CGSize)textSizeForText:(NSString *)txt font:(UIFont *)font width:(float)width;
 
