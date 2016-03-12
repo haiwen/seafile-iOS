@@ -1353,7 +1353,7 @@ enum {
 - (void)chooseUploadDir:(SeafDir *)dir file:(SeafUploadFile *)ufile replace:(BOOL)replace
 {
     SeafUploadFile *uploadFile = (SeafUploadFile *)ufile;
-    uploadFile.update = replace;
+    uploadFile.overwrite = replace;
     [dir addUploadFile:uploadFile flush:true];
     [NSThread detachNewThreadSelector:@selector(backgroundUpload:) toTarget:self withObject:ufile];
 }
@@ -1389,7 +1389,7 @@ enum {
 }
 
 #pragma mark - QBImagePickerControllerDelegate
-- (void)uploadPickedAssets:(NSArray *)assets
+- (NSMutableSet *)getExistedNameSet
 {
     NSMutableSet *nameSet = [[NSMutableSet alloc] init];
     for (id obj in _directory.allItems) {
@@ -1401,13 +1401,19 @@ enum {
         }
         [nameSet addObject:name];
     }
+    return nameSet;
+}
+
+- (void)uploadPickedAssets:(NSArray *)assets overwrite:(BOOL)overwrite
+{
+    NSMutableSet *nameSet = overwrite ? [NSMutableSet new] : [self getExistedNameSet];
     NSMutableArray *files = [[NSMutableArray alloc] init];
     NSString *date = [self.formatter stringFromDate:[NSDate date]];
     NSString *uploadDir = [SeafGlobal.sharedObject uniqueUploadDir];
     for (ALAsset *asset in assets) {
         NSString *filename = asset.defaultRepresentation.filename;
         Debug("Upload picked file : %@", filename);
-        if ([nameSet containsObject:filename]) {
+        if (!overwrite && [nameSet containsObject:filename]) {
             NSString *name = filename.stringByDeletingPathExtension;
             NSString *ext = filename.pathExtension;
             filename = [NSString stringWithFormat:@"%@-%@.%@", name, date, ext];
@@ -1415,6 +1421,7 @@ enum {
         [nameSet addObject:filename];
         NSString *path = [uploadDir stringByAppendingPathComponent:filename];
         SeafUploadFile *file =  [self.connection getUploadfile:path];
+        file.overwrite = overwrite;
         [file setAsset:asset url:asset.defaultRepresentation.url];
         file.delegate = self;
         [files addObject:file];
@@ -1427,7 +1434,7 @@ enum {
     }
 }
 
-- (void)uploadPickedAssetsUrl:(NSArray *)urls
+- (void)uploadPickedAssetsUrl:(NSArray *)urls overwrite:(BOOL)overwrite
 {
     if (urls.count == 0) return;
     NSMutableArray *assets = [[NSMutableArray alloc] init];
@@ -1436,9 +1443,9 @@ enum {
         [SeafGlobal.sharedObject assetForURL:url
                                   resultBlock:^(ALAsset *asset) {
                                       if (assets) [assets addObject:asset];
-                                      if (url == last) [self uploadPickedAssets:assets];
+                                      if (url == last) [self uploadPickedAssets:assets overwrite:overwrite];
                                   } failureBlock:^(NSError *error) {
-                                      if (url == last) [self uploadPickedAssets:assets];
+                                      if (url == last) [self uploadPickedAssets:assets overwrite:overwrite];
                                   }];
     }
 }
@@ -1461,16 +1468,29 @@ enum {
 - (void)qb_imagePickerController:(QBImagePickerController *)imagePickerController didSelectAssets:(NSArray *)assets
 {
     if (assets.count == 0) return;
+    NSSet *nameSet = [self getExistedNameSet];
     NSMutableArray *urls = [[NSMutableArray alloc] init];
+    BOOL duplicated = false;
     for (ALAsset *asset in assets) {
         NSURL *url = asset.defaultRepresentation.url;
-        if (url)
+        if (url) {
+            NSString *filename = asset.defaultRepresentation.filename;
+            if (!duplicated || [nameSet containsObject:filename])
+                duplicated = true;
             [urls addObject:url];
-        else
+        } else
             Warning("Failed to get asset url %@", asset);
     }
-    [self uploadPickedAssetsUrl:urls];
     [self dismissImagePickerController:imagePickerController];
+    if (duplicated) {
+        NSString *title = NSLocalizedString(@"There are files with the same name alreay exist, do you want to overwrite?", @"Seafile");
+        NSString *message = nil;
+        [self alertWithTitle:title message:message yes:^{
+            [self uploadPickedAssetsUrl:urls overwrite:true];
+        } no:^{
+            [self uploadPickedAssetsUrl:urls overwrite:false];
+        }];
+    }
 }
 
 #pragma mark - UIPopoverControllerDelegate

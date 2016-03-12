@@ -821,7 +821,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     if (!self.ufile) {
         self.ufile = [connection getUploadfile:self.mpath];
         self.ufile.delegate = self;
-        self.ufile.update = YES;
+        self.ufile.overwrite = YES;
         NSString *path = [self.path stringByDeletingLastPathComponent];
         self.ufile.udir = [[SeafDir alloc] initWithConnection:connection oid:nil repoId:self.repoId name:path.lastPathComponent path:path];
     }

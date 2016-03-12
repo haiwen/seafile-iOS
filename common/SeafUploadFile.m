@@ -47,7 +47,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         _uProgress = 0;
         _uploading = NO;
         _autoSync = NO;
-        self.update = [[self.uploadAttr objectForKey:@"update"] boolValue];
+        self.overwrite = [[self.uploadAttr objectForKey:@"update"] boolValue];
         if ([self.uploadAttr objectForKey:@"mtime"] != nil) {
             self.mtime = [[self.uploadAttr objectForKey:@"mtime"] longLongValue];
         } else {
@@ -281,7 +281,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     NSString *url = _commiturl;
     NSMutableURLRequest *request = [[SeafConnection requestSerializer] multipartFormRequestWithMethod:@"POST" URLString:url parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
         [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
-        if (self.update) {
+        if (self.overwrite) {
             [formData appendPartWithFormData:[@"1" dataUsingEncoding:NSUTF8StringEncoding] name:@"replace"];
         }
         [formData appendPartWithFormData:[_uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"parent_dir"];
@@ -418,17 +418,17 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     [connection sendRequest:upload_url success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          NSString *url = [JSON stringByAppendingString:@"?ret-json=true"];
-         Debug("Upload file %@ %@, %@ update=%d, byblock=%d, delegate%@\n", self.name, url, uploadpath, self.update, byblock, _delegate);
+         Debug("Upload file %@ %@, %@ overwrite=%d, byblock=%d, delegate%@\n", self.name, url, uploadpath, self.overwrite, byblock, _delegate);
          if (byblock) {
              NSMutableArray *blockids = [[NSMutableArray alloc] init];
              NSMutableArray *paths = [[NSMutableArray alloc] init];
              if ([self chunkFile:self.lpath repo:repo blockids:blockids paths:paths]) {
-                 [self uploadByBlocks:connection url:url uploadpath:uploadpath blocks:blockids paths:paths update:self.update];
+                 [self uploadByBlocks:connection url:url uploadpath:uploadpath blocks:blockids paths:paths update:self.overwrite];
              } else {
                  [self finishUpload:NO oid:nil];
              }
          } else {
-             [self uploadByFile:connection url:url path:uploadpath update:self.update];
+             [self uploadByFile:connection url:url path:uploadpath update:self.overwrite];
          }
      }
                     failure:
@@ -614,7 +614,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
                 continue;
             }
             file.udir = dir;
-            file.update = [[info objectForKey:@"update"] boolValue];
+            file.overwrite = [[info objectForKey:@"update"] boolValue];
             file.autoSync = autoSync;
             [files addObject:file];
         }

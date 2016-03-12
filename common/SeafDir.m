@@ -419,7 +419,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
         dict = [[NSMutableDictionary alloc] init];
     [Utils dict:dict setObject:self.repoId forKey:@"urepo"];
     [Utils dict:dict setObject:self.path forKey:@"upath"];
-    [Utils dict:dict setObject:[NSNumber numberWithBool:file.update] forKey:@"update"];
+    [Utils dict:dict setObject:[NSNumber numberWithBool:file.overwrite] forKey:@"update"];
     [Utils dict:dict setObject:[NSNumber numberWithBool:file.autoSync] forKey:@"autoSync"];
     if (file.asset) {
         [Utils dict:dict setObject:file.asset.defaultRepresentation.url.absoluteString forKey:@"assetURL"];
