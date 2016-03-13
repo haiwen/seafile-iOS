@@ -329,8 +329,8 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 - (void)uploadRawBlocks:(SeafConnection *)connection
 {
-    int count = MIN(3, (self.missingblocks.count - _blkidx));
-    Debug("upload idx %ld, total: %d, %d", _blkidx, self.missingblocks.count, count);
+    long count = MIN(3, (self.missingblocks.count - _blkidx));
+    Debug("upload idx %ld, total: %ld, %ld", _blkidx, (long)self.missingblocks.count, count);
     if (count == 0) {
         [self uploadBlocksCommit:connection];
         return;

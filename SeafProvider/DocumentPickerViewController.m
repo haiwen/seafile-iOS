@@ -25,7 +25,7 @@
 {
     [SeafGlobal.sharedObject loadAccounts];
     _conns = SeafGlobal.sharedObject.conns;
-    self.tableView.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
+    self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     [self.tableView reloadData];
 }
 

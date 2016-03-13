@@ -164,11 +164,12 @@
 {
     Debug("Upload file: %@ to %@, overwrite=%d", url, _directory.path, overwrite);
     [self.fileCoordinator coordinateWritingItemAtURL:url options:0 error:NULL byAccessor:^(NSURL *newURL) {
-        [Utils removeFile:url.path];
-        BOOL ret = [Utils linkFileAtURL:self.root.originalURL to:newURL];
+        if ([Utils fileExistsAtPath:url.path])
+            [Utils removeFile:url.path];
+        BOOL ret = [Utils copyFile:self.root.originalURL to:newURL];
         Debug("newURL: %@, url: %@, ret:%d", newURL, url, ret);
         if (!ret) {
-            Warning("Failed to copy file:%@", self.root.originalURL);
+            Warning("Failed to copy file:%@ to %@", self.root.originalURL, newURL);
             return;
         }
         SeafUploadFile *ufile = [[SeafUploadFile alloc] initWithPath:newURL.path];
@@ -255,7 +256,7 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    NSString *CellIdentifier = @"SeafProviderCell2";
+    NSString *CellIdentifier = @"SeafProviderCell";
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier];
@@ -269,7 +270,7 @@
     cell.textLabel.text = entry.name;
     cell.textLabel.font = [UIFont systemFontOfSize:17];
     cell.textLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
-    cell.imageView.image = entry.icon;
+    cell.imageView.image = [Utils reSizeImage:entry.icon toSquare:32];
     cell.detailTextLabel.font = [UIFont systemFontOfSize:13];
     if ([entry isKindOfClass:[SeafRepo class]]) {
         SeafRepo *srepo = (SeafRepo *)entry;
@@ -335,7 +336,8 @@
             NSURL *url = [self.root.documentStorageURL URLByAppendingPathComponent:exportURL.lastPathComponent];
             Debug("file exportURL:%@, url:%@", exportURL, url);
             [self.fileCoordinator coordinateWritingItemAtURL:url options:0 error:NULL byAccessor:^(NSURL *newURL) {
-                [Utils removeFile:newURL.path];
+                if ([Utils fileExistsAtPath:newURL.path])
+                    [Utils removeFile:newURL.path];
                 BOOL ret = [Utils linkFileAtURL:exportURL to:newURL];
                 Debug("newURL: %@, ret: %d", newURL, ret);
                 if (ret) {
