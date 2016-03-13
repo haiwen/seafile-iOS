@@ -1,7 +1,3 @@
-[submodule "libs/QBImagePickerController"]
-    path = libs/QBImagePickerController
-    url = https://github.com/haiwen/QBImagePickerController.git
-    ignore = dirty
 [submodule "libs/EGOTextView"]
     path = libs/EGOTextView
     url=https://github.com/haiwen/EGOTextView.git
