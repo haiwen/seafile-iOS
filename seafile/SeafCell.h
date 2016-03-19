@@ -15,5 +15,9 @@
 @property (strong, nonatomic) IBOutlet UILabel *detailTextLabel;
 @property (strong, nonatomic) IBOutlet UILabel *badgeLabel;
 @property (strong, nonatomic) IBOutlet UIImageView *badgeImage;
+@property (strong, nonatomic) IBOutlet UIView *cacheStatusView;
+@property (strong, nonatomic) IBOutlet UIImageView *downloadStatusImageView;
+@property (strong, nonatomic) IBOutlet NSLayoutConstraint *cacheStatusWidthConstraint;
+@property (strong, nonatomic) IBOutlet UIActivityIndicatorView *downloadingIndicator;
 
 @end

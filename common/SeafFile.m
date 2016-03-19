@@ -75,9 +75,6 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
             return [str stringByAppendingFormat:@", %@", NSLocalizedString(@"modified", @"Seafile")];
     }
 
-    if ([self hasCache])
-        return [str stringByAppendingFormat:@", %@", NSLocalizedString(@"cached", @"Seafile")];
-
     return str;
 }
 
@@ -196,9 +193,10 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
              }
              self.downloadingFileOid = curId;
          }
+         [self.delegate download:self progress:0];
          url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
          NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:DEFAULT_TIMEOUT];
-         Debug("Download file %@ %@", self.name, url);
+         Debug("Download file %@  %@ from %@", self.name, self.downloadingFileOid, url);
          NSProgress *progress = nil;
          NSString *target = [SeafGlobal.sharedObject documentPath:self.downloadingFileOid];
          _task = [connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:&progress destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
@@ -394,6 +392,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
              }
              self.downloadingFileOid = curId;
          }
+         [self.delegate download:self progress:0];
          self.blkids = [JSON objectForKey:@"blklist"];
          if (self.blkids.count <= 0) {
              [@"" writeToFile:[SeafGlobal.sharedObject documentPath:self.downloadingFileOid] atomically:YES encoding:NSUTF8StringEncoding error:nil];
@@ -434,8 +433,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (void)load:(id<SeafDentryDelegate>)delegate force:(BOOL)force
 {
-    if (delegate != nil)
-        self.delegate = delegate;
+    if (delegate != nil) self.delegate = delegate;
     [self loadContent:NO];
 }
 

@@ -27,7 +27,7 @@
 @property (retain) NSIndexPath *selectedindex;
 
 @property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
-
+@property (retain)id lock;
 @end
 
 @implementation SeafStarredFilesViewController
@@ -163,6 +163,35 @@
     return _starredFiles.count;
 }
 
+- (void)updateCellDownloadStatus:(SeafCell *)cell file:(SeafFile *)sfile waiting:(BOOL)waiting
+{
+    if (sfile.hasCache || waiting || sfile.isDownloading) {
+        cell.cacheStatusView.hidden = false;
+        [cell.cacheStatusWidthConstraint setConstant:30.0f];
+        if (sfile.isDownloading) {
+            [cell.downloadingIndicator startAnimating];
+        } else {
+            NSString *downloadImageNmae = waiting ? @"download_waiting" : @"download_finished";
+            cell.downloadStatusImageView.image = [UIImage imageNamed:downloadImageNmae];
+        }
+        cell.downloadStatusImageView.hidden = sfile.isDownloading;
+        cell.downloadingIndicator.hidden = !sfile.isDownloading;
+    } else {
+        cell.cacheStatusView.hidden = true;
+        [cell.cacheStatusWidthConstraint setConstant:0.0f];
+    }
+    [cell layoutIfNeeded];
+}
+
+- (void)updateCellContent:(SeafCell *)cell file:(SeafFile *)sfile
+{
+    cell.textLabel.text = sfile.name;
+    cell.detailTextLabel.text = sfile.detailText;
+    cell.imageView.image = sfile.icon;
+    cell.badgeLabel.text = nil;
+    [self updateCellDownloadStatus:cell file:sfile waiting:false];
+}
+
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     NSString *CellIdentifier = @"SeafCell";
@@ -179,9 +208,6 @@
         return cell;
     }
     sfile.udelegate = self;
-    cell.textLabel.text = sfile.name;
-    cell.detailTextLabel.text = sfile.detailText;
-    cell.imageView.image = sfile.icon;
     if (tableView == self.tableView) {
         cell.rightUtilityButtons = [self rightButtonsForFile:sfile];
         cell.delegate = self;
@@ -189,6 +215,7 @@
         cell.rightUtilityButtons = nil;
         cell.delegate = nil;
     }
+    [self updateCellContent:cell file:sfile];
     return cell;
 }
 
@@ -215,26 +242,30 @@
     }
 }
 
-- (void)updateEntryCell:(SeafFile *)entry
+- (SeafCell *)getEntryCell:(id)entry
 {
     NSUInteger index = [_starredFiles indexOfObject:entry];
     if (index == NSNotFound)
-        return;
-
+        return nil;
     @try {
-        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
-        UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
-        if (cell){
-            cell.detailTextLabel.text = entry.detailText;
-            cell.imageView.image = entry.icon;
-        }
+        NSIndexPath *path = [NSIndexPath indexPathForRow:index inSection:0];
+        return (SeafCell *)[self.tableView cellForRowAtIndexPath:path];
     } @catch(NSException *exception) {
+        return nil;
     }
+}
+
+- (void)updateEntryCell:(SeafFile *)entry
+{
+    SeafCell *cell = [self getEntryCell:entry];
+    if (cell) [self updateCellContent:cell file:entry];
 }
 
 #pragma mark - SeafDentryDelegate
 - (void)download:(SeafBase *)entry progress:(float)progress
 {
+    SeafCell *cell = [self getEntryCell:entry];
+    if (cell) [self updateCellDownloadStatus:cell file:(SeafFile *)entry waiting:false];
     [self.detailViewController download:entry progress:progress];
 }
 - (void)download:(SeafBase *)entry complete:(BOOL)updated
@@ -244,6 +275,7 @@
 }
 - (void)download:(SeafBase *)entry failed:(NSError *)error
 {
+    [self updateEntryCell:(SeafFile *)entry];
     [self.detailViewController download:entry failed:error];
 }
 
@@ -263,9 +295,7 @@
 #pragma mark - SeafFileUpdateDelegate
 - (void)updateProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent
 {
-    if (!res) {
-        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to upload file", @"Seafile")];
-    }
+    if (!res) [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to upload file", @"Seafile")];
     [self refreshView];
 }
 
@@ -290,8 +320,7 @@
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     if (![appdelegate checkNetworkStatus]) {
-        [self performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
-        return;
+        return [self performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
     }
 
     [self refresh:nil];
