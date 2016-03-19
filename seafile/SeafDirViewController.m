@@ -59,6 +59,8 @@
 {
     [super viewDidLoad];
     self.tableView.rowHeight = 50;
+    [self.tableView registerNib:[UINib nibWithNibName:@"SeafDirCell" bundle:nil]
+         forCellReuseIdentifier:@"SeafDirCell"];
 
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeNone;
@@ -69,7 +71,7 @@
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:STR_CANCEL style:UIBarButtonItemStyleBordered target:self action:@selector(cancel:)];
     self.tableView.scrollEnabled = YES;
     UIBarButtonItem *flexibleFpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
-    self.chooseItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Choose", @"Seafile") style:UIBarButtonItemStyleBordered target:self action:@selector(chooseFolder:)];
+    self.chooseItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"OK", @"Seafile") style:UIBarButtonItemStyleBordered target:self action:@selector(chooseFolder:)];
     NSArray *items = [NSArray arrayWithObjects:flexibleFpaceItem, self.chooseItem, flexibleFpaceItem, nil];
     [self setToolbarItems:items];
     self.title = _directory.name;

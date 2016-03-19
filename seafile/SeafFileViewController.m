@@ -647,23 +647,31 @@ enum {
             cell.detailTextLabel.text = [NSString stringWithFormat:NSLocalizedString(@"%@, waiting to upload", @"Seafile"), sizeStr];
         }
         c = cell;
+        [self updateCellDownloadStatus:cell isDownloading:false waiting:false cached:true];
     }
     return c;
 }
 
 - (void)updateCellDownloadStatus:(SeafCell *)cell file:(SeafFile *)sfile waiting:(BOOL)waiting
 {
-    if (sfile.hasCache || waiting || sfile.isDownloading) {
+    [self updateCellDownloadStatus:cell isDownloading:sfile.isDownloading waiting:waiting cached:sfile.hasCache];
+}
+
+- (void)updateCellDownloadStatus:(SeafCell *)cell isDownloading:(BOOL )isDownloading waiting:(BOOL)waiting cached:(BOOL)cached
+{
+    //Debug("... %d %d %d", cached, waiting, isDownloading);
+    if (cached || waiting || isDownloading) {
         cell.cacheStatusView.hidden = false;
-        [cell.cacheStatusWidthConstraint setConstant:30.0f];
-        if (sfile.isDownloading) {
+        [cell.cacheStatusWidthConstraint setConstant:22.0f];
+
+        if (isDownloading) {
             [cell.downloadingIndicator startAnimating];
         } else {
             NSString *downloadImageNmae = waiting ? @"download_waiting" : @"download_finished";
             cell.downloadStatusImageView.image = [UIImage imageNamed:downloadImageNmae];
         }
-        cell.downloadStatusImageView.hidden = sfile.isDownloading;
-        cell.downloadingIndicator.hidden = !sfile.isDownloading;
+        cell.downloadStatusImageView.hidden = isDownloading;
+        cell.downloadingIndicator.hidden = !isDownloading;
     } else {
         cell.cacheStatusView.hidden = true;
         [cell.cacheStatusWidthConstraint setConstant:0.0f];
@@ -850,7 +858,7 @@ enum {
     self.ufile = file;
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     UIViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:self.connection.rootFolder delegate:self chooseRepo:false];
-    
+
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
     [navController setModalPresentationStyle:UIModalPresentationFormSheet];
     [appdelegate.tabbarController presentViewController:navController animated:YES completion:nil];
@@ -1440,11 +1448,21 @@ enum {
     return nameSet;
 }
 
+- (NSString *)getUniqueFilename:(NSString *)name ext:(NSString *)ext nameSet:(NSMutableSet *)nameSet
+{
+    for (int i = 1; i < 999; ++i) {
+        NSString *filename = [NSString stringWithFormat:@"%@ (%d).%@", name, i, ext];
+        if (![nameSet containsObject:filename])
+            return filename;
+    }
+    NSString *date = [self.formatter stringFromDate:[NSDate date]];
+    return [NSString stringWithFormat:@"%@-%@.%@", name, date, ext];
+}
+
 - (void)uploadPickedAssets:(NSArray *)assets overwrite:(BOOL)overwrite
 {
     NSMutableSet *nameSet = overwrite ? [NSMutableSet new] : [self getExistedNameSet];
     NSMutableArray *files = [[NSMutableArray alloc] init];
-    NSString *date = [self.formatter stringFromDate:[NSDate date]];
     NSString *uploadDir = [SeafGlobal.sharedObject uniqueUploadDir];
     for (ALAsset *asset in assets) {
         NSString *filename = asset.defaultRepresentation.filename;
@@ -1452,7 +1470,7 @@ enum {
         if (!overwrite && [nameSet containsObject:filename]) {
             NSString *name = filename.stringByDeletingPathExtension;
             NSString *ext = filename.pathExtension;
-            filename = [NSString stringWithFormat:@"%@-%@.%@", name, date, ext];
+            filename = [self getUniqueFilename:name ext:ext nameSet:nameSet];
         }
         [nameSet addObject:filename];
         NSString *path = [uploadDir stringByAppendingPathComponent:filename];
@@ -1511,7 +1529,7 @@ enum {
         NSURL *url = asset.defaultRepresentation.url;
         if (url) {
             NSString *filename = asset.defaultRepresentation.filename;
-            if (!duplicated || [nameSet containsObject:filename])
+            if (!duplicated && [nameSet containsObject:filename])
                 duplicated = true;
             [urls addObject:url];
         } else

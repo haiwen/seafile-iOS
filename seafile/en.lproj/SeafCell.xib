@@ -28,7 +28,7 @@
                         </constraints>
                     </imageView>
                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="detail" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="25">
-                        <rect key="frame" x="78" y="23" width="185" height="23"/>
+                        <rect key="frame" x="70" y="23" width="193" height="23"/>
                         <fontDescription key="fontDescription" type="system" pointSize="13"/>
                         <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
                         <color key="highlightedColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -49,17 +49,19 @@
                         <color key="shadowColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </label>
                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="scu-4L-n7D">
-                        <rect key="frame" x="48" y="23" width="30" height="23"/>
+                        <rect key="frame" x="48" y="23" width="22" height="23"/>
                         <subviews>
                             <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="download_finished.png" translatesAutoresizingMaskIntoConstraints="NO" id="Drf-gP-cHe">
-                                <rect key="frame" x="0.0" y="3" width="17" height="17"/>
+                                <rect key="frame" x="0.0" y="3" width="15" height="15"/>
                             </imageView>
-                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="i6P-DT-o4I">
-                                <rect key="frame" x="0.0" y="0.0" width="20" height="20"/>
+                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="i6P-DT-o4I">
+                                <rect key="frame" x="0.0" y="3" width="20" height="20"/>
                             </activityIndicatorView>
                         </subviews>
                         <constraints>
-                            <constraint firstAttribute="width" constant="30" id="Fev-oD-gt8"/>
+                            <constraint firstItem="i6P-DT-o4I" firstAttribute="centerY" secondItem="scu-4L-n7D" secondAttribute="centerY" constant="1.5" id="9Zl-XA-t3O"/>
+                            <constraint firstAttribute="width" constant="22" id="Fev-oD-gt8"/>
+                            <constraint firstItem="i6P-DT-o4I" firstAttribute="leading" secondItem="scu-4L-n7D" secondAttribute="leading" id="Na8-iF-SgP"/>
                         </constraints>
                     </view>
                 </subviews>
