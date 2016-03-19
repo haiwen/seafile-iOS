@@ -72,7 +72,8 @@
 {
     [super viewDidLoad];
     self.title = NSLocalizedString(@"Starred", @"Seafile");
-
+    [self.tableView registerNib:[UINib nibWithNibName:@"SeafCell" bundle:nil]
+         forCellReuseIdentifier:@"SeafCell"];
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeNone;
     if ([self.tableView respondsToSelector:@selector(setSeparatorInset:)])

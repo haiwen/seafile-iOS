@@ -163,6 +163,8 @@ enum {
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    [self.tableView registerNib:[UINib nibWithNibName:@"SeafCell" bundle:nil]
+         forCellReuseIdentifier:@"SeafCell"];
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeNone;
     if ([self.tableView respondsToSelector:@selector(setSeparatorInset:)])
@@ -417,8 +419,7 @@ enum {
 
 - (void)setDirectory:(SeafDir *)directory
 {
-    if (!_directory)
-        [self initNavigationItems:directory];
+    if (!_directory) [self initNavigationItems:directory];
 
     _connection = directory->connection;
     _directory = directory;
@@ -511,13 +512,13 @@ enum {
     if (cell == nil) {
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:CellIdentifier owner:self options:nil];
         cell = [cells objectAtIndex:0];
-    } else {
-        cell.rightUtilityButtons = nil;
-        cell.delegate = nil;
     }
     if (tableView == self.tableView) {
         cell.rightUtilityButtons = [self rightButtons];
         cell.delegate = self;
+    } else {
+        cell.rightUtilityButtons = nil;
+        cell.delegate = nil;
     }
     return cell;
 }
@@ -686,6 +687,7 @@ enum {
     [self updateCellContent:cell file:sfile];
     sfile.delegate = self;
     sfile.udelegate = self;
+
     return cell;
 }
 
@@ -1013,8 +1015,7 @@ enum {
         if (updated) {
             [self refreshView];
             [SeafAppDelegate checkOpenLink:self];
-        } else
-            [self.tableView reloadData];
+        }
         self.state = STATE_INIT;
     }
 }
@@ -1795,6 +1796,7 @@ enum {
         [self deleteEntry:base];
     }
 }
+
 - (NSArray *)rightButtons
 {
     NSMutableArray *rightUtilityButtons = [NSMutableArray new];
@@ -1816,6 +1818,7 @@ enum {
                                                 title:S_CLEAR_REPO_PASSWORD];
     return rightUtilityButtons;
 }
+
 #pragma mark - MWPhotoBrowserDelegate
 - (NSUInteger)numberOfPhotosInPhotoBrowser:(MWPhotoBrowser *)photoBrowser {
     if (!self.photos) return 0;
