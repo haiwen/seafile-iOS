@@ -168,7 +168,7 @@
 {
     if (sfile.hasCache || waiting || sfile.isDownloading) {
         cell.cacheStatusView.hidden = false;
-        [cell.cacheStatusWidthConstraint setConstant:30.0f];
+        [cell.cacheStatusWidthConstraint setConstant:21.0f];
         if (sfile.isDownloading) {
             [cell.downloadingIndicator startAnimating];
         } else {

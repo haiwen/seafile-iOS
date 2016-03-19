@@ -49,10 +49,10 @@
                         <color key="shadowColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </label>
                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="scu-4L-n7D">
-                        <rect key="frame" x="48" y="23" width="22" height="23"/>
+                        <rect key="frame" x="48" y="23" width="21" height="23"/>
                         <subviews>
                             <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="download_finished.png" translatesAutoresizingMaskIntoConstraints="NO" id="Drf-gP-cHe">
-                                <rect key="frame" x="0.0" y="3" width="15" height="15"/>
+                                <rect key="frame" x="0.0" y="5" width="15" height="15"/>
                             </imageView>
                             <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="i6P-DT-o4I">
                                 <rect key="frame" x="0.0" y="3" width="20" height="20"/>
@@ -60,7 +60,7 @@
                         </subviews>
                         <constraints>
                             <constraint firstItem="i6P-DT-o4I" firstAttribute="centerY" secondItem="scu-4L-n7D" secondAttribute="centerY" constant="1.5" id="9Zl-XA-t3O"/>
-                            <constraint firstAttribute="width" constant="22" id="Fev-oD-gt8"/>
+                            <constraint firstAttribute="width" constant="21" id="Fev-oD-gt8"/>
                             <constraint firstItem="i6P-DT-o4I" firstAttribute="leading" secondItem="scu-4L-n7D" secondAttribute="leading" id="Na8-iF-SgP"/>
                         </constraints>
                     </view>
@@ -80,7 +80,7 @@
                     <constraint firstItem="vWy-Pk-w8f" firstAttribute="leading" secondItem="25" secondAttribute="trailing" constant="31" id="T3Q-n1-8J1"/>
                     <constraint firstItem="3" firstAttribute="leading" secondItem="4" secondAttribute="trailing" constant="8" symbolic="YES" id="fWa-dy-U1i"/>
                     <constraint firstItem="38" firstAttribute="leading" secondItem="3" secondAttribute="trailing" constant="25" id="huN-Oh-O2O"/>
-                    <constraint firstItem="25" firstAttribute="leading" secondItem="scu-4L-n7D" secondAttribute="trailing" id="nm5-v9-ysA"/>
+                    <constraint firstItem="25" firstAttribute="leading" secondItem="scu-4L-n7D" secondAttribute="trailing" constant="1" id="nm5-v9-ysA"/>
                     <constraint firstItem="scu-4L-n7D" firstAttribute="leading" secondItem="3" secondAttribute="leading" id="o4H-zJ-5df"/>
                     <constraint firstItem="25" firstAttribute="top" secondItem="7mC-NE-fI3" secondAttribute="topMargin" constant="15" id="sma-Gu-pc0"/>
                 </constraints>

@@ -662,7 +662,7 @@ enum {
     //Debug("... %d %d %d", cached, waiting, isDownloading);
     if (cached || waiting || isDownloading) {
         cell.cacheStatusView.hidden = false;
-        [cell.cacheStatusWidthConstraint setConstant:22.0f];
+        [cell.cacheStatusWidthConstraint setConstant:21.0f];
 
         if (isDownloading) {
             [cell.downloadingIndicator startAnimating];
