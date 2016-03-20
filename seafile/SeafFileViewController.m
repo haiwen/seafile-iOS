@@ -1390,7 +1390,7 @@ enum {
 - (void)uploadFile:(SeafUploadFile *)ufile toDor:(SeafDir *)dir
 {
     if ([dir nameExist:ufile.name]) {
-        [self alertWithTitle:STR_13 message:nil yes:^{
+        [self alertWithTitle:STR_12 message:nil yes:^{
             [self uploadFile:ufile toDir:dir overwrite:true];
         } no:^{
             [self uploadFile:ufile toDir:dir overwrite:false];
@@ -1524,20 +1524,21 @@ enum {
     if (assets.count == 0) return;
     NSSet *nameSet = [self getExistedNameSet];
     NSMutableArray *urls = [[NSMutableArray alloc] init];
-    BOOL duplicated = false;
+    int duplicated = 0;
     for (ALAsset *asset in assets) {
         NSURL *url = asset.defaultRepresentation.url;
         if (url) {
             NSString *filename = asset.defaultRepresentation.filename;
-            if (!duplicated && [nameSet containsObject:filename])
-                duplicated = true;
+            if ([nameSet containsObject:filename])
+                duplicated++;
             [urls addObject:url];
         } else
             Warning("Failed to get asset url %@", asset);
     }
     [self dismissImagePickerController:imagePickerController];
-    if (duplicated) {
-        [self alertWithTitle:STR_13 message:nil yes:^{
+    if (duplicated > 0) {
+        NSString *title = duplicated == 1 ? STR_12 : STR_13;
+        [self alertWithTitle:title message:nil yes:^{
             [self uploadPickedAssetsUrl:urls overwrite:true];
         } no:^{
             [self uploadPickedAssetsUrl:urls overwrite:false];

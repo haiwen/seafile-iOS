@@ -45,7 +45,8 @@ enum {
 #define STR_9 NSLocalizedString(@"The certificate from this website is invalid. Would you like to connect to the server anyway?", @"Seafile");
 #define STR_10 NSLocalizedString(@"uploading", @"Seafile")
 #define STR_11 NSLocalizedString(@"modified", @"Seafile")
-#define STR_13 NSLocalizedString(@"There are files with the same name alreay exist, do you want to overwrite?", @"Seafile")
+#define STR_12 NSLocalizedString(@"A file with the same name already exists, do you want to overwrite?", @"Seafile")
+#define STR_13 NSLocalizedString(@"Files with the same name already exist, do you want to overwrite?", @"Seafile")
 
 
 @interface SeafAppDelegate : UIResponder <UIApplicationDelegate, SeafConnectionDelegate>

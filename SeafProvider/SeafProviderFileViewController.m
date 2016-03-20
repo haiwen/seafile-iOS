@@ -187,7 +187,7 @@
     NSString *name = self.root.originalURL.lastPathComponent;
     NSURL *url = [self.root.documentStorageURL URLByAppendingPathComponent:self.root.originalURL.lastPathComponent];
     if ([_directory nameExist:name]) {
-        NSString *title = NSLocalizedString(@"There are files with the same name alreay exist, do you want to overwrite?", @"Seafile");
+        NSString *title = NSLocalizedString(@"A file with the same name already exists, do you want to overwrite?", @"Seafile");
         NSString *message = nil;
         [self alertWithTitle:title message:message yes:^{
             [self uploadFile:url overwrite:true];
