@@ -1,0 +1,10 @@
+language: objective-c
+osx_image: xcode7.2
+xcode_workspace: seafilePro.xcworkspace
+xcode_scheme: seafile-appstore
+xcode_sdk: iphonesimulator
+install:
+  - git submodule init
+  - git submodule update
+  - pod install
+
