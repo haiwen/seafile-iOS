@@ -20,7 +20,7 @@
                         <fontDescription key="fontDescription" type="system" pointSize="17"/>
                         <color key="highlightedColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </label>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="4">
+                    <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" translatesAutoresizingMaskIntoConstraints="NO" id="4">
                         <rect key="frame" x="8" y="8" width="32" height="32"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="32" id="5pS-w2-Rm7"/>
