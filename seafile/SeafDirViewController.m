@@ -87,6 +87,7 @@
 
 - (void)viewDidAppear:(BOOL)animated
 {
+    [super viewDidAppear:animated];
     [self.navigationController setToolbarHidden:NO];
     if (!_chooseRepo && [_directory isKindOfClass:[SeafRepos class]]) {
         [self.chooseItem setEnabled:NO];

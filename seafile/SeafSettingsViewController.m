@@ -272,7 +272,7 @@ enum ENC_LIBRARIES{
 
 - (void)viewDidAppear:(BOOL)animated
 {
-    [super viewWillAppear:animated];
+    [super viewDidAppear:animated];
     dispatch_async(dispatch_get_main_queue(), ^ {
         [self configureView];
     });

@@ -472,6 +472,7 @@ enum {
 
 - (void)viewWillDisappear:(BOOL)animated
 {
+    [super viewWillDisappear:animated];
     if (IsIpad() && self.popoverController) {
         [self.popoverController dismissPopoverAnimated:YES];
         self.popoverController = nil;
@@ -480,6 +481,7 @@ enum {
 
 - (void)viewDidAppear:(BOOL)animated
 {
+    [super viewDidAppear:animated];
     if ([_directory hasCache])
         [SeafAppDelegate checkOpenLink:self];
 }
