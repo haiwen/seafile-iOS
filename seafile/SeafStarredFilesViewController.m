@@ -238,7 +238,7 @@
         sfile = [_starredFiles objectAtIndex:indexPath.row];
         [self selectFile:sfile];
     } @catch(NSException *exception) {
-        [self performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
+        [self.tableView performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
         return;
     }
 }

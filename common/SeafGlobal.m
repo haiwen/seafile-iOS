@@ -611,6 +611,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 
 - (id)objectForKey:(NSString *)defaultName
 {
+    if (!defaultName) return nil;
     return [_storage objectForKey:defaultName];
 }
 

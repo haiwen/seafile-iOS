@@ -580,6 +580,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 - (NSDictionary *)uploadAttr
 {
+    if (!self.lpath) return [NSDictionary new];
     return [[SeafUploadFile uploadFileAttrs] objectForKey:self.lpath];
 }
 

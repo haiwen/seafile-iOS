@@ -193,6 +193,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (NSString *)getAttribute:(NSString *)aKey
 {
+    if (!aKey) return nil;
     return [_settings objectForKey:aKey];
 }
 

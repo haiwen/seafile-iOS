@@ -158,7 +158,7 @@
     @try {
         _curDir = [_directory.items objectAtIndex:indexPath.row];
     } @catch(NSException *exception) {
-        [self performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
+        [self.tableView performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
         return;
     }
     if (![_curDir isKindOfClass:[SeafDir class]])

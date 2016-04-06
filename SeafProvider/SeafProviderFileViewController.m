@@ -295,7 +295,7 @@
 
 #pragma mark - Table view delegate
 
-- (void)showDownloadProgress:(SeafFile *)file
+- (void)showDownloadProgress:(SeafFile *)file force:(BOOL)force
 {
     Debug("Download file %@, cached:%d", file.path, [file hasCache]);
     NSString *title = [NSString stringWithFormat: @"Downloading %@", file.name];
@@ -311,7 +311,7 @@
         self.progressView.frame = CGRectMake(20, r.size.height-45, r.size.width - 40, 20);
         [self.alert.view addSubview:self.progressView];
         Debug("Start to download file: %@", file.path);
-        [file load:self force:NO];
+        [file load:self force:force];
     }];
 }
 
@@ -321,19 +321,21 @@
     @try {
         entry = [self.items objectAtIndex:indexPath.row];
     } @catch(NSException *exception) {
-        [self performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
+        [self.tableView performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
         return;
     }
     if ([entry isKindOfClass:[SeafFile class]]) {
         SeafFile *file = (SeafFile *)entry;
         [entry loadCache];
         if (![file hasCache]) {
-            [self showDownloadProgress:file];
-            return;
+            return [self showDownloadProgress:file force:false];
         }
         if (self.root.documentPickerMode == UIDocumentPickerModeImport
             || self.root.documentPickerMode == UIDocumentPickerModeOpen) {
             NSURL *exportURL = [file exportURL];
+            if (!exportURL) {
+                return [self showDownloadProgress:file force:true];
+            }
             NSURL *url = [self.root.documentStorageURL URLByAppendingPathComponent:exportURL.lastPathComponent];
             Debug("file exportURL:%@, url:%@", exportURL, url);
             [self.fileCoordinator coordinateWritingItemAtURL:url options:0 error:NULL byAccessor:^(NSURL *newURL) {

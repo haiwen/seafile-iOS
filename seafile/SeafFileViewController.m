@@ -911,7 +911,7 @@ enum {
     }
     _curEntry = [self getDentrybyIndexPath:indexPath tableView:tableView];
     if (!_curEntry) {
-        return [self performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
+        return [self.tableView performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
     }
     if ([_curEntry isKindOfClass:[SeafRepo class]] && [(SeafRepo *)_curEntry passwordRequired]) {
         return [self popupSetRepoPassword:(SeafRepo *)_curEntry];

@@ -131,6 +131,7 @@
 
     for (i = 0; i < [self.items count]; ++i) {
         SeafRepo *r = (SeafRepo *)[self.items objectAtIndex:i];
+        if (!r.owner) continue;
         if ([owner isEqualToString:r.owner]){
             [ownRepos addObject:r];
         } else if ([SHARE_REPO isEqualToString:r.type]){

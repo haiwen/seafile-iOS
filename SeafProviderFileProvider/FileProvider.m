@@ -83,7 +83,7 @@
     if (SeafGlobal.sharedObject.conns.count == 0)
         [SeafGlobal.sharedObject loadAccounts];
     NSString *connUrl = [dict objectForKey:@"conn_url"];
-    NSString *username = [dict objectForKey: @"conn_username"];
+    NSString *username = [dict objectForKey:@"conn_username"];
     NSString *path = [dict objectForKey:@"path"];
     NSString *repoId = [dict objectForKey:@"repoid"];
     if (!connUrl || !username || !path || !repoId)
