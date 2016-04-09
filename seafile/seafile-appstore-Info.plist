@@ -22,20 +22,18 @@
 			<string>Owner</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>public.data</string>
-				<string>public.item</string>
+               <string>public.content</string>
 				<string>public.text</string>
-				<string>public.content</string>
-				<string>public.object-code</string>
 				<string>public.plain-text</string>
-				<string>public.image</string>
-				<string>public.audiovisual-content </string>
-				<string>public.executable</string>
-				<string>public.composite-content</string>
-				<string>public.archive</string>
-				<string>com.adobe.pdf</string>
+				<string>public.html</string>
+				<string>public.presentation</string>
+				<string>public.video</string>
+				<string>public.mpeg</string>
 				<string>public.audio</string>
-				<string>public.microsoft.powerpoint.ppt</string>
+				<string>public.image</string>
+				<string>public.jpeg</string>
+				<string>public.tiff</string>
+				<string>public.data</string>
 			</array>
 		</dict>
 	</array>

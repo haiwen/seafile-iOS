@@ -662,23 +662,25 @@ enum {
 - (void)updateCellDownloadStatus:(SeafCell *)cell isDownloading:(BOOL )isDownloading waiting:(BOOL)waiting cached:(BOOL)cached
 {
     //Debug("... %d %d %d", cached, waiting, isDownloading);
-    if (cached || waiting || isDownloading) {
-        cell.cacheStatusView.hidden = false;
-        [cell.cacheStatusWidthConstraint setConstant:21.0f];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (cached || waiting || isDownloading) {
+            cell.cacheStatusView.hidden = false;
+            [cell.cacheStatusWidthConstraint setConstant:21.0f];
 
-        if (isDownloading) {
-            [cell.downloadingIndicator startAnimating];
+            if (isDownloading) {
+                [cell.downloadingIndicator startAnimating];
+            } else {
+                NSString *downloadImageNmae = waiting ? @"download_waiting" : @"download_finished";
+                cell.downloadStatusImageView.image = [UIImage imageNamed:downloadImageNmae];
+            }
+            cell.downloadStatusImageView.hidden = isDownloading;
+            cell.downloadingIndicator.hidden = !isDownloading;
         } else {
-            NSString *downloadImageNmae = waiting ? @"download_waiting" : @"download_finished";
-            cell.downloadStatusImageView.image = [UIImage imageNamed:downloadImageNmae];
+            cell.cacheStatusView.hidden = true;
+            [cell.cacheStatusWidthConstraint setConstant:0.0f];
         }
-        cell.downloadStatusImageView.hidden = isDownloading;
-        cell.downloadingIndicator.hidden = !isDownloading;
-    } else {
-        cell.cacheStatusView.hidden = true;
-        [cell.cacheStatusWidthConstraint setConstant:0.0f];
-    }
-    [cell layoutIfNeeded];
+        [cell layoutIfNeeded];
+    });
 }
 
 - (void)updateCellContent:(SeafCell *)cell file:(SeafFile *)sfile
