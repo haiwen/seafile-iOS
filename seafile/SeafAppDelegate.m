@@ -86,7 +86,7 @@
     if (self.window.rootViewController == self.startNav) {
         [self.startVC selectDefaultAccount:^(bool success) {
             if (!success) return;
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5), dispatch_get_main_queue(), ^(void){
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5*NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
                 [self openFile:repoId path:path];
             });
         }];
@@ -476,7 +476,7 @@
 - (void)loginRequired:(SeafConnection *)connection
 {
     Debug("Token expired, should login again.");
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5), dispatch_get_main_queue(), ^(void){
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5*NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
         self.window.rootViewController = _startNav;
         [self.window makeKeyAndVisible];
         [self.startVC performSelector:@selector(selectAccount:) withObject:connection afterDelay:0.5f];
@@ -639,7 +639,7 @@
 + (void)checkOpenLink:(SeafFileViewController *)c
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5), dispatch_get_main_queue(), ^(void){
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5*NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
         [appdelegate checkOpenLink:c];
     });
 }

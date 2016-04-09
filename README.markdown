@@ -11,8 +11,6 @@ Follow these steps :
 
 	git clone https://github.com/haiwen/seafile-iOS.git
 	cd seafile-iOS
-	git submodule init
-	git submodule update
     pod install
     open seafilePro.xcworkspace
 

@@ -334,6 +334,7 @@
             || self.root.documentPickerMode == UIDocumentPickerModeOpen) {
             NSURL *exportURL = [file exportURL];
             if (!exportURL) {
+                Warning("Something wrong, no cache, download again.");
                 return [self showDownloadProgress:file force:true];
             }
             NSURL *url = [self.root.documentStorageURL URLByAppendingPathComponent:exportURL.lastPathComponent];

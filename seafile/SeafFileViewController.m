@@ -133,6 +133,7 @@ enum {
     [self.detailViewController setPreViewItem:nil master:nil];
     [conn loadRepos:self];
     [self setDirectory:(SeafDir *)conn.rootFolder];
+    [self refreshView];
 }
 
 - (void)showLodingView
@@ -194,6 +195,7 @@ enum {
 
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     [self.navigationController setToolbarHidden:YES animated:NO];
+    [self refreshView];
 }
 
 - (void)noneSelected:(BOOL)none
@@ -430,7 +432,6 @@ enum {
         self.tableView.sectionHeaderHeight = 0;
     [_connection checkSyncDst:_directory];
 
-    [self refreshView];
     [_directory setDelegate:self];
 }
 
@@ -1612,7 +1613,7 @@ enum {
 
 - (void)setSearchState:(UISearchDisplayController *)controller state:(NSString *)state
 {
-    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, 0.001);
+    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, 0.001*NSEC_PER_SEC);
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
         for (UIView* v in controller.searchResultsTableView.subviews) {
             if ([v isKindOfClass: [UILabel class]] &&

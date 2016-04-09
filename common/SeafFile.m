@@ -768,7 +768,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
     NSString *newpath = [dir stringByAppendingPathComponent:self.name];
     NSError *error = nil;
-    BOOL ret = [[NSFileManager defaultManager] linkItemAtPath:url.path toPath:newpath error:&error];
+    BOOL ret = [Utils linkFileAtPath:url.path to:newpath];
     if (ret) {
         [self setMpath:newpath];
         [self autoupload];

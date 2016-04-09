@@ -138,7 +138,7 @@ enum {
     if ([urlStr hasPrefix:@"file://"] || [urlStr isEqualToString:self.url] || [@"about:blank" isEqualToString:urlStr]) {
         return YES;
     } else if ([urlStr hasPrefix:@"api://"]) {
-        if (!self.navigationController.viewControllers.count == 1) return NO;
+        if (self.navigationController.viewControllers.count != 1) return NO;
         NSString *path = @"/";
         NSRange range;
         NSRange foundRange = [urlStr rangeOfString:@"/repo/" options:NSCaseInsensitiveSearch];
