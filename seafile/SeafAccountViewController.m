@@ -265,7 +265,7 @@
     connection.loginDelegate = nil;
     [self.navigationController dismissViewControllerAnimated:YES completion:nil];
     [startController saveAccount:connection];
-    [startController selectAccount:connection];
+    [startController checkSelectAccount:connection];
 }
 
 - (void)loginFailed:(SeafConnection *)conn error:(NSError *)error code:(NSInteger)errorCode

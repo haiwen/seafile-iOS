@@ -6,6 +6,8 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
+@import LocalAuthentication;
+
 #import "StartViewController.h"
 #import "SeafAccountViewController.h"
 #import "SeafAppDelegate.h"
@@ -241,6 +243,43 @@
 }
 
 #pragma mark - Table view delegate
+- (void)checkSelectAccount:(SeafConnection *)conn
+{
+    [self checkSelectAccount:conn completeHandler:^(bool success) { }];
+}
+
+- (void)checkSelectAccount:(SeafConnection *)conn completeHandler:(void (^)(bool success))handler
+{
+    if (!conn.touchIdEnabled) {
+        BOOL ret = [self selectAccount:conn];
+        return handler(ret);
+    }
+    NSError *error = nil;
+    LAContext *context = [[LAContext alloc] init];
+    if (![context canEvaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics error:&error]) {
+        Warning("TouchID unavailable: %@", error);
+        return [self alertWithTitle:STR_15];
+    }
+
+    [context evaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics
+            localizedReason:STR_17
+                      reply:^(BOOL success, NSError *error) {
+                          if (error) {
+                              Warning("Failed to evaluate TouchID: %@", error);
+                              return [self alertWithTitle:STR_16];
+                          }
+
+                          if (!success) {
+                              return [self alertWithTitle:STR_18];
+                          } else {
+                              dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.), dispatch_get_main_queue(), ^{
+                                  BOOL ret = [self selectAccount:conn];
+                                  handler(ret);
+                              });
+                          }
+                      }];
+}
+
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
@@ -249,7 +288,7 @@
 
     @try {
         SeafConnection *conn = [SeafGlobal.sharedObject.conns objectAtIndex:indexPath.row];
-        [self selectAccount:conn];
+        [self checkSelectAccount:conn];
     } @catch(NSException *exception) {
         [self.tableView performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
     }
@@ -309,23 +348,20 @@
     return YES;
 }
 
-- (BOOL)gotoAccount:(NSString *)username server:(NSString *)server
-{
-    if (!username || !server) return NO;
-    SeafConnection *conn = [SeafGlobal.sharedObject getConnection:server username:username];
-    return [self selectAccount:conn];
-}
-
-- (BOOL)selectDefaultAccount
+- (void)selectDefaultAccount:(void (^)(bool success))handler
 {
     NSString *server = [SeafGlobal.sharedObject objectForKey:@"DEAULT-SERVER"];
     NSString *username = [SeafGlobal.sharedObject objectForKey:@"DEAULT-USER"];
-    return [self gotoAccount:username server:server];
+    if (!username || !server) {
+        return handler(false);
+    }
+    SeafConnection *conn = [SeafGlobal.sharedObject getConnection:server username:username];
+    [self checkSelectAccount:conn completeHandler:handler];
 }
 
 - (IBAction)goToDefaultBtclicked:(id)sender
 {
-    [self selectDefaultAccount];
+    [self selectDefaultAccount:^(bool success) { }];
 }
 
 - (BOOL)shouldAutorotate

@@ -15,7 +15,7 @@
 @interface StartViewController : UITableViewController<UIActionSheetDelegate>
 
 - (void)saveAccount:(SeafConnection *)conn;
-- (BOOL)selectAccount:(SeafConnection *)conn;
-- (BOOL)selectDefaultAccount;
+- (void)checkSelectAccount:(SeafConnection *)conn;
+- (void)selectDefaultAccount:(void (^)(bool success))handler;
 
 @end

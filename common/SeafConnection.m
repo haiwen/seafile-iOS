@@ -246,6 +246,17 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self setAttribute:[NSNumber numberWithBool:localDecryption] forKey:@"localDecryption"];
 }
 
+- (BOOL)touchIdEnabled
+{
+    return [[self getAttribute:@"touchIdEnabled"] booleanValue:false];
+}
+
+- (void)setTouchIdEnabled:(BOOL)touchIdEnabled
+{
+    if (self.touchIdEnabled == touchIdEnabled) return;
+    [self setAttribute:[NSNumber numberWithBool:touchIdEnabled] forKey:@"touchIdEnabled"];
+}
+
 - (void)setAutoClearRepoPasswd:(BOOL)autoClearRepoPasswd
 {
     if (self.autoClearRepoPasswd == autoClearRepoPasswd) return;

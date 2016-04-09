@@ -6,7 +6,9 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
-#import <QuartzCore/QuartzCore.h>
+@import LocalAuthentication;
+@import QuartzCore;
+
 #import <SVProgressHUD.h>
 
 #import "SeafAppDelegate.h"
@@ -72,6 +74,7 @@ enum ENC_LIBRARIES{
 @property (strong, nonatomic) IBOutlet UILabel *backgroundSyncLable;
 @property (strong, nonatomic) IBOutlet UILabel *autoClearPasswdLabel;
 @property (strong, nonatomic) IBOutlet UILabel *localDecryLabel;
+@property (strong, nonatomic) IBOutlet UILabel *enableTouchIDLabel;
 
 @property (strong, nonatomic) IBOutlet UISwitch *autoSyncSwitch;
 @property (strong, nonatomic) IBOutlet UISwitch *wifiOnlySwitch;
@@ -79,6 +82,7 @@ enum ENC_LIBRARIES{
 @property (strong, nonatomic) IBOutlet UISwitch *backgroundSyncSwitch;
 @property (strong, nonatomic) IBOutlet UISwitch *autoClearPasswdSwitch;
 @property (strong, nonatomic) IBOutlet UISwitch *localDecrySwitch;
+@property (strong, nonatomic) IBOutlet UISwitch *enableTouchIDSwitch;
 
 @property (strong, nonatomic) CLLocationManager *locationManager;
 
@@ -200,12 +204,29 @@ enum ENC_LIBRARIES{
     return _locationManager;
 }
 
-- (IBAction)autoClearPasswdSwtichFlip:(id)sender {
+- (IBAction)autoClearPasswdSwtichFlip:(id)sender
+{
     _connection.autoClearRepoPasswd = _autoClearPasswdSwitch.on;
 }
 
-- (IBAction)localDecryptionSwtichFlip:(id)sender {
+- (IBAction)localDecryptionSwtichFlip:(id)sender
+{
     _connection.localDecryption = _localDecrySwitch.on;
+}
+
+- (IBAction)enableTouchIDSwtichFlip:(id)sender
+{
+    if (_enableTouchIDSwitch.on) {
+        NSError *error = nil;
+        LAContext *context = [[LAContext alloc] init];
+        if (![context canEvaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics error:&error]) {
+            Warning("TouchID unavailable: %@", error);
+            [self alertWithTitle:STR_15];
+            _enableTouchIDSwitch.on = false;
+            return;
+        }
+    }
+    _connection.touchIdEnabled = _enableTouchIDSwitch.on;
 }
 
 - (void)backgroundSyncSwitchFlip:(id)sender
@@ -239,6 +260,7 @@ enum ENC_LIBRARIES{
     [super viewDidLoad];
     _nameCell.textLabel.text = NSLocalizedString(@"Username", @"Seafile");
     _usedspaceCell.textLabel.text = NSLocalizedString(@"Space Used", @"Seafile");
+    _enableTouchIDLabel.text = NSLocalizedString(@"Enable TouchID", @"Seafile");
     _autoCameraUploadLabel.text = NSLocalizedString(@"Auto Upload", @"Seafile");
     _videoSyncLabel.text = NSLocalizedString(@"Upload Videos", @"Seafile");
     _wifiOnlyLabel.text = NSLocalizedString(@"Wifi Only", @"Seafile");
@@ -264,6 +286,8 @@ enum ENC_LIBRARIES{
     [_backgroundSyncSwitch addTarget:self action:@selector(backgroundSyncSwitchFlip:) forControlEvents:UIControlEventValueChanged];
     [_autoClearPasswdSwitch addTarget:self action:@selector(autoClearPasswdSwtichFlip:) forControlEvents:UIControlEventValueChanged];
     [_localDecrySwitch addTarget:self action:@selector(localDecryptionSwtichFlip:) forControlEvents:UIControlEventValueChanged];
+    [_enableTouchIDSwitch addTarget:self action:@selector(enableTouchIDSwtichFlip:) forControlEvents:UIControlEventValueChanged];
+
 
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
     _version = [infoDictionary objectForKey:@"CFBundleShortVersionString"];
@@ -306,6 +330,7 @@ enum ENC_LIBRARIES{
     _syncRepoCell.detailTextLabel.text = repo ? repo.name : nil;
     _autoClearPasswdSwitch.on = _connection.autoClearRepoPasswd;
     _localDecrySwitch.on = _connection.localDecryption;
+    _enableTouchIDSwitch.on = _connection.touchIdEnabled;
 
     long long cacheSize = [self cacheSize];
     _cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromLongLong:cacheSize];

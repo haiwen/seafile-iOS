@@ -74,6 +74,7 @@
 
 - (BOOL)openSeafileURL:(NSURL*)url
 {
+    Debug("open %@", url);
     NSDictionary *dict = [Utils queryToDict:url.query];
     NSString *repoId = [dict objectForKey:@"repo_id"];
     NSString *path = [dict objectForKey:@"path"];
@@ -82,29 +83,44 @@
         return false;
     }
 
-    if (![self.startVC selectDefaultAccount])
-        return false;
-
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5), dispatch_get_main_queue(), ^(void){
+    if (self.window.rootViewController == self.startNav) {
+        [self.startVC selectDefaultAccount:^(bool success) {
+            if (!success) return;
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5), dispatch_get_main_queue(), ^(void){
+                [self openFile:repoId path:path];
+            });
+        }];
+    } else
         [self openFile:repoId path:path];
-    });
     return true;
+}
+
+- (void)uploadFile:(NSString *)path
+{
+    [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
+    SeafUploadFile *file = [SeafGlobal.sharedObject.connection getUploadfile:path];
+    [self.fileVC uploadFile:file];
 }
 
 - (BOOL)openFileURL:(NSURL*)url
 {
+    Debug("open %@", url);
     NSString *uploadDir = [SeafGlobal.sharedObject uniqueUploadDir];
     NSURL *to = [NSURL fileURLWithPath:[uploadDir stringByAppendingPathComponent:url.lastPathComponent]];
     Debug("Copy %@, to %@, %@, %@\n", url, to, to.absoluteString, to.path);
-    [Utils checkMakeDir:uploadDir];
-    [Utils copyFile:url to:to];
-    if (self.window.rootViewController == self.startNav)
-        if (![self.startVC selectDefaultAccount])
-            return NO;
+    BOOL ret = [Utils checkMakeDir:uploadDir];
+    if (!ret) return false;
+    ret = [Utils copyFile:url to:to];
+    if (!ret) return false;
+    if (self.window.rootViewController == self.startNav) {
+        [self.startVC selectDefaultAccount:^(bool success) {
+            if (success) {
+                [self uploadFile:to.path];
+            }
+        }];
+    } else
+        [self uploadFile:to.path];
 
-    [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
-    SeafUploadFile *file = [SeafGlobal.sharedObject.connection getUploadfile:to.path];
-    [self.fileVC uploadFile:file];
     return true;
 }
 
@@ -208,7 +224,7 @@
     if (dict) {
         [self application:application didReceiveRemoteNotification:dict];
     } else
-        [self.startVC selectDefaultAccount];
+        [self.startVC selectDefaultAccount:^(bool success) {}];
     [[AFNetworkReachabilityManager sharedManager] startMonitoring];
 
     self.bgTask = UIBackgroundTaskInvalid;
@@ -272,7 +288,7 @@
             if (!connection) return;
             self.window.rootViewController = self.startNav;
             [self.window makeKeyAndVisible];
-            [self.startVC selectAccount:connection];
+            [self.startVC checkSelectAccount:connection];
         }
     }
 }

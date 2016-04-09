@@ -47,6 +47,10 @@ enum {
 #define STR_11 NSLocalizedString(@"modified", @"Seafile")
 #define STR_12 NSLocalizedString(@"A file with the same name already exists, do you want to overwrite?", @"Seafile")
 #define STR_13 NSLocalizedString(@"Files with the same name already exist, do you want to overwrite?", @"Seafile")
+#define STR_15 NSLocalizedString(@"Your device cannot authenticate using Touch ID.", @"Seafile")
+#define STR_16 NSLocalizedString(@"There was a problem verifying your identity.", @"Seafile")
+#define STR_17 NSLocalizedString(@"Please authenticate to proceed", @"Seafile")
+#define STR_18 NSLocalizedString(@"Failed to authenticate", @"Seafile")
 
 
 @interface SeafAppDelegate : UIResponder <UIApplicationDelegate, SeafConnectionDelegate>

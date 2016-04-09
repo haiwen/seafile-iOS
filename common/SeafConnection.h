@@ -76,6 +76,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 @property (readwrite, nonatomic) NSString *autoSyncRepo;
 @property (readwrite, nonatomic) BOOL autoClearRepoPasswd;
 @property (readwrite, nonatomic) BOOL localDecryption;
+@property (readwrite, nonatomic) BOOL touchIdEnabled;
 
 
 @property (weak) id<SeafPhotoSyncWatcherDelegate> photSyncWatcher;
