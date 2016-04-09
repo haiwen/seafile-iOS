@@ -10,7 +10,7 @@
 #import "SeafDetailViewController.h"
 #import "SeafFile.h"
 
-@interface SeafTextEditorViewController : UIViewController<UIWebViewDelegate>
+@interface SeafTextEditorViewController : UIViewController<UITextViewDelegate>
 
 @property (strong) SeafDetailViewController *detailViewController;
 
