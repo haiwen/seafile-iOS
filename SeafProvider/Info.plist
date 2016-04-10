@@ -21,7 +21,7 @@
 	<key>CFBundlePackageType</key>
 	<string>XPC!</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.2.0</string>
+	<string>2.3.0</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
@@ -44,7 +44,7 @@
 			</array>
 			<key>UIDocumentPickerSupportedFileTypes</key>
 			<array>
-                <string>public.content</string>
+				<string>public.content</string>
 				<string>public.text</string>
 				<string>public.plain-text</string>
 				<string>public.html</string>
