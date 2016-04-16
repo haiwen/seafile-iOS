@@ -9,7 +9,7 @@
 #import <UIKit/UIKit.h>
 #import "SeafConnection.h"
 
-@interface SeafActivityViewController : UIViewController<UIWebViewDelegate>
+@interface SeafActivityViewController : UITableViewController
 
 @property (strong, nonatomic) SeafConnection *connection;
 

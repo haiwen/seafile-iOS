@@ -682,7 +682,7 @@
             </objects>
             <point key="canvasLocation" x="-1725" y="-2997"/>
         </scene>
-        <!--Delegate-->
+        <!--Data Source-->
         <scene sceneID="1gS-U2-JVg">
             <objects>
                 <viewController id="xZh-Ns-hDC" customClass="SeafActivityViewController" sceneMemberID="viewController">
@@ -690,11 +690,12 @@
                         <viewControllerLayoutGuide type="top" id="axM-dV-bef"/>
                         <viewControllerLayoutGuide type="bottom" id="Nl9-42-OUU"/>
                     </layoutGuides>
-                    <view key="view" contentMode="scaleToFill" id="4Dx-fw-LSS" customClass="UIWebView">
+                    <view key="view" contentMode="scaleToFill" id="4Dx-fw-LSS" customClass="UITableView">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <connections>
+                            <outlet property="dataSource" destination="xZh-Ns-hDC" id="hHT-wf-T6u"/>
                             <outlet property="delegate" destination="xZh-Ns-hDC" id="XhQ-Fa-tce"/>
                         </connections>
                     </view>

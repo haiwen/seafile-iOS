@@ -884,6 +884,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return [[NSBundle mainBundle] pathForResource:@"account" ofType:@"png"];
 }
 
+- (UIImage *)avatarForAccount:(NSString *)email
+{
+    NSString *path = [[NSBundle mainBundle] pathForResource:@"account" ofType:@"png"];
+    return [UIImage imageWithContentsOfFile:path];
+}
+
 - (void)downloadAvatar:(BOOL)force;
 {
     Debug("%@, %d\n", self.address, [self authorized]);

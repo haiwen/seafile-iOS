@@ -106,12 +106,11 @@
         self.loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
         self.loadingView.color = [UIColor darkTextColor];
         self.loadingView.hidesWhenStopped = YES;
-        [self.tableView addSubview:self.loadingView];
+        [self.view addSubview:self.loadingView];
     }
     self.loadingView.center = self.view.center;
     self.loadingView.frame = CGRectMake((self.view.frame.size.width-self.loadingView.frame.size.width)/2, (self.view.frame.size.height-self.loadingView.frame.size.height)/2, self.loadingView.frame.size.width, self.loadingView.frame.size.height);
-    if (![self.loadingView isAnimating])
-        [self.loadingView startAnimating];
+    [self.loadingView startAnimating];
 }
 
 - (void)viewDidAppear:(BOOL)animated

@@ -709,7 +709,7 @@
             </objects>
             <point key="canvasLocation" x="650" y="-1860"/>
         </scene>
-        <!--Delegate-->
+        <!--Data Source-->
         <scene sceneID="Nt1-JY-c0I">
             <objects>
                 <viewController id="tZi-tZ-wdU" customClass="SeafActivityViewController" sceneMemberID="viewController">
@@ -717,11 +717,12 @@
                         <viewControllerLayoutGuide type="top" id="S6Z-Am-28g"/>
                         <viewControllerLayoutGuide type="bottom" id="lGO-gM-la5"/>
                     </layoutGuides>
-                    <view key="view" contentMode="scaleToFill" id="V4C-0w-DQ6" customClass="UIWebView">
+                    <view key="view" contentMode="scaleToFill" id="V4C-0w-DQ6" customClass="UITableView">
                         <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <connections>
+                            <outlet property="dataSource" destination="tZi-tZ-wdU" id="4Ax-03-qC5"/>
                             <outlet property="delegate" destination="tZi-tZ-wdU" id="6kS-E6-haW"/>
                         </connections>
                     </view>
@@ -755,7 +756,7 @@
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="GxR-hx-KDV" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-572" y="224"/>
+            <point key="canvasLocation" x="-564" y="1080"/>
         </scene>
         <!--Seaf Detail View Controller-->
         <scene sceneID="cC2-6S-qzP">

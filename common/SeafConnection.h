@@ -144,6 +144,8 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 
 - (void)registerDevice:(NSData *)deviceToken;
 
+- (UIImage *)avatarForAccount:(NSString *)email;
+
 // Cache
 - (void)loadCache;
 - (id)getCachedObj:(NSString *)key;
