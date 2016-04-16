@@ -537,7 +537,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSString *url = _address;
     NSMutableURLRequest *request = [self loginRequest:url username:username password:password];
     if (otp)
-        [request.allHTTPHeaderFields setValue:otp forKey:@"X-Seafile-OTP"];
+        [request setValue:otp forHTTPHeaderField:@"X-Seafile-OTP"];
     AFHTTPSessionManager *manager = self.loginMgr;
     manager.responseSerializer = [AFJSONResponseSerializer serializer];
 

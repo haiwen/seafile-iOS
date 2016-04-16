@@ -271,7 +271,7 @@
 - (void)twoStepVerification
 {
     NSString *placeHolder = NSLocalizedString(@"Two step verification code", @"Seafile");;
-    [self popupInputView:S_RENAME placeholder:placeHolder secure:false handler:^(NSString *input) {
+    [self popupInputView:placeHolder placeholder:placeHolder secure:false handler:^(NSString *input) {
         if (!input || input.length == 0) {
             [self alertWithTitle:NSLocalizedString(@"Verification code must not be empty", @"Seafile")];
             return;
