@@ -532,10 +532,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 /*
  curl -D a.txt --data "username=pithier@163.com&password=pithier" http://www.gonggeng.org/seahub/api2/auth-token/
  */
-- (void)loginWithUsername:(NSString *)username password:(NSString *)password
+- (void)loginWithUsername:(NSString *)username password:(NSString *)password otp:(NSString *)otp
 {
     NSString *url = _address;
     NSMutableURLRequest *request = [self loginRequest:url username:username password:password];
+    if (otp)
+        [request.allHTTPHeaderFields setValue:otp forKey:@"X-Seafile-OTP"];
     AFHTTPSessionManager *manager = self.loginMgr;
     manager.responseSerializer = [AFJSONResponseSerializer serializer];
 
@@ -543,7 +545,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSURLSessionDataTask *dataTask = [manager dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
         if (error) {
             Warning("Error: %@", error);
-            [self.loginDelegate loginFailed:self error:error code:((NSHTTPURLResponse *)response).statusCode];
+            [self.loginDelegate loginFailed:self response:response error:error];
         } else {
             [Utils dict:_info setObject:password forKey:@"password"];
             [self setToken:[responseObject objectForKey:@"token"] forUser:username isShib:false];
@@ -551,6 +553,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }];
 
     [dataTask resume];
+}
+
+- (void)loginWithUsername:(NSString *)username password:(NSString *)password
+{
+    [self loginWithUsername:username password:password otp:nil];
 }
 
 - (NSURLRequest *)buildRequest:(NSString *)url method:(NSString *)method form:(NSString *)form

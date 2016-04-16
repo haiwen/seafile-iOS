@@ -268,15 +268,36 @@
     [startController checkSelectAccount:connection];
 }
 
-- (void)loginFailed:(SeafConnection *)conn error:(NSError *)error code:(NSInteger)errorCode
+- (void)twoStepVerification
 {
-    Debug("%@, error=%ld\n", conn.address, (long)error);
+    NSString *placeHolder = NSLocalizedString(@"Two step verification code", @"Seafile");;
+    [self popupInputView:S_RENAME placeholder:placeHolder secure:false handler:^(NSString *input) {
+        if (!input || input.length == 0) {
+            [self alertWithTitle:NSLocalizedString(@"Verification code must not be empty", @"Seafile")];
+            return;
+        }
+        NSString *username = usernameTextField.text;
+        NSString *password = passwordTextField.text;
+        [connection loginWithUsername:username password:password otp:input];
+        [SVProgressHUD showWithStatus:NSLocalizedString(@"Connecting to server", @"Seafile")];
+    }];
+}
+
+- (void)loginFailed:(SeafConnection *)conn response:(NSURLResponse *)response error:(NSError *)error
+{
+    Debug("%@, error=%@\n", conn.address, error);
     if (conn != connection)
         return;
 
+    NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
+    long errorCode = resp.statusCode;
     if (errorCode == HTTP_ERR_LOGIN_INCORRECT_PASSWORD) {
         [SVProgressHUD dismiss];
-        [self alertWithTitle:NSLocalizedString(@"Wrong username or password", @"Seafile")];
+        NSString * otp = [resp.allHeaderFields objectForKey:@"X-Seafile-OTP"];
+        if ([@"required" isEqualToString:otp]) {
+            [self twoStepVerification];
+        } else
+            [self alertWithTitle:NSLocalizedString(@"Wrong username or password", @"Seafile")];
     } else {
         NSString *msg = NSLocalizedString(@"Failed to login", @"Seafile");
         [SVProgressHUD showErrorWithStatus:[msg stringByAppendingFormat:@": %ld %@", (long)errorCode, error.localizedDescription]];

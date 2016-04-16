@@ -41,7 +41,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 
 @protocol SeafLoginDelegate <NSObject>
 - (void)loginSuccess:(SeafConnection *)connection;
-- (void)loginFailed:(SeafConnection *)connection error:(NSError *)error code:(NSInteger)errorCode;
+- (void)loginFailed:(SeafConnection *)connection response:(NSURLResponse *)response error:(NSError *)error;
 @end
 
 @protocol SeafConnectionDelegate <NSObject>
@@ -117,6 +117,8 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
             failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure;
 
 - (void)loginWithUsername:(NSString *)username password:(NSString *)password;
+- (void)loginWithUsername:(NSString *)username password:(NSString *)password otp:(NSString *)otp;
+
 -(void)setToken:(NSString *)token forUser:(NSString *)username isShib:(BOOL)isshib;
 
 - (void)getAccountInfo:(void (^)(bool result, SeafConnection *conn))handler;
