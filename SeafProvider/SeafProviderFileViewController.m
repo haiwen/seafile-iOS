@@ -79,7 +79,7 @@
     if ([self isViewLoaded]) {
         [self.tableView reloadData];
         if (_directory && !_directory.hasCache) {
-            [self showLodingView];
+            [self showLoadingView];
         } else {
             [self dismissLoadingView];
         }
@@ -100,7 +100,7 @@
     // Dispose of any resources that can be recreated.
 }
 
-- (void)showLodingView
+- (void)showLoadingView
 {
     if (!self.loadingView) {
         self.loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];

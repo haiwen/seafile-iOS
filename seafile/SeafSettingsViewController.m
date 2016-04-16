@@ -247,7 +247,7 @@ enum ENC_LIBRARIES{
         }
         return;
     }
-    if (status != kCLAuthorizationStatusAuthorizedAlways && status != kCLAuthorizationStatusAuthorized) {
+    if (status != kCLAuthorizationStatusAuthorizedAlways) {
         [self alertWithTitle:NSLocalizedString(@"This app does not have access to your location service.", @"Seafile") message:NSLocalizedString(@"You can enable access in Privacy Settings", @"Seafile")];
         _backgroundSyncSwitch.on = false;
     } else {
@@ -597,7 +597,7 @@ enum ENC_LIBRARIES{
 - (void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status
 {
     Debug("AuthorizationStatus: %d", status);
-    if (status != kCLAuthorizationStatusAuthorizedAlways && status != kCLAuthorizationStatusAuthorized) {
+    if (status != kCLAuthorizationStatusAuthorizedAlways) {
         _backgroundSyncSwitch.on = false;
     } else {
         _backgroundSyncSwitch.on = true;

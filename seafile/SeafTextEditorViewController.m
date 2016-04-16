@@ -42,7 +42,7 @@
 
 - (UIBarButtonItem *)getTextBarItem:(NSString *)title action:(SEL)action active:(int)active
 {
-    UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithTitle:title style:UIBarButtonItemStyleBordered target:self action:action];
+    UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithTitle:title style:UIBarButtonItemStylePlain target:self action:action];
     return item;
 }
 

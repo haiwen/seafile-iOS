@@ -711,6 +711,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 {
     return [self uniqueDirUnder:dir identify:[[NSUUID UUID] UUIDString]];
 }
+
 - (NSString *)uniqueUploadDir
 {
     return [self uniqueDirUnder:self.uploadsDir identify:[[NSUUID UUID] UUIDString]];

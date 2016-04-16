@@ -71,7 +71,7 @@ enum {
     _url = [_connection.address stringByAppendingString:API_URL"/html/events/"];
 }
 
-- (void)showLodingView
+- (void)showLoadingView
 {
     if (!self.loadingView) {
         self.loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
@@ -91,7 +91,7 @@ enum {
 
 - (void)start
 {
-    [self showLodingView];
+    [self showLoadingView];
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:self.url] cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 30];
     [request setHTTPMethod:@"GET"];
     [request setValue:[NSString stringWithFormat:@"Token %@", _connection.token] forHTTPHeaderField:@"Authorization"];

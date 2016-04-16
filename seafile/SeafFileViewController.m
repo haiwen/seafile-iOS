@@ -136,7 +136,7 @@ enum {
     [self refreshView];
 }
 
-- (void)showLodingView
+- (void)showLoadingView
 {
     if (!self.loadingView) {
         self.loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
@@ -270,7 +270,7 @@ enum {
     }
     if (!_directory.hasCache) {
         Debug("no cache, load from server.");
-        [self showLodingView];
+        [self showLoadingView];
         self.state = STATE_LOADING;
     }
 }
