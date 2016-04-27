@@ -805,12 +805,14 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (SeafUploadFile *)getUploadfile:(NSString *)lpath create:(bool)create
 {
     if (!lpath) return nil;
-    SeafUploadFile *ufile = [self.uploadFiles objectForKey:lpath];
-    if (!ufile && create) {
-        ufile = [[SeafUploadFile alloc] initWithPath:lpath];
-        [Utils dict:self.uploadFiles setObject:ufile forKey:lpath];
-    }
-    return ufile;
+    @synchronized(self.uploadFiles) {
+        SeafUploadFile *ufile = [self.uploadFiles objectForKey:lpath];
+        if (!ufile && create) {
+            ufile = [[SeafUploadFile alloc] initWithPath:lpath];
+            [Utils dict:self.uploadFiles setObject:ufile forKey:lpath];
+        }
+        return ufile;
+    };
 }
 
 - (SeafUploadFile *)getUploadfile:(NSString *)lpath
@@ -820,7 +822,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)removeUploadfile:(SeafUploadFile *)ufile
 {
-    [self.uploadFiles removeObjectForKey:ufile.lpath];
+    @synchronized(self.uploadFiles) {
+        [self.uploadFiles removeObjectForKey:ufile.lpath];
+    }
 }
 
 - (void)search:(NSString *)keyword

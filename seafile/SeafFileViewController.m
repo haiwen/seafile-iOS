@@ -663,6 +663,8 @@ enum {
 - (void)updateCellDownloadStatus:(SeafCell *)cell isDownloading:(BOOL )isDownloading waiting:(BOOL)waiting cached:(BOOL)cached
 {
     //Debug("... %d %d %d", cached, waiting, isDownloading);
+    if (![cell isKindOfClass:[SeafCell class]])
+        return;
     dispatch_async(dispatch_get_main_queue(), ^{
         if (cached || waiting || isDownloading) {
             cell.cacheStatusView.hidden = false;

@@ -104,7 +104,7 @@
         [SeafGlobal.sharedObject synchronize];
     }];
     [self providePlaceholderAtURL:url completionHandler:^(NSError *error){
-        Debug("url=%@, error=%@", url, error);
+        Warning("url=%@, error=%@", url, error);
     }];
 }
 

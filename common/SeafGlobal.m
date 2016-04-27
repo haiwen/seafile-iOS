@@ -428,7 +428,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 
     if (result) {
         self.failedNum = 0;
-        if (file.autoSync) {
+        if (file.autoSync && file.udir) {
             [file.udir->connection fileUploadedSuccess:file];
         }
     } else {
