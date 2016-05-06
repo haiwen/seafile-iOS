@@ -163,12 +163,15 @@
 
 - (void)uploadFile:(NSURL *)url overwrite:(BOOL)overwrite
 {
-    Debug("Upload file: %@ to %@, overwrite=%d", url, _directory.path, overwrite);
+    Debug("Upload file: %@(%d) to %@, overwrite=%d", url, [Utils fileExistsAtPath:url.path], _directory.path, overwrite);
+    if ([Utils fileExistsAtPath:url.path])
+        [Utils removeFile:url.path];
+    if ([Utils fileSizeAtPath1:self.root.originalURL.path] == 0) {
+        return [self uploadmMovedFile:url overwrite:overwrite];
+    }
     [self.fileCoordinator coordinateWritingItemAtURL:url options:0 error:NULL byAccessor:^(NSURL *newURL) {
-        if ([Utils fileExistsAtPath:url.path])
-            [Utils removeFile:url.path];
         BOOL ret = [Utils copyFile:self.root.originalURL to:newURL];
-        Debug("newURL: %@, url: %@, ret:%d", newURL, url, ret);
+        Debug("from %@ %lld, url: %@ , ret:%d", self.root.originalURL.path, [Utils fileSizeAtPath1:self.root.originalURL.path], url, ret);
         if (!ret) {
             Warning("Failed to copy file:%@ to %@", self.root.originalURL, newURL);
             return;
@@ -183,10 +186,38 @@
     }];
 }
 
+- (void)uploadmMovedFile:(NSURL *)url overwrite:(BOOL)overwrite
+{
+    [self.root.originalURL startAccessingSecurityScopedResource];
+    
+    NSError* error = nil;
+    NSFileCoordinator *fileCoordinator = [[NSFileCoordinator alloc] init];
+    [fileCoordinator coordinateReadingItemAtURL:self.root.originalURL
+                                        options:NSFileCoordinatorReadingForUploading
+                                          error:&error
+                                     byAccessor:^(NSURL *newURL) {
+                                         BOOL ret = [Utils copyFile:newURL to:url];
+                                         Debug("from %@ %lld, url: %@ , ret:%d", newURL.path, [Utils fileSizeAtPath1:newURL.path], url, ret);
+                                     }];
+    [self.root.originalURL stopAccessingSecurityScopedResource];
+    NSString *key = [NSString stringWithFormat:@"EXPORTED/%@", url.lastPathComponent];
+    NSMutableDictionary *dict = [NSMutableDictionary new];
+    [dict setObject:_directory->connection.address forKey:@"conn_url"];
+    [dict setObject:_directory->connection.username forKey:@"conn_username"];
+    [dict setObject:_directory.path forKey:@"path"];
+    [dict setObject:_directory.repoId forKey:@"repoid"];
+    [dict setObject:[NSNumber numberWithBool: overwrite] forKey:@"overwrite"];
+
+    [SeafGlobal.sharedObject setObject:dict forKey:key];
+    [SeafGlobal.sharedObject synchronize];
+    [self.root dismissGrantingAccessToURL:url];
+}
+
 - (IBAction)chooseCurrentDir:(id)sender
 {
     NSString *name = self.root.originalURL.lastPathComponent;
     NSURL *url = [self.root.documentStorageURL URLByAppendingPathComponent:self.root.originalURL.lastPathComponent];
+    Debug("start to upload file: %@", url.path);
     if ([_directory nameExist:name]) {
         NSString *title = NSLocalizedString(@"A file with the same name already exists, do you want to overwrite?", @"Seafile");
         NSString *message = nil;
@@ -444,28 +475,28 @@
 }
 
 #pragma mark - SeafUploadDelegate
-- (void)uploadProgress:(SeafUploadFile *)file result:(BOOL)res progress:(int)percent
+- (void)uploadProgress:(SeafUploadFile *)file progress:(int)percent
 {
     if (self.ufile != file) return;
-    if (res) {
-        dispatch_after(0, dispatch_get_main_queue(), ^{
-            self.progressView.progress = percent * 1.0f/100.f;
-        });
-    } else {
-        Warning("Failed to upload file %@", file.name);
-        [self alertWithTitle:NSLocalizedString(@"Failed to uplod file", @"Seafile") handler:nil];
-    }
+    dispatch_after(0, dispatch_get_main_queue(), ^{
+        self.progressView.progress = percent * 1.0f/100.f;
+    });
 }
 
-- (void)uploadSucess:(SeafUploadFile *)file oid:(NSString *)oid
+- (void)uploadComplete:(BOOL)success file:(SeafUploadFile *)file oid:(NSString *)oid
 {
     if (self.ufile != file) return;
-    [self.ufile doRemove];
-    dispatch_after(0, dispatch_get_main_queue(), ^{
-        [self.alert dismissViewControllerAnimated:NO completion:^{
-            [self.root dismissGrantingAccessToURL:[NSURL URLWithString:file.lpath]];
-        }];
-    });
+    if (!success) {
+        Warning("Failed to upload file %@", file.name);
+        [self alertWithTitle:NSLocalizedString(@"Failed to uplod file", @"Seafile") handler:nil];
+    } else {
+        [self.ufile doRemove];
+        dispatch_after(0, dispatch_get_main_queue(), ^{
+            [self.alert dismissViewControllerAnimated:NO completion:^{
+                [self.root dismissGrantingAccessToURL:[NSURL URLWithString:file.lpath]];
+            }];
+        });
+    }
 }
 
 - (void)pushViewControllerDir:(SeafDir *)dir

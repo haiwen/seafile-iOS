@@ -1595,13 +1595,16 @@ enum {
     });
 }
 
-- (void)uploadProgress:(SeafUploadFile *)file result:(BOOL)res progress:(int)percent
+- (void)uploadProgress:(SeafUploadFile *)file progress:(int)percent
 {
-    [self updateFileCell:file result:res progress:percent completed:false];
+    [self updateFileCell:file result:true progress:percent completed:false];
 }
 
-- (void)uploadSucess:(SeafUploadFile *)file oid:(NSString *)oid
+- (void)uploadComplete:(BOOL)success file:(SeafUploadFile *)file oid:(NSString *)oid
 {
+    if (!success) {
+        return [self updateFileCell:file result:false progress:0 completed:true];
+    }
     [self updateFileCell:file result:YES progress:100 completed:YES];
     if (self.isVisible) {
         [SVProgressHUD showSuccessWithStatus:[NSString stringWithFormat:NSLocalizedString(@"File '%@' uploaded success", @"Seafile"), file.name]];

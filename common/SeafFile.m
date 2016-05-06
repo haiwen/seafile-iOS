@@ -852,14 +852,18 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 }
 
 #pragma mark - SeafUploadDelegate
-- (void)uploadProgress:(SeafFile *)file result:(BOOL)res progress:(int)percent
+- (void)uploadProgress:(SeafFile *)file progress:(int)percent
 {
     id<SeafFileUpdateDelegate> dg = self.udelegate;
-    [dg updateProgress:self result:res completeness:percent];
+    [dg updateProgress:self result:true completeness:percent];
 }
 
-- (void)uploadSucess:(SeafUploadFile *)file oid:(NSString *)oid
+- (void)uploadComplete:(BOOL)success file:(SeafUploadFile *)file oid:(NSString *)oid
 {
+    if (!success) {
+        id<SeafFileUpdateDelegate> dg = self.udelegate;
+        return [dg updateProgress:self result:false completeness:0];
+    }
     Debug("%@ file %@ upload success oid: %@, %@", self, self.name, oid, self.udelegate);
     id<SeafFileUpdateDelegate> dg = self.udelegate;
     self.ufile = nil;
@@ -871,6 +875,12 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     _mtime = self.mtime;
     [self setMpath:nil];
     [dg updateProgress:self result:YES completeness:100];
+}
+
+- (BOOL)waitUpload {
+    if (self.ufile)
+        return [self.ufile waitUpload];
+    return true;
 }
 
 @end

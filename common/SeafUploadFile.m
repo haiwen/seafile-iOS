@@ -33,6 +33,8 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 @property (strong) NSString *rawblksurl;
 @property (strong) NSString *uploadpath;
 @property long blkidx;
+
+@property dispatch_semaphore_t semaphore;
 @end
 
 @implementation SeafUploadFile
@@ -53,6 +55,8 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         } else {
             self.mtime = [[NSDate date] timeIntervalSince1970];
         }
+        _semaphore = dispatch_semaphore_create(0);
+
     }
     return self;
 }
@@ -157,10 +161,8 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         [self saveAttr:dict flush:true];
     }
     Debug("result=%d, name=%@, delegate=%@, oid=%@\n", result, self.name, _delegate, oid);
-    if (result)
-        [_delegate uploadSucess:self oid:oid];
-    else
-        [_delegate uploadProgress:self result:NO progress:0];
+    [_delegate uploadComplete:result file:self oid:oid];
+    dispatch_semaphore_signal(_semaphore);
 }
 
 - (void)uploadRequest:(NSMutableURLRequest *)request withConnection:(SeafConnection *)connection
@@ -223,7 +225,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     } else {
         percent = progress.fractionCompleted * 100;
     }
-    [_delegate uploadProgress:self result:YES progress:percent];
+    [_delegate uploadProgress:self progress:percent];
 }
 
 - (BOOL)chunkFile:(NSString *)path repo:(SeafRepo *)repo blockids:(NSMutableArray *)blockids paths:(NSMutableArray *)paths
@@ -390,8 +392,10 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 - (void)upload:(SeafConnection *)connection repo:(NSString *)repoId path:(NSString *)uploadpath
 {
-    if (![Utils fileExistsAtPath:self.lpath])
+    if (![Utils fileExistsAtPath:self.lpath]) {
+        Warning("File %@ no existed", self.lpath);
         return;
+    }
     @synchronized (self) {
         if (_uploading || self.uploaded)
             return;
@@ -400,7 +404,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     }
     NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:self.lpath error:nil];
     _filesize = attrs.fileSize;
-    [_delegate uploadProgress:self result:YES progress:0];
+    [_delegate uploadProgress:self progress:0];
     SeafRepo *repo = [connection getRepo:repoId];
 #if 0
     if (_filesize > LARGE_FILE_SIZE && (!repo.encrypted || [repo canLocalDecrypt])) {
@@ -417,6 +421,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         upload_url = [upload_url stringByAppendingString:@"link/"];
 
     upload_url = [upload_url stringByAppendingFormat:@"?p=%@", uploadpath.escapedUrl];
+    Debug("upload file %@ %@", self.lpath, upload_url);
     [connection sendRequest:upload_url success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          NSString *url = [JSON stringByAppendingString:@"?ret-json=true"];
@@ -606,7 +611,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         if ([dir.repoId isEqualToString:[info objectForKey:@"urepo"]] && [dir.path isEqualToString:[info objectForKey:@"upath"]]) {
             bool autoSync = [[info objectForKey:@"autoSync"] boolValue];
             SeafUploadFile *file = [dir->connection getUploadfile:lpath create:!autoSync];
-            if (!file || !file.asset) {
+            if (!file || file.asset) {
                 Debug("Auto sync photos %@:%@, remove it and will reupload from beginning", file.lpath, info);
                 if (file)
                     [file doRemove];
@@ -624,6 +629,11 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     }
     if (changed) [SeafUploadFile saveAttrs];
     return files;
+}
+
+- (BOOL)waitUpload {
+    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
+    return self.uploaded;
 }
 
 @end

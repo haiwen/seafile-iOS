@@ -18,8 +18,8 @@
 @class SeafDir;
 
 @protocol SeafUploadDelegate <NSObject>
-- (void)uploadProgress:(SeafUploadFile *)file result:(BOOL)res progress:(int)percent;
-- (void)uploadSucess:(SeafUploadFile *)file oid:(NSString *)oid;
+- (void)uploadProgress:(SeafUploadFile *)file progress:(int)percent;
+- (void)uploadComplete:(BOOL)success file:(SeafUploadFile *)file oid:(NSString *)oid;
 @end
 
 
@@ -57,5 +57,8 @@
 + (NSMutableArray *)uploadFilesForDir:(SeafDir *)dir;
 + (BOOL)saveAttrs;
 + (void)clearCache;
+
+- (BOOL)waitUpload;
+
 
 @end

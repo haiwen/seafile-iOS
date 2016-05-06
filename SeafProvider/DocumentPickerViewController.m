@@ -11,6 +11,7 @@
 #import "SeafConnection.h"
 #import "SeafAccountCell.h"
 #import "SeafGlobal.h"
+#import "Utils.h"
 #import "Debug.h"
 
 
@@ -79,7 +80,7 @@
     SeafProviderFileViewController *controller = [[UIStoryboard storyboardWithName:@"SeafProviderFileViewController" bundle:nil] instantiateViewControllerWithIdentifier:@"SeafProviderFileViewController"];
     controller.directory = dir;
     controller.root = self;
-    controller.view.frame = CGRectMake(self.view.frame.size.width, self.view.frame.origin.y, self.view.frame.size.width, self.view.frame.size.height);
+    controller.view.frame = CGRectMake(self.view.frame.size.width, self.view.frame.origin.y, self.view.frame.size.width, self.view.frame.size.height-44);
     @synchronized (self) {
         if (self.childViewControllers.count > 0)
             return;
@@ -88,7 +89,7 @@
     [controller didMoveToParentViewController:self];
     [self.view addSubview:controller.view];
     [UIView animateWithDuration:0.5f delay:0.f options:0 animations:^{
-        controller.view.frame = self.view.frame;
+        controller.view.frame = CGRectMake(self.view.frame.origin.x, self.view.frame.origin.y, self.view.frame.size.width, self.view.frame.size.height-44);
     } completion:^(BOOL finished) {
     }];
 }

@@ -53,4 +53,5 @@
 
 - (void)setThumbCompleteBlock:(nullable void (^)(BOOL ret))block;
 - (void)downloadThumb;
+- (BOOL)waitUpload;
 @end

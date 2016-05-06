@@ -10,10 +10,11 @@
 #import "FileProvider.h"
 #import "SeafGlobal.h"
 #import "SeafFile.h"
+#import "SeafDir.h"
+#import "ExtentedString.h"
 #import "Debug.h"
 
 @interface FileProvider ()
-
 @end
 
 @implementation FileProvider
@@ -90,8 +91,24 @@
         return;
     SeafConnection *conn = [SeafGlobal.sharedObject getConnection:connUrl username:username];
     if (!conn) return;
-    SeafFile *file = [[SeafFile alloc] initWithConnection:conn oid:[dict objectForKey:@"id"] repoId:repoId name:path.lastPathComponent path:path mtime:[[dict objectForKey:@"mtime"] integerValue:0] size:[[dict objectForKey:@"size"] integerValue:0]];
-    [file itemChangedAtURL:url];
+    
+    NSString *oid = [dict objectForKey:@"id"];
+    if (oid) {
+        SeafFile *file = [[SeafFile alloc] initWithConnection:conn oid:oid repoId:repoId name:path.lastPathComponent path:path mtime:[[dict objectForKey:@"mtime"] integerValue:0] size:[[dict objectForKey:@"size"] integerValue:0]];
+        [file itemChangedAtURL:url];
+        [file waitUpload];
+    } else {
+        BOOL overwrite = [[dict objectForKey:@"overwrite"] booleanValue:false];
+        SeafUploadFile *ufile = [conn getUploadfile:url.path create:true];
+        ufile.overwrite = overwrite;
+        SeafDir *dir = [[SeafDir alloc] initWithConnection:conn oid:nil repoId:repoId name:path.lastPathComponent path:path];
+        [dir addUploadFile:ufile flush:true];
+        Debug("Upload %@(%lld) to %@ %@", ufile.lpath, [Utils fileSizeAtPath1:ufile.lpath], dir.repoId, dir.path);
+        [ufile doUpload];
+        [ufile waitUpload];
+    }
+    [SeafGlobal.sharedObject removeObjectForKey:key];
+    [SeafGlobal.sharedObject synchronize];
 }
 
 - (void)stopProvidingItemAtURL:(NSURL *)url {

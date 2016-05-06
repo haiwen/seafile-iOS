@@ -175,10 +175,10 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         }
         [Utils checkMakeDir:_localUploadDir];
     }
-   
+
     return _localUploadDir;
 }
- 
+
 - (void)saveSettings
 {
     [SeafGlobal.sharedObject setObject:_settings forKey:[NSString stringWithFormat:@"%@/%@/settings", _address, self.username]];

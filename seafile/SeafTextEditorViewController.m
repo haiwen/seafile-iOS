@@ -107,7 +107,7 @@
     NSDictionary *info = [aNotification userInfo];
     CGSize kbSize = [info[UIKeyboardFrameBeginUserInfoKey] CGRectValue].size;
     UIEdgeInsets contentInsets = UIEdgeInsetsMake(0.0, 0.0, kbSize.height, 0.0);
-    
+
     self.textView.contentInset = contentInsets;
     self.textView.scrollIndicatorInsets = contentInsets;
 }
