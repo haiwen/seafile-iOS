@@ -314,6 +314,11 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         return __persistentStoreCoordinator;
     }
     NSURL *storeURL = [[self applicationDocumentsDirectoryURL] URLByAppendingPathComponent:@"seafile_pro.sqlite"];
+    Debug("storeURL: %@", storeURL);
+    if (!storeURL) {
+        Warning("nil store URL");
+        return nil;
+    }
 
     NSError *error = nil;
     __persistentStoreCoordinator = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:[self managedObjectModel]];
@@ -344,8 +349,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         [[NSFileManager defaultManager] removeItemAtURL:storeURL error:nil];
 
         if (![__persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:storeURL options:nil error:&error]) {
-            NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
-            abort();
+            Warning("Unresolved error %@, %@", error, [error userInfo]);
         }
     }
 
