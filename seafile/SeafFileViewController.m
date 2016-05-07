@@ -6,6 +6,7 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 #import <MWPhotoBrowser.h>
+#import <UIScrollView+SVPullToRefresh.h>
 
 #import "SeafAppDelegate.h"
 #import "SeafFileViewController.h"
@@ -42,7 +43,7 @@ enum {
 };
 
 
-@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, EGORefreshTableHeaderDelegate, SeafDirDelegate, SeafShareDelegate, SeafRepoPasswordDelegate, UISearchBarDelegate, UISearchDisplayDelegate, UIActionSheetDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate, MWPhotoBrowserDelegate>
+@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, SeafDirDelegate, SeafShareDelegate, SeafRepoPasswordDelegate, UISearchBarDelegate, UISearchDisplayDelegate, UIActionSheetDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate, MWPhotoBrowserDelegate>
 - (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView;
@@ -57,8 +58,6 @@ enum {
 @property (strong) UIBarButtonItem *doneItem;
 @property (strong) UIBarButtonItem *editItem;
 @property (strong) NSArray *rightItems;
-
-@property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
 
 @property (retain) SWTableViewCell *selectedCell;
 @property (retain) NSIndexPath *selectedindex;
@@ -173,12 +172,7 @@ enum {
     self.formatter = [[NSDateFormatter alloc] init];
     [self.formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
     self.tableView.rowHeight = 50;
-
     self.state = STATE_INIT;
-    _refreshHeaderView = [[EGORefreshTableHeaderView alloc] initWithFrame:CGRectMake(0.0f, 0.0f - self.tableView.bounds.size.height, self.view.frame.size.width, self.tableView.bounds.size.height)];
-    _refreshHeaderView.delegate = self;
-    [_refreshHeaderView refreshLastUpdatedDate];
-    [self.tableView addSubview:_refreshHeaderView];
 
     self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectZero];
     self.searchBar.searchTextPositionAdjustment = UIOffsetMake(0, 0);
@@ -195,6 +189,20 @@ enum {
 
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     [self.navigationController setToolbarHidden:YES animated:NO];
+
+    __weak typeof(self) weakSelf = self;
+    [self.tableView addPullToRefreshWithActionHandler:^{
+        if (weakSelf.searchDisplayController.active)
+            return;
+        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+        if (![appdelegate checkNetworkStatus]) {
+            [weakSelf performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
+            return;
+        }
+
+        weakSelf.directory.delegate = weakSelf;
+        [weakSelf.directory loadContent:YES];
+    }];
     [self refreshView];
 }
 
@@ -279,7 +287,6 @@ enum {
 {
     [super viewDidUnload];
     [self setLoadingView:nil];
-    _refreshHeaderView = nil;
     _directory = nil;
     _curEntry = nil;
 }
@@ -1107,50 +1114,10 @@ enum {
 
 - (void)doneLoadingTableViewData
 {
-    [_refreshHeaderView egoRefreshScrollViewDataSourceDidFinishedLoading:self.tableView];
-}
-
-#pragma mark - mark UIScrollViewDelegate Methods
-- (void)scrollViewDidScroll:(UIScrollView *)scrollView
-{
-    if (!self.searchDisplayController.active)
-        [_refreshHeaderView egoRefreshScrollViewDidScroll:scrollView];
-}
-
-- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
-{
-    if (!self.searchDisplayController.active)
-        [_refreshHeaderView egoRefreshScrollViewDidEndDragging:scrollView];
-}
-
-#pragma mark - EGORefreshTableHeaderDelegate Methods
-- (void)egoRefreshTableHeaderDidTriggerRefresh:(EGORefreshTableHeaderView*)view
-{
-    if (self.searchDisplayController.active)
-        return;
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    if (![appdelegate checkNetworkStatus]) {
-        [self performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
-        return;
-    }
-
-    _directory.delegate = self;
-    [_directory loadContent:YES];
-}
-
-- (BOOL)egoRefreshTableHeaderDataSourceIsLoading:(EGORefreshTableHeaderView*)view
-{
-    return [_directory state] == SEAF_DENTRY_LOADING;
-}
-
-- (NSDate*)egoRefreshTableHeaderDataSourceLastUpdated:(EGORefreshTableHeaderView*)view
-{
-    return [NSDate date];
+    [self.tableView.pullToRefreshView stopAnimating];
 }
 
 #pragma mark - edit files
-
-
 - (void)editOperation:(id)sender
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];

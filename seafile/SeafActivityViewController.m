@@ -7,7 +7,6 @@
 //
 
 #import <UIScrollView+SVPullToRefresh.h>
-#import <UIScrollView+SVInfiniteScrolling.h>
 
 #import "SeafActivityViewController.h"
 #import "SeafAppDelegate.h"
@@ -212,7 +211,7 @@ enum {
     NSString *repoId = [event objectForKey:@"repo_id"];
     NSString *commitId = [event objectForKey:@"commit_id"];
     NSString *url = [NSString stringWithFormat:API_URL"/repo_history_changes/%@/?commit_id=%@", repoId, commitId];
-    
+
     NSDictionary *detail = [_eventDetails objectForKey:url];
     if (detail)
         return [self showEvent:event detail:detail];
@@ -228,7 +227,7 @@ enum {
 }
 
 - (void)openFile:(NSString *)path inRepo:(NSString *)repoId {
-    
+
 }
 
 - (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType

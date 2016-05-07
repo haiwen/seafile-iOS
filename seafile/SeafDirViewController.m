@@ -5,6 +5,7 @@
 //  Created by Wang Wei on 10/20/12.
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
+#import <UIScrollView+SVPullToRefresh.h>
 
 #import "SeafDirViewController.h"
 #import "SeafAppDelegate.h"
@@ -17,14 +18,12 @@
 
 #define TITLE_PASSWORD @"Password of this library"
 
-@interface SeafDirViewController ()<SeafDentryDelegate, SeafRepoPasswordDelegate, EGORefreshTableHeaderDelegate, UIScrollViewDelegate>
+@interface SeafDirViewController ()<SeafDentryDelegate, SeafRepoPasswordDelegate>
 @property (strong) SeafDir *curDir;
 @property (strong) UIBarButtonItem *chooseItem;
 @property (strong, readonly) SeafDir *directory;
 @property (strong) id<SeafDirDelegate> delegate;
 @property (readwrite) BOOL chooseRepo;
-
-@property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
 
 @end
 
@@ -76,13 +75,17 @@
     [self setToolbarItems:items];
     self.title = _directory.name;
 
-    if (_refreshHeaderView == nil) {
-        EGORefreshTableHeaderView *view = [[EGORefreshTableHeaderView alloc] initWithFrame:CGRectMake(0.0f, 0.0f - self.tableView.bounds.size.height, self.view.frame.size.width, self.tableView.bounds.size.height)];
-        view.delegate = self;
-        [self.tableView addSubview:view];
-        _refreshHeaderView = view;
-    }
-    [_refreshHeaderView refreshLastUpdatedDate];
+    __weak typeof(self) weakSelf = self;
+    [self.tableView addPullToRefreshWithActionHandler:^{
+        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+        if (![appdelegate checkNetworkStatus]) {
+            [weakSelf performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
+            return;
+        }
+
+        weakSelf.directory.delegate = weakSelf;
+        [weakSelf.directory loadContent:YES];
+    }];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -239,41 +242,6 @@
 
 - (void)doneLoadingTableViewData
 {
-    [_refreshHeaderView egoRefreshScrollViewDataSourceDidFinishedLoading:self.tableView];
+    [self.tableView.pullToRefreshView stopAnimating];
 }
-
-#pragma mark - mark UIScrollViewDelegate Methods
-- (void)scrollViewDidScroll:(UIScrollView *)scrollView
-{
-    [_refreshHeaderView egoRefreshScrollViewDidScroll:scrollView];
-}
-
-- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
-{
-    [_refreshHeaderView egoRefreshScrollViewDidEndDragging:scrollView];
-}
-
-#pragma mark - EGORefreshTableHeaderDelegate Methods
-- (void)egoRefreshTableHeaderDidTriggerRefresh:(EGORefreshTableHeaderView*)view
-{
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    if (![appdelegate checkNetworkStatus]) {
-        [self performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
-        return;
-    }
-
-    _directory.delegate = self;
-    [_directory loadContent:YES];
-}
-
-- (BOOL)egoRefreshTableHeaderDataSourceIsLoading:(EGORefreshTableHeaderView*)view
-{
-    return NO;
-}
-
-- (NSDate*)egoRefreshTableHeaderDataSourceLastUpdated:(EGORefreshTableHeaderView*)view
-{
-    return [NSDate date];
-}
-
 @end

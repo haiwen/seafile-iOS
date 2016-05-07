@@ -47,7 +47,6 @@ enum {
 
 #import <CoreData/CoreData.h>
 
-#import "EGORefreshTableHeaderView.h"
 #import "SeafDir.h"
 #import "SeafFile.h"
 

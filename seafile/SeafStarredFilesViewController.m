@@ -6,6 +6,8 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
+#import <UIScrollView+SVPullToRefresh.h>
+
 #import "SeafAppDelegate.h"
 #import "SeafStarredFilesViewController.h"
 #import "SeafDetailViewController.h"
@@ -15,18 +17,16 @@
 #import "SeafCell.h"
 
 #import "UIViewController+Extend.h"
-#import "EGORefreshTableHeaderView.h"
 #import "SVProgressHUD.h"
 #import "SeafData.h"
 #import "Utils.h"
 #import "Debug.h"
 
-@interface SeafStarredFilesViewController ()<EGORefreshTableHeaderDelegate, SWTableViewCellDelegate, UIScrollViewDelegate>
+@interface SeafStarredFilesViewController ()<SWTableViewCellDelegate>
 @property NSMutableArray *starredFiles;
 @property (readonly) SeafDetailViewController *detailViewController;
 @property (retain) NSIndexPath *selectedindex;
 
-@property (readonly) EGORefreshTableHeaderView* refreshHeaderView;
 @property (retain)id lock;
 @end
 
@@ -34,7 +34,6 @@
 @synthesize connection = _connection;
 @synthesize starredFiles = _starredFiles;
 @synthesize selectedindex = _selectedindex;
-@synthesize refreshHeaderView = _refreshHeaderView;
 
 - (id)initWithStyle:(UITableViewStyle)style
 {
@@ -56,8 +55,8 @@
     [_connection getStarredFiles:^(NSHTTPURLResponse *response, id JSON) {
         @synchronized(self) {
             Debug("Success to get starred files ...\n");
-            [self doneLoadingTableViewData];
             [self handleData:JSON];
+            [self.tableView.pullToRefreshView stopAnimating];
             [self.tableView reloadData];
         }
     }
@@ -65,7 +64,7 @@
                              Warning("Failed to get starred files ...\n");
                              if (self.isVisible)
                                  [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get starred files", @"Seafile")];
-                             [self doneLoadingTableViewData];
+                             [self.tableView.pullToRefreshView stopAnimating];
                          }];
 }
 - (void)viewDidLoad
@@ -79,14 +78,17 @@
     if ([self.tableView respondsToSelector:@selector(setSeparatorInset:)])
         [self.tableView setSeparatorInset:UIEdgeInsetsMake(0, 0, 0, 0)];
     self.tableView.rowHeight = 50;
-    if (_refreshHeaderView == nil) {
-        EGORefreshTableHeaderView *view = [[EGORefreshTableHeaderView alloc] initWithFrame:CGRectMake(0.0f, 0.0f - self.tableView.bounds.size.height, self.view.frame.size.width, self.tableView.bounds.size.height)];
-        view.delegate = self;
-        [self.tableView addSubview:view];
-        _refreshHeaderView = view;
-    }
-    [_refreshHeaderView refreshLastUpdatedDate];
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
+
+    __weak typeof(self) weakSelf = self;
+    [self.tableView addPullToRefreshWithActionHandler:^{
+        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+        if (![appdelegate checkNetworkStatus]) {
+            [weakSelf.tableView.pullToRefreshView stopAnimating];
+        } else {
+            [weakSelf refresh:nil];
+        }
+    }];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -298,43 +300,6 @@
 {
     if (!res) [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to upload file", @"Seafile")];
     [self refreshView];
-}
-
-- (void)doneLoadingTableViewData
-{
-    [_refreshHeaderView egoRefreshScrollViewDataSourceDidFinishedLoading:self.tableView];
-}
-
-#pragma mark - mark UIScrollViewDelegate Methods
-- (void)scrollViewDidScroll:(UIScrollView *)scrollView
-{
-    [_refreshHeaderView egoRefreshScrollViewDidScroll:scrollView];
-}
-
-- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
-{
-    [_refreshHeaderView egoRefreshScrollViewDidEndDragging:scrollView];
-}
-
-#pragma mark - EGORefreshTableHeaderDelegate Methods
-- (void)egoRefreshTableHeaderDidTriggerRefresh:(EGORefreshTableHeaderView*)view
-{
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    if (![appdelegate checkNetworkStatus]) {
-        return [self performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
-    }
-
-    [self refresh:nil];
-}
-
-- (BOOL)egoRefreshTableHeaderDataSourceIsLoading:(EGORefreshTableHeaderView*)view
-{
-    return NO;
-}
-
-- (NSDate*)egoRefreshTableHeaderDataSourceLastUpdated:(EGORefreshTableHeaderView*)view
-{
-    return [NSDate date];
 }
 
 #pragma mark - SWTableViewCellDelegate
