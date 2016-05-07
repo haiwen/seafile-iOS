@@ -95,7 +95,7 @@ enum {
         [self dismissLoadingView];
         [self.tableView.pullToRefreshView stopAnimating];
         if (self.isVisible)
-            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get events", @"Seafile")];
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load activities", @"Seafile")];
     }];
 }
 
