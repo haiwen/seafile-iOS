@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "SeafRepos.h"
 
 @interface UIViewController (Extend)<UIAlertViewDelegate>
 @property void (^handler_ok)();
@@ -30,5 +31,7 @@
 - (UIBarButtonItem *)getSpaceBarItem:(float)width;
 
 - (BOOL)isVisible;
+
+- (void)popupSetRepoPassword:(SeafRepo *)repo handler:(void (^)())handler;
 
 @end

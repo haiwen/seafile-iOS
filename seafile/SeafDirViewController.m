@@ -18,7 +18,7 @@
 
 #define TITLE_PASSWORD @"Password of this library"
 
-@interface SeafDirViewController ()<SeafDentryDelegate, SeafRepoPasswordDelegate>
+@interface SeafDirViewController ()<SeafDentryDelegate>
 @property (strong) SeafDir *curDir;
 @property (strong) UIBarButtonItem *chooseItem;
 @property (strong, readonly) SeafDir *directory;
@@ -180,22 +180,10 @@
 
 - (void)popupSetRepoPassword:(SeafRepo *)repo
 {
-    [self popupInputView:NSLocalizedString(@"Password of this library", @"Seafile") placeholder:nil secure:true handler:^(NSString *input) {
-        if (!input || input.length == 0) {
-            [self alertWithTitle:NSLocalizedString(@"Password must not be empty", @"Seafile")handler:^{
-                [self popupSetRepoPassword:repo];
-            }];
-            return;
-        }
-        if (input.length < 3 || input.length  > 100) {
-            [self alertWithTitle:NSLocalizedString(@"The length of password should be between 3 and 100", @"Seafile") handler:^{
-                [self popupSetRepoPassword:repo];
-            }];
-            return;
-        }
-        [SVProgressHUD showWithStatus:NSLocalizedString(@"Checking library password ...", @"Seafile")];
-        [repo setDelegate:self];
-        [repo checkOrSetRepoPassword:input delegate:self];
+    [self popupSetRepoPassword:repo handler:^{
+        [SVProgressHUD dismiss];
+        SeafDirViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:repo delegate:self.delegate chooseRepo:false];
+        [self.navigationController pushViewController:controller animated:YES];
     }];
 }
 
@@ -221,18 +209,6 @@
     [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load content of the directory", @"Seafile")];
     [self.tableView reloadData];
     Warning("Failed to load directory content %@\n", _directory.name);
-}
-
-- (void)entry:(SeafBase *)entry repoPasswordSet:(int)ret
-{
-    if (ret == RET_SUCCESS) {
-        [SVProgressHUD dismiss];
-        SeafDirViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:_curDir delegate:self.delegate chooseRepo:false];
-        [self.navigationController pushViewController:controller animated:YES];
-    } else {
-        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Wrong library password", @"Seafile")];
-        [self performSelector:@selector(popupSetRepoPassword:) withObject:entry afterDelay:1.0];
-    }
 }
 
 - (void)viewDidUnload

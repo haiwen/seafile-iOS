@@ -7,6 +7,7 @@
 //
 
 #import <objc/runtime.h>
+#import <SVProgressHUD.h>
 #import "UIViewController+Extend.h"
 #import "Utils.h"
 #import "Debug.h"
@@ -171,6 +172,36 @@ ADD_DYNAMIC_PROPERTY(void (^)(NSString *),handler_input,setHandler_input);
         if (self.handler_cancel)
             self.handler_cancel();
     }
+}
+
+- (void)popupSetRepoPassword:(SeafRepo *)repo handler:(void (^)())handler
+{
+    [self popupInputView:NSLocalizedString(@"Password of this library", @"Seafile") placeholder:nil secure:true handler:^(NSString *input) {
+        if (!input || input.length == 0) {
+            [self alertWithTitle:NSLocalizedString(@"Password must not be empty", @"Seafile")handler:^{
+                [self popupSetRepoPassword:repo handler:handler];
+            }];
+            return;
+        }
+        if (input.length < 3 || input.length  > 100) {
+            [self alertWithTitle:NSLocalizedString(@"The length of password should be between 3 and 100", @"Seafile") handler:^{
+                [self popupSetRepoPassword:repo handler:handler];
+            }];
+            return;
+        }
+        [SVProgressHUD showWithStatus:NSLocalizedString(@"Checking library password ...", @"Seafile")];
+        [repo checkOrSetRepoPassword:input block:^(SeafBase *entry, int ret) {
+            if (ret == RET_SUCCESS) {
+                [SVProgressHUD dismiss];
+                handler();
+            } else {
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Wrong library password", @"Seafile")];
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    [self popupSetRepoPassword:repo handler:handler];
+                });
+            }
+        }];
+    }];
 }
 
 @end

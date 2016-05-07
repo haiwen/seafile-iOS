@@ -13,18 +13,16 @@
 #import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
 #import "SeafEventCell.h"
+#import "SeafRepos.h"
+#import "SeafBase.h"
+
 #import "SeafDateFormatter.h"
 #import "ExtentedString.h"
 #import "Debug.h"
 
-enum {
-    ACTIVITY_INIT = 0,
-    ACTIVITY_START,
-    ACTIVITY_END,
-};
+typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 
 @interface SeafActivityViewController ()
-@property int state;
 @property (strong, nonatomic) IBOutlet UIActivityIndicatorView *loadingView;
 @property (strong) NSArray *events;
 @property BOOL eventsMore;
@@ -110,12 +108,12 @@ enum {
     if (IsIpad())
         [self.navigationController popToRootViewControllerAnimated:NO];
 
-    self.state = ACTIVITY_INIT;
     if (_connection != connection) {
         _connection = connection;
         _events = nil;
         self.eventsMore = true;
         self.eventsOffset = 0;
+        self.tableView.showsPullToRefresh = true;
         _eventDetails = [NSMutableDictionary new];
         [self.tableView reloadData];
     }
@@ -195,16 +193,84 @@ enum {
 }
 
 #pragma mark - Table view delegate
-- (void)showEvent:(NSDictionary *)event detail:(NSDictionary *)detail {
-    Debug(".... event%@, detail:%@", event, detail);
+- (void)addEvents:(NSString *)repoId prefix: (NSString *)prefix array:(NSArray *)arr toAlert:(UIAlertController *)alert handler:(void (^)(NSString *repoId, NSString *path))handler
+{
+    for (NSString *name in arr) {
+        NSString *message = [NSString stringWithFormat:@"%@ '%@'", prefix, name];
+        UIAlertAction *action = [UIAlertAction actionWithTitle:message style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            handler(repoId, name);
+        }];
+        [alert addAction:action];
+    }
 }
 
+- (void)eventRenamed:(NSString *)repoId prefix:(NSString *)prefix array:(NSArray *)arr toAlert:(UIAlertController *)alert
+{
+    for (int i = 0; i < arr.count-1; i += 2) {
+        NSString *from = [arr objectAtIndex:i];
+        NSString *to = [arr objectAtIndex:i+1];
+
+        NSString *message = [NSString stringWithFormat:@"%@ %@ ==> %@", prefix, from, to];
+        UIAlertAction *action = [UIAlertAction actionWithTitle:message style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [self openFile:to inRepo:repoId];
+        }];
+        [alert addAction:action];
+    }
+}
+
+- (UIAlertController *)generateAction:(NSString *)repoId detail:(NSDictionary *)detail withTitle:(NSString *)title
+{
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+
+    ModificationHandler openHandler = ^(NSString *repoId, NSString *path) {
+        [self openFile:path inRepo:repoId];
+    };
+    ModificationHandler emptyHandler = ^(NSString *repoId, NSString *path) {};
+    NSString *s1 = NSLocalizedString(@"New file", @"Seafile");
+    NSString *s2 = NSLocalizedString(@"New directory", @"Seafile");
+    NSString *s3 = NSLocalizedString(@"Modified file", @"Seafile");
+    NSString *s4 = NSLocalizedString(@"Renamed", @"Seafile");
+    NSString *s5 = NSLocalizedString(@"Deleted file", @"Seafile");
+    NSString *s6 = NSLocalizedString(@"Deleted directory", @"Seafile");
+    [self addEvents:repoId prefix:s1 array:[detail objectForKey:@"added_files"] toAlert:alert handler:openHandler];
+    [self addEvents:repoId prefix:s2 array:[detail objectForKey:@"added_dirs"] toAlert:alert handler:emptyHandler];
+    [self addEvents:repoId prefix:s3 array:[detail objectForKey:@"modified_files"] toAlert:alert handler:openHandler];
+    [self eventRenamed:repoId prefix:s4 array:[detail objectForKey:@"renamed_files"] toAlert:alert];
+    [self addEvents:repoId prefix:s5 array:[detail objectForKey:@"deleted_files"] toAlert:alert handler:emptyHandler];
+    [self addEvents:repoId prefix:s6 array:[detail objectForKey:@"deleted_dirs"] toAlert:alert handler:emptyHandler];
+
+    if (!IsIpad()){
+        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        }];
+        [alert addAction:cancelAction];
+    }
+    return alert;
+}
+
+- (void)showEvent:(NSString *)repoId detail:(NSDictionary *)detail fromCell:(UITableViewCell *)cell
+{
+    Debug(".... repo: %@, detail:%@", repoId, detail);
+    NSString *title = NSLocalizedString(@"Modification Details", @"Seafile");
+    UIAlertController *alert = [self generateAction:repoId detail:detail withTitle:title];
+    alert.popoverPresentationController.sourceView = self.view;
+    alert.popoverPresentationController.sourceRect = cell.frame;
+    [self presentViewController:alert animated:true completion:nil];
+}
+
+- (void)getCommitModificationDetail:(NSString *)repoId url:(NSString *)url fromCell:(UITableViewCell *)cell
+{
+    [_connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        Debug("Success to get event: %@", JSON);
+        NSDictionary *detail = (NSDictionary *)JSON;
+        [_eventDetails setObject:detail forKey:url];
+        [self showEvent:repoId detail:detail fromCell:cell];
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
+        Warning("Failed to get commit detail.");
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get modification details", @"Seafile")];
+    }];
+}
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    Debug("...index: %d %d", indexPath.section, indexPath.row);
-    if (indexPath.section == 1) {
-        return [self moreEvents:_eventsOffset];
-    }
     if (indexPath.row >= _events.count)
         return;
     NSDictionary *event = [_events objectAtIndex:indexPath.row];
@@ -212,64 +278,39 @@ enum {
     NSString *commitId = [event objectForKey:@"commit_id"];
     NSString *url = [NSString stringWithFormat:API_URL"/repo_history_changes/%@/?commit_id=%@", repoId, commitId];
 
+    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
     NSDictionary *detail = [_eventDetails objectForKey:url];
     if (detail)
-        return [self showEvent:event detail:detail];
+        return [self showEvent:repoId detail:detail fromCell:cell];
 
-    [_connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-        Debug("Success to get event: %@", JSON);
-        NSDictionary *detail = (NSDictionary *)JSON;
-        [_eventDetails setObject:detail forKey:url];
-        [self showEvent:event detail:detail];
-    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
-        Warning("Failed to get commit detail.");
-    }];
+    SeafRepo *repo = [_connection getRepo:repoId];
+    if (!repo) return;
+    if (repo.passwordRequired) {
+        [self popupSetRepoPassword:repo handler:^{
+            [self getCommitModificationDetail:repoId url:url fromCell:cell];
+        }];
+    } else
+        [self getCommitModificationDetail:repoId url:url fromCell:cell];
 }
 
-- (void)openFile:(NSString *)path inRepo:(NSString *)repoId {
-
-}
-
-- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
+- (void)openFile:(NSString *)path inRepo:(NSString *)repoId
 {
-    Debug("Request %@\n", request.URL);
-    NSString *urlStr = request.URL.absoluteString;
-    if ([urlStr hasPrefix:@"api://"]) {
-        if (self.navigationController.viewControllers.count != 1) return NO;
-        NSString *path = @"/";
-        NSRange range;
-        NSRange foundRange = [urlStr rangeOfString:@"/repo/" options:NSCaseInsensitiveSearch];
-        if (foundRange.location == NSNotFound)
-            return NO;
-        range.location = foundRange.location + foundRange.length;
-        range.length = 36;
-        NSString *repo_id = [urlStr substringWithRange:range];
+    Debug("open file %@ in repo %@", path, repoId);
+    SeafFile *sfile = [[SeafFile alloc] initWithConnection:self.connection oid:nil repoId:repoId name:path.lastPathComponent path:path mtime:0 size:0];
+    SeafDetailViewController *detailvc;
+    if (IsIpad()) {
+        detailvc = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
+    } else {
+        detailvc = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
+    }
 
-        foundRange = [urlStr rangeOfString:@"files/?p=" options:NSCaseInsensitiveSearch];
-        if (foundRange.location != NSNotFound) {
-            path = [urlStr substringFromIndex:(foundRange.location+foundRange.length)];
-        }
-        path = [path stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-        Debug("repo=%@, path=%@\n", repo_id, path);
-        if (path.length <= 1) return NO;
-
-        SeafFile *sfile = [[SeafFile alloc] initWithConnection:self.connection oid:nil repoId:repo_id name:path.lastPathComponent path:path mtime:0 size:0];
-        SeafDetailViewController *detailvc;
-        if (IsIpad()) {
-            detailvc = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
-        } else {
-            detailvc = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
-        }
-
-        @synchronized(self.navigationController) {
-            if (self.navigationController.viewControllers.count == 1) {
-                [self.navigationController pushViewController:detailvc animated:YES];
-                sfile.delegate = detailvc;
-                [detailvc setPreViewItem:sfile master:nil];
-            }
+    @synchronized(self.navigationController) {
+        if (self.navigationController.viewControllers.count == 1) {
+            [self.navigationController pushViewController:detailvc animated:YES];
+            sfile.delegate = detailvc;
+            [detailvc setPreViewItem:sfile master:nil];
         }
     }
-    return NO;
 }
 
 @end

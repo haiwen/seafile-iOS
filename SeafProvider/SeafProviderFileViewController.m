@@ -15,7 +15,7 @@
 #import "Utils.h"
 #import "Debug.h"
 
-@interface SeafProviderFileViewController ()<SeafDentryDelegate, SeafUploadDelegate,SeafRepoPasswordDelegate, UIScrollViewDelegate>
+@interface SeafProviderFileViewController ()<SeafDentryDelegate, SeafUploadDelegate, UIScrollViewDelegate>
 @property (strong, nonatomic) IBOutlet UIButton *chooseButton;
 @property (strong, nonatomic) IBOutlet UIButton *backButton;
 @property (strong, nonatomic) IBOutlet UILabel *titleLabel;
@@ -245,7 +245,13 @@
             return;
         }
         [repo setDelegate:self];
-        [repo checkOrSetRepoPassword:input delegate:self];
+        [repo checkOrSetRepoPassword:input block:^(SeafBase *entry, int ret) {
+            if (ret == RET_SUCCESS) {
+                [self pushViewControllerDir:(SeafDir *)entry];
+            } else {
+                [self performSelector:@selector(popupSetRepoPassword:) withObject:entry afterDelay:1.0];
+            }
+        }];
     } from:self];
 }
 
@@ -462,15 +468,6 @@
             [self alertWithTitle:msg handler:nil];
         }];
     });
-}
-
-- (void)entry:(SeafBase *)entry repoPasswordSet:(int)ret
-{
-    if (ret == RET_SUCCESS) {
-        [self pushViewControllerDir:(SeafDir *)entry];
-    } else {
-        [self performSelector:@selector(popupSetRepoPassword:) withObject:entry afterDelay:1.0];
-    }
 }
 
 #pragma mark - SeafUploadDelegate

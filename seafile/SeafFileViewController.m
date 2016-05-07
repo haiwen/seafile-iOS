@@ -43,7 +43,7 @@ enum {
 };
 
 
-@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, SeafDirDelegate, SeafShareDelegate, SeafRepoPasswordDelegate, UISearchBarDelegate, UISearchDisplayDelegate, UIActionSheetDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate, MWPhotoBrowserDelegate>
+@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, SeafDirDelegate, SeafShareDelegate, UISearchBarDelegate, UISearchDisplayDelegate, UIActionSheetDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate, MWPhotoBrowserDelegate>
 - (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView;
@@ -793,24 +793,13 @@ enum {
 
 - (void)popupSetRepoPassword:(SeafRepo *)repo
 {
-    [repo setDelegate:self];
     self.state = STATE_PASSWORD;
-    [self popupInputView:NSLocalizedString(@"Password of this library", @"Seafile") placeholder:nil secure:true handler:^(NSString *input) {
-        if (!input || input.length == 0) {
-            [self alertWithTitle:NSLocalizedString(@"Password must not be empty", @"Seafile")handler:^{
-                [self popupSetRepoPassword:repo];
-            }];
-            return;
-        }
-        if (input.length < 3 || input.length  > 100) {
-            [self alertWithTitle:NSLocalizedString(@"The length of password should be between 3 and 100", @"Seafile") handler:^{
-                [self popupSetRepoPassword:repo];
-            }];
-            return;
-        }
-        [SVProgressHUD showWithStatus:NSLocalizedString(@"Checking library password ...", @"Seafile")];
-        [repo setDelegate:self];
-        [repo checkOrSetRepoPassword:input delegate:self];
+    [self popupSetRepoPassword:repo handler:^{
+            [SVProgressHUD dismiss];
+            self.state = STATE_INIT;
+            SeafFileViewController *controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
+            [self.navigationController pushViewController:controller animated:YES];
+            [controller setDirectory:(SeafDir *)repo];
     }];
 }
 
@@ -1092,23 +1081,6 @@ enum {
         }
         self.state = STATE_INIT;
         [self dismissLoadingView];
-    }
-}
-
-- (void)entry:(SeafBase *)entry repoPasswordSet:(int)ret;
-{
-    if (entry != _curEntry)  return;
-
-    NSAssert([entry isKindOfClass:[SeafRepo class]], @"entry must be a repo\n");
-    if (ret == RET_SUCCESS) {
-        [SVProgressHUD dismiss];
-        self.state = STATE_INIT;
-        SeafFileViewController *controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
-        [self.navigationController pushViewController:controller animated:YES];
-        [controller setDirectory:(SeafDir *)entry];
-    } else {
-        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Wrong library password", @"Seafile")];
-        [self performSelector:@selector(popupSetRepoPassword:) withObject:entry afterDelay:1.0];
     }
 }
 
