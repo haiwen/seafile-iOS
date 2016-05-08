@@ -31,6 +31,10 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 
 @property NSMutableDictionary *eventDetails;
 @property UIImage *defaultAccountImage;
+@property NSDictionary *opsMap;
+@property NSDictionary *prefixMap;
+@property NSDictionary *typesMap;
+
 @end
 
 @implementation SeafActivityViewController
@@ -42,7 +46,6 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     [self showLoadingView];
     [self moreEvents:0];
 }
-
 
 - (void)viewDidLoad
 {
@@ -61,6 +64,49 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     _eventDetails = [NSMutableDictionary new];
     _defaultAccountImage = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"account" ofType:@"png"]];
 
+    NSArray *keys = [NSArray arrayWithObjects:
+                     @"Added",
+                     @"Added directory",
+                     @"Added or modified",
+                     @"Deleted", @"Modified",
+                     @"Moved",
+                     @"Moved directory",
+                     @"Removed",
+                     @"Removed directory",
+                     @"Renamed",
+                     @"Renamed directory",
+                     nil];
+    NSArray *values = [NSArray arrayWithObjects:
+                       NSLocalizedString(@"Added", @"Seafile"),
+                       NSLocalizedString(@"Added directory", @"Seafile"),
+                       NSLocalizedString(@"Added or modified", @"Seafile"),
+                       NSLocalizedString(@"Deleted", @"Seafile"),
+                       NSLocalizedString(@"Modified", @"Seafile"),
+                       NSLocalizedString(@"Moved", @"Seafile"),
+                       NSLocalizedString(@"Moved directory", @"Seafile"),
+                       NSLocalizedString(@"Removed", @"Seafile"),
+                       NSLocalizedString(@"Removed directory", @"Seafile"),
+                       NSLocalizedString(@"Renamed", @"Seafile"),
+                       NSLocalizedString(@"Renamed directory", @"Seafile"),
+                       nil];
+
+    self.opsMap = [NSDictionary dictionaryWithObjects:values forKeys:keys];
+
+    NSArray *keys2 = [NSArray arrayWithObjects:
+                      @"Reverted library to status at",
+                      @"Recovered deleted directory",
+                      @"Changed library name or description",
+                      nil];
+    NSArray *values2 = [NSArray arrayWithObjects:
+                       NSLocalizedString(@"Reverted library to status at", @"Seafile"),
+                       NSLocalizedString(@"Recovered deleted directory", @"Seafile"),
+                       NSLocalizedString(@"Changed library name or description", @"Seafile"),
+                       nil];
+    self.prefixMap = [NSDictionary dictionaryWithObjects:values2 forKeys:keys2];
+    self.typesMap = [NSDictionary dictionaryWithObjectsAndKeys:
+                     @"files", NSLocalizedString(@"files", @"Seafile"),
+                     @"directories", NSLocalizedString(@"directories", @"Seafile"),
+                     nil];
     __weak typeof(self) weakSelf = self;
     [self.tableView addPullToRefreshWithActionHandler:^{
         [weakSelf moreEvents:weakSelf.eventsOffset];
@@ -122,6 +168,67 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     }
 }
 
+- (NSString *)translateLine:(NSString *)line
+{
+    if (!line || line.length == 0) return line;
+    NSError *error = NULL;
+    NSString *operation = [[_opsMap allKeys] componentsJoinedByString:@"|"];
+    NSString *pattern = [NSString stringWithFormat:@"(%@) \"(.*)\"\\s?(and ([0-9]+) more (files|directories))?", operation];
+    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:pattern
+                                                                           options:NSRegularExpressionCaseInsensitive
+                                                                             error:&error];
+    NSTextCheckingResult *match = [regex firstMatchInString:line options:0 range:NSMakeRange(0, [line length])];
+    if (!match) return line;
+    NSString *op = [line substringWithRange:[match rangeAtIndex:1]];
+    NSString *name = [line substringWithRange:[match rangeAtIndex:2]];
+    NSString *num = nil;
+    NSString *type = nil;
+    NSString *opTranslated = [self.opsMap objectForKey:op];
+
+    if (match.numberOfRanges > 3 && !NSEqualRanges([match rangeAtIndex:3], NSMakeRange(NSNotFound, 0))) {
+        num = [line substringWithRange:[match rangeAtIndex:4]];
+        type = [line substringWithRange:[match rangeAtIndex:5]];
+        NSString *typeTranslated = [self.typesMap objectForKey:type];
+        NSString *more = [NSString stringWithFormat:@"and %@ more", num];
+        return [NSString stringWithFormat:@"%@ \"%@\" %@ %@.", opTranslated, name, more, typeTranslated];
+    } else {
+        return [NSString stringWithFormat:@"%@ \"%@\".", opTranslated, name];
+    }
+}
+
+- (NSString *)translateCommitDesc:(NSString *)value
+{
+    if (!value || value.length == 0) return value;
+    if ([value hasPrefix:@"Reverted repo"]) {
+        [value stringByReplacingOccurrencesOfString:@"repo" withString:@"library"];
+    }
+    for (NSString *s in self.prefixMap) {
+        if ([value hasPrefix:s])
+            return [value stringByReplacingOccurrencesOfString:s withString:[self.prefixMap objectForKey:s]];
+    }
+    if ([value hasPrefix:@"Merged"] || [value hasPrefix:@"Auto merge"]) {
+        return NSLocalizedString(@"Auto merge by seafile system", @"Seafile");
+    }
+
+    NSError *error = NULL;
+    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"Reverted file \"(.*)\" to status at (.*)."
+                                                                           options:NSRegularExpressionCaseInsensitive
+                                                                             error:&error];
+    NSTextCheckingResult *match = [regex firstMatchInString:value options:0 range:NSMakeRange(0, [value length])];
+    if (match) {
+        NSString *name = [value substringWithRange:[match rangeAtIndex:1]];
+        NSString *time = [value substringWithRange:[match rangeAtIndex:2]];
+        return [NSString stringWithFormat:NSLocalizedString(@"Reverted file \"%@\" to status at %@.", @"Seafile"), name, time];
+    }
+    NSArray *lines = [value componentsSeparatedByString:@"\n"];
+    NSMutableArray *array = [NSMutableArray new];
+    for (NSString *line in lines) {
+        if (line && line.length != 0)
+            [array addObject:[self translateLine:line]];
+    }
+    return [array componentsJoinedByString:@" "];
+}
+
 - (void)showLoadingView
 {
     if (!self.loadingView) {
@@ -176,7 +283,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
                                                                              error:&error];
     NSTextCheckingResult *match = [regex firstMatchInString:string options:0 range:NSMakeRange(0, [string length])];
     if (!match) return nil;
-    
+
     NSString *path = [string substringWithRange:[match rangeAtIndex:1]];
     NSURL *url = [NSURL URLWithString:_connection.address];
     NSURL *target = [NSURL URLWithString:path relativeToURL:url];
@@ -198,7 +305,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     } else {
         cell.accountImageView.image = _defaultAccountImage;
     }
-    cell.textLabel.text = [event objectForKey:@"desc"];
+    cell.textLabel.text = [self translateCommitDesc:[event objectForKey:@"desc"]];
     cell.repoNameLabel.text = [event objectForKey:@"repo_name"];
     cell.authorLabel.text = [event objectForKey:@"nick"];
     long timestamp = [[event objectForKey:@"time"] longValue];
@@ -248,12 +355,12 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         [self openFile:path inRepo:repoId];
     };
     ModificationHandler emptyHandler = ^(NSString *repoId, NSString *path) {};
-    NSString *s1 = NSLocalizedString(@"New file", @"Seafile");
-    NSString *s2 = NSLocalizedString(@"New directory", @"Seafile");
+    NSString *s1 = NSLocalizedString(@"Added file", @"Seafile");
+    NSString *s2 = NSLocalizedString(@"Added directory", @"Seafile");
     NSString *s3 = NSLocalizedString(@"Modified file", @"Seafile");
     NSString *s4 = NSLocalizedString(@"Renamed", @"Seafile");
-    NSString *s5 = NSLocalizedString(@"Deleted file", @"Seafile");
-    NSString *s6 = NSLocalizedString(@"Deleted directory", @"Seafile");
+    NSString *s5 = NSLocalizedString(@"Removed file", @"Seafile");
+    NSString *s6 = NSLocalizedString(@"Removed directory", @"Seafile");
     [self addEvents:repoId prefix:s1 array:[detail objectForKey:@"added_files"] toAlert:alert handler:openHandler];
     [self addEvents:repoId prefix:s2 array:[detail objectForKey:@"added_dirs"] toAlert:alert handler:emptyHandler];
     [self addEvents:repoId prefix:s3 array:[detail objectForKey:@"modified_files"] toAlert:alert handler:openHandler];
@@ -299,6 +406,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     NSString *commitId = [event objectForKey:@"commit_id"];
     NSString *url = [NSString stringWithFormat:API_URL"/repo_history_changes/%@/?commit_id=%@", repoId, commitId];
 
+    Debug("Select event %@", event);
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
     NSDictionary *detail = [_eventDetails objectForKey:url];
     if (detail)
