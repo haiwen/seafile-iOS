@@ -228,9 +228,9 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 
 - (void)eventRenamed:(NSString *)repoId prefix:(NSString *)prefix array:(NSArray *)arr toAlert:(UIAlertController *)alert
 {
-    for (int i = 0; i < arr.count-1; i += 2) {
-        NSString *from = [arr objectAtIndex:i];
-        NSString *to = [arr objectAtIndex:i+1];
+    for (int i = 1; i < arr.count; i += 2) {
+        NSString *from = [arr objectAtIndex:i-1];
+        NSString *to = [arr objectAtIndex:i];
 
         NSString *message = [NSString stringWithFormat:@"%@ %@ ==> %@", prefix, from, to];
         UIAlertAction *action = [UIAlertAction actionWithTitle:message style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
