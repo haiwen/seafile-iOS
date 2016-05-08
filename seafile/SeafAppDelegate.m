@@ -162,6 +162,17 @@
 
 - (void)delayedInit
 {
+    NSUserDefaults *defs = [[NSUserDefaults alloc] initWithSuiteName:GROUP_NAME];
+    NSMutableArray *array = [NSMutableArray new];
+    for(NSString *key in defs.dictionaryRepresentation) {
+        if ([key hasPrefix:@"EXPORTED/"]) {
+            [array addObject:key];
+        }
+    }
+    for(NSString *key in array) {
+        [defs removeObjectForKey:key];
+    }
+
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
     NSString *version = [infoDictionary objectForKey:@"CFBundleShortVersionString"];
     Debug("Current app version is %@\n%@\n", version, infoDictionary);

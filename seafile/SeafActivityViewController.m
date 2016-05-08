@@ -7,6 +7,7 @@
 //
 
 #import <UIScrollView+SVPullToRefresh.h>
+#import <SDWebImage/UIImageView+WebCache.h>
 
 #import "SeafActivityViewController.h"
 #import "SeafAppDelegate.h"
@@ -29,6 +30,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 @property int eventsOffset;
 
 @property NSMutableDictionary *eventDetails;
+@property UIImage *defaultAccountImage;
 @end
 
 @implementation SeafActivityViewController
@@ -57,6 +59,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     self.eventsMore = true;
     self.eventsOffset = 0;
     _eventDetails = [NSMutableDictionary new];
+    _defaultAccountImage = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"account" ofType:@"png"]];
 
     __weak typeof(self) weakSelf = self;
     [self.tableView addPullToRefreshWithActionHandler:^{
@@ -164,6 +167,22 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     return _events.count;
 }
 
+- (NSURL *)getAvatarUrl:(NSDictionary *)event
+{
+    NSString *string = [event objectForKey:@"avatar"];
+    NSError *error = NULL;
+    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"<img src=\"(/.*)\" width=.*/>"
+                                                                           options:NSRegularExpressionCaseInsensitive
+                                                                             error:&error];
+    NSTextCheckingResult *match = [regex firstMatchInString:string options:0 range:NSMakeRange(0, [string length])];
+    if (!match) return nil;
+    
+    NSString *path = [string substringWithRange:[match rangeAtIndex:1]];
+    NSURL *url = [NSURL URLWithString:_connection.address];
+    NSURL *target = [NSURL URLWithString:path relativeToURL:url];
+    return target;
+}
+
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     NSString *CellIdentifier = @"SeafEventCell";
@@ -173,16 +192,19 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         cell = [cells objectAtIndex:0];
     }
     NSDictionary *event = [_events objectAtIndex:indexPath.row];
-    NSString *path = [[NSBundle mainBundle] pathForResource:@"account" ofType:@"png"];
-    cell.accountImageView.image = [UIImage imageWithContentsOfFile:path];
-
+    NSURL *url = [self getAvatarUrl:event];
+    if (url) {
+        [cell.accountImageView sd_setImageWithURL:url placeholderImage:_defaultAccountImage];
+    } else {
+        cell.accountImageView.image = _defaultAccountImage;
+    }
     cell.textLabel.text = [event objectForKey:@"desc"];
     cell.repoNameLabel.text = [event objectForKey:@"repo_name"];
     cell.authorLabel.text = [event objectForKey:@"nick"];
     long timestamp = [[event objectForKey:@"time"] longValue];
     cell.timeLabel.text = [SeafDateFormatter stringFromLongLong:timestamp];
-
     cell.backgroundColor = [UIColor clearColor];
+
     return cell;
 }
 
@@ -249,7 +271,6 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 
 - (void)showEvent:(NSString *)repoId detail:(NSDictionary *)detail fromCell:(UITableViewCell *)cell
 {
-    Debug(".... repo: %@, detail:%@", repoId, detail);
     NSString *title = NSLocalizedString(@"Modification Details", @"Seafile");
     UIAlertController *alert = [self generateAction:repoId detail:detail withTitle:title];
     alert.popoverPresentationController.sourceView = self.view;
