@@ -16,8 +16,6 @@
 #import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
 
-#define TITLE_PASSWORD @"Password of this library"
-
 @interface SeafDirViewController ()<SeafDentryDelegate>
 @property (strong) SeafDir *curDir;
 @property (strong) UIBarButtonItem *chooseItem;

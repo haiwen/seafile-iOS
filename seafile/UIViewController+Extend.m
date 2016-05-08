@@ -176,7 +176,8 @@ ADD_DYNAMIC_PROPERTY(void (^)(NSString *),handler_input,setHandler_input);
 
 - (void)popupSetRepoPassword:(SeafRepo *)repo handler:(void (^)())handler
 {
-    [self popupInputView:NSLocalizedString(@"Password of this library", @"Seafile") placeholder:nil secure:true handler:^(NSString *input) {
+    NSString *title = [NSString stringWithFormat:NSLocalizedString(@"Password of library '%@'", @"Seafile"), repo.name];
+    [self popupInputView:title placeholder:nil secure:true handler:^(NSString *input) {
         if (!input || input.length == 0) {
             [self alertWithTitle:NSLocalizedString(@"Password must not be empty", @"Seafile")handler:^{
                 [self popupSetRepoPassword:repo handler:handler];

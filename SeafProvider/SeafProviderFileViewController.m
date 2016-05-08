@@ -231,7 +231,8 @@
 
 - (void)popupSetRepoPassword:(SeafRepo *)repo
 {
-    [Utils popupInputView:NSLocalizedString(@"Password of this library", @"Seafile") placeholder:nil secure:true handler:^(NSString *input) {
+    NSString *title = [NSString stringWithFormat:NSLocalizedString(@"Password of library '%@'", @"Seafile"), repo.name];
+    [Utils popupInputView:title placeholder:nil secure:true handler:^(NSString *input) {
         if (!input || input.length == 0) {
             [self alertWithTitle:NSLocalizedString(@"Password must not be empty", @"Seafile")handler:^{
                 [self popupSetRepoPassword:repo];

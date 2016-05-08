@@ -104,8 +104,8 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
                        nil];
     self.prefixMap = [NSDictionary dictionaryWithObjects:values2 forKeys:keys2];
     self.typesMap = [NSDictionary dictionaryWithObjectsAndKeys:
-                     @"files", NSLocalizedString(@"files", @"Seafile"),
-                     @"directories", NSLocalizedString(@"directories", @"Seafile"),
+                     NSLocalizedString(@"files", @"Seafile"), @"files",
+                     NSLocalizedString(@"directories", @"Seafile"), @"directories",
                      nil];
     __weak typeof(self) weakSelf = self;
     [self.tableView addPullToRefreshWithActionHandler:^{
@@ -189,7 +189,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         num = [line substringWithRange:[match rangeAtIndex:4]];
         type = [line substringWithRange:[match rangeAtIndex:5]];
         NSString *typeTranslated = [self.typesMap objectForKey:type];
-        NSString *more = [NSString stringWithFormat:@"and %@ more", num];
+        NSString *more = [NSString stringWithFormat:NSLocalizedString(@"and %@ more", @"Seafile"), num];
         return [NSString stringWithFormat:@"%@ \"%@\" %@ %@.", opTranslated, name, more, typeTranslated];
     } else {
         return [NSString stringWithFormat:@"%@ \"%@\".", opTranslated, name];
