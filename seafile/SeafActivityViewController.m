@@ -7,6 +7,7 @@
 //
 
 #import <UIScrollView+SVPullToRefresh.h>
+#import <UIScrollView+SVInfiniteScrolling.h>
 #import <SDWebImage/UIImageView+WebCache.h>
 
 #import "SeafActivityViewController.h"
@@ -108,23 +109,23 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
                      NSLocalizedString(@"directories", @"Seafile"), @"directories",
                      nil];
     __weak typeof(self) weakSelf = self;
-    [self.tableView addPullToRefreshWithActionHandler:^{
+    [self.tableView addInfiniteScrollingWithActionHandler:^{
         [weakSelf moreEvents:weakSelf.eventsOffset];
-    } position:SVPullToRefreshPositionBottom];
+    }];
 }
 
 - (void)reloadData
 {
-    [self.tableView.pullToRefreshView stopAnimating];
-    self.tableView.showsPullToRefresh = _eventsMore;
+    [self.tableView.infiniteScrollingView stopAnimating];
+    self.tableView.showsInfiniteScrolling = _eventsMore;
     [self dismissLoadingView];
     [self.tableView reloadData];
 }
 - (void)moreEvents:(int)offset
 {
-    NSString *url = [NSString stringWithFormat:API_URL"/events/?start=%d", _eventsOffset];
+    NSString *url = [NSString stringWithFormat:API_URL"/events/?start=%d", offset];
     [_connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-        Debug("Success to get events %d: %@", _eventsOffset, JSON);
+        Debug("Success to get events start=%d", offset);
         NSArray *arr = [JSON objectForKey:@"events"];
         if (offset == 0)
             _events = nil;
@@ -139,7 +140,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         [self reloadData];
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
         [self dismissLoadingView];
-        [self.tableView.pullToRefreshView stopAnimating];
+        [self.tableView.infiniteScrollingView stopAnimating];
         if (self.isVisible)
             [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load activities", @"Seafile")];
     }];
@@ -162,7 +163,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         _events = nil;
         self.eventsMore = true;
         self.eventsOffset = 0;
-        self.tableView.showsPullToRefresh = true;
+        self.tableView.showsInfiniteScrolling = true;
         _eventDetails = [NSMutableDictionary new];
         [self.tableView reloadData];
     }

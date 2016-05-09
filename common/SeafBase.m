@@ -143,6 +143,7 @@
     [connection sendPost:request_str form:formString
                  success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
                      Debug("Set repo %@ password success.", self.repoId);
+                     [connection setRepo:self.repoId password:password];
                      if (block)  block(self, RET_SUCCESS);
                  } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
                      int ret = RET_FAILED;

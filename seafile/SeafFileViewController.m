@@ -1122,6 +1122,7 @@ enum {
                 [entries addObject:[_directory.allItems objectAtIndex:indexPath.row]];
             }
             self.state = STATE_DELETE;
+            _directory.delegate = self;
             [_directory delEntries:entries];
             [SVProgressHUD showWithStatus:NSLocalizedString(@"Deleting files ...", @"Seafile")];
             break;
