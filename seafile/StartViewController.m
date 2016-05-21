@@ -170,6 +170,7 @@
 
     NSString *strEdit = NSLocalizedString(@"Edit", @"Seafile");
     NSString *strDelete = NSLocalizedString(@"Delete", @"Seafile");
+    NSString *strLogout = NSLocalizedString(@"Log out", @"Seafile");
 
     if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
         return;
@@ -178,7 +179,7 @@
     if (!pressedIndex)
         return;
 
-    actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:actionSheetCancelTitle() destructiveButtonTitle:nil otherButtonTitles:strEdit, strDelete, nil];
+    actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:actionSheetCancelTitle() destructiveButtonTitle:nil otherButtonTitles:strEdit, strDelete, strLogout, nil];
 
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:pressedIndex];
     [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
@@ -299,15 +300,18 @@
 {
     if (pressedIndex) {// Long press account
         if (pressedIndex.row >= SeafGlobal.sharedObject.conns.count) return;
-        if (buttonIndex == 0) {
-            SeafConnection *conn = [[SeafGlobal sharedObject].conns objectAtIndex:pressedIndex.row];
+        SeafConnection *conn = [SeafGlobal.sharedObject.conns objectAtIndex:pressedIndex.row];
+        if (buttonIndex == 0) { //Edit
             int type = conn.isShibboleth ? ACCOUNT_SHIBBOLETH : ACCOUNT_OTHER;
             [self showAccountView:conn type:type];
-        } else if (buttonIndex == 1) {
-            [[[SeafGlobal sharedObject].conns objectAtIndex:pressedIndex.row] clearAccount];
-            [[SeafGlobal sharedObject].conns removeObjectAtIndex:pressedIndex.row];
+        } else if (buttonIndex == 1) { //Delete
+            [conn clearAccount];
+            [SeafGlobal.sharedObject.conns removeObjectAtIndex:pressedIndex.row];
             [[SeafGlobal sharedObject] saveAccounts];
             [self.tableView reloadData];
+        } else if (buttonIndex == 2) { //Log out
+            Debug("Log out %@ %@", conn.address, conn.username);
+            [conn logout];
         }
     } else {
         if (buttonIndex >= 0 && buttonIndex <= ACCOUNT_OTHER) {

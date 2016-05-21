@@ -298,7 +298,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     if (cell == nil) {
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:CellIdentifier owner:self options:nil];
         cell = [cells objectAtIndex:0];
-        cell.accountImageView.layer.cornerRadius = 10.0f;
+        cell.accountImageView.layer.cornerRadius = 5.0f;
         cell.accountImageView.clipsToBounds = YES;
     }
     NSDictionary *event = [_events objectAtIndex:indexPath.row];

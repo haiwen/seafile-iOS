@@ -95,6 +95,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 
 - (void)resetUploadedPhotos;
 - (void)clearAccount;
+- (void)logout;
 
 - (NSURLRequest *)buildRequest:(NSString *)url method:(NSString *)method form:(NSString *)form;
 

@@ -213,7 +213,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return self.token != nil;
 }
 
-
 - (BOOL)isFeatureEnabled:(NSString *)feature
 {
     NSDictionary *serverInfo = [self serverInfo];
@@ -489,6 +488,14 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         [[NSFileManager defaultManager] removeItemAtPath:_localUploadDir error:nil];
         _localUploadDir = nil;
     }
+}
+- (void)logout
+{
+    _token = nil;
+    [_info removeObjectForKey:@"token"];
+    [_info removeObjectForKey:@"password"];
+    [_info removeObjectForKey:@"repopassword"];
+    [self saveSettings];
 }
 - (void)clearAccount
 {
