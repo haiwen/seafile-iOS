@@ -406,6 +406,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     AFHTTPSessionManager *manager = [[AFHTTPSessionManager alloc] initWithSessionConfiguration:configuration];
     [manager setSessionDidReceiveAuthenticationChallengeBlock:^NSURLSessionAuthChallengeDisposition(NSURLSession *session, NSURLAuthenticationChallenge *challenge, NSURLCredential *__autoreleasing *credential) {
         *credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
+        Debug("authenticationMethod: %@ credential:%@, identity:%@", challenge.protectionSpace.authenticationMethod, *credential, (*credential).identity);
         if (SeafGlobal.sharedObject.allowInvalidCert) return NSURLSessionAuthChallengeUseCredential;
 
         if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
@@ -434,6 +435,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                 self.inCheckCert = false;
                 return dis;
             }
+        } else {
+            Debug("....authenticationMethod: %@, %@", challenge.protectionSpace.authenticationMethod, challenge.protectionSpace);
         }
         return NSURLSessionAuthChallengePerformDefaultHandling;
     }];
@@ -546,6 +549,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:[url stringByAppendingString:API_URL"/auth-token/"]]];
     [request setHTTPMethod:@"POST"];
     [request setValue:@"application/x-www-form-urlencoded; charset=UTF-8" forHTTPHeaderField:@"Content-Type"];
+
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
     NSString *version = [infoDictionary objectForKey:@"CFBundleVersion"];
     NSString *platform = @"ios";
@@ -606,6 +610,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     NSString *absoluteUrl = [url hasPrefix:@"http"] ? url : [_address stringByAppendingString:url];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:absoluteUrl]];
+    [request setValue:SeafGlobal.sharedObject.clientVersion forHTTPHeaderField:@"X-Seafile-Client-Version"];
+    [request setValue:SeafGlobal.sharedObject.platformVersion forHTTPHeaderField:@"X-Seafile-Platform-Version"];
+
     [request setTimeoutInterval:DEFAULT_TIMEOUT];
     [request setHTTPMethod:method];
     if (form) {

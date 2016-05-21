@@ -36,6 +36,8 @@
 
 @property (retain) NSMutableArray *conns;
 @property (readwrite) SeafConnection *connection;
+@property (readonly) NSString *clientVersion;
+@property (readonly) NSString *platformVersion;
 
 
 + (SeafGlobal *)sharedObject;

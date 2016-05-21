@@ -204,12 +204,11 @@
         [defs removeObjectForKey:key];
     }
 
-    NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
-    NSString *version = [infoDictionary objectForKey:@"CFBundleShortVersionString"];
-    Debug("Current app version is %@\n%@\n", version, infoDictionary);
-    [SeafGlobal.sharedObject setObject:version forKey:@"VERSION"];
-    [SeafGlobal.sharedObject startTimer];
     [Utils clearAllFiles:SeafGlobal.sharedObject.tempDir];
+
+    NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
+    Debug("Current app version is %@\n%@\n", SeafGlobal.sharedObject.clientVersion, infoDictionary);
+    [SeafGlobal.sharedObject startTimer];
 
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
         [conn checkAutoSync];

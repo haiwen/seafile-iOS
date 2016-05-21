@@ -54,7 +54,13 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         _downloadnum = 0;
         _storage = [[NSUserDefaults alloc] initWithSuiteName:GROUP_NAME];
         [self checkSettings];
-        Debug("applicationDocumentsDirectoryURL=%@",  self.applicationDocumentsDirectoryURL);
+
+        NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
+        _clientVersion = [infoDictionary objectForKey:@"CFBundleShortVersionString"];
+        _platformVersion = [infoDictionary objectForKey:@"DTPlatformVersion"];
+        [_storage setObject:_clientVersion forKey:@"VERSION"];
+        Debug("applicationDocumentsDirectoryURL=%@, clientVersion=%@, platformVersion=%@",  self.applicationDocumentsDirectoryURL, _clientVersion, _platformVersion);
+
     }
     return self;
 }

@@ -170,7 +170,6 @@
 
     NSString *strEdit = NSLocalizedString(@"Edit", @"Seafile");
     NSString *strDelete = NSLocalizedString(@"Delete", @"Seafile");
-    NSString *strLogout = NSLocalizedString(@"Log out", @"Seafile");
 
     if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
         return;
@@ -179,7 +178,7 @@
     if (!pressedIndex)
         return;
 
-    actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:actionSheetCancelTitle() destructiveButtonTitle:nil otherButtonTitles:strEdit, strDelete, strLogout, nil];
+    actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:actionSheetCancelTitle() destructiveButtonTitle:nil otherButtonTitles:strEdit, strDelete, nil];
 
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:pressedIndex];
     [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
@@ -309,9 +308,6 @@
             [SeafGlobal.sharedObject.conns removeObjectAtIndex:pressedIndex.row];
             [[SeafGlobal sharedObject] saveAccounts];
             [self.tableView reloadData];
-        } else if (buttonIndex == 2) { //Log out
-            Debug("Log out %@ %@", conn.address, conn.username);
-            [conn logout];
         }
     } else {
         if (buttonIndex >= 0 && buttonIndex <= ACCOUNT_OTHER) {
