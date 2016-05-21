@@ -218,22 +218,12 @@
 		57C03F5417FB271100F7B575 /* editfile2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57C03F4217FB271100F7B575 /* editfile2.png */; };
 		57C03F5617FB271100F7B575 /* export2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57C03F4317FB271100F7B575 /* export2.png */; };
 		57C03F5817FB271100F7B575 /* checkmask2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57C03F4417FB271100F7B575 /* checkmask2.png */; };
-		57C21E721CDCFD0E00B9D24C /* ColorfulButton.h in Sources */ = {isa = PBXBuildFile; fileRef = 57E229C41A1108B200C92330 /* ColorfulButton.h */; };
 		57C21E731CDCFD0E00B9D24C /* ColorfulButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229C51A1108B200C92330 /* ColorfulButton.m */; };
-		57C21E741CDCFD0E00B9D24C /* Debug.h in Sources */ = {isa = PBXBuildFile; fileRef = 57E229C61A1108B200C92330 /* Debug.h */; };
-		57C21E751CDCFD0E00B9D24C /* ExtentedString.h in Sources */ = {isa = PBXBuildFile; fileRef = 57E229C71A1108B200C92330 /* ExtentedString.h */; };
 		57C21E761CDCFD0E00B9D24C /* ExtentedString.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229C81A1108B200C92330 /* ExtentedString.m */; };
-		57C21E771CDCFD0E00B9D24C /* FileMimeType.h in Sources */ = {isa = PBXBuildFile; fileRef = 57E229C91A1108B200C92330 /* FileMimeType.h */; };
 		57C21E781CDCFD0E00B9D24C /* FileMimeType.plist in Sources */ = {isa = PBXBuildFile; fileRef = 57E229CB1A1108B200C92330 /* FileMimeType.plist */; };
-		57C21E791CDCFD0E00B9D24C /* FileSizeFormatter.h in Sources */ = {isa = PBXBuildFile; fileRef = 57E229CC1A1108B200C92330 /* FileSizeFormatter.h */; };
-		57C21E7A1CDCFD0E00B9D24C /* NSData+Encryption.h in Sources */ = {isa = PBXBuildFile; fileRef = 57E229CE1A1108B200C92330 /* NSData+Encryption.h */; };
 		57C21E7B1CDCFD0E00B9D24C /* NSData+Encryption.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229CF1A1108B200C92330 /* NSData+Encryption.m */; };
-		57C21E7C1CDCFD0E00B9D24C /* SeafDateFormatter.h in Sources */ = {isa = PBXBuildFile; fileRef = 57E229D01A1108B200C92330 /* SeafDateFormatter.h */; };
-		57C21E7D1CDCFD0E00B9D24C /* SKFileTypeImageLoader.h in Sources */ = {isa = PBXBuildFile; fileRef = 57E229D21A1108B200C92330 /* SKFileTypeImageLoader.h */; };
 		57C21E7E1CDCFD0E00B9D24C /* SKFileTypeImageLoader.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229D31A1108B200C92330 /* SKFileTypeImageLoader.m */; };
-		57C21E7F1CDCFD0E00B9D24C /* UIImage+FileType.h in Sources */ = {isa = PBXBuildFile; fileRef = 57E229D41A1108B200C92330 /* UIImage+FileType.h */; };
 		57C21E801CDCFD0E00B9D24C /* UIImage+FileType.m in Sources */ = {isa = PBXBuildFile; fileRef = 57E229D51A1108B200C92330 /* UIImage+FileType.m */; };
-		57C21E811CDCFD0E00B9D24C /* Utils.h in Sources */ = {isa = PBXBuildFile; fileRef = 57E229D61A1108B200C92330 /* Utils.h */; };
 		57C520FA197A3BB800970804 /* css.png in Resources */ = {isa = PBXBuildFile; fileRef = 57C520F8197A3BB800970804 /* css.png */; };
 		57C520FB197A3BB800970804 /* psd.png in Resources */ = {isa = PBXBuildFile; fileRef = 57C520F9197A3BB800970804 /* psd.png */; };
 		57CD9B841B5121CC00D1CC6B /* delete2@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57CD9B801B5121CC00D1CC6B /* delete2@2x.png */; };
@@ -1682,22 +1672,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				57C21E721CDCFD0E00B9D24C /* ColorfulButton.h in Sources */,
 				57C21E731CDCFD0E00B9D24C /* ColorfulButton.m in Sources */,
-				57C21E741CDCFD0E00B9D24C /* Debug.h in Sources */,
-				57C21E751CDCFD0E00B9D24C /* ExtentedString.h in Sources */,
 				57C21E761CDCFD0E00B9D24C /* ExtentedString.m in Sources */,
-				57C21E771CDCFD0E00B9D24C /* FileMimeType.h in Sources */,
 				57C21E781CDCFD0E00B9D24C /* FileMimeType.plist in Sources */,
-				57C21E791CDCFD0E00B9D24C /* FileSizeFormatter.h in Sources */,
-				57C21E7A1CDCFD0E00B9D24C /* NSData+Encryption.h in Sources */,
 				57C21E7B1CDCFD0E00B9D24C /* NSData+Encryption.m in Sources */,
-				57C21E7C1CDCFD0E00B9D24C /* SeafDateFormatter.h in Sources */,
-				57C21E7D1CDCFD0E00B9D24C /* SKFileTypeImageLoader.h in Sources */,
 				57C21E7E1CDCFD0E00B9D24C /* SKFileTypeImageLoader.m in Sources */,
-				57C21E7F1CDCFD0E00B9D24C /* UIImage+FileType.h in Sources */,
 				57C21E801CDCFD0E00B9D24C /* UIImage+FileType.m in Sources */,
-				57C21E811CDCFD0E00B9D24C /* Utils.h in Sources */,
 				57A192301A208FC700985F77 /* Utils.m in Sources */,
 				57A1922F1A208FBD00985F77 /* FileSizeFormatter.m in Sources */,
 				57A1922E1A208FAD00985F77 /* FileMimeType.m in Sources */,

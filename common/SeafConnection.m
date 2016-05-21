@@ -158,6 +158,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         else
             _settings = [[NSMutableDictionary alloc] init];
     }
+    if (self.authorized && ![self serverInfo]) {
+        [self getServerInfo:^(bool result) {}];
+    }
     if (self.autoClearRepoPasswd) {
         Debug("Clear repo apsswords for %@ %@", url, username);
         [self clearRepoPasswords];
@@ -208,6 +211,38 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (BOOL)authorized
 {
     return self.token != nil;
+}
+
+
+- (BOOL)isFeatureEnabled:(NSString *)feature
+{
+    NSDictionary *serverInfo = [self serverInfo];
+    if (!serverInfo)
+        return true;
+    NSArray *features = [serverInfo objectForKey:@"features"];
+    if ([features containsObject:feature])
+        return true;
+    return false;
+}
+
+- (BOOL)isSearchEnabled
+{
+    return [self isFeatureEnabled:@"file-search"];
+}
+
+- (BOOL)isActivityEnabled
+{
+    return [self isFeatureEnabled:@"seafile-pro"];
+}
+
+- (NSDictionary *)serverInfo
+{
+    return [_settings objectForKey:@"serverInfo"];
+}
+
+- (void)setServerInfo:(NSDictionary *)info
+{
+    [self setAttribute:info forKey:@"serverInfo"];
 }
 
 - (BOOL)isWifiOnly
@@ -472,7 +507,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [SeafGlobal.sharedObject synchronize];
 
 }
-- (void)getAccountInfo:(void (^)(bool result, SeafConnection *conn))handler
+- (void)getAccountInfo:(void (^)(bool result))handler
 {
     [self sendRequest:API_URL"/account/info/"
               success:
@@ -490,11 +525,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
              [Utils dict:_info setObject:newUsername forKey:@"username"];
          }
          [self saveAccountInfo];
-         if (handler) handler(true, self);
+         if (handler) handler(true);
      }
               failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
-         if (handler) handler(false, self);
+         if (handler) handler(false);
      }];
 }
 
@@ -755,6 +790,26 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
              failure (response, error);
      }];
 }
+
+- (void)getServerInfo:(void (^)(bool result))handler
+{
+    [self sendRequest:API_URL"/server-info/"
+              success:
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+         @synchronized(self) {
+             Debug("Success to get server info: %@\n", JSON);
+             [self setServerInfo:JSON];
+             if (handler)
+                 handler (true);
+         }
+     }
+              failure:
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
+         if (handler)
+             handler (false);
+     }];
+}
+
 
 - (BOOL)isStarred:(NSString *)repo path:(NSString *)path
 {

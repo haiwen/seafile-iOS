@@ -351,18 +351,22 @@ enum ENC_LIBRARIES{
     [self.tableView reloadData];
 }
 
-- (void)setConnection:(SeafConnection *)connection
+- (void)updateAccountInfo
 {
-    _connection = connection;
-    [self.tableView reloadData];
-    [_connection getAccountInfo:^(bool result, SeafConnection *conn) {
-        if (result && conn == self.connection) {
+    [_connection getAccountInfo:^(bool result) {
+        if (result) {
             dispatch_async(dispatch_get_main_queue(), ^ {
                 [self configureView];
                 _connection.photSyncWatcher = self;
             });
         }
     }];
+}
+- (void)setConnection:(SeafConnection *)connection
+{
+    _connection = connection;
+    [self.tableView reloadData];
+    [self updateAccountInfo];
 }
 
 - (void)popupRepoSelect
@@ -377,13 +381,7 @@ enum ENC_LIBRARIES{
     [self.tableView deselectRowAtIndexPath:[self.tableView indexPathForSelectedRow] animated:NO];
     if (indexPath.section == SECTION_ACCOUNT) {
         if (indexPath.row == 1) // Select the quota cell
-            [_connection getAccountInfo:^(bool result, SeafConnection *conn) {
-                if (result && conn == self.connection) {
-                    dispatch_async(dispatch_get_main_queue(), ^ {
-                        [self configureView];
-                    });
-                }
-            }];
+            [self updateAccountInfo];
     } else if (indexPath.section == SECTION_CAMERA) {
         Debug("selected %ld, autoSync: %d", (long)indexPath.row, self.autoSync);
         if (indexPath.row == CELL_DESTINATION && self.autoSync) {
@@ -509,7 +507,7 @@ enum ENC_LIBRARIES{
     MFMailComposeViewController *mailPicker = appdelegate.globalMailComposer;
     mailPicker.mailComposeDelegate = self;
     [self configureInvitationMail:mailPicker];
-    [appdelegate.tabbarController presentViewController:mailPicker animated:YES completion:nil];
+    [appdelegate.window.rootViewController presentViewController:mailPicker animated:YES completion:nil];
 }
 
 #pragma mark - MFMailComposeViewControllerDelegate

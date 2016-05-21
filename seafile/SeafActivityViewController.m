@@ -136,7 +136,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         _events = marray;
         _eventsMore = [[JSON objectForKey:@"more"] boolValue];
         _eventsOffset = [[JSON objectForKey:@"more_offset"] intValue];
-        Debug("%d events, more:%d, offset:%d", _events.count, _eventsMore, _eventsOffset);
+        Debug("%lu events, more:%d, offset:%d", (unsigned long)_events.count, _eventsMore, _eventsOffset);
         [self reloadData];
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
         [self dismissLoadingView];
@@ -298,6 +298,8 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     if (cell == nil) {
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:CellIdentifier owner:self options:nil];
         cell = [cells objectAtIndex:0];
+        cell.accountImageView.layer.cornerRadius = 10.0f;
+        cell.accountImageView.clipsToBounds = YES;
     }
     NSDictionary *event = [_events objectAtIndex:indexPath.row];
     NSURL *url = [self getAvatarUrl:event];

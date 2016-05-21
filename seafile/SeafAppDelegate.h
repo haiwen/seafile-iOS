@@ -25,6 +25,7 @@ enum {
     TABBED_ACTIVITY,
     TABBED_SETTINGS,
     TABBED_ACCOUNTS,
+    TABBED_COUNT,
 };
 
 @protocol SeafBackgroundMonitor <NSObject>
@@ -57,7 +58,6 @@ enum {
 @property (strong, nonatomic) UIWindow *window;
 
 @property (readonly) UINavigationController *startNav;
-@property (readonly) UITabBarController *tabbarController;
 
 @property (strong, readonly) StartViewController *startVC;
 @property (readonly) SeafFileViewController *fileVC;
@@ -67,6 +67,7 @@ enum {
 @property (readonly) MFMailComposeViewController *globalMailComposer;
 @property (readonly) NSData *deviceToken;
 
+- (void)enterAccount:(SeafConnection *)conn;
 
 - (void)selectAccount:(SeafConnection *)conn;
 

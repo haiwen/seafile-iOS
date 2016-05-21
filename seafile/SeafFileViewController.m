@@ -117,7 +117,7 @@ enum {
 
         fixedSpaceItem.width = 38.0f;;
         for (i = 1; i < itemsTitles.count + 1; ++i) {
-            items[i] = [[UIBarButtonItem alloc] initWithTitle:[itemsTitles objectAtIndex:i-1] style:UIBarButtonItemStyleBordered target:self action:@selector(editOperation:)];
+            items[i] = [[UIBarButtonItem alloc] initWithTitle:[itemsTitles objectAtIndex:i-1] style:UIBarButtonItemStylePlain target:self action:@selector(editOperation:)];
             items[i].tag = i;
         }
 
@@ -128,11 +128,9 @@ enum {
 
 - (void)setConnection:(SeafConnection *)conn
 {
-    self.searchDisplayController.active = NO;
     [self.detailViewController setPreViewItem:nil master:nil];
     [conn loadRepos:self];
     [self setDirectory:(SeafDir *)conn.rootFolder];
-    [self refreshView];
 }
 
 - (void)showLoadingView
@@ -276,7 +274,7 @@ enum {
         else
             [self noneSelected:NO];
     }
-    if (!_directory.hasCache) {
+    if (_directory && !_directory.hasCache) {
         Debug("no cache, load from server.");
         [self showLoadingView];
         self.state = STATE_LOADING;
@@ -426,20 +424,32 @@ enum {
     return _directory;
 }
 
+- (void)checkSearchBar:(SeafConnection *)conn
+{
+    if (conn.isSearchEnabled) {
+        self.tableView.tableHeaderView = self.searchBar;
+    } else {
+        self.tableView.tableHeaderView = nil;
+    }
+    self.searchDisplayController.active = NO;
+}
+
 - (void)setDirectory:(SeafDir *)directory
 {
+    [self checkSearchBar:directory->connection];
     if (!_directory) [self initNavigationItems:directory];
 
-    _connection = directory->connection;
     _directory = directory;
+    _connection = directory->connection;
     self.title = directory.name;
     [_directory loadContent:NO];
     Debug("%@, %@, %@, loading ... %d %@\n", _directory.repoId, _directory.name, _directory.path, _directory.hasCache, _directory.ooid);
     if (![_directory isKindOfClass:[SeafRepos class]])
         self.tableView.sectionHeaderHeight = 0;
     [_connection checkSyncDst:_directory];
-
     [_directory setDelegate:self];
+    [self refreshView];
+
 }
 
 - (void)viewWillLayoutSubviews {
@@ -864,7 +874,7 @@ enum {
 
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
     [navController setModalPresentationStyle:UIModalPresentationFormSheet];
-    [appdelegate.tabbarController presentViewController:navController animated:YES completion:nil];
+    [appdelegate.window.rootViewController presentViewController:navController animated:YES completion:nil];
     if (IsIpad()) {
         CGRect frame = navController.view.superview.frame;
         navController.view.superview.frame = CGRectMake(frame.origin.x+frame.size.width/2-320/2, frame.origin.y+frame.size.height/2-500/2, 320, 500);

@@ -317,34 +317,24 @@
 }
 
 #pragma mark - SSConnectionDelegate
-- (void)delayOP
-{
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    [appdelegate.tabbarController setSelectedIndex:TABBED_SEAFILE];
-}
-
 - (BOOL)selectAccount:(SeafConnection *)conn;
 {
     if (!conn) return NO;
     if (![conn authorized]) {
         NSString *title = NSLocalizedString(@"The token is invalid, you need to login again", @"Seafile");
         [self alertWithTitle:title handler:^{
-            [self showAccountView:conn type:ACCOUNT_OTHER];
+            int type = conn.isShibboleth ? ACCOUNT_SHIBBOLETH : ACCOUNT_OTHER;
+            [self showAccountView:conn type:type];
         }];
         return YES;
     }
+    [conn loadCache];
     [SeafGlobal.sharedObject setObject:conn.address forKey:@"DEAULT-SERVER"];
     [SeafGlobal.sharedObject setObject:conn.username forKey:@"DEAULT-USER"];
     [SeafGlobal.sharedObject synchronize];
 
-    [conn loadCache];
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    [appdelegate selectAccount:conn];
-    if (appdelegate.window.rootViewController != appdelegate.tabbarController) {
-        appdelegate.window.rootViewController = appdelegate.tabbarController;
-        [appdelegate.window makeKeyAndVisible];
-        [self performSelector:@selector(delayOP) withObject:nil afterDelay:0.01];
-    }
+    [appdelegate enterAccount:conn];
     return YES;
 }
 

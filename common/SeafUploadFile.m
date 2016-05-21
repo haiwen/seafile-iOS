@@ -408,7 +408,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     SeafRepo *repo = [connection getRepo:repoId];
 #if 0
     if (_filesize > LARGE_FILE_SIZE && (!repo.encrypted || [repo canLocalDecrypt])) {
-        Debug("upload by block.");
+        Debug("upload large file by block.");
         [self uploadLargeFileByBlocks:repo path:uploadpath];
         return;
     }

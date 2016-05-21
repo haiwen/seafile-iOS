@@ -20,6 +20,7 @@
 @property UIBackgroundTaskIdentifier bgTask;
 
 @property NSInteger moduleIdx;
+@property (readonly) UITabBarController *tabbarController;
 @property (readonly) SeafDetailViewController *detailVC;
 @property (readonly) UINavigationController *disDetailNav;
 @property (strong) NSArray *viewControllers;
@@ -50,7 +51,7 @@
     return SeafGlobal.sharedObject.uploadingnum != 0 || SeafGlobal.sharedObject.downloadingnum != 0;
 }
 
-- (void)selectAccount:(SeafConnection *)conn;
+- (void)selectAccount:(SeafConnection *)conn
 {
     conn.delegate = self;
     @synchronized(self) {
@@ -70,6 +71,36 @@
     if (self.deviceToken)
         [conn registerDevice:self.deviceToken];
 #endif
+}
+
+- (void)delayOP
+{
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    [appdelegate.tabbarController setSelectedIndex:TABBED_SEAFILE];
+}
+
+- (void)enterAccount:(SeafConnection *)conn
+{
+    [self selectAccount:conn];
+    if (self.window.rootViewController == self.tabbarController)
+        return;
+
+    Debug("isActivityEnabled:%d tabbarController: %u", conn.isActivityEnabled, self.tabbarController.viewControllers.count);
+    if (conn.isActivityEnabled) {
+        if (self.tabbarController.viewControllers.count != TABBED_COUNT) {
+            [self.tabbarController setViewControllers:self.viewControllers];
+        }
+    } else {
+        if (self.tabbarController.viewControllers.count == TABBED_COUNT) {
+            NSMutableArray *vcs = [NSMutableArray arrayWithArray:[self.tabbarController viewControllers]];
+            [vcs removeObjectAtIndex:TABBED_ACTIVITY];
+            [self.tabbarController setViewControllers:vcs];
+        }
+    }
+
+    self.window.rootViewController = self.tabbarController;
+    [self.window makeKeyAndVisible];
+    [self performSelector:@selector(delayOP) withObject:nil afterDelay:0.01];
 }
 
 - (BOOL)openSeafileURL:(NSURL*)url
@@ -217,11 +248,8 @@
     [Utils checkMakeDir:SeafGlobal.sharedObject.tempDir];
 
 #if !(TARGET_IPHONE_SIMULATOR)
-    if (ios8) {
-        [[UIApplication sharedApplication] registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:(UIUserNotificationTypeSound | UIUserNotificationTypeAlert | UIUserNotificationTypeBadge) categories:nil]];
-        [[UIApplication sharedApplication] registerForRemoteNotifications];
-    } else
-        [[UIApplication sharedApplication] registerForRemoteNotificationTypes:UIRemoteNotificationTypeBadge|UIRemoteNotificationTypeAlert|UIRemoteNotificationTypeSound];
+    [[UIApplication sharedApplication] registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:(UIUserNotificationTypeSound | UIUserNotificationTypeAlert | UIUserNotificationTypeBadge) categories:nil]];
+    [[UIApplication sharedApplication] registerForRemoteNotifications];
 #endif
 
     NSDictionary *locationOptions = [launchOptions objectForKey:UIApplicationLaunchOptionsLocationKey];

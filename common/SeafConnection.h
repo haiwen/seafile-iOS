@@ -69,6 +69,8 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 @property (readonly) long long usage;
 @property (readonly, strong) NSString *token;
 @property (readonly) BOOL authorized;
+@property (readonly) BOOL isSearchEnabled;
+@property (readonly) BOOL isActivityEnabled;
 @property (readwrite, nonatomic, getter=isWifiOnly) BOOL wifiOnly;
 @property (readwrite, nonatomic, getter=isAutoSync) BOOL autoSync;
 @property (readwrite, nonatomic, getter=isVideoSync) BOOL videoSync;
@@ -121,10 +123,12 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 
 -(void)setToken:(NSString *)token forUser:(NSString *)username isShib:(BOOL)isshib;
 
-- (void)getAccountInfo:(void (^)(bool result, SeafConnection *conn))handler;
+- (void)getAccountInfo:(void (^)(bool result))handler;
 
 - (void)getStarredFiles:(void (^)(NSHTTPURLResponse *response, id JSON))success
                 failure:(void (^)(NSHTTPURLResponse *response, NSError *error))failure;
+
+- (void)getServerInfo:(void (^)(bool result))handler;
 
 - (void)search:(NSString *)keyword
        success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSMutableArray *results))success

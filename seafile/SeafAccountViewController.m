@@ -261,11 +261,13 @@
         return;
 
     Debug("login success");
-    [SVProgressHUD dismiss];
-    connection.loginDelegate = nil;
-    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
-    [startController saveAccount:connection];
-    [startController checkSelectAccount:connection];
+    [conn getServerInfo:^(bool result) {
+        [SVProgressHUD dismiss];
+        connection.loginDelegate = nil;
+        [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+        [startController saveAccount:connection];
+        [startController checkSelectAccount:connection];
+    }];
 }
 
 - (void)twoStepVerification
