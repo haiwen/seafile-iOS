@@ -20,6 +20,8 @@
 #define Debug(fmt, args...) do{}while(0)
 #endif
 
+#define Info(fmt, args...) NSLog(@"#%d %s %@:" fmt, __LINE__, __FUNCTION__, [NSThread currentThread], ##args)
+
 #define Warning(fmt, args...) NSLog(@"#%d %s:[WARNING]" fmt, __LINE__, __FUNCTION__, ##args)
 
 #define STR_CANCEL NSLocalizedString(@"Cancel", @"Seafile")

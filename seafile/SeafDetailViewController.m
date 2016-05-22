@@ -481,8 +481,9 @@ enum SHARE_STATUS {
 
 - (IBAction)cancelDownload:(id)sender
 {
-    [(SeafFile *)self.preViewItem cancelAnyLoading];
+    id<SeafPreView> item = self.preViewItem;
     [self setPreViewItem:nil master:nil];
+    [item cancelAnyLoading];
     if (!IsIpad())
         [self goBack:nil];
 }

@@ -111,7 +111,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (BOOL)isDownloading
 {
-    return self.downloadingFileOid != nil;
+    return self.downloadingFileOid != nil || self.state == SEAF_DENTRY_LOADING;
 }
 
 - (void)clearDownloadContext
@@ -124,12 +124,12 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     }
     self.downloadingFileOid = nil;
     self.task = nil;
+    self.index = 0;
+    self.blkids = nil;
 }
 
 - (void)finishDownload:(NSString *)ooid
 {
-    self.index = 0;
-    self.blkids = nil;
     [self clearDownloadContext];
     [SeafGlobal.sharedObject finishDownload:self result:true];
     Debug("ooid=%@, self.ooid=%@, oid=%@", ooid, self.ooid, self.oid);
@@ -143,11 +143,9 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (void)failedDownload:(NSError *)error
 {
-    self.index = 0;
-    self.blkids = nil;
     [self clearDownloadContext];
-    [SeafGlobal.sharedObject finishDownload:self result:false];
     self.state = SEAF_DENTRY_INIT;
+    [SeafGlobal.sharedObject finishDownload:self result:false];
     [self.delegate download:self failed:error];
 }
 
@@ -175,7 +173,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     [SeafGlobal.sharedObject incDownloadnum];
     [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@", self.repoId, [self.path escapedUrl]] success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-         Debug("Download file from file server url: %@", JSON);
+         Debug("Download file from file server url: %@, state:%d", JSON, self.state);
          NSString *url = JSON;
          NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
          if (!curId)
@@ -185,11 +183,14 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
              [self finishDownload:curId];
              return;
          }
+
          @synchronized (self) {
+             if (self.state != SEAF_DENTRY_LOADING) {
+                 return Info("Download file %@ already canceled", self.name);
+             }
              if (self.downloadingFileOid) {// Already downloading
                  Debug("Already downloading %@", self.downloadingFileOid);
-                 [SeafGlobal.sharedObject finishDownload:self result:true];
-                 return;
+                 return [SeafGlobal.sharedObject decDownloadnum];
              }
              self.downloadingFileOid = curId;
          }
@@ -202,6 +203,9 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
          _task = [connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:&progress destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
              return [NSURL fileURLWithPath:target];
          } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
+             if (!self.downloadingFileOid) {
+                return Info("Download file %@ already canceled", self.name);
+             }
              if (error) {
                  Debug("download %@, error=%@, %ld", self.name, [error localizedDescription], (long)((NSHTTPURLResponse *)response).statusCode);
                  [self failedDownload:error];
@@ -387,8 +391,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
          }
          @synchronized (self) {
              if (self.downloadingFileOid) {// Already downloading
-                 [SeafGlobal.sharedObject finishDownload:self result:true];
-                 return;
+                 return [SeafGlobal.sharedObject decDownloadnum];
              }
              self.downloadingFileOid = curId;
          }
@@ -423,7 +426,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (void)realLoadContent
 {
-    if (!self.isDownloading) {
+    if (!self.downloadingFileOid) {
         [self loadCache];
         [self download];
     } else {
@@ -840,14 +843,13 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (void)cancelAnyLoading
 {
-    if (self.downloadingFileOid) {
+    Debug("Cancel download %@, %@, state:%d", self.path, self.downloadingFileOid, self.state);
+    if (self.state == SEAF_DENTRY_LOADING) {
         self.state = SEAF_DENTRY_INIT;
-        self.downloadingFileOid = nil;
         [self.task cancel];
-        _task = nil;
-        self.index = 0;
-        self.blkids = nil;
-        [SeafGlobal.sharedObject finishDownload:self result:true];
+        [self clearDownloadContext];
+        [SeafGlobal.sharedObject decDownloadnum];
+        [self.delegate download:self failed:nil];
     }
 }
 

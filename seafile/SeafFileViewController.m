@@ -1036,7 +1036,8 @@ enum {
         if (updated) {
             [self refreshView];
             [SeafAppDelegate checkOpenLink:self];
-        }
+        } else
+            [self.tableView reloadData];
         self.state = STATE_INIT;
     }
 }

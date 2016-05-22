@@ -68,6 +68,7 @@
 - (void)deleteAllObjects: (NSString *)entityDescription;
 
 - (void)incDownloadnum;
+- (void)decDownloadnum;
 - (unsigned long)uploadingnum;
 - (unsigned long)downloadingnum;
 

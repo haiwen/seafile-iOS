@@ -398,6 +398,13 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     }
 }
 
+- (void)decDownloadnum
+{
+    @synchronized (self) {
+        _downloadnum --;
+    }
+}
+
 - (unsigned long)uploadingnum
 {
     return self.uploadingfiles.count + self.ufiles.count;

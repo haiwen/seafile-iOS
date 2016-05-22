@@ -26,6 +26,9 @@ enum SEAFBASE_STATE {
 
 @class SeafBase;
 
+typedef void (^repo_password_set_block_t)(SeafBase *entry, int ret);
+
+
 @protocol SeafShareDelegate <NSObject>
 - (void)generateSharelink:(SeafBase *)entry WithResult:(BOOL)success;
 @end
@@ -67,7 +70,7 @@ enum SEAFBASE_STATE {
 - (BOOL)localDecrypt;
 
 - (void)checkOrSetRepoPassword:(NSString *)password delegate:(id<SeafRepoPasswordDelegate>)del;
-- (void)checkOrSetRepoPassword:(NSString *)password block:(void(^)(SeafBase *entry, int ret))block;
+- (void)checkOrSetRepoPassword:(NSString *)password block:(repo_password_set_block_t)block;
 
 
 - (NSString *)key;
