@@ -421,6 +421,7 @@ enum ENC_LIBRARIES{
             [Utils clearAllFiles:SeafGlobal.sharedObject.tempDir];
             [SeafUploadFile clearCache];
             [SeafAvatar clearCache];
+            [self clearThumbs];
 
             [[SeafGlobal sharedObject] deleteAllObjects:@"Directory"];
             [[SeafGlobal sharedObject] deleteAllObjects:@"DownloadedFile"];
@@ -429,6 +430,24 @@ enum ENC_LIBRARIES{
             long long cacheSize = [self cacheSize];
             _cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromLongLong:cacheSize];
         } no:nil];
+    }
+}
+
+- (void)clearThumbs
+{
+    NSString *dir = [SeafGlobal.sharedObject applicationDocumentsDirectory];
+    NSError *error = nil;
+    BOOL isDirectory;
+    NSArray *dirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:dir error:&error];
+
+    if (error) return;
+    for (NSString *entry in dirContents) {
+        if (![entry hasPrefix:@"thumb"] || entry.length < 40) continue;
+        NSString *path = [dir stringByAppendingPathComponent:entry];
+        if ([[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory]
+            && !isDirectory) {
+            [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
+        }
     }
 }
 

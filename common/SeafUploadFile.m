@@ -580,7 +580,11 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 + (void)clearCache
 {
     [Utils clearAllFiles:SeafGlobal.sharedObject.uploadsDir];
+    NSString *attrsFile = [[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploadfiles.plist"];
+
+    [Utils removeFile:attrsFile];
     uploadFileAttrs = [[NSMutableDictionary alloc] init];
+    [SeafUploadFile saveAttrs];
 }
 
 - (NSDictionary *)uploadAttr
