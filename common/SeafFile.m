@@ -437,7 +437,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 - (void)load:(id<SeafDentryDelegate>)delegate force:(BOOL)force
 {
     if (delegate != nil) self.delegate = delegate;
-    [self loadContent:NO];
+    [self loadContent:force];
 }
 
 - (BOOL)hasCache

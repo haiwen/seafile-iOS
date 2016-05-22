@@ -566,6 +566,7 @@ enum {
         UIAlertController *alert = [self generateAction:arr withTitle:title];
         alert.popoverPresentationController.sourceView = self.view;
         alert.popoverPresentationController.sourceRect = rect;
+        [alert.view layoutIfNeeded];
         [self presentViewController:alert animated:true completion:nil];
     } else {
         if (self.actionSheet) {
@@ -586,6 +587,7 @@ enum {
         UIAlertController *alert = [self generateAction:arr withTitle:title];
         alert.popoverPresentationController.sourceView = self.view;
         alert.popoverPresentationController.barButtonItem = item;
+        [alert.view layoutIfNeeded];
         [self presentViewController:alert animated:true completion:nil];
     }  else {
         if (self.actionSheet) {
@@ -716,6 +718,7 @@ enum {
 {
     [sfile loadCache];
     SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
+    cell.cacheStatusView.hidden = true;
     [self updateCellContent:cell file:sfile];
     sfile.delegate = self;
     sfile.udelegate = self;
@@ -1152,6 +1155,7 @@ enum {
     NSArray *entries = [NSArray arrayWithObject:file];
     self.state = STATE_DELETE;
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Deleting file ...", @"Seafile")];
+    _directory.delegate = self;
     [_directory delEntries:entries];
 }
 
@@ -1160,11 +1164,13 @@ enum {
     NSArray *entries = [NSArray arrayWithObject:dir];
     self.state = STATE_DELETE;
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Deleting directory ...", @"Seafile")];
+    _directory.delegate = self;
     [_directory delEntries:entries];
 }
 
 - (void)redownloadFile:(SeafFile *)file
 {
+    [file cancelAnyLoading];
     [file deleteCache];
     [self.detailViewController setPreViewItem:nil master:nil];
     [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
