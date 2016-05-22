@@ -230,6 +230,18 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     return [array componentsJoinedByString:@" "];
 }
 
+- (NSString *)getCommitDesc:(NSDictionary *)event
+{
+    NSString *etype = [event objectForKey:@"etype"];
+    if ([etype isEqualToString:@"repo-delete"]) {
+        return [NSString stringWithFormat:NSLocalizedString(@"Deleted library %@", @"Seafile"), [event objectForKey:@"repo_name"]];
+    } else if ([etype isEqualToString:@"repo-create"]) {
+        return [NSString stringWithFormat:NSLocalizedString(@"Created library %@", @"Seafile"), [event objectForKey:@"repo_name"]];
+    } else {
+        return [self translateCommitDesc:[event objectForKey:@"desc"]];
+    }
+}
+
 - (void)showLoadingView
 {
     if (!self.loadingView) {
@@ -308,7 +320,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     } else {
         cell.accountImageView.image = _defaultAccountImage;
     }
-    cell.textLabel.text = [self translateCommitDesc:[event objectForKey:@"desc"]];
+    cell.textLabel.text = [self getCommitDesc:event];;
     cell.repoNameLabel.text = [event objectForKey:@"repo_name"];
     cell.authorLabel.text = [event objectForKey:@"nick"];
     long timestamp = [[event objectForKey:@"time"] longValue];
@@ -405,7 +417,11 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 {
     if (indexPath.row >= _events.count)
         return;
+
     NSDictionary *event = [_events objectAtIndex:indexPath.row];
+    NSString *etype = [event objectForKey:@"etype"];
+    if (![etype isEqualToString:@"repo-update"])
+        return;
     NSString *repoId = [event objectForKey:@"repo_id"];
     NSString *commitId = [event objectForKey:@"commit_id"];
     NSString *url = [NSString stringWithFormat:API_URL"/repo_history_changes/%@/?commit_id=%@", repoId, commitId];

@@ -75,8 +75,7 @@
 
 - (void)delayOP
 {
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    [appdelegate.tabbarController setSelectedIndex:TABBED_SEAFILE];
+    [self.tabbarController setSelectedIndex:TABBED_SEAFILE];
 }
 
 - (void)enterAccount:(SeafConnection *)conn
@@ -97,7 +96,6 @@
             [self.tabbarController setViewControllers:vcs];
         }
     }
-
     self.window.rootViewController = self.tabbarController;
     [self.window makeKeyAndVisible];
     [self performSelector:@selector(delayOP) withObject:nil afterDelay:0.01];

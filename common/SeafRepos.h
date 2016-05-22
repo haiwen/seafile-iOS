@@ -9,6 +9,7 @@
 #import "SeafDir.h"
 
 #define SHARE_REPO @"srepo"
+#define ORG_REPO @"Organization"
 
 @interface SeafRepo : SeafDir<SeafSortable>
 @property (readonly) NSString *repoType;

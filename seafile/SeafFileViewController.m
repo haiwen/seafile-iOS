@@ -978,9 +978,13 @@ enum {
         if (!repo) {
             text = @"";
         } else if ([repo.type isEqualToString:SHARE_REPO]) {
-            text = NSLocalizedString(@"Private Shares", @"Seafile");
+            text = NSLocalizedString(@"Shared to me", @"Seafile");
         } else {
-            text = repo.owner;
+            if ([repo.owner isEqualToString:ORG_REPO]) {
+                text = NSLocalizedString(@"Organization", @"Seafile");
+            } else {
+                text = repo.owner;
+            }
         }
     }
     UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];

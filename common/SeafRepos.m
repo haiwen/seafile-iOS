@@ -184,7 +184,6 @@
         newRepo.delegate = self.delegate;
         [newRepos addObject:newRepo];
     }
-
     [self loadedItems:newRepos];
     [self groupingRepos];
     [self.delegate download:self complete:true];
