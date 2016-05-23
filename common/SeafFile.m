@@ -329,6 +329,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (void)donwloadBlock:(NSString *)blk_id fromUrl:(NSString *)url
 {
+    if (!self.isDownloading) return;
     NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
     Debug("URL: %@", downloadRequest.URL);
     NSProgress *progress = nil;
@@ -357,6 +358,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 }
 - (void)downloadBlocks
 {
+    if (!self.isDownloading) return;
     NSString *blk_id = [self.blkids objectAtIndex:self.index];
     if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafGlobal.sharedObject blockPath:blk_id]])
         return [self finishBlock:blk_id];
@@ -390,6 +392,9 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
              return;
          }
          @synchronized (self) {
+             if (self.state != SEAF_DENTRY_LOADING) {
+                 return Info("Download file %@ already canceled", self.name);
+             }
              if (self.downloadingFileOid) {// Already downloading
                  return [SeafGlobal.sharedObject decDownloadnum];
              }
