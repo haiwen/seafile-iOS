@@ -198,6 +198,7 @@ enum {
             return;
         }
 
+        weakSelf.state = STATE_LOADING;
         weakSelf.directory.delegate = weakSelf;
         [weakSelf.directory loadContent:YES];
     }];

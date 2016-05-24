@@ -68,10 +68,8 @@ enum {
 @property (readonly) NSData *deviceToken;
 
 - (void)enterAccount:(SeafConnection *)conn;
+- (void)exitAccount;
 
-- (void)selectAccount:(SeafConnection *)conn;
-
-- (UINavigationController *)masterNavController:(int)index;
 - (UIViewController *)detailViewControllerAtIndex:(int)index;
 
 - (void)showDetailView:(UIViewController *) c;

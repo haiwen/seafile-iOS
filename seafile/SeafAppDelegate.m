@@ -51,11 +51,12 @@
     return SeafGlobal.sharedObject.uploadingnum != 0 || SeafGlobal.sharedObject.downloadingnum != 0;
 }
 
-- (void)selectAccount:(SeafConnection *)conn
+- (BOOL)selectAccount:(SeafConnection *)conn
 {
     conn.delegate = self;
+    BOOL updated = ([[SeafGlobal sharedObject] connection] != conn);
     @synchronized(self) {
-        if ([[SeafGlobal sharedObject] connection] != conn) {
+        if (updated) {
             [[SeafGlobal sharedObject] setConnection: conn];
             [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
             [[self masterNavController:TABBED_STARRED] popToRootViewControllerAnimated:NO];
@@ -71,16 +72,12 @@
     if (self.deviceToken)
         [conn registerDevice:self.deviceToken];
 #endif
-}
-
-- (void)delayOP
-{
-    [self.tabbarController setSelectedIndex:TABBED_SEAFILE];
+    return updated;
 }
 
 - (void)enterAccount:(SeafConnection *)conn
 {
-    [self selectAccount:conn];
+    BOOL updated = [self selectAccount:conn];
     if (self.window.rootViewController == self.tabbarController)
         return;
 
@@ -96,9 +93,16 @@
             [self.tabbarController setViewControllers:vcs];
         }
     }
+    if (updated)
+        [self.tabbarController setSelectedIndex:TABBED_SEAFILE];
     self.window.rootViewController = self.tabbarController;
     [self.window makeKeyAndVisible];
-    [self performSelector:@selector(delayOP) withObject:nil afterDelay:0.01];
+}
+
+- (void)exitAccount
+{
+    self.window.rootViewController = _startNav;
+    [self.window makeKeyAndVisible];
 }
 
 - (BOOL)openSeafileURL:(NSURL*)url
@@ -369,8 +373,7 @@
 - (BOOL)tabBarController:(UITabBarController *)tabBarController shouldSelectViewController:(UIViewController *)viewController
 {
     if ([self.viewControllers indexOfObject:viewController] == TABBED_ACCOUNTS) {
-        self.window.rootViewController = _startNav;
-        [self.window makeKeyAndVisible];
+        [self exitAccount];
         return NO;
     }
     return YES;

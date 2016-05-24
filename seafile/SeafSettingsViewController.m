@@ -30,12 +30,17 @@ enum {
 };
 
 enum {
+    CELL_CACHE_SIZE = 0,
+    CELL_CACHE_WIPE,
+};
+
+enum {
     SECTION_ACCOUNT = 0,
     SECTION_CAMERA,
     SECTION_CACHE,
     SECTION_ENC,
     SECTION_ABOUT,
-    SECTION_WIPECACHE,
+    SECTION_LOGOUT,
 };
 enum CAMERA_CELL{
     CELL_AUTO = 0,
@@ -52,6 +57,7 @@ enum ENC_LIBRARIES{
 #define SEAFILE_SITE @"http://www.seafile.com"
 #define MSG_RESET_UPLOADED NSLocalizedString(@"Do you want reset the uploaded photos?", @"Seafile")
 #define MSG_CLEAR_CACHE NSLocalizedString(@"Are you sure to clear all the cache?", @"Seafile")
+#define MSG_LOG_OUT NSLocalizedString(@"Are you sure to log out?", @"Seafile")
 
 @interface SeafSettingsViewController ()<SeafDirDelegate, SeafPhotoSyncWatcherDelegate, MFMailComposeViewControllerDelegate, CLLocationManagerDelegate>
 @property (strong, nonatomic) IBOutlet UITableViewCell *nameCell;
@@ -66,8 +72,9 @@ enum ENC_LIBRARIES{
 @property (strong, nonatomic) IBOutlet UITableViewCell *videoSyncCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *backgroundSyncCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *clearEncRepoPasswordCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *wipeCacheCell;
 
-@property (strong, nonatomic) IBOutlet UILabel *wipeCacheLabel;
+@property (strong, nonatomic) IBOutlet UILabel *logOutLabel;
 @property (strong, nonatomic) IBOutlet UILabel *autoCameraUploadLabel;
 @property (strong, nonatomic) IBOutlet UILabel *wifiOnlyLabel;
 @property (strong, nonatomic) IBOutlet UILabel *videoSyncLabel;
@@ -270,12 +277,14 @@ enum ENC_LIBRARIES{
 
     _syncRepoCell.textLabel.text = NSLocalizedString(@"Upload Destination", @"Seafile");
     _cacheCell.textLabel.text = NSLocalizedString(@"Local Cache", @"Seafile");
+    _wipeCacheCell.textLabel.text = NSLocalizedString(@"Wipe Cache", @"Seafile");
+
     _tellFriendCell.textLabel.text = [NSString stringWithFormat:NSLocalizedString(@"Tell Friends about %@", @"Seafile"), APP_NAME];
     _websiteCell.textLabel.text = NSLocalizedString(@"Website", @"Seafile");
     _websiteCell.detailTextLabel.text = @"www.seafile.com";
     _serverCell.textLabel.text = NSLocalizedString(@"Server", @"Seafile");
     _versionCell.textLabel.text = NSLocalizedString(@"Version", @"Seafile");
-    _wipeCacheLabel.text = NSLocalizedString(@"Wipe Cache", @"Seafile");
+    _logOutLabel.text = NSLocalizedString(@"Log out", @"Seafile");
     _clearEncRepoPasswordCell.textLabel.text = NSLocalizedString(@"Clear remembered passwords", @"Seafile");
     self.title = NSLocalizedString(@"Settings", @"Seafile");
 
@@ -387,6 +396,30 @@ enum ENC_LIBRARIES{
         if (indexPath.row == CELL_DESTINATION && self.autoSync) {
             [self popupRepoSelect];
         }
+    } else if (indexPath.section == SECTION_CACHE) {
+        Debug("selected %ld, autoSync: %d", (long)indexPath.row, self.autoSync);
+        if (indexPath.row == CELL_CACHE_SIZE) {
+        } else if (indexPath.row == CELL_CACHE_WIPE) {
+            [self alertWithTitle:MSG_CLEAR_CACHE message:nil yes:^{
+                SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+                [(SeafDetailViewController *)[appdelegate detailViewControllerAtIndex:TABBED_SETTINGS] setPreViewItem:nil master:nil];
+                [Utils clearAllFiles:SeafGlobal.sharedObject.objectsDir];
+                [Utils clearAllFiles:SeafGlobal.sharedObject.blocksDir];
+                [Utils clearAllFiles:SeafGlobal.sharedObject.editDir];
+                [Utils clearAllFiles:SeafGlobal.sharedObject.thumbsDir];
+                [Utils clearAllFiles:SeafGlobal.sharedObject.tempDir];
+                [SeafUploadFile clearCache];
+                [SeafAvatar clearCache];
+                [self clearThumbs];
+
+                [[SeafGlobal sharedObject] deleteAllObjects:@"Directory"];
+                [[SeafGlobal sharedObject] deleteAllObjects:@"DownloadedFile"];
+                [[SeafGlobal sharedObject] deleteAllObjects:@"SeafCacheObj"];
+
+                long long cacheSize = [self cacheSize];
+                _cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromLongLong:cacheSize];
+            } no:nil];
+        }
     } else if (indexPath.section == SECTION_ENC) {
         if (indexPath.row == CELL_CLEAR_PASSWORD) {
             [_connection clearRepoPasswords];
@@ -410,27 +443,19 @@ enum ENC_LIBRARIES{
             default:
                 break;
         }
-    } else if (indexPath.section == SECTION_WIPECACHE) {
-        [self alertWithTitle:MSG_CLEAR_CACHE message:nil yes:^{
-            SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-            [(SeafDetailViewController *)[appdelegate detailViewControllerAtIndex:TABBED_SETTINGS] setPreViewItem:nil master:nil];
-            [Utils clearAllFiles:SeafGlobal.sharedObject.objectsDir];
-            [Utils clearAllFiles:SeafGlobal.sharedObject.blocksDir];
-            [Utils clearAllFiles:SeafGlobal.sharedObject.editDir];
-            [Utils clearAllFiles:SeafGlobal.sharedObject.thumbsDir];
-            [Utils clearAllFiles:SeafGlobal.sharedObject.tempDir];
-            [SeafUploadFile clearCache];
-            [SeafAvatar clearCache];
-            [self clearThumbs];
-
-            [[SeafGlobal sharedObject] deleteAllObjects:@"Directory"];
-            [[SeafGlobal sharedObject] deleteAllObjects:@"DownloadedFile"];
-            [[SeafGlobal sharedObject] deleteAllObjects:@"SeafCacheObj"];
-
-            long long cacheSize = [self cacheSize];
-            _cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromLongLong:cacheSize];
-        } no:nil];
+    } else if (indexPath.section == SECTION_LOGOUT) {
+        [self logOut];
     }
+}
+
+- (void)logOut
+{
+    [self alertWithTitle:MSG_LOG_OUT message:nil yes:^{
+        Debug("Log out %@ %@", _connection.address, _connection.username);
+        [_connection logout];
+        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+        [appdelegate exitAccount];
+    } no:nil];
 }
 
 - (void)clearThumbs
@@ -461,7 +486,7 @@ enum ENC_LIBRARIES{
         NSLocalizedString(@"About", @"Seafile"),
         @"",
     };
-    if (section < SECTION_ACCOUNT || section > SECTION_WIPECACHE)
+    if (section < SECTION_ACCOUNT || section > SECTION_LOGOUT)
         return nil;
     if (section == SECTION_CAMERA && _connection.inAutoSync) {
         NSUInteger num = _connection.photosInSyncing;
