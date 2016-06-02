@@ -345,11 +345,11 @@ enum {
 {
     if(self.popoverController)
         return;
-    if (![QBImagePickerController isAccessible]) {
-        Warning("Error: Source is not accessible.");
-        [self alertWithTitle:NSLocalizedString(@"Photos are not accessible", @"Seafile")];
-        return;
+    if([ALAssetsLibrary authorizationStatus] == ALAuthorizationStatusRestricted ||
+       [ALAssetsLibrary authorizationStatus] == ALAuthorizationStatusDenied) {
+        return [self alertWithTitle:NSLocalizedString(@"This app does not have access to your photos and videos.", @"Seafile") message:NSLocalizedString(@"You can enable access in Privacy Settings", @"Seafile")];
     }
+
     QBImagePickerController *imagePickerController = [[QBImagePickerController alloc] init];
     imagePickerController.title = NSLocalizedString(@"Photos", @"Seafile");
     imagePickerController.delegate = self;

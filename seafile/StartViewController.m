@@ -264,13 +264,16 @@
     [context evaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics
             localizedReason:STR_17
                       reply:^(BOOL success, NSError *error) {
-                          if (error) {
+                          if (error && error.code == LAErrorUserCancel)
+                              return;
+
+                          if (error && error.code == LAErrorAuthenticationFailed) {
                               Warning("Failed to evaluate TouchID: %@", error);
-                              return [self alertWithTitle:STR_16];
+                              return [self alertWithTitle:STR_18];
                           }
 
                           if (!success) {
-                              return [self alertWithTitle:STR_18];
+                              return [self alertWithTitle:STR_16];
                           } else {
                               dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.), dispatch_get_main_queue(), ^{
                                   BOOL ret = [self selectAccount:conn];
