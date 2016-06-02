@@ -393,8 +393,12 @@ enum ENC_LIBRARIES{
             [self updateAccountInfo];
     } else if (indexPath.section == SECTION_CAMERA) {
         Debug("selected %ld, autoSync: %d", (long)indexPath.row, self.autoSync);
-        if (indexPath.row == CELL_DESTINATION && self.autoSync) {
-            [self popupRepoSelect];
+        if (indexPath.row == CELL_DESTINATION) {
+            if (self.autoSync) {
+                [self popupRepoSelect];
+            } else {
+                [self alertWithTitle:NSLocalizedString(@"Auto upload should be enabled first.", @"Seafile")];
+            }
         }
     } else if (indexPath.section == SECTION_CACHE) {
         Debug("selected %ld, autoSync: %d", (long)indexPath.row, self.autoSync);
