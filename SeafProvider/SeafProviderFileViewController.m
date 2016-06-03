@@ -7,6 +7,7 @@
 //
 
 #import "SeafProviderFileViewController.h"
+#import "UIViewController+Extend.h"
 #import "SeafFile.h"
 #import "SeafRepos.h"
 #import "SeafGlobal.h"
@@ -126,16 +127,6 @@
     [self.loadingView stopAnimating];
 }
 
-- (void)alertWithTitle:(NSString*)message handler:(void (^)())handler
-{
-    [Utils alertWithTitle:message message:nil handler:handler from:self];
-}
-
-- (void)alertWithTitle:(NSString *)title message:(NSString*)message yes:(void (^)())yes no:(void (^)())no
-{
-    [Utils alertWithTitle:title message:message yes:yes no:no from:self];
-}
-
 - (IBAction)goBack:(id)sender
 {
     [self popViewController];
@@ -231,29 +222,10 @@
 
 - (void)popupSetRepoPassword:(SeafRepo *)repo
 {
-    NSString *title = [NSString stringWithFormat:NSLocalizedString(@"Password of library '%@'", @"Seafile"), repo.name];
-    [Utils popupInputView:title placeholder:nil secure:true handler:^(NSString *input) {
-        if (!input || input.length == 0) {
-            [self alertWithTitle:NSLocalizedString(@"Password must not be empty", @"Seafile")handler:^{
-                [self popupSetRepoPassword:repo];
-            }];
-            return;
-        }
-        if (input.length < 3 || input.length  > 100) {
-            [self alertWithTitle:NSLocalizedString(@"The length of password should be between 3 and 100", @"Seafile") handler:^{
-                [self popupSetRepoPassword:repo];
-            }];
-            return;
-        }
-        [repo setDelegate:self];
-        [repo checkOrSetRepoPassword:input block:^(SeafBase *entry, int ret) {
-            if (ret == RET_SUCCESS) {
-                [self pushViewControllerDir:(SeafDir *)entry];
-            } else {
-                [self performSelector:@selector(popupSetRepoPassword:) withObject:entry afterDelay:1.0];
-            }
-        }];
-    } from:self];
+    [repo setDelegate:self];
+    [self popupSetRepoPassword:repo handler:^{
+        [self pushViewControllerDir:repo];
+    }];
 }
 
 - (void)reloadTable:(BOOL)clearall

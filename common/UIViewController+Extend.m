@@ -6,30 +6,17 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
-#import <objc/runtime.h>
+@import LocalAuthentication;
+
+#ifdef SEAFILE_APP
 #import <SVProgressHUD.h>
+#endif
 #import "UIViewController+Extend.h"
 #import "Utils.h"
 #import "Debug.h"
 
-#define ADD_DYNAMIC_PROPERTY(PROPERTY_TYPE,PROPERTY_NAME,SETTER_NAME) \
-@dynamic PROPERTY_NAME ; \
-static char kProperty##PROPERTY_NAME; \
-- ( PROPERTY_TYPE ) PROPERTY_NAME \
-{ \
-return ( PROPERTY_TYPE ) objc_getAssociatedObject(self, &(kProperty##PROPERTY_NAME ) ); \
-} \
-\
-- (void) SETTER_NAME :( PROPERTY_TYPE ) PROPERTY_NAME \
-{ \
-objc_setAssociatedObject(self, &kProperty##PROPERTY_NAME , PROPERTY_NAME , OBJC_ASSOCIATION_RETAIN); \
-} \
 
 @implementation UIViewController (Extend)
-
-ADD_DYNAMIC_PROPERTY(void (^)(),handler_ok,setHandler_ok);
-ADD_DYNAMIC_PROPERTY(void (^)(),handler_cancel,setHandler_cancel);
-ADD_DYNAMIC_PROPERTY(void (^)(NSString *),handler_input,setHandler_input);
 
 
 - (id)initWithAutoNibName
@@ -63,21 +50,7 @@ ADD_DYNAMIC_PROPERTY(void (^)(NSString *),handler_input,setHandler_input);
 
 - (void)alertWithTitle:(NSString*)title message:(NSString*)message handler:(void (^)())handler;
 {
-    if (ios8)
-        [Utils alertWithTitle:title message:message handler:handler from:self];
-    else {
-        self.handler_ok = nil;
-        self.handler_cancel = handler;
-        self.handler_input = nil;
-        UIAlertView *alert = [[UIAlertView alloc]initWithTitle:title
-                                                       message:message
-                                                      delegate:self
-                                             cancelButtonTitle:@"OK"
-                                             otherButtonTitles:nil, nil];
-        alert.transform = CGAffineTransformTranslate( alert.transform, 0.0, 130.0 );
-        alert.alertViewStyle = UIAlertViewStyleDefault;
-        [alert show];
-    }
+    [Utils alertWithTitle:title message:message handler:handler from:self];
 }
 
 - (void)alertWithTitle:(NSString*)title message:(NSString*)message
@@ -98,33 +71,12 @@ ADD_DYNAMIC_PROPERTY(void (^)(NSString *),handler_input,setHandler_input);
 
 - (void)alertWithTitle:(NSString *)title message:(NSString*)message yes:(void (^)())yes no:(void (^)())no
 {
-    if (ios8) {
-        [Utils alertWithTitle:title message:message yes:yes no:no from:self];
-    } else {
-        self.handler_ok = yes;
-        self.handler_cancel = no;
-        self.handler_input = nil;
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:message delegate:self cancelButtonTitle:STR_CANCEL otherButtonTitles:NSLocalizedString(@"OK", @"Seafile"), nil];
-        alert.alertViewStyle = UIAlertViewStyleDefault;
-        [alert show];
-    }
+    [Utils alertWithTitle:title message:message yes:yes no:no from:self];
 }
 
 - (void)popupInputView:(NSString *)title placeholder:(NSString *)tip secure:(BOOL)secure handler:(void (^)(NSString *input))handler
 {
-    if (ios8) {
-        [Utils popupInputView:title placeholder:tip secure:secure handler:handler from:self];
-    } else {
-        self.handler_ok = nil;
-        self.handler_cancel = nil;
-        self.handler_input = handler;
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:nil delegate:self cancelButtonTitle:STR_CANCEL otherButtonTitles:NSLocalizedString(@"OK", @"Seafile"), nil];
-        if (secure)
-            alert.alertViewStyle = UIAlertViewStyleSecureTextInput;
-        else
-            alert.alertViewStyle = UIAlertViewStylePlainTextInput;
-        [alert show];
-    }
+    [Utils popupInputView:title placeholder:tip secure:secure handler:handler from:self];
 }
 
 - (UIBarButtonItem *)getBarItem:(NSString *)imageName action:(SEL)action size:(float)size;
@@ -156,24 +108,6 @@ ADD_DYNAMIC_PROPERTY(void (^)(NSString *),handler_input,setHandler_input);
     return [self isViewLoaded] && self.view.window;
 }
 
-#pragma mark - UIAlertViewDelegate
-
-- (void)alertView:(UIAlertView *)alertView willDismissWithButtonIndex:(NSInteger)buttonIndex
-{
-    if (buttonIndex != alertView.cancelButtonIndex) {
-        if (self.handler_ok) {
-            self.handler_ok();
-        } else if (self.handler_input) {
-            UITextField *textfiled = [alertView textFieldAtIndex:0];
-            NSString *input = textfiled.text;
-            self.handler_input(input);
-        }
-    } else {
-        if (self.handler_cancel)
-            self.handler_cancel();
-    }
-}
-
 - (void)popupSetRepoPassword:(SeafRepo *)repo handler:(void (^)())handler
 {
     NSString *title = [NSString stringWithFormat:NSLocalizedString(@"Password of library '%@'", @"Seafile"), repo.name];
@@ -190,19 +124,61 @@ ADD_DYNAMIC_PROPERTY(void (^)(NSString *),handler_input,setHandler_input);
             }];
             return;
         }
+#ifdef SEAFILE_APP
         [SVProgressHUD showWithStatus:NSLocalizedString(@"Checking library password ...", @"Seafile")];
+#endif
         [repo checkOrSetRepoPassword:input block:^(SeafBase *entry, int ret) {
             if (ret == RET_SUCCESS) {
+#ifdef SEAFILE_APP
                 [SVProgressHUD dismiss];
+#endif
                 handler();
             } else {
+#ifdef SEAFILE_APP
                 [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Wrong library password", @"Seafile")];
+#endif
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                     [self popupSetRepoPassword:repo handler:handler];
                 });
             }
         }];
     }];
+}
+
+#define STR_15 NSLocalizedString(@"Your device cannot authenticate using Touch ID.", @"Seafile")
+#define STR_16 NSLocalizedString(@"There was a problem verifying your identity.", @"Seafile")
+#define STR_17 NSLocalizedString(@"Please authenticate to proceed", @"Seafile")
+#define STR_18 NSLocalizedString(@"Failed to authenticate", @"Seafile")
+
+- (void)checkTouchId:(void (^)(bool success))handler
+{
+    NSError *error = nil;
+    LAContext *context = [[LAContext alloc] init];
+    if (![context canEvaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics error:&error]) {
+        Warning("TouchID unavailable: %@", error);
+        [self alertWithTitle:STR_15];
+        handler(false);
+    }
+
+    [context evaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics
+            localizedReason:STR_17
+                      reply:^(BOOL success, NSError *error) {
+                          if (error && error.code == LAErrorUserCancel)
+                              return;
+
+                          if (error && error.code == LAErrorAuthenticationFailed) {
+                              Warning("Failed to evaluate TouchID: %@", error);
+                              [self alertWithTitle:STR_18];
+                              return handler(false);
+                          }
+
+                          if (!success) {
+                              [self alertWithTitle:STR_16];
+                              return handler(false);
+                          } else {
+                              return handler(true);
+                          }
+                      }];
 }
 
 @end

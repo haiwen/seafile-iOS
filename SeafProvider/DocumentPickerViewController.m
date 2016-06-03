@@ -8,6 +8,7 @@
 
 #import "DocumentPickerViewController.h"
 #import "SeafProviderFileViewController.h"
+#import "UIViewController+Extend.h"
 #import "SeafConnection.h"
 #import "SeafAccountCell.h"
 #import "SeafGlobal.h"
@@ -72,7 +73,16 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     SeafConnection *conn = [SeafGlobal.sharedObject.conns objectAtIndex:indexPath.row];
-    [self pushViewControllerDir:(SeafDir *)conn.rootFolder];
+    if (!conn.touchIdEnabled) {
+        return [self pushViewControllerDir:(SeafDir *)conn.rootFolder];
+    }
+    [self checkTouchId:^(bool success) {
+        if (success) {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.), dispatch_get_main_queue(), ^{
+                [self pushViewControllerDir:(SeafDir *)conn.rootFolder];
+            });
+        }
+    }];
 }
 
 - (void)pushViewControllerDir:(SeafDir *)dir

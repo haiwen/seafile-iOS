@@ -28,13 +28,13 @@
 		5715551D1995FCDC00D2821D /* ImageError.png in Resources */ = {isa = PBXBuildFile; fileRef = 5715551B1995FCDC00D2821D /* ImageError.png */; };
 		5715551E1995FCDC00D2821D /* ImageError@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 5715551C1995FCDC00D2821D /* ImageError@2x.png */; };
 		571617B91BE39FBD00792316 /* SeafPhoto.m in Sources */ = {isa = PBXBuildFile; fileRef = 571617B81BE39FBD00792316 /* SeafPhoto.m */; };
+		571B81CD1D01C68500386856 /* UIViewController+Extend.m in Sources */ = {isa = PBXBuildFile; fileRef = 571B81CC1D01C68500386856 /* UIViewController+Extend.m */; };
 		571CFA9419076469002A58BF /* reply.png in Resources */ = {isa = PBXBuildFile; fileRef = 571CFA9319076469002A58BF /* reply.png */; };
 		571D8CAB1677881400F1A22C /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DB827F15A833FA00097CEC /* main.m */; };
 		571D8CAC1677881400F1A22C /* SeafAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DB828315A833FA00097CEC /* SeafAppDelegate.m */; };
 		571D8CAD1677881400F1A22C /* SeafFileViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DB828F15A833FA00097CEC /* SeafFileViewController.m */; };
 		571D8CBF1677881400F1A22C /* StartViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 572B0A7615D16C1C00798C6E /* StartViewController.m */; };
 		571D8CC91677881400F1A22C /* FailToPreview.m in Sources */ = {isa = PBXBuildFile; fileRef = 57655331161BEA40005E5327 /* FailToPreview.m */; };
-		571D8CCA1677881400F1A22C /* UIViewController+Extend.m in Sources */ = {isa = PBXBuildFile; fileRef = 57655341161D848F005E5327 /* UIViewController+Extend.m */; };
 		571D8CCB1677881400F1A22C /* DownloadingProgressView.m in Sources */ = {isa = PBXBuildFile; fileRef = 571ABF521625DF31005C9B08 /* DownloadingProgressView.m */; };
 		571D8CD01677881400F1A22C /* SeafUploadingFileCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 57C07CE31632556600502B06 /* SeafUploadingFileCell.m */; };
 		571D8CD21677881400F1A22C /* SeafSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5764C82A163BF91B006AD511 /* SeafSettingsViewController.m */; };
@@ -360,6 +360,8 @@
 		571617B81BE39FBD00792316 /* SeafPhoto.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafPhoto.m; sourceTree = "<group>"; };
 		571ABF511625DF31005C9B08 /* DownloadingProgressView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DownloadingProgressView.h; sourceTree = "<group>"; };
 		571ABF521625DF31005C9B08 /* DownloadingProgressView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DownloadingProgressView.m; sourceTree = "<group>"; };
+		571B81CB1D01C68500386856 /* UIViewController+Extend.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIViewController+Extend.h"; path = "common/UIViewController+Extend.h"; sourceTree = SOURCE_ROOT; };
+		571B81CC1D01C68500386856 /* UIViewController+Extend.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIViewController+Extend.m"; path = "common/UIViewController+Extend.m"; sourceTree = SOURCE_ROOT; };
 		571B845A1A5AF0F500E92BF7 /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		571B845B1A5AF10C00E92BF7 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		571B845C1A5AF14200E92BF7 /* is */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = is; path = is.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -407,8 +409,6 @@
 		57655330161BEA40005E5327 /* FailToPreview.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FailToPreview.h; sourceTree = "<group>"; };
 		57655331161BEA40005E5327 /* FailToPreview.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FailToPreview.m; sourceTree = "<group>"; };
 		5765533D161D44A2005E5327 /* MessageUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MessageUI.framework; path = System/Library/Frameworks/MessageUI.framework; sourceTree = SDKROOT; };
-		57655340161D83CF005E5327 /* UIViewController+Extend.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIViewController+Extend.h"; sourceTree = "<group>"; };
-		57655341161D848F005E5327 /* UIViewController+Extend.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIViewController+Extend.m"; sourceTree = "<group>"; };
 		576B9918186142EC00A16ED6 /* CoreText.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreText.framework; path = System/Library/Frameworks/CoreText.framework; sourceTree = SDKROOT; };
 		576B9EC015DD394600802D07 /* QuickLook.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickLook.framework; path = System/Library/Frameworks/QuickLook.framework; sourceTree = SDKROOT; };
 		576C91C1177EB43F007B50BD /* SeafDirViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafDirViewController.h; sourceTree = "<group>"; };
@@ -813,8 +813,6 @@
 				57C07CE31632556600502B06 /* SeafUploadingFileCell.m */,
 				572B0A7515D16C1C00798C6E /* StartViewController.h */,
 				572B0A7615D16C1C00798C6E /* StartViewController.m */,
-				57655340161D83CF005E5327 /* UIViewController+Extend.h */,
-				57655341161D848F005E5327 /* UIViewController+Extend.m */,
 			);
 			name = views;
 			sourceTree = "<group>";
@@ -1087,6 +1085,8 @@
 				57E229D51A1108B200C92330 /* UIImage+FileType.m */,
 				57E229D61A1108B200C92330 /* Utils.h */,
 				57E229D71A1108B200C92330 /* Utils.m */,
+				571B81CB1D01C68500386856 /* UIViewController+Extend.h */,
+				571B81CC1D01C68500386856 /* UIViewController+Extend.m */,
 			);
 			name = utils;
 			sourceTree = "<group>";
@@ -1606,11 +1606,11 @@
 				57E229B21A11087500C92330 /* SeafFile.m in Sources */,
 				57E229BB1A11087500C92330 /* SeafRepos.m in Sources */,
 				571D8CBF1677881400F1A22C /* StartViewController.m in Sources */,
+				571B81CD1D01C68500386856 /* UIViewController+Extend.m in Sources */,
 				57E229AC1A11087500C92330 /* SeafData.m in Sources */,
 				57E5E7B31CC219C8004B7125 /* SeafEventCell.m in Sources */,
 				571D8CC91677881400F1A22C /* FailToPreview.m in Sources */,
 				57E229A31A11087500C92330 /* SeafAvatar.m in Sources */,
-				571D8CCA1677881400F1A22C /* UIViewController+Extend.m in Sources */,
 				571D8CCB1677881400F1A22C /* DownloadingProgressView.m in Sources */,
 				57E229DE1A1108B200C92330 /* FileMimeType.m in Sources */,
 				571D8CD01677881400F1A22C /* SeafUploadingFileCell.m in Sources */,

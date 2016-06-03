@@ -5,6 +5,8 @@
 //  Created by Wang Wei on 11/9/14.
 //  Copyright (c) 2014 Seafile. All rights reserved.
 //
+@import LocalAuthentication;
+
 #import "SeafGlobal.h"
 #import "SeafUploadFile.h"
 #import "SeafDir.h"
@@ -733,6 +735,5 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 {
     return [self uniqueDirUnder:self.uploadsDir identify:[[NSUUID UUID] UUIDString]];
 }
-
 
 @end
