@@ -567,15 +567,9 @@ enum ENC_LIBRARIES{
     [appdelegate checkBackgroundUploadStatus];
 }
 
-- (void)chooseDir:(UIViewController *)c dir:(SeafDir *)dir
+- (void)setAutoSyncRepo:(SeafRepo *)repo
 {
-    if (c.navigationController == self.navigationController) {
-        [self.navigationController popToRootViewControllerAnimated:true];
-    } else {
-        [c.navigationController dismissViewControllerAnimated:YES completion:nil];
-    }
     NSString *old = _connection.autoSyncRepo;
-    SeafRepo *repo = (SeafRepo *)dir;
     if ([repo.repoId isEqualToString:old]) {
         [_connection checkPhotoChanges:nil];
         return;
@@ -589,6 +583,28 @@ enum ENC_LIBRARIES{
             [self setSyncRepo:repo];
         }];
     });
+}
+- (void)chooseDir:(UIViewController *)c dir:(SeafDir *)dir
+{
+    if (c.navigationController == self.navigationController) {
+        [self.navigationController popToRootViewControllerAnimated:true];
+    } else {
+        [c.navigationController dismissViewControllerAnimated:YES completion:nil];
+    }
+    SeafRepo *repo = (SeafRepo *)dir;
+    Debug("Choose repo %@ for photo auto upload, encryped:%d", repo.name, repo.encrypted);
+    if (repo.encrypted) {
+        if (!_connection.localDecryption) {
+            return [self alertWithTitle:NSLocalizedString(@"Please enable \"Local decryption\" for auto uploading photos to an encrypted library?", @"Seafile")];
+        } else if (_connection.autoClearRepoPasswd) {
+            return [self alertWithTitle:NSLocalizedString(@"Please disable \"Auto clear passwords\" for auto uploading photos to an encrypted library?", @"Seafile")];
+        } else if (repo.passwordRequired) {
+            return [self popupSetRepoPassword:repo handler:^{
+                [self setAutoSyncRepo:repo];
+            }];
+        }
+    }
+    [self setAutoSyncRepo:repo];
 }
 
 - (void)cancelChoose:(UIViewController *)c
@@ -604,8 +620,11 @@ enum ENC_LIBRARIES{
 - (void)photoSyncChanged:(long)remain
 {
     Debug("%ld photos remain to uplaod", remain);
-    if (self.isVisible)
-        [self.tableView reloadData];
+    if (self.isVisible) {
+        dispatch_async(dispatch_get_main_queue(), ^ {
+            [self.tableView reloadData];
+        });
+    }
 }
 
 #pragma mark - CLLocationManagerDelegate
