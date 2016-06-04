@@ -286,14 +286,13 @@
 - (void)startBackgroundTask
 {
     // Start the long-running task.
-    Debug("start background task");
     UIApplication* app = [UIApplication sharedApplication];
     if (UIBackgroundTaskInvalid != self.bgTask) {
         [app endBackgroundTask:self.bgTask];
         self.bgTask = UIBackgroundTaskInvalid;
     }
     if (!self.shouldContinue) return;
-
+    Debug("start background task");
     self.bgTask = [app beginBackgroundTaskWithExpirationHandler:self.expirationHandler];
 }
 

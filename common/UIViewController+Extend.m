@@ -160,11 +160,15 @@
         return handler(false);
     }
 
-    [context evaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics
+    [context evaluatePolicy:LAPolicyDeviceOwnerAuthentication
             localizedReason:STR_17
                       reply:^(BOOL success, NSError *error) {
-                          if (error && error.code == LAErrorUserCancel)
+                          if (error && error.code == LAErrorUserCancel) {
+                              Debug("Canceld by user.");
                               return;
+                          }
+                          if (success)
+                              return handler(true);
 
                           if (error && error.code == LAErrorAuthenticationFailed) {
                               Warning("Failed to evaluate TouchID: %@", error);
@@ -172,12 +176,9 @@
                               return handler(false);
                           }
 
-                          if (!success) {
-                              [self alertWithTitle:STR_16];
-                              return handler(false);
-                          } else {
-                              return handler(true);
-                          }
+                          Warning("Failed to evaluate TouchID: %@", error);
+                          [self alertWithTitle:STR_16];
+                          return handler(false);
                       }];
 }
 
