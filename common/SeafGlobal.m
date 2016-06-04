@@ -760,7 +760,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 - (NSString *)exportKeyFor:(NSURL *)url
 {
     NSArray *components = url.pathComponents;
-    int length = components.count;
+    NSUInteger length = components.count;
     return [NSString stringWithFormat:@"%@/%@", [components objectAtIndex:length-2], [components objectAtIndex:length-1]];
 }
 

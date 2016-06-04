@@ -144,7 +144,7 @@
 
 - (void)uploadFile:(NSURL *)url overwrite:(BOOL)overwrite
 {
-    Debug("Upload file: %@(%d) to %@, overwrite=%d, mode=%d", url, [Utils fileExistsAtPath:url.path], _directory.path, overwrite, self.root.documentPickerMode);
+    Debug("Upload file: %@(%d) to %@, overwrite=%d, mode=%lu", url, [Utils fileExistsAtPath:url.path], _directory.path, overwrite, (unsigned long)self.root.documentPickerMode);
     if (self.root.documentPickerMode == UIDocumentPickerModeMoveToService) {
         return [self uploadmMovedFile:url overwrite:overwrite];
     }
@@ -269,7 +269,7 @@
     }
 }
 
-- (SeafBase *)getItemAtIndex:(int)index
+- (SeafBase *)getItemAtIndex:(NSUInteger)index
 {
     @try {
         return [self.items objectAtIndex:index];
