@@ -66,7 +66,7 @@
         self.chooseButton.hidden = [_directory isKindOfClass:[SeafRepos class]];
     }
 
-    self.tableView.sectionHeaderHeight = self.chooseButton.hidden ? 1 : 22;
+    self.tableView.sectionHeaderHeight = self.chooseButton.hidden ? 1 : HEADER_HEIGHT;
 
     if ([self isViewLoaded]) {
         [self.tableView reloadData];

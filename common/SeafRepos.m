@@ -101,19 +101,19 @@
 
 - (BOOL)canLocalDecrypt
 {
-#if 1
     //Debug("localDecrypt %d version:%d, magic:%@", self.encrypted, self.encVersion, self.magic);
     return self.encrypted && self.encVersion >= 2 && self.magic;
-#else
-    return false;
-#endif
 }
 
 - (NSString *)detailText
 {
     NSString *detail = [SeafDateFormatter stringFromLongLong:self.mtime];
     if ([SHARE_REPO isEqualToString:self.type]) {
-        detail = [detail stringByAppendingFormat:@", %@", self.owner];
+        NSString *name = self.owner;
+        unsigned long index = [self.owner indexOf:'@'];
+        if (index != NSNotFound)
+            name = [self.owner substringToIndex:index];
+        detail = [detail stringByAppendingFormat:@", %@", name];
     }
     return detail;
 }

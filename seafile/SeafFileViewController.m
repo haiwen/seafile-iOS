@@ -989,8 +989,9 @@ enum {
     }
     UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
     UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 3, tableView.bounds.size.width - 10, 18)];
+    label.font = [UIFont systemFontOfSize:14];
     label.text = text;
-    label.textColor = [UIColor whiteColor];
+    label.textColor = [UIColor darkTextColor];
     label.backgroundColor = [UIColor clearColor];
     [headerView setBackgroundColor:HEADER_COLOR];
     [headerView addSubview:label];
@@ -1602,7 +1603,7 @@ enum {
 {
     self.searchResults = nil;
     if ([_directory isKindOfClass:[SeafRepos class]]) {
-        self.tableView.sectionHeaderHeight = 22;
+        self.tableView.sectionHeaderHeight = HEADER_HEIGHT;
         [self.tableView reloadData];
     }
 }

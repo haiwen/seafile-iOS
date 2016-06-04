@@ -157,7 +157,7 @@
     if (![context canEvaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics error:&error]) {
         Warning("TouchID unavailable: %@", error);
         [self alertWithTitle:STR_15];
-        handler(false);
+        return handler(false);
     }
 
     [context evaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics
