@@ -67,8 +67,6 @@ typedef void (^repo_password_set_block_t)(SeafBase *entry, int ret);
 - (void)loadContent:(BOOL)force;
 - (void)updateWithEntry:(SeafBase *)entry;
 
-- (BOOL)localDecrypt;
-
 - (void)checkOrSetRepoPassword:(NSString *)password delegate:(id<SeafRepoPasswordDelegate>)del;
 - (void)checkOrSetRepoPassword:(NSString *)password block:(repo_password_set_block_t)block;
 

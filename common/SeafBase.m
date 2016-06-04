@@ -216,14 +216,9 @@
     }];
 }
 
-- (BOOL)localDecrypt
-{
-    return [connection localDecrypt:self.repoId];
-}
-
 - (void)checkOrSetRepoPassword:(NSString *)password delegate:(id<SeafRepoPasswordDelegate>)del
 {
-    if ([self localDecrypt])
+    if ([connection localDecrypt:self.repoId])
         [self checkRepoPassword:password delegate:del];
     else
         [self setRepoPassword:password delegate:del];
@@ -231,7 +226,7 @@
 
 - (void)checkOrSetRepoPassword:(NSString *)password block:(void(^)(SeafBase *entry, int ret))block
 {
-    if ([self localDecrypt])
+    if ([connection localDecrypt:self.repoId])
         [self checkRepoPassword:password block:block];
     else
         [self setRepoPassword:password block:block];

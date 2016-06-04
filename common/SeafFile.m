@@ -423,7 +423,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (void)download
 {
-    if (self.localDecrypt)
+    if ([connection localDecrypt:self.repoId] || _filesize > LARGE_FILE_SIZE)
         [self downloadByBlocks];
     else
         [self downloadByFile];
