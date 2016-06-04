@@ -74,6 +74,7 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     SeafConnection *conn = [SeafGlobal.sharedObject.conns objectAtIndex:indexPath.row];
+    Debug("TouchId for account %@ %@, %d", conn.address, conn.username, conn.touchIdEnabled);
     if (!conn.touchIdEnabled) {
         return [self pushViewControllerDir:(SeafDir *)conn.rootFolder];
     }

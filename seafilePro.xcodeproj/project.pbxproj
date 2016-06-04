@@ -27,7 +27,8 @@
 		5715551D1995FCDC00D2821D /* ImageError.png in Resources */ = {isa = PBXBuildFile; fileRef = 5715551B1995FCDC00D2821D /* ImageError.png */; };
 		5715551E1995FCDC00D2821D /* ImageError@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 5715551C1995FCDC00D2821D /* ImageError@2x.png */; };
 		571617B91BE39FBD00792316 /* SeafPhoto.m in Sources */ = {isa = PBXBuildFile; fileRef = 571617B81BE39FBD00792316 /* SeafPhoto.m */; };
-		571B81CD1D01C68500386856 /* UIViewController+Extend.m in Sources */ = {isa = PBXBuildFile; fileRef = 571B81CC1D01C68500386856 /* UIViewController+Extend.m */; };
+		571B81D51D02CFA000386856 /* UIViewController+Extend.m in Sources */ = {isa = PBXBuildFile; fileRef = 571B81D41D02CFA000386856 /* UIViewController+Extend.m */; };
+		571B81D71D02CFB100386856 /* UIViewController+Extend.m in Sources */ = {isa = PBXBuildFile; fileRef = 571B81D41D02CFA000386856 /* UIViewController+Extend.m */; };
 		571CFA9419076469002A58BF /* reply.png in Resources */ = {isa = PBXBuildFile; fileRef = 571CFA9319076469002A58BF /* reply.png */; };
 		571D8CAB1677881400F1A22C /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DB827F15A833FA00097CEC /* main.m */; };
 		571D8CAC1677881400F1A22C /* SeafAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 57DB828315A833FA00097CEC /* SeafAppDelegate.m */; };
@@ -349,8 +350,8 @@
 		571617B81BE39FBD00792316 /* SeafPhoto.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafPhoto.m; sourceTree = "<group>"; };
 		571ABF511625DF31005C9B08 /* DownloadingProgressView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DownloadingProgressView.h; sourceTree = "<group>"; };
 		571ABF521625DF31005C9B08 /* DownloadingProgressView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DownloadingProgressView.m; sourceTree = "<group>"; };
-		571B81CB1D01C68500386856 /* UIViewController+Extend.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIViewController+Extend.h"; path = "common/UIViewController+Extend.h"; sourceTree = SOURCE_ROOT; };
-		571B81CC1D01C68500386856 /* UIViewController+Extend.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIViewController+Extend.m"; path = "common/UIViewController+Extend.m"; sourceTree = SOURCE_ROOT; };
+		571B81D31D02CFA000386856 /* UIViewController+Extend.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIViewController+Extend.h"; path = "common/UIViewController+Extend.h"; sourceTree = SOURCE_ROOT; };
+		571B81D41D02CFA000386856 /* UIViewController+Extend.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIViewController+Extend.m"; path = "common/UIViewController+Extend.m"; sourceTree = SOURCE_ROOT; };
 		571B845A1A5AF0F500E92BF7 /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		571B845B1A5AF10C00E92BF7 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		571B845C1A5AF14200E92BF7 /* is */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = is; path = is.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -760,8 +761,6 @@
 		5709512615B9ACDF00F48C08 /* views */ = {
 			isa = PBXGroup;
 			children = (
-				57E5E7B11CC219C8004B7125 /* SeafEventCell.m */,
-				57E5E7B21CC219C8004B7125 /* SeafEventCell.h */,
 				571ABF511625DF31005C9B08 /* DownloadingProgressView.h */,
 				571ABF521625DF31005C9B08 /* DownloadingProgressView.m */,
 				57655330161BEA40005E5327 /* FailToPreview.h */,
@@ -782,6 +781,8 @@
 				57A90DA018C49F97005D8A53 /* SeafDetailViewController.m */,
 				576C91C1177EB43F007B50BD /* SeafDirViewController.h */,
 				576C91C2177EB43F007B50BD /* SeafDirViewController.m */,
+				57E5E7B21CC219C8004B7125 /* SeafEventCell.h */,
+				57E5E7B11CC219C8004B7125 /* SeafEventCell.m */,
 				57DB828E15A833FA00097CEC /* SeafFileViewController.h */,
 				57DB828F15A833FA00097CEC /* SeafFileViewController.m */,
 				57D5F81B1BD23389006BAD7B /* SeafPhoto.h */,
@@ -1074,8 +1075,8 @@
 				57E229D51A1108B200C92330 /* UIImage+FileType.m */,
 				57E229D61A1108B200C92330 /* Utils.h */,
 				57E229D71A1108B200C92330 /* Utils.m */,
-				571B81CB1D01C68500386856 /* UIViewController+Extend.h */,
-				571B81CC1D01C68500386856 /* UIViewController+Extend.m */,
+				571B81D31D02CFA000386856 /* UIViewController+Extend.h */,
+				571B81D41D02CFA000386856 /* UIViewController+Extend.m */,
 			);
 			name = utils;
 			sourceTree = "<group>";
@@ -1584,7 +1585,7 @@
 				57E229B21A11087500C92330 /* SeafFile.m in Sources */,
 				57E229BB1A11087500C92330 /* SeafRepos.m in Sources */,
 				571D8CBF1677881400F1A22C /* StartViewController.m in Sources */,
-				571B81CD1D01C68500386856 /* UIViewController+Extend.m in Sources */,
+				571B81D51D02CFA000386856 /* UIViewController+Extend.m in Sources */,
 				57E229AC1A11087500C92330 /* SeafData.m in Sources */,
 				57E5E7B31CC219C8004B7125 /* SeafEventCell.m in Sources */,
 				571D8CC91677881400F1A22C /* FailToPreview.m in Sources */,
@@ -1621,6 +1622,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				571B81D71D02CFB100386856 /* UIViewController+Extend.m in Sources */,
 				57A192151A208F0900985F77 /* SeafAccountCell.m in Sources */,
 				57A029C61A17022B009C9D7B /* SeafGlobal.m in Sources */,
 				57A029BB1A1701EB009C9D7B /* ColorfulButton.m in Sources */,

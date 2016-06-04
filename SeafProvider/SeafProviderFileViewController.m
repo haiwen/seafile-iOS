@@ -7,6 +7,7 @@
 //
 
 #import "SeafProviderFileViewController.h"
+#import "UIViewController+Extend.h"
 #import "SeafFile.h"
 #import "SeafRepos.h"
 #import "SeafGlobal.h"
@@ -193,16 +194,6 @@
     [self.root dismissGrantingAccessToURL:url];
 }
 
-- (void)alertWithTitle:(NSString*)title handler:(void (^)())handler
-{
-    [Utils alertWithTitle:title message:nil handler:handler from:self];
-}
-
-- (void)alertWithTitle:(NSString *)title message:(NSString*)message yes:(void (^)())yes no:(void (^)())no
-{
-    [Utils alertWithTitle:title message:message yes:yes no:no from:self];
-}
-
 - (IBAction)chooseCurrentDir:(id)sender
 {
     NSString *tmpdir = [SeafGlobal.sharedObject uniqueDirUnder:self.root.documentStorageURL.path];
@@ -261,7 +252,7 @@
         UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
         UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 3, tableView.bounds.size.width - 10, 18)];
         label.text = NSLocalizedString(@"Save Destination", @"Seafile");
-        label.textColor = [UIColor whiteColor];
+        label.textColor = [UIColor darkTextColor];
         label.backgroundColor = [UIColor clearColor];
         [headerView setBackgroundColor:HEADER_COLOR];
         [headerView addSubview:label];
@@ -509,48 +500,6 @@
                          [self removeFromParentViewController];
                          [self.view removeFromSuperview];
                      }];
-}
-
-- (void)popupInputView:(NSString *)title placeholder:(NSString *)tip secure:(BOOL)secure handler:(void (^)(NSString *input))handler
-{
-    [Utils popupInputView:title placeholder:tip secure:secure handler:handler from:self];
-}
-
-- (void)popupSetRepoPassword:(SeafRepo *)repo handler:(void (^)())handler
-{
-    NSString *title = [NSString stringWithFormat:NSLocalizedString(@"Password of library '%@'", @"Seafile"), repo.name];
-    [self popupInputView:title placeholder:nil secure:true handler:^(NSString *input) {
-        if (!input || input.length == 0) {
-            [self alertWithTitle:NSLocalizedString(@"Password must not be empty", @"Seafile")handler:^{
-                [self popupSetRepoPassword:repo handler:handler];
-            }];
-            return;
-        }
-        if (input.length < 3 || input.length  > 100) {
-            [self alertWithTitle:NSLocalizedString(@"The length of password should be between 3 and 100", @"Seafile") handler:^{
-                [self popupSetRepoPassword:repo handler:handler];
-            }];
-            return;
-        }
-#ifdef SEAFILE_APP
-        [SVProgressHUD showWithStatus:NSLocalizedString(@"Checking library password ...", @"Seafile")];
-#endif
-        [repo checkOrSetRepoPassword:input block:^(SeafBase *entry, int ret) {
-            if (ret == RET_SUCCESS) {
-#ifdef SEAFILE_APP
-                [SVProgressHUD dismiss];
-#endif
-                handler();
-            } else {
-#ifdef SEAFILE_APP
-                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Wrong library password", @"Seafile")];
-#endif
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                    [self popupSetRepoPassword:repo handler:handler];
-                });
-            }
-        }];
-    }];
 }
 
 @end

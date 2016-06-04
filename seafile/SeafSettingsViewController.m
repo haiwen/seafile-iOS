@@ -595,9 +595,9 @@ enum ENC_LIBRARIES{
     Debug("Choose repo %@ for photo auto upload, encryped:%d", repo.name, repo.encrypted);
     if (repo.encrypted) {
         if (!_connection.localDecryption) {
-            return [self alertWithTitle:NSLocalizedString(@"Please enable \"Local decryption\" for auto uploading photos to an encrypted library?", @"Seafile")];
+            return [self alertWithTitle:NSLocalizedString(@"Please enable \"Local decryption\" for auto uploading photos to an encrypted library.", @"Seafile")];
         } else if (_connection.autoClearRepoPasswd) {
-            return [self alertWithTitle:NSLocalizedString(@"Please disable \"Auto clear passwords\" for auto uploading photos to an encrypted library?", @"Seafile")];
+            return [self alertWithTitle:NSLocalizedString(@"Please disable \"Auto clear passwords\" for auto uploading photos to an encrypted library.", @"Seafile")];
         } else if (repo.passwordRequired) {
             return [self popupSetRepoPassword:repo handler:^{
                 [self setAutoSyncRepo:repo];

@@ -118,7 +118,10 @@
 
     if (self.window.rootViewController == self.startNav) {
         [self.startVC selectDefaultAccount:^(bool success) {
-            if (!success) return;
+            if (!success) {
+                NSString *title = NSLocalizedString(@"Failed to open file", @"Seafile");
+                return [Utils alertWithTitle:title message:nil handler:nil from:self.startVC];
+            }
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5*NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
                 [self openFile:repoId path:path];
             });
@@ -149,6 +152,9 @@
         [self.startVC selectDefaultAccount:^(bool success) {
             if (success) {
                 [self uploadFile:to.path];
+            } else {
+                NSString *title = NSLocalizedString(@"Failed to upload file", @"Seafile");
+                [Utils alertWithTitle:title message:nil handler:nil from:self.startVC];
             }
         }];
     } else
