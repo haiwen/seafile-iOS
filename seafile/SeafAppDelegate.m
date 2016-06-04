@@ -81,7 +81,7 @@
     if (self.window.rootViewController == self.tabbarController)
         return;
 
-    Debug("isActivityEnabled:%d tabbarController: %u", conn.isActivityEnabled, self.tabbarController.viewControllers.count);
+    Debug("isActivityEnabled:%d tabbarController: %ld", conn.isActivityEnabled, (long)self.tabbarController.viewControllers.count);
     if (conn.isActivityEnabled) {
         if (self.tabbarController.viewControllers.count != TABBED_COUNT) {
             [self.tabbarController setViewControllers:self.viewControllers];
