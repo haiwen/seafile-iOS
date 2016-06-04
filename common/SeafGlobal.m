@@ -9,6 +9,7 @@
 
 #import "SeafGlobal.h"
 #import "SeafUploadFile.h"
+#import "SeafAvatar.h"
 #import "SeafDir.h"
 #import "Utils.h"
 #import "Debug.h"
@@ -788,6 +789,43 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 {
     [Utils clearAllFiles:SeafGlobal.sharedObject.documentStorageDir];
     [SeafGlobal.sharedObject saveExports:[NSDictionary new]];
+}
+
+
+- (void)clearThumbs
+{
+    NSString *dir = [SeafGlobal.sharedObject applicationDocumentsDirectory];
+    NSError *error = nil;
+    BOOL isDirectory;
+    NSArray *dirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:dir error:&error];
+
+    if (error) return;
+    for (NSString *entry in dirContents) {
+        if (![entry hasPrefix:@"thumb"] || entry.length < 40) continue;
+        NSString *path = [dir stringByAppendingPathComponent:entry];
+        if ([[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory]
+            && !isDirectory) {
+            [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
+        }
+    }
+}
+
+- (void)clearCache
+{
+    Debug("clear local cache.");
+    [Utils clearAllFiles:SeafGlobal.sharedObject.objectsDir];
+    [Utils clearAllFiles:SeafGlobal.sharedObject.blocksDir];
+    [Utils clearAllFiles:SeafGlobal.sharedObject.editDir];
+    [Utils clearAllFiles:SeafGlobal.sharedObject.thumbsDir];
+    [Utils clearAllFiles:SeafGlobal.sharedObject.tempDir];
+    [SeafUploadFile clearCache];
+    [SeafAvatar clearCache];
+    [self clearThumbs];
+
+    [SeafGlobal.sharedObject clearExportFiles];
+    [SeafGlobal.sharedObject deleteAllObjects:@"Directory"];
+    [SeafGlobal.sharedObject deleteAllObjects:@"DownloadedFile"];
+    [SeafGlobal.sharedObject deleteAllObjects:@"SeafCacheObj"];
 }
 
 @end

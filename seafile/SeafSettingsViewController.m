@@ -385,25 +385,6 @@ enum ENC_LIBRARIES{
 }
 
 #pragma mark - Table view delegate
-- (void)clearCache
-{
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    [(SeafDetailViewController *)[appdelegate detailViewControllerAtIndex:TABBED_SETTINGS] setPreViewItem:nil master:nil];
-    [Utils clearAllFiles:SeafGlobal.sharedObject.objectsDir];
-    [Utils clearAllFiles:SeafGlobal.sharedObject.blocksDir];
-    [Utils clearAllFiles:SeafGlobal.sharedObject.editDir];
-    [Utils clearAllFiles:SeafGlobal.sharedObject.thumbsDir];
-    [Utils clearAllFiles:SeafGlobal.sharedObject.tempDir];
-    [SeafUploadFile clearCache];
-    [SeafAvatar clearCache];
-    [self clearThumbs];
-
-    [SeafGlobal.sharedObject clearExportFiles];
-    [SeafGlobal.sharedObject deleteAllObjects:@"Directory"];
-    [SeafGlobal.sharedObject deleteAllObjects:@"DownloadedFile"];
-    [SeafGlobal.sharedObject deleteAllObjects:@"SeafCacheObj"];
-}
-
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     [self.tableView deselectRowAtIndexPath:[self.tableView indexPathForSelectedRow] animated:NO];
@@ -424,7 +405,9 @@ enum ENC_LIBRARIES{
         if (indexPath.row == CELL_CACHE_SIZE) {
         } else if (indexPath.row == CELL_CACHE_WIPE) {
             [self alertWithTitle:MSG_CLEAR_CACHE message:nil yes:^{
-                [self clearCache];
+                SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+                [(SeafDetailViewController *)[appdelegate detailViewControllerAtIndex:TABBED_SETTINGS] setPreViewItem:nil master:nil];
+                [SeafGlobal.sharedObject clearCache];
                 long long cacheSize = [self cacheSize];
                 _cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromLongLong:cacheSize];
             } no:nil];
@@ -465,24 +448,6 @@ enum ENC_LIBRARIES{
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         [appdelegate exitAccount];
     } no:nil];
-}
-
-- (void)clearThumbs
-{
-    NSString *dir = [SeafGlobal.sharedObject applicationDocumentsDirectory];
-    NSError *error = nil;
-    BOOL isDirectory;
-    NSArray *dirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:dir error:&error];
-
-    if (error) return;
-    for (NSString *entry in dirContents) {
-        if (![entry hasPrefix:@"thumb"] || entry.length < 40) continue;
-        NSString *path = [dir stringByAppendingPathComponent:entry];
-        if ([[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory]
-            && !isDirectory) {
-            [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
-        }
-    }
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section

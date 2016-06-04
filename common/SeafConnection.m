@@ -639,11 +639,15 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             Warning("Error: %@, token=%@, resp=%@, delegate=%@, url=%@", error, _token, responseObject, self.delegate, url);
             failure (request, resp, responseObject, error);
             if (resp.statusCode == HTTP_ERR_UNAUTHORIZED) {
+                NSString *wiped = [resp.allHeaderFields objectForKey:@"X-Seafile-Wiped"];
+                Debug("wiped: %@", wiped);
                 @synchronized(self) {
                     if (![self authorized])   return;
                     _token = nil;
                     [_info removeObjectForKey:@"token"];
                     [self saveAccountInfo];
+                    if (wiped)
+                        [SeafGlobal.sharedObject clearCache];
                 }
                 if (self.delegate) [self.delegate loginRequired:self];
             }

@@ -102,5 +102,7 @@
 - (NSDictionary *)getExportFile:(NSURL *)url;
 - (void)clearExportFiles;
 
+- (void)clearCache;
+
 @end
 
