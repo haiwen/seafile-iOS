@@ -10,3 +10,5 @@ seafilePro.xcworkspace/
 *.ipa
 TODO
 Podfile.lock
+common/*.lproj
+SeafProvider/*.lproj
