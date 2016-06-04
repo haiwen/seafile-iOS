@@ -740,11 +740,7 @@ enum {
 - (SeafCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView
 {
     SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
-    NSString *detail = [SeafDateFormatter stringFromLongLong:srepo.mtime];
-    if ([SHARE_REPO isEqualToString:srepo.type]) {
-        detail = [detail stringByAppendingFormat:@", %@", srepo.owner];
-    }
-    cell.detailTextLabel.text = detail;
+    cell.detailTextLabel.text = srepo.detailText;
     cell.imageView.image = srepo.icon;
     cell.textLabel.text = srepo.name;
     cell.badgeLabel.text = nil;

@@ -51,6 +51,7 @@
 - (NSString *)thumbsDir;
 - (NSString *)objectsDir;
 - (NSString *)blocksDir;
+- (NSString *)documentStorageDir;
 
 
 - (NSString *)documentPath:(NSString*)fileId;
@@ -96,6 +97,10 @@
 
 - (NSString *)uniqueDirUnder:(NSString *)dir;
 - (NSString *)uniqueUploadDir;
+- (void)addExportFile:(NSURL *)url data:(NSDictionary *)dict;
+- (void)removeExportFile:(NSURL *)url;
+- (NSDictionary *)getExportFile:(NSURL *)url;
+- (void)clearExportFiles;
 
 @end
 

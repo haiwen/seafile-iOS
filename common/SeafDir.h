@@ -42,4 +42,5 @@
 - (void)downloadContentSuccess:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir))failure;
 
 - (BOOL)nameExist:(NSString *)name;
+- (NSArray *)subDirs;
 @end

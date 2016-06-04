@@ -385,6 +385,25 @@ enum ENC_LIBRARIES{
 }
 
 #pragma mark - Table view delegate
+- (void)clearCache
+{
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    [(SeafDetailViewController *)[appdelegate detailViewControllerAtIndex:TABBED_SETTINGS] setPreViewItem:nil master:nil];
+    [Utils clearAllFiles:SeafGlobal.sharedObject.objectsDir];
+    [Utils clearAllFiles:SeafGlobal.sharedObject.blocksDir];
+    [Utils clearAllFiles:SeafGlobal.sharedObject.editDir];
+    [Utils clearAllFiles:SeafGlobal.sharedObject.thumbsDir];
+    [Utils clearAllFiles:SeafGlobal.sharedObject.tempDir];
+    [SeafUploadFile clearCache];
+    [SeafAvatar clearCache];
+    [self clearThumbs];
+
+    [SeafGlobal.sharedObject clearExportFiles];
+    [SeafGlobal.sharedObject deleteAllObjects:@"Directory"];
+    [SeafGlobal.sharedObject deleteAllObjects:@"DownloadedFile"];
+    [SeafGlobal.sharedObject deleteAllObjects:@"SeafCacheObj"];
+}
+
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     [self.tableView deselectRowAtIndexPath:[self.tableView indexPathForSelectedRow] animated:NO];
@@ -405,21 +424,7 @@ enum ENC_LIBRARIES{
         if (indexPath.row == CELL_CACHE_SIZE) {
         } else if (indexPath.row == CELL_CACHE_WIPE) {
             [self alertWithTitle:MSG_CLEAR_CACHE message:nil yes:^{
-                SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-                [(SeafDetailViewController *)[appdelegate detailViewControllerAtIndex:TABBED_SETTINGS] setPreViewItem:nil master:nil];
-                [Utils clearAllFiles:SeafGlobal.sharedObject.objectsDir];
-                [Utils clearAllFiles:SeafGlobal.sharedObject.blocksDir];
-                [Utils clearAllFiles:SeafGlobal.sharedObject.editDir];
-                [Utils clearAllFiles:SeafGlobal.sharedObject.thumbsDir];
-                [Utils clearAllFiles:SeafGlobal.sharedObject.tempDir];
-                [SeafUploadFile clearCache];
-                [SeafAvatar clearCache];
-                [self clearThumbs];
-
-                [[SeafGlobal sharedObject] deleteAllObjects:@"Directory"];
-                [[SeafGlobal sharedObject] deleteAllObjects:@"DownloadedFile"];
-                [[SeafGlobal sharedObject] deleteAllObjects:@"SeafCacheObj"];
-
+                [self clearCache];
                 long long cacheSize = [self cacheSize];
                 _cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromLongLong:cacheSize];
             } no:nil];

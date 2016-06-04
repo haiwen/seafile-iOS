@@ -33,6 +33,8 @@
             NSError *error = nil;
             [[NSFileManager defaultManager] createDirectoryAtURL:newURL withIntermediateDirectories:YES attributes:nil error:&error];
         }];
+        if (SeafGlobal.sharedObject.conns.count == 0)
+            [SeafGlobal.sharedObject loadAccounts];
     }
     return self;
 }
@@ -46,7 +48,7 @@
 
     NSError* error = nil;
     BOOL isDirectory = false;
-    Debug("url=%@", url);
+    Debug("url=%@, filesize: %d", url, [Utils fileExistsAtPath:url.path]);
     
     if (![[NSFileManager defaultManager] fileExistsAtPath:url.path isDirectory:&isDirectory]
         || isDirectory) {
@@ -60,7 +62,7 @@
 - (void)startProvidingItemAtURL:(NSURL *)url completionHandler:(void (^)(NSError *))completionHandler {
     NSError* error = nil;
     BOOL isDirectory = false;
-    Debug("url=%@", url);
+    Debug("url=%@, filesize: %d", url, [Utils fileExistsAtPath:url.path]);
 
     if (![[NSFileManager defaultManager] fileExistsAtPath:url.path isDirectory:&isDirectory]
         || isDirectory) {
@@ -74,15 +76,10 @@
 - (void)itemChangedAtURL:(NSURL *)url {
 
     // Called at some point after the file has changed; the provider may then trigger an upload
-    
-    // TODO: mark file at <url> as needing an update in the model; kick off update process
-    NSString *key = [NSString stringWithFormat:@"EXPORTED/%@", url.lastPathComponent];
-    NSDictionary *dict = [SeafGlobal.sharedObject objectForKey:key];
-    Debug("Item changed at URL %@, dict:%@", url, dict);
-    if (!dict)
-        return;
-    if (SeafGlobal.sharedObject.conns.count == 0)
-        [SeafGlobal.sharedObject loadAccounts];
+    NSDictionary *dict = [SeafGlobal.sharedObject getExportFile:url];
+    Debug("Item changed at URL %@, dict:%@, filesize: %d", url, dict, [Utils fileExistsAtPath:url.path]);
+    if (!dict) return;
+
     NSString *connUrl = [dict objectForKey:@"conn_url"];
     NSString *username = [dict objectForKey:@"conn_username"];
     NSString *path = [dict objectForKey:@"path"];
@@ -107,8 +104,6 @@
         [ufile doUpload];
         [ufile waitUpload];
     }
-    [SeafGlobal.sharedObject removeObjectForKey:key];
-    [SeafGlobal.sharedObject synchronize];
 }
 
 - (void)stopProvidingItemAtURL:(NSURL *)url {
@@ -117,8 +112,8 @@
     
     [self.fileCoordinator coordinateWritingItemAtURL:url options:NSFileCoordinatorWritingForDeleting error:nil byAccessor:^(NSURL *newURL) {
         [[NSFileManager defaultManager] removeItemAtURL:newURL error:nil];
-        [SeafGlobal.sharedObject removeObjectForKey:newURL.path];
-        [SeafGlobal.sharedObject synchronize];
+        Debug("Remove exported file %@", url);
+        [SeafGlobal.sharedObject removeExportFile:url];
     }];
     [self providePlaceholderAtURL:url completionHandler:^(NSError *error){
         Warning("url=%@, error=%@", url, error);

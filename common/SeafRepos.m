@@ -11,6 +11,8 @@
 #import "SeafDir.h"
 #import "SeafConnection.h"
 #import "SeafGlobal.h"
+#import "SeafDateFormatter.h"
+
 
 #import "ExtentedString.h"
 #import "Debug.h"
@@ -107,6 +109,15 @@
 #endif
 }
 
+- (NSString *)detailText
+{
+    NSString *detail = [SeafDateFormatter stringFromLongLong:self.mtime];
+    if ([SHARE_REPO isEqualToString:self.type]) {
+        detail = [detail stringByAppendingFormat:@", %@", self.owner];
+    }
+    return detail;
+}
+
 @end
 
 
@@ -150,7 +161,6 @@
         [repoGroup addObject:srepos];
 
     for (NSString *groupName in grepos) {
-        Debug("Add %@", groupName);
         [repoGroup addObject:[grepos objectForKey:groupName]];
     }
 

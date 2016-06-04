@@ -7,7 +7,6 @@
 //
 
 #import "SeafProviderFileViewController.h"
-#import "UIViewController+Extend.h"
 #import "SeafFile.h"
 #import "SeafRepos.h"
 #import "SeafGlobal.h"
@@ -63,19 +62,11 @@
         self.items = _directory.items;
         self.chooseButton.hidden = true;
     } else {
-        NSMutableArray *arr = [[NSMutableArray alloc] init];
-        for (SeafBase *entry in _directory.items) {
-            if ([entry isKindOfClass:[SeafDir class]])
-                [arr addObject:entry];
-        }
-        self.items = arr;
+        self.items = _directory.subDirs;
         self.chooseButton.hidden = [_directory isKindOfClass:[SeafRepos class]];
     }
 
-    if (self.chooseButton.hidden)
-        self.tableView.sectionHeaderHeight = 1;
-    else
-        self.tableView.sectionHeaderHeight = 22;
+    self.tableView.sectionHeaderHeight = self.chooseButton.hidden ? 1 : 22;
 
     if ([self isViewLoaded]) {
         [self.tableView reloadData];
@@ -153,10 +144,8 @@
 
 - (void)uploadFile:(NSURL *)url overwrite:(BOOL)overwrite
 {
-    Debug("Upload file: %@(%d) to %@, overwrite=%d", url, [Utils fileExistsAtPath:url.path], _directory.path, overwrite);
-    if ([Utils fileExistsAtPath:url.path])
-        [Utils removeFile:url.path];
-    if ([Utils fileSizeAtPath1:self.root.originalURL.path] == 0) {
+    Debug("Upload file: %@(%d) to %@, overwrite=%d, mode=%d", url, [Utils fileExistsAtPath:url.path], _directory.path, overwrite, self.root.documentPickerMode);
+    if (self.root.documentPickerMode == UIDocumentPickerModeMoveToService) {
         return [self uploadmMovedFile:url overwrite:overwrite];
     }
     [self.fileCoordinator coordinateWritingItemAtURL:url options:0 error:NULL byAccessor:^(NSURL *newURL) {
@@ -164,7 +153,7 @@
         Debug("from %@ %lld, url: %@ , ret:%d", self.root.originalURL.path, [Utils fileSizeAtPath1:self.root.originalURL.path], url, ret);
         if (!ret) {
             Warning("Failed to copy file:%@ to %@", self.root.originalURL, newURL);
-            return;
+            return [self alertWithTitle:NSLocalizedString(@"Failed to upload file", @"Seafile") handler:nil];
         }
         SeafUploadFile *ufile = [[SeafUploadFile alloc] initWithPath:newURL.path];
         [ufile saveAttr:nil flush:false];
@@ -179,7 +168,7 @@
 - (void)uploadmMovedFile:(NSURL *)url overwrite:(BOOL)overwrite
 {
     [self.root.originalURL startAccessingSecurityScopedResource];
-    
+
     NSError* error = nil;
     NSFileCoordinator *fileCoordinator = [[NSFileCoordinator alloc] init];
     [fileCoordinator coordinateReadingItemAtURL:self.root.originalURL
@@ -190,28 +179,44 @@
                                          Debug("from %@ %lld, url: %@ , ret:%d", newURL.path, [Utils fileSizeAtPath1:newURL.path], url, ret);
                                      }];
     [self.root.originalURL stopAccessingSecurityScopedResource];
-    NSString *key = [NSString stringWithFormat:@"EXPORTED/%@", url.lastPathComponent];
+
     NSMutableDictionary *dict = [NSMutableDictionary new];
     [dict setObject:_directory->connection.address forKey:@"conn_url"];
     [dict setObject:_directory->connection.username forKey:@"conn_username"];
     [dict setObject:_directory.path forKey:@"path"];
     [dict setObject:_directory.repoId forKey:@"repoid"];
     [dict setObject:[NSNumber numberWithBool: overwrite] forKey:@"overwrite"];
+    [dict setObject:[NSNumber numberWithLongLong:[Utils fileSizeAtPath1:url.path]] forKey:@"filesize"];
 
-    [SeafGlobal.sharedObject setObject:dict forKey:key];
-    [SeafGlobal.sharedObject synchronize];
+    Debug("url:%@ Dict: %@", url, dict);
+    [SeafGlobal.sharedObject addExportFile:url data:dict];
     [self.root dismissGrantingAccessToURL:url];
+}
+
+- (void)alertWithTitle:(NSString*)title handler:(void (^)())handler
+{
+    [Utils alertWithTitle:title message:nil handler:handler from:self];
+}
+
+- (void)alertWithTitle:(NSString *)title message:(NSString*)message yes:(void (^)())yes no:(void (^)())no
+{
+    [Utils alertWithTitle:title message:message yes:yes no:no from:self];
 }
 
 - (IBAction)chooseCurrentDir:(id)sender
 {
+    NSString *tmpdir = [SeafGlobal.sharedObject uniqueDirUnder:self.root.documentStorageURL.path];
+    if (![Utils checkMakeDir:tmpdir]) {
+        Warning("Failed to create temp dir.");
+        return [self alertWithTitle:NSLocalizedString(@"Failed to upload file", @"Seafile") handler:nil];
+    }
     NSString *name = self.root.originalURL.lastPathComponent;
-    NSURL *url = [self.root.documentStorageURL URLByAppendingPathComponent:self.root.originalURL.lastPathComponent];
+    NSURL *url = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
+
     Debug("start to upload file: %@", url.path);
     if ([_directory nameExist:name]) {
         NSString *title = NSLocalizedString(@"A file with the same name already exists, do you want to overwrite?", @"Seafile");
-        NSString *message = nil;
-        [self alertWithTitle:title message:message yes:^{
+        [self alertWithTitle:title message:nil yes:^{
             [self uploadFile:url overwrite:true];
         } no:^{
             [self uploadFile:url overwrite:false];
@@ -255,12 +260,21 @@
     } else {
         UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
         UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 3, tableView.bounds.size.width - 10, 18)];
-        label.text = @"Save Destination";
+        label.text = NSLocalizedString(@"Save Destination", @"Seafile");
         label.textColor = [UIColor whiteColor];
         label.backgroundColor = [UIColor clearColor];
         [headerView setBackgroundColor:HEADER_COLOR];
         [headerView addSubview:label];
         return headerView;
+    }
+}
+
+- (SeafBase *)getItemAtIndex:(int)index
+{
+    @try {
+        return [self.items objectAtIndex:index];
+    } @catch(NSException *exception) {
+        return nil;
     }
 }
 
@@ -271,21 +285,15 @@
     if (cell == nil) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier];
     }
-    SeafBase *entry;
-    @try {
-        entry = [self.items objectAtIndex:indexPath.row];
-    } @catch(NSException *exception) {
-        return cell;
-    }
+    SeafBase *entry = [self getItemAtIndex:indexPath.row];
+    if (!entry)        return cell;
     cell.textLabel.text = entry.name;
     cell.textLabel.font = [UIFont systemFontOfSize:17];
     cell.textLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
     cell.imageView.image = [Utils reSizeImage:entry.icon toSquare:32];
     cell.detailTextLabel.font = [UIFont systemFontOfSize:13];
     if ([entry isKindOfClass:[SeafRepo class]]) {
-        SeafRepo *srepo = (SeafRepo *)entry;
-        NSString *detail = [NSString stringWithFormat:@"%@, %@", [FileSizeFormatter stringFromLongLong:srepo.size], [SeafDateFormatter stringFromLongLong:srepo.mtime]];
-        cell.detailTextLabel.text = detail;
+        cell.detailTextLabel.text = [(SeafRepo *)entry detailText];
     } else if ([entry isKindOfClass:[SeafDir class]]) {
         cell.detailTextLabel.text = nil;
     } else if ([entry isKindOfClass:[SeafFile class]]) {
@@ -324,44 +332,41 @@
     }];
 }
 
+
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    SeafBase *entry;
-    @try {
-        entry = [self.items objectAtIndex:indexPath.row];
-    } @catch(NSException *exception) {
-        [self.tableView performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
-        return;
-    }
+    SeafBase *entry = [self getItemAtIndex:indexPath.row];
+    if (!entry)
+        return [self.tableView performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
+
     if ([entry isKindOfClass:[SeafFile class]]) {
         SeafFile *file = (SeafFile *)entry;
         [entry loadCache];
-        if (![file hasCache]) {
+        NSURL *exportURL = [file exportURL];
+        if (!exportURL) {
             return [self showDownloadProgress:file force:false];
         }
+
         if (self.root.documentPickerMode == UIDocumentPickerModeImport
             || self.root.documentPickerMode == UIDocumentPickerModeOpen) {
-            NSURL *exportURL = [file exportURL];
-            if (!exportURL) {
-                Warning("Something wrong, no cache, download again.");
-                return [self showDownloadProgress:file force:true];
+            NSString *tmpdir = [SeafGlobal.sharedObject uniqueDirUnder:self.root.documentStorageURL.path];
+            if (![Utils checkMakeDir:tmpdir]) {
+                Warning("Failed to create temp dir.");
+                return [self alertWithTitle:NSLocalizedString(@"Failed to open file", @"Seafile") handler:nil];
             }
-            NSURL *url = [self.root.documentStorageURL URLByAppendingPathComponent:exportURL.lastPathComponent];
+            NSURL *url = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:exportURL.lastPathComponent]];
             Debug("file exportURL:%@, url:%@", exportURL, url);
             [self.fileCoordinator coordinateWritingItemAtURL:url options:0 error:NULL byAccessor:^(NSURL *newURL) {
-                if ([Utils fileExistsAtPath:newURL.path])
-                    [Utils removeFile:newURL.path];
                 BOOL ret = [Utils linkFileAtURL:exportURL to:newURL];
                 Debug("newURL: %@, ret: %d", newURL, ret);
                 if (ret) {
                     if (self.root.documentPickerMode == UIDocumentPickerModeOpen) {
-                        NSString *key = [NSString stringWithFormat:@"EXPORTED/%@", newURL.lastPathComponent];
-                        [SeafGlobal.sharedObject setObject:file.toDict forKey:key];
-                        [SeafGlobal.sharedObject synchronize];
+                        [SeafGlobal.sharedObject addExportFile:newURL data:file.toDict];
                     }
                     [self.root dismissGrantingAccessToURL:newURL];
                 } else {
                     Warning("Failed to copy file %@", file.name);
+                    return [self alertWithTitle:NSLocalizedString(@"Failed to open file", @"Seafile") handler:nil];
                 }
             }];
         }
@@ -393,7 +398,7 @@
 {
     if (![self isViewLoaded] || entry != self.sfile)
         return;
-    
+
     NSUInteger index = [_directory.allItems indexOfObject:entry];
     if (index == NSNotFound)
         return;
@@ -455,9 +460,10 @@
 - (void)uploadComplete:(BOOL)success file:(SeafUploadFile *)file oid:(NSString *)oid
 {
     if (self.ufile != file) return;
+    Debug("upload file %@ %d", file.lpath, success);
     if (!success) {
         Warning("Failed to upload file %@", file.name);
-        [self alertWithTitle:NSLocalizedString(@"Failed to uplod file", @"Seafile") handler:nil];
+        [self alertWithTitle:NSLocalizedString(@"Failed to upload file", @"Seafile") handler:nil];
     } else {
         [self.ufile doRemove];
         dispatch_after(0, dispatch_get_main_queue(), ^{
@@ -503,6 +509,48 @@
                          [self removeFromParentViewController];
                          [self.view removeFromSuperview];
                      }];
+}
+
+- (void)popupInputView:(NSString *)title placeholder:(NSString *)tip secure:(BOOL)secure handler:(void (^)(NSString *input))handler
+{
+    [Utils popupInputView:title placeholder:tip secure:secure handler:handler from:self];
+}
+
+- (void)popupSetRepoPassword:(SeafRepo *)repo handler:(void (^)())handler
+{
+    NSString *title = [NSString stringWithFormat:NSLocalizedString(@"Password of library '%@'", @"Seafile"), repo.name];
+    [self popupInputView:title placeholder:nil secure:true handler:^(NSString *input) {
+        if (!input || input.length == 0) {
+            [self alertWithTitle:NSLocalizedString(@"Password must not be empty", @"Seafile")handler:^{
+                [self popupSetRepoPassword:repo handler:handler];
+            }];
+            return;
+        }
+        if (input.length < 3 || input.length  > 100) {
+            [self alertWithTitle:NSLocalizedString(@"The length of password should be between 3 and 100", @"Seafile") handler:^{
+                [self popupSetRepoPassword:repo handler:handler];
+            }];
+            return;
+        }
+#ifdef SEAFILE_APP
+        [SVProgressHUD showWithStatus:NSLocalizedString(@"Checking library password ...", @"Seafile")];
+#endif
+        [repo checkOrSetRepoPassword:input block:^(SeafBase *entry, int ret) {
+            if (ret == RET_SUCCESS) {
+#ifdef SEAFILE_APP
+                [SVProgressHUD dismiss];
+#endif
+                handler();
+            } else {
+#ifdef SEAFILE_APP
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Wrong library password", @"Seafile")];
+#endif
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    [self popupSetRepoPassword:repo handler:handler];
+                });
+            }
+        }];
+    }];
 }
 
 @end

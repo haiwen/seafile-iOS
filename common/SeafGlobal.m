@@ -61,8 +61,8 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         _clientVersion = [infoDictionary objectForKey:@"CFBundleShortVersionString"];
         _platformVersion = [infoDictionary objectForKey:@"DTPlatformVersion"];
         [_storage setObject:_clientVersion forKey:@"VERSION"];
+        [[AFNetworkReachabilityManager sharedManager] startMonitoring];
         Debug("applicationDocumentsDirectoryURL=%@, clientVersion=%@, platformVersion=%@",  self.applicationDocumentsDirectoryURL, _clientVersion, _platformVersion);
-
     }
     return self;
 }
@@ -140,6 +140,10 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 - (NSString *)tempDir
 {
     return [[self applicationDocumentsDirectory] stringByAppendingPathComponent:TEMP_DIR];
+}
+- (NSString *)documentStorageDir
+{
+    return [[[[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:GROUP_NAME] path] stringByAppendingPathComponent:@"File Provider Storage"];
 }
 
 - (NSString *)documentPath:(NSString*)fileId
@@ -474,6 +478,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         NSMutableArray *arr = [self.ufiles mutableCopy];
         for (SeafUploadFile *file in arr) {
             if (self.uploadingfiles.count + todo.count + self.failedNum >= 3) break;
+            Debug("ufile %@ canUpload:%d, %d", file.lpath, file.canUpload, file.uploaded);
             if (!file.canUpload) continue;
             [self.ufiles removeObject:file];
             if (!file.uploaded) {
@@ -734,6 +739,55 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 - (NSString *)uniqueUploadDir
 {
     return [self uniqueDirUnder:self.uploadsDir identify:[[NSUUID UUID] UUIDString]];
+}
+
+
+- (NSMutableDictionary *)getExports
+{
+    NSMutableDictionary *dict = [self objectForKey:@"EXPORTED"];
+    if (!dict)
+        return [NSMutableDictionary new];
+    else
+        return [[NSMutableDictionary alloc] initWithDictionary:dict];
+}
+
+- (void)saveExports:(NSDictionary *)dict
+{
+    [self setObject:dict forKey:@"EXPORTED"];
+    [self synchronize];
+}
+
+- (NSString *)exportKeyFor:(NSURL *)url
+{
+    NSArray *components = url.pathComponents;
+    int length = components.count;
+    return [NSString stringWithFormat:@"%@/%@", [components objectAtIndex:length-2], [components objectAtIndex:length-1]];
+}
+
+- (void)addExportFile:(NSURL *)url data:(NSDictionary *)dict
+{
+    NSMutableDictionary *exports = [self getExports];
+    [exports setObject:dict forKey:[self exportKeyFor:url]];
+    Debug("exports: %@", exports);
+    [SeafGlobal.sharedObject saveExports:exports];
+}
+
+- (void)removeExportFile:(NSURL *)url
+{
+    NSMutableDictionary *exports = [self getExports];
+    [exports removeObjectForKey:[self exportKeyFor:url]];
+    Debug("exports: %@", exports);
+    [SeafGlobal.sharedObject saveExports:exports];
+}
+- (NSDictionary *)getExportFile:(NSURL *)url
+{
+    NSMutableDictionary *exports = [self getExports];
+    return [exports objectForKey:[self exportKeyFor:url]];
+}
+- (void)clearExportFiles
+{
+    [Utils clearAllFiles:SeafGlobal.sharedObject.documentStorageDir];
+    [SeafGlobal.sharedObject saveExports:[NSDictionary new]];
 }
 
 @end

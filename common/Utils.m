@@ -104,7 +104,7 @@
 
 + (BOOL)linkFileAtPath:(NSString *)from to:(NSString *)to
 {
-    if (!from || !to) return false;
+    if (!from || !to || [Utils fileExistsAtPath:to]) return false;
     NSError *error = nil;
     NSFileManager* fm = [NSFileManager defaultManager];
     if ([fm fileExistsAtPath:to]
@@ -490,4 +490,5 @@
             [dict setObject:value forKey:defaultName];
     }
 }
+
 @end

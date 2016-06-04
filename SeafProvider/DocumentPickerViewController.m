@@ -29,6 +29,7 @@
     _conns = SeafGlobal.sharedObject.conns;
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     [self.tableView reloadData];
+    Debug("mode: %d", mode);
 }
 
 #pragma mark - Table view data source

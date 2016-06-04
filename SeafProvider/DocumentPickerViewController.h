@@ -8,6 +8,7 @@
 
 #import <UIKit/UIKit.h>
 #import "SeafDir.h"
+#import "SeafRepos.h"
 
 
 @interface DocumentPickerViewController : UIDocumentPickerExtensionViewController

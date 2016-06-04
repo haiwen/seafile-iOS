@@ -26,6 +26,8 @@
 @property (readonly) NSString *type;
 
 - (BOOL)canLocalDecrypt;
+- (NSString *)detailText;
+
 
 @end
 

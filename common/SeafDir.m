@@ -549,4 +549,14 @@ static NSComparator CMP = ^(id obj1, id obj2) {
     return [self generateShareLink:dg type:@"d"];
 }
 
+- (NSArray *)subDirs
+{
+    NSMutableArray *arr = [[NSMutableArray alloc] init];
+    for (SeafBase *entry in self.items) {
+        if ([entry isKindOfClass:[SeafDir class]])
+            [arr addObject:entry];
+    }
+    return arr;
+}
+
 @end

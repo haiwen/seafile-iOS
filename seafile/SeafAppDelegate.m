@@ -262,7 +262,6 @@
         [self application:application didReceiveRemoteNotification:dict];
     } else
         [self.startVC selectDefaultAccount:^(bool success) {}];
-    [[AFNetworkReachabilityManager sharedManager] startMonitoring];
 
     self.bgTask = UIBackgroundTaskInvalid;
     __weak typeof(self) weakSelf = self;
