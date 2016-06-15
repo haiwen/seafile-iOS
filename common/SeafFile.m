@@ -114,6 +114,10 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     return self.downloadingFileOid != nil || self.state == SEAF_DENTRY_LOADING;
 }
 
+- (void)removeBlock:(NSString *)blkId
+{
+    [[NSFileManager defaultManager] removeItemAtPath:[SeafGlobal.sharedObject blockPath:blkId] error:nil];
+}
 - (void)clearDownloadContext
 {
     if (_progress) {
@@ -125,6 +129,9 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     self.downloadingFileOid = nil;
     self.task = nil;
     self.index = 0;
+    for (int i = 0; i < self.blkids.count; ++i) {
+        [self removeBlock:[self.blkids objectAtIndex:i]];
+    }
     self.blkids = nil;
 }
 
@@ -310,13 +317,18 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (void)finishBlock:(NSString *)blkid
 {
+    if (!self.downloadingFileOid) {
+        Debug("file download has beeen canceled.");
+        [self removeBlock:blkid];
+        return;
+    }
     self.index ++;
     if (self.index >= self.blkids.count) {
         if ([self checkoutFile] < 0) {
             Debug("Faile to checkout out file %@\n", self.downloadingFileOid);
             self.index = 0;
             for (NSString *blk_id in self.blkids)
-                [[NSFileManager defaultManager] removeItemAtPath:[SeafGlobal.sharedObject blockPath:blk_id] error:nil];
+                [self removeBlock:blk_id];
             NSError *error = [NSError errorWithDomain:@"Faile to checkout out file" code:-1 userInfo:nil];
             [self failedDownload:error];
             return;
@@ -341,7 +353,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
             Warning("error=%@", error);
             [self failedDownload:error];
         } else {
-            Debug("Successfully downloaded file %@ block:%@", self.name, blk_id);
+            Debug("Successfully downloaded file %@ block:%@, filePath:%@", self.name, blk_id, filePath);
             if (![filePath.path isEqualToString:target]) {
                 [[NSFileManager defaultManager] removeItemAtPath:target error:nil];
                 [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
@@ -423,7 +435,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (void)download
 {
-    if ([connection localDecrypt:self.repoId] || _filesize > LARGE_FILE_SIZE) {
+    if ([connection localDecrypt:self.repoId]) {
         Debug("Download file %@ by blocks", self.name);
         [self downloadByBlocks];
     } else
