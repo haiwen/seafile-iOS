@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="10116" systemVersion="15D21" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="10117" systemVersion="15F34" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
@@ -18,7 +18,7 @@
                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="Name" lineBreakMode="middleTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3">
                         <rect key="frame" x="48" y="14" width="217" height="21"/>
                         <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                        <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                         <color key="highlightedColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </label>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="4">
@@ -28,7 +28,7 @@
                         </constraints>
                     </imageView>
                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="25">
-                        <rect key="frame" x="50" y="32" width="217" height="15"/>
+                        <rect key="frame" x="50" y="33" width="217" height="15"/>
                         <fontDescription key="fontDescription" type="system" pointSize="13"/>
                         <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
                         <color key="highlightedColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -38,13 +38,13 @@
                     <constraint firstItem="25" firstAttribute="leading" secondItem="4" secondAttribute="trailing" constant="10" id="3cg-YK-aCv"/>
                     <constraint firstItem="3" firstAttribute="leading" secondItem="4" secondAttribute="trailing" constant="8" symbolic="YES" id="EDN-2q-VAq"/>
                     <constraint firstAttribute="trailingMargin" secondItem="3" secondAttribute="trailing" constant="45" id="IKv-Ba-rLT"/>
-                    <constraint firstItem="4" firstAttribute="centerY" secondItem="3" secondAttribute="centerY" id="SDh-uy-xvO"/>
-                    <constraint firstItem="4" firstAttribute="centerY" secondItem="jlK-iz-38C" secondAttribute="centerY" id="V2U-Gy-2Na"/>
+                    <constraint firstItem="4" firstAttribute="centerY" secondItem="3" secondAttribute="centerY" constant="-0.5" id="SDh-uy-xvO" userLabel="Image View.centerY = Text Label.centerY"/>
+                    <constraint firstItem="4" firstAttribute="centerY" secondItem="jlK-iz-38C" secondAttribute="centerY" constant="-0.5" id="V2U-Gy-2Na"/>
                     <constraint firstItem="4" firstAttribute="leading" secondItem="jlK-iz-38C" secondAttribute="leadingMargin" id="VgW-a0-jx4"/>
-                    <constraint firstItem="25" firstAttribute="top" secondItem="jlK-iz-38C" secondAttribute="topMargin" constant="24" id="YWW-hF-Izg"/>
+                    <constraint firstItem="25" firstAttribute="top" secondItem="jlK-iz-38C" secondAttribute="topMargin" constant="25" id="YWW-hF-Izg"/>
                     <constraint firstItem="4" firstAttribute="top" secondItem="jlK-iz-38C" secondAttribute="topMargin" id="bGj-4Z-PmV"/>
                     <constraint firstAttribute="trailingMargin" secondItem="25" secondAttribute="trailing" constant="43" id="vAs-EZ-4ZY"/>
-                    <constraint firstAttribute="bottomMargin" secondItem="25" secondAttribute="bottom" constant="-6" id="vw4-QI-JNV"/>
+                    <constraint firstAttribute="bottomMargin" secondItem="25" secondAttribute="bottom" constant="-7" id="vw4-QI-JNV"/>
                 </constraints>
             </tableViewCellContentView>
             <connections>

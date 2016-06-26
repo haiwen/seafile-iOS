@@ -118,6 +118,10 @@
     return detail;
 }
 
+- (BOOL)isGroupRepo
+{
+    return [GROUP_REPO isEqualToString:self.type];
+}
 @end
 
 

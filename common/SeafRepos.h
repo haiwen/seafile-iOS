@@ -9,6 +9,8 @@
 #import "SeafDir.h"
 
 #define SHARE_REPO @"srepo"
+#define GROUP_REPO @"grepo"
+
 #define ORG_REPO @"Organization"
 
 @interface SeafRepo : SeafDir<SeafSortable>
@@ -27,6 +29,7 @@
 
 - (BOOL)canLocalDecrypt;
 - (NSString *)detailText;
+- (BOOL)isGroupRepo;
 
 
 @end

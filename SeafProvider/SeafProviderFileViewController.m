@@ -283,8 +283,13 @@
     cell.textLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
     cell.imageView.image = [Utils reSizeImage:entry.icon toSquare:32];
     cell.detailTextLabel.font = [UIFont systemFontOfSize:13];
+
     if ([entry isKindOfClass:[SeafRepo class]]) {
-        cell.detailTextLabel.text = [(SeafRepo *)entry detailText];
+        SeafRepo *repo = (SeafRepo *)entry;
+        NSString *detail = [repo detailText];
+        if (repo.isGroupRepo)
+            detail = [NSString stringWithFormat:@"%@, %@", detail, repo.owner];
+        cell.detailTextLabel.text = detail;
     } else if ([entry isKindOfClass:[SeafDir class]]) {
         cell.detailTextLabel.text = nil;
     } else if ([entry isKindOfClass:[SeafFile class]]) {

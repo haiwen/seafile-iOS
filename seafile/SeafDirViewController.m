@@ -140,6 +140,12 @@
         cell.textLabel.font = [UIFont systemFontOfSize:17];
         cell.imageView.image = sdir.icon;
         cell.detailTextLabel.text = nil;
+        if ([sdir isKindOfClass:[SeafRepo class]]) {
+            SeafRepo *repo = (SeafRepo *)sdir;
+            if (repo.isGroupRepo) {
+                cell.detailTextLabel.text = repo.owner;
+            }
+        }
     } @catch(NSException *exception) {
     }
     return cell;
