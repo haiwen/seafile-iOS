@@ -419,11 +419,13 @@ enum SHARE_STATUS {
         if (photo == nil)
             return;
         [photo complete:updated error:nil];
+        [self updateNavigation];
         return;
     }
     if (_preViewItem != entry) return;
     [self refreshView];
 }
+
 - (void)download:(SeafBase *)entry failed:(NSError *)error
 {
     Debug("Failed to download %@ : %@ ", entry.name, error);
