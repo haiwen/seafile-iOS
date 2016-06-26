@@ -139,7 +139,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 {
     [self clearDownloadContext];
     [SeafGlobal.sharedObject finishDownload:self result:true];
-    Debug("ooid=%@, self.ooid=%@, oid=%@", ooid, self.ooid, self.oid);
+    Debug("%@ ooid=%@, self.ooid=%@, oid=%@", self.name, ooid, self.ooid, self.oid);
     BOOL updated = ![ooid isEqualToString:self.ooid];
     [self setOoid:ooid];
     self.state = SEAF_DENTRY_UPTODATE;
@@ -433,7 +433,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
      }];
 }
 
-- (void)download
+- (void)downloadfile
 {
     if ([connection localDecrypt:self.repoId]) {
         Debug("Download file %@ by blocks", self.name);
@@ -446,7 +446,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 {
     if (!self.downloadingFileOid) {
         [self loadCache];
-        [self download];
+        [self downloadfile];
     } else {
         Debug("File %@ is already donwloading.", self.name);
     }
@@ -456,6 +456,11 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 {
     if (delegate != nil) self.delegate = delegate;
     [self loadContent:force];
+}
+
+- (void)download
+{
+    [self load:nil force:false];
 }
 
 - (BOOL)hasCache
@@ -854,9 +859,12 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     _exportURL = nil;
     _preViewURL = nil;
     _shareLink = nil;
-    [[NSFileManager defaultManager] removeItemAtPath:[SeafGlobal.sharedObject documentPath:self.ooid] error:nil];
-    NSString *tempDir = [SeafGlobal.sharedObject.tempDir stringByAppendingPathComponent:self.ooid];
-    [[NSFileManager defaultManager] removeItemAtPath:tempDir error:nil];
+    if (self.ooid) {
+        [[NSFileManager defaultManager] removeItemAtPath:[SeafGlobal.sharedObject documentPath:self.ooid] error:nil];
+        NSString *tempDir = [SeafGlobal.sharedObject.tempDir stringByAppendingPathComponent:self.ooid];
+        [[NSFileManager defaultManager] removeItemAtPath:tempDir error:nil];
+    }
+    [Utils clearAllFiles:SeafGlobal.sharedObject.blocksDir];
     self.ooid = nil;
     self.state = SEAF_DENTRY_INIT;
 }

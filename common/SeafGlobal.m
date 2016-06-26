@@ -583,8 +583,10 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 - (void)addDownloadTask:(id<SeafDownloadDelegate>)file
 {
     @synchronized (self) {
-        if (![_dfiles containsObject:file])
+        if (![_dfiles containsObject:file]) {
             [_dfiles addObject:file];
+            Debug("Added download task %@", file.name);
+        }
     }
     [self tryDownload];
 }
