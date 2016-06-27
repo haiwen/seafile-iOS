@@ -9,7 +9,7 @@
 @import LocalAuthentication;
 @import QuartzCore;
 
-#import <SVProgressHUD.h>
+#import "SVProgressHUD.h"
 
 #import "SeafAppDelegate.h"
 #import "SeafDetailViewController.h"

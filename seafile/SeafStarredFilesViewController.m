@@ -6,7 +6,7 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
-#import <UIScrollView+SVPullToRefresh.h>
+#import "UIScrollView+SVPullToRefresh.h"
 
 #import "SeafAppDelegate.h"
 #import "SeafStarredFilesViewController.h"
@@ -168,6 +168,7 @@
 
 - (void)updateCellDownloadStatus:(SeafCell *)cell file:(SeafFile *)sfile waiting:(BOOL)waiting
 {
+    if (!cell) return;
     if (sfile.hasCache || waiting || sfile.isDownloading) {
         cell.cacheStatusView.hidden = false;
         [cell.cacheStatusWidthConstraint setConstant:21.0f];
@@ -191,7 +192,6 @@
     cell.textLabel.text = sfile.name;
     cell.detailTextLabel.text = sfile.detailText;
     cell.imageView.image = sfile.icon;
-    cell.badgeLabel.text = nil;
     [self updateCellDownloadStatus:cell file:sfile waiting:false];
 }
 
@@ -203,7 +203,8 @@
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafCell" owner:self options:nil];
         cell = [cells objectAtIndex:0];
     }
-    cell.badgeLabel.text = nil;
+    [cell reset];
+    
     SeafStarredFile *sfile;
     @try {
         sfile = [_starredFiles objectAtIndex:indexPath.row];
@@ -214,9 +215,6 @@
     if (tableView == self.tableView) {
         cell.rightUtilityButtons = [self rightButtonsForFile:sfile];
         cell.delegate = self;
-    } else {
-        cell.rightUtilityButtons = nil;
-        cell.delegate = nil;
     }
     [self updateCellContent:cell file:sfile];
     return cell;
@@ -261,14 +259,14 @@
 - (void)updateEntryCell:(SeafFile *)entry
 {
     SeafCell *cell = [self getEntryCell:entry];
-    if (cell) [self updateCellContent:cell file:entry];
+    [self updateCellContent:cell file:entry];
 }
 
 #pragma mark - SeafDentryDelegate
 - (void)download:(SeafBase *)entry progress:(float)progress
 {
     SeafCell *cell = [self getEntryCell:entry];
-    if (cell) [self updateCellDownloadStatus:cell file:(SeafFile *)entry waiting:false];
+    [self updateCellDownloadStatus:cell file:(SeafFile *)entry waiting:false];
     [self.detailViewController download:entry progress:progress];
 }
 - (void)download:(SeafBase *)entry complete:(BOOL)updated
@@ -296,6 +294,17 @@
 }
 
 #pragma mark - SeafFileUpdateDelegate
+- (void)updateProgress:(SeafFile *)file progress:(int)percent
+{
+    [self updateEntryCell:file];
+}
+- (void)updateComplete:(nonnull SeafFile * )file result:(BOOL)res
+{
+    if (!res) [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to upload file", @"Seafile")];
+    [self refreshView];
+    [self updateEntryCell:file];
+}
+
 - (void)updateProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent
 {
     if (!res) [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to upload file", @"Seafile")];

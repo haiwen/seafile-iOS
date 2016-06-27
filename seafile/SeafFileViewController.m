@@ -5,8 +5,8 @@
 //  Created by Wei Wang on 7/7/12.
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
-#import <MWPhotoBrowser.h>
-#import <UIScrollView+SVPullToRefresh.h>
+#import "MWPhotoBrowser.h"
+#import "UIScrollView+SVPullToRefresh.h"
 
 #import "SeafAppDelegate.h"
 #import "SeafFileViewController.h"
@@ -15,7 +15,6 @@
 #import "SeafFile.h"
 #import "SeafRepos.h"
 #import "SeafCell.h"
-#import "SeafUploadingFileCell.h"
 #import "SeafPhoto.h"
 #import "SeafThumb.h"
 
@@ -527,21 +526,24 @@ enum {
     return repos.count;
 }
 
-- (UITableViewCell *)getCell:(NSString *)CellIdentifier forTableView:(UITableView *)tableView
+- (SeafCell *)getCell:(NSString *)CellIdentifier forTableView:(UITableView *)tableView
 {
-    SWTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+    SeafCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:CellIdentifier owner:self options:nil];
         cell = [cells objectAtIndex:0];
     }
+    [cell reset];
     if (tableView == self.tableView) {
         cell.rightUtilityButtons = [self rightButtons];
         cell.delegate = self;
-    } else {
-        cell.rightUtilityButtons = nil;
-        cell.delegate = nil;
     }
     return cell;
+}
+
+- (SeafCell *)getCellForTableView:(UITableView *)tableView
+{
+    return [self getCell:@"SeafCell" forTableView:tableView];
 }
 
 - (UIAlertController *)generateAction:(NSArray *)arr withTitle:(NSString *)title
@@ -642,22 +644,15 @@ enum {
 - (UITableViewCell *)getSeafUploadFileCell:(SeafUploadFile *)file forTableView:(UITableView *)tableView
 {
     file.delegate = self;
-    SWTableViewCell *c;
+    SeafCell *cell = [self getCellForTableView:tableView];
+    cell.textLabel.text = file.name;
+    cell.imageView.image = file.icon;
     if (file.uploading) {
-        SeafUploadingFileCell *cell = (SeafUploadingFileCell *)[self getCell:@"SeafUploadingFileCell" forTableView:tableView];
-        cell.nameLabel.text = file.name;
-        cell.imageView.image = file.icon;
+        cell.progressView.hidden = false;
         [cell.progressView setProgress:file.uProgress * 1.0/100];
-        c = cell;
     } else {
-        SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
-        cell.textLabel.text = file.name;
-        cell.imageView.image = file.icon;
-        cell.badgeLabel.text = nil;
-
         NSString *sizeStr = [FileSizeFormatter stringFromLongLong:file.filesize];
         NSDictionary *dict = [file uploadAttr];
-        cell.accessoryView = nil;
         if (dict) {
             int utime = [[dict objectForKey:@"utime"] intValue];
             BOOL result = [[dict objectForKey:@"result"] boolValue];
@@ -669,10 +664,9 @@ enum {
         } else {
             cell.detailTextLabel.text = [NSString stringWithFormat:NSLocalizedString(@"%@, waiting to upload", @"Seafile"), sizeStr];
         }
-        c = cell;
-        [self updateCellDownloadStatus:cell isDownloading:false waiting:false cached:true];
+        [self updateCellDownloadStatus:cell isDownloading:false waiting:false cached:false];
     }
-    return c;
+    return cell;
 }
 
 - (void)updateCellDownloadStatus:(SeafCell *)cell file:(SeafFile *)sfile waiting:(BOOL)waiting
@@ -682,9 +676,8 @@ enum {
 
 - (void)updateCellDownloadStatus:(SeafCell *)cell isDownloading:(BOOL )isDownloading waiting:(BOOL)waiting cached:(BOOL)cached
 {
+    if (!cell) return;
     //Debug("... %d %d %d", cached, waiting, isDownloading);
-    if (![cell isKindOfClass:[SeafCell class]])
-        return;
     dispatch_async(dispatch_get_main_queue(), ^{
         if (cached || waiting || isDownloading) {
             cell.cacheStatusView.hidden = false;
@@ -718,8 +711,7 @@ enum {
 - (SeafCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView
 {
     [sfile loadCache];
-    SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
-    cell.cacheStatusView.hidden = true;
+    SeafCell *cell = [self getCellForTableView:tableView];
     [self updateCellContent:cell file:sfile];
     sfile.delegate = self;
     sfile.udelegate = self;
@@ -739,12 +731,10 @@ enum {
 
 - (SeafCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView
 {
-    SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
+    SeafCell *cell = [self getCellForTableView:tableView];
     cell.detailTextLabel.text = srepo.detailText;
     cell.imageView.image = srepo.icon;
     cell.textLabel.text = srepo.name;
-    cell.badgeLabel.text = nil;
-    cell.cacheStatusView.hidden = true;
     [cell.cacheStatusWidthConstraint setConstant:0.0f];
     srepo.delegate = self;
     if (tableView == self.tableView && srepo.encrypted) {
@@ -931,7 +921,7 @@ enum {
     if ([_curEntry conformsToProtocol:@protocol(SeafPreView)]) {
         if ([_curEntry isKindOfClass:[SeafFile class]] && ![(SeafFile *)_curEntry hasCache]) {
             SeafCell *cell = [tableView cellForRowAtIndexPath:indexPath];
-            if (cell) [self updateCellDownloadStatus:cell file:(SeafFile *)_curEntry waiting:true];
+            [self updateCellDownloadStatus:cell file:(SeafFile *)_curEntry waiting:true];
         }
         if (!IsIpad()) {
             SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
@@ -1016,8 +1006,8 @@ enum {
         [self.detailViewController download:entry progress:progress];
         SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
         [photo setProgress:progress];
-        SeafCell *cell = (SeafCell *)[self getEntryCell:(SeafFile *)entry indexPath:nil];
-        if (cell) [self updateCellDownloadStatus:cell file:(SeafFile *)entry waiting:false];
+        SeafCell *cell = [self getEntryCell:(SeafFile *)entry indexPath:nil];
+        [self updateCellDownloadStatus:cell file:(SeafFile *)entry waiting:false];
     }
 }
 
@@ -1041,8 +1031,9 @@ enum {
         if (updated) {
             [self refreshView];
             [SeafAppDelegate checkOpenLink:self];
-        } else
-            [self.tableView reloadData];
+        } else {
+            //[self.tableView reloadData];
+        }
         self.state = STATE_INIT;
     }
 }
@@ -1520,23 +1511,13 @@ enum {
 }
 
 #pragma mark - SeafFileUpdateDelegate
-- (void)updateProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent
+- (void)updateProgress:(SeafFile *)file progress:(int)percent
 {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        @try {
-            NSIndexPath *indexPath = nil;
-            SeafCell *cell = (SeafCell *)[self getEntryCell:file indexPath:&indexPath];
-            if (res && cell) {
-                if ([cell isKindOfClass:[SeafUploadingFileCell class]]) {
-                    [((SeafUploadingFileCell *)cell).progressView setProgress:percent*1.0f/100];
-                } else {
-                    [self updateCellContent:(SeafCell *)cell file:file];
-                }
-            } else if (indexPath)
-                [self reloadIndex:indexPath];
-        } @catch(NSException *exception) {
-        }
-    });
+    [self updateEntryCell:file];
+}
+- (void)updateComplete:(nonnull SeafFile * )file result:(BOOL)res
+{
+    [self updateEntryCell:file];
 }
 
 #pragma mark - SeafUploadDelegate
@@ -1544,10 +1525,10 @@ enum {
 {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSIndexPath *indexPath = nil;
-        UITableViewCell *cell = [self getEntryCell:file indexPath:&indexPath];
+        SeafCell *cell = [self getEntryCell:file indexPath:&indexPath];
         if (!cell) return;
-        if (!completed && res && [cell isKindOfClass:[SeafUploadingFileCell class]]) {
-            [((SeafUploadingFileCell *)cell).progressView setProgress:percent*1.0f/100];
+        if (!completed && res) {
+            [cell.progressView setProgress:percent*1.0f/100];
         } else if (indexPath) {
             [self reloadIndex:indexPath];
         }
@@ -1650,7 +1631,7 @@ enum {
     [self.tableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionMiddle];
 }
 
-- (UITableViewCell *)getEntryCell:(id)entry indexPath:(NSIndexPath **)indexPath
+- (SeafCell *)getEntryCell:(id)entry indexPath:(NSIndexPath **)indexPath
 {
     NSUInteger index = [_directory.allItems indexOfObject:entry];
     if (index == NSNotFound)
@@ -1658,7 +1639,7 @@ enum {
     @try {
         NSIndexPath *path = [NSIndexPath indexPathForRow:index inSection:0];
         if (indexPath) *indexPath = path;
-        return [self.tableView cellForRowAtIndexPath:path];
+        return (SeafCell *)[self.tableView cellForRowAtIndexPath:path];
     } @catch(NSException *exception) {
         return nil;
     }
@@ -1668,8 +1649,8 @@ enum {
 {
     dispatch_async(dispatch_get_main_queue(), ^{
         @try {
-            SeafCell *cell = (SeafCell *)[self getEntryCell:entry indexPath:nil];
-            if (cell) [self updateCellContent:cell file:entry];
+            SeafCell *cell = [self getEntryCell:entry indexPath:nil];
+            [self updateCellContent:cell file:entry];
         } @catch(NSException *exception) {
         }
     });

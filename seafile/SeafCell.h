@@ -7,11 +7,12 @@
 //
 
 #import <UIKit/UIKit.h>
-#import <SWTableViewCell.h>
+#import "SWTableViewCell.h"
+#import "MarqueeLabel.h"
 
 @interface SeafCell : SWTableViewCell
 @property (strong, nonatomic) IBOutlet UIImageView *imageView;
-@property (strong, nonatomic) IBOutlet UILabel *textLabel;
+@property (strong, nonatomic) IBOutlet MarqueeLabel *textLabel;
 @property (strong, nonatomic) IBOutlet UILabel *detailTextLabel;
 @property (strong, nonatomic) IBOutlet UILabel *badgeLabel;
 @property (strong, nonatomic) IBOutlet UIImageView *badgeImage;
@@ -19,5 +20,9 @@
 @property (strong, nonatomic) IBOutlet UIImageView *downloadStatusImageView;
 @property (strong, nonatomic) IBOutlet NSLayoutConstraint *cacheStatusWidthConstraint;
 @property (strong, nonatomic) IBOutlet UIActivityIndicatorView *downloadingIndicator;
+
+@property (strong, nonatomic) IBOutlet UIProgressView *progressView;
+
+- (void)reset;
 
 @end

@@ -6,8 +6,8 @@
 //  Copyright (c) 2013 Seafile Ltd. All rights reserved.
 //
 
-#import <UIScrollView+SVPullToRefresh.h>
-#import <UIScrollView+SVInfiniteScrolling.h>
+#import "UIScrollView+SVPullToRefresh.h"
+#import "UIScrollView+SVInfiniteScrolling.h"
 #import <SDWebImage/UIImageView+WebCache.h>
 
 #import "SeafActivityViewController.h"

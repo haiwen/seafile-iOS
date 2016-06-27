@@ -9,7 +9,7 @@
 @import LocalAuthentication;
 
 #ifdef SEAFILE_APP
-#import <SVProgressHUD.h>
+#import "SVProgressHUD.h"
 #endif
 #import "UIViewController+Extend.h"
 #import "Utils.h"

@@ -5,7 +5,7 @@
 //  Created by Wang Wei on 10/17/15.
 //  Copyright © 2015 Seafile. All rights reserved.
 //
-#import <MWPhoto.h>
+#import "MWPhoto.h"
 
 #import "SeafPreView.h"
 @interface SeafPhoto : NSObject<MWPhoto>

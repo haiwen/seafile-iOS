@@ -5,7 +5,7 @@
 //  Created by Wang Wei on 10/20/12.
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
-#import <UIScrollView+SVPullToRefresh.h>
+#import "UIScrollView+SVPullToRefresh.h"
 
 #import "SeafDirViewController.h"
 #import "SeafAppDelegate.h"
@@ -133,6 +133,7 @@
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:CellIdentifier owner:self options:nil];
         cell = [cells objectAtIndex:0];
     }
+    [cell reset];
 
     @try {
         SeafDir *sdir = [_directory.items objectAtIndex:indexPath.row];

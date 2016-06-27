@@ -12,6 +12,7 @@
 @synthesize imageView;
 @synthesize textLabel;
 @synthesize detailTextLabel;
+@synthesize progressView;
 
 - (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
 {
@@ -27,6 +28,20 @@
     [super setSelected:selected animated:animated];
 
     // Configure the view for the selected state
+}
+
+- (void)reset
+{
+    self.textLabel.labelize = NO;
+    self.textLabel.trailingBuffer = 14.0;
+    self.textLabel.tapToScroll = true;
+    self.detailTextLabel.text = nil;
+    self.badgeImage.hidden = true;
+    self.badgeLabel.hidden = true;
+    self.cacheStatusView.hidden = true;
+    self.progressView.hidden = true;
+    self.rightUtilityButtons = nil;
+    self.delegate = nil;
 }
 
 @end

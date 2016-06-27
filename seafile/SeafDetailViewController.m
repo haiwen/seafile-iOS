@@ -6,8 +6,8 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
-#import <MWPhotoBrowser.h>
-#import <SVProgressHUD.h>
+#import "MWPhotoBrowser.h"
+#import "SVProgressHUD.h"
 
 #import "SeafAppDelegate.h"
 #import "SeafDetailViewController.h"

@@ -436,7 +436,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                 return dis;
             }
         } else {
-            Debug("....authenticationMethod: %@, %@", challenge.protectionSpace.authenticationMethod, challenge.protectionSpace);
+            Debug("authenticationMethod: %@, %@", challenge.protectionSpace.authenticationMethod, challenge.protectionSpace);
         }
         return NSURLSessionAuthChallengePerformDefaultHandling;
     }];

@@ -16,7 +16,9 @@
 @class SeafFile;
 
 @protocol SeafFileUpdateDelegate <NSObject>
-- (void)updateProgress:(nonnull SeafFile * )file result:(BOOL)res completeness:(int)percent;
+- (void)updateProgress:(nonnull SeafFile * )file progress:(int)percent;
+- (void)updateComplete:(nonnull SeafFile * )file result:(BOOL)res;
+
 @end
 
 @interface SeafFile : SeafBase<QLPreviewItem, SeafPreView, SeafUploadDelegate, SeafDownloadDelegate> {
