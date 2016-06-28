@@ -1078,6 +1078,23 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return results.count > 0;
 }
 
+- (int)autoSyncedNum
+{
+    NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
+    NSFetchRequest *request = [[NSFetchRequest alloc] init];
+    [request setEntity:[NSEntityDescription entityForName:@"UploadedPhotos" inManagedObjectContext:context]];
+    [request setIncludesSubentities:NO];
+    [request setPredicate:[NSPredicate predicateWithFormat:@"server==%@ AND username==%@", self.address, self.username]];
+
+    NSError *err;
+    NSUInteger count = [context countForFetchRequest:request error:&err];
+    if(count == NSNotFound) {
+        Warning("Failed to fet synced count");
+        return 0;
+    }
+
+    return count;
+}
 - (void)resetUploadedPhotos
 {
     self.uploadFiles = [[NSMutableDictionary alloc] init];
