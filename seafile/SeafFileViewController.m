@@ -911,6 +911,7 @@ enum {
         return [self noneSelected:NO];
     }
     _curEntry = [self getDentrybyIndexPath:indexPath tableView:tableView];
+    Debug("Select %@", _curEntry.name);
     if (!_curEntry) {
         return [self.tableView performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
     }

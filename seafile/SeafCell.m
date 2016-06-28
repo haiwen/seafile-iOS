@@ -33,7 +33,7 @@
 - (void)reset
 {
     self.textLabel.labelize = NO;
-    self.textLabel.trailingBuffer = 14.0;
+    self.textLabel.trailingBuffer = 20.0;
     self.textLabel.tapToScroll = true;
     self.detailTextLabel.text = nil;
     self.badgeImage.hidden = true;

@@ -312,7 +312,12 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         cell = [cells objectAtIndex:0];
         cell.accountImageView.layer.cornerRadius = 5.0f;
         cell.accountImageView.clipsToBounds = YES;
+        cell.textLabel.tapToScroll = true;
+        cell.repoNameLabel.tapToScroll = true;
+        cell.textLabel.trailingBuffer = 20.0;
+        cell.repoNameLabel.trailingBuffer = 20.0;
     }
+
     NSDictionary *event = [_events objectAtIndex:indexPath.row];
     NSURL *url = [self getAvatarUrl:event];
     if (url) {

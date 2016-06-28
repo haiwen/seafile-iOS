@@ -97,7 +97,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 - (void)clearAccount;
 - (void)logout;
 
-- (int)autoSyncedNum;
+- (NSUInteger)autoSyncedNum;
 
 - (NSURLRequest *)buildRequest:(NSString *)url method:(NSString *)method form:(NSString *)form;
 

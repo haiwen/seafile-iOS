@@ -426,13 +426,19 @@ enum SHARE_STATUS {
     [self refreshView];
 }
 
+- (void)showDownloadError:(NSString *)filename
+{
+    if (self.isVisible)
+        [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Failed to download file '%@'", @"Seafile"), self.preViewItem.previewItemTitle]];
+}
+
 - (void)download:(SeafBase *)entry failed:(NSError *)error
 {
     Debug("Failed to download %@ : %@ ", entry.name, error);
     if (self.state == PREVIEW_PHOTO) {
         SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
         if (photo == nil) return;
-        [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:@"Failed to download file '%@'",self.preViewItem.previewItemTitle]];
+        [self showDownloadError:self.preViewItem.previewItemTitle];
         NSError *error = [NSError errorWithDomain:[NSString stringWithFormat:@"Failed to download file '%@'",self.preViewItem.previewItemTitle] code:-1 userInfo:nil];
         [photo complete:false error:error];
         return;
@@ -440,7 +446,7 @@ enum SHARE_STATUS {
     if (self.preViewItem != entry || self.preViewItem.hasCache)
         return;
 
-    [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:@"Failed to download file '%@'", self.preViewItem.previewItemTitle]];
+    [self showDownloadError:self.preViewItem.previewItemTitle];
     [self setPreViewItem:nil master:nil];
 }
 

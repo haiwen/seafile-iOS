@@ -1078,7 +1078,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return results.count > 0;
 }
 
-- (int)autoSyncedNum
+- (NSUInteger)autoSyncedNum
 {
     NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
     NSFetchRequest *request = [[NSFetchRequest alloc] init];
