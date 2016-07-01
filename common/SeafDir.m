@@ -83,6 +83,10 @@ static NSComparator CMP = ^(id obj1, id obj2) {
                 return NO;
         }
     }
+    if (![JSON isKindOfClass:[NSArray class]]) {
+        Warning("Invalid response: %@", JSON);
+        return false;
+    }
 
     NSMutableArray *newItems = [NSMutableArray array];
     for (NSDictionary *itemInfo in JSON) {
