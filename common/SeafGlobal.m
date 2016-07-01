@@ -601,14 +601,15 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     @synchronized(timer) {
         for (SeafConnection *conn in self.conns) {
             [conn pickPhotosForUpload];
-
         }
         double cur = [[NSDate date] timeIntervalSince1970];
         if (cur - lastUpdate > UPDATE_INTERVAL) {
             Debug("%fs has passed, refreshRepoPassowrds", cur - lastUpdate);
             lastUpdate = cur;
-            for (SeafConnection *conn in self.conns)
+            for (SeafConnection *conn in self.conns) {
                 [conn refreshRepoPassowrds];
+                [conn photosChanged:nil];
+            }
         }
         if (self.ufiles.count > 0)
             [self tryUpload];
@@ -627,6 +628,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
                                                     userInfo:nil
                                                      repeats:YES];
     [[AFNetworkReachabilityManager sharedManager] setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
+        Debug("....");
         [self tick:_autoSyncTimer];
     }];
 }

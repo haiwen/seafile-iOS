@@ -195,7 +195,7 @@
 {
     Debug("Start check photos changes.");
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
-        [conn checkPhotoChanges:notification];
+        [conn photosChanged:notification];
     }
 }
 

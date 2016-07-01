@@ -1281,7 +1281,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }];
 }
 
-- (void)checkPhotoChanges:(NSNotification *)note
+- (void)photosChanged:(NSNotification *)note
 {
     [self checkPhotos];
 }

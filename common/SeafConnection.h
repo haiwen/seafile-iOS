@@ -169,7 +169,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 
 - (NSUInteger)photosInSyncing;
 - (void)checkSyncDst:(SeafDir *)dir;
-- (void)checkPhotoChanges:(NSNotification *)note;
+- (void)photosChanged:(NSNotification *)note;
 
 - (void)setRepo:(NSString *)repoId password:(NSString *)password;
 - (NSString *)getRepoPassword:(NSString *)repoId;

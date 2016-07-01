@@ -200,7 +200,7 @@ enum ENC_LIBRARIES{
 - (void)videoSyncSwitchFlip:(id)sender
 {
     self.videoSync = _videoSyncSwitch.on;
-    [_connection checkPhotoChanges:nil];
+    [_connection photosChanged:nil];
 }
 
 - (CLLocationManager *)locationManager {
@@ -571,7 +571,7 @@ enum ENC_LIBRARIES{
 {
     NSString *old = _connection.autoSyncRepo;
     if ([repo.repoId isEqualToString:old]) {
-        [_connection checkPhotoChanges:nil];
+        [_connection photosChanged:nil];
         return;
     }
 
