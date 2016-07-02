@@ -283,6 +283,7 @@
     cell.textLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
     cell.imageView.image = [Utils reSizeImage:entry.icon toSquare:32];
     cell.detailTextLabel.font = [UIFont systemFontOfSize:13];
+    cell.detailTextLabel.textColor = [UIColor lightGrayColor];
 
     if ([entry isKindOfClass:[SeafRepo class]]) {
         SeafRepo *repo = (SeafRepo *)entry;
