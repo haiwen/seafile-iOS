@@ -398,10 +398,10 @@ enum {
     if ([_directory isKindOfClass:[SeafRepos class]]) {
         titles = [NSMutableArray arrayWithObjects:S_SORT_NAME, S_SORT_MTIME, nil];
     } else if (_directory.editable) {
-        titles = [NSMutableArray arrayWithObjects:S_DOWNLOAD, S_EDIT, S_NEWFILE, S_MKDIR, S_SORT_NAME, S_SORT_MTIME, S_PHOTOS_ALBUM, nil];
+        titles = [NSMutableArray arrayWithObjects:S_EDIT, S_NEWFILE, S_MKDIR, S_SORT_NAME, S_SORT_MTIME, S_PHOTOS_ALBUM, nil];
         if (self.photos.count >= 3) [titles addObject:S_PHOTOS_BROWSER];
     } else {
-        titles = [NSMutableArray arrayWithObjects:S_DOWNLOAD, S_SORT_NAME, S_SORT_MTIME, S_PHOTOS_ALBUM, nil];
+        titles = [NSMutableArray arrayWithObjects:S_SORT_NAME, S_SORT_MTIME, S_PHOTOS_ALBUM, nil];
         if (self.photos.count >= 3) [titles addObject:S_PHOTOS_BROWSER];
     }
     [self showAlertWithAction:titles fromBarItem:self.editItem withTitle:nil];
@@ -615,10 +615,14 @@ enum {
     id entry = [self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
     if ([entry isKindOfClass:[SeafRepo class]]) {
         SeafRepo *repo = (SeafRepo *)entry;
-        if (repo.encrypted)
-            [self showAlertWithAction:[NSArray arrayWithObjects:S_RESET_PASSWORD, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
+        NSMutableArray *titles = [[NSMutableArray alloc] init];
+        [titles addObject:S_DOWNLOAD];
+        if (repo.encrypted) {
+            [titles addObject:S_RESET_PASSWORD];
+        }
+        [self showAlertWithAction:titles fromRect:cell.frame inView:self.tableView withTitle:nil];
     } else if ([entry isKindOfClass:[SeafDir class]]) {
-        [self showAlertWithAction:[NSArray arrayWithObjects:S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
+        [self showAlertWithAction:[NSArray arrayWithObjects:S_DOWNLOAD, S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
     } else if ([entry isKindOfClass:[SeafFile class]]) {
         SeafFile *file = (SeafFile *)entry;
         NSArray *titles;
@@ -742,8 +746,8 @@ enum {
     cell.textLabel.text = srepo.name;
     [cell.cacheStatusWidthConstraint setConstant:0.0f];
     srepo.delegate = self;
-    if (tableView == self.tableView && srepo.encrypted) {
-        [cell setRightUtilityButtons:[self repoButtons] WithButtonWidth:100];
+    if (tableView == self.tableView) {
+        [cell setRightUtilityButtons:[self repoButtons:srepo] WithButtonWidth:100];
     } else {
         cell.rightUtilityButtons = nil;
     }
@@ -1178,6 +1182,13 @@ enum {
     [_connection performSelectorInBackground:@selector(downloadDir:) withObject:dir];
 }
 
+- (void)downloadRepo:(SeafRepo *)repo
+{
+    Debug("download repo: %@ %@", repo.repoId, repo.path);
+    [SVProgressHUD showSuccessWithStatus:[NSLocalizedString(@"Start to download library: ", @"Seafile") stringByAppendingString:repo.name]];
+    [_connection performSelectorInBackground:@selector(downloadDir:) withObject:repo];
+}
+
 - (void)savePhotosToAlbum
 {
     for (id entry in _directory.allItems) {
@@ -1270,7 +1281,8 @@ enum {
     } else if ([S_MKDIR isEqualToString:title]) {
         [self popupMkdirView];
     } else if ([S_DOWNLOAD isEqualToString:title]) {
-        [self downloadDir:_directory];
+        SeafDir *dir = (SeafDir *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
+        [self downloadDir:dir];
     } else if ([S_PHOTOS_ALBUM isEqualToString:title]) {
         [self savePhotosToAlbum];
     } else if ([S_PHOTOS_BROWSER isEqualToString:title]) {
@@ -1326,6 +1338,10 @@ enum {
         SeafRepo *repo = (SeafRepo *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [repo->connection setRepo:repo.repoId password:nil];
         [self popupSetRepoPassword:repo];
+    } else if ([S_CLEAR_REPO_PASSWORD isEqualToString:title]) {
+        SeafRepo *repo = (SeafRepo *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
+        [repo->connection setRepo:repo.repoId password:nil];
+        [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Clear library password successfully.", @"Seafile")];
     }
 }
 
@@ -1756,19 +1772,23 @@ enum {
     if (!_selectedindex)
         return;
     SeafBase *base = (SeafBase *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-    if (index == 0) {
-        if ([base isKindOfClass:[SeafRepo class]]) {
-            SeafRepo *repo = (SeafRepo *)base;
+    if ([base isKindOfClass:[SeafRepo class]]) {
+        SeafRepo *repo = (SeafRepo *)base;
+       if (index == 0) {
+           [self downloadRepo:repo];
+        } else {
             [repo->connection setRepo:repo.repoId password:nil];
             [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Clear library password successfully.", @"Seafile")];
-            [self performSelector:@selector(hideCellButton:) withObject:cell afterDelay:0.1f];
-        } else {
+        }
+        [self performSelector:@selector(hideCellButton:) withObject:cell afterDelay:0.1f];
+    } else {
+        if (index == 0) {// More
             _selectedCell = cell;
             [self showActionSheetForCell:cell];
+            [self.tableView selectRowAtIndexPath:_selectedindex animated:true scrollPosition:UITableViewScrollPositionNone];
+        } else { // Delete
+            [self deleteEntry:base];
         }
-        [self.tableView selectRowAtIndexPath:_selectedindex animated:true scrollPosition:UITableViewScrollPositionNone];
-    } else {
-        [self deleteEntry:base];
     }
 }
 
@@ -1785,12 +1805,17 @@ enum {
     return rightUtilityButtons;
 }
 
-- (NSArray *)repoButtons
+- (NSArray *)repoButtons:(SeafRepo *)repo
 {
     NSMutableArray *rightUtilityButtons = [NSMutableArray new];
     [rightUtilityButtons sw_addUtilityButtonWithColor:
      [UIColor colorWithRed:0.78f green:0.78f blue:0.8f alpha:1.0]
-                                                title:S_CLEAR_REPO_PASSWORD];
+                                                title:S_DOWNLOAD];
+    if (repo.encrypted) {
+        [rightUtilityButtons sw_addUtilityButtonWithColor:
+         [UIColor colorWithRed:1.0f green:0.231f blue:0.188 alpha:1.0f]
+                                                    title:S_CLEAR_REPO_PASSWORD];
+    }
     return rightUtilityButtons;
 }
 
