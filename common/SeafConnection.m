@@ -624,7 +624,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (self.token)
         [request setValue:[NSString stringWithFormat:@"Token %@", self.token] forHTTPHeaderField:@"Authorization"];
 
-    Debug("Request: %@", request.URL);
     return request;
 }
 
@@ -633,6 +632,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                  failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure
 {
     NSURLRequest *request = [self buildRequest:url method:method form:form];
+    Debug("Request: %@", request.URL);
+
     NSURLSessionDataTask *task = [_sessionMgr dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
         NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
         if (error) {
@@ -1339,14 +1340,17 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (void)downloadDir:(SeafDir *)dir
 {
     [dir downloadContentSuccess:^(SeafDir *dir) {
+        Debug("dir %@ items: %d", dir.path, dir.items.count);
+        long delay = 1;
         for (SeafBase *item in dir.items) {
+            delay += 1;
             if ([item isKindOfClass:[SeafFile class]]) {
                 SeafFile *file = (SeafFile *)item;
-                Debug("download file: %@, %@", item.repoId, item.path );
-                [SeafGlobal.sharedObject addDownloadTask:file];
+                Debug("download file: %@, %@ after %ld ms", item.repoId, item.path, delay);
+                [SeafGlobal.sharedObject performSelector:@selector(addDownloadTask:) withObject:file afterDelay:delay];
             } else if ([item isKindOfClass:[SeafDir class]]) {
-                Debug("download dir: %@, %@", item.repoId, item.path );
-                [self downloadDir:(SeafDir *)item];
+                Debug("download dir: %@, %@ after %ld ms", item.repoId, item.path, delay);
+                [self performSelector:@selector(downloadDir:) withObject:(SeafDir *)item afterDelay:delay];
             }
         }
     } failure:^(SeafDir *dir) {

@@ -252,6 +252,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     int size = THUMB_SIZE * (int)[[UIScreen mainScreen] scale];
     NSString *thumburl = [NSString stringWithFormat:API_URL"/repos/%@/thumbnail/?size=%d&p=%@", self.repoId, size, self.path.escapedUrl];
     NSURLRequest *downloadRequest = [connection buildRequest:thumburl method:@"GET" form:nil];
+    Debug("Request: %@", downloadRequest.URL);
     NSString *target = [self thumbPath:self.oid];
     @synchronized (self) {
         if (_thumbtask) return;

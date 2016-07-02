@@ -276,7 +276,7 @@ enum {
             [self noneSelected:NO];
     }
     if (_directory && !_directory.hasCache) {
-        Debug("no cache, load from server.");
+        Debug("no cache, load %@ from server.", _directory.path);
         [self showLoadingView];
         self.state = STATE_LOADING;
     }

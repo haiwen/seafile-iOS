@@ -255,6 +255,7 @@
         BOOL ret = [self selectAccount:conn];
         return handler(ret);
     }
+    Debug("verify touchId for %@ %@", conn.address, conn.username);
     [self checkTouchId:^(bool success) {
         if (success) {
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.), dispatch_get_main_queue(), ^{
