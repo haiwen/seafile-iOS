@@ -9,7 +9,6 @@ target :"seafile-appstore" do
   platform :ios, '8.0'
   use_frameworks!
 
-  pod 'MarqueeLabel', '~> 2.7.5'
   pod 'SVPullToRefresh', '~> 0.4.1'
   pod 'SVProgressHUD', '~> 1.1.3'
   pod 'SWTableViewCell', :git => 'https://github.com/haiwen/SWTableViewCell.git', :branch => 'master'

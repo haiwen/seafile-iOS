@@ -77,7 +77,8 @@
         self.edgesForExtendedLayout = UIRectEdgeNone;
     if ([self.tableView respondsToSelector:@selector(setSeparatorInset:)])
         [self.tableView setSeparatorInset:UIEdgeInsetsMake(0, 0, 0, 0)];
-    self.tableView.rowHeight = 50;
+    self.tableView.rowHeight = UITableViewAutomaticDimension;
+    self.tableView.estimatedRowHeight = 50.0;
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 
     __weak typeof(self) weakSelf = self;

@@ -8,11 +8,10 @@
 
 #import <UIKit/UIKit.h>
 #import "SWTableViewCell.h"
-#import "MarqueeLabel.h"
 
 @interface SeafCell : SWTableViewCell
 @property (strong, nonatomic) IBOutlet UIImageView *imageView;
-@property (strong, nonatomic) IBOutlet MarqueeLabel *textLabel;
+@property (strong, nonatomic) IBOutlet UILabel *textLabel;
 @property (strong, nonatomic) IBOutlet UILabel *detailTextLabel;
 @property (strong, nonatomic) IBOutlet UILabel *badgeLabel;
 @property (strong, nonatomic) IBOutlet UIImageView *badgeImage;

@@ -59,7 +59,8 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     self.title = NSLocalizedString(@"Activities", @"Seafile");
     self.navigationItem.rightBarButtonItem = [self getBarItemAutoSize:@"refresh".navItemImgName action:@selector(refresh:)];
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
-    self.tableView.rowHeight = 60;
+    self.tableView.rowHeight = UITableViewAutomaticDimension;
+    self.tableView.estimatedRowHeight = 60.0;
     self.eventsMore = true;
     self.eventsOffset = 0;
     _eventDetails = [NSMutableDictionary new];
@@ -312,10 +313,6 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         cell = [cells objectAtIndex:0];
         cell.accountImageView.layer.cornerRadius = 5.0f;
         cell.accountImageView.clipsToBounds = YES;
-        cell.textLabel.tapToScroll = true;
-        cell.repoNameLabel.tapToScroll = true;
-        cell.textLabel.trailingBuffer = 20.0;
-        cell.repoNameLabel.trailingBuffer = 20.0;
     }
 
     NSDictionary *event = [_events objectAtIndex:indexPath.row];

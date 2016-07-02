@@ -168,7 +168,8 @@ enum {
         [self.tableView setSeparatorInset:UIEdgeInsetsMake(0, 0, 0, 0)];
     self.formatter = [[NSDateFormatter alloc] init];
     [self.formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
-    self.tableView.rowHeight = 50;
+    self.tableView.rowHeight = UITableViewAutomaticDimension;
+    self.tableView.estimatedRowHeight = 50.0;
     self.state = STATE_INIT;
 
     self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectZero];
@@ -715,7 +716,6 @@ enum {
     [self updateCellContent:cell file:sfile];
     sfile.delegate = self;
     sfile.udelegate = self;
-
     return cell;
 }
 
@@ -723,7 +723,7 @@ enum {
 {
     SeafCell *cell = (SeafCell *)[self getCell:@"SeafDirCell" forTableView:tableView];
     cell.textLabel.text = sdir.name;
-    cell.detailTextLabel.text = nil;
+    cell.detailTextLabel.text = @"";
     cell.imageView.image = sdir.icon;
     sdir.delegate = self;
     return cell;

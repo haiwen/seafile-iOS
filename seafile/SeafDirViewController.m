@@ -55,7 +55,8 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    self.tableView.rowHeight = 50;
+    self.tableView.rowHeight = UITableViewAutomaticDimension;
+    self.tableView.estimatedRowHeight = 50.0;
     [self.tableView registerNib:[UINib nibWithNibName:@"SeafDirCell" bundle:nil]
          forCellReuseIdentifier:@"SeafDirCell"];
 
@@ -140,7 +141,7 @@
         cell.textLabel.text = sdir.name;
         cell.textLabel.font = [UIFont systemFontOfSize:17];
         cell.imageView.image = sdir.icon;
-        cell.detailTextLabel.text = nil;
+        cell.detailTextLabel.text = @"";
         if ([sdir isKindOfClass:[SeafRepo class]]) {
             SeafRepo *repo = (SeafRepo *)sdir;
             if (repo.isGroupRepo) {
