@@ -296,6 +296,11 @@ enum {
     if (!self.isVisible)
         [_directory unload];
 }
+- (void)viewWillTransitionToSize:(CGSize)size
+       withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator
+{
+    [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
+}
 
 - (void)selectAll:(id)sender
 {

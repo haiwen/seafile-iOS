@@ -261,9 +261,12 @@
 
 - (void)reSortItems
 {
+    NSMutableArray *allrepos = [[NSMutableArray alloc] init];
     for (NSMutableArray *repoGroup in _repoGroups) {
         [self sortItems:repoGroup];
+        [allrepos addObjectsFromArray:repoGroup];
     }
+    self.items = allrepos;
 }
 
 @end

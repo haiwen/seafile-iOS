@@ -19,7 +19,7 @@
                     path:(NSString *)aPath;
 
 @property (readonly, copy) NSArray *allItems;
-@property (readonly, copy) NSArray *items;
+@property (readwrite, copy) NSArray *items;
 @property (readonly) NSArray *uploadFiles;
 @property (readonly) BOOL editable;
 
