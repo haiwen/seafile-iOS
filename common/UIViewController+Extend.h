@@ -31,5 +31,8 @@
 
 - (void)popupSetRepoPassword:(SeafRepo *)repo handler:(void (^)())handler;
 - (void)checkTouchId:(void (^)(bool success))handler;
+- (UIAlertController *)generateAlert:(NSArray *)arr withTitle:(NSString *)title handler:(void (^)(UIAlertAction *action))handler;
+
+- (BOOL)checkNetworkStatus;
 
 @end

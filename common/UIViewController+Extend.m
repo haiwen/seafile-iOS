@@ -11,6 +11,7 @@
 #ifdef SEAFILE_APP
 #import "SVProgressHUD.h"
 #endif
+#import "AFNetworking.h"
 #import "UIViewController+Extend.h"
 #import "Utils.h"
 #import "Debug.h"
@@ -180,6 +181,26 @@
                           [self alertWithTitle:STR_16];
                           return handler(false);
                       }];
+}
+
+- (UIAlertController *)generateAlert:(NSArray *)arr withTitle:(NSString *)title handler:(void (^ __nullable)(UIAlertAction *action))handler
+{
+    UIAlertController *alert = [Utils generateAlert:arr withTitle:title handler:handler cancelHandler:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    alert.popoverPresentationController.sourceView = self.view;
+    if (IsIpad()) {
+        [alert.view layoutIfNeeded];
+    }
+    return alert;
+}
+
+- (BOOL)checkNetworkStatus
+{
+    Debug("network status=%@\n", [[AFNetworkReachabilityManager sharedManager] localizedNetworkReachabilityStatusString]);
+    if (![[AFNetworkReachabilityManager sharedManager] isReachable]) {
+        [Utils alertWithTitle:NSLocalizedString(@"Network unavailable", @"Seafile") message:nil handler:nil from:self];
+        return NO;
+    }
+    return YES;
 }
 
 @end

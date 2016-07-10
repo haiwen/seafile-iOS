@@ -72,16 +72,12 @@ enum {
 - (void)showDetailView:(UIViewController *) c;
 - (void)cycleTheGlobalMailComposer;
 
-- (BOOL)checkNetworkStatus;
-
 - (void)addBackgroundMonitor:(id<SeafBackgroundMonitor>)monitor;
-- (void)continueWithInvalidCert:(NSURLProtectionSpace *)protectionSpace yes:(void (^)())yes no:(void (^)())no;
 
 - (void)startSignificantChangeUpdates;
 - (void)stopSignificantChangeUpdates;
 - (void)checkBackgroundUploadStatus;
 
-+ (void)showActionSheet:(UIActionSheet *)sheet fromBarButtonItem:(UIBarButtonItem *)item;
 + (void)checkOpenLink:(SeafFileViewController *)c;
 
 @end

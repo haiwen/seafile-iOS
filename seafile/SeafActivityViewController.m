@@ -399,7 +399,6 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     UIAlertController *alert = [self generateAction:repoId detail:detail withTitle:title];
     alert.popoverPresentationController.sourceView = self.view;
     alert.popoverPresentationController.sourceRect = cell.frame;
-    [alert.view layoutIfNeeded];
     [self presentViewController:alert animated:true completion:nil];
 }
 

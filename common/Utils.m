@@ -449,6 +449,22 @@
     });
 }
 
++ (UIAlertController *)generateAlert:(NSArray *)arr withTitle:(NSString *)title handler:(void (^ __nullable)(UIAlertAction *action))handler cancelHandler:(void (^ __nullable)(UIAlertAction *action))cancelHandler preferredStyle:(UIAlertControllerStyle)preferredStyle
+{
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:preferredStyle];
+    for (NSString *name in arr) {
+        UIAlertAction *action = [UIAlertAction actionWithTitle:name style:UIAlertActionStyleDefault handler:handler];
+        [alert addAction:action];
+    }
+    if (!IsIpad() || cancelHandler){
+        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+            if (cancelHandler) cancelHandler(action);
+        }];
+        [alert addAction:cancelAction];
+    }
+    return alert;
+}
+
 + (UIImage *)reSizeImage:(UIImage *)image toSquare:(float)length
 {
     CGSize reSize;

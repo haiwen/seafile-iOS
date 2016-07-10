@@ -42,11 +42,13 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 @protocol SeafLoginDelegate <NSObject>
 - (void)loginSuccess:(SeafConnection *)connection;
 - (void)loginFailed:(SeafConnection *)connection response:(NSURLResponse *)response error:(NSError *)error;
+- (BOOL)authorizeInvalidCert:(NSURLProtectionSpace *)protectionSpace;
+- (NSURLCredential *)getClientCert;
+
 @end
 
 @protocol SeafConnectionDelegate <NSObject>
 - (void)loginRequired:(SeafConnection *)connection;
-- (BOOL)continueWithInvalidCert:(NSURLProtectionSpace *)protectionSpace;
 
 @end
 

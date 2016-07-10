@@ -13,9 +13,10 @@
 #import "AFNetworking.h"
 #import "Debug.h"
 #import "Utils.h"
+#import "SecurityUtilities.h"
 
 
-@interface SeafAppDelegate () <UITabBarControllerDelegate, UIAlertViewDelegate, PHPhotoLibraryChangeObserver, CLLocationManagerDelegate>
+@interface SeafAppDelegate () <UITabBarControllerDelegate, PHPhotoLibraryChangeObserver, CLLocationManagerDelegate>
 
 @property UIBackgroundTaskIdentifier bgTask;
 
@@ -26,8 +27,6 @@
 @property (strong) NSArray *viewControllers;
 @property (readwrite) SeafGlobal *global;
 
-@property (strong) void (^handler_ok)();
-@property (strong) void (^handler_cancel)();
 @property (strong, nonatomic) dispatch_block_t expirationHandler;
 @property BOOL background;
 @property (strong) NSMutableArray *monitors;
@@ -212,10 +211,10 @@
         [defs removeObjectForKey:key];
     }
 
+    Debug("clear tmp dir: %@", SeafGlobal.sharedObject.tempDir);
     [Utils clearAllFiles:SeafGlobal.sharedObject.tempDir];
 
-    NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
-    Debug("Current app version is %@\n%@\n", SeafGlobal.sharedObject.clientVersion, infoDictionary);
+    Debug("Current app version is %@\n", SeafGlobal.sharedObject.clientVersion);
     [SeafGlobal.sharedObject startTimer];
 
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
@@ -475,21 +474,6 @@
     return (SeafActivityViewController *)[[self.viewControllers objectAtIndex:TABBED_ACTIVITY] topViewController];
 }
 
-- (BOOL)checkNetworkStatus
-{
-    NSLog(@"network status=%@\n", [[AFNetworkReachabilityManager sharedManager] localizedNetworkReachabilityStatusString]);
-    if (![[AFNetworkReachabilityManager sharedManager] isReachable]) {
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Network unavailable", @"Seafile")
-                                                        message:nil
-                                                       delegate:nil
-                                              cancelButtonTitle:NSLocalizedString(@"OK", @"Seafile")
-                                              otherButtonTitles:nil];
-        [alert show];
-        return NO;
-    }
-    return YES;
-}
-
 - (void)showDetailView:(UIViewController *) c
 {
     UINavigationController *nc = [[UINavigationController alloc] initWithRootViewController:c];
@@ -523,61 +507,6 @@
     });
 }
 
-- (void)continueWithInvalidCert:(NSURLProtectionSpace *)protectionSpace yes:(void (^)())yes no:(void (^)())no
-{
-    NSString *title = [NSString stringWithFormat:NSLocalizedString(@"%@ can't verify the identity of the website \"%@\"", @"Seafile"), APP_NAME, protectionSpace.host];
-    NSString *message = NSLocalizedString(@"The certificate from this website is invalid. Would you like to connect to the server anyway?", @"Seafile");
-
-    UIViewController *c = self.window.rootViewController;
-    if (self.window.rootViewController.presentedViewController) {
-        c = self.window.rootViewController.presentedViewController;
-    }
-
-    if (ios8)
-        [Utils alertWithTitle:title message:message yes:yes no:no from:c];
-    else {
-        [SVProgressHUD dismiss];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            self.handler_ok = yes;
-            self.handler_cancel = no;
-            UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:message delegate:self cancelButtonTitle:STR_CANCEL otherButtonTitles:NSLocalizedString(@"OK", @"Seafile"), nil];
-            alert.alertViewStyle = UIAlertViewStyleDefault;
-            [alert show];
-        });
-    }
-}
-
-- (BOOL)continueWithInvalidCert:(NSURLProtectionSpace *)protectionSpace
-{
-    __block BOOL ret = false;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    dispatch_block_t block = ^{
-        [self continueWithInvalidCert:protectionSpace yes:^{
-            ret = true;
-            dispatch_semaphore_signal(semaphore);
-        } no:^{
-            ret = false;
-            dispatch_semaphore_signal(semaphore);
-        }];
-    };
-    block();
-    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
-
-    return ret;
-}
-#pragma mark - UIAlertViewDelegate
-- (void)alertView:(UIAlertView *)alertView willDismissWithButtonIndex:(NSInteger)buttonIndex
-{
-    if (buttonIndex != alertView.cancelButtonIndex) {
-        if (self.handler_ok) {
-            self.handler_ok();
-        }
-    } else {
-        if (self.handler_cancel)
-            self.handler_cancel();
-    }
-}
-
 #pragma mark - PHPhotoLibraryChangeObserver
 - (void)photoLibraryDidChange:(PHChange *)changeInstance
 {
@@ -591,15 +520,6 @@
 - (void)addBackgroundMonitor:(id<SeafBackgroundMonitor>)monitor
 {
     [_monitors addObject:monitor];
-}
-
-
-+ (void)showActionSheet:(UIActionSheet *)actionSheet fromBarButtonItem:(UIBarButtonItem *)item
-{
-    if (IsIpad())
-        [actionSheet showFromBarButtonItem:item animated:YES];
-    else
-        [actionSheet showInView:[UIApplication sharedApplication].keyWindow];
 }
 
 #pragma mark - CLLocationManagerDelegate

@@ -405,12 +405,14 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
     AFHTTPSessionManager *manager = [[AFHTTPSessionManager alloc] initWithSessionConfiguration:configuration];
     [manager setSessionDidReceiveAuthenticationChallengeBlock:^NSURLSessionAuthChallengeDisposition(NSURLSession *session, NSURLAuthenticationChallenge *challenge, NSURLCredential *__autoreleasing *credential) {
-        *credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
-        Debug("authenticationMethod: %@ credential:%@, identity:%@", challenge.protectionSpace.authenticationMethod, *credential, (*credential).identity);
-        if (SeafGlobal.sharedObject.allowInvalidCert) return NSURLSessionAuthChallengeUseCredential;
+        Debug("authenticationMethod: %@, %@", challenge.protectionSpace.authenticationMethod, challenge.protectionSpace);
 
         if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
+            if (SeafGlobal.sharedObject.allowInvalidCert) return NSURLSessionAuthChallengeUseCredential;
+
             *credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
+            Debug("authenticationMethod: %@ credential:%@, identity:%@", challenge.protectionSpace.authenticationMethod, *credential, (*credential).identity);
+
             BOOL valid = SeafServerTrustIsValid(challenge.protectionSpace.serverTrust);
             Debug("Server cert is valid: %d, delegate=%@, inCheckCert=%d", valid, self.delegate, self.inCheckCert);
             if (valid) {
@@ -421,22 +423,30 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                 }
                 return NSURLSessionAuthChallengeUseCredential;
             } else {
-                if (!self.delegate) return NSURLSessionAuthChallengeCancelAuthenticationChallenge;
+                if (!self.loginDelegate) return NSURLSessionAuthChallengeCancelAuthenticationChallenge;
                 @synchronized(self) {
                     if (self.inCheckCert)
                         return NSURLSessionAuthChallengeCancelAuthenticationChallenge;
                     self.inCheckCert = true;
                 }
-                BOOL yes = [self.delegate continueWithInvalidCert:challenge.protectionSpace];
-                NSURLSessionAuthChallengeDisposition dis = yes?NSURLSessionAuthChallengeUseCredential: NSURLSessionAuthChallengeCancelAuthenticationChallenge;
+                BOOL yes = [self.loginDelegate authorizeInvalidCert:challenge.protectionSpace];
+                NSURLSessionAuthChallengeDisposition dis = yes ? NSURLSessionAuthChallengeUseCredential: NSURLSessionAuthChallengeCancelAuthenticationChallenge;
                 if (yes)
                     [self saveCertificate:challenge.protectionSpace];
 
                 self.inCheckCert = false;
                 return dis;
             }
+        } else if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodClientCertificate]) {
+            Debug("NSURLAuthenticationMethodClientCertificate");
+            if (!self.loginDelegate) return NSURLSessionAuthChallengeCancelAuthenticationChallenge;
+            *credential = [self.loginDelegate getClientCert];
+            if (*credential == nil){
+                return NSURLSessionAuthChallengeCancelAuthenticationChallenge;
+            } else {
+                return NSURLSessionAuthChallengeUseCredential;
+            }
         } else {
-            Debug("authenticationMethod: %@, %@", challenge.protectionSpace.authenticationMethod, challenge.protectionSpace);
         }
         return NSURLSessionAuthChallengePerformDefaultHandling;
     }];

@@ -83,8 +83,7 @@
 
     __weak typeof(self) weakSelf = self;
     [self.tableView addPullToRefreshWithActionHandler:^{
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        if (![appdelegate checkNetworkStatus]) {
+        if (![weakSelf checkNetworkStatus]) {
             [weakSelf.tableView.pullToRefreshView stopAnimating];
         } else {
             [weakSelf refresh:nil];
@@ -205,7 +204,7 @@
         cell = [cells objectAtIndex:0];
     }
     [cell reset];
-    
+
     SeafStarredFile *sfile;
     @try {
         sfile = [_starredFiles objectAtIndex:indexPath.row];

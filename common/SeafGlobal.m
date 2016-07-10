@@ -206,9 +206,8 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         [newDef synchronize];
         [oldDef removeObjectForKey:@"ACCOUNTS"];
         [oldDef synchronize];
+        Debug("accounts:%@\nnew:%@", oldDef.dictionaryRepresentation, newDef.dictionaryRepresentation);
     }
-    Debug("accounts:%@\nnew:%@", oldDef.dictionaryRepresentation, newDef.dictionaryRepresentation);
-
 }
 - (void)migrateDocuments
 {
@@ -257,6 +256,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 
 - (void)loadAccounts
 {
+    Debug("storage: %@", _storage.dictionaryRepresentation);
     NSUserDefaults * standardUserDefaults = [NSUserDefaults standardUserDefaults];
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center addObserver:self
@@ -268,7 +268,6 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 
     NSMutableArray *connections = [[NSMutableArray alloc] init];
     NSArray *accounts = [self objectForKey:@"ACCOUNTS"];
-    Debug("accounts:%@", accounts);
     for (NSDictionary *account in accounts) {
         SeafConnection *conn = [[SeafConnection alloc] initWithUrl:[account objectForKey:@"url"] username:[account objectForKey:@"username"]];
         if (conn.username)
@@ -628,7 +627,6 @@ static NSError * NewNSErrorFromException(NSException * exc) {
                                                     userInfo:nil
                                                      repeats:YES];
     [[AFNetworkReachabilityManager sharedManager] setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
-        Debug("....");
         [self tick:_autoSyncTimer];
     }];
 }
@@ -789,12 +787,12 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     NSMutableDictionary *exports = [self getExports];
     return [exports objectForKey:[self exportKeyFor:url]];
 }
+
 - (void)clearExportFiles
 {
     [Utils clearAllFiles:SeafGlobal.sharedObject.documentStorageDir];
     [SeafGlobal.sharedObject saveExports:[NSDictionary new]];
 }
-
 
 - (void)clearThumbs
 {

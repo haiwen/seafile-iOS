@@ -42,7 +42,7 @@ enum {
 };
 
 
-@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, SeafDirDelegate, SeafShareDelegate, UISearchBarDelegate, UISearchDisplayDelegate, UIActionSheetDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate, MWPhotoBrowserDelegate>
+@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, SeafDirDelegate, SeafShareDelegate, UISearchBarDelegate, UISearchDisplayDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate, MWPhotoBrowserDelegate>
 - (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView;
 - (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView;
@@ -61,8 +61,6 @@ enum {
 @property (retain) SWTableViewCell *selectedCell;
 @property (retain) NSIndexPath *selectedindex;
 @property (readonly) NSArray *editToolItems;
-
-@property (strong) UIActionSheet *actionSheet;
 
 @property int state;
 
@@ -192,8 +190,7 @@ enum {
     [self.tableView addPullToRefreshWithActionHandler:^{
         if (weakSelf.searchDisplayController.active)
             return;
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        if (![appdelegate checkNetworkStatus]) {
+        if (![weakSelf checkNetworkStatus]) {
             [weakSelf performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
             return;
         }
@@ -327,9 +324,8 @@ enum {
 
 - (void)setEditing:(BOOL)editing animated:(BOOL)animated
 {
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     if (editing) {
-        if (![appdelegate checkNetworkStatus]) return;
+        if (![self checkNetworkStatus]) return;
         [self.navigationController.toolbar sizeToFit];
         [self setToolbarItems:self.editToolItems];
         [self noneSelected:YES];
@@ -552,64 +548,24 @@ enum {
     return [self getCell:@"SeafCell" forTableView:tableView];
 }
 
-- (UIAlertController *)generateAction:(NSArray *)arr withTitle:(NSString *)title
-{
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleActionSheet];
-    for (NSString *name in arr) {
-        UIAlertAction *action = [UIAlertAction actionWithTitle:name style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            [self handleAction:name];
-        }];
-        [alert addAction:action];
-    }
-    if (!IsIpad()){
-        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        }];
-        [alert addAction:cancelAction];
-    }
-    return alert;
-}
-
 - (void)showAlertWithAction:(NSArray *)arr fromRect:(CGRect)rect inView:(UIView *)view withTitle:(NSString *)title
 {
-    if (ios8) {
-        UIAlertController *alert = [self generateAction:arr withTitle:title];
-        alert.popoverPresentationController.sourceView = self.view;
-        alert.popoverPresentationController.sourceRect = rect;
-        [alert.view layoutIfNeeded];
-        [self presentViewController:alert animated:true completion:nil];
-    } else {
-        if (self.actionSheet) {
-            [self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
-            self.actionSheet = nil;
-        }
-        self.actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:actionSheetCancelTitle() destructiveButtonTitle:nil otherButtonTitles:nil];
-        for (NSString *title in arr) {
-            [self.actionSheet addButtonWithTitle:title];
-        }
-        [self.actionSheet showFromRect:rect inView:view animated:YES];
-    }
+    UIAlertController *alert = [self generateAlert:arr withTitle:title handler:^(UIAlertAction *action) {
+        [self handleAction:action.title];
+    }];
+    alert.popoverPresentationController.sourceRect = rect;
+    [self presentViewController:alert animated:true completion:nil];
 }
 
 - (void)showAlertWithAction:(NSArray *)arr fromBarItem:(UIBarButtonItem *)item withTitle:(NSString *)title
 {
-    if (ios8) {
-        UIAlertController *alert = [self generateAction:arr withTitle:title];
-        alert.popoverPresentationController.sourceView = self.view;
-        alert.popoverPresentationController.barButtonItem = item;
-        [alert.view layoutIfNeeded];
-        [self presentViewController:alert animated:true completion:nil];
-    }  else {
-        if (self.actionSheet) {
-            [self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
-            self.actionSheet = nil;
-        }
-        self.actionSheet = [[UIActionSheet alloc] initWithTitle:title delegate:self cancelButtonTitle:actionSheetCancelTitle() destructiveButtonTitle:nil otherButtonTitles:nil];
-        for (NSString *title in arr) {
-            [self.actionSheet addButtonWithTitle:title];
-        }
-        [SeafAppDelegate showActionSheet:self.actionSheet fromBarButtonItem:item];
-    }
+    UIAlertController *alert = [self generateAlert:arr withTitle:title handler:^(UIAlertAction *action) {
+        [self handleAction:action.title];
+    }];
+    alert.popoverPresentationController.barButtonItem = item;
+    [self presentViewController:alert animated:true completion:nil];
 }
+
 - (void)showActionSheetForCell:(UITableViewCell *)cell
 {
     id entry = [self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
@@ -1254,7 +1210,6 @@ enum {
     });
 }
 
-#pragma mark - UIActionSheetDelegate
 - (void)deleteEntry:(id)entry
 {
     self.state = STATE_DELETE;
@@ -1268,6 +1223,7 @@ enum {
     else if ([entry isKindOfClass:[SeafDir class]])
         [self deleteDir: (SeafDir*)entry];
 }
+
 - (void)handleAction:(NSString *)title
 {
     Debug("handle action title:%@, %@", title, _selectedCell);
@@ -1343,15 +1299,6 @@ enum {
         [repo->connection setRepo:repo.repoId password:nil];
         [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Clear library password successfully.", @"Seafile")];
     }
-}
-
-- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
-{
-    self.actionSheet = nil;
-    if (buttonIndex < 0 || buttonIndex >= actionSheet.numberOfButtons)
-        return;
-    NSString *title = [actionSheet buttonTitleAtIndex:buttonIndex];
-    [self handleAction:title];
 }
 
 - (void)backgroundUpload:(SeafUploadFile *)ufile

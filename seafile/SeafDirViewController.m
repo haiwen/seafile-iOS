@@ -76,8 +76,7 @@
 
     __weak typeof(self) weakSelf = self;
     [self.tableView addPullToRefreshWithActionHandler:^{
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        if (![appdelegate checkNetworkStatus]) {
+        if (![weakSelf checkNetworkStatus]) {
             [weakSelf performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
             return;
         }

@@ -42,7 +42,7 @@ enum SHARE_STATUS {
 
 #define SHARE_TITLE NSLocalizedString(@"How would you like to share this file?", @"Seafile")
 
-@interface SeafDetailViewController ()<UIWebViewDelegate, UIActionSheetDelegate, UIPrintInteractionControllerDelegate, MFMailComposeViewControllerDelegate, QLPreviewControllerDelegate, QLPreviewControllerDataSource, MWPhotoBrowserDelegate>
+@interface SeafDetailViewController ()<UIWebViewDelegate, UIPrintInteractionControllerDelegate, MFMailComposeViewControllerDelegate, QLPreviewControllerDelegate, QLPreviewControllerDataSource, MWPhotoBrowserDelegate>
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
 
 @property (retain) QLPreviewController *fileViewController;
@@ -69,8 +69,6 @@ enum SHARE_STATUS {
 @property (strong) UIDocumentInteractionController *docController;
 @property int shareStatus;
 @property (readwrite, nonatomic) bool hideMaster;
-
-@property (strong) UIActionSheet *actionSheet;
 
 @end
 
@@ -510,41 +508,13 @@ enum SHARE_STATUS {
     }
 }
 
-- (UIAlertController *)generateAction:(NSArray *)arr withTitle:(NSString *)title
-{
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleActionSheet];
-    for (NSString *name in arr) {
-        UIAlertAction *action = [UIAlertAction actionWithTitle:name style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            [self handleAction:name];
-        }];
-        [alert addAction:action];
-    }
-    if (!IsIpad()){
-        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        }];
-        [alert addAction:cancelAction];
-    }
-    return alert;
-}
-
 - (void)showAlertWithAction:(NSArray *)arr fromBarItem:(UIBarButtonItem *)item withTitle:(NSString *)title
 {
-    if (ios8) {
-        UIAlertController *alert = [self generateAction:arr withTitle:title];
-        alert.popoverPresentationController.sourceView = self.view;
-        alert.popoverPresentationController.barButtonItem = item;
-        [self presentViewController:alert animated:true completion:nil];
-    }  else {
-        if (self.actionSheet) {
-            [self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
-            self.actionSheet = nil;
-        }
-        self.actionSheet = [[UIActionSheet alloc] initWithTitle:title delegate:self cancelButtonTitle:actionSheetCancelTitle() destructiveButtonTitle:nil otherButtonTitles:nil];
-        for (NSString *title in arr) {
-            [self.actionSheet addButtonWithTitle:title];
-        }
-        [SeafAppDelegate showActionSheet:self.actionSheet fromBarButtonItem:item];
-    }
+    UIAlertController *alert = [self generateAlert:arr withTitle:title handler:^(UIAlertAction *action) {
+        [self handleAction:action.title];
+    }];
+    alert.popoverPresentationController.barButtonItem = item;
+    [self presentViewController:alert animated:true completion:nil];
 }
 
 - (IBAction)export:(id)sender
@@ -629,13 +599,10 @@ enum SHARE_STATUS {
     }
 }
 
-#pragma mark - UIActionSheetDelegate
 - (void)handleAction:(NSString *)title
 {
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     SeafFile *file = (SeafFile *)self.preViewItem;
     if ([NSLocalizedString(@"Open elsewhere...", @"Seafile") isEqualToString:title]) {
-        if (self.actionSheet)[self.actionSheet dismissWithClickedButtonIndex:-1 animated:NO];
         [self performSelector:@selector(openElsewhere:) withObject:nil afterDelay:0.0f];
     } else if ([NSLocalizedString(@"Save to album", @"Seafile") isEqualToString:title]) {
         if ([Utils isImageFile:file.name]) {
@@ -653,10 +620,7 @@ enum SHARE_STATUS {
         [self printFile:file];
     } else if ([NSLocalizedString(@"Email", @"Seafile") isEqualToString:title]
                || [NSLocalizedString(@"Copy Link to Clipboard", @"Seafile") isEqualToString:title]) {
-        if (![appdelegate checkNetworkStatus])
-            return;
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        if (![appdelegate checkNetworkStatus])
+        if (![self checkNetworkStatus])
             return;
 
         if ([NSLocalizedString(@"Email", @"Seafile") isEqualToString:title])
@@ -670,15 +634,6 @@ enum SHARE_STATUS {
             [self generateSharelink:file WithResult:YES];
         }
     }
-}
-- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)bIndex
-{
-    self.actionSheet = nil;
-    if (bIndex < 0 || bIndex >= actionSheet.numberOfButtons)
-        return;
-
-    NSString *title = [actionSheet buttonTitleAtIndex:bIndex];
-    [self handleAction:title];
 }
 
 #pragma mark - SeafShareDelegate

@@ -12,19 +12,20 @@
 #import "SeafAccountViewController.h"
 #import "SeafAppDelegate.h"
 #import "SeafAccountCell.h"
+#import "SecurityUtilities.h"
 #import "UIViewController+Extend.h"
 #import "ColorfulButton.h"
 #import "SeafButtonCell.h"
+#import "SVProgressHUD.h"
+#import "ExtentedString.h"
 #import "Debug.h"
 
 
-@interface StartViewController ()
-@property (retain) NSIndexPath *pressedIndex;
+@interface StartViewController ()<UIDocumentPickerDelegate>
 @property (retain) ColorfulButton *footer;
 @end
 
 @implementation StartViewController
-@synthesize pressedIndex;
 
 - (void)saveAccount:(SeafConnection *)conn
 {
@@ -76,6 +77,7 @@
     self.tableView.tableHeaderView = header;
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
+    self.navigationItem.rightBarButtonItem = [self getBarItemAutoSize:@"ellipsis".navItemImgName action:@selector(editSheet:)];
 
     views = [[NSBundle mainBundle] loadNibNamed:@"SeafStartFooterView" owner:self options:nil];
     ColorfulButton *bt = [views objectAtIndex:0];
@@ -93,7 +95,59 @@
     self.footer.hidden = YES;
     self.tableView.sectionHeaderHeight = 20;
     [self.tableView reloadData];
+}
 
+- (void)editSheet:(id)sender
+{
+    NSString *import = NSLocalizedString(@"Import client certificate", @"Seafile");
+    NSString *remove = NSLocalizedString(@"Remove client certificate", @"Seafile");
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    UIAlertAction *importAction = [UIAlertAction actionWithTitle:import style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        [self handleImprotCertificate];
+    }];
+    UIAlertAction *removeAction = [UIAlertAction actionWithTitle:remove style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        [self handleRemoveCertificate];
+    }];
+    [alert addAction:importAction];
+    [alert addAction:removeAction];
+
+    if (!IsIpad()){
+        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:nil];
+        [alert addAction:cancelAction];
+    } else {
+        [alert.view layoutIfNeeded];
+    }
+    alert.popoverPresentationController.sourceView = self.view;
+    alert.popoverPresentationController.barButtonItem = self.navigationItem.rightBarButtonItem;
+    [self presentViewController:alert animated:true completion:nil];
+}
+
+- (void)handleImprotCertificate
+{
+    UIDocumentPickerViewController *documentPicker = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[@"public.data"] inMode:UIDocumentPickerModeImport];
+    documentPicker.delegate = self;
+    documentPicker.modalPresentationStyle = UIModalPresentationFormSheet;
+    [self presentViewController:documentPicker animated:YES completion:nil];
+}
+
+- (void)handleRemoveCertificate
+{
+    NSArray *arr = [SecurityUtilities getKeyChainCredentials];
+    if (!arr || arr.count == 0) {
+        Warning("No client certificates.");
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"No available certificates", @"Seafile")];
+        return;
+    }
+    [SecurityUtilities chooseCertFrom:arr handler:^(SecIdentityRef identity) {
+        if (!identity) return;
+        BOOL ret = [SecurityUtilities removeIdentityFromKeyChain:identity];
+        Debug("RemoveCertificate ret: %d", ret);
+        if (ret) {
+            [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Succeed to remove certificate", @"Seafile")];
+        } else {
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Faied to remove certificate", @"Seafile")];
+        }
+    } from:self];
 }
 
 - (BOOL)checkLastAccount
@@ -143,12 +197,17 @@
 
 - (IBAction)addAccount:(id)sender
 {
-    pressedIndex = nil;
     NSString *title = NSLocalizedString(@"Choose a Seafile server", @"Seafile");
     NSString *privserver = NSLocalizedString(@"Other Server", @"Seafile");
-    UIActionSheet * actionSheet = [[UIActionSheet alloc] initWithTitle:title delegate:self cancelButtonTitle:actionSheetCancelTitle() destructiveButtonTitle:nil otherButtonTitles:SERVER_SEACLOUD_NAME, SERVER_SHIB_NAME, privserver, nil];
-
-    [actionSheet showInView:self.tableView];
+    NSArray *arr = [NSArray arrayWithObjects:SERVER_SEACLOUD_NAME, SERVER_SHIB_NAME, privserver, nil];
+    UIAlertController *alert = [self generateAlert:arr withTitle:title handler:^(UIAlertAction *action) {
+        long index = [arr indexOfObject:action.title];
+        if (index >= 0 && index <= ACCOUNT_OTHER) {
+            [self showAccountView:nil type:(int)index];
+        }
+    }];
+    alert.popoverPresentationController.sourceView = sender;
+    [self presentViewController:alert animated:true completion:nil];
 }
 
 #pragma mark - Table view data source
@@ -167,22 +226,35 @@
 
 - (void)showEditMenu:(UILongPressGestureRecognizer *)gestureRecognizer
 {
-    UIActionSheet *actionSheet;
+    if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
+        return;
 
     NSString *strEdit = NSLocalizedString(@"Edit", @"Seafile");
     NSString *strDelete = NSLocalizedString(@"Delete", @"Seafile");
-
-    if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
-        return;
+    NSArray *arr = [NSArray arrayWithObjects:strEdit, strDelete, nil];
     CGPoint touchPoint = [gestureRecognizer locationInView:self.tableView];
-    pressedIndex = [self.tableView indexPathForRowAtPoint:touchPoint];
+    NSIndexPath *pressedIndex = [self.tableView indexPathForRowAtPoint:touchPoint];
     if (!pressedIndex)
         return;
 
-    actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:actionSheetCancelTitle() destructiveButtonTitle:nil otherButtonTitles:strEdit, strDelete, nil];
+    UIAlertController *alert = [self generateAlert:arr withTitle:nil handler:^(UIAlertAction *action) {
+        long index = [arr indexOfObject:action.title];
+        if (index < 0 || index >= arr.count)
+            return;
+        SeafConnection *conn = [SeafGlobal.sharedObject.conns objectAtIndex:pressedIndex.row];
+        if (index == 0) { //Edit
+            int type = conn.isShibboleth ? ACCOUNT_SHIBBOLETH : ACCOUNT_OTHER;
+            [self showAccountView:conn type:type];
+        } else if (index == 1) { //Delete
+            [conn clearAccount];
+            [SeafGlobal.sharedObject.conns removeObjectAtIndex:pressedIndex.row];
+            [[SeafGlobal sharedObject] saveAccounts];
+            [self.tableView reloadData];
+        }
+    }];
 
-    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:pressedIndex];
-    [actionSheet showFromRect:cell.frame inView:self.tableView animated:YES];
+    alert.popoverPresentationController.sourceRect = CGRectMake(touchPoint.x, touchPoint.y, 10, 10);
+    [self presentViewController:alert animated:true completion:nil];
 }
 
 - (UITableViewCell *)getAddAccountCell:(UITableView *)tableView
@@ -280,26 +352,37 @@
     }
 }
 
-#pragma mark - UIActionSheetDelegate
-- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
+#pragma mark - UIDocumentPickerDelegate
+- (void)importCertificate:(NSURL *)url
 {
-    if (pressedIndex) {// Long press account
-        if (pressedIndex.row >= SeafGlobal.sharedObject.conns.count) return;
-        SeafConnection *conn = [SeafGlobal.sharedObject.conns objectAtIndex:pressedIndex.row];
-        if (buttonIndex == 0) { //Edit
-            int type = conn.isShibboleth ? ACCOUNT_SHIBBOLETH : ACCOUNT_OTHER;
-            [self showAccountView:conn type:type];
-        } else if (buttonIndex == 1) { //Delete
-            [conn clearAccount];
-            [SeafGlobal.sharedObject.conns removeObjectAtIndex:pressedIndex.row];
-            [[SeafGlobal sharedObject] saveAccounts];
-            [self.tableView reloadData];
+    NSString *alertMessage = [NSString stringWithFormat:NSLocalizedString(@"Successfully imported %@", @"Seafile"),[url lastPathComponent]];
+    NSString *title = [NSString stringWithFormat:NSLocalizedString(@"Password of '%@'", @"Seafile"),[url lastPathComponent]];
+
+    NSString *placeHolder = NSLocalizedString(@"Password", @"Seafile");;
+    [self popupInputView:title placeholder:placeHolder secure:true handler:^(NSString *input) {
+        if (!input || input.length == 0) {
+            [self alertWithTitle:NSLocalizedString(@"Password must not be empty", @"Seafile") handler:^{
+                [self importCertificate:url];
+            }];
         }
-    } else {
-        if (buttonIndex >= 0 && buttonIndex <= ACCOUNT_OTHER) {
-            [self showAccountView:nil type:(int)buttonIndex];
+
+        BOOL ret = [SecurityUtilities importCertToKeyChain:url.path password:input];
+        Debug("import cert %@ ret=%d", url, ret);
+        if (!ret) {
+            [self alertWithTitle:NSLocalizedString(@"Wrong password", @"Seafile") handler:^{
+                [self importCertificate:url];
+            }];
+        } else {
+            [self alertWithTitle:alertMessage];
         }
-    }
+    }];
+}
+- (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentAtURL:(NSURL *)url {
+    Debug("Improt file %u url: %@", (unsigned)controller.documentPickerMode , url);
+    if (controller.documentPickerMode != UIDocumentPickerModeImport)
+        return;
+
+    [self importCertificate:url];
 }
 
 #pragma mark - SSConnectionDelegate

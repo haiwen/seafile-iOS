@@ -65,6 +65,9 @@
 		571D8DAD1677881400F1A22C /* text.png in Resources */ = {isa = PBXBuildFile; fileRef = 5739703C165800810089F32F /* text.png */; };
 		571D8DAE1677881400F1A22C /* text-directory.png in Resources */ = {isa = PBXBuildFile; fileRef = 5739703E1658008A0089F32F /* text-directory.png */; };
 		571D8DAF1677881400F1A22C /* text-directory-documents.png in Resources */ = {isa = PBXBuildFile; fileRef = 57397040165801EE0089F32F /* text-directory-documents.png */; };
+		571F40DB1D30C35A003BF6A7 /* SecurityUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 571F40DA1D30C35A003BF6A7 /* SecurityUtilities.m */; };
+		571F40DC1D30C383003BF6A7 /* SecurityUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 571F40DA1D30C35A003BF6A7 /* SecurityUtilities.m */; };
+		571F40DD1D30C38B003BF6A7 /* SecurityUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 571F40DA1D30C35A003BF6A7 /* SecurityUtilities.m */; };
 		571F5148168C80380055D69B /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 571F5147168C80380055D69B /* MobileCoreServices.framework */; };
 		57227A5D18389DB600CD28E9 /* red.png in Resources */ = {isa = PBXBuildFile; fileRef = 57227A5B18389DB600CD28E9 /* red.png */; };
 		5725186217AE7D010078CD12 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5725186117AE7D000078CD12 /* Security.framework */; };
@@ -324,7 +327,6 @@
 		14F713F28AC94AB8901C31BF /* Pods-seafile-appstore.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-seafile-appstore.release.xcconfig"; path = "Pods/Target Support Files/Pods-seafile-appstore/Pods-seafile-appstore.release.xcconfig"; sourceTree = "<group>"; };
 		2979DE872836DD67FEA29262 /* Pods-SeafProviderFileProvider.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafProviderFileProvider.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SeafProviderFileProvider/Pods-SeafProviderFileProvider.debug.xcconfig"; sourceTree = "<group>"; };
 		3DFD7A698B44546A8DDD2D26 /* libPods-SeafProviderFileProvider.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SeafProviderFileProvider.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		5703F1FE1CE2320600A50FA3 /* SeafilePro.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = SeafilePro.entitlements; path = "seafile-appstore/SeafilePro.entitlements"; sourceTree = "<group>"; };
 		5704C6D01753A1380028F4FE /* IntelligentSplitViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IntelligentSplitViewController.h; sourceTree = "<group>"; };
 		5704C6D11753A1380028F4FE /* IntelligentSplitViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IntelligentSplitViewController.m; sourceTree = "<group>"; };
 		5704C6F51756710F0028F4FE /* tab-account.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-account.png"; sourceTree = "<group>"; };
@@ -357,6 +359,8 @@
 		571B845C1A5AF14200E92BF7 /* is */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = is; path = is.lproj/Localizable.strings; sourceTree = "<group>"; };
 		571CFA9319076469002A58BF /* reply.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = reply.png; sourceTree = "<group>"; };
 		571D8DBA1677881400F1A22C /* SeafilePro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SeafilePro.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		571F40D91D30C35A003BF6A7 /* SecurityUtilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SecurityUtilities.h; path = common/SecurityUtilities.h; sourceTree = SOURCE_ROOT; };
+		571F40DA1D30C35A003BF6A7 /* SecurityUtilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SecurityUtilities.m; path = common/SecurityUtilities.m; sourceTree = SOURCE_ROOT; };
 		571F5147168C80380055D69B /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = System/Library/Frameworks/MobileCoreServices.framework; sourceTree = SDKROOT; };
 		57227A5B18389DB600CD28E9 /* red.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = red.png; sourceTree = "<group>"; };
 		5725186117AE7D000078CD12 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
@@ -970,7 +974,6 @@
 				356B8B1C9F847DA37F0EFE1E /* Pods */,
 				57DB826E15A833FA00097CEC /* Products */,
 				57DB827915A833FA00097CEC /* seafile */,
-				5703F1FE1CE2320600A50FA3 /* SeafilePro.entitlements */,
 				57A029601A16F8AC009C9D7B /* SeafProvider */,
 				57A0296E1A16F8AD009C9D7B /* SeafProviderFileProvider */,
 			);
@@ -1055,6 +1058,8 @@
 		57F53B0315DF49D00027140D /* utils */ = {
 			isa = PBXGroup;
 			children = (
+				571F40D91D30C35A003BF6A7 /* SecurityUtilities.h */,
+				571F40DA1D30C35A003BF6A7 /* SecurityUtilities.m */,
 				57E229C41A1108B200C92330 /* ColorfulButton.h */,
 				57E229C51A1108B200C92330 /* ColorfulButton.m */,
 				57E229C61A1108B200C92330 /* Debug.h */,
@@ -1169,18 +1174,31 @@
 							com.apple.BackgroundModes = {
 								enabled = 1;
 							};
+							com.apple.Keychain = {
+								enabled = 1;
+							};
 							com.apple.iCloud = {
-								enabled = 0;
+								enabled = 1;
 							};
 						};
 					};
 					57A0295E1A16F8AC009C9D7B = {
 						CreatedOnToolsVersion = 6.1;
 						DevelopmentTeam = 55LCTZ5354;
+						SystemCapabilities = {
+							com.apple.iCloud = {
+								enabled = 1;
+							};
+						};
 					};
 					57A0296C1A16F8AD009C9D7B = {
 						CreatedOnToolsVersion = 6.1;
 						DevelopmentTeam = 55LCTZ5354;
+						SystemCapabilities = {
+							com.apple.iCloud = {
+								enabled = 1;
+							};
+						};
 					};
 				};
 			};
@@ -1607,6 +1625,7 @@
 				57DA26F5173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */,
 				57E229F01A1108B200C92330 /* UIImage+FileType.m in Sources */,
 				5757DCCD1AEBCF1600BC0426 /* SeafShibbolethViewController.m in Sources */,
+				571F40DB1D30C35A003BF6A7 /* SecurityUtilities.m in Sources */,
 				5775EA1217476FAD000A1765 /* SeafActivityViewController.m in Sources */,
 				57E229DB1A1108B200C92330 /* ExtentedString.m in Sources */,
 				57A90DA118C49F97005D8A53 /* SeafDetailViewController.m in Sources */,
@@ -1622,6 +1641,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				571F40DC1D30C383003BF6A7 /* SecurityUtilities.m in Sources */,
 				571B81D71D02CFB100386856 /* UIViewController+Extend.m in Sources */,
 				57A192151A208F0900985F77 /* SeafAccountCell.m in Sources */,
 				57A029C61A17022B009C9D7B /* SeafGlobal.m in Sources */,
@@ -1652,6 +1672,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				571F40DD1D30C38B003BF6A7 /* SecurityUtilities.m in Sources */,
 				57C21E731CDCFD0E00B9D24C /* ColorfulButton.m in Sources */,
 				57C21E761CDCFD0E00B9D24C /* ExtentedString.m in Sources */,
 				57C21E781CDCFD0E00B9D24C /* FileMimeType.plist in Sources */,
@@ -1897,10 +1918,10 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = "seafile-appstore/SeafilePro.entitlements";
+				CODE_SIGN_ENTITLEMENTS = seafile/seafile.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=*]" = seafile/seafile.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: xie zheng (V5PK24Q5Y5)";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				EMBEDDED_CONTENT_CONTAINS_SWIFT = NO;
 				ENABLE_BITCODE = YES;
@@ -1912,8 +1933,8 @@
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro;
 				PRODUCT_NAME = SeafilePro;
-				PROVISIONING_PROFILE = "60b6abe4-52cf-4893-800f-7a586a0a0bcb";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "60b6abe4-52cf-4893-800f-7a586a0a0bcb";
+				PROVISIONING_PROFILE = "";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
@@ -1927,7 +1948,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = "seafile-appstore/SeafilePro.entitlements";
+				CODE_SIGN_ENTITLEMENTS = seafile/seafile.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=*]" = seafile/seafile.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
@@ -1980,7 +2001,7 @@
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "ddcbea8a-447a-4214-bb62-46ee0af6e24f";
+				PROVISIONING_PROFILE = "";
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -1997,8 +2018,8 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CODE_SIGN_ENTITLEMENTS = SeafProviderFileProvider/SeafProviderFileProvider.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Distribution: Seafile Inc. (55LCTZ5354)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Seafile Inc. (55LCTZ5354)";
+				CODE_SIGN_IDENTITY = "iPhone Distribution";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				EMBEDDED_CONTENT_CONTAINS_SWIFT = NO;
 				ENABLE_BITCODE = YES;
@@ -2048,8 +2069,8 @@
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "c99c91b4-222c-4d2e-abc2-b60e0fa85713";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "c99c91b4-222c-4d2e-abc2-b60e0fa85713";
+				PROVISIONING_PROFILE = "";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -2066,8 +2087,8 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CODE_SIGN_ENTITLEMENTS = SeafProvider/SeafProvider.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Distribution: Seafile Inc. (55LCTZ5354)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Seafile Inc. (55LCTZ5354)";
+				CODE_SIGN_IDENTITY = "iPhone Distribution";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				EMBEDDED_CONTENT_CONTAINS_SWIFT = NO;
 				ENABLE_BITCODE = YES;

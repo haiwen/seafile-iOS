@@ -12,7 +12,11 @@
 #import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
 #import "SeafRepos.h"
+#import "SecurityUtilities.h"
+#import "UIViewController+Extend.h"
 #import "Debug.h"
+#import <openssl/x509.h>
+
 
 #define HTTP @"http://"
 #define HTTPS @"https://"
@@ -252,6 +256,62 @@
 }
 
 #pragma mark - SeafLoginDelegate
+- (NSURLCredential *)getClientCert
+{
+    __block NSURLCredential *credential = NULL;
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    BOOL ret = [self getClientCert:^(SecIdentityRef identity) {
+        credential = [SecurityUtilities getCredentialFromSecIdentity:identity];
+        dispatch_semaphore_signal(semaphore);
+
+    }];
+    if (!ret) return nil;
+    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+    return credential;
+}
+
+- (BOOL)getClientCert:(void (^)(SecIdentityRef identity))completeHandler
+{
+    NSArray *arr = [SecurityUtilities getKeyChainCredentials];
+    if (!arr || arr.count == 0) {
+        Warning("No client certificates.");
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"No available certificates", @"Seafile")];
+        });
+        return false;
+    }
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [SecurityUtilities chooseCertFrom:arr handler:completeHandler from:self];
+    });
+    return true;
+}
+
+- (void)authorizeInvalidCert:(NSURLProtectionSpace *)protectionSpace yes:(void (^)())yes no:(void (^)())no
+{
+    NSString *title = [NSString stringWithFormat:NSLocalizedString(@"%@ can't verify the identity of the website \"%@\"", @"Seafile"), APP_NAME, protectionSpace.host];
+    NSString *message = NSLocalizedString(@"The certificate from this website is invalid. Would you like to connect to the server anyway?", @"Seafile");
+    [self alertWithTitle:title message:message yes:yes no:no];
+}
+
+- (BOOL)authorizeInvalidCert:(NSURLProtectionSpace *)protectionSpace
+{
+    __block BOOL ret = false;
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    dispatch_block_t block = ^{
+        [self authorizeInvalidCert:protectionSpace yes:^{
+            ret = true;
+            dispatch_semaphore_signal(semaphore);
+        } no:^{
+            ret = false;
+            dispatch_semaphore_signal(semaphore);
+        }];
+    };
+    block();
+    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+    return ret;
+}
+
 - (void)loginSuccess:(SeafConnection *)conn
 {
     if (conn != connection)
@@ -288,10 +348,14 @@
     if (conn != connection)
         return;
 
+    [SVProgressHUD dismiss];
+    if (error.code == kCFURLErrorCancelled) {
+        return;
+    }
+
     NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
     long errorCode = resp.statusCode;
     if (errorCode == HTTP_ERR_LOGIN_INCORRECT_PASSWORD) {
-        [SVProgressHUD dismiss];
         NSString * otp = [resp.allHeaderFields objectForKey:@"X-Seafile-OTP"];
         if ([@"required" isEqualToString:otp]) {
             [self twoStepVerification];
@@ -299,7 +363,7 @@
             [self alertWithTitle:NSLocalizedString(@"Wrong username or password", @"Seafile")];
     } else {
         NSString *msg = NSLocalizedString(@"Failed to login", @"Seafile");
-        [SVProgressHUD showErrorWithStatus:[msg stringByAppendingFormat:@": %ld %@", (long)errorCode, error.localizedDescription]];
+        [SVProgressHUD showErrorWithStatus:[msg stringByAppendingFormat:@": %@", error.localizedDescription]];
     }
 }
 
