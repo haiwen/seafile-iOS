@@ -13,7 +13,7 @@
 #define HTTP_ERR_LOGIN_INCORRECT_PASSWORD       400
 #define HTTP_ERR_REPO_PASSWORD_REQUIRED         440
 
-#define DEFAULT_TIMEOUT 90
+#define DEFAULT_TIMEOUT 120
 
 enum MSG_TYPE{
     MSG_NONE = 0,
@@ -43,7 +43,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 - (void)loginSuccess:(SeafConnection *)connection;
 - (void)loginFailed:(SeafConnection *)connection response:(NSURLResponse *)response error:(NSError *)error;
 - (BOOL)authorizeInvalidCert:(NSURLProtectionSpace *)protectionSpace;
-- (NSURLCredential *)getClientCert;
+- (id)getClientCertPersistentRef:(NSURLCredential *__autoreleasing *)credential; // return the persistentRef
 
 @end
 

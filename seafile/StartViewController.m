@@ -12,7 +12,6 @@
 #import "SeafAccountViewController.h"
 #import "SeafAppDelegate.h"
 #import "SeafAccountCell.h"
-#import "SecurityUtilities.h"
 #import "UIViewController+Extend.h"
 #import "ColorfulButton.h"
 #import "SeafButtonCell.h"
@@ -132,15 +131,16 @@
 
 - (void)handleRemoveCertificate
 {
-    NSArray *arr = [SecurityUtilities getKeyChainCredentials];
-    if (!arr || arr.count == 0) {
+    NSDictionary *dict = [SeafGlobal.sharedObject getAllSecIdentities];
+    if (dict.count == 0) {
         Warning("No client certificates.");
         [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"No available certificates", @"Seafile")];
         return;
     }
-    [SecurityUtilities chooseCertFrom:arr handler:^(SecIdentityRef identity) {
-        if (!identity) return;
-        BOOL ret = [SecurityUtilities removeIdentityFromKeyChain:identity];
+    [SeafGlobal.sharedObject chooseCertFrom:dict handler:^(CFDataRef persistentRef, SecIdentityRef identity) {
+        if (!identity || ! persistentRef) return;
+
+        BOOL ret = [SeafGlobal.sharedObject removeIdentity:identity forPersistentRef:persistentRef];
         Debug("RemoveCertificate ret: %d", ret);
         if (ret) {
             [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Succeed to remove certificate", @"Seafile")];
@@ -206,7 +206,13 @@
             [self showAccountView:nil type:(int)index];
         }
     }];
-    alert.popoverPresentationController.sourceView = sender;
+    if (IsIpad()) {
+        CGRect rect = [((UIView *)sender) frame];
+        alert.popoverPresentationController.sourceRect = CGRectMake(rect.size.width/2, 0, 0, 0);
+        alert.popoverPresentationController.sourceView = sender;
+    } else {
+        alert.popoverPresentationController.sourceView = sender;
+    }
     [self presentViewController:alert animated:true completion:nil];
 }
 
@@ -253,8 +259,11 @@
         }
     }];
 
+    [alert view];
     alert.popoverPresentationController.sourceRect = CGRectMake(touchPoint.x, touchPoint.y, 10, 10);
-    [self presentViewController:alert animated:true completion:nil];
+    dispatch_async(dispatch_get_main_queue(), ^ {
+        [self presentViewController:alert animated:true completion:nil];
+    });
 }
 
 - (UITableViewCell *)getAddAccountCell:(UITableView *)tableView
@@ -366,19 +375,19 @@
             }];
         }
 
-        BOOL ret = [SecurityUtilities importCertToKeyChain:url.path password:input];
+        BOOL ret = [SeafGlobal.sharedObject importCert:url.path password:input];
         Debug("import cert %@ ret=%d", url, ret);
         if (!ret) {
             [self alertWithTitle:NSLocalizedString(@"Wrong password", @"Seafile") handler:^{
                 [self importCertificate:url];
             }];
         } else {
-            [self alertWithTitle:alertMessage];
+            [SVProgressHUD showSuccessWithStatus:alertMessage];
         }
     }];
 }
 - (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentAtURL:(NSURL *)url {
-    Debug("Improt file %u url: %@", (unsigned)controller.documentPickerMode , url);
+    Debug("Improt file %u url: %@ %d", (unsigned)controller.documentPickerMode , url, [[NSFileManager defaultManager] fileExistsAtPath:url.path]);
     if (controller.documentPickerMode != UIDocumentPickerModeImport)
         return;
 

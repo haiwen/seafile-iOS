@@ -207,9 +207,9 @@
             break;
         case ACCOUNT_OTHER:{
 #if DEBUG
-            serverTextField.text = @"https://dev.seafile.com/seahub/";
+            serverTextField.text = @"https://dev.seafile.com/seahub";
             usernameTextField.text = @"demo@seafile.com";
-            passwordTextField.text = @"demo";
+            passwordTextField.text = @"";
 #else
             serverTextField.text = HTTPS;
 #endif
@@ -256,33 +256,38 @@
 }
 
 #pragma mark - SeafLoginDelegate
-- (NSURLCredential *)getClientCert
+- (id)getClientCertPersistentRef:(NSURLCredential *__autoreleasing *)credential
 {
-    __block NSURLCredential *credential = NULL;
+    __block NSURLCredential *b_cred = NULL;
+    __block id b_key;
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    BOOL ret = [self getClientCert:^(SecIdentityRef identity) {
-        credential = [SecurityUtilities getCredentialFromSecIdentity:identity];
+    BOOL ret = [self getClientCert:^(id key, NSURLCredential *cred) {
+        b_cred = cred;
+        b_key = key;
         dispatch_semaphore_signal(semaphore);
 
     }];
     if (!ret) return nil;
+
     dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
-    return credential;
+    Debug("Choosed credential: %@", b_cred);
+    *credential = b_cred;
+    return b_key;
 }
 
-- (BOOL)getClientCert:(void (^)(SecIdentityRef identity))completeHandler
+- (BOOL)getClientCert:(void (^)(id key, NSURLCredential *cred))completeHandler
 {
-    NSArray *arr = [SecurityUtilities getKeyChainCredentials];
-    if (!arr || arr.count == 0) {
+    NSDictionary *dict = [SeafGlobal.sharedObject getAllSecIdentities];
+    if (dict.count == 0) {
         Warning("No client certificates.");
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"No available certificates", @"Seafile")];
-        });
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"No available certificates", @"Seafile")];
         return false;
     }
-
     dispatch_async(dispatch_get_main_queue(), ^{
-        [SecurityUtilities chooseCertFrom:arr handler:completeHandler from:self];
+        [SeafGlobal.sharedObject chooseCertFrom:dict handler:^(CFDataRef persistentRef, SecIdentityRef identity) {
+            if (!identity || ! persistentRef) completeHandler(nil, nil);
+            completeHandler((__bridge id)persistentRef, [SecurityUtilities getCredentialFromSecIdentity:identity]);
+        } from:self];
     });
     return true;
 }
@@ -319,6 +324,7 @@
 
     Debug("login success");
     [conn getServerInfo:^(bool result) {
+        Debug("Get server info result: %d", result);
         [SVProgressHUD dismiss];
         connection.loginDelegate = nil;
         [self.navigationController dismissViewControllerAnimated:YES completion:nil];
@@ -344,7 +350,7 @@
 
 - (void)loginFailed:(SeafConnection *)conn response:(NSURLResponse *)response error:(NSError *)error
 {
-    Debug("%@, error=%@\n", conn.address, error);
+    Debug("Failed to login: %@\n", conn.address);
     if (conn != connection)
         return;
 

@@ -13,7 +13,6 @@
 #import "AFNetworking.h"
 #import "Debug.h"
 #import "Utils.h"
-#import "SecurityUtilities.h"
 
 
 @interface SeafAppDelegate () <UITabBarControllerDelegate, PHPhotoLibraryChangeObserver, CLLocationManagerDelegate>

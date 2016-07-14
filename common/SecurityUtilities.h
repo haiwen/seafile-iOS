@@ -11,11 +11,20 @@
 
 @interface SecurityUtilities : NSObject
 
-+ (NSArray *)getKeyChainCredentials;
-+ (BOOL)importCertToKeyChain:(NSString *)certificatePath password:(NSString *)keyPassword;
-+ (BOOL)removeIdentityFromKeyChain:(SecIdentityRef)identity;
-+ (SecIdentityRef)getSecIdentityFromKeyChain:(NSString *)certName;
+
++ (SecIdentityRef)copyIdentityAndTrustWithCertFile:(NSString *)certificatePath password:(NSString *)keyPassword;
++ (CFDataRef)saveSecIdentity:(SecIdentityRef)identity;
+
++ (SecIdentityRef)getSecIdentityForPersistentRef:(CFDataRef)persistentRef;
++ (BOOL)removeIdentity:(SecIdentityRef)identity forPersistentRef:(CFDataRef)persistentRef;
+
++(NSString *)nameForIdentity:(SecIdentityRef)identity;
+
 + (NSURLCredential *)getCredentialFromSecIdentity:(SecIdentityRef)identity;
-+ (void)chooseCertFrom:(NSArray *)certs handler:(void (^)(SecIdentityRef identity))completeHandler from:(UIViewController *)c;
+
++ (NSURLCredential *)getCredentialFromFile:(NSString *)certificatePath password:(NSString *)keyPassword;
+
++ (void)showAll;
 
 @end
+

@@ -9,77 +9,50 @@
 #import "SecurityUtilities.h"
 #import "Debug.h"
 
-@implementation SecurityUtilities
-
-+ (NSArray *)getKeyChainCredentials
+static NSString *copySummaryString(SecIdentityRef identity)
 {
-    NSMutableDictionary *searchDictionary = [[NSMutableDictionary alloc] init];
-    [searchDictionary setObject:(id)kSecClassIdentity forKey:(id)kSecClass];
-    [searchDictionary setObject:(id)kCFBooleanTrue forKey:(id)kSecReturnAttributes];
-    [searchDictionary setObject:(id)kSecMatchLimitAll forKey:(id)kSecMatchLimit];
+    // Get the certificate from the identity.
+    SecCertificateRef myReturnedCertificate = NULL;
+    OSStatus status = SecIdentityCopyCertificate (identity,
+                                                  &myReturnedCertificate);  // 1
 
-    CFTypeRef result = NULL;
-    OSStatus searchStatus = SecItemCopyMatching((__bridge CFDictionaryRef)searchDictionary, &result);
-    if (searchStatus != errSecSuccess) {
-        Warning("Couldn't find the cert ref: %d", (int)searchStatus);
-        return nil;
+    if (status) {
+        Debug("SecIdentityCopyCertificate failed.\n");
+        return NULL;
     }
 
-    return (__bridge NSArray *)(result);
+    CFStringRef certSummary = SecCertificateCopySubjectSummary
+    (myReturnedCertificate);  // 2
+
+    NSString* summaryString = [[NSString alloc]
+                               initWithString:(__bridge NSString *)certSummary];  // 3
+
+    CFRelease(certSummary);
+    Debug("summaryString: %@", summaryString);
+    return summaryString;
 }
 
-+ (SecIdentityRef)getSecIdentityFromKeyChain:(NSString *)certName
+static CFDataRef getPersistentRefForIdentity(SecIdentityRef identity)
 {
-    if (!certName)
+    OSStatus status = errSecSuccess;
+
+    CFTypeRef  persistent_ref = NULL;
+    const void *keys[] =   { kSecReturnPersistentRef, kSecValueRef };
+    const void *values[] = { kCFBooleanTrue,          identity };
+    CFDictionaryRef dict = CFDictionaryCreate(NULL, keys, values,
+                                              2, NULL, NULL);
+    status = SecItemCopyMatching(dict, &persistent_ref);
+
+    if (dict)
+        CFRelease(dict);
+
+    Debug("status=%d persistent_ref=%@", (int)status, persistent_ref);
+    if (status != errSecSuccess)
         return nil;
-    NSMutableDictionary *searchDictionary = [[NSMutableDictionary alloc] init];
-    [searchDictionary setObject:(id)kSecClassIdentity forKey:(id)kSecClass];
-    [searchDictionary setObject:certName forKey:(id)kSecAttrLabel];
-    [searchDictionary setObject:(id)kCFBooleanTrue forKey:(id)kSecReturnRef];
-
-    NSData *queryResult = nil;
-    OSStatus searchStatus = SecItemCopyMatching((__bridge CFDictionaryRef)searchDictionary, (void *)&queryResult);
-
-    if (searchStatus != errSecSuccess) {
-        Warning("Couldn't find the cert ref: %d", (int)searchStatus);
-        return nil;
-    }
-
-    SecIdentityRef identity = (__bridge SecIdentityRef)queryResult;
-    return identity;
+    return (CFDataRef)persistent_ref;
 }
 
-+ (NSURLCredential *)getCredentialFromSecIdentity:(SecIdentityRef)identity
-{
-#if 0
-    SecCertificateRef certificateRef = NULL;
-    SecIdentityCopyCertificate(identity, &certificateRef);
-
-    NSArray *certificateArray = [[NSArray alloc] initWithObjects:(__bridge_transfer id)(certificateRef), nil];
-    NSURLCredentialPersistence persistence = NSURLCredentialPersistenceForSession;
-
-    NSURLCredential *credential = [[NSURLCredential alloc] initWithIdentity:identity
-                                                               certificates:certificateArray
-                                                                persistence:persistence];
-
-    return credential;
-#else
-    return [NSURLCredential credentialWithIdentity:identity
-                                      certificates:nil
-                                       persistence:NSURLCredentialPersistencePermanent];
-#endif
-}
-
-+ (BOOL)importCertToKeyChain:(NSString *)certificatePath password:(NSString *)keyPassword
-{
-    SecIdentityRef identity = [SecurityUtilities copyIdentityAndTrustWithCertFile:certificatePath password:keyPassword];
-    if (!identity)
-        return false;
-    [SecurityUtilities persistentRefForIdentity:identity];
-    return true;
-}
-
-+ (void)persistentRefForIdentity:(SecIdentityRef) identity
+static CFDataRef persistentRefForIdentity(SecIdentityRef identity)
 {
     OSStatus status = errSecSuccess;
 
@@ -92,38 +65,98 @@
 
     if (dict)
         CFRelease(dict);
-}
-
-+ (BOOL)removeIdentityFromKeyChain:(SecIdentityRef)identity
-{
-    OSStatus status = errSecSuccess;
-    NSDictionary *query = @{ (id)kSecValueRef:(__bridge NSData *)identity,
-                             (id)kSecClass:(id)kSecClassCertificate};
-
-    status = SecItemDelete((CFDictionaryRef)query);
-    return (status == errSecSuccess);
-}
-
-
-+(void)chooseCertFrom:(NSArray *)certs handler:(void (^)(SecIdentityRef identity))completeHandler from:(UIViewController *)c
-{
-    NSString *title = NSLocalizedString(@"Select a certificate", @"Seafile");
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleAlert];
-
-    for (NSDictionary *dict in certs) {
-        NSString *label = [dict objectForKey:(id)kSecAttrLabel];
-        NSString *group = [dict objectForKey:(id)kSecAttrAccessGroup];
-        NSString *name = [NSString stringWithFormat:@"%@ (%@)", label, group];
-        UIAlertAction *action = [UIAlertAction actionWithTitle:name style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-            completeHandler([SecurityUtilities getSecIdentityFromKeyChain:label]);
-        }];
-        [alert addAction:action];
+    Debug("status=%d persistent_ref=%@", (int)status, persistent_ref);
+    if (status == errSecDuplicateItem) {
+        Warning("Identity already exists.");
+        return getPersistentRefForIdentity(identity);
     }
-    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        completeHandler(nil);
-    }];
-    [alert addAction:cancelAction];
-    [c presentViewController:alert animated:YES completion:nil];
+    if (status != errSecSuccess)
+        return nil;
+    return (CFDataRef)persistent_ref;
+}
+
+static SecIdentityRef identityForPersistentRef(CFDataRef persistent_ref)
+{
+    CFTypeRef   identity_ref     = NULL;
+    const void *keys[] =   { kSecClass, kSecReturnRef,  kSecValuePersistentRef };
+    const void *values[] = { kSecClassIdentity, kCFBooleanTrue, persistent_ref };
+    CFDictionaryRef dict = CFDictionaryCreate(NULL, keys, values,
+                                              3, NULL, NULL);
+    OSStatus status = SecItemCopyMatching(dict, &identity_ref);
+
+    if (dict)
+        CFRelease(dict);
+    Debug("status=%d", (int)status);
+    return (SecIdentityRef)identity_ref;
+}
+
+static BOOL removeIdentityForPersistentRef(CFDataRef persistent_ref)
+{
+    NSDictionary *query = @{ (id)kSecValuePersistentRef: (__bridge id)persistent_ref };
+    OSStatus status = SecItemDelete((CFDictionaryRef)query);
+    Debug("status=%d", (int)status);
+    return status == errSecSuccess;
+}
+
+@implementation SecurityUtilities
+
++ (void)showAll {
+    NSMutableDictionary *query = [NSMutableDictionary dictionaryWithObjectsAndKeys:
+                                  (__bridge id)kCFBooleanTrue, (__bridge id)kSecReturnAttributes,
+                                  (__bridge id)kSecMatchLimitAll, (__bridge id)kSecMatchLimit,
+                                  nil];
+    NSArray *secItemClasses = [NSArray arrayWithObjects:
+                               (__bridge id)kSecClassGenericPassword,
+                               (__bridge id)kSecClassInternetPassword,
+                               (__bridge id)kSecClassCertificate,
+                               (__bridge id)kSecClassKey,
+                               (__bridge id)kSecClassIdentity,
+                               nil];
+    for (id secItemClass in secItemClasses) {
+        [query setObject:secItemClass forKey:(__bridge id)kSecClass];
+
+        CFTypeRef result = NULL;
+        OSStatus status = SecItemCopyMatching((__bridge CFDictionaryRef)query, &result);
+        Debug("%@, status:%d, %@", secItemClass, (int)status,  (__bridge id)result);
+        if (result != NULL) CFRelease(result);
+    }
+}
+
++ (CFDataRef)saveSecIdentity:(SecIdentityRef)identity
+{
+    return persistentRefForIdentity(identity);
+}
+
++ (SecIdentityRef)getSecIdentityForPersistentRef:(CFDataRef)persistentRef
+{
+    return identityForPersistentRef(persistentRef);
+}
+
++ (BOOL)removeIdentity:(SecIdentityRef)identity forPersistentRef:(CFDataRef)persistentRef
+{
+    return removeIdentityForPersistentRef(persistentRef);
+}
+
++(NSString *)nameForIdentity:(SecIdentityRef)identity
+{
+    return copySummaryString(identity);
+}
+
++ (NSURLCredential *)getCredentialFromSecIdentity:(SecIdentityRef)identity
+{
+    if (!identity)
+        return nil;
+
+    SecCertificateRef certificateRef = NULL;
+    SecIdentityCopyCertificate(identity, &certificateRef);
+
+    NSArray *certificateArray = nil;
+    if (!certificateRef)
+        certificateArray = [[NSArray alloc] initWithObjects:(__bridge_transfer id)(certificateRef), nil];
+    NSURLCredential *cred = [NSURLCredential credentialWithIdentity:identity
+                                                       certificates:certificateArray
+                                                        persistence:NSURLCredentialPersistencePermanent];
+    return cred;
 }
 
 + (NSURLCredential *)getCredentialFromFile:(NSString *)certificatePath password:(NSString *)keyPassword
@@ -135,6 +168,10 @@
 + (SecIdentityRef)copyIdentityAndTrustWithCertFile:(NSString *)certificatePath password:(NSString *)keyPassword
 {
     NSData *PKCS12Data = [NSData dataWithContentsOfFile:certificatePath];
+    if (!PKCS12Data) {
+        Warning("Failed to read cert content file exist: %d", [[NSFileManager defaultManager] fileExistsAtPath:certificatePath]);
+        return nil;
+    }
     return [SecurityUtilities copyIdentityAndTrustWithCertData:(CFDataRef)PKCS12Data password:(CFStringRef)keyPassword];
 }
 
@@ -170,7 +207,6 @@
 
     return extractedIdentity;
 }
-
 
 @end
 

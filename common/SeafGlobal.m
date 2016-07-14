@@ -13,6 +13,7 @@
 #import "SeafDir.h"
 #import "Utils.h"
 #import "Debug.h"
+#import "SecurityUtilities.h"
 
 /*
 static NSError * NewNSErrorFromException(NSException * exc) {
@@ -37,6 +38,8 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 
 @property NSTimer *autoSyncTimer;
 @property (readonly) NSURL *applicationDocumentsDirectoryURL;
+
+@property NSMutableDictionary *secIdentities;
 
 @end
 
@@ -63,6 +66,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         _platformVersion = [infoDictionary objectForKey:@"DTPlatformVersion"];
         [_storage setObject:_clientVersion forKey:@"VERSION"];
         [[AFNetworkReachabilityManager sharedManager] startMonitoring];
+        [self loadSecIdentities];
         Debug("applicationDocumentsDirectoryURL=%@, clientVersion=%@, platformVersion=%@",  self.applicationDocumentsDirectoryURL, _clientVersion, _platformVersion);
     }
     return self;
@@ -828,6 +832,93 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     [SeafGlobal.sharedObject deleteAllObjects:@"Directory"];
     [SeafGlobal.sharedObject deleteAllObjects:@"DownloadedFile"];
     [SeafGlobal.sharedObject deleteAllObjects:@"SeafCacheObj"];
+}
+
+- (NSArray *)getSecPersistentRefs {
+    NSArray *array = (NSArray *)[self objectForKey:@"SecPersistentRefs"];
+    return array;
+}
+
+- (void)loadSecIdentities
+{
+    _secIdentities = [NSMutableDictionary new];
+    NSArray *array = [self getSecPersistentRefs];
+    if (array) {
+        for (NSData *data in array) {
+            SecIdentityRef identity = [SecurityUtilities getSecIdentityForPersistentRef:(CFDataRef)data];
+            [_secIdentities setObject:(__bridge id)identity forKey:data];
+        }
+    }
+}
+
+- (void)saveSecIdentities
+{
+    NSArray *array = _secIdentities.allKeys;
+    [self setObject:array forKey:@"SecPersistentRefs"];
+}
+
+- (NSDictionary *)getAllSecIdentities
+{
+    return _secIdentities;
+}
+
+- (BOOL)importCert:(NSString *)certificatePath password:(NSString *)keyPassword
+{
+    SecIdentityRef identity = [SecurityUtilities copyIdentityAndTrustWithCertFile:certificatePath password:keyPassword];
+    if (!identity) {
+        Warning("Wrong password");
+        return false;
+    }
+
+    NSData *data = (__bridge NSData *)[SecurityUtilities saveSecIdentity:identity];
+    if (data) {
+        [_secIdentities setObject:(__bridge id)identity forKey:data];
+        [self saveSecIdentities];
+        return true;
+    } else {
+        Warning("Failed to save to keyChain");
+        return false;
+    }
+}
+
+- (BOOL)removeIdentity:(SecIdentityRef)identity forPersistentRef:(CFDataRef)persistentRef
+{
+    BOOL ret = [SecurityUtilities removeIdentity:identity forPersistentRef:persistentRef];
+    Debug("Remove identity from keychain: %d", ret);
+    if (ret) {
+        [_secIdentities removeObjectForKey:(__bridge id)persistentRef];
+    }
+    return ret;
+}
+
+- (NSURLCredential *)getCredentialForKey:(id)key
+{
+    SecIdentityRef identity = (__bridge SecIdentityRef)[_secIdentities objectForKey:key];
+    if (identity) {
+        return [SecurityUtilities getCredentialFromSecIdentity:identity];
+    }
+    return nil;
+}
+
+-(void)chooseCertFrom:(NSDictionary *)dict handler:(void (^)(CFDataRef persistentRef, SecIdentityRef identity)) completeHandler from:(UIViewController *)c
+{
+    NSString *title = NSLocalizedString(@"Select a certificate", @"Seafile");
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleAlert];
+    for(NSData *key in dict) {
+        CFDataRef persistentRef = (__bridge CFDataRef)key;
+        SecIdentityRef identity = (__bridge SecIdentityRef)dict[key];
+        NSString *title = [SecurityUtilities nameForIdentity:identity];
+        UIAlertAction *action = [UIAlertAction actionWithTitle:title style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+            completeHandler(persistentRef, identity);
+        }];
+        [alert addAction:action];
+    }
+
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        completeHandler(nil, nil);
+    }];
+    [alert addAction:cancelAction];
+    [c presentViewController:alert animated:YES completion:nil];
 }
 
 @end

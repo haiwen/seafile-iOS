@@ -104,5 +104,11 @@
 
 - (void)clearCache;
 
+- (NSDictionary *)getAllSecIdentities;
+- (BOOL)importCert:(NSString *)certificatePath password:(NSString *)keyPassword;
+- (BOOL)removeIdentity:(SecIdentityRef)identity forPersistentRef:(CFDataRef)persistentRef;
+- (void)chooseCertFrom:(NSDictionary *)dict handler:(void (^)(CFDataRef persistentRef, SecIdentityRef identity)) completeHandler from:(UIViewController *)c;
+- (NSURLCredential *)getCredentialForKey:(id)key;
+
 @end
 
