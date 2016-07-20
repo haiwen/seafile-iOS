@@ -15,6 +15,9 @@
 
 @class SeafFile;
 
+typedef void (^SeafFileDidDownloadBlock)(SeafFile *file, BOOL result);
+
+
 @protocol SeafFileUpdateDelegate <NSObject>
 - (void)updateProgress:(nonnull SeafFile * )file progress:(int)percent;
 - (void)updateComplete:(nonnull SeafFile * )file result:(BOOL)res;
@@ -54,6 +57,9 @@
 - (nullable NSString *)cachePath;
 
 - (void)setThumbCompleteBlock:(nullable void (^)(BOOL ret))block;
+- (void)setFileDownloadedBlock:(SeafFileDidDownloadBlock)block;
 - (void)downloadThumb;
 - (BOOL)waitUpload;
+
+
 @end

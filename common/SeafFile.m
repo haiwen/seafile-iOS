@@ -21,7 +21,6 @@
 
 typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
-
 @interface SeafFile()
 
 @property (strong, readonly) NSURL *preViewURL;
@@ -37,6 +36,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 @property int index;
 
 @property (readwrite, nonatomic, copy) SeafThumbCompleteBlock thumbCompleteBlock;
+@property (readwrite, nonatomic, copy) SeafFileDidDownloadBlock fileDidDownload;
 
 @end
 
@@ -99,7 +99,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     _mtime = file.mtime;
     self.state = SEAF_DENTRY_INIT;
     [self loadCache];
-    [self.delegate download:self complete:true];
+    [self downloadComplete:true];
 }
 
 - (void)setOoid:(NSString *)ooid
@@ -145,7 +145,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     self.state = SEAF_DENTRY_UPTODATE;
     self.oid = self.ooid;
     [self savetoCache];
-    [self.delegate download:self complete:updated];
+    [self downloadComplete:updated];
 }
 
 - (void)failedDownload:(NSError *)error
@@ -153,7 +153,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     [self clearDownloadContext];
     self.state = SEAF_DENTRY_INIT;
     [SeafGlobal.sharedObject finishDownload:self result:false];
-    [self.delegate download:self failed:error];
+    [self downloadFailed:error];
 }
 
 - (void)finishDownloadThumb:(BOOL)success
@@ -164,10 +164,10 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     _thumbtask = nil;
     if (success) {
         _icon = nil;
-        [self.delegate download:self complete:false];
+        [self downloadComplete:false];
     } else if (!_icon && self.image) {
         _icon = [Utils reSizeImage:self.image toSquare:THUMB_SIZE];
-        [self.delegate download:self complete:false];
+        [self downloadComplete:false];
     }
 }
 
@@ -236,7 +236,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
                     failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          self.state = SEAF_DENTRY_INIT;
-         [self.delegate download:self failed:error];
+         [self downloadFailed:error];
      }];
 }
 
@@ -430,7 +430,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
                     failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          self.state = SEAF_DENTRY_INIT;
-         [self.delegate download:self failed:error];
+         [self downloadFailed:error];
      }];
 }
 
@@ -878,7 +878,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
         [self.task cancel];
         [self clearDownloadContext];
         [SeafGlobal.sharedObject decDownloadnum];
-        [self.delegate download:self failed:nil];
+        [self downloadFailed:nil];
     }
 }
 
@@ -911,6 +911,25 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     if (self.ufile)
         return [self.ufile waitUpload];
     return true;
+}
+
+- (void)setFileDownloadedBlock:(SeafFileDidDownloadBlock)block
+{
+    self.fileDidDownload = block;
+}
+
+- (void)downloadComplete:(BOOL)updated
+{
+    [self.delegate download:self complete:true];
+    if (self.fileDidDownload)
+        self.fileDidDownload(self, true);
+
+}
+- (void)downloadFailed:(NSError *)error
+{
+    [self.delegate download:self failed:error];
+    if (self.fileDidDownload)
+        self.fileDidDownload(self, false);
 }
 
 @end

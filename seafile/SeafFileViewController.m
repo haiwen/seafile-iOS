@@ -1147,15 +1147,27 @@ enum {
 
 - (void)savePhotosToAlbum
 {
+    SeafFileDidDownloadBlock block = ^(SeafFile *file, BOOL result) {
+        if (!result) {
+            return Warning("Failed to donwload file %@", file.path);
+        }
+        [file setFileDownloadedBlock:nil];
+        Debug("Save file %@ %@ to album", file.name, file.cachePath);
+        UIImage *img = [UIImage imageWithContentsOfFile:file.cachePath];
+        UIImageWriteToSavedPhotosAlbum(img, self, @selector(thisImage:hasBeenSavedInPhotoAlbumWithError:usingContextInfo:), (void *)CFBridgingRetain(file));
+    };
     for (id entry in _directory.allItems) {
         if (![entry isKindOfClass:[SeafFile class]]) continue;
         SeafFile *file = (SeafFile *)entry;
         if (!file.isImageFile) continue;
+        [file loadCache];
         NSString *path = file.cachePath;
-        if (!path) continue;
-        Debug("Save file %@ %@ to album", file.name, path);
-        UIImage *img = [UIImage imageWithContentsOfFile:path];
-        UIImageWriteToSavedPhotosAlbum(img, self, @selector(thisImage:hasBeenSavedInPhotoAlbumWithError:usingContextInfo:), (void *)CFBridgingRetain(file));
+        if (!path) {
+            [file setFileDownloadedBlock:block];
+            [SeafGlobal.sharedObject addDownloadTask:file];
+        } else {
+            block(file, true);
+        }
     }
     [SVProgressHUD showSuccessWithStatus:S_PHOTOS_ALBUM];
 }
