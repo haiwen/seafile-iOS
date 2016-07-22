@@ -201,9 +201,6 @@
         case ACCOUNT_SEACLOUD:
             serverTextField.text = SERVER_SEACLOUD;
             break;
-        case ACCOUNT_CLOUD:
-            serverTextField.text = SERVER_CLOUD;
-            break;
         case ACCOUNT_OTHER:{
 #if DEBUG
             serverTextField.text = @"https://dev.seafile.com/seahub/";

@@ -10,16 +10,13 @@
 #import "StartViewController.h"
 enum ACCOUNT_TYPE {
     ACCOUNT_SEACLOUD = 0,
-    ACCOUNT_CLOUD,
     ACCOUNT_SHIBBOLETH,
     ACCOUNT_OTHER,
 };
 
 #define SERVER_SEACLOUD         @"https://seacloud.cc"
-#define SERVER_CLOUD            @"https://app.seafile.de"
 
 #define SERVER_SEACLOUD_NAME    @"SeaCloud.cc"
-#define SERVER_CLOUD_NAME       @"app.seafile.de"
 #define SERVER_SHIB_NAME        @"Shibboleth"
 
 @interface SeafAccountViewController : UIViewController

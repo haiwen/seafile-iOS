@@ -1340,7 +1340,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (void)downloadDir:(SeafDir *)dir
 {
     [dir downloadContentSuccess:^(SeafDir *dir) {
-        Debug("dir %@ items: %d", dir.path, dir.items.count);
+        Debug("dir %@ items: %lu", dir.path, (unsigned long)dir.items.count);
         long delay = 1;
         for (SeafBase *item in dir.items) {
             delay += 1;
