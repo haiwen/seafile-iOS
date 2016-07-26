@@ -482,7 +482,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         NSMutableArray *arr = [self.ufiles mutableCopy];
         for (SeafUploadFile *file in arr) {
             if (self.uploadingfiles.count + todo.count + self.failedNum >= 3) break;
-            Debug("ufile %@ canUpload:%d, %d", file.lpath, file.canUpload, file.uploaded);
+            Debug("ufile %@ canUpload:%d, uploaded:%d", file.lpath, file.canUpload, file.uploaded);
             if (!file.canUpload) continue;
             [self.ufiles removeObject:file];
             if (!file.uploaded) {

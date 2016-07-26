@@ -112,10 +112,11 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     self.udir = nil;
     [self.task cancel];
     self.task = nil;
-    [self saveAttr:nil flush:true];
     [Utils removeFile:self.lpath];
-    if (!self.autoSync)
+    if (!self.autoSync) {
+        [self saveAttr:nil flush:true];
         [Utils removeDirIfEmpty:[self.lpath stringByDeletingLastPathComponent]];
+    }
 }
 
 - (BOOL)removed
@@ -148,7 +149,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     self.blkidx = 0;
 
     [SeafGlobal.sharedObject finishUpload:self result:result];
-    if (!self.removed) {
+    if (!self.removed && !self.autoSync) {
         NSMutableDictionary *dict = self.uploadAttr;
         if (!dict) {
             dict = [[NSMutableDictionary alloc] init];
@@ -440,6 +441,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
      }
                     failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
+         Warning("Failed to upload file %@: %@", self.lpath, error);
          [self finishUpload:NO oid:nil];
      }];
 }

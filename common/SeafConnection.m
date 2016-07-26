@@ -334,6 +334,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)setAutoSyncRepo:(NSString *)repoId
 {
+    _syncDir = nil;
     [self setAttribute:repoId forKey:@"autoSyncRepo"];
 }
 
@@ -1073,7 +1074,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                      }
                                      file.autoSync = true;
                                      [file setAsset:asset url:url];
-                                     [dir addUploadFile:file flush:false];
+                                     file.udir = dir;
                                      Debug("Add file %@ to upload list: %@", filename, dir.path);
                                      [SeafGlobal.sharedObject addUploadTask:file];
                                  }
@@ -1285,16 +1286,16 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)updateUploadDir:(SeafDir *)dir
 {
-    if (_syncDir && [_syncDir.repoId isEqualToString:dir.repoId] && [_syncDir.path isEqualToString:dir.path])
-        return;
-    _syncDir = dir;
+    BOOL changed = !_syncDir || ![_syncDir.repoId isEqualToString:dir.repoId] || ![_syncDir.path isEqualToString:dir.path];
+    if (changed)
+        _syncDir = dir;
     Debug("%ld photos remain, syncdir: %@ %@", (long)self.photosArray.count, _syncDir.repoId, _syncDir.name);
-    [self pickPhotosForUpload];
+    [self checkPhotos];
 }
 
 - (void)checkUploadDir
 {
-    NSString *autoSyncRepo = [[self getAttribute:@"autoSyncRepo"] stringValue];
+    NSString *autoSyncRepo = self.autoSyncRepo;
     SeafRepo *repo = [self getRepo:autoSyncRepo];
     if (!repo) {
         _syncDir = nil;
@@ -1303,30 +1304,31 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [repo loadContent:NO];
     SeafDir *uploadDir = [self getCameraUploadDir:repo];
     if (uploadDir) {
-        [self updateUploadDir:uploadDir];
-        return;
+        return [self updateUploadDir:uploadDir];
     }
 
-    [repo downloadContentSuccess:^(SeafDir *dir) {
-        SeafDir *uploadDir = [self getCameraUploadDir:repo];
+    [repo downloadContentSuccess:^(SeafDir *rdir) {
+        SeafDir *uploadDir = [self getCameraUploadDir:rdir];
         if (uploadDir) {
-            [self updateUploadDir:uploadDir];
-            return;
+            return [self updateUploadDir:uploadDir];
         } else {
             [repo mkdir:CAMERA_UPLOADS_DIR success:^(SeafDir *dir) {
                 SeafDir *uploadDir = [self getCameraUploadDir:dir];
                 [self updateUploadDir:uploadDir];
             } failure:^(SeafDir *dir) {
+                Warning("Failed to create %@", CAMERA_UPLOADS_DIR);
                 _syncDir = nil;
             }];
         }
     } failure:^(SeafDir *dir) {
+        Warning("Failed to get repo file list: %@", dir.repoId);
         _syncDir = nil;
     }];
 }
 
 - (void)photosChanged:(NSNotification *)note
 {
+    Debug("photos changed %d.", _inAutoSync);
     [self checkPhotos];
 }
 
@@ -1338,7 +1340,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         return;
     }
 
-    BOOL value = self.isAutoSync && ([[self getAttribute:@"autoSyncRepo"] stringValue] != nil);
+    BOOL value = self.isAutoSync && (self.autoSyncRepo != nil);
     if (_inAutoSync != value) {
         if (value) {
             Debug("Start auto sync for server %@", _address);
@@ -1355,10 +1357,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }
     _inAutoSync = value;
     if (_inAutoSync) {
-        _syncDir = nil;
         Debug("start auto sync, check photos for server %@", _address);
         [self checkUploadDir];
-        [self checkPhotos];
     }
 }
 
