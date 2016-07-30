@@ -1052,30 +1052,29 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         return;
     }
 
-    Debug("Current %ld photos need to upload, dir=%@", (long)self.photosArray.count, dir.path);
+    Debug("Current %u, %u photos need to upload, dir=%@", self.photosArray.count, self.uploadingArray.count, dir.path);
 
     int count = 0;
     while (_uploadingArray.count < 5 && count++ < 5) {
         NSURL *url = [self popUploadPhoto];
         if (!url) break;
-        [self addUploadingPhoto:url];
         [SeafGlobal.sharedObject assetForURL:url
                                  resultBlock:^(ALAsset *asset) {
                                      NSString *filename = asset.defaultRepresentation.filename;
                                      if (!filename) {
-                                         Warning("Failed to get asset name: %@", asset);
-                                         return;
+                                         [self removeUploadingPhoto:url];
+                                         return Warning("Failed to get asset name: %@", asset);
                                      }
                                      NSString *path = [self.localUploadDir stringByAppendingPathComponent:filename];
                                      SeafUploadFile *file = [self getUploadfile:path];
                                      if (!file) {
-                                         Warning("Failed to init upload file: %@", path);
-                                         return;
+                                         [self removeUploadingPhoto:url];
+                                         return Warning("Failed to init upload file: %@", path);
                                      }
                                      file.autoSync = true;
                                      [file setAsset:asset url:url];
                                      file.udir = dir;
-                                     Debug("Add file %@ to upload list: %@", filename, dir.path);
+                                     Debug("Add file %@ to upload list: %@ current %u %u", filename, dir.path, _photosArray.count, _uploadingArray.count);
                                      [SeafGlobal.sharedObject addUploadTask:file];
                                  }
                                 failureBlock:^(NSError *error){
@@ -1096,6 +1095,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     obj.url = ufile.assetURL.absoluteString;
     [[SeafGlobal sharedObject] saveContext];
     [self removeUploadingPhoto:ufile.assetURL];
+    Debug("Autosync file %@ %@ uploaded %d, remain %u %u", ufile.name, ufile.assetURL, [self IsPhotoUploaded:ufile.assetURL], _photosArray.count, _uploadingArray.count);
+
     if (!ufile.delegate) [ufile.udir removeUploadFile:ufile];
     if (_photSyncWatcher) [_photSyncWatcher photoSyncChanged:self.photosInSyncing];
 }
@@ -1196,7 +1197,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     @synchronized(_photosArray) {
         if (!self.photosArray || self.photosArray.count == 0) return nil;
         NSURL *url = [self.photosArray objectAtIndex:0];
+        [self addUploadingPhoto:url];
         [self.photosArray removeObject:url];
+        Debug("Picked %@ remain: %u %u", url, _photosArray.count, _uploadingArray.count);
         return url;
     }
 }
@@ -1220,13 +1223,14 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (void)checkPhotos
 {
     if (!_inAutoSync) return;
-    Debug("Check photos for server %@", _address);
-    if (!self.videoSync) [self clearUploadingVideos];
-
     @synchronized(self) {
         if (_inCheckPhotoss) return;
         _inCheckPhotoss = true;
     }
+
+    Debug("Check photos for server %@, current %u %u", _address, _photosArray.count, _uploadingArray.count);
+    if (!self.videoSync) [self clearUploadingVideos];
+
     NSMutableArray *photos = [[NSMutableArray alloc] init];
     void (^assetEnumerator)(ALAsset *, NSUInteger, BOOL *) = ^(ALAsset *asset, NSUInteger index, BOOL *stop) {
         NSURL *url = [self uploadURLForAsset:asset];
@@ -1328,7 +1332,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)photosChanged:(NSNotification *)note
 {
-    Debug("photos changed %d.", _inAutoSync);
+    if (!_inAutoSync)
+        return;
+    Debug("photos changed %d for server %@, current: %u %u", _inAutoSync, _address, _photosArray.count, _uploadingArray.count);
     [self checkPhotos];
 }
 
@@ -1363,10 +1369,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 }
 
 - (void)removeVideosFromArray:(NSMutableArray *)arr {
+    if (arr.count  == 0)
+        return;
     @synchronized(arr) {
         NSMutableArray *videos = [[NSMutableArray alloc] init];
         for (NSURL *url in arr) {
-            if (![Utils isVideoExt:url.pathExtension])
+            if ([Utils isVideoExt:url.pathExtension])
                 [videos addObject:url];
         }
         [arr removeObjectsInArray:videos];

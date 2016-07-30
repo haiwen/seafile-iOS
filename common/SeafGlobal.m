@@ -569,6 +569,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         }
     }
     for (SeafUploadFile *ufile in arr) {
+        Debug("Remove autosync video file: %@, %@", ufile.lpath, ufile.assetURL);
         [ufile.udir removeUploadFile:ufile];
     }
 }
