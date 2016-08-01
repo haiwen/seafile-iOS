@@ -1933,8 +1933,8 @@
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro;
 				PRODUCT_NAME = SeafilePro;
-				PROVISIONING_PROFILE = "";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
+				PROVISIONING_PROFILE = "60b6abe4-52cf-4893-800f-7a586a0a0bcb";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "60b6abe4-52cf-4893-800f-7a586a0a0bcb";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
@@ -1963,8 +1963,8 @@
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro;
 				PRODUCT_NAME = SeafilePro;
-				PROVISIONING_PROFILE = "";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
+				PROVISIONING_PROFILE = "0edf6f3d-89ed-4d03-a82d-14e0189af229";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "0edf6f3d-89ed-4d03-a82d-14e0189af229";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
@@ -2001,7 +2001,7 @@
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE = "ddcbea8a-447a-4214-bb62-46ee0af6e24f";
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -2033,7 +2033,8 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE = "37418e97-29fc-4fe3-894a-a508f96a0731";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "37418e97-29fc-4fe3-894a-a508f96a0731";
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
@@ -2069,7 +2070,7 @@
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE = "c99c91b4-222c-4d2e-abc2-b60e0fa85713";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SKIP_INSTALL = YES;
 			};
@@ -2103,7 +2104,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE = "f24ac237-e67f-4b50-a8f5-3fa4734e0163";
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
@@ -2148,8 +2149,8 @@
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "";
 				"PRIVATE_HEADERS_FOLDER_PATH[sdk=*]" = "";
-				PROVISIONING_PROFILE = "ddcbea8a-447a-4214-bb62-46ee0af6e24f";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "ddcbea8a-447a-4214-bb62-46ee0af6e24f";
+				PROVISIONING_PROFILE = "";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

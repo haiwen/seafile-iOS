@@ -145,7 +145,7 @@
         if (ret) {
             [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Succeed to remove certificate", @"Seafile")];
         } else {
-            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Faied to remove certificate", @"Seafile")];
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to remove certificate", @"Seafile")];
         }
     } from:self];
 }
