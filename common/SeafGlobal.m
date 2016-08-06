@@ -582,7 +582,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         else
             Warning("upload task file %@ already exist", file.name);
     }
-    [self tryUpload];
+    [self performSelectorInBackground:@selector(tryUpload) withObject:file];
 }
 - (void)addDownloadTask:(id<SeafDownloadDelegate>)file
 {
