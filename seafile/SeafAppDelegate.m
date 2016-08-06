@@ -525,6 +525,7 @@
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations
 {
     Debug("Location updated: %@", locations);
+    [self checkPhotoChanges:nil];
 }
 
 - (void)startSignificantChangeUpdates

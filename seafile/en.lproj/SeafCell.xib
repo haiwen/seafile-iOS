@@ -16,7 +16,7 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" placeholderIntrinsicWidth="230" placeholderIntrinsicHeight="14" text="Name" lineBreakMode="characterWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3">
-                        <rect key="frame" x="48" y="7" width="230" height="22"/>
+                        <rect key="frame" x="48" y="7" width="231" height="22"/>
                         <accessibility key="accessibilityConfiguration">
                             <accessibilityTraits key="traits" staticText="YES" adjustable="YES"/>
                         </accessibility>
@@ -33,8 +33,8 @@
                             <constraint firstAttribute="width" constant="32" id="irI-CI-kdT"/>
                         </constraints>
                     </imageView>
-                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="detail" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="25">
-                        <rect key="frame" x="71" y="29" width="192" height="20"/>
+                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="249" text="detail" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="25">
+                        <rect key="frame" x="71" y="29" width="208" height="20"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="20" id="g2G-3n-Jry"/>
                         </constraints>
@@ -74,12 +74,13 @@
                         </constraints>
                     </view>
                     <progressView opaque="NO" contentMode="scaleToFill" progress="0.5" translatesAutoresizingMaskIntoConstraints="NO" id="DtI-c0-SVZ">
-                        <rect key="frame" x="48" y="40" width="230" height="2"/>
+                        <rect key="frame" x="48" y="40" width="231" height="2"/>
                     </progressView>
                 </subviews>
                 <color key="backgroundColor" red="1" green="1" blue="1" alpha="0.0" colorSpace="calibratedRGB"/>
                 <constraints>
                     <constraint firstItem="25" firstAttribute="height" secondItem="scu-4L-n7D" secondAttribute="height" id="0L2-A5-RIT"/>
+                    <constraint firstItem="25" firstAttribute="trailing" secondItem="3" secondAttribute="trailing" id="1Zy-Db-9oc"/>
                     <constraint firstItem="38" firstAttribute="top" secondItem="7mC-NE-fI3" secondAttribute="topMargin" constant="3" id="2P4-6X-k2b"/>
                     <constraint firstItem="4" firstAttribute="leading" secondItem="7mC-NE-fI3" secondAttribute="leadingMargin" id="7GM-rf-HI8"/>
                     <constraint firstItem="38" firstAttribute="centerX" secondItem="vWy-Pk-w8f" secondAttribute="centerX" id="8LK-1R-YuG"/>
@@ -91,12 +92,11 @@
                     <constraint firstItem="25" firstAttribute="top" secondItem="3" secondAttribute="bottom" id="Ovj-S7-TF4"/>
                     <constraint firstItem="4" firstAttribute="top" secondItem="7mC-NE-fI3" secondAttribute="topMargin" id="RpC-aN-2se"/>
                     <constraint firstItem="3" firstAttribute="top" secondItem="7mC-NE-fI3" secondAttribute="topMargin" constant="-1" id="SgC-kA-q3g"/>
-                    <constraint firstItem="vWy-Pk-w8f" firstAttribute="leading" secondItem="25" secondAttribute="trailing" constant="31" id="T3Q-n1-8J1"/>
-                    <constraint firstItem="DtI-c0-SVZ" firstAttribute="width" secondItem="3" secondAttribute="width" id="fUI-eP-b5s"/>
                     <constraint firstItem="3" firstAttribute="leading" secondItem="4" secondAttribute="trailing" constant="8" symbolic="YES" id="fWa-dy-U1i"/>
                     <constraint firstItem="DtI-c0-SVZ" firstAttribute="leading" secondItem="3" secondAttribute="leading" id="gUL-aX-XQv"/>
-                    <constraint firstItem="38" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="3" secondAttribute="trailing" constant="25" id="huN-Oh-O2O"/>
+                    <constraint firstItem="38" firstAttribute="leading" secondItem="3" secondAttribute="trailing" constant="25" id="huN-Oh-O2O"/>
                     <constraint firstItem="DtI-c0-SVZ" firstAttribute="centerY" secondItem="25" secondAttribute="centerY" constant="1.5" id="iJo-w1-R76"/>
+                    <constraint firstItem="DtI-c0-SVZ" firstAttribute="width" secondItem="3" secondAttribute="width" id="mhM-PM-RqQ"/>
                     <constraint firstItem="25" firstAttribute="leading" secondItem="scu-4L-n7D" secondAttribute="trailing" constant="2" id="nm5-v9-ysA"/>
                     <constraint firstItem="scu-4L-n7D" firstAttribute="leading" secondItem="3" secondAttribute="leading" id="o4H-zJ-5df"/>
                 </constraints>

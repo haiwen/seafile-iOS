@@ -226,6 +226,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     } else {
         percent = progress.fractionCompleted * 100;
     }
+    _uProgress = percent;
     [_delegate uploadProgress:self progress:percent];
 }
 
@@ -340,7 +341,6 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     }
 
     NSArray *arr = [self.missingblocks subarrayWithRange:NSMakeRange(_blkidx, count)];
-    _blkidx += count;
     NSMutableURLRequest *request = [[SeafConnection requestSerializer] multipartFormRequestWithMethod:@"POST" URLString:_rawblksurl parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
         [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
         for (NSString *blockid in arr) {
@@ -358,6 +358,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
             Debug("Upload failed :%@,code=%ldd, res=%@\n", error, (long)resp.statusCode, responseObject);
             [self finishUpload:NO oid:nil];
         } else {
+            _blkidx += count;
             [self performSelector:@selector(uploadRawBlocks:) withObject:connection afterDelay:0.0];
         }
     }];
@@ -407,13 +408,10 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     _filesize = attrs.fileSize;
     [_delegate uploadProgress:self progress:0];
     SeafRepo *repo = [connection getRepo:repoId];
-#if 0
     if (_filesize > LARGE_FILE_SIZE) {
         Debug("upload large file by block.");
-        [self uploadLargeFileByBlocks:repo path:uploadpath];
-        return;
+        return [self uploadLargeFileByBlocks:repo path:uploadpath];
     }
-#endif
     BOOL byblock = [connection localDecrypt:repo.repoId];
     NSString* upload_url = [NSString stringWithFormat:API_URL"/repos/%@/upload-", repoId];
     if (byblock)
