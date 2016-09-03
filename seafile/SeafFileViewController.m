@@ -172,7 +172,7 @@ enum {
 
     self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectZero];
     self.searchBar.searchTextPositionAdjustment = UIOffsetMake(0, 0);
-    self.searchBar.placeholder = NSLocalizedString(@"Search", @"Seafile");
+    Debug("repoId:%@, %@, path:%@, loading ... cached:%d %@\n", _directory.repoId, _directory.name, _directory.path, _directory.hasCache, _directory.ooid);
     self.searchBar.delegate = self;
     [self.searchBar sizeToFit];
     self.strongSearchDisplayController = [[UISearchDisplayController alloc] initWithSearchBar:self.searchBar contentsController:self];
@@ -258,6 +258,12 @@ enum {
 
 - (void)refreshView
 {
+    if ([_directory isKindOfClass:[SeafRepos class]]) {
+        self.searchBar.placeholder = NSLocalizedString(@"Search", @"Seafile");
+    } else {
+        self.searchBar.placeholder = NSLocalizedString(@"Search files in this library", @"Seafile");
+    }
+
     [self initSeafPhotos];
     for (SeafUploadFile *file in _directory.uploadFiles) {
         file.delegate = self;
@@ -426,7 +432,7 @@ enum {
     return _directory;
 }
 
-- (void)checkSearchBar:(SeafConnection *)conn
+- (void)hideSearchBar:(SeafConnection *)conn
 {
     if (conn.isSearchEnabled) {
         self.tableView.tableHeaderView = self.searchBar;
@@ -438,20 +444,19 @@ enum {
 
 - (void)setDirectory:(SeafDir *)directory
 {
-    [self checkSearchBar:directory->connection];
+    [self hideSearchBar:directory->connection];
     if (!_directory) [self initNavigationItems:directory];
 
     _directory = directory;
     _connection = directory->connection;
     self.title = directory.name;
     [_directory loadContent:NO];
-    Debug("%@, %@, %@, loading ... %d %@\n", _directory.repoId, _directory.name, _directory.path, _directory.hasCache, _directory.ooid);
+    Debug("repoId:%@, %@, path:%@, loading ... cached:%d %@\n", _directory.repoId, _directory.name, _directory.path, _directory.hasCache, _directory.ooid);
     if (![_directory isKindOfClass:[SeafRepos class]])
         self.tableView.sectionHeaderHeight = 0;
     [_connection checkSyncDst:_directory];
     [_directory setDelegate:self];
     [self refreshView];
-
 }
 
 - (void)viewWillLayoutSubviews {
@@ -681,6 +686,10 @@ enum {
     [self updateCellContent:cell file:sfile];
     sfile.delegate = self;
     sfile.udelegate = self;
+    if (tableView != self.tableView) {// For search results
+        SeafRepo *repo = [_connection getRepo:sfile.repoId];
+        cell.detailTextLabel.text = [NSString stringWithFormat:@"%@%@, %@", repo.name, sfile.path.stringByDeletingLastPathComponent, sfile.detailText];
+    }
     return cell;
 }
 
@@ -717,6 +726,7 @@ enum {
     if (!entry) return [[UITableViewCell alloc] init];
 
     if (tableView != self.tableView) {
+        // For search results.
         return [self getSeafFileCell:(SeafFile *)entry forTableView:tableView];
     }
     if ([entry isKindOfClass:[SeafRepo class]]) {
@@ -1588,7 +1598,8 @@ enum {
     Debug("search %@", searchBar.text);
     [self setSearchState:self.searchDisplayController state:SEARCH_STATE_SEARCHING];
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Searching ...", @"Seafile")];
-    [_connection search:searchBar.text success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSMutableArray *results) {
+    NSString *repoId = [_directory isKindOfClass:[SeafRepos class]] ? nil : _directory.repoId;
+    [_connection search:searchBar.text repo:repoId success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSMutableArray *results) {
         [SVProgressHUD dismiss];
         if (results.count == 0)
             [self setSearchState:self.searchDisplayController state:SEARCH_STATE_NORESULTS];

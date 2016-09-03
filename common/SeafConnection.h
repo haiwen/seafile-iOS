@@ -135,7 +135,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 
 - (void)getServerInfo:(void (^)(bool result))handler;
 
-- (void)search:(NSString *)keyword
+- (void)search:(NSString *)keyword repo:(NSString *)repoId
        success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSMutableArray *results))success
        failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure;
 

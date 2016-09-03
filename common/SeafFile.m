@@ -437,7 +437,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 - (void)downloadfile
 {
     if ([connection localDecrypt:self.repoId] || _filesize > LARGE_FILE_SIZE) {
-        Debug("Download file %@ by blocks", self.name);
+        Debug("Download file %@ by blocks: %lld", self.name, _filesize);
         [self downloadByBlocks];
     } else
         [self downloadByFile];

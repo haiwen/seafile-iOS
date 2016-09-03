@@ -613,7 +613,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSData *data = [error.userInfo objectForKey:@"com.alamofire.serialization.response.error.data"];
     if (data && [data isKindOfClass:[NSData class]]) {
         NSString *str = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-        Debug("DeserializedErro: %@", str);
+        Debug("%@ DeserializedErro: %@", _address, str);
     }
 }
 
@@ -945,11 +945,13 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }
 }
 
-- (void)search:(NSString *)keyword
+- (void)search:(NSString *)keyword repo:(NSString *)repoId
        success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSMutableArray *results))success
        failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure
 {
     NSString *url = [NSString stringWithFormat:API_URL"/search/?q=%@&per_page=100", [keyword escapedUrl]];
+    if (repoId)
+        url = [url stringByAppendingFormat:@"&search_repo=%@", repoId];
     [self sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
         NSMutableArray *results = [[NSMutableArray alloc] init];
         for (NSDictionary *itemInfo in [JSON objectForKey:@"results"]) {

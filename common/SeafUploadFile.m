@@ -409,7 +409,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     [_delegate uploadProgress:self progress:0];
     SeafRepo *repo = [connection getRepo:repoId];
     if (_filesize > LARGE_FILE_SIZE) {
-        Debug("upload large file by block.");
+        Debug("upload large file %@ by block: %lld", self.name, _filesize);
         return [self uploadLargeFileByBlocks:repo path:uploadpath];
     }
     BOOL byblock = [connection localDecrypt:repo.repoId];
