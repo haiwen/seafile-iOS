@@ -15,7 +15,7 @@
 
 @class SeafFile;
 
-typedef void (^SeafFileDidDownloadBlock)(SeafFile *file, BOOL result);
+typedef void (^SeafFileDidDownloadBlock)(SeafFile* _Nonnull file, BOOL result);
 
 
 @protocol SeafFileUpdateDelegate <NSObject>
@@ -57,7 +57,7 @@ typedef void (^SeafFileDidDownloadBlock)(SeafFile *file, BOOL result);
 - (nullable NSString *)cachePath;
 
 - (void)setThumbCompleteBlock:(nullable void (^)(BOOL ret))block;
-- (void)setFileDownloadedBlock:(SeafFileDidDownloadBlock)block;
+- (void)setFileDownloadedBlock:(nullable SeafFileDidDownloadBlock)block;
 - (void)downloadThumb;
 - (BOOL)waitUpload;
 

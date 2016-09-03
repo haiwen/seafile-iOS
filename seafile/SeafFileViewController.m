@@ -1542,7 +1542,7 @@ enum {
     }
 }
 
-#pragma mark - Search Delegate
+#pragma mark - UISearchDisplayDelegate
 #define SEARCH_STATE_INIT NSLocalizedString(@"Click \"Search\" to start", @"Seafile")
 #define SEARCH_STATE_SEARCHING NSLocalizedString(@"Searching", @"Seafile")
 #define SEARCH_STATE_NORESULTS NSLocalizedString(@"No Results", @"Seafile")
@@ -1593,6 +1593,7 @@ enum {
     [self setSearchState:controller state:SEARCH_STATE_INIT];
 }
 
+#pragma mark - UISearchBarDelegate
 - (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar
 {
     Debug("search %@", searchBar.text);

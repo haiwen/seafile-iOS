@@ -913,7 +913,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     return true;
 }
 
-- (void)setFileDownloadedBlock:(SeafFileDidDownloadBlock)block
+- (void)setFileDownloadedBlock:(nullable SeafFileDidDownloadBlock)block
 {
     self.fileDidDownload = block;
 }
