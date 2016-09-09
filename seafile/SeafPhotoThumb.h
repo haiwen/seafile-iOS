@@ -8,12 +8,9 @@
 
 #import <Foundation/Foundation.h>
 #import "MWPhoto.h"
-
+#import "SeafThumb.h"
 #import "SeafPreView.h"
 
-@interface SeafThumb : NSObject<MWPhoto>
-@property (retain, readonly) id<SeafPreView> file;
+@interface SeafPhotoThumb : SeafThumb<MWPhoto>
 
-
-- (id)initWithSeafPreviewIem:(id<SeafPreView>)file;
 @end

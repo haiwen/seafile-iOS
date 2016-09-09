@@ -58,7 +58,8 @@ typedef void (^SeafFileDidDownloadBlock)(SeafFile* _Nonnull file, BOOL result);
 
 - (void)setThumbCompleteBlock:(nullable void (^)(BOOL ret))block;
 - (void)setFileDownloadedBlock:(nullable SeafFileDidDownloadBlock)block;
-- (void)downloadThumb;
+- (void)downloadThumb:(nullable id<SeafDownloadDelegate>)downloadTask;
+
 - (BOOL)waitUpload;
 
 

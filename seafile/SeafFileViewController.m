@@ -16,7 +16,7 @@
 #import "SeafRepos.h"
 #import "SeafCell.h"
 #import "SeafPhoto.h"
-#import "SeafThumb.h"
+#import "SeafPhotoThumb.h"
 
 #import "FileSizeFormatter.h"
 #import "SeafDateFormatter.h"
@@ -249,7 +249,7 @@ enum {
             id<SeafPreView> file = entry;
             [file setDelegate:self];
             [seafPhotos addObject:[[SeafPhoto alloc] initWithSeafPreviewIem:entry]];
-            [seafThumbs addObject:[[SeafThumb alloc] initWithSeafPreviewIem:entry]];
+            [seafThumbs addObject:[[SeafPhotoThumb alloc] initWithSeafPreviewIem:entry]];
         }
     }
     self.photos = [NSArray arrayWithArray:seafPhotos];

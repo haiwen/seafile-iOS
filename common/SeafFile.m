@@ -10,6 +10,7 @@
 #import "SeafData.h"
 #import "SeafRepos.h"
 #import "SeafGlobal.h"
+#import "SeafThumb.h"
 
 #import "FileMimeType.h"
 #import "ExtentedString.h"
@@ -245,7 +246,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     _thumbCompleteBlock = block;
 }
 
-- (void)downloadThumb
+- (void)downloadThumb:(id<SeafDownloadDelegate>)downloadTask
 {
     SeafRepo *repo = [connection getRepo:self.repoId];
     if (repo.encrypted) return;
@@ -254,12 +255,12 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     NSURLRequest *downloadRequest = [connection buildRequest:thumburl method:@"GET" form:nil];
     Debug("Request: %@", downloadRequest.URL);
     NSString *target = [self thumbPath:self.oid];
+
     @synchronized (self) {
         if (_thumbtask) return;
-        if (self.thumb) {
-            [self finishDownloadThumb:true];
-            return;
-        }
+        if (self.thumb) return [self finishDownloadThumb:true];
+
+        [SeafGlobal.sharedObject incDownloadnum];
         _thumbtask = [connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:nil destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
             return [NSURL fileURLWithPath:target];
         } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
@@ -272,6 +273,10 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
                 }
             }
             [self finishDownloadThumb:!error];
+            if (downloadTask)
+                [SeafGlobal.sharedObject finishDownload:downloadTask result:(error == nil)];
+            else
+                [SeafGlobal.sharedObject decDownloadnum];
         }];
     }
     [_thumbtask resume];
@@ -489,8 +494,10 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
             UIImage *img = [self thumb];
             if (img)
                 return _thumb;
-            else
-                [self performSelectorInBackground:@selector(downloadThumb) withObject:nil];
+            else {
+                SeafThumb *thb = [[SeafThumb alloc] initWithSeafPreviewIem:self];
+                [SeafGlobal.sharedObject addDownloadTask:thb];
+            }
         } else if (self.image) {
             [self performSelectorInBackground:@selector(genThumb) withObject:nil];
         }

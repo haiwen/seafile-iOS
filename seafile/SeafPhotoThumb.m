@@ -6,29 +6,23 @@
 //  Copyright © 2015 Seafile. All rights reserved.
 //
 
-#import "SeafThumb.h"
+#import "SeafGlobal.h"
+#import "SeafPhotoThumb.h"
 #import "SeafFile.h"
 #import "Debug.h"
 
-@interface SeafThumb ()
+@interface SeafPhotoThumb ()
 
 @property BOOL loadingInProgress;
 @end
 
-@implementation SeafThumb
+@implementation SeafPhotoThumb
 
 @synthesize underlyingImage = _underlyingImage; // synth property from protocol
 
 
-- (id)initWithSeafPreviewIem:(id<SeafPreView>)file {
-    if ((self = [super init])) {
-        _file = file;
-    }
-    return self;
-}
-
 - (UIImage *)underlyingImage {
-    return [_file thumb];
+    return [self.file thumb];
 }
 
 - (void)loadUnderlyingImageAndNotify {
@@ -40,7 +34,7 @@
             [self imageLoadingComplete];
             return;
         }
-        _underlyingImage = [_file thumb];
+        _underlyingImage = [self.file thumb];
         if (!_underlyingImage) {
             [self performLoadUnderlyingImageAndNotify];
         }
@@ -56,15 +50,15 @@
 
 // Set the underlyingImage
 - (void)performLoadUnderlyingImageAndNotify {
-    if ([_file isKindOfClass:[SeafFile class]]) {
-        SeafFile *sfile = (SeafFile *)_file;
+    if ([self.file isKindOfClass:[SeafFile class]]) {
+        SeafFile *sfile = (SeafFile *)self.file;
         [sfile setThumbCompleteBlock:^(BOOL ret) {
-            self.underlyingImage = [_file thumb];
+            self.underlyingImage = [self.file thumb];
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self imageLoadingComplete];
             });
         }];
-        [sfile downloadThumb];
+        [SeafGlobal.sharedObject addDownloadTask:self];
     }
 }
 
@@ -92,5 +86,6 @@
 - (void)cancelAnyLoading
 {
 }
+
 
 @end
