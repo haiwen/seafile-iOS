@@ -66,6 +66,8 @@
 + (BOOL)removeFile:(NSString *)path
 {
     NSError *error = nil;
+    if (![[NSFileManager defaultManager] fileExistsAtPath:path])
+        return true;
     BOOL ret = [[NSFileManager defaultManager] removeItemAtPath:path error:&error];
     if (!ret)
         Warning("Failed to remove file %@: %@", path, error);

@@ -242,14 +242,13 @@
     _startNav = (UINavigationController *)self.window.rootViewController;
     _startVC = (StartViewController *)_startNav.topViewController;
 
-    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:OBJECTS_DIR]];
-    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:AVATARS_DIR]];
-    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:CERTS_DIR]];
-    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:BLOCKS_DIR]];
-    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:UPLOADS_DIR]];
-    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:EDIT_DIR]];
-    [Utils checkMakeDir:[[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:THUMB_DIR]];
-
+    [Utils checkMakeDir:SeafGlobal.sharedObject.objectsDir];
+    [Utils checkMakeDir:SeafGlobal.sharedObject.avatarsDir];
+    [Utils checkMakeDir:SeafGlobal.sharedObject.certsDir];
+    [Utils checkMakeDir:SeafGlobal.sharedObject.blocksDir];
+    [Utils checkMakeDir:SeafGlobal.sharedObject.uploadsDir];
+    [Utils checkMakeDir:SeafGlobal.sharedObject.editDir];
+    [Utils checkMakeDir:SeafGlobal.sharedObject.thumbsDir];
     [Utils checkMakeDir:SeafGlobal.sharedObject.tempDir];
 
 #if !(TARGET_IPHONE_SIMULATOR)

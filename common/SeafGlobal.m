@@ -153,7 +153,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 
 - (NSString *)documentPath:(NSString*)fileId
 {
-    return[self.objectsDir stringByAppendingPathComponent:fileId];
+    return [self.objectsDir stringByAppendingPathComponent:fileId];
 }
 
 - (NSString *)blockPath:(NSString*)blkId
