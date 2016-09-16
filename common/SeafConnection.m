@@ -612,7 +612,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     NSData *data = [error.userInfo objectForKey:@"com.alamofire.serialization.response.error.data"];
     if (data && [data isKindOfClass:[NSData class]]) {
-        NSString *str = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        NSString *str __attribute__((unused)) = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
         Debug("%@ DeserializedErro: %@", _address, str);
     }
 }
@@ -1054,7 +1054,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         return;
     }
 
-    Debug("Current %u, %u photos need to upload, dir=%@", self.photosArray.count, self.uploadingArray.count, dir.path);
+    Debug("Current %u, %u photos need to upload, dir=%@", (unsigned)self.photosArray.count, (unsigned)self.uploadingArray.count, dir.path);
 
     int count = 0;
     while (_uploadingArray.count < 5 && count++ < 5) {
@@ -1076,7 +1076,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                      file.autoSync = true;
                                      [file setAsset:asset url:url];
                                      file.udir = dir;
-                                     Debug("Add file %@ to upload list: %@ current %u %u", filename, dir.path, _photosArray.count, _uploadingArray.count);
+                                     Debug("Add file %@ to upload list: %@ current %u %u", filename, dir.path, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
                                      [SeafGlobal.sharedObject addUploadTask:file];
                                  }
                                 failureBlock:^(NSError *error){
@@ -1097,7 +1097,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     obj.url = ufile.assetURL.absoluteString;
     [[SeafGlobal sharedObject] saveContext];
     [self removeUploadingPhoto:ufile.assetURL];
-    Debug("Autosync file %@ %@ uploaded %d, remain %u %u", ufile.name, ufile.assetURL, [self IsPhotoUploaded:ufile.assetURL], _photosArray.count, _uploadingArray.count);
+    Debug("Autosync file %@ %@ uploaded %d, remain %u %u", ufile.name, ufile.assetURL, [self IsPhotoUploaded:ufile.assetURL], (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
 
     if (!ufile.delegate) [ufile.udir removeUploadFile:ufile];
     if (_photSyncWatcher) [_photSyncWatcher photoSyncChanged:self.photosInSyncing];
@@ -1201,7 +1201,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         NSURL *url = [self.photosArray objectAtIndex:0];
         [self addUploadingPhoto:url];
         [self.photosArray removeObject:url];
-        Debug("Picked %@ remain: %u %u", url, _photosArray.count, _uploadingArray.count);
+        Debug("Picked %@ remain: %u %u", url, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
         return url;
     }
 }
@@ -1230,7 +1230,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         _inCheckPhotoss = true;
     }
 
-    Debug("Check photos for server %@, current %u %u", _address, _photosArray.count, _uploadingArray.count);
+    Debug("Check photos for server %@, current %u %u", _address, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
     if (!self.videoSync) [self clearUploadingVideos];
 
     NSMutableArray *photos = [[NSMutableArray alloc] init];
@@ -1336,7 +1336,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     if (!_inAutoSync)
         return;
-    Debug("photos changed %d for server %@, current: %u %u", _inAutoSync, _address, _photosArray.count, _uploadingArray.count);
+    Debug("photos changed %d for server %@, current: %u %u", _inAutoSync, _address, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
     [self checkPhotos];
 }
 

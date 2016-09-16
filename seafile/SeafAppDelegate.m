@@ -314,7 +314,7 @@
 
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
 {
-    NSString *status = [NSString stringWithFormat:@"Notification received:\n%@",[userInfo description]];
+    NSString *status __attribute__((unused)) = [NSString stringWithFormat:@"Notification received:\n%@",[userInfo description]];
     NSString *badgeStr = [[userInfo objectForKey:@"aps"] objectForKey:@"badge"];
     NSDictionary *alert = [[userInfo objectForKey:@"aps"] objectForKey:@"alert"];
     NSArray *args = [alert objectForKey:@"loc-args"];

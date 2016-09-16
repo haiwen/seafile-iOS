@@ -23,6 +23,7 @@
 
 - (void)awakeFromNib;
 {
+    [super awakeFromNib];
     gradientLayer = [[CAGradientLayer alloc] init];
     [gradientLayer setBounds:[self bounds]];
     [gradientLayer setPosition:CGPointMake([self bounds].size.width/2, [self bounds].size.height/2)];

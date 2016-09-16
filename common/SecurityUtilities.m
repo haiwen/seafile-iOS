@@ -82,7 +82,7 @@ static SecIdentityRef identityForPersistentRef(CFDataRef persistent_ref)
     const void *values[] = { kSecClassIdentity, kCFBooleanTrue, persistent_ref };
     CFDictionaryRef dict = CFDictionaryCreate(NULL, keys, values,
                                               3, NULL, NULL);
-    OSStatus status = SecItemCopyMatching(dict, &identity_ref);
+    OSStatus status __attribute__((unused)) = SecItemCopyMatching(dict, &identity_ref);
 
     if (dict)
         CFRelease(dict);
@@ -116,7 +116,7 @@ static BOOL removeIdentityForPersistentRef(CFDataRef persistent_ref)
         [query setObject:secItemClass forKey:(__bridge id)kSecClass];
 
         CFTypeRef result = NULL;
-        OSStatus status = SecItemCopyMatching((__bridge CFDictionaryRef)query, &result);
+        OSStatus status __attribute__((unused)) = SecItemCopyMatching((__bridge CFDictionaryRef)query, &result);
         Debug("%@, status:%d, %@", secItemClass, (int)status,  (__bridge id)result);
         if (result != NULL) CFRelease(result);
     }

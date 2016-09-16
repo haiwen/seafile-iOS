@@ -176,7 +176,7 @@
                                         options:NSFileCoordinatorReadingForUploading
                                           error:&error
                                      byAccessor:^(NSURL *newURL) {
-                                         BOOL ret = [Utils copyFile:newURL to:url];
+                                         BOOL ret __attribute__((unused)) = [Utils copyFile:newURL to:url];
                                          Debug("from %@ %lld, url: %@ , ret:%d", newURL.path, [Utils fileSizeAtPath1:newURL.path], url, ret);
                                      }];
     [self.root.originalURL stopAccessingSecurityScopedResource];

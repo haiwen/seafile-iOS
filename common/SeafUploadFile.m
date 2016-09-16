@@ -353,7 +353,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     connection.sessionMgr.responseSerializer = [AFJSONResponseSerializer serializerWithReadingOptions:NSJSONReadingAllowFragments];
     _task = [connection.sessionMgr uploadTaskWithStreamedRequest:request progress:&progress completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
         Debug("Upload blocks %@ error: %@", arr, error);
-        NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
+        NSHTTPURLResponse *resp __attribute__((unused)) = (NSHTTPURLResponse *)response;
         if (error) {
             Debug("Upload failed :%@,code=%ldd, res=%@\n", error, (long)resp.statusCode, responseObject);
             [self finishUpload:NO oid:nil];
