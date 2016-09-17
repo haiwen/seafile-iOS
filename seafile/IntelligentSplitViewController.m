@@ -105,7 +105,7 @@
         NSObject<UISplitViewControllerDelegate> *theDelegate = (NSObject<UISplitViewControllerDelegate> *)self.delegate;
 
 
-#define YOU_DONT_FEEL_QUEAZY_ABOUT_THIS_BECAUSE_IT_PASSES_THE_APP_STORE 1
+#define YOU_DONT_FEEL_QUEAZY_ABOUT_THIS_BECAUSE_IT_PASSES_THE_APP_STORE 0
 
 #if YOU_DONT_FEEL_QUEAZY_ABOUT_THIS_BECAUSE_IT_PASSES_THE_APP_STORE
         UIBarButtonItem *button = [super valueForKey:@"_barButtonItem"];

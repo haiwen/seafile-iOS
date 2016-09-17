@@ -77,6 +77,8 @@
 	</dict>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>Seafile can periodically start Camera Upload when your location changes</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Used to sync photos</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>

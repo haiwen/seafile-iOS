@@ -142,7 +142,7 @@ enum SHARE_STATUS {
             if (![QLPreviewController canPreviewItem:self.preViewItem]) {
                 self.state = PREVIEW_FAILED;
             } else {
-                self.state = PREVIEW_SUCCESS;
+                self.state = ios10 ? PREVIEW_WEBVIEW : PREVIEW_SUCCESS;
                 if ([self.preViewItem.mime hasPrefix:@"audio"]
                     || [self.preViewItem.mime hasPrefix:@"video"]
                     || [self.preViewItem.mime isEqualToString:@"image/svg+xml"])
@@ -279,19 +279,22 @@ enum SHARE_STATUS {
         views = [[NSBundle mainBundle] loadNibNamed:@"DownloadingProgress_iPhone" owner:self options:nil];
         self.progressView = [views objectAtIndex:0];
     }
-    [self.progressView.cancelBt addTarget:self action:@selector(cancelDownload:) forControlEvents:UIControlEventTouchUpInside];
-    self.fileViewController = [[QLPreviewController alloc] init];
-    self.fileViewController.delegate = self;
-    self.fileViewController.dataSource = self;
     self.webView = [[UIWebView alloc] initWithFrame:self.view.frame];
     self.webView.scalesPageToFit = YES;
     self.webView.autoresizesSubviews = YES;
     self.webView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
     [self.view addSubview:self.failedView];
     [self.view addSubview:self.progressView];
-    [self.view addSubview:self.fileViewController.view];
     [self.view addSubview:self.webView];
 
+    self.fileViewController = [[QLPreviewController alloc] init];
+    self.fileViewController.delegate = self;
+    self.fileViewController.dataSource = self;
+    [self addChildViewController:self.fileViewController];
+    [self.view addSubview:self.fileViewController.view];
+    [self.fileViewController didMoveToParentViewController:self];
+
+    [self.progressView.cancelBt addTarget:self action:@selector(cancelDownload:) forControlEvents:UIControlEventTouchUpInside];
     [self.failedView.openElseBtn addTarget:self action:@selector(openElsewhere:) forControlEvents:UIControlEventTouchUpInside];
 
     self.view.autoresizesSubviews = YES;

@@ -219,9 +219,9 @@
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
         [conn checkAutoSync];
     }
-    if (ios8)
+    if (ios8) {
          [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
-    else
+    } else
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(checkPhotoChanges:) name:ALAssetsLibraryChangedNotification object:SeafGlobal.sharedObject.assetsLibrary];
     [self checkBackgroundUploadStatus];
     [SeafGlobal.sharedObject synchronize];
