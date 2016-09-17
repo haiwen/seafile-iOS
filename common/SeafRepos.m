@@ -21,7 +21,6 @@
 #define KEY_REPOS @"REPOS"
 
 @interface SeafRepo ()
-@property (readonly) NSString *perm;
 
 @end
 @implementation SeafRepo;
@@ -45,11 +44,10 @@
     NSString *aMime = @"text/directory-documents";
     if (aEncrypted)
         aMime = @"text/directory-documents-encrypted";
-    if (self = [super initWithConnection:aConnection oid:anId repoId:aRepoId name:aName path:@"/" mime:aMime]) {
+    if (self = [super initWithConnection:aConnection oid:anId repoId:aRepoId perm:aPerm name:aName path:@"/" mime:aMime]) {
         _desc = aDesc;
         _owner = aOwner;
         _repoType = aRepoType;
-        _perm = aPerm;
         _size = aSize;
         _mtime = aMtime;
         _encrypted = aEncrypted;
@@ -67,13 +65,6 @@
         return YES;
     else
         return NO;
-}
-
-- (BOOL)editable
-{
-    if (_perm && [_perm isKindOfClass:[NSString class]])
-        return [_perm.lowercaseString isEqualToString:@"rw"];
-    return NO;
 }
 
 - (NSString *)key
@@ -269,4 +260,8 @@
     self.items = allrepos;
 }
 
+- (BOOL)editable
+{
+    return NO;
+}
 @end

@@ -258,6 +258,8 @@ enum {
 
 - (void)refreshView
 {
+    if (!_directory)
+        return;
     if ([_directory isKindOfClass:[SeafRepos class]]) {
         self.searchBar.placeholder = NSLocalizedString(@"Search", @"Seafile");
     } else {
@@ -445,16 +447,15 @@ enum {
 - (void)setDirectory:(SeafDir *)directory
 {
     [self hideSearchBar:directory->connection];
-    if (!_directory) [self initNavigationItems:directory];
+    [self initNavigationItems:directory];
 
     _directory = directory;
     _connection = directory->connection;
     self.title = directory.name;
-    [_directory loadContent:NO];
-    Debug("repoId:%@, %@, path:%@, loading ... cached:%d %@\n", _directory.repoId, _directory.name, _directory.path, _directory.hasCache, _directory.ooid);
+    [_directory loadContent:false];
+    Debug("repoId:%@, %@, path:%@, loading ... cached:%d %@, editable:%d\n", _directory.repoId, _directory.name, _directory.path, _directory.hasCache, _directory.ooid, _directory.editable);
     if (![_directory isKindOfClass:[SeafRepos class]])
         self.tableView.sectionHeaderHeight = 0;
-    [_connection checkSyncDst:_directory];
     [_directory setDelegate:self];
     [self refreshView];
 }
@@ -475,24 +476,19 @@ enum {
     if (uploadFiles.count > 0)
         Debug("Upload %lu, state=%d", (unsigned long)uploadFiles.count, self.state);
 #endif
-    dispatch_time_t time = dispatch_time(DISPATCH_TIME_NOW, 1);
-    dispatch_after(time, dispatch_get_main_queue(), ^(void){
-        for (SeafUploadFile *file in uploadFiles) {
-            file.delegate = self;
-            if (!file.uploaded && !file.uploading) {
-                Debug("background upload %@", file.name);
-                [[SeafGlobal sharedObject] addUploadTask:file];
-            }
+    for (SeafUploadFile *file in uploadFiles) {
+        file.delegate = self;
+        if (!file.uploaded && !file.uploading) {
+            Debug("background upload %@", file.name);
+            [[SeafGlobal sharedObject] addUploadTask:file];
         }
-        if ([self isViewLoaded])
-            [_directory loadContent:true];
-    });
-
+    }
 }
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    [self performSelectorInBackground:@selector(checkUploadfiles) withObject:nil];
+    [self checkUploadfiles];
+    [_directory loadContent:true];
 }
 
 - (void)viewWillDisappear:(BOOL)animated

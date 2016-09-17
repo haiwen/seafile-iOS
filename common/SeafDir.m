@@ -49,17 +49,32 @@ static NSComparator CMP = ^(id obj1, id obj2) {
 - (id)initWithConnection:(SeafConnection *)aConnection
                      oid:(NSString *)anId
                   repoId:(NSString *)aRepoId
+                    perm:(NSString *)aPerm
                     name:(NSString *)aName
                     path:(NSString *)aPath
 {
-    self = [super initWithConnection:aConnection oid:anId repoId:aRepoId name:aName path:aPath mime:@"text/directory"];
+    return [self initWithConnection:aConnection oid:anId repoId:aRepoId perm:aPerm name:aName path:aPath mime:@"text/directory"];
+}
+
+- (id)initWithConnection:(SeafConnection *)aConnection
+                     oid:(NSString *)anId
+                  repoId:(NSString *)aRepoId
+                    perm:(NSString *)aPerm
+                    name:(NSString *)aName
+                    path:(NSString *)aPath
+                    mime:(NSString *)aMime
+{
+    self = [super initWithConnection:aConnection oid:anId repoId:aRepoId name:aName path:aPath mime:aMime];
     _uploadLock = [[NSObject alloc] init];
+    _perm = aPerm;
     return self;
 }
 
 - (BOOL)editable
 {
-    return [[connection getRepo:self.repoId] editable];
+    if (self.perm && [self.perm isKindOfClass:[NSString class]])
+        return [self.perm.lowercaseString isEqualToString:@"rw"];
+    return NO;
 }
 
 - (void)unload
@@ -100,7 +115,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
         if ([type isEqual:@"file"]) {
             newItem = [[SeafFile alloc] initWithConnection:connection oid:[itemInfo objectForKey:@"id"] repoId:self.repoId name:name path:path mtime:[[itemInfo objectForKey:@"mtime"] integerValue:0] size:[[itemInfo objectForKey:@"size"] integerValue:0]];
         } else if ([type isEqual:@"dir"]) {
-            newItem = [[SeafDir alloc] initWithConnection:connection oid:[itemInfo objectForKey:@"id"] repoId:self.repoId name:name path:path];
+            newItem = [[SeafDir alloc] initWithConnection:connection oid:[itemInfo objectForKey:@"id"] repoId:self.repoId perm:[itemInfo objectForKey:@"permission"] name:name path:path];
         }
         [newItems addObject:newItem];
     }

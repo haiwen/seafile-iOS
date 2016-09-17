@@ -17,11 +17,11 @@
 #import "SVProgressHUD.h"
 
 @interface SeafDirViewController ()<SeafDentryDelegate>
-@property (strong) SeafDir *curDir;
 @property (strong) UIBarButtonItem *chooseItem;
 @property (strong, readonly) SeafDir *directory;
 @property (strong) id<SeafDirDelegate> delegate;
 @property (readwrite) BOOL chooseRepo;
+@property (nonatomic, strong) NSArray *subDirs;
 
 @end
 
@@ -34,10 +34,8 @@
         _directory = dir;
         _directory.delegate = self;
         [_directory loadContent:NO];
-        self.tableView.delegate = self;
         _chooseRepo = chooseRepo;
-        if (_chooseRepo)
-            [self.navigationController setToolbarHidden:YES];
+        self.tableView.delegate = self;
     }
     return self;
 }
@@ -62,10 +60,7 @@
 
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeNone;
-    if ([self.directory isKindOfClass:[SeafRepos class]]) {
-        [self.navigationItem setHidesBackButton:YES];
-    } else
-        [self.navigationItem setHidesBackButton:NO];
+    [self.navigationItem setHidesBackButton:[self.directory isKindOfClass:[SeafRepos class]]];
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:STR_CANCEL style:UIBarButtonItemStylePlain target:self action:@selector(cancel:)];
     self.tableView.scrollEnabled = YES;
     UIBarButtonItem *flexibleFpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
@@ -86,14 +81,11 @@
     }];
 }
 
-- (void)viewDidAppear:(BOOL)animated
+- (void)viewWillAppear:(BOOL)animated
 {
-    [super viewDidAppear:animated];
-    [self.navigationController setToolbarHidden:NO];
-    if (!_chooseRepo && [_directory isKindOfClass:[SeafRepos class]]) {
-        [self.chooseItem setEnabled:NO];
-    } else if (_chooseRepo)
-        [self.navigationController setToolbarHidden:YES];
+    [super viewWillAppear:animated];
+    [self.navigationController setToolbarHidden:_chooseRepo];
+    [self.chooseItem setEnabled:_directory.editable];
 }
 
 - (void)didReceiveMemoryWarning
@@ -114,15 +106,25 @@
     return NSLocalizedString(@"Choose", @"Seafile");
 }
 
+- (NSArray *)subDirs
+{
+    if (!_subDirs) {
+        NSMutableArray *arr = [NSMutableArray new];
+        for (int i = 0; i < _directory.subDirs.count; ++i) {
+            SeafDir *dir = (SeafDir *)[_directory.items objectAtIndex:i];
+            if (!_chooseRepo || dir.editable) {
+                [arr addObject:dir];
+            }
+        }
+        _subDirs = [NSArray arrayWithArray:arr];
+    }
+    return _subDirs;
+}
+
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    int i;
-    for (i = 0; i < _directory.items.count; ++i) {
-        if (![[_directory.items objectAtIndex:i] isKindOfClass:[SeafDir class]]) {
-            break;
-        }
-    }
-    return i;
+    _subDirs = nil;
+    return self.subDirs.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -136,7 +138,7 @@
     [cell reset];
 
     @try {
-        SeafDir *sdir = [_directory.items objectAtIndex:indexPath.row];
+        SeafDir *sdir = [self.subDirs objectAtIndex:indexPath.row];
         cell.textLabel.text = sdir.name;
         cell.textLabel.font = [UIFont systemFontOfSize:17];
         cell.imageView.image = sdir.icon;
@@ -163,23 +165,24 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    SeafDir *curDir;
     @try {
-        _curDir = [_directory.items objectAtIndex:indexPath.row];
+        curDir = [self.subDirs objectAtIndex:indexPath.row];
     } @catch(NSException *exception) {
         [self.tableView performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
         return;
     }
-    if (![_curDir isKindOfClass:[SeafDir class]])
+    if (![curDir isKindOfClass:[SeafDir class]])
         return;
     if (_chooseRepo) {
-        [self.delegate chooseDir:self dir:_curDir];
+        [self.delegate chooseDir:self dir:curDir];
         return;
     }
-    if ([_curDir isKindOfClass:[SeafRepo class]] && [(SeafRepo *)_curDir passwordRequired]) {
-        [self popupSetRepoPassword:(SeafRepo *)_curDir];
+    if ([curDir isKindOfClass:[SeafRepo class]] && [(SeafRepo *)curDir passwordRequired]) {
+        [self popupSetRepoPassword:(SeafRepo *)curDir];
         return;
     }
-    SeafDirViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:_curDir delegate:self.delegate chooseRepo:false];
+    SeafDirViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:curDir delegate:self.delegate chooseRepo:false];
     [self.navigationController pushViewController:controller animated:YES];
 }
 

@@ -15,13 +15,23 @@
 - (id)initWithConnection:(SeafConnection *)aConnection
                      oid:(NSString *)anId
                   repoId:(NSString *)aRepoId
+                    perm:(NSString *)aPerm
                     name:(NSString *)aName
                     path:(NSString *)aPath;
+
+- (id)initWithConnection:(SeafConnection *)aConnection
+                     oid:(NSString *)anId
+                  repoId:(NSString *)aRepoId
+                    perm:(NSString *)aPerm
+                    name:(NSString *)aName
+                    path:(NSString *)aPath
+                    mime:(NSString *)aMime;
 
 @property (readonly, copy) NSArray *allItems;
 @property (readwrite, copy) NSArray *items;
 @property (readonly) NSArray *uploadFiles;
 @property (readonly) BOOL editable;
+@property (readonly) NSString *perm;
 
 - (void)unload;
 

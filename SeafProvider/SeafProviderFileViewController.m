@@ -60,11 +60,16 @@
     self.titleLabel.text = _directory.name;
     if (self.root.documentPickerMode == UIDocumentPickerModeImport
         || self.root.documentPickerMode == UIDocumentPickerModeOpen) {
-        self.items = _directory.items;
         self.chooseButton.hidden = true;
+        if (self.root.documentPickerMode == UIDocumentPickerModeOpen && !_directory.editable) {
+            // Only open files with write permission
+            self.items = _directory.subDirs;
+        } else {
+            self.items = _directory.items;
+        }
     } else {
         self.items = _directory.subDirs;
-        self.chooseButton.hidden = [_directory isKindOfClass:[SeafRepos class]];
+        self.chooseButton.hidden = !_directory.editable;
     }
 
     self.tableView.sectionHeaderHeight = self.chooseButton.hidden ? 1 : HEADER_HEIGHT;
@@ -147,7 +152,7 @@
 {
     Debug("Upload file: %@(%d) to %@, overwrite=%d, mode=%lu", url, [Utils fileExistsAtPath:url.path], _directory.path, overwrite, (unsigned long)self.root.documentPickerMode);
     if (self.root.documentPickerMode == UIDocumentPickerModeMoveToService) {
-        return [self uploadmMovedFile:url overwrite:overwrite];
+        return [self uploadMovedFile:url overwrite:overwrite];
     }
     [self.fileCoordinator coordinateWritingItemAtURL:url options:0 error:NULL byAccessor:^(NSURL *newURL) {
         BOOL ret = [Utils copyFile:self.root.originalURL to:newURL];
@@ -166,7 +171,7 @@
     }];
 }
 
-- (void)uploadmMovedFile:(NSURL *)url overwrite:(BOOL)overwrite
+- (void)uploadMovedFile:(NSURL *)url overwrite:(BOOL)overwrite
 {
     [self.root.originalURL startAccessingSecurityScopedResource];
 
