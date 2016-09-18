@@ -604,7 +604,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     }
     @synchronized(timer) {
         for (SeafConnection *conn in self.conns) {
-            [conn pickPhotosForUpload];
+            [conn photosChanged:nil];
         }
         double cur = [[NSDate date] timeIntervalSince1970];
         if (cur - lastUpdate > UPDATE_INTERVAL) {

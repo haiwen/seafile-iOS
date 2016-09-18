@@ -171,6 +171,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         Debug("Clear repo apsswords for %@ %@", url, username);
         [self clearRepoPasswords];
     }
+    if (self.autoSync)
+        [_rootFolder loadContent:NO];
     return self;
 }
 
@@ -1304,6 +1306,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSString *autoSyncRepo = self.autoSyncRepo;
     SeafRepo *repo = [self getRepo:autoSyncRepo];
     if (!repo) {
+        Warning("No repo %@", self.autoSyncRepo);
+        [_rootFolder loadContent:NO];
         _syncDir = nil;
         return;
     }
@@ -1337,6 +1341,10 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (!_inAutoSync)
         return;
     Debug("photos changed %d for server %@, current: %u %u", _inAutoSync, _address, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
+    if (!_syncDir) {
+        Warning("Sync dir not exists, create.");
+        [self checkUploadDir];
+    }
     [self checkPhotos];
 }
 

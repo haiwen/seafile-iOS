@@ -473,7 +473,7 @@ enum ENC_LIBRARIES{
             remainStr = [NSString stringWithFormat:NSLocalizedString(@"%ld photos remain", @"Seafile"), num];
         }
 #if DEBUG
-        remainStr = [remainStr stringByAppendingFormat:@"  U:%ld D:%ld", (long)SeafGlobal.sharedObject.uploadingnum, (long)SeafGlobal.sharedObject.downloadingnum];
+        remainStr = [remainStr stringByAppendingFormat:@"  U:%lu D:%lu", SeafGlobal.sharedObject.uploadingnum, SeafGlobal.sharedObject.downloadingnum];
 #endif
         return [sectionNames[section] stringByAppendingFormat:@"\t %@", remainStr];
     }

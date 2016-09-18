@@ -166,7 +166,6 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 - (void)setAttribute:(id)anObject forKey:(NSString *)aKey;
 
 - (void)checkAutoSync;
-- (void)pickPhotosForUpload;
 - (void)fileUploadedSuccess:(SeafUploadFile *)ufile;
 
 - (NSUInteger)photosInSyncing;
