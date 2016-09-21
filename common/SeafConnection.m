@@ -237,6 +237,24 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return [self isFeatureEnabled:@"file-search"];
 }
 
+- (NSString *)serverVersion
+{
+    NSDictionary *serverInfo = self.serverInfo;
+    if (!serverInfo)
+        return nil;
+
+    return [serverInfo objectForKey:@"version"];
+}
+
+- (BOOL)isChunkSupported
+{
+    NSString *version = self.serverVersion;
+    if (version && [version compare:@"5.1.0" options:NSNumericSearch] != NSOrderedAscending) {
+        return true;
+    }
+    return false;
+}
+
 - (BOOL)isActivityEnabled
 {
     return [self isFeatureEnabled:@"seafile-pro"];
@@ -502,7 +520,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (BOOL)localDecrypt:(NSString *)repoId
 {
-    if (!self.localDecryption)
+    if (!self.localDecryption || !self.isChunkSupported)
         return false;
     SeafRepo *repo = [self getRepo:repoId];
     return [repo canLocalDecrypt];

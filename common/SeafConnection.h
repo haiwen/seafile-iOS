@@ -14,6 +14,7 @@
 #define HTTP_ERR_REPO_PASSWORD_REQUIRED         440
 
 #define DEFAULT_TIMEOUT 120
+#define LARGE_FILE_SIZE 10*1024*1024
 
 enum MSG_TYPE{
     MSG_NONE = 0,
@@ -73,6 +74,8 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 @property (readonly) BOOL authorized;
 @property (readonly) BOOL isSearchEnabled;
 @property (readonly) BOOL isActivityEnabled;
+@property (readonly) BOOL isChunkSupported; // upload/download by blocks
+
 @property (readwrite, nonatomic, getter=isWifiOnly) BOOL wifiOnly;
 @property (readwrite, nonatomic, getter=isAutoSync) BOOL autoSync;
 @property (readwrite, nonatomic, getter=isVideoSync) BOOL videoSync;
