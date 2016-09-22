@@ -17,6 +17,8 @@
 #import "NSData+Encryption.h"
 #import "Debug.h"
 
+#define UPLOAD_ATTEMPT_INTERVAL 3*60
+
 static NSMutableDictionary *uploadFileAttrs = nil;
 
 
@@ -35,6 +37,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 @property long blkidx;
 
 @property dispatch_semaphore_t semaphore;
+@property double lastFailedTimeStamp;
 @end
 
 @implementation SeafUploadFile
@@ -142,6 +145,8 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     }
     if (result && !_autoSync)
         [Utils linkFileAtPath:self.lpath to:[SeafGlobal.sharedObject documentPath:oid]];
+    else if (!result)
+        self.lastFailedTimeStamp = [[NSDate date] timeIntervalSince1970];
 
     self.rawblksurl = nil;
     self.commiturl = nil;
@@ -447,6 +452,14 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 - (BOOL)canUpload
 {
     if (!_udir) return false;
+    if (self.lastFailedTimeStamp > 0) {
+        double elapsed = [[NSDate date] timeIntervalSince1970] - self.lastFailedTimeStamp;
+        if (elapsed  < UPLOAD_ATTEMPT_INTERVAL) {
+            Debug("elapsed %f s < %d, do not upload.", elapsed, UPLOAD_ATTEMPT_INTERVAL);
+            return false;
+        }
+    }
+
     if (self.autoSync && _udir->connection.wifiOnly)
         return [[AFNetworkReachabilityManager sharedManager] isReachableViaWiFi];
     else
@@ -639,5 +652,11 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
     return self.uploaded;
 }
+
+- (void)resetFailedAttempt
+{
+    self.lastFailedTimeStamp = 0;
+}
+
 
 @end

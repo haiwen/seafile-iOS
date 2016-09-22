@@ -505,6 +505,12 @@
     });
 }
 
+- (void)outOfQuota:(SeafConnection *)connection
+{
+    Warning("Out of quota.");
+    [Utils alertWithTitle:NSLocalizedString(@"Out of quota", @"Seafile") message:nil handler:nil from:self.window.rootViewController];
+}
+
 #pragma mark - PHPhotoLibraryChangeObserver
 - (void)photoLibraryDidChange:(PHChange *)changeInstance
 {

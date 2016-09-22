@@ -57,6 +57,7 @@
 + (BOOL)saveAttrs;
 + (void)clearCache;
 
+- (void)resetFailedAttempt;
 - (BOOL)waitUpload;
 
 

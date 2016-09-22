@@ -701,7 +701,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
         if (error) {
             [self showDeserializedError:error];
-            Warning("token=%@, resp=%@, delegate=%@, url=%@, Error: %@", _token, responseObject, self.delegate, url, error);
+            Warning("token=%@, resp=%ld %@, delegate=%@, url=%@, Error: %@", _token, (long)resp.statusCode, responseObject, self.delegate, url, error);
             failure (request, resp, responseObject, error);
             if (resp.statusCode == HTTP_ERR_UNAUTHORIZED) {
                 NSString *wiped = [resp.allHeaderFields objectForKey:@"X-Seafile-Wiped"];
@@ -715,6 +715,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                         [SeafGlobal.sharedObject clearCache];
                 }
                 if (self.delegate) [self.delegate loginRequired:self];
+            } else if (resp.statusCode == HTTP_ERR_OPERATION_FAILED && [responseObject isKindOfClass:[NSDictionary class]]) {
+                NSString *err_msg = [((NSDictionary *)responseObject) objectForKey:@"error_msg"];
+                if (err_msg && [@"Above quota" isEqualToString:err_msg]) {
+                    Warning("Out of quota.");
+                    [self.delegate outOfQuota:self];
+                }
             }
         } else {
             success(request, resp, responseObject);

@@ -576,6 +576,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 
 - (void)addUploadTask:(SeafUploadFile *)file
 {
+    [file resetFailedAttempt];
     @synchronized (self) {
         if (![_ufiles containsObject:file] && ![_uploadingfiles containsObject:file])
             [_ufiles addObject:file];
