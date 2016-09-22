@@ -896,16 +896,21 @@ enum {
             SeafCell *cell = [tableView cellForRowAtIndexPath:indexPath];
             [self updateCellDownloadStatus:cell file:(SeafFile *)_curEntry waiting:true];
         }
-        if (!IsIpad()) {
-            SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-            [appdelegate showDetailView:self.detailViewController];
-        }
+
+        id<SeafPreView> item = (id<SeafPreView>)_curEntry;
         NSMutableArray *arr = nil;
         if ([self isCurrentFileImage:&arr]) {
-            [self.detailViewController setPreViewPhotos:arr current:(id<SeafPreView>)_curEntry master:self];
+            [self.detailViewController setPreViewPhotos:arr current:item master:self];
         } else {
-            id<SeafPreView> item = (id<SeafPreView>)_curEntry;
             [self.detailViewController setPreViewItem:item master:self];
+        }
+        if (!IsIpad()) {
+            if (self.detailViewController.state == PREVIEW_QL_MODAL) { // Use fullscreen preview for doc, xls, etc.
+                [self presentViewController:self.detailViewController.qlViewController animated:NO completion:nil];
+            } else {
+                SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+                [appdelegate showDetailView:self.detailViewController];
+            }
         }
     } else if ([_curEntry isKindOfClass:[SeafDir class]]) {
         SeafFileViewController *controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];

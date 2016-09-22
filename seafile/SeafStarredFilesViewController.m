@@ -169,22 +169,24 @@
 - (void)updateCellDownloadStatus:(SeafCell *)cell file:(SeafFile *)sfile waiting:(BOOL)waiting
 {
     if (!cell) return;
-    if (sfile.hasCache || waiting || sfile.isDownloading) {
-        cell.cacheStatusView.hidden = false;
-        [cell.cacheStatusWidthConstraint setConstant:21.0f];
-        if (sfile.isDownloading) {
-            [cell.downloadingIndicator startAnimating];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (sfile.hasCache || waiting || sfile.isDownloading) {
+            cell.cacheStatusView.hidden = false;
+            [cell.cacheStatusWidthConstraint setConstant:21.0f];
+            if (sfile.isDownloading) {
+                [cell.downloadingIndicator startAnimating];
+            } else {
+                NSString *downloadImageNmae = waiting ? @"download_waiting" : @"download_finished";
+                cell.downloadStatusImageView.image = [UIImage imageNamed:downloadImageNmae];
+            }
+            cell.downloadStatusImageView.hidden = sfile.isDownloading;
+            cell.downloadingIndicator.hidden = !sfile.isDownloading;
         } else {
-            NSString *downloadImageNmae = waiting ? @"download_waiting" : @"download_finished";
-            cell.downloadStatusImageView.image = [UIImage imageNamed:downloadImageNmae];
+            cell.cacheStatusView.hidden = true;
+            [cell.cacheStatusWidthConstraint setConstant:0.0f];
         }
-        cell.downloadStatusImageView.hidden = sfile.isDownloading;
-        cell.downloadingIndicator.hidden = !sfile.isDownloading;
-    } else {
-        cell.cacheStatusView.hidden = true;
-        [cell.cacheStatusWidthConstraint setConstant:0.0f];
-    }
-    [cell layoutIfNeeded];
+        [cell layoutIfNeeded];
+    });
 }
 
 - (void)updateCellContent:(SeafCell *)cell file:(SeafFile *)sfile
@@ -223,11 +225,16 @@
 - (void)selectFile:(SeafStarredFile *)sfile
 {
     Debug("Select file %@", sfile);
-    if (!IsIpad()) {
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        [appdelegate showDetailView:self.detailViewController];
-    }
     [self.detailViewController setPreViewItem:sfile master:self];
+
+    if (!IsIpad()) {
+        if (self.detailViewController.state == PREVIEW_QL_MODAL) { // Use fullscreen preview for doc, xls, etc.
+            [self presentViewController:self.detailViewController.qlViewController animated:NO completion:nil];
+        } else {
+            SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+            [appdelegate showDetailView:self.detailViewController];
+        }
+    }
 }
 
 #pragma mark - Table view delegate

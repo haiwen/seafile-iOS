@@ -22,15 +22,7 @@
 #import "ExtentedString.h"
 #import "Debug.h"
 
-enum PREVIEW_STATE {
-    PREVIEW_NONE = 0,
-    PREVIEW_QL,
-    PREVIEW_WEBVIEW,
-    PREVIEW_WEBVIEW_JS,
-    PREVIEW_DOWNLOADING,
-    PREVIEW_PHOTO,
-    PREVIEW_FAILED
-};
+
 
 enum SHARE_STATUS {
     SHARE_BY_MAIL = 0,
@@ -42,10 +34,11 @@ enum SHARE_STATUS {
 
 #define SHARE_TITLE NSLocalizedString(@"How would you like to share this file?", @"Seafile")
 
-@interface SeafDetailViewController ()<UIWebViewDelegate, UIPrintInteractionControllerDelegate, MFMailComposeViewControllerDelegate, QLPreviewControllerDelegate, QLPreviewControllerDataSource, MWPhotoBrowserDelegate>
+@interface SeafDetailViewController ()<UIWebViewDelegate, UIPrintInteractionControllerDelegate, MFMailComposeViewControllerDelegate, MWPhotoBrowserDelegate>
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
 
-@property (retain) QLPreviewController *fileViewController;
+@property (retain) QLPreviewController *qlSubViewController;
+
 @property (retain) FailToPreview *failedView;
 @property (retain) DownloadingProgressView *progressView;
 @property (retain) UIWebView *webView;
@@ -55,8 +48,6 @@ enum SHARE_STATUS {
 @property BOOL rotating;
 @property (retain) NSArray *photos;
 @property NSUInteger currentPageIndex;
-
-@property int state;
 
 @property (strong) NSArray *barItemsStar;
 @property (strong) NSArray *barItemsUnStar;
@@ -75,11 +66,19 @@ enum SHARE_STATUS {
 
 @implementation SeafDetailViewController
 
+- (id)initWithCoder:(NSCoder *)decoder
+{
+    self = [super initWithCoder:decoder];
+    self.qlViewController = [[QLPreviewController alloc] init];
+    self.qlViewController.delegate = self;
+    self.qlViewController.dataSource = self;
 
+    return self;
+}
 #pragma mark - Managing the detail item
 - (BOOL)previewSuccess
 {
-    return (self.state == PREVIEW_QL) || (self.state == PREVIEW_WEBVIEW) || (self.state == PREVIEW_WEBVIEW_JS);
+    return (self.state == PREVIEW_QL_SUBVIEW) || (self.state == PREVIEW_WEBVIEW) || (self.state == PREVIEW_WEBVIEW_JS);
 }
 
 - (BOOL)isPrintable:(SeafFile *)file
@@ -92,11 +91,10 @@ enum SHARE_STATUS {
     }
     return false;
 }
+
 - (BOOL)isModal
 {
-    return self.presentingViewController.presentedViewController == self
-    || self.navigationController.presentingViewController.presentedViewController == self.navigationController
-    || [self.tabBarController.presentingViewController isKindOfClass:[UITabBarController class]];
+    return self.presentingViewController != nil;
 }
 
 - (void)updateNavigation
@@ -121,41 +119,45 @@ enum SHARE_STATUS {
 {
     self.failedView.hidden = YES;
     self.progressView.hidden = YES;
-    self.fileViewController.view.hidden = YES;
+    self.qlSubViewController.view.hidden = YES;
     self.webView.hidden = YES;
     [self.webView loadHTMLString:@"" baseURL:nil];
     [self clearPhotosVIew];
 }
 
-- (void)refreshView
+- (void)updatePreviewState
 {
-    if (!self.isViewLoaded) return;
-    NSURLRequest *request = nil;
     if (self.state == PREVIEW_PHOTO && !self.photos)
         [self clearPhotosVIew];
-
-    if (self.state != PREVIEW_PHOTO) {
+    else if (self.state != PREVIEW_PHOTO) {
         [self clearPreView];
         if (!self.preViewItem) {
-            self.state = PREVIEW_NONE;
+            _state = PREVIEW_NONE;
         } else if (self.preViewItem.previewItemURL) {
             if (![QLPreviewController canPreviewItem:self.preViewItem]) {
-                self.state = PREVIEW_FAILED;
+                _state = PREVIEW_FAILED;
             } else {
-                //self.state = ios10 ? PREVIEW_WEBVIEW : PREVIEW_QL;
-                self.state = PREVIEW_QL;
+                _state = PREVIEW_QL_SUBVIEW;
                 if ([self.preViewItem.mime hasPrefix:@"audio"]
                     || [self.preViewItem.mime hasPrefix:@"video"]
                     || [self.preViewItem.mime isEqualToString:@"image/svg+xml"])
-                    self.state = PREVIEW_WEBVIEW;
+                    _state = PREVIEW_WEBVIEW;
                 else if([self.preViewItem.mime isEqualToString:@"text/x-markdown"] || [self.preViewItem.mime isEqualToString:@"text/x-seafile"])
-                    self.state = PREVIEW_WEBVIEW_JS;
+                    _state = PREVIEW_WEBVIEW_JS;
+                else if (!IsIpad() && ios10) {
+                    _state = self.preViewItem.editable ? PREVIEW_WEBVIEW : PREVIEW_QL_MODAL;
+                }
             }
         } else {
-            self.state = PREVIEW_DOWNLOADING;
+            _state = PREVIEW_DOWNLOADING;
         }
     }
+}
 
+- (void)refreshView
+{
+    if (!self.isViewLoaded) return;
+    [self updatePreviewState];
     [self updateNavigation];
     CGRect r = CGRectMake(self.view.frame.origin.x, 0, self.view.frame.size.width, self.view.frame.size.height);
     switch (self.state) {
@@ -171,16 +173,31 @@ enum SHARE_STATUS {
             self.failedView.hidden = NO;
             [self.failedView configureViewWithPrevireItem:self.preViewItem];
             break;
-        case PREVIEW_QL:
-            Debug (@"Preview file %@ mime=%@ success\n", self.preViewItem.previewItemTitle, self.preViewItem.mime);
-            [self.fileViewController reloadData];
-            self.fileViewController.view.frame = r;
-            self.fileViewController.view.hidden = NO;
+        case PREVIEW_QL_SUBVIEW:
+            Debug (@"Preview file %@ mime=%@ QL subview\n", self.preViewItem.previewItemTitle, self.preViewItem.mime);
+            [self.qlSubViewController reloadData];
+            self.qlSubViewController.view.frame = r;
+            self.qlSubViewController.view.hidden = NO;
             break;
+        case PREVIEW_QL_MODAL: {
+            Debug (@"Preview file %@ mime=%@ QL modal\n", self.preViewItem.previewItemTitle, self.preViewItem.mime);
+            [self.qlViewController reloadData];
+            if (self.isModal && self.isVisible && !self.qlViewController.presentingViewController) {
+                UIViewController *vc = self.presentingViewController;
+                [vc dismissViewControllerAnimated:NO completion:^{
+                    [vc presentViewController:self.qlViewController animated:NO completion:nil];
+                }];
+            } else if (!self.isModal) {
+                UINavigationController *nc = self.navigationController;
+                [self.navigationController popToRootViewControllerAnimated:NO];
+                [nc presentViewController:self.qlViewController animated:NO completion:nil];
+            }
+            break;
+        }
         case PREVIEW_WEBVIEW_JS:
-        case PREVIEW_WEBVIEW:
+        case PREVIEW_WEBVIEW: {
             Debug("Preview by webview %@\n", self.preViewItem.previewItemTitle);
-            request = [[NSURLRequest alloc] initWithURL:self.preViewItem.previewItemURL cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
+            NSURLRequest *request = [[NSURLRequest alloc] initWithURL:self.preViewItem.previewItemURL cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
             if (self.state == PREVIEW_WEBVIEW_JS)
                 self.webView.delegate = self;
             else
@@ -189,6 +206,7 @@ enum SHARE_STATUS {
             [self.webView loadRequest:request];
             self.webView.hidden = NO;
             break;
+        }
         case PREVIEW_PHOTO:
             Debug("Preview photo %@\n", self.preViewItem.previewItemTitle);
             self.mwPhotoBrowser.view.frame = r;
@@ -224,7 +242,7 @@ enum SHARE_STATUS {
         [seafPhotos addObject:[[SeafPhoto alloc] initWithSeafPreviewIem: file]];
     }
     self.photos = seafPhotos;
-    self.state = PREVIEW_PHOTO;
+    _state = PREVIEW_PHOTO;
     Debug("Preview photos PREVIEW_PHOTO: %d, %@ hasCache:%d", self.state, [item name], [item hasCache]);
     self.preViewItem = item;
     self.currentPageIndex = [items indexOfObject:item];
@@ -288,12 +306,12 @@ enum SHARE_STATUS {
     [self.view addSubview:self.progressView];
     [self.view addSubview:self.webView];
 
-    self.fileViewController = [[QLPreviewController alloc] init];
-    self.fileViewController.delegate = self;
-    self.fileViewController.dataSource = self;
-    [self addChildViewController:self.fileViewController];
-    [self.view addSubview:self.fileViewController.view];
-    [self.fileViewController didMoveToParentViewController:self];
+    self.qlSubViewController = [[QLPreviewController alloc] init];
+    self.qlSubViewController.delegate = self;
+    self.qlSubViewController.dataSource = self;
+    [self addChildViewController:self.qlSubViewController];
+    [self.view addSubview:self.qlSubViewController.view];
+    [self.qlSubViewController didMoveToParentViewController:self];
 
     [self.progressView.cancelBt addTarget:self action:@selector(cancelDownload:) forControlEvents:UIControlEventTouchUpInside];
     [self.failedView.openElseBtn addTarget:self action:@selector(openElsewhere:) forControlEvents:UIControlEventTouchUpInside];
@@ -309,7 +327,7 @@ enum SHARE_STATUS {
 {
     [super viewDidUnload];
     self.preViewItem = nil;
-    self.fileViewController = nil;
+    self.qlSubViewController = nil;
     self.failedView = nil;
     self.progressView = nil;
     self.docController = nil;
@@ -324,12 +342,12 @@ enum SHARE_STATUS {
 - (void)viewWillLayoutSubviews
 {
     [super viewWillLayoutSubviews];
-    if (IsIpad() && self.hideMaster && ios7) {
+    if (IsIpad() && self.hideMaster) {
         self.view.frame = CGRectMake(self.view.frame.origin.x, self.view.frame.origin.y, self.view.frame.size.width, self.view.frame.size.height + self.splitViewController.tabBarController.tabBar.frame.size.height);
     }
     CGRect r = CGRectMake(self.view.frame.origin.x, 0, self.view.frame.size.width, self.view.frame.size.height);
-    if (self.state == PREVIEW_QL) {
-        self.fileViewController.view.frame = r;
+    if (self.state == PREVIEW_QL_SUBVIEW) {
+        self.qlSubViewController.view.frame = r;
     } else if (self.state == PREVIEW_PHOTO){
         self.mwPhotoBrowser.view.frame = r;
     } else {
@@ -787,7 +805,7 @@ enum SHARE_STATUS {
 {
     [_mwPhotoBrowser.view removeFromSuperview];
     _photos = nil;
-    self.state = PREVIEW_NONE;
+    _state = PREVIEW_NONE;
 }
 
 #pragma mark - MWPhotoBrowserDelegate
