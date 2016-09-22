@@ -24,7 +24,7 @@
 
 enum PREVIEW_STATE {
     PREVIEW_NONE = 0,
-    PREVIEW_SUCCESS,
+    PREVIEW_QL,
     PREVIEW_WEBVIEW,
     PREVIEW_WEBVIEW_JS,
     PREVIEW_DOWNLOADING,
@@ -79,7 +79,7 @@ enum SHARE_STATUS {
 #pragma mark - Managing the detail item
 - (BOOL)previewSuccess
 {
-    return (self.state == PREVIEW_SUCCESS) || (self.state == PREVIEW_WEBVIEW) || (self.state == PREVIEW_WEBVIEW_JS);
+    return (self.state == PREVIEW_QL) || (self.state == PREVIEW_WEBVIEW) || (self.state == PREVIEW_WEBVIEW_JS);
 }
 
 - (BOOL)isPrintable:(SeafFile *)file
@@ -142,7 +142,8 @@ enum SHARE_STATUS {
             if (![QLPreviewController canPreviewItem:self.preViewItem]) {
                 self.state = PREVIEW_FAILED;
             } else {
-                self.state = ios10 ? PREVIEW_WEBVIEW : PREVIEW_SUCCESS;
+                //self.state = ios10 ? PREVIEW_WEBVIEW : PREVIEW_QL;
+                self.state = PREVIEW_QL;
                 if ([self.preViewItem.mime hasPrefix:@"audio"]
                     || [self.preViewItem.mime hasPrefix:@"video"]
                     || [self.preViewItem.mime isEqualToString:@"image/svg+xml"])
@@ -170,7 +171,7 @@ enum SHARE_STATUS {
             self.failedView.hidden = NO;
             [self.failedView configureViewWithPrevireItem:self.preViewItem];
             break;
-        case PREVIEW_SUCCESS:
+        case PREVIEW_QL:
             Debug (@"Preview file %@ mime=%@ success\n", self.preViewItem.previewItemTitle, self.preViewItem.mime);
             [self.fileViewController reloadData];
             self.fileViewController.view.frame = r;
@@ -327,7 +328,7 @@ enum SHARE_STATUS {
         self.view.frame = CGRectMake(self.view.frame.origin.x, self.view.frame.origin.y, self.view.frame.size.width, self.view.frame.size.height + self.splitViewController.tabBarController.tabBar.frame.size.height);
     }
     CGRect r = CGRectMake(self.view.frame.origin.x, 0, self.view.frame.size.width, self.view.frame.size.height);
-    if (self.state == PREVIEW_SUCCESS) {
+    if (self.state == PREVIEW_QL) {
         self.fileViewController.view.frame = r;
     } else if (self.state == PREVIEW_PHOTO){
         self.mwPhotoBrowser.view.frame = r;

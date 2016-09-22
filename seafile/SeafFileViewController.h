@@ -27,6 +27,9 @@ enum {
 #define S_SORT_NAME NSLocalizedString(@"Sort by Name", @"Seafile")
 #define S_SORT_MTIME NSLocalizedString(@"Sort by Last Modifed Time", @"Seafile")
 
+#define S_STAR NSLocalizedString(@"Star", @"Seafile")
+#define S_UNSTAR NSLocalizedString(@"Unstar", @"Seafile")
+
 #define S_RENAME NSLocalizedString(@"Rename", @"Seafile")
 #define S_EDIT NSLocalizedString(@"Edit", @"Seafile")
 #define S_DELETE NSLocalizedString(@"Delete", @"Seafile")
