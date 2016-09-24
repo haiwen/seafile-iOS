@@ -54,6 +54,7 @@ enum SHARE_STATUS {
 @property (strong) UIBarButtonItem *editItem;
 @property (strong) UIBarButtonItem *exportItem;
 @property (strong) UIBarButtonItem *shareItem;
+@property (strong) UIBarButtonItem *backItem;
 
 @property (strong, nonatomic) UIBarButtonItem *leftItem;
 
@@ -99,6 +100,10 @@ enum SHARE_STATUS {
 
 - (void)updateNavigation
 {
+    if ([self isModal])
+         [self.navigationItem setLeftBarButtonItem:self.backItem animated:NO];
+    else
+        self.navigationItem.leftBarButtonItem = nil;
     self.title = self.preViewItem.previewItemTitle;
     NSMutableArray *array = [[NSMutableArray alloc] init];
     if ([self.preViewItem isKindOfClass:[SeafFile class]]) {
@@ -127,37 +132,37 @@ enum SHARE_STATUS {
 
 - (void)updatePreviewState
 {
-    if (self.state == PREVIEW_PHOTO && !self.photos)
-        [self clearPhotosVIew];
-    else if (self.state != PREVIEW_PHOTO) {
-        [self clearPreView];
-        if (!self.preViewItem) {
-            _state = PREVIEW_NONE;
-        } else if (self.preViewItem.previewItemURL) {
-            if (![QLPreviewController canPreviewItem:self.preViewItem]) {
-                _state = PREVIEW_FAILED;
-            } else {
-                _state = PREVIEW_QL_SUBVIEW;
-                if ([self.preViewItem.mime hasPrefix:@"audio"]
-                    || [self.preViewItem.mime hasPrefix:@"video"]
-                    || [self.preViewItem.mime isEqualToString:@"image/svg+xml"])
-                    _state = PREVIEW_WEBVIEW;
-                else if([self.preViewItem.mime isEqualToString:@"text/x-markdown"] || [self.preViewItem.mime isEqualToString:@"text/x-seafile"])
-                    _state = PREVIEW_WEBVIEW_JS;
-                else if (!IsIpad() && ios10) {
-                    _state = self.preViewItem.editable ? PREVIEW_WEBVIEW : PREVIEW_QL_MODAL;
-                }
-            }
+    if (self.state == PREVIEW_PHOTO && self.photos)
+        return;
+
+    [self clearPreView];
+    if (!self.preViewItem) {
+        _state = PREVIEW_NONE;
+    } else if (self.preViewItem.previewItemURL) {
+        if (![QLPreviewController canPreviewItem:self.preViewItem]) {
+            _state = PREVIEW_FAILED;
         } else {
-            _state = PREVIEW_DOWNLOADING;
+            _state = PREVIEW_QL_SUBVIEW;
+            if ([self.preViewItem.mime hasPrefix:@"audio"]
+                || [self.preViewItem.mime hasPrefix:@"video"]
+                || [self.preViewItem.mime isEqualToString:@"image/svg+xml"])
+                _state = PREVIEW_WEBVIEW;
+            else if([self.preViewItem.mime isEqualToString:@"text/x-markdown"] || [self.preViewItem.mime isEqualToString:@"text/x-seafile"])
+                _state = PREVIEW_WEBVIEW_JS;
+            else if (!IsIpad() && ios10) {
+                _state = self.preViewItem.editable ? PREVIEW_WEBVIEW : PREVIEW_QL_MODAL;
+            }
         }
+    } else {
+        _state = PREVIEW_DOWNLOADING;
     }
+    Debug("preview state: %d", _state);
 }
 
 - (void)refreshView
 {
-    if (!self.isViewLoaded) return;
     [self updatePreviewState];
+    if (!self.isViewLoaded) return;
     [self updateNavigation];
     CGRect r = CGRectMake(self.view.frame.origin.x, 0, self.view.frame.size.width, self.view.frame.size.height);
     switch (self.state) {
@@ -270,10 +275,8 @@ enum SHARE_STATUS {
         self.edgesForExtendedLayout = UIRectEdgeNone;
     // Do any additional setup after loading the view, typically from a nib.
 
-    if (self.isModal) {
-        UIBarButtonItem *barButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Back", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
-        [self.navigationItem setLeftBarButtonItem:barButtonItem animated:YES];
-    }
+    self.backItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Back", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
+
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
 
@@ -356,6 +359,11 @@ enum SHARE_STATUS {
             v.frame = r;
         }
     }
+}
+- (void)viewWillAppear:(BOOL)animated
+{
+    [self updateNavigation];
+    [super viewWillAppear:animated];
 }
 
 #pragma mark - Split view

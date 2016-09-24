@@ -488,7 +488,6 @@ enum {
 {
     [super viewWillAppear:animated];
     [self checkUploadfiles];
-    [_directory loadContent:true];
 }
 
 - (void)viewWillDisappear:(BOOL)animated
@@ -904,6 +903,7 @@ enum {
         } else {
             [self.detailViewController setPreViewItem:item master:self];
         }
+
         if (!IsIpad()) {
             if (self.detailViewController.state == PREVIEW_QL_MODAL) { // Use fullscreen preview for doc, xls, etc.
                 [self presentViewController:self.detailViewController.qlViewController animated:NO completion:nil];
