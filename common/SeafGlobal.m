@@ -504,7 +504,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 {
     if (self.dfiles.count == 0) return;
     NSMutableArray *todo = [[NSMutableArray alloc] init];
-    @synchronized (self) {
+    @synchronized (self.dfiles) {
         NSMutableArray *arr = [self.dfiles mutableCopy];
         for (id<SeafDownloadDelegate> file in arr) {
             if (self.downloadnum + todo.count + self.failedNum >= 3) break;
@@ -527,7 +527,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 
 - (void)removeBackgroundDownload:(id<SeafDownloadDelegate>)file
 {
-    @synchronized (self) {
+    @synchronized (self.dfiles) {
         [self.dfiles removeObject:file];
     }
 }
@@ -587,10 +587,10 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 }
 - (void)addDownloadTask:(id<SeafDownloadDelegate>)file
 {
-    @synchronized (self) {
-        if (![_dfiles containsObject:file]) {
-            [_dfiles addObject:file];
-            Debug("Added download task %@", file.name);
+    @synchronized (self.dfiles) {
+        if (![self.dfiles containsObject:file]) {
+            [self.dfiles insertObject:file atIndex:0];
+            Debug("Added download task %@: %ld", file.name, self.dfiles.count);
         }
     }
     [self tryDownload];
