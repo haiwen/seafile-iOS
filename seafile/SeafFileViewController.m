@@ -179,6 +179,9 @@ enum {
     self.searchDisplayController.searchResultsDataSource = self;
     self.searchDisplayController.searchResultsDelegate = self;
     self.searchDisplayController.delegate = self;
+    self.searchDisplayController.searchResultsTableView.rowHeight = UITableViewAutomaticDimension;
+    self.searchDisplayController.searchResultsTableView.estimatedRowHeight = 50.0;
+
     self.tableView.tableHeaderView = self.searchBar;
     self.tableView.contentOffset = CGPointMake(0, CGRectGetHeight(self.searchBar.bounds));
     self.tableView.allowsMultipleSelection = NO;
