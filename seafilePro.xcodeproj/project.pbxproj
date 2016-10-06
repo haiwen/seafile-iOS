@@ -1943,7 +1943,7 @@
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro;
 				PRODUCT_NAME = SeafilePro;
-				PROVISIONING_PROFILE = "6d5340d9-d8c3-425e-b37c-55fdccd48453";
+				PROVISIONING_PROFILE = "9ef72b5c-0b1e-4e2b-9651-c7cb745dc3bb";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "6d5340d9-d8c3-425e-b37c-55fdccd48453";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1999,6 +1999,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 55LCTZ5354;
 				ENABLE_BITCODE = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -2013,7 +2014,8 @@
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "702ccab3-41f6-4c78-83cd-766c0b622745";
+				PROVISIONING_PROFILE = "9987b25a-b3c5-4afd-a5d7-d20f59543c4a";
+				PROVISIONING_PROFILE_SPECIFIER = SeafProviderFileProvider;
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
