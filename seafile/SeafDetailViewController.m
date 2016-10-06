@@ -45,7 +45,6 @@ enum SHARE_STATUS {
 @property (retain, nonatomic) MWPhotoBrowser *mwPhotoBrowser;
 
 @property BOOL performingLayout;
-@property BOOL rotating;
 @property (retain) NSArray *photos;
 @property NSUInteger currentPageIndex;
 
@@ -56,11 +55,8 @@ enum SHARE_STATUS {
 @property (strong) UIBarButtonItem *shareItem;
 @property (strong) UIBarButtonItem *backItem;
 
-@property (strong, nonatomic) UIBarButtonItem *leftItem;
-
 @property (strong) UIDocumentInteractionController *docController;
 @property int shareStatus;
-@property (readwrite, nonatomic) bool hideMaster;
 
 @end
 
@@ -102,8 +98,6 @@ enum SHARE_STATUS {
 {
     if ([self isModal])
          [self.navigationItem setLeftBarButtonItem:self.backItem animated:NO];
-    else
-        self.navigationItem.leftBarButtonItem = nil;
     self.title = self.preViewItem.previewItemTitle;
     NSMutableArray *array = [[NSMutableArray alloc] init];
     if ([self.preViewItem isKindOfClass:[SeafFile class]]) {
@@ -322,7 +316,6 @@ enum SHARE_STATUS {
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
-    _hideMaster = NO;
     [self refreshView];
 }
 
@@ -345,9 +338,6 @@ enum SHARE_STATUS {
 - (void)viewWillLayoutSubviews
 {
     [super viewWillLayoutSubviews];
-    if (IsIpad() && self.hideMaster) {
-        self.view.frame = CGRectMake(self.view.frame.origin.x, self.view.frame.origin.y, self.view.frame.size.width, self.view.frame.size.height + self.splitViewController.tabBarController.tabBar.frame.size.height);
-    }
     CGRect r = CGRectMake(self.view.frame.origin.x, 0, self.view.frame.size.width, self.view.frame.size.height);
     if (self.state == PREVIEW_QL_SUBVIEW) {
         self.qlSubViewController.view.frame = r;
@@ -370,49 +360,20 @@ enum SHARE_STATUS {
 
 - (void)splitViewController:(UISplitViewController *)splitController willHideViewController:(UIViewController *)viewController withBarButtonItem:(UIBarButtonItem *)barButtonItem forPopoverController:(UIPopoverController *)popoverController
 {
-    self.hideMaster = NO;
-    [self.navigationItem setLeftBarButtonItem:barButtonItem animated:YES];
+    [self.navigationItem setLeftBarButtonItem:barButtonItem animated:NO];
     self.masterPopoverController = popoverController;
 }
 
 - (void)splitViewController:(UISplitViewController *)splitController willShowViewController:(UIViewController *)viewController invalidatingBarButtonItem:(UIBarButtonItem *)barButtonItem
 {
     // Called when the view is shown again in the split view, invalidating the button and popover controller.
-    self.leftItem = barButtonItem;
-    [self.navigationItem setLeftBarButtonItem:nil animated:YES];
+    [self.navigationItem setLeftBarButtonItem:nil animated:NO];
     self.masterPopoverController = nil;
 }
 
 - (BOOL)splitViewController:(UISplitViewController *)svc shouldHideViewController:(UIViewController *)vc inOrientation:(UIInterfaceOrientation)orientation
 {
-    if (UIInterfaceOrientationIsLandscape(orientation))
-        return self.hideMaster;
-    else
-        return YES;
-}
-
-- (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration
-{
-    _rotating = YES;
-    if (IsIpad()) self.splitViewController.delegate = self;
-    [super willRotateToInterfaceOrientation:toInterfaceOrientation duration:duration];
-}
-
-- (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
-    [super willAnimateRotationToInterfaceOrientation:toInterfaceOrientation duration:duration];
-}
-
-- (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
-{
-    _rotating = NO;
-    if (IsIpad()) self.splitViewController.delegate = self;
-    if (IsIpad() && !UIInterfaceOrientationIsLandscape(self.interfaceOrientation)) {
-        if (self.hideMaster) {
-            self.navigationItem.leftBarButtonItem = self.leftItem;
-            self.hideMaster = NO;
-        }
-    }
-    [super didRotateFromInterfaceOrientation:fromInterfaceOrientation];
+    return !UIInterfaceOrientationIsLandscape(orientation);
 }
 
 - (void)viewWillDisappear:(BOOL)animated

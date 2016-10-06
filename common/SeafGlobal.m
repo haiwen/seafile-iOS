@@ -590,7 +590,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     @synchronized (self.dfiles) {
         if (![self.dfiles containsObject:file]) {
             [self.dfiles insertObject:file atIndex:0];
-            Debug("Added download task %@: %ld", file.name, self.dfiles.count);
+            Debug("Added download task %@: %ld", file.name, (unsigned long)self.dfiles.count);
         }
     }
     [self tryDownload];
