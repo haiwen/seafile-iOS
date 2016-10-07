@@ -191,6 +191,7 @@ enum {
 
     __weak typeof(self) weakSelf = self;
     [self.tableView addPullToRefreshWithActionHandler:^{
+        [self.tableView reloadData];
         if (weakSelf.searchDisplayController.active)
             return;
         if (![weakSelf checkNetworkStatus]) {
@@ -610,6 +611,7 @@ enum {
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
     [self showActionSheetForCell:cell];
 }
+
 
 - (UITableViewCell *)getSeafUploadFileCell:(SeafUploadFile *)file forTableView:(UITableView *)tableView
 {
@@ -1530,6 +1532,8 @@ enum {
         SeafCell *cell = [self getEntryCell:file indexPath:&indexPath];
         if (!cell) return;
         if (!completed && res) {
+            cell.progressView.hidden = false;
+            cell.detailTextLabel.text = nil;
             [cell.progressView setProgress:percent*1.0f/100];
         } else if (indexPath) {
             [self reloadIndex:indexPath];
