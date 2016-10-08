@@ -464,9 +464,15 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     [self loadContent:force];
 }
 
+#pragma mark - SeafDownloadDelegate
 - (void)download
 {
     [self load:nil force:false];
+}
+
+- (BOOL)retryable
+{
+    return true;
 }
 
 - (BOOL)hasCache

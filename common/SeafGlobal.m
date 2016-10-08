@@ -436,7 +436,8 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         self.failedNum = 0;
     } else {
         self.failedNum ++;
-        [self.dfiles addObject:file];
+        if ([file retryable])
+            [self.dfiles addObject:file];
         if (self.failedNum >= 3) {
             [self performSelector:@selector(tryDownload) withObject:nil afterDelay:10.0];
             self.failedNum = 2;

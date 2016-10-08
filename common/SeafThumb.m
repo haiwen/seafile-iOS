@@ -31,4 +31,9 @@
     return _file.name;
 }
 
+- (BOOL)retryable
+{
+    return false;
+}
+
 @end

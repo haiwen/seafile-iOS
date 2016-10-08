@@ -35,6 +35,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 @protocol SeafDownloadDelegate <NSObject>
 - (void)download;
 - (NSString *)name;
+- (BOOL)retryable;
 @end
 
 

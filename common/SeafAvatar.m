@@ -136,6 +136,11 @@ static NSMutableDictionary *avatarAttrs = nil;
          [SeafGlobal.sharedObject removeBackgroundDownload:self];
      }];
 }
+- (BOOL)retryable
+{
+    return false;
+}
+
 @end
 
 
