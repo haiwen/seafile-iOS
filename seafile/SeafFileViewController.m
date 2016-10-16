@@ -181,6 +181,7 @@ enum {
     self.searchDisplayController.delegate = self;
     self.searchDisplayController.searchResultsTableView.rowHeight = UITableViewAutomaticDimension;
     self.searchDisplayController.searchResultsTableView.estimatedRowHeight = 50.0;
+    self.searchDisplayController.searchResultsTableView.sectionHeaderHeight = 0;
 
     self.tableView.tableHeaderView = self.searchBar;
     self.tableView.contentOffset = CGPointMake(0, CGRectGetHeight(self.searchBar.bounds));
@@ -445,7 +446,6 @@ enum {
     } else {
         self.tableView.tableHeaderView = nil;
     }
-    self.searchDisplayController.active = NO;
 }
 
 - (void)setDirectory:(SeafDir *)directory
@@ -1571,9 +1571,10 @@ enum {
                 ([[(UILabel*)v text] isEqualToString:SEARCH_STATE_NORESULTS]
                  || [[(UILabel*)v text] isEqualToString:SEARCH_STATE_INIT]
                  || [[(UILabel*)v text] isEqualToString:SEARCH_STATE_SEARCHING])) {
-                [(UILabel*)v setText:state];
-                break;
-            }
+                    [(UILabel*)v setText:state];
+                    v.frame = CGRectMake(0, 132, controller.searchResultsTableView.frame.size.width, 50);
+                    break;
+                }
         }
     });
 }
@@ -1582,7 +1583,6 @@ enum {
 {
     self.searchResults = [[NSMutableArray alloc] init];
     [self.searchDisplayController.searchResultsTableView reloadData];
-    self.tableView.sectionHeaderHeight = 0;
     [self setSearchState:self.searchDisplayController state:SEARCH_STATE_INIT];
 }
 
