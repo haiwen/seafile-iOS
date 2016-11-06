@@ -280,7 +280,9 @@
     NSDictionary *dict = [SeafGlobal.sharedObject getAllSecIdentities];
     if (dict.count == 0) {
         Warning("No client certificates.");
-        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"No available certificates", @"Seafile")];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"No available certificates", @"Seafile")];
+        });
         return false;
     }
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -355,15 +357,15 @@
 
 - (void)loginFailed:(SeafConnection *)conn response:(NSURLResponse *)response error:(NSError *)error
 {
-    Debug("Failed to login: %@\n", conn.address);
+    Debug("Failed to login: %@ %@\n", conn.address, error);
     if (conn != connection)
         return;
 
-    [SVProgressHUD dismiss];
     if (error.code == kCFURLErrorCancelled) {
         return;
     }
 
+    [SVProgressHUD dismiss];
     NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
     long errorCode = resp.statusCode;
     if (errorCode == HTTP_ERR_LOGIN_INCORRECT_PASSWORD) {
