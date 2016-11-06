@@ -401,7 +401,7 @@
     if (![self isViewLoaded] || entry != self.sfile)
         return;
 
-    NSUInteger index = [_directory.allItems indexOfObject:entry];
+    NSUInteger index = [_directory.items indexOfObject:entry];
     if (index == NSNotFound)
         return;
     dispatch_after(0, dispatch_get_main_queue(), ^{
@@ -416,11 +416,11 @@
         [self refreshView];
     if (entry != self.sfile)
         return;
-    NSUInteger index = [_directory.allItems indexOfObject:entry];
+    NSUInteger index = [_directory.items indexOfObject:entry];
     if (index == NSNotFound)
         return;
     dispatch_after(0, dispatch_get_main_queue(), ^{
-        Debug("Successfully download %@", entry.path);
+        Debug("Successfully download %ld %@", index, entry.path);
         [self.alert dismissViewControllerAnimated:NO completion:^{
             NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
             [self tableView:self.tableView didSelectRowAtIndexPath:indexPath];
@@ -439,7 +439,7 @@
 
     dispatch_after(0, dispatch_get_main_queue(), ^{
         [self.alert dismissViewControllerAnimated:NO completion:^{
-            NSUInteger index = [_directory.allItems indexOfObject:entry];
+            NSUInteger index = [_directory.items indexOfObject:entry];
             if (index == NSNotFound) return;
             NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
             [self reloadIndex:indexPath];
