@@ -26,7 +26,7 @@
 
 @implementation StartViewController
 
-- (void)saveAccount:(SeafConnection *)conn
+- (BOOL)saveAccount:(SeafConnection *)conn
 {
     SeafGlobal *global = [SeafGlobal sharedObject];
     BOOL exist = NO;
@@ -42,8 +42,8 @@
         if (!exist)
             [global.conns addObject:conn];
     }
-    [global saveAccounts];
     [self.tableView reloadData];
+    return [global saveAccounts];
 }
 
 - (void)setExtraCellLineHidden:(UITableView *)tableView
@@ -409,7 +409,6 @@
     [conn loadCache];
     [SeafGlobal.sharedObject setObject:conn.address forKey:@"DEAULT-SERVER"];
     [SeafGlobal.sharedObject setObject:conn.username forKey:@"DEAULT-USER"];
-    [SeafGlobal.sharedObject synchronize];
 
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [appdelegate enterAccount:conn];

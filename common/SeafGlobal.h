@@ -60,7 +60,7 @@
 - (void)loadSettings:(NSUserDefaults *)standardUserDefaults;
 
 - (void)loadAccounts;
-- (void)saveAccounts;
+- (BOOL)saveAccounts;
 - (SeafConnection *)getConnection:(NSString *)url username:(NSString *)username;
 
 - (void)startTimer;

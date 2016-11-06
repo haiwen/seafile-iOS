@@ -245,7 +245,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     [self migrateDocuments];
 }
 
-- (void)saveAccounts
+- (BOOL)saveAccounts
 {
     NSMutableArray *accounts = [[NSMutableArray alloc] init];
     for (SeafConnection *connection in self.conns) {
@@ -256,6 +256,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     }
     Debug("accounts:%@", accounts);
     [self setObject:accounts forKey:@"ACCOUNTS"];
+    return [self synchronize];
 };
 
 - (void)loadAccounts

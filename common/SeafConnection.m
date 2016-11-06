@@ -148,7 +148,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                 _info = [ainfo mutableCopy];
                 [SeafGlobal.sharedObject removeObjectForKey:url];
                 [SeafGlobal.sharedObject setObject:ainfo forKey:[NSString stringWithFormat:@"%@/%@", url, username]];
-                [SeafGlobal.sharedObject synchronize];
             }
         }
 
@@ -193,7 +192,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (void)saveSettings
 {
     [SeafGlobal.sharedObject setObject:_settings forKey:[NSString stringWithFormat:@"%@/%@/settings", _address, self.username]];
-    [SeafGlobal.sharedObject synchronize];
 }
 
 - (void)setAttribute:(id)anObject forKey:(NSString *)aKey
@@ -564,8 +562,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     [SeafGlobal.sharedObject setObject:_info forKey:[NSString stringWithFormat:@"%@/%@", _address, self.username]];
     [SeafGlobal.sharedObject synchronize];
-
 }
+
 - (void)getAccountInfo:(void (^)(bool result))handler
 {
     [self sendRequest:API_URL"/account/info/"

@@ -327,9 +327,14 @@
         Debug("Get server info result: %d", result);
         [SVProgressHUD dismiss];
         connection.loginDelegate = nil;
-        [self.navigationController dismissViewControllerAnimated:YES completion:nil];
-        [startController saveAccount:connection];
-        [startController checkSelectAccount:connection];
+        BOOL ret = [startController saveAccount:connection];
+        if (!ret) {
+            [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+            [startController checkSelectAccount:connection];
+        } else {
+            Warning("Failed to save account.");
+            [self alertWithTitle:NSLocalizedString(@"Failed to save account", @"Seafile")];
+        }
     }];
 }
 
