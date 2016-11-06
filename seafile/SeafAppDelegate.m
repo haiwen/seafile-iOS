@@ -33,7 +33,7 @@
 
 @property (retain) NSString *gotoRepo;
 @property (retain) NSString *gotoPath;
-
+@property BOOL autoBackToDefaultAccount;
 @end
 
 @implementation SeafAppDelegate
@@ -238,6 +238,7 @@
 
     [SeafGlobal.sharedObject loadAccounts];
 
+    self.autoBackToDefaultAccount = false;
     _monitors = [[NSMutableArray alloc] init];
     _startNav = (UINavigationController *)self.window.rootViewController;
     _startVC = (StartViewController *)_startNav.topViewController;
@@ -343,6 +344,12 @@
     for (id <SeafBackgroundMonitor> monitor in _monitors) {
         [monitor enterBackground];
     }
+    if (self.window.rootViewController != self.startNav && SeafGlobal.sharedObject.connection.touchIdEnabled) {
+        Debug("hiding contents when enter background");
+        [self exitAccount];
+        self.autoBackToDefaultAccount = true;
+    } else
+        self.autoBackToDefaultAccount = false;
 }
 
 - (void)applicationWillEnterForeground:(UIApplication *)application
@@ -351,15 +358,22 @@
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
     [SeafGlobal.sharedObject loadSettings:[NSUserDefaults standardUserDefaults]];
     [self checkPhotoChanges:nil];
+    for (id <SeafBackgroundMonitor> monitor in _monitors) {
+        [monitor enterForeground];
+    }
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
+    if (!self.background)
+        return;
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
     [application cancelAllLocalNotifications];
     self.background = false;
-    for (id <SeafBackgroundMonitor> monitor in _monitors) {
-        [monitor enterForeground];
+    if (self.autoBackToDefaultAccount) {
+        self.autoBackToDefaultAccount = false;
+        Debug("Verify TouchId and go back to the last account.");
+        [self.startVC selectDefaultAccount:^(bool success) {}];
     }
 }
 
