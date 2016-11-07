@@ -1162,6 +1162,15 @@ enum {
     [_connection performSelectorInBackground:@selector(downloadDir:) withObject:repo];
 }
 
+- (void)saveImageToAlbum:(SeafFile *)file
+{
+    UIImage *img = [UIImage imageWithContentsOfFile:file.cachePath];
+    dispatch_time_t timeout = dispatch_time(DISPATCH_TIME_NOW, 30 * NSEC_PER_SEC);
+    dispatch_semaphore_wait(SeafGlobal.sharedObject.saveAlbumSem, timeout);
+    Info("Write image file %@ %@ to album", file.name, file.cachePath);
+    UIImageWriteToSavedPhotosAlbum(img, self, @selector(thisImage:hasBeenSavedInPhotoAlbumWithError:usingContextInfo:), (void *)CFBridgingRetain(file));
+}
+
 - (void)savePhotosToAlbum
 {
     SeafFileDidDownloadBlock block = ^(SeafFile *file, BOOL result) {
@@ -1169,9 +1178,7 @@ enum {
             return Warning("Failed to donwload file %@", file.path);
         }
         [file setFileDownloadedBlock:nil];
-        Debug("Save file %@ %@ to album", file.name, file.cachePath);
-        UIImage *img = [UIImage imageWithContentsOfFile:file.cachePath];
-        UIImageWriteToSavedPhotosAlbum(img, self, @selector(thisImage:hasBeenSavedInPhotoAlbumWithError:usingContextInfo:), (void *)CFBridgingRetain(file));
+        [self performSelectorInBackground:@selector(saveImageToAlbum:) withObject:file];
     };
     for (id entry in _directory.allItems) {
         if (![entry isKindOfClass:[SeafFile class]]) continue;
@@ -1186,7 +1193,7 @@ enum {
             block(file, true);
         }
     }
-    [SVProgressHUD showSuccessWithStatus:S_PHOTOS_ALBUM];
+    [SVProgressHUD showInfoWithStatus:S_SAVING_PHOTOS_ALBUM];
 }
 
 - (void)browserAllPhotos
@@ -1211,8 +1218,11 @@ enum {
 
 - (void)thisImage:(UIImage *)image hasBeenSavedInPhotoAlbumWithError:(NSError *)error usingContextInfo:(void *)ctxInfo
 {
+    SeafFile *file = (__bridge SeafFile *)ctxInfo;
+    Info("Finish write image file %@ %@ to album", file.name, file.cachePath);
+    dispatch_semaphore_signal(SeafGlobal.sharedObject.saveAlbumSem);
     if (error) {
-        SeafFile *file = (__bridge SeafFile *)ctxInfo;
+        Warning("Failed to save file %@ to album: %@", file.name, error);
         [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Failed to save %@ to album", @"Seafile"), file.name]];
     }
 }

@@ -215,6 +215,8 @@
 
 + (NSData *)JSONEncode:(id)obj
 {
+    if (!obj)
+        return nil;
     if ([obj isKindOfClass:[NSString class]]) {
         return [(NSString *)obj dataUsingEncoding:NSUTF8StringEncoding];
     }

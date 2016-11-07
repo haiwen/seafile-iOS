@@ -330,7 +330,7 @@
         [SVProgressHUD dismiss];
         connection.loginDelegate = nil;
         BOOL ret = [startController saveAccount:connection];
-        if (!ret) {
+        if (ret) {
             [self.navigationController dismissViewControllerAnimated:YES completion:nil];
             [startController checkSelectAccount:connection];
         } else {

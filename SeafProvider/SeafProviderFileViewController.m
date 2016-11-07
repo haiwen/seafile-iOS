@@ -420,7 +420,7 @@
     if (index == NSNotFound)
         return;
     dispatch_after(0, dispatch_get_main_queue(), ^{
-        Debug("Successfully download %ld %@", index, entry.path);
+        Debug("Successfully download %ld %@", (unsigned long)index, entry.path);
         [self.alert dismissViewControllerAnimated:NO completion:^{
             NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
             [self tableView:self.tableView didSelectRowAtIndexPath:indexPath];

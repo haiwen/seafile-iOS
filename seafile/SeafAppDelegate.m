@@ -264,8 +264,9 @@
     NSDictionary *dict = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
     if (dict) {
         [self application:application didReceiveRemoteNotification:dict];
-    } else
-        [self.startVC selectDefaultAccount:^(bool success) {}];
+    } else {
+        [self.startVC performSelector:@selector(selectDefaultAccount:) withObject:^(bool success) {} afterDelay:0.5f];
+    }
 
     self.bgTask = UIBackgroundTaskInvalid;
     __weak typeof(self) weakSelf = self;

@@ -59,6 +59,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         _conns = [[NSMutableArray alloc] init];
         _downloadnum = 0;
         _storage = [[NSUserDefaults alloc] initWithSuiteName:GROUP_NAME];
+        _saveAlbumSem = dispatch_semaphore_create(1);
         [self checkSettings];
 
         NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
@@ -495,7 +496,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     for (SeafUploadFile *file in todo) {
         if (!file.udir) continue;
 
-        [file doUpload];
+        [file performSelectorInBackground:@selector(doUpload) withObject:nil];
         @synchronized (self) {
             [self.uploadingfiles addObject:file];
         }

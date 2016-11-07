@@ -38,6 +38,7 @@
 @property (readwrite) SeafConnection *connection;
 @property (readonly) NSString *clientVersion;
 @property (readonly) NSString *platformVersion;
+@property (readonly) dispatch_semaphore_t saveAlbumSem;
 
 
 + (SeafGlobal *)sharedObject;
