@@ -306,6 +306,8 @@ enum SHARE_STATUS {
     self.qlSubViewController = [[QLPreviewController alloc] init];
     self.qlSubViewController.delegate = self;
     self.qlSubViewController.dataSource = self;
+    self.qlSubViewController.navigationItem.leftBarButtonItem = nil;
+    self.qlSubViewController.navigationItem.rightBarButtonItem = nil;
     [self addChildViewController:self.qlSubViewController];
     [self.view addSubview:self.qlSubViewController.view];
     [self.qlSubViewController didMoveToParentViewController:self];
@@ -729,6 +731,8 @@ enum SHARE_STATUS {
 #pragma -mark QLPreviewControllerDataSource
 - (NSInteger)numberOfPreviewItemsInPreviewController:(QLPreviewController *)controller
 {
+    if (self.state != PREVIEW_QL_SUBVIEW && self.state != PREVIEW_QL_MODAL)
+        return 0;
     return 1;
 }
 
