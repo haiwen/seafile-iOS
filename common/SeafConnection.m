@@ -157,9 +157,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         else
             _settings = [[NSMutableDictionary alloc] init];
     }
-    id clientIdentityKey = [_info objectForKey:@"identity"];
-    if (clientIdentityKey) {
-        self.clientCred = [SeafGlobal.sharedObject getCredentialForKey:clientIdentityKey];
+    _clientIdentityKey = [_info objectForKey:@"identity"];
+    if (_clientIdentityKey) {
+        self.clientCred = [SeafGlobal.sharedObject getCredentialForKey:_clientIdentityKey];
         Debug("Load client dentit");
     }
 
@@ -465,6 +465,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             if (key == nil){
                 return NSURLSessionAuthChallengeCancelAuthenticationChallenge;
             } else {
+                _clientIdentityKey = key;
                 self.clientCred = *credential;
                 [Utils dict:_info setObject:key forKey:@"identity"];
                 return NSURLSessionAuthChallengeUseCredential;
@@ -551,7 +552,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     [SeafGlobal.sharedObject removeObjectForKey:_address];
     [SeafGlobal.sharedObject removeObjectForKey:[NSString stringWithFormat:@"%@/%@", _address, self.username]];
-    [SeafGlobal.sharedObject synchronize];
     NSString *path = [self certPathForHost:[self host]];
     [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
     [SeafAvatar clearCache];
@@ -561,7 +561,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (void)saveAccountInfo
 {
     [SeafGlobal.sharedObject setObject:_info forKey:[NSString stringWithFormat:@"%@/%@", _address, self.username]];
-    [SeafGlobal.sharedObject synchronize];
 }
 
 - (void)getAccountInfo:(void (^)(bool result))handler

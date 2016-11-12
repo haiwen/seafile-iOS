@@ -14,7 +14,7 @@
 
 @interface StartViewController : UITableViewController
 
-- (BOOL)saveAccount:(SeafConnection *)conn;
+- (bool)saveAccount:(SeafConnection *)conn;
 - (void)checkSelectAccount:(SeafConnection *)conn;
 - (void)selectDefaultAccount:(void (^)(bool success))handler;
 

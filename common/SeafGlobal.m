@@ -166,7 +166,6 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 {
     Debug("Registering default values from Settings.bundle");
     NSUserDefaults * defs = [NSUserDefaults standardUserDefaults];
-    [defs synchronize];
 
     NSString *settingsBundle = [[NSBundle mainBundle] pathForResource:@"Settings" ofType:@"bundle"];
     if(!settingsBundle) {
@@ -196,7 +195,6 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     }
 
     [defs registerDefaults:defaultsToRegister];
-    [defs synchronize];
 }
 
 - (void)migrateUserDefaults
@@ -246,7 +244,16 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     [self migrateDocuments];
 }
 
-- (BOOL)saveAccounts
+- (BOOL)isCertInUse:(id)clientIdentityKey
+{
+    for (SeafConnection *conn in self.conns) {
+        if (conn.clientIdentityKey == clientIdentityKey)
+            return true;
+    }
+    return false;
+}
+
+- (bool)saveAccounts
 {
     NSMutableArray *accounts = [[NSMutableArray alloc] init];
     for (SeafConnection *connection in self.conns) {
@@ -257,7 +264,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     }
     Debug("accounts:%@", accounts);
     [self setObject:accounts forKey:@"ACCOUNTS"];
-    return [self synchronize];
+    return true;
 };
 
 - (void)loadAccounts
@@ -656,7 +663,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     [_storage removeObjectForKey:defaultName];
 }
 
-- (BOOL)synchronize
+-(BOOL)synchronize
 {
     return [_storage synchronize];
 }
@@ -849,10 +856,19 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     _secIdentities = [NSMutableDictionary new];
     NSArray *array = [self getSecPersistentRefs];
     if (array) {
+        bool flag = false;
         for (NSData *data in array) {
             SecIdentityRef identity = [SecurityUtilities getSecIdentityForPersistentRef:(CFDataRef)data];
-            [_secIdentities setObject:(__bridge id)identity forKey:data];
+            Debug("...data=%@, ident=%@", data, identity);
+            if (identity != nil) {
+                [_secIdentities setObject:(__bridge id)identity forKey:data];
+            } else {
+                Warning("Can not find the identity for %@", data);
+                flag = true;
+            }
         }
+        if (flag)
+            [self saveSecIdentities];
     }
 }
 

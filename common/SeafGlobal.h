@@ -60,8 +60,9 @@
 
 - (void)loadSettings:(NSUserDefaults *)standardUserDefaults;
 
+- (BOOL)isCertInUse:(id)clientIdentityKey;
 - (void)loadAccounts;
-- (BOOL)saveAccounts;
+- (bool)saveAccounts;
 - (SeafConnection *)getConnection:(NSString *)url username:(NSString *)username;
 
 - (void)startTimer;

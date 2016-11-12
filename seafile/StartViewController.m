@@ -26,7 +26,7 @@
 
 @implementation StartViewController
 
-- (BOOL)saveAccount:(SeafConnection *)conn
+- (bool)saveAccount:(SeafConnection *)conn
 {
     SeafGlobal *global = [SeafGlobal sharedObject];
     BOOL exist = NO;
@@ -139,6 +139,11 @@
     }
     [SeafGlobal.sharedObject chooseCertFrom:dict handler:^(CFDataRef persistentRef, SecIdentityRef identity) {
         if (!identity || ! persistentRef) return;
+        if ([SeafGlobal.sharedObject isCertInUse:(__bridge id)(persistentRef)]) {
+            Warning("Can not remove cert because it is still inuse.");
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Can not remove certificate because it is still in use", @"Seafile")];
+            return;
+        }
 
         BOOL ret = [SeafGlobal.sharedObject removeIdentity:identity forPersistentRef:persistentRef];
         Debug("RemoveCertificate ret: %d", ret);

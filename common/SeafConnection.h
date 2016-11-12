@@ -78,6 +78,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 @property (readonly) BOOL isSearchEnabled;
 @property (readonly) BOOL isActivityEnabled;
 @property (readonly) BOOL isChunkSupported; // upload/download by blocks
+@property (readonly) id clientIdentityKey;
 
 @property (readwrite, nonatomic, getter=isWifiOnly) BOOL wifiOnly;
 @property (readwrite, nonatomic, getter=isAutoSync) BOOL autoSync;
