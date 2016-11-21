@@ -2,7 +2,6 @@ def shared
   platform :ios, '8.0'
   pod 'AFNetworking', '~> 2.6.1'
   pod 'OpenSSL-Universal', '~> 1.0.1.p'
-  pod 'DACircularProgress', '~> 2.3.1'
 end
 
 target :"seafile-appstore" do

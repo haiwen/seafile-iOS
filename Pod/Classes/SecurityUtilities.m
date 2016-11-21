@@ -129,7 +129,6 @@ static BOOL removeIdentityForPersistentRef(CFDataRef persistent_ref)
 
 + (SecIdentityRef)getSecIdentityForPersistentRef:(CFDataRef)persistentRef
 {
-    Debug("....");
     return identityForPersistentRef(persistentRef);
 }
 

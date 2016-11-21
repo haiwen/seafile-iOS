@@ -1021,9 +1021,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     NSString *path = self.realAvatar;
     if (path) return path;
-#ifdef SEAFILE_APP
-    [self downloadAvatar:false];
-#endif
+    if (!SeafGlobal.sharedObject.isAppExtension) {
+        [self downloadAvatar:false];
+    }
     return [[NSBundle mainBundle] pathForResource:@"account" ofType:@"png"];
 }
 

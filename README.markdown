@@ -17,6 +17,25 @@ Follow these steps :
 Then you can run seafile in xcode simulator.
 
 
+SDK and Integration
+=================
+The seafile SDK is is under development and the api will be classified soon.
+Now, you can use CocoaPods to integrate Seafile in your app.
+
+    pod 'Seafile', :git => 'https://github.com/haiwen/seafile-iOS.git'
+
+If it failed with the following error:
+
+    target has transitive dependencies that include static binaries
+
+Add the following line to your Podfile.
+
+    pre_install do |installer|
+        # workaround for https://github.com/CocoaPods/CocoaPods/issues/3289
+        def installer.verify_no_static_framework_transitive_dependencies; end
+    end
+
+
 Internationalization (I18n)
 ==========
 

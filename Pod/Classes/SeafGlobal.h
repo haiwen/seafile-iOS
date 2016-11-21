@@ -39,6 +39,7 @@
 @property (readonly) NSString *clientVersion;
 @property (readonly) NSString *platformVersion;
 @property (readonly) dispatch_semaphore_t saveAlbumSem;
+@property (readwrite) BOOL isAppExtension;
 
 
 + (SeafGlobal *)sharedObject;
