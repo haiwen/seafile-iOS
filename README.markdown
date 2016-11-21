@@ -19,7 +19,7 @@ Then you can run seafile in xcode simulator.
 
 SDK and Integration
 =================
-The seafile SDK is is under development and the api will be classified soon.
+The seafile SDK is is under development and the api will be clarified soon.
 Now, you can use CocoaPods to integrate Seafile in your app.
 
     pod 'Seafile', :git => 'https://github.com/haiwen/seafile-iOS.git'
