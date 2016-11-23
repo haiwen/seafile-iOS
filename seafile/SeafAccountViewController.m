@@ -256,12 +256,12 @@
 }
 
 #pragma mark - SeafLoginDelegate
-- (id)getClientCertPersistentRef:(NSURLCredential *__autoreleasing *)credential
+- (NSData *)getClientCertPersistentRef:(NSURLCredential *__autoreleasing *)credential
 {
     __block NSURLCredential *b_cred = NULL;
-    __block id b_key;
+    __block NSData *b_key;
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    BOOL ret = [self getClientCert:^(id key, NSURLCredential *cred) {
+    BOOL ret = [self getClientCert:^(NSData *key, NSURLCredential *cred) {
         b_cred = cred;
         b_key = key;
         dispatch_semaphore_signal(semaphore);
@@ -275,7 +275,7 @@
     return b_key;
 }
 
-- (BOOL)getClientCert:(void (^)(id key, NSURLCredential *cred))completeHandler
+- (BOOL)getClientCert:(void (^)(NSData *key, NSURLCredential *cred))completeHandler
 {
     NSDictionary *dict = [SeafGlobal.sharedObject getAllSecIdentities];
     if (dict.count == 0) {
@@ -288,7 +288,7 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         [SeafGlobal.sharedObject chooseCertFrom:dict handler:^(CFDataRef persistentRef, SecIdentityRef identity) {
             if (!identity || ! persistentRef) completeHandler(nil, nil);
-            completeHandler((__bridge id)persistentRef, [SecurityUtilities getCredentialFromSecIdentity:identity]);
+            completeHandler((__bridge NSData *)persistentRef, [SecurityUtilities getCredentialFromSecIdentity:identity]);
         } from:self];
     });
     return true;

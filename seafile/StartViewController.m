@@ -139,7 +139,7 @@
     }
     [SeafGlobal.sharedObject chooseCertFrom:dict handler:^(CFDataRef persistentRef, SecIdentityRef identity) {
         if (!identity || ! persistentRef) return;
-        if ([SeafGlobal.sharedObject isCertInUse:(__bridge id)(persistentRef)]) {
+        if ([SeafGlobal.sharedObject isCertInUse:(__bridge NSData*)(persistentRef)]) {
             Warning("Can not remove cert because it is still inuse.");
             [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Can not remove certificate because it is still in use", @"Seafile")];
             return;

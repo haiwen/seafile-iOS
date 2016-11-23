@@ -160,7 +160,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     _clientIdentityKey = [_info objectForKey:@"identity"];
     if (_clientIdentityKey) {
         self.clientCred = [SeafGlobal.sharedObject getCredentialForKey:_clientIdentityKey];
-        Debug("Load client dentit");
+        Debug("Load client identity: %@, %@", _clientIdentityKey, self.clientCred);
     }
 
     if (self.authorized && ![self serverInfo]) {
@@ -461,7 +461,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         } else if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodClientCertificate]) {
             Debug("Use NSURLAuthenticationMethodClientCertificate");
             if (!self.loginDelegate) return NSURLSessionAuthChallengeCancelAuthenticationChallenge;
-            id key = [self.loginDelegate getClientCertPersistentRef:credential];
+            NSData *key = [self.loginDelegate getClientCertPersistentRef:credential];
             if (key == nil){
                 return NSURLSessionAuthChallengeCancelAuthenticationChallenge;
             } else {

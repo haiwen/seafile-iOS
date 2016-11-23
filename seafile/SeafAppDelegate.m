@@ -148,6 +148,7 @@
     if (!ret) return false;
     if (self.window.rootViewController == self.startNav) {
         [self.startVC selectDefaultAccount:^(bool success) {
+            Debug("enter default account: %d", success);
             if (success) {
                 [self uploadFile:to.path];
             } else {
@@ -164,6 +165,7 @@
 - (BOOL)openURL:(NSURL*)url
 {
     if (!url) return false;
+    self.autoBackToDefaultAccount = false;
     if ([@"seafile" isEqualToString:url.scheme]) {
         return [self openSeafileURL:url];
     } else if (url != nil && [url isFileURL]) {

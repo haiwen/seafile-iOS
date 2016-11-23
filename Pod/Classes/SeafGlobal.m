@@ -244,10 +244,10 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     [self migrateDocuments];
 }
 
-- (BOOL)isCertInUse:(id)clientIdentityKey
+- (BOOL)isCertInUse:(NSData *)clientIdentityKey
 {
     for (SeafConnection *conn in self.conns) {
-        if (conn.clientIdentityKey == clientIdentityKey)
+        if (conn.clientIdentityKey != nil && [clientIdentityKey isEqual:conn.clientIdentityKey])
             return true;
     }
     return false;
@@ -859,7 +859,6 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         bool flag = false;
         for (NSData *data in array) {
             SecIdentityRef identity = [SecurityUtilities getSecIdentityForPersistentRef:(CFDataRef)data];
-            Debug("...data=%@, ident=%@", data, identity);
             if (identity != nil) {
                 [_secIdentities setObject:(__bridge id)identity forKey:data];
             } else {
@@ -912,7 +911,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     return ret;
 }
 
-- (NSURLCredential *)getCredentialForKey:(id)key
+- (NSURLCredential *)getCredentialForKey:(NSData *)key
 {
     SecIdentityRef identity = (__bridge SecIdentityRef)[_secIdentities objectForKey:key];
     if (identity) {

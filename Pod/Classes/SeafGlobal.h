@@ -61,7 +61,7 @@
 
 - (void)loadSettings:(NSUserDefaults *)standardUserDefaults;
 
-- (BOOL)isCertInUse:(id)clientIdentityKey;
+- (BOOL)isCertInUse:(NSData*)clientIdentityKey;
 - (void)loadAccounts;
 - (bool)saveAccounts;
 - (SeafConnection *)getConnection:(NSString *)url username:(NSString *)username;
@@ -111,7 +111,7 @@
 - (BOOL)importCert:(NSString *)certificatePath password:(NSString *)keyPassword;
 - (BOOL)removeIdentity:(SecIdentityRef)identity forPersistentRef:(CFDataRef)persistentRef;
 - (void)chooseCertFrom:(NSDictionary *)dict handler:(void (^)(CFDataRef persistentRef, SecIdentityRef identity)) completeHandler from:(UIViewController *)c;
-- (NSURLCredential *)getCredentialForKey:(id)key;
+- (NSURLCredential *)getCredentialForKey:(NSData *)key;
 
 @end
 

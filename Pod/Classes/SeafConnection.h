@@ -47,7 +47,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 - (void)loginSuccess:(SeafConnection *)connection;
 - (void)loginFailed:(SeafConnection *)connection response:(NSURLResponse *)response error:(NSError *)error;
 - (BOOL)authorizeInvalidCert:(NSURLProtectionSpace *)protectionSpace;
-- (id)getClientCertPersistentRef:(NSURLCredential *__autoreleasing *)credential; // return the persistentRef
+- (NSData *)getClientCertPersistentRef:(NSURLCredential *__autoreleasing *)credential; // return the persistentRef
 
 @end
 
@@ -78,7 +78,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 @property (readonly) BOOL isSearchEnabled;
 @property (readonly) BOOL isActivityEnabled;
 @property (readonly) BOOL isChunkSupported; // upload/download by blocks
-@property (readonly) id clientIdentityKey;
+@property (readonly) NSData* clientIdentityKey;
 
 @property (readwrite, nonatomic, getter=isWifiOnly) BOOL wifiOnly;
 @property (readwrite, nonatomic, getter=isAutoSync) BOOL autoSync;
