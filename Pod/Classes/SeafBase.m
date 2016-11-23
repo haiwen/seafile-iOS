@@ -146,6 +146,7 @@
                      [connection setRepo:self.repoId password:password];
                      if (block)  block(self, RET_SUCCESS);
                  } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
+                     Debug("Failed to set repo %@ password: %@, %@", self.repoId, JSON, error);
                      int ret = RET_FAILED;
                      if (JSON != nil) {
                          NSString *errMsg = [JSON objectForKey:@"error_msg"];
@@ -226,10 +227,11 @@
 
 - (void)checkOrSetRepoPassword:(NSString *)password block:(void(^)(SeafBase *entry, int ret))block
 {
-    if ([connection localDecrypt:self.repoId])
+    if ([connection localDecrypt:self.repoId]) {
         [self checkRepoPassword:password block:block];
-    else
+    } else {
         [self setRepoPassword:password block:block];
+    }
 }
 
 - (BOOL)hasCache

@@ -517,12 +517,13 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     @synchronized (self.dfiles) {
         NSMutableArray *arr = [self.dfiles mutableCopy];
         for (id<SeafDownloadDelegate> file in arr) {
-            if (self.downloadnum + todo.count + self.failedNum >= 3) break;
+            if (self.downloadnum + todo.count + self.failedNum >= 2) break;
             [self.dfiles removeObject:file];
             [todo addObject:file];
         }
     }
     for (id<SeafDownloadDelegate> file in todo) {
+        Debug("try download %@", file.name);
         [file download];
     }
 }

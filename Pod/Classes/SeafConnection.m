@@ -170,8 +170,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         Debug("Clear repo apsswords for %@ %@", url, username);
         [self clearRepoPasswords];
     }
-    if (self.autoSync)
-        [_rootFolder loadContent:NO];
+    [_rootFolder loadContent:NO];
     return self;
 }
 
@@ -1447,10 +1446,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         return;
     for (NSString *key in repopasswds) {
         NSString *repoId = key;
-        Debug("refresh repo %@ password", repoId);
         SeafRepo *repo = [self getRepo:repoId];
         if (!repo) continue;
+        Debug("refresh server %@ repo %@ password", _address, repoId);
         id block = ^(SeafBase *entry, int ret) {
+            Debug("refresh repo %@ password: %d", entry.repoId, ret);
             if (ret == RET_WRONG_PASSWORD) {
                 Debug("Repo password incorrect, clear password.");
                 [self setRepo:repoId password:nil];

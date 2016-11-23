@@ -181,7 +181,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     [SeafGlobal.sharedObject incDownloadnum];
     [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@", self.repoId, [self.path escapedUrl]] success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-         Debug("Download file from file server url: %@, state:%d %@", JSON, self.state, self.ooid);
+         Debug("Downloading file from file server url: %@, state:%d %@", JSON, self.state, self.ooid);
          NSString *url = JSON;
          NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
          if (!curId)
@@ -216,7 +216,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
                  return Info("Download file %@ already canceled", self.name);
              }
              if (error) {
-                 Debug("download %@, error=%@, %ld", self.name, [error localizedDescription], (long)((NSHTTPURLResponse *)response).statusCode);
+                 Debug("Failed to download %@, error=%@, %ld", self.name, [error localizedDescription], (long)((NSHTTPURLResponse *)response).statusCode);
                  [self failedDownload:error];
              } else {
                  Debug("Successfully downloaded file:%@, %@ oid=%@, ooid=%@, delegate=%@, %@", self.name, downloadRequest.URL, self.downloadingFileOid, self.ooid, self.delegate, filePath);
