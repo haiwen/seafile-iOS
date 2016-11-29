@@ -149,6 +149,7 @@
 }
 
 -(void)connection:(NSURLConnection *)connection willSendRequestForAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge {
+    Debug("authenticationMethod: %@", challenge.protectionSpace.authenticationMethod);
     if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
         NSURL* baseURL = [NSURL URLWithString:self.shibbolethUrl];
         if ([challenge.protectionSpace.host isEqualToString:baseURL.host] || SeafServerTrustIsValid(challenge.protectionSpace.serverTrust)) {
@@ -156,6 +157,11 @@
             [challenge.sender useCredential:[NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust] forAuthenticationChallenge:challenge];
         } else {
             NSLog(@"Not trusting connection to host %@", challenge.protectionSpace.host);
+        }
+    } else if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodClientCertificate]) {
+        Debug("Use NSURLAuthenticationMethodClientCertificate");
+        if (self.sconn.clientCred != nil) {
+            [challenge.sender useCredential:self.sconn.clientCred forAuthenticationChallenge:challenge];
         }
     }
     [challenge.sender continueWithoutCredentialForAuthenticationChallenge:challenge];

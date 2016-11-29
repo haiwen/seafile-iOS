@@ -100,7 +100,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @property NSMutableArray *uploadingArray;
 @property SeafDir *syncDir;
 @property (readonly) NSString *localUploadDir;
-@property NSURLCredential *clientCred;
 @end
 
 @implementation SeafConnection
@@ -159,7 +158,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }
     _clientIdentityKey = [_info objectForKey:@"identity"];
     if (_clientIdentityKey) {
-        self.clientCred = [SeafGlobal.sharedObject getCredentialForKey:_clientIdentityKey];
+        _clientCred = [SeafGlobal.sharedObject getCredentialForKey:_clientIdentityKey];
         Debug("Load client identity: %@, %@", _clientIdentityKey, self.clientCred);
     }
 
@@ -465,7 +464,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                 return NSURLSessionAuthChallengeCancelAuthenticationChallenge;
             } else {
                 _clientIdentityKey = key;
-                self.clientCred = *credential;
+                _clientCred = *credential;
                 [Utils dict:_info setObject:key forKey:@"identity"];
                 return NSURLSessionAuthChallengeUseCredential;
             }
