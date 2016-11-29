@@ -110,10 +110,20 @@
 {
     if (!_subDirs) {
         NSMutableArray *arr = [NSMutableArray new];
-        for (int i = 0; i < _directory.subDirs.count; ++i) {
-            SeafDir *dir = (SeafDir *)[_directory.items objectAtIndex:i];
-            if (!_chooseRepo || dir.editable) {
-                [arr addObject:dir];
+        if ([_directory isKindOfClass:[SeafRepos class]]) {
+            SeafRepos *repos = (SeafRepos *)_directory;
+            for (int i = 0; i < repos.repoGroups.count; ++i) {
+                for (SeafRepo *repo in [repos.repoGroups objectAtIndex:i]) {
+                    if (!_chooseRepo || repo.editable) {
+                        [arr addObject:repo];
+                    }
+                }
+            }
+        } else {
+            for (SeafDir *dir in _directory.subDirs) {
+                if (!_chooseRepo || dir.editable) {
+                    [arr addObject:dir];
+                }
             }
         }
         _subDirs = [NSArray arrayWithArray:arr];
@@ -140,13 +150,14 @@
     @try {
         SeafDir *sdir = [self.subDirs objectAtIndex:indexPath.row];
         cell.textLabel.text = sdir.name;
-        cell.textLabel.font = [UIFont systemFontOfSize:17];
         cell.imageView.image = sdir.icon;
         cell.detailTextLabel.text = @"";
         if ([sdir isKindOfClass:[SeafRepo class]]) {
             SeafRepo *repo = (SeafRepo *)sdir;
             if (repo.isGroupRepo) {
-                cell.detailTextLabel.text = repo.owner;
+                cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, %@", repo.detailText, repo.owner];
+            } else {
+                cell.detailTextLabel.text = repo.detailText;
             }
         }
     } @catch(NSException *exception) {

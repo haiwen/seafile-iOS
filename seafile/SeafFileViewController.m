@@ -192,7 +192,7 @@ enum {
 
     __weak typeof(self) weakSelf = self;
     [self.tableView addPullToRefreshWithActionHandler:^{
-        [self.tableView reloadData];
+        [weakSelf.tableView reloadData];
         if (weakSelf.searchDisplayController.active)
             return;
         if (![weakSelf checkNetworkStatus]) {
@@ -855,7 +855,7 @@ enum {
             return [self.searchResults objectAtIndex:indexPath.row];
         } else if (![_directory isKindOfClass:[SeafRepos class]])
             return [_directory.allItems objectAtIndex:[indexPath row]];
-        NSArray *repos = [[((SeafRepos *)_directory)repoGroups] objectAtIndex:[indexPath section]];
+        NSArray *repos = [[((SeafRepos *)_directory) repoGroups] objectAtIndex:[indexPath section]];
         return [repos objectAtIndex:[indexPath row]];
     } @catch(NSException *exception) {
         return nil;
