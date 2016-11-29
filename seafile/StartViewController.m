@@ -64,7 +64,7 @@
 
     NSArray *views = [[NSBundle mainBundle] loadNibNamed:@"SeafStartHeaderView" owner:self options:nil];
     UIView *header = [views objectAtIndex:0];
-    header.frame = CGRectMake(0,0, self.tableView.frame.size.width, 150);
+    header.frame = CGRectMake(0,0, self.tableView.frame.size.width, 156);
     header.autoresizesSubviews = YES;
     header.backgroundColor = [UIColor clearColor];
     UILabel *welcomeLable = (UILabel *)[header viewWithTag:100];
@@ -91,7 +91,7 @@
     self.footer = bt;
     [self.view addSubview:bt];
     self.footer.hidden = YES;
-    self.tableView.sectionHeaderHeight = 5;
+    self.tableView.sectionHeaderHeight = 9;
     [self.tableView reloadData];
 }
 
@@ -310,7 +310,7 @@
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    return 64;
+    return 66;
 }
 
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath
