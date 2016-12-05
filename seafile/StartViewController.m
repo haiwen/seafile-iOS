@@ -61,7 +61,7 @@
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeNone;
     [self setExtraCellLineHidden:self.tableView];
-    self.title = NSLocalizedString(@"Accounts", @"Seafile");;
+    self.title = NSLocalizedString(@"Accounts", @"Seafile");
 
     NSArray *views = [[NSBundle mainBundle] loadNibNamed:@"SeafStartHeaderView" owner:self options:nil];
     UIView *header = [views objectAtIndex:0];

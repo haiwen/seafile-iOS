@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		10CC62C9699DE05CBA3647E4 /* libPods-seafile-appstore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E2A39A0EBB6C3379F30D1A83 /* libPods-seafile-appstore.a */; };
 		11FAE5D19696AF534A19C252 /* libPods-SeafProvider.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 08E34A4BEBB32AD5D2CB9442 /* libPods-SeafProvider.a */; };
 		5704C6D31753A1380028F4FE /* IntelligentSplitViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6D11753A1380028F4FE /* IntelligentSplitViewController.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		5704C6F91756710F0028F4FE /* tab-account.png in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F51756710F0028F4FE /* tab-account.png */; };
@@ -74,7 +75,6 @@
 		5725392C1DE26C40007EAF57 /* SKFileTypeImageLoader.m in Sources */ = {isa = PBXBuildFile; fileRef = 572539111DE26C40007EAF57 /* SKFileTypeImageLoader.m */; };
 		5725392D1DE26C40007EAF57 /* UIImage+FileType.m in Sources */ = {isa = PBXBuildFile; fileRef = 572539131DE26C40007EAF57 /* UIImage+FileType.m */; };
 		5725392F1DE26C40007EAF57 /* Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 572539171DE26C40007EAF57 /* Utils.m */; };
-		572539441DE26C84007EAF57 /* seafile.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 572539301DE26C84007EAF57 /* seafile.xcdatamodeld */; };
 		572539451DE26C84007EAF57 /* application-msword.png in Resources */ = {isa = PBXBuildFile; fileRef = 572539331DE26C84007EAF57 /* application-msword.png */; };
 		572539461DE26C84007EAF57 /* application-pdf.png in Resources */ = {isa = PBXBuildFile; fileRef = 572539341DE26C84007EAF57 /* application-pdf.png */; };
 		572539471DE26C84007EAF57 /* application-vnd.ms-excel.png in Resources */ = {isa = PBXBuildFile; fileRef = 572539351DE26C84007EAF57 /* application-vnd.ms-excel.png */; };
@@ -142,6 +142,37 @@
 		573C3C651A15104B009675F9 /* seafile.entitlements in Resources */ = {isa = PBXBuildFile; fileRef = 573C3C641A15104B009675F9 /* seafile.entitlements */; };
 		573F4AAC1788763500F096D3 /* arrowleft.png in Resources */ = {isa = PBXBuildFile; fileRef = 573F4AA91788763500F096D3 /* arrowleft.png */; };
 		573F4AAE1788763500F096D3 /* arrowright.png in Resources */ = {isa = PBXBuildFile; fileRef = 573F4AAA1788763500F096D3 /* arrowright.png */; };
+		574D3D8E1DFA6EF90093C18C /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 57D189CE182E0A380029A797 /* Images.xcassets */; };
+		574D3D8F1DFA7B190093C18C /* SeafAccountCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 5795F49916A7266E00FF90E3 /* SeafAccountCell.m */; };
+		574D3D911DFA7B3E0093C18C /* ColorfulButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 572538E91DE26C40007EAF57 /* ColorfulButton.m */; };
+		574D3D941DFA7B3E0093C18C /* ExtentedString.m in Sources */ = {isa = PBXBuildFile; fileRef = 572538EC1DE26C40007EAF57 /* ExtentedString.m */; };
+		574D3D961DFA7B3E0093C18C /* FileMimeType.m in Sources */ = {isa = PBXBuildFile; fileRef = 572538EE1DE26C40007EAF57 /* FileMimeType.m */; };
+		574D3D971DFA7B3E0093C18C /* FileMimeType.plist in Sources */ = {isa = PBXBuildFile; fileRef = 572538EF1DE26C40007EAF57 /* FileMimeType.plist */; };
+		574D3D991DFA7B3E0093C18C /* FileSizeFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 572538F11DE26C40007EAF57 /* FileSizeFormatter.m */; };
+		574D3D9B1DFA7B3E0093C18C /* NSData+Encryption.m in Sources */ = {isa = PBXBuildFile; fileRef = 572538F31DE26C40007EAF57 /* NSData+Encryption.m */; };
+		574D3D9D1DFA7B3E0093C18C /* SeafAvatar.m in Sources */ = {isa = PBXBuildFile; fileRef = 572538F51DE26C40007EAF57 /* SeafAvatar.m */; };
+		574D3D9F1DFA7B3E0093C18C /* SeafBase.m in Sources */ = {isa = PBXBuildFile; fileRef = 572538F71DE26C40007EAF57 /* SeafBase.m */; };
+		574D3DA11DFA7B3E0093C18C /* SeafConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 572538F91DE26C40007EAF57 /* SeafConnection.m */; };
+		574D3DA31DFA7B3E0093C18C /* SeafData.m in Sources */ = {isa = PBXBuildFile; fileRef = 572538FB1DE26C40007EAF57 /* SeafData.m */; };
+		574D3DA51DFA7B3E0093C18C /* SeafDateFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 572538FD1DE26C40007EAF57 /* SeafDateFormatter.m */; };
+		574D3DA71DFA7B3E0093C18C /* SeafDir.m in Sources */ = {isa = PBXBuildFile; fileRef = 572538FF1DE26C40007EAF57 /* SeafDir.m */; };
+		574D3DA91DFA7B3E0093C18C /* SeafFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 572539011DE26C40007EAF57 /* SeafFile.m */; };
+		574D3DAB1DFA7B3E0093C18C /* SeafGlobal.m in Sources */ = {isa = PBXBuildFile; fileRef = 572539031DE26C40007EAF57 /* SeafGlobal.m */; };
+		574D3DAF1DFA7B3E0093C18C /* SeafRepos.m in Sources */ = {isa = PBXBuildFile; fileRef = 572539071DE26C40007EAF57 /* SeafRepos.m */; };
+		574D3DB11DFA7B3E0093C18C /* SeafStarredFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 572539091DE26C40007EAF57 /* SeafStarredFile.m */; };
+		574D3DB31DFA7B3E0093C18C /* SeafThumb.m in Sources */ = {isa = PBXBuildFile; fileRef = 5725390B1DE26C40007EAF57 /* SeafThumb.m */; };
+		574D3DB51DFA7B3E0093C18C /* SeafUploadFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 5725390D1DE26C40007EAF57 /* SeafUploadFile.m */; };
+		574D3DB71DFA7B3E0093C18C /* SecurityUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 5725390F1DE26C40007EAF57 /* SecurityUtilities.m */; };
+		574D3DB91DFA7B3E0093C18C /* SKFileTypeImageLoader.m in Sources */ = {isa = PBXBuildFile; fileRef = 572539111DE26C40007EAF57 /* SKFileTypeImageLoader.m */; };
+		574D3DBB1DFA7B3E0093C18C /* UIImage+FileType.m in Sources */ = {isa = PBXBuildFile; fileRef = 572539131DE26C40007EAF57 /* UIImage+FileType.m */; };
+		574D3DBD1DFA7B3E0093C18C /* Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 572539171DE26C40007EAF57 /* Utils.m */; };
+		574D3DBE1DFA7FC50093C18C /* seafile.xcdatamodeld in Resources */ = {isa = PBXBuildFile; fileRef = 572539301DE26C84007EAF57 /* seafile.xcdatamodeld */; };
+		574D3DC11DFA814C0093C18C /* seafile.xcdatamodeld in Resources */ = {isa = PBXBuildFile; fileRef = 572539301DE26C84007EAF57 /* seafile.xcdatamodeld */; };
+		574D3DC21DFA815B0093C18C /* SeafAccountCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22AF91A12625B00C92330 /* SeafAccountCell.xib */; };
+		574D3DC31DFA84360093C18C /* account.png in Resources */ = {isa = PBXBuildFile; fileRef = 572539561DE26CD9007EAF57 /* account.png */; };
+		574D3DC41DFA84400093C18C /* account.png in Resources */ = {isa = PBXBuildFile; fileRef = 572539561DE26CD9007EAF57 /* account.png */; };
+		574D3DC51DFA86540093C18C /* UIViewController+Extend.m in Sources */ = {isa = PBXBuildFile; fileRef = 572539581DE2722D007EAF57 /* UIViewController+Extend.m */; };
+		574D3DC81DFA88CF0093C18C /* SeafActionDirViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 574D3DC71DFA88CF0093C18C /* SeafActionDirViewController.m */; };
 		574DF02C1AF2863E0044FE06 /* SeafShibbolethViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 574DF02A1AF2863E0044FE06 /* SeafShibbolethViewController.xib */; };
 		574F61F71BDB5DB300014EBA /* SeafButtonCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 574F61F51BDB5DB300014EBA /* SeafButtonCell.m */; };
 		57532C1A1868AA48003D564B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 57532C161868AA48003D564B /* Localizable.strings */; };
@@ -214,6 +245,9 @@
 		57A95E5F18369E5A009D268A /* ellipsis.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A95E5C18369E5A009D268A /* ellipsis.png */; };
 		57A95E6118369E5A009D268A /* ellipsis2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A95E5D18369E5A009D268A /* ellipsis2.png */; };
 		57ABE5FB187925B300145FE3 /* CoreText.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 576B9918186142EC00A16ED6 /* CoreText.framework */; };
+		57B14B6E1DF5325B0045112E /* ActionViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57B14B6D1DF5325B0045112E /* ActionViewController.m */; };
+		57B14B711DF5325B0045112E /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57B14B6F1DF5325B0045112E /* MainInterface.storyboard */; };
+		57B14B751DF5325B0045112E /* SeafAction.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 57B14B6A1DF5325A0045112E /* SeafAction.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		57BD932F174DDA8700F7732F /* group.png in Resources */ = {isa = PBXBuildFile; fileRef = 57BD932D174DDA8700F7732F /* group.png */; };
 		57C03F3A17FB227100F7B575 /* addmsg2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57C03F3817FB227100F7B575 /* addmsg2.png */; };
 		57C03F4617FB271100F7B575 /* unstar2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57C03F3B17FB271100F7B575 /* unstar2.png */; };
@@ -255,7 +289,7 @@
 		57F8CD2C1A127566000F6CDC /* SeafTextEditorViewController_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22B091A12625B00C92330 /* SeafTextEditorViewController_iPad.xib */; };
 		57F8CD2D1A127566000F6CDC /* SeafTextEditorViewController_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22B0B1A12625B00C92330 /* SeafTextEditorViewController_iPhone.xib */; };
 		57F8CD2F1A127566000F6CDC /* SeafUploadingFileCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22B0F1A12625C00C92330 /* SeafUploadingFileCell.xib */; };
-		78F78A000DDDB25C1A93B904 /* Pods_seafile_appstore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC2B43DD81BD6257512CFCA3 /* Pods_seafile_appstore.framework */; };
+		7354777D2C3444E394BB2F31 /* libPods-SeafAction.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 159E0D2A7419F67E532A240F /* libPods-SeafAction.a */; };
 		FE5D80C9DA6AB7339F81D3AD /* libPods-SeafProviderFileProvider.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3DFD7A698B44546A8DDD2D26 /* libPods-SeafProviderFileProvider.a */; };
 /* End PBXBuildFile section */
 
@@ -286,6 +320,13 @@
 			remoteGlobalIDString = 57A0295E1A16F8AC009C9D7B;
 			remoteInfo = SeafProvider;
 		};
+		57B14B731DF5325B0045112E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 57DB826415A833F900097CEC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 57B14B691DF5325A0045112E;
+			remoteInfo = SeafAction;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -297,6 +338,7 @@
 			files = (
 				57A0297A1A16F8AD009C9D7B /* SeafProvider.appex in Embed App Extensions */,
 				57A029771A16F8AD009C9D7B /* SeafProviderFileProvider.appex in Embed App Extensions */,
+				57B14B751DF5325B0045112E /* SeafAction.appex in Embed App Extensions */,
 			);
 			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -307,6 +349,7 @@
 		08E34A4BEBB32AD5D2CB9442 /* libPods-SeafProvider.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SeafProvider.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		0AC7D46EF997A8FF83A3AD84 /* Pods-SeafProvider.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafProvider.release.xcconfig"; path = "Pods/Target Support Files/Pods-SeafProvider/Pods-SeafProvider.release.xcconfig"; sourceTree = "<group>"; };
 		14F713F28AC94AB8901C31BF /* Pods-seafile-appstore.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-seafile-appstore.release.xcconfig"; path = "Pods/Target Support Files/Pods-seafile-appstore/Pods-seafile-appstore.release.xcconfig"; sourceTree = "<group>"; };
+		159E0D2A7419F67E532A240F /* libPods-SeafAction.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SeafAction.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2979DE872836DD67FEA29262 /* Pods-SeafProviderFileProvider.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafProviderFileProvider.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SeafProviderFileProvider/Pods-SeafProviderFileProvider.debug.xcconfig"; sourceTree = "<group>"; };
 		3DFD7A698B44546A8DDD2D26 /* libPods-SeafProviderFileProvider.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SeafProviderFileProvider.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5704C6D01753A1380028F4FE /* IntelligentSplitViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IntelligentSplitViewController.h; sourceTree = "<group>"; };
@@ -417,6 +460,8 @@
 		573F4AA91788763500F096D3 /* arrowleft.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = arrowleft.png; sourceTree = "<group>"; };
 		573F4AAA1788763500F096D3 /* arrowright.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = arrowright.png; sourceTree = "<group>"; };
 		574456821774922B00EA46A6 /* SeafAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafAppDelegate.h; sourceTree = "<group>"; };
+		574D3DC61DFA88CF0093C18C /* SeafActionDirViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafActionDirViewController.h; sourceTree = "<group>"; };
+		574D3DC71DFA88CF0093C18C /* SeafActionDirViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafActionDirViewController.m; sourceTree = "<group>"; };
 		574DF02B1AF2863E0044FE06 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/SeafShibbolethViewController.xib; sourceTree = "<group>"; };
 		574F61F41BDB5DB300014EBA /* SeafButtonCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafButtonCell.h; sourceTree = "<group>"; };
 		574F61F51BDB5DB300014EBA /* SeafButtonCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafButtonCell.m; sourceTree = "<group>"; };
@@ -516,6 +561,12 @@
 		57A95E5D18369E5A009D268A /* ellipsis2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ellipsis2.png; sourceTree = "<group>"; };
 		57AE2ECD1B45663E003F1672 /* nb */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nb; path = nb.lproj/Localizable.strings; sourceTree = "<group>"; };
 		57AE699418C1C0A200AEBF8B /* ca */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ca; path = ca.lproj/Localizable.strings; sourceTree = "<group>"; };
+		57B14B6A1DF5325A0045112E /* SeafAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SeafAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		57B14B6C1DF5325B0045112E /* ActionViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ActionViewController.h; sourceTree = "<group>"; };
+		57B14B6D1DF5325B0045112E /* ActionViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ActionViewController.m; sourceTree = "<group>"; };
+		57B14B701DF5325B0045112E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
+		57B14B721DF5325B0045112E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		57B14B791DF7EA300045112E /* SeafAction.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SeafAction.entitlements; sourceTree = "<group>"; };
 		57B66EAF15BA513E00C2B41B /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		57BD932D174DDA8700F7732F /* group.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = group.png; sourceTree = "<group>"; };
 		57C03F3817FB227100F7B575 /* addmsg2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = addmsg2.png; sourceTree = "<group>"; };
@@ -580,10 +631,12 @@
 		57F8CD1E1A127544000F6CDC /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/SeafTextEditorViewController_iPhone.xib; sourceTree = "<group>"; };
 		57F8CD201A12754E000F6CDC /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/SeafUploadingFileCell.xib; sourceTree = "<group>"; };
 		67C8B56C448237DC7BB99D18 /* Pods-SeafProvider.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafProvider.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SeafProvider/Pods-SeafProvider.debug.xcconfig"; sourceTree = "<group>"; };
+		9AF30EE6039454E8B0967C09 /* Pods-SeafAction.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafAction.release.xcconfig"; path = "Pods/Target Support Files/Pods-SeafAction/Pods-SeafAction.release.xcconfig"; sourceTree = "<group>"; };
 		AB170391198116EFF77DDDA5 /* Pods-seafile-appstore.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-seafile-appstore.debug.xcconfig"; path = "Pods/Target Support Files/Pods-seafile-appstore/Pods-seafile-appstore.debug.xcconfig"; sourceTree = "<group>"; };
-		AC2B43DD81BD6257512CFCA3 /* Pods_seafile_appstore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_seafile_appstore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		DE6E97E6F025F693FDC9CCB1 /* Pods-SeafProviderFileProvider.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafProviderFileProvider.release.xcconfig"; path = "Pods/Target Support Files/Pods-SeafProviderFileProvider/Pods-SeafProviderFileProvider.release.xcconfig"; sourceTree = "<group>"; };
+		E2A39A0EBB6C3379F30D1A83 /* libPods-seafile-appstore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-seafile-appstore.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E4F46F57187B44B200B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		EE1E1FA7502D3F04292B11CB /* Pods-SeafAction.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafAction.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SeafAction/Pods-SeafAction.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -605,7 +658,7 @@
 				571D8CE21677881400F1A22C /* Foundation.framework in Frameworks */,
 				571D8CE31677881400F1A22C /* CoreGraphics.framework in Frameworks */,
 				571D8CE41677881400F1A22C /* CoreData.framework in Frameworks */,
-				78F78A000DDDB25C1A93B904 /* Pods_seafile_appstore.framework in Frameworks */,
+				10CC62C9699DE05CBA3647E4 /* libPods-seafile-appstore.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -625,6 +678,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		57B14B671DF5325A0045112E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7354777D2C3444E394BB2F31 /* libPods-SeafAction.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -637,6 +698,8 @@
 				DE6E97E6F025F693FDC9CCB1 /* Pods-SeafProviderFileProvider.release.xcconfig */,
 				AB170391198116EFF77DDDA5 /* Pods-seafile-appstore.debug.xcconfig */,
 				14F713F28AC94AB8901C31BF /* Pods-seafile-appstore.release.xcconfig */,
+				EE1E1FA7502D3F04292B11CB /* Pods-SeafAction.debug.xcconfig */,
+				9AF30EE6039454E8B0967C09 /* Pods-SeafAction.release.xcconfig */,
 			);
 			name = Pods;
 			sourceTree = "<group>";
@@ -966,10 +1029,25 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
+		57B14B6B1DF5325A0045112E /* SeafAction */ = {
+			isa = PBXGroup;
+			children = (
+				57B14B791DF7EA300045112E /* SeafAction.entitlements */,
+				57B14B6C1DF5325B0045112E /* ActionViewController.h */,
+				57B14B6D1DF5325B0045112E /* ActionViewController.m */,
+				57B14B6F1DF5325B0045112E /* MainInterface.storyboard */,
+				57B14B721DF5325B0045112E /* Info.plist */,
+				574D3DC61DFA88CF0093C18C /* SeafActionDirViewController.h */,
+				574D3DC71DFA88CF0093C18C /* SeafActionDirViewController.m */,
+			);
+			path = SeafAction;
+			sourceTree = "<group>";
+		};
 		57DB826215A833F900097CEC = {
 			isa = PBXGroup;
 			children = (
 				572538E31DE26B26007EAF57 /* Pod */,
+				57B14B6B1DF5325A0045112E /* SeafAction */,
 				57DB827015A833FA00097CEC /* Frameworks */,
 				57D189CE182E0A380029A797 /* Images.xcassets */,
 				356B8B1C9F847DA37F0EFE1E /* Pods */,
@@ -986,6 +1064,7 @@
 				571D8DBA1677881400F1A22C /* SeafilePro.app */,
 				57A0295F1A16F8AC009C9D7B /* SeafProvider.appex */,
 				57A0296D1A16F8AD009C9D7B /* SeafProviderFileProvider.appex */,
+				57B14B6A1DF5325A0045112E /* SeafAction.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1009,7 +1088,8 @@
 				57DB827115A833FA00097CEC /* UIKit.framework */,
 				08E34A4BEBB32AD5D2CB9442 /* libPods-SeafProvider.a */,
 				3DFD7A698B44546A8DDD2D26 /* libPods-SeafProviderFileProvider.a */,
-				AC2B43DD81BD6257512CFCA3 /* Pods_seafile_appstore.framework */,
+				159E0D2A7419F67E532A240F /* libPods-SeafAction.a */,
+				E2A39A0EBB6C3379F30D1A83 /* libPods-seafile-appstore.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -1064,6 +1144,7 @@
 			dependencies = (
 				57A029761A16F8AD009C9D7B /* PBXTargetDependency */,
 				57A029791A16F8AD009C9D7B /* PBXTargetDependency */,
+				57B14B741DF5325B0045112E /* PBXTargetDependency */,
 			);
 			name = "seafile-appstore";
 			productName = seafile;
@@ -1110,6 +1191,26 @@
 			name = SeafProviderFileProvider;
 			productName = SeafProviderFileProvider;
 			productReference = 57A0296D1A16F8AD009C9D7B /* SeafProviderFileProvider.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		57B14B691DF5325A0045112E /* SeafAction */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 57B14B781DF5325B0045112E /* Build configuration list for PBXNativeTarget "SeafAction" */;
+			buildPhases = (
+				8C4F472736EA3B11C9C44670 /* [CP] Check Pods Manifest.lock */,
+				57B14B661DF5325A0045112E /* Sources */,
+				57B14B671DF5325A0045112E /* Frameworks */,
+				57B14B681DF5325A0045112E /* Resources */,
+				81B8C71BFA18DC8A4B3B53C8 /* [CP] Embed Pods Frameworks */,
+				B517FD8CB748C1F6D38B961A /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SeafAction;
+			productName = SeafAction;
+			productReference = 57B14B6A1DF5325A0045112E /* SeafAction.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
@@ -1160,6 +1261,19 @@
 							};
 						};
 					};
+					57B14B691DF5325A0045112E = {
+						CreatedOnToolsVersion = 8.1;
+						DevelopmentTeam = 55LCTZ5354;
+						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
+							com.apple.Keychain = {
+								enabled = 1;
+							};
+						};
+					};
 				};
 			};
 			buildConfigurationList = 57DB826715A833F900097CEC /* Build configuration list for PBXProject "seafilePro" */;
@@ -1195,6 +1309,7 @@
 				571D8CA91677881400F1A22C /* seafile-appstore */,
 				57A0295E1A16F8AC009C9D7B /* SeafProvider */,
 				57A0296C1A16F8AD009C9D7B /* SeafProviderFileProvider */,
+				57B14B691DF5325A0045112E /* SeafAction */,
 			);
 		};
 /* End PBXProject section */
@@ -1340,6 +1455,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				574D3DC41DFA84400093C18C /* account.png in Resources */,
 				57A192161A208F1600985F77 /* SeafAccountCell.xib in Resources */,
 				57A029A51A170147009C9D7B /* SeafProviderFileViewController.storyboard in Resources */,
 				577C6F391AB07B910043A833 /* Settings.bundle in Resources */,
@@ -1352,8 +1468,21 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				574D3DBE1DFA7FC50093C18C /* seafile.xcdatamodeld in Resources */,
 				577C6F3A1AB07B910043A833 /* Settings.bundle in Resources */,
 				57A029A01A16F965009C9D7B /* SeafProviderFileProvider.entitlements in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		57B14B681DF5325A0045112E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				574D3DC31DFA84360093C18C /* account.png in Resources */,
+				574D3DC21DFA815B0093C18C /* SeafAccountCell.xib in Resources */,
+				574D3DC11DFA814C0093C18C /* seafile.xcdatamodeld in Resources */,
+				57B14B711DF5325B0045112E /* MainInterface.storyboard in Resources */,
+				574D3D8E1DFA6EF90093C18C /* Images.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1431,6 +1560,36 @@
 			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
+		81B8C71BFA18DC8A4B3B53C8 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-SeafAction/Pods-SeafAction-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		8C4F472736EA3B11C9C44670 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
+			showEnvVarsInLog = 0;
+		};
 		A61BB71E2E0642962D9F33F2 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -1444,6 +1603,21 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-SeafProvider/Pods-SeafProvider-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		B517FD8CB748C1F6D38B961A /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Copy Pods Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-SeafAction/Pods-SeafAction-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		BF77F73BB58D4586C699D417 /* [CP] Copy Pods Resources */ = {
@@ -1560,7 +1734,6 @@
 				577B6C6616AADBA3008E82C2 /* SeafCell.m in Sources */,
 				572539291DE26C40007EAF57 /* SeafThumb.m in Sources */,
 				5725391E1DE26C40007EAF57 /* NSData+Encryption.m in Sources */,
-				572539441DE26C84007EAF57 /* seafile.xcdatamodeld in Sources */,
 				57DA26F5173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */,
 				5725391D1DE26C40007EAF57 /* FileSizeFormatter.m in Sources */,
 				5757DCCD1AEBCF1600BC0426 /* SeafShibbolethViewController.m in Sources */,
@@ -1640,6 +1813,39 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		57B14B661DF5325A0045112E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				574D3DC81DFA88CF0093C18C /* SeafActionDirViewController.m in Sources */,
+				574D3DC51DFA86540093C18C /* UIViewController+Extend.m in Sources */,
+				574D3D911DFA7B3E0093C18C /* ColorfulButton.m in Sources */,
+				574D3D941DFA7B3E0093C18C /* ExtentedString.m in Sources */,
+				574D3D961DFA7B3E0093C18C /* FileMimeType.m in Sources */,
+				574D3D971DFA7B3E0093C18C /* FileMimeType.plist in Sources */,
+				574D3D991DFA7B3E0093C18C /* FileSizeFormatter.m in Sources */,
+				574D3D9B1DFA7B3E0093C18C /* NSData+Encryption.m in Sources */,
+				574D3D9D1DFA7B3E0093C18C /* SeafAvatar.m in Sources */,
+				574D3D9F1DFA7B3E0093C18C /* SeafBase.m in Sources */,
+				574D3DA11DFA7B3E0093C18C /* SeafConnection.m in Sources */,
+				574D3DA31DFA7B3E0093C18C /* SeafData.m in Sources */,
+				574D3DA51DFA7B3E0093C18C /* SeafDateFormatter.m in Sources */,
+				574D3DA71DFA7B3E0093C18C /* SeafDir.m in Sources */,
+				574D3DA91DFA7B3E0093C18C /* SeafFile.m in Sources */,
+				574D3DAB1DFA7B3E0093C18C /* SeafGlobal.m in Sources */,
+				574D3DAF1DFA7B3E0093C18C /* SeafRepos.m in Sources */,
+				574D3DB11DFA7B3E0093C18C /* SeafStarredFile.m in Sources */,
+				574D3DB31DFA7B3E0093C18C /* SeafThumb.m in Sources */,
+				574D3DB51DFA7B3E0093C18C /* SeafUploadFile.m in Sources */,
+				574D3DB71DFA7B3E0093C18C /* SecurityUtilities.m in Sources */,
+				574D3DB91DFA7B3E0093C18C /* SKFileTypeImageLoader.m in Sources */,
+				574D3DBB1DFA7B3E0093C18C /* UIImage+FileType.m in Sources */,
+				574D3DBD1DFA7B3E0093C18C /* Utils.m in Sources */,
+				574D3D8F1DFA7B190093C18C /* SeafAccountCell.m in Sources */,
+				57B14B6E1DF5325B0045112E /* ActionViewController.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -1652,6 +1858,11 @@
 			isa = PBXTargetDependency;
 			target = 57A0295E1A16F8AC009C9D7B /* SeafProvider */;
 			targetProxy = 57A029781A16F8AD009C9D7B /* PBXContainerItemProxy */;
+		};
+		57B14B741DF5325B0045112E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 57B14B691DF5325A0045112E /* SeafAction */;
+			targetProxy = 57B14B731DF5325B0045112E /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1703,6 +1914,14 @@
 				57642A371B8E062800C32B92 /* pt-BR */,
 			);
 			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		57B14B6F1DF5325B0045112E /* MainInterface.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				57B14B701DF5325B0045112E /* Base */,
+			);
+			name = MainInterface.storyboard;
 			sourceTree = "<group>";
 		};
 		57DB827C15A833FA00097CEC /* InfoPlist.strings */ = {
@@ -2062,6 +2281,76 @@
 			};
 			name = Release;
 		};
+		57B14B761DF5325B0045112E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = EE1E1FA7502D3F04292B11CB /* Pods-SeafAction.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = ExtActionIcon;
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVES = YES;
+				CODE_SIGN_ENTITLEMENTS = SeafAction/SeafAction.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 55LCTZ5354;
+				EMBED_ASSET_PACKS_IN_PRODUCT_BUNDLE = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				INFOPLIST_FILE = SeafAction/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MTL_ENABLE_DEBUG_INFO = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro.SeafAction;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		57B14B771DF5325B0045112E /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9AF30EE6039454E8B0967C09 /* Pods-SeafAction.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = ExtActionIcon;
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVES = YES;
+				CODE_SIGN_ENTITLEMENTS = SeafAction/SeafAction.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Distribution";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 55LCTZ5354;
+				EMBED_ASSET_PACKS_IN_PRODUCT_BUNDLE = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				INFOPLIST_FILE = SeafAction/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MTL_ENABLE_DEBUG_INFO = NO;
+				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro.SeafAction;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
 		57DB829415A833FA00097CEC /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -2179,6 +2468,15 @@
 			buildConfigurations = (
 				57A0297F1A16F8AD009C9D7B /* Debug */,
 				57A029801A16F8AD009C9D7B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		57B14B781DF5325B0045112E /* Build configuration list for PBXNativeTarget "SeafAction" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				57B14B761DF5325B0045112E /* Debug */,
+				57B14B771DF5325B0045112E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

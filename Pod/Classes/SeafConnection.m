@@ -1030,13 +1030,13 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)downloadAvatar:(BOOL)force;
 {
-    Debug("%@, %d\n", self.address, [self authorized]);
     if (![self authorized])
         return;
     if (!force && self.realAvatar && [self.avatarLastUpdate timeIntervalSinceNow] > -24*3600)
         return;
     if (!force && [self.avatarLastUpdate timeIntervalSinceNow] > -300.0f)
         return;
+    Debug("%@, %d\n", self.address, [self authorized]);
     SeafUserAvatar *avatar = [[SeafUserAvatar alloc] initWithConnection:self username:self.username];
     [SeafGlobal.sharedObject addDownloadTask:avatar];
     self.avatarLastUpdate = [NSDate date];

@@ -21,3 +21,7 @@ end
 target :"SeafProviderFileProvider" do
   shared
 end
+
+target :"SeafAction" do
+  shared
+end
