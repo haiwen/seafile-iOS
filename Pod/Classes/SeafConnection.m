@@ -550,6 +550,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     [SeafGlobal.sharedObject removeObjectForKey:_address];
     [SeafGlobal.sharedObject removeObjectForKey:[NSString stringWithFormat:@"%@/%@", _address, self.username]];
+    [SeafGlobal.sharedObject removeObjectForKey:[NSString stringWithFormat:@"%@/%@/settings", _address, self.username]];
+
     NSString *path = [self certPathForHost:[self host]];
     [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
     [SeafAvatar clearCache];
@@ -568,16 +570,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          NSDictionary *account = JSON;
          Debug("account detail:%@", account);
-         NSString *oldUsername = self.username;
-         NSString *newUsername = [account objectForKey:@"email"];
          [Utils dict:_info setObject:[account objectForKey:@"total"] forKey:@"total"];
-         [Utils dict:_info setObject:[account objectForKey:@"total"] forKey:@"total"];
+         [Utils dict:_info setObject:[account objectForKey:@"email"] forKey:@"email"];
          [Utils dict:_info setObject:[account objectForKey:@"usage"] forKey:@"usage"];
+         [Utils dict:_info setObject:[account objectForKey:@"name"] forKey:@"name"];
          [Utils dict:_info setObject:_address forKey:@"link"];
-         if (![oldUsername isEqualToString:newUsername]) {
-             [SeafGlobal.sharedObject removeObjectForKey:[NSString stringWithFormat:@"%@/%@", _address, self.username]];
-             [Utils dict:_info setObject:newUsername forKey:@"username"];
-         }
          [self saveAccountInfo];
          if (handler) handler(true);
      }
