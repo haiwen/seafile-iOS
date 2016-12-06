@@ -19,6 +19,7 @@
 #import "ExtentedString.h"
 #import "Debug.h"
 
+#define TABLE_HEADER_HEIGHT 100
 
 @interface StartViewController ()<UIDocumentPickerDelegate>
 @property (retain) ColorfulButton *footer;
@@ -64,8 +65,7 @@
 
     NSArray *views = [[NSBundle mainBundle] loadNibNamed:@"SeafStartHeaderView" owner:self options:nil];
     UIView *header = [views objectAtIndex:0];
-    header.frame = CGRectMake(0,0, self.tableView.frame.size.width, 156);
-    header.autoresizesSubviews = YES;
+    header.frame = CGRectMake(0,0, self.tableView.frame.size.width, TABLE_HEADER_HEIGHT);
     header.backgroundColor = [UIColor clearColor];
     UILabel *welcomeLable = (UILabel *)[header viewWithTag:100];
     UILabel *msgLabel = (UILabel *)[header viewWithTag:101];
@@ -83,8 +83,8 @@
     bt.layer.cornerRadius = 0;
     bt.layer.borderWidth = 1.0f;
     bt.layer.masksToBounds = YES;
-    bt.backgroundColor = [UIColor clearColor];
-    [bt.layer setBorderColor:[[UIColor grayColor] CGColor]];
+    bt.layer.borderColor = [[UIColor grayColor] CGColor];
+    bt.backgroundColor = [UIColor colorWithRed:227.0/255.0 green:227.0/255.0 blue:227.0/255.0 alpha:1.0];
     [bt setTitleColor:[UIColor colorWithRed:112/255.0 green:112/255.0 blue:112/255.0 alpha:1.0] forState:UIControlStateNormal];
     [bt setTitle:NSLocalizedString(@"Back to Last Account", @"Seafile") forState:UIControlStateNormal];
     bt.showsTouchWhenHighlighted = true;
@@ -169,6 +169,7 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     self.footer.hidden = !([self checkLastAccount]);
+    self.tableView.tableHeaderView.frame = CGRectMake(0,0, self.tableView.frame.size.width, TABLE_HEADER_HEIGHT);
     [self.tableView reloadData];
     [super viewWillAppear:animated];
 }
@@ -176,10 +177,7 @@
 - (void)viewWillLayoutSubviews
 {
     [super viewWillLayoutSubviews];
-    ColorfulButton *bt = self.footer;
-    bt.frame = CGRectMake(self.view.frame.origin.x-1, self.view.frame.size.height-57, self.tableView.frame.size.width+2, 58);
-    bt.backgroundColor = [UIColor colorWithRed:227.0/255.0 green:227.0/255.0 blue:227.0/255.0 alpha:1.0];
-    [bt.layer setBorderColor:[[UIColor grayColor] CGColor]];
+    self.footer.frame = CGRectMake(self.view.frame.origin.x-1, self.view.frame.size.height-57, self.tableView.frame.size.width+2, 58);
 }
 
 - (void)viewDidUnload
@@ -326,6 +324,17 @@
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
 {
     return [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 20)];
+}
+
+- (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id <UIViewControllerTransitionCoordinator>)coordinator
+{
+    [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
+
+    [coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+        self.tableView.tableHeaderView.frame = CGRectMake(0,0, size.width, TABLE_HEADER_HEIGHT);
+        self.tableView.tableHeaderView = self.tableView.tableHeaderView;
+    } completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+    }];
 }
 
 #pragma mark - Table view delegate
