@@ -8,15 +8,17 @@
 
 #import "ActionViewController.h"
 #import <MobileCoreServices/MobileCoreServices.h>
+#import "SeafActionDirViewController.h"
 #import "SeafGlobal.h"
 #import "SeafAccountCell.h"
 #import "UIViewController+Extend.h"
 #import "Debug.h"
+#import "Utils.h"
 
 @interface ActionViewController ()<UITableViewDataSource, UITableViewDelegate>
-@property (strong) IBOutlet UITableView *tableView;
 
 @property (strong) NSArray *conns;
+@property (strong) SeafUploadFile *ufile;
 
 @end
 
@@ -24,51 +26,64 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.tableView.delegate = self;
-    self.tableView.dataSource = self;
 
     [SeafGlobal.sharedObject loadAccounts];
     _conns = SeafGlobal.sharedObject.conns;
 
     // Get the item[s] we're handling from the extension context.
-    
+
     // For example, look for an image and place it into an image view.
     // Replace this with something appropriate for the type[s] your extension supports.
-    BOOL imageFound = NO;
     for (NSExtensionItem *item in self.extensionContext.inputItems) {
         for (NSItemProvider *itemProvider in item.attachments) {
-            if ([itemProvider hasItemConformingToTypeIdentifier:(NSString *)kUTTypeImage]) {
-                // This is an image. We'll load it, then place it in our image view.
-                [itemProvider loadItemForTypeIdentifier:(NSString *)kUTTypeImage options:nil completionHandler:^(UIImage *image, NSError *error) {
-                    if(image) {
-                        [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-                        }];
+            Debug("itemProvider: %@", itemProvider);
+            if ([itemProvider hasItemConformingToTypeIdentifier:(NSString *)kUTTypeURL]) {
+                [itemProvider loadItemForTypeIdentifier:(NSString *)kUTTypeURL options:nil completionHandler:^(NSURL *url, NSError *error) {
+                    Debug("Received file : %@", url);
+                    NSString *tmpdir = [SeafGlobal.sharedObject uniqueDirUnder:SeafGlobal.sharedObject.tempDir];
+                    if (![Utils checkMakeDir:tmpdir]) {
+                        Warning("Failed to create temp dir.");
+                        return [self alertWithTitle:NSLocalizedString(@"Failed to upload file", @"Seafile") handler:nil];
                     }
+                    NSString *name = url.lastPathComponent;
+                    NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
+                    BOOL ret = [Utils copyFile:url to:targetUrl];
+                    if (!ret) {
+                        Warning("Failed to access file.");
+                        return [self alertWithTitle:NSLocalizedString(@"Failed to upload file", @"Seafile") handler:nil];
+                    }
+                    Debug("Upload file %@ %lld", targetUrl, [Utils fileSizeAtPath1:targetUrl.path]);
+                    _ufile = [[SeafUploadFile alloc] initWithPath:targetUrl.path];
                 }];
-                
-                imageFound = YES;
                 break;
             }
         }
-        
-        if (imageFound) {
-            // We only handle one image, so stop looking for more.
+
+        if (_ufile) {
+            // We only handle one file, so stop looking for more.
             break;
         }
     }
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeNone;
+
+    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancel:)];
+    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Accounts", @"Seafile")
+                                                                             style:UIBarButtonItemStylePlain
+                                                                            target:nil
+                                                                            action:nil];
 }
+
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
 
-- (IBAction)done {
-    // Return any edited content to the host app.
-    // This template doesn't do anything, so we just echo the passed in items.
-    [self.extensionContext completeRequestReturningItems:self.extensionContext.inputItems completionHandler:nil];
+- (IBAction)cancel:(id)sender
+{
+    [_ufile doRemove];
+   [self.extensionContext completeRequestReturningItems:self.extensionContext.inputItems completionHandler:nil];
 }
 
 #pragma mark - Table view data source
@@ -97,6 +112,7 @@
     cell.imageview.clipsToBounds = YES;
     return cell;
 }
+
 #pragma mark - Table view delegate
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
@@ -107,17 +123,17 @@
     }
     [self checkTouchId:^(bool success) {
         if (success) {
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.), dispatch_get_main_queue(), ^{
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.0), dispatch_get_main_queue(), ^{
                 [self pushViewControllerDir:(SeafDir *)conn.rootFolder];
             });
         }
     }];
-    
 }
 
 - (void)pushViewControllerDir:(SeafDir *)dir
 {
-
+    SeafActionDirViewController *controller = [[SeafActionDirViewController alloc] initWithSeafDir:dir file:self.ufile];
+    [self.navigationController pushViewController:controller animated:true];
 }
 
 @end

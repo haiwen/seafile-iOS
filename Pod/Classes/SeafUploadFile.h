@@ -45,6 +45,7 @@
 - (void)setAsset:(ALAsset *)asset url:(NSURL *)url;
 - (void)doUpload;
 
+- (void)cancel;
 - (void)doRemove;
 - (BOOL)canUpload;
 - (BOOL)uploaded;

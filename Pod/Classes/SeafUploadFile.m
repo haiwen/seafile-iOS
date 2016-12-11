@@ -109,6 +109,13 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     return _assetURL;
 }
 
+- (void)cancel
+{
+    Debug("Cancel uploadFile: %@", self.lpath);
+    self.udir = nil;
+    [self.task cancel];
+}
+
 - (void)doRemove
 {
     Debug("Remove uploadFile: %@", self.lpath);

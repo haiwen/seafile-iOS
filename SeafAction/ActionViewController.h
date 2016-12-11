@@ -8,6 +8,6 @@
 
 #import <UIKit/UIKit.h>
 
-@interface ActionViewController : UIViewController
+@interface ActionViewController : UITableViewController
 
 @end

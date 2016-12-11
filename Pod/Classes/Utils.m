@@ -121,7 +121,14 @@
 {
     NSFileManager* manager = [NSFileManager defaultManager];
     if ([manager fileExistsAtPath:filePath]){
-        return [[manager attributesOfItemAtPath:filePath error:nil] fileSize];
+        NSError *error = nil;
+        long long ans = [[manager attributesOfItemAtPath:filePath error:&error] fileSize];
+        if (error) {
+            Warning("Failed to get file %@ size: %@", filePath, error);
+        }
+        return ans;
+    } else {
+        Warning("File %@ does not exist", filePath);
     }
     return 0;
 }

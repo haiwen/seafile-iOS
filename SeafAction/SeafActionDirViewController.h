@@ -8,8 +8,10 @@
 
 #import <Foundation/Foundation.h>
 #import "SeafDir.h"
+#import "SeafUploadFile.h"
 
-@interface SeafActionDirViewController : NSObject
-@property (strong, nonatomic) SeafDir *directory;
+@interface SeafActionDirViewController : UITableViewController
+
+- (id)initWithSeafDir:(SeafDir *)directory file:(SeafUploadFile *)ufile;
 
 @end

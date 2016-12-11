@@ -23,5 +23,6 @@ target :"SeafProviderFileProvider" do
 end
 
 target :"SeafAction" do
+  pod 'SVPullToRefresh', '~> 0.4.1'
   shared
 end
