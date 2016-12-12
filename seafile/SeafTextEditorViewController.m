@@ -80,8 +80,8 @@
     self.saveItem = [self getTextBarItem:NSLocalizedString(@"Save", @"Seafile") action:@selector(save) active:0];
     NSMutableArray *litems = [[NSMutableArray alloc] initWithObjects:self.saveItem, nil];
     self.navigationItem.leftBarButtonItems = litems;
-
     [[self textView] setText:_previewFile.strContent];
+    [[self textView] setFont:[UIFont fontWithName:@"Courier" size:14.0]];
 }
 
 - (void)didReceiveMemoryWarning
