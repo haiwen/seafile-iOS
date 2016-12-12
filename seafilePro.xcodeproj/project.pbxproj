@@ -191,6 +191,24 @@
 		574D3DD91DFD1E170093C18C /* text.png in Resources */ = {isa = PBXBuildFile; fileRef = 572539401DE26C84007EAF57 /* text.png */; };
 		574D3DDA1DFD1E180093C18C /* unknown-file.png in Resources */ = {isa = PBXBuildFile; fileRef = 572539411DE26C84007EAF57 /* unknown-file.png */; };
 		574D3DDB1DFD1E180093C18C /* video.png in Resources */ = {isa = PBXBuildFile; fileRef = 572539421DE26C84007EAF57 /* video.png */; };
+		574D3DDC1DFE24FF0093C18C /* seafile.xcdatamodeld in Resources */ = {isa = PBXBuildFile; fileRef = 572539301DE26C84007EAF57 /* seafile.xcdatamodeld */; };
+		574D3DDD1DFE25090093C18C /* application-msword.png in Resources */ = {isa = PBXBuildFile; fileRef = 572539331DE26C84007EAF57 /* application-msword.png */; };
+		574D3DDE1DFE25090093C18C /* application-pdf.png in Resources */ = {isa = PBXBuildFile; fileRef = 572539341DE26C84007EAF57 /* application-pdf.png */; };
+		574D3DDF1DFE25090093C18C /* application-vnd.ms-excel.png in Resources */ = {isa = PBXBuildFile; fileRef = 572539351DE26C84007EAF57 /* application-vnd.ms-excel.png */; };
+		574D3DE01DFE25090093C18C /* application-vnd.ms-powerpoint.png in Resources */ = {isa = PBXBuildFile; fileRef = 572539361DE26C84007EAF57 /* application-vnd.ms-powerpoint.png */; };
+		574D3DE11DFE25090093C18C /* audio.png in Resources */ = {isa = PBXBuildFile; fileRef = 572539371DE26C84007EAF57 /* audio.png */; };
+		574D3DE21DFE25090093C18C /* css.png in Resources */ = {isa = PBXBuildFile; fileRef = 572539381DE26C84007EAF57 /* css.png */; };
+		574D3DE31DFE25090093C18C /* image.png in Resources */ = {isa = PBXBuildFile; fileRef = 572539391DE26C84007EAF57 /* image.png */; };
+		574D3DE41DFE25090093C18C /* psd.png in Resources */ = {isa = PBXBuildFile; fileRef = 5725393A1DE26C84007EAF57 /* psd.png */; };
+		574D3DE51DFE25090093C18C /* text-directory-documents-encrypted.png in Resources */ = {isa = PBXBuildFile; fileRef = 5725393B1DE26C84007EAF57 /* text-directory-documents-encrypted.png */; };
+		574D3DE61DFE25090093C18C /* text-directory-documents-encrypted@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 5725393C1DE26C84007EAF57 /* text-directory-documents-encrypted@2x.png */; };
+		574D3DE71DFE25090093C18C /* text-directory-documents.png in Resources */ = {isa = PBXBuildFile; fileRef = 5725393D1DE26C84007EAF57 /* text-directory-documents.png */; };
+		574D3DE81DFE25090093C18C /* text-directory-documents@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 5725393E1DE26C84007EAF57 /* text-directory-documents@2x.png */; };
+		574D3DE91DFE25090093C18C /* text-directory.png in Resources */ = {isa = PBXBuildFile; fileRef = 5725393F1DE26C84007EAF57 /* text-directory.png */; };
+		574D3DEA1DFE25090093C18C /* text.png in Resources */ = {isa = PBXBuildFile; fileRef = 572539401DE26C84007EAF57 /* text.png */; };
+		574D3DEB1DFE25090093C18C /* unknown-file.png in Resources */ = {isa = PBXBuildFile; fileRef = 572539411DE26C84007EAF57 /* unknown-file.png */; };
+		574D3DEC1DFE25090093C18C /* video.png in Resources */ = {isa = PBXBuildFile; fileRef = 572539421DE26C84007EAF57 /* video.png */; };
+		574D3DED1DFE250F0093C18C /* FileTypeIcons.plist in Resources */ = {isa = PBXBuildFile; fileRef = 572539431DE26C84007EAF57 /* FileTypeIcons.plist */; };
 		574DF02C1AF2863E0044FE06 /* SeafShibbolethViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 574DF02A1AF2863E0044FE06 /* SeafShibbolethViewController.xib */; };
 		574F61F71BDB5DB300014EBA /* SeafButtonCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 574F61F51BDB5DB300014EBA /* SeafButtonCell.m */; };
 		57532C1A1868AA48003D564B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 57532C161868AA48003D564B /* Localizable.strings */; };
@@ -1473,6 +1491,24 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				574D3DED1DFE250F0093C18C /* FileTypeIcons.plist in Resources */,
+				574D3DDD1DFE25090093C18C /* application-msword.png in Resources */,
+				574D3DDE1DFE25090093C18C /* application-pdf.png in Resources */,
+				574D3DDF1DFE25090093C18C /* application-vnd.ms-excel.png in Resources */,
+				574D3DE01DFE25090093C18C /* application-vnd.ms-powerpoint.png in Resources */,
+				574D3DE11DFE25090093C18C /* audio.png in Resources */,
+				574D3DE21DFE25090093C18C /* css.png in Resources */,
+				574D3DE31DFE25090093C18C /* image.png in Resources */,
+				574D3DE41DFE25090093C18C /* psd.png in Resources */,
+				574D3DE51DFE25090093C18C /* text-directory-documents-encrypted.png in Resources */,
+				574D3DE61DFE25090093C18C /* text-directory-documents-encrypted@2x.png in Resources */,
+				574D3DE71DFE25090093C18C /* text-directory-documents.png in Resources */,
+				574D3DE81DFE25090093C18C /* text-directory-documents@2x.png in Resources */,
+				574D3DE91DFE25090093C18C /* text-directory.png in Resources */,
+				574D3DEA1DFE25090093C18C /* text.png in Resources */,
+				574D3DEB1DFE25090093C18C /* unknown-file.png in Resources */,
+				574D3DEC1DFE25090093C18C /* video.png in Resources */,
+				574D3DDC1DFE24FF0093C18C /* seafile.xcdatamodeld in Resources */,
 				574D3DC41DFA84400093C18C /* account.png in Resources */,
 				57A192161A208F1600985F77 /* SeafAccountCell.xib in Resources */,
 				57A029A51A170147009C9D7B /* SeafProviderFileViewController.storyboard in Resources */,
