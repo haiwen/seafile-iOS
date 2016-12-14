@@ -12,3 +12,4 @@ TODO
 Podfile.lock
 common/*.lproj
 SeafProvider/*.lproj
+SeafAction/*.lproj
