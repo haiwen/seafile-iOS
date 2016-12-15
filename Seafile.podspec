@@ -15,7 +15,7 @@ Pod::Spec.new do |s|
   s.dependency 'AFNetworking', '~> 2.6.1'
   s.dependency 'OpenSSL-Universal', '~> 1.0.1.p'
   s.pod_target_xcconfig = {
-    'FRAMEWORK_SEARCH_PATHS' => '$(inherited) $(PODS_ROOT)/OpenSSL-Universal/lib-ios/',
-    'OTHER_LDFLAGS' => '$(inherited) -lssl'
+    'LIBRARY_SEARCH_PATHS' => '$(inherited) $(PODS_ROOT)/OpenSSL-Universal/lib-ios/',
+    'OTHER_LDFLAGS' => '$(inherited) -lssl -lcrypto'
   }
 end
