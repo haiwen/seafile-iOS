@@ -515,9 +515,9 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     if (![self.mime hasPrefix:@"text"]) {
         _preViewURL = [NSURL fileURLWithPath:self.lpath];
     } else if ([self.mime hasSuffix:@"markdown"]) {
-        _preViewURL = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"view_markdown" ofType:@"html"]];
+        _preViewURL = [NSURL fileURLWithPath:[SeafileBundle() pathForResource:@"htmls/view_markdown" ofType:@"html"]];
     } else if ([self.mime hasSuffix:@"seafile"]) {
-        _preViewURL = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"view_seaf" ofType:@"html"]];
+        _preViewURL = [NSURL fileURLWithPath:[SeafileBundle() pathForResource:@"htmls/view_seaf" ofType:@"html"]];
     } else {
         NSString *encodePath = [SeafGlobal.sharedObject.tempDir stringByAppendingPathComponent:self.name];
         if ([Utils tryTransformEncoding:encodePath fromFile:self.lpath])

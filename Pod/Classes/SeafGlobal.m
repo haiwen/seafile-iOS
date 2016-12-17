@@ -14,6 +14,7 @@
 #import "Utils.h"
 #import "Debug.h"
 #import "SecurityUtilities.h"
+#import "Version.h"
 
 /*
 static NSError * NewNSErrorFromException(NSException * exc) {
@@ -63,12 +64,11 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         [self checkSettings];
 
         NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
-        _clientVersion = [infoDictionary objectForKey:@"CFBundleShortVersionString"];
         _platformVersion = [infoDictionary objectForKey:@"DTPlatformVersion"];
-        [_storage setObject:_clientVersion forKey:@"VERSION"];
+        [_storage setObject:SEAFILE_VERSION forKey:@"VERSION"];
         [[AFNetworkReachabilityManager sharedManager] startMonitoring];
         [self loadSecIdentities];
-        Debug("applicationDocumentsDirectoryURL=%@, clientVersion=%@, platformVersion=%@",  self.applicationDocumentsDirectoryURL, _clientVersion, _platformVersion);
+        Debug("applicationDocumentsDirectoryURL=%@, clientVersion=%@, platformVersion=%@",  self.applicationDocumentsDirectoryURL, SEAFILE_VERSION, _platformVersion);
     }
     return self;
 }
@@ -167,7 +167,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     Debug("Registering default values from Settings.bundle");
     NSUserDefaults * defs = [NSUserDefaults standardUserDefaults];
 
-    NSString *settingsBundle = [[NSBundle mainBundle] pathForResource:@"Settings" ofType:@"bundle"];
+    NSString *settingsBundle = [[NSBundle bundleWithPath:[[NSBundle mainBundle] pathForResource:@"Seafile" ofType:@"bundle"]] pathForResource:@"Settings" ofType:@"bundle"];
     if(!settingsBundle) {
         Debug("Could not find Settings.bundle");
         return;
@@ -326,7 +326,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     if (__managedObjectModel != nil) {
         return __managedObjectModel;
     }
-    NSURL *modelURL = [[NSBundle mainBundle] URLForResource:@"seafile" withExtension:@"momd"];
+    NSURL *modelURL = [SeafileBundle() URLForResource:@"seafile" withExtension:@"momd"];
     __managedObjectModel = [[NSManagedObjectModel alloc] initWithContentsOfURL:modelURL];
     return __managedObjectModel;
 }

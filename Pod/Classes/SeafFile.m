@@ -658,13 +658,13 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (NSURL *)markdownPreviewItemURL
 {
-    _preViewURL = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"view_markdown" ofType:@"html"]];
+    _preViewURL = [NSURL fileURLWithPath:[SeafileBundle() pathForResource:@"htmls/view_markdown" ofType:@"html"]];
     return _preViewURL;
 }
 
 - (NSURL *)seafPreviewItemURL
 {
-    _preViewURL = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"view_seaf" ofType:@"html"]];
+    _preViewURL = [NSURL fileURLWithPath:[SeafileBundle() pathForResource:@"htmls/view_seaf" ofType:@"html"]];
     return _preViewURL;
 }
 

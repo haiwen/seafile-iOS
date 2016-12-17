@@ -13,6 +13,7 @@
 #import "AFNetworking.h"
 #import "Debug.h"
 #import "Utils.h"
+#import "Version.h"
 
 
 @interface SeafAppDelegate () <UITabBarControllerDelegate, PHPhotoLibraryChangeObserver, CLLocationManagerDelegate>
@@ -215,7 +216,7 @@
     Debug("clear tmp dir: %@", SeafGlobal.sharedObject.tempDir);
     [Utils clearAllFiles:SeafGlobal.sharedObject.tempDir];
 
-    Debug("Current app version is %@\n", SeafGlobal.sharedObject.clientVersion);
+    Debug("Current app version is %@\n", SEAFILE_VERSION);
     [SeafGlobal.sharedObject startTimer];
 
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
@@ -379,13 +380,11 @@
     }
 }
 
-
 - (void)applicationWillTerminate:(UIApplication *)application
 {
     // Saves changes in the application's managed object context before the application terminates.
     [[SeafGlobal sharedObject] saveContext];
 }
-
 
 - (BOOL)tabBarController:(UITabBarController *)tabBarController shouldSelectViewController:(UIViewController *)viewController
 {

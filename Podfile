@@ -1,5 +1,6 @@
 def shared
   platform :ios, '8.0'
+  pod 'Seafile', :path => "./"
   pod 'AFNetworking', '~> 2.6.1'
   pod 'OpenSSL-Universal', '~> 1.0.1.p'
 end

@@ -20,6 +20,7 @@
 #import "NSData+Encryption.h"
 #import "Debug.h"
 #import "Utils.h"
+#import "Version.h"
 
 enum {
     FLAG_LOCAL_DECRYPT = 0x1,
@@ -592,7 +593,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [request setValue:@"application/x-www-form-urlencoded; charset=UTF-8" forHTTPHeaderField:@"Content-Type"];
 
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
-    NSString *version = [infoDictionary objectForKey:@"CFBundleVersion"];
+    NSString *version = SEAFILE_VERSION;
     NSString *platform = @"ios";
     NSString *platformName = [infoDictionary objectForKey:@"DTPlatformName"];
     NSString *platformVersion = [infoDictionary objectForKey:@"DTPlatformVersion"];
@@ -665,7 +666,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     NSString *absoluteUrl = [url hasPrefix:@"http"] ? url : [_address stringByAppendingString:url];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:absoluteUrl]];
-    [request setValue:SeafGlobal.sharedObject.clientVersion forHTTPHeaderField:@"X-Seafile-Client-Version"];
+    [request setValue:SEAFILE_VERSION forHTTPHeaderField:@"X-Seafile-Client-Version"];
     [request setValue:SeafGlobal.sharedObject.platformVersion forHTTPHeaderField:@"X-Seafile-Platform-Version"];
 
     [request setTimeoutInterval:DEFAULT_TIMEOUT];
@@ -990,7 +991,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
 #if 0
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
-    NSString *version = [infoDictionary objectForKey:@"CFBundleVersion"];
+    NSString *version = SEAFILE_VERSION;
     NSString *platform = [infoDictionary objectForKey:@"DTPlatformName"];
     NSString *platformVersion = [infoDictionary objectForKey:@"DTPlatformVersion"];
 
@@ -1019,12 +1020,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (!SeafGlobal.sharedObject.isAppExtension) {
         [self downloadAvatar:false];
     }
-    return [[NSBundle mainBundle] pathForResource:@"account" ofType:@"png"];
+    return [SeafileBundle() pathForResource:@"account" ofType:@"png"];
 }
 
 - (UIImage *)avatarForAccount:(NSString *)email
 {
-    NSString *path = [[NSBundle mainBundle] pathForResource:@"account" ofType:@"png"];
+    NSString *path = [SeafileBundle() pathForResource:@"account" ofType:@"png"];
     return [UIImage imageWithContentsOfFile:path];
 }
 

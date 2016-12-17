@@ -7,6 +7,7 @@
 //
 
 #import "SKFileTypeImageLoader.h"
+#import "Debug.h"
 
 #define FILENAMEFORMAT @"{size}_{basename}{extension}"
 
@@ -20,7 +21,7 @@ static SKFileTypeImageLoader *sharedLoader = nil;
 - (id)init
 {
     if (self=[super init]) {
-        NSString *path = [[NSBundle mainBundle] pathForResource:
+        NSString *path = [SeafileBundle() pathForResource:
                           @"FileTypeIcons" ofType:@"plist"];
         _config = [[NSDictionary alloc] initWithContentsOfFile:path];
         images = [[NSMutableDictionary alloc] init];
@@ -41,7 +42,8 @@ static SKFileTypeImageLoader *sharedLoader = nil;
     if ([images objectForKey:imageName])
         return [images objectForKey:imageName];
 
-    NSString* path = [[NSBundle mainBundle] pathForResource:imageName ofType:@"png"];
+    NSString *resourcePath = [NSString stringWithFormat:@"Icons/%@", imageName];
+    NSString* path = [SeafileBundle() pathForResource:resourcePath ofType:@"png"];
     if (path) {
         UIImage* image = [UIImage imageWithContentsOfFile:path];
         [images setValue:image forKey:imageName];

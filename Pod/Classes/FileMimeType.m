@@ -7,6 +7,7 @@
 //
 
 #import "FileMimeType.h"
+#import "Debug.h"
 
 @interface FileMimeType ()
 
@@ -22,7 +23,7 @@ static FileMimeType *_sharedLoader = nil;
 - (id)init
 {
     if (self = [super init]) {
-        NSString *path = [[NSBundle mainBundle] pathForResource:
+        NSString *path = [SeafileBundle() pathForResource:
                           @"FileMimeType" ofType:@"plist"];
         _config = [[NSDictionary alloc] initWithContentsOfFile:path];
     }
