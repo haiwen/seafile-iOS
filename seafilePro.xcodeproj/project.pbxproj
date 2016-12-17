@@ -139,6 +139,7 @@
 		572539B61DE2725E007EAF57 /* Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 572539171DE26C40007EAF57 /* Utils.m */; };
 		572539B71DE2726F007EAF57 /* UIViewController+Extend.m in Sources */ = {isa = PBXBuildFile; fileRef = 572539581DE2722D007EAF57 /* UIViewController+Extend.m */; };
 		572539B81DE2727F007EAF57 /* UIViewController+Extend.m in Sources */ = {isa = PBXBuildFile; fileRef = 572539581DE2722D007EAF57 /* UIViewController+Extend.m */; };
+		57343C5C1E052E4C001E7D6A /* seafile.xcdatamodeld in Resources */ = {isa = PBXBuildFile; fileRef = 572539301DE26C84007EAF57 /* seafile.xcdatamodeld */; };
 		573C3C651A15104B009675F9 /* seafile.entitlements in Resources */ = {isa = PBXBuildFile; fileRef = 573C3C641A15104B009675F9 /* seafile.entitlements */; };
 		573F4AAC1788763500F096D3 /* arrowleft.png in Resources */ = {isa = PBXBuildFile; fileRef = 573F4AA91788763500F096D3 /* arrowleft.png */; };
 		573F4AAE1788763500F096D3 /* arrowright.png in Resources */ = {isa = PBXBuildFile; fileRef = 573F4AAA1788763500F096D3 /* arrowright.png */; };
@@ -1356,6 +1357,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				57343C5C1E052E4C001E7D6A /* seafile.xcdatamodeld in Resources */,
 				57F8CD211A127566000F6CDC /* DownloadingProgress_iPhone.xib in Resources */,
 				57F8CD221A127566000F6CDC /* DownloadingProgress_iPad.xib in Resources */,
 				57124BE11B3E710E00075EAE /* SeafAccountViewController_iPhone.xib in Resources */,
