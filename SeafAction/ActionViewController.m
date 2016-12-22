@@ -27,6 +27,10 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
+    if (IsIpad()) {
+        [self setPreferredContentSize:CGSizeMake(480.0f, 540.0f)];
+    }
+
     [SeafGlobal.sharedObject loadAccounts];
     _conns = SeafGlobal.sharedObject.conns;
 
@@ -64,6 +68,7 @@
             break;
         }
     }
+    self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeNone;
 
