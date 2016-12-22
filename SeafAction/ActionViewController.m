@@ -38,29 +38,51 @@
 
     // For example, look for an image and place it into an image view.
     // Replace this with something appropriate for the type[s] your extension supports.
+    NSString *tmpdir = [SeafGlobal.sharedObject uniqueDirUnder:SeafGlobal.sharedObject.tempDir];
+    if (![Utils checkMakeDir:tmpdir]) {
+        Warning("Failed to create temp dir.");
+        return [self alertWithTitle:NSLocalizedString(@"Failed to upload file", @"Seafile") handler:nil];
+    }
+
+    NSItemProviderCompletionHandler imageHandler = ^(UIImage *image, NSError *error) {
+        Debug("load image: %@", error);
+        if (error) {
+            return [self handleFile:nil];
+        }
+        NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+        [formatter setDateFormat:@"yyyy'-'MM'-'dd'T'HH'-'mm'-'ss"];
+
+        NSString *name = [NSString stringWithFormat:@"IMG_%@.JPG", [formatter stringFromDate:[NSDate date]] ];
+        NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
+        NSData *data = UIImageJPEGRepresentation(image, 1.0f);
+        BOOL ret = [data writeToURL:targetUrl atomically:true];
+        [self handleFile:ret ? targetUrl : nil];
+
+    };
+
+    NSItemProviderCompletionHandler urlHandler = ^(NSURL *url, NSError *error) {
+        Debug("load file from url: %@", url);
+        NSString *name = url.lastPathComponent;
+        NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
+        BOOL ret = [Utils copyFile:url to:targetUrl];
+        [self handleFile:ret ? targetUrl : nil];
+    };
+
     for (NSExtensionItem *item in self.extensionContext.inputItems) {
         for (NSItemProvider *itemProvider in item.attachments) {
             Debug("itemProvider: %@", itemProvider);
             if ([itemProvider hasItemConformingToTypeIdentifier:(NSString *)kUTTypeURL]) {
-                [itemProvider loadItemForTypeIdentifier:(NSString *)kUTTypeURL options:nil completionHandler:^(NSURL *url, NSError *error) {
-                    Debug("Received file : %@", url);
-                    NSString *tmpdir = [SeafGlobal.sharedObject uniqueDirUnder:SeafGlobal.sharedObject.tempDir];
-                    if (![Utils checkMakeDir:tmpdir]) {
-                        Warning("Failed to create temp dir.");
-                        return [self alertWithTitle:NSLocalizedString(@"Failed to upload file", @"Seafile") handler:nil];
-                    }
-                    NSString *name = url.lastPathComponent;
-                    NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
-                    BOOL ret = [Utils copyFile:url to:targetUrl];
-                    if (!ret) {
-                        Warning("Failed to access file.");
-                        return [self alertWithTitle:NSLocalizedString(@"Failed to upload file", @"Seafile") handler:nil];
-                    }
-                    Debug("Upload file %@ %lld", targetUrl, [Utils fileSizeAtPath1:targetUrl.path]);
-                    _ufile = [[SeafUploadFile alloc] initWithPath:targetUrl.path];
-                }];
-                break;
+                [itemProvider loadItemForTypeIdentifier:(NSString *)kUTTypeURL options:nil completionHandler:urlHandler];
+            } else if ([itemProvider hasItemConformingToTypeIdentifier:(NSString *)kUTTypeImage]) {
+                // This is an image.
+                [itemProvider loadItemForTypeIdentifier:(NSString *)kUTTypeImage options:nil completionHandler:imageHandler];
+            } else if ([itemProvider hasItemConformingToTypeIdentifier:(NSString *)kUTTypeMovie]) {
+                [itemProvider loadItemForTypeIdentifier:(NSString *)kUTTypeMovie options:nil completionHandler:urlHandler];
+            } else {
+                Warning("Unknown file type.");
+                return [self handleFile:nil];
             }
+            break;
         }
 
         if (_ufile) {
@@ -79,6 +101,16 @@
                                                                             action:nil];
 }
 
+- (void)handleFile:(NSURL *)url {
+    Debug("Received file : %@", url);
+    if (!url) {
+        Warning("Failed to load file.");
+        [self alertWithTitle:NSLocalizedString(@"Failed to load file", @"Seafile") handler:nil];
+        [self.extensionContext completeRequestReturningItems:self.extensionContext.inputItems completionHandler:nil];
+    }
+    Debug("Upload file %@ %lld", url, [Utils fileSizeAtPath1:url.path]);
+    _ufile = [[SeafUploadFile alloc] initWithPath:url.path];
+}
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
