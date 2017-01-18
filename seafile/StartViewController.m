@@ -413,6 +413,14 @@
     if (!conn) return NO;
     if (![conn authorized]) {
         NSString *title = NSLocalizedString(@"The token is invalid, you need to login again", @"Seafile");
+        if (conn.isShibboleth) {
+            NSHTTPCookieStorage *cookieStorage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
+            for (NSHTTPCookie *each in cookieStorage.cookies) {
+                if([each.name isEqualToString:@"sessionid"]) {
+                    [cookieStorage deleteCookie:each];
+                }
+            }
+        }
         [self alertWithTitle:title handler:^{
             int type = conn.isShibboleth ? ACCOUNT_SHIBBOLETH : ACCOUNT_OTHER;
             [self showAccountView:conn type:type];
