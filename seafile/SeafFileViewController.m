@@ -1358,7 +1358,7 @@ enum {
     [NSThread detachNewThreadSelector:@selector(backgroundUpload:) toTarget:self withObject:ufile];
 }
 
-- (void)uploadFile:(SeafUploadFile *)ufile toDor:(SeafDir *)dir
+- (void)uploadFile:(SeafUploadFile *)ufile toDir:(SeafDir *)dir
 {
     if ([dir nameExist:ufile.name]) {
         [self alertWithTitle:STR_12 message:nil yes:^{
@@ -1381,7 +1381,7 @@ enum {
 {
     [c.navigationController dismissViewControllerAnimated:YES completion:nil];
     if (self.ufile) {
-        return [self uploadFile:self.ufile toDor:dir];
+        return [self uploadFile:self.ufile toDir:dir];
     }
     NSArray *idxs = [self.tableView indexPathsForSelectedRows];
     if (!idxs) return;

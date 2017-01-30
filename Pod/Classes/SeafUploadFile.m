@@ -174,7 +174,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         [self saveAttr:dict flush:true];
     }
     Debug("result=%d, name=%@, delegate=%@, oid=%@\n", result, self.name, _delegate, oid);
-    [_delegate uploadComplete:result file:self oid:oid];
+    [self uploadComplete:result file:self oid:oid];
     dispatch_semaphore_signal(_semaphore);
 }
 
@@ -239,7 +239,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         percent = progress.fractionCompleted * 100;
     }
     _uProgress = percent;
-    [_delegate uploadProgress:self progress:percent];
+    [self uploadProgress:self progress:percent];
 }
 
 - (BOOL)chunkFile:(NSString *)path repo:(SeafRepo *)repo blockids:(NSMutableArray *)blockids paths:(NSMutableArray *)paths
@@ -418,7 +418,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     }
     NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:self.lpath error:nil];
     _filesize = attrs.fileSize;
-    [_delegate uploadProgress:self progress:0];
+    [self uploadProgress:self progress:0];
     SeafRepo *repo = [connection getRepo:repoId];
     if (_filesize > LARGE_FILE_SIZE && connection.isChunkSupported) {
         Debug("upload large file %@ by block: %lld", self.name, _filesize);
@@ -665,5 +665,19 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     self.lastFailedTimeStamp = 0;
 }
 
+- (void)uploadProgress:(SeafUploadFile *)file progress:(int)percent
+{
+    [self.delegate uploadProgress:file progress:percent];
+    if (_progressBlock) {
+        _progressBlock(file, percent);
+    }
+}
+- (void)uploadComplete:(BOOL)success file:(SeafUploadFile *)file oid:(NSString *)oid
+{
+    [self.delegate uploadComplete:success file:file oid:oid];
+    if (_completionBlock) {
+        _completionBlock(success, file, oid);
+    }
+}
 
 @end

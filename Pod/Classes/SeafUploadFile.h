@@ -16,6 +16,9 @@
 @class SeafUploadFile;
 @class SeafDir;
 
+typedef void (^SeafUploadProgressBlock)(SeafUploadFile *file, int progress);
+typedef void (^SeafUploadCompletionBlock)(BOOL success, SeafUploadFile *file, NSString *oid);
+
 @protocol SeafUploadDelegate <NSObject>
 - (void)uploadProgress:(SeafUploadFile *)file progress:(int)percent;
 - (void)uploadComplete:(BOOL)success file:(SeafUploadFile *)file oid:(NSString *)oid;
@@ -37,6 +40,8 @@
 
 @property (readonly) int uProgress;
 @property (nonatomic) id<SeafUploadDelegate> delegate;
+@property (nonatomic) SeafUploadProgressBlock progressBlock;
+@property (nonatomic) SeafUploadCompletionBlock completionBlock;
 
 @property (readwrite) SeafDir *udir;
 

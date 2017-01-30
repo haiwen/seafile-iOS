@@ -5,6 +5,8 @@
 //  Created by Wang Wei on 10/11/12.
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
+@import Contacts;
+
 #import <AssertMacros.h>
 
 #import "SeafConnection.h"
@@ -27,6 +29,8 @@ enum {
 };
 
 #define CAMERA_UPLOADS_DIR @"Camera Uploads"
+#define CONTACTS_UPLOADS_DIR @"ContactsBackup"
+
 #define KEY_STARREDFILES @"STARREDFILES"
 #define KEY_CONTACTS @"CONTACTS"
 
@@ -101,6 +105,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @property NSMutableArray *uploadingArray;
 @property SeafDir *syncDir;
 @property (readonly) NSString *localUploadDir;
+@property NSString *contactsLastBackTime;
 @end
 
 @implementation SeafConnection
@@ -199,7 +204,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self saveSettings];
 }
 
-- (NSString *)getAttribute:(NSString *)aKey
+- (id)getAttribute:(NSString *)aKey
 {
     if (!aKey) return nil;
     return [_settings objectForKey:aKey];
@@ -287,6 +292,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return [[self getAttribute:@"backgroundSync"] booleanValue:true];
 }
 
+- (BOOL)isContactsSync
+{
+    return [[self getAttribute:@"contactsSync"] booleanValue:true];
+}
+
 - (BOOL)autoClearRepoPasswd
 {
     return [[self getAttribute:@"autoClearRepoPasswd"] booleanValue:false];
@@ -344,6 +354,18 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self setAttribute:[NSNumber numberWithBool:backgroundSync] forKey:@"backgroundSync"];
 }
 
+- (void)setContactsSync:(BOOL)contactsSync
+{
+    if (self.isContactsSync == contactsSync) return;
+    [self setAttribute:[NSNumber numberWithBool:contactsSync] forKey:@"contactsSync"];
+    if (!contactsSync) {
+        self.contactsRepo = nil;
+        [self setAttribute:nil forKey:@"ContactsLastSyncRepo"];
+        [self setAttribute:nil forKey:@"ContactsLastSyncNumber"];
+        self.contactsLastBackTime = nil;
+    }
+}
+
 - (NSString *)autoSyncRepo
 {
     return [[self getAttribute:@"autoSyncRepo"] stringValue];
@@ -353,6 +375,16 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     _syncDir = nil;
     [self setAttribute:repoId forKey:@"autoSyncRepo"];
+}
+
+- (NSString *)contactsRepo
+{
+    return [[self getAttribute:@"contactsRepo"] stringValue];
+}
+
+- (void)setContactsRepo:(NSString *)repoId
+{
+    [self setAttribute:repoId forKey:@"contactsRepo"];
 }
 
 - (NSString *)username
@@ -1284,16 +1316,21 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                                  }];
 }
 
-- (SeafDir *)getCameraUploadDir:(SeafDir *)dir
+- (SeafDir *)getSubdirUnderDir:(SeafDir *)dir withName:(NSString *)name
 {
     SeafDir *uploadDir = nil;
     for (SeafBase *obj in dir.items) {
-        if ([obj isKindOfClass:[SeafDir class]] && [obj.name isEqualToString:CAMERA_UPLOADS_DIR]) {
+        if ([obj isKindOfClass:[SeafDir class]] && [obj.name isEqualToString:name]) {
             uploadDir = (SeafDir *)obj;
             return uploadDir;
         }
     }
     return nil;
+}
+
+- (SeafDir *)getCameraUploadDir:(SeafDir *)dir
+{
+    return [self getSubdirUnderDir:dir withName:CAMERA_UPLOADS_DIR];
 }
 
 - (void)checkSyncDst:(SeafDir *)dir
@@ -1347,8 +1384,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                 _syncDir = nil;
             }];
         }
-    } failure:^(SeafDir *dir) {
-        Warning("Failed to get repo file list: %@", dir.repoId);
+    } failure:^(SeafDir *dir, NSError *error) {
+        Warning("Failed to get repo %@ file list: %@", dir.repoId, error);
         _syncDir = nil;
     }];
 }
@@ -1395,6 +1432,284 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }
 }
 
+- (NSArray *)getAllContacts:(CNContactStore *)store
+{
+    NSMutableArray *contacts = [NSMutableArray array];
+    NSError *fetchError;
+
+    CNContactFetchRequest *request = [[CNContactFetchRequest alloc] initWithKeysToFetch:@[[CNContactVCardSerialization descriptorForRequiredKeys], [CNContactFormatter descriptorForRequiredKeysForStyle:CNContactFormatterStyleFullName]]];
+
+    BOOL success = [store enumerateContactsWithFetchRequest:request error:&fetchError usingBlock:^(CNContact *contact, BOOL *stop) {
+        [contacts addObject:contact];
+    }];
+    if (!success) {
+        Warning("fetch contacts error = %@", fetchError);
+        return nil;
+    }
+    return contacts;
+}
+
+- (void)saveContactsToFile:(NSString *)vCardPath completionHandler:(void(^)(BOOL success, NSArray *contacts, NSError * _Nullable error))handler
+{
+    CNContactStore *store = [[CNContactStore alloc] init];
+    [store requestAccessForEntityType:CNEntityTypeContacts completionHandler:^(BOOL granted, NSError * _Nullable error) {
+        if (!granted) {
+            self.contactsSync = false;
+            self.contactsRepo = nil;
+            Warning("access to contacts denied: %@", error);
+            return handler(false, nil, error);
+        }
+        NSMutableArray *contacts = [self getAllContacts:store];
+        if (!contacts) {
+            Warning("Failed to get all contacts.");
+            return handler(false, nil, nil);
+        }
+        NSError *err = nil;
+        NSData *vcardData = [CNContactVCardSerialization dataWithContacts:contacts error:&err];
+        if (err) {
+            Warning("Failed to serialize contacts: %@", err);
+            return handler(false, nil, err);
+        }
+        [vcardData writeToFile:vCardPath atomically:YES];
+        handler(true, contacts, nil);
+    }];
+}
+
+- (void)restoreContactsFromFile:(NSString *)vCardPath
+{
+    CNContactStore *store = [[CNContactStore alloc] init];
+    CNSaveRequest *request = [[CNSaveRequest alloc] init];
+    NSData *data = [NSData dataWithContentsOfFile:vCardPath];
+    NSError *error = nil;
+    NSArray *contacts = [NSArray arrayWithArray:[CNContactVCardSerialization contactsWithData:data error:&error]];
+    if (error) {
+        Warning("Failed to retrieve contacts from file %@", vCardPath);
+        return;
+    }
+    NSArray *currentContacts = [self getAllContacts:store];
+    NSMutableDictionary *currentContactsDict = [NSMutableDictionary new];
+    NSMutableDictionary *targetContactsDict = [NSMutableDictionary new];
+    CNContactFormatter *formatter = [[CNContactFormatter alloc] init];
+    Debug("Current contacts: %d restore to: %d", currentContacts.count, contacts.count);
+    for (CNContact *contact in currentContacts) {
+        [currentContactsDict setObject:contact forKey:contact.identifier];
+    }
+    for (CNContact *contact in contacts) {
+        [targetContactsDict setObject:contact forKey:contact.identifier];
+        if ([currentContactsDict objectForKey:contact.identifier] != nil) {
+            Debug("update %@", [formatter stringFromContact:contact]);
+            [request updateContact:contact];
+        } else {
+            Debug("add %@", [formatter stringFromContact:contact]);
+            [request addContact:contact toContainerWithIdentifier:nil];
+        }
+
+        [store executeSaveRequest:request error:nil];
+    }
+    for (CNContact *contact in currentContacts) {
+        if ([targetContactsDict objectForKey:contact.identifier] == nil) {
+            Debug("delete %@", [formatter stringFromContact:contact]);
+            [request deleteContact:contact];
+            [store executeSaveRequest:request error:nil];
+        }
+    }
+}
+
+- (void)checkMakeUploadDirectoryInRepo:(SeafRepo *)repo subdir:(NSString *)dirName completion:(void(^)(SeafDir *uploaddir, NSError * _Nullable error))completionHandler
+{
+
+    SeafDir *uploaddir = [self getSubdirUnderDir:repo withName:dirName];
+    if (!uploaddir) {
+        [repo downloadContentSuccess:^(SeafDir *dir) {
+            SeafDir *uploaddir = [self getSubdirUnderDir:repo withName:dirName];
+            if (!uploaddir) {
+                [repo mkdir:dirName success:^(SeafDir *dir) {
+                    SeafDir *udir = [self getSubdirUnderDir:repo withName:dirName];
+                    completionHandler(udir, nil);
+                } failure:^(SeafDir *dir) {
+                    Warning("Failed to create directory %@", dirName);
+                    completionHandler(nil, nil);
+                }];
+            } else {
+                completionHandler(uploaddir, nil);
+            }
+        } failure:^(SeafDir *dir, NSError *error) {
+            completionHandler(nil, error);
+        }];
+    } else {
+        completionHandler(uploaddir, nil);
+    }
+}
+
+- (void)checkMakeUploadDirectory:(NSString *)repoId subdir:(NSString *)dirName completion:(void(^)(SeafDir *uploaddir, NSError * _Nullable error))completionHandler
+{
+    SeafRepo *repo = [self getRepo:repoId];
+
+    if (!repo) {
+        Warning("No such repo %@, force update cache", repoId);
+        [_rootFolder downloadContentSuccess:^(SeafDir *dir) {
+            SeafRepo *repo = [self getRepo:self.contactsRepo];
+            if (!repo) {
+                completionHandler(nil, nil);
+            } else {
+                [self checkMakeUploadDirectoryInRepo:repo subdir:dirName completion:completionHandler];
+            }
+        } failure:^(SeafDir *dir, NSError *error) {
+            completionHandler(nil, error);
+        }];
+    } else {
+        [self checkMakeUploadDirectoryInRepo:repo subdir:dirName completion:completionHandler];
+    }
+}
+
+- (void)uploadFile:(NSString *)path toDir:(SeafDir *)dir completion:(void(^)(BOOL success, NSError * _Nullable error))completionHandler
+{
+    Debug("upload file %@ to %@", path, dir.path);
+    SeafUploadFile *ufile = [self getUploadfile:path];
+    ufile.udir = dir;
+    ufile.overwrite = true;
+    ufile.completionBlock = ^(BOOL success, SeafUploadFile *ufile, NSString *oid) {
+        completionHandler(success, nil);
+        if (success) {
+            [ufile.udir removeUploadFile:ufile];
+        }
+    };
+    [SeafGlobal.sharedObject addUploadTask:ufile];
+}
+
+- (BOOL)isContactsChangedSinceLastBackup:(SeafDir *)contactsDir currentContacts:(NSArray *)contacts
+{
+    NSString *serverLastBackupDate = [self getContactsLastBackupDate:contactsDir];
+    NSString *lastSyncRepo = [[self getAttribute:@"ContactsLastSyncRepo"] stringValue];
+    int lastSyncNumber = [[self getAttribute:@"ContactsLastSyncNumber"] integerValue:-1];
+    if (lastSyncRepo == nil || ![lastSyncRepo isEqualToString:contactsDir.repoId] || serverLastBackupDate == nil) {
+        return true;
+    }
+
+    if (lastSyncNumber != contacts.count) {
+        return true;
+    }
+    return false;
+}
+
+- (void)saveContactsLastBackupInfo:(NSString *)syncDate number:(int)syncNumber
+{
+    [self setAttribute:self.contactsRepo forKey:@"ContactsLastSyncRepo"];
+    [self setAttribute:[NSNumber numberWithInt:syncNumber] forKey:@"ContactsLastSyncNumber"];
+    self.contactsLastBackTime = syncDate;
+}
+
+- (NSDate *)dateFromYear:(int)year month:(int)month day:(int)day
+{
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    NSDateComponents *components = [[NSDateComponents alloc] init];
+    [components setDay:day];
+    [components setMonth:month];
+    [components setYear:year];
+    return [calendar dateFromComponents:components];
+}
+
+- (NSString *)getContactsLastBackupDate:(SeafDir *)contactsDir
+{
+    NSString *regExPattern = @"^contacts-([0-9]+-[0-9]{2}-[0-9]{2}).vcf$";
+    NSRegularExpression *regEx = [[NSRegularExpression alloc] initWithPattern:regExPattern options:NSRegularExpressionCaseInsensitive error:nil];
+
+    NSString *ans = nil;
+    for (id obj in contactsDir.items) {
+        if ([obj isKindOfClass:[SeafFile class]]) {
+            SeafFile *file = (SeafFile *)obj;
+            NSString *name = file.name;
+            NSArray *matches = [regEx matchesInString:name options:0 range:NSMakeRange(0, name.length)];
+            if (matches.count != 1) {
+                continue;
+            }
+            NSTextCheckingResult *match = [matches objectAtIndex:0];
+            NSRange dateRange = [match rangeAtIndex:1];
+            NSString *dateStr = [name substringWithRange:dateRange];
+            if (ans == nil || [dateStr compare:ans] == NSOrderedDescending) {
+                ans = dateStr;
+            }
+        }
+    }
+    return ans;
+}
+
+- (void)backupContacts:(BOOL)force completion:(void(^)(BOOL success, NSError * _Nullable error))completionHandler
+{
+    if (!self.contactsSync || !self.contactsRepo) {
+        Warning("contacts sync is disabled: %d %@", self.contactsSync, self.contactsRepo);
+        return;
+    }
+    NSDateFormatter *dateformate = [[NSDateFormatter alloc] init];
+    [dateformate setDateFormat:@"yyyy-MM-dd"];
+    NSDate *now = [NSDate date];
+    NSString *backupDate = [dateformate stringFromDate:now];
+    NSString *filename = [NSString stringWithFormat:@"contacts-%@.vcf", backupDate];
+    NSString *uploadDir = [SeafGlobal.sharedObject uniqueUploadDir];
+    [Utils checkMakeDir:uploadDir];
+    NSString *path = [uploadDir stringByAppendingPathComponent:filename];
+    [self saveContactsToFile:path completionHandler:^(BOOL success, NSArray *contacts, NSError * _Nullable error) {
+        if (!success) {
+            Warning("Failed to save contacts to vcf file: %@", error);
+            return completionHandler(false, error);
+        }
+        Debug("contacts(%d) write to file %@ success", contacts.count, path);
+        [self checkMakeUploadDirectory:self.contactsRepo subdir:CONTACTS_UPLOADS_DIR completion:^(SeafDir *uploaddir, NSError * _Nullable error) {
+            if (!uploaddir) {
+                Warning("Failed to create contacts backup folder: %@", error);
+                completionHandler(false, error);
+            } else {
+                BOOL changed = [self isContactsChangedSinceLastBackup:uploaddir currentContacts:contacts];
+                Debug("upload %@ to %@, changed:%d force: %d", path, uploaddir.name, changed, force);
+                if (!force && !changed) {
+                    return completionHandler(true, nil);
+                }
+                [uploaddir downloadContentSuccess:^(SeafDir *dir) {
+                    [self uploadFile:path toDir:uploaddir completion:^(BOOL success, NSError * _Nullable error) {
+                        if (success) {
+                            [self saveContactsLastBackupInfo:backupDate number:contacts.count];
+                        }
+                        completionHandler(success, nil);
+                    }];
+                } failure:^(SeafDir *dir, NSError *error) {
+                    completionHandler(false, error);
+                }];
+            }
+        }];
+    }];
+}
+
+- (void)getContactsLastBackTime:(void(^)(BOOL success, NSString *dateStr))completionHandler
+{
+    if (!self.contactsSync || !self.contactsRepo) {
+        return completionHandler(false, nil);
+    }
+
+    if (self.contactsLastBackTime) {
+        completionHandler(true, self.contactsLastBackTime);
+    } else {
+        [self checkMakeUploadDirectory:self.contactsRepo subdir:CONTACTS_UPLOADS_DIR completion:^(SeafDir *uploaddir, NSError * _Nullable error) {
+            if (!uploaddir) {
+                Warning("Failed to create contacts backup folder: %@", error);
+                completionHandler(false, error);
+            } else {
+                [uploaddir downloadContentSuccess:^(SeafDir *dir) {
+                    NSString *dateStr = [self getContactsLastBackupDate:uploaddir];
+                    Debug("getContactsLastBackupDate: %@", dateStr);
+                    completionHandler(dateStr != nil, dateStr);
+                } failure:^(SeafDir *dir, NSError *error) {
+                    completionHandler(false, nil);
+                }];
+            }
+        }];
+    }
+}
+
+- (void)restoreContacts
+{
+    //TODO
+}
+
 - (void)removeVideosFromArray:(NSMutableArray *)arr {
     if (arr.count  == 0)
         return;
@@ -1431,8 +1746,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                 [self performSelector:@selector(downloadDir:) withObject:(SeafDir *)item afterDelay:delay];
             }
         }
-    } failure:^(SeafDir *dir) {
-        Warning("Failed to download dir: %@ %@", dir.repoId, dir.path);
+    } failure:^(SeafDir *dir, NSError *error) {
+        Warning("Failed to download dir %@ %@:  %@", dir.repoId, dir.path, error);
     }];
 }
 

@@ -19,35 +19,46 @@
 @interface SeafDirViewController ()<SeafDentryDelegate>
 @property (strong) UIBarButtonItem *chooseItem;
 @property (strong, readonly) SeafDir *directory;
-@property (strong) id<SeafDirDelegate> delegate;
 @property (readwrite) BOOL chooseRepo;
 @property (nonatomic, strong) NSArray *subDirs;
-
+@property (strong) SeafDirChoose dirChoose;
+@property (strong) SeafDirCancelChoose dirCancel;
 @end
 
 @implementation SeafDirViewController
 
-- (id)initWithSeafDir:(SeafDir *)dir delegate:(id<SeafDirDelegate>)delegate chooseRepo:(BOOL)chooseRepo
+- (id)initWithSeafDir:(SeafDir *)dir dirChosen:(SeafDirChoose)choose cancel:(SeafDirCancelChoose)cancel chooseRepo:(BOOL)chooseRepo
 {
     if (self = [super init]) {
-        self.delegate = delegate;
         _directory = dir;
         _directory.delegate = self;
         [_directory loadContent:NO];
+        _dirChoose = choose;
+        _dirCancel = cancel;
         _chooseRepo = chooseRepo;
         self.tableView.delegate = self;
     }
     return self;
 }
 
+- (id)initWithSeafDir:(SeafDir *)dir delegate:(id<SeafDirDelegate>)delegate chooseRepo:(BOOL)chooseRepo
+{
+    return [self initWithSeafDir:dir dirChosen:^(UIViewController *c, SeafDir *dir) {
+        [delegate chooseDir:c dir:dir];
+    } cancel:^(UIViewController *c) {
+        [delegate cancelChoose:c];
+    } chooseRepo:chooseRepo];
+    return self;
+}
+
 - (void)cancel:(id)sender
 {
-    [self.delegate cancelChoose:self];
+    self.dirCancel(self);
 }
 
 - (IBAction)chooseFolder:(id)sender
 {
-    [self.delegate chooseDir:self dir:_directory];
+    self.dirChoose(self, _directory);
 }
 
 - (void)viewDidLoad
@@ -185,15 +196,14 @@
     }
     if (![curDir isKindOfClass:[SeafDir class]])
         return;
+
     if (_chooseRepo) {
-        [self.delegate chooseDir:self dir:curDir];
-        return;
+        return self.dirChoose(self, curDir);
     }
     if ([curDir isKindOfClass:[SeafRepo class]] && [(SeafRepo *)curDir passwordRequired]) {
-        [self popupSetRepoPassword:(SeafRepo *)curDir];
-        return;
+        return [self popupSetRepoPassword:(SeafRepo *)curDir];
     }
-    SeafDirViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:curDir delegate:self.delegate chooseRepo:false];
+    SeafDirViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:curDir dirChosen:_dirChoose cancel:_dirCancel chooseRepo:false];
     [self.navigationController pushViewController:controller animated:YES];
 }
 
@@ -201,7 +211,7 @@
 {
     [self popupSetRepoPassword:repo handler:^{
         [SVProgressHUD dismiss];
-        SeafDirViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:repo delegate:self.delegate chooseRepo:false];
+        SeafDirViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:repo dirChosen:_dirChoose cancel:_dirCancel chooseRepo:false];
         [self.navigationController pushViewController:controller animated:YES];
     }];
 }

@@ -8,6 +8,7 @@
 
 @import LocalAuthentication;
 @import QuartzCore;
+@import Contacts;
 
 #import "SVProgressHUD.h"
 
@@ -22,11 +23,31 @@
 #import "ExtentedString.h"
 #import "Debug.h"
 
+
 enum {
-    CELL_INVITATION = 0,
-    CELL_WEBSITE,
-    CELL_SERVER,
-    CELL_VERSION,
+    SECTION_ACCOUNT = 0,
+    SECTION_CAMERA,
+    SECTION_CONTACTS,
+    SECTION_CACHE,
+    SECTION_ENC,
+    SECTION_ABOUT,
+    SECTION_LOGOUT,
+};
+
+enum CAMERA_CELL{
+    CELL_CAMERA_AUTO = 0,
+    CELL_CAMERA_VIDEOS,
+    CELL_CAMERA_WIFIONLY,
+    CELL_CAMERA_BACKGROUND,
+    CELL_CAMERA_DESTINATION,
+};
+
+enum CONTACTS_CELL{
+    CELL_CONTACTS_AUTO = 0,
+    CELL_CONTACTS_DESTINATION,
+    CELL_CONTACTS_LAST,
+    CELL_CONTACTS_BACKUP,
+    CELL_CONTACTS_RESTORE,
 };
 
 enum {
@@ -34,24 +55,15 @@ enum {
     CELL_CACHE_WIPE,
 };
 
-enum {
-    SECTION_ACCOUNT = 0,
-    SECTION_CAMERA,
-    SECTION_CACHE,
-    SECTION_ENC,
-    SECTION_ABOUT,
-    SECTION_LOGOUT,
-};
-enum CAMERA_CELL{
-    CELL_AUTO = 0,
-    CELL_VIDEOS,
-    CELL_WIFIONLY,
-    CELL_BACKGROUND,
-    CELL_DESTINATION,
-};
-
 enum ENC_LIBRARIES{
     CELL_CLEAR_PASSWORD = 0,
+};
+
+enum {
+    CELL_INVITATION = 0,
+    CELL_WEBSITE,
+    CELL_SERVER,
+    CELL_VERSION,
 };
 
 #define SEAFILE_SITE @"http://www.seafile.com"
@@ -59,7 +71,7 @@ enum ENC_LIBRARIES{
 #define MSG_CLEAR_CACHE NSLocalizedString(@"Are you sure to clear all the cache?", @"Seafile")
 #define MSG_LOG_OUT NSLocalizedString(@"Are you sure to log out?", @"Seafile")
 
-@interface SeafSettingsViewController ()<SeafDirDelegate, SeafPhotoSyncWatcherDelegate, MFMailComposeViewControllerDelegate, CLLocationManagerDelegate>
+@interface SeafSettingsViewController ()<SeafPhotoSyncWatcherDelegate, MFMailComposeViewControllerDelegate, CLLocationManagerDelegate>
 @property (strong, nonatomic) IBOutlet UITableViewCell *nameCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *usedspaceCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *serverCell;
@@ -73,6 +85,10 @@ enum ENC_LIBRARIES{
 @property (strong, nonatomic) IBOutlet UITableViewCell *backgroundSyncCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *clearEncRepoPasswordCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *wipeCacheCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *contactsRepoCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *lastBackupTimeCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *uploadContactsCell;
+@property (strong, nonatomic) IBOutlet UITableViewCell *restoreContactsCell;
 
 @property (strong, nonatomic) IBOutlet UILabel *logOutLabel;
 @property (strong, nonatomic) IBOutlet UILabel *autoCameraUploadLabel;
@@ -82,6 +98,7 @@ enum ENC_LIBRARIES{
 @property (strong, nonatomic) IBOutlet UILabel *autoClearPasswdLabel;
 @property (strong, nonatomic) IBOutlet UILabel *localDecryLabel;
 @property (strong, nonatomic) IBOutlet UILabel *enableTouchIDLabel;
+@property (strong, nonatomic) IBOutlet UILabel *contactsSyncLabel;
 
 @property (strong, nonatomic) IBOutlet UISwitch *autoSyncSwitch;
 @property (strong, nonatomic) IBOutlet UISwitch *wifiOnlySwitch;
@@ -90,6 +107,7 @@ enum ENC_LIBRARIES{
 @property (strong, nonatomic) IBOutlet UISwitch *autoClearPasswdSwitch;
 @property (strong, nonatomic) IBOutlet UISwitch *localDecrySwitch;
 @property (strong, nonatomic) IBOutlet UISwitch *enableTouchIDSwitch;
+@property (strong, nonatomic) IBOutlet UISwitch *contactsSyncSwitch;
 
 @property (strong, nonatomic) CLLocationManager *locationManager;
 
@@ -112,6 +130,11 @@ enum ENC_LIBRARIES{
 - (BOOL)autoSync
 {
     return _connection.autoSync;
+}
+
+- (BOOL)contactsSync
+{
+    return _connection.contactsSync;
 }
 
 - (BOOL)wifiOnly
@@ -187,7 +210,6 @@ enum ENC_LIBRARIES{
         self.autoSync = _autoSyncSwitch.on;
         _syncRepoCell.detailTextLabel.text = @"";
         _connection.autoSyncRepo = nil;
-        [self.tableView reloadData];
         [_connection performSelectorInBackground:@selector(checkAutoSync) withObject:nil];
     }
 }
@@ -201,6 +223,52 @@ enum ENC_LIBRARIES{
 {
     self.videoSync = _videoSyncSwitch.on;
     [_connection photosChanged:nil];
+}
+
+- (void)setContactsSync:(BOOL)contactsSync
+{
+    if (_connection.contactsSync == contactsSync)
+        return;
+    _connection.contactsSync = contactsSync;
+}
+
+- (void)checkContactsAuthorizationStatus:(void (^)(bool accessGranted))completionHandler
+{
+    Debug("contactsAuthorizationStatus: %ld", (long)[CNContactStore authorizationStatusForEntityType:CNEntityTypeContacts]);
+    switch ([CNContactStore authorizationStatusForEntityType:CNEntityTypeContacts]) {
+        case CNAuthorizationStatusNotDetermined: {
+            [[[CNContactStore alloc] init] requestAccessForEntityType:CNEntityTypeContacts completionHandler:^(BOOL granted, NSError * _Nullable error) {
+                Debug("contactsAuthorizationStatus granted=%d, error: %@", granted, error);
+                completionHandler(granted);
+            }];
+        }
+            break;
+        case CNAuthorizationStatusRestricted:
+        case CNAuthorizationStatusDenied: {
+            // Show custom alert
+            [self alertWithTitle:NSLocalizedString(@"This app does not have access to your contacts.", @"Seafile") message:NSLocalizedString(@"You can enable access in Privacy Settings", @"Seafile")];
+            completionHandler(false);
+        }
+            break;
+        case CNAuthorizationStatusAuthorized:
+            completionHandler(true);
+            break;
+    }
+}
+
+- (void)contactsSyncSwitchFlip:(id)sender
+{
+    if (_contactsSyncSwitch.on) {
+        [self checkContactsAuthorizationStatus:^(bool accessGranted) {
+            self.contactsSync = accessGranted;
+            _contactsSyncSwitch.on = accessGranted;
+        }];
+    } else {
+        self.contactsSync = _contactsSyncSwitch.on;
+        _contactsRepoCell.detailTextLabel.text = @"";
+        _lastBackupTimeCell.detailTextLabel.text = @"";
+        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:[NSIndexPath indexPathForRow:CELL_CONTACTS_DESTINATION inSection:SECTION_CONTACTS]] withRowAnimation:UITableViewRowAnimationNone];
+    }
 }
 
 - (CLLocationManager *)locationManager {
@@ -268,16 +336,25 @@ enum ENC_LIBRARIES{
     _nameCell.textLabel.text = NSLocalizedString(@"Username", @"Seafile");
     _usedspaceCell.textLabel.text = NSLocalizedString(@"Space Used", @"Seafile");
     _enableTouchIDLabel.text = NSLocalizedString(@"Enable TouchID", @"Seafile");
+
     _autoCameraUploadLabel.text = NSLocalizedString(@"Auto Upload", @"Seafile");
     _videoSyncLabel.text = NSLocalizedString(@"Upload Videos", @"Seafile");
     _wifiOnlyLabel.text = NSLocalizedString(@"Wifi Only", @"Seafile");
     _backgroundSyncLable.text = NSLocalizedString(@"Background Upload", @"Seafile");
-    _autoClearPasswdLabel.text = NSLocalizedString(@"Auto clear passwords", @"Auto cleay library password");
-    _localDecryLabel.text = NSLocalizedString(@"Local decryption", @"Local decryption");
-
     _syncRepoCell.textLabel.text = NSLocalizedString(@"Upload Destination", @"Seafile");
+
+    _contactsSyncLabel.text = NSLocalizedString(@"Contacts Auto Upload", @"Seafile");
+    _contactsRepoCell.textLabel.text = NSLocalizedString(@"Upload Destination", @"Seafile");
+    _lastBackupTimeCell.textLabel.text = NSLocalizedString(@"Last Backup Time", @"Seafile");
+    _uploadContactsCell.textLabel.text = NSLocalizedString(@"Upload Contacts", @"Seafile");
+    _restoreContactsCell.textLabel.text = NSLocalizedString(@"Restore Contacts", @"Seafile");
+
     _cacheCell.textLabel.text = NSLocalizedString(@"Local Cache", @"Seafile");
     _wipeCacheCell.textLabel.text = NSLocalizedString(@"Wipe Cache", @"Seafile");
+
+    _clearEncRepoPasswordCell.textLabel.text = NSLocalizedString(@"Clear remembered passwords", @"Seafile");
+    _autoClearPasswdLabel.text = NSLocalizedString(@"Auto clear passwords", @"Auto cleay library password");
+    _localDecryLabel.text = NSLocalizedString(@"Local decryption", @"Local decryption");
 
     _tellFriendCell.textLabel.text = [NSString stringWithFormat:NSLocalizedString(@"Tell Friends about %@", @"Seafile"), APP_NAME];
     _websiteCell.textLabel.text = NSLocalizedString(@"Website", @"Seafile");
@@ -285,7 +362,7 @@ enum ENC_LIBRARIES{
     _serverCell.textLabel.text = NSLocalizedString(@"Server", @"Seafile");
     _versionCell.textLabel.text = NSLocalizedString(@"Version", @"Seafile");
     _logOutLabel.text = NSLocalizedString(@"Log out", @"Seafile");
-    _clearEncRepoPasswordCell.textLabel.text = NSLocalizedString(@"Clear remembered passwords", @"Seafile");
+
     self.title = NSLocalizedString(@"Settings", @"Seafile");
 
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
@@ -293,6 +370,8 @@ enum ENC_LIBRARIES{
     [_wifiOnlySwitch addTarget:self action:@selector(wifiOnlySwitchFlip:) forControlEvents:UIControlEventValueChanged];
     [_videoSyncSwitch addTarget:self action:@selector(videoSyncSwitchFlip:) forControlEvents:UIControlEventValueChanged];
     [_backgroundSyncSwitch addTarget:self action:@selector(backgroundSyncSwitchFlip:) forControlEvents:UIControlEventValueChanged];
+    [_contactsSyncSwitch addTarget:self action:@selector(contactsSyncSwitchFlip:) forControlEvents:UIControlEventValueChanged];
+
     [_autoClearPasswdSwitch addTarget:self action:@selector(autoClearPasswdSwtichFlip:) forControlEvents:UIControlEventValueChanged];
     [_localDecrySwitch addTarget:self action:@selector(localDecryptionSwtichFlip:) forControlEvents:UIControlEventValueChanged];
     [_enableTouchIDSwitch addTarget:self action:@selector(enableTouchIDSwtichFlip:) forControlEvents:UIControlEventValueChanged];
@@ -328,21 +407,9 @@ enum ENC_LIBRARIES{
         return;
 
     _nameCell.detailTextLabel.text = _connection.username;
-    _serverCell.detailTextLabel.text = [_connection.address trimUrl];
-    _autoSyncSwitch.on = self.autoSync;
-    if (self.autoSync)
-        [self checkPhotoLibraryAuthorizationStatus];
-    _wifiOnlySwitch.on = self.wifiOnly;
-    _videoSyncSwitch.on = self.videoSync;
-    _backgroundSyncSwitch.on = self.backgroundSync;
-    SeafRepo *repo = [_connection getRepo:_connection.autoSyncRepo];
-    _syncRepoCell.detailTextLabel.text = repo ? repo.name : nil;
-    _autoClearPasswdSwitch.on = _connection.autoClearRepoPasswd;
-    _localDecrySwitch.on = _connection.localDecryption;
     _enableTouchIDSwitch.on = _connection.touchIdEnabled;
 
     long long cacheSize = [self cacheSize];
-    _cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromLongLong:cacheSize];
     Debug("%@, %lld, %lld, total cache=%lld", _connection.username, _connection.usage, _connection.quota, cacheSize);
     if (_connection.quota <= 0) {
         if (_connection.usage < 0)
@@ -357,6 +424,32 @@ enum ENC_LIBRARIES{
         else
             _usedspaceCell.detailTextLabel.text = [NSString stringWithFormat:@"%.2f%% of %@", usage, quotaString];
     }
+
+    _autoSyncSwitch.on = self.autoSync;
+    if (self.autoSync)
+        [self checkPhotoLibraryAuthorizationStatus];
+    _videoSyncSwitch.on = self.videoSync;
+    _wifiOnlySwitch.on = self.wifiOnly;
+    _backgroundSyncSwitch.on = self.backgroundSync;
+    SeafRepo *cameraRepo = [_connection getRepo:_connection.autoSyncRepo];
+    _syncRepoCell.detailTextLabel.text = cameraRepo ? cameraRepo.name : nil;
+
+    _contactsSyncSwitch.on = self.contactsSync;
+    SeafRepo *contactsRepo = [_connection getRepo:_connection.contactsRepo];
+    _contactsRepoCell.detailTextLabel.text = contactsRepo ? contactsRepo.name : nil;
+    [_connection getContactsLastBackTime:^(BOOL success, NSString *dateStr) {
+        dispatch_async(dispatch_get_main_queue(), ^ {
+            _lastBackupTimeCell.detailTextLabel.text = dateStr;
+            [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:[NSIndexPath indexPathForRow:CELL_CONTACTS_LAST inSection:SECTION_CONTACTS]] withRowAnimation:UITableViewRowAnimationNone];
+        });
+    }];
+
+    _cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromLongLong:cacheSize];
+
+    _autoClearPasswdSwitch.on = _connection.autoClearRepoPasswd;
+    _localDecrySwitch.on = _connection.localDecryption;
+    _serverCell.detailTextLabel.text = [_connection.address trimUrl];
+
     [self.tableView reloadData];
 }
 
@@ -378,9 +471,9 @@ enum ENC_LIBRARIES{
     [self updateAccountInfo];
 }
 
-- (void)popupRepoSelect
+- (void)popupRepoChoose:(SeafDirChoose)choose cancel:(SeafDirCancelChoose)cancel
 {
-    SeafDirViewController *c = [[SeafDirViewController alloc] initWithSeafDir:self.connection.rootFolder delegate:self chooseRepo:true];
+    SeafDirViewController *c = [[SeafDirViewController alloc] initWithSeafDir:self.connection.rootFolder dirChosen:choose cancel:cancel chooseRepo:true];
     [self.navigationController pushViewController:c animated:true];
 }
 
@@ -393,12 +486,73 @@ enum ENC_LIBRARIES{
             [self updateAccountInfo];
     } else if (indexPath.section == SECTION_CAMERA) {
         Debug("selected %ld, autoSync: %d", (long)indexPath.row, self.autoSync);
-        if (indexPath.row == CELL_DESTINATION) {
+        if (indexPath.row == CELL_CAMERA_DESTINATION) {
             if (self.autoSync) {
-                [self popupRepoSelect];
+                [self popupRepoChoose:^(UIViewController *c, SeafDir *dir) {
+                    [self dismissViewController:c];
+                    SeafRepo *repo = (SeafRepo *)dir;
+                    Debug("Choose repo %@ for photo auto upload, encryped:%d", repo.name, repo.encrypted);
+                    if (repo.encrypted) {
+                        if (!_connection.localDecryption) {
+                            return [self alertWithTitle:NSLocalizedString(@"Please enable \"Local decryption\" for auto uploading photos to an encrypted library.", @"Seafile")];
+                        } else if (_connection.autoClearRepoPasswd) {
+                            return [self alertWithTitle:NSLocalizedString(@"Please disable \"Auto clear passwords\" for auto uploading photos to an encrypted library.", @"Seafile")];
+                        } else if (repo.passwordRequired) {
+                            return [self popupSetRepoPassword:repo handler:^{
+                                [self setAutoSyncRepo:repo];
+                            }];
+                        }
+                    }
+                    [self setAutoSyncRepo:repo];
+                } cancel:^(UIViewController *c) {
+                    [self dismissViewController:c];
+                }];
             } else {
                 [self alertWithTitle:NSLocalizedString(@"Auto upload should be enabled first.", @"Seafile")];
             }
+        }
+    } else if (indexPath.section == SECTION_CONTACTS) {
+        Debug("selected %ld, contactsSync: %d", (long)indexPath.row, self.contactsSync);
+        if (indexPath.row == CELL_CONTACTS_DESTINATION) {
+            if (self.contactsSync) {
+                [self popupRepoChoose:^(UIViewController *c, SeafDir *dir) {
+                    [self dismissViewController:c];
+                    SeafRepo *repo = (SeafRepo *)dir;
+                    Debug("Choose repo %@ for contacts auto upload, encryped:%d", repo.name, repo.encrypted);
+                    if (repo.encrypted) {
+                        if (!_connection.localDecryption) {
+                            return [self alertWithTitle:NSLocalizedString(@"Please enable \"Local decryption\" for auto uploading contacts to an encrypted library.", @"Seafile")];
+                        } else if (_connection.autoClearRepoPasswd) {
+                            return [self alertWithTitle:NSLocalizedString(@"Please disable \"Auto clear passwords\" for auto uploading contacts to an encrypted library.", @"Seafile")];
+                        } else if (repo.passwordRequired) {
+                            return [self popupSetRepoPassword:repo handler:^{
+                                [self setContactsSyncRepo:repo];
+                            }];
+                        }
+                    }
+                    [self setContactsSyncRepo:repo];
+                } cancel:^(UIViewController *c) {
+                    [self dismissViewController:c];
+                }];
+            } else {
+                [self alertWithTitle:NSLocalizedString(@"Contacts auto upload should be enabled first.", @"Seafile")];
+            }
+        } else if (indexPath.row == CELL_CONTACTS_BACKUP) {
+            [_connection backupContacts:false completion:^(BOOL success, NSError * _Nullable error) {
+                if (!success) {
+                    Warning("Failed to backup contacts: %@", error);
+                } else {
+                    Debug("contacts backup succeed.");
+                    [_connection getContactsLastBackTime:^(BOOL success, NSString *dateStr) {
+                        if (!success)
+                            return;
+                        _lastBackupTimeCell.detailTextLabel.text = dateStr;
+                        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:[NSIndexPath indexPathForRow:CELL_CONTACTS_LAST inSection:SECTION_CONTACTS]] withRowAnimation:UITableViewRowAnimationNone];
+                    }];
+                }
+            }];
+        } else if (indexPath.row == CELL_CONTACTS_RESTORE) {
+            [_connection restoreContacts];
         }
     } else if (indexPath.section == SECTION_CACHE) {
         Debug("selected %ld, autoSync: %d", (long)indexPath.row, self.autoSync);
@@ -455,6 +609,7 @@ enum ENC_LIBRARIES{
     NSString *sectionNames[] = {
         NSLocalizedString(@"Account Info", @"Seafile"),
         NSLocalizedString(@"Camera Upload", @"Seafile"),
+        NSLocalizedString(@"Contacts Backup", @"Seafile"),
         NSLocalizedString(@"Cache", @"Seafile"),
         NSLocalizedString(@"Encrypted Libraries", @"Seafile"),
         NSLocalizedString(@"About", @"Seafile"),
@@ -562,7 +717,7 @@ enum ENC_LIBRARIES{
     _connection.autoSyncRepo = repo.repoId;
     _syncRepoCell.detailTextLabel.text = repo.name;
     [_connection performSelectorInBackground:@selector(checkAutoSync) withObject:nil];
-    [self.tableView reloadData];
+    [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:[NSIndexPath indexPathForRow:CELL_CONTACTS_DESTINATION inSection:SECTION_CONTACTS]] withRowAnimation:UITableViewRowAnimationNone];
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [appdelegate checkBackgroundUploadStatus];
 }
@@ -588,30 +743,18 @@ enum ENC_LIBRARIES{
         }];
     });
 }
-- (void)chooseDir:(UIViewController *)c dir:(SeafDir *)dir
+
+- (void)setContactsSyncRepo:(SeafRepo *)repo
 {
-    if (c.navigationController == self.navigationController) {
-        [self.navigationController popToRootViewControllerAnimated:true];
-    } else {
-        [c.navigationController dismissViewControllerAnimated:YES completion:nil];
-    }
-    SeafRepo *repo = (SeafRepo *)dir;
-    Debug("Choose repo %@ for photo auto upload, encryped:%d", repo.name, repo.encrypted);
-    if (repo.encrypted) {
-        if (!_connection.localDecryption) {
-            return [self alertWithTitle:NSLocalizedString(@"Please enable \"Local decryption\" for auto uploading photos to an encrypted library.", @"Seafile")];
-        } else if (_connection.autoClearRepoPasswd) {
-            return [self alertWithTitle:NSLocalizedString(@"Please disable \"Auto clear passwords\" for auto uploading photos to an encrypted library.", @"Seafile")];
-        } else if (repo.passwordRequired) {
-            return [self popupSetRepoPassword:repo handler:^{
-                [self setAutoSyncRepo:repo];
-            }];
-        }
-    }
-    [self setAutoSyncRepo:repo];
+    _connection.contactsRepo = repo.repoId;
+    _contactsRepoCell.detailTextLabel.text = repo.name;
+    [_connection backupContacts:false completion:^(BOOL success, NSError * _Nullable error) {
+        Debug("contacts backup finished: %d %@", success, error);
+    }];
+    // TODO start monitor contacts change
 }
 
-- (void)cancelChoose:(UIViewController *)c
+- (void)dismissViewController:(UIViewController *)c
 {
     if (c.navigationController == self.navigationController) {
         [self.navigationController popToRootViewControllerAnimated:true];

@@ -38,7 +38,6 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 - (BOOL)retryable;
 @end
 
-
 @protocol SeafPhotoSyncWatcherDelegate <NSObject>
 - (void)photoSyncChanged:(long)remain;
 @end
@@ -84,7 +83,11 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 @property (readwrite, nonatomic, getter=isAutoSync) BOOL autoSync;
 @property (readwrite, nonatomic, getter=isVideoSync) BOOL videoSync;
 @property (readwrite, nonatomic, getter=isBackgroundSync) BOOL backgroundSync;
+@property (readwrite, nonatomic, getter=isContactsSync) BOOL contactsSync;
+
 @property (readwrite, nonatomic) NSString *autoSyncRepo;
+@property (readwrite, nonatomic) NSString *contactsRepo;
+
 @property (readwrite, nonatomic) BOOL autoClearRepoPasswd;
 @property (readwrite, nonatomic) BOOL localDecryption;
 @property (readwrite, nonatomic) BOOL touchIdEnabled;
@@ -93,6 +96,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 
 @property (weak) id<SeafPhotoSyncWatcherDelegate> photSyncWatcher;
 @property (readonly) BOOL inAutoSync;
+
 @property (readonly) NSString *avatar;
 
 
@@ -170,15 +174,18 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 - (BOOL)savetoCacheKey:(NSString *)key value:(NSString *)content;
 - (id)getCachedStarredFiles;
 
-- (NSString *)getAttribute:(NSString *)aKey;
+- (id)getAttribute:(NSString *)aKey;
 - (void)setAttribute:(id)anObject forKey:(NSString *)aKey;
 
-- (void)checkAutoSync;
 - (void)fileUploadedSuccess:(SeafUploadFile *)ufile;
 
+- (void)checkAutoSync;
 - (NSUInteger)photosInSyncing;
 - (void)checkSyncDst:(SeafDir *)dir;
 - (void)photosChanged:(NSNotification *)note;
+- (void)backupContacts:(BOOL)force completion:(void(^)(BOOL success, NSError * _Nullable error))completionHandler;
+- (void)restoreContacts;
+- (void)getContactsLastBackTime:(void(^)(BOOL success, NSString *dateStr))completionHandler;
 
 - (void)setRepo:(NSString *)repoId password:(NSString *)password;
 - (NSString *)getRepoPassword:(NSString *)repoId;
