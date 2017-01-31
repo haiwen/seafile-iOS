@@ -37,7 +37,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 @property int index;
 
 @property (readwrite, nonatomic, copy) SeafThumbCompleteBlock thumbCompleteBlock;
-@property (readwrite, nonatomic, copy) SeafFileDidDownloadBlock fileDidDownload;
+@property (readwrite, nonatomic, copy) SeafFileDidDownloadBlock fileDidDownloadBlock;
 
 @end
 
@@ -90,6 +90,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     int size = THUMB_SIZE * (int)[[UIScreen mainScreen] scale];
     return [SeafGlobal.sharedObject.thumbsDir stringByAppendingPathComponent:[NSString stringWithFormat:@"/%@-%d", objId, size]];
 }
+
 - (void)updateWithEntry:(SeafBase *)entry
 {
     SeafFile *file = (SeafFile *)entry;
@@ -100,7 +101,6 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     _mtime = file.mtime;
     self.state = SEAF_DENTRY_INIT;
     [self loadCache];
-    [self downloadComplete:true];
 }
 
 - (void)setOoid:(NSString *)ooid
@@ -928,21 +928,21 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (void)setFileDownloadedBlock:(nullable SeafFileDidDownloadBlock)block
 {
-    self.fileDidDownload = block;
+    self.fileDidDownloadBlock = block;
 }
 
 - (void)downloadComplete:(BOOL)updated
 {
     [self.delegate download:self complete:true];
-    if (self.fileDidDownload)
-        self.fileDidDownload(self, true);
+    if (self.fileDidDownloadBlock)
+        self.fileDidDownloadBlock(self, true);
 
 }
 - (void)downloadFailed:(NSError *)error
 {
     [self.delegate download:self failed:error];
-    if (self.fileDidDownload)
-        self.fileDidDownload(self, false);
+    if (self.fileDidDownloadBlock)
+        self.fileDidDownloadBlock(self, false);
 }
 
 @end

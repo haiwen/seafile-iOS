@@ -78,4 +78,6 @@ typedef void (^repo_password_set_block_t)(SeafBase *entry, int ret);
 
 - (void)generateShareLink:(id<SeafShareDelegate>)dg;
 
+- (void)downloadComplete:(BOOL)updated;
+- (void)downloadFailed:(NSError *)error;
 @end

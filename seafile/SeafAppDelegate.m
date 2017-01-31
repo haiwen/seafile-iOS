@@ -6,6 +6,7 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
+@import Contacts;
 #import <Photos/Photos.h>
 
 #import "SeafAppDelegate.h"
@@ -191,12 +192,19 @@
     return [self openURL:url];
 }
 
+- (void)contactStoreDidChange:(NSNotification *)notification
+{
+    Debug("contactStoreDidChange.");
+    for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+        [conn contactStoreDidChange:notification];
+    }
+}
 
-- (void)checkPhotoChanges:(NSNotification *)notification
+- (void)photosDidChange:(NSNotification *)notification
 {
     Debug("Start check photos changes.");
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
-        [conn photosChanged:notification];
+        [conn photosDidChange:notification];
     }
 }
 
@@ -224,8 +232,11 @@
     }
     if (ios8) {
          [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
-    } else
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(checkPhotoChanges:) name:ALAssetsLibraryChangedNotification object:SeafGlobal.sharedObject.assetsLibrary];
+    } else {
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(photosDidChange:) name:ALAssetsLibraryChangedNotification object:SeafGlobal.sharedObject.assetsLibrary];
+    }
+    //[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(contactStoreDidChange:) name:CNContactStoreDidChangeNotification object:nil];
+
     [self checkBackgroundUploadStatus];
 }
 
@@ -360,7 +371,7 @@
     Debug("Seafile will enter foreground");
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
     [SeafGlobal.sharedObject loadSettings:[NSUserDefaults standardUserDefaults]];
-    [self checkPhotoChanges:nil];
+    [self photosDidChange:nil];
     for (id <SeafBackgroundMonitor> monitor in _monitors) {
         [monitor enterForeground];
     }
@@ -532,7 +543,7 @@
     Debug("Photos library changed.");
     // Call might come on any background queue. Re-dispatch to the main queue to handle it.
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self checkPhotoChanges:nil];
+        [self photosDidChange:nil];
     });
 }
 
@@ -545,7 +556,7 @@
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations
 {
     Debug("Location updated: %@", locations);
-    [self checkPhotoChanges:nil];
+    [self photosDidChange:nil];
 }
 
 - (void)startSignificantChangeUpdates

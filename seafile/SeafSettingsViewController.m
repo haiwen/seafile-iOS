@@ -222,7 +222,7 @@ enum {
 - (void)videoSyncSwitchFlip:(id)sender
 {
     self.videoSync = _videoSyncSwitch.on;
-    [_connection photosChanged:nil];
+    [_connection photosDidChange:nil];
 }
 
 - (void)setContactsSync:(BOOL)contactsSync
@@ -343,7 +343,7 @@ enum {
     _backgroundSyncLable.text = NSLocalizedString(@"Background Upload", @"Seafile");
     _syncRepoCell.textLabel.text = NSLocalizedString(@"Upload Destination", @"Seafile");
 
-    _contactsSyncLabel.text = NSLocalizedString(@"Contacts Auto Upload", @"Seafile");
+    _contactsSyncLabel.text = NSLocalizedString(@"Contacts Backup", @"Seafile");
     _contactsRepoCell.textLabel.text = NSLocalizedString(@"Upload Destination", @"Seafile");
     _lastBackupTimeCell.textLabel.text = NSLocalizedString(@"Last Backup Time", @"Seafile");
     _uploadContactsCell.textLabel.text = NSLocalizedString(@"Upload Contacts", @"Seafile");
@@ -458,8 +458,9 @@ enum {
     [_connection getAccountInfo:^(bool result) {
         if (result) {
             dispatch_async(dispatch_get_main_queue(), ^ {
-                [self configureView];
-                _connection.photSyncWatcher = self;
+                if (self.isVisible) {
+                    [self configureView];
+                }
             });
         }
     }];
@@ -467,6 +468,7 @@ enum {
 - (void)setConnection:(SeafConnection *)connection
 {
     _connection = connection;
+    _connection.photSyncWatcher = self;
     [self.tableView reloadData];
     [self updateAccountInfo];
 }
@@ -538,7 +540,9 @@ enum {
                 [self alertWithTitle:NSLocalizedString(@"Contacts auto upload should be enabled first.", @"Seafile")];
             }
         } else if (indexPath.row == CELL_CONTACTS_BACKUP) {
-            [_connection backupContacts:false completion:^(BOOL success, NSError * _Nullable error) {
+            if (!_connection.contactsSync || !_connection.contactsRepo)
+                return;
+            [_connection backupContacts:true completion:^(BOOL success, NSError * _Nullable error) {
                 if (!success) {
                     Warning("Failed to backup contacts: %@", error);
                 } else {
@@ -552,7 +556,17 @@ enum {
                 }
             }];
         } else if (indexPath.row == CELL_CONTACTS_RESTORE) {
-            [_connection restoreContacts];
+            if (!_connection.contactsSync || !_connection.contactsRepo)
+                return;
+            [SVProgressHUD showWithStatus:NSLocalizedString(@"Restoring contacts.", @"Seafile")];
+            [_connection restoreContacts:^(BOOL success, NSError *error) {
+                Debug("restore %d: %@", success, error);
+                if (success) {
+                    [SVProgressHUD showInfoWithStatus:NSLocalizedString(@"Succeeded to restore contacts", @"Seafile")];
+                } else {
+                    [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to restore contacts.", @"Seafile")];
+                }
+            }];
         }
     } else if (indexPath.section == SECTION_CACHE) {
         Debug("selected %ld, autoSync: %d", (long)indexPath.row, self.autoSync);
@@ -726,7 +740,7 @@ enum {
 {
     NSString *old = _connection.autoSyncRepo;
     if ([repo.repoId isEqualToString:old]) {
-        [_connection photosChanged:nil];
+        [_connection photosDidChange:nil];
         return;
     }
 
@@ -748,10 +762,6 @@ enum {
 {
     _connection.contactsRepo = repo.repoId;
     _contactsRepoCell.detailTextLabel.text = repo.name;
-    [_connection backupContacts:false completion:^(BOOL success, NSError * _Nullable error) {
-        Debug("contacts backup finished: %d %@", success, error);
-    }];
-    // TODO start monitor contacts change
 }
 
 - (void)dismissViewController:(UIViewController *)c
@@ -769,7 +779,7 @@ enum {
     Debug("%ld photos remain to uplaod", remain);
     if (self.isVisible) {
         dispatch_async(dispatch_get_main_queue(), ^ {
-            [self.tableView reloadData];
+            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:SECTION_CAMERA] withRowAnimation:UITableViewRowAnimationNone];
         });
     }
 }

@@ -616,7 +616,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     }
     @synchronized(timer) {
         for (SeafConnection *conn in self.conns) {
-            [conn photosChanged:nil];
+            [conn photosDidChange:nil];
         }
         double cur = [[NSDate date] timeIntervalSince1970];
         if (cur - lastUpdate > UPDATE_INTERVAL) {
@@ -624,7 +624,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
             lastUpdate = cur;
             for (SeafConnection *conn in self.conns) {
                 [conn refreshRepoPassowrds];
-                [conn photosChanged:nil];
+                [conn photosDidChange:nil];
             }
         }
         if (self.ufiles.count > 0)

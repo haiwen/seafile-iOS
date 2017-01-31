@@ -122,8 +122,7 @@
     BOOL hasCache = [self loadCache];
     @synchronized (self) {
         if (hasCache && !force) {
-            [_delegate download:self complete:false];
-            return;
+            return [self downloadComplete:false];
         }
         if (self.state == SEAF_DENTRY_LOADING)
             return;
@@ -265,5 +264,14 @@
     return [self generateShareLink:dg type:@"f"];
 }
 
+- (void)downloadComplete:(BOOL)updated
+{
+    [self.delegate download:self complete:true];
+
+}
+- (void)downloadFailed:(NSError *)error
+{
+    [self.delegate download:self failed:error];
+}
 
 @end
