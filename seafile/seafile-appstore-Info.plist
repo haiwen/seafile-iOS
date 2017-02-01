@@ -52,7 +52,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.5.4</string>
+	<string>2.5.6</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleURLTypes</key>
@@ -75,12 +75,12 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSContactsUsageDescription</key>
+	<string>Used to backup contacts</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>Seafile can periodically start Camera Upload when your location changes</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Used to sync photos</string>
-    <key>NSContactsUsageDescription</key>
-    <string>Used to backup contacts</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
