@@ -862,7 +862,7 @@ enum {
     }
 }
 
-- (BOOL)isCurrentFileImage:(NSMutableArray **)imgs
+- (BOOL)isCurrentFileImage:(NSMutableArray **)imgs tableView:(UITableView *)tableView
 {
     if (![_curEntry conformsToProtocol:@protocol(SeafPreView)])
         return NO;
@@ -870,7 +870,8 @@ enum {
     if (!pre.isImageFile) return NO;
 
     NSMutableArray *arr = [[NSMutableArray alloc] init];
-    for (id entry in _directory.allItems) {
+    NSArray *items = (tableView == self.tableView) ? _directory.allItems : self.searchResults;
+    for (id entry in items) {
         if ([entry conformsToProtocol:@protocol(SeafPreView)]
             && [(id<SeafPreView>)entry isImageFile])
             [arr addObject:entry];
@@ -903,7 +904,7 @@ enum {
 
         id<SeafPreView> item = (id<SeafPreView>)_curEntry;
         NSMutableArray *arr = nil;
-        if ([self isCurrentFileImage:&arr]) {
+        if ([self isCurrentFileImage:&arr tableView:tableView]) {
             [self.detailViewController setPreViewPhotos:arr current:item master:self];
         } else {
             [self.detailViewController setPreViewItem:item master:self];
