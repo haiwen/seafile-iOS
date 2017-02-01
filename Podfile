@@ -6,7 +6,7 @@ def shared
 end
 
 target :"seafile-appstore" do
-  pod 'SVPullToRefresh', '~> 0.4.1'
+  pod 'SVPullToRefresh', :git => 'https://github.com/LawrenceHan/SVPullToRefresh', :branch => 'master'
   pod 'SVProgressHUD', '~> 1.1.3'
   pod 'SWTableViewCell', :git => 'https://github.com/haiwen/SWTableViewCell.git', :branch => 'master'
   pod 'MWPhotoBrowser', :git => 'https://github.com/haiwen/MWPhotoBrowser.git', :branch => 'master'
@@ -24,6 +24,6 @@ target :"SeafProviderFileProvider" do
 end
 
 target :"SeafAction" do
-  pod 'SVPullToRefresh', '~> 0.4.1'
+    pod 'SVPullToRefresh', :git => 'https://github.com/LawrenceHan/SVPullToRefresh', :branch => 'master'
   shared
 end
