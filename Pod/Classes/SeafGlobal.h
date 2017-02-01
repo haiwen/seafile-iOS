@@ -93,8 +93,6 @@
 - (void)migrate;
 - (void)assetForURL:(NSURL *)assetURL resultBlock:(ALAssetsLibraryAssetForURLResultBlock)resultBlock failureBlock:(ALAssetsLibraryAccessFailureBlock)failureBlock;
 
-- (NSComparisonResult)compare:(id<SeafSortable>)obj1 with:(id<SeafSortable>)obj2;
-
 - (UIImage *)imageFromPath:(NSString *)path withMaxSize:(float)length cachePath:(NSString *)cachePath;
 
 - (NSString *)uniqueDirUnder:(NSString *)dir;

@@ -1316,18 +1316,10 @@ enum {
             [self generateSharelink:entry WithResult:YES];
         }
     } else if ([S_SORT_NAME isEqualToString:title]) {
-        NSString *key = [SeafGlobal.sharedObject objectForKey:@"SORT_KEY"];
-        if ([@"NAME" caseInsensitiveCompare:key] != NSOrderedSame) {
-            [SeafGlobal.sharedObject setObject:@"NAME" forKey:@"SORT_KEY"];
-        }
-        [_directory reSortItems];
+        [_directory reSortItemsByName];
         [self.tableView reloadData];
     } else if ([S_SORT_MTIME isEqualToString:title]) {
-        NSString *key = [SeafGlobal.sharedObject objectForKey:@"SORT_KEY"];
-        if ([@"MTIME" caseInsensitiveCompare:key] != NSOrderedSame) {
-            [SeafGlobal.sharedObject setObject:@"MTIME" forKey:@"SORT_KEY"];
-        }
-        [_directory reSortItems];
+        [_directory reSortItemsByMtime];
         [self.tableView reloadData];
     } else if ([S_RESET_PASSWORD isEqualToString:title]) {
         SeafRepo *repo = (SeafRepo *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];

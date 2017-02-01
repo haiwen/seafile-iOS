@@ -11,6 +11,7 @@
 #import "SeafUploadFile.h"
 #import "SeafAvatar.h"
 #import "SeafDir.h"
+#import "SeafRepos.h"
 #import "Utils.h"
 #import "Debug.h"
 #import "SecurityUtilities.h"
@@ -714,15 +715,6 @@ static NSError * NewNSErrorFromException(NSException * exc) {
                                 failureBlock(error);
                             }];
                         }];
-}
-
-- (NSComparisonResult)compare:(id<SeafSortable>)obj1 with:(id<SeafSortable>)obj2
-{
-    NSString *key = [SeafGlobal.sharedObject objectForKey:@"SORT_KEY"];
-    if ([@"MTIME" caseInsensitiveCompare:key] == NSOrderedSame) {
-        return [[NSNumber numberWithLongLong:obj2.mtime] compare:[NSNumber numberWithLongLong:obj1.mtime]];
-    }
-    return [obj1.name caseInsensitiveCompare:obj2.name];
 }
 
 - (UIImage *)imageFromPath:(NSString *)path withMaxSize:(float)length cachePath:(NSString *)cachePath

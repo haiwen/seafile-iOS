@@ -18,10 +18,13 @@
 #import "Utils.h"
 #import "Debug.h"
 
+typedef NSComparisonResult (^SeafSortableCmp)(id<SeafSortable> obj1, id<SeafSortable> obj2);
 
-static NSComparator CMP = ^(id obj1, id obj2) {
+typedef NSComparisonResult (^SeafCmpFunc)(id obj1, id obj2, SeafSortableCmp comparator);
+
+static SeafCmpFunc seafCmpFunc = ^(id obj1, id obj2, SeafSortableCmp comparator) {
     if ([obj1 conformsToProtocol:@protocol(SeafSortable)] && [obj2 conformsToProtocol:@protocol(SeafSortable)]) {
-        return [SeafGlobal.sharedObject compare:obj1 with:obj2];
+        return comparator((id<SeafSortable>)obj1, (id<SeafSortable>)obj2);
     } else if ([obj1 isKindOfClass:[SeafDir class]] && [obj2 isKindOfClass:[SeafDir class]]) {
         return [[(SeafDir *)obj1 name] caseInsensitiveCompare:[(SeafDir *)obj2 name]];
     } else if ([obj1 isKindOfClass:[SeafDir class]] || [obj2 isKindOfClass:[SeafDir class]]) {
@@ -33,6 +36,20 @@ static NSComparator CMP = ^(id obj1, id obj2) {
     }
     return NSOrderedSame;
 };
+
+
+static NSComparator seafSortByName = ^(id a, id b) {
+    return seafCmpFunc(a, b, ^(id<SeafSortable> obj1, id<SeafSortable> obj2) {
+        return [obj1.name caseInsensitiveCompare:obj2.name];
+    });
+};
+
+static NSComparator seafSortByMtime = ^(id a, id b) {
+    return seafCmpFunc(a, b, ^(id<SeafSortable> obj1, id<SeafSortable> obj2) {
+        return [[NSNumber numberWithLongLong:obj2.mtime] compare:[NSNumber numberWithLongLong:obj1.mtime]];
+    });
+};
+
 
 @interface SeafDir ()
 @property NSObject *uploadLock;
@@ -206,11 +223,12 @@ static NSComparator CMP = ^(id obj1, id obj2) {
 
 - (BOOL)checkSorted:(NSArray *)items
 {
+    NSComparator cmp = [self getCmpFunc];
     int i;
     for (i = 1; i < [items count]; ++i) {
         id obj1 = [items objectAtIndex:i-1];
         id obj2 = [items objectAtIndex:i];
-        if (CMP(obj1, obj2) == NSOrderedDescending)
+        if (cmp(obj1, obj2) == NSOrderedDescending)
             return NO;
     }
     return YES;
@@ -220,7 +238,7 @@ static NSComparator CMP = ^(id obj1, id obj2) {
 {
     if ([self checkSorted:items] == NO) {
         @try {
-            [items sortUsingComparator:CMP];
+            [items sortUsingComparator:[self getCmpFunc]];
         }
         @catch (NSException *exception) {
         }
@@ -229,9 +247,37 @@ static NSComparator CMP = ^(id obj1, id obj2) {
     }
 }
 
-- (void)reSortItems
+- (NSString *)configKeyForSort
 {
-    _allItems = nil;
+    return @"SORT_KEY_FILE";
+}
+
+- (void)saveSortKey:(NSString *)keyName
+{
+    NSString *confKey = [self configKeyForSort];
+    [SeafGlobal.sharedObject setObject:keyName forKey:confKey];
+}
+
+- (void)reSortItemsByName
+{
+    [self saveSortKey:@"NAME"];
+     _allItems = nil;
+}
+
+- (void)reSortItemsByMtime
+{
+    [self saveSortKey:@"MTIME"];
+     _allItems = nil;
+}
+
+- (NSComparator)getCmpFunc
+{
+    NSString *confKey = [self configKeyForSort];
+    NSString *key = [SeafGlobal.sharedObject objectForKey:confKey];
+    if ([@"MTIME" caseInsensitiveCompare:key] == NSOrderedSame) {
+        return seafSortByMtime;
+    }
+    return seafSortByName;
 }
 
 - (void)loadedItems:(NSMutableArray *)items

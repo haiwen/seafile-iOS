@@ -255,6 +255,11 @@
     return nil;
 }
 
+- (NSString *)configKeyForSort
+{
+    return @"SORT_KEY_REPO";
+}
+
 - (void)reSortItems
 {
     NSMutableArray *allrepos = [[NSMutableArray alloc] init];
@@ -263,6 +268,18 @@
         [allrepos addObjectsFromArray:repoGroup];
     }
     self.items = allrepos;
+}
+
+- (void)reSortItemsByName
+{
+    [super reSortItemsByName];
+    [self reSortItems];
+}
+
+- (void)reSortItemsByMtime
+{
+    [super reSortItemsByMtime];
+    [self reSortItems];
 }
 
 - (BOOL)editable

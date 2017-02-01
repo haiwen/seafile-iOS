@@ -46,7 +46,9 @@
 - (void)addUploadFile:(SeafUploadFile *)file flush:(BOOL)flush;
 - (void)removeUploadFile:(SeafUploadFile *)ufile;
 
-- (void)reSortItems;
+- (NSString *)configKeyForSort;
+- (void)reSortItemsByName;
+- (void)reSortItemsByMtime;
 - (void)sortItems:(NSMutableArray *)items;
 - (void)renameFile:(SeafFile *)sfile newName:(NSString *)newName;
 - (void)downloadContentSuccess:(void (^)(SeafDir *dir)) success failure:(void (^)(SeafDir *dir, NSError *error))failure;
