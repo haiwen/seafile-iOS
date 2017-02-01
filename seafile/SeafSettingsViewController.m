@@ -523,9 +523,9 @@ enum {
                     Debug("Choose repo %@ for contacts auto upload, encryped:%d", repo.name, repo.encrypted);
                     if (repo.encrypted) {
                         if (!_connection.localDecryption) {
-                            return [self alertWithTitle:NSLocalizedString(@"Please enable \"Local decryption\" for auto uploading contacts to an encrypted library.", @"Seafile")];
+                            return [self alertWithTitle:NSLocalizedString(@"Please enable \"Local decryption\" for uploading contacts to an encrypted library.", @"Seafile")];
                         } else if (_connection.autoClearRepoPasswd) {
-                            return [self alertWithTitle:NSLocalizedString(@"Please disable \"Auto clear passwords\" for auto uploading contacts to an encrypted library.", @"Seafile")];
+                            return [self alertWithTitle:NSLocalizedString(@"Please disable \"Auto clear passwords\" for uploading contacts to an encrypted library.", @"Seafile")];
                         } else if (repo.passwordRequired) {
                             return [self popupSetRepoPassword:repo handler:^{
                                 [self setContactsSyncRepo:repo];
@@ -537,7 +537,7 @@ enum {
                     [self dismissViewController:c];
                 }];
             } else {
-                [self alertWithTitle:NSLocalizedString(@"Contacts auto upload should be enabled first.", @"Seafile")];
+                [self alertWithTitle:NSLocalizedString(@"Contacts backup should be enabled first.", @"Seafile")];
             }
         } else if (indexPath.row == CELL_CONTACTS_BACKUP) {
             if (!_connection.contactsSync || !_connection.contactsRepo)
