@@ -1671,11 +1671,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }];
 }
 
-- (void)backupContacts:(BOOL)force completion:(ContactsCompletionBlock)handler
+- (NSString *)backupContacts:(BOOL)force completion:(ContactsCompletionBlock)handler
 {
     @synchronized(self) {
         if (_inContactsSync) {
-            return handler(false, nil);
+            handler(false, nil);
+            return nil;
         }
         _inContactsSync = true;
     }
@@ -1687,7 +1688,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
     if (!self.contactsSync || !self.contactsRepo) {
         Warning("contacts sync is disabled: %d %@", self.contactsSync, self.contactsRepo);
-        return completionHandler(false, nil);
+        completionHandler(false, nil);
+        return nil;
     }
 
     NSDateFormatter *dateformate = [[NSDateFormatter alloc] init];
@@ -1727,6 +1729,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             }
         }];
     }];
+    return filename;
 }
 
 - (void)getContactsLastBackFile:(void(^)(SeafFile *file, NSString *dateStr, NSError *error))completionHandler

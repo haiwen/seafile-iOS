@@ -346,7 +346,7 @@ enum {
     _contactsSyncLabel.text = NSLocalizedString(@"Contacts Backup", @"Seafile");
     _contactsRepoCell.textLabel.text = NSLocalizedString(@"Upload Destination", @"Seafile");
     _lastBackupTimeCell.textLabel.text = NSLocalizedString(@"Last Backup Time", @"Seafile");
-    _uploadContactsCell.textLabel.text = NSLocalizedString(@"Upload Contacts", @"Seafile");
+    _uploadContactsCell.textLabel.text = NSLocalizedString(@"Backup Contacts", @"Seafile");
     _restoreContactsCell.textLabel.text = NSLocalizedString(@"Restore Contacts", @"Seafile");
 
     _cacheCell.textLabel.text = NSLocalizedString(@"Local Cache", @"Seafile");
@@ -542,10 +542,12 @@ enum {
         } else if (indexPath.row == CELL_CONTACTS_BACKUP) {
             if (!_connection.contactsSync || !_connection.contactsRepo)
                 return;
-            [_connection backupContacts:true completion:^(BOOL success, NSError * _Nullable error) {
+            NSString *filename = [_connection backupContacts:true completion:^(BOOL success, NSError * _Nullable error) {
                 if (!success) {
+                    [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Contacts backup failed.", @"Seafile")];
                     Warning("Failed to backup contacts: %@", error);
                 } else {
+                    [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Contacts backup succeeded.", @"Seafile")];
                     Debug("contacts backup succeed.");
                     [_connection getContactsLastBackTime:^(BOOL success, NSString *dateStr) {
                         if (!success)
@@ -555,6 +557,9 @@ enum {
                     }];
                 }
             }];
+            if (filename) {
+                [SVProgressHUD showWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Contacts will be backuped as: %@ ", @"Seafile"), filename]];
+            }
         } else if (indexPath.row == CELL_CONTACTS_RESTORE) {
             if (!_connection.contactsSync || !_connection.contactsRepo)
                 return;

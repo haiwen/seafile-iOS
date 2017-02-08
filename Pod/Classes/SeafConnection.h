@@ -186,7 +186,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 - (void)checkSyncDst:(SeafDir *)dir;
 - (void)photosDidChange:(NSNotification *)note;
 - (void)contactStoreDidChange:(NSNotification *)notification;
-- (void)backupContacts:(BOOL)force completion:(ContactsCompletionBlock)completionHandler;
+- (NSString *)backupContacts:(BOOL)force completion:(ContactsCompletionBlock)completionHandler;
 - (void)restoreContacts:(void(^)(BOOL success, NSError *error))completionHandler;
 - (void)getContactsLastBackTime:(void(^)(BOOL success, NSString *dateStr))completionHandler;
 

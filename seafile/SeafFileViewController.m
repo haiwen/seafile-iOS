@@ -649,7 +649,9 @@ enum {
 - (void)updateCellDownloadStatus:(SeafCell *)cell isDownloading:(BOOL )isDownloading waiting:(BOOL)waiting cached:(BOOL)cached
 {
     if (!cell) return;
-    //Debug("... cached:%d %d %d", cached, waiting, isDownloading);
+    if (isDownloading && cell.downloadingIndicator.isAnimating)
+        return;
+    //Debug("... %@ cached:%d %d %d", cell.textLabel.text, cached, waiting, isDownloading);
     dispatch_async(dispatch_get_main_queue(), ^{
         if (cached || waiting || isDownloading) {
             cell.cacheStatusView.hidden = false;
@@ -658,12 +660,14 @@ enum {
             if (isDownloading) {
                 [cell.downloadingIndicator startAnimating];
             } else {
+                [cell.downloadingIndicator stopAnimating];
                 NSString *downloadImageNmae = waiting ? @"download_waiting" : @"download_finished";
                 cell.downloadStatusImageView.image = [UIImage imageNamed:downloadImageNmae];
             }
             cell.downloadStatusImageView.hidden = isDownloading;
             cell.downloadingIndicator.hidden = !isDownloading;
         } else {
+            [cell.downloadingIndicator stopAnimating];
             cell.cacheStatusView.hidden = true;
             [cell.cacheStatusWidthConstraint setConstant:0.0f];
         }
@@ -862,13 +866,15 @@ enum {
     }
 }
 
-- (BOOL)isCurrentFileImage:(NSMutableArray **)imgs tableView:(UITableView *)tableView
+- (BOOL)isCurrentFileImage:(id<SeafPreView>)item
 {
-    if (![_curEntry conformsToProtocol:@protocol(SeafPreView)])
+    if (![item conformsToProtocol:@protocol(SeafPreView)])
         return NO;
-    id<SeafPreView> pre = (id<SeafPreView>)_curEntry;
-    if (!pre.isImageFile) return NO;
+    return item.isImageFile;
+}
 
+- (NSArray *)getCurrentFileImagesInTableView:(UITableView *)tableView
+{
     NSMutableArray *arr = [[NSMutableArray alloc] init];
     NSArray *items = (tableView == self.tableView) ? _directory.allItems : self.searchResults;
     for (id entry in items) {
@@ -876,8 +882,7 @@ enum {
             && [(id<SeafPreView>)entry isImageFile])
             [arr addObject:entry];
     }
-    *imgs = arr;
-    return YES;
+    return arr;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
@@ -903,9 +908,9 @@ enum {
         }
 
         id<SeafPreView> item = (id<SeafPreView>)_curEntry;
-        NSMutableArray *arr = nil;
-        if ([self isCurrentFileImage:&arr tableView:tableView]) {
-            [self.detailViewController setPreViewPhotos:arr current:item master:self];
+
+        if ([self isCurrentFileImage:item]) {
+            [self.detailViewController setPreViewPhotos:[self getCurrentFileImagesInTableView:tableView] current:item master:self];
         } else {
             [self.detailViewController setPreViewItem:item master:self];
         }
