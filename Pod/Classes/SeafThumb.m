@@ -28,7 +28,7 @@
 
 - (NSString *)name
 {
-    return _file.name;
+    return [_file.name stringByAppendingString:@"(-thumb)"];
 }
 
 - (BOOL)retryable

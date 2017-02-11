@@ -895,7 +895,7 @@ enum {
     _curEntry = [self getDentrybyIndexPath:indexPath tableView:tableView];
     Debug("Select %@", _curEntry.name);
     if (!_curEntry) {
-        return [self.tableView performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
+        return [tableView performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
     }
     if ([_curEntry isKindOfClass:[SeafRepo class]] && [(SeafRepo *)_curEntry passwordRequired]) {
         return [self popupSetRepoPassword:(SeafRepo *)_curEntry];
@@ -1639,23 +1639,34 @@ enum {
     }];
 }
 
+- (NSUInteger)indexOfEntry:(id<SeafPreView>)entry
+{
+    NSArray *arr = self.searchResults != nil ? self.searchResults : _directory.allItems;
+    return [arr indexOfObject:entry];
+}
+- (UITableView *)currentTableView
+{
+    return self.searchResults != nil ? self.searchDisplayController.searchResultsTableView : self.tableView;
+}
+
 - (void)photoSelectedChanged:(id<SeafPreView>)from to:(id<SeafPreView>)to;
 {
-    NSUInteger index = [_directory.allItems indexOfObject:to];
+    NSUInteger index = [self indexOfEntry:to];
+    if (index == NSNotFound)
+        return;
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
-
-    [self.tableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionMiddle];
+    [[self currentTableView] selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionMiddle];
 }
 
 - (SeafCell *)getEntryCell:(id)entry indexPath:(NSIndexPath **)indexPath
 {
-    NSUInteger index = [_directory.allItems indexOfObject:entry];
+    NSUInteger index = [self indexOfEntry:entry];
     if (index == NSNotFound)
         return nil;
     @try {
         NSIndexPath *path = [NSIndexPath indexPathForRow:index inSection:0];
         if (indexPath) *indexPath = path;
-        return (SeafCell *)[self.tableView cellForRowAtIndexPath:path];
+        return (SeafCell *)[[self currentTableView] cellForRowAtIndexPath:path];
     } @catch(NSException *exception) {
         return nil;
     }
