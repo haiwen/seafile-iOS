@@ -1213,7 +1213,8 @@ enum {
     _mwPhotoBrowser.enableGrid = true;
     _mwPhotoBrowser.startOnGrid = true;
     _mwPhotoBrowser.enableSwipeToDismiss = false;
-    _mwPhotoBrowser.preLoadNum = 3;
+    _mwPhotoBrowser.preLoadNumLeft = 0;
+    _mwPhotoBrowser.preLoadNumRight = 1;
 
     self.inPhotoBrowser = true;
 

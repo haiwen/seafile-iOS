@@ -245,11 +245,11 @@ enum SHARE_STATUS {
     Debug("Preview photos PREVIEW_PHOTO: %d, %@ hasCache:%d", self.state, [item name], [item hasCache]);
     self.preViewItem = item;
     self.currentPageIndex = [items indexOfObject:item];
-    [self.mwPhotoBrowser reloadData];
+    _mwPhotoBrowser = nil;// force recreate mwPhotoBrowser
+    [self.mwPhotoBrowser setCurrentPhotoIndex:self.currentPageIndex];
     [self.view addSubview:self.mwPhotoBrowser.view];
     self.mwPhotoBrowser.view.frame = CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height);
     [self.mwPhotoBrowser viewDidAppear:false];
-    [self.mwPhotoBrowser setCurrentPhotoIndex:self.currentPageIndex];
     [self updateNavigation];
     [self.view setNeedsLayout];
 }
@@ -764,7 +764,8 @@ enum SHARE_STATUS {
         _mwPhotoBrowser.backgroundColor = [UIColor whiteColor];
         _mwPhotoBrowser.trackTintColor = SEAF_COLOR_LIGHT;
         _mwPhotoBrowser.progressColor = SEAF_COLOR_DARK;
-        _mwPhotoBrowser.preLoadNum = 1;
+        _mwPhotoBrowser.preLoadNumLeft = 0;
+        _mwPhotoBrowser.preLoadNumRight = 1;
     }
     return _mwPhotoBrowser;
 }
