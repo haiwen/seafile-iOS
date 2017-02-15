@@ -203,6 +203,7 @@
     _httpsSwitch.on = true;
     switch (self.type) {
         case ACCOUNT_SEACLOUD:
+            serverTextField.enabled = false;
             serverTextField.text = SERVER_SEACLOUD;
             break;
         case ACCOUNT_OTHER:{

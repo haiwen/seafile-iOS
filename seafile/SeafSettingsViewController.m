@@ -479,6 +479,31 @@ enum {
     [self.navigationController pushViewController:c animated:true];
 }
 
+- (void)backupContacts
+{
+    if (!_connection.contactsSync || !_connection.contactsRepo)
+        return;
+    NSString *filename = [_connection backupContacts:true completion:^(BOOL success, NSError * _Nullable error) {
+        if (!success) {
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Contacts backup failed.", @"Seafile")];
+            Warning("Failed to backup contacts: %@", error);
+        } else {
+            [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Contacts backup succeeded.", @"Seafile")];
+            Debug("contacts backup succeed.");
+            [_connection getContactsLastBackTime:^(BOOL success, NSString *dateStr) {
+                if (!success)
+                    return;
+                _lastBackupTimeCell.detailTextLabel.text = dateStr;
+                [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:[NSIndexPath indexPathForRow:CELL_CONTACTS_LAST inSection:SECTION_CONTACTS]] withRowAnimation:UITableViewRowAnimationNone];
+            }];
+        }
+    }];
+    if (filename) {
+        [SVProgressHUD showWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Contacts will be backuped as: %@ ", @"Seafile"), filename]];
+    }
+
+}
+
 #pragma mark - Table view delegate
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
@@ -540,26 +565,7 @@ enum {
                 [self alertWithTitle:NSLocalizedString(@"Contacts backup should be enabled first.", @"Seafile")];
             }
         } else if (indexPath.row == CELL_CONTACTS_BACKUP) {
-            if (!_connection.contactsSync || !_connection.contactsRepo)
-                return;
-            NSString *filename = [_connection backupContacts:true completion:^(BOOL success, NSError * _Nullable error) {
-                if (!success) {
-                    [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Contacts backup failed.", @"Seafile")];
-                    Warning("Failed to backup contacts: %@", error);
-                } else {
-                    [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Contacts backup succeeded.", @"Seafile")];
-                    Debug("contacts backup succeed.");
-                    [_connection getContactsLastBackTime:^(BOOL success, NSString *dateStr) {
-                        if (!success)
-                            return;
-                        _lastBackupTimeCell.detailTextLabel.text = dateStr;
-                        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:[NSIndexPath indexPathForRow:CELL_CONTACTS_LAST inSection:SECTION_CONTACTS]] withRowAnimation:UITableViewRowAnimationNone];
-                    }];
-                }
-            }];
-            if (filename) {
-                [SVProgressHUD showWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Contacts will be backuped as: %@ ", @"Seafile"), filename]];
-            }
+            [self backupContacts];
         } else if (indexPath.row == CELL_CONTACTS_RESTORE) {
             if (!_connection.contactsSync || !_connection.contactsRepo)
                 return;
@@ -767,6 +773,12 @@ enum {
 {
     _connection.contactsRepo = repo.repoId;
     _contactsRepoCell.detailTextLabel.text = repo.name;
+    [self alertWithTitle:NSLocalizedString(@"Do you want to backup contacts now? ", @"Seafile") message:nil yes:^{
+        dispatch_async(dispatch_get_main_queue(), ^ {
+            [self backupContacts];
+        });
+    } no:^{
+    }];
 }
 
 - (void)dismissViewController:(UIViewController *)c

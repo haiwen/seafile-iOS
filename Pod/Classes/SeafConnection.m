@@ -29,7 +29,7 @@ enum {
 };
 
 #define CAMERA_UPLOADS_DIR @"Camera Uploads"
-#define CONTACTS_UPLOADS_DIR @"ContactsBackup"
+#define CONTACTS_UPLOADS_DIR @"Contacts Backup"
 
 #define KEY_STARREDFILES @"STARREDFILES"
 #define KEY_CONTACTS @"CONTACTS"
