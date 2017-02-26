@@ -344,6 +344,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     if (self.isVideoSync == videoSync) return;
     [self setAttribute:[NSNumber numberWithBool:videoSync] forKey:@"videoSync"];
+    if (!videoSync) {
+        [self clearUploadingVideos];
+    } else {
+        [self checkPhotos:true];
+    }
 }
 
 - (void)setWifiOnly:(BOOL)wifiOnly
@@ -995,12 +1000,13 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)removeUploadfile:(SeafUploadFile *)ufile
 {
+    Debug("Remove upload file %@, %@", ufile.name, ufile.udir);
     @synchronized(self.uploadFiles) {
         [self.uploadFiles removeObjectForKey:ufile.lpath];
     }
     [SeafGlobal.sharedObject removeBackgroundUpload:ufile];
-    [ufile doRemove];
     [ufile.udir removeUploadItem:ufile];
+    [ufile doRemove];
 }
 
 - (void)search:(NSString *)keyword repo:(NSString *)repoId
@@ -1148,10 +1154,15 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                     [self removeUploadingPhoto:url];
                                 }];
     }
+    if (self.photosArray.count == 0) {
+        Debug("Force check if there are new photos after all synced.");
+        [self checkPhotos:true];
+    }
 }
 
 - (void)autoSyncFileUploadedSuccess:(SeafUploadFile *)ufile
 {
+    [self pickPhotosForUpload];
     NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
     UploadedPhotos *obj = (UploadedPhotos *)[NSEntityDescription insertNewObjectForEntityForName:@"UploadedPhotos" inManagedObjectContext:context];
     obj.server = self.address;
@@ -1284,16 +1295,19 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return nil;
 }
 
-- (void)checkPhotos
+- (void)checkPhotos:(BOOL)force
 {
     if (!_inAutoSync) return;
+    if (!force && [self photosInSyncing] > 0) {
+        return;
+    }
+
     @synchronized(self) {
         if (_inCheckPhotoss) return;
         _inCheckPhotoss = true;
     }
 
     Debug("Check photos for server %@, current %u %u", _address, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
-    if (!self.videoSync) [self clearUploadingVideos];
 
     NSMutableArray *photos = [[NSMutableArray alloc] init];
     void (^assetEnumerator)(ALAsset *, NSUInteger, BOOL *) = ^(ALAsset *asset, NSUInteger index, BOOL *stop) {
@@ -1358,7 +1372,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (changed)
         _syncDir = dir;
     Debug("%ld photos remain, syncdir: %@ %@", (long)self.photosArray.count, _syncDir.repoId, _syncDir.name);
-    [self checkPhotos];
+    [self checkPhotos:true];
 }
 
 - (void)checkUploadDir:(CompletionBlock)handler
@@ -1387,12 +1401,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     if (!_inAutoSync)
         return;
-    Debug("photos changed %d for server %@, current: %u %u", _inAutoSync, _address, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
+    Debug("photos changed %d for server %@, current: %u %u, _syncDir:%@", _inAutoSync, _address, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count, _syncDir);
     if (!_syncDir) {
         Warning("Sync dir not exists, create.");
         [self checkUploadDir:nil];
     } else {
-        [self checkPhotos];
+        [self checkPhotos:false];
     }
 }
 
@@ -1532,6 +1546,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         [repo downloadContentSuccess:^(SeafDir *dir) {
             SeafDir *uploaddir = [self getSubdirUnderDir:repo withName:dirName];
             if (!uploaddir) {
+                Debug("mkdir %@ in repo %@", dirName, repo.repoId);
                 [repo mkdir:dirName success:^(SeafDir *dir) {
                     SeafDir *udir = [self getSubdirUnderDir:repo withName:dirName];
                     completionHandler(udir, nil);

@@ -140,8 +140,8 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     if (_blockDir) {
         [[NSFileManager defaultManager] removeItemAtPath:_blockDir error:nil];
     }
+    [self saveAttr:nil flush:true];
     if (!self.autoSync) {
-        [self saveAttr:nil flush:true];
         [Utils removeDirIfEmpty:[self.lpath stringByDeletingLastPathComponent]];
     }
 }
@@ -195,6 +195,18 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     dispatch_semaphore_signal(_semaphore);
 }
 
+-(void)showDeserializedError:(NSError *)error
+{
+    if (!error)
+        return;
+    id data = [error.userInfo objectForKey:@"com.alamofire.serialization.response.error.data"];
+
+    if (data && [data isKindOfClass:[NSData class]]) {
+        NSString *str __attribute__((unused)) = [[NSString alloc] initWithData:(NSData *)data encoding:NSUTF8StringEncoding];
+        Debug("DeserializedError: %@", str);
+    }
+}
+
 - (void)uploadRequest:(NSMutableURLRequest *)request withConnection:(SeafConnection *)connection
 {
     if (![[NSFileManager defaultManager] fileExistsAtPath:self.lpath]) {
@@ -202,7 +214,6 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         [self finishUpload:NO oid:nil];
     }
     NSProgress *progress = nil;
-    connection.sessionMgr.responseSerializer = [AFJSONResponseSerializer serializerWithReadingOptions:NSJSONReadingAllowFragments];
     _task = [connection.sessionMgr uploadTaskWithStreamedRequest:request progress:&progress completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
         NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
         if (error && resp.statusCode == 200) {
@@ -211,6 +222,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         }
         if (error) {
             Debug("Upload failed :%@,code=%ldd, res=%@\n", error, (long)resp.statusCode, responseObject);
+            [self showDeserializedError:error];
             [self finishUpload:NO oid:nil];
         } else {
             NSString *oid = nil;
@@ -300,7 +312,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         [formData appendPartWithFormData:[[NSString stringWithFormat:@"%lld", [Utils fileSizeAtPath1:self.lpath]] dataUsingEncoding:NSUTF8StringEncoding] name:@"file_size"];
         [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
 
-        Debug("surl:%@ parent_dir:%@", surl, uploadpath);
+        Debug("surl:%@ parent_dir:%@, blocks: %@", surl, uploadpath, blockids);
         for (NSString *path in paths) {
             [formData appendPartWithFileURL:[NSURL fileURLWithPath:path] name:@"file" error:nil];
         }
@@ -379,12 +391,12 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     } error:nil];
 
     NSProgress *progress = nil;
-    connection.sessionMgr.responseSerializer = [AFJSONResponseSerializer serializerWithReadingOptions:NSJSONReadingAllowFragments];
     _task = [connection.sessionMgr uploadTaskWithStreamedRequest:request progress:&progress completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
-        Debug("Upload blocks %@ error: %@", arr, error);
+        Debug("Upload blocks %@", arr);
         NSHTTPURLResponse *resp __attribute__((unused)) = (NSHTTPURLResponse *)response;
         if (error) {
-            Debug("Upload failed :%@,code=%ldd, res=%@\n", error, (long)resp.statusCode, responseObject);
+            Debug("Upload failed :%@,code=%ld, res=%@\n", error, (long)resp.statusCode, responseObject);
+            [self showDeserializedError:error];
             [self finishUpload:NO oid:nil];
         } else {
             _blkidx += count;
@@ -424,9 +436,13 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 - (void)upload:(SeafConnection *)connection repo:(NSString *)repoId path:(NSString *)uploadpath
 {
     if (![Utils fileExistsAtPath:self.lpath]) {
-        Warning("File %@ no existed", self.lpath);
-        return;
+        return Warning("File %@ no existed", self.lpath);
     }
+    SeafRepo *repo = [connection getRepo:repoId];
+    if (!repo) {
+        return Warning("Repo %@ does not exist", repoId);
+    }
+
     @synchronized (self) {
         if (_uploading || self.uploaded)
             return;
@@ -436,7 +452,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:self.lpath error:nil];
     _filesize = attrs.fileSize;
     [self uploadProgress:self progress:0];
-    SeafRepo *repo = [connection getRepo:repoId];
+
     if (_filesize > LARGE_FILE_SIZE && connection.isChunkSupported) {
         Debug("upload large file %@ by block: %lld", self.name, _filesize);
         return [self uploadLargeFileByBlocks:repo path:uploadpath];
@@ -493,7 +509,9 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 - (void)doUpload
 {
     [self checkAsset];
-    return [self upload:self.udir->connection repo:self.udir.repoId path:self.udir.path];
+    if (self.udir) {
+        [self upload:self.udir->connection repo:self.udir.repoId path:self.udir.path];
+    }
 }
 
 - (void)setAsset:(ALAsset *)asset url:(NSURL *)url
