@@ -24,6 +24,6 @@ target :"SeafProviderFileProvider" do
 end
 
 target :"SeafAction" do
-    pod 'SVPullToRefresh', :git => 'https://github.com/LawrenceHan/SVPullToRefresh', :branch => 'master'
+  pod 'SVPullToRefresh', :git => 'https://github.com/LawrenceHan/SVPullToRefresh', :branch => 'master'
   shared
 end

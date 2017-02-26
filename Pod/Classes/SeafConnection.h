@@ -30,7 +30,7 @@ enum MSG_TYPE{
 @class SeafUploadFile;
 @class SeafDir;
 
-typedef void (^ContactsCompletionBlock)(BOOL success, NSError * _Nullable error);
+typedef void (^CompletionBlock)(BOOL success, NSError * _Nullable error);
 
 BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 
@@ -179,14 +179,12 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 - (id)getAttribute:(NSString *)aKey;
 - (void)setAttribute:(id)anObject forKey:(NSString *)aKey;
 
-- (void)fileUploadedSuccess:(SeafUploadFile *)ufile;
-
 - (void)checkAutoSync;
 - (NSUInteger)photosInSyncing;
 - (void)checkSyncDst:(SeafDir *)dir;
 - (void)photosDidChange:(NSNotification *)note;
 - (void)contactStoreDidChange:(NSNotification *)notification;
-- (NSString *)backupContacts:(BOOL)force completion:(ContactsCompletionBlock)completionHandler;
+- (NSString *)backupContacts:(BOOL)force completion:(CompletionBlock)completionHandler;
 - (void)restoreContacts:(void(^)(BOOL success, NSError *error))completionHandler;
 - (void)getContactsLastBackTime:(void(^)(BOOL success, NSString *dateStr))completionHandler;
 

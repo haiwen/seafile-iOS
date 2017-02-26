@@ -523,15 +523,12 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
         }
     }
     for (SeafUploadFile *file in arr) {
-        [self removeUploadFile:file];
+        [self->connection removeUploadfile:file];
     }
 }
 
-- (void)removeUploadFile:(SeafUploadFile *)ufile
+- (void)removeUploadItem:(SeafUploadFile *)ufile
 {
-    [SeafGlobal.sharedObject removeBackgroundUpload:ufile];
-    [connection removeUploadfile:ufile];
-    [ufile doRemove];
     @synchronized(_uploadLock) {
         [self.uploadItems removeObject:ufile];
     }

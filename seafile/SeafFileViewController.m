@@ -1262,7 +1262,7 @@ enum {
     if ([entry isKindOfClass:[SeafUploadFile class]]) {
         if (self.detailViewController.preViewItem == entry)
             self.detailViewController.preViewItem = nil;
-        [self.directory removeUploadFile:(SeafUploadFile *)entry];
+        [self.directory->connection removeUploadfile:(SeafUploadFile *)entry];
         [self.tableView reloadData];
     } else if ([entry isKindOfClass:[SeafFile class]])
         [self deleteFile:(SeafFile*)entry];

@@ -44,7 +44,7 @@
 - (void)moveEntries:(NSArray *)entries dstDir:(SeafDir *)dst_dir;
 
 - (void)addUploadFile:(SeafUploadFile *)file flush:(BOOL)flush;
-- (void)removeUploadFile:(SeafUploadFile *)ufile;
+- (void)removeUploadItem:(SeafUploadFile *)ufile;
 
 - (NSString *)configKeyForSort;
 - (void)reSortItemsByName;

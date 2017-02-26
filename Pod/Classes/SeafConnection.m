@@ -998,6 +998,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     @synchronized(self.uploadFiles) {
         [self.uploadFiles removeObjectForKey:ufile.lpath];
     }
+    [SeafGlobal.sharedObject removeBackgroundUpload:ufile];
+    [ufile doRemove];
+    [ufile.udir removeUploadItem:ufile];
 }
 
 - (void)search:(NSString *)keyword repo:(NSString *)repoId
@@ -1131,6 +1134,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                      file.autoSync = true;
                                      [file setAsset:asset url:url];
                                      file.udir = dir;
+                                     [file setCompletionBlock:^(BOOL success, SeafUploadFile *file, NSString *oid) {
+                                         if (success) {
+                                             [self autoSyncFileUploadedSuccess:file];
+                                         }
+                                     }];
+
                                      Debug("Add file %@ to upload list: %@ current %u %u", filename, dir.path, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
                                      [SeafGlobal.sharedObject addUploadTask:file];
                                  }
@@ -1141,10 +1150,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }
 }
 
-- (void)fileUploadedSuccess:(SeafUploadFile *)ufile
+- (void)autoSyncFileUploadedSuccess:(SeafUploadFile *)ufile
 {
-    if (!_inAutoSync) return;
-    if (!ufile || !ufile.assetURL || !ufile.autoSync) return;
     NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
     UploadedPhotos *obj = (UploadedPhotos *)[NSEntityDescription insertNewObjectForEntityForName:@"UploadedPhotos" inManagedObjectContext:context];
     obj.server = self.address;
@@ -1154,7 +1161,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self removeUploadingPhoto:ufile.assetURL];
     Debug("Autosync file %@ %@ uploaded %d, remain %u %u", ufile.name, ufile.assetURL, [self IsPhotoUploaded:ufile.assetURL], (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
 
-    if (!ufile.delegate) [ufile.udir removeUploadFile:ufile];
+    [self removeUploadfile:ufile];
     if (_photSyncWatcher) [_photSyncWatcher photoSyncChanged:self.photosInSyncing];
 }
 
@@ -1332,11 +1339,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return nil;
 }
 
-- (SeafDir *)getCameraUploadDir:(SeafDir *)dir
-{
-    return [self getSubdirUnderDir:dir withName:CAMERA_UPLOADS_DIR];
-}
-
 - (void)checkSyncDst:(SeafDir *)dir
 {
     @synchronized(self) {
@@ -1359,38 +1361,25 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self checkPhotos];
 }
 
-- (void)checkUploadDir
+- (void)checkUploadDir:(CompletionBlock)handler
 {
-    NSString *autoSyncRepo = self.autoSyncRepo;
-    SeafRepo *repo = [self getRepo:autoSyncRepo];
-    if (!repo) {
-        Warning("No repo %@", self.autoSyncRepo);
-        [_rootFolder loadContent:NO];
-        _syncDir = nil;
-        return;
-    }
-    [repo loadContent:NO];
-    SeafDir *uploadDir = [self getCameraUploadDir:repo];
-    if (uploadDir) {
-        return [self updateUploadDir:uploadDir];
-    }
-
-    [repo downloadContentSuccess:^(SeafDir *rdir) {
-        SeafDir *uploadDir = [self getCameraUploadDir:rdir];
-        if (uploadDir) {
-            return [self updateUploadDir:uploadDir];
-        } else {
-            [repo mkdir:CAMERA_UPLOADS_DIR success:^(SeafDir *dir) {
-                SeafDir *uploadDir = [self getCameraUploadDir:dir];
-                [self updateUploadDir:uploadDir];
-            } failure:^(SeafDir *dir) {
-                Warning("Failed to create %@", CAMERA_UPLOADS_DIR);
-                _syncDir = nil;
-            }];
+    CompletionBlock completionHandler = ^(BOOL success, NSError * _Nullable error){
+        if (!success) {
+            _syncDir = nil;
         }
-    } failure:^(SeafDir *dir, NSError *error) {
-        Warning("Failed to get repo %@ file list: %@", dir.repoId, error);
-        _syncDir = nil;
+        if (handler) {
+            handler(success, error);
+        }
+    };
+
+    [self checkMakeUploadDirectory:self.autoSyncRepo subdir:CAMERA_UPLOADS_DIR completion:^(SeafDir *uploaddir, NSError * _Nullable error) {
+        if (!uploaddir) {
+            Warning("Failed to create camera sync folder: %@", error);
+            completionHandler(false, error);
+        } else {
+            [self updateUploadDir:uploaddir];
+            completionHandler(true, nil);
+        }
     }];
 }
 
@@ -1401,9 +1390,10 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     Debug("photos changed %d for server %@, current: %u %u", _inAutoSync, _address, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
     if (!_syncDir) {
         Warning("Sync dir not exists, create.");
-        [self checkUploadDir];
+        [self checkUploadDir:nil];
+    } else {
+        [self checkPhotos];
     }
-    [self checkPhotos];
 }
 
 - (void)checkAutoSync
@@ -1432,7 +1422,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     _inAutoSync = value;
     if (_inAutoSync) {
         Debug("start auto sync, check photos for server %@", _address);
-        [self checkUploadDir];
+        [self checkUploadDir:nil];
     }
 }
 
@@ -1590,7 +1580,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     ufile.completionBlock = ^(BOOL success, SeafUploadFile *ufile, NSString *oid) {
         completionHandler(success, nil);
         if (success) {
-            [ufile.udir removeUploadFile:ufile];
+            [self removeUploadfile:ufile];
         }
     };
     [SeafGlobal.sharedObject addUploadTask:ufile];
@@ -1671,7 +1661,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }];
 }
 
-- (NSString *)backupContacts:(BOOL)force completion:(ContactsCompletionBlock)handler
+- (NSString *)backupContacts:(BOOL)force completion:(CompletionBlock)handler
 {
     @synchronized(self) {
         if (_inContactsSync) {
@@ -1681,7 +1671,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         _inContactsSync = true;
     }
 
-    ContactsCompletionBlock completionHandler = ^(BOOL success, NSError * _Nullable error){
+    CompletionBlock completionHandler = ^(BOOL success, NSError * _Nullable error){
         _inContactsSync = false;
         handler(success, error);
     };
@@ -1778,7 +1768,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         _inContactsSync = true;
     }
 
-    ContactsCompletionBlock completionHandler = ^(BOOL success, NSError * _Nullable error){
+    CompletionBlock completionHandler = ^(BOOL success, NSError * _Nullable error){
         _inContactsSync = false;
         handler(success, error);
     };

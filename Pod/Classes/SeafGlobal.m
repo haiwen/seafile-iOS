@@ -466,9 +466,6 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 
     if (result) {
         self.failedNum = 0;
-        if (file.autoSync && file.udir) {
-            [file.udir->connection fileUploadedSuccess:file];
-        }
     } else {
         self.failedNum ++;
         if (!file.removed) {
@@ -561,7 +558,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     }
     Debug("clear %ld photos", (long)arr.count);
     for (SeafUploadFile *ufile in arr) {
-        [ufile.udir removeUploadFile:ufile];
+        [conn removeUploadfile:ufile];
     }
 }
 
@@ -582,7 +579,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     }
     for (SeafUploadFile *ufile in arr) {
         Debug("Remove autosync video file: %@, %@", ufile.lpath, ufile.assetURL);
-        [ufile.udir removeUploadFile:ufile];
+        [conn removeUploadfile:ufile];
     }
 }
 
