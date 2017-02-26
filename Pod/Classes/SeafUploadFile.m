@@ -34,6 +34,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 @property (strong) NSString *commiturl;
 @property (strong) NSString *rawblksurl;
 @property (strong) NSString *uploadpath;
+@property (strong) NSString *blockDir;
 @property long blkidx;
 
 @property dispatch_semaphore_t semaphore;
@@ -102,6 +103,19 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     return NO;
 }
 
+- (NSString *)blockDir
+{
+    if (!_blockDir) {
+        _blockDir = [SeafGlobal.sharedObject uniqueDirUnder:SeafGlobal.sharedObject.tempDir];
+    }
+    return _blockDir;
+}
+
+- (NSString *)blockPath:(NSString*)blkId
+{
+    return [self.blockDir stringByAppendingPathComponent:blkId];
+}
+
 - (NSURL *)assetURL
 {
     if (!_assetURL)
@@ -123,6 +137,9 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     [self.task cancel];
     self.task = nil;
     [Utils removeFile:self.lpath];
+    if (_blockDir) {
+        [[NSFileManager defaultManager] removeItemAtPath:_blockDir error:nil];
+    }
     if (!self.autoSync) {
         [self saveAttr:nil flush:true];
         [Utils removeDirIfEmpty:[self.lpath stringByDeletingLastPathComponent]];
@@ -262,7 +279,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
             break;
         }
         NSString *blockid = [data SHA1];
-        NSString *blockpath = [SeafGlobal.sharedObject blockPath:blockid];
+        NSString *blockpath = [self blockPath:blockid];
         Debug("Chunk file blockid=%@, path=%@, len=%lu\n", blockid, blockpath, (unsigned long)data.length);
         [blockids addObject:blockid];
         [paths addObject:blockpath];
@@ -356,7 +373,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     NSMutableURLRequest *request = [[SeafConnection requestSerializer] multipartFormRequestWithMethod:@"POST" URLString:_rawblksurl parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
         [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
         for (NSString *blockid in arr) {
-            NSString *blockpath = [SeafGlobal.sharedObject blockPath:blockid];
+            NSString *blockpath = [self blockPath:blockid];
             [formData appendPartWithFileURL:[NSURL fileURLWithPath:blockpath] name:@"file" error:nil];
         }
     } error:nil];
