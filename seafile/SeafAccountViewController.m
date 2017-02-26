@@ -63,7 +63,11 @@
 
 - (NSString *)replaceString:(NSString *)str prefix:(NSString *)prefix withString:(NSString *)target
 {
-    return [str stringByReplacingOccurrencesOfString:prefix withString:target options:0 range:NSMakeRange(0, prefix.length)];
+    if ([str hasPrefix:prefix]) {
+        return [str stringByReplacingOccurrencesOfString:prefix withString:target options:0 range:NSMakeRange(0, prefix.length)];
+    } else {
+        return str;
+    }
 }
 
 - (IBAction)httpsSwitchFlip:(id)sender
@@ -204,6 +208,7 @@
     switch (self.type) {
         case ACCOUNT_SEACLOUD:
             serverTextField.enabled = false;
+            _httpsSwitch.enabled = false;
             serverTextField.text = SERVER_SEACLOUD;
             break;
         case ACCOUNT_OTHER:{
