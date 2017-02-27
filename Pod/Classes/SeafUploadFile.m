@@ -107,6 +107,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 {
     if (!_blockDir) {
         _blockDir = [SeafGlobal.sharedObject uniqueDirUnder:SeafGlobal.sharedObject.tempDir];
+        [Utils checkMakeDir:_blockDir];
     }
     return _blockDir;
 }
@@ -221,7 +222,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
             error = nil;
         }
         if (error) {
-            Debug("Upload failed :%@,code=%ldd, res=%@\n", error, (long)resp.statusCode, responseObject);
+            Debug("Upload failed :%@,code=%ld, res=%@\n", error, (long)resp.statusCode, responseObject);
             [self showDeserializedError:error];
             [self finishUpload:NO oid:nil];
         } else {

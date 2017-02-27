@@ -380,14 +380,15 @@ enum {
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
     _version = [infoDictionary objectForKey:@"CFBundleShortVersionString"];
     _versionCell.detailTextLabel.text = _version;
+    [self configureView];
 }
 
 - (void)viewDidAppear:(BOOL)animated
 {
-    [super viewDidAppear:animated];
     dispatch_async(dispatch_get_main_queue(), ^ {
         [self configureView];
     });
+    [super viewDidAppear:animated];
 }
 
 - (void)didReceiveMemoryWarning

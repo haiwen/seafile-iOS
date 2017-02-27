@@ -498,10 +498,17 @@ static NSError * NewNSErrorFromException(NSException * exc) {
             }
         }
     }
-    for (SeafUploadFile *file in todo) {
+    double delayInMs = 400.0;
+    int uploadingCount = self.uploadingfiles.count;
+    for (int i = 0; i < todo.count; i++) {
+        SeafUploadFile *file = [todo objectAtIndex:i];
         if (!file.udir) continue;
 
-        [file performSelectorInBackground:@selector(doUpload) withObject:nil];
+        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (i+uploadingCount) * delayInMs * NSEC_PER_MSEC);
+        dispatch_after(popTime, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^(void){
+            [file doUpload];
+        });
+
         @synchronized (self) {
             [self.uploadingfiles addObject:file];
         }
@@ -590,7 +597,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         if (![_ufiles containsObject:file] && ![_uploadingfiles containsObject:file])
             [_ufiles addObject:file];
         else
-            Warning("upload task file %@ already exist", file.name);
+            Warning("upload task file %@ already exist", file.lpath);
     }
     [self performSelectorInBackground:@selector(tryUpload) withObject:file];
 }

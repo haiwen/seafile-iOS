@@ -462,6 +462,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 
 - (void)loadContent:(BOOL)force;
 {
+    Debug("repoId:%@, %@, path:%@, loading ... cached:%d %@, editable:%d, state:%d\n", self.repoId, self.name, self.path, self.hasCache, self.ooid, self.editable, self.state);
     _allItems = nil;
     [super loadContent:force];
 }
