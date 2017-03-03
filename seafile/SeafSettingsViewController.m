@@ -222,7 +222,6 @@ enum {
 - (void)videoSyncSwitchFlip:(id)sender
 {
     self.videoSync = _videoSyncSwitch.on;
-    [_connection photosDidChange:nil];
 }
 
 - (void)setContactsSync:(BOOL)contactsSync

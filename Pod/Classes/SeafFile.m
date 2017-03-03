@@ -292,7 +292,9 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     } else {
         percent = progress.fractionCompleted;
     }
-    [self.delegate download:self progress:percent];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.delegate download:self progress:percent];
+    });
 }
 
 - (int)checkoutFile
@@ -933,16 +935,20 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (void)downloadComplete:(BOOL)updated
 {
-    [self.delegate download:self complete:true];
-    if (self.fileDidDownloadBlock)
-        self.fileDidDownloadBlock(self, true);
-
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.delegate download:self complete:true];
+        if (self.fileDidDownloadBlock)
+            self.fileDidDownloadBlock(self, true);
+    });
 }
+
 - (void)downloadFailed:(NSError *)error
 {
-    [self.delegate download:self failed:error];
-    if (self.fileDidDownloadBlock)
-        self.fileDidDownloadBlock(self, false);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.delegate download:self failed:error];
+        if (self.fileDidDownloadBlock)
+            self.fileDidDownloadBlock(self, false);
+    });
 }
 
 @end

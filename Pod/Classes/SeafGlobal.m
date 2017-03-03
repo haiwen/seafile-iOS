@@ -620,9 +620,6 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         return;
     }
     @synchronized(timer) {
-        for (SeafConnection *conn in self.conns) {
-            [conn photosDidChange:nil];
-        }
         double cur = [[NSDate date] timeIntervalSince1970];
         if (cur - lastUpdate > UPDATE_INTERVAL) {
             Debug("%fs has passed, refreshRepoPassowrds", cur - lastUpdate);
