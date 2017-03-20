@@ -10,7 +10,6 @@
 #import "SeafRepos.h"
 #import "SeafDir.h"
 #import "SeafConnection.h"
-#import "SeafGlobal.h"
 #import "SeafDateFormatter.h"
 
 

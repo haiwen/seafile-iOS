@@ -34,7 +34,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 @property (strong) NSString *commiturl;
 @property (strong) NSString *rawblksurl;
 @property (strong) NSString *uploadpath;
-@property (strong) NSString *blockDir;
+@property (nonatomic, strong) NSString *blockDir;
 @property long blkidx;
 
 @property dispatch_semaphore_t semaphore;
@@ -106,7 +106,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 - (NSString *)blockDir
 {
     if (!_blockDir) {
-        _blockDir = [SeafGlobal.sharedObject uniqueDirUnder:SeafGlobal.sharedObject.tempDir];
+        _blockDir = [SeafFsCache uniqueDirUnder:SeafFsCache.sharedObject.tempDir];
         [Utils checkMakeDir:_blockDir];
     }
     return _blockDir;
@@ -169,7 +169,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         [self updateProgress:nil];
     }
     if (result && !_autoSync)
-        [Utils linkFileAtPath:self.lpath to:[SeafGlobal.sharedObject documentPath:oid]];
+        [Utils linkFileAtPath:self.lpath to:[SeafFsCache.sharedObject documentPath:oid]];
     else if (!result)
         self.lastFailedTimeStamp = [[NSDate date] timeIntervalSince1970];
 
@@ -555,7 +555,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     } else if ([self.mime hasSuffix:@"seafile"]) {
         _preViewURL = [NSURL fileURLWithPath:[SeafileBundle() pathForResource:@"htmls/view_seaf" ofType:@"html"]];
     } else {
-        NSString *encodePath = [SeafGlobal.sharedObject.tempDir stringByAppendingPathComponent:self.name];
+        NSString *encodePath = [SeafFsCache.sharedObject.tempDir stringByAppendingPathComponent:self.name];
         if ([Utils tryTransformEncoding:encodePath fromFile:self.lpath])
             _preViewURL = [NSURL fileURLWithPath:encodePath];
     }
@@ -584,7 +584,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         return [UIImage imageWithCGImage:_asset.defaultRepresentation.fullResolutionImage];
 
     NSString *name = [@"cacheimage-ufile-" stringByAppendingString:self.name];
-    NSString *cachePath = [[SeafGlobal.sharedObject tempDir] stringByAppendingPathComponent:name];
+    NSString *cachePath = [[SeafFsCache.sharedObject tempDir] stringByAppendingPathComponent:name];
     return [SeafGlobal.sharedObject imageFromPath:self.lpath withMaxSize:IMAGE_MAX_SIZE cachePath:cachePath];
 }
 
@@ -619,7 +619,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        NSString *attrsFile = [[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploadfiles.plist"];
+        NSString *attrsFile = [[SeafFsCache.sharedObject rootPath] stringByAppendingPathComponent:@"uploadfiles.plist"];
         uploadFileAttrs = [[NSMutableDictionary alloc] initWithContentsOfFile:attrsFile];
         if (!uploadFileAttrs)
             uploadFileAttrs = [[NSMutableDictionary alloc] init];
@@ -629,14 +629,14 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 + (BOOL)saveAttrs
 {
-    NSString *attrsFile = [[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploadfiles.plist"];
+    NSString *attrsFile = [[SeafFsCache.sharedObject rootPath] stringByAppendingPathComponent:@"uploadfiles.plist"];
     return [[SeafUploadFile uploadFileAttrs] writeToFile:attrsFile atomically:true];
 }
 
 + (void)clearCache
 {
-    [Utils clearAllFiles:SeafGlobal.sharedObject.uploadsDir];
-    NSString *attrsFile = [[SeafGlobal.sharedObject applicationDocumentsDirectory] stringByAppendingPathComponent:@"uploadfiles.plist"];
+    [Utils clearAllFiles:SeafFsCache.sharedObject.uploadsDir];
+    NSString *attrsFile = [[SeafFsCache.sharedObject rootPath] stringByAppendingPathComponent:@"uploadfiles.plist"];
 
     [Utils removeFile:attrsFile];
     uploadFileAttrs = [[NSMutableDictionary alloc] init];

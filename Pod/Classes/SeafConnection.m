@@ -17,6 +17,7 @@
 #import "SeafUploadFile.h"
 #import "SeafFile.h"
 #import "SeafGlobal.h"
+#import "SeafFsCache.h"
 
 #import "ExtentedString.h"
 #import "NSData+Encryption.h"
@@ -188,7 +189,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (!_localUploadDir) {
         _localUploadDir = [self getAttribute:@"UPLOAD_CACHE_DIR"];
         if (!_localUploadDir) {
-            _localUploadDir = [SeafGlobal.sharedObject uniqueUploadDir];
+            _localUploadDir = [SeafFsCache.sharedObject uniqueUploadDir];
             [self setAttribute:_localUploadDir forKey:@"UPLOAD_CACHE_DIR"];
         }
         [Utils checkMakeDir:_localUploadDir];
@@ -419,7 +420,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (NSString *)certPathForHost:(NSString *)host
 {
     NSString *filename = [NSString stringWithFormat:@"%@.cer", host];
-    NSString *path = [SeafGlobal.sharedObject.certsDir stringByAppendingPathComponent:filename];
+    NSString *path = [SeafFsCache.sharedObject.certsDir stringByAppendingPathComponent:filename];
     return path;
 }
 
@@ -875,7 +876,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (id)getCachedStarredFiles
 {
-    return [self getCachedObj:KEY_STARREDFILES];
+    id JSON = [self getCachedObj:KEY_STARREDFILES];
+    if (!_starredFiles) {
+        _starredFiles = JSON;
+    }
+    return JSON;
 }
 
 - (void)handleStarredData:(id)JSON
@@ -885,11 +890,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         [stars addObject:[NSString stringWithFormat:@"%@-%@", [info objectForKey:@"repo"], [info objectForKey:@"path"]]];
     }
     _starredFiles = stars;
-}
-
-- (void)loadCache
-{
-    [self handleStarredData:[self getCachedObj:KEY_STARREDFILES]];
 }
 
 - (void)getStarredFiles:(void (^)(NSHTTPURLResponse *response, id JSON))success
@@ -1702,7 +1702,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSDate *now = [NSDate date];
     NSString *backupDate = [dateformate stringFromDate:now];
     NSString *filename = [NSString stringWithFormat:@"contacts-%@.vcf", backupDate];
-    NSString *uploadDir = [SeafGlobal.sharedObject uniqueUploadDir];
+    NSString *uploadDir = [SeafFsCache.sharedObject uniqueUploadDir];
     [Utils checkMakeDir:uploadDir];
     NSString *path = [uploadDir stringByAppendingPathComponent:filename];
     [self saveContactsToFile:path completionHandler:^(BOOL success, NSArray *contacts, NSError * _Nullable error) {

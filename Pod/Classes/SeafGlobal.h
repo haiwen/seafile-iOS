@@ -12,15 +12,11 @@
 #import <AssetsLibrary/AssetsLibrary.h>
 #import "SeafConnection.h"
 #import "SeafPreView.h"
+#import "SeafFsCache.h"
 
-#define OBJECTS_DIR @"objects"
-#define AVATARS_DIR @"avatars"
-#define CERTS_DIR @"certs"
-#define BLOCKS_DIR @"blocks"
-#define UPLOADS_DIR @"uploads"
-#define EDIT_DIR @"edit"
-#define THUMB_DIR @"thumb"
-#define TEMP_DIR @"temp"
+
+#define SEAFILE_SUITE_NAME @"group.com.seafile.seafilePro"
+#define APP_ID @"com.seafile.seafilePro"
 
 #define THUMB_SIZE 96
 
@@ -40,23 +36,10 @@
 @property (readonly) dispatch_semaphore_t saveAlbumSem;
 @property (readwrite) BOOL isAppExtension;
 
-
 + (SeafGlobal *)sharedObject;
 
-- (NSString *)applicationDocumentsDirectory;
-- (NSString *)tempDir;
-- (NSString *)uploadsDir;
-- (NSString *)avatarsDir;
-- (NSString *)certsDir;
-- (NSString *)editDir;
-- (NSString *)thumbsDir;
-- (NSString *)objectsDir;
-- (NSString *)blocksDir;
 - (NSString *)documentStorageDir;
 
-
-- (NSString *)documentPath:(NSString*)fileId;
-- (NSString *)blockPath:(NSString*)blkId;
 
 - (void)loadSettings:(NSUserDefaults *)standardUserDefaults;
 
@@ -95,8 +78,6 @@
 
 - (UIImage *)imageFromPath:(NSString *)path withMaxSize:(float)length cachePath:(NSString *)cachePath;
 
-- (NSString *)uniqueDirUnder:(NSString *)dir;
-- (NSString *)uniqueUploadDir;
 - (void)addExportFile:(NSURL *)url data:(NSDictionary *)dict;
 - (void)removeExportFile:(NSURL *)url;
 - (NSDictionary *)getExportFile:(NSURL *)url;

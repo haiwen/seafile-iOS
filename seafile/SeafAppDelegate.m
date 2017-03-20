@@ -141,7 +141,7 @@
 - (BOOL)openFileURL:(NSURL*)url
 {
     Debug("open %@", url);
-    NSString *uploadDir = [SeafGlobal.sharedObject uniqueUploadDir];
+    NSString *uploadDir = [SeafFsCache.sharedObject uniqueUploadDir];
     NSURL *to = [NSURL fileURLWithPath:[uploadDir stringByAppendingPathComponent:url.lastPathComponent]];
     Debug("Copy %@, to %@, %@, %@\n", url, to, to.absoluteString, to.path);
     BOOL ret = [Utils checkMakeDir:uploadDir];
@@ -210,7 +210,7 @@
 
 - (void)delayedInit
 {
-    NSUserDefaults *defs = [[NSUserDefaults alloc] initWithSuiteName:GROUP_NAME];
+    NSUserDefaults *defs = [[NSUserDefaults alloc] initWithSuiteName:SEAFILE_SUITE_NAME];
     NSMutableArray *array = [NSMutableArray new];
     for(NSString *key in defs.dictionaryRepresentation) {
         if ([key hasPrefix:@"EXPORTED/"]) {
@@ -221,8 +221,8 @@
         [defs removeObjectForKey:key];
     }
 
-    Debug("clear tmp dir: %@", SeafGlobal.sharedObject.tempDir);
-    [Utils clearAllFiles:SeafGlobal.sharedObject.tempDir];
+    Debug("clear tmp dir: %@", SeafFsCache.sharedObject.tempDir);
+    [Utils clearAllFiles:SeafFsCache.sharedObject.tempDir];
 
     Debug("Current app version is %@\n", SEAFILE_VERSION);
     [SeafGlobal.sharedObject startTimer];
@@ -256,14 +256,6 @@
     _startNav = (UINavigationController *)self.window.rootViewController;
     _startVC = (StartViewController *)_startNav.topViewController;
 
-    [Utils checkMakeDir:SeafGlobal.sharedObject.objectsDir];
-    [Utils checkMakeDir:SeafGlobal.sharedObject.avatarsDir];
-    [Utils checkMakeDir:SeafGlobal.sharedObject.certsDir];
-    [Utils checkMakeDir:SeafGlobal.sharedObject.blocksDir];
-    [Utils checkMakeDir:SeafGlobal.sharedObject.uploadsDir];
-    [Utils checkMakeDir:SeafGlobal.sharedObject.editDir];
-    [Utils checkMakeDir:SeafGlobal.sharedObject.thumbsDir];
-    [Utils checkMakeDir:SeafGlobal.sharedObject.tempDir];
 
 #if !(TARGET_IPHONE_SIMULATOR)
     [[UIApplication sharedApplication] registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:(UIUserNotificationTypeSound | UIUserNotificationTypeAlert | UIUserNotificationTypeBadge) categories:nil]];

@@ -60,8 +60,10 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         _uploadingfiles = [[NSMutableArray alloc] init];
         _conns = [[NSMutableArray alloc] init];
         _downloadnum = 0;
-        _storage = [[NSUserDefaults alloc] initWithSuiteName:GROUP_NAME];
+        _storage = [[NSUserDefaults alloc] initWithSuiteName:SEAFILE_SUITE_NAME];
         _saveAlbumSem = dispatch_semaphore_create(1);
+         NSURL *rootURL = [[[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:SEAFILE_SUITE_NAME] URLByAppendingPathComponent:@"seafile" isDirectory:true];
+        [SeafFsCache.sharedObject registerRootPath:rootURL.path];
         [self checkSettings];
 
         NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
@@ -98,6 +100,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     static SeafGlobal *object = nil;
     if (!object) {
         object = [[SeafGlobal alloc] init];
+
     }
     return object;
 }
@@ -105,7 +108,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 - (NSURL *)applicationDocumentsDirectoryURL
 {
     if (!_applicationDocumentsDirectoryURL) {
-        _applicationDocumentsDirectoryURL = [[[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:GROUP_NAME] URLByAppendingPathComponent:@"seafile" isDirectory:true];
+        _applicationDocumentsDirectoryURL = [[[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:SEAFILE_SUITE_NAME] URLByAppendingPathComponent:@"seafile" isDirectory:true];
     }
     return _applicationDocumentsDirectoryURL;
 }
@@ -115,52 +118,9 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     return [[self applicationDocumentsDirectoryURL] path];
 }
 
-- (NSString *)uploadsDir
-{
-    return [self.applicationDocumentsDirectory stringByAppendingPathComponent:UPLOADS_DIR];
-}
-
-- (NSString *)avatarsDir
-{
-    return [self.applicationDocumentsDirectory stringByAppendingPathComponent:AVATARS_DIR];
-}
-- (NSString *)certsDir
-{
-    return [self.applicationDocumentsDirectory stringByAppendingPathComponent:CERTS_DIR];
-}
-- (NSString *)editDir
-{
-    return [self.applicationDocumentsDirectory stringByAppendingPathComponent:EDIT_DIR];
-}
-- (NSString *)thumbsDir
-{
-    return [self.applicationDocumentsDirectory stringByAppendingPathComponent:THUMB_DIR];
-}
-- (NSString *)objectsDir
-{
-    return [self.applicationDocumentsDirectory stringByAppendingPathComponent:OBJECTS_DIR];
-}
-- (NSString *)blocksDir
-{
-    return [self.applicationDocumentsDirectory stringByAppendingPathComponent:BLOCKS_DIR];
-}
-- (NSString *)tempDir
-{
-    return [[self applicationDocumentsDirectory] stringByAppendingPathComponent:TEMP_DIR];
-}
 - (NSString *)documentStorageDir
 {
-    return [[[[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:GROUP_NAME] path] stringByAppendingPathComponent:@"File Provider Storage"];
-}
-
-- (NSString *)documentPath:(NSString*)fileId
-{
-    return [self.objectsDir stringByAppendingPathComponent:fileId];
-}
-
-- (NSString *)blockPath:(NSString*)blkId
-{
-    return [self.blocksDir stringByAppendingPathComponent:blkId];
+    return [[[[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:SEAFILE_SUITE_NAME] path] stringByAppendingPathComponent:@"File Provider Storage"];
 }
 
 - (void)registerDefaultsFromSettingsBundle
@@ -201,7 +161,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 - (void)migrateUserDefaults
 {
     NSUserDefaults *oldDef = [NSUserDefaults standardUserDefaults];
-    NSUserDefaults *newDef = [[NSUserDefaults alloc] initWithSuiteName:GROUP_NAME];
+    NSUserDefaults *newDef = [[NSUserDefaults alloc] initWithSuiteName:SEAFILE_SUITE_NAME];
     NSArray *accounts = [oldDef objectForKey:@"ACCOUNTS"];
     if (accounts && accounts.count > 0) {
         for(NSString *key in oldDef.dictionaryRepresentation) {
@@ -215,9 +175,8 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 }
 - (void)migrateDocuments
 {
-
     NSURL *oldURL = [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
-    NSURL *newURL = [[[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:GROUP_NAME] URLByAppendingPathComponent:@"seafile" isDirectory:true];
+    NSURL *newURL = [[[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:SEAFILE_SUITE_NAME] URLByAppendingPathComponent:@"seafile" isDirectory:true];
     if ([Utils fileExistsAtPath:newURL.path])
         return;
 
@@ -739,22 +698,6 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     return nil;
 }
 
-- (NSString *)uniqueDirUnder:(NSString *)dir identify:(NSString *)identify
-{
-    return [dir stringByAppendingPathComponent:identify];
-}
-
-- (NSString *)uniqueDirUnder:(NSString *)dir
-{
-    return [self uniqueDirUnder:dir identify:[[NSUUID UUID] UUIDString]];
-}
-
-- (NSString *)uniqueUploadDir
-{
-    return [self uniqueDirUnder:self.uploadsDir identify:[[NSUUID UUID] UUIDString]];
-}
-
-
 - (NSMutableDictionary *)getExports
 {
     NSMutableDictionary *dict = [self objectForKey:@"EXPORTED"];
@@ -825,11 +768,8 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 - (void)clearCache
 {
     Debug("clear local cache.");
-    [Utils clearAllFiles:SeafGlobal.sharedObject.objectsDir];
-    [Utils clearAllFiles:SeafGlobal.sharedObject.blocksDir];
-    [Utils clearAllFiles:SeafGlobal.sharedObject.editDir];
-    [Utils clearAllFiles:SeafGlobal.sharedObject.thumbsDir];
-    [Utils clearAllFiles:SeafGlobal.sharedObject.tempDir];
+    [SeafFsCache.sharedObject clearCache];
+
     [SeafUploadFile clearCache];
     [SeafAvatar clearCache];
     [self clearThumbs];

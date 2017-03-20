@@ -170,7 +170,6 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 - (UIImage *)avatarForAccount:(NSString *)email;
 
 // Cache
-- (void)loadCache;
 - (id)getCachedObj:(NSString *)key;
 - (id)getCachedTimestamp:(NSString *)key;
 - (BOOL)savetoCacheKey:(NSString *)key value:(NSString *)content;

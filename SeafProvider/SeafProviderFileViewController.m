@@ -201,7 +201,7 @@
 
 - (IBAction)chooseCurrentDir:(id)sender
 {
-    NSString *tmpdir = [SeafGlobal.sharedObject uniqueDirUnder:self.root.documentStorageURL.path];
+    NSString *tmpdir = [SeafFsCache uniqueDirUnder:self.root.documentStorageURL.path];
     if (![Utils checkMakeDir:tmpdir]) {
         Warning("Failed to create temp dir.");
         return [self alertWithTitle:NSLocalizedString(@"Failed to upload file", @"Seafile") handler:nil];
@@ -351,7 +351,7 @@
 
         if (self.root.documentPickerMode == UIDocumentPickerModeImport
             || self.root.documentPickerMode == UIDocumentPickerModeOpen) {
-            NSString *tmpdir = [SeafGlobal.sharedObject uniqueDirUnder:self.root.documentStorageURL.path];
+            NSString *tmpdir = [SeafFsCache uniqueDirUnder:self.root.documentStorageURL.path];
             if (![Utils checkMakeDir:tmpdir]) {
                 Warning("Failed to create temp dir.");
                 return [self alertWithTitle:NSLocalizedString(@"Failed to open file", @"Seafile") handler:nil];

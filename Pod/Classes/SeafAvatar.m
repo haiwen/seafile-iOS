@@ -38,7 +38,7 @@ static NSMutableDictionary *avatarAttrs = nil;
 + (NSMutableDictionary *)avatarAttrs
 {
     if (avatarAttrs == nil) {
-        NSString *attrsFile = [SeafGlobal.sharedObject.avatarsDir stringByAppendingPathComponent:@"avatars.plist"];
+        NSString *attrsFile = [SeafFsCache.sharedObject.avatarsDir stringByAppendingPathComponent:@"avatars.plist"];
         avatarAttrs = [[NSMutableDictionary alloc] initWithContentsOfFile:attrsFile];
         if (!avatarAttrs)
             avatarAttrs = [[NSMutableDictionary alloc] init];
@@ -47,13 +47,13 @@ static NSMutableDictionary *avatarAttrs = nil;
 }
 + (void)saveAvatarAttrs
 {
-    NSString *attrsFile = [SeafGlobal.sharedObject.avatarsDir stringByAppendingPathComponent:@"avatars.plist"];
+    NSString *attrsFile = [SeafFsCache.sharedObject.avatarsDir stringByAppendingPathComponent:@"avatars.plist"];
     [[SeafAvatar avatarAttrs] writeToFile:attrsFile atomically:YES];
 }
 
 + (void)clearCache
 {
-    [[NSFileManager defaultManager] removeItemAtPath:[SeafGlobal.sharedObject.avatarsDir stringByAppendingPathComponent:@"avatars.plist"] error:nil];
+    [[NSFileManager defaultManager] removeItemAtPath:[SeafFsCache.sharedObject.avatarsDir stringByAppendingPathComponent:@"avatars.plist"] error:nil];
     avatarAttrs = [[NSMutableDictionary alloc] init];
 }
 
@@ -156,7 +156,7 @@ static NSMutableDictionary *avatarAttrs = nil;
 + (NSString *)pathForAvatar:(SeafConnection *)conn username:(NSString *)username
 {
     NSString *filename = [NSString stringWithFormat:@"%@-%@.jpg", conn.host, username];
-    NSString *path = [SeafGlobal.sharedObject.avatarsDir stringByAppendingPathComponent:filename];
+    NSString *path = [SeafFsCache.sharedObject.avatarsDir stringByAppendingPathComponent:filename];
     return path;
 }
 

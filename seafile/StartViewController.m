@@ -427,7 +427,7 @@
         }];
         return YES;
     }
-    [conn loadCache];
+
     [SeafGlobal.sharedObject setObject:conn.address forKey:@"DEAULT-SERVER"];
     [SeafGlobal.sharedObject setObject:conn.username forKey:@"DEAULT-USER"];
 

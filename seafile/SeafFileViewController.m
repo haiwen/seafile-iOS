@@ -1434,7 +1434,7 @@ enum {
 {
     NSMutableSet *nameSet = overwrite ? [NSMutableSet new] : [self getExistedNameSet];
     NSMutableArray *files = [[NSMutableArray alloc] init];
-    NSString *uploadDir = [SeafGlobal.sharedObject uniqueUploadDir];
+    NSString *uploadDir = [SeafFsCache.sharedObject uniqueUploadDir];
     for (ALAsset *asset in assets) {
         NSString *filename = asset.defaultRepresentation.filename;
         Debug("Upload picked file : %@", filename);

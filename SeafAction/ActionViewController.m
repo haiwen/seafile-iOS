@@ -38,7 +38,7 @@
 
     // For example, look for an image and place it into an image view.
     // Replace this with something appropriate for the type[s] your extension supports.
-    NSString *tmpdir = [SeafGlobal.sharedObject uniqueDirUnder:SeafGlobal.sharedObject.tempDir];
+    NSString *tmpdir = [SeafFsCache uniqueDirUnder:SeafFsCache.sharedObject.tempDir];
     if (![Utils checkMakeDir:tmpdir]) {
         Warning("Failed to create temp dir.");
         return [self alertWithTitle:NSLocalizedString(@"Failed to upload file", @"Seafile") handler:nil];

@@ -9,7 +9,6 @@
 #import "SeafBase.h"
 #import "SeafRepos.h"
 #import "SeafConnection.h"
-#import "SeafGlobal.h"
 
 #import "ExtentedString.h"
 #import "UIImage+FileType.h"

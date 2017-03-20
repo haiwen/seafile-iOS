@@ -10,8 +10,6 @@
 
 #define APP_NAME @"Seafile"
 
-#define GROUP_NAME @"group.com.seafile.seafilePro"
-#define APP_ID @"com.seafile.seafilePro"
 
 #define API_URL  @"/api2"
 #if DEBUG

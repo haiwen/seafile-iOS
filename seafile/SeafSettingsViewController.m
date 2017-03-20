@@ -396,11 +396,6 @@ enum {
     // Dispose of any resources that can be recreated.
 }
 
-- (long long)cacheSize
-{
-    return [Utils folderSizeAtPath:[SeafGlobal.sharedObject applicationDocumentsDirectory]];
-}
-
 - (void)configureView
 {
     if (!_connection)
@@ -409,7 +404,7 @@ enum {
     _nameCell.detailTextLabel.text = _connection.username;
     _enableTouchIDSwitch.on = _connection.touchIdEnabled;
 
-    long long cacheSize = [self cacheSize];
+    long long cacheSize = [SeafFsCache.sharedObject cacheSize];
     Debug("%@, %lld, %lld, total cache=%lld", _connection.username, _connection.usage, _connection.quota, cacheSize);
     if (_connection.quota <= 0) {
         if (_connection.usage < 0)
@@ -587,7 +582,7 @@ enum {
                 SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
                 [(SeafDetailViewController *)[appdelegate detailViewControllerAtIndex:TABBED_SETTINGS] setPreViewItem:nil master:nil];
                 [SeafGlobal.sharedObject clearCache];
-                long long cacheSize = [self cacheSize];
+                long long cacheSize = [SeafFsCache.sharedObject cacheSize];
                 _cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromLongLong:cacheSize];
             } no:nil];
         }
