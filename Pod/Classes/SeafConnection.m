@@ -18,6 +18,7 @@
 #import "SeafFile.h"
 #import "SeafGlobal.h"
 #import "SeafFsCache.h"
+#import "SeafDataTaskManager.h"
 
 #import "ExtentedString.h"
 #import "NSData+Encryption.h"
@@ -936,7 +937,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     @synchronized(self.uploadFiles) {
         [self.uploadFiles removeObjectForKey:ufile.lpath];
     }
-    [SeafGlobal.sharedObject removeBackgroundUpload:ufile];
+    [SeafDataTaskManager.sharedObject removeBackgroundUploadTask:ufile];
     [ufile.udir removeUploadItem:ufile];
     [ufile doRemove];
 }
@@ -1016,7 +1017,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         return;
     Debug("%@, %d\n", self.address, [self authorized]);
     SeafUserAvatar *avatar = [[SeafUserAvatar alloc] initWithConnection:self username:self.username];
-    [SeafGlobal.sharedObject addDownloadTask:avatar];
+    [SeafDataTaskManager.sharedObject addBackgroundDownloadTask:avatar];
     self.avatarLastUpdate = [NSDate date];
 }
 
@@ -1056,7 +1057,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     while (_uploadingArray.count < 5 && count++ < 5) {
         NSURL *url = [self popUploadPhoto];
         if (!url) break;
-        [SeafGlobal.sharedObject assetForURL:url
+        [SeafDataTaskManager.sharedObject assetForURL:url
                                  resultBlock:^(ALAsset *asset) {
                                      NSString *filename = asset.defaultRepresentation.filename;
                                      if (!filename) {
@@ -1079,7 +1080,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                      }];
 
                                      Debug("Add file %@ to upload list: %@ current %u %u", filename, dir.path, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
-                                     [SeafGlobal.sharedObject addUploadTask:file];
+                                     [SeafDataTaskManager.sharedObject addBackgroundUploadTask:file];
                                  }
                                 failureBlock:^(NSError *error){
                                     Debug("!!!!Can not find asset:%@ !", url);
@@ -1207,12 +1208,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             [self pickPhotosForUpload];
         }
     };
-    [[[SeafGlobal sharedObject] assetsLibrary] enumerateGroupsWithTypes:ALAssetsGroupSavedPhotos
-                                                   usingBlock:assetGroupEnumerator
-                                                 failureBlock:^(NSError *error) {
-                                                     Debug("There is an error: %@", error);
-                                                     _inCheckPhotoss = false;
-                                                 }];
+    [[SeafDataTaskManager.sharedObject assetsLibrary] enumerateGroupsWithTypes:ALAssetsGroupSavedPhotos
+                                                                    usingBlock:assetGroupEnumerator
+                                                                  failureBlock:^(NSError *error) {
+                                                                      Debug("There is an error: %@", error);
+                                                                      _inCheckPhotoss = false;
+                                                                  }];
 }
 
 - (SeafDir *)getSubdirUnderDir:(SeafDir *)dir withName:(NSString *)name
@@ -1303,7 +1304,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             _photosArray = nil;
             _inCheckPhotoss = false;
             _uploadingArray = nil;
-            [SeafGlobal.sharedObject clearAutoSyncPhotos:self];
+            [SeafDataTaskManager.sharedObject cancelAutoSyncTasks:self];
             [self clearUploadCache];
         }
     }
@@ -1472,7 +1473,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             [self removeUploadfile:ufile];
         }
     };
-    [SeafGlobal.sharedObject addUploadTask:ufile];
+    [SeafDataTaskManager.sharedObject addBackgroundUploadTask:ufile];
 }
 
 - (BOOL)isContactsChangedSinceLastBackup:(SeafDir *)contactsDir currentContacts:(NSArray *)contacts
@@ -1694,7 +1695,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)clearUploadingVideos
 {
-    [SeafGlobal.sharedObject clearAutoSyncVideos:self];
+    [SeafDataTaskManager.sharedObject cancelAutoSyncVideoTasks:self];
     [self removeVideosFromArray:_photosArray];
     [self removeVideosFromArray:_uploadingArray];
 }
@@ -1709,7 +1710,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             if ([item isKindOfClass:[SeafFile class]]) {
                 SeafFile *file = (SeafFile *)item;
                 Debug("download file: %@, %@ after %ld ms", item.repoId, item.path, delay);
-                [SeafGlobal.sharedObject performSelector:@selector(addDownloadTask:) withObject:file afterDelay:delay];
+                [SeafDataTaskManager.sharedObject performSelector:@selector(addDownloadTask:) withObject:file afterDelay:delay];
             } else if ([item isKindOfClass:[SeafDir class]]) {
                 Debug("download dir: %@, %@ after %ld ms", item.repoId, item.path, delay);
                 [self performSelector:@selector(downloadDir:) withObject:(SeafDir *)item afterDelay:delay];

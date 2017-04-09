@@ -6,11 +6,12 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
-#import "SeafGlobal.h"
+#import "SeafFsCache.h"
 #import "SeafUploadFile.h"
 #import "SeafRepos.h"
-#import "Utils.h"
+#import "SeafDataTaskManager.h"
 
+#import "Utils.h"
 #import "FileMimeType.h"
 #import "UIImage+FileType.h"
 #import "ExtentedString.h"
@@ -178,7 +179,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     self.missingblocks = nil;
     self.blkidx = 0;
 
-    [SeafGlobal.sharedObject finishUpload:self result:result];
+    [SeafDataTaskManager.sharedObject finishUpload:self result:result];
     if (!self.removed && !self.autoSync) {
         NSMutableDictionary *dict = self.uploadAttr;
         if (!dict) {
@@ -585,7 +586,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
     NSString *name = [@"cacheimage-ufile-" stringByAppendingString:self.name];
     NSString *cachePath = [[SeafFsCache.sharedObject tempDir] stringByAppendingPathComponent:name];
-    return [SeafGlobal.sharedObject imageFromPath:self.lpath withMaxSize:IMAGE_MAX_SIZE cachePath:cachePath];
+    return [Utils imageFromPath:self.lpath withMaxSize:IMAGE_MAX_SIZE cachePath:cachePath];
 }
 
 - (NSURL *)exportURL

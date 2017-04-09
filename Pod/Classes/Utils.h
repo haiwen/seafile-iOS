@@ -49,6 +49,7 @@
 + (UIAlertController *)generateAlert:(NSArray *)arr withTitle:(NSString *)title handler:(void (^)(UIAlertAction *action))handler cancelHandler:(void (^)(UIAlertAction *action))cancelHandler preferredStyle:(UIAlertControllerStyle)preferredStyle;
 
 + (UIImage *)reSizeImage:(UIImage *)image toSquare:(float)length;
++ (UIImage *)imageFromPath:(NSString *)path withMaxSize:(float)length cachePath:(NSString *)cachePath;
 
 + (NSDictionary *)queryToDict:(NSString *)query;
 + (void)dict:(NSMutableDictionary *)dict setObject:(id)value forKey:(NSString *)defaultName;

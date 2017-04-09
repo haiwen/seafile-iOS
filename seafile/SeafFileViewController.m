@@ -17,6 +17,7 @@
 #import "SeafCell.h"
 #import "SeafPhoto.h"
 #import "SeafPhotoThumb.h"
+#import "SeafDataTaskManager.h"
 
 #import "FileSizeFormatter.h"
 #import "SeafDateFormatter.h"
@@ -484,7 +485,7 @@ enum {
         file.delegate = self;
         if (!file.uploaded && !file.uploading) {
             Debug("background upload %@", file.name);
-            [[SeafGlobal sharedObject] addUploadTask:file];
+            [SeafDataTaskManager.sharedObject addBackgroundUploadTask:file];
         }
     }
 }
@@ -1194,7 +1195,7 @@ enum {
         NSString *path = file.cachePath;
         if (!path) {
             [file setFileDownloadedBlock:block];
-            [SeafGlobal.sharedObject addDownloadTask:file];
+            [SeafDataTaskManager.sharedObject addBackgroundDownloadTask:file];
         } else {
             block(file, true);
         }
@@ -1348,7 +1349,7 @@ enum {
 
 - (void)backgroundUpload:(SeafUploadFile *)ufile
 {
-    [[SeafGlobal sharedObject] addUploadTask:ufile];
+    [SeafDataTaskManager.sharedObject addBackgroundUploadTask:ufile];
 }
 
 - (void)uploadFile:(SeafUploadFile *)ufile toDir:(SeafDir *)dir overwrite:(BOOL)overwrite
@@ -1455,7 +1456,7 @@ enum {
     [SeafUploadFile saveAttrs];
     [self.tableView reloadData];
     for (SeafUploadFile *file in files) {
-        [[SeafGlobal sharedObject] addUploadTask:file];
+        [SeafDataTaskManager.sharedObject addBackgroundUploadTask:file];
     }
 }
 
@@ -1465,7 +1466,7 @@ enum {
     NSMutableArray *assets = [[NSMutableArray alloc] init];
     NSURL *last = [urls objectAtIndex:urls.count-1];
     for (NSURL *url in urls) {
-        [SeafGlobal.sharedObject assetForURL:url
+        [SeafDataTaskManager.sharedObject assetForURL:url
                                   resultBlock:^(ALAsset *asset) {
                                       if (assets) [assets addObject:asset];
                                       if (url == last) [self uploadPickedAssets:assets overwrite:overwrite];

@@ -9,7 +9,6 @@
 
 #import <Foundation/Foundation.h>
 #import <CoreData/CoreData.h>
-#import <AssetsLibrary/AssetsLibrary.h>
 #import "SeafConnection.h"
 #import "SeafDbCacheProvider.h"
 #import "SeafPreView.h"
@@ -19,11 +18,7 @@
 #define SEAFILE_SUITE_NAME @"group.com.seafile.seafilePro"
 #define APP_ID @"com.seafile.seafilePro"
 
-#define THUMB_SIZE 96
-
 @interface SeafGlobal : NSObject
-
-@property (readonly) ALAssetsLibrary *assetsLibrary;
 
 @property (readonly) BOOL allowInvalidCert;
 
@@ -46,30 +41,12 @@
 
 - (void)startTimer;
 
-- (void)incDownloadnum;
-- (void)decDownloadnum;
-- (unsigned long)uploadingnum;
-- (unsigned long)downloadingnum;
-
-- (void)finishDownload:(id<SeafDownloadDelegate>)file result:(BOOL)result;
-- (void)finishUpload:(SeafUploadFile *)file result:(BOOL)result;
-
-- (void)addUploadTask:(SeafUploadFile *)file;
-- (void)addDownloadTask:(id<SeafDownloadDelegate>)file;
-- (void)removeBackgroundUpload:(SeafUploadFile *)file;
-- (void)removeBackgroundDownload:(id<SeafDownloadDelegate>)file;
-- (void)clearAutoSyncPhotos:(SeafConnection *)conn;
-- (void)clearAutoSyncVideos:(SeafConnection *)conn;
-
 - (void)setObject:(id)value forKey:(NSString *)defaultName;
 - (id)objectForKey:(NSString *)defaultName;
 - (void)removeObjectForKey:(NSString *)defaultName;
 - (BOOL)synchronize;
 
 - (void)migrate;
-- (void)assetForURL:(NSURL *)assetURL resultBlock:(ALAssetsLibraryAssetForURLResultBlock)resultBlock failureBlock:(ALAssetsLibraryAccessFailureBlock)failureBlock;
-
-- (UIImage *)imageFromPath:(NSString *)path withMaxSize:(float)length cachePath:(NSString *)cachePath;
 
 - (void)addExportFile:(NSURL *)url data:(NSDictionary *)dict;
 - (void)removeExportFile:(NSURL *)url;

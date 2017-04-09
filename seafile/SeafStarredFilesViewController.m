@@ -82,7 +82,7 @@
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 
     __weak typeof(self) weakSelf = self;
-    [self.tableView addPullToRefreshWithActionHandler:^{
+    [self.tableView addPullToRefresh:[SVArrowPullToRefreshView class] withActionHandler:^{
         if (![weakSelf checkNetworkStatus]) {
             [weakSelf.tableView.pullToRefreshView stopAnimating];
         } else {

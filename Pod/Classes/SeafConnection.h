@@ -47,9 +47,9 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 
 @protocol SeafLoginDelegate <NSObject>
 - (void)loginSuccess:(SeafConnection *_Nonnull)connection;
-- (void)loginFailed:(SeafConnection *_Nonnull)connection response:(NSURLResponse *)response error:(NSError *)error;
-- (BOOL)authorizeInvalidCert:(NSURLProtectionSpace *)protectionSpace;
-- (NSData *)getClientCertPersistentRef:(NSURLCredential *__autoreleasing *)credential; // return the persistentRef
+- (void)loginFailed:(SeafConnection *_Nonnull)connection response:(NSURLResponse *_Nonnull)response error:(NSError *_Nullable)error;
+- (BOOL)authorizeInvalidCert:(NSURLProtectionSpace *_Nonnull)protectionSpace;
+- (NSData *_Nullable)getClientCertPersistentRef:(NSURLCredential * _Nonnull __autoreleasing *)credential; // return the persistentRef
 
 @end
 

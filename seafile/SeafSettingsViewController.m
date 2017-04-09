@@ -18,6 +18,8 @@
 #import "SeafDirViewController.h"
 #import "SeafRepos.h"
 #import "SeafAvatar.h"
+#import "SeafDataTaskManager.h"
+
 #import "UIViewController+Extend.h"
 #import "FileSizeFormatter.h"
 #import "ExtentedString.h"
@@ -649,13 +651,17 @@ enum {
             remainStr = [NSString stringWithFormat:NSLocalizedString(@"%ld photos remain", @"Seafile"), num];
         }
 #if DEBUG
-        remainStr = [remainStr stringByAppendingFormat:@"  U:%lu D:%lu", SeafGlobal.sharedObject.uploadingnum, SeafGlobal.sharedObject.downloadingnum];
+        remainStr = [remainStr stringByAppendingFormat:@"  U:%lu D:%lu",
+                     SeafDataTaskManager.sharedObject.backgroundUploadingNum,
+                     SeafDataTaskManager.sharedObject.backgroundDownloadingNum];
 #endif
         return [sectionNames[section] stringByAppendingFormat:@"\t %@", remainStr];
     }
 #if DEBUG
     else if (section == SECTION_CAMERA) {
-        NSString *remainStr = [NSString stringWithFormat:@"  U:%ld D:%ld", (long)SeafGlobal.sharedObject.uploadingnum, (long)SeafGlobal.sharedObject.downloadingnum];
+        NSString *remainStr = [NSString stringWithFormat:@"  U:%lu D:%lu",
+                               SeafDataTaskManager.sharedObject.backgroundUploadingNum,
+                               SeafDataTaskManager.sharedObject.backgroundDownloadingNum];
         return [sectionNames[section] stringByAppendingFormat:@"\t %@", remainStr];
     }
 #endif

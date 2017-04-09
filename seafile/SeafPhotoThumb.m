@@ -6,9 +6,9 @@
 //  Copyright © 2015 Seafile. All rights reserved.
 //
 
-#import "SeafGlobal.h"
 #import "SeafPhotoThumb.h"
 #import "SeafFile.h"
+#import "SeafDataTaskManager.h"
 #import "Debug.h"
 
 @interface SeafPhotoThumb ()
@@ -58,7 +58,7 @@
                 [self imageLoadingComplete];
             });
         }];
-        [SeafGlobal.sharedObject addDownloadTask:self];
+        [SeafDataTaskManager.sharedObject addBackgroundDownloadTask:self];
     }
 }
 

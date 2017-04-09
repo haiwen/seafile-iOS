@@ -120,14 +120,14 @@
 - (void)migrateUploadedPhotos:(NSString *)url username:(NSString *)username account:(NSString *)account
 {
     NSManagedObjectContext *context = self.managedObjectContext;
-    
+
     NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
     NSEntityDescription *entity = [NSEntityDescription entityForName:@"UploadedPhotos" inManagedObjectContext:context];
     [fetchRequest setEntity:entity];
-    
+
     NSError *error = nil;
     NSArray *items = [context executeFetchRequest:fetchRequest error:&error];
-    
+
     for (UploadedPhotos *obj in items) {
         UploadedPhotoV2 *objV2 = [NSEntityDescription insertNewObjectForEntityForName:ENTITY_UPLOAD_PHOTO inManagedObjectContext:context];
         objV2.account = account;

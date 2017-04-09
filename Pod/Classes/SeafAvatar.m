@@ -6,9 +6,10 @@
 //  Copyright (c) 2014 Seafile. All rights reserved.
 //
 
+#import "SeafFsCache.h"
 #import "SeafAvatar.h"
-#import "SeafGlobal.h"
 #import "SeafBase.h"
+#import "SeafDataTaskManager.h"
 
 #import "ExtentedString.h"
 #import "Utils.h"
@@ -82,27 +83,26 @@ static NSMutableDictionary *avatarAttrs = nil;
 }
 - (void)download
 {
-    [SeafGlobal.sharedObject incDownloadnum];
     [self.connection sendRequest:self.avatarUrl success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          if (![JSON isKindOfClass:[NSDictionary class]]) {
-             [SeafGlobal.sharedObject finishDownload:self result:NO];
+             [SeafDataTaskManager.sharedObject finishDownload:self result:NO];
              return;
          }
          NSString *url = [JSON objectForKey:@"url"];
          if (!url) {
-             [SeafGlobal.sharedObject finishDownload:self result:NO];
+             [SeafDataTaskManager.sharedObject finishDownload:self result:NO];
              return;
          }
          if([[JSON objectForKey:@"is_default"] integerValue]) {
              if ([[SeafAvatar avatarAttrs] objectForKey:self.path])
                  [[SeafAvatar avatarAttrs] removeObjectForKey:self.path];
-             [SeafGlobal.sharedObject finishDownload:self result:YES];
+             [SeafDataTaskManager.sharedObject finishDownload:self result:YES];
              return;
          }
          if (![self modified:[[JSON objectForKey:@"mtime"] integerValue:0]]) {
              Debug("avatar not modified\n");
-             [SeafGlobal.sharedObject finishDownload:self result:YES];
+             [SeafDataTaskManager.sharedObject finishDownload:self result:YES];
              return;
          }
          url = [[url stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding] escapedUrlPath];;
@@ -112,7 +112,7 @@ static NSMutableDictionary *avatarAttrs = nil;
          } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
              if (error) {
                  Debug("Failed to download avatar url=%@, error=%@",downloadRequest.URL, [error localizedDescription]);
-                 [SeafGlobal.sharedObject finishDownload:self result:NO];
+                 [SeafDataTaskManager.sharedObject finishDownload:self result:NO];
              } else {
                  Debug("Successfully downloaded avatar: %@ from %@", filePath, url);
                  if (![filePath.path isEqualToString:self.path]) {
@@ -124,7 +124,7 @@ static NSMutableDictionary *avatarAttrs = nil;
                  [Utils dict:attr setObject:[JSON objectForKey:@"mtime"] forKey:@"mtime"];
                  [self saveAttrs:attr];
                  [SeafAvatar saveAvatarAttrs];
-                 [SeafGlobal.sharedObject finishDownload:self result:YES];
+                 [SeafDataTaskManager.sharedObject finishDownload:self result:YES];
              }
          }];
          [task resume];
@@ -132,8 +132,8 @@ static NSMutableDictionary *avatarAttrs = nil;
               failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          Warning("Failed to download avatar from %@", request.URL);
-         [SeafGlobal.sharedObject finishDownload:self result:NO];
-         [SeafGlobal.sharedObject removeBackgroundDownload:self];
+         [SeafDataTaskManager.sharedObject finishDownload:self result:NO];
+         [SeafDataTaskManager.sharedObject removeBackgroundDownloadTask:self];
      }];
 }
 - (BOOL)retryable

@@ -8,10 +8,11 @@
 
 @import Contacts;
 #import <Photos/Photos.h>
-
-#import "SeafAppDelegate.h"
 #import "SVProgressHUD.h"
 #import "AFNetworking.h"
+
+#import "SeafAppDelegate.h"
+#import "SeafDataTaskManager.h"
 #import "Debug.h"
 #import "Utils.h"
 #import "Version.h"
@@ -48,7 +49,7 @@
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
         if (conn.inAutoSync) return true;
     }
-    return SeafGlobal.sharedObject.uploadingnum != 0 || SeafGlobal.sharedObject.downloadingnum != 0;
+    return SeafDataTaskManager.sharedObject.backgroundUploadingNum != 0 || SeafDataTaskManager.sharedObject.backgroundDownloadingNum != 0;
 }
 
 - (BOOL)selectAccount:(SeafConnection *)conn
@@ -233,7 +234,7 @@
     if (ios8) {
          [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
     } else {
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(photosDidChange:) name:ALAssetsLibraryChangedNotification object:SeafGlobal.sharedObject.assetsLibrary];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(photosDidChange:) name:ALAssetsLibraryChangedNotification object:SeafDataTaskManager.sharedObject.assetsLibrary];
     }
     //[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(contactStoreDidChange:) name:CNContactStoreDidChangeNotification object:nil];
 
