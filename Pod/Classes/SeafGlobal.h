@@ -12,7 +12,6 @@
 #import "SeafConnection.h"
 #import "SeafDbCacheProvider.h"
 #import "SeafPreView.h"
-#import "SeafFsCache.h"
 
 
 #define SEAFILE_SUITE_NAME @"group.com.seafile.seafilePro"

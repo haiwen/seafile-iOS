@@ -17,6 +17,8 @@
 #import "SecurityUtilities.h"
 #import "Version.h"
 #import "SeafDbCacheProvider.h"
+#import "SeafStorage.h"
+
 
 /*
 static NSError * NewNSErrorFromException(NSException * exc) {
@@ -60,7 +62,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         _storage = [[NSUserDefaults alloc] initWithSuiteName:SEAFILE_SUITE_NAME];
         _saveAlbumSem = dispatch_semaphore_create(1);
          NSURL *rootURL = [[[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:SEAFILE_SUITE_NAME] URLByAppendingPathComponent:@"seafile" isDirectory:true];
-        [SeafFsCache.sharedObject registerRootPath:rootURL.path];
+        [SeafStorage.sharedObject registerRootPath:rootURL.path];
         _cacheProvider = [[SeafDbCacheProvider alloc] init];
         [self checkSettings];
 
@@ -69,7 +71,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         [_storage setObject:SEAFILE_VERSION forKey:@"VERSION"];
         [[AFNetworkReachabilityManager sharedManager] startMonitoring];
         [self loadSecIdentities];
-        Debug("Cache root path=%@, clientVersion=%@, platformVersion=%@",  SeafFsCache.sharedObject.rootPath, SEAFILE_VERSION, _platformVersion);
+        Debug("Cache root path=%@, clientVersion=%@, platformVersion=%@",  SeafStorage.sharedObject.rootPath, SEAFILE_VERSION, _platformVersion);
     }
     return self;
 }

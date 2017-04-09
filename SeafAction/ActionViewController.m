@@ -10,6 +10,7 @@
 #import <MobileCoreServices/MobileCoreServices.h>
 #import "SeafActionDirViewController.h"
 #import "SeafGlobal.h"
+#import "SeafStorage.h"
 #import "SeafAccountCell.h"
 #import "UIViewController+Extend.h"
 #import "Debug.h"
@@ -38,7 +39,7 @@
 
     // For example, look for an image and place it into an image view.
     // Replace this with something appropriate for the type[s] your extension supports.
-    NSString *tmpdir = [SeafFsCache uniqueDirUnder:SeafFsCache.sharedObject.tempDir];
+    NSString *tmpdir = [SeafStorage uniqueDirUnder:SeafStorage.sharedObject.tempDir];
     if (![Utils checkMakeDir:tmpdir]) {
         Warning("Failed to create temp dir.");
         return [self alertWithTitle:NSLocalizedString(@"Failed to upload file", @"Seafile") handler:nil];

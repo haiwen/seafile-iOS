@@ -11,7 +11,7 @@
 #import "SeafRepos.h"
 #import "SeafThumb.h"
 #import "SeafDataTaskManager.h"
-#import "SeafFsCache.h"
+#import "SeafStorage.h"
 
 #import "FileMimeType.h"
 #import "ExtentedString.h"
@@ -84,14 +84,14 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (NSString *)downloadTempPath:(NSString *)objId
 {
-    return [SeafFsCache.sharedObject.tempDir stringByAppendingPathComponent:objId];
+    return [SeafStorage.sharedObject.tempDir stringByAppendingPathComponent:objId];
 }
 
 - (NSString *)thumbPath: (NSString *)objId
 {
     if (!self.oid) return nil;
     int size = THUMB_SIZE * (int)[[UIScreen mainScreen] scale];
-    return [SeafFsCache.sharedObject.thumbsDir stringByAppendingPathComponent:[NSString stringWithFormat:@"/%@-%d", objId, size]];
+    return [SeafStorage.sharedObject.thumbsDir stringByAppendingPathComponent:[NSString stringWithFormat:@"/%@-%d", objId, size]];
 }
 
 - (void)updateWithEntry:(SeafBase *)entry
@@ -120,7 +120,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (void)removeBlock:(NSString *)blkId
 {
-    [[NSFileManager defaultManager] removeItemAtPath:[SeafFsCache.sharedObject blockPath:blkId] error:nil];
+    [[NSFileManager defaultManager] removeItemAtPath:[SeafStorage.sharedObject blockPath:blkId] error:nil];
 }
 - (void)clearDownloadContext
 {
@@ -187,7 +187,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
          NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
          if (!curId)
              curId = self.oid;
-         if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafFsCache.sharedObject documentPath:curId]]) {
+         if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:curId]]) {
              Debug("file %@ already uptodate oid=%@\n", self.name, self.ooid);
              [self finishDownload:curId];
              return;
@@ -207,7 +207,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
          url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
          NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:DEFAULT_TIMEOUT];
          NSProgress *progress = nil;
-         NSString *target = [SeafFsCache.sharedObject documentPath:self.downloadingFileOid];
+         NSString *target = [SeafStorage.sharedObject documentPath:self.downloadingFileOid];
          Debug("Download file %@  %@ from %@, target:%@ %d", self.name, self.downloadingFileOid, url, target, [Utils fileExistsAtPath:target]);
 
          _task = [connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:&progress destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
@@ -308,7 +308,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     NSFileHandle *handle = [NSFileHandle fileHandleForWritingAtPath:tmpPath];
     [handle truncateFileAtOffset:0];
     for (NSString *blk_id in self.blkids) {
-        NSData *data = [[NSData alloc] initWithContentsOfFile:[SeafFsCache.sharedObject blockPath:blk_id]];
+        NSData *data = [[NSData alloc] initWithContentsOfFile:[SeafStorage.sharedObject blockPath:blk_id]];
         if (password)
             data = [data decrypt:password encKey:repo.encKey version:repo.encVersion];
         if (!data)
@@ -318,7 +318,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     [handle closeFile];
     if (!self.downloadingFileOid)
         return -1;
-    [[NSFileManager defaultManager] moveItemAtPath:tmpPath toPath:[SeafFsCache.sharedObject documentPath:self.downloadingFileOid] error:nil];
+    [[NSFileManager defaultManager] moveItemAtPath:tmpPath toPath:[SeafStorage.sharedObject documentPath:self.downloadingFileOid] error:nil];
     return 0;
 }
 
@@ -352,7 +352,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
     Debug("URL: %@", downloadRequest.URL);
     NSProgress *progress = nil;
-    NSString *target = [SeafFsCache.sharedObject blockPath:blk_id];
+    NSString *target = [SeafStorage.sharedObject blockPath:blk_id];
     NSURLSessionDownloadTask *task = [connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:&progress destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
         return [NSURL fileURLWithPath:target];
     } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
@@ -379,7 +379,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 {
     if (!self.isDownloading) return;
     NSString *blk_id = [self.blkids objectAtIndex:self.index];
-    if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafFsCache.sharedObject blockPath:blk_id]])
+    if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject blockPath:blk_id]])
         return [self finishBlock:blk_id];
 
     NSString *link = [NSString stringWithFormat:API_URL"/repos/%@/files/%@/blks/%@/download-link/", self.repoId, self.downloadingFileOid, blk_id];
@@ -404,7 +404,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@&op=downloadblks", self.repoId, [self.path escapedUrl]] success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          NSString *curId = [JSON objectForKey:@"file_id"];
-         if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafFsCache.sharedObject documentPath:curId]]) {
+         if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:curId]]) {
              Debug("already uptodate oid=%@\n", self.ooid);
              [self finishDownload:curId];
              return;
@@ -418,7 +418,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
          [self.delegate download:self progress:0];
          self.blkids = [JSON objectForKey:@"blklist"];
          if (self.blkids.count <= 0) {
-             [@"" writeToFile:[SeafFsCache.sharedObject documentPath:self.downloadingFileOid] atomically:YES encoding:NSUTF8StringEncoding error:nil];
+             [@"" writeToFile:[SeafStorage.sharedObject documentPath:self.downloadingFileOid] atomically:YES encoding:NSUTF8StringEncoding error:nil];
              [self finishDownload:self.downloadingFileOid];
          } else {
              SeafRepo *repo = [connection getRepo:self.repoId];
@@ -476,8 +476,8 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 {
     if (self.mpath && [[NSFileManager defaultManager] fileExistsAtPath:self.mpath])
         return true;
-    //Debug(".... %@ %@ %d", self.name, self.ooid, self.ooid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafFsCache.sharedObject documentPath:self.ooid]]);
-    if (self.ooid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafFsCache.sharedObject documentPath:self.ooid]])
+    //Debug(".... %@ %@ %d", self.name, self.ooid, self.ooid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:self.ooid]]);
+    if (self.ooid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:self.ooid]])
         return YES;
     self.ooid = nil;
     _preViewURL = nil;
@@ -538,7 +538,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
         }
         [self autoupload];
         return true;
-    } else if (self.oid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafFsCache.sharedObject documentPath:self.oid]]) {
+    } else if (self.oid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:self.oid]]) {
         if (![self.oid isEqualToString:self.ooid])
             [self setOoid:self.oid];
         return true;
@@ -578,13 +578,13 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     if (![self hasCache])
         return nil;
     @synchronized (self) {
-        NSString *tempDir = [SeafFsCache.sharedObject.tempDir stringByAppendingPathComponent:self.ooid];
+        NSString *tempDir = [SeafStorage.sharedObject.tempDir stringByAppendingPathComponent:self.ooid];
         if (![Utils checkMakeDir:tempDir])
             return nil;
         NSString *tempFileName = [tempDir stringByAppendingPathComponent:self.name];
         Debug("File exists at %@, %d", tempFileName, [Utils fileExistsAtPath:tempFileName]);
         if ([Utils fileExistsAtPath:tempFileName]
-            || [Utils linkFileAtPath:[SeafFsCache.sharedObject documentPath:self.ooid] to:tempFileName]) {
+            || [Utils linkFileAtPath:[SeafStorage.sharedObject documentPath:self.ooid] to:tempFileName]) {
             _exportURL = [NSURL fileURLWithPath:tempFileName];
         } else {
             Warning("Copy file to exportURL failed.\n");
@@ -627,11 +627,11 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     NSString *src = nil;
     NSString *tmpdir = nil;
     if (!self.mpath) {
-        src = [SeafFsCache.sharedObject documentPath:self.ooid];
+        src = [SeafStorage.sharedObject documentPath:self.ooid];
     } else {
         src = self.mpath;
     }
-    tmpdir = [SeafFsCache uniqueDirUnder:SeafFsCache.sharedObject.tempDir];
+    tmpdir = [SeafStorage uniqueDirUnder:SeafStorage.sharedObject.tempDir];
     if (![Utils checkMakeDir:tmpdir])
         return _preViewURL;
 
@@ -665,9 +665,9 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 {
     if (!self.ooid)
         return nil;
-    NSString *path = [SeafFsCache.sharedObject documentPath:self.ooid];
+    NSString *path = [SeafStorage.sharedObject documentPath:self.ooid];
     NSString *name = [@"cacheimage-" stringByAppendingString:self.ooid];
-    NSString *cachePath = [[SeafFsCache.sharedObject tempDir] stringByAppendingPathComponent:name];
+    NSString *cachePath = [[SeafStorage.sharedObject tempDir] stringByAppendingPathComponent:name];
     return [Utils imageFromPath:path withMaxSize:IMAGE_MAX_SIZE cachePath:cachePath];
 }
 
@@ -701,7 +701,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     if (self.mpath)
         return self.mpath;
     if (self.ooid)
-        return [SeafFsCache.sharedObject documentPath:self.ooid];
+        return [SeafStorage.sharedObject documentPath:self.ooid];
     return nil;
 }
 
@@ -724,7 +724,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (BOOL)saveStrContent:(NSString *)content
 {
-    NSString *dir = [SeafFsCache uniqueDirUnder:SeafFsCache.sharedObject.editDir];
+    NSString *dir = [SeafStorage uniqueDirUnder:SeafStorage.sharedObject.editDir];
     if (![Utils checkMakeDir:dir])
         return NO;
 
@@ -741,7 +741,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 - (BOOL)itemChangedAtURL:(NSURL *)url
 {
     Debug("file %@ changed:%@, repo:%@, account:%@ %@", self.name, url, self.repoId, connection.address, connection.username);
-    NSString *dir = [SeafFsCache uniqueDirUnder:SeafFsCache.sharedObject.editDir];
+    NSString *dir = [SeafStorage uniqueDirUnder:SeafStorage.sharedObject.editDir];
     if (![Utils checkMakeDir:dir])
         return NO;
 
@@ -766,13 +766,13 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (BOOL)testupload
 {
-    NSString *dir = [SeafFsCache uniqueDirUnder:SeafFsCache.sharedObject.editDir];
+    NSString *dir = [SeafStorage uniqueDirUnder:SeafStorage.sharedObject.editDir];
     if (![Utils checkMakeDir:dir])
         return NO;
     NSString *newpath = [dir stringByAppendingPathComponent:self.name];
     NSError *error = nil;
 
-    BOOL ret = [[NSFileManager defaultManager] copyItemAtPath:[SeafFsCache.sharedObject documentPath:self.ooid] toPath:newpath error:&error];
+    BOOL ret = [[NSFileManager defaultManager] copyItemAtPath:[SeafStorage.sharedObject documentPath:self.ooid] toPath:newpath error:&error];
     Debug("ret=%d newpath=%@, %@\n", ret, newpath, error);
     if (ret) {
         [self setMpath:newpath];
@@ -813,11 +813,11 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     _preViewURL = nil;
     _shareLink = nil;
     if (self.ooid) {
-        [[NSFileManager defaultManager] removeItemAtPath:[SeafFsCache.sharedObject documentPath:self.ooid] error:nil];
-        NSString *tempDir = [SeafFsCache.sharedObject.tempDir stringByAppendingPathComponent:self.ooid];
+        [[NSFileManager defaultManager] removeItemAtPath:[SeafStorage.sharedObject documentPath:self.ooid] error:nil];
+        NSString *tempDir = [SeafStorage.sharedObject.tempDir stringByAppendingPathComponent:self.ooid];
         [[NSFileManager defaultManager] removeItemAtPath:tempDir error:nil];
     }
-    [Utils clearAllFiles:SeafFsCache.sharedObject.blocksDir];
+    [Utils clearAllFiles:SeafStorage.sharedObject.blocksDir];
     self.ooid = nil;
     self.state = SEAF_DENTRY_INIT;
 }

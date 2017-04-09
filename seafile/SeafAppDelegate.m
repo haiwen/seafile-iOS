@@ -13,6 +13,8 @@
 
 #import "SeafAppDelegate.h"
 #import "SeafDataTaskManager.h"
+#import "SeafStorage.h"
+
 #import "Debug.h"
 #import "Utils.h"
 #import "Version.h"
@@ -142,7 +144,7 @@
 - (BOOL)openFileURL:(NSURL*)url
 {
     Debug("open %@", url);
-    NSString *uploadDir = [SeafFsCache.sharedObject uniqueUploadDir];
+    NSString *uploadDir = [SeafStorage.sharedObject uniqueUploadDir];
     NSURL *to = [NSURL fileURLWithPath:[uploadDir stringByAppendingPathComponent:url.lastPathComponent]];
     Debug("Copy %@, to %@, %@, %@\n", url, to, to.absoluteString, to.path);
     BOOL ret = [Utils checkMakeDir:uploadDir];
@@ -222,8 +224,8 @@
         [defs removeObjectForKey:key];
     }
 
-    Debug("clear tmp dir: %@", SeafFsCache.sharedObject.tempDir);
-    [Utils clearAllFiles:SeafFsCache.sharedObject.tempDir];
+    Debug("clear tmp dir: %@", SeafStorage.sharedObject.tempDir);
+    [Utils clearAllFiles:SeafStorage.sharedObject.tempDir];
 
     Debug("Current app version is %@\n", SEAFILE_VERSION);
     [SeafGlobal.sharedObject startTimer];

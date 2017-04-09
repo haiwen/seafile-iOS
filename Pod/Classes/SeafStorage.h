@@ -1,5 +1,5 @@
 //
-//  SeafFsCache.h
+//  SeafStorage.h
 //  Pods
 //
 //  Created by Wei W on 4/8/17.
@@ -8,9 +8,9 @@
 
 #import <Foundation/Foundation.h>
 
-@interface SeafFsCache : NSObject
+@interface SeafStorage : NSObject
 
-+ (SeafFsCache *)sharedObject;
++ (SeafStorage *)sharedObject;
 
 
 // nil for default
@@ -35,8 +35,8 @@
 
 - (void)clearCache;
 
-+ (NSString *)uniqueDirUnder:(NSString *)dir;
-
 - (long long)cacheSize;
+
++ (NSString *)uniqueDirUnder:(NSString *)dir;
 
 @end

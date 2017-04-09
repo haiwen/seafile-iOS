@@ -18,6 +18,7 @@
 #import "SeafDirViewController.h"
 #import "SeafRepos.h"
 #import "SeafAvatar.h"
+#import "SeafStorage.h"
 #import "SeafDataTaskManager.h"
 
 #import "UIViewController+Extend.h"
@@ -406,7 +407,7 @@ enum {
     _nameCell.detailTextLabel.text = _connection.username;
     _enableTouchIDSwitch.on = _connection.touchIdEnabled;
 
-    long long cacheSize = [SeafFsCache.sharedObject cacheSize];
+    long long cacheSize = [SeafStorage.sharedObject cacheSize];
     Debug("%@, %lld, %lld, total cache=%lld", _connection.username, _connection.usage, _connection.quota, cacheSize);
     if (_connection.quota <= 0) {
         if (_connection.usage < 0)
@@ -585,7 +586,7 @@ enum {
                 [(SeafDetailViewController *)[appdelegate detailViewControllerAtIndex:TABBED_SETTINGS] setPreViewItem:nil master:nil];
 
                 [_connection clearAccountCache];
-                long long cacheSize = [SeafFsCache.sharedObject cacheSize];
+                long long cacheSize = [SeafStorage.sharedObject cacheSize];
                 _cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromLongLong:cacheSize];
             } no:nil];
         }

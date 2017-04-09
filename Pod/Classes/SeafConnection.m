@@ -17,7 +17,7 @@
 #import "SeafUploadFile.h"
 #import "SeafFile.h"
 #import "SeafGlobal.h"
-#import "SeafFsCache.h"
+#import "SeafStorage.h"
 #import "SeafDataTaskManager.h"
 
 #import "ExtentedString.h"
@@ -193,7 +193,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (!_localUploadDir) {
         _localUploadDir = [self getAttribute:@"UPLOAD_CACHE_DIR"];
         if (!_localUploadDir) {
-            _localUploadDir = [SeafFsCache.sharedObject uniqueUploadDir];
+            _localUploadDir = [SeafStorage.sharedObject uniqueUploadDir];
             [self setAttribute:_localUploadDir forKey:@"UPLOAD_CACHE_DIR"];
         }
         [Utils checkMakeDir:_localUploadDir];
@@ -429,7 +429,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (NSString *)certPathForHost:(NSString *)host
 {
     NSString *filename = [NSString stringWithFormat:@"%@.cer", host];
-    NSString *path = [SeafFsCache.sharedObject.certsDir stringByAppendingPathComponent:filename];
+    NSString *path = [SeafStorage.sharedObject.certsDir stringByAppendingPathComponent:filename];
     return path;
 }
 
@@ -1577,7 +1577,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSDate *now = [NSDate date];
     NSString *backupDate = [dateformate stringFromDate:now];
     NSString *filename = [NSString stringWithFormat:@"contacts-%@.vcf", backupDate];
-    NSString *uploadDir = [SeafFsCache.sharedObject uniqueUploadDir];
+    NSString *uploadDir = [SeafStorage.sharedObject uniqueUploadDir];
     [Utils checkMakeDir:uploadDir];
     NSString *path = [uploadDir stringByAppendingPathComponent:filename];
     [self saveContactsToFile:path completionHandler:^(BOOL success, NSArray *contacts, NSError * _Nullable error) {
@@ -1817,7 +1817,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)clearAccountCache
 {
-    [SeafFsCache.sharedObject clearCache];
+    [SeafStorage.sharedObject clearCache];
     [_cacheProvider clearAllCacheInAccount:self.account];
     [SeafAvatar clearCache];
     [self clearUploadCache];

@@ -1,12 +1,12 @@
 //
-//  SeafFsCache.m
+//  SeafStorage.m
 //  Pods
 //
 //  Created by Wei W on 4/8/17.
 //
 //
 
-#import "SeafFsCache.h"
+#import "SeafStorage.h"
 #import "Utils.h"
 #import "Debug.h"
 
@@ -20,21 +20,21 @@
 #define THUMB_DIR @"thumb"
 #define TEMP_DIR @"temp"
 
-@interface SeafFsCache()
+@interface SeafStorage()
 
 @property (retain) NSString * cacheRootPath;
 @property (retain) NSString * tempPath;
 
 @end
 
-@implementation SeafFsCache
+@implementation SeafStorage
 
 
-+ (SeafFsCache *)sharedObject
++ (SeafStorage *)sharedObject
 {
-    static SeafFsCache *object = nil;
+    static SeafStorage *object = nil;
     if (!object) {
-        object = [[SeafFsCache alloc] init];
+        object = [[SeafStorage alloc] init];
     }
     return object;
 }
@@ -124,11 +124,11 @@
 - (void)clearCache
 {
     Debug("clear local cache.");
-    [Utils clearAllFiles:SeafFsCache.sharedObject.objectsDir];
-    [Utils clearAllFiles:SeafFsCache.sharedObject.blocksDir];
-    [Utils clearAllFiles:SeafFsCache.sharedObject.editDir];
-    [Utils clearAllFiles:SeafFsCache.sharedObject.thumbsDir];
-    [Utils clearAllFiles:SeafFsCache.sharedObject.tempDir];
+    [Utils clearAllFiles:SeafStorage.sharedObject.objectsDir];
+    [Utils clearAllFiles:SeafStorage.sharedObject.blocksDir];
+    [Utils clearAllFiles:SeafStorage.sharedObject.editDir];
+    [Utils clearAllFiles:SeafStorage.sharedObject.thumbsDir];
+    [Utils clearAllFiles:SeafStorage.sharedObject.tempDir];
 }
 
 + (NSString *)uniqueDirUnder:(NSString *)dir identify:(NSString *)identify
@@ -138,12 +138,12 @@
 
 + (NSString *)uniqueDirUnder:(NSString *)dir
 {
-    return [SeafFsCache uniqueDirUnder:dir identify:[[NSUUID UUID] UUIDString]];
+    return [SeafStorage uniqueDirUnder:dir identify:[[NSUUID UUID] UUIDString]];
 }
 
 - (NSString *)uniqueUploadDir
 {
-    return [SeafFsCache uniqueDirUnder:self.uploadsDir identify:[[NSUUID UUID] UUIDString]];
+    return [SeafStorage uniqueDirUnder:self.uploadsDir identify:[[NSUUID UUID] UUIDString]];
 }
 
 @end

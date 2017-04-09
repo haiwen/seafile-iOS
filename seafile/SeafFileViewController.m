@@ -17,6 +17,7 @@
 #import "SeafCell.h"
 #import "SeafPhoto.h"
 #import "SeafPhotoThumb.h"
+#import "SeafStorage.h"
 #import "SeafDataTaskManager.h"
 
 #import "FileSizeFormatter.h"
@@ -1435,7 +1436,7 @@ enum {
 {
     NSMutableSet *nameSet = overwrite ? [NSMutableSet new] : [self getExistedNameSet];
     NSMutableArray *files = [[NSMutableArray alloc] init];
-    NSString *uploadDir = [SeafFsCache.sharedObject uniqueUploadDir];
+    NSString *uploadDir = [SeafStorage.sharedObject uniqueUploadDir];
     for (ALAsset *asset in assets) {
         NSString *filename = asset.defaultRepresentation.filename;
         Debug("Upload picked file : %@", filename);

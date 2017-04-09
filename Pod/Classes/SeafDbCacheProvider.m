@@ -8,7 +8,7 @@
 
 #import <CoreData/CoreData.h>
 #import "SeafDbCacheProvider.h"
-#import "SeafFsCache.h"
+#import "SeafStorage.h"
 #import "SeafData.h"
 #import "Debug.h"
 
@@ -60,7 +60,7 @@
     if (__persistentStoreCoordinator != nil) {
         return __persistentStoreCoordinator;
     }
-    NSURL *storeURL = [[SeafFsCache.sharedObject rootURL] URLByAppendingPathComponent:@"seafile_pro.sqlite"];
+    NSURL *storeURL = [[SeafStorage.sharedObject rootURL] URLByAppendingPathComponent:@"seafile_pro.sqlite"];
     Debug("storeURL: %@", storeURL);
     if (!storeURL) {
         Warning("nil store URL");
