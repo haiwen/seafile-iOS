@@ -19,7 +19,7 @@
 @property unsigned long failedNum;
 @property NSUserDefaults *storage;
 
-@property NSTimer *autoSyncTimer;
+@property NSTimer *taskTimer;
 
 @end
 
@@ -77,7 +77,7 @@
             return;
         }
     }
-    [self performSelector:@selector(tick:) withObject:_autoSyncTimer afterDelay:0.1];
+    [self performSelector:@selector(tick:) withObject:_taskTimer afterDelay:0.1];
 }
 
 - (void)finishUpload:(SeafUploadFile *)file result:(BOOL)result
@@ -101,7 +101,7 @@
             return;
         }
     }
-    [self performSelector:@selector(tick:) withObject:_autoSyncTimer afterDelay:0.1];
+    [self performSelector:@selector(tick:) withObject:_taskTimer afterDelay:0.1];
 }
 
 - (void)tryUpload
@@ -266,13 +266,13 @@
 {
     Debug("Start timer.");
     [self tick:nil];
-    _autoSyncTimer = [NSTimer scheduledTimerWithTimeInterval:5*60
+    _taskTimer = [NSTimer scheduledTimerWithTimeInterval:5*60
                                                       target:self
                                                     selector:@selector(tick:)
                                                     userInfo:nil
                                                      repeats:YES];
     [[AFNetworkReachabilityManager sharedManager] setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
-        [self tick:_autoSyncTimer];
+        [self tick:_taskTimer];
     }];
 }
 

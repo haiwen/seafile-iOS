@@ -12,6 +12,7 @@
 #import "SeafAccountViewController.h"
 #import "SeafAppDelegate.h"
 #import "SeafAccountCell.h"
+#import "SeafStorage.h"
 #import "UIViewController+Extend.h"
 #import "ColorfulButton.h"
 #import "SeafButtonCell.h"
@@ -130,13 +131,13 @@
 
 - (void)handleRemoveCertificate
 {
-    NSDictionary *dict = [SeafGlobal.sharedObject getAllSecIdentities];
+    NSDictionary *dict = [SeafStorage.sharedObject getAllSecIdentities];
     if (dict.count == 0) {
         Warning("No client certificates.");
         [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"No available certificates", @"Seafile")];
         return;
     }
-    [SeafGlobal.sharedObject chooseCertFrom:dict handler:^(CFDataRef persistentRef, SecIdentityRef identity) {
+    [SeafStorage.sharedObject chooseCertFrom:dict handler:^(CFDataRef persistentRef, SecIdentityRef identity) {
         if (!identity || ! persistentRef) return;
         if ([SeafGlobal.sharedObject isCertInUse:(__bridge NSData*)(persistentRef)]) {
             Warning("Can not remove cert because it is still inuse.");
@@ -144,7 +145,7 @@
             return;
         }
 
-        BOOL ret = [SeafGlobal.sharedObject removeIdentity:identity forPersistentRef:persistentRef];
+        BOOL ret = [SeafStorage.sharedObject removeIdentity:identity forPersistentRef:persistentRef];
         Debug("RemoveCertificate ret: %d", ret);
         if (ret) {
             [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Succeed to remove certificate", @"Seafile")];
@@ -156,8 +157,8 @@
 
 - (BOOL)checkLastAccount
 {
-    NSString *server = [SeafGlobal.sharedObject objectForKey:@"DEAULT-SERVER"];
-    NSString *username = [SeafGlobal.sharedObject objectForKey:@"DEAULT-USER"];
+    NSString *server = [SeafStorage.sharedObject objectForKey:@"DEAULT-SERVER"];
+    NSString *username = [SeafStorage.sharedObject objectForKey:@"DEAULT-USER"];
     if (server && username) {
         SeafConnection *connection = [[SeafGlobal sharedObject] getConnection:server username:username];
         if (connection)
@@ -388,7 +389,7 @@
             }];
         }
 
-        BOOL ret = [SeafGlobal.sharedObject importCert:url.path password:input];
+        BOOL ret = [SeafStorage.sharedObject importCert:url.path password:input];
         Debug("import cert %@ ret=%d", url, ret);
         if (!ret) {
             [self alertWithTitle:NSLocalizedString(@"Wrong password", @"Seafile") handler:^{
@@ -428,8 +429,8 @@
         return YES;
     }
 
-    [SeafGlobal.sharedObject setObject:conn.address forKey:@"DEAULT-SERVER"];
-    [SeafGlobal.sharedObject setObject:conn.username forKey:@"DEAULT-USER"];
+    [SeafStorage.sharedObject setObject:conn.address forKey:@"DEAULT-SERVER"];
+    [SeafStorage.sharedObject setObject:conn.username forKey:@"DEAULT-USER"];
 
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [appdelegate enterAccount:conn];
@@ -438,8 +439,8 @@
 
 - (void)selectDefaultAccount:(void (^)(bool success))handler
 {
-    NSString *server = [SeafGlobal.sharedObject objectForKey:@"DEAULT-SERVER"];
-    NSString *username = [SeafGlobal.sharedObject objectForKey:@"DEAULT-USER"];
+    NSString *server = [SeafStorage.sharedObject objectForKey:@"DEAULT-SERVER"];
+    NSString *username = [SeafStorage.sharedObject objectForKey:@"DEAULT-USER"];
     if (!username || !server) {
         return handler(false);
     }

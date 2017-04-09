@@ -9,10 +9,10 @@
 #import "SeafData.h"
 #import "SeafDir.h"
 #import "SeafRepos.h"
+#import "SeafStorage.h"
 
 #import "SeafFile.h"
 #import "SeafUploadFile.h"
-#import "SeafGlobal.h"
 
 #import "ExtentedString.h"
 #import "Utils.h"
@@ -254,7 +254,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 - (void)saveSortKey:(NSString *)keyName
 {
     NSString *confKey = [self configKeyForSort];
-    [SeafGlobal.sharedObject setObject:keyName forKey:confKey];
+    [SeafStorage.sharedObject setObject:keyName forKey:confKey];
 }
 
 - (void)reSortItemsByName
@@ -272,7 +272,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 - (NSComparator)getCmpFunc
 {
     NSString *confKey = [self configKeyForSort];
-    NSString *key = [SeafGlobal.sharedObject objectForKey:confKey];
+    NSString *key = [SeafStorage.sharedObject objectForKey:confKey];
     if ([@"MTIME" caseInsensitiveCompare:key] == NSOrderedSame) {
         return seafSortByMtime;
     }

@@ -10,12 +10,12 @@
 
 @interface SeafStorage : NSObject
 
+@property (readwrite) BOOL allowInvalidCert;
+
++ (void)registerRootPath:(NSString *)path metadataStorage:(NSUserDefaults *)storage;
 + (SeafStorage *)sharedObject;
 
-
-// nil for default
-- (void)registerRootPath:(NSString *)path;
-
+// Fs cache
 - (NSString *)rootPath;
 - (NSURL *)rootURL;
 
@@ -38,5 +38,20 @@
 - (long long)cacheSize;
 
 + (NSString *)uniqueDirUnder:(NSString *)dir;
+
+// Metadata storage
+- (void)setObject:(id)value forKey:(NSString *)defaultName;
+- (id)objectForKey:(NSString *)defaultName;
+- (void)removeObjectForKey:(NSString *)defaultName;
+- (BOOL)synchronize;
+
+
+// Client certificate manager
+- (NSDictionary *)getAllSecIdentities;
+- (BOOL)importCert:(NSString *)certificatePath password:(NSString *)keyPassword;
+- (BOOL)removeIdentity:(SecIdentityRef)identity forPersistentRef:(CFDataRef)persistentRef;
+- (void)chooseCertFrom:(NSDictionary *)dict handler:(void (^)(CFDataRef persistentRef, SecIdentityRef identity)) completeHandler from:(UIViewController *)c;
+- (NSURLCredential *)getCredentialForKey:(NSData *)key;
+
 
 @end

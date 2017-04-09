@@ -7,6 +7,7 @@
 //
 
 #import "SeafStorage.h"
+#import "SecurityUtilities.h"
 #import "Utils.h"
 #import "Debug.h"
 
@@ -20,23 +21,46 @@
 #define THUMB_DIR @"thumb"
 #define TEMP_DIR @"temp"
 
+static SeafStorage *object = nil;
+
 @interface SeafStorage()
+@property NSUserDefaults *storage;
 
 @property (retain) NSString * cacheRootPath;
-@property (retain) NSString * tempPath;
+
+@property NSMutableDictionary *secIdentities;
 
 @end
 
 @implementation SeafStorage
 
++ (void)registerRootPath:(NSString *)path metadataStorage:(NSUserDefaults *)storage
+{
+    object = [[SeafStorage alloc] initWithRootPath:path metadataStorage:storage];
+}
 
 + (SeafStorage *)sharedObject
 {
-    static SeafStorage *object = nil;
     if (!object) {
         object = [[SeafStorage alloc] init];
     }
     return object;
+}
+
+- (void)registerMetadataStorage:(NSUserDefaults *)storage
+{
+    _storage = storage;
+    Debug("storage: %@", _storage.dictionaryRepresentation);
+}
+
+-(id)initWithRootPath:(NSString *)path metadataStorage:(NSUserDefaults *)storage
+{
+    if (self = [super init]) {
+        _cacheRootPath = path;
+        _storage = storage;
+        [self loadSecIdentities];
+    }
+    return self;
 }
 
 -(id)init
@@ -44,6 +68,8 @@
     if (self = [super init]) {
         NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
         _cacheRootPath = [paths objectAtIndex:0];
+        _storage = [[NSUserDefaults alloc] init];
+        [self loadSecIdentities];
     }
     return self;
 }
@@ -124,11 +150,11 @@
 - (void)clearCache
 {
     Debug("clear local cache.");
-    [Utils clearAllFiles:SeafStorage.sharedObject.objectsDir];
-    [Utils clearAllFiles:SeafStorage.sharedObject.blocksDir];
-    [Utils clearAllFiles:SeafStorage.sharedObject.editDir];
-    [Utils clearAllFiles:SeafStorage.sharedObject.thumbsDir];
-    [Utils clearAllFiles:SeafStorage.sharedObject.tempDir];
+    [Utils clearAllFiles:self.objectsDir];
+    [Utils clearAllFiles:self.blocksDir];
+    [Utils clearAllFiles:self.editDir];
+    [Utils clearAllFiles:self.thumbsDir];
+    [Utils clearAllFiles:self.tempDir];
 }
 
 + (NSString *)uniqueDirUnder:(NSString *)dir identify:(NSString *)identify
@@ -144,6 +170,123 @@
 - (NSString *)uniqueUploadDir
 {
     return [SeafStorage uniqueDirUnder:self.uploadsDir identify:[[NSUUID UUID] UUIDString]];
+}
+
+
+- (void)setObject:(id)value forKey:(NSString *)defaultName
+{
+    [_storage setObject:value forKey:defaultName];
+}
+
+- (id)objectForKey:(NSString *)defaultName
+{
+    if (!defaultName) return nil;
+    return [_storage objectForKey:defaultName];
+}
+
+- (void)removeObjectForKey:(NSString *)defaultName
+{
+    [_storage removeObjectForKey:defaultName];
+}
+
+-(BOOL)synchronize
+{
+    return [_storage synchronize];
+}
+
+- (NSArray *)getSecPersistentRefs {
+    NSArray *array = (NSArray *)[self objectForKey:@"SecPersistentRefs"];
+    return array;
+}
+
+- (void)loadSecIdentities
+{
+    _secIdentities = [NSMutableDictionary new];
+    NSArray *array = [self getSecPersistentRefs];
+    if (array) {
+        bool flag = false;
+        for (NSData *data in array) {
+            SecIdentityRef identity = [SecurityUtilities getSecIdentityForPersistentRef:(CFDataRef)data];
+            if (identity != nil) {
+                [_secIdentities setObject:(__bridge id)identity forKey:data];
+            } else {
+                Warning("Can not find the identity for %@", data);
+                flag = true;
+            }
+        }
+        if (flag)
+            [self saveSecIdentities];
+    }
+}
+
+- (void)saveSecIdentities
+{
+    NSArray *array = _secIdentities.allKeys;
+    [self setObject:array forKey:@"SecPersistentRefs"];
+}
+
+- (NSDictionary *)getAllSecIdentities
+{
+    return _secIdentities;
+}
+
+- (BOOL)importCert:(NSString *)certificatePath password:(NSString *)keyPassword
+{
+    SecIdentityRef identity = [SecurityUtilities copyIdentityAndTrustWithCertFile:certificatePath password:keyPassword];
+    if (!identity) {
+        Warning("Wrong password");
+        return false;
+    }
+
+    NSData *data = (__bridge NSData *)[SecurityUtilities saveSecIdentity:identity];
+    if (data) {
+        [_secIdentities setObject:(__bridge id)identity forKey:data];
+        [self saveSecIdentities];
+        return true;
+    } else {
+        Warning("Failed to save to keyChain");
+        return false;
+    }
+}
+
+- (BOOL)removeIdentity:(SecIdentityRef)identity forPersistentRef:(CFDataRef)persistentRef
+{
+    BOOL ret = [SecurityUtilities removeIdentity:identity forPersistentRef:persistentRef];
+    Debug("Remove identity from keychain: %d", ret);
+    if (ret) {
+        [_secIdentities removeObjectForKey:(__bridge id)persistentRef];
+    }
+    return ret;
+}
+
+-(void)chooseCertFrom:(NSDictionary *)dict handler:(void (^)(CFDataRef persistentRef, SecIdentityRef identity)) completeHandler from:(UIViewController *)c
+{
+    NSString *title = NSLocalizedString(@"Select a certificate", @"Seafile");
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleAlert];
+    for(NSData *key in dict) {
+        CFDataRef persistentRef = (__bridge CFDataRef)key;
+        SecIdentityRef identity = (__bridge SecIdentityRef)dict[key];
+        NSString *title = [SecurityUtilities nameForIdentity:identity];
+        UIAlertAction *action = [UIAlertAction actionWithTitle:title style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+            completeHandler(persistentRef, identity);
+        }];
+        [alert addAction:action];
+    }
+
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        completeHandler(nil, nil);
+    }];
+    [alert addAction:cancelAction];
+    [c presentViewController:alert animated:YES completion:nil];
+}
+
+- (NSURLCredential *)getCredentialForKey:(NSData *)key
+{
+    SecIdentityRef identity = (__bridge SecIdentityRef)[_secIdentities objectForKey:key];
+    if (identity) {
+        return [SecurityUtilities getCredentialFromSecIdentity:identity];
+    }
+    return nil;
 }
 
 @end

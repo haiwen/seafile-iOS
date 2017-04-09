@@ -16,7 +16,6 @@
 #import "SeafAvatar.h"
 #import "SeafUploadFile.h"
 #import "SeafFile.h"
-#import "SeafGlobal.h"
 #import "SeafStorage.h"
 #import "SeafDataTaskManager.h"
 
@@ -111,6 +110,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @property (readonly) BOOL inContactsSync;
 @property (readonly) id<SeafCacheProvider> cacheProvider;
 
+@property (readonly) NSString *platformVersion;
 
 @end
 
@@ -124,6 +124,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @synthesize policy = _policy;
 @synthesize loginMgr = _loginMgr;
 @synthesize localUploadDir = _localUploadDir;
+@synthesize platformVersion = _platformVersion;
 
 - (id)initWithUrl:(NSString *)url cacheProvider:(id<SeafCacheProvider>)cacheProvider
 {
@@ -152,20 +153,20 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     self = [self initWithUrl:url cacheProvider:cacheProvider];
     if (url) {
-        NSDictionary *ainfo = [SeafGlobal.sharedObject objectForKey:[NSString stringWithFormat:@"%@/%@", url, username]];
+        NSDictionary *ainfo = [SeafStorage.sharedObject objectForKey:[NSString stringWithFormat:@"%@/%@", url, username]];
         if (ainfo) {
             _info = [ainfo mutableCopy];
             _token = [_info objectForKey:@"token"];
         } else {
-            ainfo = [SeafGlobal.sharedObject objectForKey:url];
+            ainfo = [SeafStorage.sharedObject objectForKey:url];
             if (ainfo) {
                 _info = [ainfo mutableCopy];
-                [SeafGlobal.sharedObject removeObjectForKey:url];
-                [SeafGlobal.sharedObject setObject:ainfo forKey:[NSString stringWithFormat:@"%@/%@", url, username]];
+                [SeafStorage.sharedObject removeObjectForKey:url];
+                [SeafStorage.sharedObject setObject:ainfo forKey:[NSString stringWithFormat:@"%@/%@", url, username]];
             }
         }
 
-        NSDictionary *settings = [SeafGlobal.sharedObject objectForKey:[NSString stringWithFormat:@"%@/%@/settings", url, username]];
+        NSDictionary *settings = [SeafStorage.sharedObject objectForKey:[NSString stringWithFormat:@"%@/%@/settings", url, username]];
         if (settings)
             _settings = [settings mutableCopy];
         else
@@ -173,7 +174,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }
     _clientIdentityKey = [_info objectForKey:@"identity"];
     if (_clientIdentityKey) {
-        _clientCred = [SeafGlobal.sharedObject getCredentialForKey:_clientIdentityKey];
+        _clientCred = [SeafStorage.sharedObject getCredentialForKey:_clientIdentityKey];
         Debug("Load client identity: %@, %@", _clientIdentityKey, self.clientCred);
     }
 
@@ -186,6 +187,16 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }
     [_rootFolder loadContent:NO];
     return self;
+}
+
+
+- (NSString *)platformVersion
+{
+    if (!_platformVersion) {
+        NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
+        _platformVersion = [infoDictionary objectForKey:@"DTPlatformVersion"];
+    }
+    return _platformVersion;
 }
 
 - (NSString *)localUploadDir
@@ -209,7 +220,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)saveSettings
 {
-    [SeafGlobal.sharedObject setObject:_settings forKey:[self.account stringByAppendingString:@"/settings"]];
+    [SeafStorage.sharedObject setObject:_settings forKey:[self.account stringByAppendingString:@"/settings"]];
 }
 
 - (void)setAttribute:(id)anObject forKey:(NSString *)aKey
@@ -481,7 +492,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     AFHTTPSessionManager *manager = [[AFHTTPSessionManager alloc] initWithSessionConfiguration:configuration];
     [manager setSessionDidReceiveAuthenticationChallengeBlock:^NSURLSessionAuthChallengeDisposition(NSURLSession *session, NSURLAuthenticationChallenge *challenge, NSURLCredential *__autoreleasing *credential) {
         if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
-            if (SeafGlobal.sharedObject.allowInvalidCert) return NSURLSessionAuthChallengeUseCredential;
+            if (SeafStorage.sharedObject.allowInvalidCert) return NSURLSessionAuthChallengeUseCredential;
 
             *credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
             BOOL valid = SeafServerTrustIsValid(challenge.protectionSpace.serverTrust);
@@ -550,7 +561,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [_sessionMgr setSessionDidReceiveAuthenticationChallengeBlock:^NSURLSessionAuthChallengeDisposition(NSURLSession *session, NSURLAuthenticationChallenge *challenge, NSURLCredential *__autoreleasing *credential) {
         if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
             *credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
-            if (SeafGlobal.sharedObject.allowInvalidCert) return NSURLSessionAuthChallengeUseCredential;
+            if (SeafStorage.sharedObject.allowInvalidCert) return NSURLSessionAuthChallengeUseCredential;
             if ([weakSelf validateServerrust:challenge.protectionSpace.serverTrust withPolicy:weakSelf.policy forDomain:challenge.protectionSpace.host]) {
                 return NSURLSessionAuthChallengeUseCredential;
             } else {
@@ -601,9 +612,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)clearAccount
 {
-    [SeafGlobal.sharedObject removeObjectForKey:_address];
-    [SeafGlobal.sharedObject removeObjectForKey:[NSString stringWithFormat:@"%@/%@", _address, self.username]];
-    [SeafGlobal.sharedObject removeObjectForKey:[NSString stringWithFormat:@"%@/%@/settings", _address, self.username]];
+    [SeafStorage.sharedObject removeObjectForKey:_address];
+    [SeafStorage.sharedObject removeObjectForKey:[NSString stringWithFormat:@"%@/%@", _address, self.username]];
+    [SeafStorage.sharedObject removeObjectForKey:[NSString stringWithFormat:@"%@/%@/settings", _address, self.username]];
 
     NSString *path = [self certPathForHost:[self host]];
     [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
@@ -613,7 +624,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)saveAccountInfo
 {
-    [SeafGlobal.sharedObject setObject:_info forKey:[NSString stringWithFormat:@"%@/%@", _address, self.username]];
+    [SeafStorage.sharedObject setObject:_info forKey:[NSString stringWithFormat:@"%@/%@", _address, self.username]];
 }
 
 - (void)getAccountInfo:(void (^)(bool result))handler
@@ -719,7 +730,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSString *absoluteUrl = [url hasPrefix:@"http"] ? url : [_address stringByAppendingString:url];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:absoluteUrl]];
     [request setValue:SEAFILE_VERSION forHTTPHeaderField:@"X-Seafile-Client-Version"];
-    [request setValue:SeafGlobal.sharedObject.platformVersion forHTTPHeaderField:@"X-Seafile-Platform-Version"];
+    [request setValue:self.platformVersion forHTTPHeaderField:@"X-Seafile-Platform-Version"];
 
     [request setTimeoutInterval:DEFAULT_TIMEOUT];
     [request setHTTPMethod:method];
@@ -995,9 +1006,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     NSString *path = self.realAvatar;
     if (path) return path;
-    if (!SeafGlobal.sharedObject.isAppExtension) {
-        [self downloadAvatar:false];
-    }
+    [self downloadAvatar:false];
     return [SeafileBundle() pathForResource:@"account" ofType:@"png"];
 }
 

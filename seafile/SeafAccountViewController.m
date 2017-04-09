@@ -9,6 +9,7 @@
 #import "SeafAppDelegate.h"
 #import "SeafAccountViewController.h"
 #import "SeafShibbolethViewController.h"
+#import "SeafStorage.h"
 #import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
 #import "SeafRepos.h"
@@ -283,7 +284,7 @@
 
 - (BOOL)getClientCert:(void (^)(NSData *key, NSURLCredential *cred))completeHandler
 {
-    NSDictionary *dict = [SeafGlobal.sharedObject getAllSecIdentities];
+    NSDictionary *dict = [SeafStorage.sharedObject getAllSecIdentities];
     if (dict.count == 0) {
         Warning("No client certificates.");
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -292,7 +293,7 @@
         return false;
     }
     dispatch_async(dispatch_get_main_queue(), ^{
-        [SeafGlobal.sharedObject chooseCertFrom:dict handler:^(CFDataRef persistentRef, SecIdentityRef identity) {
+        [SeafStorage.sharedObject chooseCertFrom:dict handler:^(CFDataRef persistentRef, SecIdentityRef identity) {
             if (!identity || ! persistentRef) completeHandler(nil, nil);
             completeHandler((__bridge NSData *)persistentRef, [SecurityUtilities getCredentialFromSecIdentity:identity]);
         } from:self];

@@ -34,16 +34,8 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 */
 
 @interface SeafGlobal()
-@property (retain) NSMutableArray *ufiles;
-@property (retain) NSMutableArray *dfiles;
-@property (retain) NSMutableArray *uploadingfiles;
-@property unsigned long downloadnum;
-@property unsigned long failedNum;
-@property NSUserDefaults *storage;
 
 @property NSTimer *autoSyncTimer;
-
-@property NSMutableDictionary *secIdentities;
 
 @end
 
@@ -54,45 +46,39 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 -(id)init
 {
     if (self = [super init]) {
-        _ufiles = [[NSMutableArray alloc] init];
-        _dfiles = [[NSMutableArray alloc] init];
-        _uploadingfiles = [[NSMutableArray alloc] init];
         _conns = [[NSMutableArray alloc] init];
-        _downloadnum = 0;
-        _storage = [[NSUserDefaults alloc] initWithSuiteName:SEAFILE_SUITE_NAME];
         _saveAlbumSem = dispatch_semaphore_create(1);
          NSURL *rootURL = [[[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:SEAFILE_SUITE_NAME] URLByAppendingPathComponent:@"seafile" isDirectory:true];
-        [SeafStorage.sharedObject registerRootPath:rootURL.path];
-        _cacheProvider = [[SeafDbCacheProvider alloc] init];
-        [self checkSettings];
+        [SeafStorage registerRootPath:rootURL.path metadataStorage:[[NSUserDefaults alloc] initWithSuiteName:SEAFILE_SUITE_NAME]];
 
-        NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
-        _platformVersion = [infoDictionary objectForKey:@"DTPlatformVersion"];
-        [_storage setObject:SEAFILE_VERSION forKey:@"VERSION"];
+        _cacheProvider = [[SeafDbCacheProvider alloc] init];
+        [self checkSystemSettings];
+
+        [SeafStorage.sharedObject setObject:SEAFILE_VERSION forKey:@"VERSION"];
         [[AFNetworkReachabilityManager sharedManager] startMonitoring];
-        [self loadSecIdentities];
-        Debug("Cache root path=%@, clientVersion=%@, platformVersion=%@",  SeafStorage.sharedObject.rootPath, SEAFILE_VERSION, _platformVersion);
+        Debug("Cache root path=%@, clientVersion=%@",  SeafStorage.sharedObject.rootPath, SEAFILE_VERSION);
     }
     return self;
 }
 
-- (void)checkSettings
+- (void)checkSystemSettings
 {
     NSUserDefaults * standardUserDefaults = [NSUserDefaults standardUserDefaults];
     id obj = [standardUserDefaults objectForKey:@"allow_invalid_cert"];
-    if (!obj)
+    if (!obj) {
         [self registerDefaultsFromSettingsBundle];
+    }
 }
 
-- (void)loadSettings:(NSUserDefaults *)standardUserDefaults
+- (void)loadSystemSettings:(NSUserDefaults *)standardUserDefaults
 {
-    _allowInvalidCert = [standardUserDefaults boolForKey:@"allow_invalid_cert"];
+    SeafStorage.sharedObject.allowInvalidCert = [standardUserDefaults boolForKey:@"allow_invalid_cert"];
 }
 
 - (void)defaultsChanged:(NSNotification *)notification
 {
     NSUserDefaults *standardUserDefaults = (NSUserDefaults *)[notification object];
-    [self loadSettings:standardUserDefaults];
+    [self loadSystemSettings:standardUserDefaults];
 }
 
 + (SeafGlobal *)sharedObject
@@ -210,24 +196,23 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         [accounts addObject:account];
     }
     Debug("accounts:%@", accounts);
-    [self setObject:accounts forKey:@"ACCOUNTS"];
+    [SeafStorage.sharedObject setObject:accounts forKey:@"ACCOUNTS"];
     return true;
 };
 
 - (void)loadAccounts
 {
-    Debug("storage: %@", _storage.dictionaryRepresentation);
     NSUserDefaults * standardUserDefaults = [NSUserDefaults standardUserDefaults];
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center addObserver:self
                selector:@selector(defaultsChanged:)
                    name:NSUserDefaultsDidChangeNotification
                  object:standardUserDefaults];
-    [self loadSettings:standardUserDefaults];
-    Debug("allowInvalidCert=%d", _allowInvalidCert);
+    [self loadSystemSettings:standardUserDefaults];
+    Debug("allowInvalidCert=%d", SeafStorage.sharedObject.allowInvalidCert);
 
     NSMutableArray *connections = [[NSMutableArray alloc] init];
-    NSArray *accounts = [self objectForKey:@"ACCOUNTS"];
+    NSArray *accounts = [SeafStorage.sharedObject objectForKey:@"ACCOUNTS"];
     for (NSDictionary *account in accounts) {
         NSString *url = [account objectForKey:@"url"];
         NSString *username = [account objectForKey:@"username"];
@@ -275,7 +260,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 {
     Debug("Start timer.");
     [self tick:nil];
-    _autoSyncTimer = [NSTimer scheduledTimerWithTimeInterval:5*60
+    _autoSyncTimer = [NSTimer scheduledTimerWithTimeInterval:15*60
                                                       target:self
                                                     selector:@selector(tick:)
                                                     userInfo:nil
@@ -285,30 +270,9 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     }];
 }
 
-- (void)setObject:(id)value forKey:(NSString *)defaultName
-{
-    [_storage setObject:value forKey:defaultName];
-}
-
-- (id)objectForKey:(NSString *)defaultName
-{
-    if (!defaultName) return nil;
-    return [_storage objectForKey:defaultName];
-}
-
-- (void)removeObjectForKey:(NSString *)defaultName
-{
-    [_storage removeObjectForKey:defaultName];
-}
-
--(BOOL)synchronize
-{
-    return [_storage synchronize];
-}
-
 - (NSMutableDictionary *)getExports
 {
-    NSMutableDictionary *dict = [self objectForKey:@"EXPORTED"];
+    NSMutableDictionary *dict = [SeafStorage.sharedObject objectForKey:@"EXPORTED"];
     if (!dict)
         return [NSMutableDictionary new];
     else
@@ -317,8 +281,8 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 
 - (void)saveExports:(NSDictionary *)dict
 {
-    [self setObject:dict forKey:@"EXPORTED"];
-    [self synchronize];
+    [SeafStorage.sharedObject setObject:dict forKey:@"EXPORTED"];
+    [SeafStorage.sharedObject synchronize];
 }
 
 - (NSString *)exportKeyFor:(NSURL *)url
@@ -355,99 +319,5 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     [SeafGlobal.sharedObject saveExports:[NSDictionary new]];
 }
 
-- (NSArray *)getSecPersistentRefs {
-    NSArray *array = (NSArray *)[self objectForKey:@"SecPersistentRefs"];
-    return array;
-}
-
-- (void)loadSecIdentities
-{
-    _secIdentities = [NSMutableDictionary new];
-    NSArray *array = [self getSecPersistentRefs];
-    if (array) {
-        bool flag = false;
-        for (NSData *data in array) {
-            SecIdentityRef identity = [SecurityUtilities getSecIdentityForPersistentRef:(CFDataRef)data];
-            if (identity != nil) {
-                [_secIdentities setObject:(__bridge id)identity forKey:data];
-            } else {
-                Warning("Can not find the identity for %@", data);
-                flag = true;
-            }
-        }
-        if (flag)
-            [self saveSecIdentities];
-    }
-}
-
-- (void)saveSecIdentities
-{
-    NSArray *array = _secIdentities.allKeys;
-    [self setObject:array forKey:@"SecPersistentRefs"];
-}
-
-- (NSDictionary *)getAllSecIdentities
-{
-    return _secIdentities;
-}
-
-- (BOOL)importCert:(NSString *)certificatePath password:(NSString *)keyPassword
-{
-    SecIdentityRef identity = [SecurityUtilities copyIdentityAndTrustWithCertFile:certificatePath password:keyPassword];
-    if (!identity) {
-        Warning("Wrong password");
-        return false;
-    }
-
-    NSData *data = (__bridge NSData *)[SecurityUtilities saveSecIdentity:identity];
-    if (data) {
-        [_secIdentities setObject:(__bridge id)identity forKey:data];
-        [self saveSecIdentities];
-        return true;
-    } else {
-        Warning("Failed to save to keyChain");
-        return false;
-    }
-}
-
-- (BOOL)removeIdentity:(SecIdentityRef)identity forPersistentRef:(CFDataRef)persistentRef
-{
-    BOOL ret = [SecurityUtilities removeIdentity:identity forPersistentRef:persistentRef];
-    Debug("Remove identity from keychain: %d", ret);
-    if (ret) {
-        [_secIdentities removeObjectForKey:(__bridge id)persistentRef];
-    }
-    return ret;
-}
-
-- (NSURLCredential *)getCredentialForKey:(NSData *)key
-{
-    SecIdentityRef identity = (__bridge SecIdentityRef)[_secIdentities objectForKey:key];
-    if (identity) {
-        return [SecurityUtilities getCredentialFromSecIdentity:identity];
-    }
-    return nil;
-}
-
--(void)chooseCertFrom:(NSDictionary *)dict handler:(void (^)(CFDataRef persistentRef, SecIdentityRef identity)) completeHandler from:(UIViewController *)c
-{
-    NSString *title = NSLocalizedString(@"Select a certificate", @"Seafile");
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleAlert];
-    for(NSData *key in dict) {
-        CFDataRef persistentRef = (__bridge CFDataRef)key;
-        SecIdentityRef identity = (__bridge SecIdentityRef)dict[key];
-        NSString *title = [SecurityUtilities nameForIdentity:identity];
-        UIAlertAction *action = [UIAlertAction actionWithTitle:title style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-            completeHandler(persistentRef, identity);
-        }];
-        [alert addAction:action];
-    }
-
-    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        completeHandler(nil, nil);
-    }];
-    [alert addAction:cancelAction];
-    [c presentViewController:alert animated:YES completion:nil];
-}
 
 @end

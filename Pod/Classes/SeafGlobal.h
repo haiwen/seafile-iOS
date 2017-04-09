@@ -19,19 +19,13 @@
 
 @interface SeafGlobal : NSObject
 
-@property (readonly) BOOL allowInvalidCert;
-
 @property (retain) NSMutableArray *conns;
 @property (readwrite) SeafConnection *connection;
-@property (readonly) NSString *platformVersion;
 @property (readonly) dispatch_semaphore_t saveAlbumSem;
-@property (readwrite) BOOL isAppExtension;
 @property (readonly) SeafDbCacheProvider *cacheProvider;
 
 
 + (SeafGlobal *)sharedObject;
-
-- (void)loadSettings:(NSUserDefaults *)standardUserDefaults;
 
 - (BOOL)isCertInUse:(NSData*)clientIdentityKey;
 - (void)loadAccounts;
@@ -40,23 +34,12 @@
 
 - (void)startTimer;
 
-- (void)setObject:(id)value forKey:(NSString *)defaultName;
-- (id)objectForKey:(NSString *)defaultName;
-- (void)removeObjectForKey:(NSString *)defaultName;
-- (BOOL)synchronize;
-
 - (void)migrate;
 
 - (void)addExportFile:(NSURL *)url data:(NSDictionary *)dict;
 - (void)removeExportFile:(NSURL *)url;
 - (NSDictionary *)getExportFile:(NSURL *)url;
 - (void)clearExportFiles;
-
-- (NSDictionary *)getAllSecIdentities;
-- (BOOL)importCert:(NSString *)certificatePath password:(NSString *)keyPassword;
-- (BOOL)removeIdentity:(SecIdentityRef)identity forPersistentRef:(CFDataRef)persistentRef;
-- (void)chooseCertFrom:(NSDictionary *)dict handler:(void (^)(CFDataRef persistentRef, SecIdentityRef identity)) completeHandler from:(UIViewController *)c;
-- (NSURLCredential *)getCredentialForKey:(NSData *)key;
 
 @end
 

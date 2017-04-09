@@ -591,8 +591,8 @@
 
 - (void)openFile:(NSString *)repo path:(NSString *)path
 {
-    [SeafGlobal.sharedObject setObject:repo forKey:@"SEAFILE-OPEN-REPO"];
-    [SeafGlobal.sharedObject setObject:path forKey:@"SEAFILE-OPEN-PATH"];
+    [SeafStorage.sharedObject setObject:repo forKey:@"SEAFILE-OPEN-REPO"];
+    [SeafStorage.sharedObject setObject:path forKey:@"SEAFILE-OPEN-PATH"];
 
     Debug("open file %@ %@", repo, path);
     self.gotoRepo = repo;
