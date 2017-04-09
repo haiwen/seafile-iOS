@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "AFNetworking.h"
 #import "SeafCacheProvider.h"
+#import "SeafBase.h"
 
 #define HTTP_ERR_UNAUTHORIZED                   401
 #define HTTP_ERR_LOGIN_INCORRECT_PASSWORD       400
@@ -49,38 +50,38 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 - (void)loginSuccess:(SeafConnection *_Nonnull)connection;
 - (void)loginFailed:(SeafConnection *_Nonnull)connection response:(NSURLResponse *_Nonnull)response error:(NSError *_Nullable)error;
 - (BOOL)authorizeInvalidCert:(NSURLProtectionSpace *_Nonnull)protectionSpace;
-- (NSData *_Nullable)getClientCertPersistentRef:(NSURLCredential * _Nonnull __autoreleasing *)credential; // return the persistentRef
+- (NSData *_Nullable)getClientCertPersistentRef:(NSURLCredential *_Nullable __autoreleasing *_Nullable)credential; // return the persistentRef
 
 @end
 
 @protocol SeafConnectionDelegate <NSObject>
-- (void)loginRequired:(SeafConnection *)connection;
-- (void)outOfQuota:(SeafConnection *)connection;
+- (void)loginRequired:(SeafConnection *_Nonnull)connection;
+- (void)outOfQuota:(SeafConnection *_Nonnull)connection;
 @end
 
 
 @interface SeafConnection: NSObject
 
 
-@property (readonly, retain) NSMutableDictionary *info;
-@property (readwrite, nonatomic, copy) NSString *address;
-@property (weak) id <SeafLoginDelegate> loginDelegate;
-@property (weak) id <SeafConnectionDelegate> delegate;
-@property (strong) SeafRepos *rootFolder;
-@property (readonly) AFHTTPSessionManager *sessionMgr;
-@property (readonly) AFHTTPSessionManager *loginMgr;
-@property (readonly) NSString *username;
-@property (readonly) NSString *password;
-@property (readonly) NSString *host;
+@property (readonly, retain) NSMutableDictionary * _Nonnull info;
+@property (readwrite, nonatomic, copy) NSString * _Nullable address;
+@property (weak) id <SeafLoginDelegate> _Nullable loginDelegate;
+@property (weak) id <SeafConnectionDelegate> _Nullable delegate;
+@property (strong) SeafRepos *_Nullable rootFolder;
+@property (readonly) AFHTTPSessionManager * _Nonnull sessionMgr;
+@property (readonly) AFHTTPSessionManager * _Nonnull loginMgr;
+@property (readonly) NSString * _Nullable username;
+@property (readonly) NSString * _Nullable password;
+@property (readonly) NSString * _Nullable host;
 @property (readonly) BOOL isShibboleth;
 @property (readonly) long long quota;
 @property (readonly) long long usage;
-@property (readonly, strong) NSString *token;
+@property (readonly, strong) NSString* _Nullable token;
 @property (readonly) BOOL authorized;
 @property (readonly) BOOL isSearchEnabled;
 @property (readonly) BOOL isActivityEnabled;
 @property (readonly) BOOL isChunkSupported; // upload/download by blocks
-@property (readonly) NSData* clientIdentityKey;
+@property (readonly) NSData* _Nullable clientIdentityKey;
 
 @property (readwrite, nonatomic, getter=isWifiOnly) BOOL wifiOnly;
 @property (readwrite, nonatomic, getter=isAutoSync) BOOL autoSync;
@@ -88,27 +89,27 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 @property (readwrite, nonatomic, getter=isBackgroundSync) BOOL backgroundSync;
 @property (readwrite, nonatomic, getter=isContactsSync) BOOL contactsSync;
 
-@property (readwrite, nonatomic) NSString *autoSyncRepo;
-@property (readwrite, nonatomic) NSString *contactsRepo;
+@property (readwrite, nonatomic) NSString * _Nullable autoSyncRepo;
+@property (readwrite, nonatomic) NSString * _Nullable contactsRepo;
 
 @property (readwrite, nonatomic) BOOL autoClearRepoPasswd;
 @property (readwrite, nonatomic) BOOL localDecryption;
 @property (readwrite, nonatomic) BOOL touchIdEnabled;
-@property (readonly) NSURLCredential *clientCred;
+@property (readonly) NSURLCredential *_Nullable clientCred;
 
-@property (weak) id<SeafPhotoSyncWatcherDelegate> photSyncWatcher;
+@property (weak) id<SeafPhotoSyncWatcherDelegate> _Nullable photSyncWatcher;
 @property (readonly) BOOL inAutoSync;
 
-@property (readonly) NSString *avatar;
+@property (readonly) NSString *_Nullable avatar;
 
 
-- (id)initWithUrl:(NSString *)url cacheProvider:(id<SeafCacheProvider>)cacheProvider;
-- (id)initWithUrl:(NSString *)url cacheProvider:(id<SeafCacheProvider>)cacheProvider username:(NSString *)username ;
+- (id _Nonnull)initWithUrl:(NSString *_Nonnull)url cacheProvider:(id<SeafCacheProvider> _Nullable )cacheProvider;
+- (id _Nonnull)initWithUrl:(NSString * _Nonnull)url cacheProvider:(id<SeafCacheProvider> _Nullable )cacheProvider username:(NSString * _Nonnull)username ;
 
-- (void)loadRepos:(id)degt;
+- (void)loadRepos:(id<SeafDentryDelegate> _Nullable)degt;
 
-- (BOOL)localDecrypt:(NSString *)repoId;
-- (BOOL)isEncrypted:(NSString *)repoId;
+- (BOOL)localDecrypt:(NSString * _Nonnull)repoId;
+- (BOOL)isEncrypted:(NSString * _Nonnull)repoId;
 
 - (void)resetUploadedPhotos;
 - (void)clearAccount;
@@ -116,90 +117,90 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 
 - (NSUInteger)autoSyncedNum;
 
-- (NSURLRequest *)buildRequest:(NSString *)url method:(NSString *)method form:(NSString *)form;
+- (NSURLRequest * _Nonnull)buildRequest:(NSString * _Nonnull)url method:(NSString * _Nonnull)method form:(NSString *_Nullable)form;
 
-- (void)sendRequest:(NSString *)url
-            success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
-            failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure;
+- (void)sendRequest:(NSString * _Nonnull)url
+            success:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nonnull response, id _Nonnull JSON))success
+            failure:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nullable response, id _Nullable JSON, NSError * _Nullable error))failure;
 
-- (void)sendDelete:(NSString *)url
-           success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
-           failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure;
+- (void)sendDelete:(NSString * _Nonnull)url
+           success:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nonnull response, id _Nonnull JSON))success
+           failure:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nullable response, id _Nullable JSON, NSError * _Nullable error))failure;
 
-- (void)sendPut:(NSString *)url form:(NSString *)form
-        success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
-        failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure;
+- (void)sendPut:(NSString * _Nonnull)url form:(NSString * _Nullable)form
+        success:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nonnull response, id _Nonnull JSON))success
+        failure:(void (^ _Nullable)(NSURLRequest *_Nonnull request, NSHTTPURLResponse * _Nullable response, id _Nullable JSON, NSError * _Nullable error))failure;
 
-- (void)sendPost:(NSString *)url form:(NSString *)form
-         success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
-         failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure;
+- (void)sendPost:(NSString * _Nonnull)url form:(NSString * _Nullable)form
+         success:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nonnull response, id _Nonnull JSON))success
+         failure:(void (^_Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nullable response, id _Nullable JSON, NSError * _Nullable error))failure;
 
-- (void)sendOptions:(NSString *)url
-            success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
-            failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure;
+- (void)sendOptions:(NSString * _Nonnull)url
+            success:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nonnull response, id _Nonnull JSON))success
+            failure:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nullable response, id _Nullable JSON, NSError * _Nullable error))failure;
 
-- (void)loginWithUsername:(NSString *)username password:(NSString *)password;
-- (void)loginWithUsername:(NSString *)username password:(NSString *)password otp:(NSString *)otp;
+- (void)loginWithUsername:(NSString * _Nonnull)username password:(NSString * _Nonnull)password;
+- (void)loginWithUsername:(NSString * _Nonnull)username password:(NSString * _Nonnull)password otp:(NSString * _Nullable)otp;
 
--(void)setToken:(NSString *)token forUser:(NSString *)username isShib:(BOOL)isshib;
+-(void)setToken:(NSString * _Nonnull)token forUser:(NSString * _Nonnull)username isShib:(BOOL)isshib;
 
-- (void)getAccountInfo:(void (^)(bool result))handler;
+- (void)getAccountInfo:(void (^ _Nullable)(bool result))handler;
 
-- (void)getStarredFiles:(void (^)(NSHTTPURLResponse *response, id JSON))success
-                failure:(void (^)(NSHTTPURLResponse *response, NSError *error))failure;
+- (void)getStarredFiles:(void (^ _Nonnull)(NSHTTPURLResponse *  _Nullable response, id _Nullable JSON))success
+                failure:(void (^ _Nonnull)(NSHTTPURLResponse * _Nullable response, NSError * _Nullable error))failure;
 
-- (void)getServerInfo:(void (^)(bool result))handler;
+- (void)getServerInfo:(void (^ _Nullable)(bool result))handler;
 
-- (void)search:(NSString *)keyword repo:(NSString *)repoId
-       success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSMutableArray *results))success
-       failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure;
+- (void)search:(NSString *_Nonnull)keyword repo:(NSString * _Nonnull)repoId
+       success:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nonnull response, id  _Nonnull JSON, NSMutableArray * _Nonnull results))success
+       failure:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nullable response, id _Nullable JSON, NSError * _Nullable error))failure;
 
 
-- (BOOL)isStarred:(NSString *)repo path:(NSString *)path;
+- (BOOL)isStarred:(NSString *_Nonnull)repo path:(NSString *_Nonnull)path;
 
-- (BOOL)setStarred:(BOOL)starred repo:(NSString *)repo path:(NSString *)path;
+- (BOOL)setStarred:(BOOL)starred repo:(NSString * _Nonnull)repo path:(NSString * _Nonnull)path;
 
-- (SeafRepo *)getRepo:(NSString *)repo;
+- (SeafRepo * _Nullable)getRepo:(NSString * _Nonnull)repo;
 
-- (SeafUploadFile *)getUploadfile:(NSString *)lpath;
-- (SeafUploadFile *)getUploadfile:(NSString *)lpath create:(bool)create;
+- (SeafUploadFile * _Nullable)getUploadfile:(NSString * _Nonnull)lpath;
+- (SeafUploadFile * _Nullable)getUploadfile:(NSString * _Nonnull)lpath create:(bool)create;
 
-- (void)removeUploadfile:(SeafUploadFile *)ufile;
+- (void)removeUploadfile:(SeafUploadFile * _Nonnull)ufile;
 
-- (void)registerDevice:(NSData *)deviceToken;
+- (void)registerDevice:(NSData * _Nonnull)deviceToken;
 
-- (UIImage *)avatarForAccount:(NSString *)email;
+- (UIImage * _Nullable)avatarForAccount:(NSString * _Nonnull)email;
 
 // Cache
 - (void)clearAccountCache;
-- (NSString *)objectForKey:(NSString *)key entityName:(NSString *)entity;
-- (BOOL)setValue:(NSString *)value forKey:(NSString *)key entityName:(NSString *)entity;
-- (void)removeKey:(NSString *)key entityName:(NSString *)entity;
-- (long)totalCachedNumForEntity:(NSString *)entity;
-- (void)clearCache:(NSString *)entity;
+- (NSString * _Nullable)objectForKey:(NSString * _Nonnull)key entityName:(NSString * _Nonnull)entity;
+- (BOOL)setValue:(NSString * _Nonnull)value forKey:(NSString * _Nonnull)key entityName:(NSString * _Nonnull)entity;
+- (void)removeKey:(NSString * _Nonnull)key entityName:(NSString *_Nonnull)entity;
+- (long)totalCachedNumForEntity:(NSString * _Nonnull)entity;
+- (void)clearCache:(NSString * _Nonnull)entity;
 
-- (id)getCachedJson:(NSString *)key entityName:(NSString *)entity;
-- (id)getCachedStarredFiles;
+- (id _Nullable)getCachedJson:(NSString * _Nonnull)key entityName:(NSString * _Nonnull)entity;
+- (id _Nullable)getCachedStarredFiles;
 
-- (id)getAttribute:(NSString *)aKey;
-- (void)setAttribute:(id)anObject forKey:(NSString *)aKey;
+- (id _Nullable)getAttribute:(NSString * _Nonnull)aKey;
+- (void)setAttribute:(id _Nullable )anObject forKey:(NSString * _Nonnull)aKey;
 
 - (void)checkAutoSync;
 - (NSUInteger)photosInSyncing;
-- (void)checkSyncDst:(SeafDir *)dir;
-- (void)photosDidChange:(NSNotification *)note;
-- (void)contactStoreDidChange:(NSNotification *)notification;
-- (NSString *)backupContacts:(BOOL)force completion:(CompletionBlock)completionHandler;
-- (void)restoreContacts:(void(^)(BOOL success, NSError *error))completionHandler;
-- (void)getContactsLastBackTime:(void(^)(BOOL success, NSString *dateStr))completionHandler;
+- (void)checkSyncDst:(SeafDir *_Nonnull)dir;
+- (void)photosDidChange:(NSNotification *_Nullable)note;
+- (void)contactStoreDidChange:(NSNotification *_Nullable)notification;
+- (NSString * _Nullable)backupContacts:(BOOL)force completion:(CompletionBlock _Nullable)completionHandler;
+- (void)restoreContacts:(void(^ _Nullable)(BOOL success, NSError * _Nullable error))completionHandler;
+- (void)getContactsLastBackTime:(void(^ _Nullable)(BOOL success, NSString * _Nullable dateStr))completionHandler;
 
-- (void)setRepo:(NSString *)repoId password:(NSString *)password;
-- (NSString *)getRepoPassword:(NSString *)repoId;
-- (void)downloadDir:(SeafDir *)dir;
+- (void)setRepo:(NSString * _Nonnull)repoId password:(NSString * _Nullable)password;
+- (NSString * _Nullable)getRepoPassword:(NSString * _Nonnull)repoId;
+- (void)downloadDir:(SeafDir * _Nonnull)dir;
 
 - (void)refreshRepoPassowrds;
 - (void)clearRepoPasswords;
 
-+ (AFHTTPRequestSerializer <AFURLRequestSerialization> *)requestSerializer;
++ (AFHTTPRequestSerializer <AFURLRequestSerialization> * _Nonnull)requestSerializer;
 
 @end

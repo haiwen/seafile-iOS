@@ -81,7 +81,7 @@
     self.title = _directory.name;
 
     __weak typeof(self) weakSelf = self;
-    [self.tableView addPullToRefreshWithActionHandler:^{
+    [self.tableView addPullToRefresh:[SVArrowPullToRefreshView class] withActionHandler:^{
         if (![weakSelf checkNetworkStatus]) {
             [weakSelf performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
             return;

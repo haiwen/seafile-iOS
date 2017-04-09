@@ -17,7 +17,13 @@
 #define SEAFILE_SUITE_NAME @"group.com.seafile.seafilePro"
 #define APP_ID @"com.seafile.seafilePro"
 
-@interface SeafGlobal : NSObject
+@protocol SeafBackgroundMonitor <NSObject>
+- (void)enterBackground;
+- (void)enterForeground;
+@end
+
+
+@interface SeafGlobal : NSObject<SeafBackgroundMonitor>
 
 @property (retain) NSMutableArray *conns;
 @property (readwrite) SeafConnection *connection;

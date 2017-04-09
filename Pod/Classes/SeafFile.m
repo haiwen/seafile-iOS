@@ -7,7 +7,6 @@
 //
 #import <Foundation/Foundation.h>
 #import "SeafFile.h"
-#import "SeafData.h"
 #import "SeafRepos.h"
 #import "SeafThumb.h"
 #import "SeafDataTaskManager.h"

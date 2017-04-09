@@ -18,7 +18,6 @@
 
 #import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
-#import "SeafData.h"
 #import "Utils.h"
 #import "Debug.h"
 

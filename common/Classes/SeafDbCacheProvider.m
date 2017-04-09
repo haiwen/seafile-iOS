@@ -66,10 +66,14 @@
         Warning("nil store URL");
         return nil;
     }
+    NSMutableDictionary *options = [[NSMutableDictionary alloc] init];
+    [options setObject:[NSNumber numberWithBool:YES] forKey:NSMigratePersistentStoresAutomaticallyOption];
+    [options setObject:[NSNumber numberWithBool:YES] forKey:NSInferMappingModelAutomaticallyOption];
+
 
     NSError *error = nil;
     __persistentStoreCoordinator = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:[self managedObjectModel]];
-    if (![__persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:storeURL options:nil error:&error]) {
+    if (![__persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:storeURL options:options error:&error]) {
         /*
          Replace this implementation with code to handle the error appropriately.
 
@@ -127,7 +131,12 @@
 
     NSError *error = nil;
     NSArray *items = [context executeFetchRequest:fetchRequest error:&error];
+    if (error) {
+        Warning("Failed to load history upload photos: %@.", error);
+        return;
+    }
 
+    Info("Account: %@, migrate db table UploadedPhotos to UploadedPhotoV2 : %d", account, items.count);
     for (UploadedPhotos *obj in items) {
         UploadedPhotoV2 *objV2 = [NSEntityDescription insertNewObjectForEntityForName:ENTITY_UPLOAD_PHOTO inManagedObjectContext:context];
         objV2.account = account;

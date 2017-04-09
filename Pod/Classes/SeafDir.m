@@ -6,7 +6,6 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
-#import "SeafData.h"
 #import "SeafDir.h"
 #import "SeafRepos.h"
 #import "SeafStorage.h"

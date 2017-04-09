@@ -193,7 +193,7 @@ enum {
     [self.navigationController setToolbarHidden:YES animated:NO];
 
     __weak typeof(self) weakSelf = self;
-    [self.tableView addPullToRefreshWithActionHandler:^{
+    [self.tableView addPullToRefresh:[SVArrowPullToRefreshView class] withActionHandler:^{
         [weakSelf.tableView reloadData];
         if (weakSelf.searchDisplayController.active)
             return;

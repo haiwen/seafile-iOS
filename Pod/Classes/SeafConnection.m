@@ -12,7 +12,6 @@
 #import "SeafConnection.h"
 #import "SeafRepos.h"
 #import "SeafDir.h"
-#import "SeafData.h"
 #import "SeafAvatar.h"
 #import "SeafUploadFile.h"
 #import "SeafFile.h"
@@ -821,7 +820,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self sendRequestAsync:url method:@"POST" form:form success:success failure:failure];
 }
 
-- (void)loadRepos:(id)degt
+- (void)loadRepos:(id<SeafDentryDelegate>)degt
 {
     _rootFolder.delegate = degt;
     [_rootFolder loadContent:NO];
@@ -1167,6 +1166,10 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     if (!asset)
         return nil;
+
+    if(!self.isVideoSync && [[asset valueForProperty:ALAssetPropertyType] isEqualToString:ALAssetTypeVideo])
+        return nil;
+
     NSURL *url = (NSURL*)asset.defaultRepresentation.url;
     if ([self IsPhotoUploaded:url] || [self IsPhotoUploading:url])
         return nil;
@@ -1174,8 +1177,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if([[asset valueForProperty:ALAssetPropertyType] isEqualToString:ALAssetTypePhoto])
         return url;
 
-    if(self.isVideoSync && [[asset valueForProperty:ALAssetPropertyType] isEqualToString:ALAssetTypeVideo])
-        return url;
     return nil;
 }
 
@@ -1324,7 +1325,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }
 }
 
-- (NSArray *)getAllContacts:(CNContactStore *)store
+- (NSMutableArray *)getAllContacts:(CNContactStore *)store
 {
     NSMutableArray *contacts = [NSMutableArray array];
     NSError *fetchError;
@@ -1719,7 +1720,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             if ([item isKindOfClass:[SeafFile class]]) {
                 SeafFile *file = (SeafFile *)item;
                 Debug("download file: %@, %@ after %ld ms", item.repoId, item.path, delay);
-                [SeafDataTaskManager.sharedObject performSelector:@selector(addDownloadTask:) withObject:file afterDelay:delay];
+                [SeafDataTaskManager.sharedObject performSelector:@selector(addBackgroundDownloadTask:) withObject:file afterDelay:delay];
             } else if ([item isKindOfClass:[SeafDir class]]) {
                 Debug("download dir: %@, %@ after %ld ms", item.repoId, item.path, delay);
                 [self performSelector:@selector(downloadDir:) withObject:(SeafDir *)item afterDelay:delay];
@@ -1815,7 +1816,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)setPhotoUploaded:(NSString *)url
 {
-    [self setValue:@"" forKey:[self.account stringByAppendingString:url] entityName:ENTITY_UPLOAD_PHOTO];
+    [self setValue:@"true" forKey:[self.account stringByAppendingString:url] entityName:ENTITY_UPLOAD_PHOTO];
 }
 
 - (BOOL)IsPhotoUploaded:(NSURL *)url

@@ -28,11 +28,6 @@ enum {
     TABBED_COUNT,
 };
 
-@protocol SeafBackgroundMonitor <NSObject>
-- (void)enterBackground;
-- (void)enterForeground;
-@end
-
 
 /* Additional strings for agi18n */
 #define STR_1 NSLocalizedString(@"Release to refresh...", @"Release to refresh status")

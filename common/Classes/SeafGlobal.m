@@ -319,5 +319,13 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     [SeafGlobal.sharedObject saveExports:[NSDictionary new]];
 }
 
+- (void)enterBackground
+{
+    
+}
+- (void)enterForeground
+{
+    [SeafGlobal.sharedObject loadSystemSettings:[NSUserDefaults standardUserDefaults]];
+}
 
 @end

@@ -229,6 +229,7 @@
 
     Debug("Current app version is %@\n", SEAFILE_VERSION);
     [SeafGlobal.sharedObject startTimer];
+    [self addBackgroundMonitor:SeafGlobal.sharedObject];
 
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
         [conn checkAutoSync];
@@ -365,7 +366,6 @@
 {
     Debug("Seafile will enter foreground");
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
-    [SeafGlobal.sharedObject loadSettings:[NSUserDefaults standardUserDefaults]];
     [self photosDidChange:nil];
     for (id <SeafBackgroundMonitor> monitor in _monitors) {
         [monitor enterForeground];

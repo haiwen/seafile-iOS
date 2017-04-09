@@ -88,7 +88,7 @@
     [self refreshView];
 
     __weak typeof(self) weakSelf = self;
-    [self.tableView addPullToRefreshWithActionHandler:^{
+    [self.tableView addPullToRefresh:[SVArrowPullToRefreshView class] withActionHandler:^{
         weakSelf.directory.delegate = weakSelf;
         [weakSelf.directory loadContent:YES];
     }];
