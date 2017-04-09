@@ -8,6 +8,32 @@
 
 #import "SeafData.h"
 
+@implementation SeafCacheObjV2
+@dynamic account;
+@dynamic key;
+@dynamic value;
+@end
+
+
+@implementation DirectoryV2
+@dynamic account;
+@dynamic key;
+@dynamic value;
+@end
+
+@implementation ModifiedFileV2
+@dynamic account;
+@dynamic key;
+@dynamic value;
+@end
+
+@implementation UploadedPhotoV2
+@dynamic account;
+@dynamic key;
+@dynamic value;
+@end
+
+
 
 @implementation Directory
 

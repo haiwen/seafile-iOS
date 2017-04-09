@@ -17,6 +17,7 @@
 - (void)registerRootPath:(NSString *)path;
 
 - (NSString *)rootPath;
+- (NSURL *)rootURL;
 
 - (NSString *)tempDir;
 - (NSString *)uploadsDir;

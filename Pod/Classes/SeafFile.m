@@ -145,7 +145,6 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     [self setOoid:ooid];
     self.state = SEAF_DENTRY_UPTODATE;
     self.oid = ooid;
-    [self savetoCache];
     [self downloadComplete:updated];
 }
 
@@ -532,67 +531,24 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     return _thumb;
 }
 
-- (DownloadedFile *)loadCacheObj
-{
-    NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
-    NSFetchRequest *fetchRequest=[[NSFetchRequest alloc] init];
-    [fetchRequest setEntity:[NSEntityDescription entityForName:@"DownloadedFile" inManagedObjectContext:context]];
-    NSSortDescriptor *sortDescriptor=[[NSSortDescriptor alloc] initWithKey:@"path" ascending:YES selector:nil];
-    NSArray *descriptor=[NSArray arrayWithObject:sortDescriptor];
-    [fetchRequest setSortDescriptors:descriptor];
-
-    [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"repoid==%@ AND path==%@", self.repoId, self.path]];
-    NSFetchedResultsController *controller = [[NSFetchedResultsController alloc]
-                                              initWithFetchRequest:fetchRequest
-                                              managedObjectContext:context
-                                              sectionNameKeyPath:nil
-                                              cacheName:nil];
-    NSError *error;
-    if (![controller performFetch:&error]) {
-        Debug(@"Fetch cache error %@",[error localizedDescription]);
-        return nil;
-    }
-    NSArray *results = [controller fetchedObjects];
-    if ([results count] == 0)
-        return nil;
-    DownloadedFile *dfile = [results objectAtIndex:0];
-    return dfile;
-}
-
 - (BOOL)realLoadCache
 {
-    DownloadedFile *dfile = [self loadCacheObj];
-    if (!dfile) {
-        if (self.oid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafFsCache.sharedObject documentPath:self.oid]]) {
-            if (![self.oid isEqualToString:self.ooid])
-                [self setOoid:self.oid];
-            return true;
-        } else {
-            [self setOoid:nil];
-            return false;
-        }
-    }
-
-    if (dfile.mpath && [[NSFileManager defaultManager] fileExistsAtPath:dfile.mpath]) {
-        if (!_mpath || ![_mpath isEqualToString:dfile.mpath]) {
-            _mpath = dfile.mpath;
+    NSString *cachedMpath = [self->connection objectForKey:self.cacheKey entityName:ENTITY_FILE];
+    if (cachedMpath && [[NSFileManager defaultManager] fileExistsAtPath:cachedMpath]) {
+        if (!_mpath || ![_mpath isEqualToString:cachedMpath]) {
+            _mpath = cachedMpath;
             _preViewURL = nil;
             _exportURL = nil;
         }
         [self autoupload];
-    }
-    if (!self.oid && dfile) self.oid = dfile.oid;
-
-    if (self.oid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafFsCache.sharedObject documentPath:self.oid]]) {
+        return true;
+    } else if (self.oid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafFsCache.sharedObject documentPath:self.oid]]) {
         if (![self.oid isEqualToString:self.ooid])
             [self setOoid:self.oid];
         return true;
-    } else if (self.mpath) {
-        return true;
-    } else {
-        [self setOoid:nil];
-        return false;
     }
+    [self setOoid:nil];
+    return false;
 }
 
 - (BOOL)loadCache
@@ -602,30 +558,15 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (BOOL)savetoCache
 {
-    NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
-    DownloadedFile *dfile = [self loadCacheObj];
-    if (!dfile) {
-        dfile = (DownloadedFile *)[NSEntityDescription insertNewObjectForEntityForName:@"DownloadedFile" inManagedObjectContext:context];
-        dfile.repoid = self.repoId;
-        dfile.oid = self.ooid;
-        dfile.path = self.path;
-        dfile.mpath = self.mpath;
-    } else {
-        dfile.oid = self.ooid;
-        dfile.mpath = self.mpath;
+    if (!self.mpath) {
+        return NO;
     }
-    [[SeafGlobal sharedObject] saveContext];
-    return YES;
+    return [self->connection setValue:self.mpath forKey:self.cacheKey entityName:ENTITY_FILE];
 }
 
 - (void)clearCache
 {
-    NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
-    DownloadedFile *dfile = [self loadCacheObj];
-    if (dfile) {
-        [context deleteObject:dfile];
-        [[SeafGlobal sharedObject] saveContext];
-    }
+    [self->connection removeKey:self.cacheKey entityName:ENTITY_FILE];
 }
 
 #pragma mark - QLPreviewItem

@@ -16,6 +16,7 @@
 #import "Debug.h"
 #import "SecurityUtilities.h"
 #import "Version.h"
+#import "SeafDbCacheProvider.h"
 
 /*
 static NSError * NewNSErrorFromException(NSException * exc) {
@@ -39,17 +40,14 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 @property NSUserDefaults *storage;
 
 @property NSTimer *autoSyncTimer;
-@property (readonly) NSURL *applicationDocumentsDirectoryURL;
 
 @property NSMutableDictionary *secIdentities;
 
 @end
 
 @implementation SeafGlobal
-@synthesize managedObjectContext = __managedObjectContext;
-@synthesize managedObjectModel = __managedObjectModel;
-@synthesize persistentStoreCoordinator = __persistentStoreCoordinator;
-@synthesize applicationDocumentsDirectoryURL = _applicationDocumentsDirectoryURL;
+
+@synthesize cacheProvider = _cacheProvider;
 
 -(id)init
 {
@@ -64,6 +62,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         _saveAlbumSem = dispatch_semaphore_create(1);
          NSURL *rootURL = [[[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:SEAFILE_SUITE_NAME] URLByAppendingPathComponent:@"seafile" isDirectory:true];
         [SeafFsCache.sharedObject registerRootPath:rootURL.path];
+        _cacheProvider = [[SeafDbCacheProvider alloc] init];
         [self checkSettings];
 
         NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
@@ -71,7 +70,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         [_storage setObject:SEAFILE_VERSION forKey:@"VERSION"];
         [[AFNetworkReachabilityManager sharedManager] startMonitoring];
         [self loadSecIdentities];
-        Debug("applicationDocumentsDirectoryURL=%@, clientVersion=%@, platformVersion=%@",  self.applicationDocumentsDirectoryURL, SEAFILE_VERSION, _platformVersion);
+        Debug("Cache root path=%@, clientVersion=%@, platformVersion=%@",  SeafFsCache.sharedObject.rootPath, SEAFILE_VERSION, _platformVersion);
     }
     return self;
 }
@@ -105,20 +104,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     return object;
 }
 
-- (NSURL *)applicationDocumentsDirectoryURL
-{
-    if (!_applicationDocumentsDirectoryURL) {
-        _applicationDocumentsDirectoryURL = [[[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:SEAFILE_SUITE_NAME] URLByAppendingPathComponent:@"seafile" isDirectory:true];
-    }
-    return _applicationDocumentsDirectoryURL;
-}
-
-- (NSString *)applicationDocumentsDirectory
-{
-    return [[self applicationDocumentsDirectoryURL] path];
-}
-
-- (NSString *)documentStorageDir
+- (NSString *)fileProviderStorageDir
 {
     return [[[[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:SEAFILE_SUITE_NAME] path] stringByAppendingPathComponent:@"File Provider Storage"];
 }
@@ -242,7 +228,10 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     NSMutableArray *connections = [[NSMutableArray alloc] init];
     NSArray *accounts = [self objectForKey:@"ACCOUNTS"];
     for (NSDictionary *account in accounts) {
-        SeafConnection *conn = [[SeafConnection alloc] initWithUrl:[account objectForKey:@"url"] username:[account objectForKey:@"username"]];
+        NSString *url = [account objectForKey:@"url"];
+        NSString *username = [account objectForKey:@"username"];
+        [_cacheProvider migrateUploadedPhotos:url username:username account:[NSString stringWithFormat:@"%@/%@", url, username]];
+        SeafConnection *conn = [[SeafConnection alloc] initWithUrl:url cacheProvider:_cacheProvider username:username];
         if (conn.username)
             [connections addObject:conn];
     }
@@ -259,115 +248,6 @@ static NSError * NewNSErrorFromException(NSException * exc) {
             return conn;
     }
     return nil;
-}
-
-#pragma mark - Core Data stack
-
-// Returns the managed object context for the application.
-// If the context doesn't already exist, it is created and bound to the persistent store coordinator for the application.
-- (NSManagedObjectContext *)managedObjectContext
-{
-    if (__managedObjectContext != nil) {
-        return __managedObjectContext;
-    }
-
-    NSPersistentStoreCoordinator *coordinator = [self persistentStoreCoordinator];
-    if (coordinator != nil) {
-        __managedObjectContext = [[NSManagedObjectContext alloc] init];
-        [__managedObjectContext setPersistentStoreCoordinator:coordinator];
-    }
-    return __managedObjectContext;
-}
-
-// Returns the managed object model for the application.
-// If the model doesn't already exist, it is created from the application's model.
-- (NSManagedObjectModel *)managedObjectModel
-{
-    if (__managedObjectModel != nil) {
-        return __managedObjectModel;
-    }
-    NSURL *modelURL = [SeafileBundle() URLForResource:@"seafile" withExtension:@"momd"];
-    __managedObjectModel = [[NSManagedObjectModel alloc] initWithContentsOfURL:modelURL];
-    return __managedObjectModel;
-}
-
-// Returns the persistent store coordinator for the application.
-// If the coordinator doesn't already exist, it is created and the application's store added to it.
-- (NSPersistentStoreCoordinator *)persistentStoreCoordinator
-{
-    if (__persistentStoreCoordinator != nil) {
-        return __persistentStoreCoordinator;
-    }
-    NSURL *storeURL = [[self applicationDocumentsDirectoryURL] URLByAppendingPathComponent:@"seafile_pro.sqlite"];
-    Debug("storeURL: %@", storeURL);
-    if (!storeURL) {
-        Warning("nil store URL");
-        return nil;
-    }
-
-    NSError *error = nil;
-    __persistentStoreCoordinator = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:[self managedObjectModel]];
-    if (![__persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:storeURL options:nil error:&error]) {
-        /*
-         Replace this implementation with code to handle the error appropriately.
-
-         abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-
-         Typical reasons for an error here include:
-         * The persistent store is not accessible;
-         * The schema for the persistent store is incompatible with current managed object model.
-         Check the error message to determine what the actual problem was.
-
-
-         If the persistent store is not accessible, there is typically something wrong with the file path. Often, a file URL is pointing into the application's resources directory instead of a writeable directory.
-
-         If you encounter schema incompatibility errors during development, you can reduce their frequency by:
-         * Simply deleting the existing store:
-         [[NSFileManager defaultManager] removeItemAtURL:storeURL error:nil]
-
-         * Performing automatic lightweight migration by passing the following dictionary as the options parameter:
-         [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:YES], NSMigratePersistentStoresAutomaticallyOption, [NSNumber numberWithBool:YES], NSInferMappingModelAutomaticallyOption, nil];
-
-         Lightweight migration will only work for a limited set of schema changes; consult "Core Data Model Versioning and Data Migration Programming Guide" for details.
-
-         */
-        [[NSFileManager defaultManager] removeItemAtURL:storeURL error:nil];
-
-        if (![__persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:storeURL options:nil error:&error]) {
-            Warning("Unresolved error %@, %@", error, [error userInfo]);
-        }
-    }
-
-    return __persistentStoreCoordinator;
-}
-
-- (void)saveContext
-{
-    NSError *error = nil;
-    NSManagedObjectContext *managedObjectContext = self.managedObjectContext;
-    if (managedObjectContext != nil) {
-        if ([managedObjectContext hasChanges] && ![managedObjectContext save:&error]) {
-            Warning("Unresolved error %@, %@", error, [error userInfo]);
-        }
-    }
-}
-
-
-- (void)deleteAllObjects:(NSString *)entityDescription
-{
-    NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
-    NSEntityDescription *entity = [NSEntityDescription entityForName:entityDescription inManagedObjectContext:__managedObjectContext];
-    [fetchRequest setEntity:entity];
-
-    NSError *error = nil;
-    NSArray *items = [__managedObjectContext executeFetchRequest:fetchRequest error:&error];
-
-    for (NSManagedObject *managedObject in items) {
-        [__managedObjectContext deleteObject:managedObject];
-    }
-    if (![__managedObjectContext save:&error]) {
-        Debug(@"Error deleting %@ - error:%@",entityDescription,error);
-    }
 }
 
 - (void)incDownloadnum
@@ -743,41 +623,8 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 
 - (void)clearExportFiles
 {
-    [Utils clearAllFiles:SeafGlobal.sharedObject.documentStorageDir];
+    [Utils clearAllFiles:self.fileProviderStorageDir];
     [SeafGlobal.sharedObject saveExports:[NSDictionary new]];
-}
-
-- (void)clearThumbs
-{
-    NSString *dir = [SeafGlobal.sharedObject applicationDocumentsDirectory];
-    NSError *error = nil;
-    BOOL isDirectory;
-    NSArray *dirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:dir error:&error];
-
-    if (error) return;
-    for (NSString *entry in dirContents) {
-        if (![entry hasPrefix:@"thumb"] || entry.length < 40) continue;
-        NSString *path = [dir stringByAppendingPathComponent:entry];
-        if ([[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory]
-            && !isDirectory) {
-            [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
-        }
-    }
-}
-
-- (void)clearCache
-{
-    Debug("clear local cache.");
-    [SeafFsCache.sharedObject clearCache];
-
-    [SeafUploadFile clearCache];
-    [SeafAvatar clearCache];
-    [self clearThumbs];
-
-    [SeafGlobal.sharedObject clearExportFiles];
-    [SeafGlobal.sharedObject deleteAllObjects:@"Directory"];
-    [SeafGlobal.sharedObject deleteAllObjects:@"DownloadedFile"];
-    [SeafGlobal.sharedObject deleteAllObjects:@"SeafCacheObj"];
 }
 
 - (NSArray *)getSecPersistentRefs {

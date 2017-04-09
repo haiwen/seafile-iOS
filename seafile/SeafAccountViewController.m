@@ -96,7 +96,7 @@
     if ([url hasSuffix:@"/"])
         url = [url substringToIndex:url.length-1];
     if (!self.connection)
-        connection = [[SeafConnection alloc] init:url];
+        connection = [[SeafConnection alloc] initWithUrl:url cacheProvider:SeafGlobal.sharedObject.cacheProvider];
     if (![url isEqualToString:connection.address]) {
         connection.address = url;
     }
@@ -137,7 +137,7 @@
     if ([url hasSuffix:@"/"])
         url = [url substringToIndex:url.length-1];
     if (!self.connection)
-        connection = [[SeafConnection alloc] init:url];
+        connection = [[SeafConnection alloc] initWithUrl:url cacheProvider:SeafGlobal.sharedObject.cacheProvider];
     if (![url isEqualToString:connection.address]) {
         connection.address = url;
     }

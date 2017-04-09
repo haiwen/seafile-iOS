@@ -63,6 +63,7 @@ typedef void (^repo_password_set_block_t)(SeafBase *entry, int ret);
 - (BOOL)hasCache;
 - (BOOL)loadCache;
 - (void)clearCache;
+- (NSString *)cacheKey;
 
 - (void)loadContent:(BOOL)force;
 - (void)updateWithEntry:(SeafBase *)entry;

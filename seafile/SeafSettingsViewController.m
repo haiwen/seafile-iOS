@@ -581,7 +581,8 @@ enum {
             [self alertWithTitle:MSG_CLEAR_CACHE message:nil yes:^{
                 SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
                 [(SeafDetailViewController *)[appdelegate detailViewControllerAtIndex:TABBED_SETTINGS] setPreViewItem:nil master:nil];
-                [SeafGlobal.sharedObject clearCache];
+
+                [_connection clearAccountCache];
                 long long cacheSize = [SeafFsCache.sharedObject cacheSize];
                 _cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromLongLong:cacheSize];
             } no:nil];

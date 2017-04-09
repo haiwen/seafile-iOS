@@ -108,6 +108,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @property (readonly) NSString *localUploadDir;
 @property NSString *contactsLastBackTime;
 @property (readonly) BOOL inContactsSync;
+@property (readonly) id<SeafCacheProvider> cacheProvider;
+
 
 @end
 
@@ -122,7 +124,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @synthesize loginMgr = _loginMgr;
 @synthesize localUploadDir = _localUploadDir;
 
-- (id)init:(NSString *)url
+- (id)initWithUrl:(NSString *)url cacheProvider:(id<SeafCacheProvider>)cacheProvider
 {
     if (self = [super init]) {
         self.address = url;
@@ -140,13 +142,14 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         _settings = [[NSMutableDictionary alloc] init];
         _inAutoSync = false;
         _inContactsSync = false;
+        _cacheProvider = cacheProvider;
     }
     return self;
 }
 
-- (id)initWithUrl:(NSString *)url username:(NSString *)username
+- (id)initWithUrl:(NSString *)url cacheProvider:(id<SeafCacheProvider>)cacheProvider username:(NSString *)username
 {
-    self = [self init:url];
+    self = [self initWithUrl:url cacheProvider:cacheProvider];
     if (url) {
         NSDictionary *ainfo = [SeafGlobal.sharedObject objectForKey:[NSString stringWithFormat:@"%@/%@", url, username]];
         if (ainfo) {
@@ -198,9 +201,14 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return _localUploadDir;
 }
 
+- (NSString *)account
+{
+    return [NSString stringWithFormat:@"%@/%@", _address, self.username];
+}
+
 - (void)saveSettings
 {
-    [SeafGlobal.sharedObject setObject:_settings forKey:[NSString stringWithFormat:@"%@/%@/settings", _address, self.username]];
+    [SeafGlobal.sharedObject setObject:_settings forKey:[self.account stringByAppendingString:@"/settings"]];
 }
 
 - (void)setAttribute:(id)anObject forKey:(NSString *)aKey
@@ -580,6 +588,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         _localUploadDir = nil;
     }
 }
+
 - (void)logout
 {
     _token = nil;
@@ -597,8 +606,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
     NSString *path = [self certPathForHost:[self host]];
     [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
-    [SeafAvatar clearCache];
-    [self clearUploadCache];
+    [self clearAccountCache];
+    [self clearCache:ENTITY_UPLOAD_PHOTO];
 }
 
 - (void)saveAccountInfo
@@ -746,8 +755,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                     _token = nil;
                     [_info removeObjectForKey:@"token"];
                     [self saveAccountInfo];
-                    if (wiped)
-                        [SeafGlobal.sharedObject clearCache];
+                    if (wiped) {
+                        [self clearAccountCache];
+                    }
                 }
                 if (self.delegate) [self.delegate loginRequired:self];
             } else if (resp.statusCode == HTTP_ERR_OPERATION_FAILED && [responseObject isKindOfClass:[NSDictionary class]]) {
@@ -805,84 +815,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [_rootFolder loadContent:NO];
 }
 
-#pragma - Cache managerment
-- (SeafCacheObj *)loadSeafCacheObj:(NSString *)key
-{
-    NSManagedObjectContext *context = SeafGlobal.sharedObject.managedObjectContext;
-    NSFetchRequest *fetchRequest=[[NSFetchRequest alloc] init];
-    [fetchRequest setEntity:[NSEntityDescription entityForName:@"SeafCacheObj" inManagedObjectContext:context]];
-    NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"url" ascending:YES selector:nil];
-    NSArray *descriptor = [NSArray arrayWithObject:sortDescriptor];
-    [fetchRequest setSortDescriptors:descriptor];
-    [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"url==%@ AND username==%@ AND key==%@", self.address, self.username, key]];
-    NSFetchedResultsController *controller = [[NSFetchedResultsController alloc]
-                                              initWithFetchRequest:fetchRequest
-                                              managedObjectContext:context
-                                              sectionNameKeyPath:nil
-                                              cacheName:nil];
-    NSError *error;
-    if (![controller performFetch:&error]) {
-        Warning("Fetch cache error %@",[error localizedDescription]);
-        return nil;
-    }
-    NSArray *results = [controller fetchedObjects];
-    if ([results count] == 0) {
-        return nil;
-    }
-    return [results objectAtIndex:0];
-}
-
-- (BOOL)savetoCacheKey:(NSString *)key value:(NSString *)content
-{
-    NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
-    SeafCacheObj *obj = [self loadSeafCacheObj:key];
-    if (!obj) {
-        obj = (SeafCacheObj *)[NSEntityDescription insertNewObjectForEntityForName:@"SeafCacheObj" inManagedObjectContext:context];
-        obj.timestamp = [NSDate date];
-        obj.key = key;
-        obj.url = self.address;
-        obj.content = content;
-        obj.username = self.username;
-    } else {
-        obj.content = content;
-    }
-    [[SeafGlobal sharedObject] saveContext];
-    return YES;
-}
-
-- (id)getCachedObj:(NSString *)key
-{
-    SeafCacheObj *obj = [self loadSeafCacheObj:key];
-    if (!obj) return nil;
-
-    NSError *error = nil;
-    NSData *data = [NSData dataWithBytes:obj.content.UTF8String length:[obj.content lengthOfBytesUsingEncoding:NSUTF8StringEncoding]];
-    id JSON = [Utils JSONDecode:data error:&error];
-    if (error) {
-        Warning("json error %@", data);
-        NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
-        [context deleteObject:obj];
-        JSON = nil;
-    }
-    return JSON;
-}
-
-- (id)getCachedTimestamp:(NSString *)key
-{
-    SeafCacheObj *obj = [self loadSeafCacheObj:key];
-    if (!obj) return nil;
-    return obj.timestamp;
-}
-
-- (id)getCachedStarredFiles
-{
-    id JSON = [self getCachedObj:KEY_STARREDFILES];
-    if (!_starredFiles) {
-        _starredFiles = JSON;
-    }
-    return JSON;
-}
-
 - (void)handleStarredData:(id)JSON
 {
     NSMutableSet *stars = [NSMutableSet set];
@@ -902,7 +834,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
              Debug("Success to get starred files ...\n");
              [self handleStarredData:JSON];
              NSData *data = [Utils JSONEncode:JSON];
-             [self savetoCacheKey:KEY_STARREDFILES value:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
+             [self setValue:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] forKey:KEY_STARREDFILES entityName:ENTITY_OBJECT];
              if (success)
                  success (response, JSON);
          }
@@ -1163,12 +1095,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (void)autoSyncFileUploadedSuccess:(SeafUploadFile *)ufile
 {
     [self pickPhotosForUpload];
-    NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
-    UploadedPhotos *obj = (UploadedPhotos *)[NSEntityDescription insertNewObjectForEntityForName:@"UploadedPhotos" inManagedObjectContext:context];
-    obj.server = self.address;
-    obj.username = self.username;
-    obj.url = ufile.assetURL.absoluteString;
-    [[SeafGlobal sharedObject] saveContext];
+    [self setPhotoUploaded:ufile.assetURL.absoluteString];
     [self removeUploadingPhoto:ufile.assetURL];
     Debug("Autosync file %@ %@ uploaded %d, remain %u %u", ufile.name, ufile.assetURL, [self IsPhotoUploaded:ufile.assetURL], (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
 
@@ -1176,69 +1103,16 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (_photSyncWatcher) [_photSyncWatcher photoSyncChanged:self.photosInSyncing];
 }
 
-- (BOOL)IsPhotoUploaded:(NSURL *)url
-{
-    NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
-    NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
-    [fetchRequest setEntity:[NSEntityDescription entityForName:@"UploadedPhotos" inManagedObjectContext:context]];
-    NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"url" ascending:YES selector:nil];
-    NSArray *descriptor = [NSArray arrayWithObject:sortDescriptor];
-    [fetchRequest setSortDescriptors:descriptor];
-    [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"server==%@ AND username==%@ AND url==%@", self.address, self.username, url.absoluteString]];
-    NSFetchedResultsController *controller = [[NSFetchedResultsController alloc]
-                                              initWithFetchRequest:fetchRequest
-                                              managedObjectContext:context
-                                              sectionNameKeyPath:nil
-                                              cacheName:nil];
-    NSError *error;
-    if (![controller performFetch:&error]) {
-        Warning("error: %@", error);
-        return NO;
-    }
-    NSArray *results = [controller fetchedObjects];
-    return results.count > 0;
-}
-
 - (NSUInteger)autoSyncedNum
 {
-    NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
-    NSFetchRequest *request = [[NSFetchRequest alloc] init];
-    [request setEntity:[NSEntityDescription entityForName:@"UploadedPhotos" inManagedObjectContext:context]];
-    [request setIncludesSubentities:NO];
-    [request setPredicate:[NSPredicate predicateWithFormat:@"server==%@ AND username==%@", self.address, self.username]];
-
-    NSError *err;
-    NSUInteger count = [context countForFetchRequest:request error:&err];
-    if(count == NSNotFound) {
-        Warning("Failed to fet synced count");
-        return 0;
-    }
-
-    return count;
+    return [self totalCachedNumForEntity:ENTITY_UPLOAD_PHOTO];
 }
+
 - (void)resetUploadedPhotos
 {
     self.uploadFiles = [[NSMutableDictionary alloc] init];
     _uploadingArray = [[NSMutableArray alloc] init];
-    NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
-    NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
-    [fetchRequest setEntity:[NSEntityDescription entityForName:@"UploadedPhotos" inManagedObjectContext:context]];
-    NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"url" ascending:YES selector:nil];
-    NSArray *descriptor = [NSArray arrayWithObject:sortDescriptor];
-    [fetchRequest setSortDescriptors:descriptor];
-    [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"server==%@ AND username==%@", self.address, self.username]];
-    NSFetchedResultsController *controller = [[NSFetchedResultsController alloc]
-                                              initWithFetchRequest:fetchRequest
-                                              managedObjectContext:context
-                                              sectionNameKeyPath:nil
-                                              cacheName:nil];
-    NSError *error;
-    if ([controller performFetch:&error]) {
-        for (id obj in controller.fetchedObjects) {
-             [context deleteObject:obj];
-        }
-    }
-    [[SeafGlobal sharedObject] saveContext];
+    [self clearCache:ENTITY_UPLOAD_PHOTO];
 }
 
 - (BOOL)IsPhotoUploading:(NSURL *)url
@@ -1877,4 +1751,74 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self saveAccountInfo];
 }
 
+#pragma - Cache managerment
+- (NSString *)objectForKey:(NSString *)key entityName:(NSString *)entity
+{
+    return [_cacheProvider objectForKey:key entityName:entity inAccount:self.account];
+}
+
+- (BOOL)setValue:(NSString *)value forKey:(NSString *)key entityName:(NSString *)entity
+{
+    return [_cacheProvider setValue:value forKey:key entityName:entity inAccount:self.account];
+}
+
+- (void)removeKey:(NSString *)key entityName:(NSString *)entity
+{
+    [_cacheProvider removeKey:key entityName:entity inAccount:self.account];
+}
+
+- (long)totalCachedNumForEntity:(NSString *)entity
+{
+    return [_cacheProvider totalCachedNumForEntity:entity inAccount:self.account];
+}
+
+- (void)clearCache:(NSString *)entity
+{
+    [_cacheProvider clearCache:entity inAccount:self.account];
+}
+
+- (id)getCachedJson:(NSString *)key entityName:(NSString *)entity
+{
+    NSString *value = [self objectForKey:key entityName:entity];
+    if (!value) {
+        return nil;
+    }
+
+    NSError *error = nil;
+    NSData *data = [NSData dataWithBytes:value.UTF8String length:[value lengthOfBytesUsingEncoding:NSUTF8StringEncoding]];
+    id JSON = [Utils JSONDecode:data error:&error];
+    if (error) {
+        Warning("json error %@", data);
+        JSON = nil;
+    }
+    return JSON;
+}
+
+- (id)getCachedStarredFiles
+{
+    id JSON = [self getCachedJson:KEY_STARREDFILES entityName:ENTITY_OBJECT];
+    if (!_starredFiles) {
+        _starredFiles = JSON;
+    }
+    return JSON;
+}
+
+- (void)setPhotoUploaded:(NSString *)url
+{
+    [self setValue:@"" forKey:[self.account stringByAppendingString:url] entityName:ENTITY_UPLOAD_PHOTO];
+}
+
+- (BOOL)IsPhotoUploaded:(NSURL *)url
+{
+    NSString *value = [self objectForKey:[self.account stringByAppendingString:url.absoluteString] entityName:ENTITY_UPLOAD_PHOTO];
+    return value != nil;
+}
+
+- (void)clearAccountCache
+{
+    [SeafFsCache.sharedObject clearCache];
+    [_cacheProvider clearAllCacheInAccount:self.account];
+    [SeafAvatar clearCache];
+    [self clearUploadCache];
+}
 @end

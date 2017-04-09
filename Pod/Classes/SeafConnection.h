@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "AFNetworking.h"
+#import "SeafCacheProvider.h"
 
 #define HTTP_ERR_UNAUTHORIZED                   401
 #define HTTP_ERR_LOGIN_INCORRECT_PASSWORD       400
@@ -32,11 +33,11 @@ enum MSG_TYPE{
 
 typedef void (^CompletionBlock)(BOOL success, NSError * _Nullable error);
 
-BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
+BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 
 @protocol SeafDownloadDelegate <NSObject>
 - (void)download;
-- (NSString *)name;
+- (NSString *_Nonnull)name;
 - (BOOL)retryable;
 @end
 
@@ -45,8 +46,8 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 @end
 
 @protocol SeafLoginDelegate <NSObject>
-- (void)loginSuccess:(SeafConnection *)connection;
-- (void)loginFailed:(SeafConnection *)connection response:(NSURLResponse *)response error:(NSError *)error;
+- (void)loginSuccess:(SeafConnection *_Nonnull)connection;
+- (void)loginFailed:(SeafConnection *_Nonnull)connection response:(NSURLResponse *)response error:(NSError *)error;
 - (BOOL)authorizeInvalidCert:(NSURLProtectionSpace *)protectionSpace;
 - (NSData *)getClientCertPersistentRef:(NSURLCredential *__autoreleasing *)credential; // return the persistentRef
 
@@ -58,7 +59,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 @end
 
 
-@interface SeafConnection : NSObject
+@interface SeafConnection: NSObject
 
 
 @property (readonly, retain) NSMutableDictionary *info;
@@ -95,15 +96,15 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 @property (readwrite, nonatomic) BOOL touchIdEnabled;
 @property (readonly) NSURLCredential *clientCred;
 
-
 @property (weak) id<SeafPhotoSyncWatcherDelegate> photSyncWatcher;
 @property (readonly) BOOL inAutoSync;
 
 @property (readonly) NSString *avatar;
 
 
-- (id)init:(NSString *)url;
-- (id)initWithUrl:(NSString *)url username:(NSString *)username;
+- (id)initWithUrl:(NSString *)url cacheProvider:(id<SeafCacheProvider>)cacheProvider;
+- (id)initWithUrl:(NSString *)url cacheProvider:(id<SeafCacheProvider>)cacheProvider username:(NSString *)username ;
+
 - (void)loadRepos:(id)degt;
 
 - (BOOL)localDecrypt:(NSString *)repoId;
@@ -170,9 +171,14 @@ BOOL SeafServerTrustIsValid(SecTrustRef serverTrust);
 - (UIImage *)avatarForAccount:(NSString *)email;
 
 // Cache
-- (id)getCachedObj:(NSString *)key;
-- (id)getCachedTimestamp:(NSString *)key;
-- (BOOL)savetoCacheKey:(NSString *)key value:(NSString *)content;
+- (void)clearAccountCache;
+- (NSString *)objectForKey:(NSString *)key entityName:(NSString *)entity;
+- (BOOL)setValue:(NSString *)value forKey:(NSString *)key entityName:(NSString *)entity;
+- (void)removeKey:(NSString *)key entityName:(NSString *)entity;
+- (long)totalCachedNumForEntity:(NSString *)entity;
+- (void)clearCache:(NSString *)entity;
+
+- (id)getCachedJson:(NSString *)key entityName:(NSString *)entity;
 - (id)getCachedStarredFiles;
 
 - (id)getAttribute:(NSString *)aKey;

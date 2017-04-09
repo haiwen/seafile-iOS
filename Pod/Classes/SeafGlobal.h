@@ -11,6 +11,7 @@
 #import <CoreData/CoreData.h>
 #import <AssetsLibrary/AssetsLibrary.h>
 #import "SeafConnection.h"
+#import "SeafDbCacheProvider.h"
 #import "SeafPreView.h"
 #import "SeafFsCache.h"
 
@@ -22,10 +23,6 @@
 
 @interface SeafGlobal : NSObject
 
-@property (readonly, strong, nonatomic) NSManagedObjectContext *managedObjectContext;
-@property (readonly, strong, nonatomic) NSManagedObjectModel *managedObjectModel;
-@property (readonly, strong, nonatomic) NSPersistentStoreCoordinator *persistentStoreCoordinator;
-
 @property (readonly) ALAssetsLibrary *assetsLibrary;
 
 @property (readonly) BOOL allowInvalidCert;
@@ -35,11 +32,10 @@
 @property (readonly) NSString *platformVersion;
 @property (readonly) dispatch_semaphore_t saveAlbumSem;
 @property (readwrite) BOOL isAppExtension;
+@property (readonly) SeafDbCacheProvider *cacheProvider;
+
 
 + (SeafGlobal *)sharedObject;
-
-- (NSString *)documentStorageDir;
-
 
 - (void)loadSettings:(NSUserDefaults *)standardUserDefaults;
 
@@ -49,9 +45,6 @@
 - (SeafConnection *)getConnection:(NSString *)url username:(NSString *)username;
 
 - (void)startTimer;
-
-- (void)saveContext;
-- (void)deleteAllObjects: (NSString *)entityDescription;
 
 - (void)incDownloadnum;
 - (void)decDownloadnum;
@@ -82,8 +75,6 @@
 - (void)removeExportFile:(NSURL *)url;
 - (NSDictionary *)getExportFile:(NSURL *)url;
 - (void)clearExportFiles;
-
-- (void)clearCache;
 
 - (NSDictionary *)getAllSecIdentities;
 - (BOOL)importCert:(NSString *)certificatePath password:(NSString *)keyPassword;

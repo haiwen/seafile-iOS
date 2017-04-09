@@ -9,6 +9,26 @@
 #import <Foundation/Foundation.h>
 #import <CoreData/CoreData.h>
 
+@interface SeafCacheObjV2 : NSManagedObject
+
+@property (nonatomic, retain) NSString *account;
+@property (nonatomic, retain) NSString *key;
+@property (nonatomic, retain) NSString *value;
+
+@end
+
+@interface DirectoryV2 : SeafCacheObjV2
+
+@end
+
+@interface ModifiedFileV2 : SeafCacheObjV2
+
+@end
+
+@interface UploadedPhotoV2 : SeafCacheObjV2
+
+@end
+
 
 
 @interface Directory : NSManagedObject
@@ -19,7 +39,6 @@
 @property (nonatomic, retain) NSString *content;
 
 @end
-
 
 
 @interface DownloadedFile : NSManagedObject

@@ -212,7 +212,7 @@
              self.state = SEAF_DENTRY_UPTODATE;
              if ([self handleData:JSON]) {
                  NSData *data = [Utils JSONEncode:JSON];
-                 [self->connection savetoCacheKey:KEY_REPOS value:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
+                 [self->connection setValue:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] forKey:KEY_REPOS entityName:ENTITY_OBJECT];
                  if (success)
                      success(self);
              }
@@ -230,7 +230,7 @@
 
 - (BOOL)realLoadCache
 {
-    id JSON = [self->connection getCachedObj:KEY_REPOS];
+    id JSON = [self->connection getCachedJson:KEY_REPOS entityName:ENTITY_OBJECT];
     if (!JSON)
         return NO;
     [self handleData:JSON];

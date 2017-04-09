@@ -116,7 +116,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
         }
     }
     if (![JSON isKindOfClass:[NSArray class]]) {
-        Warning("Invalid response: %@", JSON);
+        Warning("Invalid response type: %@,  %@", NSStringFromClass([JSON class]), JSON);
         return false;
     }
 
@@ -149,8 +149,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
         if (!curId) curId = self.oid;
         if ([self handleData:curId data:JSON]) {
             self.ooid = curId;
-            NSData *data = [Utils JSONEncode:JSON];
-            [self savetoCache:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
+            [self savetoCache:JSON cacheOid:curId];
             [self.delegate download:self complete:true];
         } else {
             Debug("Already uptodate oid=%@, path=%@\n", self.ooid, self.path);
@@ -287,77 +286,27 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 
 - (void)clearCache
 {
-    NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
-    Directory *dir = [self loadCacheObj];
-    if (dir) {
-        Debug("Delete directory %@ cache.", self.path);
-        [context deleteObject:dir];
-        [[SeafGlobal sharedObject] saveContext];
-    }
+    [self->connection removeKey:self.cacheKey entityName:ENTITY_DIRECTORY];
 }
 
-- (Directory *)loadCacheObj
+- (BOOL)savetoCache:(id)JSON cacheOid:(NSString *)cacheOid
 {
-    NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
-    NSFetchRequest *fetchRequest=[[NSFetchRequest alloc] init];
-    [fetchRequest setEntity:[NSEntityDescription entityForName:@"Directory"
-                                        inManagedObjectContext:context]];
-    NSSortDescriptor *sortDescriptor=[[NSSortDescriptor alloc] initWithKey:@"path" ascending:YES selector:nil];
-    NSArray *descriptor = [NSArray arrayWithObject:sortDescriptor];
-    [fetchRequest setSortDescriptors:descriptor];
+    NSMutableDictionary *dict = [NSMutableDictionary new];
+    [dict setObject:JSON forKey:@"data"];
+    [dict setObject:cacheOid forKey:@"oid"];
 
-    [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"repoid==%@ AND path==%@", self.repoId, self.path]];
-
-    NSFetchedResultsController *controller = [[NSFetchedResultsController alloc]
-                                              initWithFetchRequest:fetchRequest
-                                              managedObjectContext:context
-                                              sectionNameKeyPath:nil
-                                              cacheName:nil];
-    NSError *error;
-    if (![controller performFetch:&error]) {
-        Debug(@"Fetch cache error:%@",[error localizedDescription]);
-        return nil;
-    }
-    NSArray *results = [controller fetchedObjects];
-    if ([results count] == 0)
-        return nil;
-    Directory *dir = [results objectAtIndex:0];
-    return dir;
-}
-
-- (BOOL)savetoCache:(NSString *)content
-{
-    NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
-    Directory *dir = [self loadCacheObj];
-    if (!dir) {
-        dir = (Directory *)[NSEntityDescription insertNewObjectForEntityForName:@"Directory" inManagedObjectContext:context];
-        dir.oid = self.ooid;
-        dir.repoid = self.repoId;
-        dir.content = content;
-        dir.path = self.path;
-    } else {
-        dir.oid = self.ooid;
-        dir.content = content;
-    }
-    [[SeafGlobal sharedObject] saveContext];
-    return YES;
+    NSString *value = [[NSString alloc] initWithData:[Utils JSONEncode:dict] encoding:NSUTF8StringEncoding];
+    return [self->connection setValue:value forKey:self.cacheKey entityName:ENTITY_DIRECTORY];
 }
 
 - (BOOL)realLoadCache
 {
-    NSError *error = nil;
-    Directory *dir = [self loadCacheObj];
-    if (!dir)
-        return NO;
-    NSData *data = [NSData dataWithBytes:dir.content.UTF8String length:[dir.content lengthOfBytesUsingEncoding:NSUTF8StringEncoding]];
-    id JSON = [Utils JSONDecode:data error:&error];
-    if (error) {
-        NSManagedObjectContext *context = [[SeafGlobal sharedObject] managedObjectContext];
-        [context deleteObject:dir];
+    NSDictionary *dict = [self->connection getCachedJson:self.cacheKey entityName:ENTITY_DIRECTORY];
+    if (!dict) {
         return NO;
     }
-
-    BOOL updated = [self handleData:dir.oid data:JSON];
+    NSString *oid = [dict objectForKey:@"oid"];
+    BOOL updated = [self handleData:oid data:[dict objectForKey:@"data"]];
     [self.delegate download:self complete:updated];
     return YES;
 }
@@ -462,9 +411,9 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 
 - (void)loadContent:(BOOL)force;
 {
-    Debug("repoId:%@, %@, path:%@, loading ... cached:%d %@, editable:%d, state:%d\n", self.repoId, self.name, self.path, self.hasCache, self.ooid, self.editable, self.state);
     _allItems = nil;
     [super loadContent:force];
+    Debug("repoId:%@, %@, path:%@, loading ... cached:%d %@, editable:%d, state:%d\n", self.repoId, self.name, self.path, self.hasCache, self.ooid, self.editable, self.state);
 }
 
 - (NSMutableArray *)uploadItems

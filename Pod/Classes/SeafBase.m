@@ -116,6 +116,12 @@
 {
 }
 
+- (NSString *)cacheKey
+{
+    return [NSString stringWithFormat:@"%@/%@", self.repoId, self.path];
+}
+
+
 - (void)loadContent:(BOOL)force;
 {
     BOOL hasCache = [self loadCache];

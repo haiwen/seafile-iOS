@@ -61,7 +61,7 @@
     [Utils checkMakeDir:self.tempDir];
 }
 
-- (NSURL *)rootPathURL
+- (NSURL *)rootURL
 {
     return [NSURL fileURLWithPath:_cacheRootPath];
 }
