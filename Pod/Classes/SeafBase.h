@@ -46,39 +46,43 @@ typedef void (^repo_password_set_block_t)(SeafBase *entry, int ret);
                     mime:(NSString *)aMime;
 
 
-@property (copy) NSString *name;
-@property (readonly, copy) NSString *path;
-@property (readonly, copy) NSString *repoId;
-@property (readonly, copy) NSString *mime;
+@property (copy) NSString *name; // name
+@property (readonly, copy) NSString *path; // path in the library
+@property (readonly, copy) NSString *repoId; // library id
+@property (readonly, copy) NSString *mime; //mime type
 
-@property (copy) NSString *ooid;
-@property (copy) NSString *oid;
+@property (copy) NSString *ooid; // cached object id
+@property (copy) NSString *oid;  // current object id
 
-@property int state;
+@property enum SEAFBASE_STATE state; // the state of local object
 
-@property (weak) id <SeafDentryDelegate> delegate;
+@property (weak) id <SeafDentryDelegate> delegate; // the delegate
 
-@property (readonly, copy) NSString *shareLink;
+@property (readonly, copy) NSString *shareLink; // shared link
 
-- (BOOL)hasCache;
-- (BOOL)loadCache;
-- (void)clearCache;
-- (NSString *)cacheKey;
+- (BOOL)hasCache;  // has local cache
+- (BOOL)loadCache; // load local cache
+- (void)clearCache;  // clear local cache
 
+// load the content of this entry, force means force load from server. Otherwise will try to load local cache first, if cache miss, load from remote server.
 - (void)loadContent:(BOOL)force;
-- (void)updateWithEntry:(SeafBase *)entry;
+- (UIImage *)icon; // icon for this entry
 
+
+// If local decryption is enabled, check library password locally, otherwise set library password on remote server
 - (void)checkOrSetRepoPassword:(NSString *)password delegate:(id<SeafRepoPasswordDelegate>)del;
 - (void)checkOrSetRepoPassword:(NSString *)password block:(repo_password_set_block_t)block;
 
+- (void)generateShareLink:(id<SeafShareDelegate>)dg; // generate shared link
 
-- (NSString *)key;
-- (UIImage *)icon;
 
-- (void)generateShareLink:(id<SeafShareDelegate>)dg type:(NSString *)type;
-
-- (void)generateShareLink:(id<SeafShareDelegate>)dg;
+// The following functions are used internally.
+- (NSString *)key; // The key used to sort
+- (NSString *)cacheKey; //the key used for cache
+- (void)updateWithEntry:(SeafBase *)entry;
 
 - (void)downloadComplete:(BOOL)updated;
 - (void)downloadFailed:(NSError *)error;
+- (void)generateShareLink:(id<SeafShareDelegate>)dg type:(NSString *)type;
+
 @end
