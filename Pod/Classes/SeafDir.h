@@ -33,24 +33,29 @@
 @property (readonly) BOOL editable;
 @property (readonly) NSString *perm;
 
-- (void)unload;
 
-- (void)loadedItems:(NSMutableArray *)items;
+// Api
 - (void)mkdir:(NSString *)newDirName;
 - (void)mkdir:(NSString *)newDirName success:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir))failure;
 - (void)createFile:(NSString *)newFileName;
 - (void)delEntries:(NSArray *)entries;
 - (void)copyEntries:(NSArray *)entries dstDir:(SeafDir *)dst_dir;
 - (void)moveEntries:(NSArray *)entries dstDir:(SeafDir *)dst_dir;
+- (void)renameFile:(SeafFile *)sfile newName:(NSString *)newName;
 
+
+
+
+- (void)unload;
 - (void)addUploadFile:(SeafUploadFile *)file flush:(BOOL)flush;
 - (void)removeUploadItem:(SeafUploadFile *)ufile;
+
+- (void)loadedItems:(NSMutableArray *)items;
 
 - (NSString *)configKeyForSort;
 - (void)reSortItemsByName;
 - (void)reSortItemsByMtime;
 - (void)sortItems:(NSMutableArray *)items;
-- (void)renameFile:(SeafFile *)sfile newName:(NSString *)newName;
 - (void)downloadContentSuccess:(void (^)(SeafDir *dir)) success failure:(void (^)(SeafDir *dir, NSError *error))failure;
 
 - (BOOL)nameExist:(NSString *)name;

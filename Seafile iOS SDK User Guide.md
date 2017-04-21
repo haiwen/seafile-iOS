@@ -134,3 +134,16 @@ Seafile is available through CocoaPods. To install it, simply add the following 
 	
 		- (BOOL)setStarred:(BOOL)starred repo:(NSString * _Nonnull)repo path:(NSString * _Nonnull)path;
 
+8. File/folder operation: delete, rename, copy, move files/folders, create new file/folder
+
+	In a parent folder(SeafDir *dir), you can delete, rename, copy, move, create new the files/folders
+
+		- (void)mkdir:(NSString *)newDirName;
+		- (void)mkdir:(NSString *)newDirName success:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir))failure;
+		- (void)createFile:(NSString *)newFileName;
+		- (void)delEntries:(NSArray *)entries;
+		- (void)copyEntries:(NSArray *)entries dstDir:(SeafDir *)dst_dir;
+		- (void)moveEntries:(NSArray *)entries dstDir:(SeafDir *)dst_dir;
+		- (void)renameFile:(SeafFile *)sfile newName:(NSString *)newName;
+
+delEntries, copyEntries and moveEntries can operate multi files/folders
