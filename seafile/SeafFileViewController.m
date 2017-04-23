@@ -1438,7 +1438,7 @@ enum {
     NSMutableArray *files = [[NSMutableArray alloc] init];
     NSString *uploadDir = [SeafStorage.sharedObject uniqueUploadDir];
     for (ALAsset *asset in assets) {
-        NSString *filename = asset.defaultRepresentation.filename;
+        NSString *filename = [Utils assertName:asset];
         Debug("Upload picked file : %@", filename);
         if (!overwrite && [nameSet containsObject:filename]) {
             NSString *name = filename.stringByDeletingPathExtension;
@@ -1501,7 +1501,7 @@ enum {
     for (ALAsset *asset in assets) {
         NSURL *url = asset.defaultRepresentation.url;
         if (url) {
-            NSString *filename = asset.defaultRepresentation.filename;
+            NSString *filename = [Utils assertName:asset];
             if ([nameSet containsObject:filename])
                 duplicated++;
             [urls addObject:url];

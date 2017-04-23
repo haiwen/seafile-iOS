@@ -871,9 +871,9 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 - (void)downloadComplete:(BOOL)updated
 {
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self.delegate download:self complete:true];
+        [self.delegate download:self complete:updated];
         if (self.fileDidDownloadBlock)
-            self.fileDidDownloadBlock(self, true);
+            self.fileDidDownloadBlock(self, updated);
     });
 }
 

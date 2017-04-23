@@ -407,8 +407,9 @@ enum {
     _nameCell.detailTextLabel.text = _connection.username;
     _enableTouchIDSwitch.on = _connection.touchIdEnabled;
 
+    Debug("Account : %@, %lld, quota: %lld", _connection.username, _connection.usage, _connection.quota);
     long long cacheSize = [SeafStorage.sharedObject cacheSize];
-    Debug("%@, %lld, %lld, total cache=%lld", _connection.username, _connection.usage, _connection.quota, cacheSize);
+    Debug("Total cache: %lld", cacheSize);
     if (_connection.quota <= 0) {
         if (_connection.usage < 0)
             _usedspaceCell.detailTextLabel.text = @"Unknown";

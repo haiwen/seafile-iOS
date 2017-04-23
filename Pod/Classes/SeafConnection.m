@@ -1067,7 +1067,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         if (!url) break;
         [SeafDataTaskManager.sharedObject assetForURL:url
                                  resultBlock:^(ALAsset *asset) {
-                                     NSString *filename = asset.defaultRepresentation.filename;
+                                     NSString *filename = [Utils assertName:asset];
                                      if (!filename) {
                                          [self removeUploadingPhoto:url];
                                          return Warning("Failed to get asset name: %@", asset);

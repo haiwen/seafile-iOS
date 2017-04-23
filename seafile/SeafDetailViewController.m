@@ -157,6 +157,7 @@ enum SHARE_STATUS {
 {
     [self updatePreviewState];
     if (!self.isViewLoaded) return;
+
     [self updateNavigation];
     CGRect r = CGRectMake(self.view.frame.origin.x, 0, self.view.frame.size.width, self.view.frame.size.height);
     switch (self.state) {
@@ -414,7 +415,9 @@ enum SHARE_STATUS {
         return;
     }
     if (_preViewItem != entry) return;
-    [self refreshView];
+    if (updated) {
+        [self refreshView];
+    }
 }
 
 - (void)showDownloadError:(NSString *)filename

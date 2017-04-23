@@ -53,4 +53,5 @@
 
 + (NSDictionary *)queryToDict:(NSString *)query;
 + (void)dict:(NSMutableDictionary *)dict setObject:(id)value forKey:(NSString *)defaultName;
++ (NSString *)assertName:(ALAsset *)asset;
 @end

@@ -518,7 +518,6 @@
     }
 }
 
-
 + (UIImage *)imageFromPath:(NSString *)path withMaxSize:(float)length cachePath:(NSString *)cachePath
 {
     const int MAX_SIZE = 2048;
@@ -538,6 +537,18 @@
         return image;
     }
     return nil;
+}
+
++ (NSString *)assertName:(ALAsset *)asset
+{
+    NSString *name = asset.defaultRepresentation.filename;
+    if ([name hasPrefix:@"IMG_"]) {
+        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+        [dateFormatter setDateFormat:@"yyyyMMdd"];
+        NSString *dateStr = [dateFormatter stringFromDate:[NSDate date]];
+        return [NSString stringWithFormat:@"IMG_%@_%@", dateStr, [name substringFromIndex:4]];
+    }
+    return name;
 }
 
 @end
