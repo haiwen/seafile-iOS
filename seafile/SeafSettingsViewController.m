@@ -759,17 +759,12 @@ enum {
         return;
     }
 
-    if (_connection.autoSyncedNum == 0) {
-        return [self setSyncRepo:repo];
+    if (_connection.autoSyncedNum > 0) {
+        [_connection resetUploadedPhotos];
     }
 
     dispatch_async(dispatch_get_main_queue(), ^ {
-        [self alertWithTitle:MSG_RESET_UPLOADED message:nil yes:^{
-            [_connection resetUploadedPhotos];
-            [self setSyncRepo:repo];
-        } no:^{
-            [self setSyncRepo:repo];
-        }];
+        [self setSyncRepo:repo];
     });
 }
 
