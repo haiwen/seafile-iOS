@@ -550,7 +550,7 @@
             date = [NSDate date];
         }
         NSString *dateStr = [dateFormatter stringFromDate:date];
-        return [NSString stringWithFormat:@"IMG_%@.%@", dateStr, name.pathExtension];
+        return [NSString stringWithFormat:@"IMG_%@_%@", dateStr, [name substringFromIndex:4]];
     }
     return name;
 }

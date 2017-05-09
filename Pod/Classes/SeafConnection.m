@@ -1079,6 +1079,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                          return Warning("Failed to init upload file: %@", path);
                                      }
                                      file.autoSync = true;
+                                     file.overwrite = true;
                                      [file setAsset:asset url:url];
                                      file.udir = dir;
                                      [file setCompletionBlock:^(BOOL success, SeafUploadFile *file, NSString *oid) {
