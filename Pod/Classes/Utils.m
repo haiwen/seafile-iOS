@@ -544,13 +544,13 @@
     NSString *name = asset.defaultRepresentation.filename;
     if ([name hasPrefix:@"IMG_"]) {
         NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-        [dateFormatter setDateFormat:@"yyyyMMdd"];
+        [dateFormatter setDateFormat:@"yyyyMMdd_HHmmss"];
         NSDate *date = [asset valueForProperty:ALAssetPropertyDate];
         if (date == nil) {
             date = [NSDate date];
         }
         NSString *dateStr = [dateFormatter stringFromDate:date];
-        return [NSString stringWithFormat:@"IMG_%@_%@", dateStr, [name substringFromIndex:4]];
+        return [NSString stringWithFormat:@"IMG_%@.%@", dateStr, name.pathExtension];
     }
     return name;
 }
