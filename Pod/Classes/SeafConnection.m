@@ -111,6 +111,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 @property (readonly) NSString *platformVersion;
 
+@property (readwrite, nonatomic, getter=isFirstTimeSync) BOOL firstTimeSync;
+
 @end
 
 @implementation SeafConnection
@@ -321,6 +323,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return [[self getAttribute:@"contactsSync"] booleanValue:true];
 }
 
+- (BOOL)isFirstTimeSync
+{
+    return [[self getAttribute:@"firstTimeSync"] booleanValue:false];
+}
+
 - (BOOL)autoClearRepoPasswd
 {
     return [[self getAttribute:@"autoClearRepoPasswd"] booleanValue:false];
@@ -358,6 +365,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     if (self.isAutoSync == autoSync) return;
     [self setAttribute:[NSNumber numberWithBool:autoSync] forKey:@"autoSync"];
+    [self setFirstTimeSync:true];
 }
 
 - (void)setVideoSync:(BOOL)videoSync
@@ -395,6 +403,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }
 }
 
+- (void)setFirstTimeSync:(BOOL)firstTimeSync
+{
+    if (self.firstTimeSync == firstTimeSync) return;
+    [self setAttribute:[NSNumber numberWithBool:firstTimeSync] forKey:@"firstTimeSync"];
+}
+
 - (NSString *)autoSyncRepo
 {
     return [[self getAttribute:@"autoSyncRepo"] stringValue];
@@ -402,8 +416,14 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)setAutoSyncRepo:(NSString *)repoId
 {
+    if (!repoId && [repoId isEqualToString:self.autoSyncRepo]) {
+        return;
+    }
     _syncDir = nil;
     [self setAttribute:repoId forKey:@"autoSyncRepo"];
+    if (repoId) {
+        [self setFirstTimeSync:true];
+    }
 }
 
 - (NSString *)contactsRepo
@@ -1181,10 +1201,17 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return nil;
 }
 
+
+- (void)firstTimeSyncUpdateSyncedPhotos:(SeafDir *)uploaddir
+{
+    [self setFirstTimeSync:false];
+}
+
 - (void)checkPhotos:(BOOL)force
 {
-    if (!_inAutoSync) return;
-    if (!force && [self photosInSyncing] > 0) {
+    SeafDir *uploadDir = _syncDir;
+    bool shouldSkip = !_inAutoSync || (!force && [self photosInSyncing] > 0) || (self.firstTimeSync && !uploadDir);
+    if (shouldSkip) {
         return;
     }
 
@@ -1197,9 +1224,19 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
     NSMutableArray *photos = [[NSMutableArray alloc] init];
     void (^assetEnumerator)(ALAsset *, NSUInteger, BOOL *) = ^(ALAsset *asset, NSUInteger index, BOOL *stop) {
+        if (self.firstTimeSync) {
+            NSString *name = [Utils assertName:asset];
+            if ([uploadDir nameExist:name]) {
+                [self setPhotoUploaded:asset.defaultRepresentation.url.absoluteString];
+                Debug("First time sync, skip file %@(%@) which has already been uploaded", name, asset.defaultRepresentation.url);
+                return;
+            }
+        }
+
         NSURL *url = [self uploadURLForAsset:asset];
-        if (url)
+        if (url) {
             [photos addObject:url];
+        }
     };
 
     void (^ assetGroupEnumerator) ( ALAssetsGroup *, BOOL *) = ^(ALAssetsGroup *group, BOOL *stop) {
@@ -1213,6 +1250,10 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                     [self addUploadPhoto:url];
                 }
             }
+            if (self.firstTimeSync) {
+                self.firstTimeSync = false;
+            }
+
             Debug("GroupAll Total %ld photos need to upload: %@", (long)_photosArray.count, _address);
             if (_photSyncWatcher) [_photSyncWatcher photoSyncChanged:self.photosInSyncing];
             _inCheckPhotoss = false;
@@ -1261,7 +1302,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self checkPhotos:true];
 }
 
-- (void)checkUploadDir:(CompletionBlock)handler
+- (void)checkPhotosUploadDir:(CompletionBlock)handler
 {
     CompletionBlock completionHandler = ^(BOOL success, NSError * _Nullable error){
         if (!success) {
@@ -1277,8 +1318,19 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             Warning("Failed to create camera sync folder: %@", error);
             completionHandler(false, error);
         } else {
-            [self updateUploadDir:uploaddir];
-            completionHandler(true, nil);
+            if (self.firstTimeSync) {
+                Debug("First time sync, force fresh uploaddir content.");
+                [uploaddir downloadContentSuccess:^(SeafDir *dir) {
+                    [self updateUploadDir:uploaddir];
+                    completionHandler(true, nil);
+                } failure:^(SeafDir *dir, NSError *error) {
+                    Warning("Failed to get uploaddir items: %@", error);
+                    completionHandler(false, error);
+                }];
+            } else {
+                [self updateUploadDir:uploaddir];
+                completionHandler(true, nil);
+            }
         }
     }];
 }
@@ -1290,7 +1342,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     Debug("photos changed %d for server %@, current: %u %u, _syncDir:%@", _inAutoSync, _address, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count, _syncDir);
     if (!_syncDir) {
         Warning("Sync dir not exists, create.");
-        [self checkUploadDir:nil];
+        [self checkPhotosUploadDir:nil];
     } else {
         [self checkPhotos:false];
     }
@@ -1322,7 +1374,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     _inAutoSync = value;
     if (_inAutoSync) {
         Debug("start auto sync, check photos for server %@", _address);
-        [self checkUploadDir:nil];
+        [self checkPhotosUploadDir:nil];
     }
 }
 
