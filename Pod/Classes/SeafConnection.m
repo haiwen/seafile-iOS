@@ -1209,6 +1209,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)checkPhotos:(BOOL)force
 {
+     [self performSelectorInBackground:@selector(backGroundCheckPhotos:) withObject:[NSNumber numberWithBool:force]];
+}
+
+- (void)backGroundCheckPhotos:(NSNumber *)forceNumber
+{
+    bool force = [forceNumber boolValue];
     SeafDir *uploadDir = _syncDir;
     bool shouldSkip = !_inAutoSync || (!force && [self photosInSyncing] > 0) || (self.firstTimeSync && !uploadDir);
     if (shouldSkip) {

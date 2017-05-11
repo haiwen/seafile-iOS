@@ -44,13 +44,13 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 @implementation SeafUploadFile
 @synthesize assetURL = _assetURL;
+@synthesize filesize = _filesize;
 
 - (id)initWithPath:(NSString *)lpath
 {
     self = [super init];
     if (self) {
         _lpath = lpath;
-        _filesize = [Utils fileSizeAtPath1:lpath] ;
         _uProgress = 0;
         _uploading = NO;
         _autoSync = NO;
@@ -74,6 +74,14 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 - (NSString *)name
 {
     return [_lpath lastPathComponent];
+}
+
+- (long long)filesize
+{
+    if (!_filesize || _filesize == 0) {
+        _filesize = [Utils fileSizeAtPath1:self.lpath] ;
+    }
+    return _filesize;
 }
 
 - (void)unload
