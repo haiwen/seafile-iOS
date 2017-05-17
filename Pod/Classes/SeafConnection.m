@@ -1195,7 +1195,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if ([self IsPhotoUploaded:url] || [self IsPhotoUploading:url])
         return nil;
 
-    if([[asset valueForProperty:ALAssetPropertyType] isEqualToString:ALAssetTypePhoto])
+    if([[asset valueForProperty:ALAssetPropertyType] isEqualToString:ALAssetTypePhoto]
+       || [[asset valueForProperty:ALAssetPropertyType] isEqualToString:ALAssetTypeVideo])
         return url;
 
     return nil;
