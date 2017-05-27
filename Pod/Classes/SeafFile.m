@@ -207,6 +207,11 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
          NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:DEFAULT_TIMEOUT];
          NSProgress *progress = nil;
          NSString *target = [SeafStorage.sharedObject documentPath:self.downloadingFileOid];
+         
+         BOOL isDir = true;
+         if (![[NSFileManager defaultManager] fileExistsAtPath:target isDirectory:&isDir]) {
+             [[NSFileManager defaultManager] createDirectoryAtPath:target withIntermediateDirectories:YES attributes:nil error:nil];
+         }
          Debug("Download file %@  %@ from %@, target:%@ %d", self.name, self.downloadingFileOid, url, target, [Utils fileExistsAtPath:target]);
 
          _task = [connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:&progress destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
