@@ -59,12 +59,14 @@
 
 - (void)finishDownload:(id<SeafDownloadDelegate>)task result:(BOOL)result
 {
-    Debug("file %@ download %ld, result=%d, failcnt=%ld", task.name, self.backgroundDownloadingNum, result, self.failedNum);
-
     @synchronized (self.downloadingTasks) {
+        if (![self.downloadingTasks containsObject:task]) {
+            return;
+        }
         [self.downloadingTasks removeObject:task];
     }
 
+    Debug("file %@ download %ld, result=%d, failcnt=%ld", task.name, self.backgroundDownloadingNum, result, self.failedNum);
     if (result) {
         self.failedNum = 0;
     } else {

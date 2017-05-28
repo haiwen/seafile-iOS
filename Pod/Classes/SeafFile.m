@@ -404,7 +404,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          NSString *curId = [JSON objectForKey:@"file_id"];
          if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:curId]]) {
-             Debug("already uptodate oid=%@\n", self.ooid);
+             Debug("Already uptodate oid=%@\n", self.ooid);
              [self finishDownload:curId];
              return;
          }

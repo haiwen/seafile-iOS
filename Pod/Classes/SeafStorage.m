@@ -56,7 +56,7 @@ static SeafStorage *object = nil;
 -(id)initWithRootPath:(NSString *)path metadataStorage:(NSUserDefaults *)storage
 {
     if (self = [super init]) {
-        _cacheRootPath = path;
+        [self registerRootPath:path];
         _storage = storage;
         [self loadSecIdentities];
     }
@@ -67,7 +67,7 @@ static SeafStorage *object = nil;
 {
     if (self = [super init]) {
         NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-        _cacheRootPath = [paths objectAtIndex:0];
+        [self registerRootPath:[paths objectAtIndex:0]];
         _storage = [[NSUserDefaults alloc] init];
         [self loadSecIdentities];
     }
