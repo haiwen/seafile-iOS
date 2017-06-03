@@ -24,11 +24,13 @@
 
 typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 
-@interface SeafActivityViewController ()
+@interface SeafActivityViewController ()<UITableViewDelegate,UITableViewDataSource>
 @property (strong, nonatomic) IBOutlet UIActivityIndicatorView *loadingView;
 @property (strong) NSArray *events;
 @property BOOL eventsMore;
 @property int eventsOffset;
+
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
 
 @property NSMutableDictionary *eventDetails;
 @property UIImage *defaultAccountImage;
@@ -52,15 +54,17 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 {
     [super viewDidLoad];
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
-        self.edgesForExtendedLayout = UIRectEdgeNone;
-    if ([self.tableView respondsToSelector:@selector(setSeparatorInset:)])
-        [self.tableView setSeparatorInset:UIEdgeInsetsMake(0, 0, 0, 0)];
+        self.edgesForExtendedLayout = UIRectEdgeAll;
+
     // Do any additional setup after loading the view from its nib.
     self.title = NSLocalizedString(@"Activities", @"Seafile");
     self.navigationItem.rightBarButtonItem = [self getBarItemAutoSize:@"refresh".navItemImgName action:@selector(refresh:)];
-    self.navigationController.navigationBar.tintColor = BAR_COLOR;
+//    self.navigationController.navigationBar.tintColor = BAR_COLOR;
     self.tableView.rowHeight = UITableViewAutomaticDimension;
     self.tableView.estimatedRowHeight = 60.0;
+    self.tableView.delegate = self;
+    self.tableView.dataSource = self;
+    
     self.eventsMore = true;
     self.eventsOffset = 0;
     _eventDetails = [NSMutableDictionary new];

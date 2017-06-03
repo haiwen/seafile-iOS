@@ -163,17 +163,16 @@ enum {
     [self.tableView registerNib:[UINib nibWithNibName:@"SeafCell" bundle:nil]
          forCellReuseIdentifier:@"SeafCell"];
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
-        self.edgesForExtendedLayout = UIRectEdgeNone;
-    if ([self.tableView respondsToSelector:@selector(setSeparatorInset:)])
-        [self.tableView setSeparatorInset:UIEdgeInsetsMake(0, 0, 0, 0)];
+        self.edgesForExtendedLayout = UIRectEdgeAll;
+
     self.formatter = [[NSDateFormatter alloc] init];
     [self.formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
+    
     self.tableView.rowHeight = UITableViewAutomaticDimension;
     self.tableView.estimatedRowHeight = 50.0;
     self.state = STATE_INIT;
 
     self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectZero];
-    self.searchBar.searchTextPositionAdjustment = UIOffsetMake(0, 0);
     Debug("repoId:%@, %@, path:%@, loading ... cached:%d %@\n", _directory.repoId, _directory.name, _directory.path, _directory.hasCache, _directory.ooid);
     self.searchBar.delegate = self;
     [self.searchBar sizeToFit];
@@ -186,14 +185,15 @@ enum {
     self.searchDisplayController.searchResultsTableView.sectionHeaderHeight = 0;
 
     self.tableView.tableHeaderView = self.searchBar;
-    self.tableView.contentOffset = CGPointMake(0, CGRectGetHeight(self.searchBar.bounds));
     self.tableView.allowsMultipleSelection = NO;
 
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     [self.navigationController setToolbarHidden:YES animated:NO];
 
+//    [self.tableView valueForKey:@"_originalTopInset"];
+    
     __weak typeof(self) weakSelf = self;
-    [self.tableView addPullToRefresh:[SVArrowPullToRefreshView class] withActionHandler:^{
+        [self.tableView addPullToRefresh:[SVArrowPullToRefreshView class] withActionHandler:^{
         [weakSelf.tableView reloadData];
         if (weakSelf.searchDisplayController.active)
             return;
@@ -201,11 +201,12 @@ enum {
             [weakSelf performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
             return;
         }
-
+        
         weakSelf.state = STATE_LOADING;
         weakSelf.directory.delegate = weakSelf;
         [weakSelf.directory loadContent:YES];
     }];
+
     [self refreshView];
 }
 

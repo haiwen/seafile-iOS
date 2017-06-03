@@ -246,18 +246,23 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+    
     Debug("%@", [[NSBundle mainBundle] infoDictionary]);
     _global = [SeafGlobal sharedObject];
     [_global migrate];
     [self initTabController];
 
+   
     [[UITabBar appearance] setTintColor:[UIColor colorWithRed:238.0f/256 green:136.0f/256 blue:51.0f/255 alpha:1.0]];
 
     [SeafGlobal.sharedObject loadAccounts];
 
+    self.window.backgroundColor = [UIColor whiteColor];
     self.autoBackToDefaultAccount = false;
     _monitors = [[NSMutableArray alloc] init];
+    _startNav.view.backgroundColor = [UIColor whiteColor];
     _startNav = (UINavigationController *)self.window.rootViewController;
+    
     _startVC = (StartViewController *)_startNav.topViewController;
 
 
@@ -287,6 +292,8 @@
     [SVProgressHUD setBackgroundColor:[UIColor colorWithRed:250.0/256 green:250.0/256 blue:250.0/256 alpha:1.0]];
 
     [self performSelectorInBackground:@selector(delayedInit) withObject:nil];
+    
+    [UIApplication sharedApplication].delegate.window.backgroundColor = [UIColor whiteColor];
     return YES;
 }
 
@@ -335,6 +342,7 @@
         if (badgeStr && [badgeStr intValue] > 0) {
             SeafConnection *connection = [[SeafGlobal sharedObject] getConnection:server username:username];
             if (!connection) return;
+            self.window.backgroundColor = [UIColor whiteColor];
             self.window.rootViewController = self.startNav;
             [self.window makeKeyAndVisible];
             [self.startVC checkSelectAccount:connection];
@@ -412,7 +420,7 @@
     UIViewController *fileController = [tabs.viewControllers objectAtIndex:TABBED_SEAFILE];
     UIViewController *starredController = [tabs.viewControllers objectAtIndex:TABBED_STARRED];
     UIViewController *settingsController = [tabs.viewControllers objectAtIndex:TABBED_SETTINGS];
-    UINavigationController *activityController = [tabs.viewControllers objectAtIndex:TABBED_ACTIVITY];
+    UIViewController *activityController = [tabs.viewControllers objectAtIndex:TABBED_ACTIVITY];
     UIViewController *accountvc = [tabs.viewControllers objectAtIndex:TABBED_ACCOUNTS];
 
     fileController.tabBarItem.title = NSLocalizedString(@"Libraries", @"Seafile");
@@ -433,9 +441,11 @@
     }
     self.viewControllers = [NSArray arrayWithArray:tabs.viewControllers];
     _tabbarController = tabs;
+    _tabbarController.navigationController.navigationBar.backgroundColor = [UIColor whiteColor];
     _tabbarController.delegate = self;
     if (ios7)
         _tabbarController.view.backgroundColor = [UIColor colorWithRed:150.0f/255 green:150.0f/255 blue:150.0f/255 alpha:1];
+    
 }
 
 - (UITabBarController *)tabbarController
@@ -471,8 +481,10 @@
     if (IsIpad()) {
         return [[[[self.viewControllers objectAtIndex:index] viewControllers] lastObject] topViewController];
     } else {
-        if (!_detailVC)
+        if (!_detailVC){
             _detailVC = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
+        }
+
         return _detailVC;
     }
 }
