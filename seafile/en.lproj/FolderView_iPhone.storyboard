@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="11762" systemVersion="16A323" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES" initialViewController="IwU-Z8-46U">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="12120" systemVersion="16F73" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES" initialViewController="IwU-Z8-46U">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment version="2048" identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11757"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12088"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -19,8 +19,8 @@
                     <tabBar key="tabBar" contentMode="scaleToFill" id="UkN-PX-asw">
                         <rect key="frame" x="129" y="330" width="163" height="49"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                        <color key="tintColor" red="0.8676757812" green="0.8676757812" blue="0.8676757812" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                        <color key="selectedImageTintColor" red="0.66666666666666663" green="0.66666666666666663" blue="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <color key="tintColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                        <color key="selectedImageTintColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                     </tabBar>
                     <connections>
                         <segue destination="CNF-ja-c3a" kind="relationship" relationship="viewControllers" id="udP-do-9F7"/>
@@ -32,7 +32,7 @@
                 </tabBarController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Fy7-AP-8tS" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-1159" y="-2566"/>
+            <point key="canvasLocation" x="-1522" y="-3025"/>
         </scene>
         <!--Seafile-->
         <scene sceneID="cix-vt-Igt">
@@ -93,7 +93,7 @@
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="5tQ-Ax-AdV" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-449" y="-3624"/>
+            <point key="canvasLocation" x="-167" y="-3884"/>
         </scene>
         <!--Starred-->
         <scene sceneID="n5y-ZA-vP7">
@@ -145,7 +145,7 @@
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="U5S-08-cgn" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-521" y="-2374"/>
+            <point key="canvasLocation" x="-485" y="-2252"/>
         </scene>
         <!--Settings-->
         <scene sceneID="eY8-yK-8gB">
@@ -790,7 +790,7 @@
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="LzM-gp-ws5" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-39" y="-3249"/>
+            <point key="canvasLocation" x="-178" y="-3098"/>
         </scene>
         <!--Settings-->
         <scene sceneID="xpW-VU-zvN">
@@ -808,7 +808,7 @@
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="eSd-c3-HyK" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-547" y="-2988"/>
+            <point key="canvasLocation" x="-935" y="-2798"/>
         </scene>
         <!--Seaf Detail View Controller-->
         <scene sceneID="3hn-ux-u67">
@@ -842,32 +842,41 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Y6P-gU-pae" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-1725" y="-2997"/>
+            <point key="canvasLocation" x="-2094" y="-2983"/>
         </scene>
-        <!--Data Source-->
-        <scene sceneID="1gS-U2-JVg">
+        <!--Seaf Activity View Controller-->
+        <scene sceneID="fLh-VR-wpx">
             <objects>
-                <viewController id="xZh-Ns-hDC" customClass="SeafActivityViewController" sceneMemberID="viewController">
+                <viewController id="fEV-xI-APv" customClass="SeafActivityViewController" sceneMemberID="viewController">
                     <layoutGuides>
-                        <viewControllerLayoutGuide type="top" id="axM-dV-bef"/>
-                        <viewControllerLayoutGuide type="bottom" id="Nl9-42-OUU"/>
+                        <viewControllerLayoutGuide type="top" id="o1N-e9-xkn"/>
+                        <viewControllerLayoutGuide type="bottom" id="u5R-OS-lgw"/>
                     </layoutGuides>
-                    <view key="view" contentMode="scaleToFill" id="4Dx-fw-LSS" customClass="UITableView">
+                    <view key="view" contentMode="scaleToFill" id="X6A-NC-FJT">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                        <connections>
-                            <outlet property="dataSource" destination="xZh-Ns-hDC" id="hHT-wf-T6u"/>
-                            <outlet property="delegate" destination="xZh-Ns-hDC" id="XhQ-Fa-tce"/>
-                        </connections>
+                        <subviews>
+                            <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="bme-d6-Z3h">
+                                <rect key="frame" x="0.0" y="0.0" width="375" height="618"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                            </tableView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstItem="bme-d6-Z3h" firstAttribute="top" secondItem="o1N-e9-xkn" secondAttribute="bottom" constant="-64" id="1VD-8e-lod"/>
+                            <constraint firstAttribute="trailing" secondItem="bme-d6-Z3h" secondAttribute="trailing" id="XSW-Pu-iwM"/>
+                            <constraint firstItem="u5R-OS-lgw" firstAttribute="top" secondItem="bme-d6-Z3h" secondAttribute="bottom" id="cXP-Zy-onC"/>
+                            <constraint firstItem="bme-d6-Z3h" firstAttribute="leading" secondItem="X6A-NC-FJT" secondAttribute="leading" id="qva-2R-PhV"/>
+                        </constraints>
                     </view>
-                    <toolbarItems/>
-                    <navigationItem key="navigationItem" title="Activities" id="FvO-2h-VgV"/>
-                    <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
+                    <navigationItem key="navigationItem" id="F2R-Gn-2JF"/>
+                    <connections>
+                        <outlet property="tableView" destination="bme-d6-Z3h" id="vO9-L2-YQn"/>
+                    </connections>
                 </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="dtp-ln-MQB" sceneMemberID="firstResponder"/>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="lll-h7-t43" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="96" y="-1808"/>
+            <point key="canvasLocation" x="3.5" y="-1505.5"/>
         </scene>
         <!--Activity-->
         <scene sceneID="NnU-GF-PKm">
@@ -885,12 +894,12 @@
                         <autoresizingMask key="autoresizingMask"/>
                     </toolbar>
                     <connections>
-                        <segue destination="xZh-Ns-hDC" kind="relationship" relationship="rootViewController" id="4NM-aJ-uLb"/>
+                        <segue destination="fEV-xI-APv" kind="relationship" relationship="rootViewController" id="Pz6-LS-4oo"/>
                     </connections>
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="nbp-0J-YrF" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-488" y="-1781"/>
+            <point key="canvasLocation" x="-549" y="-1414"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="Rii-3f-Yq9">
@@ -932,7 +941,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Cto-6H-zeO" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-1253" y="-1115"/>
+            <point key="canvasLocation" x="-1307" y="-894"/>
         </scene>
         <!--Messages-->
         <scene sceneID="S9r-s7-uuf">
