@@ -189,11 +189,9 @@ enum {
 
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     [self.navigationController setToolbarHidden:YES animated:NO];
-
-//    [self.tableView valueForKey:@"_originalTopInset"];
     
     __weak typeof(self) weakSelf = self;
-        [self.tableView addPullToRefresh:[SVArrowPullToRefreshView class] withActionHandler:^{
+    [self.tableView addPullToRefresh:[SVArrowPullToRefreshView class] withActionHandler:^{
         [weakSelf.tableView reloadData];
         if (weakSelf.searchDisplayController.active)
             return;

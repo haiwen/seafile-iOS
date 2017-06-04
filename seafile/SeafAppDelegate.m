@@ -246,7 +246,6 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    
     Debug("%@", [[NSBundle mainBundle] infoDictionary]);
     _global = [SeafGlobal sharedObject];
     [_global migrate];
@@ -481,7 +480,7 @@
     if (IsIpad()) {
         return [[[[self.viewControllers objectAtIndex:index] viewControllers] lastObject] topViewController];
     } else {
-        if (!_detailVC){
+        if (!_detailVC) {
             _detailVC = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
         }
 
