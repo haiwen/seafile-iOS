@@ -27,6 +27,7 @@
 @property (strong, nonatomic) IBOutlet UITextField *usernameTextField;
 @property (strong, nonatomic) IBOutlet UITextField *passwordTextField;
 @property (strong, nonatomic) IBOutlet UIButton *loginButton;
+@property (weak, nonatomic)   IBOutlet NSLayoutConstraint *loginBtnTopConstraint;
 @property (strong, nonatomic) IBOutlet UILabel *msgLabel;
 @property (strong, nonatomic) IBOutlet UISwitch *httpsSwitch;
 @property (strong, nonatomic) IBOutlet UILabel *httpsLabel;
@@ -179,9 +180,9 @@
     self.navigationItem.leftBarButtonItem = cancelItem;
 
     if (ios7) {
-        loginButton.layer.borderColor = [[UIColor lightGrayColor] CGColor];
-        loginButton.layer.borderWidth = 0.5f;
-        loginButton.layer.cornerRadius = 5.0f;
+        loginButton.layer.borderColor = [[UIColor whiteColor] CGColor];
+        loginButton.layer.borderWidth = 0.0f;
+        loginButton.layer.cornerRadius = 4.0f;
 
     } else {
         loginButton.reversesTitleShadowWhenHighlighted = NO;
@@ -200,6 +201,7 @@
         passwordTextField.placeholder = NSLocalizedString(@"Password", @"Seafile");
     } else {
         self.title = NSLocalizedString(@"Shibboleth Login", @"Seafile");
+        self.loginBtnTopConstraint.constant = 44;
         [usernameTextField removeFromSuperview];
         [passwordTextField removeFromSuperview];
         [_msgLabel removeFromSuperview];
