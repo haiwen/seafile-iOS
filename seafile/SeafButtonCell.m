@@ -13,6 +13,7 @@
 - (void)awakeFromNib {
     // Initialization code
     [super awakeFromNib];
+    self.button.layer.cornerRadius = 4.0f;
 }
 
 - (void)setSelected:(BOOL)selected animated:(BOOL)animated {
