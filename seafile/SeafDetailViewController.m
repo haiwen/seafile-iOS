@@ -160,7 +160,7 @@ enum SHARE_STATUS {
     if (!self.isViewLoaded) return;
 
     [self updateNavigation];
-    CGRect r = CGRectMake(self.view.frame.origin.x, 0, self.view.frame.size.width, self.view.frame.size.height);
+    CGRect r = CGRectMake(self.view.frame.origin.x, 64, self.view.frame.size.width, self.view.frame.size.height - 64);
     switch (self.state) {
         case PREVIEW_DOWNLOADING:
             Debug (@"DownLoading file %@\n", self.preViewItem.previewItemTitle);
@@ -268,7 +268,7 @@ enum SHARE_STATUS {
 {
     [super viewDidLoad];
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
-        self.edgesForExtendedLayout = UIRectEdgeNone;
+        self.edgesForExtendedLayout = UIRectEdgeAll;
     // Do any additional setup after loading the view, typically from a nib.
 
     self.backItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Back", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
@@ -298,6 +298,7 @@ enum SHARE_STATUS {
         self.progressView = [views objectAtIndex:0];
     }
     self.webView = [[UIWebView alloc] initWithFrame:self.view.frame];
+    self.webView.backgroundColor = [UIColor whiteColor];
     self.webView.scalesPageToFit = YES;
     self.webView.autoresizesSubviews = YES;
     self.webView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
@@ -342,7 +343,7 @@ enum SHARE_STATUS {
 - (void)viewWillLayoutSubviews
 {
     [super viewWillLayoutSubviews];
-    CGRect r = CGRectMake(self.view.frame.origin.x, 0, self.view.frame.size.width, self.view.frame.size.height);
+    CGRect r = CGRectMake(self.view.frame.origin.x, 64, self.view.frame.size.width, self.view.frame.size.height - 64);
     if (self.state == PREVIEW_QL_SUBVIEW) {
         self.qlSubViewController.view.frame = r;
     } else if (self.state == PREVIEW_PHOTO){
