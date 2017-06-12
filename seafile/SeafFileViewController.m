@@ -168,14 +168,18 @@ enum {
     self.formatter = [[NSDateFormatter alloc] init];
     [self.formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
     
-    self.tableView.rowHeight = UITableViewAutomaticDimension;
-    self.tableView.estimatedRowHeight = 50.0;
+    self.tableView.rowHeight = 55;
     self.state = STATE_INIT;
 
     self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectZero];
     Debug("repoId:%@, %@, path:%@, loading ... cached:%d %@\n", _directory.repoId, _directory.name, _directory.path, _directory.hasCache, _directory.ooid);
     self.searchBar.delegate = self;
+    self.searchBar.barTintColor = [UIColor colorWithRed:240/255.0 green:239/255.0 blue:246/255.0 alpha:1.0];
     [self.searchBar sizeToFit];
+    UIImageView *barImageView = [[[self.searchBar.subviews firstObject] subviews] firstObject];
+    barImageView.layer.borderColor = [UIColor colorWithRed:240/255.0 green:239/255.0 blue:246/255.0 alpha:1.0].CGColor;
+    barImageView.layer.borderWidth = 1;
+    
     self.strongSearchDisplayController = [[UISearchDisplayController alloc] initWithSearchBar:self.searchBar contentsController:self];
     self.searchDisplayController.searchResultsDataSource = self;
     self.searchDisplayController.searchResultsDelegate = self;
@@ -185,6 +189,7 @@ enum {
     self.searchDisplayController.searchResultsTableView.sectionHeaderHeight = 0;
 
     self.tableView.tableHeaderView = self.searchBar;
+    self.tableView.tableFooterView = [UIView new];
     self.tableView.allowsMultipleSelection = NO;
 
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
@@ -944,6 +949,15 @@ enum {
     }
 }
 
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+{
+    if (tableView.numberOfSections == 1) {
+        return 0.01;
+    } else {
+        return 24;
+    }
+}
+
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
 {
     if (self.searchResults || tableView != self.tableView || ![_directory isKindOfClass:[SeafRepos class]])
@@ -969,11 +983,11 @@ enum {
     }
     UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
     UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 3, tableView.bounds.size.width - 10, 18)];
-    label.font = [UIFont systemFontOfSize:14];
+    label.font = [UIFont systemFontOfSize:12];
     label.text = text;
     label.textColor = [UIColor darkTextColor];
     label.backgroundColor = [UIColor clearColor];
-    [headerView setBackgroundColor:HEADER_COLOR];
+    [headerView setBackgroundColor:[UIColor colorWithRed:246/255.0 green:246/255.0 blue:250/255.0 alpha:1.0]];
     [headerView addSubview:label];
     return headerView;
 }
