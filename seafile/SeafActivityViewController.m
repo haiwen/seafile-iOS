@@ -62,6 +62,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 //    self.navigationController.navigationBar.tintColor = BAR_COLOR;
     self.tableView.rowHeight = UITableViewAutomaticDimension;
     self.tableView.estimatedRowHeight = 60.0;
+    self.tableView.tableFooterView = [UIView new];
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
     
