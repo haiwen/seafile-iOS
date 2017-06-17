@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="11542" systemVersion="16B2657" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="12121" systemVersion="16F73" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
     <device id="ipad9_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11524"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -16,30 +16,27 @@
             <rect key="frame" x="0.0" y="0.0" width="318" height="50"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="2" id="jlK-iz-38C">
-                <rect key="frame" x="0.0" y="0.0" width="318" height="50"/>
+                <rect key="frame" x="0.0" y="0.0" width="318" height="49.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" placeholderIntrinsicWidth="230" placeholderIntrinsicHeight="22" text="Name" lineBreakMode="characterWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3">
-                        <rect key="frame" x="48" y="10" width="230" height="22"/>
+                        <rect key="frame" x="52" y="8" width="226" height="24"/>
                         <accessibility key="accessibilityConfiguration">
                             <accessibilityTraits key="traits" staticText="YES" adjustable="YES"/>
                         </accessibility>
-                        <constraints>
-                            <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="21" id="9IC-bZ-0Er"/>
-                        </constraints>
-                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                        <fontDescription key="fontDescription" type="system" pointSize="15"/>
                         <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </label>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="4">
-                        <rect key="frame" x="8" y="8" width="32" height="32"/>
+                        <rect key="frame" x="12" y="8" width="32" height="32"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="32" id="RIP-FL-6N5"/>
                             <constraint firstAttribute="height" constant="32" id="eHM-2m-WjK"/>
                         </constraints>
                     </imageView>
                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" verticalHuggingPriority="249" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="25">
-                        <rect key="frame" x="48" y="33" width="230" height="15"/>
+                        <rect key="frame" x="52" y="33" width="0.0" height="15"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="15" id="HbI-Ic-AZE"/>
                         </constraints>
@@ -47,28 +44,44 @@
                         <color key="textColor" red="0.66666666666666663" green="0.66666666666666663" blue="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </label>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="VaX-pq-H6d">
+                        <rect key="frame" x="276" y="0.0" width="30" height="49.5"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="30" id="qrf-09-21e"/>
+                        </constraints>
+                        <state key="normal" image="arrowmore.png"/>
+                        <connections>
+                            <action selector="moreButtonTouch:" destination="2" eventType="touchUpInside" id="Ouj-RW-occ"/>
+                        </connections>
+                    </button>
                 </subviews>
                 <constraints>
-                    <constraint firstItem="3" firstAttribute="top" secondItem="jlK-iz-38C" secondAttribute="topMargin" constant="2" id="0Pw-cy-JhC"/>
+                    <constraint firstItem="VaX-pq-H6d" firstAttribute="centerY" secondItem="jlK-iz-38C" secondAttribute="centerY" id="7bY-fI-lrX"/>
                     <constraint firstItem="25" firstAttribute="top" secondItem="3" secondAttribute="bottom" constant="1" id="Bpc-Dk-FXQ"/>
                     <constraint firstAttribute="trailingMargin" secondItem="3" secondAttribute="trailing" constant="32" id="IKv-Ba-rLT"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="VaX-pq-H6d" secondAttribute="trailing" constant="4" id="NwP-7Q-C7s"/>
                     <constraint firstItem="25" firstAttribute="leading" secondItem="3" secondAttribute="leading" id="PVr-Hi-acc"/>
-                    <constraint firstItem="4" firstAttribute="leading" secondItem="jlK-iz-38C" secondAttribute="leadingMargin" id="VgW-a0-jx4"/>
+                    <constraint firstAttribute="bottom" secondItem="VaX-pq-H6d" secondAttribute="bottom" id="QrV-Ze-bDM"/>
+                    <constraint firstItem="VaX-pq-H6d" firstAttribute="top" secondItem="jlK-iz-38C" secondAttribute="top" id="STp-MX-aC4"/>
+                    <constraint firstItem="4" firstAttribute="leading" secondItem="jlK-iz-38C" secondAttribute="leadingMargin" constant="4" id="VgW-a0-jx4"/>
+                    <constraint firstItem="3" firstAttribute="top" secondItem="4" secondAttribute="top" id="ZxL-U4-CWt"/>
                     <constraint firstItem="3" firstAttribute="leading" secondItem="4" secondAttribute="trailing" constant="8" id="bDK-nO-rPO"/>
                     <constraint firstItem="4" firstAttribute="top" secondItem="jlK-iz-38C" secondAttribute="topMargin" id="bGj-4Z-PmV"/>
-                    <constraint firstAttribute="leadingMargin" secondItem="4" secondAttribute="leading" id="sy6-w2-1YO"/>
                     <constraint firstAttribute="bottomMargin" secondItem="25" secondAttribute="bottom" constant="-7" id="vw4-QI-JNV"/>
-                    <constraint firstItem="25" firstAttribute="width" secondItem="3" secondAttribute="width" id="zb6-hy-7cZ"/>
                 </constraints>
             </tableViewCellContentView>
             <connections>
                 <outlet property="detailTextLabel" destination="25" id="30"/>
                 <outlet property="imageView" destination="4" id="23"/>
+                <outlet property="moreButton" destination="VaX-pq-H6d" id="oAE-ky-tJC"/>
                 <outlet property="textLabel" destination="3" id="29"/>
             </connections>
-            <point key="canvasLocation" x="184" y="130.5"/>
+            <point key="canvasLocation" x="184" y="130"/>
         </tableViewCell>
     </objects>
+    <resources>
+        <image name="arrowmore.png" width="12" height="6"/>
+    </resources>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">
         <simulatedStatusBarMetrics key="statusBar"/>
         <simulatedOrientationMetrics key="orientation"/>
