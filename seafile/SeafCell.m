@@ -18,6 +18,7 @@
 {
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
     if (self) {
+        self.selectionStyle = UITableViewCellSelectionStyleNone;
         // Initialization code
     }
     return self;
@@ -37,8 +38,14 @@
     self.badgeLabel.hidden = true;
     self.cacheStatusView.hidden = true;
     self.progressView.hidden = true;
-    self.rightUtilityButtons = nil;
-    self.delegate = nil;
+//    self.rightUtilityButtons = nil;
+//    self.delegate = nil;
 }
 
+- (IBAction)moreButtonTouch:(id)sender {
+    if (self.moreButtonBlock) {
+        self.moreButtonBlock(self.cellIndexPath);
+    }
+    
+}
 @end

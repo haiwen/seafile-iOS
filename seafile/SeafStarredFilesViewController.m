@@ -193,6 +193,7 @@
     cell.textLabel.text = sfile.name;
     cell.detailTextLabel.text = sfile.detailText;
     cell.imageView.image = sfile.icon;
+    cell.moreButton.hidden = YES;
     [self updateCellDownloadStatus:cell file:sfile waiting:false];
 }
 
@@ -214,8 +215,8 @@
     }
     sfile.udelegate = self;
     if (tableView == self.tableView) {
-        cell.rightUtilityButtons = [self rightButtonsForFile:sfile];
-        cell.delegate = self;
+//        cell.rightUtilityButtons = [self rightButtonsForFile:sfile];
+//        cell.delegate = self;
     }
     [self updateCellContent:cell file:sfile];
     return cell;
