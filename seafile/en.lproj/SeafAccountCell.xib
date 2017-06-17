@@ -1,7 +1,13 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="9531" systemVersion="15D21" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="12121" systemVersion="16F73" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
+    <device id="ipad12_9" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="9529"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
+        <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
@@ -10,27 +16,38 @@
             <rect key="frame" x="0.0" y="0.0" width="339" height="64"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="2" id="4v9-hE-F6X">
-                <rect key="frame" x="0.0" y="0.0" width="339" height="63"/>
+                <rect key="frame" x="0.0" y="0.0" width="339" height="63.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" id="4">
-                        <rect key="frame" x="7" y="7" width="50" height="50"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="4">
+                        <rect key="frame" x="12" y="8" width="47.5" height="47.5"/>
+                        <constraints>
+                            <constraint firstAttribute="width" secondItem="4" secondAttribute="height" multiplier="1:1" id="4or-tC-agT"/>
+                        </constraints>
                     </imageView>
-                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="10" id="26">
-                        <rect key="frame" x="69" y="10" width="270" height="27"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                        <fontDescription key="fontDescription" type="system" pointSize="18"/>
-                        <color key="highlightedColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="26">
+                        <rect key="frame" x="67.5" y="8" width="259.5" height="0.0"/>
+                        <fontDescription key="fontDescription" type="system" pointSize="16"/>
+                        <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </label>
-                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="10" id="27">
-                        <rect key="frame" x="69" y="31" width="270" height="21"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="27">
+                        <rect key="frame" x="67.5" y="16" width="259.5" height="0.0"/>
                         <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                        <color key="textColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
-                        <color key="highlightedColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <color key="textColor" red="0.33333333333333331" green="0.33333333333333331" blue="0.33333333333333331" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </label>
                 </subviews>
+                <constraints>
+                    <constraint firstAttribute="trailing" secondItem="27" secondAttribute="trailing" constant="12" id="6ra-zo-Tdt"/>
+                    <constraint firstItem="26" firstAttribute="top" secondItem="4" secondAttribute="top" id="AXP-Zu-bM5"/>
+                    <constraint firstItem="26" firstAttribute="leading" secondItem="4" secondAttribute="trailing" constant="8" id="Dbf-bl-pZE"/>
+                    <constraint firstItem="4" firstAttribute="leading" secondItem="4v9-hE-F6X" secondAttribute="leading" constant="12" id="ONv-iV-Tiq"/>
+                    <constraint firstItem="4" firstAttribute="top" secondItem="4v9-hE-F6X" secondAttribute="top" constant="8" id="fkI-p5-Jp5"/>
+                    <constraint firstAttribute="trailing" secondItem="26" secondAttribute="trailing" constant="12" id="hgY-AK-zrq"/>
+                    <constraint firstItem="27" firstAttribute="top" secondItem="26" secondAttribute="bottom" constant="8" id="lRB-GM-4e7"/>
+                    <constraint firstAttribute="bottom" secondItem="4" secondAttribute="bottom" constant="8" id="pE0-7W-yqk"/>
+                    <constraint firstItem="27" firstAttribute="leading" secondItem="4" secondAttribute="trailing" constant="8" id="ukM-eS-nxE"/>
+                </constraints>
             </tableViewCellContentView>
             <connections>
                 <outlet property="emailLabel" destination="27" id="29"/>
@@ -40,4 +57,9 @@
             <point key="canvasLocation" x="349.5" y="271"/>
         </tableViewCell>
     </objects>
+    <simulatedMetricsContainer key="defaultSimulatedMetrics">
+        <simulatedStatusBarMetrics key="statusBar"/>
+        <simulatedOrientationMetrics key="orientation"/>
+        <simulatedScreenMetrics key="destination" type="ipad12_9.fullscreen"/>
+    </simulatedMetricsContainer>
 </document>

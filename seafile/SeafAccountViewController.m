@@ -29,6 +29,7 @@
 @property (strong, nonatomic) IBOutlet UIButton *loginButton;
 @property (weak, nonatomic)   IBOutlet NSLayoutConstraint *loginBtnTopConstraint;
 @property (strong, nonatomic) IBOutlet UILabel *msgLabel;
+@property (weak, nonatomic) IBOutlet UILabel *httpLabel;
 @property (strong, nonatomic) IBOutlet UISwitch *httpsSwitch;
 @property (strong, nonatomic) IBOutlet UILabel *httpsLabel;
 @property StartViewController *startController;
@@ -75,12 +76,12 @@
 - (IBAction)httpsSwitchFlip:(id)sender
 {
     BOOL https = _httpsSwitch.on;
-    BOOL cur = [serverTextField.text hasPrefix:HTTPS];
+    BOOL cur = [self.httpLabel.text hasPrefix:HTTPS];
     if (cur == https) return;
     if (https) {
-        serverTextField.text = [self replaceString:serverTextField.text prefix:HTTP withString:HTTPS];
+        self.httpLabel.text = @"https://";
     } else {
-        serverTextField.text = [self replaceString:serverTextField.text prefix:HTTPS withString:HTTP];
+        self.httpLabel.text = @"http://";
     }
 }
 
@@ -118,7 +119,7 @@
     [passwordTextField resignFirstResponder];
     NSString *username = usernameTextField.text;
     NSString *password = passwordTextField.text;
-    NSString *url = serverTextField.text;
+    NSString *url = [NSString stringWithFormat:@"%@%@",self.httpLabel.text,serverTextField.text];
 
     if (!url || url.length < 1) {
         [self alertWithTitle:NSLocalizedString(@"Server must not be empty", @"Seafile")];
@@ -195,7 +196,7 @@
     serverTextField.clearButtonMode = UITextFieldViewModeNever;
     serverTextField.placeholder = NSLocalizedString(@"Server, like https://seafile.cc", @"Seafile");
     if (self.type != ACCOUNT_SHIBBOLETH) {
-        _msgLabel.text = NSLocalizedString(@"For example: https://seacloud.cc or http://192.168.1.24:8000", @"Seafile");
+//        _msgLabel.text = NSLocalizedString(@"For example: https://seacloud.cc or http://192.168.1.24:8000", @"Seafile");
         self.title = [APP_NAME stringByAppendingFormat:@" %@", NSLocalizedString(@"Account", @"Seafile")];
         usernameTextField.placeholder = NSLocalizedString(@"Email or Username", @"Seafile");
         passwordTextField.placeholder = NSLocalizedString(@"Password", @"Seafile");
@@ -216,19 +217,19 @@
             break;
         case ACCOUNT_OTHER:{
 #if DEBUG
-            serverTextField.text = @"https://dev.seafile.com/seahub";
+//            serverTextField.text = @"dev.seafile.com/seahub";
             usernameTextField.text = @"demo@seafile.com";
             passwordTextField.text = @"";
 #else
-            serverTextField.text = HTTPS;
+
 #endif
         }
             break;
         case ACCOUNT_SHIBBOLETH:
 #if DEBUG
-            serverTextField.text = @"https://dev2.seafile.com/seahub/";
+//            serverTextField.text = @"dev2.seafile.com/seahub/";
 #else
-            serverTextField.text = HTTPS;
+            
 #endif
             break;
         default:
@@ -410,9 +411,9 @@
     NSString *prefix = https ? HTTPS: HTTP;
     NSRange substringRange = NSMakeRange(0, prefix.length);
 
-    if (range.location >= substringRange.location && range.location < substringRange.location + substringRange.length) {
-        return NO;
-    }
+//    if (range.location >= substringRange.location && range.location < substringRange.location + substringRange.length) {
+//        return NO;
+//    }
 
     return YES;
 }
