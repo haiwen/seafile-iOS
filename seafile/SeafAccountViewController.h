@@ -14,7 +14,7 @@ enum ACCOUNT_TYPE {
     ACCOUNT_OTHER,
 };
 
-#define SERVER_SEACLOUD         @"https://seacloud.cc"
+#define SERVER_SEACLOUD         @"seacloud.cc"
 
 #define SERVER_SEACLOUD_NAME    @"SeaCloud.cc"
 #define SERVER_SHIB_NAME        @"Shibboleth"

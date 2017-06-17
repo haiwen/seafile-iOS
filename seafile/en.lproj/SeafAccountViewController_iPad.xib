@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="12120" systemVersion="16F73" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="12121" systemVersion="16F73" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
     <device id="ipad9_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12088"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="SeafAccountViewController">
             <connections>
+                <outlet property="httpLabel" destination="Vpc-8f-gSf" id="vPH-dR-HDa"/>
                 <outlet property="httpsLabel" destination="2K6-1h-EqF" id="z6S-yh-KVi"/>
                 <outlet property="httpsSwitch" destination="85z-9D-LEw" id="hGR-8B-XIz"/>
                 <outlet property="loginBtnTopConstraint" destination="zcU-jj-Mpe" id="h9E-L4-vuv"/>
                 <outlet property="loginButton" destination="ggd-Li-Grh" id="mhb-cE-VAk"/>
-                <outlet property="msgLabel" destination="fUE-3E-3bS" id="PCk-DC-Jfw"/>
                 <outlet property="passwordTextField" destination="8" id="38"/>
                 <outlet property="serverTextField" destination="7" id="36"/>
                 <outlet property="usernameTextField" destination="9" id="39"/>
@@ -53,9 +53,8 @@
                             </connections>
                         </textField>
                         <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="Server, like https://seafile.cc" minimumFontSize="17" clearButtonMode="whileEditing" translatesAutoresizingMaskIntoConstraints="NO" id="7">
-                            <rect key="frame" x="0.0" y="44" width="370" height="44"/>
+                            <rect key="frame" x="50" y="44" width="320" height="44"/>
                             <constraints>
-                                <constraint firstAttribute="width" constant="370" id="1TW-D0-pY5"/>
                                 <constraint firstAttribute="height" constant="44" id="3J2-bV-Afe"/>
                             </constraints>
                             <fontDescription key="fontDescription" type="system" pointSize="14"/>
@@ -65,10 +64,10 @@
                             </connections>
                         </textField>
                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="2K6-1h-EqF">
-                            <rect key="frame" x="0.0" y="88" width="65" height="44"/>
+                            <rect key="frame" x="0.0" y="88" width="50" height="44"/>
                             <constraints>
                                 <constraint firstAttribute="height" constant="44" id="JGZ-Ts-56d"/>
-                                <constraint firstAttribute="width" constant="65" id="OQ0-wb-Mr0"/>
+                                <constraint firstAttribute="width" constant="50" id="OQ0-wb-Mr0"/>
                             </constraints>
                             <fontDescription key="fontDescription" type="system" pointSize="14"/>
                             <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -123,13 +122,24 @@
                                 <action selector="login:" destination="-1" eventType="touchUpInside" id="akd-MK-cnZ"/>
                             </connections>
                         </button>
-                        <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="For example: https://seacloud.cc or http://192.168.1.24:8000" lineBreakMode="wordWrap" numberOfLines="2" baselineAdjustment="alignBaselines" highlighted="YES" adjustsFontSizeToFit="NO" preferredMaxLayoutWidth="363" translatesAutoresizingMaskIntoConstraints="NO" id="fUE-3E-3bS">
-                            <rect key="frame" x="30" y="319.5" width="230" height="33.5"/>
+                        <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" lineBreakMode="wordWrap" numberOfLines="2" baselineAdjustment="alignBaselines" highlighted="YES" adjustsFontSizeToFit="NO" preferredMaxLayoutWidth="363" translatesAutoresizingMaskIntoConstraints="NO" id="fUE-3E-3bS">
+                            <rect key="frame" x="30" y="319.5" width="230" height="35"/>
                             <constraints>
                                 <constraint firstAttribute="width" constant="230" id="0EI-dS-TXj"/>
+                                <constraint firstAttribute="height" constant="35" id="x8L-pK-jxj"/>
                             </constraints>
                             <fontDescription key="fontDescription" type="system" pointSize="14"/>
                             <color key="textColor" red="0.33333333333333331" green="0.33333333333333331" blue="0.33333333333333331" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                            <nil key="highlightedColor"/>
+                        </label>
+                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="https://" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Vpc-8f-gSf">
+                            <rect key="frame" x="0.0" y="44" width="50" height="44"/>
+                            <constraints>
+                                <constraint firstAttribute="width" constant="50" id="CWV-Me-jYC"/>
+                                <constraint firstAttribute="height" constant="44" id="yN8-MU-xKx"/>
+                            </constraints>
+                            <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                            <nil key="textColor"/>
                             <nil key="highlightedColor"/>
                         </label>
                     </subviews>
@@ -140,15 +150,17 @@
                         <constraint firstItem="9" firstAttribute="leading" secondItem="4" secondAttribute="leading" id="1p5-ol-lTX"/>
                         <constraint firstAttribute="trailing" secondItem="8" secondAttribute="trailing" id="2PW-Fh-vjm"/>
                         <constraint firstItem="8" firstAttribute="leading" secondItem="4" secondAttribute="leading" id="5FX-G1-mse"/>
-                        <constraint firstItem="7" firstAttribute="leading" secondItem="4" secondAttribute="leading" id="62D-Rg-oCP"/>
                         <constraint firstItem="9" firstAttribute="top" secondItem="sS8-66-Hle" secondAttribute="bottom" id="9PR-Um-wYg"/>
                         <constraint firstItem="sS8-66-Hle" firstAttribute="top" secondItem="2K6-1h-EqF" secondAttribute="bottom" id="Ay9-W1-EUH"/>
+                        <constraint firstItem="Vpc-8f-gSf" firstAttribute="leading" secondItem="4" secondAttribute="leading" id="C33-ZA-LEy"/>
+                        <constraint firstItem="7" firstAttribute="leading" secondItem="Vpc-8f-gSf" secondAttribute="trailing" id="HZg-3e-4wG"/>
                         <constraint firstAttribute="width" constant="370" id="HeV-x1-MjE"/>
                         <constraint firstItem="ggd-Li-Grh" firstAttribute="leading" secondItem="4" secondAttribute="leading" constant="30" id="Jqo-Fb-n78"/>
                         <constraint firstAttribute="height" constant="393" id="Mho-F4-8eX"/>
                         <constraint firstItem="sS8-66-Hle" firstAttribute="leading" secondItem="4" secondAttribute="leading" id="R2k-r0-uqq"/>
                         <constraint firstItem="1qz-sJ-qg2" firstAttribute="leading" secondItem="4" secondAttribute="leading" id="TE6-mR-k5Q"/>
                         <constraint firstItem="jXE-I6-QKZ" firstAttribute="leading" secondItem="4" secondAttribute="leading" id="Uk0-QZ-bxi"/>
+                        <constraint firstItem="7" firstAttribute="centerY" secondItem="Vpc-8f-gSf" secondAttribute="centerY" id="V4F-fU-qBk"/>
                         <constraint firstAttribute="trailing" secondItem="jXE-I6-QKZ" secondAttribute="trailing" id="VdF-CB-Suy"/>
                         <constraint firstAttribute="trailing" secondItem="9" secondAttribute="trailing" id="WNZ-U4-Mkd"/>
                         <constraint firstItem="8" firstAttribute="top" secondItem="jXE-I6-QKZ" secondAttribute="bottom" id="asY-Jv-qo7"/>
