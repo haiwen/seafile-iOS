@@ -15,6 +15,7 @@
 #import "SeafFile.h"
 #import "SeafRepos.h"
 #import "SeafCell.h"
+#import "SeafActionSheet.h"
 #import "SeafPhoto.h"
 #import "SeafPhotoThumb.h"
 #import "SeafStorage.h"
@@ -45,9 +46,9 @@ enum {
 
 
 @interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, SeafDirDelegate, SeafShareDelegate, UISearchBarDelegate, UISearchDisplayDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate, MWPhotoBrowserDelegate>
-- (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView;
-- (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView;
-- (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView;
+- (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
+- (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
+- (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
 
 @property (strong, nonatomic) SeafDir *directory;
 @property (strong) id<SeafItem> curEntry;
@@ -419,7 +420,7 @@ enum {
         titles = [NSMutableArray arrayWithObjects:S_SORT_NAME, S_SORT_MTIME, S_PHOTOS_ALBUM, nil];
         if (self.photos.count >= 3) [titles addObject:S_PHOTOS_BROWSER];
     }
-    [self showAlertWithAction:titles fromBarItem:self.editItem withTitle:nil];
+    [self showSheetWithTitles:titles andFromView:self.editItem];
 }
 
 - (void)initNavigationItems:(SeafDir *)directory
@@ -546,10 +547,7 @@ enum {
         cell = [cells objectAtIndex:0];
     }
     [cell reset];
-    if (tableView == self.tableView) {
-        cell.rightUtilityButtons = [self rightButtons];
-        cell.delegate = self;
-    }
+
     return cell;
 }
 
@@ -576,30 +574,77 @@ enum {
     [self presentViewController:alert animated:true completion:nil];
 }
 
-- (void)showActionSheetForCell:(UITableViewCell *)cell
+#pragma mark - Sheet
+- (void)showActionSheetWithIndexPath:(NSIndexPath *)indexPath
 {
-    id entry = [self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
+    _selectedindex = indexPath;
+    id entry = [self getDentrybyIndexPath:indexPath tableView:self.tableView];
+    SeafCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+    NSArray *titles;
     if ([entry isKindOfClass:[SeafRepo class]]) {
         SeafRepo *repo = (SeafRepo *)entry;
-        NSMutableArray *titles = [[NSMutableArray alloc] init];
-        [titles addObject:S_DOWNLOAD];
         if (repo.encrypted) {
-            [titles addObject:S_RESET_PASSWORD];
+            titles = [NSArray arrayWithObjects:S_DOWNLOAD, S_RESET_PASSWORD, nil];
+        } else {
+            titles = [NSArray arrayWithObjects:S_DOWNLOAD, nil];
         }
-        [self showAlertWithAction:titles fromRect:cell.frame inView:self.tableView withTitle:nil];
     } else if ([entry isKindOfClass:[SeafDir class]]) {
-        [self showAlertWithAction:[NSArray arrayWithObjects:S_DOWNLOAD, S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
+        titles = [NSArray arrayWithObjects:S_DOWNLOAD, S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
     } else if ([entry isKindOfClass:[SeafFile class]]) {
         SeafFile *file = (SeafFile *)entry;
-        NSArray *titles;
         NSString *star = file.isStarred ? S_UNSTAR : S_STAR;
         if (file.mpath)
             titles = [NSArray arrayWithObjects:star, S_DELETE, S_UPLOAD, S_SHARE_EMAIL, S_SHARE_LINK, nil];
         else
             titles = [NSArray arrayWithObjects:star, S_DELETE, S_REDOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
-        [self showAlertWithAction:titles fromRect:cell.frame inView:self.tableView withTitle:nil];
+    
     } else if ([entry isKindOfClass:[SeafUploadFile class]]) {
-        [self showAlertWithAction:[NSArray arrayWithObjects:S_DELETE, nil] fromRect:cell.frame inView:self.tableView withTitle:nil];
+        titles = [NSArray arrayWithObjects:S_DOWNLOAD, S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
+    }
+    
+    [self showSheetWithTitles:titles andFromView:cell];
+}
+
+- (void)showSheetWithTitles:(NSArray*)titles andFromView:(id)view
+{
+    SeafActionSheetSection *section = [SeafActionSheetSection sectionWithTitle:nil message:nil buttonTitles:titles buttonStyle:SFActionSheetButtonStyleDefault];
+    NSArray *sections;
+    if (IsIpad()) {
+        sections = @[section];
+    }else{
+        sections = @[section,[SeafActionSheetSection cancelSection]];
+    }
+    
+    SeafActionSheet *actionSheet = [SeafActionSheet actionSheetWithSections:sections];
+    actionSheet.insets = UIEdgeInsetsMake(20.0f, 0.0f, 0.0f, 0.0f);
+    
+    [actionSheet setButtonPressedBlock:^(SeafActionSheet *actionSheet, NSIndexPath *indexPath){
+        [actionSheet dismissAnimated:YES];
+        if (indexPath.section == 0) {
+            [self handleAction:titles[indexPath.row]];
+        }
+    }];
+    
+    if (IsIpad()) {
+        [actionSheet setOutsidePressBlock:^(SeafActionSheet *sheet) {
+            [sheet dismissAnimated:YES];
+        }];
+        CGPoint point = CGPointZero;
+        
+        if ([view isKindOfClass:[SeafCell class]]) {
+            SeafCell *cell = (SeafCell*)view;
+            point = (CGPoint){CGRectGetMidX(cell.moreButton.frame), CGRectGetMaxY(cell.moreButton.frame)};
+            point = [self.navigationController.view convertPoint:point fromView:cell];
+        } else if ([view isKindOfClass:[UIBarButtonItem class]]) {
+            UIBarButtonItem *item = (UIBarButtonItem*)view;
+            UIView *itemView = [item valueForKey:@"view"];
+            point = (CGPoint){CGRectGetMidX(itemView.frame), CGRectGetMaxY(itemView.frame) + itemView.frame.size.height};
+        }
+        
+        [actionSheet showFromPoint:point inView:self.navigationController.view arrowDirection:SFActionSheetArrowDirectionTop animated:YES];
+    } else {
+        UIView *topView = [[[UIApplication sharedApplication] keyWindow].subviews firstObject];
+        [actionSheet showInView:topView animated:YES];
     }
 }
 
@@ -614,8 +659,8 @@ enum {
     _selectedindex = [self.tableView indexPathForRowAtPoint:touchPoint];
     if (!_selectedindex)
         return;
-    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
-    [self showActionSheetForCell:cell];
+    
+    [self showActionSheetWithIndexPath:_selectedindex];
 }
 
 
@@ -690,10 +735,15 @@ enum {
     [self updateCellDownloadStatus:cell file:sfile waiting:false];
 }
 
-- (SeafCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView
+- (SeafCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath
 {
     [sfile loadCache];
     SeafCell *cell = [self getCellForTableView:tableView];
+    cell.cellIndexPath = indexPath;
+    cell.moreButtonBlock = ^(NSIndexPath *indexPath) {
+        Debug(@"%@", indexPath);
+        [self showActionSheetWithIndexPath:indexPath];
+    };
     [self updateCellContent:cell file:sfile];
     sfile.delegate = self;
     sfile.udelegate = self;
@@ -704,29 +754,34 @@ enum {
     return cell;
 }
 
-- (SeafCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView
+- (SeafCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath
 {
     SeafCell *cell = (SeafCell *)[self getCell:@"SeafDirCell" forTableView:tableView];
     cell.textLabel.text = sdir.name;
     cell.detailTextLabel.text = @"";
     cell.imageView.image = sdir.icon;
+    cell.cellIndexPath = indexPath;
+    cell.moreButtonBlock = ^(NSIndexPath *indexPath) {
+        Debug(@"%@", indexPath);
+        [self showActionSheetWithIndexPath:indexPath];
+    };
     sdir.delegate = self;
     return cell;
 }
 
-- (SeafCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView
+- (SeafCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath
 {
     SeafCell *cell = [self getCellForTableView:tableView];
     cell.detailTextLabel.text = srepo.detailText;
     cell.imageView.image = srepo.icon;
     cell.textLabel.text = srepo.name;
     [cell.cacheStatusWidthConstraint setConstant:0.0f];
+    cell.cellIndexPath = indexPath;
+    cell.moreButtonBlock = ^(NSIndexPath *indexPath) {
+        Debug(@"%@", indexPath);
+        [self showActionSheetWithIndexPath:indexPath];
+    };
     srepo.delegate = self;
-    if (tableView == self.tableView) {
-        [cell setRightUtilityButtons:[self repoButtons:srepo] WithButtonWidth:100];
-    } else {
-        cell.rightUtilityButtons = nil;
-    }
 
     return cell;
 }
@@ -738,14 +793,14 @@ enum {
 
     if (tableView != self.tableView) {
         // For search results.
-        return [self getSeafFileCell:(SeafFile *)entry forTableView:tableView];
+        return [self getSeafFileCell:(SeafFile *)entry forTableView:tableView andIndexPath:indexPath];
     }
     if ([entry isKindOfClass:[SeafRepo class]]) {
-        return [self getSeafRepoCell:(SeafRepo *)entry forTableView:tableView];
+        return [self getSeafRepoCell:(SeafRepo *)entry forTableView:tableView andIndexPath:indexPath];
     } else if ([entry isKindOfClass:[SeafFile class]]) {
-        return [self getSeafFileCell:(SeafFile *)entry forTableView:tableView];
+        return [self getSeafFileCell:(SeafFile *)entry forTableView:tableView andIndexPath:indexPath];
     } else if ([entry isKindOfClass:[SeafDir class]]) {
-        return [self getSeafDirCell:(SeafDir *)entry forTableView:tableView];
+        return [self getSeafDirCell:(SeafDir *)entry forTableView:tableView andIndexPath: indexPath];
     } else {
         return [self getSeafUploadFileCell:(SeafUploadFile *)entry forTableView:tableView];
     }
@@ -762,9 +817,7 @@ enum {
 
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (tableView != self.tableView) return NO;
-    NSObject *entry  = [self getDentrybyIndexPath:indexPath tableView:tableView];
-    return ![entry isKindOfClass:[SeafUploadFile class]];
+    return NO;
 }
 
 - (UITableViewCellEditingStyle)tableView:(UITableView *)tableView editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -1805,8 +1858,8 @@ enum {
         [self performSelector:@selector(hideCellButton:) withObject:cell afterDelay:0.1f];
     } else {
         if (index == 0) {// More
-            _selectedCell = cell;
-            [self showActionSheetForCell:cell];
+            [self showActionSheetWithIndexPath:_selectedindex];
+            [cell hideUtilityButtonsAnimated:true];
             [self.tableView selectRowAtIndexPath:_selectedindex animated:true scrollPosition:UITableViewScrollPositionNone];
         } else { // Delete
             [self deleteEntry:base];

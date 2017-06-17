@@ -82,10 +82,10 @@
     ColorfulButton *bt = [views objectAtIndex:0];
     [bt addTarget:self action:@selector(goToDefaultBtclicked:) forControlEvents:UIControlEventTouchUpInside];
     bt.layer.cornerRadius = 0;
-    bt.layer.borderWidth = 1.0f;
+    bt.layer.borderWidth = .5f;
     bt.layer.masksToBounds = YES;
-    bt.layer.borderColor = [[UIColor grayColor] CGColor];
-    bt.backgroundColor = [UIColor colorWithRed:227.0/255.0 green:227.0/255.0 blue:227.0/255.0 alpha:1.0];
+    bt.layer.borderColor = [[UIColor lightGrayColor] CGColor];
+    bt.backgroundColor = [UIColor colorWithRed:249.0f/255 green:249.0f/255 blue:249.0f/255 alpha:1];
     [bt setTitleColor:[UIColor colorWithRed:112/255.0 green:112/255.0 blue:112/255.0 alpha:1.0] forState:UIControlStateNormal];
     [bt setTitle:NSLocalizedString(@"Back to Last Account", @"Seafile") forState:UIControlStateNormal];
     bt.showsTouchWhenHighlighted = true;
