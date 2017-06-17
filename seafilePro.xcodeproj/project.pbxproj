@@ -188,6 +188,9 @@
 		58D40A7B1E9AF85100A68BEF /* seafile.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 58D40A6C1E9AF7A400A68BEF /* seafile.xcdatamodeld */; };
 		58D40A7E1E9AF86D00A68BEF /* SeafData.m in Sources */ = {isa = PBXBuildFile; fileRef = 58D40A7C1E9AF86D00A68BEF /* SeafData.m */; };
 		7354777D2C3444E394BB2F31 /* libPods-SeafAction.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 159E0D2A7419F67E532A240F /* libPods-SeafAction.a */; };
+		F568C1FB1EF10F8900F1035D /* SeafActionSheet.m in Sources */ = {isa = PBXBuildFile; fileRef = F568C1FA1EF10F8900F1035D /* SeafActionSheet.m */; };
+		F575168B1EF4CA0B00BD633B /* arrowmore@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F57516891EF4CA0B00BD633B /* arrowmore@2x.png */; };
+		F575168C1EF4CA0B00BD633B /* arrowmore@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = F575168A1EF4CA0B00BD633B /* arrowmore@3x.png */; };
 		FE5D80C9DA6AB7339F81D3AD /* libPods-SeafProviderFileProvider.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3DFD7A698B44546A8DDD2D26 /* libPods-SeafProviderFileProvider.a */; };
 /* End PBXBuildFile section */
 
@@ -471,6 +474,10 @@
 		E2A39A0EBB6C3379F30D1A83 /* libPods-seafile-appstore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-seafile-appstore.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E4F46F57187B44B200B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
 		EE1E1FA7502D3F04292B11CB /* Pods-SeafAction.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafAction.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SeafAction/Pods-SeafAction.debug.xcconfig"; sourceTree = "<group>"; };
+		F568C1F91EF10F8900F1035D /* SeafActionSheet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafActionSheet.h; sourceTree = "<group>"; };
+		F568C1FA1EF10F8900F1035D /* SeafActionSheet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafActionSheet.m; sourceTree = "<group>"; };
+		F57516891EF4CA0B00BD633B /* arrowmore@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "arrowmore@2x.png"; sourceTree = "<group>"; };
+		F575168A1EF4CA0B00BD633B /* arrowmore@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "arrowmore@3x.png"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -628,6 +635,8 @@
 				57C03F3B17FB271100F7B575 /* unstar2.png */,
 				57943BFD19F027D5008423E5 /* unstar2@2x.png */,
 				570A300316578B4F007D0CBF /* upload.png */,
+				F57516891EF4CA0B00BD633B /* arrowmore@2x.png */,
+				F575168A1EF4CA0B00BD633B /* arrowmore@3x.png */,
 			);
 			path = images;
 			sourceTree = "<group>";
@@ -675,6 +684,8 @@
 				57C07CE31632556600502B06 /* SeafUploadingFileCell.m */,
 				572B0A7515D16C1C00798C6E /* StartViewController.h */,
 				572B0A7615D16C1C00798C6E /* StartViewController.m */,
+				F568C1F91EF10F8900F1035D /* SeafActionSheet.h */,
+				F568C1FA1EF10F8900F1035D /* SeafActionSheet.m */,
 			);
 			name = views;
 			sourceTree = "<group>";
@@ -1129,6 +1140,7 @@
 				57C03F5617FB271100F7B575 /* export2.png in Resources */,
 				57A95E5F18369E5A009D268A /* ellipsis.png in Resources */,
 				57943C1819F027D5008423E5 /* tab-modify@2x.png in Resources */,
+				F575168B1EF4CA0B00BD633B /* arrowmore@2x.png in Resources */,
 				57943C0119F027D5008423E5 /* arrowleft2@2x.png in Resources */,
 				57943BFE19F027D5008423E5 /* addmsg@2x.png in Resources */,
 				57A95E5B18369147009D268A /* close2.png in Resources */,
@@ -1144,6 +1156,7 @@
 				57E5E7B81CC219E7004B7125 /* SeafEventCell.xib in Resources */,
 				57A95E5918369147009D268A /* close.png in Resources */,
 				57C03F4C17FB271100F7B575 /* arrowright2.png in Resources */,
+				F575168C1EF4CA0B00BD633B /* arrowmore@3x.png in Resources */,
 				57C03F3A17FB227100F7B575 /* addmsg2.png in Resources */,
 				57C03F5217FB271100F7B575 /* plus2.png in Resources */,
 				57A95E6118369E5A009D268A /* ellipsis2.png in Resources */,
@@ -1406,6 +1419,7 @@
 				571D8CD21677881400F1A22C /* SeafSettingsViewController.m in Sources */,
 				571D8CD41677881400F1A22C /* SeafStarredFilesViewController.m in Sources */,
 				58D40A6E1E9AF7A400A68BEF /* seafile.xcdatamodeld in Sources */,
+				F568C1FB1EF10F8900F1035D /* SeafActionSheet.m in Sources */,
 				570DFAC716A15D0100ADD5F2 /* SeafAccountViewController.m in Sources */,
 				570DFAD016A1EA1B00ADD5F2 /* SeafStartHeaderView.m in Sources */,
 				577B6C6616AADBA3008E82C2 /* SeafCell.m in Sources */,
