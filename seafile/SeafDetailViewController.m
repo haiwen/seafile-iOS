@@ -156,7 +156,7 @@ enum SHARE_STATUS {
 - (void)refreshView
 {
     [self updatePreviewState];
-    if (!self.isViewLoaded) return;
+//    if (self.isViewLoaded) return;
 
     [self updateNavigation];
     CGRect r = CGRectMake(self.view.frame.origin.x, 0, self.view.frame.size.width, self.view.frame.size.height);
