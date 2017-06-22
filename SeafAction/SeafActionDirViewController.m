@@ -108,7 +108,6 @@
 
 - (void)uploadFile:(SeafUploadFile *)ufile overwrite:(BOOL)overwrite
 {
-     [ufile saveAttr:nil flush:false];
      ufile.delegate = self;
      ufile.udir = _directory;
      ufile.overwrite = overwrite;

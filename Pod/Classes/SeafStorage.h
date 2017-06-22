@@ -32,8 +32,6 @@
 - (NSString *)documentPath:(NSString*)fileId;
 - (NSString *)blockPath:(NSString*)blkId;
 
-- (NSString *)uniqueUploadDir;
-
 - (void)clearCache;
 
 - (long long)cacheSize;

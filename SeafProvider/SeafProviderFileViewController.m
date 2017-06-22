@@ -163,7 +163,6 @@
             return [self alertWithTitle:NSLocalizedString(@"Failed to upload file", @"Seafile") handler:nil];
         }
         SeafUploadFile *ufile = [[SeafUploadFile alloc] initWithPath:newURL.path];
-        [ufile saveAttr:nil flush:false];
         ufile.delegate = self;
         ufile.udir = _directory;
         ufile.overwrite = overwrite;

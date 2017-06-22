@@ -1436,7 +1436,7 @@ enum {
 {
     NSMutableSet *nameSet = overwrite ? [NSMutableSet new] : [self getExistedNameSet];
     NSMutableArray *files = [[NSMutableArray alloc] init];
-    NSString *uploadDir = [SeafStorage.sharedObject uniqueUploadDir];
+    NSString *uploadDir = [self.connection uniqueUploadDir];
     for (ALAsset *asset in assets) {
         NSString *filename = [Utils assertName:asset];
         Debug("Upload picked file : %@", filename);
@@ -1672,6 +1672,7 @@ enum {
         if (indexPath) *indexPath = path;
         return (SeafCell *)[[self currentTableView] cellForRowAtIndexPath:path];
     } @catch(NSException *exception) {
+        Warning("Something wrong %@", exception);
         return nil;
     }
 }

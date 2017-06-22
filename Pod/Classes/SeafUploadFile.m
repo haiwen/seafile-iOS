@@ -40,6 +40,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 @property dispatch_semaphore_t semaphore;
 @property double lastFailedTimeStamp;
+@property (strong, nonatomic)NSMutableDictionary *uploadAttr;
 @end
 
 @implementation SeafUploadFile
@@ -150,7 +151,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     if (_blockDir) {
         [[NSFileManager defaultManager] removeItemAtPath:_blockDir error:nil];
     }
-    [self saveAttr:nil flush:true];
+    [self clearUploadAttr:true];
     if (!self.autoSync) {
         [Utils removeDirIfEmpty:[self.lpath stringByDeletingLastPathComponent]];
     }
@@ -198,11 +199,14 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         [Utils dict:dict setObject:[NSNumber numberWithLongLong:self.mtime] forKey:@"mtime"];
         [Utils dict:dict setObject:[NSNumber numberWithBool:result] forKey:@"result"];
         [Utils dict:dict setObject:[NSNumber numberWithBool:self.autoSync] forKey:@"autoSync"];
-        [self saveAttr:dict flush:true];
+        [self saveUploadAttr:true];
     }
     Debug("result=%d, name=%@, delegate=%@, oid=%@\n", result, self.name, _delegate, oid);
     [self uploadComplete:result file:self oid:oid];
     dispatch_semaphore_signal(_semaphore);
+    if (result) {
+        [self doRemove];
+    }
 }
 
 -(void)showDeserializedError:(NSError *)error
@@ -475,7 +479,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         upload_url = [upload_url stringByAppendingString:@"link/"];
 
     upload_url = [upload_url stringByAppendingFormat:@"?p=%@", uploadpath.escapedUrl];
-    Debug("upload file %@ %@", self.lpath, upload_url);
+    Debug("upload file size: %lld %@ %@", _filesize, self.lpath, upload_url);
     [connection sendRequest:upload_url success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          NSString *url = [JSON stringByAppendingString:@"?ret-json=true"];
@@ -537,11 +541,13 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         @synchronized(dict) {
             BOOL ret = [Utils writeDataToPath:self.lpath andAsset:self.asset];
             if (!ret) {
+                Warning("Failed to write asset to file.");
                 [self finishUpload:false oid:nil];
                 return;
             }
         }
         _filesize = [Utils fileSizeAtPath1:self.lpath];
+        Debug("asset file %@ size: %lld, lpath: %@", _asset.defaultRepresentation.url, _filesize, self.lpath);
         _asset = nil;
     }
 }
@@ -652,15 +658,29 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     [SeafUploadFile saveAttrs];
 }
 
-- (NSDictionary *)uploadAttr
+- (NSMutableDictionary *)uploadAttr
 {
-    if (!self.lpath) return [NSDictionary new];
-    return [[SeafUploadFile uploadFileAttrs] objectForKey:self.lpath];
+    if (!_uploadAttr) {
+        if (self.lpath) {
+            _uploadAttr = [[SeafUploadFile uploadFileAttrs] objectForKey:self.lpath];
+        }
+
+        if (!_uploadAttr) {
+            _uploadAttr = [NSMutableDictionary new];
+        }
+    }
+    return _uploadAttr;
 }
 
-- (BOOL)saveAttr:(NSMutableDictionary *)attr flush:(BOOL)flush
+- (BOOL)saveUploadAttr:(BOOL)flush
 {
-    [Utils dict:[SeafUploadFile uploadFileAttrs] setObject:attr forKey:self.lpath];
+    [Utils dict:[SeafUploadFile uploadFileAttrs] setObject:self.uploadAttr forKey:self.lpath];
+    return !flush || [SeafUploadFile saveAttrs];
+}
+
+- (BOOL)clearUploadAttr:(BOOL)flush
+{
+    [Utils dict:[SeafUploadFile uploadFileAttrs] setObject:nil forKey:self.lpath];
     return !flush || [SeafUploadFile saveAttrs];
 }
 

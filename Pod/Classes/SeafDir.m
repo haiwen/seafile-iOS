@@ -410,6 +410,9 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 
 - (void)loadContent:(BOOL)force;
 {
+    if (force) {
+        _uploadItems = nil;
+    }
     _allItems = nil;
     [super loadContent:force];
     Debug("repoId:%@, %@, path:%@, loading ... cached:%d %@, editable:%d, state:%d\n", self.repoId, self.name, self.path, self.hasCache, self.ooid, self.editable, self.state);
@@ -438,8 +441,6 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
         if ([self.uploadItems containsObject:file]) return;
     }
     NSMutableDictionary *dict = file.uploadAttr;
-    if (!dict)
-        dict = [[NSMutableDictionary alloc] init];
     [Utils dict:dict setObject:self.repoId forKey:@"urepo"];
     [Utils dict:dict setObject:self.path forKey:@"upath"];
     [Utils dict:dict setObject:[NSNumber numberWithBool:file.overwrite] forKey:@"update"];
@@ -448,7 +449,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
         [Utils dict:dict setObject:file.asset.defaultRepresentation.url.absoluteString forKey:@"assetURL"];
     }
     file.udir = self;
-    [file saveAttr:dict flush:flush];
+    [file saveUploadAttr:flush];
     @synchronized(_uploadLock) {
         [self.uploadItems addObject:file];
     }

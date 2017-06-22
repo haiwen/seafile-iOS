@@ -116,6 +116,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 - (void)logout;
 
 - (NSUInteger)autoSyncedNum;
+- (NSString * _Nonnull)uniqueUploadDir;
 
 - (NSURLRequest * _Nonnull)buildRequest:(NSString * _Nonnull)url method:(NSString * _Nonnull)method form:(NSString *_Nullable)form;
 

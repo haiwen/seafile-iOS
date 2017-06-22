@@ -205,7 +205,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (!_localUploadDir) {
         _localUploadDir = [self getAttribute:@"UPLOAD_CACHE_DIR"];
         if (!_localUploadDir) {
-            _localUploadDir = [SeafStorage.sharedObject uniqueUploadDir];
+            _localUploadDir = [SeafStorage uniqueDirUnder:SeafStorage.sharedObject.uploadsDir];
             [self setAttribute:_localUploadDir forKey:@"UPLOAD_CACHE_DIR"];
         }
         [Utils checkMakeDir:_localUploadDir];
@@ -477,6 +477,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     return [[_info objectForKey:@"usage"] integerValue:-1];
 }
+
+- (NSString *)uniqueUploadDir
+{
+    return [SeafStorage uniqueDirUnder:self.localUploadDir];
+}
+
 - (void)setRepo:(NSString *)repoId password:(NSString *)password
 {
     Debug("set repo %@ password %@", repoId, password);
@@ -613,11 +619,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)clearUploadCache
 {
-    if (_localUploadDir) {
-        [Utils clearAllFiles:_localUploadDir];
-        [[NSFileManager defaultManager] removeItemAtPath:_localUploadDir error:nil];
-        _localUploadDir = nil;
-    }
+    [Utils clearAllFiles:self.localUploadDir];
 }
 
 - (void)logout
@@ -952,6 +954,13 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             ufile = [[SeafUploadFile alloc] initWithPath:lpath];
             [Utils dict:self.uploadFiles setObject:ufile forKey:lpath];
         }
+        if (ufile && !ufile.completionBlock) {
+            ufile.completionBlock = ^(BOOL success, SeafUploadFile *ufile, NSString *oid) {
+                if (success) {
+                    [self removeUploadfile:ufile];
+                }
+            };
+        }
         return ufile;
     };
 }
@@ -968,8 +977,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         [self.uploadFiles removeObjectForKey:ufile.lpath];
     }
     [SeafDataTaskManager.sharedObject removeBackgroundUploadTask:ufile];
-    [ufile.udir removeUploadItem:ufile];
-    [ufile doRemove];
 }
 
 - (void)search:(NSString *)keyword repo:(NSString *)repoId
@@ -1647,7 +1654,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSDate *now = [NSDate date];
     NSString *backupDate = [dateformate stringFromDate:now];
     NSString *filename = [NSString stringWithFormat:@"contacts-%@.vcf", backupDate];
-    NSString *uploadDir = [SeafStorage.sharedObject uniqueUploadDir];
+    NSString *uploadDir = [self uniqueUploadDir];
     [Utils checkMakeDir:uploadDir];
     NSString *path = [uploadDir stringByAppendingPathComponent:filename];
     [self saveContactsToFile:path completionHandler:^(BOOL success, NSArray *contacts, NSError * _Nullable error) {

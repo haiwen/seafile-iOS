@@ -169,9 +169,8 @@ static SeafStorage *object = nil;
 
 - (NSString *)uniqueUploadDir
 {
-    return [SeafStorage uniqueDirUnder:self.uploadsDir identify:[[NSUUID UUID] UUIDString]];
+    return [SeafStorage uniqueDirUnder:self.uploadsDir];
 }
-
 
 - (void)setObject:(id)value forKey:(NSString *)defaultName
 {

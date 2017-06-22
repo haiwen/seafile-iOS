@@ -144,7 +144,7 @@
 - (BOOL)openFileURL:(NSURL*)url
 {
     Debug("open %@", url);
-    NSString *uploadDir = [SeafStorage.sharedObject uniqueUploadDir];
+    NSString *uploadDir = [SeafGlobal.sharedObject.connection uniqueUploadDir];
     NSURL *to = [NSURL fileURLWithPath:[uploadDir stringByAppendingPathComponent:url.lastPathComponent]];
     Debug("Copy %@, to %@, %@, %@\n", url, to, to.absoluteString, to.path);
     BOOL ret = [Utils checkMakeDir:uploadDir];
