@@ -148,7 +148,7 @@
         BOOL ret = [SeafStorage.sharedObject removeIdentity:identity forPersistentRef:persistentRef];
         Debug("RemoveCertificate ret: %d", ret);
         if (ret) {
-            [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Succeed to remove certificate", @"Seafile")];
+            [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Succeeded to remove certificate", @"Seafile")];
         } else {
             [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to remove certificate", @"Seafile")];
         }

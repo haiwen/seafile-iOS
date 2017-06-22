@@ -126,7 +126,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 {
     NSString *url = [NSString stringWithFormat:API_URL"/events/?start=%d", offset];
     [_connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-        Debug("Success to get events start=%d", offset);
+        Debug("Succeeded to get events start=%d", offset);
         NSArray *arr = [JSON objectForKey:@"events"];
         if (offset == 0)
             _events = nil;
@@ -405,7 +405,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 - (void)getCommitModificationDetail:(NSString *)repoId url:(NSString *)url fromCell:(UITableViewCell *)cell
 {
     [_connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-        Debug("Success to get event: %@", JSON);
+        Debug("Succeeded to get event: %@", JSON);
         NSDictionary *detail = (NSDictionary *)JSON;
         [_eventDetails setObject:detail forKey:url];
         [self showEvent:repoId detail:detail fromCell:cell];

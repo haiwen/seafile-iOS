@@ -864,7 +864,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
               success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          @synchronized(self) {
-             Debug("Success to get starred files ...\n");
+             Debug("Succeeded to get starred files ...\n");
              [self handleStarredData:JSON];
              NSData *data = [Utils JSONEncode:JSON];
              [self setValue:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] forKey:KEY_STARREDFILES entityName:ENTITY_OBJECT];
@@ -885,7 +885,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
               success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          @synchronized(self) {
-             Debug("Success to get server info: %@\n", JSON);
+             Debug("Succeeded to get server info: %@\n", JSON);
              [self setServerInfo:JSON];
              if (handler)
                  handler (true);
@@ -917,7 +917,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         [self sendPost:url form:form
                success:
          ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-             Debug("Success to star file %@, %@\n", repo, path);
+             Debug("Succeeded to star file %@, %@\n", repo, path);
          }
                failure:
          ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
@@ -929,7 +929,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         [self sendDelete:url
                success:
          ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-             Debug("Success to unstar file %@, %@\n", repo, path);
+             Debug("Succeeded to unstar file %@, %@\n", repo, path);
          }
                failure:
          ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {

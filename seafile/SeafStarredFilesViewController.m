@@ -53,7 +53,7 @@
 {
     [_connection getStarredFiles:^(NSHTTPURLResponse *response, id JSON) {
         @synchronized(self) {
-            Debug("Success to get starred files ...\n");
+            Debug("Succeeded to get starred files ...\n");
             [self handleData:JSON];
             [self.tableView.pullToRefreshView stopAnimating];
             [self.tableView reloadData];
