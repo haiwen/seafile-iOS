@@ -919,6 +919,7 @@ enum {
 
         if (!IsIpad()) {
             if (self.detailViewController.state == PREVIEW_QL_MODAL) { // Use fullscreen preview for doc, xls, etc.
+                [self.detailViewController.qlViewController reloadData];
                 [self presentViewController:self.detailViewController.qlViewController animated:NO completion:nil];
             } else {
                 SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];

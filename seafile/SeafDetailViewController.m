@@ -129,9 +129,8 @@ enum SHARE_STATUS {
     if (self.state == PREVIEW_PHOTO && self.photos)
         return;
 
-    [self clearPreView];
+    _state = PREVIEW_NONE;
     if (!self.preViewItem) {
-        _state = PREVIEW_NONE;
     } else if (self.preViewItem.previewItemURL) {
         if (![QLPreviewController canPreviewItem:self.preViewItem]) {
             _state = PREVIEW_FAILED;
@@ -143,12 +142,15 @@ enum SHARE_STATUS {
                 _state = PREVIEW_WEBVIEW;
             else if([self.preViewItem.mime isEqualToString:@"text/x-markdown"] || [self.preViewItem.mime isEqualToString:@"text/x-seafile"])
                 _state = PREVIEW_WEBVIEW_JS;
-            else if (!IsIpad() && ios10) {
+            else if (!IsIpad()) { // iPhone >= 10.0
                 _state = self.preViewItem.editable ? PREVIEW_WEBVIEW : PREVIEW_QL_MODAL;
             }
         }
     } else {
         _state = PREVIEW_DOWNLOADING;
+    }
+    if (_state != PREVIEW_QL_MODAL) {
+        [self clearPreView];
     }
     Debug("preview state: %d", _state);
 }
@@ -182,15 +184,15 @@ enum SHARE_STATUS {
         case PREVIEW_QL_MODAL: {
             Debug (@"Preview file %@ mime=%@ QL modal\n", self.preViewItem.previewItemTitle, self.preViewItem.mime);
             [self.qlViewController reloadData];
-            if (self.isModal && self.isVisible && !self.qlViewController.presentingViewController) {
-                UIViewController *vc = self.presentingViewController;
-                [vc dismissViewControllerAnimated:NO completion:^{
-                    [vc presentViewController:self.qlViewController animated:NO completion:nil];
-                }];
-            } else if (!self.isModal) {
-                UINavigationController *nc = self.navigationController;
-                [self.navigationController popToRootViewControllerAnimated:NO];
-                [nc presentViewController:self.qlViewController animated:NO completion:nil];
+            if (!self.qlViewController.presentingViewController) {
+                if (self.isModal && self.isVisible) {
+                    UIViewController *vc = self.presentingViewController;
+                    [vc dismissViewControllerAnimated:NO completion:^{
+                        [vc presentViewController:self.qlViewController animated:NO completion:^{
+                            [self clearPreView];
+                        }];
+                    }];
+                }
             }
             break;
         }
@@ -786,7 +788,6 @@ enum SHARE_STATUS {
 {
     [_mwPhotoBrowser.view removeFromSuperview];
     _photos = nil;
-    _state = PREVIEW_NONE;
 }
 
 #pragma mark - MWPhotoBrowserDelegate
