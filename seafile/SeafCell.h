@@ -16,7 +16,7 @@ typedef void(^MoreButtonTouchBlock)(NSIndexPath *indexPath);
 @property (strong, nonatomic) IBOutlet UILabel *textLabel;
 @property (strong, nonatomic) IBOutlet UILabel *detailTextLabel;
 @property (strong, nonatomic) IBOutlet UILabel *badgeLabel;
-@property (weak, nonatomic) IBOutlet UIButton *moreButton;
+@property (weak, nonatomic)   IBOutlet UIButton *moreButton;
 @property (strong, nonatomic) IBOutlet UIImageView *badgeImage;
 @property (strong, nonatomic) IBOutlet UIView *cacheStatusView;
 @property (strong, nonatomic) IBOutlet UIImageView *downloadStatusImageView;

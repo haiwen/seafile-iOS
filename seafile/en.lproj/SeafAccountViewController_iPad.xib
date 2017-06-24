@@ -11,12 +11,12 @@
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="SeafAccountViewController">
             <connections>
-                <outlet property="httpLabel" destination="Vpc-8f-gSf" id="vPH-dR-HDa"/>
                 <outlet property="httpsLabel" destination="2K6-1h-EqF" id="z6S-yh-KVi"/>
                 <outlet property="httpsSwitch" destination="85z-9D-LEw" id="hGR-8B-XIz"/>
                 <outlet property="loginBtnTopConstraint" destination="zcU-jj-Mpe" id="h9E-L4-vuv"/>
                 <outlet property="loginButton" destination="ggd-Li-Grh" id="mhb-cE-VAk"/>
                 <outlet property="passwordTextField" destination="8" id="38"/>
+                <outlet property="prefixLabel" destination="Vpc-8f-gSf" id="hIT-wH-bLu"/>
                 <outlet property="serverTextField" destination="7" id="36"/>
                 <outlet property="usernameTextField" destination="9" id="39"/>
                 <outlet property="view" destination="2" id="3"/>

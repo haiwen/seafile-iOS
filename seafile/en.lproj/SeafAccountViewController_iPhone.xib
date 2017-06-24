@@ -13,13 +13,13 @@
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="SeafAccountViewController">
             <connections>
-                <outlet property="httpLabel" destination="llZ-HJ-kGK" id="Pjm-DY-oiE"/>
                 <outlet property="httpsLabel" destination="A7P-JV-rI1" id="10j-on-nPu"/>
                 <outlet property="httpsSwitch" destination="wGA-Kv-uHI" id="b4h-PO-EeL"/>
                 <outlet property="loginBtnTopConstraint" destination="m9C-wH-LPb" id="GJ3-Qp-hVP"/>
                 <outlet property="loginButton" destination="ggd-Li-Grh" id="mhb-cE-VAk"/>
                 <outlet property="msgLabel" destination="fUE-3E-3bS" id="PCk-DC-Jfw"/>
                 <outlet property="passwordTextField" destination="8" id="38"/>
+                <outlet property="prefixLabel" destination="llZ-HJ-kGK" id="uNy-U7-ZTp"/>
                 <outlet property="serverTextField" destination="7" id="36"/>
                 <outlet property="usernameTextField" destination="9" id="39"/>
                 <outlet property="view" destination="2" id="3"/>

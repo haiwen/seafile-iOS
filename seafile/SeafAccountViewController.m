@@ -28,8 +28,7 @@
 @property (strong, nonatomic) IBOutlet UITextField *passwordTextField;
 @property (strong, nonatomic) IBOutlet UIButton *loginButton;
 @property (weak, nonatomic)   IBOutlet NSLayoutConstraint *loginBtnTopConstraint;
-@property (strong, nonatomic) IBOutlet UILabel *msgLabel;
-@property (weak, nonatomic) IBOutlet UILabel *httpLabel;
+@property (weak, nonatomic)   IBOutlet UILabel *prefixLabel;
 @property (strong, nonatomic) IBOutlet UISwitch *httpsSwitch;
 @property (strong, nonatomic) IBOutlet UILabel *httpsLabel;
 @property StartViewController *startController;
@@ -76,12 +75,12 @@
 - (IBAction)httpsSwitchFlip:(id)sender
 {
     BOOL https = _httpsSwitch.on;
-    BOOL cur = [self.httpLabel.text hasPrefix:HTTPS];
+    BOOL cur = [self.prefixLabel.text hasPrefix:HTTPS];
     if (cur == https) return;
     if (https) {
-        self.httpLabel.text = @"https://";
+        self.prefixLabel.text = @"https://";
     } else {
-        self.httpLabel.text = @"http://";
+        self.prefixLabel.text = @"http://";
     }
 }
 
@@ -119,7 +118,7 @@
     [passwordTextField resignFirstResponder];
     NSString *username = usernameTextField.text;
     NSString *password = passwordTextField.text;
-    NSString *url = [NSString stringWithFormat:@"%@%@",self.httpLabel.text,serverTextField.text];
+    NSString *url = [NSString stringWithFormat:@"%@%@",self.prefixLabel.text,serverTextField.text];
 
     if (!url || url.length < 1) {
         [self alertWithTitle:NSLocalizedString(@"Server must not be empty", @"Seafile")];
@@ -196,7 +195,6 @@
     serverTextField.clearButtonMode = UITextFieldViewModeNever;
     serverTextField.placeholder = NSLocalizedString(@"Server, like https://seafile.cc", @"Seafile");
     if (self.type != ACCOUNT_SHIBBOLETH) {
-//        _msgLabel.text = NSLocalizedString(@"For example: https://seacloud.cc or http://192.168.1.24:8000", @"Seafile");
         self.title = [APP_NAME stringByAppendingFormat:@" %@", NSLocalizedString(@"Account", @"Seafile")];
         usernameTextField.placeholder = NSLocalizedString(@"Email or Username", @"Seafile");
         passwordTextField.placeholder = NSLocalizedString(@"Password", @"Seafile");
@@ -205,7 +203,6 @@
         self.loginBtnTopConstraint.constant = 44;
         [usernameTextField removeFromSuperview];
         [passwordTextField removeFromSuperview];
-        [_msgLabel removeFromSuperview];
     }
     BOOL https = true;
     _httpsSwitch.on = true;
@@ -405,16 +402,6 @@
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
 {
-    if (textField != serverTextField)
-        return true;
-    BOOL https = _httpsSwitch.on;
-    NSString *prefix = https ? HTTPS: HTTP;
-    NSRange substringRange = NSMakeRange(0, prefix.length);
-
-//    if (range.location >= substringRange.location && range.location < substringRange.location + substringRange.length) {
-//        return NO;
-//    }
-
     return YES;
 }
 

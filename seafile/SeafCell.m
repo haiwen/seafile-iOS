@@ -38,8 +38,6 @@
     self.badgeLabel.hidden = true;
     self.cacheStatusView.hidden = true;
     self.progressView.hidden = true;
-//    self.rightUtilityButtons = nil;
-//    self.delegate = nil;
 }
 
 - (IBAction)moreButtonTouch:(id)sender {
