@@ -556,24 +556,6 @@ enum {
     return [self getCell:@"SeafCell" forTableView:tableView];
 }
 
-- (void)showAlertWithAction:(NSArray *)arr fromRect:(CGRect)rect inView:(UIView *)view withTitle:(NSString *)title
-{
-    UIAlertController *alert = [self generateAlert:arr withTitle:title handler:^(UIAlertAction *action) {
-        [self handleAction:action.title];
-    }];
-    alert.popoverPresentationController.sourceRect = rect;
-    [self presentViewController:alert animated:true completion:nil];
-}
-
-- (void)showAlertWithAction:(NSArray *)arr fromBarItem:(UIBarButtonItem *)item withTitle:(NSString *)title
-{
-    UIAlertController *alert = [self generateAlert:arr withTitle:title handler:^(UIAlertAction *action) {
-        [self handleAction:action.title];
-    }];
-    alert.popoverPresentationController.barButtonItem = item;
-    [self presentViewController:alert animated:true completion:nil];
-}
-
 #pragma mark - Sheet
 - (void)showActionSheetWithIndexPath:(NSIndexPath *)indexPath
 {
@@ -647,22 +629,6 @@ enum {
         [actionSheet showInView:topView animated:YES];
     }
 }
-
-- (void)showEditMenu:(UILongPressGestureRecognizer *)gestureRecognizer
-{
-    if (self.tableView.editing == YES)
-        return;
-    if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
-        return;
-
-    CGPoint touchPoint = [gestureRecognizer locationInView:self.tableView];
-    _selectedindex = [self.tableView indexPathForRowAtPoint:touchPoint];
-    if (!_selectedindex)
-        return;
-    
-    [self showActionSheetWithIndexPath:_selectedindex];
-}
-
 
 - (UITableViewCell *)getSeafUploadFileCell:(SeafUploadFile *)file forTableView:(UITableView *)tableView
 {
@@ -817,7 +783,9 @@ enum {
 
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    return NO;
+    if (tableView != self.tableView) return NO;
+    NSObject *entry  = [self getDentrybyIndexPath:indexPath tableView:tableView];
+    return ![entry isKindOfClass:[SeafUploadFile class]];
 }
 
 - (UITableViewCellEditingStyle)tableView:(UITableView *)tableView editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -1344,7 +1312,6 @@ enum {
 {
     Debug("handle action title:%@, %@", title, _selectedCell);
     if (_selectedCell) {
-        [self hideCellButton:_selectedCell];
         _selectedCell = nil;
     }
 
@@ -1835,65 +1802,6 @@ enum {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         [appdelegate cycleTheGlobalMailComposer];
     }];
-}
-
-- (void)hideCellButton:(SWTableViewCell *)cell
-{
-    [cell hideUtilityButtonsAnimated:true];
-}
-
-#pragma mark - SWTableViewCellDelegate
-- (void)swipeableTableViewCell:(SWTableViewCell *)cell didTriggerRightUtilityButtonWithIndex:(NSInteger)index
-{
-    _selectedindex = [self.tableView indexPathForCell:cell];
-    if (!_selectedindex)
-        return;
-    SeafBase *base = (SeafBase *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-    if ([base isKindOfClass:[SeafRepo class]]) {
-        SeafRepo *repo = (SeafRepo *)base;
-       if (index == 0) {
-           [self downloadRepo:repo];
-        } else {
-            [repo->connection setRepo:repo.repoId password:nil];
-            [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Clear library password successfully.", @"Seafile")];
-        }
-        [self performSelector:@selector(hideCellButton:) withObject:cell afterDelay:0.1f];
-    } else {
-        if (index == 0) {// More
-            [self showActionSheetWithIndexPath:_selectedindex];
-            [cell hideUtilityButtonsAnimated:true];
-            [self.tableView selectRowAtIndexPath:_selectedindex animated:true scrollPosition:UITableViewScrollPositionNone];
-        } else { // Delete
-            [self deleteEntry:base];
-        }
-    }
-}
-
-- (NSArray *)rightButtons
-{
-    NSMutableArray *rightUtilityButtons = [NSMutableArray new];
-    [rightUtilityButtons sw_addUtilityButtonWithColor:
-     [UIColor colorWithRed:0.78f green:0.78f blue:0.8f alpha:1.0]
-                                                title:S_MORE];
-    [rightUtilityButtons sw_addUtilityButtonWithColor:
-     [UIColor colorWithRed:1.0f green:0.231f blue:0.188 alpha:1.0f]
-                                                title:S_DELETE];
-
-    return rightUtilityButtons;
-}
-
-- (NSArray *)repoButtons:(SeafRepo *)repo
-{
-    NSMutableArray *rightUtilityButtons = [NSMutableArray new];
-    [rightUtilityButtons sw_addUtilityButtonWithColor:
-     [UIColor colorWithRed:0.78f green:0.78f blue:0.8f alpha:1.0]
-                                                title:S_DOWNLOAD];
-    if (repo.encrypted) {
-        [rightUtilityButtons sw_addUtilityButtonWithColor:
-         [UIColor colorWithRed:1.0f green:0.231f blue:0.188 alpha:1.0f]
-                                                    title:S_CLEAR_REPO_PASSWORD];
-    }
-    return rightUtilityButtons;
 }
 
 #pragma mark - MWPhotoBrowserDelegate

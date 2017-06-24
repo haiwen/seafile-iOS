@@ -863,8 +863,7 @@ static BOOL disableCustomEasing = NO;
         
         if (iPad) {
             duration = 0.3f;
-        }
-        else {
+        } else {
             duration = kAnimationDurationForSectionCount(self.sections.count);
         }
         
