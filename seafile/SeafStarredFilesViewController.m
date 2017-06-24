@@ -15,6 +15,7 @@
 #import "FileSizeFormatter.h"
 #import "SeafDateFormatter.h"
 #import "SeafCell.h"
+#import "SeafActionSheet.h"
 
 #import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
@@ -193,7 +194,7 @@
     cell.textLabel.text = sfile.name;
     cell.detailTextLabel.text = sfile.detailText;
     cell.imageView.image = sfile.icon;
-    cell.moreButton.hidden = YES;
+    cell.moreButton.hidden = NO;
     [self updateCellDownloadStatus:cell file:sfile waiting:false];
 }
 
@@ -205,6 +206,11 @@
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafCell" owner:self options:nil];
         cell = [cells objectAtIndex:0];
     }
+    cell.cellIndexPath = indexPath;
+    cell.moreButtonBlock = ^(NSIndexPath *indexPath) {
+        Debug(@"%@", indexPath);
+        [self showActionSheetWithIndexPath:indexPath];
+    };
     [cell reset];
 
     SeafStarredFile *sfile;
@@ -214,10 +220,7 @@
         return cell;
     }
     sfile.udelegate = self;
-    if (tableView == self.tableView) {
-//        cell.rightUtilityButtons = [self rightButtonsForFile:sfile];
-//        cell.delegate = self;
-    }
+
     [self updateCellContent:cell file:sfile];
     return cell;
 }
@@ -318,23 +321,68 @@
     [self refreshView];
 }
 
-#pragma mark - SWTableViewCellDelegate
-- (void)redownloadFile:(SeafFile *)file
+#pragma mark - Sheet
+- (void)showActionSheetWithIndexPath:(NSIndexPath *)indexPath
 {
-    [file deleteCache];
-    [self.detailViewController setPreViewItem:nil master:nil];
-    [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
+    _selectedindex = indexPath;
+    SeafFile *file = (SeafFile *)[_starredFiles objectAtIndex:_selectedindex.row];
+    
+    SeafCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+    NSString *title;
+    if (file.mpath)
+        title = S_UPLOAD;
+    else
+        title = S_REDOWNLOAD;
+    
+    NSArray *titles = @[title];
+    
+    [self showSheetWithTitles:titles andFromView:cell];
 }
 
-- (void)hideCellButton:(SWTableViewCell *)cell
+- (void)showSheetWithTitles:(NSArray*)titles andFromView:(id)view
 {
-    [cell hideUtilityButtonsAnimated:true];
+    SeafActionSheetSection *section = [SeafActionSheetSection sectionWithTitle:nil message:nil buttonTitles:titles buttonStyle:SFActionSheetButtonStyleDefault];
+    NSArray *sections;
+    if (IsIpad()) {
+        sections = @[section];
+    }else{
+        sections = @[section,[SeafActionSheetSection cancelSection]];
+    }
+    
+    SeafActionSheet *actionSheet = [SeafActionSheet actionSheetWithSections:sections];
+    actionSheet.insets = UIEdgeInsetsMake(20.0f, 0.0f, 0.0f, 0.0f);
+    
+    [actionSheet setButtonPressedBlock:^(SeafActionSheet *actionSheet, NSIndexPath *indexPath){
+        [actionSheet dismissAnimated:YES];
+        if (indexPath.section == 0) {
+            [self cellMoreAction];
+        }
+    }];
+    
+    if (IsIpad()) {
+        [actionSheet setOutsidePressBlock:^(SeafActionSheet *sheet) {
+            [sheet dismissAnimated:YES];
+        }];
+        CGPoint point = CGPointZero;
+        
+        if ([view isKindOfClass:[SeafCell class]]) {
+            SeafCell *cell = (SeafCell*)view;
+            point = (CGPoint){CGRectGetMidX(cell.moreButton.frame), CGRectGetMaxY(cell.moreButton.frame)};
+            point = [self.navigationController.view convertPoint:point fromView:cell];
+        } else if ([view isKindOfClass:[UIBarButtonItem class]]) {
+            UIBarButtonItem *item = (UIBarButtonItem*)view;
+            UIView *itemView = [item valueForKey:@"view"];
+            point = (CGPoint){CGRectGetMidX(itemView.frame), CGRectGetMaxY(itemView.frame) + itemView.frame.size.height};
+        }
+        
+        [actionSheet showFromPoint:point inView:self.navigationController.view arrowDirection:SFActionSheetArrowDirectionTop animated:YES];
+    } else {
+        UIView *topView = [[[UIApplication sharedApplication] keyWindow].subviews firstObject];
+        [actionSheet showInView:topView animated:YES];
+    }
 }
-- (void)swipeableTableViewCell:(SWTableViewCell *)cell didTriggerRightUtilityButtonWithIndex:(NSInteger)index
-{
-    _selectedindex = [self.tableView indexPathForCell:cell];
-    if (!_selectedindex)
-        return;
+
+-(void)cellMoreAction{
     SeafFile *file = (SeafFile *)[_starredFiles objectAtIndex:_selectedindex.row];
     if (file.mpath) {
         [file update:self];
@@ -342,21 +390,13 @@
     } else {
         [self redownloadFile:file];
     }
-    [self performSelector:@selector(hideCellButton:) withObject:cell afterDelay:0.1f];
 }
-- (NSArray *)rightButtonsForFile:(SeafStarredFile *)file
-{
-    NSMutableArray *rightUtilityButtons = [NSMutableArray new];
-    NSString *title;
-    if (file.mpath)
-        title = S_UPLOAD;
-    else
-        title = S_REDOWNLOAD;
 
-    [rightUtilityButtons sw_addUtilityButtonWithColor:
-     [UIColor colorWithRed:0.78f green:0.78f blue:0.8f alpha:1.0]
-                                                title:title];
-    return rightUtilityButtons;
+- (void)redownloadFile:(SeafFile *)file
+{
+    [file deleteCache];
+    [self.detailViewController setPreViewItem:nil master:nil];
+    [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
 }
 
 @end
