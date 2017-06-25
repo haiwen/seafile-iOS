@@ -17,7 +17,6 @@
                 <outlet property="httpsSwitch" destination="wGA-Kv-uHI" id="b4h-PO-EeL"/>
                 <outlet property="loginBtnTopConstraint" destination="m9C-wH-LPb" id="GJ3-Qp-hVP"/>
                 <outlet property="loginButton" destination="ggd-Li-Grh" id="mhb-cE-VAk"/>
-                <outlet property="msgLabel" destination="fUE-3E-3bS" id="PCk-DC-Jfw"/>
                 <outlet property="passwordTextField" destination="8" id="38"/>
                 <outlet property="prefixLabel" destination="llZ-HJ-kGK" id="uNy-U7-ZTp"/>
                 <outlet property="serverTextField" destination="7" id="36"/>
@@ -129,16 +128,6 @@
                                 <constraint firstAttribute="height" constant="0.5" id="Acw-vX-TcB"/>
                             </constraints>
                         </view>
-                        <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" lineBreakMode="wordWrap" numberOfLines="2" baselineAdjustment="alignBaselines" highlighted="YES" adjustsFontSizeToFit="NO" preferredMaxLayoutWidth="300" translatesAutoresizingMaskIntoConstraints="NO" id="fUE-3E-3bS">
-                            <rect key="frame" x="30" y="318" width="230" height="31.5"/>
-                            <constraints>
-                                <constraint firstAttribute="width" constant="230" id="3EW-MN-3Ny"/>
-                                <constraint firstAttribute="height" constant="32" id="c36-7i-Fsi"/>
-                            </constraints>
-                            <fontDescription key="fontDescription" type="system" pointSize="13"/>
-                            <color key="textColor" red="0.33333333333333331" green="0.33333333333333331" blue="0.33333333333333331" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                            <nil key="highlightedColor"/>
-                        </label>
                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="https://" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="llZ-HJ-kGK">
                             <rect key="frame" x="0.0" y="44" width="50" height="44"/>
                             <constraints>
@@ -158,7 +147,6 @@
                         <constraint firstItem="QqA-Ar-X3g" firstAttribute="leading" secondItem="4" secondAttribute="leading" id="25c-OB-Qe2"/>
                         <constraint firstItem="7" firstAttribute="top" secondItem="4" secondAttribute="top" constant="44" id="6sl-HE-U9U"/>
                         <constraint firstItem="9" firstAttribute="top" secondItem="rNK-Z6-77b" secondAttribute="bottom" id="6tm-0Z-CUc"/>
-                        <constraint firstItem="fUE-3E-3bS" firstAttribute="top" secondItem="ggd-Li-Grh" secondAttribute="bottom" constant="8" id="9dP-1y-aPk"/>
                         <constraint firstItem="8" firstAttribute="top" secondItem="QqA-Ar-X3g" secondAttribute="bottom" id="9kc-j7-Yl8"/>
                         <constraint firstItem="QqA-Ar-X3g" firstAttribute="top" secondItem="9" secondAttribute="bottom" id="A6D-nE-oO4"/>
                         <constraint firstAttribute="trailing" secondItem="8" secondAttribute="trailing" id="BBl-rm-D6W"/>
@@ -177,7 +165,6 @@
                         <constraint firstAttribute="trailing" secondItem="7" secondAttribute="trailing" id="gME-ok-eVj"/>
                         <constraint firstAttribute="height" constant="400" id="hbM-7D-RGX"/>
                         <constraint firstAttribute="trailing" secondItem="rNK-Z6-77b" secondAttribute="trailing" id="kar-5M-bYZ"/>
-                        <constraint firstItem="fUE-3E-3bS" firstAttribute="leading" secondItem="ggd-Li-Grh" secondAttribute="leading" id="m5a-yp-twp"/>
                         <constraint firstItem="ggd-Li-Grh" firstAttribute="top" secondItem="rNK-Z6-77b" secondAttribute="bottom" constant="133" id="m9C-wH-LPb"/>
                         <constraint firstAttribute="trailing" secondItem="9" secondAttribute="trailing" id="nQU-r4-FBI"/>
                         <constraint firstItem="7" firstAttribute="centerY" secondItem="llZ-HJ-kGK" secondAttribute="centerY" id="nmJ-f9-gea"/>
