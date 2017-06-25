@@ -26,19 +26,6 @@
     // Configure the view for the selected state
 }
 
-- (void)layoutSubviews
-{
-    [super layoutSubviews];
-    float indentPoints = (self.frame.size.width - 320)/2;
-    self.contentView.frame = CGRectMake(
-                                        indentPoints,
-                                        self.contentView.frame.origin.y,
-                                        self.contentView.frame.size.width - indentPoints,
-                                        self.contentView.frame.size.height
-                                        );
-    self.separatorInset = UIEdgeInsetsMake(0, indentPoints + 15, 0, indentPoints + 30);
-}
-
 + (SeafAccountCell *)getInstance:(UITableView *)tableView WithOwner:(id)owner
 {
     NSString *CellIdentifier = @"SeafAccountCell2";

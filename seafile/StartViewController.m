@@ -171,7 +171,6 @@
 {
     self.footer.hidden = !([self checkLastAccount]);
     self.tableView.tableHeaderView.frame = CGRectMake(0,0, self.tableView.frame.size.width, TABLE_HEADER_HEIGHT);
-    [self.tableView reloadData];
     [super viewWillAppear:animated];
 }
 
