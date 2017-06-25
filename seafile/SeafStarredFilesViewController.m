@@ -228,7 +228,8 @@
 
     if (!IsIpad()) {
         if (self.detailViewController.state == PREVIEW_QL_MODAL) { // Use fullscreen preview for doc, xls, etc.
-            [self presentViewController:self.detailViewController.qlViewController animated:NO completion:nil];
+            [self.detailViewController.qlViewController reloadData];
+            [self presentViewController:self.detailViewController.qlNavc animated:NO completion:nil];
         } else {
             SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
             [appdelegate showDetailView:self.detailViewController];

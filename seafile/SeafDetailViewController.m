@@ -69,7 +69,7 @@ enum SHARE_STATUS {
     self.qlViewController = [[QLPreviewController alloc] init];
     self.qlViewController.delegate = self;
     self.qlViewController.dataSource = self;
-
+    self.qlNavc = [[UINavigationController alloc] initWithRootViewController:self.qlViewController];
     return self;
 }
 #pragma mark - Managing the detail item
@@ -152,7 +152,7 @@ enum SHARE_STATUS {
     if (_state != PREVIEW_QL_MODAL) {
         [self clearPreView];
     }
-    Debug("preview state: %d", _state);
+    Debug("preview %@ state: %d", self.preViewItem.name, _state);
 }
 
 - (void)refreshView
@@ -185,10 +185,10 @@ enum SHARE_STATUS {
             Debug (@"Preview file %@ mime=%@ QL modal\n", self.preViewItem.previewItemTitle, self.preViewItem.mime);
             [self.qlViewController reloadData];
             if (!self.qlViewController.presentingViewController) {
-                if (self.isModal && self.isVisible) {
+                if (self.isModal && self.isVisible) { // For preview from SeafFileViewController and SeafStarredFileViewController
                     UIViewController *vc = self.presentingViewController;
                     [vc dismissViewControllerAnimated:NO completion:^{
-                        [vc presentViewController:self.qlViewController animated:NO completion:^{
+                        [vc presentViewController:self.qlNavc animated:NO completion:^{
                             [self clearPreView];
                         }];
                     }];

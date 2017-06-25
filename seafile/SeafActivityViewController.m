@@ -453,14 +453,10 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     } else {
         detailvc = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
     }
-
-    @synchronized(self.navigationController) {
-        if (self.navigationController.viewControllers.count == 1) {
-            [self.navigationController pushViewController:detailvc animated:YES];
-            sfile.delegate = detailvc;
-            [detailvc setPreViewItem:sfile master:nil];
-        }
-    }
+    sfile.delegate = detailvc;
+    [detailvc setPreViewItem:sfile master:nil];
+    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    [appdelegate showDetailView:detailvc];
 }
 
 @end
