@@ -69,7 +69,6 @@ enum SHARE_STATUS {
     self.qlViewController = [[QLPreviewController alloc] init];
     self.qlViewController.delegate = self;
     self.qlViewController.dataSource = self;
-    self.qlNavc = [[UINavigationController alloc] initWithRootViewController:self.qlViewController];
     return self;
 }
 #pragma mark - Managing the detail item
@@ -188,7 +187,7 @@ enum SHARE_STATUS {
                 if (self.isModal && self.isVisible) { // For preview from SeafFileViewController and SeafStarredFileViewController
                     UIViewController *vc = self.presentingViewController;
                     [vc dismissViewControllerAnimated:NO completion:^{
-                        [vc presentViewController:self.qlNavc animated:NO completion:^{
+                        [vc presentViewController:self.qlViewController animated:NO completion:^{
                             [self clearPreView];
                         }];
                     }];
