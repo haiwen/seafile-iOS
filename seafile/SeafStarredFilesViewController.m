@@ -77,7 +77,7 @@
         self.edgesForExtendedLayout = UIRectEdgeAll;
     if ([self.tableView respondsToSelector:@selector(setSeparatorInset:)])
         [self.tableView setSeparatorInset:UIEdgeInsetsMake(0, 0, 0, 0)];
-    self.tableView.rowHeight = 55.0;
+    self.tableView.estimatedRowHeight = 55.0;
     self.tableView.tableFooterView = [UIView new];
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 
