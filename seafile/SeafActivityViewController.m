@@ -455,7 +455,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 - (void)openFile:(NSString *)path inRepo:(NSString *)repoId
 {
     Debug("open file %@ in repo %@", path, repoId);
-    SeafFile *sfile = [[SeafFile alloc] initWithConnection:self.connection oid:nil repoId:repoId name:path.lastPathComponent path:path mtime:0 size:0];
+    SeafFile *sfile = [[SeafFile alloc] initWithConnection:self.connection oid:nil repoId:repoId name:path.lastPathComponent path:path mtime:0 size:0];    
     SeafDetailViewController *detailvc;
     if (IsIpad()) {
         detailvc = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
