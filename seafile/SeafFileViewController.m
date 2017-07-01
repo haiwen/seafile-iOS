@@ -615,7 +615,7 @@ enum {
         
         if ([view isKindOfClass:[SeafCell class]]) {
             SeafCell *cell = (SeafCell*)view;
-            point = (CGPoint){CGRectGetMidX(cell.moreButton.frame), CGRectGetMaxY(cell.moreButton.frame)};
+            point = (CGPoint){CGRectGetMidX(cell.moreButton.frame), CGRectGetMaxY(cell.moreButton.frame) - cell.moreButton.frame.size.height/2};
             point = [self.navigationController.view convertPoint:point fromView:cell];
         } else if ([view isKindOfClass:[UIBarButtonItem class]]) {
             UIBarButtonItem *item = (UIBarButtonItem*)view;
