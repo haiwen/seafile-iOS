@@ -22,9 +22,10 @@
                    mtime:(long long)mtime
                     size:(long long)size
                      org:(int)org
+                     oid:(NSString *)anId
 {
     NSString *name = aPath.lastPathComponent;
-    if (self = [super initWithConnection:aConnection oid:nil repoId:aRepo name:name path:aPath mtime:mtime size:size ]) {
+    if (self = [super initWithConnection:aConnection oid:anId repoId:aRepo name:name path:aPath mtime:mtime size:size ]) {
         _org = org;
     }
     return self;

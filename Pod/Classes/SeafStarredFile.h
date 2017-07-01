@@ -22,5 +22,6 @@
                     path:(NSString *)aPath
                    mtime:(long long)mtime
                     size:(long long)size
-                     org:(int)org;
+                     org:(int)org
+                     oid:(NSString *)anId;
 @end
