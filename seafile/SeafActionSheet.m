@@ -20,6 +20,7 @@
 
 #define kFixedWidth 320.0f
 #define kFixedWidthContinuous 300.0f
+#define kScreenHeight [UIScreen mainScreen].bounds.size.height
 
 #define kAnimationDurationForSectionCount(count) MAX(0.22f, MIN(count*0.12f, 0.45f))
 
@@ -373,12 +374,20 @@ static BOOL disableCustomEasing = NO;
     for (UIButton *button in self.buttons) {
         height += spacing;
         
+        NSInteger index = [self.buttons indexOfObject:button];
+        
         button.frame = (CGRect){{spacing, height}, {width-spacing*2.0f, buttonHeight}};
         
         UIView *l = [[UIView alloc] initWithFrame:CGRectMake(10, CGRectGetHeight(button.frame)-0.5, button.bounds.size.width - 20, 0.5)];
         l.backgroundColor = rgba(210.0f, 210.0f, 210.0f,0.5);
         [button addSubview:l];
-    
+        
+        if (iPad) {
+            if (index == self.buttons.count - 1) {
+                [l removeFromSuperview];
+            }
+        }
+        
         height += buttonHeight;
     }
     
@@ -682,6 +691,10 @@ static BOOL disableCustomEasing = NO;
     
     _targetView = view;
     
+    if (point.y > kScreenHeight - 320 - 50) {
+        arrowDirection = SFActionSheetArrowDirectionBottom;
+    }
+    
     [self moveToPoint:point arrowDirection:arrowDirection animated:NO];
     
     void (^completion)(void) = ^{
@@ -802,15 +815,15 @@ static BOOL disableCustomEasing = NO;
     }
     else if (arrowDirection == SFActionSheetArrowDirectionTop) {
         arrowFrame.origin.x = point.x-arrrowBaseWidth/2.0f;
-        arrowFrame.origin.y = point.y;
+        arrowFrame.origin.y = point.y + kSpacing;
         
-        finalFrame.origin.y = point.y+arrowHeight;
+        finalFrame.origin.y = point.y+arrowHeight + kSpacing;
     }
     else if (arrowDirection == SFActionSheetArrowDirectionBottom) {
         arrowFrame.origin.x = point.x-arrrowBaseWidth/2.0f;
-        arrowFrame.origin.y = point.y-arrowHeight;
+        arrowFrame.origin.y = point.y-arrowHeight - kSpacing;
         
-        finalFrame.origin.y = point.y-CGRectGetHeight(finalFrame)-arrowHeight;
+        finalFrame.origin.y = point.y-CGRectGetHeight(finalFrame)-arrowHeight - kSpacing;
     }
     
     if (leftOrRight) {
