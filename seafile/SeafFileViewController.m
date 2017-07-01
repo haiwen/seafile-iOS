@@ -169,7 +169,7 @@ enum {
     self.formatter = [[NSDateFormatter alloc] init];
     [self.formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
     
-    self.tableView.rowHeight = 55;
+    self.tableView.estimatedRowHeight = 55;
     self.state = STATE_INIT;
 
     self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectZero];

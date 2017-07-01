@@ -6,7 +6,6 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
-        <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -17,17 +16,14 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="55"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="2" id="7mC-NE-fI3">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="54.5"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="55"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" placeholderIntrinsicWidth="230" placeholderIntrinsicHeight="14" text="Name" lineBreakMode="characterWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3">
-                        <rect key="frame" x="59" y="8" width="230" height="14"/>
+                        <rect key="frame" x="59" y="10" width="207" height="14"/>
                         <accessibility key="accessibilityConfiguration">
                             <accessibilityTraits key="traits" staticText="YES" adjustable="YES"/>
                         </accessibility>
-                        <constraints>
-                            <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="14" id="pEf-Fc-iYk"/>
-                        </constraints>
                         <fontDescription key="fontDescription" type="system" pointSize="15"/>
                         <color key="textColor" red="0.26666666666666666" green="0.26666666666666666" blue="0.26666666666666666" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -35,17 +31,18 @@
                     <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" translatesAutoresizingMaskIntoConstraints="NO" id="4">
                         <rect key="frame" x="12" y="8" width="39" height="39"/>
                         <constraints>
-                            <constraint firstAttribute="width" secondItem="4" secondAttribute="height" multiplier="1:1" id="n8O-hH-CkP"/>
+                            <constraint firstAttribute="height" constant="39" id="d2V-TX-kIr"/>
+                            <constraint firstAttribute="width" constant="39" id="kYc-Mr-aMk"/>
                         </constraints>
                     </imageView>
                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="249" text="detail" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="25">
-                        <rect key="frame" x="80" y="26" width="31.5" height="14.5"/>
+                        <rect key="frame" x="80" y="28" width="32" height="15"/>
                         <fontDescription key="fontDescription" type="system" pointSize="12"/>
                         <color key="textColor" red="0.66666666666666663" green="0.66666666666666663" blue="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </label>
                     <imageView hidden="YES" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="red.png" translatesAutoresizingMaskIntoConstraints="NO" id="vWy-Pk-w8f">
-                        <rect key="frame" x="292" y="17.5" width="20" height="20"/>
+                        <rect key="frame" x="292" y="18" width="20" height="20"/>
                         <constraints>
                             <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="20" id="8Ne-My-1xz"/>
                             <constraint firstAttribute="height" constant="20" id="C0n-Rv-mXT"/>
@@ -61,17 +58,17 @@
                         <color key="shadowColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </label>
                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="scu-4L-n7D">
-                        <rect key="frame" x="59" y="23" width="21" height="21"/>
+                        <rect key="frame" x="59" y="25" width="21" height="21"/>
                         <subviews>
                             <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="download_finished.png" translatesAutoresizingMaskIntoConstraints="NO" id="Drf-gP-cHe">
-                                <rect key="frame" x="3" y="3.5" width="15" height="15"/>
+                                <rect key="frame" x="3" y="3" width="15" height="15"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="15" id="agu-zG-6jN"/>
                                     <constraint firstAttribute="width" constant="15" id="nnh-rC-WWP"/>
                                 </constraints>
                             </imageView>
                             <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="i6P-DT-o4I">
-                                <rect key="frame" x="0.0" y="0.5" width="20" height="20"/>
+                                <rect key="frame" x="0.0" y="1" width="20" height="20"/>
                             </activityIndicatorView>
                         </subviews>
                         <constraints>
@@ -87,7 +84,7 @@
                         <rect key="frame" x="55" y="45" width="223" height="2"/>
                     </progressView>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="0jj-Fa-Je4">
-                        <rect key="frame" x="278" y="0.0" width="30" height="54.5"/>
+                        <rect key="frame" x="278" y="0.0" width="30" height="55"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="30" id="gTm-gO-3lg"/>
                         </constraints>
@@ -99,11 +96,12 @@
                 </subviews>
                 <color key="backgroundColor" red="1" green="1" blue="1" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
                 <constraints>
+                    <constraint firstAttribute="bottom" secondItem="25" secondAttribute="bottom" constant="12" id="38R-3b-Nam"/>
                     <constraint firstItem="25" firstAttribute="top" secondItem="3" secondAttribute="bottom" constant="4" id="7zr-F7-Apv"/>
-                    <constraint firstAttribute="bottomMargin" secondItem="4" secondAttribute="bottom" id="EZL-ie-IvC"/>
+                    <constraint firstItem="scu-4L-n7D" firstAttribute="top" secondItem="3" secondAttribute="bottom" constant="1" id="Cpw-a3-LJs"/>
                     <constraint firstAttribute="trailing" secondItem="DtI-c0-SVZ" secondAttribute="trailing" constant="42" id="EbH-V7-vkv"/>
-                    <constraint firstItem="3" firstAttribute="top" secondItem="4" secondAttribute="top" id="JZk-Ug-Mpw"/>
-                    <constraint firstItem="4" firstAttribute="top" secondItem="7mC-NE-fI3" secondAttribute="topMargin" id="RJ0-9j-N1p"/>
+                    <constraint firstItem="4" firstAttribute="centerY" secondItem="7mC-NE-fI3" secondAttribute="centerY" id="HIP-9c-yF7"/>
+                    <constraint firstItem="0jj-Fa-Je4" firstAttribute="leading" secondItem="3" secondAttribute="trailing" constant="12" id="LEH-EU-jvW"/>
                     <constraint firstItem="4" firstAttribute="leading" secondItem="7mC-NE-fI3" secondAttribute="leadingMargin" constant="4" id="S2o-gq-seY"/>
                     <constraint firstItem="0jj-Fa-Je4" firstAttribute="top" secondItem="7mC-NE-fI3" secondAttribute="top" id="SVg-DW-C5K"/>
                     <constraint firstItem="3" firstAttribute="leading" secondItem="4" secondAttribute="trailing" constant="8" id="WXN-Cl-RLd"/>
@@ -116,6 +114,7 @@
                     <constraint firstItem="vWy-Pk-w8f" firstAttribute="centerY" secondItem="7mC-NE-fI3" secondAttribute="centerY" id="dE2-0K-vDr"/>
                     <constraint firstItem="scu-4L-n7D" firstAttribute="leading" secondItem="4" secondAttribute="trailing" constant="8" id="gKz-4T-zqH"/>
                     <constraint firstItem="DtI-c0-SVZ" firstAttribute="leading" secondItem="7mC-NE-fI3" secondAttribute="leading" constant="55" id="o4f-Cu-dl4"/>
+                    <constraint firstItem="3" firstAttribute="top" secondItem="7mC-NE-fI3" secondAttribute="top" constant="10" id="ued-Y8-1yb"/>
                     <constraint firstItem="0jj-Fa-Je4" firstAttribute="centerY" secondItem="7mC-NE-fI3" secondAttribute="centerY" id="wNA-Xq-GWb"/>
                 </constraints>
             </tableViewCellContentView>
@@ -132,7 +131,7 @@
                 <outlet property="progressView" destination="DtI-c0-SVZ" id="hnw-y7-tft"/>
                 <outlet property="textLabel" destination="3" id="29"/>
             </connections>
-            <point key="canvasLocation" x="170" y="221"/>
+            <point key="canvasLocation" x="170" y="220.5"/>
         </tableViewCell>
     </objects>
     <resources>
