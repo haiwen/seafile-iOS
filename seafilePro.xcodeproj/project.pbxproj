@@ -189,6 +189,8 @@
 		58D40A7E1E9AF86D00A68BEF /* SeafData.m in Sources */ = {isa = PBXBuildFile; fileRef = 58D40A7C1E9AF86D00A68BEF /* SeafData.m */; };
 		7354777D2C3444E394BB2F31 /* libPods-SeafAction.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 159E0D2A7419F67E532A240F /* libPods-SeafAction.a */; };
 		F568C1FB1EF10F8900F1035D /* SeafActionSheet.m in Sources */ = {isa = PBXBuildFile; fileRef = F568C1FA1EF10F8900F1035D /* SeafActionSheet.m */; };
+		F571850E1F0742FE00543F42 /* more_dot@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = F571850C1F0742FE00543F42 /* more_dot@3x.png */; };
+		F571850F1F0742FE00543F42 /* more_dot@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F571850D1F0742FE00543F42 /* more_dot@2x.png */; };
 		F575168B1EF4CA0B00BD633B /* arrowmore@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F57516891EF4CA0B00BD633B /* arrowmore@2x.png */; };
 		F575168C1EF4CA0B00BD633B /* arrowmore@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = F575168A1EF4CA0B00BD633B /* arrowmore@3x.png */; };
 		FE5D80C9DA6AB7339F81D3AD /* libPods-SeafProviderFileProvider.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3DFD7A698B44546A8DDD2D26 /* libPods-SeafProviderFileProvider.a */; };
@@ -476,6 +478,8 @@
 		EE1E1FA7502D3F04292B11CB /* Pods-SeafAction.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafAction.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SeafAction/Pods-SeafAction.debug.xcconfig"; sourceTree = "<group>"; };
 		F568C1F91EF10F8900F1035D /* SeafActionSheet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafActionSheet.h; sourceTree = "<group>"; };
 		F568C1FA1EF10F8900F1035D /* SeafActionSheet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafActionSheet.m; sourceTree = "<group>"; };
+		F571850C1F0742FE00543F42 /* more_dot@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "more_dot@3x.png"; sourceTree = "<group>"; };
+		F571850D1F0742FE00543F42 /* more_dot@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "more_dot@2x.png"; sourceTree = "<group>"; };
 		F57516891EF4CA0B00BD633B /* arrowmore@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "arrowmore@2x.png"; sourceTree = "<group>"; };
 		F575168A1EF4CA0B00BD633B /* arrowmore@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "arrowmore@3x.png"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -637,6 +641,8 @@
 				570A300316578B4F007D0CBF /* upload.png */,
 				F57516891EF4CA0B00BD633B /* arrowmore@2x.png */,
 				F575168A1EF4CA0B00BD633B /* arrowmore@3x.png */,
+				F571850C1F0742FE00543F42 /* more_dot@3x.png */,
+				F571850D1F0742FE00543F42 /* more_dot@2x.png */,
 			);
 			path = images;
 			sourceTree = "<group>";
@@ -1141,6 +1147,7 @@
 				57A95E5F18369E5A009D268A /* ellipsis.png in Resources */,
 				57943C1819F027D5008423E5 /* tab-modify@2x.png in Resources */,
 				F575168B1EF4CA0B00BD633B /* arrowmore@2x.png in Resources */,
+				F571850E1F0742FE00543F42 /* more_dot@3x.png in Resources */,
 				57943C0119F027D5008423E5 /* arrowleft2@2x.png in Resources */,
 				57943BFE19F027D5008423E5 /* addmsg@2x.png in Resources */,
 				57A95E5B18369147009D268A /* close2.png in Resources */,
@@ -1180,6 +1187,7 @@
 				57A550E8177F311700E3BA9B /* checkmask.png in Resources */,
 				57943C1619F027D5008423E5 /* tab-home@2x.png in Resources */,
 				57A550EA177F311700E3BA9B /* plus.png in Resources */,
+				F571850F1F0742FE00543F42 /* more_dot@2x.png in Resources */,
 				57943C0E19F027D5008423E5 /* plus@2x.png in Resources */,
 				57E228B71A0E403A00C92330 /* QBImagePickerController.bundle in Resources */,
 				573F4AAC1788763500F096D3 /* arrowleft.png in Resources */,
