@@ -36,6 +36,12 @@
     return self;
 }
 
+-(void)awakeFromNib
+{
+    [super awakeFromNib];
+    [_cancelBt setTitle:NSLocalizedString(@"Cancel download", @"Seafile") forState:UIControlStateNormal];
+}
+
 - (void)configureViewWithItem:(id<QLPreviewItem, SeafPreView>)item progress:(float)progress
 {
     if (_item != item) {
