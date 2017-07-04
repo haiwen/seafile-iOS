@@ -271,7 +271,7 @@
 
 - (void)downloadComplete:(BOOL)updated
 {
-    [self.delegate download:self complete:true];
+    [self.delegate download:self complete:updated];
 
 }
 - (void)downloadFailed:(NSError *)error

@@ -143,6 +143,7 @@
 - (void)tryDownload
 {
     if (self.dTasks.count == 0) return;
+    Debug("tryDownload:\tdownloadingTasks:%ld dTasks:%ld failedNum:%ld", self.downloadingTasks.count, self.dTasks.count, self.failedNum);
     NSMutableArray *todo = [[NSMutableArray alloc] init];
     @synchronized (self.dTasks) {
         NSMutableArray *arr = [self.dTasks mutableCopy];

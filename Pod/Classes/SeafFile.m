@@ -158,18 +158,20 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     [self downloadFailed:error];
 }
 
-- (void)finishDownloadThumb:(BOOL)success
+- (void)finishDownloadThumb:(BOOL)success task:(id<SeafDownloadDelegate>)downloadTask
 {
+    Debug("finishDownloadThumb: %@ success: %d", [downloadTask name], success);
     if (self.thumbCompleteBlock)
         self.thumbCompleteBlock(success);
 
+    if (downloadTask) {
+        [SeafDataTaskManager.sharedObject finishDownload:downloadTask result:success];
+    }
     _thumbtask = nil;
-    if (success) {
-        _icon = nil;
-        [self downloadComplete:false];
-    } else if (!_icon && self.image) {
-        _icon = [Utils reSizeImage:self.image toSquare:THUMB_SIZE];
-        [self downloadComplete:false];
+    if (success || _icon || self.image) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.delegate download:self complete:false];
+        });
     }
 }
 
@@ -249,7 +251,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 - (void)downloadThumb:(id<SeafDownloadDelegate>)downloadTask
 {
     SeafRepo *repo = [connection getRepo:self.repoId];
-    if (repo.encrypted) return;
+    if (repo.encrypted) return [self finishDownloadThumb:false task:downloadTask];
     int size = THUMB_SIZE * (int)[[UIScreen mainScreen] scale];
     NSString *thumburl = [NSString stringWithFormat:API_URL"/repos/%@/thumbnail/?size=%d&p=%@", self.repoId, size, self.path.escapedUrl];
     NSURLRequest *downloadRequest = [connection buildRequest:thumburl method:@"GET" form:nil];
@@ -257,8 +259,8 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     NSString *target = [self thumbPath:self.oid];
 
     @synchronized (self) {
-        if (_thumbtask) return;
-        if (self.thumb) return [self finishDownloadThumb:true];
+        if (_thumbtask) return [self finishDownloadThumb:false task:downloadTask];
+        if (self.thumb) return [self finishDownloadThumb:true task:downloadTask];
 
         _thumbtask = [connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:nil destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
             return [NSURL fileURLWithPath:[target stringByAppendingPathExtension:@"tmp"]];
@@ -271,10 +273,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
                     [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
                 }
             }
-            [self finishDownloadThumb:!error];
-            if (downloadTask) {
-                [SeafDataTaskManager.sharedObject finishDownload:downloadTask result:(error == nil)];
-            }
+            [self finishDownloadThumb:!error task:downloadTask];
         }];
     }
     [_thumbtask resume];
@@ -493,16 +492,16 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 {
     if (_icon) return _icon;
     if (self.isImageFile && self.oid) {
-        if (![connection isEncrypted:self.repoId]) {
+        if (self.image) {
+            [self performSelectorInBackground:@selector(genThumb) withObject:nil];
+        } else if (![connection isEncrypted:self.repoId]) {
             UIImage *img = [self thumb];
             if (img)
                 return _thumb;
-            else {
+            else if (!_thumbtask) {
                 SeafThumb *thb = [[SeafThumb alloc] initWithSeafPreviewIem:self];
                 [SeafDataTaskManager.sharedObject addBackgroundDownloadTask:thb];
             }
-        } else if (self.image) {
-            [self performSelectorInBackground:@selector(genThumb) withObject:nil];
         }
     }
     return [super icon];
