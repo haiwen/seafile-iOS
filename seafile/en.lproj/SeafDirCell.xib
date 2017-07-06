@@ -20,10 +20,13 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" placeholderIntrinsicWidth="230" placeholderIntrinsicHeight="22" text="Name" lineBreakMode="characterWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3">
-                        <rect key="frame" x="59" y="8" width="219" height="30.5"/>
+                        <rect key="frame" x="59" y="8" width="201" height="39.5"/>
                         <accessibility key="accessibilityConfiguration">
                             <accessibilityTraits key="traits" staticText="YES" adjustable="YES"/>
                         </accessibility>
+                        <constraints>
+                            <constraint firstAttribute="height" relation="greaterThanOrEqual" priority="750" constant="39" id="jca-fk-aaR"/>
+                        </constraints>
                         <fontDescription key="fontDescription" type="system" pointSize="15"/>
                         <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -35,19 +38,16 @@
                             <constraint firstAttribute="height" constant="39" id="eHM-2m-WjK"/>
                         </constraints>
                     </imageView>
-                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" verticalHuggingPriority="249" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="25">
-                        <rect key="frame" x="59" y="39.5" width="0.0" height="15"/>
-                        <constraints>
-                            <constraint firstAttribute="height" constant="15" id="HbI-Ic-AZE"/>
-                        </constraints>
+                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" verticalHuggingPriority="249" verticalCompressionResistancePriority="749" text="detail" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="25">
+                        <rect key="frame" x="59" y="31" width="197" height="16"/>
                         <fontDescription key="fontDescription" type="system" pointSize="13"/>
                         <color key="textColor" red="0.66666666666666663" green="0.66666666666666663" blue="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </label>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="VaX-pq-H6d">
-                        <rect key="frame" x="276" y="0.0" width="30" height="55.5"/>
+                        <rect key="frame" x="268" y="0.0" width="50" height="55.5"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="30" id="qrf-09-21e"/>
+                            <constraint firstAttribute="width" constant="50" id="qrf-09-21e"/>
                         </constraints>
                         <state key="normal" image="more_dot.png"/>
                         <connections>
@@ -56,10 +56,8 @@
                     </button>
                 </subviews>
                 <constraints>
-                    <constraint firstItem="VaX-pq-H6d" firstAttribute="centerY" secondItem="jlK-iz-38C" secondAttribute="centerY" id="7bY-fI-lrX"/>
-                    <constraint firstItem="25" firstAttribute="top" secondItem="3" secondAttribute="bottom" constant="1" id="Bpc-Dk-FXQ"/>
-                    <constraint firstAttribute="trailingMargin" secondItem="3" secondAttribute="trailing" constant="32" id="IKv-Ba-rLT"/>
-                    <constraint firstAttribute="trailingMargin" secondItem="VaX-pq-H6d" secondAttribute="trailing" constant="4" id="NwP-7Q-C7s"/>
+                    <constraint firstAttribute="bottom" secondItem="3" secondAttribute="bottom" constant="8" id="6ne-Pm-K0E"/>
+                    <constraint firstAttribute="bottom" secondItem="25" secondAttribute="bottom" constant="8" id="DhX-ga-Zc0"/>
                     <constraint firstItem="25" firstAttribute="leading" secondItem="3" secondAttribute="leading" id="PVr-Hi-acc"/>
                     <constraint firstAttribute="bottom" secondItem="VaX-pq-H6d" secondAttribute="bottom" id="QrV-Ze-bDM"/>
                     <constraint firstItem="VaX-pq-H6d" firstAttribute="top" secondItem="jlK-iz-38C" secondAttribute="top" id="STp-MX-aC4"/>
@@ -67,8 +65,9 @@
                     <constraint firstItem="3" firstAttribute="top" secondItem="4" secondAttribute="top" id="ZxL-U4-CWt"/>
                     <constraint firstItem="3" firstAttribute="leading" secondItem="4" secondAttribute="trailing" constant="8" id="bDK-nO-rPO"/>
                     <constraint firstItem="4" firstAttribute="top" secondItem="jlK-iz-38C" secondAttribute="topMargin" id="bGj-4Z-PmV"/>
-                    <constraint firstAttribute="bottomMargin" secondItem="4" secondAttribute="bottom" id="rfv-oW-8H3"/>
-                    <constraint firstAttribute="bottomMargin" secondItem="25" secondAttribute="bottom" constant="-7" id="vw4-QI-JNV"/>
+                    <constraint firstItem="VaX-pq-H6d" firstAttribute="leading" secondItem="3" secondAttribute="trailing" constant="8" id="bP4-hI-5E0"/>
+                    <constraint firstItem="VaX-pq-H6d" firstAttribute="leading" secondItem="25" secondAttribute="trailing" constant="12" id="gNO-9J-tB0"/>
+                    <constraint firstAttribute="trailing" secondItem="VaX-pq-H6d" secondAttribute="trailing" id="kyQ-VA-cnJ"/>
                 </constraints>
             </tableViewCellContentView>
             <connections>
