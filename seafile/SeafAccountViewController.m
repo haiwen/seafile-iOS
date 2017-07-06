@@ -214,7 +214,7 @@
             break;
         case ACCOUNT_OTHER:{
 #if DEBUG
-//            serverTextField.text = @"dev.seafile.com/seahub";
+            serverTextField.text = @"dev.seafile.com/seahub";
             usernameTextField.text = @"demo@seafile.com";
             passwordTextField.text = @"";
 #else
@@ -235,7 +235,7 @@
     if (self.connection) {
         https = [connection.address hasPrefix:HTTPS];
         _httpsSwitch.on = https;
-        serverTextField.text = connection.address;
+        serverTextField.text = [connection.address componentsSeparatedByString:@"//"].lastObject;
         usernameTextField.text = connection.username;
         passwordTextField.text = nil;
         serverTextField.enabled = false;
