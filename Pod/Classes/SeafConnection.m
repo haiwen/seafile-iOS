@@ -1875,8 +1875,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (id)getCachedStarredFiles
 {
     id JSON = [self getCachedJson:KEY_STARREDFILES entityName:ENTITY_OBJECT];
-    if (!_starredFiles) {
-        _starredFiles = JSON;
+    if (JSON) {
+        [self handleStarredData:JSON];
     }
     return JSON;
 }
