@@ -16,11 +16,11 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="55"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="2" id="7mC-NE-fI3">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="55"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="54.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" placeholderIntrinsicWidth="230" placeholderIntrinsicHeight="14" text="Name" lineBreakMode="characterWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3">
-                        <rect key="frame" x="59" y="10" width="207" height="14"/>
+                        <rect key="frame" x="59" y="10" width="199" height="14"/>
                         <accessibility key="accessibilityConfiguration">
                             <accessibilityTraits key="traits" staticText="YES" adjustable="YES"/>
                         </accessibility>
@@ -84,9 +84,9 @@
                         <rect key="frame" x="55" y="45" width="223" height="2"/>
                     </progressView>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="0jj-Fa-Je4">
-                        <rect key="frame" x="278" y="0.0" width="30" height="55"/>
+                        <rect key="frame" x="270" y="0.0" width="50" height="55"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="30" id="gTm-gO-3lg"/>
+                            <constraint firstAttribute="width" constant="50" id="gTm-gO-3lg"/>
                         </constraints>
                         <state key="normal" image="more_dot.png"/>
                         <connections>
@@ -106,7 +106,7 @@
                     <constraint firstItem="0jj-Fa-Je4" firstAttribute="top" secondItem="7mC-NE-fI3" secondAttribute="top" id="SVg-DW-C5K"/>
                     <constraint firstItem="3" firstAttribute="leading" secondItem="4" secondAttribute="trailing" constant="8" id="WXN-Cl-RLd"/>
                     <constraint firstAttribute="bottom" secondItem="0jj-Fa-Je4" secondAttribute="bottom" id="Wn6-nk-4hr"/>
-                    <constraint firstAttribute="trailing" secondItem="0jj-Fa-Je4" secondAttribute="trailing" constant="12" id="XxQ-05-yjX"/>
+                    <constraint firstAttribute="trailing" secondItem="0jj-Fa-Je4" secondAttribute="trailing" id="XxQ-05-yjX"/>
                     <constraint firstItem="25" firstAttribute="centerY" secondItem="scu-4L-n7D" secondAttribute="centerY" id="Y06-a8-BT0"/>
                     <constraint firstAttribute="trailing" secondItem="vWy-Pk-w8f" secondAttribute="trailing" constant="8" id="aIV-aq-2iq"/>
                     <constraint firstItem="DtI-c0-SVZ" firstAttribute="bottom" secondItem="4" secondAttribute="bottom" id="bg2-LN-iRj"/>
