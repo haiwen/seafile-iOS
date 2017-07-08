@@ -80,6 +80,7 @@
 {
     SeafRepo *repo = (SeafRepo *)entry;
     [super updateWithEntry:entry];
+    self.name = entry.name;
     _desc = repo.desc;
     _size = repo.size;
     _owner = repo.owner;
