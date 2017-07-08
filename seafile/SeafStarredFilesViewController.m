@@ -227,7 +227,7 @@
 
 - (void)selectFile:(SeafStarredFile *)sfile
 {
-    Debug("Select file %@", sfile);
+    Debug("Select file %@", sfile.name);
     [self.detailViewController setPreViewItem:sfile master:self];
 
     if (!IsIpad()) {
@@ -247,7 +247,15 @@
     SeafStarredFile *sfile;
     @try {
         sfile = [_starredFiles objectAtIndex:indexPath.row];
-        [self selectFile:sfile];
+        SeafRepo *repo = [_connection getRepo:sfile.repoId];
+        if (repo && repo.passwordRequired) {
+            Debug("Star file %@ repo %@ password required.", sfile.name, sfile.repoId);
+            [self popupSetRepoPassword:repo handler:^{
+                [self selectFile:sfile];
+            }];
+        } else {
+            [self selectFile:sfile];
+        }
     } @catch(NSException *exception) {
         [self.tableView performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
         return;

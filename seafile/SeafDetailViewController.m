@@ -151,7 +151,7 @@ enum SHARE_STATUS {
     if (_state != PREVIEW_QL_MODAL) {
         [self clearPreView];
     }
-    Debug("preview %@ state: %d", self.preViewItem.name, _state);
+    Debug("preview %@ %@ state: %d", self.preViewItem.name, self.preViewItem.previewItemURL, _state);
 }
 
 - (void)refreshView
@@ -176,8 +176,8 @@ enum SHARE_STATUS {
             break;
         case PREVIEW_QL_SUBVIEW:
             Debug (@"Preview file %@ mime=%@ QL subview\n", self.preViewItem.previewItemTitle, self.preViewItem.mime);
-            [self.qlSubViewController reloadData];
             self.qlSubViewController.view.frame = r;
+            [self.qlSubViewController reloadData];
             self.qlSubViewController.view.hidden = NO;
             break;
         case PREVIEW_QL_MODAL: {
