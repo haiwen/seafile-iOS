@@ -51,7 +51,12 @@
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
         if (conn.inAutoSync) return true;
     }
-    return SeafDataTaskManager.sharedObject.backgroundUploadingNum != 0 || SeafDataTaskManager.sharedObject.backgroundDownloadingNum != 0;
+    NSInteger totalDownloadingNum = 0;
+    for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+        NSInteger downloadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:conn] downloadingNum];
+        totalDownloadingNum += downloadingNum;
+    }
+    return [SeafDataTaskManager.sharedObject backgroundUploadingNum] != 0 || totalDownloadingNum != 0;
 }
 
 - (BOOL)selectAccount:(SeafConnection *)conn

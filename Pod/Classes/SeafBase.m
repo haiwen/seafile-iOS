@@ -101,7 +101,8 @@
 
 - (UIImage *)icon;
 {
-    return [UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString];
+    UIImage *image = [UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString];
+    return image;
 }
 
 - (BOOL)loadCache
@@ -127,7 +128,7 @@
     BOOL hasCache = [self loadCache];
     @synchronized (self) {
         if (hasCache && !force) {
-            return [self downloadComplete:false];
+            return [self downloadComplete:true];
         }
         if (self.state == SEAF_DENTRY_LOADING)
             return;

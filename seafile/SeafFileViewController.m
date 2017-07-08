@@ -20,6 +20,7 @@
 #import "SeafPhotoThumb.h"
 #import "SeafStorage.h"
 #import "SeafDataTaskManager.h"
+#import "SeafGlobal.h"
 
 #import "FileSizeFormatter.h"
 #import "SeafDateFormatter.h"
@@ -192,7 +193,7 @@ enum {
     UIView *bView = [[UIView alloc] initWithFrame:self.tableView.frame];
     bView.backgroundColor = [UIColor whiteColor];
     self.tableView.backgroundView = bView;
-    
+
     self.tableView.tableHeaderView = self.searchBar;
     self.tableView.tableFooterView = [UIView new];
     self.tableView.allowsMultipleSelection = NO;
@@ -1236,7 +1237,7 @@ enum {
         NSString *path = file.cachePath;
         if (!path) {
             [file setFileDownloadedBlock:block];
-            [SeafDataTaskManager.sharedObject addBackgroundDownloadTask:file];
+            [SeafDataTaskManager.sharedObject addFileDownloadTask:file];
         } else {
             block(file, true);
         }
