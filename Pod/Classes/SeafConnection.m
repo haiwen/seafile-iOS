@@ -1056,7 +1056,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         return;
     Debug("%@, %d\n", self.address, [self authorized]);
     SeafUserAvatar *avatar = [[SeafUserAvatar alloc] initWithConnection:self username:self.username];
-    [SeafDataTaskManager.sharedObject addBackgroundDownloadTask:avatar];
+    [SeafDataTaskManager.sharedObject addAvatarDownloadTask:avatar];
     self.avatarLastUpdate = [NSDate date];
 }
 
@@ -1785,16 +1785,14 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     [dir downloadContentSuccess:^(SeafDir *dir) {
         Debug("dir %@ items: %lu", dir.path, (unsigned long)dir.items.count);
-        long delay = 1;
         for (SeafBase *item in dir.items) {
-            delay += 1;
             if ([item isKindOfClass:[SeafFile class]]) {
                 SeafFile *file = (SeafFile *)item;
-                Debug("download file: %@, %@ after %ld ms", item.repoId, item.path, delay);
-                [SeafDataTaskManager.sharedObject performSelector:@selector(addBackgroundDownloadTask:) withObject:file afterDelay:delay];
+                Debug("download file: %@, %@", item.repoId, item.path);
+                [SeafDataTaskManager.sharedObject performSelector:@selector(addFileDownloadTask:) withObject:file];
             } else if ([item isKindOfClass:[SeafDir class]]) {
-                Debug("download dir: %@, %@ after %ld ms", item.repoId, item.path, delay);
-                [self performSelector:@selector(downloadDir:) withObject:(SeafDir *)item afterDelay:delay];
+                Debug("download dir: %@, %@", item.repoId, item.path);
+                [self performSelector:@selector(downloadDir:) withObject:(SeafDir *)item];
             }
         }
     } failure:^(SeafDir *dir, NSError *error) {
@@ -1901,6 +1899,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [SeafStorage.sharedObject clearCache];
     [_cacheProvider clearAllCacheInAccount:self.account];
     [SeafAvatar clearCache];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"clearCache" object:nil];
     [self clearUploadCache];
 }
 @end

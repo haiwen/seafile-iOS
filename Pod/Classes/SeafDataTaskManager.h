@@ -12,28 +12,57 @@
 #import "SeafPreView.h"
 #import "SeafConnection.h"
 #import "SeafUploadFile.h"
+#import "SeafFile.h"
+#import "SeafThumb.h"
+#import "SeafAvatar.h"
+@class SeafDownloadAccountQueue;
 
+typedef void(^SyncBlock)(SeafFile *file);
+typedef void(^DownLoadFinshBlock)(SeafFile *file);
 // Manager for background download/upload tasks, retry if failed.
 @interface SeafDataTaskManager : NSObject
 
 @property (readonly) ALAssetsLibrary *assetsLibrary;
+@property (nonatomic, copy) SyncBlock trySyncBlock;
+@property (nonatomic, copy) DownLoadFinshBlock finishBlock;
 
 + (SeafDataTaskManager *)sharedObject;
 
 - (void)startTimer;
 
-- (unsigned long)backgroundUploadingNum;
-- (unsigned long)backgroundDownloadingNum;
-
-- (void)finishDownload:(id<SeafDownloadDelegate>)task result:(BOOL)result;
-- (void)finishUpload:(SeafUploadFile *)file result:(BOOL)result;
-
 - (void)addBackgroundUploadTask:(SeafUploadFile *)file;
-- (void)addBackgroundDownloadTask:(id<SeafDownloadDelegate>)file;
+- (void)finishUpload:(SeafUploadFile *)file result:(BOOL)result;
 - (void)removeBackgroundUploadTask:(SeafUploadFile *)file;
-- (void)removeBackgroundDownloadTask:(id<SeafDownloadDelegate>)task;
+- (unsigned long)backgroundUploadingNum;
+
 - (void)cancelAutoSyncTasks:(SeafConnection *)conn;
 - (void)cancelAutoSyncVideoTasks:(SeafConnection *)conn;
 
 - (void)assetForURL:(NSURL *)assetURL resultBlock:(ALAssetsLibraryAssetForURLResultBlock)resultBlock failureBlock:(ALAssetsLibraryAccessFailureBlock)failureBlock;
+
+- (void)addFileDownloadTask:(SeafFile*)file;
+- (void)finishFileDownload:(SeafFile<SeafDownloadDelegate>*)file result:(BOOL)result;
+- (SeafDownloadAccountQueue*)accountQueueForConnection:(SeafConnection*)connection;
+
+- (void)addThumbDownloadTask:(SeafThumb*)thumb;
+- (void)finishThumbDownload:(SeafThumb<SeafDownloadDelegate> *)thumb result:(BOOL)result;
+
+- (void)removeBackgroundDownloadTask:(id<SeafDownloadDelegate>)task;
+
+- (void)addAvatarDownloadTask:(SeafAvatar*)avatar;
+- (void)finishAvatarDownloadTask:(SeafAvatar*)avatar result:(BOOL)result;
+
+@end
+
+@interface SeafDownloadAccountQueue : NSObject
+
+@property (nonatomic, strong) NSMutableArray *fileTasks;
+@property (nonatomic, strong) NSMutableArray *fileQueuedTasks;
+@property (nonatomic, readonly) NSMutableArray *allFileTasks;
+
+- (void)addFileDownloadTask:(SeafFile*)file;
+- (void)finishFileDownload:(SeafFile<SeafDownloadDelegate>*)file result:(BOOL)result;
+- (NSInteger)downloadingNum;
+- (BOOL)isActiveDownloadingFileCountBelowMaximumLimit;
+
 @end

@@ -478,20 +478,20 @@
 
 + (UIImage *)reSizeImage:(UIImage *)image toSquare:(float)length
 {
-    CGSize reSize;
-    CGSize size = image.size;
-    if (size.height > size.width) {
-        reSize = CGSizeMake(length * size.width / size.height, length);
-    } else {
-        reSize = CGSizeMake(length, length * size.height / size.width);
+    @autoreleasepool {
+        CGSize reSize;
+        CGSize size = image.size;
+        if (size.height > size.width) {
+            reSize = CGSizeMake(length * size.width / size.height, length);
+        } else {
+            reSize = CGSizeMake(length, length * size.height / size.width);
+        }
+        UIGraphicsBeginImageContext(CGSizeMake(reSize.width, reSize.height));
+        [image drawInRect:CGRectMake(0, 0, reSize.width, reSize.height)];
+        UIImage *reSizeImage = UIGraphicsGetImageFromCurrentImageContext();
+        UIGraphicsEndImageContext();
+        return reSizeImage;
     }
-
-    UIGraphicsBeginImageContext(CGSizeMake(reSize.width, reSize.height));
-    [image drawInRect:CGRectMake(0, 0, reSize.width, reSize.height)];
-    UIImage *reSizeImage = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-
-    return reSizeImage;
 }
 
 + (NSDictionary *)queryToDict:(NSString *)query
@@ -520,7 +520,7 @@
 
 + (UIImage *)imageFromPath:(NSString *)path withMaxSize:(float)length cachePath:(NSString *)cachePath
 {
-    const int MAX_SIZE = 2048;
+    const int MAX_SIZE = length;
     if ([[NSFileManager defaultManager] fileExistsAtPath:cachePath]) {
         return [UIImage imageWithContentsOfFile:cachePath];
     }
@@ -530,7 +530,7 @@
         if (image.size.width > MAX_SIZE || image.size.height > MAX_SIZE) {
             UIImage *img =  [Utils reSizeImage:image toSquare:MAX_SIZE];
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND,0), ^{
-                [UIImageJPEGRepresentation(img, 1.0) writeToFile:path atomically:YES];
+                [UIImageJPEGRepresentation(img, 1.0) writeToFile:cachePath atomically:YES];
             });
             return img;
         }

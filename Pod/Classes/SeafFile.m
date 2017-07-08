@@ -33,7 +33,6 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 @property (nonatomic, strong) UIImage *thumb;
 @property NSURLSessionDownloadTask *task;
 @property NSURLSessionDownloadTask *thumbtask;
-@property (strong) NSProgress *progress;
 @property (strong) SeafUploadFile *ufile;
 @property (strong) NSArray *blkids;
 @property int index;
@@ -79,6 +78,13 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     }
 
     return str;
+}
+
+- (NSString *)userIdentifier {
+    if (!_userIdentifier)  {
+        _userIdentifier = [NSString stringWithFormat:@"%@%@", self->connection.host, self->connection.username];
+    }
+    return _userIdentifier;
 }
 
 - (NSString *)downloadTempPath:(NSString *)objId
@@ -141,11 +147,11 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 - (void)finishDownload:(NSString *)ooid
 {
     [self clearDownloadContext];
-    [SeafDataTaskManager.sharedObject finishDownload:self result:true];
+    [SeafDataTaskManager.sharedObject finishFileDownload:self result:true];
     Debug("%@ ooid=%@, self.ooid=%@, oid=%@", self.name, ooid, self.ooid, self.oid);
     BOOL updated = ![ooid isEqualToString:self.ooid];
     [self setOoid:ooid];
-    self.state = SEAF_DENTRY_UPTODATE;
+    self.state = SEAF_DENTRY_SUCCESS;
     self.oid = ooid;
     [self downloadComplete:updated];
 }
@@ -153,8 +159,9 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 - (void)failedDownload:(NSError *)error
 {
     [self clearDownloadContext];
-    self.state = SEAF_DENTRY_INIT;
-    [SeafDataTaskManager.sharedObject finishDownload:self result:false];
+    self.state = SEAF_DENTRY_FAILURE;
+    self.failTime = [[NSDate new] timeIntervalSince1970];
+    [SeafDataTaskManager.sharedObject finishFileDownload:self result:false];
     [self downloadFailed:error];
 }
 
@@ -165,7 +172,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
         self.thumbCompleteBlock(success);
 
     if (downloadTask) {
-        [SeafDataTaskManager.sharedObject finishDownload:downloadTask result:success];
+        [SeafDataTaskManager.sharedObject finishThumbDownload:downloadTask result:success];
     }
     _thumbtask = nil;
     if (success || _icon || self.image) {
@@ -259,7 +266,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     NSString *target = [self thumbPath:self.oid];
 
     @synchronized (self) {
-        if (_thumbtask) return [self finishDownloadThumb:false task:downloadTask];
+        if (_thumbtask) return [self finishDownloadThumb:true task:downloadTask];
         if (self.thumb) return [self finishDownloadThumb:true task:downloadTask];
 
         _thumbtask = [connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:nil destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
@@ -429,7 +436,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
      }
                     failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
-         self.state = SEAF_DENTRY_INIT;
+         self.state = SEAF_DENTRY_FAILURE;
          [self downloadFailed:error];
      }];
 }
@@ -492,16 +499,16 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 {
     if (_icon) return _icon;
     if (self.isImageFile && self.oid) {
-        if (self.image) {
-            [self performSelectorInBackground:@selector(genThumb) withObject:nil];
-        } else if (![connection isEncrypted:self.repoId]) {
+        if (![connection isEncrypted:self.repoId]) {
             UIImage *img = [self thumb];
             if (img)
                 return _thumb;
             else if (!_thumbtask) {
                 SeafThumb *thb = [[SeafThumb alloc] initWithSeafPreviewIem:self];
-                [SeafDataTaskManager.sharedObject addBackgroundDownloadTask:thb];
+                [SeafDataTaskManager.sharedObject addThumbDownloadTask:thb];
             }
+        } else if (self.image) {
+            [self performSelectorInBackground:@selector(genThumb) withObject:nil];
         }
     }
     return [super icon];
@@ -870,6 +877,8 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 {
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.delegate download:self complete:updated];
+        self.state = SEAF_DENTRY_SUCCESS;
+        [SeafDataTaskManager.sharedObject finishFileDownload:self result:updated];
         if (self.fileDidDownloadBlock)
             self.fileDidDownloadBlock(self, updated);
     });

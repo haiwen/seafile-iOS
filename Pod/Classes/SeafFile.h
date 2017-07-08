@@ -45,6 +45,9 @@ typedef void (^SeafFileDidDownloadBlock)(SeafFile* _Nonnull file, BOOL result);
 @property (readonly) long long filesize;
 @property (readonly) long long mtime;
 @property (strong, nullable) id <SeafFileUpdateDelegate> udelegate;
+@property (strong, nonatomic) NSProgress * _Nullable progress;
+@property (assign, nonatomic) NSTimeInterval failTime;
+@property (copy, nonatomic) NSString * _Nullable userIdentifier;
 
 - (BOOL)isStarred;
 - (void)setStarred:(BOOL)starred;

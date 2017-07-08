@@ -143,7 +143,7 @@ enum SHARE_STATUS {
                 _state = PREVIEW_WEBVIEW_JS;
             else if (!IsIpad()) { // if (!IsIpad()) iPhone >= 10.0
                 _state = self.preViewItem.editable ? PREVIEW_WEBVIEW : PREVIEW_QL_MODAL;
-            } else if ([self.presentingViewController isKindOfClass:[UITabBarController class]]){
+            } else if ([self.presentingViewController isKindOfClass:[UITabBarController class]]){//open form 2nd tab
                 UITabBarController *tabVC = (UITabBarController*)self.presentingViewController;
                 if (tabVC.selectedIndex == 2) {
                     _state = PREVIEW_QL_MODAL;

@@ -22,6 +22,8 @@ enum SEAFBASE_STATE {
     SEAF_DENTRY_INIT = 0,
     SEAF_DENTRY_LOADING,
     SEAF_DENTRY_UPTODATE,
+    SEAF_DENTRY_SUCCESS,
+    SEAF_DENTRY_FAILURE,
 };
 
 @class SeafBase;
@@ -50,6 +52,7 @@ typedef void (^repo_password_set_block_t)(SeafBase *entry, int ret);
 @property (readonly, copy) NSString *path; // path in the library
 @property (readonly, copy) NSString *repoId; // library id
 @property (readonly, copy) NSString *mime; //mime type
+@property (nonatomic, copy) NSString *dirPath; // full path
 
 @property (copy) NSString *ooid; // cached object id
 @property (copy) NSString *oid;  // current object id
