@@ -36,14 +36,9 @@
     return self;
 }
 
--(void)awakeFromNib
-{
-    [super awakeFromNib];
-    [_cancelBt setTitle:NSLocalizedString(@"Cancel download", @"Seafile") forState:UIControlStateNormal];
-}
-
 - (void)configureViewWithItem:(id<QLPreviewItem, SeafPreView>)item progress:(float)progress
 {
+    [_cancelBt setTitle:NSLocalizedString(@"Cancel download", @"Seafile") forState:UIControlStateNormal];
     if (_item != item) {
         _item = item;
         self.imageView.image = item.icon;
