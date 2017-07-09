@@ -258,7 +258,7 @@
     _monitors = [[NSMutableArray alloc] init];
     _startNav.view.backgroundColor = [UIColor whiteColor];
     _startNav = (UINavigationController *)self.window.rootViewController;
-    
+
     _startVC = (StartViewController *)_startNav.topViewController;
 
 
@@ -288,7 +288,7 @@
     [SVProgressHUD setBackgroundColor:[UIColor colorWithRed:250.0/256 green:250.0/256 blue:250.0/256 alpha:1.0]];
 
     [self performSelectorInBackground:@selector(delayedInit) withObject:nil];
-    
+
     [UIApplication sharedApplication].delegate.window.backgroundColor = [UIColor whiteColor];
     return YES;
 }
@@ -441,7 +441,7 @@
     _tabbarController.delegate = self;
     if (ios7)
         _tabbarController.view.backgroundColor = [UIColor colorWithRed:150.0f/255 green:150.0f/255 blue:150.0f/255 alpha:1];
-    
+
 }
 
 - (UITabBarController *)tabbarController

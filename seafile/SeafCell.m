@@ -44,6 +44,6 @@
     if (self.moreButtonBlock) {
         self.moreButtonBlock(self.cellIndexPath);
     }
-    
+
 }
 @end

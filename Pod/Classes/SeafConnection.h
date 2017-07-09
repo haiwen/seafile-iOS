@@ -93,7 +93,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 @property (readwrite, nonatomic) NSString * _Nullable contactsRepo;
 
 @property (readwrite, nonatomic) BOOL autoClearRepoPasswd;
-@property (readwrite, nonatomic) BOOL localDecryption;
+@property (readwrite, nonatomic) BOOL localDecryptionEnabled;
 @property (readwrite, nonatomic) BOOL touchIdEnabled;
 @property (readonly) NSURLCredential *_Nullable clientCred;
 
@@ -108,8 +108,9 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 
 - (void)loadRepos:(id<SeafDentryDelegate> _Nullable)degt;
 
-- (BOOL)localDecrypt:(NSString * _Nonnull)repoId;
+- (BOOL)localDecrypt;
 - (BOOL)isEncrypted:(NSString * _Nonnull)repoId;
+- (BOOL)shouldLocalDecrypt:(NSString * _Nonnull)repoId;
 
 - (void)resetUploadedPhotos;
 - (void)clearAccount;

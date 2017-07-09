@@ -65,7 +65,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     self.tableView.tableFooterView = [UIView new];
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
-    
+
     self.eventsMore = true;
     self.eventsOffset = 0;
     _eventDetails = [NSMutableDictionary new];
@@ -436,14 +436,15 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
     NSDictionary *detail = [_eventDetails objectForKey:url];
     Debug("detail: %@", detail);
-    if (detail)
-        return [self showEvent:repoId detail:detail fromCell:cell];
-
     SeafRepo *repo = [_connection getRepo:repoId];
     if (!repo) {
         Warning("No such repo %@", repoId);
         return;
     }
+
+    if (detail && !repo.passwordRequired)
+        return [self showEvent:repoId detail:detail fromCell:cell];
+
     if (repo.passwordRequired) {
         [self popupSetRepoPassword:repo handler:^{
             [self getCommitModificationDetail:repoId url:url fromCell:cell];

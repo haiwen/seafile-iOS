@@ -288,7 +288,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 - (BOOL)chunkFile:(NSString *)path repo:(SeafRepo *)repo blockids:(NSMutableArray *)blockids paths:(NSMutableArray *)paths
 {
     NSString *password = [repo->connection getRepoPassword:repo.repoId];
-    if (repo.encrypted && ![repo->connection localDecrypt:repo.repoId] && !password)
+    if (repo.encrypted && !password)
         return false;
     BOOL ret = YES;
     int CHUNK_LENGTH = 2*1024*1024;
@@ -471,7 +471,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         Debug("upload large file %@ by block: %lld", self.name, _filesize);
         return [self uploadLargeFileByBlocks:repo path:uploadpath];
     }
-    BOOL byblock = [connection localDecrypt:repo.repoId];
+    BOOL byblock = [connection shouldLocalDecrypt:repo.repoId];
     NSString* upload_url = [NSString stringWithFormat:API_URL"/repos/%@/upload-", repoId];
     if (byblock)
         upload_url = [upload_url stringByAppendingString:@"blks-link/"];

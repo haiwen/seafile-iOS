@@ -333,15 +333,15 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return [[self getAttribute:@"autoClearRepoPasswd"] booleanValue:false];
 }
 
-- (BOOL)localDecryption
+- (BOOL)localDecryptionEnabled
 {
     return [[self getAttribute:@"localDecryption"] booleanValue:false];
 }
 
-- (void)setLocalDecryption:(BOOL)localDecryption
+- (void)setLocalDecryptionEnabled:(BOOL)localDecryptionEnabled
 {
-    if (self.localDecryption == localDecryption) return;
-    [self setAttribute:[NSNumber numberWithBool:localDecryption] forKey:@"localDecryption"];
+    if (self.localDecryptionEnabled == localDecryptionEnabled) return;
+    [self setAttribute:[NSNumber numberWithBool:localDecryptionEnabled] forKey:@"localDecryption"];
 }
 
 - (BOOL)touchIdEnabled
@@ -603,18 +603,22 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }];
 }
 
-- (BOOL)localDecrypt:(NSString *)repoId
+- (BOOL)localDecrypt
 {
-    if (!self.localDecryption || !self.isChunkSupported)
-        return false;
-    SeafRepo *repo = [self getRepo:repoId];
-    return [repo canLocalDecrypt];
+    return self.localDecryptionEnabled && self.isChunkSupported;
 }
 
 - (BOOL)isEncrypted:(NSString *)repoId
 {
     SeafRepo *repo = [self getRepo:repoId];
     return repo.encrypted;
+}
+
+- (BOOL)shouldLocalDecrypt:(NSString * _Nonnull)repoId
+{
+    SeafRepo *repo = [self getRepo:repoId];
+    //Debug("Repo %@ encrypted %d version:%d, magic:%@", repoId, repo.encrypted, repo.encVersion, repo.magic);
+    return [self localDecrypt] && repo.encrypted && repo.encVersion >= 2 && repo.magic;
 }
 
 - (void)clearUploadCache

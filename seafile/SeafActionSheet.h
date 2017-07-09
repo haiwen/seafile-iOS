@@ -109,7 +109,7 @@ typedef NS_ENUM(NSUInteger, SFActionSheetArrowDirection) {
 
 /**
  Initializes the action sheet with one or more sections.
- 
+
  @param sections An array containing all the sections that should be displayed in the action sheet. You must at least provide one section or an exception is thrown.
  */
 - (instancetype)initWithSections:(NSArray *)sections;

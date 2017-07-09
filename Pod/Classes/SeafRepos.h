@@ -26,10 +26,13 @@
 @property (readonly) long long mtime;
 @property (readonly) NSString *type;
 
-- (BOOL)canLocalDecrypt;
 - (NSString *)detailText;
 - (BOOL)isGroupRepo;
 
+
+// If local decryption is enabled, check library password locally, otherwise set library password on remote server
+- (void)checkOrSetRepoPassword:(NSString *)password delegate:(id<SeafRepoPasswordDelegate>)del;
+- (void)checkOrSetRepoPassword:(NSString *)password block:(repo_password_set_block_t)block;
 
 @end
 

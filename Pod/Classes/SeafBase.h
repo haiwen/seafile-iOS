@@ -68,11 +68,6 @@ typedef void (^repo_password_set_block_t)(SeafBase *entry, int ret);
 - (void)loadContent:(BOOL)force;
 - (UIImage *)icon; // icon for this entry
 
-
-// If local decryption is enabled, check library password locally, otherwise set library password on remote server
-- (void)checkOrSetRepoPassword:(NSString *)password delegate:(id<SeafRepoPasswordDelegate>)del;
-- (void)checkOrSetRepoPassword:(NSString *)password block:(repo_password_set_block_t)block;
-
 - (void)generateShareLink:(id<SeafShareDelegate>)dg; // generate shared link
 
 

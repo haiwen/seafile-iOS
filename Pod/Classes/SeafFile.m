@@ -436,7 +436,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (void)downloadfile
 {
-    if (connection.isChunkSupported && ([connection localDecrypt:self.repoId] || _filesize > LARGE_FILE_SIZE)) {
+    if (connection.isChunkSupported && ([connection shouldLocalDecrypt:self.repoId] || _filesize > LARGE_FILE_SIZE)) {
         Debug("Download file %@ by blocks: %lld", self.name, _filesize);
         [self downloadByBlocks];
     } else

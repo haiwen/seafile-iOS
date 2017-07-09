@@ -226,7 +226,7 @@
 #if DEBUG
 //            serverTextField.text = @"dev2.seafile.com/seahub/";
 #else
-            
+
 #endif
             break;
         default:

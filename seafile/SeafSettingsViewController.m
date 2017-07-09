@@ -288,7 +288,7 @@ enum {
 
 - (IBAction)localDecryptionSwtichFlip:(id)sender
 {
-    _connection.localDecryption = _localDecrySwitch.on;
+    _connection.localDecryptionEnabled = _localDecrySwitch.on;
 }
 
 - (IBAction)enableTouchIDSwtichFlip:(id)sender
@@ -446,7 +446,7 @@ enum {
     _cacheCell.detailTextLabel.text = [FileSizeFormatter stringFromLongLong:cacheSize];
 
     _autoClearPasswdSwitch.on = _connection.autoClearRepoPasswd;
-    _localDecrySwitch.on = _connection.localDecryption;
+    _localDecrySwitch.on = _connection.localDecryptionEnabled;
     _serverCell.detailTextLabel.text = [_connection.address trimUrl];
 
     [self.tableView reloadData];
@@ -519,7 +519,7 @@ enum {
                     SeafRepo *repo = (SeafRepo *)dir;
                     Debug("Choose repo %@ for photo auto upload, encryped:%d", repo.name, repo.encrypted);
                     if (repo.encrypted) {
-                        if (!_connection.localDecryption) {
+                        if (!_connection.localDecryptionEnabled) {
                             return [self alertWithTitle:NSLocalizedString(@"Please enable \"Local decryption\" for auto uploading photos to an encrypted library.", @"Seafile")];
                         } else if (_connection.autoClearRepoPasswd) {
                             return [self alertWithTitle:NSLocalizedString(@"Please disable \"Auto clear passwords\" for auto uploading photos to an encrypted library.", @"Seafile")];
@@ -546,7 +546,7 @@ enum {
                     SeafRepo *repo = (SeafRepo *)dir;
                     Debug("Choose repo %@ for contacts auto upload, encryped:%d", repo.name, repo.encrypted);
                     if (repo.encrypted) {
-                        if (!_connection.localDecryption) {
+                        if (!_connection.localDecryptionEnabled) {
                             return [self alertWithTitle:NSLocalizedString(@"Please enable \"Local decryption\" for uploading contacts to an encrypted library.", @"Seafile")];
                         } else if (_connection.autoClearRepoPasswd) {
                             return [self alertWithTitle:NSLocalizedString(@"Please disable \"Auto clear passwords\" for uploading contacts to an encrypted library.", @"Seafile")];

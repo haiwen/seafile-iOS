@@ -335,16 +335,16 @@
 {
     _selectedindex = indexPath;
     SeafFile *file = (SeafFile *)[_starredFiles objectAtIndex:_selectedindex.row];
-    
+
     SeafCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
     NSString *title;
     if (file.mpath)
         title = S_UPLOAD;
     else
         title = S_REDOWNLOAD;
-    
+
     NSArray *titles = @[title];
-    
+
     [self showSheetWithTitles:titles andFromView:cell];
 }
 
@@ -357,23 +357,23 @@
     }else{
         sections = @[section,[SeafActionSheetSection cancelSection]];
     }
-    
+
     SeafActionSheet *actionSheet = [SeafActionSheet actionSheetWithSections:sections];
     actionSheet.insets = UIEdgeInsetsMake(20.0f, 0.0f, 0.0f, 0.0f);
-    
+
     [actionSheet setButtonPressedBlock:^(SeafActionSheet *actionSheet, NSIndexPath *indexPath){
         [actionSheet dismissAnimated:YES];
         if (indexPath.section == 0) {
             [self cellMoreAction];
         }
     }];
-    
+
     if (IsIpad()) {
         [actionSheet setOutsidePressBlock:^(SeafActionSheet *sheet) {
             [sheet dismissAnimated:YES];
         }];
         CGPoint point = CGPointZero;
-        
+
         if ([view isKindOfClass:[SeafCell class]]) {
             SeafCell *cell = (SeafCell*)view;
             point = (CGPoint){CGRectGetMidX(cell.moreButton.frame), CGRectGetMaxY(cell.moreButton.frame)};
@@ -383,7 +383,7 @@
             UIView *itemView = [item valueForKey:@"view"];
             point = (CGPoint){CGRectGetMidX(itemView.frame), CGRectGetMaxY(itemView.frame) + itemView.frame.size.height};
         }
-        
+
         [actionSheet showFromPoint:point inView:self.navigationController.view arrowDirection:SFActionSheetArrowDirectionTop animated:YES];
     } else {
         UIView *topView = [[[UIApplication sharedApplication] keyWindow].subviews firstObject];

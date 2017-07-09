@@ -168,7 +168,7 @@ enum {
 
     self.formatter = [[NSDateFormatter alloc] init];
     [self.formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
-    
+
     self.tableView.estimatedRowHeight = 55;
     self.state = STATE_INIT;
 
@@ -180,7 +180,7 @@ enum {
     UIImageView *barImageView = [[[self.searchBar.subviews firstObject] subviews] firstObject];
     barImageView.layer.borderColor = [UIColor colorWithRed:240/255.0 green:239/255.0 blue:246/255.0 alpha:1.0].CGColor;
     barImageView.layer.borderWidth = 1;
-    
+
     self.strongSearchDisplayController = [[UISearchDisplayController alloc] initWithSearchBar:self.searchBar contentsController:self];
     self.searchDisplayController.searchResultsDataSource = self;
     self.searchDisplayController.searchResultsDelegate = self;
@@ -195,7 +195,7 @@ enum {
 
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     [self.navigationController setToolbarHidden:YES animated:NO];
-    
+
     __weak typeof(self) weakSelf = self;
     [self.tableView addPullToRefresh:[SVArrowPullToRefreshView class] withActionHandler:^{
         [weakSelf.tableView reloadData];
@@ -205,7 +205,7 @@ enum {
             [weakSelf performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
             return;
         }
-        
+
         weakSelf.state = STATE_LOADING;
         weakSelf.directory.delegate = weakSelf;
         [weakSelf.directory loadContent:YES];
@@ -579,11 +579,11 @@ enum {
             titles = [NSArray arrayWithObjects:star, S_DELETE, S_UPLOAD, S_SHARE_EMAIL, S_SHARE_LINK, nil];
         else
             titles = [NSArray arrayWithObjects:star, S_DELETE, S_REDOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
-    
+
     } else if ([entry isKindOfClass:[SeafUploadFile class]]) {
         titles = [NSArray arrayWithObjects:S_DOWNLOAD, S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
     }
-    
+
     [self showSheetWithTitles:titles andFromView:cell];
 }
 
@@ -596,23 +596,23 @@ enum {
     }else{
         sections = @[section,[SeafActionSheetSection cancelSection]];
     }
-    
+
     SeafActionSheet *actionSheet = [SeafActionSheet actionSheetWithSections:sections];
     actionSheet.insets = UIEdgeInsetsMake(20.0f, 0.0f, 0.0f, 0.0f);
-    
+
     [actionSheet setButtonPressedBlock:^(SeafActionSheet *actionSheet, NSIndexPath *indexPath){
         [actionSheet dismissAnimated:YES];
         if (indexPath.section == 0) {
             [self handleAction:titles[indexPath.row]];
         }
     }];
-    
+
     if (IsIpad()) {
         [actionSheet setOutsidePressBlock:^(SeafActionSheet *sheet) {
             [sheet dismissAnimated:YES];
         }];
         CGPoint point = CGPointZero;
-        
+
         if ([view isKindOfClass:[SeafCell class]]) {
             SeafCell *cell = (SeafCell*)view;
             point = (CGPoint){CGRectGetMidX(cell.moreButton.frame), CGRectGetMaxY(cell.moreButton.frame) - cell.moreButton.frame.size.height/2};
@@ -622,7 +622,7 @@ enum {
             UIView *itemView = [item valueForKey:@"view"];
             point = (CGPoint){CGRectGetMidX(itemView.frame), CGRectGetMaxY(itemView.frame) + itemView.frame.size.height};
         }
-        
+
         [actionSheet showFromPoint:point inView:self.navigationController.view arrowDirection:SFActionSheetArrowDirectionTop animated:YES];
     } else {
         UIView *topView = [[[UIApplication sharedApplication] keyWindow].subviews firstObject];
