@@ -84,7 +84,7 @@
     self.navigationItem.title = _directory.name;
     self.navigationItem.rightBarButtonItem = _directory.editable ? self.saveButton : nil;
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
-        self.edgesForExtendedLayout = UIRectEdgeNone;
+        self.edgesForExtendedLayout = UIRectEdgeAll;
     [self refreshView];
 
     __weak typeof(self) weakSelf = self;
