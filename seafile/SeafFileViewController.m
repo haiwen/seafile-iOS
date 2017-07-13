@@ -189,6 +189,10 @@ enum {
     self.searchDisplayController.searchResultsTableView.estimatedRowHeight = 50.0;
     self.searchDisplayController.searchResultsTableView.sectionHeaderHeight = 0;
 
+    UIView *bView = [[UIView alloc] initWithFrame:self.tableView.frame];
+    bView.backgroundColor = [UIColor whiteColor];
+    self.tableView.backgroundView = bView;
+    
     self.tableView.tableHeaderView = self.searchBar;
     self.tableView.tableFooterView = [UIView new];
     self.tableView.allowsMultipleSelection = NO;
@@ -211,6 +215,7 @@ enum {
         [weakSelf.directory loadContent:YES];
     }];
 
+    Debug(@"%@", self.view);
     [self refreshView];
 }
 
