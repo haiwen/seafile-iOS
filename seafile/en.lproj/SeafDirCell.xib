@@ -20,12 +20,12 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" placeholderIntrinsicWidth="230" placeholderIntrinsicHeight="22" text="Name" lineBreakMode="characterWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3">
-                        <rect key="frame" x="59" y="8" width="201" height="39.5"/>
+                        <rect key="frame" x="59" y="8" width="201" height="30"/>
                         <accessibility key="accessibilityConfiguration">
                             <accessibilityTraits key="traits" staticText="YES" adjustable="YES"/>
                         </accessibility>
                         <constraints>
-                            <constraint firstAttribute="height" relation="greaterThanOrEqual" priority="750" constant="39" id="jca-fk-aaR"/>
+                            <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="30" id="CUK-Ia-bAg"/>
                         </constraints>
                         <fontDescription key="fontDescription" type="system" pointSize="15"/>
                         <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -39,7 +39,7 @@
                         </constraints>
                     </imageView>
                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" verticalHuggingPriority="249" verticalCompressionResistancePriority="749" text="detail" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="25">
-                        <rect key="frame" x="59" y="31" width="197" height="16"/>
+                        <rect key="frame" x="59" y="42.5" width="197" height="5"/>
                         <fontDescription key="fontDescription" type="system" pointSize="13"/>
                         <color key="textColor" red="0.66666666666666663" green="0.66666666666666663" blue="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -56,8 +56,8 @@
                     </button>
                 </subviews>
                 <constraints>
-                    <constraint firstAttribute="bottom" secondItem="3" secondAttribute="bottom" constant="8" id="6ne-Pm-K0E"/>
-                    <constraint firstAttribute="bottom" secondItem="25" secondAttribute="bottom" constant="8" id="DhX-ga-Zc0"/>
+                    <constraint firstAttribute="bottom" secondItem="25" secondAttribute="bottom" constant="8" id="ERK-qR-RGA"/>
+                    <constraint firstItem="25" firstAttribute="top" secondItem="3" secondAttribute="bottom" constant="4.5" id="G9L-Db-qiR"/>
                     <constraint firstItem="25" firstAttribute="leading" secondItem="3" secondAttribute="leading" id="PVr-Hi-acc"/>
                     <constraint firstAttribute="bottom" secondItem="VaX-pq-H6d" secondAttribute="bottom" id="QrV-Ze-bDM"/>
                     <constraint firstItem="VaX-pq-H6d" firstAttribute="top" secondItem="jlK-iz-38C" secondAttribute="top" id="STp-MX-aC4"/>

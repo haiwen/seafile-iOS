@@ -70,7 +70,7 @@
          forCellReuseIdentifier:@"SeafDirCell"];
 
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
-        self.edgesForExtendedLayout = UIRectEdgeNone;
+        self.edgesForExtendedLayout = UIRectEdgeAll;
     [self.navigationItem setHidesBackButton:[self.directory isKindOfClass:[SeafRepos class]]];
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:STR_CANCEL style:UIBarButtonItemStylePlain target:self action:@selector(cancel:)];
     self.tableView.scrollEnabled = YES;
@@ -162,6 +162,7 @@
         SeafDir *sdir = [self.subDirs objectAtIndex:indexPath.row];
         cell.textLabel.text = sdir.name;
         cell.imageView.image = sdir.icon;
+        cell.moreButton.hidden = YES;
         cell.detailTextLabel.text = @"";
         if ([sdir isKindOfClass:[SeafRepo class]]) {
             SeafRepo *repo = (SeafRepo *)sdir;
