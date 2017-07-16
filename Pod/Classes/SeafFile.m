@@ -226,12 +226,6 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
                      [Utils removeFile:target];
                      [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
                  }
-                 Debug(@"oid=%@--expected:%lld--%lld",self.downloadingFileOid, response.expectedContentLength,[Utils fileSizeAtPath1:target]);
-                 if (response.expectedContentLength != [Utils fileSizeAtPath1:target]) {
-                     self.state = SEAF_DENTRY_INIT;
-                     [self failedDownload:error];
-                     return;
-                 }
                  [self finishDownload:self.downloadingFileOid];
             }
          }];
