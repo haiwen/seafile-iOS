@@ -552,9 +552,6 @@
         if (image.size.width > MAX_SIZE || image.size.height > MAX_SIZE) {
             UIImage *img =  [Utils reSizeImage:image toSquare:MAX_SIZE];
             [UIImageJPEGRepresentation(img, 1.0) writeToFile:path atomically:YES];
-//            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND,0), ^{
-//                [UIImageJPEGRepresentation(img, 1.0) writeToFile:path atomically:YES];
-//            });
             return img;
         }
         return image;

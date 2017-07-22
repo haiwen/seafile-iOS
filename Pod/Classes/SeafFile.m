@@ -664,7 +664,6 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     if (!self.ooid)
         return nil;
     NSString *path = [SeafStorage.sharedObject documentPath:self.ooid];
-//    NSString *name = [@"cacheimage-" stringByAppendingString:self.ooid];
     NSString *cachePath = [[SeafStorage.sharedObject tempDir] stringByAppendingPathComponent:self.ooid];
     return [Utils imageFromPath:path withMaxSize:IMAGE_MAX_SIZE cachePath:cachePath andFileName:self.name];
 }
