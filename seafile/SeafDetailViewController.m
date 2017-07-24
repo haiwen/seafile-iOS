@@ -141,8 +141,13 @@ enum SHARE_STATUS {
                 _state = PREVIEW_WEBVIEW;
             else if([self.preViewItem.mime isEqualToString:@"text/x-markdown"] || [self.preViewItem.mime isEqualToString:@"text/x-seafile"])
                 _state = PREVIEW_WEBVIEW_JS;
-            else { // if (!IsIpad()) iPhone >= 10.0
+            else if (!IsIpad()) { // if (!IsIpad()) iPhone >= 10.0
                 _state = self.preViewItem.editable ? PREVIEW_WEBVIEW : PREVIEW_QL_MODAL;
+            } else if ([self.presentingViewController isKindOfClass:[UITabBarController class]]){
+                UITabBarController *tabVC = (UITabBarController*)self.presentingViewController;
+                if (tabVC.selectedIndex == 2) {
+                    _state = PREVIEW_QL_MODAL;
+                }
             }
         }
     } else {

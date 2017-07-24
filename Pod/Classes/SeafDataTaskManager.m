@@ -70,9 +70,10 @@
     if (result) {
         self.failedNum = 0;
     } else {
-        self.failedNum ++;
-        if ([task retryable])
+        if ([task retryable]) {
+            self.failedNum ++;
             [self.dTasks addObject:task];
+        }
         if (self.failedNum >= 3) {
             [self performSelector:@selector(tryDownload) withObject:nil afterDelay:10.0];
             self.failedNum = 2;
