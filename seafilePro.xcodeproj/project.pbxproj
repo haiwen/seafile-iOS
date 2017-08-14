@@ -189,6 +189,42 @@
 		58D40A7E1E9AF86D00A68BEF /* SeafData.m in Sources */ = {isa = PBXBuildFile; fileRef = 58D40A7C1E9AF86D00A68BEF /* SeafData.m */; };
 		7354777D2C3444E394BB2F31 /* libPods-SeafAction.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 159E0D2A7419F67E532A240F /* libPods-SeafAction.a */; };
 		F53690381F13B5F90050D788 /* more_dot.png in Resources */ = {isa = PBXBuildFile; fileRef = F53690371F13B5F90050D788 /* more_dot.png */; };
+		F547424D1F413E54006D5D78 /* vaultEncrypted.png in Resources */ = {isa = PBXBuildFile; fileRef = F54742441F413E54006D5D78 /* vaultEncrypted.png */; };
+		F547424E1F413E54006D5D78 /* vaultEncrypted.png in Resources */ = {isa = PBXBuildFile; fileRef = F54742441F413E54006D5D78 /* vaultEncrypted.png */; };
+		F547424F1F413E54006D5D78 /* vaultEncrypted.png in Resources */ = {isa = PBXBuildFile; fileRef = F54742441F413E54006D5D78 /* vaultEncrypted.png */; };
+		F54742501F413E54006D5D78 /* vaultEncrypted.png in Resources */ = {isa = PBXBuildFile; fileRef = F54742441F413E54006D5D78 /* vaultEncrypted.png */; };
+		F54742511F413E54006D5D78 /* vaultEncrypted@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F54742451F413E54006D5D78 /* vaultEncrypted@2x.png */; };
+		F54742521F413E54006D5D78 /* vaultEncrypted@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F54742451F413E54006D5D78 /* vaultEncrypted@2x.png */; };
+		F54742531F413E54006D5D78 /* vaultEncrypted@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F54742451F413E54006D5D78 /* vaultEncrypted@2x.png */; };
+		F54742541F413E54006D5D78 /* vaultEncrypted@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F54742451F413E54006D5D78 /* vaultEncrypted@2x.png */; };
+		F54742551F413E54006D5D78 /* vaultEncrypted@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = F54742461F413E54006D5D78 /* vaultEncrypted@3x.png */; };
+		F54742561F413E54006D5D78 /* vaultEncrypted@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = F54742461F413E54006D5D78 /* vaultEncrypted@3x.png */; };
+		F54742571F413E54006D5D78 /* vaultEncrypted@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = F54742461F413E54006D5D78 /* vaultEncrypted@3x.png */; };
+		F54742581F413E54006D5D78 /* vaultEncrypted@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = F54742461F413E54006D5D78 /* vaultEncrypted@3x.png */; };
+		F54742591F413E54006D5D78 /* vaultNormal.png in Resources */ = {isa = PBXBuildFile; fileRef = F54742471F413E54006D5D78 /* vaultNormal.png */; };
+		F547425A1F413E54006D5D78 /* vaultNormal.png in Resources */ = {isa = PBXBuildFile; fileRef = F54742471F413E54006D5D78 /* vaultNormal.png */; };
+		F547425B1F413E54006D5D78 /* vaultNormal.png in Resources */ = {isa = PBXBuildFile; fileRef = F54742471F413E54006D5D78 /* vaultNormal.png */; };
+		F547425C1F413E54006D5D78 /* vaultNormal.png in Resources */ = {isa = PBXBuildFile; fileRef = F54742471F413E54006D5D78 /* vaultNormal.png */; };
+		F547425D1F413E54006D5D78 /* vaultNormal@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F54742481F413E54006D5D78 /* vaultNormal@2x.png */; };
+		F547425E1F413E54006D5D78 /* vaultNormal@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F54742481F413E54006D5D78 /* vaultNormal@2x.png */; };
+		F547425F1F413E54006D5D78 /* vaultNormal@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F54742481F413E54006D5D78 /* vaultNormal@2x.png */; };
+		F54742601F413E54006D5D78 /* vaultNormal@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F54742481F413E54006D5D78 /* vaultNormal@2x.png */; };
+		F54742611F413E54006D5D78 /* vaultNormal@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = F54742491F413E54006D5D78 /* vaultNormal@3x.png */; };
+		F54742621F413E54006D5D78 /* vaultNormal@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = F54742491F413E54006D5D78 /* vaultNormal@3x.png */; };
+		F54742631F413E54006D5D78 /* vaultNormal@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = F54742491F413E54006D5D78 /* vaultNormal@3x.png */; };
+		F54742641F413E54006D5D78 /* vaultNormal@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = F54742491F413E54006D5D78 /* vaultNormal@3x.png */; };
+		F54742651F413E54006D5D78 /* vaultReadonly.png in Resources */ = {isa = PBXBuildFile; fileRef = F547424A1F413E54006D5D78 /* vaultReadonly.png */; };
+		F54742661F413E54006D5D78 /* vaultReadonly.png in Resources */ = {isa = PBXBuildFile; fileRef = F547424A1F413E54006D5D78 /* vaultReadonly.png */; };
+		F54742671F413E54006D5D78 /* vaultReadonly.png in Resources */ = {isa = PBXBuildFile; fileRef = F547424A1F413E54006D5D78 /* vaultReadonly.png */; };
+		F54742681F413E54006D5D78 /* vaultReadonly.png in Resources */ = {isa = PBXBuildFile; fileRef = F547424A1F413E54006D5D78 /* vaultReadonly.png */; };
+		F54742691F413E54006D5D78 /* vaultReadonly@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F547424B1F413E54006D5D78 /* vaultReadonly@2x.png */; };
+		F547426A1F413E54006D5D78 /* vaultReadonly@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F547424B1F413E54006D5D78 /* vaultReadonly@2x.png */; };
+		F547426B1F413E54006D5D78 /* vaultReadonly@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F547424B1F413E54006D5D78 /* vaultReadonly@2x.png */; };
+		F547426C1F413E54006D5D78 /* vaultReadonly@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F547424B1F413E54006D5D78 /* vaultReadonly@2x.png */; };
+		F547426D1F413E54006D5D78 /* vaultReadonly@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = F547424C1F413E54006D5D78 /* vaultReadonly@3x.png */; };
+		F547426E1F413E54006D5D78 /* vaultReadonly@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = F547424C1F413E54006D5D78 /* vaultReadonly@3x.png */; };
+		F547426F1F413E54006D5D78 /* vaultReadonly@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = F547424C1F413E54006D5D78 /* vaultReadonly@3x.png */; };
+		F54742701F413E54006D5D78 /* vaultReadonly@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = F547424C1F413E54006D5D78 /* vaultReadonly@3x.png */; };
 		F568C1FB1EF10F8900F1035D /* SeafActionSheet.m in Sources */ = {isa = PBXBuildFile; fileRef = F568C1FA1EF10F8900F1035D /* SeafActionSheet.m */; };
 		F571850E1F0742FE00543F42 /* more_dot@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = F571850C1F0742FE00543F42 /* more_dot@3x.png */; };
 		F571850F1F0742FE00543F42 /* more_dot@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F571850D1F0742FE00543F42 /* more_dot@2x.png */; };
@@ -478,6 +514,15 @@
 		E4F46F57187B44B200B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
 		EE1E1FA7502D3F04292B11CB /* Pods-SeafAction.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafAction.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SeafAction/Pods-SeafAction.debug.xcconfig"; sourceTree = "<group>"; };
 		F53690371F13B5F90050D788 /* more_dot.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = more_dot.png; sourceTree = "<group>"; };
+		F54742441F413E54006D5D78 /* vaultEncrypted.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = vaultEncrypted.png; sourceTree = "<group>"; };
+		F54742451F413E54006D5D78 /* vaultEncrypted@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "vaultEncrypted@2x.png"; sourceTree = "<group>"; };
+		F54742461F413E54006D5D78 /* vaultEncrypted@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "vaultEncrypted@3x.png"; sourceTree = "<group>"; };
+		F54742471F413E54006D5D78 /* vaultNormal.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = vaultNormal.png; sourceTree = "<group>"; };
+		F54742481F413E54006D5D78 /* vaultNormal@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "vaultNormal@2x.png"; sourceTree = "<group>"; };
+		F54742491F413E54006D5D78 /* vaultNormal@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "vaultNormal@3x.png"; sourceTree = "<group>"; };
+		F547424A1F413E54006D5D78 /* vaultReadonly.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = vaultReadonly.png; sourceTree = "<group>"; };
+		F547424B1F413E54006D5D78 /* vaultReadonly@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "vaultReadonly@2x.png"; sourceTree = "<group>"; };
+		F547424C1F413E54006D5D78 /* vaultReadonly@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "vaultReadonly@3x.png"; sourceTree = "<group>"; };
 		F568C1F91EF10F8900F1035D /* SeafActionSheet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafActionSheet.h; sourceTree = "<group>"; };
 		F568C1FA1EF10F8900F1035D /* SeafActionSheet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafActionSheet.m; sourceTree = "<group>"; };
 		F571850C1F0742FE00543F42 /* more_dot@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "more_dot@3x.png"; sourceTree = "<group>"; };
@@ -646,6 +691,15 @@
 				F571850C1F0742FE00543F42 /* more_dot@3x.png */,
 				F571850D1F0742FE00543F42 /* more_dot@2x.png */,
 				F53690371F13B5F90050D788 /* more_dot.png */,
+				F54742441F413E54006D5D78 /* vaultEncrypted.png */,
+				F54742451F413E54006D5D78 /* vaultEncrypted@2x.png */,
+				F54742461F413E54006D5D78 /* vaultEncrypted@3x.png */,
+				F54742471F413E54006D5D78 /* vaultNormal.png */,
+				F54742481F413E54006D5D78 /* vaultNormal@2x.png */,
+				F54742491F413E54006D5D78 /* vaultNormal@3x.png */,
+				F547424A1F413E54006D5D78 /* vaultReadonly.png */,
+				F547424B1F413E54006D5D78 /* vaultReadonly@2x.png */,
+				F547424C1F413E54006D5D78 /* vaultReadonly@3x.png */,
 			);
 			path = images;
 			sourceTree = "<group>";
@@ -1104,6 +1158,7 @@
 				57F8CD2D1A127566000F6CDC /* SeafTextEditorViewController_iPhone.xib in Resources */,
 				57F8CD2F1A127566000F6CDC /* SeafUploadingFileCell.xib in Resources */,
 				57E22B3A1A126EBE00C92330 /* FolderView_iPad.storyboard in Resources */,
+				F547425D1F413E54006D5D78 /* vaultNormal@2x.png in Resources */,
 				57E22B3B1A126EBE00C92330 /* FolderView_iPhone.storyboard in Resources */,
 				57E22B411A126EBE00C92330 /* SeafStart.storyboard in Resources */,
 				578778A91C9CF82F009C17D4 /* download_waiting.png in Resources */,
@@ -1120,6 +1175,7 @@
 				57C03F5017FB271100F7B575 /* refresh2.png in Resources */,
 				57943C1119F027D5008423E5 /* share@2x.png in Resources */,
 				57943C1919F027D5008423E5 /* tab-settings@2x.png in Resources */,
+				F547426D1F413E54006D5D78 /* vaultReadonly@3x.png in Resources */,
 				57943C0419F027D5008423E5 /* checkmask@2x.png in Resources */,
 				571D8CFA1677881400F1A22C /* share.png in Resources */,
 				571CFA9419076469002A58BF /* reply.png in Resources */,
@@ -1150,6 +1206,7 @@
 				57A95E5F18369E5A009D268A /* ellipsis.png in Resources */,
 				57943C1819F027D5008423E5 /* tab-modify@2x.png in Resources */,
 				F575168B1EF4CA0B00BD633B /* arrowmore@2x.png in Resources */,
+				F54742611F413E54006D5D78 /* vaultNormal@3x.png in Resources */,
 				F53690381F13B5F90050D788 /* more_dot.png in Resources */,
 				F571850E1F0742FE00543F42 /* more_dot@3x.png in Resources */,
 				57943C0119F027D5008423E5 /* arrowleft2@2x.png in Resources */,
@@ -1157,8 +1214,11 @@
 				57A95E5B18369147009D268A /* close2.png in Resources */,
 				57708C0219F23CD300D6ACE7 /* tab-account@2x.png in Resources */,
 				57943C0C19F027D5008423E5 /* export@2x.png in Resources */,
+				F54742651F413E54006D5D78 /* vaultReadonly.png in Resources */,
 				57124BEB1B3EA6EA00075EAE /* LaunchScreen.png in Resources */,
+				F54742511F413E54006D5D78 /* vaultEncrypted@2x.png in Resources */,
 				577B6C6216AAD241008E82C2 /* tab-star.png in Resources */,
+				F54742551F413E54006D5D78 /* vaultEncrypted@3x.png in Resources */,
 				5715551E1995FCDC00D2821D /* ImageError@2x.png in Resources */,
 				57C03F5817FB271100F7B575 /* checkmask2.png in Resources */,
 				57C03F4617FB271100F7B575 /* unstar2.png in Resources */,
@@ -1168,6 +1228,7 @@
 				57A95E5918369147009D268A /* close.png in Resources */,
 				57C03F4C17FB271100F7B575 /* arrowright2.png in Resources */,
 				F575168C1EF4CA0B00BD633B /* arrowmore@3x.png in Resources */,
+				F54742691F413E54006D5D78 /* vaultReadonly@2x.png in Resources */,
 				57C03F3A17FB227100F7B575 /* addmsg2.png in Resources */,
 				57C03F5217FB271100F7B575 /* plus2.png in Resources */,
 				57A95E6118369E5A009D268A /* ellipsis2.png in Resources */,
@@ -1175,10 +1236,12 @@
 				57BD932F174DDA8700F7732F /* group.png in Resources */,
 				5704C6F91756710F0028F4FE /* tab-account.png in Resources */,
 				5704C6FB1756710F0028F4FE /* tab-modify.png in Resources */,
+				F54742591F413E54006D5D78 /* vaultNormal.png in Resources */,
 				5704C6FD1756710F0028F4FE /* tab-message.png in Resources */,
 				57943C1419F027D5008423E5 /* star2@2x.png in Resources */,
 				57943C0F19F027D5008423E5 /* refresh@2x.png in Resources */,
 				57E5E7B91CC219E7004B7125 /* SeafButtonCell.xib in Resources */,
+				F547424D1F413E54006D5D78 /* vaultEncrypted.png in Resources */,
 				57A550DB177F23BB00E3BA9B /* refresh.png in Resources */,
 				57C03F4E17FB271100F7B575 /* arrowleft2.png in Resources */,
 				57A550DE177F283700E3BA9B /* addmsg.png in Resources */,
@@ -1205,10 +1268,19 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F547425E1F413E54006D5D78 /* vaultNormal@2x.png in Resources */,
+				F547425A1F413E54006D5D78 /* vaultNormal.png in Resources */,
 				57A192161A208F1600985F77 /* SeafAccountCell.xib in Resources */,
+				F547424E1F413E54006D5D78 /* vaultEncrypted.png in Resources */,
 				57A029A51A170147009C9D7B /* SeafProviderFileViewController.storyboard in Resources */,
 				577C6F391AB07B910043A833 /* Settings.bundle in Resources */,
+				F547426E1F413E54006D5D78 /* vaultReadonly@3x.png in Resources */,
+				F54742621F413E54006D5D78 /* vaultNormal@3x.png in Resources */,
+				F547426A1F413E54006D5D78 /* vaultReadonly@2x.png in Resources */,
 				57A0299B1A16F95D009C9D7B /* MainInterface.storyboard in Resources */,
+				F54742561F413E54006D5D78 /* vaultEncrypted@3x.png in Resources */,
+				F54742521F413E54006D5D78 /* vaultEncrypted@2x.png in Resources */,
+				F54742661F413E54006D5D78 /* vaultReadonly.png in Resources */,
 				57A0299C1A16F95D009C9D7B /* SeafProvider.entitlements in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1217,8 +1289,17 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F54742531F413E54006D5D78 /* vaultEncrypted@2x.png in Resources */,
+				F547426F1F413E54006D5D78 /* vaultReadonly@3x.png in Resources */,
+				F54742671F413E54006D5D78 /* vaultReadonly.png in Resources */,
 				577C6F3A1AB07B910043A833 /* Settings.bundle in Resources */,
+				F547426B1F413E54006D5D78 /* vaultReadonly@2x.png in Resources */,
+				F547424F1F413E54006D5D78 /* vaultEncrypted.png in Resources */,
+				F547425B1F413E54006D5D78 /* vaultNormal.png in Resources */,
+				F54742571F413E54006D5D78 /* vaultEncrypted@3x.png in Resources */,
+				F54742631F413E54006D5D78 /* vaultNormal@3x.png in Resources */,
 				57A029A01A16F965009C9D7B /* SeafProviderFileProvider.entitlements in Resources */,
+				F547425F1F413E54006D5D78 /* vaultNormal@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1226,10 +1307,19 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F54742501F413E54006D5D78 /* vaultEncrypted.png in Resources */,
+				F54742681F413E54006D5D78 /* vaultReadonly.png in Resources */,
 				574D3DCA1DFD1E010093C18C /* Localizable.strings in Resources */,
 				574D3DC21DFA815B0093C18C /* SeafAccountCell.xib in Resources */,
 				57B14B711DF5325B0045112E /* MainInterface.storyboard in Resources */,
+				F54742701F413E54006D5D78 /* vaultReadonly@3x.png in Resources */,
+				F54742541F413E54006D5D78 /* vaultEncrypted@2x.png in Resources */,
+				F54742641F413E54006D5D78 /* vaultNormal@3x.png in Resources */,
+				F547426C1F413E54006D5D78 /* vaultReadonly@2x.png in Resources */,
 				574D3D8E1DFA6EF90093C18C /* Images.xcassets in Resources */,
+				F54742601F413E54006D5D78 /* vaultNormal@2x.png in Resources */,
+				F54742581F413E54006D5D78 /* vaultEncrypted@3x.png in Resources */,
+				F547425C1F413E54006D5D78 /* vaultNormal.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
