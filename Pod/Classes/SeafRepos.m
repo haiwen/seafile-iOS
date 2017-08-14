@@ -104,17 +104,6 @@
     return detail;
 }
 
--(UIImage *)icon
-{
-    if (self.encrypted) {
-        return  [UIImage imageNamed:@"vaultEncrypted"];
-    } else if (!self.editable) {
-        return [UIImage imageNamed:@"vaultReadonly"];
-    } else {
-        return [UIImage imageNamed:@"vaultNormal"];
-    }
-}
-
 - (BOOL)isGroupRepo
 {
     return [GROUP_REPO isEqualToString:self.type];
