@@ -978,7 +978,7 @@ enum {
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
 {
-    if (tableView.numberOfSections == 1) {
+    if (![_directory isKindOfClass:[SeafRepos class]]) {
         return 0.01;
     } else {
         return 24;
