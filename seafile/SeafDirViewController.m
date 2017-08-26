@@ -126,7 +126,13 @@
             for (int i = 0; i < repos.repoGroups.count; ++i) {
                 for (SeafRepo *repo in [repos.repoGroups objectAtIndex:i]) {
                     if (!_chooseRepo || repo.editable) {
-                        [arr addObject:repo];
+                        if (SeafGlobal.sharedObject.connection.localDecryptionEnabled) {
+                            [arr addObject:repo];
+                        } else {
+                            if (!repo.encrypted) {
+                                [arr addObject:repo];
+                            }
+                        }
                     }
                 }
             }
