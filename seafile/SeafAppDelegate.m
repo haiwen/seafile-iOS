@@ -134,37 +134,41 @@
     return true;
 }
 
-- (void)uploadFile:(NSString *)path
-{
-    [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
-    SeafUploadFile *file = [SeafGlobal.sharedObject.connection getUploadfile:path];
-    [self.fileVC uploadFile:file];
-}
-
 - (BOOL)openFileURL:(NSURL*)url
 {
     Debug("open %@", url);
-    NSString *uploadDir = [SeafGlobal.sharedObject.connection uniqueUploadDir];
-    NSURL *to = [NSURL fileURLWithPath:[uploadDir stringByAppendingPathComponent:url.lastPathComponent]];
-    Debug("Copy %@, to %@, %@, %@\n", url, to, to.absoluteString, to.path);
-    BOOL ret = [Utils checkMakeDir:uploadDir];
-    if (!ret) return false;
-    ret = [Utils copyFile:url to:to];
-    if (!ret) return false;
     if (self.window.rootViewController == self.startNav) {
         [self.startVC selectDefaultAccount:^(bool success) {
             Debug("enter default account: %d", success);
             if (success) {
-                [self uploadFile:to.path];
+                [self handleUploadPathWithUrl:url];
             } else {
                 NSString *title = NSLocalizedString(@"Failed to upload file", @"Seafile");
                 [Utils alertWithTitle:title message:nil handler:nil from:self.startVC];
             }
         }];
     } else
-        [self uploadFile:to.path];
+        [self handleUploadPathWithUrl:url];
 
     return true;
+}
+
+- (void)handleUploadPathWithUrl:(NSURL*)url {
+    NSString *uploadDir = [[SeafGlobal sharedObject].connection uniqueUploadDir];
+    NSURL *to = [NSURL fileURLWithPath:[uploadDir stringByAppendingPathComponent:url.lastPathComponent]];
+    BOOL ret = [Utils checkMakeDir:uploadDir];
+    if (!ret) return;
+    ret = [Utils copyFile:url to:to];
+    if (ret) {
+        [self uploadFile:to.path];
+    }
+}
+
+- (void)uploadFile:(NSString *)path
+{
+    [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
+    SeafUploadFile *file = [SeafGlobal.sharedObject.connection getUploadfile:path];
+    [self.fileVC uploadFile:file];
 }
 
 - (BOOL)openURL:(NSURL*)url
@@ -179,6 +183,7 @@
     Warning("Unknown scheme %@", url);
     return false;
 }
+
 - (BOOL)application:(UIApplication*)application handleOpenURL:(NSURL*)url
 {
     Debug("handleOpenURL: %@", url);
