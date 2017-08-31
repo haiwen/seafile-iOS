@@ -618,7 +618,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     SeafRepo *repo = [self getRepo:repoId];
     //Debug("Repo %@ encrypted %d version:%d, magic:%@", repoId, repo.encrypted, repo.encVersion, repo.magic);
-    return [self localDecrypt] && repo.encrypted && repo.encVersion >= 2 && repo.magic;
+    return [self localDecrypt] && repo.encrypted;
 }
 
 - (void)clearUploadCache
