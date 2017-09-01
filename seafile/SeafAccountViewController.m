@@ -235,7 +235,11 @@
     if (self.connection) {
         https = [connection.address hasPrefix:HTTPS];
         _httpsSwitch.on = https;
-        serverTextField.text = [connection.address componentsSeparatedByString:@"//"].lastObject;
+        if (https) {
+            serverTextField.text = [connection.address substringFromIndex:8];
+        } else {
+            serverTextField.text = [connection.address substringFromIndex:7];
+        }
         usernameTextField.text = connection.username;
         passwordTextField.text = nil;
         serverTextField.enabled = false;
