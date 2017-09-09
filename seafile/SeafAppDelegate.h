@@ -31,7 +31,7 @@ enum {
 
 /* Additional strings for agi18n */
 #define STR_1 NSLocalizedString(@"Release to refresh...", @"Release to refresh status")
-#define STR_2 NSLocalizedString(@"Pull down to refresh...", @"Pull down to refresh status")
+#define STR_2 NSLocalizedString(@"Pull to refresh...", @"Pull to refresh status")
 #define STR_3 NSLocalizedString(@"Loading...", @"Loading Status")
 #define STR_4 NSLocalizedString(@"Last Updated: %@", nil)
 #define STR_5 NSLocalizedString(@"SEAFILE_LOC_KEY_FORMAT", @"Seafile push notification message")
