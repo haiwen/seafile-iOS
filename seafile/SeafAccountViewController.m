@@ -86,7 +86,7 @@
 
 - (IBAction)shibboleth:(id)sender
 {
-    NSString *url = serverTextField.text;
+    NSString *url = [NSString stringWithFormat:@"%@%@",self.prefixLabel.text,serverTextField.text];
     if (!url || url.length < 1) {
         [self alertWithTitle:NSLocalizedString(@"Server must not be empty", @"Seafile")];
         return;
@@ -110,7 +110,6 @@
 
 - (IBAction)login:(id)sender
 {
-    serverTextField.text = [NSString stringWithFormat:@"%@%@",self.prefixLabel.text,serverTextField.text];
     if (self.type == ACCOUNT_SHIBBOLETH) {
         return [self shibboleth:sender];
     }
@@ -119,7 +118,7 @@
     [passwordTextField resignFirstResponder];
     NSString *username = usernameTextField.text;
     NSString *password = passwordTextField.text;
-    NSString *url = serverTextField.text;
+    NSString *url = [NSString stringWithFormat:@"%@%@",self.prefixLabel.text,serverTextField.text];
 
     if (!url || url.length < 1) {
         [self alertWithTitle:NSLocalizedString(@"Server must not be empty", @"Seafile")];
