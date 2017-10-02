@@ -546,7 +546,7 @@
         UIImage *image = [UIImage imageWithContentsOfFile:[NSString stringWithFormat:@"%@/%@",cachePath,fileName]];
         return image;
     }
-    
+
     if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
         UIImage *image = [UIImage imageWithContentsOfFile:path];
         if (image.size.width > MAX_SIZE || image.size.height > MAX_SIZE) {
