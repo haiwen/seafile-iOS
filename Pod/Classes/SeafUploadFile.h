@@ -37,6 +37,7 @@ typedef void (^SeafUploadCompletionBlock)(BOOL success, SeafUploadFile *file, NS
 @property (nonatomic, readonly) NSURL *assetURL;
 @property (readwrite) BOOL autoSync;
 @property (readonly) BOOL removed;
+@property (copy, nonatomic) NSString *userIdentifier;
 
 @property (readonly) int uProgress;
 @property (nonatomic) id<SeafUploadDelegate> delegate;

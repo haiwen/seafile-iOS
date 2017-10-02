@@ -20,6 +20,13 @@
     return self;
 }
 
+- (NSString *)userIdentifier {
+    if (!_userIdentifier)  {
+        _userIdentifier = [(SeafFile *)_file userIdentifier];
+    }
+    return _userIdentifier;
+}
+
 # pragma - SeafDownloadDelegate
 - (void)download
 {
@@ -34,6 +41,10 @@
 - (BOOL)retryable
 {
     return false;
+}
+
+- (NSString *)taskUserIdentifier {
+    return self.userIdentifier;
 }
 
 @end

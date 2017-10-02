@@ -15,6 +15,7 @@
 #import "SeafFile.h"
 #import "SeafThumb.h"
 #import "SeafAvatar.h"
+#import "SeafTaskQueue.h"
 @class SeafDownloadAccountQueue;
 
 typedef void(^SyncBlock)(SeafFile *file);
@@ -28,41 +29,32 @@ typedef void(^DownLoadFinshBlock)(SeafFile *file);
 
 + (SeafDataTaskManager *)sharedObject;
 
-- (void)startTimer;
-
 - (void)addBackgroundUploadTask:(SeafUploadFile *)file;
 - (void)finishUpload:(SeafUploadFile *)file result:(BOOL)result;
 - (void)removeBackgroundUploadTask:(SeafUploadFile *)file;
-- (unsigned long)backgroundUploadingNum;
 
 - (void)cancelAutoSyncTasks:(SeafConnection *)conn;
 - (void)cancelAutoSyncVideoTasks:(SeafConnection *)conn;
 
 - (void)assetForURL:(NSURL *)assetURL resultBlock:(ALAssetsLibraryAssetForURLResultBlock)resultBlock failureBlock:(ALAssetsLibraryAccessFailureBlock)failureBlock;
 
-- (void)addFileDownloadTask:(SeafFile*)file;
-- (void)finishFileDownload:(SeafFile<SeafDownloadDelegate>*)file result:(BOOL)result;
+- (void)addDownloadTask:(id<SeafDownloadDelegate>)task;
+- (void)finishDownloadTask:(id<SeafDownloadDelegate>)task result:(BOOL)result;
 - (SeafDownloadAccountQueue*)accountQueueForConnection:(SeafConnection*)connection;
-
-- (void)addThumbDownloadTask:(SeafThumb*)thumb;
-- (void)finishThumbDownload:(SeafThumb<SeafDownloadDelegate> *)thumb result:(BOOL)result;
-
 - (void)removeBackgroundDownloadTask:(id<SeafDownloadDelegate>)task;
-
-- (void)addAvatarDownloadTask:(SeafAvatar*)avatar;
-- (void)finishAvatarDownloadTask:(SeafAvatar*)avatar result:(BOOL)result;
 
 @end
 
 @interface SeafDownloadAccountQueue : NSObject
 
-@property (nonatomic, strong) NSMutableArray *fileTasks;
-@property (nonatomic, strong) NSMutableArray *fileQueuedTasks;
-@property (nonatomic, readonly) NSMutableArray *allFileTasks;
+@property (nonatomic, strong) SeafTaskQueue *fileQueue;
+@property (nonatomic, strong) SeafTaskQueue *thumbQueue;
+@property (nonatomic, strong) SeafTaskQueue *avatarQueue;
+@property (nonatomic, strong) SeafTaskQueue *uploadQueue;
 
-- (void)addFileDownloadTask:(SeafFile*)file;
-- (void)finishFileDownload:(SeafFile<SeafDownloadDelegate>*)file result:(BOOL)result;
-- (NSInteger)downloadingNum;
-- (BOOL)isActiveDownloadingFileCountBelowMaximumLimit;
+- (void)addFileDownloadTask:(SeafFile * _Nullable)dfile;
+- (void)addUploadTask:(SeafUploadFile * _Nullable)ufile;
+- (void)addAvatarTask:(SeafAvatar * _Nullable)avatar;
+- (void)addThumbTask:(SeafThumb * _Nullable)thumb;
 
 @end

@@ -40,6 +40,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 - (void)download;
 - (NSString *_Nonnull)name;
 - (BOOL)retryable;
+- (NSString *_Nullable)taskUserIdentifier;
 @end
 
 @protocol SeafPhotoSyncWatcherDelegate <NSObject>

@@ -12,6 +12,7 @@
 
 @interface SeafThumb : NSObject<SeafDownloadDelegate>
 @property (retain, readonly) id<SeafPreView> file;
+@property (copy, nonatomic) NSString * userIdentifier;
 
 - (id)initWithSeafPreviewIem:(id<SeafPreView>)file;
 

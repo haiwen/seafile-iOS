@@ -58,7 +58,7 @@
                 [self imageLoadingComplete];
             });
         }];
-        [SeafDataTaskManager.sharedObject addThumbDownloadTask:self];
+        [SeafDataTaskManager.sharedObject addDownloadTask:self];
     }
 }
 

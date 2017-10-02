@@ -52,11 +52,14 @@
         if (conn.inAutoSync) return true;
     }
     NSInteger totalDownloadingNum = 0;
+    NSInteger totalUploadingNum = 0;
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
-        NSInteger downloadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:conn] downloadingNum];
+        NSInteger downloadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:conn].fileQueue downloadingNum];
         totalDownloadingNum += downloadingNum;
+        NSInteger uploadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:conn].uploadQueue downloadingNum];
+        totalUploadingNum += uploadingNum;
     }
-    return [SeafDataTaskManager.sharedObject backgroundUploadingNum] != 0 || totalDownloadingNum != 0;
+    return totalUploadingNum != 0 || totalDownloadingNum != 0;
 }
 
 - (BOOL)selectAccount:(SeafConnection *)conn

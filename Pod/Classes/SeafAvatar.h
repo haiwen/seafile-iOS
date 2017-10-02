@@ -10,6 +10,8 @@
 #import "SeafConnection.h"
 
 @interface SeafAvatar : NSObject<SeafDownloadDelegate>
+@property (copy, nonatomic) NSString * userIdentifier;
+
 - (id)initWithConnection:(SeafConnection *)aConnection from:(NSString *)url toPath:(NSString *)path;
 
 + (void)clearCache;
