@@ -965,6 +965,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                 }
             };
         }
+        ufile.userIdentifier = [NSString stringWithFormat:@"%@%@", self.host, self.username];
         return ufile;
     };
 }
@@ -1056,7 +1057,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         return;
     Debug("%@, %d\n", self.address, [self authorized]);
     SeafUserAvatar *avatar = [[SeafUserAvatar alloc] initWithConnection:self username:self.username];
-    [SeafDataTaskManager.sharedObject addAvatarDownloadTask:avatar];
+    [SeafDataTaskManager.sharedObject addDownloadTask:avatar];
     self.avatarLastUpdate = [NSDate date];
 }
 
@@ -1113,6 +1114,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                      file.overwrite = true;
                                      [file setAsset:asset url:url];
                                      file.udir = dir;
+                                     file.userIdentifier = [NSString stringWithFormat:@"%@%@", self.host, self.username];
                                      [file setCompletionBlock:^(BOOL success, SeafUploadFile *file, NSString *oid) {
                                          if (success) {
                                              [self autoSyncFileUploadedSuccess:file];
@@ -1789,7 +1791,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             if ([item isKindOfClass:[SeafFile class]]) {
                 SeafFile *file = (SeafFile *)item;
                 Debug("download file: %@, %@", item.repoId, item.path);
-                [SeafDataTaskManager.sharedObject performSelector:@selector(addFileDownloadTask:) withObject:file];
+                [SeafDataTaskManager.sharedObject performSelector:@selector(addDownloadTask:) withObject:file];
             } else if ([item isKindOfClass:[SeafDir class]]) {
                 Debug("download dir: %@, %@", item.repoId, item.path);
                 [self performSelector:@selector(downloadDir:) withObject:(SeafDir *)item];

@@ -1237,7 +1237,7 @@ enum {
         NSString *path = file.cachePath;
         if (!path) {
             [file setFileDownloadedBlock:block];
-            [SeafDataTaskManager.sharedObject addFileDownloadTask:file];
+            [SeafDataTaskManager.sharedObject addDownloadTask:file];
         } else {
             block(file, true);
         }
@@ -1491,6 +1491,7 @@ enum {
         file.overwrite = overwrite;
         [file setAsset:asset url:asset.defaultRepresentation.url];
         file.delegate = self;
+        file.userIdentifier = [NSString stringWithFormat:@"%@%@", self.connection.host, self.connection.username];
         [files addObject:file];
         [self.directory addUploadFile:file flush:false];
     }

@@ -223,6 +223,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 - (void)uploadRequest:(NSMutableURLRequest *)request withConnection:(SeafConnection *)connection
 {
+    self.userIdentifier = [NSString stringWithFormat:@"%@%@", connection.host, connection.username];
     if (![[NSFileManager defaultManager] fileExistsAtPath:self.lpath]) {
         Debug("Upload failed: local file %@ not exist\n", self.lpath);
         [self finishUpload:NO oid:nil];

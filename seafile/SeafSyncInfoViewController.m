@@ -94,8 +94,8 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
 }
 
 - (void)addToFileArray {
-    SeafDownloadAccountQueue *task = [SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection];
-    for (SeafFile *file in task.allFileTasks) {
+    SeafDownloadAccountQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection];
+    for (SeafFile *file in accountQueue.fileQueue.allTasks) {
         if (file.state == SEAF_DENTRY_SUCCESS) {
             [self.finishArray addObject:file];
         } else {

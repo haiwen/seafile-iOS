@@ -58,6 +58,13 @@ static NSMutableDictionary *avatarAttrs = nil;
     avatarAttrs = [[NSMutableDictionary alloc] init];
 }
 
+- (NSString *)userIdentifier {
+    if (!_userIdentifier)  {
+        _userIdentifier = [NSString stringWithFormat:@"%@%@", self.connection.host, self.connection.username];
+    }
+    return _userIdentifier;
+}
+
 - (NSString *)name
 {
     return self.path.lastPathComponent;
@@ -87,23 +94,23 @@ static NSMutableDictionary *avatarAttrs = nil;
     [self.connection sendRequest:self.avatarUrl success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          if (![JSON isKindOfClass:[NSDictionary class]]) {
-             [SeafDataTaskManager.sharedObject finishAvatarDownloadTask:self result:NO];
+             [SeafDataTaskManager.sharedObject finishDownloadTask:self result:NO];
              return;
          }
          NSString *url = [JSON objectForKey:@"url"];
          if (!url) {
-             [SeafDataTaskManager.sharedObject finishAvatarDownloadTask:self result:NO];
+             [SeafDataTaskManager.sharedObject finishDownloadTask:self result:NO];
              return;
          }
          if([[JSON objectForKey:@"is_default"] integerValue]) {
              if ([[SeafAvatar avatarAttrs] objectForKey:self.path])
                  [[SeafAvatar avatarAttrs] removeObjectForKey:self.path];
-             [SeafDataTaskManager.sharedObject finishAvatarDownloadTask:self result:YES];
+             [SeafDataTaskManager.sharedObject finishDownloadTask:self result:YES];
              return;
          }
          if (![self modified:[[JSON objectForKey:@"mtime"] integerValue:0]]) {
              Debug("avatar not modified\n");
-             [SeafDataTaskManager.sharedObject finishAvatarDownloadTask:self result:YES];
+             [SeafDataTaskManager.sharedObject finishDownloadTask:self result:YES];
              return;
          }
          url = [[url stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding] escapedUrlPath];;
@@ -113,7 +120,7 @@ static NSMutableDictionary *avatarAttrs = nil;
          } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
              if (error) {
                  Debug("Failed to download avatar url=%@, error=%@",downloadRequest.URL, [error localizedDescription]);
-                 [SeafDataTaskManager.sharedObject finishAvatarDownloadTask:self result:NO];
+                 [SeafDataTaskManager.sharedObject finishDownloadTask:self result:NO];
              } else {
                  Debug("Successfully downloaded avatar: %@ from %@", filePath, url);
                  if (![filePath.path isEqualToString:self.path]) {
@@ -125,7 +132,7 @@ static NSMutableDictionary *avatarAttrs = nil;
                  [Utils dict:attr setObject:[JSON objectForKey:@"mtime"] forKey:@"mtime"];
                  [self saveAttrs:attr];
                  [SeafAvatar saveAvatarAttrs];
-                 [SeafDataTaskManager.sharedObject finishAvatarDownloadTask:self result:YES];
+                 [SeafDataTaskManager.sharedObject finishDownloadTask:self result:YES];
              }
          }];
          [task resume];
@@ -133,13 +140,17 @@ static NSMutableDictionary *avatarAttrs = nil;
               failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          Warning("Failed to download avatar from %@", request.URL);
-         [SeafDataTaskManager.sharedObject finishAvatarDownloadTask:self result:NO];
+         [SeafDataTaskManager.sharedObject finishDownloadTask:self result:NO];
          [SeafDataTaskManager.sharedObject removeBackgroundDownloadTask:self];
      }];
 }
-- (BOOL)retryable
-{
+
+- (BOOL)retryable {
     return false;
+}
+
+- (NSString *)taskUserIdentifier {
+    return self.userIdentifier;
 }
 
 @end
