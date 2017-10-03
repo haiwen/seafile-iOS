@@ -101,7 +101,7 @@
         SeafDir *dir = [[SeafDir alloc] initWithConnection:conn oid:nil repoId:repoId perm:@"rw" name:path.lastPathComponent path:path];
         [dir addUploadFile:ufile flush:true];
         Debug("Upload %@(%lld) to %@ %@ overwrite:%d ", ufile.lpath, [Utils fileSizeAtPath1:ufile.lpath], dir.repoId, dir.path, overwrite);
-        [ufile doUpload];
+        [ufile run:nil];
         [ufile waitUpload];
     }
 }

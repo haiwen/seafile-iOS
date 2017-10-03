@@ -40,7 +40,6 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 - (void)download;
 - (NSString *_Nonnull)name;
 - (BOOL)retryable;
-- (NSString *_Nullable)taskUserIdentifier;
 @end
 
 @protocol SeafPhotoSyncWatcherDelegate <NSObject>
@@ -71,6 +70,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 @property (strong) SeafRepos *_Nullable rootFolder;
 @property (readonly) AFHTTPSessionManager * _Nonnull sessionMgr;
 @property (readonly) AFHTTPSessionManager * _Nonnull loginMgr;
+@property (nonatomic, readonly) NSString * _Nonnull accountIdentifier;
 @property (readonly) NSString * _Nullable username;
 @property (readonly) NSString * _Nullable password;
 @property (readonly) NSString * _Nullable host;

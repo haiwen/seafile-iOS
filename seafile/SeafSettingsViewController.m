@@ -476,7 +476,7 @@ enum {
 }
 
 -(void)updateSyncInfo{
-    NSInteger downloadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].fileQueue downloadingNum];
+    NSInteger downloadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].fileQueue taskNumber];
     _downlingCell.detailTextLabel.text = [NSString stringWithFormat:@"%lu",(long)downloadingNum];
     [self.tableView reloadData];
 }
@@ -693,16 +693,16 @@ enum {
             remainStr = [NSString stringWithFormat:NSLocalizedString(@"%ld photos remain", @"Seafile"), num];
         }
 #if DEBUG
-        NSInteger downloadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].fileQueue downloadingNum];
-        NSInteger uploadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].uploadQueue downloadingNum];
+        NSInteger downloadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].fileQueue taskNumber];
+        NSInteger uploadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].uploadQueue taskNumber];
         remainStr = [remainStr stringByAppendingFormat:@"  U:%lu D:%lu",(long)uploadingNum,(long)downloadingNum];
 #endif
         return [sectionNames[section] stringByAppendingFormat:@"\t %@", remainStr];
     }
 #if DEBUG
     else if (section == SECTION_CAMERA) {
-        NSInteger downloadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].fileQueue downloadingNum];
-        NSInteger uploadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].uploadQueue downloadingNum];
+        NSInteger downloadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].fileQueue taskNumber];
+        NSInteger uploadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].uploadQueue taskNumber];
         NSString *remainStr = [NSString stringWithFormat:@"  U:%lu D:%lu",(long)uploadingNum,(long)downloadingNum];
         return [sectionNames[section] stringByAppendingFormat:@"\t %@", remainStr];
     }

@@ -101,8 +101,7 @@
 
 - (UIImage *)icon;
 {
-    UIImage *image = [UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString];
-    return image;
+    return [UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString];
 }
 
 - (BOOL)loadCache

@@ -23,9 +23,12 @@ static NSMutableDictionary *avatarAttrs = nil;
 @property SeafConnection *connection;
 @property NSString *avatarUrl;
 @property NSString *path;
+@property NSURLSessionDownloadTask *task;
 @end
 
 @implementation SeafAvatar
+@synthesize lastFailureTimestamp = _lastFailureTimestamp;
+@synthesize retryable = _retryable;
 
 - (id)initWithConnection:(SeafConnection *)aConnection from:(NSString *)url toPath:(NSString *)path
 {
@@ -33,7 +36,18 @@ static NSMutableDictionary *avatarAttrs = nil;
     self.connection = aConnection;
     self.avatarUrl = url;
     self.path = path;
+    self.retryable = false;
     return self;
+}
+
+- (BOOL)runable
+{
+    return true;
+}
+
+- (void)cancel
+{
+    [self.task cancel];
 }
 
 + (NSMutableDictionary *)avatarAttrs
@@ -58,11 +72,8 @@ static NSMutableDictionary *avatarAttrs = nil;
     avatarAttrs = [[NSMutableDictionary alloc] init];
 }
 
-- (NSString *)userIdentifier {
-    if (!_userIdentifier)  {
-        _userIdentifier = [NSString stringWithFormat:@"%@%@", self.connection.host, self.connection.username];
-    }
-    return _userIdentifier;
+- (NSString *)accountIdentifier {
+    return self.connection.accountIdentifier;
 }
 
 - (NSString *)name
@@ -89,38 +100,42 @@ static NSMutableDictionary *avatarAttrs = nil;
     return NO;
 }
 
-- (void)download
+- (void)run:(TaskCompleteBlock _Nullable)block
+{
+    if (!block) {
+        block = ^(id<SeafTask> task, BOOL result) {};
+    }
+    [self download:block];
+}
+
+- (void)download:(TaskCompleteBlock _Nonnull)completeBlock
 {
     [self.connection sendRequest:self.avatarUrl success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          if (![JSON isKindOfClass:[NSDictionary class]]) {
-             [SeafDataTaskManager.sharedObject finishDownloadTask:self result:NO];
-             return;
+              return completeBlock(self, false);
          }
          NSString *url = [JSON objectForKey:@"url"];
          if (!url) {
-             [SeafDataTaskManager.sharedObject finishDownloadTask:self result:NO];
-             return;
+             return completeBlock(self, false);
          }
          if([[JSON objectForKey:@"is_default"] integerValue]) {
              if ([[SeafAvatar avatarAttrs] objectForKey:self.path])
                  [[SeafAvatar avatarAttrs] removeObjectForKey:self.path];
-             [SeafDataTaskManager.sharedObject finishDownloadTask:self result:YES];
-             return;
+             return completeBlock(self, true);
          }
          if (![self modified:[[JSON objectForKey:@"mtime"] integerValue:0]]) {
              Debug("avatar not modified\n");
-             [SeafDataTaskManager.sharedObject finishDownloadTask:self result:YES];
-             return;
+             return completeBlock(self, true);
          }
          url = [[url stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding] escapedUrlPath];;
          NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
-         NSURLSessionDownloadTask *task = [_connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:nil destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
+         self.task = [_connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:nil destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
              return [NSURL fileURLWithPath:self.path];
          } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
              if (error) {
                  Debug("Failed to download avatar url=%@, error=%@",downloadRequest.URL, [error localizedDescription]);
-                 [SeafDataTaskManager.sharedObject finishDownloadTask:self result:NO];
+                 completeBlock(self, false);
              } else {
                  Debug("Successfully downloaded avatar: %@ from %@", filePath, url);
                  if (![filePath.path isEqualToString:self.path]) {
@@ -132,25 +147,16 @@ static NSMutableDictionary *avatarAttrs = nil;
                  [Utils dict:attr setObject:[JSON objectForKey:@"mtime"] forKey:@"mtime"];
                  [self saveAttrs:attr];
                  [SeafAvatar saveAvatarAttrs];
-                 [SeafDataTaskManager.sharedObject finishDownloadTask:self result:YES];
+                 completeBlock(self, true);
              }
          }];
-         [task resume];
+         [self.task resume];
      }
               failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          Warning("Failed to download avatar from %@", request.URL);
-         [SeafDataTaskManager.sharedObject finishDownloadTask:self result:NO];
-         [SeafDataTaskManager.sharedObject removeBackgroundDownloadTask:self];
+         completeBlock(self, false);
      }];
-}
-
-- (BOOL)retryable {
-    return false;
-}
-
-- (NSString *)taskUserIdentifier {
-    return self.userIdentifier;
 }
 
 @end

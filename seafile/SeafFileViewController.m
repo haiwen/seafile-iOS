@@ -267,7 +267,7 @@ enum {
             id<SeafPreView> file = entry;
             [file setDelegate:self];
             [seafPhotos addObject:[[SeafPhoto alloc] initWithSeafPreviewIem:entry]];
-            [seafThumbs addObject:[[SeafPhotoThumb alloc] initWithSeafPreviewIem:entry]];
+            [seafThumbs addObject:[[SeafPhotoThumb alloc] initWithSeafFile:entry]];
         }
     }
     self.photos = [NSArray arrayWithArray:seafPhotos];
@@ -497,7 +497,7 @@ enum {
         file.delegate = self;
         if (!file.uploaded && !file.uploading) {
             Debug("background upload %@", file.name);
-            [SeafDataTaskManager.sharedObject addBackgroundUploadTask:file];
+            [SeafDataTaskManager.sharedObject addUploadTask:file];
         }
     }
 }
@@ -1191,7 +1191,7 @@ enum {
 
 - (void)redownloadFile:(SeafFile *)file
 {
-    [file cancelAnyLoading];
+    [file cancel];
     [file deleteCache];
     [self.detailViewController setPreViewItem:nil master:nil];
     [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
@@ -1237,7 +1237,7 @@ enum {
         NSString *path = file.cachePath;
         if (!path) {
             [file setFileDownloadedBlock:block];
-            [SeafDataTaskManager.sharedObject addDownloadTask:file];
+            [SeafDataTaskManager.sharedObject addFileDownloadTask:file];
         } else {
             block(file, true);
         }
@@ -1390,7 +1390,7 @@ enum {
 
 - (void)backgroundUpload:(SeafUploadFile *)ufile
 {
-    [SeafDataTaskManager.sharedObject addBackgroundUploadTask:ufile];
+    [SeafDataTaskManager.sharedObject addUploadTask:ufile];
 }
 
 - (void)uploadFile:(SeafUploadFile *)ufile toDir:(SeafDir *)dir overwrite:(BOOL)overwrite
@@ -1491,14 +1491,14 @@ enum {
         file.overwrite = overwrite;
         [file setAsset:asset url:asset.defaultRepresentation.url];
         file.delegate = self;
-        file.userIdentifier = [NSString stringWithFormat:@"%@%@", self.connection.host, self.connection.username];
+        file.accountIdentifier = [NSString stringWithFormat:@"%@%@", self.connection.host, self.connection.username];
         [files addObject:file];
         [self.directory addUploadFile:file flush:false];
     }
     [SeafUploadFile saveAttrs];
     [self.tableView reloadData];
     for (SeafUploadFile *file in files) {
-        [SeafDataTaskManager.sharedObject addBackgroundUploadTask:file];
+        [SeafDataTaskManager.sharedObject addUploadTask:file];
     }
 }
 

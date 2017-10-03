@@ -132,9 +132,9 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
             newItem = [[SeafFile alloc] initWithConnection:connection oid:[itemInfo objectForKey:@"id"] repoId:self.repoId name:name path:path mtime:[[itemInfo objectForKey:@"mtime"] integerValue:0] size:[[itemInfo objectForKey:@"size"] integerValue:0]];
             SeafRepo *repo = [connection getRepo:self.repoId];
             if ([self.name isEqualToString:repo.name]) {
-                newItem.dirPath = [NSString stringWithFormat:@"/%@", self.name];
+                newItem.fullPath = [NSString stringWithFormat:@"/%@", self.name];
             } else {
-                newItem.dirPath = [NSString stringWithFormat:@"/%@/%@",repo.name,self.name];
+                newItem.fullPath = [NSString stringWithFormat:@"/%@/%@",repo.name,self.name];
             }
         } else if ([type isEqual:@"dir"]) {
             newItem = [[SeafDir alloc] initWithConnection:connection oid:[itemInfo objectForKey:@"id"] repoId:self.repoId perm:[itemInfo objectForKey:@"permission"] name:name path:path];

@@ -136,7 +136,7 @@
     NSString *title = [NSString stringWithFormat: @"Uploading %@", file.name];
     self.alert = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleAlert];
     UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        [file doRemove];
+        [file cancel];
     }];
     self.ufile = file;
     [self.alert addAction:cancelAction];
@@ -145,7 +145,7 @@
         CGRect r = self.alert.view.frame;
         self.progressView.frame = CGRectMake(20, r.size.height-45, r.size.width - 40, 20);
         [self.alert.view addSubview:self.progressView];
-        [self.ufile doUpload];
+        [self.ufile run:nil];
     }];
 }
 
@@ -166,7 +166,7 @@
         ufile.delegate = self;
         ufile.udir = _directory;
         ufile.overwrite = overwrite;
-        Debug("file %@ %d %d removed=%d", ufile.lpath, ufile.uploading, ufile.uploaded, ufile.removed);
+        Debug("file %@ %d %d", ufile.lpath, ufile.uploading, ufile.uploaded);
         [self showUploadProgress:ufile];
     }];
 }
@@ -320,7 +320,7 @@
     NSString *title = [NSString stringWithFormat: @"Downloading %@", file.name];
     self.alert = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleAlert];
     UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        [file cancelAnyLoading];
+        [file cancel];
     }];
     self.sfile = file;
     [self.alert addAction:cancelAction];
@@ -467,7 +467,7 @@
         Warning("Failed to upload file %@", file.name);
         [self alertWithTitle:NSLocalizedString(@"Failed to upload file", @"Seafile") handler:nil];
     } else {
-        [self.ufile doRemove];
+        [self.ufile cancel];
         dispatch_after(0, dispatch_get_main_queue(), ^{
             [self.alert dismissViewControllerAnimated:NO completion:^{
                 [self.root dismissGrantingAccessToURL:[NSURL URLWithString:file.lpath]];

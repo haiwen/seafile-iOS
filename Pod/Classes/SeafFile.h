@@ -16,6 +16,7 @@
 @class SeafFile;
 
 typedef void (^SeafFileDidDownloadBlock)(SeafFile* _Nonnull file, BOOL result);
+typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 
 @protocol SeafFileUpdateDelegate <NSObject>
@@ -24,7 +25,7 @@ typedef void (^SeafFileDidDownloadBlock)(SeafFile* _Nonnull file, BOOL result);
 
 @end
 
-@interface SeafFile : SeafBase<QLPreviewItem, SeafPreView, SeafUploadDelegate, SeafDownloadDelegate> {
+@interface SeafFile : SeafBase<QLPreviewItem, SeafPreView, SeafUploadDelegate, SeafTask> {
 @protected
     long long _filesize;
     long long _mtime;
@@ -46,14 +47,13 @@ typedef void (^SeafFileDidDownloadBlock)(SeafFile* _Nonnull file, BOOL result);
 @property (readonly) long long mtime;
 @property (strong, nullable) id <SeafFileUpdateDelegate> udelegate;
 @property (strong, nonatomic) NSProgress * _Nullable progress;
-@property (assign, nonatomic) NSTimeInterval failTime;
-@property (copy, nonatomic) NSString * _Nullable userIdentifier;
+@property (nonatomic, readonly) NSString * _Nonnull accountIdentifier;
 
+- (BOOL)isDownloading;
 - (BOOL)isStarred;
 - (void)setStarred:(BOOL)starred;
 - (void)deleteCache;
 - (void)update:(nullable id<SeafFileUpdateDelegate>)dg;
-- (void)cancelAnyLoading;
 - (BOOL)itemChangedAtURL:(nonnull NSURL *)url;
 - (nonnull NSDictionary *)toDict;
 
@@ -61,7 +61,8 @@ typedef void (^SeafFileDidDownloadBlock)(SeafFile* _Nonnull file, BOOL result);
 
 - (void)setThumbCompleteBlock:(nullable void (^)(BOOL ret))block;
 - (void)setFileDownloadedBlock:(nullable SeafFileDidDownloadBlock)block;
-- (void)downloadThumb:(nullable id<SeafDownloadDelegate>)downloadTask;
+- (void)downloadThumb:(SeafThumbCompleteBlock _Nonnull)completeBlock;
+- (void)cancelThumb;
 
 - (BOOL)waitUpload;
 

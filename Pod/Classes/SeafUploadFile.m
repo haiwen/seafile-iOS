@@ -18,7 +18,6 @@
 #import "NSData+Encryption.h"
 #import "Debug.h"
 
-#define UPLOAD_ATTEMPT_INTERVAL 3*60
 
 static NSMutableDictionary *uploadFileAttrs = nil;
 
@@ -39,18 +38,22 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 @property long blkidx;
 
 @property dispatch_semaphore_t semaphore;
-@property double lastFailedTimeStamp;
 @property (strong, nonatomic)NSMutableDictionary *uploadAttr;
+@property (nonatomic) TaskCompleteBlock taskCompleteBlock;
+
 @end
 
 @implementation SeafUploadFile
 @synthesize assetURL = _assetURL;
 @synthesize filesize = _filesize;
+@synthesize lastFailureTimestamp = _lastFailureTimestamp;
+@synthesize retryable = _retryable;
 
 - (id)initWithPath:(NSString *)lpath
 {
     self = [super init];
     if (self) {
+        self.retryable = true;
         _lpath = lpath;
         _uProgress = 0;
         _uploading = NO;
@@ -65,11 +68,6 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
     }
     return self;
-}
-
-- (NSString *)key
-{
-    return self.name;
 }
 
 - (NSString *)name
@@ -89,8 +87,9 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 {
 }
 
-- (void)cancelAnyLoading
+- (NSString *)accountIdentifier
 {
+    return self.udir->connection.accountIdentifier;
 }
 
 - (BOOL)hasCache
@@ -139,19 +138,21 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     Debug("Cancel uploadFile: %@", self.lpath);
     self.udir = nil;
     [self.task cancel];
+    self.task = nil;
+    [self clearLocalCache];
+    [self clearUploadAttr:true];
 }
 
-- (void)doRemove
+- (void)cancelAnyLoading
 {
-    Debug("Remove uploadFile: %@", self.lpath);
-    self.udir = nil;
-    [self.task cancel];
-    self.task = nil;
+}
+
+- (void)clearLocalCache
+{
     [Utils removeFile:self.lpath];
     if (_blockDir) {
         [[NSFileManager defaultManager] removeItemAtPath:_blockDir error:nil];
     }
-    [self clearUploadAttr:true];
     if (!self.autoSync) {
         [Utils removeDirIfEmpty:[self.lpath stringByDeletingLastPathComponent]];
     }
@@ -180,15 +181,12 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     }
     if (result && !_autoSync)
         [Utils linkFileAtPath:self.lpath to:[SeafStorage.sharedObject documentPath:oid]];
-    else if (!result)
-        self.lastFailedTimeStamp = [[NSDate date] timeIntervalSince1970];
 
     self.rawblksurl = nil;
     self.commiturl = nil;
     self.missingblocks = nil;
     self.blkidx = 0;
 
-    [SeafDataTaskManager.sharedObject finishUpload:self result:result];
     if (!self.removed && !self.autoSync) {
         NSMutableDictionary *dict = self.uploadAttr;
         if (!dict) {
@@ -202,10 +200,9 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         [self saveUploadAttr:true];
     }
     Debug("result=%d, name=%@, delegate=%@, oid=%@\n", result, self.name, _delegate, oid);
-    [self uploadComplete:result file:self oid:oid];
-    dispatch_semaphore_signal(_semaphore);
+    [self uploadComplete:result oid:oid];
     if (result) {
-        [self doRemove];
+        [self clearLocalCache];
     }
 }
 
@@ -223,7 +220,6 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 - (void)uploadRequest:(NSMutableURLRequest *)request withConnection:(SeafConnection *)connection
 {
-    self.userIdentifier = [NSString stringWithFormat:@"%@%@", connection.host, connection.username];
     if (![[NSFileManager defaultManager] fileExistsAtPath:self.lpath]) {
         Debug("Upload failed: local file %@ not exist\n", self.lpath);
         [self finishUpload:NO oid:nil];
@@ -283,7 +279,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         percent = progress.fractionCompleted * 100;
     }
     _uProgress = percent;
-    [self uploadProgress:self progress:percent];
+    [self uploadProgress:percent];
 }
 
 - (BOOL)chunkFile:(NSString *)path repo:(SeafRepo *)repo blockids:(NSMutableArray *)blockids paths:(NSMutableArray *)paths
@@ -451,11 +447,15 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 - (void)upload:(SeafConnection *)connection repo:(NSString *)repoId path:(NSString *)uploadpath
 {
     if (![Utils fileExistsAtPath:self.lpath]) {
-        return Warning("File %@ no existed", self.lpath);
+        Warning("File %@ no existed", self.lpath);
+        self.retryable = false;
+        return [self uploadComplete:false oid:nil];
     }
     SeafRepo *repo = [connection getRepo:repoId];
     if (!repo) {
-        return Warning("Repo %@ does not exist", repoId);
+        Warning("Repo %@ does not exist", repoId);
+        self.retryable = false;
+        return [self uploadComplete:false oid:nil];
     }
 
     @synchronized (self) {
@@ -466,7 +466,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     }
     NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:self.lpath error:nil];
     _filesize = attrs.fileSize;
-    [self uploadProgress:self progress:0];
+    [self uploadProgress:0];
 
     if (_filesize > LARGE_FILE_SIZE && connection.isChunkSupported) {
         Debug("upload large file %@ by block: %lld", self.name, _filesize);
@@ -504,29 +504,29 @@ static NSMutableDictionary *uploadFileAttrs = nil;
      }];
 }
 
-- (BOOL)canUpload
+- (BOOL)runable
 {
     if (!_udir) return false;
-    if (self.lastFailedTimeStamp > 0) {
-        double elapsed = [[NSDate date] timeIntervalSince1970] - self.lastFailedTimeStamp;
-        if (elapsed  < UPLOAD_ATTEMPT_INTERVAL) {
-            Debug("elapsed %f s < %d, do not upload.", elapsed, UPLOAD_ATTEMPT_INTERVAL);
-            return false;
-        }
-    }
-
+    [self checkAsset];
+    if (![Utils fileExistsAtPath:self.lpath]) return false;
     if (self.autoSync && _udir->connection.wifiOnly)
         return [[AFNetworkReachabilityManager sharedManager] isReachableViaWiFi];
     else
         return [[AFNetworkReachabilityManager sharedManager] isReachable];
 }
 
-- (void)doUpload
+- (void)run:(TaskCompleteBlock _Nullable)block
 {
     [self checkAsset];
-    if (self.udir) {
-        [self upload:self.udir->connection repo:self.udir.repoId path:self.udir.path];
+    self.taskCompleteBlock = block;
+    if (!block) {
+        self.taskCompleteBlock = ^(id<SeafTask> task, BOOL result) {};
     }
+
+    if (!self.udir) {
+        return block(self, false);
+    }
+    [self upload:self.udir->connection repo:self.udir.repoId path:self.udir.path];
 }
 
 - (void)setAsset:(ALAsset *)asset url:(NSURL *)url
@@ -703,9 +703,10 @@ static NSMutableDictionary *uploadFileAttrs = nil;
             SeafUploadFile *file = [dir->connection getUploadfile:lpath create:!autoSync];
             if (!file || file.asset) {
                 Debug("Auto sync photos %@:%@, remove it and will reupload from beginning", file.lpath, info);
-                if (file)
-                    [file doRemove];
-                else {
+                if (file) {
+                    [file clearLocalCache];
+                    [file clearUploadAttr:false];
+                } else {
                     [uploadFileAttrs removeObjectForKey:lpath];
                     changed = true;
                 }
@@ -726,24 +727,23 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     return self.uploaded;
 }
 
-- (void)resetFailedAttempt
+- (void)uploadProgress:(int)percent
 {
-    self.lastFailedTimeStamp = 0;
-}
-
-- (void)uploadProgress:(SeafUploadFile *)file progress:(int)percent
-{
-    [self.delegate uploadProgress:file progress:percent];
+    [self.delegate uploadProgress:self progress:percent];
     if (_progressBlock) {
-        _progressBlock(file, percent);
+        _progressBlock(self, percent);
     }
 }
-- (void)uploadComplete:(BOOL)success file:(SeafUploadFile *)file oid:(NSString *)oid
+- (void)uploadComplete:(BOOL)result oid:(NSString *)oid
 {
-    [self.delegate uploadComplete:success file:file oid:oid];
-    if (_completionBlock) {
-        _completionBlock(success, file, oid);
+    [self.delegate uploadComplete:result file:self oid:oid];
+    if (self.completionBlock) {
+        self.completionBlock(result, self, oid);
     }
+    if (self.taskCompleteBlock) {
+        self.taskCompleteBlock(self, result);
+    }
+    dispatch_semaphore_signal(_semaphore);
 }
 
 @end

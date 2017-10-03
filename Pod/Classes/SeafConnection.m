@@ -126,6 +126,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @synthesize loginMgr = _loginMgr;
 @synthesize localUploadDir = _localUploadDir;
 @synthesize platformVersion = _platformVersion;
+@synthesize accountIdentifier = _accountIdentifier;
 
 - (id)initWithUrl:(NSString *)url cacheProvider:(id<SeafCacheProvider>)cacheProvider
 {
@@ -214,14 +215,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return _localUploadDir;
 }
 
-- (NSString *)account
-{
-    return [NSString stringWithFormat:@"%@/%@", _address, self.username];
-}
-
 - (void)saveSettings
 {
-    [SeafStorage.sharedObject setObject:_settings forKey:[self.account stringByAppendingString:@"/settings"]];
+    [SeafStorage.sharedObject setObject:_settings forKey:[self.accountIdentifier stringByAppendingString:@"/settings"]];
 }
 
 - (void)setAttribute:(id)anObject forKey:(NSString *)aKey
@@ -451,6 +447,13 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSURL *url = [NSURL URLWithString:urlStr];
     return url.host;
 }
+- (NSString *)accountIdentifier {
+    if (!_accountIdentifier)  {
+        _accountIdentifier = [NSString stringWithFormat:@"%@/%@", self.host, self.username];
+    }
+    return _accountIdentifier;
+}
+
 - (NSString *)host
 {
     return [self hostForUrl:self.address];
@@ -638,8 +641,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (void)clearAccount
 {
     [SeafStorage.sharedObject removeObjectForKey:_address];
-    [SeafStorage.sharedObject removeObjectForKey:[NSString stringWithFormat:@"%@/%@", _address, self.username]];
-    [SeafStorage.sharedObject removeObjectForKey:[NSString stringWithFormat:@"%@/%@/settings", _address, self.username]];
+    [SeafStorage.sharedObject removeObjectForKey:self.accountIdentifier];
+    [SeafStorage.sharedObject removeObjectForKey:[NSString stringWithFormat:@"%@/settings", self.accountIdentifier]];
 
     NSString *path = [self certPathForHost:[self host]];
     [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
@@ -649,7 +652,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)saveAccountInfo
 {
-    [SeafStorage.sharedObject setObject:_info forKey:[NSString stringWithFormat:@"%@/%@", _address, self.username]];
+    [SeafStorage.sharedObject setObject:_info forKey:self.accountIdentifier];
 }
 
 - (void)getAccountInfo:(void (^)(bool result))handler
@@ -965,7 +968,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                 }
             };
         }
-        ufile.userIdentifier = [NSString stringWithFormat:@"%@%@", self.host, self.username];
         return ufile;
     };
 }
@@ -981,7 +983,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     @synchronized(self.uploadFiles) {
         [self.uploadFiles removeObjectForKey:ufile.lpath];
     }
-    [SeafDataTaskManager.sharedObject removeBackgroundUploadTask:ufile];
 }
 
 - (void)search:(NSString *)keyword repo:(NSString *)repoId
@@ -1057,7 +1058,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         return;
     Debug("%@, %d\n", self.address, [self authorized]);
     SeafUserAvatar *avatar = [[SeafUserAvatar alloc] initWithConnection:self username:self.username];
-    [SeafDataTaskManager.sharedObject addDownloadTask:avatar];
+    [SeafDataTaskManager.sharedObject addAvatarTask:avatar];
     self.avatarLastUpdate = [NSDate date];
 }
 
@@ -1114,7 +1115,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                      file.overwrite = true;
                                      [file setAsset:asset url:url];
                                      file.udir = dir;
-                                     file.userIdentifier = [NSString stringWithFormat:@"%@%@", self.host, self.username];
                                      [file setCompletionBlock:^(BOOL success, SeafUploadFile *file, NSString *oid) {
                                          if (success) {
                                              [self autoSyncFileUploadedSuccess:file];
@@ -1122,7 +1122,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                      }];
 
                                      Debug("Add file %@ to upload list: %@ current %u %u", filename, dir.path, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
-                                     [SeafDataTaskManager.sharedObject addBackgroundUploadTask:file];
+                                     [SeafDataTaskManager.sharedObject addUploadTask:file];
                                  }
                                 failureBlock:^(NSError *error){
                                     Debug("!!!!Can not find asset:%@ !", url);
@@ -1430,7 +1430,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             Warning("Failed to get all contacts.");
             return handler(false, nil, nil);
         }
-        Info("Contacts count: %d", contacts.count);
+        Info("Contacts count: %ld", contacts.count);
         NSError *err = nil;
         NSData *vcardData = [CNContactVCardSerialization dataWithContacts:contacts error:&err];
         if (err) {
@@ -1457,7 +1457,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSMutableDictionary *currentContactsDict = [NSMutableDictionary new];
     NSMutableDictionary *targetContactsDict = [NSMutableDictionary new];
     CNContactFormatter *formatter = [[CNContactFormatter alloc] init];
-    Info("Current contacts: %d restore to: %d", currentContacts.count, contacts.count);
+    Info("Current contacts: %ld restore to: %ld", currentContacts.count, contacts.count);
     for (CNContact *contact in currentContacts) {
         [currentContactsDict setObject:contact forKey:contact.identifier];
     }
@@ -1556,7 +1556,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             [self removeUploadfile:ufile];
         }
     };
-    [SeafDataTaskManager.sharedObject addBackgroundUploadTask:ufile];
+    [SeafDataTaskManager.sharedObject addUploadTask:ufile];
 }
 
 - (BOOL)isContactsChangedSinceLastBackup:(SeafDir *)contactsDir currentContacts:(NSArray *)contacts
@@ -1578,10 +1578,10 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 #endif
 }
 
-- (void)saveContactsLastBackupInfo:(NSString *)syncDate number:(int)syncNumber
+- (void)saveContactsLastBackupInfo:(NSString *)syncDate number:(long)syncNumber
 {
     [self setAttribute:self.contactsRepo forKey:@"ContactsLastSyncRepo"];
-    [self setAttribute:[NSNumber numberWithInt:syncNumber] forKey:@"ContactsLastSyncNumber"];
+    [self setAttribute:[NSNumber numberWithLong:syncNumber] forKey:@"ContactsLastSyncNumber"];
     self.contactsLastBackTime = syncDate;
 }
 
@@ -1668,7 +1668,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             Warning("Failed to save contacts to vcf file: %@", error);
             return completionHandler(false, error);
         }
-        Debug("contacts(%d) write to file %@ success", contacts.count, path);
+        Debug("contacts(%ld) write to file %@ success", contacts.count, path);
         [self checkMakeUploadDirectory:self.contactsRepo subdir:CONTACTS_UPLOADS_DIR completion:^(SeafDir *uploaddir, NSError * _Nullable error) {
             if (!uploaddir) {
                 Warning("Failed to create contacts backup folder: %@", error);
@@ -1791,7 +1791,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             if ([item isKindOfClass:[SeafFile class]]) {
                 SeafFile *file = (SeafFile *)item;
                 Debug("download file: %@, %@", item.repoId, item.path);
-                [SeafDataTaskManager.sharedObject performSelector:@selector(addDownloadTask:) withObject:file];
+                [SeafDataTaskManager.sharedObject addFileDownloadTask:file];
             } else if ([item isKindOfClass:[SeafDir class]]) {
                 Debug("download dir: %@, %@", item.repoId, item.path);
                 [self performSelector:@selector(downloadDir:) withObject:(SeafDir *)item];
@@ -1836,27 +1836,27 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 #pragma - Cache managerment
 - (NSString *)objectForKey:(NSString *)key entityName:(NSString *)entity
 {
-    return [_cacheProvider objectForKey:key entityName:entity inAccount:self.account];
+    return [_cacheProvider objectForKey:key entityName:entity inAccount:self.accountIdentifier];
 }
 
 - (BOOL)setValue:(NSString *)value forKey:(NSString *)key entityName:(NSString *)entity
 {
-    return [_cacheProvider setValue:value forKey:key entityName:entity inAccount:self.account];
+    return [_cacheProvider setValue:value forKey:key entityName:entity inAccount:self.accountIdentifier];
 }
 
 - (void)removeKey:(NSString *)key entityName:(NSString *)entity
 {
-    [_cacheProvider removeKey:key entityName:entity inAccount:self.account];
+    [_cacheProvider removeKey:key entityName:entity inAccount:self.accountIdentifier];
 }
 
 - (long)totalCachedNumForEntity:(NSString *)entity
 {
-    return [_cacheProvider totalCachedNumForEntity:entity inAccount:self.account];
+    return [_cacheProvider totalCachedNumForEntity:entity inAccount:self.accountIdentifier];
 }
 
 - (void)clearCache:(NSString *)entity
 {
-    [_cacheProvider clearCache:entity inAccount:self.account];
+    [_cacheProvider clearCache:entity inAccount:self.accountIdentifier];
 }
 
 - (id)getCachedJson:(NSString *)key entityName:(NSString *)entity
@@ -1887,19 +1887,19 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)setPhotoUploaded:(NSString *)url
 {
-    [self setValue:@"true" forKey:[self.account stringByAppendingString:url] entityName:ENTITY_UPLOAD_PHOTO];
+    [self setValue:@"true" forKey:[self.accountIdentifier stringByAppendingString:url] entityName:ENTITY_UPLOAD_PHOTO];
 }
 
 - (BOOL)IsPhotoUploaded:(NSURL *)url
 {
-    NSString *value = [self objectForKey:[self.account stringByAppendingString:url.absoluteString] entityName:ENTITY_UPLOAD_PHOTO];
+    NSString *value = [self objectForKey:[self.accountIdentifier stringByAppendingString:url.absoluteString] entityName:ENTITY_UPLOAD_PHOTO];
     return value != nil;
 }
 
 - (void)clearAccountCache
 {
     [SeafStorage.sharedObject clearCache];
-    [_cacheProvider clearAllCacheInAccount:self.account];
+    [_cacheProvider clearAllCacheInAccount:self.accountIdentifier];
     [SeafAvatar clearCache];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"clearCache" object:nil];
     [self clearUploadCache];

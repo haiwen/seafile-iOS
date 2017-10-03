@@ -8,9 +8,11 @@
 
 #import <Foundation/Foundation.h>
 #import "SeafConnection.h"
+#import "SeafTaskQueue.h"
 
-@interface SeafAvatar : NSObject<SeafDownloadDelegate>
-@property (copy, nonatomic) NSString * userIdentifier;
+@interface SeafAvatar : NSObject<SeafTask>
+
+@property (nonatomic, readonly) NSString * accountIdentifier;
 
 - (id)initWithConnection:(SeafConnection *)aConnection from:(NSString *)url toPath:(NSString *)path;
 

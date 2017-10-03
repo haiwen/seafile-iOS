@@ -16,45 +16,49 @@
 #import "SeafThumb.h"
 #import "SeafAvatar.h"
 #import "SeafTaskQueue.h"
-@class SeafDownloadAccountQueue;
+@class SeafAccountTaskQueue;
 
-typedef void(^SyncBlock)(SeafFile *file);
-typedef void(^DownLoadFinshBlock)(SeafFile *file);
+typedef void(^SyncBlock)(SeafFile * _Nonnull file);
+typedef void(^DownLoadFinshBlock)(SeafFile *_Nonnull file);
 // Manager for background download/upload tasks, retry if failed.
 @interface SeafDataTaskManager : NSObject
 
-@property (readonly) ALAssetsLibrary *assetsLibrary;
-@property (nonatomic, copy) SyncBlock trySyncBlock;
-@property (nonatomic, copy) DownLoadFinshBlock finishBlock;
+@property (readonly) ALAssetsLibrary * _Nonnull assetsLibrary;
+@property (nonatomic, copy) SyncBlock _Nullable trySyncBlock;
+@property (nonatomic, copy) DownLoadFinshBlock _Nullable finishBlock;
 
-+ (SeafDataTaskManager *)sharedObject;
++ (SeafDataTaskManager * _Nonnull)sharedObject;
 
-- (void)addBackgroundUploadTask:(SeafUploadFile *)file;
-- (void)finishUpload:(SeafUploadFile *)file result:(BOOL)result;
-- (void)removeBackgroundUploadTask:(SeafUploadFile *)file;
+- (void)addFileDownloadTask:(SeafFile * _Nonnull)dfile;
+- (void)addUploadTask:(SeafUploadFile * _Nonnull)ufile;
+- (void)addAvatarTask:(SeafAvatar * _Nonnull)avatar;
+- (void)addThumbTask:(SeafThumb * _Nonnull)thumb;
 
-- (void)cancelAutoSyncTasks:(SeafConnection *)conn;
-- (void)cancelAutoSyncVideoTasks:(SeafConnection *)conn;
+- (void)cancelAutoSyncTasks:(SeafConnection * _Nonnull)conn;
+- (void)cancelAutoSyncVideoTasks:(SeafConnection * _Nonnull)conn;
 
-- (void)assetForURL:(NSURL *)assetURL resultBlock:(ALAssetsLibraryAssetForURLResultBlock)resultBlock failureBlock:(ALAssetsLibraryAccessFailureBlock)failureBlock;
+- (void)assetForURL:(NSURL * _Nonnull)assetURL resultBlock:(ALAssetsLibraryAssetForURLResultBlock _Nonnull)resultBlock failureBlock:(ALAssetsLibraryAccessFailureBlock _Nonnull)failureBlock;
 
-- (void)addDownloadTask:(id<SeafDownloadDelegate>)task;
-- (void)finishDownloadTask:(id<SeafDownloadDelegate>)task result:(BOOL)result;
-- (SeafDownloadAccountQueue*)accountQueueForConnection:(SeafConnection*)connection;
-- (void)removeBackgroundDownloadTask:(id<SeafDownloadDelegate>)task;
+- (SeafAccountTaskQueue * _Nonnull)accountQueueForConnection:(SeafConnection * _Nonnull)connection;
 
 @end
 
-@interface SeafDownloadAccountQueue : NSObject
+@interface SeafAccountTaskQueue : NSObject
 
-@property (nonatomic, strong) SeafTaskQueue *fileQueue;
-@property (nonatomic, strong) SeafTaskQueue *thumbQueue;
-@property (nonatomic, strong) SeafTaskQueue *avatarQueue;
-@property (nonatomic, strong) SeafTaskQueue *uploadQueue;
+@property (nonatomic, strong) SeafTaskQueue * _Nonnull fileQueue;
+@property (nonatomic, strong) SeafTaskQueue * _Nonnull thumbQueue;
+@property (nonatomic, strong) SeafTaskQueue * _Nonnull avatarQueue;
+@property (nonatomic, strong) SeafTaskQueue * _Nonnull uploadQueue;
 
-- (void)addFileDownloadTask:(SeafFile * _Nullable)dfile;
-- (void)addUploadTask:(SeafUploadFile * _Nullable)ufile;
-- (void)addAvatarTask:(SeafAvatar * _Nullable)avatar;
-- (void)addThumbTask:(SeafThumb * _Nullable)thumb;
+- (void)addFileDownloadTask:(SeafFile * _Nonnull)dfile;
+- (void)addUploadTask:(SeafUploadFile * _Nonnull)ufile;
+- (void)addAvatarTask:(SeafAvatar * _Nonnull)avatar;
+- (void)addThumbTask:(SeafThumb * _Nonnull)thumb;
 
+- (void)removeFileDownloadTask:(SeafFile * _Nonnull)dfile;
+- (void)removeUploadTask:(SeafUploadFile * _Nonnull)ufile;
+- (void)removeAvatarTask:(SeafAvatar * _Nonnull)avatar;
+- (void)removeThumbTask:(SeafThumb * _Nonnull)thumb;
+- (void)tick;
+- (void)clearTasks;
 @end
