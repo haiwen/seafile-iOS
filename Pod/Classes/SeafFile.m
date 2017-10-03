@@ -22,8 +22,6 @@
 
 #define THUMB_SIZE 96
 
-typedef void (^SeafThumbCompleteBlock)(BOOL ret);
-
 @interface SeafFile()
 
 @property (strong, readonly) NSURL *preViewURL;
@@ -39,12 +37,16 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 @property (readwrite, nonatomic, copy) SeafThumbCompleteBlock thumbCompleteBlock;
 @property (readwrite, nonatomic, copy) SeafFileDidDownloadBlock fileDidDownloadBlock;
+@property (nonatomic) TaskCompleteBlock taskCompleteBlock;
 
 @end
 
 @implementation SeafFile
 @synthesize exportURL = _exportURL;
 @synthesize preViewURL = _preViewURL;
+@synthesize accountIdentifier = _accountIdentifier;
+@synthesize lastFailureTimestamp = _lastFailureTimestamp;
+@synthesize retryable = _retryable;
 
 - (id)initWithConnection:(SeafConnection *)aConnection
                      oid:(NSString *)anId
@@ -59,6 +61,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
         _filesize = size;
         self.downloadingFileOid = nil;
         self.task = nil;
+        self.retryable = true;
     }
     return self;
 }
@@ -80,11 +83,14 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     return str;
 }
 
-- (NSString *)userIdentifier {
-    if (!_userIdentifier)  {
-        _userIdentifier = [NSString stringWithFormat:@"%@%@", self->connection.host, self->connection.username];
-    }
-    return _userIdentifier;
+- (BOOL)runable
+{
+    return true;
+}
+
+- (NSString *)accountIdentifier
+{
+    return self->connection.accountIdentifier;
 }
 
 - (NSString *)downloadTempPath:(NSString *)objId
@@ -147,7 +153,6 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 - (void)finishDownload:(NSString *)ooid
 {
     [self clearDownloadContext];
-    [SeafDataTaskManager.sharedObject finishDownloadTask:self result:true];
     Debug("%@ ooid=%@, self.ooid=%@, oid=%@", self.name, ooid, self.ooid, self.oid);
     BOOL updated = ![ooid isEqualToString:self.ooid];
     [self setOoid:ooid];
@@ -160,19 +165,22 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 {
     [self clearDownloadContext];
     self.state = SEAF_DENTRY_FAILURE;
-    self.failTime = [[NSDate new] timeIntervalSince1970];
-    [SeafDataTaskManager.sharedObject finishDownloadTask:self result:false];
     [self downloadFailed:error];
 }
 
-- (void)finishDownloadThumb:(BOOL)success task:(id<SeafDownloadDelegate>)downloadTask
+- (void)cancelThumb
 {
-    Debug("finishDownloadThumb: %@ success: %d", [downloadTask name], success);
+    [_thumbtask cancel];
+    _thumbtask = nil;
+}
+- (void)finishDownloadThumb:(BOOL)success completeBlock:(SeafThumbCompleteBlock)completeBlock
+{
+    Debug("finishDownloadThumb: %@ success: %d", self.name, success);
     if (self.thumbCompleteBlock)
         self.thumbCompleteBlock(success);
 
-    if (downloadTask) {
-        [SeafDataTaskManager.sharedObject finishDownloadTask:downloadTask result:success];
+    if (completeBlock) {
+        completeBlock(success);
     }
     _thumbtask = nil;
     if (success || _icon || self.image) {
@@ -255,10 +263,10 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     _thumbCompleteBlock = block;
 }
 
-- (void)downloadThumb:(id<SeafDownloadDelegate>)downloadTask
+- (void)downloadThumb:(SeafThumbCompleteBlock _Nonnull)completeBlock
 {
     SeafRepo *repo = [connection getRepo:self.repoId];
-    if (repo.encrypted) return [self finishDownloadThumb:false task:downloadTask];
+    if (repo.encrypted) return [self finishDownloadThumb:false completeBlock:completeBlock];
     int size = THUMB_SIZE * (int)[[UIScreen mainScreen] scale];
     NSString *thumburl = [NSString stringWithFormat:API_URL"/repos/%@/thumbnail/?size=%d&p=%@", self.repoId, size, self.path.escapedUrl];
     NSURLRequest *downloadRequest = [connection buildRequest:thumburl method:@"GET" form:nil];
@@ -266,8 +274,8 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     NSString *target = [self thumbPath:self.oid];
 
     @synchronized (self) {
-        if (_thumbtask) return [self finishDownloadThumb:true task:downloadTask];
-        if (self.thumb) return [self finishDownloadThumb:true task:downloadTask];
+        if (_thumbtask) return [self finishDownloadThumb:true completeBlock:completeBlock];
+        if (self.thumb) return [self finishDownloadThumb:true completeBlock:completeBlock];
 
         _thumbtask = [connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:nil destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
             return [NSURL fileURLWithPath:[target stringByAppendingPathExtension:@"tmp"]];
@@ -280,7 +288,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
                     [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
                 }
             }
-            [self finishDownloadThumb:!error task:downloadTask];
+            [self finishDownloadThumb:!error completeBlock:completeBlock];
         }];
     }
     [_thumbtask resume];
@@ -441,6 +449,11 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
      }];
 }
 
+- (void)run:(TaskCompleteBlock _Nullable)block
+{
+    self.taskCompleteBlock = block;
+    [self downloadfile];
+}
 - (void)downloadfile
 {
     if (connection.isChunkSupported && ([connection shouldLocalDecrypt:self.repoId] || _filesize > LARGE_FILE_SIZE)) {
@@ -464,21 +477,6 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 {
     if (delegate != nil) self.delegate = delegate;
     [self loadContent:force];
-}
-
-#pragma mark - SeafDownloadDelegate
-- (void)download
-{
-    [self load:nil force:false];
-}
-
-- (BOOL)retryable
-{
-    return true;
-}
-
-- (NSString *)taskUserIdentifier {
-    return self.userIdentifier;
 }
 
 - (BOOL)hasCache
@@ -509,8 +507,8 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
             if (img)
                 return _thumb;
             else if (!_thumbtask) {
-                SeafThumb *thb = [[SeafThumb alloc] initWithSeafPreviewIem:self];
-                [SeafDataTaskManager.sharedObject addDownloadTask:thb];
+                SeafThumb *thb = [[SeafThumb alloc] initWithSeafFile:self];
+                [SeafDataTaskManager.sharedObject addThumbTask:thb];
             }
         } else if (self.image) {
             [self performSelectorInBackground:@selector(genThumb) withObject:nil];
@@ -813,7 +811,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
         [udir addUploadFile:self.ufile flush:true];
     }
     Debug("Update file %@, to %@", self.ufile.lpath, self.ufile.udir.path);
-    [SeafDataTaskManager.sharedObject addBackgroundUploadTask:self.ufile];
+    [SeafDataTaskManager.sharedObject addUploadTask:self.ufile];
 }
 
 - (void)deleteCache
@@ -829,6 +827,11 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     [Utils clearAllFiles:SeafStorage.sharedObject.blocksDir];
     self.ooid = nil;
     self.state = SEAF_DENTRY_INIT;
+}
+
+- (void)cancel
+{
+    [self cancelAnyLoading];
 }
 
 - (void)cancelAnyLoading
@@ -867,7 +870,8 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     [dg updateComplete:self result:true];
 }
 
-- (BOOL)waitUpload {
+- (BOOL)waitUpload
+{
     if (self.ufile)
         return [self.ufile waitUpload];
     return true;
@@ -883,9 +887,12 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.delegate download:self complete:updated];
         self.state = SEAF_DENTRY_SUCCESS;
-        [SeafDataTaskManager.sharedObject finishDownloadTask:self result:updated];
-        if (self.fileDidDownloadBlock)
+        if (self.fileDidDownloadBlock) {
             self.fileDidDownloadBlock(self, updated);
+        }
+        if (self.taskCompleteBlock) {
+            self.taskCompleteBlock(self, true);
+        }
     });
 }
 
@@ -893,8 +900,12 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 {
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.delegate download:self failed:error];
-        if (self.fileDidDownloadBlock)
+        if (self.fileDidDownloadBlock) {
             self.fileDidDownloadBlock(self, false);
+        }
+        if (self.taskCompleteBlock) {
+            self.taskCompleteBlock(self, false);
+        }
     });
 }
 

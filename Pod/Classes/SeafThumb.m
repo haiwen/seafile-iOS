@@ -11,26 +11,41 @@
 #import "Debug.h"
 
 @implementation SeafThumb
+@synthesize lastFailureTimestamp = _lastFailureTimestamp;
+@synthesize retryable = _retryable;
 
-- (id)initWithSeafPreviewIem:(id<SeafPreView>)file
+- (id)initWithSeafFile:(SeafFile *)file
 {
     if ((self = [super init])) {
         _file = file;
+        self.retryable = false;
     }
     return self;
 }
 
-- (NSString *)userIdentifier {
-    if (!_userIdentifier)  {
-        _userIdentifier = [(SeafFile *)_file userIdentifier];
-    }
-    return _userIdentifier;
+- (NSString *)accountIdentifier
+{
+    return self.file->connection.accountIdentifier;
 }
 
-# pragma - SeafDownloadDelegate
-- (void)download
+- (void)run:(TaskCompleteBlock _Nullable)block
 {
-    [(SeafFile *)_file downloadThumb:self];
+    if (!block) {
+        block = ^(id<SeafTask> task, BOOL result) {};
+    }
+    [self download:block];
+}
+
+- (void)download:(TaskCompleteBlock _Nonnull)completeBlock
+{
+    [self.file downloadThumb:^(BOOL result){
+        completeBlock(self, result);
+    }];
+}
+
+- (BOOL)runable
+{
+    return true;
 }
 
 - (NSString *)name
@@ -38,13 +53,10 @@
     return [_file.name stringByAppendingString:@"(-thumb)"];
 }
 
-- (BOOL)retryable
+- (void)cancel
 {
-    return false;
+    [self.file cancelThumb];
 }
 
-- (NSString *)taskUserIdentifier {
-    return self.userIdentifier;
-}
 
 @end

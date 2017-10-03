@@ -121,7 +121,7 @@
 
 - (IBAction)cancel:(id)sender
 {
-    [_ufile doRemove];
+    [_ufile cancel];
    [self.extensionContext completeRequestReturningItems:self.extensionContext.inputItems completionHandler:nil];
 }
 

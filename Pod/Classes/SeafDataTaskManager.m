@@ -13,19 +13,13 @@
 
 @interface SeafDataTaskManager()
 
+@property (nonatomic, strong) NSTimer *taskTimer;
 @property NSUserDefaults *storage;
 @property (nonatomic, strong) NSMutableDictionary *accountQueueDict;
 
 @end
 
 @implementation SeafDataTaskManager
-
-- (NSMutableDictionary *)accountQueueDict {
-    if (!_accountQueueDict) {
-        _accountQueueDict = [NSMutableDictionary dictionary];
-    }
-    return _accountQueueDict;
-}
 
 + (SeafDataTaskManager *)sharedObject
 {
@@ -40,41 +34,50 @@
 {
     if (self = [super init]) {
         _assetsLibrary = [[ALAssetsLibrary alloc] init];
-        
+        _accountQueueDict = [NSMutableDictionary new];
+        [self startTimer];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(cacheCleared:) name:@"clearCache" object:nil];
     }
     return self;
 }
 
+- (void)startTimer
+{
+    Debug("Start timer.");
+    self.taskTimer = [NSTimer scheduledTimerWithTimeInterval:5*60 target:self selector:@selector(tick:) userInfo:nil repeats:YES];
+    [[AFNetworkReachabilityManager sharedManager] setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
+        [self tick:nil];
+    }];
+}
+
+- (void)tick:(id)userInfo {
+    if (![[AFNetworkReachabilityManager sharedManager] isReachable]) {
+        return;
+    }
+    for (SeafAccountTaskQueue *accountQueue in self.accountQueueDict.allValues) {
+        [accountQueue tick];
+    }
+}
+
 #pragma mark- upload
-- (void)addBackgroundUploadTask:(SeafUploadFile *)file
+- (void)addUploadTask:(SeafUploadFile *)file
 {
-    [file resetFailedAttempt];
-    SeafDownloadAccountQueue *accountQueue = [self getAccountQueueWithFileIndectifier:file.userIdentifier];
+    SeafAccountTaskQueue *accountQueue = [self getAccountQueueWithIndentifier:file.accountIdentifier];
     [accountQueue addUploadTask:file];
-}
-
-- (void)finishUpload:(SeafUploadFile *)file result:(BOOL)result
-{
-    SeafDownloadAccountQueue *accountQueue = [self getAccountQueueWithFileIndectifier:file.userIdentifier];
-    [accountQueue.uploadQueue finishUploadTask:file result:result];
-}
-
-- (void)removeBackgroundUploadTask:(SeafUploadFile *)file
-{
-    SeafDownloadAccountQueue *accountQueue = [self getAccountQueueWithFileIndectifier:file.userIdentifier];
-    [accountQueue.uploadQueue clear];
 }
 
 - (void)cancelAutoSyncTasks:(SeafConnection *)conn
 {
-    SeafDownloadAccountQueue *accountQueue = [self getAccountQueueWithFileIndectifier:[NSString stringWithFormat:@"%@%@", conn.host, conn.username]];
+    SeafAccountTaskQueue *accountQueue = [self getAccountQueueWithIndentifier:conn.accountIdentifier];
     NSMutableArray *arr = [[NSMutableArray alloc] init];
     @synchronized (accountQueue.uploadQueue.allTasks) {
         for (SeafUploadFile *ufile in accountQueue.uploadQueue.allTasks) {
             if (ufile.autoSync && ufile.udir->connection == conn) {
                 [arr addObject:ufile];
             }
+        }
+        for (SeafUploadFile *ufile in arr) {
+            [accountQueue.uploadQueue removeTask:ufile];
         }
     }
     Debug("clear %ld photos", (long)arr.count);
@@ -85,13 +88,16 @@
 
 - (void)cancelAutoSyncVideoTasks:(SeafConnection *)conn
 {
-    SeafDownloadAccountQueue *accountQueue = [self getAccountQueueWithFileIndectifier:[NSString stringWithFormat:@"%@%@", conn.host, conn.username]];
+    SeafAccountTaskQueue *accountQueue = [self getAccountQueueWithIndentifier:conn.accountIdentifier];
     NSMutableArray *arr = [[NSMutableArray alloc] init];
     @synchronized (accountQueue.uploadQueue.allTasks) {
         for (SeafUploadFile *ufile in accountQueue.uploadQueue.allTasks) {
             if (ufile.autoSync && ufile.udir->connection == conn && !ufile.isImageFile) {
                 [arr addObject:ufile];
             }
+        }
+        for (SeafUploadFile *ufile in arr) {
+            [accountQueue.uploadQueue removeTask:ufile];
         }
     }
     for (SeafUploadFile *ufile in arr) {
@@ -100,7 +106,7 @@
     }
 }
 
-- (void)noException:(void (^)())block
+- (void)noException:(void (^)(void))block
 {
     @try {
         block();
@@ -149,66 +155,48 @@
 }
 
 #pragma mark- download file
-- (void)addDownloadTask:(id<SeafDownloadDelegate>)task {
-    SeafDownloadAccountQueue *accountQueue = [self getAccountQueueWithFileIndectifier:[task taskUserIdentifier]];
-    if ([task isKindOfClass:[SeafFile class]]) {
-        SeafFile *file = (SeafFile*)task;
-        [accountQueue addFileDownloadTask:file];
-        if (self.trySyncBlock) {
-            self.trySyncBlock(file);
-        }
-    } else if ([task isKindOfClass:[SeafThumb class]]) {
-        SeafThumb *thumb = (SeafThumb*)task;
-        [accountQueue addThumbTask:thumb];
-    } else if ([task isKindOfClass:[SeafAvatar class]]) {
-        SeafAvatar *avatar = (SeafAvatar*)task;
-        [accountQueue addAvatarTask:avatar];
+- (void)addFileDownloadTask:(SeafFile * _Nonnull)dfile
+{
+    SeafAccountTaskQueue *accountQueue = [self getAccountQueueWithIndentifier:dfile.accountIdentifier];
+    [accountQueue addFileDownloadTask:dfile];
+    if (self.trySyncBlock) {
+        self.trySyncBlock(dfile);
     }
 }
 
-- (SeafDownloadAccountQueue *)getAccountQueueWithFileIndectifier:(NSString *)identifier {
-    @synchronized(self. accountQueueDict) {
-        SeafDownloadAccountQueue *accountQueue = [self.accountQueueDict valueForKey:identifier];
+- (void)addAvatarTask:(SeafAvatar * _Nonnull)avatar
+{
+    SeafAccountTaskQueue *accountQueue = [self getAccountQueueWithIndentifier:avatar.accountIdentifier];
+    [accountQueue addAvatarTask:avatar];
+}
+- (void)addThumbTask:(SeafThumb * _Nonnull)thumb
+{
+    SeafAccountTaskQueue *accountQueue = [self getAccountQueueWithIndentifier:thumb.accountIdentifier];
+    [accountQueue addThumbTask:thumb];
+}
+
+- (SeafAccountTaskQueue *)getAccountQueueWithIndentifier:(NSString *)identifier
+{
+    @synchronized(self.accountQueueDict) {
+        SeafAccountTaskQueue *accountQueue = [self.accountQueueDict valueForKey:identifier];
         if (!accountQueue) {
-            accountQueue = [[SeafDownloadAccountQueue alloc] init];
+            accountQueue = [[SeafAccountTaskQueue alloc] init];
             [self.accountQueueDict setObject:accountQueue forKey:identifier];
         }
         return accountQueue;
     }
 }
 
-- (void)finishDownloadTask:(id<SeafDownloadDelegate>)task result:(BOOL)result {
-    SeafDownloadAccountQueue *accountQueue = [self getAccountQueueWithFileIndectifier:[task taskUserIdentifier]];
-    if ([task isKindOfClass:[SeafFile class]]) {
-        SeafFile *file = (SeafFile*)task;
-        [accountQueue.fileQueue finishTask:task result:result];
-        if (self.finishBlock) {
-            self.finishBlock(file);
-        }
-    } else if ([task isKindOfClass:[SeafThumb class]]) {
-        [accountQueue.thumbQueue finishTask:task result:result];
-    } else if ([task isKindOfClass:[SeafAvatar class]]) {
-        [accountQueue.avatarQueue finishTask:task result:result];
+- (SeafAccountTaskQueue *)accountQueueForConnection:(SeafConnection *)connection
+{
+    return [self getAccountQueueWithIndentifier:connection.accountIdentifier];
+}
+
+- (void)cacheCleared:(NSNotification*)notification
+{
+    for (SeafAccountTaskQueue *accountQueue in self.accountQueueDict.allValues) {
+        [accountQueue clearTasks];
     }
-}
-
-- (SeafDownloadAccountQueue *)accountQueueForConnection:(SeafConnection *)connection {
-    NSString *identifier = [NSString stringWithFormat:@"%@%@",connection.host,connection.username];
-    SeafDownloadAccountQueue *task = [self.accountQueueDict valueForKey:identifier];
-    return task;
-}
-
-- (void)removeBackgroundDownloadTask:(id<SeafDownloadDelegate>)task {
-    SeafDownloadAccountQueue *accountQueue = [self.accountQueueDict valueForKey:[task taskUserIdentifier]];
-    if ([task isKindOfClass:[SeafThumb class]]) {
-        [accountQueue.thumbQueue clear];
-    } else if ([task isKindOfClass:[SeafAvatar class]]) {
-        [accountQueue.avatarQueue clear];
-    }
-}
-
-- (void)cacheCleared:(NSNotification*)notification{
-    [self.accountQueueDict removeAllObjects];
 }
 
 - (void)dealloc {
@@ -217,7 +205,7 @@
 
 @end
 
-@implementation SeafDownloadAccountQueue
+@implementation SeafAccountTaskQueue
 
 - (instancetype)init {
     self = [super init];
@@ -226,24 +214,52 @@
         self.thumbQueue = [[SeafTaskQueue alloc] init];
         self.avatarQueue = [[SeafTaskQueue alloc] init];
         self.uploadQueue = [[SeafTaskQueue alloc] init];
+        self.uploadQueue.attemptInterval = 180;
     }
     return self;
 }
 
-- (void)addFileDownloadTask:(SeafFile *)dfile {
+- (void)addFileDownloadTask:(SeafFile * _Nonnull)dfile {
     [self.fileQueue addTask:dfile];
 }
 
-- (void)addThumbTask:(SeafThumb *)thumb {
+- (void)addThumbTask:(SeafThumb * _Nonnull)thumb {
     [self.thumbQueue addTask:thumb];
 }
 
-- (void)addAvatarTask:(SeafAvatar *)avatar {
+- (void)addAvatarTask:(SeafAvatar * _Nonnull)avatar {
     [self.avatarQueue addTask:avatar];
 }
 
-- (void)addUploadTask:(SeafUploadFile *)ufile {
+- (void)addUploadTask:(SeafUploadFile * _Nonnull)ufile {
     [self.uploadQueue addTask:ufile];
+}
+
+- (void)removeFileDownloadTask:(SeafFile * _Nonnull)dfile {
+    [self.fileQueue removeTask:dfile];
+}
+- (void)removeUploadTask:(SeafUploadFile * _Nonnull)ufile {
+    [self.uploadQueue removeTask:ufile];
+}
+- (void)removeAvatarTask:(SeafAvatar * _Nonnull)avatar {
+    [self.avatarQueue removeTask:avatar];
+}
+- (void)removeThumbTask:(SeafThumb * _Nonnull)thumb {
+    [self.thumbQueue removeTask:thumb];
+}
+
+- (void)tick {
+    [self.fileQueue tick];
+    [self.thumbQueue tick];
+    [self.avatarQueue tick];
+    [self.uploadQueue tick];
+}
+
+- (void)clearTasks {
+    [self.fileQueue clear];
+    [self.thumbQueue clear];
+    [self.avatarQueue clear];
+    [self.uploadQueue clear];
 }
 
 @end

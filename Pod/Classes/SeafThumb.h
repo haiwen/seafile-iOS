@@ -7,13 +7,12 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "SeafConnection.h"
-#import "SeafPreView.h"
+#import "SeafFile.h"
 
-@interface SeafThumb : NSObject<SeafDownloadDelegate>
-@property (retain, readonly) id<SeafPreView> file;
-@property (copy, nonatomic) NSString * userIdentifier;
+@interface SeafThumb : NSObject<SeafTask>
+@property (retain, readonly) SeafFile *file;
+@property (nonatomic, readonly) NSString * accountIdentifier;
 
-- (id)initWithSeafPreviewIem:(id<SeafPreView>)file;
+- (id)initWithSeafFile:(SeafFile *)file;
 
 @end

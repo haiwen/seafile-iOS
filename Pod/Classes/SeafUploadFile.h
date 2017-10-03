@@ -11,6 +11,7 @@
 #import <AssetsLibrary/AssetsLibrary.h>
 
 #import "SeafPreView.h"
+#import "SeafTaskQueue.h"
 
 @class SeafConnection;
 @class SeafUploadFile;
@@ -25,7 +26,7 @@ typedef void (^SeafUploadCompletionBlock)(BOOL success, SeafUploadFile *file, NS
 @end
 
 
-@interface SeafUploadFile : NSObject<SeafPreView, QLPreviewItem>
+@interface SeafUploadFile : NSObject<SeafPreView, QLPreviewItem, SeafTask>
 
 @property (readonly) NSString *lpath;
 @property (readonly) NSString *name;
@@ -36,8 +37,7 @@ typedef void (^SeafUploadCompletionBlock)(BOOL success, SeafUploadFile *file, NS
 @property (nonatomic, readonly) ALAsset *asset;
 @property (nonatomic, readonly) NSURL *assetURL;
 @property (readwrite) BOOL autoSync;
-@property (readonly) BOOL removed;
-@property (copy, nonatomic) NSString *userIdentifier;
+@property (copy, nonatomic) NSString *accountIdentifier;
 
 @property (readonly) int uProgress;
 @property (nonatomic) id<SeafUploadDelegate> delegate;
@@ -49,23 +49,16 @@ typedef void (^SeafUploadCompletionBlock)(BOOL success, SeafUploadFile *file, NS
 - (id)initWithPath:(NSString *)lpath;
 
 - (void)setAsset:(ALAsset *)asset url:(NSURL *)url;
-- (void)doUpload;
 
-- (void)cancel;
-- (void)doRemove;
-- (BOOL)canUpload;
 - (BOOL)uploaded;
 
-- (NSString *)key;
 - (NSMutableDictionary *)uploadAttr;
-- (BOOL)clearUploadAttr:(BOOL)flush;
 - (BOOL)saveUploadAttr:(BOOL)flush;
 
 + (NSMutableArray *)uploadFilesForDir:(SeafDir *)dir;
 + (BOOL)saveAttrs;
 + (void)clearCache;
 
-- (void)resetFailedAttempt;
 - (BOOL)waitUpload;
 
 

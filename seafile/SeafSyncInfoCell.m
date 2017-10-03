@@ -35,7 +35,7 @@
     sfile.delegate = self;
 
     self.nameLabel.text = sfile.name;
-    self.pathLabel.text = sfile.dirPath;
+    self.pathLabel.text = sfile.fullPath;
     self.iconView.image = sfile.icon;
     self.sizeLabel.text = sfile.detailText;
 
