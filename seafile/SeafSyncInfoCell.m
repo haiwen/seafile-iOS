@@ -30,62 +30,54 @@
     return self;
 }
 
--(void)showCellWithSFile:(SeafFile *)sfile
+-(void)showCellWithFile:(id)file
 {
-    sfile.delegate = self;
-
-    self.nameLabel.text = sfile.name;
-    self.pathLabel.text = sfile.fullPath;
-    self.iconView.image = sfile.icon;
-    self.sizeLabel.text = sfile.detailText;
-
-    if (sfile.state == SEAF_DENTRY_INIT){
-        self.progressView.hidden = YES;
-        self.statusLabel.text = @"";
-        self.sizeLabelLeftConstraint.constant = 0;
-    } else if (sfile.state == SEAF_DENTRY_LOADING) {
-        self.progressView.hidden = NO;
-        self.sizeLabelLeftConstraint.constant = 0;
-        if (sfile.progress.fractionCompleted == 1.0) {
+    if ([file isKindOfClass:[SeafFile class]]) {
+        SeafFile *dfile = (SeafFile*)file;
+        dfile.delegate = self;
+        
+        self.nameLabel.text = dfile.name;
+        self.pathLabel.text = dfile.fullPath;
+        self.iconView.image = dfile.icon;
+        self.sizeLabel.text = dfile.detailText;
+        
+        if (dfile.state == SEAF_DENTRY_INIT){
             self.progressView.hidden = YES;
-        } else {
-            self.progressView.hidden = NO;
             self.statusLabel.text = @"";
+            self.sizeLabelLeftConstraint.constant = 0;
+        } else if (dfile.state == SEAF_DENTRY_LOADING) {
+            self.sizeLabelLeftConstraint.constant = 0;
+            self.statusLabel.text = @"";
+            if (dfile.progress.fractionCompleted == 1.0 || dfile.progress.fractionCompleted == 0.0) {
+                self.progressView.hidden = YES;
+            } else {
+                self.progressView.hidden = NO;
+            }
+        } else if (dfile.state == SEAF_DENTRY_SUCCESS){
+            self.progressView.hidden = YES;
+            self.sizeLabelLeftConstraint.constant = 8;
+            self.statusLabel.text = NSLocalizedString(@"Completed", @"Seafile");
+        } else if (dfile.state == SEAF_DENTRY_FAILURE) {
+            self.progressView.hidden = YES;
+            self.statusLabel.text = NSLocalizedString(@"Failed", @"Seafile");
+            self.sizeLabelLeftConstraint.constant = 8;
         }
-    } else if (sfile.state == SEAF_DENTRY_SUCCESS){
-        self.progressView.hidden = YES;
-        self.sizeLabelLeftConstraint.constant = 8;
-        self.statusLabel.text = NSLocalizedString(@"Completed", @"Seafile");
-    } else if (sfile.state == SEAF_DENTRY_FAILURE) {
-        self.progressView.hidden = YES;
-        self.statusLabel.text = NSLocalizedString(@"Failed", @"Seafile");
-        self.sizeLabelLeftConstraint.constant = 8;
-    }
-}
-
--(void)showCellWithUploadFile:(SeafUploadFile *)ufile
-{
-    self.nameLabel.text = ufile.name;
-    self.statusLabel.text = @"";
-    self.iconView.image = ufile.icon;
-    self.sizeLabel.text = [FileSizeFormatter stringFromLongLong:ufile.filesize];
-
-    @weakify(self);
-    ufile.progressBlock = ^(SeafUploadFile *file, int progress) {
-        @strongify(self);
-        self.progressView.progress = progress/100.00;
-    };
-
-    ufile.completionBlock = ^(BOOL success, SeafUploadFile *file, NSString *oid) {
-        @strongify(self);
-        if (success) {
+    } else if ([file isKindOfClass:[SeafUploadFile class]]) {
+        SeafUploadFile *ufile = (SeafUploadFile*)file;
+        
+        self.nameLabel.text = ufile.name;
+        self.statusLabel.text = @"";
+        self.iconView.image = ufile.icon;
+        self.sizeLabel.text = [FileSizeFormatter stringFromLongLong:ufile.filesize];
+        if (ufile.uploading) {
+            self.progressView.hidden = NO;
+            self.progressView.progress = ufile.uProgress/100.00;
+            self.statusLabel.text = NSLocalizedString(@"Uploading", @"Seafile");
+        } else {
             self.progressView.hidden = YES;
             self.statusLabel.text = NSLocalizedString(@"Completed", @"Seafile");
-        } else {
-            self.progressView.hidden = NO;
-            self.statusLabel.text = NSLocalizedString(@"uploading", @"Seafile");
         }
-    };
+    }
 }
 
 #pragma mark - SeafDentryDelegate

@@ -18,8 +18,8 @@
 #import "SeafTaskQueue.h"
 @class SeafAccountTaskQueue;
 
-typedef void(^SyncBlock)(SeafFile * _Nonnull file);
-typedef void(^DownLoadFinshBlock)(SeafFile *_Nonnull file);
+typedef void(^SyncBlock)(id _Nullable file);
+typedef void(^DownLoadFinshBlock)(id<SeafTask>  _Nonnull task);
 // Manager for background download/upload tasks, retry if failed.
 @interface SeafDataTaskManager : NSObject
 

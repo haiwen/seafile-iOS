@@ -16,7 +16,7 @@
 
 @property (nonatomic, strong) NSMutableArray *tasks;
 @property (nonatomic, strong) NSMutableArray *ongoingTasks;
-@property TaskCompleteBlock taskCompleteBlock;
+@property (nonatomic, copy) TaskCompleteBlock taskCompleteBlock;
 @property unsigned long failedCount;
 
 @end
@@ -34,7 +34,7 @@
         __weak typeof(self) weakSelf = self;
         self.taskCompleteBlock = ^(id<SeafTask> task, BOOL result) {
             if (![weakSelf.ongoingTasks containsObject:task]) return;
-            Debug("finish task %@, %ld tasks remained.",task.name, [weakSelf taskNumber]);
+            Debug("finish task %@, %ld tasks remained.",task.name, (long)[weakSelf taskNumber]);
             @synchronized (weakSelf.ongoingTasks) { // task succeeded, remove it
                 [weakSelf.ongoingTasks removeObject:task];
             }
@@ -44,6 +44,9 @@
                     [weakSelf.tasks addObject:task];
                     weakSelf.failedCount += 1;
                 }
+            }
+            if (weakSelf.finishTaskBlock) {
+                weakSelf.finishTaskBlock(task, result);
             }
             [weakSelf tick];
         };

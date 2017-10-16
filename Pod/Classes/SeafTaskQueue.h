@@ -32,6 +32,7 @@ typedef void (^TaskCompleteBlock)(id<SeafTask> _Nonnull task, BOOL result);
 
 @property (nonatomic, assign) NSInteger concurrency;
 @property (nonatomic, assign) double attemptInterval;
+@property (nonatomic, copy) TaskCompleteBlock _Nullable finishTaskBlock;
 
 - (NSInteger)taskNumber;
 - (NSArray * _Nonnull)allTasks;

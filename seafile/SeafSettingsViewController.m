@@ -363,6 +363,7 @@ enum {
     _restoreContactsCell.textLabel.text = NSLocalizedString(@"Restore Contacts", @"Seafile");
 
     _downlingCell.textLabel.text = NSLocalizedString(@"Downloading", @"Seafile");
+    _uploadingCell.textLabel.text = NSLocalizedString(@"Uploading", @"Seafile");
 
     _cacheCell.textLabel.text = NSLocalizedString(@"Local Cache", @"Seafile");
     _wipeCacheCell.textLabel.text = NSLocalizedString(@"Wipe Cache", @"Seafile");
@@ -401,7 +402,7 @@ enum {
     SeafDataTaskManager.sharedObject.trySyncBlock = ^(SeafFile *file) {
         [weakSelf updateSyncInfo];
     };
-    SeafDataTaskManager.sharedObject.finishBlock = ^(SeafFile *file) {
+    SeafDataTaskManager.sharedObject.finishBlock = ^(id<SeafTask>  _Nonnull task) {
         [weakSelf updateSyncInfo];
     };
 }
@@ -477,8 +478,12 @@ enum {
 
 -(void)updateSyncInfo{
     NSInteger downloadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].fileQueue taskNumber];
-    _downlingCell.detailTextLabel.text = [NSString stringWithFormat:@"%lu",(long)downloadingNum];
-    [self.tableView reloadData];
+    NSInteger uploadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].uploadQueue taskNumber];
+    self.downlingCell.detailTextLabel.text = [NSString stringWithFormat:@"%lu",(long)downloadingNum];
+    self.uploadingCell.detailTextLabel.text = [NSString stringWithFormat:@"%lu",(long)uploadingNum];
+    dispatch_async(dispatch_get_main_queue(), ^ {
+        [self.tableView reloadData];
+    });
 }
 
 - (void)updateAccountInfo

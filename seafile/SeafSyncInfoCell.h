@@ -19,7 +19,6 @@
 @property (weak, nonatomic) IBOutlet UILabel *sizeLabel;
 @property (weak, nonatomic) IBOutlet UIProgressView *progressView;
 
-- (void)showCellWithSFile:(SeafFile*)sfile;
-- (void)showCellWithUploadFile:(SeafUploadFile*)ufile;
+- (void)showCellWithFile:(id)file;
 
 @end
