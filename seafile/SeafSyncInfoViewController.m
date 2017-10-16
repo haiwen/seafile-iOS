@@ -16,28 +16,28 @@
 
 static NSString *cellIdentifier = @"SeafSyncInfoCell";
 
-@interface SeafSyncInfoViewController ()<SeafDentryDelegate>
+@interface SeafSyncInfoViewController ()
 
-@property (nonatomic, strong) NSMutableArray *finishArray;
-@property (nonatomic, strong) NSMutableArray *ongongingArray;
+@property (nonatomic, strong) NSMutableArray *finishedTasks;
+@property (nonatomic, strong) NSMutableArray *ongongingTasks;
 @property (nonatomic, strong) SeafConnection *connection;
 
 @end
 
 @implementation SeafSyncInfoViewController
 
-- (NSMutableArray *)finishArray {
-    if (!_finishArray) {
-        _finishArray = [NSMutableArray array];
+- (NSMutableArray *)finishedTasks {
+    if (!_finishedTasks) {
+        _finishedTasks = [NSMutableArray array];
     }
-    return _finishArray;
+    return _finishedTasks;
 }
 
-- (NSMutableArray *)ongongingArray {
-    if (!_ongongingArray) {
-        _ongongingArray = [NSMutableArray array];
+- (NSMutableArray *)ongongingTasks {
+    if (!_ongongingTasks) {
+        _ongongingTasks = [NSMutableArray array];
     }
-    return _ongongingArray;
+    return _ongongingTasks;
 }
 
 - (instancetype)initWithType:(DETAILTYPE)type {
@@ -68,88 +68,61 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
 
     self.connection = [SeafGlobal sharedObject].connection;
 
-    [self addToFileArray];
-
     WS(weakSelf);
-    SeafDataTaskManager.sharedObject.trySyncBlock = ^(id  _Nullable file) {
-        if (![weakSelf.ongongingArray containsObject:file]) {
-            if (self.detailType == DOWNLOAD_DETAIL) {
-                SeafFile *dfile = (SeafFile*)file;
-                if (dfile->connection == self.connection) {
-                    @synchronized (weakSelf.ongongingArray) {
-                        [weakSelf.ongongingArray addObject:dfile];
-                    }
-                }
-            } else {
-                SeafUploadFile *ufile = (SeafUploadFile*)file;
-                if (ufile.accountIdentifier == self.connection.accountIdentifier) {
-                    @synchronized (weakSelf.ongongingArray) {
-                        [weakSelf.ongongingArray addObject:ufile];
-                    }
-                }
-            }
+    SeafDataTaskManager.sharedObject.trySyncBlock = ^(id<SeafTask> _Nullable task) {
+        if (![task.accountIdentifier isEqualToString:self.connection.accountIdentifier]) return;
+        if ([weakSelf.ongongingTasks containsObject:task]) return;
+        @synchronized (weakSelf.ongongingTasks) {
+            [weakSelf.ongongingTasks addObject:task];
         }
+
         dispatch_async(dispatch_get_main_queue(), ^{
             [weakSelf.tableView reloadData];
         });
     };
 
     SeafDataTaskManager.sharedObject.finishBlock = ^(id<SeafTask>  _Nonnull task) {
-        if (self.detailType == DOWNLOAD_DETAIL) {
-            SeafFile *file = (SeafFile*)task;
-            if (file->connection == self.connection) {
-                @synchronized (weakSelf.ongongingArray) {
-                     [weakSelf.ongongingArray removeObject:file];
-                }
-                @synchronized (weakSelf.finishArray) {
-                    [weakSelf.finishArray addObject:file];
-                }
-            }
-        } else {
-            SeafUploadFile *ufile = (SeafUploadFile*)task;
-            if (ufile.accountIdentifier == self.connection.accountIdentifier) {
-                @synchronized (weakSelf.ongongingArray) {
-                    [weakSelf.ongongingArray removeObject:ufile];
-                }
-                @synchronized (weakSelf.finishArray) {
-                    [weakSelf.finishArray addObject:ufile];
-                }
-            }
+        if (![task.accountIdentifier isEqualToString:self.connection.accountIdentifier]) return;
+        if ([weakSelf.ongongingTasks containsObject:task]) return;
+        @synchronized (weakSelf.ongongingTasks) {
+            [weakSelf.ongongingTasks addObject:task];
         }
+
         dispatch_async(dispatch_get_main_queue(), ^{
             [weakSelf.tableView reloadData];
         });
     };
+    [self initTaskArray];
 }
 
-- (void)addToFileArray {
+- (void)initTaskArray {
     SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection];
     if (self.detailType == DOWNLOAD_DETAIL) {
         for (SeafFile *file in accountQueue.fileQueue.allTasks) {
             if (file.state == SEAF_DENTRY_SUCCESS) {
-                @synchronized (self.finishArray) {
-                    [self.finishArray addObject:file];
+                @synchronized (self.finishedTasks) {
+                    [self.finishedTasks addObject:file];
                 }
             } else {
-                @synchronized (self.ongongingArray) {
-                    [self.ongongingArray addObject:file];
+                @synchronized (self.ongongingTasks) {
+                    [self.ongongingTasks addObject:file];
                 }
             }
         }
     } else {
         for (SeafUploadFile *file in accountQueue.uploadQueue.allTasks) {
             if (file.uploading || !file.uploaded) {
-                @synchronized (self.ongongingArray) {
-                    [self.ongongingArray addObject:file];
+                @synchronized (self.ongongingTasks) {
+                    [self.ongongingTasks addObject:file];
                 }
             } else {
-                @synchronized (self.finishArray) {
-                    [self.finishArray addObject:file];
+                @synchronized (self.finishedTasks) {
+                    [self.finishedTasks addObject:file];
                 }
             }
         }
     }
-    
+
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.tableView reloadData];
     });
@@ -163,9 +136,9 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (section == 0) {
-        return self.ongongingArray.count;
+        return self.ongongingTasks.count;
     } else {
-        return self.finishArray.count;
+        return self.finishedTasks.count;
     }
 }
 
@@ -197,18 +170,16 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     SeafSyncInfoCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier forIndexPath:indexPath];
+    NSArray *tasks = nil;
     if (indexPath.section == 0) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (self.ongongingArray.count > 0 && self.ongongingArray.count > indexPath.row) {
-                [cell showCellWithFile:self.ongongingArray[indexPath.row]];
-            }
-        });
+        tasks = self.ongongingTasks;
     } else {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (self.finishArray.count > 0 && self.finishArray.count > indexPath.row) {
-                [cell showCellWithFile:self.finishArray[indexPath.row]];
-            }
-        });
+        tasks = self.finishedTasks;
+    }
+
+    if (tasks.count > 0 && tasks.count > indexPath.row) {
+        id<SeafTask> task = tasks[indexPath.row];
+        [cell showCellWithTask:task];
     }
     return cell;
 }

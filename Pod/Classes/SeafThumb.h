@@ -11,7 +11,6 @@
 
 @interface SeafThumb : NSObject<SeafTask>
 @property (retain, readonly) SeafFile *file;
-@property (nonatomic, readonly) NSString * accountIdentifier;
 
 - (id)initWithSeafFile:(SeafFile *)file;
 

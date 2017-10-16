@@ -20,7 +20,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 
 @protocol SeafFileUpdateDelegate <NSObject>
-- (void)updateProgress:(nonnull SeafFile * )file progress:(int)percent;
+- (void)updateProgress:(nonnull SeafFile * )file progress:(float)progress;
 - (void)updateComplete:(nonnull SeafFile * )file result:(BOOL)res;
 
 @end
@@ -47,7 +47,6 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 @property (readonly) long long mtime;
 @property (strong, nullable) id <SeafFileUpdateDelegate> udelegate;
 @property (strong, nonatomic) NSProgress * _Nullable progress;
-@property (nonatomic, readonly) NSString * _Nonnull accountIdentifier;
 
 - (BOOL)isDownloading;
 - (BOOL)isStarred;

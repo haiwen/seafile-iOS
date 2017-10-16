@@ -269,7 +269,7 @@
         return nil;
     @try {
         NSIndexPath *path = [NSIndexPath indexPathForRow:index inSection:0];
-        return (SeafCell *)[self.tableView dequeueReusableCellWithIdentifier:@"SeafCell" forIndexPath:path];
+        return (SeafCell *)[self.tableView cellForRowAtIndexPath:path];
     } @catch(NSException *exception) {
         return nil;
     }
@@ -313,7 +313,7 @@
 }
 
 #pragma mark - SeafFileUpdateDelegate
-- (void)updateProgress:(SeafFile *)file progress:(int)percent
+- (void)updateProgress:(SeafFile *)file progress:(float)progress
 {
     [self updateEntryCell:file];
 }
@@ -324,7 +324,7 @@
     [self updateEntryCell:file];
 }
 
-- (void)updateProgress:(SeafFile *)file result:(BOOL)res completeness:(int)percent
+- (void)updateProgress:(SeafFile *)file result:(BOOL)res progress:(float)progress
 {
     if (!res) [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to upload file", @"Seafile")];
     [self refreshView];

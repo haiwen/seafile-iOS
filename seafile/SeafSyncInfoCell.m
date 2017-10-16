@@ -30,17 +30,16 @@
     return self;
 }
 
--(void)showCellWithFile:(id)file
+- (void)updateCellStatus:(id<SeafTask> _Nonnull)task
 {
-    if ([file isKindOfClass:[SeafFile class]]) {
-        SeafFile *dfile = (SeafFile*)file;
-        dfile.delegate = self;
-        
+    if ([task isKindOfClass:[SeafFile class]]) {
+        SeafFile *dfile = (SeafFile*)task;
+
         self.nameLabel.text = dfile.name;
         self.pathLabel.text = dfile.fullPath;
         self.iconView.image = dfile.icon;
         self.sizeLabel.text = dfile.detailText;
-        
+
         if (dfile.state == SEAF_DENTRY_INIT){
             self.progressView.hidden = YES;
             self.statusLabel.text = @"";
@@ -48,11 +47,7 @@
         } else if (dfile.state == SEAF_DENTRY_LOADING) {
             self.sizeLabelLeftConstraint.constant = 0;
             self.statusLabel.text = @"";
-            if (dfile.progress.fractionCompleted == 1.0 || dfile.progress.fractionCompleted == 0.0) {
-                self.progressView.hidden = YES;
-            } else {
-                self.progressView.hidden = NO;
-            }
+            self.progressView.hidden = NO;
         } else if (dfile.state == SEAF_DENTRY_SUCCESS){
             self.progressView.hidden = YES;
             self.sizeLabelLeftConstraint.constant = 8;
@@ -62,16 +57,16 @@
             self.statusLabel.text = NSLocalizedString(@"Failed", @"Seafile");
             self.sizeLabelLeftConstraint.constant = 8;
         }
-    } else if ([file isKindOfClass:[SeafUploadFile class]]) {
-        SeafUploadFile *ufile = (SeafUploadFile*)file;
-        
+    } else if ([task isKindOfClass:[SeafUploadFile class]]) {
+        SeafUploadFile *ufile = (SeafUploadFile*)task;
+
         self.nameLabel.text = ufile.name;
         self.statusLabel.text = @"";
         self.iconView.image = ufile.icon;
         self.sizeLabel.text = [FileSizeFormatter stringFromLongLong:ufile.filesize];
         if (ufile.uploading) {
             self.progressView.hidden = NO;
-            self.progressView.progress = ufile.uProgress/100.00;
+            self.progressView.progress = ufile.uProgress;
             self.statusLabel.text = NSLocalizedString(@"Uploading", @"Seafile");
         } else {
             self.progressView.hidden = YES;
@@ -79,33 +74,16 @@
         }
     }
 }
-
-#pragma mark - SeafDentryDelegate
-- (void)download:(SeafBase *)entry progress:(float)progress
+-(void)showCellWithTask:(id<SeafTask> _Nonnull)task
 {
-    Debug(@"%f", progress);
-    self.progressView.progress = progress;
-}
-
-- (void)download:(SeafBase *)entry complete:(BOOL)updated
-{
-
-}
-
-- (void)download:(SeafBase *)entry failed:(NSError *)error
-{
-
-}
-
--(void)awakeFromNib
-{
-    [super awakeFromNib];
-}
-
-- (void)setSelected:(BOOL)selected animated:(BOOL)animated {
-    [super setSelected:selected animated:animated];
-
-    // Configure the view for the selected state
+    [task setTaskProgressBlock:^(id<SeafTask>  _Nonnull task, float progress) {
+        if (self.progressView.hidden) {
+            [self updateCellStatus:task];
+        } else {
+            self.progressView.progress = progress;
+        }
+    }];
+    [self updateCellStatus:task];
 }
 
 @end

@@ -64,10 +64,6 @@
 {
     SeafAccountTaskQueue *accountQueue = [self getAccountQueueWithIndentifier:file.accountIdentifier];
     [accountQueue addUploadTask:file];
-    __weak typeof(self) weakSelf = self;
-    accountQueue.uploadQueue.finishTaskBlock = ^(id<SeafTask>  _Nonnull task, BOOL result) {
-        weakSelf.finishBlock(task);
-    };
     if (self.trySyncBlock) {
         self.trySyncBlock(file);
     }
@@ -166,10 +162,6 @@
 {
     SeafAccountTaskQueue *accountQueue = [self getAccountQueueWithIndentifier:dfile.accountIdentifier];
     [accountQueue addFileDownloadTask:dfile];
-    __weak typeof(self) weakSelf = self;
-    accountQueue.fileQueue.finishTaskBlock = ^(id<SeafTask>  _Nonnull task, BOOL result) {
-        weakSelf.finishBlock(task);
-    };
     if (self.trySyncBlock) {
         self.trySyncBlock(dfile);
     }
@@ -192,6 +184,15 @@
         SeafAccountTaskQueue *accountQueue = [self.accountQueueDict valueForKey:identifier];
         if (!accountQueue) {
             accountQueue = [[SeafAccountTaskQueue alloc] init];
+
+            __weak typeof(self) weakSelf = self;
+            accountQueue.uploadQueue.taskCompleteBlock = ^(id<SeafTask>  _Nonnull task, BOOL result) {
+                weakSelf.finishBlock(task);
+            };
+            accountQueue.fileQueue.taskCompleteBlock = ^(id<SeafTask>  _Nonnull task, BOOL result) {
+                weakSelf.finishBlock(task);
+            };
+
             [self.accountQueueDict setObject:accountQueue forKey:identifier];
         }
         return accountQueue;

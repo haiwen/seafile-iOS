@@ -644,7 +644,7 @@ enum {
     cell.imageView.image = file.icon;
     if (file.uploading) {
         cell.progressView.hidden = false;
-        [cell.progressView setProgress:file.uProgress * 1.0/100];
+        [cell.progressView setProgress:file.uProgress];
     } else {
         NSString *sizeStr = [FileSizeFormatter stringFromLongLong:file.filesize];
         NSDictionary *dict = [file uploadAttr];
@@ -1491,7 +1491,6 @@ enum {
         file.overwrite = overwrite;
         [file setAsset:asset url:asset.defaultRepresentation.url];
         file.delegate = self;
-        file.accountIdentifier = [NSString stringWithFormat:@"%@%@", self.connection.host, self.connection.username];
         [files addObject:file];
         [self.directory addUploadFile:file flush:false];
     }
@@ -1568,7 +1567,7 @@ enum {
 }
 
 #pragma mark - SeafFileUpdateDelegate
-- (void)updateProgress:(SeafFile *)file progress:(int)percent
+- (void)updateProgress:(SeafFile *)file progress:(float)progress
 {
     [self updateEntryCell:file];
 }
@@ -1578,7 +1577,7 @@ enum {
 }
 
 #pragma mark - SeafUploadDelegate
-- (void)updateFileCell:(SeafUploadFile *)file result:(BOOL)res progress:(int)percent completed:(BOOL)completed
+- (void)updateFileCell:(SeafUploadFile *)file result:(BOOL)res progress:(float)progress completed:(BOOL)completed
 {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSIndexPath *indexPath = nil;
@@ -1587,16 +1586,16 @@ enum {
         if (!completed && res) {
             cell.progressView.hidden = false;
             cell.detailTextLabel.text = nil;
-            [cell.progressView setProgress:percent*1.0f/100];
+            [cell.progressView setProgress:progress];
         } else if (indexPath) {
             [self reloadIndex:indexPath];
         }
     });
 }
 
-- (void)uploadProgress:(SeafUploadFile *)file progress:(int)percent
+- (void)uploadProgress:(SeafUploadFile *)file progress:(float)progress
 {
-    [self updateFileCell:file result:true progress:percent completed:false];
+    [self updateFileCell:file result:true progress:progress completed:false];
 }
 
 - (void)uploadComplete:(BOOL)success file:(SeafUploadFile *)file oid:(NSString *)oid
@@ -1604,7 +1603,7 @@ enum {
     if (!success) {
         return [self updateFileCell:file result:false progress:0 completed:true];
     }
-    [self updateFileCell:file result:YES progress:100 completed:YES];
+    [self updateFileCell:file result:YES progress:1.0f completed:YES];
     if (self.isVisible) {
         [SVProgressHUD showSuccessWithStatus:[NSString stringWithFormat:NSLocalizedString(@"File '%@' uploaded success", @"Seafile"), file.name]];
     }

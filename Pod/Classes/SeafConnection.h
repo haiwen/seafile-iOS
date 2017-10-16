@@ -36,12 +36,6 @@ typedef void (^CompletionBlock)(BOOL success, NSError * _Nullable error);
 
 BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 
-@protocol SeafDownloadDelegate <NSObject>
-- (void)download;
-- (NSString *_Nonnull)name;
-- (BOOL)retryable;
-@end
-
 @protocol SeafPhotoSyncWatcherDelegate <NSObject>
 - (void)photoSyncChanged:(long)remain;
 @end

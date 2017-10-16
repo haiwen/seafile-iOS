@@ -14,16 +14,19 @@
 @protocol SeafTask;
 
 typedef void (^TaskCompleteBlock)(id<SeafTask> _Nonnull task, BOOL result);
+typedef void (^TaskProgressBlock)(id<SeafTask> _Nonnull task, float progress);
 
 @protocol SeafTask<NSObject>
 
 @property NSTimeInterval lastFailureTimestamp;
 @property BOOL retryable;
 
+- (NSString * _Nonnull)accountIdentifier;
 - (BOOL)runable; // task good to go
 - (NSString * _Nonnull)name;
-- (void)run:(TaskCompleteBlock _Nullable)block;
+- (void)run:(TaskCompleteBlock _Nullable)completeBlock;
 - (void)cancel;
+- (void)setTaskProgressBlock:(TaskProgressBlock _Nullable)taskProgressBlock;
 
 @end
 
@@ -32,7 +35,8 @@ typedef void (^TaskCompleteBlock)(id<SeafTask> _Nonnull task, BOOL result);
 
 @property (nonatomic, assign) NSInteger concurrency;
 @property (nonatomic, assign) double attemptInterval;
-@property (nonatomic, copy) TaskCompleteBlock _Nullable finishTaskBlock;
+@property (nonatomic, copy) TaskCompleteBlock _Nullable taskCompleteBlock;
+@property (nonatomic, copy) TaskProgressBlock _Nullable taskProgressBlock;
 
 - (NSInteger)taskNumber;
 - (NSArray * _Nonnull)allTasks;

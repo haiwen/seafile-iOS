@@ -28,12 +28,17 @@
     return self.file->connection.accountIdentifier;
 }
 
-- (void)run:(TaskCompleteBlock _Nullable)block
+- (void)run:(TaskCompleteBlock _Nullable)completeBlock
 {
-    if (!block) {
-        block = ^(id<SeafTask> task, BOOL result) {};
+    if (!completeBlock) {
+        completeBlock = ^(id<SeafTask> task, BOOL result) {};
     }
-    [self download:block];
+    [self download:completeBlock];
+}
+
+- (void)setTaskProgressBlock:(TaskProgressBlock _Nullable)taskProgressBlock
+{
+
 }
 
 - (void)download:(TaskCompleteBlock _Nonnull)completeBlock
