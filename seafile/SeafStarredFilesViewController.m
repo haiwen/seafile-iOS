@@ -269,7 +269,7 @@
         return nil;
     @try {
         NSIndexPath *path = [NSIndexPath indexPathForRow:index inSection:0];
-        return (SeafCell *)[self.tableView cellForRowAtIndexPath:path];
+        return (SeafCell *)[self.tableView dequeueReusableCellWithIdentifier:@"SeafCell" forIndexPath:path];
     } @catch(NSException *exception) {
         return nil;
     }
