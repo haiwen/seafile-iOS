@@ -118,12 +118,13 @@
     [passwordTextField resignFirstResponder];
     NSString *username = usernameTextField.text;
     NSString *password = passwordTextField.text;
-    NSString *url = [NSString stringWithFormat:@"%@%@",self.prefixLabel.text,serverTextField.text];
 
     if (!serverTextField.text || serverTextField.text.length < 1) {
         [self alertWithTitle:NSLocalizedString(@"Server must not be empty", @"Seafile")];
         return;
     }
+
+    NSString *url = [NSString stringWithFormat:@"%@%@",self.prefixLabel.text,serverTextField.text];
     if (![url hasPrefix:HTTP] && ![url hasPrefix:HTTPS]) {
         [self alertWithTitle:NSLocalizedString(@"Invalid Server", @"Seafile")];
         return;
@@ -303,7 +304,7 @@
     return true;
 }
 
-- (void)authorizeInvalidCert:(NSURLProtectionSpace *)protectionSpace yes:(void (^)())yes no:(void (^)())no
+- (void)authorizeInvalidCert:(NSURLProtectionSpace *)protectionSpace yes:(void (^)(void))yes no:(void (^)(void))no
 {
     NSString *title = [NSString stringWithFormat:NSLocalizedString(@"%@ can't verify the identity of the website \"%@\"", @"Seafile"), APP_NAME, protectionSpace.host];
     NSString *message = NSLocalizedString(@"The certificate from this website is invalid. Would you like to connect to the server anyway?", @"Seafile");

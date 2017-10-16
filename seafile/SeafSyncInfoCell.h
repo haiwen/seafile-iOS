@@ -12,13 +12,13 @@
 
 @interface SeafSyncInfoCell : UITableViewCell
 
-@property (weak, nonatomic) IBOutlet UIImageView *iconView;
-@property (weak, nonatomic) IBOutlet UILabel *pathLabel;
-@property (weak, nonatomic) IBOutlet UILabel *nameLabel;
-@property (weak, nonatomic) IBOutlet UILabel *statusLabel;
-@property (weak, nonatomic) IBOutlet UILabel *sizeLabel;
-@property (weak, nonatomic) IBOutlet UIProgressView *progressView;
+@property (nonatomic) IBOutlet UIImageView * _Nonnull iconView;
+@property (nonatomic) IBOutlet UILabel * _Nonnull pathLabel;
+@property (nonatomic) IBOutlet UILabel * _Nonnull nameLabel;
+@property (nonatomic) IBOutlet UILabel * _Nonnull statusLabel;
+@property (nonatomic) IBOutlet UILabel * _Nonnull sizeLabel;
+@property (nonatomic) IBOutlet UIProgressView * _Nonnull progressView;
 
-- (void)showCellWithFile:(id)file;
+- (void)showCellWithTask:(id<SeafTask> _Nonnull)task;
 
 @end

@@ -102,7 +102,7 @@ enum {
 @property (strong, nonatomic) IBOutlet UITableViewCell *uploadContactsCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *restoreContactsCell;
 @property (weak, nonatomic) IBOutlet UITableViewCell *uploadingCell;
-@property (weak, nonatomic) IBOutlet UITableViewCell *downlingCell;
+@property (weak, nonatomic) IBOutlet UITableViewCell *downloadingCell;
 
 @property (strong, nonatomic) IBOutlet UILabel *logOutLabel;
 @property (strong, nonatomic) IBOutlet UILabel *autoCameraUploadLabel;
@@ -362,7 +362,7 @@ enum {
     _uploadContactsCell.textLabel.text = NSLocalizedString(@"Backup Contacts", @"Seafile");
     _restoreContactsCell.textLabel.text = NSLocalizedString(@"Restore Contacts", @"Seafile");
 
-    _downlingCell.textLabel.text = NSLocalizedString(@"Downloading", @"Seafile");
+    _downloadingCell.textLabel.text = NSLocalizedString(@"Downloading", @"Seafile");
     _uploadingCell.textLabel.text = NSLocalizedString(@"Uploading", @"Seafile");
 
     _cacheCell.textLabel.text = NSLocalizedString(@"Local Cache", @"Seafile");
@@ -399,7 +399,7 @@ enum {
     [self configureView];
 
     WS(weakSelf);
-    SeafDataTaskManager.sharedObject.trySyncBlock = ^(SeafFile *file) {
+    SeafDataTaskManager.sharedObject.trySyncBlock = ^(id<SeafTask>  _Nonnull task) {
         [weakSelf updateSyncInfo];
     };
     SeafDataTaskManager.sharedObject.finishBlock = ^(id<SeafTask>  _Nonnull task) {
@@ -479,10 +479,12 @@ enum {
 -(void)updateSyncInfo{
     NSInteger downloadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].fileQueue taskNumber];
     NSInteger uploadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].uploadQueue taskNumber];
-    self.downlingCell.detailTextLabel.text = [NSString stringWithFormat:@"%lu",(long)downloadingNum];
+    self.downloadingCell.detailTextLabel.text = [NSString stringWithFormat:@"%lu",(long)downloadingNum];
     self.uploadingCell.detailTextLabel.text = [NSString stringWithFormat:@"%lu",(long)uploadingNum];
     dispatch_async(dispatch_get_main_queue(), ^ {
-        [self.tableView reloadData];
+        NSIndexPath *downloadlingCellIndex = [NSIndexPath indexPathForRow:CELL_DOWNLOAD inSection:SECTION_UPDOWNLOAD];
+        NSIndexPath *uploadlingCellIndex = [NSIndexPath indexPathForRow:CELL_UPLOAD inSection:SECTION_UPDOWNLOAD];
+        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObjects:downloadlingCellIndex, uploadlingCellIndex, nil] withRowAnimation:UITableViewRowAnimationNone];
     });
 }
 

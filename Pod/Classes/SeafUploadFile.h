@@ -17,14 +17,12 @@
 @class SeafUploadFile;
 @class SeafDir;
 
-typedef void (^SeafUploadProgressBlock)(SeafUploadFile *file, int progress);
 typedef void (^SeafUploadCompletionBlock)(BOOL success, SeafUploadFile *file, NSString *oid);
 
 @protocol SeafUploadDelegate <NSObject>
-- (void)uploadProgress:(SeafUploadFile *)file progress:(int)percent;
+- (void)uploadProgress:(SeafUploadFile *)file progress:(float)progress;
 - (void)uploadComplete:(BOOL)success file:(SeafUploadFile *)file oid:(NSString *)oid;
 @end
-
 
 @interface SeafUploadFile : NSObject<SeafPreView, QLPreviewItem, SeafTask>
 
@@ -37,11 +35,9 @@ typedef void (^SeafUploadCompletionBlock)(BOOL success, SeafUploadFile *file, NS
 @property (nonatomic, readonly) ALAsset *asset;
 @property (nonatomic, readonly) NSURL *assetURL;
 @property (readwrite) BOOL autoSync;
-@property (copy, nonatomic) NSString *accountIdentifier;
 
-@property (readonly) int uProgress;
+@property (readonly) float uProgress;
 @property (nonatomic) id<SeafUploadDelegate> delegate;
-@property (nonatomic) SeafUploadProgressBlock progressBlock;
 @property (nonatomic) SeafUploadCompletionBlock completionBlock;
 
 @property (readwrite) SeafDir *udir;

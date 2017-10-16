@@ -16,7 +16,8 @@
 
 @property (nonatomic, strong) NSMutableArray *tasks;
 @property (nonatomic, strong) NSMutableArray *ongoingTasks;
-@property (nonatomic, copy) TaskCompleteBlock taskCompleteBlock;
+@property (nonatomic, copy) TaskCompleteBlock innerQueueTaskCompleteBlock;
+@property (nonatomic, copy) TaskProgressBlock innerQueueTaskProgressBlock;
 @property unsigned long failedCount;
 
 @end
@@ -32,7 +33,7 @@
         self.tasks = [NSMutableArray array];
         self.ongoingTasks = [NSMutableArray array];
         __weak typeof(self) weakSelf = self;
-        self.taskCompleteBlock = ^(id<SeafTask> task, BOOL result) {
+        self.innerQueueTaskCompleteBlock = ^(id<SeafTask> task, BOOL result) {
             if (![weakSelf.ongoingTasks containsObject:task]) return;
             Debug("finish task %@, %ld tasks remained.",task.name, (long)[weakSelf taskNumber]);
             @synchronized (weakSelf.ongoingTasks) { // task succeeded, remove it
@@ -45,10 +46,15 @@
                     weakSelf.failedCount += 1;
                 }
             }
-            if (weakSelf.finishTaskBlock) {
-                weakSelf.finishTaskBlock(task, result);
+            if (weakSelf.taskCompleteBlock) {
+                weakSelf.taskCompleteBlock(task, result);
             }
             [weakSelf tick];
+        };
+        self.innerQueueTaskProgressBlock = ^(id<SeafTask> task, float progress) {
+            if (weakSelf.taskProgressBlock) {
+                weakSelf.taskProgressBlock(task, progress);
+            }
         };
     }
     return self;
@@ -101,7 +107,7 @@
         }
     }
     for (id<SeafTask> task in todo) {
-        [task run:self.taskCompleteBlock];
+        [task run:self.innerQueueTaskCompleteBlock];
     }
 }
 

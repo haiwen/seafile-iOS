@@ -72,7 +72,8 @@ static NSMutableDictionary *avatarAttrs = nil;
     avatarAttrs = [[NSMutableDictionary alloc] init];
 }
 
-- (NSString *)accountIdentifier {
+- (NSString *)accountIdentifier
+{
     return self.connection.accountIdentifier;
 }
 
@@ -100,12 +101,17 @@ static NSMutableDictionary *avatarAttrs = nil;
     return NO;
 }
 
-- (void)run:(TaskCompleteBlock _Nullable)block
+- (void)run:(TaskCompleteBlock _Nullable)completeBlock
 {
-    if (!block) {
-        block = ^(id<SeafTask> task, BOOL result) {};
+    if (!completeBlock) {
+        completeBlock = ^(id<SeafTask> task, BOOL result) {};
     }
-    [self download:block];
+    [self download:completeBlock];
+}
+
+- (void)setTaskProgressBlock:(TaskProgressBlock _Nullable)taskProgressBlock
+{
+
 }
 
 - (void)download:(TaskCompleteBlock _Nonnull)completeBlock

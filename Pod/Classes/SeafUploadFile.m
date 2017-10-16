@@ -40,6 +40,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 @property dispatch_semaphore_t semaphore;
 @property (strong, nonatomic)NSMutableDictionary *uploadAttr;
 @property (nonatomic) TaskCompleteBlock taskCompleteBlock;
+@property (nonatomic) TaskProgressBlock taskProgressBlock;
 
 @end
 
@@ -272,14 +273,14 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 {
     if (![keyPath isEqualToString:@"fractionCompleted"] || ![object isKindOfClass:[NSProgress class]]) return;
     NSProgress *progress = (NSProgress *)object;
-    int percent = 0;
+    float fraction = 0;
     if (_rawblksurl) {
-        percent = (int) 100*(progress.fractionCompleted + _blkidx)/self.missingblocks.count;
+        fraction = 1.0f*(progress.fractionCompleted + _blkidx)/self.missingblocks.count;
     } else {
-        percent = progress.fractionCompleted * 100;
+        fraction = progress.fractionCompleted;
     }
-    _uProgress = percent;
-    [self uploadProgress:percent];
+    _uProgress = fraction;
+    [self uploadProgress:fraction];
 }
 
 - (BOOL)chunkFile:(NSString *)path repo:(SeafRepo *)repo blockids:(NSMutableArray *)blockids paths:(NSMutableArray *)paths
@@ -515,16 +516,16 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         return [[AFNetworkReachabilityManager sharedManager] isReachable];
 }
 
-- (void)run:(TaskCompleteBlock _Nullable)block
+- (void)run:(TaskCompleteBlock _Nullable)completeBlock
 {
     [self checkAsset];
-    self.taskCompleteBlock = block;
-    if (!block) {
+    self.taskCompleteBlock = completeBlock;
+    if (!completeBlock) {
         self.taskCompleteBlock = ^(id<SeafTask> task, BOOL result) {};
     }
 
     if (!self.udir) {
-        return block(self, false);
+        return completeBlock(self, false);
     }
     [self upload:self.udir->connection repo:self.udir.repoId path:self.udir.path];
 }
@@ -727,22 +728,28 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     return self.uploaded;
 }
 
-- (void)uploadProgress:(int)percent
+- (void)uploadProgress:(float)progress
 {
-    [self.delegate uploadProgress:self progress:percent];
-    if (_progressBlock) {
-        _progressBlock(self, percent);
-    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.delegate uploadProgress:self progress:progress];
+        if (_taskProgressBlock) {
+            _taskProgressBlock(self, progress);
+        }
+    });
 }
+
 - (void)uploadComplete:(BOOL)result oid:(NSString *)oid
 {
-    [self.delegate uploadComplete:result file:self oid:oid];
-    if (self.completionBlock) {
-        self.completionBlock(result, self, oid);
-    }
-    if (self.taskCompleteBlock) {
-        self.taskCompleteBlock(self, result);
-    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.delegate uploadComplete:result file:self oid:oid];
+        if (self.completionBlock) {
+            self.completionBlock(result, self, oid);
+        }
+        if (self.taskCompleteBlock) {
+            self.taskCompleteBlock(self, result);
+        }
+    });
+
     dispatch_semaphore_signal(_semaphore);
 }
 

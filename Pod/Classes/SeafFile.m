@@ -38,13 +38,12 @@
 @property (readwrite, nonatomic, copy) SeafThumbCompleteBlock thumbCompleteBlock;
 @property (readwrite, nonatomic, copy) SeafFileDidDownloadBlock fileDidDownloadBlock;
 @property (nonatomic) TaskCompleteBlock taskCompleteBlock;
-
+@property (nonatomic) TaskProgressBlock taskProgressBlock;
 @end
 
 @implementation SeafFile
 @synthesize exportURL = _exportURL;
 @synthesize preViewURL = _preViewURL;
-@synthesize accountIdentifier = _accountIdentifier;
 @synthesize lastFailureTimestamp = _lastFailureTimestamp;
 @synthesize retryable = _retryable;
 
@@ -219,7 +218,7 @@
              }
              self.downloadingFileOid = curId;
          }
-         [self.delegate download:self progress:0];
+         [self downloadProgress:0];
          url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
          NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:DEFAULT_TIMEOUT];
          NSProgress *progress = nil;
@@ -305,7 +304,7 @@
         percent = progress.fractionCompleted;
     }
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self.delegate download:self progress:percent];
+        [self downloadProgress:percent];
     });
 }
 
@@ -313,10 +312,8 @@
 {
     NSString *password = nil;
     SeafRepo *repo = [connection getRepo:self.repoId];
-    if (repo.encrypted)
+    if (repo.encrypted) {
         password = [connection getRepoPassword:self.repoId];
-    if (!repo.encKey) {
-        return -1;
     }
     NSString *tmpPath = [self downloadTempPath:self.downloadingFileOid];
     if (![[NSFileManager defaultManager] fileExistsAtPath:tmpPath])
@@ -432,7 +429,7 @@
              }
              self.downloadingFileOid = curId;
          }
-         [self.delegate download:self progress:0];
+         [self downloadProgress:0];
          self.blkids = [JSON objectForKey:@"blklist"];
          if (self.blkids.count <= 0) {
              [@"" writeToFile:[SeafStorage.sharedObject documentPath:self.downloadingFileOid] atomically:YES encoding:NSUTF8StringEncoding error:nil];
@@ -453,9 +450,9 @@
      }];
 }
 
-- (void)run:(TaskCompleteBlock _Nullable)block
+- (void)run:(TaskCompleteBlock _Nullable)completeBlock
 {
-    self.taskCompleteBlock = block;
+    self.taskCompleteBlock = completeBlock;
     self.state = SEAF_DENTRY_LOADING;
     [self downloadfile];
 }
@@ -852,9 +849,9 @@
 }
 
 #pragma mark - SeafUploadDelegate
-- (void)uploadProgress:(SeafFile *)file progress:(int)percent
+- (void)uploadProgress:(SeafFile *)file progress:(float)progress
 {
-    [self.udelegate updateProgress:self progress:percent];
+    [self.udelegate updateProgress:self progress:progress];
 }
 
 - (void)uploadComplete:(BOOL)success file:(SeafUploadFile *)file oid:(NSString *)oid
@@ -911,6 +908,16 @@
         }
         if (self.taskCompleteBlock) {
             self.taskCompleteBlock(self, false);
+        }
+    });
+}
+
+- (void)downloadProgress:(float)progress
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.delegate download:self progress:progress];
+        if (self.taskProgressBlock) {
+            self.taskProgressBlock(self, progress);
         }
     });
 }

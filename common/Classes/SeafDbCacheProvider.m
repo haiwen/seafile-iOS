@@ -136,7 +136,7 @@
         return;
     }
 
-    Info("Account: %@, migrate db table UploadedPhotos to UploadedPhotoV2 : %d", account, items.count);
+    Info("Account: %@, migrate db table UploadedPhotos to UploadedPhotoV2 : %ld", account, (long)items.count);
     for (UploadedPhotos *obj in items) {
         UploadedPhotoV2 *objV2 = [NSEntityDescription insertNewObjectForEntityForName:ENTITY_UPLOAD_PHOTO inManagedObjectContext:context];
         objV2.account = account;

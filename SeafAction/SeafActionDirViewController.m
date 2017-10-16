@@ -325,12 +325,10 @@
 }
 
 #pragma mark - SeafUploadDelegate
-- (void)uploadProgress:(SeafUploadFile *)file progress:(int)percent
+- (void)uploadProgress:(SeafUploadFile *)file progress:(float)progress
 {
     if (self.ufile != file) return;
-    dispatch_after(0, dispatch_get_main_queue(), ^{
-        self.progressView.progress = percent * 1.0f/100.f;
-    });
+    self.progressView.progress = progress;
 }
 
 - (void)uploadComplete:(BOOL)success file:(SeafUploadFile *)file oid:(NSString *)oid
