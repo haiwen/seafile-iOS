@@ -1350,7 +1350,7 @@
 			);
 			inputPaths = (
 				"${SRCROOT}/Pods/Target Support Files/Pods-SeafProvider/Pods-SeafProvider-resources.sh",
-				"$PODS_CONFIGURATION_BUILD_DIR/Seafile/Seafile.bundle",
+				$PODS_CONFIGURATION_BUILD_DIR/Seafile/Seafile.bundle,
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
@@ -1368,7 +1368,7 @@
 			);
 			inputPaths = (
 				"${SRCROOT}/Pods/Target Support Files/Pods-SeafAction/Pods-SeafAction-resources.sh",
-				"$PODS_CONFIGURATION_BUILD_DIR/Seafile/Seafile.bundle",
+				$PODS_CONFIGURATION_BUILD_DIR/Seafile/Seafile.bundle,
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
@@ -1386,7 +1386,7 @@
 			);
 			inputPaths = (
 				"${SRCROOT}/Pods/Target Support Files/Pods-SeafProviderFileProvider/Pods-SeafProviderFileProvider-resources.sh",
-				"$PODS_CONFIGURATION_BUILD_DIR/Seafile/Seafile.bundle",
+				$PODS_CONFIGURATION_BUILD_DIR/Seafile/Seafile.bundle,
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
@@ -1404,10 +1404,10 @@
 			);
 			inputPaths = (
 				"${SRCROOT}/Pods/Target Support Files/Pods-seafile-appstore/Pods-seafile-appstore-resources.sh",
-				"$PODS_CONFIGURATION_BUILD_DIR/MWPhotoBrowser/MWPhotoBrowser.bundle",
-				"$PODS_CONFIGURATION_BUILD_DIR/QBImagePickerController/QBImagePickerController.bundle",
+				$PODS_CONFIGURATION_BUILD_DIR/MWPhotoBrowser/MWPhotoBrowser.bundle,
+				$PODS_CONFIGURATION_BUILD_DIR/QBImagePickerController/QBImagePickerController.bundle,
 				"${PODS_ROOT}/SVProgressHUD/SVProgressHUD/SVProgressHUD.bundle",
-				"$PODS_CONFIGURATION_BUILD_DIR/Seafile/Seafile.bundle",
+				$PODS_CONFIGURATION_BUILD_DIR/Seafile/Seafile.bundle,
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (

@@ -388,6 +388,7 @@
                    context:NULL];
     [task resume];
 }
+
 - (void)downloadBlocks
 {
     if (!self.isDownloading) return;
@@ -452,8 +453,10 @@
 - (void)run:(TaskCompleteBlock _Nullable)block
 {
     self.taskCompleteBlock = block;
+    self.state = SEAF_DENTRY_LOADING;
     [self downloadfile];
 }
+
 - (void)downloadfile
 {
     if (connection.isChunkSupported && ([connection shouldLocalDecrypt:self.repoId] || _filesize > LARGE_FILE_SIZE)) {
