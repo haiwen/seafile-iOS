@@ -83,11 +83,17 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
 
     SeafDataTaskManager.sharedObject.finishBlock = ^(id<SeafTask>  _Nonnull task) {
         if (![task.accountIdentifier isEqualToString:self.connection.accountIdentifier]) return;
-        if ([weakSelf.ongongingTasks containsObject:task]) return;
-        @synchronized (weakSelf.ongongingTasks) {
-            [weakSelf.ongongingTasks addObject:task];
+        if ([weakSelf.ongongingTasks containsObject:task]) {
+            @synchronized (weakSelf.ongongingTasks) {
+                [weakSelf.ongongingTasks removeObject:task];
+            }
         }
-
+        if (![weakSelf.finishedTasks containsObject:task]) {
+            @synchronized (weakSelf.finishedTasks) {
+                [weakSelf.finishedTasks addObject:task];
+            }
+        }
+        
         dispatch_async(dispatch_get_main_queue(), ^{
             [weakSelf.tableView reloadData];
         });
