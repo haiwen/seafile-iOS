@@ -35,10 +35,10 @@
         __weak typeof(self) weakSelf = self;
         self.innerQueueTaskCompleteBlock = ^(id<SeafTask> task, BOOL result) {
             if (![weakSelf.ongoingTasks containsObject:task]) return;
-            Debug("finish task %@, %ld tasks remained.",task.name, (long)[weakSelf taskNumber]);
             @synchronized (weakSelf.ongoingTasks) { // task succeeded, remove it
                 [weakSelf.ongoingTasks removeObject:task];
             }
+            Debug("finish task %@, %ld tasks remained.",task.name, (long)[weakSelf taskNumber]);
             if (!result && task.retryable) { // Task fail, add to the tail of queue for retry
                 task.lastFailureTimestamp = [[NSDate new] timeIntervalSince1970];
                 @synchronized (weakSelf.tasks) {
@@ -65,7 +65,7 @@
         if (![self.tasks containsObject:task] && ![self.ongoingTasks containsObject:task]) {
             task.lastFailureTimestamp = 0;
             [self.tasks addObject:task];
-            Debug("Added file task %@: %ld", task.name, (unsigned long)self.tasks.count);
+            Debug("Added task %@: %ld", task.name, (unsigned long)self.tasks.count);
         }
     }
     [self tick];

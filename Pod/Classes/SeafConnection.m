@@ -155,16 +155,18 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     self = [self initWithUrl:url cacheProvider:cacheProvider];
     if (url) {
-        NSDictionary *ainfo = [SeafStorage.sharedObject objectForKey:[NSString stringWithFormat:@"%@/%@", url, username]];
+        NSString *infoKey = [NSString stringWithFormat:@"%@/%@", url, username];
+        NSDictionary *ainfo = [SeafStorage.sharedObject objectForKey:infoKey];
         if (ainfo) {
             _info = [ainfo mutableCopy];
+            Debug("Loaded account info from %@: %@", infoKey, ainfo);
             _token = [_info objectForKey:@"token"];
         } else {
             ainfo = [SeafStorage.sharedObject objectForKey:url];
             if (ainfo) {
                 _info = [ainfo mutableCopy];
                 [SeafStorage.sharedObject removeObjectForKey:url];
-                [SeafStorage.sharedObject setObject:ainfo forKey:[NSString stringWithFormat:@"%@/%@", url, username]];
+                [SeafStorage.sharedObject setObject:ainfo forKey:infoKey];
             }
         }
 
@@ -449,7 +451,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 }
 - (NSString *)accountIdentifier {
     if (!_accountIdentifier)  {
-        _accountIdentifier = [NSString stringWithFormat:@"%@/%@", self.host, self.username];
+        _accountIdentifier = [NSString stringWithFormat:@"%@/%@", self.address, self.username];
     }
     return _accountIdentifier;
 }
@@ -486,9 +488,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return [SeafStorage uniqueDirUnder:self.localUploadDir];
 }
 
-- (void)setRepo:(NSString *)repoId password:(NSString *)password
+- (void)saveRepo:(NSString *)repoId password:(NSString *)password
 {
-    Debug("set repo %@ password %@", repoId, password);
+    Debug("save repo %@ password %@", repoId, password);
     NSMutableDictionary *repopasswds = [NSMutableDictionary dictionaryWithDictionary:(NSDictionary*)[_info objectForKey:@"repopassword"]];
     if (!repopasswds) {
         repopasswds = [[NSMutableDictionary alloc] init];
@@ -496,6 +498,26 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [Utils dict:repopasswds setObject:password forKey:repoId];
     [Utils dict:_info setObject:repopasswds forKey:@"repopassword"];
     [self saveAccountInfo];
+}
+- (void)saveRepo:(NSString *_Nonnull)repoId encInfo:(NSDictionary *_Nonnull)encInfo
+{
+    Debug("save repo %@ enc info %@", repoId, encInfo);
+    NSMutableDictionary *repoInfos = [NSMutableDictionary dictionaryWithDictionary:(NSDictionary*)[_info objectForKey:@"repoInfo"]];
+    if (!repoInfos) {
+        repoInfos = [[NSMutableDictionary alloc] init];
+    }
+
+    [Utils dict:repoInfos setObject:encInfo forKey:repoId];
+    [Utils dict:_info setObject:repoInfos forKey:@"repoInfo"];
+    [self saveAccountInfo];
+}
+
+- (NSDictionary *)getRepoEncInfo:(NSString *)repoId
+{
+    NSDictionary *repoInfos = (NSDictionary*)[_info objectForKey:@"repoInfo"];
+    if (repoInfos)
+        return [repoInfos objectForKey:repoId];
+    return nil;
 }
 
 - (NSString *)getRepoPassword:(NSString *)repoId
@@ -635,6 +657,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [_info removeObjectForKey:@"token"];
     [_info removeObjectForKey:@"password"];
     [_info removeObjectForKey:@"repopassword"];
+    [_info removeObjectForKey:@"repoInfo"];
     [self saveSettings];
 }
 
@@ -652,7 +675,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)saveAccountInfo
 {
+    Debug("Save account info to %@: %@", self.accountIdentifier, _info);
     [SeafStorage.sharedObject setObject:_info forKey:self.accountIdentifier];
+    [SeafStorage.sharedObject synchronize];
 }
 
 - (void)getAccountInfo:(void (^)(bool result))handler
@@ -677,7 +702,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 }
 
 - (NSMutableURLRequest *)loginRequest:(NSString *)url username:(NSString *)username password:(NSString *)password
-
 {
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:[url stringByAppendingString:API_URL"/auth-token/"]]];
     [request setHTTPMethod:@"POST"];
@@ -1816,7 +1840,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             Debug("refresh repo %@ password: %d", entry.repoId, ret);
             if (ret == RET_WRONG_PASSWORD) {
                 Debug("Repo password incorrect, clear password.");
-                [self setRepo:repoId password:nil];
+                [self saveRepo:repoId password:nil];
             }
         };
 
@@ -1830,6 +1854,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (repopasswds == nil)
         return;
     [Utils dict:_info setObject:[[NSDictionary alloc] init] forKey:@"repopassword"];
+    [Utils dict:_info setObject:[[NSDictionary alloc] init] forKey:@"repoInfo"];
     [self saveAccountInfo];
 }
 

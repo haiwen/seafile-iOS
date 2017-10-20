@@ -257,7 +257,7 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    Debug("%@", [[NSBundle mainBundle] infoDictionary]);
+    Info("%@", [[NSBundle mainBundle] infoDictionary]);
     _global = [SeafGlobal sharedObject];
     [_global migrate];
     [self initTabController];

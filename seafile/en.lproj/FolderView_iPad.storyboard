@@ -329,7 +329,7 @@
                                             </subviews>
                                         </tableViewCellContentView>
                                     </tableViewCell>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="iOp-nd-Chd" detailTextLabel="Nf3-m6-YRd" style="IBUITableViewCellStyleValue1" id="8nn-WP-Erc" userLabel="Uplaoding Cell">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="iOp-nd-Chd" detailTextLabel="Nf3-m6-YRd" style="IBUITableViewCellStyleValue1" id="8nn-WP-Erc" userLabel="Uploading Cell">
                                         <rect key="frame" x="0.0" y="815.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="8nn-WP-Erc" id="6AC-FA-5Lt">
