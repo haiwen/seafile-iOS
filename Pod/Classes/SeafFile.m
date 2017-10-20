@@ -435,11 +435,8 @@
              [@"" writeToFile:[SeafStorage.sharedObject documentPath:self.downloadingFileOid] atomically:YES encoding:NSUTF8StringEncoding error:nil];
              [self finishDownload:self.downloadingFileOid];
          } else {
-             SeafRepo *repo = [connection getRepo:self.repoId];
-             repo.encrypted = [[JSON objectForKey:@"encrypted"] booleanValue:repo.encrypted];
-             repo.encVersion = (int)[[JSON objectForKey:@"enc_version"] integerValue:repo.encVersion];
              self.index = 0;
-             Debug("blks=%@, encversion=%d\n", self.blkids, repo.encVersion);
+             Debug("blks=%@", self.blkids);
              [self downloadBlocks];
          }
      }

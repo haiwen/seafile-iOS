@@ -37,9 +37,6 @@
                     size:(long long)aSize
                    mtime:(long long)aMtime
                encrypted:(BOOL)aEncrypted
-              encVersion:(int)aEncVersion
-                   magic:(NSString *)aMagic
-                  encKey:(NSString *)aEncKey
 {
     NSString *aMime = @"text/directory-documents";
     if (aEncrypted)
@@ -52,9 +49,6 @@
         _mtime = aMtime;
         _encrypted = aEncrypted;
         _type = aType;
-        _encVersion = aEncVersion;
-        _magic = aMagic;
-        _encKey = aEncKey;
     }
     return self;
 }
@@ -77,6 +71,22 @@
         index = 2;
     }
     return [NSString stringWithFormat:@"%d-%@-%@", index, self.owner, self.repoId ];
+}
+
+- (int)encVersion
+{
+    NSDictionary *encInfo = [self->connection getRepoEncInfo:self.repoId];
+    return (int)[[encInfo objectForKey:@"encVersion"] integerValue: -1];
+}
+- (NSString *)encKey
+{
+    NSDictionary *encInfo = [self->connection getRepoEncInfo:self.repoId];
+    return [encInfo objectForKey:@"encKey"];
+}
+- (NSString *)magic
+{
+    NSDictionary *encInfo = [self->connection getRepoEncInfo:self.repoId];
+    return [[encInfo objectForKey:@"magic"] stringValue];
 }
 
 - (void)updateWithEntry:(SeafBase *)entry
@@ -123,7 +133,7 @@
 {
     repo_password_set_block_t block = ^(SeafBase *entry, int ret) {
         if (ret == RET_SUCCESS)
-            [entry->connection setRepo:entry.repoId password:password];
+            [entry->connection saveRepo:entry.repoId password:password];
         [del entry:entry repoPasswordSet:ret];
     };
     [self checkOrSetRepoPassword:password block:block];
@@ -140,16 +150,18 @@
 
 - (void)checkOrSetRepoPassword:(NSString *)password block:(void(^)(SeafBase *entry, int ret))block
 {
-    if (self.encVersion > 0) {
+    if (self.encKey) {
         Debug("encVersion:%d encKey:%@ magic:%@", self.encVersion, self.encKey, self.magic);
         return [self doCheckOrSetRepoPassword:password block:block];
     }
     [self checkRepoEncVersion:^(bool success, id repoInfo) {
         if (success) {
-            _encVersion = (int)[[repoInfo objectForKey:@"enc_version"] integerValue:-1];
-            _magic = [[repoInfo objectForKey:@"magic"] stringValue];
-            _encKey = [repoInfo objectForKey:@"random_key"];
-            Debug("Repo %@ detail: %@", self.repoId, repoInfo);
+            int encVersion = (int)[[repoInfo objectForKey:@"enc_version"] integerValue:-1];
+            NSString *magic = [[repoInfo objectForKey:@"magic"] stringValue];
+            NSString *encKey = [repoInfo objectForKey:@"random_key"];
+            NSDictionary *encInfo = [[NSDictionary alloc] initWithObjectsAndKeys:[NSNumber numberWithInteger:encVersion], @"encVersion", magic, @"magic", encKey, @"encKey", nil];
+            Debug("Repo %@ encVersion:%d detail: %@", self.repoId, self.encVersion, repoInfo);
+            [self->connection saveRepo:self.repoId encInfo:encInfo];
             return [self doCheckOrSetRepoPassword:password block:block];
         } else {
             block(self, false);
@@ -168,7 +180,7 @@
     [connection sendPost:request_str form:formString
                  success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
                      Debug("Set repo %@ password success.", self.repoId);
-                     [connection setRepo:self.repoId password:password];
+                     [connection saveRepo:self.repoId password:password];
                      if (block)  block(self, RET_SUCCESS);
                  } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
                      Debug("Failed to set repo %@ password: %@, %@", self.repoId, JSON, error);
@@ -207,7 +219,7 @@
     }
     repo_password_set_block_t handler = ^(SeafBase *entry, int ret) {
         if (ret == RET_SUCCESS)
-            [connection setRepo:self.repoId password:password];
+            [connection saveRepo:self.repoId password:password];
         if (block)
             block(entry, ret);
     };
@@ -295,9 +307,6 @@
                              size:[[repoInfo objectForKey:@"size"] integerValue:0]
                              mtime:[[repoInfo objectForKey:@"mtime"] integerValue:0]
                              encrypted:[[repoInfo objectForKey:@"encrypted"] booleanValue:NO]
-                             encVersion:(int)[[repoInfo objectForKey:@"enc_version"] integerValue:0]
-                             magic:[[repoInfo objectForKey:@"magic"] stringValue]
-                             encKey:[repoInfo objectForKey:@"random_key"]
                              ];
         newRepo.delegate = self.delegate;
         [newRepos addObject:newRepo];
@@ -307,7 +316,6 @@
     [self.delegate download:self complete:true];
     return YES;
 }
-
 
 - (NSString *)url
 {

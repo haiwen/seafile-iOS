@@ -186,7 +186,6 @@ enum {
     self.searchDisplayController.searchResultsDataSource = self;
     self.searchDisplayController.searchResultsDelegate = self;
     self.searchDisplayController.delegate = self;
-    self.searchDisplayController.searchResultsTableView.rowHeight = UITableViewAutomaticDimension;
     self.searchDisplayController.searchResultsTableView.estimatedRowHeight = 50.0;
     self.searchDisplayController.searchResultsTableView.sectionHeaderHeight = 0;
 
@@ -1373,11 +1372,11 @@ enum {
         [self.tableView reloadData];
     } else if ([S_RESET_PASSWORD isEqualToString:title]) {
         SeafRepo *repo = (SeafRepo *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-        [repo->connection setRepo:repo.repoId password:nil];
+        [repo->connection saveRepo:repo.repoId password:nil];
         [self popupSetRepoPassword:repo];
     } else if ([S_CLEAR_REPO_PASSWORD isEqualToString:title]) {
         SeafRepo *repo = (SeafRepo *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-        [repo->connection setRepo:repo.repoId password:nil];
+        [repo->connection saveRepo:repo.repoId password:nil];
         [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Clear library password successfully.", @"Seafile")];
     } else if ([S_STAR isEqualToString:title]) {
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];

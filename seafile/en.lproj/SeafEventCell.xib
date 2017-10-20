@@ -1,39 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="12120" systemVersion="16F73" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="13528" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
     <device id="ipad9_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12088"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13526"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
         <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
-        <tableViewCell contentMode="scaleToFill" selectionStyle="blue" indentationWidth="10" reuseIdentifier="SeafEventCell" id="2" customClass="SeafEventCell">
-            <rect key="frame" x="0.0" y="0.0" width="320" height="60"/>
+        <tableViewCell contentMode="scaleToFill" selectionStyle="blue" indentationWidth="10" reuseIdentifier="SeafEventCell" rowHeight="74" id="2" customClass="SeafEventCell">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="74"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="2" id="jlK-iz-38C">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="59.5"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="73.5"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" text="Name" lineBreakMode="characterWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3">
-                        <rect key="frame" x="60" y="9" width="139" height="17"/>
+                        <rect key="frame" x="68" y="9" width="123" height="17"/>
                         <fontDescription key="fontDescription" type="system" pointSize="14"/>
                         <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </label>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="4">
-                        <rect key="frame" x="12" y="10" width="40" height="40"/>
+                        <rect key="frame" x="20" y="33" width="40" height="40"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="40" id="RIP-FL-6N5"/>
                             <constraint firstAttribute="height" constant="40" id="sUP-Fr-Lcf"/>
                         </constraints>
                     </imageView>
                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="Name" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="25">
-                        <rect key="frame" x="60" y="34" width="33" height="17"/>
+                        <rect key="frame" x="68" y="46" width="33" height="17"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="17" id="a2s-Xq-vZ0"/>
                         </constraints>
@@ -42,7 +42,7 @@
                         <color key="highlightedColor" red="0.94117647059999998" green="0.60221829380000003" blue="0.18823529410000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </label>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Libraries" textAlignment="right" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="fqG-kZ-Xa0">
-                        <rect key="frame" x="204" y="9" width="100" height="17"/>
+                        <rect key="frame" x="196" y="32" width="100" height="17"/>
                         <constraints>
                             <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="100" id="Zug-or-3nO"/>
                             <constraint firstAttribute="width" relation="lessThanOrEqual" constant="100" id="rCE-KD-Bq0"/>
@@ -52,15 +52,15 @@
                         <nil key="highlightedColor"/>
                     </label>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Name" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="wNN-cv-GnS">
-                        <rect key="frame" x="98" y="35.5" width="33" height="14.5"/>
+                        <rect key="frame" x="106" y="47.5" width="33" height="14.5"/>
                         <fontDescription key="fontDescription" type="system" pointSize="12"/>
                         <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </label>
                 </subviews>
                 <constraints>
+                    <constraint firstItem="3" firstAttribute="top" secondItem="jlK-iz-38C" secondAttribute="top" constant="9" id="9ND-QV-kAw"/>
                     <constraint firstItem="4" firstAttribute="leading" secondItem="jlK-iz-38C" secondAttribute="leadingMargin" constant="4" id="FAe-u3-Qbh"/>
-                    <constraint firstItem="3" firstAttribute="top" secondItem="jlK-iz-38C" secondAttribute="topMargin" constant="1" id="JDb-dc-HQr"/>
                     <constraint firstItem="wNN-cv-GnS" firstAttribute="leading" secondItem="25" secondAttribute="trailing" constant="5" id="Lcn-MX-xDO"/>
                     <constraint firstItem="25" firstAttribute="top" relation="greaterThanOrEqual" secondItem="3" secondAttribute="bottom" constant="4" id="SE4-zJ-lPV"/>
                     <constraint firstItem="25" firstAttribute="leading" secondItem="3" secondAttribute="leading" id="Zcc-6z-Vqa"/>
@@ -82,12 +82,7 @@
                 <outlet property="textLabel" destination="3" id="29"/>
                 <outlet property="timeLabel" destination="wNN-cv-GnS" id="JF4-Q0-fOo"/>
             </connections>
-            <point key="canvasLocation" x="168" y="131"/>
+            <point key="canvasLocation" x="168" y="138"/>
         </tableViewCell>
     </objects>
-    <simulatedMetricsContainer key="defaultSimulatedMetrics">
-        <simulatedStatusBarMetrics key="statusBar"/>
-        <simulatedOrientationMetrics key="orientation"/>
-        <simulatedScreenMetrics key="destination"/>
-    </simulatedMetricsContainer>
 </document>

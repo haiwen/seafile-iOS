@@ -191,8 +191,10 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 - (void)restoreContacts:(void(^ _Nullable)(BOOL success, NSError * _Nullable error))completionHandler;
 - (void)getContactsLastBackTime:(void(^ _Nullable)(BOOL success, NSString * _Nullable dateStr))completionHandler;
 
-- (void)setRepo:(NSString * _Nonnull)repoId password:(NSString * _Nullable)password;
+- (void)saveRepo:(NSString * _Nonnull)repoId password:(NSString * _Nullable)password;
+- (void)saveRepo:(NSString *_Nonnull)repoId encInfo:(NSDictionary *_Nonnull)encInfo;
 - (NSString * _Nullable)getRepoPassword:(NSString * _Nonnull)repoId;
+- (NSDictionary *_Nullable)getRepoEncInfo:(NSString * _Nonnull)repoId;
 - (void)downloadDir:(SeafDir * _Nonnull)dir;
 
 - (void)refreshRepoPassowrds;

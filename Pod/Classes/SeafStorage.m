@@ -58,6 +58,7 @@ static SeafStorage *object = nil;
     if (self = [super init]) {
         [self registerRootPath:path];
         _storage = storage;
+        Debug("Storage: %@", storage.dictionaryRepresentation);
         [self loadSecIdentities];
     }
     return self;
