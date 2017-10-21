@@ -27,7 +27,7 @@ static NSMutableDictionary *avatarAttrs = nil;
 @end
 
 @implementation SeafAvatar
-@synthesize lastFailureTimestamp = _lastFailureTimestamp;
+@synthesize lastFinishTimestamp = _lastFinishTimestamp;
 @synthesize retryable = _retryable;
 
 - (id)initWithConnection:(SeafConnection *)aConnection from:(NSString *)url toPath:(NSString *)path

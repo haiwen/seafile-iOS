@@ -12,7 +12,7 @@
 #import "ColorfulButton.h"
 
 
-@interface StartViewController : UITableViewController
+@interface StartViewController : UIViewController
 
 - (bool)saveAccount:(SeafConnection *)conn;
 - (void)checkSelectAccount:(SeafConnection *)conn;

@@ -74,16 +74,12 @@
         }
     }
 }
--(void)showCellWithTask:(id<SeafTask> _Nonnull)task
-{
-    [task setTaskProgressBlock:^(id<SeafTask>  _Nonnull task, float progress) {
-        if (self.progressView.hidden) {
-            [self updateCellStatus:task];
-        } else {
-            self.progressView.progress = progress;
-        }
-    }];
+
+- (void)showCellWithTask:(id<SeafTask> _Nonnull)task {
     [self updateCellStatus:task];
+    [task setTaskProgressBlock:^(id<SeafTask>  _Nonnull task, float progress) {
+        self.progressView.progress = progress;
+    }];
 }
 
 @end

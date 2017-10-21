@@ -47,7 +47,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 @implementation SeafUploadFile
 @synthesize assetURL = _assetURL;
 @synthesize filesize = _filesize;
-@synthesize lastFailureTimestamp = _lastFailureTimestamp;
+@synthesize lastFinishTimestamp = _lastFinishTimestamp;
 @synthesize retryable = _retryable;
 
 - (id)initWithPath:(NSString *)lpath

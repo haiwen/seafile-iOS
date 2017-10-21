@@ -23,7 +23,10 @@
 #define TABLE_HEADER_HEIGHT 100
 
 @interface StartViewController ()<UIDocumentPickerDelegate>
-@property (retain) ColorfulButton *footer;
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (weak, nonatomic) IBOutlet ColorfulButton *backButton;
+@property (weak, nonatomic) IBOutlet UILabel *welcomeLabel;
+@property (weak, nonatomic) IBOutlet UILabel *msgLabel;
 @end
 
 @implementation StartViewController
@@ -63,36 +66,24 @@
         self.edgesForExtendedLayout = UIRectEdgeNone;
     [self setExtraCellLineHidden:self.tableView];
     self.title = NSLocalizedString(@"Accounts", @"Seafile");
+    
+    self.welcomeLabel.text = [NSString stringWithFormat:NSLocalizedString(@"Welcome to %@", @"Seafile"), APP_NAME];
+    self.msgLabel.text = NSLocalizedString(@"Choose an account to start", @"Seafile");
 
-    NSArray *views = [[NSBundle mainBundle] loadNibNamed:@"SeafStartHeaderView" owner:self options:nil];
-    UIView *header = [views objectAtIndex:0];
-    header.frame = CGRectMake(0,0, self.tableView.frame.size.width, TABLE_HEADER_HEIGHT);
-    header.backgroundColor = [UIColor clearColor];
-    UILabel *welcomeLable = (UILabel *)[header viewWithTag:100];
-    UILabel *msgLabel = (UILabel *)[header viewWithTag:101];
-    welcomeLable.text = [NSString stringWithFormat:NSLocalizedString(@"Welcome to %@", @"Seafile"), APP_NAME];
-    msgLabel.text = NSLocalizedString(@"Choose an account to start", @"Seafile");
-
-    self.tableView.tableHeaderView = header;
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     self.navigationItem.rightBarButtonItem = [self getBarItemAutoSize:@"ellipsis".navItemImgName action:@selector(editSheet:)];
 
-    views = [[NSBundle mainBundle] loadNibNamed:@"SeafStartFooterView" owner:self options:nil];
-    ColorfulButton *bt = [views objectAtIndex:0];
-    [bt addTarget:self action:@selector(goToDefaultBtclicked:) forControlEvents:UIControlEventTouchUpInside];
-    bt.layer.cornerRadius = 0;
-    bt.layer.borderWidth = .5f;
-    bt.layer.masksToBounds = YES;
-    bt.layer.borderColor = [[UIColor lightGrayColor] CGColor];
-    bt.backgroundColor = [UIColor colorWithRed:249.0f/255 green:249.0f/255 blue:249.0f/255 alpha:1];
-    [bt setTitleColor:[UIColor colorWithRed:112/255.0 green:112/255.0 blue:112/255.0 alpha:1.0] forState:UIControlStateNormal];
-    [bt setTitle:NSLocalizedString(@"Back to Last Account", @"Seafile") forState:UIControlStateNormal];
-    bt.showsTouchWhenHighlighted = true;
-    self.footer = bt;
-    [self.view addSubview:bt];
-    self.footer.hidden = YES;
-    self.tableView.sectionHeaderHeight = 9;
+    [self.backButton addTarget:self action:@selector(goToDefaultBtclicked:) forControlEvents:UIControlEventTouchUpInside];
+    self.backButton.layer.cornerRadius = 0;
+    self.backButton.layer.borderWidth = .5f;
+    self.backButton.layer.masksToBounds = YES;
+    self.backButton.layer.borderColor = [[UIColor lightGrayColor] CGColor];
+    self.backButton.backgroundColor = [UIColor colorWithRed:249.0f/255 green:249.0f/255 blue:249.0f/255 alpha:1];
+    [self.backButton setTitleColor:[UIColor colorWithRed:112/255.0 green:112/255.0 blue:112/255.0 alpha:1.0] forState:UIControlStateNormal];
+    [self.backButton setTitle:NSLocalizedString(@"Back to Last Account", @"Seafile") forState:UIControlStateNormal];
+    self.backButton.showsTouchWhenHighlighted = true;
+
     [self.tableView reloadData];
 }
 
@@ -169,15 +160,12 @@
 
 - (void)viewWillAppear:(BOOL)animated
 {
-    self.footer.hidden = !([self checkLastAccount]);
-    self.tableView.tableHeaderView.frame = CGRectMake(0,0, self.tableView.frame.size.width, TABLE_HEADER_HEIGHT);
     [super viewWillAppear:animated];
 }
 
 - (void)viewWillLayoutSubviews
 {
     [super viewWillLayoutSubviews];
-    self.footer.frame = CGRectMake(self.view.frame.origin.x-1, self.view.frame.size.height-57, self.tableView.frame.size.width+2, 58);
 }
 
 - (void)viewDidUnload
@@ -321,17 +309,6 @@
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
 {
     return [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 20)];
-}
-
-- (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id <UIViewControllerTransitionCoordinator>)coordinator
-{
-    [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
-
-    [coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
-        self.tableView.tableHeaderView.frame = CGRectMake(0,0, size.width, TABLE_HEADER_HEIGHT);
-        self.tableView.tableHeaderView = self.tableView.tableHeaderView;
-    } completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
-    }];
 }
 
 #pragma mark - Table view delegate
