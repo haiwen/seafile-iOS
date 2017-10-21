@@ -32,6 +32,7 @@
         self.failedCount = 0;
         self.tasks = [NSMutableArray array];
         self.ongoingTasks = [NSMutableArray array];
+        self.completedTasks = [NSMutableArray array];
         __weak typeof(self) weakSelf = self;
         self.innerQueueTaskCompleteBlock = ^(id<SeafTask> task, BOOL result) {
             if (![weakSelf.ongoingTasks containsObject:task]) return;
@@ -39,11 +40,17 @@
                 [weakSelf.ongoingTasks removeObject:task];
             }
             Debug("finish task %@, %ld tasks remained.",task.name, (long)[weakSelf taskNumber]);
+            task.lastFinishTimestamp = [[NSDate new] timeIntervalSince1970];
             if (!result && task.retryable) { // Task fail, add to the tail of queue for retry
-                task.lastFailureTimestamp = [[NSDate new] timeIntervalSince1970];
                 @synchronized (weakSelf.tasks) {
                     [weakSelf.tasks addObject:task];
                     weakSelf.failedCount += 1;
+                }
+            } else {
+                if (![weakSelf.completedTasks containsObject:task]) {
+                    @synchronized (weakSelf.completedTasks) { // task succeeded, add to completedTasks
+                        [weakSelf.completedTasks addObject:task];
+                    }
                 }
             }
             if (weakSelf.taskCompleteBlock) {
@@ -63,7 +70,7 @@
 - (void)addTask:(id<SeafTask>)task {
     @synchronized (self.tasks) {
         if (![self.tasks containsObject:task] && ![self.ongoingTasks containsObject:task]) {
-            task.lastFailureTimestamp = 0;
+            task.lastFinishTimestamp = 0;
             [self.tasks addObject:task];
             Debug("Added task %@: %ld", task.name, (unsigned long)self.tasks.count);
         }
@@ -95,7 +102,7 @@
     @synchronized (self.tasks) {
         for (id<SeafTask> task in self.tasks) {
             if (!task.runable) continue;
-            if (task.lastFailureTimestamp < ([[NSDate new] timeIntervalSince1970] - self.attemptInterval)) {
+            if (task.lastFinishTimestamp < ([[NSDate new] timeIntervalSince1970] - self.attemptInterval)) {
                 // did not fail recently
                 [todo addObject:task];
             }
@@ -129,6 +136,7 @@
 - (void)clear {
     [self.tasks removeAllObjects];
     [self.ongoingTasks removeAllObjects];
+    [self.completedTasks removeAllObjects];
     self.failedCount = 0;
 }
 

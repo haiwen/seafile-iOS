@@ -44,7 +44,7 @@
 @implementation SeafFile
 @synthesize exportURL = _exportURL;
 @synthesize preViewURL = _preViewURL;
-@synthesize lastFailureTimestamp = _lastFailureTimestamp;
+@synthesize lastFinishTimestamp = _lastFinishTimestamp;
 @synthesize retryable = _retryable;
 
 - (id)initWithConnection:(SeafConnection *)aConnection

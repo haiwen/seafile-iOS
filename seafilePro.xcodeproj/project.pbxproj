@@ -14,7 +14,6 @@
 		5704C6FB1756710F0028F4FE /* tab-modify.png in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F61756710F0028F4FE /* tab-modify.png */; };
 		5704C6FD1756710F0028F4FE /* tab-message.png in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F71756710F0028F4FE /* tab-message.png */; };
 		570DFAC716A15D0100ADD5F2 /* SeafAccountViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 570DFAC416A15D0100ADD5F2 /* SeafAccountViewController.m */; };
-		570DFAD016A1EA1B00ADD5F2 /* SeafStartHeaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = 570DFACE16A1EA1A00ADD5F2 /* SeafStartHeaderView.m */; };
 		57124BE11B3E710E00075EAE /* SeafAccountViewController_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57124BDF1B3E710E00075EAE /* SeafAccountViewController_iPhone.xib */; };
 		57124BE41B3E726700075EAE /* SeafAccountViewController_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57124BE21B3E726700075EAE /* SeafAccountViewController_iPad.xib */; };
 		57124BEB1B3EA6EA00075EAE /* LaunchScreen.png in Resources */ = {isa = PBXBuildFile; fileRef = 57124BEA1B3EA6EA00075EAE /* LaunchScreen.png */; };
@@ -162,8 +161,6 @@
 		57F8CD251A127566000F6CDC /* SeafAccountCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22AF91A12625B00C92330 /* SeafAccountCell.xib */; };
 		57F8CD271A127566000F6CDC /* SeafCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22AFD1A12625B00C92330 /* SeafCell.xib */; };
 		57F8CD281A127566000F6CDC /* SeafDirCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22AFF1A12625B00C92330 /* SeafDirCell.xib */; };
-		57F8CD2A1A127566000F6CDC /* SeafStartFooterView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22B051A12625B00C92330 /* SeafStartFooterView.xib */; };
-		57F8CD2B1A127566000F6CDC /* SeafStartHeaderView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22B071A12625B00C92330 /* SeafStartHeaderView.xib */; };
 		57F8CD2C1A127566000F6CDC /* SeafTextEditorViewController_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22B091A12625B00C92330 /* SeafTextEditorViewController_iPad.xib */; };
 		57F8CD2D1A127566000F6CDC /* SeafTextEditorViewController_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22B0B1A12625B00C92330 /* SeafTextEditorViewController_iPhone.xib */; };
 		57F8CD2F1A127566000F6CDC /* SeafUploadingFileCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22B0F1A12625C00C92330 /* SeafUploadingFileCell.xib */; };
@@ -267,8 +264,6 @@
 		570A300316578B4F007D0CBF /* upload.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = upload.png; sourceTree = "<group>"; };
 		570DFAC316A15D0100ADD5F2 /* SeafAccountViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafAccountViewController.h; sourceTree = "<group>"; };
 		570DFAC416A15D0100ADD5F2 /* SeafAccountViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = SeafAccountViewController.m; sourceTree = "<group>"; };
-		570DFACD16A1EA1A00ADD5F2 /* SeafStartHeaderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafStartHeaderView.h; sourceTree = "<group>"; };
-		570DFACE16A1EA1A00ADD5F2 /* SeafStartHeaderView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafStartHeaderView.m; sourceTree = "<group>"; };
 		57124BE01B3E710E00075EAE /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/SeafAccountViewController_iPhone.xib; sourceTree = "<group>"; };
 		57124BE31B3E726700075EAE /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/SeafAccountViewController_iPad.xib; sourceTree = "<group>"; };
 		57124BEA1B3EA6EA00075EAE /* LaunchScreen.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = LaunchScreen.png; sourceTree = SOURCE_ROOT; };
@@ -456,8 +451,6 @@
 		57F476EA1C00623300047395 /* SeafPhotoThumb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafPhotoThumb.h; sourceTree = "<group>"; };
 		57F476EB1C00623300047395 /* SeafPhotoThumb.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafPhotoThumb.m; sourceTree = "<group>"; };
 		57F8CD1A1A127531000F6CDC /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/SeafStart.storyboard; sourceTree = "<group>"; };
-		57F8CD1B1A127536000F6CDC /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/SeafStartFooterView.xib; sourceTree = "<group>"; };
-		57F8CD1C1A12753A000F6CDC /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/SeafStartHeaderView.xib; sourceTree = "<group>"; };
 		57F8CD1D1A12753F000F6CDC /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/SeafTextEditorViewController_iPad.xib; sourceTree = "<group>"; };
 		57F8CD1E1A127544000F6CDC /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/SeafTextEditorViewController_iPhone.xib; sourceTree = "<group>"; };
 		57F8CD201A12754E000F6CDC /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/SeafUploadingFileCell.xib; sourceTree = "<group>"; };
@@ -695,8 +688,6 @@
 				5757DCCB1AEBCF1600BC0426 /* SeafShibbolethViewController.m */,
 				57853C8D164675CB00CE8857 /* SeafStarredFilesViewController.h */,
 				57853C8E164675CB00CE8857 /* SeafStarredFilesViewController.m */,
-				570DFACD16A1EA1A00ADD5F2 /* SeafStartHeaderView.h */,
-				570DFACE16A1EA1A00ADD5F2 /* SeafStartHeaderView.m */,
 				57E1E89B1737ED0F006601FE /* SeafTextEditorViewController.h */,
 				57DA26F3173E6DFC0003BA31 /* SeafTextEditorViewController.m */,
 				57F476EA1C00623300047395 /* SeafPhotoThumb.h */,
@@ -729,8 +720,6 @@
 				57E22AFF1A12625B00C92330 /* SeafDirCell.xib */,
 				574DF02A1AF2863E0044FE06 /* SeafShibbolethViewController.xib */,
 				57E22B031A12625B00C92330 /* SeafStart.storyboard */,
-				57E22B051A12625B00C92330 /* SeafStartFooterView.xib */,
-				57E22B071A12625B00C92330 /* SeafStartHeaderView.xib */,
 				57E22B091A12625B00C92330 /* SeafTextEditorViewController_iPad.xib */,
 				57E22B0B1A12625B00C92330 /* SeafTextEditorViewController_iPhone.xib */,
 				57E22B0F1A12625C00C92330 /* SeafUploadingFileCell.xib */,
@@ -1111,8 +1100,6 @@
 				57F8CD251A127566000F6CDC /* SeafAccountCell.xib in Resources */,
 				57F8CD271A127566000F6CDC /* SeafCell.xib in Resources */,
 				57F8CD281A127566000F6CDC /* SeafDirCell.xib in Resources */,
-				57F8CD2A1A127566000F6CDC /* SeafStartFooterView.xib in Resources */,
-				57F8CD2B1A127566000F6CDC /* SeafStartHeaderView.xib in Resources */,
 				57F8CD2C1A127566000F6CDC /* SeafTextEditorViewController_iPad.xib in Resources */,
 				57F8CD2D1A127566000F6CDC /* SeafTextEditorViewController_iPhone.xib in Resources */,
 				57F8CD2F1A127566000F6CDC /* SeafUploadingFileCell.xib in Resources */,
@@ -1265,7 +1252,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
 		571617B61BE2695A00792316 /* ShellScript */ = {
@@ -1322,7 +1309,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
 		8C4F472736EA3B11C9C44670 /* [CP] Check Pods Manifest.lock */ = {
@@ -1340,7 +1327,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
 		A61BB71E2E0642962D9F33F2 /* [CP] Copy Pods Resources */ = {
@@ -1448,7 +1435,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -1475,7 +1462,6 @@
 				F568C1FB1EF10F8900F1035D /* SeafActionSheet.m in Sources */,
 				570DFAC716A15D0100ADD5F2 /* SeafAccountViewController.m in Sources */,
 				F5CBCDC01F2C2F1500E8C35B /* SeafSyncInfoViewController.m in Sources */,
-				570DFAD016A1EA1B00ADD5F2 /* SeafStartHeaderView.m in Sources */,
 				577B6C6616AADBA3008E82C2 /* SeafCell.m in Sources */,
 				58D40A6B1E9AF72200A68BEF /* SeafAccountCell.m in Sources */,
 				57DA26F5173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */,
@@ -1679,22 +1665,6 @@
 				57F8CD1A1A127531000F6CDC /* en */,
 			);
 			name = SeafStart.storyboard;
-			sourceTree = "<group>";
-		};
-		57E22B051A12625B00C92330 /* SeafStartFooterView.xib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				57F8CD1B1A127536000F6CDC /* en */,
-			);
-			name = SeafStartFooterView.xib;
-			sourceTree = "<group>";
-		};
-		57E22B071A12625B00C92330 /* SeafStartHeaderView.xib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				57F8CD1C1A12753A000F6CDC /* en */,
-			);
-			name = SeafStartHeaderView.xib;
 			sourceTree = "<group>";
 		};
 		57E22B091A12625B00C92330 /* SeafTextEditorViewController_iPad.xib */ = {

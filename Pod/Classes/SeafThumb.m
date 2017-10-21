@@ -11,7 +11,7 @@
 #import "Debug.h"
 
 @implementation SeafThumb
-@synthesize lastFailureTimestamp = _lastFailureTimestamp;
+@synthesize lastFinishTimestamp = _lastFinishTimestamp;
 @synthesize retryable = _retryable;
 
 - (id)initWithSeafFile:(SeafFile *)file

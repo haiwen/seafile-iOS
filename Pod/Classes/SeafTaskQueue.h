@@ -18,7 +18,7 @@ typedef void (^TaskProgressBlock)(id<SeafTask> _Nonnull task, float progress);
 
 @protocol SeafTask<NSObject>
 
-@property NSTimeInterval lastFailureTimestamp;
+@property NSTimeInterval lastFinishTimestamp;
 @property BOOL retryable;
 
 - (NSString * _Nonnull)accountIdentifier;
@@ -37,6 +37,7 @@ typedef void (^TaskProgressBlock)(id<SeafTask> _Nonnull task, float progress);
 @property (nonatomic, assign) double attemptInterval;
 @property (nonatomic, copy) TaskCompleteBlock _Nullable taskCompleteBlock;
 @property (nonatomic, copy) TaskProgressBlock _Nullable taskProgressBlock;
+@property (nonatomic, strong) NSMutableArray * _Nullable completedTasks;
 
 - (NSInteger)taskNumber;
 - (NSArray * _Nonnull)allTasks;
