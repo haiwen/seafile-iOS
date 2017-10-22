@@ -392,6 +392,8 @@ NSString* const DetailPreviewFontSizeKey = @"DetailPreviewFontSizeKey";
 {
     [self updateNavigation];
     [super viewWillAppear:animated];
+    
+    [[self getUserDefaults] addObserver:self forKeyPath:DetailPreviewFontSizeKey options:NSKeyValueObservingOptionNew context:nil];
 }
 
 #pragma mark - Split view
@@ -419,6 +421,8 @@ NSString* const DetailPreviewFontSizeKey = @"DetailPreviewFontSizeKey";
     if (self.masterPopoverController != nil) {
         [self.masterPopoverController dismissPopoverAnimated:YES];
     }
+    
+    [[self getUserDefaults] removeObserver:self forKeyPath:DetailPreviewFontSizeKey context:nil];
     [super viewWillDisappear:animated];
 }
 
