@@ -26,6 +26,15 @@
     // Configure the view for the selected state
 }
 
+- (void)setHighlighted:(BOOL)highlighted animated:(BOOL)animated {
+    [super setHighlighted:highlighted animated:animated];
+    if (highlighted) {
+        self.contentView.backgroundColor = [UIColor lightGrayColor];
+    } else {
+        self.contentView.backgroundColor = [UIColor clearColor];
+    }
+}
+
 + (SeafAccountCell *)getInstance:(UITableView *)tableView WithOwner:(id)owner
 {
     NSString *CellIdentifier = @"SeafAccountCell2";
@@ -36,7 +45,7 @@
     }
     cell.contentView.backgroundColor = [UIColor whiteColor];
     cell.accessoryType = UITableViewCellAccessoryNone;
-    //cell.selectionStyle = UITableViewCellSelectionStyleGray;
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
     return cell;
 }
 

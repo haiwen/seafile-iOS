@@ -18,7 +18,7 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
 
 @interface SeafSyncInfoViewController ()
 
-@property (nonatomic, strong) NSMutableArray *finishedTasks;
+@property (nonatomic, strong) NSArray *finishedTasks;
 @property (nonatomic, strong) NSMutableArray *ongongingTasks;
 @property (nonatomic, strong) SeafConnection *connection;
 
@@ -26,9 +26,9 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
 
 @implementation SeafSyncInfoViewController
 
-- (NSMutableArray *)finishedTasks {
+- (NSArray *)finishedTasks {
     if (!_finishedTasks) {
-        _finishedTasks = [NSMutableArray array];
+        _finishedTasks = [NSArray array];
     }
     return _finishedTasks;
 }
@@ -87,7 +87,7 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
                 [weakSelf.ongongingTasks removeObject:task];
             }
         }
-        [weakSelf allCompeletedTask];
+        weakSelf.finishedTasks = [weakSelf allCompeletedTask];
         dispatch_async(dispatch_get_main_queue(), ^{
             [weakSelf.tableView reloadData];
         });
@@ -95,7 +95,7 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
     [self initTaskArray];
 }
 
-- (void)allCompeletedTask {
+- (NSArray*)allCompeletedTask {
     SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection];
     NSArray *completedArray = nil;
     if (self.detailType == DOWNLOAD_DETAIL) {
@@ -103,20 +103,12 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
     } else {
         completedArray = [accountQueue.uploadQueue.completedTasks mutableCopy];
     }
-    if (!completedArray) return;
-    for (id<SeafTask> task in completedArray) {
-        if (![self.finishedTasks containsObject:task] && [[NSDate new] timeIntervalSinceNow] - task.lastFinishTimestamp < DEFAULT_COMPLELE_INTERVAL) {
-            @synchronized (self.finishedTasks) {
-                [self.finishedTasks addObject:task];
-            }
-        }
-    }
+    return completedArray;
 }
 
 - (void)initTaskArray {
-    [self allCompeletedTask];
+    self.finishedTasks = [self allCompeletedTask];
     SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection];
-    
     for (id<SeafTask> task in accountQueue.fileQueue.allTasks) {
         if (![self.finishedTasks containsObject:task] && ![self.ongongingTasks containsObject:task]) {
             @synchronized (self.ongongingTasks) {
