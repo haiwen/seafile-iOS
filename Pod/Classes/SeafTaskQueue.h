@@ -10,6 +10,7 @@
 
 #define DEFAULT_CONCURRENCY 3
 #define DEFAULT_ATTEMPT_INTERVAL 60 // 1 min
+#define DEFAULT_COMPLELE_INTERVAL 3*60*1000 // 3 min
 
 @protocol SeafTask;
 

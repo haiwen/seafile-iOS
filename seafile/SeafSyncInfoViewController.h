@@ -8,8 +8,6 @@
 
 #import <UIKit/UIKit.h>
 
-#define DEFAULT_COMPLELE_INTERVAL 3*60*1000 // 3 min
-
 typedef enum : NSUInteger {
     UPLOAD_DETAIL,
     DOWNLOAD_DETAIL,

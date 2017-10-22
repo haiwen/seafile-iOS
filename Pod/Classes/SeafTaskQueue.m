@@ -91,6 +91,7 @@
 
 - (void)tick {
     [self performSelectorInBackground:@selector(runTasks) withObject:nil];
+    [self performSelectorInBackground:@selector(removeSomeCompletedTask) withObject:nil];
 }
 
 - (void)runTasks {
@@ -128,6 +129,17 @@
             if ([self.ongoingTasks containsObject:task]) {
                 [self.ongoingTasks removeObject:task];
                 [task cancel];
+            }
+        }
+    }
+}
+
+- (void)removeSomeCompletedTask {
+    @synchronized (self.completedTasks) {
+        for (id<SeafTask> task in self.completedTasks) {
+            //remove task finished more than 3 min
+            if ([[NSDate new] timeIntervalSinceNow] - task.lastFinishTimestamp > DEFAULT_COMPLELE_INTERVAL) {
+                [self.completedTasks removeObject:task];
             }
         }
     }
