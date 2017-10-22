@@ -21,13 +21,15 @@
 #import "UIViewController+Extend.h"
 #import "ExtentedString.h"
 #import "Debug.h"
-
+#import "QuickSettingsPanel.h"
 
 
 enum SHARE_STATUS {
     SHARE_BY_MAIL = 0,
     SHARE_BY_LINK = 1
 };
+
+NSString* const DetailPreviewFontSizeKey = @"DetailPreviewFontSizeKey";
 
 #define PADDING                  10
 #define ACTION_SHEET_OLD_ACTIONS 2000
@@ -58,6 +60,8 @@ enum SHARE_STATUS {
 @property (strong) UIDocumentInteractionController *docController;
 @property int shareStatus;
 
+@property (nonatomic) QuickSettingsPanel* quickSettingsPanel;
+@property (nonatomic) float previewFontSize;
 @end
 
 
@@ -845,6 +849,67 @@ enum SHARE_STATUS {
         }
     }
     [self updateNavigation];
+}
+
+#pragma mark preview font size and quick settings part
+- (NSUserDefaults*)getUserDefaults {
+    return [NSUserDefaults standardUserDefaults];
+}
+
+- (void)registerDefaultPreviewFontSize {
+    [[self getUserDefaults]
+     registerDefaults:@{
+                        DetailPreviewFontSizeKey: @(100.0) // in %
+                        }];
+}
+
+- (void)changePreviewFontSize:(NSString*)changeKey {
+    float currentFontSize = self.previewFontSize;
+
+    if ([changeKey isEqualToString:QuickSettingsFontSizeIncrement]) {
+        currentFontSize = currentFontSize + 20.0;
+    } else if ([changeKey isEqualToString:QuickSettingsFontSizeDecrement]) {
+        currentFontSize = currentFontSize - 20.0;
+    }
+    
+    self.previewFontSize = currentFontSize;
+}
+
+- (float)previewFontSize {
+    return [[[self getUserDefaults] objectForKey:DetailPreviewFontSizeKey] floatValue];
+}
+
+- (void)setPreviewFontSize:(float)previewFontSize {
+    float maximumFontSize = 1000.0; // %
+    float minimumFontSize = 10.0; // %
+    
+    // just to be sure that we have adequate values
+    if (previewFontSize > minimumFontSize && previewFontSize < maximumFontSize) {
+        [[self getUserDefaults] setObject:@(previewFontSize) forKey:DetailPreviewFontSizeKey];
+    }
+}
+
+- (void)applyPreviewFontSize {
+    if ([self canApplyPreviewFontSize]) {
+        NSString *newValue = [NSString stringWithFormat:@"%.0f%%", self.previewFontSize];
+        NSString *jsCheck = [NSString stringWithFormat:@"document.body.style.fontSize;"];
+        NSString *currentValue = [self.webView stringByEvaluatingJavaScriptFromString:jsCheck];
+        NSString *js = [NSString stringWithFormat:@"document.body.style.fontSize = '%@';", newValue];
+        if (![newValue isEqualToString:currentValue]) {
+            [self.webView stringByEvaluatingJavaScriptFromString:js];
+        }
+    }
+}
+
+- (BOOL)canApplyPreviewFontSize {
+    return [self.preViewItem.mime isEqualToString:@"text/plain"];
+}
+
+#pragma mark KVO
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
+    if ([keyPath isEqualToString:DetailPreviewFontSizeKey]) {
+        [self applyPreviewFontSize];
+    }
 }
 
 @end
