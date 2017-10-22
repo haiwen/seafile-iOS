@@ -80,6 +80,8 @@
 {
     [super viewDidLoad];
     self.tableView.rowHeight = 50;
+    self.tableView.estimatedSectionFooterHeight = 0;
+    self.tableView.estimatedSectionHeaderHeight = 0;
     self.saveButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSave target:self action:@selector(save:)];
     self.navigationItem.title = _directory.name;
     self.navigationItem.rightBarButtonItem = _directory.editable ? self.saveButton : nil;
@@ -197,18 +199,27 @@
     return self.subDirs.count;
 }
 
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
+    if (_directory.editable) {
+        return 0.01;
+    } else {
+        return 30;
+    }
+}
+
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
 {
     if (_directory.editable) {
         UIView *lineView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, tableView.frame.size.width, 1.0f)];
-        [lineView setBackgroundColor:[UIColor lightGrayColor]];
+        [lineView setBackgroundColor:[UIColor clearColor]];
         return lineView;
     } else {
         UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
-        UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 3, tableView.bounds.size.width - 10, 18)];
+        UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 6, tableView.bounds.size.width - 10, 18)];
         label.text = NSLocalizedString(@"Save Destination", @"Seafile");
         label.textColor = [UIColor darkTextColor];
         label.backgroundColor = [UIColor clearColor];
+        label.font = [UIFont systemFontOfSize:15];
         [headerView setBackgroundColor:HEADER_COLOR];
         [headerView addSubview:label];
         return headerView;

@@ -250,18 +250,27 @@
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
 {
     if (self.chooseButton.hidden) {
-        UIView *lineView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, tableView.frame.size.width, 1.0f)];
+        UIView *lineView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, tableView.frame.size.width, 0.5f)];
         [lineView setBackgroundColor:[UIColor lightGrayColor]];
         return lineView;
     } else {
         UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
-        UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 3, tableView.bounds.size.width - 10, 18)];
+        UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 6, tableView.bounds.size.width - 10, 18)];
         label.text = NSLocalizedString(@"Save Destination", @"Seafile");
         label.textColor = [UIColor darkTextColor];
         label.backgroundColor = [UIColor clearColor];
+        label.font = [UIFont systemFontOfSize:16];
         [headerView setBackgroundColor:HEADER_COLOR];
         [headerView addSubview:label];
         return headerView;
+    }
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
+    if (self.chooseButton.hidden) {
+        return 0.5;
+    } else {
+        return 30;
     }
 }
 
