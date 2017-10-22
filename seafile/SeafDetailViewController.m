@@ -208,10 +208,9 @@ NSString* const DetailPreviewFontSizeKey = @"DetailPreviewFontSizeKey";
         case PREVIEW_WEBVIEW: {
             Debug("Preview by webview %@\n", self.preViewItem.previewItemTitle);
             NSURLRequest *request = [[NSURLRequest alloc] initWithURL:self.preViewItem.previewItemURL cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
-            if (self.state == PREVIEW_WEBVIEW_JS)
-                self.webView.delegate = self;
-            else
-                self.webView.delegate = nil;
+            
+            self.webView.delegate = self;
+            
             self.webView.frame = r;
             [self.webView loadRequest:request];
             self.webView.hidden = NO;
@@ -739,9 +738,13 @@ NSString* const DetailPreviewFontSizeKey = @"DetailPreviewFontSizeKey";
 # pragma - UIWebViewDelegate
 - (void)webViewDidFinishLoad:(UIWebView *)webView
 {
-    if (self.preViewItem) {
-        NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [self.preViewItem.strContent stringEscapedForJavasacript]];
-        [self.webView stringByEvaluatingJavaScriptFromString:js];
+    if (self.state == PREVIEW_WEBVIEW_JS) {
+        if (self.preViewItem) {
+            NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [self.preViewItem.strContent stringEscapedForJavasacript]];
+            [self.webView stringByEvaluatingJavaScriptFromString:js];
+        }
+    } else {
+        [self applyPreviewFontSize];
     }
 }
 - (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
