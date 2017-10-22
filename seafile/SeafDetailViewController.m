@@ -169,6 +169,7 @@ NSString* const DetailPreviewFontSizeKey = @"DetailPreviewFontSizeKey";
     if (!self.isViewLoaded) return;
 
     [self updateNavigation];
+    [self.quickSettingsPanel setHidden:YES];
     CGRect r = CGRectMake(self.view.frame.origin.x, 64, self.view.frame.size.width, self.view.frame.size.height - 64);
     switch (self.state) {
         case PREVIEW_DOWNLOADING:
@@ -214,6 +215,14 @@ NSString* const DetailPreviewFontSizeKey = @"DetailPreviewFontSizeKey";
             self.webView.frame = r;
             [self.webView loadRequest:request];
             self.webView.hidden = NO;
+            if ([self canApplyPreviewFontSize]) {
+                [self.quickSettingsPanel setHidden:NO];
+                [self.quickSettingsPanel setOpen:NO animate:NO];
+                __weak id weakSelf = self;
+                self.quickSettingsPanel.actionHandler = ^(NSString *actionKey, NSDictionary *userInfo) {
+                    [weakSelf changePreviewFontSize:actionKey];
+                };
+            }
             break;
         }
         case PREVIEW_PHOTO:
@@ -329,6 +338,10 @@ NSString* const DetailPreviewFontSizeKey = @"DetailPreviewFontSizeKey";
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
+    self.quickSettingsPanel = [QuickSettingsPanel new];
+    [self.view addSubview:self.quickSettingsPanel];
+    [self registerDefaultPreviewFontSize];
+    
     [self refreshView];
 }
 
