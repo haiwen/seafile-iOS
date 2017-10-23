@@ -135,13 +135,15 @@
 }
 
 - (void)removeSomeCompletedTask {
-    @synchronized (self.completedTasks) {
-        for (id<SeafTask> task in self.completedTasks) {
-            //remove task finished more than 3 min
-            if ([[NSDate new] timeIntervalSinceNow] - task.lastFinishTimestamp > DEFAULT_COMPLELE_INTERVAL) {
-                [self.completedTasks removeObject:task];
-            }
+    NSMutableArray *tempArray = [NSMutableArray array];
+    for (id<SeafTask> task in self.completedTasks) {
+        //remove task finished more than 3 min
+        if ([[NSDate new] timeIntervalSinceNow] - task.lastFinishTimestamp > DEFAULT_COMPLELE_INTERVAL) {
+            [tempArray addObject:task];
         }
+    }
+    @synchronized (self.completedTasks) {
+        [self.completedTasks removeObjectsInArray:tempArray];
     }
 }
 
