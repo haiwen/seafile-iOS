@@ -39,21 +39,20 @@
         self.pathLabel.text = dfile.fullPath;
         self.iconView.image = dfile.icon;
         self.sizeLabel.text = dfile.detailText;
-
+        self.progressView.hidden = YES;
+        if (dfile.progress.fractionCompleted != 0 && dfile.progress.fractionCompleted != 1) {
+            self.progressView.hidden = NO;
+        }
         if (dfile.state == SEAF_DENTRY_INIT){
-            self.progressView.hidden = YES;
             self.statusLabel.text = @"";
             self.sizeLabelLeftConstraint.constant = 0;
         } else if (dfile.state == SEAF_DENTRY_LOADING) {
             self.sizeLabelLeftConstraint.constant = 0;
             self.statusLabel.text = @"";
-            self.progressView.hidden = NO;
         } else if (dfile.state == SEAF_DENTRY_SUCCESS){
-            self.progressView.hidden = YES;
             self.sizeLabelLeftConstraint.constant = 8;
             self.statusLabel.text = NSLocalizedString(@"Completed", @"Seafile");
         } else if (dfile.state == SEAF_DENTRY_FAILURE) {
-            self.progressView.hidden = YES;
             self.statusLabel.text = NSLocalizedString(@"Failed", @"Seafile");
             self.sizeLabelLeftConstraint.constant = 8;
         }
@@ -78,7 +77,10 @@
 - (void)showCellWithTask:(id<SeafTask> _Nonnull)task {
     [self updateCellStatus:task];
     [task setTaskProgressBlock:^(id<SeafTask>  _Nonnull task, float progress) {
-        self.progressView.progress = progress;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.progressView.progress = progress;
+        });
+       
     }];
 }
 
