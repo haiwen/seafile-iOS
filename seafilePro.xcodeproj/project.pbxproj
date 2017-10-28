@@ -1001,7 +1001,7 @@
 				TargetAttributes = {
 					571D8CA91677881400F1A22C = {
 						DevelopmentTeam = 7S4HM7TAWQ;
-						ProvisioningStyle = Automatic;
+						ProvisioningStyle = Manual;
 						SystemCapabilities = {
 							com.apple.ApplicationGroups.iOS = {
 								enabled = 1;
@@ -1010,7 +1010,7 @@
 								enabled = 1;
 							};
 							com.apple.Keychain = {
-								enabled = 1;
+								enabled = 0;
 							};
 							com.apple.iCloud = {
 								enabled = 1;
@@ -1020,8 +1020,11 @@
 					57A0295E1A16F8AC009C9D7B = {
 						CreatedOnToolsVersion = 6.1;
 						DevelopmentTeam = 7S4HM7TAWQ;
-						ProvisioningStyle = Automatic;
+						ProvisioningStyle = Manual;
 						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
 							com.apple.Keychain = {
 								enabled = 1;
 							};
@@ -1033,8 +1036,11 @@
 					57A0296C1A16F8AD009C9D7B = {
 						CreatedOnToolsVersion = 6.1;
 						DevelopmentTeam = 7S4HM7TAWQ;
-						ProvisioningStyle = Automatic;
+						ProvisioningStyle = Manual;
 						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
 							com.apple.iCloud = {
 								enabled = 1;
 							};
@@ -1043,7 +1049,7 @@
 					57B14B691DF5325A0045112E = {
 						CreatedOnToolsVersion = 8.1;
 						DevelopmentTeam = 7S4HM7TAWQ;
-						ProvisioningStyle = Automatic;
+						ProvisioningStyle = Manual;
 						SystemCapabilities = {
 							com.apple.ApplicationGroups.iOS = {
 								enabled = 1;
@@ -1741,10 +1747,10 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = "$(inherited)";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = seafile/seafile.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=*]" = seafile/seafile.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Distribution: Amethystum Storage Technology Co., Ltd (7S4HM7TAWQ)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Amethystum Storage Technology Co., Ltd (7S4HM7TAWQ)";
+				CODE_SIGN_STYLE = Manual;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 7S4HM7TAWQ;
 				ENABLE_BITCODE = YES;
@@ -1756,9 +1762,9 @@
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.amethystum.amefile;
 				PRODUCT_NAME = AmeFile;
-				PROVISIONING_PROFILE = "";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
-				PROVISIONING_PROFILE_SPECIFIER = "";
+				PROVISIONING_PROFILE = "07e3845d-13ee-4934-ae6b-8c3610620f39";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "07e3845d-13ee-4934-ae6b-8c3610620f39";
+				PROVISIONING_PROFILE_SPECIFIER = "amefile distribution";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
@@ -1772,10 +1778,10 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = "$(inherited)";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = seafile/seafile.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=*]" = seafile/seafile.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Distribution";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Distribution: Amethystum Storage Technology Co., Ltd (7S4HM7TAWQ)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Amethystum Storage Technology Co., Ltd (7S4HM7TAWQ)";
+				CODE_SIGN_STYLE = Manual;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 7S4HM7TAWQ;
 				ENABLE_BITCODE = YES;
@@ -1787,9 +1793,9 @@
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.amethystum.amefile;
 				PRODUCT_NAME = AmeFile;
-				PROVISIONING_PROFILE = "";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
-				PROVISIONING_PROFILE_SPECIFIER = "";
+				PROVISIONING_PROFILE = "07e3845d-13ee-4934-ae6b-8c3610620f39";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "07e3845d-13ee-4934-ae6b-8c3610620f39";
+				PROVISIONING_PROFILE_SPECIFIER = "amefile distribution";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
@@ -1809,8 +1815,9 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CODE_SIGN_ENTITLEMENTS = SeafProviderFileProvider/SeafProviderFileProvider.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Distribution: Amethystum Storage Technology Co., Ltd (7S4HM7TAWQ)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Amethystum Storage Technology Co., Ltd (7S4HM7TAWQ)";
+				CODE_SIGN_STYLE = Manual;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 7S4HM7TAWQ;
 				ENABLE_BITCODE = YES;
@@ -1827,8 +1834,8 @@
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.amethystum.amefile.AmefProviderFileProvider;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
-				PROVISIONING_PROFILE_SPECIFIER = "";
+				PROVISIONING_PROFILE = "0da986c5-2c29-43ff-aa09-23d3de3fdf66";
+				PROVISIONING_PROFILE_SPECIFIER = "AmefProviderFileProvider Distribution";
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -1846,8 +1853,9 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CODE_SIGN_ENTITLEMENTS = SeafProviderFileProvider/SeafProviderFileProvider.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Distribution";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Distribution: Amethystum Storage Technology Co., Ltd (7S4HM7TAWQ)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Amethystum Storage Technology Co., Ltd (7S4HM7TAWQ)";
+				CODE_SIGN_STYLE = Manual;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 7S4HM7TAWQ;
 				ENABLE_BITCODE = YES;
@@ -1861,9 +1869,9 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.amethystum.amefile.AmefProviderFileProvider;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
-				PROVISIONING_PROFILE_SPECIFIER = "";
+				PROVISIONING_PROFILE = "0da986c5-2c29-43ff-aa09-23d3de3fdf66";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "fce8c1d1-82b6-4f98-b617-264bc0b93614";
+				PROVISIONING_PROFILE_SPECIFIER = "AmefProviderFileProvider Distribution";
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
@@ -1881,8 +1889,9 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CODE_SIGN_ENTITLEMENTS = SeafProvider/SeafProvider.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Distribution: Amethystum Storage Technology Co., Ltd (7S4HM7TAWQ)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Amethystum Storage Technology Co., Ltd (7S4HM7TAWQ)";
+				CODE_SIGN_STYLE = Manual;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 7S4HM7TAWQ;
 				ENABLE_BITCODE = YES;
@@ -1900,9 +1909,9 @@
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.amethystum.amefile.AmefProvider;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
-				PROVISIONING_PROFILE_SPECIFIER = "";
+				PROVISIONING_PROFILE = "1949b75d-7c5b-402c-b703-b3bd71d3d760";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "1949b75d-7c5b-402c-b703-b3bd71d3d760";
+				PROVISIONING_PROFILE_SPECIFIER = "AmefProvider Distribution";
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -1920,8 +1929,9 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CODE_SIGN_ENTITLEMENTS = SeafProvider/SeafProvider.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Distribution";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Distribution: Amethystum Storage Technology Co., Ltd (7S4HM7TAWQ)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Amethystum Storage Technology Co., Ltd (7S4HM7TAWQ)";
+				CODE_SIGN_STYLE = Manual;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 7S4HM7TAWQ;
 				ENABLE_BITCODE = YES;
@@ -1936,7 +1946,8 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.amethystum.amefile.AmefProvider;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE = "1949b75d-7c5b-402c-b703-b3bd71d3d760";
+				PROVISIONING_PROFILE_SPECIFIER = "AmefProvider Distribution";
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
@@ -1956,8 +1967,9 @@
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_SUSPICIOUS_MOVES = YES;
 				CODE_SIGN_ENTITLEMENTS = SeafAction/SeafAction.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Distribution: Amethystum Storage Technology Co., Ltd (7S4HM7TAWQ)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Amethystum Storage Technology Co., Ltd (7S4HM7TAWQ)";
+				CODE_SIGN_STYLE = Manual;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 7S4HM7TAWQ;
 				EMBED_ASSET_PACKS_IN_PRODUCT_BUNDLE = "$(inherited)";
@@ -1973,6 +1985,8 @@
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.amethystum.amefile.AmefAction;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "55069807-0a31-4455-8e69-babe744eff49";
+				PROVISIONING_PROFILE_SPECIFIER = "AmefAction Distribution";
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -1992,8 +2006,9 @@
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_SUSPICIOUS_MOVES = YES;
 				CODE_SIGN_ENTITLEMENTS = SeafAction/SeafAction.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Distribution";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Distribution: Amethystum Storage Technology Co., Ltd (7S4HM7TAWQ)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Amethystum Storage Technology Co., Ltd (7S4HM7TAWQ)";
+				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 7S4HM7TAWQ;
@@ -2007,6 +2022,8 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.amethystum.amefile.AmefAction;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "55069807-0a31-4455-8e69-babe744eff49";
+				PROVISIONING_PROFILE_SPECIFIER = "AmefAction Distribution";
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
