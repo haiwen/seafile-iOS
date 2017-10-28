@@ -14,8 +14,8 @@
 #import "SeafPreView.h"
 
 
-#define SEAFILE_SUITE_NAME @"group.com.seafile.seafilePro"
-#define APP_ID @"com.seafile.seafilePro"
+#define SEAFILE_SUITE_NAME @"group.com.amethystum.amefile"
+#define APP_ID @"com.amethystum.amefile"
 
 @protocol SeafBackgroundMonitor <NSObject>
 - (void)enterBackground;

@@ -16,8 +16,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "57A0295E1A16F8AC009C9D7B"
-               BuildableName = "SeafProvider.appex"
-               BlueprintName = "SeafProvider"
+               BuildableName = "AmefProvider.appex"
+               BlueprintName = "AmefProvider"
                ReferencedContainer = "container:seafilePro.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -31,7 +31,7 @@
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "571D8CA91677881400F1A22C"
                BuildableName = "AmeFile.app"
-               BlueprintName = "seaffile-appstore"
+               BlueprintName = "AmeFile-appstore"
                ReferencedContainer = "container:seafilePro.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -49,8 +49,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "57A0295E1A16F8AC009C9D7B"
-            BuildableName = "SeafProvider.appex"
-            BlueprintName = "SeafProvider"
+            BuildableName = "AmefProvider.appex"
+            BlueprintName = "AmefProvider"
             ReferencedContainer = "container:seafilePro.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -75,7 +75,7 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "571D8CA91677881400F1A22C"
             BuildableName = "AmeFile.app"
-            BlueprintName = "seaffile-appstore"
+            BlueprintName = "AmeFile-appstore"
             ReferencedContainer = "container:seafilePro.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -95,7 +95,7 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "571D8CA91677881400F1A22C"
             BuildableName = "AmeFile.app"
-            BlueprintName = "seaffile-appstore"
+            BlueprintName = "AmeFile-appstore"
             ReferencedContainer = "container:seafilePro.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
