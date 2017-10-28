@@ -20,19 +20,22 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="4">
-                        <rect key="frame" x="20" y="8" width="47" height="47.5"/>
+                        <rect key="frame" x="49" y="8" width="47" height="47.5"/>
                         <constraints>
                             <constraint firstAttribute="width" secondItem="4" secondAttribute="height" multiplier="1:1" id="4or-tC-agT"/>
                         </constraints>
                     </imageView>
                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="server" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="26">
-                        <rect key="frame" x="74.5" y="11" width="257" height="19.5"/>
+                        <rect key="frame" x="103.5" y="11" width="200" height="19.5"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="200" id="wDy-wW-rAp"/>
+                        </constraints>
                         <fontDescription key="fontDescription" type="system" pointSize="16"/>
                         <color key="textColor" red="0.26666666666666666" green="0.26666666666666666" blue="0.26666666666666666" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </label>
                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="email" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="27">
-                        <rect key="frame" x="75" y="34.5" width="259" height="17"/>
+                        <rect key="frame" x="104" y="34.5" width="230" height="17"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="17" id="TSa-bL-W1A"/>
                         </constraints>
@@ -45,11 +48,9 @@
                     <constraint firstItem="26" firstAttribute="top" secondItem="4" secondAttribute="top" constant="3" id="AXP-Zu-bM5"/>
                     <constraint firstItem="27" firstAttribute="leading" secondItem="4" secondAttribute="trailing" constant="8" id="Av7-Kv-kxY"/>
                     <constraint firstItem="26" firstAttribute="leading" secondItem="4" secondAttribute="trailing" constant="8" id="Dbf-bl-pZE"/>
-                    <constraint firstItem="4" firstAttribute="leading" secondItem="4v9-hE-F6X" secondAttribute="leading" constant="20" id="ONv-iV-Tiq"/>
                     <constraint firstItem="26" firstAttribute="centerX" secondItem="4v9-hE-F6X" secondAttribute="centerX" constant="28" id="cqM-Cb-QPR"/>
                     <constraint firstItem="4" firstAttribute="top" secondItem="4v9-hE-F6X" secondAttribute="top" constant="8" id="fkI-p5-Jp5"/>
                     <constraint firstAttribute="trailing" secondItem="27" secondAttribute="trailing" constant="16" id="gy5-hU-NrM"/>
-                    <constraint firstAttribute="trailing" secondItem="26" secondAttribute="trailing" priority="750" constant="16" id="jeg-yG-gzO"/>
                     <constraint firstItem="27" firstAttribute="top" secondItem="26" secondAttribute="bottom" constant="4" id="lRB-GM-4e7"/>
                     <constraint firstAttribute="bottom" secondItem="4" secondAttribute="bottom" constant="8" id="pE0-7W-yqk"/>
                 </constraints>

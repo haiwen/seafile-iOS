@@ -109,7 +109,13 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
 - (void)initTaskArray {
     self.finishedTasks = [self allCompeletedTask];
     SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection];
-    for (id<SeafTask> task in accountQueue.fileQueue.allTasks) {
+    NSArray *allTasks = nil;
+    if (self.detailType == DOWNLOAD_DETAIL) {
+        allTasks = accountQueue.fileQueue.allTasks;
+    } else {
+        allTasks = accountQueue.uploadQueue.allTasks;
+    }
+    for (id<SeafTask> task in allTasks) {
         if (![self.finishedTasks containsObject:task] && ![self.ongongingTasks containsObject:task]) {
             @synchronized (self.ongongingTasks) {
                 [self.ongongingTasks addObject:task];;
