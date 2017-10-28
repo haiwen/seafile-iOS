@@ -281,7 +281,7 @@
 		571B845B1A5AF10C00E92BF7 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		571B845C1A5AF14200E92BF7 /* is */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = is; path = is.lproj/Localizable.strings; sourceTree = "<group>"; };
 		571CFA9319076469002A58BF /* reply.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = reply.png; sourceTree = "<group>"; };
-		571D8DBA1677881400F1A22C /* SeafilePro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SeafilePro.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		571D8DBA1677881400F1A22C /* AmeFile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AmeFile.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		571F5147168C80380055D69B /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = System/Library/Frameworks/MobileCoreServices.framework; sourceTree = SDKROOT; };
 		57227A5B18389DB600CD28E9 /* red.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = red.png; sourceTree = "<group>"; };
 		5725186117AE7D000078CD12 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
@@ -834,9 +834,15 @@
 		57DB826E15A833FA00097CEC /* Products */ = {
 			isa = PBXGroup;
 			children = (
+<<<<<<< HEAD
 				571D8DBA1677881400F1A22C /* SeafilePro.app */,
 				57A0295F1A16F8AC009C9D7B /* SeafFileProviderUI.appex */,
 				57A0296D1A16F8AD009C9D7B /* SeafFileProvider.appex */,
+=======
+				571D8DBA1677881400F1A22C /* AmeFile.app */,
+				57A0295F1A16F8AC009C9D7B /* SeafProvider.appex */,
+				57A0296D1A16F8AD009C9D7B /* SeafProviderFileProvider.appex */,
+>>>>>>> AmeFile replace seafile
 				57B14B6A1DF5325A0045112E /* SeafAction.appex */,
 			);
 			name = Products;
@@ -933,9 +939,15 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+<<<<<<< HEAD
 		571D8CA91677881400F1A22C /* seafileApp */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 571D8DB71677881400F1A22C /* Build configuration list for PBXNativeTarget "seafileApp" */;
+=======
+		571D8CA91677881400F1A22C /* seaffile-appstore */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 571D8DB71677881400F1A22C /* Build configuration list for PBXNativeTarget "seaffile-appstore" */;
+>>>>>>> AmeFile replace seafile
 			buildPhases = (
 				3AD17BEEB9F4EF2ADD5DFDB6 /* [CP] Check Pods Manifest.lock */,
 				571D8CAA1677881400F1A22C /* Sources */,
@@ -953,9 +965,13 @@
 				57A029791A16F8AD009C9D7B /* PBXTargetDependency */,
 				57B14B741DF5325B0045112E /* PBXTargetDependency */,
 			);
+<<<<<<< HEAD
 			name = seafileApp;
+=======
+			name = "seaffile-appstore";
+>>>>>>> AmeFile replace seafile
 			productName = seafile;
-			productReference = 571D8DBA1677881400F1A22C /* SeafilePro.app */;
+			productReference = 571D8DBA1677881400F1A22C /* AmeFile.app */;
 			productType = "com.apple.product-type.application";
 		};
 		57A0295E1A16F8AC009C9D7B /* SeafFileProviderUI */ = {
@@ -1111,9 +1127,15 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+<<<<<<< HEAD
 				571D8CA91677881400F1A22C /* seafileApp */,
 				57A0295E1A16F8AC009C9D7B /* SeafFileProviderUI */,
 				57A0296C1A16F8AD009C9D7B /* SeafFileProvider */,
+=======
+				571D8CA91677881400F1A22C /* seaffile-appstore */,
+				57A0295E1A16F8AC009C9D7B /* SeafProvider */,
+				57A0296C1A16F8AD009C9D7B /* SeafProviderFileProvider */,
+>>>>>>> AmeFile replace seafile
 				57B14B691DF5325A0045112E /* SeafAction */,
 			);
 		};
@@ -1790,7 +1812,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro;
-				PRODUCT_NAME = SeafilePro;
+				PRODUCT_NAME = AmeFile;
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1823,7 +1845,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro;
-				PRODUCT_NAME = SeafilePro;
+				PRODUCT_NAME = AmeFile;
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -2102,6 +2124,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "";
 				"PRIVATE_HEADERS_FOLDER_PATH[sdk=*]" = "";
+				PRODUCT_NAME = "";
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
@@ -2148,6 +2171,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
+				PRODUCT_NAME = "";
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
@@ -2159,7 +2183,11 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+<<<<<<< HEAD
 		571D8DB71677881400F1A22C /* Build configuration list for PBXNativeTarget "seafileApp" */ = {
+=======
+		571D8DB71677881400F1A22C /* Build configuration list for PBXNativeTarget "seaffile-appstore" */ = {
+>>>>>>> AmeFile replace seafile
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				571D8DB81677881400F1A22C /* Debug */,

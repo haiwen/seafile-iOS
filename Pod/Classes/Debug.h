@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-#define APP_NAME @"Seafile"
+#define APP_NAME @"AmeFile"
 
 
 #define API_URL  @"/api2"
