@@ -99,23 +99,19 @@
         return;
     }
 
-    NSMutableArray *todo = [NSMutableArray new];
-    @synchronized (self.tasks) {
-        for (id<SeafTask> task in self.tasks) {
-            if (!task.runable) continue;
-            if (task.lastFinishTimestamp < ([[NSDate new] timeIntervalSince1970] - self.attemptInterval)) {
-                // did not fail recently
-                [todo addObject:task];
+    while (self.ongoingTasks.count + self.failedCount < self.concurrency) {
+        id<SeafTask> task = self.tasks.firstObject;
+        if (!task) return;
+        if (task.lastFinishTimestamp < ([[NSDate new] timeIntervalSince1970] - self.attemptInterval)) {// did not fail recently
+            // did not fail recently
+            @synchronized (self.tasks) {
+                [self.tasks removeObject:task];
             }
-            if (self.ongoingTasks.count + todo.count + self.failedCount >= self.concurrency) break;
+            @synchronized (self.ongoingTasks) {
+                [self.ongoingTasks addObject:task];
+            }
+            [task run:self.innerQueueTaskCompleteBlock];
         }
-        for (id<SeafTask> task in todo) {
-            [self.tasks removeObject:task];
-            [self.ongoingTasks addObject:task];
-        }
-    }
-    for (id<SeafTask> task in todo) {
-        [task run:self.innerQueueTaskCompleteBlock];
     }
 }
 

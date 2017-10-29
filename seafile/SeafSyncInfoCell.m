@@ -40,15 +40,14 @@
         self.iconView.image = dfile.icon;
         self.sizeLabel.text = dfile.detailText;
         self.progressView.hidden = YES;
-        if (dfile.progress.fractionCompleted != 0 && dfile.progress.fractionCompleted != 1) {
-            self.progressView.hidden = NO;
-        }
+
         if (dfile.state == SEAF_DENTRY_INIT){
             self.statusLabel.text = @"";
             self.sizeLabelLeftConstraint.constant = 0;
         } else if (dfile.state == SEAF_DENTRY_LOADING) {
             self.sizeLabelLeftConstraint.constant = 0;
             self.statusLabel.text = @"";
+            self.progressView.hidden = NO;
         } else if (dfile.state == SEAF_DENTRY_SUCCESS){
             self.sizeLabelLeftConstraint.constant = 8;
             self.statusLabel.text = NSLocalizedString(@"Completed", @"Seafile");
@@ -80,7 +79,6 @@
         dispatch_async(dispatch_get_main_queue(), ^{
             self.progressView.progress = progress;
         });
-       
     }];
 }
 
