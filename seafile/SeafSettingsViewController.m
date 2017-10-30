@@ -479,9 +479,9 @@ enum {
 -(void)updateSyncInfo{
     NSInteger downloadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].fileQueue taskNumber];
     NSInteger uploadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].uploadQueue taskNumber];
-    self.downloadingCell.detailTextLabel.text = [NSString stringWithFormat:@"%lu",(long)downloadingNum];
-    self.uploadingCell.detailTextLabel.text = [NSString stringWithFormat:@"%lu",(long)uploadingNum];
     dispatch_async(dispatch_get_main_queue(), ^ {
+        self.downloadingCell.detailTextLabel.text = [NSString stringWithFormat:@"%lu",(long)downloadingNum];
+        self.uploadingCell.detailTextLabel.text = [NSString stringWithFormat:@"%lu",(long)uploadingNum];
         NSIndexPath *downloadlingCellIndex = [NSIndexPath indexPathForRow:CELL_DOWNLOAD inSection:SECTION_UPDOWNLOAD];
         NSIndexPath *uploadlingCellIndex = [NSIndexPath indexPathForRow:CELL_UPLOAD inSection:SECTION_UPDOWNLOAD];
         [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObjects:downloadlingCellIndex, uploadlingCellIndex, nil] withRowAnimation:UITableViewRowAnimationNone];
