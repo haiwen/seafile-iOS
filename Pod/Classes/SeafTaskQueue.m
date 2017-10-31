@@ -102,26 +102,25 @@
     while (self.ongoingTasks.count + self.failedCount < self.concurrency) {
         id<SeafTask> task = [self pickTask];
         if (!task) break;
-        @synchronized (self.tasks) {
-            [self.tasks removeObject:task];
-        }
         @synchronized (self.ongoingTasks) {
             [self.ongoingTasks addObject:task];
         }
-        if (!task.runable) continue;
         [task run:self.innerQueueTaskCompleteBlock];
     }
 }
 
 - (id<SeafTask>)pickTask {
-    __block id<SeafTask> task;
-    [self.tasks enumerateObjectsUsingBlock:^(id<SeafTask>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        if (obj.lastFinishTimestamp < ([[NSDate new] timeIntervalSince1970] - self.attemptInterval)) {
-            task = obj;
-            *stop = YES;
+    id<SeafTask> runableTask;
+    @synchronized (self.tasks) {
+        for (id<SeafTask> task in self.tasks) {
+            if (task.runable && task.lastFinishTimestamp < ([[NSDate new] timeIntervalSince1970] - self.attemptInterval)) {
+                runableTask = task;
+                break;
+            }
         }
-    }];
-    return task;
+        [self.tasks removeObject:runableTask];
+    }
+    return runableTask;
 }
 
 - (void)removeTask:(id<SeafTask>)task {
