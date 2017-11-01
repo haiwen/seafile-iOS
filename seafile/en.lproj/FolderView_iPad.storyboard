@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="12121" systemVersion="17B35a" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES" initialViewController="cyW-Je-Rn4">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="13196" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES" initialViewController="cyW-Je-Rn4">
     <device id="ipad9_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment version="2048" identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13174"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -279,7 +279,7 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="Last Backup Time" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="fcx-EL-76W">
-                                                    <rect key="frame" x="15" y="12" width="145.5" height="20.5"/>
+                                                    <rect key="frame" x="15" y="12" width="145" height="20.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                                     <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -631,6 +631,7 @@
                         <outlet property="backgroundSyncCell" destination="Wpl-EH-vWh" id="gDv-oD-V8l"/>
                         <outlet property="backgroundSyncLable" destination="Abl-sI-a88" id="Sit-Ck-IE2"/>
                         <outlet property="backgroundSyncSwitch" destination="Kyn-1G-5Ap" id="lgx-yV-qOp"/>
+                        <outlet property="cacheCell" destination="TaN-1T-o1k" id="o9o-4r-WMD"/>
                         <outlet property="clearEncRepoPasswordCell" destination="50z-yM-W3t" id="iYg-gW-ziy"/>
                         <outlet property="contactsRepoCell" destination="P92-6Q-vYB" id="CVi-dn-wos"/>
                         <outlet property="contactsSyncLabel" destination="wmn-c0-1Sx" id="9qV-SO-wDd"/>
@@ -657,6 +658,7 @@
                         <outlet property="websiteCell" destination="0s2-lY-e3M" id="Q0h-ri-HbT"/>
                         <outlet property="wifiOnlyLabel" destination="dPm-WD-WPI" id="sha-WZ-1Ac"/>
                         <outlet property="wifiOnlySwitch" destination="Yqe-zw-2jc" id="dAJ-qm-C4R"/>
+                        <outlet property="wipeCacheCell" destination="lgx-fS-Ihm" id="gYT-06-KVU"/>
                     </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="RGF-wG-KHp" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -669,7 +671,6 @@
                 <navigationController title="Starred" definesPresentationContext="YES" id="HbK-VG-mor" sceneMemberID="viewController">
                     <tabBarItem key="tabBarItem" title="" id="gvu-Sd-SDA"/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="1x4-I5-Tb4">
-                        <rect key="frame" x="0.0" y="20" width="320" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <connections>
@@ -686,7 +687,6 @@
                 <navigationController title="Settings" definesPresentationContext="YES" id="ZS2-rO-b6R" sceneMemberID="viewController">
                     <tabBarItem key="tabBarItem" title="" id="S82-ac-TEU"/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="0c8-lf-Lr3">
-                        <rect key="frame" x="0.0" y="20" width="320" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <connections>
@@ -848,7 +848,6 @@
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <toolbar key="toolbar" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="fJL-OB-aiQ">
-                        <rect key="frame" x="0.0" y="980" width="768" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </toolbar>
                     <connections>
@@ -888,7 +887,6 @@
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <toolbar key="toolbar" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="vS9-wU-eCD">
-                        <rect key="frame" x="0.0" y="980" width="768" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </toolbar>
                     <connections>
@@ -928,7 +926,6 @@
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <toolbar key="toolbar" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="zpt-c2-dcF">
-                        <rect key="frame" x="0.0" y="980" width="768" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </toolbar>
                     <connections>
@@ -980,7 +977,6 @@
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <toolbar key="toolbar" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="Aau-1A-wWh">
-                        <rect key="frame" x="0.0" y="0.0" width="1000" height="1000"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <color key="tintColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </toolbar>
@@ -1148,7 +1144,6 @@
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <toolbar key="toolbar" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="t9I-Of-dZa">
-                        <rect key="frame" x="0.0" y="0.0" width="1000" height="1000"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <color key="tintColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </toolbar>
@@ -1188,9 +1183,4 @@
     <resources>
         <image name="seafile-logo.png" width="360" height="360"/>
     </resources>
-    <simulatedMetricsContainer key="defaultSimulatedMetrics">
-        <simulatedStatusBarMetrics key="statusBar"/>
-        <simulatedOrientationMetrics key="orientation"/>
-        <simulatedScreenMetrics key="destination"/>
-    </simulatedMetricsContainer>
 </document>
