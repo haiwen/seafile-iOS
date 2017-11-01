@@ -118,7 +118,9 @@
                 break;
             }
         }
-        [self.tasks removeObject:runableTask];
+        if (runableTask) {
+            [self.tasks removeObject:runableTask];
+        }
     }
     return runableTask;
 }
