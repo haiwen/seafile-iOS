@@ -11,7 +11,6 @@
 
 
 @interface FailToPreview ()
-@property (strong) UIDocumentInteractionController *docController;
 @property (strong, nonatomic) IBOutlet UILabel *errorLabel;
 @end
 
@@ -20,21 +19,14 @@
 
 - (id)initWithCoder:(NSCoder *)decoder
 {
-    self = [super initWithCoder:decoder];
-    _errorLabel.text = [NSString stringWithFormat:NSLocalizedString(@"%@ does not support to preview file of this kind at the moment.", @"Seafile"), APP_NAME];
-    _openElseBtn.titleLabel.text = NSLocalizedString(@"Open in other applications", @"Seafile");
-    for (UIView *v in self.subviews) {
-        v.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin| UIViewAutoresizingFlexibleRightMargin| UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleTopMargin;
-    }
-    self.autoresizesSubviews = YES;
-    self.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
-    return self;
+    return [super initWithCoder:decoder];
 }
 
 - (void)configureViewWithPrevireItem:(id<SeafPreView>)item
 {
     self.imageView.image = item.icon;
     self.nameLabel.text = item.previewItemTitle;
+    self.errorLabel.text = [NSString stringWithFormat:NSLocalizedString(@"%@ does not support to preview file of this kind at the moment.", @"Seafile"), APP_NAME];
 }
 
 @end

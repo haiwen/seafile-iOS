@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13528" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13529" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13526"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13527"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -16,31 +16,28 @@
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="3">
-                    <rect key="frame" x="20" y="122" width="280" height="324"/>
+                    <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                     <subviews>
                         <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" translatesAutoresizingMaskIntoConstraints="NO" id="6">
-                            <rect key="frame" x="90" y="20" width="100" height="100"/>
+                            <rect key="frame" x="110" y="164" width="100" height="100"/>
                             <constraints>
                                 <constraint firstAttribute="height" constant="100" id="Pmu-Vk-5kG"/>
                                 <constraint firstAttribute="width" constant="100" id="SvD-qm-gkg"/>
                             </constraints>
                         </imageView>
                         <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="" textAlignment="center" lineBreakMode="middleTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="4">
-                            <rect key="frame" x="20" y="138" width="240" height="0.0"/>
+                            <rect key="frame" x="50" y="284" width="220" height="0.0"/>
                             <fontDescription key="fontDescription" type="system" pointSize="17"/>
                             <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                             <nil key="highlightedColor"/>
                         </label>
                         <progressView opaque="NO" contentMode="scaleToFill" progress="0.5" translatesAutoresizingMaskIntoConstraints="NO" id="5">
-                            <rect key="frame" x="25" y="200" width="230" height="2"/>
-                            <constraints>
-                                <constraint firstAttribute="width" constant="230" id="RzU-dg-vJt"/>
-                            </constraints>
+                            <rect key="frame" x="50" y="314" width="220" height="2"/>
                         </progressView>
                         <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" showsTouchWhenHighlighted="YES" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="sWH-aO-TK6">
-                            <rect key="frame" x="77" y="232" width="127" height="32"/>
+                            <rect key="frame" x="95.5" y="346" width="130" height="32"/>
                             <constraints>
-                                <constraint firstAttribute="width" constant="127" id="SEH-7E-MxM"/>
+                                <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="130" id="SEH-7E-MxM"/>
                             </constraints>
                             <fontDescription key="fontDescription" type="system" pointSize="16"/>
                             <color key="tintColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
@@ -51,16 +48,15 @@
                     </subviews>
                     <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     <constraints>
-                        <constraint firstItem="4" firstAttribute="leading" secondItem="3" secondAttribute="leading" constant="20" id="7Bu-u8-eu9"/>
-                        <constraint firstItem="6" firstAttribute="top" secondItem="3" secondAttribute="top" constant="20" id="BDy-X7-N8J"/>
                         <constraint firstItem="4" firstAttribute="centerX" secondItem="3" secondAttribute="centerX" id="Fel-h0-MPl"/>
                         <constraint firstItem="sWH-aO-TK6" firstAttribute="centerX" secondItem="3" secondAttribute="centerX" id="FrR-Qc-Blv"/>
-                        <constraint firstItem="4" firstAttribute="top" secondItem="6" secondAttribute="bottom" constant="18" id="Hx2-gh-M1t"/>
+                        <constraint firstItem="5" firstAttribute="top" secondItem="4" secondAttribute="bottom" constant="30" id="HaN-n5-D2C"/>
+                        <constraint firstItem="4" firstAttribute="top" secondItem="6" secondAttribute="bottom" constant="20" id="Hx2-gh-M1t"/>
                         <constraint firstItem="6" firstAttribute="centerX" secondItem="3" secondAttribute="centerX" id="UPf-nW-aT6"/>
-                        <constraint firstAttribute="height" constant="324" id="WSo-WI-Fmy"/>
-                        <constraint firstAttribute="trailing" secondItem="4" secondAttribute="trailing" constant="20" id="a8s-ye-0XX"/>
+                        <constraint firstItem="5" firstAttribute="width" secondItem="4" secondAttribute="width" id="UtM-Q6-b43"/>
+                        <constraint firstItem="4" firstAttribute="width" secondItem="3" secondAttribute="width" constant="-100" id="Wvu-fl-3L6"/>
+                        <constraint firstItem="4" firstAttribute="centerY" secondItem="3" secondAttribute="centerY" id="hxF-SN-cNy"/>
                         <constraint firstItem="sWH-aO-TK6" firstAttribute="top" secondItem="5" secondAttribute="bottom" constant="30" id="tfO-lp-Fee"/>
-                        <constraint firstItem="5" firstAttribute="top" secondItem="6" secondAttribute="bottom" constant="80" id="yUi-TJ-yXj"/>
                     </constraints>
                 </view>
             </subviews>
@@ -68,8 +64,9 @@
             <constraints>
                 <constraint firstItem="5" firstAttribute="centerX" secondItem="1" secondAttribute="centerX" id="1rx-4L-Nz9"/>
                 <constraint firstItem="3" firstAttribute="centerY" secondItem="1" secondAttribute="centerY" id="2dX-5m-72t"/>
-                <constraint firstItem="3" firstAttribute="leading" secondItem="1" secondAttribute="leading" constant="20" id="Vic-ca-8te"/>
-                <constraint firstAttribute="trailing" secondItem="3" secondAttribute="trailing" constant="20" id="YyH-t5-bQt"/>
+                <constraint firstItem="3" firstAttribute="width" secondItem="1" secondAttribute="width" id="6xx-FG-bgv"/>
+                <constraint firstItem="3" firstAttribute="height" secondItem="1" secondAttribute="height" id="91l-3n-hXY"/>
+                <constraint firstItem="3" firstAttribute="centerX" secondItem="1" secondAttribute="centerX" id="QC2-vC-gQD"/>
             </constraints>
             <connections>
                 <outlet property="cancelBt" destination="sWH-aO-TK6" id="Tx4-HF-ljs"/>
