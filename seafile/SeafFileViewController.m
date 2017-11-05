@@ -1484,6 +1484,9 @@ enum {
             NSString *ext = filename.pathExtension;
             filename = [self getUniqueFilename:name ext:ext nameSet:nameSet];
         }
+        if ([filename.pathExtension isEqualToString:@"HEIC"]) {
+            filename = [NSString stringWithFormat:@"%@.jpg",filename.stringByDeletingPathExtension];
+        }
         [nameSet addObject:filename];
         NSString *path = [uploadDir stringByAppendingPathComponent:filename];
         SeafUploadFile *file =  [self.connection getUploadfile:path];
