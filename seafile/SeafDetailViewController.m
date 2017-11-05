@@ -21,13 +21,15 @@
 #import "UIViewController+Extend.h"
 #import "ExtentedString.h"
 #import "Debug.h"
-
+#import "QuickSettingsPanel.h"
 
 
 enum SHARE_STATUS {
     SHARE_BY_MAIL = 0,
     SHARE_BY_LINK = 1
 };
+
+NSString* const DetailPreviewFontSizeKey = @"DetailPreviewFontSizeKey";
 
 #define PADDING                  10
 #define ACTION_SHEET_OLD_ACTIONS 2000
@@ -58,6 +60,8 @@ enum SHARE_STATUS {
 @property (strong) UIDocumentInteractionController *docController;
 @property int shareStatus;
 
+@property (nonatomic) QuickSettingsPanel* quickSettingsPanel;
+@property (nonatomic) float previewFontSize;
 @end
 
 
@@ -165,6 +169,7 @@ enum SHARE_STATUS {
     if (!self.isViewLoaded) return;
 
     [self updateNavigation];
+    [self.quickSettingsPanel setHidden:YES];
     CGRect r = CGRectMake(self.view.frame.origin.x, 64, self.view.frame.size.width, self.view.frame.size.height - 64);
     switch (self.state) {
         case PREVIEW_DOWNLOADING:
@@ -204,13 +209,20 @@ enum SHARE_STATUS {
         case PREVIEW_WEBVIEW: {
             Debug("Preview by webview %@\n", self.preViewItem.previewItemTitle);
             NSURLRequest *request = [[NSURLRequest alloc] initWithURL:self.preViewItem.previewItemURL cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
-            if (self.state == PREVIEW_WEBVIEW_JS)
-                self.webView.delegate = self;
-            else
-                self.webView.delegate = nil;
+            
+            self.webView.delegate = self;
+            
             self.webView.frame = r;
             [self.webView loadRequest:request];
             self.webView.hidden = NO;
+            if ([self canApplyPreviewFontSize]) {
+                [self.quickSettingsPanel setHidden:NO];
+                [self.quickSettingsPanel setOpen:NO animate:NO];
+                __weak id weakSelf = self;
+                self.quickSettingsPanel.actionHandler = ^(NSString *actionKey, NSDictionary *userInfo) {
+                    [weakSelf changePreviewFontSize:actionKey];
+                };
+            }
             break;
         }
         case PREVIEW_PHOTO:
@@ -326,6 +338,10 @@ enum SHARE_STATUS {
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
+    self.quickSettingsPanel = [QuickSettingsPanel new];
+    [self.view addSubview:self.quickSettingsPanel];
+    [self registerDefaultPreviewFontSize];
+    
     [self refreshView];
 }
 
@@ -376,6 +392,8 @@ enum SHARE_STATUS {
 {
     [self updateNavigation];
     [super viewWillAppear:animated];
+    
+    [[self getUserDefaults] addObserver:self forKeyPath:DetailPreviewFontSizeKey options:NSKeyValueObservingOptionNew context:nil];
 }
 
 #pragma mark - Split view
@@ -403,6 +421,8 @@ enum SHARE_STATUS {
     if (self.masterPopoverController != nil) {
         [self.masterPopoverController dismissPopoverAnimated:YES];
     }
+    
+    [[self getUserDefaults] removeObserver:self forKeyPath:DetailPreviewFontSizeKey context:nil];
     [super viewWillDisappear:animated];
 }
 
@@ -735,9 +755,13 @@ enum SHARE_STATUS {
 # pragma - UIWebViewDelegate
 - (void)webViewDidFinishLoad:(UIWebView *)webView
 {
-    if (self.preViewItem) {
-        NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [self.preViewItem.strContent stringEscapedForJavasacript]];
-        [self.webView stringByEvaluatingJavaScriptFromString:js];
+    if (self.state == PREVIEW_WEBVIEW_JS) {
+        if (self.preViewItem) {
+            NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [self.preViewItem.strContent stringEscapedForJavasacript]];
+            [self.webView stringByEvaluatingJavaScriptFromString:js];
+        }
+    } else {
+        [self applyPreviewFontSize];
     }
 }
 - (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
@@ -845,6 +869,67 @@ enum SHARE_STATUS {
         }
     }
     [self updateNavigation];
+}
+
+#pragma mark preview font size and quick settings part
+- (NSUserDefaults*)getUserDefaults {
+    return [NSUserDefaults standardUserDefaults];
+}
+
+- (void)registerDefaultPreviewFontSize {
+    [[self getUserDefaults]
+     registerDefaults:@{
+                        DetailPreviewFontSizeKey: @(100.0) // in %
+                        }];
+}
+
+- (void)changePreviewFontSize:(NSString*)changeKey {
+    float currentFontSize = self.previewFontSize;
+
+    if ([changeKey isEqualToString:QuickSettingsFontSizeIncrement]) {
+        currentFontSize = currentFontSize + 20.0;
+    } else if ([changeKey isEqualToString:QuickSettingsFontSizeDecrement]) {
+        currentFontSize = currentFontSize - 20.0;
+    }
+    
+    self.previewFontSize = currentFontSize;
+}
+
+- (float)previewFontSize {
+    return [[[self getUserDefaults] objectForKey:DetailPreviewFontSizeKey] floatValue];
+}
+
+- (void)setPreviewFontSize:(float)previewFontSize {
+    float maximumFontSize = 1000.0; // %
+    float minimumFontSize = 10.0; // %
+    
+    // just to be sure that we have adequate values
+    if (previewFontSize > minimumFontSize && previewFontSize < maximumFontSize) {
+        [[self getUserDefaults] setObject:@(previewFontSize) forKey:DetailPreviewFontSizeKey];
+    }
+}
+
+- (void)applyPreviewFontSize {
+    if ([self canApplyPreviewFontSize]) {
+        NSString *newValue = [NSString stringWithFormat:@"%.0f%%", self.previewFontSize];
+        NSString *jsCheck = [NSString stringWithFormat:@"document.body.style.fontSize;"];
+        NSString *currentValue = [self.webView stringByEvaluatingJavaScriptFromString:jsCheck];
+        NSString *js = [NSString stringWithFormat:@"document.body.style.fontSize = '%@';", newValue];
+        if (![newValue isEqualToString:currentValue]) {
+            [self.webView stringByEvaluatingJavaScriptFromString:js];
+        }
+    }
+}
+
+- (BOOL)canApplyPreviewFontSize {
+    return [self.preViewItem.mime isEqualToString:@"text/plain"];
+}
+
+#pragma mark KVO
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
+    if ([keyPath isEqualToString:DetailPreviewFontSizeKey]) {
+        [self applyPreviewFontSize];
+    }
 }
 
 @end

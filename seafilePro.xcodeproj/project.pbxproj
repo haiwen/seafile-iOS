@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		10CC62C9699DE05CBA3647E4 /* libPods-seafile-appstore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E2A39A0EBB6C3379F30D1A83 /* libPods-seafile-appstore.a */; };
 		11FAE5D19696AF534A19C252 /* libPods-SeafProvider.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 08E34A4BEBB32AD5D2CB9442 /* libPods-SeafProvider.a */; };
+		50098B991F802E8A0072941D /* QuickSettingsPanel.m in Sources */ = {isa = PBXBuildFile; fileRef = 50098B971F802E8A0072941D /* QuickSettingsPanel.m */; };
 		5704C6D31753A1380028F4FE /* IntelligentSplitViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6D11753A1380028F4FE /* IntelligentSplitViewController.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		5704C6F91756710F0028F4FE /* tab-account.png in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F51756710F0028F4FE /* tab-account.png */; };
 		5704C6FB1756710F0028F4FE /* tab-modify.png in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F61756710F0028F4FE /* tab-modify.png */; };
@@ -256,6 +257,8 @@
 		159E0D2A7419F67E532A240F /* libPods-SeafAction.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SeafAction.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2979DE872836DD67FEA29262 /* Pods-SeafProviderFileProvider.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafProviderFileProvider.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SeafProviderFileProvider/Pods-SeafProviderFileProvider.debug.xcconfig"; sourceTree = "<group>"; };
 		3DFD7A698B44546A8DDD2D26 /* libPods-SeafProviderFileProvider.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SeafProviderFileProvider.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		50098B971F802E8A0072941D /* QuickSettingsPanel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QuickSettingsPanel.m; sourceTree = "<group>"; };
+		50098B981F802E8A0072941D /* QuickSettingsPanel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QuickSettingsPanel.h; sourceTree = "<group>"; };
 		5704C6D01753A1380028F4FE /* IntelligentSplitViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IntelligentSplitViewController.h; sourceTree = "<group>"; };
 		5704C6D11753A1380028F4FE /* IntelligentSplitViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IntelligentSplitViewController.m; sourceTree = "<group>"; };
 		5704C6F51756710F0028F4FE /* tab-account.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-account.png"; sourceTree = "<group>"; };
@@ -556,6 +559,8 @@
 		5704C6CF1753A07E0028F4FE /* thirdpart */ = {
 			isa = PBXGroup;
 			children = (
+				50098B981F802E8A0072941D /* QuickSettingsPanel.h */,
+				50098B971F802E8A0072941D /* QuickSettingsPanel.m */,
 				5704C6D01753A1380028F4FE /* IntelligentSplitViewController.h */,
 				5704C6D11753A1380028F4FE /* IntelligentSplitViewController.m */,
 			);
@@ -1472,6 +1477,7 @@
 				5704C6D31753A1380028F4FE /* IntelligentSplitViewController.m in Sources */,
 				57F476EC1C00623300047395 /* SeafPhotoThumb.m in Sources */,
 				576C91C4177EB43F007B50BD /* SeafDirViewController.m in Sources */,
+				50098B991F802E8A0072941D /* QuickSettingsPanel.m in Sources */,
 				58D40A7E1E9AF86D00A68BEF /* SeafData.m in Sources */,
 				F536DA191F30DB6F00F2EF3F /* SeafSyncInfoCell.m in Sources */,
 				58D40A691E9AF72200A68BEF /* SeafGlobal.m in Sources */,
