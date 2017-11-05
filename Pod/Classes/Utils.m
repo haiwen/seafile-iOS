@@ -16,6 +16,7 @@
 #import <sys/stat.h>
 #import <dirent.h>
 #import <sys/xattr.h>
+#import <Photos/Photos.h>
 
 @implementation Utils
 
@@ -381,9 +382,32 @@
 {
     [Utils checkMakeDir:[filePath stringByDeletingLastPathComponent]];
     NSString *ext = filePath.pathExtension.lowercaseString;
-    if ([@"jpg" isEqualToString:ext] || [@"jpeg" isEqualToString:ext])
+    if ([@"jpg" isEqualToString:ext] || [@"jpeg" isEqualToString:ext]) {
         return [Utils writeDataToPathWithMeta:filePath andAsset:asset];
+    } else if ([@"heic" isEqualToString:ext]) {
+        return [Utils writeHeifDataToPathWithMeta:filePath andAsset:asset];
+    }
     return [Utils writeDataToPathNoMeta:filePath andAsset:asset];
+}
+
++ (BOOL)writeHeifDataToPathWithMeta:(NSString*)filePath andAsset:(ALAsset*)asset {
+    NSURL *imageUrl = [[asset defaultRepresentation]url];
+    PHAsset *phAsset = [PHAsset fetchAssetsWithALAssetURLs:@[imageUrl] options:nil].firstObject;
+    
+    __block BOOL success;
+    __block dispatch_semaphore_t sem = dispatch_semaphore_create(0);
+    [[PHImageManager defaultManager] requestImageDataForAsset:phAsset options:nil resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
+        CIImage *ciImage = [CIImage imageWithData:imageData];
+        CIContext *context = [CIContext context];
+        if (@available(iOS 10.0, *)) {
+            NSData *jpgData = [context JPEGRepresentationOfImage:ciImage colorSpace:ciImage.colorSpace options:@{}];
+            NSURL *url = [[NSURL alloc] initFileURLWithPath:[filePath stringByReplacingOccurrencesOfString:@"HEIC" withString:@"jpg"]];
+            success = [jpgData writeToURL:url atomically:YES];
+        }
+        dispatch_semaphore_signal(sem);
+    }];
+    dispatch_semaphore_wait(sem, DISPATCH_TIME_FOREVER);
+    return success;
 }
 
 + (BOOL)fileExistsAtPath:(NSString *)path
