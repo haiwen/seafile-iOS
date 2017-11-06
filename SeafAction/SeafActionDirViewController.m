@@ -113,7 +113,7 @@
      ufile.delegate = self;
      ufile.udir = _directory;
      ufile.overwrite = overwrite;
-     Debug("file %@ %d %d", ufile.lpath, ufile.uploading, ufile.uploaded);
+     Debug("file %@ %d %d", ufile.lpath, ufile.isUploading, ufile.isUploaded);
      [self showUploadProgress:ufile];
 }
 

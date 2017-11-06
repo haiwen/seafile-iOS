@@ -35,7 +35,7 @@ typedef void (^repo_password_set_block_t)(SeafBase *entry, int ret);
 - (void)generateSharelink:(SeafBase *)entry WithResult:(BOOL)success;
 @end
 
-@interface SeafBase : NSObject<SeafItem>
+@interface SeafBase : NSObject
 {
 @public
     SeafConnection *connection;

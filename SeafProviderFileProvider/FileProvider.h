@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Seafile. All rights reserved.
 //
 
-#import <UIKit/UIKit.h>
+#import <FileProvider/FileProvider.h>
 
 @interface FileProvider : NSFileProviderExtension
 

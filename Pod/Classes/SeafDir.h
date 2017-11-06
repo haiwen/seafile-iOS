@@ -56,7 +56,7 @@
 - (void)reSortItemsByName;
 - (void)reSortItemsByMtime;
 - (void)sortItems:(NSMutableArray *)items;
-- (void)downloadContentSuccess:(void (^)(SeafDir *dir)) success failure:(void (^)(SeafDir *dir, NSError *error))failure;
+- (void)loadContentSuccess:(void (^)(SeafDir *dir)) success failure:(void (^)(SeafDir *dir, NSError *error))failure;
 
 - (BOOL)nameExist:(NSString *)name;
 - (NSArray *)subDirs;

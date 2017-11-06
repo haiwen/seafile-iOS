@@ -1366,7 +1366,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         } else {
             if (self.firstTimeSync) {
                 Debug("First time sync, force fresh uploaddir content.");
-                [uploaddir downloadContentSuccess:^(SeafDir *dir) {
+                [uploaddir loadContentSuccess:^(SeafDir *dir) {
                     [self updateUploadDir:uploaddir];
                     completionHandler(true, nil);
                 } failure:^(SeafDir *dir, NSError *error) {
@@ -1527,7 +1527,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     SeafDir *uploaddir = [self getSubdirUnderDir:repo withName:dirName];
     if (!uploaddir) {
-        [repo downloadContentSuccess:^(SeafDir *dir) {
+        [repo loadContentSuccess:^(SeafDir *dir) {
             SeafDir *uploaddir = [self getSubdirUnderDir:repo withName:dirName];
             if (!uploaddir) {
                 Debug("mkdir %@ in repo %@", dirName, repo.repoId);
@@ -1555,7 +1555,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
     if (!repo) {
         Warning("No such repo %@, force update cache", repoId);
-        [_rootFolder downloadContentSuccess:^(SeafDir *dir) {
+        [_rootFolder loadContentSuccess:^(SeafDir *dir) {
             SeafRepo *repo = [self getRepo:self.contactsRepo];
             if (!repo) {
                 completionHandler(nil, nil);
@@ -1705,7 +1705,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                 if (!force && !changed) {
                     return completionHandler(true, nil);
                 }
-                [uploaddir downloadContentSuccess:^(SeafDir *dir) {
+                [uploaddir loadContentSuccess:^(SeafDir *dir) {
                     [self uploadFile:path toDir:uploaddir completion:^(BOOL success, NSError * _Nullable error) {
                         if (success) {
                             [self saveContactsLastBackupInfo:backupDate number:contacts.count];
@@ -1732,7 +1732,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             Warning("Failed to create contacts backup folder: %@", error);
             completionHandler(nil, nil, error);
         } else {
-            [uploaddir downloadContentSuccess:^(SeafDir *dir) {
+            [uploaddir loadContentSuccess:^(SeafDir *dir) {
                 SeafFile *backupFile = nil;
                 NSString *dateStr = [self getContactsLastBackupDate:uploaddir backupFile:&backupFile];
                 Debug("getContactsLastBackupDate: %@ %@", dateStr, backupFile.name);
@@ -1811,7 +1811,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)downloadDir:(SeafDir *)dir
 {
-    [dir downloadContentSuccess:^(SeafDir *dir) {
+    [dir loadContentSuccess:^(SeafDir *dir) {
         Debug("dir %@ items: %lu", dir.path, (unsigned long)dir.items.count);
         for (SeafBase *item in dir.items) {
             if ([item isKindOfClass:[SeafFile class]]) {

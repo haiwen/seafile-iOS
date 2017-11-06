@@ -178,10 +178,10 @@ static SeafStorage *object = nil;
     [_storage setObject:value forKey:defaultName];
 }
 
-- (id)objectForKey:(NSString *)defaultName
+- (id)objectForKey:(NSString *)key
 {
-    if (!defaultName) return nil;
-    return [_storage objectForKey:defaultName];
+    if (!key) return nil;
+    return [_storage objectForKey:key];
 }
 
 - (void)removeObjectForKey:(NSString *)defaultName
@@ -191,6 +191,7 @@ static SeafStorage *object = nil;
 
 -(BOOL)synchronize
 {
+    Debug("....");
     return [_storage synchronize];
 }
 

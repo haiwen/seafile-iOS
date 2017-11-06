@@ -61,9 +61,8 @@
         self.nameLabel.text = ufile.name;
         self.iconView.image = ufile.icon;
         self.statusLabel.text = @"";
-        self.sizeLabel.text = @"";
         self.progressView.hidden = YES;
-        if (ufile.uploading) {
+        if (ufile.isUploading) {
             self.progressView.hidden = NO;
             self.progressView.progress = ufile.uProgress;
             self.statusLabel.text = NSLocalizedString(@"Uploading", @"Seafile");

@@ -138,6 +138,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     NSUserDefaults *newDef = [[NSUserDefaults alloc] initWithSuiteName:SEAFILE_SUITE_NAME];
     NSArray *accounts = [oldDef objectForKey:@"ACCOUNTS"];
     if (accounts && accounts.count > 0) {
+        Debug("Start migrate: %@", accounts);
         for(NSString *key in oldDef.dictionaryRepresentation) {
             [newDef setObject:[oldDef objectForKey:key] forKey:key];
         }

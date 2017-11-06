@@ -73,7 +73,7 @@
         str = [str stringByAppendingFormat:@", %@", timeStr];
     }
     if (self.mpath) {
-        if (self.ufile.uploading)
+        if (self.ufile.isUploading)
             return [str stringByAppendingFormat:@", %@", NSLocalizedString(@"uploading", @"Seafile")];
         else
             return [str stringByAppendingFormat:@", %@", NSLocalizedString(@"modified", @"Seafile")];
@@ -716,7 +716,7 @@
 
 - (void)autoupload
 {
-    if (self.ufile && self.ufile.uploading)  return;
+    if (self.ufile && self.ufile.isUploading)  return;
     [self update:self.udelegate];
 }
 
@@ -760,6 +760,7 @@
     if (ret) {
         [self setMpath:newpath];
         [self autoupload];
+        [self waitUpload];
     } else
         Warning("Failed to copy file %@ to %@: %@", url, newpath, error);
     return ret;
@@ -877,6 +878,15 @@
     if (self.ufile)
         return [self.ufile waitUpload];
     return true;
+}
+- (BOOL)isUploaded
+{
+    return !self.ufile || self.ufile.isUploaded;
+}
+
+- (BOOL)isUploading
+{
+    return self.ufile.isUploading;
 }
 
 - (void)setFileDownloadedBlock:(nullable SeafFileDidDownloadBlock)block

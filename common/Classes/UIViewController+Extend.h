@@ -17,8 +17,8 @@
 
 - (void)alertWithTitle:(NSString*)title;
 - (void)alertWithTitle:(NSString*)title message:(NSString*)message;
-- (void)alertWithTitle:(NSString*)title handler:(void (^)())handler;
-- (void)alertWithTitle:(NSString *)title message:(NSString*)message yes:(void (^)())yes no:(void (^)())no;
+- (void)alertWithTitle:(NSString*)title handler:(void (^)(void))handler;
+- (void)alertWithTitle:(NSString *)title message:(NSString*)message yes:(void (^)(void))yes no:(void (^)(void))no;
 
 - (void)popupInputView:(NSString *)title placeholder:(NSString *)tip secure:(BOOL)secure handler:(void (^)(NSString *input))handler;
 
@@ -29,7 +29,7 @@
 
 - (BOOL)isVisible;
 
-- (void)popupSetRepoPassword:(SeafRepo *)repo handler:(void (^)())handler;
+- (void)popupSetRepoPassword:(SeafRepo *)repo handler:(void (^)(void))handler;
 - (void)checkTouchId:(void (^)(bool success))handler;
 - (UIAlertController *)generateAlert:(NSArray *)arr withTitle:(NSString *)title handler:(void (^)(UIAlertAction *action))handler;
 

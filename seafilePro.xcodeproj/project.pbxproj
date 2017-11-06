@@ -165,6 +165,9 @@
 		57F8CD2D1A127566000F6CDC /* SeafTextEditorViewController_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22B0B1A12625B00C92330 /* SeafTextEditorViewController_iPhone.xib */; };
 		57F8CD2F1A127566000F6CDC /* SeafUploadingFileCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22B0F1A12625C00C92330 /* SeafUploadingFileCell.xib */; };
 		583F23C21E3E6EAC00F9FE07 /* Contacts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 583F23C11E3E6EAC00F9FE07 /* Contacts.framework */; };
+		5857E9CB1FAFCAD5004F124D /* SeafProviderItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 5857E9CA1FAFCAD5004F124D /* SeafProviderItem.m */; };
+		5857E9CE1FB0195C004F124D /* SeafEnumerator.m in Sources */ = {isa = PBXBuildFile; fileRef = 5857E9CD1FB0195C004F124D /* SeafEnumerator.m */; };
+		5857EA2A1FB03F2C004F124D /* SeafItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 5857EA291FB03F2C004F124D /* SeafItem.m */; };
 		58D40A681E9AF72200A68BEF /* UIViewController+Extend.m in Sources */ = {isa = PBXBuildFile; fileRef = 58D40A601E9AF72200A68BEF /* UIViewController+Extend.m */; };
 		58D40A691E9AF72200A68BEF /* SeafGlobal.m in Sources */ = {isa = PBXBuildFile; fileRef = 58D40A621E9AF72200A68BEF /* SeafGlobal.m */; };
 		58D40A6A1E9AF72200A68BEF /* SeafDbCacheProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = 58D40A641E9AF72200A68BEF /* SeafDbCacheProvider.m */; };
@@ -455,6 +458,12 @@
 		57F8CD1E1A127544000F6CDC /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/SeafTextEditorViewController_iPhone.xib; sourceTree = "<group>"; };
 		57F8CD201A12754E000F6CDC /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/SeafUploadingFileCell.xib; sourceTree = "<group>"; };
 		583F23C11E3E6EAC00F9FE07 /* Contacts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Contacts.framework; path = System/Library/Frameworks/Contacts.framework; sourceTree = SDKROOT; };
+		5857E9C91FAFCAD5004F124D /* SeafProviderItem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafProviderItem.h; sourceTree = "<group>"; };
+		5857E9CA1FAFCAD5004F124D /* SeafProviderItem.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafProviderItem.m; sourceTree = "<group>"; };
+		5857E9CC1FB0195C004F124D /* SeafEnumerator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafEnumerator.h; sourceTree = "<group>"; };
+		5857E9CD1FB0195C004F124D /* SeafEnumerator.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafEnumerator.m; sourceTree = "<group>"; };
+		5857EA281FB03F2C004F124D /* SeafItem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafItem.h; sourceTree = "<group>"; };
+		5857EA291FB03F2C004F124D /* SeafItem.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafItem.m; sourceTree = "<group>"; };
 		58D40A601E9AF72200A68BEF /* UIViewController+Extend.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIViewController+Extend.m"; path = "common/Classes/UIViewController+Extend.m"; sourceTree = "<group>"; };
 		58D40A611E9AF72200A68BEF /* UIViewController+Extend.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIViewController+Extend.h"; path = "common/Classes/UIViewController+Extend.h"; sourceTree = "<group>"; };
 		58D40A621E9AF72200A68BEF /* SeafGlobal.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafGlobal.m; path = common/Classes/SeafGlobal.m; sourceTree = "<group>"; };
@@ -756,6 +765,12 @@
 			children = (
 				57A0298A1A16F935009C9D7B /* FileProvider.h */,
 				57A0298B1A16F935009C9D7B /* FileProvider.m */,
+				5857E9C91FAFCAD5004F124D /* SeafProviderItem.h */,
+				5857E9CA1FAFCAD5004F124D /* SeafProviderItem.m */,
+				5857E9CC1FB0195C004F124D /* SeafEnumerator.h */,
+				5857E9CD1FB0195C004F124D /* SeafEnumerator.m */,
+				5857EA281FB03F2C004F124D /* SeafItem.h */,
+				5857EA291FB03F2C004F124D /* SeafItem.m */,
 				57A0299D1A16F965009C9D7B /* Info.plist */,
 				57A0299E1A16F965009C9D7B /* SeafProviderFileProvider.entitlements */,
 				57A0296F1A16F8AD009C9D7B /* Supporting Files */,
@@ -1337,7 +1352,7 @@
 			);
 			inputPaths = (
 				"${SRCROOT}/Pods/Target Support Files/Pods-SeafProvider/Pods-SeafProvider-resources.sh",
-				"$PODS_CONFIGURATION_BUILD_DIR/Seafile/Seafile.bundle",
+				$PODS_CONFIGURATION_BUILD_DIR/Seafile/Seafile.bundle,
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
@@ -1355,7 +1370,7 @@
 			);
 			inputPaths = (
 				"${SRCROOT}/Pods/Target Support Files/Pods-SeafAction/Pods-SeafAction-resources.sh",
-				"$PODS_CONFIGURATION_BUILD_DIR/Seafile/Seafile.bundle",
+				$PODS_CONFIGURATION_BUILD_DIR/Seafile/Seafile.bundle,
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
@@ -1373,7 +1388,7 @@
 			);
 			inputPaths = (
 				"${SRCROOT}/Pods/Target Support Files/Pods-SeafProviderFileProvider/Pods-SeafProviderFileProvider-resources.sh",
-				"$PODS_CONFIGURATION_BUILD_DIR/Seafile/Seafile.bundle",
+				$PODS_CONFIGURATION_BUILD_DIR/Seafile/Seafile.bundle,
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
@@ -1391,10 +1406,10 @@
 			);
 			inputPaths = (
 				"${SRCROOT}/Pods/Target Support Files/Pods-seafile-appstore/Pods-seafile-appstore-resources.sh",
-				"$PODS_CONFIGURATION_BUILD_DIR/MWPhotoBrowser/MWPhotoBrowser.bundle",
-				"$PODS_CONFIGURATION_BUILD_DIR/QBImagePickerController/QBImagePickerController.bundle",
+				$PODS_CONFIGURATION_BUILD_DIR/MWPhotoBrowser/MWPhotoBrowser.bundle,
+				$PODS_CONFIGURATION_BUILD_DIR/QBImagePickerController/QBImagePickerController.bundle,
 				"${PODS_ROOT}/SVProgressHUD/SVProgressHUD/SVProgressHUD.bundle",
-				"$PODS_CONFIGURATION_BUILD_DIR/Seafile/Seafile.bundle",
+				$PODS_CONFIGURATION_BUILD_DIR/Seafile/Seafile.bundle,
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
@@ -1497,8 +1512,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				58D40A7A1E9AF84C00A68BEF /* seafile.xcdatamodeld in Sources */,
+				5857E9CE1FB0195C004F124D /* SeafEnumerator.m in Sources */,
 				58D40A731E9AF82900A68BEF /* SeafGlobal.m in Sources */,
+				5857E9CB1FAFCAD5004F124D /* SeafProviderItem.m in Sources */,
 				58D40A741E9AF82900A68BEF /* SeafDbCacheProvider.m in Sources */,
+				5857EA2A1FB03F2C004F124D /* SeafItem.m in Sources */,
 				57A0298E1A16F935009C9D7B /* FileProvider.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

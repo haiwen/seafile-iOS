@@ -30,7 +30,9 @@ typedef void (^SeafUploadCompletionBlock)(BOOL success, SeafUploadFile *file, NS
 @property (readonly) NSString *name;
 @property (readonly) long long filesize;
 
-@property (readonly) BOOL uploading;
+@property (nonatomic, readonly, getter=isUploaded) BOOL uploaded;
+@property (nonatomic, readonly, getter=isUploading) BOOL uploading;
+
 @property (readwrite) BOOL overwrite;
 @property (nonatomic, readonly) ALAsset *asset;
 @property (nonatomic, readonly) NSURL *assetURL;
@@ -46,7 +48,7 @@ typedef void (^SeafUploadCompletionBlock)(BOOL success, SeafUploadFile *file, NS
 
 - (void)setAsset:(ALAsset *)asset url:(NSURL *)url;
 
-- (BOOL)uploaded;
+- (BOOL)isUploaded;
 
 - (NSMutableDictionary *)uploadAttr;
 - (BOOL)saveUploadAttr:(BOOL)flush;

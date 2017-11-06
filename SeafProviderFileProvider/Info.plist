@@ -35,6 +35,8 @@
 	<dict>
 		<key>NSExtensionFileProviderDocumentGroup</key>
 		<string>group.com.seafile.seafilePro</string>
+		<key>NSExtensionFileProviderSupportsEnumeration</key>
+		<true/>
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.fileprovider-nonui</string>
 		<key>NSExtensionPrincipalClass</key>

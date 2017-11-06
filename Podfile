@@ -3,6 +3,7 @@ def shared
   pod 'Seafile', :path => "./"
   pod 'AFNetworking', '~> 2.6.1'
   pod 'OpenSSL-Universal', '~> 1.0.1.p'
+  pod 'APLRUCache', '~> 1.0.0'
 end
 
 target :"seafile-appstore" do

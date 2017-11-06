@@ -151,7 +151,7 @@
 
 - (void)uploadFileOverwrite:(BOOL)overwrite
 {
-    NSString *uniqDir = [Utils encodeDir:_directory->connection.address username:_directory->connection.username repo:_directory.repoId path:_directory.path overwrite:overwrite];
+    NSString *uniqDir = [Utils encodePath:_directory->connection.address username:_directory->connection.username repo:_directory.repoId path:_directory.path];
     NSString *tmpdir = [self.root.documentStorageURL.path stringByAppendingString:uniqDir];
     if (![Utils checkMakeDir:tmpdir]) {
         Warning("Failed to create temp dir.");
@@ -176,7 +176,7 @@
         ufile.delegate = self;
         ufile.udir = _directory;
         ufile.overwrite = overwrite;
-        Debug("file %@ %d %d", ufile.lpath, ufile.uploading, ufile.uploaded);
+        Debug("file %@ %d %d", ufile.lpath, ufile.isUploading, ufile.isUploaded);
         [self showUploadProgress:ufile];
     }];
 }
@@ -350,7 +350,7 @@
 
         if (self.root.documentPickerMode == UIDocumentPickerModeImport
             || self.root.documentPickerMode == UIDocumentPickerModeOpen) {
-            NSString *encodeUniqDir = [Utils encodeDir:file->connection.address username:file->connection.username repo:file.repoId path:file.path.stringByDeletingLastPathComponent overwrite:true];
+            NSString *encodeUniqDir = [Utils encodePath:file->connection.address username:file->connection.username repo:file.repoId path:file.path.stringByDeletingLastPathComponent];
             NSString *tmpdir = [self.root.documentStorageURL.path stringByAppendingPathComponent:encodeUniqDir];
             if (![Utils checkMakeDir:tmpdir]) {
                 Warning("Failed to create temp dir.");

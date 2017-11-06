@@ -47,6 +47,8 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 @property (readonly) long long mtime;
 @property (strong, nullable) id <SeafFileUpdateDelegate> udelegate;
 @property (strong, nonatomic) NSProgress * _Nullable progress;
+@property (nonatomic, readonly, getter=isUploaded) BOOL uploaded;
+@property (nonatomic, readonly, getter=isUploading) BOOL uploading;
 
 - (BOOL)isDownloading;
 - (BOOL)isStarred;

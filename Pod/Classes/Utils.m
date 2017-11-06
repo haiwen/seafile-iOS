@@ -613,30 +613,49 @@
     return name;
 }
 
-+ (NSString *)encodeDir:(NSString *)server username:(NSString *)username repo:(NSString *)repoId path:(NSString *)path overwrite:(BOOL)overwrite
++ (NSString *)encodePath:(NSString *)server username:(NSString *)username repo:(NSString *)repoId path:(NSString *)path
 {
-    NSMutableCharacterSet *allowedSet = [NSMutableCharacterSet uppercaseLetterCharacterSet];
-    [allowedSet formUnionWithCharacterSet:[NSMutableCharacterSet lowercaseLetterCharacterSet]];
-    [allowedSet formUnionWithCharacterSet:[NSMutableCharacterSet decimalDigitCharacterSet]];
-
-    NSString *s = [NSString stringWithFormat:@"%@-%@-%@-%@-%d",
-                [server stringByAddingPercentEncodingWithAllowedCharacters:allowedSet],
-                   [username stringByAddingPercentEncodingWithAllowedCharacters:allowedSet],
-                   [repoId stringByAddingPercentEncodingWithAllowedCharacters:allowedSet],
-                   [path stringByAddingPercentEncodingWithAllowedCharacters:allowedSet],
-                   overwrite];
-    return s;
+    NSMutableCharacterSet *allowedSet = [NSMutableCharacterSet characterSetWithCharactersInString:@"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLKMNOPQRSTUVWXYZ0123456789"];
+    [allowedSet addCharactersInString:@"@.- "];
+    NSMutableString *ms = [NSMutableString new];
+    if (server) {
+        [ms appendFormat:@"%@_%@", [server stringByAddingPercentEncodingWithAllowedCharacters:allowedSet], [username stringByAddingPercentEncodingWithAllowedCharacters:allowedSet]];
+    }
+    if (repoId) {
+        [ms appendFormat:@"_%@", [repoId stringByAddingPercentEncodingWithAllowedCharacters:allowedSet]];
+    }
+    if (path) {
+        [ms appendFormat:@"_%@", [path stringByAddingPercentEncodingWithAllowedCharacters:allowedSet]];
+    }
+    //Debug("_server=%ld, %@, _username=%@, repo=%@,   ms:%@", server.length, server, username, repoId, ms);
+/*
+    NSString *server2 = nil;
+    NSString *username2 = nil;;
+    NSString *repoId2 = nil;
+    NSString *path2 = nil;
+    [Utils decodePath:ms server:&server2 username:&username2 repo:&repoId2 path:&path2];
+    Debug(">>>>_server=%ld, %@, _username=%@, repo=%@,   ms:%@", server2.length, server2, username2, repoId2, ms);
+*/
+    return ms;
 }
 
-+ (NSArray *)decodeDir:(NSString *)encodedStr // server, username, repo, path, overwrite
++ (void)decodePath:(NSString *)encodedStr server:(NSString **)server username:(NSString **)username repo:(NSString **)repoId path:(NSString **)path
 {
-    NSArray *arr = [encodedStr componentsSeparatedByString:@"-"];
-    if (arr.count != 5) return nil;
+    NSArray *arr = [encodedStr componentsSeparatedByString:@"_"];
+    *server = nil;
+    *username = nil;
+    *repoId = nil;
+    *path = nil;
 
-    NSMutableArray *ans = [NSMutableArray new];
-    for (NSString *s in arr) {
-        [ans addObject:[s stringByRemovingPercentEncoding]];
+    if (arr.count >= 2) {
+        *server = [[arr objectAtIndex:0] stringByRemovingPercentEncoding];
+        *username = [[arr objectAtIndex:1] stringByRemovingPercentEncoding];
     }
-    return arr;
+    if (arr.count >= 3) {
+        *repoId = [[arr objectAtIndex:2] stringByRemovingPercentEncoding];
+    }
+    if (arr.count >= 4) {
+        *path = [[arr objectAtIndex:3] stringByRemovingPercentEncoding];
+    }
 }
 @end

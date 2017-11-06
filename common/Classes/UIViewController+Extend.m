@@ -49,7 +49,7 @@
     return [self initWithNibName:[NSString stringWithFormat:@"%@_%@_%@", className, plaformSuffix, lang] bundle:nil];
 }
 
-- (void)alertWithTitle:(NSString*)title message:(NSString*)message handler:(void (^)())handler;
+- (void)alertWithTitle:(NSString*)title message:(NSString*)message handler:(void (^)(void))handler;
 {
     [Utils alertWithTitle:title message:message handler:handler from:self];
 }
@@ -64,13 +64,13 @@
     [self alertWithTitle:title message:nil];
 }
 
-- (void)alertWithTitle:(NSString*)title handler:(void (^)())handler
+- (void)alertWithTitle:(NSString*)title handler:(void (^)(void))handler
 {
     [self alertWithTitle:title message:nil handler:handler];
 }
 
 
-- (void)alertWithTitle:(NSString *)title message:(NSString*)message yes:(void (^)())yes no:(void (^)())no
+- (void)alertWithTitle:(NSString *)title message:(NSString*)message yes:(void (^)(void))yes no:(void (^)(void))no
 {
     [Utils alertWithTitle:title message:message yes:yes no:no from:self];
 }
@@ -109,7 +109,7 @@
     return [self isViewLoaded] && self.view.window;
 }
 
-- (void)popupSetRepoPassword:(SeafRepo *)repo handler:(void (^)())handler
+- (void)popupSetRepoPassword:(SeafRepo *)repo handler:(void (^)(void))handler
 {
     NSString *title = [NSString stringWithFormat:NSLocalizedString(@"Password of library '%@'", @"Seafile"), repo.name];
     [self popupInputView:title placeholder:nil secure:true handler:^(NSString *input) {

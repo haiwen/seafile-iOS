@@ -52,7 +52,7 @@ enum {
 - (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
 
 @property (strong, nonatomic) SeafDir *directory;
-@property (strong) id<SeafItem> curEntry;
+@property (strong) id curEntry;
 @property (strong, nonatomic) IBOutlet UIActivityIndicatorView *loadingView;
 
 @property (strong) UIBarButtonItem *selectAllItem;
@@ -494,7 +494,7 @@ enum {
 #endif
     for (SeafUploadFile *file in uploadFiles) {
         file.delegate = self;
-        if (!file.uploaded && !file.uploading) {
+        if (!file.isUploaded && !file.isUploading) {
             Debug("background upload %@", file.name);
             [SeafDataTaskManager.sharedObject addUploadTask:file];
         }
@@ -641,7 +641,7 @@ enum {
     SeafCell *cell = [self getCellForTableView:tableView];
     cell.textLabel.text = file.name;
     cell.imageView.image = file.icon;
-    if (file.uploading) {
+    if (file.isUploading) {
         cell.progressView.hidden = false;
         [cell.progressView setProgress:file.uProgress];
     } else {
@@ -925,15 +925,16 @@ enum {
         return [self noneSelected:NO];
     }
     _curEntry = [self getDentrybyIndexPath:indexPath tableView:tableView];
-    Debug("Select %@", _curEntry.name);
+    Debug("Select %@", [_curEntry name]);
     if (!_curEntry) {
         return [tableView performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
     }
     if ([_curEntry isKindOfClass:[SeafRepo class]] && [(SeafRepo *)_curEntry passwordRequired]) {
         return [self popupSetRepoPassword:(SeafRepo *)_curEntry];
     }
-    [_curEntry setDelegate:self];
+    
     if ([_curEntry conformsToProtocol:@protocol(SeafPreView)]) {
+        [(id<SeafPreView>)_curEntry setDelegate:self];
         if ([_curEntry isKindOfClass:[SeafFile class]] && ![(SeafFile *)_curEntry hasCache]) {
             SeafCell *cell = [tableView cellForRowAtIndexPath:indexPath];
             [self updateCellDownloadStatus:cell file:(SeafFile *)_curEntry waiting:true];
@@ -957,6 +958,7 @@ enum {
             }
         }
     } else if ([_curEntry isKindOfClass:[SeafDir class]]) {
+        [(SeafDir *)_curEntry setDelegate:self];
         SeafFileViewController *controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
         [controller setDirectory:(SeafDir *)_curEntry];
         [self.navigationController pushViewController:controller animated:YES];

@@ -8,7 +8,6 @@
 
 #import <Foundation/Foundation.h>
 #import <QuickLook/QuickLook.h>
-#import "SeafItem.h"
 
 @class SeafBase;
 
@@ -34,7 +33,7 @@ enum SET_REPO_PASSWORD_RET {
 @end
 
 
-@protocol SeafPreView <QLPreviewItem, SeafItem, SeafSortable>
+@protocol SeafPreView <QLPreviewItem, SeafSortable>
 - (UIImage *)image;
 - (UIImage *)thumb;
 - (UIImage *)icon;
@@ -48,7 +47,7 @@ enum SET_REPO_PASSWORD_RET {
 - (BOOL)isImageFile;
 - (long long) mtime;
 - (void)cancelAnyLoading;
-
+- (void)setDelegate:(id)delegate;
 
 - (void)load:(id<SeafDentryDelegate>)delegate force:(BOOL)force;
 @end

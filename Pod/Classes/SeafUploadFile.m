@@ -164,7 +164,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     return !_udir;
 }
 
-- (BOOL)uploaded
+- (BOOL)isUploaded
 {
     NSMutableDictionary *dict = self.uploadAttr;
     if (dict && [[dict objectForKey:@"result"] boolValue])
@@ -175,7 +175,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 - (void)finishUpload:(BOOL)result oid:(NSString *)oid
 {
     @synchronized(self) {
-        if (!_uploading) return;
+        if (!self.isUploading) return;
         _uploading = NO;
         self.task = nil;
         [self updateProgress:nil];
@@ -464,7 +464,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     }
 
     @synchronized (self) {
-        if (_uploading || self.uploaded)
+        if (self.isUploading || self.isUploaded)
             return;
         _uploading = YES;
         _uProgress = 0;
@@ -568,9 +568,9 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     } else if ([self.mime hasSuffix:@"seafile"]) {
         _preViewURL = [NSURL fileURLWithPath:[SeafileBundle() pathForResource:@"htmls/view_seaf" ofType:@"html"]];
     } else {
-        NSString *encodePath = [SeafStorage.sharedObject.tempDir stringByAppendingPathComponent:self.name];
-        if ([Utils tryTransformEncoding:encodePath fromFile:self.lpath])
-            _preViewURL = [NSURL fileURLWithPath:encodePath];
+        NSString *utf16Path = [SeafStorage.sharedObject.tempDir stringByAppendingPathComponent:self.name];
+        if ([Utils tryTransformEncoding:utf16Path fromFile:self.lpath])
+            _preViewURL = [NSURL fileURLWithPath:utf16Path];
     }
     if (!_preViewURL)
         _preViewURL = [NSURL fileURLWithPath:self.lpath];
@@ -721,7 +721,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 - (BOOL)waitUpload {
     dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
-    return self.uploaded;
+    return self.isUploaded;
 }
 
 - (void)uploadProgress:(float)progress
