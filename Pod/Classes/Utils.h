@@ -55,4 +55,8 @@
 + (NSDictionary *)queryToDict:(NSString *)query;
 + (void)dict:(NSMutableDictionary *)dict setObject:(id)value forKey:(NSString *)defaultName;
 + (NSString *)assertName:(ALAsset *)asset;
+
++ (NSString *)encodeDir:(NSString *)server username:(NSString *)username repo:(NSString *)repoId path:(NSString *)path overwrite:(BOOL)overwrite;
++ (NSArray *)decodeDir:(NSString *)encodedStr; // server, username, repo, path, overwrite
+
 @end

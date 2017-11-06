@@ -575,4 +575,30 @@
     return name;
 }
 
++ (NSString *)encodeDir:(NSString *)server username:(NSString *)username repo:(NSString *)repoId path:(NSString *)path overwrite:(BOOL)overwrite
+{
+    NSMutableCharacterSet *allowedSet = [NSMutableCharacterSet uppercaseLetterCharacterSet];
+    [allowedSet formUnionWithCharacterSet:[NSMutableCharacterSet lowercaseLetterCharacterSet]];
+    [allowedSet formUnionWithCharacterSet:[NSMutableCharacterSet decimalDigitCharacterSet]];
+
+    NSString *s = [NSString stringWithFormat:@"%@-%@-%@-%@-%d",
+                [server stringByAddingPercentEncodingWithAllowedCharacters:allowedSet],
+                   [username stringByAddingPercentEncodingWithAllowedCharacters:allowedSet],
+                   [repoId stringByAddingPercentEncodingWithAllowedCharacters:allowedSet],
+                   [path stringByAddingPercentEncodingWithAllowedCharacters:allowedSet],
+                   overwrite];
+    return s;
+}
+
++ (NSArray *)decodeDir:(NSString *)encodedStr // server, username, repo, path, overwrite
+{
+    NSArray *arr = [encodedStr componentsSeparatedByString:@"-"];
+    if (arr.count != 5) return nil;
+
+    NSMutableArray *ans = [NSMutableArray new];
+    for (NSString *s in arr) {
+        [ans addObject:[s stringByRemovingPercentEncoding]];
+    }
+    return arr;
+}
 @end

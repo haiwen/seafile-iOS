@@ -42,10 +42,5 @@
 
 - (void)migrate;
 
-- (void)addExportFile:(NSURL *)url data:(NSDictionary *)dict;
-- (void)removeExportFile:(NSURL *)url;
-- (NSDictionary *)getExportFile:(NSURL *)url;
-- (void)clearExportFiles;
-
 @end
 
