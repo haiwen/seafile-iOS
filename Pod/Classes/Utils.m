@@ -17,6 +17,7 @@
 #import <dirent.h>
 #import <sys/xattr.h>
 #import <Photos/Photos.h>
+#import <MobileCoreServices/MobileCoreServices.h>
 
 @implementation Utils
 
@@ -292,7 +293,7 @@
 
 + (BOOL)isImageFile:(NSString *)name
 {
-    static NSString *imgexts[] = {@"tif", @"tiff", @"jpg", @"jpeg", @"gif", @"png", @"bmp", @"ico", nil};
+    static NSString *imgexts[] = {@"tif", @"tiff", @"jpg", @"jpeg", @"gif", @"png", @"bmp", @"ico", @"heic",nil};
     NSString *ext = name.pathExtension.lowercaseString;
     return [Utils isExt:ext In:imgexts];
 }
@@ -394,15 +395,28 @@
     NSURL *imageUrl = [[asset defaultRepresentation]url];
     PHAsset *phAsset = [PHAsset fetchAssetsWithALAssetURLs:@[imageUrl] options:nil].firstObject;
     
+    PHImageManager *imageManager = [PHImageManager new];
+    PHImageRequestOptions *options = [PHImageRequestOptions new];
+    options.networkAccessAllowed = YES;
+    options.synchronous = YES;
+    options.version = PHImageRequestOptionsVersionCurrent;
+    options.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
+    
     __block BOOL success;
     __block dispatch_semaphore_t sem = dispatch_semaphore_create(0);
-    [[PHImageManager defaultManager] requestImageDataForAsset:phAsset options:nil resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
-        CIImage *ciImage = [CIImage imageWithData:imageData];
-        CIContext *context = [CIContext context];
-        if (@available(iOS 10.0, *)) {
-            NSData *jpgData = [context JPEGRepresentationOfImage:ciImage colorSpace:ciImage.colorSpace options:@{}];
-            NSURL *url = [[NSURL alloc] initFileURLWithPath:[filePath stringByReplacingOccurrencesOfString:@"HEIC" withString:@"jpg"]];
-            success = [jpgData writeToURL:url atomically:YES];
+    [imageManager requestImageDataForAsset:phAsset options:nil resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
+        if (imageData) {
+            if (!UTTypeConformsTo((__bridge CFStringRef _Nonnull)(dataUTI), kUTTypeJPEG)) {
+                CIImage *ciImage = [CIImage imageWithData:imageData];
+                CIContext *context = [CIContext context];
+                NSURL *outputURL = [[NSURL alloc] initFileURLWithPath:[filePath stringByReplacingOccurrencesOfString:@"HEIC" withString:@"jpg"]];
+                NSError *error = nil;
+                if (@available(iOS 10.0, *)) {
+                    success = [context writeJPEGRepresentationOfImage:ciImage toURL:outputURL colorSpace:ciImage.colorSpace options:@{} error:&error];
+                }
+            }
+        } else {
+            Debug(@"Could not requestImageDataForAsset! %@", info);
         }
         dispatch_semaphore_signal(sem);
     }];
