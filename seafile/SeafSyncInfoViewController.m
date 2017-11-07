@@ -68,6 +68,8 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
 
     self.connection = [SeafGlobal sharedObject].connection;
 
+    [self initTaskArray];
+    
     WS(weakSelf);
     SeafDataTaskManager.sharedObject.trySyncBlock = ^(id<SeafTask> _Nullable task) {
         if (![task.accountIdentifier isEqualToString:self.connection.accountIdentifier]) return;
@@ -92,7 +94,6 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
             [weakSelf.tableView reloadData];
         });
     };
-    [self initTaskArray];
 }
 
 - (NSArray*)allCompeletedTask {

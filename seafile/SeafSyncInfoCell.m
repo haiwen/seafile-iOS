@@ -62,13 +62,16 @@
         self.statusLabel.text = @"";
         self.iconView.image = ufile.icon;
         self.sizeLabel.text = [FileSizeFormatter stringFromLongLong:ufile.filesize];
+        self.progressView.hidden = YES;
         if (ufile.uploading) {
             self.progressView.hidden = NO;
             self.progressView.progress = ufile.uProgress;
             self.statusLabel.text = NSLocalizedString(@"Uploading", @"Seafile");
-        } else {
-            self.progressView.hidden = YES;
+        } else if (ufile.uploaded) {
             self.statusLabel.text = NSLocalizedString(@"Completed", @"Seafile");
+        } else if (ufile.waitUpload) {
+            self.statusLabel.text = @"";
+            self.sizeLabelLeftConstraint.constant = 0;
         }
     }
 }

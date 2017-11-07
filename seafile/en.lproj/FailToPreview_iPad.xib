@@ -1,8 +1,12 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="6250" systemVersion="13F34" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="13529" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
+    <device id="ipad9_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6244"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13527"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
@@ -11,46 +15,65 @@
             <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
-                <view contentMode="scaleToFill" id="16">
-                    <rect key="frame" x="65" y="257" width="638" height="491"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="16">
+                    <rect key="frame" x="65" y="266.5" width="638" height="491"/>
                     <subviews>
-                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" id="4">
-                            <rect key="frame" x="244" y="51" width="150" height="150"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                        </imageView>
-                        <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="Name" textAlignment="center" lineBreakMode="middleTruncation" minimumFontSize="10" id="7">
-                            <rect key="frame" x="110" y="217" width="417" height="25"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="Name" textAlignment="center" lineBreakMode="middleTruncation" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="7">
+                            <rect key="frame" x="293.5" y="214" width="50.5" height="23"/>
                             <fontDescription key="fontDescription" type="system" pointSize="19"/>
                             <nil key="highlightedColor"/>
                         </label>
-                        <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="3">
-                            <rect key="frame" x="69" y="298" width="500" height="21"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="3">
+                            <rect key="frame" x="169" y="265" width="300" height="21"/>
+                            <constraints>
+                                <constraint firstAttribute="height" constant="21" id="KsQ-6v-wMv"/>
+                                <constraint firstAttribute="width" constant="300" id="lXS-Ms-dgo"/>
+                            </constraints>
                             <fontDescription key="fontDescription" type="system" pointSize="17"/>
                             <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                             <nil key="highlightedColor"/>
                         </label>
-                        <button opaque="NO" contentMode="scaleToFill" selected="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" showsTouchWhenHighlighted="YES" adjustsImageWhenDisabled="NO" lineBreakMode="middleTruncation" id="5" customClass="ColorfulButton">
-                            <rect key="frame" x="212" y="361" width="227" height="37"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <button opaque="NO" contentMode="scaleToFill" selected="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" showsTouchWhenHighlighted="YES" adjustsImageWhenDisabled="NO" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="5" customClass="ColorfulButton">
+                            <rect key="frame" x="218.5" y="368" width="201" height="33"/>
                             <fontDescription key="fontDescription" type="system" pointSize="17"/>
                             <state key="normal" title="Open in other applications">
-                                <color key="titleColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                                <color key="titleColor" red="0.66666668653488159" green="0.66666668653488159" blue="0.66666668653488159" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                             </state>
                             <state key="selected">
-                                <color key="titleColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                                <color key="titleColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                             </state>
                             <state key="highlighted">
-                                <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <color key="titleColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                             </state>
                         </button>
+                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="4">
+                            <rect key="frame" x="244" y="29" width="150" height="150"/>
+                            <constraints>
+                                <constraint firstAttribute="width" constant="150" id="2x6-tf-h0v"/>
+                                <constraint firstAttribute="height" constant="150" id="hfb-Te-xgf"/>
+                            </constraints>
+                        </imageView>
                     </subviews>
-                    <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                    <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <constraints>
+                        <constraint firstItem="7" firstAttribute="centerX" secondItem="16" secondAttribute="centerX" id="4Za-rJ-ug6"/>
+                        <constraint firstAttribute="bottom" secondItem="5" secondAttribute="bottom" constant="90" id="4pv-op-I9R"/>
+                        <constraint firstItem="7" firstAttribute="top" secondItem="4" secondAttribute="bottom" constant="35" id="EfI-Lb-Dph"/>
+                        <constraint firstAttribute="width" constant="638" id="INL-x9-TVJ"/>
+                        <constraint firstItem="3" firstAttribute="centerX" secondItem="16" secondAttribute="centerX" id="NKB-04-7IL"/>
+                        <constraint firstItem="5" firstAttribute="centerX" secondItem="16" secondAttribute="centerX" id="Nsf-WU-aWe"/>
+                        <constraint firstAttribute="height" constant="491" id="W2j-C1-Lil"/>
+                        <constraint firstItem="3" firstAttribute="centerY" secondItem="16" secondAttribute="centerY" constant="30" id="pRf-mA-1oM"/>
+                        <constraint firstItem="7" firstAttribute="centerY" secondItem="16" secondAttribute="centerY" constant="-20" id="qH5-16-f31"/>
+                        <constraint firstItem="4" firstAttribute="centerX" secondItem="16" secondAttribute="centerX" id="qtP-bW-yO0"/>
+                    </constraints>
                 </view>
             </subviews>
-            <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+            <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <constraints>
+                <constraint firstItem="16" firstAttribute="centerX" secondItem="1" secondAttribute="centerX" id="DJj-oi-2Ck"/>
+                <constraint firstItem="16" firstAttribute="centerY" secondItem="1" secondAttribute="centerY" id="Ese-tX-FyZ"/>
+            </constraints>
             <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackOpaque"/>
             <connections>
                 <outlet property="errorLabel" destination="3" id="kMO-UZ-9zX"/>
@@ -60,9 +83,4 @@
             </connections>
         </view>
     </objects>
-    <simulatedMetricsContainer key="defaultSimulatedMetrics">
-        <simulatedStatusBarMetrics key="statusBar"/>
-        <simulatedOrientationMetrics key="orientation"/>
-        <simulatedScreenMetrics key="destination"/>
-    </simulatedMetricsContainer>
 </document>

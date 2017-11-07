@@ -1,56 +1,83 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="6250" systemVersion="13F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13529" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6244"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13527"/>
+        <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
         <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
         <view contentMode="scaleToFill" id="1" customClass="FailToPreview">
-            <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+            <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
-                <view contentMode="scaleToFill" id="16">
-                    <rect key="frame" x="15" y="55" width="290" height="357"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="16">
+                    <rect key="frame" x="0.0" y="146" width="375" height="375"/>
                     <subviews>
-                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" id="4">
-                            <rect key="frame" x="95" y="20" width="100" height="100"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="4">
+                            <rect key="frame" x="137.5" y="30" width="100" height="100"/>
+                            <constraints>
+                                <constraint firstAttribute="width" constant="100" id="FKR-5P-KXH"/>
+                                <constraint firstAttribute="height" constant="100" id="c43-1n-VcN"/>
+                            </constraints>
                         </imageView>
-                        <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="2" minimumFontSize="10" id="3">
-                            <rect key="frame" x="11" y="243" width="268" height="42"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="2" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="3">
+                            <rect key="frame" x="53.5" y="203" width="268" height="40"/>
+                            <constraints>
+                                <constraint firstAttribute="height" constant="40" id="dZQ-hB-A3J"/>
+                                <constraint firstAttribute="width" constant="268" id="lva-Dv-gU4"/>
+                            </constraints>
                             <fontDescription key="fontDescription" type="system" pointSize="17"/>
                             <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                             <nil key="highlightedColor"/>
                         </label>
-                        <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="Name" textAlignment="center" lineBreakMode="middleTruncation" minimumFontSize="10" id="7">
-                            <rect key="frame" x="20" y="161" width="250" height="25"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="Name" textAlignment="center" lineBreakMode="middleTruncation" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="7">
+                            <rect key="frame" x="62.5" y="150" width="250" height="23"/>
+                            <constraints>
+                                <constraint firstAttribute="width" constant="250" id="LrY-eY-FX0"/>
+                            </constraints>
                             <fontDescription key="fontDescription" type="system" pointSize="19"/>
                             <nil key="highlightedColor"/>
                         </label>
-                        <button opaque="NO" contentMode="scaleToFill" selected="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" showsTouchWhenHighlighted="YES" adjustsImageWhenDisabled="NO" lineBreakMode="middleTruncation" id="5" customClass="ColorfulButton">
-                            <rect key="frame" x="32" y="308" width="227" height="37"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <button opaque="NO" contentMode="scaleToFill" selected="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" showsTouchWhenHighlighted="YES" adjustsImageWhenDisabled="NO" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="5" customClass="ColorfulButton">
+                            <rect key="frame" x="87" y="312" width="201" height="33"/>
                             <fontDescription key="fontDescription" type="system" pointSize="17"/>
                             <state key="normal" title="Open in other applications">
-                                <color key="titleColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                                <color key="titleColor" red="0.66666668653488159" green="0.66666668653488159" blue="0.66666668653488159" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                             </state>
                             <state key="selected">
-                                <color key="titleColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                                <color key="titleColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                             </state>
                             <state key="highlighted">
-                                <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <color key="titleColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                             </state>
                         </button>
                     </subviews>
-                    <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                    <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <constraints>
+                        <constraint firstAttribute="width" secondItem="16" secondAttribute="height" multiplier="1:1" id="6EO-KR-SQf"/>
+                        <constraint firstItem="7" firstAttribute="centerX" secondItem="16" secondAttribute="centerX" id="Bhs-Ul-yUj"/>
+                        <constraint firstItem="3" firstAttribute="centerX" secondItem="16" secondAttribute="centerX" id="TGr-8b-K2I"/>
+                        <constraint firstItem="5" firstAttribute="centerX" secondItem="16" secondAttribute="centerX" id="h5W-vX-kGV"/>
+                        <constraint firstItem="4" firstAttribute="centerX" secondItem="16" secondAttribute="centerX" id="ifB-9a-Iqw"/>
+                        <constraint firstItem="4" firstAttribute="top" secondItem="16" secondAttribute="top" constant="30" id="m2X-Em-V8p"/>
+                        <constraint firstItem="3" firstAttribute="top" secondItem="7" secondAttribute="bottom" constant="30" id="mZl-ni-hd6"/>
+                        <constraint firstItem="7" firstAttribute="top" secondItem="4" secondAttribute="bottom" constant="20" id="oct-fb-tYm"/>
+                        <constraint firstAttribute="bottom" secondItem="5" secondAttribute="bottom" constant="30" id="uvS-W4-Eyi"/>
+                    </constraints>
                 </view>
             </subviews>
-            <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+            <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <constraints>
+                <constraint firstItem="16" firstAttribute="centerY" secondItem="1" secondAttribute="centerY" id="KbO-YE-9cD"/>
+                <constraint firstAttribute="trailing" secondItem="16" secondAttribute="trailing" id="WTs-DS-5kn"/>
+                <constraint firstItem="16" firstAttribute="leading" secondItem="1" secondAttribute="leading" id="lfV-MU-rLZ"/>
+            </constraints>
             <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackOpaque"/>
             <connections>
                 <outlet property="errorLabel" destination="3" id="3En-4I-2pH"/>
@@ -60,9 +87,4 @@
             </connections>
         </view>
     </objects>
-    <simulatedMetricsContainer key="defaultSimulatedMetrics">
-        <simulatedStatusBarMetrics key="statusBar"/>
-        <simulatedOrientationMetrics key="orientation"/>
-        <simulatedScreenMetrics key="destination" type="retina4"/>
-    </simulatedMetricsContainer>
 </document>

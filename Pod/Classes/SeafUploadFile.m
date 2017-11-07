@@ -542,6 +542,9 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     if (_asset) {
         @synchronized(dict) {
             BOOL ret = [Utils writeDataToPath:self.lpath andAsset:self.asset];
+            if ([self.lpath.pathExtension isEqualToString:@"HEIC"]) {
+                _lpath = [NSString stringWithFormat:@"%@.jpg",self.lpath.stringByDeletingPathExtension];
+            }
             if (!ret) {
                 Warning("Failed to write asset to file.");
                 [self finishUpload:false oid:nil];
