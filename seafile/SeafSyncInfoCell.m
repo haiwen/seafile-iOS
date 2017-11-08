@@ -59,19 +59,20 @@
         SeafUploadFile *ufile = (SeafUploadFile*)task;
 
         self.nameLabel.text = ufile.name;
-        self.statusLabel.text = @"";
         self.iconView.image = ufile.icon;
-        self.sizeLabel.text = [FileSizeFormatter stringFromLongLong:ufile.filesize];
+        self.statusLabel.text = @"";
+        self.sizeLabel.text = @"";
         self.progressView.hidden = YES;
         if (ufile.uploading) {
             self.progressView.hidden = NO;
             self.progressView.progress = ufile.uProgress;
             self.statusLabel.text = NSLocalizedString(@"Uploading", @"Seafile");
+            self.sizeLabel.text = [FileSizeFormatter stringFromLongLong:ufile.filesize];
         } else if (ufile.uploaded) {
             self.statusLabel.text = NSLocalizedString(@"Completed", @"Seafile");
-        } else if (ufile.waitUpload) {
-            self.statusLabel.text = @"";
-            self.sizeLabelLeftConstraint.constant = 0;
+            self.sizeLabel.text = [FileSizeFormatter stringFromLongLong:ufile.filesize];
+        } else {
+            self.statusLabel.text = [NSString stringWithFormat:NSLocalizedString(@"Waiting to upload", @"Seafile"), @""];
         }
     }
 }
