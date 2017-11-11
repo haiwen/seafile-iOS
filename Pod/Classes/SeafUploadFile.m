@@ -234,6 +234,10 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         }
         if (error) {
             Debug("Upload failed :%@,code=%ld, res=%@\n", error, (long)resp.statusCode, responseObject);
+            if (resp.statusCode == HTTP_ERR_REPO_PASSWORD_EXPIRED || resp.statusCode == HTTP_ERR_LOGIN_INCORRECT_PASSWORD) {
+                //refredh passwords when expired
+                [connection refreshRepoPassowrds];
+            }
             [self showDeserializedError:error];
             [self finishUpload:NO oid:nil];
         } else {
@@ -474,6 +478,10 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         return [self uploadLargeFileByBlocks:repo path:uploadpath];
     }
     BOOL byblock = [connection shouldLocalDecrypt:repo.repoId];
+    if (byblock && connection.isChunkSupported) {
+        Debug("upload Local decrypt %@ by block: %lld", self.name, _filesize);
+        return [self uploadLargeFileByBlocks:repo path:uploadpath];
+    }
     NSString* upload_url = [NSString stringWithFormat:API_URL"/repos/%@/upload-", repoId];
     if (byblock)
         upload_url = [upload_url stringByAppendingString:@"blks-link/"];
