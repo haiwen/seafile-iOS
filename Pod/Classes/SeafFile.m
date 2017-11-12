@@ -520,7 +520,9 @@
 - (void)genThumb
 {
     _icon = [Utils reSizeImage:self.image toSquare:THUMB_SIZE];
-    [self.delegate download:self complete:false];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.delegate download:self complete:false];
+    });
 }
 
 - (UIImage *)thumb
