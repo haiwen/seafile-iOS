@@ -830,6 +830,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                     Warning("Out of quota.");
                     [self.delegate outOfQuota:self];
                 }
+            } else if (resp.statusCode == HTTP_ERR_REPO_DOWNLOAD_PASSWORD_EXPIRED) {
+                [self refreshRepoPassowrds];
             }
         } else {
             success(request, resp, responseObject);

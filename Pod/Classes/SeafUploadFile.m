@@ -234,7 +234,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         }
         if (error) {
             Debug("Upload failed :%@,code=%ld, res=%@\n", error, (long)resp.statusCode, responseObject);
-            if (resp.statusCode == HTTP_ERR_REPO_PASSWORD_EXPIRED || resp.statusCode == HTTP_ERR_LOGIN_INCORRECT_PASSWORD) {
+            if (resp.statusCode == HTTP_ERR_REPO_UPLOAD_PASSWORD_EXPIRED || resp.statusCode == HTTP_ERR_REPO_DOWNLOAD_PASSWORD_EXPIRED) {
                 //refredh passwords when expired
                 [connection refreshRepoPassowrds];
             }
