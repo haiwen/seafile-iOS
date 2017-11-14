@@ -56,6 +56,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 
         [SeafStorage.sharedObject setObject:SEAFILE_VERSION forKey:@"VERSION"];
         [[AFNetworkReachabilityManager sharedManager] startMonitoring];
+        [SeafStorage.sharedObject removeObjectForKey:@"EXPORTED"];
         Debug("Cache root path=%@, clientVersion=%@",  SeafStorage.sharedObject.rootPath, SEAFILE_VERSION);
     }
     return self;
@@ -270,54 +271,6 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     }];
 }
 
-- (NSMutableDictionary *)getExports
-{
-    NSMutableDictionary *dict = [SeafStorage.sharedObject objectForKey:@"EXPORTED"];
-    if (!dict)
-        return [NSMutableDictionary new];
-    else
-        return [[NSMutableDictionary alloc] initWithDictionary:dict];
-}
-
-- (void)saveExports:(NSDictionary *)dict
-{
-    [SeafStorage.sharedObject setObject:dict forKey:@"EXPORTED"];
-    [SeafStorage.sharedObject synchronize];
-}
-
-- (NSString *)exportKeyFor:(NSURL *)url
-{
-    NSArray *components = url.pathComponents;
-    NSUInteger length = components.count;
-    return [NSString stringWithFormat:@"%@/%@", [components objectAtIndex:length-2], [components objectAtIndex:length-1]];
-}
-
-- (void)addExportFile:(NSURL *)url data:(NSDictionary *)dict
-{
-    NSMutableDictionary *exports = [self getExports];
-    [exports setObject:dict forKey:[self exportKeyFor:url]];
-    Debug("exports: %@", exports);
-    [SeafGlobal.sharedObject saveExports:exports];
-}
-
-- (void)removeExportFile:(NSURL *)url
-{
-    NSMutableDictionary *exports = [self getExports];
-    [exports removeObjectForKey:[self exportKeyFor:url]];
-    Debug("exports: %@", exports);
-    [SeafGlobal.sharedObject saveExports:exports];
-}
-- (NSDictionary *)getExportFile:(NSURL *)url
-{
-    NSMutableDictionary *exports = [self getExports];
-    return [exports objectForKey:[self exportKeyFor:url]];
-}
-
-- (void)clearExportFiles
-{
-    [Utils clearAllFiles:self.fileProviderStorageDir];
-    [SeafGlobal.sharedObject saveExports:[NSDictionary new]];
-}
 
 - (void)enterBackground
 {

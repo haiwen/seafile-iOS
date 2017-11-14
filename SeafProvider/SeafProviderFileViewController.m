@@ -149,12 +149,22 @@
     }];
 }
 
-- (void)uploadFile:(NSURL *)url overwrite:(BOOL)overwrite
+- (void)uploadFileOverwrite:(BOOL)overwrite
 {
+    NSString *uniqDir = [Utils encodeDir:_directory->connection.address username:_directory->connection.username repo:_directory.repoId path:_directory.path overwrite:overwrite];
+    NSString *tmpdir = [self.root.documentStorageURL.path stringByAppendingString:uniqDir];
+    if (![Utils checkMakeDir:tmpdir]) {
+        Warning("Failed to create temp dir.");
+        return [self alertWithTitle:NSLocalizedString(@"Failed to upload file", @"Seafile") handler:nil];
+    }
+    NSString *name = self.root.originalURL.lastPathComponent;
+    NSURL *url = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
+
     Debug("Upload file: %@(%d) to %@, overwrite=%d, mode=%lu", url, [Utils fileExistsAtPath:url.path], _directory.path, overwrite, (unsigned long)self.root.documentPickerMode);
     if (self.root.documentPickerMode == UIDocumentPickerModeMoveToService) {
-        return [self uploadMovedFile:url overwrite:overwrite];
+        return [self uploadMovedFile:url];
     }
+
     [self.fileCoordinator coordinateWritingItemAtURL:url options:0 error:NULL byAccessor:^(NSURL *newURL) {
         BOOL ret = [Utils copyFile:self.root.originalURL to:newURL];
         Debug("from %@ %lld, url: %@ , ret:%d", self.root.originalURL.path, [Utils fileSizeAtPath1:self.root.originalURL.path], url, ret);
@@ -171,10 +181,9 @@
     }];
 }
 
-- (void)uploadMovedFile:(NSURL *)url overwrite:(BOOL)overwrite
+- (void)uploadMovedFile:(NSURL *)url
 {
     [self.root.originalURL startAccessingSecurityScopedResource];
-
     NSError* error = nil;
     NSFileCoordinator *fileCoordinator = [[NSFileCoordinator alloc] init];
     [fileCoordinator coordinateReadingItemAtURL:self.root.originalURL
@@ -182,43 +191,24 @@
                                           error:&error
                                      byAccessor:^(NSURL *newURL) {
                                          BOOL ret __attribute__((unused)) = [Utils copyFile:newURL to:url];
-                                         Debug("from %@ %lld, url: %@ , ret:%d", newURL.path, [Utils fileSizeAtPath1:newURL.path], url, ret);
+                                         Debug("Copy file from %@ %lld, url: %@ , ret:%d", newURL.path, [Utils fileSizeAtPath1:newURL.path], url, ret);
                                      }];
     [self.root.originalURL stopAccessingSecurityScopedResource];
-
-    NSMutableDictionary *dict = [NSMutableDictionary new];
-    [dict setObject:_directory->connection.address forKey:@"conn_url"];
-    [dict setObject:_directory->connection.username forKey:@"conn_username"];
-    [dict setObject:_directory.path forKey:@"path"];
-    [dict setObject:_directory.repoId forKey:@"repoid"];
-    [dict setObject:[NSNumber numberWithBool: overwrite] forKey:@"overwrite"];
-    [dict setObject:[NSNumber numberWithLongLong:[Utils fileSizeAtPath1:url.path]] forKey:@"filesize"];
-
-    Debug("url:%@ Dict: %@", url, dict);
-    [SeafGlobal.sharedObject addExportFile:url data:dict];
     [self.root dismissGrantingAccessToURL:url];
 }
 
 - (IBAction)chooseCurrentDir:(id)sender
 {
-    NSString *tmpdir = [SeafStorage uniqueDirUnder:self.root.documentStorageURL.path];
-    if (![Utils checkMakeDir:tmpdir]) {
-        Warning("Failed to create temp dir.");
-        return [self alertWithTitle:NSLocalizedString(@"Failed to upload file", @"Seafile") handler:nil];
-    }
     NSString *name = self.root.originalURL.lastPathComponent;
-    NSURL *url = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
-
-    Debug("start to upload file: %@", url.path);
     if ([_directory nameExist:name]) {
         NSString *title = NSLocalizedString(@"A file with the same name already exists, do you want to overwrite?", @"Seafile");
         [self alertWithTitle:title message:nil yes:^{
-            [self uploadFile:url overwrite:true];
+            [self uploadFileOverwrite:true];
         } no:^{
-            [self uploadFile:url overwrite:false];
+            [self uploadFileOverwrite:false];
         }];
     } else
-        [self uploadFile:url overwrite:false];
+        [self uploadFileOverwrite:false];
 }
 
 - (void)popupSetRepoPassword:(SeafRepo *)repo
@@ -360,7 +350,8 @@
 
         if (self.root.documentPickerMode == UIDocumentPickerModeImport
             || self.root.documentPickerMode == UIDocumentPickerModeOpen) {
-            NSString *tmpdir = [SeafStorage uniqueDirUnder:self.root.documentStorageURL.path];
+            NSString *encodeUniqDir = [Utils encodeDir:file->connection.address username:file->connection.username repo:file.repoId path:file.path.stringByDeletingLastPathComponent overwrite:true];
+            NSString *tmpdir = [self.root.documentStorageURL.path stringByAppendingPathComponent:encodeUniqDir];
             if (![Utils checkMakeDir:tmpdir]) {
                 Warning("Failed to create temp dir.");
                 return [self alertWithTitle:NSLocalizedString(@"Failed to open file", @"Seafile") handler:nil];
@@ -368,12 +359,9 @@
             NSURL *url = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:exportURL.lastPathComponent]];
             Debug("file exportURL:%@, url:%@", exportURL, url);
             [self.fileCoordinator coordinateWritingItemAtURL:url options:0 error:NULL byAccessor:^(NSURL *newURL) {
-                BOOL ret = [Utils linkFileAtURL:exportURL to:newURL];
+                BOOL ret = [Utils fileExistsAtPath:newURL.path] || [Utils linkFileAtURL:exportURL to:newURL];
                 Debug("newURL: %@, ret: %d", newURL, ret);
                 if (ret) {
-                    if (self.root.documentPickerMode == UIDocumentPickerModeOpen) {
-                        [SeafGlobal.sharedObject addExportFile:newURL data:file.toDict];
-                    }
                     [self.root dismissGrantingAccessToURL:newURL];
                 } else {
                     Warning("Failed to copy file %@", file.name);

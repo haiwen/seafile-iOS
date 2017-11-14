@@ -12,6 +12,7 @@
 #import "SeafFile.h"
 #import "SeafDir.h"
 #import "ExtentedString.h"
+#import "Utils.h"
 #import "Debug.h"
 
 @interface FileProvider ()
@@ -21,7 +22,7 @@
 
 - (NSFileCoordinator *)fileCoordinator {
     NSFileCoordinator *fileCoordinator = [[NSFileCoordinator alloc] init];
-    [fileCoordinator setPurposeIdentifier:[self providerIdentifier]];
+    [fileCoordinator setPurposeIdentifier:APP_ID];
     return fileCoordinator;
 }
 
@@ -39,17 +40,12 @@
     return self;
 }
 
-- (NSString *)providerIdentifier
-{
-    return APP_ID;
-}
-
 - (void)providePlaceholderAtURL:(NSURL *)url completionHandler:(void (^)(NSError *error))completionHandler {
 
     NSError* error = nil;
     BOOL isDirectory = false;
     Debug("url=%@, filesize: %d", url, [Utils fileExistsAtPath:url.path]);
-    
+
     if (![[NSFileManager defaultManager] fileExistsAtPath:url.path isDirectory:&isDirectory]
         || isDirectory) {
         error = [NSError errorWithDomain:NSPOSIXErrorDomain code:-1 userInfo:nil];
@@ -76,47 +72,41 @@
 - (void)itemChangedAtURL:(NSURL *)url {
 
     // Called at some point after the file has changed; the provider may then trigger an upload
-    NSDictionary *dict = [SeafGlobal.sharedObject getExportFile:url];
-    Debug("Item changed at URL %@, dict:%@, filesize: %d", url, dict, [Utils fileExistsAtPath:url.path]);
-    if (!dict) return;
-
-    NSString *connUrl = [dict objectForKey:@"conn_url"];
-    NSString *username = [dict objectForKey:@"conn_username"];
-    NSString *path = [dict objectForKey:@"path"];
-    NSString *repoId = [dict objectForKey:@"repoid"];
-    if (!connUrl || !username || !path || !repoId)
-        return;
-    SeafConnection *conn = [SeafGlobal.sharedObject getConnection:connUrl username:username];
-    if (!conn) return;
-    
-    NSString *oid = [dict objectForKey:@"id"];
-    if (oid) {
-        SeafFile *file = [[SeafFile alloc] initWithConnection:conn oid:oid repoId:repoId name:path.lastPathComponent path:path mtime:[[dict objectForKey:@"mtime"] integerValue:0] size:[[dict objectForKey:@"size"] integerValue:0]];
-        [file itemChangedAtURL:url];
-        [file waitUpload];
-    } else {
-        BOOL overwrite = [[dict objectForKey:@"overwrite"] booleanValue:false];
-        SeafUploadFile *ufile = [conn getUploadfile:url.path create:true];
-        ufile.overwrite = overwrite;
-        SeafDir *dir = [[SeafDir alloc] initWithConnection:conn oid:nil repoId:repoId perm:@"rw" name:path.lastPathComponent path:path];
-        [dir addUploadFile:ufile flush:true];
-        Debug("Upload %@(%lld) to %@ %@ overwrite:%d ", ufile.lpath, [Utils fileSizeAtPath1:ufile.lpath], dir.repoId, dir.path, overwrite);
-        [ufile run:nil];
-        [ufile waitUpload];
+    NSString *filename = url.path.lastPathComponent;
+    NSString *encodedDir = url.path.stringByDeletingLastPathComponent.lastPathComponent;
+    NSArray *arr = [Utils decodeDir:encodedDir];
+    if (arr.count != 5) {
+        return Warning("Invalid dir: %@", encodedDir);
     }
+    NSString *server = [arr objectAtIndex:0];
+    NSString *username = [arr objectAtIndex:1];
+    NSString *repoId = [arr objectAtIndex:2];
+    NSString *path = [arr objectAtIndex:3];
+    int overwrite = [[arr objectAtIndex:4] intValue];
+
+    Debug("Item changed at URL %@, %@ %@ %@ %@ %d, filesize: %d", url, server, username, repoId, path, overwrite, [Utils fileExistsAtPath:url.path]);
+
+    if (!server || !username || !path || !repoId) return;
+    SeafConnection *conn = [SeafGlobal.sharedObject getConnection:server username:username];
+    if (!conn) return;
+
+    SeafUploadFile *ufile = [conn getUploadfile:url.path create:true];
+    ufile.overwrite = overwrite;
+    SeafDir *dir = [[SeafDir alloc] initWithConnection:conn oid:nil repoId:repoId perm:@"rw" name:path.lastPathComponent path:path];
+    [dir addUploadFile:ufile flush:true];
+    Debug("Upload %@(%lld) to %@ %@ overwrite:%d ", ufile.lpath, [Utils fileSizeAtPath1:ufile.lpath], dir.repoId, dir.path, overwrite);
+    [ufile run:nil];
+    [ufile waitUpload];
 }
 
 - (void)stopProvidingItemAtURL:(NSURL *)url {
     // Called after the last claim to the file has been released. At this point, it is safe for the file provider to remove the content file.
     // Care should be taken that the corresponding placeholder file stays behind after the content file has been deleted.
-    
+
     [self.fileCoordinator coordinateWritingItemAtURL:url options:NSFileCoordinatorWritingForDeleting error:nil byAccessor:^(NSURL *newURL) {
+        Debug("Remove exported file %@", newURL);
         [[NSFileManager defaultManager] removeItemAtURL:newURL error:nil];
-        Debug("Remove exported file %@", url);
-        [SeafGlobal.sharedObject removeExportFile:url];
-    }];
-    [self providePlaceholderAtURL:url completionHandler:^(NSError *error){
-        Warning("url=%@, error=%@", url, error);
+        [[NSFileManager defaultManager] removeItemAtURL:[newURL URLByDeletingLastPathComponent] error:nil];
     }];
 }
 

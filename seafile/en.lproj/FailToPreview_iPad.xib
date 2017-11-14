@@ -16,70 +16,52 @@
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="16">
-                    <rect key="frame" x="65" y="266.5" width="638" height="491"/>
+                    <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
                     <subviews>
+                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="4">
+                            <rect key="frame" x="309" y="330.5" width="150" height="150"/>
+                            <constraints>
+                                <constraint firstAttribute="height" constant="150" id="mpX-ga-aHe"/>
+                                <constraint firstAttribute="width" constant="150" id="wJb-px-Oav"/>
+                            </constraints>
+                        </imageView>
                         <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="Name" textAlignment="center" lineBreakMode="middleTruncation" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="7">
-                            <rect key="frame" x="293.5" y="214" width="50.5" height="23"/>
+                            <rect key="frame" x="100.5" y="500.5" width="568" height="23"/>
                             <fontDescription key="fontDescription" type="system" pointSize="19"/>
                             <nil key="highlightedColor"/>
                         </label>
                         <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="3">
-                            <rect key="frame" x="169" y="265" width="300" height="21"/>
-                            <constraints>
-                                <constraint firstAttribute="height" constant="21" id="KsQ-6v-wMv"/>
-                                <constraint firstAttribute="width" constant="300" id="lXS-Ms-dgo"/>
-                            </constraints>
+                            <rect key="frame" x="100" y="553.5" width="568" height="0.0"/>
                             <fontDescription key="fontDescription" type="system" pointSize="17"/>
                             <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                             <nil key="highlightedColor"/>
                         </label>
-                        <button opaque="NO" contentMode="scaleToFill" selected="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" showsTouchWhenHighlighted="YES" adjustsImageWhenDisabled="NO" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="5" customClass="ColorfulButton">
-                            <rect key="frame" x="218.5" y="368" width="201" height="33"/>
-                            <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                            <state key="normal" title="Open in other applications">
-                                <color key="titleColor" red="0.66666668653488159" green="0.66666668653488159" blue="0.66666668653488159" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                            </state>
-                            <state key="selected">
-                                <color key="titleColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                            </state>
-                            <state key="highlighted">
-                                <color key="titleColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                            </state>
-                        </button>
-                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="4">
-                            <rect key="frame" x="244" y="29" width="150" height="150"/>
-                            <constraints>
-                                <constraint firstAttribute="width" constant="150" id="2x6-tf-h0v"/>
-                                <constraint firstAttribute="height" constant="150" id="hfb-Te-xgf"/>
-                            </constraints>
-                        </imageView>
                     </subviews>
                     <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     <constraints>
-                        <constraint firstItem="7" firstAttribute="centerX" secondItem="16" secondAttribute="centerX" id="4Za-rJ-ug6"/>
-                        <constraint firstAttribute="bottom" secondItem="5" secondAttribute="bottom" constant="90" id="4pv-op-I9R"/>
-                        <constraint firstItem="7" firstAttribute="top" secondItem="4" secondAttribute="bottom" constant="35" id="EfI-Lb-Dph"/>
-                        <constraint firstAttribute="width" constant="638" id="INL-x9-TVJ"/>
-                        <constraint firstItem="3" firstAttribute="centerX" secondItem="16" secondAttribute="centerX" id="NKB-04-7IL"/>
-                        <constraint firstItem="5" firstAttribute="centerX" secondItem="16" secondAttribute="centerX" id="Nsf-WU-aWe"/>
-                        <constraint firstAttribute="height" constant="491" id="W2j-C1-Lil"/>
-                        <constraint firstItem="3" firstAttribute="centerY" secondItem="16" secondAttribute="centerY" constant="30" id="pRf-mA-1oM"/>
-                        <constraint firstItem="7" firstAttribute="centerY" secondItem="16" secondAttribute="centerY" constant="-20" id="qH5-16-f31"/>
-                        <constraint firstItem="4" firstAttribute="centerX" secondItem="16" secondAttribute="centerX" id="qtP-bW-yO0"/>
+                        <constraint firstItem="3" firstAttribute="top" secondItem="7" secondAttribute="bottom" constant="30" id="2PH-S9-Pud"/>
+                        <constraint firstItem="7" firstAttribute="centerX" secondItem="16" secondAttribute="centerX" id="OPL-AV-7XM"/>
+                        <constraint firstItem="4" firstAttribute="centerX" secondItem="16" secondAttribute="centerX" id="QKh-ra-7HV"/>
+                        <constraint firstItem="3" firstAttribute="centerX" secondItem="16" secondAttribute="centerX" id="UHY-Cu-tyu"/>
+                        <constraint firstItem="7" firstAttribute="centerY" secondItem="16" secondAttribute="centerY" id="Xlh-Ik-LZb"/>
+                        <constraint firstItem="7" firstAttribute="width" secondItem="16" secondAttribute="width" constant="-200" id="fNX-6B-daZ"/>
+                        <constraint firstItem="7" firstAttribute="top" secondItem="4" secondAttribute="bottom" constant="20" id="xQG-Ha-iQG"/>
+                        <constraint firstItem="3" firstAttribute="width" secondItem="7" secondAttribute="width" id="y69-KE-FYA"/>
                     </constraints>
                 </view>
             </subviews>
             <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
             <constraints>
-                <constraint firstItem="16" firstAttribute="centerX" secondItem="1" secondAttribute="centerX" id="DJj-oi-2Ck"/>
-                <constraint firstItem="16" firstAttribute="centerY" secondItem="1" secondAttribute="centerY" id="Ese-tX-FyZ"/>
+                <constraint firstItem="16" firstAttribute="centerX" secondItem="1" secondAttribute="centerX" id="YCx-a5-aqO"/>
+                <constraint firstItem="16" firstAttribute="height" secondItem="1" secondAttribute="height" id="a5P-p7-4a1"/>
+                <constraint firstItem="16" firstAttribute="width" secondItem="1" secondAttribute="width" id="cti-Y6-XMW"/>
+                <constraint firstItem="16" firstAttribute="centerY" secondItem="1" secondAttribute="centerY" id="znV-qp-q0L"/>
             </constraints>
             <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackOpaque"/>
             <connections>
                 <outlet property="errorLabel" destination="3" id="kMO-UZ-9zX"/>
                 <outlet property="imageView" destination="4" id="12"/>
                 <outlet property="nameLabel" destination="7" id="JdS-qk-EPa"/>
-                <outlet property="openElseBtn" destination="5" id="fdy-A4-4Du"/>
             </connections>
         </view>
     </objects>

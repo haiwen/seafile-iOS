@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="13528" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="13529" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
     <device id="ipad9_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13526"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13527"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -16,29 +16,29 @@
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="32">
-                    <rect key="frame" x="114" y="266.5" width="540" height="491"/>
+                    <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
                     <subviews>
                         <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" translatesAutoresizingMaskIntoConstraints="NO" id="3">
-                            <rect key="frame" x="195" y="50" width="150" height="150"/>
+                            <rect key="frame" x="309" y="342" width="150" height="150"/>
                             <constraints>
                                 <constraint firstAttribute="width" constant="150" id="Rro-o6-ZQB"/>
                                 <constraint firstAttribute="height" constant="150" id="jaT-KD-1Gs"/>
                             </constraints>
                         </imageView>
                         <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="" textAlignment="center" lineBreakMode="middleTruncation" baselineAdjustment="alignBaselines" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="8">
-                            <rect key="frame" x="269.5" y="238" width="0.0" height="0.0"/>
+                            <rect key="frame" x="149.5" y="512" width="468" height="0.0"/>
                             <fontDescription key="fontDescription" type="system" pointSize="17"/>
                             <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                             <nil key="highlightedColor"/>
                         </label>
                         <progressView opaque="NO" contentMode="scaleToFill" progress="0.5" translatesAutoresizingMaskIntoConstraints="NO" id="30">
-                            <rect key="frame" x="92" y="320" width="355" height="2"/>
-                            <constraints>
-                                <constraint firstAttribute="width" constant="355" id="cWk-Md-wWu"/>
-                            </constraints>
+                            <rect key="frame" x="149.5" y="542" width="468" height="2"/>
                         </progressView>
                         <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" showsTouchWhenHighlighted="YES" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ags-96-vmi">
-                            <rect key="frame" x="207.5" y="352" width="125" height="32"/>
+                            <rect key="frame" x="319" y="574" width="130" height="32"/>
+                            <constraints>
+                                <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="130" id="tah-o1-qBo"/>
+                            </constraints>
                             <fontDescription key="fontDescription" name=".AppleSystemUIFont" family=".AppleSystemUIFont" pointSize="16"/>
                             <color key="tintColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
                             <state key="normal" title="Cancel download">
@@ -48,14 +48,14 @@
                     </subviews>
                     <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     <constraints>
-                        <constraint firstItem="8" firstAttribute="top" secondItem="3" secondAttribute="bottom" constant="38" id="36V-tQ-NiP"/>
+                        <constraint firstItem="8" firstAttribute="top" secondItem="3" secondAttribute="bottom" constant="20" id="36V-tQ-NiP"/>
                         <constraint firstItem="30" firstAttribute="centerX" secondItem="32" secondAttribute="centerX" id="B6u-et-t8n"/>
-                        <constraint firstItem="3" firstAttribute="top" secondItem="32" secondAttribute="top" constant="50" id="J9m-io-jth"/>
-                        <constraint firstAttribute="height" constant="491" id="K9U-8l-DyT"/>
+                        <constraint firstItem="8" firstAttribute="centerY" secondItem="32" secondAttribute="centerY" id="Ide-uK-qZZ"/>
                         <constraint firstItem="ags-96-vmi" firstAttribute="top" secondItem="30" secondAttribute="bottom" constant="30" id="LNf-Pl-Cib"/>
                         <constraint firstItem="3" firstAttribute="centerX" secondItem="32" secondAttribute="centerX" id="Rd1-RL-EJK"/>
-                        <constraint firstAttribute="width" constant="540" id="RtB-AC-gCX"/>
-                        <constraint firstItem="30" firstAttribute="top" secondItem="3" secondAttribute="bottom" constant="120" id="UCJ-HM-SXo"/>
+                        <constraint firstItem="30" firstAttribute="top" secondItem="8" secondAttribute="bottom" constant="30" id="a2B-qX-NgI"/>
+                        <constraint firstItem="8" firstAttribute="width" secondItem="32" secondAttribute="width" constant="-300" id="cjW-NC-qe4"/>
+                        <constraint firstItem="30" firstAttribute="width" secondItem="8" secondAttribute="width" id="hiJ-Co-y5K"/>
                         <constraint firstItem="8" firstAttribute="centerX" secondItem="32" secondAttribute="centerX" id="la2-ht-IXj"/>
                         <constraint firstItem="ags-96-vmi" firstAttribute="centerX" secondItem="32" secondAttribute="centerX" id="wJp-nK-0rD"/>
                     </constraints>
@@ -63,6 +63,8 @@
             </subviews>
             <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
             <constraints>
+                <constraint firstItem="32" firstAttribute="width" secondItem="1" secondAttribute="width" id="RjW-7y-iw0"/>
+                <constraint firstItem="32" firstAttribute="height" secondItem="1" secondAttribute="height" id="YvZ-Ml-Ua5"/>
                 <constraint firstItem="32" firstAttribute="centerY" secondItem="1" secondAttribute="centerY" id="dc8-KI-ZIf"/>
                 <constraint firstItem="32" firstAttribute="centerX" secondItem="1" secondAttribute="centerX" id="iHn-sQ-DZF"/>
             </constraints>

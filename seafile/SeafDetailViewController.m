@@ -34,7 +34,7 @@ enum SHARE_STATUS {
 
 #define SHARE_TITLE NSLocalizedString(@"How would you like to share this file?", @"Seafile")
 
-@interface SeafDetailViewController ()<UIWebViewDelegate, UIPrintInteractionControllerDelegate, MFMailComposeViewControllerDelegate, MWPhotoBrowserDelegate>
+@interface SeafDetailViewController ()<UIWebViewDelegate, MFMailComposeViewControllerDelegate, MWPhotoBrowserDelegate>
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
 
 @property (retain) QLPreviewController *qlSubViewController;
@@ -75,17 +75,6 @@ enum SHARE_STATUS {
 - (BOOL)previewSuccess
 {
     return (self.state == PREVIEW_QL_SUBVIEW) || (self.state == PREVIEW_WEBVIEW) || (self.state == PREVIEW_WEBVIEW_JS);
-}
-
-- (BOOL)isPrintable:(SeafFile *)file
-{
-    NSArray *exts = [NSArray arrayWithObjects:@"pdf", @"doc", @"docx", @"jpeg", @"jpg", @"rtf", nil];
-    NSString *ext = file.name.pathExtension.lowercaseString;
-    if (ext && ext.length != 0 && [exts indexOfObject:ext] != NSNotFound) {
-        if ([UIPrintInteractionController canPrintURL:file.exportURL])
-            return true;
-    }
-    return false;
 }
 
 - (BOOL)isModal
@@ -321,7 +310,6 @@ enum SHARE_STATUS {
     [self.qlSubViewController didMoveToParentViewController:self];
 
     [self.progressView.cancelBt addTarget:self action:@selector(cancelDownload:) forControlEvents:UIControlEventTouchUpInside];
-    [self.failedView.openElseBtn addTarget:self action:@selector(openElsewhere:) forControlEvents:UIControlEventTouchUpInside];
 
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
@@ -513,20 +501,6 @@ enum SHARE_STATUS {
         [self goBack:nil];
 }
 
-- (IBAction)openElsewhere:(id)sender
-{
-    NSURL *url = [self.preViewItem exportURL];
-    if (!url)   return;
-
-    if (self.docController)
-        [self.docController dismissMenuAnimated:NO];
-    self.docController = [UIDocumentInteractionController interactionControllerWithURL:url];
-    BOOL ret = [self.docController presentOpenInMenuFromBarButtonItem:self.exportItem animated:YES];
-    if (ret == NO) {
-        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"There is no app which can open this type of file on this machine", @"Seafile")];
-    }
-}
-
 - (void)showAlertWithAction:(NSArray *)arr fromBarItem:(UIBarButtonItem *)item withTitle:(NSString *)title
 {
     UIAlertController *alert = [self generateAlert:arr withTitle:title handler:^(UIAlertAction *action) {
@@ -539,25 +513,18 @@ enum SHARE_STATUS {
 - (IBAction)export:(id)sender
 {
     if (![self.preViewItem isKindOfClass:[SeafFile class]]) return;
-
-    //image :save album, copy clipboard, print
-    //pdf :print
-    NSMutableArray *bts = [[NSMutableArray alloc] init];
     SeafFile *file = (SeafFile *)self.preViewItem;
-    if ([Utils isImageFile:file.name]) {
-        [bts addObject:NSLocalizedString(@"Save to album", @"Seafile")];
-        [bts addObject:NSLocalizedString(@"Copy image to clipboard", @"Seafile")];
-    } else if ([Utils isVideoFile:file.name]) {
-        [bts addObject:NSLocalizedString(@"Save to album", @"Seafile")];
-    }
-    if ([self isPrintable:file])
-        [bts addObject:NSLocalizedString(@"Print", @"Seafile")];
-    if (bts.count == 0) {
-        [self openElsewhere:nil];
-    } else {
-        [bts addObject:NSLocalizedString(@"Open elsewhere...", "Seafile")];
-        [self showAlertWithAction:bts fromBarItem:self.exportItem withTitle:nil];
-    }
+    NSURL *fileURL = file.exportURL;
+    UIActivityViewController *controller = [[UIActivityViewController alloc] initWithActivityItems:@[fileURL] applicationActivities:nil];
+    Debug("Export file %@", fileURL);
+    controller.completionWithItemsHandler = ^(UIActivityType __nullable activityType, BOOL completed, NSArray * __nullable returnedItems, NSError * __nullable activityError) {
+        Debug("activityType=%@ completed=%d, returnedItems=%@, activityError=%@", activityType, completed, returnedItems, activityError);
+        if ([UIActivityTypeSaveToCameraRoll isEqualToString:activityType]) {
+            [self savedToPhotoAlbumWithError:activityError file:file];
+        }
+    };
+    controller.popoverPresentationController.barButtonItem = self.exportItem;
+    [self presentViewController:controller animated:true completion:nil];
 }
 
 - (IBAction)share:(id)sender
@@ -577,67 +544,11 @@ enum SHARE_STATUS {
         [SVProgressHUD showSuccessWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Succeeded to save %@ to album", @"Seafile"), file.name]];
     }
 }
-- (void)thisImage:(UIImage *)image hasBeenSavedInPhotoAlbumWithError:(NSError *)error usingContextInfo:(void *)ctxInfo
-{
-    SeafFile *file = (__bridge SeafFile *)ctxInfo;
-    [self savedToPhotoAlbumWithError:error file:file];
-}
-
-- (void)video: (NSString *)videoPath didFinishSavingWithError:(NSError *)error contextInfo:(void *)ctxInfo
-{
-    SeafFile *file = (__bridge SeafFile *)ctxInfo;
-    [self savedToPhotoAlbumWithError:error file:file];
-}
-
-- (void)printFile:(SeafFile *)file
-{
-    UIPrintInteractionController *pic = [UIPrintInteractionController sharedPrintController];
-    if  (pic && [UIPrintInteractionController canPrintURL:file.exportURL] ) {
-        pic.delegate = self;
-
-        UIPrintInfo *printInfo = [UIPrintInfo printInfo];
-        printInfo.outputType = UIPrintInfoOutputGeneral;
-        printInfo.jobName = file.name;
-        printInfo.duplex = UIPrintInfoDuplexLongEdge;
-        pic.printInfo = printInfo;
-        pic.showsPageRange = YES;
-        pic.printingItem = file.exportURL;
-
-        void (^completionHandler)(UIPrintInteractionController *, BOOL, NSError *) =
-        ^(UIPrintInteractionController *pic, BOOL completed, NSError *error) {
-            if (!completed && error)
-                NSLog(@"FAILED! due to error in domain %@ with error code %ld",
-                      error.domain, (long)error.code);
-        };
-        if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
-            [pic presentFromBarButtonItem:self.exportItem animated:YES
-                        completionHandler:completionHandler];
-        } else {
-            [pic presentAnimated:YES completionHandler:completionHandler];
-        }
-    }
-}
 
 - (void)handleAction:(NSString *)title
 {
     SeafFile *file = (SeafFile *)self.preViewItem;
-    if ([NSLocalizedString(@"Open elsewhere...", @"Seafile") isEqualToString:title]) {
-        [self performSelector:@selector(openElsewhere:) withObject:nil afterDelay:0.0f];
-    } else if ([NSLocalizedString(@"Save to album", @"Seafile") isEqualToString:title]) {
-        if ([Utils isImageFile:file.name]) {
-            UIImage *img = [UIImage imageWithContentsOfFile:file.previewItemURL.path];
-            UIImageWriteToSavedPhotosAlbum(img, self, @selector(thisImage:hasBeenSavedInPhotoAlbumWithError:usingContextInfo:), (void *)CFBridgingRetain(file));
-        } else {
-            Debug("Save video %@ to album", file.previewItemURL.path);
-            UISaveVideoAtPathToSavedPhotosAlbum(file.previewItemURL.path, self, @selector(video:didFinishSavingWithError:contextInfo:), (void *)CFBridgingRetain(file));
-        }
-    }  else if ([NSLocalizedString(@"Copy image to clipboard", @"Seafile") isEqualToString:title]) {
-        UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-        NSData *data = [NSData dataWithContentsOfFile:file.previewItemURL.path];
-        [pasteboard setData:data forPasteboardType:file.name];
-    } else if ([NSLocalizedString(@"Print", @"Seafile") isEqualToString:title]) {
-        [self printFile:file];
-    } else if ([NSLocalizedString(@"Email", @"Seafile") isEqualToString:title]
+    if ([NSLocalizedString(@"Email", @"Seafile") isEqualToString:title]
                || [NSLocalizedString(@"Copy Link to Clipboard", @"Seafile") isEqualToString:title]) {
         if (![self checkNetworkStatus])
             return;
