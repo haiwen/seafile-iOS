@@ -145,7 +145,7 @@ static APLRUCache *cache() {
 }
 - (BOOL)isRepoRoot
 {
-    return _repoId && _path && [_path isEqualToString:@"/"];
+    return _repoId && _path && [_path isEqualToString:@"/"] && !_filename;
 }
 - (BOOL)isFile
 {

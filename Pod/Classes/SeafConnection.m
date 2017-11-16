@@ -1534,9 +1534,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                 [repo mkdir:dirName success:^(SeafDir *dir) {
                     SeafDir *udir = [self getSubdirUnderDir:repo withName:dirName];
                     completionHandler(udir, nil);
-                } failure:^(SeafDir *dir) {
+                } failure:^(SeafDir *dir, NSError *error) {
                     Warning("Failed to create directory %@", dirName);
-                    completionHandler(nil, nil);
+                    completionHandler(nil, error);
                 }];
             } else {
                 completionHandler(uploaddir, nil);

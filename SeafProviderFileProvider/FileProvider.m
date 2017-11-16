@@ -146,7 +146,8 @@
     }
 
     SeafFile *sfile = (SeafFile *)item.toSeafObj;
-    [sfile itemChangedAtURL:url];
+    [sfile uploadFromFile:url];
+    [sfile waitUpload];
 }
 
 - (void)stopProvidingItemAtURL:(NSURL *)url {
@@ -168,48 +169,127 @@
    }
 
 # pragma mark - NSFileProviderActions
+- (NSError *)getNSError
+{
+    NSDictionary *userInfo = @{
+                               NSLocalizedDescriptionKey: NSLocalizedString(@"Operation was unsuccessful.", nil),
+                               NSLocalizedFailureReasonErrorKey: NSLocalizedString(@"The operation failed.", nil),
+                               NSLocalizedRecoverySuggestionErrorKey: NSLocalizedString(@"Have you tried turning it off and on again?", nil)
+                               };
+    NSError *error = [NSError errorWithDomain:@"Seafile" code:-1 userInfo:userInfo];
+    return error;
+}
 - (void)importDocumentAtURL:(NSURL *)fileURL
      toParentItemIdentifier:(NSFileProviderItemIdentifier)parentItemIdentifier
           completionHandler:(void (^)(NSFileProviderItem _Nullable importedDocumentItem, NSError * _Nullable error))completionHandler
 {
+    NSFileProviderItemIdentifier itemIdentifier = [parentItemIdentifier stringByAppendingPathComponent:fileURL.path.lastPathComponent];
+    Debug("...file path: %@, parentItemIdentifier:%@, itemIdentifier:%@", fileURL.path, parentItemIdentifier, itemIdentifier);
+    SeafItem *item = [[SeafItem alloc] initWithItemIdentity:itemIdentifier];
+    SeafFile *sfile = (SeafFile *)[item toSeafObj];
+    [sfile setFileUploadedBlock:^(BOOL success, SeafUploadFile *file, NSString *oid) {
+        SeafProviderItem *providerItem = [[SeafProviderItem alloc] initWithSeafItem:item];
+        NSError *error = success ? nil : [self getNSError];
+        completionHandler(providerItem, error);
+    }];
+    [sfile uploadFromFile:fileURL];
 }
 
 - (void)createDirectoryWithName:(NSString *)directoryName
          inParentItemIdentifier:(NSFileProviderItemIdentifier)parentItemIdentifier
               completionHandler:(void (^)(NSFileProviderItem _Nullable createdDirectoryItem, NSError * _Nullable error))completionHandler
 {
-
+    Debug("...parentItemIdentifier: %@, directoryName:%@", parentItemIdentifier, directoryName);
+    SeafItem *item = [[SeafItem alloc] initWithItemIdentity:parentItemIdentifier];
+    SeafDir *parentDir = (SeafDir *)[item toSeafObj];
+    [parentDir mkdir:directoryName success:^(SeafDir *dir) {
+        NSString *createdDirectoryPath = [dir.path stringByAppendingPathComponent:directoryName];
+        SeafItem *createdItem = [[SeafItem alloc] initWithServer:dir->connection.address username:dir->connection.username repo:dir.repoId path:createdDirectoryPath filename:nil];
+        SeafProviderItem *providerItem = [[SeafProviderItem alloc] initWithSeafItem:createdItem];
+        completionHandler(providerItem, nil);
+    } failure:^(SeafDir *dir, NSError *error) {
+        completionHandler(nil, error ? error : [self getNSError]);
+    }];
 }
 
 - (void)renameItemWithIdentifier:(NSFileProviderItemIdentifier)itemIdentifier
                           toName:(NSString *)itemName
                completionHandler:(void (^)(NSFileProviderItem _Nullable renamedItem, NSError * _Nullable error))completionHandler;
 {
+    Debug("...itemIdentifier: %@, toName:%@", itemIdentifier, itemName);
+    SeafItem *item = [[SeafItem alloc] initWithItemIdentity:itemIdentifier];
+    SeafDir *dir = (SeafDir *)[item.parentItem toSeafObj];
 
+    [dir renameEntry:item.name newName:itemName success:^(SeafDir *dir) {
+        NSString *newpath = [dir.path stringByAppendingPathComponent:itemName];
+        NSString *filename = item.isFile ? itemName : nil;
+        SeafItem *newItem = [[SeafItem alloc] initWithServer:dir->connection.address username:dir->connection.username repo:dir.repoId path:newpath filename:filename];
+        SeafProviderItem *renamedItem = [[SeafProviderItem alloc] initWithSeafItem:newItem];
+        completionHandler(renamedItem, nil);
+    } failure:^(SeafDir *dir, NSError *error) {
+        completionHandler(nil, error ? error : [self getNSError]);
+    }];
 }
 - (void)reparentItemWithIdentifier:(NSFileProviderItemIdentifier)itemIdentifier
         toParentItemWithIdentifier:(NSFileProviderItemIdentifier)parentItemIdentifier
                            newName:(nullable NSString *)newName
                  completionHandler:(void (^)(NSFileProviderItem _Nullable reparentedItem, NSError * _Nullable error))completionHandler
 {
+    // move file
+    Debug("...itemIdentifier: %@, parentItemIdentifier:%@", itemIdentifier, parentItemIdentifier);
+    SeafItem *item = [[SeafItem alloc] initWithItemIdentity:itemIdentifier];
+    SeafItem *dstItem = [[SeafItem alloc] initWithItemIdentity:parentItemIdentifier];
+    SeafDir *srcDir = (SeafDir *)[item.parentItem toSeafObj];
+    SeafDir *dstDir = (SeafDir *)dstItem.toSeafObj;
+
+    [srcDir moveEntries:[NSArray arrayWithObject:item.name] dstDir:dstDir success:^(SeafDir *dir) {
+        NSString *newpath = [dstDir.path stringByAppendingPathComponent:item.name];
+        NSString *filename = item.isFile ? item.filename : nil;
+        if (newName && ![newName isEqualToString:item.name]) {
+            [dstDir renameEntry:item.name newName:newName success:^(SeafDir *dir) {
+                NSString *renamedpath = [dstDir.path stringByAppendingPathComponent:newName];
+                SeafItem *renamedItem = [[SeafItem alloc] initWithServer:dstDir->connection.address username:dstDir->connection.username repo:dstDir.repoId path:renamedpath filename:newName];
+                completionHandler([[SeafProviderItem alloc] initWithSeafItem:renamedItem], nil);
+            } failure:^(SeafDir *dir, NSError *error) {
+                completionHandler(nil, error ? error : [self getNSError]);
+            }];
+        } else {
+            SeafItem *newItem = [[SeafItem alloc] initWithServer:dstDir->connection.address username:dstDir->connection.username repo:dstDir.repoId path:newpath filename:filename];
+            SeafProviderItem *reparentedItem = [[SeafProviderItem alloc] initWithSeafItem:newItem];
+            completionHandler(reparentedItem, nil);
+        }
+    } failure:^(SeafDir *dir, NSError *error) {
+        completionHandler(nil, error ? error : [self getNSError]);
+    }];
 }
 
-- (void)trashItemWithIdentifier:(NSFileProviderItemIdentifier)itemIdentifier
-              completionHandler:(void (^)(NSFileProviderItem _Nullable trashedItem, NSError * _Nullable error))completionHandler
-{
-
-}
-- (void)untrashItemWithIdentifier:(NSFileProviderItemIdentifier)itemIdentifier
-           toParentItemIdentifier:(nullable NSFileProviderItemIdentifier)parentItemIdentifier
-                completionHandler:(void (^)(NSFileProviderItem _Nullable untrashedItem, NSError * _Nullable error))completionHandler
-{
-
-}
 - (void)deleteItemWithIdentifier:(NSFileProviderItemIdentifier)itemIdentifier
                completionHandler:(void (^)(NSError * _Nullable error))completionHandler
 {
-
+    Debug("...itemIdentifier: %@", itemIdentifier);
+    SeafItem *item = [[SeafItem alloc] initWithItemIdentity:itemIdentifier];
+    SeafDir *dir = (SeafDir *)[item.parentItem toSeafObj];
+    [dir delEntries:[NSArray arrayWithObject:item.name] success:^(SeafDir *dir) {
+        completionHandler(nil);
+    } failure:^(SeafDir *dir, NSError *error) {
+        completionHandler(error ? error : [self getNSError]);
+    }];
 }
+
+/*
+ - (void)trashItemWithIdentifier:(NSFileProviderItemIdentifier)itemIdentifier
+ completionHandler:(void (^)(NSFileProviderItem _Nullable trashedItem, NSError * _Nullable error))completionHandler
+ {
+
+ }
+
+ - (void)untrashItemWithIdentifier:(NSFileProviderItemIdentifier)itemIdentifier
+ toParentItemIdentifier:(nullable NSFileProviderItemIdentifier)parentItemIdentifier
+ completionHandler:(void (^)(NSFileProviderItem _Nullable untrashedItem, NSError * _Nullable error))completionHandler
+ {
+
+ }
+
 - (void)setLastUsedDate:(nullable NSDate *)lastUsedDate
       forItemIdentifier:(NSFileProviderItemIdentifier)itemIdentifier
       completionHandler:(void (^)(NSFileProviderItem _Nullable recentlyUsedItem, NSError * _Nullable error))completionHandler
@@ -244,4 +324,5 @@
 {
     return nil;
 }
+ */
 @end

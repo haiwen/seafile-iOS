@@ -35,6 +35,7 @@
     if (self = [super init]) {
         _assetsLibrary = [[ALAssetsLibrary alloc] init];
         _accountQueueDict = [NSMutableDictionary new];
+        _finishBlock = nil;
         [self startTimer];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(cacheCleared:) name:@"clearCache" object:nil];
     }
@@ -187,10 +188,10 @@
 
             __weak typeof(self) weakSelf = self;
             accountQueue.uploadQueue.taskCompleteBlock = ^(id<SeafTask>  _Nonnull task, BOOL result) {
-                weakSelf.finishBlock(task);
+                if (weakSelf.finishBlock)  weakSelf.finishBlock(task);
             };
             accountQueue.fileQueue.taskCompleteBlock = ^(id<SeafTask>  _Nonnull task, BOOL result) {
-                weakSelf.finishBlock(task);
+                if (weakSelf.finishBlock)  weakSelf.finishBlock(task);
             };
 
             [self.accountQueueDict setObject:accountQueue forKey:identifier];

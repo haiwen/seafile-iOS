@@ -186,13 +186,11 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
     [connection sendRequest:self.url
                     success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
                         [self handleResponse:response json:JSON];
-                        if (success)
-                            success(self);
+                        if (success)  success(self);
                     }
                     failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
                         self.state = SEAF_DENTRY_INIT;
-                        if (failure)
-                            failure(self, error);
+                        if (failure) failure(self, error);
                         [self.delegate download:self failed:error];
                     }];
 }
@@ -321,7 +319,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
     [self mkdir:newDirName success:nil failure:nil];
 }
 
-- (void)mkdir:(NSString *)newDirName success:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir))failure
+- (void)mkdir:(NSString *)newDirName success:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir, NSError *error))failure
 {
     NSString *path = [self.path stringByAppendingPathComponent:newDirName];
     NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/dir/?p=%@&reloaddir=true", self.repoId, [path escapedUrl]];
@@ -337,7 +335,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          Warning("requestUrl:%@ resp=%ld\n", requestUrl, (long)response.statusCode);
          [self.delegate download:self failed:error];
-         if (failure) failure(self);
+         if (failure) failure(self, error);
      }];
 }
 
@@ -359,14 +357,14 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
      }];
 }
 
-- (void)delEntries:(NSArray *)entries
+- (void)delEntries:(NSArray *)entries success:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir, NSError *error))failure
 {
     int i = 0;
     NSAssert(entries.count > 0, @"There must be at least one entry");
     NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/fileops/delete/?p=%@&reloaddir=true", self.repoId, [self.path escapedUrl]];
 
     NSMutableString *form = [[NSMutableString alloc] init];
-    [form appendFormat:@"file_names=%@", [[[entries objectAtIndex:0] name] escapedPostForm]];
+    [form appendFormat:@"file_names=%@", [[entries objectAtIndex:0] escapedPostForm]];
 
     for (i = 1; i < entries.count; ++i) {
         SeafBase *entry = [entries objectAtIndex:i];
@@ -378,16 +376,18 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          Debug("resp=%ld\n", (long)response.statusCode);
          [self handleResponse:response json:JSON];
-         for (int i = 0; i < entries.count; ++i) {
-             SeafBase *entry = [entries objectAtIndex:i];
-             [entry clearCache];
-         }
+         if (success) success(self);
      }
                  failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          Warning("resp=%ld\n", (long)response.statusCode);
          [self.delegate download:self failed:error];
+         if (failure) failure(self, error);
      }];
+}
+- (void)delEntries:(NSArray *)entries
+{
+    [self delEntries:entries success:nil failure:nil];
 }
 
 - (NSArray *)allItems
@@ -491,35 +491,41 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
     _allItems = nil;
 }
 
-- (void)renameFile:(SeafFile *)sfile newName:(NSString *)newName
+- (void)renameEntry:(NSString *)oldName newName:(NSString *)newName success:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir, NSError *error))failure
 {
-    NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@&reloaddir=true", self.repoId, [sfile.path escapedUrl]];
+    NSString *filePath = [self.path stringByAppendingPathComponent:oldName];
+    NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@&reloaddir=true", self.repoId, [filePath escapedUrl]];
     NSString *form = [NSString stringWithFormat:@"operation=rename&newname=%@", [newName escapedUrl]];
     [connection sendPost:requestUrl form:form
                  success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          Debug("resp=%ld\n", (long)response.statusCode);
          [self handleResponse:response json:JSON];
+         if (success)  success(self);
      }
                  failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          Warning("resp=%ld\n", (long)response.statusCode);
          [self.delegate download:self failed:error];
+         if (failure) failure(self, error);
      }];
 }
+- (void)renameEntry:(NSString *)oldName newName:(NSString *)newName
+{
+    [self renameEntry:oldName newName:newName success:nil failure:nil];
+}
 
-- (void)copyEntries:(NSArray *)entries dstDir:(SeafDir *)dir
+- (void)copyEntries:(NSArray *)entries dstDir:(SeafDir *)dir success:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir, NSError *error))failure
 {
     int i = 0;
     NSAssert(entries.count > 0, @"There must be at least one entry");
     NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/fileops/copy/?p=%@&reloaddir=true", self.repoId, [self.path escapedUrl]];
 
     NSMutableString *form = [[NSMutableString alloc] init];
-    [form appendFormat:@"dst_repo=%@&dst_dir=%@&file_names=%@", dir.repoId, [dir.path escapedUrl], [[[entries objectAtIndex:0] name] escapedPostForm]];
+    [form appendFormat:@"dst_repo=%@&dst_dir=%@&file_names=%@", dir.repoId, [dir.path escapedUrl], [[entries objectAtIndex:0] escapedPostForm]];
 
     for (i = 1; i < entries.count; ++i) {
-        SeafBase *entry = [entries objectAtIndex:i];
-        [form appendFormat:@":%@", [entry.name escapedPostForm]];
+        [form appendFormat:@":%@", [[entries objectAtIndex:i] escapedPostForm]];
     }
 
     [connection sendPost:requestUrl form:form
@@ -527,26 +533,31 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          Debug("resp=%ld\n", (long)response.statusCode);
          [self handleResponse:response json:JSON];
+         if (success) success(self);
      }
                  failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          Warning("resp=%ld\n", (long)response.statusCode);
          [self.delegate download:self failed:error];
+         if (failure) failure(self, error);
      }];
 }
+- (void)copyEntries:(NSArray *)entries dstDir:(SeafDir *)dstDir
+{
+    [self copyEntries:entries dstDir:dstDir success:nil failure:nil];
+}
 
-- (void)moveEntries:(NSArray *)entries dstDir:(SeafDir *)dir
+- (void)moveEntries:(NSArray *)entries dstDir:(SeafDir *)dir success:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir, NSError *error))failure
 {
     int i = 0;
     NSAssert(entries.count > 0, @"There must be at least one entry");
     NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/fileops/move/?p=%@&reloaddir=true", self.repoId, [self.path escapedUrl]];
 
     NSMutableString *form = [[NSMutableString alloc] init];
-    [form appendFormat:@"dst_repo=%@&dst_dir=%@&file_names=%@", dir.repoId, [dir.path escapedUrl], [[[entries objectAtIndex:0] name] escapedPostForm]];
+    [form appendFormat:@"dst_repo=%@&dst_dir=%@&file_names=%@", dir.repoId, [dir.path escapedUrl], [[entries objectAtIndex:0] escapedPostForm]];
 
     for (i = 1; i < entries.count; ++i) {
-        SeafBase *entry = [entries objectAtIndex:i];
-        [form appendFormat:@":%@", [entry.name escapedPostForm]];
+        [form appendFormat:@":%@", [[entries objectAtIndex:i] escapedPostForm]];
     }
 
     [connection sendPost:requestUrl form:form
@@ -554,12 +565,19 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          Debug("resp=%ld\n", (long)response.statusCode);
          [self handleResponse:response json:JSON];
+         if (success) success(self);
      }
                  failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          Warning("resp=%ld\n", (long)response.statusCode);
          [self.delegate download:self failed:error];
+         if (failure) failure(self, error);
      }];
+}
+
+- (void)moveEntries:(NSArray *)entries dstDir:(SeafDir *)dstDir
+{
+    [self moveEntries:entries dstDir:dstDir success:nil failure:nil];
 }
 
 - (void)generateShareLink:(id<SeafShareDelegate>)dg

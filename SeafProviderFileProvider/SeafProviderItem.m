@@ -82,7 +82,10 @@
     }
 
     if (repo.editable) {
-        cap = NSFileProviderItemCapabilitiesAllowsAll;
+        cap |= NSFileProviderItemCapabilitiesAllowsWriting
+        | NSFileProviderItemCapabilitiesAllowsReparenting
+        | NSFileProviderItemCapabilitiesAllowsRenaming
+        | NSFileProviderItemCapabilitiesAllowsDeleting;
     }
     return cap;
 }

@@ -36,13 +36,20 @@
 
 // Api
 - (void)mkdir:(NSString *)newDirName;
-- (void)mkdir:(NSString *)newDirName success:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir))failure;
+- (void)mkdir:(NSString *)newDirName success:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir, NSError *error))failure;
 - (void)createFile:(NSString *)newFileName;
-- (void)delEntries:(NSArray *)entries;
-- (void)copyEntries:(NSArray *)entries dstDir:(SeafDir *)dst_dir;
-- (void)moveEntries:(NSArray *)entries dstDir:(SeafDir *)dst_dir;
-- (void)renameFile:(SeafFile *)sfile newName:(NSString *)newName;
 
+- (void)delEntries:(NSArray *)entries success:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir, NSError *error))failure;
+- (void)delEntries:(NSArray *)entries;
+
+- (void)copyEntries:(NSArray *)entries dstDir:(SeafDir *)dstDir success:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir, NSError *error))failure;
+- (void)copyEntries:(NSArray *)entries dstDir:(SeafDir *)dstDir;
+
+- (void)moveEntries:(NSArray *)entries dstDir:(SeafDir *)dstDir success:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir, NSError *error))failure;
+- (void)moveEntries:(NSArray *)entries dstDir:(SeafDir *)dstDir;
+
+- (void)renameEntry:(NSString *)oldName newName:(NSString *)newName success:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir, NSError *error))failure;
+- (void)renameEntry:(NSString *)oldName newName:(NSString *)newName;
 
 
 

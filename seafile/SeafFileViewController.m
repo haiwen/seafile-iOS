@@ -851,10 +851,10 @@ enum {
     }];
 }
 
-- (void)popupRenameView:(NSString *)newName
+- (void)popupRenameView:(NSString *)oldName
 {
     self.state = STATE_RENAME;
-    [self popupInputView:S_RENAME placeholder:newName secure:false handler:^(NSString *input) {
+    [self popupInputView:S_RENAME placeholder:oldName secure:false handler:^(NSString *input) {
         if (!input || input.length == 0) {
             [self alertWithTitle:NSLocalizedString(@"File name must not be empty", @"Seafile")];
             return;
@@ -863,7 +863,7 @@ enum {
             [self alertWithTitle:NSLocalizedString(@"File name invalid", @"Seafile")];
             return;
         }
-        [_directory renameFile:(SeafFile *)_curEntry newName:input];
+        [_directory renameEntry:oldName newName:input];
         [SVProgressHUD showWithStatus:NSLocalizedString(@"Renaming file ...", @"Seafile")];
     }];
 }
@@ -1105,8 +1105,8 @@ enum {
                 break;
             case STATE_RENAME: {
                 [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to rename file", @"Seafile")];
-                SeafFile *file = (SeafFile *)_curEntry;
-                [self performSelector:@selector(popupRenameView:) withObject:file.name afterDelay:1.0];
+                NSString *oldName = [(SeafBase *)_curEntry name];
+                [self performSelector:@selector(popupRenameView:) withObject:oldName afterDelay:1.0];
                 break;
             }
             case STATE_LOADING:
@@ -1159,7 +1159,7 @@ enum {
             if (!idxs) return;
             NSMutableArray *entries = [[NSMutableArray alloc] init];
             for (NSIndexPath *indexPath in idxs) {
-                [entries addObject:[_directory.allItems objectAtIndex:indexPath.row]];
+                [entries addObject:[[_directory.allItems objectAtIndex:indexPath.row] name]];
             }
             self.state = STATE_DELETE;
             _directory.delegate = self;
@@ -1174,7 +1174,7 @@ enum {
 
 - (void)deleteFile:(SeafFile *)file
 {
-    NSArray *entries = [NSArray arrayWithObject:file];
+    NSArray *entries = [NSArray arrayWithObject:file.name];
     self.state = STATE_DELETE;
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Deleting file ...", @"Seafile")];
     _directory.delegate = self;
@@ -1183,7 +1183,7 @@ enum {
 
 - (void)deleteDir:(SeafDir *)dir
 {
-    NSArray *entries = [NSArray arrayWithObject:dir];
+    NSArray *entries = [NSArray arrayWithObject:dir.name];
     self.state = STATE_DELETE;
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Deleting directory ...", @"Seafile")];
     _directory.delegate = self;
@@ -1278,10 +1278,10 @@ enum {
     }
 }
 
-- (void)renameFile:(SeafFile *)file
+- (void)renameEntry:(SeafBase *)obj
 {
-    _curEntry = file;
-    [self popupRenameView:file.name];
+    _curEntry = obj;
+    [self popupRenameView:obj.name];
 }
 
 - (void)reloadIndex:(NSIndexPath *)indexPath
@@ -1342,8 +1342,8 @@ enum {
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [self redownloadFile:file];
     } else if ([S_RENAME isEqualToString:title]) {
-        SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-        [self renameFile:file];
+        SeafBase *entry = (SeafBase *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
+        [self renameEntry:entry];
     } else if ([S_UPLOAD isEqualToString:title]) {
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [file update:self];
@@ -1430,7 +1430,7 @@ enum {
     if (!idxs) return;
     NSMutableArray *entries = [[NSMutableArray alloc] init];
     for (NSIndexPath *indexPath in idxs) {
-        [entries addObject:[_directory.allItems objectAtIndex:indexPath.row]];
+        [entries addObject:[[_directory.allItems objectAtIndex:indexPath.row] name]];
     }
     _directory.delegate = self;
     if (self.state == STATE_COPY) {

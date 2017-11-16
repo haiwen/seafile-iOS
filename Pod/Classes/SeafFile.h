@@ -55,16 +55,17 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 - (void)setStarred:(BOOL)starred;
 - (void)deleteCache;
 - (void)update:(nullable id<SeafFileUpdateDelegate>)dg;
-- (BOOL)itemChangedAtURL:(nonnull NSURL *)url;
 - (nonnull NSDictionary *)toDict;
 
 - (nullable NSString *)cachePath;
 
 - (void)setThumbCompleteBlock:(nullable void (^)(BOOL ret))block;
 - (void)setFileDownloadedBlock:(nullable SeafFileDidDownloadBlock)block;
+- (void)setFileUploadedBlock:(nullable SeafUploadCompletionBlock)block;
 - (void)downloadThumb:(SeafThumbCompleteBlock _Nonnull)completeBlock;
 - (void)cancelThumb;
 
+- (BOOL)uploadFromFile:(NSURL *_Nonnull)url;
 - (BOOL)waitUpload;
 
 

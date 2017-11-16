@@ -37,6 +37,7 @@
 
 @property (readwrite, nonatomic, copy) SeafThumbCompleteBlock thumbCompleteBlock;
 @property (readwrite, nonatomic, copy) SeafFileDidDownloadBlock fileDidDownloadBlock;
+@property (readwrite, nonatomic) SeafUploadCompletionBlock uploadCompletionBlock;
 @property (nonatomic) TaskCompleteBlock taskCompleteBlock;
 @property (nonatomic) TaskProgressBlock taskProgressBlock;
 @end
@@ -747,9 +748,9 @@
     return ret;
 }
 
-- (BOOL)itemChangedAtURL:(NSURL *)url
+- (BOOL)uploadFromFile:(NSURL *_Nonnull)url
 {
-    Debug("file %@ changed:%@, repo:%@, account:%@ %@", self.name, url, self.repoId, connection.address, connection.username);
+    Debug("file %@ from:%@, repo:%@, account:%@ %@", self.name, url, self.repoId, connection.address, connection.username);
     NSString *dir = [SeafStorage uniqueDirUnder:SeafStorage.sharedObject.editDir];
     if (![Utils checkMakeDir:dir])
         return NO;
@@ -760,7 +761,6 @@
     if (ret) {
         [self setMpath:newpath];
         [self autoupload];
-        [self waitUpload];
     } else
         Warning("Failed to copy file %@ to %@: %@", url, newpath, error);
     return ret;
@@ -809,6 +809,7 @@
         self.ufile = [connection getUploadfile:self.mpath];
         self.ufile.delegate = self;
         self.ufile.overwrite = YES;
+        self.ufile.completionBlock = self.uploadCompletionBlock;
         NSString *path = [self.path stringByDeletingLastPathComponent];
         SeafDir *udir = [[SeafDir alloc] initWithConnection:connection oid:nil repoId:self.repoId perm:@"rw" name:path.lastPathComponent path:path];
         [udir addUploadFile:self.ufile flush:true];
@@ -892,6 +893,10 @@
 - (void)setFileDownloadedBlock:(nullable SeafFileDidDownloadBlock)block
 {
     self.fileDidDownloadBlock = block;
+}
+- (void)setFileUploadedBlock:(nullable SeafUploadCompletionBlock)block
+{
+    self.uploadCompletionBlock = block;
 }
 
 - (void)downloadComplete:(BOOL)updated
