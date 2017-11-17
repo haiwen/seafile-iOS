@@ -33,6 +33,7 @@
     if (!completeBlock) {
         completeBlock = ^(id<SeafTask> task, BOOL result) {};
     }
+
     [self download:completeBlock];
 }
 
@@ -62,6 +63,5 @@
 {
     [self.file cancelThumb];
 }
-
 
 @end

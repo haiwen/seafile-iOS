@@ -191,7 +191,6 @@ static SeafStorage *object = nil;
 
 -(BOOL)synchronize
 {
-    Debug("....");
     return [_storage synchronize];
 }
 

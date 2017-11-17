@@ -137,11 +137,13 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 - (void)cancel
 {
     Debug("Cancel uploadFile: %@", self.lpath);
-    self.udir = nil;
+
     [self.task cancel];
-    self.task = nil;
     [self clearLocalCache];
+    [self.udir removeUploadItem:self];
     [self clearUploadAttr:true];
+    self.udir = nil;
+    self.task = nil;
 }
 
 - (void)cancelAnyLoading
@@ -150,6 +152,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 - (void)clearLocalCache
 {
+    Debug("Remove uploaded disk file: %@", self.lpath);
     [Utils removeFile:self.lpath];
     if (_blockDir) {
         [[NSFileManager defaultManager] removeItemAtPath:_blockDir error:nil];
@@ -172,7 +175,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     return NO;
 }
 
-- (void)finishUpload:(BOOL)result oid:(NSString *)oid
+- (void)finishUpload:(BOOL)result oid:(NSString *)oid error:(NSError *)error
 {
     @synchronized(self) {
         if (!self.isUploading) return;
@@ -180,8 +183,6 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         self.task = nil;
         [self updateProgress:nil];
     }
-    if (result && !_autoSync)
-        [Utils linkFileAtPath:self.lpath to:[SeafStorage.sharedObject documentPath:oid]];
 
     self.rawblksurl = nil;
     self.commiturl = nil;
@@ -200,10 +201,19 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         [Utils dict:dict setObject:[NSNumber numberWithBool:self.autoSync] forKey:@"autoSync"];
         [self saveUploadAttr:true];
     }
-    Debug("result=%d, name=%@, delegate=%@, oid=%@\n", result, self.name, _delegate, oid);
-    [self uploadComplete:result oid:oid];
+    NSError *err = error;
+    if (!err && !result) {
+        err = [Utils defaultError];
+    }
+    Debug("result=%d, name=%@, delegate=%@, oid=%@, err=%@\n", result, self.name, _delegate, oid, err);
+    [self uploadComplete:oid error:err];
     if (result) {
-        [self clearLocalCache];
+        if (!_autoSync) {
+            [Utils linkFileAtPath:self.lpath to:[SeafStorage.sharedObject documentPath:oid]];
+        } else {
+            [self clearLocalCache];
+        }
+        [self.udir removeUploadItem:self];
     }
 }
 
@@ -223,7 +233,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 {
     if (![[NSFileManager defaultManager] fileExistsAtPath:self.lpath]) {
         Debug("Upload failed: local file %@ not exist\n", self.lpath);
-        [self finishUpload:NO oid:nil];
+        [self finishUpload:NO oid:nil error:nil];
     }
     NSProgress *progress = nil;
     _task = [connection.sessionMgr uploadTaskWithStreamedRequest:request progress:&progress completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
@@ -239,7 +249,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
                 [connection refreshRepoPassowrds];
             }
             [self showDeserializedError:error];
-            [self finishUpload:NO oid:nil];
+            [self finishUpload:NO oid:nil error:error];
         } else {
             NSString *oid = nil;
             if ([responseObject isKindOfClass:[NSArray class]]) {
@@ -249,7 +259,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
             }
             if (!oid || oid.length < 1) oid = [[NSUUID UUID] UUIDString];
             Debug("Successfully upload file:%@ autosync:%d oid=%@, responseObject=%@", self.name, _autoSync, oid, responseObject);
-            [self finishUpload:YES oid:oid];
+            [self finishUpload:YES oid:oid error:nil];
         }
     }];
 
@@ -355,7 +365,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     NSURLSessionDataTask *task = [connection.sessionMgr dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
         if (error) {
             Debug("Failed to upload blocks: %@", error);
-            [self finishUpload:NO oid:nil];
+            [self finishUpload:NO oid:nil error:error];
         } else {
             NSString *oid = nil;
             if ([responseObject isKindOfClass:[NSArray class]]) {
@@ -365,7 +375,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
             }
             if (!oid || oid.length < 1) oid = [[NSUUID UUID] UUIDString];
             Debug("Successfully upload file:%@ autosync:%d oid=%@, responseObject=%@", self.name, _autoSync, oid, responseObject);
-            [self finishUpload:YES oid:oid];
+            [self finishUpload:YES oid:oid error:nil];
         }
     }];
     [task resume];
@@ -413,7 +423,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         if (error) {
             Debug("Upload failed :%@,code=%ld, res=%@\n", error, (long)resp.statusCode, responseObject);
             [self showDeserializedError:error];
-            [self finishUpload:NO oid:nil];
+            [self finishUpload:NO oid:nil error:error];
         } else {
             _blkidx += count;
             [self performSelector:@selector(uploadRawBlocks:) withObject:connection afterDelay:0.0];
@@ -430,7 +440,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     _uploadpath = uploadpath;
     if (![self chunkFile:self.lpath repo:repo blockids:blockids paths:paths]) {
         Debug("Failed to chunk file");
-        [self finishUpload:NO oid:nil];
+        [self finishUpload:NO oid:nil error:[Utils defaultError]];
         return;
     }
     self.allblocks = blockids;
@@ -445,7 +455,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         [self uploadRawBlocks:repo->connection];
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
         Debug("Failed to upload: %@", error);
-        [self finishUpload:NO oid:nil];
+        [self finishUpload:NO oid:nil error:error];
     }];
 }
 
@@ -454,13 +464,13 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     if (![Utils fileExistsAtPath:self.lpath]) {
         Warning("File %@ no existed", self.lpath);
         self.retryable = false;
-        return [self uploadComplete:false oid:nil];
+        return [self uploadComplete:nil error:[Utils defaultError]];
     }
     SeafRepo *repo = [connection getRepo:repoId];
     if (!repo) {
         Warning("Repo %@ does not exist", repoId);
         self.retryable = false;
-        return [self uploadComplete:false oid:nil];
+        return [self uploadComplete:nil error:[Utils defaultError]];
     }
 
     @synchronized (self) {
@@ -494,7 +504,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
                     failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          Warning("Failed to upload file %@: %@", self.lpath, error);
-         [self finishUpload:NO oid:nil];
+         [self finishUpload:NO oid:nil error:error];
      }];
 }
 
@@ -540,7 +550,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
             }
             if (!ret) {
                 Warning("Failed to write asset to file.");
-                [self finishUpload:false oid:nil];
+                [self finishUpload:false oid:nil error:nil];
                 return;
             }
         }
@@ -696,17 +706,16 @@ static NSMutableDictionary *uploadFileAttrs = nil;
             continue;
         }
         if ([dir.repoId isEqualToString:[info objectForKey:@"urepo"]] && [dir.path isEqualToString:[info objectForKey:@"upath"]]) {
+            bool result = [[info objectForKey:@"result"] boolValue];
             bool autoSync = [[info objectForKey:@"autoSync"] boolValue];
             SeafUploadFile *file = [dir->connection getUploadfile:lpath create:!autoSync];
-            if (!file || file.asset) {
-                Debug("Auto sync photos %@:%@, remove it and will reupload from beginning", file.lpath, info);
+            if (!file || file.asset || result) {
+                Debug("Remove upload file %@:%@, it is finished: %d or will reupload(auto sync) from beginning", file.lpath, info, result);
                 if (file) {
                     [file clearLocalCache];
-                    [file clearUploadAttr:false];
-                } else {
-                    [uploadFileAttrs removeObjectForKey:lpath];
-                    changed = true;
                 }
+                [uploadFileAttrs removeObjectForKey:lpath];
+                changed = true;
                 continue;
             }
             file.udir = dir;
@@ -734,15 +743,15 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     });
 }
 
-- (void)uploadComplete:(BOOL)result oid:(NSString *)oid
+- (void)uploadComplete:(NSString *)oid error:(NSError *)error
 {
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self.delegate uploadComplete:result file:self oid:oid];
+        [self.delegate uploadComplete:!error file:self oid:oid];
         if (self.completionBlock) {
-            self.completionBlock(result, self, oid);
+            self.completionBlock(self, oid, error);
         }
         if (self.taskCompleteBlock) {
-            self.taskCompleteBlock(self, result);
+            self.taskCompleteBlock(self, !error);
         }
     });
 

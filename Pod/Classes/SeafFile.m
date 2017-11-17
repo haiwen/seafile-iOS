@@ -36,7 +36,7 @@
 @property int index;
 
 @property (readwrite, nonatomic, copy) SeafThumbCompleteBlock thumbCompleteBlock;
-@property (readwrite, nonatomic, copy) SeafFileDidDownloadBlock fileDidDownloadBlock;
+@property (readwrite, nonatomic, copy) SeafDownloadCompletionBlock fileDidDownloadBlock;
 @property (readwrite, nonatomic) SeafUploadCompletionBlock uploadCompletionBlock;
 @property (nonatomic) TaskCompleteBlock taskCompleteBlock;
 @property (nonatomic) TaskProgressBlock taskProgressBlock;
@@ -198,13 +198,12 @@
 {
     [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@", self.repoId, [self.path escapedUrl]] success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-         Debug("Downloading file from file server url: %@, state:%d %@", JSON, self.state, self.ooid);
          NSString *url = JSON;
          NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
-         if (!curId)
-             curId = self.oid;
+         Debug("Downloading file from file server url: %@, state:%d %@, %@", JSON, self.state, self.ooid, curId);
+         if (!curId) curId = self.oid;
          if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:curId]]) {
-             Debug("file %@ already uptodate oid=%@\n", self.name, self.ooid);
+             Debug("file %@ already exist curId=%@, ooid=%@", self.name, curId, self.ooid);
              [self finishDownload:curId];
              return;
          }
@@ -258,7 +257,7 @@
      }];
 }
 
-- (void)setThumbCompleteBlock:(nullable void (^)(BOOL ret))block
+- (void)setThumbCompleteBlock:(nullable SeafThumbCompleteBlock)block
 {
     _thumbCompleteBlock = block;
 }
@@ -857,12 +856,11 @@
 
 - (void)uploadComplete:(BOOL)success file:(SeafUploadFile *)file oid:(NSString *)oid
 {
-    if (!success) {
-        id<SeafFileUpdateDelegate> dg = self.udelegate;
-        return [dg updateComplete:self result:false];
-    }
     Debug("%@ file %@ upload success oid: %@, %@", self, self.name, oid, self.udelegate);
     id<SeafFileUpdateDelegate> dg = self.udelegate;
+    if (!success) {
+        return [dg updateComplete:self result:false];
+    }
     self.ufile = nil;
     self.udelegate = nil;
     self.state = SEAF_DENTRY_INIT;
@@ -890,7 +888,7 @@
     return self.ufile.isUploading;
 }
 
-- (void)setFileDownloadedBlock:(nullable SeafFileDidDownloadBlock)block
+- (void)setFileDownloadedBlock:(nullable SeafDownloadCompletionBlock)block
 {
     self.fileDidDownloadBlock = block;
 }
@@ -905,7 +903,7 @@
         [self.delegate download:self complete:updated];
         self.state = SEAF_DENTRY_SUCCESS;
         if (self.fileDidDownloadBlock) {
-            self.fileDidDownloadBlock(self, updated);
+            self.fileDidDownloadBlock(self, nil);
         }
         if (self.taskCompleteBlock) {
             self.taskCompleteBlock(self, true);
@@ -915,10 +913,11 @@
 
 - (void)downloadFailed:(NSError *)error
 {
+    NSError *err = error ? error : [Utils defaultError];
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self.delegate download:self failed:error];
+        [self.delegate download:self failed:err];
         if (self.fileDidDownloadBlock) {
-            self.fileDidDownloadBlock(self, false);
+            self.fileDidDownloadBlock(self, err);
         }
         if (self.taskCompleteBlock) {
             self.taskCompleteBlock(self, false);

@@ -21,7 +21,6 @@
 
 - (instancetype)initWithItemIdentifier:(NSFileProviderItemIdentifier)itemIdentifier
 {
-    Debug("...>>>>>itemIdentifier:%@", itemIdentifier);
     return [self initWithSeafItem:[[SeafItem alloc] initWithItemIdentity:itemIdentifier]];
 }
 
@@ -35,13 +34,13 @@
 
 - (void)invalidate
 {
-    Debug(".... %@", self.item.itemIdentifier);
+    Debug("invalidate %@", self.item.itemIdentifier);
 }
 
 - (void)enumerateItemsForObserver:(id<NSFileProviderEnumerationObserver>)observer
                    startingAtPage:(NSFileProviderPage)page
 {
-    Debug("....%@, root:%d accountroot:%d, reporoot:%d ", _item.itemIdentifier, _item.isRoot, _item.isAccountRoot, _item.isRepoRoot);
+    Debug("%@, root:%d accountroot:%d, reporoot:%d ", _item.itemIdentifier, _item.isRoot, _item.isAccountRoot, _item.isRepoRoot);
     if (_item.isRoot) {// account list
         [observer didEnumerateItems:self.getRootProviderItems];
         [observer finishEnumeratingUpToPage:nil];
@@ -49,9 +48,7 @@
     }
 
     SeafDir *dir = (SeafDir *)[_item toSeafObj];
-    Debug("current folder ： %@", dir);
     [dir loadContentSuccess: ^(SeafDir *d) {
-        Debug("...");
         if (@available(iOS 11.0, *)) {
             if (NSFileProviderInitialPageSortedByDate == page) {
                 [d reSortItemsByMtime];
@@ -62,7 +59,6 @@
         [observer didEnumerateItems:[self getSeafDirProviderItems:d]];
         [observer finishEnumeratingUpToPage:nil];
     } failure:^(SeafDir *d, NSError *error) {
-        Debug("...");
         [observer finishEnumeratingWithError:error];
     }];
 }
@@ -72,7 +68,6 @@
     NSMutableArray *items = [NSMutableArray new];
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
         SeafItem *item = [SeafItem fromAccount:conn];
-        Debug("....item=%@, %@", item.itemIdentifier, item.name);
         [items addObject:[[SeafProviderItem alloc] initWithSeafItem:item]];
     }
     return items;
@@ -84,7 +79,6 @@
     for (SeafBase *obj in dir.items) {
         [items addObject: [[SeafProviderItem alloc] initWithSeafItem:[SeafItem fromSeafBase:obj]]];
     }
-    Debug(".....%@ subitems number: %ld", _item.itemIdentifier, dir.items.count);
     return items;
 }
 

@@ -25,31 +25,26 @@
     if (self = [super init]) {
         _item = item;
         _itemIdentifier = itemIdentifier;
-        Debug("...._item=%@, _itemIdentify=%@", _item, _itemIdentifier);
     }
     return self;
 }
 - (instancetype)initWithSeafItem:(SeafItem *)item
 {
-    //Debug("....");
     return [self initWithSeafItem:item itemIdentifier:item.itemIdentifier];
 }
 
 - (instancetype)initWithItemIdentifier:(NSFileProviderItemIdentifier)itemIdentifier
 {
-    //Debug("....");
     return [self initWithSeafItem:[[SeafItem alloc] initWithItemIdentity:itemIdentifier] itemIdentifier:itemIdentifier];
 }
 
 - (NSFileProviderItemIdentifier)parentItemIdentifier
 {
-    //Debug(".... %@ parent: %@", self.itemIdentifier, self.item.parentItem.itemIdentifier);
     return self.item.parentItem.itemIdentifier;
 }
 
 - (NSString *)filename
 {
-    //Debug(".... identify=%@, name=%@, self=%@", _itemIdentifier, _item.name, self);
     return _item.name;
 }
 
@@ -61,7 +56,6 @@
     } else {
         uti = (NSString *)CFBridgingRelease(UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension,(__bridge CFStringRef)(_item.filename.pathExtension), NULL));
     }
-    //Debug("... identify=%@, uti=%@", _itemIdentifier, uti);
     return uti;
 }
 
@@ -92,7 +86,6 @@
 
 -(NSDate *)contentModificationDate
 {
-    //Debug("...");
     SeafBase *obj = [_item toSeafObj];
     if (obj && [obj isKindOfClass:[SeafFile class]]) {
         return [NSDate dateWithTimeIntervalSince1970:[(SeafFile *)obj mtime]];
@@ -109,7 +102,6 @@
 }
 -(NSData *)versionIdentifier
 {
-    //Debug("...");
     SeafBase *obj = [_item toSeafObj];
     return [obj.ooid dataUsingEncoding:NSUTF8StringEncoding];
 }

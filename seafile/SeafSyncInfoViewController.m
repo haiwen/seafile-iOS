@@ -123,7 +123,7 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
             }
         }
     }
-    
+
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.tableView reloadData];
     });
@@ -177,7 +177,7 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
     } else {
         tasks = self.finishedTasks;
     }
-    
+
     if (tasks.count > 0 && tasks.count > indexPath.row) {
         id<SeafTask> task = tasks[indexPath.row];
         [cell showCellWithTask:task];

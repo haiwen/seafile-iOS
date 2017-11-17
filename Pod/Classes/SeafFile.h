@@ -15,7 +15,7 @@
 
 @class SeafFile;
 
-typedef void (^SeafFileDidDownloadBlock)(SeafFile* _Nonnull file, BOOL result);
+typedef void (^SeafDownloadCompletionBlock)(SeafFile* _Nonnull file, NSError * _Nullable error);
 typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 
@@ -59,8 +59,8 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (nullable NSString *)cachePath;
 
-- (void)setThumbCompleteBlock:(nullable void (^)(BOOL ret))block;
-- (void)setFileDownloadedBlock:(nullable SeafFileDidDownloadBlock)block;
+- (void)setThumbCompleteBlock:(nullable SeafThumbCompleteBlock)block;
+- (void)setFileDownloadedBlock:(nullable SeafDownloadCompletionBlock)block;
 - (void)setFileUploadedBlock:(nullable SeafUploadCompletionBlock)block;
 - (void)downloadThumb:(SeafThumbCompleteBlock _Nonnull)completeBlock;
 - (void)cancelThumb;

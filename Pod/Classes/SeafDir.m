@@ -367,8 +367,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
     [form appendFormat:@"file_names=%@", [[entries objectAtIndex:0] escapedPostForm]];
 
     for (i = 1; i < entries.count; ++i) {
-        SeafBase *entry = [entries objectAtIndex:i];
-        [form appendFormat:@":%@", [entry.name escapedPostForm]];
+        [form appendFormat:@":%@", [[entries objectAtIndex:i] escapedPostForm]];
     }
 
     [connection sendPost:requestUrl form:form
@@ -460,8 +459,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
         [self.uploadItems addObject:file];
     }
     _allItems = nil;
-    if (!file.autoSync)
-        [self.delegate download:self complete:true];
+    if (!file.autoSync) [self.delegate download:self complete:true];
 }
 
 - (void)checkUploadFiles

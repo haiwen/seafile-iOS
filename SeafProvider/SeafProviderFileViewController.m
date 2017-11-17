@@ -337,8 +337,9 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     SeafBase *entry = [self getItemAtIndex:indexPath.row];
-    if (!entry)
+    if (!entry) {
         return [self.tableView performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
+    }
 
     if ([entry isKindOfClass:[SeafFile class]]) {
         SeafFile *file = (SeafFile *)entry;
@@ -352,22 +353,10 @@
             || self.root.documentPickerMode == UIDocumentPickerModeOpen) {
             NSString *encodeUniqDir = [Utils encodePath:file->connection.address username:file->connection.username repo:file.repoId path:file.path.stringByDeletingLastPathComponent];
             NSString *tmpdir = [self.root.documentStorageURL.path stringByAppendingPathComponent:encodeUniqDir];
-            if (![Utils checkMakeDir:tmpdir]) {
-                Warning("Failed to create temp dir.");
-                return [self alertWithTitle:NSLocalizedString(@"Failed to open file", @"Seafile") handler:nil];
-            }
-            NSURL *url = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:exportURL.lastPathComponent]];
-            Debug("file exportURL:%@, url:%@", exportURL, url);
-            [self.fileCoordinator coordinateWritingItemAtURL:url options:0 error:NULL byAccessor:^(NSURL *newURL) {
-                BOOL ret = [Utils fileExistsAtPath:newURL.path] || [Utils linkFileAtURL:exportURL to:newURL];
-                Debug("newURL: %@, ret: %d", newURL, ret);
-                if (ret) {
-                    [self.root dismissGrantingAccessToURL:newURL];
-                } else {
-                    Warning("Failed to copy file %@", file.name);
-                    return [self alertWithTitle:NSLocalizedString(@"Failed to open file", @"Seafile") handler:nil];
-                }
-            }];
+            NSURL *url = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:file.name]];
+            Debug("dismissGrantingAccessToURL:%@", url);
+            [self.root dismissGrantingAccessToURL:url];
+
         }
     } else if ([entry isKindOfClass:[SeafRepo class]] && [(SeafRepo *)entry passwordRequired]) {
         [self popupSetRepoPassword:(SeafRepo *)entry];

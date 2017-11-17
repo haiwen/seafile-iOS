@@ -66,7 +66,7 @@
         self.edgesForExtendedLayout = UIRectEdgeNone;
     [self setExtraCellLineHidden:self.tableView];
     self.title = NSLocalizedString(@"Accounts", @"Seafile");
-    
+
     self.welcomeLabel.text = [NSString stringWithFormat:NSLocalizedString(@"Welcome to %@", @"Seafile"), APP_NAME];
     self.msgLabel.text = NSLocalizedString(@"Choose an account to start", @"Seafile");
 

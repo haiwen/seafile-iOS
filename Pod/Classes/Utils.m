@@ -627,15 +627,7 @@
     if (path) {
         [ms appendFormat:@"_%@", [path stringByAddingPercentEncodingWithAllowedCharacters:allowedSet]];
     }
-    //Debug("_server=%ld, %@, _username=%@, repo=%@,   ms:%@", server.length, server, username, repoId, ms);
-/*
-    NSString *server2 = nil;
-    NSString *username2 = nil;;
-    NSString *repoId2 = nil;
-    NSString *path2 = nil;
-    [Utils decodePath:ms server:&server2 username:&username2 repo:&repoId2 path:&path2];
-    Debug(">>>>_server=%ld, %@, _username=%@, repo=%@,   ms:%@", server2.length, server2, username2, repoId2, ms);
-*/
+
     return ms;
 }
 
@@ -657,5 +649,15 @@
     if (arr.count >= 4) {
         *path = [[arr objectAtIndex:3] stringByRemovingPercentEncoding];
     }
+}
+
++ (NSError *)defaultError
+{
+    NSDictionary *userInfo = @{
+                               NSLocalizedDescriptionKey: NSLocalizedString(@"Operation was unsuccessful.", nil),
+                               NSLocalizedFailureReasonErrorKey: NSLocalizedString(@"The operation failed.", nil),
+                               };
+    NSError *error = [NSError errorWithDomain:@"Seafile" code:-1 userInfo:userInfo];
+    return error;
 }
 @end

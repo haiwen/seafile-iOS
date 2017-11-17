@@ -17,7 +17,7 @@
 @class SeafUploadFile;
 @class SeafDir;
 
-typedef void (^SeafUploadCompletionBlock)(BOOL success, SeafUploadFile *file, NSString *oid);
+typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, NSError *error);
 
 @protocol SeafUploadDelegate <NSObject>
 - (void)uploadProgress:(SeafUploadFile *)file progress:(float)progress;

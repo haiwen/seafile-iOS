@@ -988,8 +988,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             [Utils dict:self.uploadFiles setObject:ufile forKey:lpath];
         }
         if (ufile && !ufile.completionBlock) {
-            ufile.completionBlock = ^(BOOL success, SeafUploadFile *ufile, NSString *oid) {
-                if (success) {
+            ufile.completionBlock = ^(SeafUploadFile *ufile, NSString *oid, NSError *error) {
+                if (!error) {
                     [self removeUploadfile:ufile];
                 }
             };
@@ -1141,8 +1141,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                      file.overwrite = true;
                                      [file setAsset:asset url:url];
                                      file.udir = dir;
-                                     [file setCompletionBlock:^(BOOL success, SeafUploadFile *file, NSString *oid) {
-                                         if (success) {
+                                     [file setCompletionBlock:^(SeafUploadFile *file, NSString *oid, NSError *error) {
+                                         if (!error) {
                                              [self autoSyncFileUploadedSuccess:file];
                                          }
                                      }];
@@ -1576,9 +1576,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     SeafUploadFile *ufile = [self getUploadfile:path];
     ufile.udir = dir;
     ufile.overwrite = true;
-    ufile.completionBlock = ^(BOOL success, SeafUploadFile *ufile, NSString *oid) {
-        completionHandler(success, nil);
-        if (success) {
+    ufile.completionBlock = ^(SeafUploadFile *ufile, NSString *oid, NSError *error) {
+        completionHandler(!error, nil);
+        if (!error) {
             [self removeUploadfile:ufile];
         }
     };
@@ -1776,10 +1776,10 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         if (!file) {
             return completionHandler(false, error);
         }
-        [file setFileDownloadedBlock:^(SeafFile * _Nonnull file, BOOL result) {
+        [file setFileDownloadedBlock:^(SeafFile * _Nonnull file, NSError *err) {
             NSString *path = [[file exportURL] path];
-            if (!result || !path) {
-                completionHandler(false, nil);
+            if (err || !path) {
+                completionHandler(false, err);
             } else {
                 BOOL ret = [self restoreContactsFromFile:path];
                 completionHandler(ret, nil);
