@@ -482,29 +482,14 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         Debug("upload Local decrypt %@ by block: %lld", self.name, _filesize);
         return [self uploadLargeFileByBlocks:repo path:uploadpath];
     }
-    NSString* upload_url = [NSString stringWithFormat:API_URL"/repos/%@/upload-", repoId];
-    if (byblock)
-        upload_url = [upload_url stringByAppendingString:@"blks-link/"];
-    else
-        upload_url = [upload_url stringByAppendingString:@"link/"];
-
+    NSString* upload_url = [NSString stringWithFormat:API_URL"/repos/%@/upload-link/", repoId];
     upload_url = [upload_url stringByAppendingFormat:@"?p=%@", uploadpath.escapedUrl];
     Debug("upload file size: %lld %@ %@", _filesize, self.lpath, upload_url);
     [connection sendRequest:upload_url success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          NSString *url = [JSON stringByAppendingString:@"?ret-json=true"];
          Debug("Upload file %@ %@, %@ overwrite=%d, byblock=%d, delegate%@\n", self.name, url, uploadpath, self.overwrite, byblock, _delegate);
-         if (byblock) {
-             NSMutableArray *blockids = [[NSMutableArray alloc] init];
-             NSMutableArray *paths = [[NSMutableArray alloc] init];
-             if ([self chunkFile:self.lpath repo:repo blockids:blockids paths:paths]) {
-                 [self uploadByBlocks:connection url:url uploadpath:uploadpath blocks:blockids paths:paths update:self.overwrite];
-             } else {
-                 [self finishUpload:NO oid:nil];
-             }
-         } else {
-             [self uploadByFile:connection url:url path:uploadpath update:self.overwrite];
-         }
+         [self uploadByFile:connection url:url path:uploadpath update:self.overwrite];
      }
                     failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
