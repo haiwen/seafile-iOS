@@ -172,7 +172,12 @@
     [self.fileCoordinator coordinateWritingItemAtURL:url options:NSFileCoordinatorWritingForDeleting error:nil byAccessor:^(NSURL *newURL) {
         Debug("Remove exported file %@", newURL);
         [[NSFileManager defaultManager] removeItemAtURL:newURL error:nil];
-        [[NSFileManager defaultManager] removeItemAtURL:[newURL URLByDeletingLastPathComponent] error:nil];
+        NSError *error = nil;
+        NSString *parentDir = newURL.path.stringByDeletingLastPathComponent;
+        NSArray *folderContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:parentDir error:&error];
+        if (!error && folderContents.count == 0) {
+             [[NSFileManager defaultManager] removeItemAtPath:parentDir error:nil];
+        }
     }];
 }
 
