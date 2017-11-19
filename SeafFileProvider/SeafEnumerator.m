@@ -46,7 +46,8 @@
 {
     Debug("%@, root:%d accountroot:%d, reporoot:%d ", _item.itemIdentifier, _item.isRoot, _item.isAccountRoot, _item.isRepoRoot);
     if (_item.isRoot) {// account list
-        [observer didEnumerateItems:self.getRootProviderItems];
+        NSArray *accounts = self.getRootProviderItems;
+        [observer didEnumerateItems:accounts];
         [observer finishEnumeratingUpToPage:nil];
         return;
     }

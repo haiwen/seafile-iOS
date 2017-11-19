@@ -12,6 +12,6 @@
 
 @interface SeafProviderItem : NSObject<NSFileProviderItem>
 
-- (instancetype)initWithItemIdentifier:(NSFileProviderItemIdentifier)itemIdentifier;
+- (instancetype)initWithSeafItem:(SeafItem *)item itemIdentifier:(NSFileProviderItemIdentifier)itemIdentifier;
 - (instancetype)initWithSeafItem:(SeafItem *)item;
 @end

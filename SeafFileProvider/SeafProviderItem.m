@@ -7,6 +7,7 @@
 //
 #import <MobileCoreServices/MobileCoreServices.h>
 #import "SeafProviderItem.h"
+#import "SeafGlobal.h"
 #import "SeafItem.h"
 #import "SeafDir.h"
 #import "SeafRepos.h"
@@ -33,14 +34,13 @@
     return [self initWithSeafItem:item itemIdentifier:item.itemIdentifier];
 }
 
-- (instancetype)initWithItemIdentifier:(NSFileProviderItemIdentifier)itemIdentifier
-{
-    return [self initWithSeafItem:[[SeafItem alloc] initWithItemIdentity:itemIdentifier] itemIdentifier:itemIdentifier];
-}
-
 - (NSFileProviderItemIdentifier)parentItemIdentifier
 {
-    return self.item.parentItem.itemIdentifier;
+    SeafItem *parentItem = self.item.parentItem;
+    if (parentItem.isRoot) {
+        return NSFileProviderRootContainerItemIdentifier;
+    }
+    return parentItem.itemIdentifier;
 }
 
 - (NSString *)filename
@@ -108,6 +108,9 @@
 
 -(NSNumber *)childItemCount
 {
+    if (_item.isRoot) {
+        return [NSNumber numberWithUnsignedInteger:SeafGlobal.sharedObject.conns.count];
+    }
     SeafBase *obj = [_item toSeafObj];
     if (obj && [obj hasCache] && [obj isKindOfClass:[SeafDir class]]) {
         long cnt = [[(SeafDir *)obj items] count];
@@ -122,6 +125,7 @@
     if (_item.isRoot) {
         return true;
     }
+
     SeafBase *obj = [_item toSeafObj];
     return [obj hasCache];
 }

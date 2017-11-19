@@ -130,7 +130,7 @@ static APLRUCache *cache() {
         } else {
             _name = _path.lastPathComponent;
         }
-        //Debug("identify=%@, _server=%ld, %@, _username=%@, repo=%@, path=%@, filename=%@  ===> %@", _itemIdentifier, _server.length, _server, _username, _repoId, _path, _filename, _name);
+        Debug("identify=%@, _server=%@, _username=%@, repo=%@, path=%@, filename=%@  ===> %@", _itemIdentifier, _server, _username, _repoId, _path, _filename, _name);
     }
     return _name;
 }
@@ -178,9 +178,10 @@ static APLRUCache *cache() {
             obj = [self getSeafObj];
             if (obj) {
                 [CACHE cacheObject:obj forKey:self.itemIdentifier];
+                [obj loadCache];
             }
         }
-        [obj loadCache];
+
         return obj;
     }
 }
@@ -214,7 +215,7 @@ static APLRUCache *cache() {
 }
 + (SeafItem *)fromSeafFile:(SeafFile *)file
 {
-    return [[SeafItem alloc] initWithServer:file->connection.address username:file->connection.username repo:file.repoId path:file.path filename:file.name];
+    return [[SeafItem alloc] initWithServer:file->connection.address username:file->connection.username repo:file.repoId path:file.path.stringByDeletingLastPathComponent filename:file.name];
 }
 
 @end

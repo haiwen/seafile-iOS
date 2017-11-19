@@ -99,7 +99,8 @@
 
 - (nullable NSFileProviderItem)itemForIdentifier:(NSFileProviderItemIdentifier)identifier error:(NSError * _Nullable *)error
 {
-    return [[SeafProviderItem alloc] initWithItemIdentifier:[self translateIdentifier:identifier]];
+    SeafItem *item = [[SeafItem alloc] initWithItemIdentity:[self translateIdentifier:identifier]];
+    return [[SeafProviderItem alloc] initWithSeafItem:item itemIdentifier:identifier];
 }
 
 - (void)providePlaceholderAtURL:(NSURL *)url completionHandler:(void (^)(NSError *error))completionHandler
@@ -113,11 +114,13 @@
         return completionHandler([Utils defaultError]);
     }
 
+    [Utils checkMakeDir:url.path.stringByDeletingLastPathComponent];
     NSURL *placeholderURL = [NSFileProviderManager placeholderURLForURL:url];
     Debug("placeholderURL:%@ url:%@", placeholderURL, url);
     NSError *error = nil;
     SeafProviderItem *providerItem = [[SeafProviderItem alloc] initWithSeafItem:item];
     [NSFileProviderManager writePlaceholderAtURL:placeholderURL withMetadata:providerItem error:&error];
+    if (error) Warning("Failed to write placeholder: %@", error);
     completionHandler(error);
 }
 

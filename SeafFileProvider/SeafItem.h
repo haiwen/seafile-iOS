@@ -17,7 +17,7 @@
 @property (readonly) NSString *server;
 @property (readonly) NSString *username;
 @property (readonly) NSString *repoId;
-@property (readonly) NSString *path;
+@property (readonly) NSString *path; //folder path
 @property (readonly) NSString *filename;
 
 
