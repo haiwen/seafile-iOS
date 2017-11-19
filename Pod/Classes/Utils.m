@@ -43,7 +43,7 @@
                                        withIntermediateDirectories:YES
                                                         attributes:nil
                                                              error:&error]) {
-            Warning("Failed to create objects directory %@:%@\n", path, error);
+            Warning("Failed to create directory %@:%@\n", path, error);
             return NO;
         }
     }
@@ -95,25 +95,26 @@
     NSFileManager* fm = [NSFileManager defaultManager];
     if ([fm fileExistsAtPath:to.path]
         || ![[NSFileManager defaultManager] copyItemAtURL:from toURL:to error:&error]) {
-        Warning("Failed to link file from %@ to %@: %@\n", from, to, error);
+        Warning("Failed to copy file from %@ to %@: %@\n", from, to, error);
         return false;
     }
     return true;
 }
 
-+ (BOOL)linkFileAtURL:(NSURL *)from to:(NSURL *)to
++ (BOOL)linkFileAtURL:(NSURL *)from to:(NSURL *)to error:(NSError **)error
 {
-    return [Utils linkFileAtPath:from.path to:to.path];
+    return [Utils linkFileAtPath:from.path to:to.path error:error];
 }
 
-+ (BOOL)linkFileAtPath:(NSString *)from to:(NSString *)to
++ (BOOL)linkFileAtPath:(NSString *)from to:(NSString *)to error:(NSError **)error
 {
     if (!from || !to || [Utils fileExistsAtPath:to]) return false;
-    NSError *error = nil;
+    NSError *err = nil;
     NSFileManager* fm = [NSFileManager defaultManager];
     if ([fm fileExistsAtPath:to]
-        || ![[NSFileManager defaultManager] linkItemAtPath:from toPath:to error:&error]) {
-        Warning("Failed to link file from %@ to %@: %@\n", from, to, error);
+        || ![[NSFileManager defaultManager] linkItemAtPath:from toPath:to error:&err]) {
+        Warning("Failed to link file from %@ to %@: %@\n", from, to, err);
+        if (error) *error = err;
         return false;
     }
     return true;

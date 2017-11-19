@@ -140,8 +140,9 @@
             [Utils removeFile:url.path];
         }
         [Utils checkMakeDir:url.path.stringByDeletingLastPathComponent];
-        BOOL ret = [Utils linkFileAtURL:file.exportURL to:url];
-        NSError *err = ret ? nil : [Utils defaultError];
+        NSError *err = nil;
+        BOOL ret = [Utils linkFileAtURL:file.exportURL to:url error:&err];
+        if (!ret && !err) err = [Utils defaultError];
         completionHandler(err);
     }];
     [file loadContent:true];
@@ -165,20 +166,27 @@
     [sfile waitUpload];
 }
 
-- (void)stopProvidingItemAtURL:(NSURL *)url {
+- (void)stopProvidingItemAtURL:(NSURL *)url
+{
     // Called after the last claim to the file has been released. At this point, it is safe for the file provider to remove the content file.
     // Care should be taken that the corresponding placeholder file stays behind after the content file has been deleted.
 
     [self.fileCoordinator coordinateWritingItemAtURL:url options:NSFileCoordinatorWritingForDeleting error:nil byAccessor:^(NSURL *newURL) {
-        Debug("Remove exported file %@", newURL);
-        [[NSFileManager defaultManager] removeItemAtURL:newURL error:nil];
-        NSError *error = nil;
-        NSString *parentDir = newURL.path.stringByDeletingLastPathComponent;
-        NSArray *folderContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:parentDir error:&error];
-        if (!error && folderContents.count == 0) {
-             [[NSFileManager defaultManager] removeItemAtPath:parentDir error:nil];
-        }
+        [self removeProvidingItemAndParentIfEmpty:url];
     }];
+}
+
+- (void)removeProvidingItemAndParentIfEmpty:(NSURL *)url
+{
+    Debug("Remove providingItem: %@", url);
+    [[NSFileManager defaultManager] removeItemAtURL:url error:nil];
+
+    NSError *error = nil;
+    NSString *parentDir = url.path.stringByDeletingLastPathComponent;
+    NSArray *folderContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:parentDir error:&error];
+    if (!error && folderContents.count == 0) {
+        [[NSFileManager defaultManager] removeItemAtPath:parentDir error:nil];
+    }
 }
 
 # pragma mark - NSFileProviderEnumerator
@@ -197,11 +205,24 @@
     Debug("file path: %@, parentItemIdentifier:%@, itemIdentifier:%@", fileURL.path, parentItemIdentifier, itemIdentifier);
     SeafItem *item = [[SeafItem alloc] initWithItemIdentity:itemIdentifier];
     SeafFile *sfile = (SeafFile *)[item toSeafObj];
+    NSURL *localURL = [self URLForItemWithPersistentIdentifier:itemIdentifier];
+
     [sfile setFileUploadedBlock:^(SeafUploadFile *file, NSString *oid, NSError *error) {
-        SeafProviderItem *providerItem = [[SeafProviderItem alloc] initWithSeafItem:item];
-        completionHandler(providerItem, error);
+        if (!error) [self removeProvidingItemAndParentIfEmpty:localURL];
     }];
-    [sfile uploadFromFile:fileURL];
+    
+    [fileURL startAccessingSecurityScopedResource];
+    [Utils checkMakeDir:localURL.path.stringByDeletingLastPathComponent];
+    NSError *err = nil;
+    BOOL ret = [[NSFileManager defaultManager] moveItemAtURL:fileURL toURL:localURL error:&err];
+    [fileURL stopAccessingSecurityScopedResource];
+
+    if (!ret) return completionHandler(nil, err ? err : [Utils defaultError]);
+    ret = [sfile uploadFromFile:localURL];
+    if (!ret) return completionHandler(nil, err ? err : [Utils defaultError]);
+
+    SeafProviderItem *providerItem = [[SeafProviderItem alloc] initWithSeafItem:item];
+    completionHandler(providerItem, nil);
 }
 
 - (void)createDirectoryWithName:(NSString *)directoryName

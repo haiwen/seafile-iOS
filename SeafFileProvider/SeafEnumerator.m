@@ -49,14 +49,7 @@
 
     SeafDir *dir = (SeafDir *)[_item toSeafObj];
     [dir loadContentSuccess: ^(SeafDir *d) {
-        if (@available(iOS 11.0, *)) {
-            if (NSFileProviderInitialPageSortedByDate == page) {
-                [d reSortItemsByMtime];
-            } else {
-                [d reSortItemsByName];
-            }
-        }
-        [observer didEnumerateItems:[self getSeafDirProviderItems:d]];
+        [observer didEnumerateItems:[self getSeafDirProviderItems:d startingAtPage:page]];
         [observer finishEnumeratingUpToPage:nil];
     } failure:^(SeafDir *d, NSError *error) {
         [observer finishEnumeratingWithError:error];
@@ -73,8 +66,16 @@
     return items;
 }
 
-- (NSArray *)getSeafDirProviderItems:(SeafDir *)dir
+- (NSArray *)getSeafDirProviderItems:(SeafDir *)dir startingAtPage:(NSFileProviderPage)page
 {
+    if (@available(iOS 11.0, *)) {
+        if (NSFileProviderInitialPageSortedByDate == page) {
+            [dir reSortItemsByMtime];
+        } else {
+            [dir reSortItemsByName];
+        }
+    }
+
     NSMutableArray *items = [NSMutableArray new];
     for (SeafBase *obj in dir.items) {
         [items addObject: [[SeafProviderItem alloc] initWithSeafItem:[SeafItem fromSeafBase:obj]]];

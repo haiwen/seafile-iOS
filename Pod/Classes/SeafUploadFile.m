@@ -209,7 +209,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     [self uploadComplete:oid error:err];
     if (result) {
         if (!_autoSync) {
-            [Utils linkFileAtPath:self.lpath to:[SeafStorage.sharedObject documentPath:oid]];
+            [Utils linkFileAtPath:self.lpath to:[SeafStorage.sharedObject documentPath:oid] error:nil];
         } else {
             [self clearLocalCache];
         }

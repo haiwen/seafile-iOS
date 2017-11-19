@@ -21,8 +21,8 @@
 
 + (long long)folderSizeAtPath:(NSString*)folderPath;
 + (BOOL)copyFile:(NSURL *)from to:(NSURL *)to;
-+ (BOOL)linkFileAtURL:(NSURL *)from to:(NSURL *)to;
-+ (BOOL)linkFileAtPath:(NSString *)from to:(NSString *)to;
++ (BOOL)linkFileAtURL:(NSURL *)from to:(NSURL *)to error:(NSError **)error;
++ (BOOL)linkFileAtPath:(NSString *)from to:(NSString *)to error:(NSError **)error;
 
 + (long long)fileSizeAtPath1:(NSString*)filePath;
 

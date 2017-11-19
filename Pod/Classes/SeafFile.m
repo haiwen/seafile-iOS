@@ -594,7 +594,7 @@
         NSString *tempFileName = [tempDir stringByAppendingPathComponent:self.name];
         Debug("File exists at %@, %d", tempFileName, [Utils fileExistsAtPath:tempFileName]);
         if ([Utils fileExistsAtPath:tempFileName]
-            || [Utils linkFileAtPath:[SeafStorage.sharedObject documentPath:self.ooid] to:tempFileName]) {
+            || [Utils linkFileAtPath:[SeafStorage.sharedObject documentPath:self.ooid] to:tempFileName error:nil]) {
             _exportURL = [NSURL fileURLWithPath:tempFileName];
         } else {
             Warning("Copy file to exportURL failed.\n");
@@ -756,12 +756,13 @@
 
     NSString *newpath = [dir stringByAppendingPathComponent:self.name];
     NSError *error = nil;
-    BOOL ret = [Utils linkFileAtPath:url.path to:newpath];
+    BOOL ret = [Utils linkFileAtPath:url.path to:newpath error:&error];
     if (ret) {
         [self setMpath:newpath];
         [self autoupload];
-    } else
+    } else {
         Warning("Failed to copy file %@ to %@: %@", url, newpath, error);
+    }
     return ret;
 }
 
