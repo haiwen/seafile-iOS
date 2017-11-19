@@ -121,7 +121,7 @@ static APLRUCache *cache() {
         if (self.isRoot) {
             _name = @"Seafile";
         } else if (self.isAccountRoot) {
-            _name = [NSString stringWithFormat:@"%@-%@", _username, self.conn.host];
+            _name = [NSString stringWithFormat:@"%@-%@", self.conn.host, _username];
         } else if (self.isRepoRoot) {
             SeafRepo *repo = [self.conn getRepo:_repoId];
             _name = repo.name;

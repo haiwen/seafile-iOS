@@ -62,6 +62,9 @@
         if ([containerItemIdentifier isEqualToString:NSFileProviderRootContainerItemIdentifier]) {
             return @"/";
         }
+        if ([containerItemIdentifier isEqualToString:NSFileProviderWorkingSetContainerItemIdentifier]) {
+            return @"/";
+        }
     }
     return containerItemIdentifier;
 }

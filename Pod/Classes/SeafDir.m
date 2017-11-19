@@ -289,6 +289,9 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 
 - (void)clearCache
 {
+    self.state = SEAF_DENTRY_INIT;
+    _items = nil;
+    _allItems = nil;
     [self->connection removeKey:self.cacheKey entityName:ENTITY_DIRECTORY];
 }
 

@@ -35,6 +35,10 @@
 - (void)invalidate
 {
     Debug("invalidate %@", self.item.itemIdentifier);
+    if (!_item.isRoot && !_item.isFile) {
+        SeafDir *dir = (SeafDir *)[_item toSeafObj];
+        [dir clearCache];
+    }
 }
 
 - (void)enumerateItemsForObserver:(id<NSFileProviderEnumerationObserver>)observer
@@ -48,6 +52,11 @@
     }
 
     SeafDir *dir = (SeafDir *)[_item toSeafObj];
+    if (dir.hasCache) {
+        [observer didEnumerateItems:[self getSeafDirProviderItems:dir startingAtPage:page]];
+        [observer finishEnumeratingUpToPage:nil];
+        return;
+    }
     [dir loadContentSuccess: ^(SeafDir *d) {
         [observer didEnumerateItems:[self getSeafDirProviderItems:d startingAtPage:page]];
         [observer finishEnumeratingUpToPage:nil];
