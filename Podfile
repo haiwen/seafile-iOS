@@ -6,7 +6,7 @@ def shared
   pod 'APLRUCache', '~> 1.0.0'
 end
 
-target :"seafile-appstore" do
+target :"seafileApp" do
   pod 'SVPullToRefresh', :git => 'https://github.com/lilthree/SVPullToRefresh.git', :branch => 'master'
   pod 'SVProgressHUD', '~> 1.1.3'
   pod 'SWTableViewCell', :git => 'https://github.com/haiwen/SWTableViewCell.git', :branch => 'master'
@@ -16,11 +16,11 @@ target :"seafile-appstore" do
 end
 
 
-target :"SeafProvider" do
+target :"SeafFileProvider" do
   shared
 end
 
-target :"SeafProviderFileProvider" do
+target :"SeafFileProviderUI" do
   shared
 end
 

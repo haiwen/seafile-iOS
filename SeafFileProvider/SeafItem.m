@@ -1,6 +1,6 @@
 //
 //  SeafDecodedData.m
-//  SeafProviderFileProvider
+//  SeafFileProvider
 //
 //  Created by Wei W on 11/5/17.
 //  Copyright © 2017 Seafile. All rights reserved.
@@ -149,7 +149,7 @@ static APLRUCache *cache() {
 }
 - (BOOL)isFile
 {
-    return _filename;
+    return !!_filename;
 }
 
 - (SeafBase *)getSeafObj

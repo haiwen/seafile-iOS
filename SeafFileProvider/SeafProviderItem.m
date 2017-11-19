@@ -1,6 +1,6 @@
 //
 //  SeafProviderItem.m
-//  SeafProviderFileProvider
+//  SeafFileProvider
 //
 //  Created by Wei W on 11/5/17.
 //  Copyright © 2017 Seafile. All rights reserved.
@@ -96,7 +96,7 @@
 {
     SeafBase *obj = [_item toSeafObj];
     if (obj && [obj isKindOfClass:[SeafFile class]]) {
-        return [NSNumber numberWithLong:[(SeafFile *)obj filesize]];
+        return [NSNumber numberWithLongLong:[(SeafFile *)obj filesize]];
     }
     return nil;
 }

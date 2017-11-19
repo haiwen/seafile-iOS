@@ -1,6 +1,6 @@
 //
 //  FileProvider.m
-//  SeafProviderFileProvider
+//  SeafFileProvider
 //
 //  Created by Wang Wei on 11/15/14.
 //  Copyright (c) 2014 Seafile. All rights reserved.
@@ -139,6 +139,7 @@
         if ([Utils fileExistsAtPath:url.path]) {
             [Utils removeFile:url.path];
         }
+        [Utils checkMakeDir:url.path.stringByDeletingLastPathComponent];
         BOOL ret = [Utils linkFileAtURL:file.exportURL to:url];
         NSError *err = ret ? nil : [Utils defaultError];
         completionHandler(err);
@@ -178,6 +179,7 @@
 # pragma mark - NSFileProviderEnumerator
 - (nullable id<NSFileProviderEnumerator>)enumeratorForContainerItemIdentifier:(NSFileProviderItemIdentifier)containerItemIdentifier error:(NSError **)error
 {
+    Debug("enumerator for %@", containerItemIdentifier);
     return [[SeafEnumerator alloc] initWithItemIdentifier:[self translateIdentifier:[self translateIdentifier:containerItemIdentifier]]];
    }
 
