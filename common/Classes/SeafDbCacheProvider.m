@@ -115,7 +115,7 @@
         if ([managedObjectContext hasChanges]) {
             BOOL ret = [managedObjectContext save:&error];
             if (!ret) {
-                Warning("Unresolved error %@, %@", error, [error userInfo]);
+                Warning("Unresolved error %@", error);
             }
         }
     }

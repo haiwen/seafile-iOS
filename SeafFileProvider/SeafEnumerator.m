@@ -76,6 +76,20 @@
     return items;
 }
 
+- (NSArray *)getAccessiableSubItems:(SeafDir *)dir
+{
+    if ([dir isKindOfClass:[SeafRepos class]]) { // for repo, only show those unencryped or password already saved
+        NSMutableArray *repos = [NSMutableArray new];
+        for (SeafRepo *repo in [(SeafRepos*)dir items]) {
+            if (!repo.passwordRequired) {
+                [repos addObject:repo];
+            }
+        }
+        return repos;
+    }
+    return dir.items;
+}
+
 - (NSArray *)getSeafDirProviderItems:(SeafDir *)dir startingAtPage:(NSFileProviderPage)page
 {
     if (@available(iOS 11.0, *)) {
@@ -87,7 +101,7 @@
     }
 
     NSMutableArray *items = [NSMutableArray new];
-    for (SeafBase *obj in dir.items) {
+    for (SeafBase *obj in [self getAccessiableSubItems: dir]) {
         [items addObject: [[SeafProviderItem alloc] initWithSeafItem:[SeafItem fromSeafBase:obj]]];
     }
     return items;

@@ -112,9 +112,16 @@
         return [NSNumber numberWithUnsignedInteger:SeafGlobal.sharedObject.publicAccounts.count];
     }
     SeafBase *obj = [_item toSeafObj];
-    if (obj && [obj hasCache] && [obj isKindOfClass:[SeafDir class]]) {
-        long cnt = [[(SeafDir *)obj items] count];
-        return [NSNumber numberWithLong:cnt];
+    if (obj && [obj hasCache]) {
+        if ([obj isKindOfClass:[SeafRepos class]]) {
+            int cnt = 0;
+            for (SeafRepo *repo in [(SeafRepos*)obj items]) {
+                if (!repo.passwordRequired) ++cnt;
+            }
+            return  [NSNumber numberWithInt:cnt];
+        } else if ([obj isKindOfClass:[SeafDir class]]) {
+            return [NSNumber numberWithUnsignedInteger:[[(SeafDir *)obj items] count]];
+        }
     }
     // placeholder
     return [NSNumber numberWithInt:1];
