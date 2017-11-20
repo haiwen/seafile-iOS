@@ -30,6 +30,7 @@
 #import "Debug.h"
 
 #import "QBImagePickerController.h"
+#import <WechatOpenSDK/WXApi.h>
 
 enum {
     STATE_INIT = 0,
@@ -43,6 +44,10 @@ enum {
     STATE_COPY,
     STATE_SHARE_EMAIL,
     STATE_SHARE_LINK,
+    STATE_SHARE_SAVE_ALBUM,
+    STATE_SHARE_COPING_CLIPBOARD,
+    STATE_SHARE_OPEN_ELESWHERE,
+    STATE_SHARE_SHARE_WECHAT
 };
 
 
@@ -82,6 +87,7 @@ enum {
 
 @property SeafUploadFile *ufile;
 @property (nonatomic, strong)NSArray *allItems;
+@property (strong) UIDocumentInteractionController *docController;
 
 @end
 
@@ -593,11 +599,24 @@ enum {
     } else if ([entry isKindOfClass:[SeafFile class]]) {
         SeafFile *file = (SeafFile *)entry;
         NSString *star = file.isStarred ? S_UNSTAR : S_STAR;
+        NSMutableArray *tTitles = [NSMutableArray array];
         if (file.mpath)
-            titles = [NSArray arrayWithObjects:star, S_DELETE, S_UPLOAD, S_SHARE_EMAIL, S_SHARE_LINK, nil];
+            tTitles = [NSMutableArray arrayWithObjects:star, S_DELETE, S_UPLOAD, S_SHARE_EMAIL, S_SHARE_LINK, nil];
         else
-            titles = [NSArray arrayWithObjects:star, S_DELETE, S_REDOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
+            tTitles = [NSMutableArray arrayWithObjects:star, S_DELETE, S_REDOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
 
+
+        if ([Utils isImageFile:file.name]) {
+            [tTitles addObjectsFromArray:[NSArray arrayWithObjects:S_SAVE_TO_ALBUM,S_COPYING_PHOTO, nil]];
+            
+        } else if ([Utils isVideoFile:file.name]) {
+            [tTitles addObject:S_SAVE_TO_ALBUM];
+        }
+        [tTitles addObject:S_OPEN_ELESWHERE];
+        if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"wechat://"]]) {
+            [tTitles addObject:S_SHARE_TO_WECHAT];
+        }
+        titles = [tTitles copy];
     } else if ([entry isKindOfClass:[SeafUploadFile class]]) {
         titles = [NSArray arrayWithObjects:S_DOWNLOAD, S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
     }
@@ -1059,15 +1078,25 @@ enum {
 
 - (void)download:(SeafBase *)entry complete:(BOOL)updated
 {
+    [SVProgressHUD dismiss];
     if ([entry isKindOfClass:[SeafFile class]]) {
         SeafFile *file = (SeafFile *)entry;
         [self updateEntryCell:file];
-        [self.detailViewController download:file complete:updated];
-        SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
-        [photo complete:updated error:nil];
+        if (self.state == STATE_SHARE_SAVE_ALBUM) {
+            [self saveImageToAlbum:file];
+        } else if (self.state == STATE_SHARE_COPING_CLIPBOARD) {
+            [self copyToClipboard:file];
+        } else if (self.state == STATE_SHARE_OPEN_ELESWHERE) {
+            [self openElsewhere:file];
+        } else if (self.state == STATE_SHARE_SHARE_WECHAT) {
+            [self shareToWechat:file];
+        } else {
+            [self.detailViewController download:file complete:updated];
+            SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
+            [photo complete:updated error:nil];
+        }
     } else if (entry == _directory) {
         [self dismissLoadingView];
-        [SVProgressHUD dismiss];
         [self doneLoadingTableViewData];
         if (self.state == STATE_DELETE && !IsIpad()) {
             [self.detailViewController goBack:nil];
@@ -1085,6 +1114,7 @@ enum {
 - (void)download:(SeafBase *)entry failed:(NSError *)error
 {
     if ([entry isKindOfClass:[SeafFile class]]) {
+        [SVProgressHUD dismiss];
         SeafFile *file = (SeafFile *)entry;
         [self updateEntryCell:file];
         [self.detailViewController download:entry failed:error];
@@ -1209,6 +1239,12 @@ enum {
     [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
 }
 
+- (void)downloadFile:(SeafFile *)file {
+    [file cancelAnyLoading];
+    [file deleteCache];
+    [SeafDataTaskManager.sharedObject addFileDownloadTask:file];
+}
+
 - (void)downloadDir:(SeafDir *)dir
 {
     Debug("download dir: %@ %@", dir.repoId, dir.path);
@@ -1225,11 +1261,13 @@ enum {
 
 - (void)saveImageToAlbum:(SeafFile *)file
 {
+    self.state = STATE_INIT;
     UIImage *img = [UIImage imageWithContentsOfFile:file.cachePath];
     dispatch_time_t timeout = dispatch_time(DISPATCH_TIME_NOW, 30 * NSEC_PER_SEC);
     dispatch_semaphore_wait(SeafGlobal.sharedObject.saveAlbumSem, timeout);
     Info("Write image file %@ %@ to album", file.name, file.cachePath);
     UIImageWriteToSavedPhotosAlbum(img, self, @selector(thisImage:hasBeenSavedInPhotoAlbumWithError:usingContextInfo:), (void *)CFBridgingRetain(file));
+    [SVProgressHUD showInfoWithStatus:S_SAVE_TO_ALBUM];
 }
 
 - (void)savePhotosToAlbum
@@ -1255,6 +1293,58 @@ enum {
         }
     }
     [SVProgressHUD showInfoWithStatus:S_SAVING_PHOTOS_ALBUM];
+}
+
+- (void)copyToClipboard:(SeafFile*)file {
+    self.state = STATE_INIT;
+    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+    NSData *data = [NSData dataWithContentsOfFile:file.previewItemURL.path];
+    [pasteboard setData:data forPasteboardType:file.name];
+    [SVProgressHUD showSuccessWithStatus:S_COPYING_PHOTO];
+}
+
+- (void)openElsewhere:(SeafFile*)file
+{
+    self.state = STATE_INIT;
+    NSURL *url = [file exportURL];
+    if (!url)   return;
+    if (self.docController)
+        [self.docController dismissMenuAnimated:NO];
+
+    self.docController = [UIDocumentInteractionController interactionControllerWithURL:url];
+    SeafCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
+    BOOL ret = [self.docController presentOpenInMenuFromRect:cell.bounds inView:cell animated:YES];
+    if (ret == NO) {
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"There is no app which can open this type of file on this machine", @"Seafile")];
+    }
+}
+
+- (void)shareToWechat:(SeafFile*)file {
+    self.state = STATE_INIT;
+    NSURL *url = [file exportURL];
+    if (!url) return;
+
+    WXMediaMessage *message = [WXMediaMessage message];
+    message.title = file.name;
+    message.description = file.name;
+    message.messageExt = [file.path pathExtension];
+    
+    if ([Utils isImageFile:file.name]) {
+        WXImageObject *imageObj = [WXImageObject object];
+        imageObj.imageData = [NSData dataWithContentsOfURL:url];
+        [message setThumbImage:[file icon]];
+        message.mediaObject = imageObj;
+    } else {
+        WXFileObject *fileObj = [WXFileObject object];
+        fileObj.fileData = [NSData dataWithContentsOfURL:url];
+        fileObj.fileExtension = [file.path pathExtension];
+        message.mediaObject = fileObj;
+    }
+    SendMessageToWXReq *req = [[SendMessageToWXReq alloc] init];
+    req.bText = NO;
+    req.message = message;
+    req.scene = WXSceneSession;
+    [WXApi sendReq:req];
 }
 
 - (void)browserAllPhotos
@@ -1394,9 +1484,49 @@ enum {
     } else if ([S_STAR isEqualToString:title]) {
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [file setStarred:YES];
-    }else if ([S_UNSTAR isEqualToString:title]) {
+    } else if ([S_UNSTAR isEqualToString:title]) {
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [file setStarred:NO];
+    } else if ([S_SAVE_TO_ALBUM isEqualToString:title]) {
+        //sava to album
+        self.state = STATE_SHARE_SAVE_ALBUM;
+        SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
+        if (!file.hasCache) {
+            [SVProgressHUD showWithStatus:NSLocalizedString(@"Creating file ...", @"Seafile")];
+            [self downloadFile:file];
+        } else {
+            [self saveImageToAlbum:file];
+        }
+    } else if ([S_COPYING_PHOTO isEqualToString:title]) {
+        //copy
+        self.state = STATE_SHARE_COPING_CLIPBOARD;
+        SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
+        if (!file.hasCache) {
+            [SVProgressHUD showWithStatus:NSLocalizedString(@"Creating file ...", @"Seafile")];
+            [self downloadFile:file];
+        } else {
+            [self copyToClipboard:file];
+        }
+    } else if ([S_OPEN_ELESWHERE isEqualToString:title]) {
+        //open eleshwere
+        self.state = STATE_SHARE_OPEN_ELESWHERE;
+        SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
+        if (!file.hasCache) {
+            [SVProgressHUD showWithStatus:NSLocalizedString(@"Creating file ...", @"Seafile")];
+            [self downloadFile:file];
+        } else {
+            [self openElsewhere:file];
+        }
+    } else if ([S_SHARE_TO_WECHAT isEqualToString:title]) {
+        //open eleshwere
+        self.state = STATE_SHARE_SHARE_WECHAT;
+        SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
+        if (!file.hasCache) {
+            [SVProgressHUD showWithStatus:NSLocalizedString(@"Creating file ...", @"Seafile")];
+            [self downloadFile:file];
+        } else {
+            [self shareToWechat:file];
+        }
     }
 }
 

@@ -18,9 +18,9 @@
 #import "Debug.h"
 #import "Utils.h"
 #import "Version.h"
+#import <WechatOpenSDK/WXApi.h>
 
-
-@interface SeafAppDelegate () <UITabBarControllerDelegate, PHPhotoLibraryChangeObserver, CLLocationManagerDelegate>
+@interface SeafAppDelegate () <UITabBarControllerDelegate, PHPhotoLibraryChangeObserver, CLLocationManagerDelegate, WXApiDelegate>
 
 @property UIBackgroundTaskIdentifier bgTask;
 
@@ -193,7 +193,11 @@
 - (BOOL)application:(UIApplication*)application handleOpenURL:(NSURL*)url
 {
     Debug("handleOpenURL: %@", url);
-    return [self openURL:url];
+    if ([url.host isEqualToString:@"platformId=wechat"]) {
+        return [WXApi handleOpenURL:url delegate:self];
+    } else {
+        return [self openURL:url];
+    }
 }
 
 
@@ -203,7 +207,11 @@
          annotation:(id)annotation
 {
     Debug("Calling Application Bundle ID: %@, url: %@", sourceApplication, url);
-    return [self openURL:url];
+    if ([url.host isEqualToString:@"platformId=wechat"]) {
+        return [WXApi handleOpenURL:url delegate:self];
+    } else {
+        return [self openURL:url];
+    }
 }
 
 - (void)contactStoreDidChange:(NSNotification *)notification
@@ -301,6 +309,8 @@
     [self performSelectorInBackground:@selector(delayedInit) withObject:nil];
 
     [UIApplication sharedApplication].delegate.window.backgroundColor = [UIColor whiteColor];
+    
+    [WXApi registerApp:@"wx4799bc7f5242c55a"];
     return YES;
 }
 
@@ -646,6 +656,26 @@
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5*NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
         [appdelegate checkOpenLink:c];
     });
+}
+
+# pragma mark- wechat callback
+- (void)onResp:(BaseResp *)resp {
+    if([resp isKindOfClass:[SendMessageToWXResp class]]) {
+        switch (resp.errCode) {
+            case WXSuccess:
+                Debug(@"share to wechar success");
+                break;
+            case WXErrCodeSentFail:
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to share to WeChat", @"Seafile")];
+                break;
+            case WXErrCodeUserCancel:
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Share Cancelled", @"Seafile")];
+                break;
+            default:
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to share to WeChat", @"Seafile")];
+                break;
+        }
+    }
 }
 
 @end

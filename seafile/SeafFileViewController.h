@@ -46,6 +46,10 @@ enum {
 #define S_UPLOAD NSLocalizedString(@"Upload", @"Seafile")
 #define S_RESET_PASSWORD NSLocalizedString(@"Reset repo password", @"Seafile")
 #define S_CLEAR_REPO_PASSWORD NSLocalizedString(@"Clear password", @"Seafile")
+#define S_SAVE_TO_ALBUM NSLocalizedString(@"Save to album", @"Seafile")
+#define S_COPYING_PHOTO NSLocalizedString(@"Copy image to clipboard", @"Seafile")
+#define S_OPEN_ELESWHERE NSLocalizedString(@"Open elsewhere...", "Seafile")
+#define S_SHARE_TO_WECHAT NSLocalizedString(@"Share to WeChat", "Seafile")
 
 
 @class SeafDetailViewController;

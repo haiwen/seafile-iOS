@@ -87,7 +87,7 @@
 - (IBAction)shibboleth:(id)sender
 {
     NSString *url = [NSString stringWithFormat:@"%@%@",self.prefixLabel.text,serverTextField.text];
-    if (!url || url.length < 1) {
+    if (!serverTextField.text || serverTextField.text.length < 1) {
         [self alertWithTitle:NSLocalizedString(@"Server must not be empty", @"Seafile")];
         return;
     }

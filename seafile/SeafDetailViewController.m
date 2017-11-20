@@ -21,7 +21,7 @@
 #import "UIViewController+Extend.h"
 #import "ExtentedString.h"
 #import "Debug.h"
-
+#import <WechatOpenSDK/WXApi.h>
 
 
 enum SHARE_STATUS {
@@ -533,7 +533,12 @@ enum SHARE_STATUS {
     [self.preViewItem setDelegate:self];
     NSString *email = NSLocalizedString(@"Email", @"Seafile");
     NSString *copy = NSLocalizedString(@"Copy Link to Clipboard", @"Seafile");
-    [self showAlertWithAction:[NSArray arrayWithObjects:email, copy, nil] fromBarItem:self.shareItem withTitle:SHARE_TITLE];
+    NSMutableArray *titles = [NSMutableArray arrayWithObjects:email, copy, nil];
+    if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"wechat://"]]) {
+        NSString *wechat = NSLocalizedString(@"Share to WeChat", @"Seafile");
+        [titles addObject:wechat];
+    }
+    [self showAlertWithAction:titles fromBarItem:self.shareItem withTitle:SHARE_TITLE];
 }
 
 - (void)savedToPhotoAlbumWithError:(NSError *)error file:(SeafFile *)file
@@ -563,7 +568,36 @@ enum SHARE_STATUS {
         } else {
             [self generateSharelink:file WithResult:YES];
         }
+    } else if ([NSLocalizedString(@"Share to WeChat", @"Seafile") isEqualToString:title]) {
+        [self shareToWechat:file];
     }
+}
+
+- (void)shareToWechat:(SeafFile*)file {
+    NSURL *url = [file exportURL];
+    if (!url) return;
+    
+    WXMediaMessage *message = [WXMediaMessage message];
+    message.title = file.name;
+    message.description = file.name;
+    message.messageExt = [file.path pathExtension];
+    
+    if ([Utils isImageFile:file.name]) {
+        WXImageObject *imageObj = [WXImageObject object];
+        imageObj.imageData = [NSData dataWithContentsOfURL:url];
+        [message setThumbImage:[file icon]];
+        message.mediaObject = imageObj;
+    } else {
+        WXFileObject *fileObj = [WXFileObject object];
+        fileObj.fileData = [NSData dataWithContentsOfURL:url];
+        fileObj.fileExtension = [file.path pathExtension];
+        message.mediaObject = fileObj;
+    }
+    SendMessageToWXReq *req = [[SendMessageToWXReq alloc] init];
+    req.bText = NO;
+    req.message = message;
+    req.scene = WXSceneSession;
+    [WXApi sendReq:req];
 }
 
 #pragma mark - SeafShareDelegate

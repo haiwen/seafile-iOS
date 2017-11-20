@@ -4,6 +4,7 @@ def shared
   pod 'AFNetworking', '~> 2.6.1'
   pod 'OpenSSL-Universal', '~> 1.0.1.p'
   pod 'APLRUCache', '~> 1.0.0'
+  pod 'WechatOpenSDK', '~> 1.8.0'
 end
 
 target :"seafileApp" do
