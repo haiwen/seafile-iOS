@@ -62,9 +62,6 @@
 		5775EA1217476FAD000A1765 /* SeafActivityViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5775EA0F17476FAD000A1765 /* SeafActivityViewController.m */; };
 		577B6C6216AAD241008E82C2 /* tab-star.png in Resources */ = {isa = PBXBuildFile; fileRef = 577B6C6016AAD241008E82C2 /* tab-star.png */; };
 		577B6C6616AADBA3008E82C2 /* SeafCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 577B6C6416AADBA3008E82C2 /* SeafCell.m */; };
-		577C6F381AB07B910043A833 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 577C6F371AB07B910043A833 /* Settings.bundle */; };
-		577C6F391AB07B910043A833 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 577C6F371AB07B910043A833 /* Settings.bundle */; };
-		577C6F3A1AB07B910043A833 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 577C6F371AB07B910043A833 /* Settings.bundle */; };
 		57814AF81AA8B55000D1D5D8 /* Photos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57814AF71AA8B55000D1D5D8 /* Photos.framework */; };
 		578778A81C9CF82F009C17D4 /* download_finished.png in Resources */ = {isa = PBXBuildFile; fileRef = 578778A61C9CF82F009C17D4 /* download_finished.png */; };
 		578778A91C9CF82F009C17D4 /* download_waiting.png in Resources */ = {isa = PBXBuildFile; fileRef = 578778A71C9CF82F009C17D4 /* download_waiting.png */; };
@@ -166,6 +163,10 @@
 		5857E9CB1FAFCAD5004F124D /* SeafProviderItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 5857E9CA1FAFCAD5004F124D /* SeafProviderItem.m */; };
 		5857E9CE1FB0195C004F124D /* SeafEnumerator.m in Sources */ = {isa = PBXBuildFile; fileRef = 5857E9CD1FB0195C004F124D /* SeafEnumerator.m */; };
 		5857EA2A1FB03F2C004F124D /* SeafItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 5857EA291FB03F2C004F124D /* SeafItem.m */; };
+		58AC97D81FC391A100A7518C /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 58AC97D71FC391A100A7518C /* Settings.bundle */; };
+		58AC97D91FC391FD00A7518C /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 58AC97D71FC391A100A7518C /* Settings.bundle */; };
+		58AC97DA1FC3920500A7518C /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 58AC97D71FC391A100A7518C /* Settings.bundle */; };
+		58AC97DD1FC3926300A7518C /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 58AC97D71FC391A100A7518C /* Settings.bundle */; };
 		58D40A681E9AF72200A68BEF /* UIViewController+Extend.m in Sources */ = {isa = PBXBuildFile; fileRef = 58D40A601E9AF72200A68BEF /* UIViewController+Extend.m */; };
 		58D40A691E9AF72200A68BEF /* SeafGlobal.m in Sources */ = {isa = PBXBuildFile; fileRef = 58D40A621E9AF72200A68BEF /* SeafGlobal.m */; };
 		58D40A6A1E9AF72200A68BEF /* SeafDbCacheProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = 58D40A641E9AF72200A68BEF /* SeafDbCacheProvider.m */; };
@@ -321,7 +322,6 @@
 		577B6C6016AAD241008E82C2 /* tab-star.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tab-star.png"; sourceTree = "<group>"; };
 		577B6C6316AADBA3008E82C2 /* SeafCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafCell.h; sourceTree = "<group>"; };
 		577B6C6416AADBA3008E82C2 /* SeafCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = SeafCell.m; sourceTree = "<group>"; };
-		577C6F371AB07B910043A833 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		57814AF71AA8B55000D1D5D8 /* Photos.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Photos.framework; path = System/Library/Frameworks/Photos.framework; sourceTree = SDKROOT; };
 		57853C8D164675CB00CE8857 /* SeafStarredFilesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafStarredFilesViewController.h; sourceTree = "<group>"; };
 		57853C8E164675CB00CE8857 /* SeafStarredFilesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafStarredFilesViewController.m; sourceTree = "<group>"; };
@@ -462,6 +462,7 @@
 		5857E9CD1FB0195C004F124D /* SeafEnumerator.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafEnumerator.m; sourceTree = "<group>"; };
 		5857EA281FB03F2C004F124D /* SeafItem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafItem.h; sourceTree = "<group>"; };
 		5857EA291FB03F2C004F124D /* SeafItem.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafItem.m; sourceTree = "<group>"; };
+		58AC97D71FC391A100A7518C /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; name = Settings.bundle; path = common/Resources/Settings.bundle; sourceTree = "<group>"; };
 		58D40A601E9AF72200A68BEF /* UIViewController+Extend.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIViewController+Extend.m"; path = "common/Classes/UIViewController+Extend.m"; sourceTree = "<group>"; };
 		58D40A611E9AF72200A68BEF /* UIViewController+Extend.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIViewController+Extend.h"; path = "common/Classes/UIViewController+Extend.h"; sourceTree = "<group>"; };
 		58D40A621E9AF72200A68BEF /* SeafGlobal.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafGlobal.m; path = common/Classes/SeafGlobal.m; sourceTree = "<group>"; };
@@ -879,7 +880,6 @@
 				57E228BC1A0E4FC400C92330 /* seafile-Prefix.pch */,
 				57DB827C15A833FA00097CEC /* InfoPlist.strings */,
 				57DB827F15A833FA00097CEC /* main.m */,
-				577C6F371AB07B910043A833 /* Settings.bundle */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -913,6 +913,7 @@
 		58D40A5F1E9AF70D00A68BEF /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				58AC97D71FC391A100A7518C /* Settings.bundle */,
 				58D40A6C1E9AF7A400A68BEF /* seafile.xcdatamodeld */,
 			);
 			name = Resources;
@@ -1164,6 +1165,7 @@
 				57943C1B19F027D5008423E5 /* unstar@2x.png in Resources */,
 				57943BFF19F027D5008423E5 /* addmsg2@2x.png in Resources */,
 				57943C0919F027D5008423E5 /* editfile2@2x.png in Resources */,
+				58AC97D81FC391A100A7518C /* Settings.bundle in Resources */,
 				578778A81C9CF82F009C17D4 /* download_finished.png in Resources */,
 				57943C0A19F027D5008423E5 /* ellipsis@2x.png in Resources */,
 				57943C0319F027D5008423E5 /* arrowright2@2x.png in Resources */,
@@ -1205,7 +1207,6 @@
 				57A550DE177F283700E3BA9B /* addmsg.png in Resources */,
 				57943C1019F027D5008423E5 /* refresh2@2x.png in Resources */,
 				57943C0019F027D5008423E5 /* arrowleft@2x.png in Resources */,
-				577C6F381AB07B910043A833 /* Settings.bundle in Resources */,
 				57943C0819F027D5008423E5 /* editfile@2x.png in Resources */,
 				57A550E1177F2C4400E3BA9B /* export.png in Resources */,
 				57A550E4177F2CBA00E3BA9B /* editfile.png in Resources */,
@@ -1226,9 +1227,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				58AC97D91FC391FD00A7518C /* Settings.bundle in Resources */,
 				57A192161A208F1600985F77 /* SeafAccountCell.xib in Resources */,
 				57A029A51A170147009C9D7B /* SeafProviderFileViewController.storyboard in Resources */,
-				577C6F391AB07B910043A833 /* Settings.bundle in Resources */,
 				57A0299B1A16F95D009C9D7B /* MainInterface.storyboard in Resources */,
 				57A0299C1A16F95D009C9D7B /* SeafFileProviderUI.entitlements in Resources */,
 			);
@@ -1238,7 +1239,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				577C6F3A1AB07B910043A833 /* Settings.bundle in Resources */,
+				58AC97DA1FC3920500A7518C /* Settings.bundle in Resources */,
 				57A029A01A16F965009C9D7B /* SeafFileProvider.entitlements in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1247,6 +1248,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				58AC97DD1FC3926300A7518C /* Settings.bundle in Resources */,
 				574D3DCA1DFD1E010093C18C /* Localizable.strings in Resources */,
 				574D3DC21DFA815B0093C18C /* SeafAccountCell.xib in Resources */,
 				57B14B711DF5325B0045112E /* MainInterface.storyboard in Resources */,
