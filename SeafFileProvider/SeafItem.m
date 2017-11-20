@@ -130,7 +130,7 @@ static APLRUCache *cache() {
         } else {
             _name = _path.lastPathComponent;
         }
-        Debug("identify=%@, _server=%@, _username=%@, repo=%@, path=%@, filename=%@  ===> %@", _itemIdentifier, _server, _username, _repoId, _path, _filename, _name);
+        //Debug("identify=%@, _server=%@, _username=%@, repo=%@, path=%@, filename=%@  ===> %@", _itemIdentifier, _server, _username, _repoId, _path, _filename, _name);
     }
     return _name;
 }

@@ -285,8 +285,10 @@
             [dstDir renameEntry:item.name newName:newName success:^(SeafDir *dir) {
                 NSString *renamedpath = [dstDir.path stringByAppendingPathComponent:newName];
                 SeafItem *renamedItem = [[SeafItem alloc] initWithServer:dstDir->connection.address username:dstDir->connection.username repo:dstDir.repoId path:renamedpath filename:newName];
+                Debug("reparent %@ successfully", itemIdentifier);
                 completionHandler([[SeafProviderItem alloc] initWithSeafItem:renamedItem], nil);
             } failure:^(SeafDir *dir, NSError *error) {
+                Warning("Failed to reparent %@: %@", itemIdentifier, error);
                 completionHandler(nil, error ? error : [Utils defaultError]);
             }];
         } else {
@@ -295,6 +297,7 @@
             completionHandler(reparentedItem, nil);
         }
     } failure:^(SeafDir *dir, NSError *error) {
+        Warning("Failed to reparent %@: %@", itemIdentifier, error);
         completionHandler(nil, error ? error : [Utils defaultError]);
     }];
 }
