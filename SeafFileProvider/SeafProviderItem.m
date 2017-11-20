@@ -109,7 +109,7 @@
 -(NSNumber *)childItemCount
 {
     if (_item.isRoot) {
-        return [NSNumber numberWithUnsignedInteger:SeafGlobal.sharedObject.conns.count];
+        return [NSNumber numberWithUnsignedInteger:SeafGlobal.sharedObject.publicAccounts.count];
     }
     SeafBase *obj = [_item toSeafObj];
     if (obj && [obj hasCache] && [obj isKindOfClass:[SeafDir class]]) {

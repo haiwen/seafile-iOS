@@ -33,22 +33,9 @@
 
 - (bool)saveAccount:(SeafConnection *)conn
 {
-    SeafGlobal *global = [SeafGlobal sharedObject];
-    BOOL exist = NO;
-    if (![global.conns containsObject:conn]) {
-        for (int i = 0; i < global.conns.count; ++i) {
-            SeafConnection *c = global.conns[i];
-            if ([c.address isEqual:conn.address] && [conn.username isEqual:c.username]) {
-                global.conns[i] = conn;
-                exist = YES;
-                break;
-            }
-        }
-        if (!exist)
-            [global.conns addObject:conn];
-    }
+    BOOL ret = [[SeafGlobal sharedObject] saveConnection:conn];
     [self.tableView reloadData];
-    return [global saveAccounts];
+    return ret;
 }
 
 - (void)setExtraCellLineHidden:(UITableView *)tableView
@@ -243,8 +230,7 @@
             [self showAccountView:conn type:type];
         } else if (index == 1) { //Delete
             [conn clearAccount];
-            [SeafGlobal.sharedObject.conns removeObjectAtIndex:pressedIndex.row];
-            [[SeafGlobal sharedObject] saveAccounts];
+            [SeafGlobal.sharedObject removeConnection:conn];
             [self.tableView reloadData];
         }
     }];

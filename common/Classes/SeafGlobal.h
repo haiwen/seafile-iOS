@@ -25,21 +25,22 @@
 
 @interface SeafGlobal : NSObject<SeafBackgroundMonitor>
 
-@property (retain) NSMutableArray *conns;
+@property (readonly) NSMutableArray *conns;
 @property (readwrite) SeafConnection *connection;
 @property (readonly) dispatch_semaphore_t saveAlbumSem;
 @property (readonly) SeafDbCacheProvider *cacheProvider;
 
+@property (readonly) NSArray *publicAccounts;
 
 + (SeafGlobal *)sharedObject;
 
 - (BOOL)isCertInUse:(NSData*)clientIdentityKey;
 - (void)loadAccounts;
-- (bool)saveAccounts;
 - (SeafConnection *)getConnection:(NSString *)url username:(NSString *)username;
+- (BOOL)saveConnection:(SeafConnection *)conn;
+- (BOOL)removeConnection:(SeafConnection *)conn;
 
 - (void)startTimer;
-
 - (void)migrate;
 
 @end

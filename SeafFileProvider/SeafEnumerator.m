@@ -69,7 +69,7 @@
 - (NSArray *)getRootProviderItems
 {
     NSMutableArray *items = [NSMutableArray new];
-    for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+    for (SeafConnection *conn in SeafGlobal.sharedObject.publicAccounts) {
         SeafItem *item = [SeafItem fromAccount:conn];
         [items addObject:[[SeafProviderItem alloc] initWithSeafItem:item]];
     }

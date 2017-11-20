@@ -188,7 +188,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     return false;
 }
 
-- (bool)saveAccounts
+- (BOOL)saveAccounts
 {
     NSMutableArray *accounts = [[NSMutableArray alloc] init];
     for (SeafConnection *connection in self.conns) {
@@ -223,7 +223,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         if (conn.username)
             [connections addObject:conn];
     }
-    self.conns = connections;
+    _conns = connections;
 }
 
 - (SeafConnection *)getConnection:(NSString *)url username:(NSString *)username
@@ -236,6 +236,42 @@ static NSError * NewNSErrorFromException(NSException * exc) {
             return conn;
     }
     return nil;
+}
+
+- (BOOL)saveConnection:(SeafConnection *)conn
+{
+    NSString *address = conn.address;
+    if ([address hasSuffix:@"/"]) {
+        address = [address substringToIndex:address.length-1];
+    }
+    BOOL existed = false;
+    for (int i = 0; i < self.conns.count; ++i) {
+        SeafConnection *c = self.conns[i];
+        if ([c.address isEqual:address] && [conn.username isEqual:c.username]) {
+            self.conns[i] = conn;
+            existed = true;
+            break;
+        }
+    }
+    if (!existed) [self.conns addObject: conn];
+    return [self saveAccounts];
+}
+
+- (BOOL)removeConnection:(SeafConnection *)conn
+{
+    [self.conns removeObject:conn];
+    return [self saveAccounts];
+}
+
+- (NSArray *)publicAccounts
+{
+    NSMutableArray *arr = [NSMutableArray new];
+    for (SeafConnection *conn in self.conns) {
+        if (!conn.touchIdEnabled) {
+            [arr addObject:conn];
+        }
+    }
+    return arr;
 }
 
 - (void)tick:(NSTimer *)timer
