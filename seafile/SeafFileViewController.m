@@ -44,9 +44,7 @@ enum {
     STATE_COPY,
     STATE_SHARE_EMAIL,
     STATE_SHARE_LINK,
-    STATE_SHARE_SAVE_ALBUM,
-    STATE_SHARE_COPING_CLIPBOARD,
-    STATE_SHARE_OPEN_ELESWHERE,
+    STATE_SHARE_EXPORT,
     STATE_SHARE_SHARE_WECHAT
 };
 
@@ -87,7 +85,6 @@ enum {
 
 @property SeafUploadFile *ufile;
 @property (nonatomic, strong)NSArray *allItems;
-@property (strong) UIDocumentInteractionController *docController;
 
 @end
 
@@ -605,14 +602,7 @@ enum {
         else
             tTitles = [NSMutableArray arrayWithObjects:star, S_DELETE, S_REDOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
 
-
-        if ([Utils isImageFile:file.name]) {
-            [tTitles addObjectsFromArray:[NSArray arrayWithObjects:S_SAVE_TO_ALBUM,S_COPYING_PHOTO, nil]];
-            
-        } else if ([Utils isVideoFile:file.name]) {
-            [tTitles addObject:S_SAVE_TO_ALBUM];
-        }
-        [tTitles addObject:S_OPEN_ELESWHERE];
+        [tTitles addObject:S_SHARE_EXPORT];
         if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"wechat://"]]) {
             [tTitles addObject:S_SHARE_TO_WECHAT];
         }
@@ -1082,12 +1072,8 @@ enum {
     if ([entry isKindOfClass:[SeafFile class]]) {
         SeafFile *file = (SeafFile *)entry;
         [self updateEntryCell:file];
-        if (self.state == STATE_SHARE_SAVE_ALBUM) {
-            [self saveImageToAlbum:file];
-        } else if (self.state == STATE_SHARE_COPING_CLIPBOARD) {
-            [self copyToClipboard:file];
-        } else if (self.state == STATE_SHARE_OPEN_ELESWHERE) {
-            [self openElsewhere:file];
+        if (self.state == STATE_SHARE_EXPORT) {
+            [self exportFile:file];
         } else if (self.state == STATE_SHARE_SHARE_WECHAT) {
             [self shareToWechat:file];
         } else {
@@ -1267,7 +1253,7 @@ enum {
     dispatch_semaphore_wait(SeafGlobal.sharedObject.saveAlbumSem, timeout);
     Info("Write image file %@ %@ to album", file.name, file.cachePath);
     UIImageWriteToSavedPhotosAlbum(img, self, @selector(thisImage:hasBeenSavedInPhotoAlbumWithError:usingContextInfo:), (void *)CFBridgingRetain(file));
-    [SVProgressHUD showInfoWithStatus:S_SAVE_TO_ALBUM];
+    [SVProgressHUD showInfoWithStatus:NSLocalizedString(@"Save to album", @"Seafile")];
 }
 
 - (void)savePhotosToAlbum
@@ -1295,27 +1281,25 @@ enum {
     [SVProgressHUD showInfoWithStatus:S_SAVING_PHOTOS_ALBUM];
 }
 
-- (void)copyToClipboard:(SeafFile*)file {
+- (void)exportFile:(SeafFile*)file {
     self.state = STATE_INIT;
-    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-    NSData *data = [NSData dataWithContentsOfFile:file.previewItemURL.path];
-    [pasteboard setData:data forPasteboardType:file.name];
-    [SVProgressHUD showSuccessWithStatus:S_COPYING_PHOTO];
+    NSURL *fileURL = file.exportURL;
+    UIActivityViewController *controller = [[UIActivityViewController alloc] initWithActivityItems:@[fileURL] applicationActivities:nil];
+    Debug("Export file %@", fileURL);
+    controller.completionWithItemsHandler = ^(UIActivityType __nullable activityType, BOOL completed, NSArray * __nullable returnedItems, NSError * __nullable activityError) {
+        Debug("activityType=%@ completed=%d, returnedItems=%@, activityError=%@", activityType, completed, returnedItems, activityError);
+        if ([UIActivityTypeSaveToCameraRoll isEqualToString:activityType]) {
+            [self savedToPhotoAlbumWithError:activityError file:file];
+        }
+    };
+    [self presentViewController:controller animated:true completion:nil];
 }
 
-- (void)openElsewhere:(SeafFile*)file
-{
-    self.state = STATE_INIT;
-    NSURL *url = [file exportURL];
-    if (!url)   return;
-    if (self.docController)
-        [self.docController dismissMenuAnimated:NO];
-
-    self.docController = [UIDocumentInteractionController interactionControllerWithURL:url];
-    SeafCell *cell = [self.tableView cellForRowAtIndexPath:_selectedindex];
-    BOOL ret = [self.docController presentOpenInMenuFromRect:cell.bounds inView:cell animated:YES];
-    if (ret == NO) {
-        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"There is no app which can open this type of file on this machine", @"Seafile")];
+- (void)savedToPhotoAlbumWithError:(NSError *)error file:(SeafFile *)file {
+    if (error) {
+        [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Failed to save %@ to album", @"Seafile"), file.name]];
+    } else {
+        [SVProgressHUD showSuccessWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Succeeded to save %@ to album", @"Seafile"), file.name]];
     }
 }
 
@@ -1487,35 +1471,15 @@ enum {
     } else if ([S_UNSTAR isEqualToString:title]) {
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [file setStarred:NO];
-    } else if ([S_SAVE_TO_ALBUM isEqualToString:title]) {
-        //sava to album
-        self.state = STATE_SHARE_SAVE_ALBUM;
-        SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-        if (!file.hasCache) {
-            [SVProgressHUD showWithStatus:NSLocalizedString(@"Creating file ...", @"Seafile")];
-            [self downloadFile:file];
-        } else {
-            [self saveImageToAlbum:file];
-        }
-    } else if ([S_COPYING_PHOTO isEqualToString:title]) {
-        //copy
-        self.state = STATE_SHARE_COPING_CLIPBOARD;
-        SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-        if (!file.hasCache) {
-            [SVProgressHUD showWithStatus:NSLocalizedString(@"Creating file ...", @"Seafile")];
-            [self downloadFile:file];
-        } else {
-            [self copyToClipboard:file];
-        }
-    } else if ([S_OPEN_ELESWHERE isEqualToString:title]) {
+    } else if ([S_SHARE_EXPORT isEqualToString:title]) {
         //open eleshwere
-        self.state = STATE_SHARE_OPEN_ELESWHERE;
+        self.state = STATE_SHARE_EXPORT;
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         if (!file.hasCache) {
             [SVProgressHUD showWithStatus:NSLocalizedString(@"Creating file ...", @"Seafile")];
             [self downloadFile:file];
         } else {
-            [self openElsewhere:file];
+            [self exportFile:file];
         }
     } else if ([S_SHARE_TO_WECHAT isEqualToString:title]) {
         //open eleshwere
