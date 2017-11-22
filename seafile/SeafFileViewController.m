@@ -44,7 +44,6 @@ enum {
     STATE_COPY,
     STATE_SHARE_EMAIL,
     STATE_SHARE_LINK,
-    STATE_SHARE_EXPORT,
     STATE_SHARE_SHARE_WECHAT
 };
 
@@ -602,7 +601,6 @@ enum {
         else
             tTitles = [NSMutableArray arrayWithObjects:star, S_DELETE, S_REDOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
 
-        [tTitles addObject:S_SHARE_EXPORT];
         if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"wechat://"]]) {
             [tTitles addObject:S_SHARE_TO_WECHAT];
         }
@@ -1072,9 +1070,7 @@ enum {
     if ([entry isKindOfClass:[SeafFile class]]) {
         SeafFile *file = (SeafFile *)entry;
         [self updateEntryCell:file];
-        if (self.state == STATE_SHARE_EXPORT) {
-            [self exportFile:file];
-        } else if (self.state == STATE_SHARE_SHARE_WECHAT) {
+        if (self.state == STATE_SHARE_SHARE_WECHAT) {
             [self shareToWechat:file];
         } else {
             [self.detailViewController download:file complete:updated];
@@ -1281,28 +1277,6 @@ enum {
     [SVProgressHUD showInfoWithStatus:S_SAVING_PHOTOS_ALBUM];
 }
 
-- (void)exportFile:(SeafFile*)file {
-    self.state = STATE_INIT;
-    NSURL *fileURL = file.exportURL;
-    UIActivityViewController *controller = [[UIActivityViewController alloc] initWithActivityItems:@[fileURL] applicationActivities:nil];
-    Debug("Export file %@", fileURL);
-    controller.completionWithItemsHandler = ^(UIActivityType __nullable activityType, BOOL completed, NSArray * __nullable returnedItems, NSError * __nullable activityError) {
-        Debug("activityType=%@ completed=%d, returnedItems=%@, activityError=%@", activityType, completed, returnedItems, activityError);
-        if ([UIActivityTypeSaveToCameraRoll isEqualToString:activityType]) {
-            [self savedToPhotoAlbumWithError:activityError file:file];
-        }
-    };
-    [self presentViewController:controller animated:true completion:nil];
-}
-
-- (void)savedToPhotoAlbumWithError:(NSError *)error file:(SeafFile *)file {
-    if (error) {
-        [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Failed to save %@ to album", @"Seafile"), file.name]];
-    } else {
-        [SVProgressHUD showSuccessWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Succeeded to save %@ to album", @"Seafile"), file.name]];
-    }
-}
-
 - (void)shareToWechat:(SeafFile*)file {
     self.state = STATE_INIT;
     NSURL *url = [file exportURL];
@@ -1471,16 +1445,6 @@ enum {
     } else if ([S_UNSTAR isEqualToString:title]) {
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [file setStarred:NO];
-    } else if ([S_SHARE_EXPORT isEqualToString:title]) {
-        //open eleshwere
-        self.state = STATE_SHARE_EXPORT;
-        SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-        if (!file.hasCache) {
-            [SVProgressHUD showWithStatus:NSLocalizedString(@"Creating file ...", @"Seafile")];
-            [self downloadFile:file];
-        } else {
-            [self exportFile:file];
-        }
     } else if ([S_SHARE_TO_WECHAT isEqualToString:title]) {
         //open eleshwere
         self.state = STATE_SHARE_SHARE_WECHAT;

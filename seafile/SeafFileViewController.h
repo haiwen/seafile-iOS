@@ -46,7 +46,6 @@ enum {
 #define S_UPLOAD NSLocalizedString(@"Upload", @"Seafile")
 #define S_RESET_PASSWORD NSLocalizedString(@"Reset repo password", @"Seafile")
 #define S_CLEAR_REPO_PASSWORD NSLocalizedString(@"Clear password", @"Seafile")
-#define S_SHARE_EXPORT NSLocalizedString(@"Share", "Seafile")
 #define S_SHARE_TO_WECHAT NSLocalizedString(@"Share to WeChat", "Seafile")
 
 
