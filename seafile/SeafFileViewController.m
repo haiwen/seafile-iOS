@@ -559,6 +559,10 @@ enum {
     return repos.count;
 }
 
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    return UITableViewAutomaticDimension;
+}
+
 - (SeafCell *)getCell:(NSString *)CellIdentifier forTableView:(UITableView *)tableView
 {
     SeafCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
@@ -723,6 +727,11 @@ enum {
     cell.detailTextLabel.text = sfile.detailText;
     cell.imageView.image = sfile.icon;
     cell.badgeLabel.text = nil;
+    if (self.searchResults) {
+        cell.moreButton.hidden = YES;
+    } else{
+        cell.moreButton.hidden = NO;
+    }
     [self updateCellDownloadStatus:cell file:sfile waiting:false];
 }
 
@@ -1000,7 +1009,7 @@ enum {
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
 {
-    if (![_directory isKindOfClass:[SeafRepos class]]) {
+    if (![_directory isKindOfClass:[SeafRepos class]] || self.searchResults) {
         return 0.01;
     } else {
         return 24;
