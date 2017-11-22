@@ -96,6 +96,7 @@ enum SHARE_STATUS {
             [array addObjectsFromArray:self.barItemsUnStar];
 
         [self.exportItem setEnabled:([self.preViewItem exportURL] != nil)];
+        [self.shareItem setEnabled:([self.preViewItem exportURL] != nil)];
     }
     if ([self.preViewItem editable] && [self previewSuccess])
         [array addObject:self.editItem];
