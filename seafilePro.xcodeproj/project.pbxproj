@@ -192,6 +192,7 @@
 		F53690381F13B5F90050D788 /* more_dot.png in Resources */ = {isa = PBXBuildFile; fileRef = F53690371F13B5F90050D788 /* more_dot.png */; };
 		F536DA191F30DB6F00F2EF3F /* SeafSyncInfoCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F536DA171F30DB6F00F2EF3F /* SeafSyncInfoCell.m */; };
 		F536DA1A1F30DB6F00F2EF3F /* SeafSyncInfoCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F536DA181F30DB6F00F2EF3F /* SeafSyncInfoCell.xib */; };
+		F555676A1FC7222800E87043 /* SeafWechatHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = F55567691FC7222800E87043 /* SeafWechatHelper.m */; };
 		F568C1FB1EF10F8900F1035D /* SeafActionSheet.m in Sources */ = {isa = PBXBuildFile; fileRef = F568C1FA1EF10F8900F1035D /* SeafActionSheet.m */; };
 		F571850E1F0742FE00543F42 /* more_dot@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = F571850C1F0742FE00543F42 /* more_dot@3x.png */; };
 		F571850F1F0742FE00543F42 /* more_dot@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F571850D1F0742FE00543F42 /* more_dot@2x.png */; };
@@ -486,6 +487,8 @@
 		F536DA161F30DB6F00F2EF3F /* SeafSyncInfoCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafSyncInfoCell.h; sourceTree = "<group>"; };
 		F536DA171F30DB6F00F2EF3F /* SeafSyncInfoCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafSyncInfoCell.m; sourceTree = "<group>"; };
 		F536DA181F30DB6F00F2EF3F /* SeafSyncInfoCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafSyncInfoCell.xib; sourceTree = "<group>"; };
+		F55567681FC7222800E87043 /* SeafWechatHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafWechatHelper.h; sourceTree = "<group>"; };
+		F55567691FC7222800E87043 /* SeafWechatHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafWechatHelper.m; sourceTree = "<group>"; };
 		F568C1F91EF10F8900F1035D /* SeafActionSheet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafActionSheet.h; sourceTree = "<group>"; };
 		F568C1FA1EF10F8900F1035D /* SeafActionSheet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafActionSheet.m; sourceTree = "<group>"; };
 		F571850C1F0742FE00543F42 /* more_dot@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "more_dot@3x.png"; sourceTree = "<group>"; };
@@ -707,6 +710,8 @@
 				572B0A7615D16C1C00798C6E /* StartViewController.m */,
 				F568C1F91EF10F8900F1035D /* SeafActionSheet.h */,
 				F568C1FA1EF10F8900F1035D /* SeafActionSheet.m */,
+				F55567681FC7222800E87043 /* SeafWechatHelper.h */,
+				F55567691FC7222800E87043 /* SeafWechatHelper.m */,
 			);
 			name = views;
 			sourceTree = "<group>";
@@ -1460,6 +1465,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F555676A1FC7222800E87043 /* SeafWechatHelper.m in Sources */,
 				574F61F71BDB5DB300014EBA /* SeafButtonCell.m in Sources */,
 				571D8CAB1677881400F1A22C /* main.m in Sources */,
 				571D8CAC1677881400F1A22C /* SeafAppDelegate.m in Sources */,

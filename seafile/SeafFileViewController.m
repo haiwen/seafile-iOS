@@ -31,6 +31,7 @@
 
 #import "QBImagePickerController.h"
 #import <WechatOpenSDK/WXApi.h>
+#import "SeafWechatHelper.h"
 
 enum {
     STATE_INIT = 0,
@@ -605,7 +606,7 @@ enum {
         else
             tTitles = [NSMutableArray arrayWithObjects:star, S_DELETE, S_REDOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
 
-        if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"wechat://"]]) {
+        if ([SeafWechatHelper wechatInstalled]) {
             [tTitles addObject:S_SHARE_TO_WECHAT];
         }
         titles = [tTitles copy];
@@ -1231,8 +1232,6 @@ enum {
 }
 
 - (void)downloadFile:(SeafFile *)file {
-    [file cancelAnyLoading];
-    [file deleteCache];
     [SeafDataTaskManager.sharedObject addFileDownloadTask:file];
 }
 
@@ -1288,30 +1287,7 @@ enum {
 
 - (void)shareToWechat:(SeafFile*)file {
     self.state = STATE_INIT;
-    NSURL *url = [file exportURL];
-    if (!url) return;
-
-    WXMediaMessage *message = [WXMediaMessage message];
-    message.title = file.name;
-    message.description = file.name;
-    message.messageExt = [file.path pathExtension];
-    
-    if ([Utils isImageFile:file.name]) {
-        WXImageObject *imageObj = [WXImageObject object];
-        imageObj.imageData = [NSData dataWithContentsOfURL:url];
-        [message setThumbImage:[file icon]];
-        message.mediaObject = imageObj;
-    } else {
-        WXFileObject *fileObj = [WXFileObject object];
-        fileObj.fileData = [NSData dataWithContentsOfURL:url];
-        fileObj.fileExtension = [file.path pathExtension];
-        message.mediaObject = fileObj;
-    }
-    SendMessageToWXReq *req = [[SendMessageToWXReq alloc] init];
-    req.bText = NO;
-    req.message = message;
-    req.scene = WXSceneSession;
-    [WXApi sendReq:req];
+    [SeafWechatHelper shareToWechatWithFile:file];
 }
 
 - (void)browserAllPhotos
@@ -1459,7 +1435,7 @@ enum {
         self.state = STATE_SHARE_SHARE_WECHAT;
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         if (!file.hasCache) {
-            [SVProgressHUD showWithStatus:NSLocalizedString(@"Creating file ...", @"Seafile")];
+            [SVProgressHUD showWithStatus:NSLocalizedString(@"Downloading", @"Seafile")];
             [self downloadFile:file];
         } else {
             [self shareToWechat:file];

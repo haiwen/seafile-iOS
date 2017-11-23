@@ -18,7 +18,7 @@
 #import "Debug.h"
 #import "Utils.h"
 #import "Version.h"
-#import <WechatOpenSDK/WXApi.h>
+#import "SeafWechatHelper.h"
 
 @interface SeafAppDelegate () <UITabBarControllerDelegate, PHPhotoLibraryChangeObserver, CLLocationManagerDelegate, WXApiDelegate>
 
@@ -309,8 +309,8 @@
     [self performSelectorInBackground:@selector(delayedInit) withObject:nil];
 
     [UIApplication sharedApplication].delegate.window.backgroundColor = [UIColor whiteColor];
+    [SeafWechatHelper registerWechat];
     
-    [WXApi registerApp:@"wx4799bc7f5242c55a"];
     return YES;
 }
 

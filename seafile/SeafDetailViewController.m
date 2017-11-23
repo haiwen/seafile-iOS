@@ -21,7 +21,7 @@
 #import "UIViewController+Extend.h"
 #import "ExtentedString.h"
 #import "Debug.h"
-#import <WechatOpenSDK/WXApi.h>
+#import "SeafWechatHelper.h"
 
 
 enum SHARE_STATUS {
@@ -96,7 +96,6 @@ enum SHARE_STATUS {
             [array addObjectsFromArray:self.barItemsUnStar];
 
         [self.exportItem setEnabled:([self.preViewItem exportURL] != nil)];
-        [self.shareItem setEnabled:([self.preViewItem exportURL] != nil)];
     }
     if ([self.preViewItem editable] && [self previewSuccess])
         [array addObject:self.editItem];
@@ -535,7 +534,7 @@ enum SHARE_STATUS {
     NSString *email = NSLocalizedString(@"Email", @"Seafile");
     NSString *copy = NSLocalizedString(@"Copy Link to Clipboard", @"Seafile");
     NSMutableArray *titles = [NSMutableArray arrayWithObjects:email, copy, nil];
-    if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"wechat://"]]) {
+    if ([SeafWechatHelper wechatInstalled] && [self.preViewItem exportURL]) {
         NSString *wechat = NSLocalizedString(@"Share to WeChat", @"Seafile");
         [titles addObject:wechat];
     }
@@ -570,35 +569,8 @@ enum SHARE_STATUS {
             [self generateSharelink:file WithResult:YES];
         }
     } else if ([NSLocalizedString(@"Share to WeChat", @"Seafile") isEqualToString:title]) {
-        [self shareToWechat:file];
+        [SeafWechatHelper shareToWechatWithFile:file];
     }
-}
-
-- (void)shareToWechat:(SeafFile*)file {
-    NSURL *url = [file exportURL];
-    if (!url) return;
-    
-    WXMediaMessage *message = [WXMediaMessage message];
-    message.title = file.name;
-    message.description = file.name;
-    message.messageExt = [file.path pathExtension];
-    
-    if ([Utils isImageFile:file.name]) {
-        WXImageObject *imageObj = [WXImageObject object];
-        imageObj.imageData = [NSData dataWithContentsOfURL:url];
-        [message setThumbImage:[file icon]];
-        message.mediaObject = imageObj;
-    } else {
-        WXFileObject *fileObj = [WXFileObject object];
-        fileObj.fileData = [NSData dataWithContentsOfURL:url];
-        fileObj.fileExtension = [file.path pathExtension];
-        message.mediaObject = fileObj;
-    }
-    SendMessageToWXReq *req = [[SendMessageToWXReq alloc] init];
-    req.bText = NO;
-    req.message = message;
-    req.scene = WXSceneSession;
-    [WXApi sendReq:req];
 }
 
 #pragma mark - SeafShareDelegate
