@@ -21,7 +21,7 @@
 #import "UIViewController+Extend.h"
 #import "ExtentedString.h"
 #import "Debug.h"
-
+#import "SeafWechatHelper.h"
 
 
 enum SHARE_STATUS {
@@ -533,7 +533,12 @@ enum SHARE_STATUS {
     [self.preViewItem setDelegate:self];
     NSString *email = NSLocalizedString(@"Email", @"Seafile");
     NSString *copy = NSLocalizedString(@"Copy Link to Clipboard", @"Seafile");
-    [self showAlertWithAction:[NSArray arrayWithObjects:email, copy, nil] fromBarItem:self.shareItem withTitle:SHARE_TITLE];
+    NSMutableArray *titles = [NSMutableArray arrayWithObjects:email, copy, nil];
+    if ([SeafWechatHelper wechatInstalled] && [self.preViewItem exportURL]) {
+        NSString *wechat = NSLocalizedString(@"Share to WeChat", @"Seafile");
+        [titles addObject:wechat];
+    }
+    [self showAlertWithAction:titles fromBarItem:self.shareItem withTitle:SHARE_TITLE];
 }
 
 - (void)savedToPhotoAlbumWithError:(NSError *)error file:(SeafFile *)file
@@ -563,6 +568,8 @@ enum SHARE_STATUS {
         } else {
             [self generateSharelink:file WithResult:YES];
         }
+    } else if ([NSLocalizedString(@"Share to WeChat", @"Seafile") isEqualToString:title]) {
+        [SeafWechatHelper shareToWechatWithFile:file];
     }
 }
 

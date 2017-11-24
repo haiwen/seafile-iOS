@@ -30,6 +30,8 @@
 #import "Debug.h"
 
 #import "QBImagePickerController.h"
+#import <WechatOpenSDK/WXApi.h>
+#import "SeafWechatHelper.h"
 
 enum {
     STATE_INIT = 0,
@@ -43,6 +45,7 @@ enum {
     STATE_COPY,
     STATE_SHARE_EMAIL,
     STATE_SHARE_LINK,
+    STATE_SHARE_SHARE_WECHAT
 };
 
 
@@ -557,6 +560,10 @@ enum {
     return repos.count;
 }
 
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    return UITableViewAutomaticDimension;
+}
+
 - (SeafCell *)getCell:(NSString *)CellIdentifier forTableView:(UITableView *)tableView
 {
     SeafCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
@@ -593,11 +600,16 @@ enum {
     } else if ([entry isKindOfClass:[SeafFile class]]) {
         SeafFile *file = (SeafFile *)entry;
         NSString *star = file.isStarred ? S_UNSTAR : S_STAR;
+        NSMutableArray *tTitles = [NSMutableArray array];
         if (file.mpath)
-            titles = [NSArray arrayWithObjects:star, S_DELETE, S_UPLOAD, S_SHARE_EMAIL, S_SHARE_LINK, nil];
+            tTitles = [NSMutableArray arrayWithObjects:star, S_DELETE, S_UPLOAD, S_SHARE_EMAIL, S_SHARE_LINK, nil];
         else
-            titles = [NSArray arrayWithObjects:star, S_DELETE, S_REDOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
+            tTitles = [NSMutableArray arrayWithObjects:star, S_DELETE, S_REDOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
 
+        if ([SeafWechatHelper wechatInstalled]) {
+            [tTitles addObject:S_SHARE_TO_WECHAT];
+        }
+        titles = [tTitles copy];
     } else if ([entry isKindOfClass:[SeafUploadFile class]]) {
         titles = [NSArray arrayWithObjects:S_DOWNLOAD, S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
     }
@@ -716,6 +728,11 @@ enum {
     cell.detailTextLabel.text = sfile.detailText;
     cell.imageView.image = sfile.icon;
     cell.badgeLabel.text = nil;
+    if (self.searchResults) {
+        cell.moreButton.hidden = YES;
+    } else{
+        cell.moreButton.hidden = NO;
+    }
     [self updateCellDownloadStatus:cell file:sfile waiting:false];
 }
 
@@ -993,7 +1010,7 @@ enum {
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
 {
-    if (![_directory isKindOfClass:[SeafRepos class]]) {
+    if (![_directory isKindOfClass:[SeafRepos class]] || self.searchResults) {
         return 0.01;
     } else {
         return 24;
@@ -1059,15 +1076,19 @@ enum {
 
 - (void)download:(SeafBase *)entry complete:(BOOL)updated
 {
+    [SVProgressHUD dismiss];
     if ([entry isKindOfClass:[SeafFile class]]) {
         SeafFile *file = (SeafFile *)entry;
         [self updateEntryCell:file];
-        [self.detailViewController download:file complete:updated];
-        SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
-        [photo complete:updated error:nil];
+        if (self.state == STATE_SHARE_SHARE_WECHAT) {
+            [self shareToWechat:file];
+        } else {
+            [self.detailViewController download:file complete:updated];
+            SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
+            [photo complete:updated error:nil];
+        }
     } else if (entry == _directory) {
         [self dismissLoadingView];
-        [SVProgressHUD dismiss];
         [self doneLoadingTableViewData];
         if (self.state == STATE_DELETE && !IsIpad()) {
             [self.detailViewController goBack:nil];
@@ -1085,6 +1106,7 @@ enum {
 - (void)download:(SeafBase *)entry failed:(NSError *)error
 {
     if ([entry isKindOfClass:[SeafFile class]]) {
+        [SVProgressHUD dismiss];
         SeafFile *file = (SeafFile *)entry;
         [self updateEntryCell:file];
         [self.detailViewController download:entry failed:error];
@@ -1209,6 +1231,10 @@ enum {
     [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
 }
 
+- (void)downloadFile:(SeafFile *)file {
+    [SeafDataTaskManager.sharedObject addFileDownloadTask:file];
+}
+
 - (void)downloadDir:(SeafDir *)dir
 {
     Debug("download dir: %@ %@", dir.repoId, dir.path);
@@ -1225,11 +1251,13 @@ enum {
 
 - (void)saveImageToAlbum:(SeafFile *)file
 {
+    self.state = STATE_INIT;
     UIImage *img = [UIImage imageWithContentsOfFile:file.cachePath];
     dispatch_time_t timeout = dispatch_time(DISPATCH_TIME_NOW, 30 * NSEC_PER_SEC);
     dispatch_semaphore_wait(SeafGlobal.sharedObject.saveAlbumSem, timeout);
     Info("Write image file %@ %@ to album", file.name, file.cachePath);
     UIImageWriteToSavedPhotosAlbum(img, self, @selector(thisImage:hasBeenSavedInPhotoAlbumWithError:usingContextInfo:), (void *)CFBridgingRetain(file));
+    [SVProgressHUD showInfoWithStatus:NSLocalizedString(@"Save to album", @"Seafile")];
 }
 
 - (void)savePhotosToAlbum
@@ -1255,6 +1283,11 @@ enum {
         }
     }
     [SVProgressHUD showInfoWithStatus:S_SAVING_PHOTOS_ALBUM];
+}
+
+- (void)shareToWechat:(SeafFile*)file {
+    self.state = STATE_INIT;
+    [SeafWechatHelper shareToWechatWithFile:file];
 }
 
 - (void)browserAllPhotos
@@ -1394,9 +1427,19 @@ enum {
     } else if ([S_STAR isEqualToString:title]) {
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [file setStarred:YES];
-    }else if ([S_UNSTAR isEqualToString:title]) {
+    } else if ([S_UNSTAR isEqualToString:title]) {
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [file setStarred:NO];
+    } else if ([S_SHARE_TO_WECHAT isEqualToString:title]) {
+        //open eleshwere
+        self.state = STATE_SHARE_SHARE_WECHAT;
+        SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
+        if (!file.hasCache) {
+            [SVProgressHUD showWithStatus:NSLocalizedString(@"Downloading", @"Seafile")];
+            [self downloadFile:file];
+        } else {
+            [self shareToWechat:file];
+        }
     }
 }
 
