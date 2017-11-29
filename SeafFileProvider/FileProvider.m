@@ -331,6 +331,17 @@
     }];
 }
 
+- (void)setTagData:(NSData *)tagData forItemIdentifier:(NSFileProviderItemIdentifier)itemIdentifier completionHandler:(void (^)(NSFileProviderItem _Nullable, NSError * _Nullable))completionHandler
+{
+    Debug("itemIdentifier: %@, tagData:%@", itemIdentifier, tagData);
+    SeafItem *item = [[SeafItem alloc] initWithItemIdentity:itemIdentifier];
+    [item addTagData:tagData];
+    SeafProviderItem *tagedItem = [[SeafProviderItem alloc] initWithSeafItem:item];
+    SeafBase *seafObj = (SeafBase *)[item toSeafObj];
+    [seafObj setTagData:tagData];
+    completionHandler(tagedItem, nil);
+}
+
 /*
  - (void)trashItemWithIdentifier:(NSFileProviderItemIdentifier)itemIdentifier
  completionHandler:(void (^)(NSFileProviderItem _Nullable trashedItem, NSError * _Nullable error))completionHandler

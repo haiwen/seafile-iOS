@@ -166,4 +166,9 @@
     return false;
 }
 
+- (NSData *)tagData {
+    SeafBase *obj = [_item toSeafObj];
+    return obj.tagData;
+}
+
 @end

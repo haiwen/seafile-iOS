@@ -19,7 +19,7 @@
 @property (readonly) NSString *repoId;
 @property (readonly) NSString *path; //folder path
 @property (readonly) NSString *filename;
-
+@property (readonly) NSData *tagData;
 
 @property (readonly) NSString *name;
 @property (readonly) SeafConnection *conn;
@@ -33,6 +33,8 @@
 - (BOOL)isAccountRoot;
 - (BOOL)isRepoRoot;
 - (BOOL)isFile;
+
+- (void)addTagData:(NSData*)tag;
 
 - (SeafBase *)toSeafObj;
 
