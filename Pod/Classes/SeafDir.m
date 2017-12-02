@@ -295,6 +295,15 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
     [self->connection removeKey:self.cacheKey entityName:ENTITY_DIRECTORY];
 }
 
+- (BOOL)hasCache {
+    NSDictionary *dict = [self->connection getCachedJson:self.cacheKey entityName:ENTITY_DIRECTORY];
+    if (!dict) {
+        return NO;
+    } else {
+        return YES;
+    }
+}
+
 - (BOOL)savetoCache:(id)JSON cacheOid:(NSString *)cacheOid
 {
     NSMutableDictionary *dict = [NSMutableDictionary new];
