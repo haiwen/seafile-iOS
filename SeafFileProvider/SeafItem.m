@@ -12,6 +12,7 @@
 #import "APLRUCache.h"
 #import "Utils.h"
 #import "Debug.h"
+#import "SeafStorage.h"
 
 static APLRUCache *_cache = nil;
 
@@ -189,6 +190,11 @@ static APLRUCache *cache() {
 
 - (void)addTagData:(NSData *)tag {
     _tagData = tag;
+    [SeafStorage.sharedObject setObject:_tagData forKey:_itemIdentifier];
+}
+
+- (NSData *)tagData {
+    return [SeafStorage.sharedObject objectForKey:_itemIdentifier];
 }
 
 + (SeafItem *)fromAccount:(SeafConnection *)conn

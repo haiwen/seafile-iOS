@@ -648,7 +648,7 @@
         *repoId = [[arr objectAtIndex:2] stringByRemovingPercentEncoding];
     }
     if (arr.count >= 4) {
-        *path = [arr objectAtIndex:3];
+        *path = [[arr objectAtIndex:3] stringByRemovingPercentEncoding];
     }
 }
 
