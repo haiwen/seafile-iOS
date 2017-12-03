@@ -35,10 +35,6 @@
 - (void)invalidate
 {
     Debug("invalidate %@", self.item.itemIdentifier);
-    if (!_item.isRoot && !_item.isFile) {
-        SeafDir *dir = (SeafDir *)[_item toSeafObj];
-        [dir clearCache];
-    }
 }
 
 - (void)enumerateItemsForObserver:(id<NSFileProviderEnumerationObserver>)observer

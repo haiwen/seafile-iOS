@@ -103,6 +103,15 @@
     return [[SeafProviderItem alloc] initWithSeafItem:item itemIdentifier:identifier];
 }
 
+- (NSURL *)getPlaceholderURLForURL:(NSURL *)url
+{
+    if (@available(iOS 11.0, *)) {
+        return [NSFileProviderManager placeholderURLForURL:url];
+    } else {
+        return [NSFileProviderExtension placeholderURLForURL:url];
+    }
+}
+
 - (void)providePlaceholderAtURL:(NSURL *)url completionHandler:(void (^)(NSError *error))completionHandler
 {
     NSFileProviderItemIdentifier identifier = [self persistentIdentifierForItemAtURL:url];
@@ -115,11 +124,18 @@
     }
 
     [Utils checkMakeDir:url.path.stringByDeletingLastPathComponent];
-    NSURL *placeholderURL = [NSFileProviderManager placeholderURLForURL:url];
+    NSURL *placeholderURL = [self getPlaceholderURLForURL:url];
     Debug("placeholderURL:%@ url:%@", placeholderURL, url);
     NSError *error = nil;
     SeafProviderItem *providerItem = [[SeafProviderItem alloc] initWithSeafItem:item];
-    [NSFileProviderManager writePlaceholderAtURL:placeholderURL withMetadata:providerItem error:&error];
+    if (@available(iOS 11.0, *)) {
+        [NSFileProviderManager writePlaceholderAtURL:placeholderURL withMetadata:providerItem error:&error];
+    } else {
+        NSDictionary *metadata = [[NSDictionary alloc] initWithObjectsAndKeys:
+                                  providerItem.filename, @"filename", providerItem.typeIdentifier, @"typeIdentifier",
+                                  providerItem.documentSize, @"documentSize", nil];
+        [NSFileProviderExtension writePlaceholderAtURL:placeholderURL withMetadata:metadata error:&error];
+    }
     if (error) Warning("Failed to write placeholder: %@", error);
     completionHandler(error);
 }

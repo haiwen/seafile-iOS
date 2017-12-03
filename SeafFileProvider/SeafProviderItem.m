@@ -37,8 +37,10 @@
 - (NSFileProviderItemIdentifier)parentItemIdentifier
 {
     SeafItem *parentItem = self.item.parentItem;
-    if (parentItem.isRoot) {
-        return NSFileProviderRootContainerItemIdentifier;
+    if (@available(iOS 11.0, *)) {
+        if (parentItem.isRoot) {
+            return NSFileProviderRootContainerItemIdentifier;
+        }
     }
     return parentItem.itemIdentifier;
 }
