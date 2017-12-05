@@ -335,7 +335,7 @@
 {
     Debug("itemIdentifier: %@, tagData:%@", itemIdentifier, tagData);
     SeafItem *item = [[SeafItem alloc] initWithItemIdentity:itemIdentifier];
-    [item addTagData:tagData];
+    [item setTagData:tagData];
     SeafProviderItem *tagedItem = [[SeafProviderItem alloc] initWithSeafItem:item];
     completionHandler(tagedItem, nil);
 }

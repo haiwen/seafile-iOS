@@ -47,6 +47,12 @@
         [observer finishEnumeratingUpToPage:nil];
         return;
     }
+    
+    if (_item.isFile) {
+        [observer didEnumerateItems:@[[[SeafProviderItem alloc] initWithSeafItem:_item]]];
+        [observer finishEnumeratingUpToPage:nil];
+        return;
+    }
 
     SeafDir *dir = (SeafDir *)[_item toSeafObj];
     if (dir.hasCache) {

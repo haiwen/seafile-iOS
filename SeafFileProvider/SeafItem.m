@@ -188,13 +188,16 @@ static APLRUCache *cache() {
     }
 }
 
-- (void)addTagData:(NSData *)tag {
-    _tagData = tag;
-    [SeafStorage.sharedObject setObject:_tagData forKey:_itemIdentifier];
+- (void)setTagData:(NSData *)tagData {
+    _tagData = tagData;
+    [SeafStorage.sharedObject saveFileProviderTagData:_tagData withItemIdentifier:_itemIdentifier];
 }
 
 - (NSData *)tagData {
-    return [SeafStorage.sharedObject objectForKey:_itemIdentifier];
+    if (!_tagData) {
+        _tagData = [SeafStorage.sharedObject loadFileProviderTagDataWithItemIdentifier:_itemIdentifier];
+    }
+    return _tagData;
 }
 
 + (SeafItem *)fromAccount:(SeafConnection *)conn
