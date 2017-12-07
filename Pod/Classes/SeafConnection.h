@@ -201,6 +201,10 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 - (void)refreshRepoPassowrds;
 - (void)clearRepoPasswords;
 
+// fileProvider tagData
+- (void)saveFileProviderTagData:(NSData * _Nullable)tagData withItemIdentifier:(NSString * _Nullable)itemId;
+- (NSData * _Nullable)loadFileProviderTagDataWithItemIdentifier:(NSString * _Nullable)itemId;
+
 + (AFHTTPRequestSerializer <AFURLRequestSerialization> * _Nonnull)requestSerializer;
 
 @end

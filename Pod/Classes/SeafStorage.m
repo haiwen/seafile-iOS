@@ -20,7 +20,6 @@
 #define EDIT_DIR @"edit"
 #define THUMB_DIR @"thumb"
 #define TEMP_DIR @"temp"
-#define TAGDATA @"fileProviderTagData"
 
 static SeafStorage *object = nil;
 
@@ -157,7 +156,6 @@ static SeafStorage *object = nil;
     [Utils clearAllFiles:self.editDir];
     [Utils clearAllFiles:self.thumbsDir];
     [Utils clearAllFiles:self.tempDir];
-    [SeafStorage.sharedObject removeObjectForKey:TAGDATA];
 }
 
 + (NSString *)uniqueDirUnder:(NSString *)dir identify:(NSString *)identify
@@ -289,26 +287,6 @@ static SeafStorage *object = nil;
         return [SecurityUtilities getCredentialFromSecIdentity:identity];
     }
     return nil;
-}
-
-- (void)saveFileProviderTagData:(NSData*)tagData withItemIdentifier:(NSString*)itemId {
-    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:TAGDATA]];
-    if (tagData) {
-        [dict setObject:tagData forKey:itemId];
-    } else {
-        [dict removeObjectForKey:itemId];
-    }
-    
-    [self setObject:dict forKey:TAGDATA];
-}
-
-- (NSData*)loadFileProviderTagDataWithItemIdentifier:(NSString*)itemId {
-    NSDictionary *dict = [self objectForKey:TAGDATA];
-    if (dict) {
-        return [dict objectForKey:itemId];
-    } else {
-        return nil;
-    }
 }
 
 @end

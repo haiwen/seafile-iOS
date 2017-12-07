@@ -52,8 +52,4 @@
 - (void)chooseCertFrom:(NSDictionary *)dict handler:(void (^)(CFDataRef persistentRef, SecIdentityRef identity)) completeHandler from:(UIViewController *)c;
 - (NSURLCredential *)getCredentialForKey:(NSData *)key;
 
-// fileProvider tagData
-- (void)saveFileProviderTagData:(NSData*)tagData withItemIdentifier:(NSString*)itemId;
-- (NSData*)loadFileProviderTagDataWithItemIdentifier:(NSString*)itemId;
-
 @end
