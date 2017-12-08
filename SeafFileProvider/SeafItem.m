@@ -31,6 +31,7 @@ static APLRUCache *cache() {
 @synthesize repoId = _repoId;
 @synthesize path = _path;
 @synthesize filename = _filename;
+@synthesize tagData = _tagData;
 
 @synthesize conn = _conn;
 @synthesize name = _name;
@@ -184,6 +185,18 @@ static APLRUCache *cache() {
 
         return obj;
     }
+}
+
+- (void)setTagData:(NSData *)tagData {
+    _tagData = tagData;
+    [self.conn saveFileProviderTagData:_tagData withItemIdentifier:_itemIdentifier];
+}
+
+- (NSData *)tagData {
+    if (!_tagData) {
+        _tagData = [self.conn loadFileProviderTagDataWithItemIdentifier:_itemIdentifier];
+    }
+    return _tagData;
 }
 
 + (SeafItem *)fromAccount:(SeafConnection *)conn

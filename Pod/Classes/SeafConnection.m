@@ -33,6 +33,7 @@ enum {
 
 #define KEY_STARREDFILES @"STARREDFILES"
 #define KEY_CONTACTS @"CONTACTS"
+#define TAGDATA @"TagData"
 
 static SecTrustRef AFUTTrustWithCertificate(SecCertificateRef certificate) {
     NSArray *certs  = [NSArray arrayWithObject:(__bridge id)(certificate)];
@@ -110,6 +111,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @property (readonly) id<SeafCacheProvider> cacheProvider;
 
 @property (readonly) NSString *platformVersion;
+@property (readonly) NSString *tagDataKey;
 
 @property (readwrite, nonatomic, getter=isFirstTimeSync) BOOL firstTimeSync;
 
@@ -127,6 +129,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @synthesize localUploadDir = _localUploadDir;
 @synthesize platformVersion = _platformVersion;
 @synthesize accountIdentifier = _accountIdentifier;
+@synthesize tagDataKey = _tagDataKey;
 
 - (id)initWithUrl:(NSString *)url cacheProvider:(id<SeafCacheProvider>)cacheProvider
 {
@@ -147,6 +150,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         _inAutoSync = false;
         _inContactsSync = false;
         _cacheProvider = cacheProvider;
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateKeyValuePairs:) name:NSUbiquitousKeyValueStoreDidChangeExternallyNotification object:[NSUbiquitousKeyValueStore defaultStore]];
     }
     return self;
 }
@@ -488,6 +493,13 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return [SeafStorage uniqueDirUnder:self.localUploadDir];
 }
 
+- (NSString *)tagDataKey {
+    if (!_tagDataKey) {
+        _tagDataKey = [NSString stringWithFormat:@"%@/%@",TAGDATA,self.accountIdentifier];
+    }
+    return _tagDataKey;
+}
+
 - (void)saveRepo:(NSString *)repoId password:(NSString *)password
 {
     Debug("save repo %@ password %@", repoId, password);
@@ -666,6 +678,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [SeafStorage.sharedObject removeObjectForKey:_address];
     [SeafStorage.sharedObject removeObjectForKey:self.accountIdentifier];
     [SeafStorage.sharedObject removeObjectForKey:[NSString stringWithFormat:@"%@/settings", self.accountIdentifier]];
+    [SeafStorage.sharedObject removeObjectForKey:_tagDataKey];
 
     NSString *path = [self certPathForHost:[self host]];
     [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
@@ -1931,4 +1944,56 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [[NSNotificationCenter defaultCenter] postNotificationName:@"clearCache" object:nil];
     [self clearUploadCache];
 }
+
+// fileProvider tagData
+- (void)saveFileProviderTagData:(NSData*)tagData withItemIdentifier:(NSString*)itemId {
+    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:self.tagDataKey]];
+    if (tagData) {
+        [dict setObject:tagData forKey:itemId];
+    } else {
+        [dict removeObjectForKey:itemId];
+    }
+    
+    [SeafStorage.sharedObject setObject:dict forKey:self.tagDataKey];
+    // Save to iCloud
+    [self performSelectorInBackground:@selector(saveTagDataToICloudWithObject:) withObject:dict];
+}
+
+- (void)saveTagDataToICloudWithObject:(id)object{
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    [store setObject:object forKey:self.tagDataKey];
+    [store synchronize];
+}
+
+- (NSData*)loadFileProviderTagDataWithItemIdentifier:(NSString*)itemId {
+    NSDictionary *dict = [SeafStorage.sharedObject objectForKey:self.tagDataKey];
+    if (dict) {
+        return [dict objectForKey:itemId];
+    } else {
+        return nil;
+    }
+}
+
+- (void)updateKeyValuePairs:(NSNotification*)notification {
+    if ([notification.userInfo objectForKey:NSUbiquitousKeyValueStoreChangeReasonKey]) {
+        NSInteger changeReason = [[notification.userInfo objectForKey:NSUbiquitousKeyValueStoreChangeReasonKey] integerValue];
+        if (changeReason == NSUbiquitousKeyValueStoreServerChange || changeReason == NSUbiquitousKeyValueStoreInitialSyncChange) {
+            NSArray *changeKeys = [notification.userInfo objectForKey:NSUbiquitousKeyValueStoreChangedKeysKey];
+            @synchronized (changeKeys) {
+                NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+                for (NSString *key in changeKeys) {
+                    if ([key isEqualToString:self.tagDataKey]) {
+                        NSDictionary *dict = [store objectForKey:key];
+                        [SeafStorage.sharedObject setObject:dict forKey:self.tagDataKey];
+                    }
+                }
+            }
+        }
+    }
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:NSUbiquitousKeyValueStoreDidChangeExternallyNotification object:[NSUbiquitousKeyValueStore defaultStore]];
+}
+
 @end

@@ -52,5 +52,4 @@
 - (void)chooseCertFrom:(NSDictionary *)dict handler:(void (^)(CFDataRef persistentRef, SecIdentityRef identity)) completeHandler from:(UIViewController *)c;
 - (NSURLCredential *)getCredentialForKey:(NSData *)key;
 
-
 @end

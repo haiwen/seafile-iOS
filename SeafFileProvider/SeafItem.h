@@ -19,7 +19,7 @@
 @property (readonly) NSString *repoId;
 @property (readonly) NSString *path; //folder path
 @property (readonly) NSString *filename;
-
+@property (readwrite) NSData *tagData;
 
 @property (readonly) NSString *name;
 @property (readonly) SeafConnection *conn;

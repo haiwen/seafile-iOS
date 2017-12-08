@@ -166,4 +166,8 @@
     return false;
 }
 
+- (NSData *)tagData {
+    return _item.tagData;
+}
+
 @end
