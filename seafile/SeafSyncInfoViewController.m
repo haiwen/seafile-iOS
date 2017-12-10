@@ -14,6 +14,9 @@
 #import "SeafPhoto.h"
 #import "SeafGlobal.h"
 
+#define CANCEL_UPLOAD NSLocalizedString(@"Cancel upload", @"Seafile")
+#define CANCEL_DOWNLOAD NSLocalizedString(@"Cancel download", @"Seafile")
+
 static NSString *cellIdentifier = @"SeafSyncInfoCell";
 
 @interface SeafSyncInfoViewController ()
@@ -62,8 +65,10 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
 
     if (self.detailType == DOWNLOAD_DETAIL) {
         self.navigationItem.title = NSLocalizedString(@"Downloading", @"Seafile");
+        self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:CANCEL_DOWNLOAD style:UIBarButtonItemStyleDone target:self action:@selector(cancelAllOngoingTask)];
     } else {
-        self.navigationItem.title = NSLocalizedString(@"Uploading", @"Seafile");;
+        self.navigationItem.title = NSLocalizedString(@"Uploading", @"Seafile");
+        self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:CANCEL_UPLOAD style:UIBarButtonItemStyleDone target:self action:@selector(cancelAllOngoingTask)];
     }
 
     self.connection = [SeafGlobal sharedObject].connection;
@@ -127,6 +132,37 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.tableView reloadData];
     });
+}
+
+- (void)cancelAllOngoingTask {
+    NSString *title = self.navigationItem.rightBarButtonItem.title;
+    WS(weakSelf);
+    [Utils alertWithTitle:title message:nil yes:^{
+        SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection];
+        @synchronized (self.ongongingTasks) {
+            for (id<SeafTask> task in self.ongongingTasks) {
+                if ([title isEqualToString:CANCEL_UPLOAD]) {
+                    SeafUploadFile *ufile = (SeafUploadFile*)task;
+                    [accountQueue removeUploadTask:ufile];
+                } else if ([title isEqualToString:CANCEL_DOWNLOAD]) {
+                    SeafFile *file = (SeafFile*)task;
+                    [accountQueue removeFileDownloadTask:file];
+                }
+            }
+            [weakSelf.ongongingTasks removeAllObjects];
+        }
+        if ([title isEqualToString:CANCEL_UPLOAD]) {
+            [SeafDataTaskManager.sharedObject removeUploadTaskInStoragewithIndentifier:self.connection.accountIdentifier];
+        } else if ([title isEqualToString:CANCEL_DOWNLOAD]) {
+            [SeafDataTaskManager.sharedObject removeDownloadTaskInStoragewithIndentifier:self.connection.accountIdentifier];
+        }
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf.tableView reloadData];
+        });
+    } no:^{
+        
+    } from:self];
 }
 
 #pragma mark - Table view data source
