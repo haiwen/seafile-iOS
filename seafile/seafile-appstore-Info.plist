@@ -91,8 +91,10 @@
 	</dict>
 	<key>NSContactsUsageDescription</key>
 	<string>Used to backup contacts</string>
-	<key>NSLocationAlwaysUsageDescription</key>
-	<string>Seafile can periodically start Camera Upload when your location changes</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Choose always allow Seafile can periodically start Camera Upload when your location changes</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Choose always allow Seafile can periodically start Camera Upload when your location changes</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Used to sync photos</string>
 	<key>UIBackgroundModes</key>
