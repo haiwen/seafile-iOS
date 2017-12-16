@@ -12,6 +12,7 @@
 
 #import "SeafFile.h"
 #import "SeafUploadFile.h"
+#import "SeafDataTaskManager.h"
 
 #import "ExtentedString.h"
 #import "Utils.h"
@@ -429,10 +430,8 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 - (NSMutableArray *)uploadItems
 {
     if (self.path && !_uploadItems)
-        _uploadItems = [SeafUploadFile uploadFilesForDir:self];
-
-    if (!_uploadItems)
-        _uploadItems = [[NSMutableArray alloc] init];
+        _uploadItems = [NSMutableArray arrayWithArray:[[SeafDataTaskManager sharedObject] getUploadTasksForDir:self]];
+    
     return _uploadItems;
 }
 
@@ -448,16 +447,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
     @synchronized(_uploadLock) {
         if ([self.uploadItems containsObject:file]) return;
     }
-    NSMutableDictionary *dict = file.uploadAttr;
-    [Utils dict:dict setObject:self.repoId forKey:@"urepo"];
-    [Utils dict:dict setObject:self.path forKey:@"upath"];
-    [Utils dict:dict setObject:[NSNumber numberWithBool:file.overwrite] forKey:@"update"];
-    [Utils dict:dict setObject:[NSNumber numberWithBool:file.autoSync] forKey:@"autoSync"];
-    if (file.asset) {
-        [Utils dict:dict setObject:file.asset.defaultRepresentation.url.absoluteString forKey:@"assetURL"];
-    }
     file.udir = self;
-    [file saveUploadAttr:flush];
     @synchronized(_uploadLock) {
         [self.uploadItems addObject:file];
     }

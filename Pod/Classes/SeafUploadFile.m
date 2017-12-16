@@ -19,9 +19,6 @@
 #import "Debug.h"
 
 
-static NSMutableDictionary *uploadFileAttrs = nil;
-
-
 @interface SeafUploadFile ()
 @property (readonly) NSString *mime;
 @property (strong, readonly) NSURL *preViewURL;
@@ -59,6 +56,7 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         _uProgress = 0;
         _uploading = NO;
         _autoSync = NO;
+        _uploaded = NO;
         self.overwrite = [[self.uploadAttr objectForKey:@"update"] boolValue];
         if ([self.uploadAttr objectForKey:@"mtime"] != nil) {
             self.mtime = [[self.uploadAttr objectForKey:@"mtime"] longLongValue];
@@ -141,9 +139,9 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     [self.task cancel];
     [self clearLocalCache];
     [self.udir removeUploadItem:self];
-    [self clearUploadAttr:true];
     self.udir = nil;
     self.task = nil;
+    [SeafDataTaskManager.sharedObject removeUploadFileTaskInStorage:self];
 }
 
 - (void)cancelAnyLoading
@@ -167,14 +165,6 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     return !_udir;
 }
 
-- (BOOL)isUploaded
-{
-    NSMutableDictionary *dict = self.uploadAttr;
-    if (dict && [[dict objectForKey:@"result"] boolValue])
-        return YES;
-    return NO;
-}
-
 - (void)finishUpload:(BOOL)result oid:(NSString *)oid error:(NSError *)error
 {
     @synchronized(self) {
@@ -188,18 +178,9 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     self.commiturl = nil;
     self.missingblocks = nil;
     self.blkidx = 0;
-
+    _uploaded = result;
     if (!self.removed && !self.autoSync) {
-        NSMutableDictionary *dict = self.uploadAttr;
-        if (!dict) {
-            dict = [[NSMutableDictionary alloc] init];
-            [Utils dict:dict setObject:self.name forKey:@"name"];
-        }
-        [Utils dict:dict setObject:[NSNumber numberWithDouble:[[NSDate date] timeIntervalSince1970]]forKey:@"utime"];
-        [Utils dict:dict setObject:[NSNumber numberWithLongLong:self.mtime] forKey:@"mtime"];
-        [Utils dict:dict setObject:[NSNumber numberWithBool:result] forKey:@"result"];
-        [Utils dict:dict setObject:[NSNumber numberWithBool:self.autoSync] forKey:@"autoSync"];
-        [self saveUploadAttr:true];
+        [SeafDataTaskManager.sharedObject removeUploadFileTaskInStorage:self];
     }
     NSError *err = error;
     if (!err && !result) {
@@ -541,9 +522,8 @@ static NSMutableDictionary *uploadFileAttrs = nil;
 
 - (void)checkAsset
 {
-    NSMutableDictionary *dict = [SeafUploadFile uploadFileAttrs];
     if (_asset) {
-        @synchronized(dict) {
+        @synchronized(self) {
             BOOL ret = [Utils writeDataToPath:self.lpath andAsset:self.asset];
             if ([self.lpath.pathExtension isEqualToString:@"HEIC"]) {
                 _lpath = [NSString stringWithFormat:@"%@.jpg",self.lpath.stringByDeletingPathExtension];
@@ -638,39 +618,19 @@ static NSMutableDictionary *uploadFileAttrs = nil;
     return [content writeToFile:self.lpath atomically:YES encoding:NSUTF8StringEncoding error:nil];
 }
 
-+ (NSMutableDictionary *)uploadFileAttrs
-{
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        NSString *attrsFile = [[SeafStorage.sharedObject rootPath] stringByAppendingPathComponent:@"uploadfiles.plist"];
-        uploadFileAttrs = [[NSMutableDictionary alloc] initWithContentsOfFile:attrsFile];
-        if (!uploadFileAttrs)
-            uploadFileAttrs = [[NSMutableDictionary alloc] init];
-    });
-    return uploadFileAttrs;
-}
-
-+ (BOOL)saveAttrs
-{
-    NSString *attrsFile = [[SeafStorage.sharedObject rootPath] stringByAppendingPathComponent:@"uploadfiles.plist"];
-    return [[SeafUploadFile uploadFileAttrs] writeToFile:attrsFile atomically:true];
-}
-
 + (void)clearCache
 {
     [Utils clearAllFiles:SeafStorage.sharedObject.uploadsDir];
     NSString *attrsFile = [[SeafStorage.sharedObject rootPath] stringByAppendingPathComponent:@"uploadfiles.plist"];
 
     [Utils removeFile:attrsFile];
-    uploadFileAttrs = [[NSMutableDictionary alloc] init];
-    [SeafUploadFile saveAttrs];
 }
 
 - (NSMutableDictionary *)uploadAttr
 {
     if (!_uploadAttr) {
         if (self.lpath) {
-            _uploadAttr = [[SeafUploadFile uploadFileAttrs] objectForKey:self.lpath];
+            _uploadAttr = [[SeafDataTaskManager sharedObject] uploadFileInfoInStorage:self];
         }
 
         if (!_uploadAttr) {
@@ -678,54 +638,6 @@ static NSMutableDictionary *uploadFileAttrs = nil;
         }
     }
     return _uploadAttr;
-}
-
-- (BOOL)saveUploadAttr:(BOOL)flush
-{
-    [Utils dict:[SeafUploadFile uploadFileAttrs] setObject:self.uploadAttr forKey:self.lpath];
-    return !flush || [SeafUploadFile saveAttrs];
-}
-
-- (BOOL)clearUploadAttr:(BOOL)flush
-{
-    [Utils dict:[SeafUploadFile uploadFileAttrs] setObject:nil forKey:self.lpath];
-    return !flush || [SeafUploadFile saveAttrs];
-}
-
-+ (NSMutableArray *)uploadFilesForDir:(SeafDir *)dir
-{
-    bool changed = false;
-    NSDictionary *allFiles = [[SeafUploadFile uploadFileAttrs] copy];
-    NSMutableArray *files = [[NSMutableArray alloc] init];
-    for (NSString *lpath in allFiles.allKeys) {
-        NSDictionary *info = [allFiles objectForKey:lpath];
-        if (![Utils fileExistsAtPath:lpath]) {
-            [uploadFileAttrs removeObjectForKey:lpath];
-            Debug("Upload file %@ not exist", lpath);
-            changed = true;
-            continue;
-        }
-        if ([dir.repoId isEqualToString:[info objectForKey:@"urepo"]] && [dir.path isEqualToString:[info objectForKey:@"upath"]]) {
-            bool result = [[info objectForKey:@"result"] boolValue];
-            bool autoSync = [[info objectForKey:@"autoSync"] boolValue];
-            SeafUploadFile *file = [dir->connection getUploadfile:lpath create:!autoSync];
-            if (!file || file.asset || result) {
-                Debug("Remove upload file %@:%@, it is finished: %d or will reupload(auto sync) from beginning", file.lpath, info, result);
-                if (file) {
-                    [file clearLocalCache];
-                }
-                [uploadFileAttrs removeObjectForKey:lpath];
-                changed = true;
-                continue;
-            }
-            file.udir = dir;
-            file.overwrite = [[info objectForKey:@"update"] boolValue];
-            file.autoSync = autoSync;
-            [files addObject:file];
-        }
-    }
-    if (changed) [SeafUploadFile saveAttrs];
-    return files;
 }
 
 - (BOOL)waitUpload {

@@ -51,13 +51,8 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 - (BOOL)isUploaded;
 
 - (NSMutableDictionary *)uploadAttr;
-- (BOOL)saveUploadAttr:(BOOL)flush;
-
-+ (NSMutableArray *)uploadFilesForDir:(SeafDir *)dir;
-+ (BOOL)saveAttrs;
-+ (void)clearCache;
 
 - (BOOL)waitUpload;
 
-
+- (void)clearLocalCache;
 @end

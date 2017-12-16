@@ -34,9 +34,15 @@ typedef void(^DownLoadFinshBlock)(id<SeafTask>  _Nonnull task);
 - (void)addAvatarTask:(SeafAvatar * _Nonnull)avatar;
 - (void)addThumbTask:(SeafThumb * _Nonnull)thumb;
 
-- (void)startLastTimeUnfinshTaskWithConnection:(SeafConnection *)conn;
-- (void)removeDownloadTaskInStoragewithIndentifier:(NSString *_Nullable)accountIdentifier;
-- (void)removeUploadTaskInStoragewithIndentifier:(NSString *_Nullable)accountIdentifier;
+- (void)startLastTimeUnfinshTaskWithConnection:(SeafConnection *_Nullable)conn;
+- (void)removeAccountDownloadTaskFromStorage:(NSString *_Nullable)accountIdentifier;
+- (void)removeAccountUploadTaskFromStorage:(NSString *_Nullable)accountIdentifier;
+
+- (NSMutableDictionary * _Nullable)convertTaskToDict:(id _Nullable)task;
+- (void)saveUploadFileToTaskStorage:(SeafUploadFile * _Nullable)ufile;
+- (void)removeUploadFileTaskInStorage:(SeafUploadFile * _Nullable)ufile;
+- (NSMutableDictionary * _Nullable)uploadFileInfoInStorage:(SeafUploadFile * _Nullable)ufile;
+- (NSArray * _Nullable)getUploadTasksForDir:(SeafDir * _Nullable)dir;
 
 - (void)cancelAutoSyncTasks:(SeafConnection * _Nonnull)conn;
 - (void)cancelAutoSyncVideoTasks:(SeafConnection * _Nonnull)conn;

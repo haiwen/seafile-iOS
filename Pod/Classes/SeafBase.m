@@ -68,6 +68,7 @@
         _mime = aMime;
         _ooid = nil;
         _shareLink = nil;
+        _uniqueKey = [NSString stringWithFormat:@"%@/%@/%@",connection.accountIdentifier,aRepoId,aPath];
         self.state = SEAF_DENTRY_INIT;
     }
     return self;
