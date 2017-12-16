@@ -12,8 +12,8 @@
 #import "SeafFile.h"
 #import "SeafStorage.h"
 
-#define ALL_UPLOAD @"allUploadTask"
-#define ALL_DOWNLOAD @"allDownloadTask"
+#define KEY_UPLOAD @"allUploadTask"
+#define KEY_DOWNLOAD @"allDownloadTask"
 
 @interface SeafDataTaskManager()
 
@@ -65,11 +65,12 @@
 }
 
 #pragma mark- upload
-- (void)addUploadTask:(SeafUploadFile *)file
-{
+- (void)addUploadTask:(SeafUploadFile *)file {
     SeafAccountTaskQueue *accountQueue = [self getAccountQueueWithIndentifier:file.accountIdentifier];
     [accountQueue addUploadTask:file];
-    [self saveToTaskStorage:file withIndentifier:file.accountIdentifier];
+    if (file.retryable) {
+        [self saveUploadFileToTaskStorage:file];
+    }
     if (self.trySyncBlock) {
         self.trySyncBlock(file);
     }
@@ -164,11 +165,12 @@
 }
 
 #pragma mark- download file
-- (void)addFileDownloadTask:(SeafFile * _Nonnull)dfile
-{
+- (void)addFileDownloadTask:(SeafFile * _Nonnull)dfile {
     SeafAccountTaskQueue *accountQueue = [self getAccountQueueWithIndentifier:dfile.accountIdentifier];
     [accountQueue addFileDownloadTask:dfile];
-    [self saveToTaskStorage:dfile withIndentifier:dfile.accountIdentifier];
+    if (dfile.retryable) {
+        [self saveFileToTaskStorage:dfile];
+    }
     if (self.trySyncBlock) {
         self.trySyncBlock(dfile);
     }
@@ -195,11 +197,17 @@
             __weak typeof(self) weakSelf = self;
             accountQueue.uploadQueue.taskCompleteBlock = ^(id<SeafTask>  _Nonnull task, BOOL result) {
                 if (weakSelf.finishBlock)  weakSelf.finishBlock(task);
-                [weakSelf removeTaskInStorage:task withIndentifier:task.accountIdentifier];
+                SeafUploadFile *ufile = (SeafUploadFile*)task;
+                if (result) {
+                    [weakSelf removeUploadFileTaskInStorage:ufile];
+                }
             };
             accountQueue.fileQueue.taskCompleteBlock = ^(id<SeafTask>  _Nonnull task, BOOL result) {
                 if (weakSelf.finishBlock)  weakSelf.finishBlock(task);
-                [weakSelf removeTaskInStorage:task withIndentifier:task.accountIdentifier];
+                SeafFile *file = (SeafFile*)task;
+                if (result) {
+                    [weakSelf removeFileTaskInStorage:file];
+                }
             };
 
             [self.accountQueueDict setObject:accountQueue forKey:identifier];
@@ -213,72 +221,111 @@
     return [self getAccountQueueWithIndentifier:connection.accountIdentifier];
 }
 
-- (void)cacheCleared:(NSNotification*)notification
-{
+- (void)cacheCleared:(NSNotification*)notification {
     for (SeafAccountTaskQueue *accountQueue in self.accountQueueDict.allValues) {
         [accountQueue clearTasks];
     }
 }
 
-- (void)saveToTaskStorage:(id)task withIndentifier:(NSString*)accountIdentifier {
-    NSString *key = [NSString new];
-    NSDictionary *dict = [self convertTaskToDict:task];
-    if ([task isKindOfClass:[SeafFile class]]) {
-        key = [NSString stringWithFormat:@"%@/%@",ALL_DOWNLOAD,accountIdentifier];
-    } else if ([task isKindOfClass:[SeafUploadFile class]]) {
-        key = [NSString stringWithFormat:@"%@/%@",ALL_UPLOAD,accountIdentifier];
-    }
-    
-    NSMutableArray *downloadStorage = [NSMutableArray arrayWithArray:[SeafStorage.sharedObject objectForKey:key]];
-    if (![downloadStorage containsObject:dict]) {
-        [downloadStorage addObject:dict];
-        [SeafStorage.sharedObject setObject:downloadStorage forKey:key];
+- (void)saveUploadFileToTaskStorage:(SeafUploadFile *)ufile {
+    NSString *key = [self uploadStorageKey:ufile.accountIdentifier];
+    NSDictionary *dict = [self convertTaskToDict:ufile];
+    @synchronized(self) {
+        NSMutableDictionary *taskStorage = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:key]];
+        [taskStorage setObject:dict forKey:ufile.lpath];
+        [SeafStorage.sharedObject setObject:taskStorage forKey:key];
     }
 }
 
-- (void)removeTaskInStorage:(id)task withIndentifier:(NSString*)accountIdentifier {
-    NSString *key = [NSString new];
-    NSDictionary *dict = [self convertTaskToDict:task];
-    if ([task isKindOfClass:[SeafFile class]]) {
-        key = [NSString stringWithFormat:@"%@/%@",ALL_DOWNLOAD,accountIdentifier];
-    } else if ([task isKindOfClass:[SeafUploadFile class]]) {
-        key = [NSString stringWithFormat:@"%@/%@",ALL_UPLOAD,accountIdentifier];
-    }
-    
-    NSMutableArray *downloadStorage = [NSMutableArray arrayWithArray:[SeafStorage.sharedObject objectForKey:key]];
-    if ([downloadStorage containsObject:dict]) {
-        [downloadStorage removeObject:dict];
-        [SeafStorage.sharedObject setObject:downloadStorage forKey:key];
+- (void)saveFileToTaskStorage:(SeafFile *)file {
+    NSString *key = [self downloadStorageKey:file.accountIdentifier];
+    NSDictionary *dict = [self convertTaskToDict:file];
+    @synchronized(self) {
+        NSMutableDictionary *taskStorage = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:key]];
+        [taskStorage setObject:dict forKey:file.uniqueKey];
+        [SeafStorage.sharedObject setObject:taskStorage forKey:key];
     }
 }
 
-- (NSDictionary*)convertTaskToDict:(id)task {
-    NSDictionary *dict = [NSDictionary dictionary];
+- (void)removeUploadFileTaskInStorage:(SeafUploadFile *)ufile {
+    NSString *key = [self uploadStorageKey:ufile.accountIdentifier];
+    
+    @synchronized(self) {
+        NSMutableDictionary *taskStorage = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:key]];
+        [taskStorage removeObjectForKey:ufile.lpath];
+        [SeafStorage.sharedObject setObject:taskStorage forKey:key];
+    }
+}
+
+- (void)removeFileTaskInStorage:(SeafFile *)file {
+    NSString *key = [self downloadStorageKey:file.accountIdentifier];
+    
+    @synchronized(self) {
+        NSMutableDictionary *taskStorage = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:key]];
+        [taskStorage removeObjectForKey:file.uniqueKey];
+        [SeafStorage.sharedObject setObject:taskStorage forKey:key];
+    }
+}
+
+- (NSMutableDictionary *)uploadFileInfoInStorage:(SeafUploadFile *)ufile {
+    if (ufile.udir) {
+        NSString *key = [self uploadStorageKey:ufile.accountIdentifier];
+        NSMutableDictionary *taskStorage = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:key]];
+        return [taskStorage objectForKey:ufile.lpath];
+    } else {
+        return nil;
+    }
+    
+}
+
+- (NSString*)downloadStorageKey:(NSString*)accountIdentifier {
+    return [NSString stringWithFormat:@"%@/%@",KEY_DOWNLOAD,accountIdentifier];
+}
+
+- (NSString*)uploadStorageKey:(NSString*)accountIdentifier {
+     return [NSString stringWithFormat:@"%@/%@",KEY_UPLOAD,accountIdentifier];
+}
+
+- (NSMutableDictionary*)convertTaskToDict:(id)task {
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     if ([task isKindOfClass:[SeafFile class]]) {
         SeafFile *file = (SeafFile*)task;
-        dict = @{@"oid":file.oid,@"repoId":file.repoId,@"name":file.name,@"path":file.path,@"mtime":[NSNumber numberWithLong:file.mtime],@"size":[NSNumber numberWithLong:file.filesize]};
+        [Utils dict:dict setObject:file.uniqueKey forKey:@"uniqueKey"];
+        [Utils dict:dict setObject:file.oid forKey:@"oid"];
+        [Utils dict:dict setObject:file.repoId forKey:@"repoId"];
+        [Utils dict:dict setObject:file.name forKey:@"name"];
+        [Utils dict:dict setObject:file.path forKey:@"path"];
+        [Utils dict:dict setObject:[NSNumber numberWithLongLong:file.mtime] forKey:@"mtime"];
+        [Utils dict:dict setObject:[NSNumber numberWithLongLong:file.filesize] forKey:@"size"];
     } else if ([task isKindOfClass:[SeafUploadFile class]]) {
         SeafUploadFile *ufile = (SeafUploadFile*)task;
-        dict = @{@"lpath":ufile.lpath,@"oid":ufile.udir.oid,@"repoId":ufile.udir.repoId,@"name":ufile.udir.name,@"path":ufile.udir.path,@"perm":ufile.udir.perm,@"mime":ufile.udir.mime};
+        [Utils dict:dict setObject:ufile.lpath forKey:@"lpath"];
+        [Utils dict:dict setObject:[NSNumber numberWithBool:ufile.overwrite] forKey:@"update"];
+        [Utils dict:dict setObject:ufile.udir.oid forKey:@"oid"];
+        [Utils dict:dict setObject:ufile.udir.repoId forKey:@"repoId"];
+        [Utils dict:dict setObject:ufile.udir.name forKey:@"name"];
+        [Utils dict:dict setObject:ufile.udir.path forKey:@"path"];
+        [Utils dict:dict setObject:ufile.udir.perm forKey:@"perm"];
+        [Utils dict:dict setObject:ufile.udir.mime forKey:@"mime"];
     }
     return dict;
 }
 
 - (void)startLastTimeUnfinshTaskWithConnection:(SeafConnection *)conn {
-    NSString *downloadKey = [NSString stringWithFormat:@"%@/%@",ALL_DOWNLOAD,conn.accountIdentifier];
-    NSArray *downloadTasks = [SeafStorage.sharedObject objectForKey:downloadKey];
-    if (downloadTasks.count > 0) {
-        for (NSDictionary *dict in downloadTasks) {
+    NSString *downloadKey = [self downloadStorageKey:conn.accountIdentifier];
+    NSDictionary *downloadTasks = [SeafStorage.sharedObject objectForKey:downloadKey];
+    if (downloadTasks.allValues.count > 0) {
+        for (NSDictionary *dict in downloadTasks.allValues) {
             SeafFile *file = [[SeafFile alloc] initWithConnection:conn oid:[dict objectForKey:@"oid"] repoId:[dict objectForKey:@"repoId"] name:[dict objectForKey:@"name"] path:[dict objectForKey:@"path"] mtime:[[dict objectForKey:@"mtime"] longLongValue] size:[[dict objectForKey:@"size"] longLongValue]];
             [self addFileDownloadTask:file];
         }
     }
     
-    NSString *uploadKey = [NSString stringWithFormat:@"%@/%@",ALL_UPLOAD,conn.accountIdentifier];
-    NSArray *uploadTasks = [SeafStorage.sharedObject objectForKey:uploadKey];
-    if (uploadTasks.count > 0) {
-        for (NSDictionary *dict in uploadTasks) {
-            SeafUploadFile *ufile = [[SeafUploadFile alloc] initWithPath:[dict objectForKey:@"lpath"]];
+    NSString *uploadKey = [self uploadStorageKey:conn.accountIdentifier];
+    NSDictionary *uploadTasks = [SeafStorage.sharedObject objectForKey:uploadKey];
+    if (uploadTasks.allValues.count > 0) {
+        for (NSDictionary *dict in uploadTasks.allValues) {
+            SeafUploadFile *ufile = [conn getUploadfile:[dict objectForKey:@"lpath"] create:true];
             SeafDir *udir = [[SeafDir alloc] initWithConnection:conn oid:[dict objectForKey:@"oid"] repoId:[dict objectForKey:@"repoId"] perm:[dict objectForKey:@"perm"] name:[dict objectForKey:@"name"] path:[dict objectForKey:@"path"] mime:[dict objectForKey:@"mime"]];
             ufile.udir = udir;
             [self addUploadTask:ufile];
@@ -286,13 +333,29 @@
     }
 }
 
-- (void)removeDownloadTaskInStoragewithIndentifier:(NSString *)accountIdentifier {
-    NSString *key = [NSString stringWithFormat:@"%@/%@",ALL_DOWNLOAD,accountIdentifier];
+- (NSArray *)getUploadTasksForDir:(SeafDir *)dir {
+    NSMutableArray *filesInDir = [[NSMutableArray alloc] init];
+    @synchronized(self) {
+        NSDictionary *accountUploadStorage = [SeafStorage.sharedObject objectForKey:[self uploadStorageKey:dir->connection.accountIdentifier]];
+        NSArray *uploadFiles = accountUploadStorage.allValues;
+        for (NSDictionary *info in uploadFiles) {
+            if ([dir.repoId isEqualToString:[info objectForKey:@"repoId"]] && [dir.path isEqualToString:[info objectForKey:@"path"]]) {
+                SeafUploadFile *file = [dir->connection getUploadfile:[info objectForKey:@"lpath"] create:YES];
+                file.udir = dir;
+                [filesInDir addObject:file];
+            }
+        }
+    }
+    return filesInDir;
+}
+
+- (void)removeAccountDownloadTaskFromStorage:(NSString *)accountIdentifier {
+    NSString *key = [self downloadStorageKey:accountIdentifier];
     [SeafStorage.sharedObject removeObjectForKey:key];
 }
 
-- (void)removeUploadTaskInStoragewithIndentifier:(NSString*)accountIdentifier {
-    NSString *key = [NSString stringWithFormat:@"%@/%@",ALL_UPLOAD,accountIdentifier];
+- (void)removeAccountUploadTaskFromStorage:(NSString *)accountIdentifier {
+    NSString *key = [self uploadStorageKey:accountIdentifier];
     [SeafStorage.sharedObject removeObjectForKey:key];
 }
 

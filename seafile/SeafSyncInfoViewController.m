@@ -75,6 +75,9 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
 
     [self initTaskArray];
     
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.tableView reloadData];
+    });
     WS(weakSelf);
     SeafDataTaskManager.sharedObject.trySyncBlock = ^(id<SeafTask> _Nullable task) {
         if (![task.accountIdentifier isEqualToString:self.connection.accountIdentifier]) return;
@@ -122,16 +125,12 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
         allTasks = accountQueue.uploadQueue.allTasks;
     }
     for (id<SeafTask> task in allTasks) {
-        if (![self.finishedTasks containsObject:task] && ![self.ongongingTasks containsObject:task]) {
+        if (![self.finishedTasks containsObject:task]) {
             @synchronized (self.ongongingTasks) {
-                [self.ongongingTasks addObject:task];;
+                [self.ongongingTasks addObject:task];
             }
         }
     }
-
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self.tableView reloadData];
-    });
 }
 
 - (void)cancelAllOngoingTask {
@@ -152,9 +151,9 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
             [weakSelf.ongongingTasks removeAllObjects];
         }
         if ([title isEqualToString:CANCEL_UPLOAD]) {
-            [SeafDataTaskManager.sharedObject removeUploadTaskInStoragewithIndentifier:self.connection.accountIdentifier];
+            [SeafDataTaskManager.sharedObject removeAccountUploadTaskFromStorage:self.connection.accountIdentifier];
         } else if ([title isEqualToString:CANCEL_DOWNLOAD]) {
-            [SeafDataTaskManager.sharedObject removeDownloadTaskInStoragewithIndentifier:self.connection.accountIdentifier];
+            [SeafDataTaskManager.sharedObject removeAccountDownloadTaskFromStorage:self.connection.accountIdentifier];
         }
 
         dispatch_async(dispatch_get_main_queue(), ^{

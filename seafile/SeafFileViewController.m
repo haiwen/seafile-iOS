@@ -509,13 +509,11 @@ enum {
         Debug("Upload %lu, state=%d", (unsigned long)uploadFiles.count, self.state);
 #endif
     for (SeafUploadFile *file in uploadFiles) {
+        Debug("background upload %@", file.name);
         file.delegate = self;
-        if (!file.isUploaded && !file.isUploading) {
-            Debug("background upload %@", file.name);
-            [SeafDataTaskManager.sharedObject addUploadTask:file];
-        }
     }
 }
+
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
@@ -1549,7 +1547,6 @@ enum {
         [files addObject:file];
         [self.directory addUploadFile:file flush:false];
     }
-    [SeafUploadFile saveAttrs];
     [self reloadTable];
     for (SeafUploadFile *file in files) {
         [SeafDataTaskManager.sharedObject addUploadTask:file];
