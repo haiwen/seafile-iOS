@@ -669,15 +669,8 @@ enum {
         [cell.progressView setProgress:file.uProgress];
     } else {
         NSString *sizeStr = [FileSizeFormatter stringFromLongLong:file.filesize];
-        NSDictionary *dict = [file uploadAttr];
-        if (dict) {
-            int utime = [[dict objectForKey:@"utime"] intValue];
-            BOOL result = [[dict objectForKey:@"result"] boolValue];
-            if (result)
-                cell.detailTextLabel.text = [NSString stringWithFormat:NSLocalizedString(@"%@, Uploaded %@", @"Seafile"), sizeStr, [SeafDateFormatter stringFromLongLong:utime]];
-            else {
-                cell.detailTextLabel.text = [NSString stringWithFormat:NSLocalizedString(@"%@, waiting to upload", @"Seafile"), sizeStr];
-            }
+        if (file.uploaded) {
+            cell.detailTextLabel.text = [NSString stringWithFormat:NSLocalizedString(@"%@, Uploaded %@", @"Seafile"), sizeStr, [SeafDateFormatter stringFromLongLong:file.uploadedTime]];
         } else {
             cell.detailTextLabel.text = [NSString stringWithFormat:NSLocalizedString(@"%@, waiting to upload", @"Seafile"), sizeStr];
         }
@@ -1229,10 +1222,6 @@ enum {
     [self tableView:self.tableView didSelectRowAtIndexPath:_selectedindex];
 }
 
-- (void)downloadFile:(SeafFile *)file {
-    [SeafDataTaskManager.sharedObject addFileDownloadTask:file];
-}
-
 - (void)downloadDir:(SeafDir *)dir
 {
     Debug("download dir: %@ %@", dir.repoId, dir.path);
@@ -1347,10 +1336,10 @@ enum {
     if ([entry isKindOfClass:[SeafUploadFile class]]) {
         if (self.detailViewController.preViewItem == entry)
             self.detailViewController.preViewItem = nil;
-        Debug("Remove SeafUploadFile %@", ((SeafUploadFile *)entry).name);
-        [self.directory->connection removeUploadfile:(SeafUploadFile *)entry];
+        SeafUploadFile *ufile = (SeafUploadFile *)entry;
+        Debug("Remove SeafUploadFile %@", ufile.name);
+        [ufile cancel];
         [self reloadTable];
-
     } else if ([entry isKindOfClass:[SeafFile class]])
         [self deleteFile:(SeafFile*)entry];
     else if ([entry isKindOfClass:[SeafDir class]])
@@ -1434,23 +1423,18 @@ enum {
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         if (!file.hasCache) {
             [SVProgressHUD showWithStatus:NSLocalizedString(@"Downloading", @"Seafile")];
-            [self downloadFile:file];
+            [file load:self force:true];
         } else {
             [self shareToWechat:file];
         }
     }
 }
 
-- (void)backgroundUpload:(SeafUploadFile *)ufile
-{
-    [SeafDataTaskManager.sharedObject addUploadTask:ufile];
-}
-
 - (void)uploadFile:(SeafUploadFile *)ufile toDir:(SeafDir *)dir overwrite:(BOOL)overwrite
 {
     ufile.overwrite = overwrite;
-    [dir addUploadFile:ufile flush:true];
-    [NSThread detachNewThreadSelector:@selector(backgroundUpload:) toTarget:self withObject:ufile];
+    [dir addUploadFile:ufile];
+    [SeafDataTaskManager.sharedObject addUploadTask:ufile];
 }
 
 - (void)uploadFile:(SeafUploadFile *)ufile toDir:(SeafDir *)dir
@@ -1540,12 +1524,12 @@ enum {
         }
         [nameSet addObject:filename];
         NSString *path = [uploadDir stringByAppendingPathComponent:filename];
-        SeafUploadFile *file =  [self.connection getUploadfile:path];
+        SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
         file.overwrite = overwrite;
         [file setAsset:asset url:asset.defaultRepresentation.url];
         file.delegate = self;
         [files addObject:file];
-        [self.directory addUploadFile:file flush:false];
+        [self.directory addUploadFile:file];
     }
     [self reloadTable];
     for (SeafUploadFile *file in files) {

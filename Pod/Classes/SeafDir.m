@@ -148,7 +148,6 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 
 - (void)handleResponse:(NSHTTPURLResponse *)response json:(id)JSON
 {
-    [self checkUploadFiles];
     @synchronized(self) {
         self.state = SEAF_DENTRY_UPTODATE;
         NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
@@ -430,7 +429,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 - (NSMutableArray *)uploadItems
 {
     if (self.path && !_uploadItems)
-        _uploadItems = [NSMutableArray arrayWithArray:[[SeafDataTaskManager sharedObject] getUploadTasksForDir:self]];
+        _uploadItems = [NSMutableArray arrayWithArray:[[SeafDataTaskManager sharedObject] getUploadTasksInDir:self]];
     
     return _uploadItems;
 }
@@ -442,7 +441,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
     }
 }
 
-- (void)addUploadFile:(SeafUploadFile *)file flush:(BOOL)flush;
+- (void)addUploadFile:(SeafUploadFile *)file
 {
     @synchronized(_uploadLock) {
         if ([self.uploadItems containsObject:file]) return;
@@ -453,25 +452,6 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
     }
     _allItems = nil;
     if (!file.autoSync) [self.delegate download:self complete:true];
-}
-
-- (void)checkUploadFiles
-{
-    NSMutableArray *arr = [[NSMutableArray alloc] init];
-    @synchronized(_uploadLock) {
-        for (SeafUploadFile *file in self.uploadItems) {
-            NSMutableDictionary *dict = file.uploadAttr;
-            if (dict) {
-                BOOL result = [[dict objectForKey:@"result"] boolValue];
-                if (result) {
-                    [arr addObject:file];
-                }
-            }
-        }
-    }
-    for (SeafUploadFile *file in arr) {
-        [self->connection removeUploadfile:file];
-    }
 }
 
 - (void)removeUploadItem:(SeafUploadFile *)ufile

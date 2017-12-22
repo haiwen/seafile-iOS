@@ -41,9 +41,9 @@
             }
             Debug("finish task %@, %ld tasks remained.",task.name, (long)[weakSelf taskNumber]);
             task.lastFinishTimestamp = [[NSDate new] timeIntervalSince1970];
-            if (!result && task.retryable) { // Task fail, add to the tail of queue for retry
+            if (!result) { // Task fail, add to the tail of queue for retry
                 @synchronized (weakSelf.tasks) {
-                    [weakSelf.tasks addObject:task];
+                    if (task.retryable) [weakSelf.tasks addObject:task];
                     weakSelf.failedCount += 1;
                 }
             } else {
@@ -91,7 +91,7 @@
 
 - (void)tick {
     [self performSelectorInBackground:@selector(runTasks) withObject:nil];
-    [self performSelectorInBackground:@selector(removeSomeCompletedTask) withObject:nil];
+    [self performSelectorInBackground:@selector(removOldCompletedTask) withObject:nil];
 }
 
 - (void)runTasks {
@@ -140,7 +140,7 @@
     }
 }
 
-- (void)removeSomeCompletedTask {
+- (void)removOldCompletedTask {
     NSMutableArray *tempArray = [NSMutableArray array];
     @synchronized (self.completedTasks) {
         for (id<SeafTask> task in self.completedTasks) {
@@ -153,9 +153,20 @@
     }
 }
 
-- (void)clear {
-    [self.tasks removeAllObjects];
+- (void)clearTasks {
+    @synchronized (self.tasks) {
+        for (id<SeafTask> task in self.tasks) {
+            task.retryable = false;
+        }
+        [self.tasks removeAllObjects];
+    }
+    NSArray *arr = [NSArray arrayWithArray:self.ongoingTasks];
+    for (id<SeafTask> task in arr) {
+        task.retryable = false;
+        [task cancel];
+    }
     [self.ongoingTasks removeAllObjects];
+
     [self.completedTasks removeAllObjects];
     self.failedCount = 0;
 }

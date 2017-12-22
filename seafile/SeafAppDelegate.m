@@ -174,7 +174,7 @@
 - (void)uploadFile:(NSString *)path
 {
     [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
-    SeafUploadFile *file = [SeafGlobal.sharedObject.connection getUploadfile:path];
+    SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
     [self.fileVC uploadFile:file];
 }
 

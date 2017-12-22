@@ -76,6 +76,12 @@
     }
 }
 
+- (void)removeUploadTask:(SeafUploadFile * _Nonnull)ufile forAccount:(SeafConnection * _Nonnull)conn
+{
+    SeafAccountTaskQueue *accountQueue = [self getAccountQueueWithIndentifier:conn.accountIdentifier];
+    [accountQueue removeUploadTask:ufile];
+}
+
 - (void)cancelAutoSyncTasks:(SeafConnection *)conn
 {
     SeafAccountTaskQueue *accountQueue = [self getAccountQueueWithIndentifier:conn.accountIdentifier];
@@ -92,7 +98,7 @@
     }
     Debug("clear %ld photos", (long)arr.count);
     for (SeafUploadFile *ufile in arr) {
-        [conn removeUploadfile:ufile];
+        [ufile cancel];
     }
 }
 
@@ -112,8 +118,22 @@
     }
     for (SeafUploadFile *ufile in arr) {
         Debug("Remove autosync video file: %@, %@", ufile.lpath, ufile.assetURL);
-        [conn removeUploadfile:ufile];
+        [ufile cancel];
     }
+}
+
+- (void)cancelAllDownloadTasks:(SeafConnection * _Nonnull)conn
+{
+    SeafAccountTaskQueue *accountQueue = [self getAccountQueueWithIndentifier:conn.accountIdentifier];
+    [accountQueue.fileQueue clearTasks];
+    [self removeAccountDownloadTaskFromStorage:conn.accountIdentifier];
+}
+
+- (void)cancelAllUploadTasks:(SeafConnection * _Nonnull)conn
+{
+    SeafAccountTaskQueue *accountQueue = [self getAccountQueueWithIndentifier:conn.accountIdentifier];
+    [accountQueue.uploadQueue clearTasks];
+    [self removeAccountUploadTaskFromStorage:conn.accountIdentifier];
 }
 
 - (void)noException:(void (^)(void))block
@@ -199,7 +219,12 @@
                 if (weakSelf.finishBlock)  weakSelf.finishBlock(task);
                 SeafUploadFile *ufile = (SeafUploadFile*)task;
                 if (result) {
-                    [weakSelf removeUploadFileTaskInStorage:ufile];
+                    if (ufile.retryable) {
+                        [weakSelf removeUploadFileTaskInStorage:ufile];
+                    }
+                } else if (!ufile.retryable) {
+                    // Remove upload file local cache
+                    [ufile clearLocalCache];
                 }
             };
             accountQueue.fileQueue.taskCompleteBlock = ^(id<SeafTask>  _Nonnull task, BOOL result) {
@@ -222,9 +247,6 @@
 }
 
 - (void)cacheCleared:(NSNotification*)notification {
-    for (SeafAccountTaskQueue *accountQueue in self.accountQueueDict.allValues) {
-        [accountQueue clearTasks];
-    }
 }
 
 - (void)saveUploadFileToTaskStorage:(SeafUploadFile *)ufile {
@@ -267,17 +289,6 @@
     }
 }
 
-- (NSMutableDictionary *)uploadFileInfoInStorage:(SeafUploadFile *)ufile {
-    if (ufile.udir) {
-        NSString *key = [self uploadStorageKey:ufile.accountIdentifier];
-        NSMutableDictionary *taskStorage = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:key]];
-        return [taskStorage objectForKey:ufile.lpath];
-    } else {
-        return nil;
-    }
-    
-}
-
 - (NSString*)downloadStorageKey:(NSString*)accountIdentifier {
     return [NSString stringWithFormat:@"%@/%@",KEY_DOWNLOAD,accountIdentifier];
 }
@@ -290,7 +301,6 @@
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     if ([task isKindOfClass:[SeafFile class]]) {
         SeafFile *file = (SeafFile*)task;
-        [Utils dict:dict setObject:file.uniqueKey forKey:@"uniqueKey"];
         [Utils dict:dict setObject:file.oid forKey:@"oid"];
         [Utils dict:dict setObject:file.repoId forKey:@"repoId"];
         [Utils dict:dict setObject:file.name forKey:@"name"];
@@ -300,7 +310,7 @@
     } else if ([task isKindOfClass:[SeafUploadFile class]]) {
         SeafUploadFile *ufile = (SeafUploadFile*)task;
         [Utils dict:dict setObject:ufile.lpath forKey:@"lpath"];
-        [Utils dict:dict setObject:[NSNumber numberWithBool:ufile.overwrite] forKey:@"update"];
+        [Utils dict:dict setObject:[NSNumber numberWithBool:ufile.overwrite] forKey:@"overwrite"];
         [Utils dict:dict setObject:ufile.udir.oid forKey:@"oid"];
         [Utils dict:dict setObject:ufile.udir.repoId forKey:@"repoId"];
         [Utils dict:dict setObject:ufile.udir.name forKey:@"name"];
@@ -325,7 +335,8 @@
     NSDictionary *uploadTasks = [SeafStorage.sharedObject objectForKey:uploadKey];
     if (uploadTasks.allValues.count > 0) {
         for (NSDictionary *dict in uploadTasks.allValues) {
-            SeafUploadFile *ufile = [conn getUploadfile:[dict objectForKey:@"lpath"] create:true];
+            SeafUploadFile *ufile = [[SeafUploadFile alloc] initWithPath:[dict objectForKey:@"lpath"]];
+            ufile.overwrite = [[dict objectForKey:@"overwrite"] boolValue];
             SeafDir *udir = [[SeafDir alloc] initWithConnection:conn oid:[dict objectForKey:@"oid"] repoId:[dict objectForKey:@"repoId"] perm:[dict objectForKey:@"perm"] name:[dict objectForKey:@"name"] path:[dict objectForKey:@"path"] mime:[dict objectForKey:@"mime"]];
             ufile.udir = udir;
             [self addUploadTask:ufile];
@@ -333,19 +344,23 @@
     }
 }
 
-- (NSArray *)getUploadTasksForDir:(SeafDir *)dir {
-    NSMutableArray *filesInDir = [[NSMutableArray alloc] init];
-    @synchronized(self) {
-        NSDictionary *accountUploadStorage = [SeafStorage.sharedObject objectForKey:[self uploadStorageKey:dir->connection.accountIdentifier]];
-        NSArray *uploadFiles = accountUploadStorage.allValues;
-        for (NSDictionary *info in uploadFiles) {
-            if ([dir.repoId isEqualToString:[info objectForKey:@"repoId"]] && [dir.path isEqualToString:[info objectForKey:@"path"]]) {
-                SeafUploadFile *file = [dir->connection getUploadfile:[info objectForKey:@"lpath"] create:YES];
-                file.udir = dir;
-                [filesInDir addObject:file];
-            }
+- (void)removeAccountQueue:(SeafConnection *_Nullable)conn {
+    SeafAccountTaskQueue *accountQueue = [self getAccountQueueWithIndentifier:conn.accountIdentifier];
+    [accountQueue clearTasks];
+    [self removeAccountDownloadTaskFromStorage:conn.accountIdentifier];
+    [self removeAccountUploadTaskFromStorage:conn.accountIdentifier];
+}
+
+
+- (NSArray *)getUploadTasksInDir:(SeafDir *)dir {
+    SeafAccountTaskQueue *accountQueue = [self getAccountQueueWithIndentifier:dir->connection.accountIdentifier];
+    NSMutableArray *filesInDir = [NSMutableArray new];
+    for (SeafUploadFile *ufile in accountQueue.uploadQueue.allTasks) {
+        if ([ufile.udir.repoId isEqualToString: dir.repoId] && [ufile.udir.path isEqualToString: dir.path]) {
+            [filesInDir addObject:ufile];
         }
     }
+
     return filesInDir;
 }
 
@@ -418,10 +433,10 @@
 }
 
 - (void)clearTasks {
-    [self.fileQueue clear];
-    [self.thumbQueue clear];
-    [self.avatarQueue clear];
-    [self.uploadQueue clear];
+    [self.fileQueue clearTasks];
+    [self.thumbQueue clearTasks];
+    [self.avatarQueue clearTasks];
+    [self.uploadQueue clearTasks];
 }
 
 @end
