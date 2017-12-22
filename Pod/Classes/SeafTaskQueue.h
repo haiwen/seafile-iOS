@@ -10,7 +10,7 @@
 
 #define DEFAULT_CONCURRENCY 3
 #define DEFAULT_ATTEMPT_INTERVAL 60 // 1 min
-#define DEFAULT_COMPLELE_INTERVAL 3*60*1000 // 3 min
+#define DEFAULT_COMPLELE_INTERVAL 3*60 // 3 min
 
 @protocol SeafTask;
 
@@ -28,6 +28,9 @@ typedef void (^TaskProgressBlock)(id<SeafTask> _Nonnull task, float progress);
 - (void)run:(TaskCompleteBlock _Nullable)completeBlock;
 - (void)cancel;
 - (void)setTaskProgressBlock:(TaskProgressBlock _Nullable)taskProgressBlock;
+
+@optional
+- (void)cleanup;
 
 @end
 
