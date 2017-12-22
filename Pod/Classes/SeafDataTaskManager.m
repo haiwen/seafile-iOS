@@ -12,8 +12,9 @@
 #import "SeafFile.h"
 #import "SeafStorage.h"
 
-#define KEY_UPLOAD @"allUploadTask"
-#define KEY_DOWNLOAD @"allDownloadTask"
+#define KEY_UPLOAD @"allUploadingTasks"
+#define KEY_DOWNLOAD @"allDownloadingTasks"
+#define KEY_UPLOADED @"allUploadedTasks"
 
 @interface SeafDataTaskManager()
 
@@ -49,7 +50,7 @@
 - (void)startTimer
 {
     Debug("Start timer.");
-    self.taskTimer = [NSTimer scheduledTimerWithTimeInterval:5*60 target:self selector:@selector(tick:) userInfo:nil repeats:YES];
+    self.taskTimer = [NSTimer scheduledTimerWithTimeInterval:2*60 target:self selector:@selector(tick:) userInfo:nil repeats:YES];
     [[AFNetworkReachabilityManager sharedManager] setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
         [self tick:nil];
     }];
@@ -59,6 +60,7 @@
     if (![[AFNetworkReachabilityManager sharedManager] isReachable]) {
         return;
     }
+    Debug("tick...");
     for (SeafAccountTaskQueue *accountQueue in self.accountQueueDict.allValues) {
         [accountQueue tick];
     }
@@ -219,12 +221,12 @@
                 if (weakSelf.finishBlock)  weakSelf.finishBlock(task);
                 SeafUploadFile *ufile = (SeafUploadFile*)task;
                 if (result) {
-                    if (ufile.retryable) {
-                        [weakSelf removeUploadFileTaskInStorage:ufile];
+                    if (ufile.retryable) { // Do not remove now, will remove it next time
+                        [weakSelf saveUploadFileToTaskStorage:ufile];
                     }
                 } else if (!ufile.retryable) {
                     // Remove upload file local cache
-                    [ufile clearLocalCache];
+                    [ufile cleanup];
                 }
             };
             accountQueue.fileQueue.taskCompleteBlock = ^(id<SeafTask>  _Nonnull task, BOOL result) {
@@ -317,6 +319,7 @@
         [Utils dict:dict setObject:ufile.udir.path forKey:@"path"];
         [Utils dict:dict setObject:ufile.udir.perm forKey:@"perm"];
         [Utils dict:dict setObject:ufile.udir.mime forKey:@"mime"];
+        [Utils dict:dict setObject:[NSNumber numberWithBool:ufile.isUploaded] forKey:@"uploaded"];
     }
     return dict;
 }
@@ -332,15 +335,31 @@
     }
     
     NSString *uploadKey = [self uploadStorageKey:conn.accountIdentifier];
-    NSDictionary *uploadTasks = [SeafStorage.sharedObject objectForKey:uploadKey];
-    if (uploadTasks.allValues.count > 0) {
-        for (NSDictionary *dict in uploadTasks.allValues) {
-            SeafUploadFile *ufile = [[SeafUploadFile alloc] initWithPath:[dict objectForKey:@"lpath"]];
-            ufile.overwrite = [[dict objectForKey:@"overwrite"] boolValue];
-            SeafDir *udir = [[SeafDir alloc] initWithConnection:conn oid:[dict objectForKey:@"oid"] repoId:[dict objectForKey:@"repoId"] perm:[dict objectForKey:@"perm"] name:[dict objectForKey:@"name"] path:[dict objectForKey:@"path"] mime:[dict objectForKey:@"mime"]];
-            ufile.udir = udir;
-            [self addUploadTask:ufile];
+    NSMutableDictionary *uploadTasks = [NSMutableDictionary dictionaryWithDictionary: [SeafStorage.sharedObject objectForKey:uploadKey]];
+    NSMutableArray *toDelete = [NSMutableArray new];
+    for (NSString *key in uploadTasks) {
+        NSDictionary *dict = [uploadTasks objectForKey:key];
+        NSString *lpath = [dict objectForKey:@"lpath"];
+        if (![Utils fileExistsAtPath:lpath]) {
+            [toDelete addObject:key];
+            continue;
         }
+        SeafUploadFile *ufile = [[SeafUploadFile alloc] initWithPath:lpath];
+        if ([[dict objectForKey:@"uploaded"] boolValue]) {
+            [ufile cleanup];
+            [toDelete addObject:key];
+            continue;
+        }
+        ufile.overwrite = [[dict objectForKey:@"overwrite"] boolValue];
+        SeafDir *udir = [[SeafDir alloc] initWithConnection:conn oid:[dict objectForKey:@"oid"] repoId:[dict objectForKey:@"repoId"] perm:[dict objectForKey:@"perm"] name:[dict objectForKey:@"name"] path:[dict objectForKey:@"path"] mime:[dict objectForKey:@"mime"]];
+        ufile.udir = udir;
+        [self addUploadTask:ufile];
+    }
+    if (toDelete.count > 0) {
+        for (NSString *key in toDelete) {
+            [uploadTasks removeObjectForKey:key];
+        }
+        [SeafStorage.sharedObject setObject:uploadTasks forKey:uploadKey];
     }
 }
 
@@ -350,7 +369,6 @@
     [self removeAccountDownloadTaskFromStorage:conn.accountIdentifier];
     [self removeAccountUploadTaskFromStorage:conn.accountIdentifier];
 }
-
 
 - (NSArray *)getUploadTasksInDir:(SeafDir *)dir {
     SeafAccountTaskQueue *accountQueue = [self getAccountQueueWithIndentifier:dir->connection.accountIdentifier];

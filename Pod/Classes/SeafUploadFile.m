@@ -135,7 +135,7 @@
     SeafConnection *conn = self.udir->connection;
     @synchronized(self) {
         [self.task cancel];
-        [self clearLocalCache];
+        [self cleanup];
         [self.udir removeUploadItem:self];
         self.udir = nil;
         self.task = nil;
@@ -148,9 +148,9 @@
 {
 }
 
-- (void)clearLocalCache
+- (void)cleanup
 {
-    Debug("Remove uploaded disk file: %@", self.lpath);
+    Debug("Cleanup uploaded disk file: %@", self.lpath);
     [Utils removeFile:self.lpath];
     if (_blockDir) {
         [[NSFileManager defaultManager] removeItemAtPath:_blockDir error:nil];
@@ -179,7 +179,6 @@
     self.missingblocks = nil;
     self.blkidx = 0;
     _uploaded = result;
-    _uploadedTime = [[NSDate date] timeIntervalSince1970];
     NSError *err = error;
     if (!err && !result) {
         err = [Utils defaultError];
@@ -191,7 +190,7 @@
             [Utils linkFileAtPath:self.lpath to:[SeafStorage.sharedObject documentPath:oid] error:nil];
         } else {
             // For auto sync photos, release local cache files immediately.
-            [self clearLocalCache];
+            [self cleanup];
         }
         [self.udir removeUploadItem:self];
     }
@@ -212,8 +211,9 @@
 - (void)uploadRequest:(NSMutableURLRequest *)request withConnection:(SeafConnection *)connection
 {
     if (![[NSFileManager defaultManager] fileExistsAtPath:self.lpath]) {
-        Debug("Upload failed: local file %@ not exist\n", self.lpath);
+        Debug("Upload failed: local file %@ not exist.", self.lpath);
         [self finishUpload:NO oid:nil error:nil];
+        return;
     }
     NSProgress *progress = nil;
     _task = [connection.sessionMgr uploadTaskWithStreamedRequest:request progress:&progress completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
@@ -223,7 +223,7 @@
             error = nil;
         }
         if (error) {
-            Debug("Upload failed :%@,code=%ld, res=%@\n", error, (long)resp.statusCode, responseObject);
+            Debug("Upload failed :%@,code=%ld, res=%@", error, (long)resp.statusCode, responseObject);
             if (resp.statusCode == HTTP_ERR_REPO_UPLOAD_PASSWORD_EXPIRED || resp.statusCode == HTTP_ERR_REPO_DOWNLOAD_PASSWORD_EXPIRED) {
                 //refredh passwords when expired
                 [connection refreshRepoPassowrds];

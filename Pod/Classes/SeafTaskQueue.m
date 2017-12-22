@@ -145,8 +145,11 @@
     @synchronized (self.completedTasks) {
         for (id<SeafTask> task in self.completedTasks) {
             //remove task finished more than 3 min
-            if ([[NSDate new] timeIntervalSinceNow] - task.lastFinishTimestamp > DEFAULT_COMPLELE_INTERVAL) {
+            if ([[NSDate date] timeIntervalSince1970] - task.lastFinishTimestamp > DEFAULT_COMPLELE_INTERVAL) {
                 [tempArray addObject:task];
+                if ([task respondsToSelector:@selector(cleanup)]) {
+                    [task cleanup];
+                }
             }
         }
         [self.completedTasks removeObjectsInArray:tempArray];

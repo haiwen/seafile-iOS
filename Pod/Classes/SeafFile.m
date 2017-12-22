@@ -863,6 +863,7 @@
     if (!success) {
         return [dg updateComplete:self result:false];
     }
+    [self.ufile cleanup];
     self.ufile = nil;
     self.udelegate = nil;
     self.state = SEAF_DENTRY_INIT;

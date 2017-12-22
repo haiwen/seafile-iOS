@@ -133,7 +133,7 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
     }
 }
 
-- (void)cancelAllDownloadTask {
+- (void)cancelAllDownloadTasks {
     WS(weakSelf);
     [Utils alertWithTitle:NSLocalizedString(@"Are you sure to cancel all downloading tasks?", @"Seafile") message:nil yes:^{
         [SeafDataTaskManager.sharedObject cancelAllDownloadTasks:self.connection];
@@ -144,7 +144,7 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
     } from:self];
 }
 
-- (void)cancelAllUploadTask {
+- (void)cancelAllUploadTasks {
     WS(weakSelf);
     [Utils alertWithTitle:NSLocalizedString(@"Are you sure to cancel all uploading tasks?", @"Seafile") message:nil yes:^{
         [SeafDataTaskManager.sharedObject cancelAllUploadTasks:self.connection];
