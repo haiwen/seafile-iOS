@@ -54,7 +54,7 @@
 
 
 - (void)unload;
-- (void)addUploadFile:(SeafUploadFile *)file flush:(BOOL)flush;
+- (void)addUploadFile:(SeafUploadFile *)file;
 - (void)removeUploadItem:(SeafUploadFile *)ufile;
 
 - (void)loadedItems:(NSMutableArray *)items;

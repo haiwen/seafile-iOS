@@ -160,11 +160,6 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 
 - (SeafRepo * _Nullable)getRepo:(NSString * _Nonnull)repo;
 
-- (SeafUploadFile * _Nullable)getUploadfile:(NSString * _Nonnull)lpath;
-- (SeafUploadFile * _Nullable)getUploadfile:(NSString * _Nonnull)lpath create:(bool)create;
-
-- (void)removeUploadfile:(SeafUploadFile * _Nonnull)ufile;
-
 - (void)registerDevice:(NSData * _Nonnull)deviceToken;
 
 - (UIImage * _Nullable)avatarForAccount:(NSString * _Nonnull)email;

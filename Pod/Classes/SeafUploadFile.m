@@ -24,7 +24,6 @@
 @property (strong, readonly) NSURL *preViewURL;
 @property (strong) NSURLSessionUploadTask *task;
 @property (strong) NSProgress *progress;
-@property long long mtime;
 
 @property (strong) NSArray *missingblocks;
 @property (strong) NSArray *allblocks;
@@ -35,7 +34,6 @@
 @property long blkidx;
 
 @property dispatch_semaphore_t semaphore;
-@property (strong, nonatomic)NSMutableDictionary *uploadAttr;
 @property (nonatomic) TaskCompleteBlock taskCompleteBlock;
 @property (nonatomic) TaskProgressBlock taskProgressBlock;
 
@@ -57,14 +55,8 @@
         _uploading = NO;
         _autoSync = NO;
         _uploaded = NO;
-        self.overwrite = [[self.uploadAttr objectForKey:@"update"] boolValue];
-        if ([self.uploadAttr objectForKey:@"mtime"] != nil) {
-            self.mtime = [[self.uploadAttr objectForKey:@"mtime"] longLongValue];
-        } else {
-            self.mtime = [[NSDate date] timeIntervalSince1970];
-        }
+        _overwrite = NO;
         _semaphore = dispatch_semaphore_create(0);
-
     }
     return self;
 }
@@ -106,6 +98,16 @@
     [self checkAsset];
 }
 
+- (long long)mtime
+{
+    if (![[NSFileManager defaultManager] fileExistsAtPath:self.lpath]) {
+        return [[NSDate date] timeIntervalSince1970];
+    } else {
+        NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:self.lpath error:nil];
+        return [[attributes fileModificationDate] timeIntervalSince1970];
+    }
+}
+
 - (BOOL)editable
 {
     return NO;
@@ -125,23 +127,21 @@
     return [self.blockDir stringByAppendingPathComponent:blkId];
 }
 
-- (NSURL *)assetURL
-{
-    if (!_assetURL)
-        _assetURL = [self.uploadAttr objectForKey:@"assetURL"];
-    return _assetURL;
-}
-
 - (void)cancel
 {
     Debug("Cancel uploadFile: %@", self.lpath);
+    // Avoid recursively call cancel in SeafDataTaskManager
+    if (!self.udir) return;
+    SeafConnection *conn = self.udir->connection;
+    @synchronized(self) {
+        [self.task cancel];
+        [self clearLocalCache];
+        [self.udir removeUploadItem:self];
+        self.udir = nil;
+        self.task = nil;
+    }
 
-    [self.task cancel];
-    [self clearLocalCache];
-    [self.udir removeUploadItem:self];
-    self.udir = nil;
-    self.task = nil;
-    [SeafDataTaskManager.sharedObject removeUploadFileTaskInStorage:self];
+    [SeafDataTaskManager.sharedObject removeUploadTask:self forAccount: conn];
 }
 
 - (void)cancelAnyLoading
@@ -179,9 +179,7 @@
     self.missingblocks = nil;
     self.blkidx = 0;
     _uploaded = result;
-    if (!self.removed && !self.autoSync) {
-        [SeafDataTaskManager.sharedObject removeUploadFileTaskInStorage:self];
-    }
+    _uploadedTime = [[NSDate date] timeIntervalSince1970];
     NSError *err = error;
     if (!err && !result) {
         err = [Utils defaultError];
@@ -192,6 +190,7 @@
         if (!_autoSync) {
             [Utils linkFileAtPath:self.lpath to:[SeafStorage.sharedObject documentPath:oid] error:nil];
         } else {
+            // For auto sync photos, release local cache files immediately.
             [self clearLocalCache];
         }
         [self.udir removeUploadItem:self];
@@ -621,23 +620,6 @@
 + (void)clearCache
 {
     [Utils clearAllFiles:SeafStorage.sharedObject.uploadsDir];
-    NSString *attrsFile = [[SeafStorage.sharedObject rootPath] stringByAppendingPathComponent:@"uploadfiles.plist"];
-
-    [Utils removeFile:attrsFile];
-}
-
-- (NSMutableDictionary *)uploadAttr
-{
-    if (!_uploadAttr) {
-        if (self.lpath) {
-            _uploadAttr = [[SeafDataTaskManager sharedObject] uploadFileInfoInStorage:self];
-        }
-
-        if (!_uploadAttr) {
-            _uploadAttr = [NSMutableDictionary new];
-        }
-    }
-    return _uploadAttr;
 }
 
 - (BOOL)waitUpload {

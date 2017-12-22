@@ -49,6 +49,7 @@
 @synthesize name = _name, oid = _oid, path = _path, repoId = _repoId, mime=_mime;
 @synthesize delegate = _delegate;
 @synthesize ooid = _ooid;
+@synthesize uniqueKey = _uniqueKey;
 @synthesize state;
 
 
@@ -68,7 +69,6 @@
         _mime = aMime;
         _ooid = nil;
         _shareLink = nil;
-        _uniqueKey = [NSString stringWithFormat:@"%@/%@/%@",connection.accountIdentifier,aRepoId,aPath];
         self.state = SEAF_DENTRY_INIT;
     }
     return self;
@@ -93,6 +93,14 @@
 {
     if (_oid != entry.oid)
         _oid = entry.oid;
+}
+
+- (NSString *)uniqueKey
+{
+    if (!_uniqueKey) {
+        _uniqueKey = [NSString stringWithFormat:@"%@/%@/%@", connection.accountIdentifier, _repoId, _path];
+    }
+    return _uniqueKey;
 }
 
 - (NSString *)key

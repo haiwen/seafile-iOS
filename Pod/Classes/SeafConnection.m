@@ -94,7 +94,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @interface SeafConnection ()
 
 @property NSMutableSet *starredFiles;
-@property NSMutableDictionary *uploadFiles;
 @property AFSecurityPolicy *policy;
 @property NSDate *avatarLastUpdate;
 @property NSMutableDictionary *settings;
@@ -136,7 +135,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (self = [super init]) {
         self.address = url;
         _rootFolder = [[SeafRepos alloc] initWithConnection:self];
-        self.uploadFiles = [[NSMutableDictionary alloc] init];
         _info = [[NSMutableDictionary alloc] init];
         _avatarLastUpdate = [NSDate dateWithTimeIntervalSince1970:0];
         _syncDir = nil;
@@ -675,6 +673,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)clearAccount
 {
+    [SeafDataTaskManager.sharedObject removeAccountQueue:self];
     [SeafStorage.sharedObject removeObjectForKey:_address];
     [SeafStorage.sharedObject removeObjectForKey:self.accountIdentifier];
     [SeafStorage.sharedObject removeObjectForKey:[NSString stringWithFormat:@"%@/settings", self.accountIdentifier]];
@@ -991,39 +990,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return [self.rootFolder getRepo:repo];
 }
 
-- (SeafUploadFile *)getUploadfile:(NSString *)lpath create:(bool)create
-{
-    if (!lpath) return nil;
-    @synchronized(self.uploadFiles) {
-        SeafUploadFile *ufile = [self.uploadFiles objectForKey:lpath];
-        if (!ufile && create) {
-            ufile = [[SeafUploadFile alloc] initWithPath:lpath];
-            [Utils dict:self.uploadFiles setObject:ufile forKey:lpath];
-        }
-        if (ufile && !ufile.completionBlock) {
-            ufile.completionBlock = ^(SeafUploadFile *ufile, NSString *oid, NSError *error) {
-                if (!error) {
-                    [self removeUploadfile:ufile];
-                }
-            };
-        }
-        return ufile;
-    };
-}
-
-- (SeafUploadFile *)getUploadfile:(NSString *)lpath
-{
-    return [self getUploadfile:lpath create:true];
-}
-
-- (void)removeUploadfile:(SeafUploadFile *)ufile
-{
-    Debug("Remove upload file %@, %@", ufile.name, ufile.udir);
-    @synchronized(self.uploadFiles) {
-        [self.uploadFiles removeObjectForKey:ufile.lpath];
-    }
-}
-
 - (void)search:(NSString *)keyword repo:(NSString *)repoId
        success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSMutableArray *results))success
        failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure
@@ -1145,19 +1111,14 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                                          return Warning("Failed to get asset name: %@", asset);
                                      }
                                      NSString *path = [self.localUploadDir stringByAppendingPathComponent:filename];
-                                     SeafUploadFile *file = [self getUploadfile:path];
-                                     if (!file) {
-                                         [self removeUploadingPhoto:url];
-                                         return Warning("Failed to init upload file: %@", path);
-                                     }
+                                     SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
+                                     file.retryable = false;
                                      file.autoSync = true;
                                      file.overwrite = true;
                                      [file setAsset:asset url:url];
                                      file.udir = dir;
                                      [file setCompletionBlock:^(SeafUploadFile *file, NSString *oid, NSError *error) {
-                                         if (!error) {
-                                             [self autoSyncFileUploadedSuccess:file];
-                                         }
+                                         [self autoSyncFileUploadComplete:file error:error];
                                      }];
 
                                      Debug("Add file %@ to upload list: %@ current %u %u", filename, dir.path, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
@@ -1174,15 +1135,20 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }
 }
 
-- (void)autoSyncFileUploadedSuccess:(SeafUploadFile *)ufile
+- (void)autoSyncFileUploadComplete:(SeafUploadFile *)ufile error:(NSError *)error
 {
-    [self pickPhotosForUpload];
-    [self setPhotoUploaded:ufile.assetURL.absoluteString];
-    [self removeUploadingPhoto:ufile.assetURL];
-    Debug("Autosync file %@ %@ uploaded %d, remain %u %u", ufile.name, ufile.assetURL, [self IsPhotoUploaded:ufile.assetURL], (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
-
-    [self removeUploadfile:ufile];
-    if (_photSyncWatcher) [_photSyncWatcher photoSyncChanged:self.photosInSyncing];
+    if (!error) {
+        [self pickPhotosForUpload];
+        [self setPhotoUploaded:ufile.assetURL.absoluteString];
+        [self removeUploadingPhoto:ufile.assetURL];
+        Debug("Autosync file %@ %@ uploaded %d, remain %u %u", ufile.name, ufile.assetURL, [self IsPhotoUploaded:ufile.assetURL], (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
+        
+        if (_photSyncWatcher) [_photSyncWatcher photoSyncChanged:self.photosInSyncing];
+    } else {
+        Warning("Failed to upload photo %@: %@", ufile.name, error);
+        // Add photo to the end of queue
+        [self addUploadPhoto:ufile.assetURL];
+    }
 }
 
 - (NSUInteger)autoSyncedNum
@@ -1192,7 +1158,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)resetUploadedPhotos
 {
-    self.uploadFiles = [[NSMutableDictionary alloc] init];
     _uploadingArray = [[NSMutableArray alloc] init];
     [self clearCache:ENTITY_UPLOAD_PHOTO];
 }
@@ -1225,7 +1190,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }
 }
 - (NSURL *)popUploadPhoto{
-    @synchronized(_photosArray) {
+    @synchronized(self.photosArray) {
         if (!self.photosArray || self.photosArray.count == 0) return nil;
         NSURL *url = [self.photosArray objectAtIndex:0];
         [self addUploadingPhoto:url];
@@ -1586,15 +1551,10 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (void)uploadFile:(NSString *)path toDir:(SeafDir *)dir completion:(void(^)(BOOL success, NSError * _Nullable error))completionHandler
 {
     Debug("upload file %@ to %@", path, dir.path);
-    SeafUploadFile *ufile = [self getUploadfile:path];
+    SeafUploadFile *ufile = [[SeafUploadFile alloc] initWithPath:path];
     ufile.udir = dir;
     ufile.overwrite = true;
-    ufile.completionBlock = ^(SeafUploadFile *ufile, NSString *oid, NSError *error) {
-        completionHandler(!error, nil);
-        if (!error) {
-            [self removeUploadfile:ufile];
-        }
-    };
+    ufile.retryable = false;
     [SeafDataTaskManager.sharedObject addUploadTask:ufile];
 }
 
@@ -1943,6 +1903,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [SeafAvatar clearCache];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"clearCache" object:nil];
     [self clearUploadCache];
+    // CLear old versiond data
+    NSString *attrsFile = [[SeafStorage.sharedObject rootPath] stringByAppendingPathComponent:@"uploadfiles.plist"];
+    [Utils removeFile:attrsFile];
 }
 
 // fileProvider tagData

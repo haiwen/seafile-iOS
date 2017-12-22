@@ -33,19 +33,17 @@ typedef void(^DownLoadFinshBlock)(id<SeafTask>  _Nonnull task);
 - (void)addUploadTask:(SeafUploadFile * _Nonnull)ufile;
 - (void)addAvatarTask:(SeafAvatar * _Nonnull)avatar;
 - (void)addThumbTask:(SeafThumb * _Nonnull)thumb;
+- (void)removeUploadTask:(SeafUploadFile * _Nonnull)ufile forAccount:(SeafConnection * _Nonnull)conn;
 
 - (void)startLastTimeUnfinshTaskWithConnection:(SeafConnection *_Nullable)conn;
-- (void)removeAccountDownloadTaskFromStorage:(NSString *_Nullable)accountIdentifier;
-- (void)removeAccountUploadTaskFromStorage:(NSString *_Nullable)accountIdentifier;
+- (void)removeAccountQueue:(SeafConnection *_Nullable)conn;
 
-- (NSMutableDictionary * _Nullable)convertTaskToDict:(id _Nullable)task;
-- (void)saveUploadFileToTaskStorage:(SeafUploadFile * _Nullable)ufile;
-- (void)removeUploadFileTaskInStorage:(SeafUploadFile * _Nullable)ufile;
-- (NSMutableDictionary * _Nullable)uploadFileInfoInStorage:(SeafUploadFile * _Nullable)ufile;
-- (NSArray * _Nullable)getUploadTasksForDir:(SeafDir * _Nullable)dir;
+- (NSArray * _Nullable)getUploadTasksInDir:(SeafDir * _Nullable)dir;
 
 - (void)cancelAutoSyncTasks:(SeafConnection * _Nonnull)conn;
 - (void)cancelAutoSyncVideoTasks:(SeafConnection * _Nonnull)conn;
+- (void)cancelAllDownloadTasks:(SeafConnection * _Nonnull)conn;
+- (void)cancelAllUploadTasks:(SeafConnection * _Nonnull)conn;
 
 - (void)assetForURL:(NSURL * _Nonnull)assetURL resultBlock:(ALAssetsLibraryAssetForURLResultBlock _Nonnull)resultBlock failureBlock:(ALAssetsLibraryAccessFailureBlock _Nonnull)failureBlock;
 

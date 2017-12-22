@@ -806,13 +806,14 @@
     if (!self.mpath)   return;
     self.udelegate = dg;
     if (!self.ufile) {
-        self.ufile = [connection getUploadfile:self.mpath];
+        self.ufile = [[SeafUploadFile alloc] initWithPath:self.mpath];
         self.ufile.delegate = self;
         self.ufile.overwrite = YES;
         self.ufile.completionBlock = self.uploadCompletionBlock;
         NSString *path = [self.path stringByDeletingLastPathComponent];
         SeafDir *udir = [[SeafDir alloc] initWithConnection:connection oid:nil repoId:self.repoId perm:@"rw" name:path.lastPathComponent path:path];
-        [udir addUploadFile:self.ufile flush:true];
+        self.ufile.udir = udir;
+        [udir addUploadFile:self.ufile];
     }
     Debug("Update file %@, to %@", self.ufile.lpath, self.ufile.udir.path);
     [SeafDataTaskManager.sharedObject addUploadTask:self.ufile];
