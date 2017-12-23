@@ -208,7 +208,9 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
     else {
         NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
         for (SeafBase *obj in _items) {
-            [dict setObject:obj forKey:[obj key]];
+            if (![obj isKindOfClass:[SeafUploadFile class]]) {
+                [dict setObject:obj forKey:[obj key]];
+            }
         }
         for (i = 0; i < [items count]; ++i) {
             SeafBase *obj = (SeafBase*)[items objectAtIndex:i];
@@ -400,7 +402,11 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
     NSMutableArray *arr = [[NSMutableArray alloc] init];
     [arr addObjectsFromArray:_items];
      @synchronized(_uploadLock) {
-         [arr addObjectsFromArray:self.uploadItems];
+         for (SeafUploadFile *ufile in self.uploadItems) {
+             if (!ufile.uploaded) {
+                 [arr addObject:ufile];
+             }
+         }
      }
     [self sortItems:arr];
     _allItems = arr;
@@ -428,6 +434,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 
 - (NSMutableArray *)uploadItems
 {
+    Debug(@"dir name %@", self.name);
     if (self.path && !_uploadItems)
         _uploadItems = [NSMutableArray arrayWithArray:[[SeafDataTaskManager sharedObject] getUploadTasksInDir:self]];
     
@@ -437,7 +444,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 - (NSArray *)uploadFiles
 {
     @synchronized(_uploadLock) {
-        return [NSArray arrayWithArray: self.uploadItems];
+        return [NSArray arrayWithArray:self.uploadItems];
     }
 }
 
@@ -458,6 +465,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 {
     @synchronized(_uploadLock) {
         [self.uploadItems removeObject:ufile];
+        [_items addObject:ufile];
     }
     _allItems = nil;
 }

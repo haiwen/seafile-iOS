@@ -28,7 +28,7 @@
                     mime:(NSString *)aMime;
 
 @property (readonly, copy) NSArray *allItems;
-@property (readwrite, copy) NSArray *items;
+@property (readwrite, copy) NSMutableArray *items;
 @property (readonly) NSArray *uploadFiles;
 @property (readonly) BOOL editable;
 @property (readonly) NSString *perm;
