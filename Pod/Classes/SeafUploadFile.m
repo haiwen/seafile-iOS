@@ -640,13 +640,13 @@
 - (void)uploadComplete:(NSString *)oid error:(NSError *)error
 {
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self.delegate uploadComplete:!error file:self oid:oid];
         if (self.completionBlock) {
             self.completionBlock(self, oid, error);
         }
         if (self.taskCompleteBlock) {
             self.taskCompleteBlock(self, !error);
         }
+        [self.delegate uploadComplete:!error file:self oid:oid];
     });
 
     dispatch_semaphore_signal(_semaphore);
