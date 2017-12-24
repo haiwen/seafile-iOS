@@ -484,7 +484,7 @@ enum {
     _directory = directory;
     _connection = directory->connection;
     self.title = directory.name;
-    [_directory loadContent:false];
+    [_directory loadContent:true];
     Debug("repoId:%@, %@, path:%@, loading ... cached:%d %@, editable:%d\n", _directory.repoId, _directory.name, _directory.path, _directory.hasCache, _directory.ooid, _directory.editable);
     if (![_directory isKindOfClass:[SeafRepos class]])
         self.tableView.sectionHeaderHeight = 0;

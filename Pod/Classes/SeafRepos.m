@@ -244,7 +244,6 @@
 
 @implementation SeafRepos
 @synthesize repoGroups = _repoGroups;
-@synthesize items = _items;
 
 - (id)initWithConnection:(SeafConnection *)aConnection
 {
@@ -389,7 +388,7 @@
         [self sortItems:repoGroup];
         [allrepos addObjectsFromArray:repoGroup];
     }
-    _items = allrepos;
+    self.items = allrepos;
 }
 
 - (void)reSortItemsByName
