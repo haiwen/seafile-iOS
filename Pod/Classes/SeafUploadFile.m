@@ -192,7 +192,6 @@
             // For auto sync photos, release local cache files immediately.
             [self cleanup];
         }
-        [self.udir removeUploadItem:self];
     }
 }
 
