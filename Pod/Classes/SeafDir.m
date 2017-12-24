@@ -185,6 +185,8 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 {
     [connection sendRequest:self.url
                     success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+                        // Force reload uplaodItems from task queue.
+                        _uploadItems = nil;
                         [self handleResponse:response json:JSON];
                         if (success)  success(self);
                     }
