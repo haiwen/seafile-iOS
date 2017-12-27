@@ -92,6 +92,7 @@
 - (void)tick {
     [self performSelectorInBackground:@selector(runTasks) withObject:nil];
     [self performSelectorInBackground:@selector(removOldCompletedTask) withObject:nil];
+    if (self.failedCount > 0) self.failedCount -= 1;
 }
 
 - (void)runTasks {
