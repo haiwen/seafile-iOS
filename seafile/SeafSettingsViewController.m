@@ -398,12 +398,11 @@ enum {
     _versionCell.detailTextLabel.text = _version;
     [self configureView];
 
-    WS(weakSelf);
     SeafDataTaskManager.sharedObject.trySyncBlock = ^(id<SeafTask>  _Nonnull task) {
-        [weakSelf updateSyncInfo];
+        [self performSelectorInBackground:@selector(updateSyncInfo) withObject:nil];
     };
     SeafDataTaskManager.sharedObject.finishBlock = ^(id<SeafTask>  _Nonnull task) {
-        [weakSelf updateSyncInfo];
+        [self performSelectorInBackground:@selector(updateSyncInfo) withObject:nil];
     };
 }
 
@@ -479,12 +478,11 @@ enum {
 -(void)updateSyncInfo{
     NSInteger downloadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].fileQueue taskNumber];
     NSInteger uploadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].uploadQueue taskNumber];
-    dispatch_async(dispatch_get_main_queue(), ^ {
-        self.downloadingCell.detailTextLabel.text = [NSString stringWithFormat:@"%lu",(long)downloadingNum];
-        self.uploadingCell.detailTextLabel.text = [NSString stringWithFormat:@"%lu",(long)uploadingNum];
-        NSIndexPath *downloadlingCellIndex = [NSIndexPath indexPathForRow:CELL_DOWNLOAD inSection:SECTION_UPDOWNLOAD];
-        NSIndexPath *uploadlingCellIndex = [NSIndexPath indexPathForRow:CELL_UPLOAD inSection:SECTION_UPDOWNLOAD];
-        [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObjects:downloadlingCellIndex, uploadlingCellIndex, nil] withRowAnimation:UITableViewRowAnimationNone];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (self.tableView.dragging == false && self.tableView.decelerating == false && self.tableView.tracking == false) {
+            _downloadingCell.detailTextLabel.text = [NSString stringWithFormat:@"%lu",(long)downloadingNum];
+            _uploadingCell.detailTextLabel.text = [NSString stringWithFormat:@"%lu",(long)uploadingNum];
+        }
     });
 }
 
@@ -698,11 +696,6 @@ enum {
         } else {
             remainStr = [NSString stringWithFormat:NSLocalizedString(@"%ld photos remain", @"Seafile"), num];
         }
-#if DEBUG
-        NSInteger downloadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].fileQueue taskNumber];
-        NSInteger uploadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].uploadQueue taskNumber];
-        remainStr = [remainStr stringByAppendingFormat:@"  U:%lu D:%lu",(long)uploadingNum,(long)downloadingNum];
-#endif
         return [sectionNames[section] stringByAppendingFormat:@"\t %@", remainStr];
     }
 #if DEBUG
