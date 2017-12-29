@@ -47,6 +47,7 @@
                     weakSelf.failedCount += 1;
                 }
             } else {
+                weakSelf.failedCount = 0;
                 if (![weakSelf.completedTasks containsObject:task]) {
                     @synchronized (weakSelf.completedTasks) { // task succeeded, add to completedTasks
                         [weakSelf.completedTasks addObject:task];

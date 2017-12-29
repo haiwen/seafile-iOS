@@ -388,7 +388,7 @@
         [self sortItems:repoGroup];
         [allrepos addObjectsFromArray:repoGroup];
     }
-    self.items = allrepos;
+    [self setValue:allrepos forKey:@"_items"];
 }
 
 - (void)reSortItemsByName
