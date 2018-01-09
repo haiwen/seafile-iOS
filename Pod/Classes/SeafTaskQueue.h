@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 
 #define DEFAULT_CONCURRENCY 3
+#define DEFAULT_RETRYCOUNT 3
 #define DEFAULT_ATTEMPT_INTERVAL 60 // 1 min
 #define DEFAULT_COMPLELE_INTERVAL 3*60 // 3 min
 
@@ -20,6 +21,7 @@ typedef void (^TaskProgressBlock)(id<SeafTask> _Nonnull task, float progress);
 @protocol SeafTask<NSObject>
 
 @property NSTimeInterval lastFinishTimestamp;
+@property NSInteger retryCount;
 @property BOOL retryable;
 
 - (NSString * _Nonnull)accountIdentifier;

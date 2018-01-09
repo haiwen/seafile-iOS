@@ -44,6 +44,7 @@
 @synthesize filesize = _filesize;
 @synthesize lastFinishTimestamp = _lastFinishTimestamp;
 @synthesize retryable = _retryable;
+@synthesize retryCount = _retryCount;
 
 - (id)initWithPath:(NSString *)lpath
 {
@@ -524,7 +525,7 @@
         @synchronized(self) {
             BOOL ret = [Utils writeDataToPath:self.lpath andAsset:self.asset];
             if ([self.lpath.pathExtension isEqualToString:@"HEIC"]) {
-                _lpath = [NSString stringWithFormat:@"%@.jpg",self.lpath.stringByDeletingPathExtension];
+                _lpath = [NSString stringWithFormat:@"%@.JPG",self.lpath.stringByDeletingPathExtension];
             }
             if (!ret) {
                 Warning("Failed to write asset to file.");

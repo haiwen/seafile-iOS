@@ -47,6 +47,7 @@
 @synthesize preViewURL = _preViewURL;
 @synthesize lastFinishTimestamp = _lastFinishTimestamp;
 @synthesize retryable = _retryable;
+@synthesize retryCount = _retryCount;
 
 - (id)initWithConnection:(SeafConnection *)aConnection
                      oid:(NSString *)anId
