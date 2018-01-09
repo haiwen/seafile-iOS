@@ -42,9 +42,12 @@
             Debug("finish task %@, %ld tasks remained.",task.name, (long)[weakSelf taskNumber]);
             task.lastFinishTimestamp = [[NSDate new] timeIntervalSince1970];
             if (!result) { // Task fail, add to the tail of queue for retry
+                weakSelf.failedCount += 1;
                 @synchronized (weakSelf.tasks) {
-                    if (task.retryable) [weakSelf.tasks addObject:task];
-                    weakSelf.failedCount += 1;
+                    if (task.retryable) {
+                        task.retryCount += 1;
+                        [weakSelf.tasks addObject:task];
+                    }
                 }
             } else {
                 weakSelf.failedCount = 0;
@@ -72,6 +75,7 @@
     @synchronized (self.tasks) {
         if (![self.tasks containsObject:task] && ![self.ongoingTasks containsObject:task]) {
             task.lastFinishTimestamp = 0;
+            task.retryCount = 0;
             [self.tasks addObject:task];
             Debug("Added task %@: %ld", task.name, (unsigned long)self.tasks.count);
         }
@@ -91,9 +95,9 @@
 }
 
 - (void)tick {
+    if (self.failedCount > 0) self.failedCount -= 1;
     [self performSelectorInBackground:@selector(runTasks) withObject:nil];
     [self performSelectorInBackground:@selector(removOldCompletedTask) withObject:nil];
-    if (self.failedCount > 0) self.failedCount -= 1;
 }
 
 - (void)runTasks {
@@ -115,7 +119,7 @@
     id<SeafTask> runableTask;
     @synchronized (self.tasks) {
         for (id<SeafTask> task in self.tasks) {
-            if (task.runable && task.lastFinishTimestamp < ([[NSDate new] timeIntervalSince1970] - self.attemptInterval)) {
+            if (task.runable && task.lastFinishTimestamp < ([[NSDate new] timeIntervalSince1970] - self.attemptInterval) && task.retryCount < DEFAULT_RETRYCOUNT) {
                 runableTask = task;
                 break;
             }

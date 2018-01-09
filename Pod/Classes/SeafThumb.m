@@ -13,6 +13,7 @@
 @implementation SeafThumb
 @synthesize lastFinishTimestamp = _lastFinishTimestamp;
 @synthesize retryable = _retryable;
+@synthesize retryCount = _retryCount;
 
 - (id)initWithSeafFile:(SeafFile *)file
 {
