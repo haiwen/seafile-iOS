@@ -387,42 +387,10 @@
     if ([@"jpg" isEqualToString:ext] || [@"jpeg" isEqualToString:ext]) {
         return [Utils writeDataToPathWithMeta:filePath andAsset:asset];
     } else if ([@"heic" isEqualToString:ext]) {
-        return [Utils writeHeifDataToPathWithMeta:filePath andAsset:asset];
+        filePath = [filePath stringByReplacingOccurrencesOfString:@"HEIC" withString:@"JPG"];
+        return [Utils writeDataToPathWithMeta:filePath andAsset:asset];
     }
     return [Utils writeDataToPathNoMeta:filePath andAsset:asset];
-}
-
-+ (BOOL)writeHeifDataToPathWithMeta:(NSString*)filePath andAsset:(ALAsset*)asset {
-    NSURL *imageUrl = [[asset defaultRepresentation]url];
-    PHAsset *phAsset = [PHAsset fetchAssetsWithALAssetURLs:@[imageUrl] options:nil].firstObject;
-    
-    PHImageManager *imageManager = [PHImageManager new];
-    PHImageRequestOptions *options = [PHImageRequestOptions new];
-    options.networkAccessAllowed = YES;
-    options.synchronous = YES;
-    options.version = PHImageRequestOptionsVersionCurrent;
-    options.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
-    
-    __block BOOL success;
-    __block dispatch_semaphore_t sem = dispatch_semaphore_create(0);
-    [imageManager requestImageDataForAsset:phAsset options:nil resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
-        if (imageData) {
-            if (!UTTypeConformsTo((__bridge CFStringRef _Nonnull)(dataUTI), kUTTypeJPEG)) {
-                CIImage *ciImage = [CIImage imageWithData:imageData];
-                CIContext *context = [CIContext context];
-                NSURL *outputURL = [[NSURL alloc] initFileURLWithPath:[filePath stringByReplacingOccurrencesOfString:@"HEIC" withString:@"jpg"]];
-                NSError *error = nil;
-                if (@available(iOS 10.0, *)) {
-                    success = [context writeJPEGRepresentationOfImage:ciImage toURL:outputURL colorSpace:ciImage.colorSpace options:@{} error:&error];
-                }
-            }
-        } else {
-            Debug(@"Could not requestImageDataForAsset! %@", info);
-        }
-        dispatch_semaphore_signal(sem);
-    }];
-    dispatch_semaphore_wait(sem, DISPATCH_TIME_FOREVER);
-    return success;
 }
 
 + (BOOL)fileExistsAtPath:(NSString *)path
