@@ -50,7 +50,7 @@
 - (void)startTimer
 {
     Debug("Start timer.");
-    self.taskTimer = [NSTimer scheduledTimerWithTimeInterval:2*60 target:self selector:@selector(tick:) userInfo:nil repeats:YES];
+    self.taskTimer = [NSTimer scheduledTimerWithTimeInterval:1*60 target:self selector:@selector(tick:) userInfo:nil repeats:YES];
     [[AFNetworkReachabilityManager sharedManager] setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
         [self tick:nil];
     }];
