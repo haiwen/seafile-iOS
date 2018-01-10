@@ -1147,6 +1147,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     } else {
         Warning("Failed to upload photo %@: %@", ufile.name, error);
         // Add photo to the end of queue
+        [self removeUploadingPhoto:ufile.assetURL];
         [self addUploadPhoto:ufile.assetURL];
     }
 }
