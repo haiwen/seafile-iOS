@@ -103,10 +103,11 @@
         }
     }
     if (updated)
+        [SeafDataTaskManager.sharedObject startLastTimeUnfinshTaskWithConnection:conn];
         [self.tabbarController setSelectedIndex:TABBED_SEAFILE];
     self.window.rootViewController = self.tabbarController;
     [self.window makeKeyAndVisible];
-    [SeafDataTaskManager.sharedObject startLastTimeUnfinshTaskWithConnection:conn];
+    
 }
 
 - (void)exitAccount
