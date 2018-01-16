@@ -35,32 +35,33 @@
         self.completedTasks = [NSMutableArray array];
         __weak typeof(self) weakSelf = self;
         self.innerQueueTaskCompleteBlock = ^(id<SeafTask> task, BOOL result) {
-            if (![weakSelf.ongoingTasks containsObject:task]) return;
-            @synchronized (weakSelf.ongoingTasks) { // task succeeded, remove it
-                [weakSelf.ongoingTasks removeObject:task];
+            __strong __typeof(self) strongSelf = weakSelf;
+            if (![strongSelf.ongoingTasks containsObject:task]) return;
+            @synchronized (strongSelf.ongoingTasks) { // task succeeded, remove it
+                [strongSelf.ongoingTasks removeObject:task];
             }
             Debug("finish task %@, %ld tasks remained.",task.name, (long)[weakSelf taskNumber]);
             task.lastFinishTimestamp = [[NSDate new] timeIntervalSince1970];
             if (!result) { // Task fail, add to the tail of queue for retry
-                weakSelf.failedCount += 1;
-                @synchronized (weakSelf.tasks) {
+                strongSelf.failedCount += 1;
+                @synchronized (strongSelf.tasks) {
                     if (task.retryable) {
                         task.retryCount += 1;
-                        [weakSelf.tasks addObject:task];
+                        [strongSelf.tasks addObject:task];
                     }
                 }
             } else {
-                weakSelf.failedCount = 0;
-                if (![weakSelf.completedTasks containsObject:task]) {
-                    @synchronized (weakSelf.completedTasks) { // task succeeded, add to completedTasks
-                        [weakSelf.completedTasks addObject:task];
+                strongSelf.failedCount = 0;
+                if (![strongSelf.completedTasks containsObject:task]) {
+                    @synchronized (strongSelf.completedTasks) { // task succeeded, add to completedTasks
+                        [strongSelf.completedTasks addObject:task];
                     }
                 }
             }
-            if (weakSelf.taskCompleteBlock) {
-                weakSelf.taskCompleteBlock(task, result);
+            if (strongSelf.taskCompleteBlock) {
+                strongSelf.taskCompleteBlock(task, result);
             }
-            [weakSelf tick];
+            [strongSelf tick];
         };
         self.innerQueueTaskProgressBlock = ^(id<SeafTask> task, float progress) {
             if (weakSelf.taskProgressBlock) {
