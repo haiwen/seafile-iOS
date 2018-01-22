@@ -491,11 +491,7 @@
 - (BOOL)runable
 {
     if (!_udir) return false;
-    if (_autoSync) {
-        [self performSelectorInBackground:@selector(checkAsset) withObject:nil];
-    } else {
-        [self checkAsset];
-    }
+    [self checkAsset];
     if (![Utils fileExistsAtPath:self.lpath]) return false;
     if (self.autoSync && _udir->connection.wifiOnly)
         return [[AFNetworkReachabilityManager sharedManager] isReachableViaWiFi];
