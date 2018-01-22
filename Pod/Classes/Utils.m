@@ -353,31 +353,33 @@
 
 + (BOOL)writeDataToPathWithMeta:(NSString*)filePath andAsset:(ALAsset*)asset
 {
-    ALAssetRepresentation *defaultRep = asset.defaultRepresentation;
-    CGImageRef cgimg = [defaultRep CGImageWithOptions:defaultRep.metadata];
-    UIImage *image = [UIImage imageWithCGImage:cgimg];
-    CGImageSourceRef source =  CGImageSourceCreateWithData((CFDataRef)UIImageJPEGRepresentation(image, 1.0), NULL);
-
-    NSURL *url = [[NSURL alloc] initFileURLWithPath:filePath];
-    CFStringRef UTI = CGImageSourceGetType(source); //this is the type of image (e.g., public.jpeg)
-    CGImageDestinationRef destination = CGImageDestinationCreateWithURL((CFURLRef)url, UTI, 1, NULL);
-    if(!destination) {
-        Debug("***Could not create image destination ***");
-        return false;
+    @autoreleasepool {
+        ALAssetRepresentation *defaultRep = asset.defaultRepresentation;
+        CGImageRef cgimg = [defaultRep CGImageWithOptions:defaultRep.metadata];
+        UIImage *image = [UIImage imageWithCGImage:cgimg];
+        CGImageSourceRef source =  CGImageSourceCreateWithData((CFDataRef)UIImageJPEGRepresentation(image, 1.0), NULL);
+        
+        NSURL *url = [[NSURL alloc] initFileURLWithPath:filePath];
+        CFStringRef UTI = CGImageSourceGetType(source); //this is the type of image (e.g., public.jpeg)
+        CGImageDestinationRef destination = CGImageDestinationCreateWithURL((CFURLRef)url, UTI, 1, NULL);
+        if(!destination) {
+            Debug("***Could not create image destination ***");
+            return false;
+        }
+        
+        //add the image contained in the image source to the destination, overidding the old metadata with our modified metadata
+        CGImageDestinationAddImageFromSource(destination, source, 0, (CFDictionaryRef)defaultRep.metadata);
+        
+        //tell the destination to write the image data and metadata into our data object.
+        //It will return false if something goes wrong
+        BOOL success = CGImageDestinationFinalize(destination);
+        if (!success) {
+            Debug("***Could not create data from image destination ***");
+        }
+        CFRelease(destination);
+        CFRelease(source);
+        return success;
     }
-
-    //add the image contained in the image source to the destination, overidding the old metadata with our modified metadata
-    CGImageDestinationAddImageFromSource(destination, source, 0, (CFDictionaryRef)defaultRep.metadata);
-
-    //tell the destination to write the image data and metadata into our data object.
-    //It will return false if something goes wrong
-    BOOL success = CGImageDestinationFinalize(destination);
-    if (!success) {
-        Debug("***Could not create data from image destination ***");
-    }
-    CFRelease(destination);
-    CFRelease(source);
-    return success;
 }
 
 + (BOOL)writeDataToPath:(NSString*)filePath andAsset:(ALAsset*)asset
