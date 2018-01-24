@@ -397,6 +397,13 @@ enum {
     _version = [infoDictionary objectForKey:@"CFBundleShortVersionString"];
     _versionCell.detailTextLabel.text = _version;
     [self configureView];
+
+    SeafDataTaskManager.sharedObject.trySyncBlock = ^(id<SeafTask>  _Nonnull task) {
+        [self performSelectorInBackground:@selector(updateSyncInfo) withObject:nil];
+    };
+    SeafDataTaskManager.sharedObject.finishBlock = ^(id<SeafTask>  _Nonnull task) {
+        [self performSelectorInBackground:@selector(updateSyncInfo) withObject:nil];
+    };
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -464,12 +471,6 @@ enum {
     _serverCell.detailTextLabel.text = [_connection.address trimUrl];
 
     [self updateSyncInfo];
-    SeafDataTaskManager.sharedObject.trySyncBlock = ^(id<SeafTask>  _Nonnull task) {
-        [self performSelectorInBackground:@selector(updateSyncInfo) withObject:nil];
-    };
-    SeafDataTaskManager.sharedObject.finishBlock = ^(id<SeafTask>  _Nonnull task) {
-        [self performSelectorInBackground:@selector(updateSyncInfo) withObject:nil];
-    };
 
     [self.tableView reloadData];
 }

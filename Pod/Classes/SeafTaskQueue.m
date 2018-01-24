@@ -43,8 +43,8 @@
             Debug("finish task %@, %ld tasks remained.",task.name, (long)[weakSelf taskNumber]);
             task.lastFinishTimestamp = [[NSDate new] timeIntervalSince1970];
             if (!result) { // Task fail, add to the tail of queue for retry
-                strongSelf.failedCount += 1;
                 @synchronized (strongSelf.tasks) {
+                    strongSelf.failedCount += 1;
                     if (task.retryable) {
                         task.retryCount += 1;
                         [strongSelf.tasks addObject:task];
