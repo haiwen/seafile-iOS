@@ -102,9 +102,10 @@
             [self.tabbarController setViewControllers:vcs];
         }
     }
-    if (updated)
+    if (updated) {
         [SeafDataTaskManager.sharedObject startLastTimeUnfinshTaskWithConnection:conn];
         [self.tabbarController setSelectedIndex:TABBED_SEAFILE];
+    }
     self.window.rootViewController = self.tabbarController;
     [self.window makeKeyAndVisible];
     
