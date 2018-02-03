@@ -288,20 +288,22 @@
     if (!fileHandle)
         return NO;
     while (YES) {
-        NSData *data = [fileHandle readDataOfLength:CHUNK_LENGTH];
-        if (!data || data.length == 0) break;
-        if (password)
-            data = [data encrypt:password encKey:repo.encKey version:repo.encVersion];
-        if (!data) {
-            ret = NO;
-            break;
+        @autoreleasepool {
+            NSData *data = [fileHandle readDataOfLength:CHUNK_LENGTH];
+            if (!data || data.length == 0) break;
+            if (password)
+                data = [data encrypt:password encKey:repo.encKey version:repo.encVersion];
+            if (!data) {
+                ret = NO;
+                break;
+            }
+            NSString *blockid = [data SHA1];
+            NSString *blockpath = [self blockPath:blockid];
+            Debug("Chunk file blockid=%@, path=%@, len=%lu\n", blockid, blockpath, (unsigned long)data.length);
+            [blockids addObject:blockid];
+            [paths addObject:blockpath];
+            [data writeToFile:blockpath atomically:YES];
         }
-        NSString *blockid = [data SHA1];
-        NSString *blockpath = [self blockPath:blockid];
-        Debug("Chunk file blockid=%@, path=%@, len=%lu\n", blockid, blockpath, (unsigned long)data.length);
-        [blockids addObject:blockid];
-        [paths addObject:blockpath];
-        [data writeToFile:blockpath atomically:YES];
     }
     [fileHandle closeFile];
     return ret;
