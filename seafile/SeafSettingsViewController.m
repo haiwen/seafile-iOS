@@ -832,11 +832,11 @@ enum {
 - (void)photoSyncChanged:(long)remain
 {
     Debug("%ld photos remain to uplaod", remain);
-    if (self.isVisible) {
-        dispatch_async(dispatch_get_main_queue(), ^ {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (self.isVisible) {
             [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:SECTION_CAMERA] withRowAnimation:UITableViewRowAnimationNone];
-        });
-    }
+        }
+    });
 }
 
 #pragma mark - CLLocationManagerDelegate

@@ -208,7 +208,7 @@
 
 + (long long)folderSizeAtPath:(NSString*)folderPath
 {
-    return [self _folderSizeAtPath:[folderPath cStringUsingEncoding:NSUTF8StringEncoding]];
+    return [self folderSizeAtPath1:folderPath];
 }
 
 + (id)JSONDecode:(NSData *)data error:(NSError **)error
