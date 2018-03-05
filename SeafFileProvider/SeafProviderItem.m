@@ -114,6 +114,10 @@
         return [NSNumber numberWithUnsignedInteger:SeafGlobal.sharedObject.publicAccounts.count];
     }
     SeafBase *obj = [_item toSeafObj];
+    if ([obj isKindOfClass:[SeafFile class]]) {
+        return [NSNumber numberWithInt:0];
+    }
+
     if (obj && [obj hasCache]) {
         if ([obj isKindOfClass:[SeafRepos class]]) {
             int cnt = 0;
@@ -125,7 +129,7 @@
             return [NSNumber numberWithUnsignedInteger:[[(SeafDir *)obj items] count]];
         }
     }
-    // placeholder
+    // placeholder for folder
     return [NSNumber numberWithInt:1];
 }
 

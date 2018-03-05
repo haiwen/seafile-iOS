@@ -55,16 +55,16 @@
     }
 
     SeafDir *dir = (SeafDir *)[_item toSeafObj];
-    if (dir.hasCache) {
-        [observer didEnumerateItems:[self getSeafDirProviderItems:dir startingAtPage:page]];
-        [observer finishEnumeratingUpToPage:nil];
-        return;
-    }
     [dir loadContentSuccess: ^(SeafDir *d) {
         [observer didEnumerateItems:[self getSeafDirProviderItems:d startingAtPage:page]];
         [observer finishEnumeratingUpToPage:nil];
     } failure:^(SeafDir *d, NSError *error) {
-        [observer finishEnumeratingWithError:error];
+        if (d.hasCache) {
+            [observer didEnumerateItems:[self getSeafDirProviderItems:dir startingAtPage:page]];
+            [observer finishEnumeratingUpToPage:nil];
+        } else {
+            [observer finishEnumeratingWithError:error];
+        }
     }];
 }
 
@@ -104,6 +104,7 @@
 
     NSMutableArray *items = [NSMutableArray new];
     for (SeafBase *obj in [self getAccessiableSubItems: dir]) {
+        [obj loadCache];
         [items addObject: [[SeafProviderItem alloc] initWithSeafItem:[SeafItem fromSeafBase:obj]]];
     }
     return items;
