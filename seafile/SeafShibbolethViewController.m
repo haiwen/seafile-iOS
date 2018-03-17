@@ -126,7 +126,7 @@
                 NSString *username = [str substringToIndex:range.location];
                 NSString *token = [str substringFromIndex:range.location+1];
                 Debug("Token=%@, username=%@", token, username);
-                [_sconn setToken:token forUser:username isShib:true];
+                [_sconn setToken:token forUser:username isShib:true s2faToken:nil];
             }
         }
     }

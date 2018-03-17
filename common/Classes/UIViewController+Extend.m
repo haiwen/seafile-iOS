@@ -80,6 +80,39 @@
     [Utils popupInputView:title placeholder:tip secure:secure handler:handler from:self];
 }
 
+- (void)popupTwoStepVerificationViewHandler:(void (^)(NSString *input,BOOL remember))handler {
+    NSString *placeHolder = NSLocalizedString(@"Two step verification code", @"Seafile");;
+    
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:placeHolder message:nil preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    }];
+    UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"Seafile") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        NSString *input = [[alert.textFields objectAtIndex:0] text];
+        if (handler)
+            handler(input,false);
+    }];
+    
+    UIAlertAction *rememberAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK and Remember Device", @"Seafile") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        NSString *input = [[alert.textFields objectAtIndex:0] text];
+        if (handler)
+            handler(input,true);
+    }];
+    
+    [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+        textField.placeholder = placeHolder;
+        textField.autocorrectionType = UITextAutocorrectionTypeNo;
+        textField.secureTextEntry = true;
+    }];
+    
+    [alert addAction:rememberAction];
+    [alert addAction:cancelAction];
+    [alert addAction:okAction];
+    
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self presentViewController:alert animated:true completion:nil];
+    });
+}
+
 - (UIBarButtonItem *)getBarItem:(NSString *)imageName action:(SEL)action size:(float)size;
 {
     UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
