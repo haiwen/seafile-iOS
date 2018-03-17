@@ -180,15 +180,9 @@
     UIBarButtonItem *cancelItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancel:)];
     self.navigationItem.leftBarButtonItem = cancelItem;
 
-    if (ios7) {
-        loginButton.layer.borderColor = [[UIColor whiteColor] CGColor];
-        loginButton.layer.borderWidth = 0.0f;
-        loginButton.layer.cornerRadius = 4.0f;
-
-    } else {
-        loginButton.reversesTitleShadowWhenHighlighted = NO;
-        loginButton.tintColor=[UIColor whiteColor];
-    }
+    loginButton.layer.borderColor = [[UIColor whiteColor] CGColor];
+    loginButton.layer.borderWidth = 0.0f;
+    loginButton.layer.cornerRadius = 4.0f;
     [loginButton setTitle:NSLocalizedString(@"Login", @"Seafile") forState:UIControlStateNormal];
     [loginButton setTitle:NSLocalizedString(@"Login", @"Seafile") forState:UIControlStateHighlighted];
 
@@ -352,20 +346,20 @@
 
 - (void)twoStepVerification
 {
-    NSString *placeHolder = NSLocalizedString(@"Two step verification code", @"Seafile");;
-    [self popupInputView:placeHolder placeholder:placeHolder secure:false handler:^(NSString *input) {
+    [self popupTwoStepVerificationViewHandler:^(NSString *input, BOOL remember) {
         if (!input || input.length == 0) {
             [self alertWithTitle:NSLocalizedString(@"Verification code must not be empty", @"Seafile")];
             return;
         }
+        
         NSString *username = usernameTextField.text;
         NSString *password = passwordTextField.text;
-        [connection loginWithUsername:username password:password otp:input];
+        [connection loginWithUsername:username password:password otp:input rememberDevice:remember];
         [SVProgressHUD showWithStatus:NSLocalizedString(@"Connecting to server", @"Seafile")];
     }];
 }
 
-- (void)loginFailed:(SeafConnection *)conn response:(NSURLResponse *)response error:(NSError *)error
+- (void)loginFailed:(SeafConnection *)conn response:(NSHTTPURLResponse *)response error:(NSError *)error
 {
     Debug("Failed to login: %@ %@\n", conn.address, error);
     if (conn != connection)
@@ -376,10 +370,10 @@
     }
 
     [SVProgressHUD dismiss];
-    NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
-    long errorCode = resp.statusCode;
+    
+    long errorCode = response.statusCode;
     if (errorCode == HTTP_ERR_LOGIN_INCORRECT_PASSWORD) {
-        NSString * otp = [resp.allHeaderFields objectForKey:@"X-Seafile-OTP"];
+        NSString * otp = [response.allHeaderFields objectForKey:@"X-Seafile-OTP"];
         if ([@"required" isEqualToString:otp]) {
             [self twoStepVerification];
         } else

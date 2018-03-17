@@ -732,16 +732,17 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return request;
 }
 
--(void)setToken:(NSString *)token forUser:(NSString *)username isShib:(BOOL)isshib
+-(void)setToken:(NSString *)token forUser:(NSString *)username isShib:(BOOL)isshib s2faToken:(NSString*)s2faToken
 {
     _token = token;
     [Utils dict:_info setObject:username forKey:@"username"];
     [Utils dict:_info setObject:token forKey:@"token"];
     [Utils dict:_info setObject:_address forKey:@"link"];
     [Utils dict:_info setObject:[NSNumber numberWithBool:isshib] forKey:@"isshibboleth"];
+    [Utils dict:_info setObject:s2faToken forKey:@"s2faToken"];
     [self saveAccountInfo];
     [self.loginDelegate loginSuccess:self];
-
+    
     dispatch_time_t delayTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5 * NSEC_PER_SEC));
     dispatch_after(delayTime, dispatch_get_main_queue(), ^{
         [self downloadAvatar:true];
@@ -760,24 +761,35 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 /*
  curl -D a.txt --data "username=xx@seafile.com&password=xx" https://seacloud.cc/api2/auth-token/
  */
-- (void)loginWithUsername:(NSString *)username password:(NSString *)password otp:(NSString *)otp
+- (void)loginWithUsername:(NSString *)username password:(NSString *)password otp:(NSString *)otp rememberDevice:(BOOL)remember
 {
     NSString *url = _address;
     NSMutableURLRequest *request = [self loginRequest:url username:username password:password];
-    if (otp)
+    if (otp) {
         [request setValue:otp forHTTPHeaderField:@"X-Seafile-OTP"];
+    }
+    if (remember) {
+        [request setValue:@"1" forHTTPHeaderField:@"X-SEAFILE-2FA-TRUST-DEVICE"];
+    }
+    if ([_info objectForKey:@"s2faToken"]) {
+        [request setValue:[_info objectForKey:@"s2faToken"] forHTTPHeaderField:@"X-SEAFILE-S2FA"];
+    }
+    
     AFHTTPSessionManager *manager = self.loginMgr;
     manager.responseSerializer = [AFJSONResponseSerializer serializer];
 
     Debug("Login: %@ %@", url, username);
     NSURLSessionDataTask *dataTask = [manager dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
+        NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
         if (error) {
             Warning("Error: %@, response:%@", error, responseObject);
             [self showDeserializedError:error];
-            [self.loginDelegate loginFailed:self response:response error:error];
+            [self.loginDelegate loginFailed:self response:resp error:error];
         } else {
+            NSString *s2faToken = [resp.allHeaderFields objectForKey:@"X-SEAFILE-S2FA"];
+            
             [Utils dict:_info setObject:password forKey:@"password"];
-            [self setToken:[responseObject objectForKey:@"token"] forUser:username isShib:false];
+            [self setToken:[responseObject objectForKey:@"token"] forUser:username isShib:false s2faToken:s2faToken];
         }
     }];
 
@@ -786,7 +798,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)loginWithUsername:(NSString *)username password:(NSString *)password
 {
-    [self loginWithUsername:username password:password otp:nil];
+    [self loginWithUsername:username password:password otp:nil rememberDevice:false];
 }
 
 - (NSURLRequest *)buildRequest:(NSString *)url method:(NSString *)method form:(NSString *)form

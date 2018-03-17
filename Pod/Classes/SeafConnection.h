@@ -43,7 +43,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 
 @protocol SeafLoginDelegate <NSObject>
 - (void)loginSuccess:(SeafConnection *_Nonnull)connection;
-- (void)loginFailed:(SeafConnection *_Nonnull)connection response:(NSURLResponse *_Nonnull)response error:(NSError *_Nullable)error;
+- (void)loginFailed:(SeafConnection *_Nonnull)connection response:(NSHTTPURLResponse *_Nonnull)response error:(NSError *_Nullable)error;
 - (BOOL)authorizeInvalidCert:(NSURLProtectionSpace *_Nonnull)protectionSpace;
 - (NSData *_Nullable)getClientCertPersistentRef:(NSURLCredential *_Nullable __autoreleasing *_Nullable)credential; // return the persistentRef
 
@@ -138,9 +138,9 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
             failure:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nullable response, id _Nullable JSON, NSError * _Nullable error))failure;
 
 - (void)loginWithUsername:(NSString * _Nonnull)username password:(NSString * _Nonnull)password;
-- (void)loginWithUsername:(NSString * _Nonnull)username password:(NSString * _Nonnull)password otp:(NSString * _Nullable)otp;
+- (void)loginWithUsername:(NSString * _Nonnull)username password:(NSString * _Nonnull)password otp:(NSString * _Nullable)otp rememberDevice:(BOOL)remember;
 
--(void)setToken:(NSString * _Nonnull)token forUser:(NSString * _Nonnull)username isShib:(BOOL)isshib;
+-(void)setToken:(NSString * _Nonnull)token forUser:(NSString * _Nonnull)username isShib:(BOOL)isshib s2faToken:(NSString*)s2faToken;
 
 - (void)getAccountInfo:(void (^ _Nullable)(bool result))handler;
 
