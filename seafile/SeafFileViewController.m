@@ -313,6 +313,22 @@ enum {
         else
             [self noneSelected:NO];
     }
+    if ([_directory isKindOfClass:[SeafRepos class]]) {
+        SeafRepos *root = (SeafRepos*)_directory;
+        NSMutableArray *tempArray = [NSMutableArray array];
+        @synchronized (_directory) {
+            for (NSArray *array in root.repoGroups) {
+                for (SeafRepos *repos in array) {
+                    [tempArray addObject:repos];
+                }
+            }
+        }
+        if (tempArray.count == 0) {
+            [self dismissLoadingView];
+            self.state = STATE_INIT;
+            return;
+        }
+    }
     if (_directory && !_directory.hasCache) {
         Debug("no cache, load %@ from server.", _directory.path);
         [self showLoadingView];
