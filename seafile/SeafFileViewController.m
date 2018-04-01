@@ -1433,6 +1433,7 @@ enum {
 
 - (void)uploadFile:(SeafUploadFile *)ufile toDir:(SeafDir *)dir overwrite:(BOOL)overwrite
 {
+    [SVProgressHUD showInfoWithStatus:[NSString stringWithFormat:NSLocalizedString(@"%@, uploading", @"Seafile"), ufile.name]];
     ufile.overwrite = overwrite;
     [dir addUploadFile:ufile];
     [SeafDataTaskManager.sharedObject addUploadTask:ufile];
