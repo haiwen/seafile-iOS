@@ -1013,13 +1013,17 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         NSMutableArray *results = [[NSMutableArray alloc] init];
         for (NSDictionary *itemInfo in [JSON objectForKey:@"results"]) {
             if ([itemInfo objectForKey:@"name"] == [NSNull null]) continue;
-            if ([[itemInfo objectForKey:@"is_dir"] integerValue]) continue;
             NSString *oid = [itemInfo objectForKey:@"oid"];
             NSString *repoId = [itemInfo objectForKey:@"repo_id"];
             NSString *name = [itemInfo objectForKey:@"name"];
             NSString *path = [itemInfo objectForKey:@"fullpath"];
-            SeafFile *file = [[SeafFile alloc] initWithConnection:self oid:oid repoId:repoId name:name path:path mtime:[[itemInfo objectForKey:@"last_modified"] integerValue:0] size:[[itemInfo objectForKey:@"size"] integerValue:0]];
-            [results addObject:file];
+            if ([[itemInfo objectForKey:@"is_dir"] integerValue]) {
+                SeafDir *dir = [[SeafDir alloc] initWithConnection:self oid:oid repoId:repoId perm:nil name:name path:path];
+                [results addObject:dir];
+            } else {
+                SeafFile *file = [[SeafFile alloc] initWithConnection:self oid:oid repoId:repoId name:name path:path mtime:[[itemInfo objectForKey:@"last_modified"] integerValue:0] size:[[itemInfo objectForKey:@"size"] integerValue:0]];
+                [results addObject:file];
+            }
         }
         success(request, response, JSON, results);
     } failure:failure];

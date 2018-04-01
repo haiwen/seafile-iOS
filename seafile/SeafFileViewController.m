@@ -802,7 +802,11 @@ enum {
 
     if (tableView != self.tableView) {
         // For search results.
-        return [self getSeafFileCell:(SeafFile *)entry forTableView:tableView andIndexPath:indexPath];
+        if ([entry isKindOfClass:[SeafDir class]]) {
+            return [self getSeafDirCell:(SeafDir *)entry forTableView:tableView andIndexPath: indexPath];
+        } else {
+            return [self getSeafFileCell:(SeafFile *)entry forTableView:tableView andIndexPath:indexPath];
+        }
     }
     if ([entry isKindOfClass:[SeafRepo class]]) {
         return [self getSeafRepoCell:(SeafRepo *)entry forTableView:tableView andIndexPath:indexPath];
