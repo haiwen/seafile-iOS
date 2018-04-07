@@ -45,7 +45,8 @@ enum {
     STATE_COPY,
     STATE_SHARE_EMAIL,
     STATE_SHARE_LINK,
-    STATE_SHARE_SHARE_WECHAT
+    STATE_SHARE_SHARE_WECHAT,
+    STATE_MKLIB
 };
 
 
@@ -449,7 +450,7 @@ enum {
 {
     NSMutableArray *titles = nil;
     if ([_directory isKindOfClass:[SeafRepos class]]) {
-        titles = [NSMutableArray arrayWithObjects:S_SORT_NAME, S_SORT_MTIME, nil];
+        titles = [NSMutableArray arrayWithObjects:S_MKLIB,S_SORT_NAME, S_SORT_MTIME, nil];
     } else if (_directory.editable) {
         titles = [NSMutableArray arrayWithObjects:S_EDIT, S_NEWFILE, S_MKDIR, S_SORT_NAME, S_SORT_MTIME, S_PHOTOS_ALBUM, nil];
         if (self.photos.count >= 3) [titles addObject:S_PHOTOS_BROWSER];
@@ -875,6 +876,30 @@ enum {
     }];
 }
 
+- (void)popupMklibView {
+    self.state = STATE_MKLIB;
+    _directory.delegate = self;
+    [self popupInputView:S_MKLIB placeholder:NSLocalizedString(@"New library name", @"Seafile") secure:false handler:^(NSString *input) {
+        if (!input || input.length == 0) {
+            [self alertWithTitle:NSLocalizedString(@"Library name must not be empty", @"Seafile")];
+            return;
+        }
+        if (![input isValidFileName]) {
+            [self alertWithTitle:NSLocalizedString(@"Library name invalid", @"Seafile")];
+            return;
+        }
+        SeafRepos *repos = (SeafRepos*)_directory;
+        __weak typeof(self) weakSelf = self;
+        [repos createLibrary:input block:^(bool success, id repoInfo) {
+            if (success) {
+                [SVProgressHUD dismiss];
+                [weakSelf.directory loadContent:true];
+            }
+        }];
+        [SVProgressHUD showWithStatus:NSLocalizedString(@"Creating library ...", @"Seafile")];
+    }];
+}
+
 - (void)popupCreateView
 {
     self.state = STATE_CREATE;
@@ -1160,6 +1185,10 @@ enum {
                     [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load files", @"Seafile")];
                 } else
                     [SVProgressHUD dismiss];
+                break;
+            case STATE_MKLIB:
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to create library", @"Seafile")];
+                [self performSelector:@selector(popupMklibView) withObject:nil afterDelay:1.0];
                 break;
             default:
                 break;
@@ -1448,6 +1477,9 @@ enum {
         } else {
             [self shareToWechat:file];
         }
+    } else if ([S_MKLIB isEqualToString:title]) {
+        Debug(@"create lib");
+        [self popupMklibView];
     }
 }
 

@@ -23,6 +23,7 @@ enum {
 };
 
 #define S_MKDIR NSLocalizedString(@"New Folder", @"Seafile")
+#define S_MKLIB NSLocalizedString(@"New Library", @"Seafile")
 #define S_NEWFILE NSLocalizedString(@"New File", @"Seafile")
 #define S_SORT_NAME NSLocalizedString(@"Sort by Name", @"Seafile")
 #define S_SORT_MTIME NSLocalizedString(@"Sort by Last Modifed Time", @"Seafile")

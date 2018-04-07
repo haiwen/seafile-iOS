@@ -43,5 +43,6 @@
 - (id)initWithConnection:(SeafConnection *)aConnection;
 
 - (SeafRepo *)getRepo:(NSString *)repo;
+- (void)createLibrary:(NSString *)newLibName block:(void(^)(bool success, id repoInfo))completeBlock;
 
 @end
