@@ -410,18 +410,19 @@
 
 - (void)createLibrary:(NSString *)newLibName block:(void(^)(bool success, id repoInfo))completeBlock {
     NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/"];
-    NSString *form = [NSString stringWithFormat:@"name=%@&desc=%@",newLibName,@"new library"];
+    NSString *form = [NSString stringWithFormat:@"name=%@&desc=%@", [newLibName escapedUrl], @"new library"];
     [connection sendPost:requestUrl form:form
                  success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          Debug("resp=%ld\n", (long)response.statusCode);
-         completeBlock(true,JSON);
+         [self.delegate download:self complete:true];
+         completeBlock(true, JSON);
      }
                  failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          Warning("resp=%ld\n", (long)response.statusCode);
          [self.delegate download:self failed:error];
-         completeBlock(false,error);
+         completeBlock(false, error);
      }];
 }
 @end

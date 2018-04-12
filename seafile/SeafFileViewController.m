@@ -768,7 +768,14 @@ enum {
 {
     SeafCell *cell = (SeafCell *)[self getCell:@"SeafDirCell" forTableView:tableView];
     cell.textLabel.text = sdir.name;
-    cell.detailTextLabel.text = @"";
+    if (tableView != self.tableView) {// For search results
+        SeafRepo *repo = [_connection getRepo:sdir.repoId];
+        cell.detailTextLabel.text = [NSString stringWithFormat:@"%@%@", repo.name, sdir.path.stringByDeletingLastPathComponent];
+        cell.moreButton.hidden = true;
+    } else {
+        cell.detailTextLabel.text = @"";
+        cell.moreButton.hidden = false;
+    }
     cell.imageView.image = sdir.icon;
     cell.cellIndexPath = indexPath;
     cell.moreButtonBlock = ^(NSIndexPath *indexPath) {
