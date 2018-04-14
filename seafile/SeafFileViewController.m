@@ -32,6 +32,7 @@
 #import "QBImagePickerController.h"
 #import <WechatOpenSDK/WXApi.h>
 #import "SeafWechatHelper.h"
+#import "SeafMkLibAlertController.h"
 
 enum {
     STATE_INIT = 0,
@@ -666,7 +667,9 @@ enum {
         } else if ([view isKindOfClass:[UIBarButtonItem class]]) {
             UIBarButtonItem *item = (UIBarButtonItem*)view;
             UIView *itemView = [item valueForKey:@"view"];
-            point = (CGPoint){CGRectGetMidX(itemView.frame), CGRectGetMaxY(itemView.frame) + itemView.frame.size.height};
+            CGRect frameInNaviView = [self.navigationController.view convertRect:itemView.frame fromView:itemView.superview
+                              ];
+            point = (CGPoint){CGRectGetMidX(frameInNaviView), CGRectGetMaxY(frameInNaviView)};
         }
 
         [actionSheet showFromPoint:point inView:self.navigationController.view arrowDirection:SFActionSheetArrowDirectionTop animated:YES];
@@ -886,25 +889,23 @@ enum {
 - (void)popupMklibView {
     self.state = STATE_MKLIB;
     _directory.delegate = self;
-    [self popupInputView:S_MKLIB placeholder:NSLocalizedString(@"New library name", @"Seafile") secure:false handler:^(NSString *input) {
-        if (!input || input.length == 0) {
-            [self alertWithTitle:NSLocalizedString(@"Library name must not be empty", @"Seafile")];
-            return;
-        }
-        if (![input isValidFileName]) {
-            [self alertWithTitle:NSLocalizedString(@"Library name invalid", @"Seafile")];
-            return;
-        }
+    
+    SeafMkLibAlertController *alter = [[SeafMkLibAlertController alloc] init];
+    UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:alter];
+    [navController setModalPresentationStyle:UIModalPresentationOverCurrentContext];
+    [self presentViewController:navController animated:false completion:nil];
+    
+    __weak typeof(self) weakSelf = self;
+    alter.handlerBlock = ^(NSString *name, NSString *pwd) {
         SeafRepos *repos = (SeafRepos*)_directory;
-        __weak typeof(self) weakSelf = self;
-        [repos createLibrary:input block:^(bool success, id repoInfo) {
+        [repos createLibrary:name passwd:pwd block:^(bool success, id repoInfo) {
             if (success) {
                 [SVProgressHUD dismiss];
                 [weakSelf.directory loadContent:true];
             }
         }];
         [SVProgressHUD showWithStatus:NSLocalizedString(@"Creating library ...", @"Seafile")];
-    }];
+    };
 }
 
 - (void)popupCreateView
