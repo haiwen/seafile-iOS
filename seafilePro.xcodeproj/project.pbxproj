@@ -199,6 +199,9 @@
 		F571850F1F0742FE00543F42 /* more_dot@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F571850D1F0742FE00543F42 /* more_dot@2x.png */; };
 		F575168B1EF4CA0B00BD633B /* arrowmore@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F57516891EF4CA0B00BD633B /* arrowmore@2x.png */; };
 		F575168C1EF4CA0B00BD633B /* arrowmore@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = F575168A1EF4CA0B00BD633B /* arrowmore@3x.png */; };
+		F5ADEA042081B69C00FB6451 /* SeafMkLibAlertController.m in Sources */ = {isa = PBXBuildFile; fileRef = F5ADEA022081B69C00FB6451 /* SeafMkLibAlertController.m */; };
+		F5ADEA052081B69C00FB6451 /* SeafMkLibAlertController_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = F5ADEA032081B69C00FB6451 /* SeafMkLibAlertController_iPhone.xib */; };
+		F5ADEA072081F92900FB6451 /* SeafMkLibAlertController_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = F5ADEA062081F92900FB6451 /* SeafMkLibAlertController_iPad.xib */; };
 		F5CBCDC01F2C2F1500E8C35B /* SeafSyncInfoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F5CBCDBF1F2C2F1500E8C35B /* SeafSyncInfoViewController.m */; };
 /* End PBXBuildFile section */
 
@@ -496,6 +499,10 @@
 		F571850D1F0742FE00543F42 /* more_dot@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "more_dot@2x.png"; sourceTree = "<group>"; };
 		F57516891EF4CA0B00BD633B /* arrowmore@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "arrowmore@2x.png"; sourceTree = "<group>"; };
 		F575168A1EF4CA0B00BD633B /* arrowmore@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "arrowmore@3x.png"; sourceTree = "<group>"; };
+		F5ADEA012081B69C00FB6451 /* SeafMkLibAlertController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafMkLibAlertController.h; sourceTree = "<group>"; };
+		F5ADEA022081B69C00FB6451 /* SeafMkLibAlertController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafMkLibAlertController.m; sourceTree = "<group>"; };
+		F5ADEA032081B69C00FB6451 /* SeafMkLibAlertController_iPhone.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SeafMkLibAlertController_iPhone.xib; sourceTree = "<group>"; };
+		F5ADEA062081F92900FB6451 /* SeafMkLibAlertController_iPad.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SeafMkLibAlertController_iPad.xib; sourceTree = "<group>"; };
 		F5CBCDBE1F2C2F1500E8C35B /* SeafSyncInfoViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafSyncInfoViewController.h; sourceTree = "<group>"; };
 		F5CBCDBF1F2C2F1500E8C35B /* SeafSyncInfoViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafSyncInfoViewController.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -713,6 +720,8 @@
 				F568C1FA1EF10F8900F1035D /* SeafActionSheet.m */,
 				F55567681FC7222800E87043 /* SeafWechatHelper.h */,
 				F55567691FC7222800E87043 /* SeafWechatHelper.m */,
+				F5ADEA012081B69C00FB6451 /* SeafMkLibAlertController.h */,
+				F5ADEA022081B69C00FB6451 /* SeafMkLibAlertController.m */,
 			);
 			name = views;
 			sourceTree = "<group>";
@@ -739,6 +748,8 @@
 				57E22B0B1A12625B00C92330 /* SeafTextEditorViewController_iPhone.xib */,
 				57E22B0F1A12625C00C92330 /* SeafUploadingFileCell.xib */,
 				F536DA181F30DB6F00F2EF3F /* SeafSyncInfoCell.xib */,
+				F5ADEA032081B69C00FB6451 /* SeafMkLibAlertController_iPhone.xib */,
+				F5ADEA062081F92900FB6451 /* SeafMkLibAlertController_iPad.xib */,
 			);
 			name = ui;
 			sourceTree = "<group>";
@@ -1153,6 +1164,7 @@
 				571D8D081677881400F1A22C /* star.png in Resources */,
 				57227A5D18389DB600CD28E9 /* red.png in Resources */,
 				57943C1319F027D5008423E5 /* star@2x.png in Resources */,
+				F5ADEA072081F92900FB6451 /* SeafMkLibAlertController_iPad.xib in Resources */,
 				57943C1A19F027D5008423E5 /* tab-star@2x.png in Resources */,
 				57943C0719F027D5008423E5 /* close2@2x.png in Resources */,
 				5715551D1995FCDC00D2821D /* ImageError.png in Resources */,
@@ -1196,6 +1208,7 @@
 				57A95E6118369E5A009D268A /* ellipsis2.png in Resources */,
 				57C03F4817FB271100F7B575 /* star2.png in Resources */,
 				57BD932F174DDA8700F7732F /* group.png in Resources */,
+				F5ADEA052081B69C00FB6451 /* SeafMkLibAlertController_iPhone.xib in Resources */,
 				5704C6F91756710F0028F4FE /* tab-account.png in Resources */,
 				5704C6FB1756710F0028F4FE /* tab-modify.png in Resources */,
 				5704C6FD1756710F0028F4FE /* tab-message.png in Resources */,
@@ -1498,6 +1511,7 @@
 				58D40A7E1E9AF86D00A68BEF /* SeafData.m in Sources */,
 				F536DA191F30DB6F00F2EF3F /* SeafSyncInfoCell.m in Sources */,
 				58D40A691E9AF72200A68BEF /* SeafGlobal.m in Sources */,
+				F5ADEA042081B69C00FB6451 /* SeafMkLibAlertController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

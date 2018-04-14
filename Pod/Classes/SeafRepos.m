@@ -408,9 +408,12 @@
     return NO;
 }
 
-- (void)createLibrary:(NSString *)newLibName block:(void(^)(bool success, id repoInfo))completeBlock {
+- (void)createLibrary:(NSString *)newLibName passwd:(NSString*)passwd block:(void(^)(bool success, id repoInfo))completeBlock {
     NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/"];
-    NSString *form = [NSString stringWithFormat:@"name=%@&desc=%@", [newLibName escapedUrl], @"new library"];
+    NSMutableString *form = [NSMutableString stringWithFormat:@"name=%@&desc=%@", [newLibName escapedUrl], @"new library"];
+    if (passwd) {
+        [form appendFormat:@"&passwd=%@",passwd];
+    }
     [connection sendPost:requestUrl form:form
                  success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
