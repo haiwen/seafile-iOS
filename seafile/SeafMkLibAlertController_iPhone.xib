@@ -73,10 +73,10 @@
                             <textInputTraits key="textInputTraits" autocorrectionType="no" keyboardType="alphabet" returnKeyType="go" secureTextEntry="YES" textContentType="password"/>
                         </textField>
                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="加密" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="4BG-H2-UYv">
-                            <rect key="frame" x="15" y="91" width="50" height="44"/>
+                            <rect key="frame" x="15" y="91" width="100" height="44"/>
                             <constraints>
                                 <constraint firstAttribute="height" constant="44" id="68i-cC-b1Z"/>
-                                <constraint firstAttribute="width" constant="50" id="Tgk-vT-6FT"/>
+                                <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="100" id="Tgk-vT-6FT"/>
                             </constraints>
                             <fontDescription key="fontDescription" type="system" pointSize="14"/>
                             <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
