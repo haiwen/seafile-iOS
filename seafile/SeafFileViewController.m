@@ -1077,11 +1077,17 @@ enum {
             text = @"";
         } else if ([repo.type isEqualToString:SHARE_REPO]) {
             text = NSLocalizedString(@"Shared to me", @"Seafile");
+        } else if ([repo.type isEqualToString:GROUP_REPO]) {
+            text = NSLocalizedString(@"Shared with groups", @"Seafile");
         } else {
-            if ([repo.owner isEqualToString:ORG_REPO]) {
-                text = NSLocalizedString(@"Organization", @"Seafile");
+            if ([repo.owner isKindOfClass:[NSNull class]]) {
+                text = @"";
             } else {
-                text = repo.owner;
+                if ([repo.owner isEqualToString:ORG_REPO]) {
+                    text = NSLocalizedString(@"Organization", @"Seafile");
+                } else {
+                    text = repo.owner;
+                }
             }
         }
     }

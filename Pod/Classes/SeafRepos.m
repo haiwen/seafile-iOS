@@ -67,7 +67,7 @@
     int index = 0;
     if ([self.repoType isEqualToString:SHARE_REPO]){
         index = 1;
-    } else if ([self.repoType isEqualToString:@"grepo"]){
+    } else if ([self.repoType isEqualToString:GROUP_REPO]){
         index = 2;
     }
     return [NSString stringWithFormat:@"%d-%@-%@", index, self.owner, self.repoId ];
@@ -258,7 +258,8 @@
     NSMutableArray *repoGroup = [[NSMutableArray alloc] init];
     NSMutableArray *ownRepos = [[NSMutableArray alloc] init];
     NSMutableArray *srepos = [[NSMutableArray alloc] init];
-    NSMutableDictionary *grepos = [[NSMutableDictionary alloc] init];
+    NSMutableArray *grepos = [[NSMutableArray alloc] init];
+    NSMutableDictionary *otherRepos = [[NSMutableDictionary alloc] init];
 
     for (i = 0; i < [self.items count]; ++i) {
         SeafRepo *r = (SeafRepo *)[self.items objectAtIndex:i];
@@ -267,11 +268,13 @@
             [ownRepos addObject:r];
         } else if ([SHARE_REPO isEqualToString:r.type]){
             [srepos addObject:r];
+        } else if ([GROUP_REPO isEqualToString:r.type]) {
+            [grepos addObject:r];
         } else {
-            NSMutableArray *group = [grepos objectForKey:r.owner];
+            NSMutableArray *group = [otherRepos objectForKey:r.owner];
             if (!group) {
                 group = [[NSMutableArray alloc] init];
-                [grepos setObject:group forKey:r.owner];
+                [otherRepos setObject:group forKey:r.owner];
             }
             [group addObject:r];
         }
@@ -279,9 +282,12 @@
     [repoGroup addObject:ownRepos];
     if (srepos.count > 0)
         [repoGroup addObject:srepos];
+    
+    if (grepos.count > 0)
+        [repoGroup addObject:grepos];
 
-    for (NSString *groupName in grepos) {
-        [repoGroup addObject:[grepos objectForKey:groupName]];
+    for (NSString *groupName in otherRepos) {
+        [repoGroup addObject:[otherRepos objectForKey:groupName]];
     }
 
     _repoGroups = repoGroup;
