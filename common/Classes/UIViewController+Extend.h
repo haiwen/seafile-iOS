@@ -36,4 +36,6 @@
 - (BOOL)checkNetworkStatus;
 
 - (void)popupTwoStepVerificationViewHandler:(void (^)(NSString *input,BOOL remember))handler;
+
+- (UIViewController *)topViewControllerIn:(UIViewController*)rootViewRootVC;
 @end

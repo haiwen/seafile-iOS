@@ -674,8 +674,9 @@ enum {
 
         [actionSheet showFromPoint:point inView:self.navigationController.view arrowDirection:SFActionSheetArrowDirectionTop animated:YES];
     } else {
-        UIView *topView = [[[UIApplication sharedApplication] keyWindow].subviews firstObject];
-        [actionSheet showInView:topView animated:YES];
+        UIViewController *topVC = [self topViewControllerIn:[[[[UIApplication sharedApplication] delegate] window] rootViewController]];
+        
+        [actionSheet showInView:topVC.view.window animated:YES];
     }
 }
 
