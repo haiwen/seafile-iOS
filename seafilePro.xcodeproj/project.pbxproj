@@ -101,7 +101,7 @@
 		57943C1A19F027D5008423E5 /* tab-star@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57943BFB19F027D5008423E5 /* tab-star@2x.png */; };
 		57943C1B19F027D5008423E5 /* unstar@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57943BFC19F027D5008423E5 /* unstar@2x.png */; };
 		57943C1C19F027D5008423E5 /* unstar2@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 57943BFD19F027D5008423E5 /* unstar2@2x.png */; };
-		57A0297A1A16F8AD009C9D7B /* AmefProvider.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 57A0295F1A16F8AC009C9D7B /* AmefProvider.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		57A0297A1A16F8AD009C9D7B /* SeafProvider.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 57A0295F1A16F8AC009C9D7B /* SeafProvider.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		57A029861A16F91F009C9D7B /* DocumentPickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57A029821A16F91F009C9D7B /* DocumentPickerViewController.m */; };
 		57A0298E1A16F935009C9D7B /* FileProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = 57A0298B1A16F935009C9D7B /* FileProvider.m */; };
 		57A0299B1A16F95D009C9D7B /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57A029981A16F95D009C9D7B /* MainInterface.storyboard */; };
@@ -124,7 +124,7 @@
 		57ABE5FB187925B300145FE3 /* CoreText.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 576B9918186142EC00A16ED6 /* CoreText.framework */; };
 		57B14B6E1DF5325B0045112E /* ActionViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57B14B6D1DF5325B0045112E /* ActionViewController.m */; };
 		57B14B711DF5325B0045112E /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57B14B6F1DF5325B0045112E /* MainInterface.storyboard */; };
-		57B14B751DF5325B0045112E /* AmefAction.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 57B14B6A1DF5325A0045112E /* AmefAction.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		57B14B751DF5325B0045112E /* SeafAction.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 57B14B6A1DF5325A0045112E /* SeafAction.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		57BD932F174DDA8700F7732F /* group.png in Resources */ = {isa = PBXBuildFile; fileRef = 57BD932D174DDA8700F7732F /* group.png */; };
 		57C03F3A17FB227100F7B575 /* addmsg2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57C03F3817FB227100F7B575 /* addmsg2.png */; };
 		57C03F4617FB271100F7B575 /* unstar2.png in Resources */ = {isa = PBXBuildFile; fileRef = 57C03F3B17FB271100F7B575 /* unstar2.png */; };
@@ -233,8 +233,8 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				57A0297A1A16F8AD009C9D7B /* AmefProvider.appex in Embed App Extensions */,
-				57B14B751DF5325B0045112E /* AmefAction.appex in Embed App Extensions */,
+				57A0297A1A16F8AD009C9D7B /* SeafProvider.appex in Embed App Extensions */,
+				57B14B751DF5325B0045112E /* SeafAction.appex in Embed App Extensions */,
 			);
 			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -351,8 +351,8 @@
 		57943BFC19F027D5008423E5 /* unstar@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "unstar@2x.png"; sourceTree = "<group>"; };
 		57943BFD19F027D5008423E5 /* unstar2@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "unstar2@2x.png"; sourceTree = "<group>"; };
 		579E612219C1FBEA008EA307 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
-		57A0295F1A16F8AC009C9D7B /* AmefProvider.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AmefProvider.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		57A0296D1A16F8AD009C9D7B /* AmefProviderFileProvider.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AmefProviderFileProvider.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		57A0295F1A16F8AC009C9D7B /* SeafProvider.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SeafProvider.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		57A0296D1A16F8AD009C9D7B /* SeafProviderFileProvider.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SeafProviderFileProvider.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		57A029811A16F91F009C9D7B /* DocumentPickerViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DocumentPickerViewController.h; sourceTree = "<group>"; };
 		57A029821A16F91F009C9D7B /* DocumentPickerViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DocumentPickerViewController.m; sourceTree = "<group>"; };
 		57A0298A1A16F935009C9D7B /* FileProvider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FileProvider.h; sourceTree = "<group>"; };
@@ -380,7 +380,7 @@
 		57A95E5D18369E5A009D268A /* ellipsis2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ellipsis2.png; sourceTree = "<group>"; };
 		57AE2ECD1B45663E003F1672 /* nb */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nb; path = nb.lproj/Localizable.strings; sourceTree = "<group>"; };
 		57AE699418C1C0A200AEBF8B /* ca */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ca; path = ca.lproj/Localizable.strings; sourceTree = "<group>"; };
-		57B14B6A1DF5325A0045112E /* AmefAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AmefAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		57B14B6A1DF5325A0045112E /* SeafAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SeafAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		57B14B6C1DF5325B0045112E /* ActionViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ActionViewController.h; sourceTree = "<group>"; };
 		57B14B6D1DF5325B0045112E /* ActionViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ActionViewController.m; sourceTree = "<group>"; };
 		57B14B701DF5325B0045112E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
@@ -797,9 +797,9 @@
 			isa = PBXGroup;
 			children = (
 				571D8DBA1677881400F1A22C /* AmeFile.app */,
-				57A0295F1A16F8AC009C9D7B /* AmefProvider.appex */,
-				57A0296D1A16F8AD009C9D7B /* AmefProviderFileProvider.appex */,
-				57B14B6A1DF5325A0045112E /* AmefAction.appex */,
+				57A0295F1A16F8AC009C9D7B /* SeafProvider.appex */,
+				57A0296D1A16F8AD009C9D7B /* SeafProviderFileProvider.appex */,
+				57B14B6A1DF5325A0045112E /* SeafAction.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -895,9 +895,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		571D8CA91677881400F1A22C /* AmeFile-appstore */ = {
+		571D8CA91677881400F1A22C /* seafile-appstore */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 571D8DB71677881400F1A22C /* Build configuration list for PBXNativeTarget "AmeFile-appstore" */;
+			buildConfigurationList = 571D8DB71677881400F1A22C /* Build configuration list for PBXNativeTarget "seafile-appstore" */;
 			buildPhases = (
 				3AD17BEEB9F4EF2ADD5DFDB6 /* [CP] Check Pods Manifest.lock */,
 				571D8CAA1677881400F1A22C /* Sources */,
@@ -914,14 +914,14 @@
 				57A029791A16F8AD009C9D7B /* PBXTargetDependency */,
 				57B14B741DF5325B0045112E /* PBXTargetDependency */,
 			);
-			name = "AmeFile-appstore";
+			name = "seafile-appstore";
 			productName = seafile;
 			productReference = 571D8DBA1677881400F1A22C /* AmeFile.app */;
 			productType = "com.apple.product-type.application";
 		};
-		57A0295E1A16F8AC009C9D7B /* AmefProvider */ = {
+		57A0295E1A16F8AC009C9D7B /* SeafProvider */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 57A0297E1A16F8AD009C9D7B /* Build configuration list for PBXNativeTarget "AmefProvider" */;
+			buildConfigurationList = 57A0297E1A16F8AD009C9D7B /* Build configuration list for PBXNativeTarget "SeafProvider" */;
 			buildPhases = (
 				E8C55D49FB459D43BDFE937B /* [CP] Check Pods Manifest.lock */,
 				57A0295B1A16F8AC009C9D7B /* Sources */,
@@ -934,14 +934,14 @@
 			);
 			dependencies = (
 			);
-			name = AmefProvider;
+			name = SeafProvider;
 			productName = SeafProvider;
-			productReference = 57A0295F1A16F8AC009C9D7B /* AmefProvider.appex */;
+			productReference = 57A0295F1A16F8AC009C9D7B /* SeafProvider.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		57A0296C1A16F8AD009C9D7B /* AmefProviderFileProvider */ = {
+		57A0296C1A16F8AD009C9D7B /* SeafProviderFileProvider */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 57A0297B1A16F8AD009C9D7B /* Build configuration list for PBXNativeTarget "AmefProviderFileProvider" */;
+			buildConfigurationList = 57A0297B1A16F8AD009C9D7B /* Build configuration list for PBXNativeTarget "SeafProviderFileProvider" */;
 			buildPhases = (
 				692521AF382DFE63965818C2 /* [CP] Check Pods Manifest.lock */,
 				57A029691A16F8AD009C9D7B /* Sources */,
@@ -954,14 +954,14 @@
 			);
 			dependencies = (
 			);
-			name = AmefProviderFileProvider;
+			name = SeafProviderFileProvider;
 			productName = SeafProviderFileProvider;
-			productReference = 57A0296D1A16F8AD009C9D7B /* AmefProviderFileProvider.appex */;
+			productReference = 57A0296D1A16F8AD009C9D7B /* SeafProviderFileProvider.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		57B14B691DF5325A0045112E /* AmefAction */ = {
+		57B14B691DF5325A0045112E /* SeafAction */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 57B14B781DF5325B0045112E /* Build configuration list for PBXNativeTarget "AmefAction" */;
+			buildConfigurationList = 57B14B781DF5325B0045112E /* Build configuration list for PBXNativeTarget "SeafAction" */;
 			buildPhases = (
 				8C4F472736EA3B11C9C44670 /* [CP] Check Pods Manifest.lock */,
 				57B14B661DF5325A0045112E /* Sources */,
@@ -974,9 +974,9 @@
 			);
 			dependencies = (
 			);
-			name = AmefAction;
+			name = SeafAction;
 			productName = SeafAction;
-			productReference = 57B14B6A1DF5325A0045112E /* AmefAction.appex */;
+			productReference = 57B14B6A1DF5325A0045112E /* SeafAction.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
@@ -1081,10 +1081,10 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				571D8CA91677881400F1A22C /* AmeFile-appstore */,
-				57A0295E1A16F8AC009C9D7B /* AmefProvider */,
-				57A0296C1A16F8AD009C9D7B /* AmefProviderFileProvider */,
-				57B14B691DF5325A0045112E /* AmefAction */,
+				571D8CA91677881400F1A22C /* seafile-appstore */,
+				57A0295E1A16F8AC009C9D7B /* SeafProvider */,
+				57A0296C1A16F8AD009C9D7B /* SeafProviderFileProvider */,
+				57B14B691DF5325A0045112E /* SeafAction */,
 			);
 		};
 /* End PBXProject section */
@@ -1255,7 +1255,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 		571617B61BE2695A00792316 /* ShellScript */ = {
@@ -1312,7 +1312,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 		8C4F472736EA3B11C9C44670 /* [CP] Check Pods Manifest.lock */ = {
@@ -1330,7 +1330,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 		A61BB71E2E0642962D9F33F2 /* [CP] Copy Pods Resources */ = {
@@ -1340,7 +1340,7 @@
 			);
 			inputPaths = (
 				"${SRCROOT}/Pods/Target Support Files/Pods-SeafProvider/Pods-SeafProvider-resources.sh",
-				$PODS_CONFIGURATION_BUILD_DIR/Seafile/Seafile.bundle,
+				"$PODS_CONFIGURATION_BUILD_DIR/Seafile/Seafile.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
@@ -1358,7 +1358,7 @@
 			);
 			inputPaths = (
 				"${SRCROOT}/Pods/Target Support Files/Pods-SeafAction/Pods-SeafAction-resources.sh",
-				$PODS_CONFIGURATION_BUILD_DIR/Seafile/Seafile.bundle,
+				"$PODS_CONFIGURATION_BUILD_DIR/Seafile/Seafile.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
@@ -1376,7 +1376,7 @@
 			);
 			inputPaths = (
 				"${SRCROOT}/Pods/Target Support Files/Pods-SeafProviderFileProvider/Pods-SeafProviderFileProvider-resources.sh",
-				$PODS_CONFIGURATION_BUILD_DIR/Seafile/Seafile.bundle,
+				"$PODS_CONFIGURATION_BUILD_DIR/Seafile/Seafile.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
@@ -1394,10 +1394,10 @@
 			);
 			inputPaths = (
 				"${SRCROOT}/Pods/Target Support Files/Pods-seafile-appstore/Pods-seafile-appstore-resources.sh",
-				$PODS_CONFIGURATION_BUILD_DIR/MWPhotoBrowser/MWPhotoBrowser.bundle,
-				$PODS_CONFIGURATION_BUILD_DIR/QBImagePickerController/QBImagePickerController.bundle,
+				"$PODS_CONFIGURATION_BUILD_DIR/MWPhotoBrowser/MWPhotoBrowser.bundle",
+				"$PODS_CONFIGURATION_BUILD_DIR/QBImagePickerController/QBImagePickerController.bundle",
 				"${PODS_ROOT}/SVProgressHUD/SVProgressHUD/SVProgressHUD.bundle",
-				$PODS_CONFIGURATION_BUILD_DIR/Seafile/Seafile.bundle,
+				"$PODS_CONFIGURATION_BUILD_DIR/Seafile/Seafile.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
@@ -1438,7 +1438,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -1525,12 +1525,12 @@
 /* Begin PBXTargetDependency section */
 		57A029791A16F8AD009C9D7B /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 57A0295E1A16F8AC009C9D7B /* AmefProvider */;
+			target = 57A0295E1A16F8AC009C9D7B /* SeafProvider */;
 			targetProxy = 57A029781A16F8AD009C9D7B /* PBXContainerItemProxy */;
 		};
 		57B14B741DF5325B0045112E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 57B14B691DF5325A0045112E /* AmefAction */;
+			target = 57B14B691DF5325A0045112E /* SeafAction */;
 			targetProxy = 57B14B731DF5325B0045112E /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -2121,7 +2121,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		571D8DB71677881400F1A22C /* Build configuration list for PBXNativeTarget "AmeFile-appstore" */ = {
+		571D8DB71677881400F1A22C /* Build configuration list for PBXNativeTarget "seafile-appstore" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				571D8DB81677881400F1A22C /* Debug */,
@@ -2130,7 +2130,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		57A0297B1A16F8AD009C9D7B /* Build configuration list for PBXNativeTarget "AmefProviderFileProvider" */ = {
+		57A0297B1A16F8AD009C9D7B /* Build configuration list for PBXNativeTarget "SeafProviderFileProvider" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				57A0297C1A16F8AD009C9D7B /* Debug */,
@@ -2139,7 +2139,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		57A0297E1A16F8AD009C9D7B /* Build configuration list for PBXNativeTarget "AmefProvider" */ = {
+		57A0297E1A16F8AD009C9D7B /* Build configuration list for PBXNativeTarget "SeafProvider" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				57A0297F1A16F8AD009C9D7B /* Debug */,
@@ -2148,7 +2148,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		57B14B781DF5325B0045112E /* Build configuration list for PBXNativeTarget "AmefAction" */ = {
+		57B14B781DF5325B0045112E /* Build configuration list for PBXNativeTarget "SeafAction" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				57B14B761DF5325B0045112E /* Debug */,

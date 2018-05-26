@@ -78,7 +78,7 @@ enum {
     CELL_VERSION,
 };
 
-#define SEAFILE_SITE @"http://www.seafile.com"
+#define SEAFILE_SITE @"http://www.amethystum.com"
 #define MSG_RESET_UPLOADED NSLocalizedString(@"Do you want reset the uploaded photos?", @"Seafile")
 #define MSG_CLEAR_CACHE NSLocalizedString(@"Are you sure to clear all the cache?", @"Seafile")
 #define MSG_LOG_OUT NSLocalizedString(@"Are you sure to log out?", @"Seafile")
@@ -374,7 +374,7 @@ enum {
 
     _tellFriendCell.textLabel.text = [NSString stringWithFormat:NSLocalizedString(@"Tell Friends about %@", @"Seafile"), APP_NAME];
     _websiteCell.textLabel.text = NSLocalizedString(@"Website", @"Seafile");
-    _websiteCell.detailTextLabel.text = @"www.seafile.com";
+    _websiteCell.detailTextLabel.text = NSLocalizedString(@"www.seafile.com", @"Seafile");
     _serverCell.textLabel.text = NSLocalizedString(@"Server", @"Seafile");
     _versionCell.textLabel.text = NSLocalizedString(@"Version", @"Seafile");
     _logOutLabel.text = NSLocalizedString(@"Log out", @"Seafile");

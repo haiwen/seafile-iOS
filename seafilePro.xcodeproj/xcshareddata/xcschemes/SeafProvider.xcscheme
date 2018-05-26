@@ -16,8 +16,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "57A0295E1A16F8AC009C9D7B"
-               BuildableName = "AmefProvider.appex"
-               BlueprintName = "AmefProvider"
+               BuildableName = "SeafProvider.appex"
+               BlueprintName = "SeafProvider"
                ReferencedContainer = "container:seafilePro.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -31,7 +31,7 @@
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "571D8CA91677881400F1A22C"
                BuildableName = "AmeFile.app"
-               BlueprintName = "AmeFile-appstore"
+               BlueprintName = "seafile-appstore"
                ReferencedContainer = "container:seafilePro.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -41,7 +41,6 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      language = ""
       shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
       </Testables>
@@ -49,8 +48,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "57A0295E1A16F8AC009C9D7B"
-            BuildableName = "AmefProvider.appex"
-            BlueprintName = "AmefProvider"
+            BuildableName = "SeafProvider.appex"
+            BlueprintName = "SeafProvider"
             ReferencedContainer = "container:seafilePro.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -61,7 +60,6 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = ""
       selectedLauncherIdentifier = "Xcode.IDEFoundation.Launcher.PosixSpawn"
-      language = ""
       launchStyle = "0"
       useCustomWorkingDirectory = "NO"
       ignoresPersistentStateOnLaunch = "NO"
@@ -75,7 +73,7 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "571D8CA91677881400F1A22C"
             BuildableName = "AmeFile.app"
-            BlueprintName = "AmeFile-appstore"
+            BlueprintName = "seafile-appstore"
             ReferencedContainer = "container:seafilePro.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -95,7 +93,7 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "571D8CA91677881400F1A22C"
             BuildableName = "AmeFile.app"
-            BlueprintName = "AmeFile-appstore"
+            BlueprintName = "seafile-appstore"
             ReferencedContainer = "container:seafilePro.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
