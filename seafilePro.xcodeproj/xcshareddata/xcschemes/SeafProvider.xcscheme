@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "0910"
+   LastUpgradeVersion = "0930"
    wasCreatedForAppExtension = "YES"
    version = "2.0">
    <BuildAction
@@ -16,8 +16,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "57A0295E1A16F8AC009C9D7B"
-               BuildableName = "SeafProvider.appex"
-               BlueprintName = "SeafProvider"
+               BuildableName = "SeafFileProvider.appex"
+               BlueprintName = "SeafFileProvider"
                ReferencedContainer = "container:seafilePro.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -31,7 +31,7 @@
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "571D8CA91677881400F1A22C"
                BuildableName = "AmeFile.app"
-               BlueprintName = "seafile-appstore"
+               BlueprintName = "seafileApp"
                ReferencedContainer = "container:seafilePro.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -48,8 +48,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "57A0295E1A16F8AC009C9D7B"
-            BuildableName = "SeafProvider.appex"
-            BlueprintName = "SeafProvider"
+            BuildableName = "SeafFileProvider.appex"
+            BlueprintName = "SeafFileProvider"
             ReferencedContainer = "container:seafilePro.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -73,7 +73,7 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "571D8CA91677881400F1A22C"
             BuildableName = "AmeFile.app"
-            BlueprintName = "seafile-appstore"
+            BlueprintName = "seafileApp"
             ReferencedContainer = "container:seafilePro.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -93,7 +93,7 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "571D8CA91677881400F1A22C"
             BuildableName = "AmeFile.app"
-            BlueprintName = "seafile-appstore"
+            BlueprintName = "seafileApp"
             ReferencedContainer = "container:seafilePro.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
