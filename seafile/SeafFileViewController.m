@@ -674,9 +674,7 @@ enum {
 
         [actionSheet showFromPoint:point inView:self.navigationController.view arrowDirection:SFActionSheetArrowDirectionTop animated:YES];
     } else {
-        UIViewController *topVC = [self topViewControllerIn:[[[[UIApplication sharedApplication] delegate] window] rootViewController]];
-        
-        [actionSheet showInView:topVC.view.window animated:YES];
+        [actionSheet showInView:[SeafAppDelegate topViewController].view.window animated:YES];
     }
 }
 

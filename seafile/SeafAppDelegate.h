@@ -73,6 +73,7 @@ enum {
 - (void)stopSignificantChangeUpdates;
 - (void)checkBackgroundUploadStatus;
 
++ (UIViewController *)topViewController;
 + (void)checkOpenLink:(SeafFileViewController *)c;
 
 @end
