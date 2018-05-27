@@ -681,4 +681,30 @@
     }
 }
 
+#pragma mark topViewController
++ (UIViewController *)topViewController {
+    SeafAppDelegate *delegate = (SeafAppDelegate*)[UIApplication sharedApplication].delegate;
+    return  [delegate topViewController];
+}
+
+- (UIViewController *)topViewController {
+    UIViewController *rootVC = [self.window rootViewController];
+    UIViewController *topVC = [self findTopViewController:rootVC];
+    while (topVC.presentedViewController) {
+        topVC = [self findTopViewController:topVC.presentedViewController];
+    }
+    return topVC;
+}
+
+- (UIViewController *)findTopViewController:(UIViewController *)vc {
+    if ([vc isKindOfClass:[UINavigationController class]]) {
+        return [self findTopViewController:[(UINavigationController *)vc topViewController]];
+    } else if ([vc isKindOfClass:[UITabBarController class]]) {
+        return [self findTopViewController:[(UITabBarController *)vc selectedViewController]];
+    } else {
+        return vc;
+    }
+    return nil;
+}
+
 @end

@@ -236,25 +236,4 @@
     return YES;
 }
 
-#pragma mark topViewController
-- (UIViewController *)topViewControllerIn:(UIViewController*)rootViewRootVC {
-    UIViewController *topVC;
-    topVC = [self findTopViewController:rootViewRootVC];
-    while (topVC.presentedViewController) {
-        topVC = [self findTopViewController:topVC.presentedViewController];
-    }
-    return topVC;
-}
-
-- (UIViewController *)findTopViewController:(UIViewController *)vc {
-    if ([vc isKindOfClass:[UINavigationController class]]) {
-        return [self findTopViewController:[(UINavigationController *)vc topViewController]];
-    } else if ([vc isKindOfClass:[UITabBarController class]]) {
-        return [self findTopViewController:[(UITabBarController *)vc selectedViewController]];
-    } else {
-        return vc;
-    }
-    return nil;
-}
-
 @end
