@@ -9,6 +9,6 @@
 #ifndef version_h
 #define version_h
 
-#define SEAFILE_VERSION @"2.7.6"
+#define SEAFILE_VERSION @"2.7.7"
 
 #endif /* version_h */
