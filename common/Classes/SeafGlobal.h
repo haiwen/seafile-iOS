@@ -16,6 +16,7 @@
 
 #define SEAFILE_SUITE_NAME @"group.com.seafile.seafilePro"
 #define APP_ID @"com.seafile.seafilePro"
+#define SEAF_FILE_PROVIDE @"com.seafile.seafilePro.fileprovide"
 
 @protocol SeafBackgroundMonitor <NSObject>
 - (void)enterBackground;

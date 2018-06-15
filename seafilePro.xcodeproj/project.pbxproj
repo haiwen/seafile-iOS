@@ -203,6 +203,7 @@
 		F5ADEA052081B69C00FB6451 /* SeafMkLibAlertController_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = F5ADEA032081B69C00FB6451 /* SeafMkLibAlertController_iPhone.xib */; };
 		F5ADEA072081F92900FB6451 /* SeafMkLibAlertController_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = F5ADEA062081F92900FB6451 /* SeafMkLibAlertController_iPad.xib */; };
 		F5CBCDC01F2C2F1500E8C35B /* SeafSyncInfoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F5CBCDBF1F2C2F1500E8C35B /* SeafSyncInfoViewController.m */; };
+		F5E621EF20D16666001EDA7A /* NSError+SeafFileProvierError.m in Sources */ = {isa = PBXBuildFile; fileRef = F5E621EE20D16666001EDA7A /* NSError+SeafFileProvierError.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXBuildRule section */
@@ -505,6 +506,8 @@
 		F5ADEA062081F92900FB6451 /* SeafMkLibAlertController_iPad.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SeafMkLibAlertController_iPad.xib; sourceTree = "<group>"; };
 		F5CBCDBE1F2C2F1500E8C35B /* SeafSyncInfoViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafSyncInfoViewController.h; sourceTree = "<group>"; };
 		F5CBCDBF1F2C2F1500E8C35B /* SeafSyncInfoViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafSyncInfoViewController.m; sourceTree = "<group>"; };
+		F5E621ED20D16666001EDA7A /* NSError+SeafFileProvierError.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSError+SeafFileProvierError.h"; sourceTree = "<group>"; };
+		F5E621EE20D16666001EDA7A /* NSError+SeafFileProvierError.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSError+SeafFileProvierError.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -788,6 +791,8 @@
 				5857E9CD1FB0195C004F124D /* SeafEnumerator.m */,
 				5857EA281FB03F2C004F124D /* SeafItem.h */,
 				5857EA291FB03F2C004F124D /* SeafItem.m */,
+				F5E621ED20D16666001EDA7A /* NSError+SeafFileProvierError.h */,
+				F5E621EE20D16666001EDA7A /* NSError+SeafFileProvierError.m */,
 				57A0299D1A16F965009C9D7B /* Info.plist */,
 				57A0299E1A16F965009C9D7B /* SeafFileProvider.entitlements */,
 				57A0296F1A16F8AD009C9D7B /* Supporting Files */,
@@ -1540,6 +1545,7 @@
 				58D40A741E9AF82900A68BEF /* SeafDbCacheProvider.m in Sources */,
 				5857EA2A1FB03F2C004F124D /* SeafItem.m in Sources */,
 				57A0298E1A16F935009C9D7B /* FileProvider.m in Sources */,
+				F5E621EF20D16666001EDA7A /* NSError+SeafFileProvierError.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
