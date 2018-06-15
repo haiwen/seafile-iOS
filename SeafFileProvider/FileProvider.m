@@ -15,6 +15,8 @@
 #import "ExtentedString.h"
 #import "Utils.h"
 #import "Debug.h"
+#import "NSError+SeafFileProvierError.h"
+#import "SeafStorage.h"
 
 @interface FileProvider ()
 @end
@@ -23,7 +25,9 @@
 
 - (NSFileCoordinator *)fileCoordinator {
     NSFileCoordinator *fileCoordinator = [[NSFileCoordinator alloc] init];
-    [fileCoordinator setPurposeIdentifier:APP_ID];
+    if (@available(iOS 11.0, *)) {
+        [fileCoordinator setPurposeIdentifier:APP_ID];
+    }
     return fileCoordinator;
 }
 
@@ -65,6 +69,7 @@
         if ([containerItemIdentifier isEqualToString:NSFileProviderWorkingSetContainerItemIdentifier]) {
             return @"/";
         }
+
     }
     return containerItemIdentifier;
 }
@@ -116,11 +121,11 @@
 {
     NSFileProviderItemIdentifier identifier = [self persistentIdentifierForItemAtURL:url];
     if (!identifier) {
-        return completionHandler([Utils defaultError]);
+        return completionHandler([NSError fileProvierErrorNoSuchItem]);
     }
     SeafItem *item = [[SeafItem alloc] initWithItemIdentity:identifier];
     if (!item.isFile) {
-        return completionHandler([Utils defaultError]);
+        return completionHandler([NSError fileProvierErrorNoSuchItem]);
     }
 
     [Utils checkMakeDir:url.path.stringByDeletingLastPathComponent];
@@ -145,18 +150,18 @@
     Debug("providing at url: %@", url);
     NSFileProviderItemIdentifier identifier = [self persistentIdentifierForItemAtURL:url];
     if (!identifier) {
-        return completionHandler([Utils defaultError]);
+        return completionHandler([NSError fileProvierErrorNoSuchItem]);
     }
     SeafItem *item = [[SeafItem alloc] initWithItemIdentity:identifier];
     if (!item.isFile) {
-        return completionHandler([Utils defaultError]);
+        return completionHandler([NSError fileProvierErrorNoSuchItem]);
     }
 
     SeafFile *file = (SeafFile *)item.toSeafObj;
     [file setFileDownloadedBlock:^(SeafFile * _Nonnull file, NSError * _Nullable error) {
         if (error) {
             Warning("Failed to download file %@: %@", identifier, error);
-            return completionHandler(error);
+            return completionHandler([NSError fileProvierErrorServerUnreachable]);
         }
         if ([Utils fileExistsAtPath:url.path]) {
             [Utils removeFile:url.path];
@@ -164,7 +169,7 @@
         [Utils checkMakeDir:url.path.stringByDeletingLastPathComponent];
         NSError *err = nil;
         BOOL ret = [Utils linkFileAtURL:file.exportURL to:url error:&err];
-        if (!ret && !err) err = [Utils defaultError];
+        if (!ret && !err) err = [NSError fileProvierErrorNoSuchItem];
         completionHandler(err);
     }];
     [file loadContent:true];
@@ -216,7 +221,7 @@
 {
     Debug("enumerator for %@", containerItemIdentifier);
     return [[SeafEnumerator alloc] initWithItemIdentifier:[self translateIdentifier:[self translateIdentifier:containerItemIdentifier]]];
-   }
+}
 
 # pragma mark - NSFileProviderActions
 - (void)importDocumentAtURL:(NSURL *)fileURL
@@ -230,7 +235,11 @@
     NSURL *localURL = [self URLForItemWithPersistentIdentifier:itemIdentifier];
 
     [sfile setFileUploadedBlock:^(SeafUploadFile *file, NSString *oid, NSError *error) {
-        if (!error) [self removeProvidingItemAndParentIfEmpty:localURL];
+        if (error) {
+            completionHandler(nil, [NSError fileProvierErrorServerUnreachable]);
+        } else {
+            [self removeProvidingItemAndParentIfEmpty:localURL];
+        }
     }];
     
     [fileURL startAccessingSecurityScopedResource];
@@ -239,9 +248,9 @@
     BOOL ret = [[NSFileManager defaultManager] moveItemAtURL:fileURL toURL:localURL error:&err];
     [fileURL stopAccessingSecurityScopedResource];
 
-    if (!ret) return completionHandler(nil, err ? err : [Utils defaultError]);
+    if (!ret) return completionHandler(nil, [NSError fileProvierErrorNoSuchItem]);
     ret = [sfile uploadFromFile:localURL];
-    if (!ret) return completionHandler(nil, err ? err : [Utils defaultError]);
+    if (!ret) return completionHandler(nil, [NSError fileProvierErrorNoSuchItem]);
 
     SeafProviderItem *providerItem = [[SeafProviderItem alloc] initWithSeafItem:item];
     completionHandler(providerItem, nil);
@@ -258,9 +267,10 @@
         NSString *createdDirectoryPath = [dir.path stringByAppendingPathComponent:directoryName];
         SeafItem *createdItem = [[SeafItem alloc] initWithServer:dir->connection.address username:dir->connection.username repo:dir.repoId path:createdDirectoryPath filename:nil];
         SeafProviderItem *providerItem = [[SeafProviderItem alloc] initWithSeafItem:createdItem];
+        [self signalEnumerator:@[parentItemIdentifier, NSFileProviderWorkingSetContainerItemIdentifier]];
         completionHandler(providerItem, nil);
     } failure:^(SeafDir *dir, NSError *error) {
-        completionHandler(nil, error ? error : [Utils defaultError]);
+        completionHandler(nil, [NSError fileProvierErrorServerUnreachable]);
     }];
 }
 
@@ -277,6 +287,7 @@
         NSString *filename = item.isFile ? itemName : nil;
         SeafItem *newItem = [[SeafItem alloc] initWithServer:dir->connection.address username:dir->connection.username repo:dir.repoId path:newpath filename:filename];
         SeafProviderItem *renamedItem = [[SeafProviderItem alloc] initWithSeafItem:newItem];
+        [self signalEnumerator:@[renamedItem.parentItemIdentifier, NSFileProviderWorkingSetContainerItemIdentifier]];
         completionHandler(renamedItem, nil);
     } failure:^(SeafDir *dir, NSError *error) {
         completionHandler(nil, error ? error : [Utils defaultError]);
@@ -302,19 +313,21 @@
                 NSString *renamedpath = [dstDir.path stringByAppendingPathComponent:newName];
                 SeafItem *renamedItem = [[SeafItem alloc] initWithServer:dstDir->connection.address username:dstDir->connection.username repo:dstDir.repoId path:renamedpath filename:newName];
                 Debug("reparent %@ successfully", itemIdentifier);
+                [self signalEnumerator:@[parentItemIdentifier, NSFileProviderWorkingSetContainerItemIdentifier]];
                 completionHandler([[SeafProviderItem alloc] initWithSeafItem:renamedItem], nil);
             } failure:^(SeafDir *dir, NSError *error) {
                 Warning("Failed to reparent %@: %@", itemIdentifier, error);
-                completionHandler(nil, error ? error : [Utils defaultError]);
+                completionHandler(nil, [NSError fileProvierErrorServerUnreachable]);
             }];
         } else {
             SeafItem *newItem = [[SeafItem alloc] initWithServer:dstDir->connection.address username:dstDir->connection.username repo:dstDir.repoId path:newpath filename:filename];
             SeafProviderItem *reparentedItem = [[SeafProviderItem alloc] initWithSeafItem:newItem];
+            [self signalEnumerator:@[parentItemIdentifier, NSFileProviderWorkingSetContainerItemIdentifier]];
             completionHandler(reparentedItem, nil);
         }
     } failure:^(SeafDir *dir, NSError *error) {
         Warning("Failed to reparent %@: %@", itemIdentifier, error);
-        completionHandler(nil, error ? error : [Utils defaultError]);
+        completionHandler(nil, [NSError fileProvierErrorServerUnreachable]);
     }];
 }
 
@@ -325,9 +338,10 @@
     SeafItem *item = [[SeafItem alloc] initWithItemIdentity:itemIdentifier];
     SeafDir *dir = (SeafDir *)[item.parentItem toSeafObj];
     [dir delEntries:[NSArray arrayWithObject:item.name] success:^(SeafDir *dir) {
+        [self signalEnumerator:@[item.parentItem.itemIdentifier, NSFileProviderWorkingSetContainerItemIdentifier]];
         completionHandler(nil);
     } failure:^(SeafDir *dir, NSError *error) {
-        completionHandler(error ? error : [Utils defaultError]);
+        completionHandler([NSError fileProvierErrorServerUnreachable]);
     }];
 }
 
@@ -336,8 +350,29 @@
     Debug("itemIdentifier: %@, tagData:%@", itemIdentifier, tagData);
     SeafItem *item = [[SeafItem alloc] initWithItemIdentity:itemIdentifier];
     [item setTagData:tagData];
+    [self saveToLocal:item];
     SeafProviderItem *tagedItem = [[SeafProviderItem alloc] initWithSeafItem:item];
+    [self signalEnumerator:@[tagedItem.parentItemIdentifier,NSFileProviderWorkingSetContainerItemIdentifier]];
     completionHandler(tagedItem, nil);
+}
+
+- (void)signalEnumerator:(NSArray<NSFileProviderItemIdentifier> *)itemIdentifiers {
+    if (@available(iOS 11.0, *)) {
+        for (NSString *identifier in itemIdentifiers) {
+            [NSFileProviderManager.defaultManager signalEnumeratorForContainerItemIdentifier:identifier completionHandler:^(NSError * _Nullable error) {
+                Debug("error itemIdentifier: %@", identifier);
+            }];
+        }
+    }
+}
+
+- (void)saveToLocal:(SeafItem *)item {
+    NSDictionary *dict = [item convertToDict];
+    @synchronized(self) {
+        NSMutableDictionary *filesStorage = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:SEAF_FILE_PROVIDE]];
+        [filesStorage setObject:dict forKey:item.itemIdentifier];
+        [SeafStorage.sharedObject setObject:filesStorage forKey:SEAF_FILE_PROVIDE];
+    }
 }
 
 /*

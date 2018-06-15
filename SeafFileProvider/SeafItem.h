@@ -39,4 +39,6 @@
 + (SeafItem *)fromAccount:(SeafConnection *)conn;
 + (SeafItem *)fromSeafBase:(SeafBase *)obj;
 
+- (NSDictionary*)convertToDict;
+
 @end

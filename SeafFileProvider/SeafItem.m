@@ -231,4 +231,17 @@ static APLRUCache *cache() {
     return [[SeafItem alloc] initWithServer:file->connection.address username:file->connection.username repo:file.repoId path:file.path.stringByDeletingLastPathComponent filename:file.name];
 }
 
+- (NSDictionary *)convertToDict {
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    [Utils dict:dict setObject:self.itemIdentifier forKey:@"itemIdentifier"];
+    [Utils dict:dict setObject:self.server forKey:@"server"];
+    [Utils dict:dict setObject:self.username forKey:@"username"];
+    [Utils dict:dict setObject:self.repoId forKey:@"repoId"];
+    [Utils dict:dict setObject:self.path forKey:@"path"];
+    [Utils dict:dict setObject:self.filename forKey:@"filename"];
+    [Utils dict:dict setObject:self.tagData forKey:@"tagData"];
+    [Utils dict:dict setObject:self.name forKey:@"name"];
+    return dict;
+}
+
 @end

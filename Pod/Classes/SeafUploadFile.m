@@ -633,8 +633,8 @@
 {
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.delegate uploadProgress:self progress:progress];
-        if (_taskProgressBlock) {
-            _taskProgressBlock(self, progress);
+        if (self.taskProgressBlock) {
+            self.taskProgressBlock(self, progress);
         }
     });
 }

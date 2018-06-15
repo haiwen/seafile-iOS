@@ -11,6 +11,8 @@
 #import "Debug.h"
 #import "SeafGlobal.h"
 #import "SeafRepos.h"
+#import "NSError+SeafFileProvierError.h"
+#import "SeafStorage.h"
 
 @interface SeafEnumerator ()
 @property (strong) SeafItem *item;
@@ -41,31 +43,51 @@
                    startingAtPage:(NSFileProviderPage)page
 {
     Debug("%@, root:%d accountroot:%d, reporoot:%d ", _item.itemIdentifier, _item.isRoot, _item.isAccountRoot, _item.isRepoRoot);
-    if (_item.isRoot) {// account list
-        NSArray *accounts = self.getRootProviderItems;
-        [observer didEnumerateItems:accounts];
-        [observer finishEnumeratingUpToPage:nil];
-        return;
-    }
     
-    if (_item.isFile) {
-        [observer didEnumerateItems:@[[[SeafProviderItem alloc] initWithSeafItem:_item]]];
-        [observer finishEnumeratingUpToPage:nil];
-        return;
-    }
-
-    SeafDir *dir = (SeafDir *)[_item toSeafObj];
-    [dir loadContentSuccess: ^(SeafDir *d) {
-        [observer didEnumerateItems:[self getSeafDirProviderItems:d startingAtPage:page]];
-        [observer finishEnumeratingUpToPage:nil];
-    } failure:^(SeafDir *d, NSError *error) {
-        if (d.hasCache) {
-            [observer didEnumerateItems:[self getSeafDirProviderItems:dir startingAtPage:page]];
-            [observer finishEnumeratingUpToPage:nil];
+    if (@available(iOS 11.0, *)) {
+        if (_item.itemIdentifier == NSFileProviderWorkingSetContainerItemIdentifier) {
+            Debug("WorkingSetItemIdentifier %@", _item.itemIdentifier);
+            NSMutableDictionary *filesStorage = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:SEAF_FILE_PROVIDE]];
+            for (NSDictionary *dict in filesStorage) {
+                SeafItem *item = [[SeafItem alloc] initWithItemIdentity:[dict objectForKey:@"itemIdentifier"]];
+                [observer didEnumerateItems:@[[[SeafProviderItem alloc] initWithSeafItem:item]]];
+                [observer finishEnumeratingUpToPage:nil];
+            }
+            
+            
+            return;
         } else {
-            [observer finishEnumeratingWithError:error];
+            if (_item.isRoot) {// account list
+                NSArray *accounts = self.getRootProviderItems;
+                if (accounts.count == 0) {
+                    [observer finishEnumeratingWithError:[NSError fileProvierErrorNotAuthenticated]];
+                } else {
+                    [observer didEnumerateItems:accounts];
+                    [observer finishEnumeratingUpToPage:nil];
+                }
+                return;
+            }
+            
+            if (_item.isFile) {
+                [observer didEnumerateItems:@[[[SeafProviderItem alloc] initWithSeafItem:_item]]];
+                [observer finishEnumeratingUpToPage:nil];
+                return;
+            }
+            
+            SeafDir *dir = (SeafDir *)[_item toSeafObj];
+            [dir loadContentSuccess: ^(SeafDir *d) {
+                [observer didEnumerateItems:[self getSeafDirProviderItems:d startingAtPage:page]];
+                [observer finishEnumeratingUpToPage:nil];
+            } failure:^(SeafDir *d, NSError *error) {
+                if (d.hasCache) {
+                    [observer didEnumerateItems:[self getSeafDirProviderItems:dir startingAtPage:page]];
+                    [observer finishEnumeratingUpToPage:nil];
+                } else {
+                    [observer finishEnumeratingWithError:[NSError fileProvierErrorServerUnreachable]];
+                }
+            }];
         }
-    }];
+    }
 }
 
 - (NSArray *)getRootProviderItems
