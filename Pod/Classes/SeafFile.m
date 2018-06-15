@@ -870,8 +870,8 @@
     self.state = SEAF_DENTRY_INIT;
     self.ooid = oid;
     self.oid = oid;
-    _filesize = self.filesize;
-    _mtime = self.mtime;
+    _filesize = file.filesize;
+    _mtime = file.mtime;
     [self setMpath:nil];
     [dg updateComplete:self result:true];
 }
