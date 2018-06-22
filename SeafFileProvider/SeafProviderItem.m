@@ -72,7 +72,7 @@
 
     if (_item.isRepoRoot) {
         if (repo.editable) {
-            cap |= NSFileProviderItemCapabilitiesAllowsAddingSubItems;
+            cap |= NSFileProviderItemCapabilitiesAllowsAddingSubItems | NSFileProviderItemCapabilitiesAllowsContentEnumerating;
         }
         return cap;
     }

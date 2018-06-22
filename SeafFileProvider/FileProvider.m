@@ -19,6 +19,7 @@
 #import "SeafStorage.h"
 
 @interface FileProvider ()
+@property (nonatomic, assign) NSInteger currentAnchor;
 @end
 
 @implementation FileProvider
@@ -67,7 +68,7 @@
             return @"/";
         }
         if ([containerItemIdentifier isEqualToString:NSFileProviderWorkingSetContainerItemIdentifier]) {
-            return @"/";
+            return NSFileProviderWorkingSetContainerItemIdentifier;
         }
 
     }
@@ -169,7 +170,9 @@
         [Utils checkMakeDir:url.path.stringByDeletingLastPathComponent];
         NSError *err = nil;
         BOOL ret = [Utils linkFileAtURL:file.exportURL to:url error:&err];
-        if (!ret && !err) err = [NSError fileProvierErrorNoSuchItem];
+        if (!ret) {
+            err = [NSError fileProvierErrorNoSuchItem];
+        }
         completionHandler(err);
     }];
     [file loadContent:true];
@@ -220,7 +223,16 @@
 - (nullable id<NSFileProviderEnumerator>)enumeratorForContainerItemIdentifier:(NSFileProviderItemIdentifier)containerItemIdentifier error:(NSError **)error
 {
     Debug("enumerator for %@", containerItemIdentifier);
-    return [[SeafEnumerator alloc] initWithItemIdentifier:[self translateIdentifier:[self translateIdentifier:containerItemIdentifier]]];
+    if (@available(iOS 11.0, *)) {
+        if (containerItemIdentifier == NSFileProviderWorkingSetContainerItemIdentifier) {
+            NSMutableDictionary *filesStorage = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:SEAF_FILE_PROVIDER]];
+            for (NSDictionary *dict in filesStorage.allValues) {
+                SeafItem *item = [[SeafItem alloc] convertFromDict:dict];
+                [self signalEnumerator:@[item.itemIdentifier, NSFileProviderWorkingSetContainerItemIdentifier]];
+            }
+        }
+    }
+    return [[SeafEnumerator alloc] initWithItemIdentifier:[self translateIdentifier:[self translateIdentifier:containerItemIdentifier]] containerItemIdentifier:containerItemIdentifier currentAnchor:self.currentAnchor];
 }
 
 # pragma mark - NSFileProviderActions
@@ -356,8 +368,17 @@
     completionHandler(tagedItem, nil);
 }
 
+-(void)setLastUsedDate:(NSDate *)lastUsedDate forItemIdentifier:(NSFileProviderItemIdentifier)itemIdentifier completionHandler:(void (^)(NSFileProviderItem _Nullable, NSError * _Nullable))completionHandler {
+    Debug("itemIdentifier: %@, lastUsedDate:%@", itemIdentifier, lastUsedDate);
+    SeafItem *item = [[SeafItem alloc] initWithItemIdentity:itemIdentifier];
+    [item setLastUsedDate:lastUsedDate];
+    SeafProviderItem *lastItem = [[SeafProviderItem alloc] initWithSeafItem:item];
+    completionHandler(lastItem, nil);
+}
+
 - (void)signalEnumerator:(NSArray<NSFileProviderItemIdentifier> *)itemIdentifiers {
     if (@available(iOS 11.0, *)) {
+        self.currentAnchor += 1;
         for (NSString *identifier in itemIdentifiers) {
             [NSFileProviderManager.defaultManager signalEnumeratorForContainerItemIdentifier:identifier completionHandler:^(NSError * _Nullable error) {
                 Debug("error itemIdentifier: %@", identifier);
@@ -369,9 +390,9 @@
 - (void)saveToLocal:(SeafItem *)item {
     NSDictionary *dict = [item convertToDict];
     @synchronized(self) {
-        NSMutableDictionary *filesStorage = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:SEAF_FILE_PROVIDE]];
+        NSMutableDictionary *filesStorage = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:SEAF_FILE_PROVIDER]];
         [filesStorage setObject:dict forKey:item.itemIdentifier];
-        [SeafStorage.sharedObject setObject:filesStorage forKey:SEAF_FILE_PROVIDE];
+        [SeafStorage.sharedObject setObject:filesStorage forKey:SEAF_FILE_PROVIDER];
     }
 }
 

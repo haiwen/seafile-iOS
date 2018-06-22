@@ -241,7 +241,15 @@ static APLRUCache *cache() {
     [Utils dict:dict setObject:self.filename forKey:@"filename"];
     [Utils dict:dict setObject:self.tagData forKey:@"tagData"];
     [Utils dict:dict setObject:self.name forKey:@"name"];
+    [Utils dict:dict setObject:self.lastUsedDate forKey:@"lastUsedDate"];
     return dict;
+}
+
+- (SeafItem *)convertFromDict:(NSDictionary *)dict {
+    SeafItem *item = [[SeafItem alloc] initWithItemIdentity:[dict objectForKey:@"itemIdentifier"]];
+    item.tagData = [dict objectForKey:@"tagData"];
+    item.lastUsedDate = [dict objectForKey:@"lastUsedDate"];
+    return item;
 }
 
 @end

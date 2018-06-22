@@ -20,6 +20,7 @@
 @property (readonly) NSString *path; //folder path
 @property (readonly) NSString *filename;
 @property (readwrite) NSData *tagData;
+@property (readwrite) NSDate *lastUsedDate;
 
 @property (readonly) NSString *name;
 @property (readonly) SeafConnection *conn;
@@ -40,5 +41,5 @@
 + (SeafItem *)fromSeafBase:(SeafBase *)obj;
 
 - (NSDictionary*)convertToDict;
-
+- (SeafItem *)convertFromDict:(NSDictionary *)dict;
 @end
