@@ -15,15 +15,20 @@
 #import "SeafStorage.h"
 
 @interface SeafEnumerator ()
-@property (strong) SeafItem *item;
+@property (nonatomic, strong) SeafItem *item;
+@property (nonatomic, copy) NSFileProviderItemIdentifier containerItemIdentifier;
+@property (nonatomic, assign) NSInteger currentAnchor;
 @end
 
 
 @implementation SeafEnumerator
 
-- (instancetype)initWithItemIdentifier:(NSFileProviderItemIdentifier)itemIdentifier
+- (instancetype)initWithItemIdentifier:(NSFileProviderItemIdentifier)itemIdentifier containerItemIdentifier:(NSFileProviderItemIdentifier)containerItemIdentifier currentAnchor:(NSInteger)currentAnchor
 {
-    return [self initWithSeafItem:[[SeafItem alloc] initWithItemIdentity:itemIdentifier]];
+    SeafEnumerator *enumerator = [self initWithSeafItem:[[SeafItem alloc] initWithItemIdentity:itemIdentifier]];
+    enumerator.containerItemIdentifier = containerItemIdentifier;
+    enumerator.currentAnchor = currentAnchor;
+    return enumerator;
 }
 
 - (instancetype)initWithSeafItem:(SeafItem *)item
@@ -45,16 +50,13 @@
     Debug("%@, root:%d accountroot:%d, reporoot:%d ", _item.itemIdentifier, _item.isRoot, _item.isAccountRoot, _item.isRepoRoot);
     
     if (@available(iOS 11.0, *)) {
-        if (_item.itemIdentifier == NSFileProviderWorkingSetContainerItemIdentifier) {
+        if (_containerItemIdentifier == NSFileProviderWorkingSetContainerItemIdentifier) {
             Debug("WorkingSetItemIdentifier %@", _item.itemIdentifier);
-            NSMutableDictionary *filesStorage = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:SEAF_FILE_PROVIDE]];
-            for (NSDictionary *dict in filesStorage) {
-                SeafItem *item = [[SeafItem alloc] initWithItemIdentity:[dict objectForKey:@"itemIdentifier"]];
-                [observer didEnumerateItems:@[[[SeafProviderItem alloc] initWithSeafItem:item]]];
-                [observer finishEnumeratingUpToPage:nil];
-            }
-            
-            
+            NSMutableDictionary *filesStorage = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:SEAF_FILE_PROVIDER]];
+            NSDictionary *dict = [filesStorage objectForKey:_item.itemIdentifier];
+            SeafItem *item = [[SeafItem alloc] convertFromDict:dict];
+            [observer didEnumerateItems:@[[[SeafProviderItem alloc] initWithSeafItem:item]]];
+            [observer finishEnumeratingUpToPage:nil];
             return;
         } else {
             if (_item.isRoot) {// account list
@@ -132,16 +134,27 @@
     return items;
 }
 
-#if 0
-- (void)enumerateChangesForObserver:(id<NSFileProviderChangeObserver>)observer
-                     fromSyncAnchor:(NSFileProviderSyncAnchor)syncAnchor NS_SWIFT_NAME(enumerateChanges(for:from:))
-{
-
+- (void)enumerateChangesForObserver:(id<NSFileProviderChangeObserver>)observer fromSyncAnchor:(NSFileProviderSyncAnchor)syncAnchor {
+    NSMutableArray *itemsUpdate = [NSMutableArray array];
+    
+    if (@available(iOS 11.0, *)) {
+        if (_containerItemIdentifier == NSFileProviderWorkingSetContainerItemIdentifier) {
+            NSDictionary *filesStorage = [SeafStorage.sharedObject objectForKey:SEAF_FILE_PROVIDER];
+            for (NSDictionary *dict in filesStorage.allValues) {
+                SeafItem *item = [[SeafItem alloc] convertFromDict:dict];
+                [itemsUpdate addObject:[[SeafProviderItem alloc] initWithSeafItem:item]];
+            }
+        }
+    }
+    [observer didUpdateItems:itemsUpdate];
+    NSData *currentAnchor = [[NSString stringWithFormat:@"%ld",(long)_currentAnchor] dataUsingEncoding:NSUTF8StringEncoding];
+    [observer finishEnumeratingChangesUpToSyncAnchor:currentAnchor moreComing:false];
 }
+
 - (void)currentSyncAnchorWithCompletionHandler:(void(^)(_Nullable NSFileProviderSyncAnchor currentAnchor))completionHandler
 {
-
+    NSData *currentAnchor = [[NSString stringWithFormat:@"%ld",(long)_currentAnchor] dataUsingEncoding:NSUTF8StringEncoding];
+    completionHandler(currentAnchor);
 }
-#endif
 
 @end
