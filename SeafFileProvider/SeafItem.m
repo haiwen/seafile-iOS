@@ -199,6 +199,10 @@ static APLRUCache *cache() {
     return _tagData;
 }
 
+- (void)setLastUsedDate:(NSDate *)lastUsedDate {
+    _lastUsedDate = lastUsedDate;
+}
+
 + (SeafItem *)fromAccount:(SeafConnection *)conn
 {
     return [[SeafItem alloc] initWithServer:conn.address username:conn.username repo:nil path:nil filename:nil];
@@ -242,6 +246,7 @@ static APLRUCache *cache() {
     [Utils dict:dict setObject:self.tagData forKey:@"tagData"];
     [Utils dict:dict setObject:self.name forKey:@"name"];
     [Utils dict:dict setObject:self.lastUsedDate forKey:@"lastUsedDate"];
+    [Utils dict:dict setObject:self.favoriteRank forKey:@"favoriteRank"];
     return dict;
 }
 
@@ -249,6 +254,7 @@ static APLRUCache *cache() {
     SeafItem *item = [[SeafItem alloc] initWithItemIdentity:[dict objectForKey:@"itemIdentifier"]];
     item.tagData = [dict objectForKey:@"tagData"];
     item.lastUsedDate = [dict objectForKey:@"lastUsedDate"];
+    item.favoriteRank = [dict objectForKey:@"favoriteRank"];
     return item;
 }
 
