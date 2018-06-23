@@ -372,6 +372,19 @@
     Debug("itemIdentifier: %@, lastUsedDate:%@", itemIdentifier, lastUsedDate);
     SeafItem *item = [[SeafItem alloc] initWithItemIdentity:itemIdentifier];
     [item setLastUsedDate:lastUsedDate];
+    [self saveToLocal:item];
+    SeafProviderItem *lastItem = [[SeafProviderItem alloc] initWithSeafItem:item];
+    completionHandler(lastItem, nil);
+}
+
+- (void)setFavoriteRank:(nullable NSNumber *)favoriteRank
+      forItemIdentifier:(NSFileProviderItemIdentifier)itemIdentifier
+      completionHandler:(void (^)(NSFileProviderItem _Nullable favoriteItem, NSError * _Nullable error))completionHandler
+{
+    Debug("itemIdentifier: %@, favoriteRank:%@", itemIdentifier, favoriteRank);
+    SeafItem *item = [[SeafItem alloc] initWithItemIdentity:itemIdentifier];
+    [item setFavoriteRank:favoriteRank];
+    [self saveToLocal:item];
     SeafProviderItem *lastItem = [[SeafProviderItem alloc] initWithSeafItem:item];
     completionHandler(lastItem, nil);
 }

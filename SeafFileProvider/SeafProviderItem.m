@@ -174,4 +174,12 @@
     return _item.tagData;
 }
 
+- (NSDate *)lastUsedDate {
+    return _item.lastUsedDate;
+}
+
+- (NSNumber *)favoriteRank {
+    return _item.favoriteRank;
+}
+
 @end

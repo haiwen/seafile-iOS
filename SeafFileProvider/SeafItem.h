@@ -19,8 +19,9 @@
 @property (readonly) NSString *repoId;
 @property (readonly) NSString *path; //folder path
 @property (readonly) NSString *filename;
-@property (readwrite) NSData *tagData;
-@property (readwrite) NSDate *lastUsedDate;
+@property (nonatomic, strong) NSData *tagData;
+@property (nonatomic, strong) NSDate *lastUsedDate;
+@property (nonatomic, strong) NSNumber *favoriteRank;
 
 @property (readonly) NSString *name;
 @property (readonly) SeafConnection *conn;
