@@ -45,6 +45,7 @@ static APLRUCache *cache() {
         _repoId = repoId;
         _path = path;
         _filename = filename;
+        _lastUsedDate = [NSDate date];
     }
     return self;
 }
@@ -197,10 +198,6 @@ static APLRUCache *cache() {
         _tagData = [self.conn loadFileProviderTagDataWithItemIdentifier:_itemIdentifier];
     }
     return _tagData;
-}
-
-- (void)setLastUsedDate:(NSDate *)lastUsedDate {
-    _lastUsedDate = lastUsedDate;
 }
 
 + (SeafItem *)fromAccount:(SeafConnection *)conn

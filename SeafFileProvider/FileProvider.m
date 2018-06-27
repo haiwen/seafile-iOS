@@ -43,6 +43,7 @@
         if (SeafGlobal.sharedObject.conns.count == 0) {
             [SeafGlobal.sharedObject loadAccounts];
         }
+        self.currentAnchor = 0;
     }
     return self;
 }
@@ -154,7 +155,7 @@
         return completionHandler([NSError fileProvierErrorNoSuchItem]);
     }
     SeafItem *item = [[SeafItem alloc] initWithItemIdentity:identifier];
-    if (!item.isFile) {
+    if (!item) {
         return completionHandler([NSError fileProvierErrorNoSuchItem]);
     }
 
@@ -374,6 +375,7 @@
     [item setLastUsedDate:lastUsedDate];
     [self saveToLocal:item];
     SeafProviderItem *lastItem = [[SeafProviderItem alloc] initWithSeafItem:item];
+    [self signalEnumerator:@[lastItem.parentItemIdentifier,NSFileProviderWorkingSetContainerItemIdentifier]];
     completionHandler(lastItem, nil);
 }
 
