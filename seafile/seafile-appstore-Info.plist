@@ -91,6 +91,8 @@
 	</dict>
 	<key>NSContactsUsageDescription</key>
 	<string>This lets you backup contacts to Seafile</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>This lets you use Face ID</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Choose always allow Seafile can periodically start Camera Upload when your location changes</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

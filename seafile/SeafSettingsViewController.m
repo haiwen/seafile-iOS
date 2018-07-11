@@ -309,7 +309,15 @@ enum {
         LAContext *context = [[LAContext alloc] init];
         if (![context canEvaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics error:&error]) {
             Warning("TouchID unavailable: %@", error);
-            [self alertWithTitle:STR_15];
+            if (@available(iOS 11.0, *)) {
+                if (context.biometryType == LABiometryTypeFaceID) {
+                    [self alertWithTitle:STR_19];
+                } else {
+                    [self alertWithTitle:STR_15];
+                }
+            } else {
+                [self alertWithTitle:STR_15];
+            }
             _enableTouchIDSwitch.on = false;
             return;
         }
@@ -348,8 +356,11 @@ enum {
     [super viewDidLoad];
     _nameCell.textLabel.text = NSLocalizedString(@"Username", @"Seafile");
     _usedspaceCell.textLabel.text = NSLocalizedString(@"Space Used", @"Seafile");
-    _enableTouchIDLabel.text = NSLocalizedString(@"Enable TouchID", @"Seafile");
-
+    if ([UIScreen mainScreen].bounds.size.height == 812) {
+        _enableTouchIDLabel.text = NSLocalizedString(@"Enable FaceID", @"Seafile");
+    } else {
+        _enableTouchIDLabel.text = NSLocalizedString(@"Enable TouchID", @"Seafile");
+    }
     _autoCameraUploadLabel.text = NSLocalizedString(@"Auto Upload", @"Seafile");
     _videoSyncLabel.text = NSLocalizedString(@"Upload Videos", @"Seafile");
     _wifiOnlyLabel.text = NSLocalizedString(@"Wifi Only", @"Seafile");
