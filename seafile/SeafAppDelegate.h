@@ -44,7 +44,7 @@ enum {
 #define STR_12 NSLocalizedString(@"A file with the same name already exists, do you want to overwrite?", @"Seafile")
 #define STR_13 NSLocalizedString(@"Files with the same name already exist, do you want to overwrite?", @"Seafile")
 #define STR_15 NSLocalizedString(@"Your device cannot authenticate using Touch ID.", @"Seafile")
-
+#define STR_19 NSLocalizedString(@"Your device cannot authenticate using Face ID.", @"Seafile")
 
 @interface SeafAppDelegate : UIResponder <UIApplicationDelegate, SeafConnectionDelegate>
 @property (strong, nonatomic) UIWindow *window;

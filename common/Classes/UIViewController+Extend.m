@@ -183,6 +183,7 @@
 #define STR_16 NSLocalizedString(@"There was a problem verifying your identity.", @"Seafile")
 #define STR_17 NSLocalizedString(@"Please authenticate to proceed", @"Seafile")
 #define STR_18 NSLocalizedString(@"Failed to authenticate", @"Seafile")
+#define STR_19 NSLocalizedString(@"Your device cannot authenticate using Face ID.", @"Seafile")
 
 - (void)checkTouchId:(void (^)(bool success))handler
 {
@@ -190,7 +191,16 @@
     LAContext *context = [[LAContext alloc] init];
     if (![context canEvaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics error:&error]) {
         Warning("TouchID unavailable: %@", error);
-        [self alertWithTitle:STR_15];
+        if (@available(iOS 11.0, *)) {
+            if (context.biometryType == LABiometryTypeFaceID) {
+                [self alertWithTitle:STR_19];
+            } else {
+                [self alertWithTitle:STR_15];
+            }
+        } else {
+            [self alertWithTitle:STR_15];
+        }
+        
         return handler(false);
     }
 
