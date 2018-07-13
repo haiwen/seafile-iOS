@@ -52,10 +52,14 @@
     if (@available(iOS 11.0, *)) {
         if (_containerItemIdentifier == NSFileProviderWorkingSetContainerItemIdentifier) {
             Debug("WorkingSetItemIdentifier %@", _item.itemIdentifier);
+            NSMutableArray *items = [NSMutableArray array];
             NSMutableDictionary *filesStorage = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:SEAF_FILE_PROVIDER]];
-            NSDictionary *dict = [filesStorage objectForKey:_item.itemIdentifier];
-            SeafItem *item = [[SeafItem alloc] convertFromDict:dict];
-            [observer didEnumerateItems:@[[[SeafProviderItem alloc] initWithSeafItem:item]]];
+            for (NSDictionary *dict in filesStorage.allValues) {
+                SeafItem *item = [[SeafItem alloc] convertFromDict:dict];
+                SeafProviderItem *providerItem = [[SeafProviderItem alloc] initWithSeafItem:item];
+                [items addObject:providerItem];
+            }
+            [observer didEnumerateItems:items];
             [observer finishEnumeratingUpToPage:nil];
             return;
         } else {
