@@ -1928,7 +1928,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 // fileProvider tagData
 - (void)saveFileProviderTagData:(NSData*)tagData withItemIdentifier:(NSString*)itemId {
     NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:self.tagDataKey]];
-    if (tagData) {
+    if (tagData && tagData.length > 0) {
         [dict setObject:tagData forKey:itemId];
     } else {
         [dict removeObjectForKey:itemId];

@@ -68,10 +68,6 @@
         if ([containerItemIdentifier isEqualToString:NSFileProviderRootContainerItemIdentifier]) {
             return @"/";
         }
-        if ([containerItemIdentifier isEqualToString:NSFileProviderWorkingSetContainerItemIdentifier]) {
-            return NSFileProviderWorkingSetContainerItemIdentifier;
-        }
-
     }
     return containerItemIdentifier;
 }
@@ -224,16 +220,18 @@
 - (nullable id<NSFileProviderEnumerator>)enumeratorForContainerItemIdentifier:(NSFileProviderItemIdentifier)containerItemIdentifier error:(NSError **)error
 {
     Debug("enumerator for %@", containerItemIdentifier);
+    SeafEnumerator *enumerator = nil;
     if (@available(iOS 11.0, *)) {
-        if (containerItemIdentifier == NSFileProviderWorkingSetContainerItemIdentifier) {
-            NSMutableDictionary *filesStorage = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:SEAF_FILE_PROVIDER]];
-            for (NSDictionary *dict in filesStorage.allValues) {
-                SeafItem *item = [[SeafItem alloc] convertFromDict:dict];
-                [self signalEnumerator:@[item.itemIdentifier, NSFileProviderWorkingSetContainerItemIdentifier]];
-            }
+        if (containerItemIdentifier == NSFileProviderRootContainerItemIdentifier) {
+            [self signalEnumerator:@[NSFileProviderWorkingSetContainerItemIdentifier]];
+            enumerator = [[SeafEnumerator alloc] initWithItemIdentifier:[self translateIdentifier:containerItemIdentifier] containerItemIdentifier:containerItemIdentifier currentAnchor:self.currentAnchor];
+        } else if (containerItemIdentifier == NSFileProviderWorkingSetContainerItemIdentifier) {
+            enumerator = [[SeafEnumerator alloc] initWithItemIdentifier:containerItemIdentifier containerItemIdentifier:containerItemIdentifier currentAnchor:self.currentAnchor];
+        } else {
+           enumerator = [[SeafEnumerator alloc] initWithItemIdentifier:[self translateIdentifier:[self translateIdentifier:containerItemIdentifier]] containerItemIdentifier:containerItemIdentifier currentAnchor:self.currentAnchor];
         }
     }
-    return [[SeafEnumerator alloc] initWithItemIdentifier:[self translateIdentifier:[self translateIdentifier:containerItemIdentifier]] containerItemIdentifier:containerItemIdentifier currentAnchor:self.currentAnchor];
+    return enumerator;
 }
 
 # pragma mark - NSFileProviderActions
@@ -363,7 +361,11 @@
     Debug("itemIdentifier: %@, tagData:%@", itemIdentifier, tagData);
     SeafItem *item = [[SeafItem alloc] initWithItemIdentity:itemIdentifier];
     [item setTagData:tagData];
-    [self saveToLocal:item];
+    if (tagData && tagData.length > 0) {
+        [self saveToLocal:item];
+    } else {
+        [self removeFromLocal:item];
+    }
     SeafProviderItem *tagedItem = [[SeafProviderItem alloc] initWithSeafItem:item];
     [self signalEnumerator:@[tagedItem.parentItemIdentifier,NSFileProviderWorkingSetContainerItemIdentifier]];
     completionHandler(tagedItem, nil);
@@ -396,7 +398,9 @@
         self.currentAnchor += 1;
         for (NSString *identifier in itemIdentifiers) {
             [NSFileProviderManager.defaultManager signalEnumeratorForContainerItemIdentifier:identifier completionHandler:^(NSError * _Nullable error) {
-                Debug("error itemIdentifier: %@", identifier);
+                if (error) {
+                    Debug("signalEnumerator itemIdentifier: %@ error: %@", identifier, error);
+                }
             }];
         }
     }
@@ -407,6 +411,14 @@
     @synchronized(self) {
         NSMutableDictionary *filesStorage = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:SEAF_FILE_PROVIDER]];
         [filesStorage setObject:dict forKey:item.itemIdentifier];
+        [SeafStorage.sharedObject setObject:filesStorage forKey:SEAF_FILE_PROVIDER];
+    }
+}
+
+- (void)removeFromLocal:(SeafItem *)item {
+    @synchronized(self) {
+        NSMutableDictionary *filesStorage = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:SEAF_FILE_PROVIDER]];
+        [filesStorage removeObjectForKey:item.itemIdentifier];
         [SeafStorage.sharedObject setObject:filesStorage forKey:SEAF_FILE_PROVIDER];
     }
 }
