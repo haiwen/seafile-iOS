@@ -388,7 +388,11 @@
     Debug("itemIdentifier: %@, favoriteRank:%@", itemIdentifier, favoriteRank);
     SeafItem *item = [[SeafItem alloc] initWithItemIdentity:itemIdentifier];
     [item setFavoriteRank:favoriteRank];
-    [self saveToLocal:item];
+    if (favoriteRank) {
+        [self saveToLocal:item];
+    } else {
+        [self removeFromLocal:item];
+    }
     SeafProviderItem *lastItem = [[SeafProviderItem alloc] initWithSeafItem:item];
     completionHandler(lastItem, nil);
 }
