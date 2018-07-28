@@ -9,22 +9,31 @@
 #import "SeafActionDirViewController.h"
 #import "UIViewController+Extend.h"
 #import "UIScrollView+SVPullToRefresh.h"
+#import "Utils.h"
+#import "Debug.h"
+#import "ExtentedString.h"
 #import "SeafUploadFile.h"
 #import "SeafGlobal.h"
 #import "SeafFile.h"
-#import "Utils.h"
-#import "Debug.h"
+
+typedef enum : NSUInteger {
+    STATE_INIT = 0,
+    STATE_LOADING,
+    STATE_MKDIR,
+} DIR_STATE;
 
 @interface SeafActionDirViewController()<SeafDentryDelegate, SeafUploadDelegate>
 @property (strong, nonatomic) SeafDir *directory;
 @property (strong, nonatomic) SeafUploadFile *ufile;
 @property (strong, nonatomic) UIBarButtonItem *saveButton;
+@property (strong, nonatomic) UIBarButtonItem *createButton;
 
 @property (strong, nonatomic) IBOutlet UIActivityIndicatorView *loadingView;
 
 @property (strong, nonatomic) UIProgressView* progressView;
 @property (strong) UIAlertController *alert;
 @property (nonatomic, strong) NSArray *subDirs;
+@property (nonatomic, assign) DIR_STATE state;
 
 @end
 
@@ -36,6 +45,7 @@
         _directory = directory;
         _directory.delegate = self;
         _ufile = ufile;
+        _state = STATE_INIT;
         [_directory loadContent:NO];
     }
     return self;
@@ -53,6 +63,7 @@
     _directory = directory;
     _directory.delegate = self;
     [_directory loadContent:true];
+    _state = STATE_LOADING;
     self.navigationItem.title = _directory.name;
 }
 
@@ -85,6 +96,12 @@
     self.saveButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSave target:self action:@selector(save:)];
     self.navigationItem.title = _directory.name;
     self.navigationItem.rightBarButtonItem = _directory.editable ? self.saveButton : nil;
+    
+    self.createButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"New Folder", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(createFolder)];
+    UIBarButtonItem *flexItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
+    self.toolbarItems = @[flexItem, self.createButton, flexItem];
+    self.navigationController.toolbarHidden = _directory.editable ? false : true;
+    
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeAll;
     [self refreshView];
@@ -93,6 +110,7 @@
     [self.tableView addPullToRefresh:[SVArrowPullToRefreshView class] withActionHandler:^{
         weakSelf.directory.delegate = weakSelf;
         [weakSelf.directory loadContent:YES];
+        weakSelf.state = STATE_LOADING;
     }];
 }
 
@@ -115,6 +133,23 @@
      ufile.overwrite = overwrite;
      Debug("file %@ %d %d", ufile.lpath, ufile.isUploading, ufile.isUploaded);
      [self showUploadProgress:ufile];
+}
+
+- (void)createFolder {
+    self.state = STATE_MKDIR;
+    self.directory.delegate = self;
+    [self popupInputView:NSLocalizedString(@"New Folder", @"Seafile") placeholder:NSLocalizedString(@"New folder name", @"Seafile") secure:false handler:^(NSString *input) {
+        if (!input || input.length == 0) {
+            [self alertWithTitle:NSLocalizedString(@"Folder name must not be empty", @"Seafile")];
+            return;
+        }
+        if (![input isValidFileName]) {
+            [self alertWithTitle:NSLocalizedString(@"Folder name invalid", @"Seafile")];
+            return;
+        }
+        [self.directory mkdir:input];
+        [self showLoadingView];
+    }];
 }
 
 - (IBAction)save:(id)sender
@@ -328,10 +363,14 @@
 
     [self doneLoadingTableViewData];
     Warning("Failed to load directory content %@\n", entry.name);
-    if ([_directory hasCache]) {
-        return;
-    } else {
-        [self alertWithTitle:NSLocalizedString(@"Failed to load content of the directory", @"Seafile")];
+    if (_state == STATE_LOADING) {
+        if ([_directory hasCache]) {
+            return;
+        } else {
+            [self alertWithTitle:NSLocalizedString(@"Failed to load content of the directory", @"Seafile")];
+        }
+    } else if (_state == STATE_MKDIR) {
+        [self alertWithTitle:NSLocalizedString(@"Failed to create folder", @"Seafile") handler:nil];
     }
 }
 
