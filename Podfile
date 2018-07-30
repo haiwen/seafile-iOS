@@ -29,3 +29,8 @@ target :"SeafAction" do
   pod 'SVPullToRefresh', :git => 'https://github.com/lilthree/SVPullToRefresh.git', :branch => 'master'
   shared
 end
+
+target :"SeafShare" do
+    pod 'SVPullToRefresh', :git => 'https://github.com/lilthree/SVPullToRefresh.git', :branch => 'master'
+    shared
+end
