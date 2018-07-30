@@ -788,7 +788,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         } else {
             NSString *s2faToken = [resp.allHeaderFields objectForKey:@"X-SEAFILE-S2FA"];
             
-            [Utils dict:_info setObject:password forKey:@"password"];
+            [Utils dict:self.info setObject:password forKey:@"password"];
             [self setToken:[responseObject objectForKey:@"token"] forUser:username isShib:false s2faToken:s2faToken];
         }
     }];
