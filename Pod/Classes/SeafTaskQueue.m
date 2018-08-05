@@ -36,8 +36,10 @@
         __weak typeof(self) weakSelf = self;
         self.innerQueueTaskCompleteBlock = ^(id<SeafTask> task, BOOL result) {
             __strong __typeof(self) strongSelf = weakSelf;
-            if (![strongSelf.ongoingTasks containsObject:task]) return;
             @synchronized (strongSelf.ongoingTasks) { // task succeeded, remove it
+                if (![strongSelf.ongoingTasks containsObject:task]) {
+                    return;
+                }
                 [strongSelf.ongoingTasks removeObject:task];
             }
             Debug("finish task %@, %ld tasks remained.",task.name, (long)[weakSelf taskNumber]);
@@ -52,8 +54,8 @@
                 }
             } else {
                 strongSelf.failedCount = 0;
-                if (![strongSelf.completedTasks containsObject:task]) {
-                    @synchronized (strongSelf.completedTasks) { // task succeeded, add to completedTasks
+                @synchronized (strongSelf.completedTasks) { // task succeeded, add to completedTasks
+                    if (![strongSelf.completedTasks containsObject:task]) {
                         [strongSelf.completedTasks addObject:task];
                     }
                 }
