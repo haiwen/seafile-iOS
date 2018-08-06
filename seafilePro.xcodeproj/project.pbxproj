@@ -542,6 +542,8 @@
 		F571850D1F0742FE00543F42 /* more_dot@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "more_dot@2x.png"; sourceTree = "<group>"; };
 		F57516891EF4CA0B00BD633B /* arrowmore@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "arrowmore@2x.png"; sourceTree = "<group>"; };
 		F575168A1EF4CA0B00BD633B /* arrowmore@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "arrowmore@3x.png"; sourceTree = "<group>"; };
+		F5AB05422118846D00443522 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafCell.xib; sourceTree = "<group>"; };
+		F5AB0544211884D600443522 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafAccountCell.xib; sourceTree = "<group>"; };
 		F5ADEA012081B69C00FB6451 /* SeafMkLibAlertController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafMkLibAlertController.h; sourceTree = "<group>"; };
 		F5ADEA022081B69C00FB6451 /* SeafMkLibAlertController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafMkLibAlertController.m; sourceTree = "<group>"; };
 		F5ADEA032081B69C00FB6451 /* SeafMkLibAlertController_iPhone.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SeafMkLibAlertController_iPhone.xib; sourceTree = "<group>"; };
@@ -1881,6 +1883,7 @@
 			isa = PBXVariantGroup;
 			children = (
 				57E22B641A12745500C92330 /* en */,
+				F5AB0544211884D600443522 /* Base */,
 			);
 			name = SeafAccountCell.xib;
 			sourceTree = "<group>";
@@ -1889,6 +1892,7 @@
 			isa = PBXVariantGroup;
 			children = (
 				57E22B661A12746000C92330 /* en */,
+				F5AB05422118846D00443522 /* Base */,
 			);
 			name = SeafCell.xib;
 			sourceTree = "<group>";
