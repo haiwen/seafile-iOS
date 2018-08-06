@@ -28,6 +28,7 @@
 @property (nonatomic, strong) SeafConnection *connection;
 @property (nonatomic, strong) SeafDir *directory;
 @property (nonatomic, strong) UIActivityIndicatorView *loadingView;
+@property (nonatomic, strong) UIAlertController *alert;
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
 @property (weak, nonatomic) IBOutlet UILabel *accountLabel;
 @property (weak, nonatomic) IBOutlet UILabel *destinationLabel;
@@ -51,6 +52,8 @@
     
     self.accountLabel.text = NSLocalizedString(@"Accounts", @"Seafile");
     self.destinationLabel.text = NSLocalizedString(@"Destination", @"Seafile");
+    self.accontButton.enabled = false;
+    self.destinationButton.enabled = false;
     [SeafGlobal.sharedObject loadAccounts];
     _conns = SeafGlobal.sharedObject.conns;
     if (_conns.count > 0) {
@@ -58,6 +61,8 @@
         NSString *hostAndName = [NSString stringWithFormat:@"%@-%@",_connection.host,_connection.username];
         [self.accontButton setTitle:hostAndName forState:UIControlStateNormal];
         [self updateSaveButton];
+    } else {
+        [self showAlert];
     }
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(selectDirNotification:) name:@"SelectedDirectoryNotif" object:nil];
@@ -83,10 +88,10 @@
         Warning("Failed to create temp dir.");
         return [self alertWithTitle:NSLocalizedString(@"Failed to upload file", @"Seafile") handler:nil];
     }
-    
+
     NSItemProviderCompletionHandler imageHandler = ^(UIImage *image, NSError *error) {
         Debug("load image: %@", error);
-        if (error) {
+        if (!image || error) {
             return [self handleFile:nil];
         }
         NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
@@ -94,7 +99,7 @@
         
         NSString *name = [NSString stringWithFormat:@"IMG_%@.JPG", [formatter stringFromDate:[NSDate date]] ];
         NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
-        NSData *data = UIImageJPEGRepresentation(image, 1.0f);
+        NSData *data = UIImageJPEGRepresentation(image, 0.5f);
         BOOL ret = [data writeToURL:targetUrl atomically:true];
         [self handleFile:ret ? targetUrl : nil];
     };
@@ -123,9 +128,13 @@
                 Warning("Unknown file type.");
                 return [self handleFile:nil];
             }
+            
         }
     }
+    
     dispatch_group_notify(self.group, dispatch_get_main_queue(), ^{
+        self.accontButton.enabled = true;
+        self.destinationButton.enabled = true;
         [self.loadingView stopAnimating];
         [self.tableView reloadData];
     });
@@ -135,12 +144,18 @@
     Debug("Received file : %@", url);
     if (!url) {
         Warning("Failed to load file.");
-        [self alertWithTitle:NSLocalizedString(@"Failed to load file", @"Seafile") handler:nil];
-        [self.extensionContext completeRequestReturningItems:self.extensionContext.inputItems completionHandler:nil];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self alertWithTitle:NSLocalizedString(@"Failed to load file", @"Seafile") handler:^{
+                [self.extensionContext completeRequestReturningItems:self.extensionContext.inputItems completionHandler:nil];
+            }];
+        });
+        return;
     }
     Debug("Upload file %@ %lld", url, [Utils fileSizeAtPath1:url.path]);
     SeafUploadFile *ufile = [[SeafUploadFile alloc] initWithPath:url.path];
-    [self.ufiles addObject:ufile];
+    dispatch_barrier_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        [self.ufiles addObject:ufile];
+    });
     dispatch_group_leave(self.group);
 }
 
@@ -157,6 +172,17 @@
     self.loadingView.center = self.view.center;
     self.loadingView.frame = CGRectMake((self.view.frame.size.width-self.loadingView.frame.size.width)/2, (self.view.frame.size.height-self.loadingView.frame.size.height)/2, self.loadingView.frame.size.width, self.loadingView.frame.size.height);
     [self.loadingView startAnimating];
+}
+
+- (void)showAlert {
+    if (!_alert) {
+        self.alert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Failed to login", @"Seafile") message:nil preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+            [self cancel:nil];
+        }];
+        [self.alert addAction:cancelAction];
+    }
+    [self presentViewController:self.alert animated:true completion:nil];
 }
 
 - (void)updateSaveButton {
