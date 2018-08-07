@@ -156,9 +156,9 @@
                     <navigationItem key="navigationItem" title="Save to Seafile" id="k9q-Nw-n0I">
                         <barButtonItem key="rightBarButtonItem" style="plain" id="a5T-Ez-09S">
                             <button key="customView" opaque="NO" contentMode="scaleToFill" enabled="NO" contentHorizontalAlignment="trailing" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="TAh-Vn-sNW">
-                                <rect key="frame" x="276" y="7" width="83" height="30"/>
+                                <rect key="frame" x="276" y="5.5" width="83" height="33"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="15"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <state key="normal" title="Save"/>
                                 <connections>
                                     <action selector="save:" destination="gTO-8A-cHg" eventType="touchUpInside" id="xJa-fA-WFG"/>

@@ -54,6 +54,8 @@
     self.destinationLabel.text = NSLocalizedString(@"Destination", @"Seafile");
     self.accontButton.enabled = false;
     self.destinationButton.enabled = false;
+    [self.saveButton setTitle:NSLocalizedString(@"Save", @"Seafile") forState:UIControlStateNormal];
+    
     [SeafGlobal.sharedObject loadAccounts];
     _conns = SeafGlobal.sharedObject.conns;
     if (_conns.count > 0) {
@@ -68,11 +70,13 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(selectDirNotification:) name:@"SelectedDirectoryNotif" object:nil];
     
     [self setupTableview];
-    [self handleInputs];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
+    if (self.ufiles.count == 0) {
+        [self handleInputs];
+    }
     [self updateSaveButton];
 }
 
@@ -83,52 +87,64 @@
 
 - (void)handleInputs {
     self.group = dispatch_group_create();
+    dispatch_queue_t queue = dispatch_queue_create("com.seafile.share.imagehandle", DISPATCH_QUEUE_CONCURRENT);
+    
     NSString *tmpdir = [SeafStorage uniqueDirUnder:SeafStorage.sharedObject.tempDir];
     if (![Utils checkMakeDir:tmpdir]) {
         Warning("Failed to create temp dir.");
         return [self alertWithTitle:NSLocalizedString(@"Failed to upload file", @"Seafile") handler:nil];
     }
-
-    NSItemProviderCompletionHandler imageHandler = ^(UIImage *image, NSError *error) {
-        Debug("load image: %@", error);
-        if (!image || error) {
-            return [self handleFile:nil];
-        }
-        NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-        [formatter setDateFormat:@"yyyy'-'MM'-'dd'T'HH'-'mm'-'ss"];
-        
-        NSString *name = [NSString stringWithFormat:@"IMG_%@.JPG", [formatter stringFromDate:[NSDate date]] ];
-        NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
-        NSData *data = UIImageJPEGRepresentation(image, 0.5f);
-        BOOL ret = [data writeToURL:targetUrl atomically:true];
-        [self handleFile:ret ? targetUrl : nil];
-    };
-    
-    NSItemProviderCompletionHandler urlHandler = ^(NSURL *url, NSError *error) {
-        Debug("load file from url: %@", url);
-        NSString *name = url.lastPathComponent;
-        NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
-        BOOL ret = [Utils copyFile:url to:targetUrl];
-        [self handleFile:ret ? targetUrl : nil];
-    };
     
     [self showLoadingView];
     for (NSExtensionItem *item in self.extensionContext.inputItems) {
         for (NSItemProvider *itemProvider in item.attachments) {
             dispatch_group_enter(self.group);
-            Debug("itemProvider: %@", itemProvider);
-            if ([itemProvider hasItemConformingToTypeIdentifier:(NSString *)kUTTypeURL]) {
-                [itemProvider loadItemForTypeIdentifier:(NSString *)kUTTypeURL options:nil completionHandler:urlHandler];
-            } else if ([itemProvider hasItemConformingToTypeIdentifier:(NSString *)kUTTypeImage]) {
-                // This is an image.
-                [itemProvider loadItemForTypeIdentifier:(NSString *)kUTTypeImage options:nil completionHandler:imageHandler];
-            } else if ([itemProvider hasItemConformingToTypeIdentifier:(NSString *)kUTTypeMovie]) {
-                [itemProvider loadItemForTypeIdentifier:(NSString *)kUTTypeMovie options:nil completionHandler:urlHandler];
-            } else {
-                Warning("Unknown file type.");
-                return [self handleFile:nil];
-            }
-            
+            dispatch_barrier_async(queue, ^{
+                Debug("itemProvider: %@", itemProvider);
+                if ([itemProvider hasItemConformingToTypeIdentifier:(NSString *)kUTTypeItem]) {
+                    [itemProvider loadItemForTypeIdentifier:(NSString *)kUTTypeItem options:nil completionHandler:^(id<NSSecureCoding, NSObject>  _Nullable item, NSError * _Null_unspecified error) {
+                        if (!error) {
+                            if ([item isKindOfClass:[UIImage class]]) {
+                                UIImage *image = (UIImage *)item;
+                                NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+                                [formatter setDateFormat:@"yyyy'-'MM'-'dd'T'HH'-'mm'-'ss"];
+                                
+                                NSString *name = [NSString stringWithFormat:@"IMG_%@.JPG", [formatter stringFromDate:[NSDate date]] ];
+                                NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
+                                NSData *data = [self UIImageToDataJPEG:image];
+                                BOOL ret = [data writeToURL:targetUrl atomically:true];
+                                [self handleFile:ret ? targetUrl : nil];
+                            } else if ([item isKindOfClass:[NSData class]]) {
+                                NSData *data = (NSData *)item;
+                                NSString *name = item.description;
+                                NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
+                                BOOL ret = [data writeToURL:targetUrl atomically:true];
+                                [self handleFile:ret ? targetUrl : nil];
+                            } else if ([item isKindOfClass:[NSURL class]]) {
+                                NSURL *url = (NSURL *)item;
+                                NSString *name = url.lastPathComponent;
+                                NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
+                                BOOL ret = [Utils copyFile:url to:targetUrl];
+                                [self handleFile:ret ? targetUrl : nil];
+                            } else if ([item isKindOfClass:[NSString class]]) {
+                                NSString *string = (NSString *)item;
+                                if (string.length > 0) {
+                                    NSString *name = [NSString stringWithFormat:@"%@.txt", item.description];
+                                    NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
+                                    BOOL ret = [[string dataUsingEncoding:NSUTF8StringEncoding] writeToURL:targetUrl atomically:true];
+                                    [self handleFile:ret ? targetUrl : nil];
+                                } else {
+                                    [self handleFile:nil];
+                                }
+                            } else {
+                                [self handleFile:nil];
+                            }
+                        } else {
+                            [self handleFile:nil];
+                        }
+                    }];
+                }
+            });
         }
     }
     
@@ -138,6 +154,13 @@
         [self.loadingView stopAnimating];
         [self.tableView reloadData];
     });
+}
+
+- (NSData *)UIImageToDataJPEG:(UIImage *)image {
+    @autoreleasepool {
+        NSData *data = UIImageJPEGRepresentation(image, 0.9f);
+        return data;
+    }
 }
 
 - (void)handleFile:(NSURL *)url {
@@ -244,6 +267,7 @@
 }
 
 - (void)cancel:(id)sender {
+    self.ufiles = nil;
     [self.extensionContext completeRequestReturningItems:self.extensionContext.inputItems completionHandler:nil];
 }
 
