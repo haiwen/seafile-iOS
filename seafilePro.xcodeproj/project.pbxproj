@@ -51,9 +51,7 @@
 		573F4AAC1788763500F096D3 /* arrowleft.png in Resources */ = {isa = PBXBuildFile; fileRef = 573F4AA91788763500F096D3 /* arrowleft.png */; };
 		573F4AAE1788763500F096D3 /* arrowright.png in Resources */ = {isa = PBXBuildFile; fileRef = 573F4AAA1788763500F096D3 /* arrowright.png */; };
 		574D3D8E1DFA6EF90093C18C /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 57D189CE182E0A380029A797 /* Images.xcassets */; };
-		574D3DC21DFA815B0093C18C /* SeafAccountCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22AF91A12625B00C92330 /* SeafAccountCell.xib */; };
 		574D3DC81DFA88CF0093C18C /* SeafActionDirViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 574D3DC71DFA88CF0093C18C /* SeafActionDirViewController.m */; };
-		574D3DCA1DFD1E010093C18C /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 57532C161868AA48003D564B /* Localizable.strings */; };
 		574DF02C1AF2863E0044FE06 /* SeafShibbolethViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 574DF02A1AF2863E0044FE06 /* SeafShibbolethViewController.xib */; };
 		574F61F71BDB5DB300014EBA /* SeafButtonCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 574F61F51BDB5DB300014EBA /* SeafButtonCell.m */; };
 		57532C1A1868AA48003D564B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 57532C161868AA48003D564B /* Localizable.strings */; };
@@ -106,7 +104,6 @@
 		57A029A01A16F965009C9D7B /* SeafFileProvider.entitlements in Resources */ = {isa = PBXBuildFile; fileRef = 57A0299E1A16F965009C9D7B /* SeafFileProvider.entitlements */; };
 		57A029A41A170147009C9D7B /* SeafProviderFileViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 57A029A21A170147009C9D7B /* SeafProviderFileViewController.m */; };
 		57A029A51A170147009C9D7B /* SeafProviderFileViewController.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57A029A31A170147009C9D7B /* SeafProviderFileViewController.storyboard */; };
-		57A192161A208F1600985F77 /* SeafAccountCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22AF91A12625B00C92330 /* SeafAccountCell.xib */; };
 		57A550DB177F23BB00E3BA9B /* refresh.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550D9177F23BB00E3BA9B /* refresh.png */; };
 		57A550DE177F283700E3BA9B /* addmsg.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550DC177F283700E3BA9B /* addmsg.png */; };
 		57A550E1177F2C4400E3BA9B /* export.png in Resources */ = {isa = PBXBuildFile; fileRef = 57A550DF177F2C4400E3BA9B /* export.png */; };
@@ -154,8 +151,6 @@
 		57F8CD221A127566000F6CDC /* DownloadingProgress_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22B251A12647800C92330 /* DownloadingProgress_iPad.xib */; };
 		57F8CD231A127566000F6CDC /* FailToPreview_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22AEF1A12625B00C92330 /* FailToPreview_iPad.xib */; };
 		57F8CD241A127566000F6CDC /* FailToPreview_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22AF11A12625B00C92330 /* FailToPreview_iPhone.xib */; };
-		57F8CD251A127566000F6CDC /* SeafAccountCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22AF91A12625B00C92330 /* SeafAccountCell.xib */; };
-		57F8CD271A127566000F6CDC /* SeafCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22AFD1A12625B00C92330 /* SeafCell.xib */; };
 		57F8CD281A127566000F6CDC /* SeafDirCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22AFF1A12625B00C92330 /* SeafDirCell.xib */; };
 		57F8CD2C1A127566000F6CDC /* SeafTextEditorViewController_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22B091A12625B00C92330 /* SeafTextEditorViewController_iPad.xib */; };
 		57F8CD2D1A127566000F6CDC /* SeafTextEditorViewController_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22B0B1A12625B00C92330 /* SeafTextEditorViewController_iPhone.xib */; };
@@ -200,6 +195,17 @@
 		F571850F1F0742FE00543F42 /* more_dot@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F571850D1F0742FE00543F42 /* more_dot@2x.png */; };
 		F575168B1EF4CA0B00BD633B /* arrowmore@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F57516891EF4CA0B00BD633B /* arrowmore@2x.png */; };
 		F575168C1EF4CA0B00BD633B /* arrowmore@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = F575168A1EF4CA0B00BD633B /* arrowmore@3x.png */; };
+		F5AB05472125D10900443522 /* SeafInputItemsProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = F5AB05462125D10900443522 /* SeafInputItemsProvider.m */; };
+		F5AB05482125D10900443522 /* SeafInputItemsProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = F5AB05462125D10900443522 /* SeafInputItemsProvider.m */; };
+		F5AB05492125D10900443522 /* SeafInputItemsProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = F5AB05462125D10900443522 /* SeafInputItemsProvider.m */; };
+		F5AB0565212737AF00443522 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 57532C161868AA48003D564B /* Localizable.strings */; };
+		F5AB0566212737B100443522 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 57532C161868AA48003D564B /* Localizable.strings */; };
+		F5AB057021273C0E00443522 /* SeafCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F5AB056F21273C0D00443522 /* SeafCell.xib */; };
+		F5AB057121273C0E00443522 /* SeafCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F5AB056F21273C0D00443522 /* SeafCell.xib */; };
+		F5AB057221273C0E00443522 /* SeafCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F5AB056F21273C0D00443522 /* SeafCell.xib */; };
+		F5AB057821273C9000443522 /* SeafAccountCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F5AB057721273C8F00443522 /* SeafAccountCell.xib */; };
+		F5AB057921273C9000443522 /* SeafAccountCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F5AB057721273C8F00443522 /* SeafAccountCell.xib */; };
+		F5AB057A21273C9000443522 /* SeafAccountCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F5AB057721273C8F00443522 /* SeafAccountCell.xib */; };
 		F5ADEA042081B69C00FB6451 /* SeafMkLibAlertController.m in Sources */ = {isa = PBXBuildFile; fileRef = F5ADEA022081B69C00FB6451 /* SeafMkLibAlertController.m */; };
 		F5ADEA052081B69C00FB6451 /* SeafMkLibAlertController_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = F5ADEA032081B69C00FB6451 /* SeafMkLibAlertController_iPhone.xib */; };
 		F5ADEA072081F92900FB6451 /* SeafMkLibAlertController_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = F5ADEA062081F92900FB6451 /* SeafMkLibAlertController_iPad.xib */; };
@@ -211,10 +217,8 @@
 		F5C64908210A25EB00842687 /* SeafAccountCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 58D40A661E9AF72200A68BEF /* SeafAccountCell.m */; };
 		F5C64909210A291100842687 /* SeafDbCacheProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = 58D40A641E9AF72200A68BEF /* SeafDbCacheProvider.m */; };
 		F5C6490B210AC90200842687 /* seafile.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 58D40A6C1E9AF7A400A68BEF /* seafile.xcdatamodeld */; };
-		F5C6490C210AD22000842687 /* SeafAccountCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22AF91A12625B00C92330 /* SeafAccountCell.xib */; };
 		F5C6490D210AD7F700842687 /* SeafActionDirViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 574D3DC71DFA88CF0093C18C /* SeafActionDirViewController.m */; };
 		F5C64910210DFF4B00842687 /* SeafShareNavigatioController.m in Sources */ = {isa = PBXBuildFile; fileRef = F5C6490F210DFF4B00842687 /* SeafShareNavigatioController.m */; };
-		F5C649112110BCB700842687 /* SeafCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 57E22AFD1A12625B00C92330 /* SeafCell.xib */; };
 		F5C649122110BD9700842687 /* download_finished.png in Resources */ = {isa = PBXBuildFile; fileRef = 578778A61C9CF82F009C17D4 /* download_finished.png */; };
 		F5C649132110BD9A00842687 /* download_waiting.png in Resources */ = {isa = PBXBuildFile; fileRef = 578778A71C9CF82F009C17D4 /* download_waiting.png */; };
 		F5C649142110BDC000842687 /* red.png in Resources */ = {isa = PBXBuildFile; fileRef = 57227A5B18389DB600CD28E9 /* red.png */; };
@@ -228,7 +232,6 @@
 		F5C6491F2112052800842687 /* more_right.png in Resources */ = {isa = PBXBuildFile; fileRef = F5C6491A2112052800842687 /* more_right.png */; };
 		F5C649202112052800842687 /* more_right@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F5C6491B2112052800842687 /* more_right@2x.png */; };
 		F5C649212112052800842687 /* more_right@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F5C6491B2112052800842687 /* more_right@2x.png */; };
-		F5C649222112083900842687 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 57532C161868AA48003D564B /* Localizable.strings */; };
 		F5C649252112186200842687 /* SeafShareAccountViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F5C649242112186200842687 /* SeafShareAccountViewController.m */; };
 		F5C649262112186200842687 /* SeafShareAccountViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F5C649242112186200842687 /* SeafShareAccountViewController.m */; };
 		F5C649292112269800842687 /* SeafShareDirViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F5C649282112269800842687 /* SeafShareDirViewController.m */; };
@@ -481,8 +484,6 @@
 		57E22B611A12744000C92330 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/FailToPreview_iPhone.xib; sourceTree = "<group>"; };
 		57E22B621A12744700C92330 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/FolderView_iPad.storyboard; sourceTree = "<group>"; };
 		57E22B631A12744F00C92330 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/FolderView_iPhone.storyboard; sourceTree = "<group>"; };
-		57E22B641A12745500C92330 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/SeafAccountCell.xib; sourceTree = "<group>"; };
-		57E22B661A12746000C92330 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/SeafCell.xib; sourceTree = "<group>"; };
 		57E22B671A12746C00C92330 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/SeafDirCell.xib; sourceTree = "<group>"; };
 		57E2FEA21ABD544900BCD7F5 /* cs */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = cs; path = cs.lproj/Localizable.strings; sourceTree = "<group>"; };
 		57E51BC619A0F355002B50C6 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -542,8 +543,10 @@
 		F571850D1F0742FE00543F42 /* more_dot@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "more_dot@2x.png"; sourceTree = "<group>"; };
 		F57516891EF4CA0B00BD633B /* arrowmore@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "arrowmore@2x.png"; sourceTree = "<group>"; };
 		F575168A1EF4CA0B00BD633B /* arrowmore@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "arrowmore@3x.png"; sourceTree = "<group>"; };
-		F5AB05422118846D00443522 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafCell.xib; sourceTree = "<group>"; };
-		F5AB0544211884D600443522 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SeafAccountCell.xib; sourceTree = "<group>"; };
+		F5AB05452125D10900443522 /* SeafInputItemsProvider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafInputItemsProvider.h; sourceTree = "<group>"; };
+		F5AB05462125D10900443522 /* SeafInputItemsProvider.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafInputItemsProvider.m; sourceTree = "<group>"; };
+		F5AB056F21273C0D00443522 /* SeafCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafCell.xib; sourceTree = "<group>"; };
+		F5AB057721273C8F00443522 /* SeafAccountCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafAccountCell.xib; sourceTree = "<group>"; };
 		F5ADEA012081B69C00FB6451 /* SeafMkLibAlertController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafMkLibAlertController.h; sourceTree = "<group>"; };
 		F5ADEA022081B69C00FB6451 /* SeafMkLibAlertController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafMkLibAlertController.m; sourceTree = "<group>"; };
 		F5ADEA032081B69C00FB6451 /* SeafMkLibAlertController_iPhone.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SeafMkLibAlertController_iPhone.xib; sourceTree = "<group>"; };
@@ -804,6 +807,8 @@
 		5709512815B9B1B600F48C08 /* ui */ = {
 			isa = PBXGroup;
 			children = (
+				F5AB056F21273C0D00443522 /* SeafCell.xib */,
+				F5AB057721273C8F00443522 /* SeafAccountCell.xib */,
 				57E5E7B41CC219E7004B7125 /* SeafEventCell.xib */,
 				57E5E7B61CC219E7004B7125 /* SeafButtonCell.xib */,
 				57E22B251A12647800C92330 /* DownloadingProgress_iPad.xib */,
@@ -812,10 +817,8 @@
 				57E22AF11A12625B00C92330 /* FailToPreview_iPhone.xib */,
 				57E22AF31A12625B00C92330 /* FolderView_iPad.storyboard */,
 				57E22AF51A12625B00C92330 /* FolderView_iPhone.storyboard */,
-				57E22AF91A12625B00C92330 /* SeafAccountCell.xib */,
 				57124BE21B3E726700075EAE /* SeafAccountViewController_iPad.xib */,
 				57124BDF1B3E710E00075EAE /* SeafAccountViewController_iPhone.xib */,
-				57E22AFD1A12625B00C92330 /* SeafCell.xib */,
 				57E22AFF1A12625B00C92330 /* SeafDirCell.xib */,
 				574DF02A1AF2863E0044FE06 /* SeafShibbolethViewController.xib */,
 				57E22B031A12625B00C92330 /* SeafStart.storyboard */,
@@ -997,6 +1000,8 @@
 				58D40A651E9AF72200A68BEF /* SeafDbCacheProvider.h */,
 				58D40A661E9AF72200A68BEF /* SeafAccountCell.m */,
 				58D40A671E9AF72200A68BEF /* SeafAccountCell.h */,
+				F5AB05452125D10900443522 /* SeafInputItemsProvider.h */,
+				F5AB05462125D10900443522 /* SeafInputItemsProvider.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -1260,12 +1265,11 @@
 				57124BE11B3E710E00075EAE /* SeafAccountViewController_iPhone.xib in Resources */,
 				57F8CD231A127566000F6CDC /* FailToPreview_iPad.xib in Resources */,
 				57F8CD241A127566000F6CDC /* FailToPreview_iPhone.xib in Resources */,
-				57F8CD251A127566000F6CDC /* SeafAccountCell.xib in Resources */,
-				57F8CD271A127566000F6CDC /* SeafCell.xib in Resources */,
 				57F8CD281A127566000F6CDC /* SeafDirCell.xib in Resources */,
 				57F8CD2C1A127566000F6CDC /* SeafTextEditorViewController_iPad.xib in Resources */,
 				57F8CD2D1A127566000F6CDC /* SeafTextEditorViewController_iPhone.xib in Resources */,
 				57F8CD2F1A127566000F6CDC /* SeafUploadingFileCell.xib in Resources */,
+				F5AB057021273C0E00443522 /* SeafCell.xib in Resources */,
 				57E22B3A1A126EBE00C92330 /* FolderView_iPad.storyboard in Resources */,
 				57E22B3B1A126EBE00C92330 /* FolderView_iPhone.storyboard in Resources */,
 				57E22B411A126EBE00C92330 /* SeafStart.storyboard in Resources */,
@@ -1331,6 +1335,7 @@
 				57C03F4617FB271100F7B575 /* unstar2.png in Resources */,
 				57943C0219F027D5008423E5 /* arrowright@2x.png in Resources */,
 				57532C1A1868AA48003D564B /* Localizable.strings in Resources */,
+				F5AB057821273C9000443522 /* SeafAccountCell.xib in Resources */,
 				57E5E7B81CC219E7004B7125 /* SeafEventCell.xib in Resources */,
 				57A95E5918369147009D268A /* close.png in Resources */,
 				57C03F4C17FB271100F7B575 /* arrowright2.png in Resources */,
@@ -1375,7 +1380,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				58AC97D91FC391FD00A7518C /* Settings.bundle in Resources */,
-				57A192161A208F1600985F77 /* SeafAccountCell.xib in Resources */,
 				57A029A51A170147009C9D7B /* SeafProviderFileViewController.storyboard in Resources */,
 				57A0299B1A16F95D009C9D7B /* MainInterface.storyboard in Resources */,
 				57A0299C1A16F95D009C9D7B /* SeafFileProviderUI.entitlements in Resources */,
@@ -1395,9 +1399,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F5AB057921273C9000443522 /* SeafAccountCell.xib in Resources */,
+				F5AB0566212737B100443522 /* Localizable.strings in Resources */,
 				58AC97DD1FC3926300A7518C /* Settings.bundle in Resources */,
-				574D3DCA1DFD1E010093C18C /* Localizable.strings in Resources */,
-				574D3DC21DFA815B0093C18C /* SeafAccountCell.xib in Resources */,
+				F5AB057121273C0E00443522 /* SeafCell.xib in Resources */,
 				57B14B711DF5325B0045112E /* MainInterface.storyboard in Resources */,
 				574D3D8E1DFA6EF90093C18C /* Images.xcassets in Resources */,
 			);
@@ -1407,7 +1412,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F5C6490C210AD22000842687 /* SeafAccountCell.xib in Resources */,
+				F5AB057A21273C9000443522 /* SeafAccountCell.xib in Resources */,
 				F5C649122110BD9700842687 /* download_finished.png in Resources */,
 				F5C649152110BE1F00842687 /* more_dot@3x.png in Resources */,
 				F5C649132110BD9A00842687 /* download_waiting.png in Resources */,
@@ -1415,10 +1420,10 @@
 				F5C6491D2112052800842687 /* more_right@3x.png in Resources */,
 				F5C649212112052800842687 /* more_right@2x.png in Resources */,
 				F5C649162110BE2100842687 /* more_dot@2x.png in Resources */,
+				F5AB0565212737AF00443522 /* Localizable.strings in Resources */,
+				F5AB057221273C0E00443522 /* SeafCell.xib in Resources */,
 				F5C6491F2112052800842687 /* more_right.png in Resources */,
-				F5C649222112083900842687 /* Localizable.strings in Resources */,
 				F5C649172110BE2400842687 /* more_dot.png in Resources */,
-				F5C649112110BCB700842687 /* SeafCell.xib in Resources */,
 				F5C648FD210A0B4E00842687 /* MainInterface.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1679,6 +1684,7 @@
 				577B6C6616AADBA3008E82C2 /* SeafCell.m in Sources */,
 				58D40A6B1E9AF72200A68BEF /* SeafAccountCell.m in Sources */,
 				57DA26F5173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */,
+				F5AB05472125D10900443522 /* SeafInputItemsProvider.m in Sources */,
 				5757DCCD1AEBCF1600BC0426 /* SeafShibbolethViewController.m in Sources */,
 				58D40A681E9AF72200A68BEF /* UIViewController+Extend.m in Sources */,
 				F5C649292112269800842687 /* SeafShareDirViewController.m in Sources */,
@@ -1735,6 +1741,7 @@
 				58D40A781E9AF83200A68BEF /* SeafAccountCell.m in Sources */,
 				574D3DC81DFA88CF0093C18C /* SeafActionDirViewController.m in Sources */,
 				57B14B6E1DF5325B0045112E /* ActionViewController.m in Sources */,
+				F5AB05482125D10900443522 /* SeafInputItemsProvider.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1753,6 +1760,7 @@
 				F5C64906210A25DB00842687 /* UIViewController+Extend.m in Sources */,
 				F5C6490D210AD7F700842687 /* SeafActionDirViewController.m in Sources */,
 				F5C6492A2112269800842687 /* SeafShareDirViewController.m in Sources */,
+				F5AB05492125D10900443522 /* SeafInputItemsProvider.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1877,24 +1885,6 @@
 				57E22B631A12744F00C92330 /* en */,
 			);
 			name = FolderView_iPhone.storyboard;
-			sourceTree = "<group>";
-		};
-		57E22AF91A12625B00C92330 /* SeafAccountCell.xib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				57E22B641A12745500C92330 /* en */,
-				F5AB0544211884D600443522 /* Base */,
-			);
-			name = SeafAccountCell.xib;
-			sourceTree = "<group>";
-		};
-		57E22AFD1A12625B00C92330 /* SeafCell.xib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				57E22B661A12746000C92330 /* en */,
-				F5AB05422118846D00443522 /* Base */,
-			);
-			name = SeafCell.xib;
 			sourceTree = "<group>";
 		};
 		57E22AFF1A12625B00C92330 /* SeafDirCell.xib */ = {

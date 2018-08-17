@@ -15,6 +15,7 @@
 #import "UIViewController+Extend.h"
 #import "Debug.h"
 #import "Utils.h"
+#import "SeafInputItemsProvider.h"
 
 @interface ActionViewController ()<UITableViewDataSource, UITableViewDelegate>
 
@@ -34,63 +35,7 @@
 
     [SeafGlobal.sharedObject loadAccounts];
     _conns = SeafGlobal.sharedObject.conns;
-
-    // Get the item[s] we're handling from the extension context.
-
-    // For example, look for an image and place it into an image view.
-    // Replace this with something appropriate for the type[s] your extension supports.
-    NSString *tmpdir = [SeafStorage uniqueDirUnder:SeafStorage.sharedObject.tempDir];
-    if (![Utils checkMakeDir:tmpdir]) {
-        Warning("Failed to create temp dir.");
-        return [self alertWithTitle:NSLocalizedString(@"Failed to upload file", @"Seafile") handler:nil];
-    }
-
-    NSItemProviderCompletionHandler imageHandler = ^(UIImage *image, NSError *error) {
-        Debug("load image: %@", error);
-        if (error) {
-            return [self handleFile:nil];
-        }
-        NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-        [formatter setDateFormat:@"yyyy'-'MM'-'dd'T'HH'-'mm'-'ss"];
-
-        NSString *name = [NSString stringWithFormat:@"IMG_%@.JPG", [formatter stringFromDate:[NSDate date]] ];
-        NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
-        NSData *data = UIImageJPEGRepresentation(image, 1.0f);
-        BOOL ret = [data writeToURL:targetUrl atomically:true];
-        [self handleFile:ret ? targetUrl : nil];
-
-    };
-
-    NSItemProviderCompletionHandler urlHandler = ^(NSURL *url, NSError *error) {
-        Debug("load file from url: %@", url);
-        NSString *name = url.lastPathComponent;
-        NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
-        BOOL ret = [Utils copyFile:url to:targetUrl];
-        [self handleFile:ret ? targetUrl : nil];
-    };
-
-    for (NSExtensionItem *item in self.extensionContext.inputItems) {
-        for (NSItemProvider *itemProvider in item.attachments) {
-            Debug("itemProvider: %@", itemProvider);
-            if ([itemProvider hasItemConformingToTypeIdentifier:(NSString *)kUTTypeURL]) {
-                [itemProvider loadItemForTypeIdentifier:(NSString *)kUTTypeURL options:nil completionHandler:urlHandler];
-            } else if ([itemProvider hasItemConformingToTypeIdentifier:(NSString *)kUTTypeImage]) {
-                // This is an image.
-                [itemProvider loadItemForTypeIdentifier:(NSString *)kUTTypeImage options:nil completionHandler:imageHandler];
-            } else if ([itemProvider hasItemConformingToTypeIdentifier:(NSString *)kUTTypeMovie]) {
-                [itemProvider loadItemForTypeIdentifier:(NSString *)kUTTypeMovie options:nil completionHandler:urlHandler];
-            } else {
-                Warning("Unknown file type.");
-                return [self handleFile:nil];
-            }
-            break;
-        }
-
-        if (_ufile) {
-            // We only handle one file, so stop looking for more.
-            break;
-        }
-    }
+    
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeAll;
@@ -101,6 +46,19 @@
                                                                             target:nil
                                                                             action:nil];
     self.tableView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.tableView.bounds.size.width, 10)];
+    
+    __weak typeof(self) weakSelf = self;
+    [SeafInputItemsProvider loadInputs:weakSelf.extensionContext complete:^(BOOL result, NSArray *array) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (result) {
+                weakSelf.ufile = array.firstObject;
+            } else {
+                [weakSelf alertWithTitle:NSLocalizedString(@"Failed to load file", @"Seafile") handler:^{
+                    [weakSelf.extensionContext completeRequestReturningItems:self.extensionContext.inputItems completionHandler:nil];
+                }];
+            }
+        });
+    }];
 }
 
 - (void)handleFile:(NSURL *)url {
