@@ -63,7 +63,6 @@
     self.createButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"New Folder", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(createFolder)];
     UIBarButtonItem *flexItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
     self.toolbarItems = @[flexItem, self.createButton, flexItem];
-    self.navigationController.toolbarHidden = _directory.editable ? false : true;
     
     [self refreshView];
     
@@ -72,6 +71,11 @@
         weakSelf.directory.delegate = weakSelf;
         [weakSelf.directory loadContent:YES];
     }];
+}
+
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    self.navigationController.toolbarHidden = _directory.editable ? false : true;
 }
 
 - (void)refreshView {

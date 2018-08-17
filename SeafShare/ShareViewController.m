@@ -19,12 +19,12 @@
 #import "SeafShareAccountViewController.h"
 #import "SeafShareDirViewController.h"
 #import "SeafDataTaskManager.h"
+#import "SeafInputItemsProvider.h"
 
 @interface ShareViewController ()<UITableViewDataSource, UITableViewDelegate, SeafUploadDelegate>
 
 @property (nonatomic, copy) NSArray *conns;
-@property (nonatomic, strong) NSMutableArray *ufiles;
-@property (nonatomic, strong) dispatch_group_t group;
+@property (nonatomic, strong) NSArray *ufiles;
 @property (nonatomic, strong) SeafConnection *connection;
 @property (nonatomic, strong) SeafDir *directory;
 @property (nonatomic, strong) UIActivityIndicatorView *loadingView;
@@ -75,7 +75,7 @@
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     if (self.ufiles.count == 0) {
-        [self handleInputs];
+        [self loadInputs];
     }
     [self updateSaveButton];
 }
@@ -85,101 +85,24 @@
     [self updateSaveButton];
 }
 
-- (void)handleInputs {
-    self.group = dispatch_group_create();
-    dispatch_queue_t queue = dispatch_queue_create("com.seafile.share.imagehandle", DISPATCH_QUEUE_CONCURRENT);
-    
-    NSString *tmpdir = [SeafStorage uniqueDirUnder:SeafStorage.sharedObject.tempDir];
-    if (![Utils checkMakeDir:tmpdir]) {
-        Warning("Failed to create temp dir.");
-        return [self alertWithTitle:NSLocalizedString(@"Failed to upload file", @"Seafile") handler:nil];
-    }
-    
+- (void)loadInputs {
     [self showLoadingView];
-    for (NSExtensionItem *item in self.extensionContext.inputItems) {
-        for (NSItemProvider *itemProvider in item.attachments) {
-            dispatch_group_enter(self.group);
-            dispatch_barrier_async(queue, ^{
-                Debug("itemProvider: %@", itemProvider);
-                if ([itemProvider hasItemConformingToTypeIdentifier:(NSString *)kUTTypeItem]) {
-                    [itemProvider loadItemForTypeIdentifier:(NSString *)kUTTypeItem options:nil completionHandler:^(id<NSSecureCoding, NSObject>  _Nullable item, NSError * _Null_unspecified error) {
-                        if (!error) {
-                            if ([item isKindOfClass:[UIImage class]]) {
-                                UIImage *image = (UIImage *)item;
-                                NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-                                [formatter setDateFormat:@"yyyy'-'MM'-'dd'T'HH'-'mm'-'ss"];
-                                
-                                NSString *name = [NSString stringWithFormat:@"IMG_%@.JPG", [formatter stringFromDate:[NSDate date]] ];
-                                NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
-                                NSData *data = [self UIImageToDataJPEG:image];
-                                BOOL ret = [data writeToURL:targetUrl atomically:true];
-                                [self handleFile:ret ? targetUrl : nil];
-                            } else if ([item isKindOfClass:[NSData class]]) {
-                                NSData *data = (NSData *)item;
-                                NSString *name = item.description;
-                                NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
-                                BOOL ret = [data writeToURL:targetUrl atomically:true];
-                                [self handleFile:ret ? targetUrl : nil];
-                            } else if ([item isKindOfClass:[NSURL class]]) {
-                                NSURL *url = (NSURL *)item;
-                                NSString *name = url.lastPathComponent;
-                                NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
-                                BOOL ret = [Utils copyFile:url to:targetUrl];
-                                [self handleFile:ret ? targetUrl : nil];
-                            } else if ([item isKindOfClass:[NSString class]]) {
-                                NSString *string = (NSString *)item;
-                                if (string.length > 0) {
-                                    NSString *name = [NSString stringWithFormat:@"%@.txt", item.description];
-                                    NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
-                                    BOOL ret = [[string dataUsingEncoding:NSUTF8StringEncoding] writeToURL:targetUrl atomically:true];
-                                    [self handleFile:ret ? targetUrl : nil];
-                                } else {
-                                    [self handleFile:nil];
-                                }
-                            } else {
-                                [self handleFile:nil];
-                            }
-                        } else {
-                            [self handleFile:nil];
-                        }
-                    }];
-                }
-            });
-        }
-    }
-    
-    dispatch_group_notify(self.group, dispatch_get_main_queue(), ^{
-        self.accontButton.enabled = true;
-        self.destinationButton.enabled = true;
-        [self.loadingView stopAnimating];
-        [self.tableView reloadData];
-    });
-}
-
-- (NSData *)UIImageToDataJPEG:(UIImage *)image {
-    @autoreleasepool {
-        NSData *data = UIImageJPEGRepresentation(image, 0.9f);
-        return data;
-    }
-}
-
-- (void)handleFile:(NSURL *)url {
-    Debug("Received file : %@", url);
-    if (!url) {
-        Warning("Failed to load file.");
+    __weak typeof(self) weakSelf = self;
+    [SeafInputItemsProvider loadInputs:weakSelf.extensionContext complete:^(BOOL result, NSArray *array) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self alertWithTitle:NSLocalizedString(@"Failed to load file", @"Seafile") handler:^{
-                [self.extensionContext completeRequestReturningItems:self.extensionContext.inputItems completionHandler:nil];
-            }];
+            [weakSelf.loadingView stopAnimating];
+            if (result) {
+                weakSelf.ufiles = array;
+                [weakSelf.tableView reloadData];
+                weakSelf.accontButton.enabled = true;
+                weakSelf.destinationButton.enabled = true;
+            } else {
+                [weakSelf alertWithTitle:NSLocalizedString(@"Failed to load file", @"Seafile") handler:^{
+                    [weakSelf.extensionContext completeRequestReturningItems:self.extensionContext.inputItems completionHandler:nil];
+                }];
+            }
         });
-        return;
-    }
-    Debug("Upload file %@ %lld", url, [Utils fileSizeAtPath1:url.path]);
-    SeafUploadFile *ufile = [[SeafUploadFile alloc] initWithPath:url.path];
-    dispatch_barrier_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        [self.ufiles addObject:ufile];
-    });
-    dispatch_group_leave(self.group);
+    }];
 }
 
 - (void)setupTableview {
@@ -344,13 +267,6 @@
     [self.navigationController pushViewController:dirVC animated:true];
 }
 
-- (NSMutableArray *)ufiles {
-    if (!_ufiles) {
-        _ufiles = [NSMutableArray array];
-    }
-    return _ufiles;
-}
-
 - (UIActivityIndicatorView *)loadingView {
     if (!_loadingView) {
         _loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
@@ -358,6 +274,10 @@
         _loadingView.hidesWhenStopped = YES;
     }
     return _loadingView;
+}
+
+- (void)dealloc {
+    Debug(@"%s", __func__);
 }
 
 @end

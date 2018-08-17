@@ -100,7 +100,6 @@ typedef enum : NSUInteger {
     self.createButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"New Folder", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(createFolder)];
     UIBarButtonItem *flexItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
     self.toolbarItems = @[flexItem, self.createButton, flexItem];
-    self.navigationController.toolbarHidden = _directory.editable ? false : true;
     
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeAll;
@@ -186,6 +185,7 @@ typedef enum : NSUInteger {
     if (self.loadingView && [self.loadingView isAnimating]) {
         self.loadingView.frame = CGRectMake((self.view.frame.size.width-self.loadingView.frame.size.width)/2, (self.view.frame.size.height-self.loadingView.frame.size.height)/2, self.loadingView.frame.size.width, self.loadingView.frame.size.height);
     }
+    self.navigationController.toolbarHidden = _directory.editable ? false : true;
 }
 
 - (void)dismissLoadingView

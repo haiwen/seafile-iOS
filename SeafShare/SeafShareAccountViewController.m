@@ -14,7 +14,6 @@
 
 @interface SeafShareAccountViewController ()<UITableViewDataSource, UITableViewDelegate>
 
-@property (nonatomic, copy) NSArray *conns;
 @property (nonatomic, strong) UITableView *tableView;
 
 @end
@@ -26,7 +25,6 @@
     self.navigationItem.title = NSLocalizedString(@"Accounts", @"Seafile");
     
     [SeafGlobal.sharedObject loadAccounts];
-    _conns = SeafGlobal.sharedObject.conns;
     
     self.tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStylePlain];
     self.tableView.rowHeight = 64;
@@ -43,12 +41,12 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return _conns.count;
+    return SeafGlobal.sharedObject.conns.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     SeafAccountCell *cell = [SeafAccountCell getInstance:tableView WithOwner:self];
-    SeafConnection *conn = [self.conns objectAtIndex:indexPath.row];
+    SeafConnection *conn = [SeafGlobal.sharedObject.conns objectAtIndex:indexPath.row];
     cell.imageview.image = [UIImage imageWithContentsOfFile:conn.avatar];
     cell.serverLabel.text = conn.address;
     cell.emailLabel.text = conn.username;
@@ -72,9 +70,15 @@
             if (self.selectedBlock) {
                 self.selectedBlock(conn);
             }
-            [self.navigationController popViewControllerAnimated:true];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self.navigationController popViewControllerAnimated:true];
+            });
         }
     }];
+}
+
+- (void)dealloc {
+    NSLog(@"delloc");
 }
 
 - (void)didReceiveMemoryWarning {
