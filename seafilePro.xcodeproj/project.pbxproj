@@ -998,8 +998,8 @@
 				58D40A631E9AF72200A68BEF /* SeafGlobal.h */,
 				58D40A641E9AF72200A68BEF /* SeafDbCacheProvider.m */,
 				58D40A651E9AF72200A68BEF /* SeafDbCacheProvider.h */,
-				58D40A661E9AF72200A68BEF /* SeafAccountCell.m */,
 				58D40A671E9AF72200A68BEF /* SeafAccountCell.h */,
+				58D40A661E9AF72200A68BEF /* SeafAccountCell.m */,
 				F5AB05452125D10900443522 /* SeafInputItemsProvider.h */,
 				F5AB05462125D10900443522 /* SeafInputItemsProvider.m */,
 			);

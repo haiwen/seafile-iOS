@@ -44,6 +44,7 @@
     if (![Utils checkMakeDir:tmpdir]) {
         Warning("Failed to create temp dir.");
         provider.completeBlock(false, nil);
+        return;
     }
     
     for (NSExtensionItem *item in extensionContext.inputItems) {
@@ -60,37 +61,41 @@
                                 [formatter setDateFormat:@"yyyy'-'MM'-'dd'T'HH'-'mm'-'ss"];
                                 
                                 NSString *name = [NSString stringWithFormat:@"IMG_%@.JPG", [formatter stringFromDate:[NSDate date]] ];
-                                NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
                                 NSData *data = [provider UIImageToDataJPEG:image];
-                                BOOL ret = [data writeToURL:targetUrl atomically:true];
-                                [provider handleFile:ret ? targetUrl : nil];
+                                NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
+                                
+                                [provider writeData:data toTarget:targetUrl];
                             } else if ([item isKindOfClass:[NSData class]]) {
                                 NSData *data = (NSData *)item;
                                 NSString *name = item.description;
                                 NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
-                                BOOL ret = [data writeToURL:targetUrl atomically:true];
-                                [provider handleFile:ret ? targetUrl : nil];
+                                
+                                [provider writeData:data toTarget:targetUrl];
                             } else if ([item isKindOfClass:[NSURL class]]) {
                                 NSURL *url = (NSURL *)item;
                                 NSString *name = url.lastPathComponent;
                                 NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
                                 BOOL ret = [Utils copyFile:url to:targetUrl];
-                                [provider handleFile:ret ? targetUrl : nil];
+                                if (ret) {
+                                    [provider handleFile:targetUrl];
+                                } else {
+                                    [provider handleFailed];
+                                }
                             } else if ([item isKindOfClass:[NSString class]]) {
                                 NSString *string = (NSString *)item;
                                 if (string.length > 0) {
                                     NSString *name = [NSString stringWithFormat:@"%@.txt", item.description];
                                     NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
-                                    BOOL ret = [[string dataUsingEncoding:NSUTF8StringEncoding] writeToURL:targetUrl atomically:true];
-                                    [provider handleFile:ret ? targetUrl : nil];
+                                    NSData *data = [string dataUsingEncoding:NSUTF8StringEncoding];
+                                    [provider writeData:data toTarget:targetUrl];
                                 } else {
-                                    [provider handleFile:nil];
+                                    [provider handleFailed];
                                 }
                             } else {
-                                [provider handleFile:nil];
+                                [provider handleFailed];
                             }
                         } else {
-                            [provider handleFile:nil];
+                            [provider handleFailed];
                         }
                     }];
                 }
@@ -110,12 +115,20 @@
     }
 }
 
+- (void)writeData:(NSData *)data toTarget:(NSURL *)targetUrl {
+    BOOL ret = [data writeToURL:targetUrl atomically:true];
+    if (ret) {
+        [self handleFile:targetUrl];
+    } else {
+        [self handleFailed];
+    }
+}
+
 - (void)handleFile:(NSURL *)url {
     Debug("Received file : %@", url);
     if (!url) {
         Warning("Failed to load file.");
-        self.completeBlock(false, nil);
-        return;
+        [self handleFailed];
     }
     Debug("Upload file %@ %lld", url, [Utils fileSizeAtPath1:url.path]);
     SeafUploadFile *ufile = [[SeafUploadFile alloc] initWithPath:url.path];
@@ -123,6 +136,11 @@
         [self.ufiles addObject:ufile];
     });
     dispatch_group_leave(self.group);
+}
+
+- (void)handleFailed {
+    self.completeBlock(false, nil);
+    return;
 }
 
 @end

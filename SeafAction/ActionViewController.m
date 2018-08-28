@@ -102,11 +102,8 @@
 {
     SeafAccountCell *cell = [SeafAccountCell getInstance:tableView WithOwner:self];
     SeafConnection *conn = [self.conns objectAtIndex:indexPath.row];
-    cell.imageview.image = [UIImage imageWithContentsOfFile:conn.avatar];
-    cell.serverLabel.text = conn.address;
-    cell.emailLabel.text = conn.username;
+    [cell updateAccountCell:conn];
     cell.imageview.layer.cornerRadius = 5;
-    cell.imageview.clipsToBounds = YES;
     return cell;
 }
 

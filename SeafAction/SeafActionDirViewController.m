@@ -16,12 +16,6 @@
 #import "SeafGlobal.h"
 #import "SeafFile.h"
 
-typedef enum : NSUInteger {
-    STATE_INIT = 0,
-    STATE_LOADING,
-    STATE_MKDIR,
-} DIR_STATE;
-
 @interface SeafActionDirViewController()<SeafDentryDelegate, SeafUploadDelegate>
 @property (strong, nonatomic) SeafDir *directory;
 @property (strong, nonatomic) SeafUploadFile *ufile;
@@ -33,7 +27,6 @@ typedef enum : NSUInteger {
 @property (strong, nonatomic) UIProgressView* progressView;
 @property (strong) UIAlertController *alert;
 @property (nonatomic, strong) NSArray *subDirs;
-@property (nonatomic, assign) DIR_STATE state;
 
 @end
 
@@ -45,7 +38,6 @@ typedef enum : NSUInteger {
         _directory = directory;
         _directory.delegate = self;
         _ufile = ufile;
-        _state = STATE_INIT;
         [_directory loadContent:NO];
     }
     return self;
@@ -63,7 +55,6 @@ typedef enum : NSUInteger {
     _directory = directory;
     _directory.delegate = self;
     [_directory loadContent:true];
-    _state = STATE_LOADING;
     self.navigationItem.title = _directory.name;
 }
 
@@ -93,13 +84,16 @@ typedef enum : NSUInteger {
     self.tableView.rowHeight = 50;
     self.tableView.estimatedSectionFooterHeight = 0;
     self.tableView.estimatedSectionHeaderHeight = 0;
-    self.saveButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSave target:self action:@selector(save:)];
-    self.navigationItem.title = _directory.name;
-    self.navigationItem.rightBarButtonItem = _directory.editable ? self.saveButton : nil;
     
-    self.createButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"New Folder", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(createFolder)];
-    UIBarButtonItem *flexItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
-    self.toolbarItems = @[flexItem, self.createButton, flexItem];
+    if (_directory.editable) {
+        self.saveButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSave target:self action:@selector(save:)];
+        self.navigationItem.title = _directory.name;
+        self.navigationItem.rightBarButtonItem = self.saveButton;
+        
+        self.createButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"New Folder", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(createFolder)];
+        UIBarButtonItem *flexItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
+        self.toolbarItems = @[flexItem, self.createButton, flexItem];
+    }
     
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeAll;
@@ -109,7 +103,6 @@ typedef enum : NSUInteger {
     [self.tableView addPullToRefresh:[SVArrowPullToRefreshView class] withActionHandler:^{
         weakSelf.directory.delegate = weakSelf;
         [weakSelf.directory loadContent:YES];
-        weakSelf.state = STATE_LOADING;
     }];
 }
 
@@ -135,8 +128,6 @@ typedef enum : NSUInteger {
 }
 
 - (void)createFolder {
-    self.state = STATE_MKDIR;
-    self.directory.delegate = self;
     [self popupInputView:NSLocalizedString(@"New Folder", @"Seafile") placeholder:NSLocalizedString(@"New folder name", @"Seafile") secure:false handler:^(NSString *input) {
         if (!input || input.length == 0) {
             [self alertWithTitle:NSLocalizedString(@"Folder name must not be empty", @"Seafile")];
@@ -146,8 +137,13 @@ typedef enum : NSUInteger {
             [self alertWithTitle:NSLocalizedString(@"Folder name invalid", @"Seafile")];
             return;
         }
-        [self.directory mkdir:input];
         [self showLoadingView];
+        [self.directory mkdir:input success:^(SeafDir *dir) {
+            [self dismissLoadingView];
+        } failure:^(SeafDir *dir, NSError *error) {
+            [self dismissLoadingView];
+            [self alertWithTitle:NSLocalizedString(@"Failed to create folder", @"Seafile") handler:nil];
+        }];
     }];
 }
 
@@ -157,9 +153,9 @@ typedef enum : NSUInteger {
     if ([_directory nameExist:_ufile.name]) {
         NSString *title = NSLocalizedString(@"A file with the same name already exists, do you want to overwrite?", @"Seafile");
         [self alertWithTitle:title message:nil yes:^{
-            [self uploadFile:_ufile overwrite:true];
+            [self uploadFile:self.ufile overwrite:true];
         } no:^{
-            [self uploadFile:_ufile overwrite:false];
+            [self uploadFile:self.ufile overwrite:false];
         }];
     } else {
         [self uploadFile:_ufile overwrite:false];
@@ -363,14 +359,10 @@ typedef enum : NSUInteger {
 
     [self doneLoadingTableViewData];
     Warning("Failed to load directory content %@\n", entry.name);
-    if (_state == STATE_LOADING) {
-        if ([_directory hasCache]) {
-            return;
-        } else {
-            [self alertWithTitle:NSLocalizedString(@"Failed to load content of the directory", @"Seafile")];
-        }
-    } else if (_state == STATE_MKDIR) {
-        [self alertWithTitle:NSLocalizedString(@"Failed to create folder", @"Seafile") handler:nil];
+    if ([_directory hasCache]) {
+        return;
+    } else {
+        [self alertWithTitle:NSLocalizedString(@"Failed to load content of the directory", @"Seafile")];
     }
 }
 
@@ -392,7 +384,6 @@ typedef enum : NSUInteger {
         dispatch_after(0, dispatch_get_main_queue(), ^{
             [self.alert dismissViewControllerAnimated:NO completion:^{
                 [self.extensionContext completeRequestReturningItems:self.extensionContext.inputItems completionHandler:nil];
-
             }];
         });
     }
@@ -403,6 +394,5 @@ typedef enum : NSUInteger {
     SeafActionDirViewController *controller = [[SeafActionDirViewController alloc] initWithSeafDir:dir file:self.ufile];
     [self.navigationController pushViewController:controller animated:true];
 }
-
 
 @end
