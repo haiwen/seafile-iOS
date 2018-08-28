@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+@class SeafConnection;
 
 @interface SeafAccountCell : UITableViewCell
 @property (strong, nonatomic) IBOutlet UILabel *serverLabel;
@@ -14,5 +15,5 @@
 @property (strong, nonatomic) IBOutlet UIImageView *imageview;
 
 + (SeafAccountCell *)getInstance:(UITableView *)tableView WithOwner:(id)owner;
-
+- (void)updateAccountCell:(SeafConnection *)conn;
 @end

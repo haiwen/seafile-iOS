@@ -266,13 +266,10 @@
     }
     SeafAccountCell *cell = [SeafAccountCell getInstance:tableView WithOwner:self];
     SeafConnection *conn = [[SeafGlobal sharedObject].conns objectAtIndex:indexPath.row];
-    cell.imageview.image = [UIImage imageWithContentsOfFile:conn.avatar];
-    cell.serverLabel.text = [conn.address componentsSeparatedByString:@"//"].lastObject;
-    cell.emailLabel.text = conn.username;
-    cell.accessoryType = UITableViewCellAccessoryNone;
-    UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditMenu:)];
+    [cell updateAccountCell:conn];
     cell.imageview.layer.cornerRadius = 25;
-    cell.imageview.clipsToBounds = YES;
+
+    UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditMenu:)];
     [cell addGestureRecognizer:longPressGesture];
     return cell;
 }

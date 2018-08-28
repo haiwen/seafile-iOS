@@ -56,13 +56,17 @@
     self.tableView.dataSource = self;
     [self.view addSubview:self.tableView];
     
-    self.saveButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSave target:self action:@selector(save:)];
-    self.navigationItem.title = _directory.name;
-    self.navigationItem.rightBarButtonItem = _directory.editable ? self.saveButton : nil;
     
-    self.createButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"New Folder", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(createFolder)];
-    UIBarButtonItem *flexItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
-    self.toolbarItems = @[flexItem, self.createButton, flexItem];
+    if (_directory.editable) {
+        self.createButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"New Folder", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(createFolder)];
+        UIBarButtonItem *flexItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
+        [self setToolbarItems:@[flexItem, self.createButton, flexItem] animated:true];
+        self.navigationController.toolbarHidden = true;
+        
+        self.saveButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSave target:self action:@selector(save:)];
+        self.navigationItem.rightBarButtonItem = self.saveButton;
+        self.navigationItem.title = _directory.name;
+    }
     
     [self refreshView];
     
@@ -73,8 +77,8 @@
     }];
 }
 
-- (void)viewDidAppear:(BOOL)animated {
-    [super viewDidAppear:animated];
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
     self.navigationController.toolbarHidden = _directory.editable ? false : true;
 }
 
@@ -100,18 +104,24 @@
             [self alertWithTitle:NSLocalizedString(@"Folder name invalid", @"Seafile")];
             return;
         }
-        [self.directory mkdir:input];
         [self showLoadingView];
+        [self.directory mkdir:input success:^(SeafDir *dir) {
+            [self dismissLoadingView];
+        } failure:^(SeafDir *dir, NSError *error) {
+            [self dismissLoadingView];
+            [self alertWithTitle:NSLocalizedString(@"Failed to create folder", @"Seafile") handler:nil];
+        }];
     }];
 }
 
 - (void)save:(id)sender {
+    NSString *showPath = @"";
     if ([_directory.path isEqualToString:@"/"]) {
-        _directory.fullPath = [NSString stringWithFormat:@"%@/", _repoName];
+        showPath = [NSString stringWithFormat:@"%@/", _repoName];
     } else {
-        _directory.fullPath = [NSString stringWithFormat:@"%@%@", _repoName, _directory.path];
+        showPath = [NSString stringWithFormat:@"%@%@", _repoName, _directory.path];
     }
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"SelectedDirectoryNotif" object:_directory];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"SelectedDirectoryNotif" object:@{@"dir":_directory, @"path":showPath}];
     [self.navigationController popToRootViewControllerAnimated:false];
 }
 

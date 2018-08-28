@@ -7,6 +7,7 @@
 //
 #import "SeafAccountCell.h"
 #import "Debug.h"
+#import "SeafConnection.h"
 
 @implementation SeafAccountCell
 
@@ -47,6 +48,13 @@
     cell.accessoryType = UITableViewCellAccessoryNone;
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
     return cell;
+}
+
+- (void)updateAccountCell:(SeafConnection *)conn {
+    self.imageview.image = [UIImage imageWithContentsOfFile:conn.avatar];
+    self.serverLabel.text = conn.address;
+    self.emailLabel.text = conn.username;
+    self.imageview.clipsToBounds = YES;
 }
 
 @end

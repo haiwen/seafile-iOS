@@ -35,6 +35,7 @@
 @property (weak, nonatomic) IBOutlet UIButton *accontButton;
 @property (weak, nonatomic) IBOutlet UIButton *destinationButton;
 @property (weak, nonatomic) IBOutlet UIButton *saveButton;
+@property (nonatomic, copy) NSString *showPath;
 
 @end
 
@@ -64,24 +65,16 @@
         [self.accontButton setTitle:hostAndName forState:UIControlStateNormal];
         [self updateSaveButton];
     } else {
-        [self showAlert];
+        [self showNoAccountsAlert];
     }
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(selectDirNotification:) name:@"SelectedDirectoryNotif" object:nil];
-    
+    [self loadInputs];
     [self setupTableview];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
-    if (self.ufiles.count == 0) {
-        [self loadInputs];
-    }
-    [self updateSaveButton];
-}
-
-- (void)selectDirNotification:(NSNotification *)notif {
-    self.directory = notif.object;
     [self updateSaveButton];
 }
 
@@ -120,9 +113,9 @@
     [self.loadingView startAnimating];
 }
 
-- (void)showAlert {
+- (void)showNoAccountsAlert {
     if (!_alert) {
-        self.alert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Failed to login", @"Seafile") message:nil preferredStyle:UIAlertControllerStyleAlert];
+        self.alert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"There is no account available", @"Seafile") message:nil preferredStyle:UIAlertControllerStyleAlert];
         UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
             [self cancel:nil];
         }];
@@ -134,13 +127,14 @@
 - (void)updateSaveButton {
     if (_directory && _connection) {
         self.saveButton.enabled = true;
-        [self.destinationButton setTitle:_directory.fullPath forState:UIControlStateNormal];
+        [self.destinationButton setTitle:self.showPath forState:UIControlStateNormal];
     } else {
         self.saveButton.enabled = false;
         [self.destinationButton setTitle:@"" forState:UIControlStateNormal];
     }
 }
 
+#pragma mark - tableview
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     return 1;
 }
@@ -189,31 +183,6 @@
     return cell;
 }
 
-- (void)cancel:(id)sender {
-    self.ufiles = nil;
-    [self.extensionContext completeRequestReturningItems:self.extensionContext.inputItems completionHandler:nil];
-}
-
-- (IBAction)save:(id)sender {
-    for (SeafUploadFile *ufile in _ufiles) {
-        ufile.overwrite = true;
-        ufile.udir = _directory;
-        ufile.delegate = self;
-        [SeafDataTaskManager.sharedObject addUploadTask:ufile];
-    }
-    self.saveButton.enabled = false;
-    NSMutableArray *temp = [_ufiles mutableCopy];
-    SeafDataTaskManager.sharedObject.finishBlock = ^(id<SeafTask>  _Nullable file) {
-        if ([temp containsObject:file]) {
-            [temp removeObject:file];
-        }
-        if (temp.count == 0) {
-            self.saveButton.enabled = true;
-            [self cancel:nil];
-        }
-    };
-}
-
 #pragma mark - SeafUploadDelegate
 - (void)uploadProgress:(SeafUploadFile *)file progress:(float)progress {
     [self updateFileCell:file result:true progress:progress completed:false];
@@ -250,6 +219,7 @@
     }
 }
 
+#pragma mark- action
 - (IBAction)selectAccount:(id)sender {
     SeafShareAccountViewController *accountVC = [[SeafShareAccountViewController alloc] init];
     [self.navigationController pushViewController:accountVC animated:true];
@@ -267,6 +237,43 @@
     [self.navigationController pushViewController:dirVC animated:true];
 }
 
+- (IBAction)save:(id)sender {
+    for (SeafUploadFile *ufile in _ufiles) {
+        ufile.overwrite = true;
+        ufile.udir = _directory;
+        ufile.delegate = self;
+        [SeafDataTaskManager.sharedObject addUploadTask:ufile];
+    }
+    self.saveButton.enabled = false;
+    NSMutableArray *temp = [_ufiles mutableCopy];
+    SeafDataTaskManager.sharedObject.finishBlock = ^(id<SeafTask>  _Nullable file) {
+        if ([temp containsObject:file]) {
+            [temp removeObject:file];
+        }
+        if (temp.count == 0) {
+            self.saveButton.enabled = true;
+            [self done];
+        }
+    };
+}
+
+- (void)done {
+    [self.extensionContext completeRequestReturningItems:self.extensionContext.inputItems completionHandler:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)cancel:(id)sender {
+    [self done];
+    self.ufiles = nil;
+}
+
+#pragma mark- notification
+- (void)selectDirNotification:(NSNotification *)notif {
+    self.directory = [notif.object objectForKey:@"dir"];
+    self.showPath = [notif.object objectForKey:@"path"];
+    [self updateSaveButton];
+}
+
 - (UIActivityIndicatorView *)loadingView {
     if (!_loadingView) {
         _loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
@@ -274,10 +281,6 @@
         _loadingView.hidesWhenStopped = YES;
     }
     return _loadingView;
-}
-
-- (void)dealloc {
-    Debug(@"%s", __func__);
 }
 
 @end
