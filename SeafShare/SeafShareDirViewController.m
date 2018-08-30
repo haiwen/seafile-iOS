@@ -22,20 +22,14 @@
 @property (strong, nonatomic) UIBarButtonItem *createButton;
 @property (strong, nonatomic) UIActivityIndicatorView *loadingView;
 @property (strong, nonatomic) UITableView *tableView;
-@property (copy, nonatomic) NSString *repoName;
 
 @end
 
 @implementation SeafShareDirViewController
 
-- (id)initWithSeafDir:(SeafDir *)directory andRepoName:(NSString *)repoName {
+- (id)initWithSeafDir:(SeafDir *)directory {
     if (self = [super init]) {
         _directory = directory;
-        if (!repoName && [directory.path isEqualToString:@"/"]) {
-            self.repoName = [NSString stringWithString:directory.name];
-        } else {
-            self.repoName = repoName;
-        }
         _directory.delegate = self;
         [_directory loadContent:NO];
     }
@@ -115,13 +109,7 @@
 }
 
 - (void)save:(id)sender {
-    NSString *showPath = @"";
-    if ([_directory.path isEqualToString:@"/"]) {
-        showPath = [NSString stringWithFormat:@"%@/", _repoName];
-    } else {
-        showPath = [NSString stringWithFormat:@"%@%@", _repoName, _directory.path];
-    }
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"SelectedDirectoryNotif" object:@{@"dir":_directory, @"path":showPath}];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"SelectedDirectoryNotif" object:_directory];
     [self.navigationController popToRootViewControllerAnimated:false];
 }
 
@@ -230,7 +218,7 @@
 }
 
 - (void)pushViewControllerDir:(SeafDir *)dir {
-    SeafShareDirViewController *controller = [[SeafShareDirViewController alloc] initWithSeafDir:dir andRepoName:self.repoName];
+    SeafShareDirViewController *controller = [[SeafShareDirViewController alloc] initWithSeafDir:dir];
     [self.navigationController pushViewController:controller animated:true];
 }
 

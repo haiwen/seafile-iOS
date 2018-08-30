@@ -11,6 +11,6 @@
 
 @interface SeafShareDirViewController : UIViewController
 
-- (id)initWithSeafDir:(SeafDir *)directory andRepoName:(NSString *)repoName;
+- (id)initWithSeafDir:(SeafDir *)directory;
 
 @end

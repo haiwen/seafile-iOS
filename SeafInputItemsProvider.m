@@ -79,7 +79,7 @@
                                 if (ret) {
                                     [provider handleFile:targetUrl];
                                 } else {
-                                    [provider handleFailed];
+                                    [provider handleFailure];
                                 }
                             } else if ([item isKindOfClass:[NSString class]]) {
                                 NSString *string = (NSString *)item;
@@ -89,15 +89,17 @@
                                     NSData *data = [string dataUsingEncoding:NSUTF8StringEncoding];
                                     [provider writeData:data toTarget:targetUrl];
                                 } else {
-                                    [provider handleFailed];
+                                    [provider handleFailure];
                                 }
                             } else {
-                                [provider handleFailed];
+                                [provider handleFailure];
                             }
                         } else {
-                            [provider handleFailed];
+                            [provider handleFailure];
                         }
                     }];
+                } else {
+                    [provider handleFailure];
                 }
             });
         }
@@ -120,7 +122,7 @@
     if (ret) {
         [self handleFile:targetUrl];
     } else {
-        [self handleFailed];
+        [self handleFailure];
     }
 }
 
@@ -128,7 +130,8 @@
     Debug("Received file : %@", url);
     if (!url) {
         Warning("Failed to load file.");
-        [self handleFailed];
+        [self handleFailure];
+        return;
     }
     Debug("Upload file %@ %lld", url, [Utils fileSizeAtPath1:url.path]);
     SeafUploadFile *ufile = [[SeafUploadFile alloc] initWithPath:url.path];
@@ -138,9 +141,8 @@
     dispatch_group_leave(self.group);
 }
 
-- (void)handleFailed {
+- (void)handleFailure {
     self.completeBlock(false, nil);
-    return;
 }
 
 @end
