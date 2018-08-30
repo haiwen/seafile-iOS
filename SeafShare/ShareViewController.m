@@ -35,7 +35,6 @@
 @property (weak, nonatomic) IBOutlet UIButton *accontButton;
 @property (weak, nonatomic) IBOutlet UIButton *destinationButton;
 @property (weak, nonatomic) IBOutlet UIButton *saveButton;
-@property (nonatomic, copy) NSString *showPath;
 
 @end
 
@@ -127,7 +126,12 @@
 - (void)updateSaveButton {
     if (_directory && _connection) {
         self.saveButton.enabled = true;
-        [self.destinationButton setTitle:self.showPath forState:UIControlStateNormal];
+        SeafRepo *repo = [_connection getRepo:_directory.repoId];
+        NSString *showPath = [NSString stringWithFormat:@"/%@%@", repo.name, _directory.path];
+        if ([_directory.path isEqualToString:@"/"]) {
+            showPath = [NSString stringWithFormat:@"/%@", repo.name];
+        }
+        [self.destinationButton setTitle:showPath forState:UIControlStateNormal];
     } else {
         self.saveButton.enabled = false;
         [self.destinationButton setTitle:@"" forState:UIControlStateNormal];
@@ -233,7 +237,7 @@
 }
 
 - (IBAction)selectDestination:(id)sender {
-    SeafShareDirViewController *dirVC = [[SeafShareDirViewController alloc] initWithSeafDir:(SeafDir *)_connection.rootFolder andRepoName:nil];
+    SeafShareDirViewController *dirVC = [[SeafShareDirViewController alloc] initWithSeafDir:(SeafDir *)_connection.rootFolder];
     [self.navigationController pushViewController:dirVC animated:true];
 }
 
@@ -269,8 +273,7 @@
 
 #pragma mark- notification
 - (void)selectDirNotification:(NSNotification *)notif {
-    self.directory = [notif.object objectForKey:@"dir"];
-    self.showPath = [notif.object objectForKey:@"path"];
+    self.directory = notif.object;
     [self updateSaveButton];
 }
 
@@ -281,6 +284,10 @@
         _loadingView.hidesWhenStopped = YES;
     }
     return _loadingView;
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 @end
