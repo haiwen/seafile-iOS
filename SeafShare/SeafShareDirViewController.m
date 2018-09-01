@@ -110,7 +110,8 @@
 
 - (void)save:(id)sender {
     [[NSNotificationCenter defaultCenter] postNotificationName:@"SelectedDirectoryNotif" object:_directory];
-    [self.navigationController popToRootViewControllerAnimated:false];
+    UIViewController *controller = [self.navigationController.viewControllers objectAtIndex:1];
+    [self.navigationController popToViewController:controller animated:true];
 }
 
 #pragma mark - Table view data source
