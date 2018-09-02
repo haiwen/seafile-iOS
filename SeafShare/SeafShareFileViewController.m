@@ -123,13 +123,13 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return _ufiles.count;
+    return self.ufiles.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     SeafCell *cell = [self getCell:@"SeafCell" forTableView:tableView];
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
-    SeafUploadFile *file = _ufiles[indexPath.row];
+    SeafUploadFile *file = self.ufiles[indexPath.row];
     file.delegate = self;
     cell.textLabel.text = file.name;
     cell.imageView.image = file.icon;
@@ -189,7 +189,7 @@
 }
 
 - (SeafCell *)getEntryCell:(id)entry indexPath:(NSIndexPath **)indexPath {
-    NSUInteger index = [_ufiles indexOfObject:entry];
+    NSUInteger index = [self.ufiles indexOfObject:entry];
     if (index == NSNotFound)
         return nil;
     @try {
@@ -209,14 +209,14 @@
 }
 
 - (IBAction)save:(id)sender {
-    for (SeafUploadFile *ufile in _ufiles) {
+    for (SeafUploadFile *ufile in self.ufiles) {
         ufile.overwrite = true;
         ufile.udir = _directory;
         ufile.delegate = self;
         [SeafDataTaskManager.sharedObject addUploadTask:ufile];
     }
     self.saveButton.enabled = false;
-    NSMutableArray *temp = [_ufiles mutableCopy];
+    NSMutableArray *temp = [self.ufiles mutableCopy];
     SeafDataTaskManager.sharedObject.finishBlock = ^(id<SeafTask>  _Nullable file) {
         if ([temp containsObject:file]) {
             [temp removeObject:file];
