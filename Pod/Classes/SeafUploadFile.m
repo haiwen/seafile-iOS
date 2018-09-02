@@ -654,4 +654,12 @@
     dispatch_semaphore_signal(_semaphore);
 }
 
+- (UIImage *)previewImage {
+    if (!_previewImage) {
+        return [UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString];
+    } else {
+        return _previewImage;
+    }
+}
+
 @end

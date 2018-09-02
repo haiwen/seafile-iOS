@@ -64,20 +64,38 @@
                                 NSData *data = [provider UIImageToDataJPEG:image];
                                 NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
                                 
-                                [provider writeData:data toTarget:targetUrl];
+                                [itemProvider loadPreviewImageWithOptions:nil completionHandler:^(id<NSSecureCoding, NSObject>  _Nullable item, NSError * _Null_unspecified error) {
+                                    if (item && [item isKindOfClass:[UIImage class]]) {
+                                        [provider writeData:data toTarget:targetUrl andPrivewImage:(UIImage*)item];
+                                    } else {
+                                        [provider writeData:data toTarget:targetUrl andPrivewImage:nil];
+                                    }
+                                }];
                             } else if ([item isKindOfClass:[NSData class]]) {
                                 NSData *data = (NSData *)item;
                                 NSString *name = item.description;
                                 NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
                                 
-                                [provider writeData:data toTarget:targetUrl];
+                                [itemProvider loadPreviewImageWithOptions:nil completionHandler:^(id<NSSecureCoding, NSObject>  _Nullable item, NSError * _Null_unspecified error) {
+                                    if (item && [item isKindOfClass:[UIImage class]]) {
+                                        [provider writeData:data toTarget:targetUrl andPrivewImage:(UIImage*)item];
+                                    } else {
+                                        [provider writeData:data toTarget:targetUrl andPrivewImage:nil];
+                                    }
+                                }];
                             } else if ([item isKindOfClass:[NSURL class]]) {
                                 NSURL *url = (NSURL *)item;
                                 NSString *name = url.lastPathComponent;
                                 NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
                                 BOOL ret = [Utils copyFile:url to:targetUrl];
                                 if (ret) {
-                                    [provider handleFile:targetUrl];
+                                    [itemProvider loadPreviewImageWithOptions:nil completionHandler:^(id<NSSecureCoding, NSObject>  _Nullable item, NSError * _Null_unspecified error) {
+                                        if (item && [item isKindOfClass:[UIImage class]]) {
+                                            [provider handleFile:targetUrl andPriview:(UIImage*)item];
+                                        } else {
+                                            [provider handleFile:targetUrl andPriview:nil];
+                                        }
+                                    }];
                                 } else {
                                     [provider handleFailure];
                                 }
@@ -87,7 +105,7 @@
                                     NSString *name = [NSString stringWithFormat:@"%@.txt", item.description];
                                     NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
                                     NSData *data = [string dataUsingEncoding:NSUTF8StringEncoding];
-                                    [provider writeData:data toTarget:targetUrl];
+                                    [provider writeData:data toTarget:targetUrl andPrivewImage:nil];
                                 } else {
                                     [provider handleFailure];
                                 }
@@ -117,16 +135,16 @@
     }
 }
 
-- (void)writeData:(NSData *)data toTarget:(NSURL *)targetUrl {
+- (void)writeData:(NSData *)data toTarget:(NSURL *)targetUrl andPrivewImage:(UIImage *)preview{
     BOOL ret = [data writeToURL:targetUrl atomically:true];
     if (ret) {
-        [self handleFile:targetUrl];
+        [self handleFile:targetUrl andPriview:preview];
     } else {
         [self handleFailure];
     }
 }
 
-- (void)handleFile:(NSURL *)url {
+- (void)handleFile:(NSURL *)url andPriview:(UIImage *)preview{
     Debug("Received file : %@", url);
     if (!url) {
         Warning("Failed to load file.");
@@ -135,6 +153,9 @@
     }
     Debug("Upload file %@ %lld", url, [Utils fileSizeAtPath1:url.path]);
     SeafUploadFile *ufile = [[SeafUploadFile alloc] initWithPath:url.path];
+    if (preview) {
+        ufile.previewImage = preview;
+    }
     dispatch_barrier_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         [self.ufiles addObject:ufile];
     });
