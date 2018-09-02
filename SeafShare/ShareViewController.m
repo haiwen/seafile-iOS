@@ -88,8 +88,10 @@
 }
 
 - (void)pushViewControllerConn:(SeafConnection *)conn {
-    SeafShareFileViewController *fileVC = [[SeafShareFileViewController alloc] initWithConnection:conn];
-    [self.navigationController pushViewController:fileVC animated:true];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        SeafShareFileViewController *fileVC = [[SeafShareFileViewController alloc] initWithConnection:conn];
+        [self.navigationController pushViewController:fileVC animated:true];
+    });
 }
 
 - (void)didReceiveMemoryWarning {
