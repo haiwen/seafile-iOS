@@ -88,7 +88,7 @@
 }
 
 - (void)setupTableview {
-    self.tableView.rowHeight = 68;
+    self.tableView.estimatedRowHeight = 68;
     self.tableView.tableFooterView = [UIView new];
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
@@ -132,7 +132,7 @@
     SeafUploadFile *file = self.ufiles[indexPath.row];
     file.delegate = self;
     cell.textLabel.text = file.name;
-    cell.imageView.image = file.icon;
+    cell.imageView.image = file.previewImage;
     cell.moreButton.hidden = true;
     [self updateCell:cell file:file];
     return cell;

@@ -43,6 +43,7 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 @property (nonatomic) SeafUploadCompletionBlock completionBlock;
 
 @property (readwrite) SeafDir *udir;
+@property (nonatomic, strong) UIImage *previewImage;//NSItemProvider previewImage
 
 - (id)initWithPath:(NSString *)lpath;
 
