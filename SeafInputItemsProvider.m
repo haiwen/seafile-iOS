@@ -64,38 +64,20 @@
                                 NSData *data = [provider UIImageToDataJPEG:image];
                                 NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
                                 
-                                [itemProvider loadPreviewImageWithOptions:nil completionHandler:^(id<NSSecureCoding, NSObject>  _Nullable item, NSError * _Null_unspecified error) {
-                                    if (item && [item isKindOfClass:[UIImage class]]) {
-                                        [provider writeData:data toTarget:targetUrl andPrivewImage:(UIImage*)item];
-                                    } else {
-                                        [provider writeData:data toTarget:targetUrl andPrivewImage:nil];
-                                    }
-                                }];
+                                [provider loadPreviewImageWith:itemProvider writeData:data toTargetUrl:targetUrl];
                             } else if ([item isKindOfClass:[NSData class]]) {
                                 NSData *data = (NSData *)item;
                                 NSString *name = item.description;
                                 NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
                                 
-                                [itemProvider loadPreviewImageWithOptions:nil completionHandler:^(id<NSSecureCoding, NSObject>  _Nullable item, NSError * _Null_unspecified error) {
-                                    if (item && [item isKindOfClass:[UIImage class]]) {
-                                        [provider writeData:data toTarget:targetUrl andPrivewImage:(UIImage*)item];
-                                    } else {
-                                        [provider writeData:data toTarget:targetUrl andPrivewImage:nil];
-                                    }
-                                }];
+                                [provider loadPreviewImageWith:itemProvider writeData:data toTargetUrl:targetUrl];
                             } else if ([item isKindOfClass:[NSURL class]]) {
                                 NSURL *url = (NSURL *)item;
                                 NSString *name = url.lastPathComponent;
                                 NSURL *targetUrl = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:name]];
                                 BOOL ret = [Utils copyFile:url to:targetUrl];
                                 if (ret) {
-                                    [itemProvider loadPreviewImageWithOptions:nil completionHandler:^(id<NSSecureCoding, NSObject>  _Nullable item, NSError * _Null_unspecified error) {
-                                        if (item && [item isKindOfClass:[UIImage class]]) {
-                                            [provider handleFile:targetUrl andPriview:(UIImage*)item];
-                                        } else {
-                                            [provider handleFile:targetUrl andPriview:nil];
-                                        }
-                                    }];
+                                    [provider loadPreviewImageWith:itemProvider toTargetUrl:targetUrl];
                                 } else {
                                     [provider handleFailure];
                                 }
@@ -126,6 +108,26 @@
     dispatch_group_notify(provider.group, dispatch_get_main_queue(), ^{
         provider.completeBlock(true, provider.ufiles);
     });
+}
+
+- (void)loadPreviewImageWith:(NSItemProvider *)itemProvider writeData:(NSData *)data toTargetUrl:(NSURL *)targetUrl {
+    [itemProvider loadPreviewImageWithOptions:nil completionHandler:^(id<NSSecureCoding, NSObject>  _Nullable item, NSError * _Null_unspecified error) {
+        if (!error && item && [item isKindOfClass:[UIImage class]]) {
+            [self writeData:data toTarget:targetUrl andPrivewImage:(UIImage*)item];
+        } else {
+            [self writeData:data toTarget:targetUrl andPrivewImage:nil];
+        }
+    }];
+}
+
+- (void)loadPreviewImageWith:(NSItemProvider *)itemProvider toTargetUrl:(NSURL *)targetUrl {
+    [itemProvider loadPreviewImageWithOptions:nil completionHandler:^(id<NSSecureCoding, NSObject>  _Nullable item, NSError * _Null_unspecified error) {
+        if (!error && item && [item isKindOfClass:[UIImage class]]) {
+            [self handleFile:targetUrl andPriview:(UIImage*)item];
+        } else {
+            [self handleFile:targetUrl andPriview:nil];
+        }
+    }];
 }
 
 - (NSData *)UIImageToDataJPEG:(UIImage *)image {
