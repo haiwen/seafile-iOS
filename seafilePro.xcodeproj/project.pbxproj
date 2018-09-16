@@ -189,9 +189,9 @@
 		F53690381F13B5F90050D788 /* more_dot.png in Resources */ = {isa = PBXBuildFile; fileRef = F53690371F13B5F90050D788 /* more_dot.png */; };
 		F536DA191F30DB6F00F2EF3F /* SeafSyncInfoCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F536DA171F30DB6F00F2EF3F /* SeafSyncInfoCell.m */; };
 		F536DA1A1F30DB6F00F2EF3F /* SeafSyncInfoCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F536DA181F30DB6F00F2EF3F /* SeafSyncInfoCell.xib */; };
+		F5518092214E27DD00AA9D7A /* SeafShareFileViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F5C648F9210A0B4E00842687 /* SeafShareFileViewController.m */; };
 		F555676A1FC7222800E87043 /* SeafWechatHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = F55567691FC7222800E87043 /* SeafWechatHelper.m */; };
 		F55A4ADF213A7D0500AAF3DF /* SeafShareFileViewController.h in Sources */ = {isa = PBXBuildFile; fileRef = F5C648F8210A0B4E00842687 /* SeafShareFileViewController.h */; };
-		F55A4AE1213A7D9D00AAF3DF /* SeafShareFileViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F5C648F9210A0B4E00842687 /* SeafShareFileViewController.m */; };
 		F55A4AE4213A9E5A00AAF3DF /* ShareViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F55A4AE3213A9E5A00AAF3DF /* ShareViewController.m */; };
 		F568C1FB1EF10F8900F1035D /* SeafActionSheet.m in Sources */ = {isa = PBXBuildFile; fileRef = F568C1FA1EF10F8900F1035D /* SeafActionSheet.m */; };
 		F571850E1F0742FE00543F42 /* more_dot@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = F571850C1F0742FE00543F42 /* more_dot@3x.png */; };
@@ -234,7 +234,6 @@
 		F5C6491F2112052800842687 /* more_right.png in Resources */ = {isa = PBXBuildFile; fileRef = F5C6491A2112052800842687 /* more_right.png */; };
 		F5C649202112052800842687 /* more_right@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F5C6491B2112052800842687 /* more_right@2x.png */; };
 		F5C649212112052800842687 /* more_right@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F5C6491B2112052800842687 /* more_right@2x.png */; };
-		F5C649292112269800842687 /* SeafShareDirViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F5C649282112269800842687 /* SeafShareDirViewController.m */; };
 		F5C6492A2112269800842687 /* SeafShareDirViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F5C649282112269800842687 /* SeafShareDirViewController.m */; };
 		F5CBCDC01F2C2F1500E8C35B /* SeafSyncInfoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F5CBCDBF1F2C2F1500E8C35B /* SeafSyncInfoViewController.m */; };
 		F5E621EF20D16666001EDA7A /* NSError+SeafFileProvierError.m in Sources */ = {isa = PBXBuildFile; fileRef = F5E621EE20D16666001EDA7A /* NSError+SeafFileProvierError.m */; };
@@ -1687,7 +1686,6 @@
 				F5AB05472125D10900443522 /* SeafInputItemsProvider.m in Sources */,
 				5757DCCD1AEBCF1600BC0426 /* SeafShibbolethViewController.m in Sources */,
 				58D40A681E9AF72200A68BEF /* UIViewController+Extend.m in Sources */,
-				F5C649292112269800842687 /* SeafShareDirViewController.m in Sources */,
 				5775EA1217476FAD000A1765 /* SeafActivityViewController.m in Sources */,
 				57A90DA118C49F97005D8A53 /* SeafDetailViewController.m in Sources */,
 				5704C6D31753A1380028F4FE /* IntelligentSplitViewController.m in Sources */,
@@ -1756,11 +1754,11 @@
 				F5C64908210A25EB00842687 /* SeafAccountCell.m in Sources */,
 				F5C64905210A259A00842687 /* SeafGlobal.m in Sources */,
 				F5C64906210A25DB00842687 /* UIViewController+Extend.m in Sources */,
-				F55A4AE1213A7D9D00AAF3DF /* SeafShareFileViewController.m in Sources */,
 				F5C6490D210AD7F700842687 /* SeafActionDirViewController.m in Sources */,
 				F55A4AE4213A9E5A00AAF3DF /* ShareViewController.m in Sources */,
 				F5C6492A2112269800842687 /* SeafShareDirViewController.m in Sources */,
 				F5AB05492125D10900443522 /* SeafInputItemsProvider.m in Sources */,
+				F5518092214E27DD00AA9D7A /* SeafShareFileViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

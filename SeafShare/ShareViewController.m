@@ -11,7 +11,7 @@
 #import "SeafAccountCell.h"
 #import "Debug.h"
 #import "UIViewController+Extend.h"
-#import "SeafShareFileViewController.h"
+#import "SeafShareDirViewController.h"
 
 @interface ShareViewController ()<UITableViewDataSource, UITableViewDelegate>
 
@@ -89,8 +89,8 @@
 
 - (void)pushViewControllerConn:(SeafConnection *)conn {
     dispatch_async(dispatch_get_main_queue(), ^{
-        SeafShareFileViewController *fileVC = [[SeafShareFileViewController alloc] initWithConnection:conn];
-        [self.navigationController pushViewController:fileVC animated:true];
+        SeafShareDirViewController *dirVC = [[SeafShareDirViewController alloc] initWithSeafDir:conn.rootFolder];
+        [self.navigationController pushViewController:dirVC animated:true];
     });
 }
 
