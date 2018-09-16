@@ -89,37 +89,14 @@
                                         <nil key="textColor"/>
                                         <nil key="highlightedColor"/>
                                     </label>
-                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="X8P-4F-RuP">
-                                        <rect key="frame" x="345" y="15.5" width="18" height="18"/>
-                                        <constraints>
-                                            <constraint firstAttribute="width" constant="18" id="tt5-km-P8z"/>
-                                            <constraint firstAttribute="height" constant="18" id="v61-fB-kjM"/>
-                                        </constraints>
-                                        <state key="normal" image="more_right.png"/>
-                                    </button>
-                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Pol-P7-bxZ">
-                                        <rect key="frame" x="97" y="9.5" width="248" height="30"/>
-                                        <fontDescription key="fontDescription" type="system" weight="light" pointSize="15"/>
-                                        <state key="normal">
-                                            <color key="titleColor" white="0.66666666669999997" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                        </state>
-                                        <connections>
-                                            <action selector="selectDestination:" destination="gTO-8A-cHg" eventType="touchUpInside" id="Enz-az-K8I"/>
-                                        </connections>
-                                    </button>
                                 </subviews>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <constraints>
                                     <constraint firstItem="HCC-ho-FTH" firstAttribute="leading" secondItem="jUF-jD-tfV" secondAttribute="leading" id="ARV-a6-MZR"/>
-                                    <constraint firstItem="Pol-P7-bxZ" firstAttribute="centerY" secondItem="510-5v-Trw" secondAttribute="centerY" id="BQy-O6-6AL"/>
-                                    <constraint firstItem="Pol-P7-bxZ" firstAttribute="leading" secondItem="510-5v-Trw" secondAttribute="trailing" constant="5" id="Hpf-qd-dlg"/>
-                                    <constraint firstItem="X8P-4F-RuP" firstAttribute="leading" secondItem="Pol-P7-bxZ" secondAttribute="trailing" id="XM1-Ym-3SD"/>
                                     <constraint firstItem="510-5v-Trw" firstAttribute="leading" secondItem="jUF-jD-tfV" secondAttribute="leading" constant="12" id="dHa-aE-tJR"/>
                                     <constraint firstAttribute="height" constant="44" id="dJ0-zR-APG"/>
-                                    <constraint firstItem="X8P-4F-RuP" firstAttribute="centerY" secondItem="510-5v-Trw" secondAttribute="centerY" id="iKj-xr-Y2Y"/>
                                     <constraint firstAttribute="trailing" secondItem="HCC-ho-FTH" secondAttribute="trailing" id="kVG-FU-Qj5"/>
                                     <constraint firstAttribute="bottom" secondItem="510-5v-Trw" secondAttribute="bottom" constant="11" id="nbq-xp-ivH"/>
-                                    <constraint firstAttribute="trailing" secondItem="X8P-4F-RuP" secondAttribute="trailing" constant="12" id="xAq-kh-QpJ"/>
                                     <constraint firstItem="HCC-ho-FTH" firstAttribute="top" secondItem="jUF-jD-tfV" secondAttribute="top" id="xUM-a4-blD"/>
                                 </constraints>
                             </view>
@@ -137,22 +114,21 @@
                         <viewLayoutGuide key="safeArea" id="Zip-Eu-FlQ"/>
                     </view>
                     <navigationItem key="navigationItem" title="Save to Seafile" id="k9q-Nw-n0I">
-                        <barButtonItem key="rightBarButtonItem" style="plain" id="a5T-Ez-09S">
-                            <button key="customView" opaque="NO" contentMode="scaleToFill" enabled="NO" contentHorizontalAlignment="trailing" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="TAh-Vn-sNW">
-                                <rect key="frame" x="276" y="5.5" width="83" height="33"/>
+                        <barButtonItem key="leftBarButtonItem" style="plain" id="MM5-bd-0tN">
+                            <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="geS-Fe-Xce">
+                                <rect key="frame" x="16" y="5.5" width="83" height="33"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                <state key="normal" title="Save"/>
+                                <state key="normal" title="Cancel"/>
                                 <connections>
-                                    <action selector="save:" destination="gTO-8A-cHg" eventType="touchUpInside" id="HHb-TY-Rqf"/>
+                                    <action selector="cancel:" destination="gTO-8A-cHg" eventType="touchUpInside" id="XXg-1r-aPS"/>
                                 </connections>
                             </button>
                         </barButtonItem>
                     </navigationItem>
                     <connections>
-                        <outlet property="destinationButton" destination="Pol-P7-bxZ" id="QBs-Mg-4ka"/>
+                        <outlet property="cancelButton" destination="geS-Fe-Xce" id="O8G-OD-ZpE"/>
                         <outlet property="destinationLabel" destination="510-5v-Trw" id="7SC-5e-fDJ"/>
-                        <outlet property="saveButton" destination="TAh-Vn-sNW" id="3no-KH-0Mn"/>
                         <outlet property="tableView" destination="cM7-WV-PoN" id="Ql4-Lt-Hkm"/>
                     </connections>
                 </viewController>
@@ -161,7 +137,4 @@
             <point key="canvasLocation" x="802" y="788"/>
         </scene>
     </scenes>
-    <resources>
-        <image name="more_right.png" width="18" height="18"/>
-    </resources>
 </document>

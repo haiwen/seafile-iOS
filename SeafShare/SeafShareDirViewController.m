@@ -13,6 +13,7 @@
 #import "Debug.h"
 #import "ExtentedString.h"
 #import "SeafGlobal.h"
+#import "SeafShareFileViewController.h"
 
 @interface SeafShareDirViewController ()<SeafDentryDelegate, UITableViewDelegate, UITableViewDataSource>
 
@@ -109,9 +110,8 @@
 }
 
 - (void)save:(id)sender {
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"SelectedDirectoryNotif" object:_directory];
-    UIViewController *controller = [self.navigationController.viewControllers objectAtIndex:1];
-    [self.navigationController popToViewController:controller animated:true];
+    SeafShareFileViewController *fileVC = [[SeafShareFileViewController alloc] initWithDir:_directory];
+    [self.navigationController pushViewController:fileVC animated:true];
 }
 
 #pragma mark - Table view data source

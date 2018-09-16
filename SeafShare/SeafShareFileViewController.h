@@ -11,6 +11,6 @@
 
 @interface SeafShareFileViewController : UIViewController
 
-- (instancetype)initWithConnection:(SeafConnection *)connection;
+- (instancetype)initWithDir:(SeafDir *)dir;
 
 @end

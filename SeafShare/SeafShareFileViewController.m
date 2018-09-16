@@ -16,31 +16,28 @@
 #import "SeafCell.h"
 #import "SeafDateFormatter.h"
 #import "FileSizeFormatter.h"
-#import "SeafShareDirViewController.h"
 #import "SeafDataTaskManager.h"
 #import "SeafInputItemsProvider.h"
 
 @interface SeafShareFileViewController ()<UITableViewDataSource, UITableViewDelegate, SeafUploadDelegate>
 
 @property (nonatomic, strong) NSArray *ufiles;
-@property (nonatomic, strong) SeafConnection *connection;
 @property (nonatomic, strong) SeafDir *directory;
 @property (nonatomic, strong) UIActivityIndicatorView *loadingView;
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
 
 @property (weak, nonatomic) IBOutlet UILabel *destinationLabel;
-@property (weak, nonatomic) IBOutlet UIButton *destinationButton;
-@property (weak, nonatomic) IBOutlet UIButton *saveButton;
+@property (weak, nonatomic) IBOutlet UIButton *cancelButton;
 
 @end
 
 @implementation SeafShareFileViewController
 
-- (instancetype)initWithConnection:(SeafConnection *)connection {
+- (instancetype)initWithDir:(SeafDir *)dir {
     UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"MainInterface" bundle:nil];
     self = [storyboard instantiateViewControllerWithIdentifier:@"SeafShareFileViewController"];
     if (self) {
-        _connection = connection;
+        _directory = dir;
     }
     return self;
 }
@@ -53,18 +50,16 @@
     }
     
     self.navigationItem.title = NSLocalizedString(@"Save to Seafile", @"Seafile");
-    self.destinationLabel.text = NSLocalizedString(@"Destination", @"Seafile");
-    self.destinationButton.enabled = false;
-    [self.saveButton setTitle:NSLocalizedString(@"Save", @"Seafile") forState:UIControlStateNormal];
+    [self.cancelButton setTitle:NSLocalizedString(@"Cancel", @"Seafile") forState:UIControlStateNormal];
     
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(selectDirNotification:) name:@"SelectedDirectoryNotif" object:nil];
     [self loadInputs];
     [self setupTableview];
+    [self updateDestinationLabel];
 }
 
-- (void)viewWillAppear:(BOOL)animated {
-    [super viewWillAppear:animated];
-    [self updateSaveButton];
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    [self startUpload];
 }
 
 - (void)loadInputs {
@@ -76,8 +71,6 @@
             if (result) {
                 weakSelf.ufiles = array;
                 [weakSelf.tableView reloadData];
-                
-                weakSelf.destinationButton.enabled = true;
             } else {
                 [weakSelf alertWithTitle:NSLocalizedString(@"Failed to load file", @"Seafile") handler:^{
                     [weakSelf.extensionContext completeRequestReturningItems:self.extensionContext.inputItems completionHandler:nil];
@@ -102,18 +95,15 @@
     [self.loadingView startAnimating];
 }
 
-- (void)updateSaveButton {
-    if (_directory && _connection) {
-        self.saveButton.enabled = true;
-        SeafRepo *repo = [_connection getRepo:_directory.repoId];
+- (void)updateDestinationLabel {
+    if (_directory) {
+        SeafRepo *repo = [_directory->connection getRepo:_directory.repoId];
         NSString *showPath = [NSString stringWithFormat:@"/%@%@", repo.name, _directory.path];
         if ([_directory.path isEqualToString:@"/"]) {
             showPath = [NSString stringWithFormat:@"/%@", repo.name];
         }
-        [self.destinationButton setTitle:showPath forState:UIControlStateNormal];
-    } else {
-        self.saveButton.enabled = false;
-        [self.destinationButton setTitle:@"" forState:UIControlStateNormal];
+        NSString *title = NSLocalizedString(@"Destination", @"Seafile");
+        self.destinationLabel.text = [NSString stringWithFormat:@"%@:  %@", title, showPath];
     }
 }
 
@@ -203,26 +193,24 @@
 }
 
 #pragma mark- action
-- (IBAction)selectDestination:(id)sender {
-    SeafShareDirViewController *dirVC = [[SeafShareDirViewController alloc] initWithSeafDir:(SeafDir *)_connection.rootFolder];
-    [self.navigationController pushViewController:dirVC animated:true];
+- (IBAction)cancel:(id)sender {
+    [SeafDataTaskManager.sharedObject cancelAllUploadTasks:_directory->connection];
+    [self done];
 }
 
-- (IBAction)save:(id)sender {
+- (void)startUpload {
     for (SeafUploadFile *ufile in self.ufiles) {
         ufile.overwrite = true;
         ufile.udir = _directory;
         ufile.delegate = self;
         [SeafDataTaskManager.sharedObject addUploadTask:ufile];
     }
-    self.saveButton.enabled = false;
     NSMutableArray *temp = [self.ufiles mutableCopy];
     SeafDataTaskManager.sharedObject.finishBlock = ^(id<SeafTask>  _Nullable file) {
         if ([temp containsObject:file]) {
             [temp removeObject:file];
         }
         if (temp.count == 0) {
-            self.saveButton.enabled = true;
             [self done];
         }
     };
@@ -230,21 +218,6 @@
 
 - (void)done {
     [self.extensionContext completeRequestReturningItems:self.extensionContext.inputItems completionHandler:nil];
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-}
-
-- (void)cancel:(id)sender {
-    [self done];
-    self.ufiles = nil;
-}
-
-#pragma mark- notification
-- (void)selectDirNotification:(NSNotification *)notif {
-    self.directory = notif.object;
-    [self updateSaveButton];
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [self save:nil];
-    });
 }
 
 - (UIActivityIndicatorView *)loadingView {
@@ -254,10 +227,6 @@
         _loadingView.hidesWhenStopped = YES;
     }
     return _loadingView;
-}
-
-- (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 @end
