@@ -57,11 +57,6 @@
     [self updateDestinationLabel];
 }
 
-- (void)viewDidAppear:(BOOL)animated {
-    [super viewDidAppear:animated];
-    [self startUpload];
-}
-
 - (void)loadInputs {
     [self showLoadingView];
     __weak typeof(self) weakSelf = self;
@@ -71,9 +66,10 @@
             if (result) {
                 weakSelf.ufiles = array;
                 [weakSelf.tableView reloadData];
+                [weakSelf startUpload];
             } else {
                 [weakSelf alertWithTitle:NSLocalizedString(@"Failed to load file", @"Seafile") handler:^{
-                    [weakSelf.extensionContext completeRequestReturningItems:self.extensionContext.inputItems completionHandler:nil];
+                    [weakSelf done];
                 }];
             }
         });

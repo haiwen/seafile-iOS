@@ -67,7 +67,7 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="cM7-WV-PoN">
-                                <rect key="frame" x="0.0" y="64" width="375" height="559"/>
+                                <rect key="frame" x="0.0" y="72" width="375" height="551"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                             </tableView>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="jUF-jD-tfV">
@@ -106,7 +106,7 @@
                             <constraint firstItem="cM7-WV-PoN" firstAttribute="trailing" secondItem="Zip-Eu-FlQ" secondAttribute="trailing" id="3lG-Mu-Jft"/>
                             <constraint firstItem="jUF-jD-tfV" firstAttribute="top" secondItem="cM7-WV-PoN" secondAttribute="bottom" id="KoU-Iq-iG4"/>
                             <constraint firstItem="Zip-Eu-FlQ" firstAttribute="trailing" secondItem="jUF-jD-tfV" secondAttribute="trailing" id="UFW-Uy-UiN"/>
-                            <constraint firstItem="cM7-WV-PoN" firstAttribute="top" secondItem="Zip-Eu-FlQ" secondAttribute="top" id="VjO-kS-Wol"/>
+                            <constraint firstItem="cM7-WV-PoN" firstAttribute="top" secondItem="Zip-Eu-FlQ" secondAttribute="top" constant="8" id="VjO-kS-Wol"/>
                             <constraint firstItem="cM7-WV-PoN" firstAttribute="leading" secondItem="Zip-Eu-FlQ" secondAttribute="leading" id="b5i-Gx-ZCh"/>
                             <constraint firstItem="jUF-jD-tfV" firstAttribute="leading" secondItem="Zip-Eu-FlQ" secondAttribute="leading" id="eUy-ck-Km3"/>
                             <constraint firstItem="jUF-jD-tfV" firstAttribute="bottom" secondItem="Zip-Eu-FlQ" secondAttribute="bottom" id="plz-1f-bwY"/>
