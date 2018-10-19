@@ -38,7 +38,6 @@
 - (id)init
 {
     if (self = [super init]) {
-        _assetsLibrary = [[ALAssetsLibrary alloc] init];
         _accountQueueDict = [NSMutableDictionary new];
         _finishBlock = nil;
         [self startTimer];
@@ -148,42 +147,6 @@
     } @finally {
     }
 
-}
-
-- (void)assetForURL:(NSURL *)assetURL resultBlock:(ALAssetsLibraryAssetForURLResultBlock)resultBlock failureBlock:(ALAssetsLibraryAccessFailureBlock)failureBlock
-{
-    [self.assetsLibrary assetForURL:assetURL
-                        resultBlock:^(ALAsset *asset) {
-                            // Success #1
-                            if (asset){
-                                [self noException:^{
-                                    resultBlock(asset);
-                                }];
-                                // No luck, try another way
-                            } else {
-                                // Search in the Photo Stream Album
-                                [self.assetsLibrary enumerateGroupsWithTypes:ALAssetsGroupPhotoStream
-                                                                  usingBlock:^(ALAssetsGroup *group, BOOL *stop) {
-                                                                      [group enumerateAssetsWithOptions:NSEnumerationReverse usingBlock:^(ALAsset *result, NSUInteger index, BOOL *stop) {
-                                                                          if([result.defaultRepresentation.url isEqual:assetURL]) {
-                                                                              [self noException:^{
-                                                                                  resultBlock(asset);
-                                                                              }];
-                                                                              *stop = YES;
-                                                                          }
-                                                                      }];
-                                                                  }
-                                                                failureBlock:^(NSError *error) {
-                                                                    [self noException:^{
-                                                                        failureBlock(error);
-                                                                    }];
-                                                                }];
-                            }
-                        } failureBlock:^(NSError *error) {
-                            [self noException:^{
-                                failureBlock(error);
-                            }];
-                        }];
 }
 
 #pragma mark- download file

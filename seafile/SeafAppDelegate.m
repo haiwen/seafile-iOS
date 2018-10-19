@@ -256,12 +256,7 @@
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
         [conn checkAutoSync];
     }
-    if (ios8) {
-         [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
-    } else {
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(photosDidChange:) name:ALAssetsLibraryChangedNotification object:SeafDataTaskManager.sharedObject.assetsLibrary];
-    }
-    //[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(contactStoreDidChange:) name:CNContactStoreDidChangeNotification object:nil];
+    [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
 
     [self checkBackgroundUploadStatus];
 }

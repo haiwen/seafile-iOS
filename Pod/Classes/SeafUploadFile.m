@@ -36,6 +36,7 @@
 @property dispatch_semaphore_t semaphore;
 @property (nonatomic) TaskCompleteBlock taskCompleteBlock;
 @property (nonatomic) TaskProgressBlock taskProgressBlock;
+@property (nonatomic, strong) PHImageRequestOptions *requestOptions;
 
 @end
 
@@ -238,7 +239,7 @@
                 oid = [responseObject objectForKey:@"id"];
             }
             if (!oid || oid.length < 1) oid = [[NSUUID UUID] UUIDString];
-            Debug("Successfully upload file:%@ autosync:%d oid=%@, responseObject=%@", self.name, _autoSync, oid, responseObject);
+            Debug("Successfully upload file:%@ autosync:%d oid=%@, responseObject=%@", self.name, self.autoSync, oid, responseObject);
             [self finishUpload:YES oid:oid error:nil];
         }
     }];
@@ -337,12 +338,12 @@
         if (self.overwrite) {
             [formData appendPartWithFormData:[@"1" dataUsingEncoding:NSUTF8StringEncoding] name:@"replace"];
         }
-        [formData appendPartWithFormData:[_uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"parent_dir"];
+        [formData appendPartWithFormData:[self.uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"parent_dir"];
         [formData appendPartWithFormData:[self.name dataUsingEncoding:NSUTF8StringEncoding] name:@"file_name"];
         [formData appendPartWithFormData:[[NSString stringWithFormat:@"%lld", [Utils fileSizeAtPath1:self.lpath]] dataUsingEncoding:NSUTF8StringEncoding] name:@"file_size"];
         [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
         [formData appendPartWithFormData:[Utils JSONEncode:self.allblocks] name:@"blockids"];
-        Debug("url:%@ parent_dir:%@, %@", url, _uploadpath, [[NSString alloc] initWithData:[Utils JSONEncode:self.allblocks] encoding:NSUTF8StringEncoding]);
+        Debug("url:%@ parent_dir:%@, %@", url, self.uploadpath, [[NSString alloc] initWithData:[Utils JSONEncode:self.allblocks] encoding:NSUTF8StringEncoding]);
     } error:nil];
     NSURLSessionDataTask *task = [connection.sessionMgr dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
         if (error) {
@@ -356,7 +357,7 @@
                 oid = [responseObject objectForKey:@"id"];
             }
             if (!oid || oid.length < 1) oid = [[NSUUID UUID] UUIDString];
-            Debug("Successfully upload file:%@ autosync:%d oid=%@, responseObject=%@", self.name, _autoSync, oid, responseObject);
+            Debug("Successfully upload file:%@ autosync:%d oid=%@, responseObject=%@", self.name, self.autoSync, oid, responseObject);
             [self finishUpload:YES oid:oid error:nil];
         }
     }];
@@ -407,7 +408,7 @@
             [self showDeserializedError:error];
             [self finishUpload:NO oid:nil error:error];
         } else {
-            _blkidx += count;
+            self.blkidx += count;
             [self performSelector:@selector(uploadRawBlocks:) withObject:connection afterDelay:0.0];
         }
     }];
@@ -480,7 +481,7 @@
     [connection sendRequest:upload_url success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          NSString *url = [JSON stringByAppendingString:@"?ret-json=true"];
-         Debug("Upload file %@ %@, %@ overwrite=%d, byblock=%d, delegate%@\n", self.name, url, uploadpath, self.overwrite, byblock, _delegate);
+         Debug("Upload file %@ %@, %@ overwrite=%d, byblock=%d, delegate%@\n", self.name, url, uploadpath, self.overwrite, byblock, self.delegate);
          [self uploadByFile:connection url:url path:uploadpath update:self.overwrite];
      }
                     failure:
@@ -515,8 +516,7 @@
     [self upload:self.udir->connection repo:self.udir.repoId path:self.udir.path];
 }
 
-- (void)setAsset:(ALAsset *)asset url:(NSURL *)url
-{
+- (void)setPHAsset:(PHAsset *)asset url:(NSURL *)url {
     _asset = asset;
     _assetURL = url;
 }
@@ -536,7 +536,7 @@
             }
         }
         _filesize = [Utils fileSizeAtPath1:self.lpath];
-        Debug("asset file %@ size: %lld, lpath: %@", _asset.defaultRepresentation.url, _filesize, self.lpath);
+        Debug("asset file %@ size: %lld, lpath: %@", _asset.localIdentifier, _filesize, self.lpath);
         _asset = nil;
     }
 }
@@ -568,13 +568,20 @@
     return _preViewURL;
 }
 
-- (UIImage *)icon
-{
-    if (_asset)
-        return [UIImage imageWithCGImage:_asset.thumbnail];
-
-    UIImage *img = [self isImageFile] ? self.image : nil;
-    return img ? [Utils reSizeImage:img toSquare:32.0f] : [UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString];
+- (UIImage *)icon {
+    __block UIImage *icon;
+    if (_asset) {
+        [[PHImageManager defaultManager] requestImageForAsset:_asset targetSize:CGSizeMake(100, 100) contentMode:PHImageContentModeAspectFill options:self.requestOptions resultHandler:^(UIImage * _Nullable result, NSDictionary * _Nullable info) {
+            icon = result;
+        }];
+    }
+    
+    if (icon) {
+        return icon;
+    } else {
+        UIImage *img = [self isImageFile] ? self.image : nil;
+        return img ? [Utils reSizeImage:img toSquare:32.0f] : [UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString];
+    }
 }
 
 - (UIImage *)thumb
@@ -582,14 +589,20 @@
     return [self icon];
 }
 
-- (UIImage *)image
-{
-    if (_asset)
-        return [UIImage imageWithCGImage:_asset.defaultRepresentation.fullResolutionImage];
-
-    NSString *name = [@"cacheimage-ufile-" stringByAppendingString:self.name];
-    NSString *cachePath = [[SeafStorage.sharedObject tempDir] stringByAppendingPathComponent:name];
-    return [Utils imageFromPath:self.lpath withMaxSize:IMAGE_MAX_SIZE cachePath:cachePath];
+- (UIImage *)image {
+    __block UIImage *image;
+    if (_asset) {
+        [[PHImageManager defaultManager] requestImageDataForAsset:_asset options:self.requestOptions resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
+            image = [UIImage imageWithData:imageData];
+        }];
+    }
+    if (image) {
+        return image;
+    } else {
+        NSString *name = [@"cacheimage-ufile-" stringByAppendingString:self.name];
+        NSString *cachePath = [[SeafStorage.sharedObject tempDir] stringByAppendingPathComponent:name];
+        return [Utils imageFromPath:self.lpath withMaxSize:IMAGE_MAX_SIZE cachePath:cachePath];
+    }
 }
 
 - (NSURL *)exportURL
@@ -660,6 +673,16 @@
     } else {
         return _previewImage;
     }
+}
+
+- (PHImageRequestOptions *)requestOptions {
+    if (!_requestOptions) {
+        _requestOptions = [PHImageRequestOptions new];
+        _requestOptions.networkAccessAllowed = YES; // iCloud
+        _requestOptions.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
+        _requestOptions.synchronous = YES;
+    }
+    return _requestOptions;
 }
 
 @end

@@ -7,7 +7,6 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <AssetsLibrary/AssetsLibrary.h>
 
 #import "SeafPreView.h"
 #import "SeafConnection.h"
@@ -23,7 +22,6 @@ typedef void(^DownLoadFinshBlock)(id<SeafTask>  _Nonnull task);
 // Manager for background download/upload tasks, retry if failed.
 @interface SeafDataTaskManager : NSObject
 
-@property (readonly) ALAssetsLibrary * _Nonnull assetsLibrary;
 @property (nonatomic, copy) SyncBlock _Nullable trySyncBlock;
 @property (nonatomic, copy) DownLoadFinshBlock _Nullable finishBlock;
 
@@ -44,8 +42,6 @@ typedef void(^DownLoadFinshBlock)(id<SeafTask>  _Nonnull task);
 - (void)cancelAutoSyncVideoTasks:(SeafConnection * _Nonnull)conn;
 - (void)cancelAllDownloadTasks:(SeafConnection * _Nonnull)conn;
 - (void)cancelAllUploadTasks:(SeafConnection * _Nonnull)conn;
-
-- (void)assetForURL:(NSURL * _Nonnull)assetURL resultBlock:(ALAssetsLibraryAssetForURLResultBlock _Nonnull)resultBlock failureBlock:(ALAssetsLibraryAccessFailureBlock _Nonnull)failureBlock;
 
 - (SeafAccountTaskQueue * _Nonnull)accountQueueForConnection:(SeafConnection * _Nonnull)connection;
 

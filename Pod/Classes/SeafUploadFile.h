@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <QuickLook/QuickLook.h>
-#import <AssetsLibrary/AssetsLibrary.h>
+#import <Photos/Photos.h>
 
 #import "SeafPreView.h"
 #import "SeafTaskQueue.h"
@@ -34,7 +34,7 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 @property (nonatomic, readonly, getter=isUploading) BOOL uploading;
 
 @property (readwrite) BOOL overwrite;
-@property (nonatomic, readonly) ALAsset *asset;
+@property (nonatomic, readonly) PHAsset *asset;
 @property (nonatomic, readonly) NSURL *assetURL;
 @property (readwrite) BOOL autoSync;
 
@@ -47,7 +47,7 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 
 - (id)initWithPath:(NSString *)lpath;
 
-- (void)setAsset:(ALAsset *)asset url:(NSURL *)url;
+- (void)setPHAsset:(PHAsset *)asset url:(NSURL *)url;
 
 - (BOOL)waitUpload;
 

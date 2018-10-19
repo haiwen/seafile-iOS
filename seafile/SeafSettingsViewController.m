@@ -194,24 +194,21 @@ enum {
 
 - (void)checkPhotoLibraryAuthorizationStatus
 {
-    Debug("Current AuthorizationStatus:%ld", (long)[ALAssetsLibrary authorizationStatus]);
+    Debug("Current AuthorizationStatus:%ld", (long)[PHPhotoLibrary authorizationStatus]);
 
-    if([ALAssetsLibrary authorizationStatus] == ALAuthorizationStatusNotDetermined) {
-        ALAssetsLibrary *assetLibrary = [[ALAssetsLibrary alloc] init];
-        /*
-         Enumerating assets or groups of assets in the library will present a consent dialog to the user.
-         */
-        [assetLibrary enumerateGroupsWithTypes:ALAssetsGroupAll usingBlock:^(ALAssetsGroup *group, BOOL *stop) {
-            self.autoSync = _autoSyncSwitch.on;
-            *stop = true;
-        } failureBlock:^(NSError *error) {
-            _autoSyncSwitch.on = false;
+    if([PHPhotoLibrary authorizationStatus] == PHAuthorizationStatusNotDetermined) {
+        [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
+            if (status == PHAuthorizationStatusAuthorized) {
+                self.autoSync = _autoSyncSwitch.on;
+            } else {
+                _autoSyncSwitch.on = false;
+            }
         }];
-    } else if([ALAssetsLibrary authorizationStatus] == ALAuthorizationStatusRestricted ||
-              [ALAssetsLibrary authorizationStatus] == ALAuthorizationStatusDenied) {
+    } else if([PHPhotoLibrary authorizationStatus] == PHAuthorizationStatusRestricted ||
+              [PHPhotoLibrary authorizationStatus] == PHAuthorizationStatusDenied) {
         [self alertWithTitle:NSLocalizedString(@"This app does not have access to your photos and videos.", @"Seafile") message:NSLocalizedString(@"You can enable access in Privacy Settings", @"Seafile")];
         _autoSyncSwitch.on = false;
-    } else if([ALAssetsLibrary authorizationStatus] == ALAuthorizationStatusAuthorized) {
+    } else if([PHPhotoLibrary authorizationStatus] == PHAuthorizationStatusAuthorized) {
         self.autoSync = _autoSyncSwitch.on;
     }
 }
