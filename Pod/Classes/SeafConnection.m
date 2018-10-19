@@ -23,6 +23,7 @@
 #import "Debug.h"
 #import "Utils.h"
 #import "Version.h"
+#import "SeafPhotoAsset.h"
 
 enum {
     FLAG_LOCAL_DECRYPT = 0x1,
@@ -833,7 +834,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
         if (error) {
             [self showDeserializedError:error];
-            Warning("token=%@, resp=%ld %@, delegate=%@, url=%@, Error: %@", _token, (long)resp.statusCode, responseObject, self.delegate, url, error);
+            Warning("token=%@, resp=%ld %@, delegate=%@, url=%@, Error: %@", self.token, (long)resp.statusCode, responseObject, self.delegate, url, error);
             failure (request, resp, responseObject, error);
             if (resp.statusCode == HTTP_ERR_UNAUTHORIZED) {
                 NSString *wiped = [resp.allHeaderFields objectForKey:@"X-Seafile-Wiped"];
@@ -1117,33 +1118,26 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
     int count = 0;
     while (_uploadingArray.count < 5 && count++ < 5) {
-        NSURL *url = [self popUploadPhoto];
-        if (!url) break;
-        [SeafDataTaskManager.sharedObject assetForURL:url
-                                 resultBlock:^(ALAsset *asset) {
-                                     NSString *filename = [Utils assertName:asset];
-                                     if (!filename) {
-                                         [self removeUploadingPhoto:url];
-                                         return Warning("Failed to get asset name: %@", asset);
-                                     }
-                                     NSString *path = [self.localUploadDir stringByAppendingPathComponent:filename];
-                                     SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
-                                     file.retryable = false;
-                                     file.autoSync = true;
-                                     file.overwrite = true;
-                                     [file setAsset:asset url:url];
-                                     file.udir = dir;
-                                     [file setCompletionBlock:^(SeafUploadFile *file, NSString *oid, NSError *error) {
-                                         [self autoSyncFileUploadComplete:file error:error];
-                                     }];
+        SeafPhotoAsset *photoAsset = [self popUploadPhoto];
+        if (!photoAsset) break;
+        
+        PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[photoAsset.localIdentifier] options:nil];
+        PHAsset *asset = [result firstObject];
 
-                                     Debug("Add file %@ to upload list: %@ current %u %u", filename, dir.path, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
-                                     [SeafDataTaskManager.sharedObject addUploadTask:file];
-                                 }
-                                failureBlock:^(NSError *error){
-                                    Debug("!!!!Can not find asset:%@ !", url);
-                                    [self removeUploadingPhoto:url];
-                                }];
+        NSString *path = [self.localUploadDir stringByAppendingPathComponent:photoAsset.name];
+        SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
+        file.retryable = false;
+        file.autoSync = true;
+        file.overwrite = true;
+        [file setPHAsset:asset url:photoAsset.url];
+        file.udir = dir;
+        [file setCompletionBlock:^(SeafUploadFile *file, NSString *oid, NSError *error) {
+            [self autoSyncFileUploadComplete:file error:error];
+        }];
+
+    
+        Debug("Add file %@ to upload list: %@ current %u %u", photoAsset.name, dir.path, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
+        [SeafDataTaskManager.sharedObject addUploadTask:file];
     }
     if (self.photosArray.count == 0) {
         Debug("Force check if there are new photos after all synced.");
@@ -1164,7 +1158,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         Warning("Failed to upload photo %@: %@", ufile.name, error);
         // Add photo to the end of queue
         [self removeUploadingPhoto:ufile.assetURL];
-        [self addUploadPhoto:ufile.assetURL];
+        SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:ufile.asset];
+        [self addUploadPhoto:photoAsset];
     }
 }
 
@@ -1201,41 +1196,23 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         [_uploadingArray removeObject:url];
     }
 }
-- (void)addUploadPhoto:(NSURL *)url {
+
+- (void)addUploadPhoto:(SeafPhotoAsset *)asset {
     @synchronized(_photosArray) {
-        [_photosArray addObject:url];
+        [_photosArray addObject:asset];
     }
 }
-- (NSURL *)popUploadPhoto{
+
+- (SeafPhotoAsset *)popUploadPhoto{
     @synchronized(self.photosArray) {
         if (!self.photosArray || self.photosArray.count == 0) return nil;
-        NSURL *url = [self.photosArray objectAtIndex:0];
-        [self addUploadingPhoto:url];
-        [self.photosArray removeObject:url];
-        Debug("Picked %@ remain: %u %u", url, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
-        return url;
+        SeafPhotoAsset *photoAsset = [self.photosArray objectAtIndex:0];
+        [self addUploadingPhoto:photoAsset.url];
+        [self.photosArray removeObject:photoAsset];
+        Debug("Picked %@ remain: %u %u", photoAsset.url, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
+        return photoAsset;
     }
 }
-
-- (NSURL *)uploadURLForAsset:(ALAsset *)asset
-{
-    if (!asset)
-        return nil;
-
-    if(!self.isVideoSync && [[asset valueForProperty:ALAssetPropertyType] isEqualToString:ALAssetTypeVideo])
-        return nil;
-
-    NSURL *url = (NSURL*)asset.defaultRepresentation.url;
-    if ([self IsPhotoUploaded:url] || [self IsPhotoUploading:url])
-        return nil;
-
-    if([[asset valueForProperty:ALAssetPropertyType] isEqualToString:ALAssetTypePhoto]
-       || [[asset valueForProperty:ALAssetPropertyType] isEqualToString:ALAssetTypeVideo])
-        return url;
-
-    return nil;
-}
-
 
 - (void)firstTimeSyncUpdateSyncedPhotos:(SeafDir *)uploaddir
 {
@@ -1247,66 +1224,73 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
      [self performSelectorInBackground:@selector(backGroundCheckPhotos:) withObject:[NSNumber numberWithBool:force]];
 }
 
-- (void)backGroundCheckPhotos:(NSNumber *)forceNumber
-{
+- (void)backGroundCheckPhotos:(NSNumber *)forceNumber {
     bool force = [forceNumber boolValue];
     SeafDir *uploadDir = _syncDir;
     bool shouldSkip = !_inAutoSync || (!force && [self photosInSyncing] > 0) || (self.firstTimeSync && !uploadDir);
     if (shouldSkip) {
         return;
     }
-
+    
     @synchronized(self) {
         if (_inCheckPhotoss) return;
         _inCheckPhotoss = true;
     }
-
-    Debug("Check photos for server %@, current %u %u", _address, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
-
+    
+    PHFetchResult *result = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum subtype:PHAssetCollectionSubtypeSmartAlbumUserLibrary options:nil];
+    
+    NSPredicate *predicateImage = [NSPredicate predicateWithFormat:@"mediaType == %i", PHAssetMediaTypeImage];
+    NSPredicate *predicateVideo = [NSPredicate predicateWithFormat:@"mediaType == %i", PHAssetMediaTypeVideo];
+    NSPredicate *predicate;
+    if (self.isAutoSync && self.isVideoSync) {
+        predicate = [NSCompoundPredicate orPredicateWithSubpredicates:@[predicateImage, predicateVideo]];
+    } else if (self.isAutoSync) {
+        predicate = predicateImage;
+    } else if (self.isVideoSync) {
+        predicate = predicateVideo;
+    } else {
+        predicate = nil;
+    }
+    
+    if (!predicate) {
+        return;
+    }
+    
+    PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
+    fetchOptions.predicate = predicate;
+    PHAssetCollection *collection = result.firstObject;
+    PHFetchResult *assets = [PHAsset fetchAssetsInAssetCollection:collection options:fetchOptions];
+    
     NSMutableArray *photos = [[NSMutableArray alloc] init];
-    void (^assetEnumerator)(ALAsset *, NSUInteger, BOOL *) = ^(ALAsset *asset, NSUInteger index, BOOL *stop) {
+    for (PHAsset *asset in assets) {
+        SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset];
+        
         if (self.firstTimeSync) {
-            NSString *name = [Utils assertName:asset];
-            if ([uploadDir nameExist:name]) {
-                [self setPhotoUploaded:asset.defaultRepresentation.url.absoluteString];
-                Debug("First time sync, skip file %@(%@) which has already been uploaded", name, asset.defaultRepresentation.url);
+            if ([uploadDir nameExist:photoAsset.name]) {
+                [self setPhotoUploaded:photoAsset.url.absoluteString];
+                Debug("First time sync, skip file %@(%@) which has already been uploaded", photoAsset.name, photoAsset.localIdentifier);
                 return;
             }
         }
-
-        NSURL *url = [self uploadURLForAsset:asset];
-        if (url) {
-            [photos addObject:url];
+        
+        [photos addObject:photoAsset];
+    }
+    
+    for (SeafPhotoAsset *photoAsset in photos) {
+        if (![self IsPhotoUploaded:photoAsset.url] && ![self IsPhotoUploading:photoAsset.url]) {
+            [self addUploadPhoto:photoAsset];
         }
-    };
-
-    void (^ assetGroupEnumerator) ( ALAssetsGroup *, BOOL *) = ^(ALAssetsGroup *group, BOOL *stop) {
-        if(group != nil) {
-            [group setAssetsFilter:[ALAssetsFilter allAssets]];
-            [group enumerateAssetsUsingBlock:assetEnumerator];
-            Debug("Group %@, total %ld photos for server:%@", group, (long)group.numberOfAssets, _address);
-        } else {
-            for (NSURL *url in photos) {
-                if (![self IsPhotoUploaded:url] && ![self IsPhotoUploading:url]) {
-                    [self addUploadPhoto:url];
-                }
-            }
-            if (self.firstTimeSync) {
-                self.firstTimeSync = false;
-            }
-
-            Debug("GroupAll Total %ld photos need to upload: %@", (long)_photosArray.count, _address);
-            if (_photSyncWatcher) [_photSyncWatcher photoSyncChanged:self.photosInSyncing];
-            _inCheckPhotoss = false;
-            [self pickPhotosForUpload];
-        }
-    };
-    [[SeafDataTaskManager.sharedObject assetsLibrary] enumerateGroupsWithTypes:ALAssetsGroupSavedPhotos
-                                                                    usingBlock:assetGroupEnumerator
-                                                                  failureBlock:^(NSError *error) {
-                                                                      Debug("There is an error: %@", error);
-                                                                      _inCheckPhotoss = false;
-                                                                  }];
+    }
+    if (self.firstTimeSync) {
+        self.firstTimeSync = false;
+    }
+    
+    Debug("GroupAll Total %ld photos need to upload: %@", (long)_photosArray.count, _address);
+    
+    if (_photSyncWatcher) [_photSyncWatcher photoSyncChanged:self.photosInSyncing];
+    _inCheckPhotoss = false;
+    
+    [self pickPhotosForUpload];
 }
 
 - (SeafDir *)getSubdirUnderDir:(SeafDir *)dir withName:(NSString *)name
@@ -1347,7 +1331,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     CompletionBlock completionHandler = ^(BOOL success, NSError * _Nullable error){
         if (!success) {
-            _syncDir = nil;
+            self.syncDir = nil;
         }
         if (handler) {
             handler(success, error);
@@ -1392,7 +1376,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (void)checkAutoSync
 {
     if (!self.authorized) return;
-    if (self.isAutoSync && [ALAssetsLibrary authorizationStatus] != ALAuthorizationStatusAuthorized) {
+    if (self.isAutoSync && [PHPhotoLibrary authorizationStatus] != PHAuthorizationStatusAuthorized) {
         self.autoSync = false;
         return;
     }
@@ -1419,8 +1403,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }
 }
 
-- (NSMutableArray *)getAllContacts:(CNContactStore *)store
-{
+- (NSMutableArray *)getAllContacts:(CNContactStore *)store API_AVAILABLE(ios(9.0)){
     NSMutableArray *contacts = [NSMutableArray array];
     NSError *fetchError;
 
@@ -1438,84 +1421,89 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)saveContactsToFile:(NSString *)vCardPath completionHandler:(void(^)(BOOL success, NSArray *contacts, NSError * _Nullable error))handler
 {
-    CNContactStore *store = [[CNContactStore alloc] init];
-    [store requestAccessForEntityType:CNEntityTypeContacts completionHandler:^(BOOL granted, NSError * _Nullable error) {
-        if (!granted) {
-            self.contactsSync = false;
-            self.contactsRepo = nil;
-            Warning("access to contacts denied: %@", error);
-            return handler(false, nil, error);
-        }
-        NSMutableArray *contacts = [self getAllContacts:store];
-        if (!contacts) {
-            Warning("Failed to get all contacts.");
-            return handler(false, nil, nil);
-        }
-        Info("Contacts count: %ld", contacts.count);
-        NSError *err = nil;
-        NSData *vcardData = [CNContactVCardSerialization dataWithContacts:contacts error:&err];
-        if (err) {
-            Warning("Failed to serialize contacts: %@", err);
-            return handler(false, nil, err);
-        }
-        [vcardData writeToFile:vCardPath atomically:YES];
-        handler(true, contacts, nil);
-    }];
+    if (@available(iOS 9.0, *)) {
+        CNContactStore *store = [[CNContactStore alloc] init];
+        [store requestAccessForEntityType:CNEntityTypeContacts completionHandler:^(BOOL granted, NSError * _Nullable error) {
+            if (!granted) {
+                self.contactsSync = false;
+                self.contactsRepo = nil;
+                Warning("access to contacts denied: %@", error);
+                return handler(false, nil, error);
+            }
+            NSMutableArray *contacts = [self getAllContacts:store];
+            if (!contacts) {
+                Warning("Failed to get all contacts.");
+                return handler(false, nil, nil);
+            }
+            Info("Contacts count: %ld", contacts.count);
+            NSError *err = nil;
+            NSData *vcardData = [CNContactVCardSerialization dataWithContacts:contacts error:&err];
+            if (err) {
+                Warning("Failed to serialize contacts: %@", err);
+                return handler(false, nil, err);
+            }
+            [vcardData writeToFile:vCardPath atomically:YES];
+            handler(true, contacts, nil);
+        }];
+    }
 }
 
 - (BOOL)restoreContactsFromFile:(NSString *)vCardPath
 {
     Info("Restore contacts from file %@", vCardPath);
-    CNContactStore *store = [[CNContactStore alloc] init];
-    NSData *data = [NSData dataWithContentsOfFile:vCardPath];
-    NSError *error = nil;
-    NSArray *contacts = [NSArray arrayWithArray:[CNContactVCardSerialization contactsWithData:data error:&error]];
-    if (error) {
-        Warning("Failed to retrieve contacts from file %@", vCardPath);
-        return false;
-    }
-    NSArray *currentContacts = [self getAllContacts:store];
-    NSMutableDictionary *currentContactsDict = [NSMutableDictionary new];
-    NSMutableDictionary *targetContactsDict = [NSMutableDictionary new];
-    CNContactFormatter *formatter = [[CNContactFormatter alloc] init];
-    Info("Current contacts: %ld restore to: %ld", currentContacts.count, contacts.count);
-    for (CNContact *contact in currentContacts) {
-        [currentContactsDict setObject:contact forKey:contact.identifier];
-    }
-    for (CNContact *contact in contacts) {
+    if (@available(iOS 9.0, *)) {
+        CNContactStore *store = [[CNContactStore alloc] init];
+        NSData *data = [NSData dataWithContentsOfFile:vCardPath];
         NSError *error = nil;
-        CNSaveRequest *request = [[CNSaveRequest alloc] init];
-        [targetContactsDict setObject:contact forKey:contact.identifier];
-        if ([currentContactsDict objectForKey:contact.identifier] != nil) {
-            Debug("Update %@ %@", contact.identifier, [formatter stringFromContact:contact]);
-            [request updateContact:[contact mutableCopy] ];
-        } else {
-            Debug("Add %@ %@", contact.identifier, [formatter stringFromContact:contact]);
-            [request addContact:[contact mutableCopy] toContainerWithIdentifier:nil];
-        }
-
-        [store executeSaveRequest:request error:&error];
+        NSArray *contacts = [NSArray arrayWithArray:[CNContactVCardSerialization contactsWithData:data error:&error]];
         if (error) {
-            Warning("Failed to execute request: %@", error);
+            Warning("Failed to retrieve contacts from file %@", vCardPath);
             return false;
         }
-    }
-    for (CNContact *contact in currentContacts) {
-        if ([targetContactsDict objectForKey:contact.identifier] == nil) {
+        NSArray *currentContacts = [self getAllContacts:store];
+        NSMutableDictionary *currentContactsDict = [NSMutableDictionary new];
+        NSMutableDictionary *targetContactsDict = [NSMutableDictionary new];
+        CNContactFormatter *formatter = [[CNContactFormatter alloc] init];
+        Info("Current contacts: %ld restore to: %ld", currentContacts.count, contacts.count);
+        for (CNContact *contact in currentContacts) {
+            [currentContactsDict setObject:contact forKey:contact.identifier];
+        }
+        for (CNContact *contact in contacts) {
             NSError *error = nil;
-
-            Debug("Delete %@ %@", contact.identifier, [formatter stringFromContact:contact]);
             CNSaveRequest *request = [[CNSaveRequest alloc] init];
-            [request deleteContact:[contact mutableCopy] ];
+            [targetContactsDict setObject:contact forKey:contact.identifier];
+            if ([currentContactsDict objectForKey:contact.identifier] != nil) {
+                Debug("Update %@ %@", contact.identifier, [formatter stringFromContact:contact]);
+                [request updateContact:[contact mutableCopy] ];
+            } else {
+                Debug("Add %@ %@", contact.identifier, [formatter stringFromContact:contact]);
+                [request addContact:[contact mutableCopy] toContainerWithIdentifier:nil];
+            }
+            
             [store executeSaveRequest:request error:&error];
             if (error) {
-                Warning("Failed to execute delete request: %@", error);
+                Warning("Failed to execute request: %@", error);
                 return false;
             }
         }
+        for (CNContact *contact in currentContacts) {
+            if ([targetContactsDict objectForKey:contact.identifier] == nil) {
+                NSError *error = nil;
+                
+                Debug("Delete %@ %@", contact.identifier, [formatter stringFromContact:contact]);
+                CNSaveRequest *request = [[CNSaveRequest alloc] init];
+                [request deleteContact:[contact mutableCopy] ];
+                [store executeSaveRequest:request error:&error];
+                if (error) {
+                    Warning("Failed to execute delete request: %@", error);
+                    return false;
+                }
+            }
+        }
+        return true;
+    } else {
+        return false;
     }
-
-    return true;
 }
 
 - (void)checkMakeUploadDirectoryInRepo:(SeafRepo *)repo subdir:(NSString *)dirName completion:(void(^)(SeafDir *uploaddir, NSError * _Nullable error))completionHandler
@@ -1643,11 +1631,13 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)contactStoreDidChange:(NSNotification *)notification
 {
-    if (self.inContactsSync || !self.contactsSync || !self.contactsRepo)
-        return;
-    [self backupContacts:false completion:^(BOOL success, NSError * _Nullable error) {
-        Debug("Backup contacts %d: %@", success, error);
-    }];
+    if (@available(iOS 9.0, *)) {
+        if (self.inContactsSync || !self.contactsSync || !self.contactsRepo)
+            return;
+        [self backupContacts:false completion:^(BOOL success, NSError * _Nullable error) {
+            Debug("Backup contacts %d: %@", success, error);
+        }];
+    }
 }
 
 - (NSString *)backupContacts:(BOOL)force completion:(CompletionBlock)handler

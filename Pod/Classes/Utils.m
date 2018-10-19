@@ -12,7 +12,6 @@
 #import "Utils.h"
 #import "Debug.h"
 #import "ExtentedString.h"
-
 #import <sys/stat.h>
 #import <dirent.h>
 #import <sys/xattr.h>
@@ -323,76 +322,45 @@
     return false;
 }
 
-+ (BOOL)writeDataToPathNoMeta:(NSString*)filePath andAsset:(ALAsset*)asset
-{
-    [[NSFileManager defaultManager] createFileAtPath:filePath contents:nil attributes:nil];
-    NSFileHandle *handle = [NSFileHandle fileHandleForWritingAtPath:filePath];
-    if (!handle) {
-        return NO;
-    }
-    static const NSUInteger BufferSize = 1024*1024;
-
-    ALAssetRepresentation *rep = [asset defaultRepresentation];
-    uint8_t *buffer = calloc(BufferSize, sizeof(*buffer));
-    NSUInteger offset = 0, bytesRead = 0;
-
-    do {
-        @try {
-            bytesRead = [rep getBytes:buffer fromOffset:offset length:BufferSize error:nil];
-            [handle writeData:[NSData dataWithBytesNoCopy:buffer length:bytesRead freeWhenDone:NO]];
-            offset += bytesRead;
-        } @catch (NSException *exception) {
-            free(buffer);
-            return NO;
-        }
-    } while (bytesRead > 0);
-
-    free(buffer);
-    return YES;
-}
-
-+ (BOOL)writeDataToPathWithMeta:(NSString*)filePath andAsset:(ALAsset*)asset
-{
-    @autoreleasepool {
-        ALAssetRepresentation *defaultRep = asset.defaultRepresentation;
-        CGImageRef cgimg = [defaultRep CGImageWithOptions:defaultRep.metadata];
-        UIImage *image = [UIImage imageWithCGImage:cgimg];
-        CGImageSourceRef source =  CGImageSourceCreateWithData((CFDataRef)UIImageJPEGRepresentation(image, 1.0), NULL);
-        
++ (BOOL)writeDataToPathWithMeta:(NSString*)filePath andAsset:(PHAsset *)asset {
+    PHImageRequestOptions *options = [PHImageRequestOptions new];
+    options.networkAccessAllowed = YES; // iCloud
+    options.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
+    options.synchronous = YES;
+    
+    __block BOOL success = NO;
+    [[PHImageManager defaultManager] requestImageDataForAsset:asset options:options resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
+//        NSError *error = nil;
         NSURL *url = [[NSURL alloc] initFileURLWithPath:filePath];
-        CFStringRef UTI = CGImageSourceGetType(source); //this is the type of image (e.g., public.jpeg)
-        CGImageDestinationRef destination = CGImageDestinationCreateWithURL((CFURLRef)url, UTI, 1, NULL);
-        if(!destination) {
-            Debug("***Could not create image destination ***");
-            return false;
-        }
-        
-        //add the image contained in the image source to the destination, overidding the old metadata with our modified metadata
-        CGImageDestinationAddImageFromSource(destination, source, 0, (CFDictionaryRef)defaultRep.metadata);
-        
-        //tell the destination to write the image data and metadata into our data object.
-        //It will return false if something goes wrong
-        BOOL success = CGImageDestinationFinalize(destination);
-        if (!success) {
-            Debug("***Could not create data from image destination ***");
-        }
-        CFRelease(destination);
-        CFRelease(source);
-        return success;
-    }
+        success = [imageData writeToURL:url atomically:true];
+    }];
+    
+    return success;
 }
 
-+ (BOOL)writeDataToPath:(NSString*)filePath andAsset:(ALAsset*)asset
++ (BOOL)writeDataToPath:(NSString*)filePath andAsset:(PHAsset *)asset
 {
     [Utils checkMakeDir:[filePath stringByDeletingLastPathComponent]];
-    NSString *ext = filePath.pathExtension.lowercaseString;
-    if ([@"jpg" isEqualToString:ext] || [@"jpeg" isEqualToString:ext]) {
-        return [Utils writeDataToPathWithMeta:filePath andAsset:asset];
-    } else if ([@"heic" isEqualToString:ext]) {
-        filePath = [filePath stringByReplacingOccurrencesOfString:@"HEIC" withString:@"JPG"];
-        return [Utils writeDataToPathWithMeta:filePath andAsset:asset];
-    }
-    return [Utils writeDataToPathNoMeta:filePath andAsset:asset];
+    __block NSString *path = filePath;
+    
+    PHImageRequestOptions *options = [PHImageRequestOptions new];
+    options.networkAccessAllowed = YES; // iCloud
+    options.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
+    options.synchronous = YES;
+    
+    __block BOOL success = NO;
+    [[PHImageManager defaultManager] requestImageDataForAsset:asset options:options resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
+        //        NSError *error = nil;
+        if ([dataUTI isEqualToString:@"public.heic"]) {
+            UIImage *image = [UIImage imageWithData:imageData];
+            imageData = UIImageJPEGRepresentation(image, 1.0);
+            path = [filePath stringByReplacingOccurrencesOfString:@"HEIC" withString:@"JPG"];
+        }
+        NSURL *url = [[NSURL alloc] initFileURLWithPath:path];
+        success = [imageData writeToURL:url atomically:true];
+    }];
+    
+    return success;
 }
 
 + (BOOL)fileExistsAtPath:(NSString *)path
@@ -568,20 +536,49 @@
     return nil;
 }
 
-+ (NSString *)assertName:(ALAsset *)asset
-{
-    NSString *name = asset.defaultRepresentation.filename;
++ (NSString *)assetName:(PHAsset *)asset {
+    NSString *name;
+    if (@available(iOS 9.0, *)) {
+        NSArray *resources = [PHAssetResource assetResourcesForAsset:asset];
+        name = ((PHAssetResource*)resources.firstObject).originalFilename;
+    } else {
+        name = [asset valueForKey:@"filename"];
+    }
     if ([name hasPrefix:@"IMG_"]) {
         NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
         [dateFormatter setDateFormat:@"yyyyMMdd_HHmmss"];
-        NSDate *date = [asset valueForProperty:ALAssetPropertyDate];
+        NSDate *date = asset.creationDate;
         if (date == nil) {
             date = [NSDate date];
         }
         NSString *dateStr = [dateFormatter stringFromDate:date];
-        return [NSString stringWithFormat:@"IMG_%@_%@", dateStr, [name substringFromIndex:4]];
+        name = [NSString stringWithFormat:@"IMG_%@_%@", dateStr, [name substringFromIndex:4]];
+    }
+    if ([name hasSuffix:@"HEIC"]) {
+        name = [name stringByReplacingOccurrencesOfString:@"HEIC" withString:@"JPG"];
     }
     return name;
+}
+
++ (NSURL *)assetURL:(PHAsset *)asset {
+    __block NSURL *URL;
+    if (asset.mediaType == PHAssetMediaTypeImage) {
+        PHImageRequestOptions *options = [[PHImageRequestOptions alloc] init];
+        options.synchronous = YES;
+        [PHImageManager.defaultManager requestImageDataForAsset:asset options:options resultHandler:^(NSData *imageData, NSString *dataUTI, UIImageOrientation orientation, NSDictionary *info) {
+            URL = info[@"PHImageFileURLKey"];
+        }];
+    } else if (asset.mediaType == PHAssetMediaTypeVideo) {
+        PHVideoRequestOptions *options = [[PHVideoRequestOptions alloc] init];
+        options.version = PHVideoRequestOptionsVersionCurrent;
+        [[PHImageManager defaultManager] requestAVAssetForVideo:asset options:options resultHandler:^(AVAsset * _Nullable asset, AVAudioMix * _Nullable audioMix, NSDictionary * _Nullable info) {
+            if ([asset isKindOfClass:[AVURLAsset class]]) {
+                AVURLAsset *urlAsset = (AVURLAsset*)asset;
+                URL = urlAsset.URL;
+            }
+        }];
+    }
+    return URL;
 }
 
 + (NSString *)encodePath:(NSString *)server username:(NSString *)username repo:(NSString *)repoId path:(NSString *)path

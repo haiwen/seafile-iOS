@@ -21,6 +21,7 @@
 #import "SeafStorage.h"
 #import "SeafDataTaskManager.h"
 #import "SeafGlobal.h"
+#import "SeafPhotoAsset.h"
 
 #import "FileSizeFormatter.h"
 #import "SeafDateFormatter.h"
@@ -51,7 +52,7 @@ enum {
 };
 
 
-@interface SeafFileViewController ()<QBImagePickerControllerDelegate, UIPopoverControllerDelegate, SeafUploadDelegate, SeafDirDelegate, SeafShareDelegate, UISearchBarDelegate, UISearchDisplayDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate, MWPhotoBrowserDelegate>
+@interface SeafFileViewController ()<QBImagePickerControllerDelegate, SeafUploadDelegate, SeafDirDelegate, SeafShareDelegate, UISearchBarDelegate, UISearchDisplayDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate, MWPhotoBrowserDelegate>
 - (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
 - (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
 - (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
@@ -73,7 +74,6 @@ enum {
 
 @property int state;
 
-@property(nonatomic,strong) UIPopoverController *popoverController;
 @property (retain) NSDateFormatter *formatter;
 
 @property(nonatomic, strong, readwrite) UISearchBar *searchBar;
@@ -100,9 +100,6 @@ enum {
 @synthesize selectedCell = _selectedCell;
 
 @synthesize editToolItems = _editToolItems;
-
-@synthesize popoverController;
-
 
 - (SeafDetailViewController *)detailViewController
 {
@@ -401,12 +398,8 @@ enum {
     [self.tableView setEditing:editing animated:animated];
 }
 
-- (void)addPhotos:(id)sender
-{
-    if(self.popoverController)
-        return;
-    if([ALAssetsLibrary authorizationStatus] == ALAuthorizationStatusRestricted ||
-       [ALAssetsLibrary authorizationStatus] == ALAuthorizationStatusDenied) {
+- (void)addPhotos:(id)sender {
+    if ([PHPhotoLibrary authorizationStatus] == PHAuthorizationStatusRestricted || [PHPhotoLibrary authorizationStatus] == PHAuthorizationStatusDenied) {
         return [self alertWithTitle:NSLocalizedString(@"This app does not have access to your photos and videos.", @"Seafile") message:NSLocalizedString(@"You can enable access in Privacy Settings", @"Seafile")];
     }
 
@@ -414,17 +407,12 @@ enum {
     imagePickerController.title = NSLocalizedString(@"Photos", @"Seafile");
     imagePickerController.delegate = self;
     imagePickerController.allowsMultipleSelection = YES;
-    imagePickerController.filterType = QBImagePickerControllerFilterTypeNone;
-
+    imagePickerController.mediaType = QBImagePickerMediaTypeAny;
     if (IsIpad()) {
-        UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:imagePickerController];
-        self.popoverController = [[UIPopoverController alloc] initWithContentViewController:navigationController];
-        self.popoverController.delegate = self;
-        [self.popoverController presentPopoverFromBarButtonItem:self.photoItem permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
-    } else {
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        [appdelegate showDetailView:imagePickerController];
+        imagePickerController.modalPresentationStyle = UIModalPresentationPopover;
+        imagePickerController.popoverPresentationController.barButtonItem = self.photoItem;
     }
+    [self presentViewController:imagePickerController animated:YES completion:nil];
 }
 
 - (void)editDone:(id)sender
@@ -440,10 +428,6 @@ enum {
     if (self.editing) {
         self.navigationItem.rightBarButtonItems = nil;
         self.navigationItem.rightBarButtonItem = self.doneItem;
-        if (IsIpad() && self.popoverController) {
-            [self.popoverController dismissPopoverAnimated:YES];
-            self.popoverController = nil;
-        }
     }
 }
 
@@ -537,15 +521,6 @@ enum {
 {
     [super viewWillAppear:animated];
     [self checkUploadfiles];
-}
-
-- (void)viewWillDisappear:(BOOL)animated
-{
-    [super viewWillDisappear:animated];
-    if (IsIpad() && self.popoverController) {
-        [self.popoverController dismissPopoverAnimated:YES];
-        self.popoverController = nil;
-    }
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -1576,13 +1551,19 @@ enum {
     return [NSString stringWithFormat:@"%@-%@.%@", name, date, ext];
 }
 
-- (void)uploadPickedAssets:(NSArray *)assets overwrite:(BOOL)overwrite
-{
-    NSMutableSet *nameSet = overwrite ? [NSMutableSet new] : [self getExistedNameSet];
+- (void)uploadPickedAssetsIdentifier:(NSArray *)identifiers overwrite:(BOOL)overwrite {
+    if (identifiers.count == 0) return;
+    
     NSMutableArray *files = [[NSMutableArray alloc] init];
     NSString *uploadDir = [self.connection uniqueUploadDir];
-    for (ALAsset *asset in assets) {
-        NSString *filename = [Utils assertName:asset];
+    NSMutableSet *nameSet = overwrite ? [NSMutableSet new] : [self getExistedNameSet];
+    
+    for (NSString *localIdentifier in identifiers) {
+        PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
+        PHAsset *asset = [result firstObject];
+        SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset];
+        
+        NSString *filename = photoAsset.name;
         Debug("Upload picked file : %@", filename);
         if (!overwrite && [nameSet containsObject:filename]) {
             NSString *name = filename.stringByDeletingPathExtension;
@@ -1593,61 +1574,37 @@ enum {
         NSString *path = [uploadDir stringByAppendingPathComponent:filename];
         SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
         file.overwrite = overwrite;
-        [file setAsset:asset url:asset.defaultRepresentation.url];
+        [file setPHAsset:asset url:photoAsset.url];
         file.delegate = self;
         [files addObject:file];
         [self.directory addUploadFile:file];
     }
+    
     [self reloadTable];
     for (SeafUploadFile *file in files) {
         [SeafDataTaskManager.sharedObject addUploadTask:file];
     }
 }
 
-- (void)uploadPickedAssetsUrl:(NSArray *)urls overwrite:(BOOL)overwrite
-{
-    if (urls.count == 0) return;
-    NSMutableArray *assets = [[NSMutableArray alloc] init];
-    NSURL *last = [urls objectAtIndex:urls.count-1];
-    for (NSURL *url in urls) {
-        [SeafDataTaskManager.sharedObject assetForURL:url
-                                  resultBlock:^(ALAsset *asset) {
-                                      if (assets) [assets addObject:asset];
-                                      if (url == last) [self uploadPickedAssets:assets overwrite:overwrite];
-                                  } failureBlock:^(NSError *error) {
-                                      if (url == last) [self uploadPickedAssets:assets overwrite:overwrite];
-                                  }];
-    }
+- (void)dismissImagePickerController:(QBImagePickerController *)imagePickerController {
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
-- (void)dismissImagePickerController:(QBImagePickerController *)imagePickerController
-{
-    if (IsIpad()) {
-        [self.popoverController dismissPopoverAnimated:YES];
-        self.popoverController = nil;
-    } else {
-        [imagePickerController.navigationController dismissViewControllerAnimated:YES completion:NULL];
-    }
-}
-
-- (void)qb_imagePickerControllerDidCancel:(QBImagePickerController *)imagePickerController
-{
+- (void)qb_imagePickerControllerDidCancel:(QBImagePickerController *)imagePickerController {
     [self dismissImagePickerController:imagePickerController];
 }
 
-- (void)qb_imagePickerController:(QBImagePickerController *)imagePickerController didSelectAssets:(NSArray *)assets
-{
+- (void)qb_imagePickerController:(QBImagePickerController *)imagePickerController didFinishPickingAssets:(NSArray *)assets {
     if (assets.count == 0) return;
     NSSet *nameSet = [self getExistedNameSet];
-    NSMutableArray *urls = [[NSMutableArray alloc] init];
+    NSMutableArray *identifiers = [[NSMutableArray alloc] init];
     int duplicated = 0;
-    for (ALAsset *asset in assets) {
-        NSURL *url = asset.defaultRepresentation.url;
-        if (url) {
-            NSString *filename = [Utils assertName:asset];
-            if ([nameSet containsObject:filename])
+    for (PHAsset *asset in assets) {
+        SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset];
+        if (photoAsset.localIdentifier) {
+            if ([nameSet containsObject:photoAsset.name])
                 duplicated++;
-            [urls addObject:url];
+            [identifiers addObject:photoAsset.localIdentifier];
         } else
             Warning("Failed to get asset url %@", asset);
     }
@@ -1655,18 +1612,12 @@ enum {
     if (duplicated > 0) {
         NSString *title = duplicated == 1 ? STR_12 : STR_13;
         [self alertWithTitle:title message:nil yes:^{
-            [self uploadPickedAssetsUrl:urls overwrite:true];
+            [self uploadPickedAssetsIdentifier:identifiers overwrite:true];
         } no:^{
-            [self uploadPickedAssetsUrl:urls overwrite:false];
+            [self uploadPickedAssetsIdentifier:identifiers overwrite:false];
         }];
     } else
-        [self uploadPickedAssetsUrl:urls overwrite:false];
-}
-
-#pragma mark - UIPopoverControllerDelegate
-- (void)popoverControllerDidDismissPopover:(UIPopoverController *)popoverController
-{
-    self.popoverController = nil;
+        [self uploadPickedAssetsIdentifier:identifiers overwrite:false];
 }
 
 #pragma mark - SeafFileUpdateDelegate
