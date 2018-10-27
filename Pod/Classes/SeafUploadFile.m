@@ -37,6 +37,7 @@
 @property (nonatomic) TaskCompleteBlock taskCompleteBlock;
 @property (nonatomic) TaskProgressBlock taskProgressBlock;
 @property (nonatomic, strong) PHImageRequestOptions *requestOptions;
+@property (nonatomic, strong) NSData *originalImageData;
 
 @end
 
@@ -521,25 +522,73 @@
     _assetURL = url;
 }
 
-- (void)checkAsset
-{
+- (void)checkAsset {
     if (_asset) {
         @synchronized(self) {
-            BOOL ret = [Utils writeDataToPath:self.lpath andAsset:self.asset];
-            if ([self.lpath.pathExtension isEqualToString:@"HEIC"]) {
-                _lpath = [NSString stringWithFormat:@"%@.JPG",self.lpath.stringByDeletingPathExtension];
-            }
-            if (!ret) {
-                Warning("Failed to write asset to file.");
+            if (![Utils checkMakeDir:[self.lpath stringByDeletingLastPathComponent]]) {
                 [self finishUpload:false oid:nil error:nil];
-                return;
+            }
+            if (_asset.mediaType == PHAssetMediaTypeVideo) {
+                [self getVideoForAsset];
+            } else if (_asset.mediaType == PHAssetMediaTypeImage) {
+                [self getImageDataForAsset];
             }
         }
-        _filesize = [Utils fileSizeAtPath1:self.lpath];
         Debug("asset file %@ size: %lld, lpath: %@", _asset.localIdentifier, _filesize, self.lpath);
-        _asset = nil;
     }
 }
+
+- (void)getImageDataForAsset {
+    __weak typeof(self) weakSelf = self;
+    self.requestOptions.progressHandler = ^(double progress, NSError * _Nullable error, BOOL * _Nonnull stop, NSDictionary * _Nullable info) {
+        if (error) {
+            [weakSelf finishUpload:false oid:nil error:nil];
+        }
+    };
+    
+    [[PHImageManager defaultManager] requestImageDataForAsset:_asset options:self.requestOptions resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
+        if (imageData) {
+            if ([dataUTI isEqualToString:@"public.heic"]) {
+                UIImage *image = [UIImage imageWithData:imageData];
+                imageData = UIImageJPEGRepresentation(image, 1.0);
+                self->_lpath = [self.lpath stringByReplacingOccurrencesOfString:@"HEIC" withString:@"JPG"];
+            }
+            NSURL *url = [[NSURL alloc] initFileURLWithPath:self.lpath];
+            [imageData writeToURL:url atomically:true];
+            self.originalImageData = imageData;
+            self->_filesize = [Utils fileSizeAtPath1:self.lpath];
+        } else {
+            [self finishUpload:false oid:nil error:nil];
+        }
+        self->_asset = nil;
+    }];
+}
+
+- (void)getVideoForAsset {
+    PHVideoRequestOptions *options = [PHVideoRequestOptions new];
+    options.networkAccessAllowed = YES;
+    options.version = PHVideoRequestOptionsVersionOriginal;
+    options.progressHandler = ^(double progress, NSError * _Nullable error, BOOL * _Nonnull stop, NSDictionary * _Nullable info) {
+        if (error) {
+            [self finishUpload:false oid:nil error:nil];
+        }
+    };
+    
+    [[PHImageManager defaultManager] requestAVAssetForVideo:_asset options:options resultHandler:^(AVAsset * _Nullable asset, AVAudioMix * _Nullable audioMix, NSDictionary * _Nullable info) {
+        if ([asset isKindOfClass:[AVURLAsset class]]) {
+            [Utils checkMakeDir:[self.lpath stringByDeletingLastPathComponent]];
+            BOOL result =  [Utils copyFile:[(AVURLAsset *)asset URL] to:[NSURL fileURLWithPath:self.lpath]];
+            if (!result) {
+                [self finishUpload:false oid:nil error:nil];
+            }
+        } else {
+            [self finishUpload:false oid:nil error:nil];
+        }
+        self->_filesize = [Utils fileSizeAtPath1:self.lpath];
+        self->_asset = nil;
+    }];
+}
+
 #pragma mark - QLPreviewItem
 - (NSString *)previewItemTitle
 {
@@ -569,19 +618,8 @@
 }
 
 - (UIImage *)icon {
-    __block UIImage *icon;
-    if (_asset) {
-        [[PHImageManager defaultManager] requestImageForAsset:_asset targetSize:CGSizeMake(100, 100) contentMode:PHImageContentModeAspectFill options:self.requestOptions resultHandler:^(UIImage * _Nullable result, NSDictionary * _Nullable info) {
-            icon = result;
-        }];
-    }
-    
-    if (icon) {
-        return icon;
-    } else {
-        UIImage *img = [self isImageFile] ? self.image : nil;
-        return img ? [Utils reSizeImage:img toSquare:32.0f] : [UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString];
-    }
+    UIImage *img = [self isImageFile] ? self.image : nil;
+    return img ? [Utils reSizeImage:img toSquare:32.0f] : [UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString];
 }
 
 - (UIImage *)thumb
@@ -590,14 +628,8 @@
 }
 
 - (UIImage *)image {
-    __block UIImage *image;
-    if (_asset) {
-        [[PHImageManager defaultManager] requestImageDataForAsset:_asset options:self.requestOptions resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
-            image = [UIImage imageWithData:imageData];
-        }];
-    }
-    if (image) {
-        return image;
+    if (self.originalImageData) {
+        return [UIImage imageWithData:self.originalImageData];
     } else {
         NSString *name = [@"cacheimage-ufile-" stringByAppendingString:self.name];
         NSString *cachePath = [[SeafStorage.sharedObject tempDir] stringByAppendingPathComponent:name];

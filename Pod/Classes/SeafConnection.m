@@ -1232,50 +1232,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         return;
     }
     
-    @synchronized(self) {
-        if (_inCheckPhotoss) return;
-        _inCheckPhotoss = true;
-    }
-    
-    PHFetchResult *result = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum subtype:PHAssetCollectionSubtypeSmartAlbumUserLibrary options:nil];
-    
-    NSPredicate *predicateImage = [NSPredicate predicateWithFormat:@"mediaType == %i", PHAssetMediaTypeImage];
-    NSPredicate *predicateVideo = [NSPredicate predicateWithFormat:@"mediaType == %i", PHAssetMediaTypeVideo];
-    NSPredicate *predicate;
-    if (self.isAutoSync && self.isVideoSync) {
-        predicate = [NSCompoundPredicate orPredicateWithSubpredicates:@[predicateImage, predicateVideo]];
-    } else if (self.isAutoSync) {
-        predicate = predicateImage;
-    } else if (self.isVideoSync) {
-        predicate = predicateVideo;
-    } else {
-        predicate = nil;
-    }
-    
-    if (!predicate) {
-        return;
-    }
-    
-    PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
-    fetchOptions.predicate = predicate;
-    PHAssetCollection *collection = result.firstObject;
-    PHFetchResult *assets = [PHAsset fetchAssetsInAssetCollection:collection options:fetchOptions];
-    
-    NSMutableArray *photos = [[NSMutableArray alloc] init];
-    for (PHAsset *asset in assets) {
-        SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset];
-        
-        if (self.firstTimeSync) {
-            if ([uploadDir nameExist:photoAsset.name]) {
-                [self setPhotoUploaded:photoAsset.url.absoluteString];
-                Debug("First time sync, skip file %@(%@) which has already been uploaded", photoAsset.name, photoAsset.localIdentifier);
-                return;
-            }
-        }
-        
-        [photos addObject:photoAsset];
-    }
-    
+    NSArray *photos = [self filterOutUploadedPhotos];
     for (SeafPhotoAsset *photoAsset in photos) {
         if (![self IsPhotoUploaded:photoAsset.url] && ![self IsPhotoUploading:photoAsset.url]) {
             [self addUploadPhoto:photoAsset];
@@ -1291,6 +1248,55 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     _inCheckPhotoss = false;
     
     [self pickPhotosForUpload];
+}
+
+- (NSArray *)filterOutUploadedPhotos {
+    PHFetchResult *result = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum subtype:PHAssetCollectionSubtypeSmartAlbumUserLibrary options:nil];
+    
+    NSPredicate *predicate = [self buildAutoSyncPredicte];
+    if (!predicate) {
+        return nil;
+    }
+    
+    @synchronized(self) {
+        if (_inCheckPhotoss) {
+            return nil;
+        }
+        _inCheckPhotoss = true;
+    }
+
+    NSMutableArray *photos = [[NSMutableArray alloc] init];
+    
+    PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
+    fetchOptions.predicate = predicate;
+    PHAssetCollection *collection = result.firstObject;
+    PHFetchResult *assets = [PHAsset fetchAssetsInAssetCollection:collection options:fetchOptions];
+    
+    for (PHAsset *asset in assets) {
+        SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset];
+        if (self.firstTimeSync) {
+            if ([_syncDir nameExist:photoAsset.name]) {
+                [self setPhotoUploaded:photoAsset.url.absoluteString];
+                Debug("First time sync, skip file %@(%@) which has already been uploaded", photoAsset.name, photoAsset.localIdentifier);
+            }
+        } else {
+            [photos addObject:photoAsset];
+        }
+    }
+
+    return photos;
+}
+
+- (NSPredicate *)buildAutoSyncPredicte {
+    NSPredicate *predicate = nil;
+    NSPredicate *predicateImage = [NSPredicate predicateWithFormat:@"mediaType == %i", PHAssetMediaTypeImage];
+    NSPredicate *predicateVideo = [NSPredicate predicateWithFormat:@"mediaType == %i", PHAssetMediaTypeVideo];
+    if (self.isAutoSync) {
+        predicate = predicateImage;
+    } else if (self.isAutoSync && self.isVideoSync) {
+        predicate = [NSCompoundPredicate orPredicateWithSubpredicates:@[predicateImage, predicateVideo]];
+    }
+    return predicate;
 }
 
 - (SeafDir *)getSubdirUnderDir:(SeafDir *)dir withName:(NSString *)name
