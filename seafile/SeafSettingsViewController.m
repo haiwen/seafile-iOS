@@ -26,6 +26,7 @@
 #import "FileSizeFormatter.h"
 #import "ExtentedString.h"
 #import "Debug.h"
+#import "SeafPrivacyPolicyViewController.h"
 
 
 enum {
@@ -76,6 +77,7 @@ enum {
     CELL_WEBSITE,
     CELL_SERVER,
     CELL_VERSION,
+    CELL_PRIVACY,
 };
 
 #define SEAFILE_SITE @"http://www.seafile.com"
@@ -113,6 +115,7 @@ enum {
 @property (strong, nonatomic) IBOutlet UILabel *localDecryLabel;
 @property (strong, nonatomic) IBOutlet UILabel *enableTouchIDLabel;
 @property (strong, nonatomic) IBOutlet UILabel *contactsSyncLabel;
+@property (weak, nonatomic) IBOutlet UILabel *privacyPolicyLabel;
 
 @property (strong, nonatomic) IBOutlet UISwitch *autoSyncSwitch;
 @property (strong, nonatomic) IBOutlet UISwitch *wifiOnlySwitch;
@@ -386,6 +389,7 @@ enum {
     _serverCell.textLabel.text = NSLocalizedString(@"Server", @"Seafile");
     _versionCell.textLabel.text = NSLocalizedString(@"Version", @"Seafile");
     _logOutLabel.text = NSLocalizedString(@"Log out", @"Seafile");
+    _privacyPolicyLabel.text = NSLocalizedString(@"Privacy Policy", @"Seafile");
 
     self.title = NSLocalizedString(@"Settings", @"Seafile");
 
@@ -661,12 +665,25 @@ enum {
             case CELL_SERVER:
                 [[UIApplication sharedApplication] openURL:[NSURL URLWithString:[NSString stringWithFormat:@"%@/", _connection.address]]];
                 break;
-
+            case CELL_PRIVACY:
+                [self privacyPolicyVC];
+                break;
             default:
                 break;
         }
     } else if (indexPath.section == SECTION_LOGOUT) {
         [self logOut];
+    }
+}
+
+- (void) privacyPolicyVC {
+    SeafPrivacyPolicyViewController *vc = [[SeafPrivacyPolicyViewController alloc] init];
+    if (IsIpad()) {
+        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+        [appdelegate showDetailView:vc];
+    } else {
+        vc.hidesBottomBarWhenPushed = true;
+        [self.navigationController pushViewController:vc animated:true];
     }
 }
 

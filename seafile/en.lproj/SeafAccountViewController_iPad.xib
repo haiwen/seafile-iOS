@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="13771" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
     <device id="ipad9_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13772"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14283.14"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -95,7 +95,7 @@
                             </constraints>
                         </view>
                         <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="85z-9D-LEw">
-                            <rect key="frame" x="313" y="95" width="51" height="31"/>
+                            <rect key="frame" x="313" y="94.5" width="51" height="31"/>
                             <connections>
                                 <action selector="httpsSwitchFlip:" destination="-1" eventType="touchUpInside" id="WxY-Yd-fkf"/>
                             </connections>
@@ -142,6 +142,19 @@
                             <nil key="textColor"/>
                             <nil key="highlightedColor"/>
                         </label>
+                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="oQW-c9-2rM">
+                            <rect key="frame" x="143" y="321.5" width="84" height="30"/>
+                            <constraints>
+                                <constraint firstAttribute="height" constant="30" id="2ku-Yw-q2g"/>
+                            </constraints>
+                            <fontDescription key="fontDescription" type="system" pointSize="13"/>
+                            <state key="normal" title="Privacy Policy">
+                                <color key="titleColor" white="0.33333333333333331" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            </state>
+                            <connections>
+                                <action selector="readPrivacyPolocy:" destination="-1" eventType="touchUpInside" id="HC3-NN-c2h"/>
+                            </connections>
+                        </button>
                     </subviews>
                     <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
                     <color key="tintColor" red="0.0" green="0.47843137250000001" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -157,6 +170,7 @@
                         <constraint firstAttribute="width" constant="370" id="HeV-x1-MjE"/>
                         <constraint firstItem="ggd-Li-Grh" firstAttribute="leading" secondItem="4" secondAttribute="leading" constant="30" id="Jqo-Fb-n78"/>
                         <constraint firstAttribute="height" constant="393" id="Mho-F4-8eX"/>
+                        <constraint firstItem="oQW-c9-2rM" firstAttribute="top" secondItem="ggd-Li-Grh" secondAttribute="bottom" constant="12" id="PjI-8y-jVZ"/>
                         <constraint firstItem="sS8-66-Hle" firstAttribute="leading" secondItem="4" secondAttribute="leading" id="R2k-r0-uqq"/>
                         <constraint firstItem="1qz-sJ-qg2" firstAttribute="leading" secondItem="4" secondAttribute="leading" id="TE6-mR-k5Q"/>
                         <constraint firstItem="jXE-I6-QKZ" firstAttribute="leading" secondItem="4" secondAttribute="leading" id="Uk0-QZ-bxi"/>
@@ -174,6 +188,7 @@
                         <constraint firstAttribute="trailing" secondItem="85z-9D-LEw" secondAttribute="trailing" constant="8" id="iNt-il-j7Z"/>
                         <constraint firstItem="aS6-hv-X0x" firstAttribute="top" secondItem="8" secondAttribute="bottom" id="iYB-OC-aXt"/>
                         <constraint firstItem="2K6-1h-EqF" firstAttribute="leading" secondItem="4" secondAttribute="leading" id="j9b-Mi-ECw"/>
+                        <constraint firstItem="oQW-c9-2rM" firstAttribute="centerX" secondItem="ggd-Li-Grh" secondAttribute="centerX" id="lKY-TX-cmI"/>
                         <constraint firstAttribute="trailing" secondItem="sS8-66-Hle" secondAttribute="trailing" id="nP7-dw-mDm"/>
                         <constraint firstItem="fUE-3E-3bS" firstAttribute="top" secondItem="ggd-Li-Grh" secondAttribute="bottom" constant="10" id="qS4-99-Hk3"/>
                         <constraint firstItem="aS6-hv-X0x" firstAttribute="leading" secondItem="4" secondAttribute="leading" id="s95-3V-69T"/>
@@ -190,7 +205,7 @@
                 <constraint firstItem="4" firstAttribute="top" secondItem="2" secondAttribute="top" constant="39" id="DpL-XG-bet"/>
             </constraints>
             <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackOpaque"/>
-            <point key="canvasLocation" x="258" y="218"/>
+            <point key="canvasLocation" x="201.5625" y="127.73437499999999"/>
         </view>
     </objects>
 </document>

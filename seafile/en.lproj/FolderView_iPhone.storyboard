@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="13771" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES" initialViewController="IwU-Z8-46U">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES" initialViewController="IwU-Z8-46U">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13772"/>
-        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14283.14"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -32,7 +31,7 @@
                 </tabBarController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Fy7-AP-8tS" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-1522" y="-3025"/>
+            <point key="canvasLocation" x="-2435.1999999999998" y="-2721.139430284858"/>
         </scene>
         <!--Seafile-->
         <scene sceneID="cix-vt-Igt">
@@ -42,6 +41,7 @@
                     <toolbarItems/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                     <navigationBar key="navigationBar" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" id="fTo-jb-ZSP">
+                        <rect key="frame" x="0.0" y="20" width="375" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <connections>
@@ -50,7 +50,7 @@
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="FZN-AN-oN6" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-934" y="-3588"/>
+            <point key="canvasLocation" x="-1494.4000000000001" y="-3227.5862068965521"/>
         </scene>
         <!--Seaf File View Controller-->
         <scene sceneID="UbQ-9W-oFk">
@@ -92,7 +92,7 @@
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="5tQ-Ax-AdV" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-167" y="-3884"/>
+            <point key="canvasLocation" x="-267.19999999999999" y="-3493.8530734632686"/>
         </scene>
         <!--Starred-->
         <scene sceneID="n5y-ZA-vP7">
@@ -126,7 +126,7 @@
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="6lK-YG-Yqx" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="4" y="-2344"/>
+            <point key="canvasLocation" x="6.4000000000000004" y="-2108.5457271364321"/>
         </scene>
         <!--Starred-->
         <scene sceneID="F3d-4G-2bC">
@@ -135,6 +135,7 @@
                     <tabBarItem key="tabBarItem" title="" id="VH7-iY-RiF"/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="cyv-Qp-O9m">
+                        <rect key="frame" x="0.0" y="20" width="375" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <connections>
@@ -143,7 +144,7 @@
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="U5S-08-cgn" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-485" y="-2252"/>
+            <point key="canvasLocation" x="-776" y="-2025.7871064467768"/>
         </scene>
         <!--Settings-->
         <scene sceneID="eY8-yK-8gB">
@@ -212,14 +213,14 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <switch opaque="NO" tag="100" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="8nl-VI-wEN">
-                                                    <rect key="frame" x="310" y="6" width="51" height="31"/>
+                                                    <rect key="frame" x="310" y="6.5" width="51" height="31"/>
                                                     <constraints>
                                                         <constraint firstAttribute="height" constant="31" id="RUP-HX-aKJ"/>
                                                         <constraint firstAttribute="width" constant="49" id="bHB-Jm-RZc"/>
                                                     </constraints>
                                                 </switch>
                                                 <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Enable TouchID" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="CrZ-SM-e9h">
-                                                    <rect key="frame" x="15" y="11" width="127" height="21"/>
+                                                    <rect key="frame" x="15" y="11.5" width="127" height="21"/>
                                                     <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
@@ -244,12 +245,12 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" verticalHuggingPriority="251" horizontalCompressionResistancePriority="500" text="Auto Upload" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="1af-Tn-HYe">
-                                                    <rect key="frame" x="15" y="11" width="101" height="21"/>
+                                                    <rect key="frame" x="15" y="11.5" width="101" height="21"/>
                                                     <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
                                                 <switch opaque="NO" tag="100" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="JZc-TU-fcn">
-                                                    <rect key="frame" x="310" y="6" width="51" height="31"/>
+                                                    <rect key="frame" x="310" y="6.5" width="51" height="31"/>
                                                 </switch>
                                             </subviews>
                                             <constraints>
@@ -268,10 +269,10 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <switch opaque="NO" tag="100" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fFZ-gz-Sso">
-                                                    <rect key="frame" x="310" y="6" width="51" height="31"/>
+                                                    <rect key="frame" x="310" y="6.5" width="51" height="31"/>
                                                 </switch>
                                                 <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" verticalHuggingPriority="251" horizontalCompressionResistancePriority="500" text="Upload Videos" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Kcw-kJ-pcF">
-                                                    <rect key="frame" x="15" y="11" width="118.5" height="21"/>
+                                                    <rect key="frame" x="15" y="11.5" width="118.5" height="21"/>
                                                     <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
@@ -292,10 +293,10 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <switch opaque="NO" tag="100" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EII-rv-WS4">
-                                                    <rect key="frame" x="310" y="6" width="51" height="31"/>
+                                                    <rect key="frame" x="310" y="6.5" width="51" height="31"/>
                                                 </switch>
                                                 <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Wifi Only" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5rP-cB-Wm0">
-                                                    <rect key="frame" x="15" y="11" width="74" height="21"/>
+                                                    <rect key="frame" x="15" y="11.5" width="74" height="21"/>
                                                     <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
@@ -316,10 +317,10 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <switch opaque="NO" tag="100" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="GiP-GK-ztk">
-                                                    <rect key="frame" x="310" y="6" width="51" height="31"/>
+                                                    <rect key="frame" x="310" y="6.5" width="51" height="31"/>
                                                 </switch>
                                                 <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Background Upload" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="BvI-L7-dN7">
-                                                    <rect key="frame" x="15" y="11" width="161" height="21"/>
+                                                    <rect key="frame" x="15" y="11.5" width="161" height="21"/>
                                                     <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
@@ -368,12 +369,12 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Contacts Backup" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="TaU-1G-Kiq">
-                                                    <rect key="frame" x="15" y="11" width="140" height="21"/>
+                                                    <rect key="frame" x="15" y="11.5" width="140" height="21"/>
                                                     <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
                                                 <switch opaque="NO" tag="100" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VAc-3j-lOR">
-                                                    <rect key="frame" x="310" y="5.5" width="51" height="31"/>
+                                                    <rect key="frame" x="310" y="6.5" width="51" height="31"/>
                                                 </switch>
                                             </subviews>
                                             <constraints>
@@ -440,7 +441,7 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" text="Backup Contacts" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="hNY-fW-Zm1">
-                                                    <rect key="frame" x="16" y="0.0" width="343" height="43.5"/>
+                                                    <rect key="frame" x="15" y="0.0" width="345" height="43.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                                     <nil key="textColor"/>
@@ -457,7 +458,7 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" text="Restore Contacts" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="fOq-Ls-F8q">
-                                                    <rect key="frame" x="16" y="0.0" width="343" height="43.5"/>
+                                                    <rect key="frame" x="15" y="0.0" width="345" height="43.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                                     <nil key="textColor"/>
@@ -478,14 +479,14 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" text="Downloading" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="J8t-1F-902">
-                                                    <rect key="frame" x="16" y="12" width="107" height="20.5"/>
+                                                    <rect key="frame" x="15" y="12" width="107" height="20.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                                     <nil key="textColor"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
                                                 <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" text="0" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="a6y-z2-Hvp">
-                                                    <rect key="frame" x="348.5" y="12" width="10.5" height="20.5"/>
+                                                    <rect key="frame" x="349.5" y="12" width="10.5" height="20.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <nil key="textColor"/>
@@ -503,14 +504,14 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" text="Uploading" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="8X5-T3-yxS" userLabel="Uploading">
-                                                    <rect key="frame" x="16" y="12" width="84" height="20.5"/>
+                                                    <rect key="frame" x="15" y="12" width="84" height="20.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                                     <nil key="textColor"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
                                                 <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" text="0" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="sAy-Su-9nE">
-                                                    <rect key="frame" x="348.5" y="12" width="10.5" height="20.5"/>
+                                                    <rect key="frame" x="349.5" y="12" width="10.5" height="20.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <nil key="textColor"/>
@@ -532,7 +533,7 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="Local Cache" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="63f-7w-kh2">
-                                                    <rect key="frame" x="16" y="12" width="99" height="20.5"/>
+                                                    <rect key="frame" x="16" y="12" width="99.5" height="20.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                                     <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -556,14 +557,14 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="Wipe Cache" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="1Gf-YX-qmR">
-                                                    <rect key="frame" x="15" y="12" width="97.5" height="20.5"/>
+                                                    <rect key="frame" x="16" y="12" width="97.5" height="20.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                                     <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                                     <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                                 </label>
                                                 <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="LB2-oG-R75">
-                                                    <rect key="frame" x="316" y="12" width="44" height="20.5"/>
+                                                    <rect key="frame" x="315" y="12" width="44" height="20.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <color key="textColor" red="0.21960784310000001" green="0.3294117647" blue="0.52941176469999995" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -584,14 +585,14 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="Clear remembered passwords" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" highlighted="YES" adjustsFontSizeToFit="NO" id="VQ3-ZI-VmL">
-                                                    <rect key="frame" x="15" y="12" width="245.5" height="20.5"/>
+                                                    <rect key="frame" x="16" y="12" width="245.5" height="20.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                                     <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                                     <color key="highlightedColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                                 </label>
                                                 <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="TIB-8Y-9AH">
-                                                    <rect key="frame" x="316" y="12" width="44" height="20.5"/>
+                                                    <rect key="frame" x="315" y="12" width="44" height="20.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <color key="textColor" red="0.21960784310000001" green="0.3294117647" blue="0.52941176469999995" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -608,12 +609,12 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Auto clear passwords" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Auj-zx-JVH">
-                                                    <rect key="frame" x="15" y="11" width="176.5" height="21"/>
+                                                    <rect key="frame" x="15" y="11.5" width="176.5" height="21"/>
                                                     <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
                                                 <switch opaque="NO" tag="100" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Kfl-ym-odU">
-                                                    <rect key="frame" x="310" y="6" width="51" height="31"/>
+                                                    <rect key="frame" x="310" y="6.5" width="51" height="31"/>
                                                 </switch>
                                             </subviews>
                                             <constraints>
@@ -632,12 +633,12 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Local decryption" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="T4X-pn-1qY">
-                                                    <rect key="frame" x="15" y="11" width="136.5" height="21"/>
+                                                    <rect key="frame" x="15" y="11.5" width="136.5" height="21"/>
                                                     <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
                                                 <switch opaque="NO" tag="100" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="A3y-jl-13y">
-                                                    <rect key="frame" x="310" y="6" width="51" height="31"/>
+                                                    <rect key="frame" x="310" y="6.5" width="51" height="31"/>
                                                 </switch>
                                             </subviews>
                                             <constraints>
@@ -660,7 +661,7 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" text="" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="9uz-sk-gtQ">
-                                                    <rect key="frame" x="15" y="0.0" width="345" height="43.5"/>
+                                                    <rect key="frame" x="16" y="0.0" width="343" height="43.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                                     <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -677,14 +678,14 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="Website" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="fU6-mc-Krp">
-                                                    <rect key="frame" x="15" y="12" width="66.5" height="20.5"/>
+                                                    <rect key="frame" x="16" y="12" width="66.5" height="20.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                                     <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                                     <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                                 </label>
                                                 <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="www.seafile.com" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="Jf3-AP-WLB">
-                                                    <rect key="frame" x="231" y="12" width="129" height="20.5"/>
+                                                    <rect key="frame" x="230" y="12" width="129" height="20.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <color key="textColor" red="0.21960784310000001" green="0.3294117647" blue="0.52941176469999995" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -701,14 +702,14 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="Server" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="kVu-zt-I7X">
-                                                    <rect key="frame" x="15" y="12" width="54.5" height="20.5"/>
+                                                    <rect key="frame" x="16" y="12" width="54.5" height="20.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                                     <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                                     <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                                 </label>
                                                 <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="Prn-ee-8Bg">
-                                                    <rect key="frame" x="316" y="12" width="44" height="20.5"/>
+                                                    <rect key="frame" x="315" y="12" width="44" height="20.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <color key="textColor" red="0.21960784310000001" green="0.3294117647" blue="0.52941176469999995" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -725,18 +726,35 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="Version" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="gbw-Hm-6Ao">
-                                                    <rect key="frame" x="15" y="12" width="62" height="20.5"/>
+                                                    <rect key="frame" x="16" y="12" width="62" height="20.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                                     <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                                     <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                                 </label>
                                                 <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="X0g-ge-tAv">
-                                                    <rect key="frame" x="316" y="12" width="44" height="20.5"/>
+                                                    <rect key="frame" x="315" y="12" width="44" height="20.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <color key="textColor" red="0.21960784310000001" green="0.3294117647" blue="0.52941176469999995" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                                     <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                                </label>
+                                            </subviews>
+                                        </tableViewCellContentView>
+                                    </tableViewCell>
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" accessoryType="disclosureIndicator" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="6sg-US-GsD" style="IBUITableViewCellStyleDefault" id="FB0-2T-Bkz" userLabel="Privacy Policy Cell">
+                                        <rect key="frame" x="0.0" y="1399.5" width="375" height="44"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="FB0-2T-Bkz" id="3PE-U5-pCr">
+                                            <rect key="frame" x="0.0" y="0.0" width="341" height="43.5"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Title" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="6sg-US-GsD">
+                                                    <rect key="frame" x="16" y="0.0" width="324" height="43.5"/>
+                                                    <autoresizingMask key="autoresizingMask"/>
+                                                    <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
+                                                    <nil key="textColor"/>
+                                                    <nil key="highlightedColor"/>
                                                 </label>
                                             </subviews>
                                         </tableViewCellContentView>
@@ -746,14 +764,14 @@
                             <tableViewSection id="XdC-dE-LzG">
                                 <cells>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="bba-45-U6K">
-                                        <rect key="frame" x="0.0" y="1419.5" width="375" height="44"/>
+                                        <rect key="frame" x="0.0" y="1463.5" width="375" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="bba-45-U6K" id="cPA-cT-uky">
                                             <rect key="frame" x="0.0" y="0.0" width="375" height="43.5"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Log out" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" translatesAutoresizingMaskIntoConstraints="NO" id="ntG-cs-ded">
-                                                    <rect key="frame" x="0.0" y="5" width="375" height="38.5"/>
+                                                    <rect key="frame" x="0.0" y="2" width="375" height="41.5"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                                     <nil key="highlightedColor"/>
@@ -801,6 +819,7 @@
                         <outlet property="localDecrySwitch" destination="A3y-jl-13y" id="k80-OT-Hir"/>
                         <outlet property="logOutLabel" destination="ntG-cs-ded" id="aPf-EW-SAU"/>
                         <outlet property="nameCell" destination="5xi-tG-aX7" id="ca7-Gk-LIC"/>
+                        <outlet property="privacyPolicyLabel" destination="6sg-US-GsD" id="W84-Vg-iHX"/>
                         <outlet property="restoreContactsCell" destination="W2e-Xm-weP" id="kCE-50-Yt1"/>
                         <outlet property="serverCell" destination="ggp-Jn-gkE" id="Xdv-ti-fV2"/>
                         <outlet property="syncRepoCell" destination="c9x-M1-SOm" id="VDB-S3-dIj"/>
@@ -820,7 +839,7 @@
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="LzM-gp-ws5" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-178" y="-3098"/>
+            <point key="canvasLocation" x="-284.80000000000001" y="-2786.8065967016496"/>
         </scene>
         <!--Settings-->
         <scene sceneID="xpW-VU-zvN">
@@ -829,6 +848,7 @@
                     <tabBarItem key="tabBarItem" title="" id="Jmw-Qh-gQG"/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="wRf-xr-PKT">
+                        <rect key="frame" x="0.0" y="20" width="375" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <connections>
@@ -837,7 +857,7 @@
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="eSd-c3-HyK" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-935" y="-2798"/>
+            <point key="canvasLocation" x="-1496" y="-2516.9415292353824"/>
         </scene>
         <!--Seaf Detail View Controller-->
         <scene sceneID="3hn-ux-u67">
@@ -871,7 +891,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Y6P-gU-pae" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-2094" y="-2983"/>
+            <point key="canvasLocation" x="-3350.4000000000001" y="-2683.3583208395803"/>
         </scene>
         <!--Seaf Activity View Controller-->
         <scene sceneID="fLh-VR-wpx">
@@ -905,7 +925,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="lll-h7-t43" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="3.5" y="-1505.5"/>
+            <point key="canvasLocation" x="5.5999999999999996" y="-1354.2728635682161"/>
         </scene>
         <!--Activity-->
         <scene sceneID="NnU-GF-PKm">
@@ -915,6 +935,7 @@
                     <toolbarItems/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                     <navigationBar key="navigationBar" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" id="cTk-LZ-0Cj">
+                        <rect key="frame" x="0.0" y="20" width="375" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <toolbar key="toolbar" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="DXP-mQ-i31">
@@ -926,7 +947,7 @@
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="nbp-0J-YrF" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-549" y="-1414"/>
+            <point key="canvasLocation" x="-878.39999999999998" y="-1271.9640179910045"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="Rii-3f-Yq9">
@@ -936,6 +957,7 @@
                     <toolbarItems/>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
                     <navigationBar key="navigationBar" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" id="UQz-Me-idq">
+                        <rect key="frame" x="0.0" y="20" width="375" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <toolbar key="toolbar" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="xmg-ss-8Et">
@@ -947,7 +969,7 @@
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="KCx-wU-Lkz" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-1296" y="-1793"/>
+            <point key="canvasLocation" x="-2073.5999999999999" y="-1612.8935532233884"/>
         </scene>
         <!--View Controller-->
         <scene sceneID="rrh-f2-Vfy">
@@ -966,7 +988,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="YhT-z1-50N" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-1297" y="-959"/>
+            <point key="canvasLocation" x="-2075.1999999999998" y="-862.66866566716647"/>
         </scene>
         <!--Messages-->
         <scene sceneID="S9r-s7-uuf">
@@ -986,7 +1008,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="7bH-U4-hfK" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-2390" y="-1168"/>
+            <point key="canvasLocation" x="-3824" y="-1050.6746626686659"/>
         </scene>
     </scenes>
     <resources>

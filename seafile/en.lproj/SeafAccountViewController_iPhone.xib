@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="13771" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
     <device id="ipad9_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13772"/>
-        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
-        <capability name="Constraints with non-1.0 multipliers" minToolsVersion="5.1"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14283.14"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -138,6 +136,19 @@
                             <nil key="textColor"/>
                             <nil key="highlightedColor"/>
                         </label>
+                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="B8O-lA-Kxs">
+                            <rect key="frame" x="115.5" y="322" width="84" height="30"/>
+                            <constraints>
+                                <constraint firstAttribute="height" constant="30" id="xd9-Wl-kaB"/>
+                            </constraints>
+                            <fontDescription key="fontDescription" type="system" pointSize="13"/>
+                            <state key="normal" title="Privacy Policy">
+                                <color key="titleColor" white="0.33333333329999998" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            </state>
+                            <connections>
+                                <action selector="readPrivacyPolocy:" destination="-1" eventType="touchUpInside" id="W5t-lg-l2r"/>
+                            </connections>
+                        </button>
                     </subviews>
                     <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
                     <color key="tintColor" red="0.0" green="0.47843137250000001" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -159,10 +170,12 @@
                         <constraint firstItem="A7P-JV-rI1" firstAttribute="top" secondItem="9WX-6W-Erd" secondAttribute="bottom" id="S9r-1K-bnr"/>
                         <constraint firstItem="wGA-Kv-uHI" firstAttribute="centerY" secondItem="A7P-JV-rI1" secondAttribute="centerY" id="aGE-69-uRa"/>
                         <constraint firstAttribute="trailing" secondItem="wGA-Kv-uHI" secondAttribute="trailing" constant="8" id="bFd-VL-nq9"/>
+                        <constraint firstItem="B8O-lA-Kxs" firstAttribute="top" secondItem="ggd-Li-Grh" secondAttribute="bottom" constant="12" id="cHM-dY-MBD"/>
                         <constraint firstItem="9WX-6W-Erd" firstAttribute="top" secondItem="7" secondAttribute="bottom" id="dUb-5Y-B0L"/>
                         <constraint firstAttribute="trailing" secondItem="9WX-6W-Erd" secondAttribute="trailing" id="er5-Ik-zRv"/>
                         <constraint firstAttribute="trailing" secondItem="QqA-Ar-X3g" secondAttribute="trailing" id="g0w-CD-Q8u"/>
                         <constraint firstAttribute="trailing" secondItem="7" secondAttribute="trailing" id="gME-ok-eVj"/>
+                        <constraint firstItem="B8O-lA-Kxs" firstAttribute="centerX" secondItem="ggd-Li-Grh" secondAttribute="centerX" id="hGd-F7-wKV"/>
                         <constraint firstAttribute="height" constant="400" id="hbM-7D-RGX"/>
                         <constraint firstAttribute="trailing" secondItem="rNK-Z6-77b" secondAttribute="trailing" id="kar-5M-bYZ"/>
                         <constraint firstItem="ggd-Li-Grh" firstAttribute="top" secondItem="rNK-Z6-77b" secondAttribute="bottom" constant="133" id="m9C-wH-LPb"/>
@@ -188,7 +201,7 @@
             </constraints>
             <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackOpaque"/>
             <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
-            <point key="canvasLocation" x="108.5" y="112.5"/>
+            <point key="canvasLocation" x="84.765625" y="65.91796875"/>
         </view>
     </objects>
 </document>
