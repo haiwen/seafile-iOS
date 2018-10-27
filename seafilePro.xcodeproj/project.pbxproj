@@ -231,6 +231,7 @@
 		F5C6492A2112269800842687 /* SeafShareDirViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F5C649282112269800842687 /* SeafShareDirViewController.m */; };
 		F5CBCDC01F2C2F1500E8C35B /* SeafSyncInfoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F5CBCDBF1F2C2F1500E8C35B /* SeafSyncInfoViewController.m */; };
 		F5E621EF20D16666001EDA7A /* NSError+SeafFileProvierError.m in Sources */ = {isa = PBXBuildFile; fileRef = F5E621EE20D16666001EDA7A /* NSError+SeafFileProvierError.m */; };
+		F5EAAE93218419120068BFE3 /* SeafPrivacyPolicyViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F5EAAE92218419120068BFE3 /* SeafPrivacyPolicyViewController.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXBuildRule section */
@@ -560,6 +561,8 @@
 		F5CBCDBF1F2C2F1500E8C35B /* SeafSyncInfoViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafSyncInfoViewController.m; sourceTree = "<group>"; };
 		F5E621ED20D16666001EDA7A /* NSError+SeafFileProvierError.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSError+SeafFileProvierError.h"; sourceTree = "<group>"; };
 		F5E621EE20D16666001EDA7A /* NSError+SeafFileProvierError.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSError+SeafFileProvierError.m"; sourceTree = "<group>"; };
+		F5EAAE91218419120068BFE3 /* SeafPrivacyPolicyViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafPrivacyPolicyViewController.h; sourceTree = "<group>"; };
+		F5EAAE92218419120068BFE3 /* SeafPrivacyPolicyViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafPrivacyPolicyViewController.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -787,6 +790,8 @@
 				F55567691FC7222800E87043 /* SeafWechatHelper.m */,
 				F5ADEA012081B69C00FB6451 /* SeafMkLibAlertController.h */,
 				F5ADEA022081B69C00FB6451 /* SeafMkLibAlertController.m */,
+				F5EAAE91218419120068BFE3 /* SeafPrivacyPolicyViewController.h */,
+				F5EAAE92218419120068BFE3 /* SeafPrivacyPolicyViewController.m */,
 			);
 			name = views;
 			sourceTree = "<group>";
@@ -1650,6 +1655,7 @@
 				571D8CAC1677881400F1A22C /* SeafAppDelegate.m in Sources */,
 				571D8CAD1677881400F1A22C /* SeafFileViewController.m in Sources */,
 				571D8CBF1677881400F1A22C /* StartViewController.m in Sources */,
+				F5EAAE93218419120068BFE3 /* SeafPrivacyPolicyViewController.m in Sources */,
 				57E5E7B31CC219C8004B7125 /* SeafEventCell.m in Sources */,
 				571D8CC91677881400F1A22C /* FailToPreview.m in Sources */,
 				571D8CCB1677881400F1A22C /* DownloadingProgressView.m in Sources */,

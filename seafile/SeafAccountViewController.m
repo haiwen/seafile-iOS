@@ -17,6 +17,7 @@
 #import "UIViewController+Extend.h"
 #import "Debug.h"
 #import <openssl/x509.h>
+#import "SeafPrivacyPolicyViewController.h"
 
 
 #define HTTP @"http://"
@@ -402,4 +403,16 @@
     return YES;
 }
 
+- (IBAction)readPrivacyPolocy:(id)sender {
+    SeafPrivacyPolicyViewController *vc = [[SeafPrivacyPolicyViewController alloc] init];
+    if (IsIpad()) {
+        UINavigationController *nc = [[UINavigationController alloc] initWithRootViewController:vc];
+        [nc setModalPresentationStyle:UIModalPresentationFullScreen];
+        nc.navigationBar.tintColor = BAR_COLOR;
+        [self presentViewController:nc animated:true completion:nil];
+    } else {
+        vc.hidesBottomBarWhenPushed = true;
+        [self.navigationController pushViewController:vc animated:true];
+    }
+}
 @end
