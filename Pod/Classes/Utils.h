@@ -38,9 +38,6 @@
 
 + (BOOL)isVideoExt:(NSString *)ext;
 
-+ (BOOL)writeDataToPath:(NSString *)filePath andAsset:(PHAsset *)asset;
-
-
 + (CGSize)textSizeForText:(NSString *)txt font:(UIFont *)font width:(float)width;
 
 + (void)alertWithTitle:(NSString *)title message:(NSString*)message yes:(void (^)(void))yes no:(void (^)(void))no from:(UIViewController *)c;
@@ -58,8 +55,5 @@
 + (NSString *)encodePath:(NSString *)server username:(NSString *)username repo:(NSString *)repoId path:(NSString *)path;
 + (void)decodePath:(NSString *)encodedStr server:(NSString **)server username:(NSString **)username repo:(NSString **)repoId path:(NSString **)path;
 + (NSError *)defaultError;
-
-+ (NSString *)assetName:(PHAsset *)asset;
-+ (NSURL *)assetURL:(PHAsset *)asset;
 
 @end

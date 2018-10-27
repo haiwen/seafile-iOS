@@ -338,31 +338,6 @@
     return success;
 }
 
-+ (BOOL)writeDataToPath:(NSString*)filePath andAsset:(PHAsset *)asset
-{
-    [Utils checkMakeDir:[filePath stringByDeletingLastPathComponent]];
-    __block NSString *path = filePath;
-    
-    PHImageRequestOptions *options = [PHImageRequestOptions new];
-    options.networkAccessAllowed = YES; // iCloud
-    options.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
-    options.synchronous = YES;
-    
-    __block BOOL success = NO;
-    [[PHImageManager defaultManager] requestImageDataForAsset:asset options:options resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
-        //        NSError *error = nil;
-        if ([dataUTI isEqualToString:@"public.heic"]) {
-            UIImage *image = [UIImage imageWithData:imageData];
-            imageData = UIImageJPEGRepresentation(image, 1.0);
-            path = [filePath stringByReplacingOccurrencesOfString:@"HEIC" withString:@"JPG"];
-        }
-        NSURL *url = [[NSURL alloc] initFileURLWithPath:path];
-        success = [imageData writeToURL:url atomically:true];
-    }];
-    
-    return success;
-}
-
 + (BOOL)fileExistsAtPath:(NSString *)path
 {
     return [[NSFileManager defaultManager] fileExistsAtPath:path];
@@ -534,51 +509,6 @@
         return image;
     }
     return nil;
-}
-
-+ (NSString *)assetName:(PHAsset *)asset {
-    NSString *name;
-    if (@available(iOS 9.0, *)) {
-        NSArray *resources = [PHAssetResource assetResourcesForAsset:asset];
-        name = ((PHAssetResource*)resources.firstObject).originalFilename;
-    } else {
-        name = [asset valueForKey:@"filename"];
-    }
-    if ([name hasPrefix:@"IMG_"]) {
-        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-        [dateFormatter setDateFormat:@"yyyyMMdd_HHmmss"];
-        NSDate *date = asset.creationDate;
-        if (date == nil) {
-            date = [NSDate date];
-        }
-        NSString *dateStr = [dateFormatter stringFromDate:date];
-        name = [NSString stringWithFormat:@"IMG_%@_%@", dateStr, [name substringFromIndex:4]];
-    }
-    if ([name hasSuffix:@"HEIC"]) {
-        name = [name stringByReplacingOccurrencesOfString:@"HEIC" withString:@"JPG"];
-    }
-    return name;
-}
-
-+ (NSURL *)assetURL:(PHAsset *)asset {
-    __block NSURL *URL;
-    if (asset.mediaType == PHAssetMediaTypeImage) {
-        PHImageRequestOptions *options = [[PHImageRequestOptions alloc] init];
-        options.synchronous = YES;
-        [PHImageManager.defaultManager requestImageDataForAsset:asset options:options resultHandler:^(NSData *imageData, NSString *dataUTI, UIImageOrientation orientation, NSDictionary *info) {
-            URL = info[@"PHImageFileURLKey"];
-        }];
-    } else if (asset.mediaType == PHAssetMediaTypeVideo) {
-        PHVideoRequestOptions *options = [[PHVideoRequestOptions alloc] init];
-        options.version = PHVideoRequestOptionsVersionCurrent;
-        [[PHImageManager defaultManager] requestAVAssetForVideo:asset options:options resultHandler:^(AVAsset * _Nullable asset, AVAudioMix * _Nullable audioMix, NSDictionary * _Nullable info) {
-            if ([asset isKindOfClass:[AVURLAsset class]]) {
-                AVURLAsset *urlAsset = (AVURLAsset*)asset;
-                URL = urlAsset.URL;
-            }
-        }];
-    }
-    return URL;
 }
 
 + (NSString *)encodePath:(NSString *)server username:(NSString *)username repo:(NSString *)repoId path:(NSString *)path
