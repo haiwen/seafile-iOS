@@ -520,6 +520,7 @@
 - (void)setPHAsset:(PHAsset *)asset url:(NSURL *)url {
     _asset = asset;
     _assetURL = url;
+    _assetIdentifier = asset.localIdentifier;
 }
 
 - (void)checkAsset {
@@ -542,6 +543,7 @@
     __weak typeof(self) weakSelf = self;
     self.requestOptions.progressHandler = ^(double progress, NSError * _Nullable error, BOOL * _Nonnull stop, NSDictionary * _Nullable info) {
         if (error) {
+            Debug("Failed to get image data: %@", error);
             [weakSelf finishUpload:false oid:nil error:nil];
         }
     };
@@ -570,6 +572,7 @@
     options.version = PHVideoRequestOptionsVersionOriginal;
     options.progressHandler = ^(double progress, NSError * _Nullable error, BOOL * _Nonnull stop, NSDictionary * _Nullable info) {
         if (error) {
+            Debug("Failed to get video: %@", error);
             [self finishUpload:false oid:nil error:nil];
         }
     };

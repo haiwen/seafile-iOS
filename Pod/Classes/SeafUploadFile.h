@@ -36,6 +36,7 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 @property (readwrite) BOOL overwrite;
 @property (nonatomic, readonly) PHAsset *asset;
 @property (nonatomic, readonly) NSURL *assetURL;
+@property (nonatomic, readonly) NSString *assetIdentifier;
 @property (readwrite) BOOL autoSync;
 
 @property (readonly) float uProgress;

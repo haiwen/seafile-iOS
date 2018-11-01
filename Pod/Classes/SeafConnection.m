@@ -700,11 +700,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          NSDictionary *account = JSON;
          Debug("account detail:%@", account);
-         [Utils dict:_info setObject:[account objectForKey:@"total"] forKey:@"total"];
-         [Utils dict:_info setObject:[account objectForKey:@"email"] forKey:@"email"];
-         [Utils dict:_info setObject:[account objectForKey:@"usage"] forKey:@"usage"];
-         [Utils dict:_info setObject:[account objectForKey:@"name"] forKey:@"name"];
-         [Utils dict:_info setObject:_address forKey:@"link"];
+         [Utils dict:self->_info setObject:[account objectForKey:@"total"] forKey:@"total"];
+         [Utils dict:self->_info setObject:[account objectForKey:@"email"] forKey:@"email"];
+         [Utils dict:self->_info setObject:[account objectForKey:@"usage"] forKey:@"usage"];
+         [Utils dict:self->_info setObject:[account objectForKey:@"name"] forKey:@"name"];
+         [Utils dict:self->_info setObject:self.address forKey:@"link"];
          [self saveAccountInfo];
          if (handler) handler(true);
      }
@@ -1149,15 +1149,15 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     if (!error) {
         [self pickPhotosForUpload];
-        [self setPhotoUploaded:ufile.assetURL.absoluteString];
-        [self removeUploadingPhoto:ufile.assetURL];
-        Debug("Autosync file %@ %@ uploaded %d, remain %u %u", ufile.name, ufile.assetURL, [self IsPhotoUploaded:ufile.assetURL], (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
+        [self setPhotoUploadedIdentifier:ufile.assetIdentifier];
+        [self removeUploadingPhoto:ufile.assetIdentifier];
+        Debug("Autosync file %@ %@, remain %u %u", ufile.name, ufile.assetURL, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
         
         if (_photSyncWatcher) [_photSyncWatcher photoSyncChanged:self.photosInSyncing];
     } else {
         Warning("Failed to upload photo %@: %@", ufile.name, error);
         // Add photo to the end of queue
-        [self removeUploadingPhoto:ufile.assetURL];
+        [self removeUploadingPhoto:ufile.assetIdentifier];
         SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:ufile.asset];
         [self addUploadPhoto:photoAsset];
     }
@@ -1174,26 +1174,28 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self clearCache:ENTITY_UPLOAD_PHOTO];
 }
 
-- (BOOL)IsPhotoUploading:(NSURL *)url
-{
+- (BOOL)IsPhotoUploading:(SeafPhotoAsset *)asset {
+    if (!asset) {
+        return false;
+    }
     @synchronized(_photosArray) {
-        if ([_photosArray containsObject:url]) return true;
+        if ([_photosArray containsObject:asset]) return true;
     }
     @synchronized(_uploadingArray) {
-        if ([_uploadingArray containsObject:url]) return true;
+        if ([_uploadingArray containsObject:asset.localIdentifier]) return true;
     }
     return false;
 }
 
-- (void)addUploadingPhoto:(NSURL *)url {
+- (void)addUploadingPhotoIdentifier:(NSString *)localIdentifier {
     @synchronized(_uploadingArray) {
-        [_uploadingArray addObject:url];
+        [_uploadingArray addObject:localIdentifier];
     }
 }
 
-- (void)removeUploadingPhoto:(NSURL *)url {
+- (void)removeUploadingPhoto:(NSString *)localIdentifier {
     @synchronized(_uploadingArray) {
-        [_uploadingArray removeObject:url];
+        [_uploadingArray removeObject:localIdentifier];
     }
 }
 
@@ -1207,7 +1209,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     @synchronized(self.photosArray) {
         if (!self.photosArray || self.photosArray.count == 0) return nil;
         SeafPhotoAsset *photoAsset = [self.photosArray objectAtIndex:0];
-        [self addUploadingPhoto:photoAsset.url];
+        [self addUploadingPhotoIdentifier:photoAsset.localIdentifier];
         [self.photosArray removeObject:photoAsset];
         Debug("Picked %@ remain: %u %u", photoAsset.url, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
         return photoAsset;
@@ -1234,7 +1236,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     
     NSArray *photos = [self filterOutUploadedPhotos];
     for (SeafPhotoAsset *photoAsset in photos) {
-        if (![self IsPhotoUploaded:photoAsset.url] && ![self IsPhotoUploading:photoAsset.url]) {
+        if (![self IsPhotoUploaded:photoAsset] && ![self IsPhotoUploading:photoAsset]) {
             [self addUploadPhoto:photoAsset];
         }
     }
@@ -1276,7 +1278,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset];
         if (self.firstTimeSync) {
             if ([_syncDir nameExist:photoAsset.name]) {
-                [self setPhotoUploaded:photoAsset.url.absoluteString];
+                [self setPhotoUploadedIdentifier:asset.localIdentifier];
                 Debug("First time sync, skip file %@(%@) which has already been uploaded", photoAsset.name, photoAsset.localIdentifier);
             }
         } else {
@@ -1293,7 +1295,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSPredicate *predicateVideo = [NSPredicate predicateWithFormat:@"mediaType == %i", PHAssetMediaTypeVideo];
     if (self.isAutoSync) {
         predicate = predicateImage;
-    } else if (self.isAutoSync && self.isVideoSync) {
+    }
+    if (self.isAutoSync && self.isVideoSync) {
         predicate = [NSCompoundPredicate orPredicateWithSubpredicates:@[predicateImage, predicateVideo]];
     }
     return predicate;
@@ -1441,7 +1444,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                 Warning("Failed to get all contacts.");
                 return handler(false, nil, nil);
             }
-            Info("Contacts count: %ld", contacts.count);
+            Info("Contacts count: %lu", (unsigned long)contacts.count);
             NSError *err = nil;
             NSData *vcardData = [CNContactVCardSerialization dataWithContacts:contacts error:&err];
             if (err) {
@@ -1898,15 +1901,23 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return JSON;
 }
 
-- (void)setPhotoUploaded:(NSString *)url
-{
-    [self setValue:@"true" forKey:[self.accountIdentifier stringByAppendingString:url] entityName:ENTITY_UPLOAD_PHOTO];
+- (void)setPhotoUploadedIdentifier:(NSString *)localIdentifier {
+    [self setValue:@"true" forKey:[self.accountIdentifier stringByAppendingString:localIdentifier] entityName:ENTITY_UPLOAD_PHOTO];
 }
 
-- (BOOL)IsPhotoUploaded:(NSURL *)url
-{
-    NSString *value = [self objectForKey:[self.accountIdentifier stringByAppendingString:url.absoluteString] entityName:ENTITY_UPLOAD_PHOTO];
-    return value != nil;
+- (BOOL)IsPhotoUploaded:(SeafPhotoAsset *)asset {
+    NSInteger saveCount = 0;
+    if (asset.url) {
+       NSString *url = [self objectForKey:[self.accountIdentifier stringByAppendingString:asset.url.absoluteString] entityName:ENTITY_UPLOAD_PHOTO];
+        if (url != nil) {
+            saveCount ++;
+        }
+    }
+    NSString *identifier = [self objectForKey:[self.accountIdentifier stringByAppendingString:asset.localIdentifier] entityName:ENTITY_UPLOAD_PHOTO];
+    if (identifier != nil) {
+        saveCount ++;
+    }
+    return saveCount > 0;
 }
 
 - (void)clearAccountCache
