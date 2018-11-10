@@ -558,4 +558,15 @@
     NSError *error = [NSError errorWithDomain:@"Seafile" code:-1 userInfo:userInfo];
     return error;
 }
+
++ (NSString *)convertToALAssetUrl:(NSString *)fileURL andIdentifier:(NSString *)identifier {
+    NSString *name = [identifier componentsSeparatedByString:@"/"].firstObject;
+    NSString *ext = fileURL.pathExtension.uppercaseString;
+    
+    if (name && ext) {
+        return [NSString stringWithFormat:@"assets-library://asset/asset.%@?id=%@&ext=%@", ext, name, ext];
+    } else {
+        return nil;
+    }
+}
 @end

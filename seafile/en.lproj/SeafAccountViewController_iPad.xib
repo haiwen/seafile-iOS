@@ -17,6 +17,7 @@
                 <outlet property="loginButton" destination="ggd-Li-Grh" id="mhb-cE-VAk"/>
                 <outlet property="passwordTextField" destination="8" id="38"/>
                 <outlet property="prefixLabel" destination="Vpc-8f-gSf" id="hIT-wH-bLu"/>
+                <outlet property="privacyPolicyButton" destination="oQW-c9-2rM" id="4Ti-TJ-7XG"/>
                 <outlet property="serverTextField" destination="7" id="36"/>
                 <outlet property="usernameTextField" destination="9" id="39"/>
                 <outlet property="view" destination="2" id="3"/>

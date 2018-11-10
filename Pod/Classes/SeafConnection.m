@@ -102,8 +102,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @property BOOL inCheckPhotoss;
 @property BOOL inCheckCert;
 
-@property NSMutableArray *photosArray;
-@property NSMutableArray *uploadingArray;
+@property NSMutableArray<NSString *> *photosArray;
+@property NSMutableArray<NSString *> *uploadingArray;
 @property SeafDir *syncDir;
 @property (readonly) NSString *localUploadDir;
 @property NSString *contactsLastBackTime;
@@ -1118,11 +1118,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
     int count = 0;
     while (_uploadingArray.count < 5 && count++ < 5) {
-        SeafPhotoAsset *photoAsset = [self popUploadPhoto];
-        if (!photoAsset) break;
+        NSString *localIdentifier = [self popUploadPhotoIdentifier];
+        if (!localIdentifier) break;
         
-        PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[photoAsset.localIdentifier] options:nil];
+        PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
         PHAsset *asset = [result firstObject];
+        SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset];
 
         NSString *path = [self.localUploadDir stringByAppendingPathComponent:photoAsset.name];
         SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
@@ -1158,8 +1159,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         Warning("Failed to upload photo %@: %@", ufile.name, error);
         // Add photo to the end of queue
         [self removeUploadingPhoto:ufile.assetIdentifier];
-        SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:ufile.asset];
-        [self addUploadPhoto:photoAsset];
+        [self addUploadPhoto:ufile.assetIdentifier];
     }
 }
 
@@ -1179,7 +1179,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         return false;
     }
     @synchronized(_photosArray) {
-        if ([_photosArray containsObject:asset]) return true;
+        if ([_photosArray containsObject:asset.localIdentifier]) return true;
     }
     @synchronized(_uploadingArray) {
         if ([_uploadingArray containsObject:asset.localIdentifier]) return true;
@@ -1199,20 +1199,20 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }
 }
 
-- (void)addUploadPhoto:(SeafPhotoAsset *)asset {
+- (void)addUploadPhoto:(NSString *)localIdentifier {
     @synchronized(_photosArray) {
-        [_photosArray addObject:asset];
+        [_photosArray addObject:localIdentifier];
     }
 }
 
-- (SeafPhotoAsset *)popUploadPhoto{
+- (NSString *)popUploadPhotoIdentifier{
     @synchronized(self.photosArray) {
         if (!self.photosArray || self.photosArray.count == 0) return nil;
-        SeafPhotoAsset *photoAsset = [self.photosArray objectAtIndex:0];
-        [self addUploadingPhotoIdentifier:photoAsset.localIdentifier];
-        [self.photosArray removeObject:photoAsset];
-        Debug("Picked %@ remain: %u %u", photoAsset.url, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
-        return photoAsset;
+        NSString *localIdentifier = self.photosArray.firstObject;
+        [self addUploadingPhotoIdentifier:localIdentifier];
+        [self.photosArray removeObject:localIdentifier];
+        Debug("Picked photo identifier: %@ remain: %u %u", localIdentifier, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
+        return localIdentifier;
     }
 }
 
@@ -1237,7 +1237,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSArray *photos = [self filterOutUploadedPhotos];
     for (SeafPhotoAsset *photoAsset in photos) {
         if (![self IsPhotoUploaded:photoAsset] && ![self IsPhotoUploading:photoAsset]) {
-            [self addUploadPhoto:photoAsset];
+            [self addUploadPhoto:photoAsset.localIdentifier];
         }
     }
     if (self.firstTimeSync) {
@@ -1908,9 +1908,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (BOOL)IsPhotoUploaded:(SeafPhotoAsset *)asset {
     NSInteger saveCount = 0;
     if (asset.url) {
-       NSString *url = [self objectForKey:[self.accountIdentifier stringByAppendingString:asset.url.absoluteString] entityName:ENTITY_UPLOAD_PHOTO];
-        if (url != nil) {
-            saveCount ++;
+        NSString *oldAssetUrl = [Utils convertToALAssetUrl:asset.url.absoluteString andIdentifier:asset.localIdentifier];
+        if (oldAssetUrl) {
+            NSString *value = [self objectForKey:[self.accountIdentifier stringByAppendingString:oldAssetUrl] entityName:ENTITY_UPLOAD_PHOTO];
+            if (value != nil) {
+                saveCount ++;
+            }
         }
     }
     NSString *identifier = [self objectForKey:[self.accountIdentifier stringByAppendingString:asset.localIdentifier] entityName:ENTITY_UPLOAD_PHOTO];
