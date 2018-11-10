@@ -32,6 +32,7 @@
 @property (weak, nonatomic)   IBOutlet UILabel *prefixLabel;
 @property (strong, nonatomic) IBOutlet UISwitch *httpsSwitch;
 @property (strong, nonatomic) IBOutlet UILabel *httpsLabel;
+@property (weak, nonatomic) IBOutlet UIButton *privacyPolicyButton;
 @property StartViewController *startController;
 @property SeafConnection *connection;
 @property int type;
@@ -186,6 +187,7 @@
     loginButton.layer.cornerRadius = 4.0f;
     [loginButton setTitle:NSLocalizedString(@"Login", @"Seafile") forState:UIControlStateNormal];
     [loginButton setTitle:NSLocalizedString(@"Login", @"Seafile") forState:UIControlStateHighlighted];
+    [self.privacyPolicyButton setTitle:NSLocalizedString(@"Privacy Policy", @"Seafile") forState:UIControlStateNormal];
 
     _httpsLabel.text = @"https";
     serverTextField.clearButtonMode = UITextFieldViewModeNever;
