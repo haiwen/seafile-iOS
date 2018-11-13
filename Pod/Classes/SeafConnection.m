@@ -1130,7 +1130,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         file.retryable = false;
         file.autoSync = true;
         file.overwrite = true;
-        [file setPHAsset:asset url:photoAsset.url];
+        [file setPHAsset:asset url:photoAsset.ALAssetURL];
         file.udir = dir;
         [file setCompletionBlock:^(SeafUploadFile *file, NSString *oid, NSError *error) {
             [self autoSyncFileUploadComplete:file error:error];
@@ -1907,13 +1907,10 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (BOOL)IsPhotoUploaded:(SeafPhotoAsset *)asset {
     NSInteger saveCount = 0;
-    if (asset.url) {
-        NSString *oldAssetUrl = [Utils convertToALAssetUrl:asset.url.absoluteString andIdentifier:asset.localIdentifier];
-        if (oldAssetUrl) {
-            NSString *value = [self objectForKey:[self.accountIdentifier stringByAppendingString:oldAssetUrl] entityName:ENTITY_UPLOAD_PHOTO];
-            if (value != nil) {
-                saveCount ++;
-            }
+    if (asset.ALAssetURL) {
+        NSString *value = [self objectForKey:[self.accountIdentifier stringByAppendingString:asset.ALAssetURL.absoluteString] entityName:ENTITY_UPLOAD_PHOTO];
+        if (value != nil) {
+            saveCount ++;
         }
     }
     NSString *identifier = [self objectForKey:[self.accountIdentifier stringByAppendingString:asset.localIdentifier] entityName:ENTITY_UPLOAD_PHOTO];

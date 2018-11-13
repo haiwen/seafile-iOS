@@ -7,6 +7,7 @@
 
 #import "SeafPhotoAsset.h"
 #import "Utils.h"
+#import <objc/runtime.h>
 
 @implementation SeafPhotoAsset
 
@@ -14,8 +15,8 @@
     self = [super init];
     if (self) {
         _name = [self assetName:asset];
-        _url = [self assetURL:asset];
         _localIdentifier = asset.localIdentifier;
+        _ALAssetURL = [self assetURL:asset];
     }
     return self;
 }
@@ -45,22 +46,15 @@
 }
 
 - (NSURL *)assetURL:(PHAsset *)asset {
-    __block NSURL *URL;
-    if (asset.mediaType == PHAssetMediaTypeImage) {
-        PHImageRequestOptions *options = [[PHImageRequestOptions alloc] init];
-        options.synchronous = YES;
-        [PHImageManager.defaultManager requestImageDataForAsset:asset options:options resultHandler:^(NSData *imageData, NSString *dataUTI, UIImageOrientation orientation, NSDictionary *info) {
-            URL = info[@"PHImageFileURLKey"];
-        }];
-    } else if (asset.mediaType == PHAssetMediaTypeVideo) {
-        PHVideoRequestOptions *options = [[PHVideoRequestOptions alloc] init];
-        options.version = PHVideoRequestOptionsVersionCurrent;
-        [[PHImageManager defaultManager] requestAVAssetForVideo:asset options:options resultHandler:^(AVAsset * _Nullable asset, AVAudioMix * _Nullable audioMix, NSDictionary * _Nullable info) {
-            if ([asset isKindOfClass:[AVURLAsset class]]) {
-                AVURLAsset *urlAsset = (AVURLAsset*)asset;
-                URL = urlAsset.URL;
-            }
-        }];
+    NSURL *URL;
+    unsigned int count;
+    objc_property_t *propertyList = class_copyPropertyList([asset class], &count);
+    for (unsigned int i = 0; i < count; i++) {
+        const char *propertyName = property_getName(propertyList[i]);
+        if ([[NSString stringWithUTF8String:propertyName] isEqualToString:@"ALAssetURL"]) {
+            URL = [asset valueForKey:@"ALAssetURL"];
+            break;
+        }
     }
     return URL;
 }
