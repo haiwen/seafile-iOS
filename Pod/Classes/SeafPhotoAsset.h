@@ -13,11 +13,6 @@ NS_ASSUME_NONNULL_BEGIN
 @interface SeafPhotoAsset : NSObject
 
 /**
- URL
- */
-@property (nonatomic, strong) NSURL *url;
-
-/**
  asset.localIdentifier
  */
 @property (nonatomic, copy) NSString *localIdentifier;
@@ -26,6 +21,11 @@ NS_ASSUME_NONNULL_BEGIN
  name
  */
 @property (nonatomic, copy) NSString *name;
+
+/**
+ ALAssetURL
+ */
+@property (nonatomic, strong) NSURL *ALAssetURL;
 
 - (instancetype)initWithAsset:(PHAsset*)asset;
 
