@@ -17,7 +17,8 @@ enum ACCOUNT_TYPE {
 #define SERVER_SEACLOUD         @"seacloud.cc"
 
 #define SERVER_SEACLOUD_NAME    @"SeaCloud.cc"
-#define SERVER_SHIB_NAME        @"Shibboleth"
+#define SERVER_SHIB_NAME        NSLocalizedString(@"Single Sign On", @"Seafile")
+
 
 @interface SeafAccountViewController : UIViewController
 

@@ -7,8 +7,10 @@
 //
 
 #import "SeafActionSheet.h"
+#import "SeafCell.h"
+#import "SeafAppDelegate.h"
 
-#define kHostsCornerRadius 3.0f
+#define kHostsCornerRadius 8.0f
 
 #define kSpacing 5.0f
 
@@ -21,8 +23,9 @@
 #define kFixedWidth 320.0f
 #define kFixedWidthContinuous 300.0f
 #define kScreenHeight [UIScreen mainScreen].bounds.size.height
+#define KButtonHeight = 44.0f
 
-#define kAnimationDurationForSectionCount(count) MAX(0.22f, MIN(count*0.12f, 0.45f))
+#define kAnimationDurationForSectionCount(count) MAX(0.3f, MIN(count*0.12f, 0.45f))
 
 #define rgba(r, g, b, a) [UIColor colorWithRed:r/255.0f green:g/255.0f blue:b/255.0f alpha:a]
 
@@ -125,15 +128,16 @@ static BOOL disableCustomEasing = NO;
     CAShapeLayer *mask = [CAShapeLayer layer];
     mask.path = path.CGPath;
     mask.fillColor = [UIColor blackColor].CGColor;
-
+    
     self.layer.mask = mask;
     self.layer.shadowColor = [UIColor blackColor].CGColor;
     self.layer.shadowOffset = CGSizeZero;
     self.layer.shadowRadius = kShadowRadius;
     self.layer.shadowOpacity = kShadowOpacity;
-
+    
     self.layer.contentsScale = [UIScreen mainScreen].scale;
     ((CAShapeLayer *)self.layer).fillColor = [UIColor whiteColor].CGColor;
+    ((CAShapeLayer *)self.layer).strokeColor = [UIColor whiteColor].CGColor;
 }
 
 + (Class)layerClass {
@@ -162,147 +166,40 @@ static BOOL disableCustomEasing = NO;
 
 @property (nonatomic, copy) void (^buttonPressedBlock)(NSIndexPath *indexPath);
 
-- (void)setUpForContinuous:(BOOL)continuous;
-
 @end
 
 @implementation SeafActionSheetSection
 
 + (instancetype)cancelSection {
-    return [self sectionWithTitle:nil message:nil buttonTitles:@[NSLocalizedString(@"Cancel",)] buttonStyle:SFActionSheetButtonStyleCancel];
+    return [self sectionWithButtonTitles:@[NSLocalizedString(@"Cancel",)] buttonStyle:SFActionSheetButtonStyleCancel];
 }
 
-+(instancetype)sectionWithTitle:(NSString *)title message:(NSString *)message buttonTitles:(NSArray *)buttonTitles buttonStyle:(SFActionSheetButtonStyle)buttonStyle {
-    return [[self alloc] initWithTitle:title message:message buttonTitles:buttonTitles buttonStyle:buttonStyle];
++(instancetype)sectionWithButtonTitles:(NSArray *)buttonTitles buttonStyle:(SFActionSheetButtonStyle)buttonStyle {
+    return [[self alloc] initWithButtonTitles:buttonTitles buttonStyle:buttonStyle];
 }
 
--(instancetype)initWithTitle:(NSString *)title message:(NSString *)message buttonTitles:(NSArray *)buttonTitles buttonStyle:(SFActionSheetButtonStyle)buttonStyle {
+-(instancetype)initWithButtonTitles:(NSArray *)buttonTitles buttonStyle:(SFActionSheetButtonStyle)buttonStyle {
     self = [super init];
 
     if (self) {
-        if (title) {
-            UILabel *titleLabel = [[UILabel alloc] init];
-            titleLabel.backgroundColor = [UIColor clearColor];
-            titleLabel.textAlignment = NSTextAlignmentCenter;
-            titleLabel.font = [UIFont boldSystemFontOfSize:14.0f];
-            titleLabel.textColor = [UIColor blackColor];
-            titleLabel.numberOfLines = 1;
-
-            titleLabel.text = title;
-
-            _titleLabel = titleLabel;
-
-            [self addSubview:_titleLabel];
-        }
-
-        if (message) {
-            UILabel *messageLabel = [[UILabel alloc] init];
-            messageLabel.backgroundColor = [UIColor clearColor];
-            messageLabel.textAlignment = NSTextAlignmentCenter;
-            messageLabel.font = [UIFont systemFontOfSize:12.0f];
-            messageLabel.textColor = [UIColor blackColor];
-            messageLabel.numberOfLines = 0;
-
-            messageLabel.text = message;
-
-            _messageLabel = messageLabel;
-
-            [self addSubview:_messageLabel];
-        }
-
         if (buttonTitles.count) {
             NSMutableArray *buttons = [NSMutableArray arrayWithCapacity:buttonTitles.count];
-
             NSInteger index = 0;
 
             for (NSString *str in buttonTitles) {
                 SeafSectionButton *b = [self makeButtonWithTitle:str style:buttonStyle];
                 b.row = (NSUInteger)index;
-
                 [self addSubview:b];
-
                 [buttons addObject:b];
-
                 index++;
             }
-
             _buttons = buttons.copy;
         }
-
-
     }
 
     return self;
 }
 #pragma mark UI
-
-- (void)setUpForContinuous:(BOOL)continuous {
-    if (continuous) {
-        self.backgroundColor = [UIColor clearColor];
-        self.layer.cornerRadius = 0.0f;
-        self.layer.shadowOpacity = 0.0f;
-    }
-    else {
-        self.backgroundColor = [UIColor clearColor];
-        self.layer.cornerRadius = kHostsCornerRadius;
-
-    }
-}
-
-- (void)setButtonStyle:(SFActionSheetButtonStyle)buttonStyle forButtonAtIndex:(NSUInteger)index {
-    if (index < self.buttons.count) {
-        UIButton *button = self.buttons[index];
-
-        [self setButtonStyle:buttonStyle forButton:button];
-    }
-    else {
-        NSLog(@"ERROR: Index out of bounds");
-        return;
-    }
-}
-
-- (void)setButtonStyle:(SFActionSheetButtonStyle)buttonStyle forButton:(UIButton *)button {
-    UIColor *backgroundColor, *borderColor, *titleColor = nil;
-    UIFont *font = nil;
-
-    if (buttonStyle == SFActionSheetButtonStyleDefault) {
-        font = [UIFont systemFontOfSize:15.0f];
-        titleColor = [UIColor blackColor];
-
-        backgroundColor = [UIColor colorWithWhite:1.0 alpha:1.0];
-        borderColor = [UIColor colorWithWhite:1.0 alpha:1.0];
-    }
-    else if (buttonStyle == SFActionSheetButtonStyleCancel) {
-        font = [UIFont boldSystemFontOfSize:15.0f];
-        titleColor = [UIColor blackColor];
-
-        backgroundColor = [UIColor colorWithWhite:1.0 alpha:1.0];
-        borderColor = [UIColor colorWithWhite:1.0 alpha:1.0];
-    }
-    else if (buttonStyle == SFActionSheetButtonStyleRed) {
-        font = [UIFont systemFontOfSize:15.0f];
-        titleColor = [UIColor whiteColor];
-
-        backgroundColor = rgb(231.0f, 76.0f, 60.0f);
-        borderColor = rgb(192.0f, 57.0f, 43.0f);
-    }
-    else if (buttonStyle == SFActionSheetButtonStyleBlue) {
-        font = [UIFont systemFontOfSize:15.0f];
-        titleColor = [UIColor whiteColor];
-
-        backgroundColor = rgb(52.0f, 152.0f, 219.0f);
-        borderColor = rgb(41.0f, 128.0f, 185.0f);
-    }
-
-    [button setTitleColor:titleColor forState:UIControlStateNormal];
-
-    button.titleLabel.font = font;
-
-    [button setBackgroundImage:[self pixelImageWithColor:backgroundColor] forState:UIControlStateNormal];
-    [button setBackgroundImage:[self pixelImageWithColor:borderColor] forState:UIControlStateHighlighted];
-
-    button.layer.borderColor = borderColor.CGColor;
-}
 
 - (UIImage *)pixelImageWithColor:(UIColor *)color {
     UIGraphicsBeginImageContextWithOptions((CGSize){1.0f, 1.0f}, YES, 0.0f);
@@ -319,17 +216,26 @@ static BOOL disableCustomEasing = NO;
 }
 
 - (SeafSectionButton *)makeButtonWithTitle:(NSString *)title style:(SFActionSheetButtonStyle)style {
-    SeafSectionButton *b = [[SeafSectionButton alloc] init];
-
-//    b.layer.cornerRadius = 2.0f;
-//    b.layer.masksToBounds = YES;
-//    b.layer.borderWidth = 1.0f;
+    CGFloat buttonHeight = 44.0f;
+    UIEdgeInsets titleInsets = UIEdgeInsetsZero;
+    if (style == SFActionSheetButtonStyleCancel) {
+        if (@available(iOS 11.0, *)) {
+            buttonHeight += [[UIApplication sharedApplication] delegate].window.safeAreaInsets.bottom;
+            titleInsets = UIEdgeInsetsMake(0, 0, [[UIApplication sharedApplication] delegate].window.safeAreaInsets.bottom, 0);
+        }
+    }
+    SeafSectionButton *b = [[SeafSectionButton alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.bounds), buttonHeight)];
 
     [b setTitle:title forState:UIControlStateNormal];
-
+    [b setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    [b setTitleEdgeInsets:titleInsets];
     [b addTarget:self action:@selector(buttonPressed:) forControlEvents:UIControlEventTouchUpInside];
-
-    [self setButtonStyle:style forButton:b];
+    [b setBackgroundImage:[self pixelImageWithColor:[UIColor colorWithWhite:1.0 alpha:1.0]] forState:UIControlStateNormal];
+    [b setBackgroundImage:[self pixelImageWithColor:[UIColor colorWithWhite:0.88 alpha:1.0]] forState:UIControlStateHighlighted];
+    b.titleLabel.font = [UIFont systemFontOfSize:15.0f];
+    if (style == SFActionSheetButtonStyleCancel) {
+        b.titleLabel.font = [UIFont boldSystemFontOfSize:15.0f];
+    }
 
     return b;
 }
@@ -341,69 +247,25 @@ static BOOL disableCustomEasing = NO;
 }
 
 - (CGRect)layoutForWidth:(CGFloat)width {
-    CGFloat buttonHeight = 44.0f;
     CGFloat spacing = 0;
-
     CGFloat height = 0.0f;
-
-    if (self.titleLabel) {
-        height += spacing;
-
-        [self.titleLabel sizeToFit];
-        height += CGRectGetHeight(self.titleLabel.frame);
-
-        self.titleLabel.frame = (CGRect){{spacing, spacing}, {width-spacing*2.0f, CGRectGetHeight(self.titleLabel.frame)}};
-    }
-
-    if (self.messageLabel) {
-        height += spacing;
-
-        CGSize maxLabelSize = {width-spacing*2.0f, width};
-
-        CGFloat messageLabelHeight = 0.0f;
-
-        NSDictionary *attributes = @{NSFontAttributeName : self.messageLabel.font};
-
-        messageLabelHeight = CGRectGetHeight([self.messageLabel.text boundingRectWithSize:maxLabelSize options:NSStringDrawingUsesLineFragmentOrigin attributes:attributes context:nil]);
-
-        self.messageLabel.frame = (CGRect){{spacing, height}, {width-spacing*2.0f, messageLabelHeight}};
-
-        height += messageLabelHeight;
-    }
 
     for (UIButton *button in self.buttons) {
         height += spacing;
-
-        NSInteger index = [self.buttons indexOfObject:button];
-
-        button.frame = (CGRect){{spacing, height}, {width-spacing*2.0f, buttonHeight}};
-
+        button.frame = (CGRect){{spacing, height}, {width, button.bounds.size.height}};
+        height += button.bounds.size.height;
+        
         UIView *l = [[UIView alloc] initWithFrame:CGRectMake(10, CGRectGetHeight(button.frame)-0.5, button.bounds.size.width - 20, 0.5)];
         l.backgroundColor = rgba(210.0f, 210.0f, 210.0f,0.5);
         [button addSubview:l];
-
-        if (iPad) {
-            if (index == self.buttons.count - 1) {
-                [l removeFromSuperview];
-            }
+        
+        if (iPad && [self.buttons indexOfObject:button] == self.buttons.count - 1) {
+            [l removeFromSuperview];
         }
-
-        height += buttonHeight;
-    }
-
-    if (self.contentView) {
-        height += spacing;
-
-        self.contentView.frame = (CGRect){{spacing, height}, {width-spacing*2.0f, self.contentView.frame.size.height}};
-
-        height += CGRectGetHeight(self.contentView.frame);
     }
 
     height += spacing;
-
     self.frame = (CGRect){CGPointZero, {width, height}};
-
-    self.backgroundColor = [UIColor clearColor];
     return self.frame;
 }
 
@@ -423,16 +285,18 @@ static BOOL disableCustomEasing = NO;
     SFActionSheetArrowDirection _anchoredArrowDirection;
 }
 
+@property (nonatomic, strong) NSArray *sections;
+
 @end
 
 @implementation SeafActionSheet
 
-+ (instancetype)actionSheetWithSections:(NSArray *)sections {
-    return [[self alloc] initWithSections:sections];
++ (instancetype)actionSheetWithTitles:(NSArray *)titles {
+    return [[self alloc] initWithSectionTitles:titles];
 }
 
-- (instancetype)initWithSections:(NSArray *)sections {
-    NSAssert(sections.count > 0, @"Must at least provide 1 section");
+- (instancetype)initWithSectionTitles:(NSArray *)titles {
+    NSAssert(titles.count > 0, @"Must at least provide 1 section");
 
     self = [super init];
 
@@ -444,6 +308,10 @@ static BOOL disableCustomEasing = NO;
 
         _scrollViewHost = [[SeafActionSheetView alloc] init];
         _scrollViewHost.backgroundColor = [UIColor clearColor];
+        if (iPad) {
+            _scrollViewHost.layer.cornerRadius = kHostsCornerRadius;
+            _scrollViewHost.layer.masksToBounds = YES;
+        }
 
         _scrollView = [[UIScrollView alloc] init];
         _scrollView.backgroundColor = [UIColor clearColor];
@@ -454,7 +322,15 @@ static BOOL disableCustomEasing = NO;
         [self addSubview:_scrollViewHost];
 
         self.backgroundColor = [UIColor colorWithWhite:0.0f alpha:0.3f];
+        
+        SeafActionSheetSection *section = [SeafActionSheetSection sectionWithButtonTitles:titles buttonStyle:SFActionSheetButtonStyleDefault];
 
+        NSArray *sections;
+        if (iPad) {
+            sections = @[section];
+        }else{
+            sections = @[section,[SeafActionSheetSection cancelSection]];
+        }
         _sections = sections;
 
         NSInteger index = 0;
@@ -497,7 +373,7 @@ static BOOL disableCustomEasing = NO;
 #pragma mark Callbacks
 
 - (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer {
-    if ([self hitTest:[gestureRecognizer locationInView:self] withEvent:nil] == self && self.outsidePressBlock) {
+    if ([self hitTest:[gestureRecognizer locationInView:self] withEvent:nil] == self) {
         return YES;
     }
 
@@ -505,13 +381,13 @@ static BOOL disableCustomEasing = NO;
 }
 
 - (void)tapped:(UITapGestureRecognizer *)gesture {
-    if ([self hitTest:[gesture locationInView:self] withEvent:nil] == self && self.outsidePressBlock) {
-        self.outsidePressBlock(self);
+    if ([self hitTest:[gesture locationInView:self] withEvent:nil] == self) {
+        [self dismissAnimated:YES];
     }
 }
 
 - (void)orientationChanged {
-    if (_targetView && !CGRectEqualToRect(self.bounds, _targetView.bounds)) {
+    if (_targetVC.view && !CGRectEqualToRect(self.bounds, _targetVC.view.bounds)) {
         disableCustomEasing = YES;
         [UIView animateWithDuration:(iPad ? 0.4 : 0.3) delay:0.0 options:UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationOptionCurveEaseInOut animations:^{
             if (_anchoredAtPoint) {
@@ -534,37 +410,22 @@ static BOOL disableCustomEasing = NO;
 
 #pragma mark Layout
 
-- (void)layoutSheetForFrame:(CGRect)frame fitToRect:(BOOL)fitToRect initialSetUp:(BOOL)initial continuous:(BOOL)continuous {
-    if (continuous) {
-        frame.size.width = kFixedWidthContinuous;
-    }
-
-    CGFloat spacing = 2.0f*kSpacing;
-
+- (void)layoutSheetForFrame:(CGRect)frame fitToRect:(BOOL)fitToRect initialSetUp:(BOOL)initial {
     CGFloat width = CGRectGetWidth(frame);
-
-    CGFloat height = (continuous ? 0.0f : spacing);
+    CGFloat height = 0;
 
     for (SeafActionSheetSection *section in self.sections) {
-        if (initial) {
-            [section setUpForContinuous:continuous];
-        }
-
         CGRect f = [section layoutForWidth:width];
-
         f.origin.y = height;
-
         f.origin.x = 0;
-
         section.frame = f;
-
         height += CGRectGetHeight(f);
     }
 
     _scrollView.contentSize = (CGSize){CGRectGetWidth(frame), height};
 
-    if (!fitToRect && !continuous) {
-        frame.size.height = CGRectGetHeight(_targetView.bounds)-CGRectGetMinY(frame);
+    if (!fitToRect) {
+        frame.size.height = CGRectGetHeight(_targetVC.view.bounds)-CGRectGetMinY(frame);
     }
 
     if (height > CGRectGetHeight(frame)) {
@@ -574,11 +435,7 @@ static BOOL disableCustomEasing = NO;
 
         if (fitToRect) {
             finalY = CGRectGetMaxY(frame)-height;
-        }
-        else if (continuous) {
-            finalY = CGRectGetMinY(frame);
-        }
-        else {
+        } else {
             finalY = CGRectGetMinY(frame)+(CGRectGetHeight(frame)-height)/2.0f;
         }
 
@@ -586,9 +443,7 @@ static BOOL disableCustomEasing = NO;
     }
 
     _finalContentFrame = _scrollViewHost.frame;
-
     _scrollView.frame = _scrollViewHost.bounds;
-
     [_scrollView scrollRectToVisible:(CGRect){{0.0f, _scrollView.contentSize.height-1.0f}, {1.0f, 1.0f}} animated:NO];
 
     UIVisualEffectView *effectView = [[UIVisualEffectView alloc]initWithEffect:[UIVibrancyEffect effectForBlurEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleDark]]];
@@ -605,31 +460,26 @@ static BOOL disableCustomEasing = NO;
         if (iPad) {
             viewToModify.alpha = 1.0f;
             _arrowView.alpha = 1.0f;
-        }
-        else {
+        } else {
             viewToModify.frame = _finalContentFrame;
         }
-    }
-    else {
+    } else {
         super.backgroundColor = [UIColor clearColor];
 
         if (iPad) {
             viewToModify.alpha = 0.0f;
             _arrowView.alpha = 0.0f;
-        }
-        else {
-            viewToModify.frame = (CGRect){{viewToModify.frame.origin.x, CGRectGetHeight(_targetView.bounds)}, _scrollView.contentSize};
+        } else {
+            viewToModify.frame = (CGRect){{viewToModify.frame.origin.x, CGRectGetHeight(_targetVC.view.bounds)}, _scrollView.contentSize};
         }
     }
 }
 
 #pragma mark Showing
 
-- (void)showInView:(UIView *)view animated:(BOOL)animated {
+- (void)showAnimated:(BOOL)animated {
 
     [[UIApplication sharedApplication] beginIgnoringInteractionEvents];
-
-    _targetView = view;
 
     [self layoutSheetInitial:YES];
 
@@ -638,16 +488,13 @@ static BOOL disableCustomEasing = NO;
     };
 
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(orientationChanged) name:UIApplicationDidChangeStatusBarFrameNotification object:nil];
-
     [self layoutForVisible:!animated];
-
-    [_targetView addSubview:self];
+    [[self topWindow] addSubview:self];
 
     if (!animated) {
         completion();
-    }
-    else {
-        CGFloat duration = (iPad ? 0.3f : kAnimationDurationForSectionCount(self.sections.count));
+    } else {
+        CGFloat duration = kAnimationDurationForSectionCount(self.sections.count);
 
         [UIView animateWithDuration:duration animations:^{
             [self layoutForVisible:YES];
@@ -658,38 +505,25 @@ static BOOL disableCustomEasing = NO;
 }
 
 - (void)layoutSheetInitial:(BOOL)initial {
-    self.frame = _targetView.bounds;
-
-    _scrollViewHost.layer.cornerRadius = 0.0f;
-    _scrollViewHost.layer.shadowOpacity = 0.0f;
+    self.frame = [self topWindow].bounds;
+    
     _scrollViewHost.backgroundColor = [UIColor clearColor];
 
     CGRect frame = self.frame;
-
     if (iPad) {
-        CGFloat fixedWidth = kFixedWidth;
-
-        frame.origin.x = (CGRectGetWidth(frame)-fixedWidth)/2.0f;
-
-        frame.size.width = fixedWidth;
+        frame.origin.x = (CGRectGetWidth(frame)-kFixedWidth)/2.0f;
+        frame.size.width = kFixedWidth;
     }
 
-    frame = UIEdgeInsetsInsetRect(frame, self.insets);
-
-    [self layoutSheetForFrame:frame fitToRect:!iPad initialSetUp:initial continuous:NO];
+    frame = UIEdgeInsetsInsetRect(frame, UIEdgeInsetsMake(20.0f, 0.0f, 0.0f, 0.0f));
+    [self layoutSheetForFrame:frame fitToRect:!iPad initialSetUp:initial];
 }
 
 #pragma mark Showing From Point
 
 - (void)showFromPoint:(CGPoint)point inView:(UIView *)view arrowDirection:(SFActionSheetArrowDirection)arrowDirection animated:(BOOL)animated {
 
-    if (!iPad) {
-        return [self showInView:view animated:animated];
-    }
-
     [[UIApplication sharedApplication] beginIgnoringInteractionEvents];
-
-    _targetView = view;
 
     if (point.y > kScreenHeight - 320 - 50) {
         arrowDirection = SFActionSheetArrowDirectionBottom;
@@ -705,7 +539,7 @@ static BOOL disableCustomEasing = NO;
 
     [self layoutForVisible:!animated];
 
-    [_targetView addSubview:self];
+    [[self topWindow] addSubview:self];
 
     if (!animated) {
         completion();
@@ -720,6 +554,27 @@ static BOOL disableCustomEasing = NO;
     }
 }
 
+- (void)showFromView:(UIView *)view {
+    if (iPad) {
+        CGPoint point = CGPointZero;
+        
+        if ([view isKindOfClass:[SeafCell class]]) {
+            SeafCell *cell = (SeafCell*)view;
+            point = (CGPoint){CGRectGetMidX(cell.moreButton.frame), CGRectGetMaxY(cell.moreButton.frame) - cell.moreButton.frame.size.height/2};
+            point = [_targetVC.navigationController.view convertPoint:point fromView:cell];
+        } else if ([view isKindOfClass:[UIBarButtonItem class]]) {
+            UIBarButtonItem *item = (UIBarButtonItem*)view;
+            UIView *itemView = [item valueForKey:@"view"];
+            CGRect frameInNaviView = [_targetVC.navigationController.view convertRect:itemView.frame fromView:itemView.superview
+                                      ];
+            point = (CGPoint){CGRectGetMidX(frameInNaviView), CGRectGetMaxY(frameInNaviView)};
+        }
+        [self showFromPoint:point inView:view arrowDirection:SFActionSheetArrowDirectionTop animated:YES];
+    } else {
+        [self showAnimated:YES];
+    }
+}
+
 - (void)moveToPoint:(CGPoint)point arrowDirection:(SFActionSheetArrowDirection)arrowDirection animated:(BOOL)animated {
     if (!iPad) {
         return;
@@ -730,27 +585,24 @@ static BOOL disableCustomEasing = NO;
     disableCustomEasing = YES;
 
     void (^changes)(void) = ^{
-        self.frame = _targetView.bounds;
-
+        self.frame = [self topWindow].bounds;
         CGRect finalFrame = CGRectZero;
-
         CGFloat arrowHeight = kArrowHeight;
-
         CGFloat spacing = kSpacing;
 
         if (arrowDirection == SFActionSheetArrowDirectionRight) {
             finalFrame.size.width = point.x-arrowHeight;
-            finalFrame.size.height = CGRectGetHeight(_targetView.bounds);
+            finalFrame.size.height = CGRectGetHeight(_targetVC.view.bounds);
         } else if (arrowDirection == SFActionSheetArrowDirectionLeft) {
-            finalFrame.size.width = CGRectGetWidth(_targetView.bounds)-point.x-arrowHeight;
-            finalFrame.size.height = CGRectGetHeight(_targetView.bounds);
+            finalFrame.size.width = CGRectGetWidth(_targetVC.view.bounds)-point.x-arrowHeight;
+            finalFrame.size.height = CGRectGetHeight(_targetVC.view.bounds);
             finalFrame.origin.x = point.x+arrowHeight;
         } else if (arrowDirection == SFActionSheetArrowDirectionTop) {
-            finalFrame.size.width = CGRectGetWidth(_targetView.bounds);
-            finalFrame.size.height = CGRectGetHeight(_targetView.bounds)-point.y-arrowHeight;
+            finalFrame.size.width = CGRectGetWidth(_targetVC.view.bounds);
+            finalFrame.size.height = CGRectGetHeight(_targetVC.view.bounds)-point.y-arrowHeight;
             finalFrame.origin.y = point.y+arrowHeight;
         } else if (arrowDirection == SFActionSheetArrowDirectionBottom) {
-            finalFrame.size.width = CGRectGetWidth(_targetView.bounds);
+            finalFrame.size.width = CGRectGetWidth(_targetVC.view.bounds);
             finalFrame.size.height = point.y-arrowHeight;
         } else {
             @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Invalid arrow direction" userInfo:nil];
@@ -761,11 +613,11 @@ static BOOL disableCustomEasing = NO;
         finalFrame.size.height -= spacing*2.0f;
         finalFrame.size.width -= spacing*2.0f;
 
-        finalFrame = UIEdgeInsetsInsetRect(finalFrame, self.insets);
+        finalFrame = UIEdgeInsetsInsetRect(finalFrame, UIEdgeInsetsMake(20.0f, 0.0f, 0.0f, 0.0f));
 
         _scrollViewHost.backgroundColor = [UIColor clearColor];
 
-        [self layoutSheetForFrame:finalFrame fitToRect:NO initialSetUp:YES continuous:YES];
+        [self layoutSheetForFrame:finalFrame fitToRect:NO initialSetUp:YES];
 
         [self anchorSheetAtPoint:point withArrowDirection:arrowDirection availableFrame:finalFrame];
     };
@@ -778,8 +630,7 @@ static BOOL disableCustomEasing = NO;
         [UIView animateWithDuration:0.3 animations:changes completion:^(BOOL finished) {
             completion();
         }];
-    }
-    else {
+    } else {
         changes();
         completion();
     }
@@ -806,20 +657,17 @@ static BOOL disableCustomEasing = NO;
         arrowFrame.origin.y = point.y-arrrowBaseWidth/2.0f;
 
         finalFrame.origin.x = point.x-CGRectGetWidth(finalFrame)-arrowHeight;
-    }
-    else if (arrowDirection == SFActionSheetArrowDirectionLeft) {
+    } else if (arrowDirection == SFActionSheetArrowDirectionLeft) {
         arrowFrame.origin.x = point.x;
         arrowFrame.origin.y = point.y-arrrowBaseWidth/2.0f;
 
         finalFrame.origin.x = point.x+arrowHeight;
-    }
-    else if (arrowDirection == SFActionSheetArrowDirectionTop) {
+    } else if (arrowDirection == SFActionSheetArrowDirectionTop) {
         arrowFrame.origin.x = point.x-arrrowBaseWidth/2.0f;
         arrowFrame.origin.y = point.y + kSpacing;
 
         finalFrame.origin.y = point.y+arrowHeight + kSpacing;
-    }
-    else if (arrowDirection == SFActionSheetArrowDirectionBottom) {
+    } else if (arrowDirection == SFActionSheetArrowDirectionBottom) {
         arrowFrame.origin.x = point.x-arrrowBaseWidth/2.0f;
         arrowFrame.origin.y = point.y-arrowHeight - kSpacing;
 
@@ -828,8 +676,7 @@ static BOOL disableCustomEasing = NO;
 
     if (leftOrRight) {
         finalFrame.origin.y = MIN(MAX(CGRectGetMaxY(frame)-CGRectGetHeight(finalFrame), CGRectGetMaxY(arrowFrame)-CGRectGetHeight(finalFrame)+kHostsCornerRadius), MIN(MAX(CGRectGetMinY(frame), point.y-CGRectGetHeight(finalFrame)/2.0f), CGRectGetMinY(arrowFrame)-kHostsCornerRadius));
-    }
-    else {
+    } else {
         finalFrame.origin.x = MIN(MAX(MIN(CGRectGetMinX(frame), CGRectGetMinX(arrowFrame)-kHostsCornerRadius), point.x-CGRectGetWidth(finalFrame)/2.0f), MAX(CGRectGetMaxX(frame)-CGRectGetWidth(finalFrame), CGRectGetMaxX(arrowFrame)+kHostsCornerRadius-CGRectGetWidth(finalFrame)));
     }
 
@@ -840,7 +687,7 @@ static BOOL disableCustomEasing = NO;
 
     [_arrowView setFrame:arrowFrame arrowDirection:arrowDirection];
 
-    if (!CGRectContainsRect(_targetView.bounds, finalFrame) || !CGRectContainsRect(_targetView.bounds, arrowFrame)) {
+    if (!CGRectContainsRect(_targetVC.view.bounds, finalFrame) || !CGRectContainsRect(_targetVC.view.bounds, arrowFrame)) {
         NSLog(@"WARNING: Action sheet does not fit view bounds!");
     }
 
@@ -856,8 +703,6 @@ static BOOL disableCustomEasing = NO;
     void (^completion)(void) = ^{
         [_arrowView removeFromSuperview];
         _arrowView = nil;
-
-        _targetView = nil;
 
         [self removeFromSuperview];
 
@@ -885,14 +730,16 @@ static BOOL disableCustomEasing = NO;
         } completion:^(BOOL finished) {
             completion();
         }];
-    }
-    else {
+    } else {
         [self layoutForVisible:NO];
 
         completion();
     }
 }
 
+- (UIView *)topWindow {
+    return [SeafAppDelegate topViewController].view.window;
+}
 
 /*
 // Only override drawRect: if you perform custom drawing.

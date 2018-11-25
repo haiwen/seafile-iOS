@@ -197,7 +197,7 @@
         usernameTextField.placeholder = NSLocalizedString(@"Email or Username", @"Seafile");
         passwordTextField.placeholder = NSLocalizedString(@"Password", @"Seafile");
     } else {
-        self.title = NSLocalizedString(@"Shibboleth Login", @"Seafile");
+        self.title = NSLocalizedString(@"Single Sign On", @"Seafile");
         self.loginBtnTopConstraint.constant = 44;
         [usernameTextField removeFromSuperview];
         [passwordTextField removeFromSuperview];
