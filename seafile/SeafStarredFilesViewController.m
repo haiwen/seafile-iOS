@@ -348,18 +348,9 @@
     [self showSheetWithTitles:titles andFromView:cell];
 }
 
-- (void)showSheetWithTitles:(NSArray*)titles andFromView:(id)view
-{
-    SeafActionSheetSection *section = [SeafActionSheetSection sectionWithTitle:nil message:nil buttonTitles:titles buttonStyle:SFActionSheetButtonStyleDefault];
-    NSArray *sections;
-    if (IsIpad()) {
-        sections = @[section];
-    }else{
-        sections = @[section,[SeafActionSheetSection cancelSection]];
-    }
-
-    SeafActionSheet *actionSheet = [SeafActionSheet actionSheetWithSections:sections];
-    actionSheet.insets = UIEdgeInsetsMake(20.0f, 0.0f, 0.0f, 0.0f);
+- (void)showSheetWithTitles:(NSArray*)titles andFromView:(id)view {
+    SeafActionSheet *actionSheet = [SeafActionSheet actionSheetWithTitles:titles];
+    actionSheet.targetVC = self;
 
     [actionSheet setButtonPressedBlock:^(SeafActionSheet *actionSheet, NSIndexPath *indexPath){
         [actionSheet dismissAnimated:YES];
@@ -367,28 +358,8 @@
             [self cellMoreAction];
         }
     }];
-
-    if (IsIpad()) {
-        [actionSheet setOutsidePressBlock:^(SeafActionSheet *sheet) {
-            [sheet dismissAnimated:YES];
-        }];
-        CGPoint point = CGPointZero;
-
-        if ([view isKindOfClass:[SeafCell class]]) {
-            SeafCell *cell = (SeafCell*)view;
-            point = (CGPoint){CGRectGetMidX(cell.moreButton.frame), CGRectGetMaxY(cell.moreButton.frame)};
-            point = [self.navigationController.view convertPoint:point fromView:cell];
-        } else if ([view isKindOfClass:[UIBarButtonItem class]]) {
-            UIBarButtonItem *item = (UIBarButtonItem*)view;
-            UIView *itemView = [item valueForKey:@"view"];
-            point = (CGPoint){CGRectGetMidX(itemView.frame), CGRectGetMaxY(itemView.frame) + itemView.frame.size.height};
-        }
-
-        [actionSheet showFromPoint:point inView:self.navigationController.view arrowDirection:SFActionSheetArrowDirectionTop animated:YES];
-    } else {
-        UIView *topView = [[[UIApplication sharedApplication] keyWindow].subviews firstObject];
-        [actionSheet showInView:topView animated:YES];
-    }
+    
+    [actionSheet showFromView:view];
 }
 
 -(void)cellMoreAction{
