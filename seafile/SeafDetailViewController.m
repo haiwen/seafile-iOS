@@ -22,6 +22,7 @@
 #import "ExtentedString.h"
 #import "Debug.h"
 #import "SeafWechatHelper.h"
+#import "SeafActionsManager.h"
 
 
 enum SHARE_STATUS {
@@ -514,17 +515,8 @@ enum SHARE_STATUS {
 {
     if (![self.preViewItem isKindOfClass:[SeafFile class]]) return;
     SeafFile *file = (SeafFile *)self.preViewItem;
-    NSURL *fileURL = file.exportURL;
-    UIActivityViewController *controller = [[UIActivityViewController alloc] initWithActivityItems:@[fileURL] applicationActivities:nil];
-    Debug("Export file %@", fileURL);
-    controller.completionWithItemsHandler = ^(UIActivityType __nullable activityType, BOOL completed, NSArray * __nullable returnedItems, NSError * __nullable activityError) {
-        Debug("activityType=%@ completed=%d, returnedItems=%@, activityError=%@", activityType, completed, returnedItems, activityError);
-        if ([UIActivityTypeSaveToCameraRoll isEqualToString:activityType]) {
-            [self savedToPhotoAlbumWithError:activityError file:file];
-        }
-    };
-    controller.popoverPresentationController.barButtonItem = self.exportItem;
-    [self presentViewController:controller animated:true completion:nil];
+    NSArray *array = @[file.exportURL];
+    [SeafActionsManager exportByActivityView:array item:self.exportItem targerVC:self];
 }
 
 - (IBAction)share:(id)sender

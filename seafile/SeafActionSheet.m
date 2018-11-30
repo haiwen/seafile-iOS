@@ -554,7 +554,7 @@ static BOOL disableCustomEasing = NO;
     }
 }
 
-- (void)showFromView:(UIView *)view {
+- (void)showFromView:(id)view {
     if (iPad) {
         CGPoint point = CGPointZero;
         

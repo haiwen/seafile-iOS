@@ -21,6 +21,7 @@
 #import "SVProgressHUD.h"
 #import "Utils.h"
 #import "Debug.h"
+#import "SeafActionsManager.h"
 
 @interface SeafStarredFilesViewController ()<SWTableViewCellDelegate>
 @property NSMutableArray *starredFiles;
