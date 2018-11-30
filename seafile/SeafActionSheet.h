@@ -79,7 +79,7 @@ typedef NS_ENUM(NSUInteger, SFActionSheetArrowDirection) {
 /**
  Show from view.
  */
-- (void)showFromView:(UIView *)view;
+- (void)showFromView:(id)view;
 
 /**
  Dismisses the action sheet.

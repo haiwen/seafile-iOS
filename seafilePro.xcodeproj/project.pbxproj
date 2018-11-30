@@ -186,6 +186,10 @@
 		D9BE2094AD9B16A02584A3C2 /* libPods-seafileApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B3D78ABE0B0673E422054A82 /* libPods-seafileApp.a */; };
 		DE940CA1A2BA2DD43C20EA2C /* libPods-SeafFileProviderUI.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 15EFA735E2957F22E301E23A /* libPods-SeafFileProviderUI.a */; };
 		E0FED1E93CBE02FB9B335ADB /* libPods-SeafFileProvider.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3583928919818364B46034EA /* libPods-SeafFileProvider.a */; };
+		F515E4B621AC3DBB00A62F64 /* SeafActionsManager.m in Sources */ = {isa = PBXBuildFile; fileRef = F515E4B521AC3DBB00A62F64 /* SeafActionsManager.m */; };
+		F515E4C921B028D300A62F64 /* toolbar_copy@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F515E4C721B028D300A62F64 /* toolbar_copy@2x.png */; };
+		F515E4CA21B028D300A62F64 /* toolbar_copy@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = F515E4C821B028D300A62F64 /* toolbar_copy@3x.png */; };
+		F515E4CC21B028FF00A62F64 /* toolbar_copy.png in Resources */ = {isa = PBXBuildFile; fileRef = F515E4CB21B028FF00A62F64 /* toolbar_copy.png */; };
 		F53690381F13B5F90050D788 /* more_dot.png in Resources */ = {isa = PBXBuildFile; fileRef = F53690371F13B5F90050D788 /* more_dot.png */; };
 		F536DA191F30DB6F00F2EF3F /* SeafSyncInfoCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F536DA171F30DB6F00F2EF3F /* SeafSyncInfoCell.m */; };
 		F536DA1A1F30DB6F00F2EF3F /* SeafSyncInfoCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F536DA181F30DB6F00F2EF3F /* SeafSyncInfoCell.xib */; };
@@ -525,6 +529,11 @@
 		DBDEFA043CD6CF7650726549 /* Pods-seafileApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-seafileApp.debug.xcconfig"; path = "Pods/Target Support Files/Pods-seafileApp/Pods-seafileApp.debug.xcconfig"; sourceTree = "<group>"; };
 		E4F46F57187B44B200B80C36 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
 		EE1E1FA7502D3F04292B11CB /* Pods-SeafAction.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafAction.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SeafAction/Pods-SeafAction.debug.xcconfig"; sourceTree = "<group>"; };
+		F515E4B421AC3DBB00A62F64 /* SeafActionsManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafActionsManager.h; sourceTree = "<group>"; };
+		F515E4B521AC3DBB00A62F64 /* SeafActionsManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafActionsManager.m; sourceTree = "<group>"; };
+		F515E4C721B028D300A62F64 /* toolbar_copy@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "toolbar_copy@2x.png"; sourceTree = "<group>"; };
+		F515E4C821B028D300A62F64 /* toolbar_copy@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "toolbar_copy@3x.png"; sourceTree = "<group>"; };
+		F515E4CB21B028FF00A62F64 /* toolbar_copy.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = toolbar_copy.png; sourceTree = "<group>"; };
 		F53690371F13B5F90050D788 /* more_dot.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = more_dot.png; sourceTree = "<group>"; };
 		F536DA161F30DB6F00F2EF3F /* SeafSyncInfoCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafSyncInfoCell.h; sourceTree = "<group>"; };
 		F536DA171F30DB6F00F2EF3F /* SeafSyncInfoCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafSyncInfoCell.m; sourceTree = "<group>"; };
@@ -735,6 +744,9 @@
 				F571850C1F0742FE00543F42 /* more_dot@3x.png */,
 				F571850D1F0742FE00543F42 /* more_dot@2x.png */,
 				F53690371F13B5F90050D788 /* more_dot.png */,
+				F515E4CB21B028FF00A62F64 /* toolbar_copy.png */,
+				F515E4C721B028D300A62F64 /* toolbar_copy@2x.png */,
+				F515E4C821B028D300A62F64 /* toolbar_copy@3x.png */,
 			);
 			path = images;
 			sourceTree = "<group>";
@@ -792,6 +804,8 @@
 				F5ADEA022081B69C00FB6451 /* SeafMkLibAlertController.m */,
 				F5EAAE91218419120068BFE3 /* SeafPrivacyPolicyViewController.h */,
 				F5EAAE92218419120068BFE3 /* SeafPrivacyPolicyViewController.m */,
+				F515E4B421AC3DBB00A62F64 /* SeafActionsManager.h */,
+				F515E4B521AC3DBB00A62F64 /* SeafActionsManager.m */,
 			);
 			name = views;
 			sourceTree = "<group>";
@@ -1271,6 +1285,8 @@
 				573C3C651A15104B009675F9 /* seafile.entitlements in Resources */,
 				57CD9B861B5121CC00D1CC6B /* delete@2x.png in Resources */,
 				57943C0619F027D5008423E5 /* close@2x.png in Resources */,
+				F515E4C921B028D300A62F64 /* toolbar_copy@2x.png in Resources */,
+				F515E4CA21B028D300A62F64 /* toolbar_copy@3x.png in Resources */,
 				57C03F4A17FB271100F7B575 /* share2.png in Resources */,
 				574DF02C1AF2863E0044FE06 /* SeafShibbolethViewController.xib in Resources */,
 				57CD9B851B5121CC00D1CC6B /* delete2.png in Resources */,
@@ -1314,6 +1330,7 @@
 				F575168B1EF4CA0B00BD633B /* arrowmore@2x.png in Resources */,
 				F53690381F13B5F90050D788 /* more_dot.png in Resources */,
 				F571850E1F0742FE00543F42 /* more_dot@3x.png in Resources */,
+				F515E4CC21B028FF00A62F64 /* toolbar_copy.png in Resources */,
 				57943C0119F027D5008423E5 /* arrowleft2@2x.png in Resources */,
 				57943BFE19F027D5008423E5 /* addmsg@2x.png in Resources */,
 				57A95E5B18369147009D268A /* close2.png in Resources */,
@@ -1666,6 +1683,7 @@
 				571D8CD41677881400F1A22C /* SeafStarredFilesViewController.m in Sources */,
 				58D40A6E1E9AF7A400A68BEF /* seafile.xcdatamodeld in Sources */,
 				F568C1FB1EF10F8900F1035D /* SeafActionSheet.m in Sources */,
+				F515E4B621AC3DBB00A62F64 /* SeafActionsManager.m in Sources */,
 				570DFAC716A15D0100ADD5F2 /* SeafAccountViewController.m in Sources */,
 				F5CBCDC01F2C2F1500E8C35B /* SeafSyncInfoViewController.m in Sources */,
 				577B6C6616AADBA3008E82C2 /* SeafCell.m in Sources */,

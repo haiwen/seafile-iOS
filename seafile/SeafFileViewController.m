@@ -34,6 +34,7 @@
 #import <WechatOpenSDK/WXApi.h>
 #import "SeafWechatHelper.h"
 #import "SeafMkLibAlertController.h"
+#import "SeafActionsManager.h"
 
 enum {
     STATE_INIT = 0,
@@ -48,7 +49,8 @@ enum {
     STATE_SHARE_EMAIL,
     STATE_SHARE_LINK,
     STATE_SHARE_SHARE_WECHAT,
-    STATE_MKLIB
+    STATE_MKLIB,
+    STATE_EXPORT
 };
 
 
@@ -118,22 +120,21 @@ enum {
 - (NSArray *)editToolItems
 {
     if (!_editToolItems) {
-        int i;
         UIBarButtonItem *flexibleFpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:self action:nil];
-        UIBarButtonItem *fixedSpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:self action:nil];
 
-        NSArray *itemsTitles = [NSArray arrayWithObjects:S_MKDIR, S_NEWFILE, NSLocalizedString(@"Copy", @"Seafile"), NSLocalizedString(@"Move", @"Seafile"), S_DELETE, NSLocalizedString(@"PasteTo", @"Seafile"), NSLocalizedString(@"MoveTo", @"Seafile"), STR_CANCEL, nil ];
-
-        UIBarButtonItem *items[EDITOP_NUM];
-        items[0] = flexibleFpaceItem;
-
-        fixedSpaceItem.width = 38.0f;
-        for (i = 1; i < itemsTitles.count + 1; ++i) {
-            items[i] = [[UIBarButtonItem alloc] initWithTitle:[itemsTitles objectAtIndex:i-1] style:UIBarButtonItemStylePlain target:self action:@selector(editOperation:)];
-            items[i].tag = i;
-        }
-
-        _editToolItems = [NSArray arrayWithObjects:items[EDITOP_COPY], items[EDITOP_MOVE], items[EDITOP_SPACE], items[EDITOP_DELETE], nil ];
+        UIBarButtonItem *exportItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAction target:self action:@selector(editOperation:)];
+        exportItem.tag = EDITOP_EXPORT;
+        
+        UIBarButtonItem *copyItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"toolbar_copy"] style:UIBarButtonItemStylePlain target:self action:@selector(editOperation:)];
+        copyItem.tag = EDITOP_COPY;
+        
+        UIBarButtonItem *moveItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemOrganize target:self action:@selector(editOperation:)];
+        moveItem.tag = EDITOP_MOVE;
+        
+        UIBarButtonItem *deleteItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemTrash target:self action:@selector(editOperation:)];
+        deleteItem.tag = EDITOP_CANCEL;
+        
+        _editToolItems = [NSArray arrayWithObjects:exportItem, flexibleFpaceItem, copyItem, flexibleFpaceItem, moveItem, flexibleFpaceItem, deleteItem, nil];
     }
     return _editToolItems;
 }
@@ -238,16 +239,31 @@ enum {
 {
     if (none) {
         self.navigationItem.leftBarButtonItem = _selectAllItem;
-        NSArray *items = self.toolbarItems;
-        [[items objectAtIndex:0] setEnabled:NO];
-        [[items objectAtIndex:1] setEnabled:NO];
-        [[items objectAtIndex:3] setEnabled:NO];
+        for (UIBarButtonItem *item in self.toolbarItems) {
+            [item setEnabled:NO];
+        }
     } else {
         self.navigationItem.leftBarButtonItem = _selectNoneItem;
-        NSArray *items = self.toolbarItems;
-        [[items objectAtIndex:0] setEnabled:YES];
-        [[items objectAtIndex:1] setEnabled:YES];
-        [[items objectAtIndex:3] setEnabled:YES];
+        for (UIBarButtonItem *item in self.toolbarItems) {
+            [item setEnabled:YES];
+        }
+    }
+}
+
+- (void)updateExportBarItem {
+    NSArray *idxs = [self.tableView indexPathsForSelectedRows];
+    UIBarButtonItem *item = self.toolbarItems.firstObject;
+    if (idxs.count > 9) {
+        [item setEnabled:NO];
+        return;
+    }
+    for (NSIndexPath *indexPath in idxs) {
+        id entry = [self getDentrybyIndexPath:indexPath tableView:self.tableView];
+        if ([entry isKindOfClass:[SeafDir class]] || [entry isKindOfClass:[SeafUploadFile class]]) {
+            
+            [item setEnabled:NO];
+            break;
+        }
     }
 }
 
@@ -366,6 +382,7 @@ enum {
             [self.tableView selectRowAtIndexPath:indexPath animated:YES scrollPosition:UITableViewScrollPositionNone];
     }
     [self noneSelected:NO];
+    [self updateExportBarItem];
 }
 
 - (void)selectNone:(id)sender
@@ -431,19 +448,12 @@ enum {
     }
 }
 
-- (void)editSheet:(id)sender
-{
-    NSMutableArray *titles = nil;
-    if ([_directory isKindOfClass:[SeafRepos class]]) {
-        titles = [NSMutableArray arrayWithObjects:S_MKLIB,S_SORT_NAME, S_SORT_MTIME, nil];
-    } else if (_directory.editable) {
-        titles = [NSMutableArray arrayWithObjects:S_EDIT, S_NEWFILE, S_MKDIR, S_SORT_NAME, S_SORT_MTIME, S_PHOTOS_ALBUM, nil];
-        if (self.photos.count >= 3) [titles addObject:S_PHOTOS_BROWSER];
-    } else {
-        titles = [NSMutableArray arrayWithObjects:S_SORT_NAME, S_SORT_MTIME, S_PHOTOS_ALBUM, nil];
-        if (self.photos.count >= 3) [titles addObject:S_PHOTOS_BROWSER];
-    }
-    [self showSheetWithTitles:titles andFromView:self.editItem];
+- (void)editSheet:(id)sender {
+    @weakify(self);
+    [SeafActionsManager directoryAction:self.directory photos:self.photos inTargetVC:self fromItem:self.editItem actionBlock:^(NSString *typeTile) {
+        @strongify(self);
+        [self handleAction:typeTile];
+    }];
 }
 
 - (void)initNavigationItems:(SeafDir *)directory
@@ -574,53 +584,15 @@ enum {
 }
 
 #pragma mark - Sheet
-- (void)showActionSheetWithIndexPath:(NSIndexPath *)indexPath
-{
+- (void)showActionSheetWithIndexPath:(NSIndexPath *)indexPath {
     _selectedindex = indexPath;
     id entry = [self getDentrybyIndexPath:indexPath tableView:self.tableView];
     SeafCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
-    NSArray *titles;
-    if ([entry isKindOfClass:[SeafRepo class]]) {
-        SeafRepo *repo = (SeafRepo *)entry;
-        if (repo.encrypted) {
-            titles = [NSArray arrayWithObjects:S_DOWNLOAD, S_RESET_PASSWORD, nil];
-        } else {
-            titles = [NSArray arrayWithObjects:S_DOWNLOAD, nil];
-        }
-    } else if ([entry isKindOfClass:[SeafDir class]]) {
-        titles = [NSArray arrayWithObjects:S_DOWNLOAD, S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
-    } else if ([entry isKindOfClass:[SeafFile class]]) {
-        SeafFile *file = (SeafFile *)entry;
-        NSString *star = file.isStarred ? S_UNSTAR : S_STAR;
-        NSMutableArray *tTitles = [NSMutableArray array];
-        if (file.mpath)
-            tTitles = [NSMutableArray arrayWithObjects:star, S_DELETE, S_UPLOAD, S_SHARE_EMAIL, S_SHARE_LINK, nil];
-        else
-            tTitles = [NSMutableArray arrayWithObjects:star, S_DELETE, S_REDOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
-
-        if ([SeafWechatHelper wechatInstalled]) {
-            [tTitles addObject:S_SHARE_TO_WECHAT];
-        }
-        titles = [tTitles copy];
-    } else if ([entry isKindOfClass:[SeafUploadFile class]]) {
-        titles = [NSArray arrayWithObjects:S_DOWNLOAD, S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
-    }
-
-    [self showSheetWithTitles:titles andFromView:cell];
-}
-
-- (void)showSheetWithTitles:(NSArray*)titles andFromView:(id)view {
-    SeafActionSheet *actionSheet = [SeafActionSheet actionSheetWithTitles:titles];
-    actionSheet.targetVC = self;
-
-    [actionSheet setButtonPressedBlock:^(SeafActionSheet *actionSheet, NSIndexPath *indexPath){
-        [actionSheet dismissAnimated:YES];
-        if (indexPath.section == 0) {
-            [self handleAction:titles[indexPath.row]];
-        }
+    @weakify(self);
+    [SeafActionsManager entryAction:entry inTargetVC:self fromView:cell actionBlock:^(NSString *typeTile) {
+        @strongify(self);
+        [self handleAction:typeTile];
     }];
-
-    [actionSheet showFromView:view];
 }
 
 - (UITableViewCell *)getSeafUploadFileCell:(SeafUploadFile *)file forTableView:(UITableView *)tableView
@@ -941,7 +913,9 @@ enum {
     if (self.navigationController.topViewController != self)   return;
     _selectedindex = indexPath;
     if (tableView.editing == YES) {
-        return [self noneSelected:NO];
+        [self noneSelected:NO];
+        [self updateExportBarItem];
+        return;
     }
     _curEntry = [self getDentrybyIndexPath:indexPath tableView:tableView];
     Debug("Select %@", [_curEntry name]);
@@ -992,8 +966,12 @@ enum {
 - (void)tableView:(UITableView *)tableView didDeselectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if (tableView.editing == YES) {
-        if (![tableView indexPathsForSelectedRows])
+        if (![tableView indexPathsForSelectedRows]) {
             [self noneSelected:YES];
+        } else {
+            [self noneSelected:NO];
+            [self updateExportBarItem];
+        }
     }
 }
 
@@ -1071,7 +1049,9 @@ enum {
 
 - (void)download:(SeafBase *)entry complete:(BOOL)updated
 {
-    [SVProgressHUD dismiss];
+    if (self.state != STATE_EXPORT) {
+        [SVProgressHUD dismiss];
+    }
     if ([entry isKindOfClass:[SeafFile class]]) {
         SeafFile *file = (SeafFile *)entry;
         [self updateEntryCell:file];
@@ -1101,7 +1081,9 @@ enum {
 - (void)download:(SeafBase *)entry failed:(NSError *)error
 {
     if ([entry isKindOfClass:[SeafFile class]]) {
-        [SVProgressHUD dismiss];
+        if (self.state != STATE_EXPORT) {
+            [SVProgressHUD dismiss];
+        }
         SeafFile *file = (SeafFile *)entry;
         [self updateEntryCell:file];
         [self.detailViewController download:entry failed:error];
@@ -1199,9 +1181,69 @@ enum {
             [SVProgressHUD showWithStatus:NSLocalizedString(@"Deleting files ...", @"Seafile")];
             break;
         }
+        case EDITOP_EXPORT: {
+            [self exportSelected];
+        }
         default:
             break;
     }
+}
+
+- (void)exportSelected {
+    NSArray *idxs = [self.tableView indexPathsForSelectedRows];
+    if (!idxs) return;
+    NSMutableArray *entries = [[NSMutableArray alloc] init];
+    for (NSIndexPath *indexPath in idxs) {
+        id entry = [self getDentrybyIndexPath:indexPath tableView:self.tableView];
+        [entries addObject:entry];
+    }
+    self.state = STATE_EXPORT;
+    [self editDone:nil];
+    [self downloadEntries:entries completion:^(BOOL result, NSArray *array) {
+         self.state = STATE_INIT;
+        if (result) {
+            [SeafActionsManager exportByActivityView:array item:self.toolbarItems.firstObject targerVC:self];
+        }
+    }];
+}
+
+- (void)downloadEntries:(NSArray *)entries completion:(DownloadCompleteBlock)block {
+    NSMutableArray *urls = [NSMutableArray array];
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_group_t group = dispatch_group_create();
+    [SVProgressHUD show];
+    for (id entry in entries) {
+        dispatch_group_enter(group);
+        dispatch_barrier_async(queue, ^{
+            SeafFile *file = (SeafFile *)entry;
+            [file loadCache];
+            NSURL *exportURL = file.exportURL;
+            if (!exportURL) {
+                [SeafDataTaskManager.sharedObject addFileDownloadTask:file];
+                Debug("Download file %@", file.path);
+                [file setFileDownloadedBlock:^(SeafFile * _Nonnull file, NSError * _Nullable error) {
+                    if (error) {
+                        Warning("Failed to donwload file %@: %@", file.path, error);
+                        [NSString stringWithFormat:NSLocalizedString(@"Failed to download file '%@'", @"Seafile"), file.previewItemTitle];
+                        block(NO, nil);
+                    } else {
+                        [urls addObject:file.exportURL];
+                    }
+                    [file setFileDownloadedBlock:nil];
+                    dispatch_group_leave(group);
+                }];
+            } else {
+                [urls addObject:file.exportURL];
+                dispatch_group_leave(group);
+            }
+        });
+    }
+    dispatch_group_notify(group, queue, ^{
+        block(YES, urls);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [SVProgressHUD dismiss];
+        });
+    });
 }
 
 - (void)deleteFile:(SeafFile *)file
