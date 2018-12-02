@@ -189,26 +189,20 @@ enum {
     self.tableView.estimatedRowHeight = 55;
     self.state = STATE_INIT;
 
-    self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectZero];
-    Debug("repoId:%@, %@, path:%@, loading ... cached:%d %@\n", _directory.repoId, _directory.name, _directory.path, _directory.hasCache, _directory.ooid);
-    self.searchBar.delegate = self;
-    self.searchBar.barTintColor = [UIColor colorWithRed:240/255.0 green:239/255.0 blue:246/255.0 alpha:1.0];
-    [self.searchBar sizeToFit];
-    UIImageView *barImageView = [[[self.searchBar.subviews firstObject] subviews] firstObject];
-    barImageView.layer.borderColor = [UIColor colorWithRed:240/255.0 green:239/255.0 blue:246/255.0 alpha:1.0].CGColor;
-    barImageView.layer.borderWidth = 1;
-
     self.strongSearchDisplayController = [[UISearchDisplayController alloc] initWithSearchBar:self.searchBar contentsController:self];
     self.searchDisplayController.searchResultsDataSource = self;
     self.searchDisplayController.searchResultsDelegate = self;
     self.searchDisplayController.delegate = self;
     self.searchDisplayController.searchResultsTableView.estimatedRowHeight = 50.0;
     self.searchDisplayController.searchResultsTableView.sectionHeaderHeight = 0;
+    if (@available(iOS 11.0, *)) {
+        self.searchDisplayController.searchResultsTableView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
+    }
 
     UIView *bView = [[UIView alloc] initWithFrame:self.tableView.frame];
     bView.backgroundColor = [UIColor whiteColor];
     self.tableView.backgroundView = bView;
-
+    
     self.tableView.tableHeaderView = self.searchBar;
     self.tableView.tableFooterView = [UIView new];
     self.tableView.allowsMultipleSelection = NO;
@@ -1947,6 +1941,20 @@ enum {
         [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Failed to find %@", @"Seafile"), path]];
     }
     return FALSE;
+}
+
+- (UISearchBar *)searchBar {
+    if (!_searchBar) {
+        _searchBar = [[UISearchBar alloc] initWithFrame:CGRectZero];
+        Debug("repoId:%@, %@, path:%@, loading ... cached:%d %@\n", _directory.repoId, _directory.name, _directory.path, _directory.hasCache, _directory.ooid);
+        _searchBar.delegate = self;
+        _searchBar.barTintColor = [UIColor colorWithRed:240/255.0 green:239/255.0 blue:246/255.0 alpha:1.0];
+        [_searchBar sizeToFit];
+        UIImageView *barImageView = [[[_searchBar.subviews firstObject] subviews] firstObject];
+        barImageView.layer.borderColor = [UIColor colorWithRed:240/255.0 green:239/255.0 blue:246/255.0 alpha:1.0].CGColor;
+        barImageView.layer.borderWidth = 1;
+    }
+    return _searchBar;
 }
 
 @end
