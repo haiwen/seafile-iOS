@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-typedef void(^DownloadCompleteBlock)(BOOL result, NSArray *array);
+typedef void(^DownloadCompleteBlock)(NSArray *array, NSString *errorStr);
 
 @class SeafDetailViewController;
 

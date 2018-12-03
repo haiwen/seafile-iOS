@@ -233,14 +233,15 @@ enum {
 {
     if (none) {
         self.navigationItem.leftBarButtonItem = _selectAllItem;
-        for (UIBarButtonItem *item in self.toolbarItems) {
-            [item setEnabled:NO];
-        }
     } else {
         self.navigationItem.leftBarButtonItem = _selectNoneItem;
-        for (UIBarButtonItem *item in self.toolbarItems) {
-            [item setEnabled:YES];
-        }
+    }
+    [self setToolBarItemsEnabled:!none];
+}
+
+- (void)setToolBarItemsEnabled:(BOOL)enabled {
+    for (UIBarButtonItem *item in self.toolbarItems) {
+        [item setEnabled:enabled];
     }
 }
 
@@ -1193,9 +1194,13 @@ enum {
     }
     self.state = STATE_EXPORT;
     [self editDone:nil];
-    [self downloadEntries:entries completion:^(BOOL result, NSArray *array) {
-         self.state = STATE_INIT;
-        if (result) {
+    @weakify(self);
+    [self downloadEntries:entries completion:^(NSArray *array, NSString *errorStr) {
+        @strongify(self);
+        self.state = STATE_INIT;
+        if (errorStr) {
+            [SVProgressHUD showErrorWithStatus:errorStr];
+        } else {
             [SeafActionsManager exportByActivityView:array item:self.toolbarItems.firstObject targerVC:self];
         }
     }];
@@ -1218,13 +1223,12 @@ enum {
                 [file setFileDownloadedBlock:^(SeafFile * _Nonnull file, NSError * _Nullable error) {
                     if (error) {
                         Warning("Failed to donwload file %@: %@", file.path, error);
-                        [NSString stringWithFormat:NSLocalizedString(@"Failed to download file '%@'", @"Seafile"), file.previewItemTitle];
-                        block(NO, nil);
+                        block(nil, [NSString stringWithFormat:NSLocalizedString(@"Failed to download file '%@'", @"Seafile"), file.previewItemTitle]);
                     } else {
                         [urls addObject:file.exportURL];
+                        dispatch_group_leave(group);
                     }
                     [file setFileDownloadedBlock:nil];
-                    dispatch_group_leave(group);
                 }];
             } else {
                 [urls addObject:file.exportURL];
@@ -1233,7 +1237,7 @@ enum {
         });
     }
     dispatch_group_notify(group, queue, ^{
-        block(YES, urls);
+        block(urls, nil);
         dispatch_async(dispatch_get_main_queue(), ^{
             [SVProgressHUD dismiss];
         });
