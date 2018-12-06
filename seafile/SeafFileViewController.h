@@ -23,6 +23,8 @@ typedef void(^DownloadCompleteBlock)(NSArray *array, NSString *errorStr);
 
 @property (strong, nonatomic) SeafConnection *connection;
 
+@property (strong, nonatomic) SeafDir *directory;
+
 @property (strong, readonly) SeafDetailViewController *detailViewController;
 
 - (void)refreshView;
