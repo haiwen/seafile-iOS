@@ -75,9 +75,12 @@
     [Utils alertWithTitle:title message:message yes:yes no:no from:self];
 }
 
-- (void)popupInputView:(NSString *)title placeholder:(NSString *)tip secure:(BOOL)secure handler:(void (^)(NSString *input))handler
-{
-    [Utils popupInputView:title placeholder:tip secure:secure handler:handler from:self];
+- (void)popupInputView:(NSString *)title placeholder:(NSString *)tip showText:(BOOL)showText secure:(BOOL)secure handler:(void (^)(NSString *input))handler {
+    [Utils popupInputView:title placeholder:tip showText:showText secure:secure handler:handler from:self];
+}
+
+- (void)popupInputView:(NSString *)title placeholder:(NSString *)tip secure:(BOOL)secure handler:(void (^)(NSString *input))handler {
+    [Utils popupInputView:title placeholder:tip showText:NO secure:secure handler:handler from:self];
 }
 
 - (void)popupTwoStepVerificationViewHandler:(void (^)(NSString *input,BOOL remember))handler {
