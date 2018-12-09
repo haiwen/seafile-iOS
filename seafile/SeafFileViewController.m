@@ -1846,7 +1846,6 @@ enum {
         _searchController = [[UISearchController alloc] initWithSearchResultsController:self.searchReslutController];
         _searchController.searchResultsUpdater = self.searchReslutController;
         _searchController.searchBar.barTintColor = [UIColor colorWithRed:240/255.0 green:239/255.0 blue:246/255.0 alpha:1.0];
-        _searchController.searchBar.delegate = self;
         [_searchController.searchBar sizeToFit];
         
         UIImageView *barImageView = [[[_searchController.searchBar.subviews firstObject] subviews] firstObject];

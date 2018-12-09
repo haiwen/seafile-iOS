@@ -57,6 +57,15 @@
     
 }
 
+- (void)viewWillLayoutSubviews {
+    [super viewWillLayoutSubviews];
+    if (IsIpad()) {
+        self.tableView.frame = CGRectMake(0, 0, self.presentingViewController.view.frame.size.width, self.view.window.frame.size.height);
+        self.stateLabel.frame = CGRectMake(0, 0, self.tableView.bounds.size.width, 50);
+        self.stateLabel.center = CGPointMake(self.tableView.center.x, self.tableView.center.y - 100);
+    }
+}
+
 - (void)updateSearchResultsForSearchController:(UISearchController *)searchController {
     searchController.searchBar.delegate = self;
     if (searchController.searchBar.text.length == 0) {
