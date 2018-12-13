@@ -21,7 +21,7 @@
 - (void)alertWithTitle:(NSString *)title message:(NSString*)message yes:(void (^)(void))yes no:(void (^)(void))no;
 
 - (void)popupInputView:(NSString *)title placeholder:(NSString *)tip secure:(BOOL)secure handler:(void (^)(NSString *input))handler;
-- (void)popupInputView:(NSString *)title placeholder:(NSString *)tip showText:(BOOL)showText secure:(BOOL)secure handler:(void (^)(NSString *input))handler;
+- (void)popupInputView:(NSString *)title placeholder:(NSString *)tip inputs:(NSString *)inputs secure:(BOOL)secure handler:(void (^)(NSString *input))handler;
 
 - (UIBarButtonItem *)getBarItem:(NSString *)imageName action:(SEL)action size:(float)size;
 

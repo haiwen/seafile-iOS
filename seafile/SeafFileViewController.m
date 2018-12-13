@@ -803,7 +803,7 @@ enum {
 - (void)popupRenameView:(NSString *)oldName
 {
     self.state = STATE_RENAME;
-    [self popupInputView:S_RENAME placeholder:oldName showText:true secure:false handler:^(NSString *input) {
+    [self popupInputView:S_RENAME placeholder:oldName inputs:oldName secure:false handler:^(NSString *input) {
         if ([input isEqualToString:oldName]) {
             return;
         }
