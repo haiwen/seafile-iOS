@@ -388,7 +388,7 @@
     });
 }
 
-+ (void)popupInputView:(NSString *)title placeholder:(NSString *)tip showText:(BOOL)showText secure:(BOOL)secure handler:(void (^)(NSString *input))handler from:(UIViewController *)c
++ (void)popupInputView:(NSString *)title placeholder:(NSString *)tip inputs:(NSString *)inputs secure:(BOOL)secure handler:(void (^)(NSString *input))handler from:(UIViewController *)c
 {
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleAlert];
     UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
@@ -400,8 +400,8 @@
     }];
     [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
         textField.placeholder = tip;
-        if (showText) {
-            textField.text = tip;
+        if (inputs) {
+            textField.text = inputs;
         }
         textField.autocorrectionType = UITextAutocorrectionTypeNo;
         textField.secureTextEntry = secure;
