@@ -100,9 +100,9 @@
 
 + (void)savedToPhotoAlbumWithError:(NSError *)error {
     if (!error) {
-        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Successfully saved", @"Seafile")];
+        [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Successfully saved", @"Seafile")];
     } else {
-        [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Save failed", @"Seafile")];
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Save failed", @"Seafile")];
     }
 }
 

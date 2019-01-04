@@ -121,16 +121,20 @@ enum {
         UIBarButtonItem *flexibleFpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:self action:nil];
 
         UIBarButtonItem *exportItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAction target:self action:@selector(editOperation:)];
+        exportItem.tintColor = BAR_COLOR;
         exportItem.tag = EDITOP_EXPORT;
         
         UIBarButtonItem *copyItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"toolbar_copy"] style:UIBarButtonItemStylePlain target:self action:@selector(editOperation:)];
+        copyItem.tintColor = BAR_COLOR;
         copyItem.tag = EDITOP_COPY;
         
-        UIBarButtonItem *moveItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemOrganize target:self action:@selector(editOperation:)];
+        UIBarButtonItem *moveItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"toolbar_move"] style:UIBarButtonItemStylePlain target:self action:@selector(editOperation:)];
+        moveItem.tintColor = BAR_COLOR;
         moveItem.tag = EDITOP_MOVE;
         
-        UIBarButtonItem *deleteItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemTrash target:self action:@selector(editOperation:)];
-        deleteItem.tag = EDITOP_CANCEL;
+        UIBarButtonItem *deleteItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"toolbar_delete"] style:UIBarButtonItemStylePlain  target:self action:@selector(editOperation:)];
+        deleteItem.tintColor = BAR_COLOR;
+        deleteItem.tag = EDITOP_DELETE;
         
         _editToolItems = [NSArray arrayWithObjects:exportItem, flexibleFpaceItem, copyItem, flexibleFpaceItem, moveItem, flexibleFpaceItem, deleteItem, nil];
     }
@@ -824,10 +828,17 @@ enum {
 {
     self.ufile = file;
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    UIViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:self.connection.rootFolder delegate:self chooseRepo:false];
+
+    SeafDirViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:self.connection.rootFolder delegate:self chooseRepo:false];
+    if (self.state == STATE_COPY) {
+        controller.operationState = OPERATION_STATE_COPY;
+    } else if (self.state == STATE_MOVE) {
+        controller.operationState = OPERATION_STATE_MOVE;
+    }
 
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
     [navController setModalPresentationStyle:UIModalPresentationFormSheet];
+    navController.navigationBar.tintColor = BAR_COLOR;
     [appdelegate.window.rootViewController presentViewController:navController animated:YES completion:nil];
     if (IsIpad()) {
         CGRect frame = navController.view.superview.frame;

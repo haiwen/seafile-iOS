@@ -75,9 +75,9 @@
     self.tableView.scrollEnabled = YES;
     UIBarButtonItem *flexibleFpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
     self.chooseItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"OK", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(chooseFolder:)];
+    self.chooseItem.tintColor = BAR_COLOR;
     NSArray *items = [NSArray arrayWithObjects:flexibleFpaceItem, self.chooseItem, flexibleFpaceItem, nil];
     [self setToolbarItems:items];
-    self.title = _directory.name;
 
     __weak typeof(self) weakSelf = self;
     [self.tableView addPullToRefresh:[SVArrowPullToRefreshView class] withActionHandler:^{
@@ -89,6 +89,17 @@
         weakSelf.directory.delegate = weakSelf;
         [weakSelf.directory loadContent:YES];
     }];
+}
+
+- (void)setOperationState:(OperationState)operationState {
+    _operationState = operationState;
+    if (_operationState == OPERATION_STATE_COPY) {
+        self.title = NSLocalizedString(@"Copy", @"Seafile");
+    } else if (_operationState == OPERATION_STATE_MOVE) {
+        self.title = NSLocalizedString(@"Move", @"Seafile");
+    } else {
+        self.title = _directory.name;
+    }
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -113,7 +124,7 @@
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
 {
-    return NSLocalizedString(@"Choose", @"Seafile");
+    return NSLocalizedString(@"Choose directory", @"Seafile");
 }
 
 - (NSArray *)subDirs
