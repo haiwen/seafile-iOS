@@ -180,7 +180,12 @@
 {
     SeafCacheObjV2 *obj = [self getCacheObj:key entityName:entity inAccount:account];
     if (obj) {
-        return obj.value;
+        @try {
+            return obj.value;
+        } @catch (NSException *exception) {
+            Warning("Failed to get value!");
+            return nil;
+        }
     }
     return nil;
 }
