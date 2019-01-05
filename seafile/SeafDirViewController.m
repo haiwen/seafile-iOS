@@ -215,14 +215,18 @@
         return [self popupSetRepoPassword:(SeafRepo *)curDir];
     }
     SeafDirViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:curDir dirChosen:_dirChoose cancel:_dirCancel chooseRepo:false];
+    controller.operationState = self.operationState;
     [self.navigationController pushViewController:controller animated:YES];
 }
 
 - (void)popupSetRepoPassword:(SeafRepo *)repo
 {
+    @weakify(self);
     [self popupSetRepoPassword:repo handler:^{
+        @strongify(self);
         [SVProgressHUD dismiss];
         SeafDirViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:repo dirChosen:_dirChoose cancel:_dirCancel chooseRepo:false];
+        controller.operationState = self.operationState;
         [self.navigationController pushViewController:controller animated:YES];
     }];
 }
