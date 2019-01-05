@@ -437,6 +437,7 @@ enum {
 - (void)popupRepoChoose:(SeafDirChoose)choose cancel:(SeafDirCancelChoose)cancel
 {
     SeafDirViewController *c = [[SeafDirViewController alloc] initWithSeafDir:self.connection.rootFolder dirChosen:choose cancel:cancel chooseRepo:true];
+    c.operationState = OPERATION_STATE_OTHER;
     [self.navigationController pushViewController:c animated:true];
 }
 
