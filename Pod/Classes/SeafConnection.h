@@ -83,10 +83,8 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 @property (readwrite, nonatomic, getter=isAutoSync) BOOL autoSync;
 @property (readwrite, nonatomic, getter=isVideoSync) BOOL videoSync;
 @property (readwrite, nonatomic, getter=isBackgroundSync) BOOL backgroundSync;
-@property (readwrite, nonatomic, getter=isContactsSync) BOOL contactsSync;
 
 @property (readwrite, nonatomic) NSString * _Nullable autoSyncRepo;
-@property (readwrite, nonatomic) NSString * _Nullable contactsRepo;
 
 @property (readwrite, nonatomic) BOOL autoClearRepoPasswd;
 @property (readwrite, nonatomic) BOOL localDecryptionEnabled;
@@ -182,10 +180,6 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 - (NSUInteger)photosInSyncing;
 - (void)checkSyncDst:(SeafDir *_Nonnull)dir;
 - (void)photosDidChange:(NSNotification *_Nullable)note;
-- (void)contactStoreDidChange:(NSNotification *_Nullable)notification;
-- (NSString * _Nullable)backupContacts:(BOOL)force completion:(CompletionBlock _Nullable)completionHandler;
-- (void)restoreContacts:(void(^ _Nullable)(BOOL success, NSError * _Nullable error))completionHandler;
-- (void)getContactsLastBackTime:(void(^ _Nullable)(BOOL success, NSString * _Nullable dateStr))completionHandler;
 
 - (void)saveRepo:(NSString * _Nonnull)repoId password:(NSString * _Nullable)password;
 - (void)saveRepo:(NSString *_Nonnull)repoId encInfo:(NSDictionary *_Nonnull)encInfo;
