@@ -5,7 +5,6 @@
 //  Created by Wang Wei on 10/11/12.
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
-@import Contacts;
 
 #import <AssertMacros.h>
 
@@ -30,10 +29,8 @@ enum {
 };
 
 #define CAMERA_UPLOADS_DIR @"Camera Uploads"
-#define CONTACTS_UPLOADS_DIR @"Contacts Backup"
 
 #define KEY_STARREDFILES @"STARREDFILES"
-#define KEY_CONTACTS @"CONTACTS"
 #define TAGDATA @"TagData"
 
 static SecTrustRef AFUTTrustWithCertificate(SecCertificateRef certificate) {
@@ -106,8 +103,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @property NSMutableArray<NSString *> *uploadingArray;
 @property SeafDir *syncDir;
 @property (readonly) NSString *localUploadDir;
-@property NSString *contactsLastBackTime;
-@property (readonly) BOOL inContactsSync;
 @property (readonly) id<SeafCacheProvider> cacheProvider;
 
 @property (readonly) NSString *platformVersion;
@@ -147,7 +142,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         self.policy = [self policyForHost:[self host]];
         _settings = [[NSMutableDictionary alloc] init];
         _inAutoSync = false;
-        _inContactsSync = false;
         _cacheProvider = cacheProvider;
         
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateKeyValuePairs:) name:NSUbiquitousKeyValueStoreDidChangeExternallyNotification object:[NSUbiquitousKeyValueStore defaultStore]];
@@ -320,11 +314,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return [[self getAttribute:@"backgroundSync"] booleanValue:true];
 }
 
-- (BOOL)isContactsSync
-{
-    return [[self getAttribute:@"contactsSync"] booleanValue:true];
-}
-
 - (BOOL)isFirstTimeSync
 {
     return [[self getAttribute:@"firstTimeSync"] booleanValue:false];
@@ -393,18 +382,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self setAttribute:[NSNumber numberWithBool:backgroundSync] forKey:@"backgroundSync"];
 }
 
-- (void)setContactsSync:(BOOL)contactsSync
-{
-    if (self.isContactsSync == contactsSync) return;
-    [self setAttribute:[NSNumber numberWithBool:contactsSync] forKey:@"contactsSync"];
-    if (!contactsSync) {
-        self.contactsRepo = nil;
-        [self setAttribute:nil forKey:@"ContactsLastSyncRepo"];
-        [self setAttribute:nil forKey:@"ContactsLastSyncNumber"];
-        self.contactsLastBackTime = nil;
-    }
-}
-
 - (void)setFirstTimeSync:(BOOL)firstTimeSync
 {
     if (self.firstTimeSync == firstTimeSync) return;
@@ -426,16 +403,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (repoId) {
         [self setFirstTimeSync:true];
     }
-}
-
-- (NSString *)contactsRepo
-{
-    return [[self getAttribute:@"contactsRepo"] stringValue];
-}
-
-- (void)setContactsRepo:(NSString *)repoId
-{
-    [self setAttribute:repoId forKey:@"contactsRepo"];
 }
 
 - (NSString *)username
@@ -1412,109 +1379,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }
 }
 
-- (NSMutableArray *)getAllContacts:(CNContactStore *)store API_AVAILABLE(ios(9.0)){
-    NSMutableArray *contacts = [NSMutableArray array];
-    NSError *fetchError;
-
-    CNContactFetchRequest *request = [[CNContactFetchRequest alloc] initWithKeysToFetch:@[[CNContactVCardSerialization descriptorForRequiredKeys], [CNContactFormatter descriptorForRequiredKeysForStyle:CNContactFormatterStyleFullName]]];
-
-    BOOL success = [store enumerateContactsWithFetchRequest:request error:&fetchError usingBlock:^(CNContact *contact, BOOL *stop) {
-        [contacts addObject:contact];
-    }];
-    if (!success) {
-        Warning("fetch contacts error = %@", fetchError);
-        return nil;
-    }
-    return contacts;
-}
-
-- (void)saveContactsToFile:(NSString *)vCardPath completionHandler:(void(^)(BOOL success, NSArray *contacts, NSError * _Nullable error))handler
-{
-    if (@available(iOS 9.0, *)) {
-        CNContactStore *store = [[CNContactStore alloc] init];
-        [store requestAccessForEntityType:CNEntityTypeContacts completionHandler:^(BOOL granted, NSError * _Nullable error) {
-            if (!granted) {
-                self.contactsSync = false;
-                self.contactsRepo = nil;
-                Warning("access to contacts denied: %@", error);
-                return handler(false, nil, error);
-            }
-            NSMutableArray *contacts = [self getAllContacts:store];
-            if (!contacts) {
-                Warning("Failed to get all contacts.");
-                return handler(false, nil, nil);
-            }
-            Info("Contacts count: %lu", (unsigned long)contacts.count);
-            NSError *err = nil;
-            NSData *vcardData = [CNContactVCardSerialization dataWithContacts:contacts error:&err];
-            if (err) {
-                Warning("Failed to serialize contacts: %@", err);
-                return handler(false, nil, err);
-            }
-            [vcardData writeToFile:vCardPath atomically:YES];
-            handler(true, contacts, nil);
-        }];
-    }
-}
-
-- (BOOL)restoreContactsFromFile:(NSString *)vCardPath
-{
-    Info("Restore contacts from file %@", vCardPath);
-    if (@available(iOS 9.0, *)) {
-        CNContactStore *store = [[CNContactStore alloc] init];
-        NSData *data = [NSData dataWithContentsOfFile:vCardPath];
-        NSError *error = nil;
-        NSArray *contacts = [NSArray arrayWithArray:[CNContactVCardSerialization contactsWithData:data error:&error]];
-        if (error) {
-            Warning("Failed to retrieve contacts from file %@", vCardPath);
-            return false;
-        }
-        NSArray *currentContacts = [self getAllContacts:store];
-        NSMutableDictionary *currentContactsDict = [NSMutableDictionary new];
-        NSMutableDictionary *targetContactsDict = [NSMutableDictionary new];
-        CNContactFormatter *formatter = [[CNContactFormatter alloc] init];
-        Info("Current contacts: %ld restore to: %ld", currentContacts.count, contacts.count);
-        for (CNContact *contact in currentContacts) {
-            [currentContactsDict setObject:contact forKey:contact.identifier];
-        }
-        for (CNContact *contact in contacts) {
-            NSError *error = nil;
-            CNSaveRequest *request = [[CNSaveRequest alloc] init];
-            [targetContactsDict setObject:contact forKey:contact.identifier];
-            if ([currentContactsDict objectForKey:contact.identifier] != nil) {
-                Debug("Update %@ %@", contact.identifier, [formatter stringFromContact:contact]);
-                [request updateContact:[contact mutableCopy] ];
-            } else {
-                Debug("Add %@ %@", contact.identifier, [formatter stringFromContact:contact]);
-                [request addContact:[contact mutableCopy] toContainerWithIdentifier:nil];
-            }
-            
-            [store executeSaveRequest:request error:&error];
-            if (error) {
-                Warning("Failed to execute request: %@", error);
-                return false;
-            }
-        }
-        for (CNContact *contact in currentContacts) {
-            if ([targetContactsDict objectForKey:contact.identifier] == nil) {
-                NSError *error = nil;
-                
-                Debug("Delete %@ %@", contact.identifier, [formatter stringFromContact:contact]);
-                CNSaveRequest *request = [[CNSaveRequest alloc] init];
-                [request deleteContact:[contact mutableCopy] ];
-                [store executeSaveRequest:request error:&error];
-                if (error) {
-                    Warning("Failed to execute delete request: %@", error);
-                    return false;
-                }
-            }
-        }
-        return true;
-    } else {
-        return false;
-    }
-}
-
 - (void)checkMakeUploadDirectoryInRepo:(SeafRepo *)repo subdir:(NSString *)dirName completion:(void(^)(SeafDir *uploaddir, NSError * _Nullable error))completionHandler
 {
     SeafDir *uploaddir = [self getSubdirUnderDir:repo withName:dirName];
@@ -1548,12 +1412,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (!repo) {
         Warning("No such repo %@, force update cache", repoId);
         [_rootFolder loadContentSuccess:^(SeafDir *dir) {
-            SeafRepo *repo = [self getRepo:self.contactsRepo];
-            if (!repo) {
-                completionHandler(nil, nil);
-            } else {
-                [self checkMakeUploadDirectoryInRepo:repo subdir:dirName completion:completionHandler];
-            }
+            [self checkMakeUploadDirectoryInRepo:repo subdir:dirName completion:completionHandler];
         } failure:^(SeafDir *dir, NSError *error) {
             completionHandler(nil, error);
         }];
@@ -1572,32 +1431,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [SeafDataTaskManager.sharedObject addUploadTask:ufile];
 }
 
-- (BOOL)isContactsChangedSinceLastBackup:(SeafDir *)contactsDir currentContacts:(NSArray *)contacts
-{
-#if 0
-    NSString *serverLastBackupDate = [self getContactsLastBackupDate:contactsDir backupFile:nil];
-    NSString *lastSyncRepo = [[self getAttribute:@"ContactsLastSyncRepo"] stringValue];
-    int lastSyncNumber = [[self getAttribute:@"ContactsLastSyncNumber"] integerValue:-1];
-    if (lastSyncRepo == nil || ![lastSyncRepo isEqualToString:contactsDir.repoId] || serverLastBackupDate == nil) {
-        return true;
-    }
-
-    if (lastSyncNumber != contacts.count) {
-        return true;
-    }
-    return false;
-#else
-    return true;
-#endif
-}
-
-- (void)saveContactsLastBackupInfo:(NSString *)syncDate number:(long)syncNumber
-{
-    [self setAttribute:self.contactsRepo forKey:@"ContactsLastSyncRepo"];
-    [self setAttribute:[NSNumber numberWithLong:syncNumber] forKey:@"ContactsLastSyncNumber"];
-    self.contactsLastBackTime = syncDate;
-}
-
 - (NSDate *)dateFromYear:(int)year month:(int)month day:(int)day
 {
     NSCalendar *calendar = [NSCalendar currentCalendar];
@@ -1606,176 +1439,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [components setMonth:month];
     [components setYear:year];
     return [calendar dateFromComponents:components];
-}
-
-- (NSString *)getContactsLastBackupDate:(SeafDir *)contactsDir backupFile:(SeafFile **)bfile
-{
-    NSString *regExPattern = @"^contacts-([0-9]+-[0-9]{2}-[0-9]{2}).vcf$";
-    NSRegularExpression *regEx = [[NSRegularExpression alloc] initWithPattern:regExPattern options:NSRegularExpressionCaseInsensitive error:nil];
-
-    SeafFile *backupFile = nil;
-    NSString *ans = nil;
-    for (id obj in contactsDir.items) {
-        if ([obj isKindOfClass:[SeafFile class]]) {
-            SeafFile *file = (SeafFile *)obj;
-            NSString *name = file.name;
-            NSArray *matches = [regEx matchesInString:name options:0 range:NSMakeRange(0, name.length)];
-            if (matches.count != 1) {
-                continue;
-            }
-            NSTextCheckingResult *match = [matches objectAtIndex:0];
-            NSRange dateRange = [match rangeAtIndex:1];
-            NSString *dateStr = [name substringWithRange:dateRange];
-            if (ans == nil || [dateStr compare:ans] == NSOrderedDescending) {
-                ans = dateStr;
-                backupFile = file;
-            }
-        }
-    }
-    if (bfile) {
-        *bfile = backupFile;
-    }
-    return ans;
-}
-
-- (void)contactStoreDidChange:(NSNotification *)notification
-{
-    if (@available(iOS 9.0, *)) {
-        if (self.inContactsSync || !self.contactsSync || !self.contactsRepo)
-            return;
-        [self backupContacts:false completion:^(BOOL success, NSError * _Nullable error) {
-            Debug("Backup contacts %d: %@", success, error);
-        }];
-    }
-}
-
-- (NSString *)backupContacts:(BOOL)force completion:(CompletionBlock)handler
-{
-    @synchronized(self) {
-        if (_inContactsSync) {
-            handler(false, nil);
-            return nil;
-        }
-        _inContactsSync = true;
-    }
-
-    CompletionBlock completionHandler = ^(BOOL success, NSError * _Nullable error){
-        _inContactsSync = false;
-        handler(success, error);
-    };
-
-    if (!self.contactsSync || !self.contactsRepo) {
-        Warning("contacts sync is disabled: %d %@", self.contactsSync, self.contactsRepo);
-        completionHandler(false, nil);
-        return nil;
-    }
-
-    NSDateFormatter *dateformate = [[NSDateFormatter alloc] init];
-    [dateformate setDateFormat:@"yyyy-MM-dd"];
-    NSDate *now = [NSDate date];
-    NSString *backupDate = [dateformate stringFromDate:now];
-    NSString *filename = [NSString stringWithFormat:@"contacts-%@.vcf", backupDate];
-    NSString *uploadDir = [self uniqueUploadDir];
-    [Utils checkMakeDir:uploadDir];
-    NSString *path = [uploadDir stringByAppendingPathComponent:filename];
-    [self saveContactsToFile:path completionHandler:^(BOOL success, NSArray *contacts, NSError * _Nullable error) {
-        if (!success) {
-            Warning("Failed to save contacts to vcf file: %@", error);
-            return completionHandler(false, error);
-        }
-        Debug("contacts(%ld) write to file %@ success", contacts.count, path);
-        [self checkMakeUploadDirectory:self.contactsRepo subdir:CONTACTS_UPLOADS_DIR completion:^(SeafDir *uploaddir, NSError * _Nullable error) {
-            if (!uploaddir) {
-                Warning("Failed to create contacts backup folder: %@", error);
-                completionHandler(false, error);
-            } else {
-                BOOL changed = [self isContactsChangedSinceLastBackup:uploaddir currentContacts:contacts];
-                Debug("upload %@ to %@, changed:%d force: %d", path, uploaddir.name, changed, force);
-                if (!force && !changed) {
-                    return completionHandler(true, nil);
-                }
-                [uploaddir loadContentSuccess:^(SeafDir *dir) {
-                    [self uploadFile:path toDir:uploaddir completion:^(BOOL success, NSError * _Nullable error) {
-                        if (success) {
-                            [self saveContactsLastBackupInfo:backupDate number:contacts.count];
-                        }
-                        completionHandler(success, nil);
-                    }];
-                } failure:^(SeafDir *dir, NSError *error) {
-                    completionHandler(false, error);
-                }];
-            }
-        }];
-    }];
-    return filename;
-}
-
-- (void)getContactsLastBackFile:(void(^)(SeafFile *file, NSString *dateStr, NSError *error))completionHandler
-{
-    if (!self.contactsSync || !self.contactsRepo) {
-        return completionHandler(nil, nil, nil);
-    }
-
-    [self checkMakeUploadDirectory:self.contactsRepo subdir:CONTACTS_UPLOADS_DIR completion:^(SeafDir *uploaddir, NSError * _Nullable error) {
-        if (!uploaddir) {
-            Warning("Failed to create contacts backup folder: %@", error);
-            completionHandler(nil, nil, error);
-        } else {
-            [uploaddir loadContentSuccess:^(SeafDir *dir) {
-                SeafFile *backupFile = nil;
-                NSString *dateStr = [self getContactsLastBackupDate:uploaddir backupFile:&backupFile];
-                Debug("getContactsLastBackupDate: %@ %@", dateStr, backupFile.name);
-                completionHandler(backupFile, dateStr, nil);
-            } failure:^(SeafDir *dir, NSError *error) {
-                Warning("Failed to get uploaddir items: %@", error);
-                completionHandler(nil, nil, error);
-            }];
-        }
-    }];
-}
-
-- (void)getContactsLastBackTime:(void(^)(BOOL success, NSString *dateStr))completionHandler
-{
-    if (self.contactsLastBackTime) {
-        return completionHandler(true, self.contactsLastBackTime);
-    }
-    [self getContactsLastBackFile:^(SeafFile *file, NSString *dateStr, NSError *error) {
-        completionHandler(dateStr != nil, dateStr);
-        if (dateStr) {
-            self.contactsLastBackTime = dateStr;
-        }
-    }];
-}
-
-- (void)restoreContacts:(void(^)(BOOL success, NSError *error))handler
-{
-    @synchronized(self) {
-        if (_inContactsSync) {
-            return handler(false, nil);
-        }
-        _inContactsSync = true;
-    }
-
-    CompletionBlock completionHandler = ^(BOOL success, NSError * _Nullable error){
-        _inContactsSync = false;
-        handler(success, error);
-    };
-
-    [self getContactsLastBackFile:^(SeafFile *file, NSString *dateStr, NSError *error) {
-        if (!file) {
-            return completionHandler(false, error);
-        }
-        [file setFileDownloadedBlock:^(SeafFile * _Nonnull file, NSError *err) {
-            NSString *path = [[file exportURL] path];
-            if (err || !path) {
-                completionHandler(false, err);
-            } else {
-                BOOL ret = [self restoreContactsFromFile:path];
-                completionHandler(ret, nil);
-            }
-        }];
-        [file loadContent:false];
-    }];
 }
 
 - (void)removeVideosFromArray:(NSMutableArray *)arr {

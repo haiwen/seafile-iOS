@@ -6,7 +6,6 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
-@import Contacts;
 #import <Photos/Photos.h>
 #import "SVProgressHUD.h"
 #import "AFNetworking.h"
@@ -214,14 +213,6 @@
         return [WXApi handleOpenURL:url delegate:self];
     } else {
         return [self openURL:url];
-    }
-}
-
-- (void)contactStoreDidChange:(NSNotification *)notification
-{
-    Debug("contactStoreDidChange.");
-    for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
-        [conn contactStoreDidChange:notification];
     }
 }
 
