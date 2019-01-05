@@ -37,7 +37,6 @@
 @property (nonatomic) TaskCompleteBlock taskCompleteBlock;
 @property (nonatomic) TaskProgressBlock taskProgressBlock;
 @property (nonatomic, strong) PHImageRequestOptions *requestOptions;
-@property (nonatomic, strong) NSData *originalImageData;
 
 @end
 
@@ -557,7 +556,6 @@
             }
             NSURL *url = [[NSURL alloc] initFileURLWithPath:self.lpath];
             [imageData writeToURL:url atomically:true];
-            self.originalImageData = imageData;
             self->_filesize = [Utils fileSizeAtPath1:self.lpath];
         } else {
             [self finishUpload:false oid:nil error:nil];
@@ -631,13 +629,9 @@
 }
 
 - (UIImage *)image {
-    if (self.originalImageData) {
-        return [UIImage imageWithData:self.originalImageData];
-    } else {
-        NSString *name = [@"cacheimage-ufile-" stringByAppendingString:self.name];
-        NSString *cachePath = [[SeafStorage.sharedObject tempDir] stringByAppendingPathComponent:name];
-        return [Utils imageFromPath:self.lpath withMaxSize:IMAGE_MAX_SIZE cachePath:cachePath];
-    }
+    NSString *name = [@"cacheimage-ufile-" stringByAppendingString:self.name];
+    NSString *cachePath = [[SeafStorage.sharedObject tempDir] stringByAppendingPathComponent:name];
+    return [Utils imageFromPath:self.lpath withMaxSize:IMAGE_MAX_SIZE cachePath:cachePath];
 }
 
 - (NSURL *)exportURL

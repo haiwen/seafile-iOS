@@ -56,6 +56,7 @@
             break;
         }
     }
+    free(propertyList);
     return URL;
 }
 
