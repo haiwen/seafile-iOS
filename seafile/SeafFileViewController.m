@@ -1018,7 +1018,11 @@ enum {
 
 - (void)download:(SeafBase *)entry complete:(BOOL)updated
 {
-    if (self.state != STATE_EXPORT) {
+    if (self.state == STATE_COPY) {
+        [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Successfully copied", @"Seafile")];
+    } else if (self.state == STATE_MOVE) {
+        [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Successfully moved", @"Seafile")];
+    } else if (self.state != STATE_EXPORT) {
         [SVProgressHUD dismiss];
     }
     if ([entry isKindOfClass:[SeafFile class]]) {
