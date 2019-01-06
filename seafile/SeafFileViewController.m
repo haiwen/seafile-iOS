@@ -827,7 +827,6 @@ enum {
 - (void)popupDirChooseView:(SeafUploadFile *)file
 {
     self.ufile = file;
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
 
     SeafDirViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:self.connection.rootFolder delegate:self chooseRepo:false];
     if (self.state == STATE_COPY) {
@@ -839,7 +838,7 @@ enum {
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
     [navController setModalPresentationStyle:UIModalPresentationFormSheet];
     navController.navigationBar.tintColor = BAR_COLOR;
-    [appdelegate.window.rootViewController presentViewController:navController animated:YES completion:nil];
+    [self presentViewController:navController animated:YES completion:nil];
     if (IsIpad()) {
         CGRect frame = navController.view.superview.frame;
         navController.view.superview.frame = CGRectMake(frame.origin.x+frame.size.width/2-320/2, frame.origin.y+frame.size.height/2-500/2, 320, 500);
