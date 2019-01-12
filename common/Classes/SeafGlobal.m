@@ -287,7 +287,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
             Debug("%fs has passed, refreshRepoPassowrds", cur - lastUpdate);
             lastUpdate = cur;
             for (SeafConnection *conn in self.conns) {
-                [conn refreshRepoPassowrds];
+                [conn refreshRepoPasswords];
                 [conn photosDidChange:nil];
             }
         }

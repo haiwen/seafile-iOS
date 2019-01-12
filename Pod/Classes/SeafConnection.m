@@ -856,7 +856,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                     [self.delegate outOfQuota:self];
                 }
             } else if (resp.statusCode == HTTP_ERR_REPO_DOWNLOAD_PASSWORD_EXPIRED) {
-                [self refreshRepoPassowrds];
+                [self refreshRepoPasswords];
             }
         } else {
             success(request, resp, responseObject);
@@ -1135,7 +1135,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         [file setCompletionBlock:^(SeafUploadFile *file, NSString *oid, NSError *error) {
             [self autoSyncFileUploadComplete:file error:error];
         }];
-
     
         Debug("Add file %@ to upload list: %@ current %u %u", photoAsset.name, dir.path, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
         [SeafDataTaskManager.sharedObject addUploadTask:file];
@@ -1817,7 +1816,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }];
 }
 
-- (void)refreshRepoPassowrds
+- (void)refreshRepoPasswords
 {
      NSDictionary *repopasswds = [_info objectForKey:@"repopassword"];
     if (repopasswds == nil)

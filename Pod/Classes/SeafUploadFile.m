@@ -57,6 +57,7 @@
         _uProgress = 0;
         _uploading = NO;
         _autoSync = NO;
+        _starred = NO;
         _uploaded = NO;
         _overwrite = NO;
         _semaphore = dispatch_semaphore_create(0);
@@ -176,6 +177,11 @@
         self.task = nil;
         [self updateProgress:nil];
     }
+    
+    if (_starred) {
+        NSString* rpath = [_udir.path stringByAppendingPathComponent:self.name];
+        [_udir->connection setStarred:YES repo:_udir.repoId path:rpath];
+    }
 
     self.rawblksurl = nil;
     self.commiturl = nil;
@@ -227,8 +233,8 @@
         if (error) {
             Debug("Upload failed :%@,code=%ld, res=%@", error, (long)resp.statusCode, responseObject);
             if (resp.statusCode == HTTP_ERR_REPO_UPLOAD_PASSWORD_EXPIRED || resp.statusCode == HTTP_ERR_REPO_DOWNLOAD_PASSWORD_EXPIRED) {
-                //refredh passwords when expired
-                [connection refreshRepoPassowrds];
+                // Refresh passwords when expired
+                [connection refreshRepoPasswords];
             }
             [self showDeserializedError:error];
             [self finishUpload:NO oid:nil error:error];
@@ -521,6 +527,7 @@
     _asset = asset;
     _assetURL = url;
     _assetIdentifier = asset.localIdentifier;
+    _starred = asset.isFavorite;
 }
 
 - (void)checkAsset {
