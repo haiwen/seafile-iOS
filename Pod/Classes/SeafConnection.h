@@ -187,7 +187,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 - (NSDictionary *_Nullable)getRepoEncInfo:(NSString * _Nonnull)repoId;
 - (void)downloadDir:(SeafDir * _Nonnull)dir;
 
-- (void)refreshRepoPassowrds;
+- (void)refreshRepoPasswords;
 - (void)clearRepoPasswords;
 
 // fileProvider tagData

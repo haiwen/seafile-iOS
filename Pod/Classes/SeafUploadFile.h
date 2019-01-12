@@ -46,6 +46,8 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 @property (readwrite) SeafDir *udir;
 @property (nonatomic, strong) UIImage *previewImage;//NSItemProvider previewImage
 
+@property (nonatomic, assign, getter=isStarred) BOOL starred;
+
 - (id)initWithPath:(NSString *)lpath;
 
 - (void)setPHAsset:(PHAsset *)asset url:(NSURL *)url;
