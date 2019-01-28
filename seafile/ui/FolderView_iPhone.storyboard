@@ -219,7 +219,7 @@
                                                     </constraints>
                                                 </switch>
                                                 <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Enable TouchID" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="CrZ-SM-e9h">
-                                                    <rect key="frame" x="15" y="11.5" width="119" height="21"/>
+                                                    <rect key="frame" x="16" y="11.5" width="119" height="21"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
@@ -228,7 +228,7 @@
                                                 <constraint firstAttribute="trailing" secondItem="8nl-VI-wEN" secondAttribute="trailing" constant="16" id="b0C-TR-7kY"/>
                                                 <constraint firstItem="CrZ-SM-e9h" firstAttribute="centerY" secondItem="RJ3-NE-faD" secondAttribute="centerY" id="ces-zs-tzj"/>
                                                 <constraint firstItem="CrZ-SM-e9h" firstAttribute="centerY" secondItem="8nl-VI-wEN" secondAttribute="centerY" id="eei-AG-gNz"/>
-                                                <constraint firstItem="CrZ-SM-e9h" firstAttribute="leading" secondItem="RJ3-NE-faD" secondAttribute="leading" constant="15" id="siJ-jC-ajp"/>
+                                                <constraint firstItem="CrZ-SM-e9h" firstAttribute="leading" secondItem="RJ3-NE-faD" secondAttribute="leading" constant="16" id="siJ-jC-ajp"/>
                                             </constraints>
                                         </tableViewCellContentView>
                                     </tableViewCell>
@@ -244,7 +244,7 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" verticalHuggingPriority="251" horizontalCompressionResistancePriority="500" text="Auto Upload" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="1af-Tn-HYe">
-                                                    <rect key="frame" x="15" y="11.5" width="95" height="21"/>
+                                                    <rect key="frame" x="16" y="11.5" width="95" height="21"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
@@ -254,7 +254,7 @@
                                             </subviews>
                                             <constraints>
                                                 <constraint firstItem="JZc-TU-fcn" firstAttribute="centerY" secondItem="1af-Tn-HYe" secondAttribute="centerY" id="8pO-Ec-Hse"/>
-                                                <constraint firstItem="1af-Tn-HYe" firstAttribute="leading" secondItem="Mca-LK-BJW" secondAttribute="leading" constant="15" id="Gj7-i5-sN2"/>
+                                                <constraint firstItem="1af-Tn-HYe" firstAttribute="leading" secondItem="Mca-LK-BJW" secondAttribute="leading" constant="16" id="Gj7-i5-sN2"/>
                                                 <constraint firstItem="1af-Tn-HYe" firstAttribute="centerY" secondItem="Mca-LK-BJW" secondAttribute="centerY" id="IZm-ce-BT8"/>
                                                 <constraint firstAttribute="trailing" secondItem="JZc-TU-fcn" secondAttribute="trailing" constant="16" id="WUY-TE-FHK"/>
                                             </constraints>
@@ -271,13 +271,13 @@
                                                     <rect key="frame" x="310" y="6.5" width="51" height="31"/>
                                                 </switch>
                                                 <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" verticalHuggingPriority="251" horizontalCompressionResistancePriority="500" text="Upload Videos" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Kcw-kJ-pcF">
-                                                    <rect key="frame" x="15" y="11.5" width="112" height="21"/>
+                                                    <rect key="frame" x="16" y="11.5" width="112" height="21"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
                                             </subviews>
                                             <constraints>
-                                                <constraint firstItem="Kcw-kJ-pcF" firstAttribute="leading" secondItem="BB0-K9-y9C" secondAttribute="leading" constant="15" id="2Qw-2L-WWe"/>
+                                                <constraint firstItem="Kcw-kJ-pcF" firstAttribute="leading" secondItem="BB0-K9-y9C" secondAttribute="leading" constant="16" id="2Qw-2L-WWe"/>
                                                 <constraint firstAttribute="trailing" secondItem="fFZ-gz-Sso" secondAttribute="trailing" constant="16" id="Z3m-uP-BaB"/>
                                                 <constraint firstItem="fFZ-gz-Sso" firstAttribute="centerY" secondItem="Kcw-kJ-pcF" secondAttribute="centerY" id="i21-XL-ghj"/>
                                                 <constraint firstItem="fFZ-gz-Sso" firstAttribute="centerY" secondItem="BB0-K9-y9C" secondAttribute="centerY" id="tjX-jr-Sp6"/>
@@ -295,7 +295,7 @@
                                                     <rect key="frame" x="310" y="6.5" width="51" height="31"/>
                                                 </switch>
                                                 <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Wifi Only" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5rP-cB-Wm0">
-                                                    <rect key="frame" x="15" y="11.5" width="69" height="21"/>
+                                                    <rect key="frame" x="16" y="11.5" width="69" height="21"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
@@ -304,7 +304,7 @@
                                                 <constraint firstItem="EII-rv-WS4" firstAttribute="centerY" secondItem="5rP-cB-Wm0" secondAttribute="centerY" id="2Lz-qz-D80"/>
                                                 <constraint firstItem="EII-rv-WS4" firstAttribute="centerY" secondItem="Tjg-fs-8RU" secondAttribute="centerY" id="GKm-My-Lkp"/>
                                                 <constraint firstAttribute="trailing" secondItem="EII-rv-WS4" secondAttribute="trailing" constant="16" id="S3J-ft-YDT"/>
-                                                <constraint firstItem="5rP-cB-Wm0" firstAttribute="leading" secondItem="Tjg-fs-8RU" secondAttribute="leading" constant="15" id="W06-5s-68l"/>
+                                                <constraint firstItem="5rP-cB-Wm0" firstAttribute="leading" secondItem="Tjg-fs-8RU" secondAttribute="leading" constant="16" id="W06-5s-68l"/>
                                             </constraints>
                                         </tableViewCellContentView>
                                     </tableViewCell>
@@ -319,14 +319,14 @@
                                                     <rect key="frame" x="310" y="6.5" width="51" height="31"/>
                                                 </switch>
                                                 <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Background Upload" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="BvI-L7-dN7">
-                                                    <rect key="frame" x="15" y="11.5" width="151.5" height="21"/>
+                                                    <rect key="frame" x="16" y="11.5" width="151.5" height="21"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
                                             </subviews>
                                             <constraints>
                                                 <constraint firstItem="GiP-GK-ztk" firstAttribute="centerY" secondItem="BvI-L7-dN7" secondAttribute="centerY" id="RdT-9m-7jQ"/>
-                                                <constraint firstItem="BvI-L7-dN7" firstAttribute="leading" secondItem="lx7-jl-qiU" secondAttribute="leading" constant="15" id="Rpo-Xu-1Kj"/>
+                                                <constraint firstItem="BvI-L7-dN7" firstAttribute="leading" secondItem="lx7-jl-qiU" secondAttribute="leading" constant="16" id="Rpo-Xu-1Kj"/>
                                                 <constraint firstAttribute="trailing" secondItem="GiP-GK-ztk" secondAttribute="trailing" constant="16" id="UBV-sn-j9F"/>
                                                 <constraint firstItem="GiP-GK-ztk" firstAttribute="centerY" secondItem="lx7-jl-qiU" secondAttribute="centerY" id="oSm-vL-o6R"/>
                                             </constraints>
@@ -498,7 +498,7 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Auto clear passwords" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Auj-zx-JVH">
-                                                    <rect key="frame" x="15" y="11.5" width="164" height="21"/>
+                                                    <rect key="frame" x="16" y="11.5" width="164" height="21"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
@@ -510,7 +510,7 @@
                                                 <constraint firstAttribute="trailingMargin" secondItem="Kfl-ym-odU" secondAttribute="trailing" constant="8" id="8sw-EV-KyM"/>
                                                 <constraint firstItem="Kfl-ym-odU" firstAttribute="centerY" secondItem="1VU-pv-Tbs" secondAttribute="centerY" id="eEe-0b-zK4"/>
                                                 <constraint firstItem="Kfl-ym-odU" firstAttribute="centerY" secondItem="Auj-zx-JVH" secondAttribute="centerY" id="epW-Me-7CD"/>
-                                                <constraint firstItem="Auj-zx-JVH" firstAttribute="leading" secondItem="1VU-pv-Tbs" secondAttribute="leading" constant="15" id="yih-zh-Yrr"/>
+                                                <constraint firstItem="Auj-zx-JVH" firstAttribute="leading" secondItem="1VU-pv-Tbs" secondAttribute="leading" constant="16" id="yih-zh-Yrr"/>
                                             </constraints>
                                         </tableViewCellContentView>
                                     </tableViewCell>
@@ -522,7 +522,7 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Local decryption" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="T4X-pn-1qY">
-                                                    <rect key="frame" x="15" y="11.5" width="127.5" height="21"/>
+                                                    <rect key="frame" x="16" y="11.5" width="127.5" height="21"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
@@ -534,7 +534,7 @@
                                                 <constraint firstItem="A3y-jl-13y" firstAttribute="centerY" secondItem="MBF-T7-OmC" secondAttribute="centerY" id="7FB-7q-I8d"/>
                                                 <constraint firstItem="A3y-jl-13y" firstAttribute="centerY" secondItem="T4X-pn-1qY" secondAttribute="centerY" id="a12-qh-WOH"/>
                                                 <constraint firstAttribute="trailingMargin" secondItem="A3y-jl-13y" secondAttribute="trailing" constant="8" id="cGB-Qh-v8V"/>
-                                                <constraint firstItem="T4X-pn-1qY" firstAttribute="leading" secondItem="MBF-T7-OmC" secondAttribute="leading" constant="15" id="ofS-JB-OrD"/>
+                                                <constraint firstItem="T4X-pn-1qY" firstAttribute="leading" secondItem="MBF-T7-OmC" secondAttribute="leading" constant="16" id="ofS-JB-OrD"/>
                                             </constraints>
                                         </tableViewCellContentView>
                                     </tableViewCell>
