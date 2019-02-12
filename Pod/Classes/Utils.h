@@ -23,6 +23,8 @@
 + (BOOL)copyFile:(NSURL *)from to:(NSURL *)to;
 + (BOOL)linkFileAtURL:(NSURL *)from to:(NSURL *)to error:(NSError **)error;
 + (BOOL)linkFileAtPath:(NSString *)from to:(NSString *)to error:(NSError **)error;
++ (BOOL)writeDataWithMeta:(NSData *)imageData toPath:(NSString*)filePath;
++ (BOOL)writeCIImage:(CIImage *)ciImage toPath:(NSString*)filePath API_AVAILABLE(ios(10.0));
 
 + (long long)fileSizeAtPath1:(NSString*)filePath;
 
