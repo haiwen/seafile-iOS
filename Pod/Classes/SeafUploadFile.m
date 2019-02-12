@@ -556,13 +556,19 @@
     
     [[PHImageManager defaultManager] requestImageDataForAsset:_asset options:self.requestOptions resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
         if (imageData) {
-            if ([dataUTI isEqualToString:@"public.heic"]) {
-                UIImage *image = [UIImage imageWithData:imageData];
-                imageData = UIImageJPEGRepresentation(image, 1.0);
-                self->_lpath = [self.lpath stringByReplacingOccurrencesOfString:@"HEIC" withString:@"JPG"];
+            if (@available(iOS 10.0, *)) {
+                if ([dataUTI isEqualToString:@"public.heic"]) {// HEIC available after iOS11
+                    self->_lpath = [self.lpath stringByReplacingOccurrencesOfString:@"HEIC" withString:@"JPG"];
+                }
+                CIImage* ciImage = [CIImage imageWithData:imageData];
+                if (![Utils writeCIImage:ciImage toPath:self.lpath]) {
+                    [self finishUpload:false oid:nil error:nil];
+                }
+            } else {
+                if (![Utils writeDataWithMeta:imageData toPath:self.lpath]) {
+                    [self finishUpload:false oid:nil error:nil];
+                }
             }
-            NSURL *url = [[NSURL alloc] initFileURLWithPath:self.lpath];
-            [imageData writeToURL:url atomically:true];
             self->_filesize = [Utils fileSizeAtPath1:self.lpath];
         } else {
             [self finishUpload:false oid:nil error:nil];

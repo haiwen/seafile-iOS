@@ -322,20 +322,47 @@
     return false;
 }
 
-+ (BOOL)writeDataToPathWithMeta:(NSString*)filePath andAsset:(PHAsset *)asset {
-    PHImageRequestOptions *options = [PHImageRequestOptions new];
-    options.networkAccessAllowed = YES; // iCloud
-    options.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
-    options.synchronous = YES;
++ (BOOL)writeDataWithMeta:(NSData *)imageData toPath:(NSString*)filePath {
+    NSDictionary *options = @{(id)kCGImageSourceShouldCache : @(false)};
+    // create an imagesourceref
+    CGImageSourceRef source = CGImageSourceCreateWithData((__bridge CFDataRef) imageData, (__bridge CFDictionaryRef)options);
     
-    __block BOOL success = NO;
-    [[PHImageManager defaultManager] requestImageDataForAsset:asset options:options resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
-//        NSError *error = nil;
-        NSURL *url = [[NSURL alloc] initFileURLWithPath:filePath];
-        success = [imageData writeToURL:url atomically:true];
-    }];
+    // this is the type of image (e.g., public.jpeg)
+    CFStringRef UTI = CGImageSourceGetType(source);
     
+    // create a new data object and write the new image into it
+    NSURL *url = [[NSURL alloc] initFileURLWithPath:filePath];
+    CGImageDestinationRef destination = CGImageDestinationCreateWithURL((CFURLRef)url, UTI, 1, NULL);
+    if (!destination) {
+        Debug(@"Error: Could not create image destination");
+        CFRelease(source);
+        CFRelease(UTI);
+        return false;
+    }
+    
+    CFDictionaryRef imageProperties = CGImageSourceCopyPropertiesAtIndex(source, 0, (__bridge CFDictionaryRef)options);
+    if (imageProperties) {
+        //add the image contained in the image source to the destination, overidding the old metadata with our modified metadata
+        CGImageDestinationAddImageFromSource(destination, source, 0, imageProperties);
+        CFRelease(imageProperties);
+    }
+    
+    BOOL success = NO;
+    success = CGImageDestinationFinalize(destination);
+    if (!success) {
+        Debug(@"Error: Could not create data from image destination");
+    }
+    CFRelease(destination);
+    CFRelease(source);
+    CFRelease(UTI);
     return success;
+}
+
++ (BOOL)writeCIImage:(CIImage *)ciImage toPath:(NSString*)filePath {
+    NSError *error = nil;
+    CIContext *context = [[CIContext alloc] init];
+    NSURL *url = [[NSURL alloc] initFileURLWithPath:filePath];
+    return [context writeJPEGRepresentationOfImage:ciImage toURL:url colorSpace:CGColorSpaceCreateWithName(kCGColorSpaceSRGB) options:@{(CIImageRepresentationOption)kCGImageDestinationLossyCompressionQuality : @(1.0)} error:&error];
 }
 
 + (BOOL)fileExistsAtPath:(NSString *)path
