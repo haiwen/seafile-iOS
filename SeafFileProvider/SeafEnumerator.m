@@ -18,6 +18,7 @@
 @property (nonatomic, strong) SeafItem *item;
 @property (nonatomic, copy) NSFileProviderItemIdentifier containerItemIdentifier;
 @property (nonatomic, assign) NSInteger currentAnchor;
+@property (nonatomic, assign) NSInteger maxItemCount;
 @end
 
 
@@ -35,6 +36,7 @@
 {
     if (self = [super init]) {
         _item = item;
+        _maxItemCount = 20;
     }
     return self;
 }
@@ -82,8 +84,15 @@
             
             SeafDir *dir = (SeafDir *)[_item toSeafObj];
             [dir loadContentSuccess: ^(SeafDir *d) {
-                [observer didEnumerateItems:[self getSeafDirProviderItems:d startingAtPage:page]];
-                [observer finishEnumeratingUpToPage:nil];
+                NSArray *items = [self getSeafDirProviderItems:d startingAtPage:page];
+                [observer didEnumerateItems:items];
+                if (items.count == self.maxItemCount) {
+                    NSInteger numPage = [[NSString stringWithUTF8String:[page bytes]] integerValue] + 1;
+                    NSData *providerPage = [[NSString stringWithFormat:@"%ld", (long)numPage] dataUsingEncoding:NSUTF8StringEncoding];
+                    [observer finishEnumeratingUpToPage:providerPage];
+                } else {
+                    [observer finishEnumeratingUpToPage:nil];
+                }
             } failure:^(SeafDir *d, NSError *error) {
                 if (d.hasCache) {
                     [observer didEnumerateItems:[self getSeafDirProviderItems:dir startingAtPage:page]];
@@ -129,11 +138,19 @@
             [dir reSortItemsByName];
         }
     }
+    
+    NSInteger numPage = [[NSString stringWithUTF8String:[page bytes]] integerValue];
+    NSInteger start = numPage * self.maxItemCount + 1;
+    NSInteger stop = start + (self.maxItemCount - 1);
+    NSInteger counter = 0;
 
     NSMutableArray *items = [NSMutableArray new];
     for (SeafBase *obj in [self getAccessiableSubItems: dir]) {
-        [obj loadCache];
-        [items addObject: [[SeafProviderItem alloc] initWithSeafItem:[SeafItem fromSeafBase:obj]]];
+        counter += 1;
+        if (counter >= start && counter <= stop) {
+            [obj loadCache];
+            [items addObject: [[SeafProviderItem alloc] initWithSeafItem:[SeafItem fromSeafBase:obj]]];
+        }
     }
     return items;
 }
