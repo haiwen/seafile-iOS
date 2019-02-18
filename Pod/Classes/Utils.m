@@ -362,7 +362,7 @@
     NSError *error = nil;
     CIContext *context = [[CIContext alloc] init];
     NSURL *url = [[NSURL alloc] initFileURLWithPath:filePath];
-    return [context writeJPEGRepresentationOfImage:ciImage toURL:url colorSpace:CGColorSpaceCreateWithName(kCGColorSpaceSRGB) options:@{(CIImageRepresentationOption)kCGImageDestinationLossyCompressionQuality : @(1.0)} error:&error];
+    return [context writeJPEGRepresentationOfImage:ciImage toURL:url colorSpace:ciImage.colorSpace options:@{(CIImageRepresentationOption)kCGImageDestinationLossyCompressionQuality : @(0.8)} error:&error];
 }
 
 + (BOOL)fileExistsAtPath:(NSString *)path
