@@ -446,16 +446,16 @@ enum {
 - (void)initNavigationItems:(SeafDir *)directory
 {
     if (![directory isKindOfClass:[SeafRepos class]] && directory.editable) {
-        self.photoItem = [self getBarItem:@"plus".navItemImgName action:@selector(addPhotos:)size:20];
+        self.photoItem = [self getBarItem:@"plus2" action:@selector(addPhotos:)size:20];
         self.doneItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(editDone:)];
-        self.editItem = [self getBarItemAutoSize:@"ellipsis".navItemImgName action:@selector(editSheet:)];
+        self.editItem = [self getBarItemAutoSize:@"ellipsis2" action:@selector(editSheet:)];
         UIBarButtonItem *space = [self getSpaceBarItem:16.0];
         self.rightItems = [NSArray arrayWithObjects: self.editItem, space, self.photoItem, nil];
 
         _selectAllItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Select All", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(selectAll:)];
         _selectNoneItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Select None", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(selectNone:)];
     } else {
-        self.editItem = [self getBarItemAutoSize:@"ellipsis".navItemImgName action:@selector(editSheet:)];
+        self.editItem = [self getBarItemAutoSize:@"ellipsis2" action:@selector(editSheet:)];
         self.rightItems = [NSArray arrayWithObjects: self.editItem, nil];
     }
     self.navigationItem.rightBarButtonItems = self.rightItems;

@@ -58,7 +58,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 
     // Do any additional setup after loading the view from its nib.
     self.title = NSLocalizedString(@"Activities", @"Seafile");
-    self.navigationItem.rightBarButtonItem = [self getBarItemAutoSize:@"refresh".navItemImgName action:@selector(refresh:)];
+    self.navigationItem.rightBarButtonItem = [self getBarItemAutoSize:@"refresh2" action:@selector(refresh:)];
 //    self.navigationController.navigationBar.tintColor = BAR_COLOR;
     self.tableView.rowHeight = UITableViewAutomaticDimension;
     self.tableView.estimatedRowHeight = 60.0;

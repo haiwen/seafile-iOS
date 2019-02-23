@@ -91,14 +91,4 @@
     return foundRange.location;
 }
 
-- (NSString *)navItemImgName
-{
-    /* For ios < 7, color is white
-     * ios7 color is (238,136,51, 255)
-     */
-    if (NSFoundationVersionNumber > NSFoundationVersionNumber_iOS_6_1)
-        return [self stringByAppendingString:@"2.png"];
-    else
-        return [self stringByAppendingString:@".png"];
-}
 @end
