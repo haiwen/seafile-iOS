@@ -12,6 +12,7 @@
 #import "SeafBase.h"
 #import "Utils.h"
 
+#define THUMB_SIZE 96
 
 @class SeafFile;
 

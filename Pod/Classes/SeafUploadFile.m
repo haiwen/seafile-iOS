@@ -194,6 +194,9 @@
     Debug("result=%d, name=%@, delegate=%@, oid=%@, err=%@\n", result, self.name, _delegate, oid, err);
     [self uploadComplete:oid error:err];
     if (result) {
+        if ([self isImageFile]) {
+            [self saveThumbToLocal:oid];
+        }
         if (!_autoSync) {
             [Utils linkFileAtPath:self.lpath to:[SeafStorage.sharedObject documentPath:oid] error:nil];
         } else {
@@ -577,6 +580,17 @@
     }];
 }
 
+- (UIImage *)getThumbImageFormAsset {
+    __block UIImage *img = nil;
+    if (_asset) {
+        CGSize size = CGSizeMake(THUMB_SIZE * (int)[UIScreen mainScreen].scale, THUMB_SIZE * (int)[UIScreen mainScreen].scale);
+        [[PHImageManager defaultManager] requestImageForAsset:_asset targetSize:size contentMode:PHImageContentModeDefault options:self.requestOptions resultHandler:^(UIImage * _Nullable result, NSDictionary * _Nullable info) {
+            img = result;
+        }];
+    }
+    return img;
+}
+
 - (void)getVideoForAsset {
     PHVideoRequestOptions *options = [PHVideoRequestOptions new];
     options.networkAccessAllowed = YES;
@@ -632,13 +646,26 @@
 }
 
 - (UIImage *)icon {
-    UIImage *img = [self isImageFile] ? self.image : nil;
-    return img ? [Utils reSizeImage:img toSquare:32.0f] : [UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString];
+    if ([self getThumbImageFormAsset]) {
+        return [self getThumbImageFormAsset];
+    } else {
+        UIImage *img = [self isImageFile] ? self.image : nil;
+        return img ? [Utils reSizeImage:img toSquare:THUMB_SIZE * (int)[UIScreen mainScreen].scale] : [UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString];
+    }
 }
 
 - (UIImage *)thumb
 {
     return [self icon];
+}
+
+- (void)saveThumbToLocal:(NSString *)oid {
+    int size = THUMB_SIZE * (int)[[UIScreen mainScreen] scale];
+    NSString *thumbPath = [SeafStorage.sharedObject.thumbsDir stringByAppendingPathComponent:[NSString stringWithFormat:@"/%@-%d", oid, size]];
+    if (![Utils fileExistsAtPath:thumbPath]) {
+        NSData *data = UIImageJPEGRepresentation([self thumb], 1.0);
+        [data writeToFile:thumbPath atomically:true];
+    }
 }
 
 - (UIImage *)image {

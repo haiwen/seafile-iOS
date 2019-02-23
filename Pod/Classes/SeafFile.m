@@ -20,8 +20,6 @@
 #import "Debug.h"
 #import "Utils.h"
 
-#define THUMB_SIZE 96
-
 @interface SeafFile()
 
 @property (strong, readonly) NSURL *preViewURL;

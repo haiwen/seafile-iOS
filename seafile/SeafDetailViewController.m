@@ -458,7 +458,7 @@ enum SHARE_STATUS {
 
 #pragma mark - file operations
 - (IBAction)delete:(id)sender {
-    [self alertWithTitle:@"" message:[NSString stringWithFormat:NSLocalizedString(@"Are you sure you want to delete %@ ?", @"Seafile"), self.preViewItem.name] yes:^{
+    [self alertWithTitle:[NSString stringWithFormat:NSLocalizedString(@"Are you sure you want to delete %@ ?", @"Seafile"), self.preViewItem.name] message:nil yes:^{
         if (_masterVc && [_masterVc isKindOfClass:[SeafFileViewController class]]) {
             [self goBack:nil];
             [(SeafFileViewController *)_masterVc deleteFile:(SeafFile *)self.preViewItem];
