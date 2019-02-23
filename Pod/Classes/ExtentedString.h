@@ -18,6 +18,4 @@
 - (NSString *)stringEscapedForJavasacript;
 - (unsigned long) indexOf:(char) searchChar;
 
-- (NSString *)navItemImgName;
-
 @end

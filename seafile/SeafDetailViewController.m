@@ -53,7 +53,7 @@ enum SHARE_STATUS {
 @property (strong) NSArray *barItemsUnStar;
 @property (strong) UIBarButtonItem *editItem;
 @property (strong) UIBarButtonItem *exportItem;
-@property (strong) UIBarButtonItem *shareItem;
+@property (strong) UIBarButtonItem *deleteItem;
 @property (strong) UIBarButtonItem *backItem;
 
 @property (strong) UIDocumentInteractionController *docController;
@@ -271,15 +271,15 @@ enum SHARE_STATUS {
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
 
-    self.editItem = [self getBarItem:@"editfile".navItemImgName action:@selector(editFile:)size:18];
-    self.exportItem = [self getBarItemAutoSize:@"export".navItemImgName action:@selector(export:)];
-    self.shareItem = [self getBarItemAutoSize:@"share".navItemImgName action:@selector(share:)];
-    //UIBarButtonItem *deleteItem = [self getBarItemAutoSize:@"delete".navItemImgName action:@selector(delete:)];
-    UIBarButtonItem *starItem = [self getBarItem:@"star".navItemImgName action:@selector(unstarFile:)size:24];
-    UIBarButtonItem *unstarItem = [self getBarItem:@"unstar".navItemImgName action:@selector(starFile:)size:24];
+    self.editItem = [self getBarItem:@"editfile2" action:@selector(editFile:)size:18];
+    self.exportItem = [self getBarItemAutoSize:@"export2" action:@selector(export:)];
+    self.deleteItem = [self getBarItemAutoSize:@"delete" action:@selector(delete:)];
+
+    UIBarButtonItem *starItem = [self getBarItem:@"star" action:@selector(unstarFile:)size:22];
+    UIBarButtonItem *unstarItem = [self getBarItem:@"unstar" action:@selector(starFile:)size:22];
     UIBarButtonItem *space = [self getSpaceBarItem];
-    self.barItemsStar  = [NSArray arrayWithObjects:self.exportItem, space, self.shareItem, space, starItem, space, nil];
-    self.barItemsUnStar  = [NSArray arrayWithObjects:self.exportItem, space, self.shareItem, space, unstarItem, space, nil];
+    self.barItemsStar  = [NSArray arrayWithObjects:self.exportItem, space, self.deleteItem, space, starItem, space, nil];
+    self.barItemsUnStar  = [NSArray arrayWithObjects:self.exportItem, space, self.deleteItem, space, unstarItem, space, nil];
 
     if(IsIpad()) {
         NSArray *views = [[NSBundle mainBundle] loadNibNamed:@"FailToPreview_iPad" owner:self options:nil];
@@ -457,11 +457,13 @@ enum SHARE_STATUS {
 }
 
 #pragma mark - file operations
-- (IBAction)delete:(id)sender
-{
-    if (_masterVc && [_masterVc isKindOfClass:[SeafFileViewController class]]) {
-        [(SeafFileViewController *)_masterVc deleteFile:(SeafFile *)self.preViewItem];
-    }
+- (IBAction)delete:(id)sender {
+    [self alertWithTitle:@"" message:[NSString stringWithFormat:NSLocalizedString(@"Are you sure you want to delete %@ ?", @"Seafile"), self.preViewItem.name] yes:^{
+        if (_masterVc && [_masterVc isKindOfClass:[SeafFileViewController class]]) {
+            [self goBack:nil];
+            [(SeafFileViewController *)_masterVc deleteFile:(SeafFile *)self.preViewItem];
+        }
+    } no:nil];
 }
 
 - (IBAction)starFile:(id)sender
@@ -530,7 +532,7 @@ enum SHARE_STATUS {
         NSString *wechat = NSLocalizedString(@"Share to WeChat", @"Seafile");
         [titles addObject:wechat];
     }
-    [self showAlertWithAction:titles fromBarItem:self.shareItem withTitle:SHARE_TITLE];
+//    [self showAlertWithAction:titles fromBarItem:self.deleteItem withTitle:SHARE_TITLE];
 }
 
 - (void)savedToPhotoAlbumWithError:(NSError *)error file:(SeafFile *)file

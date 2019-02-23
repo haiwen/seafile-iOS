@@ -123,6 +123,7 @@
     UIImage *img = [UIImage imageNamed:imageName];
     [btn setImage:img forState:UIControlStateNormal];
     btn.showsTouchWhenHighlighted = YES;
+    btn.clipsToBounds = true;
     [btn addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];
     UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithCustomView:btn];
     return item;
