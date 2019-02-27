@@ -194,11 +194,9 @@
     Debug("result=%d, name=%@, delegate=%@, oid=%@, err=%@\n", result, self.name, _delegate, oid, err);
     [self uploadComplete:oid error:err];
     if (result) {
-        if ([self isImageFile]) {
-            [self saveThumbToLocal:oid];
-        }
         if (!_autoSync) {
             [Utils linkFileAtPath:self.lpath to:[SeafStorage.sharedObject documentPath:oid] error:nil];
+            [self saveThumbToLocal:oid];
         } else {
             // For auto sync photos, release local cache files immediately.
             [self cleanup];
@@ -580,7 +578,7 @@
     }];
 }
 
-- (UIImage *)getThumbImageFormAsset {
+- (UIImage *)getThumbImageFromAsset {
     __block UIImage *img = nil;
     if (_asset) {
         CGSize size = CGSizeMake(THUMB_SIZE * (int)[UIScreen mainScreen].scale, THUMB_SIZE * (int)[UIScreen mainScreen].scale);
@@ -646,11 +644,12 @@
 }
 
 - (UIImage *)icon {
-    if ([self getThumbImageFormAsset]) {
-        return [self getThumbImageFormAsset];
+    UIImage *thumb = [self getThumbImageFromAsset];
+    if (thumb) {
+        return thumb;
     } else {
-        UIImage *img = [self isImageFile] ? self.image : nil;
-        return img ? [Utils reSizeImage:img toSquare:THUMB_SIZE * (int)[UIScreen mainScreen].scale] : [UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString];
+        thumb = [self isImageFile] ? self.image : nil;
+        return thumb ? [Utils reSizeImage:thumb toSquare:THUMB_SIZE * (int)[UIScreen mainScreen].scale] : [UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString];
     }
 }
 
@@ -660,6 +659,7 @@
 }
 
 - (void)saveThumbToLocal:(NSString *)oid {
+    if (![self isImageFile]) return;
     int size = THUMB_SIZE * (int)[[UIScreen mainScreen] scale];
     NSString *thumbPath = [SeafStorage.sharedObject.thumbsDir stringByAppendingPathComponent:[NSString stringWithFormat:@"/%@-%d", oid, size]];
     if (![Utils fileExistsAtPath:thumbPath]) {
