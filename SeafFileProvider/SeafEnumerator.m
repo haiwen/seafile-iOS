@@ -86,12 +86,12 @@
             [dir loadContentSuccess: ^(SeafDir *d) {
                 NSArray *items = [self getSeafDirProviderItems:d startingAtPage:page];
                 [observer didEnumerateItems:items];
-                if (items.count == self.maxItemCount) {
+                if (items.count != self.maxItemCount) {
+                    [observer finishEnumeratingUpToPage:nil];
+                } else {
                     NSInteger numPage = [[NSString stringWithUTF8String:[page bytes]] integerValue] + 1;
                     NSData *providerPage = [[NSString stringWithFormat:@"%ld", (long)numPage] dataUsingEncoding:NSUTF8StringEncoding];
                     [observer finishEnumeratingUpToPage:providerPage];
-                } else {
-                    [observer finishEnumeratingUpToPage:nil];
                 }
             } failure:^(SeafDir *d, NSError *error) {
                 if (d.hasCache) {
@@ -140,17 +140,15 @@
     }
     
     NSInteger numPage = [[NSString stringWithUTF8String:[page bytes]] integerValue];
-    NSInteger start = numPage * self.maxItemCount + 1;
+    NSInteger start = numPage * self.maxItemCount;
     NSInteger stop = start + (self.maxItemCount - 1);
-    NSInteger counter = 0;
 
     NSMutableArray *items = [NSMutableArray new];
-    for (SeafBase *obj in [self getAccessiableSubItems: dir]) {
-        counter += 1;
-        if (counter >= start && counter <= stop) {
-            [obj loadCache];
-            [items addObject: [[SeafProviderItem alloc] initWithSeafItem:[SeafItem fromSeafBase:obj]]];
-        }
+    NSArray *array = [self getAccessiableSubItems:dir];
+    for (NSUInteger idx = start; idx <= stop && idx < array.count; ++idx) {
+        SeafBase *obj = [array objectAtIndex:idx];
+        [obj loadCache];
+        [items addObject: [[SeafProviderItem alloc] initWithSeafItem:[SeafItem fromSeafBase:obj]]];
     }
     return items;
 }
