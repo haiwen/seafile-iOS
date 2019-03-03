@@ -84,25 +84,29 @@
             
             SeafDir *dir = (SeafDir *)[_item toSeafObj];
             [dir loadContentSuccess: ^(SeafDir *d) {
-                NSArray *items = [self getSeafDirProviderItems:d startingAtPage:page];
-                [observer didEnumerateItems:items];
-                if (items.count != self.maxItemCount) {
-                    [observer finishEnumeratingUpToPage:nil];
-                } else {
-                    NSInteger numPage = [[NSString stringWithUTF8String:[page bytes]] integerValue] + 1;
-                    NSData *providerPage = [[NSString stringWithFormat:@"%ld", (long)numPage] dataUsingEncoding:NSUTF8StringEncoding];
-                    [observer finishEnumeratingUpToPage:providerPage];
-                }
+                [self enumerateItemsForObserver:observer startingAtPage:page inSeafDir:d];
             } failure:^(SeafDir *d, NSError *error) {
                 if (d.hasCache) {
-                    [observer didEnumerateItems:[self getSeafDirProviderItems:dir startingAtPage:page]];
-                    [observer finishEnumeratingUpToPage:nil];
+                    [self enumerateItemsForObserver:observer startingAtPage:page inSeafDir:d];
                 } else {
                     [observer finishEnumeratingWithError:[NSError fileProvierErrorServerUnreachable]];
                 }
             }];
         }
     }
+}
+
+- (void)enumerateItemsForObserver:(id<NSFileProviderEnumerationObserver>)observer startingAtPage:(NSFileProviderPage)page inSeafDir:(SeafDir *)dir {
+    [self getItemsFromSeafDir:dir startingAtPage:page result:^(NSArray *items, BOOL isLastPage) {
+        [observer didEnumerateItems:items];
+        if (isLastPage) {
+            [observer finishEnumeratingUpToPage:nil];
+        } else {
+            NSInteger numPage = [[NSString stringWithUTF8String:[page bytes]] integerValue] + 1;
+            NSData *providerPage = [[NSString stringWithFormat:@"%ld", (long)numPage] dataUsingEncoding:NSUTF8StringEncoding];
+            [observer finishEnumeratingUpToPage:providerPage];
+        }
+    }];
 }
 
 - (NSArray *)getRootProviderItems
@@ -129,8 +133,7 @@
     return dir.items;
 }
 
-- (NSArray *)getSeafDirProviderItems:(SeafDir *)dir startingAtPage:(NSFileProviderPage)page
-{
+- (void)getItemsFromSeafDir:(SeafDir *)dir startingAtPage:(NSFileProviderPage)page result:(void (^)(NSArray *items, BOOL isLastPage))resultBlock {
     if (@available(iOS 11.0, *)) {
         if (NSFileProviderInitialPageSortedByDate == page) {
             [dir reSortItemsByMtime];
@@ -145,12 +148,13 @@
 
     NSMutableArray *items = [NSMutableArray new];
     NSArray *array = [self getAccessiableSubItems:dir];
+    BOOL isLastPage = (stop >= array.count - 1);
     for (NSUInteger idx = start; idx <= stop && idx < array.count; ++idx) {
         SeafBase *obj = [array objectAtIndex:idx];
         [obj loadCache];
         [items addObject: [[SeafProviderItem alloc] initWithSeafItem:[SeafItem fromSeafBase:obj]]];
     }
-    return items;
+    resultBlock(items, isLastPage);
 }
 
 - (void)enumerateChangesForObserver:(id<NSFileProviderChangeObserver>)observer fromSyncAnchor:(NSFileProviderSyncAnchor)syncAnchor {
