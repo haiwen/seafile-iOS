@@ -137,7 +137,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
         //configuration.TLSMaximumSupportedProtocol = kTLSProtocol12;
         configuration.TLSMinimumSupportedProtocol = kTLSProtocol1;
-        _sessionMgr = [[AFHTTPSessionManager alloc] initWithSessionConfiguration:configuration];
+        _sessionMgr = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:self.address] sessionConfiguration:configuration];
         _sessionMgr.responseSerializer = [AFJSONResponseSerializer serializerWithReadingOptions:NSJSONReadingAllowFragments];
         self.policy = [self policyForHost:[self host]];
         _settings = [[NSMutableDictionary alloc] init];
