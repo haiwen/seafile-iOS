@@ -1,7 +1,7 @@
 def shared
   platform :ios, '8.0'
   pod 'Seafile', :path => "./"
-  pod 'AFNetworking', '~> 2.6.1'
+  pod 'AFNetworking', '~> 3.2.0'
   pod 'OpenSSL-Universal', '~> 1.0.1.p'
   pod 'APLRUCache', '~> 1.0.0'
 end
@@ -33,4 +33,15 @@ end
 target :"SeafShare" do
     pod 'SVPullToRefresh', :git => 'https://github.com/lilthree/SVPullToRefresh.git', :branch => 'master'
     shared
+end
+
+# https://github.com/CocoaPods/CocoaPods/issues/8069
+post_install do |installer|
+    installer.pods_project.targets.each do |target|
+        target.build_configurations.each do |config|
+            if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 8.0
+                config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '8.0'
+            end
+        end
+    end
 end

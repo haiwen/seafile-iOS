@@ -12,7 +12,7 @@ Pod::Spec.new do |s|
   s.platform         = :ios, '8.0'
   s.requires_arc     = true
   s.frameworks       = 'AssetsLibrary'
-  s.dependency 'AFNetworking', '~> 2.6.1'
+  s.dependency 'AFNetworking', '~> 3.2.0'
   s.dependency 'OpenSSL-Universal', '~> 1.0.1.p'
   s.pod_target_xcconfig = {
     'LIBRARY_SEARCH_PATHS' => '$(inherited) $(PODS_ROOT)/OpenSSL-Universal/lib-ios/',

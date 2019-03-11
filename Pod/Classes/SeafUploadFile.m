@@ -223,8 +223,12 @@
         [self finishUpload:NO oid:nil error:nil];
         return;
     }
-    NSProgress *progress = nil;
-    _task = [connection.sessionMgr uploadTaskWithStreamedRequest:request progress:&progress completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
+    __weak __typeof__ (self) wself = self;
+    self.task = [connection.sessionMgr uploadTaskWithStreamedRequest:request progress:^(NSProgress * _Nonnull uploadProgress) {
+        __strong __typeof (wself) sself = wself;
+        [sself updateProgress:uploadProgress];
+    } completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
+        __strong __typeof (wself) sself = wself;
         NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
         if (error && resp.statusCode == 200) {
             Debug("Error:%@, %@, %@", error, response, error.userInfo);
@@ -236,8 +240,8 @@
                 // Refresh passwords when expired
                 [connection refreshRepoPasswords];
             }
-            [self showDeserializedError:error];
-            [self finishUpload:NO oid:nil error:error];
+            [sself showDeserializedError:error];
+            [sself finishUpload:NO oid:nil error:error];
         } else {
             NSString *oid = nil;
             if ([responseObject isKindOfClass:[NSArray class]]) {
@@ -247,11 +251,10 @@
             }
             if (!oid || oid.length < 1) oid = [[NSUUID UUID] UUIDString];
             Debug("Successfully upload file:%@ autosync:%d oid=%@, responseObject=%@", self.name, self.autoSync, oid, responseObject);
-            [self finishUpload:YES oid:oid error:nil];
+            [sself finishUpload:YES oid:oid error:nil];
         }
     }];
 
-    [self updateProgress:progress];
     [_task resume];
 }
 
@@ -406,20 +409,24 @@
         }
     } error:nil];
 
-    NSProgress *progress = nil;
-    _task = [connection.sessionMgr uploadTaskWithStreamedRequest:request progress:&progress completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
+    __weak __typeof__ (self) wself = self;
+    self.task = [connection.sessionMgr uploadTaskWithStreamedRequest:request progress:^(NSProgress * _Nonnull uploadProgress) {
+        __strong __typeof (wself) sself = wself;
+        [sself updateProgress:uploadProgress];
+    } completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
+        __strong __typeof (wself) sself = wself;
         Debug("Upload blocks %@", arr);
         NSHTTPURLResponse *resp __attribute__((unused)) = (NSHTTPURLResponse *)response;
         if (error) {
             Debug("Upload failed :%@,code=%ld, res=%@\n", error, (long)resp.statusCode, responseObject);
-            [self showDeserializedError:error];
-            [self finishUpload:NO oid:nil error:error];
+            [sself showDeserializedError:error];
+            [sself finishUpload:NO oid:nil error:error];
         } else {
-            self.blkidx += count;
-            [self performSelector:@selector(uploadRawBlocks:) withObject:connection afterDelay:0.0];
+            sself.blkidx += count;
+            [sself performSelector:@selector(uploadRawBlocks:) withObject:connection afterDelay:0.0];
         }
     }];
-    [self updateProgress:progress];
+    
     [_task resume];
 }
 

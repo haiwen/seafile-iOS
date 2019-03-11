@@ -220,13 +220,19 @@
          [self downloadProgress:0];
          url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
          NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:DEFAULT_TIMEOUT];
-         NSProgress *progress = nil;
+
          NSString *target = [SeafStorage.sharedObject documentPath:self.downloadingFileOid];
          Debug("Download file %@  %@ from %@, target:%@ %d", self.name, self.downloadingFileOid, url, target, [Utils fileExistsAtPath:target]);
 
-         _task = [connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:&progress destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
+         self.task = [self->connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:^(NSProgress * _Nonnull downloadProgress) {
+             self.progress = downloadProgress;
+             [self.progress addObserver:self
+                         forKeyPath:@"fractionCompleted"
+                            options:NSKeyValueObservingOptionNew
+                            context:NULL];
+         } destination:^NSURL * _Nonnull(NSURL * _Nonnull targetPath, NSURLResponse * _Nonnull response) {
              return [NSURL fileURLWithPath:[target stringByAppendingPathExtension:@"tmp"]];
-         } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
+         } completionHandler:^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
              if (!self.downloadingFileOid) {
                  return Info("Download file %@ already canceled", self.name);
              }
@@ -240,14 +246,10 @@
                      [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
                  }
                  [self finishDownload:self.downloadingFileOid];
-            }
+             }
          }];
-         _progress = progress;
-         [_progress addObserver:self
-                    forKeyPath:@"fractionCompleted"
-                       options:NSKeyValueObservingOptionNew
-                       context:NULL];
-         [_task resume];
+         
+         [self.task resume];
      }
                     failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
@@ -363,28 +365,33 @@
     if (!self.isDownloading) return;
     NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
     Debug("URL: %@", downloadRequest.URL);
-    NSProgress *progress = nil;
+
     NSString *target = [SeafStorage.sharedObject blockPath:blk_id];
-    NSURLSessionDownloadTask *task = [connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:&progress destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
+    __weak __typeof__ (self) wself = self;
+    NSURLSessionDownloadTask *task = [connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:^(NSProgress * _Nonnull downloadProgress) {
+        __strong __typeof (wself) sself = wself;
+        sself.progress = downloadProgress;
+        [sself.progress addObserver:sself
+                    forKeyPath:@"fractionCompleted"
+                       options:NSKeyValueObservingOptionNew
+                       context:NULL];
+    } destination:^NSURL * _Nonnull(NSURL * _Nonnull targetPath, NSURLResponse * _Nonnull response) {
         return [NSURL fileURLWithPath:target];
-    } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
+    } completionHandler:^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
+        __strong __typeof (wself) sself = wself;
         if (error) {
             Warning("error=%@", error);
-            [self failedDownload:error];
+            [sself failedDownload:error];
         } else {
-            Debug("Successfully downloaded file %@ block:%@, filePath:%@", self.name, blk_id, filePath);
+            Debug("Successfully downloaded file %@ block:%@, filePath:%@", sself.name, blk_id, filePath);
             if (![filePath.path isEqualToString:target]) {
                 [[NSFileManager defaultManager] removeItemAtPath:target error:nil];
                 [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
             }
-            [self finishBlock:blk_id];
+            [sself finishBlock:blk_id];
         }
     }];
-    _progress = progress;
-    [_progress addObserver:self
-                forKeyPath:@"fractionCompleted"
-                   options:NSKeyValueObservingOptionNew
-                   context:NULL];
+    
     [task resume];
 }
 
