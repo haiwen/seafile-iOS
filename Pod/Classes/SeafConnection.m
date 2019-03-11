@@ -62,7 +62,7 @@ static AFSecurityPolicy *SeafPolicyFromCert(SecCertificateRef cert)
     policy.allowInvalidCertificates = YES;
     SecTrustRef clientTrust = AFUTTrustWithCertificate(cert);
     NSArray * certificates = AFCertificateTrustChainForServerTrust(clientTrust);
-    [policy setPinnedCertificates:certificates];
+    [policy setPinnedCertificates:[NSSet setWithArray:certificates]];
     return policy;
 }
 static AFSecurityPolicy *SeafPolicyFromFile(NSString *path)
@@ -554,9 +554,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             if (key == nil){
                 return NSURLSessionAuthChallengeCancelAuthenticationChallenge;
             } else {
-                _clientIdentityKey = key;
-                _clientCred = *credential;
-                [Utils dict:_info setObject:key forKey:@"identity"];
+                self->_clientIdentityKey = key;
+                self->_clientCred = *credential;
+                [Utils dict:self->_info setObject:key forKey:@"identity"];
                 return NSURLSessionAuthChallengeUseCredential;
             }
         } else {
@@ -797,7 +797,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSURLRequest *request = [self buildRequest:url method:method form:form];
     Debug("Request: %@", request.URL);
 
-    NSURLSessionDataTask *task = [_sessionMgr dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
+    NSURLSessionDataTask *task = [self.sessionMgr dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
         NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
         if (error) {
             [self showDeserializedError:error];
@@ -808,8 +808,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                 Debug("wiped: %@", wiped);
                 @synchronized(self) {
                     if (![self authorized])   return;
-                    _token = nil;
-                    [_info removeObjectForKey:@"token"];
+                    self->_token = nil;
+                    [self.info removeObjectForKey:@"token"];
                     [self saveAccountInfo];
                     if (wiped) {
                         [self clearAccountCache];
@@ -1090,6 +1090,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         
         PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
         PHAsset *asset = [result firstObject];
+        if (asset == nil) continue;
         SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset];
 
         NSString *path = [self.localUploadDir stringByAppendingPathComponent:photoAsset.name];
