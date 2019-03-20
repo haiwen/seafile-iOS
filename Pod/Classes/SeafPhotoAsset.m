@@ -23,11 +23,15 @@
 
 - (NSString *)assetName:(PHAsset *)asset {
     NSString *name;
-    if (@available(iOS 9.0, *)) {
-        NSArray *resources = [PHAssetResource assetResourcesForAsset:asset];
-        name = ((PHAssetResource*)resources.firstObject).originalFilename;
-    } else {
+    if ([asset valueForKey:@"filename"]) {
+        //private api,same as originalFilename, test on iOS12 iOS11.1 iOS10.3 iOS9.0 iOS8.4
         name = [asset valueForKey:@"filename"];
+    } else {
+        if (@available(iOS 9.0, *)) {
+            //it's very slow to get the originalFilename
+            NSArray *resources = [PHAssetResource assetResourcesForAsset:asset];
+            name = ((PHAssetResource*)resources.firstObject).originalFilename;
+        }
     }
     if ([name hasPrefix:@"IMG_"]) {
         NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];

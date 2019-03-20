@@ -528,7 +528,7 @@ enum {
     }
 }
 
-- (void) privacyPolicyVC {
+- (void)privacyPolicyVC {
     SeafPrivacyPolicyViewController *vc = [[SeafPrivacyPolicyViewController alloc] init];
     if (IsIpad()) {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
