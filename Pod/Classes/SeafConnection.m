@@ -1202,11 +1202,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }
     
     NSArray *photos = [self filterOutUploadedPhotos];
-    for (SeafPhotoAsset *photoAsset in photos) {
+    [photos enumerateObjectsUsingBlock:^(SeafPhotoAsset *photoAsset, NSUInteger idx, BOOL * _Nonnull stop) {
         if (![self IsPhotoUploaded:photoAsset] && ![self IsPhotoUploading:photoAsset]) {
             [self addUploadPhoto:photoAsset.localIdentifier];
         }
-    }
+    }];
+
     if (self.firstTimeSync) {
         self.firstTimeSync = false;
     }
@@ -1234,24 +1235,27 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         _inCheckPhotoss = true;
     }
 
-    NSMutableArray *photos = [[NSMutableArray alloc] init];
+    __block NSMutableArray *photos = [[NSMutableArray alloc] init];
     
     PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
     fetchOptions.predicate = predicate;
     PHAssetCollection *collection = result.firstObject;
     PHFetchResult *assets = [PHAsset fetchAssetsInAssetCollection:collection options:fetchOptions];
     
-    for (PHAsset *asset in assets) {
+    [assets enumerateObjectsUsingBlock:^(PHAsset *asset, NSUInteger idx, BOOL * _Nonnull stop) {
         SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset];
+        if (photoAsset.name == nil) {
+            return;
+        }
         if (self.firstTimeSync) {
-            if ([_syncDir nameExist:photoAsset.name]) {
+            if ([self.syncDir nameExist:photoAsset.name]) {
                 [self setPhotoUploadedIdentifier:asset.localIdentifier];
                 Debug("First time sync, skip file %@(%@) which has already been uploaded", photoAsset.name, photoAsset.localIdentifier);
+                return;
             }
-        } else {
-            [photos addObject:photoAsset];
         }
-    }
+        [photos addObject:photoAsset];
+    }];
 
     return photos;
 }
@@ -1375,7 +1379,13 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     _inAutoSync = value;
     if (_inAutoSync) {
         Debug("start auto sync, check photos for server %@", _address);
-        [self checkPhotosUploadDir:nil];
+        [self checkPhotosUploadDir:^(BOOL success, NSError * _Nullable error) {
+            if (error) {
+                
+            } else {
+                
+            }
+        }];
     }
 }
 

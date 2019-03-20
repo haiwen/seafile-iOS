@@ -113,7 +113,6 @@
 		57F0AAFE16D8935800364D18 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57F0AAFC16D8913600364D18 /* AssetsLibrary.framework */; };
 		57F143931B886B96009C1BC8 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57F143921B886B96009C1BC8 /* CoreLocation.framework */; };
 		57F476EC1C00623300047395 /* SeafPhotoThumb.m in Sources */ = {isa = PBXBuildFile; fileRef = 57F476EB1C00623300047395 /* SeafPhotoThumb.m */; };
-		583F23C21E3E6EAC00F9FE07 /* Contacts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 583F23C11E3E6EAC00F9FE07 /* Contacts.framework */; };
 		5857E9CB1FAFCAD5004F124D /* SeafProviderItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 5857E9CA1FAFCAD5004F124D /* SeafProviderItem.m */; };
 		5857E9CE1FB0195C004F124D /* SeafEnumerator.m in Sources */ = {isa = PBXBuildFile; fileRef = 5857E9CD1FB0195C004F124D /* SeafEnumerator.m */; };
 		5857EA2A1FB03F2C004F124D /* SeafItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 5857EA291FB03F2C004F124D /* SeafItem.m */; };
@@ -602,7 +601,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				583F23C21E3E6EAC00F9FE07 /* Contacts.framework in Frameworks */,
 				57F143931B886B96009C1BC8 /* CoreLocation.framework in Frameworks */,
 				57814AF81AA8B55000D1D5D8 /* Photos.framework in Frameworks */,
 				57ABE5FB187925B300145FE3 /* CoreText.framework in Frameworks */,
