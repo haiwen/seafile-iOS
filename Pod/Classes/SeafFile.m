@@ -682,8 +682,10 @@
     if (!self.ooid)
         return nil;
     NSString *path = [SeafStorage.sharedObject documentPath:self.ooid];
-    NSString *cachePath = [[SeafStorage.sharedObject tempDir] stringByAppendingPathComponent:self.ooid];
-    return [Utils imageFromPath:path withMaxSize:IMAGE_MAX_SIZE cachePath:cachePath andFileName:self.name];
+    NSString *name = [@"cacheimage-preview-" stringByAppendingString:self.name];
+    NSString *cachePath = [[[SeafStorage.sharedObject tempDir] stringByAppendingPathComponent:self.ooid] stringByAppendingPathComponent:name];
+    return [Utils imageFromPath:path withMaxSize:IMAGE_MAX_SIZE cachePath:cachePath];
+    
 }
 
 - (long long)filesize
