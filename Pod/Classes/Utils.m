@@ -521,26 +521,6 @@
     return nil;
 }
 
-+ (UIImage *)imageFromPath:(NSString *)path withMaxSize:(float)length cachePath:(NSString *)cachePath andFileName:(NSString *)fileName
-{
-    const int MAX_SIZE = 2048;
-    if ([[NSFileManager defaultManager] fileExistsAtPath:cachePath]) {
-        UIImage *image = [UIImage imageWithContentsOfFile:[NSString stringWithFormat:@"%@/%@",cachePath,fileName]];
-        return image;
-    }
-
-    if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
-        UIImage *image = [UIImage imageWithContentsOfFile:path];
-        if (image.size.width > MAX_SIZE || image.size.height > MAX_SIZE) {
-            UIImage *img =  [Utils reSizeImage:image toSquare:MAX_SIZE];
-            [UIImageJPEGRepresentation(img, 1.0) writeToFile:path atomically:YES];
-            return img;
-        }
-        return image;
-    }
-    return nil;
-}
-
 + (NSString *)encodePath:(NSString *)server username:(NSString *)username repo:(NSString *)repoId path:(NSString *)path
 {
     NSMutableCharacterSet *allowedSet = [NSMutableCharacterSet characterSetWithCharactersInString:@"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLKMNOPQRSTUVWXYZ0123456789"];

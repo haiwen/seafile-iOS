@@ -49,7 +49,6 @@
 
 + (UIImage *)reSizeImage:(UIImage *)image toSquare:(float)length;
 + (UIImage *)imageFromPath:(NSString *)path withMaxSize:(float)length cachePath:(NSString *)cachePath;
-+ (UIImage *)imageFromPath:(NSString *)path withMaxSize:(float)length cachePath:(NSString *)cachePath andFileName:(NSString *)fileName;
 
 + (NSDictionary *)queryToDict:(NSString *)query;
 + (void)dict:(NSMutableDictionary *)dict setObject:(id)value forKey:(NSString *)defaultName;
