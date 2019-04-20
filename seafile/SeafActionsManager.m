@@ -16,7 +16,7 @@
 
 @implementation SeafActionsManager
 
-+ (void)entryAction:(SeafBase *)entry inTargetVC:(UIViewController *)targetVC fromView:(UIView *)view actionBlock:(ActionType)block {
++ (void)entryAction:(SeafBase *)entry inEncryptedRepo:(BOOL)inEncryptedRepo inTargetVC:(UIViewController *)targetVC fromView:(UIView *)view actionBlock:(ActionType)block {
     NSArray *titles;
     if ([entry isKindOfClass:[SeafRepo class]]) {
         SeafRepo *repo = (SeafRepo *)entry;
@@ -26,22 +26,35 @@
             titles = [NSArray arrayWithObjects:S_DOWNLOAD, nil];
         }
     } else if ([entry isKindOfClass:[SeafDir class]]) {
-        titles = [NSArray arrayWithObjects:S_DOWNLOAD, S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
+        if (inEncryptedRepo) {
+            titles = [NSArray arrayWithObjects:S_DOWNLOAD, S_DELETE, S_RENAME, nil];
+        } else {
+            titles = [NSArray arrayWithObjects:S_DOWNLOAD, S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
+        }
     } else if ([entry isKindOfClass:[SeafFile class]]) {
         SeafFile *file = (SeafFile *)entry;
+        
         NSString *star = file.isStarred ? S_UNSTAR : S_STAR;
         NSMutableArray *tTitles = [NSMutableArray array];
         if (file.mpath)
-            tTitles = [NSMutableArray arrayWithObjects:star, S_DELETE, S_UPLOAD, S_SHARE_EMAIL, S_SHARE_LINK, nil];
+            tTitles = [NSMutableArray arrayWithObjects:star, S_DELETE, S_UPLOAD, nil];
         else
-            tTitles = [NSMutableArray arrayWithObjects:star, S_DELETE, S_REDOWNLOAD, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
+            tTitles = [NSMutableArray arrayWithObjects:star, S_DELETE, S_REDOWNLOAD, S_RENAME, nil];
+        
+        if (!inEncryptedRepo) {
+            [tTitles addObjectsFromArray:@[S_SHARE_EMAIL, S_SHARE_LINK]];
+        }
         
         if ([SeafWechatHelper wechatInstalled]) {
             [tTitles addObject:S_SHARE_TO_WECHAT];
         }
         titles = [tTitles copy];
     } else if ([entry isKindOfClass:[SeafUploadFile class]]) {
-        titles = [NSArray arrayWithObjects:S_DOWNLOAD, S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
+        if (inEncryptedRepo) {
+            titles = [NSArray arrayWithObjects:S_DOWNLOAD, S_DELETE, S_RENAME, nil];
+        } else {
+            titles = [NSArray arrayWithObjects:S_DOWNLOAD, S_DELETE, S_RENAME, S_SHARE_EMAIL, S_SHARE_LINK, nil];
+        }
     }
     
     SeafActionSheet *actionSheet = [SeafActionSheet actionSheetWithTitles:titles];

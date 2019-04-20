@@ -150,30 +150,32 @@
     return _ooid != nil;
 }
 
-- (void)generateShareLink:(id<SeafShareDelegate>)dg type:(NSString *)type
-{
-    NSString *url = [NSString stringWithFormat:API_URL"/repos/%@/file/shared-link/", self.repoId];
-    NSString *form = [NSString stringWithFormat:@"p=%@&type=%@", [self.path escapedPostForm], type];
-    [connection sendPut:url form:form
-                success:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-         NSString *link = [[response allHeaderFields] objectForKey:@"Location"];
-         Debug("delegate=%@, share link = %@\n", dg, link);
-         if ([link hasPrefix:@"\""])
-             _shareLink = [link substringWithRange:NSMakeRange(1, link.length-2)];
-         else
-             _shareLink = link;
-         [dg generateSharelink:self WithResult:YES];
-     }
-                failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
-         [dg generateSharelink:self WithResult:NO];
-     }];
+- (void)generateShareLink:(id<SeafShareDelegate>)dg password:(NSString *)password expire_days:(NSString *)expire_days {
+    NSString *url = [NSString stringWithFormat:@"%@/share-links/", API_URL_V21];
+    NSString *form = [NSString stringWithFormat:@"path=%@&repo_id=%@", [self.path escapedPostForm], self.repoId];
+    if (password) {
+        [form stringByAppendingString:[NSString stringWithFormat:@"&password=%@", password]];
+    }
+    if (expire_days) {
+        [form stringByAppendingString:[NSString stringWithFormat:@"&expire_days=%@", expire_days]];
+    }
+    
+    [connection sendPost:url form:form success:^(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nonnull response, id  _Nonnull JSON) {
+        if (JSON && [JSON objectForKey:@"link"]) {
+            NSString *link = [JSON objectForKey:@"link"];
+            self->_shareLink = link;
+            [dg generateSharelink:self WithResult:YES];
+        } else {
+            [dg generateSharelink:self WithResult:NO];
+        }
+    } failure:^(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nullable response, id  _Nullable JSON, NSError * _Nullable error) {
+        [dg generateSharelink:self WithResult:NO];
+    }];
 }
 
 - (void)generateShareLink:(id<SeafShareDelegate>)dg
 {
-    return [self generateShareLink:dg type:@"f"];
+    return [self generateShareLink:dg password:nil expire_days:nil];
 }
 
 - (void)downloadComplete:(BOOL)updated
