@@ -252,6 +252,8 @@
 		F536DA191F30DB6F00F2EF3F /* SeafSyncInfoCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F536DA171F30DB6F00F2EF3F /* SeafSyncInfoCell.m */; };
 		F5518092214E27DD00AA9D7A /* SeafShareFileViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F5C648F9210A0B4E00842687 /* SeafShareFileViewController.m */; };
 		F555676A1FC7222800E87043 /* SeafWechatHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = F55567691FC7222800E87043 /* SeafWechatHelper.m */; };
+		F55896882263269A0084C642 /* LaunchScreeniPhone.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F55896872263269A0084C642 /* LaunchScreeniPhone.storyboard */; };
+		F558968A22632A9C0084C642 /* LaunchScreeniPad.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F558968922632A9C0084C642 /* LaunchScreeniPad.storyboard */; };
 		F55A4ADF213A7D0500AAF3DF /* SeafShareFileViewController.h in Sources */ = {isa = PBXBuildFile; fileRef = F5C648F8210A0B4E00842687 /* SeafShareFileViewController.h */; };
 		F55A4AE4213A9E5A00AAF3DF /* ShareViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F55A4AE3213A9E5A00AAF3DF /* ShareViewController.m */; };
 		F568C1FB1EF10F8900F1035D /* SeafActionSheet.m in Sources */ = {isa = PBXBuildFile; fileRef = F568C1FA1EF10F8900F1035D /* SeafActionSheet.m */; };
@@ -566,6 +568,8 @@
 		F536DA171F30DB6F00F2EF3F /* SeafSyncInfoCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafSyncInfoCell.m; sourceTree = "<group>"; };
 		F55567681FC7222800E87043 /* SeafWechatHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafWechatHelper.h; sourceTree = "<group>"; };
 		F55567691FC7222800E87043 /* SeafWechatHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafWechatHelper.m; sourceTree = "<group>"; };
+		F55896872263269A0084C642 /* LaunchScreeniPhone.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreeniPhone.storyboard; sourceTree = "<group>"; };
+		F558968922632A9C0084C642 /* LaunchScreeniPad.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreeniPad.storyboard; sourceTree = "<group>"; };
 		F55A4AE2213A9E5A00AAF3DF /* ShareViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShareViewController.h; sourceTree = "<group>"; };
 		F55A4AE3213A9E5A00AAF3DF /* ShareViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ShareViewController.m; sourceTree = "<group>"; };
 		F568C1F91EF10F8900F1035D /* SeafActionSheet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafActionSheet.h; sourceTree = "<group>"; };
@@ -1011,6 +1015,8 @@
 				F52111D721E1C14D00D93BB8 /* SeafMkLibAlertController_iPad.xib */,
 				F52111D521E1C14D00D93BB8 /* SeafMkLibAlertController_iPhone.xib */,
 				F52111D621E1C14D00D93BB8 /* SeafSyncInfoCell.xib */,
+				F55896872263269A0084C642 /* LaunchScreeniPhone.storyboard */,
+				F558968922632A9C0084C642 /* LaunchScreeniPad.storyboard */,
 			);
 			path = ui;
 			sourceTree = "<group>";
@@ -1221,6 +1227,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 				"zh-Hans",
 				Base,
@@ -1313,6 +1320,7 @@
 				57708C0219F23CD300D6ACE7 /* tab-account@2x.png in Resources */,
 				57124BEB1B3EA6EA00075EAE /* LaunchScreen.png in Resources */,
 				577B6C6216AAD241008E82C2 /* tab-star.png in Resources */,
+				F558968A22632A9C0084C642 /* LaunchScreeniPad.storyboard in Resources */,
 				5715551E1995FCDC00D2821D /* ImageError@2x.png in Resources */,
 				57C03F5817FB271100F7B575 /* checkmask2.png in Resources */,
 				57C03F4617FB271100F7B575 /* unstar2.png in Resources */,
@@ -1334,6 +1342,7 @@
 				57943C1019F027D5008423E5 /* refresh2@2x.png in Resources */,
 				57943C0019F027D5008423E5 /* arrowleft@2x.png in Resources */,
 				F52111C121E1C12000D93BB8 /* SeafAccountViewController_iPad.xib in Resources */,
+				F55896882263269A0084C642 /* LaunchScreeniPhone.storyboard in Resources */,
 				F521118521E1C12000D93BB8 /* SeafTextEditorViewController_iPad.xib in Resources */,
 				57943C1619F027D5008423E5 /* tab-home@2x.png in Resources */,
 				F52111B721E1C12000D93BB8 /* SeafDirCell.xib in Resources */,
