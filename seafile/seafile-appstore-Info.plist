@@ -103,6 +103,10 @@
 	<array>
 		<string>fetch</string>
 	</array>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreeniPhone</string>
+	<key>UILaunchStoryboardName~ipad</key>
+	<string>LaunchScreeniPad</string>
 	<key>UIMainStoryboardFile</key>
 	<string>SeafStart</string>
 	<key>UIMainStoryboardFile~ipad</key>
