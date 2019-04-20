@@ -32,18 +32,28 @@
         name = ((PHAssetResource*)resources.firstObject).originalFilename;
     }
     if ([name hasPrefix:@"IMG_"]) {
-        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-        [dateFormatter setDateFormat:@"yyyyMMdd_HHmmss"];
-        NSDate *date = asset.creationDate;
-        if (date == nil) {
-            date = [NSDate date];
+        name = [self nameFormat:[name substringFromIndex:4] creationDate:asset.creationDate];
+    } else if ([asset valueForKey:@"cloudAssetGUID"] && [name containsString:[asset valueForKey:@"cloudAssetGUID"]]) {
+        //name of image from icloud: E5DBF99D-E62F-4E29-BCF9-EBC253E3A1C8.PNG
+        NSRange range = [name rangeOfString:@"." options:NSBackwardsSearch];
+        if (range.location > 4) {
+            name = [self nameFormat:[name substringFromIndex:range.location-4] creationDate:asset.creationDate];
         }
-        NSString *dateStr = [dateFormatter stringFromDate:date];
-        name = [NSString stringWithFormat:@"IMG_%@_%@", dateStr, [name substringFromIndex:4]];
     }
     if ([name hasSuffix:@"HEIC"]) {
         name = [name stringByReplacingOccurrencesOfString:@"HEIC" withString:@"JPG"];
     }
+    return name;
+}
+
+- (NSString *)nameFormat:(NSString *)name creationDate:(NSDate *)date {
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    [dateFormatter setDateFormat:@"yyyyMMdd_HHmmss"];
+    if (date == nil) {
+        date = [NSDate date];
+    }
+    NSString *dateStr = [dateFormatter stringFromDate:date];
+    name = [NSString stringWithFormat:@"IMG_%@_%@", dateStr, name];
     return name;
 }
 
