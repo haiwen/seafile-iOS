@@ -576,17 +576,7 @@ enum {
     SeafCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
     @weakify(self);
     
-    BOOL encrypted = NO;
-    for (NSArray *group in self.connection.rootFolder.repoGroups) {
-        for (SeafRepo *repo in group) {
-            if (self.directory.repoId == repo.repoId) {
-                encrypted = repo.encrypted;
-                break;
-            }
-        }
-    }
-    
-    [SeafActionsManager entryAction:entry inEncryptedRepo:encrypted inTargetVC:self fromView:cell actionBlock:^(NSString *typeTile) {
+    [SeafActionsManager entryAction:entry inEncryptedRepo:[self.connection isEncrypted:self.directory.repoId] inTargetVC:self fromView:cell actionBlock:^(NSString *typeTile) {
         @strongify(self);
         [self handleAction:typeTile];
     }];
