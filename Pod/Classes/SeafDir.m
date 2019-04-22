@@ -553,11 +553,6 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
     [self moveEntries:entries dstDir:dstDir success:nil failure:nil];
 }
 
-- (void)generateShareLink:(id<SeafShareDelegate>)dg
-{
-    return [self generateShareLink:dg type:@"d"];
-}
-
 - (NSArray *)subDirs
 {
     NSMutableArray *arr = [[NSMutableArray alloc] init];
