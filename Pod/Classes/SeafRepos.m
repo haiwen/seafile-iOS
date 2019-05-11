@@ -53,13 +53,31 @@
     return self;
 }
 
-- (BOOL)passwordRequired
-{
-    //Debug("repoId;%@ %d %@", self.repoId, self.encrypted, [connection getRepoPassword:self.repoId]);
-    if (self.encrypted && ![connection getRepoPassword:self.repoId])
-        return YES;
-    else
+- (BOOL)passwordRequired {
+    if (self.encrypted) {
+        if ([connection shouldLocalDecrypt:self.repoId]) {
+            return [connection getRepoPassword:self.repoId] == nil ? YES : NO;
+        } else {
+            NSString *password = [connection getRepoPassword:self.repoId];
+            if (!password) {
+                return YES;
+            } else {
+                __block BOOL result = YES;
+                __block BOOL wait = YES;
+                [self setRepoPassword:password block:^(SeafBase *entry, int ret) {
+                    wait = NO;
+                    result = ret == RET_SUCCESS ? NO : YES;
+                }];
+                //dispatch_semaphore will block main thread
+                while (wait) {
+                    [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
+                }
+                return result;
+            }
+        }
+    } else {
         return NO;
+    }
 }
 
 - (NSString *)key
@@ -177,13 +195,16 @@
     }
     NSString *request_str = [NSString stringWithFormat:API_URL"/repos/%@/?op=setpassword", self.repoId];
     NSString *formString = [NSString stringWithFormat:@"password=%@", password.escapedPostForm];
+    __weak typeof(self) wself = self;
     [connection sendPost:request_str form:formString
                  success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-                     Debug("Set repo %@ password success.", self.repoId);
-                     [connection saveRepo:self.repoId password:password];
-                     if (block)  block(self, RET_SUCCESS);
+                     __strong typeof(self) sself = wself;
+                     Debug("Set repo %@ password success.", sself.repoId);
+                     [sself->connection saveRepo:sself.repoId password:password];
+                     if (block)  block(sself, RET_SUCCESS);
                  } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
-                     Debug("Failed to set repo %@ password: %@, %@", self.repoId, JSON, error);
+                     __strong typeof(self) sself = wself;
+                     Debug("Failed to set repo %@ password: %@, %@", sself.repoId, JSON, error);
                      int ret = RET_FAILED;
                      if (JSON != nil) {
                          NSString *errMsg = [JSON objectForKey:@"error_msg"];
@@ -192,7 +213,7 @@
                              ret = RET_WRONG_PASSWORD;
                          }
                      }
-                     if (block)  block(self, ret);
+                     if (block)  block(sself, ret);
                  }];
 }
 
@@ -219,23 +240,12 @@
     }
     repo_password_set_block_t handler = ^(SeafBase *entry, int ret) {
         if (ret == RET_SUCCESS)
-            [connection saveRepo:self.repoId password:password];
+            [self->connection saveRepo:self.repoId password:password];
         if (block)
             block(entry, ret);
     };
-
-    int version = [[connection getRepo:self.repoId] encVersion];
-    if (version == 2)
-        return [self checkRepoPasswordV2:password block:handler];
-    NSString *magic = [NSData passwordMaigc:password repo:self.repoId version:version];
-    NSString *request_str = [NSString stringWithFormat:API_URL"/repos/%@/?op=checkpassword", self.repoId];
-    NSString *formString = [NSString stringWithFormat:@"magic=%@", [magic escapedPostForm]];
-    [connection sendPost:request_str form:formString
-                 success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-                     handler(self, true);
-                 } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
-                     handler(self, false);
-                 } ];
+    //only support encVersion=2
+    [self checkRepoPasswordV2:password block:handler];
 }
 
 @end

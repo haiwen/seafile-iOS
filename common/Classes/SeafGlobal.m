@@ -298,13 +298,18 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 {
     Debug("Start timer.");
     [self tick:nil];
-    _autoSyncTimer = [NSTimer scheduledTimerWithTimeInterval:15*60
-                                                      target:self
-                                                    selector:@selector(tick:)
-                                                    userInfo:nil
-                                                     repeats:YES];
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        self->_autoSyncTimer = [NSTimer scheduledTimerWithTimeInterval:15*30
+                                                          target:self
+                                                        selector:@selector(tick:)
+                                                        userInfo:nil
+                                                         repeats:YES];
+        [[NSRunLoop currentRunLoop] addTimer:self->_autoSyncTimer forMode:NSRunLoopCommonModes];
+        //use this method to ensure that the timer working
+        [[NSRunLoop currentRunLoop] run];
+    });
     [[AFNetworkReachabilityManager sharedManager] setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
-        [self tick:_autoSyncTimer];
+        [self tick:self->_autoSyncTimer];
     }];
 }
 
