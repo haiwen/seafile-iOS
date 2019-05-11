@@ -608,7 +608,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (BOOL)localDecrypt
 {
-    return self.localDecryptionEnabled && self.isChunkSupported;
+    return self.localDecryptionEnabled;
 }
 
 - (BOOL)isEncrypted:(NSString *)repoId
@@ -1490,9 +1490,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }];
 }
 
-- (void)refreshRepoPasswords
-{
-     NSDictionary *repopasswds = [_info objectForKey:@"repopassword"];
+- (void)refreshRepoPasswords {
+    NSDictionary *repopasswds = [_info objectForKey:@"repopassword"];
     if (repopasswds == nil)
         return;
     for (NSString *key in repopasswds) {
@@ -1512,6 +1511,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         [repo checkOrSetRepoPassword:password block:block];
     }
 }
+
 - (void)clearRepoPasswords
 {
     NSDictionary *repopasswds = [_info objectForKey:@"repopassword"];
