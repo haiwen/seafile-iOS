@@ -445,7 +445,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     if (detail && !repo.passwordRequired)
         return [self showEvent:repoId detail:detail fromCell:cell];
 
-    if (repo.passwordRequired) {
+    if (repo.passwordRequiredWithSyncRefresh) {
         [self popupSetRepoPassword:repo handler:^{
             [self getCommitModificationDetail:repoId url:url fromCell:cell];
         }];

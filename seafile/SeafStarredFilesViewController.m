@@ -249,7 +249,7 @@
     @try {
         sfile = [_starredFiles objectAtIndex:indexPath.row];
         SeafRepo *repo = [_connection getRepo:sfile.repoId];
-        if (repo && repo.passwordRequired) {
+        if (repo && repo.passwordRequiredWithSyncRefresh) {
             Debug("Star file %@ repo %@ password required.", sfile.name, sfile.repoId);
             [self popupSetRepoPassword:repo handler:^{
                 [self selectFile:sfile];

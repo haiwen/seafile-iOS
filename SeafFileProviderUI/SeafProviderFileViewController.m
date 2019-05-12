@@ -358,7 +358,7 @@
             [self.root dismissGrantingAccessToURL:url];
 
         }
-    } else if ([entry isKindOfClass:[SeafRepo class]] && [(SeafRepo *)entry passwordRequired]) {
+    } else if ([entry isKindOfClass:[SeafRepo class]] && [(SeafRepo *)entry passwordRequiredWithSyncRefresh]) {
         [self popupSetRepoPassword:(SeafRepo *)entry];
     } else if ([entry isKindOfClass:[SeafDir class]]) {
         [self pushViewControllerDir:(SeafDir *)entry];

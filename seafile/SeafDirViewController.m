@@ -211,7 +211,7 @@
     if (_chooseRepo) {
         return self.dirChoose(self, curDir);
     }
-    if ([curDir isKindOfClass:[SeafRepo class]] && [(SeafRepo *)curDir passwordRequired]) {
+    if ([curDir isKindOfClass:[SeafRepo class]] && [(SeafRepo *)curDir passwordRequiredWithSyncRefresh]) {
         return [self popupSetRepoPassword:(SeafRepo *)curDir];
     }
     SeafDirViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:curDir dirChosen:_dirChoose cancel:_dirCancel chooseRepo:false];
