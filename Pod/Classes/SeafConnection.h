@@ -76,7 +76,6 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 @property (readonly) BOOL authorized;
 @property (readonly) BOOL isSearchEnabled;
 @property (readonly) BOOL isActivityEnabled;
-@property (readonly) BOOL isChunkSupported; // upload/download by blocks
 @property (readonly) NSData* _Nullable clientIdentityKey;
 
 @property (readwrite, nonatomic, getter=isWifiOnly) BOOL wifiOnly;

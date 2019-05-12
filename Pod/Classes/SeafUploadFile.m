@@ -480,12 +480,12 @@
     _filesize = attrs.fileSize;
     [self uploadProgress:0];
 
-    if (_filesize > LARGE_FILE_SIZE && connection.isChunkSupported) {
+    if (_filesize > LARGE_FILE_SIZE) {
         Debug("upload large file %@ by block: %lld", self.name, _filesize);
         return [self uploadLargeFileByBlocks:repo path:uploadpath];
     }
     BOOL byblock = [connection shouldLocalDecrypt:repo.repoId];
-    if (byblock && connection.isChunkSupported) {
+    if (byblock) {
         Debug("upload Local decrypt %@ by block: %lld", self.name, _filesize);
         return [self uploadLargeFileByBlocks:repo path:uploadpath];
     }
