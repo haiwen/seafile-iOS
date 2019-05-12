@@ -56,7 +56,7 @@
 - (BOOL)passwordRequired {
     if (self.encrypted) {
         if ([connection shouldLocalDecrypt:self.repoId]) {
-            return [connection getRepoPassword:self.repoId] == nil ? YES : NO;
+            return [connection getRepoPassword:self.repoId] != nil;
         } else {
             NSString *password = [connection getRepoPassword:self.repoId];
             if (!password) {

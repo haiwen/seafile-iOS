@@ -270,15 +270,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return [serverInfo objectForKey:@"version"];
 }
 
-- (BOOL)isChunkSupported
-{
-    NSString *version = self.serverVersion;
-    if (version && [version compare:@"5.1.0" options:NSNumericSearch] != NSOrderedAscending) {
-        return true;
-    }
-    return false;
-}
-
 - (BOOL)isActivityEnabled
 {
     return [self isFeatureEnabled:@"seafile-pro"];
