@@ -21,6 +21,8 @@
 #define DEFAULT_TIMEOUT 120
 #define LARGE_FILE_SIZE 10*1024*1024
 
+#define INFO_LASTTIME_REPO_PASSWORD @"lastRepoRefreshPasswordTime"
+
 enum MSG_TYPE{
     MSG_NONE = 0,
     MSG_GROUP,
@@ -188,6 +190,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 
 - (void)refreshRepoPasswords;
 - (void)clearRepoPasswords;
+- (NSTimeInterval)getRepoLastRefreshPasswordTime:(NSString *_Nullable)repoId;
 
 // fileProvider tagData
 - (void)saveFileProviderTagData:(NSData * _Nullable)tagData withItemIdentifier:(NSString * _Nullable)itemId;

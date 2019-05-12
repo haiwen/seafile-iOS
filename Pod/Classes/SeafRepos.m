@@ -19,6 +19,7 @@
 #import "Utils.h"
 
 #define KEY_REPOS @"REPOS"
+#define REPO_PASSWORD_REFRESH_INTERVAL 300
 
 @interface SeafRepo ()
 
@@ -54,6 +55,14 @@
 }
 
 - (BOOL)passwordRequired {
+    //Debug("repoId;%@ %d %@", self.repoId, self.encrypted, [connection getRepoPassword:self.repoId]);
+    if (self.encrypted && ![connection getRepoPassword:self.repoId])
+        return YES;
+    else
+        return NO;
+}
+
+- (BOOL)passwordRequiredWithSyncRefresh {
     if (self.encrypted) {
         if ([connection shouldLocalDecrypt:self.repoId]) {
             return [connection getRepoPassword:self.repoId] != nil;
@@ -62,17 +71,22 @@
             if (!password) {
                 return YES;
             } else {
-                __block BOOL result = YES;
-                __block BOOL wait = YES;
-                [self setRepoPassword:password block:^(SeafBase *entry, int ret) {
-                    wait = NO;
-                    result = ret == RET_SUCCESS ? NO : YES;
-                }];
-                //dispatch_semaphore will block main thread
-                while (wait) {
-                    [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
+                NSTimeInterval cur = [[NSDate date] timeIntervalSince1970];
+                if (cur - [connection getRepoLastRefreshPasswordTime:self.repoId] > REPO_PASSWORD_REFRESH_INTERVAL) {
+                    __block BOOL result = YES;
+                    __block BOOL wait = YES;
+                    [self setRepoPassword:password block:^(SeafBase *entry, int ret) {
+                        wait = NO;
+                        result = ret == RET_SUCCESS ? NO : YES;
+                    }];
+                    //dispatch_semaphore will block main thread
+                    while (wait) {
+                        [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
+                    }
+                    return result;
+                } else {
+                    return NO;
                 }
-                return result;
             }
         }
     } else {

@@ -457,8 +457,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return _tagDataKey;
 }
 
-- (void)saveRepo:(NSString *)repoId password:(NSString *)password
-{
+- (void)saveRepo:(NSString *)repoId password:(NSString *)password {
     Debug("save repo %@ password %@", repoId, password);
     NSMutableDictionary *repopasswds = [NSMutableDictionary dictionaryWithDictionary:(NSDictionary*)[_info objectForKey:@"repopassword"]];
     if (!repopasswds) {
@@ -466,6 +465,13 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }
     [Utils dict:repopasswds setObject:password forKey:repoId];
     [Utils dict:_info setObject:repopasswds forKey:@"repopassword"];
+    
+    NSMutableDictionary *times = [NSMutableDictionary dictionaryWithDictionary:(NSDictionary*)[_info objectForKey:INFO_LASTTIME_REPO_PASSWORD]];
+    if (!times) {
+        times = [[NSMutableDictionary alloc] init];
+    }
+    [Utils dict:times setObject:@([[NSDate date] timeIntervalSince1970]) forKey:repoId];
+    [Utils dict:_info setObject:times forKey:INFO_LASTTIME_REPO_PASSWORD];
     [self saveAccountInfo];
 }
 - (void)saveRepo:(NSString *_Nonnull)repoId encInfo:(NSDictionary *_Nonnull)encInfo
@@ -479,6 +485,13 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [Utils dict:repoInfos setObject:encInfo forKey:repoId];
     [Utils dict:_info setObject:repoInfos forKey:@"repoInfo"];
     [self saveAccountInfo];
+}
+
+- (NSTimeInterval)getRepoLastRefreshPasswordTime:(NSString *)repoId {
+    NSDictionary *times = (NSDictionary*)[_info objectForKey:INFO_LASTTIME_REPO_PASSWORD];
+    if (times)
+        return [[times objectForKey:repoId] doubleValue];
+    return 0;
 }
 
 - (NSDictionary *)getRepoEncInfo:(NSString *)repoId

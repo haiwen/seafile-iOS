@@ -20,6 +20,7 @@
 @property (readonly, copy) NSString *magic;
 @property (readonly, copy) NSString *encKey;
 @property (readonly) BOOL passwordRequired;
+@property (readonly, nonatomic, assign) BOOL passwordRequiredWithSyncRefresh;
 @property (readwrite) BOOL encrypted;
 @property (readonly) int encVersion;
 @property (readonly) unsigned long long size;
