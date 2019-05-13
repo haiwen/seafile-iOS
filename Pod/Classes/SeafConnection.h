@@ -21,7 +21,7 @@
 #define DEFAULT_TIMEOUT 120
 #define LARGE_FILE_SIZE 10*1024*1024
 
-#define INFO_LASTTIME_REPO_PASSWORD @"lastRepoRefreshPasswordTime"
+#define REPO_LAST_UPDATE_PASSWORD_TIME @"repoLastPasswordUpdateTsMap"
 
 enum MSG_TYPE{
     MSG_NONE = 0,
