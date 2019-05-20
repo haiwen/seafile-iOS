@@ -65,7 +65,7 @@
 - (BOOL)passwordRequiredWithSyncRefresh {
     if (self.encrypted) {
         if ([connection shouldLocalDecrypt:self.repoId]) {
-            return [connection getRepoPassword:self.repoId] != nil;
+            return [connection getRepoPassword:self.repoId] == nil ? YES : NO;
         } else {
             NSString *password = [connection getRepoPassword:self.repoId];
             if (!password) {
