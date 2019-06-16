@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		1234A1AA0526579332B5E703 /* libPods-SeafShare.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DA126D224400B6A8E752C31 /* libPods-SeafShare.a */; };
+		4A5E88CF22AD3102008146BA /* SeafActivitiesCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A5E88CD22AD3102008146BA /* SeafActivitiesCell.m */; };
+		4A5E88D022AD3102008146BA /* SeafActivitiesCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4A5E88CE22AD3102008146BA /* SeafActivitiesCell.xib */; };
 		5704C6D31753A1380028F4FE /* IntelligentSplitViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5704C6D11753A1380028F4FE /* IntelligentSplitViewController.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		5704C6F91756710F0028F4FE /* tab-account.png in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F51756710F0028F4FE /* tab-account.png */; };
 		5704C6FB1756710F0028F4FE /* tab-modify.png in Resources */ = {isa = PBXBuildFile; fileRef = 5704C6F61756710F0028F4FE /* tab-modify.png */; };
@@ -354,6 +356,9 @@
 		15EFA735E2957F22E301E23A /* libPods-SeafFileProviderUI.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SeafFileProviderUI.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3583928919818364B46034EA /* libPods-SeafFileProvider.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SeafFileProvider.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		492C6C1B7591DFE8AF317708 /* Pods-SeafShare.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafShare.release.xcconfig"; path = "Pods/Target Support Files/Pods-SeafShare/Pods-SeafShare.release.xcconfig"; sourceTree = "<group>"; };
+		4A5E88CC22AD3102008146BA /* SeafActivitiesCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafActivitiesCell.h; sourceTree = "<group>"; };
+		4A5E88CD22AD3102008146BA /* SeafActivitiesCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafActivitiesCell.m; sourceTree = "<group>"; };
+		4A5E88CE22AD3102008146BA /* SeafActivitiesCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SeafActivitiesCell.xib; sourceTree = "<group>"; };
 		4B157E719E6CB55B7A11A45F /* Pods-SeafShare.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafShare.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SeafShare/Pods-SeafShare.debug.xcconfig"; sourceTree = "<group>"; };
 		5704C6D01753A1380028F4FE /* IntelligentSplitViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IntelligentSplitViewController.h; sourceTree = "<group>"; };
 		5704C6D11753A1380028F4FE /* IntelligentSplitViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IntelligentSplitViewController.m; sourceTree = "<group>"; };
@@ -770,6 +775,8 @@
 				576C91C2177EB43F007B50BD /* SeafDirViewController.m */,
 				57E5E7B21CC219C8004B7125 /* SeafEventCell.h */,
 				57E5E7B11CC219C8004B7125 /* SeafEventCell.m */,
+				4A5E88CC22AD3102008146BA /* SeafActivitiesCell.h */,
+				4A5E88CD22AD3102008146BA /* SeafActivitiesCell.m */,
 				57DB828E15A833FA00097CEC /* SeafFileViewController.h */,
 				57DB828F15A833FA00097CEC /* SeafFileViewController.m */,
 				F515E4D021B6D24E00A62F64 /* SeafSearchResultViewController.h */,
@@ -1017,6 +1024,7 @@
 				F52111D621E1C14D00D93BB8 /* SeafSyncInfoCell.xib */,
 				F55896872263269A0084C642 /* LaunchScreeniPhone.storyboard */,
 				F558968922632A9C0084C642 /* LaunchScreeniPad.storyboard */,
+				4A5E88CE22AD3102008146BA /* SeafActivitiesCell.xib */,
 			);
 			path = ui;
 			sourceTree = "<group>";
@@ -1352,6 +1360,7 @@
 				573F4AAE1788763500F096D3 /* arrowright.png in Resources */,
 				57943C0519F027D5008423E5 /* checkmask2@2x.png in Resources */,
 				57943BDE19F024D0008423E5 /* plus2@2x.png in Resources */,
+				4A5E88D022AD3102008146BA /* SeafActivitiesCell.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1603,7 +1612,7 @@
 			files = (
 			);
 			inputPaths = (
-				"${SRCROOT}/Pods/Target Support Files/Pods-SeafFileProviderUI/Pods-SeafFileProviderUI-resources.sh",
+				"${PODS_ROOT}/Target Support Files/Pods-SeafFileProviderUI/Pods-SeafFileProviderUI-resources.sh",
 				"${PODS_CONFIGURATION_BUILD_DIR}/Seafile/Seafile.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
@@ -1612,7 +1621,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-SeafFileProviderUI/Pods-SeafFileProviderUI-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SeafFileProviderUI/Pods-SeafFileProviderUI-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		B10A3EF5B4CB6B4474FC92D2 /* [CP] Copy Pods Resources */ = {
@@ -1621,7 +1630,7 @@
 			files = (
 			);
 			inputPaths = (
-				"${SRCROOT}/Pods/Target Support Files/Pods-SeafShare/Pods-SeafShare-resources.sh",
+				"${PODS_ROOT}/Target Support Files/Pods-SeafShare/Pods-SeafShare-resources.sh",
 				"${PODS_CONFIGURATION_BUILD_DIR}/Seafile/Seafile.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
@@ -1630,7 +1639,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-SeafShare/Pods-SeafShare-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SeafShare/Pods-SeafShare-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		B517FD8CB748C1F6D38B961A /* [CP] Copy Pods Resources */ = {
@@ -1639,7 +1648,7 @@
 			files = (
 			);
 			inputPaths = (
-				"${SRCROOT}/Pods/Target Support Files/Pods-SeafAction/Pods-SeafAction-resources.sh",
+				"${PODS_ROOT}/Target Support Files/Pods-SeafAction/Pods-SeafAction-resources.sh",
 				"${PODS_CONFIGURATION_BUILD_DIR}/Seafile/Seafile.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
@@ -1648,7 +1657,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-SeafAction/Pods-SeafAction-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SeafAction/Pods-SeafAction-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		BF77F73BB58D4586C699D417 /* [CP] Copy Pods Resources */ = {
@@ -1657,7 +1666,7 @@
 			files = (
 			);
 			inputPaths = (
-				"${SRCROOT}/Pods/Target Support Files/Pods-SeafFileProvider/Pods-SeafFileProvider-resources.sh",
+				"${PODS_ROOT}/Target Support Files/Pods-SeafFileProvider/Pods-SeafFileProvider-resources.sh",
 				"${PODS_CONFIGURATION_BUILD_DIR}/Seafile/Seafile.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
@@ -1666,7 +1675,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-SeafFileProvider/Pods-SeafFileProvider-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SeafFileProvider/Pods-SeafFileProvider-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		DBA7E67946E92470596B2A9A /* [CP] Copy Pods Resources */ = {
@@ -1675,7 +1684,7 @@
 			files = (
 			);
 			inputPaths = (
-				"${SRCROOT}/Pods/Target Support Files/Pods-seafileApp/Pods-seafileApp-resources.sh",
+				"${PODS_ROOT}/Target Support Files/Pods-seafileApp/Pods-seafileApp-resources.sh",
 				"${PODS_CONFIGURATION_BUILD_DIR}/MWPhotoBrowser/MWPhotoBrowser.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/QBImagePickerController/QBImagePicker.bundle",
 				"${PODS_ROOT}/SVProgressHUD/SVProgressHUD/SVProgressHUD.bundle",
@@ -1690,7 +1699,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-seafileApp/Pods-seafileApp-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-seafileApp/Pods-seafileApp-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		E8C55D49FB459D43BDFE937B /* [CP] Check Pods Manifest.lock */ = {
@@ -1741,6 +1750,7 @@
 				F5CBCDC01F2C2F1500E8C35B /* SeafSyncInfoViewController.m in Sources */,
 				577B6C6616AADBA3008E82C2 /* SeafCell.m in Sources */,
 				58D40A6B1E9AF72200A68BEF /* SeafAccountCell.m in Sources */,
+				4A5E88CF22AD3102008146BA /* SeafActivitiesCell.m in Sources */,
 				57DA26F5173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */,
 				5757DCCD1AEBCF1600BC0426 /* SeafShibbolethViewController.m in Sources */,
 				58D40A681E9AF72200A68BEF /* UIViewController+Extend.m in Sources */,

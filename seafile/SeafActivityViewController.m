@@ -17,6 +17,8 @@
 #import "SeafEventCell.h"
 #import "SeafRepos.h"
 #import "SeafBase.h"
+#import "SeafActivitiesCell.h"
+#import "SeafActivityModel.h"
 
 #import "SeafDateFormatter.h"
 #import "ExtentedString.h"
@@ -129,6 +131,9 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 }
 - (void)moreEvents:(int)offset
 {
+    if (_connection.isNewActivitiesApiSupported) {
+        return [self newApiRequest:offset];
+    }
     NSString *url = [NSString stringWithFormat:API_URL"/events/?start=%d", offset];
     [_connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
         Debug("Succeeded to get events start=%d", offset);
@@ -150,6 +155,38 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         if (self.isVisible)
             [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load activities", @"Seafile")];
     }];
+}
+
+- (void)newApiRequest:(int)offset {
+    if (offset == 0) {
+        offset += 1;
+    }
+    NSString *url = [NSString stringWithFormat:API_URL_V21"/activities/?page=%d", offset];
+    [_connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        Debug("Succeeded to get events start=%d  %@", offset, JSON);
+        NSArray *arr = [JSON objectForKey:@"events"];
+        if (offset == 1)
+            _events = nil;
+        
+        NSMutableArray *marray = [NSMutableArray new];
+        [marray addObjectsFromArray:_events];
+        [marray addObjectsFromArray:arr];
+        _events = marray;
+        if (_events.count < 25) {
+            _eventsMore = false;
+        } else {
+            _eventsMore = true;
+        }
+        _eventsOffset = offset + 1;
+        Debug("%lu events, more:%d, offset:%d", (unsigned long)_events.count, _eventsMore, _eventsOffset);
+        [self reloadData];
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
+        [self dismissLoadingView];
+        [self.tableView.infiniteScrollingView stopAnimating];
+        if (self.isVisible)
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load activities", @"Seafile")];
+    }];
+
 }
 
 - (void)didReceiveMemoryWarning
@@ -311,6 +348,10 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    if (_connection.isNewActivitiesApiSupported) {
+        return [self activitiesCell:tableView indexPath:indexPath];
+    }
+    
     NSString *CellIdentifier = @"SeafEventCell";
     SeafEventCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
@@ -327,13 +368,26 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     } else {
         cell.accountImageView.image = _defaultAccountImage;
     }
-    cell.textLabel.text = [self getCommitDesc:event];;
+    cell.textLabel.text = [self getCommitDesc:event];
     cell.repoNameLabel.text = [event objectForKey:@"repo_name"];
     cell.authorLabel.text = [event objectForKey:@"nick"];
     long timestamp = [[event objectForKey:@"time"] longValue];
     cell.timeLabel.text = [SeafDateFormatter stringFromLongLong:timestamp];
     cell.backgroundColor = [UIColor clearColor];
 
+    return cell;
+}
+
+- (SeafActivitiesCell *)activitiesCell:(UITableView *)tableView indexPath:(NSIndexPath *)indexPath {
+    NSString *CellIdentifier = @"SeafActivitiesCell";
+    SeafActivitiesCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+    if (cell == nil) {
+        cell = [[NSBundle mainBundle] loadNibNamed:CellIdentifier owner:self options:nil].firstObject;
+    }
+    
+    SeafActivityModel *event = [[SeafActivityModel alloc] initWithNewAPIRequestJSON:[_events objectAtIndex:indexPath.row]];
+    [cell showWithImage:event.avatar_url author:event.author_name operation:event.operation time:event.time detail:event.detail repoName:event.repo_name];
+    
     return cell;
 }
 
@@ -421,13 +475,27 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 }
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    [tableView deselectRowAtIndexPath:indexPath animated:true];
     if (indexPath.row >= _events.count)
         return;
 
     NSDictionary *event = [_events objectAtIndex:indexPath.row];
     NSString *etype = [event objectForKey:@"etype"];
-    if (![etype isEqualToString:@"repo-update"])
-        return;
+    if ([_connection isNewActivitiesApiSupported]) {
+        NSString *name = [event valueForKey:@"name"];
+        NSString *op_type = [event valueForKey:@"op_type"];
+        NSString *obj_type = [event valueForKey:@"obj_type"];
+        if ([obj_type containsString:@"draft"] && [op_type isEqualToString:@"publish"]) {
+            return [self openFile:[event valueForKey:@"path"] inRepo:[event valueForKey:@"repo_id"]];
+        } else if ([op_type isEqualToString:@"delete"] || [op_type isEqualToString:@"clean-up-trash"] || [name containsString:@"(draft).md"]) {
+            return;
+        }
+    } else {
+        if (![etype isEqualToString:@"repo-update"]) {
+            return;
+        }
+    }
+    
     NSString *repoId = [event objectForKey:@"repo_id"];
     NSString *commitId = [event objectForKey:@"commit_id"];
     NSString *url = [NSString stringWithFormat:API_URL"/repo_history_changes/%@/?commit_id=%@", repoId, commitId];

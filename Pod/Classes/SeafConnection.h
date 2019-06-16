@@ -78,6 +78,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 @property (readonly) BOOL authorized;
 @property (readonly) BOOL isSearchEnabled;
 @property (readonly) BOOL isActivityEnabled;
+@property (readonly) BOOL isNewActivitiesApiSupported;
 @property (readonly) NSData* _Nullable clientIdentityKey;
 
 @property (readwrite, nonatomic, getter=isWifiOnly) BOOL wifiOnly;
