@@ -62,4 +62,45 @@ static SeafDateFormatter *sharedLoader = nil;
         return [[SeafDateFormatter sharedLoader] stringFromDate:date];
 }
 
++(NSString *)compareCurrentFromGMTDate:(NSString *)timeStr {
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    [dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZ"];
+    NSTimeZone *localTimeZone = [NSTimeZone localTimeZone];
+    [dateFormatter setTimeZone:localTimeZone];
+    NSDate *dateFormatted = [dateFormatter dateFromString:timeStr];
+
+    [dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+    NSDate *timeDate = [dateFormatter dateFromString:[dateFormatter stringFromDate:dateFormatted]];
+    NSDate *currentDate = [NSDate date];
+    
+    NSTimeInterval timeInterval = [currentDate timeIntervalSinceDate:timeDate];
+    long temp = 0;
+    NSString *result;
+    if (timeInterval/60 < 1) {
+        result = NSLocalizedString(@"a few seconds ago", @"Seafile");
+    } else if (timeInterval/60 == 1) {
+        result = NSLocalizedString(@"a minute ago", @"Seafile");
+    } else if ((temp = timeInterval/60) < 60 ) {
+        result = [NSString stringWithFormat:NSLocalizedString(@"%ld minutes ago", @"Seafile"), temp];
+    } else if ((temp = timeInterval/60) == 60) {
+        result = [NSString stringWithFormat:NSLocalizedString(@"an hour ago", @"Seafile"), temp];
+    } else if ((temp = timeInterval/3600) < 24 ) {
+        result = [NSString stringWithFormat:NSLocalizedString(@"%ld hours ago", @"Seafile"), temp];
+    } else if ((temp = timeInterval/3600) == 24 ) {
+        result = NSLocalizedString(@"a day ago", @"Seafile");
+    } else if((temp = timeInterval/(3600*24)) < 30 ) {
+        result = [NSString stringWithFormat:NSLocalizedString(@"%ld days ago", @"Seafile"), temp];
+    } else if((temp = timeInterval/(3600*24)) == 30 ) {
+        result = [NSString stringWithFormat:NSLocalizedString(@"a month ago", @"Seafile"), temp];
+    } else if((temp = timeInterval/(3600*24*30)) < 12 ) {
+        result = [NSString stringWithFormat:NSLocalizedString(@"%ld months ago", @"Seafile"), temp];
+    } else if((temp = timeInterval/(3600*24*30)) == 12 ) {
+        result = [NSString stringWithFormat:NSLocalizedString(@"a year ago", @"Seafile"), temp];
+    } else {
+        temp = timeInterval/(3600*24*30*12);
+        result = [NSString stringWithFormat:NSLocalizedString(@"%ld years ago", @"Seafile"), temp];
+    }
+    return  result;
+}
+
 @end
