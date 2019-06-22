@@ -36,7 +36,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 
 @property NSMutableDictionary *eventDetails;
 @property UIImage *defaultAccountImage;
-@property NSDictionary *opsMap;
+@property (strong, nonatomic) NSDictionary *opsMap;
 @property NSDictionary *prefixMap;
 @property NSDictionary *typesMap;
 
@@ -72,34 +72,6 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     self.eventsOffset = 0;
     _eventDetails = [NSMutableDictionary new];
     _defaultAccountImage = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"account" ofType:@"png"]];
-
-    NSArray *keys = [NSArray arrayWithObjects:
-                     @"Added",
-                     @"Added directory",
-                     @"Added or modified",
-                     @"Deleted", @"Modified",
-                     @"Moved",
-                     @"Moved directory",
-                     @"Removed",
-                     @"Removed directory",
-                     @"Renamed",
-                     @"Renamed directory",
-                     nil];
-    NSArray *values = [NSArray arrayWithObjects:
-                       NSLocalizedString(@"Added", @"Seafile"),
-                       NSLocalizedString(@"Added directory", @"Seafile"),
-                       NSLocalizedString(@"Added or modified", @"Seafile"),
-                       NSLocalizedString(@"Deleted", @"Seafile"),
-                       NSLocalizedString(@"Modified", @"Seafile"),
-                       NSLocalizedString(@"Moved", @"Seafile"),
-                       NSLocalizedString(@"Moved directory", @"Seafile"),
-                       NSLocalizedString(@"Removed", @"Seafile"),
-                       NSLocalizedString(@"Removed directory", @"Seafile"),
-                       NSLocalizedString(@"Renamed", @"Seafile"),
-                       NSLocalizedString(@"Renamed directory", @"Seafile"),
-                       nil];
-
-    self.opsMap = [NSDictionary dictionaryWithObjects:values forKeys:keys];
 
     NSArray *keys2 = [NSArray arrayWithObjects:
                       @"Reverted library to status at",
@@ -157,27 +129,28 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     }];
 }
 
-- (void)newApiRequest:(int)offset {
-    if (offset == 0) {
-        offset += 1;
+- (void)newApiRequest:(int)page {
+    if (page == 0) {
+        page += 1;
     }
-    NSString *url = [NSString stringWithFormat:API_URL_V21"/activities/?page=%d", offset];
+    NSString *url = [NSString stringWithFormat:API_URL_V21"/activities/?page=%d", page];
     [_connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-        Debug("Succeeded to get events start=%d  %@", offset, JSON);
+        Debug("Succeeded to get events start=%d  %@", page, JSON);
         NSArray *arr = [JSON objectForKey:@"events"];
-        if (offset == 1)
+        if (page == 1) {
             _events = nil;
+        }
         
         NSMutableArray *marray = [NSMutableArray new];
         [marray addObjectsFromArray:_events];
         [marray addObjectsFromArray:arr];
         _events = marray;
-        if (_events.count < 25) {
+        if (arr.count < 25) {
             _eventsMore = false;
         } else {
             _eventsMore = true;
         }
-        _eventsOffset = offset + 1;
+        _eventsOffset = page + 1;
         Debug("%lu events, more:%d, offset:%d", (unsigned long)_events.count, _eventsMore, _eventsOffset);
         [self reloadData];
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
@@ -385,8 +358,8 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         cell = [[NSBundle mainBundle] loadNibNamed:CellIdentifier owner:self options:nil].firstObject;
     }
     
-    SeafActivityModel *event = [[SeafActivityModel alloc] initWithNewAPIRequestJSON:[_events objectAtIndex:indexPath.row]];
-    [cell showWithImage:event.avatar_url author:event.author_name operation:event.operation time:event.time detail:event.detail repoName:event.repo_name];
+    SeafActivityModel *event = [[SeafActivityModel alloc] initWithEvenJSON:[_events objectAtIndex:indexPath.row] andOpsMap:self.opsMap];
+    [cell showWithImage:event.avatarURL author:event.authorName operation:event.operation time:event.time detail:event.detail repoName:event.repoName];
     
     return cell;
 }
@@ -482,18 +455,16 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     NSDictionary *event = [_events objectAtIndex:indexPath.row];
     NSString *etype = [event objectForKey:@"etype"];
     if ([_connection isNewActivitiesApiSupported]) {
-        NSString *name = [event valueForKey:@"name"];
-        NSString *op_type = [event valueForKey:@"op_type"];
-        NSString *obj_type = [event valueForKey:@"obj_type"];
+        NSString *name = [event objectForKey:@"name"];
+        NSString *op_type = [event objectForKey:@"op_type"];
+        NSString *obj_type = [event objectForKey:@"obj_type"];
         if ([obj_type containsString:@"draft"] && [op_type isEqualToString:@"publish"]) {
             return [self openFile:[event valueForKey:@"path"] inRepo:[event valueForKey:@"repo_id"]];
         } else if ([op_type isEqualToString:@"delete"] || [op_type isEqualToString:@"clean-up-trash"] || [name containsString:@"(draft).md"]) {
             return;
         }
-    } else {
-        if (![etype isEqualToString:@"repo-update"]) {
-            return;
-        }
+    } else if (![etype isEqualToString:@"repo-update"]) {
+        return;
     }
     
     NSString *repoId = [event objectForKey:@"repo_id"];
@@ -535,6 +506,87 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     [detailvc setPreViewItem:sfile master:nil];
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [appdelegate showDetailView:detailvc];
+}
+
+- (NSDictionary *)opsMap {
+    if (!_opsMap) {
+        if ([_connection isNewActivitiesApiSupported]) {
+            NSArray *keys = [NSArray arrayWithObjects:
+                             @"create repo",
+                             @"rename repo",
+                             @"delete repo",
+                             @"restore repo",
+                             @"create dir",
+                             @"rename dir",
+                             @"delete dir",
+                             @"restore dir",
+                             @"move dir",
+                             @"create file",
+                             @"rename file",
+                             @"delete file",
+                             @"restore file",
+                             @"move file",
+                             @"edit file",
+                             @"create draft",
+                             @"delete draft",
+                             @"edit draft",
+                             @"publish draft",
+                             @"create files",
+                             nil];
+            NSArray *values = [NSArray arrayWithObjects:
+                               NSLocalizedString(@"Created library", @"Seafile"),
+                               NSLocalizedString(@"Renamed library", @"Seafile"),
+                               NSLocalizedString(@"Deleted library", @"Seafile"),
+                               NSLocalizedString(@"Restored library", @"Seafile"),
+                               NSLocalizedString(@"Created folder", @"Seafile"),
+                               NSLocalizedString(@"Renamed folder", @"Seafile"),
+                               NSLocalizedString(@"Deleted folder", @"Seafile"),
+                               NSLocalizedString(@"Restored folder", @"Seafile"),
+                               NSLocalizedString(@"Moved folder", @"Seafile"),
+                               NSLocalizedString(@"Created file", @"Seafile"),
+                               NSLocalizedString(@"Renamed file", @"Seafile"),
+                               NSLocalizedString(@"Deleted file", @"Seafile"),
+                               NSLocalizedString(@"Restored file", @"Seafile"),
+                               NSLocalizedString(@"Moved file", @"Seafile"),
+                               NSLocalizedString(@"Updated file", @"Seafile"),
+                               NSLocalizedString(@"Created draft", @"Seafile"),
+                               NSLocalizedString(@"Deleted draft", @"Seafile"),
+                               NSLocalizedString(@"Updated draft", @"Seafile"),
+                               NSLocalizedString(@"Publish draft", @"Seafile"),
+                               NSLocalizedString(@"Created files", @"Seafile"),
+                               nil];
+            _opsMap = [NSDictionary dictionaryWithObjects:values forKeys:keys];
+        } else {
+            NSArray *keys = [NSArray arrayWithObjects:
+                             @"Added",
+                             @"Added directory",
+                             @"Added or modified",
+                             @"Deleted", @"Modified",
+                             @"Moved",
+                             @"Moved directory",
+                             @"Removed",
+                             @"Removed directory",
+                             @"Renamed",
+                             @"Renamed directory",
+                             nil];
+            NSArray *values = [NSArray arrayWithObjects:
+                               NSLocalizedString(@"Added", @"Seafile"),
+                               NSLocalizedString(@"Added directory", @"Seafile"),
+                               NSLocalizedString(@"Added or modified", @"Seafile"),
+                               NSLocalizedString(@"Deleted", @"Seafile"),
+                               NSLocalizedString(@"Modified", @"Seafile"),
+                               NSLocalizedString(@"Moved", @"Seafile"),
+                               NSLocalizedString(@"Moved directory", @"Seafile"),
+                               NSLocalizedString(@"Removed", @"Seafile"),
+                               NSLocalizedString(@"Removed directory", @"Seafile"),
+                               NSLocalizedString(@"Renamed", @"Seafile"),
+                               NSLocalizedString(@"Renamed directory", @"Seafile"),
+                               nil];
+            
+            _opsMap = [NSDictionary dictionaryWithObjects:values forKeys:keys];
+        }
+    }
+    return _opsMap;
 }
 
 @end

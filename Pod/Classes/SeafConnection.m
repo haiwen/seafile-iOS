@@ -179,10 +179,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         _clientCred = [SeafStorage.sharedObject getCredentialForKey:_clientIdentityKey];
         Debug("Load client identity: %@, %@", _clientIdentityKey, self.clientCred);
     }
-
-    if (self.authorized && ![self serverInfo]) {
-        [self getServerInfo:^(bool result) {}];
-    }
+    
+    //Get the latest server info 
+    [self getServerInfo:^(bool result) {}];
     if (self.autoClearRepoPasswd) {
         Debug("Clear repo apsswords for %@ %@", url, username);
         [self clearRepoPasswords];
@@ -277,10 +276,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (BOOL)isNewActivitiesApiSupported {
     NSString *version = self.serverVersion;
-    if (version && [version compare:@"7.0.0" options:NSNumericSearch] != NSOrderedAscending) {
-        return true;
-    }
-    return false;
+    return version != nil && [version compare:@"7.0.0" options:NSNumericSearch] != NSOrderedAscending;
 }
 
 - (NSDictionary *)serverInfo

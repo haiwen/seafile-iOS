@@ -17,7 +17,7 @@
 static SeafDateFormatter *sharedLoaderSameDay = nil;
 static SeafDateFormatter *sharedLoaderSameYear = nil;
 static SeafDateFormatter *sharedLoader = nil;
-
+static SeafDateFormatter *sharedLoaderUTC = nil;
 
 + (SeafDateFormatter *)sharedLoader
 {
@@ -46,6 +46,16 @@ static SeafDateFormatter *sharedLoader = nil;
     return sharedLoaderSameYear;
 }
 
++ (SeafDateFormatter *)sharedLoaderUTC {
+    if (sharedLoaderUTC == nil) {
+        sharedLoaderUTC = [[SeafDateFormatter alloc] init];
+        [sharedLoaderUTC setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZ"];
+        NSTimeZone *localTimeZone = [NSTimeZone timeZoneWithAbbreviation:@"UTC"];
+        [sharedLoaderUTC setTimeZone:localTimeZone];
+    }
+    return sharedLoaderUTC;
+}
+
 + (NSString *)stringFromLongLong:(long long)time
 {
     NSDate *date = [NSDate dateWithTimeIntervalSince1970:time];
@@ -62,45 +72,39 @@ static SeafDateFormatter *sharedLoader = nil;
         return [[SeafDateFormatter sharedLoader] stringFromDate:date];
 }
 
-+(NSString *)compareCurrentFromGMTDate:(NSString *)timeStr {
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    [dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZ"];
-    NSTimeZone *localTimeZone = [NSTimeZone localTimeZone];
-    [dateFormatter setTimeZone:localTimeZone];
-    NSDate *dateFormatted = [dateFormatter dateFromString:timeStr];
-
-    [dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
-    NSDate *timeDate = [dateFormatter dateFromString:[dateFormatter stringFromDate:dateFormatted]];
-    NSDate *currentDate = [NSDate date];
++(NSString *)compareGMTTimeWithNow:(NSString *)gmtTimeStr {
+    NSDate *dateFormatted = [[SeafDateFormatter sharedLoaderUTC] dateFromString:gmtTimeStr];
+    NSTimeInterval timeInterval = [[NSDate date] timeIntervalSinceDate:dateFormatted];
     
-    NSTimeInterval timeInterval = [currentDate timeIntervalSinceDate:timeDate];
-    long temp = 0;
-    NSString *result;
-    if (timeInterval/60 < 1) {
-        result = NSLocalizedString(@"a few seconds ago", @"Seafile");
-    } else if (timeInterval/60 == 1) {
-        result = NSLocalizedString(@"a minute ago", @"Seafile");
-    } else if ((temp = timeInterval/60) < 60 ) {
-        result = [NSString stringWithFormat:NSLocalizedString(@"%ld minutes ago", @"Seafile"), temp];
-    } else if ((temp = timeInterval/60) == 60) {
-        result = [NSString stringWithFormat:NSLocalizedString(@"an hour ago", @"Seafile"), temp];
-    } else if ((temp = timeInterval/3600) < 24 ) {
-        result = [NSString stringWithFormat:NSLocalizedString(@"%ld hours ago", @"Seafile"), temp];
-    } else if ((temp = timeInterval/3600) == 24 ) {
-        result = NSLocalizedString(@"a day ago", @"Seafile");
-    } else if((temp = timeInterval/(3600*24)) < 30 ) {
-        result = [NSString stringWithFormat:NSLocalizedString(@"%ld days ago", @"Seafile"), temp];
-    } else if((temp = timeInterval/(3600*24)) == 30 ) {
-        result = [NSString stringWithFormat:NSLocalizedString(@"a month ago", @"Seafile"), temp];
-    } else if((temp = timeInterval/(3600*24*30)) < 12 ) {
-        result = [NSString stringWithFormat:NSLocalizedString(@"%ld months ago", @"Seafile"), temp];
-    } else if((temp = timeInterval/(3600*24*30)) == 12 ) {
-        result = [NSString stringWithFormat:NSLocalizedString(@"a year ago", @"Seafile"), temp];
+    double minutes = timeInterval / 60;
+    double hours = minutes / 60;
+    double days = hours / 24;
+    double months = days / 30;
+    double years = months / 12;
+    
+    if (minutes < 1.0) {
+        return NSLocalizedString(@"a few seconds ago", @"Seafile");
+    } else if (minutes == 1.0) {
+        return NSLocalizedString(@"a minute ago", @"Seafile");
+    } else if (minutes < 60.0) {
+        return [NSString stringWithFormat:NSLocalizedString(@"%ld minutes ago", @"Seafile"), lround(minutes)];
+    } else if (hours == 1.0) {
+        return [NSString stringWithFormat:NSLocalizedString(@"an hour ago", @"Seafile")];
+    } else if (hours < 24.0) {
+        return [NSString stringWithFormat:NSLocalizedString(@"%ld hours ago", @"Seafile"), lround(hours)];
+    } else if (days == 1.0) {
+        return NSLocalizedString(@"a day ago", @"Seafile");
+    } else if (days < 30.0) {
+        return [NSString stringWithFormat:NSLocalizedString(@"%ld days ago", @"Seafile"), lround(days)];
+    } else if (months == 1.0) {
+        return [NSString stringWithFormat:NSLocalizedString(@"a month ago", @"Seafile")];
+    } else if (months < 12.0) {
+        return [NSString stringWithFormat:NSLocalizedString(@"%ld months ago", @"Seafile"), lround(months)];
+    } else if (years == 1.0) {
+        return [NSString stringWithFormat:NSLocalizedString(@"a year ago", @"Seafile")];
     } else {
-        temp = timeInterval/(3600*24*30*12);
-        result = [NSString stringWithFormat:NSLocalizedString(@"%ld years ago", @"Seafile"), temp];
+        return [NSString stringWithFormat:NSLocalizedString(@"%ld years ago", @"Seafile"), lround(years)];
     }
-    return  result;
 }
 
 @end
