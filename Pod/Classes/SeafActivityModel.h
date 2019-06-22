@@ -11,19 +11,19 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface SeafActivityModel : NSObject
 
-@property (nonatomic, copy) NSString *author_name;
+@property (nonatomic, copy) NSString *authorName;
 
 @property (nonatomic, copy) NSString *time;
 
 @property (nonatomic, copy) NSString *operation;
 
-@property (nonatomic, strong) NSURL *avatar_url;
+@property (nonatomic, strong) NSURL *avatarURL;
 
-@property (nonatomic, copy) NSString *repo_name;
+@property (nonatomic, copy) NSString *repoName;
 
 @property (nonatomic, copy) NSString *detail;
 
-- (instancetype)initWithNewAPIRequestJSON:(NSDictionary *)dict;
+- (instancetype)initWithEvenJSON:(NSDictionary *)even andOpsMap:(NSDictionary *)opsMap;
 
 @end
 

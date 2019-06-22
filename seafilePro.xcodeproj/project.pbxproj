@@ -1612,7 +1612,7 @@
 			files = (
 			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-SeafFileProviderUI/Pods-SeafFileProviderUI-resources.sh",
+				"${SRCROOT}/Pods/Target Support Files/Pods-SeafFileProviderUI/Pods-SeafFileProviderUI-resources.sh",
 				"${PODS_CONFIGURATION_BUILD_DIR}/Seafile/Seafile.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
@@ -1621,7 +1621,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SeafFileProviderUI/Pods-SeafFileProviderUI-resources.sh\"\n";
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-SeafFileProviderUI/Pods-SeafFileProviderUI-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		B10A3EF5B4CB6B4474FC92D2 /* [CP] Copy Pods Resources */ = {
@@ -1630,7 +1630,7 @@
 			files = (
 			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-SeafShare/Pods-SeafShare-resources.sh",
+				"${SRCROOT}/Pods/Target Support Files/Pods-SeafShare/Pods-SeafShare-resources.sh",
 				"${PODS_CONFIGURATION_BUILD_DIR}/Seafile/Seafile.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
@@ -1639,7 +1639,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SeafShare/Pods-SeafShare-resources.sh\"\n";
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-SeafShare/Pods-SeafShare-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		B517FD8CB748C1F6D38B961A /* [CP] Copy Pods Resources */ = {
@@ -1648,7 +1648,7 @@
 			files = (
 			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-SeafAction/Pods-SeafAction-resources.sh",
+				"${SRCROOT}/Pods/Target Support Files/Pods-SeafAction/Pods-SeafAction-resources.sh",
 				"${PODS_CONFIGURATION_BUILD_DIR}/Seafile/Seafile.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
@@ -1657,7 +1657,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SeafAction/Pods-SeafAction-resources.sh\"\n";
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-SeafAction/Pods-SeafAction-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		BF77F73BB58D4586C699D417 /* [CP] Copy Pods Resources */ = {
@@ -1666,7 +1666,7 @@
 			files = (
 			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-SeafFileProvider/Pods-SeafFileProvider-resources.sh",
+				"${SRCROOT}/Pods/Target Support Files/Pods-SeafFileProvider/Pods-SeafFileProvider-resources.sh",
 				"${PODS_CONFIGURATION_BUILD_DIR}/Seafile/Seafile.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
@@ -1675,7 +1675,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SeafFileProvider/Pods-SeafFileProvider-resources.sh\"\n";
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-SeafFileProvider/Pods-SeafFileProvider-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		DBA7E67946E92470596B2A9A /* [CP] Copy Pods Resources */ = {
@@ -1684,7 +1684,7 @@
 			files = (
 			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-seafileApp/Pods-seafileApp-resources.sh",
+				"${SRCROOT}/Pods/Target Support Files/Pods-seafileApp/Pods-seafileApp-resources.sh",
 				"${PODS_CONFIGURATION_BUILD_DIR}/MWPhotoBrowser/MWPhotoBrowser.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/QBImagePickerController/QBImagePicker.bundle",
 				"${PODS_ROOT}/SVProgressHUD/SVProgressHUD/SVProgressHUD.bundle",
@@ -1699,7 +1699,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-seafileApp/Pods-seafileApp-resources.sh\"\n";
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-seafileApp/Pods-seafileApp-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		E8C55D49FB459D43BDFE937B /* [CP] Check Pods Manifest.lock */ = {

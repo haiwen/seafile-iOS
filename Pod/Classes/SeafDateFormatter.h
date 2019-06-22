@@ -12,6 +12,6 @@
 
 + (NSString *)stringFromLongLong:(long long)time;
 
-+ (NSString *)compareCurrentFromGMTDate:(NSString *)timeStr;
++ (NSString *)compareGMTTimeWithNow:(NSString *)gmtTimeStr;
 
 @end

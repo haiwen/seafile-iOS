@@ -10,93 +10,62 @@
 
 @implementation SeafActivityModel
 
-- (instancetype)initWithNewAPIRequestJSON:(NSDictionary *)dict {
+- (instancetype)initWithEvenJSON:(NSDictionary *)even andOpsMap:(NSDictionary *)opsMap {
     if (self = [super init]) {
-        self.avatar_url = [NSURL URLWithString:[dict objectForKey:@"avatar_url"]];
-        self.author_name = [dict objectForKey:@"author_name"];
-        self.repo_name = [dict objectForKey:@"repo_name"];
-        self.time = [SeafDateFormatter compareCurrentFromGMTDate:[dict objectForKey:@"time"]];
+        self.avatarURL = [NSURL URLWithString:[even objectForKey:@"avatar_url"]];
+        self.authorName = [even objectForKey:@"author_name"];
+        self.repoName = [even objectForKey:@"repo_name"];
+        self.time = [SeafDateFormatter compareGMTTimeWithNow:[even objectForKey:@"time"]];
         
-        NSArray *keys = [NSArray arrayWithObjects:
-                         @"create repo",
-                         @"rename repo",
-                         @"delete repo",
-                         @"restore repo",
-                         @"create dir",
-                         @"rename dir",
-                         @"delete dir",
-                         @"restore dir",
-                         @"move dir",
-                         @"create file",
-                         @"rename file",
-                         @"delete file",
-                         @"restore file",
-                         @"move file",
-                         @"edit file",
-                         @"create draft",
-                         @"delete draft",
-                         @"edit draft",
-                         @"publish draft",
-                         @"create files",
-                         nil];
-        NSArray *values = [NSArray arrayWithObjects:
-                           NSLocalizedString(@"Created library", @"Seafile"),
-                           NSLocalizedString(@"Renamed library", @"Seafile"),
-                           NSLocalizedString(@"Deleted library", @"Seafile"),
-                           NSLocalizedString(@"Restored library", @"Seafile"),
-                           NSLocalizedString(@"Created folder", @"Seafile"),
-                           NSLocalizedString(@"Renamed folder", @"Seafile"),
-                           NSLocalizedString(@"Deleted folder", @"Seafile"),
-                           NSLocalizedString(@"Restored folder", @"Seafile"),
-                           NSLocalizedString(@"Moved folder", @"Seafile"),
-                           NSLocalizedString(@"Created file", @"Seafile"),
-                           NSLocalizedString(@"Renamed file", @"Seafile"),
-                           NSLocalizedString(@"Deleted file", @"Seafile"),
-                           NSLocalizedString(@"Restored file", @"Seafile"),
-                           NSLocalizedString(@"Moved file", @"Seafile"),
-                           NSLocalizedString(@"Updated file", @"Seafile"),
-                           NSLocalizedString(@"Created draft", @"Seafile"),
-                           NSLocalizedString(@"Deleted draft", @"Seafile"),
-                           NSLocalizedString(@"Updated draft", @"Seafile"),
-                           NSLocalizedString(@"Publish draft", @"Seafile"),
-                           NSLocalizedString(@"Created files", @"Seafile"),
-                           nil];
+        NSString *name = [even objectForKey:@"name"];
+        NSString *opType = [even objectForKey:@"op_type"];
+        NSString *objType = [even objectForKey:@"obj_type"];
+        //For files ending with a (draft).md string, the front end identifies it as a draft file and replaces the original op_type field (file) with a draft
+        if ([name hasSuffix:@"(draft).md"]) {
+            objType = @"draft";
+        }
         
-        NSString *name = [dict objectForKey:@"name"];
-        self.detail = name;
-        if ([dict objectForKey:@"op_type"] && [dict objectForKey:@"obj_type"]) {
-            NSString *op_type = [dict objectForKey:@"op_type"];
-            NSString *obj_type = [dict objectForKey:@"obj_type"];
-            if ([name containsString:@"(draft).md"]) {
-                obj_type = @"draft";
-            }
-            
-            NSString *opsKey = [NSString stringWithFormat:@"%@ %@", op_type, obj_type];
-            NSDictionary *opsMap = [NSDictionary dictionaryWithObjects:values forKeys:keys];
-            self.operation = [opsMap objectForKey:opsKey];
-            
-            if ([op_type isEqualToString:@"rename"]) {
-                if ([obj_type isEqualToString:@"file"]) {
-                    self.detail = [NSString stringWithFormat:@"%@ => %@", [dict objectForKey:@"old_name"], [dict objectForKey:@"name"]];
-                } else {
-                    NSString *old_key = [NSString stringWithFormat:@"old_%@_name", obj_type];
-                    NSString *key = [NSString stringWithFormat:@"%@_name", obj_type];
-                    self.detail = [NSString stringWithFormat:@"%@ => %@", [dict objectForKey:old_key], [dict objectForKey:key]];
-                }
-            } else if ([op_type isEqualToString:@"move"]) {
-                self.detail = [NSString stringWithFormat:@"%@ => %@", [dict objectForKey:@"old_path"], [dict objectForKey:@"path"]];
-            } else if ([op_type isEqualToString:@"clean-up-trash"]) {
-                NSInteger days = [[dict objectForKey:@"days"] integerValue];
-                if (days == 0) {
-                    self.operation = NSLocalizedString(@"Removed all items from trash", @"Seafile");
-                } else {
-                    self.operation = [NSString stringWithFormat:NSLocalizedString(@"Removed items older than %ld days from trash", @"Seafile"), days];
-                }
-                self.detail = [dict objectForKey:@"repo_name"];
+        self.operation = [self getOpreationFromOpType:opType objType:objType opsMap:opsMap even:even];
+        self.detail = [self eventRenamed:even opType:opType objType:objType];
+    }
+    return self;
+}
+
+- (NSString *)getOpreationFromOpType:(NSString *)opType objType:(NSString *)objType opsMap:(NSDictionary *)opsMap even:(NSDictionary *)even {
+    NSString *operation;
+    if (opType && objType) {
+        NSString *opsKey = [NSString stringWithFormat:@"%@ %@", opType, objType];
+        operation = [opsMap objectForKey:opsKey];
+        //clean-up-trash operation
+        if ([opType isEqualToString:@"clean-up-trash"]) {
+            NSString *days = [even objectForKey:@"days"];
+            if ([days integerValue] == 0) {
+                operation = NSLocalizedString(@"Removed all items from trash", @"Seafile");
+            } else {
+                operation = [NSString stringWithFormat:NSLocalizedString(@"Removed items older than %@ days from trash", @"Seafile"), days];
             }
         }
     }
-    return self;
+    return operation;
+}
+
+- (NSString *)eventRenamed:(NSDictionary *)even opType:(NSString *)opType objType:(NSString *)objType {
+    NSString *detail = [even objectForKey:@"name"];
+    if ([opType isEqualToString:@"rename"]) {
+        if ([objType isEqualToString:@"file"]) {
+            detail = [NSString stringWithFormat:@"%@ => %@", [even objectForKey:@"old_name"], [even objectForKey:@"name"]];
+        } else {
+            NSString *old_key = [NSString stringWithFormat:@"old_%@_name", objType];
+            NSString *key = [NSString stringWithFormat:@"%@_name", objType];
+            detail = [NSString stringWithFormat:@"%@ => %@", [even objectForKey:old_key], [even objectForKey:key]];
+        }
+    } else if ([opType isEqualToString:@"move"]) {
+        detail = [NSString stringWithFormat:@"%@ => %@", [even objectForKey:@"old_path"], [even objectForKey:@"path"]];
+    } else if ([opType isEqualToString:@"clean-up-trash"]) {
+        detail = [even objectForKey:@"repo_name"];
+    }
+    
+    return detail;
 }
 
 @end
