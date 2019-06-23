@@ -358,7 +358,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         cell = [[NSBundle mainBundle] loadNibNamed:CellIdentifier owner:self options:nil].firstObject;
     }
     
-    SeafActivityModel *event = [[SeafActivityModel alloc] initWithEvenJSON:[_events objectAtIndex:indexPath.row] andOpsMap:self.opsMap];
+    SeafActivityModel *event = [[SeafActivityModel alloc] initWithEventJSON:[_events objectAtIndex:indexPath.row] andOpsMap:self.opsMap];
     [cell showWithImage:event.avatarURL author:event.authorName operation:event.operation time:event.time detail:event.detail repoName:event.repoName];
     
     return cell;
@@ -532,6 +532,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
                              @"edit draft",
                              @"publish draft",
                              @"create files",
+                             @"clean-up-trash",
                              nil];
             NSArray *values = [NSArray arrayWithObjects:
                                NSLocalizedString(@"Created library", @"Seafile"),
@@ -554,6 +555,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
                                NSLocalizedString(@"Updated draft", @"Seafile"),
                                NSLocalizedString(@"Publish draft", @"Seafile"),
                                NSLocalizedString(@"Created files", @"Seafile"),
+                               NSLocalizedString(@"Removed all items from trash", @"Seafile"),
                                nil];
             _opsMap = [NSDictionary dictionaryWithObjects:values forKeys:keys];
         } else {

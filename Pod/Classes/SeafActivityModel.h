@@ -23,7 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, copy) NSString *detail;
 
-- (instancetype)initWithEvenJSON:(NSDictionary *)even andOpsMap:(NSDictionary *)opsMap;
+- (instancetype)initWithEventJSON:(NSDictionary *)event andOpsMap:(NSDictionary *)opsMap;
 
 @end
 
