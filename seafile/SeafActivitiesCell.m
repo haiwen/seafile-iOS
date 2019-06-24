@@ -29,13 +29,12 @@
     self.desLabel.text = detail;
     
     if (operation && operation.length > 0) {
-        self.operationButton.hidden = false;
-        [self.operationButton setTitle:operation forState:UIControlStateNormal];
-        self.operationButton.layer.cornerRadius = 3.0;
-        self.operationButton.layer.masksToBounds = true;
-        self.operationButton.enabled = false;
+        self.operationContainer.hidden = false;
+        self.operationContainer.layer.cornerRadius = 3.0;
+        self.operationContainer.layer.masksToBounds = true;
+        self.operationLabel.text = operation;
     } else {
-        self.operationButton.hidden = true;
+        self.operationContainer.hidden = true;
     }
 }
 

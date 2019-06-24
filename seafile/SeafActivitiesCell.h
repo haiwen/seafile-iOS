@@ -16,7 +16,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (strong, nonatomic) IBOutlet UILabel *authorLabel;
 
-@property (strong, nonatomic) IBOutlet UIButton *operationButton;
+@property (strong, nonatomic) IBOutlet UILabel *operationLabel;
+
+@property (strong, nonatomic) IBOutlet UIView *operationContainer;
 
 @property (strong, nonatomic) IBOutlet UILabel *desLabel;
 
