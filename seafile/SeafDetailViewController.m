@@ -23,6 +23,8 @@
 #import "Debug.h"
 #import "SeafWechatHelper.h"
 #import "SeafActionsManager.h"
+#import <WebKit/WebKit.h>
+#import <SafariServices/SafariServices.h>
 
 
 enum SHARE_STATUS {
@@ -35,14 +37,14 @@ enum SHARE_STATUS {
 
 #define SHARE_TITLE NSLocalizedString(@"How would you like to share this file?", @"Seafile")
 
-@interface SeafDetailViewController ()<UIWebViewDelegate, MFMailComposeViewControllerDelegate, MWPhotoBrowserDelegate>
+@interface SeafDetailViewController ()<MFMailComposeViewControllerDelegate, MWPhotoBrowserDelegate, WKNavigationDelegate>
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
 
 @property (retain) QLPreviewController *qlSubViewController;
 
 @property (retain) FailToPreview *failedView;
 @property (retain) DownloadingProgressView *progressView;
-@property (retain) UIWebView *webView;
+@property (nonatomic, strong) WKWebView *webView;
 @property (retain, nonatomic) MWPhotoBrowser *mwPhotoBrowser;
 
 @property BOOL performingLayout;
@@ -194,10 +196,11 @@ enum SHARE_STATUS {
         case PREVIEW_WEBVIEW: {
             Debug("Preview by webview %@\n", self.preViewItem.previewItemTitle);
             NSURLRequest *request = [[NSURLRequest alloc] initWithURL:self.preViewItem.previewItemURL cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
-            if (self.state == PREVIEW_WEBVIEW_JS)
-                self.webView.delegate = self;
-            else
-                self.webView.delegate = nil;
+            if (self.state == PREVIEW_WEBVIEW_JS) {
+                self.webView.navigationDelegate = self;
+            } else {
+                self.webView.navigationDelegate = nil;
+            }
             self.webView.frame = r;
             [self.webView loadRequest:request];
             self.webView.hidden = NO;
@@ -292,9 +295,8 @@ enum SHARE_STATUS {
         views = [[NSBundle mainBundle] loadNibNamed:@"DownloadingProgress_iPhone" owner:self options:nil];
         self.progressView = [views objectAtIndex:0];
     }
-    self.webView = [[UIWebView alloc] initWithFrame:self.view.frame];
+    self.webView = [[WKWebView alloc] initWithFrame:self.view.frame];
     self.webView.backgroundColor = [UIColor whiteColor];
-    self.webView.scalesPageToFit = YES;
     self.webView.autoresizesSubviews = YES;
     self.webView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
     [self.view addSubview:self.failedView];
@@ -644,19 +646,29 @@ enum SHARE_STATUS {
     Debug("share file:send mail %@\n", msg);
 }
 
-# pragma - UIWebViewDelegate
-- (void)webViewDidFinishLoad:(UIWebView *)webView
-{
+# pragma - WKWebViewDelegate
+- (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation {
     if (self.preViewItem) {
         NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [self.preViewItem.strContent stringEscapedForJavasacript]];
-        [self.webView stringByEvaluatingJavaScriptFromString:js];
+        [self.webView evaluateJavaScript:js completionHandler:nil];
     }
 }
-- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
-{
-    if ([request.URL.absoluteString hasPrefix:@"file://"])
-        return YES;
-    return NO;
+
+- (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(nonnull WKNavigationAction *)navigationAction decisionHandler:(nonnull void (^)(WKNavigationActionPolicy))decisionHandler {
+    NSURL *requestURL = navigationAction.request.URL;
+    if ([requestURL.absoluteString hasPrefix:@"file://"]) {
+        decisionHandler(WKNavigationActionPolicyAllow);
+    } else {
+        if ([requestURL.absoluteString hasPrefix:@"http"]) {
+            if (@available(iOS 9.0, *)) {
+                SFSafariViewController *safariVC = [[SFSafariViewController alloc] initWithURL:requestURL];
+                [self presentViewController:safariVC animated:true completion:nil];
+            } else {
+                [[UIApplication sharedApplication] openURL:requestURL];
+            }
+        }
+        decisionHandler(WKNavigationActionPolicyCancel);
+    }
 }
 
 - (UIBarButtonItem *)getSpaceBarItem
