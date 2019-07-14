@@ -26,7 +26,12 @@
             titles = [NSMutableArray arrayWithObjects:S_DOWNLOAD, nil];
         }
     } else if ([entry isKindOfClass:[SeafDir class]]) {
-        titles = [NSMutableArray arrayWithObjects:S_DOWNLOAD, S_DELETE, S_RENAME, nil];
+        SeafDir *dir = (SeafDir *)entry;
+        if (dir.editable) {
+            titles = [NSMutableArray arrayWithObjects:S_DOWNLOAD, S_DELETE, S_RENAME, nil];
+        } else {
+            titles = [NSMutableArray arrayWithObjects:S_DOWNLOAD, nil];
+        }
     } else if ([entry isKindOfClass:[SeafFile class]]) {
         SeafFile *file = (SeafFile *)entry;
         

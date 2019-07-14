@@ -40,8 +40,12 @@
                encrypted:(BOOL)aEncrypted
 {
     NSString *aMime = @"text/directory-documents";
-    if (aEncrypted)
+    if ([aPerm.lowercaseString isEqualToString:@"r"]) {
+        aMime = @"text/directory-documents-readonly";
+    }
+    if (aEncrypted) {
         aMime = @"text/directory-documents-encrypted";
+    }
     if (self = [super initWithConnection:aConnection oid:anId repoId:aRepoId perm:aPerm name:aName path:@"/" mime:aMime]) {
         _desc = aDesc;
         _owner = aOwner;

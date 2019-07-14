@@ -70,7 +70,11 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
                     name:(NSString *)aName
                     path:(NSString *)aPath
 {
-    return [self initWithConnection:aConnection oid:anId repoId:aRepoId perm:aPerm name:aName path:aPath mime:@"text/directory"];
+    NSString *aMime = @"text/directory";
+    if ([aPerm.lowercaseString isEqualToString:@"r"]) {
+        aMime = @"text/directory-readonly";
+    }
+    return [self initWithConnection:aConnection oid:anId repoId:aRepoId perm:aPerm name:aName path:aPath mime:aMime];
 }
 
 - (id)initWithConnection:(SeafConnection *)aConnection
