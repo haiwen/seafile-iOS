@@ -38,6 +38,7 @@
                     size:(long long)aSize
                    mtime:(long long)aMtime
                encrypted:(BOOL)aEncrypted
+           ownerNickName:(NSString *)nickname
 {
     NSString *aMime = @"text/directory-documents";
     if ([aPerm.lowercaseString isEqualToString:@"r"]) {
@@ -54,6 +55,7 @@
         _mtime = aMtime;
         _encrypted = aEncrypted;
         _type = aType;
+        _ownerNickname = nickname;
     }
     return self;
 }
@@ -135,17 +137,22 @@
     _owner = repo.owner;
     _encrypted = repo.encrypted;
     _mtime = repo.mtime;
+    _ownerNickname = repo.ownerNickname;
 }
 
 - (NSString *)detailText
 {
     NSString *detail = [SeafDateFormatter stringFromLongLong:self.mtime];
     if ([SHARE_REPO isEqualToString:self.type]) {
-        NSString *name = self.owner;
-        unsigned long index = [self.owner indexOf:'@'];
-        if (index != NSNotFound)
-            name = [self.owner substringToIndex:index];
-        detail = [detail stringByAppendingFormat:@", %@", name];
+        if (self.ownerNickname) {
+            detail = [detail stringByAppendingFormat:@", %@", self.ownerNickname];
+        } else {
+            NSString *name = self.owner;
+            unsigned long index = [self.owner indexOf:'@'];
+            if (index != NSNotFound)
+                name = [self.owner substringToIndex:index];
+            detail = [detail stringByAppendingFormat:@", %@", name];
+        }
     }
     return detail;
 }
@@ -282,7 +289,6 @@
 - (void)groupingRepos
 {
     int i;
-    NSString *owner = connection.username;
     NSMutableArray *repoGroup = [[NSMutableArray alloc] init];
     NSMutableArray *ownRepos = [[NSMutableArray alloc] init];
     NSMutableArray *srepos = [[NSMutableArray alloc] init];
@@ -292,7 +298,7 @@
     for (i = 0; i < [self.items count]; ++i) {
         SeafRepo *r = (SeafRepo *)[self.items objectAtIndex:i];
         if (!r.owner) continue;
-        if ([owner isEqualToString:r.owner]){
+        if ([MINE_REPO isEqualToString:r.type]){
             [ownRepos addObject:r];
         } else if ([SHARE_REPO isEqualToString:r.type]){
             [srepos addObject:r];
@@ -341,6 +347,7 @@
                              size:[[repoInfo objectForKey:@"size"] integerValue:0]
                              mtime:[[repoInfo objectForKey:@"mtime"] integerValue:0]
                              encrypted:[[repoInfo objectForKey:@"encrypted"] booleanValue:NO]
+                             ownerNickName:[repoInfo objectForKey:@"owner_nickname"]
                              ];
         newRepo.delegate = self.delegate;
         [newRepos addObject:newRepo];
