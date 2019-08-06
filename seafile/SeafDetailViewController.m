@@ -111,7 +111,7 @@ enum SHARE_STATUS {
     self.progressView.hidden = YES;
     self.qlSubViewController.view.hidden = YES;
     self.webView.hidden = YES;
-    [self.webView loadHTMLString:@"" baseURL:nil];
+    [self.webView evaluateJavaScript:@"document.body.innerHTML='';" completionHandler:nil];
     [self clearPhotosVIew];
 }
 
@@ -195,14 +195,13 @@ enum SHARE_STATUS {
         case PREVIEW_WEBVIEW_JS:
         case PREVIEW_WEBVIEW: {
             Debug("Preview by webview %@\n", self.preViewItem.previewItemTitle);
-            NSURLRequest *request = [[NSURLRequest alloc] initWithURL:self.preViewItem.previewItemURL cachePolicy: NSURLRequestUseProtocolCachePolicy timeoutInterval: 1];
             if (self.state == PREVIEW_WEBVIEW_JS) {
                 self.webView.navigationDelegate = self;
             } else {
                 self.webView.navigationDelegate = nil;
             }
             self.webView.frame = r;
-            [self.webView loadRequest:request];
+            [self.webView loadFileURL:self.preViewItem.previewItemURL allowingReadAccessToURL:self.preViewItem.previewItemURL];
             self.webView.hidden = NO;
             break;
         }
