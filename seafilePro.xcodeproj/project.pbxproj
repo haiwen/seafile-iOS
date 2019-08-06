@@ -250,6 +250,7 @@
 		F52111E421E1C14D00D93BB8 /* SeafMkLibAlertController_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = F52111D721E1C14D00D93BB8 /* SeafMkLibAlertController_iPad.xib */; };
 		F52111E521E1C14D00D93BB8 /* SeafMkLibAlertController_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = F52111D721E1C14D00D93BB8 /* SeafMkLibAlertController_iPad.xib */; };
 		F52111E621E1C14D00D93BB8 /* SeafMkLibAlertController_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = F52111D721E1C14D00D93BB8 /* SeafMkLibAlertController_iPad.xib */; };
+		F527AF3D22F881490057B59E /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F527AF3C22F881480057B59E /* WebKit.framework */; };
 		F53690381F13B5F90050D788 /* more_dot.png in Resources */ = {isa = PBXBuildFile; fileRef = F53690371F13B5F90050D788 /* more_dot.png */; };
 		F536DA191F30DB6F00F2EF3F /* SeafSyncInfoCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F536DA171F30DB6F00F2EF3F /* SeafSyncInfoCell.m */; };
 		F5518092214E27DD00AA9D7A /* SeafShareFileViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F5C648F9210A0B4E00842687 /* SeafShareFileViewController.m */; };
@@ -568,6 +569,7 @@
 		F52111D521E1C14D00D93BB8 /* SeafMkLibAlertController_iPhone.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafMkLibAlertController_iPhone.xib; sourceTree = "<group>"; };
 		F52111D621E1C14D00D93BB8 /* SeafSyncInfoCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafSyncInfoCell.xib; sourceTree = "<group>"; };
 		F52111D721E1C14D00D93BB8 /* SeafMkLibAlertController_iPad.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafMkLibAlertController_iPad.xib; sourceTree = "<group>"; };
+		F527AF3C22F881480057B59E /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		F53690371F13B5F90050D788 /* more_dot.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = more_dot.png; sourceTree = "<group>"; };
 		F536DA161F30DB6F00F2EF3F /* SeafSyncInfoCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafSyncInfoCell.h; sourceTree = "<group>"; };
 		F536DA171F30DB6F00F2EF3F /* SeafSyncInfoCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafSyncInfoCell.m; sourceTree = "<group>"; };
@@ -610,6 +612,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F527AF3D22F881490057B59E /* WebKit.framework in Frameworks */,
 				57F143931B886B96009C1BC8 /* CoreLocation.framework in Frameworks */,
 				57814AF81AA8B55000D1D5D8 /* Photos.framework in Frameworks */,
 				57ABE5FB187925B300145FE3 /* CoreText.framework in Frameworks */,
@@ -910,6 +913,7 @@
 		57DB827015A833FA00097CEC /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				F527AF3C22F881480057B59E /* WebKit.framework */,
 				583F23C11E3E6EAC00F9FE07 /* Contacts.framework */,
 				57F143921B886B96009C1BC8 /* CoreLocation.framework */,
 				57814AF71AA8B55000D1D5D8 /* Photos.framework */,
