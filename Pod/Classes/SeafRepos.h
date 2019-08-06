@@ -10,6 +10,7 @@
 
 #define SHARE_REPO @"srepo"
 #define GROUP_REPO @"grepo"
+#define MINE_REPO @"repo"
 
 #define ORG_REPO @"Organization"
 
@@ -17,6 +18,7 @@
 @property (readonly) NSString *repoType;
 @property (readonly, copy) NSString *desc;
 @property (readonly, copy) NSString *owner;
+@property (readonly, copy) NSString *ownerNickname;
 @property (readonly, copy) NSString *magic;
 @property (readonly, copy) NSString *encKey;
 @property (readonly) BOOL passwordRequired;
