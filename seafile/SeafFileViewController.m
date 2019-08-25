@@ -36,6 +36,7 @@
 #import "SeafMkLibAlertController.h"
 #import "SeafActionsManager.h"
 #import "SeafSearchResultViewController.h"
+#import "UISearchBar+SeafExtend.h"
 
 enum {
     STATE_INIT = 0,
