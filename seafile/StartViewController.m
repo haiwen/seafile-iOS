@@ -165,7 +165,11 @@
 {
     SeafAccountViewController *controller = [[SeafAccountViewController alloc] initWithController:self connection:conn type:type];
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
-    navController.modalPresentationStyle = UIModalPresentationFormSheet;
+    if (IsIpad()) {
+        navController.modalPresentationStyle = UIModalPresentationFormSheet;
+    } else {
+        navController.modalPresentationStyle = UIModalPresentationFullScreen;
+    }
     dispatch_async(dispatch_get_main_queue(), ^ {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         [appdelegate.window.rootViewController presentViewController:navController animated:YES completion:nil];
