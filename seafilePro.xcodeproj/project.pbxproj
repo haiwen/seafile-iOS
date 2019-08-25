@@ -267,6 +267,7 @@
 		F5AB0565212737AF00443522 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 57532C161868AA48003D564B /* Localizable.strings */; };
 		F5AB0566212737B100443522 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 57532C161868AA48003D564B /* Localizable.strings */; };
 		F5ADEA042081B69C00FB6451 /* SeafMkLibAlertController.m in Sources */ = {isa = PBXBuildFile; fileRef = F5ADEA022081B69C00FB6451 /* SeafMkLibAlertController.m */; };
+		F5B106AB23129A0C009348E1 /* UISearchBar+SeafExtend.m in Sources */ = {isa = PBXBuildFile; fileRef = F5B106AA23129A0C009348E1 /* UISearchBar+SeafExtend.m */; };
 		F5B209092169994000762342 /* SeafInputItemsProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = F5B209072169993F00762342 /* SeafInputItemsProvider.m */; };
 		F5B2090A2169994000762342 /* SeafInputItemsProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = F5B209072169993F00762342 /* SeafInputItemsProvider.m */; };
 		F5B2090B2169994000762342 /* SeafInputItemsProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = F5B209072169993F00762342 /* SeafInputItemsProvider.m */; };
@@ -297,6 +298,8 @@
 			isa = PBXBuildRule;
 			compilerSpec = com.apple.compilers.proxy.script;
 			fileType = wrapper.nib;
+			inputFiles = (
+			);
 			isEditable = 1;
 			outputFiles = (
 			);
@@ -587,6 +590,8 @@
 		F575168A1EF4CA0B00BD633B /* arrowmore@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "arrowmore@3x.png"; sourceTree = "<group>"; };
 		F5ADEA012081B69C00FB6451 /* SeafMkLibAlertController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafMkLibAlertController.h; sourceTree = "<group>"; };
 		F5ADEA022081B69C00FB6451 /* SeafMkLibAlertController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafMkLibAlertController.m; sourceTree = "<group>"; };
+		F5B106A923129A0C009348E1 /* UISearchBar+SeafExtend.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "UISearchBar+SeafExtend.h"; path = "common/Classes/UISearchBar+SeafExtend.h"; sourceTree = "<group>"; };
+		F5B106AA23129A0C009348E1 /* UISearchBar+SeafExtend.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = "UISearchBar+SeafExtend.m"; path = "common/Classes/UISearchBar+SeafExtend.m"; sourceTree = "<group>"; };
 		F5B209072169993F00762342 /* SeafInputItemsProvider.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SeafInputItemsProvider.m; path = common/Classes/SeafInputItemsProvider.m; sourceTree = "<group>"; };
 		F5B209082169993F00762342 /* SeafInputItemsProvider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SeafInputItemsProvider.h; path = common/Classes/SeafInputItemsProvider.h; sourceTree = "<group>"; };
 		F5C648F6210A0B4E00842687 /* SeafShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SeafShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -990,6 +995,8 @@
 				F521116A21E1BEE800D93BB8 /* SeafAccountCell.xib */,
 				F5B209082169993F00762342 /* SeafInputItemsProvider.h */,
 				F5B209072169993F00762342 /* SeafInputItemsProvider.m */,
+				F5B106A923129A0C009348E1 /* UISearchBar+SeafExtend.h */,
+				F5B106AA23129A0C009348E1 /* UISearchBar+SeafExtend.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -1739,6 +1746,7 @@
 				571D8CBF1677881400F1A22C /* StartViewController.m in Sources */,
 				F5EAAE93218419120068BFE3 /* SeafPrivacyPolicyViewController.m in Sources */,
 				57E5E7B31CC219C8004B7125 /* SeafEventCell.m in Sources */,
+				F5B106AB23129A0C009348E1 /* UISearchBar+SeafExtend.m in Sources */,
 				571D8CC91677881400F1A22C /* FailToPreview.m in Sources */,
 				571D8CCB1677881400F1A22C /* DownloadingProgressView.m in Sources */,
 				571D8CD01677881400F1A22C /* SeafUploadingFileCell.m in Sources */,
