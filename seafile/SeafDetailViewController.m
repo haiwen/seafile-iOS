@@ -40,8 +40,6 @@ enum SHARE_STATUS {
 @interface SeafDetailViewController ()<MFMailComposeViewControllerDelegate, MWPhotoBrowserDelegate, WKNavigationDelegate>
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
 
-@property (retain) QLPreviewController *qlSubViewController;
-
 @property (retain) FailToPreview *failedView;
 @property (retain) DownloadingProgressView *progressView;
 @property (nonatomic, strong) WKWebView *webView;
@@ -77,7 +75,7 @@ enum SHARE_STATUS {
 #pragma mark - Managing the detail item
 - (BOOL)previewSuccess
 {
-    return (self.state == PREVIEW_QL_SUBVIEW) || (self.state == PREVIEW_WEBVIEW) || (self.state == PREVIEW_WEBVIEW_JS);
+    return (self.state == PREVIEW_WEBVIEW) || (self.state == PREVIEW_WEBVIEW_JS);
 }
 
 - (BOOL)isModal
@@ -105,11 +103,15 @@ enum SHARE_STATUS {
     self.navigationItem.rightBarButtonItems = array;
 }
 
+- (void)resetNavigation {
+    self.navigationItem.title = nil;
+    self.navigationItem.rightBarButtonItems = nil;
+}
+
 - (void)clearPreView
 {
     self.failedView.hidden = YES;
     self.progressView.hidden = YES;
-    self.qlSubViewController.view.hidden = YES;
     self.webView.hidden = YES;
     [self.webView evaluateJavaScript:@"document.body.innerHTML='';" completionHandler:nil];
     [self clearPhotosVIew];
@@ -126,20 +128,13 @@ enum SHARE_STATUS {
         if (![QLPreviewController canPreviewItem:self.preViewItem]) {
             _state = PREVIEW_FAILED;
         } else {
-            _state = PREVIEW_QL_SUBVIEW;
-            if ([self.preViewItem.mime hasPrefix:@"audio"]
-                || [self.preViewItem.mime hasPrefix:@"video"]
-                || [self.preViewItem.mime isEqualToString:@"image/svg+xml"])
+            _state = PREVIEW_QL_MODAL;
+            if ([self.preViewItem.mime isEqualToString:@"image/svg+xml"]) {
                 _state = PREVIEW_WEBVIEW;
-            else if([self.preViewItem.mime isEqualToString:@"text/x-markdown"] || [self.preViewItem.mime isEqualToString:@"text/x-seafile"])
+            } else if([self.preViewItem.mime isEqualToString:@"text/x-markdown"] || [self.preViewItem.mime isEqualToString:@"text/x-seafile"]) {
                 _state = PREVIEW_WEBVIEW_JS;
-            else if (!IsIpad()) { // if (!IsIpad()) iPhone >= 10.0
+            } else if (!IsIpad()) { // if (!IsIpad()) iPhone >= 10.0
                 _state = self.preViewItem.editable ? PREVIEW_WEBVIEW : PREVIEW_QL_MODAL;
-            } else if ([self.presentingViewController isKindOfClass:[UITabBarController class]]){//open form 2nd tab
-                UITabBarController *tabVC = (UITabBarController*)self.presentingViewController;
-                if (tabVC.selectedIndex == 2) {
-                    _state = PREVIEW_QL_MODAL;
-                }
             }
         }
     } else {
@@ -171,12 +166,6 @@ enum SHARE_STATUS {
             self.failedView.hidden = NO;
             [self.failedView configureViewWithPrevireItem:self.preViewItem];
             break;
-        case PREVIEW_QL_SUBVIEW:
-            Debug (@"Preview file %@ mime=%@ QL subview\n", self.preViewItem.previewItemTitle, self.preViewItem.mime);
-            self.qlSubViewController.view.frame = r;
-            [self.qlSubViewController reloadData];
-            self.qlSubViewController.view.hidden = NO;
-            break;
         case PREVIEW_QL_MODAL: {
             Debug (@"Preview file %@ mime=%@ QL modal\n", self.preViewItem.previewItemTitle, self.preViewItem.mime);
             [self.qlViewController reloadData];
@@ -187,6 +176,11 @@ enum SHARE_STATUS {
                         [vc presentViewController:self.qlViewController animated:NO completion:^{
                             [self clearPreView];
                         }];
+                    }];
+                } else if (IsIpad()) {
+                    [[SeafAppDelegate topViewController].parentViewController presentViewController:self.qlViewController animated:YES completion:^{
+                        [self clearPreView];
+                        [self resetNavigation];
                     }];
                 }
             }
@@ -302,15 +296,6 @@ enum SHARE_STATUS {
     [self.view addSubview:self.progressView];
     [self.view addSubview:self.webView];
 
-    self.qlSubViewController = [[QLPreviewController alloc] init];
-    self.qlSubViewController.delegate = self;
-    self.qlSubViewController.dataSource = self;
-    self.qlSubViewController.navigationItem.leftBarButtonItem = nil;
-    self.qlSubViewController.navigationItem.rightBarButtonItem = nil;
-    [self addChildViewController:self.qlSubViewController];
-    [self.view addSubview:self.qlSubViewController.view];
-    [self.qlSubViewController didMoveToParentViewController:self];
-
     [self.progressView.cancelBt addTarget:self action:@selector(cancelDownload:) forControlEvents:UIControlEventTouchUpInside];
 
     self.view.autoresizesSubviews = YES;
@@ -323,7 +308,6 @@ enum SHARE_STATUS {
 {
     [super viewDidUnload];
     self.preViewItem = nil;
-    self.qlSubViewController = nil;
     self.failedView = nil;
     self.progressView = nil;
     self.docController = nil;
@@ -342,9 +326,7 @@ enum SHARE_STATUS {
     if (IsIpad()) {
         r = CGRectMake(self.view.frame.origin.x, 0, self.view.frame.size.width, self.view.frame.size.height - 0);
     }
-    if (self.state == PREVIEW_QL_SUBVIEW) {
-        self.qlSubViewController.view.frame = r;
-    } else if (self.state == PREVIEW_PHOTO){
+    if (self.state == PREVIEW_PHOTO){
         if (IsIpad()) {
             self.mwPhotoBrowser.view.frame = r;
         } else {
@@ -361,11 +343,6 @@ enum SHARE_STATUS {
             v.frame = r;
         }
     }
-}
-- (void)viewWillAppear:(BOOL)animated
-{
-    [self updateNavigation];
-    [super viewWillAppear:animated];
 }
 
 #pragma mark - Split view
@@ -680,7 +657,7 @@ enum SHARE_STATUS {
 #pragma -mark QLPreviewControllerDataSource
 - (NSInteger)numberOfPreviewItemsInPreviewController:(QLPreviewController *)controller
 {
-    if (self.state != PREVIEW_QL_SUBVIEW && self.state != PREVIEW_QL_MODAL)
+    if (self.state != PREVIEW_QL_MODAL)
         return 0;
     return 1;
 }

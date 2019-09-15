@@ -90,7 +90,8 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
                      nil];
     __weak typeof(self) weakSelf = self;
     [self.tableView addInfiniteScrollingWithActionHandler:^{
-        [weakSelf moreEvents:weakSelf.eventsOffset];
+        __strong typeof (weakSelf) strongSelf = weakSelf;
+        [strongSelf moreEvents:strongSelf.eventsOffset];
     }];
 }
 

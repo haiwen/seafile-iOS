@@ -298,8 +298,6 @@
 			isa = PBXBuildRule;
 			compilerSpec = com.apple.compilers.proxy.script;
 			fileType = wrapper.nib;
-			inputFiles = (
-			);
 			isEditable = 1;
 			outputFiles = (
 			);
@@ -984,8 +982,8 @@
 			children = (
 				58D40A7C1E9AF86D00A68BEF /* SeafData.m */,
 				58D40A7D1E9AF86D00A68BEF /* SeafData.h */,
-				58D40A601E9AF72200A68BEF /* UIViewController+Extend.m */,
 				58D40A611E9AF72200A68BEF /* UIViewController+Extend.h */,
+				58D40A601E9AF72200A68BEF /* UIViewController+Extend.m */,
 				58D40A621E9AF72200A68BEF /* SeafGlobal.m */,
 				58D40A631E9AF72200A68BEF /* SeafGlobal.h */,
 				58D40A641E9AF72200A68BEF /* SeafDbCacheProvider.m */,
