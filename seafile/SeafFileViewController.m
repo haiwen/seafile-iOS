@@ -910,15 +910,18 @@ enum {
         } else {
             [self.detailViewController setPreViewItem:item master:self];
         }
-
-        if (!IsIpad()) {
-            if (self.detailViewController.state == PREVIEW_QL_MODAL) { // Use fullscreen preview for doc, xls, etc.
-                [self.detailViewController.qlViewController reloadData];
-                [self presentViewController:self.detailViewController.qlViewController animated:true completion:nil];
+        
+        if (self.detailViewController.state == PREVIEW_QL_MODAL) { // Use fullscreen preview for doc, xls, etc.
+            [self.detailViewController.qlViewController reloadData];
+            if (IsIpad()) {
+                //Use fullscreen on ipad, QLPreviewController's navigationbar has action items
+                [[[SeafAppDelegate topViewController] parentViewController] presentViewController:self.detailViewController.qlViewController animated:true completion:nil];
             } else {
-                SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-                [appdelegate showDetailView:self.detailViewController];
+                [self presentViewController:self.detailViewController.qlViewController animated:true completion:nil];
             }
+        } else if (!IsIpad()) {
+            SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+            [appdelegate showDetailView:self.detailViewController];
         }
     } else if ([_curEntry isKindOfClass:[SeafDir class]]) {
         [(SeafDir *)_curEntry setDelegate:self];
