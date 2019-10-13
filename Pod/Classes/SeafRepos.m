@@ -39,6 +39,7 @@
                    mtime:(long long)aMtime
                encrypted:(BOOL)aEncrypted
            ownerNickName:(NSString *)nickname
+               groupName:(NSString *)groupName
 {
     NSString *aMime = @"text/directory-documents";
     if ([aPerm.lowercaseString isEqualToString:@"r"]) {
@@ -56,6 +57,7 @@
         _encrypted = aEncrypted;
         _type = aType;
         _ownerNickname = nickname;
+        _groupName = groupName;
     }
     return self;
 }
@@ -317,8 +319,23 @@
     if (srepos.count > 0)
         [repoGroup addObject:srepos];
     
-    if (grepos.count > 0)
-        [repoGroup addObject:grepos];
+    if (grepos.count > 0) {
+        NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+        for (SeafRepo *r in grepos) {
+            NSString *groupName = r.groupName;
+            if ([dict.allKeys containsObject:groupName]) {
+                [[dict objectForKey:groupName] addObject:r];
+            } else {
+                NSMutableArray *array = [NSMutableArray array];
+                [array addObject:r];
+                [dict setValue:array forKey:groupName];
+            }
+        }
+        
+        for (NSMutableArray *array in dict.allValues) {
+            [repoGroup addObject:array];
+        }
+    }
 
     for (NSString *groupName in otherRepos) {
         [repoGroup addObject:[otherRepos objectForKey:groupName]];
@@ -348,6 +365,7 @@
                              mtime:[[repoInfo objectForKey:@"mtime"] integerValue:0]
                              encrypted:[[repoInfo objectForKey:@"encrypted"] booleanValue:NO]
                              ownerNickName:[repoInfo objectForKey:@"owner_nickname"]
+                             groupName:[repoInfo objectForKey:@"group_name"]
                              ];
         newRepo.delegate = self.delegate;
         [newRepos addObject:newRepo];

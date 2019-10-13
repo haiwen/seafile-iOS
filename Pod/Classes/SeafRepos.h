@@ -28,6 +28,7 @@
 @property (readonly) unsigned long long size;
 @property (readonly) long long mtime;
 @property (readonly) NSString *type;
+@property (readonly) NSString *groupName;
 
 - (NSString *)detailText;
 - (BOOL)isGroupRepo;
