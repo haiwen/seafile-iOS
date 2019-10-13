@@ -973,7 +973,7 @@ enum {
         } else if ([repo.type isEqualToString:SHARE_REPO]) {
             text = NSLocalizedString(@"Shared to me", @"Seafile");
         } else if ([repo.type isEqualToString:GROUP_REPO]) {
-            text = NSLocalizedString(@"Shared with groups", @"Seafile");
+            text = repo.groupName;
         } else {
             if ([repo.owner isKindOfClass:[NSNull class]]) {
                 text = @"";
