@@ -208,6 +208,13 @@ enum SHARE_STATUS {
         default:
             break;
     }
+    if (@available(iOS 13.0, *)) {
+        if ([self isPortrait]) {
+            self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModePrimaryHidden;
+        } else {
+            self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModeAllVisible;
+        }
+    }
 }
 
 - (void)setPreViewItem:(id<SeafPreView>)item master:(UIViewController<SeafDentryDelegate> *)c
@@ -301,6 +308,11 @@ enum SHARE_STATUS {
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
+    
+    if (IsIpad() && self.navigationItem.leftBarButtonItem == nil && [self isPortrait]) {
+        [self.navigationItem setLeftBarButtonItem:self.splitViewController.displayModeButtonItem animated:NO];
+    }
+    
     [self refreshView];
 }
 
@@ -745,6 +757,15 @@ enum SHARE_STATUS {
         }
     }
     [self updateNavigation];
+}
+
+- (BOOL)isPortrait {
+    UIDeviceOrientation orientation = (UIDeviceOrientation)[UIApplication sharedApplication].statusBarOrientation;
+    if (orientation == UIDeviceOrientationPortrait || orientation == UIDeviceOrientationPortraitUpsideDown) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 @end
