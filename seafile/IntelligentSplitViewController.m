@@ -160,6 +160,14 @@
     UIInterfaceOrientation fromOrientation = [[notification.userInfo valueForKey:UIApplicationStatusBarOrientationUserInfoKey] integerValue];
     //UIInterfaceOrientation toOrientation = [UIApplication sharedApplication].statusBarOrientation;
 
+    if (@available(iOS 13.0, *)) {
+        if (UIInterfaceOrientationIsPortrait(fromOrientation)) {
+            self.preferredDisplayMode = UISplitViewControllerDisplayModeAllVisible;
+        } else {
+            self.preferredDisplayMode = UISplitViewControllerDisplayModePrimaryHidden;
+        }
+    }
+    
     UITabBarController *tabBar = self.tabBarController;
     BOOL notModal = (!tabBar.presentedViewController );
     BOOL isSelectedTab = [self.tabBarController.selectedViewController isEqual:self];
