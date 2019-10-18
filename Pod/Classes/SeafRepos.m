@@ -323,6 +323,9 @@
         NSMutableDictionary *dict = [NSMutableDictionary dictionary];
         for (SeafRepo *r in grepos) {
             NSString *groupName = r.groupName;
+            if (!groupName || groupName.length == 0) {
+                groupName = GROUP_REPO;
+            }
             if ([dict.allKeys containsObject:groupName]) {
                 [[dict objectForKey:groupName] addObject:r];
             } else {
