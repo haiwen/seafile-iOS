@@ -58,4 +58,8 @@
 + (NSError *)defaultError;
 + (NSString *)convertToALAssetUrl:(NSString *)fileURL andIdentifier:(NSString *)identifier;
 
++ (NSURL *)generateFileTempPath:(NSString *)name;
+
++ (NSString *)currentBundleIdentifier;
+
 @end

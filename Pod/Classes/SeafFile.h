@@ -69,5 +69,6 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 - (BOOL)uploadFromFile:(NSURL *_Nonnull)url;
 - (BOOL)waitUpload;
 
+- (NSString *_Nullable)thumbPath:(NSString *)objId;
 
 @end

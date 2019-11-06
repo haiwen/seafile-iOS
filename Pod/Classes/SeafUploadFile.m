@@ -196,7 +196,10 @@
     if (result) {
         if (!_autoSync) {
             [Utils linkFileAtPath:self.lpath to:[SeafStorage.sharedObject documentPath:oid] error:nil];
-            [self saveThumbToLocal:oid];
+            // files.app menory limit 15MB, reSizeImage will use more than 15MB
+            if (![[Utils currentBundleIdentifier] containsString:@"SeafFileProvider"]) {
+                [self saveThumbToLocal:oid];
+            }
         } else {
             // For auto sync photos, release local cache files immediately.
             [self cleanup];
@@ -524,7 +527,7 @@
         self.taskCompleteBlock = ^(id<SeafTask> task, BOOL result) {};
     }
 
-    if (!self.udir) {
+    if (!self.udir.repoId || !self.udir.path) {
         return completeBlock(self, false);
     }
     [self upload:self.udir->connection repo:self.udir.repoId path:self.udir.path];

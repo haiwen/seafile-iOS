@@ -97,7 +97,7 @@
     return [SeafStorage.sharedObject.tempDir stringByAppendingPathComponent:objId];
 }
 
-- (NSString *)thumbPath: (NSString *)objId
+- (NSString *)thumbPath:(NSString *)objId
 {
     if (!self.oid) return nil;
     int size = THUMB_SIZE * (int)[[UIScreen mainScreen] scale];
@@ -767,6 +767,7 @@
     BOOL ret = [Utils linkFileAtPath:url.path to:newpath error:&error];
     if (ret) {
         [self setMpath:newpath];
+        Debug(@"linked newpath : %@ file size: %lld", newpath, [Utils fileSizeAtPath1:newpath]);
         [self autoupload];
     } else {
         Warning("Failed to copy file %@ to %@: %@", url, newpath, error);
