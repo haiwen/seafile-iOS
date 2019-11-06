@@ -80,7 +80,8 @@
     if (pathComponents.count == 1) {
         ret = self.rootURL;
     } else if (pathComponents.count == 2) {
-        ret = [self.rootURL URLByAppendingPathComponent:[pathComponents objectAtIndex:1] isDirectory:true];
+        BOOL isFolder = [[pathComponents objectAtIndex:1] isEqualToString:(NSString *)kUTTypeFolder];
+        ret = [self.rootURL URLByAppendingPathComponent:[pathComponents objectAtIndex:1] isDirectory:isFolder];
     } else {
         NSURL *url = [self.rootURL URLByAppendingPathComponent:[pathComponents objectAtIndex:1] isDirectory:true];
         ret = [url URLByAppendingPathComponent:[pathComponents objectAtIndex:2] isDirectory:false];
@@ -88,8 +89,7 @@
     return ret;
 }
 
-- (nullable NSFileProviderItemIdentifier)persistentIdentifierForItemAtURL:(NSURL *)url
-{
+- (nullable NSFileProviderItemIdentifier)persistentIdentifierForItemAtURL:(NSURL *)url {
     NSRange range = [url.path rangeOfString:self.rootPath.lastPathComponent];
     if (range.location == NSNotFound) {
         Warning("Unknown url: %@", url);
@@ -183,14 +183,23 @@
     NSFileProviderItemIdentifier identifier = [self persistentIdentifierForItemAtURL:url];
     Debug("File changed: %@ %@", url, identifier);
     SeafItem *item = [[SeafItem alloc] initWithItemIdentity:identifier];
+    if ([self readFromLocal:identifier]) {
+        item = [self readFromLocal:identifier];
+    }
+    
     if (!item.isFile) {
         Debug("%@ is not a file.", identifier);
         return;
     }
 
     SeafFile *sfile = (SeafFile *)item.toSeafObj;
-    [sfile uploadFromFile:url];
-    [sfile waitUpload];
+    NSURL *tempURL = [Utils generateFileTempPath:sfile.name];
+    NSError *err;
+    BOOL ret = [[NSFileManager defaultManager] moveItemAtURL:url toURL:tempURL error:&err];
+    if (ret) {
+        [sfile uploadFromFile:tempURL];
+        [sfile waitUpload];
+    }
 }
 
 - (void)stopProvidingItemAtURL:(NSURL *)url
@@ -242,6 +251,7 @@
     NSFileProviderItemIdentifier itemIdentifier = [parentItemIdentifier stringByAppendingPathComponent:fileURL.path.lastPathComponent];
     Debug("file path: %@, parentItemIdentifier:%@, itemIdentifier:%@", fileURL.path, parentItemIdentifier, itemIdentifier);
     SeafItem *item = [[SeafItem alloc] initWithItemIdentity:itemIdentifier];
+    [self saveToLocal:item];
     SeafFile *sfile = (SeafFile *)[item toSeafObj];
     NSURL *localURL = [self URLForItemWithPersistentIdentifier:itemIdentifier];
 
@@ -255,12 +265,18 @@
     
     [fileURL startAccessingSecurityScopedResource];
     [Utils checkMakeDir:localURL.path.stringByDeletingLastPathComponent];
+    if ([Utils fileExistsAtPath:localURL.path]) {
+        [Utils removeFile:localURL.path];
+    }
     NSError *err = nil;
     BOOL ret = [[NSFileManager defaultManager] moveItemAtURL:fileURL toURL:localURL error:&err];
     [fileURL stopAccessingSecurityScopedResource];
 
+    Debug(@"local file size: %lld", [Utils fileSizeAtPath1:localURL.path]);
     if (!ret) return completionHandler(nil, [NSError fileProvierErrorNoSuchItem]);
+    [localURL startAccessingSecurityScopedResource];
     ret = [sfile uploadFromFile:localURL];
+    [localURL stopAccessingSecurityScopedResource];
     if (!ret) return completionHandler(nil, [NSError fileProvierErrorNoSuchItem]);
 
     SeafProviderItem *providerItem = [[SeafProviderItem alloc] initWithSeafItem:item];
@@ -377,7 +393,6 @@
     [item setLastUsedDate:lastUsedDate];
     [self saveToLocal:item];
     SeafProviderItem *lastItem = [[SeafProviderItem alloc] initWithSeafItem:item];
-    [self signalEnumerator:@[lastItem.parentItemIdentifier,NSFileProviderWorkingSetContainerItemIdentifier]];
     completionHandler(lastItem, nil);
 }
 
@@ -395,6 +410,56 @@
     }
     SeafProviderItem *lastItem = [[SeafProviderItem alloc] initWithSeafItem:item];
     completionHandler(lastItem, nil);
+}
+
+- (NSProgress *)fetchThumbnailsForItemIdentifiers:(NSArray<NSFileProviderItemIdentifier> *)itemIdentifiers requestedSize:(CGSize)size perThumbnailCompletionHandler:(void (^)(NSFileProviderItemIdentifier _Nonnull, NSData * _Nullable, NSError * _Nullable))perThumbnailCompletionHandler completionHandler:(void (^)(NSError * _Nullable))completionHandler {
+    NSProgress *progress = [NSProgress progressWithTotalUnitCount:itemIdentifiers.count];
+    __block NSInteger counterProgress = 0;
+    
+    for (NSString *itemIdentifier in itemIdentifiers) {
+        Debug("fetch thumb itemIdentifier: %@", itemIdentifier);
+        SeafItem *item = [[SeafItem alloc] initWithItemIdentity:itemIdentifier];
+        if (!item.isFile) {
+            counterProgress += 1;
+            if (counterProgress == progress.totalUnitCount) {
+                completionHandler(nil);
+            }
+            continue;
+        }
+        
+        SeafFile *sfile = (SeafFile *)[item toSeafObj];
+        if ([sfile isImageFile]) {
+            if (sfile.thumb) {
+                counterProgress += 1;
+                NSData *imageData = UIImagePNGRepresentation(sfile.thumb);
+                perThumbnailCompletionHandler(itemIdentifier, imageData, nil);
+                if (counterProgress == progress.totalUnitCount) {
+                    completionHandler(nil);
+                }
+            } else {
+                __weak typeof(sfile) weakFile = sfile;
+                [sfile downloadThumb:^(BOOL ret) {
+                    counterProgress += 1;
+                    if (ret) {
+                        NSData *imageData = [NSData dataWithContentsOfFile:[weakFile thumbPath:weakFile.oid]];
+                        perThumbnailCompletionHandler(itemIdentifier, imageData, nil);
+                    } else {
+                        Warning("Failed fetch thumb itemIdentifier: %@", itemIdentifier);
+                        perThumbnailCompletionHandler(itemIdentifier, nil, [NSError fileProvierErrorServerUnreachable]);
+                    }
+                    if (counterProgress == progress.totalUnitCount) {
+                        completionHandler(nil);
+                    }
+                }];
+            }
+        } else {
+            counterProgress += 1;
+            if (counterProgress == progress.totalUnitCount) {
+                completionHandler(nil);
+            }
+        }
+    }
+    return progress;
 }
 
 - (void)signalEnumerator:(NSArray<NSFileProviderItemIdentifier> *)itemIdentifiers {
@@ -425,6 +490,18 @@
         [filesStorage removeObjectForKey:item.itemIdentifier];
         [SeafStorage.sharedObject setObject:filesStorage forKey:SEAF_FILE_PROVIDER];
     }
+}
+
+- (SeafItem *)readFromLocal:(NSString *)itemIdentifier {
+    SeafItem *item;
+    @synchronized (self) {
+        NSMutableDictionary *filesStorage = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:SEAF_FILE_PROVIDER]];
+        NSDictionary *dict = [filesStorage valueForKey:itemIdentifier];
+        if (dict) {
+            [item convertFromDict:dict];
+        }
+    }
+    return item;
 }
 
 /*

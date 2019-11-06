@@ -110,6 +110,7 @@
     if (!from || !to || [Utils fileExistsAtPath:to]) return false;
     NSError *err = nil;
     NSFileManager* fm = [NSFileManager defaultManager];
+    // file import from Files.app,sometime file size is 0
     if ([fm fileExistsAtPath:to]
         || ![[NSFileManager defaultManager] linkItemAtPath:from toPath:to error:&err]) {
         Warning("Failed to link file from %@ to %@: %@\n", from, to, err);
@@ -579,4 +580,22 @@
         return nil;
     }
 }
+
++ (NSURL *)generateFileTempPath:(NSString *)name {
+    NSString *tempPath = [NSTemporaryDirectory() stringByAppendingPathComponent:[name stringByAddingPercentEscapesUsingEncoding:NSUTF16StringEncoding]];
+    NSURL *tempURL = [NSURL fileURLWithPath:tempPath];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:tempPath]) {
+        NSError *error;
+        [[NSFileManager defaultManager] removeItemAtPath:tempPath error:&error];
+        if (error) {
+            Warning("Failed to generate temp url, error: %@", error);
+        }
+    }
+    return tempURL;
+}
+
++ (NSString *)currentBundleIdentifier {
+    return [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleIdentifier"];
+}
+
 @end
