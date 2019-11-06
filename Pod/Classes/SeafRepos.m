@@ -48,6 +48,9 @@
     if (aEncrypted) {
         aMime = @"text/directory-documents-encrypted";
     }
+    if ([groupName isKindOfClass:[NSNull class]]) {
+        groupName = nil;
+    }
     if (self = [super initWithConnection:aConnection oid:anId repoId:aRepoId perm:aPerm name:aName path:@"/" mime:aMime]) {
         _desc = aDesc;
         _owner = aOwner;
