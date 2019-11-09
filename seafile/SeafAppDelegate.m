@@ -244,10 +244,14 @@
     [SeafGlobal.sharedObject startTimer];
     [self addBackgroundMonitor:SeafGlobal.sharedObject];
 
+    BOOL registeredChangeObserver = false;
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
         [conn checkAutoSync];
+        if (conn.inAutoSync && !registeredChangeObserver) {
+            [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
+            registeredChangeObserver = true;
+        }
     }
-    [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
 
     [self checkBackgroundUploadStatus];
 }
