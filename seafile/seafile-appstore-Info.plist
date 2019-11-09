@@ -100,7 +100,7 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Choose always allow Seafile can periodically start Camera Upload when your location changes</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>This lets you upload photos to Seafile</string>
+	<string>Access to your photo library is required to upload photos to your account</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
