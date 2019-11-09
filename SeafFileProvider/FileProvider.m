@@ -182,9 +182,9 @@
     // Called at some point after the file has changed; the provider may then trigger an upload
     NSFileProviderItemIdentifier identifier = [self persistentIdentifierForItemAtURL:url];
     Debug("File changed: %@ %@", url, identifier);
-    SeafItem *item = [[SeafItem alloc] initWithItemIdentity:identifier];
-    if ([self readFromLocal:identifier]) {
-        item = [self readFromLocal:identifier];
+    SeafItem *item = [self readFromLocal:identifier];
+    if (!item) {
+        item = [[SeafItem alloc] initWithItemIdentity:identifier];
     }
     
     if (!item.isFile) {
