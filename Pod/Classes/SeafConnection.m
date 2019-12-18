@@ -204,7 +204,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     if (!_localUploadDir) {
         _localUploadDir = [self getAttribute:@"UPLOAD_CACHE_DIR"];
-        if (!_localUploadDir) {
+        //rootPath changed after system is restored from backup, copy to uploadsdir will permission denied
+        if (!_localUploadDir || ![_localUploadDir containsString:SeafStorage.sharedObject.rootPath]) {
             _localUploadDir = [SeafStorage uniqueDirUnder:SeafStorage.sharedObject.uploadsDir];
             [self setAttribute:_localUploadDir forKey:@"UPLOAD_CACHE_DIR"];
         }
