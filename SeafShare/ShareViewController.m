@@ -15,12 +15,21 @@
 
 @interface ShareViewController ()<UITableViewDataSource, UITableViewDelegate>
 
-@property (nonatomic, strong) UITableView *tableView;
 @property (nonatomic, strong) UIAlertController *alert;
 
 @end
 
 @implementation ShareViewController
+
+- (instancetype)initWithCoder:(NSCoder *)coder {
+    self = [super initWithCoder:coder];
+    if (self) {
+        if (@available(iOS 13.0, *)) {
+            self.modalInPresentation = true;
+        }
+    }
+    return self;
+}
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -32,13 +41,11 @@
         [self showNoAccountsAlert];
     }
     
-    self.tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStylePlain];
     self.tableView.rowHeight = 64;
     self.tableView.tableFooterView = [UIView new];
     self.tableView.separatorStyle = UITableViewCellSelectionStyleNone;
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
-    [self.view addSubview:self.tableView];
 }
 
 - (void)showNoAccountsAlert {

@@ -416,6 +416,8 @@ enum {
     if (IsIpad()) {
         imagePickerController.modalPresentationStyle = UIModalPresentationPopover;
         imagePickerController.popoverPresentationController.barButtonItem = self.photoItem;
+    } else {
+        imagePickerController.modalPresentationStyle = UIModalPresentationFullScreen;
     }
     [self presentViewController:imagePickerController animated:YES completion:nil];
 }
@@ -838,7 +840,11 @@ enum {
     }
 
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
-    [navController setModalPresentationStyle:UIModalPresentationFormSheet];
+    if (IsIpad()) {
+        [navController setModalPresentationStyle:UIModalPresentationFormSheet];
+    } else {
+        [navController setModalPresentationStyle:UIModalPresentationFullScreen];
+    }
     navController.navigationBar.tintColor = BAR_COLOR;
     [self presentViewController:navController animated:YES completion:nil];
     if (IsIpad()) {

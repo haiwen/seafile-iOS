@@ -8,6 +8,6 @@
 
 #import <UIKit/UIKit.h>
 
-@interface ShareViewController : UIViewController
+@interface ShareViewController : UITableViewController
 
 @end
