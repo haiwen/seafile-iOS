@@ -1,53 +1,64 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14113" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="TmP-fd-Bxa">
-    <device id="retina4_7" orientation="portrait">
-        <adaptation id="fullscreen"/>
-    </device>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="15702" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="TmP-fd-Bxa">
+    <device id="retina4_7" orientation="portrait" appearance="dark"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14088"/>
-        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="15704"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
-        <!--Seaf Share Navigatio Controller-->
+        <!--Navigation Controller-->
         <scene sceneID="1eM-hN-iMF">
             <objects>
-                <navigationController id="TmP-fd-Bxa" customClass="SeafShareNavigatioController" sceneMemberID="viewController">
-                    <navigationBar key="navigationBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="O8w-R7-a0L">
-                        <rect key="frame" x="0.0" y="20" width="375" height="44"/>
+                <navigationController id="TmP-fd-Bxa" sceneMemberID="viewController">
+                    <nil key="simulatedStatusBarMetrics"/>
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" translucent="NO" id="O8w-R7-a0L">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <connections>
-                        <segue destination="1L0-Bx-HLe" kind="relationship" relationship="rootViewController" id="gPZ-eh-Q6c"/>
+                        <segue destination="oQu-kN-kAG" kind="relationship" relationship="rootViewController" id="NRn-Hz-gOb"/>
                     </connections>
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="zmS-Xq-peu" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-364" y="77"/>
         </scene>
-        <!--Save to Seafile-->
-        <scene sceneID="A7I-oo-jJl">
+        <!--Share View Controller-->
+        <scene sceneID="tbF-C9-vrQ">
             <objects>
-                <viewController id="1L0-Bx-HLe" customClass="ShareViewController" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="NnE-FM-Rmn">
-                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                <tableViewController modalPresentationStyle="fullScreen" id="oQu-kN-kAG" customClass="ShareViewController" sceneMemberID="viewController">
+                    <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" id="MBE-QC-sFo">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="623"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                        <viewLayoutGuide key="safeArea" id="vH4-QN-b6I"/>
-                    </view>
-                    <navigationItem key="navigationItem" title="Save to Seafile" id="uxw-ij-XXa"/>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="P21-7i-bxw" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor" cocoaTouchSystemColor="whiteColor"/>
+                        <prototypes>
+                            <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" id="ycU-bV-Ana">
+                                <rect key="frame" x="0.0" y="28" width="375" height="43.5"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="ycU-bV-Ana" id="NyA-f6-z24">
+                                    <rect key="frame" x="0.0" y="0.0" width="375" height="43.5"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                </tableViewCellContentView>
+                            </tableViewCell>
+                        </prototypes>
+                        <connections>
+                            <outlet property="dataSource" destination="oQu-kN-kAG" id="jQR-w1-WmO"/>
+                            <outlet property="delegate" destination="oQu-kN-kAG" id="uY2-DN-um5"/>
+                        </connections>
+                    </tableView>
+                    <navigationItem key="navigationItem" id="UWT-m1-qiu"/>
+                </tableViewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="sfg-tc-nc1" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="801" y="77"/>
+            <point key="canvasLocation" x="761" y="77"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="5WE-LR-U4X">
             <objects>
-                <navigationController id="lsY-UA-aHA" sceneMemberID="viewController">
+                <navigationController modalPresentationStyle="fullScreen" id="lsY-UA-aHA" sceneMemberID="viewController">
                     <navigationBar key="navigationBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="10K-g0-n8e">
-                        <rect key="frame" x="0.0" y="20" width="375" height="44"/>
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <connections>
@@ -61,13 +72,17 @@
         <!--Save to Seafile-->
         <scene sceneID="elq-62-fHb">
             <objects>
-                <viewController storyboardIdentifier="SeafShareFileViewController" id="gTO-8A-cHg" customClass="SeafShareFileViewController" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="SeafShareFileViewController" modalPresentationStyle="fullScreen" id="gTO-8A-cHg" customClass="SeafShareFileViewController" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="lef-rB-svO"/>
+                        <viewControllerLayoutGuide type="bottom" id="vBP-N7-0fR"/>
+                    </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="Dcz-ki-YzP">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="cM7-WV-PoN">
-                                <rect key="frame" x="0.0" y="72" width="375" height="551"/>
+                                <rect key="frame" x="0.0" y="44" width="375" height="579"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                             </tableView>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="jUF-jD-tfV">
@@ -75,7 +90,7 @@
                                 <subviews>
                                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="HCC-ho-FTH">
                                         <rect key="frame" x="0.0" y="0.0" width="375" height="0.5"/>
-                                        <color key="backgroundColor" white="0.0" alpha="0.10000000000000001" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <color key="backgroundColor" systemColor="systemBackgroundColor" cocoaTouchSystemColor="whiteColor"/>
                                         <constraints>
                                             <constraint firstAttribute="height" constant="0.5" id="XXR-ul-fu5"/>
                                         </constraints>
@@ -86,11 +101,10 @@
                                             <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="80" id="5um-sN-jFP"/>
                                         </constraints>
                                         <fontDescription key="fontDescription" type="system" weight="medium" pointSize="14"/>
-                                        <nil key="textColor"/>
                                         <nil key="highlightedColor"/>
                                     </label>
                                 </subviews>
-                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <color key="backgroundColor" systemColor="systemBackgroundColor" cocoaTouchSystemColor="whiteColor"/>
                                 <constraints>
                                     <constraint firstItem="HCC-ho-FTH" firstAttribute="leading" secondItem="jUF-jD-tfV" secondAttribute="leading" id="ARV-a6-MZR"/>
                                     <constraint firstItem="510-5v-Trw" firstAttribute="leading" secondItem="jUF-jD-tfV" secondAttribute="leading" constant="12" id="dHa-aE-tJR"/>
@@ -103,15 +117,14 @@
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
-                            <constraint firstItem="cM7-WV-PoN" firstAttribute="trailing" secondItem="Zip-Eu-FlQ" secondAttribute="trailing" id="3lG-Mu-Jft"/>
+                            <constraint firstItem="cM7-WV-PoN" firstAttribute="trailing" secondItem="Dcz-ki-YzP" secondAttribute="trailing" id="3lG-Mu-Jft"/>
                             <constraint firstItem="jUF-jD-tfV" firstAttribute="top" secondItem="cM7-WV-PoN" secondAttribute="bottom" id="KoU-Iq-iG4"/>
-                            <constraint firstItem="Zip-Eu-FlQ" firstAttribute="trailing" secondItem="jUF-jD-tfV" secondAttribute="trailing" id="UFW-Uy-UiN"/>
-                            <constraint firstItem="cM7-WV-PoN" firstAttribute="top" secondItem="Zip-Eu-FlQ" secondAttribute="top" constant="8" id="VjO-kS-Wol"/>
-                            <constraint firstItem="cM7-WV-PoN" firstAttribute="leading" secondItem="Zip-Eu-FlQ" secondAttribute="leading" id="b5i-Gx-ZCh"/>
-                            <constraint firstItem="jUF-jD-tfV" firstAttribute="leading" secondItem="Zip-Eu-FlQ" secondAttribute="leading" id="eUy-ck-Km3"/>
-                            <constraint firstItem="jUF-jD-tfV" firstAttribute="bottom" secondItem="Zip-Eu-FlQ" secondAttribute="bottom" id="plz-1f-bwY"/>
+                            <constraint firstAttribute="trailing" secondItem="jUF-jD-tfV" secondAttribute="trailing" id="UFW-Uy-UiN"/>
+                            <constraint firstItem="cM7-WV-PoN" firstAttribute="top" secondItem="lef-rB-svO" secondAttribute="bottom" id="VjO-kS-Wol"/>
+                            <constraint firstItem="cM7-WV-PoN" firstAttribute="leading" secondItem="Dcz-ki-YzP" secondAttribute="leading" id="b5i-Gx-ZCh"/>
+                            <constraint firstItem="jUF-jD-tfV" firstAttribute="leading" secondItem="Dcz-ki-YzP" secondAttribute="leading" id="eUy-ck-Km3"/>
+                            <constraint firstItem="jUF-jD-tfV" firstAttribute="bottom" secondItem="vBP-N7-0fR" secondAttribute="top" id="plz-1f-bwY"/>
                         </constraints>
-                        <viewLayoutGuide key="safeArea" id="Zip-Eu-FlQ"/>
                     </view>
                     <navigationItem key="navigationItem" title="Save to Seafile" id="k9q-Nw-n0I">
                         <barButtonItem key="leftBarButtonItem" style="plain" id="MM5-bd-0tN">

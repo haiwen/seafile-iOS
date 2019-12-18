@@ -248,10 +248,15 @@
         UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
         UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 6, tableView.bounds.size.width - 10, 18)];
         label.text = NSLocalizedString(@"Save Destination", @"Seafile");
-        label.textColor = [UIColor darkTextColor];
         label.backgroundColor = [UIColor clearColor];
+        if (@available(iOS 13.0, *)) {
+            [headerView setBackgroundColor:[UIColor secondarySystemBackgroundColor]];
+            label.textColor = [UIColor labelColor];
+        } else {
+            [headerView setBackgroundColor:HEADER_COLOR];
+            label.textColor = [UIColor darkTextColor];
+        }
         label.font = [UIFont systemFontOfSize:15];
-        [headerView setBackgroundColor:HEADER_COLOR];
         [headerView addSubview:label];
         return headerView;
     }

@@ -118,6 +118,11 @@
     SeafUploadFile *file = self.ufiles[indexPath.row];
     file.delegate = self;
     cell.textLabel.text = file.name;
+    if (@available(iOS 13.0, *)) {
+        cell.textLabel.textColor = [UIColor labelColor];
+    } else {
+        cell.textLabel.textColor = [UIColor whiteColor];
+    }
     cell.imageView.image = file.previewImage;
     cell.moreButton.hidden = true;
     [self updateCell:cell file:file];

@@ -51,6 +51,12 @@
     self.tableView.dataSource = self;
     [self.view addSubview:self.tableView];
     
+    NSMutableArray *items = [NSMutableArray array];
+    
+    if (@available(iOS 13.0, *)) {
+        UIBarButtonItem *refreshItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(reloadContent)];
+        [items addObject:refreshItem];
+    }
     
     if (_directory.editable) {
         self.createButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"New Folder", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(createFolder)];
@@ -59,17 +65,22 @@
         self.navigationController.toolbarHidden = true;
         
         self.saveButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSave target:self action:@selector(save:)];
-        self.navigationItem.rightBarButtonItem = self.saveButton;
+        [items addObject:self.saveButton];
         self.navigationItem.title = _directory.name;
     }
     
+    self.navigationItem.rightBarButtonItems = items;
     [self refreshView];
     
     __weak typeof(self) weakSelf = self;
     [self.tableView addPullToRefresh:[SVArrowPullToRefreshView class] withActionHandler:^{
         weakSelf.directory.delegate = weakSelf;
-        [weakSelf.directory loadContent:YES];
+        [weakSelf reloadContent];
     }];
+}
+
+- (void)reloadContent {
+    [self.directory loadContent:YES];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -136,16 +147,25 @@
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
     if (_directory.editable) {
         UIView *lineView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, tableView.frame.size.width, 1.0f)];
-        [lineView setBackgroundColor:[UIColor clearColor]];
+        if (@available(iOS 13.0, *)) {
+            [lineView setBackgroundColor:[UIColor systemBackgroundColor]];
+        } else {
+            [lineView setBackgroundColor:[UIColor clearColor]];
+        }
         return lineView;
     } else {
         UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
         UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 6, tableView.bounds.size.width - 10, 18)];
         label.text = NSLocalizedString(@"Save Destination", @"Seafile");
-        label.textColor = [UIColor darkTextColor];
         label.backgroundColor = [UIColor clearColor];
+        if (@available(iOS 13.0, *)) {
+            [headerView setBackgroundColor:[UIColor secondarySystemBackgroundColor]];
+            label.textColor = [UIColor labelColor];
+        } else {
+            [headerView setBackgroundColor:HEADER_COLOR];
+            label.textColor = [UIColor darkTextColor];
+        }
         label.font = [UIFont systemFontOfSize:15];
-        [headerView setBackgroundColor:HEADER_COLOR];
         [headerView addSubview:label];
         return headerView;
     }
@@ -172,7 +192,13 @@
     cell.textLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
     cell.imageView.image = [Utils reSizeImage:entry.icon toSquare:32];
     cell.detailTextLabel.font = [UIFont systemFontOfSize:13];
-    cell.detailTextLabel.textColor = [UIColor lightGrayColor];
+    if (@available(iOS 13.0, *)) {
+        cell.textLabel.textColor = [UIColor labelColor];
+        cell.detailTextLabel.textColor = [UIColor secondaryLabelColor];
+    } else {
+        cell.textLabel.textColor = [UIColor whiteColor];
+        cell.detailTextLabel.textColor = [UIColor lightGrayColor];
+    }
     
     if ([entry isKindOfClass:[SeafRepo class]]) {
         SeafRepo *repo = (SeafRepo *)entry;
