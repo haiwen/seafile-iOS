@@ -1752,6 +1752,7 @@ enum {
     }
     [mailPicker setSubject:emailSubject];
     [mailPicker setMessageBody:emailBody isHTML:YES];
+    mailPicker.modalPresentationStyle = UIModalPresentationFullScreen;
     [self presentViewController:mailPicker animated:YES completion:nil];
 }
 
