@@ -63,19 +63,16 @@ enum ENC_LIBRARIES{
 };
 
 enum {
-    CELL_INVITATION = 0,
-    CELL_WEBSITE,
-    CELL_SERVER,
+    CELL_SERVER = 0,
     CELL_VERSION,
     CELL_PRIVACY,
 };
 
-#define SEAFILE_SITE @"http://www.seafile.com"
 #define MSG_RESET_UPLOADED NSLocalizedString(@"Do you want reset the uploaded photos?", @"Seafile")
 #define MSG_CLEAR_CACHE NSLocalizedString(@"Are you sure to clear all the cache?", @"Seafile")
 #define MSG_LOG_OUT NSLocalizedString(@"Are you sure to log out?", @"Seafile")
 
-@interface SeafSettingsViewController ()<SeafPhotoSyncWatcherDelegate, MFMailComposeViewControllerDelegate, CLLocationManagerDelegate>
+@interface SeafSettingsViewController ()<SeafPhotoSyncWatcherDelegate, CLLocationManagerDelegate>
 @property (strong, nonatomic) IBOutlet UITableViewCell *nameCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *usedspaceCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *serverCell;
@@ -83,8 +80,6 @@ enum {
 @property (strong, nonatomic) IBOutlet UITableViewCell *versionCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *autoSyncCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *syncRepoCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *tellFriendCell;
-@property (strong, nonatomic) IBOutlet UITableViewCell *websiteCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *videoSyncCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *backgroundSyncCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *clearEncRepoPasswordCell;
@@ -310,9 +305,6 @@ enum {
     _autoClearPasswdLabel.text = NSLocalizedString(@"Auto clear passwords", @"Auto cleay library password");
     _localDecryLabel.text = NSLocalizedString(@"Local decryption", @"Local decryption");
 
-    _tellFriendCell.textLabel.text = [NSString stringWithFormat:NSLocalizedString(@"Tell Friends about %@", @"Seafile"), APP_NAME];
-    _websiteCell.textLabel.text = NSLocalizedString(@"Website", @"Seafile");
-    _websiteCell.detailTextLabel.text = @"www.seafile.com";
     _serverCell.textLabel.text = NSLocalizedString(@"Server", @"Seafile");
     _versionCell.textLabel.text = NSLocalizedString(@"Version", @"Seafile");
     _logOutLabel.text = NSLocalizedString(@"Log out", @"Seafile");
@@ -506,14 +498,6 @@ enum {
     } else if (indexPath.section == SECTION_ABOUT) {
         _state = (int)indexPath.row;
         switch ((indexPath.row)) {
-            case CELL_INVITATION:
-                [self sendMailInApp];
-                break;
-
-            case CELL_WEBSITE:
-                [[UIApplication sharedApplication] openURL:[NSURL URLWithString:SEAFILE_SITE]];
-                break;
-
             case CELL_SERVER:
                 [[UIApplication sharedApplication] openURL:[NSURL URLWithString:[NSString stringWithFormat:@"%@/", _connection.address]]];
                 break;
@@ -592,67 +576,6 @@ enum {
     [self setCacheCell:nil];
     [self setVersionCell:nil];
     [super viewDidUnload];
-}
-
-
-#pragma mark - sena mail inside app
-- (void)sendMailInApp
-{
-    Class mailClass = NSClassFromString(@"MFMailComposeViewController");
-    if (!mailClass) {
-        [self alertWithTitle:NSLocalizedString(@"This function is not supportted yet", @"Seafile")];
-        return;
-    }
-    if (![mailClass canSendMail]) {
-        [self alertWithTitle:NSLocalizedString(@"The mail account has not been set yet", @"Seafile")];
-        return;
-    }
-    [self displayMailPicker];
-}
-
-- (void)configureInvitationMail:(MFMailComposeViewController *)mailPicker
-{
-    [mailPicker setSubject:[NSString stringWithFormat:NSLocalizedString(@"%@ invite you to %@", @"Seafile"), NSFullUserName(), APP_NAME]];
-    NSString *emailBody = [NSString stringWithFormat:NSLocalizedString(@"Hey there!<br/><br/> I've been using %@ and thought you might like it. It is a free way to bring all you files anywhere and share them easily.<br/><br/>Go to the official website of %@:</br></br> <a href=\"%@\">%@</a>\n\n", @"Seafile"), APP_NAME, APP_NAME, SEAFILE_SITE, SEAFILE_SITE];
-
-    [mailPicker setMessageBody:emailBody isHTML:YES];
-}
-
-- (void)displayMailPicker
-{
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    MFMailComposeViewController *mailPicker = appdelegate.globalMailComposer;
-    mailPicker.mailComposeDelegate = self;
-    [self configureInvitationMail:mailPicker];
-    [appdelegate.window.rootViewController presentViewController:mailPicker animated:YES completion:nil];
-}
-
-#pragma mark - MFMailComposeViewControllerDelegate
-- (void)mailComposeController:(MFMailComposeViewController *)controller didFinishWithResult:(MFMailComposeResult)result error:(NSError *)error
-{
-    NSString *msg;
-    switch (result) {
-        case MFMailComposeResultCancelled:
-            msg = @"cancalled";
-            break;
-        case MFMailComposeResultSaved:
-            msg = @"saved";
-            break;
-        case MFMailComposeResultSent:
-            msg = @"sent";
-            break;
-        case MFMailComposeResultFailed:
-            msg = @"failed";
-            break;
-        default:
-            msg = @"";
-            break;
-    }
-    Debug("state=%d:send mail %@\n", _state, msg);
-    [self dismissViewControllerAnimated:YES completion:^{
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        [appdelegate cycleTheGlobalMailComposer];
-    }];
 }
 
 #pragma mark - SeafDirDelegate

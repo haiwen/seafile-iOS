@@ -597,6 +597,7 @@ enum SHARE_STATUS {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     MFMailComposeViewController *mailPicker = appdelegate.globalMailComposer;
     mailPicker.mailComposeDelegate = self;
+    mailPicker.modalPresentationStyle = UIModalPresentationFullScreen;
 
     [mailPicker setSubject:[NSString stringWithFormat:NSLocalizedString(@"File '%@' is shared with you using %@", @"Seafile"), name, APP_NAME]];
     NSString *emailBody = [NSString stringWithFormat:NSLocalizedString(@"Hi,<br/><br/>Here is a link to <b>'%@'</b> in my %@:<br/><br/> <a href=\"%@\">%@</a>\n\n", @"Seafile"), name, APP_NAME, shareLink, shareLink];
