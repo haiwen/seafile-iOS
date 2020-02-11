@@ -11,14 +11,17 @@
 #import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
 #import "ExtentedString.h"
+#import <WebKit/WebKit.h>
 
 #import "Debug.h"
 
-@interface SeafShibbolethViewController ()<UIWebViewDelegate, NSURLConnectionDelegate>
+@interface SeafShibbolethViewController ()<WKNavigationDelegate, NSURLConnectionDelegate>
 
 @property (strong) SeafConnection *sconn;
 @property (strong) NSURLRequest *FailedRequest;
 @property (strong) NSURLConnection *conn;
+@property (strong, nonatomic) WKWebView *webView;
+@property (strong, nonatomic) UIProgressView *progressView;
 @property BOOL authenticated;
 
 @end
@@ -29,7 +32,6 @@
 {
     if (self = [super initWithAutoNibName]) {
         self.sconn = sconn;
-        [self start];
     }
     return self;
 }
@@ -55,14 +57,10 @@
     return [_sconn.address stringByAppendingString:@"/api2/ping/"];
 }
 
-- (UIWebView *)webView
-{
-    return (UIWebView *)self.view;
-}
-
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
+    [self start];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -75,7 +73,7 @@
     if ([_sconn.address hasPrefix:@"http://"]) {
         _authenticated = true;
         NSURLRequest *request = [[NSURLRequest alloc] initWithURL:[NSURL URLWithString:self.shibbolethUrl]];
-        [self.webView loadRequest:request];
+        [self webviewLoadRequest:request];
     } else {
         _authenticated = false;
         NSURLRequest *request = [[NSURLRequest alloc] initWithURL:[NSURL URLWithString:self.pingUrl]];
@@ -91,17 +89,29 @@
     manager.responseSerializer = [AFHTTPResponseSerializer serializer];
     NSURLSessionDataTask *dataTask = [manager dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
         if (error) {
-            [SVProgressHUD dismiss];
             Warning("Error: %@", error);
+            [SVProgressHUD showErrorWithStatus:error.localizedDescription];
         } else {
             NSString *url = self.shibbolethUrl;
             Debug("Send request: %@", url);
             NSMutableURLRequest *r = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:url]];
             r.HTTPShouldHandleCookies = true;
-            [self.webView loadRequest:r];
+            [self webviewLoadRequest:r];
         }
     }];
     [dataTask resume];
+}
+
+- (void)webviewLoadRequest:(NSURLRequest *)request {
+    WKWebView *wekview = [[WKWebView alloc] initWithFrame:self.view.bounds configuration:[WKWebViewConfiguration new]];
+    wekview.configuration.processPool = [[WKProcessPool alloc] init];
+    wekview.navigationDelegate = self;
+    [self.view addSubview:wekview];
+    [self.view addSubview:self.progressView];
+    [wekview loadRequest:request];
+    [self deleteCookiesForURL:request.URL];
+    [wekview addObserver:self forKeyPath:@"estimatedProgress" options:NSKeyValueObservingOptionNew context:nil];
+   self.webView = wekview;
 }
 
 - (void)viewWillDisappear:(BOOL)animated
@@ -110,42 +120,69 @@
     [super viewWillDisappear:animated];
 }
 
-# pragma - UIWebViewDelegate
-- (void)webViewDidFinishLoad:(UIWebView *)webView
-{
+# pragma - WKNavigationDelegate
+- (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation {
     [SVProgressHUD dismiss];
-    NSArray *arr = [[NSHTTPCookieStorage sharedHTTPCookieStorage] cookiesForURL:[NSURL URLWithString:self.shibbolethUrl]];
-    for (NSHTTPCookie *cookie in arr) {
-        if ([cookie.name isEqualToString:@"seahub_auth"]) {
-            Debug("Got seahub_auth: %@", cookie.value);
-            NSString *str = [cookie.value stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"\""]];
-            NSRange range = [str rangeOfCharacterFromSet:[NSCharacterSet characterSetWithCharactersInString:@"@"] options:NSBackwardsSearch];
-            if (range.location == NSNotFound) {
-                Warning("Can not seahub_auth cookie invalid");
-            } else {
-                NSString *username = [str substringToIndex:range.location];
-                NSString *token = [str substringFromIndex:range.location+1];
-                Debug("Token=%@, username=%@", token, username);
-                [_sconn setToken:token forUser:username isShib:true s2faToken:nil];
+    void(^FilterCookies)(NSArray *cookies) = ^void(NSArray *cookies){
+        for (NSHTTPCookie *cookie in cookies) {
+            if ([cookie.name isEqualToString:@"seahub_auth"]) {
+                Debug("Got seahub_auth: %@", cookie.value);
+                NSString *str = [cookie.value stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"\""]];
+                NSRange range = [str rangeOfCharacterFromSet:[NSCharacterSet characterSetWithCharactersInString:@"@"] options:NSBackwardsSearch];
+                if (range.location == NSNotFound) {
+                    Warning("Can not seahub_auth cookie invalid");
+                    [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to login", @"Seafile")];
+                } else {
+                    NSString *username = [str substringToIndex:range.location];
+                    NSString *token = [str substringFromIndex:range.location+1];
+                    Debug("Token=%@, username=%@", token, username);
+                    [_sconn setToken:token forUser:username isShib:true s2faToken:nil];
+                }
             }
         }
+    };
+    if (@available(iOS 11.0, *)) {
+        WKWebsiteDataStore *dateStore = [WKWebsiteDataStore defaultDataStore];
+        [dateStore fetchDataRecordsOfTypes:[WKWebsiteDataStore allWebsiteDataTypes] completionHandler:^(NSArray<WKWebsiteDataRecord *> * __nonnull records) {
+             for (WKWebsiteDataRecord *record  in records) {
+               if ([self.shibbolethUrl containsString:record.displayName]) {
+                   NSLog(@"WKWebsiteDataRecord %@", record);
+               }
+             }
+           }
+         ];
+        
+        WKHTTPCookieStore *cookieStore = webView.configuration.websiteDataStore.httpCookieStore;
+        [cookieStore getAllCookies:^(NSArray<NSHTTPCookie *> * _Nonnull arr) {
+            FilterCookies(arr);
+        }];
+    } else {
+        NSArray *arr = [[NSHTTPCookieStorage sharedHTTPCookieStorage] cookiesForURL:[NSURL URLWithString:self.shibbolethUrl]];
+        FilterCookies(arr);
     }
 }
 
-- (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
-{
+- (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error {
     Warning("Failed to load request: %@", error);
-    [SVProgressHUD dismiss];
+    [SVProgressHUD showErrorWithStatus:error.localizedDescription];
 }
 
--(BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType {
-    BOOL result = _authenticated;
-    if (!_authenticated) {
-        _FailedRequest = request;
-        self.conn = [[NSURLConnection alloc] initWithRequest:request delegate:self];
+- (void)webView:(WKWebView *)webView decidePolicyForNavigationResponse:(WKNavigationResponse *)navigationResponse decisionHandler:(void (^)(WKNavigationResponsePolicy))decisionHandler {
+    [SVProgressHUD dismiss];
+    if (decisionHandler) {
+      decisionHandler(WKNavigationResponsePolicyAllow);
     }
-    Debug("load request: %@, %d", request.URL, result);
-    return result;
+}
+
+- (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(nonnull WKNavigationAction *)navigationAction decisionHandler:(nonnull void (^)(WKNavigationActionPolicy))decisionHandler {
+    Debug("load request: %@, %d", navigationAction.request.URL, _authenticated);
+    if (!_authenticated) {
+        _FailedRequest = navigationAction.request;
+        self.conn = [[NSURLConnection alloc] initWithRequest:_FailedRequest delegate:self];
+        decisionHandler(WKNavigationActionPolicyCancel);
+    } else {
+        decisionHandler(WKNavigationActionPolicyAllow);
+    }
 }
 
 -(void)connection:(NSURLConnection *)connection willSendRequestForAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge {
@@ -176,6 +213,59 @@
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error
 {
     Warning("Failed to load request: %@", error);
-    [SVProgressHUD dismiss];
+    [SVProgressHUD showErrorWithStatus:error.localizedDescription];
 }
+
+- (void)deleteCookiesForURL:(NSURL *)URL {
+    WKWebsiteDataStore *dateStore = [WKWebsiteDataStore defaultDataStore];
+    [dateStore fetchDataRecordsOfTypes:[WKWebsiteDataStore allWebsiteDataTypes] completionHandler:^(NSArray<WKWebsiteDataRecord *> * __nonnull records) {
+         for (WKWebsiteDataRecord *record in records) {
+           if ([URL.host containsString:record.displayName]) {
+               [dateStore removeDataOfTypes:record.dataTypes forDataRecords:@[record] completionHandler:^{
+                   Debug(@"WKWebsiteDataStore deleted successfully: %@", record.displayName);
+               }];
+           }
+         }
+       }
+    ];
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
+    if (object == self.webView && [keyPath isEqualToString:@"estimatedProgress"]) {
+        CGFloat newprogress = [[change objectForKey:NSKeyValueChangeNewKey] doubleValue];
+        self.progressView.alpha = 1.0f;
+        [self.progressView setProgress:newprogress animated:YES];
+        if (newprogress >= 1.0f) {
+            [UIView animateWithDuration:0.3f
+                                  delay:0.3f
+                                options:UIViewAnimationOptionCurveEaseOut
+                             animations:^{
+                                 self.progressView.alpha = 0.0f;
+                             }
+                             completion:^(BOOL finished) {
+                                 [self.progressView setProgress:0 animated:NO];
+                             }];
+        }
+    } else {
+        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+    }
+}
+
+- (UIProgressView *)progressView {
+    if (!_progressView) {
+        CGFloat y = [[UIApplication sharedApplication] statusBarFrame].size.height + self.navigationController.navigationBar.frame.size.height;
+        if (IsIpad()) {
+            y = self.navigationController.navigationBar.frame.size.height;
+        }
+        _progressView = [[UIProgressView alloc] initWithFrame:CGRectMake(0, y, [UIScreen mainScreen].bounds.size.width, 2)];
+        _progressView.tintColor = SEAF_COLOR_LIGHT;
+        _progressView.trackTintColor = [UIColor whiteColor];
+    }
+    return _progressView;
+}
+
+- (void)dealloc {
+    [self.webView removeObserver:self forKeyPath:@"estimatedProgress"];
+}
+
 @end
