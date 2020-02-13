@@ -123,43 +123,32 @@
 # pragma - WKNavigationDelegate
 - (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation {
     [SVProgressHUD dismiss];
-    void(^FilterCookies)(NSArray *cookies) = ^void(NSArray *cookies){
-        for (NSHTTPCookie *cookie in cookies) {
-            if ([cookie.name isEqualToString:@"seahub_auth"]) {
-                Debug("Got seahub_auth: %@", cookie.value);
-                NSString *str = [cookie.value stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"\""]];
-                NSRange range = [str rangeOfCharacterFromSet:[NSCharacterSet characterSetWithCharactersInString:@"@"] options:NSBackwardsSearch];
-                if (range.location == NSNotFound) {
-                    Warning("Can not seahub_auth cookie invalid");
-                    [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to login", @"Seafile")];
-                } else {
-                    NSString *username = [str substringToIndex:range.location];
-                    NSString *token = [str substringFromIndex:range.location+1];
-                    Debug("Token=%@, username=%@", token, username);
-                    [_sconn setToken:token forUser:username isShib:true s2faToken:nil];
+    [webView evaluateJavaScript:@"document.cookie" completionHandler:^(id _Nullable response, NSError * _Nullable error) {
+        if (response) {
+            NSArray *cookies = [(NSString*)response componentsSeparatedByString:@";"];
+            for (NSString *value in cookies) {
+                if ([value containsString:@"seahub_auth"]) {
+                    Debug("Got seahub_auth: %@", value);
+                    if ([value componentsSeparatedByString:@"="].lastObject) {
+                        NSString *str = [[value componentsSeparatedByString:@"="].lastObject stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"\""]];
+                        NSRange range = [str rangeOfCharacterFromSet:[NSCharacterSet characterSetWithCharactersInString:@"@"] options:NSBackwardsSearch];
+                        if (range.location == NSNotFound) {
+                            Warning("Can not seahub_auth cookie invalid");
+                            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to login", @"Seafile")];
+                        } else {
+                            NSString *username = [str substringToIndex:range.location];
+                            NSString *token = [str substringFromIndex:range.location+1];
+                            Debug("Token=%@, username=%@", token, username);
+                            [_sconn setToken:token forUser:username isShib:true s2faToken:nil];
+                        }
+                    } else {
+                        Warning("Can not seahub_auth cookie invalid");
+                        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to login", @"Seafile")];
+                    }
                 }
             }
         }
-    };
-    if (@available(iOS 11.0, *)) {
-        WKWebsiteDataStore *dateStore = [WKWebsiteDataStore defaultDataStore];
-        [dateStore fetchDataRecordsOfTypes:[WKWebsiteDataStore allWebsiteDataTypes] completionHandler:^(NSArray<WKWebsiteDataRecord *> * __nonnull records) {
-             for (WKWebsiteDataRecord *record  in records) {
-               if ([self.shibbolethUrl containsString:record.displayName]) {
-                   NSLog(@"WKWebsiteDataRecord %@", record);
-               }
-             }
-           }
-         ];
-        
-        WKHTTPCookieStore *cookieStore = webView.configuration.websiteDataStore.httpCookieStore;
-        [cookieStore getAllCookies:^(NSArray<NSHTTPCookie *> * _Nonnull arr) {
-            FilterCookies(arr);
-        }];
-    } else {
-        NSArray *arr = [[NSHTTPCookieStorage sharedHTTPCookieStorage] cookiesForURL:[NSURL URLWithString:self.shibbolethUrl]];
-        FilterCookies(arr);
-    }
+    }];
 }
 
 - (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error {
