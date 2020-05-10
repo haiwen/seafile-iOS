@@ -37,4 +37,6 @@
 - (BOOL)checkNetworkStatus;
 
 - (void)popupTwoStepVerificationViewHandler:(void (^)(NSString *input,BOOL remember))handler;
+
+- (void)checkPhotoLibraryAuth:(void (^)(void))handler;
 @end

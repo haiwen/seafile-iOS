@@ -1284,32 +1284,38 @@ enum {
     dispatch_semaphore_wait(SeafGlobal.sharedObject.saveAlbumSem, timeout);
     Info("Write image file %@ %@ to album", file.name, file.cachePath);
     UIImageWriteToSavedPhotosAlbum(img, self, @selector(thisImage:hasBeenSavedInPhotoAlbumWithError:usingContextInfo:), (void *)CFBridgingRetain(file));
-    [SVProgressHUD showInfoWithStatus:NSLocalizedString(@"Save to album", @"Seafile")];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [SVProgressHUD showInfoWithStatus:NSLocalizedString(@"Save to album", @"Seafile")];
+    });
 }
 
 - (void)savePhotosToAlbum
 {
-    SeafDownloadCompletionBlock block = ^(SeafFile *file, NSError *error) {
-        if (error) {
-            return Warning("Failed to donwload file %@: %@", file.path, error);
-        }
-        [file setFileDownloadedBlock:nil];
-        [self performSelectorInBackground:@selector(saveImageToAlbum:) withObject:file];
-    };
-    for (id entry in self.allItems) {
-        if (![entry isKindOfClass:[SeafFile class]]) continue;
-        SeafFile *file = (SeafFile *)entry;
-        if (!file.isImageFile) continue;
-        [file loadCache];
-        NSString *path = file.cachePath;
-        if (!path) {
-            [file setFileDownloadedBlock:block];
-            [SeafDataTaskManager.sharedObject addFileDownloadTask:file];
-        } else {
-            block(file, nil);
-        }
-    }
-    [SVProgressHUD showInfoWithStatus:S_SAVING_PHOTOS_ALBUM];
+    [self checkPhotoLibraryAuth:^{
+        [self alertWithTitle:nil message:NSLocalizedString(@"Are you sure to save all photos to album?", @"Seafile") yes:^{
+            SeafDownloadCompletionBlock block = ^(SeafFile *file, NSError *error) {
+                if (error) {
+                    return Warning("Failed to donwload file %@: %@", file.path, error);
+                }
+                [file setFileDownloadedBlock:nil];
+                [self performSelectorInBackground:@selector(saveImageToAlbum:) withObject:file];
+            };
+            for (id entry in self.allItems) {
+                if (![entry isKindOfClass:[SeafFile class]]) continue;
+                SeafFile *file = (SeafFile *)entry;
+                if (!file.isImageFile) continue;
+                [file loadCache];
+                NSString *path = file.cachePath;
+                if (!path) {
+                    [file setFileDownloadedBlock:block];
+                    [SeafDataTaskManager.sharedObject addFileDownloadTask:file];
+                } else {
+                    block(file, nil);
+                }
+            }
+            [SVProgressHUD showInfoWithStatus:S_SAVING_PHOTOS_ALBUM];
+        } no:nil];
+    }];
 }
 
 - (void)shareToWechat:(SeafFile*)file {
@@ -1335,6 +1341,8 @@ enum {
 
     UINavigationController *nc = [[UINavigationController alloc] initWithRootViewController:_mwPhotoBrowser];
     nc.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
+    nc.modalPresentationStyle = UIModalPresentationFullScreen;
+    [nc.navigationBar setTitleTextAttributes:@{NSForegroundColorAttributeName:[UIColor whiteColor]}];
     [self presentViewController:nc animated:YES completion:nil];
 }
 
