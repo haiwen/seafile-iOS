@@ -43,7 +43,8 @@ enum SHARE_STATUS {
 @property (retain) FailToPreview *failedView;
 @property (retain) DownloadingProgressView *progressView;
 @property (nonatomic, strong) WKWebView *webView;
-@property (retain, nonatomic) MWPhotoBrowser *mwPhotoBrowser;
+@property (nonatomic, strong) MWPhotoBrowser *mwPhotoBrowser;
+@property (nonatomic, strong) UITextView *textView;
 
 @property BOOL performingLayout;
 @property (retain) NSArray *photos;
@@ -75,7 +76,7 @@ enum SHARE_STATUS {
 #pragma mark - Managing the detail item
 - (BOOL)previewSuccess
 {
-    return (self.state == PREVIEW_WEBVIEW) || (self.state == PREVIEW_WEBVIEW_JS);
+    return (self.state == PREVIEW_WEBVIEW) || (self.state == PREVIEW_WEBVIEW_JS) || (self.state == PREVIEW_TEXT);
 }
 
 - (BOOL)isModal
@@ -113,6 +114,8 @@ enum SHARE_STATUS {
     self.failedView.hidden = YES;
     self.progressView.hidden = YES;
     self.webView.hidden = YES;
+    [self.textView removeFromSuperview];
+    self.textView = nil;
     [self.webView evaluateJavaScript:@"document.body.innerHTML='';" completionHandler:nil];
     [self clearPhotosVIew];
 }
@@ -125,17 +128,17 @@ enum SHARE_STATUS {
     _state = PREVIEW_NONE;
     if (!self.preViewItem) {
     } else if (self.preViewItem.previewItemURL) {
-        if (![QLPreviewController canPreviewItem:self.preViewItem]) {
+        _state = PREVIEW_QL_MODAL;
+        if ([self.preViewItem.mime isEqualToString:@"image/svg+xml"]) {
+            _state = PREVIEW_WEBVIEW;
+        } else if([self.preViewItem.mime isEqualToString:@"text/x-markdown"] || [self.preViewItem.mime isEqualToString:@"text/x-seafile"]) {
+            _state = PREVIEW_WEBVIEW_JS;
+        } else if ([self.preViewItem.mime containsString:@"text/"]) {
+            _state = PREVIEW_TEXT;
+        } else if (!IsIpad()) { // if (!IsIpad()) iPhone >= 10.0
+            _state = self.preViewItem.editable ? PREVIEW_WEBVIEW : PREVIEW_QL_MODAL;
+        } else if (![QLPreviewController canPreviewItem:self.preViewItem]) {
             _state = PREVIEW_FAILED;
-        } else {
-            _state = PREVIEW_QL_MODAL;
-            if ([self.preViewItem.mime isEqualToString:@"image/svg+xml"]) {
-                _state = PREVIEW_WEBVIEW;
-            } else if([self.preViewItem.mime isEqualToString:@"text/x-markdown"] || [self.preViewItem.mime isEqualToString:@"text/x-seafile"]) {
-                _state = PREVIEW_WEBVIEW_JS;
-            } else if (!IsIpad()) { // if (!IsIpad()) iPhone >= 10.0
-                _state = self.preViewItem.editable ? PREVIEW_WEBVIEW : PREVIEW_QL_MODAL;
-            }
         }
     } else {
         _state = PREVIEW_DOWNLOADING;
@@ -152,7 +155,11 @@ enum SHARE_STATUS {
     if (!self.isViewLoaded) return;
 
     [self updateNavigation];
-    CGRect r = CGRectMake(self.view.frame.origin.x, 64, self.view.frame.size.width, self.view.frame.size.height - 64);
+    CGFloat y = 64;
+    if (@available(iOS 11.0, *)) {
+       y = 44 + [UIApplication sharedApplication].keyWindow.safeAreaInsets.top;
+    }
+    CGRect r = CGRectMake(self.view.frame.origin.x, y, self.view.frame.size.width, self.view.frame.size.height - 64);
     switch (self.state) {
         case PREVIEW_DOWNLOADING:
             Debug (@"DownLoading file %@\n", self.preViewItem.previewItemTitle);
@@ -199,6 +206,14 @@ enum SHARE_STATUS {
             self.webView.hidden = NO;
             break;
         }
+        case PREVIEW_TEXT:
+            Debug("Preview text %@\n", self.preViewItem.previewItemTitle);
+            [self.view addSubview:self.textView];
+            self.textView.frame = r;
+            self.textView.attributedText = [self attributedTextOfPreViewItem];
+            self.textView.hidden = NO;
+            [self.textView scrollsToTop];
+            break;
         case PREVIEW_PHOTO:
             Debug("Preview photo %@\n", self.preViewItem.previewItemTitle);
             self.mwPhotoBrowser.view.frame = r;
@@ -767,6 +782,21 @@ enum SHARE_STATUS {
     } else {
         return false;
     }
+}
+
+- (UITextView *)textView {
+    if (!_textView) {
+        _textView = [[UITextView alloc] initWithFrame:self.view.frame];
+        _textView.editable = false;
+        _textView.contentInset = UIEdgeInsetsMake(0, 10, 0, 10);
+    }
+    return _textView;
+}
+
+- (NSAttributedString *)attributedTextOfPreViewItem {
+    NSMutableAttributedString *attributedText = [[NSMutableAttributedString alloc] initWithFileURL:self.preViewItem.previewItemURL options:@{NSDocumentTypeDocumentAttribute : NSPlainTextDocumentType} documentAttributes:nil error:nil];
+    [attributedText addAttributes:@{NSFontAttributeName : [UIFont systemFontOfSize:14.0]} range:NSMakeRange(0, attributedText.length)];
+    return attributedText;
 }
 
 @end
