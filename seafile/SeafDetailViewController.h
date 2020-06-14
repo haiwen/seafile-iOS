@@ -16,7 +16,8 @@ enum PREVIEW_STATE {
     PREVIEW_WEBVIEW_JS,
     PREVIEW_DOWNLOADING,
     PREVIEW_PHOTO,
-    PREVIEW_FAILED
+    PREVIEW_FAILED,
+    PREVIEW_TEXT
 };
 
 @interface SeafDetailViewController : UIViewController <UISplitViewControllerDelegate, QLPreviewControllerDelegate, QLPreviewControllerDataSource, SeafShareDelegate, SeafDentryDelegate>
