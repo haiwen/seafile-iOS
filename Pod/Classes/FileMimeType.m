@@ -25,23 +25,7 @@ static FileMimeType *_sharedLoader = nil;
     if (self = [super init]) {
         NSString *path = [SeafileBundle() pathForResource:
                           @"FileMimeType" ofType:@"plist"];
-        
-        NSArray *array = @[@"ac", @"am", @"bat", @"c", @"cc", @"cmake", @"conf", @"cpp", @"cs", @"css", @"csv", @"diff",
-                           @"el", @"go", @"groovy", @"h", @"htm", @"html", @"java", @"js", @"json", @"less", @"log", @"make",
-        @"org", @"patch", @"pde", @"php", @"pl", @"properties", @"py", @"rb", @"rst",
-        @"sc", @"scala", @"scd", @"schelp", @"script", @"sh", @"sql", @"text", @"tex", @"txt", @"vi", @"vim",
-                           @"xhtml", @"xml", @"yml"];
-        
-        NSMutableDictionary *dict = [[NSMutableDictionary alloc] initWithContentsOfFile:path];
-        NSMutableDictionary *temp = [NSMutableDictionary dictionary];
-        for (NSString *key in array) {
-            [temp setValue:[NSString stringWithFormat:@"text/%@", key] forKey:key];
-            if ([dict.allKeys containsObject:key]) {
-                [dict removeObjectForKey:key];
-            }
-        }
-        [dict addEntriesFromDictionary:temp];
-        _config = [NSDictionary dictionaryWithDictionary:dict];
+        _config = [[NSDictionary alloc] initWithContentsOfFile:path];
     }
     return self;
 }

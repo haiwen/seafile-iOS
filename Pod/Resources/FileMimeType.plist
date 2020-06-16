@@ -10,6 +10,8 @@
 	<string>application/x-authoware-map</string>
 	<key>aas</key>
 	<string>application/x-authoware-seg</string>
+	<key>ac</key>
+	<string>text/ac</string>
 	<key>ai</key>
 	<string>application/postscript</string>
 	<key>aif</key>
@@ -20,6 +22,8 @@
 	<string>audio/x-aiff</string>
 	<key>als</key>
 	<string>audio/X-Alpha5</string>
+	<key>am</key>
+	<string>text/am</string>
 	<key>amc</key>
 	<string>application/x-mpeg</string>
 	<key>ani</key>
@@ -46,6 +50,8 @@
 	<string>audio/amr-wb</string>
 	<key>awk</key>
 	<string>application/x-awk</string>
+	<key>bat</key>
+	<string>text/bat</string>
 	<key>bcpio</key>
 	<string>application/x-bcpio</string>
 	<key>bin</key>
@@ -80,12 +86,16 @@
 	<string>application/octet-stream</string>
 	<key>clp</key>
 	<string>application/x-msclip</string>
+	<key>cmake</key>
+	<string>text/x-cmake</string>
 	<key>cmx</key>
 	<string>application/x-cmx</string>
 	<key>co</key>
 	<string>application/x-cult3d-object</string>
 	<key>cod</key>
 	<string>image/cis-cod</string>
+	<key>conf</key>
+	<string>text/conf</string>
 	<key>cpio</key>
 	<string>application/x-cpio</string>
 	<key>cpp</key>
@@ -116,6 +126,8 @@
 	<string>image/x-dcx</string>
 	<key>dhtml</key>
 	<string>text/html</string>
+	<key>diff</key>
+	<string>text/diff</string>
 	<key>dir</key>
 	<string>application/x-director</string>
 	<key>dll</key>
@@ -142,6 +154,8 @@
 	<string>application/x-director</string>
 	<key>ebk</key>
 	<string>application/x-expandedbook</string>
+	<key>el</key>
+	<string>text/el</string>
 	<key>emb</key>
 	<string>chemical/x-embl-dl-nucleotide</string>
 	<key>embl</key>
@@ -190,8 +204,12 @@
 	<string>x-lml/x-gdb</string>
 	<key>gif</key>
 	<string>image/gif</string>
+	<key>go</key>
+	<string>text/go</string>
 	<key>gps</key>
 	<string>application/x-gps</string>
+	<key>groovy</key>
+	<string>text/groovy</string>
 	<key>gtar</key>
 	<string>application/x-gtar</string>
 	<key>gz</key>
@@ -247,7 +265,7 @@
 	<key>jar</key>
 	<string>application/java-archive</string>
 	<key>java</key>
-	<string>application/x-java</string>
+	<string>text/x-java</string>
 	<key>jnlp</key>
 	<string>application/x-java-jnlp-file</string>
 	<key>jpe</key>
@@ -259,7 +277,9 @@
 	<key>jpz</key>
 	<string>image/jpeg</string>
 	<key>js</key>
-	<string>application/x-javascript</string>
+	<string>text/x-javascript</string>
+	<key>json</key>
+	<string>text/json</string>
 	<key>jwc</key>
 	<string>application/jwc</string>
 	<key>kjx</key>
@@ -274,12 +294,16 @@
 	<string>application/x-digitalloca</string>
 	<key>lcr</key>
 	<string>application/x-digitalloca</string>
+	<key>less</key>
+	<string>text/less</string>
 	<key>lgh</key>
 	<string>application/lgh</string>
 	<key>lha</key>
 	<string>application/octet-stream</string>
 	<key>lml</key>
 	<string>x-lml/x-lml</string>
+	<key>log</key>
+	<string>text/log</string>
 	<key>lmlpack</key>
 	<string>x-lml/x-lmlpack</string>
 	<key>lsf</key>
@@ -308,6 +332,8 @@
 	<string>audio/ma3</string>
 	<key>ma5</key>
 	<string>audio/ma5</string>
+	<key>make</key>
+	<string>text/make</string>
 	<key>man</key>
 	<string>application/x-troff-man</string>
 	<key>map</key>
@@ -440,6 +466,8 @@
 	<string>application/vnd.oasis.opendocument.text</string>
 	<key>oom</key>
 	<string>application/x-AtlasMate-Plugin</string>
+	<key>org</key>
+	<string>text/org</string>
 	<key>oth</key>
 	<string>application/vnd.oasis.opendocument.text-web</string>
 	<key>pac</key>
@@ -448,6 +476,8 @@
 	<string>audio/x-epac</string>
 	<key>pan</key>
 	<string>application/x-pan</string>
+	<key>path</key>
+	<string>text/path</string>
 	<key>pbm</key>
 	<string>image/x-portable-bitmap</string>
 	<key>pch</key>
@@ -458,6 +488,8 @@
 	<string>image/x-pda</string>
 	<key>pdb</key>
 	<string>chemical/x-pdb</string>
+	<key>pde</key>
+	<string>text/pde</string>
 	<key>pdf</key>
 	<string>application/pdf</string>
 	<key>pfr</key>
@@ -465,9 +497,9 @@
 	<key>pgm</key>
 	<string>image/x-portable-graymap</string>
 	<key>php</key>
-	<string>application/x-php</string>
+	<string>text/x-php</string>
 	<key>pl</key>
-	<string>application/x-perl</string>
+	<string>text/x-perl</string>
 	<key>pict</key>
 	<string>image/x-pict</string>
 	<key>pm</key>
@@ -496,6 +528,8 @@
 	<string>application/cprplayer</string>
 	<key>prc</key>
 	<string>application/x-prc</string>
+	<key>properties</key>
+	<string>text/properties</string>
 	<key>proxy</key>
 	<string>application/x-ns-proxy-autoconfig</string>
 	<key>ps</key>
@@ -529,7 +563,7 @@
 	<key>ras</key>
 	<string>image/x-cmu-raster</string>
 	<key>rb</key>
-	<string>application/x-ruby</string>
+	<string>text/x-ruby</string>
 	<key>rdf</key>
 	<string>application/rdf+xml</string>
 	<key>rf</key>
@@ -554,6 +588,8 @@
 	<string>image/vnd.rn-realpix</string>
 	<key>rpm</key>
 	<string>application/x-rpm</string>
+	<key>rst</key>
+	<string>text/rst</string>
 	<key>rt</key>
 	<string>text/vnd.rn-realtext</string>
 	<key>rte</key>
@@ -572,10 +608,18 @@
 	<string>audio/x-mod</string>
 	<key>s3z</key>
 	<string>audio/x-mod</string>
+	<key>sc</key>
+	<string>text/sc</string>
 	<key>sca</key>
 	<string>application/x-supercard</string>
+	<key>scala</key>
+	<string>text/scala</string>
 	<key>scd</key>
-	<string>application/x-msschedule</string>
+	<string>text/x-msschedule</string>
+	<key>schelp</key>
+	<string>text/schelp</string>
+	<key>script</key>
+	<string>text/script</string>
 	<key>sdf</key>
 	<string>application/e-score</string>
 	<key>sdp</key>
@@ -638,6 +682,8 @@
 	<string>application/x-sprite</string>
 	<key>spt</key>
 	<string>application/x-spt</string>
+	<key>sql</key>
+	<string>text/sql</string>
 	<key>src</key>
 	<string>application/x-wais-source</string>
 	<key>stk</key>
@@ -677,11 +723,13 @@
 	<key>tcl</key>
 	<string>application/x-tcl</string>
 	<key>tex</key>
-	<string>application/x-tex</string>
+	<string>text/x-tex</string>
 	<key>texi</key>
 	<string>application/x-texinfo</string>
 	<key>texinfo</key>
 	<string>application/x-texinfo</string>
+	<key>text</key>
+	<string>text/plain</string>
 	<key>tgz</key>
 	<string>application/x-tar</string>
 	<key>thm</key>
@@ -732,8 +780,12 @@
 	<string>text/x-vcard</string>
 	<key>vdo</key>
 	<string>video/vdo</string>
+	<key>vi</key>
+	<string>text/vi</string>
 	<key>vib</key>
 	<string>audio/vib</string>
+	<key>vim</key>
+	<string>text/vim</string>
 	<key>viv</key>
 	<string>video/vivo</string>
 	<key>vivo</key>
@@ -837,7 +889,7 @@
 	<key>xhtm</key>
 	<string>application/xhtml+xml</string>
 	<key>xhtml</key>
-	<string>application/xhtml+xml</string>
+	<string>text/xhtml+xml</string>
 	<key>xla</key>
 	<string>application/vnd.ms-excel</string>
 	<key>xlc</key>
@@ -874,6 +926,8 @@
 	<string>image/x-xwindowdump</string>
 	<key>xyz</key>
 	<string>chemical/x-pdb</string>
+	<key>yml</key>
+	<string>text/yml</string>
 	<key>yz1</key>
 	<string>application/x-yz1</string>
 	<key>z</key>
