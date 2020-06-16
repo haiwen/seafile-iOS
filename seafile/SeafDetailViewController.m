@@ -788,7 +788,8 @@ enum SHARE_STATUS {
     if (!_textView) {
         _textView = [[UITextView alloc] initWithFrame:self.view.frame];
         _textView.editable = false;
-        _textView.contentInset = UIEdgeInsetsMake(0, 10, 0, 10);
+        _textView.contentInset =UIEdgeInsetsMake(6, 10, 6, 10);
+        _textView.alwaysBounceVertical = YES;
     }
     return _textView;
 }
