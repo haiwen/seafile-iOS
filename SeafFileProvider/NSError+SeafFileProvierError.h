@@ -16,6 +16,6 @@
 + (NSError *)fileProvierErrorPageExpired;
 + (NSError *)fileProvierErrorFilenameCollision;
 + (NSError *)fileProvierErrorInsufficientQuota;
-
++ (NSError *)fileProvierErrorNoAccount;
 
 @end

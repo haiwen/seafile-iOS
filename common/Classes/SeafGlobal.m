@@ -263,15 +263,8 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     return [self saveAccounts];
 }
 
-- (NSArray *)publicAccounts
-{
-    NSMutableArray *arr = [NSMutableArray new];
-    for (SeafConnection *conn in self.conns) {
-        if (!conn.touchIdEnabled) {
-            [arr addObject:conn];
-        }
-    }
-    return arr;
+- (NSArray *)publicAccounts {
+    return self.conns;
 }
 
 - (void)tick:(NSTimer *)timer

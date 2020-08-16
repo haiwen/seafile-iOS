@@ -52,7 +52,15 @@
     Debug("%@, root:%d accountroot:%d, reporoot:%d ", _item.itemIdentifier, _item.isRoot, _item.isAccountRoot, _item.isRepoRoot);
     
     if (@available(iOS 11.0, *)) {
-        if (_containerItemIdentifier == NSFileProviderWorkingSetContainerItemIdentifier) {
+        if ([_containerItemIdentifier isEqualToString:NSFileProviderRootContainerItemIdentifier]) {
+            NSArray *accounts = self.getRootProviderItems;
+            if (accounts.count == 0) {
+                [observer finishEnumeratingWithError:[NSError fileProvierErrorNoAccount]];
+            } else {
+                [observer didEnumerateItems:accounts];
+                [observer finishEnumeratingUpToPage:nil];
+            }
+        } else if ([_containerItemIdentifier isEqualToString: NSFileProviderWorkingSetContainerItemIdentifier]) {
             Debug("WorkingSetItemIdentifier %@", _item.itemIdentifier);
             NSMutableArray *items = [NSMutableArray array];
             NSMutableDictionary *filesStorage = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:SEAF_FILE_PROVIDER]];
@@ -65,14 +73,8 @@
             [observer finishEnumeratingUpToPage:nil];
             return;
         } else {
-            if (_item.isRoot) {// account list
-                NSArray *accounts = self.getRootProviderItems;
-                if (accounts.count == 0) {
-                    [observer finishEnumeratingWithError:[NSError fileProvierErrorNotAuthenticated]];
-                } else {
-                    [observer didEnumerateItems:accounts];
-                    [observer finishEnumeratingUpToPage:nil];
-                }
+            if (_item.isAccountRoot && _item.isTouchIdEnabled) {
+                [observer finishEnumeratingWithError:[NSError fileProvierErrorNotAuthenticated]];
                 return;
             }
             

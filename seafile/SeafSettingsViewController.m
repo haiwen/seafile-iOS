@@ -284,8 +284,14 @@ enum {
     [super viewDidLoad];
     _nameCell.textLabel.text = NSLocalizedString(@"Username", @"Seafile");
     _usedspaceCell.textLabel.text = NSLocalizedString(@"Space Used", @"Seafile");
-    if ([UIScreen mainScreen].bounds.size.height == 812) {
-        _enableTouchIDLabel.text = NSLocalizedString(@"Enable FaceID", @"Seafile");
+    
+    LAContext *lac = [[LAContext alloc] init];
+    if (@available(iOS 11.0, *)) {
+        if (lac.biometryType == LABiometryTypeFaceID) {
+            _enableTouchIDLabel.text = NSLocalizedString(@"Enable FaceID", @"Seafile");
+        } else {
+            _enableTouchIDLabel.text = NSLocalizedString(@"Enable TouchID", @"Seafile");
+        }
     } else {
         _enableTouchIDLabel.text = NSLocalizedString(@"Enable TouchID", @"Seafile");
     }

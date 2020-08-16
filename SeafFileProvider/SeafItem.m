@@ -154,6 +154,10 @@ static APLRUCache *cache() {
     return !!_filename;
 }
 
+- (BOOL)isTouchIdEnabled {
+    return self.conn.touchIdEnabled;
+}
+
 - (SeafBase *)getSeafObj
 {
     if (self.isRoot) {

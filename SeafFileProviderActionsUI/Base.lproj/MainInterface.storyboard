@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="16097.2" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="J6p-g8-CHO">
+    <device id="retina4_7" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="16087"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--Title-->
+        <scene sceneID="Q8I-MS-tKG">
+            <objects>
+                <viewController id="J6p-g8-CHO" customClass="DocumentActionViewController" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Vdh-Gp-eV6">
+                        <rect key="frame" x="0.0" y="0.0" width="350" height="400"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text=" TouchID is Enabled " textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gdj-d0-nZ2">
+                                <rect key="frame" x="73" y="167" width="204.5" height="26.5"/>
+                                <accessibility key="accessibilityConfiguration" identifier="FPUInternalActionContentLabelIdentifier"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="22"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Files cannot be used whith TouchID.If you would like to use Files,please open Seafile and disable TouchID" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Fwj-fa-AqO">
+                                <rect key="frame" x="25" y="223.5" width="300" height="54"/>
+                                <accessibility key="accessibilityConfiguration" identifier="FPUInternalActionTypeLabelIdentifier"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="15"/>
+                                <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <navigationBar contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4wI-mF-fMZ">
+                                <rect key="frame" x="0.0" y="0.0" width="350" height="44"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <items>
+                                    <navigationItem id="lQS-Wf-n4x">
+                                        <barButtonItem key="leftBarButtonItem" systemItem="cancel" id="bg8-Ws-pay">
+                                            <connections>
+                                                <action selector="cancelButtonTapped:" destination="J6p-g8-CHO" id="IJ0-1L-Agm"/>
+                                            </connections>
+                                        </barButtonItem>
+                                    </navigationItem>
+                                </items>
+                            </navigationBar>
+                        </subviews>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor" cocoaTouchSystemColor="whiteColor"/>
+                        <constraints>
+                            <constraint firstItem="gdj-d0-nZ2" firstAttribute="centerX" secondItem="zTo-CZ-ppy" secondAttribute="centerX" id="Lzv-xm-Pq8"/>
+                            <constraint firstItem="Fwj-fa-AqO" firstAttribute="top" secondItem="gdj-d0-nZ2" secondAttribute="bottom" constant="30" id="RaY-OX-raY"/>
+                            <constraint firstItem="Fwj-fa-AqO" firstAttribute="leading" secondItem="zTo-CZ-ppy" secondAttribute="leading" constant="25" id="Wlf-ic-xfe"/>
+                            <constraint firstItem="gdj-d0-nZ2" firstAttribute="centerY" secondItem="zTo-CZ-ppy" secondAttribute="centerY" constant="-20" id="mXB-bH-zc8"/>
+                            <constraint firstItem="zTo-CZ-ppy" firstAttribute="trailing" secondItem="Fwj-fa-AqO" secondAttribute="trailing" constant="25" id="sDU-6c-lIW"/>
+                        </constraints>
+                        <viewLayoutGuide key="safeArea" id="zTo-CZ-ppy"/>
+                    </view>
+                    <navigationItem key="navigationItem" title="Title" id="BKE-3f-iRe"/>
+                    <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+                    <size key="freeformSize" width="350" height="400"/>
+                    <connections>
+                        <outlet property="actionTypeLabel" destination="Fwj-fa-AqO" id="cqr-bL-fOs"/>
+                        <outlet property="identifierLabel" destination="gdj-d0-nZ2" id="Gjq-Rr-4sd"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="UoZ-ya-W3e" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-80" y="63.868065967016499"/>
+        </scene>
+    </scenes>
+</document>

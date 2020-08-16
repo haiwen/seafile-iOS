@@ -22,7 +22,15 @@
 
 + (NSError *)fileProvierErrorNotAuthenticated {
     if (@available(iOS 11.0, *)) {
-        return [[NSError alloc] initWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorNotAuthenticated userInfo:nil];
+        return [[NSError alloc] initWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorNotAuthenticated userInfo:@{@"reason" : @"notAuthenticated"}];
+    } else {
+        return [Utils defaultError];
+    }
+}
+
++ (NSError *)fileProvierErrorNoAccount {
+    if (@available(iOS 11.0, *)) {
+        return [[NSError alloc] initWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorNotAuthenticated userInfo:@{@"reason" : @"noAccount"}];
     } else {
         return [Utils defaultError];
     }
