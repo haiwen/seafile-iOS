@@ -231,13 +231,19 @@
     Debug("enumerator for %@", containerItemIdentifier);
     SeafEnumerator *enumerator = nil;
     if (@available(iOS 11.0, *)) {
-        if (containerItemIdentifier == NSFileProviderRootContainerItemIdentifier) {
+        if ([containerItemIdentifier isEqualToString:NSFileProviderRootContainerItemIdentifier]) {
             [self signalEnumerator:@[NSFileProviderWorkingSetContainerItemIdentifier]];
             enumerator = [[SeafEnumerator alloc] initWithItemIdentifier:[self translateIdentifier:containerItemIdentifier] containerItemIdentifier:containerItemIdentifier currentAnchor:self.currentAnchor];
-        } else if (containerItemIdentifier == NSFileProviderWorkingSetContainerItemIdentifier) {
+        } else if ([containerItemIdentifier isEqualToString:NSFileProviderWorkingSetContainerItemIdentifier]) {
             enumerator = [[SeafEnumerator alloc] initWithItemIdentifier:containerItemIdentifier containerItemIdentifier:containerItemIdentifier currentAnchor:self.currentAnchor];
         } else {
-           enumerator = [[SeafEnumerator alloc] initWithItemIdentifier:[self translateIdentifier:[self translateIdentifier:containerItemIdentifier]] containerItemIdentifier:containerItemIdentifier currentAnchor:self.currentAnchor];
+            SeafItem *item = [[SeafItem alloc] initWithItemIdentity:[self translateIdentifier:[self translateIdentifier:containerItemIdentifier]]];
+            if (item.isAccountRoot && item.isTouchIdEnabled) {
+                *error = [NSError fileProvierErrorNotAuthenticated];
+                enumerator = [[SeafEnumerator alloc] initWithItemIdentifier:[self translateIdentifier:[self translateIdentifier:containerItemIdentifier]] containerItemIdentifier:containerItemIdentifier currentAnchor:self.currentAnchor];
+            } else {
+                 enumerator = [[SeafEnumerator alloc] initWithItemIdentifier:[self translateIdentifier:[self translateIdentifier:containerItemIdentifier]] containerItemIdentifier:containerItemIdentifier currentAnchor:self.currentAnchor];
+            }
         }
     }
     return enumerator;
@@ -287,7 +293,7 @@
          inParentItemIdentifier:(NSFileProviderItemIdentifier)parentItemIdentifier
               completionHandler:(void (^)(NSFileProviderItem _Nullable createdDirectoryItem, NSError * _Nullable error))completionHandler
 {
-    Debug("parentItemIdentifier: %@, directoryName:%@", parentItemIdentifier, directoryName);
+    Debug("create dir parentItemIdentifier: %@, directoryName:%@", parentItemIdentifier, directoryName);
     SeafItem *item = [[SeafItem alloc] initWithItemIdentity:parentItemIdentifier];
     SeafDir *parentDir = (SeafDir *)[item toSeafObj];
     [parentDir mkdir:directoryName success:^(SeafDir *dir) {
@@ -326,7 +332,7 @@
                  completionHandler:(void (^)(NSFileProviderItem _Nullable reparentedItem, NSError * _Nullable error))completionHandler
 {
     // move file
-    Debug("itemIdentifier: %@, parentItemIdentifier:%@", itemIdentifier, parentItemIdentifier);
+    Debug("move file itemIdentifier: %@, parentItemIdentifier:%@", itemIdentifier, parentItemIdentifier);
     SeafItem *item = [[SeafItem alloc] initWithItemIdentity:itemIdentifier];
     SeafItem *dstItem = [[SeafItem alloc] initWithItemIdentity:parentItemIdentifier];
     SeafDir *srcDir = (SeafDir *)[item.parentItem toSeafObj];

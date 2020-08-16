@@ -250,6 +250,7 @@
 		F52111E421E1C14D00D93BB8 /* SeafMkLibAlertController_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = F52111D721E1C14D00D93BB8 /* SeafMkLibAlertController_iPad.xib */; };
 		F52111E521E1C14D00D93BB8 /* SeafMkLibAlertController_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = F52111D721E1C14D00D93BB8 /* SeafMkLibAlertController_iPad.xib */; };
 		F52111E621E1C14D00D93BB8 /* SeafMkLibAlertController_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = F52111D721E1C14D00D93BB8 /* SeafMkLibAlertController_iPad.xib */; };
+		F5231B5324E8E318006D71DF /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 57532C161868AA48003D564B /* Localizable.strings */; };
 		F527AF3D22F881490057B59E /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F527AF3C22F881480057B59E /* WebKit.framework */; };
 		F53690381F13B5F90050D788 /* more_dot.png in Resources */ = {isa = PBXBuildFile; fileRef = F53690371F13B5F90050D788 /* more_dot.png */; };
 		F536DA191F30DB6F00F2EF3F /* SeafSyncInfoCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F536DA171F30DB6F00F2EF3F /* SeafSyncInfoCell.m */; };
@@ -266,6 +267,9 @@
 		F575168C1EF4CA0B00BD633B /* arrowmore@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = F575168A1EF4CA0B00BD633B /* arrowmore@3x.png */; };
 		F5AB0565212737AF00443522 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 57532C161868AA48003D564B /* Localizable.strings */; };
 		F5AB0566212737B100443522 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 57532C161868AA48003D564B /* Localizable.strings */; };
+		F5AD6ADF24C42D140067F9AF /* DocumentActionViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F5AD6ADE24C42D140067F9AF /* DocumentActionViewController.m */; };
+		F5AD6AE224C42D140067F9AF /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F5AD6AE024C42D140067F9AF /* MainInterface.storyboard */; };
+		F5AD6AE624C42D140067F9AF /* SeafFileProviderActionsUI.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = F5AD6ADB24C42D140067F9AF /* SeafFileProviderActionsUI.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F5ADEA042081B69C00FB6451 /* SeafMkLibAlertController.m in Sources */ = {isa = PBXBuildFile; fileRef = F5ADEA022081B69C00FB6451 /* SeafMkLibAlertController.m */; };
 		F5B106AB23129A0C009348E1 /* UISearchBar+SeafExtend.m in Sources */ = {isa = PBXBuildFile; fileRef = F5B106AA23129A0C009348E1 /* UISearchBar+SeafExtend.m */; };
 		F5B209092169994000762342 /* SeafInputItemsProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = F5B209072169993F00762342 /* SeafInputItemsProvider.m */; };
@@ -329,6 +333,13 @@
 			remoteGlobalIDString = 57B14B691DF5325A0045112E;
 			remoteInfo = SeafAction;
 		};
+		F5AD6AE424C42D140067F9AF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 57DB826415A833F900097CEC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F5AD6ADA24C42D140067F9AF;
+			remoteInfo = SeafFileProviderActionsUI;
+		};
 		F5C648FF210A0B4E00842687 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 57DB826415A833F900097CEC /* Project object */;
@@ -347,6 +358,7 @@
 			files = (
 				57A0297A1A16F8AD009C9D7B /* SeafFileProviderUI.appex in Embed App Extensions */,
 				F5C64901210A0B4E00842687 /* SeafShare.appex in Embed App Extensions */,
+				F5AD6AE624C42D140067F9AF /* SeafFileProviderActionsUI.appex in Embed App Extensions */,
 				57A029771A16F8AD009C9D7B /* SeafFileProvider.appex in Embed App Extensions */,
 				57B14B751DF5325B0045112E /* SeafAction.appex in Embed App Extensions */,
 			);
@@ -588,6 +600,15 @@
 		F571850D1F0742FE00543F42 /* more_dot@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "more_dot@2x.png"; sourceTree = "<group>"; };
 		F57516891EF4CA0B00BD633B /* arrowmore@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "arrowmore@2x.png"; sourceTree = "<group>"; };
 		F575168A1EF4CA0B00BD633B /* arrowmore@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "arrowmore@3x.png"; sourceTree = "<group>"; };
+		F5AD6ACA24C42C8A0067F9AF /* DocumentActionViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DocumentActionViewController.h; sourceTree = "<group>"; };
+		F5AD6ACB24C42C8A0067F9AF /* DocumentActionViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DocumentActionViewController.m; sourceTree = "<group>"; };
+		F5AD6ACE24C42C8A0067F9AF /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
+		F5AD6AD024C42C8A0067F9AF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F5AD6ADB24C42D140067F9AF /* SeafFileProviderActionsUI.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SeafFileProviderActionsUI.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		F5AD6ADD24C42D140067F9AF /* DocumentActionViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DocumentActionViewController.h; sourceTree = "<group>"; };
+		F5AD6ADE24C42D140067F9AF /* DocumentActionViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DocumentActionViewController.m; sourceTree = "<group>"; };
+		F5AD6AE124C42D140067F9AF /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
+		F5AD6AE324C42D140067F9AF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F5ADEA012081B69C00FB6451 /* SeafMkLibAlertController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafMkLibAlertController.h; sourceTree = "<group>"; };
 		F5ADEA022081B69C00FB6451 /* SeafMkLibAlertController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafMkLibAlertController.m; sourceTree = "<group>"; };
 		F5B106A923129A0C009348E1 /* UISearchBar+SeafExtend.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "UISearchBar+SeafExtend.h"; path = "common/Classes/UISearchBar+SeafExtend.h"; sourceTree = "<group>"; };
@@ -657,6 +678,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				7354777D2C3444E394BB2F31 /* libPods-SeafAction.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F5AD6AD824C42D140067F9AF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -893,6 +921,7 @@
 				58D40A461E9ACEA000A68BEF /* common */,
 				57B14B6B1DF5325A0045112E /* SeafAction */,
 				F5C648F7210A0B4E00842687 /* SeafShare */,
+				F5AD6AC924C42C8A0067F9AF /* SeafFileProviderActionUI */,
 				57DB827015A833FA00097CEC /* Frameworks */,
 				57D189CE182E0A380029A797 /* Images.xcassets */,
 				356B8B1C9F847DA37F0EFE1E /* Pods */,
@@ -900,6 +929,7 @@
 				57DB827915A833FA00097CEC /* seafile */,
 				57A029601A16F8AC009C9D7B /* SeafFileProviderUI */,
 				57A0296E1A16F8AD009C9D7B /* SeafFileProvider */,
+				F5AD6ADC24C42D140067F9AF /* SeafFileProviderActionsUI */,
 			);
 			sourceTree = "<group>";
 		};
@@ -911,6 +941,7 @@
 				57A0296D1A16F8AD009C9D7B /* SeafFileProvider.appex */,
 				57B14B6A1DF5325A0045112E /* SeafAction.appex */,
 				F5C648F6210A0B4E00842687 /* SeafShare.appex */,
+				F5AD6ADB24C42D140067F9AF /* SeafFileProviderActionsUI.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1040,6 +1071,28 @@
 			path = ui;
 			sourceTree = "<group>";
 		};
+		F5AD6AC924C42C8A0067F9AF /* SeafFileProviderActionUI */ = {
+			isa = PBXGroup;
+			children = (
+				F5AD6ACA24C42C8A0067F9AF /* DocumentActionViewController.h */,
+				F5AD6ACB24C42C8A0067F9AF /* DocumentActionViewController.m */,
+				F5AD6ACD24C42C8A0067F9AF /* MainInterface.storyboard */,
+				F5AD6AD024C42C8A0067F9AF /* Info.plist */,
+			);
+			path = SeafFileProviderActionUI;
+			sourceTree = "<group>";
+		};
+		F5AD6ADC24C42D140067F9AF /* SeafFileProviderActionsUI */ = {
+			isa = PBXGroup;
+			children = (
+				F5AD6ADD24C42D140067F9AF /* DocumentActionViewController.h */,
+				F5AD6ADE24C42D140067F9AF /* DocumentActionViewController.m */,
+				F5AD6AE024C42D140067F9AF /* MainInterface.storyboard */,
+				F5AD6AE324C42D140067F9AF /* Info.plist */,
+			);
+			path = SeafFileProviderActionsUI;
+			sourceTree = "<group>";
+		};
 		F5C648F7210A0B4E00842687 /* SeafShare */ = {
 			isa = PBXGroup;
 			children = (
@@ -1080,6 +1133,7 @@
 				57A029791A16F8AD009C9D7B /* PBXTargetDependency */,
 				57B14B741DF5325B0045112E /* PBXTargetDependency */,
 				F5C64900210A0B4E00842687 /* PBXTargetDependency */,
+				F5AD6AE524C42D140067F9AF /* PBXTargetDependency */,
 			);
 			name = seafileApp;
 			productName = seafile;
@@ -1144,6 +1198,23 @@
 			name = SeafAction;
 			productName = SeafAction;
 			productReference = 57B14B6A1DF5325A0045112E /* SeafAction.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		F5AD6ADA24C42D140067F9AF /* SeafFileProviderActionsUI */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F5AD6AE724C42D140067F9AF /* Build configuration list for PBXNativeTarget "SeafFileProviderActionsUI" */;
+			buildPhases = (
+				F5AD6AD724C42D140067F9AF /* Sources */,
+				F5AD6AD824C42D140067F9AF /* Frameworks */,
+				F5AD6AD924C42D140067F9AF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SeafFileProviderActionsUI;
+			productName = SeafFileProviderActionsUI;
+			productReference = F5AD6ADB24C42D140067F9AF /* SeafFileProviderActionsUI.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 		F5C648F5210A0B4E00842687 /* SeafShare */ = {
@@ -1226,6 +1297,11 @@
 							};
 						};
 					};
+					F5AD6ADA24C42D140067F9AF = {
+						CreatedOnToolsVersion = 11.5;
+						DevelopmentTeam = 55LCTZ5354;
+						ProvisioningStyle = Automatic;
+					};
 					F5C648F5210A0B4E00842687 = {
 						CreatedOnToolsVersion = 9.4;
 						DevelopmentTeam = 55LCTZ5354;
@@ -1277,6 +1353,7 @@
 				57A0296C1A16F8AD009C9D7B /* SeafFileProvider */,
 				57B14B691DF5325A0045112E /* SeafAction */,
 				F5C648F5210A0B4E00842687 /* SeafShare */,
+				F5AD6ADA24C42D140067F9AF /* SeafFileProviderActionsUI */,
 			);
 		};
 /* End PBXProject section */
@@ -1464,6 +1541,15 @@
 				F52111B021E1C12000D93BB8 /* SeafButtonCell.xib in Resources */,
 				574D3D8E1DFA6EF90093C18C /* Images.xcassets in Resources */,
 				F52111E521E1C14D00D93BB8 /* SeafMkLibAlertController_iPad.xib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F5AD6AD924C42D140067F9AF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F5AD6AE224C42D140067F9AF /* MainInterface.storyboard in Resources */,
+				F5231B5324E8E318006D71DF /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1823,6 +1909,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F5AD6AD724C42D140067F9AF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F5AD6ADF24C42D140067F9AF /* DocumentActionViewController.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F5C648F2210A0B4E00842687 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1860,6 +1954,11 @@
 			isa = PBXTargetDependency;
 			target = 57B14B691DF5325A0045112E /* SeafAction */;
 			targetProxy = 57B14B731DF5325B0045112E /* PBXContainerItemProxy */;
+		};
+		F5AD6AE524C42D140067F9AF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F5AD6ADA24C42D140067F9AF /* SeafFileProviderActionsUI */;
+			targetProxy = F5AD6AE424C42D140067F9AF /* PBXContainerItemProxy */;
 		};
 		F5C64900210A0B4E00842687 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1908,6 +2007,22 @@
 				5729697318B76D6F00363B2E /* Base */,
 			);
 			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		F5AD6ACD24C42C8A0067F9AF /* MainInterface.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				F5AD6ACE24C42C8A0067F9AF /* Base */,
+			);
+			name = MainInterface.storyboard;
+			sourceTree = "<group>";
+		};
+		F5AD6AE024C42D140067F9AF /* MainInterface.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				F5AD6AE124C42D140067F9AF /* Base */,
+			);
+			name = MainInterface.storyboard;
 			sourceTree = "<group>";
 		};
 		F5C648FB210A0B4E00842687 /* MainInterface.storyboard */ = {
@@ -2326,6 +2441,82 @@
 			};
 			name = Release;
 		};
+		F5AD6AE824C42D140067F9AF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 55LCTZ5354;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				INFOPLIST_FILE = SeafFileProviderActionsUI/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.5;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro.SeafFileProviderActionsUI;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		F5AD6AE924C42D140067F9AF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_IDENTITY = "iPhone Distribution";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 55LCTZ5354;
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				INFOPLIST_FILE = SeafFileProviderActionsUI/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.5;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro.SeafFileProviderActionsUI;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		F5C64903210A0B4E00842687 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 4B157E719E6CB55B7A11A45F /* Pods-SeafShare.debug.xcconfig */;
@@ -2454,6 +2645,15 @@
 			buildConfigurations = (
 				57DB829415A833FA00097CEC /* Debug */,
 				57DB829515A833FA00097CEC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F5AD6AE724C42D140067F9AF /* Build configuration list for PBXNativeTarget "SeafFileProviderActionsUI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F5AD6AE824C42D140067F9AF /* Debug */,
+				F5AD6AE924C42D140067F9AF /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

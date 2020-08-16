@@ -35,6 +35,7 @@
 - (BOOL)isAccountRoot;
 - (BOOL)isRepoRoot;
 - (BOOL)isFile;
+- (BOOL)isTouchIdEnabled;
 
 - (SeafBase *)toSeafObj;
 
