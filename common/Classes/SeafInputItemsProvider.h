@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 
 typedef void(^CompleteBlock)(BOOL result, NSArray *array);
+typedef void(^ItemLoadHandler)(BOOL result);
 
 @interface SeafInputItemsProvider : NSObject
 

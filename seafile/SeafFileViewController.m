@@ -1190,11 +1190,13 @@ enum {
     [self downloadEntries:entries completion:^(NSArray *array, NSString *errorStr) {
         @strongify(self);
         self.state = STATE_INIT;
-        if (errorStr) {
-            [SVProgressHUD showErrorWithStatus:errorStr];
-        } else {
-            [SeafActionsManager exportByActivityView:array item:self.toolbarItems.firstObject targerVC:self];
-        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (errorStr) {
+                [SVProgressHUD showErrorWithStatus:errorStr];
+            } else {
+                [SeafActionsManager exportByActivityView:array item:self.toolbarItems.firstObject targerVC:self];
+            }
+        });
     }];
 }
 
