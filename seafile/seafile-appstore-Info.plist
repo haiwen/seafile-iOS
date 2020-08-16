@@ -97,6 +97,8 @@
 	<string>This lets you use Face ID</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Choose always allow Seafile can periodically start Camera Upload when your location changes</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Choose always allow Seafile can periodically start Camera Upload when your location changes</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Choose always allow Seafile can periodically start Camera Upload when your location changes</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
