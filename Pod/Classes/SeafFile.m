@@ -504,10 +504,16 @@
     return [Utils isImageFile:self.name];
 }
 
+
+- (BOOL)isVideoFile
+{
+    return [Utils isVideoFile:self.name];
+}
+
 - (UIImage *)icon
 {
     if (_icon) return _icon;
-    if (self.isImageFile && self.oid) {
+    if ((self.isImageFile || self.isVideoFile) && self.oid) {
         if (![connection isEncrypted:self.repoId]) {
             UIImage *img = [self thumb];
             if (img)
@@ -948,3 +954,4 @@
 }
 
 @end
+
