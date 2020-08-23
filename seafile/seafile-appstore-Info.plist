@@ -104,7 +104,7 @@
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Access to your photo library is required to save photos</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Access to your photo library is required to upload photos to your account</string>
+	<string>This lets you upload photos and videos to Seafile Account for backup</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
