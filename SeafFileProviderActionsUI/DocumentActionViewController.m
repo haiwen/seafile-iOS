@@ -24,7 +24,7 @@
         NSString *reason = [userInfo objectForKey:@"reason"];
         if ([reason isEqualToString:@"notAuthenticated"]) {
             self.identifierLabel.text = NSLocalizedString(@"FaceID(TouchID) is Enabled", @"Seafile");
-            self.actionTypeLabel.text = NSLocalizedString(@"Files cannot be used whith FaceID(TouchID).If you would like to use Files,please open Seafile and disable FaceID(TouchID)", @"Seafile");
+            self.actionTypeLabel.text = NSLocalizedString(@"Files cannot access files in Seafile when FaceID(TouchID) enabled. Please open Seafile and disable FaceID(TouchID).", @"Seafile");
         } else if ([reason isEqualToString:@"noAccount"]) {
             self.identifierLabel.text = NSLocalizedString(@"There is no account available", @"Seafile");
             self.actionTypeLabel.text = NSLocalizedString(@"Please open Seafile ans add an account to start", @"Seafile");
