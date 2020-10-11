@@ -38,9 +38,7 @@
 
     [provider.ufiles removeAllObjects];
     provider.completeBlock = block;
-    
-    dispatch_queue_t queue = dispatch_queue_create("com.seafile.loadinputs", DISPATCH_QUEUE_CONCURRENT);
-    
+        
     NSString *tmpdir = [SeafStorage uniqueDirUnder:SeafStorage.sharedObject.tempDir];
     if (![Utils checkMakeDir:tmpdir]) {
         Warning("Failed to create temp dir.");
@@ -51,30 +49,34 @@
     
     for (NSExtensionItem *item in extensionContext.inputItems) {
         for (NSItemProvider *itemProvider in item.attachments) {
+            dispatch_group_enter(provider.group);
             Debug("itemProvider: %@", itemProvider);
-            dispatch_group_async(provider.group, queue, ^{
-                if ([itemProvider hasItemConformingToTypeIdentifier:(NSString *)kUTTypeItem]) {
-                    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-                    [itemProvider loadItemForTypeIdentifier:(NSString *)kUTTypeItem options:nil completionHandler:^(id<NSSecureCoding, NSObject>  _Nullable item, NSError * _Null_unspecified error) {
-                        if (!error) {
-                            [provider loadMatchingItem:item provider:itemProvider handler:^(BOOL result) {
-                                dispatch_semaphore_signal(semaphore);
-                            }];
-                        } else {
-                            [provider handleFailure:^(BOOL result) {
-                                dispatch_semaphore_signal(semaphore);
-                            }];
-                        }
-                    }];
-                    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, 5*NSEC_PER_SEC));
-                } else {
-                    [provider handleFailure:nil];
+            if ([itemProvider hasItemConformingToTypeIdentifier:(NSString *)kUTTypeItem] || [itemProvider hasItemConformingToTypeIdentifier:@"public.url"]) {
+                //image or ics need to call with "public.url" as identifier
+                NSString *typeIdentifier = (NSString *)kUTTypeItem;
+                if ([itemProvider hasItemConformingToTypeIdentifier:@"public.url"]) {
+                    typeIdentifier = @"public.url";
                 }
-            });
+                [itemProvider loadItemForTypeIdentifier:typeIdentifier options:nil completionHandler:^(id<NSSecureCoding, NSObject>  _Nullable item, NSError * _Null_unspecified error) {
+                    if (!error) {
+                        [provider loadMatchingItem:item provider:itemProvider handler:^(BOOL result) {
+                            dispatch_group_leave(provider.group);
+                        }];
+                    } else {
+                        [provider handleFailure:^(BOOL result) {
+                            dispatch_group_leave(provider.group);
+                        }];
+                    }
+                }];
+            } else {
+                [provider handleFailure:^(BOOL result) {
+                    dispatch_group_leave(provider.group);
+                }];
+            }
         }
     };
     
-    dispatch_group_notify(provider.group, queue, ^{
+    dispatch_group_notify(provider.group, dispatch_get_main_queue(), ^{
         provider.completeBlock(true, provider.ufiles);
     });
 }
