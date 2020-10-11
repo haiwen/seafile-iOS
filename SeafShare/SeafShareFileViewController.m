@@ -22,6 +22,7 @@
 @interface SeafShareFileViewController ()<UITableViewDataSource, UITableViewDelegate, SeafUploadDelegate>
 
 @property (nonatomic, strong) NSArray *ufiles;
+@property (nonatomic, assign) NSInteger uploadFileCount;
 @property (nonatomic, strong) SeafDir *directory;
 @property (nonatomic, strong) UIActivityIndicatorView *loadingView;
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
@@ -65,6 +66,7 @@
             [weakSelf.loadingView stopAnimating];
             if (result) {
                 weakSelf.ufiles = array;
+                weakSelf.uploadFileCount = array.count;
                 [weakSelf.tableView reloadData];
                 [weakSelf startUpload];
             } else {
@@ -204,17 +206,23 @@
         ufile.overwrite = true;
         ufile.udir = _directory;
         ufile.delegate = self;
+        [ufile setCompletionBlock:^(SeafUploadFile *file, NSString *oid, NSError *error) {
+            [self fileUploadComplete:file error:error];
+        }];
         [SeafDataTaskManager.sharedObject addUploadTask:ufile];
     }
-    NSMutableArray *temp = [self.ufiles mutableCopy];
-    SeafDataTaskManager.sharedObject.finishBlock = ^(id<SeafTask>  _Nullable file) {
-        if ([temp containsObject:file]) {
-            [temp removeObject:file];
+}
+
+- (void)fileUploadComplete:(SeafUploadFile *)ufile error:(NSError *)error {
+    for (SeafUploadFile *file in self.ufiles) {
+        if ([ufile.name isEqualToString:file.name]) {
+            self.uploadFileCount--;
+            break;
         }
-        if (temp.count == 0) {
-            [self done];
-        }
-    };
+    }
+    if (self.uploadFileCount == 0) {
+        [self done];
+    }
 }
 
 - (void)done {

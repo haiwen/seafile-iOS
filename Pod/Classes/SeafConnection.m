@@ -1629,9 +1629,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self performSelectorInBackground:@selector(saveTagDataToICloudWithObject:) withObject:dict];
 }
 
-- (void)saveTagDataToICloudWithObject:(id)object{
+- (void)saveTagDataToICloudWithObject:(NSDictionary *)dict {
     NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
-    [store setObject:object forKey:self.tagDataKey];
+    [store setDictionary:dict forKey:self.tagDataKey];
     [store synchronize];
 }
 
