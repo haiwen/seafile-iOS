@@ -806,10 +806,6 @@
 		F55A4AE3213A9E5A00AAF3DF /* ShareViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ShareViewController.m; sourceTree = "<group>"; };
 		F568C1F91EF10F8900F1035D /* SeafActionSheet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeafActionSheet.h; sourceTree = "<group>"; };
 		F568C1FA1EF10F8900F1035D /* SeafActionSheet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SeafActionSheet.m; sourceTree = "<group>"; };
-		F5AD6ACA24C42C8A0067F9AF /* DocumentActionViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DocumentActionViewController.h; sourceTree = "<group>"; };
-		F5AD6ACB24C42C8A0067F9AF /* DocumentActionViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DocumentActionViewController.m; sourceTree = "<group>"; };
-		F5AD6ACE24C42C8A0067F9AF /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
-		F5AD6AD024C42C8A0067F9AF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F5AD6ADB24C42D140067F9AF /* SeafFileProviderActionsUI.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SeafFileProviderActionsUI.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		F5AD6ADD24C42D140067F9AF /* DocumentActionViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DocumentActionViewController.h; sourceTree = "<group>"; };
 		F5AD6ADE24C42D140067F9AF /* DocumentActionViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DocumentActionViewController.m; sourceTree = "<group>"; };
@@ -1149,7 +1145,6 @@
 				58D40A461E9ACEA000A68BEF /* common */,
 				57B14B6B1DF5325A0045112E /* SeafAction */,
 				F5C648F7210A0B4E00842687 /* SeafShare */,
-				F5AD6AC924C42C8A0067F9AF /* SeafFileProviderActionUI */,
 				57DB827015A833FA00097CEC /* Frameworks */,
 				57D189CE182E0A380029A797 /* Images.xcassets */,
 				356B8B1C9F847DA37F0EFE1E /* Pods */,
@@ -1282,17 +1277,6 @@
 				4A5E88CE22AD3102008146BA /* SeafActivitiesCell.xib */,
 			);
 			path = ui;
-			sourceTree = "<group>";
-		};
-		F5AD6AC924C42C8A0067F9AF /* SeafFileProviderActionUI */ = {
-			isa = PBXGroup;
-			children = (
-				F5AD6ACA24C42C8A0067F9AF /* DocumentActionViewController.h */,
-				F5AD6ACB24C42C8A0067F9AF /* DocumentActionViewController.m */,
-				F5AD6ACD24C42C8A0067F9AF /* MainInterface.storyboard */,
-				F5AD6AD024C42C8A0067F9AF /* Info.plist */,
-			);
-			path = SeafFileProviderActionUI;
 			sourceTree = "<group>";
 		};
 		F5AD6ADC24C42D140067F9AF /* SeafFileProviderActionsUI */ = {
@@ -2553,14 +2537,6 @@
 			name = MainInterface.storyboard;
 			sourceTree = "<group>";
 		};
-		F5AD6ACD24C42C8A0067F9AF /* MainInterface.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				F5AD6ACE24C42C8A0067F9AF /* Base */,
-			);
-			name = MainInterface.storyboard;
-			sourceTree = "<group>";
-		};
 		F5AD6AE024C42D140067F9AF /* MainInterface.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -2657,7 +2633,7 @@
 				INFOPLIST_FILE = "seafile/Supporting Files/seafile-appstore-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MARKETING_VERSION = 2.9.10;
+				MARKETING_VERSION = 2.9.11;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro;
 				PRODUCT_NAME = SeafilePro;
 				PROVISIONING_PROFILE = "";
@@ -2692,7 +2668,7 @@
 				INFOPLIST_FILE = "seafile/Supporting Files/seafile-appstore-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MARKETING_VERSION = 2.9.10;
+				MARKETING_VERSION = 2.9.11;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro;
 				PRODUCT_NAME = SeafilePro;
 				PROVISIONING_PROFILE = "";
@@ -2734,7 +2710,7 @@
 				INFOPLIST_FILE = "$(SRCROOT)/SeafFileProvider/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../Frameworks";
-				MARKETING_VERSION = 2.9.10;
+				MARKETING_VERSION = 2.9.11;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -2771,7 +2747,7 @@
 				INFOPLIST_FILE = "$(SRCROOT)/SeafFileProvider/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../Frameworks";
-				MARKETING_VERSION = 2.9.10;
+				MARKETING_VERSION = 2.9.11;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -2813,7 +2789,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MARKETING_VERSION = 2.9.10;
+				MARKETING_VERSION = 2.9.11;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -2852,7 +2828,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MARKETING_VERSION = 2.9.10;
+				MARKETING_VERSION = 2.9.11;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.seafile.seafilePro.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -2892,7 +2868,7 @@
 				INFOPLIST_FILE = SeafAction/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 2.9.10;
+				MARKETING_VERSION = 2.9.11;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro.SeafAction;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -2928,7 +2904,7 @@
 				INFOPLIST_FILE = SeafAction/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 2.9.10;
+				MARKETING_VERSION = 2.9.11;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro.SeafAction;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -3070,7 +3046,7 @@
 				INFOPLIST_FILE = SeafFileProviderActionsUI/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.5;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 2.9.10;
+				MARKETING_VERSION = 2.9.11;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro.SeafFileProviderActionsUI;
@@ -3109,7 +3085,7 @@
 				INFOPLIST_FILE = SeafFileProviderActionsUI/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.5;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 2.9.10;
+				MARKETING_VERSION = 2.9.11;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro.SeafFileProviderActionsUI;
@@ -3153,7 +3129,7 @@
 				INFOPLIST_FILE = SeafShare/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.4;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 2.9.10;
+				MARKETING_VERSION = 2.9.11;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro.SeafShare;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -3194,7 +3170,7 @@
 				INFOPLIST_FILE = SeafShare/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.4;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 2.9.10;
+				MARKETING_VERSION = 2.9.11;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro.SeafShare;
 				PRODUCT_NAME = "$(TARGET_NAME)";
