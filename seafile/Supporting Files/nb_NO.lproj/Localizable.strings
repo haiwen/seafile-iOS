@@ -1,0 +1,1069 @@
+﻿
+
+/* Seafile */
+"%@ can't verify the identity of the website \"%@\"" = "%1$@ kan ikke bekrefte websidens identitet \"%2$@\"";
+
+/* Seafile */
+"%@ does not support to preview file of this kind at the moment." = "%@ støtter for øyeblikket ikke forhåndsvisning av denne filtypen.";
+
+/* Seafile */
+"%@ invite you to %@" = "%1$@ inviterer deg til %2$@";
+
+/* Seafile */
+"%@, Uploaded %@" = "%1$@, opplastet %2$@";
+
+/* Seafile */
+"%@, uploading" = "%@, uploading";
+
+/* Seafile */
+"%@, waiting to upload" = "%@, venter på opplasting";
+
+/* Seafile */
+"%ld photos remain" = "%ld bilder gjenstår";
+
+/* Seafile */
+"%ld files are uploaded to Seafile" = "%ld files are uploaded to Seafile";
+
+/* Seafile */
+"1 photo remain" = "1 bilde gjenstår";
+
+/* Seafile */
+"%ld days ago" = "%ld days ago";
+
+/* Seafile */
+"%ld hours ago" = "%ld hours ago";
+
+/* Seafile */
+"%ld minutes ago" = "%ld minutes ago";
+
+/* Seafile */
+"%ld months ago" = "%ld months ago";
+
+/* Seafile */
+"%ld years ago" = "%ld years ago";
+
+/* Seafile */
+"a day ago" = "a day ago";
+
+/* Seafile */
+"a few seconds ago" = "a few seconds ago";
+
+/* Seafile */
+"an hour ago" = "an hour ago";
+
+/* Seafile */
+"a minute ago" = "a minute ago";
+
+/* Seafile */
+"a month ago" = "a month ago";
+
+/* Seafile */
+"a year ago" = "a year ago";
+
+/* Seafile */
+"A file with the same name already exists, do you want to overwrite?" = "A file with the same name already exists, do you want to overwrite?";
+
+/* Seafile */
+"About" = "Om";
+
+/* Seafile */
+"Account" = "Konto";
+
+/* Seafile */
+"Account Info" = "Kontoinformasjon";
+
+/* Seafile */
+"Accounts" = "Konti";
+
+/* Seafile */
+"Activities" = "Aktiviteter";
+
+/* Seafile */
+"Activity" = "Aktivitet";
+
+/* Seafile */
+"Add a new discussion" = "Add a new discussion";
+
+/* Seafile */
+"Add account" = "Opprett ny konto";
+
+/* Seafile */
+"Add contact" = "Add contact";
+
+/* Seafile */
+"Added" = "Added";
+
+/* Seafile */
+"Added directory" = "Added directory";
+
+/* Seafile */
+"Added file" = "Added file";
+
+/* Seafile */
+"Added or modified" = "Added or modified";
+
+/* Seafile */
+"All photos synced" = "Alle bilder er synkroniserte";
+
+/* Seafile */
+"Are you sure to clear all the cache?" = "Er du sikker på at du ønsker å slette all mellomlagring?";
+
+/* Seafile */
+"Are you sure to cancel all downloading tasks?" = "Are you sure to cancel all downloading tasks?";
+
+/* Seafile */
+"Are you sure to cancel all uploading tasks" = "Are you sure to cancel all uploading tasks";
+
+/* Seafile */
+"Are you sure to log out?" = "Are you sure to log out?";
+
+/* Seafile */
+"Are you sure you want to delete %@ ?" = "Are you sure you want to delete %@ ?";
+
+/* Seafile */
+"Are you sure to save all photos to album?" = "Are you sure to save all photos to album";
+
+/* Seafile */
+"Auto Upload" = "Auto Upload";
+
+/* Auto cleay library password */
+"Auto clear passwords" = "Auto clear passwords";
+
+/* Seafile */
+"Auto merge by seafile system" = "Auto merge by seafile system";
+
+/* Seafile */
+"Auto upload should be enabled first." = "Auto upload should be enabled first.";
+
+/* Seafile */
+"Back" = "Tilbake";
+
+/* Seafile */
+"Back to Last Account" = "Tilbake til forrige konto";
+
+/* Seafile */
+"Background Upload" = "Background Upload";
+
+/* Seafile */
+"Backup Contacts" = "Backup Contacts";
+
+/* Seafile */
+"Cache" = "Mellomlagring";
+
+/* FolderView_iPad.storyboard */
+"Camera Upload" = "Kameraopplasting";
+
+/* Seafile */
+"Can not remove certificate because it is still in use" = "Can not remove certificate because it is still in use";
+
+/* Seafile */
+"Cancel" = "Cancel";
+
+/* Seafile */
+"Cancel download" = "Avbryt nedlasting";
+
+/* Seafile */
+"Cancel upload" = "Cancel upload";
+
+/* Seafile */
+"Changed library name or description" = "Changed library name or description";
+
+/* Seafile */
+"Checking library password ..." = "Kontrollerer bibliotekspassord...";
+
+/* Seafile */
+"Choose" = "Velg";
+
+/* Seafile */
+"Choose directory" = "Choose directory";
+
+/* Seafile */
+"Choose a Seafile server" = "Choose a Seafile server";
+
+/* Seafile */
+"Choose an account to start" = "Velg en konto for å starte";
+
+/* Seafile */
+"Clear libraries passwords successfully." = "Clear libraries passwords successfully.";
+
+/* Seafile */
+"Clear library password successfully." = "Clear library password successfully.";
+
+/* Seafile */
+"Clear password" = "Clear password";
+
+/* Seafile */
+"Clear remembered passwords" = "Clear remembered passwords";
+
+/* Seafile */
+"Click \"Search\" to start" = "Trykk \"søk\" for å starte";
+
+/* Seafile */
+"Connecting to server" = "Kobler til server";
+
+/* Seafile */
+"Contacts Backup" = "Contacts Backup";
+
+/* Seafile */
+"Contacts backup failed." = "Contacts backup failed.";
+
+/* Seafile */
+"Contacts backup should be enabled first." = "Contacts backup should be enabled first.";
+
+/* Seafile */
+"Contacts backup succeeded." = "Contacts backup succeeded.";
+
+/* Seafile */
+"Contacts will be backuped as: %@ " = "Contacts will be backuped as: %@ ";
+
+/* Seafile */
+"Copy" = "Kopiere";
+
+/* Seafile */
+"Copy Link to Clipboard" = "Kopiere lenke til utklippstavlen";
+
+/* Seafile */
+"Copy image to clipboard" = "Kopiere bilde til utklippstavlen";
+
+/* Seafile */
+"Copy share link to clipboard" = "Kopiere delingslenke til utklippstavle";
+
+/* Seafile */
+"Copying files ..." = "Kopierer filer...";
+
+/* Seafile */
+"Created library %@" = "Created library %@";
+
+/* Seafile */
+"Creating file ..." = "Oppretter fil...";
+
+/* Seafile */
+"Creating folder ..." = "Oppretter mappe...";
+
+/* Seafile */
+"Creating library ..." = "Creating library ...";
+
+/* Seafile */
+"Created library" = "Created library";
+
+/* Seafile */
+"Created folder" = "Created folder";
+
+/* Seafile */
+"Created file" = "Created file";
+
+/* Seafile */
+"Created %ld files" = "Created %ld files";
+
+/* Seafile */
+"Created draft" = "Created draft";
+
+/* Seafile */
+"Delete" = "Slette";
+
+/* Seafile */
+"Deleted" = "Deleted";
+
+/* Seafile */
+"Deleted library %@" = "Deleted library %@";
+
+/* Seafile */
+"Deleting directory ..." = "Sletter mappe";
+
+/* Seafile */
+"Deleting file ..." = "Sletter fil...";
+
+/* Seafile */
+"Deleting files ..." = "Sletter filer....";
+
+/* Seafile */
+"Deleted library" = "Deleted library";
+
+/* Seafile */
+"Deleted folder" = "Deleted folder";
+
+/* Seafile */
+"Deleted file" = "Deleted file";
+
+/* Seafile */
+"Deleted draft" = "Deleted draft";
+
+/* Seafile */
+"Destination" = "Destination";
+
+/* Seafile */
+"Directory '%@' is shared with you using %@" = "Mappe '%1$@' er delt med deg ved å bruke %2$@";
+
+/* Seafile */
+"Discussion" = "Diskusjon";
+
+/* Seafile */
+"Do you want reset the uploaded photos?" = "Vil du nullstille opplastede bilder?";
+
+/* Seafile */
+"Do you want to backup contacts now? " = "Do you want to backup contacts now? ";
+
+/* Seafile */
+"Download" = "Download";
+
+/* Seafile */
+"Edit" = "Redigere";
+
+/* Seafile */
+"Email" = "E-post";
+
+/* Seafile */
+"Email or Username" = "Email or Username";
+
+/* Seafile */
+"Enable TouchID" = "Enable Touch ID";
+
+/* Seafile */
+"Enable FaceID" = "Enable Face ID";
+
+/* Seafile */
+"Encrypted Libraries" = "Encrypted Libraries";
+
+/* Seafile */
+"Encrypted" = "Encrypted";
+
+/* Seafile */
+"Failed to add discussion" = "Failed to add discussion";
+
+/* Seafile */
+"Failed to authenticate" = "Failed to authenticate";
+
+/* Seafile */
+"Failed to copy files" = "Kunne ikke kopiere filer";
+
+/* Seafile */
+"Failed to create file" = "Kunne ikke opprette fil";
+
+/* Seafile */
+"Failed to create folder" = "Kunne ikke opprette mappe";
+
+/* Seafile */
+"Failed to create library" = "Failed to create library";
+
+/* Seafile */
+"Failed to delete files" = "Kunne ikke slette filer";
+
+/* Seafile */
+"Failed to download file '%@'" = "Failed to download file '%@'";
+
+/* Seafile */
+"Failed to find %@" = "Failed to find %@";
+
+/* Seafile */
+"Failed to find library" = "Failed to find library";
+
+/* Seafile */
+"Failed to generate share link of directory '%@'" = "Kunne ikke lage delingslenke for bibliotek '%@'";
+
+/* Seafile */
+"Failed to generate share link of file '%@'" = "Kunne ikke lage delingslenke for filen '%@'";
+
+/* Seafile */
+"Failed to get groups ..." = "Failed to get groups ...";
+
+/* Seafile */
+"Failed to get messages" = "Failed to get messages";
+
+/* Seafile */
+"Failed to get modification details" = "Failed to get modification details";
+
+/* Seafile */
+"Failed to get starred files" = "Kunne ikke hente favorittmarkerte filer";
+
+/* Seafile */
+"Failed to identify the coding of '%@'" = "Kunne ikke identifisere tegnkodingen til '%@'";
+
+/* Seafile */
+"Failed to load activities" = "Kunen ikke laste inn aktiviteter";
+
+/* Seafile */
+"Failed to load content of the directory" = "Kunne ikke laste inn mappens innhold";
+
+/* Seafile */
+"Failed to load files" = "Kunne ikke laste inn filer";
+
+/* Seafile */
+"Failed to login" = "Kunne ikke logge inn";
+
+/* Seafile */
+"Failed to move files" = "Kunne ikke flytte filer";
+
+/* Seafile */
+"Failed to open file" = "Failed to open file";
+
+/* Seafile */
+"Failed to remove certificate" = "Failed to remove certificate";
+
+/* Seafile */
+"Failed to rename file" = "Kunne ikke omdøpe filer";
+
+/* Seafile */
+"Failed to restore contacts." = "Failed to restore contacts.";
+
+/* Seafile */
+"Failed to save %@ to album" = "Kunne ikke lagre %@ til albumet";
+
+/* Seafile */
+"Failed to copy %@ to clipboard" = "Failed to copy %@ to clipboard";
+
+/* Seafile */
+"Failed to save account" = "Failed to save account";
+
+/* Seafile */
+"Failed to search" = "Kunne ikke søke";
+
+/* Seafile */
+"Failed to send message" = "Failed to send message";
+
+/* Seafile */
+"Failed to upload file" = "Kunne ikke laste opp filen";
+
+/* Seafile */
+"File '%@' is shared with you using %@" = "Filen '%1$@' er delt med deg ved hjelp av %2$@";
+
+/* Seafile */
+"File '%@' is too large to edit" = "Filen '%@' er for stor til å redigere";
+
+/* Seafile */
+"File '%@' uploaded successfully" = "File '%@' uploaded successfully";
+
+/* Seafile */
+"File name invalid" = "Filnavnet er ugyldig";
+
+/* Seafile */
+"File name must not be empty" = "Filnavnet kan ikke være tomt";
+
+/* Seafile */
+"Files with the same name already exist, do you want to overwrite?" = "Files with the same name already exist, do you want to overwrite?";
+
+/* Seafile */
+"File can not be shared" = "File can not be shared";
+
+/* Seafile */
+"Folder name invalid" = "Mappenavnet er ugyldig";
+
+/* Seafile */
+"Folder name must not be empty" = "Mappenavnet kan ikke være tomt";
+
+/* Seafile */
+"For example: https://seacloud.cc or http://192.168.1.24:8000" = "For eksempel: https://seacloud.cc eller http://192.168.1.24:8000";
+
+/* Seafile */
+"Generate share link ..." = "Opprett delingslenke...";
+
+/* Seafile */
+"Generate share link success" = "Delingslenke opprettet";
+
+/* Seafile */
+"Group discussion" = "Group discussion";
+
+/* Seafile */
+"Hey there!<br/><br/> I've been using %@ and thought you might like it. It is a free way to bring all you files anywhere and share them easily.<br/><br/>Go to the official website of %@:</br></br> <a href=\"%@\">%@</a>\n\n" = "Hei!<br/><br/> Jeg har brukt %1$@ og tror du kanskje vil like den. Det er en gratis måte å ta med deg alle filene dine hvor som helst og kunne dele dem på en enkel måte,<br/><br/>Gå til den offisielle websiden til %2$@:</br></br> <a href=\"%3$@\">%4$@</a>\n\n";
+
+/* Seafile */
+"Hi,<br/><br/>Here is a link to <b>'%@'</b> in my %@:<br/><br/> <a href=\"%@\">%@</a>\n\n" = "Hei,<br/><br/>Her er en lenke til <b>'%1$@'</b> ii mitt %2$@:<br/><br/> <a href=\"%3$@\">%4$@</a>\n\n";
+
+/* Seafile */
+"Hi,<br/><br/>Here is a link to directory <b>'%@'</b> in my %@:<br/><br/> <a href=\"%@\">%@</a>\n\n" = "Hei,<br/><br/>Her er en lenke til mappen <b>'%1$@'</b> i mitt %2$@:<br/><br/> <a href=\"%3$@\">%4$@</a>\n\n";
+
+/* Seafile */
+"How would you like to share this file?" = "Hvordan ønsker du å dele denne filen?";
+
+/* Seafile */
+"Hide" = "Hide";
+
+/* Seafile */
+"Import client certificate" = "Import client certificate";
+
+/* Seafile */
+"Invalid Server" = "Ugyldig server";
+
+/* Seafile */
+"Invalid email" = "Invalid email";
+
+/* Seafile */
+"Last Backup Time" = "Last Backup Time";
+
+/* No comment provided by engineer. */
+"Last Updated: %@" = "Sist endret: %@";
+
+/* Seafile */
+"Libraries" = "Biblioteker";
+
+/* Loading Status */
+"Loading..." = "Laster inn....";
+
+/* Seafile */
+"Local Cache" = "Lokal mellomlagring";
+
+/* Local decryption */
+"Local decryption" = "Local decryption";
+
+/* Seafile */
+"Log out" = "Log out";
+
+/* Seafile */
+"Login" = "Logg inn";
+
+/* Seafile */
+"Library name invalid" = "Library name invalid";
+
+/* Seafile */
+"Library name must not be empty" = "Library name must not be empty";
+
+/* Seafile */
+"Message" = "Message";
+
+/* Seafile */
+"Messages" = "Meldinger";
+
+/* Seafile */
+"Modification Details" = "Modification Details";
+
+/* Seafile */
+"Modified" = "Modified";
+
+/* Seafile */
+"Modified file" = "Modified file";
+
+/* Seafile */
+"More" = "More";
+
+/* Seafile */
+"Move" = "Flyte";
+
+/* Seafile */
+"MoveTo" = "Flytte til";
+
+/* Seafile */
+"Moved" = "Moved";
+
+/* Seafile */
+"Moved directory" = "Moved directory";
+
+/* Seafile */
+"Moving files ..." = "Flytter filer...";
+
+/* Seafile */
+"Moved folder" = "Moved folder";
+
+/* Seafile */
+"Moved file" = "Moved file";
+
+/* Seafile */
+"My Own Libraries" = "Mine egne biblioteker";
+
+/* Seafile */
+"NO" = "NO";
+
+/* FailToPreview_iPad.xib, FailToPreview_iPhone.xib, SeafCell.xib, SeafDirCell.xib, SeafMessageCell.xib, SeafUploadDirViewController.xib */
+"Name" = "Navn";
+
+/* Seafile */
+"Network unavailable" = "Utilgjengelig nettverk";
+
+/* Seafile */
+"New File" = "Ny fil";
+
+/* Seafile */
+"New Folder" = "Ny mappe";
+
+/* Seafile */
+"New file name" = "Navn på filen";
+
+/* Seafile */
+"New folder name" = "Navn på mappen";
+
+/* Seafile */
+"New Library" = "New Library";
+
+/* Seafile */
+"New library name" = "New Library Name";
+
+/* Seafile */
+"No Results" = "Ingen resultater";
+
+/* Seafile */
+"No available certificates" = "No available certificates";
+
+/* Seafile */
+"OK" = "OK";
+
+/* Seafile */
+"Open elsewhere..." = "Åpne et annet sted...";
+
+/* Seafile */
+"Open in other applications" = "Åpne i en annen applikasjon";
+
+/* Seafile */
+"Open photo browser" = "Open photo browser";
+
+/* Seafile */
+"Open Seafile to view details" = "Open Seafile to view details";
+
+/* Seafile */
+"Organization" = "Organization";
+
+/* Seafile */
+"Other Server" = "Other Server";
+
+/* Seafile */
+"Out of quota" = "Out of quota";
+
+/* Seafile */
+"Password" = "Passord";
+
+/* Seafile */
+"Password must not be empty" = "Passord kan ikke være tomt";
+
+/* Seafile */
+"Password of '%@'" = "Password of '%@'";
+
+/* Seafile */
+"Password of library '%@'" = "Password of library '%@'";
+
+/* Seafile */
+"Password required" = "Passord er påkrevd";
+
+/* Seafile */
+"Password (at least 8 characters)" = "Password (at least 8 characters)";
+
+/* Seafile */
+"Please enter your password again" = "Please enter your password again";
+
+/* Seafile */
+"Password must at least 8 characters" = "Password must at least 8 characters";
+
+/* Seafile */
+"Two passwords are different" = "Two passwords are different";
+
+/* Seafile */
+"PasteTo" = "Lim inn til";
+
+/* Seafile */
+"Photos" = "Bilder";
+
+/* Seafile */
+"Photos are not accessible" = "Photos are not accessible";
+
+/* Seafile */
+"Please authenticate to proceed" = "Please authenticate to proceed";
+
+/* Seafile */
+"Please disable \"Auto clear passwords\" for auto uploading photos to an encrypted library." = "Please disable \"Auto clear passwords\" for auto uploading photos to an encrypted library.";
+
+/* Seafile */
+"Please disable \"Auto clear passwords\" for uploading contacts to an encrypted library." = "Please disable \"Auto clear passwords\" for uploading contacts to an encrypted library.";
+
+/* Seafile */
+"Please enable \"Local decryption\" for auto uploading photos to an encrypted library." = "Please enable \"Local decryption\" for auto uploading photos to an encrypted library.";
+
+/* Seafile */
+"Please enable \"Local decryption\" for uploading contacts to an encrypted library." = "Please enable \"Local decryption\" for uploading contacts to an encrypted library.";
+
+/* Seafile */
+"Post a discussion to group" = "Post a discussion to group";
+
+/* Seafile */
+"Preview" = "Preview";
+
+/* Seafile */
+"Print" = "Skriv ut";
+
+/* Seafile */
+"Publish draft" = "Publish draft";
+
+/* Pull down to get more messages */
+"Pull down to get more messages..." = "Pull down to get more messages...";
+
+/* Pull to refresh status */
+"Pull to refresh..." = "Pull to refresh...";
+
+/* Seafile */
+"Recovered deleted directory" = "Recovered deleted directory";
+
+/* Seafile */
+"Redownload" = "Last ned pånytt";
+
+/* Release to get more messages */
+"Release to get more messages..." = "Release to get more messages...";
+
+/* Release to refresh status */
+"Release to refresh..." = "Slipp for oppfriske...";
+
+/* Seafile */
+"Removed all items from trash" = "Removed all items from trash";
+
+/* Seafile */
+"Removed items older than %ld days from trash" = "Removed items older than %ld days from trash";
+
+/* Seafile */
+"Remove client certificate" = "Remove client certificate";
+
+/* Seafile */
+"Removed" = "Removed";
+
+/* Seafile */
+"Removed directory" = "Removed directory";
+
+/* Seafile */
+"Removed file" = "Removed file";
+
+/* Seafile */
+"Rename" = "Omdøpe";
+
+/* Seafile */
+"Renamed" = "Renamed";
+
+/* Seafile */
+"Renamed directory" = "Renamed directory";
+
+/* Seafile */
+"Renaming file ..." = "Omdøper filen...";
+
+/* Seafile */
+"Renamed library" = "Renamed library";
+
+/* Seafile */
+"Renamed folder" = "Renamed folder";
+
+/* Seafile */
+"Renamed file" = "Renamed file";
+
+/* Seafile */
+"Replace" = "Replace";
+
+/* Seafile */
+"Reset repo password" = "Reset repo password";
+
+/* Seafile */
+"Restore Contacts" = "Restore Contacts";
+
+/* Seafile */
+"Restoring contacts." = "Restoring contacts.";
+
+/* Seafile */
+"Restored library" = "Restored library";
+
+/* Seafile */
+"Restored folder" = "Restored folder";
+
+/* Seafile */
+"Restored file" = "Restored file";
+
+/* Seafile */
+"Reverted file \"%@\" to status at %@." = "Reverted file \"%1$@\" to status at %2$@.";
+
+/* Seafile */
+"Reverted library to status at" = "Reverted library to status at";
+
+/* Seafile push notification message */
+"SEAFILE_LOC_KEY_FORMAT" = "%@, you got new messages from %@";
+
+/* Seafile */
+"Save" = "Lagre";
+
+/* Seafile */
+"Save Destination" = "Save Destination";
+
+/* Seafile */
+"Save all photos to album" = "Save all photos to album";
+
+/* Seafile */
+"Save to %@" = "Save to %@";
+
+/* MainInterface.storyboard */
+"Save to Seafile" = "Save to Seafile";
+
+/* Seafile */
+"Save to album" = "Lagre til album";
+
+/* Seafile */
+"Saving all photos to album" = "Saving all photos to album";
+
+/* Seafile */
+"Seafile" = "Seafile";
+
+/* Seafile */
+"Search" = "Søk";
+
+/* Seafile */
+"Search files in this library" = "Search files in this library";
+
+/* Seafile */
+"Search is not supported on the server" = "Søk er ikke støttet på serveren";
+
+/* Seafile */
+"Searching" = "Søker";
+
+/* Seafile */
+"Searching ..." = "Søker....";
+
+/* Seafile */
+"Select All" = "Velg alt";
+
+/* Seafile */
+"Select None" = "Velg ingen";
+
+/* Seafile */
+"Select a certificate" = "Select a certificate";
+
+/* No comment provided by engineer. */
+"Send" = "Send";
+
+/* Seafile */
+"Send share link via email" = "Send delingslenke via e-post";
+
+/* Seafile */
+"Sending" = "Sending";
+
+/* Seafile */
+"Sending..." = "Sending...";
+
+/* Seafile */
+"Server" = "Server";
+
+/* Seafile */
+"Server must not be empty" = "Server kan ikke være tom";
+
+/* Seafile */
+"Server, like https://seafile.cc" = "Server, slik som https://seafile.cc";
+
+/* Seafile */
+"Settings" = "Innstillinger";
+
+/* Seafile */
+"Shared to me" = "Shared to me";
+
+/* Seafile */
+"Shared with groups" = "Shared with groups";
+
+/* Seafile */
+"Share" = "Share";
+
+/* Seafile */
+"Shibboleth" = "Shibboleth";
+
+/* Seafile */
+"Shibboleth Login" = "Shibboleth Login";
+
+/* Seafile */
+"Single Sign On" = "Single Sign On";
+
+/* Seafile */
+"Sort by Last Modifed Time" = "Sort by Last Modifed Time";
+
+/* Seafile */
+"Sort by Name" = "Sort by Name";
+
+/* Seafile */
+"Space Used" = "Forbrukt lagringsplass";
+
+/* Seafile */
+"Star" = "Star";
+
+/* Seafile */
+"Starred" = "Favorittmarkert";
+
+/* Seafile */
+"Start to download folder: " = "Start to download folder: ";
+
+/* Seafile */
+"Start to download library: " = "Start to download library: ";
+
+/* Seafile */
+"Succeeded to remove certificate" = "Succeeded to remove certificate";
+
+/* Seafile */
+"Succeeded to restore contacts" = "Succeeded to restore contacts";
+
+/* Seafile */
+"Succeeded to save %@ to album" = "Succeeded to save %@ to album";
+
+/* Seafile */
+"Succeeded to copy %@ to clipboard" = "Succeeded to copy %@ to clipboard";
+
+/* Seafile */
+"Successfully imported %@" = "Successfully imported %@";
+
+/* Seafile */
+"Successfully moved" = "Successfully moved";
+
+/* Seafile */
+"Successfully copied" = "Successfully copied";
+
+/* Seafile */
+"Tell Friends about %@" = "Fortell venner om %@";
+
+/* Seafile */
+"The certificate from this website has been changed. Would you like to connect to the server anyway?" = "Sertifikatet fra denne websiden har blitt endret. Ønsker du å koble til serveren likevel?";
+
+/* Seafile */
+"The certificate from this website is invalid. Would you like to connect to the server anyway?" = "Sertifikatet fra denne websiden er ugyldig. Ønsker du å koble til serveren likevel?";
+
+/* Seafile */
+"The length of password should be between 3 and 100" = "Passordets lengde må være mellom 3 og 100";
+
+/* Seafile */
+"The mail account has not been set yet" = "E-postkontoen har ikke blitt satt opp en da";
+
+/* Seafile */
+"The token is invalid, you need to login again" = "Mottatt \"token\" er ugyldig. Du må logge inn pånytt.";
+
+/* Seafile */
+"There is no app which can open this type of file on this machine" = "Det er ingen program som kan åpne denne filtypen på denne maskinen";
+
+/* Seafile */
+"There was a problem verifying your identity." = "There was a problem verifying your identity.";
+
+/* Seafile */
+"This app does not have access to your contacts." = "This app does not have access to your contacts.";
+
+/* Seafile */
+"There is no account available" = "There is no account available.";
+
+/* Seafile */
+"This app does not have access to your location service." = "This app does not have access to your location service.";
+
+/* Seafile */
+"This app does not have access to your photos and videos." = "Dette programmet har ikke tilgang til dine bilder og videoer";
+
+/* Seafile */
+"This function is not supportted yet" = "Denne funksjonen er ikke støttet enda";
+
+/* Seafile */
+"This function is not supportted yet，you can copy it to the pasteboard and send mail by yourself" = "Denne funksjonen er ikke støttet enda. Du kan kopiere den til utklippstavlen og så sende e-posten selv.";
+
+/* Seafile */
+"Two step verification code" = "Two step verification code";
+
+/* Seafile */
+"Unstar" = "Unstar";
+
+/* Seafile */
+"Upload" = "Laste opp";
+
+/* Seafile */
+"Upload Destination" = "Opplastingsdestinasjon";
+
+/* Seafile */
+"Upload Videos" = "Upload Videos";
+
+/* Seafile */
+"Updated file" = "Upload file";
+
+/* Seafile */
+"Updated draft" = "Upload draft";
+
+/* NSPhotoLibraryUsageDescription */
+"Used to sync photos" = "Used to sync photos";
+
+/* Seafile */
+"Username" = "Brukernavn";
+
+/* Seafile */
+"Username must not be empty" = "Brukernavn kan ikke være tomt";
+
+/* Seafile */
+"Verification code must not be empty" = "Verification code must not be empty";
+
+/* Seafile */
+"Version" = "Verson";
+
+/* Seafile */
+"Website" = "Webside";
+
+/* Seafile */
+"Welcome to %@" = "Velkommen til %@";
+
+/* Seafile */
+"Wifi Only" = "Kun Wi-fi";
+
+/* Seafile */
+"Wipe Cache" = "Tøm mellomlagringen";
+
+/* Seafile */
+"Wrong library password" = "Feil passord til biblioteket";
+
+/* Seafile */
+"Wrong password" = "Wrong password";
+
+/* Seafile */
+"Wrong username or password" = "Feil brukernavn eller passord";
+
+/* Seafile */
+"YES" = "YES";
+
+/* Seafile */
+"You can enable access in Privacy Settings" = "Du kan tillate tilgang i sikkerhetsinnstillingene";
+
+/* Seafile */
+"Your device cannot authenticate using Touch ID." = "Your device cannot authenticate using Touch ID.";
+
+/* Seafile */
+"Your device cannot authenticate using Face ID." = "Your device cannot authenticate using Face ID.";
+
+/* Seafile */
+"and %@ more" = "and %@ more";
+
+/* SeafCell.xib */
+"detail" = "detail";
+
+/* Seafile */
+"directories" = "directories";
+
+/* Seafile */
+"files" = "files";
+
+/* Seafile */
+"modified" = "endret";
+
+/* Seafile */
+"Uploading" = "Uploading";
+
+/* Seafile */
+"Downloading" = "Downloading";
+
+/* Seafile */
+"Upload & Download" = "Upload & Download";
+
+/* Seafile */
+"Completed" = "Completed";
+
+/* waiting to upload */
+"Waiting to upload" = "%Waiting to upload";
+
+/* FolderView_iPad.storyboard, FolderView_iPhone.storyboard */
+"www.seafile.com" = "www.seafile.com";
+
+/* Share to WeChat */
+"Share to WeChat" = "Share to WeChat";
+
+/* Share Cancelled */
+"Share Cancelled" = "Share Cancelled";
+
+/* Failed to share to WeChat */
+"Failed to share to WeChat" = "Failed to share to WeChat";
+
+/* OK and Remember Device */
+"OK and Remember Device" = "OK and Remember Device";
+
+/* Privacy Policy */
+"Privacy Policy" = "Privacy Policy";
+
+/* Privacy Policy URL */
+"https://www.seafile.com/en/privacy_policy/" = "https://www.seafile.com/en/privacy_policy/";
+
+/*  TouchID is Enabled  */
+"FaceID(TouchID) is Enabled" = "FaceID(TouchID) is Enabled";
+
+/* Files cannot be used whith TouchID */
+"Files cannot access files in Seafile when FaceID(TouchID) enabled. Please open Seafile and disable FaceID(TouchID)." = "Files cannot access files in Seafile when FaceID(TouchID) enabled. Please open Seafile and disable FaceID(TouchID).";
+
+/* Seafile */
+"Please open Seafile ans add an account to start" = "Please open Seafile ans add an account to start.";
