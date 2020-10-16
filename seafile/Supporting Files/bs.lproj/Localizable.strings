@@ -1,0 +1,1069 @@
+﻿
+
+/* Seafile */
+"%@ can't verify the identity of the website \"%@\"" = "%1$@ ne može potvrditi identitiet web stranice \"%2$@\"";
+
+/* Seafile */
+"%@ does not support to preview file of this kind at the moment." = "%@ trenutno ne podržava brzi pregled datoteke ovog tipa.";
+
+/* Seafile */
+"%@ invite you to %@" = "%1$@ Vas poziva %2$@";
+
+/* Seafile */
+"%@, Uploaded %@" = "%1$@, Uploadovano %2$@";
+
+/* Seafile */
+"%@, uploading" = "%@, uploading";
+
+/* Seafile */
+"%@, waiting to upload" = "%@, čeka za upload";
+
+/* Seafile */
+"%ld photos remain" = "%ld slika preostalo";
+
+/* Seafile */
+"%ld files are uploaded to Seafile" = "%ld files are uploaded to Seafile";
+
+/* Seafile */
+"1 photo remain" = "1 slika preostala";
+
+/* Seafile */
+"%ld days ago" = "%ld days ago";
+
+/* Seafile */
+"%ld hours ago" = "%ld hours ago";
+
+/* Seafile */
+"%ld minutes ago" = "%ld minutes ago";
+
+/* Seafile */
+"%ld months ago" = "%ld months ago";
+
+/* Seafile */
+"%ld years ago" = "%ld years ago";
+
+/* Seafile */
+"a day ago" = "a day ago";
+
+/* Seafile */
+"a few seconds ago" = "a few seconds ago";
+
+/* Seafile */
+"an hour ago" = "an hour ago";
+
+/* Seafile */
+"a minute ago" = "a minute ago";
+
+/* Seafile */
+"a month ago" = "a month ago";
+
+/* Seafile */
+"a year ago" = "a year ago";
+
+/* Seafile */
+"A file with the same name already exists, do you want to overwrite?" = "Datoteka sa istim imenom već postoji. Da li je želite prepisati?";
+
+/* Seafile */
+"About" = "O programu";
+
+/* Seafile */
+"Account" = "Račun";
+
+/* Seafile */
+"Account Info" = "Informacije o računu";
+
+/* Seafile */
+"Accounts" = "Računi";
+
+/* Seafile */
+"Activities" = "Aktivnosti";
+
+/* Seafile */
+"Activity" = "Aktivnost";
+
+/* Seafile */
+"Add a new discussion" = "Add a new discussion";
+
+/* Seafile */
+"Add account" = "Dodaj račun";
+
+/* Seafile */
+"Add contact" = "Add contact";
+
+/* Seafile */
+"Added" = "Dodano";
+
+/* Seafile */
+"Added directory" = "Dodan direktorij";
+
+/* Seafile */
+"Added file" = "Dodana datoteka";
+
+/* Seafile */
+"Added or modified" = "Dodan ili izmjenjen";
+
+/* Seafile */
+"All photos synced" = "Sve slike sinhronizirane";
+
+/* Seafile */
+"Are you sure to clear all the cache?" = "Da li ste sigurni da želite izbrisati sav cache?";
+
+/* Seafile */
+"Are you sure to cancel all downloading tasks?" = "Are you sure to cancel all downloading tasks?";
+
+/* Seafile */
+"Are you sure to cancel all uploading tasks" = "Are you sure to cancel all uploading tasks";
+
+/* Seafile */
+"Are you sure to log out?" = "Da li ste sigurni da se želite odjaviti?";
+
+/* Seafile */
+"Are you sure you want to delete %@ ?" = "Are you sure you want to delete %@ ?";
+
+/* Seafile */
+"Are you sure to save all photos to album?" = "Are you sure to save all photos to album";
+
+/* Seafile */
+"Auto Upload" = "Automatski upload";
+
+/* Auto cleay library password */
+"Auto clear passwords" = "Automatsko brisanje šifri";
+
+/* Seafile */
+"Auto merge by seafile system" = "Automatsko spajanje od strane seafile sistema";
+
+/* Seafile */
+"Auto upload should be enabled first." = "Automatski upload bi trebao biti omogućen.";
+
+/* Seafile */
+"Back" = "Nazad";
+
+/* Seafile */
+"Back to Last Account" = "Nazad na posljednji račun";
+
+/* Seafile */
+"Background Upload" = "Pozadinski upload";
+
+/* Seafile */
+"Backup Contacts" = "Sigurnosna kopija kontakata";
+
+/* Seafile */
+"Cache" = "Cache";
+
+/* FolderView_iPad.storyboard */
+"Camera Upload" = "Upload sa kamere";
+
+/* Seafile */
+"Can not remove certificate because it is still in use" = "Certifikat nije moguće izbrisati jer je još u upotrebi";
+
+/* Seafile */
+"Cancel" = "Cancel";
+
+/* Seafile */
+"Cancel download" = "Prekini download";
+
+/* Seafile */
+"Cancel upload" = "Cancel upload";
+
+/* Seafile */
+"Changed library name or description" = "Promjenjeno ime ili opis biblioteke";
+
+/* Seafile */
+"Checking library password ..." = "Provjera šifre biblioteke ...";
+
+/* Seafile */
+"Choose" = "Odaberi";
+
+/* Seafile */
+"Choose directory" = "Choose directory";
+
+/* Seafile */
+"Choose a Seafile server" = "Odaberi Seafile Server";
+
+/* Seafile */
+"Choose an account to start" = "Odaberi račun za početak";
+
+/* Seafile */
+"Clear libraries passwords successfully." = "Brisanje šifri biblioteka uspješno.";
+
+/* Seafile */
+"Clear library password successfully." = "Brisanje šifre biblioteke uspješno.";
+
+/* Seafile */
+"Clear password" = "Briši šifru";
+
+/* Seafile */
+"Clear remembered passwords" = "Briši zapamćene šifre";
+
+/* Seafile */
+"Click \"Search\" to start" = "Klikni \"Pretraga\" za početak";
+
+/* Seafile */
+"Connecting to server" = "Spajanje na server";
+
+/* Seafile */
+"Contacts Backup" = "Sigurnosna kopija kontakata";
+
+/* Seafile */
+"Contacts backup failed." = "Sigurnosna kopija kontakata neuspješna.";
+
+/* Seafile */
+"Contacts backup should be enabled first." = "Sigurnosna kopija kontakata bi trebala biti omogućena.";
+
+/* Seafile */
+"Contacts backup succeeded." = "Sigurnosna kopija kontakata uspješna.";
+
+/* Seafile */
+"Contacts will be backuped as: %@ " = "Sigurnosna kopija kontakata će biti napravljena kao: %@ ";
+
+/* Seafile */
+"Copy" = "Kopiranje";
+
+/* Seafile */
+"Copy Link to Clipboard" = "Kopiraj link u memoriju";
+
+/* Seafile */
+"Copy image to clipboard" = "Kopiraj sliku u memoriju";
+
+/* Seafile */
+"Copy share link to clipboard" = "Kopiraj link za dijeljenje u memoriju";
+
+/* Seafile */
+"Copying files ..." = "Kopiram datoteke ...";
+
+/* Seafile */
+"Created library %@" = "Biblioteka %@ napravljena";
+
+/* Seafile */
+"Creating file ..." = "Pravim datoteke ...";
+
+/* Seafile */
+"Creating folder ..." = "Pravim direktorij ...";
+
+/* Seafile */
+"Creating library ..." = "Creating library ...";
+
+/* Seafile */
+"Created library" = "Created library";
+
+/* Seafile */
+"Created folder" = "Created folder";
+
+/* Seafile */
+"Created file" = "Created file";
+
+/* Seafile */
+"Created %ld files" = "Created %ld files";
+
+/* Seafile */
+"Created draft" = "Created draft";
+
+/* Seafile */
+"Delete" = "Brisanje";
+
+/* Seafile */
+"Deleted" = "Izbrisano";
+
+/* Seafile */
+"Deleted library %@" = "Izbrisana biblioteka %@";
+
+/* Seafile */
+"Deleting directory ..." = "Brišem direktorij ...";
+
+/* Seafile */
+"Deleting file ..." = "Brišem datoteku ...";
+
+/* Seafile */
+"Deleting files ..." = "Brišem datoteke ...";
+
+/* Seafile */
+"Deleted library" = "Deleted library";
+
+/* Seafile */
+"Deleted folder" = "Deleted folder";
+
+/* Seafile */
+"Deleted file" = "Deleted file";
+
+/* Seafile */
+"Deleted draft" = "Deleted draft";
+
+/* Seafile */
+"Destination" = "Destination";
+
+/* Seafile */
+"Directory '%@' is shared with you using %@" = "Direktorij '%1$@' je podjeljen sa vama preko %2$@";
+
+/* Seafile */
+"Discussion" = "Diskusija";
+
+/* Seafile */
+"Do you want reset the uploaded photos?" = "Da li želite poništiti uploadovane slike?";
+
+/* Seafile */
+"Do you want to backup contacts now? " = "Da li želite napraviti sigurnosnu kopiju kontakata sada?";
+
+/* Seafile */
+"Download" = "Download";
+
+/* Seafile */
+"Edit" = "Edit";
+
+/* Seafile */
+"Email" = "Email";
+
+/* Seafile */
+"Email or Username" = "Email ili Korisničko ime";
+
+/* Seafile */
+"Enable TouchID" = "Enable Touch ID";
+
+/* Seafile */
+"Enable FaceID" = "Enable Face ID";
+
+/* Seafile */
+"Encrypted Libraries" = "Šifrovane biblioteke";
+
+/* Seafile */
+"Encrypted" = "Encrypted";
+
+/* Seafile */
+"Failed to add discussion" = "Failed to add discussion";
+
+/* Seafile */
+"Failed to authenticate" = "Neuspješna prijava";
+
+/* Seafile */
+"Failed to copy files" = "Neuspješno kopiranje datoteka";
+
+/* Seafile */
+"Failed to create file" = "Neuspješno pravljenje datoteke";
+
+/* Seafile */
+"Failed to create folder" = "Neuspješno pravljenje direktorija";
+
+/* Seafile */
+"Failed to create library" = "Failed to create library";
+
+/* Seafile */
+"Failed to delete files" = "Neuspješno brisanje datoteka";
+
+/* Seafile */
+"Failed to download file '%@'" = "Neuspješan download datoteke '%@'";
+
+/* Seafile */
+"Failed to find %@" = "Neuspješno traženje%@";
+
+/* Seafile */
+"Failed to find library" = "Neuspješno traženje biblioteke";
+
+/* Seafile */
+"Failed to generate share link of directory '%@'" = "Neuspješno generisanje linka za dijeljenje direktorija '%@'";
+
+/* Seafile */
+"Failed to generate share link of file '%@'" = "Neuspješno generisanje linka za dijeljenje datoteke '%@'";
+
+/* Seafile */
+"Failed to get groups ..." = "Failed to get groups ...";
+
+/* Seafile */
+"Failed to get messages" = "Failed to get messages";
+
+/* Seafile */
+"Failed to get modification details" = "Neuspješno dohvatanje detalja o izmjenama";
+
+/* Seafile */
+"Failed to get starred files" = "Neuspješno dohvatanje omiljenih datoteka";
+
+/* Seafile */
+"Failed to identify the coding of '%@'" = "Neuspješno pronalaženje šifriranja za '%@'";
+
+/* Seafile */
+"Failed to load activities" = "Neuspješno učitavanje aktivnosti";
+
+/* Seafile */
+"Failed to load content of the directory" = "Neuspješno učitavanje sadržaja direktorija";
+
+/* Seafile */
+"Failed to load files" = "Neuspješno učitavanje datoteka";
+
+/* Seafile */
+"Failed to login" = "Neuspješna prijava";
+
+/* Seafile */
+"Failed to move files" = "Neuspješno premještanje datoteka";
+
+/* Seafile */
+"Failed to open file" = "Neuspješno otvaranje datoteke";
+
+/* Seafile */
+"Failed to remove certificate" = "Neuspješno brisanje certifikata";
+
+/* Seafile */
+"Failed to rename file" = "Neuspješna promjena imena datoteke";
+
+/* Seafile */
+"Failed to restore contacts." = "Neuspješno vraćanje kontakata.";
+
+/* Seafile */
+"Failed to save %@ to album" = "Neuspješno spašavanje %@ u album";
+
+/* Seafile */
+"Failed to copy %@ to clipboard" = "Failed to copy %@ to clipboard";
+
+/* Seafile */
+"Failed to save account" = "Neuspješno spašavanje računa";
+
+/* Seafile */
+"Failed to search" = "Neuspješna pretraga";
+
+/* Seafile */
+"Failed to send message" = "Failed to send message";
+
+/* Seafile */
+"Failed to upload file" = "Neuspješan upload datoteke";
+
+/* Seafile */
+"File '%@' is shared with you using %@" = "Datoteka '%1$@' je podijeljena sa vama kroz %2$@";
+
+/* Seafile */
+"File '%@' is too large to edit" = "Datoteka '%@' je prevelika za modifikaciju";
+
+/* Seafile */
+"File '%@' uploaded successfully" = "File '%@' uploaded successfully";
+
+/* Seafile */
+"File name invalid" = "Naziv datoteke neispravan";
+
+/* Seafile */
+"File name must not be empty" = "Naziv datoteke ne može biti prazan";
+
+/* Seafile */
+"Files with the same name already exist, do you want to overwrite?" = "Datoteke sa istim nazivom već postoje. Da li ih želite prepisati?";
+
+/* Seafile */
+"File can not be shared" = "File can not be shared";
+
+/* Seafile */
+"Folder name invalid" = "Naziv direktorija neispravan";
+
+/* Seafile */
+"Folder name must not be empty" = "Naziv direktorija ne može biti prazan";
+
+/* Seafile */
+"For example: https://seacloud.cc or http://192.168.1.24:8000" = "Na primjer: https://seacloud.cc or http://192.168.1.24:8000";
+
+/* Seafile */
+"Generate share link ..." = "Generiši link za dijeljenje ...";
+
+/* Seafile */
+"Generate share link success" = "Generisanje linka za dijeljenje uspješno";
+
+/* Seafile */
+"Group discussion" = "Group discussion";
+
+/* Seafile */
+"Hey there!<br/><br/> I've been using %@ and thought you might like it. It is a free way to bring all you files anywhere and share them easily.<br/><br/>Go to the official website of %@:</br></br> <a href=\"%@\">%@</a>\n\n" = "Zdravo!<br/><br/> Ja koristim %1$@ i mislim da bi se i tebi svidio. U pitanju je besplatan način da imate vaše datoteke svugdje i da ih podijelite jednostavno.<br/><br/>Otvorite zvaničnu stranicu %2$@:</br></br> <a href=\"%3$@\">%4$@</a>\n\n";
+
+/* Seafile */
+"Hi,<br/><br/>Here is a link to <b>'%@'</b> in my %@:<br/><br/> <a href=\"%@\">%@</a>\n\n" = "Zdravo,<br/><br/>Šaljem Vam link za <b>'%1$@'</b> na mom%2$@:<br/><br/> <a href=\"%3$@\">%4$@</a>\n\n";
+
+/* Seafile */
+"Hi,<br/><br/>Here is a link to directory <b>'%@'</b> in my %@:<br/><br/> <a href=\"%@\">%@</a>\n\n" = "Zdravo,<br/><br/>Šaljem Vam link na direktorij <b>'%1$@'</b> na mom %2$@:<br/><br/> <a href=\"%3$@\">%4$@</a>\n\n";
+
+/* Seafile */
+"How would you like to share this file?" = "Kako biste željeli da podijelite ovu datoteku?";
+
+/* Seafile */
+"Hide" = "Hide";
+
+/* Seafile */
+"Import client certificate" = "Uvezi klijentski certifikat";
+
+/* Seafile */
+"Invalid Server" = "Neispravan Server";
+
+/* Seafile */
+"Invalid email" = "Invalid email";
+
+/* Seafile */
+"Last Backup Time" = "Vrijeme posljednje sigurnosne kopije";
+
+/* No comment provided by engineer. */
+"Last Updated: %@" = "Posljednji put ažurirano: %@";
+
+/* Seafile */
+"Libraries" = "Biblioteke";
+
+/* Loading Status */
+"Loading..." = "Učitavam...";
+
+/* Seafile */
+"Local Cache" = "Lokalni Cache";
+
+/* Local decryption */
+"Local decryption" = "Lokalno dešifrovanje";
+
+/* Seafile */
+"Log out" = "Odjava";
+
+/* Seafile */
+"Login" = "Prijava";
+
+/* Seafile */
+"Library name invalid" = "Library name invalid";
+
+/* Seafile */
+"Library name must not be empty" = "Library name must not be empty";
+
+/* Seafile */
+"Message" = "Message";
+
+/* Seafile */
+"Messages" = "Poruke";
+
+/* Seafile */
+"Modification Details" = "Detalji o izmjeni";
+
+/* Seafile */
+"Modified" = "Izmjenjeno";
+
+/* Seafile */
+"Modified file" = "Izmjenjena datoteka";
+
+/* Seafile */
+"More" = "Više";
+
+/* Seafile */
+"Move" = "Premjesti";
+
+/* Seafile */
+"MoveTo" = "Premjesti u";
+
+/* Seafile */
+"Moved" = "Premješteno";
+
+/* Seafile */
+"Moved directory" = "Premjesti direktorij";
+
+/* Seafile */
+"Moving files ..." = "Premještam datoteke ...";
+
+/* Seafile */
+"Moved folder" = "Moved folder";
+
+/* Seafile */
+"Moved file" = "Moved file";
+
+/* Seafile */
+"My Own Libraries" = "Moja Biblioteka";
+
+/* Seafile */
+"NO" = "NO";
+
+/* FailToPreview_iPad.xib, FailToPreview_iPhone.xib, SeafCell.xib, SeafDirCell.xib, SeafMessageCell.xib, SeafUploadDirViewController.xib */
+"Name" = "Ime";
+
+/* Seafile */
+"Network unavailable" = "Mreža nedostupna";
+
+/* Seafile */
+"New File" = "Nova Datoteka";
+
+/* Seafile */
+"New Folder" = "Novi Direktorij";
+
+/* Seafile */
+"New file name" = "Novi naziv datoteke";
+
+/* Seafile */
+"New folder name" = "Novi naziv direktorija";
+
+/* Seafile */
+"New Library" = "New Library";
+
+/* Seafile */
+"New library name" = "New Library Name";
+
+/* Seafile */
+"No Results" = "Nema rezultata";
+
+/* Seafile */
+"No available certificates" = "Nema dostupnih certifikata";
+
+/* Seafile */
+"OK" = "OK";
+
+/* Seafile */
+"Open elsewhere..." = "Otvori drugdje...";
+
+/* Seafile */
+"Open in other applications" = "Otvori u drugim aplikacijama";
+
+/* Seafile */
+"Open photo browser" = "Otvori preglednik slika";
+
+/* Seafile */
+"Open Seafile to view details" = "Open Seafile to view details";
+
+/* Seafile */
+"Organization" = "Organizacija";
+
+/* Seafile */
+"Other Server" = "Drugi Server";
+
+/* Seafile */
+"Out of quota" = "Manjak prostora";
+
+/* Seafile */
+"Password" = "Šifra";
+
+/* Seafile */
+"Password must not be empty" = "Šifra ne može biti prazna";
+
+/* Seafile */
+"Password of '%@'" = "Šifra za '%@'";
+
+/* Seafile */
+"Password of library '%@'" = "Šifra biblioteke '%@'";
+
+/* Seafile */
+"Password required" = "Potrebna šifra";
+
+/* Seafile */
+"Password (at least 8 characters)" = "Password (at least 8 characters)";
+
+/* Seafile */
+"Please enter your password again" = "Please enter your password again";
+
+/* Seafile */
+"Password must at least 8 characters" = "Password must at least 8 characters";
+
+/* Seafile */
+"Two passwords are different" = "Two passwords are different";
+
+/* Seafile */
+"PasteTo" = "Zalijepi u";
+
+/* Seafile */
+"Photos" = "Slike";
+
+/* Seafile */
+"Photos are not accessible" = "Photos are not accessible";
+
+/* Seafile */
+"Please authenticate to proceed" = "Molim prijavite se za nastavak";
+
+/* Seafile */
+"Please disable \"Auto clear passwords\" for auto uploading photos to an encrypted library." = "Molim ugasite \"Automatsko brisanje šifri\" za automatski upload slika u zaštićenu biblioteku.";
+
+/* Seafile */
+"Please disable \"Auto clear passwords\" for uploading contacts to an encrypted library." = "Molim ugasite \"Automatsko brisanje šifri\" za upload kontakata u zaštićenu biblioteku.";
+
+/* Seafile */
+"Please enable \"Local decryption\" for auto uploading photos to an encrypted library." = "Molim upalite \"Lokano dekriptovanje\" za automatski upload slika u zaštićeni biblioteku.";
+
+/* Seafile */
+"Please enable \"Local decryption\" for uploading contacts to an encrypted library." = "Molim upalite \"Lokano dekriptovanje\" za automatski upload kontakata u zaštićeni biblioteku.";
+
+/* Seafile */
+"Post a discussion to group" = "Post a discussion to group";
+
+/* Seafile */
+"Preview" = "Preview";
+
+/* Seafile */
+"Print" = "Štampa";
+
+/* Seafile */
+"Publish draft" = "Publish draft";
+
+/* Pull down to get more messages */
+"Pull down to get more messages..." = "Pull down to get more messages...";
+
+/* Pull to refresh status */
+"Pull to refresh..." = "Pull to refresh...";
+
+/* Seafile */
+"Recovered deleted directory" = "Vračanje izbrisanog direktorija";
+
+/* Seafile */
+"Redownload" = "Download ponovo";
+
+/* Release to get more messages */
+"Release to get more messages..." = "Release to get more messages...";
+
+/* Release to refresh status */
+"Release to refresh..." = "Otpusite za osvježavanje...";
+
+/* Seafile */
+"Removed all items from trash" = "Removed all items from trash";
+
+/* Seafile */
+"Removed items older than %ld days from trash" = "Removed items older than %ld days from trash";
+
+/* Seafile */
+"Remove client certificate" = "Izbriši klijentski certifikat";
+
+/* Seafile */
+"Removed" = "Izbrisan";
+
+/* Seafile */
+"Removed directory" = "Izbrisan direktorij";
+
+/* Seafile */
+"Removed file" = "Izbrisana datoteka";
+
+/* Seafile */
+"Rename" = "Preimenuj";
+
+/* Seafile */
+"Renamed" = "Preimenovan";
+
+/* Seafile */
+"Renamed directory" = "Preimenovan direktorij";
+
+/* Seafile */
+"Renaming file ..." = "Preimenujem datoteku ...";
+
+/* Seafile */
+"Renamed library" = "Renamed library";
+
+/* Seafile */
+"Renamed folder" = "Renamed folder";
+
+/* Seafile */
+"Renamed file" = "Renamed file";
+
+/* Seafile */
+"Replace" = "Replace";
+
+/* Seafile */
+"Reset repo password" = "Promeni repo šifru";
+
+/* Seafile */
+"Restore Contacts" = "Vrati Kontakte";
+
+/* Seafile */
+"Restoring contacts." = "Vraćam Kontakte.";
+
+/* Seafile */
+"Restored library" = "Restored library";
+
+/* Seafile */
+"Restored folder" = "Restored folder";
+
+/* Seafile */
+"Restored file" = "Restored file";
+
+/* Seafile */
+"Reverted file \"%@\" to status at %@." = "Datoteka \"%1$@\" vraćena na status kod %2$@.";
+
+/* Seafile */
+"Reverted library to status at" = "Biblioteka vraćena na status kod";
+
+/* Seafile push notification message */
+"SEAFILE_LOC_KEY_FORMAT" = "%@, you got new messages from %@";
+
+/* Seafile */
+"Save" = "Spasi";
+
+/* Seafile */
+"Save Destination" = "Save Destination";
+
+/* Seafile */
+"Save all photos to album" = "Spasi sve slike u album";
+
+/* Seafile */
+"Save to %@" = "Save to %@";
+
+/* MainInterface.storyboard */
+"Save to Seafile" = "Save to Seafile";
+
+/* Seafile */
+"Save to album" = "Spasi u album";
+
+/* Seafile */
+"Saving all photos to album" = "Spašavam sve slike u album";
+
+/* Seafile */
+"Seafile" = "Seafile";
+
+/* Seafile */
+"Search" = "Pretraga";
+
+/* Seafile */
+"Search files in this library" = "Pretraga datoteka u ovoj biblioteci";
+
+/* Seafile */
+"Search is not supported on the server" = "Pretraga nije podržana na serveru";
+
+/* Seafile */
+"Searching" = "Tražim";
+
+/* Seafile */
+"Searching ..." = "Tražim ...";
+
+/* Seafile */
+"Select All" = "Odaberi Sve";
+
+/* Seafile */
+"Select None" = "Odaberi Ništa";
+
+/* Seafile */
+"Select a certificate" = "Select a certificate";
+
+/* No comment provided by engineer. */
+"Send" = "Pošalji";
+
+/* Seafile */
+"Send share link via email" = "Pošalji dijeljeni link putem email-a";
+
+/* Seafile */
+"Sending" = "Sending";
+
+/* Seafile */
+"Sending..." = "Sending...";
+
+/* Seafile */
+"Server" = "Server";
+
+/* Seafile */
+"Server must not be empty" = "Server ne može biti prazno";
+
+/* Seafile */
+"Server, like https://seafile.cc" = "Server, poput https://seafile.cc";
+
+/* Seafile */
+"Settings" = "Podešavanja";
+
+/* Seafile */
+"Shared to me" = "Dijeljeno meni";
+
+/* Seafile */
+"Shared with groups" = "Shared with groups";
+
+/* Seafile */
+"Share" = "Share";
+
+/* Seafile */
+"Shibboleth" = "Shibboleth";
+
+/* Seafile */
+"Shibboleth Login" = "Shibboleth Prijava";
+
+/* Seafile */
+"Single Sign On" = "Single Sign On";
+
+/* Seafile */
+"Sort by Last Modifed Time" = "Poredaj po vremenu posljednje izmjene";
+
+/* Seafile */
+"Sort by Name" = "Poredaj po nazivu";
+
+/* Seafile */
+"Space Used" = "Prostora Iskorišteno";
+
+/* Seafile */
+"Star" = "Omiljeno";
+
+/* Seafile */
+"Starred" = "Omiljeno";
+
+/* Seafile */
+"Start to download folder: " = "Započni download direktorija:";
+
+/* Seafile */
+"Start to download library: " = "Započni download biblioteke:";
+
+/* Seafile */
+"Succeeded to remove certificate" = "Uspješno brisanje certifikata";
+
+/* Seafile */
+"Succeeded to restore contacts" = "Uspješno vraćanje kontakata";
+
+/* Seafile */
+"Succeeded to save %@ to album" = "Uspješno spašavanje %@ u album";
+
+/* Seafile */
+"Succeeded to copy %@ to clipboard" = "Succeeded to copy %@ to clipboard";
+
+/* Seafile */
+"Successfully imported %@" = "Uspješan uvoz %@";
+
+/* Seafile */
+"Successfully moved" = "Successfully moved";
+
+/* Seafile */
+"Successfully copied" = "Successfully copied";
+
+/* Seafile */
+"Tell Friends about %@" = "Recite prijateljima o%@";
+
+/* Seafile */
+"The certificate from this website has been changed. Would you like to connect to the server anyway?" = "Certifikat ove web stranice je promjenjen. Da li se želite spojiti svakako?";
+
+/* Seafile */
+"The certificate from this website is invalid. Would you like to connect to the server anyway?" = "Certifikat ove web stranice je neispravan. Da li se želite spojiti svakako?";
+
+/* Seafile */
+"The length of password should be between 3 and 100" = "Dužina šifre bi trebala biti između 3 i 100 slova";
+
+/* Seafile */
+"The mail account has not been set yet" = "Mail račun nije još unesen";
+
+/* Seafile */
+"The token is invalid, you need to login again" = "Token je neispravan, morate se prijaviti ponovo";
+
+/* Seafile */
+"There is no app which can open this type of file on this machine" = "Nema aplikacije koja može otvoriti ovaj tip datoteke na ovom uređaju";
+
+/* Seafile */
+"There was a problem verifying your identity." = "Problem sa provjerom vašeg identiteta.";
+
+/* Seafile */
+"This app does not have access to your contacts." = "Ova aplikacija nema prava pristupa vašim kontaktima.";
+
+/* Seafile */
+"There is no account available" = "There is no account available.";
+
+/* Seafile */
+"This app does not have access to your location service." = "Ova aplikacija nema prava pristupa vašem lokacijskom servisu.";
+
+/* Seafile */
+"This app does not have access to your photos and videos." = "Ova aplikacija nema prava pristupa vašim slikama i videima.";
+
+/* Seafile */
+"This function is not supportted yet" = "Ova funkcionalnost nije još podržana";
+
+/* Seafile */
+"This function is not supportted yet，you can copy it to the pasteboard and send mail by yourself" = "Ova funkcionalnost nije još podržana. Možete kopirati u pasteboard i manuelno poslati email-om";
+
+/* Seafile */
+"Two step verification code" = "Kod za dvo-stepenu provjeru";
+
+/* Seafile */
+"Unstar" = "Ne-omiljeno";
+
+/* Seafile */
+"Upload" = "Upload";
+
+/* Seafile */
+"Upload Destination" = "Destinacija za Upload";
+
+/* Seafile */
+"Upload Videos" = "Upload Videa";
+
+/* Seafile */
+"Updated file" = "Upload file";
+
+/* Seafile */
+"Updated draft" = "Upload draft";
+
+/* NSPhotoLibraryUsageDescription */
+"Used to sync photos" = "Used to sync photos";
+
+/* Seafile */
+"Username" = "Korisničko ime";
+
+/* Seafile */
+"Username must not be empty" = "Korisničko ime ne može biti prazno";
+
+/* Seafile */
+"Verification code must not be empty" = "Verifikacijski kod ne može biti prazno";
+
+/* Seafile */
+"Version" = "Verzija";
+
+/* Seafile */
+"Website" = "Web stranica";
+
+/* Seafile */
+"Welcome to %@" = "Dobrodošli u %@";
+
+/* Seafile */
+"Wifi Only" = "Samo preko WiFi";
+
+/* Seafile */
+"Wipe Cache" = "Očisti Cache";
+
+/* Seafile */
+"Wrong library password" = "Pogrešna šifra za biblioteku";
+
+/* Seafile */
+"Wrong password" = "Pogrešna šifra";
+
+/* Seafile */
+"Wrong username or password" = "Pogrešno korisničko ime ili šifra";
+
+/* Seafile */
+"YES" = "YES";
+
+/* Seafile */
+"You can enable access in Privacy Settings" = "Možete omogućiti pristup u Podešavanjima Privatnosti";
+
+/* Seafile */
+"Your device cannot authenticate using Touch ID." = "Vaš uređaj se ne može prijaviti koristeći TouchID.";
+
+/* Seafile */
+"Your device cannot authenticate using Face ID." = "Your device cannot authenticate using Face ID.";
+
+/* Seafile */
+"and %@ more" = "i%@ još";
+
+/* SeafCell.xib */
+"detail" = "detalji";
+
+/* Seafile */
+"directories" = "direktoriji";
+
+/* Seafile */
+"files" = "datoteke";
+
+/* Seafile */
+"modified" = "izmjenjeno";
+
+/* Seafile */
+"Uploading" = "Uploading";
+
+/* Seafile */
+"Downloading" = "Downloading";
+
+/* Seafile */
+"Upload & Download" = "Upload & Download";
+
+/* Seafile */
+"Completed" = "Completed";
+
+/* waiting to upload */
+"Waiting to upload" = "%Waiting to upload";
+
+/* FolderView_iPad.storyboard, FolderView_iPhone.storyboard */
+"www.seafile.com" = "www.seafile.com";
+
+/* Share to WeChat */
+"Share to WeChat" = "Share to WeChat";
+
+/* Share Cancelled */
+"Share Cancelled" = "Share Cancelled";
+
+/* Failed to share to WeChat */
+"Failed to share to WeChat" = "Failed to share to WeChat";
+
+/* OK and Remember Device */
+"OK and Remember Device" = "OK and Remember Device";
+
+/* Privacy Policy */
+"Privacy Policy" = "Privacy Policy";
+
+/* Privacy Policy URL */
+"https://www.seafile.com/en/privacy_policy/" = "https://www.seafile.com/en/privacy_policy/";
+
+/*  TouchID is Enabled  */
+"FaceID(TouchID) is Enabled" = "FaceID(TouchID) is Enabled";
+
+/* Files cannot be used whith TouchID */
+"Files cannot access files in Seafile when FaceID(TouchID) enabled. Please open Seafile and disable FaceID(TouchID)." = "Files cannot access files in Seafile when FaceID(TouchID) enabled. Please open Seafile and disable FaceID(TouchID).";
+
+/* Seafile */
+"Please open Seafile ans add an account to start" = "Please open Seafile ans add an account to start.";
