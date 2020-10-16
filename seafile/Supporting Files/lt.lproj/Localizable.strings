@@ -1,0 +1,1069 @@
+﻿
+
+/* Seafile */
+"%@ can't verify the identity of the website \"%@\"" = "%1$@ nepavyko patikrinti svetainės \"%2$@\" autentiškumo";
+
+/* Seafile */
+"%@ does not support to preview file of this kind at the moment." = "%@ šiuo metu tokio tipo bylų peržiūra nepalaikoma.";
+
+/* Seafile */
+"%@ invite you to %@" = "%1$@ kviečia prisijungti prie %2$@";
+
+/* Seafile */
+"%@, Uploaded %@" = "%1$@, Įkelta %2$@";
+
+/* Seafile */
+"%@, uploading" = "%@, uploading";
+
+/* Seafile */
+"%@, waiting to upload" = "%@, laukia įkėlimo";
+
+/* Seafile */
+"%ld photos remain" = "liko %ld nuotraukų";
+
+/* Seafile */
+"%ld files are uploaded to Seafile" = "%ld files are uploaded to Seafile";
+
+/* Seafile */
+"1 photo remain" = "Liko 1 nuotrauka";
+
+/* Seafile */
+"%ld days ago" = "%ld days ago";
+
+/* Seafile */
+"%ld hours ago" = "%ld hours ago";
+
+/* Seafile */
+"%ld minutes ago" = "%ld minutes ago";
+
+/* Seafile */
+"%ld months ago" = "%ld months ago";
+
+/* Seafile */
+"%ld years ago" = "%ld years ago";
+
+/* Seafile */
+"a day ago" = "a day ago";
+
+/* Seafile */
+"a few seconds ago" = "a few seconds ago";
+
+/* Seafile */
+"an hour ago" = "an hour ago";
+
+/* Seafile */
+"a minute ago" = "a minute ago";
+
+/* Seafile */
+"a month ago" = "a month ago";
+
+/* Seafile */
+"a year ago" = "a year ago";
+
+/* Seafile */
+"A file with the same name already exists, do you want to overwrite?" = "Byla tokiu pavadinimu jau yra, norite ją perrašyti?";
+
+/* Seafile */
+"About" = "Apie";
+
+/* Seafile */
+"Account" = "Paskyra";
+
+/* Seafile */
+"Account Info" = "Paskyros informacija";
+
+/* Seafile */
+"Accounts" = "Paskyros";
+
+/* Seafile */
+"Activities" = "Veiksmai";
+
+/* Seafile */
+"Activity" = "Veiksmas";
+
+/* Seafile */
+"Add a new discussion" = "Add a new discussion";
+
+/* Seafile */
+"Add account" = "Įtraukti paskyra";
+
+/* Seafile */
+"Add contact" = "Add contact";
+
+/* Seafile */
+"Added" = "Įtraukta";
+
+/* Seafile */
+"Added directory" = "Įtraukti aplankai";
+
+/* Seafile */
+"Added file" = "Įtrauktos bylos";
+
+/* Seafile */
+"Added or modified" = "Įtraukta arba pakeista";
+
+/* Seafile */
+"All photos synced" = "Visos nuotraukos sinchronizuotos";
+
+/* Seafile */
+"Are you sure to clear all the cache?" = "Tikrai norite išvalyti talpyklą?";
+
+/* Seafile */
+"Are you sure to cancel all downloading tasks?" = "Are you sure to cancel all downloading tasks?";
+
+/* Seafile */
+"Are you sure to cancel all uploading tasks" = "Are you sure to cancel all uploading tasks";
+
+/* Seafile */
+"Are you sure to log out?" = "At tikrai norite atsijungti?";
+
+/* Seafile */
+"Are you sure you want to delete %@ ?" = "Are you sure you want to delete %@ ?";
+
+/* Seafile */
+"Are you sure to save all photos to album?" = "Are you sure to save all photos to album";
+
+/* Seafile */
+"Auto Upload" = "Automatinis įkėlimas";
+
+/* Auto cleay library password */
+"Auto clear passwords" = "Automatiškai išvalyti slaptažodžius";
+
+/* Seafile */
+"Auto merge by seafile system" = "Automatiškai sujungta seafile sistemos";
+
+/* Seafile */
+"Auto upload should be enabled first." = "Pirmiau reikia įjungti automatinį įkėlimą.";
+
+/* Seafile */
+"Back" = "Atgal";
+
+/* Seafile */
+"Back to Last Account" = "Grįžti į vėliausią paskyrą";
+
+/* Seafile */
+"Background Upload" = "Įkėlimas fone";
+
+/* Seafile */
+"Backup Contacts" = "Kontaktų atsarginė kopija";
+
+/* Seafile */
+"Cache" = "Talpykla";
+
+/* FolderView_iPad.storyboard */
+"Camera Upload" = "Kameros įkėlimai";
+
+/* Seafile */
+"Can not remove certificate because it is still in use" = "Negalima pašalinti sertifikato kadangi jis vis dar naudojamas";
+
+/* Seafile */
+"Cancel" = "Cancel";
+
+/* Seafile */
+"Cancel download" = "Atšaukti atsisiuntimą";
+
+/* Seafile */
+"Cancel upload" = "Cancel upload";
+
+/* Seafile */
+"Changed library name or description" = "Pakeistas bibliotekos pavadinimas ar aprašymas";
+
+/* Seafile */
+"Checking library password ..." = "Tikrinamas bibliotekos slaptažodis...";
+
+/* Seafile */
+"Choose" = "Pasirinkti";
+
+/* Seafile */
+"Choose directory" = "Choose directory";
+
+/* Seafile */
+"Choose a Seafile server" = "Pasirinkite Seafile serverį";
+
+/* Seafile */
+"Choose an account to start" = "Pasirinkite paskyrą kuria pradėsite";
+
+/* Seafile */
+"Clear libraries passwords successfully." = "Bibliotekos slaptažodžiai sėkmingai išvalyti.";
+
+/* Seafile */
+"Clear library password successfully." = "Bibliotekos slaptažodis sėkmingai išvalytas.";
+
+/* Seafile */
+"Clear password" = "Išvalyti slaptažodį";
+
+/* Seafile */
+"Clear remembered passwords" = "Išvalyti įrašytus slaptažodžius";
+
+/* Seafile */
+"Click \"Search\" to start" = "Norėdami pradėti spauskite \"Ieškoti\"";
+
+/* Seafile */
+"Connecting to server" = "Jungiamasi prie serverio";
+
+/* Seafile */
+"Contacts Backup" = "Kontaktų atsarginė kopija";
+
+/* Seafile */
+"Contacts backup failed." = "Nepavyko sukurti kontaktų atsarginės kopijos.";
+
+/* Seafile */
+"Contacts backup should be enabled first." = "Pirmiau reikia įjungti kontaktų atsarginį kopijavimą.";
+
+/* Seafile */
+"Contacts backup succeeded." = "Kontaktų atsarginė kopija sukurta.";
+
+/* Seafile */
+"Contacts will be backuped as: %@ " = "Kontaktų atsarginė kopija bus sukurta: %@ ";
+
+/* Seafile */
+"Copy" = "Kopijuoti";
+
+/* Seafile */
+"Copy Link to Clipboard" = "Kopijuoti nuorodą į iškarpinę";
+
+/* Seafile */
+"Copy image to clipboard" = "Kopijuoti paveikslėlį į iškarpinę";
+
+/* Seafile */
+"Copy share link to clipboard" = "Kopijuoti bendrinimo nuorodą į iškarpinę";
+
+/* Seafile */
+"Copying files ..." = "Kopijuojamos bylos...";
+
+/* Seafile */
+"Created library %@" = "Sukurta biblioteka %@";
+
+/* Seafile */
+"Creating file ..." = "Kuriama byla...";
+
+/* Seafile */
+"Creating folder ..." = "Kuriamas aplankas...";
+
+/* Seafile */
+"Creating library ..." = "Creating library ...";
+
+/* Seafile */
+"Created library" = "Created library";
+
+/* Seafile */
+"Created folder" = "Created folder";
+
+/* Seafile */
+"Created file" = "Created file";
+
+/* Seafile */
+"Created %ld files" = "Created %ld files";
+
+/* Seafile */
+"Created draft" = "Created draft";
+
+/* Seafile */
+"Delete" = "Trinti";
+
+/* Seafile */
+"Deleted" = "Ištrinta";
+
+/* Seafile */
+"Deleted library %@" = "Ištrinta biblioteka %@";
+
+/* Seafile */
+"Deleting directory ..." = "Trinamas aplankas...";
+
+/* Seafile */
+"Deleting file ..." = "Trinama byla...";
+
+/* Seafile */
+"Deleting files ..." = "Trinamos bylos...";
+
+/* Seafile */
+"Deleted library" = "Deleted library";
+
+/* Seafile */
+"Deleted folder" = "Deleted folder";
+
+/* Seafile */
+"Deleted file" = "Deleted file";
+
+/* Seafile */
+"Deleted draft" = "Deleted draft";
+
+/* Seafile */
+"Destination" = "Destination";
+
+/* Seafile */
+"Directory '%@' is shared with you using %@" = "Aplankas '%1$@' bendrinamas naudojant %2$@";
+
+/* Seafile */
+"Discussion" = "Aptarimas";
+
+/* Seafile */
+"Do you want reset the uploaded photos?" = "Norite iš naujo nustatyti įkeltas nuotraukas?";
+
+/* Seafile */
+"Do you want to backup contacts now? " = "Norite dabar sukurti kontaktų atsarginę kopija?";
+
+/* Seafile */
+"Download" = "Atsisiųsti";
+
+/* Seafile */
+"Edit" = "Redaguoti";
+
+/* Seafile */
+"Email" = "El. paštas";
+
+/* Seafile */
+"Email or Username" = "El. paštas arba vartotojo vardas";
+
+/* Seafile */
+"Enable TouchID" = "Enable Touch ID";
+
+/* Seafile */
+"Enable FaceID" = "Enable Face ID";
+
+/* Seafile */
+"Encrypted Libraries" = "Šifruotos bibliotekos";
+
+/* Seafile */
+"Encrypted" = "Encrypted";
+
+/* Seafile */
+"Failed to add discussion" = "Failed to add discussion";
+
+/* Seafile */
+"Failed to authenticate" = "Nepavyko autentifikuoti";
+
+/* Seafile */
+"Failed to copy files" = "Nepavyko nukopijuoti bylų";
+
+/* Seafile */
+"Failed to create file" = "Nepavyko sukurti bylos";
+
+/* Seafile */
+"Failed to create folder" = "Nepavyko sukurti aplanko";
+
+/* Seafile */
+"Failed to create library" = "Failed to create library";
+
+/* Seafile */
+"Failed to delete files" = "Nepavyko ištrinti bylų";
+
+/* Seafile */
+"Failed to download file '%@'" = "Nepavyko atsisiųsti bylos '%@'";
+
+/* Seafile */
+"Failed to find %@" = "Nepavyko rasti %@";
+
+/* Seafile */
+"Failed to find library" = "Nepavyko rasti bibliotekos";
+
+/* Seafile */
+"Failed to generate share link of directory '%@'" = "Nepavyko sukurti aplanko '%@' bendrinimo nuorodos";
+
+/* Seafile */
+"Failed to generate share link of file '%@'" = "Nepavyko sukurti bylos '%@' bendrinimo nuorodos";
+
+/* Seafile */
+"Failed to get groups ..." = "Failed to get groups ...";
+
+/* Seafile */
+"Failed to get messages" = "Failed to get messages";
+
+/* Seafile */
+"Failed to get modification details" = "Nepavyksta gauti išsamaus pakeitimų žurnalo";
+
+/* Seafile */
+"Failed to get starred files" = "Nepavyko gauti žvaigždute pažymėtų bylų";
+
+/* Seafile */
+"Failed to identify the coding of '%@'" = "Nepavyko nustatyti '%@' kodavimo";
+
+/* Seafile */
+"Failed to load activities" = "Nepavyko užkrauti veiksmų sąrašo";
+
+/* Seafile */
+"Failed to load content of the directory" = "Nepavyko užkrauti aplanko turinio";
+
+/* Seafile */
+"Failed to load files" = "Nepavyko įkelti bylų";
+
+/* Seafile */
+"Failed to login" = "Nepavyko prisijungti";
+
+/* Seafile */
+"Failed to move files" = "Nepavyko perkelti bylos";
+
+/* Seafile */
+"Failed to open file" = "Nepavyko atverti bylos";
+
+/* Seafile */
+"Failed to remove certificate" = "Nepavyko pašalinti sertifikato";
+
+/* Seafile */
+"Failed to rename file" = "Nepavyko pervardinti bylos";
+
+/* Seafile */
+"Failed to restore contacts." = "Nepavyko atkurti kontaktų.";
+
+/* Seafile */
+"Failed to save %@ to album" = "Nepavyko išsaugoti %@ į albumą";
+
+/* Seafile */
+"Failed to copy %@ to clipboard" = "Failed to copy %@ to clipboard";
+
+/* Seafile */
+"Failed to save account" = "Nepavyko išsaugoti paskyros";
+
+/* Seafile */
+"Failed to search" = "Nepavyko ieškoti";
+
+/* Seafile */
+"Failed to send message" = "Failed to send message";
+
+/* Seafile */
+"Failed to upload file" = "Nepavyko įkelti bylos";
+
+/* Seafile */
+"File '%@' is shared with you using %@" = "Byla '%1$@' bendrinama naudojant %2$@";
+
+/* Seafile */
+"File '%@' is too large to edit" = "Byla '%@' redagavimui per didelė";
+
+/* Seafile */
+"File '%@' uploaded successfully" = "File '%@' uploaded successfully";
+
+/* Seafile */
+"File name invalid" = "Neteisingas bylos pavadinimas";
+
+/* Seafile */
+"File name must not be empty" = "Bylos pavadinimas negali būti tuščias";
+
+/* Seafile */
+"Files with the same name already exist, do you want to overwrite?" = "Bylos tokiu pavadinimu jau yra, norite perrašyti?";
+
+/* Seafile */
+"File can not be shared" = "File can not be shared";
+
+/* Seafile */
+"Folder name invalid" = "Neteisingas aplanko pavadinimas";
+
+/* Seafile */
+"Folder name must not be empty" = "Aplanko pavadinimas negali būti tuščias";
+
+/* Seafile */
+"For example: https://seacloud.cc or http://192.168.1.24:8000" = "Pavyzdžiui: https://seacloud.cc or http://192.168.1.24:8000";
+
+/* Seafile */
+"Generate share link ..." = "Kuriama bendrinimo nuoroda...";
+
+/* Seafile */
+"Generate share link success" = "Bendrinimo nuoroda sėkmingai sukurta";
+
+/* Seafile */
+"Group discussion" = "Group discussion";
+
+/* Seafile */
+"Hey there!<br/><br/> I've been using %@ and thought you might like it. It is a free way to bring all you files anywhere and share them easily.<br/><br/>Go to the official website of %@:</br></br> <a href=\"%@\">%@</a>\n\n" = "Hey there!<br/><br/> I've been using %1$@ and thought you might like it. It is a free way to bring all you files anywhere and share them easily.<br/><br/>Go to the official website of %2$@:</br></br> <a href=\"%3$@\">%4$@</a>\n\n";
+
+/* Seafile */
+"Hi,<br/><br/>Here is a link to <b>'%@'</b> in my %@:<br/><br/> <a href=\"%@\">%@</a>\n\n" = "Sveiki,<br/><br/>Tai nuoroda į <b>'%1$@'</b> esanti mano %2$@:<br/><br/> <a href=\"%3$@\">%4$@</a>\n\n";
+
+/* Seafile */
+"Hi,<br/><br/>Here is a link to directory <b>'%@'</b> in my %@:<br/><br/> <a href=\"%@\">%@</a>\n\n" = "Sveiki,<br/><br/>Tai nuoroda į aplanką <b>'%1$@'</b> esanti mano %2$@:<br/><br/> <a href=\"%3$@\">%4$@</a>\n\n";
+
+/* Seafile */
+"How would you like to share this file?" = "Kaip norite bendrinti šią bylą?";
+
+/* Seafile */
+"Hide" = "Hide";
+
+/* Seafile */
+"Import client certificate" = "Importuoti kliento sertifikatą";
+
+/* Seafile */
+"Invalid Server" = "Neteisingas serveris";
+
+/* Seafile */
+"Invalid email" = "Invalid email";
+
+/* Seafile */
+"Last Backup Time" = "Paskutinės atsarginės kopijos laikas";
+
+/* No comment provided by engineer. */
+"Last Updated: %@" = "Paskutinis atnaujinimas: %@";
+
+/* Seafile */
+"Libraries" = "Bibliotekos";
+
+/* Loading Status */
+"Loading..." = "Kraunasi...";
+
+/* Seafile */
+"Local Cache" = "Vietinė talpyklą";
+
+/* Local decryption */
+"Local decryption" = "Vietinis iššifravimas";
+
+/* Seafile */
+"Log out" = "Atsijungti";
+
+/* Seafile */
+"Login" = "Prisijungti";
+
+/* Seafile */
+"Library name invalid" = "Library name invalid";
+
+/* Seafile */
+"Library name must not be empty" = "Library name must not be empty";
+
+/* Seafile */
+"Message" = "Message";
+
+/* Seafile */
+"Messages" = "Pranešimai";
+
+/* Seafile */
+"Modification Details" = "Pakeitimai išsamiai";
+
+/* Seafile */
+"Modified" = "Pakeista";
+
+/* Seafile */
+"Modified file" = "Pakeista byla";
+
+/* Seafile */
+"More" = "Daugiau";
+
+/* Seafile */
+"Move" = "Perkelti";
+
+/* Seafile */
+"MoveTo" = "Perkelti į";
+
+/* Seafile */
+"Moved" = "Perkelta";
+
+/* Seafile */
+"Moved directory" = "Perkeltas aplankas";
+
+/* Seafile */
+"Moving files ..." = "Perkeliamos bylos...";
+
+/* Seafile */
+"Moved folder" = "Moved folder";
+
+/* Seafile */
+"Moved file" = "Moved file";
+
+/* Seafile */
+"My Own Libraries" = "Mano asmeninės bibliotekos";
+
+/* Seafile */
+"NO" = "NO";
+
+/* FailToPreview_iPad.xib, FailToPreview_iPhone.xib, SeafCell.xib, SeafDirCell.xib, SeafMessageCell.xib, SeafUploadDirViewController.xib */
+"Name" = "Vardas";
+
+/* Seafile */
+"Network unavailable" = "Tinklas nepasiekiamas";
+
+/* Seafile */
+"New File" = "Nauja byla";
+
+/* Seafile */
+"New Folder" = "Naujas aplankas";
+
+/* Seafile */
+"New file name" = "Naujas bylos pavadinimas";
+
+/* Seafile */
+"New folder name" = "Naujas aplanko pavadinimas";
+
+/* Seafile */
+"New Library" = "New Library";
+
+/* Seafile */
+"New library name" = "New Library Name";
+
+/* Seafile */
+"No Results" = "Jokių rezultatų";
+
+/* Seafile */
+"No available certificates" = "Nėra prieinamų sertifikatų";
+
+/* Seafile */
+"OK" = "Gerai";
+
+/* Seafile */
+"Open elsewhere..." = "Atverti kur nors...";
+
+/* Seafile */
+"Open in other applications" = "Atverti kitoje programoje";
+
+/* Seafile */
+"Open photo browser" = "Atverti nuotraukų naršyklę";
+
+/* Seafile */
+"Open Seafile to view details" = "Open Seafile to view details";
+
+/* Seafile */
+"Organization" = "Organizacija";
+
+/* Seafile */
+"Other Server" = "Kitas serveris";
+
+/* Seafile */
+"Out of quota" = "Saugyklos vieta išnaudota";
+
+/* Seafile */
+"Password" = "Slaptažodis";
+
+/* Seafile */
+"Password must not be empty" = "Slaptažodis negali būti tuščias";
+
+/* Seafile */
+"Password of '%@'" = "'%@' slaptažodis";
+
+/* Seafile */
+"Password of library '%@'" = "Bibliotekos '%@' slaptažodis";
+
+/* Seafile */
+"Password required" = "Slaptažodis privalomas";
+
+/* Seafile */
+"Password (at least 8 characters)" = "Password (at least 8 characters)";
+
+/* Seafile */
+"Please enter your password again" = "Please enter your password again";
+
+/* Seafile */
+"Password must at least 8 characters" = "Password must at least 8 characters";
+
+/* Seafile */
+"Two passwords are different" = "Two passwords are different";
+
+/* Seafile */
+"PasteTo" = "Įklijuoti į";
+
+/* Seafile */
+"Photos" = "Nuotraukos";
+
+/* Seafile */
+"Photos are not accessible" = "Photos are not accessible";
+
+/* Seafile */
+"Please authenticate to proceed" = "Norėdami tęsti patvirtinkite";
+
+/* Seafile */
+"Please disable \"Auto clear passwords\" for auto uploading photos to an encrypted library." = "Išjunkite \"Automatinis slaptažodžių išvalymas\" jei norite automatiškai įkelti kontaktus į šifruotą biblioteką.";
+
+/* Seafile */
+"Please disable \"Auto clear passwords\" for uploading contacts to an encrypted library." = "Išjunkite \"Automatinis slaptažodžių išvalymas\" jei norite įkelti kontaktus į šifruotą biblioteką.";
+
+/* Seafile */
+"Please enable \"Local decryption\" for auto uploading photos to an encrypted library." = "Įjunkite \"Vietinis iškodavimas\" jei norite automatiškai įkelti nuotraukas į šifruotą biblioteką.";
+
+/* Seafile */
+"Please enable \"Local decryption\" for uploading contacts to an encrypted library." = "Įjunkite \"Vietinis iškodavimas\" jei norite įkelti kontaktus į šifruotą biblioteką.";
+
+/* Seafile */
+"Post a discussion to group" = "Post a discussion to group";
+
+/* Seafile */
+"Preview" = "Preview";
+
+/* Seafile */
+"Print" = "Spausdinti";
+
+/* Seafile */
+"Publish draft" = "Publish draft";
+
+/* Pull down to get more messages */
+"Pull down to get more messages..." = "Pull down to get more messages...";
+
+/* Pull to refresh status */
+"Pull to refresh..." = "Pull to refresh...";
+
+/* Seafile */
+"Recovered deleted directory" = "Atkurtas ištrintas aplankas";
+
+/* Seafile */
+"Redownload" = "Atsisiųsti iš naujo";
+
+/* Release to get more messages */
+"Release to get more messages..." = "Release to get more messages...";
+
+/* Release to refresh status */
+"Release to refresh..." = "Norėdami atnaujinti paleiskite...";
+
+/* Seafile */
+"Removed all items from trash" = "Removed all items from trash";
+
+/* Seafile */
+"Removed items older than %ld days from trash" = "Removed items older than %ld days from trash";
+
+/* Seafile */
+"Remove client certificate" = "Pašalinti kliento sertifikatą";
+
+/* Seafile */
+"Removed" = "Pašalinta";
+
+/* Seafile */
+"Removed directory" = "Pašalinti aplankai";
+
+/* Seafile */
+"Removed file" = "Pašalintos bylos";
+
+/* Seafile */
+"Rename" = "Pervardinti";
+
+/* Seafile */
+"Renamed" = "Pervardinta";
+
+/* Seafile */
+"Renamed directory" = "Pervardinti aplankai";
+
+/* Seafile */
+"Renaming file ..." = "Pervardinama byla...";
+
+/* Seafile */
+"Renamed library" = "Renamed library";
+
+/* Seafile */
+"Renamed folder" = "Renamed folder";
+
+/* Seafile */
+"Renamed file" = "Renamed file";
+
+/* Seafile */
+"Replace" = "Replace";
+
+/* Seafile */
+"Reset repo password" = "Iš naujo nustatyti saugyklos slaptažodį";
+
+/* Seafile */
+"Restore Contacts" = "Atkurti kontaktus";
+
+/* Seafile */
+"Restoring contacts." = "Atkuriami kontaktai.";
+
+/* Seafile */
+"Restored library" = "Restored library";
+
+/* Seafile */
+"Restored folder" = "Restored folder";
+
+/* Seafile */
+"Restored file" = "Restored file";
+
+/* Seafile */
+"Reverted file \"%@\" to status at %@." = "Bylos \"%1$@\" būsena sugrąžinta į %2$@.";
+
+/* Seafile */
+"Reverted library to status at" = "Bibliotekos būsena sugrąžinta į";
+
+/* Seafile push notification message */
+"SEAFILE_LOC_KEY_FORMAT" = "%@, you got new messages from %@";
+
+/* Seafile */
+"Save" = "Išsaugoti";
+
+/* Seafile */
+"Save Destination" = "Save Destination";
+
+/* Seafile */
+"Save all photos to album" = "Išsaugoti visas nuotraukas į albumą";
+
+/* Seafile */
+"Save to %@" = "Save to %@";
+
+/* MainInterface.storyboard */
+"Save to Seafile" = "Save to Seafile";
+
+/* Seafile */
+"Save to album" = "Išsaugoti į albumą";
+
+/* Seafile */
+"Saving all photos to album" = "Visos nuotraukos išsaugomos į albumą";
+
+/* Seafile */
+"Seafile" = "Seafile";
+
+/* Seafile */
+"Search" = "Ieškoti";
+
+/* Seafile */
+"Search files in this library" = "Ieškoti bylų šioje bibliotekoje";
+
+/* Seafile */
+"Search is not supported on the server" = "Paieška serveryje nepalaikoma";
+
+/* Seafile */
+"Searching" = "Ieškoma";
+
+/* Seafile */
+"Searching ..." = "Ieškoma...";
+
+/* Seafile */
+"Select All" = "Pasirinkti visus";
+
+/* Seafile */
+"Select None" = "Nepasirinkti nieko";
+
+/* Seafile */
+"Select a certificate" = "Select a certificate";
+
+/* No comment provided by engineer. */
+"Send" = "Siųsti";
+
+/* Seafile */
+"Send share link via email" = "Siųsti bendrinimo nuorodą el. paštu";
+
+/* Seafile */
+"Sending" = "Sending";
+
+/* Seafile */
+"Sending..." = "Sending...";
+
+/* Seafile */
+"Server" = "Serveris";
+
+/* Seafile */
+"Server must not be empty" = "Serveris negali būti tuščias";
+
+/* Seafile */
+"Server, like https://seafile.cc" = "Serveris, kaip https://seafile.cc";
+
+/* Seafile */
+"Settings" = "Nustatymai";
+
+/* Seafile */
+"Shared to me" = "Bendrinama su manimi";
+
+/* Seafile */
+"Shared with groups" = "Shared with groups";
+
+/* Seafile */
+"Share" = "Share";
+
+/* Seafile */
+"Shibboleth" = "Shibboleth";
+
+/* Seafile */
+"Shibboleth Login" = "Shibboleth prisijungimas";
+
+/* Seafile */
+"Single Sign On" = "Single Sign On";
+
+/* Seafile */
+"Sort by Last Modifed Time" = "Rūšiuoti pagal paskutinio pakeitimo laiką";
+
+/* Seafile */
+"Sort by Name" = "Rūšiuoti pagal pavadinimą";
+
+/* Seafile */
+"Space Used" = "Naudojama";
+
+/* Seafile */
+"Star" = "Žveigždutė";
+
+/* Seafile */
+"Starred" = "Pažymėtieji";
+
+/* Seafile */
+"Start to download folder: " = "Pradėti siųstis aplanką:";
+
+/* Seafile */
+"Start to download library: " = "Pradėti siųstis biblioteką:";
+
+/* Seafile */
+"Succeeded to remove certificate" = "Sertifikatas sėkmingai pašalintas";
+
+/* Seafile */
+"Succeeded to restore contacts" = "Kontaktai sėkmingai atkurti";
+
+/* Seafile */
+"Succeeded to save %@ to album" = "%@ sėkmingai išsaugota albume";
+
+/* Seafile */
+"Succeeded to copy %@ to clipboard" = "Succeeded to copy %@ to clipboard";
+
+/* Seafile */
+"Successfully imported %@" = "Sėkmingai importuota %@";
+
+/* Seafile */
+"Successfully moved" = "Successfully moved";
+
+/* Seafile */
+"Successfully copied" = "Successfully copied";
+
+/* Seafile */
+"Tell Friends about %@" = "Pranešti draugams apie %@";
+
+/* Seafile */
+"The certificate from this website has been changed. Would you like to connect to the server anyway?" = "Šios svetainės sertifikatas pakeistas. Vis tiek norite prisijungti prie serverio?";
+
+/* Seafile */
+"The certificate from this website is invalid. Would you like to connect to the server anyway?" = "Šios svetainės sertifikatas neteisingas. Vis tiek norite prisijungti prie serverio?";
+
+/* Seafile */
+"The length of password should be between 3 and 100" = "Slaptažodžio ilgis gali būti nuo 3 iki 100";
+
+/* Seafile */
+"The mail account has not been set yet" = "El. pašto paskyra dar nenustatyta";
+
+/* Seafile */
+"The token is invalid, you need to login again" = "Raktas neteisingas, turite prisijungti iš naujo";
+
+/* Seafile */
+"There is no app which can open this type of file on this machine" = "Nėra programos kuri gali atverti tokio tipo bylą";
+
+/* Seafile */
+"There was a problem verifying your identity." = "Iškilo tapatybės patvirtinimo problemų.";
+
+/* Seafile */
+"This app does not have access to your contacts." = "Ši programa neturi leidimo naudotis kontaktais.";
+
+/* Seafile */
+"There is no account available" = "There is no account available.";
+
+/* Seafile */
+"This app does not have access to your location service." = "Ši programa neturi leidimo naudotis vietos nustatymo paslauga.";
+
+/* Seafile */
+"This app does not have access to your photos and videos." = "Ši programa neturi leidimo naudotis nuotraukomis ir vaizdais.";
+
+/* Seafile */
+"This function is not supportted yet" = "Šiuo metu ši funkcija nepalaikoma";
+
+/* Seafile */
+"This function is not supportted yet，you can copy it to the pasteboard and send mail by yourself" = "Šiuo metu ši funkcija nepalaikoma. Galite tai nukopijuoti į iškarpinę ir išsiųsti el. laišką savarankiškai.";
+
+/* Seafile */
+"Two step verification code" = "Dviejų lygių autentikacijos kodas";
+
+/* Seafile */
+"Unstar" = "Nužymėti žvaigždutę";
+
+/* Seafile */
+"Upload" = "Įkelti";
+
+/* Seafile */
+"Upload Destination" = "Įkelti į";
+
+/* Seafile */
+"Upload Videos" = "Įkelti vaizdus";
+
+/* Seafile */
+"Updated file" = "Upload file";
+
+/* Seafile */
+"Updated draft" = "Upload draft";
+
+/* NSPhotoLibraryUsageDescription */
+"Used to sync photos" = "Used to sync photos";
+
+/* Seafile */
+"Username" = "Vartotojo vardas";
+
+/* Seafile */
+"Username must not be empty" = "Vartotojo vardas negali būti tuščias";
+
+/* Seafile */
+"Verification code must not be empty" = "Patvirtinimo kodas negali būti tuščias";
+
+/* Seafile */
+"Version" = "Versija";
+
+/* Seafile */
+"Website" = "Svetainė";
+
+/* Seafile */
+"Welcome to %@" = "Sveiki prisijungę prie %@";
+
+/* Seafile */
+"Wifi Only" = "Tik Wifi";
+
+/* Seafile */
+"Wipe Cache" = "Išvalyti talpyklą";
+
+/* Seafile */
+"Wrong library password" = "Neteisingas bibliotekos slaptažodis";
+
+/* Seafile */
+"Wrong password" = "Neteisingas slaptažodis";
+
+/* Seafile */
+"Wrong username or password" = "Neteisingas vartotojo vardas arba slaptažodis";
+
+/* Seafile */
+"YES" = "YES";
+
+/* Seafile */
+"You can enable access in Privacy Settings" = "Galite leisti prieigą Privacy Settings nustatymuose";
+
+/* Seafile */
+"Your device cannot authenticate using Touch ID." = "Šis įrenginys negali naudoti Touch ID.";
+
+/* Seafile */
+"Your device cannot authenticate using Face ID." = "Your device cannot authenticate using Face ID.";
+
+/* Seafile */
+"and %@ more" = "ir %@ daugiau";
+
+/* SeafCell.xib */
+"detail" = "išsamiai";
+
+/* Seafile */
+"directories" = "aplankai";
+
+/* Seafile */
+"files" = "bylos";
+
+/* Seafile */
+"modified" = "pakeista";
+
+/* Seafile */
+"Uploading" = "Uploading";
+
+/* Seafile */
+"Downloading" = "Downloading";
+
+/* Seafile */
+"Upload & Download" = "Upload & Download";
+
+/* Seafile */
+"Completed" = "Completed";
+
+/* waiting to upload */
+"Waiting to upload" = "%Waiting to upload";
+
+/* FolderView_iPad.storyboard, FolderView_iPhone.storyboard */
+"www.seafile.com" = "www.seafile.com";
+
+/* Share to WeChat */
+"Share to WeChat" = "Share to WeChat";
+
+/* Share Cancelled */
+"Share Cancelled" = "Share Cancelled";
+
+/* Failed to share to WeChat */
+"Failed to share to WeChat" = "Failed to share to WeChat";
+
+/* OK and Remember Device */
+"OK and Remember Device" = "OK and Remember Device";
+
+/* Privacy Policy */
+"Privacy Policy" = "Privacy Policy";
+
+/* Privacy Policy URL */
+"https://www.seafile.com/en/privacy_policy/" = "https://www.seafile.com/en/privacy_policy/";
+
+/*  TouchID is Enabled  */
+"FaceID(TouchID) is Enabled" = "FaceID(TouchID) is Enabled";
+
+/* Files cannot be used whith TouchID */
+"Files cannot access files in Seafile when FaceID(TouchID) enabled. Please open Seafile and disable FaceID(TouchID)." = "Files cannot access files in Seafile when FaceID(TouchID) enabled. Please open Seafile and disable FaceID(TouchID).";
+
+/* Seafile */
+"Please open Seafile ans add an account to start" = "Please open Seafile ans add an account to start.";
