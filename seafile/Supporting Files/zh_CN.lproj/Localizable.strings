@@ -1,0 +1,1069 @@
+﻿
+
+/* Seafile */
+"%@ can't verify the identity of the website \"%@\"" = "%1$@ 无法验证网站 \"%2$@\" 的证书";
+
+/* Seafile */
+"%@ does not support to preview file of this kind at the moment." = "%@ 当前不支持预览这种类型的文件。";
+
+/* Seafile */
+"%@ invite you to %@" = "%@ 邀请你使用Seafile";
+
+/* Seafile */
+"%@, Uploaded %@" = "%1$@, 已上传 %2$@";
+
+/* Seafile */
+"%@, uploading" = "%@, uploading";
+
+/* Seafile */
+"%@, waiting to upload" = "%@, 等待上传";
+
+/* Seafile */
+"%ld photos remain" = "还有 %ld 张相片";
+
+/* Seafile */
+"%ld files are uploaded to Seafile" = "%ld files are uploaded to Seafile";
+
+/* Seafile */
+"1 photo remain" = "还有 1 张相片";
+
+/* Seafile */
+"%ld days ago" = "%ld days ago";
+
+/* Seafile */
+"%ld hours ago" = "%ld hours ago";
+
+/* Seafile */
+"%ld minutes ago" = "%ld minutes ago";
+
+/* Seafile */
+"%ld months ago" = "%ld months ago";
+
+/* Seafile */
+"%ld years ago" = "%ld years ago";
+
+/* Seafile */
+"a day ago" = "a day ago";
+
+/* Seafile */
+"a few seconds ago" = "a few seconds ago";
+
+/* Seafile */
+"an hour ago" = "an hour ago";
+
+/* Seafile */
+"a minute ago" = "a minute ago";
+
+/* Seafile */
+"a month ago" = "a month ago";
+
+/* Seafile */
+"a year ago" = "a year ago";
+
+/* Seafile */
+"A file with the same name already exists, do you want to overwrite?" = "有一个同名文件已存在，确认要覆盖它吗？";
+
+/* Seafile */
+"About" = "关于";
+
+/* Seafile */
+"Account" = "账户";
+
+/* Seafile */
+"Account Info" = "账户信息";
+
+/* Seafile */
+"Accounts" = "账户";
+
+/* Seafile */
+"Activities" = "最近修改";
+
+/* Seafile */
+"Activity" = "最近修改";
+
+/* Seafile */
+"Add a new discussion" = "Add a new discussion";
+
+/* Seafile */
+"Add account" = "添加账户";
+
+/* Seafile */
+"Add contact" = "Add contact";
+
+/* Seafile */
+"Added" = "添加";
+
+/* Seafile */
+"Added directory" = "添加目录";
+
+/* Seafile */
+"Added file" = "添加文件";
+
+/* Seafile */
+"Added or modified" = "添加或修改";
+
+/* Seafile */
+"All photos synced" = "所有相片已同步";
+
+/* Seafile */
+"Are you sure to clear all the cache?" = "你确定要清除所有的缓存吗?";
+
+/* Seafile */
+"Are you sure to cancel all downloading tasks?" = "Are you sure to cancel all downloading tasks?";
+
+/* Seafile */
+"Are you sure to cancel all uploading tasks" = "Are you sure to cancel all uploading tasks";
+
+/* Seafile */
+"Are you sure to log out?" = "你确定要退出登录吗？";
+
+/* Seafile */
+"Are you sure you want to delete %@ ?" = "Are you sure you want to delete %@ ?";
+
+/* Seafile */
+"Are you sure to save all photos to album?" = "Are you sure to save all photos to album";
+
+/* Seafile */
+"Auto Upload" = "自动上传";
+
+/* Auto cleay library password */
+"Auto clear passwords" = "自动清除资料库密码";
+
+/* Seafile */
+"Auto merge by seafile system" = "系统自动合并";
+
+/* Seafile */
+"Auto upload should be enabled first." = "请先打开自动上传";
+
+/* Seafile */
+"Back" = "返回";
+
+/* Seafile */
+"Back to Last Account" = "回到最近访问的账户";
+
+/* Seafile */
+"Background Upload" = "后台上传";
+
+/* Seafile */
+"Backup Contacts" = "备份通讯录";
+
+/* Seafile */
+"Cache" = "缓存";
+
+/* FolderView_iPad.storyboard */
+"Camera Upload" = "相机上传";
+
+/* Seafile */
+"Can not remove certificate because it is still in use" = "无法删除正在使用的证书";
+
+/* Seafile */
+"Cancel" = "Cancel";
+
+/* Seafile */
+"Cancel download" = "取消下载";
+
+/* Seafile */
+"Cancel upload" = "Cancel upload";
+
+/* Seafile */
+"Changed library name or description" = "修改了资料库名称或描述";
+
+/* Seafile */
+"Checking library password ..." = "验证资料库的密码 ...";
+
+/* Seafile */
+"Choose" = "选择";
+
+/* Seafile */
+"Choose directory" = "Choose directory";
+
+/* Seafile */
+"Choose a Seafile server" = "请选择一个Seafile服务器";
+
+/* Seafile */
+"Choose an account to start" = "选择一个账户开始使用";
+
+/* Seafile */
+"Clear libraries passwords successfully." = "清除资料库密码成功";
+
+/* Seafile */
+"Clear library password successfully." = "成功清除资料库密码";
+
+/* Seafile */
+"Clear password" = "清除密码";
+
+/* Seafile */
+"Clear remembered passwords" = "清除保存的密码";
+
+/* Seafile */
+"Click \"Search\" to start" = "点击 \"搜索\" 开始";
+
+/* Seafile */
+"Connecting to server" = "正在连接服务器";
+
+/* Seafile */
+"Contacts Backup" = "通讯录备份";
+
+/* Seafile */
+"Contacts backup failed." = "通讯录备份失败";
+
+/* Seafile */
+"Contacts backup should be enabled first." = "需要先开启通讯录备份";
+
+/* Seafile */
+"Contacts backup succeeded." = "通讯录备份成功";
+
+/* Seafile */
+"Contacts will be backuped as: %@ " = "通讯录将会备份成：%@";
+
+/* Seafile */
+"Copy" = "复制";
+
+/* Seafile */
+"Copy Link to Clipboard" = "复制链接到剪切板";
+
+/* Seafile */
+"Copy image to clipboard" = "复制图片到剪切板";
+
+/* Seafile */
+"Copy share link to clipboard" = "复制共享链接到剪切板";
+
+/* Seafile */
+"Copying files ..." = "正在复制文件 ...";
+
+/* Seafile */
+"Created library %@" = "创建了资料库 %@";
+
+/* Seafile */
+"Creating file ..." = "正在创建文件 ...";
+
+/* Seafile */
+"Creating folder ..." = "正在创建文件夹 ...";
+
+/* Seafile */
+"Creating library ..." = "Creating library ...";
+
+/* Seafile */
+"Created library" = "Created library";
+
+/* Seafile */
+"Created folder" = "Created folder";
+
+/* Seafile */
+"Created file" = "Created file";
+
+/* Seafile */
+"Created %ld files" = "Created %ld files";
+
+/* Seafile */
+"Created draft" = "Created draft";
+
+/* Seafile */
+"Delete" = "删除";
+
+/* Seafile */
+"Deleted" = "删除了";
+
+/* Seafile */
+"Deleted library %@" = "删除了资料库 %@";
+
+/* Seafile */
+"Deleting directory ..." = "正在删除文件夹 ...";
+
+/* Seafile */
+"Deleting file ..." = "正在删除文件 ...";
+
+/* Seafile */
+"Deleting files ..." = "正在删除文件 ...";
+
+/* Seafile */
+"Deleted library" = "Deleted library";
+
+/* Seafile */
+"Deleted folder" = "Deleted folder";
+
+/* Seafile */
+"Deleted file" = "Deleted file";
+
+/* Seafile */
+"Deleted draft" = "Deleted draft";
+
+/* Seafile */
+"Destination" = "Destination";
+
+/* Seafile */
+"Directory '%@' is shared with you using %@" = "文件夹 '%1$@' 在%2$@上共享给你";
+
+/* Seafile */
+"Discussion" = "讨论";
+
+/* Seafile */
+"Do you want reset the uploaded photos?" = "你想重置已同步的相片吗？";
+
+/* Seafile */
+"Do you want to backup contacts now? " = "是否立即备份通讯录吗？";
+
+/* Seafile */
+"Download" = "下载";
+
+/* Seafile */
+"Edit" = "编辑";
+
+/* Seafile */
+"Email" = "电子邮件";
+
+/* Seafile */
+"Email or Username" = "用户名或邮箱";
+
+/* Seafile */
+"Enable TouchID" = "Enable Touch ID";
+
+/* Seafile */
+"Enable FaceID" = "Enable Face ID";
+
+/* Seafile */
+"Encrypted Libraries" = "加密资料库";
+
+/* Seafile */
+"Encrypted" = "Encrypted";
+
+/* Seafile */
+"Failed to add discussion" = "Failed to add discussion";
+
+/* Seafile */
+"Failed to authenticate" = "认证失败";
+
+/* Seafile */
+"Failed to copy files" = "复制文件失败";
+
+/* Seafile */
+"Failed to create file" = "创建文件失败";
+
+/* Seafile */
+"Failed to create folder" = "创建文件夹失败";
+
+/* Seafile */
+"Failed to create library" = "Failed to create library";
+
+/* Seafile */
+"Failed to delete files" = "删除文件失败";
+
+/* Seafile */
+"Failed to download file '%@'" = "下载文件 '%@' 失败";
+
+/* Seafile */
+"Failed to find %@" = "找不到 %@";
+
+/* Seafile */
+"Failed to find library" = "找不到资料库";
+
+/* Seafile */
+"Failed to generate share link of directory '%@'" = "获取文件夹 '%@' 共享外链失败";
+
+/* Seafile */
+"Failed to generate share link of file '%@'" = "获取文件 '%@' 共享外链失败";
+
+/* Seafile */
+"Failed to get groups ..." = "Failed to get groups ...";
+
+/* Seafile */
+"Failed to get messages" = "Failed to get messages";
+
+/* Seafile */
+"Failed to get modification details" = "获取修改详情失败";
+
+/* Seafile */
+"Failed to get starred files" = "获取星标文件失败";
+
+/* Seafile */
+"Failed to identify the coding of '%@'" = "无法识别文件 '%@' 的编码";
+
+/* Seafile */
+"Failed to load activities" = "获取最近修改失败";
+
+/* Seafile */
+"Failed to load content of the directory" = "获取目录文件列表失败";
+
+/* Seafile */
+"Failed to load files" = "获取目录文件列表失败";
+
+/* Seafile */
+"Failed to login" = "登录失败";
+
+/* Seafile */
+"Failed to move files" = "移动文件失败";
+
+/* Seafile */
+"Failed to open file" = "打开文件失败";
+
+/* Seafile */
+"Failed to remove certificate" = "删除证书失败";
+
+/* Seafile */
+"Failed to rename file" = "重命名文件失败";
+
+/* Seafile */
+"Failed to restore contacts." = "恢复通讯录失败";
+
+/* Seafile */
+"Failed to save %@ to album" = "保存 %@ 到图片库失败";
+
+/* Seafile */
+"Failed to copy %@ to clipboard" = "Failed to copy %@ to clipboard";
+
+/* Seafile */
+"Failed to save account" = "保存账户失败";
+
+/* Seafile */
+"Failed to search" = "搜索失败";
+
+/* Seafile */
+"Failed to send message" = "Failed to send message";
+
+/* Seafile */
+"Failed to upload file" = "上传文件失败";
+
+/* Seafile */
+"File '%@' is shared with you using %@" = "文件 '%1$@' 在%2$@上共享给你";
+
+/* Seafile */
+"File '%@' is too large to edit" = "文件 '%@' 太大，不支持编辑功能";
+
+/* Seafile */
+"File '%@' uploaded successfully" = "File '%@' uploaded successfully";
+
+/* Seafile */
+"File name invalid" = "文件名无效";
+
+/* Seafile */
+"File name must not be empty" = "文件名不能为空";
+
+/* Seafile */
+"Files with the same name already exist, do you want to overwrite?" = "同名文件已存在，确认要覆盖它们吗？";
+
+/* Seafile */
+"File can not be shared" = "File can not be shared";
+
+/* Seafile */
+"Folder name invalid" = "无效的文件夹名";
+
+/* Seafile */
+"Folder name must not be empty" = "文件夹名不能为空";
+
+/* Seafile */
+"For example: https://seacloud.cc or http://192.168.1.24:8000" = "例如: https://seacloud.cc 或者 http://192.168.1.24:8000";
+
+/* Seafile */
+"Generate share link ..." = "获取文件外链 ...";
+
+/* Seafile */
+"Generate share link success" = "获取文件外链成功";
+
+/* Seafile */
+"Group discussion" = "Group discussion";
+
+/* Seafile */
+"Hey there!<br/><br/> I've been using %@ and thought you might like it. It is a free way to bring all you files anywhere and share them easily.<br/><br/>Go to the official website of %@:</br></br> <a href=\"%@\">%@</a>\n\n" = "你好!<br/><br/> 我正在使用%1$@，我认为你可能会喜欢它。<br/><br/>去%2$@的官网看看吧：</br></br> <a href=\"%3$@\">%4$@</a>\n\n";
+
+/* Seafile */
+"Hi,<br/><br/>Here is a link to <b>'%@'</b> in my %@:<br/><br/> <a href=\"%@\">%@</a>\n\n" = "您好,<br/><br/>这是我的%2$@中文件 <b>'%1$@'</b> 的链接 :<br/><br/> <a href=\"%3$@\">%4$@</a>\n\n";
+
+/* Seafile */
+"Hi,<br/><br/>Here is a link to directory <b>'%@'</b> in my %@:<br/><br/> <a href=\"%@\">%@</a>\n\n" = "您好,<br/><br/>这是我的%2$@中文件夹 <b>'%1$@'</b> 的共享链接 :<br/><br/> <a href=\"%3$@\">%4$@</a>\n\n";
+
+/* Seafile */
+"How would you like to share this file?" = "你想怎样共享这个文件?";
+
+/* Seafile */
+"Hide" = "Hide";
+
+/* Seafile */
+"Import client certificate" = "导入客户端证书";
+
+/* Seafile */
+"Invalid Server" = "无效的服务器地址";
+
+/* Seafile */
+"Invalid email" = "Invalid email";
+
+/* Seafile */
+"Last Backup Time" = "最后备份时间";
+
+/* No comment provided by engineer. */
+"Last Updated: %@" = "最近更新时间: %@";
+
+/* Seafile */
+"Libraries" = "资料库";
+
+/* Loading Status */
+"Loading..." = "正在刷新...";
+
+/* Seafile */
+"Local Cache" = "本地缓存";
+
+/* Local decryption */
+"Local decryption" = "本地解密";
+
+/* Seafile */
+"Log out" = "退出登录";
+
+/* Seafile */
+"Login" = "登录";
+
+/* Seafile */
+"Library name invalid" = "Library name invalid";
+
+/* Seafile */
+"Library name must not be empty" = "Library name must not be empty";
+
+/* Seafile */
+"Message" = "Message";
+
+/* Seafile */
+"Messages" = "消息";
+
+/* Seafile */
+"Modification Details" = "修改详情";
+
+/* Seafile */
+"Modified" = "修改了";
+
+/* Seafile */
+"Modified file" = "修改了文件";
+
+/* Seafile */
+"More" = "更多";
+
+/* Seafile */
+"Move" = "移动";
+
+/* Seafile */
+"MoveTo" = "移动到";
+
+/* Seafile */
+"Moved" = "移动了";
+
+/* Seafile */
+"Moved directory" = "移动了目录";
+
+/* Seafile */
+"Moving files ..." = "正在移动文件 ...";
+
+/* Seafile */
+"Moved folder" = "Moved folder";
+
+/* Seafile */
+"Moved file" = "Moved file";
+
+/* Seafile */
+"My Own Libraries" = "我的资料库";
+
+/* Seafile */
+"NO" = "NO";
+
+/* FailToPreview_iPad.xib, FailToPreview_iPhone.xib, SeafCell.xib, SeafDirCell.xib, SeafMessageCell.xib, SeafUploadDirViewController.xib */
+"Name" = "文件名";
+
+/* Seafile */
+"Network unavailable" = "网络不可用";
+
+/* Seafile */
+"New File" = "新建文件";
+
+/* Seafile */
+"New Folder" = "新建文件夹";
+
+/* Seafile */
+"New file name" = "新建文件名";
+
+/* Seafile */
+"New folder name" = "新建文件夹名";
+
+/* Seafile */
+"New Library" = "New Library";
+
+/* Seafile */
+"New library name" = "New Library Name";
+
+/* Seafile */
+"No Results" = "无结果";
+
+/* Seafile */
+"No available certificates" = "没有可用的证书";
+
+/* Seafile */
+"OK" = "确定";
+
+/* Seafile */
+"Open elsewhere..." = "使用其它应用打开";
+
+/* Seafile */
+"Open in other applications" = "在其它应用中打开";
+
+/* Seafile */
+"Open photo browser" = "打开图片浏览器";
+
+/* Seafile */
+"Open Seafile to view details" = "Open Seafile to view details";
+
+/* Seafile */
+"Organization" = "公共";
+
+/* Seafile */
+"Other Server" = "其他服务器";
+
+/* Seafile */
+"Out of quota" = "存储空间不足";
+
+/* Seafile */
+"Password" = "密码";
+
+/* Seafile */
+"Password must not be empty" = "密码不能为空";
+
+/* Seafile */
+"Password of '%@'" = "%@' 的密码";
+
+/* Seafile */
+"Password of library '%@'" = "资料库 '%@' 的密码";
+
+/* Seafile */
+"Password required" = "需要密码";
+
+/* Seafile */
+"Password (at least 8 characters)" = "Password (at least 8 characters)";
+
+/* Seafile */
+"Please enter your password again" = "Please enter your password again";
+
+/* Seafile */
+"Password must at least 8 characters" = "Password must at least 8 characters";
+
+/* Seafile */
+"Two passwords are different" = "Two passwords are different";
+
+/* Seafile */
+"PasteTo" = "复制到";
+
+/* Seafile */
+"Photos" = "图片";
+
+/* Seafile */
+"Photos are not accessible" = "Photos are not accessible";
+
+/* Seafile */
+"Please authenticate to proceed" = "请认证后继续";
+
+/* Seafile */
+"Please disable \"Auto clear passwords\" for auto uploading photos to an encrypted library." = "自动上传图片到加密资料库请先取消“自动清除资料库密码”";
+
+/* Seafile */
+"Please disable \"Auto clear passwords\" for uploading contacts to an encrypted library." = "备份通讯录到加密资料库请先取消“自动清除资料库密码”";
+
+/* Seafile */
+"Please enable \"Local decryption\" for auto uploading photos to an encrypted library." = "自动上传图片到加密资料库请先开启“本地解密”";
+
+/* Seafile */
+"Please enable \"Local decryption\" for uploading contacts to an encrypted library." = "备份通讯录到加密资料库请先开启“本地解密”";
+
+/* Seafile */
+"Post a discussion to group" = "Post a discussion to group";
+
+/* Seafile */
+"Preview" = "Preview";
+
+/* Seafile */
+"Print" = "打印";
+
+/* Seafile */
+"Publish draft" = "Publish draft";
+
+/* Pull down to get more messages */
+"Pull down to get more messages..." = "Pull down to get more messages...";
+
+/* Pull to refresh status */
+"Pull to refresh..." = "Pull to refresh...";
+
+/* Seafile */
+"Recovered deleted directory" = "还原已删除的目录";
+
+/* Seafile */
+"Redownload" = "重新下载";
+
+/* Release to get more messages */
+"Release to get more messages..." = "Release to get more messages...";
+
+/* Release to refresh status */
+"Release to refresh..." = "松手开始刷新...";
+
+/* Seafile */
+"Removed all items from trash" = "Removed all items from trash";
+
+/* Seafile */
+"Removed items older than %ld days from trash" = "Removed items older than %ld days from trash";
+
+/* Seafile */
+"Remove client certificate" = "删除客户端证书";
+
+/* Seafile */
+"Removed" = "删除了";
+
+/* Seafile */
+"Removed directory" = "删除了目录";
+
+/* Seafile */
+"Removed file" = "删除了文件";
+
+/* Seafile */
+"Rename" = "重命名";
+
+/* Seafile */
+"Renamed" = "重命名或移动了";
+
+/* Seafile */
+"Renamed directory" = "重命名了目录";
+
+/* Seafile */
+"Renaming file ..." = "正在重命名文件 ...";
+
+/* Seafile */
+"Renamed library" = "Renamed library";
+
+/* Seafile */
+"Renamed folder" = "Renamed folder";
+
+/* Seafile */
+"Renamed file" = "Renamed file";
+
+/* Seafile */
+"Replace" = "Replace";
+
+/* Seafile */
+"Reset repo password" = "重新设置资料库密码";
+
+/* Seafile */
+"Restore Contacts" = "恢复通讯录";
+
+/* Seafile */
+"Restoring contacts." = "正在恢复通讯录";
+
+/* Seafile */
+"Restored library" = "Restored library";
+
+/* Seafile */
+"Restored folder" = "Restored folder";
+
+/* Seafile */
+"Restored file" = "Restored file";
+
+/* Seafile */
+"Reverted file \"%@\" to status at %@." = "文件 \"%1$@\" 还原到 %2$@.";
+
+/* Seafile */
+"Reverted library to status at" = "资料库内容还原到";
+
+/* Seafile push notification message */
+"SEAFILE_LOC_KEY_FORMAT" = "%@, you got new messages from %@";
+
+/* Seafile */
+"Save" = "保存";
+
+/* Seafile */
+"Save Destination" = "Save Destination";
+
+/* Seafile */
+"Save all photos to album" = "保存所有图片到图片库";
+
+/* Seafile */
+"Save to %@" = "Save to %@";
+
+/* MainInterface.storyboard */
+"Save to Seafile" = "Save to Seafile";
+
+/* Seafile */
+"Save to album" = "保存到图片库";
+
+/* Seafile */
+"Saving all photos to album" = "正在保存所有图片到图片库";
+
+/* Seafile */
+"Seafile" = "Seafile";
+
+/* Seafile */
+"Search" = "搜索";
+
+/* Seafile */
+"Search files in this library" = "在当前资料库中搜索文件";
+
+/* Seafile */
+"Search is not supported on the server" = "服务器不支持搜索";
+
+/* Seafile */
+"Searching" = "正在搜索";
+
+/* Seafile */
+"Searching ..." = "正在搜索 ...";
+
+/* Seafile */
+"Select All" = "全选";
+
+/* Seafile */
+"Select None" = "取消选择";
+
+/* Seafile */
+"Select a certificate" = "Select a certificate";
+
+/* No comment provided by engineer. */
+"Send" = "发送";
+
+/* Seafile */
+"Send share link via email" = "使用电子邮件发送共享链接";
+
+/* Seafile */
+"Sending" = "Sending";
+
+/* Seafile */
+"Sending..." = "Sending...";
+
+/* Seafile */
+"Server" = "服务器";
+
+/* Seafile */
+"Server must not be empty" = "服务器地址不能为空";
+
+/* Seafile */
+"Server, like https://seafile.cc" = "服务器, 例如 https://seafile.cc";
+
+/* Seafile */
+"Settings" = "设置";
+
+/* Seafile */
+"Shared to me" = "共享给我的";
+
+/* Seafile */
+"Shared with groups" = "Shared with groups";
+
+/* Seafile */
+"Share" = "Share";
+
+/* Seafile */
+"Shibboleth" = "Shibboleth";
+
+/* Seafile */
+"Shibboleth Login" = "Shibboleth 登陆";
+
+/* Seafile */
+"Single Sign On" = "Single Sign On";
+
+/* Seafile */
+"Sort by Last Modifed Time" = "按最后修改时间排序";
+
+/* Seafile */
+"Sort by Name" = "按名称排序";
+
+/* Seafile */
+"Space Used" = "已用空间";
+
+/* Seafile */
+"Star" = "加星标";
+
+/* Seafile */
+"Starred" = "星标文件";
+
+/* Seafile */
+"Start to download folder: " = "开始下载文件夹: ";
+
+/* Seafile */
+"Start to download library: " = "开始下载资料库";
+
+/* Seafile */
+"Succeeded to remove certificate" = "成功删除证书";
+
+/* Seafile */
+"Succeeded to restore contacts" = "成功恢复通讯录";
+
+/* Seafile */
+"Succeeded to save %@ to album" = "成功保存 %@ 到图片库";
+
+/* Seafile */
+"Succeeded to copy %@ to clipboard" = "Succeeded to copy %@ to clipboard";
+
+/* Seafile */
+"Successfully imported %@" = "成功导入%@";
+
+/* Seafile */
+"Successfully moved" = "Successfully moved";
+
+/* Seafile */
+"Successfully copied" = "Successfully copied";
+
+/* Seafile */
+"Tell Friends about %@" = "向朋友们推荐%@";
+
+/* Seafile */
+"The certificate from this website has been changed. Would you like to connect to the server anyway?" = "这个网站提供的证书已经改变，你确定要连接到服务器吗？";
+
+/* Seafile */
+"The certificate from this website is invalid. Would you like to connect to the server anyway?" = "这个网站提供的证书无效，你确定要连接到服务器吗？";
+
+/* Seafile */
+"The length of password should be between 3 and 100" = "密码长度必须在3到100个字符自己";
+
+/* Seafile */
+"The mail account has not been set yet" = "邮件账户未设置";
+
+/* Seafile */
+"The token is invalid, you need to login again" = "会话已经过期，需要重新登录";
+
+/* Seafile */
+"There is no app which can open this type of file on this machine" = "本地没有开用来打开这种类型文件的应用";
+
+/* Seafile */
+"There was a problem verifying your identity." = "身份认证出现问题";
+
+/* Seafile */
+"This app does not have access to your contacts." = "该应用无法访问通讯录";
+
+/* Seafile */
+"There is no account available" = "There is no account available.";
+
+/* Seafile */
+"This app does not have access to your location service." = "应用程序无法访问位置服务";
+
+/* Seafile */
+"This app does not have access to your photos and videos." = "该应用无法访问你的照片和视频.";
+
+/* Seafile */
+"This function is not supportted yet" = "该功能暂不支持";
+
+/* Seafile */
+"This function is not supportted yet，you can copy it to the pasteboard and send mail by yourself" = "该功能暂不支持";
+
+/* Seafile */
+"Two step verification code" = "两步认证验证码";
+
+/* Seafile */
+"Unstar" = "取消星标";
+
+/* Seafile */
+"Upload" = "上传";
+
+/* Seafile */
+"Upload Destination" = "上传位置";
+
+/* Seafile */
+"Upload Videos" = "自动上传视频";
+
+/* Seafile */
+"Updated file" = "Upload file";
+
+/* Seafile */
+"Updated draft" = "Upload draft";
+
+/* NSPhotoLibraryUsageDescription */
+"Used to sync photos" = "Used to sync photos";
+
+/* Seafile */
+"Username" = "用户名";
+
+/* Seafile */
+"Username must not be empty" = "用户名不能为空";
+
+/* Seafile */
+"Verification code must not be empty" = "验证码不能为空";
+
+/* Seafile */
+"Version" = "版本";
+
+/* Seafile */
+"Website" = "官网";
+
+/* Seafile */
+"Welcome to %@" = "欢迎使用%@";
+
+/* Seafile */
+"Wifi Only" = "仅在Wifi下自动同步";
+
+/* Seafile */
+"Wipe Cache" = "清除缓存";
+
+/* Seafile */
+"Wrong library password" = "资料库密码错误";
+
+/* Seafile */
+"Wrong password" = "密码错误";
+
+/* Seafile */
+"Wrong username or password" = "用户名或密码错误";
+
+/* Seafile */
+"YES" = "YES";
+
+/* Seafile */
+"You can enable access in Privacy Settings" = "你可以在'隐私设置'中授权访问";
+
+/* Seafile */
+"Your device cannot authenticate using Touch ID." = "你的设备无法使用Touch ID 认证";
+
+/* Seafile */
+"Your device cannot authenticate using Face ID." = "Your device cannot authenticate using Face ID.";
+
+/* Seafile */
+"and %@ more" = "和其它 %@ 个";
+
+/* SeafCell.xib */
+"detail" = "详情";
+
+/* Seafile */
+"directories" = "目录";
+
+/* Seafile */
+"files" = "文件";
+
+/* Seafile */
+"modified" = "已修改";
+
+/* Seafile */
+"Uploading" = "Uploading";
+
+/* Seafile */
+"Downloading" = "Downloading";
+
+/* Seafile */
+"Upload & Download" = "Upload & Download";
+
+/* Seafile */
+"Completed" = "Completed";
+
+/* waiting to upload */
+"Waiting to upload" = "%Waiting to upload";
+
+/* FolderView_iPad.storyboard, FolderView_iPhone.storyboard */
+"www.seafile.com" = "www.seafile.com";
+
+/* Share to WeChat */
+"Share to WeChat" = "Share to WeChat";
+
+/* Share Cancelled */
+"Share Cancelled" = "Share Cancelled";
+
+/* Failed to share to WeChat */
+"Failed to share to WeChat" = "Failed to share to WeChat";
+
+/* OK and Remember Device */
+"OK and Remember Device" = "OK and Remember Device";
+
+/* Privacy Policy */
+"Privacy Policy" = "Privacy Policy";
+
+/* Privacy Policy URL */
+"https://www.seafile.com/en/privacy_policy/" = "https://www.seafile.com/en/privacy_policy/";
+
+/*  TouchID is Enabled  */
+"FaceID(TouchID) is Enabled" = "FaceID(TouchID) is Enabled";
+
+/* Files cannot be used whith TouchID */
+"Files cannot access files in Seafile when FaceID(TouchID) enabled. Please open Seafile and disable FaceID(TouchID)." = "Files cannot access files in Seafile when FaceID(TouchID) enabled. Please open Seafile and disable FaceID(TouchID).";
+
+/* Seafile */
+"Please open Seafile ans add an account to start" = "Please open Seafile ans add an account to start.";
