@@ -1,0 +1,1069 @@
+﻿
+
+/* Seafile */
+"%@ can't verify the identity of the website \"%@\"" = "%1$@ nie może zweryfikować tożsamości witryny \"%2$@\"";
+
+/* Seafile */
+"%@ does not support to preview file of this kind at the moment." = "%@ w tej chwili nie obsługuje podglądu plików tego typu.";
+
+/* Seafile */
+"%@ invite you to %@" = "%1$@ zaprasza Cię do %2$@";
+
+/* Seafile */
+"%@, Uploaded %@" = "%1$@, Przesłano %2$@";
+
+/* Seafile */
+"%@, uploading" = "%@, uploading";
+
+/* Seafile */
+"%@, waiting to upload" = "%@, oczekiwanie na przesłanie";
+
+/* Seafile */
+"%ld photos remain" = "Pozostało %ld zdjęć";
+
+/* Seafile */
+"%ld files are uploaded to Seafile" = "%ld files are uploaded to Seafile";
+
+/* Seafile */
+"1 photo remain" = "Pozostało 1 zdjęcie";
+
+/* Seafile */
+"%ld days ago" = "%ld days ago";
+
+/* Seafile */
+"%ld hours ago" = "%ld hours ago";
+
+/* Seafile */
+"%ld minutes ago" = "%ld minutes ago";
+
+/* Seafile */
+"%ld months ago" = "%ld months ago";
+
+/* Seafile */
+"%ld years ago" = "%ld years ago";
+
+/* Seafile */
+"a day ago" = "a day ago";
+
+/* Seafile */
+"a few seconds ago" = "a few seconds ago";
+
+/* Seafile */
+"an hour ago" = "an hour ago";
+
+/* Seafile */
+"a minute ago" = "a minute ago";
+
+/* Seafile */
+"a month ago" = "a month ago";
+
+/* Seafile */
+"a year ago" = "a year ago";
+
+/* Seafile */
+"A file with the same name already exists, do you want to overwrite?" = "Plik o takiej samej nazwie już istnieje, czy chcesz go nadpisać?";
+
+/* Seafile */
+"About" = "O programie";
+
+/* Seafile */
+"Account" = "Konto";
+
+/* Seafile */
+"Account Info" = "Informacje o koncie";
+
+/* Seafile */
+"Accounts" = "Konta";
+
+/* Seafile */
+"Activities" = "Aktywność";
+
+/* Seafile */
+"Activity" = "Aktywność";
+
+/* Seafile */
+"Add a new discussion" = "Add a new discussion";
+
+/* Seafile */
+"Add account" = "Dodaj konto";
+
+/* Seafile */
+"Add contact" = "Add contact";
+
+/* Seafile */
+"Added" = "Dodane";
+
+/* Seafile */
+"Added directory" = "Dodane katalogi";
+
+/* Seafile */
+"Added file" = "Dodany plik";
+
+/* Seafile */
+"Added or modified" = "Dodane lub zmienione";
+
+/* Seafile */
+"All photos synced" = "Zsynchronizowano wszystkie zdjęcia ";
+
+/* Seafile */
+"Are you sure to clear all the cache?" = "Czy na pewno chcesz wyczyścić całą pamięć podręczną?";
+
+/* Seafile */
+"Are you sure to cancel all downloading tasks?" = "Are you sure to cancel all downloading tasks?";
+
+/* Seafile */
+"Are you sure to cancel all uploading tasks" = "Are you sure to cancel all uploading tasks";
+
+/* Seafile */
+"Are you sure to log out?" = "Czy na pewno chcesz się wylogować?";
+
+/* Seafile */
+"Are you sure you want to delete %@ ?" = "Are you sure you want to delete %@ ?";
+
+/* Seafile */
+"Are you sure to save all photos to album?" = "Are you sure to save all photos to album";
+
+/* Seafile */
+"Auto Upload" = "Automatyczne przesyłanie";
+
+/* Auto cleay library password */
+"Auto clear passwords" = "Automatycznie czyść hasła";
+
+/* Seafile */
+"Auto merge by seafile system" = "Automatycznie złączone przez system seafile";
+
+/* Seafile */
+"Auto upload should be enabled first." = "Najpierw należy włączyć automatyczne przesyłanie.";
+
+/* Seafile */
+"Back" = "Wstecz";
+
+/* Seafile */
+"Back to Last Account" = "Wróć do poprzedniego konta";
+
+/* Seafile */
+"Background Upload" = "Przesyłanie w tle";
+
+/* Seafile */
+"Backup Contacts" = "Kopia zapasowa kontaktów";
+
+/* Seafile */
+"Cache" = "Pamięć podręczna";
+
+/* FolderView_iPad.storyboard */
+"Camera Upload" = "Kopia zdjęć";
+
+/* Seafile */
+"Can not remove certificate because it is still in use" = "Nie można usunąć certyfikatu ponieważ jest ciągle w użyciu";
+
+/* Seafile */
+"Cancel" = "Cancel";
+
+/* Seafile */
+"Cancel download" = "Anuluj pobieranie";
+
+/* Seafile */
+"Cancel upload" = "Cancel upload";
+
+/* Seafile */
+"Changed library name or description" = "Zmieniona nazwa biblioteki lub opis";
+
+/* Seafile */
+"Checking library password ..." = "Sprawdzanie hasła biblioteki...";
+
+/* Seafile */
+"Choose" = "Wybierz";
+
+/* Seafile */
+"Choose directory" = "Choose directory";
+
+/* Seafile */
+"Choose a Seafile server" = "Wybierz serwer Seafile";
+
+/* Seafile */
+"Choose an account to start" = "Wybierz konto, aby rozpocząć";
+
+/* Seafile */
+"Clear libraries passwords successfully." = "Pomyślnie wyczyszczono hasła bibliotek.";
+
+/* Seafile */
+"Clear library password successfully." = "Pomyślnie wyczyszczono hasło biblioteki.";
+
+/* Seafile */
+"Clear password" = "Wyczyść hasło";
+
+/* Seafile */
+"Clear remembered passwords" = "Wyczyść zapamiętane hasła";
+
+/* Seafile */
+"Click \"Search\" to start" = "Kliknij \"Szukaj\", aby rozpocząć";
+
+/* Seafile */
+"Connecting to server" = "Łączenie z serwerem";
+
+/* Seafile */
+"Contacts Backup" = "Kopia zapasowa kontaktów";
+
+/* Seafile */
+"Contacts backup failed." = "Nie udało się wykonać kopii zapasowej kontaktów.";
+
+/* Seafile */
+"Contacts backup should be enabled first." = "Najpierw należy włączyć kopię zapasową kontaktów.";
+
+/* Seafile */
+"Contacts backup succeeded." = "Pomyślnie wykonano kopię zapasową kontaktów.";
+
+/* Seafile */
+"Contacts will be backuped as: %@ " = "Kontakty będą zachowane jako: %@";
+
+/* Seafile */
+"Copy" = "Kopiuj";
+
+/* Seafile */
+"Copy Link to Clipboard" = "Skopiuj odsyłacz do schowka";
+
+/* Seafile */
+"Copy image to clipboard" = "Skopiuj obraz do schowka";
+
+/* Seafile */
+"Copy share link to clipboard" = "Kopiuj łącze udostępniania do schowka";
+
+/* Seafile */
+"Copying files ..." = "Kopiowanie plików...";
+
+/* Seafile */
+"Created library %@" = "Utworzona biblioteka %@";
+
+/* Seafile */
+"Creating file ..." = "Tworzenie pliku...";
+
+/* Seafile */
+"Creating folder ..." = "Tworzenie folderu...";
+
+/* Seafile */
+"Creating library ..." = "Creating library ...";
+
+/* Seafile */
+"Created library" = "Created library";
+
+/* Seafile */
+"Created folder" = "Created folder";
+
+/* Seafile */
+"Created file" = "Created file";
+
+/* Seafile */
+"Created %ld files" = "Created %ld files";
+
+/* Seafile */
+"Created draft" = "Created draft";
+
+/* Seafile */
+"Delete" = "Usuń";
+
+/* Seafile */
+"Deleted" = "Usunięte";
+
+/* Seafile */
+"Deleted library %@" = "Usunięta biblioteka %@";
+
+/* Seafile */
+"Deleting directory ..." = "Usuwanie folderu...";
+
+/* Seafile */
+"Deleting file ..." = "Usuwanie pliku...";
+
+/* Seafile */
+"Deleting files ..." = "Usuwanie plików...";
+
+/* Seafile */
+"Deleted library" = "Deleted library";
+
+/* Seafile */
+"Deleted folder" = "Deleted folder";
+
+/* Seafile */
+"Deleted file" = "Deleted file";
+
+/* Seafile */
+"Deleted draft" = "Deleted draft";
+
+/* Seafile */
+"Destination" = "Destination";
+
+/* Seafile */
+"Directory '%@' is shared with you using %@" = "Katalog '%1$@' został Ci udostępniony za pomocą %2$@";
+
+/* Seafile */
+"Discussion" = "Dyskusja";
+
+/* Seafile */
+"Do you want reset the uploaded photos?" = "Czy chcesz zresetować przesłane zdjęcia?";
+
+/* Seafile */
+"Do you want to backup contacts now? " = "Czy chcesz wykonać teraz kopię kontaktów?";
+
+/* Seafile */
+"Download" = "Pobierz";
+
+/* Seafile */
+"Edit" = "Edytuj";
+
+/* Seafile */
+"Email" = "E-mail";
+
+/* Seafile */
+"Email or Username" = "Email lub nazwa użytkownika";
+
+/* Seafile */
+"Enable TouchID" = "Enable Touch ID";
+
+/* Seafile */
+"Enable FaceID" = "Enable Face ID";
+
+/* Seafile */
+"Encrypted Libraries" = "Biblioteki zaszyfrowane";
+
+/* Seafile */
+"Encrypted" = "Encrypted";
+
+/* Seafile */
+"Failed to add discussion" = "Failed to add discussion";
+
+/* Seafile */
+"Failed to authenticate" = "Nie udało się uwierzytelnić";
+
+/* Seafile */
+"Failed to copy files" = "Nie udało się skopiować plików";
+
+/* Seafile */
+"Failed to create file" = "Nie udało się stworzyć pliku";
+
+/* Seafile */
+"Failed to create folder" = "Nie udało się stworzyć folderu";
+
+/* Seafile */
+"Failed to create library" = "Failed to create library";
+
+/* Seafile */
+"Failed to delete files" = "Nie udało się usunąć plików";
+
+/* Seafile */
+"Failed to download file '%@'" = "Nie udało się pobrać pliku '%@'";
+
+/* Seafile */
+"Failed to find %@" = "Nie odnaleziono %@";
+
+/* Seafile */
+"Failed to find library" = "Nie odnaleziono biblioteki";
+
+/* Seafile */
+"Failed to generate share link of directory '%@'" = "Nie udało się wygenerować łącza udostępniania dla folderu '%@'";
+
+/* Seafile */
+"Failed to generate share link of file '%@'" = "Nie udało się wygenerować łącza udostępniania dla pliku '%@'";
+
+/* Seafile */
+"Failed to get groups ..." = "Failed to get groups ...";
+
+/* Seafile */
+"Failed to get messages" = "Failed to get messages";
+
+/* Seafile */
+"Failed to get modification details" = "Nie udało się pobrać szczegółów zmian";
+
+/* Seafile */
+"Failed to get starred files" = "Nie udało się pobrać ulubionych plików";
+
+/* Seafile */
+"Failed to identify the coding of '%@'" = "Nie rozpoznano kodowania '%@'";
+
+/* Seafile */
+"Failed to load activities" = "Nie udało się wczytać aktywności";
+
+/* Seafile */
+"Failed to load content of the directory" = "Nie udało się pobrać zawartości folderu";
+
+/* Seafile */
+"Failed to load files" = "Nie udało się wczytać plików";
+
+/* Seafile */
+"Failed to login" = "Nie udało się zalogować";
+
+/* Seafile */
+"Failed to move files" = "Nie udało się przenieść plików";
+
+/* Seafile */
+"Failed to open file" = "Nie udało się otworzyć pliku";
+
+/* Seafile */
+"Failed to remove certificate" = "Nie udało się usunąć certyfikatu";
+
+/* Seafile */
+"Failed to rename file" = "Nie udało się zmienić nazwy pliku";
+
+/* Seafile */
+"Failed to restore contacts." = "Nie udało się przywrócić kontaktów";
+
+/* Seafile */
+"Failed to save %@ to album" = "Nie udało się zapisać %@ w albumie";
+
+/* Seafile */
+"Failed to copy %@ to clipboard" = "Failed to copy %@ to clipboard";
+
+/* Seafile */
+"Failed to save account" = "Nie udało się zapisać konta";
+
+/* Seafile */
+"Failed to search" = "Nie udało się wyszukać";
+
+/* Seafile */
+"Failed to send message" = "Failed to send message";
+
+/* Seafile */
+"Failed to upload file" = "Nie udało się wgrać pliku";
+
+/* Seafile */
+"File '%@' is shared with you using %@" = "Plik '%1$@' został Ci udostępniony używając %2$@";
+
+/* Seafile */
+"File '%@' is too large to edit" = "Plik '%@' jest zbyt duży do edycji";
+
+/* Seafile */
+"File '%@' uploaded successfully" = "File '%@' uploaded successfully";
+
+/* Seafile */
+"File name invalid" = "Nieprawidłowa nazwa pliku";
+
+/* Seafile */
+"File name must not be empty" = "Nazwa pliku nie może być pusta";
+
+/* Seafile */
+"Files with the same name already exist, do you want to overwrite?" = "Pliki o takich samych nazwach już istnieją, czy chcesz je nadpisać?";
+
+/* Seafile */
+"File can not be shared" = "File can not be shared";
+
+/* Seafile */
+"Folder name invalid" = "Nieprawidłowa nazwa folderu";
+
+/* Seafile */
+"Folder name must not be empty" = "Nazwa folderu nie może być pusta";
+
+/* Seafile */
+"For example: https://seacloud.cc or http://192.168.1.24:8000" = "Przykładowo: https://seacloud.cc lub http://192.168.1.24:8000";
+
+/* Seafile */
+"Generate share link ..." = "Wygeneruj łącze udostępniania...";
+
+/* Seafile */
+"Generate share link success" = "Wygenerowano łącze udostępniania";
+
+/* Seafile */
+"Group discussion" = "Group discussion";
+
+/* Seafile */
+"Hey there!<br/><br/> I've been using %@ and thought you might like it. It is a free way to bring all you files anywhere and share them easily.<br/><br/>Go to the official website of %@:</br></br> <a href=\"%@\">%@</a>\n\n" = "Cześć!<br/><br/> Używam %1$@ i pomyślałem, że też może Ci się spodobać. To darmowy sposób przenoszenia i udostępniania swoich plików.<br/><br/>Odwiedź oficjalną stronę %2$@:</br></br> <a href=\"%3$@\">%4$@</a>\n\n";
+
+/* Seafile */
+"Hi,<br/><br/>Here is a link to <b>'%@'</b> in my %@:<br/><br/> <a href=\"%@\">%@</a>\n\n" = "Cześć,<br/><br/>Oto odsyłacz do <b>'%1$@'</b> w mojej %2$@:<br/><br/> <a href=\"%3$@\">%4$@</a>\n\n";
+
+/* Seafile */
+"Hi,<br/><br/>Here is a link to directory <b>'%@'</b> in my %@:<br/><br/> <a href=\"%@\">%@</a>\n\n" = "Cześć,<br/><br/>Oto odsyłacz do katalogu <b>'%1$@'</b> w mojej %2$@:<br/><br/> <a href=\"%3$@\">%4$@</a>\n\n";
+
+/* Seafile */
+"How would you like to share this file?" = "Jak chciałbyś udostępnić ten plik?";
+
+/* Seafile */
+"Hide" = "Hide";
+
+/* Seafile */
+"Import client certificate" = "Zaimportuj certyfikat klienta";
+
+/* Seafile */
+"Invalid Server" = "Nieprawidłowy serwer";
+
+/* Seafile */
+"Invalid email" = "Invalid email";
+
+/* Seafile */
+"Last Backup Time" = "Czas ostatniej kopii";
+
+/* No comment provided by engineer. */
+"Last Updated: %@" = "Ostatnia aktualizacja: %@";
+
+/* Seafile */
+"Libraries" = "Biblioteki";
+
+/* Loading Status */
+"Loading..." = "Wczytywanie...";
+
+/* Seafile */
+"Local Cache" = "Lokalna pamięć podręczna";
+
+/* Local decryption */
+"Local decryption" = "Deszyfrowanie lokalne";
+
+/* Seafile */
+"Log out" = "Wyloguj";
+
+/* Seafile */
+"Login" = "Zaloguj";
+
+/* Seafile */
+"Library name invalid" = "Library name invalid";
+
+/* Seafile */
+"Library name must not be empty" = "Library name must not be empty";
+
+/* Seafile */
+"Message" = "Message";
+
+/* Seafile */
+"Messages" = "Wiadomości";
+
+/* Seafile */
+"Modification Details" = "Szczegóły zmian";
+
+/* Seafile */
+"Modified" = "Zmienione";
+
+/* Seafile */
+"Modified file" = "Zmieniony plik";
+
+/* Seafile */
+"More" = "Więcej";
+
+/* Seafile */
+"Move" = "Przenieś";
+
+/* Seafile */
+"MoveTo" = "PrzenieśDo";
+
+/* Seafile */
+"Moved" = "Przeniesiony";
+
+/* Seafile */
+"Moved directory" = "Przeniesiony katalog";
+
+/* Seafile */
+"Moving files ..." = "Przenoszenie plików...";
+
+/* Seafile */
+"Moved folder" = "Moved folder";
+
+/* Seafile */
+"Moved file" = "Moved file";
+
+/* Seafile */
+"My Own Libraries" = "Moje biblioteki";
+
+/* Seafile */
+"NO" = "NO";
+
+/* FailToPreview_iPad.xib, FailToPreview_iPhone.xib, SeafCell.xib, SeafDirCell.xib, SeafMessageCell.xib, SeafUploadDirViewController.xib */
+"Name" = "Nazwa";
+
+/* Seafile */
+"Network unavailable" = "Sieć niedostępna";
+
+/* Seafile */
+"New File" = "Nowy plik";
+
+/* Seafile */
+"New Folder" = "Nowy folder";
+
+/* Seafile */
+"New file name" = "Nowa nazwa pliku";
+
+/* Seafile */
+"New folder name" = "Nowa nazwa folderu";
+
+/* Seafile */
+"New Library" = "New Library";
+
+/* Seafile */
+"New library name" = "New Library Name";
+
+/* Seafile */
+"No Results" = "Brak wyników";
+
+/* Seafile */
+"No available certificates" = "Brak dostępnych certyfikatów";
+
+/* Seafile */
+"OK" = "OK";
+
+/* Seafile */
+"Open elsewhere..." = "Otwórz gdzie indziej...";
+
+/* Seafile */
+"Open in other applications" = "Otwórz w innej aplikacji";
+
+/* Seafile */
+"Open photo browser" = "Otwórz przeglądarkę zdjęć";
+
+/* Seafile */
+"Open Seafile to view details" = "Open Seafile to view details";
+
+/* Seafile */
+"Organization" = "Organizacja";
+
+/* Seafile */
+"Other Server" = "Inny serwer";
+
+/* Seafile */
+"Out of quota" = "Brak miejsca";
+
+/* Seafile */
+"Password" = "Hasło";
+
+/* Seafile */
+"Password must not be empty" = "Hasło nie może być puste";
+
+/* Seafile */
+"Password of '%@'" = "Hasło '%@'";
+
+/* Seafile */
+"Password of library '%@'" = "Hasło biblioteki '%@'";
+
+/* Seafile */
+"Password required" = "Hasło jest wymagane";
+
+/* Seafile */
+"Password (at least 8 characters)" = "Password (at least 8 characters)";
+
+/* Seafile */
+"Please enter your password again" = "Please enter your password again";
+
+/* Seafile */
+"Password must at least 8 characters" = "Password must at least 8 characters";
+
+/* Seafile */
+"Two passwords are different" = "Two passwords are different";
+
+/* Seafile */
+"PasteTo" = "WklejDo";
+
+/* Seafile */
+"Photos" = "Zdjęcia";
+
+/* Seafile */
+"Photos are not accessible" = "Photos are not accessible";
+
+/* Seafile */
+"Please authenticate to proceed" = "Proszę się uwierzytelnić, aby kontynować";
+
+/* Seafile */
+"Please disable \"Auto clear passwords\" for auto uploading photos to an encrypted library." = "Proszę wyłączyć \"Automatyczne czyszczenie haseł\" dla automatycznego przesyłania zdjęć do zaszyfrowanej biblioteki.";
+
+/* Seafile */
+"Please disable \"Auto clear passwords\" for uploading contacts to an encrypted library." = "Proszę wyłączyć \"Automatyczne czyszczenie haseł\", aby przesyłać kontakty do zaszyfrowanej biblioteki.";
+
+/* Seafile */
+"Please enable \"Local decryption\" for auto uploading photos to an encrypted library." = "Proszę włączyć \"Lokalne odszyfrowywanie\" dla automatycznego przesyłania zdjęć do zaszyfrowanej biblioteki.";
+
+/* Seafile */
+"Please enable \"Local decryption\" for uploading contacts to an encrypted library." = "Proszę włączyć \"Lokalne odszyfrowywanie\", aby przesyłać kontakty do zaszyfrowanej biblioteki.";
+
+/* Seafile */
+"Post a discussion to group" = "Post a discussion to group";
+
+/* Seafile */
+"Preview" = "Preview";
+
+/* Seafile */
+"Print" = "Drukuj";
+
+/* Seafile */
+"Publish draft" = "Publish draft";
+
+/* Pull down to get more messages */
+"Pull down to get more messages..." = "Pull down to get more messages...";
+
+/* Pull to refresh status */
+"Pull to refresh..." = "Pull to refresh...";
+
+/* Seafile */
+"Recovered deleted directory" = "Przywrócono usunięty katalog";
+
+/* Seafile */
+"Redownload" = "Pobierz ponownie";
+
+/* Release to get more messages */
+"Release to get more messages..." = "Release to get more messages...";
+
+/* Release to refresh status */
+"Release to refresh..." = "Puść, aby odświeżyć...";
+
+/* Seafile */
+"Removed all items from trash" = "Removed all items from trash";
+
+/* Seafile */
+"Removed items older than %ld days from trash" = "Removed items older than %ld days from trash";
+
+/* Seafile */
+"Remove client certificate" = "Usuń certyfikat klienta";
+
+/* Seafile */
+"Removed" = "Usunięty";
+
+/* Seafile */
+"Removed directory" = "Usunięty katalog";
+
+/* Seafile */
+"Removed file" = "Usunięty plik";
+
+/* Seafile */
+"Rename" = "Zmień nazwę";
+
+/* Seafile */
+"Renamed" = "Zmieniona nazwa";
+
+/* Seafile */
+"Renamed directory" = "Zmieniona nazwa katalogu";
+
+/* Seafile */
+"Renaming file ..." = "Zmienianie nazwy pliku...";
+
+/* Seafile */
+"Renamed library" = "Renamed library";
+
+/* Seafile */
+"Renamed folder" = "Renamed folder";
+
+/* Seafile */
+"Renamed file" = "Renamed file";
+
+/* Seafile */
+"Replace" = "Replace";
+
+/* Seafile */
+"Reset repo password" = "Zresetuj hasło repozytorium";
+
+/* Seafile */
+"Restore Contacts" = "Przywróć kontakty";
+
+/* Seafile */
+"Restoring contacts." = "Przywracanie kontaktów.";
+
+/* Seafile */
+"Restored library" = "Restored library";
+
+/* Seafile */
+"Restored folder" = "Restored folder";
+
+/* Seafile */
+"Restored file" = "Restored file";
+
+/* Seafile */
+"Reverted file \"%@\" to status at %@." = "Przywrócono plik \"%1$@\" do stanu z %2$@.";
+
+/* Seafile */
+"Reverted library to status at" = "Przywrócono bibliotekę do stanu z";
+
+/* Seafile push notification message */
+"SEAFILE_LOC_KEY_FORMAT" = "%@, you got new messages from %@";
+
+/* Seafile */
+"Save" = "Zapisz";
+
+/* Seafile */
+"Save Destination" = "Save Destination";
+
+/* Seafile */
+"Save all photos to album" = "Zapisz wszystkie zdjęcia w albumie";
+
+/* Seafile */
+"Save to %@" = "Save to %@";
+
+/* MainInterface.storyboard */
+"Save to Seafile" = "Save to Seafile";
+
+/* Seafile */
+"Save to album" = "Zapisz w albumie";
+
+/* Seafile */
+"Saving all photos to album" = "Zapisywanie wszystkich zdjęć w albumie";
+
+/* Seafile */
+"Seafile" = "Seafile";
+
+/* Seafile */
+"Search" = "Szukaj";
+
+/* Seafile */
+"Search files in this library" = "Znajdź pliki w tej bibliotece";
+
+/* Seafile */
+"Search is not supported on the server" = "Wyszukiwanie nie jest obsługiwane przez serwer";
+
+/* Seafile */
+"Searching" = "Wyszukiwanie";
+
+/* Seafile */
+"Searching ..." = "Wyszukiwanie...";
+
+/* Seafile */
+"Select All" = "Zaznacz wszystko";
+
+/* Seafile */
+"Select None" = "Usuń zaznaczenie";
+
+/* Seafile */
+"Select a certificate" = "Select a certificate";
+
+/* No comment provided by engineer. */
+"Send" = "Wyślij";
+
+/* Seafile */
+"Send share link via email" = "Wyślij łącze udostępniania przez e-mail";
+
+/* Seafile */
+"Sending" = "Sending";
+
+/* Seafile */
+"Sending..." = "Sending...";
+
+/* Seafile */
+"Server" = "Serwer";
+
+/* Seafile */
+"Server must not be empty" = "Serwer nie może być pusty";
+
+/* Seafile */
+"Server, like https://seafile.cc" = "Serwer, np. https://seafile.cc";
+
+/* Seafile */
+"Settings" = "Ustawienia";
+
+/* Seafile */
+"Shared to me" = "Udostępnione dla mnie";
+
+/* Seafile */
+"Shared with groups" = "Shared with groups";
+
+/* Seafile */
+"Share" = "Share";
+
+/* Seafile */
+"Shibboleth" = "Shibboleth";
+
+/* Seafile */
+"Shibboleth Login" = "Logowanie Shibboleth";
+
+/* Seafile */
+"Single Sign On" = "Single Sign On";
+
+/* Seafile */
+"Sort by Last Modifed Time" = "Sortuj wg Daty modyfikacji";
+
+/* Seafile */
+"Sort by Name" = "Sortuj wg Nazwy";
+
+/* Seafile */
+"Space Used" = "Wykorzystane miejsce";
+
+/* Seafile */
+"Star" = "Gwiazdka";
+
+/* Seafile */
+"Starred" = "Ulubione";
+
+/* Seafile */
+"Start to download folder: " = "Rozpocznij pobieranie folderu:";
+
+/* Seafile */
+"Start to download library: " = "Rozpocznij pobieranie biblioteki:";
+
+/* Seafile */
+"Succeeded to remove certificate" = "Pomyślnie usunięto certyfikat";
+
+/* Seafile */
+"Succeeded to restore contacts" = "Pomyślnie przywrócono kontakty";
+
+/* Seafile */
+"Succeeded to save %@ to album" = "Pomyślnie zapisano %@ w albumie";
+
+/* Seafile */
+"Succeeded to copy %@ to clipboard" = "Succeeded to copy %@ to clipboard";
+
+/* Seafile */
+"Successfully imported %@" = "Pomyślnie zaimportowano %@";
+
+/* Seafile */
+"Successfully moved" = "Successfully moved";
+
+/* Seafile */
+"Successfully copied" = "Successfully copied";
+
+/* Seafile */
+"Tell Friends about %@" = "Powiedz znajomym o %@";
+
+/* Seafile */
+"The certificate from this website has been changed. Would you like to connect to the server anyway?" = "Certyfikat tej strony się zmienił. Czy mimo to chcesz się połączyć z serwerem?";
+
+/* Seafile */
+"The certificate from this website is invalid. Would you like to connect to the server anyway?" = "Certyfikat tej strony jest nieprawidłowy. Czy mimo to chcesz się połączyć z serwerem?";
+
+/* Seafile */
+"The length of password should be between 3 and 100" = "Długość hasła musi się zawierać pomiędzy 3 a 100 znaków";
+
+/* Seafile */
+"The mail account has not been set yet" = "Konto pocztowe nie zostało jeszcze skonfigurowane";
+
+/* Seafile */
+"The token is invalid, you need to login again" = "Nieprawidłowy token, musisz się ponownie zalogować";
+
+/* Seafile */
+"There is no app which can open this type of file on this machine" = "Nie ma aplikacji umożliwiającej otwarcie plików tego typu";
+
+/* Seafile */
+"There was a problem verifying your identity." = "Wystąpił problem podczas weryfikacji Twojej tożsamości.";
+
+/* Seafile */
+"This app does not have access to your contacts." = "Aplikacja nie ma dostępu do Twoich kontaktów.";
+
+/* Seafile */
+"There is no account available" = "There is no account available.";
+
+/* Seafile */
+"This app does not have access to your location service." = "Ta aplikacja nie ma dostępu do usług lokalizacyjnych.";
+
+/* Seafile */
+"This app does not have access to your photos and videos." = "Ta aplikacja nie ma dostępu do Twoich zdjęć i filmów.";
+
+/* Seafile */
+"This function is not supportted yet" = "Ta funkcja nie jest jeszcze obsługiwana";
+
+/* Seafile */
+"This function is not supportted yet，you can copy it to the pasteboard and send mail by yourself" = "Ta funkcja nie jest jeszcze obsługiwana, możesz skopiować to do schowka i samodzielnie wysłać mailem.";
+
+/* Seafile */
+"Two step verification code" = "Kod uwierzytelniania dwuetapowego";
+
+/* Seafile */
+"Unstar" = "Usuń gwiazdkę";
+
+/* Seafile */
+"Upload" = "Wgraj";
+
+/* Seafile */
+"Upload Destination" = "Wgraj do";
+
+/* Seafile */
+"Upload Videos" = "Prześlij wideo";
+
+/* Seafile */
+"Updated file" = "Upload file";
+
+/* Seafile */
+"Updated draft" = "Upload draft";
+
+/* NSPhotoLibraryUsageDescription */
+"Used to sync photos" = "Used to sync photos";
+
+/* Seafile */
+"Username" = "Nazwa użytkownika";
+
+/* Seafile */
+"Username must not be empty" = "Nazwa użytkownika nie może być pusta";
+
+/* Seafile */
+"Verification code must not be empty" = "Kod weryfikacyjny nie może być pusty";
+
+/* Seafile */
+"Version" = "Wersja";
+
+/* Seafile */
+"Website" = "Witryna";
+
+/* Seafile */
+"Welcome to %@" = "Witaj w %@";
+
+/* Seafile */
+"Wifi Only" = "Tylko Wifi";
+
+/* Seafile */
+"Wipe Cache" = "Wyczyść pamięć podręczną";
+
+/* Seafile */
+"Wrong library password" = "Nieprawidłowe hasło do biblioteki";
+
+/* Seafile */
+"Wrong password" = "Nieprawidłowe hasło";
+
+/* Seafile */
+"Wrong username or password" = "Nieprawidłowa nazwa użytkownika lub hasło";
+
+/* Seafile */
+"YES" = "YES";
+
+/* Seafile */
+"You can enable access in Privacy Settings" = "Możesz przyznać dostęp w Ustawieniach Prywatności";
+
+/* Seafile */
+"Your device cannot authenticate using Touch ID." = "To urządzenie nie może wykorzystać TouchID w celu uwierzytelnienia.";
+
+/* Seafile */
+"Your device cannot authenticate using Face ID." = "Your device cannot authenticate using Face ID.";
+
+/* Seafile */
+"and %@ more" = "i %@ więcej";
+
+/* SeafCell.xib */
+"detail" = "szczegół";
+
+/* Seafile */
+"directories" = "katalogi";
+
+/* Seafile */
+"files" = "pliki";
+
+/* Seafile */
+"modified" = "zmodyfikowano";
+
+/* Seafile */
+"Uploading" = "Uploading";
+
+/* Seafile */
+"Downloading" = "Downloading";
+
+/* Seafile */
+"Upload & Download" = "Upload & Download";
+
+/* Seafile */
+"Completed" = "Completed";
+
+/* waiting to upload */
+"Waiting to upload" = "%Waiting to upload";
+
+/* FolderView_iPad.storyboard, FolderView_iPhone.storyboard */
+"www.seafile.com" = "www.seafile.com";
+
+/* Share to WeChat */
+"Share to WeChat" = "Share to WeChat";
+
+/* Share Cancelled */
+"Share Cancelled" = "Share Cancelled";
+
+/* Failed to share to WeChat */
+"Failed to share to WeChat" = "Failed to share to WeChat";
+
+/* OK and Remember Device */
+"OK and Remember Device" = "OK and Remember Device";
+
+/* Privacy Policy */
+"Privacy Policy" = "Privacy Policy";
+
+/* Privacy Policy URL */
+"https://www.seafile.com/en/privacy_policy/" = "https://www.seafile.com/en/privacy_policy/";
+
+/*  TouchID is Enabled  */
+"FaceID(TouchID) is Enabled" = "FaceID(TouchID) is Enabled";
+
+/* Files cannot be used whith TouchID */
+"Files cannot access files in Seafile when FaceID(TouchID) enabled. Please open Seafile and disable FaceID(TouchID)." = "Files cannot access files in Seafile when FaceID(TouchID) enabled. Please open Seafile and disable FaceID(TouchID).";
+
+/* Seafile */
+"Please open Seafile ans add an account to start" = "Please open Seafile ans add an account to start.";
