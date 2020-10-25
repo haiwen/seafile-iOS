@@ -60,6 +60,7 @@ static AFSecurityPolicy *SeafPolicyFromCert(SecCertificateRef cert)
 {
     AFSecurityPolicy *policy = [AFSecurityPolicy policyWithPinningMode:AFSSLPinningModePublicKey];
     policy.allowInvalidCertificates = YES;
+    policy.validatesDomainName = NO;
     SecTrustRef clientTrust = AFUTTrustWithCertificate(cert);
     NSArray * certificates = AFCertificateTrustChainForServerTrust(clientTrust);
     [policy setPinnedCertificates:[NSSet setWithArray:certificates]];
@@ -1359,7 +1360,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         Warning("Sync dir not exists, create.");
         [self checkPhotosUploadDir:nil];
     } else {
-        [self checkPhotos:false];
+        BOOL force = false;
+        if (note) {
+            force = [[note.userInfo valueForKey:@"force"] boolValue];
+        }
+        [self checkPhotos:force];
     }
 }
 
@@ -1590,7 +1595,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (BOOL)IsPhotoUploaded:(SeafPhotoAsset *)asset {
     NSInteger saveCount = 0;
-    if (asset.ALAssetURL) {
+    if (asset.ALAssetURL && asset.ALAssetURL.absoluteString) {
         NSString *value = [self objectForKey:[self.accountIdentifier stringByAppendingString:asset.ALAssetURL.absoluteString] entityName:ENTITY_UPLOAD_PHOTO];
         if (value != nil) {
             saveCount ++;
