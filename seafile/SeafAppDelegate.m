@@ -38,6 +38,8 @@
 @property (retain) NSString *gotoRepo;
 @property (retain) NSString *gotoPath;
 @property BOOL autoBackToDefaultAccount;
+@property (nonatomic, assign) BOOL needReset;
+@property (nonatomic, strong) NSMutableArray *backgroundTaskIDs;
 @end
 
 @implementation SeafAppDelegate
@@ -291,10 +293,18 @@
     }
 
     self.bgTask = UIBackgroundTaskInvalid;
+    self.needReset = NO;
     __weak typeof(self) weakSelf = self;
     self.expirationHandler = ^{
         Debug("Expired, Time Remain = %f, restart background task.", [application backgroundTimeRemaining]);
-        [weakSelf startBackgroundTask];
+        if (@available(iOS 13.0, *)) {
+            [application endBackgroundTask:weakSelf.bgTask];
+            weakSelf.needReset = YES;
+            [[SeafDataTaskManager.sharedObject accountQueueForConnection:SeafGlobal.sharedObject.connection].uploadQueue clearTasks];
+        } else {
+            //not work in iOS 13, and while call in app  become active next time
+            [weakSelf startBackgroundTask];
+        }
     };
 
     [SVProgressHUD setBackgroundColor:[UIColor colorWithRed:250.0/256 green:250.0/256 blue:250.0/256 alpha:1.0]];
@@ -383,8 +393,15 @@
 - (void)applicationWillEnterForeground:(UIApplication *)application
 {
     Debug("Seafile will enter foreground");
+    [application endBackgroundTask:self.bgTask];
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
-    [self photosDidChange:nil];
+    if (self.needReset == YES) {
+        self.needReset = NO;
+        NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
+        [self photosDidChange:note];
+    } else {
+        [self photosDidChange:nil];
+    }
     for (id <SeafBackgroundMonitor> monitor in _monitors) {
         [monitor enterForeground];
     }
