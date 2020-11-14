@@ -8,6 +8,7 @@
 #import "SeafPhotoAsset.h"
 #import "Utils.h"
 #import <objc/runtime.h>
+#import "Debug.h"
 
 @implementation SeafPhotoAsset
 
@@ -33,7 +34,7 @@
     }
     if ([name hasPrefix:@"IMG_"]) {
         name = [self nameFormat:[name substringFromIndex:4] creationDate:asset.creationDate];
-    } else if ([asset valueForKey:@"cloudAssetGUID"] && [name containsString:[asset valueForKey:@"cloudAssetGUID"]]) {
+    } else if ([asset respondsToSelector:NSSelectorFromString(@"cloudAssetGUID")] && [asset valueForKey:@"cloudAssetGUID"] && [name containsString:[asset valueForKey:@"cloudAssetGUID"]]) {
         //name of image from icloud: E5DBF99D-E62F-4E29-BCF9-EBC253E3A1C8.PNG
         NSRange range = [name rangeOfString:@"." options:NSBackwardsSearch];
         if (range.location > 4) {
@@ -64,7 +65,9 @@
     for (unsigned int i = 0; i < count; i++) {
         const char *propertyName = property_getName(propertyList[i]);
         if ([[NSString stringWithUTF8String:propertyName] isEqualToString:@"ALAssetURL"]) {
-            URL = [asset valueForKey:@"ALAssetURL"];
+            if ([[asset valueForKey:@"ALAssetURL"] isKindOfClass:[NSURL class]]) {//may be not NSURL
+                URL = [asset valueForKey:@"ALAssetURL"];
+            }
             break;
         }
     }
