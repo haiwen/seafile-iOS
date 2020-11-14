@@ -175,11 +175,13 @@ enum {
 
     if([PHPhotoLibrary authorizationStatus] == PHAuthorizationStatusNotDetermined) {
         [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
-            if (status == PHAuthorizationStatusAuthorized) {
-                self.autoSync = _autoSyncSwitch.on;
-            } else {
-                _autoSyncSwitch.on = false;
-            }
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (status == PHAuthorizationStatusAuthorized) {
+                    self.autoSync = _autoSyncSwitch.on;
+                } else {
+                    _autoSyncSwitch.on = false;
+                }
+            });
         }];
     } else if([PHPhotoLibrary authorizationStatus] == PHAuthorizationStatusRestricted ||
               [PHPhotoLibrary authorizationStatus] == PHAuthorizationStatusDenied) {

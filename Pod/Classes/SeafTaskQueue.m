@@ -30,9 +30,6 @@
         self.concurrency = DEFAULT_CONCURRENCY;
         self.attemptInterval = DEFAULT_ATTEMPT_INTERVAL;
         self.failedCount = 0;
-        self.tasks = [NSMutableArray array];
-        self.ongoingTasks = [NSMutableArray array];
-        self.completedTasks = [NSMutableArray array];
         __weak typeof(self) weakSelf = self;
         self.innerQueueTaskCompleteBlock = ^(id<SeafTask> task, BOOL result) {
             __strong __typeof(self) strongSelf = weakSelf;
@@ -181,6 +178,27 @@
 
     [self.completedTasks removeAllObjects];
     self.failedCount = 0;
+}
+
+- (NSMutableArray *)tasks {
+    if (!_tasks) {
+        _tasks = [NSMutableArray array];
+    }
+    return _tasks;
+}
+
+- (NSMutableArray *)ongoingTasks {
+    if (!_ongoingTasks) {
+        _ongoingTasks = [NSMutableArray array];
+    }
+    return _ongoingTasks;
+}
+
+- (NSMutableArray *)completedTasks {
+    if (!_completedTasks) {
+        _completedTasks = [NSMutableArray array];
+    }
+    return _completedTasks;
 }
 
 @end

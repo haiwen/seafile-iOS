@@ -1595,7 +1595,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (BOOL)IsPhotoUploaded:(SeafPhotoAsset *)asset {
     NSInteger saveCount = 0;
-    if (asset.ALAssetURL && asset.ALAssetURL.absoluteString) {
+    if (asset.ALAssetURL && [asset.ALAssetURL respondsToSelector:NSSelectorFromString(@"absoluteString")] && asset.ALAssetURL.absoluteString) {
         NSString *value = [self objectForKey:[self.accountIdentifier stringByAppendingString:asset.ALAssetURL.absoluteString] entityName:ENTITY_UPLOAD_PHOTO];
         if (value != nil) {
             saveCount ++;

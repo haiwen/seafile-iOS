@@ -35,7 +35,7 @@
 
     NSPersistentStoreCoordinator *coordinator = [self persistentStoreCoordinator];
     if (coordinator != nil) {
-        __managedObjectContext = [[NSManagedObjectContext alloc] init];
+        __managedObjectContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
         [__managedObjectContext setPersistentStoreCoordinator:coordinator];
     }
     return __managedObjectContext;
@@ -159,7 +159,7 @@
     NSArray *descriptor = [NSArray arrayWithObject:sortDescriptor];
     [fetchRequest setSortDescriptors:descriptor];
     [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"account==%@ AND key==%@", account, key]];
-    NSFetchedResultsController *controller = [[NSFetchedResultsController alloc]
+    __strong NSFetchedResultsController *controller = [[NSFetchedResultsController alloc]
                                               initWithFetchRequest:fetchRequest
                                               managedObjectContext:context
                                               sectionNameKeyPath:nil
@@ -170,6 +170,7 @@
         return nil;
     }
     NSArray *results = [controller fetchedObjects];
+    controller = nil;
     if ([results count] == 0) {
         return nil;
     }
@@ -245,7 +246,7 @@
     [request setSortDescriptors:descriptor];
     [request setPredicate:[NSPredicate predicateWithFormat:@"account==%@", account]];
 
-    NSFetchedResultsController *controller = [[NSFetchedResultsController alloc]
+    __strong NSFetchedResultsController *controller = [[NSFetchedResultsController alloc]
                                               initWithFetchRequest:request
                                               managedObjectContext:context
                                               sectionNameKeyPath:nil
@@ -256,6 +257,7 @@
             [context deleteObject:obj];
         }
     }
+    controller = nil;
     [self saveContext];
 }
 
