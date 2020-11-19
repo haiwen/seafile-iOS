@@ -18,6 +18,8 @@
 @property (readonly, strong, nonatomic) NSManagedObjectContext *managedObjectContext;
 @property (readonly, strong, nonatomic) NSManagedObjectModel *managedObjectModel;
 @property (readonly, strong, nonatomic) NSPersistentStoreCoordinator *persistentStoreCoordinator;
+@property (strong, nonatomic) NSFetchedResultsController *fetchedResultsController;
+
 @end
 
 
@@ -35,7 +37,7 @@
 
     NSPersistentStoreCoordinator *coordinator = [self persistentStoreCoordinator];
     if (coordinator != nil) {
-        __managedObjectContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
+        __managedObjectContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSMainQueueConcurrencyType];
         [__managedObjectContext setPersistentStoreCoordinator:coordinator];
     }
     return __managedObjectContext;
@@ -109,14 +111,16 @@
 
 - (void)saveContext
 {
-    NSError *error = nil;
+    __block NSError *error = nil;
     NSManagedObjectContext *managedObjectContext = self.managedObjectContext;
     if (managedObjectContext != nil) {
         if ([managedObjectContext hasChanges]) {
-            BOOL ret = [managedObjectContext save:&error];
-            if (!ret) {
-                Warning("Unresolved error %@", error);
-            }
+            [managedObjectContext performBlockAndWait:^{
+                BOOL ret = [managedObjectContext save:&error];
+                if (!ret) {
+                    Warning("Unresolved error %@", error);
+                }
+            }];
         }
     }
 }
@@ -159,19 +163,30 @@
     NSArray *descriptor = [NSArray arrayWithObject:sortDescriptor];
     [fetchRequest setSortDescriptors:descriptor];
     [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"account==%@ AND key==%@", account, key]];
-    __strong NSFetchedResultsController *controller = [[NSFetchedResultsController alloc]
+    NSFetchedResultsController *controller = [[NSFetchedResultsController alloc]
                                               initWithFetchRequest:fetchRequest
                                               managedObjectContext:context
                                               sectionNameKeyPath:nil
                                               cacheName:nil];
-    NSError *error;
-    if (![controller performFetch:&error]) {
-        Warning("Fetch cache error %@", [error localizedDescription]);
+    _fetchedResultsController = controller;
+    __block NSError *error = nil;
+    __block BOOL ret = NO;
+    [context performBlockAndWait:^{
+        ret = [_fetchedResultsController performFetch:&error];
+        if (!ret) {
+            Warning("Fetch cache error %@", [error localizedDescription]);
+        }
+    }];
+    if (!ret) {
         return nil;
     }
-    NSArray *results = [controller fetchedObjects];
-    controller = nil;
-    if ([results count] == 0) {
+    
+    __block NSArray *results;
+    [context performBlockAndWait:^{
+        results = [_fetchedResultsController fetchedObjects];
+    }];
+    _fetchedResultsController = nil;
+    if (results == nil || [results count] == 0) {
         return nil;
     }
     return [results objectAtIndex:0];
@@ -211,9 +226,11 @@
 - (void)removeKey:(NSString *)key entityName:(NSString *)entity inAccount:(NSString *)account
 {
     NSManagedObjectContext *context = self.managedObjectContext;
-    SeafCacheObjV2 *obj = [self getCacheObj:key entityName:entity inAccount:account];
+    __block SeafCacheObjV2 *obj = [self getCacheObj:key entityName:entity inAccount:account];
     if (obj != nil) {
-        [context deleteObject:obj];
+        [context performBlockAndWait:^{
+            [context deleteObject:obj];
+        }];
         [self saveContext];
     }
 }
@@ -226,8 +243,14 @@
     [request setIncludesSubentities:NO];
     [request setPredicate:[NSPredicate predicateWithFormat:@"account==%@", account]];
 
-    NSError *err;
-    NSUInteger count = [context countForFetchRequest:request error:&err];
+    __block NSUInteger count = 0;
+    [context performBlockAndWait:^{
+        NSError *err;
+        count = [context countForFetchRequest:request error:&err];
+        if (err) {
+            Warning("Fetch count error %@", [err localizedDescription]);
+        }
+    }];
     if(count == NSNotFound) {
         Warning("Failed to fet synced count");
         return 0;
@@ -246,18 +269,31 @@
     [request setSortDescriptors:descriptor];
     [request setPredicate:[NSPredicate predicateWithFormat:@"account==%@", account]];
 
-    __strong NSFetchedResultsController *controller = [[NSFetchedResultsController alloc]
+    NSFetchedResultsController *controller = [[NSFetchedResultsController alloc]
                                               initWithFetchRequest:request
                                               managedObjectContext:context
                                               sectionNameKeyPath:nil
                                               cacheName:nil];
-    NSError *error;
-    if ([controller performFetch:&error]) {
-        for (id obj in controller.fetchedObjects) {
-            [context deleteObject:obj];
+    _fetchedResultsController = controller;
+    __block BOOL ret = NO;
+    
+    [context performBlockAndWait:^{
+        NSError *error = nil;
+        ret = [_fetchedResultsController performFetch:&error];
+        if (error) {
+            Warning("Fetch cache error %@", [error localizedDescription]);
         }
+    }];
+    if (!ret) {
+        return;
     }
-    controller = nil;
+    
+    for (id obj in _fetchedResultsController.fetchedObjects) {
+        [context performBlockAndWait:^{
+            [context deleteObject:obj];
+        }];
+    }
+    _fetchedResultsController = nil;
     [self saveContext];
 }
 
@@ -269,15 +305,27 @@
     NSEntityDescription *entity = [NSEntityDescription entityForName:entityDescription inManagedObjectContext:context];
     [fetchRequest setEntity:entity];
 
-    NSError *error = nil;
-    NSArray *items = [context executeFetchRequest:fetchRequest error:&error];
+    __block NSError *error = nil;
+    __block NSArray *items;;
+    [context performBlockAndWait:^{
+        items = [context executeFetchRequest:fetchRequest error:&error];
+        if (error) {
+            Debug(@"Fetch error:%@",[error localizedDescription]);
+        }
+    }];
 
     for (NSManagedObject *managedObject in items) {
-        [context deleteObject:managedObject];
+        [context performBlockAndWait:^{
+            [context deleteObject:managedObject];
+        }];
     }
-    if (![context save:&error]) {
-        Debug(@"Error deleting %@ - error:%@",entityDescription,error);
-    }
+    error = nil;
+    [context performBlockAndWait:^{
+        BOOL savedOK = [context save:&error];
+        if (!savedOK) {
+            Debug(@"Error deleting %@ - error:%@",entityDescription,error);
+        }
+    }];
 }
 
 - (void)clearAllCacheInAccount:(NSString *)account

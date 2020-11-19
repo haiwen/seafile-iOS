@@ -1099,24 +1099,28 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         NSString *localIdentifier = [self popUploadPhotoIdentifier];
         if (!localIdentifier) break;
         
-        PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
-        PHAsset *asset = [result firstObject];
-        if (asset == nil) continue;
-        SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset];
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            //Crash: Termination Reason: Namespace SPRINGBOARD, Code 0x8badf00d
+            PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
+            PHAsset *asset = [result firstObject];
+            if (asset) {
+                SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset];
 
-        NSString *path = [self.localUploadDir stringByAppendingPathComponent:photoAsset.name];
-        SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
-        file.retryable = false;
-        file.autoSync = true;
-        file.overwrite = true;
-        [file setPHAsset:asset url:photoAsset.ALAssetURL];
-        file.udir = dir;
-        [file setCompletionBlock:^(SeafUploadFile *file, NSString *oid, NSError *error) {
-            [self autoSyncFileUploadComplete:file error:error];
-        }];
-    
-        Debug("Add file %@ to upload list: %@ current %u %u", photoAsset.name, dir.path, (unsigned)_photosArray.count, (unsigned)_uploadingArray.count);
-        [SeafDataTaskManager.sharedObject addUploadTask:file];
+                NSString *path = [self.localUploadDir stringByAppendingPathComponent:photoAsset.name];
+                SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
+                file.retryable = false;
+                file.autoSync = true;
+                file.overwrite = true;
+                [file setPHAsset:asset url:photoAsset.ALAssetURL];
+                file.udir = dir;
+                [file setCompletionBlock:^(SeafUploadFile *file, NSString *oid, NSError *error) {
+                    [self autoSyncFileUploadComplete:file error:error];
+                }];
+                
+                Debug("Add file %@ to upload list: %@ current %u %u", photoAsset.name, dir.path, (unsigned)self.photosArray.count, (unsigned)self.uploadingArray.count);
+                [SeafDataTaskManager.sharedObject addUploadTask:file];
+            }
+        });
     }
     if (self.photosArray.count == 0) {
         Debug("Force check if there are new photos after all synced.");
