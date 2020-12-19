@@ -13,6 +13,7 @@ target :"seafileApp" do
   pod 'MWPhotoBrowser', :git => 'https://github.com/haiwen/MWPhotoBrowser.git', :branch => 'master'
   pod 'QBImagePickerController', :git => 'https://github.com/haiwen/QBImagePickerController.git', :branch => 'master'
   pod 'WechatOpenSDK', '1.8.5'
+  pod 'Bugly'
   shared
 end
 

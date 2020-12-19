@@ -11,7 +11,6 @@
 #import "SeafGlobal.h"
 #import "SeafStorage.h"
 #import "Debug.h"
-#import "Utils.h"
 #import "SeafUploadFile.h"
 #import "SeafCell.h"
 #import "SeafDateFormatter.h"
