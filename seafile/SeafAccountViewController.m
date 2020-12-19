@@ -372,11 +372,10 @@
     if (error.code == kCFURLErrorCancelled) {
         return;
     }
-
-    [SVProgressHUD dismiss];
     
     long errorCode = response.statusCode;
     if (errorCode == HTTP_ERR_LOGIN_INCORRECT_PASSWORD) {
+        [SVProgressHUD dismiss];
         NSString * otp = [response.allHeaderFields objectForKey:@"X-Seafile-OTP"];
         if ([@"required" isEqualToString:otp]) {
             [self twoStepVerification];

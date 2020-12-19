@@ -540,7 +540,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                 [[NSFileManager defaultManager] removeItemAtPath:[self certPathForHost:challenge.protectionSpace.host] error:nil];
                 if ([challenge.protectionSpace.host isEqualToString:self.host]) {
                     SecCertificateRef cer = SecTrustGetCertificateAtIndex(challenge.protectionSpace.serverTrust, 0);
-                    self.policy = SeafPolicyFromCert(cer);
+                    AFSecurityPolicy *policy = SeafPolicyFromCert(cer);
+                    if (policy.SSLPinningMode != AFSSLPinningModeNone && ![self.address hasPrefix:@"https://"]) {
+                        Warning("Invalid Security Policy, A security policy configured with `%lu` can only be applied on a manager with a secure base URL (i.e. https)", (unsigned long)policy.SSLPinningMode);
+                    } else {
+                        self.policy = SeafPolicyFromCert(cer);
+                    }
                 }
                 return NSURLSessionAuthChallengeUseCredential;
             } else {
