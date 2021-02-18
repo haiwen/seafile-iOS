@@ -19,6 +19,7 @@ end
 
 
 target :"SeafFileProvider" do
+  pod 'BuglyExtension'
   shared
 end
 
@@ -32,6 +33,7 @@ target :"SeafAction" do
 end
 
 target :"SeafShare" do
+    pod 'BuglyExtension'
     pod 'SVPullToRefresh', :git => 'https://github.com/lilthree/SVPullToRefresh.git', :branch => 'master'
     shared
 end

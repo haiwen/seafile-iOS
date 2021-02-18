@@ -12,6 +12,7 @@
 #import "APLRUCache.h"
 #import "Utils.h"
 #import "Debug.h"
+#import "ExtentedString.h"
 
 static APLRUCache *_cache = nil;
 
@@ -46,6 +47,7 @@ static APLRUCache *cache() {
         _path = path;
         _filename = filename;
         _lastUsedDate = [NSDate date];
+//        Debug("filiename = %@", [_filename escapedUrl]);
     }
     return self;
 }
@@ -56,7 +58,7 @@ static APLRUCache *cache() {
 
          NSArray *pathCompoents = identity.pathComponents; // @"/", encodedDir, filename
          if (pathCompoents.count >= 3) {
-             _filename = [pathCompoents objectAtIndex:2];
+             _filename = [[pathCompoents objectAtIndex:2] stringByRemovingPercentEncoding];
          }
          if (pathCompoents.count >= 2) {
              NSString *encodedDir = [pathCompoents objectAtIndex:1];
@@ -93,7 +95,8 @@ static APLRUCache *cache() {
         } else {
             NSString *encodedPath = [Utils encodePath:_server username:_username repo:_repoId path:_path];
             if (_filename) {
-                _itemIdentifier = [NSString stringWithFormat:@"/%@/%@", encodedPath, _filename];
+                //if doesnot encode, ä,ö,ü will encode to a%CC%88%2Co%CC%88%2Cu%CC%88 when upload
+                _itemIdentifier = [NSString stringWithFormat:@"/%@/%@", encodedPath, [Utils stringWithPercentEscapes:_filename]];
             } else {
                 _itemIdentifier = [NSString stringWithFormat:@"/%@", encodedPath];
             }
@@ -168,6 +171,7 @@ static APLRUCache *cache() {
         return [self.conn getRepo:_repoId];
     } else if (self.isFile) {
         NSString *filepath = [self.path stringByAppendingPathComponent:self.filename];
+//        Debug(@"getSeafObj filename: %@", [_filename escapedUrl]);
         return [[SeafFile alloc] initWithConnection:self.conn oid:nil repoId:_repoId name:_filename path:filepath mtime:0 size:0];
     } else {
         return [[SeafDir alloc] initWithConnection:self.conn oid:nil repoId:self.repoId perm:nil name:self.filename path:self.path];
