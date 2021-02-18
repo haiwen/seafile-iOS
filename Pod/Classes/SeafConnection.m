@@ -110,6 +110,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @property (readonly) NSString *tagDataKey;
 
 @property (readwrite, nonatomic, getter=isFirstTimeSync) BOOL firstTimeSync;
+@property (nonatomic, strong) dispatch_queue_t photoCheckQueue;
 
 @end
 
@@ -1210,7 +1211,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)checkPhotos:(BOOL)force
 {
-     [self performSelectorInBackground:@selector(backGroundCheckPhotos:) withObject:[NSNumber numberWithBool:force]];
+    if (self.photoCheckQueue == nil) {
+        self.photoCheckQueue = dispatch_queue_create("com.seafile.checkPhotos", DISPATCH_QUEUE_CONCURRENT);
+    }
+    dispatch_async(self.photoCheckQueue, ^{
+        [self backGroundCheckPhotos:[NSNumber numberWithBool:force]];
+    });
 }
 
 - (void)backGroundCheckPhotos:(NSNumber *)forceNumber {
