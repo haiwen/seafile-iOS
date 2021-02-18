@@ -43,12 +43,21 @@
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeAll;
     
-    self.tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStylePlain];
+    CGFloat TOP_DISTANCE = IsIpad()? 0 : 40.0;
+    CGRect tableViewFrame = self.view.frame;
+    
+    if (@available(iOS 13.0, *)) {
+        tableViewFrame = CGRectMake(self.view.frame.origin.x, self.view.frame.origin.y, self.view.frame.size.width , self.view.frame.size.height - self.navigationController.navigationBar.frame.size.height - TOP_DISTANCE);
+    }
+    self.tableView = [[UITableView alloc] initWithFrame:tableViewFrame style:UITableViewStylePlain];
     self.tableView.rowHeight = 50;
     self.tableView.estimatedSectionFooterHeight = 0;
     self.tableView.estimatedSectionHeaderHeight = 0;
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
+    if (IsIpad()) {
+        self.tableView.contentInset = UIEdgeInsetsMake(0, 0, self.navigationController.navigationBar.frame.size.height*2, 0);
+    }
     [self.view addSubview:self.tableView];
     
     NSMutableArray *items = [NSMutableArray array];
@@ -67,6 +76,10 @@
         self.saveButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSave target:self action:@selector(save:)];
         [items addObject:self.saveButton];
         self.navigationItem.title = _directory.name;
+        
+        if (!IsIpad()) {
+            self.tableView.frame = CGRectMake(self.tableView.frame.origin.x, self.tableView.frame.origin.y, self.tableView.frame.size.width, self.tableView.frame.size.height - self.navigationController.toolbar.frame.size.height);
+        }
     }
     
     self.navigationItem.rightBarButtonItems = items;
@@ -77,6 +90,11 @@
         weakSelf.directory.delegate = weakSelf;
         [weakSelf reloadContent];
     }];
+}
+
+- (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
+    [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
+    self.tableView.frame = CGRectMake(0, 0, size.width, size.height);
 }
 
 - (void)reloadContent {
@@ -196,7 +214,7 @@
         cell.textLabel.textColor = [UIColor labelColor];
         cell.detailTextLabel.textColor = [UIColor secondaryLabelColor];
     } else {
-        cell.textLabel.textColor = [UIColor whiteColor];
+        cell.textLabel.textColor = [UIColor blackColor];
         cell.detailTextLabel.textColor = [UIColor lightGrayColor];
     }
     
