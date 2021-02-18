@@ -301,7 +301,9 @@
         if (@available(iOS 13.0, *)) {
             [application endBackgroundTask:weakSelf.bgTask];
             weakSelf.needReset = YES;
-            [[SeafDataTaskManager.sharedObject accountQueueForConnection:SeafGlobal.sharedObject.connection].uploadQueue clearTasks];
+            if (SeafGlobal.sharedObject.connection.accountIdentifier) {
+                [[SeafDataTaskManager.sharedObject accountQueueForConnection:SeafGlobal.sharedObject.connection].uploadQueue clearTasks];
+            }
         } else {
             //not work in iOS 13, and while call in app  become active next time
             [weakSelf startBackgroundTask];
