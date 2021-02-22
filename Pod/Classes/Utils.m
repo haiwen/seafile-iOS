@@ -540,11 +540,6 @@
     return ms;
 }
 
-+ (NSString *)stringWithPercentEscapes:(NSString *)str {
-    NSMutableCharacterSet *allowedSet = [NSMutableCharacterSet characterSetWithCharactersInString:@"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLKMNOPQRSTUVWXYZ0123456789"];
-    [allowedSet addCharactersInString:@"@.- "];
-    return [str stringByAddingPercentEncodingWithAllowedCharacters:allowedSet];
-}
 
 + (void)decodePath:(NSString *)encodedStr server:(NSString **)server username:(NSString **)username repo:(NSString **)repoId path:(NSString **)path
 {
