@@ -47,7 +47,6 @@ static APLRUCache *cache() {
         _path = path;
         _filename = filename;
         _lastUsedDate = [NSDate date];
-//        Debug("filiename = %@", [_filename escapedUrl]);
     }
     return self;
 }
@@ -96,7 +95,7 @@ static APLRUCache *cache() {
             NSString *encodedPath = [Utils encodePath:_server username:_username repo:_repoId path:_path];
             if (_filename) {
                 //if doesnot encode, ä,ö,ü will encode to a%CC%88%2Co%CC%88%2Cu%CC%88 when upload
-                _itemIdentifier = [NSString stringWithFormat:@"/%@/%@", encodedPath, [Utils stringWithPercentEscapes:_filename]];
+                _itemIdentifier = [NSString stringWithFormat:@"/%@/%@", encodedPath, [_filename escapedUrl]];
             } else {
                 _itemIdentifier = [NSString stringWithFormat:@"/%@", encodedPath];
             }
@@ -171,7 +170,6 @@ static APLRUCache *cache() {
         return [self.conn getRepo:_repoId];
     } else if (self.isFile) {
         NSString *filepath = [self.path stringByAppendingPathComponent:self.filename];
-//        Debug(@"getSeafObj filename: %@", [_filename escapedUrl]);
         return [[SeafFile alloc] initWithConnection:self.conn oid:nil repoId:_repoId name:_filename path:filepath mtime:0 size:0];
     } else {
         return [[SeafDir alloc] initWithConnection:self.conn oid:nil repoId:self.repoId perm:nil name:self.filename path:self.path];
