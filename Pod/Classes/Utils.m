@@ -462,17 +462,23 @@
 + (UIImage *)reSizeImage:(UIImage *)image toSquare:(float)length
 {
     @autoreleasepool {
-        CGSize reSize;
-        CGSize size = image.size;
-        if (size.height > size.width) {
-            reSize = CGSizeMake(length * size.width / size.height, length);
-        } else {
-            reSize = CGSizeMake(length, length * size.height / size.width);
-        }
-        UIGraphicsBeginImageContext(CGSizeMake(reSize.width, reSize.height));
-        [image drawInRect:CGRectMake(0, 0, reSize.width, reSize.height)];
-        UIImage *reSizeImage = UIGraphicsGetImageFromCurrentImageContext();
-        UIGraphicsEndImageContext();
+        NSData *imgData = UIImageJPEGRepresentation(image, 1);
+        CGImageSourceRef imageSource = CGImageSourceCreateWithData((CFDataRef)imgData, NULL);
+        if (!imageSource)
+            return nil;
+
+        CFDictionaryRef options = (__bridge CFDictionaryRef)[NSDictionary dictionaryWithObjectsAndKeys:
+                                                     (id)kCFBooleanTrue, (id)kCGImageSourceCreateThumbnailWithTransform,
+                                                     (id)kCFBooleanTrue, (id)kCGImageSourceCreateThumbnailFromImageIfAbsent,
+                                                    (id)[NSNumber numberWithFloat:length], (id)kCGImageSourceThumbnailMaxPixelSize,
+                                                     nil];
+        CGImageRef imgRef = CGImageSourceCreateThumbnailAtIndex(imageSource, 0, options);
+
+        UIImage *reSizeImage = [UIImage imageWithCGImage:imgRef];
+         
+        CGImageRelease(imgRef);
+        CFRelease(imageSource);
+
         return reSizeImage;
     }
 }

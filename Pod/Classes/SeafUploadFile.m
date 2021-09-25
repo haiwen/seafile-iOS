@@ -197,9 +197,11 @@
         if (!_autoSync) {
             [Utils linkFileAtPath:self.lpath to:[SeafStorage.sharedObject documentPath:oid] error:nil];
             // files.app menory limit 15MB, reSizeImage will use more than 15MB
-            if (![[Utils currentBundleIdentifier] containsString:@"SeafFileProvider"]) {
+            // resize thumb while reaching memory limit in share extension
+            if ([[Utils currentBundleIdentifier] isEqualToString:@"com.seafile.seafilePro"]) {
                 [self saveThumbToLocal:oid];
             }
+            
         } else {
             // For auto sync photos, release local cache files immediately.
             [self cleanup];
