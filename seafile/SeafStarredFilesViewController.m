@@ -82,6 +82,16 @@
     self.tableView.tableFooterView = [UIView new];
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 
+    if (@available(iOS 15.0, *)) {
+        UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
+        barAppearance.backgroundColor = [UIColor whiteColor];
+        
+        self.navigationController.navigationBar.standardAppearance = barAppearance;
+        self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
+        
+        self.tableView.sectionHeaderTopPadding = 0;
+    }
+    
     __weak typeof(self) weakSelf = self;
     [self.tableView addPullToRefresh:[SVArrowPullToRefreshView class] withActionHandler:^{
         if (![weakSelf checkNetworkStatus]) {

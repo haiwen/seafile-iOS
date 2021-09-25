@@ -245,6 +245,13 @@
     }
     [self.serverTextField setDelegate:self];
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
+    if (@available(iOS 15.0, *)) {
+        UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
+        barAppearance.backgroundColor = [UIColor whiteColor];
+        
+        self.navigationController.navigationBar.standardAppearance = barAppearance;
+        self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
+    }
 }
 
 - (void)didReceiveMemoryWarning
