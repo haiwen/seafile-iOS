@@ -46,6 +46,15 @@
                                                                             target:nil
                                                                             action:nil];
     self.tableView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.tableView.bounds.size.width, 10)];
+    if (@available(iOS 15.0, *)) {
+        UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
+        barAppearance.backgroundColor = [UIColor systemBackgroundColor];
+        
+        self.navigationController.navigationBar.standardAppearance = barAppearance;
+        self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
+        
+        self.tableView.sectionHeaderTopPadding = 0;
+    }
     
     __weak typeof(self) weakSelf = self;
     [SeafInputItemsProvider loadInputs:weakSelf.extensionContext complete:^(BOOL result, NSArray *array) {

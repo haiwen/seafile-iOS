@@ -200,6 +200,16 @@ enum {
     self.tableView.tableFooterView = [UIView new];
     self.tableView.allowsMultipleSelection = NO;
 
+    if (@available(iOS 15.0, *)) {
+        UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
+        barAppearance.backgroundColor = [UIColor whiteColor];
+        
+        self.navigationController.navigationBar.standardAppearance = barAppearance;
+        self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
+        
+        self.tableView.sectionHeaderTopPadding = 0;
+    }
+    
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     [self.navigationController setToolbarHidden:YES animated:NO];
 
@@ -894,7 +904,7 @@ enum {
         return;
     }
     _curEntry = [self getDentrybyIndexPath:indexPath tableView:tableView];
-    Debug("Select %@", [_curEntry name]);
+    Debug("Select %@", [_curEntry valueForKey:@"name"]);
     if (!_curEntry) {
         return [tableView performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
     }
@@ -1160,7 +1170,8 @@ enum {
             if (!idxs) return;
             NSMutableArray *entries = [[NSMutableArray alloc] init];
             for (NSIndexPath *indexPath in idxs) {
-                [entries addObject:[[self.allItems objectAtIndex:indexPath.row] name]];
+                SeafBase *item = (SeafBase *)[self.allItems objectAtIndex:indexPath.row];
+                [entries addObject:item.name];
             }
             self.state = STATE_DELETE;
             _directory.delegate = self;
@@ -1520,7 +1531,8 @@ enum {
     if (!idxs) return;
     NSMutableArray *entries = [[NSMutableArray alloc] init];
     for (NSIndexPath *indexPath in idxs) {
-        [entries addObject:[[self.allItems objectAtIndex:indexPath.row] name]];
+        SeafBase *item = (SeafBase *)[self.allItems objectAtIndex:indexPath.row];
+        [entries addObject:item.name];
     }
     _directory.delegate = self;
     if (self.state == STATE_COPY) {

@@ -59,6 +59,20 @@
         self.tableView.contentInset = UIEdgeInsetsMake(0, 0, self.navigationController.navigationBar.frame.size.height*2, 0);
     }
     [self.view addSubview:self.tableView];
+    if (@available(iOS 15.0, *)) {
+        UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
+        barAppearance.backgroundColor = [UIColor systemBackgroundColor];
+        
+        self.navigationController.navigationBar.standardAppearance = barAppearance;
+        self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
+        
+        UIToolbarAppearance *toolbarAppearance = [UIToolbarAppearance new];
+        toolbarAppearance.backgroundColor = [UIColor systemBackgroundColor];
+        self.navigationController.toolbar.standardAppearance = toolbarAppearance;
+        self.navigationController.toolbar.scrollEdgeAppearance = toolbarAppearance;
+        
+        self.tableView.sectionHeaderTopPadding = 0;
+    }
     
     NSMutableArray *items = [NSMutableArray array];
     

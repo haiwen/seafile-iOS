@@ -342,6 +342,16 @@ enum {
     SeafDataTaskManager.sharedObject.finishBlock = ^(id<SeafTask>  _Nonnull task) {
         [self performSelectorInBackground:@selector(updateSyncInfo) withObject:nil];
     };
+    
+    if (@available(iOS 15.0, *)) {
+        UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
+        barAppearance.backgroundColor = [UIColor whiteColor];
+        
+        self.navigationController.navigationBar.standardAppearance = barAppearance;
+        self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
+        
+        self.tableView.sectionHeaderTopPadding = 0;
+    }
 }
 
 - (void)viewDidAppear:(BOOL)animated
