@@ -1,4 +1,4 @@
-﻿
+
 
 /* Seafile */
 "%@ can't verify the identity of the website \"%@\"" = "%1$@ nemůže ověřit identitu stránek „%2$@“";
@@ -13,7 +13,7 @@
 "%@, Uploaded %@" = "%1$@, Nahráno %2$@";
 
 /* Seafile */
-"%@, uploading" = "%@, uploading";
+"%@, uploading" = "%@, nahrávání";
 
 /* Seafile */
 "%@, waiting to upload" = "%@, čeká na nahrání";
@@ -22,43 +22,43 @@
 "%ld photos remain" = "%ld fotek zbývá";
 
 /* Seafile */
-"%ld files are uploaded to Seafile" = "%ld files are uploaded to Seafile";
+"%ld files are uploaded to Seafile" = "%ld souborů je nahráno na Seafile";
 
 /* Seafile */
 "1 photo remain" = "1 fotka zbývá";
 
 /* Seafile */
-"%ld days ago" = "%ld days ago";
+"%ld days ago" = "před %ld dny";
 
 /* Seafile */
-"%ld hours ago" = "%ld hours ago";
+"%ld hours ago" = "před %ld hodinami";
 
 /* Seafile */
-"%ld minutes ago" = "%ld minutes ago";
+"%ld minutes ago" = "před %ld minutou";
 
 /* Seafile */
-"%ld months ago" = "%ld months ago";
+"%ld months ago" = "před %ld měsíci";
 
 /* Seafile */
-"%ld years ago" = "%ld years ago";
+"%ld years ago" = "před %ld lety";
 
 /* Seafile */
-"a day ago" = "a day ago";
+"a day ago" = "před dnem";
 
 /* Seafile */
-"a few seconds ago" = "a few seconds ago";
+"a few seconds ago" = "před sekundou";
 
 /* Seafile */
-"an hour ago" = "an hour ago";
+"an hour ago" = "před hodinou";
 
 /* Seafile */
-"a minute ago" = "a minute ago";
+"a minute ago" = "před minutou";
 
 /* Seafile */
-"a month ago" = "a month ago";
+"a month ago" = "před měsícem";
 
 /* Seafile */
-"a year ago" = "a year ago";
+"a year ago" = "před rokem";
 
 /* Seafile */
 "A file with the same name already exists, do you want to overwrite?" = "Existuje soubor se stejným názvem, chcete ho přepsat?";
@@ -82,13 +82,13 @@
 "Activity" = "Aktivita";
 
 /* Seafile */
-"Add a new discussion" = "Add a new discussion";
+"Add a new discussion" = "Přidat novou diskuzi";
 
 /* Seafile */
 "Add account" = "Přidat účet";
 
 /* Seafile */
-"Add contact" = "Add contact";
+"Add contact" = "Přidat kontakt";
 
 /* Seafile */
 "Added" = "Přidáno";
@@ -109,19 +109,19 @@
 "Are you sure to clear all the cache?" = "Opravdu chcete vymazat mezipaměť?";
 
 /* Seafile */
-"Are you sure to cancel all downloading tasks?" = "Are you sure to cancel all downloading tasks?";
+"Are you sure to cancel all downloading tasks?" = "Opravdu chcete zrušit všechny úlohy stahování?";
 
 /* Seafile */
-"Are you sure to cancel all uploading tasks" = "Are you sure to cancel all uploading tasks";
+"Are you sure to cancel all uploading tasks" = "Opravdu chcete zrušit všechny úlohy nahrávání";
 
 /* Seafile */
 "Are you sure to log out?" = "Opravdu se chcete odhlásit?";
 
 /* Seafile */
-"Are you sure you want to delete %@ ?" = "Are you sure you want to delete %@ ?";
+"Are you sure you want to delete %@ ?" = "Opravdu chcete %@ smazat?";
 
 /* Seafile */
-"Are you sure to save all photos to album?" = "Are you sure to save all photos to album";
+"Are you sure to save all photos to album?" = "Opravdu chcete uložit veškeré fotky do alba";
 
 /* Seafile */
 "Auto Upload" = "Nahrávat automaticky";
@@ -157,13 +157,13 @@
 "Can not remove certificate because it is still in use" = "Certifikát není možné odebrat protože je stále používán";
 
 /* Seafile */
-"Cancel" = "Cancel";
+"Cancel" = "Storno";
 
 /* Seafile */
 "Cancel download" = "Zrušit stahování";
 
 /* Seafile */
-"Cancel upload" = "Cancel upload";
+"Cancel upload" = "Zrušit nahrávání";
 
 /* Seafile */
 "Changed library name or description" = "Změněný název nebo popis knihovny";
@@ -175,7 +175,7 @@
 "Choose" = "Vybrat";
 
 /* Seafile */
-"Choose directory" = "Choose directory";
+"Choose directory" = "Zvolte složku";
 
 /* Seafile */
 "Choose a Seafile server" = "Vyberte Seafile server";
@@ -241,22 +241,22 @@
 "Creating folder ..." = "Vytváření složky…";
 
 /* Seafile */
-"Creating library ..." = "Creating library ...";
+"Creating library ..." = "Vytváření knihovny…";
 
 /* Seafile */
-"Created library" = "Created library";
+"Created library" = "Knihovna vytvořena";
 
 /* Seafile */
-"Created folder" = "Created folder";
+"Created folder" = "Složka vytvořena";
 
 /* Seafile */
-"Created file" = "Created file";
+"Created file" = "Složka vytvořena";
 
 /* Seafile */
-"Created %ld files" = "Created %ld files";
+"Created %ld files" = "Vytvořeno %ld souborů";
 
 /* Seafile */
-"Created draft" = "Created draft";
+"Created draft" = "Koncept vytvořen";
 
 /* Seafile */
 "Delete" = "Smazat";
@@ -277,19 +277,19 @@
 "Deleting files ..." = "Mazání souborů…";
 
 /* Seafile */
-"Deleted library" = "Deleted library";
+"Deleted library" = "Smazaná knihovna";
 
 /* Seafile */
-"Deleted folder" = "Deleted folder";
+"Deleted folder" = "Smazaná složka";
 
 /* Seafile */
-"Deleted file" = "Deleted file";
+"Deleted file" = "Soubor smazán";
 
 /* Seafile */
-"Deleted draft" = "Deleted draft";
+"Deleted draft" = "Koncept smazán";
 
 /* Seafile */
-"Destination" = "Destination";
+"Destination" = "Cíl";
 
 /* Seafile */
 "Directory '%@' is shared with you using %@" = "Složka „%1$@“ je s vámi sdílena pomocí %2$@";
@@ -316,19 +316,19 @@
 "Email or Username" = "E-mail nebo uživatelské jméno";
 
 /* Seafile */
-"Enable TouchID" = "Enable Touch ID";
+"Enable TouchID" = "Povolit TouchID";
 
 /* Seafile */
-"Enable FaceID" = "Enable Face ID";
+"Enable FaceID" = "Povolit Face ID";
 
 /* Seafile */
 "Encrypted Libraries" = "Šifrované knihovny";
 
 /* Seafile */
-"Encrypted" = "Encrypted";
+"Encrypted" = "Šifrované";
 
 /* Seafile */
-"Failed to add discussion" = "Failed to add discussion";
+"Failed to add discussion" = "Diskuzi se nepodařilo přidat";
 
 /* Seafile */
 "Failed to authenticate" = "Nepodařilo se ověřit";
@@ -343,7 +343,7 @@
 "Failed to create folder" = "Vytvoření složky se nezdařilo";
 
 /* Seafile */
-"Failed to create library" = "Failed to create library";
+"Failed to create library" = "Knihovnu se nepodařilo vytvořit";
 
 /* Seafile */
 "Failed to delete files" = "Smazání souborů se nezdařilo";
@@ -364,10 +364,10 @@
 "Failed to generate share link of file '%@'" = "Vytváření odkazu pro sdílení souboru „%@“ se nezdařilo";
 
 /* Seafile */
-"Failed to get groups ..." = "Failed to get groups ...";
+"Failed to get groups ..." = "Nepodařilo se získat skupiny…";
 
 /* Seafile */
-"Failed to get messages" = "Failed to get messages";
+"Failed to get messages" = "Nepodařilo se získat zprávy";
 
 /* Seafile */
 "Failed to get modification details" = "Nepodařilo se načíst podrobnosti o úpravě";
@@ -409,7 +409,7 @@
 "Failed to save %@ to album" = "Uložení „%@“ do alba se nezdařilo";
 
 /* Seafile */
-"Failed to copy %@ to clipboard" = "Failed to copy %@ to clipboard";
+"Failed to copy %@ to clipboard" = "%@ se nepodařilo zkopírovat do schránky";
 
 /* Seafile */
 "Failed to save account" = "Účet se nepodařilo uložit";
@@ -418,7 +418,7 @@
 "Failed to search" = "Hledání se nezdařilo";
 
 /* Seafile */
-"Failed to send message" = "Failed to send message";
+"Failed to send message" = "Zprávu se nepodařilo odeslat";
 
 /* Seafile */
 "Failed to upload file" = "Nahrání souboru se nezdařilo";
@@ -430,7 +430,7 @@
 "File '%@' is too large to edit" = "Soubor „%@“ je příliš velký pro úpravy";
 
 /* Seafile */
-"File '%@' uploaded successfully" = "File '%@' uploaded successfully";
+"File '%@' uploaded successfully" = "Soubor „%@“ úspěšně nahrán";
 
 /* Seafile */
 "File name invalid" = "Neplatný název souboru";
@@ -442,7 +442,7 @@
 "Files with the same name already exist, do you want to overwrite?" = "Už existují soubory se stejným názvem, přejete si je přepsat?";
 
 /* Seafile */
-"File can not be shared" = "File can not be shared";
+"File can not be shared" = "Soubor není možné sdílet";
 
 /* Seafile */
 "Folder name invalid" = "Neplatný název složky";
@@ -460,7 +460,7 @@
 "Generate share link success" = "Vytvoření odkazu pro sdílení proběhlo úspěšně";
 
 /* Seafile */
-"Group discussion" = "Group discussion";
+"Group discussion" = "Skupinová diskuze";
 
 /* Seafile */
 "Hey there!<br/><br/> I've been using %@ and thought you might like it. It is a free way to bring all you files anywhere and share them easily.<br/><br/>Go to the official website of %@:</br></br> <a href=\"%@\">%@</a>\n\n" = "Ahoj!<br/><br/> používám %1$@ a myslím, že by se ti to mohlo líbit. Jedná se o způsob, jak mít své soubory vždy po ruce a jednoduše je sdílet.<br/><br/>Vše najdeš na oficiálních webových stránkách %2$@:</br></br> <a href=\"%3$@\">%4$@</a>";
@@ -475,7 +475,7 @@
 "How would you like to share this file?" = "Jak si přejete tento soubor sdílet";
 
 /* Seafile */
-"Hide" = "Hide";
+"Hide" = "Skrýt";
 
 /* Seafile */
 "Import client certificate" = "Přenesení klientských certifikátů";
@@ -484,7 +484,7 @@
 "Invalid Server" = "Neplatný server";
 
 /* Seafile */
-"Invalid email" = "Invalid email";
+"Invalid email" = "Neplatný e-mail";
 
 /* Seafile */
 "Last Backup Time" = "Okamžik poslední zálohy";
@@ -511,13 +511,13 @@
 "Login" = "Přihlásit";
 
 /* Seafile */
-"Library name invalid" = "Library name invalid";
+"Library name invalid" = "Neplatný název knihovny";
 
 /* Seafile */
-"Library name must not be empty" = "Library name must not be empty";
+"Library name must not be empty" = "Knihovnu je třeba nějak nazvat";
 
 /* Seafile */
-"Message" = "Message";
+"Message" = "Zpráva";
 
 /* Seafile */
 "Messages" = "Zprávy";
@@ -550,16 +550,16 @@
 "Moving files ..." = "Přemisťování souborů…";
 
 /* Seafile */
-"Moved folder" = "Moved folder";
+"Moved folder" = "Přesunutá složka";
 
 /* Seafile */
-"Moved file" = "Moved file";
+"Moved file" = "Soubor přesunut";
 
 /* Seafile */
 "My Own Libraries" = "Mé knihovny";
 
 /* Seafile */
-"NO" = "NO";
+"NO" = "NE";
 
 /* FailToPreview_iPad.xib, FailToPreview_iPhone.xib, SeafCell.xib, SeafDirCell.xib, SeafMessageCell.xib, SeafUploadDirViewController.xib */
 "Name" = "Název";
@@ -580,10 +580,10 @@
 "New folder name" = "Název nové složky";
 
 /* Seafile */
-"New Library" = "New Library";
+"New Library" = "Nová knihovna";
 
 /* Seafile */
-"New library name" = "New Library Name";
+"New library name" = "Název nové knihovny";
 
 /* Seafile */
 "No Results" = "Žádné výsledky";
@@ -604,7 +604,7 @@
 "Open photo browser" = "Otevřít prohlížeč fotografií";
 
 /* Seafile */
-"Open Seafile to view details" = "Open Seafile to view details";
+"Open Seafile to view details" = "Otevřít Seafile a zobrazit podrobnosti";
 
 /* Seafile */
 "Organization" = "Organizace";
@@ -631,16 +631,16 @@
 "Password required" = "Je požadováno heslo";
 
 /* Seafile */
-"Password (at least 8 characters)" = "Password (at least 8 characters)";
+"Password (at least 8 characters)" = "Heslo (přinejmenším 8 znaků)";
 
 /* Seafile */
-"Please enter your password again" = "Please enter your password again";
+"Please enter your password again" = "Zadejte své heslo znovu";
 
 /* Seafile */
-"Password must at least 8 characters" = "Password must at least 8 characters";
+"Password must at least 8 characters" = "Je třeba, aby heslo bylo alespoň 8 znaků dlouhé";
 
 /* Seafile */
-"Two passwords are different" = "Two passwords are different";
+"Two passwords are different" = "Zadání hesla se liší";
 
 /* Seafile */
 "PasteTo" = "Vložit do";
@@ -649,7 +649,7 @@
 "Photos" = "Fotky";
 
 /* Seafile */
-"Photos are not accessible" = "Photos are not accessible";
+"Photos are not accessible" = "Fotky nejsou přístupné";
 
 /* Seafile */
 "Please authenticate to proceed" = "Pro pokračování se ověřte";
@@ -667,22 +667,22 @@
 "Please enable \"Local decryption\" for uploading contacts to an encrypted library." = "Pro nahrávání kontaktů do šifrované knihovny zapněte „Místní rozšifrování“.";
 
 /* Seafile */
-"Post a discussion to group" = "Post a discussion to group";
+"Post a discussion to group" = "Poslat diskuzi do skupiny";
 
 /* Seafile */
-"Preview" = "Preview";
+"Preview" = "Náhled";
 
 /* Seafile */
 "Print" = "Tisk";
 
 /* Seafile */
-"Publish draft" = "Publish draft";
+"Publish draft" = "Zveřejnit koncept";
 
 /* Pull down to get more messages */
-"Pull down to get more messages..." = "Pull down to get more messages...";
+"Pull down to get more messages..." = "Stažením dolů získáte další zprávy…";
 
 /* Pull to refresh status */
-"Pull to refresh..." = "Pull to refresh...";
+"Pull to refresh..." = "Stiskněte pro znovunačtení…";
 
 /* Seafile */
 "Recovered deleted directory" = "Smazaná knihovna obnovena";
@@ -691,16 +691,16 @@
 "Redownload" = "Znovu stáhnout";
 
 /* Release to get more messages */
-"Release to get more messages..." = "Release to get more messages...";
+"Release to get more messages..." = "Uvolněním získáte další zprávy";
 
 /* Release to refresh status */
 "Release to refresh..." = "Pro obnovení uvolněte";
 
 /* Seafile */
-"Removed all items from trash" = "Removed all items from trash";
+"Removed all items from trash" = "Veškeré položky z koše odstraněny";
 
 /* Seafile */
-"Removed items older than %ld days from trash" = "Removed items older than %ld days from trash";
+"Removed items older than %ld days from trash" = "Z koše odebrány položky starší, než %ld dnů";
 
 /* Seafile */
 "Remove client certificate" = "Odstranit klientský certifikát";
@@ -727,16 +727,16 @@
 "Renaming file ..." = "Přejmenování souboru…";
 
 /* Seafile */
-"Renamed library" = "Renamed library";
+"Renamed library" = "Knihovna přejmenována";
 
 /* Seafile */
-"Renamed folder" = "Renamed folder";
+"Renamed folder" = "Soubor přejmenován";
 
 /* Seafile */
-"Renamed file" = "Renamed file";
+"Renamed file" = "Soubor přejmenován";
 
 /* Seafile */
-"Replace" = "Replace";
+"Replace" = "Nahradit";
 
 /* Seafile */
 "Reset repo password" = "Obnovit heslo repozitáře";
@@ -748,13 +748,13 @@
 "Restoring contacts." = "Obnovování kontaktů.";
 
 /* Seafile */
-"Restored library" = "Restored library";
+"Restored library" = "Knihovna obnovena";
 
 /* Seafile */
-"Restored folder" = "Restored folder";
+"Restored folder" = "Složka obnovena";
 
 /* Seafile */
-"Restored file" = "Restored file";
+"Restored file" = "Soubor obnoven";
 
 /* Seafile */
 "Reverted file \"%@\" to status at %@." = "Soubor „%1$@“ vrácen do stavu k %2$@.";
@@ -763,22 +763,22 @@
 "Reverted library to status at" = "Knihovna obnovena do stavu k ";
 
 /* Seafile push notification message */
-"SEAFILE_LOC_KEY_FORMAT" = "%@, you got new messages from %@";
+"SEAFILE_LOC_KEY_FORMAT" = "%@, máte zprávy od %@";
 
 /* Seafile */
 "Save" = "Uložit";
 
 /* Seafile */
-"Save Destination" = "Save Destination";
+"Save Destination" = "Cíl ukládání";
 
 /* Seafile */
 "Save all photos to album" = "Uložit všechny fotky do alba";
 
 /* Seafile */
-"Save to %@" = "Save to %@";
+"Save to %@" = "Uložit do %@";
 
 /* MainInterface.storyboard */
-"Save to Seafile" = "Save to Seafile";
+"Save to Seafile" = "Uložit na Seafile";
 
 /* Seafile */
 "Save to album" = "Uložit album";
@@ -811,7 +811,7 @@
 "Select None" = "Zrušit výběr";
 
 /* Seafile */
-"Select a certificate" = "Select a certificate";
+"Select a certificate" = "Vybrat certifikát";
 
 /* No comment provided by engineer. */
 "Send" = "Odeslat";
@@ -820,10 +820,10 @@
 "Send share link via email" = "Odeslat odkaz pro sdílení emailem";
 
 /* Seafile */
-"Sending" = "Sending";
+"Sending" = "Odesílání";
 
 /* Seafile */
-"Sending..." = "Sending...";
+"Sending..." = "Odesílání…";
 
 /* Seafile */
 "Server" = "Server";
@@ -841,10 +841,10 @@
 "Shared to me" = "Sdíleno se mnou";
 
 /* Seafile */
-"Shared with groups" = "Shared with groups";
+"Shared with groups" = "Sdíleno se skupinami";
 
 /* Seafile */
-"Share" = "Share";
+"Share" = "Sdílet";
 
 /* Seafile */
 "Shibboleth" = "Shibboleth";
@@ -853,7 +853,7 @@
 "Shibboleth Login" = "Přihlášení Shibboleth";
 
 /* Seafile */
-"Single Sign On" = "Single Sign On";
+"Single Sign On" = "Sjednocené přihlášení (SSO)";
 
 /* Seafile */
 "Sort by Last Modifed Time" = "Třídit dle data posledních úprav";
@@ -886,16 +886,16 @@
 "Succeeded to save %@ to album" = "%@ úspěšně uloženo do alba";
 
 /* Seafile */
-"Succeeded to copy %@ to clipboard" = "Succeeded to copy %@ to clipboard";
+"Succeeded to copy %@ to clipboard" = "%@ úspěšně zkopírováno do schránky";
 
 /* Seafile */
 "Successfully imported %@" = "%@ byl úspěšně importován";
 
 /* Seafile */
-"Successfully moved" = "Successfully moved";
+"Successfully moved" = "Úspěšně přesunuto";
 
 /* Seafile */
-"Successfully copied" = "Successfully copied";
+"Successfully copied" = "Úspěšně zkopírováno";
 
 /* Seafile */
 "Tell Friends about %@" = "Řekněte o %@ přátelům";
@@ -925,7 +925,7 @@
 "This app does not have access to your contacts." = "Tato aplikace nemá přístup k vašim kontaktům.";
 
 /* Seafile */
-"There is no account available" = "There is no account available.";
+"There is no account available" = "Není k dispozici žádný účet.";
 
 /* Seafile */
 "This app does not have access to your location service." = "Tato aplikace nemá k vaší místní službě přístup";
@@ -955,13 +955,13 @@
 "Upload Videos" = "Nahrát videa";
 
 /* Seafile */
-"Updated file" = "Upload file";
+"Updated file" = "Nahrát soubor";
 
 /* Seafile */
-"Updated draft" = "Upload draft";
+"Updated draft" = "Nahrát koncept";
 
 /* NSPhotoLibraryUsageDescription */
-"Used to sync photos" = "Used to sync photos";
+"Used to sync photos" = "Slouží k synchronizaci fotek";
 
 /* Seafile */
 "Username" = "Uživatelské jméno";
@@ -997,7 +997,7 @@
 "Wrong username or password" = "Chybné uživatelské jméno nebo heslo";
 
 /* Seafile */
-"YES" = "YES";
+"YES" = "ANO";
 
 /* Seafile */
 "You can enable access in Privacy Settings" = "Přístup můžete povolit v Nastavení soukromí";
@@ -1006,7 +1006,7 @@
 "Your device cannot authenticate using Touch ID." = "Vaše zařízení se pomocí Touch ID nemůže ověřit.";
 
 /* Seafile */
-"Your device cannot authenticate using Face ID." = "Your device cannot authenticate using Face ID.";
+"Your device cannot authenticate using Face ID." = "Vaše zařízení se pomocí Face ID nemůže ověřit.";
 
 /* Seafile */
 "and %@ more" = "a %@ dalších";
@@ -1024,46 +1024,46 @@
 "modified" = "upraveno";
 
 /* Seafile */
-"Uploading" = "Uploading";
+"Uploading" = "Nahrávání";
 
 /* Seafile */
-"Downloading" = "Downloading";
+"Downloading" = "Stahování";
 
 /* Seafile */
-"Upload & Download" = "Upload & Download";
+"Upload & Download" = "Aktualizovat a stáhnout";
 
 /* Seafile */
-"Completed" = "Completed";
+"Completed" = "Dokončeno";
 
 /* waiting to upload */
-"Waiting to upload" = "%Waiting to upload";
+"Waiting to upload" = "%Čeká se na nahrání";
 
 /* FolderView_iPad.storyboard, FolderView_iPhone.storyboard */
 "www.seafile.com" = "www.seafile.com";
 
 /* Share to WeChat */
-"Share to WeChat" = "Share to WeChat";
+"Share to WeChat" = "Sdílet na WeChat";
 
 /* Share Cancelled */
-"Share Cancelled" = "Share Cancelled";
+"Share Cancelled" = "Sdílení zrušeno";
 
 /* Failed to share to WeChat */
-"Failed to share to WeChat" = "Failed to share to WeChat";
+"Failed to share to WeChat" = "Nepodařilo se sdílet do WeChat";
 
 /* OK and Remember Device */
-"OK and Remember Device" = "OK and Remember Device";
+"OK and Remember Device" = "OK a zapamatovat zařízení";
 
 /* Privacy Policy */
-"Privacy Policy" = "Privacy Policy";
+"Privacy Policy" = "Zásady ochrany soukromí";
 
 /* Privacy Policy URL */
 "https://www.seafile.com/en/privacy_policy/" = "https://www.seafile.com/en/privacy_policy/";
 
 /*  TouchID is Enabled  */
-"FaceID(TouchID) is Enabled" = "FaceID(TouchID) is Enabled";
+"FaceID(TouchID) is Enabled" = "FaceID (TouchID) je zapnuté";
 
 /* Files cannot be used whith TouchID */
-"Files cannot access files in Seafile when FaceID(TouchID) enabled. Please open Seafile and disable FaceID(TouchID)." = "Files cannot access files in Seafile when FaceID(TouchID) enabled. Please open Seafile and disable FaceID(TouchID).";
+"Files cannot access files in Seafile when FaceID(TouchID) enabled. Please open Seafile and disable FaceID(TouchID)." = "Pokud je zapnuté FaceID (TouchID), aplikace Soubory nemůže přistupovat k souborům v Seafile. Otevřete Seafile a vypněte FaceID (TouchID).";
 
 /* Seafile */
-"Please open Seafile ans add an account to start" = "Please open Seafile ans add an account to start.";
+"Please open Seafile ans add an account to start" = "Abyste mohli začít, otevřete Seafile a přidejte účet.";
