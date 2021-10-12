@@ -781,6 +781,36 @@
     return ret;
 }
 
+- (BOOL)saveEditedPreviewFile:(NSURL *)url {
+    NSString *editDir = [SeafStorage uniqueDirUnder:SeafStorage.sharedObject.editDir];
+    if (![Utils checkMakeDir:editDir])
+        return NO;
+
+    NSString *newpath = [editDir stringByAppendingPathComponent:self.name];
+    NSURL *pathURL = [NSURL fileURLWithPath:newpath];
+    
+    [url startAccessingSecurityScopedResource];
+    BOOL ret = [Utils copyFile:url to:pathURL];
+    if (ret) {
+        [self setMpath:newpath];
+        //update local file
+        NSString *target = [SeafStorage.sharedObject documentPath:self.ooid];
+        
+        if ([Utils removeFile:target]) {
+            NSError *error = nil;
+            BOOL result = [[NSFileManager defaultManager] copyItemAtPath:newpath toPath:target error:&error];
+            
+            if (error || !result) {
+                Warning("Failed to copy file %@ to %@: %@", newpath, target, error);
+            }
+        }
+        
+        [self autoupload];
+    }
+    [url stopAccessingSecurityScopedResource];
+    return ret;
+}
+
 - (NSDictionary *)toDict
 {
     NSDictionary *dict = [NSDictionary dictionaryWithObjectsAndKeys:connection.address, @"conn_url",  connection.username, @"conn_username",
