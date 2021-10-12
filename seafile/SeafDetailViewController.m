@@ -37,7 +37,7 @@ enum SHARE_STATUS {
 
 #define SHARE_TITLE NSLocalizedString(@"How would you like to share this file?", @"Seafile")
 
-@interface SeafDetailViewController ()<MFMailComposeViewControllerDelegate, MWPhotoBrowserDelegate, WKNavigationDelegate>
+@interface SeafDetailViewController ()<MFMailComposeViewControllerDelegate, MWPhotoBrowserDelegate, WKNavigationDelegate, SeafFileUpdateDelegate>
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
 
 @property (retain) FailToPreview *failedView;
@@ -58,6 +58,7 @@ enum SHARE_STATUS {
 @property (strong) UIBarButtonItem *backItem;
 
 @property (strong) UIDocumentInteractionController *docController;
+@property (nonatomic, assign) BOOL previewDidEdited;
 @property int shareStatus;
 
 @end
@@ -71,6 +72,7 @@ enum SHARE_STATUS {
     self.qlViewController = [[QLPreviewController alloc] init];
     self.qlViewController.delegate = self;
     self.qlViewController.dataSource = self;
+    self.previewDidEdited = NO;
     return self;
 }
 #pragma mark - Managing the detail item
@@ -705,6 +707,37 @@ enum SHARE_STATUS {
         return nil;
     }
     return self.preViewItem;
+}
+
+#pragma -mark QLPreviewControllerDelegate
+
+- (QLPreviewItemEditingMode)previewController:(QLPreviewController *)controller editingModeForPreviewItem:(id<QLPreviewItem>)previewItem  API_AVAILABLE(ios(13.0)){
+    SeafFile *file = (SeafFile *)previewItem;
+    if ([file.mime isEqualToString:@"application/pdf"]) {
+        return QLPreviewItemEditingModeCreateCopy;
+    } else {
+        return QLPreviewItemEditingModeDisabled;
+    }
+}
+
+- (void)previewController:(QLPreviewController *)controller didSaveEditedCopyOfPreviewItem:(id<QLPreviewItem>)previewItem atURL:(NSURL *)modifiedContentsURL {
+    if (previewItem && modifiedContentsURL) {
+        self.previewDidEdited = YES;
+        SeafFile *file = (SeafFile *)previewItem;
+        
+        [file saveEditedPreviewFile:modifiedContentsURL];
+    }
+}
+
+- (void)previewControllerDidDismiss:(QLPreviewController *)controller {
+    if (self.previewDidEdited) {
+        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+        [appdelegate.fileVC refreshView];
+        [appdelegate.starredVC refreshView];
+        
+        self.previewDidEdited = NO;
+    }
+    
 }
 
 - (MWPhotoBrowser *)mwPhotoBrowser
