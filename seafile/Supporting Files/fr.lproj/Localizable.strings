@@ -1,4 +1,4 @@
-﻿
+
 
 /* Seafile */
 "%@ can't verify the identity of the website \"%@\"" = "%1$@ ne peut vérifier l'identité du site web \"%2$@\"";
@@ -1063,7 +1063,7 @@
 "FaceID(TouchID) is Enabled" = "FaceID(TouchID) est activé";
 
 /* Files cannot be used whith TouchID */
-"Files cannot access files in Seafile when FaceID(TouchID) enabled. Please open Seafile and disable FaceID(TouchID)." = "Files cannot access files in Seafile when FaceID(TouchID) enabled. Please open Seafile and disable FaceID(TouchID).";
+"Files cannot access files in Seafile when FaceID(TouchID) enabled. Please open Seafile and disable FaceID(TouchID)." = "Impossible d'accéder aux fichiers dans Seafile lorsque FaceID (TouchID) est activé. Veuillez ouvrir Seafile et désactiver FaceID (TouchID).";
 
 /* Seafile */
 "Please open Seafile ans add an account to start" = "Veuillez ouvrir Seafile et ajouter un compte pour commencer.";
