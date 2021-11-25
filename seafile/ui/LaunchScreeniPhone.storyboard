@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
-    <device id="retina6_5" orientation="portrait">
-        <adaptation id="fullscreen"/>
-    </device>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="19162" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+    <device id="retina6_5" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14490.49"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="19144"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -21,18 +19,52 @@
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="iPhoneLaunchScreen" translatesAutoresizingMaskIntoConstraints="NO" id="9ZC-PB-GJc">
-                                <rect key="frame" x="0.0" y="80" width="414" height="736"/>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Jbq-zA-oxD">
+                                <rect key="frame" x="107" y="348" width="200" height="200"/>
+                                <subviews>
+                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="180.png" translatesAutoresizingMaskIntoConstraints="NO" id="UYd-43-hZY">
+                                        <rect key="frame" x="50" y="0.0" width="100" height="100"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="100" id="CMb-95-e80"/>
+                                            <constraint firstAttribute="height" constant="100" id="E9Y-VK-Z79"/>
+                                        </constraints>
+                                    </imageView>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="luckycloud" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ffZ-ZF-5bH">
+                                        <rect key="frame" x="0.0" y="110" width="200" height="40"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="40" id="cEs-HN-LWQ"/>
+                                        </constraints>
+                                        <fontDescription key="fontDescription" type="boldSystem" pointSize="20"/>
+                                        <color key="textColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Sharing &amp; collaboration" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="HvR-1Z-iJT">
+                                        <rect key="frame" x="0.0" y="160" width="200" height="40"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="15"/>
+                                        <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                </subviews>
+                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <constraints>
-                                    <constraint firstAttribute="width" secondItem="9ZC-PB-GJc" secondAttribute="height" multiplier="9:16" id="Lcg-We-nFT"/>
+                                    <constraint firstItem="HvR-1Z-iJT" firstAttribute="leading" secondItem="Jbq-zA-oxD" secondAttribute="leading" id="3hX-Gu-OFQ"/>
+                                    <constraint firstItem="ffZ-ZF-5bH" firstAttribute="top" secondItem="UYd-43-hZY" secondAttribute="bottom" constant="10" id="5LD-qt-iMb"/>
+                                    <constraint firstItem="UYd-43-hZY" firstAttribute="centerX" secondItem="Jbq-zA-oxD" secondAttribute="centerX" id="663-DW-lxk"/>
+                                    <constraint firstAttribute="width" constant="200" id="7Xu-XX-bU4"/>
+                                    <constraint firstAttribute="bottom" secondItem="HvR-1Z-iJT" secondAttribute="bottom" id="BfP-X5-0An"/>
+                                    <constraint firstAttribute="height" constant="200" id="ED2-8R-T94"/>
+                                    <constraint firstItem="UYd-43-hZY" firstAttribute="top" secondItem="Jbq-zA-oxD" secondAttribute="top" id="Ecb-Iv-02e"/>
+                                    <constraint firstItem="HvR-1Z-iJT" firstAttribute="top" secondItem="ffZ-ZF-5bH" secondAttribute="bottom" constant="10" id="HqP-qS-Mi6"/>
+                                    <constraint firstAttribute="trailing" secondItem="HvR-1Z-iJT" secondAttribute="trailing" id="J2k-uI-YXL"/>
+                                    <constraint firstAttribute="trailing" secondItem="ffZ-ZF-5bH" secondAttribute="trailing" id="NTm-cw-dBD"/>
+                                    <constraint firstItem="ffZ-ZF-5bH" firstAttribute="leading" secondItem="Jbq-zA-oxD" secondAttribute="leading" id="OHa-Z0-1J2"/>
                                 </constraints>
-                            </imageView>
+                            </view>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
-                            <constraint firstItem="9ZC-PB-GJc" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" id="WoH-Gn-3ZQ"/>
-                            <constraint firstItem="9ZC-PB-GJc" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="jy1-2B-6gb"/>
-                            <constraint firstAttribute="trailing" secondItem="9ZC-PB-GJc" secondAttribute="trailing" id="ovI-Yd-ag9"/>
+                            <constraint firstItem="Jbq-zA-oxD" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="0Y3-3a-dr3"/>
+                            <constraint firstItem="Jbq-zA-oxD" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="pOn-jx-BeU"/>
                         </constraints>
                     </view>
                 </viewController>
@@ -42,6 +74,6 @@
         </scene>
     </scenes>
     <resources>
-        <image name="iPhoneLaunchScreen" width="414" height="736"/>
+        <image name="180.png" width="180" height="180"/>
     </resources>
 </document>

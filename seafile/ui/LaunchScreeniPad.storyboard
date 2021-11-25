@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
-    <device id="ipad10_5" orientation="landscape">
-        <adaptation id="fullscreen"/>
-    </device>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="19162" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+    <device id="ipad10_5" orientation="landscape" layout="fullscreen" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14490.49"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="19144"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -21,16 +19,52 @@
                         <rect key="frame" x="0.0" y="0.0" width="1112" height="834"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="iPadLaunchScreen" translatesAutoresizingMaskIntoConstraints="NO" id="yeC-cC-nxr">
-                                <rect key="frame" x="0.0" y="0.0" width="1112" height="834"/>
-                            </imageView>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Jkd-RP-PeL">
+                                <rect key="frame" x="456" y="317" width="200" height="200"/>
+                                <subviews>
+                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="180.png" translatesAutoresizingMaskIntoConstraints="NO" id="JQq-AC-7XD">
+                                        <rect key="frame" x="50" y="0.0" width="100" height="100"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="100" id="Ku4-np-nUF"/>
+                                            <constraint firstAttribute="width" constant="100" id="OZj-Fj-LcA"/>
+                                        </constraints>
+                                    </imageView>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="luckycloud" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="47q-qL-XCq">
+                                        <rect key="frame" x="0.0" y="110" width="200" height="40"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="40" id="09q-k4-mq3"/>
+                                        </constraints>
+                                        <fontDescription key="fontDescription" type="boldSystem" pointSize="20"/>
+                                        <color key="textColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Sharing &amp; collaboration" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="xor-2B-kCd">
+                                        <rect key="frame" x="0.0" y="160" width="200" height="40"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="15"/>
+                                        <color key="textColor" white="0.66666666669999997" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                </subviews>
+                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <constraints>
+                                    <constraint firstItem="JQq-AC-7XD" firstAttribute="top" secondItem="Jkd-RP-PeL" secondAttribute="top" id="4FN-gb-Ha3"/>
+                                    <constraint firstAttribute="height" constant="200" id="5xN-in-HBF"/>
+                                    <constraint firstItem="47q-qL-XCq" firstAttribute="leading" secondItem="Jkd-RP-PeL" secondAttribute="leading" id="62u-kR-hrH"/>
+                                    <constraint firstItem="xor-2B-kCd" firstAttribute="leading" secondItem="Jkd-RP-PeL" secondAttribute="leading" id="8zS-2X-frK"/>
+                                    <constraint firstItem="xor-2B-kCd" firstAttribute="top" secondItem="47q-qL-XCq" secondAttribute="bottom" constant="10" id="DTO-Sd-KqI"/>
+                                    <constraint firstAttribute="width" constant="200" id="XGI-Nm-CAH"/>
+                                    <constraint firstAttribute="bottom" secondItem="xor-2B-kCd" secondAttribute="bottom" id="bpS-0C-mA3"/>
+                                    <constraint firstItem="JQq-AC-7XD" firstAttribute="centerX" secondItem="Jkd-RP-PeL" secondAttribute="centerX" id="cgG-c2-ZQp"/>
+                                    <constraint firstAttribute="trailing" secondItem="47q-qL-XCq" secondAttribute="trailing" id="f4P-7r-EGQ"/>
+                                    <constraint firstAttribute="trailing" secondItem="xor-2B-kCd" secondAttribute="trailing" id="imJ-wR-KGz"/>
+                                    <constraint firstItem="47q-qL-XCq" firstAttribute="top" secondItem="JQq-AC-7XD" secondAttribute="bottom" constant="10" id="qPZ-sP-SPn"/>
+                                </constraints>
+                            </view>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
-                            <constraint firstItem="yeC-cC-nxr" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" id="1Ya-VD-8o0"/>
-                            <constraint firstItem="unT-Id-noE" firstAttribute="top" secondItem="yeC-cC-nxr" secondAttribute="bottom" id="BSK-d6-kMr"/>
-                            <constraint firstItem="yeC-cC-nxr" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" id="FIN-hg-0pS"/>
-                            <constraint firstAttribute="trailing" secondItem="yeC-cC-nxr" secondAttribute="trailing" id="sV5-bc-IPN"/>
+                            <constraint firstItem="Jkd-RP-PeL" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="PLj-4e-9Q9"/>
+                            <constraint firstItem="Jkd-RP-PeL" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="z1b-5O-FZt"/>
                         </constraints>
                     </view>
                 </viewController>
@@ -40,6 +74,6 @@
         </scene>
     </scenes>
     <resources>
-        <image name="iPadLaunchScreen" width="768" height="1024"/>
+        <image name="180.png" width="180" height="180"/>
     </resources>
 </document>
