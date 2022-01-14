@@ -86,6 +86,49 @@
 		58D40A7B1E9AF85100A68BEF /* seafile.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 58D40A6C1E9AF7A400A68BEF /* seafile.xcdatamodeld */; };
 		58D40A7E1E9AF86D00A68BEF /* SeafData.m in Sources */ = {isa = PBXBuildFile; fileRef = 58D40A7C1E9AF86D00A68BEF /* SeafData.m */; };
 		7354777D2C3444E394BB2F31 /* libPods-SeafAction.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 159E0D2A7419F67E532A240F /* libPods-SeafAction.a */; };
+		B1177E02274EBAE90093C905 /* icons in Resources */ = {isa = PBXBuildFile; fileRef = B1177E01274EBAE90093C905 /* icons */; };
+		B1281448275B6202005EF4D5 /* activity_refresh.png in Resources */ = {isa = PBXBuildFile; fileRef = B1281447275B6202005EF4D5 /* activity_refresh.png */; };
+		B1281449275B6202005EF4D5 /* activity_refresh.png in Resources */ = {isa = PBXBuildFile; fileRef = B1281447275B6202005EF4D5 /* activity_refresh.png */; };
+		B128144A275B6202005EF4D5 /* activity_refresh.png in Resources */ = {isa = PBXBuildFile; fileRef = B1281447275B6202005EF4D5 /* activity_refresh.png */; };
+		B128144B275B6202005EF4D5 /* activity_refresh.png in Resources */ = {isa = PBXBuildFile; fileRef = B1281447275B6202005EF4D5 /* activity_refresh.png */; };
+		B128144C275B6202005EF4D5 /* activity_refresh.png in Resources */ = {isa = PBXBuildFile; fileRef = B1281447275B6202005EF4D5 /* activity_refresh.png */; };
+		B128144D275B6202005EF4D5 /* activity_refresh.png in Resources */ = {isa = PBXBuildFile; fileRef = B1281447275B6202005EF4D5 /* activity_refresh.png */; };
+		B128144F275B6A5B005EF4D5 /* new_plus.png in Resources */ = {isa = PBXBuildFile; fileRef = B128144E275B6A5B005EF4D5 /* new_plus.png */; };
+		B1281450275B6A5B005EF4D5 /* new_plus.png in Resources */ = {isa = PBXBuildFile; fileRef = B128144E275B6A5B005EF4D5 /* new_plus.png */; };
+		B1281451275B6A5B005EF4D5 /* new_plus.png in Resources */ = {isa = PBXBuildFile; fileRef = B128144E275B6A5B005EF4D5 /* new_plus.png */; };
+		B1281452275B6A5B005EF4D5 /* new_plus.png in Resources */ = {isa = PBXBuildFile; fileRef = B128144E275B6A5B005EF4D5 /* new_plus.png */; };
+		B1281453275B6A5B005EF4D5 /* new_plus.png in Resources */ = {isa = PBXBuildFile; fileRef = B128144E275B6A5B005EF4D5 /* new_plus.png */; };
+		B1281454275B6A5B005EF4D5 /* new_plus.png in Resources */ = {isa = PBXBuildFile; fileRef = B128144E275B6A5B005EF4D5 /* new_plus.png */; };
+		B1281456275B6FCD005EF4D5 /* new_delete.png in Resources */ = {isa = PBXBuildFile; fileRef = B1281455275B6FCD005EF4D5 /* new_delete.png */; };
+		B1281457275B6FCD005EF4D5 /* new_delete.png in Resources */ = {isa = PBXBuildFile; fileRef = B1281455275B6FCD005EF4D5 /* new_delete.png */; };
+		B1281458275B6FCD005EF4D5 /* new_delete.png in Resources */ = {isa = PBXBuildFile; fileRef = B1281455275B6FCD005EF4D5 /* new_delete.png */; };
+		B1281459275B6FCD005EF4D5 /* new_delete.png in Resources */ = {isa = PBXBuildFile; fileRef = B1281455275B6FCD005EF4D5 /* new_delete.png */; };
+		B128145A275B6FCD005EF4D5 /* new_delete.png in Resources */ = {isa = PBXBuildFile; fileRef = B1281455275B6FCD005EF4D5 /* new_delete.png */; };
+		B128145B275B6FCD005EF4D5 /* new_delete.png in Resources */ = {isa = PBXBuildFile; fileRef = B1281455275B6FCD005EF4D5 /* new_delete.png */; };
+		B128145D275B7089005EF4D5 /* new_expert.png in Resources */ = {isa = PBXBuildFile; fileRef = B128145C275B7089005EF4D5 /* new_expert.png */; };
+		B128145E275B7089005EF4D5 /* new_expert.png in Resources */ = {isa = PBXBuildFile; fileRef = B128145C275B7089005EF4D5 /* new_expert.png */; };
+		B128145F275B7089005EF4D5 /* new_expert.png in Resources */ = {isa = PBXBuildFile; fileRef = B128145C275B7089005EF4D5 /* new_expert.png */; };
+		B1281460275B7089005EF4D5 /* new_expert.png in Resources */ = {isa = PBXBuildFile; fileRef = B128145C275B7089005EF4D5 /* new_expert.png */; };
+		B1281461275B7089005EF4D5 /* new_expert.png in Resources */ = {isa = PBXBuildFile; fileRef = B128145C275B7089005EF4D5 /* new_expert.png */; };
+		B1281462275B7089005EF4D5 /* new_expert.png in Resources */ = {isa = PBXBuildFile; fileRef = B128145C275B7089005EF4D5 /* new_expert.png */; };
+		B1281464275BBF97005EF4D5 /* new_editfile.png in Resources */ = {isa = PBXBuildFile; fileRef = B1281463275BBF97005EF4D5 /* new_editfile.png */; };
+		B1281465275BBF97005EF4D5 /* new_editfile.png in Resources */ = {isa = PBXBuildFile; fileRef = B1281463275BBF97005EF4D5 /* new_editfile.png */; };
+		B1281466275BBF97005EF4D5 /* new_editfile.png in Resources */ = {isa = PBXBuildFile; fileRef = B1281463275BBF97005EF4D5 /* new_editfile.png */; };
+		B1281467275BBF97005EF4D5 /* new_editfile.png in Resources */ = {isa = PBXBuildFile; fileRef = B1281463275BBF97005EF4D5 /* new_editfile.png */; };
+		B1281468275BBF97005EF4D5 /* new_editfile.png in Resources */ = {isa = PBXBuildFile; fileRef = B1281463275BBF97005EF4D5 /* new_editfile.png */; };
+		B1281469275BBF97005EF4D5 /* new_editfile.png in Resources */ = {isa = PBXBuildFile; fileRef = B1281463275BBF97005EF4D5 /* new_editfile.png */; };
+		B128146C275BC6C6005EF4D5 /* new_unstar.png in Resources */ = {isa = PBXBuildFile; fileRef = B128146A275BC6C6005EF4D5 /* new_unstar.png */; };
+		B128146D275BC6C6005EF4D5 /* new_unstar.png in Resources */ = {isa = PBXBuildFile; fileRef = B128146A275BC6C6005EF4D5 /* new_unstar.png */; };
+		B128146E275BC6C6005EF4D5 /* new_unstar.png in Resources */ = {isa = PBXBuildFile; fileRef = B128146A275BC6C6005EF4D5 /* new_unstar.png */; };
+		B128146F275BC6C6005EF4D5 /* new_unstar.png in Resources */ = {isa = PBXBuildFile; fileRef = B128146A275BC6C6005EF4D5 /* new_unstar.png */; };
+		B1281470275BC6C6005EF4D5 /* new_unstar.png in Resources */ = {isa = PBXBuildFile; fileRef = B128146A275BC6C6005EF4D5 /* new_unstar.png */; };
+		B1281471275BC6C6005EF4D5 /* new_unstar.png in Resources */ = {isa = PBXBuildFile; fileRef = B128146A275BC6C6005EF4D5 /* new_unstar.png */; };
+		B1281472275BC6C6005EF4D5 /* new_star.png in Resources */ = {isa = PBXBuildFile; fileRef = B128146B275BC6C6005EF4D5 /* new_star.png */; };
+		B1281473275BC6C6005EF4D5 /* new_star.png in Resources */ = {isa = PBXBuildFile; fileRef = B128146B275BC6C6005EF4D5 /* new_star.png */; };
+		B1281474275BC6C6005EF4D5 /* new_star.png in Resources */ = {isa = PBXBuildFile; fileRef = B128146B275BC6C6005EF4D5 /* new_star.png */; };
+		B1281475275BC6C6005EF4D5 /* new_star.png in Resources */ = {isa = PBXBuildFile; fileRef = B128146B275BC6C6005EF4D5 /* new_star.png */; };
+		B1281476275BC6C6005EF4D5 /* new_star.png in Resources */ = {isa = PBXBuildFile; fileRef = B128146B275BC6C6005EF4D5 /* new_star.png */; };
+		B1281477275BC6C6005EF4D5 /* new_star.png in Resources */ = {isa = PBXBuildFile; fileRef = B128146B275BC6C6005EF4D5 /* new_star.png */; };
 		D9BE2094AD9B16A02584A3C2 /* libPods-seafileApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B3D78ABE0B0673E422054A82 /* libPods-seafileApp.a */; };
 		DE940CA1A2BA2DD43C20EA2C /* libPods-SeafFileProviderUI.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 15EFA735E2957F22E301E23A /* libPods-SeafFileProviderUI.a */; };
 		E0FED1E93CBE02FB9B335ADB /* libPods-SeafFileProvider.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3583928919818364B46034EA /* libPods-SeafFileProvider.a */; };
@@ -766,6 +809,14 @@
 		71B308DC2DFEC09F58232B49 /* Pods-SeafFileProviderUI.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafFileProviderUI.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SeafFileProviderUI/Pods-SeafFileProviderUI.debug.xcconfig"; sourceTree = "<group>"; };
 		948B9BFC1AD5D795756A9E90 /* Pods-SeafFileProvider.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafFileProvider.release.xcconfig"; path = "Pods/Target Support Files/Pods-SeafFileProvider/Pods-SeafFileProvider.release.xcconfig"; sourceTree = "<group>"; };
 		9AF30EE6039454E8B0967C09 /* Pods-SeafAction.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafAction.release.xcconfig"; path = "Pods/Target Support Files/Pods-SeafAction/Pods-SeafAction.release.xcconfig"; sourceTree = "<group>"; };
+		B1177E01274EBAE90093C905 /* icons */ = {isa = PBXFileReference; lastKnownFileType = folder; path = icons; sourceTree = "<group>"; };
+		B1281447275B6202005EF4D5 /* activity_refresh.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = activity_refresh.png; sourceTree = "<group>"; };
+		B128144E275B6A5B005EF4D5 /* new_plus.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = new_plus.png; sourceTree = "<group>"; };
+		B1281455275B6FCD005EF4D5 /* new_delete.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = new_delete.png; sourceTree = "<group>"; };
+		B128145C275B7089005EF4D5 /* new_expert.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = new_expert.png; sourceTree = "<group>"; };
+		B1281463275BBF97005EF4D5 /* new_editfile.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = new_editfile.png; sourceTree = "<group>"; };
+		B128146A275BC6C6005EF4D5 /* new_unstar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = new_unstar.png; sourceTree = "<group>"; };
+		B128146B275BC6C6005EF4D5 /* new_star.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = new_star.png; sourceTree = "<group>"; };
 		B3D78ABE0B0673E422054A82 /* libPods-seafileApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-seafileApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B6C7801D49498095B24DB644 /* Pods-seafileApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-seafileApp.release.xcconfig"; path = "Pods/Target Support Files/Pods-seafileApp/Pods-seafileApp.release.xcconfig"; sourceTree = "<group>"; };
 		DBDEFA043CD6CF7650726549 /* Pods-seafileApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-seafileApp.debug.xcconfig"; path = "Pods/Target Support Files/Pods-seafileApp/Pods-seafileApp.debug.xcconfig"; sourceTree = "<group>"; };
@@ -1200,6 +1251,7 @@
 		57DB827915A833FA00097CEC /* seafile */ = {
 			isa = PBXGroup;
 			children = (
+				B1177E01274EBAE90093C905 /* icons */,
 				F5DF747524FE83DB004CAB1E /* Supporting Files */,
 				F521116E21E1C0DF00D93BB8 /* ui */,
 				5704C6CF1753A07E0028F4FE /* thirdpart */,
@@ -1325,6 +1377,13 @@
 		F5DF748624FE83DB004CAB1E /* images */ = {
 			isa = PBXGroup;
 			children = (
+				B128146B275BC6C6005EF4D5 /* new_star.png */,
+				B128146A275BC6C6005EF4D5 /* new_unstar.png */,
+				B1281463275BBF97005EF4D5 /* new_editfile.png */,
+				B128145C275B7089005EF4D5 /* new_expert.png */,
+				B1281455275B6FCD005EF4D5 /* new_delete.png */,
+				B128144E275B6A5B005EF4D5 /* new_plus.png */,
+				B1281447275B6202005EF4D5 /* activity_refresh.png */,
 				F5DF748724FE83DB004CAB1E /* share2.png */,
 				F5DF748824FE83DB004CAB1E /* seafile-logo.png */,
 				F5DF748924FE83DB004CAB1E /* delete2.png */,
@@ -1642,6 +1701,7 @@
 				F5DF752224FE83DB004CAB1E /* unstar2.png in Resources */,
 				F5DF75B224FE83DB004CAB1E /* unstar2@2x.png in Resources */,
 				F5DF75BE24FE83DB004CAB1E /* arrowright2.png in Resources */,
+				B1281456275B6FCD005EF4D5 /* new_delete.png in Resources */,
 				F5DF74EC24FE83DB004CAB1E /* seafile-logo.png in Resources */,
 				F521119E21E1C12000D93BB8 /* FolderView_iPhone.storyboard in Resources */,
 				F5DF763024FE83DC004CAB1E /* export2@2x.png in Resources */,
@@ -1655,9 +1715,11 @@
 				F5DF762A24FE83DC004CAB1E /* red.png in Resources */,
 				F5DF74E624FE83DB004CAB1E /* share2.png in Resources */,
 				F5DF755E24FE83DB004CAB1E /* download_waiting.png in Resources */,
+				B1281448275B6202005EF4D5 /* activity_refresh.png in Resources */,
 				F52111DD21E1C14D00D93BB8 /* SeafSyncInfoCell.xib in Resources */,
 				F5DF760024FE83DC004CAB1E /* star2.png in Resources */,
 				F5DF752E24FE83DB004CAB1E /* tab-account@2x.png in Resources */,
+				B1177E02274EBAE90093C905 /* icons in Resources */,
 				F5DF75E824FE83DB004CAB1E /* close2@2x.png in Resources */,
 				F5DF75DC24FE83DB004CAB1E /* ellipsis2.png in Resources */,
 				F5DF753A24FE83DB004CAB1E /* export2.png in Resources */,
@@ -1667,6 +1729,7 @@
 				F521119421E1C12000D93BB8 /* FailToPreview_iPad.xib in Resources */,
 				F5DF756424FE83DB004CAB1E /* reply.png in Resources */,
 				F5DF75CA24FE83DB004CAB1E /* arrowleft@2x.png in Resources */,
+				B128144F275B6A5B005EF4D5 /* new_plus.png in Resources */,
 				F5DF74CE24FE83DB004CAB1E /* Localizable.strings in Resources */,
 				F5DF75F424FE83DC004CAB1E /* more_dot@2x.png in Resources */,
 				F5DF75A624FE83DB004CAB1E /* tab-modify@2x.png in Resources */,
@@ -1674,6 +1737,8 @@
 				F5DF74F224FE83DB004CAB1E /* delete2.png in Resources */,
 				F52111B221E1C12000D93BB8 /* DownloadingProgress_iPhone.xib in Resources */,
 				F5DF75A024FE83DB004CAB1E /* upload.png in Resources */,
+				B128145D275B7089005EF4D5 /* new_expert.png in Resources */,
+				B1281464275BBF97005EF4D5 /* new_editfile.png in Resources */,
 				F5DF750424FE83DB004CAB1E /* plus2.png in Resources */,
 				F52111BC21E1C12000D93BB8 /* FailToPreview_iPhone.xib in Resources */,
 				F52111D021E1C12000D93BB8 /* FolderView_iPad.storyboard in Resources */,
@@ -1689,11 +1754,13 @@
 				58AC97D81FC391A100A7518C /* Settings.bundle in Resources */,
 				F5DF754624FE83DB004CAB1E /* tab-star.png in Resources */,
 				F5DF75FA24FE83DC004CAB1E /* share2@2x.png in Resources */,
+				B1281472275BC6C6005EF4D5 /* new_star.png in Resources */,
 				F5DF760624FE83DC004CAB1E /* arrowleft2@2x.png in Resources */,
 				F5DF761E24FE83DC004CAB1E /* tab-home.png in Resources */,
 				F5DF762424FE83DC004CAB1E /* plus2@2x.png in Resources */,
 				F521118A21E1C12000D93BB8 /* SeafStart.storyboard in Resources */,
 				F52111A821E1C12000D93BB8 /* SeafShibbolethViewController.xib in Resources */,
+				B128146C275BC6C6005EF4D5 /* new_unstar.png in Resources */,
 				F5DF761824FE83DC004CAB1E /* arrowright2@2x.png in Resources */,
 				F5DF759A24FE83DB004CAB1E /* arrowleft.png in Resources */,
 				F52111AD21E1C12000D93BB8 /* SeafButtonCell.xib in Resources */,
@@ -1746,7 +1813,10 @@
 				F5DF74D524FE83DB004CAB1E /* InfoPlist.strings in Resources */,
 				F52111E321E1C14D00D93BB8 /* SeafMkLibAlertController_iPad.xib in Resources */,
 				F5DF75CB24FE83DB004CAB1E /* arrowleft@2x.png in Resources */,
+				B1281473275BC6C6005EF4D5 /* new_star.png in Resources */,
+				B128146D275BC6C6005EF4D5 /* new_unstar.png in Resources */,
 				58AC97D91FC391FD00A7518C /* Settings.bundle in Resources */,
+				B1281450275B6A5B005EF4D5 /* new_plus.png in Resources */,
 				F5DF761324FE83DC004CAB1E /* more_dot@3x.png in Resources */,
 				F5DF757724FE83DB004CAB1E /* editfile2.png in Resources */,
 				F5DF760D24FE83DC004CAB1E /* checkmask2.png in Resources */,
@@ -1754,10 +1824,12 @@
 				F5DF758F24FE83DB004CAB1E /* delete2@2x.png in Resources */,
 				F5DF75DD24FE83DB004CAB1E /* ellipsis2.png in Resources */,
 				F521118121E1C12000D93BB8 /* DownloadingProgress_iPad.xib in Resources */,
+				B128145E275B7089005EF4D5 /* new_expert.png in Resources */,
 				F5DF75A724FE83DB004CAB1E /* tab-modify@2x.png in Resources */,
 				F5DF761924FE83DC004CAB1E /* arrowright2@2x.png in Resources */,
 				F5DF74F924FE83DB004CAB1E /* tab-star@2x.png in Resources */,
 				F5DF75A124FE83DB004CAB1E /* upload.png in Resources */,
+				B1281457275B6FCD005EF4D5 /* new_delete.png in Resources */,
 				57A029A51A170147009C9D7B /* SeafProviderFileViewController.storyboard in Resources */,
 				F5DF762B24FE83DC004CAB1E /* red.png in Resources */,
 				F5DF751124FE83DB004CAB1E /* arrowmore@3x.png in Resources */,
@@ -1785,6 +1857,7 @@
 				F52111D121E1C12000D93BB8 /* FolderView_iPad.storyboard in Resources */,
 				F5DF751724FE83DB004CAB1E /* download_finished.png in Resources */,
 				F5DF763124FE83DC004CAB1E /* export2@2x.png in Resources */,
+				B1281465275BBF97005EF4D5 /* new_editfile.png in Resources */,
 				F52111CC21E1C12000D93BB8 /* SeafEventCell.xib in Resources */,
 				F5DF754124FE83DB004CAB1E /* tab-modify.png in Resources */,
 				F52111DE21E1C14D00D93BB8 /* SeafSyncInfoCell.xib in Resources */,
@@ -1812,6 +1885,7 @@
 				F5DF753524FE83DB004CAB1E /* group.png in Resources */,
 				F52111C721E1C12000D93BB8 /* SeafTextEditorViewController_iPhone.xib in Resources */,
 				F5DF754D24FE83DB004CAB1E /* tab-settings.png in Resources */,
+				B1281449275B6202005EF4D5 /* activity_refresh.png in Resources */,
 				F5DF750B24FE83DB004CAB1E /* star2@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1832,6 +1906,7 @@
 				F52111A521E1C12000D93BB8 /* SeafCell.xib in Resources */,
 				F5DF760824FE83DC004CAB1E /* arrowleft2@2x.png in Resources */,
 				F5DF751E24FE83DB004CAB1E /* arrowright.png in Resources */,
+				B128146E275BC6C6005EF4D5 /* new_unstar.png in Resources */,
 				F5DF74D024FE83DB004CAB1E /* Localizable.strings in Resources */,
 				F5DF75D224FE83DB004CAB1E /* tab-message@2x.png in Resources */,
 				F5DF762624FE83DC004CAB1E /* plus2@2x.png in Resources */,
@@ -1845,15 +1920,19 @@
 				F5DF750C24FE83DB004CAB1E /* star2@2x.png in Resources */,
 				F5DF755424FE83DB004CAB1E /* close2.png in Resources */,
 				F5DF75BA24FE83DB004CAB1E /* tab-settings@2x.png in Resources */,
+				B1281474275BC6C6005EF4D5 /* new_star.png in Resources */,
 				F5DF756024FE83DB004CAB1E /* download_waiting.png in Resources */,
+				B128144A275B6202005EF4D5 /* activity_refresh.png in Resources */,
 				F5DF763224FE83DC004CAB1E /* export2@2x.png in Resources */,
 				F5DF760E24FE83DC004CAB1E /* checkmask2.png in Resources */,
 				F5DF754824FE83DB004CAB1E /* tab-star.png in Resources */,
 				F5DF75DE24FE83DB004CAB1E /* ellipsis2.png in Resources */,
 				F5DF75CC24FE83DB004CAB1E /* arrowleft@2x.png in Resources */,
 				F52111E421E1C14D00D93BB8 /* SeafMkLibAlertController_iPad.xib in Resources */,
+				B128145F275B7089005EF4D5 /* new_expert.png in Resources */,
 				F5DF761424FE83DC004CAB1E /* more_dot@3x.png in Resources */,
 				F521119B21E1C12000D93BB8 /* SeafAccountViewController_iPhone.xib in Resources */,
+				B1281466275BBF97005EF4D5 /* new_editfile.png in Resources */,
 				F52111A021E1C12000D93BB8 /* FolderView_iPhone.storyboard in Resources */,
 				F52111AF21E1C12000D93BB8 /* SeafButtonCell.xib in Resources */,
 				F52111C321E1C12000D93BB8 /* SeafAccountViewController_iPad.xib in Resources */,
@@ -1884,6 +1963,7 @@
 				F52111BE21E1C12000D93BB8 /* FailToPreview_iPhone.xib in Resources */,
 				F52111B421E1C12000D93BB8 /* DownloadingProgress_iPhone.xib in Resources */,
 				F52111C821E1C12000D93BB8 /* SeafTextEditorViewController_iPhone.xib in Resources */,
+				B1281458275B6FCD005EF4D5 /* new_delete.png in Resources */,
 				F5DF757E24FE83DB004CAB1E /* ImageError.png in Resources */,
 				F5DF74E824FE83DB004CAB1E /* share2.png in Resources */,
 				F5DF760224FE83DC004CAB1E /* star2.png in Resources */,
@@ -1891,6 +1971,7 @@
 				F5DF756624FE83DB004CAB1E /* reply.png in Resources */,
 				F5DF75A224FE83DB004CAB1E /* upload.png in Resources */,
 				F5DF75C624FE83DB004CAB1E /* arrowright@2x.png in Resources */,
+				B1281451275B6A5B005EF4D5 /* new_plus.png in Resources */,
 				F5DF75AE24FE83DB004CAB1E /* refresh2.png in Resources */,
 				F5DF753624FE83DB004CAB1E /* group.png in Resources */,
 				F5DF762024FE83DC004CAB1E /* tab-home.png in Resources */,
@@ -1924,7 +2005,10 @@
 				F5DF74D724FE83DB004CAB1E /* InfoPlist.strings in Resources */,
 				F52111C421E1C12000D93BB8 /* SeafAccountViewController_iPad.xib in Resources */,
 				F5DF75CD24FE83DB004CAB1E /* arrowleft@2x.png in Resources */,
+				B1281475275BC6C6005EF4D5 /* new_star.png in Resources */,
+				B128146F275BC6C6005EF4D5 /* new_unstar.png in Resources */,
 				F52111BF21E1C12000D93BB8 /* FailToPreview_iPhone.xib in Resources */,
+				B1281452275B6A5B005EF4D5 /* new_plus.png in Resources */,
 				F5DF761524FE83DC004CAB1E /* more_dot@3x.png in Resources */,
 				F5DF757924FE83DB004CAB1E /* editfile2.png in Resources */,
 				F5DF760F24FE83DC004CAB1E /* checkmask2.png in Resources */,
@@ -1932,10 +2016,12 @@
 				F5DF759124FE83DB004CAB1E /* delete2@2x.png in Resources */,
 				F5DF75DF24FE83DB004CAB1E /* ellipsis2.png in Resources */,
 				F521119C21E1C12000D93BB8 /* SeafAccountViewController_iPhone.xib in Resources */,
+				B1281460275B7089005EF4D5 /* new_expert.png in Resources */,
 				F5DF75A924FE83DB004CAB1E /* tab-modify@2x.png in Resources */,
 				F5DF761B24FE83DC004CAB1E /* arrowright2@2x.png in Resources */,
 				F5DF74FB24FE83DB004CAB1E /* tab-star@2x.png in Resources */,
 				F5DF75A324FE83DB004CAB1E /* upload.png in Resources */,
+				B1281459275B6FCD005EF4D5 /* new_delete.png in Resources */,
 				F521116C21E1BEE800D93BB8 /* SeafAccountCell.xib in Resources */,
 				F5DF762D24FE83DC004CAB1E /* red.png in Resources */,
 				F5DF751324FE83DB004CAB1E /* arrowmore@3x.png in Resources */,
@@ -1963,6 +2049,7 @@
 				F52111E021E1C14D00D93BB8 /* SeafSyncInfoCell.xib in Resources */,
 				F5DF751924FE83DB004CAB1E /* download_finished.png in Resources */,
 				F5DF763324FE83DC004CAB1E /* export2@2x.png in Resources */,
+				B1281467275BBF97005EF4D5 /* new_editfile.png in Resources */,
 				F52111BA21E1C12000D93BB8 /* SeafDirCell.xib in Resources */,
 				F5DF754324FE83DB004CAB1E /* tab-modify.png in Resources */,
 				F521118D21E1C12000D93BB8 /* SeafStart.storyboard in Resources */,
@@ -1990,6 +2077,7 @@
 				F5DF753724FE83DB004CAB1E /* group.png in Resources */,
 				F52111E521E1C14D00D93BB8 /* SeafMkLibAlertController_iPad.xib in Resources */,
 				F5DF754F24FE83DB004CAB1E /* tab-settings.png in Resources */,
+				B128144B275B6202005EF4D5 /* activity_refresh.png in Resources */,
 				F5DF750D24FE83DB004CAB1E /* star2@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1999,7 +2087,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				F5DF75ED24FE83DB004CAB1E /* close2@2x.png in Resources */,
+				B1281477275BC6C6005EF4D5 /* new_star.png in Resources */,
 				F5DF75A524FE83DB004CAB1E /* upload.png in Resources */,
+				B1281462275B7089005EF4D5 /* new_expert.png in Resources */,
+				B1281454275B6A5B005EF4D5 /* new_plus.png in Resources */,
 				F5DF75F924FE83DC004CAB1E /* more_dot@2x.png in Resources */,
 				F5DF75FF24FE83DC004CAB1E /* share2@2x.png in Resources */,
 				F5DF753924FE83DB004CAB1E /* group.png in Resources */,
@@ -2020,6 +2111,7 @@
 				F5DF758124FE83DB004CAB1E /* ImageError.png in Resources */,
 				F5DF756324FE83DB004CAB1E /* download_waiting.png in Resources */,
 				F5DF75E124FE83DB004CAB1E /* ellipsis2.png in Resources */,
+				B128145B275B6FCD005EF4D5 /* new_delete.png in Resources */,
 				F5DF751B24FE83DB004CAB1E /* download_finished.png in Resources */,
 				F5DF759324FE83DB004CAB1E /* delete2@2x.png in Resources */,
 				F5AD6AE224C42D140067F9AF /* MainInterface.storyboard in Resources */,
@@ -2041,6 +2133,7 @@
 				F5DF75AB24FE83DB004CAB1E /* tab-modify@2x.png in Resources */,
 				F5DF755724FE83DB004CAB1E /* close2.png in Resources */,
 				F5DF760524FE83DC004CAB1E /* star2.png in Resources */,
+				B1281469275BBF97005EF4D5 /* new_editfile.png in Resources */,
 				F5DF761D24FE83DC004CAB1E /* arrowright2@2x.png in Resources */,
 				F5DF74F724FE83DB004CAB1E /* delete2.png in Resources */,
 				F5DF74FD24FE83DB004CAB1E /* tab-star@2x.png in Resources */,
@@ -2049,7 +2142,9 @@
 				F5DF75C324FE83DB004CAB1E /* arrowright2.png in Resources */,
 				F5DF74EB24FE83DB004CAB1E /* share2.png in Resources */,
 				F5DF753324FE83DB004CAB1E /* tab-account@2x.png in Resources */,
+				B128144D275B6202005EF4D5 /* activity_refresh.png in Resources */,
 				F5DF760B24FE83DC004CAB1E /* arrowleft2@2x.png in Resources */,
+				B1281471275BC6C6005EF4D5 /* new_unstar.png in Resources */,
 				F5DF758724FE83DB004CAB1E /* tab-home@2x.png in Resources */,
 				F5DF758D24FE83DB004CAB1E /* tab-message.png in Resources */,
 				F5DF752724FE83DB004CAB1E /* unstar2.png in Resources */,
@@ -2065,6 +2160,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B128145A275B6FCD005EF4D5 /* new_delete.png in Resources */,
 				F5DF762E24FE83DC004CAB1E /* red.png in Resources */,
 				F52111E621E1C14D00D93BB8 /* SeafMkLibAlertController_iPad.xib in Resources */,
 				F5DF75A424FE83DB004CAB1E /* upload.png in Resources */,
@@ -2073,6 +2169,7 @@
 				F5DF757424FE83DB004CAB1E /* checkmask2@2x.png in Resources */,
 				F5DF761C24FE83DC004CAB1E /* arrowright2@2x.png in Resources */,
 				F5DF759824FE83DB004CAB1E /* arrowleft2.png in Resources */,
+				B1281468275BBF97005EF4D5 /* new_editfile.png in Resources */,
 				F52111B621E1C12000D93BB8 /* DownloadingProgress_iPhone.xib in Resources */,
 				F5DF750E24FE83DB004CAB1E /* star2@2x.png in Resources */,
 				F5DF754A24FE83DB004CAB1E /* tab-star.png in Resources */,
@@ -2094,6 +2191,7 @@
 				F5DF760424FE83DC004CAB1E /* star2.png in Resources */,
 				F52111A721E1C12000D93BB8 /* SeafCell.xib in Resources */,
 				F521119321E1C12000D93BB8 /* SeafUploadingFileCell.xib in Resources */,
+				B1281461275B7089005EF4D5 /* new_expert.png in Resources */,
 				F5DF756224FE83DB004CAB1E /* download_waiting.png in Resources */,
 				F5DF75DA24FE83DB004CAB1E /* editfile2@2x.png in Resources */,
 				F5DF74F624FE83DB004CAB1E /* delete2.png in Resources */,
@@ -2102,6 +2200,7 @@
 				F52111AC21E1C12000D93BB8 /* SeafShibbolethViewController.xib in Resources */,
 				F5DF74DE24FE83DB004CAB1E /* DownloadingProgress_iPhone.strings in Resources */,
 				F521118421E1C12000D93BB8 /* DownloadingProgress_iPad.xib in Resources */,
+				B1281476275BC6C6005EF4D5 /* new_star.png in Resources */,
 				F5DF753E24FE83DB004CAB1E /* export2.png in Resources */,
 				F5DF761024FE83DC004CAB1E /* checkmask2.png in Resources */,
 				F521118921E1C12000D93BB8 /* SeafTextEditorViewController_iPad.xib in Resources */,
@@ -2109,6 +2208,7 @@
 				F5DF756824FE83DB004CAB1E /* reply.png in Resources */,
 				F5DF755C24FE83DB004CAB1E /* ImageError@2x.png in Resources */,
 				F5DF752624FE83DB004CAB1E /* unstar2.png in Resources */,
+				B1281453275B6A5B005EF4D5 /* new_plus.png in Resources */,
 				F52111CF21E1C12000D93BB8 /* SeafEventCell.xib in Resources */,
 				F5DF75E624FE83DB004CAB1E /* refresh2@2x.png in Resources */,
 				F52111E121E1C14D00D93BB8 /* SeafSyncInfoCell.xib in Resources */,
@@ -2135,10 +2235,12 @@
 				F5C648FD210A0B4E00842687 /* MainInterface.storyboard in Resources */,
 				F5DF757A24FE83DB004CAB1E /* editfile2.png in Resources */,
 				F5DF762824FE83DC004CAB1E /* plus2@2x.png in Resources */,
+				B128144C275B6202005EF4D5 /* activity_refresh.png in Resources */,
 				F5DF75E024FE83DB004CAB1E /* ellipsis2.png in Resources */,
 				F5DF758624FE83DB004CAB1E /* tab-home@2x.png in Resources */,
 				F5DF75B624FE83DB004CAB1E /* unstar2@2x.png in Resources */,
 				F52111B121E1C12000D93BB8 /* SeafButtonCell.xib in Resources */,
+				B1281470275BC6C6005EF4D5 /* new_unstar.png in Resources */,
 				F5DF74E424FE83DB004CAB1E /* QBImagePickerController.bundle in Resources */,
 				F5DF75FE24FE83DC004CAB1E /* share2@2x.png in Resources */,
 				F5DF74F024FE83DB004CAB1E /* seafile-logo.png in Resources */,

@@ -291,12 +291,14 @@ enum SHARE_STATUS {
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
 
-    self.editItem = [self getBarItem:@"editfile2" action:@selector(editFile:)size:18];
-    self.exportItem = [self getBarItemAutoSize:@"export2" action:@selector(export:)];
-    self.deleteItem = [self getBarItemAutoSize:@"delete" action:@selector(delete:)];
+    self.editItem = [self getBarItem:@"new_editfile.png" action:@selector(editFile:)size:18];
+    self.exportItem = [self getBarItem:@"new_expert.png" action:@selector(export:) size:18];
+    self.exportItem.tintColor = [UIColor colorWithRed:101.0/255.0 green:191.0/255.0 blue:42.0/255.0 alpha:1.0];
 
-    UIBarButtonItem *starItem = [self getBarItem:@"star" action:@selector(unstarFile:)size:22];
-    UIBarButtonItem *unstarItem = [self getBarItem:@"unstar" action:@selector(starFile:)size:22];
+    self.deleteItem = [self getBarItem:@"new_delete.png" action:@selector(delete:) size:20];
+
+    UIBarButtonItem *starItem = [self getBarItem:@"new_star.png" action:@selector(unstarFile:)size:22];
+    UIBarButtonItem *unstarItem = [self getBarItem:@"new_unstar.png" action:@selector(starFile:)size:22];
     UIBarButtonItem *space = [self getSpaceBarItem];
     self.barItemsStar  = [NSArray arrayWithObjects:self.exportItem, space, self.deleteItem, space, starItem, space, nil];
     self.barItemsUnStar  = [NSArray arrayWithObjects:self.exportItem, space, self.deleteItem, space, unstarItem, space, nil];

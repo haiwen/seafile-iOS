@@ -161,9 +161,9 @@
     [super viewDidUnload];
 }
 
-- (void)showAccountView:(SeafConnection *)conn type:(int)type
+- (void)showAccountView:(SeafConnection *)conn type:(int)type demo:(int)demo
 {
-    SeafAccountViewController *controller = [[SeafAccountViewController alloc] initWithController:self connection:conn type:type];
+    SeafAccountViewController *controller = [[SeafAccountViewController alloc] initWithController:self connection:conn type:type demo:demo];
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
     if (IsIpad()) {
         navController.modalPresentationStyle = UIModalPresentationFormSheet;
@@ -176,26 +176,6 @@
     });
 }
 
-- (IBAction)addAccount:(id)sender
-{
-    NSString *title = NSLocalizedString(@"Choose a Seafile server", @"Seafile");
-    NSString *privserver = NSLocalizedString(@"Other Server", @"Seafile");
-    NSArray *arr = [NSArray arrayWithObjects:SERVER_SEACLOUD_NAME, SERVER_SHIB_NAME, privserver, nil];
-    UIAlertController *alert = [self generateAlert:arr withTitle:title handler:^(UIAlertAction *action) {
-        long index = [arr indexOfObject:action.title];
-        if (index >= 0 && index <= ACCOUNT_OTHER) {
-            [self showAccountView:nil type:(int)index];
-        }
-    }];
-    if (IsIpad()) {
-        CGRect rect = [((UIView *)sender) frame];
-        alert.popoverPresentationController.sourceRect = CGRectMake(rect.size.width/2, 0, 0, 0);
-        alert.popoverPresentationController.sourceView = sender;
-    } else {
-        alert.popoverPresentationController.sourceView = sender;
-    }
-    [self presentViewController:alert animated:true completion:nil];
-}
 
 #pragma mark - Table view data source
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
@@ -208,7 +188,7 @@
     if (section == 0)
         return SeafGlobal.sharedObject.conns.count;
     else
-        return 1;
+        return 3;
 }
 
 - (void)showEditMenu:(UILongPressGestureRecognizer *)gestureRecognizer
@@ -231,7 +211,7 @@
         SeafConnection *conn = [SeafGlobal.sharedObject.conns objectAtIndex:pressedIndex.row];
         if (index == 0) { //Edit
             int type = conn.isShibboleth ? ACCOUNT_SHIBBOLETH : ACCOUNT_OTHER;
-            [self showAccountView:conn type:type];
+            [self showAccountView:conn type:type demo:0];
         } else if (index == 1) { //Delete
             [conn clearAccount];
             [SeafGlobal.sharedObject removeConnection:conn];
@@ -245,8 +225,64 @@
         [self presentViewController:alert animated:true completion:nil];
     });
 }
+- (IBAction)addAccount:(id)sender
+{
+    SeafAccountViewController *controller = [[SeafAccountViewController alloc] initWithController:self connection:nil type:ACCOUNT_SEACLOUD demo:0];
+    UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
+    if (IsIpad()) {
+        navController.modalPresentationStyle = UIModalPresentationFormSheet;
+    } else {
+        navController.modalPresentationStyle = UIModalPresentationFullScreen;
+    }
+    dispatch_async(dispatch_get_main_queue(), ^ {
+        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+        [appdelegate.window.rootViewController presentViewController:navController animated:YES completion:nil];
+    });
 
-- (UITableViewCell *)getAddAccountCell:(UITableView *)tableView
+    /*
+    NSString *title = NSLocalizedString(@"Choose a Seafile server", @"Seafile");
+    NSString *privserver = NSLocalizedString(@"Other Server", @"Seafile");
+    NSArray *arr = [NSArray arrayWithObjects:SERVER_SEACLOUD_NAME, nil];
+    //NSArray *arr = [NSArray arrayWithObjects:SERVER_SEACLOUD_NAME, SERVER_SHIB_NAME, privserver, nil];
+
+    UIAlertController *alert = [self generateAlert:arr withTitle:title handler:^(UIAlertAction *action) {
+        long index = [arr indexOfObject:action.title];
+        if (index >= 0 && index <= ACCOUNT_OTHER) {
+            [self showAccountView:nil type:(int)index demo:0];
+        }
+    }];
+    if (IsIpad()) {
+        CGRect rect = [((UIView *)sender) frame];
+        alert.popoverPresentationController.sourceRect = CGRectMake(rect.size.width/2, 0, 0, 0);
+        alert.popoverPresentationController.sourceView = sender;
+    } else {
+        alert.popoverPresentationController.sourceView = sender;
+    }
+    [self presentViewController:alert animated:true completion:nil];*/
+}
+
+- (IBAction)demoAccount:(id)sender
+{
+    SeafAccountViewController *controller = [[SeafAccountViewController alloc] initWithController:self connection:nil type:ACCOUNT_SEACLOUD demo:1];
+    UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
+    if (IsIpad()) {
+        navController.modalPresentationStyle = UIModalPresentationFormSheet;
+    } else {
+        navController.modalPresentationStyle = UIModalPresentationFullScreen;
+    }
+    dispatch_async(dispatch_get_main_queue(), ^ {
+        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+        [appdelegate.window.rootViewController presentViewController:navController animated:YES completion:nil];
+    });
+}
+
+- (IBAction)newAccount:(id)sender
+{
+    [[UIApplication sharedApplication] openURL:[[NSURL alloc] initWithString:@"https://luckycloud.de/de/"]];
+
+}
+
+- (UITableViewCell *)getAddAccountCell:(UITableView *)tableView index:(int)index
 {
     NSString *CellIdentifier = @"SeafButtonCell";
     SeafButtonCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
@@ -254,19 +290,34 @@
         NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafButtonCell" owner:self options:nil];
         cell = [cells objectAtIndex:0];
     }
-    [cell.button setTitle:NSLocalizedString(@"Add account", @"Seafile") forState:UIControlStateNormal];
-    [cell.button setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    cell.button.backgroundColor = SEAF_COLOR_DARK;
-    cell.selectionStyle = UITableViewCellSelectionStyleNone;
-    [cell.button addTarget:self action:@selector(addAccount:) forControlEvents:UIControlEventTouchUpInside];
+    if(index == 0){
+        [cell.button setTitle:[NSLocalizedString(@"login", @"Seafile") capitalizedString] forState:UIControlStateNormal];
+        [cell.button setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        cell.button.backgroundColor = SEAF_COLOR_DARK;
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        [cell.button addTarget:self action:@selector(addAccount:) forControlEvents:UIControlEventTouchUpInside];
 
+    }else if(index == 1){
+        [cell.button setTitle:NSLocalizedString(@"demo account", @"Seafile") forState:UIControlStateNormal];
+        [cell.button setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        cell.button.backgroundColor = SEAF_COLOR_DARK;
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        [cell.button addTarget:self action:@selector(demoAccount:) forControlEvents:UIControlEventTouchUpInside];
+
+    }else if(index == 2){
+        [cell.button setTitle:NSLocalizedString(@"new account", @"Seafile") forState:UIControlStateNormal];
+        [cell.button setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        cell.button.backgroundColor = SEAF_COLOR_DARK;
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        [cell.button addTarget:self action:@selector(newAccount:) forControlEvents:UIControlEventTouchUpInside];
+    }
     return cell;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if (indexPath.section == 1) {
-        return [self getAddAccountCell:tableView];
+        return [self getAddAccountCell:tableView index:indexPath.row];
     }
     SeafAccountCell *cell = [SeafAccountCell getInstance:tableView WithOwner:self];
     SeafConnection *conn = [[SeafGlobal sharedObject].conns objectAtIndex:indexPath.row];
@@ -384,7 +435,7 @@
         }
         [self alertWithTitle:title handler:^{
             int type = conn.isShibboleth ? ACCOUNT_SHIBBOLETH : ACCOUNT_OTHER;
-            [self showAccountView:conn type:type];
+            [self showAccountView:conn type:type demo:0];
         }];
         return YES;
     }

@@ -86,6 +86,9 @@
 
 /* Seafile */
 "Add account" = "Ajouter un compte";
+"new account" = "new Account";
+
+"demo account" = "Demo Account";
 
 /* Seafile */
 "Add contact" = "Ajouter un contact";
@@ -178,7 +181,7 @@
 "Choose directory" = "Choisissez un répertoire";
 
 /* Seafile */
-"Choose a Seafile server" = "Choisissez un serveur Seafile";
+"Choose a Seafile server" = "Choisissez un serveur luckycloud";
 
 /* Seafile */
 "Choose an account to start" = "Choisissez un compte pour commencer";
@@ -1039,7 +1042,7 @@
 "Waiting to upload" = "% en attente d'envoi";
 
 /* FolderView_iPad.storyboard, FolderView_iPhone.storyboard */
-"www.seafile.com" = "www.seafile.com";
+"www.seafile.com" = "luckycloud.de";
 
 /* Share to WeChat */
 "Share to WeChat" = "Partagé avec WeChat";
@@ -1057,7 +1060,7 @@
 "Privacy Policy" = "Respect de la vie privée.";
 
 /* Privacy Policy URL */
-"https://www.seafile.com/en/privacy_policy/" = "https://www.seafile.com/en/privacy_policy/";
+"https://www.seafile.com/en/privacy_policy/" = "https://luckycloud.de/de/data-and-privacy/";
 
 /*  TouchID is Enabled  */
 "FaceID(TouchID) is Enabled" = "FaceID(TouchID) est activé";

@@ -459,16 +459,20 @@ enum {
 - (void)initNavigationItems:(SeafDir *)directory
 {
     if (![directory isKindOfClass:[SeafRepos class]] && directory.editable) {
-        self.photoItem = [self getBarItem:@"plus2" action:@selector(addPhotos:)size:20];
+        self.photoItem = [self getBarItemAutoSize:@"new_plus.png" action:@selector(addPhotos:)];
+        //self.photoItem.tintColor = [UIColor colorWithRed:101.0/255.0 green:191.0/255.0 blue:42.0/255.0 alpha:1.0];
+
         self.doneItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(editDone:)];
-        self.editItem = [self getBarItemAutoSize:@"ellipsis2" action:@selector(editSheet:)];
+        self.editItem = [self getBarItemAutoSize:@"more_dot.png" action:@selector(editSheet:)];
+        self.editItem.tintColor = [UIColor colorWithRed:101.0/255.0 green:191.0/255.0 blue:42.0/255.0 alpha:1.0];
+
         UIBarButtonItem *space = [self getSpaceBarItem:16.0];
         self.rightItems = [NSArray arrayWithObjects: self.editItem, space, self.photoItem, nil];
 
         _selectAllItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Select All", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(selectAll:)];
         _selectNoneItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Select None", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(selectNone:)];
     } else {
-        self.editItem = [self getBarItemAutoSize:@"ellipsis2" action:@selector(editSheet:)];
+        self.editItem = [self getBarItemAutoSize:@"more_dot.png" action:@selector(editSheet:)];
         self.rightItems = [NSArray arrayWithObjects: self.editItem, nil];
     }
     self.navigationItem.rightBarButtonItems = self.rightItems;

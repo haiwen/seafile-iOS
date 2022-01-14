@@ -1039,7 +1039,7 @@
 "Waiting to upload" = "%等待上传";
 
 /* FolderView_iPad.storyboard, FolderView_iPhone.storyboard */
-"www.seafile.com" = "www.seafile.com";
+"www.seafile.com" = "luckycloud.de";
 
 /* Share to WeChat */
 "Share to WeChat" = "分享到微信";
@@ -1057,7 +1057,7 @@
 "Privacy Policy" = "隐私政策";
 
 /* Privacy Policy URL */
-"https://www.seafile.com/en/privacy_policy/" = "https://www.seafile.com/en/privacy_policy/";
+"https://www.seafile.com/en/privacy_policy/" = "https://luckycloud.de/de/data-and-privacy/";
 
 /*  TouchID is Enabled  */
 "FaceID(TouchID) is Enabled" = "FaceID(TouchID) 已开启";

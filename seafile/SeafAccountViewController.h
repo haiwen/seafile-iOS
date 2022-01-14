@@ -14,14 +14,14 @@ enum ACCOUNT_TYPE {
     ACCOUNT_OTHER,
 };
 
-#define SERVER_SEACLOUD         @"seacloud.cc"
+#define SERVER_SEACLOUD         @"luckycloud.de"
 
-#define SERVER_SEACLOUD_NAME    @"SeaCloud.cc"
+#define SERVER_SEACLOUD_NAME    @"luckycloud.de"
 #define SERVER_SHIB_NAME        NSLocalizedString(@"Single Sign On", @"Seafile")
 
 
 @interface SeafAccountViewController : UIViewController
 
-- (id)initWithController:(StartViewController *)controller connection: (SeafConnection *)conn type:(int)type;
+- (id)initWithController:(StartViewController *)controller connection: (SeafConnection *)conn type:(int)type demo:(int)demo;
 
 @end

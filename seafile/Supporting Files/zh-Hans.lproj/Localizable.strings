@@ -1,4 +1,4 @@
-﻿
+
 
 /* Seafile */
 "%@ can't verify the identity of the website \"%@\"" = "%@ 无法验证网站 \"%@\" 的证书";
@@ -86,6 +86,10 @@
 
 /* Seafile */
 "Add account" = "添加账户";
+
+"new account" = "new Account";
+
+"demo account" = "Demo Account";
 
 /* Seafile */
 "Add contact" = "添加联系人";
@@ -178,7 +182,7 @@
 "Choose directory" = "选择目录";
 
 /* Seafile */
-"Choose a Seafile server" = "请选择一个Seafile服务器";
+"Choose a Seafile server" = "请选择一个luckycloud服务器";
 
 /* Seafile */
 "Choose an account to start" = "选择一个账户开始使用";
@@ -1039,7 +1043,7 @@
 "Waiting to upload" = "%等待上传";
 
 /* FolderView_iPad.storyboard, FolderView_iPhone.storyboard */
-"www.seafile.com" = "www.seafile.com";
+"www.seafile.com" = "luckycloud.de";
 
 /* Share to WeChat */
 "Share to WeChat" = "分享到微信";
@@ -1057,7 +1061,7 @@
 "Privacy Policy" = "隐私政策";
 
 /* Privacy Policy URL */
-"https://www.seafile.com/en/privacy_policy/" = "https://www.seafile.com/en/privacy_policy/";
+"https://www.seafile.com/en/privacy_policy/" = "https://luckycloud.de/de/data-and-privacy/";
 
 /*  TouchID is Enabled  */
 "FaceID(TouchID) is Enabled" = "FaceID(TouchID) 已开启";

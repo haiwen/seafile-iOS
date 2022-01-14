@@ -36,6 +36,9 @@
 @property StartViewController *startController;
 @property SeafConnection *connection;
 @property int type;
+@property int demo;
+@property NSString* server_url;
+
 @end
 
 @implementation SeafAccountViewController
@@ -46,14 +49,18 @@
 @synthesize startController;
 @synthesize connection;
 @synthesize type;
+@synthesize demo;
+@synthesize server_url;
 
 
-- (id)initWithController:(StartViewController *)controller connection: (SeafConnection *)conn type:(int)atype
+- (id)initWithController:(StartViewController *)controller connection: (SeafConnection *)conn type:(int)atype demo:(int)demo
 {
     if (self = [super initWithAutoPlatformNibName]) {
         self.startController = controller;
         self.connection = conn;
         self.type = atype;
+        self.demo = demo;
+        self.server_url = @"";
     }
     return self;
 }
@@ -112,25 +119,17 @@
 
 - (IBAction)login:(id)sender
 {
-    if (self.type == ACCOUNT_SHIBBOLETH) {
-        return [self shibboleth:sender];
-    }
+    server_url = @"https://storage.luckyclode.de";
+    [self doLogin:@"https://storage.luckycloud.de"];
+}
+
+-(void)doLogin:(NSString *)server_url{
     [usernameTextField resignFirstResponder];
     [serverTextField resignFirstResponder];
     [passwordTextField resignFirstResponder];
     NSString *username = usernameTextField.text;
     NSString *password = passwordTextField.text;
 
-    if (!serverTextField.text || serverTextField.text.length < 1) {
-        [self alertWithTitle:NSLocalizedString(@"Server must not be empty", @"Seafile")];
-        return;
-    }
-
-    NSString *url = [NSString stringWithFormat:@"%@%@",self.prefixLabel.text,serverTextField.text];
-    if (![url hasPrefix:HTTP] && ![url hasPrefix:HTTPS]) {
-        [self alertWithTitle:NSLocalizedString(@"Invalid Server", @"Seafile")];
-        return;
-    }
     if (!username || username.length < 1) {
         [self alertWithTitle:NSLocalizedString(@"Username must not be empty", @"Seafile")];
         return;
@@ -139,8 +138,7 @@
         [self alertWithTitle:NSLocalizedString(@"Password required", @"Seafile")];
         return;
     }
-    if ([url hasSuffix:@"/"])
-        url = [url substringToIndex:url.length-1];
+    NSString *url = server_url;
     if (!self.connection)
         connection = [[SeafConnection alloc] initWithUrl:url cacheProvider:SeafGlobal.sharedObject.cacheProvider];
     if (![url isEqualToString:connection.address]) {
@@ -151,8 +149,8 @@
     connection.delegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [connection loginWithUsername:username password:password];
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Connecting to server", @"Seafile")];
-}
 
+}
 - (CGSize)getSizeForText:(NSString *)text maxWidth:(CGFloat)width font:(UIFont*)font  {
     CGSize constraintSize;
     constraintSize.height = MAXFLOAT;
@@ -181,8 +179,13 @@
         | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
     }
     UIBarButtonItem *cancelItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancel:)];
+    cancelItem.tintColor = [UIColor colorWithRed:101.0/255.0 green:191.0/255.0 blue:42.0/255.0 alpha:1.0];
     self.navigationItem.leftBarButtonItem = cancelItem;
 
+    if(self.demo == 1){
+        usernameTextField.text = @"demo@luckycloud.de";
+        passwordTextField.text = @"q1w2e3R4";
+    }
     loginButton.layer.borderColor = [[UIColor whiteColor] CGColor];
     loginButton.layer.borderWidth = 0.0f;
     loginButton.layer.cornerRadius = 4.0f;
@@ -209,7 +212,7 @@
         case ACCOUNT_SEACLOUD:
             serverTextField.enabled = false;
             _httpsSwitch.enabled = false;
-            serverTextField.text = SERVER_SEACLOUD;
+            serverTextField.text = @"storage.luckycloud.de";
             break;
         case ACCOUNT_OTHER:{
 #if DEBUG
@@ -386,12 +389,29 @@
         NSString * otp = [response.allHeaderFields objectForKey:@"X-Seafile-OTP"];
         if ([@"required" isEqualToString:otp]) {
             [self twoStepVerification];
-        } else
-            [self alertWithTitle:NSLocalizedString(@"Wrong username or password", @"Seafile")];
+        } else{
+            if([server_url containsString:@"storage"]){
+                server_url = @"https://sync.luckyclode.de";
+                [self doLogin:@"https://sync.luckycloud.de"];
+            }else{
+                [self alertWithTitle:NSLocalizedString(@"Wrong username or password", @"Seafile")];
+                server_url = @"";
+            }
+        }
     } else {
         NSString *msg = NSLocalizedString(@"Failed to login", @"Seafile");
         [SVProgressHUD showErrorWithStatus:[msg stringByAppendingFormat:@": %@", error.localizedDescription]];
+        
+        if([server_url containsString:@"storage"]){
+            server_url = @"https://sync.luckyclode.de";
+            [self doLogin:@"https://sync.luckycloud.de"];
+
+        }
+
     }
+    
+    
+
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField

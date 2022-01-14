@@ -22,7 +22,7 @@
 "%ld photos remain" = "%ld photos remain";
 
 /* Seafile */
-"%ld files are uploaded to Seafile" = "%ld files are uploaded to Seafile";
+"%ld files are uploaded to Seafile" = "%ld files are uploaded to luckycloud";
 
 /* Seafile */
 "1 photo remain" = "1 photo remain";
@@ -86,6 +86,9 @@
 
 /* Seafile */
 "Add account" = "Добавить учётную запись";
+"new account" = "new Account";
+
+"demo account" = "Demo Account";
 
 /* Seafile */
 "Add contact" = "Add contact";
@@ -130,7 +133,7 @@
 "Auto clear passwords" = "Auto clear passwords";
 
 /* Seafile */
-"Auto merge by seafile system" = "Auto merge by seafile system";
+"Auto merge by seafile system" = "Auto merge by luckycloud system";
 
 /* Seafile */
 "Auto upload should be enabled first." = "Auto upload should be enabled first.";
@@ -178,7 +181,7 @@
 "Choose directory" = "Choose directory";
 
 /* Seafile */
-"Choose a Seafile server" = "Choose a Seafile server";
+"Choose a Seafile server" = "Choose a luckycloud server";
 
 /* Seafile */
 "Choose an account to start" = "Выберите учётную запись";
@@ -1039,7 +1042,7 @@
 "Waiting to upload" = "%Waiting to upload";
 
 /* FolderView_iPad.storyboard, FolderView_iPhone.storyboard */
-"www.seafile.com" = "www.seafile.com";
+"www.seafile.com" = "luckycloud.de";
 
 /* Share to WeChat */
 "Share to WeChat" = "Share to WeChat";
@@ -1057,7 +1060,7 @@
 "Privacy Policy" = "Privacy Policy";
 
 /* Privacy Policy URL */
-"https://www.seafile.com/en/privacy_policy/" = "https://www.seafile.com/en/privacy_policy/";
+"https://www.seafile.com/en/privacy_policy/" = "https://luckycloud.de/de/data-and-privacy/";
 
 /*  TouchID is Enabled  */
 "FaceID(TouchID) is Enabled" = "FaceID(TouchID) is Enabled";
