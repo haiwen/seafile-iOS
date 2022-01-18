@@ -1,0 +1,36 @@
+{
+  "name": "Seafile",
+  "version": "2.9.12",
+  "summary": "iOS client for seafile.",
+  "homepage": "https://github.com/haiwen/seafile-iOS",
+  "license": "MIT",
+  "authors": {
+    "wei.wang": "poetwang@gmail.com"
+  },
+  "source": {
+    "git": "https://github.com/haiwen/seafile-iOS.git",
+    "tag": "2.9.12"
+  },
+  "social_media_url": "https://twitter.com/Seafile",
+  "source_files": "Pod/Classes/*.{h,m}",
+  "resource_bundles": {
+    "Seafile": "Pod/Resources/*"
+  },
+  "platforms": {
+    "ios": "8.0"
+  },
+  "requires_arc": true,
+  "frameworks": "AssetsLibrary",
+  "dependencies": {
+    "AFNetworking": [
+      "~> 3.2.0"
+    ],
+    "OpenSSL-Universal": [
+      "~> 1.0.1.p"
+    ]
+  },
+  "pod_target_xcconfig": {
+    "LIBRARY_SEARCH_PATHS": "$(inherited) $(PODS_ROOT)/OpenSSL-Universal/lib-ios/",
+    "OTHER_LDFLAGS": "$(inherited) -lssl -lcrypto"
+  }
+}
