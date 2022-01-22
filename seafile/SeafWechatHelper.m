@@ -12,7 +12,7 @@
 @implementation SeafWechatHelper
 
 + (void)registerWechat {
-    [WXApi registerApp:@"wx4799bc7f5242c55a"];
+    [WXApi registerApp:@"wx4799bc7f5242c55a" universalLink:@""];
 }
 
 + (BOOL)wechatInstalled {
@@ -46,7 +46,9 @@
     req.bText = NO;
     req.message = message;
     req.scene = WXSceneSession;
-    [WXApi sendReq:req];
+    [WXApi sendReq:req completion:^(BOOL success) {
+
+    }];
 }
 
 @end

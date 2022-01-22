@@ -18,6 +18,7 @@
 #import "NSError+SeafFileProvierError.h"
 #import "SeafStorage.h"
 #import <BuglyExtension/CrashReporterLite.h>
+#import <MobileCoreServices/MobileCoreServices.h>
 
 @interface FileProvider ()
 @property (nonatomic, assign) NSInteger currentAnchor;

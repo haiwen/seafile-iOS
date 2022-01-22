@@ -9,10 +9,10 @@ Pod::Spec.new do |s|
   s.social_media_url = 'https://twitter.com/Seafile'
   s.source_files     = 'Pod/Classes/*.{h,m}'
   s.resource_bundles = { 'Seafile' => 'Pod/Resources/*' }
-  s.platform         = :ios, '8.0'
+  s.platform         = :ios, '9.0'
   s.requires_arc     = true
   s.frameworks       = 'AssetsLibrary'
-  s.dependency 'AFNetworking', '~> 3.2.0'
+  s.dependency 'AFNetworking', '~> 4.0.0'
   s.dependency 'OpenSSL-Universal', '~> 1.0.1.p'
   s.pod_target_xcconfig = {
     'LIBRARY_SEARCH_PATHS' => '$(inherited) $(PODS_ROOT)/OpenSSL-Universal/lib-ios/',

@@ -1,7 +1,7 @@
 def shared
-  platform :ios, '8.0'
+  platform :ios, '9.0'
   pod 'Seafile', :path => "./"
-  pod 'AFNetworking', '~> 3.2.0'
+  pod 'AFNetworking', '~> 4.0.0'
   pod 'OpenSSL-Universal', '1.0.2.17'
   pod 'APLRUCache', '~> 1.0.0'
 end
@@ -12,7 +12,7 @@ target :"seafileApp" do
   pod 'SWTableViewCell', :git => 'https://github.com/haiwen/SWTableViewCell.git', :branch => 'master'
   pod 'MWPhotoBrowser', :git => 'https://github.com/haiwen/MWPhotoBrowser.git', :branch => 'master'
   pod 'QBImagePickerController', :git => 'https://github.com/haiwen/QBImagePickerController.git', :branch => 'master'
-  pod 'WechatOpenSDK', '1.8.5'
+  pod 'WechatOpenSDK', '~> 1.8.7.1'
   pod 'Bugly'
   shared
 end
