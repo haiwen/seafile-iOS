@@ -315,7 +315,7 @@
     [self performSelectorInBackground:@selector(delayedInit) withObject:nil];
 
     [UIApplication sharedApplication].delegate.window.backgroundColor = [UIColor whiteColor];
-    [SeafWechatHelper registerWechat];
+
     [Bugly startWithAppId:@"67d77f8636"];
     return YES;
 }

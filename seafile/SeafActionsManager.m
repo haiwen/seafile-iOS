@@ -41,9 +41,6 @@
         else
             titles = [NSMutableArray arrayWithObjects:star, S_DELETE, S_REDOWNLOAD, S_RENAME, nil];
         
-        if ([SeafWechatHelper wechatInstalled]) {
-            [titles addObject:S_SHARE_TO_WECHAT];
-        }
     } else if ([entry isKindOfClass:[SeafUploadFile class]]) {
         [titles addObjectsFromArray:@[S_DOWNLOAD, S_DELETE, S_RENAME]];
     }
