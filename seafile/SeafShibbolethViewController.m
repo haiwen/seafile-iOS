@@ -30,7 +30,7 @@
 
 - (id)init:(SeafConnection *)sconn
 {
-    if (self = [super initWithAutoNibName]) {
+    if (self = [super initWithNibName:nil bundle:nil]) {
         self.sconn = sconn;
     }
     return self;
@@ -60,6 +60,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
+    self.view.backgroundColor = [UIColor whiteColor];
     [self start];
 }
 
@@ -155,13 +156,16 @@
     }];
 }
 
+- (void)webView:(WKWebView *)webView didStartProvisionalNavigation:(WKNavigation *)navigation {
+    [SVProgressHUD showWithStatus:NSLocalizedString(@"Connecting to server", @"Seafile")];
+}
+
 - (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error {
     Warning("Failed to load request: %@", error);
     [SVProgressHUD showErrorWithStatus:error.localizedDescription];
 }
 
 - (void)webView:(WKWebView *)webView decidePolicyForNavigationResponse:(WKNavigationResponse *)navigationResponse decisionHandler:(void (^)(WKNavigationResponsePolicy))decisionHandler {
-    [SVProgressHUD dismiss];
     if (decisionHandler) {
       decisionHandler(WKNavigationResponsePolicyAllow);
     }
