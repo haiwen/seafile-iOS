@@ -178,11 +178,6 @@
 		F52111A521E1C12000D93BB8 /* SeafCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F521117621E1C11F00D93BB8 /* SeafCell.xib */; };
 		F52111A621E1C12000D93BB8 /* SeafCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F521117621E1C11F00D93BB8 /* SeafCell.xib */; };
 		F52111A721E1C12000D93BB8 /* SeafCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F521117621E1C11F00D93BB8 /* SeafCell.xib */; };
-		F52111A821E1C12000D93BB8 /* SeafShibbolethViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = F521117721E1C11F00D93BB8 /* SeafShibbolethViewController.xib */; };
-		F52111A921E1C12000D93BB8 /* SeafShibbolethViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = F521117721E1C11F00D93BB8 /* SeafShibbolethViewController.xib */; };
-		F52111AA21E1C12000D93BB8 /* SeafShibbolethViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = F521117721E1C11F00D93BB8 /* SeafShibbolethViewController.xib */; };
-		F52111AB21E1C12000D93BB8 /* SeafShibbolethViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = F521117721E1C11F00D93BB8 /* SeafShibbolethViewController.xib */; };
-		F52111AC21E1C12000D93BB8 /* SeafShibbolethViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = F521117721E1C11F00D93BB8 /* SeafShibbolethViewController.xib */; };
 		F52111AD21E1C12000D93BB8 /* SeafButtonCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F521117821E1C11F00D93BB8 /* SeafButtonCell.xib */; };
 		F52111AE21E1C12000D93BB8 /* SeafButtonCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F521117821E1C11F00D93BB8 /* SeafButtonCell.xib */; };
 		F52111AF21E1C12000D93BB8 /* SeafButtonCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F521117821E1C11F00D93BB8 /* SeafButtonCell.xib */; };
@@ -836,7 +831,6 @@
 		F521117421E1C11F00D93BB8 /* SeafAccountViewController_iPhone.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafAccountViewController_iPhone.xib; sourceTree = "<group>"; };
 		F521117521E1C11F00D93BB8 /* FolderView_iPhone.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = FolderView_iPhone.storyboard; sourceTree = "<group>"; };
 		F521117621E1C11F00D93BB8 /* SeafCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafCell.xib; sourceTree = "<group>"; };
-		F521117721E1C11F00D93BB8 /* SeafShibbolethViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafShibbolethViewController.xib; sourceTree = "<group>"; };
 		F521117821E1C11F00D93BB8 /* SeafButtonCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafButtonCell.xib; sourceTree = "<group>"; };
 		F521117921E1C11F00D93BB8 /* DownloadingProgress_iPhone.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DownloadingProgress_iPhone.xib; sourceTree = "<group>"; };
 		F521117A21E1C12000D93BB8 /* SeafDirCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SeafDirCell.xib; sourceTree = "<group>"; };
@@ -1320,7 +1314,6 @@
 				F521117621E1C11F00D93BB8 /* SeafCell.xib */,
 				F521117A21E1C12000D93BB8 /* SeafDirCell.xib */,
 				F521117E21E1C12000D93BB8 /* SeafEventCell.xib */,
-				F521117721E1C11F00D93BB8 /* SeafShibbolethViewController.xib */,
 				F521117121E1C11E00D93BB8 /* SeafStart.storyboard */,
 				F521117021E1C11E00D93BB8 /* SeafTextEditorViewController_iPad.xib */,
 				F521117D21E1C12000D93BB8 /* SeafTextEditorViewController_iPhone.xib */,
@@ -1763,7 +1756,6 @@
 				F5DF761E24FE83DC004CAB1E /* tab-home.png in Resources */,
 				F5DF762424FE83DC004CAB1E /* plus2@2x.png in Resources */,
 				F521118A21E1C12000D93BB8 /* SeafStart.storyboard in Resources */,
-				F52111A821E1C12000D93BB8 /* SeafShibbolethViewController.xib in Resources */,
 				B128146C275BC6C6005EF4D5 /* new_unstar.png in Resources */,
 				F5DF761824FE83DC004CAB1E /* arrowright2@2x.png in Resources */,
 				F5DF759A24FE83DB004CAB1E /* arrowleft.png in Resources */,
@@ -1812,7 +1804,6 @@
 				F5DF75B324FE83DB004CAB1E /* unstar2@2x.png in Resources */,
 				F5DF75E924FE83DB004CAB1E /* close2@2x.png in Resources */,
 				F5DF75EF24FE83DB004CAB1E /* more_dot.png in Resources */,
-				F52111A921E1C12000D93BB8 /* SeafShibbolethViewController.xib in Resources */,
 				F52111AE21E1C12000D93BB8 /* SeafButtonCell.xib in Resources */,
 				F5DF74D524FE83DB004CAB1E /* InfoPlist.strings in Resources */,
 				F52111E321E1C14D00D93BB8 /* SeafMkLibAlertController_iPad.xib in Resources */,
@@ -1916,7 +1907,6 @@
 				F5DF762624FE83DC004CAB1E /* plus2@2x.png in Resources */,
 				F5DF757824FE83DB004CAB1E /* editfile2.png in Resources */,
 				F5DF75EA24FE83DB004CAB1E /* close2@2x.png in Resources */,
-				F52111AA21E1C12000D93BB8 /* SeafShibbolethViewController.xib in Resources */,
 				F521119621E1C12000D93BB8 /* FailToPreview_iPad.xib in Resources */,
 				F521119121E1C12000D93BB8 /* SeafUploadingFileCell.xib in Resources */,
 				F5DF762C24FE83DC004CAB1E /* red.png in Resources */,
@@ -2030,7 +2020,6 @@
 				F5DF762D24FE83DC004CAB1E /* red.png in Resources */,
 				F5DF751324FE83DB004CAB1E /* arrowmore@3x.png in Resources */,
 				F5DF750124FE83DB004CAB1E /* tab-account.png in Resources */,
-				F52111AB21E1C12000D93BB8 /* SeafShibbolethViewController.xib in Resources */,
 				F5DF74E324FE83DB004CAB1E /* QBImagePickerController.bundle in Resources */,
 				F5DF757F24FE83DB004CAB1E /* ImageError.png in Resources */,
 				F5DF756D24FE83DB004CAB1E /* ellipsis2@2x.png in Resources */,
@@ -2201,7 +2190,6 @@
 				F5DF74F624FE83DB004CAB1E /* delete2.png in Resources */,
 				F5DF753224FE83DB004CAB1E /* tab-account@2x.png in Resources */,
 				F5DF74EA24FE83DB004CAB1E /* share2.png in Resources */,
-				F52111AC21E1C12000D93BB8 /* SeafShibbolethViewController.xib in Resources */,
 				F5DF74DE24FE83DB004CAB1E /* DownloadingProgress_iPhone.strings in Resources */,
 				F521118421E1C12000D93BB8 /* DownloadingProgress_iPad.xib in Resources */,
 				B1281476275BC6C6005EF4D5 /* new_star.png in Resources */,
@@ -2737,7 +2725,7 @@
 				GCC_PREFIX_HEADER = "seafile/seafile-Prefix.pch";
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = "seafile/Supporting Files/seafile-appstore-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = de.luckycloud.app;
@@ -2772,7 +2760,7 @@
 				GCC_PREFIX_HEADER = "seafile/seafile-Prefix.pch";
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = "seafile/Supporting Files/seafile-appstore-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = de.luckycloud.app;
@@ -2816,7 +2804,7 @@
 				INFOPLIST_FILE = "$(SRCROOT)/SeafFileProvider/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../Frameworks";
-				MARKETING_VERSION = 2.9.16;
+				MARKETING_VERSION = 2.9.17;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = de.luckycloud.app.provider;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -2853,7 +2841,7 @@
 				INFOPLIST_FILE = "$(SRCROOT)/SeafFileProvider/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../Frameworks";
-				MARKETING_VERSION = 2.9.16;
+				MARKETING_VERSION = 2.9.17;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = de.luckycloud.app.provider;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -2895,7 +2883,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MARKETING_VERSION = 2.9.16;
+				MARKETING_VERSION = 2.9.17;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = de.luckycloud.app.providerui;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -2934,7 +2922,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MARKETING_VERSION = 2.9.16;
+				MARKETING_VERSION = 2.9.17;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = de.luckycloud.app.providerui;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -2974,7 +2962,7 @@
 				INFOPLIST_FILE = SeafAction/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 2.9.16;
+				MARKETING_VERSION = 2.9.17;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = de.luckycloud.app.action;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -3010,7 +2998,7 @@
 				INFOPLIST_FILE = SeafAction/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 2.9.16;
+				MARKETING_VERSION = 2.9.17;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = de.luckycloud.app.action;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -3152,7 +3140,7 @@
 				INFOPLIST_FILE = SeafFileProviderActionsUI/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.5;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 2.9.16;
+				MARKETING_VERSION = 2.9.17;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = de.luckycloud.app.FPAppex;
@@ -3191,7 +3179,7 @@
 				INFOPLIST_FILE = SeafFileProviderActionsUI/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.5;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 2.9.16;
+				MARKETING_VERSION = 2.9.17;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = de.luckycloud.app.FPAppex;
@@ -3235,7 +3223,7 @@
 				INFOPLIST_FILE = SeafShare/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.4;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 2.9.16;
+				MARKETING_VERSION = 2.9.17;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = de.luckycloud.app.share;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -3276,7 +3264,7 @@
 				INFOPLIST_FILE = SeafShare/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.4;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 2.9.16;
+				MARKETING_VERSION = 2.9.17;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = de.luckycloud.app.share;
 				PRODUCT_NAME = "$(TARGET_NAME)";

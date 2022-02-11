@@ -764,7 +764,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     manager.responseSerializer = [AFJSONResponseSerializer serializer];
 
     Debug("Login: %@ %@", url, username);
-    NSURLSessionDataTask *dataTask = [manager dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
+    NSURLSessionDataTask *dataTask = [manager dataTaskWithRequest:request uploadProgress:^(NSProgress * _Nonnull uploadProgress) {
+        
+    } downloadProgress:^(NSProgress * _Nonnull downloadProgress) {
+        
+    } completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
         NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
         if (error) {
             Warning("Error: %@, response:%@", error, responseObject);
@@ -814,7 +818,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSURLRequest *request = [self buildRequest:url method:method form:form];
     Debug("Request: %@", request.URL);
 
-    NSURLSessionDataTask *task = [self.sessionMgr dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
+    NSURLSessionDataTask *task = [self.sessionMgr dataTaskWithRequest:request uploadProgress:^(NSProgress * _Nonnull uploadProgress) {
+        
+    } downloadProgress:^(NSProgress * _Nonnull downloadProgress) {
+        
+    } completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
         NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
         if (error) {
             [self showDeserializedError:error];
