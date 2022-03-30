@@ -13,13 +13,11 @@ target :"seafileApp" do
   pod 'MWPhotoBrowser', :git => 'https://github.com/haiwen/MWPhotoBrowser.git', :branch => 'master'
   pod 'QBImagePickerController', :git => 'https://github.com/haiwen/QBImagePickerController.git', :branch => 'master'
   pod 'WechatOpenSDK', '~> 1.8.7.1'
-  pod 'Bugly'
   shared
 end
 
 
 target :"SeafFileProvider" do
-  pod 'BuglyExtension'
   shared
 end
 
@@ -33,7 +31,6 @@ target :"SeafAction" do
 end
 
 target :"SeafShare" do
-    pod 'BuglyExtension'
     pod 'SVPullToRefresh', :git => 'https://github.com/lilthree/SVPullToRefresh.git', :branch => 'master'
     shared
 end
