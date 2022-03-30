@@ -12,7 +12,6 @@
 #import "Debug.h"
 #import "UIViewController+Extend.h"
 #import "SeafShareDirViewController.h"
-#import <BuglyExtension/CrashReporterLite.h>
 
 @interface ShareViewController ()<UITableViewDataSource, UITableViewDelegate>
 
@@ -25,7 +24,6 @@
 - (instancetype)initWithCoder:(NSCoder *)coder {
     self = [super initWithCoder:coder];
     if (self) {
-        [CrashReporterLite startWithApplicationGroupIdentifier:SEAFILE_SUITE_NAME];
         if (@available(iOS 13.0, *)) {
             self.modalInPresentation = true;
         }

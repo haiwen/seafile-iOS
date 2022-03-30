@@ -17,7 +17,6 @@
 #import "Debug.h"
 #import "NSError+SeafFileProvierError.h"
 #import "SeafStorage.h"
-#import <BuglyExtension/CrashReporterLite.h>
 #import <MobileCoreServices/MobileCoreServices.h>
 
 @interface FileProvider ()
@@ -37,7 +36,6 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-        [CrashReporterLite startWithApplicationGroupIdentifier:SEAFILE_SUITE_NAME];
         [self.fileCoordinator coordinateWritingItemAtURL:self.rootURL options:0 error:nil byAccessor:^(NSURL *newURL) {
             // ensure the documentStorageURL actually exists
             NSError *error = nil;
