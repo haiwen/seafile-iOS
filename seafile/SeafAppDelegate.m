@@ -18,7 +18,6 @@
 #import "Utils.h"
 #import "Version.h"
 #import "SeafWechatHelper.h"
-#import <Bugly/Bugly.h>
 
 @interface SeafAppDelegate () <UITabBarControllerDelegate, PHPhotoLibraryChangeObserver, CLLocationManagerDelegate, WXApiDelegate>
 
@@ -316,7 +315,6 @@
 
     [UIApplication sharedApplication].delegate.window.backgroundColor = [UIColor whiteColor];
 
-    [Bugly startWithAppId:@"67d77f8636"];
     return YES;
 }
 
