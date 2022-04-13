@@ -134,7 +134,7 @@
 "Auto clear passwords" = "Passwörter immer löschen";
 
 /* Seafile */
-"Auto merge by seafile system" = "Automatisch von Seafile zusammengeführt";
+"Auto merge by seafile system" = "Automatisch von luckycloud zusammengeführt";
 
 /* Seafile */
 "Auto upload should be enabled first." = "Aktivieren Sie zuerst das automatische Hochladen";
@@ -608,7 +608,7 @@
 "Open photo browser" = "Fotos öffnen";
 
 /* Seafile */
-"Open Seafile to view details" = "Für Details Seafile öffnen";
+"Open Seafile to view details" = "Für Details luckycloud öffnen";
 
 /* Seafile */
 "Organization" = "Organisation";
@@ -782,7 +782,7 @@
 "Save to %@" = "In %@ speichern";
 
 /* MainInterface.storyboard */
-"Save to Seafile" = "In Seafile speichern";
+"Save to Seafile" = "In luckycloud speichern";
 
 /* Seafile */
 "Save to album" = "Im Album speichern";
@@ -1067,7 +1067,7 @@
 "FaceID(TouchID) is Enabled" = "Face/Touch ID ist aktiviert";
 
 /* Files cannot be used whith TouchID */
-"Files cannot access files in Seafile when FaceID(TouchID) enabled. Please open Seafile and disable FaceID(TouchID)." = "Die Dateien-App kann nicht auf Dateien in Seafile zugreifen, wenn dort Face ID oder Touch ID verwendet wird. Öffnen Sie bitte die Seafile-App und deaktivieren Sie Face ID oder Touch ID.";
+"Files cannot access files in Seafile when FaceID(TouchID) enabled. Please open Seafile and disable FaceID(TouchID)." = "Die Dateien-App kann nicht auf Dateien in luckycloud zugreifen, wenn dort Face ID oder Touch ID verwendet wird. Öffnen Sie bitte die luckycloud-App und deaktivieren Sie Face ID oder Touch ID.";
 
 /* Seafile */
-"Please open Seafile ans add an account to start" = "Zum Starten öffnen Sie bitte Seafile und wählen ein Konto.";
+"Please open Seafile ans add an account to start" = "Zum Starten öffnen Sie bitte luckycloud und wählen ein Konto.";
