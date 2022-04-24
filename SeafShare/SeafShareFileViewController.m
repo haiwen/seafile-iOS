@@ -57,7 +57,7 @@
         self.navigationController.navigationBar.standardAppearance = barAppearance;
         self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
         
-        self.tableView.sectionHeaderTopPadding = 0;
+//        self.tableView.sectionHeaderTopPadding = 0;
     }
     [self.cancelButton setTitle:NSLocalizedString(@"Cancel", @"Seafile") forState:UIControlStateNormal];
     

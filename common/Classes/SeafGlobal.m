@@ -48,7 +48,9 @@ static NSError * NewNSErrorFromException(NSException * exc) {
     if (self = [super init]) {
         _conns = [[NSMutableArray alloc] init];
         _saveAlbumSem = dispatch_semaphore_create(1);
-         NSURL *rootURL = [[[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:SEAFILE_SUITE_NAME] URLByAppendingPathComponent:@"seafile" isDirectory:true];
+//         NSURL *rootURL = [[[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:SEAFILE_SUITE_NAME] URLByAppendingPathComponent:@"seafile" isDirectory:true];
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        NSURL *rootURL = [[fileManager URLForDirectory:NSDocumentDirectory inDomain:NSUserDomainMask appropriateForURL:nil create:NO error:nil] URLByAppendingPathComponent:@"seafile" isDirectory:true];
         [SeafStorage registerRootPath:rootURL.path metadataStorage:[[NSUserDefaults alloc] initWithSuiteName:SEAFILE_SUITE_NAME]];
 
         _cacheProvider = [[SeafDbCacheProvider alloc] init];

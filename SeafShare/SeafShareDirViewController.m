@@ -71,7 +71,7 @@
         self.navigationController.toolbar.standardAppearance = toolbarAppearance;
         self.navigationController.toolbar.scrollEdgeAppearance = toolbarAppearance;
         
-        self.tableView.sectionHeaderTopPadding = 0;
+//        self.tableView.sectionHeaderTopPadding = 0;
     }
     
     NSMutableArray *items = [NSMutableArray array];
