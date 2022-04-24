@@ -6,7 +6,7 @@ seafilePro.xcodeproj/xcshareddata
 *~
 *.bak
 .DS_Store
-
+Pods
 seafilePro.xcworkspace/
 *.ipa
 TODO
