@@ -1,4 +1,4 @@
-﻿
+
 
 /* Seafile */
 "%@ can't verify the identity of the website \"%@\"" = "%1$@님이 \"%2$@\" 웹사이트 신원을 검증할 수 없습니다.";
@@ -13,7 +13,7 @@
 "%@, Uploaded %@" = "%2$@에 %1$@을(를) 업로드했습니다";
 
 /* Seafile */
-"%@, uploading" = "%@, uploading";
+"%@, uploading" = "%@, 업로드 중";
 
 /* Seafile */
 "%@, waiting to upload" = "%@, 업로드 대기 중";
@@ -22,43 +22,43 @@
 "%ld photos remain" = "남은 사진 %ld개";
 
 /* Seafile */
-"%ld files are uploaded to Seafile" = "%ld files are uploaded to Seafile";
+"%ld files are uploaded to Seafile" = "파일 %ld개를 Seafile에 업로드했습니다";
 
 /* Seafile */
 "1 photo remain" = "남은 사진 1개";
 
 /* Seafile */
-"%ld days ago" = "%ld days ago";
+"%ld days ago" = "%ld일 전";
 
 /* Seafile */
-"%ld hours ago" = "%ld hours ago";
+"%ld hours ago" = "%ld시간 전";
 
 /* Seafile */
-"%ld minutes ago" = "%ld minutes ago";
+"%ld minutes ago" = "%ld분 전";
 
 /* Seafile */
-"%ld months ago" = "%ld months ago";
+"%ld months ago" = "%ld달 전";
 
 /* Seafile */
-"%ld years ago" = "%ld years ago";
+"%ld years ago" = "%ld년 전";
 
 /* Seafile */
-"a day ago" = "a day ago";
+"a day ago" = "하루 전";
 
 /* Seafile */
-"a few seconds ago" = "a few seconds ago";
+"a few seconds ago" = "몇 초 전";
 
 /* Seafile */
-"an hour ago" = "an hour ago";
+"an hour ago" = "한시간 전";
 
 /* Seafile */
-"a minute ago" = "a minute ago";
+"a minute ago" = "1분 전";
 
 /* Seafile */
-"a month ago" = "a month ago";
+"a month ago" = "한달 전";
 
 /* Seafile */
-"a year ago" = "a year ago";
+"a year ago" = "1년 전";
 
 /* Seafile */
 "A file with the same name already exists, do you want to overwrite?" = "같은 이름을 가진 파일이 있습니다. 덮어쓸까요?";
@@ -82,13 +82,13 @@
 "Activity" = "활동";
 
 /* Seafile */
-"Add a new discussion" = "Add a new discussion";
+"Add a new discussion" = "새 토론 추가";
 
 /* Seafile */
 "Add account" = "계정 추가";
 
 /* Seafile */
-"Add contact" = "Add contact";
+"Add contact" = "연락처 추가";
 
 /* Seafile */
 "Added" = "추가함";
@@ -109,19 +109,19 @@
 "Are you sure to clear all the cache?" = "정말 모든 캐시를 지울까요?";
 
 /* Seafile */
-"Are you sure to cancel all downloading tasks?" = "Are you sure to cancel all downloading tasks?";
+"Are you sure to cancel all downloading tasks?" = "정말로 모든 다운로드 동작을 취소할까요?";
 
 /* Seafile */
-"Are you sure to cancel all uploading tasks" = "Are you sure to cancel all uploading tasks";
+"Are you sure to cancel all uploading tasks" = "정말로 모든 업로드 동작을 취소할까요";
 
 /* Seafile */
 "Are you sure to log out?" = "정말 로그아웃할까요?";
 
 /* Seafile */
-"Are you sure you want to delete %@ ?" = "Are you sure you want to delete %@ ?";
+"Are you sure you want to delete %@ ?" = "정말로 %@ 항목을 삭제할까요?";
 
 /* Seafile */
-"Are you sure to save all photos to album?" = "Are you sure to save all photos to album";
+"Are you sure to save all photos to album?" = "정말로 모든 사진을 앨범에 저장할까요?";
 
 /* Seafile */
 "Auto Upload" = "자동 업로드";
@@ -157,13 +157,13 @@
 "Can not remove certificate because it is still in use" = "여전히 사용중이기 때문에 인증서를 제거할 수 없습니다";
 
 /* Seafile */
-"Cancel" = "Cancel";
+"Cancel" = "취소";
 
 /* Seafile */
 "Cancel download" = "다운로드 취소";
 
 /* Seafile */
-"Cancel upload" = "Cancel upload";
+"Cancel upload" = "업로드 취소";
 
 /* Seafile */
 "Changed library name or description" = "바뀐 라이브러리 이름 또는 설명";
@@ -175,7 +175,7 @@
 "Choose" = "선택";
 
 /* Seafile */
-"Choose directory" = "Choose directory";
+"Choose directory" = "디렉터리 선택";
 
 /* Seafile */
 "Choose a Seafile server" = "Seafile 서버를 선택하세요";
@@ -241,22 +241,22 @@
 "Creating folder ..." = "폴더 만드는 중 ...";
 
 /* Seafile */
-"Creating library ..." = "Creating library ...";
+"Creating library ..." = "라이브러리 만드는 중 ...";
 
 /* Seafile */
-"Created library" = "Created library";
+"Created library" = "만든 라이브러리 ";
 
 /* Seafile */
-"Created folder" = "Created folder";
+"Created folder" = "만든 폴더";
 
 /* Seafile */
-"Created file" = "Created file";
+"Created file" = "만든 파일 ";
 
 /* Seafile */
-"Created %ld files" = "Created %ld files";
+"Created %ld files" = "만든 파일 %ld개";
 
 /* Seafile */
-"Created draft" = "Created draft";
+"Created draft" = "만든 초안";
 
 /* Seafile */
 "Delete" = "삭제";
@@ -277,19 +277,19 @@
 "Deleting files ..." = "파일 삭제 중 ...";
 
 /* Seafile */
-"Deleted library" = "Deleted library";
+"Deleted library" = "삭제한 라이브러리";
 
 /* Seafile */
-"Deleted folder" = "Deleted folder";
+"Deleted folder" = "삭제한 폴더";
 
 /* Seafile */
-"Deleted file" = "Deleted file";
+"Deleted file" = "삭제한 파일";
 
 /* Seafile */
-"Deleted draft" = "Deleted draft";
+"Deleted draft" = "삭제한 초안";
 
 /* Seafile */
-"Destination" = "Destination";
+"Destination" = "대상";
 
 /* Seafile */
 "Directory '%@' is shared with you using %@" = "'%1$@' 디렉터리를 %2$@(으)로 공유했습니다";
@@ -316,19 +316,19 @@
 "Email or Username" = "전자메일 주소 또는 사용자 이름";
 
 /* Seafile */
-"Enable TouchID" = "Enable Touch ID";
+"Enable TouchID" = "터치 ID 활성";
 
 /* Seafile */
-"Enable FaceID" = "Enable Face ID";
+"Enable FaceID" = "페이스 ID 활성";
 
 /* Seafile */
 "Encrypted Libraries" = "암호화 라이브러리";
 
 /* Seafile */
-"Encrypted" = "Encrypted";
+"Encrypted" = "암호화함";
 
 /* Seafile */
-"Failed to add discussion" = "Failed to add discussion";
+"Failed to add discussion" = "토론 추가에 실패했습니다";
 
 /* Seafile */
 "Failed to authenticate" = "인증에 실패했습니다";
@@ -343,7 +343,7 @@
 "Failed to create folder" = "폴더 만들기에 실패했습니다";
 
 /* Seafile */
-"Failed to create library" = "Failed to create library";
+"Failed to create library" = "라이브러리 만들기에 실패했습니다";
 
 /* Seafile */
 "Failed to delete files" = "파일 삭제에 실패했습니다";
@@ -364,10 +364,10 @@
 "Failed to generate share link of file '%@'" = "'%@' 파일 공유 링크 만들기에 실패했습니다";
 
 /* Seafile */
-"Failed to get groups ..." = "Failed to get groups ...";
+"Failed to get groups ..." = "그룹 가져오기에 실패했습니다 ...";
 
 /* Seafile */
-"Failed to get messages" = "Failed to get messages";
+"Failed to get messages" = "메시지 가져오기에 실패했습니다";
 
 /* Seafile */
 "Failed to get modification details" = "수정 세부내역 정보 가져오기에 실패했습니다";
@@ -409,7 +409,7 @@
 "Failed to save %@ to album" = "%@ 앨범 저장에 실패했습니다";
 
 /* Seafile */
-"Failed to copy %@ to clipboard" = "Failed to copy %@ to clipboard";
+"Failed to copy %@ to clipboard" = "클립보드로의 %@ 복사에 실패했습니다";
 
 /* Seafile */
 "Failed to save account" = "계정 저장에 실패했습니다";
@@ -418,7 +418,7 @@
 "Failed to search" = "검색에 실패했습니다";
 
 /* Seafile */
-"Failed to send message" = "Failed to send message";
+"Failed to send message" = "메시지 보내기에 실패했습니다";
 
 /* Seafile */
 "Failed to upload file" = "파일 업로드에 실패했습니다";
@@ -430,7 +430,7 @@
 "File '%@' is too large to edit" = "'%@' 파일을 편집하기에 너무 큽니다";
 
 /* Seafile */
-"File '%@' uploaded successfully" = "File '%@' uploaded successfully";
+"File '%@' uploaded successfully" = "'%@' 파일 업로드에 성공했습니다";
 
 /* Seafile */
 "File name invalid" = "파일 이름이 잘못되었습니다";
@@ -442,7 +442,7 @@
 "Files with the same name already exist, do you want to overwrite?" = "같은 이름을 가진 파일이 있습니다. 덮어쓸까요?";
 
 /* Seafile */
-"File can not be shared" = "File can not be shared";
+"File can not be shared" = "파일을 공유할 수 없습니다";
 
 /* Seafile */
 "Folder name invalid" = "폴더 이름이 잘못되었습니다";
@@ -460,7 +460,7 @@
 "Generate share link success" = "공유 링크 만들기에 성공했습니다";
 
 /* Seafile */
-"Group discussion" = "Group discussion";
+"Group discussion" = "그룹 토론";
 
 /* Seafile */
 "Hey there!<br/><br/> I've been using %@ and thought you might like it. It is a free way to bring all you files anywhere and share them easily.<br/><br/>Go to the official website of %@:</br></br> <a href=\"%@\">%@</a>\n\n" = "안녕하세요!<br/><br/>%1$@을 사용중인데 맘에 드실거라 생각해서 메일드립니다. 파일을 어디든 쉽게 가져다 쓰고 공유할 수 있는 쉬운 수단입니다.<br/><br/>%2$@ 공식 웹사이트를 방문해보세요:<br/><br/><a href=\"%3$@\">%4$@</a>\n";
@@ -475,7 +475,7 @@
 "How would you like to share this file?" = "이 파일을 어떻게 공유할까요?";
 
 /* Seafile */
-"Hide" = "Hide";
+"Hide" = "숨기기 ";
 
 /* Seafile */
 "Import client certificate" = "클라이언트 인증서 가져오기";
@@ -484,7 +484,7 @@
 "Invalid Server" = "잘못된 서버";
 
 /* Seafile */
-"Invalid email" = "Invalid email";
+"Invalid email" = "잘못된 전자메일 주소";
 
 /* Seafile */
 "Last Backup Time" = "최근 백업 시각";
@@ -511,13 +511,13 @@
 "Login" = "로그인";
 
 /* Seafile */
-"Library name invalid" = "Library name invalid";
+"Library name invalid" = "잘못된 라이브러리 이름";
 
 /* Seafile */
-"Library name must not be empty" = "Library name must not be empty";
+"Library name must not be empty" = "라이브러리 이름을 비워두면 안됩니다";
 
 /* Seafile */
-"Message" = "Message";
+"Message" = "메시지";
 
 /* Seafile */
 "Messages" = "메시지 ";
@@ -550,10 +550,10 @@
 "Moving files ..." = "파일 옮기는 중 ...";
 
 /* Seafile */
-"Moved folder" = "Moved folder";
+"Moved folder" = "이동한 폴더 ";
 
 /* Seafile */
-"Moved file" = "Moved file";
+"Moved file" = "이동한 파일";
 
 /* Seafile */
 "My Own Libraries" = "내 라이브러리";
@@ -580,10 +580,10 @@
 "New folder name" = "새 폴더 이름";
 
 /* Seafile */
-"New Library" = "New Library";
+"New Library" = "새 라이브러리";
 
 /* Seafile */
-"New library name" = "New Library Name";
+"New library name" = "새 라이브러리 이름";
 
 /* Seafile */
 "No Results" = "결과 없음";
@@ -604,7 +604,7 @@
 "Open photo browser" = "사진 브라우저 열기";
 
 /* Seafile */
-"Open Seafile to view details" = "Open Seafile to view details";
+"Open Seafile to view details" = "Seafile을 열어 내용 보기 ";
 
 /* Seafile */
 "Organization" = "조직";
@@ -631,16 +631,16 @@
 "Password required" = "암호가 필요합니다";
 
 /* Seafile */
-"Password (at least 8 characters)" = "Password (at least 8 characters)";
+"Password (at least 8 characters)" = "암호(최소 8글자)";
 
 /* Seafile */
-"Please enter your password again" = "Please enter your password again";
+"Please enter your password again" = "암호를 다시 입력해주세요";
 
 /* Seafile */
-"Password must at least 8 characters" = "Password must at least 8 characters";
+"Password must at least 8 characters" = "암초는 최소 8글자여야 합니다";
 
 /* Seafile */
-"Two passwords are different" = "Two passwords are different";
+"Two passwords are different" = "두 암호가 다릅니다 ";
 
 /* Seafile */
 "PasteTo" = "다음에 붙여넣기";
@@ -649,7 +649,7 @@
 "Photos" = "사진";
 
 /* Seafile */
-"Photos are not accessible" = "Photos are not accessible";
+"Photos are not accessible" = "사진에 접근할 수 없습니다 ";
 
 /* Seafile */
 "Please authenticate to proceed" = "진행하려면 인증하세요";
@@ -667,22 +667,22 @@
 "Please enable \"Local decryption\" for uploading contacts to an encrypted library." = "암호화 라이브러리에 연락처를 업로드하려면 \"로컬 복호화\"를 활성화해주세요.";
 
 /* Seafile */
-"Post a discussion to group" = "Post a discussion to group";
+"Post a discussion to group" = "그룹에 토론 내용 게시";
 
 /* Seafile */
-"Preview" = "Preview";
+"Preview" = "미리 보기";
 
 /* Seafile */
 "Print" = "인쇄";
 
 /* Seafile */
-"Publish draft" = "Publish draft";
+"Publish draft" = "초안 공개";
 
 /* Pull down to get more messages */
-"Pull down to get more messages..." = "Pull down to get more messages...";
+"Pull down to get more messages..." = "아래로 당겨 더 많은 메시지 내용 보기...";
 
 /* Pull to refresh status */
-"Pull to refresh..." = "Pull to refresh...";
+"Pull to refresh..." = "아래로 당겨 새로 고치기...";
 
 /* Seafile */
 "Recovered deleted directory" = "삭제한 라이브러리를 복구했습니다";
@@ -691,16 +691,16 @@
 "Redownload" = "다시 다운로드";
 
 /* Release to get more messages */
-"Release to get more messages..." = "Release to get more messages...";
+"Release to get more messages..." = "메시지를 더 보려면 놓으세요...";
 
 /* Release to refresh status */
 "Release to refresh..." = "새로 고치려면 놓으세요...";
 
 /* Seafile */
-"Removed all items from trash" = "Removed all items from trash";
+"Removed all items from trash" = "휴지통에서 모든 항목을 제거했습니다";
 
 /* Seafile */
-"Removed items older than %ld days from trash" = "Removed items older than %ld days from trash";
+"Removed items older than %ld days from trash" = "휴지통에서 %ld일 전 항목을 제거했습니다";
 
 /* Seafile */
 "Remove client certificate" = "클라이언트 인증서 제거";
@@ -727,16 +727,16 @@
 "Renaming file ..." = "파일 이름 바꾸는 중 ...";
 
 /* Seafile */
-"Renamed library" = "Renamed library";
+"Renamed library" = "이름 바꾼 라이브러리";
 
 /* Seafile */
-"Renamed folder" = "Renamed folder";
+"Renamed folder" = "이름 바꾼 폴더";
 
 /* Seafile */
-"Renamed file" = "Renamed file";
+"Renamed file" = "이름 바꾼 파일 ";
 
 /* Seafile */
-"Replace" = "Replace";
+"Replace" = "바꾸기";
 
 /* Seafile */
 "Reset repo password" = "저장소 암호 초기화";
@@ -748,13 +748,13 @@
 "Restoring contacts." = "연락처를 복원합니다.";
 
 /* Seafile */
-"Restored library" = "Restored library";
+"Restored library" = "복원한 라이브러리";
 
 /* Seafile */
-"Restored folder" = "Restored folder";
+"Restored folder" = "복원한 폴더";
 
 /* Seafile */
-"Restored file" = "Restored file";
+"Restored file" = "복원한 파일";
 
 /* Seafile */
 "Reverted file \"%@\" to status at %@." = "\"%1$@\" 파일을 %2$@ 상태로 되돌렸습니다.";
@@ -763,22 +763,22 @@
 "Reverted library to status at" = "다음 상태로 라이브러리 되돌림";
 
 /* Seafile push notification message */
-"SEAFILE_LOC_KEY_FORMAT" = "%@, you got new messages from %@";
+"SEAFILE_LOC_KEY_FORMAT" = "%@님, %@님께서 보내신 새 메시지가 도착했습니다";
 
 /* Seafile */
 "Save" = "저장";
 
 /* Seafile */
-"Save Destination" = "Save Destination";
+"Save Destination" = "대상 저장";
 
 /* Seafile */
 "Save all photos to album" = "모든 사진을 앨범에 저장";
 
 /* Seafile */
-"Save to %@" = "Save to %@";
+"Save to %@" = "%@에 저장";
 
 /* MainInterface.storyboard */
-"Save to Seafile" = "Save to Seafile";
+"Save to Seafile" = "Seafile에 저장";
 
 /* Seafile */
 "Save to album" = "앨범에 저장";
@@ -811,7 +811,7 @@
 "Select None" = "선택 안함";
 
 /* Seafile */
-"Select a certificate" = "Select a certificate";
+"Select a certificate" = "인증서 선택";
 
 /* No comment provided by engineer. */
 "Send" = "보내기";
@@ -820,10 +820,10 @@
 "Send share link via email" = "전자메일로 공유 링크 보내기";
 
 /* Seafile */
-"Sending" = "Sending";
+"Sending" = "보내는 중";
 
 /* Seafile */
-"Sending..." = "Sending...";
+"Sending..." = "보내는 중...";
 
 /* Seafile */
 "Server" = "서버";
@@ -841,19 +841,19 @@
 "Shared to me" = "나에게 공유";
 
 /* Seafile */
-"Shared with groups" = "Shared with groups";
+"Shared with groups" = "그룹에 공유";
 
 /* Seafile */
-"Share" = "Share";
+"Share" = "공유";
 
 /* Seafile */
-"Shibboleth" = "Shibboleth";
+"Shibboleth" = "시볼레스";
 
 /* Seafile */
 "Shibboleth Login" = "시볼레스 로그인";
 
 /* Seafile */
-"Single Sign On" = "Single Sign On";
+"Single Sign On" = "단일 로그인";
 
 /* Seafile */
 "Sort by Last Modifed Time" = "최종 수정일시순 정렬";
@@ -886,16 +886,16 @@
 "Succeeded to save %@ to album" = "%@ 앨범 저장에 성공했습니다";
 
 /* Seafile */
-"Succeeded to copy %@ to clipboard" = "Succeeded to copy %@ to clipboard";
+"Succeeded to copy %@ to clipboard" = "클립보드로의 %@ 복사에 성공했습니다";
 
 /* Seafile */
 "Successfully imported %@" = "%@ 가져오기에 성공했습니다";
 
 /* Seafile */
-"Successfully moved" = "Successfully moved";
+"Successfully moved" = "이동에 성공했습니다";
 
 /* Seafile */
-"Successfully copied" = "Successfully copied";
+"Successfully copied" = "복사에 성공했습니다 ";
 
 /* Seafile */
 "Tell Friends about %@" = "%@을(를) 친구에게 알리기";
@@ -925,7 +925,7 @@
 "This app does not have access to your contacts." = "이 앱에서 연락처를 다룰 수 없습니다.";
 
 /* Seafile */
-"There is no account available" = "There is no account available.";
+"There is no account available" = "사용할 수 있는 계정이 없습니다.";
 
 /* Seafile */
 "This app does not have access to your location service." = "이 앱에서 위치 서비스에 접근할 수 없습니다.";
@@ -955,13 +955,13 @@
 "Upload Videos" = "동영상 업로드";
 
 /* Seafile */
-"Updated file" = "Upload file";
+"Updated file" = "파일 업로드";
 
 /* Seafile */
-"Updated draft" = "Upload draft";
+"Updated draft" = "초안 업로드";
 
 /* NSPhotoLibraryUsageDescription */
-"Used to sync photos" = "Used to sync photos";
+"Used to sync photos" = "사진 동기화에 사용";
 
 /* Seafile */
 "Username" = "사용자 이름";
@@ -1006,7 +1006,7 @@
 "Your device cannot authenticate using Touch ID." = "장치에서 터치 ID로 인증할 수 없습니다";
 
 /* Seafile */
-"Your device cannot authenticate using Face ID." = "Your device cannot authenticate using Face ID.";
+"Your device cannot authenticate using Face ID." = "장치에서 페이스 ID로 인증할 수 없습니다.";
 
 /* Seafile */
 "and %@ more" = "및 %@ 더";
@@ -1024,46 +1024,46 @@
 "modified" = "수정함";
 
 /* Seafile */
-"Uploading" = "Uploading";
+"Uploading" = "업로드 중";
 
 /* Seafile */
-"Downloading" = "Downloading";
+"Downloading" = "다운로드 중";
 
 /* Seafile */
-"Upload & Download" = "Upload & Download";
+"Upload & Download" = "업로드 및 다운로드";
 
 /* Seafile */
-"Completed" = "Completed";
+"Completed" = "완료";
 
 /* waiting to upload */
-"Waiting to upload" = "%Waiting to upload";
+"Waiting to upload" = "업로드 대기 중";
 
 /* FolderView_iPad.storyboard, FolderView_iPhone.storyboard */
 "www.seafile.com" = "www.seafile.com";
 
 /* Share to WeChat */
-"Share to WeChat" = "Share to WeChat";
+"Share to WeChat" = "위챗에 공유";
 
 /* Share Cancelled */
-"Share Cancelled" = "Share Cancelled";
+"Share Cancelled" = "공유를 취소했습니다";
 
 /* Failed to share to WeChat */
-"Failed to share to WeChat" = "Failed to share to WeChat";
+"Failed to share to WeChat" = "위챗으로의 공유에 실패했습니다";
 
 /* OK and Remember Device */
-"OK and Remember Device" = "OK and Remember Device";
+"OK and Remember Device" = "확인하고 장치 기억";
 
 /* Privacy Policy */
-"Privacy Policy" = "Privacy Policy";
+"Privacy Policy" = "개인정보 보호 정책";
 
 /* Privacy Policy URL */
 "https://www.seafile.com/en/privacy_policy/" = "https://www.seafile.com/en/privacy_policy/";
 
 /*  TouchID is Enabled  */
-"FaceID(TouchID) is Enabled" = "FaceID(TouchID) is Enabled";
+"FaceID(TouchID) is Enabled" = "페이스 ID(터치 ID)를 사용합니다";
 
 /* Files cannot be used whith TouchID */
-"Files cannot access files in Seafile when FaceID(TouchID) enabled. Please open Seafile and disable FaceID(TouchID)." = "Files cannot access files in Seafile when FaceID(TouchID) enabled. Please open Seafile and disable FaceID(TouchID).";
+"Files cannot access files in Seafile when FaceID(TouchID) enabled. Please open Seafile and disable FaceID(TouchID)." = "페이스 ID(터치 ID)를 활성 상태로 설정하면 Seafile에서 파일에 접근할 수 없습니다. Seafile을 열어 페이스 ID(터치 ID) 사용을 꺼주세요.";
 
 /* Seafile */
-"Please open Seafile ans add an account to start" = "Please open Seafile ans add an account to start.";
+"Please open Seafile ans add an account to start" = "Seafile을 열고 계정을 추가하여 시작하세요.";
