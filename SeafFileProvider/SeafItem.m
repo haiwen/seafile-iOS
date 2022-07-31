@@ -90,7 +90,7 @@ static APLRUCache *cache() {
 {
     if (!_itemIdentifier) {
         if (self.isRoot) {
-            _itemIdentifier = @"/";
+            _itemIdentifier = NSFileProviderRootContainerItemIdentifier;
         } else {
             NSString *encodedPath = [Utils encodePath:_server username:_username repo:_repoId path:_path];
             if (_filename) {
@@ -108,7 +108,7 @@ static APLRUCache *cache() {
 {
     // /account/repo/path
     if (self.isRoot) { // root
-        return self;
+        return nil;
     } else if (self.isAccountRoot) { // directory, account root(repo list)
         return [[SeafItem alloc] initWithServer:nil username:nil repo:nil path:nil filename:nil];
     } else if (self.isRepoRoot) { // directory, account root(repo list)

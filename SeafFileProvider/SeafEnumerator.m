@@ -150,7 +150,7 @@
 
     NSMutableArray *items = [NSMutableArray new];
     NSArray *array = [self getAccessiableSubItems:dir];
-    BOOL isLastPage = (stop >= array.count - 1);
+    BOOL isLastPage = array.count == 0 ? YES : (stop >= array.count - 1);
     for (NSUInteger idx = start; idx <= stop && idx < array.count; ++idx) {
         SeafBase *obj = [array objectAtIndex:idx];
         [obj loadCache];

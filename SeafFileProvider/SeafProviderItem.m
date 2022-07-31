@@ -14,7 +14,8 @@
 #import "Debug.h"
 
 @interface SeafProviderItem ()
-@property (strong) SeafItem *item;
+@property (nonatomic, strong) SeafItem *item;
+@property (nonatomic, copy) NSString *parentItemIdentifier;
 @end
 
 
@@ -37,10 +38,11 @@
 - (NSFileProviderItemIdentifier)parentItemIdentifier
 {
     SeafItem *parentItem = self.item.parentItem;
-    if (@available(iOS 11.0, *)) {
-        if (parentItem.isRoot) {
-            return NSFileProviderRootContainerItemIdentifier;
-        }
+    if (parentItem == nil) {
+        return _itemIdentifier;
+    }
+    if (parentItem.isRoot) {
+        return NSFileProviderRootContainerItemIdentifier;
     }
     return parentItem.itemIdentifier;
 }

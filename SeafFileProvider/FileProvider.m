@@ -63,21 +63,14 @@
     }
 }
 
-- (NSFileProviderItemIdentifier)translateIdentifier:(NSFileProviderItemIdentifier)containerItemIdentifier
-{
-    if (@available(iOS 11.0, *)) {
-        if ([containerItemIdentifier isEqualToString:NSFileProviderRootContainerItemIdentifier]) {
-            return @"/";
-        }
-    }
-    return containerItemIdentifier;
-}
-
 - (nullable NSURL *)URLForItemWithPersistentIdentifier:(NSFileProviderItemIdentifier)itemIdentifier
 {
-    NSFileProviderItemIdentifier identifier = [self translateIdentifier:itemIdentifier];
     NSURL *ret;
-    NSArray *pathComponents = [identifier pathComponents];
+    if (![itemIdentifier isEqualToString:NSFileProviderRootContainerItemIdentifier] && ![itemIdentifier hasPrefix:@"/"]) {
+        itemIdentifier = [NSString stringWithFormat:@"/%@", itemIdentifier];
+    }
+    NSArray *pathComponents = [itemIdentifier pathComponents];
+    Debug(@"URLForItem pathComponents: %@", pathComponents);
     if (pathComponents.count == 1) {
         ret = self.rootURL;
     } else if (pathComponents.count == 2) {
@@ -87,6 +80,7 @@
         NSURL *url = [self.rootURL URLByAppendingPathComponent:[pathComponents objectAtIndex:1] isDirectory:true];
         ret = [url URLByAppendingPathComponent:[pathComponents objectAtIndex:2] isDirectory:false];
     }
+    Debug(@"URLForItem url: %@", ret);
     return ret;
 }
 
@@ -97,13 +91,13 @@
         return nil;
     }
     NSString *suffix = [url.path substringFromIndex:(range.location+range.length)];
-    if (!suffix || suffix.length == 0) return @"/";
+    if (!suffix || suffix.length == 0) return NSFileProviderRootContainerItemIdentifier;
     return suffix;
 }
 
 - (nullable NSFileProviderItem)itemForIdentifier:(NSFileProviderItemIdentifier)identifier error:(NSError * _Nullable *)error
 {
-    SeafItem *item = [[SeafItem alloc] initWithItemIdentity:[self translateIdentifier:identifier]];
+    SeafItem *item = [[SeafItem alloc] initWithItemIdentity:identifier];
     return [[SeafProviderItem alloc] initWithSeafItem:item itemIdentifier:identifier];
 }
 
@@ -182,6 +176,9 @@
 
     // Called at some point after the file has changed; the provider may then trigger an upload
     NSFileProviderItemIdentifier identifier = [self persistentIdentifierForItemAtURL:url];
+    if ([identifier isEqualToString:NSFileProviderRootContainerItemIdentifier] || [identifier isEqualToString:NSFileProviderWorkingSetContainerItemIdentifier]) {
+        return;
+    }
     Debug("File changed: %@ %@", url, identifier);
     SeafItem *item = [self readFromLocal:identifier];
     if (!item) {
@@ -195,12 +192,18 @@
 
     SeafFile *sfile = (SeafFile *)item.toSeafObj;
     NSURL *tempURL = [Utils generateFileTempPath:sfile.name];
-    NSError *err;
-    BOOL ret = [[NSFileManager defaultManager] moveItemAtURL:url toURL:tempURL error:&err];
+    BOOL ret = [self copyItemAtURL:url toURL:tempURL];
     if (ret) {
         [sfile uploadFromFile:tempURL];
         [sfile waitUpload];
     }
+}
+
+- (BOOL)copyItemAtURL:(NSURL *)fromUrl toURL:(NSURL *)toURL {
+    [[NSFileManager defaultManager] removeItemAtURL:toURL error:nil];
+    NSError *error;
+    BOOL ret = [[NSFileManager defaultManager] copyItemAtURL:fromUrl toURL:toURL error:&error];
+    return error ? NO : ret;
 }
 
 - (void)stopProvidingItemAtURL:(NSURL *)url
@@ -231,19 +234,16 @@
 {
     Debug("enumerator for %@", containerItemIdentifier);
     SeafEnumerator *enumerator = nil;
-    if (@available(iOS 11.0, *)) {
+    if (![containerItemIdentifier isEqualToString:NSFileProviderWorkingSetContainerItemIdentifier]) {
         if ([containerItemIdentifier isEqualToString:NSFileProviderRootContainerItemIdentifier]) {
-            [self signalEnumerator:@[NSFileProviderWorkingSetContainerItemIdentifier]];
-            enumerator = [[SeafEnumerator alloc] initWithItemIdentifier:[self translateIdentifier:containerItemIdentifier] containerItemIdentifier:containerItemIdentifier currentAnchor:self.currentAnchor];
-        } else if ([containerItemIdentifier isEqualToString:NSFileProviderWorkingSetContainerItemIdentifier]) {
-            enumerator = [[SeafEnumerator alloc] initWithItemIdentifier:containerItemIdentifier containerItemIdentifier:containerItemIdentifier currentAnchor:self.currentAnchor];
+            enumerator = [[SeafEnumerator alloc] initWithItemIdentifier:containerItemIdentifier  containerItemIdentifier:containerItemIdentifier currentAnchor:self.currentAnchor];
         } else {
-            SeafItem *item = [[SeafItem alloc] initWithItemIdentity:[self translateIdentifier:[self translateIdentifier:containerItemIdentifier]]];
+            SeafItem *item = [[SeafItem alloc] initWithItemIdentity:containerItemIdentifier];
             if (item.isAccountRoot && item.isTouchIdEnabled) {
                 *error = [NSError fileProvierErrorNotAuthenticated];
-                enumerator = [[SeafEnumerator alloc] initWithItemIdentifier:[self translateIdentifier:[self translateIdentifier:containerItemIdentifier]] containerItemIdentifier:containerItemIdentifier currentAnchor:self.currentAnchor];
+                enumerator = [[SeafEnumerator alloc] initWithItemIdentifier:containerItemIdentifier containerItemIdentifier:containerItemIdentifier currentAnchor:self.currentAnchor];
             } else {
-                 enumerator = [[SeafEnumerator alloc] initWithItemIdentifier:[self translateIdentifier:[self translateIdentifier:containerItemIdentifier]] containerItemIdentifier:containerItemIdentifier currentAnchor:self.currentAnchor];
+                 enumerator = [[SeafEnumerator alloc] initWithItemIdentifier:containerItemIdentifier containerItemIdentifier:containerItemIdentifier currentAnchor:self.currentAnchor];
             }
         }
     }
@@ -276,7 +276,7 @@
         [Utils removeFile:localURL.path];
     }
     NSError *err = nil;
-    BOOL ret = [[NSFileManager defaultManager] moveItemAtURL:fileURL toURL:localURL error:&err];
+    BOOL ret = [[NSFileManager defaultManager] copyItemAtURL:fileURL toURL:localURL error:&err];
     [fileURL stopAccessingSecurityScopedResource];
 
     Debug(@"local file size: %lld", [Utils fileSizeAtPath1:localURL.path]);
