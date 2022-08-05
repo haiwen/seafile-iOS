@@ -605,4 +605,38 @@
     return [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleIdentifier"];
 }
 
++ (NSString *)creatNewFileName:(NSString *)fileName {
+    NSString *name = fileName.stringByDeletingPathExtension;
+    NSString *ext = fileName.pathExtension;
+    
+    if (name.length<3) {
+        if (ext.length == 0) {
+            fileName = [NSString stringWithFormat:@"%@(1)", name];
+        } else {
+            fileName = [NSString stringWithFormat:@"%@(1).%@", name, ext];
+        }
+    } else {
+        NSInteger len = name.length;
+        NSString *numStr = [name substringWithRange:NSMakeRange(len-2, 1)];
+        NSInteger num = [numStr integerValue];
+        NSString *par = [name substringWithRange:NSMakeRange(len-3, 1)];
+        if ([par isEqualToString:@"("] && num > 0) {
+            num+=1;
+            name = [name substringToIndex:len-3];
+            if (ext.length == 0) {
+                fileName = [NSString stringWithFormat:@"%@(%ld)", name, (long)num];
+            } else {
+                fileName = [NSString stringWithFormat:@"%@(%ld).%@", name, (long)num,ext];
+            }
+        } else {
+            if (ext.length == 0) {
+                fileName = [NSString stringWithFormat:@"%@(1)", name];
+            } else {
+                fileName = [NSString stringWithFormat:@"%@(1).%@", name, ext];
+            }
+        }
+    }
+    return fileName;
+}
+
 @end

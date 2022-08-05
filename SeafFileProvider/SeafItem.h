@@ -44,4 +44,6 @@
 
 - (NSDictionary*)convertToDict;
 - (SeafItem *)convertFromDict:(NSDictionary *)dict;
+
+- (void)updateCacheWithSubItem:(SeafItem *)item;
 @end

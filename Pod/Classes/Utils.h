@@ -63,4 +63,6 @@
 
 + (NSString *)currentBundleIdentifier;
 
++ (NSString *)creatNewFileName:(NSString *)fileName;
+
 @end
