@@ -255,8 +255,25 @@
      toParentItemIdentifier:(NSFileProviderItemIdentifier)parentItemIdentifier
           completionHandler:(void (^)(NSFileProviderItem _Nullable importedDocumentItem, NSError * _Nullable error))completionHandler
 {
-    NSFileProviderItemIdentifier itemIdentifier = [parentItemIdentifier stringByAppendingPathComponent:fileURL.path.lastPathComponent];
-    Debug("file path: %@, parentItemIdentifier:%@, itemIdentifier:%@", fileURL.path, parentItemIdentifier, itemIdentifier);
+    Debug("file path: %@, parentItemIdentifier:%@", fileURL.path, parentItemIdentifier);
+    NSString *fileName = fileURL.path.lastPathComponent;
+
+    SeafItem *parentItem = [[SeafItem alloc] initWithItemIdentity:parentItemIdentifier];
+    if ([[parentItem toSeafObj] isKindOfClass:[SeafDir class]]) {
+        SeafDir *dir = (SeafDir *)[parentItem toSeafObj];
+        bool exit = false;
+        while (exit != true) {
+            if ([dir nameExist:fileName]) {
+                fileName = [Utils creatNewFileName:fileName];
+            } else {
+                exit = true;
+            }
+        }
+    }
+    
+    NSFileProviderItemIdentifier itemIdentifier = [parentItemIdentifier stringByAppendingPathComponent:fileName];
+    Debug("file itemIdentifier: %@", itemIdentifier);
+
     SeafItem *item = [[SeafItem alloc] initWithItemIdentity:itemIdentifier];
     [self saveToLocal:item];
     SeafFile *sfile = (SeafFile *)[item toSeafObj];
@@ -266,6 +283,11 @@
         if (error) {
             completionHandler(nil, [NSError fileProvierErrorServerUnreachable]);
         } else {
+            SeafProviderItem *providerItem = [[SeafProviderItem alloc] initWithSeafItem:item];
+            completionHandler(providerItem, nil);
+            
+            [parentItem updateCacheWithSubItem:item];
+            [self signalEnumerator:@[parentItemIdentifier, NSFileProviderWorkingSetContainerItemIdentifier]];
             [self removeProvidingItemAndParentIfEmpty:localURL];
         }
     }];
@@ -285,9 +307,7 @@
     ret = [sfile uploadFromFile:localURL];
     [localURL stopAccessingSecurityScopedResource];
     if (!ret) return completionHandler(nil, [NSError fileProvierErrorNoSuchItem]);
-
-    SeafProviderItem *providerItem = [[SeafProviderItem alloc] initWithSeafItem:item];
-    completionHandler(providerItem, nil);
+    
 }
 
 - (void)createDirectoryWithName:(NSString *)directoryName

@@ -194,6 +194,18 @@ static APLRUCache *cache() {
     }
 }
 
+- (void)updateCacheWithSubItem:(SeafItem *)item {
+    SeafBase *obj = [CACHE cachedObjectForKey:self.itemIdentifier];
+    if (obj != nil && item != nil && [obj isKindOfClass:[SeafDir class]]) {
+        SeafDir *dir = (SeafDir *)obj;
+        SeafBase *file = [item toSeafObj];
+        NSMutableArray *mArr = [NSMutableArray arrayWithArray:dir.items];
+        [mArr addObject:file];
+        [dir loadedItems:mArr];
+        [CACHE cacheObject:dir forKey:self.itemIdentifier];
+    }
+}
+
 - (void)setTagData:(NSData *)tagData {
     _tagData = tagData;
     [self.conn saveFileProviderTagData:_tagData withItemIdentifier:_itemIdentifier];
