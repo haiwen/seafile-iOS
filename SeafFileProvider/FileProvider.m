@@ -18,9 +18,10 @@
 #import "NSError+SeafFileProvierError.h"
 #import "SeafStorage.h"
 #import <MobileCoreServices/MobileCoreServices.h>
+#import "SeafFileProviderUtility.h"
 
 @interface FileProvider ()
-@property (nonatomic, assign) NSInteger currentAnchor;
+
 @end
 
 @implementation FileProvider
@@ -44,7 +45,6 @@
         if (SeafGlobal.sharedObject.conns.count == 0) {
             [SeafGlobal.sharedObject loadAccounts];
         }
-        self.currentAnchor = 0;
     }
     return self;
 }
@@ -236,14 +236,14 @@
     SeafEnumerator *enumerator = nil;
     if (![containerItemIdentifier isEqualToString:NSFileProviderWorkingSetContainerItemIdentifier]) {
         if ([containerItemIdentifier isEqualToString:NSFileProviderRootContainerItemIdentifier]) {
-            enumerator = [[SeafEnumerator alloc] initWithItemIdentifier:containerItemIdentifier  containerItemIdentifier:containerItemIdentifier currentAnchor:self.currentAnchor];
+            enumerator = [[SeafEnumerator alloc] initWithItemIdentifier:containerItemIdentifier];
         } else {
             SeafItem *item = [[SeafItem alloc] initWithItemIdentity:containerItemIdentifier];
             if (item.isAccountRoot && item.isTouchIdEnabled) {
                 *error = [NSError fileProvierErrorNotAuthenticated];
-                enumerator = [[SeafEnumerator alloc] initWithItemIdentifier:containerItemIdentifier containerItemIdentifier:containerItemIdentifier currentAnchor:self.currentAnchor];
+                enumerator = [[SeafEnumerator alloc] initWithItemIdentifier:containerItemIdentifier];
             } else {
-                 enumerator = [[SeafEnumerator alloc] initWithItemIdentifier:containerItemIdentifier containerItemIdentifier:containerItemIdentifier currentAnchor:self.currentAnchor];
+                 enumerator = [[SeafEnumerator alloc] initWithItemIdentifier:containerItemIdentifier];
             }
         }
     }
@@ -276,17 +276,17 @@
 
     SeafItem *item = [[SeafItem alloc] initWithItemIdentity:itemIdentifier];
     [self saveToLocal:item];
-    SeafFile *sfile = (SeafFile *)[item toSeafObj];
+    __weak SeafFile *sfile = (SeafFile *)[item toSeafObj];
     NSURL *localURL = [self URLForItemWithPersistentIdentifier:itemIdentifier];
 
     [sfile setFileUploadedBlock:^(SeafUploadFile *file, NSString *oid, NSError *error) {
         if (error) {
             completionHandler(nil, [NSError fileProvierErrorServerUnreachable]);
         } else {
-            SeafProviderItem *providerItem = [[SeafProviderItem alloc] initWithSeafItem:item];
-            completionHandler(providerItem, nil);
+            SeafProviderItem *providerItem = [[SeafProviderItem alloc] initWithSeafItem:[SeafItem fromSeafBase:sfile]];
             
             [parentItem updateCacheWithSubItem:item];
+            [SeafFileProviderUtility.shared saveUpdateItem:providerItem];
             [self signalEnumerator:@[parentItemIdentifier, NSFileProviderWorkingSetContainerItemIdentifier]];
             [self removeProvidingItemAndParentIfEmpty:localURL];
         }
@@ -308,6 +308,8 @@
     [localURL stopAccessingSecurityScopedResource];
     if (!ret) return completionHandler(nil, [NSError fileProvierErrorNoSuchItem]);
     
+    SeafProviderItem *providerItem = [[SeafProviderItem alloc] initWithSeafItem:[SeafItem fromSeafBase:sfile]];
+    completionHandler(providerItem, nil);
 }
 
 - (void)createDirectoryWithName:(NSString *)directoryName
@@ -491,7 +493,7 @@
 
 - (void)signalEnumerator:(NSArray<NSFileProviderItemIdentifier> *)itemIdentifiers {
     if (@available(iOS 11.0, *)) {
-        self.currentAnchor += 1;
+        SeafFileProviderUtility.shared.currentAnchor += 1;
         for (NSString *identifier in itemIdentifiers) {
             [NSFileProviderManager.defaultManager signalEnumeratorForContainerItemIdentifier:identifier completionHandler:^(NSError * _Nullable error) {
                 if (error) {
