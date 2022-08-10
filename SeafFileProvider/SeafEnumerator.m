@@ -13,46 +13,41 @@
 #import "SeafRepos.h"
 #import "NSError+SeafFileProvierError.h"
 #import "SeafStorage.h"
+#import "SeafFileProviderUtility.h"
 
 @interface SeafEnumerator ()
-@property (nonatomic, strong) SeafItem *item;
-@property (nonatomic, copy) NSFileProviderItemIdentifier containerItemIdentifier;
-@property (nonatomic, assign) NSInteger currentAnchor;
+@property (nonatomic, copy) NSFileProviderItemIdentifier itemIdentifier;
+@property (nonatomic, strong) SeafItem* item;
 @property (nonatomic, assign) NSInteger maxItemCount;
 @end
 
 
 @implementation SeafEnumerator
 
-- (instancetype)initWithItemIdentifier:(NSFileProviderItemIdentifier)itemIdentifier containerItemIdentifier:(NSFileProviderItemIdentifier)containerItemIdentifier currentAnchor:(NSInteger)currentAnchor
+- (instancetype)initWithItemIdentifier:(NSFileProviderItemIdentifier)itemIdentifier
 {
-    SeafEnumerator *enumerator = [self initWithSeafItem:[[SeafItem alloc] initWithItemIdentity:itemIdentifier]];
-    enumerator.containerItemIdentifier = containerItemIdentifier;
-    enumerator.currentAnchor = currentAnchor;
-    return enumerator;
-}
-
-- (instancetype)initWithSeafItem:(SeafItem *)item
-{
-    if (self = [super init]) {
-        _item = item;
-        _maxItemCount = 20;
+    self = [super init];
+    if (self) {
+        self.itemIdentifier = itemIdentifier;
+        self.item = [[SeafItem alloc] initWithItemIdentity:itemIdentifier];
+        self.maxItemCount = 20;
     }
     return self;
 }
 
 - (void)invalidate
 {
-    Debug("invalidate %@", self.item.itemIdentifier);
+    Debug("invalidate %@", self.itemIdentifier);
+    _item = nil;
+    _itemIdentifier = nil;
 }
 
 - (void)enumerateItemsForObserver:(id<NSFileProviderEnumerationObserver>)observer
                    startingAtPage:(NSFileProviderPage)page
 {
     Debug("%@, root:%d accountroot:%d, reporoot:%d ", _item.itemIdentifier, _item.isRoot, _item.isAccountRoot, _item.isRepoRoot);
-    
     if (@available(iOS 11.0, *)) {
-        if ([_containerItemIdentifier isEqualToString:NSFileProviderRootContainerItemIdentifier]) {
+        if ([_itemIdentifier isEqualToString:NSFileProviderRootContainerItemIdentifier]) {
             NSArray *accounts = self.getRootProviderItems;
             if (accounts.count == 0) {
                 [observer finishEnumeratingWithError:[NSError fileProvierErrorNoAccount]];
@@ -60,7 +55,7 @@
                 [observer didEnumerateItems:accounts];
                 [observer finishEnumeratingUpToPage:nil];
             }
-        } else if ([_containerItemIdentifier isEqualToString: NSFileProviderWorkingSetContainerItemIdentifier]) {
+        } else if ([_itemIdentifier isEqualToString: NSFileProviderWorkingSetContainerItemIdentifier]) {
             Debug("WorkingSetItemIdentifier %@", _item.itemIdentifier);
             NSMutableArray *items = [NSMutableArray array];
             NSMutableDictionary *filesStorage = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:SEAF_FILE_PROVIDER]];
@@ -163,7 +158,7 @@
     NSMutableArray *itemsUpdate = [NSMutableArray array];
     
     if (@available(iOS 11.0, *)) {
-        if (_containerItemIdentifier == NSFileProviderWorkingSetContainerItemIdentifier) {
+        if (_itemIdentifier == NSFileProviderWorkingSetContainerItemIdentifier) {
             NSDictionary *filesStorage = [SeafStorage.sharedObject objectForKey:SEAF_FILE_PROVIDER];
             for (NSDictionary *dict in filesStorage.allValues) {
                 SeafItem *item = [[SeafItem alloc] convertFromDict:dict];
@@ -171,14 +166,21 @@
             }
         }
     }
+    for (SeafProviderItem *item in [SeafFileProviderUtility.shared allUpdateItems]) {
+        Debug(@"allUpdateItem itemIdentifier: %@ parentItemIdentifier: %@",  item.itemIdentifier ,item.parentItemIdentifier);
+        [itemsUpdate addObject:item];
+    }
+    [SeafFileProviderUtility.shared removeAllUpdateItems];
+    
     [observer didUpdateItems:itemsUpdate];
-    NSData *currentAnchor = [[NSString stringWithFormat:@"%ld",(long)_currentAnchor] dataUsingEncoding:NSUTF8StringEncoding];
+    NSData *currentAnchor = [[NSString stringWithFormat:@"%ld",(long)SeafFileProviderUtility.shared.currentAnchor
+                             ] dataUsingEncoding:NSUTF8StringEncoding];
     [observer finishEnumeratingChangesUpToSyncAnchor:currentAnchor moreComing:false];
 }
 
 - (void)currentSyncAnchorWithCompletionHandler:(void(^)(_Nullable NSFileProviderSyncAnchor currentAnchor))completionHandler
 {
-    NSData *currentAnchor = [[NSString stringWithFormat:@"%ld",(long)_currentAnchor] dataUsingEncoding:NSUTF8StringEncoding];
+    NSData *currentAnchor = [[NSString stringWithFormat:@"%ld",(long)SeafFileProviderUtility.shared.currentAnchor] dataUsingEncoding:NSUTF8StringEncoding];
     completionHandler(currentAnchor);
 }
 

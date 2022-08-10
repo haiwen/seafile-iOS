@@ -12,8 +12,6 @@
 
 @interface SeafEnumerator : NSObject<NSFileProviderEnumerator>
 
-- (instancetype)initWithItemIdentifier:(NSFileProviderItemIdentifier)itemIdentifier containerItemIdentifier:(NSFileProviderItemIdentifier)containerItemIdentifier currentAnchor:(NSInteger)currentAnchor;
-
-- (instancetype)initWithSeafItem:(SeafItem *)item;
+- (instancetype)initWithItemIdentifier:(NSFileProviderItemIdentifier)itemIdentifier;
 
 @end
