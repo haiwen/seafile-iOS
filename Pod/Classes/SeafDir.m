@@ -416,7 +416,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 - (BOOL)nameExist:(NSString *)name
 {
     for (SeafBase *entry in _items) {
-        if ([name isEqualToString:entry.name])
+        if ([[name precomposedStringWithCanonicalMapping] isEqualToString:[entry.name precomposedStringWithCanonicalMapping]])
             return true;
     }
     return false;

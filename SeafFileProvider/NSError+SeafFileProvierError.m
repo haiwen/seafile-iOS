@@ -68,5 +68,9 @@
     }
 }
 
++ (NSError *)fileProvierErrorFeatureUnsupported {
+    return [NSError errorWithDomain:NSCocoaErrorDomain code:NSFeatureUnsupportedError userInfo:@{}];
+}
+
 
 @end

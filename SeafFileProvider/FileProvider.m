@@ -78,7 +78,7 @@
         ret = [self.rootURL URLByAppendingPathComponent:[pathComponents objectAtIndex:1] isDirectory:isFolder];
     } else {
         NSURL *url = [self.rootURL URLByAppendingPathComponent:[pathComponents objectAtIndex:1] isDirectory:true];
-        ret = [url URLByAppendingPathComponent:[pathComponents objectAtIndex:2] isDirectory:false];
+        ret = [url URLByAppendingPathComponent:[[pathComponents objectAtIndex:2] stringByRemovingPercentEncoding] isDirectory:false];
     }
     Debug(@"URLForItem url: %@", ret);
     return ret;
@@ -92,6 +92,13 @@
     }
     NSString *suffix = [url.path substringFromIndex:(range.location+range.length)];
     if (!suffix || suffix.length == 0) return NSFileProviderRootContainerItemIdentifier;
+    NSArray *pathCompoents = suffix.pathComponents;
+    if (pathCompoents.count >= 3) {
+        NSString *path = url.path.precomposedStringWithCanonicalMapping;
+        NSString *fileName = path.lastPathComponent;
+        NSString *str = [NSString stringWithFormat:@"%@%@/%@", pathCompoents[0], pathCompoents[1], [fileName escapedUrl]];
+        suffix = str;
+    }
     return suffix;
 }
 
@@ -161,7 +168,7 @@
         }
         [Utils checkMakeDir:url.path.stringByDeletingLastPathComponent];
         NSError *err = nil;
-        BOOL ret = [Utils linkFileAtURL:file.exportURL to:url error:&err];
+        BOOL ret = [Utils copyFile:file.exportURL to:url];
         if (!ret) {
             err = [NSError fileProvierErrorNoSuchItem];
         }
@@ -210,7 +217,7 @@
 {
     // Called after the last claim to the file has been released. At this point, it is safe for the file provider to remove the content file.
     // Care should be taken that the corresponding placeholder file stays behind after the content file has been deleted.
-
+    Debug(@"stopProvidingItemAtURL %@", url);
     [self.fileCoordinator coordinateWritingItemAtURL:url options:NSFileCoordinatorWritingForDeleting error:nil byAccessor:^(NSURL *newURL) {
         [self removeProvidingItemAndParentIfEmpty:url];
     }];
@@ -271,7 +278,7 @@
         }
     }
     
-    NSFileProviderItemIdentifier itemIdentifier = [parentItemIdentifier stringByAppendingPathComponent:fileName];
+    NSFileProviderItemIdentifier itemIdentifier = [parentItemIdentifier stringByAppendingPathComponent:[fileName.precomposedStringWithCanonicalMapping escapedUrl]];
     Debug("file itemIdentifier: %@", itemIdentifier);
 
     SeafItem *item = [[SeafItem alloc] initWithItemIdentity:itemIdentifier];
@@ -339,12 +346,20 @@
     SeafDir *dir = (SeafDir *)[item.parentItem toSeafObj];
 
     [dir renameEntry:item.name newName:itemName success:^(SeafDir *dir) {
-        NSString *newpath = [dir.path stringByAppendingPathComponent:itemName];
-        NSString *filename = item.isFile ? itemName : nil;
-        SeafItem *newItem = [[SeafItem alloc] initWithServer:dir->connection.address username:dir->connection.username repo:dir.repoId path:newpath filename:filename];
-        SeafProviderItem *renamedItem = [[SeafProviderItem alloc] initWithSeafItem:newItem];
-        [self signalEnumerator:@[renamedItem.parentItemIdentifier, NSFileProviderWorkingSetContainerItemIdentifier]];
-        completionHandler(renamedItem, nil);
+        SeafBase *file;
+        for (SeafBase *obj in dir.items) {
+            if ([obj.name.precomposedStringWithCompatibilityMapping isEqualToString:itemName.precomposedStringWithCompatibilityMapping]) {
+                file = obj;
+                break;
+            }
+        }
+        if (file) {
+            [file loadCache];
+            SeafProviderItem *renamedItem = [[SeafProviderItem alloc] initWithSeafItem:[SeafItem fromSeafBase:file]];
+            completionHandler(renamedItem, nil);
+        } else {
+            completionHandler(nil, [Utils defaultError]);
+        }
     } failure:^(SeafDir *dir, NSError *error) {
         completionHandler(nil, error ? error : [Utils defaultError]);
     }];
@@ -418,11 +433,7 @@
 
 -(void)setLastUsedDate:(NSDate *)lastUsedDate forItemIdentifier:(NSFileProviderItemIdentifier)itemIdentifier completionHandler:(void (^)(NSFileProviderItem _Nullable, NSError * _Nullable))completionHandler {
     Debug("itemIdentifier: %@, lastUsedDate:%@", itemIdentifier, lastUsedDate);
-    SeafItem *item = [[SeafItem alloc] initWithItemIdentity:itemIdentifier];
-    [item setLastUsedDate:lastUsedDate];
-    [self saveToLocal:item];
-    SeafProviderItem *lastItem = [[SeafProviderItem alloc] initWithSeafItem:item];
-    completionHandler(lastItem, nil);
+    completionHandler(nil, [NSError fileProvierErrorFeatureUnsupported]);
 }
 
 - (void)setFavoriteRank:(nullable NSNumber *)favoriteRank
