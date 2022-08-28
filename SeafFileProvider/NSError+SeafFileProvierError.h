@@ -17,5 +17,5 @@
 + (NSError *)fileProvierErrorFilenameCollision;
 + (NSError *)fileProvierErrorInsufficientQuota;
 + (NSError *)fileProvierErrorNoAccount;
-
++ (NSError *)fileProvierErrorFeatureUnsupported;
 @end
