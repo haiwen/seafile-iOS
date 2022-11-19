@@ -791,23 +791,10 @@
     
     [url startAccessingSecurityScopedResource];
     BOOL ret = [Utils copyFile:url to:pathURL];
+    [url stopAccessingSecurityScopedResource];
     if (ret) {
         [self setMpath:newpath];
-        //update local file
-        NSString *target = [SeafStorage.sharedObject documentPath:self.ooid];
-        
-        if ([Utils removeFile:target]) {
-            NSError *error = nil;
-            BOOL result = [[NSFileManager defaultManager] copyItemAtPath:newpath toPath:target error:&error];
-            
-            if (error || !result) {
-                Warning("Failed to copy file %@ to %@: %@", newpath, target, error);
-            }
-        }
-        
-        [self autoupload];
     }
-    [url stopAccessingSecurityScopedResource];
     return ret;
 }
 

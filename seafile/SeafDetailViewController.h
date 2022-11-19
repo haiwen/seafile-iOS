@@ -26,7 +26,7 @@ enum PREVIEW_STATE {
 
 @property (nonatomic) id<SeafPreView> preViewItem;
 @property (nonatomic) UIViewController<SeafDentryDelegate> *masterVc;
-@property (retain) QLPreviewController *qlViewController;
+@property (nonatomic, strong) QLPreviewController *qlViewController;
 
 
 - (void)refreshView;
