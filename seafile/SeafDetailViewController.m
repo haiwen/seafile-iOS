@@ -69,9 +69,6 @@ enum SHARE_STATUS {
 - (id)initWithCoder:(NSCoder *)decoder
 {
     self = [super initWithCoder:decoder];
-    self.qlViewController = [[QLPreviewController alloc] init];
-    self.qlViewController.delegate = self;
-    self.qlViewController.dataSource = self;
     self.previewDidEdited = NO;
     return self;
 }
@@ -720,6 +717,10 @@ enum SHARE_STATUS {
     }
 }
 
+- (void)previewController:(QLPreviewController *)controller didUpdateContentsOfPreviewItem:(id<QLPreviewItem>)previewItem {
+    Debug(@"previewItem did update :%@", previewItem);
+}
+
 - (void)previewController:(QLPreviewController *)controller didSaveEditedCopyOfPreviewItem:(id<QLPreviewItem>)previewItem atURL:(NSURL *)modifiedContentsURL {
     if (previewItem && modifiedContentsURL) {
         self.previewDidEdited = YES;
@@ -731,13 +732,19 @@ enum SHARE_STATUS {
 
 - (void)previewControllerDidDismiss:(QLPreviewController *)controller {
     if (self.previewDidEdited) {
+        SeafFile *file = (SeafFile *)self.preViewItem;
+        if (file && [file respondsToSelector:@selector(autoupload)]) {
+            [file performSelector:@selector(autoupload)];
+        }
+        
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         [appdelegate.fileVC refreshView];
         [appdelegate.starredVC refreshView];
         
         self.previewDidEdited = NO;
     }
-    
+    self.preViewItem = nil;
+    self.qlViewController = nil;
 }
 
 - (MWPhotoBrowser *)mwPhotoBrowser
@@ -833,6 +840,15 @@ enum SHARE_STATUS {
         _textView.alwaysBounceVertical = YES;
     }
     return _textView;
+}
+
+- (QLPreviewController *)qlViewController {
+    if (!_qlViewController) {
+        _qlViewController = [[QLPreviewController alloc] init];
+        _qlViewController.delegate = self;
+        _qlViewController.dataSource = self;
+    }
+    return _qlViewController;
 }
 
 - (NSAttributedString *)attributedTextOfPreViewItem {

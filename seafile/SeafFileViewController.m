@@ -856,6 +856,7 @@ enum {
         [navController setModalPresentationStyle:UIModalPresentationFullScreen];
     }
     navController.navigationBar.tintColor = BAR_COLOR;
+    navController.navigationBar.backgroundColor = [UIColor whiteColor];
     [self presentViewController:navController animated:YES completion:nil];
     if (IsIpad()) {
         CGRect frame = navController.view.superview.frame;
@@ -1545,6 +1546,7 @@ enum {
 }
 - (void)cancelChoose:(UIViewController *)c
 {
+    self.state = STATE_INIT;
     [c.navigationController dismissViewControllerAnimated:YES completion:nil];
 }
 
