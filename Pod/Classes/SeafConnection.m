@@ -141,6 +141,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         configuration.TLSMinimumSupportedProtocol = kTLSProtocol1;
         _sessionMgr = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:self.address] sessionConfiguration:configuration];
         _sessionMgr.responseSerializer = [AFJSONResponseSerializer serializerWithReadingOptions:NSJSONReadingAllowFragments];
+        
+        //fix "NSLocalizedDescription=Request failed: unacceptable content-type: text/plain} "
+        NSMutableSet *newTypes = [NSMutableSet setWithSet:_sessionMgr.responseSerializer.acceptableContentTypes];        //"text/javascript","application/json","text/json"
+        [newTypes addObject:@"text/plain"];
+        _sessionMgr.responseSerializer.acceptableContentTypes = newTypes;
+        
         self.policy = [self policyForHost:[self host]];
         _settings = [[NSMutableDictionary alloc] init];
         _inAutoSync = false;
