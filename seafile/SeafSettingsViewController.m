@@ -104,6 +104,8 @@ enum {
 @property (strong, nonatomic) IBOutlet UISwitch *autoClearPasswdSwitch;
 @property (strong, nonatomic) IBOutlet UISwitch *localDecrySwitch;
 @property (strong, nonatomic) IBOutlet UISwitch *enableTouchIDSwitch;
+@property (weak, nonatomic) IBOutlet UISwitch *enableUploadHeic;
+@property (weak, nonatomic) IBOutlet UILabel *enableHeicLabel;
 
 @property (strong, nonatomic) CLLocationManager *locationManager;
 
@@ -231,6 +233,9 @@ enum {
 {
     _connection.localDecryptionEnabled = _localDecrySwitch.on;
 }
+- (IBAction)enableUploadHeicFlip:(UISwitch *)sender {
+    [_connection setUploadHeicEnabled:sender.on];
+}
 
 - (IBAction)enableTouchIDSwtichFlip:(id)sender
 {
@@ -302,6 +307,7 @@ enum {
     _wifiOnlyLabel.text = NSLocalizedString(@"Wifi Only", @"Seafile");
     _backgroundSyncLable.text = NSLocalizedString(@"Background Upload", @"Seafile");
     _syncRepoCell.textLabel.text = NSLocalizedString(@"Upload Destination", @"Seafile");
+    _enableHeicLabel.text = NSLocalizedString(@"Upload HEIC", @"Seafile");
 
     _downloadingCell.textLabel.text = NSLocalizedString(@"Downloading", @"Seafile");
     _uploadingCell.textLabel.text = NSLocalizedString(@"Uploading", @"Seafile");
@@ -407,6 +413,8 @@ enum {
     _autoClearPasswdSwitch.on = _connection.autoClearRepoPasswd;
     _localDecrySwitch.on = _connection.localDecryptionEnabled;
     _serverCell.detailTextLabel.text = [_connection.address trimUrl];
+    
+    self.enableUploadHeic.on = _connection.uploadHeicEnabled;
 
     [self updateSyncInfo];
 

@@ -392,6 +392,15 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self setAttribute:[NSNumber numberWithBool:firstTimeSync] forKey:@"firstTimeSync"];
 }
 
+- (BOOL)uploadHeicEnabled {
+    return [[self getAttribute:@"uploadHeicEnabled"] booleanValue:false];
+}
+
+- (void)setUploadHeicEnabled:(BOOL)uploadHeicEnabled {
+    if (self.uploadHeicEnabled == uploadHeicEnabled) return;
+    [self setAttribute:[NSNumber numberWithBool:uploadHeicEnabled] forKey:@"uploadHeicEnabled"];
+}
+
 - (NSString *)autoSyncRepo
 {
     return [[self getAttribute:@"autoSyncRepo"] stringValue];
@@ -1124,7 +1133,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
             PHAsset *asset = [result firstObject];
             if (asset) {
-                SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset];
+                SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!self.uploadHeicEnabled];
 
                 NSString *path = [self.localUploadDir stringByAppendingPathComponent:photoAsset.name];
                 SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
@@ -1283,7 +1292,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     PHFetchResult *assets = [PHAsset fetchAssetsInAssetCollection:collection options:fetchOptions];
     
     [assets enumerateObjectsUsingBlock:^(PHAsset *asset, NSUInteger idx, BOOL * _Nonnull stop) {
-        SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset];
+        SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!self.uploadHeicEnabled];
         if (photoAsset.name == nil) {
             return;
         }

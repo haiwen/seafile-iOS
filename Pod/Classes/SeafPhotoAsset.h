@@ -27,7 +27,12 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @property (nonatomic, strong) NSURL *ALAssetURL;
 
-- (instancetype)initWithAsset:(PHAsset*)asset;
+/**
+ compress
+ */
+@property (nonatomic, assign) BOOL isCompress;
+
+- (instancetype)initWithAsset:(PHAsset*)asset isCompress:(BOOL)isCompress;
 
 @end
 

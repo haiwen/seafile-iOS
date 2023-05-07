@@ -12,9 +12,10 @@
 
 @implementation SeafPhotoAsset
 
-- (instancetype)initWithAsset:(PHAsset *)asset {
+- (instancetype)initWithAsset:(PHAsset *)asset isCompress:(BOOL)isCompress {
     self = [super init];
     if (self) {
+        _isCompress = isCompress;
         _name = [self assetName:asset];
         _localIdentifier = asset.localIdentifier;
         _ALAssetURL = [self assetURL:asset];
@@ -41,7 +42,7 @@
             name = [self nameFormat:[name substringFromIndex:range.location-4] creationDate:asset.creationDate];
         }
     }
-    if ([name hasSuffix:@"HEIC"]) {
+    if ([name hasSuffix:@"HEIC"] && _isCompress == YES) {
         name = [name stringByReplacingOccurrencesOfString:@"HEIC" withString:@"JPG"];
     }
     return name;

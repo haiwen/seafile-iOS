@@ -516,6 +516,12 @@
 
     if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
         UIImage *image = [UIImage imageWithContentsOfFile:path];
+        NSString *imageUTType = (__bridge NSString *)CGImageGetUTType(image.CGImage);
+        if ([imageUTType isEqualToString:@"public.heic"]) {
+            NSData *imageData = [NSData dataWithContentsOfFile:path];
+            [imageData writeToFile:cachePath atomically:YES];
+            return image;
+        }
         if (image.size.width > MAX_SIZE || image.size.height > MAX_SIZE) {
             UIImage *img =  [Utils reSizeImage:image toSquare:MAX_SIZE];
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND,0), ^{

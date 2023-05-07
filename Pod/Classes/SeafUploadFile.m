@@ -116,6 +116,10 @@
     return NO;
 }
 
+- (BOOL)uploadHeic {
+    return self.udir->connection.uploadHeicEnabled;
+}
+
 - (NSString *)blockDir
 {
     if (!_blockDir) {
@@ -575,7 +579,7 @@
     [[PHImageManager defaultManager] requestImageDataForAsset:_asset options:self.requestOptions resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
         if (imageData) {
             if (@available(iOS 10.0, *)) {
-                if ([dataUTI isEqualToString:@"public.heic"]) {// HEIC available after iOS11
+                if (![self uploadHeic] && [dataUTI isEqualToString:@"public.heic"]) {// HEIC available after iOS11
                     self->_lpath = [self.lpath stringByReplacingOccurrencesOfString:@"HEIC" withString:@"JPG"];
                 }
                 CIImage* ciImage = [CIImage imageWithData:imageData];
