@@ -85,6 +85,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 @property (readwrite, nonatomic, getter=isAutoSync) BOOL autoSync;
 @property (readwrite, nonatomic, getter=isVideoSync) BOOL videoSync;
 @property (readwrite, nonatomic, getter=isBackgroundSync) BOOL backgroundSync;
+@property (assign, nonatomic) BOOL uploadHeicEnabled;
 
 @property (readwrite, nonatomic) NSString * _Nullable autoSyncRepo;
 
