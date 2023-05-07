@@ -173,9 +173,42 @@
     }];
 }
 
+- (void)getShareLink:(void(^)(BOOL result, NSString *link))completionHandler {
+    NSString *query = [NSString stringWithFormat:@"path=%@&repo_id=%@", [self.path escapedPostForm], self.repoId];
+    NSString *url = [NSString stringWithFormat:@"%@/share-links/?%@", API_URL_V21, query];
+    
+    [connection sendRequest:url success:^(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nonnull response, id  _Nonnull JSON) {
+        if (JSON && [JSON isKindOfClass:[NSArray class]]) {
+            NSArray *list = (NSArray *)JSON;
+            if (list.count > 0) {
+                NSDictionary *dict = (NSDictionary *)list.firstObject;
+                if (dict && [dict objectForKey:@"link"]) {
+                    NSString *link = [dict objectForKey:@"link"];
+                    completionHandler(YES, link);
+                } else {
+                    completionHandler(NO, nil);
+                }
+            } else {
+                completionHandler(NO, nil);
+            }
+        } else {
+            completionHandler(NO, nil);
+        }
+    } failure:^(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nullable response, id  _Nullable JSON, NSError * _Nullable error) {
+        completionHandler(NO, nil);
+    }];
+}
+
 - (void)generateShareLink:(id<SeafShareDelegate>)dg
 {
-    return [self generateShareLink:dg password:nil expire_days:nil];
+    [self getShareLink:^(BOOL result, NSString *link) {
+        if (result && link.length > 0) {
+            self->_shareLink = link;
+            [dg generateSharelink:self WithResult:YES];
+        } else {
+            [self generateShareLink:dg password:nil expire_days:nil];
+        }
+    }];
 }
 
 - (void)downloadComplete:(BOOL)updated
