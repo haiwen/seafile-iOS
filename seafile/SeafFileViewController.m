@@ -6,7 +6,6 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 #import "MWPhotoBrowser.h"
-#import "UIScrollView+SVPullToRefresh.h"
 
 #import "SeafAppDelegate.h"
 #import "SeafFileViewController.h"
@@ -56,7 +55,7 @@ enum {
 };
 
 
-@interface SeafFileViewController ()<QBImagePickerControllerDelegate, SeafUploadDelegate, SeafDirDelegate, SeafShareDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate, MWPhotoBrowserDelegate>
+@interface SeafFileViewController ()<QBImagePickerControllerDelegate, SeafUploadDelegate, SeafDirDelegate, SeafShareDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate, MWPhotoBrowserDelegate, UIScrollViewAccessibilityDelegate>
 - (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
 - (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
 - (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
@@ -213,21 +212,11 @@ enum {
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     [self.navigationController setToolbarHidden:YES animated:NO];
 
-    __weak typeof(self) weakSelf = self;
-    [self.tableView addPullToRefresh:[SVArrowPullToRefreshView class] withActionHandler:^{
-        [weakSelf.tableView reloadData];
-        if (weakSelf.searchDisplayController.active)
-            return;
-        if (![weakSelf checkNetworkStatus]) {
-            [weakSelf performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
-            return;
-        }
-
-        weakSelf.state = STATE_LOADING;
-        weakSelf.directory.delegate = weakSelf;
-        [weakSelf.directory loadContent:YES];
-    }];
-
+    UIRefreshControl *refreshControl = [[UIRefreshControl alloc] init];
+    self.tableView.refreshControl = refreshControl;
+    [self.tableView.refreshControl addTarget:self action:@selector(refreshControlChanged) forControlEvents:UIControlEventValueChanged];
+    
+    self.view.accessibilityElements = @[refreshControl, self.tableView];
     Debug(@"%@", self.view);
     [self refreshView];
 }
@@ -1136,9 +1125,38 @@ enum {
     }
 }
 
-- (void)doneLoadingTableViewData
-{
-    [self.tableView.pullToRefreshView stopAnimating];
+#pragma mark - pull to Refresh
+- (void)refreshControlChanged {
+    if (!self.tableView.isDragging) {
+        [self pullToRefresh];
+    }
+}
+
+- (void)pullToRefresh {
+    [self.tableView reloadData];
+    if (self.searchDisplayController.active)
+        return;
+    if (![self checkNetworkStatus]) {
+        [self performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
+        return;
+    }
+    
+    self.tableView.accessibilityElementsHidden = YES;
+    UIAccessibilityPostNotification(UIAccessibilityScreenChangedNotification, self.tableView.refreshControl);
+    self.state = STATE_LOADING;
+    self.directory.delegate = self;
+    [self.directory loadContent:YES];
+}
+
+- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
+    if (self.tableView.refreshControl.isRefreshing) {
+        [self pullToRefresh];
+    }
+}
+
+- (void)doneLoadingTableViewData {
+    [self.tableView.refreshControl endRefreshing];
+    self.tableView.accessibilityElementsHidden = NO;
 }
 
 #pragma mark - edit files
@@ -1899,13 +1917,12 @@ enum {
     if (!_searchController) {
         _searchController = [[UISearchController alloc] initWithSearchResultsController:self.searchReslutController];
         _searchController.searchResultsUpdater = self.searchReslutController;
-        _searchController.searchBar.barTintColor = [UIColor colorWithRed:240/255.0 green:239/255.0 blue:246/255.0 alpha:1.0];
+        _searchController.searchBar.barTintColor = [UIColor whiteColor];
         [_searchController.searchBar sizeToFit];
         
-        UIImageView *barImageView = [[[_searchController.searchBar.subviews firstObject] subviews] firstObject];
-        barImageView.layer.borderColor = [UIColor colorWithRed:240/255.0 green:239/255.0 blue:246/255.0 alpha:1.0].CGColor;
-        barImageView.layer.borderWidth = 1;
-        self.definesPresentationContext = YES;
+//        barImageView.backgroundColor = [UIColor clearColor];
+//        barImageView.layer.borderWidth = 1;
+//        self.definesPresentationContext = YES;
     }
     return _searchController;
 }

@@ -1,5 +1,5 @@
 def shared
-  platform :ios, '9.0'
+  platform :ios, '11.0'
   pod 'Seafile', :path => "./"
   pod 'AFNetworking', '~> 4.0.0'
   pod 'OpenSSL-Universal', '1.0.2.17'
@@ -41,8 +41,9 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     target.build_configurations.each do |config|
       config.build_settings['ENABLE_BITCODE'] = 'YES'
-      if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 8.0
-          config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '8.0'
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = "arm64"
+      if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 11.0
+          config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '11.0'
       end
     end
     if target.respond_to?(:product_type) and target.product_type == "com.apple.product-type.bundle"

@@ -79,16 +79,32 @@
     NSArray *items = [NSArray arrayWithObjects:flexibleFpaceItem, self.chooseItem, flexibleFpaceItem, nil];
     [self setToolbarItems:items];
 
-    __weak typeof(self) weakSelf = self;
-    [self.tableView addPullToRefresh:[SVArrowPullToRefreshView class] withActionHandler:^{
-        if (![weakSelf checkNetworkStatus]) {
-            [weakSelf performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
-            return;
-        }
+    self.tableView.refreshControl = [[UIRefreshControl alloc] init];
+    [self.tableView.refreshControl addTarget:self action:@selector(refreshControlChanged) forControlEvents:UIControlEventValueChanged];
+}
 
-        weakSelf.directory.delegate = weakSelf;
-        [weakSelf.directory loadContent:YES];
-    }];
+- (void)refreshControlChanged {
+    if (!self.tableView.isDragging) {
+        [self pullToRefresh];
+    }
+}
+
+- (void)pullToRefresh {
+    if (![self checkNetworkStatus]) {
+        [self performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
+        return;
+    }
+    
+    self.tableView.accessibilityElementsHidden = YES;
+    UIAccessibilityPostNotification(UIAccessibilityScreenChangedNotification, self.tableView.refreshControl);
+    self.directory.delegate = self;
+    [self.directory loadContent:YES];
+}
+
+- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
+    if (self.tableView.refreshControl.isRefreshing) {
+        [self pullToRefresh];
+    }
 }
 
 - (void)setOperationState:(OperationState)operationState {
@@ -262,6 +278,7 @@
 
 - (void)doneLoadingTableViewData
 {
-    [self.tableView.pullToRefreshView stopAnimating];
+    self.tableView.accessibilityElementsHidden = NO;
+    [self.tableView.refreshControl endRefreshing];
 }
 @end
