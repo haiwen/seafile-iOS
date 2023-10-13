@@ -28,6 +28,9 @@
 
 - (void)seaf_layoutSubviews {
     [self seaf_layoutSubviews];
+    if (@available(iOS 16.0, *)) {
+        return;
+    }
     if (@available(iOS 13.0, *)) {
         //fix searchbar's frame
         UIView *backgroundView = [self performSelector:NSSelectorFromString(@"_backgroundView")];

@@ -27,7 +27,6 @@
 typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 
 @interface SeafActivityViewController ()<UITableViewDelegate,UITableViewDataSource>
-@property (strong, nonatomic) IBOutlet UIActivityIndicatorView *loadingView;
 @property (strong) NSArray *events;
 @property BOOL eventsMore;
 @property int eventsOffset;
@@ -46,12 +45,6 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 @synthesize connection = _connection;
 
 
-- (void)refresh:(id)sender
-{
-    [self showLoadingView];
-    [self moreEvents:0];
-}
-
 - (void)viewDidLoad
 {
     [super viewDidLoad];
@@ -60,8 +53,6 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 
     // Do any additional setup after loading the view from its nib.
     self.title = NSLocalizedString(@"Activities", @"Seafile");
-    self.navigationItem.rightBarButtonItem = [self getBarItemAutoSize:@"refresh2" action:@selector(refresh:)];
-//    self.navigationController.navigationBar.tintColor = BAR_COLOR;
     self.tableView.rowHeight = UITableViewAutomaticDimension;
     self.tableView.estimatedRowHeight = 60.0;
     self.tableView.tableFooterView = [UIView new];
@@ -101,15 +92,43 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         __strong typeof (weakSelf) strongSelf = weakSelf;
         [strongSelf moreEvents:strongSelf.eventsOffset];
     }];
+    
+    self.tableView.refreshControl = [[UIRefreshControl alloc] init];
+    [self.tableView.refreshControl addTarget:self action:@selector(refreshControlChanged) forControlEvents:UIControlEventValueChanged];
+}
+
+#pragma mark - pull to Refresh
+- (void)refreshControlChanged {
+    if (!self.tableView.isDragging) {
+        [self refresh:nil];
+    }
+}
+
+- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
+    if (self.tableView.refreshControl.isRefreshing) {
+        [self refresh:nil];
+    }
+}
+
+- (void)refresh:(id)sender {
+    self.tableView.accessibilityElementsHidden = YES;
+    UIAccessibilityPostNotification(UIAccessibilityScreenChangedNotification, self.tableView.refreshControl);
+    [self moreEvents:0];
+}
+
+- (void)endRefreshing {
+    self.tableView.accessibilityElementsHidden = NO;
+    [self.tableView.refreshControl endRefreshing];
 }
 
 - (void)reloadData
 {
     [self.tableView.infiniteScrollingView stopAnimating];
     self.tableView.showsInfiniteScrolling = _eventsMore;
-    [self dismissLoadingView];
+    [self endRefreshing];
     [self.tableView reloadData];
 }
+
 - (void)moreEvents:(int)offset
 {
     if (_connection.isNewActivitiesApiSupported) {
@@ -131,7 +150,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         Debug("%lu events, more:%d, offset:%d", (unsigned long)_events.count, _eventsMore, _eventsOffset);
         [self reloadData];
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
-        [self dismissLoadingView];
+        [self endRefreshing];
         [self.tableView.infiniteScrollingView stopAnimating];
         if (self.isVisible)
             [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load activities", @"Seafile")];
@@ -163,7 +182,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         Debug("%lu events, more:%d, offset:%d", (unsigned long)_events.count, _eventsMore, _eventsOffset);
         [self reloadData];
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
-        [self dismissLoadingView];
+        [self endRefreshing];
         [self.tableView.infiniteScrollingView stopAnimating];
         if (self.isVisible)
             [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load activities", @"Seafile")];
@@ -267,29 +286,10 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     }
 }
 
-- (void)showLoadingView
-{
-    if (!self.loadingView) {
-        self.loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
-        self.loadingView.color = [UIColor darkTextColor];
-        self.loadingView.hidesWhenStopped = YES;
-        [self.view addSubview:self.loadingView];
-    }
-    self.loadingView.center = self.view.center;
-    self.loadingView.frame = CGRectMake(self.loadingView.frame.origin.x, (self.view.frame.size.height-self.loadingView.frame.size.height)/2, self.loadingView.frame.size.width, self.loadingView.frame.size.height);
-    [self.loadingView startAnimating];
-}
-
-- (void)dismissLoadingView
-{
-    [self.loadingView stopAnimating];
-}
-
 - (void)viewWillAppear:(BOOL)animated
 {
     if (!_events) {
         [self moreEvents:0];
-        [self showLoadingView];
     }
     [super viewWillAppear:animated];
 }

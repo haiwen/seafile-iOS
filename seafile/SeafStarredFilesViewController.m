@@ -57,7 +57,7 @@
         @synchronized(self) {
             Debug("Succeeded to get starred files ...\n");
             [self handleData:JSON];
-            [self.tableView.pullToRefreshView stopAnimating];
+            [self endPullRefresh];
             [self.tableView reloadData];
         }
     }
@@ -92,14 +92,8 @@
         self.tableView.sectionHeaderTopPadding = 0;
     }
     
-    __weak typeof(self) weakSelf = self;
-    [self.tableView addPullToRefresh:[SVArrowPullToRefreshView class] withActionHandler:^{
-        if (![weakSelf checkNetworkStatus]) {
-            [weakSelf.tableView.pullToRefreshView stopAnimating];
-        } else {
-            [weakSelf refresh:nil];
-        }
-    }];
+    self.tableView.refreshControl = [[UIRefreshControl alloc] init];
+    [self.tableView.refreshControl addTarget:self action:@selector(refreshControlChanged) forControlEvents:UIControlEventValueChanged];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -163,6 +157,35 @@
     [self.detailViewController setPreViewItem:nil master:nil];
     [self loadCache];
     [self.tableView reloadData];
+}
+
+
+#pragma mark - pull to Refresh
+- (void)refreshControlChanged {
+    if (!self.tableView.isDragging) {
+        [self pullToRefresh];
+    }
+}
+
+- (void)pullToRefresh {
+    if (![self checkNetworkStatus]) {
+        [self.tableView.refreshControl endRefreshing];
+    } else {
+        self.tableView.accessibilityElementsHidden = YES;
+        UIAccessibilityPostNotification(UIAccessibilityScreenChangedNotification, self.tableView.refreshControl);
+        [self refresh:nil];
+    }
+}
+
+- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
+    if (self.tableView.refreshControl.isRefreshing) {
+        [self pullToRefresh];
+    }
+}
+
+- (void)endPullRefresh {
+    [self.tableView.refreshControl endRefreshing];
+    self.tableView.accessibilityElementsHidden = NO;
 }
 
 #pragma mark - Table view data source
