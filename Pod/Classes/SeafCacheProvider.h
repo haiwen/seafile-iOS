@@ -21,6 +21,9 @@
 - (void)removeKey:(NSString *)key entityName:(NSString *)entity inAccount:(NSString *)account;
 - (long)totalCachedNumForEntity:(NSString *)entity inAccount:(NSString *)account;
 - (void)clearCache:(NSString *)entity inAccount:(NSString *)account;
+- (long)getCacheNumForValue:(NSString *)key entityName:(NSString *)entity inAccount:(NSString *)account;
+- (long)getCacheNumByPredicate:(NSPredicate *)pre entityName:(NSString *)entity;
+- (BOOL)updateValue:(NSString *)value whenIsNot:(NSString *)defaultValue forKey:(NSString *)key entityName:(NSString *)entity inAccount:(NSString *)account;
 
 - (void)clearAllCacheInAccount:(NSString *)account;
 

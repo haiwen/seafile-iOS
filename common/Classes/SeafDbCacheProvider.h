@@ -14,4 +14,5 @@
 
 - (void)migrateUploadedPhotos:(NSString *)url username:(NSString *)username account:(NSString *)account;
 
+- (void)migrateUploadedPhotosToRealm;
 @end
