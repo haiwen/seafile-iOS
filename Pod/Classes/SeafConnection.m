@@ -23,6 +23,7 @@
 #import "Utils.h"
 #import "Version.h"
 #import "SeafPhotoAsset.h"
+#import "SeafRealmManager.h"
 
 enum {
     FLAG_LOCAL_DECRYPT = 0x1,
@@ -683,6 +684,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
     [self clearAccountCache];
     [self clearCache:ENTITY_UPLOAD_PHOTO];
+    [[SeafRealmManager shared] clearAllCachedPhotosInAccount:self.accountIdentifier];
 }
 
 - (void)saveAccountInfo
@@ -1148,6 +1150,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                 
                 Debug("Add file %@ to upload list: %@ current %u %u", photoAsset.name, dir.path, (unsigned)self.photosArray.count, (unsigned)self.uploadingArray.count);
                 [SeafDataTaskManager.sharedObject addUploadTask:file];
+            } else {
+                [[SeafRealmManager shared] deletePhotoWithIdentifier:[self.accountIdentifier stringByAppendingString:localIdentifier] forAccount:self.accountIdentifier];
             }
         });
     }
@@ -1176,13 +1180,14 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (NSUInteger)autoSyncedNum
 {
-    return [self totalCachedNumForEntity:ENTITY_UPLOAD_PHOTO];
+    return [[SeafRealmManager shared] numOfCachedPhotosWhithAccount:self.accountIdentifier];
 }
 
 - (void)resetUploadedPhotos
 {
     _uploadingArray = [[NSMutableArray alloc] init];
     [self clearCache:ENTITY_UPLOAD_PHOTO];
+    [[SeafRealmManager shared] clearAllCachedPhotosInAccount:self.accountIdentifier];
 }
 
 - (BOOL)IsPhotoUploading:(SeafPhotoAsset *)asset {
@@ -1256,6 +1261,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             [self addUploadPhoto:photoAsset.localIdentifier];
         }
     }];
+    
+    [self checkPhotosNeedUploadInRealm];
+    
+    long num = [[SeafRealmManager shared] numOfCachedPhotosWhithAccount:self.accountIdentifier];
+    Debug("Filter out %ld photos, cached : %ld photos", (long)photos.count, num);
 
     if (self.firstTimeSync) {
         self.firstTimeSync = false;
@@ -1267,6 +1277,19 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     _inCheckPhotoss = false;
     
     [self pickPhotosForUpload];
+}
+
+- (void)checkPhotosNeedUploadInRealm {
+    NSArray *array = [[SeafRealmManager shared] getNeedUploadPhotosWithAccount:self.accountIdentifier];
+    if (array == nil || array.count == 0) {
+        return;
+    }
+    [array enumerateObjectsUsingBlock:^(NSString *url, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSString *localIdentifier = [url stringByReplacingOccurrencesOfString:self.accountIdentifier withString:@""];
+        if (![_photosArray containsObject:localIdentifier]) {
+            [self addUploadPhoto:localIdentifier];
+        }
+    }];
 }
 
 - (NSArray *)filterOutUploadedPhotos {
@@ -1296,6 +1319,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         if (photoAsset.name == nil) {
             return;
         }
+        [self saveNeedUploadPhotoToLocalWithAssetIdentifier:asset.localIdentifier];
         if (self.firstTimeSync) {
             if ([self.syncDir nameExist:photoAsset.name]) {
                 [self setPhotoUploadedIdentifier:asset.localIdentifier];
@@ -1344,7 +1368,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (NSUInteger)photosInSyncing
 {
-    return _photosArray.count + _uploadingArray.count;
+    return [[SeafRealmManager shared] numOfCachedPhotosWithStatus:@"false" forAccount:self.accountIdentifier];
 }
 
 - (void)updateUploadDir:(SeafDir *)dir
@@ -1627,23 +1651,33 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return JSON;
 }
 
+- (void)saveNeedUploadPhotoToLocalWithAssetIdentifier:(NSString *)assetIdentifier {
+    NSString *key = [self.accountIdentifier stringByAppendingString:assetIdentifier];
+    [[SeafRealmManager shared] savePhotoWithIdentifier:key forAccount:self.accountIdentifier andStatus:@"false"];
+}
+
 - (void)setPhotoUploadedIdentifier:(NSString *)localIdentifier {
-    [self setValue:@"true" forKey:[self.accountIdentifier stringByAppendingString:localIdentifier] entityName:ENTITY_UPLOAD_PHOTO];
+    NSString *key = [self.accountIdentifier stringByAppendingString:localIdentifier];
+    [[SeafRealmManager shared] updateCachePhotoWithIdentifier:key forAccount:self.accountIdentifier andStatus:@"true"];
 }
 
 - (BOOL)IsPhotoUploaded:(SeafPhotoAsset *)asset {
     NSInteger saveCount = 0;
     if (asset.ALAssetURL && [asset.ALAssetURL respondsToSelector:NSSelectorFromString(@"absoluteString")] && asset.ALAssetURL.absoluteString) {
-        NSString *value = [self objectForKey:[self.accountIdentifier stringByAppendingString:asset.ALAssetURL.absoluteString] entityName:ENTITY_UPLOAD_PHOTO];
+        NSString *value = [self getCachedPhotoStatuWithIdentifier:[self.accountIdentifier stringByAppendingString:asset.ALAssetURL.absoluteString]];
         if (value != nil) {
             saveCount ++;
         }
     }
-    NSString *identifier = [self objectForKey:[self.accountIdentifier stringByAppendingString:asset.localIdentifier] entityName:ENTITY_UPLOAD_PHOTO];
-    if (identifier != nil) {
+    NSString *identifier = [self getCachedPhotoStatuWithIdentifier:[self.accountIdentifier stringByAppendingString:asset.localIdentifier]];
+    if (identifier != nil && [identifier isEqualToString:@"true"]) {
         saveCount ++;
     }
     return saveCount > 0;
+}
+
+- (NSString *)getCachedPhotoStatuWithIdentifier:(NSString *)identifier {
+    return [[SeafRealmManager shared] getPhotoStatusWithIdentifier:identifier forAccount:self.accountIdentifier];
 }
 
 - (void)clearAccountCache

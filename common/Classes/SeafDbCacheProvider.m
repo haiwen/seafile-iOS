@@ -11,6 +11,7 @@
 #import "SeafStorage.h"
 #import "SeafData.h"
 #import "Debug.h"
+#import "SeafRealmManager.h"
 
 
 @interface SeafDbCacheProvider()
@@ -152,6 +153,32 @@
     } else {
         [self deleteAllObjectsForEntity:@"UploadedPhotos"];
     }
+}
+
+- (void)migrateUploadedPhotosToRealm {
+    NSManagedObjectContext *context = self.managedObjectContext;
+
+    NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
+    NSEntityDescription *entity = [NSEntityDescription entityForName:ENTITY_UPLOAD_PHOTO inManagedObjectContext:context];
+    [fetchRequest setEntity:entity];
+    
+    NSError *error = nil;
+    NSArray *items = [context executeFetchRequest:fetchRequest error:&error];
+    if (error) {
+        Warning("Failed to load history upload photos: %@.", error);
+        return;
+    }
+    
+    if (items.count == 0) {
+        return;
+    }
+    
+    Info("Migrate db table UploadedPhotoV2 to realm : %ld", (long)items.count);
+    for (UploadedPhotoV2 *obj in items) {
+        [[SeafRealmManager shared] migrateCachedPhotosFromCoreDataWithIdentifier:obj.key forAccount:obj.account andStatus:obj.value];
+    }
+    
+    [self deleteAllObjectsForEntity:ENTITY_UPLOAD_PHOTO];
 }
 
 - (SeafCacheObjV2 *)getCacheObj:(NSString *)key entityName:(NSString *)entity inAccount:(NSString *)account
