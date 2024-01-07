@@ -1250,23 +1250,25 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (void)backGroundCheckPhotos:(NSNumber *)forceNumber {
     bool force = [forceNumber boolValue];
     SeafDir *uploadDir = _syncDir;
-    bool shouldSkip = !_inAutoSync || (!force && [self photosInSyncing] > 0) || (self.firstTimeSync && !uploadDir);
+    bool shouldSkip = !_inAutoSync || (self.firstTimeSync && !uploadDir);
     if (shouldSkip) {
         return;
     }
     
-    NSArray *photos = [self filterOutUploadedPhotos];
-    [photos enumerateObjectsUsingBlock:^(SeafPhotoAsset *photoAsset, NSUInteger idx, BOOL * _Nonnull stop) {
-        if (![self IsPhotoUploaded:photoAsset] && ![self IsPhotoUploading:photoAsset]) {
-            [self addUploadPhoto:photoAsset.localIdentifier];
-        }
-    }];
+    if (force || [self photosInSyncing] == 0) {
+        NSArray *photos = [self filterOutUploadedPhotos];
+        [photos enumerateObjectsUsingBlock:^(SeafPhotoAsset *photoAsset, NSUInteger idx, BOOL * _Nonnull stop) {
+            if (![self IsPhotoUploaded:photoAsset] && ![self IsPhotoUploading:photoAsset]) {
+                [self addUploadPhoto:photoAsset.localIdentifier];
+            }
+        }];
+        
+        long num = [[SeafRealmManager shared] numOfCachedPhotosWhithAccount:self.accountIdentifier];
+        Debug("Filter out %ld photos, cached : %ld photos", (long)photos.count, num);
+        
+        [self checkPhotosNeedUploadInRealm];
+    }
     
-    [self checkPhotosNeedUploadInRealm];
-    
-    long num = [[SeafRealmManager shared] numOfCachedPhotosWhithAccount:self.accountIdentifier];
-    Debug("Filter out %ld photos, cached : %ld photos", (long)photos.count, num);
-
     if (self.firstTimeSync) {
         self.firstTimeSync = false;
     }
@@ -1286,7 +1288,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }
     [array enumerateObjectsUsingBlock:^(NSString *url, NSUInteger idx, BOOL * _Nonnull stop) {
         NSString *localIdentifier = [url stringByReplacingOccurrencesOfString:self.accountIdentifier withString:@""];
-        if (![_photosArray containsObject:localIdentifier]) {
+        if (localIdentifier != nil && ![_photosArray containsObject:localIdentifier]) {
             [self addUploadPhoto:localIdentifier];
         }
     }];

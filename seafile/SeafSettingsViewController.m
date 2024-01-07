@@ -344,10 +344,10 @@ enum {
     [self configureView];
 
     SeafDataTaskManager.sharedObject.trySyncBlock = ^(id<SeafTask>  _Nonnull task) {
-        [self performSelectorInBackground:@selector(updateSyncInfo) withObject:nil];
+        [self updateSyncInfo];
     };
     SeafDataTaskManager.sharedObject.finishBlock = ^(id<SeafTask>  _Nonnull task) {
-        [self performSelectorInBackground:@selector(updateSyncInfo) withObject:nil];
+        [self updateSyncInfo];
     };
     
     if (@available(iOS 15.0, *)) {
@@ -647,6 +647,7 @@ enum {
     Debug("%ld photos remain to uplaod", remain);
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self.isVisible) {
+            [self updateSyncInfo];
             [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:SECTION_CAMERA] withRowAnimation:UITableViewRowAnimationNone];
         }
     });

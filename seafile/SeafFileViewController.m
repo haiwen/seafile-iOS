@@ -175,7 +175,9 @@ enum {
 - (void)reloadTable
 {
     _allItems = nil;
-    [self.tableView reloadData];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.tableView reloadData];
+    });
 }
 - (void)viewDidLoad
 {
@@ -296,9 +298,13 @@ enum {
     if (!_directory)
         return;
     if ([_directory isKindOfClass:[SeafRepos class]]) {
-        self.searchController.searchBar.placeholder = NSLocalizedString(@"Search", @"Seafile");
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.searchController.searchBar.placeholder = NSLocalizedString(@"Search", @"Seafile");
+        });
     } else {
-        self.searchController.searchBar.placeholder = NSLocalizedString(@"Search files in this library", @"Seafile");
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.searchController.searchBar.placeholder = NSLocalizedString(@"Search files in this library", @"Seafile");
+        });
     }
 
     [self initSeafPhotos];
@@ -1155,8 +1161,10 @@ enum {
 }
 
 - (void)doneLoadingTableViewData {
-    [self.tableView.refreshControl endRefreshing];
-    self.tableView.accessibilityElementsHidden = NO;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.tableView.refreshControl endRefreshing];
+        self.tableView.accessibilityElementsHidden = NO;
+    });
 }
 
 #pragma mark - edit files
