@@ -73,7 +73,7 @@
 
 - (void)addTask:(id<SeafTask>)task {
     @synchronized (self.tasks) {
-        if (![self.tasks containsObject:task] && ![self.ongoingTasks containsObject:task]) {
+        if (task != nil && ![self.tasks containsObject:task] && ![self.ongoingTasks containsObject:task]) {
             task.lastFinishTimestamp = 0;
             task.retryCount = 0;
             [self.tasks addObject:task];
