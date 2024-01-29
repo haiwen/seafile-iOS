@@ -28,7 +28,7 @@ typedef void(^DownLoadFinshBlock)(id<SeafTask>  _Nonnull task);
 + (SeafDataTaskManager * _Nonnull)sharedObject;
 
 - (void)addFileDownloadTask:(SeafFile * _Nonnull)dfile;
-- (void)addUploadTask:(SeafUploadFile * _Nonnull)ufile;
+- (BOOL)addUploadTask:(SeafUploadFile * _Nonnull)ufile;
 - (void)addAvatarTask:(SeafAvatar * _Nonnull)avatar;
 - (void)addThumbTask:(SeafThumb * _Nonnull)thumb;
 - (void)removeUploadTask:(SeafUploadFile * _Nonnull)ufile forAccount:(SeafConnection * _Nonnull)conn;
@@ -55,7 +55,7 @@ typedef void(^DownLoadFinshBlock)(id<SeafTask>  _Nonnull task);
 @property (nonatomic, strong) SeafTaskQueue * _Nonnull uploadQueue;
 
 - (void)addFileDownloadTask:(SeafFile * _Nonnull)dfile;
-- (void)addUploadTask:(SeafUploadFile * _Nonnull)ufile;
+- (BOOL)addUploadTask:(SeafUploadFile * _Nonnull)ufile;
 - (void)addAvatarTask:(SeafAvatar * _Nonnull)avatar;
 - (void)addThumbTask:(SeafThumb * _Nonnull)thumb;
 

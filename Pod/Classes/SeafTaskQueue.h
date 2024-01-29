@@ -47,7 +47,7 @@ typedef void (^TaskProgressBlock)(id<SeafTask> _Nonnull task, float progress);
 
 - (NSInteger)taskNumber;
 - (NSArray * _Nonnull)allTasks;
-- (void)addTask:(id<SeafTask> _Nonnull)task; // Add task if not exist
+- (BOOL)addTask:(id<SeafTask> _Nonnull)task; // Add task if not exist
 - (void)removeTask:(id<SeafTask> _Nonnull)task;// Remove task, cancel if running
 - (void)clearTasks; //clear all tasks
 - (void)tick; //pick available tasks from tasks queue to activate untill it reaches queue concurrency.

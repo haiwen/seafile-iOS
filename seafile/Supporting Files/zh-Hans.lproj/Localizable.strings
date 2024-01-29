@@ -675,6 +675,8 @@
 /* Seafile */
 "Print" = "打印";
 
+"Prepare for backup" = "正在准备备份...";
+
 /* Seafile */
 "Publish draft" = "发布草稿";
 

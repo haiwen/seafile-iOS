@@ -19,6 +19,7 @@
 @property (nonatomic, copy) TaskCompleteBlock innerQueueTaskCompleteBlock;
 @property (nonatomic, copy) TaskProgressBlock innerQueueTaskProgressBlock;
 @property unsigned long failedCount;
+@property (nonatomic, strong) dispatch_semaphore_t semaphore;
 
 @end
 
@@ -30,6 +31,7 @@
         self.concurrency = DEFAULT_CONCURRENCY;
         self.attemptInterval = DEFAULT_ATTEMPT_INTERVAL;
         self.failedCount = 0;
+        self.semaphore = dispatch_semaphore_create(1);
         __weak typeof(self) weakSelf = self;
         self.innerQueueTaskCompleteBlock = ^(id<SeafTask> task, BOOL result) {
             __strong __typeof(self) strongSelf = weakSelf;
@@ -71,16 +73,20 @@
     return self;
 }
 
-- (void)addTask:(id<SeafTask>)task {
+- (BOOL)addTask:(id<SeafTask>)task {
+    BOOL res = YES;
     @synchronized (self.tasks) {
         if (task != nil && ![self.tasks containsObject:task] && ![self.ongoingTasks containsObject:task]) {
             task.lastFinishTimestamp = 0;
             task.retryCount = 0;
             [self.tasks addObject:task];
             Debug("Added task %@: %ld", task.name, (unsigned long)self.tasks.count);
+        } else {
+            res = NO;
         }
     }
     [self tick];
+    return res;
 }
 
 - (NSInteger)taskNumber {
@@ -104,8 +110,9 @@
     if (![[AFNetworkReachabilityManager sharedManager] isReachable] || self.tasks.count == 0) {
         return;
     }
-
-    while (self.ongoingTasks.count + self.failedCount < self.concurrency) {
+    
+    dispatch_semaphore_wait(self.semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)));
+    while (self.ongoingTasks.count < self.concurrency && self.failedCount < self.concurrency) {
         id<SeafTask> task = [self pickTask];
         if (!task) break;
         @synchronized (self.ongoingTasks) {
@@ -113,6 +120,7 @@
         }
         [task run:self.innerQueueTaskCompleteBlock];
     }
+    dispatch_semaphore_signal(self.semaphore);
 }
 
 - (id<SeafTask>)pickTask {
@@ -149,7 +157,8 @@
 - (void)removOldCompletedTask {
     NSMutableArray *tempArray = [NSMutableArray array];
     @synchronized (self.completedTasks) {
-        for (id<SeafTask> task in self.completedTasks) {
+        NSArray *copyArray = [NSArray arrayWithArray:self.completedTasks];
+        for (id<SeafTask> task in copyArray) {
             //remove task finished more than 3 min
             if ([[NSDate date] timeIntervalSince1970] - task.lastFinishTimestamp > DEFAULT_COMPLELE_INTERVAL) {
                 [tempArray addObject:task];

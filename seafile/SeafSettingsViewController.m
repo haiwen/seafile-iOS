@@ -415,7 +415,7 @@ enum {
     _localDecrySwitch.on = _connection.localDecryptionEnabled;
     _serverCell.detailTextLabel.text = [_connection.address trimUrl];
     
-    self.enableUploadHeic.on = _connection.uploadHeicEnabled;
+    self.enableUploadHeic.on = _connection.isUploadHeicEnabled;
 
     [self updateSyncInfo];
 
@@ -448,7 +448,7 @@ enum {
 - (void)setConnection:(SeafConnection *)connection
 {
     _connection = connection;
-    _connection.photSyncWatcher = self;
+    _connection.photoBackup.photSyncWatcher = self;
     [self.tableView reloadData];
     [self updateAccountInfo];
 }
@@ -574,25 +574,24 @@ enum {
     if (section < SECTION_ACCOUNT || section > SECTION_LOGOUT)
         return nil;
     if (section == SECTION_CAMERA && _connection.inAutoSync) {
-        NSUInteger num = _connection.photosInSyncing;
         NSString *remainStr = @"";
-        if (num == 0) {
-            remainStr = NSLocalizedString(@"All photos synced", @"Seafile");
-        } else if (num == 1) {
-            remainStr = NSLocalizedString(@"1 photo remain", @"Seafile");
+        if (_connection.isCheckingPhotoLibrary) {
+            remainStr = NSLocalizedString(@"Prepare for backup", @"Seafile");
         } else {
-            remainStr = [NSString stringWithFormat:NSLocalizedString(@"%ld photos remain", @"Seafile"), num];
+            NSUInteger num = _connection.photosInSyncing;
+            if (num == 0) {
+                remainStr = NSLocalizedString(@"All photos synced", @"Seafile");
+            } else if (num == 1) {
+                remainStr = NSLocalizedString(@"1 photo remain", @"Seafile");
+            } else {
+                remainStr = [NSString stringWithFormat:NSLocalizedString(@"%ld photos remain", @"Seafile"), num];
+            }
+#if DEBUG
+            remainStr = [remainStr stringByAppendingFormat:@" /uploading count is %ld", _connection.photoBackup.photosInUploadingArray];
+#endif
         }
         return [sectionNames[section] stringByAppendingFormat:@"\t %@", remainStr];
     }
-#if DEBUG
-    else if (section == SECTION_CAMERA) {
-        NSInteger downloadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].fileQueue taskNumber];
-        NSInteger uploadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].uploadQueue taskNumber];
-        NSString *remainStr = [NSString stringWithFormat:@"  U:%lu D:%lu",(long)uploadingNum,(long)downloadingNum];
-        return [sectionNames[section] stringByAppendingFormat:@"\t %@", remainStr];
-    }
-#endif
     return sectionNames[section];
 }
 
