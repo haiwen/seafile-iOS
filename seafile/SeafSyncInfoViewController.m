@@ -81,7 +81,8 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
     WS(weakSelf);
     SeafDataTaskManager.sharedObject.trySyncBlock = ^(id<SeafTask> _Nullable task) {
         if (![task.accountIdentifier isEqualToString:self.connection.accountIdentifier]) return;
-        if ([weakSelf.ongongingTasks containsObject:task]) return;
+        NSArray *copyArray = [NSArray arrayWithArray:weakSelf.ongongingTasks];
+        if ([copyArray containsObject:task]) return;
         @synchronized (weakSelf.ongongingTasks) {
             [weakSelf.ongongingTasks addObject:task];
         }

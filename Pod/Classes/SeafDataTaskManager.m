@@ -66,15 +66,16 @@
 }
 
 #pragma mark- upload
-- (void)addUploadTask:(SeafUploadFile *)file {
+- (BOOL)addUploadTask:(SeafUploadFile *)file {
     SeafAccountTaskQueue *accountQueue = [self getAccountQueueWithIndentifier:file.accountIdentifier];
-    [accountQueue addUploadTask:file];
-    if (file.retryable) {
+    BOOL res = [accountQueue addUploadTask:file];
+    if (res && file.retryable) {
         [self saveUploadFileToTaskStorage:file];
     }
     if (self.trySyncBlock) {
         self.trySyncBlock(file);
     }
+    return res;
 }
 
 - (void)removeUploadTask:(SeafUploadFile * _Nonnull)ufile forAccount:(SeafConnection * _Nonnull)conn
@@ -389,8 +390,8 @@
     [self.avatarQueue addTask:avatar];
 }
 
-- (void)addUploadTask:(SeafUploadFile * _Nonnull)ufile {
-    [self.uploadQueue addTask:ufile];
+- (BOOL)addUploadTask:(SeafUploadFile * _Nonnull)ufile {
+    return [self.uploadQueue addTask:ufile];
 }
 
 - (void)removeFileDownloadTask:(SeafFile * _Nonnull)dfile {

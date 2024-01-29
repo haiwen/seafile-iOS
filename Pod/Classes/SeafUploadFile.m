@@ -117,7 +117,7 @@
 }
 
 - (BOOL)uploadHeic {
-    return self.udir->connection.uploadHeicEnabled;
+    return self.udir->connection.isUploadHeicEnabled;
 }
 
 - (NSString *)blockDir
@@ -180,11 +180,6 @@
         self.task = nil;
         [self updateProgress:nil];
     }
-    
-    if (_starred) {
-        NSString* rpath = [_udir.path stringByAppendingPathComponent:self.name];
-        [_udir->connection setStarred:YES repo:_udir.repoId path:rpath];
-    }
 
     self.rawblksurl = nil;
     self.commiturl = nil;
@@ -198,6 +193,11 @@
     Debug("result=%d, name=%@, delegate=%@, oid=%@, err=%@\n", result, self.name, _delegate, oid, err);
     [self uploadComplete:oid error:err];
     if (result) {
+        if (_starred && self.udir) {
+            NSString* rpath = [_udir.path stringByAppendingPathComponent:self.name];
+            [_udir->connection setStarred:YES repo:_udir.repoId path:rpath];
+        }
+        
         if (!_autoSync) {
             [Utils linkFileAtPath:self.lpath to:[SeafStorage.sharedObject documentPath:oid] error:nil];
             // files.app menory limit 15MB, reSizeImage will use more than 15MB

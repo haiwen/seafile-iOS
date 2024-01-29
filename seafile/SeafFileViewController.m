@@ -1609,7 +1609,7 @@ enum {
     NSMutableArray *files = [[NSMutableArray alloc] init];
     NSString *uploadDir = [self.connection uniqueUploadDir];
     NSMutableSet *nameSet = overwrite ? [NSMutableSet new] : [self getExistedNameSet];
-    BOOL uploadHeicEnabled = self.connection.uploadHeicEnabled;
+    BOOL uploadHeicEnabled = self.connection.isUploadHeicEnabled;
     
     for (NSString *localIdentifier in identifiers) {
         PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
@@ -1652,7 +1652,7 @@ enum {
     NSSet *nameSet = [self getExistedNameSet];
     NSMutableArray *identifiers = [[NSMutableArray alloc] init];
     int duplicated = 0;
-    BOOL uploadHeicEnabled = self.connection.uploadHeicEnabled;
+    BOOL uploadHeicEnabled = self.connection.isUploadHeicEnabled;
     for (PHAsset *asset in assets) {
         SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!uploadHeicEnabled];
         if (photoAsset.localIdentifier) {

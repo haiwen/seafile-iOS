@@ -10,6 +10,7 @@
 #import "AFNetworking.h"
 #import "SeafCacheProvider.h"
 #import "SeafBase.h"
+#import "SeafPhotoBackupTool.h"
 
 #define HTTP_ERR_UNAUTHORIZED                    401
 #define HTTP_ERR_LOGIN_INCORRECT_PASSWORD        400
@@ -38,10 +39,6 @@ enum MSG_TYPE{
 typedef void (^CompletionBlock)(BOOL success, NSError * _Nullable error);
 
 BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
-
-@protocol SeafPhotoSyncWatcherDelegate <NSObject>
-- (void)photoSyncChanged:(long)remain;
-@end
 
 @protocol SeafLoginDelegate <NSObject>
 - (void)loginSuccess:(SeafConnection *_Nonnull)connection;
@@ -85,7 +82,8 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 @property (readwrite, nonatomic, getter=isAutoSync) BOOL autoSync;
 @property (readwrite, nonatomic, getter=isVideoSync) BOOL videoSync;
 @property (readwrite, nonatomic, getter=isBackgroundSync) BOOL backgroundSync;
-@property (assign, nonatomic) BOOL uploadHeicEnabled;
+@property (readwrite, nonatomic, getter=isFirstTimeSync) BOOL firstTimeSync;
+@property (assign, nonatomic, getter=isUploadHeicEnabled) BOOL uploadHeicEnabled;
 
 @property (readwrite, nonatomic) NSString * _Nullable autoSyncRepo;
 
@@ -94,10 +92,11 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 @property (readwrite, nonatomic) BOOL touchIdEnabled;
 @property (readonly) NSURLCredential *_Nullable clientCred;
 
-@property (weak) id<SeafPhotoSyncWatcherDelegate> _Nullable photSyncWatcher;
 @property (readonly) BOOL inAutoSync;
 
 @property (readonly) NSString *_Nullable avatar;
+
+@property (nonatomic, strong) SeafPhotoBackupTool * _Nullable photoBackup;
 
 
 - (id _Nonnull)initWithUrl:(NSString *_Nonnull)url cacheProvider:(id<SeafCacheProvider> _Nullable )cacheProvider;
@@ -181,6 +180,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 
 - (void)checkAutoSync;
 - (NSUInteger)photosInSyncing;
+- (BOOL)isCheckingPhotoLibrary;
 - (void)checkSyncDst:(SeafDir *_Nonnull)dir;
 - (void)photosDidChange:(NSNotification *_Nullable)note;
 

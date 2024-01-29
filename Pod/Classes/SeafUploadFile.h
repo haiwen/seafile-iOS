@@ -43,7 +43,7 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 @property (nonatomic) id<SeafUploadDelegate> delegate;
 @property (nonatomic) SeafUploadCompletionBlock completionBlock;
 
-@property (readwrite) SeafDir *udir;
+@property (nonatomic, strong, readwrite) SeafDir *udir;
 @property (nonatomic, strong) UIImage *previewImage;//NSItemProvider previewImage
 
 @property (nonatomic, assign, getter=isStarred) BOOL starred;
