@@ -112,13 +112,25 @@
     wekview.configuration.processPool = [[WKProcessPool alloc] init];
     wekview.navigationDelegate = self;
     // Add customUserAgent to bypass Google's OAUTH2 user-agent restriction.
-    wekview.customUserAgent = @"Mozilla/5.0 (iPhone; CPU iPhone OS 17_1_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1.2 Mobile/15E148 Safari/604.1";
+    wekview.customUserAgent = [self customUserAgent];
     [self.view addSubview:wekview];
     [self.view addSubview:self.progressView];
     [wekview loadRequest:request];
     [self deleteCookiesForURL:request.URL];
     [wekview addObserver:self forKeyPath:@"estimatedProgress" options:NSKeyValueObservingOptionNew context:nil];
    self.webView = wekview;
+}
+
+- (NSString *)customUserAgent {
+    NSString *userAgent = [[WKWebView new] valueForKey:@"userAgent"];
+    NSBundle *webKit = [NSBundle bundleWithIdentifier:@"com.apple.WebKit"];
+    if (webKit && [webKit infoDictionary]) {
+        NSString *version = [[webKit infoDictionary] objectForKey:@"CFBundleVersion"]; userAgent = [userAgent stringByAppendingFormat:@" Safari/%@", version];
+    }
+    else {
+        userAgent = [userAgent stringByAppendingFormat:@" Safari/605.1.15"];
+    }
+    return userAgent;
 }
 
 - (void)viewWillDisappear:(BOOL)animated
