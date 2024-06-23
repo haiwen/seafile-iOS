@@ -366,6 +366,13 @@
     return [context writeJPEGRepresentationOfImage:ciImage toURL:url colorSpace:ciImage.colorSpace options:@{(CIImageRepresentationOption)kCGImageDestinationLossyCompressionQuality : @(0.8)} error:&error];
 }
 
++ (BOOL)writeHEICCIImage:(CIImage *)ciImage toPath:(NSString*)filePath {
+    NSError *error = nil;
+    CIContext *context = [[CIContext alloc] init];
+    NSURL *url = [[NSURL alloc] initFileURLWithPath:filePath];
+    return [context writeHEIFRepresentationOfImage:ciImage toURL:url format:kCIFormatRGBA8 colorSpace:ciImage.colorSpace options:@{(CIImageRepresentationOption)kCGImageDestinationLossyCompressionQuality : @(0.85)} error:&error];
+}
+
 + (BOOL)fileExistsAtPath:(NSString *)path
 {
     return [[NSFileManager defaultManager] fileExistsAtPath:path];

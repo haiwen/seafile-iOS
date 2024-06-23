@@ -65,4 +65,6 @@
 
 + (NSString *)creatNewFileName:(NSString *)fileName;
 
++ (BOOL)writeHEICCIImage:(CIImage *)ciImage toPath:(NSString*)filePath;
+
 @end

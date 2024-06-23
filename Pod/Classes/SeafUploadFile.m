@@ -583,8 +583,14 @@
                     self->_lpath = [self.lpath stringByReplacingOccurrencesOfString:@"HEIC" withString:@"JPG"];
                 }
                 CIImage* ciImage = [CIImage imageWithData:imageData];
-                if (![Utils writeCIImage:ciImage toPath:self.lpath]) {
-                    [self finishUpload:false oid:nil error:nil];
+                if ([self uploadHeic]) {
+                    if (![Utils writeHEICCIImage:ciImage toPath:self.lpath]) {
+                        [self finishUpload:false oid:nil error:nil];
+                    }
+                } else {
+                    if (![Utils writeCIImage:ciImage toPath:self.lpath]) {
+                        [self finishUpload:false oid:nil error:nil];
+                    }
                 }
             } else {
                 if (![Utils writeDataWithMeta:imageData toPath:self.lpath]) {
