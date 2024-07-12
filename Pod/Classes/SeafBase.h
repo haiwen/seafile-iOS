@@ -11,6 +11,9 @@
 
 @class SeafConnection;
 
+/**
+ * An extension to NSObject to provide default value handling for different types.
+ */
 @interface NSObject (NSObjectValue)
 - (long long)integerValue:(int)defaultValue;
 - (BOOL)booleanValue:(BOOL)defaultValue;
@@ -18,6 +21,9 @@
 
 @end
 
+/**
+ * Enumeration that defines various states of a SeafBase entry.
+ */
 enum SEAFBASE_STATE {
     SEAF_DENTRY_INIT = 0,
     SEAF_DENTRY_LOADING,
@@ -27,18 +33,28 @@ enum SEAFBASE_STATE {
 };
 
 @class SeafBase;
-
+/**
+ * A block type for setting repository passwords.
+ * @param entry The SeafBase object concerned.
+ * @param ret The result of the password setting operation.
+ */
 typedef void (^repo_password_set_block_t)(SeafBase *entry, int ret);
 
-
+/**
+ * Protocol defining the delegate methods for sharing operations.
+ */
 @protocol SeafShareDelegate <NSObject>
 - (void)generateSharelink:(SeafBase *)entry WithResult:(BOOL)success;
 @end
 
+/**
+ * @class SeafBase
+ * @discussion This class is the base class for Seafile entries, providing basic functionalities such as caching, sharing, and content management.
+ */
 @interface SeafBase : NSObject
 {
 @public
-    SeafConnection *connection;
+    SeafConnection *connection;///< Connection used for network operations related to this entry.
 }
 - (id)initWithConnection:(SeafConnection *)aConnection
                      oid:(NSString *)anId

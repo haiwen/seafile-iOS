@@ -21,8 +21,8 @@ static NSMutableDictionary *avatarAttrs = nil;
 
 @interface SeafAvatar()
 @property SeafConnection *connection;
-@property NSString *avatarUrl;
-@property NSString *path;
+@property NSString *avatarUrl;///< The URL from which to download the avatar.
+@property NSString *path;///< The local file system path where the avatar is stored.
 @property NSURLSessionDownloadTask *task;
 @end
 
@@ -51,6 +51,10 @@ static NSMutableDictionary *avatarAttrs = nil;
     [self.task cancel];
 }
 
+/**
+ * Retrieves or initializes the avatar attributes dictionary.
+ * @return A mutable dictionary used to store avatar attributes.
+ */
 + (NSMutableDictionary *)avatarAttrs
 {
     if (avatarAttrs == nil) {
@@ -61,6 +65,10 @@ static NSMutableDictionary *avatarAttrs = nil;
     }
     return avatarAttrs;
 }
+
+/**
+ * Saves the avatar attributes to a plist file.
+ */
 + (void)saveAvatarAttrs
 {
     NSString *attrsFile = [SeafStorage.sharedObject.avatarsDir stringByAppendingPathComponent:@"avatars.plist"];
@@ -115,6 +123,13 @@ static NSMutableDictionary *avatarAttrs = nil;
 
 }
 
+/**
+ * Downloads the user avatar from a specified URL and handles the response.
+ * This method initiates a network request to download the avatar and manages the response to update the avatar accordingly.
+ *
+ * @param completeBlock A completion handler block that is called when the download task is completed.
+ * This block takes two parameters: the callee task object and a Boolean indicating whether the download was successful.
+ */
 - (void)download:(TaskCompleteBlock _Nonnull)completeBlock
 {
     [self.connection sendRequest:self.avatarUrl success:

@@ -13,18 +13,19 @@
 
 @interface SeafPhotoThumb ()
 
-@property BOOL loadingInProgress;
+@property BOOL loadingInProgress;// Flag indicating whether a loading operation is currently in progress
 @end
 
 @implementation SeafPhotoThumb
 
 @synthesize underlyingImage = _underlyingImage; // synth property from protocol
 
-
+// Getter for underlyingImage. If image already loaded, return it, otherwise, attempt to generate it.
 - (UIImage *)underlyingImage {
     return [self.file thumb];
 }
 
+// Begins the process of loading the underlying image and posts a notification when the image is loaded or an error occurs.
 - (void)loadUnderlyingImageAndNotify {
     NSAssert([[NSThread currentThread] isMainThread], @"This method must be called on the main thread.");
     if (_loadingInProgress) return;
@@ -70,6 +71,7 @@
     self.underlyingImage = nil;
 }
 
+// Notifies that the image has been fully loaded or an error has occurred
 - (void)imageLoadingComplete {
     NSAssert([[NSThread currentThread] isMainThread], @"This method must be called on the main thread.");
     // Complete so notify

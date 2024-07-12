@@ -60,19 +60,19 @@ enum {
 - (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
 - (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
 
-@property (strong) id curEntry;
+@property (strong) id curEntry; // Currently selected directory entry.
 @property (strong, nonatomic) IBOutlet UIActivityIndicatorView *loadingView;
 
-@property (strong) UIBarButtonItem *selectAllItem;
+@property (strong) UIBarButtonItem *selectAllItem;// Button to select all items in the directory.
 @property (strong) UIBarButtonItem *selectNoneItem;
-@property (strong) UIBarButtonItem *photoItem;
+@property (strong) UIBarButtonItem *photoItem; // Button to trigger photo actions.
 @property (strong) UIBarButtonItem *doneItem;
 @property (strong) UIBarButtonItem *editItem;
 @property (strong) NSArray *rightItems;
 
-@property (retain) SWTableViewCell *selectedCell;
-@property (retain) NSIndexPath *selectedindex;
-@property (readonly) NSArray *editToolItems;
+@property (retain) SWTableViewCell *selectedCell;// The cell currently selected.
+@property (retain) NSIndexPath *selectedindex; // Index path of the currently selected cell.
+@property (readonly) NSArray *editToolItems;// Tools available when editing.
 
 @property int state;
 
@@ -81,12 +81,12 @@ enum {
 @property (nonatomic, strong) UISearchController *searchController;
 @property (nonatomic, strong) SeafSearchResultViewController *searchReslutController;
 
-@property (strong, retain) NSArray *photos;
-@property (strong, retain) NSArray *thumbs;
-@property BOOL inPhotoBrowser;
+@property (strong, retain) NSArray *photos;// Array of photo entries.
+@property (strong, retain) NSArray *thumbs;// Array of thumbnail entries.
+@property BOOL inPhotoBrowser;// Indicates whether the photo browser is active.
 
-@property SeafUploadFile *ufile;
-@property (nonatomic, strong)NSArray *allItems;
+@property SeafUploadFile *ufile; // The file being uploaded.
+@property (nonatomic, strong)NSArray *allItems;// All items in the current directory.
 
 @end
 
@@ -115,6 +115,7 @@ enum {
     return _allItems;
 }
 
+// Initializes toolbar items for edit mode.
 - (NSArray *)editToolItems
 {
     if (!_editToolItems) {
@@ -141,6 +142,7 @@ enum {
     return _editToolItems;
 }
 
+// Sets the connection for the view controller.
 - (void)setConnection:(SeafConnection *)conn
 {
     [self.detailViewController setPreViewItem:nil master:nil];
@@ -223,6 +225,7 @@ enum {
     [self refreshView];
 }
 
+// Handles the selection state of items.
 - (void)noneSelected:(BOOL)none
 {
     if (none) {
@@ -239,6 +242,7 @@ enum {
     }
 }
 
+// Updates the state of the export bar item based on the selection.
 - (void)updateExportBarItem {
     NSArray *idxs = [self.tableView indexPathsForSelectedRows];
     UIBarButtonItem *item = self.toolbarItems.firstObject;
@@ -256,6 +260,7 @@ enum {
     }
 }
 
+// Checks if the previewed file still exists.
 - (void)checkPreviewFileExist
 {
     if ([self.detailViewController.preViewItem isKindOfClass:[SeafFile class]]) {
@@ -275,6 +280,7 @@ enum {
     }
 }
 
+// Initializes the arrays for photos and thumbnails.
 - (void)initSeafPhotos
 {
     NSMutableArray *seafPhotos = [NSMutableArray array];
@@ -443,6 +449,7 @@ enum {
     }
 }
 
+// Presents an action sheet for directory actions
 - (void)editSheet:(id)sender {
     @weakify(self);
     [SeafActionsManager directoryAction:self.directory photos:self.photos inTargetVC:self fromItem:self.editItem actionBlock:^(NSString *typeTile) {
@@ -451,6 +458,7 @@ enum {
     }];
 }
 
+// Initializes the navigation items based on the directory type and editability
 - (void)initNavigationItems:(SeafDir *)directory
 {
     if (![directory isKindOfClass:[SeafRepos class]] && directory.editable) {
@@ -510,6 +518,7 @@ enum {
     }
 }
 
+// Checks and processes files queued for upload.
 - (void)checkUploadfiles
 {
     [_connection checkSyncDst:_directory];
@@ -578,6 +587,7 @@ enum {
 }
 
 #pragma mark - Sheet
+// Shows an action sheet for the selected cell
 - (void)showActionSheetWithIndexPath:(NSIndexPath *)indexPath {
     _selectedindex = indexPath;
     id entry = [self getDentrybyIndexPath:indexPath tableView:self.tableView];
@@ -590,6 +600,7 @@ enum {
     }];
 }
 
+// Configures and returns a cell for an upload file
 - (UITableViewCell *)getSeafUploadFileCell:(SeafUploadFile *)file forTableView:(UITableView *)tableView
 {
     file.delegate = self;
@@ -611,11 +622,13 @@ enum {
     return cell;
 }
 
+// Updates the download status indicator on a cell
 - (void)updateCellDownloadStatus:(SeafCell *)cell file:(SeafFile *)sfile waiting:(BOOL)waiting
 {
     [self updateCellDownloadStatus:cell isDownloading:sfile.isDownloading waiting:waiting cached:sfile.hasCache];
 }
 
+// Helper method to update cell download status
 - (void)updateCellDownloadStatus:(SeafCell *)cell isDownloading:(BOOL )isDownloading waiting:(BOOL)waiting cached:(BOOL)cached
 {
     if (!cell) return;
@@ -645,6 +658,7 @@ enum {
     });
 }
 
+// Updates the content displayed in a cell for a file
 - (void)updateCellContent:(SeafCell *)cell file:(SeafFile *)sfile
 {
     cell.textLabel.text = sfile.name;
@@ -655,6 +669,7 @@ enum {
     [self updateCellDownloadStatus:cell file:sfile waiting:false];
 }
 
+// Configures and returns a cell for a file
 - (SeafCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath
 {
     [sfile loadCache];
@@ -670,6 +685,7 @@ enum {
     return cell;
 }
 
+// Configures and returns a cell for a directory
 - (SeafCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath
 {
     SeafCell *cell = (SeafCell *)[self getCell:@"SeafDirCell" forTableView:tableView];
@@ -686,6 +702,7 @@ enum {
     return cell;
 }
 
+// Configures and returns a cell for a repository
 - (SeafCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath
 {
     SeafCell *cell = [self getCellForTableView:tableView];
@@ -743,6 +760,7 @@ enum {
     return NO;
 }
 
+// Presents a popup to set a repository password
 - (void)popupSetRepoPassword:(SeafRepo *)repo
 {
     self.state = STATE_PASSWORD;
@@ -755,6 +773,7 @@ enum {
     }];
 }
 
+// Presents a view for creating a new directory
 - (void)popupMkdirView
 {
     self.state = STATE_MKDIR;
@@ -773,6 +792,7 @@ enum {
     }];
 }
 
+// Presents a view for creating a new library
 - (void)popupMklibView {
     self.state = STATE_MKLIB;
     _directory.delegate = self;
@@ -795,6 +815,7 @@ enum {
     };
 }
 
+// Presents a view to create a new file
 - (void)popupCreateView
 {
     self.state = STATE_CREATE;
@@ -813,6 +834,7 @@ enum {
     }];
 }
 
+// Presents a view to rename an existing file
 - (void)popupRenameView:(NSString *)oldName
 {
     self.state = STATE_RENAME;
@@ -833,6 +855,7 @@ enum {
     }];
 }
 
+// Presents a directory chooser view for moving or copying files
 - (void)popupDirChooseView:(SeafUploadFile *)file
 {
     self.ufile = file;
@@ -858,7 +881,7 @@ enum {
         navController.view.superview.frame = CGRectMake(frame.origin.x+frame.size.width/2-320/2, frame.origin.y+frame.size.height/2-500/2, 320, 500);
     }
 }
-
+// Retrieves a directory entry by its index path in a table view
 - (SeafBase *)getDentrybyIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView
 {
     if (!indexPath) return nil;
@@ -872,6 +895,7 @@ enum {
     }
 }
 
+// Checks if a given item is an image file
 - (BOOL)isCurrentFileImage:(id<SeafPreView>)item
 {
     if (![item conformsToProtocol:@protocol(SeafPreView)])
@@ -879,6 +903,7 @@ enum {
     return item.isImageFile;
 }
 
+// Retrieves all image files from the current directory to display in a photo browser
 - (NSArray *)getCurrentFileImagesInTableView:(UITableView *)tableView
 {
     NSMutableArray *arr = [[NSMutableArray alloc] init];
@@ -1014,6 +1039,7 @@ enum {
 }
 
 #pragma mark - SeafDentryDelegate
+// Retrieves a photo object for a given preview item if it exists within the current photo browser session
 - (SeafPhoto *)getSeafPhoto:(id<SeafPreView>)photo {
     if (!self.inPhotoBrowser || ![photo isImageFile])
         return nil;
@@ -1025,6 +1051,7 @@ enum {
     return nil;
 }
 
+// Handles the download progress for an entry, updating UI elements accordingly
 - (void)download:(SeafBase *)entry progress:(float)progress
 {
     if ([entry isKindOfClass:[SeafFile class]]) {
@@ -1036,8 +1063,10 @@ enum {
     }
 }
 
+// Handles the completion of a download, updating UI and state accordingly
 - (void)download:(SeafBase *)entry complete:(BOOL)updated
 {
+    // Handle specific states after download completion
     if (self.state == STATE_COPY) {
         [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Successfully copied", @"Seafile")];
     } else if (self.state == STATE_MOVE) {
@@ -1071,6 +1100,7 @@ enum {
     }
 }
 
+// Handles download failures, updating UI and state accordingly
 - (void)download:(SeafBase *)entry failed:(NSError *)error
 {
     if ([entry isKindOfClass:[SeafFile class]]) {
@@ -1132,12 +1162,14 @@ enum {
 }
 
 #pragma mark - pull to Refresh
+// Handles the refresh control state change
 - (void)refreshControlChanged {
     if (!self.tableView.isDragging) {
         [self pullToRefresh];
     }
 }
 
+// Refreshes the directory content by reloading the tableView
 - (void)pullToRefresh {
     [self.tableView reloadData];
     if (self.searchDisplayController.active)
@@ -1160,6 +1192,7 @@ enum {
     }
 }
 
+// Ends data loading, signaling that refreshing has completed
 - (void)doneLoadingTableViewData {
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.tableView.refreshControl endRefreshing];
@@ -1168,6 +1201,7 @@ enum {
 }
 
 #pragma mark - edit files
+// Handles operations related to editing files such as creating, deleting, or moving files
 - (void)editOperation:(id)sender
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
@@ -1214,6 +1248,7 @@ enum {
     }
 }
 
+// Initiates the export of selected files
 - (void)exportSelected {
     NSArray *idxs = [self.tableView indexPathsForSelectedRows];
     if (!idxs) return;
@@ -1238,6 +1273,7 @@ enum {
     }];
 }
 
+// Manages the download of multiple entries for export, handling completion and errors
 - (void)downloadEntries:(NSArray *)entries completion:(DownloadCompleteBlock)block {
     NSMutableArray *urls = [NSMutableArray array];
     dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
@@ -1276,6 +1312,7 @@ enum {
     });
 }
 
+// Deletes a specific file
 - (void)deleteFile:(SeafFile *)file
 {
     NSArray *entries = [NSArray arrayWithObject:file.name];
@@ -1309,6 +1346,7 @@ enum {
     [_connection performSelectorInBackground:@selector(downloadDir:) withObject:dir];
 }
 
+// Starts the download of a repository
 - (void)downloadRepo:(SeafRepo *)repo
 {
     Debug("download repo: %@ %@", repo.repoId, repo.path);
@@ -1316,6 +1354,7 @@ enum {
     [_connection performSelectorInBackground:@selector(downloadDir:) withObject:repo];
 }
 
+// Saves an image to the photo album
 - (void)saveImageToAlbum:(SeafFile *)file
 {
     self.state = STATE_INIT;
@@ -1329,6 +1368,7 @@ enum {
     });
 }
 
+// Initiates saving of all photos to the album after checking permissions
 - (void)savePhotosToAlbum
 {
     [self checkPhotoLibraryAuth:^{
@@ -1363,6 +1403,7 @@ enum {
     [SeafWechatHelper shareToWechatWithFile:file];
 }
 
+// Presents a photo browser for viewing all photos
 - (void)browserAllPhotos
 {
     MWPhotoBrowser *_mwPhotoBrowser = [[MWPhotoBrowser alloc] initWithDelegate:self];
@@ -1386,6 +1427,7 @@ enum {
     [self presentViewController:nc animated:YES completion:nil];
 }
 
+// Callback for when an image has been saved to the photo album, handles errors if they occur
 - (void)thisImage:(UIImage *)image hasBeenSavedInPhotoAlbumWithError:(NSError *)error usingContextInfo:(void *)ctxInfo
 {
     SeafFile *file = (__bridge SeafFile *)ctxInfo;
@@ -1397,12 +1439,14 @@ enum {
     }
 }
 
+// Initiates renaming of an entry
 - (void)renameEntry:(SeafBase *)obj
 {
     _curEntry = obj;
     [self popupRenameView:obj.name];
 }
 
+// Reloads a specific index in the table, catching and handling any exceptions that occur
 - (void)reloadIndex:(NSIndexPath *)indexPath
 {
     if (indexPath) {
@@ -1418,6 +1462,7 @@ enum {
     }
 }
 
+// Deletes an entry from the file system or upload queue
 - (void)deleteEntry:(id)entry
 {
     self.state = STATE_DELETE;
@@ -1434,6 +1479,7 @@ enum {
         [self deleteDir: (SeafDir*)entry];
 }
 
+// Handles various file and directory actions based on the selected action
 - (void)handleAction:(NSString *)title
 {
     Debug("handle action title:%@, %@", title, _selectedCell);
@@ -1521,6 +1567,7 @@ enum {
     }
 }
 
+// Uploads a file to a directory, handling overwrite scenarios
 - (void)uploadFile:(SeafUploadFile *)ufile toDir:(SeafDir *)dir overwrite:(BOOL)overwrite
 {
     [SVProgressHUD showInfoWithStatus:[NSString stringWithFormat:NSLocalizedString(@"%@, uploading", @"Seafile"), ufile.name]];
@@ -1529,6 +1576,7 @@ enum {
     [SeafDataTaskManager.sharedObject addUploadTask:ufile];
 }
 
+// Uploads a file to a directory after checking if the file name exists
 - (void)uploadFile:(SeafUploadFile *)ufile toDir:(SeafDir *)dir
 {
     if ([dir nameExist:ufile.name]) {
@@ -1548,6 +1596,7 @@ enum {
 }
 
 #pragma mark - SeafDirDelegate
+// Handles the selection of a directory for moving or copying files
 - (void)chooseDir:(UIViewController *)c dir:(SeafDir *)dir
 {
     [c.navigationController dismissViewControllerAnimated:YES completion:nil];
@@ -1570,6 +1619,8 @@ enum {
         [SVProgressHUD showWithStatus:NSLocalizedString(@"Moving files ...", @"Seafile")];
     }
 }
+
+// Cancels the directory selection process
 - (void)cancelChoose:(UIViewController *)c
 {
     self.state = STATE_INIT;
@@ -1577,6 +1628,7 @@ enum {
 }
 
 #pragma mark - QBImagePickerControllerDelegate
+// Retrieves a set of existing filenames to prevent overwriting
 - (NSMutableSet *)getExistedNameSet
 {
     NSMutableSet *nameSet = [[NSMutableSet alloc] init];
@@ -1592,6 +1644,7 @@ enum {
     return nameSet;
 }
 
+// Generates a unique filename if the original name already exists
 - (NSString *)getUniqueFilename:(NSString *)name ext:(NSString *)ext nameSet:(NSMutableSet *)nameSet
 {
     for (int i = 1; i < 999; ++i) {
@@ -1603,6 +1656,7 @@ enum {
     return [NSString stringWithFormat:@"%@-%@.%@", name, date, ext];
 }
 
+// Handles the upload of picked images from the photo library
 - (void)uploadPickedAssetsIdentifier:(NSArray *)identifiers overwrite:(BOOL)overwrite {
     if (identifiers.count == 0) return;
     
@@ -1639,14 +1693,17 @@ enum {
     }
 }
 
+// Dismisses the image picker controller after selection or cancellation
 - (void)dismissImagePickerController:(QBImagePickerController *)imagePickerController {
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
+// Handles the cancellation of the image picker
 - (void)qb_imagePickerControllerDidCancel:(QBImagePickerController *)imagePickerController {
     [self dismissImagePickerController:imagePickerController];
 }
 
+// Handles the completion of asset selection from the image picker
 - (void)qb_imagePickerController:(QBImagePickerController *)imagePickerController didFinishPickingAssets:(NSArray *)assets {
     if (assets.count == 0) return;
     NSSet *nameSet = [self getExistedNameSet];
@@ -1675,16 +1732,20 @@ enum {
 }
 
 #pragma mark - SeafFileUpdateDelegate
+// Updates the progress of a file update
 - (void)updateProgress:(SeafFile *)file progress:(float)progress
 {
     [self updateEntryCell:file];
 }
+
+// Handles the completion of a file update
 - (void)updateComplete:(nonnull SeafFile * )file result:(BOOL)res
 {
     [self updateEntryCell:file];
 }
 
 #pragma mark - SeafUploadDelegate
+// Updates the file cell with progress or completion status
 - (void)updateFileCell:(SeafUploadFile *)file result:(BOOL)res progress:(float)progress completed:(BOOL)completed
 {
     NSIndexPath *indexPath = nil;
@@ -1699,11 +1760,13 @@ enum {
     }
 }
 
+// Updates the progress of a file upload
 - (void)uploadProgress:(SeafUploadFile *)file progress:(float)progress
 {
     [self updateFileCell:file result:true progress:progress completed:false];
 }
 
+// Handles the completion of a file upload, updating the UI and state
 - (void)uploadComplete:(BOOL)success file:(SeafUploadFile *)file oid:(NSString *)oid
 {
     [self updateFileCell:file result:success progress:1.0f completed:YES];
@@ -1712,14 +1775,17 @@ enum {
     }
 }
 
+// Returns the index of an entry within the allItems array
 - (NSUInteger)indexOfEntry:(id<SeafPreView>)entry {
     return [self.allItems indexOfObject:entry];
 }
 
+// Returns the current table view being used
 - (UITableView *)currentTableView{
     return self.tableView;
 }
 
+// Handles the change in photo selection within a photo browser
 - (void)photoSelectedChanged:(id<SeafPreView>)from to:(id<SeafPreView>)to;
 {
     NSUInteger index = [self indexOfEntry:to];
@@ -1729,6 +1795,7 @@ enum {
     [[self currentTableView] selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionMiddle];
 }
 
+// Retrieves a cell associated with a specific entry
 - (SeafCell *)getEntryCell:(id)entry indexPath:(NSIndexPath **)indexPath
 {
     NSUInteger index = [self indexOfEntry:entry];
@@ -1744,6 +1811,7 @@ enum {
     }
 }
 
+// Updates the content of a cell associated with a SeafFile
 - (void)updateEntryCell:(SeafFile *)entry
 {
     @try {
@@ -1754,6 +1822,7 @@ enum {
 }
 
 #pragma mark - SeafShareDelegate
+// Generates a share link for an entry and updates the UI based on success or failure
 - (void)generateSharelink:(SeafBase *)entry WithResult:(BOOL)success
 {
     SeafBase *base = (SeafBase *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
@@ -1780,6 +1849,7 @@ enum {
 }
 
 #pragma mark - sena mail inside app
+// Configures and presents the mail compose view controller
 - (void)sendMailInApp:(SeafBase *)entry
 {
     Class mailClass = (NSClassFromString(@"MFMailComposeViewController"));
@@ -1809,6 +1879,7 @@ enum {
 }
 
 #pragma mark - MFMailComposeViewControllerDelegate
+// Handles the result of the mail composition
 - (void)mailComposeController:(MFMailComposeViewController *)controller didFinishWithResult:(MFMailComposeResult)result error:(NSError *)error
 {
     NSString *msg;
@@ -1837,11 +1908,13 @@ enum {
 }
 
 #pragma mark - MWPhotoBrowserDelegate
+// Returns the number of photos in the photo browser
 - (NSUInteger)numberOfPhotosInPhotoBrowser:(MWPhotoBrowser *)photoBrowser {
     if (!self.photos) return 0;
     return self.photos.count;
 }
 
+// Returns a photo for a particular index in the photo browser.
 - (id <MWPhoto>)photoBrowser:(MWPhotoBrowser *)photoBrowser photoAtIndex:(NSUInteger)index {
     if (index < self.photos.count) {
         return [self.photos objectAtIndex:index];
@@ -1849,6 +1922,7 @@ enum {
     return nil;
 }
 
+// Returns the title for a photo in the photo browser.
 - (NSString *)photoBrowser:(MWPhotoBrowser *)photoBrowser titleForPhotoAtIndex:(NSUInteger)index
 {
     if (index < self.photos.count) {
@@ -1859,6 +1933,8 @@ enum {
         return nil;
     }
 }
+
+// Returns a thumbnail for a photo in the photo browser.
 - (id <MWPhoto>)photoBrowser:(MWPhotoBrowser *)photoBrowser thumbPhotoAtIndex:(NSUInteger)index
 {
     if (index < self.thumbs.count)
@@ -1866,12 +1942,14 @@ enum {
     return nil;
 }
 
+// Called when the photo browser has finished presentation.
 - (void)photoBrowserDidFinishModalPresentation:(MWPhotoBrowser *)photoBrowser
 {
     [photoBrowser dismissViewControllerAnimated:YES completion:nil];
     self.inPhotoBrowser = false;
 }
 
+// Navigates to a specific repository and path.
 - (BOOL)goTo:(NSString *)repo path:(NSString *)path
 {
     if (![_directory hasCache] || !self.isVisible)

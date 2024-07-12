@@ -17,18 +17,18 @@
 
 @interface SeafShibbolethViewController ()<WKNavigationDelegate, NSURLConnectionDelegate>
 
-@property (strong) SeafConnection *sconn;
+@property (strong) SeafConnection *sconn;// Connection to the Seafile server
 @property (strong) NSURLRequest *FailedRequest;
-@property (strong) NSURLConnection *conn;
-@property (strong, nonatomic) WKWebView *webView;
+@property (strong) NSURLConnection *conn;// Network connection used for certain requests
+@property (strong, nonatomic) WKWebView *webView;// WebKit view for handling Shibboleth authentication
 @property (strong, nonatomic) UIProgressView *progressView;
-@property BOOL authenticated;
+@property BOOL authenticated;// Flag to check if authentication has occurred
 
 @end
 
 @implementation SeafShibbolethViewController
 
-- (id)init:(SeafConnection *)sconn
+- (id)init:(SeafConnection *)sconn// Custom initializer with a SeafConnection instance
 {
     if (self = [super initWithNibName:nil bundle:nil]) {
         self.sconn = sconn;
@@ -36,7 +36,7 @@
     return self;
 }
 
-- (NSString *)shibbolethUrl
+- (NSString *)shibbolethUrl// Constructs the URL needed for Shibboleth authentication
 {
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
     NSString *version = [infoDictionary objectForKey:@"CFBundleVersion"];
@@ -69,6 +69,7 @@
     // Dispose of any resources that can be recreated.
 }
 
+// Starts the authentication or ping process
 - (void)start
 {
     if ([_sconn.address hasPrefix:@"http://"]) {
@@ -84,6 +85,7 @@
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Connecting to server", @"Seafile")];
 }
 
+// Loads a given URL request in the background
 - (void)loadRequestBackground:(NSURLRequest *)request
 {
     AFHTTPSessionManager *manager = _sconn.loginMgr;
@@ -107,6 +109,7 @@
     [dataTask resume];
 }
 
+// Loads a given URL request in the webView
 - (void)webviewLoadRequest:(NSURLRequest *)request {
     WKWebView *wekview = [[WKWebView alloc] initWithFrame:self.view.bounds configuration:[WKWebViewConfiguration new]];
     wekview.configuration.processPool = [[WKProcessPool alloc] init];
@@ -121,6 +124,7 @@
    self.webView = wekview;
 }
 
+// Generates a custom user agent string to use with the webView
 - (NSString *)customUserAgent {
     NSString *userAgent = [[WKWebView new] valueForKey:@"userAgent"];
     NSBundle *webKit = [NSBundle bundleWithIdentifier:@"com.apple.WebKit"];
@@ -227,6 +231,7 @@
     [SVProgressHUD showErrorWithStatus:error.localizedDescription];
 }
 
+// Deletes cookies for a given URL
 - (void)deleteCookiesForURL:(NSURL *)URL {
     WKWebsiteDataStore *dateStore = [WKWebsiteDataStore defaultDataStore];
     [dateStore fetchDataRecordsOfTypes:[WKWebsiteDataStore allWebsiteDataTypes] completionHandler:^(NSArray<WKWebsiteDataRecord *> * __nonnull records) {
@@ -241,6 +246,7 @@
     ];
 }
 
+// Observes value changes for the web view's progress
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
     if (object == self.webView && [keyPath isEqualToString:@"estimatedProgress"]) {
         CGFloat newprogress = [[change objectForKey:NSKeyValueChangeNewKey] doubleValue];
@@ -262,6 +268,7 @@
     }
 }
 
+// Lazily initialized progress view
 - (UIProgressView *)progressView {
     if (!_progressView) {
         CGFloat y = [[UIApplication sharedApplication] statusBarFrame].size.height + self.navigationController.navigationBar.frame.size.height;

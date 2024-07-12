@@ -46,6 +46,9 @@
     return self;
 }
 
+/**
+ * Starts a timer to periodically execute background tasks.
+ */
 - (void)startTimer
 {
     Debug("Start timer.");
@@ -55,6 +58,10 @@
     }];
 }
 
+/**
+ * A method called by the timer at regular intervals.
+ * @param userInfo Additional user information that can be passed into the timer.
+ */
 - (void)tick:(id)userInfo {
     if (![[AFNetworkReachabilityManager sharedManager] isReachable]) {
         return;
@@ -173,6 +180,11 @@
     [accountQueue addThumbTask:thumb];
 }
 
+/**
+ * Retrieves an account task queue associated with a specific identifier.
+ * @param identifier The identifier associated with the account.
+ * @return An instance of SeafAccountTaskQueue associated with the given identifier.
+ */
 - (SeafAccountTaskQueue *)getAccountQueueWithIndentifier:(NSString *)identifier
 {
     @synchronized(self.accountQueueDict) {
@@ -215,6 +227,10 @@
 - (void)cacheCleared:(NSNotification*)notification {
 }
 
+/**
+ * Saves information about an upload file task to persistent storage.
+ * @param ufile The upload file whose information is to be saved.
+ */
 - (void)saveUploadFileToTaskStorage:(SeafUploadFile *)ufile {
     NSString *key = [self uploadStorageKey:ufile.accountIdentifier];
     NSDictionary *dict = [self convertTaskToDict:ufile];
@@ -225,6 +241,10 @@
     }
 }
 
+/**
+ * Saves information about a file download task to persistent storage.
+ * @param file The file whose information is to be saved.
+ */
 - (void)saveFileToTaskStorage:(SeafFile *)file {
     NSString *key = [self downloadStorageKey:file.accountIdentifier];
     NSDictionary *dict = [self convertTaskToDict:file];
@@ -235,6 +255,10 @@
     }
 }
 
+/**
+ * Removes information about an upload file task from persistent storage.
+ * @param ufile The upload file whose information is to be removed.
+ */
 - (void)removeUploadFileTaskInStorage:(SeafUploadFile *)ufile {
     NSString *key = [self uploadStorageKey:ufile.accountIdentifier];
     
@@ -245,6 +269,10 @@
     }
 }
 
+/**
+ * Removes information about a file download task from persistent storage.
+ * @param file The file whose information is to be removed.
+ */
 - (void)removeFileTaskInStorage:(SeafFile *)file {
     NSString *key = [self downloadStorageKey:file.accountIdentifier];
     
@@ -255,14 +283,29 @@
     }
 }
 
+/**
+ * Retrieves the storage key for file download tasks associated with a specific account.
+ * @param accountIdentifier The identifier for the account.
+ * @return A string representing the storage key for download tasks.
+ */
 - (NSString*)downloadStorageKey:(NSString*)accountIdentifier {
     return [NSString stringWithFormat:@"%@/%@",KEY_DOWNLOAD,accountIdentifier];
 }
 
+/**
+ * Retrieves the storage key for file upload tasks associated with a specific account.
+ * @param accountIdentifier The identifier for the account.
+ * @return A string representing the storage key for upload tasks.
+ */
 - (NSString*)uploadStorageKey:(NSString*)accountIdentifier {
      return [NSString stringWithFormat:@"%@/%@",KEY_UPLOAD,accountIdentifier];
 }
 
+/**
+ * Converts a task object into a dictionary representation for storage.
+ * @param task The task to be converted.
+ * @return A dictionary representation of the task.
+ */
 - (NSMutableDictionary*)convertTaskToDict:(id)task {
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     if ([task isKindOfClass:[SeafFile class]]) {
@@ -288,6 +331,10 @@
     return dict;
 }
 
+/**
+ * Starts any unfinished tasks from the last session associated with a specific connection.
+ * @param conn The connection whose tasks are to be started.
+ */
 - (void)startLastTimeUnfinshTaskWithConnection:(SeafConnection *)conn {
     NSString *downloadKey = [self downloadStorageKey:conn.accountIdentifier];
     NSDictionary *downloadTasks = [SeafStorage.sharedObject objectForKey:downloadKey];
@@ -327,6 +374,10 @@
     }
 }
 
+/**
+ * Removes all tasks associated with a specific account queue.
+ * @param conn The connection whose task queue is to be removed.
+ */
 - (void)removeAccountQueue:(SeafConnection *_Nullable)conn {
     SeafAccountTaskQueue *accountQueue = [self getAccountQueueWithIndentifier:conn.accountIdentifier];
     [accountQueue clearTasks];
@@ -334,6 +385,11 @@
     [self removeAccountUploadTaskFromStorage:conn.accountIdentifier];
 }
 
+/**
+ * Retrieves all upload tasks that are within a specific directory.
+ * @param dir The directory within which the upload tasks are to be retrieved.
+ * @return An array containing all the upload tasks within the specified directory.
+ */
 - (NSArray *)getUploadTasksInDir:(SeafDir *)dir {
     SeafAccountTaskQueue *accountQueue = [self getAccountQueueWithIndentifier:dir->connection.accountIdentifier];
     NSMutableArray *filesInDir = [NSMutableArray new];
@@ -346,11 +402,19 @@
     return filesInDir;
 }
 
+/**
+ * Removes all download tasks associated with a specific account from storage.
+ * @param accountIdentifier The identifier of the account whose download tasks are to be removed.
+ */
 - (void)removeAccountDownloadTaskFromStorage:(NSString *)accountIdentifier {
     NSString *key = [self downloadStorageKey:accountIdentifier];
     [SeafStorage.sharedObject removeObjectForKey:key];
 }
 
+/**
+ * Removes all upload tasks associated with a specific account from storage.
+ * @param accountIdentifier The identifier of the account whose upload tasks are to be removed.
+ */
 - (void)removeAccountUploadTaskFromStorage:(NSString *)accountIdentifier {
     NSString *key = [self uploadStorageKey:accountIdentifier];
     [SeafStorage.sharedObject removeObjectForKey:key];

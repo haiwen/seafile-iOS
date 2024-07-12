@@ -8,15 +8,39 @@
 
 #import "SeafFile.h"
 
+/**
+ * The `SeafStarFileDelegate` protocol defines methods that a delegate of a `SeafStarredFile` object
+ * must adopt. The methods provide notifications for changes to the starred status of the file.
+ */
 @protocol SeafStarFileDelegate <NSObject>
+/**
+ * Notifies the delegate that the starred state of the file has changed.
+ * @param starred The new starred state of the file.
+ * @param sfile The file whose starred state has changed.
+ */
 - (void)fileStateChanged:(BOOL)starred file:(SeafFile *)sfile;
 @end
 
+/**
+ * `SeafStarredFile` is a subclass of `SeafFile` that represents a file marked as starred in Seafile.
+ */
 @interface SeafStarredFile : SeafFile
+/// The delegate object that receives star state change events.
 @property (strong) id<SeafStarFileDelegate> starDelegate;
-@property int org;
+@property int org;/// The organization identifier for this file, if it belongs to an organization library.
 
 
+/**
+ * Initializes a `SeafStarredFile` object with the specified parameters.
+ * @param aConnection The connection to the Seafile server.
+ * @param aRepo The repository identifier where the file is located.
+ * @param aPath The path to the file within the repository.
+ * @param mtime The modification time of the file.
+ * @param size The size of the file in bytes.
+ * @param org The organization identifier, if applicable.
+ * @param anId The object identifier for the file.
+ * @return An initialized `SeafStarredFile` object.
+ */
 - (id)initWithConnection:(SeafConnection *)aConnection
                     repo:(NSString *)aRepo
                     path:(NSString *)aPath

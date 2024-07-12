@@ -23,14 +23,19 @@
 #define TABLE_HEADER_HEIGHT 100
 
 @interface StartViewController ()<UIDocumentPickerDelegate>
+// Table view to display accounts and buttons
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
+// Button to go back to the last account
 @property (weak, nonatomic) IBOutlet ColorfulButton *backButton;
+// Label for displaying welcome message
 @property (weak, nonatomic) IBOutlet UILabel *welcomeLabel;
+// Label for additional messages or instructions
 @property (weak, nonatomic) IBOutlet UILabel *msgLabel;
 @end
 
 @implementation StartViewController
 
+// Saves the account details to persistent storage
 - (bool)saveAccount:(SeafConnection *)conn
 {
     BOOL ret = [[SeafGlobal sharedObject] saveConnection:conn];
@@ -38,6 +43,7 @@
     return ret;
 }
 
+// Hides extra cell lines by setting a clear footer view
 - (void)setExtraCellLineHidden:(UITableView *)tableView
 {
     UIView *view = [UIView new];
@@ -53,7 +59,8 @@
         self.edgesForExtendedLayout = UIRectEdgeNone;
     [self setExtraCellLineHidden:self.tableView];
     self.title = NSLocalizedString(@"Accounts", @"Seafile");
-
+    
+    // Set up welcome and message labels
     self.welcomeLabel.text = [NSString stringWithFormat:NSLocalizedString(@"Welcome to %@", @"Seafile"), APP_NAME];
     self.msgLabel.text = NSLocalizedString(@"Choose an account to start", @"Seafile");
 
@@ -61,6 +68,7 @@
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
 //    self.navigationItem.rightBarButtonItem = [self getBarItemAutoSize:@"ellipsis".navItemImgName action:@selector(editSheet:)];
 
+    // Setup back button appearance and behavior
     [self.backButton addTarget:self action:@selector(goToDefaultBtclicked:) forControlEvents:UIControlEventTouchUpInside];
     self.backButton.layer.cornerRadius = 0;
     self.backButton.layer.borderWidth = .5f;
@@ -74,6 +82,7 @@
     [self.tableView reloadData];
 }
 
+// Present an action sheet for importing or removing client certificates
 - (void)editSheet:(id)sender
 {
     NSString *import = NSLocalizedString(@"Import client certificate", @"Seafile");
@@ -99,6 +108,7 @@
     [self presentViewController:alert animated:true completion:nil];
 }
 
+// Handles the import of a client certificate
 - (void)handleImprotCertificate
 {
     UIDocumentPickerViewController *documentPicker = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[@"public.data"] inMode:UIDocumentPickerModeImport];
@@ -107,6 +117,7 @@
     [self presentViewController:documentPicker animated:YES completion:nil];
 }
 
+// Handles the removal of a client certificate
 - (void)handleRemoveCertificate
 {
     NSDictionary *dict = [SeafStorage.sharedObject getAllSecIdentities];
@@ -133,6 +144,7 @@
     } from:self];
 }
 
+// Checks if the last used account is still valid
 - (BOOL)checkLastAccount
 {
     NSString *server = [SeafStorage.sharedObject objectForKey:@"DEAULT-SERVER"];
@@ -161,6 +173,7 @@
     [super viewDidUnload];
 }
 
+// Presents the account view controller for a given connection
 - (void)showAccountView:(SeafConnection *)conn type:(int)type
 {
     SeafAccountViewController *controller = [[SeafAccountViewController alloc] initWithController:self connection:conn type:type];
@@ -176,6 +189,7 @@
     });
 }
 
+// Handles the action for adding a new account
 - (IBAction)addAccount:(id)sender
 {
     NSString *title = NSLocalizedString(@"Choose a Seafile server", @"Seafile");
@@ -211,6 +225,7 @@
         return 1;
 }
 
+// Displays an edit menu when a long press gesture is recognized
 - (void)showEditMenu:(UILongPressGestureRecognizer *)gestureRecognizer
 {
     if (gestureRecognizer.state != UIGestureRecognizerStateBegan)
@@ -246,6 +261,7 @@
     });
 }
 
+// Generates a cell for adding a new account
 - (UITableViewCell *)getAddAccountCell:(UITableView *)tableView
 {
     NSString *CellIdentifier = @"SeafButtonCell";
@@ -299,11 +315,13 @@
 }
 
 #pragma mark - Table view delegate
+// Checks whether the selected account is valid and updates the interface accordingly
 - (void)checkSelectAccount:(SeafConnection *)conn
 {
     [self checkSelectAccount:conn completeHandler:^(bool success) { }];
 }
 
+// Verifies the selected account with optional biometric authentication
 - (void)checkSelectAccount:(SeafConnection *)conn completeHandler:(void (^)(bool success))handler
 {
     if (!conn.touchIdEnabled) {
@@ -336,6 +354,7 @@
 }
 
 #pragma mark - UIDocumentPickerDelegate
+// Manages the import of a security certificate from the specified URL
 - (void)importCertificate:(NSURL *)url
 {
     NSString *alertMessage = [NSString stringWithFormat:NSLocalizedString(@"Successfully imported %@", @"Seafile"),[url lastPathComponent]];
@@ -360,6 +379,8 @@
         }
     }];
 }
+
+// Handles the document picked by the user for importing
 - (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentAtURL:(NSURL *)url {
     Debug("Improt file %u url: %@ %d", (unsigned)controller.documentPickerMode , url, [[NSFileManager defaultManager] fileExistsAtPath:url.path]);
     if (controller.documentPickerMode != UIDocumentPickerModeImport)
@@ -369,6 +390,7 @@
 }
 
 #pragma mark - SSConnectionDelegate
+// Selects the given account and updates the app state
 - (BOOL)selectAccount:(SeafConnection *)conn;
 {
     if (!conn) return NO;
@@ -397,6 +419,7 @@
     return YES;
 }
 
+// Attempts to select the default account as specified in the app's settings
 - (void)selectDefaultAccount:(void (^)(bool success))handler
 {
     NSString *server = [SeafStorage.sharedObject objectForKey:@"DEAULT-SERVER"];
@@ -424,3 +447,5 @@
 }
 
 @end
+
+

@@ -66,6 +66,7 @@
     }
 }
 
+// Update search results when user types in the search bar.
 - (void)updateSearchResultsForSearchController:(UISearchController *)searchController {
     searchController.searchBar.delegate = self;
     if (searchController.searchBar.text.length == 0) {
@@ -74,6 +75,7 @@
     }
 }
 
+// Initiates search when the search button is clicked.
 - (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar {
     Debug("search %@", searchBar.text);
     self.tableView.contentInset = UIEdgeInsetsMake(CGRectGetMaxY(searchBar.frame), 0, 0, 0);
@@ -99,16 +101,19 @@
     }];
 }
 
+// Resets the search when the cancel button on the search bar is clicked.
 - (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar {
     [self resetTableview];
 }
 
+// Resets the table view to its initial state.
 - (void)resetTableview {
     self.searchResults = nil;
     [self updateStateLabel:SEARCH_STATE_INIT];
     [self.tableView reloadData];
 }
 
+// Updates the label to reflect the current state of search.
 - (void)updateStateLabel:(NSString *)state {
     if (state) {
         self.stateLabel.text = state;
@@ -179,12 +184,14 @@
     }
 }
 
+// Determine if the current file is an image.
 - (BOOL)isCurrentFileImage:(id<SeafPreView>)item {
     if (![item conformsToProtocol:@protocol(SeafPreView)])
         return NO;
     return item.isImageFile;
 }
 
+// Retrieve all image files in the current search results.
 - (NSArray *)getCurrentFileImagesInTableView:(UITableView *)tableView {
     NSMutableArray *arr = [[NSMutableArray alloc] init];
     for (id entry in self.searchResults) {
@@ -206,6 +213,7 @@
     }
 }
 
+// Handles errors during file download.
 - (void)download:(SeafBase *)entry failed:(NSError *)error {
     if ([entry isKindOfClass:[SeafFile class]]) {
         SeafFile *file = (SeafFile *)entry;
@@ -214,6 +222,7 @@
     }
 }
 
+// Updates the progress of a file being downloaded.
 - (void)download:(SeafBase *)entry progress:(float)progress {
     if ([entry isKindOfClass:[SeafFile class]]) {
         SeafFile *file = (SeafFile *)entry;
@@ -228,6 +237,7 @@
 }
 
 #pragma mark - Tableview cell
+// Retrieves a cell configured for a directory entry.
 - (SeafCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath {
     SeafCell *cell = (SeafCell *)[self getCell:@"SeafDirCell" forTableView:tableView];
     cell.textLabel.text = sdir.name;
@@ -240,6 +250,7 @@
     return cell;
 }
 
+// Generic method to retrieve a reusable cell from the table view.
 - (SeafCell *)getCell:(NSString *)cellIdentifier forTableView:(UITableView *)tableView {
     SeafCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
     if (cell == nil) {
@@ -251,6 +262,7 @@
     return cell;
 }
 
+// Retrieves a cell configured for a file entry.
 - (SeafCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath {
     [sfile loadCache];
     SeafCell *cell = (SeafCell *)[self getCell:@"SeafDirCell" forTableView:tableView];
@@ -262,6 +274,7 @@
     return cell;
 }
 
+// Updates the content of a cell based on the properties of a file.
 - (void)updateCellContent:(SeafCell *)cell file:(SeafFile *)sfile {
     cell.textLabel.text = sfile.name;
     cell.imageView.image = sfile.icon;
@@ -270,6 +283,7 @@
     [self updateCellDownloadStatus:cell isDownloading:sfile.isDownloading waiting:false cached:sfile.hasCache];
 }
 
+// Updates the download status indicator of a cell.
 - (void)updateCellDownloadStatus:(SeafCell *)cell isDownloading:(BOOL )isDownloading waiting:(BOOL)waiting cached:(BOOL)cached {
     if (!cell) return;
     if (isDownloading && cell.downloadingIndicator.isAnimating)
@@ -298,6 +312,7 @@
     });
 }
 
+// Updates the display of a file entry cell after its data has changed.
 - (void)updateEntryCell:(SeafFile *)entry {
     NSUInteger index = [self.searchResults indexOfObject:entry];
     NSIndexPath *path = [NSIndexPath indexPathForRow:index inSection:0];
@@ -305,6 +320,7 @@
     [self updateCellContent:cell file:entry];
 }
 
+// Retrieves the detail view controller from the app delegate.
 - (SeafDetailViewController *)detailViewController {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     return (SeafDetailViewController *)[appdelegate detailViewControllerAtIndex:TABBED_SEAFILE];

@@ -47,8 +47,10 @@
 @synthesize tabbarController = _tabbarController;
 @synthesize globalMailComposer = _globalMailComposer;
 
+// Determines whether the app has ongoing tasks that would require it to keep running in the background.
 - (BOOL)shouldContinue
 {
+    // Check if any connection is in auto-sync mode.
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
         if (conn.inAutoSync) return true;
     }
@@ -58,9 +60,11 @@
         SeafAccountTaskQueue *accountQueue =[SeafDataTaskManager.sharedObject accountQueueForConnection:conn];
         totalUploadingNum += accountQueue.fileQueue.taskNumber + accountQueue.uploadQueue.taskNumber;
     }
+    // Continue if there are any active uploads or downloads.
     return totalUploadingNum != 0 || totalDownloadingNum != 0;
 }
 
+// Selects the provided Seafile connection as the active account, updates navigation state.
 - (BOOL)selectAccount:(SeafConnection *)conn
 {
     conn.delegate = self;
@@ -78,6 +82,7 @@
             self.actvityVC.connection = conn;
         }
     }
+    // Register device for push notifications if token available.
 #if !(TARGET_IPHONE_SIMULATOR)
     if (self.deviceToken)
         [conn registerDevice:self.deviceToken];
@@ -85,6 +90,7 @@
     return updated;
 }
 
+// Transition to the provided account's interface or maintain current if already displayed.
 - (void)enterAccount:(SeafConnection *)conn
 {
     BOOL updated = [self selectAccount:conn];
@@ -92,6 +98,8 @@
         return;
 
     Debug("isActivityEnabled:%d tabbarController: %ld", conn.isActivityEnabled, (long)self.tabbarController.viewControllers.count);
+    
+    // Adjust tab bar controller's tabs based on the account's features
     if (conn.isActivityEnabled) {
         if (self.tabbarController.viewControllers.count != TABBED_COUNT) {
             [self.tabbarController setViewControllers:self.viewControllers];
@@ -104,20 +112,24 @@
         }
     }
     if (updated) {
+        // Restart any unfinished tasks and default to the files tab.
         [SeafDataTaskManager.sharedObject startLastTimeUnfinshTaskWithConnection:conn];
         [self.tabbarController setSelectedIndex:TABBED_SEAFILE];
     }
+    // Make the tab bar controller the root view controller and display it.
     self.window.rootViewController = self.tabbarController;
     [self.window makeKeyAndVisible];
     
 }
 
+// Exit current account and display the start (login) screen.
 - (void)exitAccount
 {
     self.window.rootViewController = _startNav;
     [self.window makeKeyAndVisible];
 }
 
+// Handle opening Seafile-specific URLs, typically used for navigating to a specific file or folder.
 - (BOOL)openSeafileURL:(NSURL*)url
 {
     Debug("open %@", url);
@@ -144,6 +156,7 @@
     return true;
 }
 
+// Handle opening file URLs to upload local files to Seafile.
 - (BOOL)openFileURL:(NSURL*)url
 {
     Debug("open %@", url);
@@ -163,6 +176,7 @@
     return true;
 }
 
+// Processes the file URL for uploading by copying it to a designated upload directory.
 - (void)handleUploadPathWithUrl:(NSURL*)url {
     NSString *uploadDir = [[SeafGlobal sharedObject].connection uniqueUploadDir];
     NSURL *to = [NSURL fileURLWithPath:[uploadDir stringByAppendingPathComponent:url.lastPathComponent]];
@@ -174,6 +188,7 @@
     }
 }
 
+// Upload the specified file to the connected Seafile server.
 - (void)uploadFile:(NSString *)path
 {
     [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
@@ -181,6 +196,7 @@
     [self.fileVC uploadFile:file];
 }
 
+// Generic method to handle different URL schemes with appropriate actions.
 - (BOOL)openURL:(NSURL*)url
 {
     if (!url) return false;
@@ -325,6 +341,7 @@
     [self startBackgroundTask];
 }
 
+// Background tasks management to ensure the app can continue operations when sent to background.
 - (void)startBackgroundTask
 {
     // Start the long-running task.
@@ -333,6 +350,7 @@
         [app endBackgroundTask:self.bgTask];
         self.bgTask = UIBackgroundTaskInvalid;
     }
+    // Start a new background task if there are tasks that should continue running.
     if (!self.shouldContinue) return;
     Debug("start background task");
     self.bgTask = [app beginBackgroundTaskWithExpirationHandler:self.expirationHandler];
@@ -437,6 +455,7 @@
 }
 
 #pragma mark - ViewController
+// Method to initialize and setup the tab controller with all required tabs.
 - (void)initTabController
 {
     UITabBarController *tabs;
@@ -540,12 +559,15 @@
     [self.window.rootViewController presentViewController:nc animated:YES completion:nil];
 }
 
+// Gets or creates the global mail composer to handle email interactions.
 - (MFMailComposeViewController *)globalMailComposer
 {
     if (_globalMailComposer == nil)
         [self cycleTheGlobalMailComposer];
     return _globalMailComposer;
 }
+
+// Recreates the mail composer to handle known iOS bugs with its caching.
 -(void)cycleTheGlobalMailComposer
 {
     // we are cycling the damned GlobalMailComposer... due to horrible iOS issue
@@ -565,6 +587,7 @@
     });
 }
 
+// Handle quota-related issues by notifying the user if the server quota is exceeded.
 - (void)outOfQuota:(SeafConnection *)connection
 {
     Warning("Out of quota.");
@@ -572,6 +595,7 @@
 }
 
 #pragma mark - PHPhotoLibraryChangeObserver
+// Observes changes to the photo library and triggers synchronization if necessary.
 - (void)photoLibraryDidChange:(PHChange *)changeInstance
 {
     Debug("Photos library changed.");
@@ -581,18 +605,21 @@
     });
 }
 
+// Adds a background monitor to keep track of significant app events like entering or leaving the background.
 - (void)addBackgroundMonitor:(id<SeafBackgroundMonitor>)monitor
 {
     [_monitors addObject:monitor];
 }
 
 #pragma mark - CLLocationManagerDelegate
+// Responds to location updates which might trigger background uploads based on significant location changes.
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations
 {
     Debug("Location updated: %@", locations);
     [self photosDidChange:nil];
 }
 
+// Starts or stops significant location updates based on the app's current needs.
 - (void)startSignificantChangeUpdates
 {
     Debug("_locationManager=%@", _locationManager);
@@ -603,6 +630,7 @@
         [_locationManager startMonitoringSignificantLocationChanges];
     }
 }
+
 - (void)stopSignificantChangeUpdates
 {
     if (_locationManager) {
@@ -612,6 +640,7 @@
     }
 }
 
+// Check and update the background upload status based on connectivity and user preferences.
 - (void)checkBackgroundUploadStatus
 {
     BOOL needLocationService = false;
@@ -622,6 +651,7 @@
         }
     }
     Debug("needLocationService: %d", needLocationService);
+    // Use CLLocationManager to start or stop monitoring significant location changes based on active features.
     if (needLocationService) {
         [self startSignificantChangeUpdates];
     } else {
@@ -629,6 +659,7 @@
     }
 }
 
+// Generic method to open any file by path and repository ID.
 - (void)openFile:(NSString *)repo path:(NSString *)path
 {
     [SeafStorage.sharedObject setObject:repo forKey:@"SEAFILE-OPEN-REPO"];
@@ -644,12 +675,14 @@
         [SeafAppDelegate checkOpenLink:self.fileVC];
 }
 
+// Ensures navigation ends if a file link cannot be opened.
 - (void)endGoto
 {
     self.gotoRepo = nil;
     self.gotoPath = nil;
 }
 
+// Checks if a direct link to a file can be opened and navigates accordingly.
 - (void)checkOpenLink:(SeafFileViewController *)c
 {
     if (!self.gotoRepo || !self.gotoPath)
@@ -670,6 +703,7 @@
 }
 
 # pragma mark- wechat callback
+// Facilitates response handling for WeChat-specific actions within the app.
 - (void)onResp:(BaseResp *)resp {
     if([resp isKindOfClass:[SendMessageToWXResp class]]) {
         switch (resp.errCode) {
@@ -695,6 +729,7 @@
     return  [delegate topViewController];
 }
 
+// Finds the topmost view controller in the navigation stack to handle certain UI actions.
 - (UIViewController *)topViewController {
     UIViewController *rootVC = [self.window rootViewController];
     UIViewController *topVC = [self findTopViewController:rootVC];
@@ -704,6 +739,7 @@
     return topVC;
 }
 
+// Recursively searches for the topmost view controller.
 - (UIViewController *)findTopViewController:(UIViewController *)vc {
     if ([vc isKindOfClass:[UINavigationController class]]) {
         return [self findTopViewController:[(UINavigationController *)vc topViewController]];

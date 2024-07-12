@@ -47,7 +47,7 @@
 @synthesize connection;
 @synthesize type;
 
-
+// Initializes a new instance of the view controller with necessary parameters.
 - (id)initWithController:(StartViewController *)controller connection: (SeafConnection *)conn type:(int)atype
 {
     if (self = [super initWithAutoPlatformNibName]) {
@@ -58,6 +58,7 @@
     return self;
 }
 
+// Action for cancel button, dismissing progress HUD and view controller.
 - (IBAction)cancel:(id)sender
 {
     connection.loginDelegate = nil;
@@ -65,6 +66,7 @@
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
+// Helper method to replace a prefix in a string with a target string.
 - (NSString *)replaceString:(NSString *)str prefix:(NSString *)prefix withString:(NSString *)target
 {
     if ([str hasPrefix:prefix]) {
@@ -78,6 +80,7 @@
 {
     BOOL https = _httpsSwitch.on;
     BOOL cur = [self.prefixLabel.text hasPrefix:HTTPS];
+    // Check if the current prefix matches the switch's state to avoid unnecessary updates
     if (cur == https) return;
     if (https) {
         self.prefixLabel.text = @"https://";
@@ -89,16 +92,21 @@
 - (IBAction)shibboleth:(id)sender
 {
     NSString *url = [NSString stringWithFormat:@"%@%@",self.prefixLabel.text,serverTextField.text];
+    
+    // Validate server text field is not empty
     if (!serverTextField.text || serverTextField.text.length < 1) {
         [self alertWithTitle:NSLocalizedString(@"Server must not be empty", @"Seafile")];
         return;
     }
+    // Validate the URL to ensure it has the correct protocol prefix
     if (![url hasPrefix:HTTP] && ![url hasPrefix:HTTPS]) {
         [self alertWithTitle:NSLocalizedString(@"Invalid Server", @"Seafile")];
         return;
     }
+    // Trim trailing slash for uniformity
     if ([url hasSuffix:@"/"])
         url = [url substringToIndex:url.length-1];
+    // Initialize or reuse existing connection object
     if (!self.connection)
         connection = [[SeafConnection alloc] initWithUrl:url cacheProvider:SeafGlobal.sharedObject.cacheProvider];
     if (![url isEqualToString:connection.address]) {
@@ -112,6 +120,7 @@
 
 - (IBAction)login:(id)sender
 {
+    // Distinguish between Shibboleth and standard login processes
     if (self.type == ACCOUNT_SHIBBOLETH) {
         return [self shibboleth:sender];
     }
@@ -121,12 +130,15 @@
     NSString *username = usernameTextField.text;
     NSString *password = passwordTextField.text;
 
+    // Check for non-empty server field
     if (!serverTextField.text || serverTextField.text.length < 1) {
         [self alertWithTitle:NSLocalizedString(@"Server must not be empty", @"Seafile")];
         return;
     }
 
     NSString *url = [NSString stringWithFormat:@"%@%@",self.prefixLabel.text,serverTextField.text];
+    
+    // Validate URL prefix for correctness
     if (![url hasPrefix:HTTP] && ![url hasPrefix:HTTPS]) {
         [self alertWithTitle:NSLocalizedString(@"Invalid Server", @"Seafile")];
         return;
@@ -141,6 +153,8 @@
     }
     if ([url hasSuffix:@"/"])
         url = [url substringToIndex:url.length-1];
+    
+    // Setup or reset connection object based on the URL
     if (!self.connection)
         connection = [[SeafConnection alloc] initWithUrl:url cacheProvider:SeafGlobal.sharedObject.cacheProvider];
     if (![url isEqualToString:connection.address]) {
@@ -176,6 +190,7 @@
     // Do any additional setup after loading the view from its nib.
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeNone;
+    // Setup flexible margins for subviews for proper resizing behavior.
     for (UIView *v in self.view.subviews) {
         v.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin| UIViewAutoresizingFlexibleRightMargin
         | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
@@ -193,6 +208,8 @@
     _httpsLabel.text = @"https";
     serverTextField.clearButtonMode = UITextFieldViewModeNever;
     serverTextField.placeholder = NSLocalizedString(@"Server, like https://seafile.cc", @"Seafile");
+    
+    // Adjust the UI based on account type.
     if (self.type != ACCOUNT_SHIBBOLETH) {
         self.title = [APP_NAME stringByAppendingFormat:@" %@", NSLocalizedString(@"Account", @"Seafile")];
         usernameTextField.placeholder = NSLocalizedString(@"Email or Username", @"Seafile");
@@ -203,6 +220,8 @@
         [usernameTextField removeFromSuperview];
         [passwordTextField removeFromSuperview];
     }
+    
+    // Configure the switch for HTTPS and set the initial server URL if needed.
     BOOL https = true;
     _httpsSwitch.on = true;
     switch (self.type) {
@@ -232,6 +251,8 @@
         default:
             break;
     }
+    
+    // Restore previous session details if available.
     if (self.connection) {
         https = [connection.address hasPrefix:HTTPS];
         _httpsSwitch.on = https;
@@ -244,6 +265,8 @@
         _httpsSwitch.enabled = false;
     }
     [self.serverTextField setDelegate:self];
+    
+    // Setup navigation bar appearance for iOS 15 and later.
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     if (@available(iOS 15.0, *)) {
         UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
@@ -271,6 +294,7 @@
 }
 
 #pragma mark - SeafLoginDelegate
+// Handle client certificate selection needed for certain secure connections.
 - (NSData *)getClientCertPersistentRef:(NSURLCredential *__autoreleasing *)credential
 {
     __block NSURLCredential *b_cred = NULL;
@@ -290,6 +314,7 @@
     return b_key;
 }
 
+// Initiate client certificate retrieval from keychain.
 - (BOOL)getClientCert:(void (^)(NSData *key, NSURLCredential *cred))completeHandler
 {
     NSDictionary *dict = [SeafStorage.sharedObject getAllSecIdentities];
@@ -309,6 +334,7 @@
     return true;
 }
 
+// Dialog for invalid SSL certificates.
 - (void)authorizeInvalidCert:(NSURLProtectionSpace *)protectionSpace yes:(void (^)(void))yes no:(void (^)(void))no
 {
     NSString *title = [NSString stringWithFormat:NSLocalizedString(@"%@ can't verify the identity of the website \"%@\"", @"Seafile"), APP_NAME, protectionSpace.host];
@@ -316,6 +342,7 @@
     [self alertWithTitle:title message:message yes:yes no:no];
 }
 
+// Simplified version for synchronous handling of invalid SSL certificate acceptance.
 - (BOOL)authorizeInvalidCert:(NSURLProtectionSpace *)protectionSpace
 {
     __block BOOL ret = false;

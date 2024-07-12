@@ -73,16 +73,19 @@ enum SHARE_STATUS {
     return self;
 }
 #pragma mark - Managing the detail item
+// Check if preview was successful based on the current preview state.
 - (BOOL)previewSuccess
 {
     return (self.state == PREVIEW_WEBVIEW) || (self.state == PREVIEW_WEBVIEW_JS) || (self.state == PREVIEW_TEXT);
 }
 
+// Check if the current view controller is presented modally.
 - (BOOL)isModal
 {
     return self.presentingViewController != nil;
 }
 
+// Update navigation items depending on the current state and item properties.
 - (void)updateNavigation
 {
     if ([self isModal])
@@ -103,11 +106,13 @@ enum SHARE_STATUS {
     self.navigationItem.rightBarButtonItems = array;
 }
 
+// Clear current preview settings and restore to initial state.
 - (void)resetNavigation {
     self.navigationItem.title = nil;
     self.navigationItem.rightBarButtonItems = nil;
 }
 
+// Clear all views associated with the current preview.
 - (void)clearPreView
 {
     self.failedView.hidden = YES;
@@ -119,15 +124,17 @@ enum SHARE_STATUS {
     [self clearPhotosVIew];
 }
 
+// Update the preview state based on the current item's properties and state.
 - (void)updatePreviewState
 {
     if (self.state == PREVIEW_PHOTO && self.photos)
-        return;
+        return;// No change needed if already displaying photos
 
     _state = PREVIEW_NONE;
-    if (!self.preViewItem) {
+    if (!self.preViewItem) {        // No item to preview
+
     } else if (self.preViewItem.previewItemURL) {
-        _state = PREVIEW_QL_MODAL;
+        _state = PREVIEW_QL_MODAL;// Default state
         if ([self.preViewItem.mime isEqualToString:@"image/svg+xml"]) {
             _state = PREVIEW_WEBVIEW;
         } else if([self.preViewItem.mime isEqualToString:@"text/x-markdown"] || [self.preViewItem.mime isEqualToString:@"text/x-seafile"]) {
@@ -135,14 +142,14 @@ enum SHARE_STATUS {
         } else if ([self.preViewItem.mime containsString:@"text/"]) {
             _state = PREVIEW_TEXT;
         } else if (!IsIpad()) { // if (!IsIpad()) iPhone >= 10.0
-            _state = self.preViewItem.editable ? PREVIEW_WEBVIEW : PREVIEW_QL_MODAL;
+            _state = self.preViewItem.editable ? PREVIEW_WEBVIEW : PREVIEW_QL_MODAL; // Use Quick Look for non-editable files on iPhone
         } else if (![QLPreviewController canPreviewItem:self.preViewItem]) {
-            _state = PREVIEW_FAILED;
+            _state = PREVIEW_FAILED;// Mark as failed if Quick Look can't preview the item
         }
     } else {
-        _state = PREVIEW_DOWNLOADING;
+        _state = PREVIEW_DOWNLOADING;// Set state as downloading if no URL is available
     }
-    if (_state != PREVIEW_QL_MODAL) {
+    if (_state != PREVIEW_QL_MODAL) { // Clear the preview if state is not Quick Look modal
         [self clearPreView];
     }
     Debug("preview %@ %@ state: %d", self.preViewItem.name, self.preViewItem.previewItemURL, _state);
@@ -150,10 +157,10 @@ enum SHARE_STATUS {
 
 - (void)refreshView
 {
-    [self updatePreviewState];
+    [self updatePreviewState];// Update the state based on the current item
     if (!self.isViewLoaded) return;
 
-    [self updateNavigation];
+    [self updateNavigation];// Update the navigation items
     CGFloat y = 64;
     if (@available(iOS 11.0, *)) {
        y = 44 + [UIApplication sharedApplication].keyWindow.safeAreaInsets.top;
@@ -164,29 +171,29 @@ enum SHARE_STATUS {
             Debug (@"DownLoading file %@\n", self.preViewItem.previewItemTitle);
             self.progressView.frame = r;
             self.progressView.hidden = NO;
-            [self.progressView configureViewWithItem:self.preViewItem progress:0];
+            [self.progressView configureViewWithItem:self.preViewItem progress:0]; // Initialize progress view
             break;
         case PREVIEW_FAILED:
             Debug ("Can not preview file %@ %@\n", self.preViewItem.previewItemTitle, self.preViewItem.previewItemURL);
             self.failedView.frame = r;
             self.failedView.hidden = NO;
-            [self.failedView configureViewWithPrevireItem:self.preViewItem];
+            [self.failedView configureViewWithPrevireItem:self.preViewItem]; // Initialize failure view
             break;
         case PREVIEW_QL_MODAL: {
             Debug (@"Preview file %@ mime=%@ QL modal\n", self.preViewItem.previewItemTitle, self.preViewItem.mime);
-            [self.qlViewController reloadData];
+            [self.qlViewController reloadData]; // Reload data for Quick Look view controller
             if (!self.qlViewController.presentingViewController) {
-                if (self.isModal && self.isVisible) { // For preview from SeafFileViewController and SeafStarredFileViewController
+                if (self.isModal && self.isVisible) { // Check if modal and visible
                     UIViewController *vc = self.presentingViewController;
                     [vc dismissViewControllerAnimated:NO completion:^{
                         [vc presentViewController:self.qlViewController animated:NO completion:^{
-                            [self clearPreView];
+                            [self clearPreView];// Clear previous views after presenting Quick Look
                         }];
                     }];
                 } else if (IsIpad()) {
                     [[SeafAppDelegate topViewController].parentViewController presentViewController:self.qlViewController animated:YES completion:^{
                         [self clearPreView];
-                        [self resetNavigation];
+                        [self resetNavigation];// Reset navigation items
                     }];
                 }
             }
@@ -196,9 +203,9 @@ enum SHARE_STATUS {
         case PREVIEW_WEBVIEW: {
             Debug("Preview by webview %@\n", self.preViewItem.previewItemTitle);
             if (self.state == PREVIEW_WEBVIEW_JS) {
-                self.webView.navigationDelegate = self;
+                self.webView.navigationDelegate = self;// Set delegate for handling JavaScript
             } else {
-                self.webView.navigationDelegate = nil;
+                self.webView.navigationDelegate = nil;// Clear delegate for regular web view
             }
             self.webView.frame = r;
             [self.webView loadFileURL:self.preViewItem.previewItemURL allowingReadAccessToURL:self.preViewItem.previewItemURL];
@@ -211,7 +218,7 @@ enum SHARE_STATUS {
             self.textView.frame = r;
             self.textView.attributedText = [self attributedTextOfPreViewItem];
             self.textView.hidden = NO;
-            [self.textView scrollsToTop];
+            [self.textView scrollsToTop];// Scroll to top
             break;
         case PREVIEW_PHOTO:
             Debug("Preview photo %@\n", self.preViewItem.previewItemTitle);
@@ -224,13 +231,14 @@ enum SHARE_STATUS {
     }
     if (@available(iOS 13.0, *)) {
         if ([self isPortrait]) {
-            self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModePrimaryHidden;
+            self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModePrimaryHidden;// Adjust split view controller display mode for portrait
         } else {
-            self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModeAllVisible;
+            self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModeAllVisible;// Adjust split view controller display mode for landscape
         }
     }
 }
 
+// Set the preview item and refresh the view.
 - (void)setPreViewItem:(id<SeafPreView>)item master:(UIViewController<SeafDentryDelegate> *)c
 {
     if (self.masterPopoverController != nil)
@@ -243,11 +251,12 @@ enum SHARE_STATUS {
     [self refreshView];
 }
 
+// Set and prepare photo views for preview.
 - (void)setPreViewPhotos:(NSArray *)items current:(id<SeafPreView>)item master:(UIViewController<SeafDentryDelegate> *)c
 {
     [self clearPreView];
     if (self.masterPopoverController != nil)
-        [self.masterPopoverController dismissPopoverAnimated:YES];
+        [self.masterPopoverController dismissPopoverAnimated:YES];// Dismiss popover if exists
     self.masterVc = c;
     NSMutableArray *seafPhotos = [[NSMutableArray alloc] init];
     for (id<SeafPreView> file in items) {
@@ -268,6 +277,7 @@ enum SHARE_STATUS {
     [self.view setNeedsLayout];
 }
 
+// Handle the back button action.
 - (void)goBack:(id)sender
 {
     if (self.isModal)
@@ -348,25 +358,25 @@ enum SHARE_STATUS {
 - (void)viewWillLayoutSubviews
 {
     [super viewWillLayoutSubviews];
-    CGRect r = CGRectMake(self.view.frame.origin.x, 64, self.view.frame.size.width, self.view.frame.size.height - 64);
+    CGRect r = CGRectMake(self.view.frame.origin.x, 64, self.view.frame.size.width, self.view.frame.size.height - 64);// Calculate layout rectangle
     if (IsIpad()) {
         r = CGRectMake(self.view.frame.origin.x, 0, self.view.frame.size.width, self.view.frame.size.height - 0);
     }
     if (self.state == PREVIEW_PHOTO){
         if (IsIpad()) {
-            self.mwPhotoBrowser.view.frame = r;
+            self.mwPhotoBrowser.view.frame = r;// Adjust photo browser frame for iPad
         } else {
-            UIDeviceOrientation orientation = (UIDeviceOrientation)[UIApplication sharedApplication].statusBarOrientation;
+            UIDeviceOrientation orientation = (UIDeviceOrientation)[UIApplication sharedApplication].statusBarOrientation;// Get current device orientation
             if (orientation == UIDeviceOrientationPortrait || orientation == UIDeviceOrientationPortraitUpsideDown) {
-                self.mwPhotoBrowser.view.frame = r;
+                self.mwPhotoBrowser.view.frame = r;// Adjust photo browser frame for portrait orientation
             } else {
-                self.mwPhotoBrowser.view.frame = CGRectMake(self.view.frame.origin.x, 32, self.view.frame.size.width, self.view.frame.size.height - 32);
+                self.mwPhotoBrowser.view.frame = CGRectMake(self.view.frame.origin.x, 32, self.view.frame.size.width, self.view.frame.size.height - 32);// Adjust photo browser frame for landscape orientation
             }
         }
     } else {
         if (self.view.subviews.count > 1) {
             UIView *v = [self.view.subviews objectAtIndex:0];
-            v.frame = r;
+            v.frame = r; // Adjust frame for the first subview
         }
     }
     
@@ -383,7 +393,7 @@ enum SHARE_STATUS {
 
 - (void)splitViewController:(UISplitViewController *)splitController willHideViewController:(UIViewController *)viewController withBarButtonItem:(UIBarButtonItem *)barButtonItem forPopoverController:(UIPopoverController *)popoverController
 {
-    [self.navigationItem setLeftBarButtonItem:barButtonItem animated:NO];
+    [self.navigationItem setLeftBarButtonItem:barButtonItem animated:NO];// Set left bar button item when hiding the view controller
     self.masterPopoverController = popoverController;
 }
 
@@ -396,13 +406,13 @@ enum SHARE_STATUS {
 
 - (BOOL)splitViewController:(UISplitViewController *)svc shouldHideViewController:(UIViewController *)vc inOrientation:(UIInterfaceOrientation)orientation
 {
-    return !UIInterfaceOrientationIsLandscape(orientation);
+    return !UIInterfaceOrientationIsLandscape(orientation); // Determine if the view controller should be hidden based on orientation
 }
 
 - (void)viewWillDisappear:(BOOL)animated
 {
     if (self.masterPopoverController != nil) {
-        [self.masterPopoverController dismissPopoverAnimated:YES];
+        [self.masterPopoverController dismissPopoverAnimated:YES];// Dismiss the master popover controller if it exists
     }
     [super viewWillDisappear:animated];
 }
@@ -410,18 +420,18 @@ enum SHARE_STATUS {
 #pragma mark - SeafDentryDelegate
 - (void)download:(SeafBase *)entry progress:(float)progress
 {
-    if (_preViewItem != entry) return;
+    if (_preViewItem != entry) return; // Return if the entry is not the current preview item
 
     if (self.state == PREVIEW_PHOTO) {
         SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
         if (photo != nil)
-            [photo setProgress:progress];
+            [photo setProgress:progress];// Update progress for the photo
         return;
     }
     if (self.state != PREVIEW_DOWNLOADING) {
-        [self refreshView];
+        [self refreshView];// Refresh the view if state is not downloading
     } else
-        [self.progressView configureViewWithItem:self.preViewItem progress:progress];
+        [self.progressView configureViewWithItem:self.preViewItem progress:progress];// Update progress view
 }
 
 - (void)download:(SeafBase *)entry complete:(BOOL)updated
@@ -429,9 +439,9 @@ enum SHARE_STATUS {
     if (self.state == PREVIEW_PHOTO) {
         SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
         if (photo == nil)
-            return;
+            return;// Return if no photo is found
         [photo complete:updated error:nil];
-        [self updateNavigation];
+        [self updateNavigation];// Update navigation items
         return;
     }
     if (_preViewItem != entry) return;
@@ -452,28 +462,28 @@ enum SHARE_STATUS {
     Debug("Failed to download %@ : %@ ", entry.name, error);
     if (self.state == PREVIEW_PHOTO) {
         SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
-        if (photo == nil) return;
-        if (self.preViewItem == entry) {
+        if (photo == nil) return;// Return if no photo is found
+        if (self.preViewItem == entry) {// Show download error
             [self showDownloadError:self.preViewItem.previewItemTitle];
         }
         NSError *error = [NSError errorWithDomain:[NSString stringWithFormat:@"Failed to download file '%@'",self.preViewItem.previewItemTitle] code:-1 userInfo:nil];
-        [photo complete:false error:error];
+        [photo complete:false error:error];// Mark the photo as not complete with error
         return;
     }
 
     if (self.preViewItem != entry || self.preViewItem.hasCache)
-        return;
+        return;// Return if the entry is not the current item or if it is cached
 
     [self showDownloadError:self.preViewItem.previewItemTitle];
-    [self setPreViewItem:nil master:nil];
+    [self setPreViewItem:nil master:nil];// Clear the preview item and master
 }
 
 #pragma mark - file operations
 - (IBAction)delete:(id)sender {
     [self alertWithTitle:[NSString stringWithFormat:NSLocalizedString(@"Are you sure you want to delete %@ ?", @"Seafile"), self.preViewItem.name] message:nil yes:^{
         if (_masterVc && [_masterVc isKindOfClass:[SeafFileViewController class]]) {
-            [self goBack:nil];
-            [(SeafFileViewController *)_masterVc deleteFile:(SeafFile *)self.preViewItem];
+            [self goBack:nil];// Go back if deletion is confirmed
+            [(SeafFileViewController *)_masterVc deleteFile:(SeafFile *)self.preViewItem];// Delete the file
         }
     } no:nil];
 }
@@ -481,22 +491,22 @@ enum SHARE_STATUS {
 - (IBAction)starFile:(id)sender
 {
     [(SeafFile *)self.preViewItem setStarred:YES];
-    [self updateNavigation];
+    [self updateNavigation];// Update navigation items
 }
 
 - (IBAction)unstarFile:(id)sender
 {
     [(SeafFile *)self.preViewItem setStarred:NO];
-    [self updateNavigation];
+    [self updateNavigation];// Update navigation items
 }
 
 - (IBAction)editFile:(id)sender
 {
-    if (self.preViewItem.filesize > 10 * 1024 * 1024) {
+    if (self.preViewItem.filesize > 10 * 1024 * 1024) {// Alert if file is too large to edit
         [self alertWithTitle:[NSString stringWithFormat:NSLocalizedString(@"File '%@' is too large to edit", @"Seafile"), self.preViewItem.name]];
         return;
     }
-    if (!self.preViewItem.strContent) {
+    if (!self.preViewItem.strContent) { // Alert if file encoding is unidentified
         [self alertWithTitle:[NSString stringWithFormat:NSLocalizedString(@"Failed to identify the coding of '%@'", @"Seafile"), self.preViewItem.name]];
         return;
     }
@@ -510,10 +520,10 @@ enum SHARE_STATUS {
 - (IBAction)cancelDownload:(id)sender
 {
     id<SeafPreView> item = self.preViewItem;
-    [self setPreViewItem:nil master:nil];
-    [item cancelAnyLoading];
+    [self setPreViewItem:nil master:nil];// Clear the preview item and master
+    [item cancelAnyLoading];// Cancel any ongoing loading
     if (!IsIpad())
-        [self goBack:nil];
+        [self goBack:nil];// Go back if not iPad
 }
 
 - (void)showAlertWithAction:(NSArray *)arr fromBarItem:(UIBarButtonItem *)item withTitle:(NSString *)title
@@ -527,20 +537,20 @@ enum SHARE_STATUS {
 
 - (IBAction)export:(id)sender
 {
-    if (![self.preViewItem isKindOfClass:[SeafFile class]]) return;
+    if (![self.preViewItem isKindOfClass:[SeafFile class]]) return;// Return if the preview item is not a file
     SeafFile *file = (SeafFile *)self.preViewItem;
     NSArray *array = @[file.exportURL];
-    [SeafActionsManager exportByActivityView:array item:self.exportItem targerVC:self];
+    [SeafActionsManager exportByActivityView:array item:self.exportItem targerVC:self];// Export the file using the activity view
 }
 
 - (IBAction)share:(id)sender
 {
-    if (![self.preViewItem isKindOfClass:[SeafFile class]]) return;
+    if (![self.preViewItem isKindOfClass:[SeafFile class]]) return;// Return if the preview item is not a file
     [self.preViewItem setDelegate:self];
     NSString *email = NSLocalizedString(@"Email", @"Seafile");
     NSString *copy = NSLocalizedString(@"Copy Link to Clipboard", @"Seafile");
     NSMutableArray *titles = [NSMutableArray arrayWithObjects:email, copy, nil];
-    if ([SeafWechatHelper wechatInstalled] && [self.preViewItem exportURL]) {
+    if ([SeafWechatHelper wechatInstalled] && [self.preViewItem exportURL]) { // Add "Share to WeChat" option
         NSString *wechat = NSLocalizedString(@"Share to WeChat", @"Seafile");
         [titles addObject:wechat];
     }
@@ -561,28 +571,28 @@ enum SHARE_STATUS {
     SeafFile *file = (SeafFile *)self.preViewItem;
     if ([NSLocalizedString(@"Email", @"Seafile") isEqualToString:title]
                || [NSLocalizedString(@"Copy Link to Clipboard", @"Seafile") isEqualToString:title]) {
-        if (![self checkNetworkStatus])
+        if (![self checkNetworkStatus])// Return if there is no network connection
             return;
 
-        if ([NSLocalizedString(@"Email", @"Seafile") isEqualToString:title])
+        if ([NSLocalizedString(@"Email", @"Seafile") isEqualToString:title])// Set share status to "Share by Mail"
             _shareStatus = SHARE_BY_MAIL;
         else
-            _shareStatus = SHARE_BY_LINK;
-        if (!file.shareLink) {
+            _shareStatus = SHARE_BY_LINK;// Set share status to "Share by Link"
+        if (!file.shareLink) {// Show status for generating share link
             [SVProgressHUD showWithStatus:NSLocalizedString(@"Generate share link ...", @"Seafile")];
-            [file generateShareLink:self];
+            [file generateShareLink:self];// Generate share link
         } else {
-            [self generateSharelink:file WithResult:YES];
+            [self generateSharelink:file WithResult:YES];// Handle generated share link
         }
     } else if ([NSLocalizedString(@"Share to WeChat", @"Seafile") isEqualToString:title]) {
-        [SeafWechatHelper shareToWechatWithFile:file];
+        [SeafWechatHelper shareToWechatWithFile:file];// Share file to WeChat
     }
 }
 
 #pragma mark - SeafShareDelegate
 - (void)generateSharelink:(SeafBase*)entry WithResult:(BOOL)success
 {
-    if (entry != self.preViewItem) {
+    if (entry != self.preViewItem) {// Dismiss the progress HUD if the entry is not the current item
         [SVProgressHUD dismiss];
         return;
     }
@@ -596,10 +606,10 @@ enum SHARE_STATUS {
     Debug("file %@ sharelink;%@", file.name, file.shareLink);
 
     if (_shareStatus == SHARE_BY_MAIL) {
-        [self sendMailInApp:file.name shareLink:file.shareLink];
+        [self sendMailInApp:file.name shareLink:file.shareLink];// Send mail with the share link
     } else if (_shareStatus == SHARE_BY_LINK){
         UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-        [pasteboard setString:file.shareLink];
+        [pasteboard setString:file.shareLink];// Set the share link in the pasteboard
     }
 }
 
@@ -607,7 +617,7 @@ enum SHARE_STATUS {
 - (void)sendMailInApp:(NSString *)name shareLink:(NSString *)shareLink
 {
     Debug("send mail: %@", shareLink);
-    Class mailClass = (NSClassFromString(@"MFMailComposeViewController"));
+    Class mailClass = (NSClassFromString(@"MFMailComposeViewController"));// Get the mail compose view controller class
     if (!mailClass) {
         [self alertWithTitle:NSLocalizedString(@"This function is not supportted yet，you can copy it to the pasteboard and send mail by yourself", @"Seafile")];
         return;
@@ -660,20 +670,20 @@ enum SHARE_STATUS {
 # pragma - WKWebViewDelegate
 - (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation {
     if (self.preViewItem) {
-        NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [self.preViewItem.strContent stringEscapedForJavasacript]];
-        [self.webView evaluateJavaScript:js completionHandler:nil];
+        NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [self.preViewItem.strContent stringEscapedForJavasacript]];// Prepare JavaScript for setting content
+        [self.webView evaluateJavaScript:js completionHandler:nil];// Evaluate JavaScript
     }
 }
 
 - (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(nonnull WKNavigationAction *)navigationAction decisionHandler:(nonnull void (^)(WKNavigationActionPolicy))decisionHandler {
     NSURL *requestURL = navigationAction.request.URL;
     if ([requestURL.absoluteString hasPrefix:@"file://"]) {
-        decisionHandler(WKNavigationActionPolicyAllow);
+        decisionHandler(WKNavigationActionPolicyAllow);// Allow navigation for file URLs
     } else {
         if ([requestURL.absoluteString hasPrefix:@"http"]) {
             if (@available(iOS 9.0, *)) {
                 SFSafariViewController *safariVC = [[SFSafariViewController alloc] initWithURL:requestURL];
-                [self presentViewController:safariVC animated:true completion:nil];
+                [self presentViewController:safariVC animated:true completion:nil];// Present Safari view controller
             } else {
                 [[UIApplication sharedApplication] openURL:requestURL];
             }
@@ -711,9 +721,9 @@ enum SHARE_STATUS {
 - (QLPreviewItemEditingMode)previewController:(QLPreviewController *)controller editingModeForPreviewItem:(id<QLPreviewItem>)previewItem  API_AVAILABLE(ios(13.0)){
     SeafFile *file = (SeafFile *)previewItem;
     if ([file.mime isEqualToString:@"application/pdf"]) {
-        return QLPreviewItemEditingModeCreateCopy;
+        return QLPreviewItemEditingModeCreateCopy;// Allow creating a copy for PDF files
     } else {
-        return QLPreviewItemEditingModeDisabled;
+        return QLPreviewItemEditingModeDisabled;// Disable editing for other files
     }
 }
 

@@ -66,7 +66,8 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         self.navigationController.navigationBar.standardAppearance = barAppearance;
         self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
     }
-
+    
+    // Initialize the loading of more events and setup for infinite scrolling
     self.eventsMore = true;
     self.eventsOffset = 0;
     _eventDetails = [NSMutableDictionary new];
@@ -82,6 +83,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
                        NSLocalizedString(@"Recovered deleted directory", @"Seafile"),
                        NSLocalizedString(@"Changed library name or description", @"Seafile"),
                        nil];
+    // Setup dictionaries for operations and types mapping
     self.prefixMap = [NSDictionary dictionaryWithObjects:values2 forKeys:keys2];
     self.typesMap = [NSDictionary dictionaryWithObjectsAndKeys:
                      NSLocalizedString(@"files", @"Seafile"), @"files",
@@ -93,6 +95,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         [strongSelf moreEvents:strongSelf.eventsOffset];
     }];
     
+    // Setup pull to refresh control and its target action
     self.tableView.refreshControl = [[UIRefreshControl alloc] init];
     [self.tableView.refreshControl addTarget:self action:@selector(refreshControlChanged) forControlEvents:UIControlEventValueChanged];
 }
@@ -111,12 +114,15 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 }
 
 - (void)refresh:(id)sender {
+    // Hide accessibility elements during refresh to avoid user interaction
     self.tableView.accessibilityElementsHidden = YES;
     UIAccessibilityPostNotification(UIAccessibilityScreenChangedNotification, self.tableView.refreshControl);
     [self moreEvents:0];
 }
 
+// Ends the refresh process and updates UI
 - (void)endRefreshing {
+    // Re-enable accessibility elements
     self.tableView.accessibilityElementsHidden = NO;
     [self.tableView.refreshControl endRefreshing];
 }
@@ -124,6 +130,8 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 - (void)reloadData
 {
     [self.tableView.infiniteScrollingView stopAnimating];
+    
+    // Determine if the infinite scrolling should be shown based on if more events are expected
     self.tableView.showsInfiniteScrolling = _eventsMore;
     [self endRefreshing];
     [self.tableView reloadData];
@@ -131,9 +139,12 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 
 - (void)moreEvents:(int)offset
 {
+    // Check for the new API compatibility, if so use new method for requesting events
     if (_connection.isNewActivitiesApiSupported) {
         return [self newApiRequest:offset];
     }
+    
+    // Standard request for older API versions
     NSString *url = [NSString stringWithFormat:API_URL"/events/?start=%d", offset];
     [_connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
         Debug("Succeeded to get events start=%d", offset);
@@ -157,28 +168,29 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     }];
 }
 
+// Handles the new API request specifically for loading events with pagination support.
 - (void)newApiRequest:(int)page {
     if (page == 0) {
-        page += 1;
+        page += 1;// Ensure the page starts from 1 if reset to 0
     }
     NSString *url = [NSString stringWithFormat:API_URL_V21"/activities/?page=%d", page];
     [_connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
         Debug("Succeeded to get events start=%d  %@", page, JSON);
         NSArray *arr = [JSON objectForKey:@"events"];
         if (page == 1) {
-            _events = nil;
+            _events = nil;// Clear existing events if refreshing
         }
         
         NSMutableArray *marray = [NSMutableArray new];
         [marray addObjectsFromArray:_events];
         [marray addObjectsFromArray:arr];
         _events = marray;
-        if (arr.count < 25) {
+        if (arr.count < 25) {// Check if there's likely more data based on page size
             _eventsMore = false;
         } else {
             _eventsMore = true;
         }
-        _eventsOffset = page + 1;
+        _eventsOffset = page + 1;// Prepare the next page number
         Debug("%lu events, more:%d, offset:%d", (unsigned long)_events.count, _eventsMore, _eventsOffset);
         [self reloadData];
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
@@ -197,22 +209,24 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     // Dispose of any resources that can be recreated.
 }
 
+// Sets up a new connection and refreshes the event list if the connection changes
 - (void)setConnection:(SeafConnection *)connection
 {
-    if (IsIpad())
+    if (IsIpad())// On iPad, pop to root to manage navigation stack in split view
         [self.navigationController popToRootViewControllerAnimated:NO];
 
     if (_connection != connection) {
         _connection = connection;
-        _events = nil;
-        self.eventsMore = true;
-        self.eventsOffset = 0;
+        _events = nil;// Reset events
+        self.eventsMore = true;// Reset loading state
+        self.eventsOffset = 0;// Start from the beginning
         self.tableView.showsInfiniteScrolling = true;
-        _eventDetails = [NSMutableDictionary new];
+        _eventDetails = [NSMutableDictionary new];// Clear event details
         [self.tableView reloadData];
     }
 }
 
+// Translates activity line to user-friendly description if it matches known patterns
 - (NSString *)translateLine:(NSString *)line
 {
     if (!line || line.length == 0) return line;
@@ -223,7 +237,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
                                                                            options:NSRegularExpressionCaseInsensitive
                                                                              error:&error];
     NSTextCheckingResult *match = [regex firstMatchInString:line options:0 range:NSMakeRange(0, [line length])];
-    if (!match) return line;
+    if (!match) return line;// No pattern matched
     NSString *op = [line substringWithRange:[match rangeAtIndex:1]];
     NSString *name = [line substringWithRange:[match rangeAtIndex:2]];
     NSString *num = nil;
@@ -241,6 +255,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     }
 }
 
+// Attempts to make complex commit descriptions more user-friendly
 - (NSString *)translateCommitDesc:(NSString *)value
 {
     if (!value || value.length == 0) return value;
@@ -254,7 +269,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     if ([value hasPrefix:@"Merged"] || [value hasPrefix:@"Auto merge"]) {
         return NSLocalizedString(@"Auto merge by seafile system", @"Seafile");
     }
-
+    // Regular expression to detect and format reverted file descriptions
     NSError *error = NULL;
     NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"Reverted file \"(.*)\" to status at (.*)."
                                                                            options:NSRegularExpressionCaseInsensitive
@@ -472,7 +487,9 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         } else if ([op_type isEqualToString:@"delete"] || [op_type isEqualToString:@"clean-up-trash"] || [name containsString:@"(draft).md"]) {
             return;
         }
-    } else if (![etype isEqualToString:@"repo-update"]) {
+    }
+    // Handle only 'repo-update' events for showing details
+    else if (![etype isEqualToString:@"repo-update"]) {
         return;
     }
     
@@ -489,7 +506,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         Warning("No such repo %@", repoId);
         return;
     }
-
+    // Show event details if already fetched, or fetch them if necessary
     if (detail && !repo.passwordRequired)
         return [self showEvent:repoId detail:detail fromCell:cell];
 
@@ -501,6 +518,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         [self getCommitModificationDetail:repoId url:url fromCell:cell];
 }
 
+// Opens a file specified by path in a given repository
 - (void)openFile:(NSString *)path inRepo:(NSString *)repoId
 {
     Debug("open file %@ in repo %@", path, repoId);

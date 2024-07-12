@@ -122,6 +122,7 @@
     [self dismissViewControllerAnimated:false completion:nil];
 }
 
+//Toggles additional UI elements related to password input based on the state of the encrypted switch.
 - (IBAction)encryptedSwitchFlip:(UISwitch *)sender {
     if (sender.on) {
         [UIView animateWithDuration:0.3 animations:^{
@@ -135,6 +136,7 @@
     [self pwdGroupHidden:!sender.on];
 }
 
+//Shows or hides the password input fields and their corresponding labels.
 - (void)pwdGroupHidden:(BOOL)hidden {
     self.pwdRepeatTextField.hidden = hidden;
     self.pwdTextField.hidden = hidden;

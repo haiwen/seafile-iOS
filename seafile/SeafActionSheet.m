@@ -273,7 +273,7 @@ static BOOL disableCustomEasing = NO;
 
 @interface SeafActionSheet ()<UIGestureRecognizerDelegate> {
     UIScrollView *_scrollView;
-    SeafActionSheetTriangle *_arrowView;
+    SeafActionSheetTriangle *_arrowView;// View for displaying a directional arrow pointing to the action sheet's origin
     SeafActionSheetView *_scrollViewHost;
 
     CGRect _finalContentFrame;
@@ -281,20 +281,22 @@ static BOOL disableCustomEasing = NO;
     UIColor *_realBGColor;
 
     BOOL _anchoredAtPoint;
-    CGPoint _anchorPoint;
-    SFActionSheetArrowDirection _anchoredArrowDirection;
+    CGPoint _anchorPoint;// The point at which the action sheet is anchored
+    SFActionSheetArrowDirection _anchoredArrowDirection;// The direction of the arrow when the action sheet is anchored
 }
 
-@property (nonatomic, strong) NSArray *sections;
+@property (nonatomic, strong) NSArray *sections;// Array of sections within the action sheet
 
 @end
 
 @implementation SeafActionSheet
 
+// Initializes the action sheet with titles for each button in the sections.
 + (instancetype)actionSheetWithTitles:(NSArray *)titles {
     return [[self alloc] initWithSectionTitles:titles];
 }
 
+// Shows the action sheet with an optional animation.
 - (instancetype)initWithSectionTitles:(NSArray *)titles {
     NSAssert(titles.count > 0, @"Must at least provide 1 section");
 
@@ -409,7 +411,7 @@ static BOOL disableCustomEasing = NO;
 }
 
 #pragma mark Layout
-
+// Lays out the sections within the action sheet based on the given frame.
 - (void)layoutSheetForFrame:(CGRect)frame fitToRect:(BOOL)fitToRect initialSetUp:(BOOL)initial {
     CGFloat width = CGRectGetWidth(frame);
     CGFloat height = 0;
@@ -451,6 +453,7 @@ static BOOL disableCustomEasing = NO;
     [_scrollViewHost insertSubview:effectView belowSubview:_scrollView];
 }
 
+//Adjusts the layout properties based on whether the action sheet should be visible or hidden.
 - (void)layoutForVisible:(BOOL)visible {
     UIView *viewToModify = _scrollViewHost;
 

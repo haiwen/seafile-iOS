@@ -12,11 +12,13 @@
 
 - (instancetype)initWithEventJSON:(NSDictionary *)event andOpsMap:(NSDictionary *)opsMap {
     if (self = [super init]) {
+        // Parse basic information from the JSON event
         self.avatarURL = [NSURL URLWithString:[event objectForKey:@"avatar_url"]];
         self.authorName = [event objectForKey:@"author_name"];
         self.repoName = [event objectForKey:@"repo_name"];
         self.time = [SeafDateFormatter compareGMTTimeWithNow:[event objectForKey:@"time"]];
         
+        // Additional parsing to determine the operation type and detail
         NSString *name = [event objectForKey:@"name"];
         NSString *opType = [event objectForKey:@"op_type"];
         NSString *objType = [event objectForKey:@"obj_type"];
@@ -25,6 +27,7 @@
             objType = @"draft";
         }
         
+        // Get the operation description from the opsMap
         self.operation = [self getOpreationFromOpType:opType objType:objType opsMap:opsMap cleanUpTrashDays:[event objectForKey:@"days"]];
         self.detail = [self getDetail:event opType:opType objType:objType];
     }
@@ -46,6 +49,7 @@
 
 - (NSString *)getDetail:(NSDictionary *)event opType:(NSString *)opType objType:(NSString *)objType {
     NSString *detail = [event objectForKey:@"name"];
+    // Handle different types of operations to construct a detailed description
     if ([opType isEqualToString:@"rename"]) {
         if ([objType isEqualToString:@"file"]) {
             detail = [NSString stringWithFormat:@"%@ => %@", [event objectForKey:@"old_name"], [event objectForKey:@"name"]];

@@ -21,9 +21,9 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
 
 @interface SeafSyncInfoViewController ()
 
-@property (nonatomic, strong) NSArray *finishedTasks;
-@property (nonatomic, strong) NSMutableArray *ongongingTasks;
-@property (nonatomic, strong) SeafConnection *connection;
+@property (nonatomic, strong) NSArray *finishedTasks;//An array of tasks that have been completed.
+@property (nonatomic, strong) NSMutableArray *ongongingTasks;//A mutable array of tasks that are currently in progress.
+@property (nonatomic, strong) SeafConnection *connection;//An instance of SeafConnection which manages network communication and session details with a Seafile server.
 
 @end
 
@@ -105,6 +105,7 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
     };
 }
 
+//Retrieves all completed tasks from the SeafDataTaskManager.
 - (NSArray*)allCompeletedTask {
     SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection];
     NSArray *completedArray = nil;
@@ -116,6 +117,7 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
     return completedArray;
 }
 
+//Initializes the array of ongoing and finished tasks by fetching data from SeafDataTaskManager.
 - (void)initTaskArray {
     self.finishedTasks = [self allCompeletedTask];
     SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection];
@@ -134,6 +136,7 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
     }
 }
 
+// Provides functionality to cancel all download tasks.
 - (void)cancelAllDownloadTasks {
     WS(weakSelf);
     [Utils alertWithTitle:NSLocalizedString(@"Are you sure to cancel all downloading tasks?", @"Seafile") message:nil yes:^{
@@ -145,6 +148,7 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
     } from:self];
 }
 
+//Provides functionality to cancel all upload tasks.
 - (void)cancelAllUploadTasks {
     WS(weakSelf);
     [Utils alertWithTitle:NSLocalizedString(@"Are you sure to cancel all uploading tasks?", @"Seafile") message:nil yes:^{

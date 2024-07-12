@@ -52,7 +52,16 @@
 @synthesize uniqueKey = _uniqueKey;
 @synthesize state;
 
-
+/**
+ * Initializes a new instance of SeafBase with the specified parameters.
+ * @param aConnection The SeafConnection instance to use.
+ * @param anId The object ID.
+ * @param aRepoId The repository ID.
+ * @param aName The name of the entry.
+ * @param aPath The path of the entry in the repository.
+ * @param aMime The MIME type of the entry.
+ * @return An initialized SeafBase instance.
+ */
 - (id)initWithConnection:(SeafConnection *)aConnection
                      oid:(NSString *)anId
                   repoId:(NSString *)aRepoId
@@ -199,6 +208,10 @@
     }];
 }
 
+/**
+ * Generates a share link for this entry using the specified delegate.
+ * @param dg The delegate to be notified about the share link generation status.
+ */
 - (void)generateShareLink:(id<SeafShareDelegate>)dg
 {
     [self getShareLink:^(BOOL result, NSString *link) {

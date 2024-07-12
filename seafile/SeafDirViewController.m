@@ -27,6 +27,7 @@
 
 @implementation SeafDirViewController
 
+// Custom initializer with directory, selection handlers, and a flag to choose repositories
 - (id)initWithSeafDir:(SeafDir *)dir dirChosen:(SeafDirChoose)choose cancel:(SeafDirCancelChoose)cancel chooseRepo:(BOOL)chooseRepo
 {
     if (self = [super init]) {
@@ -41,6 +42,7 @@
     return self;
 }
 
+// Overloaded initializer for initializing with a delegate instead of blocks
 - (id)initWithSeafDir:(SeafDir *)dir delegate:(id<SeafDirDelegate>)delegate chooseRepo:(BOOL)chooseRepo
 {
     return [self initWithSeafDir:dir dirChosen:^(UIViewController *c, SeafDir *dir) {
@@ -56,9 +58,10 @@
     self.dirCancel(self);
 }
 
+// Method to handle the confirmation of the directory selection
 - (IBAction)chooseFolder:(id)sender
 {
-    self.dirChoose(self, _directory);
+    self.dirChoose(self, _directory);// Call the choose block with the current directory
 }
 
 - (void)viewDidLoad
@@ -73,12 +76,15 @@
     [self.navigationItem setHidesBackButton:[self.directory isKindOfClass:[SeafRepos class]]];
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:STR_CANCEL style:UIBarButtonItemStylePlain target:self action:@selector(cancel:)];
     self.tableView.scrollEnabled = YES;
+    
+    // Setup the toolbar items
     UIBarButtonItem *flexibleFpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
     self.chooseItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"OK", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(chooseFolder:)];
     self.chooseItem.tintColor = BAR_COLOR;
     NSArray *items = [NSArray arrayWithObjects:flexibleFpaceItem, self.chooseItem, flexibleFpaceItem, nil];
     [self setToolbarItems:items];
 
+    // Setup the refresh control for pull-to-refresh functionality
     self.tableView.refreshControl = [[UIRefreshControl alloc] init];
     [self.tableView.refreshControl addTarget:self action:@selector(refreshControlChanged) forControlEvents:UIControlEventValueChanged];
 }
@@ -90,7 +96,7 @@
 }
 
 - (void)pullToRefresh {
-    if (![self checkNetworkStatus]) {
+    if (![self checkNetworkStatus]) {// Check network status and stop if not connected
         [self performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
         return;
     }
@@ -98,7 +104,7 @@
     self.tableView.accessibilityElementsHidden = YES;
     UIAccessibilityPostNotification(UIAccessibilityScreenChangedNotification, self.tableView.refreshControl);
     self.directory.delegate = self;
-    [self.directory loadContent:YES];
+    [self.directory loadContent:YES];// Reload the directory content with force
 }
 
 - (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
@@ -107,6 +113,7 @@
     }
 }
 
+// Method to set the current operation state and adjust the title accordingly
 - (void)setOperationState:(OperationState)operationState {
     _operationState = operationState;
     if (_operationState == OPERATION_STATE_COPY) {
@@ -122,7 +129,7 @@
 {
     [super viewWillAppear:animated];
     [self.navigationController setToolbarHidden:_chooseRepo];
-    [self.chooseItem setEnabled:_directory.editable];
+    [self.chooseItem setEnabled:_directory.editable];// Enable the choose item if the directory is editable
 }
 
 - (void)didReceiveMemoryWarning
@@ -143,12 +150,14 @@
     return NSLocalizedString(@"Choose directory", @"Seafile");
 }
 
+// Loading of subdirectories to improve performance.
 - (NSArray *)subDirs
 {
     if (!_subDirs) {
         NSMutableArray *arr = [NSMutableArray new];
         if ([_directory isKindOfClass:[SeafRepos class]]) {
             SeafRepos *repos = (SeafRepos *)_directory;
+            // Iterate over repositories, adding those that are either editable or when _chooseRepo is false.
             for (int i = 0; i < repos.repoGroups.count; ++i) {
                 for (SeafRepo *repo in [repos.repoGroups objectAtIndex:i]) {
                     if (!_chooseRepo || repo.editable) {
@@ -157,6 +166,7 @@
                 }
             }
         } else {
+            // Iterate over directories, adding those that are either editable or when _chooseRepo is false.
             for (SeafDir *dir in _directory.subDirs) {
                 if (!_chooseRepo || dir.editable) {
                     [arr addObject:dir];
@@ -170,7 +180,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    _subDirs = nil;
+    _subDirs = nil;// Reset subdirectories to force refresh.
     return self.subDirs.count;
 }
 
@@ -185,6 +195,7 @@
     [cell reset];
 
     @try {
+        // Configure the cell with directory details.
         SeafDir *sdir = [self.subDirs objectAtIndex:indexPath.row];
         cell.textLabel.text = sdir.name;
         cell.imageView.image = sdir.icon;
@@ -224,6 +235,7 @@
     if (![curDir isKindOfClass:[SeafDir class]])
         return;
 
+    // Choose directory or handle repository with password.
     if (_chooseRepo) {
         return self.dirChoose(self, curDir);
     }
@@ -235,6 +247,7 @@
     [self.navigationController pushViewController:controller animated:YES];
 }
 
+// Display a popup to set the repository password if required.
 - (void)popupSetRepoPassword:(SeafRepo *)repo
 {
     @weakify(self);
@@ -252,6 +265,8 @@
 {
 
 }
+
+// Handle the completion of a download operation.
 - (void)download:(SeafBase *)entry complete:(BOOL)updated
 {
     [self doneLoadingTableViewData];
@@ -260,6 +275,7 @@
     }
 }
 
+// Handle failures in the download operation.
 - (void)download:(SeafBase *)entry failed:(NSError *)error
 {
     [self doneLoadingTableViewData];
@@ -276,6 +292,7 @@
     [super viewDidUnload];
 }
 
+// Clean up and reset after data is loaded.
 - (void)doneLoadingTableViewData
 {
     self.tableView.accessibilityElementsHidden = NO;

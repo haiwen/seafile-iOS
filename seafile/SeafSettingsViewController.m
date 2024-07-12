@@ -74,7 +74,9 @@ enum {
 #define MSG_LOG_OUT NSLocalizedString(@"Are you sure to log out?", @"Seafile")
 
 @interface SeafSettingsViewController ()<SeafPhotoSyncWatcherDelegate, CLLocationManagerDelegate>
+// Holds the cell that displays the username.
 @property (strong, nonatomic) IBOutlet UITableViewCell *nameCell;
+// Displays the amount of space used by the user.
 @property (strong, nonatomic) IBOutlet UITableViewCell *usedspaceCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *serverCell;
 @property (strong, nonatomic) IBOutlet UITableViewCell *cacheCell;
@@ -108,11 +110,11 @@ enum {
 @property (weak, nonatomic) IBOutlet UISwitch *enableUploadHeic;
 @property (weak, nonatomic) IBOutlet UILabel *enableHeicLabel;
 
-@property (strong, nonatomic) CLLocationManager *locationManager;
+@property (strong, nonatomic) CLLocationManager *locationManager; // Manages location services for background upload functionality.
 
-@property int state;
+@property int state;// Stores the current state of settings options selected.
 
-@property NSString *version;
+@property NSString *version;// Stores the current version of the application.
 @end
 
 @implementation SeafSettingsViewController
@@ -126,6 +128,7 @@ enum {
     return self;
 }
 
+// Returns whether auto-sync is enabled.
 - (BOOL)autoSync
 {
     return _connection.autoSync;
@@ -146,6 +149,7 @@ enum {
     return _connection.backgroundSync;
 }
 
+// Sets the auto-sync feature on or off.
 - (void)setAutoSync:(BOOL)autoSync
 {
     if (_connection.autoSync == autoSync)
@@ -172,6 +176,7 @@ enum {
     [appdelegate checkBackgroundUploadStatus];
 }
 
+// Checks the authorization status of the photo library.
 - (void)checkPhotoLibraryAuthorizationStatus
 {
     Debug("Current AuthorizationStatus:%ld", (long)[PHPhotoLibrary authorizationStatus]);
@@ -195,6 +200,7 @@ enum {
     }
 }
 
+// Handles the toggle of the auto-sync switch.
 - (void)autoSyncSwitchFlip:(id)sender
 {
     if (_autoSyncSwitch.on) {
@@ -238,6 +244,7 @@ enum {
     [_connection setUploadHeicEnabled:sender.on];
 }
 
+// Handles the toggle of the TouchID/FaceID switch.
 - (IBAction)enableTouchIDSwtichFlip:(id)sender
 {
     if (_enableTouchIDSwitch.on) {
@@ -261,6 +268,7 @@ enum {
     _connection.touchIdEnabled = _enableTouchIDSwitch.on;
 }
 
+// Handles the toggle of the background sync switch.
 - (void)backgroundSyncSwitchFlip:(id)sender
 {
     Debug("_backgroundSyncSwitch status:%d", _backgroundSyncSwitch.on);
@@ -375,6 +383,7 @@ enum {
     // Dispose of any resources that can be recreated.
 }
 
+// Configures the view initially with current settings and updates UI components.
 - (void)configureView
 {
     if (!_connection)
@@ -422,6 +431,7 @@ enum {
     [self.tableView reloadData];
 }
 
+// Updates the upload and download tasks information.
 -(void)updateSyncInfo{
     NSInteger downloadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].fileQueue taskNumber];
     NSInteger uploadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].uploadQueue taskNumber];
@@ -433,6 +443,7 @@ enum {
     });
 }
 
+// Fetches and updates the account information.
 - (void)updateAccountInfo
 {
     [_connection getAccountInfo:^(bool result) {
@@ -445,6 +456,8 @@ enum {
         }
     }];
 }
+
+// Sets the current connection and updates the UI.
 - (void)setConnection:(SeafConnection *)connection
 {
     _connection = connection;
@@ -453,6 +466,7 @@ enum {
     [self updateAccountInfo];
 }
 
+// Presents the repository selection view.
 - (void)popupRepoChoose:(SeafDirChoose)choose cancel:(SeafDirCancelChoose)cancel
 {
     SeafDirViewController *c = [[SeafDirViewController alloc] initWithSeafDir:self.connection.rootFolder dirChosen:choose cancel:cancel chooseRepo:true];
