@@ -7,10 +7,10 @@
 "%@ does not support to preview file of this kind at the moment." = "%@ 当前不支持预览这种类型的文件。";
 
 /* Seafile */
-"%@ invite you to %@" = "@ 邀请你使用%2%@";
+"%@ invite you to %@" = "%1$@ 邀请你使用%2$@";
 
 /* Seafile */
-"%@, Uploaded %@" = "%@, 已上传 %2%@";
+"%@, Uploaded %@" = "%1$@, 已上传 %2$@";
 
 /* Seafile */
 "%@, uploading" = "%@，正在上传";
@@ -292,7 +292,7 @@
 "Destination" = "上传目录";
 
 /* Seafile */
-"Directory '%@' is shared with you using %@" = "文件夹 '%@' 在%2%@上共享给你";
+"Directory '%@' is shared with you using %@" = "文件夹 '%1$@' 在%2$@上共享给你";
 
 /* Seafile */
 "Discussion" = "讨论";
@@ -424,7 +424,7 @@
 "Failed to upload file" = "上传文件失败";
 
 /* Seafile */
-"File '%@' is shared with you using %@" = "文件 '%@' 在%2%@上共享给你";
+"File '%@' is shared with you using %@" = "文件 '%1$@' 在%2$@上共享给你";
 
 /* Seafile */
 "File '%@' is too large to edit" = "文件 '%@' 太大，不支持编辑功能";
