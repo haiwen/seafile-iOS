@@ -36,19 +36,22 @@ static SeafRealmManager* instance;
     [self updateCachePhotoWithIdentifier:identifier forAccount:account andStatus:status];
 }
 
+//save new photo or set photo which status is not true
 - (void)savePhotoWithIdentifier:(NSString *)identifier forAccount:(NSString *)account andStatus:(NSString *)status {
     RLMResults<SeafCachePhoto *> *photos = [SeafCachePhoto objectsWhere:@"identifier == %@ AND account == %@", identifier, account];
-    if (photos.count > 0) {
+    
+    if (photos.count > 0) { //get the specific photo
         RLMRealm *realm = [RLMRealm defaultRealm];
         SeafCachePhoto *photo = photos.firstObject;
-        
+        //false or not set
         if (![photo.status isEqualToString:@"true"]) {
             [realm transactionWithBlock:^{
                 photo.status = status;
                 [realm addOrUpdateObject:photo];
             }];
         }
-    } else {
+    } 
+    else {//add new photo to realm
         [self updateCachePhotoWithIdentifier:identifier forAccount:account andStatus:status];
     }
 }
@@ -90,6 +93,12 @@ static SeafRealmManager* instance;
     }
 }
 
+- ( RLMResults<SeafCachePhoto *> *)getRealmAllPhotos{
+    RLMRealm *realm = [RLMRealm defaultRealm];
+    RLMResults<SeafCachePhoto *> *allPhotos = [SeafCachePhoto allObjects];
+    return allPhotos;
+}
+
 - (NSArray *)getNeedUploadPhotosWithAccount:(NSString *)account {
     RLMResults<SeafCachePhoto *> *photos = [SeafCachePhoto objectsWhere:@"account == %@ AND status == %@", account, @"false"];
     
@@ -116,6 +125,20 @@ static SeafRealmManager* instance;
     }
 }
 
+- (void)deletePhotoWithIdSets:(NSSet *)identifierSet forAccount:(NSString *)account{
+    RLMRealm *realm = [RLMRealm defaultRealm];
+
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"identifier IN %@", identifierSet];
+    RLMResults<SeafCachePhoto *> *photosToDelete = [SeafCachePhoto objectsInRealm:realm withPredicate:predicate];
+
+    if (photosToDelete.count > 0) {
+        [realm transactionWithBlock:^{
+            [realm deleteObjects:photosToDelete];
+        }];
+    }
+}
+
+
 - (void)clearAllCachedPhotosInAccount:(NSString *)account {
     Debug("clear photos in account: %@", account);
     RLMResults<SeafCachePhoto *> *photos = [SeafCachePhoto objectsWhere:@"account == %@", account];
@@ -127,15 +150,15 @@ static SeafRealmManager* instance;
     }];
 }
 
-- (void)clearAllCachedPhotos {
-    Debug("clear SeafCachePhoto table");
-    RLMResults<SeafCachePhoto *> *photos = [SeafCachePhoto allObjects];
-    
-    RLMRealm *realm = [RLMRealm defaultRealm];
-    
-    [realm transactionWithBlock:^{
-        [realm deleteObjects:photos];
-    }];
-}
+//- (void)clearAllCachedPhotos {
+//    Debug("clear SeafCachePhoto table");
+//    RLMResults<SeafCachePhoto *> *photos = [SeafCachePhoto allObjects];
+//    
+//    RLMRealm *realm = [RLMRealm defaultRealm];
+//    
+//    [realm transactionWithBlock:^{
+//        [realm deleteObjects:photos];
+//    }];
+//}
 
 @end

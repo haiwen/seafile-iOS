@@ -496,11 +496,11 @@ enum {
                             return [self alertWithTitle:NSLocalizedString(@"Please disable \"Auto clear passwords\" for auto uploading photos to an encrypted library.", @"Seafile")];
                         } else if (repo.passwordRequired) {
                             return [self popupSetRepoPassword:repo handler:^{
-                                [self setAutoSyncRepo:repo];
+                                [self setSelectedAutoSyncRepo:repo];
                             }];
                         }
                     }
-                    [self setAutoSyncRepo:repo];
+                    [self setSelectedAutoSyncRepo:repo];
                 } cancel:^(UIViewController *c) {
                     [self dismissViewController:c];
                 }];
@@ -623,12 +623,14 @@ enum {
 {
     _connection.autoSyncRepo = repo.repoId;
     _syncRepoCell.detailTextLabel.text = repo.name;
+    //check address and dir
     [_connection performSelectorInBackground:@selector(checkAutoSync) withObject:nil];
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [appdelegate checkBackgroundUploadStatus];
 }
 
-- (void)setAutoSyncRepo:(SeafRepo *)repo
+//after user selected repo
+- (void)setSelectedAutoSyncRepo:(SeafRepo *)repo
 {
     NSString *old = _connection.autoSyncRepo;
     if ([repo.repoId isEqualToString:old]) {
@@ -636,6 +638,7 @@ enum {
         return;
     }
 
+    //clear account photos in realm
     if (_connection.autoSyncedNum > 0) {
         [_connection resetUploadedPhotos];
     }

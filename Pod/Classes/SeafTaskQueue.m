@@ -76,6 +76,7 @@
 - (BOOL)addTask:(id<SeafTask>)task {
     BOOL res = YES;
     @synchronized (self.tasks) {
+        //if not exist ,create a new one
         if (task != nil && ![self.tasks containsObject:task] && ![self.ongoingTasks containsObject:task]) {
             task.lastFinishTimestamp = 0;
             task.retryCount = 0;

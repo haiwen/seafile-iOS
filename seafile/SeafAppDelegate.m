@@ -31,7 +31,7 @@
 @property (readwrite) SeafGlobal *global;
 
 @property (strong, nonatomic) dispatch_block_t expirationHandler;
-@property BOOL background;
+@property BOOL background;//Mark whether to return from the background or re-enter the app
 @property (strong) NSMutableArray *monitors;
 @property (readwrite) CLLocationManager *locationManager;
 
@@ -54,7 +54,9 @@
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
         if (conn.inAutoSync) return true;
     }
+    //not use
     NSInteger totalDownloadingNum = 0;
+    
     NSInteger totalUploadingNum = 0;
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
         SeafAccountTaskQueue *accountQueue =[SeafDataTaskManager.sharedObject accountQueueForConnection:conn];
@@ -238,7 +240,9 @@
 {
     Debug("Start check photos changes.");
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
-        [conn photosDidChange:notification];
+//        [conn photosDidChange:notification];
+        //check photos and connection
+        [conn checkAutoSync];
     }
 }
 
@@ -276,6 +280,8 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+    NSString *homeDirectory = NSHomeDirectory();
+        NSLog(@"App Home Directory: %@", homeDirectory);
     Info("%@", [[NSBundle mainBundle] infoDictionary]);
     _global = [SeafGlobal sharedObject];
     [_global migrate];
@@ -319,6 +325,14 @@
             if (SeafGlobal.sharedObject.connection.accountIdentifier) {
                 [[SeafDataTaskManager.sharedObject accountQueueForConnection:SeafGlobal.sharedObject.connection].uploadQueue clearTasks];
             }
+            //reset all upload photos and connection
+            for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+                conn.inAutoSync = false;
+                [conn.photoBackup resetAll];
+                [SeafDataTaskManager.sharedObject cancelAutoSyncTasks:conn];
+                [conn clearUploadCache];
+            }
+            
         } else {
             //not work in iOS 13, and while call in app  become active next time
             [weakSelf startBackgroundTask];
@@ -398,9 +412,12 @@
 - (void)applicationDidEnterBackground:(UIApplication *)application
 {
     [self enterBackground];
+    //Not currently used
     for (id <SeafBackgroundMonitor> monitor in _monitors) {
         [monitor enterBackground];
     }
+    
+    //Account Status
     if (self.window.rootViewController != self.startNav && SeafGlobal.sharedObject.connection.touchIdEnabled) {
         Debug("hiding contents when enter background");
         [self exitAccount];
@@ -433,10 +450,14 @@
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
     [application cancelAllLocalNotifications];
     self.background = false;
+    
+    //Whether to select a default account
     if (self.autoBackToDefaultAccount) {
         self.autoBackToDefaultAccount = false;
         Debug("Verify TouchId and go back to the last account.");
-        [self.startVC selectDefaultAccount:^(bool success) {}];
+        [self.startVC selectDefaultAccount:^(bool success) {
+            
+        }];
     }
 }
 
@@ -616,7 +637,14 @@
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations
 {
     Debug("Location updated: %@", locations);
-    [self photosDidChange:nil];
+//    [self photosDidChange:nil];//modified at 2024.7.23
+    if (self.needReset == YES) {
+        self.needReset = NO;
+        NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
+        [self photosDidChange:note];
+    } else {
+        [self photosDidChange:nil];
+    }
 }
 
 // Starts or stops significant location updates based on the app's current needs.

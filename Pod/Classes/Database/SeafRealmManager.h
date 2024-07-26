@@ -6,6 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "SeafCachePhoto.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -29,9 +30,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)deletePhotoWithIdentifier:(NSString *)identifier forAccount:(NSString *)account;
 
+- (void)deletePhotoWithIdSets:(NSSet *)identifierSet forAccount:(NSString *)account;
+
 - (void)clearAllCachedPhotosInAccount:(NSString *)account;
 
-- (void)clearAllCachedPhotos;
+- ( RLMResults<SeafCachePhoto *> *)getRealmAllPhotos;
+
+//- (void)clearAllCachedPhotos;
 
 @end
 

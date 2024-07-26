@@ -188,6 +188,7 @@
 - (SeafAccountTaskQueue *)getAccountQueueWithIndentifier:(NSString *)identifier
 {
     @synchronized(self.accountQueueDict) {
+        //get accountQueue from self.accountQueueDict with identifier
         SeafAccountTaskQueue *accountQueue = [self.accountQueueDict valueForKey:identifier];
         if (!accountQueue) {
             accountQueue = [[SeafAccountTaskQueue alloc] init];

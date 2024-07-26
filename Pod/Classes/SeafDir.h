@@ -43,6 +43,8 @@
 
 @property (readonly, copy) NSArray *allItems;
 @property (readonly, copy) NSArray *items;
+@property (strong, nonatomic) NSMutableDictionary *normalizedNames;
+
 @property (readonly) NSArray *uploadFiles;
 @property (readonly) BOOL editable;
 @property (readonly) NSString *perm;

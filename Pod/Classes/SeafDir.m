@@ -59,6 +59,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 
 @implementation SeafDir
 @synthesize items = _items;
+@synthesize normalizedNames = _normalizedNames;
 @synthesize uploadItems = _uploadItems;
 @synthesize allItems = _allItems;
 
@@ -102,6 +103,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 {
     self.ooid = nil;
     _items = nil;
+    _normalizedNames = nil;
     _allItems = nil;
     _uploadItems = nil;
     self.state = SEAF_DENTRY_INIT;
@@ -226,6 +228,14 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
         }
         _items = items;
     }
+    NSMutableDictionary *tempDict = [NSMutableDictionary dictionary];
+    for (SeafBase *entry in _items) {
+            NSString *normalized = [entry.name precomposedStringWithCanonicalMapping];
+            if (normalized) {
+                tempDict[normalized] = entry;
+            }
+        }
+    self.normalizedNames = [tempDict copy];
     _allItems = nil;
 }
 
@@ -415,11 +425,15 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 
 - (BOOL)nameExist:(NSString *)name
 {
-    for (SeafBase *entry in _items) {
-        if ([[name precomposedStringWithCanonicalMapping] isEqualToString:[entry.name precomposedStringWithCanonicalMapping]])
-            return true;
-    }
-    return false;
+//    for (SeafBase *entry in _items) {
+//        if ([[name precomposedStringWithCanonicalMapping] isEqualToString:[entry.name precomposedStringWithCanonicalMapping]])
+//            return true;
+//    }
+//    return false;
+    
+    //find from dict
+    NSString *normalized = [name precomposedStringWithCanonicalMapping];
+    return self.normalizedNames[normalized] != nil;
 }
 
 - (void)loadContent:(BOOL)force;

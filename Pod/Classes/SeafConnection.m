@@ -359,7 +359,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     if (self.isAutoSync == autoSync) return;
     [self setAttribute:[NSNumber numberWithBool:autoSync] forKey:@"autoSync"];
-    [self setFirstTimeSync:true];
+    self.firstTimeSync = true;
 }
 
 - (void)setVideoSync:(BOOL)videoSync
@@ -413,7 +413,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     _syncDir = nil;
     [self setAttribute:repoId forKey:@"autoSyncRepo"];
     if (repoId) {
-        [self setFirstTimeSync:true];
+        self.firstTimeSync = true;
     }
 }
 
@@ -1123,10 +1123,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self.photoBackup resetUploadedPhotos];
 }
 
-- (void)firstTimeSyncUpdateSyncedPhotos:(SeafDir *)uploaddir
-{
-    [self setFirstTimeSync:false];
-}
+//not used
+//- (void)firstTimeSyncUpdateSyncedPhotos:(SeafDir *)uploaddir
+//{
+//    [self setFirstTimeSync:false];
+//}
 
 - (void)checkPhotos:(BOOL)force
 {
@@ -1187,6 +1188,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         }
     };
 
+    //check and make dir
     [self checkMakeUploadDirectory:self.autoSyncRepo subdir:CAMERA_UPLOADS_DIR completion:^(SeafDir *uploaddir, NSError * _Nullable error) {
         if (!uploaddir) {
             Warning("Failed to create camera sync folder: %@", error);

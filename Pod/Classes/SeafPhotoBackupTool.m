@@ -14,6 +14,9 @@
 #import "SeafDir.h"
 #import "SeafUploadFile.h"
 #import "SeafDataTaskManager.h"
+#import <Realm/Realm.h>
+#import "SeafCachePhoto.h"
+
 
 #define DEFAULT_UPLOADINGARRAY_INTERVAL 10*60 // 10 min
 
@@ -25,6 +28,7 @@
 
 @property (nonatomic, strong) dispatch_queue_t photoCheckQueue;
 
+//recording the uploading asset identifier with timeStamp
 @property (nonatomic, strong) NSMutableDictionary *uploadingDict;
 
 @end
@@ -75,13 +79,17 @@
 - (void)backGroundCheckPhotos:(NSNumber *)forceNumber {
     bool force = [forceNumber boolValue];
     SeafDir *uploadDir = _syncDir;
+    //check whether is inAutoSync or firstTimeSync or uploadDir not exist
     bool shouldSkip = !_inAutoSync || (_connection.firstTimeSync && !uploadDir);
     if (shouldSkip) {
         return;
     }
     
+    //continue syncing
     if (force || [self photosInSyncing] == 0) {
+        //all album photos unless first time sync
         NSArray *photos = [self filterOutUploadedPhotos];
+        //filter need upload photos
         [photos enumerateObjectsUsingBlock:^(SeafPhotoAsset *photoAsset, NSUInteger idx, BOOL * _Nonnull stop) {
             if (![self IsPhotoUploaded:photoAsset] && ![self IsPhotoUploading:photoAsset]) {
                 [self addUploadPhoto:photoAsset.localIdentifier];
@@ -106,14 +114,16 @@
 }
 
 - (void)checkPhotosNeedUploadInRealm {
-    NSArray *array = [[SeafRealmManager shared] getNeedUploadPhotosWithAccount:self.accountIdentifier];
-    if (array == nil || array.count == 0) {
+    //get user all photos marked "false"
+    NSArray *userUnloadPhotoIdArray = [[SeafRealmManager shared] getNeedUploadPhotosWithAccount:self.accountIdentifier];
+    if (userUnloadPhotoIdArray == nil || userUnloadPhotoIdArray.count == 0) {
         return;
     }
-    NSArray *copyArray = [NSArray arrayWithArray:_photosArray];
-    [array enumerateObjectsUsingBlock:^(NSString *url, NSUInteger idx, BOOL * _Nonnull stop) {
+
+    NSArray *copyPhotosArray = [NSArray arrayWithArray:_photosArray];
+    [userUnloadPhotoIdArray enumerateObjectsUsingBlock:^(NSString *url, NSUInteger idx, BOOL * _Nonnull stop) {
         NSString *localIdentifier = [url stringByReplacingOccurrencesOfString:self.accountIdentifier withString:@""];
-        if (localIdentifier != nil && ![copyArray containsObject:localIdentifier]) {
+        if (localIdentifier != nil && ![copyPhotosArray containsObject:localIdentifier]) {
             [self addUploadPhoto:localIdentifier];
         }
     }];
@@ -160,7 +170,8 @@
                     [self removeFromUploadingDictWith:localIdentifier];
                     file = nil;
                 }
-            } else {
+            }
+            else {
                 [self removeUploadingPhoto:localIdentifier];
                 [self removeFromUploadingDictWith:localIdentifier];
                 [[SeafRealmManager shared] deletePhotoWithIdentifier:[self.accountIdentifier stringByAppendingString:localIdentifier] forAccount:self.accountIdentifier];
@@ -204,8 +215,10 @@
 }
 
 - (NSArray *)filterOutUploadedPhotos {
+    //define album dir,set to PHAssetCollectionTypeSmartAlbum,user added
     PHFetchResult *result = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum subtype:PHAssetCollectionSubtypeSmartAlbumUserLibrary options:nil];
     
+    //Filter images or videos
     NSPredicate *predicate = [self buildAutoSyncPredicte];
     if (!predicate) {
         return nil;
@@ -220,18 +233,33 @@
 
     __block NSMutableArray *photos = [[NSMutableArray alloc] init];
     
+    //get all photos in realm
+    RLMResults<SeafCachePhoto *> *realmAllPhotos = [[SeafRealmManager shared] getRealmAllPhotos];
+    NSMutableSet *photoIdentifersSet = [NSMutableSet set];
+    for (SeafCachePhoto *photo in realmAllPhotos) {
+        [photoIdentifersSet addObject:photo.identifier];
+    }
+    
+    __block NSMutableSet *albumPhotoCacheIdSet = [[NSMutableSet alloc] init];
+    
     PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
     fetchOptions.predicate = predicate;
     PHAssetCollection *collection = result.firstObject;
+    //album all pics
     PHFetchResult *assets = [PHAsset fetchAssetsInAssetCollection:collection options:fetchOptions];
     
+    //enumerrate assets
     [assets enumerateObjectsUsingBlock:^(PHAsset *asset, NSUInteger idx, BOOL * _Nonnull stop) {
         SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!self.connection.isUploadHeicEnabled];
         if (photoAsset.name == nil) {
             return;
         }
+        NSString *key = [self.accountIdentifier stringByAppendingString:asset.localIdentifier];
+        [albumPhotoCacheIdSet addObject:key];
+        //save all album photo identifier to realm
         [self saveNeedUploadPhotoToLocalWithAssetIdentifier:asset.localIdentifier];
         if (self.connection.isFirstTimeSync) {
+            //photo has been set before
             if ([self.syncDir nameExist:photoAsset.name]) {
                 [self setPhotoUploadedIdentifier:asset.localIdentifier];
                 Debug("First time sync, skip file %@(%@) which has already been uploaded", photoAsset.name, photoAsset.localIdentifier);
@@ -239,9 +267,31 @@
             }
         }
         [photos addObject:photoAsset];
+        
     }];
+    
+    //filter the deleted photos from realm
+    NSMutableSet *needDeletePhotoFromRealmSet = [NSMutableSet setWithSet:photoIdentifersSet];
+    [needDeletePhotoFromRealmSet minusSet:albumPhotoCacheIdSet];
+    
+    [[SeafRealmManager shared]deletePhotoWithIdSets:needDeletePhotoFromRealmSet forAccount:self.accountIdentifier];
+    
+    //filter the deleted photos from "photos"
+    NSMutableArray *filteredArray = [NSMutableArray arrayWithArray:photos];
 
-    return photos;
+    for (NSString *cachePhotoId in needDeletePhotoFromRealmSet){
+        NSString *localIdentifier = [cachePhotoId stringByReplacingOccurrencesOfString:self.accountIdentifier withString:@""];
+        // Find and remove matching elements in array photos
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"localIdentifier == %@", localIdentifier];
+        NSArray *matchingItems = [photos filteredArrayUsingPredicate:predicate];
+        
+        if (matchingItems.count > 0) {
+            [filteredArray removeObjectsInArray:matchingItems];
+        }
+    }
+    
+
+    return filteredArray;
 }
 
 - (NSPredicate *)buildAutoSyncPredicte {
@@ -264,12 +314,14 @@
 
 - (BOOL)IsPhotoUploaded:(SeafPhotoAsset *)asset {
     NSInteger saveCount = 0;
+    //before iOS9 check ALAssetURL is available
     if (asset.ALAssetURL && [asset.ALAssetURL respondsToSelector:NSSelectorFromString(@"absoluteString")] && asset.ALAssetURL.absoluteString) {
         NSString *value = [self getCachedPhotoStatuWithIdentifier:[self.accountIdentifier stringByAppendingString:asset.ALAssetURL.absoluteString]];
         if (value != nil) {
             saveCount ++;
         }
     }
+    //after iOS9 check photo from Realm which marked "true"
     NSString *identifier = [self getCachedPhotoStatuWithIdentifier:[self.accountIdentifier stringByAppendingString:asset.localIdentifier]];
     if (identifier != nil && [identifier isEqualToString:@"true"]) {
         saveCount ++;
@@ -290,6 +342,7 @@
     return false;
 }
 
+//If it exceeds 10 minutes, put it at the end of the queue and try again.
 - (void)checkAndRemoveFromUploadingArray {
     if (self.uploadingArray == nil || self.uploadingDict == nil) {
         return;
@@ -378,8 +431,9 @@
 }
 
 #pragma mark- cache
-- (void)saveNeedUploadPhotoToLocalWithAssetIdentifier:(NSString *)assetIdentifier {
+- (void)saveNeedUploadPhotoToLocalWithAssetIdentifier:(NSString *)assetIdentifier{
     NSString *key = [self.accountIdentifier stringByAppendingString:assetIdentifier];
+    
     [[SeafRealmManager shared] savePhotoWithIdentifier:key forAccount:self.accountIdentifier andStatus:@"false"];
 }
 

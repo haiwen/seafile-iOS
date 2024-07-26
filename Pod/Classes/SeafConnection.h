@@ -100,7 +100,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 @property (strong) SeafRepos *_Nullable rootFolder;///< Root folder object representing the top directory in the server.
 @property (readonly) AFHTTPSessionManager * _Nonnull sessionMgr; ///< Session manager for regular HTTP requests.
 @property (readonly) AFHTTPSessionManager * _Nonnull loginMgr;///< Session manager for login requests.
-@property (nonatomic, readonly) NSString * _Nonnull accountIdentifier;///< Unique identifier for the user's account.
+@property (nonatomic, readonly) NSString * _Nonnull accountIdentifier;///< Unique identifier for the user's account.(address + username)
 @property (readonly) NSString * _Nullable username;///< Username of the Seafile account.
 @property (readonly) NSString * _Nullable password;///< Password of the Seafile account.
 @property (readonly) NSString * _Nullable host;///< Host URL of the Seafile server.
@@ -121,14 +121,14 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 @property (readwrite, nonatomic, getter=isFirstTimeSync) BOOL firstTimeSync;///< Indicates whether this is the first time syncing.
 @property (assign, nonatomic, getter=isUploadHeicEnabled) BOOL uploadHeicEnabled;///< Indicates whether HEIC photo upload is enabled.
 
-@property (readwrite, nonatomic) NSString * _Nullable autoSyncRepo;///< Repository ID for automatic synchronization.
+@property (readwrite, nonatomic) NSString * _Nullable autoSyncRepo;///< Repository ID for automatic synchronization. eg.37ddc77d-5b83-499f-99d4-c8e7e9282d40
 
 @property (readwrite, nonatomic) BOOL autoClearRepoPasswd; ///< Indicates whether to automatically clear repository passwords.
 @property (readwrite, nonatomic) BOOL localDecryptionEnabled;///< Indicates whether local decryption is enabled.
 @property (readwrite, nonatomic) BOOL touchIdEnabled;///< Indicates whether Touch ID is enabled for authentication.
 @property (readonly) NSURLCredential *_Nullable clientCred;///< Client credentials for authentication.
 
-@property (readonly) BOOL inAutoSync;///< Indicates whether the connection is currently in auto-sync mode.
+@property BOOL inAutoSync;///< Indicates whether the connection is currently in auto-sync mode.
 
 @property (readonly) NSString *_Nullable avatar;///< Path to the user's avatar.
 
@@ -482,5 +482,12 @@ Checks the auto synchronization settings and updates the connection’s synchron
  * @return A singleton `AFHTTPRequestSerializer` instance that can be used to serialize `NSURLRequest` objects.
  */
 + (AFHTTPRequestSerializer <AFURLRequestSerialization> * _Nonnull)requestSerializer;
+
+/**
+ *
+    Connetion clear upload cache
+ */
+- (void)clearUploadCache;
+
 
 @end
