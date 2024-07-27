@@ -470,16 +470,20 @@
     UIViewController *activityController = [tabs.viewControllers objectAtIndex:TABBED_ACTIVITY];
     UIViewController *accountvc = [tabs.viewControllers objectAtIndex:TABBED_ACCOUNTS];
 
-    fileController.tabBarItem.title = NSLocalizedString(@"Libraries", @"Seafile");
-    fileController.tabBarItem.image = [UIImage imageNamed:@"tab-home.png"];
-    starredController.tabBarItem.title = NSLocalizedString(@"Starred", @"Seafile");
-    starredController.tabBarItem.image = [UIImage imageNamed:@"tab-star.png"];
-    settingsController.tabBarItem.title = NSLocalizedString(@"Settings", @"Seafile");
-    settingsController.tabBarItem.image = [UIImage imageNamed:@"tab-settings.png"];
-    activityController.tabBarItem.title = NSLocalizedString(@"Activity", @"Seafile");
-    activityController.tabBarItem.image = [UIImage imageNamed:@"tab-modify.png"];
-    accountvc.tabBarItem.title = NSLocalizedString(@"Accounts", @"Seafile");
-    accountvc.tabBarItem.image = [UIImage imageNamed:@"tab-account.png"];
+    UITabBarItem *homeItem = [[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Libraries", @"Seafile") image:[UIImage imageNamed:@"tab-home.png"] tag:0];
+    fileController.tabBarItem = homeItem;
+    
+    UITabBarItem *starItem = [[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Starred", @"Seafile") image:[UIImage imageNamed:@"tab-star.png"] tag:1];
+    starredController.tabBarItem = starItem;
+    
+    UITabBarItem *settingsItem = [[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Settings", @"Seafile") image:[UIImage imageNamed:@"tab-settings.png"] tag:2];
+    settingsController.tabBarItem = settingsItem;
+    
+    UITabBarItem *activityItem = [[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Activity", @"Seafile") image:[UIImage imageNamed:@"tab-modify.png"] tag:3];
+    activityController.tabBarItem = activityItem;
+    
+    UITabBarItem *accountItem = [[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Accounts", @"Seafile") image:[UIImage imageNamed:@"tab-account.png"] tag:4];
+    accountvc.tabBarItem = accountItem;
 
     if (IsIpad()) {
         ((UISplitViewController *)fileController).delegate = (id)[[((UISplitViewController *)fileController).viewControllers lastObject] topViewController];
