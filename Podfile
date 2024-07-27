@@ -8,7 +8,7 @@ end
 
 target :"seafileApp" do
   pod 'SVPullToRefresh', :git => 'https://github.com/lilthree/SVPullToRefresh.git', :branch => 'master'
-  pod 'SVProgressHUD', '~> 1.1.3'
+  pod 'SVProgressHUD', :git => 'https://github.com/SVProgressHUD/SVProgressHUD', :tag =>'1.1.3'
   pod 'SWTableViewCell', :git => 'https://github.com/haiwen/SWTableViewCell.git', :branch => 'master'
   pod 'MWPhotoBrowser', :git => 'https://github.com/haiwen/MWPhotoBrowser.git', :branch => 'master'
   pod 'QBImagePickerController', :git => 'https://github.com/haiwen/QBImagePickerController.git', :branch => 'master'
