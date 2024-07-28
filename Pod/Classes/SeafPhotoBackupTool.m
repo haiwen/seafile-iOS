@@ -17,7 +17,7 @@
 
 #define DEFAULT_UPLOADINGARRAY_INTERVAL 10*60 // 10 min
 
-@interface SeafPhotoBackupTool()
+@interface SeafPhotoBackupTool ()<PHPhotoLibraryChangeObserver>
 
 @property (nonatomic, copy) NSString * _Nonnull accountIdentifier;
 
@@ -25,7 +25,13 @@
 
 @property (nonatomic, strong) dispatch_queue_t photoCheckQueue;
 
+@property (nonatomic, strong) dispatch_queue_t photoPickupQueue;
+
 @property (nonatomic, strong) NSMutableDictionary *uploadingDict;
+
+@property (nonatomic, strong) PHFetchResult *fetchResult;
+
+@property (nonatomic, assign) BOOL firstTimeFilterOut;
 
 @end
 
@@ -37,6 +43,8 @@
         self.connection = connection;
         self.accountIdentifier = connection.accountIdentifier;
         self.localUploadDir = localUploadDir;
+        self.firstTimeFilterOut = YES;
+        [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
     }
     return self;
 }
@@ -129,14 +137,19 @@
 
     Debug("Current %u, %u photos need to upload, dir=%@", (unsigned)self.photosArray.count, (unsigned)self.uploadingArray.count, dir.path);
 
-    [self checkAndRemoveFromUploadingArray];
-    int count = 0;
-    while (_uploadingArray.count < 5 && count++ < 5) {
-        NSString *localIdentifier = [self popUploadPhotoIdentifier];
-        if (!localIdentifier) break;
-        
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            //Crash: Termination Reason: Namespace SPRINGBOARD, Code 0x8badf00d
+    if (self.photoPickupQueue == nil) {
+        self.photoPickupQueue = dispatch_queue_create("com.seafile.photoPickup", DISPATCH_QUEUE_CONCURRENT);
+    }
+    
+    @weakify(self);
+    dispatch_async(self.photoPickupQueue, ^{
+        @strongify(self);
+        [self checkAndRemoveFromUploadingArray];
+        int count = 0;
+        while (self.uploadingArray.count < 5 && count++ < 5) {
+            NSString *localIdentifier = [self popUploadPhotoIdentifier];
+            if (!localIdentifier) break;
+            
             PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
             PHAsset *asset = [result firstObject];
             if (asset) {
@@ -164,14 +177,15 @@
                 [self removeUploadingPhoto:localIdentifier];
                 [self removeFromUploadingDictWith:localIdentifier];
                 [[SeafRealmManager shared] deletePhotoWithIdentifier:[self.accountIdentifier stringByAppendingString:localIdentifier] forAccount:self.accountIdentifier];
+                if (self.photSyncWatcher) [self.photSyncWatcher photoSyncChanged:self.photosInSyncing];
             }
-        });
-    }
-    
-    if (self.photosArray.count == 0) {
-        Debug("Force check if there are new photos after all synced.");
-        [self checkPhotos:true];
-    }
+        }
+        
+        if (self.photosArray.count == 0) {
+            Debug("Force check if there are new photos after all synced.");
+            [self checkPhotos:true];
+        }
+    });
 }
 
 - (NSString *)popUploadPhotoIdentifier {
@@ -219,18 +233,28 @@
     }
 
     __block NSMutableArray *photos = [[NSMutableArray alloc] init];
+    __block NSMutableArray *recentPhotos = [[NSMutableArray alloc] init];
+    NSArray *oldPhotos;
+    if (self.firstTimeFilterOut) {
+        oldPhotos = [[SeafRealmManager shared] getNeedUploadPhotosWithAccount:self.accountIdentifier];
+    }
     
     PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
     fetchOptions.predicate = predicate;
     PHAssetCollection *collection = result.firstObject;
-    PHFetchResult *assets = [PHAsset fetchAssetsInAssetCollection:collection options:fetchOptions];
+    if (!self.fetchResult) {
+        self.fetchResult = [PHAsset fetchAssetsInAssetCollection:collection options:fetchOptions];
+    }
     
-    [assets enumerateObjectsUsingBlock:^(PHAsset *asset, NSUInteger idx, BOOL * _Nonnull stop) {
+    [self.fetchResult enumerateObjectsUsingBlock:^(PHAsset *asset, NSUInteger idx, BOOL * _Nonnull stop) {
         SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!self.connection.isUploadHeicEnabled];
         if (photoAsset.name == nil) {
             return;
         }
         [self saveNeedUploadPhotoToLocalWithAssetIdentifier:asset.localIdentifier];
+        if (self.firstTimeFilterOut) {
+            [recentPhotos addObject:[self.accountIdentifier stringByAppendingString:asset.localIdentifier]];
+        }
         if (self.connection.isFirstTimeSync) {
             if ([self.syncDir nameExist:photoAsset.name]) {
                 [self setPhotoUploadedIdentifier:asset.localIdentifier];
@@ -240,6 +264,20 @@
         }
         [photos addObject:photoAsset];
     }];
+    
+    if (self.firstTimeFilterOut) {
+        NSMutableArray *needDeletePhotos = [[NSMutableArray alloc] init];
+        for (NSString *identifier in oldPhotos) {
+            if (![recentPhotos containsObject:identifier]) {
+                [needDeletePhotos addObject:identifier];
+            }
+        }
+        
+        for (NSString *cachePhotoId in needDeletePhotos) {
+            [[SeafRealmManager shared] deletePhotoWithIdentifier:cachePhotoId forAccount:self.accountIdentifier];
+        }
+        self.firstTimeFilterOut = NO;
+    }
 
     return photos;
 }
@@ -390,6 +428,26 @@
 - (void)setPhotoUploadedIdentifier:(NSString *)localIdentifier {
     NSString *key = [self.accountIdentifier stringByAppendingString:localIdentifier];
     [[SeafRealmManager shared] updateCachePhotoWithIdentifier:key forAccount:self.accountIdentifier andStatus:@"true"];
+}
+
+#pragma mark - PHPhotoLibraryChangeObserver
+// Observes changes to the photo library and triggers synchronization if necessary.
+- (void)photoLibraryDidChange:(PHChange *)changeInstance {
+    Debug("Photos library changed.");
+    PHFetchResultChangeDetails *detail = [changeInstance changeDetailsForFetchResult:self.fetchResult];
+    if (detail && detail.fetchResultAfterChanges) {
+        self.fetchResult = detail.fetchResultAfterChanges;
+    }
+    if (detail.removedObjects.count > 0) {
+        for (PHAsset *asset in detail.removedObjects) {
+            NSString *localIdentifier = asset.localIdentifier;
+            [self removeUploadingPhoto:localIdentifier];
+            [self removeFromUploadingDictWith:localIdentifier];
+            [[SeafRealmManager shared] deletePhotoWithIdentifier:[self.accountIdentifier stringByAppendingString:localIdentifier] forAccount:self.accountIdentifier];
+        }
+        if (self.photSyncWatcher) [self.photSyncWatcher photoSyncChanged:self.photosInSyncing];
+    }
+    [self checkPhotos:YES];
 }
 
 @end
