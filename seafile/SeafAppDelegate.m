@@ -19,7 +19,7 @@
 #import "Version.h"
 #import "SeafWechatHelper.h"
 
-@interface SeafAppDelegate () <UITabBarControllerDelegate, PHPhotoLibraryChangeObserver, CLLocationManagerDelegate, WXApiDelegate>
+@interface SeafAppDelegate () <UITabBarControllerDelegate, CLLocationManagerDelegate, WXApiDelegate>
 
 @property UIBackgroundTaskIdentifier bgTask;
 
@@ -262,13 +262,8 @@
     [SeafGlobal.sharedObject startTimer];
     [self addBackgroundMonitor:SeafGlobal.sharedObject];
 
-    BOOL registeredChangeObserver = false;
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
         [conn checkAutoSync];
-        if (conn.inAutoSync && !registeredChangeObserver) {
-            [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
-            registeredChangeObserver = true;
-        }
     }
 
     [self checkBackgroundUploadStatus];
@@ -596,17 +591,6 @@
 {
     Warning("Out of quota.");
     [Utils alertWithTitle:NSLocalizedString(@"Out of quota", @"Seafile") message:nil handler:nil from:self.window.rootViewController];
-}
-
-#pragma mark - PHPhotoLibraryChangeObserver
-// Observes changes to the photo library and triggers synchronization if necessary.
-- (void)photoLibraryDidChange:(PHChange *)changeInstance
-{
-    Debug("Photos library changed.");
-    // Call might come on any background queue. Re-dispatch to the main queue to handle it.
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self photosDidChange:nil];
-    });
 }
 
 // Adds a background monitor to keep track of significant app events like entering or leaving the background.
