@@ -31,8 +31,6 @@
 
 @property (nonatomic, strong) PHFetchResult *fetchResult;
 
-@property (nonatomic, assign) BOOL firstTimeFilterOut;
-
 @end
 
 @implementation SeafPhotoBackupTool
@@ -43,7 +41,6 @@
         self.connection = connection;
         self.accountIdentifier = connection.accountIdentifier;
         self.localUploadDir = localUploadDir;
-        self.firstTimeFilterOut = YES;
         [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
     }
     return self;
@@ -98,8 +95,6 @@
         
         long num = [[SeafRealmManager shared] numOfCachedPhotosWhithAccount:self.accountIdentifier];
         Debug("Filter out %ld photos, cached : %ld photos", (long)photos.count, num);
-        
-        [self checkPhotosNeedUploadInRealm];
     }
     
     if (_connection.firstTimeSync) {
@@ -234,10 +229,7 @@
 
     __block NSMutableArray *photos = [[NSMutableArray alloc] init];
     __block NSMutableArray *recentPhotos = [[NSMutableArray alloc] init];
-    NSArray *oldPhotos;
-    if (self.firstTimeFilterOut) {
-        oldPhotos = [[SeafRealmManager shared] getNeedUploadPhotosWithAccount:self.accountIdentifier];
-    }
+    NSArray *oldPhotos = [[SeafRealmManager shared] getNeedUploadPhotosWithAccount:self.accountIdentifier];
     
     PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
     fetchOptions.predicate = predicate;
@@ -252,9 +244,7 @@
             return;
         }
         [self saveNeedUploadPhotoToLocalWithAssetIdentifier:asset.localIdentifier];
-        if (self.firstTimeFilterOut) {
-            [recentPhotos addObject:[self.accountIdentifier stringByAppendingString:asset.localIdentifier]];
-        }
+        [recentPhotos addObject:[self.accountIdentifier stringByAppendingString:asset.localIdentifier]];
         if (self.connection.isFirstTimeSync) {
             if ([self.syncDir nameExist:photoAsset.name]) {
                 [self setPhotoUploadedIdentifier:asset.localIdentifier];
@@ -265,18 +255,15 @@
         [photos addObject:photoAsset];
     }];
     
-    if (self.firstTimeFilterOut) {
-        NSMutableArray *needDeletePhotos = [[NSMutableArray alloc] init];
-        for (NSString *identifier in oldPhotos) {
-            if (![recentPhotos containsObject:identifier]) {
-                [needDeletePhotos addObject:identifier];
-            }
+    NSMutableArray *needDeletePhotos = [[NSMutableArray alloc] init];
+    for (NSString *identifier in oldPhotos) {
+        if (![recentPhotos containsObject:identifier]) {
+            [needDeletePhotos addObject:identifier];
         }
-        
-        for (NSString *cachePhotoId in needDeletePhotos) {
-            [[SeafRealmManager shared] deletePhotoWithIdentifier:cachePhotoId forAccount:self.accountIdentifier];
-        }
-        self.firstTimeFilterOut = NO;
+    }
+    
+    for (NSString *cachePhotoId in needDeletePhotos) {
+        [[SeafRealmManager shared] deletePhotoWithIdentifier:cachePhotoId forAccount:self.accountIdentifier];
     }
 
     return photos;
