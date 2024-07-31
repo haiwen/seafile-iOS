@@ -128,7 +128,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 @property (readwrite, nonatomic) BOOL touchIdEnabled;///< Indicates whether Touch ID is enabled for authentication.
 @property (readonly) NSURLCredential *_Nullable clientCred;///< Client credentials for authentication.
 
-@property (readonly) BOOL inAutoSync;///< Indicates whether the connection is currently in auto-sync mode.
+@property (assign,nonatomic) BOOL inAutoSync;///< Indicates whether the connection is currently in auto-sync mode.
 
 @property (readonly) NSString *_Nullable avatar;///< Path to the user's avatar.
 
@@ -482,5 +482,12 @@ Checks the auto synchronization settings and updates the connection’s synchron
  * @return A singleton `AFHTTPRequestSerializer` instance that can be used to serialize `NSURLRequest` objects.
  */
 + (AFHTTPRequestSerializer <AFURLRequestSerialization> * _Nonnull)requestSerializer;
+
+/**
+ *
+    Connetion clear upload cache
+ */
+- (void)clearUploadCache;
+
 
 @end

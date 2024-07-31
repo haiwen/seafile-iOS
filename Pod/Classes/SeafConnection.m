@@ -1159,7 +1159,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 }
 
 - (BOOL)isCheckingPhotoLibrary {
-    return self.photoBackup.inCheckPhotoss && self.isFirstTimeSync;
+    return self.photoBackup.inCheckPhotos && self.isFirstTimeSync;
 }
 
 - (void)updateUploadDir:(SeafDir *)dir

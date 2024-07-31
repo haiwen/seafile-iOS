@@ -18,6 +18,7 @@
 #import "Utils.h"
 #import "Version.h"
 #import "SeafWechatHelper.h"
+#import "SeafRealmManager.h"
 
 @interface SeafAppDelegate () <UITabBarControllerDelegate, CLLocationManagerDelegate, WXApiDelegate>
 
@@ -62,6 +63,27 @@
     }
     // Continue if there are any active uploads or downloads.
     return totalUploadingNum != 0 || totalDownloadingNum != 0;
+}
+
+- (void)checkAndUpgradeRealmDB {
+    
+//    NSString *currentVersion = [SeafStorage.sharedObject objectForKey:@"VERSION"];
+//
+//    NSString *newVersion = SEAFILE_VERSION;
+//    
+//    //Versions before 2.9.26 need to be updated
+//    NSString *numericString = [currentVersion stringByReplacingOccurrencesOfString:@"." withString:@""];
+//    
+//    int versionNumber = [numericString intValue];
+//    
+//    //less than 2.9.27 and need update
+//    if (versionNumber < 2927 && [Utils needsUpdateCurrentVersion:currentVersion newVersion:SEAFILE_VERSION]){
+//        [[SeafRealmManager shared] deletePhotoWithNotUploadedStatus];
+//    }
+    
+    //test
+    [[SeafRealmManager shared] deletePhotoWithNotUploadedStatus];
+
 }
 
 // Selects the provided Seafile connection as the active account, updates navigation state.
@@ -272,6 +294,9 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     Info("%@", [[NSBundle mainBundle] infoDictionary]);
+    //2.9.27:Versions before 2.9.26 need to be updated
+    [self checkAndUpgradeRealmDB];
+    
     _global = [SeafGlobal sharedObject];
     [_global migrate];
     [self initTabController];
@@ -313,6 +338,13 @@
             weakSelf.needReset = YES;
             if (SeafGlobal.sharedObject.connection.accountIdentifier) {
                 [[SeafDataTaskManager.sharedObject accountQueueForConnection:SeafGlobal.sharedObject.connection].uploadQueue clearTasks];
+            }
+            //reset all upload photos and connection
+            for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+                conn.inAutoSync = false;
+                [conn.photoBackup resetAll];
+                [SeafDataTaskManager.sharedObject cancelAutoSyncTasks:conn];
+                [conn clearUploadCache];
             }
         } else {
             //not work in iOS 13, and while call in app  become active next time
@@ -393,9 +425,13 @@
 - (void)applicationDidEnterBackground:(UIApplication *)application
 {
     [self enterBackground];
+    
+    //not used
     for (id <SeafBackgroundMonitor> monitor in _monitors) {
         [monitor enterBackground];
     }
+    
+    //Account Status
     if (self.window.rootViewController != self.startNav && SeafGlobal.sharedObject.connection.touchIdEnabled) {
         Debug("hiding contents when enter background");
         [self exitAccount];
@@ -411,8 +447,11 @@
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
     if (self.needReset == YES) {
         self.needReset = NO;
-        NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
-        [self photosDidChange:note];
+//        NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
+//        [self photosDidChange:note];
+        for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+            [conn checkAutoSync];
+        }
     } else {
         [self photosDidChange:nil];
     }
@@ -604,7 +643,15 @@
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations
 {
     Debug("Location updated: %@", locations);
-    [self photosDidChange:nil];
+    //    [self photosDidChange:nil];//modified at 2024.7.31
+    if (self.needReset == YES) {
+        self.needReset = NO;
+        for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+            [conn checkAutoSync];
+        }
+    } else {
+        [self photosDidChange:nil];
+    }
 }
 
 // Starts or stops significant location updates based on the app's current needs.

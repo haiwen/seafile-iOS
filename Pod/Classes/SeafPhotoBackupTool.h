@@ -46,7 +46,7 @@
 @property (nonatomic, assign) BOOL inAutoSync;
 
 /// A Boolean value indicating whether the tool is currently checking the photo library.
-@property (nonatomic, assign) BOOL inCheckPhotoss;
+@property (nonatomic, assign) BOOL inCheckPhotos;
 
 /**
  Initializes a SeafPhotoBackupTool object with the specified SeafConnection and local upload directory.

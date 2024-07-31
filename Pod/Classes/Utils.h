@@ -125,4 +125,7 @@
 /// Create a new filename by appending a sequence number.
 + (NSString *)creatNewFileName:(NSString *)fileName;
 
+/// Check if is new version.
++ (BOOL)needsUpdateCurrentVersion:(NSString *)currentVersion newVersion:(NSString *)newVersion;
+
 @end
