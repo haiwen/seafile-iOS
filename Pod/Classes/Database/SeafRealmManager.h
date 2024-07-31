@@ -33,6 +33,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)clearAllCachedPhotos;
 
+// Check if a photo exists in the realm. added at 2024.7.30
+- (BOOL)isPhotoExistInRealm:(NSString *)identifier forAccount:(NSString *)account;
+
+//Used for version update after 2.9.27,delete the status "false" photo.Only record uploaded photos.
+- (void)deletePhotoWithNotUploadedStatus;
+
 @end
 
 NS_ASSUME_NONNULL_END

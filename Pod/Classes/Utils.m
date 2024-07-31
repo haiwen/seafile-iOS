@@ -645,4 +645,30 @@
     return fileName;
 }
 
++ (BOOL)needsUpdateCurrentVersion:(NSString *)currentVersion newVersion:(NSString *)newVersion {
+    NSArray *currentVersionComponents = [currentVersion componentsSeparatedByString:@"."];
+    NSArray *newVersionComponents = [newVersion componentsSeparatedByString:@"."];
+    
+    // Calculate the minimum count of components to compare
+    NSUInteger count = MIN([currentVersionComponents count], [newVersionComponents count]);
+    
+    for (NSUInteger i = 0; i < count; i++) {
+        NSInteger currentVersionNumber = [currentVersionComponents[i] integerValue];
+        NSInteger newVersionNumber = [newVersionComponents[i] integerValue];
+        
+        if (newVersionNumber > currentVersionNumber) {
+            return YES;  // New version is greater, update is needed
+        } else if (newVersionNumber < currentVersionNumber) {
+            return NO;   // Current version is greater, no update needed
+        }
+    }
+    
+    // If all compared components are equal, check if new version has more components
+    if ([newVersionComponents count] > [currentVersionComponents count]) {
+        return YES;  // New version might have additional non-zero components
+    }
+    // If all components are equal or new version is shorter or the same, no update is needed
+    return NO;
+}
+
 @end

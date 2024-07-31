@@ -104,6 +104,7 @@ static SeafRealmManager* instance;
     }
 }
 
+//remove uploaded Photo from Realm.
 - (void)deletePhotoWithIdentifier:(NSString *)identifier forAccount:(NSString *)account {
     RLMResults<SeafCachePhoto *> *photos = [SeafCachePhoto objectsWhere:@"identifier == %@ AND account == %@", identifier, account];
     
@@ -135,6 +136,20 @@ static SeafRealmManager* instance;
     
     [realm transactionWithBlock:^{
         [realm deleteObjects:photos];
+    }];
+}
+
+// Check if a photo exists in the realm. added at 2024.7.30
+- (BOOL)isPhotoExistInRealm:(NSString *)identifier forAccount:(NSString *)account{
+    return [SeafCachePhoto objectsWhere:@"identifier == %@ AND account == %@", identifier, account].count > 0;
+}
+
+//V2.9.27 delete the not uploaded photo in realm.
+- (void)deletePhotoWithNotUploadedStatus {
+    RLMRealm *realm = [RLMRealm defaultRealm];
+    [realm transactionWithBlock:^{
+        RLMResults<SeafCachePhoto *> *objectsToDelete = [SeafCachePhoto objectsWhere:@"status == %@",@"false"];
+        [realm deleteObjects:objectsToDelete];
     }];
 }
 
