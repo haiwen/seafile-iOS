@@ -1123,10 +1123,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self.photoBackup resetUploadedPhotos];
 }
 
-- (void)firstTimeSyncUpdateSyncedPhotos:(SeafDir *)uploaddir
-{
-    [self setFirstTimeSync:false];
-}
+//not used
+//- (void)firstTimeSyncUpdateSyncedPhotos:(SeafDir *)uploaddir
+//{
+//    [self setFirstTimeSync:false];
+//}
 
 - (void)checkPhotos:(BOOL)force
 {

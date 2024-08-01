@@ -93,13 +93,6 @@
         
         [self filterOutNeedUploadPhotos];
 
-//        NSArray *photos = [self filterOutUploadedPhotos];
-//        [photos enumerateObjectsUsingBlock:^(SeafPhotoAsset *photoAsset, NSUInteger idx, BOOL * _Nonnull stop) {
-//            if (![self IsPhotoUploaded:photoAsset] && ![self IsPhotoUploading:photoAsset]) {
-//                [self addUploadPhoto:photoAsset.localIdentifier];
-//            }
-//        }];
-        
         long num = [[SeafRealmManager shared] numOfCachedPhotosWhithAccount:self.accountIdentifier];
         Debug("Filter out %ld photos, cached : %ld photos", (long)_photosArray.count, num);
     }
@@ -180,10 +173,8 @@
             } else {
                 [self removeUploadingPhoto:localIdentifier];
                 [self removeFromUploadingDictWith:localIdentifier];
-//                [[SeafRealmManager shared] deletePhotoWithIdentifier:[self.accountIdentifier stringByAppendingString:localIdentifier] forAccount:self.accountIdentifier];
                 if (self.photSyncWatcher) [self.photSyncWatcher photoSyncChanged:self.photosInSyncing];
-               
-                [self pickPhotosForUpload];
+                count--;
             }
         }
         
@@ -239,9 +230,7 @@
         }
         _inCheckPhotos = true;
     }
-    
-//    __block NSMutableArray *photos = [[NSMutableArray alloc] init];
-    
+        
     PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
     fetchOptions.predicate = predicate;
     PHAssetCollection *collection = result.firstObject;
@@ -259,7 +248,6 @@
                     return;
                 }
             }
-            //            [self saveNeedUploadPhotoToLocalWithAssetIdentifier:asset.localIdentifier];
             NSString *realmIdentifer = [self.accountIdentifier stringByAppendingString:asset.localIdentifier];
             //if not exist in realm,add to photos.
             if (![[SeafRealmManager shared]isPhotoExistInRealm:realmIdentifer forAccount:self.accountIdentifier]){
@@ -270,63 +258,6 @@
         }
     }];
 }
-
-//- (NSArray *)filterOutUploadedPhotos {
-//    PHFetchResult *result = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum subtype:PHAssetCollectionSubtypeSmartAlbumUserLibrary options:nil];
-//    
-//    NSPredicate *predicate = [self buildAutoSyncPredicte];
-//    if (!predicate) {
-//        return nil;
-//    }
-//    
-//    @synchronized(self) {
-//        if (_inCheckPhotos) {
-//            return nil;
-//        }
-//        _inCheckPhotos = true;
-//    }
-//
-//    __block NSMutableArray *photos = [[NSMutableArray alloc] init];
-//    __block NSMutableArray *recentPhotos = [[NSMutableArray alloc] init];
-//    NSArray *oldPhotos = [[SeafRealmManager shared] getNeedUploadPhotosWithAccount:self.accountIdentifier];
-//    
-//    PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
-//    fetchOptions.predicate = predicate;
-//    PHAssetCollection *collection = result.firstObject;
-//    if (!self.fetchResult) {
-//        self.fetchResult = [PHAsset fetchAssetsInAssetCollection:collection options:fetchOptions];
-//    }
-//    
-//    [self.fetchResult enumerateObjectsUsingBlock:^(PHAsset *asset, NSUInteger idx, BOOL * _Nonnull stop) {
-//        SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!self.connection.isUploadHeicEnabled];
-//        if (photoAsset.name == nil) {
-//            return;
-//        }
-//        [self saveNeedUploadPhotoToLocalWithAssetIdentifier:asset.localIdentifier];
-//        [recentPhotos addObject:[self.accountIdentifier stringByAppendingString:asset.localIdentifier]];
-//        if (self.connection.isFirstTimeSync) {
-//            if ([self.syncDir nameExist:photoAsset.name]) {
-//                [self setPhotoUploadedIdentifier:asset.localIdentifier];
-//                Debug("First time sync, skip file %@(%@) which has already been uploaded", photoAsset.name, photoAsset.localIdentifier);
-//                return;
-//            }
-//        }
-//        [photos addObject:photoAsset];
-//    }];
-//    
-//    NSMutableArray *needDeletePhotos = [[NSMutableArray alloc] init];
-//    for (NSString *identifier in oldPhotos) {
-//        if (![recentPhotos containsObject:identifier]) {
-//            [needDeletePhotos addObject:identifier];
-//        }
-//    }
-//    
-//    for (NSString *cachePhotoId in needDeletePhotos) {
-//        [[SeafRealmManager shared] deletePhotoWithIdentifier:cachePhotoId forAccount:self.accountIdentifier];
-//    }
-//
-//    return photos;
-//}
 
 - (NSPredicate *)buildAutoSyncPredicte {
     NSPredicate *predicate = nil;
@@ -343,8 +274,7 @@
 
 
 - (NSUInteger)photosInSyncing {
-    return self.photosArray.count;
-//    return [[SeafRealmManager shared] numOfCachedPhotosWithStatus:@"false" forAccount:self.accountIdentifier];
+    return self.photosArray.count + self.uploadingArray.count;
 }
 
 - (BOOL)IsPhotoUploaded:(SeafPhotoAsset *)asset {
@@ -359,9 +289,6 @@
     //after iOS9 check photo is existed in Realm.
     NSString *identifier = [self getCachedPhotoStatuWithIdentifier:[self.accountIdentifier stringByAppendingString:asset.localIdentifier]];//get id from realm.
     
-    //    if (identifier != nil && [identifier isEqualToString:@"true"]) {
-    //        saveCount ++;
-    //    }
     if (identifier){
         saveCount ++;
     }
@@ -517,17 +444,9 @@
             for (PHAsset *asset in detail.insertedObjects) {
                 SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!self.connection.isUploadHeicEnabled];
                 if (photoAsset.name != nil) {
-                    //if is firstTimeSync ,check photo has already uploaded to dir.
-                    if (self.connection.isFirstTimeSync) {
-                        if ([self.syncDir nameExist:photoAsset.name]) {
-                            [self setPhotoUploadedIdentifier:asset.localIdentifier];
-                            Debug("First time sync, skip file %@(%@) which has already been uploaded", photoAsset.name, photoAsset.localIdentifier);
-                            return;
-                        }
-                    }
-                    NSString *realmIdentifer = [self.accountIdentifier stringByAppendingString:asset.localIdentifier];
                     //if not exist in realm,add to photos.
-                    if (![[SeafRealmManager shared]isPhotoExistInRealm:realmIdentifer forAccount:self.accountIdentifier]){
+                    NSString *realmIdentifer = [self.accountIdentifier stringByAppendingString:asset.localIdentifier];
+                    if (![[SeafRealmManager shared]isPhotoExistInRealm:realmIdentifer forAccount:self.accountIdentifier]) {
                         if (![self IsPhotoUploaded:photoAsset] &&![self IsPhotoUploading:photoAsset]) {
                             [self addUploadPhoto:photoAsset.localIdentifier];
                         }
@@ -537,10 +456,7 @@
         }
     }
     
-    
     if (self.photSyncWatcher) [self.photSyncWatcher photoSyncChanged:self.photosInSyncing];
-
-//    [self checkPhotos:YES];
 }
 
 @end

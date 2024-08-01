@@ -81,8 +81,12 @@
 //        [[SeafRealmManager shared] deletePhotoWithNotUploadedStatus];
 //    }
     
-    //test
-    [[SeafRealmManager shared] deletePhotoWithNotUploadedStatus];
+    //Determine whether an upgrade is needed based on the userDefault "RealmVersion" number
+    NSString *isRealmUpdatedToV2 = [[SeafStorage sharedObject]objectForKey:@"RealmVersion"];
+    if (isRealmUpdatedToV2.length == 0 || isRealmUpdatedToV2.intValue < 2) {
+        [[SeafRealmManager shared] deletePhotoWithNotUploadedStatus];
+        [[SeafStorage sharedObject]setObject:@"2" forKey:@"RealmVersion"];
+    }
 
 }
 
@@ -447,11 +451,8 @@
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
     if (self.needReset == YES) {
         self.needReset = NO;
-//        NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
-//        [self photosDidChange:note];
-        for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
-            [conn checkAutoSync];
-        }
+        NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
+        [self photosDidChange:note];
     } else {
         [self photosDidChange:nil];
     }
@@ -643,12 +644,10 @@
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations
 {
     Debug("Location updated: %@", locations);
-    //    [self photosDidChange:nil];//modified at 2024.7.31
     if (self.needReset == YES) {
         self.needReset = NO;
-        for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
-            [conn checkAutoSync];
-        }
+        NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
+        [self photosDidChange:note];
     } else {
         [self photosDidChange:nil];
     }

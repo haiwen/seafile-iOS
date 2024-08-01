@@ -175,9 +175,8 @@
     
     Info("Migrate db table UploadedPhotoV2 to realm : %ld", (long)items.count);
     for (UploadedPhotoV2 *obj in items) {
-//        [[SeafRealmManager shared] migrateCachedPhotosFromCoreDataWithIdentifier:obj.key forAccount:obj.account andStatus:obj.value];
         //save uploaded obj to realm.
-        if (![obj.value isEqual:@"false"]){
+        if ([obj.value isEqual:@"true"]){
             [[SeafRealmManager shared] migrateCachedPhotosFromCoreDataWithIdentifier:obj.key forAccount:obj.account andStatus:obj.value];
         }
     }
