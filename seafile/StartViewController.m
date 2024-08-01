@@ -194,13 +194,33 @@
 {
     NSString *title = NSLocalizedString(@"Choose a Seafile server", @"Seafile");
     NSString *privserver = NSLocalizedString(@"Other Server", @"Seafile");
-    NSArray *arr = [NSArray arrayWithObjects:SERVER_SEACLOUD_NAME, SERVER_SHIB_NAME, privserver, nil];
-    UIAlertController *alert = [self generateAlert:arr withTitle:title handler:^(UIAlertAction *action) {
-        long index = [arr indexOfObject:action.title];
-        if (index >= 0 && index <= ACCOUNT_OTHER) {
-            [self showAccountView:nil type:(int)index];
-        }
-    }];
+    
+    //Array of display at login view.
+    NSArray *arrZH = [NSArray arrayWithObjects:SERVER_SEACLOUD_NAME, SERVER_SHIB_NAME, privserver, nil];
+    NSArray *arrOther = [NSArray arrayWithObjects:SERVER_SHIB_NAME, privserver, nil];
+    
+    //Detect the current locale
+    NSString *currentLanguage = [[NSLocale preferredLanguages] firstObject];
+    
+    UIAlertController *alert = nil;
+    
+    //Show different login methods
+    if ([currentLanguage hasPrefix:@"zh"]) {
+        alert = [self generateAlert:arrZH withTitle:title handler:^(UIAlertAction *action) {
+            long index = [arrZH indexOfObject:action.title];
+            if (index >= 0 && index <= ACCOUNT_OTHER) {
+                [self showAccountView:nil type:(int)index];
+            }
+        }];
+    } else {
+        alert = [self generateAlert:arrOther withTitle:title handler:^(UIAlertAction *action) {
+            long index = [arrOther indexOfObject:action.title];
+            if (index >= 0 && index <= ACCOUNT_OTHER) {
+                [self showAccountView:nil type:(int)index + 1];
+            }
+        }];
+    }
+
     if (IsIpad()) {
         CGRect rect = [((UIView *)sender) frame];
         alert.popoverPresentationController.sourceRect = CGRectMake(rect.size.width/2, 0, 0, 0);
