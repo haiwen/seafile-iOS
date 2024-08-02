@@ -82,10 +82,10 @@
 //    }
     
     //Determine whether an upgrade is needed based on the userDefault "RealmVersion" number
-    NSString *isRealmUpdatedToV2 = [[SeafStorage sharedObject]objectForKey:@"RealmVersion"];
-    if (isRealmUpdatedToV2.length == 0 || isRealmUpdatedToV2.intValue < 2) {
+    NSString *realmVersion = [[SeafStorage sharedObject] objectForKey:@"RealmVersion"];
+    if (realmVersion.length == 0 || realmVersion.intValue < 2) {
         [[SeafRealmManager shared] deletePhotoWithNotUploadedStatus];
-        [[SeafStorage sharedObject]setObject:@"2" forKey:@"RealmVersion"];
+        [[SeafStorage sharedObject] setObject:@"2" forKey:@"RealmVersion"];
     }
 
 }
