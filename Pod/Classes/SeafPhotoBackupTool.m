@@ -248,12 +248,9 @@
                     return;
                 }
             }
-            NSString *realmIdentifer = [self.accountIdentifier stringByAppendingString:asset.localIdentifier];
             //if not exist in realm,add to photos.
-            if (![[SeafRealmManager shared]isPhotoExistInRealm:realmIdentifer forAccount:self.accountIdentifier]){
-                if (![self IsPhotoUploaded:photoAsset] &&![self IsPhotoUploading:photoAsset]) {
-                    [self addUploadPhoto:photoAsset.localIdentifier];
-                }
+            if (![self IsPhotoUploaded:photoAsset] &&![self IsPhotoUploading:photoAsset]) {
+                [self addUploadPhoto:photoAsset.localIdentifier];
             }
         }
     }];
@@ -277,23 +274,20 @@
     return self.photosArray.count + self.uploadingArray.count;
 }
 
+//Determine whether it has been uploaded and recorded in realm.
 - (BOOL)IsPhotoUploaded:(SeafPhotoAsset *)asset {
-    NSInteger saveCount = 0;
     //before iOS9 check ALAssetURL is available
     if (asset.ALAssetURL && [asset.ALAssetURL respondsToSelector:NSSelectorFromString(@"absoluteString")] && asset.ALAssetURL.absoluteString) {
         NSString *value = [self getCachedPhotoStatuWithIdentifier:[self.accountIdentifier stringByAppendingString:asset.ALAssetURL.absoluteString]];
         if (value != nil) {
-            saveCount ++;
+            return YES;
         }
     }
+    
     //after iOS9 check photo is existed in Realm.
-    NSString *identifier = [self getCachedPhotoStatuWithIdentifier:[self.accountIdentifier stringByAppendingString:asset.localIdentifier]];//get id from realm.
+    NSString *realmAssetId = [self.accountIdentifier stringByAppendingString:asset.localIdentifier];
     
-    if (identifier){
-        saveCount ++;
-    }
-    
-    return saveCount > 0;
+    return [[SeafRealmManager shared] isPhotoExistInRealm:realmAssetId forAccount:self.accountIdentifier];
 }
 
 - (BOOL)IsPhotoUploading:(SeafPhotoAsset *)asset {
@@ -445,11 +439,8 @@
                 SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!self.connection.isUploadHeicEnabled];
                 if (photoAsset.name != nil) {
                     //if not exist in realm,add to photos.
-                    NSString *realmIdentifer = [self.accountIdentifier stringByAppendingString:asset.localIdentifier];
-                    if (![[SeafRealmManager shared]isPhotoExistInRealm:realmIdentifer forAccount:self.accountIdentifier]) {
-                        if (![self IsPhotoUploaded:photoAsset] &&![self IsPhotoUploading:photoAsset]) {
-                            [self addUploadPhoto:photoAsset.localIdentifier];
-                        }
+                    if (![self IsPhotoUploaded:photoAsset] &&![self IsPhotoUploading:photoAsset]) {
+                        [self addUploadPhoto:photoAsset.localIdentifier];
                     }
                 }
             }
