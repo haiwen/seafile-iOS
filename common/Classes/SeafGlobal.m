@@ -220,6 +220,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         NSString *username = [account objectForKey:@"username"];
         [_cacheProvider migrateUploadedPhotos:url username:username account:[NSString stringWithFormat:@"%@/%@", url, username]];
         [_cacheProvider migrateUploadedPhotosToRealm];
+        [_cacheProvider checkAndUpgradeRealmDB];
         
         SeafConnection *conn = [[SeafConnection alloc] initWithUrl:url cacheProvider:_cacheProvider username:username];
         if (conn.username)

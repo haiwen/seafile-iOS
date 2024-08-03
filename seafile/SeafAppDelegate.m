@@ -23,6 +23,8 @@
 @interface SeafAppDelegate () <UITabBarControllerDelegate, CLLocationManagerDelegate, WXApiDelegate>
 
 @property UIBackgroundTaskIdentifier bgTask;
+@property (nonatomic, strong) NSTimer *bgTaskTimer;
+@property (nonatomic, assign) NSInteger bgTaskNum;
 
 @property NSInteger moduleIdx;
 @property (readonly) UITabBarController *tabbarController;
@@ -63,31 +65,6 @@
     }
     // Continue if there are any active uploads or downloads.
     return totalUploadingNum != 0 || totalDownloadingNum != 0;
-}
-
-- (void)checkAndUpgradeRealmDB {
-    
-//    NSString *currentVersion = [SeafStorage.sharedObject objectForKey:@"VERSION"];
-//
-//    NSString *newVersion = SEAFILE_VERSION;
-//    
-//    //Versions before 2.9.26 need to be updated
-//    NSString *numericString = [currentVersion stringByReplacingOccurrencesOfString:@"." withString:@""];
-//    
-//    int versionNumber = [numericString intValue];
-//    
-//    //less than 2.9.27 and need update
-//    if (versionNumber < 2927 && [Utils needsUpdateCurrentVersion:currentVersion newVersion:SEAFILE_VERSION]){
-//        [[SeafRealmManager shared] deletePhotoWithNotUploadedStatus];
-//    }
-    
-    //Determine whether an upgrade is needed based on the userDefault "RealmVersion" number
-    NSString *realmVersion = [[SeafStorage sharedObject] objectForKey:@"RealmVersion"];
-    if (realmVersion.length == 0 || realmVersion.intValue < 2) {
-        [[SeafRealmManager shared] deletePhotoWithNotUploadedStatus];
-        [[SeafStorage sharedObject] setObject:@"2" forKey:@"RealmVersion"];
-    }
-
 }
 
 // Selects the provided Seafile connection as the active account, updates navigation state.
@@ -298,8 +275,6 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     Info("%@", [[NSBundle mainBundle] infoDictionary]);
-    //2.9.27:Versions before 2.9.26 need to be updated
-    [self checkAndUpgradeRealmDB];
     
     _global = [SeafGlobal sharedObject];
     [_global migrate];
@@ -334,12 +309,13 @@
 
     self.bgTask = UIBackgroundTaskInvalid;
     self.needReset = NO;
-    __weak typeof(self) weakSelf = self;
+    @weakify(self);
     self.expirationHandler = ^{
+        @strongify(self);
         Debug("Expired, Time Remain = %f, restart background task.", [application backgroundTimeRemaining]);
         if (@available(iOS 13.0, *)) {
-            [application endBackgroundTask:weakSelf.bgTask];
-            weakSelf.needReset = YES;
+            [application endBackgroundTask:self.bgTask];
+            self.needReset = YES;
             if (SeafGlobal.sharedObject.connection.accountIdentifier) {
                 [[SeafDataTaskManager.sharedObject accountQueueForConnection:SeafGlobal.sharedObject.connection].uploadQueue clearTasks];
             }
@@ -350,9 +326,11 @@
                 [SeafDataTaskManager.sharedObject cancelAutoSyncTasks:conn];
                 [conn clearUploadCache];
             }
+            [self photosDidChange:[NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}]];
+            [self startBackgroundTask];
         } else {
             //not work in iOS 13, and while call in app  become active next time
-            [weakSelf startBackgroundTask];
+            [self startBackgroundTask];
         }
     };
 
@@ -373,18 +351,30 @@
 }
 
 // Background tasks management to ensure the app can continue operations when sent to background.
-- (void)startBackgroundTask
-{
+- (void)startBackgroundTask {
     // Start the long-running task.
+    self.bgTaskNum = 0;
     UIApplication* app = [UIApplication sharedApplication];
     if (UIBackgroundTaskInvalid != self.bgTask) {
         [app endBackgroundTask:self.bgTask];
         self.bgTask = UIBackgroundTaskInvalid;
     }
-    // Start a new background task if there are tasks that should continue running.
-    if (!self.shouldContinue) return;
     Debug("start background task");
+    self.bgTaskTimer = [NSTimer timerWithTimeInterval:1.0 target:self selector:@selector(bgTaskCount) userInfo:nil repeats:YES];
+    [[NSRunLoop currentRunLoop] addTimer:self.bgTaskTimer forMode:NSRunLoopCommonModes];
     self.bgTask = [app beginBackgroundTaskWithExpirationHandler:self.expirationHandler];
+}
+
+- (void)bgTaskCount {
+    if (self.bgTaskNum < 600) {
+        self.bgTaskNum++;
+    }
+    if (self.bgTaskNum >= 600) {
+        self.bgTaskNum = 0;
+        [self.bgTaskTimer invalidate];
+        self.bgTaskTimer = nil;
+        [[UIApplication sharedApplication] endBackgroundTask:self.bgTask];
+    }
 }
 
 - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
@@ -448,6 +438,9 @@
 {
     Debug("Seafile will enter foreground");
     [application endBackgroundTask:self.bgTask];
+    self.bgTaskNum = 0;
+    [self.bgTaskTimer invalidate];
+    self.bgTaskTimer = nil;
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
     if (self.needReset == YES) {
         self.needReset = NO;
