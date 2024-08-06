@@ -294,11 +294,11 @@
     if (!asset) {
         return false;
     }
-    @synchronized(_photosArray) {
-        if ([_photosArray containsObject:asset.localIdentifier]) return true;
+    @synchronized(self.photosArray) {
+        if ([self.photosArray containsObject:asset.localIdentifier]) return true;
     }
-    @synchronized(_uploadingArray) {
-        if ([_uploadingArray containsObject:asset.localIdentifier]) return true;
+    @synchronized(self.uploadingArray) {
+        if ([self.uploadingArray containsObject:asset.localIdentifier]) return true;
     }
     return false;
 }
@@ -334,26 +334,26 @@
 }
 
 - (void)addUploadPhoto:(NSString *)localIdentifier {
-    @synchronized(_photosArray) {
-        [_photosArray addObject:localIdentifier];
+    @synchronized(self.photosArray) {
+        [self.photosArray addObject:localIdentifier];
     }
 }
 
 - (void)removeNeedUploadPhoto:(NSString *)localIdentifier {
-    @synchronized(_photosArray) {
-        [_photosArray removeObject:localIdentifier];
+    @synchronized(self.photosArray) {
+        [self.photosArray removeObject:localIdentifier];
     }
 }
 
 - (void)addUploadingPhotoIdentifier:(NSString *)localIdentifier {
-    @synchronized(_uploadingArray) {
-        [_uploadingArray addObject:localIdentifier];
+    @synchronized(self.uploadingArray) {
+        [self.uploadingArray addObject:localIdentifier];
     }
 }
 
 - (void)removeUploadingPhoto:(NSString *)localIdentifier {
-    @synchronized(_uploadingArray) {
-        [_uploadingArray removeObject:localIdentifier];
+    @synchronized(self.uploadingArray) {
+        [self.uploadingArray removeObject:localIdentifier];
     }
 }
 
@@ -389,7 +389,7 @@
 
 - (void)resetUploadedPhotos
 {
-    _uploadingArray = [[NSMutableArray alloc] init];
+    self.uploadingArray = [[NSMutableArray alloc] init];
     [[SeafRealmManager shared] clearAllCachedPhotosInAccount:self.accountIdentifier];
 }
 
@@ -448,6 +448,28 @@
     }
     
     if (self.photSyncWatcher) [self.photSyncWatcher photoSyncChanged:self.photosInSyncing];
+}
+
+#pragma mark - getter
+- (NSMutableArray *)uploadingArray {
+    if (!_uploadingArray) {
+        _uploadingArray = [[NSMutableArray alloc] init];
+    }
+    return _uploadingArray;
+}
+
+- (NSMutableArray *)photosArray {
+    if (!_photosArray) {
+        _photosArray = [[NSMutableArray alloc] init];
+    }
+    return _photosArray;
+}
+
+- (NSMutableDictionary *)uploadingDict {
+    if (!_uploadingDict) {
+        _uploadingDict = [[NSMutableDictionary alloc] init];
+    }
+    return _uploadingDict;
 }
 
 @end

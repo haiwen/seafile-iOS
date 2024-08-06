@@ -184,6 +184,15 @@
     [self deleteAllObjectsForEntity:ENTITY_UPLOAD_PHOTO];
 }
 
+- (void)checkAndUpgradeRealmDB {
+    //Determine whether an upgrade is needed based on the userDefault "RealmVersion" number
+    NSString *realmVersion = [[SeafStorage sharedObject] objectForKey:@"RealmVersion"];
+    if (realmVersion.length == 0 || realmVersion.intValue < 2) {
+        [[SeafRealmManager shared] deletePhotoWithNotUploadedStatus];
+        [[SeafStorage sharedObject] setObject:@"2" forKey:@"RealmVersion"];
+    }
+}
+
 - (SeafCacheObjV2 *)getCacheObj:(NSString *)key entityName:(NSString *)entity inAccount:(NSString *)account
 {
     NSManagedObjectContext *context = self.managedObjectContext;
