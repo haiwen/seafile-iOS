@@ -319,13 +319,6 @@
             if (SeafGlobal.sharedObject.connection.accountIdentifier) {
                 [[SeafDataTaskManager.sharedObject accountQueueForConnection:SeafGlobal.sharedObject.connection].uploadQueue clearTasks];
             }
-            //reset all upload photos and connection
-            for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
-                conn.inAutoSync = false;
-                [conn.photoBackup resetAll];
-                [SeafDataTaskManager.sharedObject cancelAutoSyncTasks:conn];
-                [conn clearUploadCache];
-            }
             [self photosDidChange:[NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}]];
             [self startBackgroundTask];
         } else {
@@ -353,6 +346,9 @@
 // Background tasks management to ensure the app can continue operations when sent to background.
 - (void)startBackgroundTask {
     // Start the long-running task.
+    if (![self shouldContinue]) {
+        return;
+    }
     self.bgTaskNum = 0;
     UIApplication* app = [UIApplication sharedApplication];
     if (UIBackgroundTaskInvalid != self.bgTask) {
