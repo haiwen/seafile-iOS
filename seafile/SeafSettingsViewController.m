@@ -635,10 +635,16 @@ enum {
         [_connection photosDidChange:nil];
         return;
     }
-
-    if (_connection.autoSyncedNum > 0) {
-        [_connection resetUploadedPhotos];
+    
+    if (!_connection.photoBackup){
+        _connection.photoBackup = [[SeafPhotoBackupTool alloc] initWithConnection:_connection andLocalUploadDir:_connection.localUploadDir];
+        _connection.photoBackup.photSyncWatcher = self;
     }
+
+//    if (_connection.autoSyncedNum > 0) {
+//        [_connection resetUploadedPhotos];
+//    }
+    [_connection resetUploadedPhotos];
 
     dispatch_async(dispatch_get_main_queue(), ^ {
         [self setSyncRepo:repo];

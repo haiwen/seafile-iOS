@@ -440,8 +440,12 @@
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
     if (self.needReset == YES) {
         self.needReset = NO;
-        NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
-        [self photosDidChange:note];
+//        NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
+//        [self photosDidChange:note];
+        for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+            [conn checkAutoSync];
+        }
+
     } else {
         [self photosDidChange:nil];
     }
@@ -635,8 +639,11 @@
     Debug("Location updated: %@", locations);
     if (self.needReset == YES) {
         self.needReset = NO;
-        NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
-        [self photosDidChange:note];
+//        NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
+//        [self photosDidChange:note];
+        for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+            [conn checkAutoSync];
+        }
     } else {
         [self photosDidChange:nil];
     }

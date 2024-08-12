@@ -82,6 +82,8 @@
 	<false/>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
+		<string>https</string>
+		<string>http</string>
 		<string>wechat</string>
 	</array>
 	<key>LSRequiresIPhoneOS</key>

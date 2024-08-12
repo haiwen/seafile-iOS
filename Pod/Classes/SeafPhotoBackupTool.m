@@ -389,7 +389,9 @@
 
 - (void)resetUploadedPhotos
 {
-    self.uploadingArray = [[NSMutableArray alloc] init];
+    _photosArray = [[NSMutableArray alloc] init];
+    _uploadingDict = [[NSMutableDictionary alloc] init];
+    _uploadingArray = [[NSMutableArray alloc] init];
     [[SeafRealmManager shared] clearAllCachedPhotosInAccount:self.accountIdentifier];
 }
 

@@ -15,7 +15,7 @@
 
 #import "Debug.h"
 
-@interface SeafShibbolethViewController ()<WKNavigationDelegate, NSURLConnectionDelegate>
+@interface SeafShibbolethViewController ()<WKNavigationDelegate, NSURLConnectionDelegate,UINavigationControllerDelegate>
 
 @property (strong) SeafConnection *sconn;// Connection to the Seafile server
 @property (strong) NSURLRequest *FailedRequest;
@@ -23,6 +23,9 @@
 @property (strong, nonatomic) WKWebView *webView;// WebKit view for handling Shibboleth authentication
 @property (strong, nonatomic) UIProgressView *progressView;
 @property BOOL authenticated;// Flag to check if authentication has occurred
+@property (strong, nonatomic) NSTimer *timer;//to get the sso login status every 15s.
+@property (strong, nonatomic) NSString *ssoLinkToken;//sso login urlString.
+@property (assign, nonatomic) BOOL isSSOLoginSuccess;// Indicate whether the SSO login was successful.
 
 @end
 
@@ -57,11 +60,34 @@
     return [_sconn.address stringByAppendingString:@"/api2/ping/"];
 }
 
+- (NSString *)serverInfo
+{
+    return [_sconn.address stringByAppendingString:@"/api2/server-info/"];
+}
+
+- (NSString *)ssoLink {
+    return [_sconn.address stringByAppendingString:@"/api2/client-sso-link/"];
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
+    [self setupNotifications];
     // Do any additional setup after loading the view from its nib.
     self.view.backgroundColor = [UIColor whiteColor];
+    self.navigationController.delegate = self;
     [self start];
+}
+
+//navigation back button clicked
+- (void)navigationController:(UINavigationController *)navigationController willShowViewController:(UIViewController *)viewController animated:(BOOL)animated {
+    if (viewController != self) {
+        if (self.timer) {
+            if (self.timer.isValid) {
+                [self.timer invalidate];
+            }
+            self.timer = nil;
+        }
+    }
 }
 
 - (void)didReceiveMemoryWarning {
@@ -72,6 +98,47 @@
 // Starts the authentication or ping process
 - (void)start
 {
+    //From 2.9.27
+    _authenticated = true;
+    _ssoLinkToken = @"";
+    _isSSOLoginSuccess = false;
+    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:self.serverInfo]];
+
+    @weakify(self)
+    [self sendRequest:request completionHandler:^(NSDictionary *responseDict, NSError *error) {
+        @strongify(self)
+        if (!self) return;
+        
+        if (error) {
+            Debug(@"Failed to retrieve server info: %@", error.localizedDescription);
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to connect to SSO Server Info server", @"Seafile")];
+        } else {
+            Debug(@"Server Info Retrieved Successfully");
+            // Process the server's response
+            NSArray *features = responseDict[@"features"];
+            if ([features containsObject:@"client-sso-via-local-browser"]) {
+                Debug(@"Client SSO via local browser is supported");
+                // Execute additional code for client SSO via local browser
+                if ([features containsObject:@"client-sso-via-local-browser"]) {
+                    Debug("Feature client-sso-via-local-browser is supported");
+                    //Send request to get the sso link url.
+                    [self sendClintSSOLinkRequest];
+                } else {//old sso login
+                    Debug("Using standard Shibboleth login");
+                    [self oldSSOLoginStart];
+                }
+            } else {
+                Debug(@"Using standard login method");
+                [self oldSSOLoginStart];
+            }
+        }
+    }];
+    
+    [SVProgressHUD showWithStatus:NSLocalizedString(@"Connecting to server", @"Seafile")];
+}
+
+- (void)oldSSOLoginStart {
+    //Before 2.9.26
     if ([_sconn.address hasPrefix:@"http://"]) {
         _authenticated = true;
         NSURLRequest *request = [[NSURLRequest alloc] initWithURL:[NSURL URLWithString:self.shibbolethUrl]];
@@ -82,7 +149,84 @@
         Debug("Ping %@", self.pingUrl);
         [self loadRequestBackground:request];
     }
-    [SVProgressHUD showWithStatus:NSLocalizedString(@"Connecting to server", @"Seafile")];
+}
+
+- (void)sendClintSSOLinkRequest {
+    NSMutableURLRequest *ssoRequest = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:self.ssoLink]];
+    ssoRequest.HTTPMethod = @"POST";
+    Debug("Send SSO request: %@", self.ssoLink);
+    @weakify(self)
+    [self sendRequest:ssoRequest completionHandler:^(NSDictionary *responseDict, NSError *error) {
+        @strongify(self)
+        if (!self) return;
+        
+        if (error) {
+            Debug(@"Failed to retrieve server info: %@", error.localizedDescription);
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to connect to SSO link server", @"Seafile")];
+        } else {
+            Debug(@"Server Info Retrieved Successfully");
+            // Process the server's response
+            //Get SSO Link
+            NSString *link = responseDict[@"link"];
+            if (link && [link isKindOfClass:[NSString class]] && link.length > 0) {
+                Debug(@"'link' exists and is not empty: %@", link);
+//                NSString *urlString = [self modifyLinkString:link];
+                NSString *urlString = link;
+
+                self.ssoLinkToken = [self getSSOTokenFromURLString:urlString];
+                [self startTimerWithUrlString:[self.ssoLink stringByAppendingString:self.ssoLinkToken]];
+                
+                [self openURLInSafari:urlString];
+
+            } else {
+                Debug(@"'link' does not exist or is empty");
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get SSO link", @"Seafile")];
+            }
+        }
+    }];
+}
+
+- (NSString *)modifyLinkString:(NSString *)originalURLString {
+    // Use regular expression to replace duplicate 'seahub/' with single 'seahub/'
+    NSError *error = nil;
+    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"(seahub/)+"
+                                                                            options:NSRegularExpressionCaseInsensitive
+                                                                             error:&error];
+    if (error) {
+        Debug(@"Error creating regex: %@", error.localizedDescription);
+    } else {
+        NSString *modifiedURLString = [regex stringByReplacingMatchesInString:originalURLString
+                                                                       options:0
+                                                                         range:NSMakeRange(0, [originalURLString length])
+                                                                  withTemplate:@"seahub/"];
+        return modifiedURLString;
+    }
+    return @"";
+}
+
+- (void)sendRequest:(NSURLRequest *)request completionHandler:(void (^)(NSDictionary *responseDict, NSError *error))completionHandler {
+    AFHTTPSessionManager *manager = _sconn.loginMgr;
+    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+    NSURLSessionDataTask *dataTask = [manager dataTaskWithRequest:request uploadProgress:nil downloadProgress:nil completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            Debug("Response Received: %@", response);
+            if (error) {
+                Warning("Error: %@", error);
+                //            [SVProgressHUD showErrorWithStatus:error.localizedDescription];
+                if (completionHandler) {
+                    completionHandler(nil, error);
+                }
+            } else {
+                NSDictionary *responseDict = [NSJSONSerialization JSONObjectWithData:responseObject options:0 error:nil];
+                Debug("Response Data: %@", responseDict);
+                if (completionHandler) {
+                    completionHandler(responseDict, nil);
+                }
+            }
+        });
+    }];
+    [dataTask resume];
+    Debug("Request Sent: %@", request.URL);
 }
 
 // Loads a given URL request in the background
@@ -95,18 +239,25 @@
     } downloadProgress:^(NSProgress * _Nonnull downloadProgress) {
         
     } completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
-        if (error) {
-            Warning("Error: %@", error);
-            [SVProgressHUD showErrorWithStatus:error.localizedDescription];
-        } else {
-            NSString *url = self.shibbolethUrl;
-            Debug("Send request: %@", url);
-            NSMutableURLRequest *r = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:url]];
-            r.HTTPShouldHandleCookies = true;
-            [self webviewLoadRequest:r];
-        }
+        Debug("Response Received: %@", response);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (error) {
+                Warning("Error: %@", error);
+                [SVProgressHUD showErrorWithStatus:error.localizedDescription];
+            } else {
+                NSString *url = self.shibbolethUrl;
+                Debug("Send request: %@", url);
+                NSMutableURLRequest *r = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:url]];
+                r.HTTPShouldHandleCookies = true;
+                [self webviewLoadRequest:r];
+                
+                NSString *responseString = [[NSString alloc] initWithData:responseObject encoding:NSUTF8StringEncoding];
+                Debug("Response Data: %@", responseString);
+            }
+        });
     }];
     [dataTask resume];
+    Debug("Request Sent: %@", request.URL);
 }
 
 // Loads a given URL request in the webView
@@ -149,6 +300,7 @@
     [webView evaluateJavaScript:@"document.cookie" completionHandler:^(id _Nullable response, NSError * _Nullable error) {
         if (response) {
             NSArray *cookies = [(NSString*)response componentsSeparatedByString:@";"];
+            //to save account to app
             for (NSString *value in cookies) {
                 if ([value containsString:@"seahub_auth"]) {
                     Debug("Got seahub_auth: %@", value);
@@ -191,6 +343,7 @@
 
 - (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(nonnull WKNavigationAction *)navigationAction decisionHandler:(nonnull void (^)(WKNavigationActionPolicy))decisionHandler {
     Debug("load request: %@, %d", navigationAction.request.URL, _authenticated);
+    //whether if ping response correct
     if (!_authenticated) {
         _FailedRequest = navigationAction.request;
         self.conn = [[NSURLConnection alloc] initWithRequest:_FailedRequest delegate:self];
@@ -282,8 +435,132 @@
     return _progressView;
 }
 
+//Open url in safari
+- (void)openURLInSafari:(NSString *)urlString {
+    NSURL *url = [NSURL URLWithString:urlString];
+    if ([[UIApplication sharedApplication] canOpenURL:url]) {
+        [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:^(BOOL success) {
+            if (success) {
+                Debug(@"URL was opened successfully");
+            } else {
+                Debug(@"Failed to open URL");
+            }
+        }];
+    } else {
+        Debug(@"URL is not valid or cannot be opened");
+    }
+}
+
+- (NSString *)getSSOTokenFromURLString:(NSString *)urlString {
+    NSString *key = @"client-sso/";
+    // Find the location of "client-sso/" in the URL, example: "2c7820f684bc464f81f77fab5c999d49a6cd558eaf4494a22e544ab5a77c/", ends with "/"
+    NSRange rangeOfKey = [urlString rangeOfString:key];
+    if (rangeOfKey.location != NSNotFound) {
+        // Calculate the starting index right after "client-sso/"
+        NSUInteger startIndex = rangeOfKey.location + rangeOfKey.length;
+
+        // Extract the string starting right after "client-sso/"
+        NSString *substringAfterKey = [urlString substringFromIndex:startIndex];
+        return substringAfterKey;
+    } else {
+        Debug(@"'client-sso/' not found in the URL");
+        return @"";
+    }
+}
+
+- (void)startTimerWithUrlString:(NSString *)urlString {
+    if (urlString == nil || [urlString length] == 0 || self.isSSOLoginSuccess) {
+        // Early return to prevent timer from starting.
+        return;
+    }
+    
+    NSDictionary *userInfo = @{@"urlString": urlString};
+    self.timer = [NSTimer scheduledTimerWithTimeInterval:10.0
+                                                  target:self
+                                                selector:@selector(sendLoginRequest)
+                                                userInfo:userInfo
+                                                 repeats:YES];
+}
+
+//request for Whether safari login is successful
+- (void)sendLoginRequest {
+    if (self.isSSOLoginSuccess){
+        if (self.timer) {
+            [self.timer invalidate];
+            self.timer = nil;
+        }
+        return;
+    }
+    NSDictionary *userInfo = self.timer.userInfo;
+    NSString *urlString = userInfo[@"urlString"];
+    NSURL *url = [NSURL URLWithString:urlString];
+    NSURLRequest *request = [NSURLRequest requestWithURL:url];
+
+    @weakify(self)
+    [self sendRequest:request completionHandler:^(NSDictionary *responseDict, NSError *error) {
+        @strongify(self)
+        if (!self) return;
+        
+        if (!error && [responseDict[@"status"] isEqualToString:@"success"]) {
+            Debug(@"login success");
+            [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Shibboleth Login", @"Seafile")];
+            NSString *username = responseDict[@"username"];
+            NSString *apiToken = responseDict[@"apiToken"];
+            Debug("Token=%@, username=%@", apiToken, username);
+            [self->_sconn setToken:apiToken forUser:username isShib:true s2faToken:nil];
+            // stop timer after login success.
+            if (self.timer) {
+                [self.timer invalidate];
+                self.timer = nil;
+            }
+            self.isSSOLoginSuccess = true;
+        }
+    }];
+}
+
+- (void)setupNotifications {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(appDidEnterBackground)
+                                                 name:UIApplicationDidEnterBackgroundNotification
+                                               object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(appWillEnterForeground)
+                                                 name:UIApplicationWillEnterForegroundNotification
+                                               object:nil];
+}
+
+- (void)appDidEnterBackground {
+    if (self.timer) {
+        if (self.timer.isValid) {
+            [self.timer invalidate];
+        }
+        self.timer = nil;
+    }
+}
+
+- (void)appWillEnterForeground {
+    // Fire `[self sendLoginRequest]` once immediately after a 1-second delay
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self sendLoginRequest];
+    });
+    
+    //
+    [self startTimerWithUrlString:[self.ssoLink stringByAppendingString:self.ssoLinkToken]];
+
+}
+
 - (void)dealloc {
+    if (self.timer) {
+        if (self.timer.isValid) {
+            [self.timer invalidate];
+        }
+        self.timer = nil;
+    }
+    
     [self.webView removeObserver:self forKeyPath:@"estimatedProgress"];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+
 }
 
 @end

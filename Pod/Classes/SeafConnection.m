@@ -101,7 +101,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 @property BOOL inCheckCert;
 
 @property SeafDir *syncDir;
-@property (readonly) NSString *localUploadDir;
 @property (readonly) id<SeafCacheProvider> cacheProvider;
 
 @property (readonly) NSString *platformVersion;

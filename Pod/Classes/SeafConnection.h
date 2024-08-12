@@ -134,6 +134,8 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 
 @property (nonatomic, strong) SeafPhotoBackupTool * _Nullable photoBackup;///< Tool for backing up photos.
 
+@property (readonly) NSString * _Nullable localUploadDir;
+
 /**
  * Initializes a new connection with a specified URL and an optional cache provider.
  * @param url The URL to the Seafile server.
