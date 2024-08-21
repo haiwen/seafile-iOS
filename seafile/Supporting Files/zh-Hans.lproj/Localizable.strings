@@ -202,6 +202,15 @@
 "Connecting to server" = "正在连接服务器";
 
 /* Seafile */
+"Failed to connect to SSO 'Server Info' server" = "无法连接到 SSO '服务器信息' 服务器";
+
+/* Seafile */
+"Failed to get SSO link" = "获取 SSO 链接失败";
+
+/* Seafile */
+"Failed to connect to SSO link server" = "无法连接到 SSO 链接服务器";
+
+/* Seafile */
 "Contacts Backup" = "通讯录备份";
 
 /* Seafile */

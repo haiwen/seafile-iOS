@@ -243,6 +243,7 @@
         case ACCOUNT_SHIBBOLETH:
             _httpsSwitch.enabled = false;
 #if DEBUG
+            serverTextField.text = @"dev.seafile.com/seahub/";
 //            serverTextField.text = @"dev2.seafile.com/seahub/";
 #else
 
