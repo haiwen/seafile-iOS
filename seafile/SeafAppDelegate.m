@@ -319,8 +319,14 @@
             if (SeafGlobal.sharedObject.connection.accountIdentifier) {
                 [[SeafDataTaskManager.sharedObject accountQueueForConnection:SeafGlobal.sharedObject.connection].uploadQueue clearTasks];
             }
-            [self photosDidChange:[NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}]];
-            [self startBackgroundTask];
+            for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+                conn.inAutoSync = false;
+                [conn.photoBackup resetAll];
+                [SeafDataTaskManager.sharedObject cancelAutoSyncTasks:conn];
+                [conn clearUploadCache];
+            }
+//            [self photosDidChange:[NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}]];
+//            [self startBackgroundTask];
         } else {
             //not work in iOS 13, and while call in app  become active next time
             [self startBackgroundTask];
