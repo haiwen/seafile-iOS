@@ -42,6 +42,7 @@
         _finishBlock = nil;
         [self startTimer];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(cacheCleared:) name:@"clearCache" object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationWillEnterForeground:) name:UIApplicationWillEnterForegroundNotification object:nil];
     }
     return self;
 }
@@ -340,7 +341,11 @@
     NSDictionary *downloadTasks = [SeafStorage.sharedObject objectForKey:downloadKey];
     if (downloadTasks.allValues.count > 0) {
         for (NSDictionary *dict in downloadTasks.allValues) {
-            SeafFile *file = [[SeafFile alloc] initWithConnection:conn oid:[dict objectForKey:@"oid"] repoId:[dict objectForKey:@"repoId"] name:[dict objectForKey:@"name"] path:[dict objectForKey:@"path"] mtime:[[dict objectForKey:@"mtime"] longLongValue] size:[[dict objectForKey:@"size"] longLongValue]];
+            NSNumber *mtimeNumber = [dict objectForKey:@"mtime"];
+
+            NSString *oid = [Utils getNewOidFromMtime:[mtimeNumber longLongValue] repoId:[dict objectForKey:@"repoId"] path:[dict objectForKey:@"path"]];
+                        
+            SeafFile *file = [[SeafFile alloc] initWithConnection:conn oid:oid repoId:[dict objectForKey:@"repoId"] name:[dict objectForKey:@"name"] path:[dict objectForKey:@"path"] mtime:[[dict objectForKey:@"mtime"] longLongValue] size:[[dict objectForKey:@"size"] longLongValue]];
             [self addFileDownloadTask:file];
         }
     }
@@ -418,6 +423,12 @@
 - (void)removeAccountUploadTaskFromStorage:(NSString *)accountIdentifier {
     NSString *key = [self uploadStorageKey:accountIdentifier];
     [SeafStorage.sharedObject removeObjectForKey:key];
+}
+
+- (void)applicationWillEnterForeground:(NSNotification *)notif {
+    [self.taskTimer invalidate];
+    self.taskTimer = nil;
+    self.taskTimer = [NSTimer scheduledTimerWithTimeInterval:1*60 target:self selector:@selector(tick:) userInfo:nil repeats:YES];
 }
 
 - (void)dealloc {

@@ -57,10 +57,16 @@
         _repoType = aRepoType;
         _size = aSize;
         _mtime = aMtime;
-        _encrypted = aEncrypted;
+        self.encrypted = aEncrypted;
         _type = aType;
         _ownerNickname = nickname;
         _groupName = groupName;
+    }
+    return self;
+}
+
+- (id)initWithConnection:(SeafConnection *)aConnection andRepoId:(NSString *)aRepoId andRepoName:(NSString *)aName {
+    if (self = [super initWithConnection:aConnection oid:nil repoId:aRepoId perm:nil name:aName path:nil mime:nil]) {
     }
     return self;
 }
@@ -140,7 +146,7 @@
     _desc = repo.desc;
     _size = repo.size;
     _owner = repo.owner;
-    _encrypted = repo.encrypted;
+    self.encrypted = repo.encrypted;
     _mtime = repo.mtime;
     _ownerNickname = repo.ownerNickname;
 }

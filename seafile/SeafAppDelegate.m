@@ -270,6 +270,9 @@
     }
 
     [self checkBackgroundUploadStatus];
+    
+    //from 2.9.28
+    [self clearUserCacheFile];
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
@@ -319,14 +322,8 @@
             if (SeafGlobal.sharedObject.connection.accountIdentifier) {
                 [[SeafDataTaskManager.sharedObject accountQueueForConnection:SeafGlobal.sharedObject.connection].uploadQueue clearTasks];
             }
-            for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
-                conn.inAutoSync = false;
-                [conn.photoBackup resetAll];
-                [SeafDataTaskManager.sharedObject cancelAutoSyncTasks:conn];
-                [conn clearUploadCache];
-            }
-//            [self photosDidChange:[NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}]];
-//            [self startBackgroundTask];
+            [self photosDidChange:[NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}]];
+            [self startBackgroundTask];
         } else {
             //not work in iOS 13, and while call in app  become active next time
             [self startBackgroundTask];
@@ -368,10 +365,9 @@
 }
 
 - (void)bgTaskCount {
-    if (self.bgTaskNum < 600) {
+    if (self.bgTaskNum < 3000) {
         self.bgTaskNum++;
-    }
-    if (self.bgTaskNum >= 600) {
+    } else {
         self.bgTaskNum = 0;
         [self.bgTaskTimer invalidate];
         self.bgTaskTimer = nil;
@@ -446,12 +442,8 @@
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
     if (self.needReset == YES) {
         self.needReset = NO;
-//        NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
-//        [self photosDidChange:note];
-        for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
-            [conn checkAutoSync];
-        }
-
+        NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
+        [self photosDidChange:note];
     } else {
         [self photosDidChange:nil];
     }
@@ -645,11 +637,8 @@
     Debug("Location updated: %@", locations);
     if (self.needReset == YES) {
         self.needReset = NO;
-//        NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
-//        [self photosDidChange:note];
-        for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
-            [conn checkAutoSync];
-        }
+        NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
+        [self photosDidChange:note];
     } else {
         [self photosDidChange:nil];
     }
@@ -673,6 +662,19 @@
         Debug("STOP");
         [_locationManager stopMonitoringSignificantLocationChanges];
         _locationManager = nil;
+    }
+}
+
+/*from 2.9.28 Clear old cache files identified by the ‘oid’ field.
+new identifier is "'mtime' + 'repoId' + 'path'"
+ */
+- (void)clearUserCacheFile {
+    NSString *hasCleanCache = [[SeafStorage sharedObject] objectForKey:@"hasClearCachedByOid"];
+    if (hasCleanCache.length == 0 || hasCleanCache.intValue < 1) {
+        for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+            [conn clearAccountCache];
+        }
+        [[SeafStorage sharedObject] setObject:@"1" forKey:@"hasClearCachedByOid"];
     }
 }
 

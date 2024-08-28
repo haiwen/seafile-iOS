@@ -16,6 +16,8 @@
 #import "Utils.h"
 #import "Debug.h"
 
+#define REPO_PASSWORD_REFRESH_INTERVAL 300
+
 @implementation NSObject (NSObjectValue)
 - (long long)integerValue:(int)defaultValue
 {
@@ -140,9 +142,8 @@
 }
 
 
-- (void)loadContent:(BOOL)force;
-{
-    BOOL hasCache = [self loadCache];
+- (void)loadContent:(BOOL)force {
+    BOOL hasCache = [self loadCache]; //set true if ooid==nil or has Json cache
     @synchronized (self) {
         if (hasCache && !force) {
             return [self downloadComplete:true];
@@ -156,7 +157,12 @@
 
 - (BOOL)hasCache
 {
-    return _ooid != nil;
+    if (_ooid != nil){
+        return true;
+    } else {
+        return false;
+    }
+//    return _ooid != nil;
 }
 
 - (void)generateShareLink:(id<SeafShareDelegate>)dg password:(NSString *)password expire_days:(NSString *)expire_days {
@@ -234,4 +240,70 @@
     [self.delegate download:self failed:error];
 }
 
+- (void)setStarred:(BOOL)starred
+{
+    [connection setStarred:starred repo:self.repoId path:self.path];
+}
+
+- (BOOL)passwordRequiredWithSyncRefresh {
+    if (self.encrypted) {
+        if ([connection shouldLocalDecrypt:self.repoId]) {
+            return [connection getRepoPassword:self.repoId] == nil ? YES : NO;
+        } else {
+            NSString *password = [connection getRepoPassword:self.repoId];
+            if (!password) {
+                return YES;
+            } else {
+                NSTimeInterval cur = [[NSDate date] timeIntervalSince1970];
+                if (cur - [connection getRepoLastRefreshPasswordTime:self.repoId] > REPO_PASSWORD_REFRESH_INTERVAL) {
+                    __block BOOL result = YES;
+                    __block BOOL wait = YES;
+                    [self setRepoPassword:password block:^(SeafBase *entry, int ret) {
+                        wait = NO;
+                        result = ret == RET_SUCCESS ? NO : YES;
+                    }];
+                    //dispatch_semaphore will block main thread
+                    while (wait) {
+                        [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
+                    }
+                    return result;
+                } else {
+                    return NO;
+                }
+            }
+        }
+    } else {
+        return NO;
+    }
+}
+
+- (void)setRepoPassword:(NSString *)password block:(void(^)(SeafBase *entry, int ret))block
+{
+    if (!self.repoId) {
+        if (block) block(self, RET_FAILED);
+        return;
+    }
+    NSString *request_str = [NSString stringWithFormat:API_URL"/repos/%@/?op=setpassword", self.repoId];
+    NSString *formString = [NSString stringWithFormat:@"password=%@", password.escapedPostForm];
+    __weak typeof(self) wself = self;
+    [connection sendPost:request_str form:formString
+                 success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+                     __strong typeof(self) sself = wself;
+                     Debug("Set repo %@ password success.", sself.repoId);
+                     [sself->connection saveRepo:sself.repoId password:password];
+                     if (block)  block(sself, RET_SUCCESS);
+                 } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
+                     __strong typeof(self) sself = wself;
+                     Debug("Failed to set repo %@ password: %@, %@", sself.repoId, JSON, error);
+                     int ret = RET_FAILED;
+                     if (JSON != nil) {
+                         NSString *errMsg = [JSON objectForKey:@"error_msg"];
+                         if ([@"Incorrect password" isEqualToString:errMsg]) {
+                             Debug("Repo password incorrect.");
+                             ret = RET_WRONG_PASSWORD;
+                         }
+                     }
+                     if (block)  block(sself, ret);
+                 }];
+}
 @end

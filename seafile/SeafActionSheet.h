@@ -77,6 +77,14 @@ typedef NS_ENUM(NSUInteger, SFActionSheetArrowDirection) {
 + (instancetype)actionSheetWithTitles:(NSArray *)titles;
 
 /**
+ Convenience initializer
+
+ @param titles titles
+ @return action sheet without default "cancel" button
+ */
++ (instancetype)actionSheetWithoutCancelWithTitles:(NSArray *)titles;
+
+/**
  Show from view.
  */
 - (void)showFromView:(id)view;

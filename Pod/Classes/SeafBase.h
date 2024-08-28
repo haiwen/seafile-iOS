@@ -64,7 +64,8 @@ typedef void (^repo_password_set_block_t)(SeafBase *entry, int ret);
                     mime:(NSString *)aMime;
 
 
-@property (copy) NSString *name; // name
+@property (copy) NSString *name; //obj name
+@property (nonatomic, copy) NSString *repoName;//repo name
 @property (readonly, copy) NSString *path; // path in the library
 @property (readonly, copy) NSString *repoId; // library id
 @property (readonly, copy) NSString *mime; //mime type
@@ -80,6 +81,10 @@ typedef void (^repo_password_set_block_t)(SeafBase *entry, int ret);
 
 @property (readonly, copy) NSString *shareLink; // shared link
 
+@property (nonatomic, assign) BOOL isDeleted;//2.9.27 mark is deleted
+
+@property (assign, nonatomic) BOOL encrypted;///< Indicates whether the repository is encrypted.
+
 - (BOOL)hasCache;  // has local cache
 - (BOOL)loadCache; // load local cache
 - (void)clearCache;  // clear local cache
@@ -87,6 +92,9 @@ typedef void (^repo_password_set_block_t)(SeafBase *entry, int ret);
 // load the content of this entry, force means force load from server. Otherwise will try to load local cache first, if cache miss, load from remote server.
 - (void)loadContent:(BOOL)force;
 - (UIImage *)icon; // icon for this entry
+
+//starred page load content
+- (void)loadStarredContent:(BOOL)force;
 
 - (void)generateShareLink:(id<SeafShareDelegate>)dg; // generate shared link
 
@@ -99,4 +107,9 @@ typedef void (^repo_password_set_block_t)(SeafBase *entry, int ret);
 - (void)downloadComplete:(BOOL)updated;
 - (void)downloadFailed:(NSError *)error;
 
+/**
+ * Sets the starred status of the file.
+ * @param starred YES to star the file, NO to unstar.
+ */
+- (void)setStarred:(BOOL)starred;
 @end

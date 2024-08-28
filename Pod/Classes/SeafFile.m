@@ -70,7 +70,29 @@
     NSString *str = [FileSizeFormatter stringFromLongLong:self.filesize];
     if (self.mtime) {
         NSString *timeStr = [SeafDateFormatter stringFromLongLong:self.mtime];
-        str = [str stringByAppendingFormat:@", %@", timeStr];
+        str = [str stringByAppendingFormat:@" · %@", timeStr];
+    }
+    if (self.mpath) {
+        if (self.ufile.isUploading)
+            return [str stringByAppendingFormat:@", %@", NSLocalizedString(@"uploading", @"Seafile")];
+        else
+            return [str stringByAppendingFormat:@", %@", NSLocalizedString(@"modified", @"Seafile")];
+    }
+
+    return str;
+}
+
+- (NSString *)starredDetailText
+{
+//    NSString *str = [FileSizeFormatter stringFromLongLong:self.filesize];
+    NSString *str = self.repoName;
+    if (self.mtime) {
+        NSString *timeStr = [SeafDateFormatter stringFromLongLong:self.mtime];
+        if (str && str > 0){
+            str = [str stringByAppendingFormat:@" · %@", timeStr];
+        } else {
+            str = timeStr;
+        }
     }
     if (self.mpath) {
         if (self.ufile.isUploading)
@@ -198,7 +220,9 @@
     [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@", self.repoId, [self.path escapedUrl]] success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          NSString *url = JSON;
-         NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
+//         NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
+        NSString *curId = [Utils getNewOidFromMtime:self.mtime repoId:self.repoId path:self.path];
+        
          Debug("Downloading file from file server url: %@, state:%d %@, %@", JSON, self.state, self.ooid, curId);
          if (!curId) curId = self.oid;
          if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:curId]]) {
@@ -332,6 +356,9 @@
     [handle closeFile];
     if (!self.downloadingFileOid)
         return -1;
+    
+    self.downloadingFileOid = [Utils getNewOidFromMtime:self.mtime repoId:self.repoId path:self.path];
+    
     [[NSFileManager defaultManager] moveItemAtPath:tmpPath toPath:[SeafStorage.sharedObject documentPath:self.downloadingFileOid] error:nil];
     return 0;
 }
@@ -424,9 +451,12 @@
     [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@&op=downloadblks", self.repoId, [self.path escapedUrl]] success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          NSString *curId = [JSON objectForKey:@"file_id"];
-         if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:curId]]) {
+        
+        NSString *oid = [Utils getNewOidFromMtime:self.mtime repoId:self.repoId path:self.path];
+
+         if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:oid]]) {
              Debug("Already uptodate oid=%@\n", self.ooid);
-             [self finishDownload:curId];
+             [self finishDownload:oid];
              return;
          }
          @synchronized (self) {
@@ -515,16 +545,23 @@
     if (_icon) return _icon;
     if ((self.isImageFile || self.isVideoFile) && self.oid) {
         if (![connection isEncrypted:self.repoId]) {
-            UIImage *img = [self thumb];
-            if (img)
-                return _thumb;
-            else if (!_thumbtask) {
-                SeafThumb *thb = [[SeafThumb alloc] initWithSeafFile:self];
-                [SeafDataTaskManager.sharedObject addThumbTask:thb];
+            if (!self.isDeleted) {
+                UIImage *img = [self thumb];
+                if (img)
+                    return _thumb;
+                else if (!_thumbtask) {
+                    SeafThumb *thb = [[SeafThumb alloc] initWithSeafFile:self];
+                    [SeafDataTaskManager.sharedObject addThumbTask:thb];
+                }
+            } else {
+                return [super icon];
             }
-        } else if (self.image) {
-            [self performSelectorInBackground:@selector(genThumb) withObject:nil];
+        } else {
+            return [super icon];
         }
+//        } else if (self.image) {
+//            [self performSelectorInBackground:@selector(genThumb) withObject:nil];
+//        }
     }
     return [super icon];
 }
@@ -828,10 +865,6 @@
     return [connection isStarred:self.repoId path:self.path];
 }
 
-- (void)setStarred:(BOOL)starred
-{
-    [connection setStarred:starred repo:self.repoId path:self.path];
-}
 
 - (void)update:(id<SeafFileUpdateDelegate>)dg
 {

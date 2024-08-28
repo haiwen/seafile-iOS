@@ -34,10 +34,12 @@
 - (void)reset
 {
     self.detailTextLabel.text = nil;
+    self.detailTextLabel.textColor = [UIColor colorWithRed:0.666667 green:0.666667 blue:0.666667 alpha:1];
     self.badgeImage.hidden = true;
     self.badgeLabel.hidden = true;
     self.cacheStatusView.hidden = true;
     self.progressView.hidden = true;
+    self.imageView.image = nil;
 }
 
 - (IBAction)moreButtonTouch:(id)sender {

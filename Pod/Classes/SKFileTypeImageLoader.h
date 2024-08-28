@@ -18,6 +18,7 @@
 
 + (UIImage *)imageForMimeType:(NSString *)mimeType;
 + (UIImage *)imageForMimeType:(NSString *)mimeType ext:(NSString *)ext;
++ (UIImage*)loadImageWithImgName:(NSString*)imageName;
 
 
 @end

@@ -24,7 +24,7 @@
 #import "Version.h"
 #import "SeafPhotoAsset.h"
 #import "SeafRealmManager.h"
-
+#import "SeafFile.h"
 enum {
     FLAG_LOCAL_DECRYPT = 0x1,
 };
@@ -804,6 +804,14 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self loginWithUsername:username password:password otp:nil rememberDevice:false];
 }
 
+- (NSString *)buildThumbnailImageUrlFromSFile:(SeafFile *)sFile {
+    NSString *urlString = [NSString stringWithFormat:@"/api2/repos/%@/thumbnail/?p=%@&size=128", sFile.repoId, sFile.path];
+    
+    NSString *encodedURL = [self encodeStringToURLFormat:urlString];
+    
+    return encodedURL;
+}
+
 - (NSURLRequest *)buildRequest:(NSString *)url method:(NSString *)method form:(NSString *)form
 {
     NSString *absoluteUrl = [url hasPrefix:@"http"] ? url : [_address stringByAppendingString:url];
@@ -912,19 +920,63 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [_rootFolder loadContent:NO];
 }
 
+//befor 2.9.27 old api for handle data
+//- (void)handleStarredData:(id)JSON
+//{
+//    NSMutableSet *stars = [NSMutableSet set];
+//    for (NSDictionary *info in JSON) {
+//        [stars addObject:[NSString stringWithFormat:@"%@-%@", [info objectForKey:@"repo"], [info objectForKey:@"path"]]];
+//    }
+//    _starredFiles = stars;
+//}
+
 - (void)handleStarredData:(id)JSON
 {
+    if (![JSON isKindOfClass:[NSDictionary class]]) {
+        Debug(@"Expected a dictionary with a 'starred_item_list' key");
+        return;
+    }
+    
+    NSArray *starredItems = [JSON objectForKey:@"starred_item_list"];
+    if (![starredItems isKindOfClass:[NSArray class]]) {
+        Debug(@"Expected 'starred_item_list' to be an array");
+        return;
+    }
+
     NSMutableSet *stars = [NSMutableSet set];
-    for (NSDictionary *info in JSON) {
-        [stars addObject:[NSString stringWithFormat:@"%@-%@", [info objectForKey:@"repo"], [info objectForKey:@"path"]]];
+    for (NSDictionary *info in starredItems) {
+        [stars addObject:[NSString stringWithFormat:@"%@-%@", [info objectForKey:@"repo_id"], [info objectForKey:@"path"]]];
     }
     _starredFiles = stars;
 }
 
+//befor 2.9.27 old api for get starred files
+//- (void)getStarredFiles:(void (^)(NSHTTPURLResponse *response, id JSON))success
+//                failure:(void (^)(NSHTTPURLResponse *response, NSError *error))failure
+//{
+//    [self sendRequest:API_URL"/starredfiles/"
+//              success:
+//     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+//         @synchronized(self) {
+//             Debug("Succeeded to get starred files ...\n");
+//             [self handleStarredData:JSON];
+//             NSData *data = [Utils JSONEncode:JSON];
+//             [self setValue:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] forKey:KEY_STARREDFILES entityName:ENTITY_OBJECT];
+//             if (success)
+//                 success (response, JSON);
+//         }
+//     }
+//              failure:
+//     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
+//         if (failure)
+//             failure (response, error);
+//     }];
+//}
+
 - (void)getStarredFiles:(void (^)(NSHTTPURLResponse *response, id JSON))success
                 failure:(void (^)(NSHTTPURLResponse *response, NSError *error))failure
 {
-    [self sendRequest:API_URL"/starredfiles/"
+    [self sendRequest:API_URL_V21"/starred-items/"
               success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          @synchronized(self) {
@@ -976,8 +1028,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     NSString *key = [NSString stringWithFormat:@"%@-%@", repo, path];
     if (starred) {
         [_starredFiles addObject:key];
-        NSString *form = [NSString stringWithFormat:@"repo_id=%@&p=%@", repo, [path escapedUrl]];
-        NSString *url = [NSString stringWithFormat:API_URL"/starredfiles/"];
+        NSString *form = [NSString stringWithFormat:@"repo_id=%@&path=%@", repo, [path escapedUrl]];
+        NSString *url = [NSString stringWithFormat:API_URL_V21"/starred-items/"];
+
         [self sendPost:url form:form
                success:
          ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
@@ -989,7 +1042,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
          }];
     } else {
         [_starredFiles removeObject:key];
-        NSString *url = [NSString stringWithFormat:API_URL"/starredfiles/?repo_id=%@&p=%@", repo, path.escapedUrl];
+        NSString *url = [NSString stringWithFormat:API_URL_V21"/starred-items/?repo_id=%@&path=%@", repo, path.escapedUrl];
         [self sendDelete:url
                success:
          ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
@@ -1003,6 +1056,42 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
     return YES;
 }
+
+//before 2.9.27 old api for set starred file
+//- (BOOL)setStarred:(BOOL)starred repo:(NSString *)repo path:(NSString *)path
+//{
+//    NSString *key = [NSString stringWithFormat:@"%@-%@", repo, path];
+//    if (starred) {
+//        [_starredFiles addObject:key];
+//        NSString *form = [NSString stringWithFormat:@"repo_id=%@&p=%@", repo, [path escapedUrl]];
+//        NSString *url = [NSString stringWithFormat:API_URL"/starredfiles/"];
+////        NSString *url = [NSString stringWithFormat:API_URL_V21"/starredfiles/"];
+//
+//        [self sendPost:url form:form
+//               success:
+//         ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+//             Debug("Succeeded to star file %@, %@\n", repo, path);
+//         }
+//               failure:
+//         ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
+//             Warning("Failed to star file %@, %@\n", repo, path);
+//         }];
+//    } else {
+//        [_starredFiles removeObject:key];
+//        NSString *url = [NSString stringWithFormat:API_URL"/starredfiles/?repo_id=%@&p=%@", repo, path.escapedUrl];
+//        [self sendDelete:url
+//               success:
+//         ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+//             Debug("Succeeded to unstar file %@, %@\n", repo, path);
+//         }
+//               failure:
+//         ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
+//             Warning("Failed to unstar file %@, %@\n", repo, path);
+//         }];
+//    }
+//
+//    return YES;
+//}
 
 - (SeafRepo *)getRepo:(NSString *)repo
 {
@@ -1495,6 +1584,16 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             }
         }
     }
+}
+
+- (NSString *)encodeStringToURLFormat:(NSString *)string {
+    // Create a character set that includes all characters allowed in a URL query
+    NSCharacterSet *allowedCharacters = [NSCharacterSet URLQueryAllowedCharacterSet];
+    
+    // Encode the string using the specified character set
+    NSString *encodedString = [string stringByAddingPercentEncodingWithAllowedCharacters:allowedCharacters];
+    
+    return encodedString;
 }
 
 - (void)dealloc {

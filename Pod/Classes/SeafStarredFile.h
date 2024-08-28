@@ -28,7 +28,9 @@
 /// The delegate object that receives star state change events.
 @property (strong) id<SeafStarFileDelegate> starDelegate;
 @property int org;/// The organization identifier for this file, if it belongs to an organization library.
+@property (nonatomic, assign) int isDir;//is file or dir
 
+- (id)initWithConnection:(SeafConnection *)aConnection Info:(NSDictionary *)infoDict;
 
 /**
  * Initializes a `SeafStarredFile` object with the specified parameters.
@@ -41,11 +43,11 @@
  * @param anId The object identifier for the file.
  * @return An initialized `SeafStarredFile` object.
  */
-- (id)initWithConnection:(SeafConnection *)aConnection
-                    repo:(NSString *)aRepo
-                    path:(NSString *)aPath
-                   mtime:(long long)mtime
-                    size:(long long)size
-                     org:(int)org
-                     oid:(NSString *)anId;
+//- (id)initWithConnection:(SeafConnection *)aConnection
+//                    repo:(NSString *)aRepo
+//                    path:(NSString *)aPath
+//                   mtime:(long long)mtime
+//                    size:(long long)size
+//                     org:(int)org
+//                     oid:(NSString *)anId;
 @end

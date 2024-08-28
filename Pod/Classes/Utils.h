@@ -128,4 +128,12 @@
 /// Check if is new version.
 + (BOOL)needsUpdateCurrentVersion:(NSString *)currentVersion newVersion:(NSString *)newVersion;
 
+//convert dateString to UTC int
++ (int)convertTimeStringToUTC:(NSString *)timeStr;
+
+//modified from 2.9.28 use newOid
++ (NSString *)getNewOidFromMtime:(long long)mtime
+                          repoId:(NSString *)repoId
+                            path:(NSString *)path;
+
 @end

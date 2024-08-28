@@ -348,6 +348,7 @@ enum {
         [self showLoadingView];
         self.state = STATE_LOADING;
     }
+    [self initNavigationItems:_directory];
 }
 
 - (void)viewDidUnload
@@ -1950,17 +1951,17 @@ enum {
 }
 
 // Navigates to a specific repository and path.
-- (BOOL)goTo:(NSString *)repo path:(NSString *)path
+- (BOOL)goTo:(NSString *)targetRepo path:(NSString *)path
 {
     if (![_directory hasCache] || !self.isVisible)
         return TRUE;
-    Debug("repo: %@, path: %@, current: %@", repo, path, _directory.path);
+    Debug("repo: %@, path: %@, current: %@", targetRepo, path, _directory.path);
     if ([self.directory isKindOfClass:[SeafRepos class]]) {
         for (int i = 0; i < ((SeafRepos *)_directory).repoGroups.count; ++i) {
             NSArray *repos = [((SeafRepos *)_directory).repoGroups objectAtIndex:i];
             for (int j = 0; j < repos.count; ++j) {
                 SeafRepo *r = [repos objectAtIndex:j];
-                if ([r.repoId isEqualToString:repo]) {
+                if ([r.repoId isEqualToString:targetRepo]) {
                     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:j inSection:i];
                     [self.tableView selectRowAtIndexPath:indexPath animated:true scrollPosition:UITableViewScrollPositionMiddle];
                     [self tableView:self.tableView didSelectRowAtIndexPath:indexPath];
@@ -1968,7 +1969,7 @@ enum {
                 }
             }
         }
-        Debug("Repo %@ not found.", repo);
+        Debug("Repo %@ not found.", targetRepo);
         [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to find library", @"Seafile")];
     } else {
         if ([@"/" isEqualToString:path])
@@ -1988,7 +1989,7 @@ enum {
                 return !found;
             }
         }
-        Debug("file %@/%@ not found", repo, path);
+        Debug("file %@/%@ not found", targetRepo, path);
         [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Failed to find %@", @"Seafile"), path]];
     }
     return FALSE;

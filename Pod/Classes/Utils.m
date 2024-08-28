@@ -671,4 +671,41 @@
     return NO;
 }
 
+//convert dateString to UTC int
++ (int)convertTimeStringToUTC:(NSString *)timeStr {
+    // init NSDateFormatter
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssXXXXX"];
+    [formatter setTimeZone:[NSTimeZone timeZoneWithAbbreviation:@"UTC"]];
+
+    // convert to NSDate
+    NSDate *date = [formatter dateFromString:timeStr];
+    
+    // check if get date successed
+    if (date) {
+        // get Unix Timestamp from NSDate
+        NSTimeInterval timestamp = [date timeIntervalSince1970];
+
+        int intTimestamp = (int)timestamp;
+
+        return intTimestamp;
+    } else {
+        //failed
+        Debug(@"Failed to parse date string. Please check the format.");
+        return 0;
+    }
+}
+
+//modified from 2.9.28 use newOid
++ (NSString *)getNewOidFromMtime:(long long)mtime
+                          repoId:(NSString *)repoId
+                            path:(NSString *)path
+{
+    NSString *mtimeStr = [NSString stringWithFormat:@"%lld", mtime];
+    NSString *orginOid = [NSString stringWithFormat:@"%@%@%@", mtimeStr, repoId, path];
+    NSString *noSlashes = [orginOid stringByReplacingOccurrencesOfString:@"/" withString:@""];
+    NSString *newOid = [noSlashes stringByReplacingOccurrencesOfString:@"." withString:@""];
+    return newOid;
+}
+
 @end

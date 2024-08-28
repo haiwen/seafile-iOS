@@ -1081,3 +1081,12 @@
 
 /* Seafile */
 "Please open Seafile ans add an account to start" = "请在 Seafile 中登录账户后开始使用。";
+
+/* Seafile */
+"Navigate to Folder" = "定位到文件夹";
+
+/* Seafile */
+"The file has been deleted" = "文件已删除";
+
+/* Seafile */
+"The folder has been deleted" = "文件夹已删除";

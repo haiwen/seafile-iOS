@@ -45,7 +45,6 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     long long _filesize;///< File size in bytes.
     long long _mtime;///< Modification time.
     NSString *_shareLink;///< Share link of the file.
-
 }
 
 /**
@@ -75,6 +74,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 @property (strong, nonatomic) NSProgress * _Nullable progress;///< Progress of the ongoing file operation.
 @property (nonatomic, readonly, getter=isUploaded) BOOL uploaded;///< Whether the file is uploaded.
 @property (nonatomic, readonly, getter=isUploading) BOOL uploading;///< Whether the file is currently uploading.
+@property (copy, nonatomic) NSString * _Nullable thumbnailURLStr;//image thumbnail Url String
 
 /**
  * Checks if the file is currently being downloaded.
@@ -87,12 +87,6 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
  * @return YES if the file is starred, otherwise NO.
  */
 - (BOOL)isStarred;
-
-/**
- * Sets the starred status of the file.
- * @param starred YES to star the file, NO to unstar.
- */
-- (void)setStarred:(BOOL)starred;
 
 /**
  * Deletes the local cache of the file.
@@ -164,13 +158,15 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
  * @param url The URL of the modified file.
  * @return YES if the file was successfully saved to the local cache, otherwise NO.
  */
-- (BOOL)saveEditedPreviewFile:(NSURL *)url;
+- (BOOL)saveEditedPreviewFile:(NSURL *_Nullable)url;
 
 /**
  * Gets the path for the thumbnail of the file.
  * @param objId The object identifier for which the thumbnail is requested.
  * @return The path to the thumbnail.
  */
-- (NSString *_Nullable)thumbPath:(NSString *)objId;
+- (NSString *_Nullable)thumbPath:(NSString *_Nullable)objId;
+
+- (NSString *_Nullable)starredDetailText;
 
 @end
