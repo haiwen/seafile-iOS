@@ -64,10 +64,14 @@ enum SET_REPO_PASSWORD_RET {
 - (BOOL)saveStrContent:(NSString *)content;///< Saves the string content to the file.
 - (BOOL)hasCache;///< Indicates whether the file is cached.
 - (BOOL)isImageFile;///< Indicates whether the file is an image.
+- (BOOL)isVideoFile;///< Indicates whether the file is an image.
 - (long long) mtime;///< the modification time of the file.
 - (void)cancelAnyLoading;///< Cancels any ongoing loading processes.
 - (void)setDelegate:(id)delegate; ///< Sets the delegate to receive callbacks.
 
 
 - (void)load:(id<SeafDentryDelegate>)delegate force:(BOOL)force;///< Loads the file, optionally forcing a reload.
+
+- (void)loadStarred:(id<SeafDentryDelegate>)delegate force:(BOOL)force;///<Starred ViewController need this method.
+
 @end

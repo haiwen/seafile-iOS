@@ -671,4 +671,29 @@
     return NO;
 }
 
+//convert dateString to UTC int
++ (int)convertTimeStringToUTC:(NSString *)timeStr {
+    // init NSDateFormatter
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssXXXXX"];
+    [formatter setTimeZone:[NSTimeZone timeZoneWithAbbreviation:@"UTC"]];
+
+    // convert to NSDate
+    NSDate *date = [formatter dateFromString:timeStr];
+    
+    // check if get date successed
+    if (date) {
+        // get Unix Timestamp from NSDate
+        NSTimeInterval timestamp = [date timeIntervalSince1970];
+
+        int intTimestamp = (int)timestamp;
+
+        return intTimestamp;
+    } else {
+        //failed
+        Debug(@"Failed to parse date string. Please check the format.");
+        return 0;
+    }
+}
+
 @end

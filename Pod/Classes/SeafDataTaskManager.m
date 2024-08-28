@@ -340,7 +340,15 @@
     NSDictionary *downloadTasks = [SeafStorage.sharedObject objectForKey:downloadKey];
     if (downloadTasks.allValues.count > 0) {
         for (NSDictionary *dict in downloadTasks.allValues) {
-            SeafFile *file = [[SeafFile alloc] initWithConnection:conn oid:[dict objectForKey:@"oid"] repoId:[dict objectForKey:@"repoId"] name:[dict objectForKey:@"name"] path:[dict objectForKey:@"path"] mtime:[[dict objectForKey:@"mtime"] longLongValue] size:[[dict objectForKey:@"size"] longLongValue]];
+            NSNumber *mtimeNumber = [dict objectForKey:@"mtime"];
+
+            NSString *mtimeStr = [mtimeNumber stringValue];
+            //create oid by 'timeStr' 'repoId' 'path'
+            NSString *orginOid = [NSString stringWithFormat:@"%@%@%@", mtimeStr, [dict objectForKey:@"repoId"], [dict objectForKey:@"path"]];
+            NSString *noSlashes = [orginOid stringByReplacingOccurrencesOfString:@"/" withString:@""];
+            NSString *oid = [noSlashes stringByReplacingOccurrencesOfString:@"." withString:@""];
+            
+            SeafFile *file = [[SeafFile alloc] initWithConnection:conn oid:oid repoId:[dict objectForKey:@"repoId"] name:[dict objectForKey:@"name"] path:[dict objectForKey:@"path"] mtime:[[dict objectForKey:@"mtime"] longLongValue] size:[[dict objectForKey:@"size"] longLongValue]];
             [self addFileDownloadTask:file];
         }
     }

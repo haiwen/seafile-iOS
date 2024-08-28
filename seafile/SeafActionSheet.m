@@ -296,6 +296,80 @@ static BOOL disableCustomEasing = NO;
     return [[self alloc] initWithSectionTitles:titles];
 }
 
++ (instancetype)actionSheetWithoutCancelWithTitles:(NSArray *)titles {
+    return [[self alloc] initWithoutCancelWithSectionTitles:titles];
+}
+
+- (instancetype)initWithoutCancelWithSectionTitles:(NSArray *)titles {
+    NSAssert(titles.count > 0, @"Must at least provide 1 section");
+
+    self = [super init];
+
+    if (self) {
+        UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapped:)];
+        tap.delegate = self;
+
+        [self addGestureRecognizer:tap];
+
+        _scrollViewHost = [[SeafActionSheetView alloc] init];
+        _scrollViewHost.backgroundColor = [UIColor clearColor];
+        if (iPad) {
+            _scrollViewHost.layer.cornerRadius = kHostsCornerRadius;
+            _scrollViewHost.layer.masksToBounds = YES;
+        }
+
+        _scrollView = [[UIScrollView alloc] init];
+        _scrollView.backgroundColor = [UIColor clearColor];
+        _scrollView.showsHorizontalScrollIndicator = NO;
+        _scrollView.showsVerticalScrollIndicator = NO;
+
+        [_scrollViewHost addSubview:_scrollView];
+        [self addSubview:_scrollViewHost];
+
+        self.backgroundColor = [UIColor colorWithWhite:0.0f alpha:0.3f];
+        
+        SeafActionSheetSection *section;
+        if (titles.count > 1) {
+            NSArray *modifiedTitles = [titles subarrayWithRange:NSMakeRange(0, [titles count] - 1)];
+            section = [SeafActionSheetSection sectionWithButtonTitles:modifiedTitles buttonStyle:SFActionSheetButtonStyleDefault];
+        } else {
+            section = [SeafActionSheetSection sectionWithButtonTitles:titles buttonStyle:SFActionSheetButtonStyleCancel];
+        }
+
+        NSArray *sections;
+        if (iPad) {
+            sections = @[section];
+        }else{
+            if (titles.count > 1) {
+                sections = @[section,[SeafActionSheetSection sectionWithButtonTitles:@[NSLocalizedString(titles.lastObject,)] buttonStyle:SFActionSheetButtonStyleCancel]];
+            } else {
+                sections = @[section];
+            }
+        }
+        _sections = sections;
+
+        NSInteger index = 0;
+
+        __weak __typeof(self) weakSelf = self;
+
+        void (^pressedBlock)(NSIndexPath *) = ^(NSIndexPath *indexPath) {
+            [weakSelf buttonPressed:indexPath];
+        };
+
+        for (SeafActionSheetSection *section in self.sections) {
+            section.index = index;
+
+            [_scrollView addSubview:section];
+
+            [section setButtonPressedBlock:pressedBlock];
+
+            index++;
+        }
+    }
+
+    return self;
+}
+
 // Shows the action sheet with an optional animation.
 - (instancetype)initWithSectionTitles:(NSArray *)titles {
     NSAssert(titles.count > 0, @"Must at least provide 1 section");

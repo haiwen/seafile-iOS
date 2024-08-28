@@ -19,6 +19,9 @@
 #import "NSData+Encryption.h"
 #import "Debug.h"
 #import "Utils.h"
+#import <AFNetworking/AFNetworking.h>
+#import <AFNetworking/UIImageView+AFNetworking.h>
+#import <AFNetworking/AFImageDownloader.h>
 
 @interface SeafFile()
 
@@ -70,7 +73,29 @@
     NSString *str = [FileSizeFormatter stringFromLongLong:self.filesize];
     if (self.mtime) {
         NSString *timeStr = [SeafDateFormatter stringFromLongLong:self.mtime];
-        str = [str stringByAppendingFormat:@", %@", timeStr];
+        str = [str stringByAppendingFormat:@" · %@", timeStr];
+    }
+    if (self.mpath) {
+        if (self.ufile.isUploading)
+            return [str stringByAppendingFormat:@", %@", NSLocalizedString(@"uploading", @"Seafile")];
+        else
+            return [str stringByAppendingFormat:@", %@", NSLocalizedString(@"modified", @"Seafile")];
+    }
+
+    return str;
+}
+
+- (NSString *)starredDetailText
+{
+//    NSString *str = [FileSizeFormatter stringFromLongLong:self.filesize];
+    NSString *str = self.repoName;
+    if (self.mtime) {
+        NSString *timeStr = [SeafDateFormatter stringFromLongLong:self.mtime];
+        if (str && str > 0){
+            str = [str stringByAppendingFormat:@" · %@", timeStr];
+        } else {
+            str = timeStr;
+        }
     }
     if (self.mpath) {
         if (self.ufile.isUploading)
@@ -189,6 +214,78 @@
     }
 }
 
+- (void)downloadByStarredFile
+{
+    [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@", self.repoId, [self.path escapedUrl]] success:
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+         NSString *url = JSON;
+        NSString *mtimeStr = [NSString stringWithFormat:@"%lld", self.mtime];
+//        NSString *curId = [NSString stringWithFormat:@"%@%@%@", mtimeStr, self.repoId, self.path];
+        NSString *orginOid = [NSString stringWithFormat:@"%@%@%@", mtimeStr, self.repoId, self.path];
+        NSString *noSlashes = [orginOid stringByReplacingOccurrencesOfString:@"/" withString:@""];
+        NSString *curId = [noSlashes stringByReplacingOccurrencesOfString:@"." withString:@""];
+//         NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
+         Debug("Downloading file from file server url: %@, state:%d %@, %@", JSON, self.state, self.ooid, curId);
+         if (!curId) curId = self.oid;
+         if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:curId]]) {
+             Debug("file %@ already exist curId=%@, ooid=%@", self.name, curId, self.ooid);
+             [self finishDownload:curId];
+             return;
+         }
+
+         @synchronized (self) {
+             if (self.state != SEAF_DENTRY_LOADING) {
+                 return Info("Download file %@ already canceled", self.name);
+             }
+             if (self.downloadingFileOid) {// Already downloading
+                 Debug("Already downloading %@", self.downloadingFileOid);
+                 return;
+             }
+             self.downloadingFileOid = curId;
+         }
+         [self downloadProgress:0];
+         url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+         NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:DEFAULT_TIMEOUT];
+
+         NSString *target = [SeafStorage.sharedObject documentPath:self.downloadingFileOid];
+         Debug("Download file %@  %@ from %@, target:%@ %d", self.name, self.downloadingFileOid, url, target, [Utils fileExistsAtPath:target]);
+
+         self.task = [self->connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:^(NSProgress * _Nonnull downloadProgress) {
+             self.progress = downloadProgress;
+             [self.progress addObserver:self
+                         forKeyPath:@"fractionCompleted"
+                            options:NSKeyValueObservingOptionNew
+                            context:NULL];
+         } destination:^NSURL * _Nonnull(NSURL * _Nonnull targetPath, NSURLResponse * _Nonnull response) {
+             return [NSURL fileURLWithPath:[target stringByAppendingPathExtension:@"tmp"]];
+         } completionHandler:^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
+             if (!self.downloadingFileOid) {
+                 return Info("Download file %@ already canceled", self.name);
+             }
+             if (error) {
+                 Debug("Failed to download %@, error=%@, %ld", self.name, [error localizedDescription], (long)((NSHTTPURLResponse *)response).statusCode);
+                 [self failedDownload:error];
+             } else {
+                 Debug("Successfully downloaded file:%@, %@ oid=%@, ooid=%@, delegate=%@, %@", self.name, downloadRequest.URL, self.downloadingFileOid, self.ooid, self.delegate, filePath);
+                 if (![filePath.path isEqualToString:target]) {
+                     [Utils removeFile:target];
+                     [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
+                 }
+                 [self finishDownload:self.downloadingFileOid];
+             }
+         }];
+         
+         [self.task resume];
+     }
+                    failure:
+     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
+         self.state = SEAF_DENTRY_INIT;
+         [self downloadFailed:error];
+     }];
+}
+
+
+
 /*
  curl -D a.txt -H 'Cookie:sessionid=7eb567868b5df5b22b2ba2440854589c' http://127.0.0.1:8000/api/file/640fd90d-ef4e-490d-be1c-b34c24040da7/8dd0a3be9289aea6795c1203351691fcc1373fbb/
 
@@ -198,7 +295,12 @@
     [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@", self.repoId, [self.path escapedUrl]] success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          NSString *url = JSON;
-         NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
+//         NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
+        NSString *mtimeStr = [NSString stringWithFormat:@"%lld", self.mtime];
+        NSString *orginOid = [NSString stringWithFormat:@"%@%@%@", mtimeStr, self.repoId, self.path];
+        NSString *noSlashes = [orginOid stringByReplacingOccurrencesOfString:@"/" withString:@""];
+        NSString *curId = [noSlashes stringByReplacingOccurrencesOfString:@"." withString:@""];
+        
          Debug("Downloading file from file server url: %@, state:%d %@, %@", JSON, self.state, self.ooid, curId);
          if (!curId) curId = self.oid;
          if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:curId]]) {
@@ -332,6 +434,12 @@
     [handle closeFile];
     if (!self.downloadingFileOid)
         return -1;
+    
+    NSString *mtimeStr = [NSString stringWithFormat:@"%lld", self.mtime];
+//        NSString *curId = [NSString stringWithFormat:@"%@%@%@", mtimeStr, self.repoId, self.path];
+    NSString *orginOid = [NSString stringWithFormat:@"%@%@%@", mtimeStr, self.repoId, self.path];
+    NSString *noSlashes = [orginOid stringByReplacingOccurrencesOfString:@"/" withString:@""];
+    self.downloadingFileOid = [noSlashes stringByReplacingOccurrencesOfString:@"." withString:@""];
     [[NSFileManager defaultManager] moveItemAtPath:tmpPath toPath:[SeafStorage.sharedObject documentPath:self.downloadingFileOid] error:nil];
     return 0;
 }
@@ -424,9 +532,14 @@
     [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@&op=downloadblks", self.repoId, [self.path escapedUrl]] success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          NSString *curId = [JSON objectForKey:@"file_id"];
-         if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:curId]]) {
+        NSString *mtimeStr = [NSString stringWithFormat:@"%lld", self.mtime];
+        NSString *orginOid = [NSString stringWithFormat:@"%@%@%@", mtimeStr, self.repoId, self.path];
+        NSString *noSlashes = [orginOid stringByReplacingOccurrencesOfString:@"/" withString:@""];
+        NSString *oid = [noSlashes stringByReplacingOccurrencesOfString:@"." withString:@""];
+
+         if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:oid]]) {
              Debug("Already uptodate oid=%@\n", self.ooid);
-             [self finishDownload:curId];
+             [self finishDownload:oid];
              return;
          }
          @synchronized (self) {
@@ -479,10 +592,37 @@
     }
 }
 
+//load starredContent
+- (void)realLoadStarredContent
+{
+    if (!self.downloadingFileOid) {
+        [self loadCache];
+        [self downloadStarredfile];
+    } else {
+        Debug("File %@ is already donwloading.", self.name);
+    }
+}
+
+//download starred file
+- (void)downloadStarredfile
+{
+    if ([connection shouldLocalDecrypt:self.repoId] || _filesize > LARGE_FILE_SIZE) {
+        Debug("Download file %@ by blocks: %lld", self.name, _filesize);
+        [self downloadByBlocks];
+    } else
+        [self downloadByStarredFile];
+}
+
 - (void)load:(id<SeafDentryDelegate>)delegate force:(BOOL)force
 {
     if (delegate != nil) self.delegate = delegate;
     [self loadContent:force];
+}
+
+- (void)loadStarred:(id<SeafDentryDelegate>)delegate force:(BOOL)force
+{
+    if (delegate != nil) self.delegate = delegate;
+    [self loadStarredContent:force];
 }
 
 - (BOOL)hasCache
@@ -526,6 +666,12 @@
             [self performSelectorInBackground:@selector(genThumb) withObject:nil];
         }
     }
+    return [super icon];
+}
+
+- (UIImage *)newApiIcon
+{
+    if (_icon) return _icon;
     return [super icon];
 }
 
@@ -828,10 +974,6 @@
     return [connection isStarred:self.repoId path:self.path];
 }
 
-- (void)setStarred:(BOOL)starred
-{
-    [connection setStarred:starred repo:self.repoId path:self.path];
-}
 
 - (void)update:(id<SeafFileUpdateDelegate>)dg
 {

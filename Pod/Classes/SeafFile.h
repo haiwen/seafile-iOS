@@ -45,7 +45,6 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
     long long _filesize;///< File size in bytes.
     long long _mtime;///< Modification time.
     NSString *_shareLink;///< Share link of the file.
-
 }
 
 /**
@@ -75,6 +74,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 @property (strong, nonatomic) NSProgress * _Nullable progress;///< Progress of the ongoing file operation.
 @property (nonatomic, readonly, getter=isUploaded) BOOL uploaded;///< Whether the file is uploaded.
 @property (nonatomic, readonly, getter=isUploading) BOOL uploading;///< Whether the file is currently uploading.
+@property (strong, nonatomic) NSString * _Nullable thumbnailURLStr;//image thumbnail Url String
 
 /**
  * Checks if the file is currently being downloaded.
@@ -87,12 +87,6 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
  * @return YES if the file is starred, otherwise NO.
  */
 - (BOOL)isStarred;
-
-/**
- * Sets the starred status of the file.
- * @param starred YES to star the file, NO to unstar.
- */
-- (void)setStarred:(BOOL)starred;
 
 /**
  * Deletes the local cache of the file.
@@ -172,5 +166,10 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
  * @return The path to the thumbnail.
  */
 - (NSString *_Nullable)thumbPath:(NSString *)objId;
+
+
+- (UIImage *_Nonnull)newApiIcon;
+
+- (NSString *_Nullable)starredDetailText;
 
 @end

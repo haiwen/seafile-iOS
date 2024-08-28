@@ -128,4 +128,7 @@
 /// Check if is new version.
 + (BOOL)needsUpdateCurrentVersion:(NSString *)currentVersion newVersion:(NSString *)newVersion;
 
+//convert dateString to UTC int
++ (int)convertTimeStringToUTC:(NSString *)timeStr;
+
 @end

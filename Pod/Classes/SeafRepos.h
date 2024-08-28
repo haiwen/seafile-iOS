@@ -26,10 +26,10 @@
 @property (readonly, copy) NSString *encKey;///< Encryption key for the repository.
 @property (readonly) BOOL passwordRequired; ///< Indicates whether a password is required to access the repository.
 @property (readonly, nonatomic, assign) BOOL passwordRequiredWithSyncRefresh; ///< Indicates whether a password is required with a sync refresh.
-@property (readwrite) BOOL encrypted;///< Indicates whether the repository is encrypted.
+//@property (assign, nonatomic) BOOL encrypted;///< Indicates whether the repository is encrypted.
 @property (readonly) int encVersion; ///< Encryption version.
 @property (readonly) unsigned long long size;///< Size of the repository.
-@property (readonly) long long mtime;///< Modification time of the repository.
+@property (assign, nonatomic) long long mtime;///< Modification time of the repository.
 @property (readonly) NSString *type;///< Type of the repository.
 @property (readonly) NSString *groupName;///< Group name associated with the repository, if any.
 

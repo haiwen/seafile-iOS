@@ -11,6 +11,7 @@
 #import "SeafCacheProvider.h"
 #import "SeafBase.h"
 #import "SeafPhotoBackupTool.h"
+@class SeafFile;
 
 #define HTTP_ERR_UNAUTHORIZED                    401
 #define HTTP_ERR_LOGIN_INCORRECT_PASSWORD        400
@@ -491,5 +492,10 @@ Checks the auto synchronization settings and updates the connection’s synchron
  */
 - (void)clearUploadCache;
 
+/**
+ *
+    Build starred thumbnail image url string
+ */
+- (NSString *_Nullable)buildThumbnailImageUrlFromSFile:(SeafFile *_Nullable)sFile;
 
 @end

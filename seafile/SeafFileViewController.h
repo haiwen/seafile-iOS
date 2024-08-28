@@ -36,4 +36,6 @@ typedef void(^DownloadCompleteBlock)(NSArray *array, NSString *errorStr);
 
 - (BOOL)goTo:(NSString *)repo path:(NSString *)path;
 
+- (void)pullToRefresh;
+
 @end

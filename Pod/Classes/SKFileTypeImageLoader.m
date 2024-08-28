@@ -37,6 +37,10 @@ static SKFileTypeImageLoader *sharedLoader = nil;
              stringByReplacingOccurrencesOfString:@"{extension}" withString:@""];
 }
 
++ (UIImage*)loadImageWithImgName:(NSString*)imageName {
+    return [[self sharedLoader] loadImageWithName:imageName];
+}
+
 - (UIImage*)loadImageWithName:(NSString*)imageName
 {
     if ([images objectForKey:imageName])

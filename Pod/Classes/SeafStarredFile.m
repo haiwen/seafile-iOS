@@ -13,29 +13,59 @@
 
 
 @implementation SeafStarredFile
-@synthesize starDelegate = _starDelegate;
-@synthesize org = _org;
+
+- (id)initWithConnection:(SeafConnection *)aConnection Info:(NSDictionary *)infoDict {
+    NSNumber *isDirNum = [infoDict objectForKey:@"is_dir"];
+    int isDir = [isDirNum intValue];
+    NSNumber *repoEncryptedNum = [infoDict objectForKey:@"repo_encrypted"];
+    int repoEncrypted = [repoEncryptedNum intValue];
+    
+    NSString *mtimeStr = [infoDict objectForKey:@"mtime"];
+    int mtime = [Utils convertTimeStringToUTC:mtimeStr];
+    
+    NSNumber *isDeletedNum = [infoDict objectForKey:@"deleted"];
+    BOOL isDeleted = [isDeletedNum intValue];
+    
+    return [self initWithConnection:aConnection repo:[infoDict objectForKey:@"repo_id"] path:[infoDict objectForKey:@"path"] mtime:mtime objName:[infoDict objectForKey:@"obj_name"] isDir:isDir repoEncrypted:repoEncrypted thumbnail:[infoDict objectForKey:@"encoded_thumbnail_src"] repoName:[infoDict objectForKey:@"repo_name"] deleted:isDeleted];
+}
+
 
 - (id)initWithConnection:(SeafConnection *)aConnection
                     repo:(NSString *)aRepo
                     path:(NSString *)aPath
                    mtime:(long long)mtime
-                    size:(long long)size
-                     org:(int)org
-                     oid:(NSString *)anId
+                 objName:(NSString *)objName
+                   isDir:(int)isDir
+           repoEncrypted:(int)repoEncrypted
+               thumbnail:(NSString *)thumbnail
+                repoName:(NSString *)repoName
+                 deleted:(BOOL)isDeleted
 {
     NSString *name = aPath.lastPathComponent;
-    if (self = [super initWithConnection:aConnection oid:anId repoId:aRepo name:name path:aPath mtime:mtime size:size ]) {
-        _org = org;
+    NSString *mtimeStr = [NSString stringWithFormat:@"%lld", mtime];
+    //create oid by 'timeStr' 'repoId' 'path'
+    NSString *orginOid = [NSString stringWithFormat:@"%@%@%@", mtimeStr, aRepo, aPath];
+    NSString *noSlashes = [orginOid stringByReplacingOccurrencesOfString:@"/" withString:@""];
+    NSString *oid = [noSlashes stringByReplacingOccurrencesOfString:@"." withString:@""];
+
+
+    if (self = [super initWithConnection:aConnection oid:oid repoId:aRepo name:objName path:aPath mtime:mtime size:0 ]) {
+        
+        _isDir = isDir;
+        self.encrypted = repoEncrypted;
+        _mtime = mtime;
+        self.thumbnailURLStr = thumbnail;
+        self.repoName = repoName;
+        self.isDeleted = isDeleted;
     }
     return self;
 }
 
-- (void)setStarred:(BOOL)starred
-{
-    [connection setStarred:starred repo:self.repoId path:self.path];
-    [_starDelegate fileStateChanged:starred file:self];
-}
+//- (void)setStarred:(BOOL)starred
+//{
+//    [connection setStarred:starred repo:self.repoId path:self.path];
+//    [_starDelegate fileStateChanged:starred file:self];
+//}
 
 - (NSString *)key
 {

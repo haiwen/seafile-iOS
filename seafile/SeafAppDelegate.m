@@ -270,6 +270,9 @@
     }
 
     [self checkBackgroundUploadStatus];
+    
+    //from 2.9.28
+    [self clearUserCacheFile];
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
@@ -673,6 +676,19 @@
         Debug("STOP");
         [_locationManager stopMonitoringSignificantLocationChanges];
         _locationManager = nil;
+    }
+}
+
+/*from 2.9.28 Clear old cache files identified by the ‘oid’ field.
+new identifier is "'mtime' + 'repoId' + 'path'"
+ */
+- (void)clearUserCacheFile {
+    NSString *realmVersion = [[SeafStorage sharedObject] objectForKey:@"hasClearCacheIdByOid"];
+    if (realmVersion.length == 0 || realmVersion.intValue < 1) {
+        for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+            [conn clearAccountCache];
+        }
+        [[SeafStorage sharedObject] setObject:@"1" forKey:@"hasClearCacheIdByOid"];
     }
 }
 

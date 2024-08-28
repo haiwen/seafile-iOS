@@ -141,6 +141,15 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
             } else {
                 newItem.fullPath = [NSString stringWithFormat:@"/%@/%@",repo.name,self.name];
             }
+            
+            NSNumber *mtimeNumber = [itemInfo objectForKey:@"mtime"];
+
+            NSString *mtimeStr = [mtimeNumber stringValue];
+            //create oid by 'timeStr' 'repoId' 'path'
+            NSString *orginOid = [NSString stringWithFormat:@"%@%@%@", mtimeStr, self.repoId, path];
+            NSString *noSlashes = [orginOid stringByReplacingOccurrencesOfString:@"/" withString:@""];
+            NSString *oid = [noSlashes stringByReplacingOccurrencesOfString:@"." withString:@""];
+            newItem.oid = oid;
         } else if ([type isEqual:@"dir"]) {
             newItem = [[SeafDir alloc] initWithConnection:connection oid:[itemInfo objectForKey:@"id"] repoId:self.repoId perm:[itemInfo objectForKey:@"permission"] name:name path:path];
         }
@@ -158,7 +167,11 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
         if (!curId) curId = self.oid;
         if ([self handleData:curId data:JSON]) {
             self.ooid = curId;
-            [self savetoCache:JSON cacheOid:curId];
+            NSString *dirPerm = [[response allHeaderFields] objectForKey:@"dir_perm"];
+            if (dirPerm) {
+                self.perm = dirPerm;
+            }
+            [self savetoCache:JSON cacheOid:curId perm:dirPerm];
             [self.delegate download:self complete:true];
         } else {
             Debug("Already uptodate oid=%@, path=%@\n", self.ooid, self.path);
@@ -301,11 +314,12 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
     [self->connection removeKey:self.cacheKey entityName:ENTITY_DIRECTORY];
 }
 
-- (BOOL)savetoCache:(id)JSON cacheOid:(NSString *)cacheOid
+- (BOOL)savetoCache:(id)JSON cacheOid:(NSString *)cacheOid perm:(NSString *)permStr
 {
     NSMutableDictionary *dict = [NSMutableDictionary new];
     [dict setObject:JSON forKey:@"data"];
     [dict setObject:cacheOid forKey:@"oid"];
+    [dict setObject:permStr forKey:@"perm"];
 
     NSString *value = [[NSString alloc] initWithData:[Utils JSONEncode:dict] encoding:NSUTF8StringEncoding];
     return [self->connection setValue:value forKey:self.cacheKey entityName:ENTITY_DIRECTORY];
@@ -318,6 +332,8 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
         return NO;
     }
     NSString *oid = [dict objectForKey:@"oid"];
+    NSString *perm = [dict objectForKey:@"perm"];
+    self.perm = perm;
     BOOL updated = [self handleData:oid data:[dict objectForKey:@"data"]];
     [self.delegate download:self complete:updated];
     return YES;
