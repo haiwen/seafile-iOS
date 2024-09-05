@@ -42,6 +42,7 @@
         _finishBlock = nil;
         [self startTimer];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(cacheCleared:) name:@"clearCache" object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationWillEnterForeground:) name:UIApplicationWillEnterForegroundNotification object:nil];
     }
     return self;
 }
@@ -422,6 +423,12 @@
 - (void)removeAccountUploadTaskFromStorage:(NSString *)accountIdentifier {
     NSString *key = [self uploadStorageKey:accountIdentifier];
     [SeafStorage.sharedObject removeObjectForKey:key];
+}
+
+- (void)applicationWillEnterForeground:(NSNotification *)notif {
+    [self.taskTimer invalidate];
+    self.taskTimer = nil;
+    self.taskTimer = [NSTimer scheduledTimerWithTimeInterval:1*60 target:self selector:@selector(tick:) userInfo:nil repeats:YES];
 }
 
 - (void)dealloc {
