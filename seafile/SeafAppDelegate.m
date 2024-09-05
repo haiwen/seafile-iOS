@@ -683,12 +683,12 @@
 new identifier is "'mtime' + 'repoId' + 'path'"
  */
 - (void)clearUserCacheFile {
-    NSString *realmVersion = [[SeafStorage sharedObject] objectForKey:@"hasClearCacheIdByOid"];
-    if (realmVersion.length == 0 || realmVersion.intValue < 1) {
+    NSString *hasCleanCache = [[SeafStorage sharedObject] objectForKey:@"hasClearCachedByOid"];
+    if (hasCleanCache.length == 0 || hasCleanCache.intValue < 1) {
         for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
             [conn clearAccountCache];
         }
-        [[SeafStorage sharedObject] setObject:@"1" forKey:@"hasClearCacheIdByOid"];
+        [[SeafStorage sharedObject] setObject:@"1" forKey:@"hasClearCachedByOid"];
     }
 }
 

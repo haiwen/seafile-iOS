@@ -248,8 +248,7 @@ enum SHARE_STATUS {
     self.photos = nil;
     self.preViewItem = item;
     //if need load from cache.
-//    [item load:(self.masterVc ? self.masterVc:self) force:NO];
-    [item loadStarred:(self.masterVc ? self.masterVc:self) force:NO];
+    [item load:(self.masterVc ? self.masterVc:self) force:NO];
     [self refreshView];
 }
 

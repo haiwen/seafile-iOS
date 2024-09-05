@@ -74,7 +74,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 @property (strong, nonatomic) NSProgress * _Nullable progress;///< Progress of the ongoing file operation.
 @property (nonatomic, readonly, getter=isUploaded) BOOL uploaded;///< Whether the file is uploaded.
 @property (nonatomic, readonly, getter=isUploading) BOOL uploading;///< Whether the file is currently uploading.
-@property (strong, nonatomic) NSString * _Nullable thumbnailURLStr;//image thumbnail Url String
+@property (copy, nonatomic) NSString * _Nullable thumbnailURLStr;//image thumbnail Url String
 
 /**
  * Checks if the file is currently being downloaded.
@@ -158,17 +158,14 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
  * @param url The URL of the modified file.
  * @return YES if the file was successfully saved to the local cache, otherwise NO.
  */
-- (BOOL)saveEditedPreviewFile:(NSURL *)url;
+- (BOOL)saveEditedPreviewFile:(NSURL *_Nullable)url;
 
 /**
  * Gets the path for the thumbnail of the file.
  * @param objId The object identifier for which the thumbnail is requested.
  * @return The path to the thumbnail.
  */
-- (NSString *_Nullable)thumbPath:(NSString *)objId;
-
-
-- (UIImage *_Nonnull)newApiIcon;
+- (NSString *_Nullable)thumbPath:(NSString *_Nullable)objId;
 
 - (NSString *_Nullable)starredDetailText;
 

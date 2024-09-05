@@ -342,12 +342,8 @@
         for (NSDictionary *dict in downloadTasks.allValues) {
             NSNumber *mtimeNumber = [dict objectForKey:@"mtime"];
 
-            NSString *mtimeStr = [mtimeNumber stringValue];
-            //create oid by 'timeStr' 'repoId' 'path'
-            NSString *orginOid = [NSString stringWithFormat:@"%@%@%@", mtimeStr, [dict objectForKey:@"repoId"], [dict objectForKey:@"path"]];
-            NSString *noSlashes = [orginOid stringByReplacingOccurrencesOfString:@"/" withString:@""];
-            NSString *oid = [noSlashes stringByReplacingOccurrencesOfString:@"." withString:@""];
-            
+            NSString *oid = [Utils getNewOidFromMtime:[mtimeNumber longLongValue] repoId:[dict objectForKey:@"repoId"] path:[dict objectForKey:@"path"]];
+                        
             SeafFile *file = [[SeafFile alloc] initWithConnection:conn oid:oid repoId:[dict objectForKey:@"repoId"] name:[dict objectForKey:@"name"] path:[dict objectForKey:@"path"] mtime:[[dict objectForKey:@"mtime"] longLongValue] size:[[dict objectForKey:@"size"] longLongValue]];
             [self addFileDownloadTask:file];
         }

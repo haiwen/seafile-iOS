@@ -144,11 +144,9 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
             
             NSNumber *mtimeNumber = [itemInfo objectForKey:@"mtime"];
 
-            NSString *mtimeStr = [mtimeNumber stringValue];
             //create oid by 'timeStr' 'repoId' 'path'
-            NSString *orginOid = [NSString stringWithFormat:@"%@%@%@", mtimeStr, self.repoId, path];
-            NSString *noSlashes = [orginOid stringByReplacingOccurrencesOfString:@"/" withString:@""];
-            NSString *oid = [noSlashes stringByReplacingOccurrencesOfString:@"." withString:@""];
+            NSString *oid = [Utils getNewOidFromMtime:[mtimeNumber longLongValue] repoId:self.repoId path:path];
+            
             newItem.oid = oid;
         } else if ([type isEqual:@"dir"]) {
             newItem = [[SeafDir alloc] initWithConnection:connection oid:[itemInfo objectForKey:@"id"] repoId:self.repoId perm:[itemInfo objectForKey:@"permission"] name:name path:path];

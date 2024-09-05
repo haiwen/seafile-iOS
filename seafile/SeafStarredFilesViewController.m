@@ -37,7 +37,7 @@
 
 @property (retain)id lock;
 @property (nonatomic, strong)NSMutableArray *cellDataArray;
-@property (nonatomic, assign)BOOL isFirstLaunch;
+//@property (nonatomic, assign)BOOL isFirstLaunch;
 
 @property (nonatomic, assign)NSInteger needPasswordCellRow;
 @end
@@ -64,9 +64,9 @@
 
 - (void)refresh:(id)sender
 {
-    if (_isFirstLaunch){
-        _isFirstLaunch = false;
-    }
+//    if (_isFirstLaunch){
+//        _isFirstLaunch = false;
+//    }
     [_connection getStarredFiles:^(NSHTTPURLResponse *response, id JSON) {
         @synchronized(self) {
             Debug("Succeeded to get starred files ...\n");
@@ -162,15 +162,15 @@
             NSString *path = [info objectForKey:@"path"];
             //is dir
             if ([path isKindOfClass:[NSString class]] && [path length] > 1) {
-                SeafStarredDir *starredDir = [[SeafStarredDir alloc]initWithConnection:_connection Info:info];
+                SeafStarredDir *starredDir = [[SeafStarredDir alloc] initWithConnection:_connection Info:info];
                 [jsonDataArray addObject:starredDir];
             } else {//is repo
-                SeafStarredRepo *starredRepo = [[SeafStarredRepo alloc]initWithConnection:_connection Info:info];
+                SeafStarredRepo *starredRepo = [[SeafStarredRepo alloc] initWithConnection:_connection Info:info];
                 [jsonDataArray addObject:starredRepo];
 
             }
         } else {// is file
-            SeafStarredFile *sfile = [[SeafStarredFile alloc]initWithConnection:_connection Info:info];
+            SeafStarredFile *sfile = [[SeafStarredFile alloc] initWithConnection:_connection Info:info];
             sfile.starDelegate = self;
             [starFiles addObject:sfile];
         }
@@ -256,7 +256,7 @@
     _connection = conn;
     _cellDataArray = nil;
     [self.detailViewController setPreViewItem:nil master:nil];
-    _isFirstLaunch = true;
+//    _isFirstLaunch = true;
     [self loadCache];
     [self.tableView reloadData];
 }
@@ -306,14 +306,12 @@
 - (void)updateCellDownloadStatus:(SeafCell *)cell file:(SeafFile *)sfile waiting:(BOOL)waiting
 {
     if (!cell) return;
-    if (!sfile) {
-        dispatch_async(dispatch_get_main_queue(), ^{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (!sfile) {
             cell.cacheStatusView.hidden = true;
             [cell.cacheStatusWidthConstraint setConstant:0.0f];
             [cell layoutIfNeeded];
-        });
-    } else {
-        dispatch_async(dispatch_get_main_queue(), ^{
+        } else {
             if (sfile.hasCache || waiting || sfile.isDownloading) {
                 cell.cacheStatusView.hidden = false;
                 [cell.cacheStatusWidthConstraint setConstant:21.0f];
@@ -330,158 +328,136 @@
                 [cell.cacheStatusWidthConstraint setConstant:0.0f];
             }
             [cell layoutIfNeeded];
-        });
-
-    }
+        }
+    });
 }
 
 - (void)updateCellContent:(SeafCell *)cell file:(SeafFile *)sfile {
-    cell.textLabel.text = sfile.name;
-    
-    //set detail text and color
+    NSString *detailText;
+    UIColor *textColor;
     if (sfile.isDeleted){
-        cell.detailTextLabel.text = @"已删除";
-        cell.detailTextLabel.textColor = UIColor.redColor;
+        detailText = NSLocalizedString(@"Removed", @"Seafile");
+        textColor = UIColor.redColor;
     } else {
-        cell.detailTextLabel.text = sfile.starredDetailText;
+        detailText = sfile.starredDetailText;
+        textColor = [UIColor colorWithRed:0.666667 green:0.666667 blue:0.666667 alpha:1];
     }
+    [self updateCellUI:cell cellName:sfile.name detailText:detailText detailTextColor:textColor image:sfile.icon morButtonIsHidden:NO];
     
-    if (sfile.isImageFile || sfile.isVideoFile) {//show thumbnail image
-        if (sfile.isDeleted){//if deleted show empty image
-            cell.imageView.image = [SKFileTypeImageLoader loadImageWithImgName:@"image"];
-        } else {
-            if (_isFirstLaunch) {//firstLaunch load image from cache.
-                [self setCacheImageFromSFile:sfile toCell:cell];
-            }
-            else{
-                [self downloadThumbnailImageWithSFile:sfile cell:cell];
-            }
-        }
-    } else {//show other type image
-        cell.imageView.image = sfile.newApiIcon;
-    }
-    cell.moreButton.hidden = NO;
+    sfile.delegate = self;
+    sfile.udelegate = self;
+
     [self updateCellDownloadStatus:cell file:sfile waiting:false];
-}
-
-- (void)setCacheImageFromSFile:(SeafFile *)sfile toCell:(SeafCell *)cell {
-    NSString *imageAppendStr = [_connection buildThumbnailImageUrlFromSFile:sfile];
-    
-    NSURLRequest *requestOrigin = [_connection buildRequest:imageAppendStr method:@"GET" form:nil];
-
-    NSString *cacheKey = requestOrigin.URL.absoluteString;
-    
-    SDImageCache *imageCache = [SDImageCache sharedImageCache];
-    
-    UIImage *memoryImage = [imageCache imageFromMemoryCacheForKey:cacheKey];
-
-    if (memoryImage) {
-        cell.imageView.image = memoryImage;
-    } else {
-        UIImage *diskImage = [imageCache imageFromDiskCacheForKey:cacheKey];
-        if (diskImage){
-            cell.imageView.image = diskImage;
-        } else {
-            cell.imageView.image = [SKFileTypeImageLoader loadImageWithImgName:@"image"];
-        }
-    }
-}
-
-- (void)downloadThumbnailImageWithSFile:(SeafFile *)sfile cell:(SeafCell *)cell{
-    AFImageDownloader *downloader = [AFImageDownloader defaultInstance];
-    
-    // 配置 NSURLRequest
-    //            NSURLRequest *requestOrigin = [NSURLRequest requestWithURL:[NSURL URLWithString:@"https://dev.seafile.com/seahub/thumbnail/cb5d47d0-bdbd-42f3-a5e8-47cc6a9c5277/48/Camera%20Uploads/IMG_20240716_174358_9494.JPG"]];
-    
-    NSString *imageAppendStr = [_connection buildThumbnailImageUrlFromSFile:sfile];
-    
-    //    NSString *imageAppendStr = @"https://dev.seafile.com/seahub//api2/repos/2f77b4b8-08ae-44d4-8015-f8be3c86179c/thumbnail/?p=/Camera Uploads/IMG_20240716_174358_9593.JPG&size=128";
-    
-    
-    NSURLRequest *requestOrigin = [_connection buildRequest:imageAppendStr method:@"GET" form:nil];
-    
-    NSString *cacheKey = requestOrigin.URL.absoluteString;
-    
-    SDImageCache *imageCache = [SDImageCache sharedImageCache];
-    
-    UIImage *memoryImage = [imageCache imageFromMemoryCacheForKey:cacheKey];
-
-    if (memoryImage) {
-        cell.imageView.image = memoryImage;
-    } else {
-        UIImage *diskImage = [imageCache imageFromDiskCacheForKey:cacheKey];
-        if (diskImage){
-            cell.imageView.image = diskImage;
-        } else {
-            cell.imageView.image = [SKFileTypeImageLoader loadImageWithImgName:@"image"];
-            [downloader downloadImageForURLRequest:requestOrigin
-                                           success:^(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *responseObject) {
-                Debug(@"图片下载成功,response == %@",response);
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    cell.imageView.image = responseObject;
-                });
-                // cache image manual
-                NSString *cacheKey = request.URL.absoluteString;
-                
-                SDImageCache *imageCache = [SDImageCache sharedImageCache];
-                // save pic to disk,or memeory
-                [imageCache storeImage:responseObject forKey:cacheKey toDisk:YES];
-                
-            } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
-                Debug(@"图片下载失败：%@  ，request = %@,rrr = %@", error.localizedDescription,request.URL ,response);
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    cell.imageView.image = [SKFileTypeImageLoader loadImageWithImgName:@"image"];
-                });
-            }];      
-        }
-    }
-}
-  
-
-- (void)updateCellContent:(SeafCell *)cell repo:(SeafStarredRepo *)sRepo
-{
-    cell.textLabel.text = sRepo.name;
-    
-    if (sRepo.isDeleted){
-        cell.detailTextLabel.text = @"已删除";
-        cell.detailTextLabel.textColor = UIColor.redColor;
-    } else {
-        cell.detailTextLabel.text = sRepo.detailText;
-    }
-    
-    cell.imageView.image = sRepo.icon;
-    cell.moreButton.hidden = NO;
-    //Not of type "sfile", set to nil
-    [self updateCellDownloadStatus:cell file:nil waiting:false];
 }
 
 - (void)updateCellContent:(SeafCell *)cell dir:(SeafStarredDir *)sDir
 {
-    cell.textLabel.text = sDir.name;
-    
+    NSString *detailText;
+    UIColor *textColor;
     if (sDir.isDeleted){
-        cell.detailTextLabel.text = @"已删除";
-        cell.detailTextLabel.textColor = UIColor.redColor;
+        detailText = NSLocalizedString(@"Removed", @"Seafile");
+        textColor = UIColor.redColor;
     } else {
-        cell.detailTextLabel.text = sDir.detailText;
+        detailText = sDir.detailText;
+        textColor = [UIColor colorWithRed:0.666667 green:0.666667 blue:0.666667 alpha:1];
     }
     
-    cell.imageView.image = sDir.icon;
-    cell.moreButton.hidden = NO;
+    [self updateCellUI:cell cellName:sDir.name detailText:detailText detailTextColor:textColor image:sDir.icon morButtonIsHidden:NO];
+    sDir.delegate = self;
+
     //Not of type "sfile", set to nil
     [self updateCellDownloadStatus:cell file:nil waiting:false];
+}
+
+//use SDWebImage download and cache by url.
+//- (void)setCacheImageFromSFile:(SeafFile *)sfile toCell:(SeafCell *)cell {
+//    NSString *imageAppendStr = [_connection buildThumbnailImageUrlFromSFile:sfile];
+//    
+//    NSURLRequest *requestOrigin = [_connection buildRequest:imageAppendStr method:@"GET" form:nil];
+//
+//    NSString *cacheKey = requestOrigin.URL.absoluteString;
+//    
+//    SDImageCache *imageCache = [SDImageCache sharedImageCache];
+//    
+//    UIImage *memoryImage = [imageCache imageFromMemoryCacheForKey:cacheKey];
+//
+//    if (memoryImage) {
+//        cell.imageView.image = memoryImage;
+//    } else {
+//        UIImage *diskImage = [imageCache imageFromDiskCacheForKey:cacheKey];
+//        if (diskImage){
+//            cell.imageView.image = diskImage;
+//        } else {
+//            cell.imageView.image = [SKFileTypeImageLoader loadImageWithImgName:@"image"];
+//        }
+//    }
+//}
+
+//use SDWebImage download and cache by url.
+//- (void)downloadThumbnailImageWithSFile:(SeafFile *)sfile cell:(SeafCell *)cell{
+//    AFImageDownloader *downloader = [AFImageDownloader defaultInstance];
+//    
+//    NSString *imageAppendStr = [_connection buildThumbnailImageUrlFromSFile:sfile];
+//    
+//    NSURLRequest *requestOrigin = [_connection buildRequest:imageAppendStr method:@"GET" form:nil];
+//    
+//    NSString *cacheKey = requestOrigin.URL.absoluteString;
+//    
+//    SDImageCache *imageCache = [SDImageCache sharedImageCache];
+//    
+//    UIImage *memoryImage = [imageCache imageFromMemoryCacheForKey:cacheKey];
+//
+//    if (memoryImage) {
+//        cell.imageView.image = memoryImage;
+//    } else {
+//        UIImage *diskImage = [imageCache imageFromDiskCacheForKey:cacheKey];
+//        if (diskImage){
+//            cell.imageView.image = diskImage;
+//        } else {
+//            cell.imageView.image = [SKFileTypeImageLoader loadImageWithImgName:@"image"];
+//            [downloader downloadImageForURLRequest:requestOrigin
+//                                           success:^(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *responseObject) {
+//                Debug(@"图片下载成功,response == %@",response);
+//                dispatch_async(dispatch_get_main_queue(), ^{
+//                    cell.imageView.image = responseObject;
+//                });
+//                // cache image manual
+//                NSString *cacheKey = request.URL.absoluteString;
+//                
+//                SDImageCache *imageCache = [SDImageCache sharedImageCache];
+//                // save pic to disk,or memeory
+//                [imageCache storeImage:responseObject forKey:cacheKey toDisk:YES];
+//                
+//            } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+//                Debug(@"图片下载失败：%@  ，request = %@,rrr = %@", error.localizedDescription,request.URL ,response);
+//                dispatch_async(dispatch_get_main_queue(), ^{
+//                    cell.imageView.image = [SKFileTypeImageLoader loadImageWithImgName:@"image"];
+//                });
+//            }];      
+//        }
+//    }
+//}
+
+- (void)updateCellUI:(SeafCell *)cell
+            cellName:(NSString *)name
+          detailText:(NSString *)detailText
+     detailTextColor:(UIColor *)color
+               image:(UIImage *)img
+   morButtonIsHidden:(BOOL)isHidden
+{
+    [cell.cacheStatusWidthConstraint setConstant:0.0f];
+
+    cell.textLabel.text = name;
+    cell.detailTextLabel.text = detailText;
+    cell.detailTextLabel.textColor = color;
+    cell.imageView.image = img;
+    cell.moreButton.hidden = isHidden;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     NSString *CellIdentifier = @"SeafCell";
-//    SeafCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-//    if (cell == nil) {
-//        NSArray *cells = [[NSBundle mainBundle] loadNibNamed:@"SeafCell" owner:self options:nil];
-//        cell = [cells objectAtIndex:0];
-//    }
     SeafCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
-
     cell.cellIndexPath = indexPath;
     cell.moreButtonBlock = ^(NSIndexPath *indexPath) {
         Debug(@"%@", indexPath);
@@ -491,23 +467,9 @@
     
     NSObject *entry = [_cellDataArray objectAtIndex:indexPath.row];
     if ([entry isKindOfClass:[SeafStarredFile class]]) {
-        SeafStarredFile *sfile = (SeafStarredFile *)entry;
-//        @try {
-//            sfile = [_starredFiles objectAtIndex:indexPath.row];
-//        } @catch(NSException *exception) {
-//            return cell;
-//        }
-        sfile.udelegate = self;
-        Debug(@"ffffName = %@", sfile.name);
-
-        [self updateCellContent:cell file:sfile];
+        [self updateCellContent:cell file:(SeafStarredFile *)entry];
         return cell;
-    }
-    else if ([entry isKindOfClass:[SeafStarredRepo class]]) {
-        [self updateCellContent:cell repo:(SeafStarredRepo *)entry];
-        return cell;
-    }
-    else if ([entry isKindOfClass:[SeafStarredDir class]]) {
+    } else {
         [self updateCellContent:cell dir:(SeafStarredDir *)entry];
         return cell;
     }
@@ -544,7 +506,12 @@
 {
     [self popupSetRepoPassword:repo handler:^{
         [SVProgressHUD dismiss];
-        SeafFileViewController *controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
+        SeafFileViewController *controller;
+        if (IsIpad()){
+            controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
+        } else {
+            controller = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"FILEMASTERVC"];
+        }
         [self.navigationController pushViewController:controller animated:YES];
         [controller setDirectory:(SeafDir *)repo];
         [repo setDelegate:controller];
@@ -564,7 +531,13 @@
         if ([(SeafRepo *)entry passwordRequiredWithSyncRefresh]){
             return [self popupSelectedCellSetRepoPassword:(SeafRepo *)entry];
         }
-        SeafFileViewController *controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
+        SeafFileViewController *controller;
+        if (IsIpad()){
+            controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
+        } else {
+            controller = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"FILEMASTERVC"];
+        }
+       
         [starredRepo setDelegate:controller];
         [controller setDirectory:starredRepo];
 
@@ -811,19 +784,30 @@
         dirDataArray = [self createSubdirsFromTargetDir:(SeafBase *)entry isFile:true];
     }
     // get the firest tab 的 UINavigationController
-    UINavigationController *navController = self.tabBarController.viewControllers[0];
-    
+    UINavigationController *navController;
+    if (IsIpad()){
+        UISplitViewController *fileController = self.tabBarController.viewControllers[0];
+        navController = [fileController.viewControllers firstObject];
+    } else {
+        navController = self.tabBarController.viewControllers[0];
+    }
+        
     // make sure navController is UINavigationController
     if ([navController isKindOfClass:[UINavigationController class]]) {
         [navController popToRootViewControllerAnimated:NO];
     }
-
+    
     NSMutableArray *createdNavgationControllers = [[NSMutableArray alloc]init];
     UIViewController *rootViewController = [navController.viewControllers firstObject];
     [createdNavgationControllers addObject:rootViewController];
     
     for (SeafDir *seafDir in dirDataArray) {
-        SeafFileViewController *controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
+        SeafFileViewController *controller;
+        if (IsIpad()){
+            controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
+        } else {
+            controller = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"FILEMASTERVC"];
+        }
         [controller setDirectory:seafDir];
         [seafDir setDelegate:controller];
         [createdNavgationControllers addObject:controller];

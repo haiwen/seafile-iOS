@@ -337,14 +337,10 @@ static BOOL disableCustomEasing = NO;
         }
 
         NSArray *sections;
-        if (iPad) {
+        if (titles.count > 1) {
+            sections = @[section,[SeafActionSheetSection sectionWithButtonTitles:@[NSLocalizedString(titles.lastObject,)] buttonStyle:SFActionSheetButtonStyleCancel]];
+        } else {
             sections = @[section];
-        }else{
-            if (titles.count > 1) {
-                sections = @[section,[SeafActionSheetSection sectionWithButtonTitles:@[NSLocalizedString(titles.lastObject,)] buttonStyle:SFActionSheetButtonStyleCancel]];
-            } else {
-                sections = @[section];
-            }
         }
         _sections = sections;
 

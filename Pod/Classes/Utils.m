@@ -696,4 +696,16 @@
     }
 }
 
+//modified from 2.9.28 use newOid
++ (NSString *)getNewOidFromMtime:(long long)mtime
+                          repoId:(NSString *)repoId
+                            path:(NSString *)path
+{
+    NSString *mtimeStr = [NSString stringWithFormat:@"%lld", mtime];
+    NSString *orginOid = [NSString stringWithFormat:@"%@%@%@", mtimeStr, repoId, path];
+    NSString *noSlashes = [orginOid stringByReplacingOccurrencesOfString:@"/" withString:@""];
+    NSString *newOid = [noSlashes stringByReplacingOccurrencesOfString:@"." withString:@""];
+    return newOid;
+}
+
 @end

@@ -72,6 +72,4 @@ enum SET_REPO_PASSWORD_RET {
 
 - (void)load:(id<SeafDentryDelegate>)delegate force:(BOOL)force;///< Loads the file, optionally forcing a reload.
 
-- (void)loadStarred:(id<SeafDentryDelegate>)delegate force:(BOOL)force;///<Starred ViewController need this method.
-
 @end

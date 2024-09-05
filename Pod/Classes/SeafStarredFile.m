@@ -42,12 +42,8 @@
                  deleted:(BOOL)isDeleted
 {
     NSString *name = aPath.lastPathComponent;
-    NSString *mtimeStr = [NSString stringWithFormat:@"%lld", mtime];
     //create oid by 'timeStr' 'repoId' 'path'
-    NSString *orginOid = [NSString stringWithFormat:@"%@%@%@", mtimeStr, aRepo, aPath];
-    NSString *noSlashes = [orginOid stringByReplacingOccurrencesOfString:@"/" withString:@""];
-    NSString *oid = [noSlashes stringByReplacingOccurrencesOfString:@"." withString:@""];
-
+    NSString *oid = [Utils getNewOidFromMtime:mtime repoId:aRepo path:aPath];
 
     if (self = [super initWithConnection:aConnection oid:oid repoId:aRepo name:objName path:aPath mtime:mtime size:0 ]) {
         

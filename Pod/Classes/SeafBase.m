@@ -95,11 +95,6 @@
     // must be override
 }
 
-//used for starred page
-- (void)realLoadStarredContent {
-    // must be override
-}
-
 - (BOOL)realLoadCache
 {
     return NO;
@@ -159,20 +154,6 @@
     }
     [self realLoadContent];
 }
-
-- (void)loadStarredContent:(BOOL)force{
-    BOOL hasCache = [self loadCache];
-    @synchronized (self) {
-        if (hasCache && !force) {
-            return [self downloadComplete:true];
-        }
-        if (self.state == SEAF_DENTRY_LOADING)
-            return;
-        self.state = SEAF_DENTRY_LOADING;
-    }
-    [self realLoadStarredContent];
-}
-
 
 - (BOOL)hasCache
 {

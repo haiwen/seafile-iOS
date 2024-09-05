@@ -65,7 +65,7 @@ typedef void (^repo_password_set_block_t)(SeafBase *entry, int ret);
 
 
 @property (copy) NSString *name; //obj name
-@property (nonatomic, strong) NSString *repoName;//repo name
+@property (nonatomic, copy) NSString *repoName;//repo name
 @property (readonly, copy) NSString *path; // path in the library
 @property (readonly, copy) NSString *repoId; // library id
 @property (readonly, copy) NSString *mime; //mime type

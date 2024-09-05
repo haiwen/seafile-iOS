@@ -45,7 +45,7 @@
 @property (readonly, copy) NSArray *items;
 @property (readonly) NSArray *uploadFiles;
 @property (readonly) BOOL editable;
-@property (nonatomic, assign) NSString *perm;
+@property (nonatomic, copy) NSString *perm;
 //@property (assign, nonatomic) BOOL encrypted;///< Indicates whether the repository is encrypted.
 
 
