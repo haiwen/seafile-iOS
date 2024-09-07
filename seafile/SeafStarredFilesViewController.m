@@ -502,20 +502,18 @@
     }];
 }
 
-- (void)popupSelectedCellSetRepoPassword:(SeafRepo *)repo
+- (void)selectDirOrRepo:(SeafDir *)repo
 {
-    [self popupSetRepoPassword:repo handler:^{
-        [SVProgressHUD dismiss];
-        SeafFileViewController *controller;
-        if (IsIpad()){
-            controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
-        } else {
-            controller = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"FILEMASTERVC"];
-        }
-        [self.navigationController pushViewController:controller animated:YES];
-        [controller setDirectory:(SeafDir *)repo];
-        [repo setDelegate:controller];
-    }];
+    [SVProgressHUD dismiss];
+    SeafFileViewController *controller;
+    if (IsIpad()){
+        controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
+    } else {
+        controller = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"FILEMASTERVC"];
+    }
+    [self.navigationController pushViewController:controller animated:YES];
+    [controller setDirectory:repo];
+    [repo setDelegate:controller];
 }
 
 #pragma mark - Table view delegate
@@ -528,20 +526,30 @@
             [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"The folder has been deleted", @"Seafile")];
             return;
         }
-        if ([(SeafRepo *)entry passwordRequiredWithSyncRefresh]){
-            return [self popupSelectedCellSetRepoPassword:(SeafRepo *)entry];
-        }
-        SeafFileViewController *controller;
-        if (IsIpad()){
-            controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
+//        if ([(SeafRepo *)entry passwordRequiredWithSyncRefresh]){
+//            return [self popupSelectedCellSetRepoPassword:(SeafRepo *)entry];
+//        }
+        SeafRepo *repo = [_connection getRepo:starredRepo.repoId];
+        if (repo && repo.passwordRequiredWithSyncRefresh) {
+//            Debug("Star file %@ repo %@ password required.", sfile.name, sfile.repoId);
+            [self popupSetRepoPassword:repo handler:^{
+                [self selectDirOrRepo:starredRepo];
+            }];
         } else {
-            controller = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"FILEMASTERVC"];
+            [self selectDirOrRepo:starredRepo];
         }
-       
-        [starredRepo setDelegate:controller];
-        [controller setDirectory:starredRepo];
-
-        [self.navigationController pushViewController:controller animated:YES];
+        
+//        SeafFileViewController *controller;
+//        if (IsIpad()){
+//            controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
+//        } else {
+//            controller = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"FILEMASTERVC"];
+//        }
+//       
+//        [starredRepo setDelegate:controller];
+//        [controller setDirectory:starredRepo];
+//
+//        [self.navigationController pushViewController:controller animated:YES];
 
     } else if ([entry isKindOfClass:[SeafStarredFile class]]) {
         SeafStarredFile *tempSFile = (SeafStarredFile *)entry;
@@ -631,10 +639,15 @@
     }
 }
 
-- (void)updateEntryCell:(SeafFile *)entry
+- (void)updateEntryCell:(SeafBase *)entry
 {
     SeafCell *cell = [self getEntryCell:entry];
-    [self updateCellContent:cell file:entry];
+    if ([entry isKindOfClass:[SeafStarredFile class]]) {
+        [self updateCellContent:cell file:(SeafStarredFile *)entry];
+    } else {
+        [self updateCellContent:cell dir:(SeafStarredDir *)entry];
+    }
+//    [self updateCellContent:cell file:entry];
 }
 
 #pragma mark - SeafDentryDelegate
@@ -646,7 +659,7 @@
 }
 - (void)download:(SeafBase *)entry complete:(BOOL)updated
 {
-    [self updateEntryCell:(SeafFile *)entry];
+    [self updateEntryCell:(SeafBase *)entry];
     [self.detailViewController download:entry complete:updated];
 }
 - (void)download:(SeafBase *)entry failed:(NSError *)error

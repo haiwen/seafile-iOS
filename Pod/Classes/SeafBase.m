@@ -143,7 +143,7 @@
 
 
 - (void)loadContent:(BOOL)force {
-    BOOL hasCache = [self loadCache];
+    BOOL hasCache = [self loadCache]; //set true if ooid==nil or has Json cache
     @synchronized (self) {
         if (hasCache && !force) {
             return [self downloadComplete:true];
@@ -157,7 +157,12 @@
 
 - (BOOL)hasCache
 {
-    return _ooid != nil;
+    if (_ooid != nil){
+        return true;
+    } else {
+        return false;
+    }
+//    return _ooid != nil;
 }
 
 - (void)generateShareLink:(id<SeafShareDelegate>)dg password:(NSString *)password expire_days:(NSString *)expire_days {

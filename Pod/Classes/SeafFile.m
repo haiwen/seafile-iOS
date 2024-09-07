@@ -544,17 +544,24 @@
 {
     if (_icon) return _icon;
     if ((self.isImageFile || self.isVideoFile) && self.oid) {
-        if (![connection isEncrypted:self.repoId] || !self.isDeleted) {
-            UIImage *img = [self thumb];
-            if (img)
-                return _thumb;
-            else if (!_thumbtask) {
-                SeafThumb *thb = [[SeafThumb alloc] initWithSeafFile:self];
-                [SeafDataTaskManager.sharedObject addThumbTask:thb];
+        if (![connection isEncrypted:self.repoId]) {
+            if (!self.isDeleted) {
+                UIImage *img = [self thumb];
+                if (img)
+                    return _thumb;
+                else if (!_thumbtask) {
+                    SeafThumb *thb = [[SeafThumb alloc] initWithSeafFile:self];
+                    [SeafDataTaskManager.sharedObject addThumbTask:thb];
+                }
+            } else {
+                return [super icon];
             }
-        } else if (self.image) {
-            [self performSelectorInBackground:@selector(genThumb) withObject:nil];
+        } else {
+            return [super icon];
         }
+//        } else if (self.image) {
+//            [self performSelectorInBackground:@selector(genThumb) withObject:nil];
+//        }
     }
     return [super icon];
 }
