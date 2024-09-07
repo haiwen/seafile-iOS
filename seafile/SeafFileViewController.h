@@ -38,4 +38,6 @@ typedef void(^DownloadCompleteBlock)(NSArray *array, NSString *errorStr);
 
 - (void)pullToRefresh;
 
+- (void)loadDataFromServerAndRefresh;
+
 @end

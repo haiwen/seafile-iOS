@@ -450,6 +450,12 @@
     for (id <SeafBackgroundMonitor> monitor in _monitors) {
         [monitor enterForeground];
     }
+    
+    // if is FileVC refresh data and view
+    UIViewController *topViewController = [self topViewController];
+    if ([topViewController respondsToSelector:@selector(loadDataFromServerAndRefresh)]) {
+        [(id)topViewController loadDataFromServerAndRefresh];
+    }
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
