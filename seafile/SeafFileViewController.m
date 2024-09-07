@@ -225,6 +225,12 @@ enum {
     [self refreshView];
 }
 
+- (void)loadDataFromServerAndRefresh {
+    self.state = STATE_LOADING;
+    self.directory.delegate = self;
+    [_directory loadContent:true]; // get data from server
+}
+
 // Handles the selection state of items.
 - (void)noneSelected:(BOOL)none
 {
@@ -509,6 +515,10 @@ enum {
         self.tableView.sectionHeaderHeight = 0;
     [_directory setDelegate:self];
     [self refreshView];
+    
+    self.state = STATE_LOADING;
+    self.directory.delegate = self;
+    [_directory loadContent:true];
 }
 
 - (void)viewWillLayoutSubviews {
@@ -543,8 +553,12 @@ enum {
 - (void)viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
-    if ([_directory hasCache])
+    if ([_directory hasCache]) {
         [SeafAppDelegate checkOpenLink:self];
+    }
+    self.state = STATE_LOADING;
+    self.directory.delegate = self;
+    [_directory loadContent:true]; // get data from server
 }
 
 #pragma mark - Table View
