@@ -582,9 +582,20 @@
                 if (![self uploadHeic] && [dataUTI isEqualToString:@"public.heic"]) {// HEIC available after iOS11
                     self->_lpath = [self.lpath stringByReplacingOccurrencesOfString:@"HEIC" withString:@"JPG"];
                 }
-                CIImage* ciImage = [CIImage imageWithData:imageData];
-                if (![Utils writeCIImage:ciImage toPath:self.lpath]) {
-                    [self finishUpload:false oid:nil error:nil];
+                if ([self uploadHeic]) {
+                    NSDictionary<CIImageOption, id> *options = nil;
+                    if (@available(iOS 17.0, *)) {
+                        options = @{kCIImageExpandToHDR : @(YES)};
+                    }
+                    CIImage* ciImage = [CIImage imageWithData:imageData options:options];
+                    if (![Utils writeHEICCIImage:ciImage toPath:self.lpath]) {
+                        [self finishUpload:false oid:nil error:nil];
+                    }
+                } else {
+                    CIImage* ciImage = [CIImage imageWithData:imageData];
+                    if (![Utils writeCIImage:ciImage toPath:self.lpath]) {
+                        [self finishUpload:false oid:nil error:nil];
+                    }
                 }
             } else {
                 if (![Utils writeDataWithMeta:imageData toPath:self.lpath]) {

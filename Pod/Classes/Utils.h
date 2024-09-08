@@ -136,4 +136,6 @@
                           repoId:(NSString *)repoId
                             path:(NSString *)path;
 
++ (BOOL)writeHEICCIImage:(CIImage *)ciImage toPath:(NSString*)filePath;
+
 @end

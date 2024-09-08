@@ -366,6 +366,21 @@
     return [context writeJPEGRepresentationOfImage:ciImage toURL:url colorSpace:ciImage.colorSpace options:@{(CIImageRepresentationOption)kCGImageDestinationLossyCompressionQuality : @(0.8)} error:&error];
 }
 
++ (BOOL)writeHEICCIImage:(CIImage *)ciImage toPath:(NSString*)filePath {
+    NSError *error = nil;
+    CIContext *context = [[CIContext alloc] init];
+    NSURL *url = [[NSURL alloc] initFileURLWithPath:filePath];
+    CGColorSpaceRef colorSpace = ciImage.colorSpace;
+    if (!colorSpace) {
+        colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceITUR_2100_PQ);
+    }
+    if (@available(iOS 15.0, *)) {
+        return [context writeHEIF10RepresentationOfImage:ciImage toURL:url colorSpace:ciImage.colorSpace options:@{} error:&error];
+    } else {
+        return [context writeHEIFRepresentationOfImage:ciImage toURL:url format:kCIFormatRGBA8 colorSpace:ciImage.colorSpace options:@{(CIImageRepresentationOption)kCGImageDestinationLossyCompressionQuality : @(0.8)} error:&error];
+    }
+}
+
 + (BOOL)fileExistsAtPath:(NSString *)path
 {
     return [[NSFileManager defaultManager] fileExistsAtPath:path];
@@ -511,13 +526,20 @@
 {
     const int MAX_SIZE = length;
     if ([[NSFileManager defaultManager] fileExistsAtPath:cachePath]) {
-        return [UIImage imageWithContentsOfFile:cachePath];
+        if (@available(iOS 17.0, *)) {
+            return [[UIImageReader defaultReader] imageWithContentsOfFileURL:[NSURL fileURLWithPath:cachePath]];
+        } else {
+            return [UIImage imageWithContentsOfFile:cachePath];
+        }
     }
 
     if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
         UIImage *image = [UIImage imageWithContentsOfFile:path];
         NSString *imageUTType = (__bridge NSString *)CGImageGetUTType(image.CGImage);
         if ([imageUTType isEqualToString:@"public.heic"]) {
+            if (@available(iOS 17.0, *)) {
+                image = [[UIImageReader defaultReader] imageWithContentsOfFileURL:[NSURL fileURLWithPath:path]];
+            }
             NSData *imageData = [NSData dataWithContentsOfFile:path];
             [imageData writeToFile:cachePath atomically:YES];
             return image;

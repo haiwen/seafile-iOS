@@ -285,6 +285,8 @@ enum SHARE_STATUS {
         [self.navigationController dismissViewControllerAnimated:YES completion:nil];
     else
         [self.navigationController popViewControllerAnimated:NO];
+    [self.mwPhotoBrowser viewDidDisappear:NO];
+    [self.mwPhotoBrowser.view removeFromSuperview];
 }
 
 - (void)viewDidLoad

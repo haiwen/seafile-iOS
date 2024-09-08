@@ -547,9 +547,11 @@
         if (![connection isEncrypted:self.repoId]) {
             if (!self.isDeleted) {
                 UIImage *img = [self thumb];
-                if (img)
+                if (img) {
                     return _thumb;
-                else if (!_thumbtask) {
+                } else if (self.image) {
+                    [self performSelectorInBackground:@selector(genThumb) withObject:nil];
+                } else if (!_thumbtask) {
                     SeafThumb *thb = [[SeafThumb alloc] initWithSeafFile:self];
                     [SeafDataTaskManager.sharedObject addThumbTask:thb];
                 }
@@ -559,9 +561,6 @@
         } else {
             return [super icon];
         }
-//        } else if (self.image) {
-//            [self performSelectorInBackground:@selector(genThumb) withObject:nil];
-//        }
     }
     return [super icon];
 }
