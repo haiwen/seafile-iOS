@@ -365,10 +365,9 @@
 }
 
 - (void)bgTaskCount {
-    if (self.bgTaskNum < 600) {
+    if (self.bgTaskNum < 3000) {
         self.bgTaskNum++;
-    }
-    if (self.bgTaskNum >= 600) {
+    } else {
         self.bgTaskNum = 0;
         [self.bgTaskTimer invalidate];
         self.bgTaskTimer = nil;

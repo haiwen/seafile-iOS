@@ -59,7 +59,7 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 
 @property (nonatomic, assign, getter=isStarred) BOOL starred;
 
-@property (nonatomic, assign) NSTimeInterval uplaodStartedTime;
+@property (nonatomic, assign) NSTimeInterval uploadStartedTime;
 
 /**
  * Initializes a SeafUploadFile with a local path.

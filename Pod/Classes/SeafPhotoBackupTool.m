@@ -306,7 +306,7 @@
     for (NSString *identifier in copyArray) {
         if ([copyDict valueForKey:identifier]) {
             SeafUploadFile *file = [copyDict valueForKey:identifier];
-            NSTimeInterval t1 = file.uplaodStartedTime;
+            NSTimeInterval t1 = file.uploadStartedTime;
             NSTimeInterval cur = [[NSDate date] timeIntervalSince1970];
             if (cur - t1 > DEFAULT_UPLOADINGARRAY_INTERVAL) {
                 [self removeUploadingPhoto:identifier];
@@ -354,7 +354,7 @@
     if (identifier) {
         @synchronized (self) {
             NSTimeInterval cur = [[NSDate date] timeIntervalSince1970];
-            file.uplaodStartedTime = cur;
+            file.uploadStartedTime = cur;
             [self.uploadingDict setObject:file forKey:identifier];
         }
     }
