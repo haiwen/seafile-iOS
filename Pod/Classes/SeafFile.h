@@ -76,6 +76,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 @property (nonatomic, readonly, getter=isUploading) BOOL uploading;///< Whether the file is currently uploading.
 @property (copy, nonatomic) NSString * _Nullable thumbnailURLStr;//image thumbnail Url String
 @property (nonatomic, assign) NSInteger thumbFailedCount;//download thumb failure count
+@property (nonatomic, copy) NSURLSessionDownloadTask * _Nullable thumbtask;
 
 /**
  * Checks if the file is currently being downloaded.
@@ -140,6 +141,11 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
  * Cancels any ongoing thumbnail download.
  */
 - (void)cancelThumb;
+
+/**
+ * Cancels the thumb which not download complete.
+ */
+- (void)cancelNotDisplayThumb;
 
 /**
  * Uploads the file from a specified URL.

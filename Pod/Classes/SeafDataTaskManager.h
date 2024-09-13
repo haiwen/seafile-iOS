@@ -115,6 +115,13 @@ typedef void(^DownLoadFinshBlock)(id<SeafTask>  _Nonnull task);
  */
 - (SeafAccountTaskQueue * _Nonnull)accountQueueForConnection:(SeafConnection * _Nonnull)connection;
 
+
+/**
+ * Remove an account thumb from accountQueue
+ * @param thumb The account thumb
+ */
+- (void)removeThumbTaskFromAccountQueue:(SeafThumb * _Nonnull)thumb;
+
 @end
 
 @interface SeafAccountTaskQueue : NSObject

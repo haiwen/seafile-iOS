@@ -27,9 +27,8 @@
 @property (readonly) NSURL *exportURL;
 @property (strong) NSString *downloadingFileOid;
 @property (nonatomic, strong) UIImage *icon;
-@property (nonatomic, strong) UIImage *thumb;
+//@property (nonatomic, strong) UIImage *thumb;
 @property NSURLSessionDownloadTask *task;
-@property NSURLSessionDownloadTask *thumbtask;
 @property (strong) SeafUploadFile *ufile;
 @property (strong) NSArray *blkids;
 @property int index;
@@ -39,6 +38,9 @@
 @property (readwrite, nonatomic) SeafUploadCompletionBlock uploadCompletionBlock;
 @property (nonatomic) TaskCompleteBlock taskCompleteBlock;
 @property (nonatomic) TaskProgressBlock taskProgressBlock;
+@property (strong, nonatomic) SeafThumb *thumbTaskForQueue;
+@property (assign, nonatomic) BOOL isTaskCanceled;
+
 @end
 
 @implementation SeafFile
@@ -63,6 +65,7 @@
         self.task = nil;
         self.retryable = true;
         self.thumbFailedCount = 0;
+        _isTaskCanceled = false;
     }
     return self;
 }
@@ -196,6 +199,7 @@
     [_thumbtask cancel];
     _thumbtask = nil;
 }
+
 - (void)finishDownloadThumb:(BOOL)success completeBlock:(SeafThumbCompleteBlock)completeBlock
 {
     Debug("finishDownloadThumb: %@ success: %d", self.name, success);
@@ -207,7 +211,9 @@
     }
     _thumbtask = nil;
     if (success || _icon || self.image) {
+        @weakify(self);
         dispatch_async(dispatch_get_main_queue(), ^{
+            @strongify(self);
             [self.delegate download:self complete:false];
         });
     }
@@ -219,69 +225,75 @@
  */
 - (void)downloadByFile
 {
+    __weak typeof(self) weakSelf = self;
     [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@", self.repoId, [self.path escapedUrl]] success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-         NSString *url = JSON;
-//         NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
+        __strong typeof(weakSelf) self = weakSelf;
+        NSString *url = JSON;
+        //         NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
         NSString *curId = [Utils getNewOidFromMtime:self.mtime repoId:self.repoId path:self.path];
         
-         Debug("Downloading file from file server url: %@, state:%d %@, %@", JSON, self.state, self.ooid, curId);
-         if (!curId) curId = self.oid;
-         if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:curId]]) {
-             Debug("file %@ already exist curId=%@, ooid=%@", self.name, curId, self.ooid);
-             [self finishDownload:curId];
-             return;
-         }
+        Debug("Downloading file from file server url: %@, state:%d %@, %@", JSON, self.state, self.ooid, curId);
+        if (!curId) curId = self.oid;
+        if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:curId]]) {
+            Debug("file %@ already exist curId=%@, ooid=%@", self.name, curId, self.ooid);
+            [self finishDownload:curId];
+            return;
+        }
+        
+        @synchronized (self) {
+            if (self.state != SEAF_DENTRY_LOADING) {
+                return Info("Download file %@ already canceled", self.name);
+            }
+            if (self.downloadingFileOid) {// Already downloading
+                Debug("Already downloading %@", self.downloadingFileOid);
+                return;
+            }
+            self.downloadingFileOid = curId;
+        }
+        [self downloadProgress:0];
+        url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+        NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:DEFAULT_TIMEOUT];
+        
+        NSString *target = [SeafStorage.sharedObject documentPath:self.downloadingFileOid];
+        Debug("Download file %@  %@ from %@, target:%@ %d", self.name, self.downloadingFileOid, url, target, [Utils fileExistsAtPath:target]);
 
-         @synchronized (self) {
-             if (self.state != SEAF_DENTRY_LOADING) {
-                 return Info("Download file %@ already canceled", self.name);
-             }
-             if (self.downloadingFileOid) {// Already downloading
-                 Debug("Already downloading %@", self.downloadingFileOid);
-                 return;
-             }
-             self.downloadingFileOid = curId;
-         }
-         [self downloadProgress:0];
-         url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-         NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:DEFAULT_TIMEOUT];
-
-         NSString *target = [SeafStorage.sharedObject documentPath:self.downloadingFileOid];
-         Debug("Download file %@  %@ from %@, target:%@ %d", self.name, self.downloadingFileOid, url, target, [Utils fileExistsAtPath:target]);
-
-         self.task = [self->connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:^(NSProgress * _Nonnull downloadProgress) {
-             self.progress = downloadProgress;
-             [self.progress addObserver:self
-                         forKeyPath:@"fractionCompleted"
-                            options:NSKeyValueObservingOptionNew
-                            context:NULL];
-         } destination:^NSURL * _Nonnull(NSURL * _Nonnull targetPath, NSURLResponse * _Nonnull response) {
-             return [NSURL fileURLWithPath:[target stringByAppendingPathExtension:@"tmp"]];
-         } completionHandler:^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
-             if (!self.downloadingFileOid) {
-                 return Info("Download file %@ already canceled", self.name);
-             }
-             if (error) {
-                 Debug("Failed to download %@, error=%@, %ld", self.name, [error localizedDescription], (long)((NSHTTPURLResponse *)response).statusCode);
-                 [self failedDownload:error];
-             } else {
-                 Debug("Successfully downloaded file:%@, %@ oid=%@, ooid=%@, delegate=%@, %@", self.name, downloadRequest.URL, self.downloadingFileOid, self.ooid, self.delegate, filePath);
-                 if (![filePath.path isEqualToString:target]) {
-                     [Utils removeFile:target];
-                     [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
-                 }
-                 [self finishDownload:self.downloadingFileOid];
-             }
-         }];
+        __weak typeof(self) weakSelf2 = self; // another weakify for nested block
+        self.task = [self->connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:^(NSProgress * _Nonnull downloadProgress) {
+            __strong typeof(weakSelf2) self = weakSelf2;
+            self.progress = downloadProgress;
+            [self.progress addObserver:self
+                            forKeyPath:@"fractionCompleted"
+                               options:NSKeyValueObservingOptionNew
+                               context:NULL];
+        } destination:^NSURL * _Nonnull(NSURL * _Nonnull targetPath, NSURLResponse * _Nonnull response) {
+            return [NSURL fileURLWithPath:[target stringByAppendingPathExtension:@"tmp"]];
+        } completionHandler:^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
+            __strong typeof(weakSelf2) self = weakSelf2;
+            if (!self.downloadingFileOid) {
+                return Info("Download file %@ already canceled", self.name);
+            }
+            if (error) {
+                Debug("Failed to download %@, error=%@, %ld", self.name, [error localizedDescription], (long)((NSHTTPURLResponse *)response).statusCode);
+                [self failedDownload:error];
+            } else {
+                Debug("Successfully downloaded file:%@, %@ oid=%@, ooid=%@, delegate=%@, %@", self.name, downloadRequest.URL, self.downloadingFileOid, self.ooid, self.delegate, filePath);
+                if (![filePath.path isEqualToString:target]) {
+                    [Utils removeFile:target];
+                    [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
+                }
+                [self finishDownload:self.downloadingFileOid];
+            }
+        }];
          
-         [self.task resume];
-     }
+        [self.task resume];
+    }
                     failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
-         self.state = SEAF_DENTRY_INIT;
-         [self downloadFailed:error];
-     }];
+        __strong typeof(weakSelf) self = weakSelf;
+        self.state = SEAF_DENTRY_INIT;
+        [self downloadFailed:error];
+    }];
 }
 
 - (void)setThumbCompleteBlock:(nullable SeafThumbCompleteBlock)block
@@ -300,25 +312,39 @@
     NSString *target = [self thumbPath:self.oid];
 
     @synchronized (self) {
-        if (_thumbtask) return [self finishDownloadThumb:true completeBlock:completeBlock];
+        if (_thumbtask) return;
         if (self.thumb) return [self finishDownloadThumb:true completeBlock:completeBlock];
-
         @weakify(self);
+        self.isTaskCanceled = false;
         _thumbtask = [connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:nil destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
             return [NSURL fileURLWithPath:[target stringByAppendingPathExtension:@"tmp"]];
         } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
             @strongify(self);
             if (error) {
-                self.thumbFailedCount++;
-                Debug("Failed to download thumb %@, error=%@", self.name, error.localizedDescription);
+                if (error.code == NSURLErrorCancelled) {
+                    Debug(@"Task was cancelled %@", self.name);
+                } else if (self.isTaskCanceled){
+                    self.isTaskCanceled = false;
+                    Debug(@"task is canceled %@,with error", self.name);
+                } else {
+                    self.thumbFailedCount++;
+                    Debug("Failed to download thumb %@, error=%@", self.name, error.localizedDescription);
+                }
+                [self finishDownloadThumb:NO completeBlock:completeBlock];
             } else {
                 self.thumbFailedCount = 0;
+                if (self.isTaskCanceled){
+                    self.isTaskCanceled = false;
+                    Debug(@"task is canceled %@", self.name);
+                    [self finishDownloadThumb:NO completeBlock:completeBlock];
+                    return;
+                }
                 if (![filePath.path isEqualToString:target]) {
                     [Utils removeFile:target];
                     [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
                 }
+                [self finishDownloadThumb:YES completeBlock:completeBlock];
             }
-            [self finishDownloadThumb:!error completeBlock:completeBlock];
         }];
     }
     [_thumbtask resume];
@@ -437,11 +463,14 @@
 
     NSString *link = [NSString stringWithFormat:API_URL"/repos/%@/files/%@/blks/%@/download-link/", self.repoId, self.downloadingFileOid, blk_id];
     Debug("link=%@", link);
+    @weakify(self);
     [connection sendRequest:link success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        @strongify(self);
          NSString *url = JSON;
          [self donwloadBlock:blk_id fromUrl:url];
      } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
+         @strongify(self);
          Warning("error=%@", error);
          [self failedDownload:error];
      }];
@@ -454,8 +483,10 @@
  */
 - (void)downloadByBlocks
 {
+    @weakify(self);
     [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@&op=downloadblks", self.repoId, [self.path escapedUrl]] success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        @strongify(self);
          NSString *curId = [JSON objectForKey:@"file_id"];
         
         NSString *oid = [Utils getNewOidFromMtime:self.mtime repoId:self.repoId path:self.path];
@@ -484,6 +515,7 @@
      }
                     failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
+        @strongify(self);
          self.state = SEAF_DENTRY_FAILURE;
          [self downloadFailed:error];
      }];
@@ -553,10 +585,12 @@
         if (![connection isEncrypted:self.repoId]) {
             if (!self.isDeleted) {
                 UIImage *img = [self thumb];
-                if (img)
+                if (img) {
                     return img;
-                else if (!_thumbtask) {
+                }
+                else if (!self.thumbTaskForQueue) {
                     SeafThumb *thb = [[SeafThumb alloc] initWithSeafFile:self];
+                    self.thumbTaskForQueue = thb;
                     [SeafDataTaskManager.sharedObject addThumbTask:thb];
                 }
             } else {
@@ -596,6 +630,7 @@
     }
     return thumb;
 }
+
 
 - (BOOL)realLoadCache
 {
@@ -876,7 +911,6 @@
     return [connection isStarred:self.repoId path:self.path];
 }
 
-
 - (void)update:(id<SeafFileUpdateDelegate>)dg
 {
     if (!self.mpath)   return;
@@ -913,6 +947,15 @@
 - (void)cancel
 {
     [self cancelAnyLoading];
+}
+
+- (void)cancelNotDisplayThumb {
+    if (self.thumbTaskForQueue){
+        [SeafDataTaskManager.sharedObject removeThumbTaskFromAccountQueue:self.thumbTaskForQueue];
+        self.thumbTaskForQueue = nil;
+        self.isTaskCanceled = true;
+    }
+    [self cancelThumb];
 }
 
 - (void)cancelAnyLoading

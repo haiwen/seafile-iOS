@@ -19,6 +19,11 @@
 #define DEFAULT_RETRYCOUNT 3
 
 /**
+ * Default number of times a FileThumb should retry on failure.
+ */
+#define Default_FileThumb_RetryCount 3
+
+/**
  * Default interval in seconds between retries of a task.
  */
 #define DEFAULT_ATTEMPT_INTERVAL 60 // 1 min

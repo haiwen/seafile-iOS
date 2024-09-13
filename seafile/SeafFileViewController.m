@@ -36,6 +36,7 @@
 #import "SeafActionsManager.h"
 #import "SeafSearchResultViewController.h"
 #import "UISearchBar+SeafExtend.h"
+#import "UIImage+FileType.h"
 
 enum {
     STATE_INIT = 0,
@@ -186,6 +187,9 @@ enum {
     [super viewDidLoad];
     [self.tableView registerNib:[UINib nibWithNibName:@"SeafCell" bundle:nil]
          forCellReuseIdentifier:@"SeafCell"];
+    [self.tableView registerNib:[UINib nibWithNibName:@"SeafDirCell" bundle:nil]
+         forCellReuseIdentifier:@"SeafDirCell"];
+    
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeAll;
 
@@ -310,11 +314,15 @@ enum {
     if (!_directory)
         return;
     if ([_directory isKindOfClass:[SeafRepos class]]) {
+        @weakify(self);
         dispatch_async(dispatch_get_main_queue(), ^{
+            @strongify(self);
             self.searchController.searchBar.placeholder = NSLocalizedString(@"Search", @"Seafile");
         });
     } else {
+        @weakify(self);
         dispatch_async(dispatch_get_main_queue(), ^{
+            @strongify(self);
             self.searchController.searchBar.placeholder = NSLocalizedString(@"Search files in this library", @"Seafile");
         });
     }
@@ -588,8 +596,9 @@ enum {
 {
     SeafCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
-        NSArray *cells = [[NSBundle mainBundle] loadNibNamed:CellIdentifier owner:self options:nil];
-        cell = [cells objectAtIndex:0];
+        cell = [[SeafCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
+//        NSArray *cells = [[NSBundle mainBundle] loadNibNamed:CellIdentifier owner:self options:nil];
+//        cell = [cells objectAtIndex:0];
     }
     [cell reset];
 
@@ -616,12 +625,21 @@ enum {
 }
 
 // Configures and returns a cell for an upload file
-- (UITableViewCell *)getSeafUploadFileCell:(SeafUploadFile *)file forTableView:(UITableView *)tableView
+- (UITableViewCell *)getSeafUploadFileCell:(SeafUploadFile *)file forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath
 {
     file.delegate = self;
     SeafCell *cell = [self getCellForTableView:tableView];
     cell.textLabel.text = file.name;
-    cell.imageView.image = file.icon;
+    cell.cellIndexPath = indexPath;
+//    cell.imageView.image = file.icon;
+    cell.imageView.image = [UIImage imageForMimeType:file.mime ext:file.name.pathExtension.lowercaseString];
+    [file iconWithCompletion:^(UIImage *image) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (cell.cellIndexPath == indexPath) {
+                cell.imageView.image = image;
+            }
+        });
+    }];
     if (file.isUploading) {
         cell.progressView.hidden = false;
         [cell.progressView setProgress:file.uProgress];
@@ -678,10 +696,30 @@ enum {
 {
     cell.textLabel.text = sfile.name;
     cell.detailTextLabel.text = sfile.detailText;
-    cell.imageView.image = sfile.icon;
+//    cell.imageView.image = sfile.icon;
+    [self loadImageForCell:cell withFile:sfile];
     cell.badgeLabel.text = nil;
     cell.moreButton.hidden = NO;
     [self updateCellDownloadStatus:cell file:sfile waiting:false];
+}
+
+- (void)loadImageForCell:(SeafCell *)cell withFile:(SeafFile *)sFile{
+    NSUInteger index = [self indexOfEntry:sFile];
+    // record current cell indexPath
+    NSString *currentIndexPath = [NSString stringWithFormat:@"%ld",index];
+    cell.imageLoadIdentifier = currentIndexPath;
+    
+    // Asynchronously load cached images,Not currently in use
+//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+    UIImage *image = sFile.icon;
+
+    //        dispatch_async(dispatch_get_main_queue(), ^{
+    //  Check if the current cell is still the cell corresponding to the current indexPath
+    if ([cell.imageLoadIdentifier isEqualToString:currentIndexPath]) {
+        cell.imageView.image = image;
+    }
+//        });
+//    });
 }
 
 // Configures and returns a cell for a file
@@ -689,6 +727,8 @@ enum {
 {
     [sfile loadCache];
     SeafCell *cell = [self getCellForTableView:tableView];
+    
+    cell.cellSeafFile = sfile;
     cell.cellIndexPath = indexPath;
     cell.moreButtonBlock = ^(NSIndexPath *indexPath) {
         Debug(@"%@", indexPath);
@@ -703,7 +743,7 @@ enum {
 // Configures and returns a cell for a directory
 - (SeafCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath
 {
-    SeafCell *cell = (SeafCell *)[self getCell:@"SeafDirCell" forTableView:tableView];
+    SeafCell *cell = [self getCell:@"SeafDirCell" forTableView:tableView];
     cell.textLabel.text = sdir.name;
     cell.detailTextLabel.text = @"";
     cell.moreButton.hidden = false;
@@ -747,7 +787,7 @@ enum {
     } else if ([entry isKindOfClass:[SeafDir class]]) {
         return [self getSeafDirCell:(SeafDir *)entry forTableView:tableView andIndexPath: indexPath];
     } else {
-        return [self getSeafUploadFileCell:(SeafUploadFile *)entry forTableView:tableView];
+        return [self getSeafUploadFileCell:(SeafUploadFile *)entry forTableView:tableView andIndexPath: indexPath];
     }
 }
 
@@ -775,16 +815,25 @@ enum {
     return NO;
 }
 
+- (void)tableView:(UITableView *)tableView didEndDisplayingCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
+    if ([cell isKindOfClass:[SeafCell class]]) {
+        SeafCell *sCell = (SeafCell *)cell;
+        [sCell resetCellFile];
+    }
+}
+
 // Presents a popup to set a repository password
 - (void)popupSetRepoPassword:(SeafRepo *)repo
 {
     self.state = STATE_PASSWORD;
+    @weakify(self);
     [self popupSetRepoPassword:repo handler:^{
-            [SVProgressHUD dismiss];
-            self.state = STATE_INIT;
-            SeafFileViewController *controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
-            [self.navigationController pushViewController:controller animated:YES];
-            [controller setDirectory:(SeafDir *)repo];
+        @strongify(self);
+        [SVProgressHUD dismiss];
+        self.state = STATE_INIT;
+        SeafFileViewController *controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
+        [self.navigationController pushViewController:controller animated:YES];
+        [controller setDirectory:(SeafDir *)repo];
     }];
 }
 
@@ -1209,7 +1258,9 @@ enum {
 
 // Ends data loading, signaling that refreshing has completed
 - (void)doneLoadingTableViewData {
+    @weakify(self);
     dispatch_async(dispatch_get_main_queue(), ^{
+        @strongify(self);
         [self.tableView.refreshControl endRefreshing];
         self.tableView.accessibilityElementsHidden = NO;
     });
@@ -1278,7 +1329,9 @@ enum {
     [self downloadEntries:entries completion:^(NSArray *array, NSString *errorStr) {
         @strongify(self);
         self.state = STATE_INIT;
+        @weakify(self);
         dispatch_async(dispatch_get_main_queue(), ^{
+            @strongify(self);
             if (errorStr) {
                 [SVProgressHUD showErrorWithStatus:errorStr];
             } else {
@@ -1387,8 +1440,12 @@ enum {
 - (void)savePhotosToAlbum
 {
     [self checkPhotoLibraryAuth:^{
+        __weak typeof(self) weakSelf = self;
         [self alertWithTitle:nil message:NSLocalizedString(@"Are you sure to save all photos to album?", @"Seafile") yes:^{
+            __strong typeof(weakSelf) self = weakSelf;
+            __weak typeof(self) weakSelf2 = self;
             SeafDownloadCompletionBlock block = ^(SeafFile *file, NSError *error) {
+                __strong typeof(weakSelf2) self = weakSelf2;
                 if (error) {
                     return Warning("Failed to donwload file %@: %@", file.path, error);
                 }
@@ -1595,9 +1652,12 @@ enum {
 - (void)uploadFile:(SeafUploadFile *)ufile toDir:(SeafDir *)dir
 {
     if ([dir nameExist:ufile.name]) {
+        @weakify(self);
         [self alertWithTitle:STR_12 message:nil yes:^{
+            @strongify(self);
             [self uploadFile:ufile toDir:dir overwrite:true];
         } no:^{
+            @strongify(self);
             [self uploadFile:ufile toDir:dir overwrite:false];
         }];
     } else
@@ -1737,9 +1797,12 @@ enum {
     [self dismissImagePickerController:imagePickerController];
     if (duplicated > 0) {
         NSString *title = duplicated == 1 ? STR_12 : STR_13;
+        @weakify(self);
         [self alertWithTitle:title message:nil yes:^{
+            @strongify(self);
             [self uploadPickedAssetsIdentifier:identifiers overwrite:true];
         } no:^{
+            @strongify(self);
             [self uploadPickedAssetsIdentifier:identifiers overwrite:false];
         }];
     } else

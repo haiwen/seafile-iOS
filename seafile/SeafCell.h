@@ -8,6 +8,7 @@
 
 #import <UIKit/UIKit.h>
 #import "SWTableViewCell.h"
+#import "SeafFile.h"
 
 typedef void(^MoreButtonTouchBlock)(NSIndexPath *indexPath);
 
@@ -28,6 +29,11 @@ typedef void(^MoreButtonTouchBlock)(NSIndexPath *indexPath);
 @property (strong, nonatomic) NSIndexPath *cellIndexPath;
 
 @property (nonatomic, copy) MoreButtonTouchBlock moreButtonBlock;
+@property (nonatomic, copy) NSString *imageLoadIdentifier;//Cell identifier is used for asynchronous image loading
+@property (nonatomic, strong) SeafFile *cellSeafFile;
+
 - (void)reset;
+
+- (void)resetCellFile;
 
 @end

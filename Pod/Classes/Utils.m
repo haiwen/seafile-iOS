@@ -459,27 +459,46 @@
     return alert;
 }
 
-+ (UIImage *)reSizeImage:(UIImage *)image toSquare:(float)length
-{
+//+ (UIImage *)reSizeImage:(UIImage *)image toSquare:(float)length
+//{
+//    @autoreleasepool {
+//        NSData *imgData = UIImageJPEGRepresentation(image, 1);
+//        CGImageSourceRef imageSource = CGImageSourceCreateWithData((CFDataRef)imgData, NULL);
+//        if (!imageSource)
+//            return nil;
+//
+//        CFDictionaryRef options = (__bridge CFDictionaryRef)[NSDictionary dictionaryWithObjectsAndKeys:
+//                                                     (id)kCFBooleanTrue, (id)kCGImageSourceCreateThumbnailWithTransform,
+//                                                     (id)kCFBooleanTrue, (id)kCGImageSourceCreateThumbnailFromImageIfAbsent,
+//                                                    (id)[NSNumber numberWithFloat:length], (id)kCGImageSourceThumbnailMaxPixelSize,
+//                                                     nil];
+//        CGImageRef imgRef = CGImageSourceCreateThumbnailAtIndex(imageSource, 0, options);
+//
+//        UIImage *reSizeImage = [UIImage imageWithCGImage:imgRef];
+//         
+//        CGImageRelease(imgRef);
+//        CFRelease(imageSource);
+//
+//        return reSizeImage;
+//    }
+//}
+
++ (UIImage *)reSizeImage:(UIImage *)image toSquare:(float)length {
     @autoreleasepool {
-        NSData *imgData = UIImageJPEGRepresentation(image, 1);
-        CGImageSourceRef imageSource = CGImageSourceCreateWithData((CFDataRef)imgData, NULL);
-        if (!imageSource)
-            return nil;
-
-        CFDictionaryRef options = (__bridge CFDictionaryRef)[NSDictionary dictionaryWithObjectsAndKeys:
-                                                     (id)kCFBooleanTrue, (id)kCGImageSourceCreateThumbnailWithTransform,
-                                                     (id)kCFBooleanTrue, (id)kCGImageSourceCreateThumbnailFromImageIfAbsent,
-                                                    (id)[NSNumber numberWithFloat:length], (id)kCGImageSourceThumbnailMaxPixelSize,
-                                                     nil];
-        CGImageRef imgRef = CGImageSourceCreateThumbnailAtIndex(imageSource, 0, options);
-
-        UIImage *reSizeImage = [UIImage imageWithCGImage:imgRef];
-         
-        CGImageRelease(imgRef);
-        CFRelease(imageSource);
-
-        return reSizeImage;
+        CIImage *ciImage = [[CIImage alloc] initWithCGImage:image.CGImage];
+        CIFilter *resizeFilter = [CIFilter filterWithName:@"CILanczosScaleTransform"];
+        [resizeFilter setValue:ciImage forKey:kCIInputImageKey];
+        [resizeFilter setValue:@(length/ciImage.extent.size.width) forKey:@"inputScale"];
+        [resizeFilter setValue:@1.0 forKey:@"inputAspectRatio"];
+        CIImage *outputCIImage = [resizeFilter outputImage];
+        
+        CIContext *context = [CIContext contextWithOptions:nil];
+        CGImageRef cgImage = [context createCGImage:outputCIImage fromRect:[outputCIImage extent]];
+        
+        UIImage *finalImage = [UIImage imageWithCGImage:cgImage];
+        CGImageRelease(cgImage);
+        
+        return finalImage;
     }
 }
 
@@ -505,6 +524,48 @@
         else
             [dict setObject:value forKey:defaultName];
     }
+}
+
++ (void)imageFromPath:(NSString *)path withMaxSize:(float)length cachePath:(NSString *)cachePath completion:(void (^)(UIImage *image))completion {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+        UIImage *image = nil;
+        if ([[NSFileManager defaultManager] fileExistsAtPath:cachePath]) {
+            image = [UIImage imageWithContentsOfFile:cachePath];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completion(image);
+            });
+            return;
+        }
+        
+        if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
+            UIImage *originalImage = [UIImage imageWithContentsOfFile:path];
+            NSString *imageUTType = (__bridge NSString *)CGImageGetUTType(originalImage.CGImage);
+            if ([imageUTType isEqualToString:@"public.heic"]) {
+                NSData *imageData = [NSData dataWithContentsOfFile:path];
+                [imageData writeToFile:cachePath atomically:YES];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    completion(originalImage);
+                });
+                return;
+            }
+            if (originalImage.size.width > length || originalImage.size.height > length) {
+                UIImage *resizedImage = [Utils reSizeImage:originalImage toSquare:length];
+                NSData *jpegData = UIImageJPEGRepresentation(resizedImage, 1.0);
+                [jpegData writeToFile:cachePath atomically:YES];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    completion(resizedImage);
+                });
+                return;
+            }
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completion(originalImage);
+            });
+        } else {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completion(nil);
+            });
+        }
+    });
 }
 
 + (UIImage *)imageFromPath:(NSString *)path withMaxSize:(float)length cachePath:(NSString *)cachePath
@@ -706,6 +767,15 @@
     NSString *noSlashes = [orginOid stringByReplacingOccurrencesOfString:@"/" withString:@""];
     NSString *newOid = [noSlashes stringByReplacingOccurrencesOfString:@"." withString:@""];
     return newOid;
+}
+
++ (UIColor *)cellDetailTextTextColor {
+    static UIColor *defaultTextColor = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        defaultTextColor = [UIColor colorWithRed:0.666667 green:0.666667 blue:0.666667 alpha:1];
+    });
+    return defaultTextColor;
 }
 
 @end
