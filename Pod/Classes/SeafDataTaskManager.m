@@ -181,6 +181,12 @@
     [accountQueue addThumbTask:thumb];
 }
 
+- (void)removeThumbTaskFromAccountQueue:(SeafThumb * _Nonnull)thumb
+{
+    SeafAccountTaskQueue *accountQueue = [self getAccountQueueWithIndentifier:thumb.accountIdentifier];
+    [accountQueue removeThumbTask:thumb];
+}
+
 /**
  * Retrieves an account task queue associated with a specific identifier.
  * @param identifier The identifier associated with the account.

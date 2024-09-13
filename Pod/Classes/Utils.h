@@ -98,6 +98,9 @@
 /// Load an image from a path, optionally using a cache.
 + (UIImage *)imageFromPath:(NSString *)path withMaxSize:(float)length cachePath:(NSString *)cachePath;
 
+/// Load an image asynchronously.
++ (void)imageFromPath:(NSString *)path withMaxSize:(float)length cachePath:(NSString *)cachePath completion:(void (^)(UIImage *image))completion;
+
 /// Convert a query string to a dictionary of parameters.
 + (NSDictionary *)queryToDict:(NSString *)query;
 
@@ -135,5 +138,8 @@
 + (NSString *)getNewOidFromMtime:(long long)mtime
                           repoId:(NSString *)repoId
                             path:(NSString *)path;
+
+//cell detailText color
++ (UIColor *)cellDetailTextTextColor;
 
 @end

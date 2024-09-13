@@ -595,7 +595,7 @@
         } else {
             [self finishUpload:false oid:nil error:nil];
         }
-        self->_asset = nil;
+//        self->_asset = nil;
     }];
 }
 
@@ -674,6 +674,40 @@
     }
 }
 
+- (void)iconWithCompletion:(void (^)(UIImage *image))completion {
+    [self getThumbImageFromAssetWithCompletion:^(UIImage *thumb) {
+        if (thumb) {
+            completion(thumb);
+        } else {
+            if ([self isImageFile]) {
+                [self getImageWithCompletion:^(UIImage *image) {
+                    UIImage *thumb = image;
+                    if (thumb) {
+                        completion(thumb);
+                    } else {
+                        thumb = [UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString];
+                        completion(thumb);
+                    }
+                }];
+            } else {
+                UIImage *thumb = [UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString];
+                completion(thumb);
+            }
+        }
+    }];
+}
+
+- (void)getThumbImageFromAssetWithCompletion:(void (^)(UIImage *image))completion {
+    if (_asset) {
+        CGSize size = CGSizeMake(THUMB_SIZE * (int)[UIScreen mainScreen].scale, THUMB_SIZE * (int)[UIScreen mainScreen].scale);
+        [[PHImageManager defaultManager] requestImageForAsset:_asset targetSize:size contentMode:PHImageContentModeDefault options:self.requestOptionsAsyn resultHandler:^(UIImage * _Nullable result, NSDictionary * _Nullable info) {
+            completion(result);
+        }];
+    } else {
+        completion(nil);
+    }
+}
+
 - (UIImage *)thumb
 {
     return [self icon];
@@ -689,10 +723,24 @@
     }
 }
 
+//- (UIImage *)image {
+//    NSString *name = [@"cacheimage-ufile-" stringByAppendingString:self.name];
+//    NSString *cachePath = [[SeafStorage.sharedObject tempDir] stringByAppendingPathComponent:name];
+//    return [Utils imageFromPath:self.lpath withMaxSize:IMAGE_MAX_SIZE cachePath:cachePath];
+//}
+
 - (UIImage *)image {
     NSString *name = [@"cacheimage-ufile-" stringByAppendingString:self.name];
     NSString *cachePath = [[SeafStorage.sharedObject tempDir] stringByAppendingPathComponent:name];
     return [Utils imageFromPath:self.lpath withMaxSize:IMAGE_MAX_SIZE cachePath:cachePath];
+}
+
+- (void)getImageWithCompletion:(void (^)(UIImage *image))completion {
+    NSString *name = [@"cacheimage-ufile-" stringByAppendingString:self.name];
+    NSString *cachePath = [[SeafStorage.sharedObject tempDir] stringByAppendingPathComponent:name];
+    [Utils imageFromPath:self.lpath withMaxSize:IMAGE_MAX_SIZE cachePath:cachePath completion:^(UIImage *image) {
+        completion(image);
+    }];
 }
 
 - (NSURL *)exportURL
@@ -771,6 +819,16 @@
         _requestOptions.networkAccessAllowed = YES; // iCloud
         _requestOptions.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
         _requestOptions.synchronous = YES;
+    }
+    return _requestOptions;
+}
+
+- (PHImageRequestOptions *)requestOptionsAsyn {
+    if (!_requestOptions) {
+        _requestOptions = [PHImageRequestOptions new];
+        _requestOptions.networkAccessAllowed = YES; // iCloud
+        _requestOptions.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
+        _requestOptions.synchronous = NO;
     }
     return _requestOptions;
 }

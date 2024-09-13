@@ -356,6 +356,12 @@ enum SHARE_STATUS {
     [super didReceiveMemoryWarning];
 }
 
+- (void)dealloc {
+    [self.webView stopLoading];
+    self.webView.navigationDelegate = nil;
+    [self.webView removeFromSuperview];
+}
+
 - (void)viewWillLayoutSubviews
 {
     [super viewWillLayoutSubviews];

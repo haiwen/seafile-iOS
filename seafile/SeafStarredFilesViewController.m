@@ -337,7 +337,7 @@
         textColor = UIColor.redColor;
     } else {
         detailText = sfile.starredDetailText;
-        textColor = [UIColor colorWithRed:0.666667 green:0.666667 blue:0.666667 alpha:1];
+        textColor = Utils.cellDetailTextTextColor;
     }
     [self updateCellUI:cell cellName:sfile.name detailText:detailText detailTextColor:textColor image:sfile.icon morButtonIsHidden:NO];
     
@@ -356,7 +356,7 @@
         textColor = UIColor.redColor;
     } else {
         detailText = sDir.detailText;
-        textColor = [UIColor colorWithRed:0.666667 green:0.666667 blue:0.666667 alpha:1];
+        textColor = Utils.cellDetailTextTextColor;
     }
     
     [self updateCellUI:cell cellName:sDir.name detailText:detailText detailTextColor:textColor image:sDir.icon morButtonIsHidden:NO];

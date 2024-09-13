@@ -49,7 +49,7 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 
 @property (readonly) float uProgress;/// Current upload progress as a float between 0 and 1.
 
-@property (nonatomic) id<SeafUploadDelegate> delegate;/// Delegate to handle progress and completion updates.
+@property (nonatomic, weak) id<SeafUploadDelegate> delegate;/// Delegate to handle progress and completion updates.
 
 @property (nonatomic) SeafUploadCompletionBlock completionBlock;
 
@@ -85,4 +85,9 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
  * Cleans up resources associated with the file once it has been uploaded.
  */
 - (void)cleanup;
+
+/**
+ * Asynchronously get photo library images.
+ */
+- (void)iconWithCompletion:(void (^)(UIImage *image))completion;
 @end

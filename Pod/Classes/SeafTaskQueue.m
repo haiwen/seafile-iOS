@@ -65,8 +65,9 @@
             [strongSelf tick];
         };
         self.innerQueueTaskProgressBlock = ^(id<SeafTask> task, float progress) {
-            if (weakSelf.taskProgressBlock) {
-                weakSelf.taskProgressBlock(task, progress);
+            __strong __typeof(self) strongSelf = weakSelf;
+            if (strongSelf.taskProgressBlock) {
+                strongSelf.taskProgressBlock(task, progress);
             }
         };
     }
@@ -143,6 +144,7 @@
     task.retryable = false;
     @synchronized (self.tasks) {
         if ([self.tasks containsObject:task]) {
+//            Debug(@"Delete task ,remain undeleted %lu", (unsigned long)self.tasks.count);
             return [self.tasks removeObject:task];
         }
         @synchronized (self.ongoingTasks) {
