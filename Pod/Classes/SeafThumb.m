@@ -34,6 +34,9 @@
     if (!completeBlock) {
         completeBlock = ^(id<SeafTask> task, BOOL result) {};
     }
+    if (self.file.thumbFailedCount >= DEFAULT_RETRYCOUNT) {
+        return completeBlock(self, YES);
+    }
 
     [self download:completeBlock];
 }
