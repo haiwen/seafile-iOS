@@ -19,6 +19,7 @@
 #import "NSData+Encryption.h"
 #import "Debug.h"
 #import "Utils.h"
+#import "SeafCacheManager.h"
 
 @interface SeafFile()
 
@@ -61,6 +62,7 @@
         self.downloadingFileOid = nil;
         self.task = nil;
         self.retryable = true;
+        self.thumbFailedCount = 0;
     }
     return self;
 }
@@ -301,12 +303,16 @@
         if (_thumbtask) return [self finishDownloadThumb:true completeBlock:completeBlock];
         if (self.thumb) return [self finishDownloadThumb:true completeBlock:completeBlock];
 
+        @weakify(self);
         _thumbtask = [connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:nil destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
             return [NSURL fileURLWithPath:[target stringByAppendingPathExtension:@"tmp"]];
         } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
+            @strongify(self);
             if (error) {
+                self.thumbFailedCount++;
                 Debug("Failed to download thumb %@, error=%@", self.name, error.localizedDescription);
             } else {
+                self.thumbFailedCount = 0;
                 if (![filePath.path isEqualToString:target]) {
                     [Utils removeFile:target];
                     [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
@@ -548,7 +554,7 @@
             if (!self.isDeleted) {
                 UIImage *img = [self thumb];
                 if (img)
-                    return _thumb;
+                    return img;
                 else if (!_thumbtask) {
                     SeafThumb *thb = [[SeafThumb alloc] initWithSeafFile:self];
                     [SeafDataTaskManager.sharedObject addThumbTask:thb];
@@ -576,14 +582,19 @@
 
 - (UIImage *)thumb
 {
-    if (_thumb)
-        return _thumb;
-
     NSString *thumbpath = [self thumbPath:self.oid];
-    if (thumbpath && [Utils fileExistsAtPath:thumbpath]) {
-        _thumb = [UIImage imageWithContentsOfFile:thumbpath];
+    UIImage *thumb = [SeafCacheManager.sharedManager getThumbFromCache:thumbpath];
+    if (thumb) {
+        return thumb;
     }
-    return _thumb;
+    
+    if (thumbpath && [Utils fileExistsAtPath:thumbpath]) {
+        thumb = [UIImage imageWithContentsOfFile:thumbpath];
+        if (thumb) {
+            [SeafCacheManager.sharedManager saveThumbToCache:thumb key:thumbpath];
+        }
+    }
+    return thumb;
 }
 
 - (BOOL)realLoadCache
