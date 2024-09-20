@@ -37,6 +37,7 @@
             __strong __typeof(self) strongSelf = weakSelf;
             @synchronized (strongSelf.ongoingTasks) { // task succeeded, remove it
                 if (![strongSelf.ongoingTasks containsObject:task]) {
+                    [strongSelf tick];
                     return;
                 }
                 [strongSelf.ongoingTasks removeObject:task];
