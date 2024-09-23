@@ -166,10 +166,10 @@
             }
         }
         
-        if (self.photosArray.count == 0) {
-            Debug("Force check if there are new photos after all synced.");
-            [self checkPhotos:true];
-        }
+//        if (self.photosArray.count == 0) {
+//            Debug("Force check if there are new photos after all synced.");
+//            [self checkPhotos:true];
+//        }
     });
 }
 
@@ -218,7 +218,10 @@
         _inCheckPhotos = true;
     }
     
-    [self resetUploadingArray];
+//    [self resetUploadingArray];
+    @synchronized(self) {
+        self.photosArray = [[NSMutableArray alloc] init];
+    }
         
     PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
     fetchOptions.predicate = predicate;
