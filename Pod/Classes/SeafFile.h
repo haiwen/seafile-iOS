@@ -177,4 +177,6 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (NSString *_Nullable)starredDetailText;
 
+- (void)getImageWithCompletion:(void (^_Nullable)(UIImage * _Nullable image))completion;
+
 @end

@@ -30,7 +30,7 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
  */
 @interface SeafUploadFile : NSObject<SeafPreView, QLPreviewItem, SeafTask>
 
-@property (readonly) NSString *lpath;/// The local path of the file to be uploaded.
+@property (nonatomic, copy) NSString *lpath;/// The local path of the file to be uploaded.
 
 @property (readonly) NSString *name;
 @property (readonly) long long filesize;

@@ -789,7 +789,18 @@
     NSString *name = [@"cacheimage-preview-" stringByAppendingString:self.name];
     NSString *cachePath = [[[SeafStorage.sharedObject tempDir] stringByAppendingPathComponent:self.ooid] stringByAppendingPathComponent:name];
     return [Utils imageFromPath:path withMaxSize:IMAGE_MAX_SIZE cachePath:cachePath];
-    
+}
+
+- (void)getImageWithCompletion:(void (^)(UIImage *image))completion {
+    if (!self.ooid) {
+        return completion(nil);
+    }
+    NSString *path = [SeafStorage.sharedObject documentPath:self.ooid];
+    NSString *name = [@"cacheimage-preview-" stringByAppendingString:self.name];
+    NSString *cachePath = [[[SeafStorage.sharedObject tempDir] stringByAppendingPathComponent:self.ooid] stringByAppendingPathComponent:name];
+    [Utils imageFromPath:path withMaxSize:IMAGE_MAX_SIZE cachePath:cachePath completion:^(UIImage *image) {
+        completion(image);
+    }];
 }
 
 - (long long)filesize

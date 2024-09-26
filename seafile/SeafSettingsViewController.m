@@ -433,8 +433,8 @@ enum {
 
 // Updates the upload and download tasks information.
 -(void)updateSyncInfo{
-    NSInteger downloadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].fileQueue taskNumber];
-    NSInteger uploadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].uploadQueue taskNumber];
+    NSInteger downloadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].fileQueue onGoingTaskNumber];
+    NSInteger uploadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].uploadQueue onGoingTaskNumber];
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self.tableView.dragging == false && self.tableView.decelerating == false && self.tableView.tracking == false) {
             _downloadingCell.detailTextLabel.text = [NSString stringWithFormat:@"%lu",(long)downloadingNum];

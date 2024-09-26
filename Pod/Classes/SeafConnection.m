@@ -328,7 +328,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (BOOL)localDecryptionEnabled
 {
-    return [[self getAttribute:@"localDecryption"] booleanValue:false];
+    return false;
 }
 
 - (void)setLocalDecryptionEnabled:(BOOL)localDecryptionEnabled

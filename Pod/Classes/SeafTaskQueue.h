@@ -122,6 +122,8 @@ typedef void (^TaskProgressBlock)(id<SeafTask> _Nonnull task, float progress);
  */
 - (NSInteger)taskNumber;
 
+- (NSInteger)onGoingTaskNumber;
+
 /**
  * Returns all tasks currently in the queue.
  * @return An array of all tasks.

@@ -1802,14 +1802,9 @@ enum {
     }
 }
 
-// Dismisses the image picker controller after selection or cancellation
-- (void)dismissImagePickerController:(QBImagePickerController *)imagePickerController {
-    [self dismissViewControllerAnimated:YES completion:nil];
-}
-
 // Handles the cancellation of the image picker
 - (void)qb_imagePickerControllerDidCancel:(QBImagePickerController *)imagePickerController {
-    [self dismissImagePickerController:imagePickerController];
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 // Handles the completion of asset selection from the image picker
@@ -1828,7 +1823,7 @@ enum {
         } else
             Warning("Failed to get asset url %@", asset);
     }
-    [self dismissImagePickerController:imagePickerController];
+    [self dismissViewControllerAnimated:YES completion:nil];
     if (duplicated > 0) {
         NSString *title = duplicated == 1 ? STR_12 : STR_13;
         @weakify(self);

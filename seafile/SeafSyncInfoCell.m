@@ -9,6 +9,7 @@
 #import "SeafSyncInfoCell.h"
 #import "Debug.h"
 #import "FileSizeFormatter.h"
+#import "UIImage+FileType.h"
 
 @interface SeafSyncInfoCell ()
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *sizeLabelLeftConstraint;
@@ -57,11 +58,24 @@
         }
     } else if ([task isKindOfClass:[SeafUploadFile class]]) {
         SeafUploadFile *ufile = (SeafUploadFile*)task;
-
+        
         self.nameLabel.text = ufile.name;
-        self.iconView.image = ufile.icon;
         self.statusLabel.text = @"";
         self.progressView.hidden = YES;
+        
+        self.iconView.image = [UIImage imageForMimeType:ufile.mime ext:ufile.name.pathExtension.lowercaseString]; // Set placeholder image first
+
+        self.taskIdentifier = ufile.lpath; // Use file path as a unique identifier
+        
+        //load images asynchronously
+        [ufile iconWithCompletion:^(UIImage *image) {
+            if (image && [self.taskIdentifier isEqualToString:ufile.lpath]) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    self.iconView.image = image;
+                });
+            }
+        }];
+        
         if (ufile.isUploading) {
             self.progressView.hidden = NO;
             self.progressView.progress = ufile.uProgress;

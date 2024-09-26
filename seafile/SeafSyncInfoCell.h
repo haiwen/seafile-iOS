@@ -19,6 +19,8 @@
 @property (nonatomic) IBOutlet UILabel * _Nonnull sizeLabel;
 @property (nonatomic) IBOutlet UIProgressView * _Nonnull progressView;
 
+@property (nonatomic, strong) NSString * _Nonnull taskIdentifier;
+
 - (void)showCellWithTask:(id<SeafTask> _Nonnull)task;
 
 @end
