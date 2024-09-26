@@ -7,6 +7,7 @@
 //
 #import "SeafPhoto.h"
 #import "Debug.h"
+#import "SeafFile.h"
 
 @interface SeafPhoto ()
 
@@ -30,10 +31,21 @@
 {
     @synchronized(_file) {
         if (!_underlyingImage && [_file hasCache]) {
-            self.underlyingImage = _file.image;
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self imageLoadingComplete];
-            });
+            if ([_file isKindOfClass:[SeafFile class]]) {
+                SeafFile *sFile = (SeafFile *)_file;
+                //change load image from Synchronous to Asynchronous.
+                [sFile getImageWithCompletion:^(UIImage * _Nullable image) {
+                    self.underlyingImage = image;
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [self imageLoadingComplete];
+                    });
+                }];
+            } else {
+                self.underlyingImage = _file.image;
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self imageLoadingComplete];
+                });
+            }
         }
     }
 }
@@ -101,15 +113,27 @@
                           self, @"photo", nil];
     [[NSNotificationCenter defaultCenter] postNotificationName:MWPHOTO_PROGRESS_NOTIFICATION object:dict];
 }
+
 - (void)complete:(BOOL)updated error:(NSError *)error
 {
     if (error) {
         Debug("failed to download image: %@", error);
     }
-    self.underlyingImage = _file.image;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self imageLoadingComplete];
-    });
+    if ([_file isKindOfClass:[SeafFile class]]) {
+        SeafFile *sFile = (SeafFile *)_file;
+        //change load image from Synchronous to Asynchronous.
+        [sFile getImageWithCompletion:^(UIImage * _Nullable image) {
+            self.underlyingImage = image;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self imageLoadingComplete];
+            });
+        }];
+    } else {
+        self.underlyingImage = _file.image;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self imageLoadingComplete];
+        });
+    }
 }
 
 @end

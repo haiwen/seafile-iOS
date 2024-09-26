@@ -459,46 +459,27 @@
     return alert;
 }
 
-//+ (UIImage *)reSizeImage:(UIImage *)image toSquare:(float)length
-//{
-//    @autoreleasepool {
-//        NSData *imgData = UIImageJPEGRepresentation(image, 1);
-//        CGImageSourceRef imageSource = CGImageSourceCreateWithData((CFDataRef)imgData, NULL);
-//        if (!imageSource)
-//            return nil;
-//
-//        CFDictionaryRef options = (__bridge CFDictionaryRef)[NSDictionary dictionaryWithObjectsAndKeys:
-//                                                     (id)kCFBooleanTrue, (id)kCGImageSourceCreateThumbnailWithTransform,
-//                                                     (id)kCFBooleanTrue, (id)kCGImageSourceCreateThumbnailFromImageIfAbsent,
-//                                                    (id)[NSNumber numberWithFloat:length], (id)kCGImageSourceThumbnailMaxPixelSize,
-//                                                     nil];
-//        CGImageRef imgRef = CGImageSourceCreateThumbnailAtIndex(imageSource, 0, options);
-//
-//        UIImage *reSizeImage = [UIImage imageWithCGImage:imgRef];
-//         
-//        CGImageRelease(imgRef);
-//        CFRelease(imageSource);
-//
-//        return reSizeImage;
-//    }
-//}
-
-+ (UIImage *)reSizeImage:(UIImage *)image toSquare:(float)length {
++ (UIImage *)reSizeImage:(UIImage *)image toSquare:(float)length
+{
     @autoreleasepool {
-        CIImage *ciImage = [[CIImage alloc] initWithCGImage:image.CGImage];
-        CIFilter *resizeFilter = [CIFilter filterWithName:@"CILanczosScaleTransform"];
-        [resizeFilter setValue:ciImage forKey:kCIInputImageKey];
-        [resizeFilter setValue:@(length/ciImage.extent.size.width) forKey:@"inputScale"];
-        [resizeFilter setValue:@1.0 forKey:@"inputAspectRatio"];
-        CIImage *outputCIImage = [resizeFilter outputImage];
-        
-        CIContext *context = [CIContext contextWithOptions:nil];
-        CGImageRef cgImage = [context createCGImage:outputCIImage fromRect:[outputCIImage extent]];
-        
-        UIImage *finalImage = [UIImage imageWithCGImage:cgImage];
-        CGImageRelease(cgImage);
-        
-        return finalImage;
+        NSData *imgData = UIImageJPEGRepresentation(image, 1);
+        CGImageSourceRef imageSource = CGImageSourceCreateWithData((CFDataRef)imgData, NULL);
+        if (!imageSource)
+            return nil;
+
+        CFDictionaryRef options = (__bridge CFDictionaryRef)[NSDictionary dictionaryWithObjectsAndKeys:
+                                                     (id)kCFBooleanTrue, (id)kCGImageSourceCreateThumbnailWithTransform,
+                                                     (id)kCFBooleanTrue, (id)kCGImageSourceCreateThumbnailFromImageIfAbsent,
+                                                    (id)[NSNumber numberWithFloat:length], (id)kCGImageSourceThumbnailMaxPixelSize,
+                                                     nil];
+        CGImageRef imgRef = CGImageSourceCreateThumbnailAtIndex(imageSource, 0, options);
+
+        UIImage *reSizeImage = [UIImage imageWithCGImage:imgRef];
+         
+        CGImageRelease(imgRef);
+        CFRelease(imageSource);
+
+        return reSizeImage;
     }
 }
 
@@ -527,49 +508,52 @@
 }
 
 + (void)imageFromPath:(NSString *)path withMaxSize:(float)length cachePath:(NSString *)cachePath completion:(void (^)(UIImage *image))completion {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         UIImage *image = nil;
         if ([[NSFileManager defaultManager] fileExistsAtPath:cachePath]) {
+            // Load image from cache if it exists
             image = [UIImage imageWithContentsOfFile:cachePath];
-            dispatch_async(dispatch_get_main_queue(), ^{
-                completion(image);
-            });
+            completion(image);
             return;
         }
-        
+
         if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
-            UIImage *originalImage = [UIImage imageWithContentsOfFile:path];
-            NSString *imageUTType = (__bridge NSString *)CGImageGetUTType(originalImage.CGImage);
-            if ([imageUTType isEqualToString:@"public.heic"]) {
-                NSData *imageData = [NSData dataWithContentsOfFile:path];
+            NSData *data = [NSData dataWithContentsOfFile:path];
+            // Use Image I/O framework to decode the image
+            CGImageSourceRef source = CGImageSourceCreateWithData((CFDataRef)data, NULL);
+            if (source) {
+                CGSize maxSize = CGSizeMake(length, length);
+                NSDictionary *thumbnailOptions = @{
+                    (NSString *)kCGImageSourceCreateThumbnailFromImageAlways: @YES,
+                    (NSString *)kCGImageSourceThumbnailMaxPixelSize: @(MAX(maxSize.width, maxSize.height)),
+                    (NSString *)kCGImageSourceCreateThumbnailWithTransform: @YES
+                };
+                // Create a thumbnail of the image with the given options
+                CGImageRef cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, (CFDictionaryRef)thumbnailOptions);
+                if (cgImage) {
+                    image = [UIImage imageWithCGImage:cgImage];
+                    CGImageRelease(cgImage);
+                }
+                CFRelease(source);
+            }
+            
+            // Decode the image
+            image = [Utils decodedImageWithImage:image];
+
+            // Save the processed image to the cache path
+            if (image) {
+                NSData *imageData = UIImageJPEGRepresentation(image, 1.0);
                 [imageData writeToFile:cachePath atomically:YES];
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    completion(originalImage);
-                });
-                return;
             }
-            if (originalImage.size.width > length || originalImage.size.height > length) {
-                UIImage *resizedImage = [Utils reSizeImage:originalImage toSquare:length];
-                NSData *jpegData = UIImageJPEGRepresentation(resizedImage, 1.0);
-                [jpegData writeToFile:cachePath atomically:YES];
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    completion(resizedImage);
-                });
-                return;
-            }
-            dispatch_async(dispatch_get_main_queue(), ^{
-                completion(originalImage);
-            });
+            completion(image);
         } else {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                completion(nil);
-            });
+            // If neither cache nor original image exists, return nil
+            completion(nil);
         }
     });
 }
 
-+ (UIImage *)imageFromPath:(NSString *)path withMaxSize:(float)length cachePath:(NSString *)cachePath
-{
++ (UIImage *)imageFromPath:(NSString *)path withMaxSize:(float)length cachePath:(NSString *)cachePath {
     const int MAX_SIZE = length;
     if ([[NSFileManager defaultManager] fileExistsAtPath:cachePath]) {
         return [UIImage imageWithContentsOfFile:cachePath];
@@ -583,16 +567,49 @@
             [imageData writeToFile:cachePath atomically:YES];
             return image;
         }
+        UIImage *resizedImage = image;
         if (image.size.width > MAX_SIZE || image.size.height > MAX_SIZE) {
-            UIImage *img =  [Utils reSizeImage:image toSquare:MAX_SIZE];
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND,0), ^{
-                [UIImageJPEGRepresentation(img, 1.0) writeToFile:cachePath atomically:YES];
-            });
-            return img;
+            resizedImage = [Utils reSizeImage:image toSquare:MAX_SIZE];
         }
-        return image;
+        UIImage *decodedImage = [Utils decodedImageWithImage:resizedImage];
+
+        // Save the decoded image to cache asynchronously
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+            NSData *imageData = UIImageJPEGRepresentation(decodedImage, 1.0);
+            [imageData writeToFile:cachePath atomically:YES];
+        });
+
+        return decodedImage;
     }
     return nil;
+}
+
++ (UIImage *)decodedImageWithImage:(UIImage *)image {
+    if (!image) {
+        return nil;
+    }
+    CGImageRef imageRef = image.CGImage;
+    CGSize size = CGSizeMake(CGImageGetWidth(imageRef), CGImageGetHeight(imageRef));
+
+    CGContextRef context = CGBitmapContextCreate(NULL,
+                                                 size.width,
+                                                 size.height,
+                                                 CGImageGetBitsPerComponent(imageRef),
+                                                 0,
+                                                 CGImageGetColorSpace(imageRef),
+                                                 CGImageGetBitmapInfo(imageRef));
+    if (!context) {
+        return image;
+    }
+
+    CGContextDrawImage(context, CGRectMake(0, 0, size.width, size.height), imageRef);
+    CGImageRef decompressedImageRef = CGBitmapContextCreateImage(context);
+    UIImage *decompressedImage = [UIImage imageWithCGImage:decompressedImageRef];
+
+    CGContextRelease(context);
+    CGImageRelease(decompressedImageRef);
+
+    return decompressedImage;
 }
 
 + (NSString *)encodePath:(NSString *)server username:(NSString *)username repo:(NSString *)repoId path:(NSString *)path

@@ -95,6 +95,10 @@
     return self.tasks.count + self.ongoingTasks.count;
 }
 
+- (NSInteger)onGoingTaskNumber {
+    return self.ongoingTasks.count;
+}
+
 - (NSArray *)allTasks {
     NSMutableArray *arr = [NSMutableArray new];
     [arr addObjectsFromArray:self.tasks];

@@ -18,6 +18,13 @@
 #import "NSData+Encryption.h"
 #import "Debug.h"
 
+#import <ImageIO/ImageIO.h>
+#import <MobileCoreServices/MobileCoreServices.h> // Required for older system versions
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h> // Used for iOS 14/macOS 11 and later
+
+#ifndef kUTTypeHEIC
+#define kUTTypeHEIC CFSTR("public.heic")
+#endif
 
 @interface SeafUploadFile ()
 @property (readonly) NSString *mime;
@@ -212,12 +219,6 @@
         
         if (!_uploadFileAutoSync) {
             [Utils linkFileAtPath:self.lpath to:[SeafStorage.sharedObject documentPath:fOid] error:nil];
-            // files.app menory limit 15MB, reSizeImage will use more than 15MB
-            // resize thumb while reaching memory limit in share extension
-            if ([[Utils currentBundleIdentifier] isEqualToString:@"com.seafile.seafilePro"]) {
-                [self saveThumbToLocal:fOid];
-            }
-            
         } else {
             // For auto sync photos, release local cache files immediately.
             [self cleanup];
@@ -580,36 +581,119 @@
     }
 }
 
-- (void)getImageDataForAsset {
-    __weak typeof(self) weakSelf = self;
-    self.requestOptions.progressHandler = ^(double progress, NSError * _Nullable error, BOOL * _Nonnull stop, NSDictionary * _Nullable info) {
-        if (error) {
-            Debug("Failed to get image data: %@", error);
-            [weakSelf finishUpload:false oid:nil error:nil];
+- (BOOL)getImageDataForAsset {
+    PHAssetResource *resource = nil;
+    NSArray<PHAssetResource *> *resources = [PHAssetResource assetResourcesForAsset:self.asset];
+
+    // Prefer to choose the original image resource
+    for (PHAssetResource *res in resources) {
+        if (res.type == PHAssetResourceTypePhoto || res.type == PHAssetResourceTypeFullSizePhoto) {
+            resource = res;
+            break;
         }
-    };
-    
-    [[PHImageManager defaultManager] requestImageDataForAsset:_asset options:self.requestOptions resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
-        if (imageData) {
-            if (@available(iOS 10.0, *)) {
-                if (![self uploadHeic] && [dataUTI isEqualToString:@"public.heic"]) {// HEIC available after iOS11
-                    self->_lpath = [self.lpath stringByReplacingOccurrencesOfString:@"HEIC" withString:@"JPG"];
-                }
-                CIImage* ciImage = [CIImage imageWithData:imageData];
-                if (![Utils writeCIImage:ciImage toPath:self.lpath]) {
+    }
+    if (!resource) {
+        resource = resources.firstObject;
+    }
+
+    NSString *filePath = self.lpath;
+    NSOutputStream *stream = [NSOutputStream outputStreamToFileAtPath:filePath append:NO];
+    [stream open];
+
+    // Create a semaphore to wait for the asynchronous task to complete
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    __block BOOL success = NO;
+
+    PHAssetResourceRequestOptions *options = [[PHAssetResourceRequestOptions alloc] init];
+    options.networkAccessAllowed = YES; // Allow downloading from iCloud
+
+    [[PHAssetResourceManager defaultManager] requestDataForAssetResource:resource options:options dataReceivedHandler:^(NSData * _Nonnull data) {
+        @autoreleasepool {
+            [stream write:data.bytes maxLength:data.length];
+        }
+    } completionHandler:^(NSError * _Nullable error) {
+        [stream close];
+        if (error) {
+            [self finishUpload:false oid:nil error:error];
+            success = NO;
+        } else {
+            // Check if format conversion is needed
+            NSURL *sourceURL = [NSURL fileURLWithPath:self.lpath];
+            NSString *fileExtension = sourceURL.pathExtension.lowercaseString;
+            
+            if (![self uploadHeic] && [fileExtension isEqualToString:@"heic"]) {//if turn on allow upload heic switch.
+                // Conversion to JPEG is needed
+                NSString *destinationPath = [[self.lpath stringByDeletingPathExtension] stringByAppendingPathExtension:@"jpg"];
+                NSURL *destinationURL = [NSURL fileURLWithPath:destinationPath];
+
+                if ([self convertHEICToJPEGAtURL:sourceURL destinationURL:destinationURL]) {
+                    // Conversion successful, update file path and size
+                    self.lpath = destinationPath;
+                    self->_filesize = [Utils fileSizeAtPath1:self.lpath];
+                    // Delete the original HEIC file
+                    [[NSFileManager defaultManager] removeItemAtURL:sourceURL error:nil];
+                    success = YES;
+                } else {
+                    // Conversion failed, handle error
                     [self finishUpload:false oid:nil error:nil];
+                    success = NO;
                 }
             } else {
-                if (![Utils writeDataWithMeta:imageData toPath:self.lpath]) {
-                    [self finishUpload:false oid:nil error:nil];
-                }
+                // No conversion needed, continue
+                self->_filesize = [Utils fileSizeAtPath1:self.lpath];
+                success = YES;
             }
-            self->_filesize = [Utils fileSizeAtPath1:self.lpath];
-        } else {
-            [self finishUpload:false oid:nil error:nil];
         }
-//        self->_asset = nil;
+        // Signal the semaphore to release the wait
+        dispatch_semaphore_signal(semaphore);
     }];
+
+    // Wait for the asynchronous operation to complete
+    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+
+    return success;
+}
+
+- (BOOL)convertHEICToJPEGAtURL:(NSURL *)sourceURL destinationURL:(NSURL *)destinationURL {
+    CGImageSourceRef source = CGImageSourceCreateWithURL((__bridge CFURLRef)sourceURL, NULL);
+    if (!source) return NO;
+    
+    CFStringRef sourceType = CGImageSourceGetType(source);
+    BOOL success = NO;
+
+    if (@available(iOS 14.0, macOS 11.0, *)) {
+        // Use the new UTType API
+        UTType *type = [UTType typeWithIdentifier:(__bridge NSString *)sourceType];
+        if ([type conformsToType:UTTypeHEIC]) {
+            CGImageDestinationRef destination = CGImageDestinationCreateWithURL((__bridge CFURLRef)destinationURL, (__bridge CFStringRef)UTTypeJPEG.identifier, 1, NULL);
+            if (destination) {
+                NSDictionary *options = @{ (__bridge NSString *)kCGImageDestinationLossyCompressionQuality: @0.8 };
+                CGImageDestinationAddImageFromSource(destination, source, 0, (__bridge CFDictionaryRef)options);
+                success = CGImageDestinationFinalize(destination);
+                CFRelease(destination);
+            }
+        }
+    } else {
+        // Use the older UTTypeConformsTo function
+        if (UTTypeConformsTo(sourceType, kUTTypeHEIC)) {
+            CGImageDestinationRef destination = CGImageDestinationCreateWithURL((__bridge CFURLRef)destinationURL, kUTTypeJPEG, 1, NULL);
+            if (destination) {
+                NSDictionary *options = @{ (__bridge NSString *)kCGImageDestinationLossyCompressionQuality: @0.8 };
+                CGImageDestinationAddImageFromSource(destination, source, 0, (__bridge CFDictionaryRef)options);
+                success = CGImageDestinationFinalize(destination);
+                CFRelease(destination);
+            }
+        }
+    }
+
+    // If the format is not HEIC, just copy the file
+    if (!success) {
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        success = [fileManager copyItemAtURL:sourceURL toURL:destinationURL error:nil];
+    }
+
+    CFRelease(source);
+    return success;
 }
 
 - (UIImage *)getThumbImageFromAsset {
@@ -621,6 +705,21 @@
         }];
     }
     return img;
+}
+
+- (void)getThumbImageFromAssetWithCompletion:(void (^)(UIImage *image))completion {
+    if (_asset) {
+        CGSize size = CGSizeMake(THUMB_SIZE * (int)[UIScreen mainScreen].scale, THUMB_SIZE * (int)[UIScreen mainScreen].scale);
+        [[PHImageManager defaultManager] requestImageForAsset:_asset targetSize:size contentMode:PHImageContentModeDefault options:self.requestOptions resultHandler:^(UIImage * _Nullable result, NSDictionary * _Nullable info) {
+            if (completion) {
+                completion(result);
+            }
+        }];
+    } else {
+        if (completion) {
+            completion(nil);
+        }
+    }
 }
 
 - (void)getVideoForAsset {
@@ -690,35 +789,27 @@
 - (void)iconWithCompletion:(void (^)(UIImage *image))completion {
     [self getThumbImageFromAssetWithCompletion:^(UIImage *thumb) {
         if (thumb) {
-            completion(thumb);
+            if (completion) {
+                completion(thumb);
+            }
         } else {
             if ([self isImageFile]) {
-                [self getImageWithCompletion:^(UIImage *image) {
-                    UIImage *thumb = image;
-                    if (thumb) {
-                        completion(thumb);
-                    } else {
-                        thumb = [UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString];
-                        completion(thumb);
-                    }
-                }];
+                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                    UIImage *image = self.image;
+                    UIImage *resizedImage = image ? [Utils reSizeImage:image toSquare:THUMB_SIZE * (int)[UIScreen mainScreen].scale] : nil;
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        if (completion) {
+                            completion(resizedImage ?: [UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString]);
+                        }
+                    });
+                });
             } else {
-                UIImage *thumb = [UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString];
-                completion(thumb);
+                if (completion) {
+                    completion([UIImage imageForMimeType:self.mime ext:self.name.pathExtension.lowercaseString]);
+                }
             }
         }
     }];
-}
-
-- (void)getThumbImageFromAssetWithCompletion:(void (^)(UIImage *image))completion {
-    if (_asset) {
-        CGSize size = CGSizeMake(THUMB_SIZE * (int)[UIScreen mainScreen].scale, THUMB_SIZE * (int)[UIScreen mainScreen].scale);
-        [[PHImageManager defaultManager] requestImageForAsset:_asset targetSize:size contentMode:PHImageContentModeDefault options:self.requestOptionsAsyn resultHandler:^(UIImage * _Nullable result, NSDictionary * _Nullable info) {
-            completion(result);
-        }];
-    } else {
-        completion(nil);
-    }
 }
 
 - (UIImage *)thumb
@@ -731,16 +822,16 @@
     int size = THUMB_SIZE * (int)[[UIScreen mainScreen] scale];
     NSString *thumbPath = [SeafStorage.sharedObject.thumbsDir stringByAppendingPathComponent:[NSString stringWithFormat:@"/%@-%d", oid, size]];
     if (![Utils fileExistsAtPath:thumbPath]) {
-        NSData *data = UIImageJPEGRepresentation([self thumb], 1.0);
-        [data writeToFile:thumbPath atomically:true];
+        [self iconWithCompletion:^(UIImage *thumbImage) {
+            if (thumbImage) {
+                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                    NSData *data = UIImageJPEGRepresentation(thumbImage, 1.0);
+                    [data writeToFile:thumbPath atomically:true];
+                });
+            }
+        }];
     }
 }
-
-//- (UIImage *)image {
-//    NSString *name = [@"cacheimage-ufile-" stringByAppendingString:self.name];
-//    NSString *cachePath = [[SeafStorage.sharedObject tempDir] stringByAppendingPathComponent:name];
-//    return [Utils imageFromPath:self.lpath withMaxSize:IMAGE_MAX_SIZE cachePath:cachePath];
-//}
 
 - (UIImage *)image {
     NSString *name = [@"cacheimage-ufile-" stringByAppendingString:self.name];
