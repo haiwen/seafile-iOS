@@ -199,7 +199,7 @@
         }
         
         if (!_autoSync) {
-            [Utils linkFileAtPath:self.lpath to:[SeafStorage.sharedObject documentPath:oid] error:nil];
+            [Utils linkFileAtPath:self.lpath to:[SeafStorage.sharedObject documentPath:oid] error:nil];//not used
             // files.app menory limit 15MB, reSizeImage will use more than 15MB
             // resize thumb while reaching memory limit in share extension
             if ([[Utils currentBundleIdentifier] isEqualToString:@"com.seafile.seafilePro"]) {
@@ -578,20 +578,26 @@
     
     [[PHImageManager defaultManager] requestImageDataForAsset:_asset options:self.requestOptions resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
         if (imageData) {
-            if (@available(iOS 10.0, *)) {
-                if (![self uploadHeic] && [dataUTI isEqualToString:@"public.heic"]) {// HEIC available after iOS11
-                    self->_lpath = [self.lpath stringByReplacingOccurrencesOfString:@"HEIC" withString:@"JPG"];
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                if (@available(iOS 10.0, *)) {
+                    if (![self uploadHeic] && [dataUTI isEqualToString:@"public.heic"]) {// HEIC available after iOS11
+                        self->_lpath = [self.lpath stringByReplacingOccurrencesOfString:@"HEIC" withString:@"JPG"];
+                    }
+                    CIImage* ciImage = [CIImage imageWithData:imageData];
+                    if (![Utils writeCIImage:ciImage toPath:self.lpath]) {
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            [self finishUpload:false oid:nil error:nil];
+                        });
+                    }
+                } else {
+                    if (![Utils writeDataWithMeta:imageData toPath:self.lpath]) {
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            [self finishUpload:false oid:nil error:nil];
+                        });
+                    }
                 }
-                CIImage* ciImage = [CIImage imageWithData:imageData];
-                if (![Utils writeCIImage:ciImage toPath:self.lpath]) {
-                    [self finishUpload:false oid:nil error:nil];
-                }
-            } else {
-                if (![Utils writeDataWithMeta:imageData toPath:self.lpath]) {
-                    [self finishUpload:false oid:nil error:nil];
-                }
-            }
-            self->_filesize = [Utils fileSizeAtPath1:self.lpath];
+                self->_filesize = [Utils fileSizeAtPath1:self.lpath];
+            });
         } else {
             [self finishUpload:false oid:nil error:nil];
         }
