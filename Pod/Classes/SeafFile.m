@@ -29,7 +29,6 @@
 @property (nonatomic, strong) UIImage *icon;
 //@property (nonatomic, strong) UIImage *thumb;
 @property NSURLSessionDownloadTask *task;
-@property (strong) SeafUploadFile *ufile;
 @property (strong) NSArray *blkids;
 @property int index;
 
@@ -40,6 +39,7 @@
 @property (nonatomic) TaskProgressBlock taskProgressBlock;
 @property (strong, nonatomic) SeafThumb *thumbTaskForQueue;
 @property (assign, nonatomic) BOOL isTaskCanceled;
+@property (assign, nonatomic) BOOL isFileEditedAgain; // to set SeafUploadFile shouldShowUploadFailure property
 
 @end
 
@@ -134,11 +134,22 @@
 - (void)updateWithEntry:(SeafBase *)entry
 {
     SeafFile *file = (SeafFile *)entry;
-    if ([self.oid isEqualToString:entry.oid])
+    if ([self.oid isEqualToString:entry.oid]) {
+        if (file.ufile) {
+            _ufile = file.ufile;
+            _ufile.delegate = self;
+            _mpath = file.mpath;
+            self.udelegate = file.udelegate;
+        }
         return;
+    }
     [super updateWithEntry:entry];
     _filesize = file.filesize;
     _mtime = file.mtime;
+    _ufile = file.ufile;
+    _ufile.delegate = self;
+    _mpath = file.mpath;
+    self.udelegate = file.udelegate;
     self.state = SEAF_DENTRY_INIT;
     [self loadCache];
 }
@@ -226,73 +237,76 @@
 - (void)downloadByFile
 {
     __weak typeof(self) weakSelf = self;
-    [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@", self.repoId, [self.path escapedUrl]] success:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-        __strong typeof(weakSelf) self = weakSelf;
+    [connection sendRequest:[NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@", self.repoId, [self.path escapedUrl]]
+                    success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
         NSString *url = JSON;
-        //         NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
-        NSString *curId = [Utils getNewOidFromMtime:self.mtime repoId:self.repoId path:self.path];
-        
-        Debug("Downloading file from file server url: %@, state:%d %@, %@", JSON, self.state, self.ooid, curId);
-        if (!curId) curId = self.oid;
+        NSString *curId = [Utils getNewOidFromMtime:strongSelf.mtime repoId:strongSelf.repoId path:strongSelf.path];
+
+        Debug("Downloading file from file server url: %@, state:%d %@, %@", JSON, strongSelf.state, strongSelf.ooid, curId);
+        if (!curId) curId = strongSelf.oid;
         if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:curId]]) {
-            Debug("file %@ already exist curId=%@, ooid=%@", self.name, curId, self.ooid);
-            [self finishDownload:curId];
+            Debug("file %@ already exist curId=%@, ooid=%@", strongSelf.name, curId, strongSelf.ooid);
+            [strongSelf finishDownload:curId];
             return;
         }
-        
-        @synchronized (self) {
-            if (self.state != SEAF_DENTRY_LOADING) {
-                return Info("Download file %@ already canceled", self.name);
+
+        @synchronized (strongSelf) {
+            if (strongSelf.state != SEAF_DENTRY_LOADING) {
+                return Info("Download file %@ already canceled", strongSelf.name);
             }
-            if (self.downloadingFileOid) {// Already downloading
-                Debug("Already downloading %@", self.downloadingFileOid);
+            if (strongSelf.downloadingFileOid) { // Already downloading
+                Debug("Already downloading %@", strongSelf.downloadingFileOid);
                 return;
             }
-            self.downloadingFileOid = curId;
+            strongSelf.downloadingFileOid = curId;
         }
-        [self downloadProgress:0];
+        [strongSelf downloadProgress:0];
         url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-        NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:DEFAULT_TIMEOUT];
-        
-        NSString *target = [SeafStorage.sharedObject documentPath:self.downloadingFileOid];
-        Debug("Download file %@  %@ from %@, target:%@ %d", self.name, self.downloadingFileOid, url, target, [Utils fileExistsAtPath:target]);
+        NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url] cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:DEFAULT_TIMEOUT];
 
-        __weak typeof(self) weakSelf2 = self; // another weakify for nested block
-        self.task = [self->connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:^(NSProgress * _Nonnull downloadProgress) {
-            __strong typeof(weakSelf2) self = weakSelf2;
-            self.progress = downloadProgress;
-            [self.progress addObserver:self
-                            forKeyPath:@"fractionCompleted"
-                               options:NSKeyValueObservingOptionNew
-                               context:NULL];
-        } destination:^NSURL * _Nonnull(NSURL * _Nonnull targetPath, NSURLResponse * _Nonnull response) {
-            return [NSURL fileURLWithPath:[target stringByAppendingPathExtension:@"tmp"]];
-        } completionHandler:^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
-            __strong typeof(weakSelf2) self = weakSelf2;
-            if (!self.downloadingFileOid) {
-                return Info("Download file %@ already canceled", self.name);
-            }
-            if (error) {
-                Debug("Failed to download %@, error=%@, %ld", self.name, [error localizedDescription], (long)((NSHTTPURLResponse *)response).statusCode);
-                [self failedDownload:error];
-            } else {
-                Debug("Successfully downloaded file:%@, %@ oid=%@, ooid=%@, delegate=%@, %@", self.name, downloadRequest.URL, self.downloadingFileOid, self.ooid, self.delegate, filePath);
-                if (![filePath.path isEqualToString:target]) {
-                    [Utils removeFile:target];
-                    [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
+        NSString *target = [SeafStorage.sharedObject documentPath:strongSelf.downloadingFileOid];
+        Debug("Download file %@  %@ from %@, target:%@ %d", strongSelf.name, strongSelf.downloadingFileOid, url, target, [Utils fileExistsAtPath:target]);
+
+        strongSelf.task = [strongSelf->connection.sessionMgr downloadTaskWithRequest:downloadRequest
+            progress:^(NSProgress * _Nonnull downloadProgress) {
+                __strong typeof(weakSelf) strongSelf = weakSelf;
+                if (!strongSelf) return;
+                if (strongSelf.progress) {
+                    [strongSelf.progress removeObserver:strongSelf forKeyPath:@"fractionCompleted" context:NULL];
                 }
-                [self finishDownload:self.downloadingFileOid];
+                strongSelf.progress = downloadProgress;
+                [strongSelf.progress addObserver:strongSelf forKeyPath:@"fractionCompleted" options:NSKeyValueObservingOptionNew context:NULL];
             }
-        }];
-         
-        [self.task resume];
+            destination:^NSURL * _Nonnull(NSURL * _Nonnull targetPath, NSURLResponse * _Nonnull response) {
+                return [NSURL fileURLWithPath:[target stringByAppendingPathExtension:@"tmp"]];
+            }
+            completionHandler:^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
+                __strong typeof(weakSelf) strongSelf = weakSelf;
+                if (!strongSelf) return;
+                if (!strongSelf.downloadingFileOid) {
+                    return Info("Download file %@ already canceled", strongSelf.name);
+                }
+                if (error) {
+                    Debug("Failed to download %@, error=%@, %ld", strongSelf.name, [error localizedDescription], (long)((NSHTTPURLResponse *)response).statusCode);
+                    [strongSelf failedDownload:error];
+                } else {
+                    Debug("Successfully downloaded file:%@, %@ oid=%@, ooid=%@, delegate=%@, %@", strongSelf.name, downloadRequest.URL, strongSelf.downloadingFileOid, strongSelf.ooid, strongSelf.delegate, filePath);
+                    if (![filePath.path isEqualToString:target]) {
+                        [Utils removeFile:target];
+                        [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
+                    }
+                    [strongSelf finishDownload:strongSelf.downloadingFileOid];
+                }
+            }];
+        [strongSelf.task resume];
     }
-                    failure:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
-        __strong typeof(weakSelf) self = weakSelf;
-        self.state = SEAF_DENTRY_INIT;
-        [self downloadFailed:error];
+                    failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
+        strongSelf.state = SEAF_DENTRY_INIT;
+        [strongSelf downloadFailed:error];
     }];
 }
 
@@ -550,6 +564,7 @@
 - (void)load:(id<SeafDentryDelegate>)delegate force:(BOOL)force
 {
     if (delegate != nil) self.delegate = delegate;
+    self.udelegate = delegate;
     [self loadContent:force];
 }
 
@@ -641,7 +656,7 @@
             _preViewURL = nil;
             _exportURL = nil;
         }
-        [self autoupload];
+//        [self autoupload];
         return true;
     } else if (self.oid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:self.oid]]) {
         if (![self.oid isEqualToString:self.ooid])
@@ -813,7 +828,13 @@
 
 - (void)autoupload
 {
-    if (self.ufile && self.ufile.isUploading)  return;
+    if (self.ufile) {
+        NSString *newModifiedPath = [self.mpath copy];
+        [SeafDataTaskManager.sharedObject removeUploadTask:self.ufile forAccount:connection];
+        self.ufile = nil;
+        [self setMpath:newModifiedPath];
+        self.isFileEditedAgain = true;
+    }
     [self update:self.udelegate];
 }
 
@@ -889,22 +910,6 @@
     return dict;
 }
 
-- (BOOL)testupload
-{
-    NSString *dir = [SeafStorage uniqueDirUnder:SeafStorage.sharedObject.editDir];
-    if (![Utils checkMakeDir:dir])
-        return NO;
-    NSString *newpath = [dir stringByAppendingPathComponent:self.name];
-    NSError *error = nil;
-
-    BOOL ret = [[NSFileManager defaultManager] copyItemAtPath:[SeafStorage.sharedObject documentPath:self.ooid] toPath:newpath error:&error];
-    Debug("ret=%d newpath=%@, %@\n", ret, newpath, error);
-    if (ret) {
-        [self setMpath:newpath];
-        [self autoupload];
-    }
-    return ret;
-}
 
 - (BOOL)isStarred
 {
@@ -920,6 +925,14 @@
         self.ufile.delegate = self;
         self.ufile.overwrite = YES;
         self.ufile.completionBlock = self.uploadCompletionBlock;
+        self.ufile.isEditedFile = YES;
+        self.ufile.editedFileRepoId = self.repoId;
+        self.ufile.editedFilePath = self.path;
+        self.ufile.editedFileOid = self.oid;
+        if (self.isFileEditedAgain) {//is edited before upload completed
+            self.ufile.shouldShowUploadFailure = false;
+            self.isFileEditedAgain = false;//reset flag
+        }
         NSString *path = [self.path stringByDeletingLastPathComponent];
         SeafDir *udir = [[SeafDir alloc] initWithConnection:connection oid:nil repoId:self.repoId perm:@"rw" name:path.lastPathComponent path:path];
         self.ufile.udir = udir;

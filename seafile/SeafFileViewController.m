@@ -1159,9 +1159,43 @@ enum {
         if (updated) {
             [self refreshView];
             [SeafAppDelegate checkOpenLink:self];
+        } else {
+            if ([entry isKindOfClass:[SeafDir class]] && [self checkIsEditedFileUploading:(SeafDir *)entry]) {
+                [self refreshView];
+                [SeafAppDelegate checkOpenLink:self];
+            }
         }
         self.state = STATE_INIT;
     }
+}
+
+- (BOOL)checkIsEditedFileUploading:(SeafDir *)entry {
+    SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self->_connection];
+    NSArray *allUpLoadTasks = accountQueue.uploadQueue.allTasks;
+    BOOL hasEditedFile = false;
+    if (allUpLoadTasks.count > 0) {//if have uploadTask
+        NSPredicate *nonNilPredicate = [NSPredicate predicateWithFormat:@"editedFileOid != nil"];
+        NSArray *nonNilTasks = [allUpLoadTasks filteredArrayUsingPredicate:nonNilPredicate];
+
+        for (SeafBase *tempItem in entry.allItems){
+            SeafBase *__strong item = tempItem; // Declare a strong reference variable to hold tempItem
+            if ([item isKindOfClass:[SeafFile class]]) {
+                for (SeafUploadFile *file in nonNilTasks) {
+                    //check and set uploadFile to SeafFile
+                    if ([file.editedFilePath isEqualToString:item.path] && [file.editedFileRepoId isEqualToString:item.repoId]) {
+                        SeafFile *fileItem = (SeafFile *)item;
+                        fileItem.ufile = file;
+                        [fileItem setMpath:file.lpath];
+                        fileItem.udelegate = self;
+                        fileItem.ufile.delegate = fileItem;
+                        item = fileItem;
+                        hasEditedFile = true;
+                    }
+                }
+            }
+        }
+    }
+    return hasEditedFile;
 }
 
 // Handles download failures, updating UI and state accordingly

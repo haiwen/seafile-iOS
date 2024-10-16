@@ -53,7 +53,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 
 @interface SeafDir ()
 @property NSObject *uploadLock;
-@property (readonly, nonatomic) NSMutableArray *uploadItems;
+@property (readonly, nonatomic) NSMutableArray *uploadItems;//Files being uploaded in the current directory.
 
 @end
 
@@ -123,6 +123,10 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
         Warning("Invalid response type: %@,  %@", NSStringFromClass([JSON class]), JSON);
         return false;
     }
+    
+    //check if has edited file not uploaded before.
+    SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self->connection];
+    NSArray *allUpLoadTasks = accountQueue.uploadQueue.allTasks;
 
     NSMutableArray *newItems = [NSMutableArray array];
     for (NSDictionary *itemInfo in JSON) {
@@ -148,6 +152,20 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
             NSString *oid = [Utils getNewOidFromMtime:[mtimeNumber longLongValue] repoId:self.repoId path:path];
             
             newItem.oid = oid;
+            
+            if (allUpLoadTasks.count > 0) {//if have uploadTask
+                for (SeafUploadFile *file in allUpLoadTasks) {
+                    //check and set uploadFile to SeafFile
+                    if ((file.editedFileOid != nil) && [file.editedFileOid isEqualToString:oid]) {
+                        SeafFile *fileItem = (SeafFile *)newItem;
+                        fileItem.ufile = file;
+                        [fileItem setMpath:file.lpath];
+                        fileItem.ufile.delegate = fileItem;
+                        newItem = fileItem;
+                    }
+                }
+            }
+            
         } else if ([type isEqual:@"dir"]) {
             newItem = [[SeafDir alloc] initWithConnection:connection oid:[itemInfo objectForKey:@"id"] repoId:self.repoId perm:[itemInfo objectForKey:@"permission"] name:name path:path];
         }
@@ -471,7 +489,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
         [self.uploadItems addObject:file];
     }
     _allItems = nil;
-    if (!file.autoSync) [self.delegate download:self complete:true];
+    if (!file.uploadFileAutoSync) [self.delegate download:self complete:true];
 }
 
 - (void)removeUploadItem:(SeafUploadFile *)ufile

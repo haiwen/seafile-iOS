@@ -55,11 +55,12 @@
         _lpath = lpath;
         _uProgress = 0;
         _uploading = NO;
-        _autoSync = NO;
+        _uploadFileAutoSync = NO;
         _starred = NO;
         _uploaded = NO;
         _overwrite = NO;
         _semaphore = dispatch_semaphore_create(0);
+        _shouldShowUploadFailure = true;
     }
     return self;
 }
@@ -162,7 +163,7 @@
     if (_blockDir) {
         [[NSFileManager defaultManager] removeItemAtPath:_blockDir error:nil];
     }
-    if (!self.autoSync) {
+    if (!self.uploadFileAutoSync) {
         [Utils removeDirIfEmpty:[self.lpath stringByDeletingLastPathComponent]];
     }
 }
@@ -190,20 +191,31 @@
     if (!err && !result) {
         err = [Utils defaultError];
     }
-    Debug("result=%d, name=%@, delegate=%@, oid=%@, err=%@\n", result, self.name, _delegate, oid, err);
-    [self uploadComplete:oid error:err];
+    NSString *fOid = oid;
+    
+    Debug("result=%d, name=%@, delegate=%@, oid=%@, err=%@\n", result, self.name, _delegate, fOid, err);
+
     if (result) {
+        if (self.isEditedFile) {
+            long long mtime = [Utils currentTimestampAsLongLong];
+            fOid = [Utils getNewOidFromMtime:mtime repoId:self.editedFileRepoId path:self.editedFilePath];
+            
+            if (self.editedFileOid) {
+                [Utils removeFile:[SeafStorage.sharedObject documentPath:self.editedFileOid]];
+            }
+        }
+        
         if (_starred && self.udir) {
             NSString* rpath = [_udir.path stringByAppendingPathComponent:self.name];
             [_udir->connection setStarred:YES repo:_udir.repoId path:rpath];
         }
         
-        if (!_autoSync) {
-            [Utils linkFileAtPath:self.lpath to:[SeafStorage.sharedObject documentPath:oid] error:nil];
+        if (!_uploadFileAutoSync) {
+            [Utils linkFileAtPath:self.lpath to:[SeafStorage.sharedObject documentPath:fOid] error:nil];
             // files.app menory limit 15MB, reSizeImage will use more than 15MB
             // resize thumb while reaching memory limit in share extension
             if ([[Utils currentBundleIdentifier] isEqualToString:@"com.seafile.seafilePro"]) {
-                [self saveThumbToLocal:oid];
+                [self saveThumbToLocal:fOid];
             }
             
         } else {
@@ -211,6 +223,7 @@
             [self cleanup];
         }
     }
+    [self uploadComplete:fOid error:err];
 }
 
 -(void)showDeserializedError:(NSError *)error
@@ -259,7 +272,7 @@
                 oid = [responseObject objectForKey:@"id"];
             }
             if (!oid || oid.length < 1) oid = [[NSUUID UUID] UUIDString];
-            Debug("Successfully upload file:%@ autosync:%d oid=%@, responseObject=%@", self.name, self.autoSync, oid, responseObject);
+            Debug("Successfully upload file:%@ autosync:%d oid=%@, responseObject=%@", self.name, self.uploadFileAutoSync, oid, responseObject);
             [sself finishUpload:YES oid:oid error:nil];
         }
     }];
@@ -381,7 +394,7 @@
                 oid = [responseObject objectForKey:@"id"];
             }
             if (!oid || oid.length < 1) oid = [[NSUUID UUID] UUIDString];
-            Debug("Successfully upload file:%@ autosync:%d oid=%@, responseObject=%@", self.name, self.autoSync, oid, responseObject);
+            Debug("Successfully upload file:%@ autosync:%d oid=%@, responseObject=%@", self.name, self.uploadFileAutoSync, oid, responseObject);
             [self finishUpload:YES oid:oid error:nil];
         }
     }];
@@ -524,7 +537,7 @@
     if (!_udir) return false;
     [self checkAsset];
     if (![Utils fileExistsAtPath:self.lpath]) return false;
-    if (self.autoSync && _udir->connection.wifiOnly)
+    if (self.uploadFileAutoSync && _udir->connection.wifiOnly)
         return [[AFNetworkReachabilityManager sharedManager] isReachableViaWiFi];
     else
         return [[AFNetworkReachabilityManager sharedManager] isReachable];
@@ -800,6 +813,9 @@
             self.taskCompleteBlock(self, !error);
         }
         [self.delegate uploadComplete:!error file:self oid:oid];
+        if (self.staredFileDelegate) {
+            [self.staredFileDelegate uploadComplete:!error file:self oid:oid];
+        }
     });
 
     dispatch_semaphore_signal(_semaphore);

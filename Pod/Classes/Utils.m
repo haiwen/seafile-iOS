@@ -769,6 +769,21 @@
     return newOid;
 }
 
+//Timestamp of the current time
++ (long long)currentTimestampAsLongLong {
+    NSTimeInterval timeStamp;
+    
+    if (@available(iOS 13.0, *)) {
+        timeStamp = [[NSDate now] timeIntervalSince1970];
+    } else {
+        timeStamp = [[NSDate date] timeIntervalSince1970];
+    }
+    
+    long long timeStampLongLong = (long long)timeStamp;
+    
+    return timeStampLongLong;
+}
+
 + (UIColor *)cellDetailTextTextColor {
     static UIColor *defaultTextColor = nil;
     static dispatch_once_t onceToken;

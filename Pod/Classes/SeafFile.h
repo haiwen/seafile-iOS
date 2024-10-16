@@ -77,6 +77,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 @property (copy, nonatomic) NSString * _Nullable thumbnailURLStr;//image thumbnail Url String
 @property (nonatomic, assign) NSInteger thumbFailedCount;//download thumb failure count
 @property (nonatomic, copy) NSURLSessionDownloadTask * _Nullable thumbtask;
+@property (strong, nonatomic) SeafUploadFile * _Nullable ufile;
 
 /**
  * Checks if the file is currently being downloaded.
