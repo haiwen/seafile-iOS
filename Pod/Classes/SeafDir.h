@@ -41,9 +41,9 @@
                     path:(NSString *)aPath
                     mime:(NSString *)aMime;
 
-@property (readonly, copy) NSArray *allItems;
-@property (readonly, copy) NSArray *items;
-@property (readonly) NSArray *uploadFiles;
+@property (readonly, copy) NSArray *allItems;//All items displayed in the current directory
+@property (readonly, copy) NSArray *items;//All items from server,after modified by - (void)updateItems:(NSMutableArray *)items
+@property (readonly) NSArray *uploadFiles;// equal to uploadItems
 @property (readonly) BOOL editable;
 @property (nonatomic, copy) NSString *perm;
 //@property (assign, nonatomic) BOOL encrypted;///< Indicates whether the repository is encrypted.

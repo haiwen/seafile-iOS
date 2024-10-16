@@ -29,7 +29,6 @@
 @property (nonatomic, strong) UIImage *icon;
 //@property (nonatomic, strong) UIImage *thumb;
 @property NSURLSessionDownloadTask *task;
-@property (strong) SeafUploadFile *ufile;
 @property (strong) NSArray *blkids;
 @property int index;
 
@@ -641,7 +640,7 @@
             _preViewURL = nil;
             _exportURL = nil;
         }
-        [self autoupload];
+//        [self autoupload];
         return true;
     } else if (self.oid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:self.oid]]) {
         if (![self.oid isEqualToString:self.ooid])
@@ -920,6 +919,10 @@
         self.ufile.delegate = self;
         self.ufile.overwrite = YES;
         self.ufile.completionBlock = self.uploadCompletionBlock;
+        self.ufile.isEditedFile = YES;
+        self.ufile.editedFileRepoId = self.repoId;
+        self.ufile.editedFilePath = self.path;
+        self.ufile.editedFileOid = self.oid;
         NSString *path = [self.path stringByDeletingLastPathComponent];
         SeafDir *udir = [[SeafDir alloc] initWithConnection:connection oid:nil repoId:self.repoId perm:@"rw" name:path.lastPathComponent path:path];
         self.ufile.udir = udir;

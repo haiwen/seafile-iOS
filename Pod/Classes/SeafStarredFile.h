@@ -12,21 +12,11 @@
  * The `SeafStarFileDelegate` protocol defines methods that a delegate of a `SeafStarredFile` object
  * must adopt. The methods provide notifications for changes to the starred status of the file.
  */
-@protocol SeafStarFileDelegate <NSObject>
-/**
- * Notifies the delegate that the starred state of the file has changed.
- * @param starred The new starred state of the file.
- * @param sfile The file whose starred state has changed.
- */
-- (void)fileStateChanged:(BOOL)starred file:(SeafFile *)sfile;
-@end
 
 /**
  * `SeafStarredFile` is a subclass of `SeafFile` that represents a file marked as starred in Seafile.
  */
 @interface SeafStarredFile : SeafFile
-/// The delegate object that receives star state change events.
-@property (strong) id<SeafStarFileDelegate> starDelegate;
 @property int org;/// The organization identifier for this file, if it belongs to an organization library.
 @property (nonatomic, assign) int isDir;//is file or dir
 

@@ -41,7 +41,7 @@
         _accountQueueDict = [NSMutableDictionary new];
         _finishBlock = nil;
         [self startTimer];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(cacheCleared:) name:@"clearCache" object:nil];
+//        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(cacheCleared:) name:@"clearCache" object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationWillEnterForeground:) name:UIApplicationWillEnterForegroundNotification object:nil];
     }
     return self;
@@ -98,7 +98,7 @@
     NSMutableArray *arr = [[NSMutableArray alloc] init];
     @synchronized (accountQueue.uploadQueue.allTasks) {
         for (SeafUploadFile *ufile in accountQueue.uploadQueue.allTasks) {
-            if (ufile.autoSync && ufile.udir->connection == conn) {
+            if (ufile.upLoadFileAutoSync && ufile.udir->connection == conn) {
                 [arr addObject:ufile];
             }
         }
@@ -118,7 +118,7 @@
     NSMutableArray *arr = [[NSMutableArray alloc] init];
     @synchronized (accountQueue.uploadQueue.allTasks) {
         for (SeafUploadFile *ufile in accountQueue.uploadQueue.allTasks) {
-            if (ufile.autoSync && ufile.udir->connection == conn && !ufile.isImageFile) {
+            if (ufile.upLoadFileAutoSync && ufile.udir->connection == conn && !ufile.isImageFile) {
                 [arr addObject:ufile];
             }
         }
@@ -231,8 +231,8 @@
     return [self getAccountQueueWithIndentifier:connection.accountIdentifier];
 }
 
-- (void)cacheCleared:(NSNotification*)notification {
-}
+//- (void)cacheCleared:(NSNotification*)notification {
+//}
 
 /**
  * Saves information about an upload file task to persistent storage.
@@ -333,6 +333,13 @@
         [Utils dict:dict setObject:ufile.udir.path forKey:@"path"];
         [Utils dict:dict setObject:ufile.udir.perm forKey:@"perm"];
         [Utils dict:dict setObject:ufile.udir.mime forKey:@"mime"];
+        if (ufile.isEditedFile) {
+            [Utils dict:dict setObject:[NSNumber numberWithBool:ufile.isEditedFile] forKey:@"isEditedFile"];
+            [Utils dict:dict setObject:ufile.editedFilePath forKey:@"editedFilePath"];
+            [Utils dict:dict setObject:ufile.editedFileRepoId forKey:@"editedFileRepoId"];
+            [Utils dict:dict setObject:ufile.editedFileOid forKey:@"editedFileOid"];
+        }
+
         [Utils dict:dict setObject:[NSNumber numberWithBool:ufile.isUploaded] forKey:@"uploaded"];
     }
     return dict;
@@ -375,6 +382,19 @@
         ufile.overwrite = [[dict objectForKey:@"overwrite"] boolValue];
         SeafDir *udir = [[SeafDir alloc] initWithConnection:conn oid:[dict objectForKey:@"oid"] repoId:[dict objectForKey:@"repoId"] perm:[dict objectForKey:@"perm"] name:[dict objectForKey:@"name"] path:[dict objectForKey:@"path"] mime:[dict objectForKey:@"mime"]];
         ufile.udir = udir;
+        
+        NSNumber *isEditedFileNumber = [dict objectForKey:@"isEditedFile"];
+        BOOL isEditedUploadFile = NO;
+        if (isEditedFileNumber != nil && [isEditedFileNumber isKindOfClass:[NSNumber class]]) {
+            isEditedUploadFile = [isEditedFileNumber boolValue];
+        }
+        
+        if (isEditedUploadFile) {
+            ufile.isEditedFile = YES;
+            ufile.editedFilePath = [dict objectForKey:@"editedFilePath"];
+            ufile.editedFileRepoId = [dict objectForKey:@"editedFileRepoId"];
+            ufile.editedFileOid = [dict objectForKey:@"editedFileOid"];
+        }
         [self addUploadTask:ufile];
     }
     if (toDelete.count > 0) {
@@ -405,7 +425,8 @@
     SeafAccountTaskQueue *accountQueue = [self getAccountQueueWithIndentifier:dir->connection.accountIdentifier];
     NSMutableArray *filesInDir = [NSMutableArray new];
     for (SeafUploadFile *ufile in accountQueue.uploadQueue.allTasks) {
-        if ([ufile.udir.repoId isEqualToString: dir.repoId] && [ufile.udir.path isEqualToString: dir.path]) {
+        //Check if the uploaded file belongs to the current folder.
+        if (!ufile.isEditedFile && [ufile.udir.repoId isEqualToString: dir.repoId] && [ufile.udir.path isEqualToString: dir.path]) {
             [filesInDir addObject:ufile];
         }
     }

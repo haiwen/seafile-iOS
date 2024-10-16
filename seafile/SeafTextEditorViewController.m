@@ -60,8 +60,8 @@
     [_previewFile saveStrContent:content];
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [self.detailViewController refreshView];
-    [appdelegate.fileVC refreshView];
-    [appdelegate.starredVC refreshView];
+//    [appdelegate.fileVC refreshView];
+//    [appdelegate.starredVC refreshView];
     [self dismissCurrentView];
 }
 

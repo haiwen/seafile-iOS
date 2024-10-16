@@ -139,6 +139,9 @@
                           repoId:(NSString *)repoId
                             path:(NSString *)path;
 
+//Timestamp of the current time
++ (long long)currentTimestampAsLongLong;
+
 //cell detailText color
 + (UIColor *)cellDetailTextTextColor;
 

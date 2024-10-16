@@ -45,11 +45,13 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 
 @property (nonatomic, readonly) NSString *assetIdentifier;/// The unique identifier of the asset.
 
-@property (readwrite) BOOL autoSync;/// Whether the upload should be automatically retried upon failure.
+@property (readwrite) BOOL upLoadFileAutoSync;/// Whether the uploadFile is added from autoSync photo album.
 
 @property (readonly) float uProgress;/// Current upload progress as a float between 0 and 1.
 
 @property (nonatomic, weak) id<SeafUploadDelegate> delegate;/// Delegate to handle progress and completion updates.
+
+@property (nonatomic, weak) id<SeafUploadDelegate> staredFileDelegate;/// Delegate to handle progress and completion for starred view.
 
 @property (nonatomic) SeafUploadCompletionBlock completionBlock;
 
@@ -60,6 +62,14 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 @property (nonatomic, assign, getter=isStarred) BOOL starred;
 
 @property (nonatomic, assign) NSTimeInterval uploadStartedTime;
+
+@property (nonatomic, assign) BOOL isEditedFile;//belongs to SeafFile
+
+@property (nonatomic, copy) NSString *editedFileRepoId;//the edited SeaFile repoId
+
+@property (nonatomic, copy) NSString *editedFilePath;//the edited SeaFile path
+
+@property (nonatomic, copy) NSString *editedFileOid;//the edited SeaFile oid
 
 /**
  * Initializes a SeafUploadFile with a local path.

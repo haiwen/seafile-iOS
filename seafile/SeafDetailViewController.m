@@ -754,9 +754,9 @@ enum SHARE_STATUS {
             [file performSelector:@selector(autoupload)];
         }
         
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        [appdelegate.fileVC refreshView];
-        [appdelegate.starredVC refreshView];
+//        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+//        [appdelegate.fileVC refreshView];
+//        [appdelegate.starredVC refreshView];
         
         self.previewDidEdited = NO;
     }

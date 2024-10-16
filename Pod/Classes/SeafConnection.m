@@ -1532,7 +1532,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [SeafStorage.sharedObject clearCache];
     [_cacheProvider clearAllCacheInAccount:self.accountIdentifier];
     [SeafAvatar clearCache];
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"clearCache" object:nil];
+//    [[NSNotificationCenter defaultCenter] postNotificationName:@"clearCache" object:nil];
     [self clearUploadCache];
     // CLear old versiond data
     NSString *attrsFile = [[SeafStorage.sharedObject rootPath] stringByAppendingPathComponent:@"uploadfiles.plist"];

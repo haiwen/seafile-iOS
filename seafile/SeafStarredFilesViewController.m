@@ -29,6 +29,7 @@
 #import <AFNetworking/AFImageDownloader.h>
 #import <SDWebImage/SDWebImageManager.h>
 #import "SKFileTypeImageLoader.h"
+#import "SeafDataTaskManager.h"
 
 @interface SeafStarredFilesViewController ()<SWTableViewCellDelegate>
 //@property NSMutableArray *starredFiles;
@@ -151,6 +152,10 @@
         return;
     }
     
+    //check if has edited file not uploaded before.
+    SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:_connection];
+    NSArray *allUpLoadTasks = accountQueue.uploadQueue.allTasks;
+    
     NSMutableArray *starFiles = [NSMutableArray array];
     for (NSDictionary *info in starredItems) {
         NSNumber *isDirNum = [info objectForKey:@"is_dir"];
@@ -168,7 +173,22 @@
             }
         } else {// is file
             SeafStarredFile *sfile = [[SeafStarredFile alloc] initWithConnection:_connection Info:info];
-            sfile.starDelegate = self;
+//            sfile.starDelegate = self;
+            sfile.udelegate = self;
+            
+            if (allUpLoadTasks.count > 0) {//if have uploadTask
+                NSPredicate *nonNilPredicate = [NSPredicate predicateWithFormat:@"editedFileOid != nil"];
+                NSArray *nonNilTasks = [allUpLoadTasks filteredArrayUsingPredicate:nonNilPredicate];
+
+                for (SeafUploadFile *file in nonNilTasks) {
+                    //set uploadFile to SeafFile
+                    if ([file.editedFileOid isEqualToString:sfile.oid]) {
+                        sfile.ufile = file;
+                        [sfile setMpath:file.lpath];
+                        sfile.ufile.staredFileDelegate = sfile;
+                    }
+                }
+            }
             [starFiles addObject:sfile];
         }
     }
@@ -184,29 +204,6 @@
     _cellDataArray = jsonDataArray;
 
     return;
-}
-
-- (NSMutableArray<SeafBase *> *)replaceItemsInArrayB:(NSMutableArray<SeafBase *> *)arrayB withMatchesFromArrayA:(NSArray<SeafBase *> *)arrayA {
-    //Use a dictionary to optimize matching search, where the dictionary key is a string composed of p1 and p2.
-    NSMutableDictionary<NSString *, SeafBase *> *itemsByP1P2 = [NSMutableDictionary dictionary];
-    for (SeafBase *item in arrayA) {
-        NSString *key = [NSString stringWithFormat:@"%@%@", item.repoId, item.path];
-        itemsByP1P2[key] = item;
-    }
-
-    // Iterate through array B, find the matching items, and replace them
-    NSUInteger index = 0;
-    while (index < arrayB.count) {
-        SeafBase *item = arrayB[index];
-        NSString *key = [NSString stringWithFormat:@"%@%@", item.repoId, item.path];
-        SeafBase *matchingItem = itemsByP1P2[key];
-        if (matchingItem) {
-            // Replace elements in array B
-            [arrayB replaceObjectAtIndex:index withObject:matchingItem];
-        }
-        index++;
-    }
-    return arrayB;
 }
 
 //Old API JSON Parsing
@@ -631,19 +628,6 @@
 {
     [self updateEntryCell:(SeafFile *)entry];
     [self.detailViewController download:entry failed:error];
-}
-
-#pragma mark - SeafStarFileDelegate
-- (void)fileStateChanged:(BOOL)starred file:(SeafStarredFile *)sfile
-{
-    if (starred) {
-        if ([_cellDataArray indexOfObject:sfile] == NSNotFound)
-            [_cellDataArray addObject:sfile];
-    } else {
-        [_cellDataArray removeObject:sfile];
-    }
-
-    [self.tableView reloadData];
 }
 
 #pragma mark - SeafFileUpdateDelegate
