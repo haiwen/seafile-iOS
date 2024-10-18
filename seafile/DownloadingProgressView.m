@@ -45,8 +45,29 @@
         self.nameLabel.text = item.previewItemTitle;
     }
     dispatch_async(dispatch_get_main_queue(), ^{
+        long long downloadedBytes = _item.filesize * progress;
+
         _progress.progress = progress;
+        _percentLabel.text = [self progressToPercentString:progress];
+        _downloadedBytesLabel.text = [self bytesToString:downloadedBytes];
+        _totalBytesLabel.text = [self bytesToString:_item.filesize];
     });
+}
+
+- (NSString *)bytesToString:(long long)bytes
+{
+    NSByteCountFormatter *formatter = [[NSByteCountFormatter alloc] init];
+    [formatter setCountStyle:NSByteCountFormatterCountStyleFile];
+    
+    return [formatter stringFromByteCount:bytes];
+}
+
+- (NSString *)progressToPercentString:(float)progress
+{
+    NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
+    [formatter setNumberStyle:NSNumberFormatterPercentStyle];
+    
+    return [formatter stringFromNumber:[NSNumber numberWithFloat:progress]];
 }
 
 
