@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="13529" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
-    <device id="ipad9_7" orientation="portrait">
-        <adaptation id="fullscreen"/>
-    </device>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="23094" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
+    <device id="ipad9_7" orientation="portrait" layout="fullscreen" appearance="light"/>
     <dependencies>
-        <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13527"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23084"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -26,38 +23,63 @@
                             </constraints>
                         </imageView>
                         <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="" textAlignment="center" lineBreakMode="middleTruncation" baselineAdjustment="alignBaselines" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="8">
-                            <rect key="frame" x="149.5" y="512" width="468" height="0.0"/>
+                            <rect key="frame" x="150" y="512" width="468" height="0.0"/>
                             <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                            <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                            <color key="textColor" systemColor="darkTextColor"/>
                             <nil key="highlightedColor"/>
                         </label>
                         <progressView opaque="NO" contentMode="scaleToFill" progress="0.5" translatesAutoresizingMaskIntoConstraints="NO" id="30">
-                            <rect key="frame" x="149.5" y="542" width="468" height="2"/>
+                            <rect key="frame" x="150" y="542" width="468" height="4"/>
                         </progressView>
-                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" showsTouchWhenHighlighted="YES" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ags-96-vmi">
-                            <rect key="frame" x="319" y="574" width="130" height="32"/>
+                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" showsTouchWhenHighlighted="YES" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ags-96-vmi">
+                            <rect key="frame" x="319" y="576" width="130" height="32"/>
                             <constraints>
                                 <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="130" id="tah-o1-qBo"/>
                             </constraints>
                             <fontDescription key="fontDescription" name=".AppleSystemUIFont" family=".AppleSystemUIFont" pointSize="16"/>
-                            <color key="tintColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
+                            <color key="tintColor" systemColor="groupTableViewBackgroundColor"/>
                             <state key="normal" title="Cancel download">
                                 <color key="titleColor" red="0.33333333333333331" green="0.33333333333333331" blue="0.33333333333333331" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                             </state>
                         </button>
+                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="0%" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="8WM-CE-R7j">
+                            <rect key="frame" x="150" y="519" width="468" height="21"/>
+                            <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                            <color key="textColor" white="0.33333333329999998" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            <nil key="highlightedColor"/>
+                        </label>
+                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="0mb" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="HPa-aV-qub">
+                            <rect key="frame" x="150" y="548" width="35" height="21"/>
+                            <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                            <color key="textColor" white="0.33333333329999998" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            <nil key="highlightedColor"/>
+                        </label>
+                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="1mb" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="kdF-IW-e3p">
+                            <rect key="frame" x="586" y="548" width="32" height="21"/>
+                            <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                            <color key="textColor" white="0.33333333329999998" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            <nil key="highlightedColor"/>
+                        </label>
                     </subviews>
                     <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     <constraints>
                         <constraint firstItem="8" firstAttribute="top" secondItem="3" secondAttribute="bottom" constant="20" id="36V-tQ-NiP"/>
+                        <constraint firstItem="ags-96-vmi" firstAttribute="top" secondItem="30" secondAttribute="bottom" constant="30" id="3Oi-OX-B33"/>
                         <constraint firstItem="30" firstAttribute="centerX" secondItem="32" secondAttribute="centerX" id="B6u-et-t8n"/>
+                        <constraint firstItem="kdF-IW-e3p" firstAttribute="top" secondItem="30" secondAttribute="bottom" constant="2" id="CKq-5o-3Xc"/>
                         <constraint firstItem="8" firstAttribute="centerY" secondItem="32" secondAttribute="centerY" id="Ide-uK-qZZ"/>
-                        <constraint firstItem="ags-96-vmi" firstAttribute="top" secondItem="30" secondAttribute="bottom" constant="30" id="LNf-Pl-Cib"/>
+                        <constraint firstItem="HPa-aV-qub" firstAttribute="leading" secondItem="30" secondAttribute="leading" id="NKt-WQ-w3q"/>
                         <constraint firstItem="3" firstAttribute="centerX" secondItem="32" secondAttribute="centerX" id="Rd1-RL-EJK"/>
+                        <constraint firstItem="8WM-CE-R7j" firstAttribute="leading" secondItem="30" secondAttribute="leading" id="S8k-nP-oCH"/>
                         <constraint firstItem="30" firstAttribute="top" secondItem="8" secondAttribute="bottom" constant="30" id="a2B-qX-NgI"/>
+                        <constraint firstItem="30" firstAttribute="top" secondItem="8WM-CE-R7j" secondAttribute="bottom" constant="2" id="cNN-uV-PHd"/>
                         <constraint firstItem="8" firstAttribute="width" secondItem="32" secondAttribute="width" constant="-300" id="cjW-NC-qe4"/>
+                        <constraint firstItem="HPa-aV-qub" firstAttribute="top" secondItem="30" secondAttribute="bottom" constant="2" id="fB2-rX-sea"/>
                         <constraint firstItem="30" firstAttribute="width" secondItem="8" secondAttribute="width" id="hiJ-Co-y5K"/>
                         <constraint firstItem="8" firstAttribute="centerX" secondItem="32" secondAttribute="centerX" id="la2-ht-IXj"/>
+                        <constraint firstItem="8WM-CE-R7j" firstAttribute="trailing" secondItem="30" secondAttribute="trailing" id="m1Q-hD-jdN"/>
                         <constraint firstItem="ags-96-vmi" firstAttribute="centerX" secondItem="32" secondAttribute="centerX" id="wJp-nK-0rD"/>
+                        <constraint firstItem="kdF-IW-e3p" firstAttribute="trailing" secondItem="30" secondAttribute="trailing" id="yrt-0Z-sNF"/>
                     </constraints>
                 </view>
             </subviews>
@@ -71,10 +93,22 @@
             <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="blackOpaque"/>
             <connections>
                 <outlet property="cancelBt" destination="ags-96-vmi" id="A7g-fq-dp8"/>
+                <outlet property="downloadedBytesLabel" destination="HPa-aV-qub" id="c6r-2O-INr"/>
                 <outlet property="imageView" destination="3" id="28"/>
                 <outlet property="nameLabel" destination="8" id="29"/>
+                <outlet property="percentLabel" destination="8WM-CE-R7j" id="Y7X-2U-dC9"/>
                 <outlet property="progress" destination="30" id="31"/>
+                <outlet property="totalBytesLabel" destination="kdF-IW-e3p" id="rf4-E1-2Gi"/>
             </connections>
+            <point key="canvasLocation" x="-6" y="-31"/>
         </view>
     </objects>
+    <resources>
+        <systemColor name="darkTextColor">
+            <color white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
+        <systemColor name="groupTableViewBackgroundColor">
+            <color red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </systemColor>
+    </resources>
 </document>

@@ -16,6 +16,9 @@
 @property (strong, nonatomic) IBOutlet UIImageView *imageView;
 @property (strong, nonatomic) IBOutlet UILabel *nameLabel;
 @property (strong, nonatomic) IBOutlet UIProgressView *progress;
+@property (strong, nonatomic) IBOutlet UILabel *percentLabel;
+@property (strong, nonatomic) IBOutlet UILabel *downloadedBytesLabel;
+@property (strong, nonatomic) IBOutlet UILabel *totalBytesLabel;
 
 - (void)configureViewWithItem:(id<QLPreviewItem, SeafPreView>)item progress:(float)progress;
 
