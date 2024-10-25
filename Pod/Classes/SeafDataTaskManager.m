@@ -41,7 +41,6 @@
         _accountQueueDict = [NSMutableDictionary new];
         _finishBlock = nil;
         [self startTimer];
-//        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(cacheCleared:) name:@"clearCache" object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationWillEnterForeground:) name:UIApplicationWillEnterForegroundNotification object:nil];
     }
     return self;
@@ -98,7 +97,7 @@
     NSMutableArray *arr = [[NSMutableArray alloc] init];
     @synchronized (accountQueue.uploadQueue.allTasks) {
         for (SeafUploadFile *ufile in accountQueue.uploadQueue.allTasks) {
-            if (ufile.upLoadFileAutoSync && ufile.udir->connection == conn) {
+            if (ufile.uploadFileAutoSync && ufile.udir->connection == conn) {
                 [arr addObject:ufile];
             }
         }
@@ -118,7 +117,7 @@
     NSMutableArray *arr = [[NSMutableArray alloc] init];
     @synchronized (accountQueue.uploadQueue.allTasks) {
         for (SeafUploadFile *ufile in accountQueue.uploadQueue.allTasks) {
-            if (ufile.upLoadFileAutoSync && ufile.udir->connection == conn && !ufile.isImageFile) {
+            if (ufile.uploadFileAutoSync && ufile.udir->connection == conn && !ufile.isImageFile) {
                 [arr addObject:ufile];
             }
         }
@@ -143,7 +142,7 @@
 {
     SeafAccountTaskQueue *accountQueue = [self getAccountQueueWithIndentifier:conn.accountIdentifier];
     [accountQueue.uploadQueue clearTasks];
-    [self removeAccountUploadTaskFromStorage:conn.accountIdentifier];
+    [self removeAccountUploadTaskFromStorage:conn.accountIdentifier];//remove the current account all uploadFile info from storage
 }
 
 - (void)noException:(void (^)(void))block
@@ -230,9 +229,6 @@
 {
     return [self getAccountQueueWithIndentifier:connection.accountIdentifier];
 }
-
-//- (void)cacheCleared:(NSNotification*)notification {
-//}
 
 /**
  * Saves information about an upload file task to persistent storage.

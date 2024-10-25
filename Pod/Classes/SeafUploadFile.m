@@ -55,11 +55,12 @@
         _lpath = lpath;
         _uProgress = 0;
         _uploading = NO;
-        _upLoadFileAutoSync = NO;
+        _uploadFileAutoSync = NO;
         _starred = NO;
         _uploaded = NO;
         _overwrite = NO;
         _semaphore = dispatch_semaphore_create(0);
+        _shouldShowUploadFailure = true;
     }
     return self;
 }
@@ -162,11 +163,8 @@
     if (_blockDir) {
         [[NSFileManager defaultManager] removeItemAtPath:_blockDir error:nil];
     }
-    if (!self.upLoadFileAutoSync) {
+    if (!self.uploadFileAutoSync) {
         [Utils removeDirIfEmpty:[self.lpath stringByDeletingLastPathComponent]];
-    }
-    if (self.isEditedFile && self.editedFileOid) {
-        [Utils removeFile:[SeafStorage.sharedObject documentPath:self.editedFileOid]];
     }
 }
 
@@ -194,20 +192,25 @@
         err = [Utils defaultError];
     }
     NSString *fOid = oid;
-    if (self.isEditedFile) {
-        long long mtime = [Utils currentTimestampAsLongLong];
-        fOid = [Utils getNewOidFromMtime:mtime repoId:self.editedFileRepoId path:self.editedFilePath];
-    }
+    
     Debug("result=%d, name=%@, delegate=%@, oid=%@, err=%@\n", result, self.name, _delegate, fOid, err);
 
-    [self uploadComplete:fOid error:err];
     if (result) {
+        if (self.isEditedFile) {
+            long long mtime = [Utils currentTimestampAsLongLong];
+            fOid = [Utils getNewOidFromMtime:mtime repoId:self.editedFileRepoId path:self.editedFilePath];
+            
+            if (self.editedFileOid) {
+                [Utils removeFile:[SeafStorage.sharedObject documentPath:self.editedFileOid]];
+            }
+        }
+        
         if (_starred && self.udir) {
             NSString* rpath = [_udir.path stringByAppendingPathComponent:self.name];
             [_udir->connection setStarred:YES repo:_udir.repoId path:rpath];
         }
         
-        if (!_upLoadFileAutoSync) {
+        if (!_uploadFileAutoSync) {
             [Utils linkFileAtPath:self.lpath to:[SeafStorage.sharedObject documentPath:fOid] error:nil];
             // files.app menory limit 15MB, reSizeImage will use more than 15MB
             // resize thumb while reaching memory limit in share extension
@@ -220,6 +223,7 @@
             [self cleanup];
         }
     }
+    [self uploadComplete:fOid error:err];
 }
 
 -(void)showDeserializedError:(NSError *)error
@@ -242,7 +246,6 @@
         return;
     }
     __weak __typeof__ (self) wself = self;
-    
     self.task = [connection.sessionMgr uploadTaskWithStreamedRequest:request progress:^(NSProgress * _Nonnull uploadProgress) {
         __strong __typeof (wself) sself = wself;
         [sself updateProgress:uploadProgress];
@@ -269,7 +272,7 @@
                 oid = [responseObject objectForKey:@"id"];
             }
             if (!oid || oid.length < 1) oid = [[NSUUID UUID] UUIDString];
-            Debug("Successfully upload file:%@ autosync:%d oid=%@, responseObject=%@", self.name, self.upLoadFileAutoSync, oid, responseObject);
+            Debug("Successfully upload file:%@ autosync:%d oid=%@, responseObject=%@", self.name, self.uploadFileAutoSync, oid, responseObject);
             [sself finishUpload:YES oid:oid error:nil];
         }
     }];
@@ -391,7 +394,7 @@
                 oid = [responseObject objectForKey:@"id"];
             }
             if (!oid || oid.length < 1) oid = [[NSUUID UUID] UUIDString];
-            Debug("Successfully upload file:%@ autosync:%d oid=%@, responseObject=%@", self.name, self.upLoadFileAutoSync, oid, responseObject);
+            Debug("Successfully upload file:%@ autosync:%d oid=%@, responseObject=%@", self.name, self.uploadFileAutoSync, oid, responseObject);
             [self finishUpload:YES oid:oid error:nil];
         }
     }];
@@ -534,7 +537,7 @@
     if (!_udir) return false;
     [self checkAsset];
     if (![Utils fileExistsAtPath:self.lpath]) return false;
-    if (self.upLoadFileAutoSync && _udir->connection.wifiOnly)
+    if (self.uploadFileAutoSync && _udir->connection.wifiOnly)
         return [[AFNetworkReachabilityManager sharedManager] isReachableViaWiFi];
     else
         return [[AFNetworkReachabilityManager sharedManager] isReachable];

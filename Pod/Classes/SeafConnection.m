@@ -950,29 +950,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     _starredFiles = stars;
 }
 
-//befor 2.9.27 old api for get starred files
-//- (void)getStarredFiles:(void (^)(NSHTTPURLResponse *response, id JSON))success
-//                failure:(void (^)(NSHTTPURLResponse *response, NSError *error))failure
-//{
-//    [self sendRequest:API_URL"/starredfiles/"
-//              success:
-//     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-//         @synchronized(self) {
-//             Debug("Succeeded to get starred files ...\n");
-//             [self handleStarredData:JSON];
-//             NSData *data = [Utils JSONEncode:JSON];
-//             [self setValue:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] forKey:KEY_STARREDFILES entityName:ENTITY_OBJECT];
-//             if (success)
-//                 success (response, JSON);
-//         }
-//     }
-//              failure:
-//     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
-//         if (failure)
-//             failure (response, error);
-//     }];
-//}
-
 - (void)getStarredFiles:(void (^)(NSHTTPURLResponse *response, id JSON))success
                 failure:(void (^)(NSHTTPURLResponse *response, NSError *error))failure
 {
@@ -1056,42 +1033,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
     return YES;
 }
-
-//before 2.9.27 old api for set starred file
-//- (BOOL)setStarred:(BOOL)starred repo:(NSString *)repo path:(NSString *)path
-//{
-//    NSString *key = [NSString stringWithFormat:@"%@-%@", repo, path];
-//    if (starred) {
-//        [_starredFiles addObject:key];
-//        NSString *form = [NSString stringWithFormat:@"repo_id=%@&p=%@", repo, [path escapedUrl]];
-//        NSString *url = [NSString stringWithFormat:API_URL"/starredfiles/"];
-////        NSString *url = [NSString stringWithFormat:API_URL_V21"/starredfiles/"];
-//
-//        [self sendPost:url form:form
-//               success:
-//         ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-//             Debug("Succeeded to star file %@, %@\n", repo, path);
-//         }
-//               failure:
-//         ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
-//             Warning("Failed to star file %@, %@\n", repo, path);
-//         }];
-//    } else {
-//        [_starredFiles removeObject:key];
-//        NSString *url = [NSString stringWithFormat:API_URL"/starredfiles/?repo_id=%@&p=%@", repo, path.escapedUrl];
-//        [self sendDelete:url
-//               success:
-//         ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-//             Debug("Succeeded to unstar file %@, %@\n", repo, path);
-//         }
-//               failure:
-//         ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
-//             Warning("Failed to unstar file %@, %@\n", repo, path);
-//         }];
-//    }
-//
-//    return YES;
-//}
 
 - (SeafRepo *)getRepo:(NSString *)repo
 {
@@ -1210,12 +1151,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self clearCache:ENTITY_UPLOAD_PHOTO];
     [self.photoBackup resetUploadedPhotos];
 }
-
-//not used
-//- (void)firstTimeSyncUpdateSyncedPhotos:(SeafDir *)uploaddir
-//{
-//    [self setFirstTimeSync:false];
-//}
 
 - (void)checkPhotos:(BOOL)force
 {
@@ -1532,7 +1467,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [SeafStorage.sharedObject clearCache];
     [_cacheProvider clearAllCacheInAccount:self.accountIdentifier];
     [SeafAvatar clearCache];
-//    [[NSNotificationCenter defaultCenter] postNotificationName:@"clearCache" object:nil];
     [self clearUploadCache];
     // CLear old versiond data
     NSString *attrsFile = [[SeafStorage.sharedObject rootPath] stringByAppendingPathComponent:@"uploadfiles.plist"];

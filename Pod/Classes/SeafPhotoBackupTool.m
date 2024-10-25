@@ -140,7 +140,7 @@
                 NSString *path = [self.localUploadDir stringByAppendingPathComponent:photoAsset.name];
                 SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
                 file.retryable = false;
-                file.upLoadFileAutoSync = true;
+                file.uploadFileAutoSync = true;
                 file.overwrite = true;
                 [file setPHAsset:asset url:photoAsset.ALAssetURL];
                 file.udir = dir;

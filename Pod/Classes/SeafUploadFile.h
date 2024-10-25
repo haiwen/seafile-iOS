@@ -45,7 +45,7 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 
 @property (nonatomic, readonly) NSString *assetIdentifier;/// The unique identifier of the asset.
 
-@property (readwrite) BOOL upLoadFileAutoSync;/// Whether the uploadFile is added from autoSync photo album.
+@property (readwrite) BOOL uploadFileAutoSync;/// Whether the uploadFile is added from autoSync photo album.
 
 @property (readonly) float uProgress;/// Current upload progress as a float between 0 and 1.
 
@@ -63,13 +63,15 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 
 @property (nonatomic, assign) NSTimeInterval uploadStartedTime;
 
-@property (nonatomic, assign) BOOL isEditedFile;//belongs to SeafFile
+@property (nonatomic, assign) BOOL isEditedFile;//is edited from Seafile
 
-@property (nonatomic, copy) NSString *editedFileRepoId;//the edited SeaFile repoId
+@property (nonatomic, copy) NSString *editedFileRepoId;//the edited Seafile repoId
 
-@property (nonatomic, copy) NSString *editedFilePath;//the edited SeaFile path
+@property (nonatomic, copy) NSString *editedFilePath;//the edited Seafile path
 
-@property (nonatomic, copy) NSString *editedFileOid;//the edited SeaFile oid
+@property (nonatomic, copy) NSString *editedFileOid;//the edited Seafile oid
+
+@property (assign, nonatomic) BOOL shouldShowUploadFailure; // When modifying the file and uploading again during the upload editing process, do not show the upload failure dialog
 
 /**
  * Initializes a SeafUploadFile with a local path.

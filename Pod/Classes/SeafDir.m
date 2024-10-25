@@ -154,17 +154,15 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
             newItem.oid = oid;
             
             if (allUpLoadTasks.count > 0) {//if have uploadTask
-                NSPredicate *nonNilPredicate = [NSPredicate predicateWithFormat:@"editedFileOid != nil"];
-                NSArray *nonNilTasks = [allUpLoadTasks filteredArrayUsingPredicate:nonNilPredicate];
-
-                for (SeafUploadFile *file in nonNilTasks) {
-                    //set uploadFile to SeafFile
-                    if ([file.editedFileOid isEqualToString:oid]) {
+                for (SeafUploadFile *file in allUpLoadTasks) {
+                    //check and set uploadFile to SeafFile
+                    if ((file.editedFileOid != nil) && [file.editedFileOid isEqualToString:oid]) {
                         SeafFile *fileItem = (SeafFile *)newItem;
                         fileItem.ufile = file;
                         [fileItem setMpath:file.lpath];
                         fileItem.ufile.delegate = fileItem;
                         newItem = fileItem;
+                        break;
                     }
                 }
             }
@@ -492,7 +490,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
         [self.uploadItems addObject:file];
     }
     _allItems = nil;
-    if (!file.upLoadFileAutoSync) [self.delegate download:self complete:true];
+    if (!file.uploadFileAutoSync) [self.delegate download:self complete:true];
 }
 
 - (void)removeUploadItem:(SeafUploadFile *)ufile
