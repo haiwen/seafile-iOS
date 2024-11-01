@@ -2112,12 +2112,14 @@ enum {
     if (!_searchController) {
         _searchController = [[UISearchController alloc] initWithSearchResultsController:self.searchReslutController];
         _searchController.searchResultsUpdater = self.searchReslutController;
-        _searchController.searchBar.barTintColor = [UIColor whiteColor];
+        self.searchController.searchBar.searchBarStyle = UISearchBarStyleMinimal;
+        self.searchController.searchBar.barTintColor = [UIColor clearColor];
+        self.searchController.searchBar.backgroundColor = [UIColor clearColor];
         [_searchController.searchBar sizeToFit];
         
 //        barImageView.backgroundColor = [UIColor clearColor];
 //        barImageView.layer.borderWidth = 1;
-//        self.definesPresentationContext = YES;
+        self.definesPresentationContext = YES;
     }
     return _searchController;
 }

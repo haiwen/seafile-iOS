@@ -569,6 +569,11 @@ enum {
     [self alertWithTitle:MSG_LOG_OUT message:nil yes:^{
         Debug("Log out %@ %@", _connection.address, _connection.username);
         [_connection logout];
+        
+        // Remove the default account settings
+           [SeafStorage.sharedObject removeObjectForKey:@"DEAULT-SERVER"];
+           [SeafStorage.sharedObject removeObjectForKey:@"DEAULT-USER"];
+        
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         [appdelegate exitAccount];
     } no:nil];
