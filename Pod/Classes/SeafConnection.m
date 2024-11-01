@@ -666,6 +666,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [_info removeObjectForKey:@"password"];
     [_info removeObjectForKey:@"repopassword"];
     [_info removeObjectForKey:@"repoInfo"];
+    
+    [SeafStorage.sharedObject setObject:_info forKey:self.accountIdentifier];
+
     [self saveSettings];
 }
 
