@@ -459,26 +459,19 @@
     return alert;
 }
 
-+ (UIImage *)reSizeImage:(UIImage *)image toSquare:(float)length
-{
-    @autoreleasepool {
-        NSData *imgData = UIImageJPEGRepresentation(image, 1);
-        CGImageSourceRef imageSource = CGImageSourceCreateWithData((CFDataRef)imgData, NULL);
-        if (!imageSource)
-            return nil;
-
-        CFDictionaryRef options = (__bridge CFDictionaryRef)[NSDictionary dictionaryWithObjectsAndKeys:
-                                                     (id)kCFBooleanTrue, (id)kCGImageSourceCreateThumbnailWithTransform,
-                                                     (id)kCFBooleanTrue, (id)kCGImageSourceCreateThumbnailFromImageIfAbsent,
-                                                    (id)[NSNumber numberWithFloat:length], (id)kCGImageSourceThumbnailMaxPixelSize,
-                                                     nil];
-        CGImageRef imgRef = CGImageSourceCreateThumbnailAtIndex(imageSource, 0, options);
-
-        UIImage *reSizeImage = [UIImage imageWithCGImage:imgRef];
-         
-        CGImageRelease(imgRef);
-        CFRelease(imageSource);
-
++ (UIImage *)reSizeImage:(UIImage *)image toSquare:(float)length {
+    CGSize newSize = CGSizeMake(length, length);
+    if (@available(iOS 10.0, *)) {
+        UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:newSize];
+        UIImage *reSizeImage = [renderer imageWithActions:^(UIGraphicsImageRendererContext * _Nonnull context) {
+            [image drawInRect:CGRectMake(0, 0, length, length)];
+        }];
+        return reSizeImage;
+    } else {
+        UIGraphicsBeginImageContextWithOptions(newSize, NO, 0.0);
+        [image drawInRect:CGRectMake(0, 0, length, length)];
+        UIImage *reSizeImage = UIGraphicsGetImageFromCurrentImageContext();
+        UIGraphicsEndImageContext();
         return reSizeImage;
     }
 }
