@@ -478,7 +478,6 @@
          
         CGImageRelease(imgRef);
         CFRelease(imageSource);
-
         return reSizeImage;
     }
 }
