@@ -460,20 +460,18 @@
 }
 
 + (UIImage *)reSizeImage:(UIImage *)image toSquare:(float)length {
-    CGSize newSize = CGSizeMake(length, length);
-    if (@available(iOS 10.0, *)) {
-        UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:newSize];
-        UIImage *reSizeImage = [renderer imageWithActions:^(UIGraphicsImageRendererContext * _Nonnull context) {
-            [image drawInRect:CGRectMake(0, 0, length, length)];
-        }];
-        return reSizeImage;
-    } else {
-        UIGraphicsBeginImageContextWithOptions(newSize, NO, 0.0);
-        [image drawInRect:CGRectMake(0, 0, length, length)];
-        UIImage *reSizeImage = UIGraphicsGetImageFromCurrentImageContext();
-        UIGraphicsEndImageContext();
-        return reSizeImage;
+    // Check if length is greater than zero
+    if (length <= 0) {
+        return nil;
     }
+
+    CGSize newSize = CGSizeMake(length, length);
+    
+    UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:newSize];
+    UIImage *reSizeImage = [renderer imageWithActions:^(UIGraphicsImageRendererContext * _Nonnull context) {
+        [image drawInRect:CGRectMake(0, 0, length, length)];
+    }];
+    return reSizeImage;
 }
 
 + (NSDictionary *)queryToDict:(NSString *)query

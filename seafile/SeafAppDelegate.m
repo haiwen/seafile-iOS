@@ -318,12 +318,13 @@
         Debug("Expired, Time Remain = %f, restart background task.", [application backgroundTimeRemaining]);
         if (@available(iOS 13.0, *)) {
             [application endBackgroundTask:self.bgTask];
+            self.bgTask = UIBackgroundTaskInvalid;
+            
             self.needReset = YES;
             if (SeafGlobal.sharedObject.connection.accountIdentifier) {
                 [[SeafDataTaskManager.sharedObject accountQueueForConnection:SeafGlobal.sharedObject.connection].uploadQueue clearTasks];
             }
             [self photosDidChange:[NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}]];
-            [self startBackgroundTask];
         } else {
             //not work in iOS 13, and while call in app  become active next time
             [self startBackgroundTask];
