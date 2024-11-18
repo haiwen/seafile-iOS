@@ -20,17 +20,15 @@
 #import "Debug.h"
 #import "Utils.h"
 #import "SeafCacheManager.h"
+#import <FileProvider/NSFileProviderError.h>
 
 @interface SeafFile()
 
 @property (strong, readonly) NSURL *preViewURL;
 @property (readonly) NSURL *exportURL;
-@property (strong) NSString *downloadingFileOid;
 @property (nonatomic, strong) UIImage *icon;
 //@property (nonatomic, strong) UIImage *thumb;
-@property NSURLSessionDownloadTask *task;
-@property (strong) NSArray *blkids;
-@property int index;
+//@property NSURLSessionDownloadTask *task;
 
 @property (readwrite, nonatomic, copy) SeafThumbCompleteBlock thumbCompleteBlock;
 @property (readwrite, nonatomic, copy) SeafDownloadCompletionBlock fileDidDownloadBlock;
@@ -38,7 +36,6 @@
 @property (nonatomic) TaskCompleteBlock taskCompleteBlock;
 @property (nonatomic) TaskProgressBlock taskProgressBlock;
 @property (strong, nonatomic) SeafThumb *thumbTaskForQueue;
-@property (assign, nonatomic) BOOL isTaskCanceled;
 @property (assign, nonatomic) BOOL isFileEditedAgain; // to set SeafUploadFile shouldShowUploadFailure property
 
 @end
@@ -64,8 +61,8 @@
         self.downloadingFileOid = nil;
         self.task = nil;
         self.retryable = true;
-        self.thumbFailedCount = 0;
-        _isTaskCanceled = false;
+//        self.thumbFailedCount = 0;
+//        _isTaskCanceled = false;
     }
     return self;
 }
@@ -121,6 +118,7 @@
 
 - (NSString *)downloadTempPath:(NSString *)objId
 {
+    objId = self.downloadingFileOid;
     return [SeafStorage.sharedObject.tempDir stringByAppendingPathComponent:objId];
 }
 
@@ -230,6 +228,20 @@
     }
 }
 
+- (void)finishDownloadThumb:(BOOL)success{
+    Debug("finishDownloadThumb: %@ success: %d", self.name, success);
+    if (self.thumbCompleteBlock)
+        self.thumbCompleteBlock(success);
+    _thumbtask = nil;
+    if (success || _icon || self.image) {
+        @weakify(self);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            @strongify(self);
+            [self.delegate download:self complete:false];
+        });
+    }
+}
+
 /*
  curl -D a.txt -H 'Cookie:sessionid=7eb567868b5df5b22b2ba2440854589c' http://127.0.0.1:8000/api/file/640fd90d-ef4e-490d-be1c-b34c24040da7/8dd0a3be9289aea6795c1203351691fcc1373fbb/
 
@@ -329,7 +341,7 @@
         if (_thumbtask) return;
         if (self.thumb) return [self finishDownloadThumb:true completeBlock:completeBlock];
         @weakify(self);
-        self.isTaskCanceled = false;
+//        self.isTaskCanceled = false;
         _thumbtask = [connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:nil destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
             return [NSURL fileURLWithPath:[target stringByAppendingPathExtension:@"tmp"]];
         } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
@@ -337,22 +349,22 @@
             if (error) {
                 if (error.code == NSURLErrorCancelled) {
                     Debug(@"Task was cancelled %@", self.name);
-                } else if (self.isTaskCanceled){
-                    self.isTaskCanceled = false;
-                    Debug(@"task is canceled %@,with error", self.name);
+//                } else if (self.isTaskCanceled){
+//                    self.isTaskCanceled = false;
+//                    Debug(@"task is canceled %@,with error", self.name);
                 } else {
-                    self.thumbFailedCount++;
+//                    self.thumbFailedCount++;
                     Debug("Failed to download thumb %@, error=%@", self.name, error.localizedDescription);
                 }
                 [self finishDownloadThumb:NO completeBlock:completeBlock];
             } else {
-                self.thumbFailedCount = 0;
-                if (self.isTaskCanceled){
-                    self.isTaskCanceled = false;
-                    Debug(@"task is canceled %@", self.name);
-                    [self finishDownloadThumb:NO completeBlock:completeBlock];
-                    return;
-                }
+//                self.thumbFailedCount = 0;
+//                if (self.isTaskCanceled){
+//                    self.isTaskCanceled = false;
+//                    Debug(@"task is canceled %@", self.name);
+//                    [self finishDownloadThumb:NO completeBlock:completeBlock];
+//                    return;
+//                }
                 if (![filePath.path isEqualToString:target]) {
                     [Utils removeFile:target];
                     [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
@@ -950,7 +962,7 @@
         [udir addUploadFile:self.ufile];
     }
     Debug("Update file %@, to %@", self.ufile.lpath, self.ufile.udir.path);
-    [SeafDataTaskManager.sharedObject addUploadTask:self.ufile];
+    [SeafDataTaskManager.sharedObject addUploadTask:self.ufile priority:NSOperationQueuePriorityHigh];
 }
 
 - (void)deleteCache
@@ -977,9 +989,9 @@
     if (self.thumbTaskForQueue){
         [SeafDataTaskManager.sharedObject removeThumbTaskFromAccountQueue:self.thumbTaskForQueue];
         self.thumbTaskForQueue = nil;
-        self.isTaskCanceled = true;
+//        self.isTaskCanceled = true;
     }
-    [self cancelThumb];
+//    [self cancelThumb];
 }
 
 - (void)cancelAnyLoading
@@ -1002,6 +1014,15 @@
 - (void)uploadComplete:(BOOL)success file:(SeafUploadFile *)file oid:(NSString *)oid
 {
     Debug("%@ file %@ upload success oid: %@, %@", self, self.name, oid, self.udelegate);
+
+    if (self.uploadCompletionBlock != nil) {
+        NSError *error = nil;
+        if (!success) {
+            error = [[NSError alloc] initWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorServerUnreachable userInfo:nil];
+        }
+        self.uploadCompletionBlock(file, oid, error);
+    }
+    
     id<SeafFileUpdateDelegate> dg = self.udelegate;
     if (!success) {
         return [dg updateComplete:self result:false];
@@ -1051,10 +1072,28 @@
         if (self.fileDidDownloadBlock) {
             self.fileDidDownloadBlock(self, nil);
         }
+//        [self removeFileTaskInStorage:self];
+
         if (self.taskCompleteBlock) {
             self.taskCompleteBlock(self, true);
+        } else {
+            [self removeFileTaskInStorage:self];
         }
     });
+}
+
+//remove retryable信息
+- (void)removeFileTaskInStorage:(SeafFile *)file {
+    NSString *key = [self downloadStorageKey:file.accountIdentifier];
+    @synchronized(self) {
+        NSMutableDictionary *taskStorage = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:key]];
+        [taskStorage removeObjectForKey:file.uniqueKey];
+        [SeafStorage.sharedObject setObject:taskStorage forKey:key];
+    }
+}
+
+- (NSString*)downloadStorageKey:(NSString*)accountIdentifier {
+   return [NSString stringWithFormat:@"%@/%@",KEY_DOWNLOAD,accountIdentifier];
 }
 
 - (void)downloadFailed:(NSError *)error
@@ -1062,6 +1101,9 @@
     NSError *err = error ? error : [Utils defaultError];
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.delegate download:self failed:err];
+        
+        self.state = SEAF_DENTRY_FAILURE;
+        
         if (self.fileDidDownloadBlock) {
             self.fileDidDownloadBlock(self, err);
         }
@@ -1073,10 +1115,16 @@
 
 - (void)downloadProgress:(float)progress
 {
+    float percent = 0;
+    if (self.blkids) {
+        percent = (progress + self.index) *1.0f/self.blkids.count;
+    } else {
+        percent = progress;
+    }
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self.delegate download:self progress:progress];
+        [self.delegate download:self progress:percent];
         if (self.taskProgressBlock) {
-            self.taskProgressBlock(self, progress);
+            self.taskProgressBlock(self, percent);
         }
     });
 }

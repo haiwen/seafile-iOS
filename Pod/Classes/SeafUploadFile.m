@@ -30,15 +30,7 @@
 @property (readonly) NSString *mime;
 @property (strong, readonly) NSURL *preViewURL;
 @property (strong) NSURLSessionUploadTask *task;
-@property (strong) NSProgress *progress;
 
-@property (strong) NSArray *missingblocks;
-@property (strong) NSArray *allblocks;
-@property (strong) NSString *commiturl;
-@property (strong) NSString *rawblksurl;
-@property (strong) NSString *uploadpath;
-@property (nonatomic, strong) NSString *blockDir;
-@property long blkidx;
 
 @property dispatch_semaphore_t semaphore;
 @property (nonatomic) TaskCompleteBlock taskCompleteBlock;
@@ -198,6 +190,8 @@
     if (!err && !result) {
         err = [Utils defaultError];
     }
+    
+    self.lastFinishTimestamp = [[NSDate new] timeIntervalSince1970];
     NSString *fOid = oid;
     
     Debug("result=%d, name=%@, delegate=%@, oid=%@, err=%@\n", result, self.name, _delegate, fOid, err);
@@ -301,6 +295,17 @@
 {
     if (![keyPath isEqualToString:@"fractionCompleted"] || ![object isKindOfClass:[NSProgress class]]) return;
     NSProgress *progress = (NSProgress *)object;
+    float fraction = 0;
+    if (_rawblksurl) {
+        fraction = 1.0f*(progress.fractionCompleted + _blkidx)/self.missingblocks.count;
+    } else {
+        fraction = progress.fractionCompleted;
+    }
+    _uProgress = fraction;
+    [self uploadProgress:fraction];
+}
+
+-(void)updateProgressWithoutKVO:(NSProgress *)progress {
     float fraction = 0;
     if (_rawblksurl) {
         fraction = 1.0f*(progress.fractionCompleted + _blkidx)/self.missingblocks.count;
@@ -580,6 +585,159 @@
         Debug("asset file %@ size: %lld, lpath: %@", _asset.localIdentifier, _filesize, self.lpath);
     }
 }
+
+- (void)checkAssetWithCompletion:(void (^)(BOOL success, NSError *error))completion {
+    if (_asset) {
+        @synchronized(self) {
+            if (![Utils checkMakeDir:[self.lpath stringByDeletingLastPathComponent]]) {
+                [self finishUpload:false oid:nil error:nil];
+                if (completion) {
+                    completion(NO, nil); // failed
+                }
+                return;
+            }
+            if (_asset.mediaType == PHAssetMediaTypeVideo) {
+                [self getVideoForAssetWithCompletion:^(BOOL success, NSError *error) {
+                    if (success) {
+                        Debug("asset file %@ size: %lld, lpath: %@", self->_asset.localIdentifier, self->_filesize, self.lpath);
+                    }
+                    if (completion) {
+                        completion(success, error);
+                    }
+                }];
+            } else if (_asset.mediaType == PHAssetMediaTypeImage) {
+                [self getImageDataForAssetWithCompletion:^(BOOL success, NSError *error) {
+                    if (success) {
+                        Debug("asset file %@ size: %lld, lpath: %@", self->_asset.localIdentifier, self->_filesize, self.lpath);
+                    }
+                    if (completion) {
+                        completion(success, error);
+                    }
+                }];
+            } else {
+                if (completion) {
+                    completion(NO, nil); // failed
+                }
+            }
+        }
+    } else {
+        if (completion) {
+            completion(NO, nil); // failed
+        }
+    }
+}
+
+- (void)getVideoForAssetWithCompletion:(void (^)(BOOL success, NSError *error))completion {
+    PHVideoRequestOptions *options = [PHVideoRequestOptions new];
+    options.networkAccessAllowed = YES;
+    options.version = PHVideoRequestOptionsVersionOriginal;
+    options.progressHandler = ^(double progress, NSError * _Nullable error, BOOL * _Nonnull stop, NSDictionary * _Nullable info) {
+        if (error) {
+            Debug("Failed to get video: %@", error);
+            [self finishUpload:false oid:nil error:error];
+            if (completion) {
+                completion(NO, error);
+            }
+            *stop = YES;
+        }
+    };
+    
+    [[PHImageManager defaultManager] requestAVAssetForVideo:_asset options:options resultHandler:^(AVAsset * _Nullable asset, AVAudioMix * _Nullable audioMix, NSDictionary * _Nullable info) {
+        if ([asset isKindOfClass:[AVURLAsset class]]) {
+            [Utils checkMakeDir:[self.lpath stringByDeletingLastPathComponent]];
+            BOOL result = [Utils copyFile:[(AVURLAsset *)asset URL] to:[NSURL fileURLWithPath:self.lpath]];
+            if (!result) {
+                [self finishUpload:false oid:nil error:nil];
+                if (completion) {
+                    completion(NO, nil); // 或者传入适当的错误信息
+                }
+                return;
+            }
+        } else {
+            [self finishUpload:false oid:nil error:nil];
+            if (completion) {
+                completion(NO, nil); // 或者传入适当的错误信息
+            }
+            return;
+        }
+        self->_filesize = [Utils fileSizeAtPath1:self.lpath];
+        self->_asset = nil;
+        if (completion) {
+            completion(YES, nil);
+        }
+    }];
+}
+
+- (void)getImageDataForAssetWithCompletion:(void (^)(BOOL success, NSError *error))completion {
+    PHAssetResource *resource = nil;
+    NSArray<PHAssetResource *> *resources = [PHAssetResource assetResourcesForAsset:self.asset];
+
+    // 优先选择原始图像资源
+    for (PHAssetResource *res in resources) {
+        if (res.type == PHAssetResourceTypePhoto || res.type == PHAssetResourceTypeFullSizePhoto) {
+            resource = res;
+            break;
+        }
+    }
+    if (!resource) {
+        resource = resources.firstObject;
+    }
+
+    NSString *filePath = self.lpath;
+    NSOutputStream *stream = [NSOutputStream outputStreamToFileAtPath:filePath append:NO];
+    [stream open];
+
+    PHAssetResourceRequestOptions *options = [[PHAssetResourceRequestOptions alloc] init];
+    options.networkAccessAllowed = YES; // 允许从 iCloud 下载
+
+    [[PHAssetResourceManager defaultManager] requestDataForAssetResource:resource options:options dataReceivedHandler:^(NSData * _Nonnull data) {
+        @autoreleasepool {
+            [stream write:data.bytes maxLength:data.length];
+        }
+    } completionHandler:^(NSError * _Nullable error) {
+        [stream close];
+        if (error) {
+            [self finishUpload:false oid:nil error:error];
+            if (completion) {
+                completion(NO, error);
+            }
+        } else {
+            // 检查是否需要格式转换
+            NSURL *sourceURL = [NSURL fileURLWithPath:self.lpath];
+            NSString *fileExtension = sourceURL.pathExtension.lowercaseString;
+            
+            if (![self uploadHeic] && [fileExtension isEqualToString:@"heic"]) { // 如果未开启允许上传 HEIC
+                // 需要转换为 JPEG
+                NSString *destinationPath = [[self.lpath stringByDeletingPathExtension] stringByAppendingPathExtension:@"jpg"];
+                NSURL *destinationURL = [NSURL fileURLWithPath:destinationPath];
+
+                if ([self convertHEICToJPEGAtURL:sourceURL destinationURL:destinationURL]) {
+                    // 转换成功，更新文件路径和大小
+                    self.lpath = destinationPath;
+                    self->_filesize = [Utils fileSizeAtPath1:self.lpath];
+                    // 删除原始 HEIC 文件
+                    [[NSFileManager defaultManager] removeItemAtURL:sourceURL error:nil];
+                    if (completion) {
+                        completion(YES, nil);
+                    }
+                } else {
+                    // 转换失败，处理错误
+                    [self finishUpload:false oid:nil error:nil];
+                    if (completion) {
+                        completion(NO, nil); // 或者传入适当的错误信息
+                    }
+                }
+            } else {
+                // 不需要转换，继续
+                self->_filesize = [Utils fileSizeAtPath1:self.lpath];
+                if (completion) {
+                    completion(YES, nil);
+                }
+            }
+        }
+    }];
+}
+
 
 - (BOOL)getImageDataForAsset {
     PHAssetResource *resource = nil;
@@ -1004,12 +1162,23 @@
 - (void)uploadComplete:(NSString *)oid error:(NSError *)error
 {
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (self.completionBlock) {
+        if (self.completionBlock) {//看起来可以删掉
             self.completionBlock(self, oid, error);
         }
-        if (self.taskCompleteBlock) {
-            self.taskCompleteBlock(self, !error);
+//        if (self.taskCompleteBlock) {
+//            self.taskCompleteBlock(self, !error);
+//        }
+        
+        //原来SeafDataTask finishBlock逻辑在这里
+        if (!error) {
+            if (self.retryable) { // Do not remove now, will remove it next time
+                [self saveUploadFileToTaskStorage:self];
+            }
+        } else if (!self.retryable) {
+            // Remove upload file local cache
+            [self cleanup];
         }
+        
         [self.delegate uploadComplete:!error file:self oid:oid];
         if (self.staredFileDelegate) {
             [self.staredFileDelegate uploadComplete:!error file:self oid:oid];
@@ -1017,6 +1186,20 @@
     });
 
     dispatch_semaphore_signal(_semaphore);
+}
+
+- (void)saveUploadFileToTaskStorage:(SeafUploadFile *)ufile {
+    NSString *key = [self uploadStorageKey:ufile.accountIdentifier];
+    NSDictionary *dict = [SeafDataTaskManager.sharedObject convertTaskToDict:ufile];
+    @synchronized(self) {
+        NSMutableDictionary *taskStorage = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:key]];
+        [taskStorage setObject:dict forKey:ufile.lpath];
+        [SeafStorage.sharedObject setObject:taskStorage forKey:key];
+    }
+}
+
+- (NSString*)uploadStorageKey:(NSString*)accountIdentifier {
+     return [NSString stringWithFormat:@"%@/%@",KEY_UPLOAD,accountIdentifier];
 }
 
 - (UIImage *)previewImage {
@@ -1045,6 +1228,38 @@
         _requestOptions.synchronous = NO;
     }
     return _requestOptions;
+}
+
+- (void)prepareForUploadWithCompletion:(void (^)(BOOL success, NSError *error))completion {
+    [self checkAssetWithCompletion:^(BOOL success, NSError *error) {
+        // 检查文件是否存在于本地路径
+        if (![[NSFileManager defaultManager] fileExistsAtPath:self.lpath]) {
+            NSError *fileNotExistError = [NSError errorWithDomain:@"SeafUploadFile"
+                                                             code:-1
+                                                         userInfo:@{NSLocalizedDescriptionKey: @"File does not exist at the specified path"}];
+            if (completion) {
+                completion(NO, fileNotExistError);
+            }
+            return;
+        }
+        
+        // 获取文件属性
+        NSError *fileAttributesError = nil;
+        NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:self.lpath error:&fileAttributesError];
+        if (fileAttributesError) {
+            if (completion) {
+                completion(NO, fileAttributesError);
+            }
+            return;
+        }
+        
+        self.filesize = [attrs fileSize];
+                
+        // 调用 completion 块并传递成功
+        if (completion) {
+            completion(YES, nil);
+        }
+    }];
 }
 
 @end

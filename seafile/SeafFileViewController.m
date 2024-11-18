@@ -37,6 +37,7 @@
 #import "SeafSearchResultViewController.h"
 #import "UISearchBar+SeafExtend.h"
 #import "UIImage+FileType.h"
+#import "SeafUploadOperation.h"
 
 enum {
     STATE_INIT = 0,
@@ -335,12 +336,15 @@ enum {
     if (IsIpad() && self.detailViewController.preViewItem) {
         [self checkPreviewFileExist];
     }
-    if (self.editing) {
-        if (![self.tableView indexPathsForSelectedRows])
-            [self noneSelected:YES];
-        else
-            [self noneSelected:NO];
-    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (self.editing) {
+            if (![self.tableView indexPathsForSelectedRows])
+                [self noneSelected:YES];
+            else
+                [self noneSelected:NO];
+        }
+    });
+
     if ([_directory isKindOfClass:[SeafRepos class]]) {
         SeafRepos *root = (SeafRepos*)_directory;
         NSMutableArray *tempArray = [NSMutableArray array];
@@ -476,20 +480,22 @@ enum {
 // Initializes the navigation items based on the directory type and editability
 - (void)initNavigationItems:(SeafDir *)directory
 {
-    if (![directory isKindOfClass:[SeafRepos class]] && directory.editable) {
-        self.photoItem = [self getBarItem:@"plus2" action:@selector(addPhotos:)size:20];
-        self.doneItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(editDone:)];
-        self.editItem = [self getBarItemAutoSize:@"ellipsis2" action:@selector(editSheet:)];
-        UIBarButtonItem *space = [self getSpaceBarItem:16.0];
-        self.rightItems = [NSArray arrayWithObjects: self.editItem, space, self.photoItem, nil];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (![directory isKindOfClass:[SeafRepos class]] && directory.editable) {
+            self.photoItem = [self getBarItem:@"plus2" action:@selector(addPhotos:)size:20];
+            self.doneItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(editDone:)];
+            self.editItem = [self getBarItemAutoSize:@"ellipsis2" action:@selector(editSheet:)];
+            UIBarButtonItem *space = [self getSpaceBarItem:16.0];
+            self.rightItems = [NSArray arrayWithObjects: self.editItem, space, self.photoItem, nil];
 
-        _selectAllItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Select All", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(selectAll:)];
-        _selectNoneItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Select None", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(selectNone:)];
-    } else {
-        self.editItem = [self getBarItemAutoSize:@"ellipsis2" action:@selector(editSheet:)];
-        self.rightItems = [NSArray arrayWithObjects: self.editItem, nil];
-    }
-    self.navigationItem.rightBarButtonItems = self.rightItems;
+            _selectAllItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Select All", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(selectAll:)];
+            _selectNoneItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Select None", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(selectNone:)];
+        } else {
+            self.editItem = [self getBarItemAutoSize:@"ellipsis2" action:@selector(editSheet:)];
+            self.rightItems = [NSArray arrayWithObjects: self.editItem, nil];
+        }
+        self.navigationItem.rightBarButtonItems = self.rightItems;
+    });
 }
 
 - (SeafDir *)directory
@@ -631,7 +637,6 @@ enum {
     SeafCell *cell = [self getCellForTableView:tableView];
     cell.textLabel.text = file.name;
     cell.cellIndexPath = indexPath;
-//    cell.imageView.image = file.icon;
     cell.imageView.image = [UIImage imageForMimeType:file.mime ext:file.name.pathExtension.lowercaseString];
     [file iconWithCompletion:^(UIImage *image) {
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -696,7 +701,6 @@ enum {
 {
     cell.textLabel.text = sfile.name;
     cell.detailTextLabel.text = sfile.detailText;
-//    cell.imageView.image = sfile.icon;
     [self loadImageForCell:cell withFile:sfile];
     cell.badgeLabel.text = nil;
     cell.moreButton.hidden = NO;
@@ -712,14 +716,10 @@ enum {
     // Asynchronously load cached images,Not currently in use
 //    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
     UIImage *image = sFile.icon;
-
-    //        dispatch_async(dispatch_get_main_queue(), ^{
     //  Check if the current cell is still the cell corresponding to the current indexPath
     if ([cell.imageLoadIdentifier isEqualToString:currentIndexPath]) {
         cell.imageView.image = image;
     }
-//        });
-//    });
 }
 
 // Configures and returns a cell for a file
@@ -1171,7 +1171,8 @@ enum {
 
 - (BOOL)checkIsEditedFileUploading:(SeafDir *)entry {
     SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self->_connection];
-    NSArray *allUpLoadTasks = accountQueue.uploadQueue.allTasks;
+    NSArray *allUpLoadTasks = [accountQueue getNeedUploadTasks];
+    
     BOOL hasEditedFile = false;
     if (allUpLoadTasks.count > 0) {//if have uploadTask
         NSPredicate *nonNilPredicate = [NSPredicate predicateWithFormat:@"editedFileOid != nil"];
@@ -1493,6 +1494,7 @@ enum {
                 [file loadCache];
                 NSString *path = file.cachePath;
                 if (!path) {
+                    file.state = SEAF_DENTRY_INIT;
                     [file setFileDownloadedBlock:block];
                     [SeafDataTaskManager.sharedObject addFileDownloadTask:file];
                 } else {
@@ -1797,9 +1799,10 @@ enum {
     }
     
     [self reloadTable];
-    for (SeafUploadFile *file in files) {
-        [SeafDataTaskManager.sharedObject addUploadTask:file];
-    }
+    
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        [SeafDataTaskManager.sharedObject addUploadTasksInBatch:files forConnection:self.connection];
+    });
 }
 
 // Handles the cancellation of the image picker
@@ -2117,8 +2120,6 @@ enum {
         self.searchController.searchBar.backgroundColor = [UIColor clearColor];
         [_searchController.searchBar sizeToFit];
         
-//        barImageView.backgroundColor = [UIColor clearColor];
-//        barImageView.layer.borderWidth = 1;
         self.definesPresentationContext = YES;
     }
     return _searchController;

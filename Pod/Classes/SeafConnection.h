@@ -11,6 +11,7 @@
 #import "SeafCacheProvider.h"
 #import "SeafBase.h"
 #import "SeafPhotoBackupTool.h"
+#import "ExtentedString.h"
 @class SeafFile;
 
 #define HTTP_ERR_UNAUTHORIZED                    401
@@ -183,7 +184,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
  * @param success A block that is called if the request is successful, returning the request, response, and JSON data.
  * @param failure A block that is called if the request fails, returning the request, response, optional JSON data, and an error.
  */
-- (void)sendRequest:(NSString * _Nonnull)url
+- (NSURLSessionDataTask *_Nullable)sendRequest:(NSString * _Nonnull)url
             success:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nonnull response, id _Nonnull JSON))success
             failure:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nullable response, id _Nullable JSON, NSError * _Nullable error))failure;
 
@@ -215,7 +216,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
  @param success A block to execute if the request succeeds.
  @param failure A block to execute if the request fails.
  */
-- (void)sendPost:(NSString * _Nonnull)url form:(NSString * _Nullable)form
+- (NSURLSessionDataTask *_Nullable)sendPost:(NSString * _Nonnull)url form:(NSString * _Nullable)form
          success:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nonnull response, id _Nonnull JSON))success
          failure:(void (^_Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nullable response, id _Nullable JSON, NSError * _Nullable error))failure;
 
