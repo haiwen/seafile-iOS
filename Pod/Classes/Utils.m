@@ -17,6 +17,7 @@
 #import <sys/xattr.h>
 #import <Photos/Photos.h>
 #import <MobileCoreServices/MobileCoreServices.h>
+#import <SystemConfiguration/SystemConfiguration.h>
 
 @implementation Utils
 
@@ -809,4 +810,26 @@
     return defaultTextColor;
 }
 
++ (NSDictionary *)checkNetworkReachability {
+    SCNetworkReachabilityFlags flags;
+    SCNetworkReachabilityRef reachability = SCNetworkReachabilityCreateWithName(NULL, "www.apple.com");
+    BOOL isReachable = NO;
+    BOOL isWiFiReachable = NO;
+
+    if (SCNetworkReachabilityGetFlags(reachability, &flags)) {
+        isReachable = (flags & kSCNetworkReachabilityFlagsReachable) != 0 &&
+                      (flags & kSCNetworkReachabilityFlagsConnectionRequired) == 0;
+        
+        BOOL isWWAN = (flags & kSCNetworkReachabilityFlagsIsWWAN) != 0;
+        isWiFiReachable = isReachable && !isWWAN;
+    }
+    if (reachability) {
+        CFRelease(reachability);
+    }
+
+    return @{
+        @"isReachable": @(isReachable),
+        @"isWiFiReachable": @(isWiFiReachable)
+    };
+}
 @end

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>public.jpeg</key>
+	<string>JPG</string>
+	<key>public.png</key>
+	<string>PNG</string>
+	<key>public.gif</key>
+	<string>GIF</string>
+	<key>public.tiff</key>
+	<string>TIF</string>
+	<key>com.compuserve.gif</key>
+	<string>GIF</string>
+	<key>com.microsoft.bmp</key>
+	<string>BMP</string>
+</dict>
+</plist>

@@ -12,4 +12,5 @@
 
 + (NSString *)mimeType:(NSString *)fileName;
 
++ (NSString *)fileExtensionForUTI:(NSString *)dataUTI;
 @end

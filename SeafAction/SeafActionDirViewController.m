@@ -15,6 +15,7 @@
 #import "SeafUploadFile.h"
 #import "SeafGlobal.h"
 #import "SeafFile.h"
+#import "SeafDataTaskManager.h"
 
 @interface SeafActionDirViewController()<SeafDentryDelegate, SeafUploadDelegate>
 @property (strong, nonatomic) SeafDir *directory;

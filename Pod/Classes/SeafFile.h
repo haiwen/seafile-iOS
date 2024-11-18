@@ -75,15 +75,25 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 @property (nonatomic, readonly, getter=isUploaded) BOOL uploaded;///< Whether the file is uploaded.
 @property (nonatomic, readonly, getter=isUploading) BOOL uploading;///< Whether the file is currently uploading.
 @property (copy, nonatomic) NSString * _Nullable thumbnailURLStr;//image thumbnail Url String
-@property (nonatomic, assign) NSInteger thumbFailedCount;//download thumb failure count
+//@property (nonatomic, assign) NSInteger thumbFailedCount;//download thumb failure count
 @property (nonatomic, copy) NSURLSessionDownloadTask * _Nullable thumbtask;
 @property (strong, nonatomic) SeafUploadFile * _Nullable ufile;
+@property (assign, nonatomic) BOOL isDownloading;// Checks if the file is currently being downloaded.
+@property (assign, nonatomic) BOOL downloaded;// Checks if the file is downloaded.
 
-/**
- * Checks if the file is currently being downloaded.
- * @return YES if the file is downloading, otherwise NO.
- */
-- (BOOL)isDownloading;
+@property (strong) NSString * _Nullable downloadingFileOid;
+@property NSURLSessionDownloadTask * _Nullable task;
+@property (strong) NSArray *blkids;
+@property int index;
+
+//@property (assign, nonatomic) BOOL isTaskCanceled;
+
+
+///**
+// * Checks if the file is currently being downloaded.
+// * @return YES if the file is downloading, otherwise NO.
+// */
+//- (BOOL)isDownloading;
 
 /**
  * Checks if the file is starred.
@@ -178,5 +188,19 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 - (NSString *_Nullable)starredDetailText;
 
 - (void)getImageWithCompletion:(void (^_Nullable)(UIImage * _Nullable image))completion;
+
+- (NSString *_Nullable)downloadTempPath:(NSString *_Nullable)objId;
+
+- (void)downloadProgress:(float)progress;
+
+- (void)finishDownload:(NSString *_Nullable)ooid;
+
+- (void)failedDownload:(NSError *_Nullable)error;
+
+- (void)downloadBlocks;
+
+- (void)finishDownloadThumb:(BOOL)success;
+
+- (void)removeBlock:(NSString *)blkId;
 
 @end

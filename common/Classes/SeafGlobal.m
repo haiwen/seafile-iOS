@@ -284,7 +284,7 @@ static NSError * NewNSErrorFromException(NSException * exc) {
             lastUpdate = cur;
             for (SeafConnection *conn in self.conns) {
                 [conn refreshRepoPasswords];
-                [conn photosDidChange:nil];
+//                [conn photosDidChange:nil];
             }
         }
     }
