@@ -39,7 +39,7 @@ Add the following line to your Podfile.
 Internationalization (I18n)
 ==========
 
-Please submit translations via Transifex: [https://www.transifex.com/projects/p/seafile-ios/](https://www.transifex.com/projects/p/seafile-ios/)
+Please submit translations via Transifex: [https://app.transifex.com/haiwen/seafile-ios/](https://app.transifex.com/haiwen/seafile-ios/)
 
 Steps:
 
