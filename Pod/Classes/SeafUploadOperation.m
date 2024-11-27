@@ -30,11 +30,6 @@
 //@property (nonatomic, strong) NSString *blockDir;
 //@property long blkidx;
 
-@property (nonatomic, strong) NSMutableArray<NSURLSessionTask *> *taskList;
-@property (nonatomic, assign) BOOL operationCompleted;
-
-
-
 @end
 
 @implementation SeafUploadOperation
@@ -45,45 +40,19 @@
 - (instancetype)initWithUploadFile:(SeafUploadFile *)uploadFile
 {
     if (self = [super init]) {
-        _taskList = [[NSMutableArray alloc] init];
         _uploadFile = uploadFile;
-        _executing = NO;
-        _finished = NO;
         
-        _observersRemoved = NO;
+        self.retryDelay = UPLOAD_RETRY_DELAY;
+        self.maxRetryCount = uploadFile.retryable ? DEFAULT_RETRYCOUNT : 0;
     }
     return self;
 }
 
 #pragma mark - NSOperation Overrides
 
-- (BOOL)isAsynchronous
-{
-    return YES;
-}
-
-- (BOOL)isExecuting
-{
-    return _executing;
-}
-
-- (BOOL)isFinished
-{
-    return _finished;
-}
-
 - (void)start
 {
-    [self.taskList removeAllObjects];
-    
-    if (self.isCancelled) {
-        [self completeOperation];
-        return;
-    }
-
-    [self willChangeValueForKey:@"isExecuting"];
-    _executing = YES;
-    [self didChangeValueForKey:@"isExecuting"];
+    [super start];
 
     // Begin the upload process
     [self.uploadFile prepareForUploadWithCompletion:^(BOOL success, NSError *error) {
@@ -100,9 +69,9 @@
 {
     [super cancel];
     
-    [self cancelAllRequests];
+//    [self cancelAllRequests];
     
-    if (self.isExecuting && !_operationCompleted) {
+    if (self.isExecuting && !self.operationCompleted) {
         // create cancel NSError
         NSError *cancelError = [NSError errorWithDomain:NSURLErrorDomain
                                                        code:NSURLErrorCancelled
@@ -112,14 +81,16 @@
         [self completeOperation];
     }
 }
-
-- (void)cancelAllRequests
-{
-    for (NSURLSessionTask *task in self.taskList) {
-        [task cancel];
-    }
-    [self.taskList removeAllObjects];
-}
+//
+//- (void)cancelAllRequests
+//{
+//    @synchronized (self.taskList) {
+//        for (NSURLSessionTask *task in self.taskList) {
+//            [task cancel];
+//        }
+//        [self.taskList removeAllObjects];
+//    }
+//}
 
 #pragma mark - Upload Logic
 
@@ -144,34 +115,34 @@
         [self finishUpload:NO oid:nil error:[Utils defaultError]];
         return;
     }
-
+    
     SeafRepo *repo = [connection getRepo:repoId];
     if (!repo) {
         Warning("Repo %@ does not exist", repoId);
         [self finishUpload:NO oid:nil error:[Utils defaultError]];
         return;
     }
-
+    
     self.uploadFile.uploading = YES;
-
+    
     NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:self.uploadFile.lpath error:nil];
     self.uploadFile.filesize = attrs.fileSize;
-
+    
     if (self.uploadFile.filesize > LARGE_FILE_SIZE) {
         Debug("Upload large file %@ by block: %lld", self.uploadFile.name, self.uploadFile.filesize);
         [self uploadLargeFileByBlocks:repo path:uploadpath];
         return;
     }
-
+    
     BOOL byblock = [connection shouldLocalDecrypt:repo.repoId];
     if (byblock) {
         Debug("Upload with local decryption %@ by block: %lld", self.uploadFile.name, self.uploadFile.filesize);
         [self uploadLargeFileByBlocks:repo path:uploadpath];
         return;
     }
-
+    
     NSString *uploadURL = [NSString stringWithFormat:API_URL"/repos/%@/upload-link/?p=%@", repoId, uploadpath.escapedUrl];
-
+    
     __weak typeof(self) weakSelf = self;
     NSURLSessionDataTask *connectUploadLinkTask = [connection sendRequest:uploadURL success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
@@ -182,7 +153,9 @@
         [strongSelf finishUpload:NO oid:nil error:error];
     }];
     
-    [self.taskList addObject:connectUploadLinkTask];
+    @synchronized (self.taskList) {
+        [self.taskList addObject:connectUploadLinkTask];
+    }
 }
 
 - (void)uploadLargeFileByBlocks:(SeafRepo *)repo path:(NSString *)uploadpath
@@ -210,7 +183,9 @@
         [self finishUpload:NO oid:nil error:error];
     }];
     
-    [self.taskList addObject:sendBlockInfoTask];
+    @synchronized (self.taskList) {
+        [self.taskList addObject:sendBlockInfoTask];
+    }
 }
 
 - (void)uploadRawBlocks:(SeafConnection *)connection
@@ -221,7 +196,7 @@
         [self uploadBlocksCommit:connection];
         return;
     }
-
+    
     NSArray *arr = [self.uploadFile.missingblocks subarrayWithRange:NSMakeRange(self.uploadFile.blkidx, count)];
     NSMutableURLRequest *request = [[SeafConnection requestSerializer] multipartFormRequestWithMethod:@"POST" URLString:self.uploadFile.rawblksurl parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
         [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
@@ -230,7 +205,7 @@
             [formData appendPartWithFileURL:[NSURL fileURLWithPath:blockpath] name:@"file" error:nil];
         }
     } error:nil];
-
+    
     __weak __typeof__ (self) wself = self;
     NSURLSessionUploadTask *blockDataUploadTask = [connection.sessionMgr uploadTaskWithStreamedRequest:request progress:^(NSProgress * _Nonnull uploadProgress) {
         __strong __typeof (wself) sself = wself;
@@ -251,7 +226,9 @@
     
     [blockDataUploadTask resume];
     
-    [self.taskList addObject:blockDataUploadTask];
+    @synchronized (self.taskList) {
+        [self.taskList addObject:blockDataUploadTask];
+    }
 }
 
 -(void)showDeserializedError:(NSError *)error
@@ -318,7 +295,9 @@
     }];
     [blockCompleteTask resume];
     
-    [self.taskList addObject:blockCompleteTask];
+    @synchronized (self.taskList) {
+        [self.taskList addObject:blockCompleteTask];
+    }
 }
 
 - (NSString *)uploadFileName {
@@ -379,7 +358,7 @@
         [self finishUpload:NO oid:nil error:nil];
         return;
     }
-
+    
     __weak typeof(self) weakSelf = self;
     NSURLSessionUploadTask *uploadByFileTask = [connection.sessionMgr uploadTaskWithStreamedRequest:request progress:^(NSProgress * _Nonnull uploadProgress) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
@@ -399,92 +378,83 @@
             [strongSelf finishUpload:YES oid:oid error:nil];
         }
     }];
-
+    
     [uploadByFileTask resume];
     
-    [self.taskList addObject:uploadByFileTask];
+    @synchronized (self.taskList) {
+        [self.taskList addObject:uploadByFileTask];
+    }
 }
-
-//- (void)updateProgress:(NSProgress *)progress
-//{
-//    if (_progress) {
-//        [_progress removeObserver:self
-//                       forKeyPath:@"fractionCompleted"
-//                          context:NULL];
-//    }
-//
-//    _progress = progress;
-//    if (progress) {
-//        [_progress addObserver:self
-//                    forKeyPath:@"fractionCompleted"
-//                       options:NSKeyValueObservingOptionNew
-//                       context:NULL];
-//    }
-//}
-
-//- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
-//{
-//    if (![keyPath isEqualToString:@"fractionCompleted"] || ![object isKindOfClass:[NSProgress class]]) return;
-//    NSProgress *progress = (NSProgress *)object;
-//    float fraction = progress.fractionCompleted;
-//    dispatch_async(dispatch_get_main_queue(), ^{
-//        if (self.uploadFile.delegate && [self.uploadFile.delegate respondsToSelector:@selector(uploadProgress:progress:)]) {
-//            [self.uploadFile.delegate uploadProgress:self.uploadFile progress:fraction];
-//        }
-//    });
-//}
 
 //after upload
-- (void)finishUpload:(BOOL)result oid:(NSString *)oid error:(NSError *)error
-{
-    [self.uploadFile finishUpload:result oid:oid error:error];
+- (void)finishUpload:(BOOL)result oid:(NSString *)oid error:(NSError *)error {
+//    self.uploadFile.uploading = NO;
+//    self.uploadFile.uploaded = result;
 
-    self.uploadFile.uploading = NO;
-    self.uploadFile.uploaded = result;
-//    [self.uploadFile cleanup];
-
-//    dispatch_async(dispatch_get_main_queue(), ^{
-//        [self.uploadFile.delegate uploadComplete:result file:self.uploadFile oid:oid];
-//    });
-
-    [self completeOperation];
+    if (result) {
+        [self.uploadFile finishUpload:result oid:oid error:error];
+        [self completeOperation];
+    } else {
+        if (self.isCancelled) {
+            [self.uploadFile finishUpload:result oid:oid error:error];
+            [self completeOperation];
+            return;
+        }
+//        if ([self isRetryableError:error] && self.retryCount < self.maxRetryCount) {
+        if (self.retryCount < self.maxRetryCount) {
+            self.retryCount += 1;
+            Debug(@"Upload failed, retrying %ld/%ld in %.0f seconds", (long)self.retryCount, (long)self.maxRetryCount, self.retryDelay);
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.retryDelay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                if (!self.isCancelled) {
+                    [self beginUpload];
+                } else {
+                    [self completeOperation];
+                }
+            });
+        } else {
+            [self.uploadFile finishUpload:result oid:oid error:error];
+            [self completeOperation];
+        }
+    }
 }
+
 
 #pragma mark - Operation State Management
 
-- (void)completeOperation
-{
-    if (_operationCompleted) {
-        return; // 如果已经完成操作，则不再重复执行
-    }
-
-    _operationCompleted = YES;  // 设置标志，表示操作已完成
-
-//    if (self.uploadFile.progress) {
-//        [self.uploadFile.progress removeObserver:self.uploadFile
-//                       forKeyPath:@"fractionCompleted"
-//                          context:NULL];
+//- (void)completeOperation {
+//    __block BOOL alreadyCompleted = NO;
+//
+//    dispatch_sync(_operationQueue, ^{
+//        if (self.operationCompleted) {
+//            alreadyCompleted = YES;
+//        } else {
+//            self.operationCompleted = YES;
+//        }
+//    });
+//
+//    if (alreadyCompleted) {
+//        return; // 如果已经完成，直接返回
 //    }
-    
-    [self willChangeValueForKey:@"isExecuting"];
-    [self willChangeValueForKey:@"isFinished"];
-    _executing = NO;
-    _finished = YES;
-    [self didChangeValueForKey:@"isFinished"];
-    [self didChangeValueForKey:@"isExecuting"];
-}
+//
+//    [self willChangeValueForKey:@"isExecuting"];
+//    [self willChangeValueForKey:@"isFinished"];
+//    _executing = NO;
+//    _finished = YES;
+//    [self didChangeValueForKey:@"isFinished"];
+//    [self didChangeValueForKey:@"isExecuting"];
+//}
 
-- (void)dealloc {
-    if (!self.observersRemoved) {
-        @try {
-            [self removeObserver:self.accountTaskQueue forKeyPath:@"isExecuting"];
-            [self removeObserver:self.accountTaskQueue forKeyPath:@"isFinished"];
-            [self removeObserver:self.accountTaskQueue forKeyPath:@"isCancelled"];
-        } @catch (NSException *exception) {
-            // Handle exception
-        }
-        self.observersRemoved = YES;
-    }
-}
+//- (void)dealloc {
+//    if (!self.observersRemoved) {
+//        @try {
+//            [self removeObserver:self.accountTaskQueue forKeyPath:@"isExecuting"];
+//            [self removeObserver:self.accountTaskQueue forKeyPath:@"isFinished"];
+//            [self removeObserver:self.accountTaskQueue forKeyPath:@"isCancelled"];
+//        } @catch (NSException *exception) {
+//            // Handle exception
+//        }
+//        self.observersRemoved = YES;
+//    }
+//}
 
 @end

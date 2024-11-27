@@ -10,7 +10,6 @@
 #import "SeafUploadOperation.h"
 #import "SeafDownloadOperation.h"
 #import "SeafThumbOperation.h"
-#import "SeafAvatarOperation.h"
 #import "SeafDir.h"
 #import "Debug.h"
 #import "SeafStorage.h"
@@ -46,13 +45,14 @@
 #pragma mark - Upload Tasks
 
 - (BOOL)addUploadTask:(SeafUploadFile *)file {
+    return [self addUploadTask:file priority:NSOperationQueuePriorityNormal];
+}
+
+- (BOOL)addUploadTask:(SeafUploadFile *)file priority:(NSOperationQueuePriority)priority {
     SeafAccountTaskQueue *accountQueue = [self accountQueueForConnection:file.udir->connection];
     BOOL res = [accountQueue addUploadTask:file];
     if (res && file.retryable) {
         [self saveUploadFileToTaskStorage:file];
-    }
-    if (self.trySyncBlock) {
-        self.trySyncBlock(file);
     }
     return res;
 }
@@ -71,18 +71,9 @@
     if (dfile.retryable) {
         [self saveFileToTaskStorage:dfile];
     }
-    if (self.trySyncBlock) {
-        self.trySyncBlock(dfile);
-    }
 }
 
-#pragma mark - Avatar and Thumb Tasks
-
-- (void)addAvatarTask:(SeafAvatar * _Nonnull)avatar
-{
-    SeafAccountTaskQueue *accountQueue = [self accountQueueForConnection:avatar.connection];
-    [accountQueue addAvatarTask:avatar];
-}
+#pragma mark - Thumb Tasks
 
 - (void)addThumbTask:(SeafThumb * _Nonnull)thumb {
     SeafAccountTaskQueue *accountQueue = [self accountQueueForConnection:thumb.file->connection];
@@ -254,22 +245,15 @@
 }
 
 #pragma mark - Canceling Tasks
-
-//- (void)cancelAutoSyncTasks:(SeafConnection *)conn {
-//    SeafAccountTaskQueue *accountQueue = [self accountQueueForConnection:conn];
-//    [accountQueue.uploadQueue cancelAllOperations];
-//}
-
 - (void)cancelAllDownloadTasks:(SeafConnection * _Nonnull)conn {
     SeafAccountTaskQueue *accountQueue = [self accountQueueForConnection:conn];
-//    [accountQueue.downloadQueue cancelAllOperations];
     [accountQueue cancelAllDownloadTasks];
     [self removeAccountDownloadTaskFromStorage:conn.accountIdentifier];
 }
 
+//取消任务并且清除缓存
 - (void)cancelAllUploadTasks:(SeafConnection * _Nonnull)conn {
     SeafAccountTaskQueue *accountQueue = [self accountQueueForConnection:conn];
-//    [accountQueue.uploadQueue cancelAllOperations];
     [accountQueue cancelAllUploadTasks];
     [self removeAccountUploadTaskFromStorage:conn.accountIdentifier];
 }

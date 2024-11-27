@@ -18,86 +18,57 @@
 
 @interface SeafDownloadOperation ()
 
-@property (nonatomic, assign) BOOL executing;
-@property (nonatomic, assign) BOOL finished;
-
-//@property (strong) NSProgress *progress;
-@property (nonatomic, strong) NSMutableArray<NSURLSessionTask *> *taskList;
-@property (nonatomic, assign) BOOL operationCompleted;
-
 @end
 
 @implementation SeafDownloadOperation
 
-@synthesize executing = _executing;
-@synthesize finished = _finished;
-
 - (instancetype)initWithFile:(SeafFile *)file
 {
     if (self = [super init]) {
-        _file = file;
-        _executing = NO;
-        _finished = NO;
-        _taskList = [NSMutableArray array];
+        self.file = file;
+
+        self.retryDelay = 5;
+        self.maxRetryCount = file.retryable ? DEFAULT_RETRYCOUNT : 0;
+        
     }
     return self;
 }
 
 #pragma mark - NSOperation Overrides
-
-- (BOOL)isAsynchronous
-{
-    return YES;
-}
-
-- (BOOL)isExecuting
-{
-    return _executing;
-}
-
-- (BOOL)isFinished
-{
-    return _finished;
-}
-
 - (void)start
 {
-    [self.taskList removeAllObjects];
-    
-    if (self.isCancelled) {
-        [self completeOperation];
-        return;
-    }
-
-    [self willChangeValueForKey:@"isExecuting"];
-    _executing = YES;
-    [self didChangeValueForKey:@"isExecuting"];
+    [super start];
 
     [self beginDownload];
 }
 
-- (void)cancel
-{
-    [super cancel];
-    [self cancelAllRequests];
-    self.file.state = SEAF_DENTRY_FAILURE;
+- (void)cancel {
+    @synchronized (self) {
+//        if (self.isCancelled) {
+//            return;
+//        }
+        [super cancel];
+//        [self cancelAllRequests];
+        self.file.state = SEAF_DENTRY_FAILURE;
 
-    if (self.isExecuting && !_operationCompleted) {
-        NSError *cancelError = [NSError errorWithDomain:NSURLErrorDomain
-                                                   code:NSURLErrorCancelled
-                                               userInfo:@{NSLocalizedDescriptionKey: @"The download task was cancelled."}];
-        [self finishDownload:NO error:cancelError ooid:self.file.ooid];
-        [self completeOperation];
+        if (self.isExecuting && !self.operationCompleted) {
+            NSError *cancelError = [NSError errorWithDomain:NSURLErrorDomain
+                                                       code:NSURLErrorCancelled
+                                                   userInfo:@{NSLocalizedDescriptionKey: @"The download task was cancelled."}];
+            [self finishDownload:NO error:cancelError ooid:self.file.ooid];
+            [self completeOperation];
+        }
     }
 }
 
-- (void)cancelAllRequests
-{
-    for (NSURLSessionTask *task in self.taskList) {
-        [task cancel];
-    }
-    [self.taskList removeAllObjects];
-}
+//- (void)cancelAllRequests {
+//    @synchronized (self.taskList) {
+//        for (NSURLSessionTask *task in self.taskList) {
+//            [task cancel];
+//        }
+//        [self.taskList removeAllObjects];
+//    }
+//}
 
 #pragma mark - Download Logic
 
@@ -158,7 +129,8 @@
         [strongSelf finishDownload:NO error:error ooid:nil];
     }];
     
-    [self.taskList addObject:getDownloadUrlTask];
+    [self addTaskToList:getDownloadUrlTask];
+
 }
 
 - (void)downloadFileWithUrl:(NSString *)url connection:(SeafConnection *)connection
@@ -174,7 +146,10 @@
                                                                                    progress:^(NSProgress * _Nonnull downloadProgress) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) return;
-        [strongSelf updateProgress:downloadProgress];
+        float fraction = downloadProgress.fractionCompleted;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.file downloadProgress:fraction];
+        });
     } destination:^NSURL * _Nonnull(NSURL * _Nonnull targetPath, NSURLResponse * _Nonnull response) {
         return [NSURL fileURLWithPath:[target stringByAppendingPathExtension:@"tmp"]];
     } completionHandler:^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
@@ -202,7 +177,8 @@
         }
     }];
     [downloadTask resume];
-    [self.taskList addObject:downloadTask];
+    
+    [self addTaskToList:downloadTask];
 }
 
 - (void)downloadByBlocks:(SeafConnection *)connection
@@ -248,7 +224,7 @@
         [strongSelf.file downloadFailed:error];
         [strongSelf finishDownload:NO error:error ooid:nil];
     }];
-    [self.taskList addObject:getBlockInfoTask];
+    [self addTaskToList:getBlockInfoTask];
 }
 
 - (void)downloadBlocks
@@ -272,7 +248,7 @@
          [self.file failedDownload:error];
          [self finishDownload:false error:error ooid:nil];
      }];
-    [self.taskList addObject:task];
+    [self addTaskToList:task];
 }
 
 - (void)donwloadBlock:(NSString *)blk_id fromUrl:(NSString *)url
@@ -285,11 +261,10 @@
     __weak __typeof__ (self) wself = self;
     NSURLSessionDownloadTask *task = [self.file->connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:^(NSProgress * _Nonnull downloadProgress) {
         __strong __typeof (wself) sself = wself;
-        sself.file.progress = downloadProgress;
-        [sself.file.progress addObserver:sself.file
-                    forKeyPath:@"fractionCompleted"
-                       options:NSKeyValueObservingOptionNew
-                       context:NULL];
+        float fraction = downloadProgress.fractionCompleted;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [sself.file downloadProgress:fraction];
+        });
     } destination:^NSURL * _Nonnull(NSURL * _Nonnull targetPath, NSURLResponse * _Nonnull response) {
         return [NSURL fileURLWithPath:target];
     } completionHandler:^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
@@ -309,7 +284,7 @@
     }];
     
     [task resume];
-    [self.taskList addObject:task];
+    [self addTaskToList:task];
 }
 
 - (void)finishBlock:(NSString *)blkid
@@ -367,57 +342,45 @@
     return 0;
 }
 
-- (void)updateProgress:(NSProgress *)progress
-{
-    if (self.file.progress) {
-        [self.file.progress removeObserver:self.file forKeyPath:@"fractionCompleted" context:NULL];
-    }
+- (void)finishDownload:(BOOL)success error:(NSError *)error ooid:(NSString *)ooid {
+    @synchronized (self.file) {
+        self.file.isDownloading = NO;
+        self.file.downloaded = success;
+        if (success && ooid != nil) {
+            [self.file finishDownload:ooid];
+            [self completeOperation];
+        } else {
+            if (self.isCancelled) {
+                [self.file downloadFailed:error];
+                [self completeOperation];
+                return;
+            }
 
-    self.file.progress = progress;
-    if (progress) {
-        [self.file.progress addObserver:self.file
-                    forKeyPath:@"fractionCompleted"
-                       options:NSKeyValueObservingOptionNew
-                       context:NULL];
+//            if ([self isRetryableError:error] && self.retryCount < self.maxRetryCount) {
+            if (self.retryCount < self.maxRetryCount) {
+                self.retryCount += 1;
+                Debug(@"download failed，after %.0f second will retry %ld/%ld", self.retryDelay, (long)self.retryCount, (long)self.maxRetryCount);
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.retryDelay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    if (!self.isCancelled) {
+                        [self beginDownload];
+                    } else {
+                        [self completeOperation];
+                    }
+                });
+            } else {
+                [self.file downloadFailed:error];
+                [self completeOperation];
+            }
+        }
     }
 }
 
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
-{
-    if (![keyPath isEqualToString:@"fractionCompleted"] || ![object isKindOfClass:[NSProgress class]]) return;
-    NSProgress *progress = (NSProgress *)object;
-    float fraction = progress.fractionCompleted;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self.file downloadProgress:fraction];
-    });
-}
-
-- (void)finishDownload:(BOOL)success error:(NSError *)error ooid:(NSString *)ooid
-{
-    self.file.isDownloading = NO;
-    self.file.downloaded = success;
-    if (ooid != nil) {
-        [self.file finishDownload:ooid];
-    }
-    [self completeOperation];
-}
 
 #pragma mark - Operation State Management
-
-- (void)completeOperation
-{
-    if (_operationCompleted) {
-        return; // 如果已经完成操作，则不再重复执行
+- (void)addTaskToList:(NSURLSessionTask *)task {
+    @synchronized (self.taskList) {
+        [self.taskList addObject:task];
     }
-
-    _operationCompleted = YES;  // 设置标志，表示操作已完成
-
-    [self willChangeValueForKey:@"isExecuting"];
-    [self willChangeValueForKey:@"isFinished"];
-    _executing = NO;
-    _finished = YES;
-    [self didChangeValueForKey:@"isFinished"];
-    [self didChangeValueForKey:@"isExecuting"];
 }
 
 @end

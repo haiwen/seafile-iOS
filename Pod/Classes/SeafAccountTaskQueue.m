@@ -9,7 +9,6 @@
 #import "SeafUploadOperation.h"
 #import "SeafDownloadOperation.h"
 #import "SeafThumbOperation.h"
-#import "SeafAvatarOperation.h"
 #import "SeafAccountTaskQueue.h"
 #import "SeafBase.h"
 #import "SeafDir.h"
@@ -29,9 +28,7 @@
         
         self.thumbQueue = [[NSOperationQueue alloc] init];
         self.thumbQueue.maxConcurrentOperationCount = THUMB_MAX_COUNT;
-        
-        self.avatarQueue = [[NSOperationQueue alloc] init];
-        self.avatarQueue.maxConcurrentOperationCount = DEFAULT_CONCURRENCY;
+        self.thumbQueue.qualityOfService = NSQualityOfServiceUserInteractive;
         
         self.uploadQueue = [[NSOperationQueue alloc] init];
         self.uploadQueue.maxConcurrentOperationCount = UPLOAD_MAX_COUNT;
@@ -69,7 +66,8 @@
     [operation addObserver:self forKeyPath:@"isExecuting" options:NSKeyValueObservingOptionNew context:NULL];
     [operation addObserver:self forKeyPath:@"isFinished" options:NSKeyValueObservingOptionNew context:NULL];
     [operation addObserver:self forKeyPath:@"isCancelled" options:NSKeyValueObservingOptionNew context:NULL];
-    
+    operation.observersAdded = YES; // Set to YES after adding observers
+
     // 初始状态为等待执行，添加到 waitingDownloadTasks
     @synchronized (self.waitingDownloadTasks) {
         [self.waitingDownloadTasks addObject:dfile];
@@ -79,6 +77,10 @@
 }
 
 - (BOOL)addUploadTask:(SeafUploadFile * _Nonnull)ufile {
+    return [self addUploadTask:ufile priority:NSOperationQueuePriorityNormal];
+}
+
+- (BOOL)addUploadTask:(SeafUploadFile * _Nonnull)ufile priority:(NSOperationQueuePriority)priority {
     // Check if the task already exists
     for (SeafUploadOperation *op in self.uploadQueue.operations) {
         if ([op.uploadFile.lpath isEqual:ufile.lpath]) {
@@ -86,11 +88,12 @@
         }
     }
     SeafUploadOperation *operation = [[SeafUploadOperation alloc] initWithUploadFile:ufile];
-    operation.accountTaskQueue = self; // Set the weak reference
+//    operation.accountTaskQueue = self; // Set the weak reference
     [operation addObserver:self forKeyPath:@"isExecuting" options:NSKeyValueObservingOptionNew context:NULL];
     [operation addObserver:self forKeyPath:@"isFinished" options:NSKeyValueObservingOptionNew context:NULL];
     [operation addObserver:self forKeyPath:@"isCancelled" options:NSKeyValueObservingOptionNew context:NULL];
-    
+    operation.observersAdded = YES; // Set to YES after adding observers
+    operation.queuePriority = priority;
     // 初始状态为等待执行，添加到 waitingTasks
     @synchronized (self.waitingTasks) {
         [self.waitingTasks addObject:ufile];
@@ -98,17 +101,6 @@
     
     [self.uploadQueue addOperation:operation];
     return YES;
-}
-
-- (void)addAvatarTask:(SeafAvatar * _Nonnull)avatar {
-    // Check if the task already exists
-    for (SeafAvatarOperation *op in self.avatarQueue.operations) {
-        if ([op.avatar isEqual:avatar]) {
-            return;
-        }
-    }
-    SeafAvatarOperation *operation = [[SeafAvatarOperation alloc] initWithAvatar:avatar];
-    [self.avatarQueue addOperation:operation];
 }
 
 - (void)addThumbTask:(SeafThumb * _Nonnull)thumb {
@@ -155,6 +147,8 @@
     [self removeDownloadTask:dfile fromArray:self.waitingDownloadTasks];
     [self removeDownloadTask:dfile fromArray:self.ongoingDownloadTasks];
     [self addDownloadTask:dfile toArray:self.cancelledDownloadTasks];
+    
+    [self postDownloadTaskStatusChangedNotification];
 }
 
 - (void)removeUploadTask:(SeafUploadFile * _Nonnull)ufile {
@@ -172,15 +166,6 @@
     [self postUploadTaskStatusChangedNotification];
 }
 
-- (void)removeAvatarTask:(SeafAvatar * _Nonnull)avatar {
-    for (SeafAvatarOperation *op in self.avatarQueue.operations) {
-        if ([op.avatar isEqual:avatar]) {
-            [op cancel];
-            break;
-        }
-    }
-}
-
 - (void)removeThumbTask:(SeafThumb * _Nonnull)thumb {
     for (SeafThumbOperation *op in self.thumbQueue.operations) {
         if ([op.file.oid isEqual:thumb.file.oid]) {
@@ -195,6 +180,8 @@
 }
 
 - (void)cancelAutoSyncTasks:(SeafConnection *)conn {
+    [self.uploadQueue setSuspended:YES];
+
     // 遍历 ongoingTasks
     @synchronized (self.ongoingTasks) {
         NSArray *ongoingTasksCopy = [self.ongoingTasks copy];
@@ -233,11 +220,16 @@
         }
     }
 
+    // Resume the operation queue
+    [self.uploadQueue setSuspended:NO];
+    
     // 发送任务状态变更通知
     [self postUploadTaskStatusChangedNotification];
 }
 
 - (void)cancelAutoSyncVideoTasks:(SeafConnection *)conn {
+    [self.uploadQueue setSuspended:YES];
+
     // 遍历 ongoingTasks
     @synchronized (self.ongoingTasks) {
         NSArray *ongoingTasksCopy = [self.ongoingTasks copy];
@@ -275,6 +267,8 @@
             }
         }
     }
+    
+    [self.uploadQueue setSuspended:NO];
 
     // 发送任务状态变更通知
     [self postUploadTaskStatusChangedNotification];
@@ -290,82 +284,6 @@
     }
     return filesInDir;
 }
-
-//- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
-//    if ([keyPath isEqualToString:@"isExecuting"]) {
-//        SeafUploadOperation *operation = (SeafUploadOperation *)object;
-//        BOOL isExecuting = [[change objectForKey:NSKeyValueChangeNewKey] boolValue];
-//        if (isExecuting) {
-//            Debug(@"开始执行");
-//            // 任务开始执行
-////            [self uploadOperationDidStart:operation];
-//        } else {
-//            // 任务结束执行
-//            Debug(@"结束执行");
-//            if (operation.isFinished) {
-////                [self uploadOperationDidFinish:operation];
-//
-//                // 移除观察者
-//                [operation removeObserver:self forKeyPath:@"isExecuting"];
-//            }
-//        }
-//    }
-//}
-
-//// uploading
-//- (NSArray *)getOngoingUploadTasks{
-//    NSMutableArray *ongoingTasks = [NSMutableArray array];
-//    for (SeafUploadOperation *operation in self.uploadQueue.operations) {
-//        if (operation.isExecuting && !operation.isFinished && !operation.isCancelled) {
-//            [ongoingTasks addObject:operation.uploadFile];
-//        }
-//    }
-//    return ongoingTasks;
-//}
-//
-//// waiting to upload
-//- (NSArray *)getWaitingUploadTasks{
-//    NSMutableArray *waitingTasks = [NSMutableArray array];
-//    for (SeafUploadOperation *operation in self.uploadQueue.operations) {
-//        if (!operation.isExecuting && !operation.isFinished && !operation.isCancelled) {
-//            [waitingTasks addObject:operation.uploadFile];
-//        }
-//    }
-//    return waitingTasks;
-//}
-//
-//// Tasks that have been canceled
-//- (NSArray *)getCancelledUploadTasks {
-//    NSMutableArray *cancelledTasks = [NSMutableArray array];
-//    for (SeafUploadOperation *operation in self.uploadQueue.operations) {
-//        if (operation.isCancelled) {
-//            [cancelledTasks addObject:operation.uploadFile];
-//        }
-//    }
-//    return cancelledTasks;
-//}
-//
-//// Tasks that have completed and succeeded
-//- (NSArray *)getCompletedSuccessfulUploadTasks {
-//    NSMutableArray *successfulTasks = [NSMutableArray array];
-//    for (SeafUploadOperation *operation in self.uploadQueue.operations) {
-//        if (operation.isFinished && !operation.isCancelled && operation.uploadFile.uploaded) {
-//            [successfulTasks addObject:operation.uploadFile];
-//        }
-//    }
-//    return successfulTasks;
-//}
-
-////Tasks that have completed but failed
-//- (NSArray *)getCompletedFailedUploadTasks {
-//    NSMutableArray *failedTasks = [NSMutableArray array];
-//    for (SeafUploadOperation *operation in self.uploadQueue.operations) {
-//        if (operation.isFinished && !operation.isCancelled && !operation.uploadFile.uploaded) {
-//            [failedTasks addObject:operation.uploadFile];
-//        }
-//    }
-//    return failedTasks;
-//}
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
     if ([object isKindOfClass:[SeafUploadOperation class]]) {
@@ -390,12 +308,10 @@
                 } else {
                     [self addTask:ufile toArray:self.completedFailedTasks];
                 }
-                [self safelyRemoveObserversFromOperation:operation];
 
                 // 移除观察者
-//                [operation removeObserver:self forKeyPath:@"isExecuting"];
-//                [operation removeObserver:self forKeyPath:@"isFinished"];
-//                [operation removeObserver:self forKeyPath:@"isCancelled"];
+                [self safelyRemoveObserversFromOperation:operation];
+                
             }
         } else if ([keyPath isEqualToString:@"isCancelled"]) {
             BOOL isCancelled = [[change objectForKey:NSKeyValueChangeNewKey] boolValue];
@@ -404,11 +320,9 @@
                 [self removeTask:ufile fromArray:self.waitingTasks];
                 [self removeTask:ufile fromArray:self.ongoingTasks];
                 [self addTask:ufile toArray:self.cancelledTasks];
-                
+
                 // 移除观察者
-//                [operation removeObserver:self forKeyPath:@"isExecuting"];
-//                [operation removeObserver:self forKeyPath:@"isFinished"];
-//                [operation removeObserver:self forKeyPath:@"isCancelled"];
+                [self safelyRemoveObserversFromOperation:operation];
             }
         }
         [self postUploadTaskStatusChangedNotification];
@@ -435,12 +349,9 @@
                     } else {
                         [self addDownloadTask:dfile toArray:self.completedFailedDownloadTasks];
                     }
-//                    [self addDownloadTask:dfile toArray:self.completedSuccessfulDownloadTasks];
 
                     // 移除观察者
-                    [operation removeObserver:self forKeyPath:@"isExecuting"];
-                    [operation removeObserver:self forKeyPath:@"isFinished"];
-                    [operation removeObserver:self forKeyPath:@"isCancelled"];
+                    [self safelyRemoveObserversFromOperation:operation];
                 }
             } else if ([keyPath isEqualToString:@"isCancelled"]) {
                 BOOL isCancelled = [[change objectForKey:NSKeyValueChangeNewKey] boolValue];
@@ -449,11 +360,9 @@
                     [self removeDownloadTask:dfile fromArray:self.waitingDownloadTasks];
                     [self removeDownloadTask:dfile fromArray:self.ongoingDownloadTasks];
                     [self addDownloadTask:dfile toArray:self.cancelledDownloadTasks];
-                    
+                
                     // 移除观察者
-                    [operation removeObserver:self forKeyPath:@"isExecuting"];
-                    [operation removeObserver:self forKeyPath:@"isFinished"];
-                    [operation removeObserver:self forKeyPath:@"isCancelled"];
+                    [self safelyRemoveObserversFromOperation:operation];
                 }
             }
             [self postDownloadTaskStatusChangedNotification];
@@ -616,7 +525,6 @@
     [self cancelAllUploadTasks];
     [self cancelAllDownloadTasks];
     [self.thumbQueue cancelAllOperations];
-    [self.avatarQueue cancelAllOperations];
     
     // 发送相应的通知
 //    [self postUploadTaskStatusChangedNotification];
@@ -625,9 +533,12 @@
 
 //取消所有上传任务
 - (void)cancelAllUploadTasks {
+    [self.uploadQueue setSuspended:YES];
+
     // 取消上传队列中的所有操作
     for (SeafUploadOperation *op in self.uploadQueue.operations) {
         [op cancel];
+        [self safelyRemoveObserversFromOperation:op];
     }
     // 清空正在进行和等待中的上传任务数组，并将它们加入已取消的任务数组
     @synchronized (self.ongoingTasks) {
@@ -638,14 +549,20 @@
         [self.cancelledTasks addObjectsFromArray:self.waitingTasks];
         [self.waitingTasks removeAllObjects];
     }
+    
+    [self.uploadQueue setSuspended:NO];
+
     [self postUploadTaskStatusChangedNotification];
 }
 
 //取消所有下载任务的方法
 - (void)cancelAllDownloadTasks {
+    [self.downloadQueue setSuspended:YES];
+
     // 取消下载队列中的所有操作
     for (SeafDownloadOperation *op in self.downloadQueue.operations) {
         [op cancel];
+        [self safelyRemoveObserversFromOperation:op];
     }
     // 清空正在进行和等待中的下载任务数组，并将它们加入已取消的任务数组
     @synchronized (self.ongoingDownloadTasks) {
@@ -656,29 +573,24 @@
         [self.cancelledDownloadTasks addObjectsFromArray:self.waitingDownloadTasks];
         [self.waitingDownloadTasks removeAllObjects];
     }
+    
+    [self.downloadQueue setSuspended:NO];
+
     [self postDownloadTaskStatusChangedNotification];
 }
 
 #pragma mark - 移除观察者
-//
-//- (void)dealloc {
-//    for (SeafUploadOperation *operation in self.uploadQueue.operations) {
-//        [operation removeObserver:self forKeyPath:@"isExecuting"];
-//        [operation removeObserver:self forKeyPath:@"isFinished"];
-//        [operation removeObserver:self forKeyPath:@"isCancelled"];
-//    }
-//    for (SeafDownloadOperation *operation in self.downloadQueue.operations) {
-//        [operation removeObserver:self forKeyPath:@"isExecuting"];
-//        [operation removeObserver:self forKeyPath:@"isFinished"];
-//        [operation removeObserver:self forKeyPath:@"isCancelled"];
-//    }
-//}
-- (void)safelyRemoveObserversFromOperation:(SeafUploadOperation *)operation {
-    if (!operation.observersRemoved) {
-        [operation removeObserver:self forKeyPath:@"isExecuting"];
-        [operation removeObserver:self forKeyPath:@"isFinished"];
-        [operation removeObserver:self forKeyPath:@"isCancelled"];
-        operation.observersRemoved = YES;
+
+- (void)safelyRemoveObserversFromOperation:(SeafBaseOperation *)operation {
+    if (operation.observersAdded && !operation.observersRemoved) {
+        @try {
+            [operation removeObserver:self forKeyPath:@"isExecuting"];
+            [operation removeObserver:self forKeyPath:@"isFinished"];
+            [operation removeObserver:self forKeyPath:@"isCancelled"];
+            operation.observersRemoved = YES;
+        } @catch (NSException *exception) {
+            NSLog(@"Exception when removing observer: %@", exception);
+        }
     }
 }
 

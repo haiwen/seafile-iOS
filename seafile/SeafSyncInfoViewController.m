@@ -66,8 +66,12 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
     [self initTaskArrays];
 
     // 添加通知观察者
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(taskStatusChanged:) name:@"SeafUploadTaskStatusChanged" object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(taskStatusChanged:) name:@"SeafDownloadTaskStatusChanged" object:nil];
+    if (self.detailType == DOWNLOAD_DETAIL) {
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(taskStatusChanged:) name:@"SeafDownloadTaskStatusChanged" object:nil];
+    }
+    else {
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(taskStatusChanged:) name:@"SeafUploadTaskStatusChanged" object:nil];
+    }
 }
 
 - (void)dealloc {
@@ -90,7 +94,8 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
 
         NSMutableArray *finishedTasks = [NSMutableArray array];
         [finishedTasks addObjectsFromArray:accountQueue.getCompletedSuccessfulDownloadTasks];
-        [finishedTasks addObjectsFromArray:accountQueue.getCompletedFailedDownloadTasks];
+        //失败的不统计在内
+//        [finishedTasks addObjectsFromArray:accountQueue.getCompletedFailedDownloadTasks];
         self.finishedTasks = [finishedTasks copy];
     } else {
         // 分开获取正在上传和等待上传的任务
@@ -99,7 +104,8 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
 
         NSMutableArray *finishedTasks = [NSMutableArray array];
         [finishedTasks addObjectsFromArray:accountQueue.getCompletedSuccessfulTasks];
-        [finishedTasks addObjectsFromArray:accountQueue.getCompletedFailedTasks];
+        //失败的不统计在内
+//        [finishedTasks addObjectsFromArray:accountQueue.getCompletedFailedTasks];
         self.finishedTasks = [finishedTasks copy];
     }
 }

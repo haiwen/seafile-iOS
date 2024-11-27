@@ -41,7 +41,7 @@
 @property (nonatomic, strong) NSMutableArray * _Nullable photosArray;
 
 /// An array containing the identifiers of photos currently being uploaded.
-@property (nonatomic, strong) NSMutableArray * _Nullable uploadingArray;
+//@property (nonatomic, strong) NSMutableArray * _Nullable uploadingArray;
 
 /// A Boolean value indicating whether automatic syncing is enabled.
 @property (nonatomic, assign) BOOL inAutoSync;
@@ -88,11 +88,5 @@
  Clears the list of uploading videos.
  */
 - (void)clearUploadingVideos;
-
-/**
- Returns the number of photos currently being uploaded.
- @return The number of photos in the uploading array.
- */
-- (NSUInteger)photosInUploadingArray;
 
 @end

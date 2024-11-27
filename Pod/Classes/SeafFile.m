@@ -1075,9 +1075,9 @@
         
         [self removeFileTaskInStorage:self];
 
-//        if (self.taskCompleteBlock) {
-//            self.taskCompleteBlock(self, true);
-//        }
+        if (self.taskCompleteBlock) {
+            self.taskCompleteBlock(self, true);
+        }
     });
 }
 
@@ -1099,6 +1099,9 @@
     NSError *err = error ? error : [Utils defaultError];
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.delegate download:self failed:err];
+        
+        self.state = SEAF_DENTRY_FAILURE;
+        
         if (self.fileDidDownloadBlock) {
             self.fileDidDownloadBlock(self, err);
         }

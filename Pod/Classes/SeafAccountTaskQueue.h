@@ -7,13 +7,12 @@
 #import "SeafUploadFile.h"
 #import "SeafFile.h"
 #import "SeafThumb.h"
-#import "SeafAvatar.h"
+#import "SeafBaseOperation.h"
 
 @interface SeafAccountTaskQueue : NSObject
 
 @property (nonatomic, strong) NSOperationQueue * _Nonnull downloadQueue;
 @property (nonatomic, strong) NSOperationQueue * _Nonnull thumbQueue;
-@property (nonatomic, strong) NSOperationQueue * _Nonnull avatarQueue;
 @property (nonatomic, strong) NSOperationQueue * _Nonnull uploadQueue;
 
 // Arrays for task status
@@ -35,12 +34,10 @@
 
 - (void)addFileDownloadTask:(SeafFile * _Nonnull)dfile;
 - (BOOL)addUploadTask:(SeafUploadFile * _Nonnull)ufile;
-- (void)addAvatarTask:(SeafAvatar * _Nonnull)avatar;
 - (void)addThumbTask:(SeafThumb * _Nonnull)thumb;
 
 - (void)removeFileDownloadTask:(SeafFile * _Nonnull)dfile;
 - (void)removeUploadTask:(SeafUploadFile * _Nonnull)ufile;
-- (void)removeAvatarTask:(SeafAvatar * _Nonnull)avatar;
 - (void)removeThumbTask:(SeafThumb * _Nonnull)thumb;
 
 - (NSArray *_Nullable)getUploadTasksInDir:(SeafDir *_Nullable)dir;
@@ -67,5 +64,8 @@
 - (void)cancelAllDownloadTasks;
 - (void)cancelAutoSyncTasks:(SeafConnection *_Nonnull)conn;
 - (void)cancelAutoSyncVideoTasks:(SeafConnection *_Nonnull)conn;
+
+- (void)postUploadTaskStatusChangedNotification;
+- (void)postDownloadTaskStatusChangedNotification;
 
 @end

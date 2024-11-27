@@ -1119,8 +1119,61 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         return;
     Debug("%@, %d\n", self.address, [self authorized]);
     SeafUserAvatar *avatar = [[SeafUserAvatar alloc] initWithConnection:self username:self.username];
-    [SeafDataTaskManager.sharedObject addAvatarTask:avatar];
+//    [SeafDataTaskManager.sharedObject addAvatarTask:avatar];
+    [self downloadAvatarWithAvatar:avatar];
     self.avatarLastUpdate = [NSDate date];
+}
+
+- (void)downloadAvatarWithAvatar:(SeafUserAvatar *)avatar
+{
+    [self sendRequest:avatar.avatarUrl success:^(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nonnull response, id  _Nonnull JSON) {
+        if (![JSON isKindOfClass:[NSDictionary class]]) {
+            NSError *error = [NSError errorWithDomain:@"com.seafile.error"
+                                           code:-1
+                                       userInfo:@{ NSLocalizedDescriptionKey: @"JSON format is incorrect" }];
+            return;
+        }
+        NSString *url = [JSON objectForKey:@"url"];
+        if (!url) {
+            NSError *error = [NSError errorWithDomain:@"com.seafile.error"
+                                           code:-1
+                                       userInfo:@{ NSLocalizedDescriptionKey: @"JSON format is incorrect" }];
+            return;
+        }
+        if([[JSON objectForKey:@"is_default"] integerValue]) {
+            if ([[SeafAvatar avatarAttrs] objectForKey:avatar.path])
+                [[SeafAvatar avatarAttrs] removeObjectForKey:avatar.path];
+            return;
+        }
+        if (![avatar modified:[[JSON objectForKey:@"mtime"] integerValue:0]]) {
+            Debug("avatar not modified\n");
+            return;
+        }
+        
+        url = [[url stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding] escapedUrlPath];;
+        NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
+        NSURLSessionDownloadTask *task = [self.sessionMgr downloadTaskWithRequest:downloadRequest progress:nil destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
+            return [NSURL fileURLWithPath:avatar.path];
+        } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
+            if (error) {
+                Debug("Failed to download avatar url=%@, error=%@",downloadRequest.URL, [error localizedDescription]);
+            } else {
+                Debug("Successfully downloaded avatar: %@ from %@", filePath, url);
+                if (![filePath.path isEqualToString:avatar.path]) {
+                    [[NSFileManager defaultManager] removeItemAtPath:avatar.path error:nil];
+                    [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:avatar.path error:nil];
+                }
+                NSMutableDictionary *attr = [[SeafAvatar avatarAttrs] objectForKey:avatar.path];
+                if (!attr) attr = [[NSMutableDictionary alloc] init];
+                [Utils dict:attr setObject:[JSON objectForKey:@"mtime"] forKey:@"mtime"];
+                [avatar saveAttrs:attr];
+                [SeafAvatar saveAvatarAttrs];
+            }
+        }];
+        [task resume];
+    } failure:^(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nullable response, id  _Nullable JSON, NSError * _Nullable error) {
+        Warning("Failed to download avatar from %@", request.URL);
+    }];
 }
 
 - (void)saveCertificate:(NSURLProtectionSpace *)protectionSpace
@@ -1240,7 +1293,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     if (!_inAutoSync)
         return;
-    Debug("photos changed %d for server %@, current: %u %u, _syncDir:%@", _inAutoSync, _address, (unsigned)self.photoBackup.photosArray.count, (unsigned)self.photoBackup.uploadingArray.count, _syncDir);
+//    Debug("photos changed %d for server %@, current: %u %u, _syncDir:%@", _inAutoSync, _address, (unsigned)self.photoBackup.photosArray.count, (unsigned)self.photoBackup.uploadingArray.count, _syncDir);
+    Debug("photos changed %d for server %@, current: %u, _syncDir:%@", _inAutoSync, _address, (unsigned)self.photoBackup.photosArray.count, _syncDir);
+
     if (!_syncDir) {
         Warning("Sync dir not exists, create.");
         [self checkPhotosUploadDir:nil];
