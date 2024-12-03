@@ -585,13 +585,23 @@
     PHAssetResource *resource = nil;
     NSArray<PHAssetResource *> *resources = [PHAssetResource assetResourcesForAsset:self.asset];
 
-    // Prefer to choose the original image resource
+    // Prefer to choose the modified image resource
     for (PHAssetResource *res in resources) {
-        if (res.type == PHAssetResourceTypePhoto || res.type == PHAssetResourceTypeFullSizePhoto) {
-            resource = res;
-            break;
+        if (res.type == PHAssetResourceTypeAdjustmentData) {//if is modifed image,use PHImageManager
+            [self getModifiedImageDataForAsset];
+            return YES;
         }
     }
+    
+    if (!resource) {
+        for (PHAssetResource *res in resources) {
+            if (res.type == PHAssetResourceTypePhoto || res.type == PHAssetResourceTypeFullSizePhoto) {
+                resource = res;
+                break; // get original image
+            }
+        }
+    }
+
     if (!resource) {
         resource = resources.firstObject;
     }
@@ -693,6 +703,103 @@
     }
 
     CFRelease(source);
+    return success;
+}
+
+- (void)getModifiedImageDataForAsset {
+    __weak typeof(self) weakSelf = self;
+    self.requestOptions.progressHandler = ^(double progress, NSError * _Nullable error, BOOL * _Nonnull stop, NSDictionary * _Nullable info) {
+        if (error) {
+            Debug("Failed to get image data: %@", error);
+            [weakSelf finishUpload:false oid:nil error:nil];
+        }
+    };
+    
+    [[PHImageManager defaultManager] requestImageDataForAsset:_asset options:self.requestOptions resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
+        if (imageData) {
+            if (![self uploadHeic] && [dataUTI isEqualToString:@"public.heic"]) {
+                self->_lpath = [self.lpath stringByReplacingOccurrencesOfString:@"HEIC" withString:@"JPG"];
+                CIImage* ciImage = [CIImage imageWithData:imageData];
+                if (![Utils writeCIImage:ciImage toPath:self.lpath]) {
+                    [self finishUpload:false oid:nil error:nil];
+                    return;
+                }
+            } else {
+                NSString *newExtension = nil;
+                
+                if ([dataUTI isEqualToString:@"public.heic"]) {
+                    newExtension = @"HEIC";
+                } else if ([dataUTI isEqualToString:@"public.jpeg"]) {
+                    newExtension = @"JPG";
+                } else if ([dataUTI isEqualToString:@"public.png"]) {
+                    newExtension = @"PNG";
+                }
+                
+                if (newExtension && ![self.lpath.pathExtension.lowercaseString isEqualToString:newExtension]) {
+                    self.lpath = [[self.lpath stringByDeletingPathExtension] stringByAppendingPathExtension:newExtension];
+                    Debug(@"Updated file path to: %@", self.lpath);
+                }
+                
+                if (![Utils writeDataWithMeta:imageData toPath:self.lpath]) {
+                    [self finishUpload:false oid:nil error:nil];
+                    return;
+                }
+            }
+            self->_filesize = [Utils fileSizeAtPath1:self.lpath];
+        } else {
+            [self finishUpload:false oid:nil error:nil];
+        }
+    }];
+}
+
++ (BOOL)writeDataWithMeta:(NSData *)imageData toPath:(NSString*)filePath {
+    NSDictionary *options = @{(__bridge NSString *)kCGImageSourceShouldCache : @NO};
+    
+    // Create a reference to the image source
+    CGImageSourceRef source = CGImageSourceCreateWithData((__bridge CFDataRef)imageData, (__bridge CFDictionaryRef)options);
+    if (!source) {
+        Debug(@"Error: Could not create image source");
+        return NO;
+    }
+    
+    // Get the image type (UTI)
+    CFStringRef UTI = CGImageSourceGetType(source);
+    if (!UTI) {
+        Debug(@"Error: Could not determine image UTI");
+        CFRelease(source);
+        return NO;
+    }
+    
+    // Create a reference to the image destination
+    NSURL *url = [NSURL fileURLWithPath:filePath];
+    CGImageDestinationRef destination = CGImageDestinationCreateWithURL((__bridge CFURLRef)url, UTI, 1, NULL);
+    if (!destination) {
+        Debug(@"Error: Could not create image destination");
+        CFRelease(source);
+        return CFBridgingRelease(UTI); // Only needed if UTI is mutable
+    }
+    
+    // Get image properties
+    CFDictionaryRef imageProperties = CGImageSourceCopyPropertiesAtIndex(source, 0, (__bridge CFDictionaryRef)options);
+    if (imageProperties) {
+        // Add the image to the destination, including metadata
+        CGImageDestinationAddImageFromSource(destination, source, 0, imageProperties);
+        CFRelease(imageProperties);
+    } else {
+        // If properties cannot be obtained, still try to add the image
+        CGImageDestinationAddImageFromSource(destination, source, 0, NULL);
+    }
+    
+    // Finalize the image destination
+    BOOL success = CGImageDestinationFinalize(destination);
+    if (!success) {
+        Debug(@"Error: Could not finalize image destination");
+    }
+    
+    // Release resources
+    CFRelease(destination);
+    CFRelease(source);
+    
     return success;
 }
 
