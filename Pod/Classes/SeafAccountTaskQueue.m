@@ -24,13 +24,16 @@
     self = [super init];
     if (self) {
         self.downloadQueue = [[NSOperationQueue alloc] init];
+        self.downloadQueue.name = @"com.seafile.fileDownloadQueue";
         self.downloadQueue.maxConcurrentOperationCount = DOWNLOAD_MAX_COUNT;
         
         self.thumbQueue = [[NSOperationQueue alloc] init];
+        self.thumbQueue.name = @"com.seafile.thumbDownloadQueue";
         self.thumbQueue.maxConcurrentOperationCount = THUMB_MAX_COUNT;
         self.thumbQueue.qualityOfService = NSQualityOfServiceUserInteractive;
         
         self.uploadQueue = [[NSOperationQueue alloc] init];
+        self.uploadQueue.name = @"com.seafile.fileUploadQueue";
         self.uploadQueue.maxConcurrentOperationCount = UPLOAD_MAX_COUNT;
         
         self.ongoingTasks = [NSMutableArray array];

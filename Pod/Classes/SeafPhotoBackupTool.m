@@ -95,8 +95,6 @@
     }
     
     Debug("GroupAll Total %ld photos need to upload: %@", (long)_photosArray.count, _connection.address);
-    //refresh UI
-//    if (_photSyncWatcher) [_photSyncWatcher photoSyncChanged:self.photosInSyncing];
     
     _inCheckPhotos = false;
     [self pickPhotosForUpload];
@@ -117,29 +115,28 @@
         return;
     }
     
-    PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:self.photosArray options:nil];
+    NSArray *photos = [self.photosArray copy];
+    PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:photos options:nil];
     for (PHAsset *asset in result) {
         if (asset) {
             SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!self.connection.isUploadHeicEnabled];
             
             NSString *path = [self.localUploadDir stringByAppendingPathComponent:photoAsset.name];
             SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
-            file.retryable = true;
+            file.retryable = false;
             file.uploadFileAutoSync = true;
             file.overwrite = true;
             [file setPHAsset:asset url:photoAsset.ALAssetURL];
             file.udir = dir;
-//            file.delegate = self;
             [file setCompletionBlock:^(SeafUploadFile *file, NSString *oid, NSError *error) {
                 [self autoSyncFileUploadComplete:file error:error];
             }];
             [self saveUploadingFile:file withIdentifier:asset.localIdentifier];
-            Debug("Add file %@ to upload list: %@ current %u %u", photoAsset.name, dir.path, (unsigned)self.photosArray.count);
+            Debug("Add file %@ to upload list: %@ current %u", photoAsset.name, dir.path, (unsigned)self.photosArray.count);
 
-            BOOL res = [SeafDataTaskManager.sharedObject addUploadTask:file];
+            [SeafDataTaskManager.sharedObject addUploadTask:file];
         }
     }
-    
 }
 
 - (void)uploadPhotoByIdentifier:(NSString *)localIdentifier {
@@ -161,8 +158,6 @@
     @weakify(self);
     dispatch_async(self.photoPickupQueue, ^{
         @strongify(self);
-        int count = 0;
-        
         PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
         PHAsset *asset = [result firstObject];
         if (asset) {
@@ -180,14 +175,8 @@
             }];
             [self saveUploadingFile:file withIdentifier:localIdentifier];
             Debug("Add file %@ to upload list: %@ current %u", photoAsset.name, dir.path, (unsigned)self.photosArray.count);
-            BOOL res = [SeafDataTaskManager.sharedObject addUploadTask:file];
+            [SeafDataTaskManager.sharedObject addUploadTask:file];
         } else {
-//            NSDictionary *userInfo = @{
-//                NSLocalizedDescriptionKey: @"not found asset",
-//            };
-//            NSError *err = [NSError errorWithDomain:@"SeafBackupTool"
-//                                               code:1001
-//                                           userInfo:userInfo];
             @synchronized(self.photosArray) {
                 [self.photosArray removeObject:localIdentifier];
             }

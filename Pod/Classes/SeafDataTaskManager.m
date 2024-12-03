@@ -189,6 +189,12 @@
 #pragma mark - Starting Unfinished Tasks
 
 - (void)startLastTimeUnfinshTaskWithConnection:(SeafConnection *)conn {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),^{
+        [self p_startLastTimeUnfinshTaskWithConnection:conn];
+    });
+}
+
+- (void)p_startLastTimeUnfinshTaskWithConnection:(SeafConnection *)conn {
     NSString *downloadKey = [self downloadStorageKey:conn.accountIdentifier];
     NSDictionary *downloadTasks = [SeafStorage.sharedObject objectForKey:downloadKey];
     if (downloadTasks.allValues.count > 0) {
@@ -203,8 +209,9 @@
     }
     
     NSString *uploadKey = [self uploadStorageKey:conn.accountIdentifier];
-    NSMutableDictionary *uploadTasks = [NSMutableDictionary dictionaryWithDictionary: [SeafStorage.sharedObject objectForKey:uploadKey]];
+    NSMutableDictionary *uploadTasks = [NSMutableDictionary dictionaryWithDictionary:[SeafStorage.sharedObject objectForKey:uploadKey]];
     NSMutableArray *toDelete = [NSMutableArray new];
+    NSTimeInterval t1 = [NSDate date].timeIntervalSince1970;
     for (NSString *key in uploadTasks) {
         NSDictionary *dict = [uploadTasks objectForKey:key];
         NSString *lpath = [dict objectForKey:@"lpath"];
@@ -236,6 +243,8 @@
         }
         [self addUploadTask:ufile];
     }
+    NSTimeInterval t2 = [NSDate date].timeIntervalSince1970;
+    Debug("restart uplaod task time cost: %f", (t2 - t1));
     if (toDelete.count > 0) {
         for (NSString *key in toDelete) {
             [uploadTasks removeObjectForKey:key];
