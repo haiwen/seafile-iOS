@@ -619,19 +619,19 @@
         } else {
             // Check if format conversion is needed
             NSURL *sourceURL = [NSURL fileURLWithPath:self.lpath];
-            NSString *fileExtension = sourceURL.pathExtension.lowercaseString;
             
+            NSString *filename = resource.originalFilename;
+            NSString *fileExtension = filename.pathExtension.lowercaseString;
+
             if (![self uploadHeic] && [fileExtension isEqualToString:@"heic"]) {//if turn on allow upload heic switch.
-                // Conversion to JPEG is needed
-                NSString *destinationPath = [[self.lpath stringByDeletingPathExtension] stringByAppendingPathExtension:@"jpg"];
+                // Conversion to JPEG
+                NSString *destinationPath = self.lpath;  // replace the original file
                 NSURL *destinationURL = [NSURL fileURLWithPath:destinationPath];
 
                 if ([self convertHEICToJPEGAtURL:sourceURL destinationURL:destinationURL]) {
                     // Conversion successful, update file path and size
                     self.lpath = destinationPath;
                     self->_filesize = [Utils fileSizeAtPath1:self.lpath];
-                    // Delete the original HEIC file
-                    [[NSFileManager defaultManager] removeItemAtURL:sourceURL error:nil];
                     success = YES;
                 } else {
                     // Conversion failed, handle error
