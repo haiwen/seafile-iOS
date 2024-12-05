@@ -99,6 +99,7 @@
             accountQueue = [[SeafAccountTaskQueue alloc] init];
             [self.accountQueueDict setObject:accountQueue forKey:connection.accountIdentifier];
         }
+        accountQueue.conn = connection;
         return accountQueue;
     }
 }

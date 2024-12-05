@@ -245,6 +245,7 @@
             //if not exist in realm,add to photos.
             if (![self IsPhotoUploaded:photoAsset] && ![self IsPhotoUploading:photoAsset]) {
                 [self addUploadPhoto:photoAsset.localIdentifier];
+                [self uploadPhotoByIdentifier:photoAsset.localIdentifier];
             }
         }
     }];
@@ -287,7 +288,7 @@
 
 - (void)clearUploadingVideos {
     SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection];
-    [accountQueue cancelAutoSyncVideoTasks:self.connection];
+    [accountQueue cancelAutoSyncVideoTasks];
     [self removeVideosFromArray:_photosArray];
 }
 

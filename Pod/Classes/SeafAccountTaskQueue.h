@@ -29,8 +29,15 @@
 @property (nonatomic, strong) NSMutableArray<SeafFile *> * _Nullable completedSuccessfulDownloadTasks;
 @property (nonatomic, strong) NSMutableArray<SeafFile *> * _Nullable completedFailedDownloadTasks;
 
+// keep track of paused tasks
+@property (nonatomic, strong) NSMutableArray<SeafUploadFile *> * _Nullable pausedUploadTasks;
+@property (nonatomic, strong) NSMutableArray<SeafFile *> * _Nullable pausedDownloadTasks;
+@property (nonatomic, strong) NSMutableArray<SeafThumb *> * _Nullable pausedThumbTasks;
+
 // 取消的缩略图数组
 @property (nonatomic, strong) NSMutableArray<SeafThumb *> * _Nullable cancelledThumbTasks;
+
+@property (nonatomic, strong) SeafConnection * _Nonnull conn;
 
 - (void)addFileDownloadTask:(SeafFile * _Nonnull)dfile;
 - (BOOL)addUploadTask:(SeafUploadFile * _Nonnull)ufile;
@@ -62,10 +69,13 @@
 - (void)cancelAllTasks;
 - (void)cancelAllUploadTasks;
 - (void)cancelAllDownloadTasks;
-- (void)cancelAutoSyncTasks:(SeafConnection *_Nonnull)conn;
-- (void)cancelAutoSyncVideoTasks:(SeafConnection *_Nonnull)conn;
+- (void)cancelAutoSyncTasks;
+- (void)cancelAutoSyncVideoTasks;
 
 - (void)postUploadTaskStatusChangedNotification;
 - (void)postDownloadTaskStatusChangedNotification;
+
+- (void)pauseAllTasks;
+- (void)resumeAllTasks;
 
 @end

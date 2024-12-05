@@ -322,9 +322,7 @@
             self.needReset = YES;
             for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
                 if (conn.accountIdentifier) {
-//                    [[SeafDataTaskManager.sharedObject accountQueueForConnection:conn] cancelAllUploadTasks];
-//                    [[SeafDataTaskManager.sharedObject accountQueueForConnection:conn] cancelAllDownloadTasks];
-                    [[SeafDataTaskManager.sharedObject accountQueueForConnection:conn] cancelAllTasks];
+                    [[SeafDataTaskManager.sharedObject accountQueueForConnection:conn] pauseAllTasks];
                 }
             }
 
@@ -446,13 +444,23 @@
     [self.bgTaskTimer invalidate];
     self.bgTaskTimer = nil;
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
-    if (self.needReset == YES) {
-        self.needReset = NO;
-        NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
-        [self photosDidChange:note];
-    } else {
-        [self photosDidChange:nil];
-    }
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        if (self.needReset == YES) {
+            self.needReset = NO;
+            for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+                if (conn.accountIdentifier) {
+                    [[SeafDataTaskManager.sharedObject accountQueueForConnection:conn] resumeAllTasks];
+                }
+            }
+            NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
+            
+            [self photosDidChange:note];
+        }
+//        else {
+//            [self photosDidChange:nil];
+//        }
+    });
+    
     for (id <SeafBackgroundMonitor> monitor in _monitors) {
         [monitor enterForeground];
     }

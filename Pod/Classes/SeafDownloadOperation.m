@@ -16,10 +16,6 @@
 #import "SeafRepos.h"
 #import "NSData+Encryption.h"
 
-@interface SeafDownloadOperation ()
-
-@end
-
 @implementation SeafDownloadOperation
 
 - (instancetype)initWithFile:(SeafFile *)file
@@ -38,6 +34,10 @@
 - (void)start
 {
     [super start];
+    
+    if (self.isCancelled || self.isFinished) {
+        return;
+    }
 
     [self beginDownload];
 }

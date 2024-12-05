@@ -1325,7 +1325,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             Debug("Stop auto Sync for server %@", _address);
             [self.photoBackup resetAll];
             SeafAccountTaskQueue *accountQueue =[SeafDataTaskManager.sharedObject accountQueueForConnection:self];
-            [accountQueue cancelAutoSyncTasks:self];
+            [accountQueue cancelAutoSyncTasks];
             [self clearUploadCache];
         }
     }
@@ -1421,17 +1421,19 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (void)downloadDir:(SeafDir *)dir
 {
     [dir loadContentSuccess:^(SeafDir *dir) {
-        Debug("dir %@ items: %lu", dir.path, (unsigned long)dir.items.count);
-        for (SeafBase *item in dir.items) {
-            if ([item isKindOfClass:[SeafFile class]]) {
-                SeafFile *file = (SeafFile *)item;
-                Debug("download file: %@, %@", item.repoId, item.path);
-                [SeafDataTaskManager.sharedObject addFileDownloadTask:file];
-            } else if ([item isKindOfClass:[SeafDir class]]) {
-                Debug("download dir: %@, %@", item.repoId, item.path);
-                [self performSelector:@selector(downloadDir:) withObject:(SeafDir *)item];
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            Debug("dir %@ items: %lu", dir.path, (unsigned long)dir.items.count);
+            for (SeafBase *item in dir.items) {
+                if ([item isKindOfClass:[SeafFile class]]) {
+                    SeafFile *file = (SeafFile *)item;
+                    Debug("download file: %@, %@", item.repoId, item.path);
+                    [SeafDataTaskManager.sharedObject addFileDownloadTask:file];
+                } else if ([item isKindOfClass:[SeafDir class]]) {
+                    Debug("download dir: %@, %@", item.repoId, item.path);
+                    [self performSelector:@selector(downloadDir:) withObject:(SeafDir *)item];
+                }
             }
-        }
+        });
     } failure:^(SeafDir *dir, NSError *error) {
         Warning("Failed to download dir %@ %@:  %@", dir.repoId, dir.path, error);
     }];

@@ -1803,9 +1803,11 @@ enum {
     }
     
     [self reloadTable];
-    for (SeafUploadFile *file in files) {
-        [SeafDataTaskManager.sharedObject addUploadTask:file];
-    }
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        for (SeafUploadFile *file in files) {
+            [SeafDataTaskManager.sharedObject addUploadTask:file];
+        }
+    });
 }
 
 // Handles the cancellation of the image picker

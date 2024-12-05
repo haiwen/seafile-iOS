@@ -17,10 +17,10 @@
 #import "NSData+Encryption.h"
 #import "SeafStorage.h"
 
-@interface SeafUploadOperation ()
+//@interface SeafUploadOperation ()
 
-@property (nonatomic, assign) BOOL executing;
-@property (nonatomic, assign) BOOL finished;
+//@property (nonatomic, assign) BOOL executing;
+//@property (nonatomic, assign) BOOL finished;
 
 //@property (strong) NSArray *missingblocks;
 //@property (strong) NSArray *allblocks;
@@ -30,12 +30,12 @@
 //@property (nonatomic, strong) NSString *blockDir;
 //@property long blkidx;
 
-@end
+//@end
 
 @implementation SeafUploadOperation
-
-@synthesize executing = _executing;
-@synthesize finished = _finished;
+//
+//@synthesize executing = _executing;
+//@synthesize finished = _finished;
 
 - (instancetype)initWithUploadFile:(SeafUploadFile *)uploadFile
 {
@@ -53,6 +53,9 @@
 - (void)start
 {
     [super start];
+    if (self.isCancelled || self.isFinished) {
+        return;
+    }
 
     // Begin the upload process
     [self.uploadFile prepareForUploadWithCompletion:^(BOOL success, NSError *error) {
