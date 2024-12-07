@@ -57,12 +57,12 @@
     }
     
     __weak typeof(self) weakSelf = self;
-    [SeafInputItemsProvider loadInputs:weakSelf.extensionContext complete:^(BOOL result, NSArray *array) {
+    [SeafInputItemsProvider loadInputs:weakSelf.extensionContext complete:^(BOOL result, NSArray *array, NSString *errorDisplayMessage) {
         dispatch_async(dispatch_get_main_queue(), ^{
             if (result) {
                 weakSelf.ufile = array.firstObject;
             } else {
-                [weakSelf alertWithTitle:NSLocalizedString(@"Failed to load file", @"Seafile") handler:^{
+                [weakSelf alertWithTitle:NSLocalizedString(errorDisplayMessage, @"Seafile") handler:^{
                     [weakSelf.extensionContext completeRequestReturningItems:self.extensionContext.inputItems completionHandler:nil];
                 }];
             }
