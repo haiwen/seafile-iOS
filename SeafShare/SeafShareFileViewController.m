@@ -69,7 +69,7 @@
 - (void)loadInputs {
     [self showLoadingView];
     __weak typeof(self) weakSelf = self;
-    [SeafInputItemsProvider loadInputs:weakSelf.extensionContext complete:^(BOOL result, NSArray *array) {
+    [SeafInputItemsProvider loadInputs:weakSelf.extensionContext complete:^(BOOL result, NSArray *array, NSString *errorDisplayMessage) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [weakSelf.loadingView stopAnimating];
             if (result) {
@@ -78,7 +78,7 @@
                 [weakSelf.tableView reloadData];
                 [weakSelf startUpload];
             } else {
-                [weakSelf alertWithTitle:NSLocalizedString(@"Failed to load file", @"Seafile") handler:^{
+                [weakSelf alertWithTitle:NSLocalizedString(errorDisplayMessage, @"Seafile") handler:^{
                     [weakSelf done];
                 }];
             }
