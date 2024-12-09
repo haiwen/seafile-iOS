@@ -1124,14 +1124,6 @@
 
 - (void)prepareForUploadWithCompletion:(void (^)(BOOL success, NSError *error))completion {
     [self checkAssetWithCompletion:^(BOOL success, NSError *error) {
-        if (!success) {
-            // 如果 checkAsset 失败，直接调用 completion 并返回错误
-            if (completion) {
-                completion(NO, error);
-            }
-            return;
-        }
-        
         // 检查文件是否存在于本地路径
         if (![[NSFileManager defaultManager] fileExistsAtPath:self.lpath]) {
             NSError *fileNotExistError = [NSError errorWithDomain:@"SeafUploadFile"

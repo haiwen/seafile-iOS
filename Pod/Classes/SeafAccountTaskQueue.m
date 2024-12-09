@@ -152,11 +152,11 @@
         }
     }
     // 从 waitingDownloadTasks 或 ongoingDownloadTasks 中移除，加入 cancelledDownloadTasks
-    [self removeDownloadTask:dfile fromArray:self.waitingDownloadTasks];
-    [self removeDownloadTask:dfile fromArray:self.ongoingDownloadTasks];
-    [self addDownloadTask:dfile toArray:self.cancelledDownloadTasks];
-    
-    [self postDownloadTaskStatusChangedNotification];
+//    [self removeDownloadTask:dfile fromArray:self.waitingDownloadTasks];
+//    [self removeDownloadTask:dfile fromArray:self.ongoingDownloadTasks];
+//    [self addDownloadTask:dfile toArray:self.cancelledDownloadTasks];
+//    
+//    [self postDownloadTaskStatusChangedNotification];
 }
 
 - (void)removeUploadTask:(SeafUploadFile * _Nonnull)ufile {
@@ -167,11 +167,11 @@
         }
     }
     // 从 waitingTasks 或 ongoingTasks 中移除，加入 cancelledTasks
-    [self removeTask:ufile fromArray:self.waitingTasks];
-    [self removeTask:ufile fromArray:self.ongoingTasks];
-    [self addTask:ufile toArray:self.cancelledTasks];
-    
-    [self postUploadTaskStatusChangedNotification];
+//    [self removeTask:ufile fromArray:self.waitingTasks];
+//    [self removeTask:ufile fromArray:self.ongoingTasks];
+//    [self addTask:ufile toArray:self.cancelledTasks];
+//    
+//    [self postUploadTaskStatusChangedNotification];
 }
 
 - (void)removeThumbTask:(SeafThumb * _Nonnull)thumb {
@@ -251,7 +251,7 @@
                 }
                 // 从 ongoingTasks 中移除，加入 cancelledTasks
                 [self removeTask:ufile fromArray:self.ongoingTasks];
-                [self addTask:ufile toArray:self.cancelledTasks];
+//                [self addTask:ufile toArray:self.cancelledTasks];
             }
         }
     }
@@ -271,7 +271,7 @@
                 }
                 // 从 waitingTasks 中移除，加入 cancelledTasks
                 [self removeTask:ufile fromArray:self.waitingTasks];
-                [self addTask:ufile toArray:self.cancelledTasks];
+//                [self addTask:ufile toArray:self.cancelledTasks];
             }
         }
     }

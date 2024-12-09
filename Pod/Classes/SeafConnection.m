@@ -1239,7 +1239,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 }
 
 - (BOOL)isCheckingPhotoLibrary {
-    return self.photoBackup.inCheckPhotos && self.isFirstTimeSync;
+    return self.photoBackup.inCheckPhotos;
 }
 
 - (void)updateUploadDir:(SeafDir *)dir
