@@ -35,7 +35,7 @@
 @property (nonatomic, strong) SeafDir * _Nullable syncDir;
 
 /// Delegate object to receive photo synchronization change notifications.
-@property (weak) id<SeafPhotoSyncWatcherDelegate> _Nullable photSyncWatcher;
+//@property (weak) id<SeafPhotoSyncWatcherDelegate> _Nullable photSyncWatcher;
 
 /// An array containing the identifiers of photos queued for synchronization.
 @property (nonatomic, strong) NSMutableArray * _Nullable photosArray;
@@ -74,7 +74,7 @@
 - (void)resetAll;
 
 /**
- Returns the number of photos currently being synchronized.
+ Returns the number of photos need to sync
  @return The number of photos in synchronization.
  */
 - (NSUInteger)photosInSyncing;

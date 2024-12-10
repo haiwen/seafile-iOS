@@ -466,7 +466,7 @@ enum {
 - (void)setConnection:(SeafConnection *)connection
 {
     _connection = connection;
-    _connection.photoBackup.photSyncWatcher = self;
+//    _connection.photoBackup.photSyncWatcher = self;
     [self.tableView reloadData];
     [self updateAccountInfo];
 }
@@ -665,7 +665,7 @@ enum {
     
     if (!_connection.photoBackup){
         _connection.photoBackup = [[SeafPhotoBackupTool alloc] initWithConnection:_connection andLocalUploadDir:_connection.localUploadDir];
-        _connection.photoBackup.photSyncWatcher = self;
+//        _connection.photoBackup.photSyncWatcher = self;
     }
 
 //    if (_connection.autoSyncedNum > 0) {

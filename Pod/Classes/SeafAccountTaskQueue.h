@@ -71,6 +71,7 @@
 - (void)cancelAllDownloadTasks;
 - (void)cancelAutoSyncTasks;
 - (void)cancelAutoSyncVideoTasks;
+- (void)cancelUploadTasksForLocalIdentifier:(NSArray<NSString *> *_Nullable)accountIdentifiers;
 
 - (void)postUploadTaskStatusChangedNotification;
 - (void)postDownloadTaskStatusChangedNotification;

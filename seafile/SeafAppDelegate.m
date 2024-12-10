@@ -659,9 +659,10 @@
         self.needReset = NO;
         NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
         [self photosDidChange:note];
-    } else {
-        [self photosDidChange:nil];
     }
+//    else {
+//        [self photosDidChange:nil];
+//    }
 }
 
 // Starts or stops significant location updates based on the app's current needs.

@@ -144,144 +144,6 @@
     return NO;
 }
 
-- (void)removeFileDownloadTask:(SeafFile * _Nonnull)dfile {
-    for (SeafDownloadOperation *op in self.downloadQueue.operations) {
-        if ([op.file isEqual:dfile]) {
-            [op cancel];
-            break;
-        }
-    }
-    // 从 waitingDownloadTasks 或 ongoingDownloadTasks 中移除，加入 cancelledDownloadTasks
-//    [self removeDownloadTask:dfile fromArray:self.waitingDownloadTasks];
-//    [self removeDownloadTask:dfile fromArray:self.ongoingDownloadTasks];
-//    [self addDownloadTask:dfile toArray:self.cancelledDownloadTasks];
-//    
-//    [self postDownloadTaskStatusChangedNotification];
-}
-
-- (void)removeUploadTask:(SeafUploadFile * _Nonnull)ufile {
-    for (SeafUploadOperation *op in self.uploadQueue.operations) {
-        if ([op.uploadFile isEqual:ufile]) {
-            [op cancel];
-            break;
-        }
-    }
-    // 从 waitingTasks 或 ongoingTasks 中移除，加入 cancelledTasks
-//    [self removeTask:ufile fromArray:self.waitingTasks];
-//    [self removeTask:ufile fromArray:self.ongoingTasks];
-//    [self addTask:ufile toArray:self.cancelledTasks];
-//    
-//    [self postUploadTaskStatusChangedNotification];
-}
-
-- (void)removeThumbTask:(SeafThumb * _Nonnull)thumb {
-    for (SeafThumbOperation *op in self.thumbQueue.operations) {
-        if ([op.file.oid isEqual:thumb.file.oid]) {
-            [op cancel];
-            // 将任务加入取消列表
-            @synchronized (self.cancelledThumbTasks) {
-                [self.cancelledThumbTasks addObject:thumb];
-            }
-            break;
-        }
-    }
-}
-
-- (void)cancelAutoSyncTasks {
-    [self.uploadQueue setSuspended:YES];
-    
-    [self cancelAutoSyncTasksWithoutSuspend];
-    
-    [self.uploadQueue setSuspended:NO];
-}
-
-- (void)cancelAutoSyncTasksWithoutSuspend {
-    NSMutableArray<SeafUploadFile *> *tasksToCancel = [NSMutableArray array];
-    
-    // 收集需要取消的任务
-    NSArray *taskArrays = @[self.ongoingTasks, self.waitingTasks];
-    for (NSMutableArray<SeafUploadFile *> *taskArray in taskArrays) {
-        @synchronized (taskArray) {
-            for (SeafUploadFile *ufile in taskArray) {
-                if (ufile.uploadFileAutoSync && ufile.udir->connection == self.conn) {
-                    [tasksToCancel addObject:ufile];
-                }
-            }
-        }
-    }
-    
-    // 创建一个映射表，使用 ufile.lpath 作为键
-    NSMutableDictionary<NSString *, SeafUploadOperation *> *operationMap = [NSMutableDictionary dictionary];
-    for (SeafUploadOperation *op in self.uploadQueue.operations) {
-        if (op.uploadFile && op.uploadFile.lpath) {
-            operationMap[op.uploadFile.lpath] = op;
-        }
-    }
-    
-    // 取消任务并更新任务数组
-    for (SeafUploadFile *ufile in tasksToCancel) {
-        SeafUploadOperation *op = operationMap[ufile.lpath];
-        if (op) {
-            [self safelyRemoveObserversFromOperation:op];
-            [op cancel];
-        }
-        [self removeTask:ufile fromArray:self.ongoingTasks];
-        [self removeTask:ufile fromArray:self.waitingTasks];
-//        [self addTask:ufile toArray:self.cancelledTasks];
-    }
-    
-    [self postUploadTaskStatusChangedNotification];
-}
-
-- (void)cancelAutoSyncVideoTasks {
-    [self.uploadQueue setSuspended:YES];
-
-    // 遍历 ongoingTasks
-    @synchronized (self.ongoingTasks) {
-        NSArray *ongoingTasksCopy = [self.ongoingTasks copy];
-        for (SeafUploadFile *ufile in ongoingTasksCopy) {
-            if (ufile.uploadFileAutoSync && ufile.udir->connection == self.conn && !ufile.isImageFile) {
-                // 找到对应的 SeafUploadOperation
-                for (SeafUploadOperation *op in self.uploadQueue.operations) {
-                    if (op.uploadFile == ufile) {
-                        [self safelyRemoveObserversFromOperation:op];
-                        [op cancel];
-                        break;
-                    }
-                }
-                // 从 ongoingTasks 中移除，加入 cancelledTasks
-                [self removeTask:ufile fromArray:self.ongoingTasks];
-//                [self addTask:ufile toArray:self.cancelledTasks];
-            }
-        }
-    }
-
-    // 遍历 waitingTasks
-    @synchronized (self.waitingTasks) {
-        NSArray *waitingTasksCopy = [self.waitingTasks copy];
-        for (SeafUploadFile *ufile in waitingTasksCopy) {
-            if (ufile.uploadFileAutoSync && ufile.udir->connection == self.conn && !ufile.isImageFile) {
-                // 找到对应的 SeafUploadOperation
-                for (SeafUploadOperation *op in self.uploadQueue.operations) {
-                    if (op.uploadFile == ufile) {
-                        [self safelyRemoveObserversFromOperation:op];
-                        [op cancel];
-                        break;
-                    }
-                }
-                // 从 waitingTasks 中移除，加入 cancelledTasks
-                [self removeTask:ufile fromArray:self.waitingTasks];
-//                [self addTask:ufile toArray:self.cancelledTasks];
-            }
-        }
-    }
-    
-    [self.uploadQueue setSuspended:NO];
-
-    // 发送任务状态变更通知
-    [self postUploadTaskStatusChangedNotification];
-}
-
 - (NSArray *)getUploadTasksInDir:(SeafDir *)dir {
     NSMutableArray *filesInDir = [NSMutableArray array];
     for (SeafUploadOperation *op in self.uploadQueue.operations) {
@@ -587,6 +449,195 @@
     [self postDownloadTaskStatusChangedNotification];
 }
 
+//备份照片相关：根据照片本地identifier数组，删除对应任务
+- (void)cancelUploadTasksForLocalIdentifier:(NSArray<NSString *> *)accountIdentifiers {
+    // 暂停上传队列，确保在操作时队列不执行任务
+    [self.uploadQueue setSuspended:YES];
+
+    // 为快速查找，将 accountIdentifiers 转为集合
+    NSSet *identifierSet = [NSSet setWithArray:accountIdentifiers];
+
+    // 准备一个数组，用于收集需要取消的任务
+    NSMutableArray<SeafUploadFile *> *tasksToCancel = [NSMutableArray array];
+    
+    // 遍历上传队列中所有操作
+    for (SeafUploadOperation *op in self.uploadQueue.operations) {
+        SeafUploadFile *ufile = op.uploadFile;
+        // 检查该任务的 accountIdentifier 是否在指定的集合中
+        if ([identifierSet containsObject:ufile.accountIdentifier]) {
+            // 移除观察者并取消任务
+            [self safelyRemoveObserversFromOperation:op];
+            [op cancel];
+            
+            [tasksToCancel addObject:ufile];
+        }
+    }
+
+    // 从 ongoingTasks 中移除匹配的任务，并移动到 cancelledTasks
+    @synchronized (self.ongoingTasks) {
+        for (SeafUploadFile *ufile in tasksToCancel) {
+            if ([self.ongoingTasks containsObject:ufile]) {
+                [self.ongoingTasks removeObject:ufile];
+                [self.cancelledTasks addObject:ufile];
+            }
+        }
+    }
+
+    // 从 waitingTasks 中移除匹配的任务，并移动到 cancelledTasks
+    @synchronized (self.waitingTasks) {
+        for (SeafUploadFile *ufile in tasksToCancel) {
+            if ([self.waitingTasks containsObject:ufile]) {
+                [self.waitingTasks removeObject:ufile];
+                [self.cancelledTasks addObject:ufile];
+            }
+        }
+    }
+
+    // 恢复上传队列
+    [self.uploadQueue setSuspended:NO];
+
+    // 通知上传任务状态已更新
+    [self postUploadTaskStatusChangedNotification];
+}
+
+- (void)removeFileDownloadTask:(SeafFile * _Nonnull)dfile {
+    for (SeafDownloadOperation *op in self.downloadQueue.operations) {
+        if ([op.file isEqual:dfile]) {
+            [op cancel];
+            break;
+        }
+    }
+    // 从 waitingDownloadTasks 或 ongoingDownloadTasks 中移除，加入 cancelledDownloadTasks
+//    [self removeDownloadTask:dfile fromArray:self.waitingDownloadTasks];
+//    [self removeDownloadTask:dfile fromArray:self.ongoingDownloadTasks];
+//    [self addDownloadTask:dfile toArray:self.cancelledDownloadTasks];
+//
+//    [self postDownloadTaskStatusChangedNotification];
+}
+
+- (void)removeUploadTask:(SeafUploadFile * _Nonnull)ufile {
+    for (SeafUploadOperation *op in self.uploadQueue.operations) {
+        if ([op.uploadFile isEqual:ufile]) {
+            [op cancel];
+            break;
+        }
+    }
+    // 从 waitingTasks 或 ongoingTasks 中移除，加入 cancelledTasks
+//    [self removeTask:ufile fromArray:self.waitingTasks];
+//    [self removeTask:ufile fromArray:self.ongoingTasks];
+//    [self addTask:ufile toArray:self.cancelledTasks];
+//
+//    [self postUploadTaskStatusChangedNotification];
+}
+
+- (void)removeThumbTask:(SeafThumb * _Nonnull)thumb {
+    for (SeafThumbOperation *op in self.thumbQueue.operations) {
+        if ([op.file.oid isEqual:thumb.file.oid]) {
+            [op cancel];
+            // 将任务加入取消列表
+            @synchronized (self.cancelledThumbTasks) {
+                [self.cancelledThumbTasks addObject:thumb];
+            }
+            break;
+        }
+    }
+}
+
+- (void)cancelAutoSyncTasks {
+    [self.uploadQueue setSuspended:YES];
+    
+    [self cancelAutoSyncTasksWithoutSuspend];
+    
+    [self.uploadQueue setSuspended:NO];
+}
+
+- (void)cancelAutoSyncTasksWithoutSuspend {
+    NSMutableArray<SeafUploadFile *> *tasksToCancel = [NSMutableArray array];
+    
+    // 收集需要取消的任务
+    NSArray *taskArrays = @[self.ongoingTasks, self.waitingTasks];
+    for (NSMutableArray<SeafUploadFile *> *taskArray in taskArrays) {
+        @synchronized (taskArray) {
+            for (SeafUploadFile *ufile in taskArray) {
+                if (ufile.uploadFileAutoSync && ufile.udir->connection == self.conn) {
+                    [tasksToCancel addObject:ufile];
+                }
+            }
+        }
+    }
+    
+    // 创建一个映射表，使用 ufile.lpath 作为键
+    NSMutableDictionary<NSString *, SeafUploadOperation *> *operationMap = [NSMutableDictionary dictionary];
+    for (SeafUploadOperation *op in self.uploadQueue.operations) {
+        if (op.uploadFile && op.uploadFile.lpath) {
+            operationMap[op.uploadFile.lpath] = op;
+        }
+    }
+    
+    // 取消任务并更新任务数组
+    for (SeafUploadFile *ufile in tasksToCancel) {
+        SeafUploadOperation *op = operationMap[ufile.lpath];
+        if (op) {
+            [self safelyRemoveObserversFromOperation:op];
+            [op cancel];
+        }
+        [self removeTask:ufile fromArray:self.ongoingTasks];
+        [self removeTask:ufile fromArray:self.waitingTasks];
+//        [self addTask:ufile toArray:self.cancelledTasks];
+    }
+    
+    [self postUploadTaskStatusChangedNotification];
+}
+
+- (void)cancelAutoSyncVideoTasks {
+    [self.uploadQueue setSuspended:YES];
+
+    // 遍历 ongoingTasks
+    @synchronized (self.ongoingTasks) {
+        NSArray *ongoingTasksCopy = [self.ongoingTasks copy];
+        for (SeafUploadFile *ufile in ongoingTasksCopy) {
+            if (ufile.uploadFileAutoSync && ufile.udir->connection == self.conn && !ufile.isImageFile) {
+                // 找到对应的 SeafUploadOperation
+                for (SeafUploadOperation *op in self.uploadQueue.operations) {
+                    if (op.uploadFile == ufile) {
+                        [self safelyRemoveObserversFromOperation:op];
+                        [op cancel];
+                        break;
+                    }
+                }
+                // 从 ongoingTasks 中移除，加入 cancelledTasks
+                [self removeTask:ufile fromArray:self.ongoingTasks];
+//                [self addTask:ufile toArray:self.cancelledTasks];
+            }
+        }
+    }
+
+    // 遍历 waitingTasks
+    @synchronized (self.waitingTasks) {
+        NSArray *waitingTasksCopy = [self.waitingTasks copy];
+        for (SeafUploadFile *ufile in waitingTasksCopy) {
+            if (ufile.uploadFileAutoSync && ufile.udir->connection == self.conn && !ufile.isImageFile) {
+                // 找到对应的 SeafUploadOperation
+                for (SeafUploadOperation *op in self.uploadQueue.operations) {
+                    if (op.uploadFile == ufile) {
+                        [self safelyRemoveObserversFromOperation:op];
+                        [op cancel];
+                        break;
+                    }
+                }
+                // 从 waitingTasks 中移除，加入 cancelledTasks
+                [self removeTask:ufile fromArray:self.waitingTasks];
+//                [self addTask:ufile toArray:self.cancelledTasks];
+            }
+        }
+    }
+    
+    [self.uploadQueue setSuspended:NO];
+
+    // 发送任务状态变更通知
+    [self postUploadTaskStatusChangedNotification];
+}
+
 #pragma mark - 暂停任务
 /// Pauses all queues and cancels any ongoing tasks, storing them for resumption.
 - (void)pauseAllTasks {
@@ -597,9 +648,9 @@
     
     [self cancelAutoSyncTasksWithoutSuspend];
     
-    [self pauseAllUploadTasks];
-    [self pauseAllDownloadTasks];
-    [self pauseAllThumbTasks];
+    [self pauseAllUploadingTasks];
+    [self pauseAllDownloadingTasks];
+    [self pauseAllThumbOngoingTasks];
 }
 
 /// Resumes all queues and restarts any tasks that were canceled during the pause.
@@ -611,12 +662,11 @@
     [self.uploadQueue setSuspended:NO];
     [self.downloadQueue setSuspended:NO];
     [self.thumbQueue setSuspended:NO];
-
 }
 
 #pragma mark - Pause Helpers
 /// Pauses all upload tasks.
-- (void)pauseAllUploadTasks {
+- (void)pauseAllUploadingTasks {
     [self.uploadQueue setSuspended:YES];
     
     for (SeafUploadOperation *op in self.uploadQueue.operations) {
@@ -634,15 +684,12 @@
     @synchronized (self.ongoingTasks) {
         [self.ongoingTasks removeAllObjects];
     }
-//    @synchronized (self.waitingTasks) {
-//        [self.waitingTasks removeAllObjects];
-//    }
     
     [self postUploadTaskStatusChangedNotification];
 }
 
 /// Pauses all download tasks.
-- (void)pauseAllDownloadTasks {
+- (void)pauseAllDownloadingTasks {
     [self.downloadQueue setSuspended:YES];
     
     for (SeafDownloadOperation *op in self.downloadQueue.operations) {
@@ -660,15 +707,12 @@
     @synchronized (self.ongoingDownloadTasks) {
         [self.ongoingDownloadTasks removeAllObjects];
     }
-//    @synchronized (self.waitingDownloadTasks) {
-//        [self.waitingDownloadTasks removeAllObjects];
-//    }
     
     [self postDownloadTaskStatusChangedNotification];
 }
 
 /// Pauses all thumb tasks.
-- (void)pauseAllThumbTasks {
+- (void)pauseAllThumbOngoingTasks {
     [self.thumbQueue setSuspended:YES];
     
     for (SeafThumbOperation *op in self.thumbQueue.operations) {

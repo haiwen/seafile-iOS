@@ -350,16 +350,23 @@
 #pragma mark - PHPhotoLibraryChangeObserver
 // Observes changes to the photo library and triggers synchronization if necessary.
 - (void)photoLibraryDidChange:(PHChange *)changeInstance {
+    if (!_inAutoSync) {
+        return;
+    }
     Debug("Photos library changed.");
     PHFetchResultChangeDetails *detail = [changeInstance changeDetailsForFetchResult:self.fetchResult];
     if (detail && detail.fetchResultAfterChanges) {
         self.fetchResult = detail.fetchResultAfterChanges;
         //delete photo
         if (detail.removedObjects.count > 0) {
+            NSMutableArray *localIdentifiersNeedRemove = [[NSMutableArray alloc] init];
             for (PHAsset *asset in detail.removedObjects) {
                 NSString *localIdentifier = asset.localIdentifier;
                 [self removeNeedUploadPhoto:localIdentifier];
+                [localIdentifiersNeedRemove addObject:localIdentifier];
             }
+            SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection];
+            [accountQueue cancelUploadTasksForLocalIdentifier:localIdentifiersNeedRemove];
         }
         //
         if (detail.insertedObjects.count > 0) {

@@ -43,7 +43,7 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 
 @property (nonatomic, readonly) NSURL *assetURL;/// The URL of the asset in the photo library.
 
-@property (nonatomic, readonly) NSString *assetIdentifier;/// The unique identifier of the asset.
+@property (nonatomic, copy) NSString *assetIdentifier;/// The unique identifier of the asset.
 
 @property (readwrite) BOOL uploadFileAutoSync;/// Whether the uploadFile is added from autoSync photo album.
 

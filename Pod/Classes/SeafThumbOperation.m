@@ -135,7 +135,7 @@
         if (error) {
             if (error.code == NSURLErrorCancelled) {
                 Debug(@"Task was cancelled %@", self.file.name);
-                [self.file finishDownloadThumb:NO];
+//                [self.file finishDownloadThumb:NO];
                 [strongSelf finishDownloadThumbOperation:NO];
             } else {
                 strongSelf.retryCount++; // 增加重试次数
@@ -147,29 +147,19 @@
                     });
                 } else {
                     Debug(@"Max retry count reached for %@. Failing download.", self.file.name);
-//                    self.file.thumbFailedCount++;
-                    [self.file finishDownloadThumb:NO];
+//                    [self.file finishDownloadThumb:NO];
                     [strongSelf finishDownloadThumbOperation:NO];
                 }
             }
         }
         else {
-//                strongSelf.file.thumbFailedCount = 0;
-//                if (self.file.isTaskCanceled){
-//                    self.file.isTaskCanceled = false;
-//                    Debug(@"task is canceled %@", self.file.name);
-//                    [self.file finishDownloadThumb:NO];
-//                    [strongSelf finishDownloadThumbOperation:NO];
-//                    return;
-//                }
                 if (![filePath.path isEqualToString:target]) {
                     [Utils removeFile:target];
                     [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
                 }
-                [self.file finishDownloadThumb:YES];
+//                [self.file finishDownloadThumb:YES];
                 [strongSelf finishDownloadThumbOperation:YES];
-            
-        }
+        } 
     }];
     
     [self.thumbTask resume];
@@ -185,14 +175,15 @@
 
 - (void)finishDownloadThumbOperation:(BOOL)success
 {
-    if (success) {
-        // 通知文件对象缩略图已下载完成
-        if (self.file.delegate && [(NSObject *)self.file.delegate respondsToSelector:@selector(download:complete:)]) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self.file.delegate download:self.file complete:NO];
-            });
-        }
-    }
+//    if (success) {
+//        // 通知文件对象缩略图已下载完成
+//        if (self.file.delegate && [(NSObject *)self.file.delegate respondsToSelector:@selector(download:complete:)]) {
+//            dispatch_async(dispatch_get_main_queue(), ^{
+//                [self.file.delegate download:self.file complete:NO];
+//            });
+//        }
+//    }
+    [self.file finishDownloadThumb:success];
     [self completeOperation];
 }
 
