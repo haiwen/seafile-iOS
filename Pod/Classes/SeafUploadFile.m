@@ -1055,13 +1055,14 @@
 - (void)uploadComplete:(NSString *)oid error:(NSError *)error
 {
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (self.completionBlock) {
+        if (self.completionBlock) {//看起来可以删掉
             self.completionBlock(self, oid, error);
         }
 //        if (self.taskCompleteBlock) {
 //            self.taskCompleteBlock(self, !error);
 //        }
         
+        //原来SeafDataTask finishBlock逻辑在这里
         if (!error) {
             if (self.retryable) { // Do not remove now, will remove it next time
                 [self saveUploadFileToTaskStorage:self];

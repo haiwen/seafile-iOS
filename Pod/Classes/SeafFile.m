@@ -1072,15 +1072,17 @@
         if (self.fileDidDownloadBlock) {
             self.fileDidDownloadBlock(self, nil);
         }
-        
-        [self removeFileTaskInStorage:self];
+//        [self removeFileTaskInStorage:self];
 
         if (self.taskCompleteBlock) {
             self.taskCompleteBlock(self, true);
+        } else {
+            [self removeFileTaskInStorage:self];
         }
     });
 }
 
+//remove retryable信息
 - (void)removeFileTaskInStorage:(SeafFile *)file {
     NSString *key = [self downloadStorageKey:file.accountIdentifier];
     @synchronized(self) {
@@ -1113,10 +1115,16 @@
 
 - (void)downloadProgress:(float)progress
 {
+    float percent = 0;
+    if (self.blkids) {
+        percent = (progress + self.index) *1.0f/self.blkids.count;
+    } else {
+        percent = progress;
+    }
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self.delegate download:self progress:progress];
+        [self.delegate download:self progress:percent];
         if (self.taskProgressBlock) {
-            self.taskProgressBlock(self, progress);
+            self.taskProgressBlock(self, percent);
         }
     });
 }

@@ -322,7 +322,8 @@
             self.needReset = YES;
             for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
                 if (conn.accountIdentifier) {
-                    [[SeafDataTaskManager.sharedObject accountQueueForConnection:conn] pauseAllTasks];
+                    SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:conn];
+                    [accountQueue pauseAllTasks];
                 }
             }
 
@@ -452,9 +453,9 @@
                     [[SeafDataTaskManager.sharedObject accountQueueForConnection:conn] resumeAllTasks];
                 }
             }
-            NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
-            
-            [self photosDidChange:note];
+//            NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
+//            
+//            [self photosDidChange:note];
         }
 //        else {
 //            [self photosDidChange:nil];

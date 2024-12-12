@@ -201,7 +201,7 @@
         [self.photosArray removeObject:ufile.assetIdentifier];
     } else {
         Warning("Failed to upload photo %@: %@", ufile.name, error);
-        [self.photosArray removeObject:ufile.assetIdentifier];
+//        [self.photosArray removeObject:ufile.assetIdentifier];
     }
 }
 

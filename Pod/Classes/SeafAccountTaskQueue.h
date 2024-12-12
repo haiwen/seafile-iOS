@@ -79,4 +79,8 @@
 - (void)pauseAllTasks;
 - (void)resumeAllTasks;
 
+// 定时器控制方法
+- (void)startCleanupTimer;   // 启动清理任务的定时器
+- (void)pauseCleanupTimer;   // 暂停清理任务的定时器
+
 @end

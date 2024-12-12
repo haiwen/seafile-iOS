@@ -100,6 +100,9 @@
         if (!strongSelf) return;
         NSString *downloadUrl = JSON;
         NSString *curId = [Utils getNewOidFromMtime:strongSelf.file.mtime repoId:strongSelf.file.repoId path:strongSelf.file.path];
+        
+        Debug("Downloading file from file server url: %@, state:%d %@, %@", JSON, strongSelf.file.state, strongSelf.file.ooid, curId);
+
         if (!curId) curId = strongSelf.file.oid;
         if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:curId]]) {
             Debug("File %@ already exists, curId=%@, ooid=%@", strongSelf.file.name, curId, strongSelf.file.ooid);
@@ -109,12 +112,16 @@
         @synchronized (strongSelf.file) {
             if (strongSelf.file.state != SEAF_DENTRY_LOADING) {
                 Info("Download file %@ already canceled", strongSelf.file.name);
-                [strongSelf finishDownload:YES error:nil ooid:nil];//Only completed, no further processing
+//                [strongSelf finishDownload:YES error:nil ooid:nil];//Only completed, no further processing
+                [self completeOperation];
+
                 return;
             }
             if (strongSelf.file.downloadingFileOid) {
                 Debug("Already downloading %@", strongSelf.file.downloadingFileOid);
-                [strongSelf finishDownload:YES error:nil ooid:nil];
+//                [strongSelf finishDownload:YES error:nil ooid:nil];
+                [self completeOperation];
+
                 return;
             }
             strongSelf.file.downloadingFileOid = curId;
@@ -125,7 +132,7 @@
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) return;
         strongSelf.file.state = SEAF_DENTRY_INIT;
-        [strongSelf.file downloadFailed:error];//temporary put this code here.
+//        [strongSelf.file downloadFailed:error];//temporary put this code here.
         [strongSelf finishDownload:NO error:error ooid:nil];
     }];
     
@@ -160,12 +167,13 @@
         }
         if (!strongSelf.file.downloadingFileOid) {
             Info("Download file %@ already canceled", strongSelf.file.name);
-            [strongSelf finishDownload:YES error:nil ooid:nil];
+//            [strongSelf finishDownload:YES error:nil ooid:nil];
+            [strongSelf completeOperation];
             return;
         }
         if (error) {
             Debug("Failed to download %@, error=%@, %ld", strongSelf.file.name, [error localizedDescription], (long)((NSHTTPURLResponse *)response).statusCode);
-            [strongSelf.file downloadFailed:error];//temporary
+//            [strongSelf.file downloadFailed:error];//temporary
             [strongSelf finishDownload:NO error:error ooid:nil];
         } else {
             Debug("Successfully downloaded file:%@, %@", strongSelf.file.name, downloadRequest.URL);
@@ -200,7 +208,8 @@
         @synchronized (strongSelf.file) {
             if (strongSelf.file.state != SEAF_DENTRY_LOADING) {
                 Info("Download file %@ already canceled", strongSelf.file.name);
-                [strongSelf finishDownload:YES error:nil ooid:nil];
+//                [strongSelf finishDownload:YES error:nil ooid:nil];
+                [self completeOperation];
                 return;
             }
             strongSelf.file.downloadingFileOid = curId;
@@ -221,7 +230,7 @@
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) return;
         strongSelf.file.state = SEAF_DENTRY_FAILURE;
-        [strongSelf.file downloadFailed:error];
+//        [strongSelf.file downloadFailed:error];
         [strongSelf finishDownload:NO error:error ooid:nil];
     }];
     [self addTaskToList:getBlockInfoTask];
@@ -241,17 +250,17 @@
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
         @strongify(self);
          NSString *url = JSON;
-         [self donwloadBlock:blk_id fromUrl:url];
+         [self downloadBlock:blk_id fromUrl:url];
      } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
          @strongify(self);
          Warning("error=%@", error);
-         [self.file failedDownload:error];
-         [self finishDownload:false error:error ooid:nil];
+//         [self.file failedDownload:error];
+         [self finishDownload:NO error:error ooid:nil];
      }];
     [self addTaskToList:task];
 }
 
-- (void)donwloadBlock:(NSString *)blk_id fromUrl:(NSString *)url
+- (void)downloadBlock:(NSString *)blk_id fromUrl:(NSString *)url
 {
     if (!self.file.isDownloading) return;
     NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
@@ -271,7 +280,7 @@
         __strong __typeof (wself) sself = wself;
         if (error) {
             Warning("error=%@", error);
-            [sself.file failedDownload:error];
+//            [sself.file failedDownload:error];
             [sself finishDownload:false error:error ooid:nil];
         } else {
             Debug("Successfully downloaded file %@ block:%@, filePath:%@", sself.name, blk_id, filePath);
@@ -302,7 +311,7 @@
             for (NSString *blk_id in self.file.blkids)
                 [self.file removeBlock:blk_id];
             NSError *error = [NSError errorWithDomain:@"Faile to checkout out file" code:-1 userInfo:nil];
-            [self.file failedDownload:error];
+//            [self.file failedDownload:error];
             [self finishDownload:NO error:error ooid:nil];
             return;
         }
@@ -346,18 +355,21 @@
     @synchronized (self.file) {
         self.file.isDownloading = NO;
         self.file.downloaded = success;
+        self.file.lastFinishTimestamp = [[NSDate new] timeIntervalSince1970];
         if (success && ooid != nil) {
             [self.file finishDownload:ooid];
             [self completeOperation];
-        } else {
+        }
+        else {
             if (self.isCancelled) {
-                [self.file downloadFailed:error];
+                [self.file failedDownload:error];
                 [self completeOperation];
                 return;
             }
 
 //            if ([self isRetryableError:error] && self.retryCount < self.maxRetryCount) {
-            if (self.retryCount < self.maxRetryCount) {
+            //if !success need to try,self.retryCount < self.maxRetryCount is a necessary condition for retry.
+            if (self.retryCount < self.maxRetryCount && !success) {
                 self.retryCount += 1;
                 Debug(@"download failed，after %.0f second will retry %ld/%ld", self.retryDelay, (long)self.retryCount, (long)self.maxRetryCount);
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.retryDelay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
@@ -368,7 +380,7 @@
                     }
                 });
             } else {
-                [self.file downloadFailed:error];
+                [self.file failedDownload:error];
                 [self completeOperation];
             }
         }

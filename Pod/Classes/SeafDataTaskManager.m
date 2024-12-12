@@ -13,11 +13,12 @@
 #import "SeafDir.h"
 #import "Debug.h"
 #import "SeafStorage.h"
-
+#import <AFNetworking/AFNetworking.h>
 
 @interface SeafDataTaskManager()
 
 @property (nonatomic, strong) NSMutableDictionary<NSString *, SeafAccountTaskQueue *> *accountQueueDict;
+@property (nonatomic, strong) AFNetworkReachabilityManager *reachabilityManager;
 
 @end
 
@@ -38,6 +39,9 @@
     if (self = [super init]) {
         _accountQueueDict = [NSMutableDictionary new];
         _finishBlock = nil;
+        
+        // 初始化网络状态监测
+        [self setupNetworkMonitoring];
     }
     return self;
 }
@@ -331,6 +335,55 @@
         }
     }
     return completedTasks;
+}
+
+#pragma mark - 网络状态监测
+
+- (void)setupNetworkMonitoring {
+    self.reachabilityManager = [AFNetworkReachabilityManager sharedManager];
+    
+    __weak typeof(self) weakSelf = self; // 使用弱引用 self
+    [self.reachabilityManager setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
+        __strong typeof(weakSelf) strongSelf = weakSelf; // 转换为强引用，确保在 block 执行时 strongSelf 仍然有效
+        if (!strongSelf) return;
+
+        switch (status) {
+            case AFNetworkReachabilityStatusNotReachable:
+                NSLog(@"Network is unavailable.");
+                [strongSelf handleNetworkUnavailable];
+                break;
+            case AFNetworkReachabilityStatusReachableViaWiFi:
+            case AFNetworkReachabilityStatusReachableViaWWAN:
+                NSLog(@"Network is available.");
+                [strongSelf handleNetworkAvailable];
+                break;
+            case AFNetworkReachabilityStatusUnknown:
+            default:
+                NSLog(@"Unknown network status.");
+                break;
+        }
+    }];
+
+    // 开始监测网络状态
+    [self.reachabilityManager startMonitoring];
+}
+
+#pragma mark - 网络状态处理
+
+- (void)handleNetworkUnavailable {
+    @synchronized (self.accountQueueDict) {
+        for (SeafAccountTaskQueue *queue in self.accountQueueDict.allValues) {
+            [queue pauseAllTasks];
+        }
+    }
+}
+
+- (void)handleNetworkAvailable {
+    @synchronized (self.accountQueueDict) {
+        for (SeafAccountTaskQueue *queue in self.accountQueueDict.allValues) {
+            [queue resumeAllTasks];
+        }
+    }
 }
 
 @end

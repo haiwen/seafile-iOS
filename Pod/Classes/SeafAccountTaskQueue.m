@@ -18,6 +18,13 @@
 #define UPLOAD_MAX_COUNT 5
 #define DOWNLOAD_MAX_COUNT 5
 
+@interface SeafAccountTaskQueue ()
+
+@property (nonatomic, strong) dispatch_source_t cleanupTimerSource;  // GCD 定时器对象
+@property (nonatomic, assign) BOOL isCleanupTimerRunning;           // 定时器状态标识
+
+@end
+
 @implementation SeafAccountTaskQueue
 
 - (instancetype)init {
@@ -56,7 +63,8 @@
         
         // 管理已取消的缩略图任务
         self.cancelledThumbTasks = [NSMutableArray array];
-
+        
+        [self startCleanupTimer];
     }
     return self;
 }
@@ -64,6 +72,7 @@
 #pragma mark - 添加下载任务
 
 - (void)addFileDownloadTask:(SeafFile * _Nonnull)dfile {
+    dfile.state = SEAF_DENTRY_INIT;
     // 检查任务是否已存在
     for (SeafDownloadOperation *op in self.downloadQueue.operations) {
         if ([op.file isEqual:dfile]) {
@@ -651,6 +660,8 @@
     [self pauseAllUploadingTasks];
     [self pauseAllDownloadingTasks];
     [self pauseAllThumbOngoingTasks];
+    
+    [self pauseCleanupTimer];
 }
 
 /// Resumes all queues and restarts any tasks that were canceled during the pause.
@@ -662,6 +673,11 @@
     [self.uploadQueue setSuspended:NO];
     [self.downloadQueue setSuspended:NO];
     [self.thumbQueue setSuspended:NO];
+    
+    NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
+    [self.conn photosDidChange:note];
+    
+    [self startCleanupTimer];
 }
 
 #pragma mark - Pause Helpers
@@ -771,6 +787,97 @@
             NSLog(@"Exception when removing observer: %@", exception);
         }
     }
+}
+
+#pragma mark - 移除3分钟后的完成任务
+// 在后台线程调用 removeOldCompletedTasks
+- (void)runRemoveTasksInBackground {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+        [self removeOldCompletedTasks];
+    });
+}
+
+- (void)removeOldCompletedTasks {
+    NSMutableArray *tempSuccessfulDownloadTasks = [NSMutableArray array];
+    NSMutableArray *tempSuccessfulTasks = [NSMutableArray array];
+
+    NSTimeInterval currentTimestamp = [[NSDate date] timeIntervalSince1970];
+
+    @synchronized (self.completedSuccessfulDownloadTasks) {
+        NSArray *copyArray = [NSArray arrayWithArray:self.completedSuccessfulDownloadTasks];
+        for (id<SeafTask> task in copyArray) {
+            if (currentTimestamp - task.lastFinishTimestamp > DEFAULT_COMPLELE_INTERVAL) {
+                [tempSuccessfulDownloadTasks addObject:task];
+                if ([task respondsToSelector:@selector(cleanup)]) {
+                    [task cleanup];
+                }
+            }
+        }
+        
+        if (tempSuccessfulDownloadTasks.count > 0) {
+            [self.completedSuccessfulDownloadTasks removeObjectsInArray:tempSuccessfulDownloadTasks];
+            [self postDownloadTaskStatusChangedNotification];
+        }
+    }
+
+    @synchronized (self.completedSuccessfulTasks) {
+        NSArray *copyArray = [NSArray arrayWithArray:self.completedSuccessfulTasks];
+        for (id<SeafTask> task in copyArray) {
+            if (currentTimestamp - task.lastFinishTimestamp > DEFAULT_COMPLELE_INTERVAL) {
+                [tempSuccessfulTasks addObject:task];
+                if ([task respondsToSelector:@selector(cleanup)]) {
+                    [task cleanup];
+                }
+            }
+        }
+        if (tempSuccessfulTasks.count > 0) {
+            [self.completedSuccessfulTasks removeObjectsInArray:tempSuccessfulTasks];
+            [self postUploadTaskStatusChangedNotification];
+        }
+    }
+}
+
+#pragma mark - GCD Timer 定时器控制
+
+// 启动清理任务定时器（GCD方式）
+- (void)startCleanupTimer {
+    if (self.isCleanupTimerRunning) {
+        Debug(@"GCD Cleanup timer is already running.");
+        return;
+    }
+
+    // 创建一个 GCD 定时器
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0);
+    self.cleanupTimerSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, queue);
+    
+    // 设置定时器时间：每30秒触发一次
+    dispatch_source_set_timer(self.cleanupTimerSource,
+                              dispatch_time(DISPATCH_TIME_NOW, 0),
+                              30 * NSEC_PER_SEC,  // 每30秒触发
+                              1 * NSEC_PER_SEC);  // 容忍误差1秒
+
+    // 定时触发的事件
+    dispatch_source_set_event_handler(self.cleanupTimerSource, ^{
+        [self runRemoveTasksInBackground];
+    });
+
+    // 启动定时器
+    dispatch_resume(self.cleanupTimerSource);
+    self.isCleanupTimerRunning = YES;
+    Debug(@"GCD Cleanup timer started.");
+}
+
+// 暂停清理任务定时器（GCD方式）
+- (void)pauseCleanupTimer {
+    if (!self.isCleanupTimerRunning || !self.cleanupTimerSource) {
+        Debug(@"GCD Cleanup timer is not running.");
+        return;
+    }
+    
+    dispatch_source_cancel(self.cleanupTimerSource);
+    self.cleanupTimerSource = nil;
+    self.isCleanupTimerRunning = NO;
+    Debug(@"GCD Cleanup timer paused.");
 }
 
 @end
