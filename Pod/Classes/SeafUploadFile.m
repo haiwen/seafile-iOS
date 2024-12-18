@@ -649,14 +649,14 @@
             if (!result) {
                 [self finishUpload:false oid:nil error:nil];
                 if (completion) {
-                    completion(NO, nil); // 或者传入适当的错误信息
+                    completion(NO, nil);
                 }
                 return;
             }
         } else {
             [self finishUpload:false oid:nil error:nil];
             if (completion) {
-                completion(NO, nil); // 或者传入适当的错误信息
+                completion(NO, nil);
             }
             return;
         }
@@ -672,15 +672,33 @@
     PHAssetResource *resource = nil;
     NSArray<PHAssetResource *> *resources = [PHAssetResource assetResourcesForAsset:self.asset];
 
-    // 优先选择原始图像资源
+    // Prefer to choose the modified image resource
     for (PHAssetResource *res in resources) {
-        if (res.type == PHAssetResourceTypePhoto || res.type == PHAssetResourceTypeFullSizePhoto) {
-            resource = res;
-            break;
+        if (res.type == PHAssetResourceTypeAdjustmentData) {
+            [self getModifiedImageDataForAssetWithCompletion:^(BOOL success, NSError *error) {
+                if (!success) {
+                    // if getImage failed, return
+                    if (completion) {
+                        completion(NO, error);
+                    }
+                    return;
+                }
+                self->_filesize = [Utils fileSizeAtPath1:self.lpath];
+                if (completion) {
+                    completion(YES, nil);
+                }
+            }];
+            return;
         }
     }
+    
     if (!resource) {
-        resource = resources.firstObject;
+        for (PHAssetResource *res in resources) {
+            if (res.type == PHAssetResourceTypePhoto || res.type == PHAssetResourceTypeFullSizePhoto) {
+                resource = res;
+                break; // get original image
+            }
+        }
     }
 
     NSString *filePath = self.lpath;
@@ -688,7 +706,7 @@
     [stream open];
 
     PHAssetResourceRequestOptions *options = [[PHAssetResourceRequestOptions alloc] init];
-    options.networkAccessAllowed = YES; // 允许从 iCloud 下载
+    options.networkAccessAllowed = YES; // Allow downloading from iCloud
 
     [[PHAssetResourceManager defaultManager] requestDataForAssetResource:resource options:options dataReceivedHandler:^(NSData * _Nonnull data) {
         @autoreleasepool {
@@ -702,33 +720,33 @@
                 completion(NO, error);
             }
         } else {
-            // 检查是否需要格式转换
+            // Check if format conversion is required
             NSURL *sourceURL = [NSURL fileURLWithPath:self.lpath];
-            NSString *fileExtension = sourceURL.pathExtension.lowercaseString;
             
-            if (![self uploadHeic] && [fileExtension isEqualToString:@"heic"]) { // 如果未开启允许上传 HEIC
-                // 需要转换为 JPEG
-                NSString *destinationPath = [[self.lpath stringByDeletingPathExtension] stringByAppendingPathExtension:@"jpg"];
+            NSString *filename = resource.originalFilename;
+            NSString *fileExtension = filename.pathExtension.lowercaseString;
+            
+            if (![self uploadHeic] && [fileExtension isEqualToString:@"heic"]) { // If HEIC uploads are not enabled
+                // Conversion to JPEG is required
+                NSString *destinationPath = self.lpath;  // Replace the original file
                 NSURL *destinationURL = [NSURL fileURLWithPath:destinationPath];
 
                 if ([self convertHEICToJPEGAtURL:sourceURL destinationURL:destinationURL]) {
-                    // 转换成功，更新文件路径和大小
+                    // Conversion succeeded, update file path and size
                     self.lpath = destinationPath;
                     self->_filesize = [Utils fileSizeAtPath1:self.lpath];
-                    // 删除原始 HEIC 文件
-                    [[NSFileManager defaultManager] removeItemAtURL:sourceURL error:nil];
                     if (completion) {
                         completion(YES, nil);
                     }
                 } else {
-                    // 转换失败，处理错误
+                    // Conversion failed, handle the error
                     [self finishUpload:false oid:nil error:nil];
                     if (completion) {
-                        completion(NO, nil); // 或者传入适当的错误信息
+                        completion(NO, nil); // Or pass appropriate error information
                     }
                 }
             } else {
-                // 不需要转换，继续
+                // No conversion required, proceed
                 self->_filesize = [Utils fileSizeAtPath1:self.lpath];
                 if (completion) {
                     completion(YES, nil);
@@ -864,6 +882,99 @@
     return success;
 }
 
+- (void)getModifiedImageDataForAssetWithCompletion:(void (^)(BOOL success, NSError *error))completion {
+    __weak typeof(self) weakSelf = self;
+    self.requestOptions.progressHandler = ^(double progress, NSError * _Nullable error, BOOL * _Nonnull stop, NSDictionary * _Nullable info) {
+        if (error) {
+            Debug("Failed to get image data: %@", error);
+            if (completion) {
+                completion(NO, error);
+            }
+            [weakSelf finishUpload:false oid:nil error:nil];
+            *stop = YES;
+        }
+    };
+    
+    [[PHImageManager defaultManager] requestImageDataForAsset:self.asset options:self.requestOptions resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
+        if (!imageData) {
+            NSError *noDataError = [NSError errorWithDomain:@"SeafUploadFile"
+                                                       code:-1
+                                                   userInfo:@{NSLocalizedDescriptionKey: @"No image data returned."}];
+            if (completion) {
+                completion(NO, noDataError);
+            }
+            [weakSelf finishUpload:false oid:nil error:nil];
+            return;
+        }
+        
+        // Check for HEIC format and whether conversion is needed
+        if (![weakSelf uploadHeic] && [dataUTI isEqualToString:@"public.heic"]) {
+            weakSelf.lpath = [weakSelf.lpath stringByReplacingOccurrencesOfString:@"HEIC" withString:@"JPG"];
+            CIImage* ciImage = [CIImage imageWithData:imageData];
+            if (![Utils writeCIImage:ciImage toPath:weakSelf.lpath]) {
+                // If there is an error while writing the file
+                if (completion) {
+                    completion(NO, nil);
+                }
+                [weakSelf finishUpload:false oid:nil error:nil];
+                return;
+            }
+        } else {
+            // Determine the file extension based on the dataUTI
+            NSString *newExtension = nil;
+
+            // Assign the appropriate file extension based on UTI
+            if ([dataUTI isEqualToString:@"public.heic"]) {
+                newExtension = @"HEIC";
+            } else if ([dataUTI isEqualToString:@"public.heif"]) {
+                newExtension = @"HEIF";
+            } else if ([dataUTI isEqualToString:@"public.jpeg"]) {
+                newExtension = @"JPG";
+            } else if ([dataUTI isEqualToString:@"public.png"]) {
+                newExtension = @"PNG";
+            } else if ([dataUTI isEqualToString:@"public.tiff"]) {
+                newExtension = @"TIFF";
+            } else if ([dataUTI isEqualToString:@"com.compuserve.gif"]) {
+                newExtension = @"GIF";
+            } else if ([dataUTI isEqualToString:@"com.microsoft.bmp"]) {
+                newExtension = @"BMP";
+            } else {
+                // If the UTI is not in the above list, use the original file extension or assign a default one
+                NSString *originalExtension = self.lpath.pathExtension;
+                if (originalExtension.length == 0) {
+                    // Assign a default extension, such as JPG, when no extension exists
+                    newExtension = @"JPG";
+                } else {
+                    // Use the existing file extension
+                    newExtension = originalExtension;
+                }
+            }
+            
+            // Update the file extension if needed
+            if (newExtension && ![[weakSelf.lpath.pathExtension lowercaseString] isEqualToString:[newExtension lowercaseString]]) {
+                weakSelf.lpath = [[weakSelf.lpath stringByDeletingPathExtension] stringByAppendingPathExtension:newExtension];
+                Debug(@"Updated file path to: %@", weakSelf.lpath);
+            }
+            
+            // Write the image data to the file
+            if (![Utils writeDataWithMeta:imageData toPath:weakSelf.lpath]) {
+                if (completion) {
+                    completion(NO, nil);
+                }
+                [weakSelf finishUpload:false oid:nil error:nil];
+                return;
+            }
+        }
+        
+        weakSelf.filesize = [Utils fileSizeAtPath1:weakSelf.lpath];
+        
+        // Callback completion once everything is successful
+        if (completion) {
+            completion(YES, nil);
+        }
+    }];
+}
+
 - (void)getModifiedImageDataForAsset {
     __weak typeof(self) weakSelf = self;
     self.requestOptions.progressHandler = ^(double progress, NSError * _Nullable error, BOOL * _Nonnull stop, NSDictionary * _Nullable info) {
@@ -884,15 +995,34 @@
                 }
             } else {
                 NSString *newExtension = nil;
-                
+
+                // Assign corresponding extension based on the UTI
                 if ([dataUTI isEqualToString:@"public.heic"]) {
                     newExtension = @"HEIC";
+                } else if ([dataUTI isEqualToString:@"public.heif"]) {
+                    newExtension = @"HEIF";
                 } else if ([dataUTI isEqualToString:@"public.jpeg"]) {
                     newExtension = @"JPG";
                 } else if ([dataUTI isEqualToString:@"public.png"]) {
                     newExtension = @"PNG";
+                } else if ([dataUTI isEqualToString:@"public.tiff"]) {
+                    newExtension = @"TIFF";
+                } else if ([dataUTI isEqualToString:@"com.compuserve.gif"]) {
+                    newExtension = @"GIF";
+                } else if ([dataUTI isEqualToString:@"com.microsoft.bmp"]) {
+                    newExtension = @"BMP";
+                } else {
+                    // If the UTI is not listed above, use the original file extension or assign a default extension
+                    NSString *originalExtension = self.lpath.pathExtension;
+                    if (originalExtension.length == 0) {
+                        // Assign a default extension, such as JPG, when no extension exists
+                        newExtension = @"JPG";
+                    } else {
+                        // Use the existing file extension
+                        newExtension = originalExtension;
+                    }
                 }
-                
+
                 if (newExtension && ![self.lpath.pathExtension.lowercaseString isEqualToString:newExtension]) {
                     self.lpath = [[self.lpath stringByDeletingPathExtension] stringByAppendingPathExtension:newExtension];
                     Debug(@"Updated file path to: %@", self.lpath);
