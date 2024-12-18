@@ -27,7 +27,6 @@
 #import "Debug.h"
 #import "SeafPrivacyPolicyViewController.h"
 
-
 enum {
     SECTION_ACCOUNT = 0,
     SECTION_CAMERA,
@@ -351,9 +350,6 @@ enum {
     _versionCell.detailTextLabel.text = _version;
     [self configureView];
 
-    SeafDataTaskManager.sharedObject.trySyncBlock = ^(id<SeafTask>  _Nonnull task) {
-        [self updateSyncInfo];
-    };
     SeafDataTaskManager.sharedObject.finishBlock = ^(id<SeafTask>  _Nonnull task) {
         [self updateSyncInfo];
     };
@@ -367,6 +363,10 @@ enum {
         
         self.tableView.sectionHeaderTopPadding = 0;
     }
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(uploadTaskStatusChanged:) name:@"SeafUploadTaskStatusChanged" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(uploadTaskStatusChanged:) name:@"SeafDownloadTaskStatusChanged" object:nil];
+
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -433,8 +433,10 @@ enum {
 
 // Updates the upload and download tasks information.
 -(void)updateSyncInfo{
-    NSInteger downloadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].fileQueue onGoingTaskNumber];
-    NSInteger uploadingNum = [[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection].uploadQueue onGoingTaskNumber];
+    SeafAccountTaskQueue *accountTaskQueue= [SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection];
+    NSUInteger uploadingNum = accountTaskQueue.getOngoingTasks.count;
+    NSUInteger downloadingNum = accountTaskQueue.getOngoingDownloadTasks.count;
+
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self.tableView.dragging == false && self.tableView.decelerating == false && self.tableView.tracking == false) {
             _downloadingCell.detailTextLabel.text = [NSString stringWithFormat:@"%lu",(long)downloadingNum];
@@ -461,7 +463,6 @@ enum {
 - (void)setConnection:(SeafConnection *)connection
 {
     _connection = connection;
-    _connection.photoBackup.photSyncWatcher = self;
     [self.tableView reloadData];
     [self updateAccountInfo];
 }
@@ -472,6 +473,15 @@ enum {
     SeafDirViewController *c = [[SeafDirViewController alloc] initWithSeafDir:self.connection.rootFolder dirChosen:choose cancel:cancel chooseRepo:true];
     c.operationState = OPERATION_STATE_OTHER;
     [self.navigationController pushViewController:c animated:true];
+}
+
+- (void)uploadTaskStatusChanged:(NSNotification *)notification {
+        dispatch_async(dispatch_get_main_queue(), ^{
+        // update the number of uploading and downloading
+        [self updateSyncInfo];
+        [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:SECTION_CAMERA] withRowAnimation:UITableViewRowAnimationNone];
+
+    });
 }
 
 #pragma mark - Table view delegate
@@ -606,7 +616,7 @@ enum {
                 remainStr = [NSString stringWithFormat:NSLocalizedString(@"%ld photos remain", @"Seafile"), num];
             }
 #if DEBUG
-            remainStr = [remainStr stringByAppendingFormat:@" /uploading count is %ld", _connection.photoBackup.photosInUploadingArray];
+//            remainStr = [remainStr stringByAppendingFormat:@" /uploading count is %ld", _connection.photoBackup.photosInUploadingArray];
 #endif
         }
         return [sectionNames[section] stringByAppendingFormat:@"\t %@", remainStr];
@@ -637,18 +647,14 @@ enum {
 {
     NSString *old = _connection.autoSyncRepo;
     if ([repo.repoId isEqualToString:old]) {
-        [_connection photosDidChange:nil];
+//        [_connection photosDidChange:nil];
         return;
     }
     
     if (!_connection.photoBackup){
         _connection.photoBackup = [[SeafPhotoBackupTool alloc] initWithConnection:_connection andLocalUploadDir:_connection.localUploadDir];
-        _connection.photoBackup.photSyncWatcher = self;
     }
-
-//    if (_connection.autoSyncedNum > 0) {
-//        [_connection resetUploadedPhotos];
-//    }
+    
     [_connection resetUploadedPhotos];
 
     dispatch_async(dispatch_get_main_queue(), ^ {
@@ -688,6 +694,10 @@ enum {
         _backgroundSyncSwitch.on = true;
         self.backgroundSync = true;
     }
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"SeafUploadTaskStatusChanged" object:nil];
 }
 
 @end

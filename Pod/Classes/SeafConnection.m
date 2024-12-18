@@ -16,7 +16,6 @@
 #import "SeafFile.h"
 #import "SeafStorage.h"
 #import "SeafDataTaskManager.h"
-
 #import "ExtentedString.h"
 #import "NSData+Encryption.h"
 #import "Debug.h"
@@ -836,7 +835,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return request;
 }
 
-- (void)sendRequestAsync:(NSString *)url method:(NSString *)method form:(NSString *)form
+- (NSURLSessionDataTask *)sendRequestAsync:(NSString *)url method:(NSString *)method form:(NSString *)form
                  success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
                  failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure
 {
@@ -880,13 +879,14 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         }
     }];
     [task resume];
+    return task;
 }
 
-- (void)sendRequest:(NSString *)url
+- (NSURLSessionDataTask *)sendRequest:(NSString *)url
             success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
             failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure
 {
-    [self sendRequestAsync:url method:@"GET" form:nil success:success failure:failure];
+    return [self sendRequestAsync:url method:@"GET" form:nil success:success failure:failure];
 }
 
 - (void)sendOptions:(NSString *)url
@@ -910,11 +910,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self sendRequestAsync:url method:@"PUT" form:form success:success failure:failure];
 }
 
-- (void)sendPost:(NSString *)url form:(NSString *)form
+- (NSURLSessionDataTask *)sendPost:(NSString *)url form:(NSString *)form
          success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
          failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure
 {
-    [self sendRequestAsync:url method:@"POST" form:form success:success failure:failure];
+    return [self sendRequestAsync:url method:@"POST" form:form success:success failure:failure];
 }
 
 - (void)loadRepos:(id<SeafDentryDelegate>)degt
@@ -1119,8 +1119,61 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         return;
     Debug("%@, %d\n", self.address, [self authorized]);
     SeafUserAvatar *avatar = [[SeafUserAvatar alloc] initWithConnection:self username:self.username];
-    [SeafDataTaskManager.sharedObject addAvatarTask:avatar];
+//    [SeafDataTaskManager.sharedObject addAvatarTask:avatar];
+    [self downloadAvatarWithAvatar:avatar];
     self.avatarLastUpdate = [NSDate date];
+}
+
+- (void)downloadAvatarWithAvatar:(SeafUserAvatar *)avatar
+{
+    [self sendRequest:avatar.avatarUrl success:^(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nonnull response, id  _Nonnull JSON) {
+        if (![JSON isKindOfClass:[NSDictionary class]]) {
+            NSError *error = [NSError errorWithDomain:@"com.seafile.error"
+                                           code:-1
+                                       userInfo:@{ NSLocalizedDescriptionKey: @"JSON format is incorrect" }];
+            return;
+        }
+        NSString *url = [JSON objectForKey:@"url"];
+        if (!url) {
+            NSError *error = [NSError errorWithDomain:@"com.seafile.error"
+                                           code:-1
+                                       userInfo:@{ NSLocalizedDescriptionKey: @"JSON format is incorrect" }];
+            return;
+        }
+        if([[JSON objectForKey:@"is_default"] integerValue]) {
+            if ([[SeafAvatar avatarAttrs] objectForKey:avatar.path])
+                [[SeafAvatar avatarAttrs] removeObjectForKey:avatar.path];
+            return;
+        }
+        if (![avatar modified:[[JSON objectForKey:@"mtime"] integerValue:0]]) {
+            Debug("avatar not modified\n");
+            return;
+        }
+        
+        url = [[url stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding] escapedUrlPath];;
+        NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
+        NSURLSessionDownloadTask *task = [self.sessionMgr downloadTaskWithRequest:downloadRequest progress:nil destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
+            return [NSURL fileURLWithPath:avatar.path];
+        } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
+            if (error) {
+                Debug("Failed to download avatar url=%@, error=%@",downloadRequest.URL, [error localizedDescription]);
+            } else {
+                Debug("Successfully downloaded avatar: %@ from %@", filePath, url);
+                if (![filePath.path isEqualToString:avatar.path]) {
+                    [[NSFileManager defaultManager] removeItemAtPath:avatar.path error:nil];
+                    [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:avatar.path error:nil];
+                }
+                NSMutableDictionary *attr = [[SeafAvatar avatarAttrs] objectForKey:avatar.path];
+                if (!attr) attr = [[NSMutableDictionary alloc] init];
+                [Utils dict:attr setObject:[JSON objectForKey:@"mtime"] forKey:@"mtime"];
+                [avatar saveAttrs:attr];
+                [SeafAvatar saveAvatarAttrs];
+            }
+        }];
+        [task resume];
+    } failure:^(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nullable response, id  _Nullable JSON, NSError * _Nullable error) {
+        Warning("Failed to download avatar from %@", request.URL);
+    }];
 }
 
 - (void)saveCertificate:(NSURLProtectionSpace *)protectionSpace
@@ -1186,7 +1239,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 }
 
 - (BOOL)isCheckingPhotoLibrary {
-    return self.photoBackup.inCheckPhotos && self.isFirstTimeSync;
+    return self.photoBackup.inCheckPhotos;
 }
 
 - (void)updateUploadDir:(SeafDir *)dir
@@ -1240,7 +1293,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 {
     if (!_inAutoSync)
         return;
-    Debug("photos changed %d for server %@, current: %u %u, _syncDir:%@", _inAutoSync, _address, (unsigned)self.photoBackup.photosArray.count, (unsigned)self.photoBackup.uploadingArray.count, _syncDir);
+    Debug("photos changed %d for server %@, current: %u, _syncDir:%@", _inAutoSync, _address, (unsigned)self.photoBackup.photosArray.count, _syncDir);
+
     if (!_syncDir) {
         Warning("Sync dir not exists, create.");
         [self checkPhotosUploadDir:nil];
@@ -1269,10 +1323,13 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         } else {
             Debug("Stop auto Sync for server %@", _address);
             [self.photoBackup resetAll];
-            [SeafDataTaskManager.sharedObject cancelAutoSyncTasks:self];
             [self clearUploadCache];
         }
     }
+    
+    SeafAccountTaskQueue *accountQueue =[SeafDataTaskManager.sharedObject accountQueueForConnection:self];
+    [accountQueue cancelAutoSyncTasks];
+    
     _inAutoSync = value;
     self.photoBackup.inAutoSync = _inAutoSync;
     if (_inAutoSync) {
@@ -1284,6 +1341,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                 
             }
         }];
+    } else {
+        SeafAccountTaskQueue *accountTaskQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self];
+        [accountTaskQueue postUploadTaskStatusChangedNotification];
     }
 }
 
@@ -1365,17 +1425,19 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (void)downloadDir:(SeafDir *)dir
 {
     [dir loadContentSuccess:^(SeafDir *dir) {
-        Debug("dir %@ items: %lu", dir.path, (unsigned long)dir.items.count);
-        for (SeafBase *item in dir.items) {
-            if ([item isKindOfClass:[SeafFile class]]) {
-                SeafFile *file = (SeafFile *)item;
-                Debug("download file: %@, %@", item.repoId, item.path);
-                [SeafDataTaskManager.sharedObject addFileDownloadTask:file];
-            } else if ([item isKindOfClass:[SeafDir class]]) {
-                Debug("download dir: %@, %@", item.repoId, item.path);
-                [self performSelector:@selector(downloadDir:) withObject:(SeafDir *)item];
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            Debug("dir %@ items: %lu", dir.path, (unsigned long)dir.items.count);
+            for (SeafBase *item in dir.items) {
+                if ([item isKindOfClass:[SeafFile class]]) {
+                    SeafFile *file = (SeafFile *)item;
+                    Debug("download file: %@, %@", item.repoId, item.path);
+                    [SeafDataTaskManager.sharedObject addFileDownloadTask:file];
+                } else if ([item isKindOfClass:[SeafDir class]]) {
+                    Debug("download dir: %@, %@", item.repoId, item.path);
+                    [self performSelector:@selector(downloadDir:) withObject:(SeafDir *)item];
+                }
             }
-        }
+        });
     } failure:^(SeafDir *dir, NSError *error) {
         Warning("Failed to download dir %@ %@:  %@", dir.repoId, dir.path, error);
     }];

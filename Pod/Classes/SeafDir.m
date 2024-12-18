@@ -13,10 +13,12 @@
 #import "SeafFile.h"
 #import "SeafUploadFile.h"
 #import "SeafDataTaskManager.h"
+#import "SeafAccountTaskQueue.h"
 
 #import "ExtentedString.h"
 #import "Utils.h"
 #import "Debug.h"
+#import "SeafUploadOperation.h"
 
 typedef NSComparisonResult (^SeafSortableCmp)(id<SeafSortable> obj1, id<SeafSortable> obj2);
 
@@ -126,8 +128,8 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
     
     //check if has edited file not uploaded before.
     SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self->connection];
-    NSArray *allUpLoadTasks = accountQueue.uploadQueue.allTasks;
-
+    NSArray *allUpLoadTasks = [accountQueue getNeedUploadTasks];
+    
     NSMutableArray *newItems = [NSMutableArray array];
     for (NSDictionary *itemInfo in JSON) {
         if ([itemInfo objectForKey:@"name"] == [NSNull null])
@@ -152,10 +154,10 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
             NSString *oid = [Utils getNewOidFromMtime:[mtimeNumber longLongValue] repoId:self.repoId path:path];
             
             newItem.oid = oid;
-            
             if (allUpLoadTasks.count > 0) {//if have uploadTask
                 for (SeafUploadFile *file in allUpLoadTasks) {
                     //check and set uploadFile to SeafFile
+//                    SeafUploadFile *file = uploadOperation.uploadFile;
                     if ((file.editedFileOid != nil) && [file.editedFileOid isEqualToString:oid]) {
                         SeafFile *fileItem = (SeafFile *)newItem;
                         fileItem.ufile = file;
@@ -467,7 +469,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 - (NSMutableArray *)uploadItems
 {
     if (self.path && !_uploadItems)
-        _uploadItems = [NSMutableArray arrayWithArray:[[SeafDataTaskManager sharedObject] getUploadTasksInDir:self]];
+        _uploadItems = [NSMutableArray arrayWithArray:[[SeafDataTaskManager sharedObject] getUploadTasksInDir:self connection:self->connection]];
     
     return _uploadItems;
 }

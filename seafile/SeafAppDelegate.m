@@ -57,14 +57,15 @@
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
         if (conn.inAutoSync) return true;
     }
-    NSInteger totalDownloadingNum = 0;
-    NSInteger totalUploadingNum = 0;
+//    NSInteger totalDownloadingNum = 0;
+    NSInteger totalOngoingNum = 0;
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
         SeafAccountTaskQueue *accountQueue =[SeafDataTaskManager.sharedObject accountQueueForConnection:conn];
-        totalUploadingNum += accountQueue.fileQueue.taskNumber + accountQueue.uploadQueue.taskNumber;
+//        totalUploadingNum += accountQueue.downloadQueue.operationCount + accountQueue.uploadQueue.operationCount;
+        totalOngoingNum += [accountQueue getNeedUploadTasks].count + [accountQueue getNeedDownloadTasks].count;
     }
     // Continue if there are any active uploads or downloads.
-    return totalUploadingNum != 0 || totalDownloadingNum != 0;
+    return totalOngoingNum != 0;
 }
 
 // Selects the provided Seafile connection as the active account, updates navigation state.
@@ -317,14 +318,20 @@
         @strongify(self);
         Debug("Expired, Time Remain = %f, restart background task.", [application backgroundTimeRemaining]);
         if (@available(iOS 13.0, *)) {
-            [application endBackgroundTask:self.bgTask];
-            self.bgTask = UIBackgroundTaskInvalid;
+            if (self.bgTask != UIBackgroundTaskInvalid) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [[UIApplication sharedApplication] endBackgroundTask:self.bgTask];
+                    self.bgTask = UIBackgroundTaskInvalid;
+                });
+            }
             
             self.needReset = YES;
-            if (SeafGlobal.sharedObject.connection.accountIdentifier) {
-                [[SeafDataTaskManager.sharedObject accountQueueForConnection:SeafGlobal.sharedObject.connection].uploadQueue clearTasks];
+            for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+                if (conn.accountIdentifier) {
+                    SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:conn];
+                    [accountQueue pauseAllTasks];
+                }
             }
-            [self photosDidChange:[NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}]];
         } else {
             //not work in iOS 13, and while call in app  become active next time
             [self startBackgroundTask];
@@ -441,13 +448,17 @@
     [self.bgTaskTimer invalidate];
     self.bgTaskTimer = nil;
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
-    if (self.needReset == YES) {
-        self.needReset = NO;
-        NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
-        [self photosDidChange:note];
-    } else {
-        [self photosDidChange:nil];
-    }
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        if (self.needReset == YES) {
+            self.needReset = NO;
+            for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+                if (conn.accountIdentifier) {
+                    [[SeafDataTaskManager.sharedObject accountQueueForConnection:conn] resumeAllTasks];
+                }
+            }
+        }
+    });
+    
     for (id <SeafBackgroundMonitor> monitor in _monitors) {
         [monitor enterForeground];
     }
@@ -646,8 +657,6 @@
         self.needReset = NO;
         NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
         [self photosDidChange:note];
-    } else {
-        [self photosDidChange:nil];
     }
 }
 
@@ -741,8 +750,21 @@ new identifier is "'mtime' + 'repoId' + 'path'"
 
 + (void)checkOpenLink:(SeafFileViewController *)c
 {
+    if ([NSThread isMainThread]) {
+        // Already on the main thread, execute directly
+        [self safeCheckOpenLink:c];
+    } else {
+        // Switch to the main thread for execution
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self safeCheckOpenLink:c];
+        });
+    }
+}
+
++ (void)safeCheckOpenLink:(SeafFileViewController *)c
+{
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5*NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [appdelegate checkOpenLink:c];
     });
 }

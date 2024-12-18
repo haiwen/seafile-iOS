@@ -30,6 +30,7 @@
 #import <SDWebImage/SDWebImageManager.h>
 #import "SKFileTypeImageLoader.h"
 #import "SeafDataTaskManager.h"
+#import "SeafUploadOperation.h"
 
 @interface SeafStarredFilesViewController ()<SWTableViewCellDelegate>
 @property (readonly) SeafDetailViewController *detailViewController;
@@ -142,7 +143,7 @@
     
     //check if has edited file not uploaded before.
     SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:_connection];
-    NSArray *allUpLoadTasks = accountQueue.uploadQueue.allTasks;
+    NSArray *allUpLoadTasks = [accountQueue getNeedUploadTasks];
     
     NSMutableArray *starFiles = [NSMutableArray array];
     for (NSDictionary *info in starredItems) {
@@ -165,6 +166,7 @@
             if (allUpLoadTasks.count > 0) {//if have uploadTask
                 for (SeafUploadFile *file in allUpLoadTasks) {
                     //check and set uploadFile to SeafFile
+//                    SeafUploadFile *file = uploadOperation.uploadFile;
                     if ((file.editedFileOid != nil) && [file.editedFilePath isEqualToString:sfile.path] && [file.editedFileRepoId isEqualToString:sfile.repoId]) {
                         sfile.ufile = file;
                         [sfile setMpath:file.lpath];

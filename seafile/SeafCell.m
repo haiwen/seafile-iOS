@@ -39,6 +39,9 @@
     self.badgeLabel.hidden = true;
     self.cacheStatusView.hidden = true;
     self.progressView.hidden = true;
+    
+    self.imageView.image = nil;
+
     [self resetCellFile];
 }
 

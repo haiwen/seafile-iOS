@@ -1,6 +1,6 @@
 //
-//  SeafUpDownloadViewController.m
-//  seafilePro
+//  SeafSyncInfoViewController.m
+//  SeafilePro
 //
 //  Created by three on 2017/7/29.
 //  Copyright © 2017年 Seafile. All rights reserved.
@@ -13,6 +13,7 @@
 #import "SeafFile.h"
 #import "SeafPhoto.h"
 #import "SeafGlobal.h"
+#import "SeafUploadOperation.h"
 
 #define CANCEL_UPLOAD NSLocalizedString(@"Cancel upload", @"Seafile")
 #define CANCEL_DOWNLOAD NSLocalizedString(@"Cancel download", @"Seafile")
@@ -21,27 +22,16 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
 
 @interface SeafSyncInfoViewController ()
 
-@property (nonatomic, strong) NSArray *finishedTasks;//An array of tasks that have been completed.
-@property (nonatomic, strong) NSMutableArray *ongongingTasks;//A mutable array of tasks that are currently in progress.
-@property (nonatomic, strong) SeafConnection *connection;//An instance of SeafConnection which manages network communication and session details with a Seafile server.
+@property (nonatomic, strong) NSArray *uploadingTasks;     // Tasks currently being uploaded
+@property (nonatomic, strong) NSArray *waitingUploadTasks; // Tasks waiting to be uploaded
+@property (nonatomic, strong) NSArray *downloadingTasks;   // Tasks currently being downloaded
+@property (nonatomic, strong) NSArray *waitingDownloadTasks; // Tasks waiting to be downloaded
+@property (nonatomic, strong) NSArray *finishedTasks;      // Array of completed tasks
+@property (nonatomic, strong) SeafConnection *connection;
 
 @end
 
 @implementation SeafSyncInfoViewController
-
-- (NSArray *)finishedTasks {
-    if (!_finishedTasks) {
-        _finishedTasks = [NSArray array];
-    }
-    return _finishedTasks;
-}
-
-- (NSMutableArray *)ongongingTasks {
-    if (!_ongongingTasks) {
-        _ongongingTasks = [NSMutableArray array];
-    }
-    return _ongongingTasks;
-}
 
 - (instancetype)initWithType:(DETAILTYPE)type {
     self = [super init];
@@ -60,7 +50,7 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
     [self.tableView registerNib:[UINib nibWithNibName:@"SeafSyncInfoCell" bundle:nil]
          forCellReuseIdentifier:cellIdentifier];
 
-    if([self respondsToSelector:@selector(edgesForExtendedLayout)])
+    if ([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeAll;
 
     if (self.detailType == DOWNLOAD_DETAIL) {
@@ -73,89 +63,74 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
 
     self.connection = [SeafGlobal sharedObject].connection;
 
-    [self initTaskArray];
-    
+    [self initTaskArrays];
+
+    // Add notification observers
+    if (self.detailType == DOWNLOAD_DETAIL) {
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(taskStatusChanged:) name:@"SeafDownloadTaskStatusChanged" object:nil];
+    }
+    else {
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(taskStatusChanged:) name:@"SeafUploadTaskStatusChanged" object:nil];
+    }
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+#pragma mark - Initialize Task Arrays
+
+- (void)initTaskArrays {
+    [self updateTaskArrays];
+}
+
+- (void)updateTaskArrays {
+    SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection];
+
+    if (self.detailType == DOWNLOAD_DETAIL) {
+        // Separate tasks into currently downloading and waiting to download
+        self.downloadingTasks = [accountQueue.getOngoingDownloadTasks copy];
+        self.waitingDownloadTasks = [accountQueue.getWaitingDownloadTasks copy];
+
+        NSMutableArray *finishedTasks = [NSMutableArray array];
+        [finishedTasks addObjectsFromArray:accountQueue.getCompletedSuccessfulDownloadTasks];
+        // Do not include failed tasks
+//        [finishedTasks addObjectsFromArray:accountQueue.getCompletedFailedDownloadTasks];
+        self.finishedTasks = [finishedTasks copy];
+    } else {
+        // Separate tasks into currently uploading and waiting to upload
+        self.uploadingTasks = [accountQueue.getOngoingTasks copy];
+        self.waitingUploadTasks = [accountQueue.getWaitingTasks copy];
+
+        NSMutableArray *finishedTasks = [NSMutableArray array];
+        [finishedTasks addObjectsFromArray:accountQueue.getCompletedSuccessfulTasks];
+        // Do not include failed tasks
+//        [finishedTasks addObjectsFromArray:accountQueue.getCompletedFailedTasks];
+        self.finishedTasks = [finishedTasks copy];
+    }
+}
+
+#pragma mark - Notification Callback
+
+- (void)taskStatusChanged:(NSNotification *)notification {
+    [self updateTaskArrays];
+
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.tableView reloadData];
     });
-    WS(weakSelf);
-    SeafDataTaskManager.sharedObject.trySyncBlock = ^(id<SeafTask> _Nullable task) {
-        if (![task.accountIdentifier isEqualToString:self.connection.accountIdentifier]) return;
-        NSArray *copyArray = [NSArray arrayWithArray:weakSelf.ongongingTasks];
-        if ([copyArray containsObject:task]) return;
-        @synchronized (weakSelf.ongongingTasks) {
-            [weakSelf.ongongingTasks addObject:task];
-        }
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [weakSelf.tableView reloadData];
-        });
-    };
-
-    SeafDataTaskManager.sharedObject.finishBlock = ^(id<SeafTask>  _Nonnull task) {
-        if (![task.accountIdentifier isEqualToString:self.connection.accountIdentifier]) return;
-        if ([weakSelf.ongongingTasks containsObject:task]) {
-            @synchronized (weakSelf.ongongingTasks) {
-                [weakSelf.ongongingTasks removeObject:task];
-            }
-        }
-        weakSelf.finishedTasks = [weakSelf allCompeletedTask];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [weakSelf.tableView reloadData];
-        });
-    };
 }
 
-//Retrieves all completed tasks from the SeafDataTaskManager.
-- (NSArray*)allCompeletedTask {
-    SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection];
-    NSArray *completedArray = nil;
-    if (self.detailType == DOWNLOAD_DETAIL) {
-        completedArray = [accountQueue.fileQueue.completedTasks mutableCopy];
-    } else {
-        completedArray = [accountQueue.uploadQueue.completedTasks mutableCopy];
-    }
-    return completedArray;
-}
-
-//Initializes the array of ongoing and finished tasks by fetching data from SeafDataTaskManager.
-- (void)initTaskArray {
-    self.finishedTasks = [self allCompeletedTask];
-    SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection];
-    NSArray *allTasks = nil;
-    if (self.detailType == DOWNLOAD_DETAIL) {
-        allTasks = accountQueue.fileQueue.allTasks;
-    } else {
-        allTasks = accountQueue.uploadQueue.allTasks;
-    }
-    for (id<SeafTask> task in allTasks) {
-        if (![self.finishedTasks containsObject:task]) {
-            @synchronized (self.ongongingTasks) {
-                [self.ongongingTasks addObject:task];
-            }
-        }
-    }
-}
-
-// Provides functionality to cancel all download tasks.
+#pragma mark - Cancel All Tasks
 - (void)cancelAllDownloadTasks {
-    WS(weakSelf);
     [Utils alertWithTitle:NSLocalizedString(@"Are you sure to cancel all downloading tasks?", @"Seafile") message:nil yes:^{
         [SeafDataTaskManager.sharedObject cancelAllDownloadTasks:self.connection];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [weakSelf.tableView reloadData];
-        });
     } no:^{
     } from:self];
 }
 
-//Provides functionality to cancel all upload tasks.
 - (void)cancelAllUploadTasks {
-    WS(weakSelf);
     [Utils alertWithTitle:NSLocalizedString(@"Are you sure to cancel all uploading tasks?", @"Seafile") message:nil yes:^{
         [SeafDataTaskManager.sharedObject cancelAllUploadTasks:self.connection];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [weakSelf.tableView reloadData];
-        });
     } no:^{
     } from:self];
 }
@@ -167,14 +142,24 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    if (section == 0) {
-        return self.ongongingTasks.count;
+    if (self.detailType == DOWNLOAD_DETAIL) {
+        if (section == 0) {
+            return self.downloadingTasks.count + self.waitingDownloadTasks.count;
+        } else if (section == 1) {
+            return self.finishedTasks.count;
+        }
     } else {
-        return self.finishedTasks.count;
+        if (section == 0) {
+            return self.uploadingTasks.count + self.waitingUploadTasks.count;
+        } else if (section == 1) {
+            return self.finishedTasks.count;
+        }
     }
+    return 0;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
+    // Always show the header with a height of 24
     return 24;
 }
 
@@ -186,9 +171,10 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
         } else {
             text = NSLocalizedString(@"Uploading", @"Seafile");
         }
-    } else {
+    } else if (section == 1) {
         text = NSLocalizedString(@"Completed", @"Seafile");
     }
+
     UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
     UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 3, tableView.bounds.size.width - 10, 18)];
     label.font = [UIFont systemFontOfSize:12];
@@ -200,25 +186,43 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
     return headerView;
 }
 
+- (NSArray *)combinedActiveTasks {
+    if (self.detailType == DOWNLOAD_DETAIL) {
+        NSMutableArray *combinedTasks = [NSMutableArray array];
+        // Add currently downloading tasks first
+        [combinedTasks addObjectsFromArray:self.downloadingTasks];
+        // Add tasks waiting to be downloaded
+        [combinedTasks addObjectsFromArray:self.waitingDownloadTasks];
+        return [combinedTasks copy];
+    } else {
+        NSMutableArray *combinedTasks = [NSMutableArray array];
+        // Add currently uploading tasks first
+        [combinedTasks addObjectsFromArray:self.uploadingTasks];
+        // Add tasks waiting to be uploaded
+        [combinedTasks addObjectsFromArray:self.waitingUploadTasks];
+        return [combinedTasks copy];
+    }
+}
+
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     SeafSyncInfoCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier forIndexPath:indexPath];
     NSArray *tasks = nil;
     if (indexPath.section == 0) {
-        tasks = self.ongongingTasks;
-    } else {
+        tasks = [self combinedActiveTasks];
+    } else if (indexPath.section == 1) {
         tasks = self.finishedTasks;
     }
 
-    if (tasks.count > 0 && tasks.count > indexPath.row) {
-        id<SeafTask> task = tasks[indexPath.row];
-        [cell showCellWithTask:task];
+    if (tasks.count > indexPath.row) {
+        if (self.detailType == DOWNLOAD_DETAIL) {
+            SeafFile *task = tasks[indexPath.row];
+            [cell showCellWithTask:task];
+        } else {
+            SeafUploadFile *task = tasks[indexPath.row];
+            [cell showCellWithTask:task];
+        }
     }
     return cell;
-}
-
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
 }
 
 @end

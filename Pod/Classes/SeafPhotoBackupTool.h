@@ -6,6 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "SeafUploadFile.h"
 
 @class SeafConnection;
 @class SeafDir;
@@ -25,7 +26,7 @@
 /**
  A utility class for backing up photos to a Seafile server.
  */
-@interface SeafPhotoBackupTool : NSObject
+@interface SeafPhotoBackupTool : NSObject<SeafUploadDelegate>
 
 /// The SeafConnection object managing network operations.
 @property (nonatomic, strong) SeafConnection * _Nonnull connection;
@@ -34,13 +35,13 @@
 @property (nonatomic, strong) SeafDir * _Nullable syncDir;
 
 /// Delegate object to receive photo synchronization change notifications.
-@property (weak) id<SeafPhotoSyncWatcherDelegate> _Nullable photSyncWatcher;
+//@property (weak) id<SeafPhotoSyncWatcherDelegate> _Nullable photSyncWatcher;
 
 /// An array containing the identifiers of photos queued for synchronization.
 @property (nonatomic, strong) NSMutableArray * _Nullable photosArray;
 
 /// An array containing the identifiers of photos currently being uploaded.
-@property (nonatomic, strong) NSMutableArray * _Nullable uploadingArray;
+//@property (nonatomic, strong) NSMutableArray * _Nullable uploadingArray;
 
 /// A Boolean value indicating whether automatic syncing is enabled.
 @property (nonatomic, assign) BOOL inAutoSync;
@@ -73,7 +74,7 @@
 - (void)resetAll;
 
 /**
- Returns the number of photos currently being synchronized.
+ Returns the number of photos need to sync
  @return The number of photos in synchronization.
  */
 - (NSUInteger)photosInSyncing;
@@ -87,11 +88,5 @@
  Clears the list of uploading videos.
  */
 - (void)clearUploadingVideos;
-
-/**
- Returns the number of photos currently being uploaded.
- @return The number of photos in the uploading array.
- */
-- (NSUInteger)photosInUploadingArray;
 
 @end
