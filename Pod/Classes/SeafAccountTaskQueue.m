@@ -63,9 +63,6 @@
         self.pausedDownloadTasks = [NSMutableArray array];
         self.pausedThumbTasks = [NSMutableArray array];
         
-        // Manage canceled thumbnail tasks
-        self.cancelledThumbTasks = [NSMutableArray array];
-        
         self.pendingUploadTasks = [NSMutableArray array];
         self.maxBatchSize = QUEUE_MAX_COUNT; // Maximum of 50 tasks per batch
         
@@ -168,11 +165,6 @@
 }
 
 - (void)addThumbTask:(SeafThumb * _Nonnull)thumb {
-    // Check if the task is in the canceled task list
-    if ([self resumeCancelledThumbTask:thumb]) {
-        return; // If the task is successfully resumed, return immediately
-    }
-    
     // Check if the task already exists
     for (SeafThumbOperation *op in self.thumbQueue.operations) {
         if ([op.file.oid isEqual:thumb.file.oid]) {
@@ -182,22 +174,6 @@
     
     SeafThumbOperation *operation = [[SeafThumbOperation alloc] initWithSeafFile:thumb.file];
     [self.thumbQueue addOperation:operation];
-}
-
-- (BOOL)resumeCancelledThumbTask:(SeafThumb * _Nonnull)thumb {
-    @synchronized (self.cancelledThumbTasks) {
-        for (SeafThumb *cancelledThumb in self.cancelledThumbTasks) {
-            if ([cancelledThumb.file.oid isEqual:thumb.file.oid]) {
-                // Remove from the canceled list
-                [self.cancelledThumbTasks removeObject:cancelledThumb];
-                // Re-add the task
-                SeafThumbOperation *operation = [[SeafThumbOperation alloc] initWithSeafFile:thumb.file];
-                [self.thumbQueue addOperation:operation];
-                return YES;
-            }
-        }
-    }
-    return NO;
 }
 
 - (NSArray *)getUploadTasksInDir:(SeafDir *)dir {
@@ -292,9 +268,10 @@
                 }
             }
             [self postDownloadTaskStatusChangedNotification];
-        } else {
-            [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
         }
+    else {
+        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+    }
 }
 
 #pragma mark - Post Notifications
@@ -587,10 +564,6 @@
     for (SeafThumbOperation *op in self.thumbQueue.operations) {
         if ([op.file.oid isEqual:thumb.file.oid]) {
             [op cancel];
-            
-            @synchronized (self.cancelledThumbTasks) {
-                [self.cancelledThumbTasks addObject:thumb];
-            }
             break;
         }
     }

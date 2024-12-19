@@ -150,11 +150,11 @@
             }
         }
         else {
-                if (![filePath.path isEqualToString:target]) {
-                    [Utils removeFile:target];
-                    [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
-                }
-                [strongSelf finishDownloadThumbOperation:YES];
+            if (![filePath.path isEqualToString:target]) {
+                [Utils removeFile:target];
+                [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
+            }
+            [strongSelf finishDownloadThumbOperation:YES];
         }
     }];
     

@@ -81,10 +81,6 @@
 
 - (void)addThumbTask:(SeafThumb * _Nonnull)thumb {
     SeafAccountTaskQueue *accountQueue = [self accountQueueForConnection:thumb.file->connection];
-    if ([accountQueue resumeCancelledThumbTask:thumb]) {
-        // If a canceled task is resumed, return immediately
-        return;
-    }
     [accountQueue addThumbTask:thumb];
 }
 

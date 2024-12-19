@@ -34,9 +34,6 @@
 @property (nonatomic, strong) NSMutableArray<SeafFile *> * _Nullable pausedDownloadTasks;
 @property (nonatomic, strong) NSMutableArray<SeafThumb *> * _Nullable pausedThumbTasks;
 
-// Array of canceled thumbnails
-@property (nonatomic, strong) NSMutableArray<SeafThumb *> * _Nullable cancelledThumbTasks;
-
 @property (nonatomic, strong) SeafConnection * _Nonnull conn;
 
 - (void)addFileDownloadTask:(SeafFile * _Nonnull)dfile;
@@ -62,9 +59,6 @@
 - (NSArray<SeafFile *> *_Nullable)getCancelledDownloadTasks;
 - (NSArray<SeafFile *> *_Nullable)getCompletedSuccessfulDownloadTasks;
 - (NSArray<SeafFile *> *_Nullable)getCompletedFailedDownloadTasks;
-
-// Resume previously canceled thumbnails
-- (BOOL)resumeCancelledThumbTask:(SeafThumb * _Nonnull)thumb;
 
 - (void)cancelAllTasks;
 - (void)cancelAllUploadTasks;
