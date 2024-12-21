@@ -42,7 +42,7 @@
     NSString *tmpdir = [SeafStorage uniqueDirUnder:SeafStorage.sharedObject.tempDir];
     if (![Utils checkMakeDir:tmpdir]) {
         Warning("Failed to create temp dir.");
-        provider.completeBlock(false, nil);
+        provider.completeBlock(false, nil, @"Failed to load file");
         return;
     }
     provider.tmpdir = tmpdir;
@@ -77,7 +77,7 @@
     };
     
     dispatch_group_notify(provider.group, dispatch_get_main_queue(), ^{
-        provider.completeBlock(true, provider.ufiles);
+        provider.completeBlock(true, provider.ufiles, @"");
     });
 }
 
@@ -94,11 +94,7 @@
         
         [self loadPreviewImageWith:itemProvider writeData:data toTargetUrl:targetUrl handler:handler];
     } else if ([item isKindOfClass:[NSData class]]) {
-        NSData *data = (NSData *)item;
-        NSString *name = item.description;
-        NSURL *targetUrl = [NSURL fileURLWithPath:[self.tmpdir stringByAppendingPathComponent:name]];
-        
-        [self loadPreviewImageWith:itemProvider writeData:data toTargetUrl:targetUrl handler:handler];
+        [self handleFailure:handler withErrorDisplayMessage:@"Sharing of NSData format is not supported."];
     } else if ([item isKindOfClass:[NSURL class]]) {
         NSURL *url = (NSURL *)item;
         NSString *name = url.lastPathComponent;
@@ -182,7 +178,14 @@
     if (handler) {
         handler(false);
     }
-    self.completeBlock(false, nil);
+    self.completeBlock(false, nil, @"Failed to load file");
+}
+
+- (void)handleFailure:(ItemLoadHandler)handler withErrorDisplayMessage:(NSString *)errorMessage {
+    if (handler) {
+        handler(false);
+    }
+    self.completeBlock(false, nil, errorMessage);
 }
 
 @end

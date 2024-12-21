@@ -486,19 +486,12 @@ enum {
         if (indexPath.row == CELL_CAMERA_DESTINATION) {
             if (self.autoSync) {
                 [self popupRepoChoose:^(UIViewController *c, SeafDir *dir) {
-                    [self dismissViewController:c];
                     SeafRepo *repo = (SeafRepo *)dir;
                     Debug("Choose repo %@ for photo auto upload, encryped:%d", repo.name, repo.encrypted);
                     if (repo.encrypted) {
-                        if (!_connection.localDecryptionEnabled) {
-                            return [self alertWithTitle:NSLocalizedString(@"Please enable \"Local decryption\" for auto uploading photos to an encrypted library.", @"Seafile")];
-                        } else if (_connection.autoClearRepoPasswd) {
-                            return [self alertWithTitle:NSLocalizedString(@"Please disable \"Auto clear passwords\" for auto uploading photos to an encrypted library.", @"Seafile")];
-                        } else if (repo.passwordRequired) {
-                            return [self popupSetRepoPassword:repo handler:^{
-                                [self setAutoSyncRepo:repo];
-                            }];
-                        }
+                        return;
+                    } else {
+                        [self dismissViewController:c];
                     }
                     [self setAutoSyncRepo:repo];
                 } cancel:^(UIViewController *c) {
