@@ -145,4 +145,9 @@
 //cell detailText color
 + (UIColor *)cellDetailTextTextColor;
 
+// Immediately checks the current network reachability status.
+// Returns a dictionary containing the keys:
+// - @"isReachable": A BOOL indicating whether the network is reachable.
+// - @"isWiFiReachable": A BOOL indicating whether the network is reachable via Wi-Fi.
++ (NSDictionary *)checkNetworkReachability;
 @end

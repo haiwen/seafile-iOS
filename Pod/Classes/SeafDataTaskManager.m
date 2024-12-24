@@ -345,17 +345,17 @@
 
         switch (status) {
             case AFNetworkReachabilityStatusNotReachable:
-                NSLog(@"Network is unavailable.");
+                Debug(@"Network is unavailable.");
                 [strongSelf handleNetworkUnavailable];
                 break;
             case AFNetworkReachabilityStatusReachableViaWiFi:
             case AFNetworkReachabilityStatusReachableViaWWAN:
-                NSLog(@"Network is available.");
+                Debug(@"Network is available.");
                 [strongSelf handleNetworkAvailable];
                 break;
             case AFNetworkReachabilityStatusUnknown:
             default:
-                NSLog(@"Unknown network status.");
+                Debug(@"Unknown network status.");
                 break;
         }
     }];

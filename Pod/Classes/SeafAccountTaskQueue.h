@@ -34,6 +34,8 @@
 @property (nonatomic, strong) NSMutableArray<SeafFile *> * _Nullable pausedDownloadTasks;
 @property (nonatomic, strong) NSMutableArray<SeafThumb *> * _Nullable pausedThumbTasks;
 
+@property (nonatomic, assign) BOOL isPaused;
+
 @property (nonatomic, strong) SeafConnection * _Nonnull conn;
 
 - (void)addFileDownloadTask:(SeafFile * _Nonnull)dfile;

@@ -27,8 +27,6 @@
 @property (strong, readonly) NSURL *preViewURL;
 @property (readonly) NSURL *exportURL;
 @property (nonatomic, strong) UIImage *icon;
-//@property (nonatomic, strong) UIImage *thumb;
-//@property NSURLSessionDownloadTask *task;
 
 @property (readwrite, nonatomic, copy) SeafThumbCompleteBlock thumbCompleteBlock;
 @property (readwrite, nonatomic, copy) SeafDownloadCompletionBlock fileDidDownloadBlock;
@@ -61,8 +59,6 @@
         self.downloadingFileOid = nil;
         self.task = nil;
         self.retryable = true;
-//        self.thumbFailedCount = 0;
-//        _isTaskCanceled = false;
     }
     return self;
 }
@@ -86,7 +82,6 @@
 
 - (NSString *)starredDetailText
 {
-//    NSString *str = [FileSizeFormatter stringFromLongLong:self.filesize];
     NSString *str = self.repoName;
     if (self.mtime) {
         NSString *timeStr = [SeafDateFormatter stringFromLongLong:self.mtime];
@@ -220,9 +215,7 @@
     }
     _thumbtask = nil;
     if (success || _icon || self.image) {
-        @weakify(self);
         dispatch_async(dispatch_get_main_queue(), ^{
-            @strongify(self);
             [self.delegate download:self complete:false];
         });
     }
@@ -341,7 +334,6 @@
         if (_thumbtask) return;
         if (self.thumb) return [self finishDownloadThumb:true completeBlock:completeBlock];
         @weakify(self);
-//        self.isTaskCanceled = false;
         _thumbtask = [connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:nil destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
             return [NSURL fileURLWithPath:[target stringByAppendingPathExtension:@"tmp"]];
         } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
@@ -349,22 +341,11 @@
             if (error) {
                 if (error.code == NSURLErrorCancelled) {
                     Debug(@"Task was cancelled %@", self.name);
-//                } else if (self.isTaskCanceled){
-//                    self.isTaskCanceled = false;
-//                    Debug(@"task is canceled %@,with error", self.name);
                 } else {
-//                    self.thumbFailedCount++;
                     Debug("Failed to download thumb %@, error=%@", self.name, error.localizedDescription);
                 }
                 [self finishDownloadThumb:NO completeBlock:completeBlock];
             } else {
-//                self.thumbFailedCount = 0;
-//                if (self.isTaskCanceled){
-//                    self.isTaskCanceled = false;
-//                    Debug(@"task is canceled %@", self.name);
-//                    [self finishDownloadThumb:NO completeBlock:completeBlock];
-//                    return;
-//                }
                 if (![filePath.path isEqualToString:target]) {
                     [Utils removeFile:target];
                     [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
@@ -584,7 +565,6 @@
 {
     if (self.mpath && [[NSFileManager defaultManager] fileExistsAtPath:self.mpath])
         return true;
-    //Debug(".... %@ %@ %d", self.name, self.ooid, self.ooid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:self.ooid]]);
     if (self.ooid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:self.ooid]])
         return YES;
     self.ooid = nil;
@@ -626,9 +606,6 @@
         } else {
             return [super icon];
         }
-//        } else if (self.image) {
-//            [self performSelectorInBackground:@selector(genThumb) withObject:nil];
-//        }
     }
     return [super icon];
 }
@@ -668,7 +645,6 @@
             _preViewURL = nil;
             _exportURL = nil;
         }
-//        [self autoupload];
         return true;
     } else if (self.oid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:self.oid]]) {
         if (![self.oid isEqualToString:self.ooid])
@@ -989,9 +965,7 @@
     if (self.thumbTaskForQueue){
         [SeafDataTaskManager.sharedObject removeThumbTaskFromAccountQueue:self.thumbTaskForQueue];
         self.thumbTaskForQueue = nil;
-//        self.isTaskCanceled = true;
     }
-//    [self cancelThumb];
 }
 
 - (void)cancelAnyLoading
@@ -1072,8 +1046,6 @@
         if (self.fileDidDownloadBlock) {
             self.fileDidDownloadBlock(self, nil);
         }
-//        [self removeFileTaskInStorage:self];
-
         if (self.taskCompleteBlock) {
             self.taskCompleteBlock(self, true);
         } else {
@@ -1082,7 +1054,7 @@
     });
 }
 
-//remove retryable信息
+//remove retryable
 - (void)removeFileTaskInStorage:(SeafFile *)file {
     NSString *key = [self downloadStorageKey:file.accountIdentifier];
     @synchronized(self) {

@@ -21,6 +21,7 @@
 #import <ImageIO/ImageIO.h>
 #import <MobileCoreServices/MobileCoreServices.h> // Required for older system versions
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h> // Used for iOS 14/macOS 11 and later
+#import "FileMimeType.h"
 
 #ifndef kUTTypeHEIC
 #define kUTTypeHEIC CFSTR("public.heic")
@@ -920,34 +921,9 @@
                 return;
             }
         } else {
-            // Determine the file extension based on the dataUTI
-            NSString *newExtension = nil;
-
-            // Assign the appropriate file extension based on UTI
-            if ([dataUTI isEqualToString:@"public.heic"]) {
-                newExtension = @"HEIC";
-            } else if ([dataUTI isEqualToString:@"public.heif"]) {
-                newExtension = @"HEIF";
-            } else if ([dataUTI isEqualToString:@"public.jpeg"]) {
-                newExtension = @"JPG";
-            } else if ([dataUTI isEqualToString:@"public.png"]) {
-                newExtension = @"PNG";
-            } else if ([dataUTI isEqualToString:@"public.tiff"]) {
-                newExtension = @"TIFF";
-            } else if ([dataUTI isEqualToString:@"com.compuserve.gif"]) {
-                newExtension = @"GIF";
-            } else if ([dataUTI isEqualToString:@"com.microsoft.bmp"]) {
-                newExtension = @"BMP";
-            } else {
-                // If the UTI is not in the above list, use the original file extension or assign a default one
-                NSString *originalExtension = self.lpath.pathExtension;
-                if (originalExtension.length == 0) {
-                    // Assign a default extension, such as JPG, when no extension exists
-                    newExtension = @"JPG";
-                } else {
-                    // Use the existing file extension
-                    newExtension = originalExtension;
-                }
+            NSString *newExtension = [FileMimeType fileExtensionForUTI:dataUTI];
+            if (!newExtension) {
+                newExtension = self.lpath.pathExtension;
             }
             
             // Update the file extension if needed
@@ -994,33 +970,9 @@
                     return;
                 }
             } else {
-                NSString *newExtension = nil;
-
-                // Assign corresponding extension based on the UTI
-                if ([dataUTI isEqualToString:@"public.heic"]) {
-                    newExtension = @"HEIC";
-                } else if ([dataUTI isEqualToString:@"public.heif"]) {
-                    newExtension = @"HEIF";
-                } else if ([dataUTI isEqualToString:@"public.jpeg"]) {
-                    newExtension = @"JPG";
-                } else if ([dataUTI isEqualToString:@"public.png"]) {
-                    newExtension = @"PNG";
-                } else if ([dataUTI isEqualToString:@"public.tiff"]) {
-                    newExtension = @"TIFF";
-                } else if ([dataUTI isEqualToString:@"com.compuserve.gif"]) {
-                    newExtension = @"GIF";
-                } else if ([dataUTI isEqualToString:@"com.microsoft.bmp"]) {
-                    newExtension = @"BMP";
-                } else {
-                    // If the UTI is not listed above, use the original file extension or assign a default extension
-                    NSString *originalExtension = self.lpath.pathExtension;
-                    if (originalExtension.length == 0) {
-                        // Assign a default extension, such as JPG, when no extension exists
-                        newExtension = @"JPG";
-                    } else {
-                        // Use the existing file extension
-                        newExtension = originalExtension;
-                    }
+                NSString *newExtension = [FileMimeType fileExtensionForUTI:dataUTI];
+                if (!newExtension) {
+                    newExtension = self.lpath.pathExtension;
                 }
 
                 if (newExtension && ![self.lpath.pathExtension.lowercaseString isEqualToString:newExtension]) {

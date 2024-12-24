@@ -32,6 +32,7 @@
 @end
 
 @implementation SeafPhotoBackupTool
+@synthesize photosArray = _photosArray;
 
 - (instancetype _Nonnull )initWithConnection:(SeafConnection * _Nonnull)connection andLocalUploadDir:(NSString * _Nonnull)localUploadDir {
     self = [super init];
@@ -221,12 +222,7 @@
             return;
         }
         _inCheckPhotos = true;
-    }
-    
-    @synchronized(self) {
-        @synchronized(self.photosArray) {
-            self.photosArray = [[NSMutableArray alloc] init];
-        }
+        self.photosArray = [[NSMutableArray alloc] init];
     }
         
     PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
@@ -396,12 +392,18 @@
     }
 }
 
-#pragma mark - getter
+#pragma mark - getter & setter
 - (NSMutableArray *)photosArray {
     if (!_photosArray) {
         _photosArray = [[NSMutableArray alloc] init];
     }
     return _photosArray;
+}
+
+- (void)setPhotosArray:(NSMutableArray *)photosArray {
+    if (_photosArray != photosArray) {
+        _photosArray = photosArray;
+    }
 }
 
 @end

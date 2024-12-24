@@ -452,9 +452,22 @@
         if (self.needReset == YES) {
             self.needReset = NO;
             for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
-                if (conn.accountIdentifier) {
-                    [[SeafDataTaskManager.sharedObject accountQueueForConnection:conn] resumeAllTasks];
+                if (!conn.accountIdentifier) {
+                    continue;
                 }
+                
+                NSDictionary *networkStatus = [Utils checkNetworkReachability];
+                BOOL isReachable = [networkStatus[@"isReachable"] boolValue];
+                BOOL isWiFiReachable = [networkStatus[@"isWiFiReachable"] boolValue];
+                
+                BOOL isNotWiFiReachable = conn.wifiOnly && !isWiFiReachable;
+                BOOL isNotReachable = !isReachable;
+                
+                if (isNotWiFiReachable || isNotReachable) {
+                    continue;
+                }
+                
+                [[SeafDataTaskManager.sharedObject accountQueueForConnection:conn] resumeAllTasks];
             }
         }
     });
@@ -655,8 +668,24 @@
     Debug("Location updated: %@", locations);
     if (self.needReset == YES) {
         self.needReset = NO;
-        NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
-        [self photosDidChange:note];
+        for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+            if (!conn.accountIdentifier) {
+                continue;
+            }
+            
+            NSDictionary *networkStatus = [Utils checkNetworkReachability];
+            BOOL isReachable = [networkStatus[@"isReachable"] boolValue];
+            BOOL isWiFiReachable = [networkStatus[@"isWiFiReachable"] boolValue];
+            
+            BOOL isNotWiFiReachable = conn.wifiOnly && !isWiFiReachable;
+            BOOL isNotReachable = !isReachable;
+            
+            if (isNotWiFiReachable || isNotReachable) {
+                continue;
+            }
+            
+            [[SeafDataTaskManager.sharedObject accountQueueForConnection:conn] resumeAllTasks];
+        }
     }
 }
 

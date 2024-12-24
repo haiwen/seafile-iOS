@@ -1119,7 +1119,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         return;
     Debug("%@, %d\n", self.address, [self authorized]);
     SeafUserAvatar *avatar = [[SeafUserAvatar alloc] initWithConnection:self username:self.username];
-//    [SeafDataTaskManager.sharedObject addAvatarTask:avatar];
     [self downloadAvatarWithAvatar:avatar];
     self.avatarLastUpdate = [NSDate date];
 }

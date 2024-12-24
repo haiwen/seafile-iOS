@@ -66,6 +66,8 @@
         self.pendingUploadTasks = [NSMutableArray array];
         self.maxBatchSize = QUEUE_MAX_COUNT; // Maximum of 50 tasks per batch
         
+        self.isPaused = NO;
+        
         [self startCleanupTimer];
     }
     return self;
@@ -583,11 +585,9 @@
     // Collect tasks that need to be canceled
     NSArray *taskArrays = @[self.ongoingTasks, self.waitingTasks];
     for (NSMutableArray<SeafUploadFile *> *taskArray in taskArrays) {
-        @synchronized (taskArray) {
-            for (SeafUploadFile *ufile in taskArray) {
-                if (ufile.uploadFileAutoSync && ufile.udir->connection == self.conn) {
-                    [tasksToCancel addObject:ufile];
-                }
+        for (SeafUploadFile *ufile in taskArray) {
+            if (ufile.uploadFileAutoSync && ufile.udir->connection == self.conn) {
+                [tasksToCancel addObject:ufile];
             }
         }
     }
@@ -682,6 +682,7 @@
 #pragma mark - Pause Tasks
 /// Pauses all queues and cancels any ongoing tasks, storing them for resumption.
 - (void)pauseAllTasks {
+    self.isPaused = YES;
     // Pause the queues
     [self.uploadQueue setSuspended:YES];
     [self.downloadQueue setSuspended:YES];
@@ -698,6 +699,10 @@
 
 /// Resumes all queues and restarts any tasks that were canceled during the pause.
 - (void)resumeAllTasks {
+    if (!self.isPaused) {
+        return;
+    }
+    self.isPaused = NO;
     [self resumePausedUploadTasks];
     [self resumePausedDownloadTasks];
     [self resumePausedThumbTasks];
