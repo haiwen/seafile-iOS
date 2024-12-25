@@ -179,6 +179,7 @@
         if (!self.isUploading) return;
         _uploading = NO;
         self.task = nil;
+        self.uploadError = error;
         [self updateProgress:nil];
     }
 

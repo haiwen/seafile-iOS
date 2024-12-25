@@ -60,7 +60,7 @@
                                                        code:NSURLErrorCancelled
                                                    userInfo:@{NSLocalizedDescriptionKey: @"The upload task was cancelled."}];
         
-        [self finishUpload:false oid:nil error:cancelError];
+        [self finishUpload:NO oid:nil error:cancelError];
         [self completeOperation];
     }
 }

@@ -456,17 +456,6 @@
                     continue;
                 }
                 
-                NSDictionary *networkStatus = [Utils checkNetworkReachability];
-                BOOL isReachable = [networkStatus[@"isReachable"] boolValue];
-                BOOL isWiFiReachable = [networkStatus[@"isWiFiReachable"] boolValue];
-                
-                BOOL isNotWiFiReachable = conn.wifiOnly && !isWiFiReachable;
-                BOOL isNotReachable = !isReachable;
-                
-                if (isNotWiFiReachable || isNotReachable) {
-                    continue;
-                }
-                
                 [[SeafDataTaskManager.sharedObject accountQueueForConnection:conn] resumeAllTasks];
             }
         }

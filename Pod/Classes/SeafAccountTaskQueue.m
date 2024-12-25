@@ -25,6 +25,12 @@
 @property (nonatomic, strong) dispatch_source_t cleanupTimerSource;  // GCD timer object
 @property (nonatomic, assign) BOOL isCleanupTimerRunning;           // Timer status flag
 
+// Records the number of occurrences of different HTTP error codes, Key: @(statusCode), Value: @(occurrence count)
+@property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSNumber *> *errorCodeCountDict;
+
+// Used to record the last error code that caused the queue to pause (e.g., 443, 401, etc.)
+@property (nonatomic, strong, nullable) NSNumber *lastPausedErrorCode;
+
 @end
 
 @implementation SeafAccountTaskQueue
@@ -209,8 +215,14 @@
                 // Add to success or failure array based on the upload result
                 if (ufile.uploaded) {
                     [self addTask:ufile toArray:self.completedSuccessfulTasks];
+                    
+                    // reset errorCode count
+                    [self.errorCodeCountDict removeAllObjects];
+
                 } else {
                     [self addTask:ufile toArray:self.completedFailedTasks];
+                    
+                    [self handleUploadErrorIfNeeded:ufile.uploadError];
                 }
 
                 // Remove observers
@@ -699,6 +711,12 @@
 
 /// Resumes all queues and restarts any tasks that were canceled during the pause.
 - (void)resumeAllTasks {
+    // First check if the network is available
+    if (![self canResumeTasks]) {
+        Debug(@"Network is not available (or only Wi-Fi allowed but not connected). Skip resume...");
+        return;
+    }
+    
     if (!self.isPaused) {
         return;
     }
@@ -779,8 +797,58 @@
     }
 }
 
-#pragma mark - Resume Helpers
+- (void)pauseUploadTasks {
+    // Pause the upload queue
+    [self.uploadQueue setSuspended:YES];
 
+    // Cancel the ongoing upload tasks and move them to the pausedUploadTasks list
+    for (SeafUploadOperation *op in self.uploadQueue.operations) {
+        if (op.isExecuting) {
+            [self safelyRemoveObserversFromOperation:op];
+            [op cancel];
+            SeafUploadFile *ufile = op.uploadFile;
+            @synchronized (self.pausedUploadTasks) {
+                [self.pausedUploadTasks addObject:ufile];
+            }
+        }
+    }
+
+    // Clear the ongoing tasks array (to avoid duplication with pausedUploadTasks)
+    @synchronized (self.ongoingTasks) {
+        [self.ongoingTasks removeAllObjects];
+    }
+    
+    Debug(@"[pauseUploadTasks] All upload tasks has been paused。");
+    
+    // Send task status update notification (can trigger UI refresh, etc.)
+    [self postUploadTaskStatusChangedNotification];
+}
+
+- (void)resumeUploadTasks {
+    // First check if the network is available
+    if (![self canResumeTasks]) {
+        Debug(@"Network is not available (or only Wi-Fi allowed but not connected). Skip resume...");
+        return;
+    }
+    
+    // Resume from pausedUploadTasks
+    @synchronized (self.pausedUploadTasks) {
+        for (SeafUploadFile *ufile in self.pausedUploadTasks) {
+            [self addUploadTask:ufile];
+        }
+        [self.pausedUploadTasks removeAllObjects];
+    }
+
+    // Resume the upload queue
+    [self.uploadQueue setSuspended:NO];
+    
+    Debug(@"[resumeUploadTasks] All upload tasks have been resumed.");
+
+    // Send task status update notification (can trigger UI refresh, etc.)
+    [self postUploadTaskStatusChangedNotification];
+}
+
+#pragma mark - Resume Helpers
 /// Resumes all paused upload tasks.
 - (void)resumePausedUploadTasks {
     @synchronized (self.pausedUploadTasks) {
@@ -821,21 +889,27 @@
             [operation removeObserver:self forKeyPath:@"isCancelled"];
             operation.observersRemoved = YES;
         } @catch (NSException *exception) {
-            NSLog(@"Exception when removing observer: %@", exception);
+            Debug(@"Exception when removing observer: %@", exception);
         }
     }
 }
 
 #pragma mark - Remove Completed Tasks After 3 Minutes
 // Call removeOldCompletedTasks on a background thread
-- (void)runRemoveTasksInBackground {
+- (void)backgroundPeriodicTaskCheck {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
         [self removeOldCompletedTasks];
         [self checkBackupNeedToUpload];
+        [self resumeUploadTasks];
     });
 }
 
 - (void)checkBackupNeedToUpload {
+    if (self.uploadQueue.isSuspended) {
+        Debug(@"Upload queue is suspended. Skip checkBackupNeedToUpload.");
+        return;
+    }
+    
     if (self.conn.photoBackup.photosArray.count > 0 && self.ongoingTasks.count == 0 && self.waitingTasks.count == 0) {
         NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
         [self.conn photosDidChange:note];
@@ -903,7 +977,7 @@
 
     // Event handler for the timer
     dispatch_source_set_event_handler(self.cleanupTimerSource, ^{
-        [self runRemoveTasksInBackground];
+        [self backgroundPeriodicTaskCheck];
     });
 
     // Start the timer
@@ -925,4 +999,102 @@
     Debug(@"GCD Cleanup timer paused.");
 }
 
+#pragma mark - Error Handling
+- (void)handleUploadErrorIfNeeded:(NSError *)error {
+    if (!error) return;
+    
+    // Retrieve NSHTTPURLResponse from error.userInfo
+    NSHTTPURLResponse *response = error.userInfo[AFNetworkingOperationFailingURLResponseErrorKey];
+    if (![response isKindOfClass:[NSHTTPURLResponse class]]) {
+        return;
+    }
+    
+    NSInteger statusCode = response.statusCode;
+    Debug(@"[Upload Error] statusCode=%ld, error=%@", (long)statusCode, error);
+
+    // 1. First, count the occurrences of this error code
+    [self recordErrorCode:statusCode];
+    
+    // 2. Then handle further based on the specific error code
+    switch (statusCode) {
+        case 443: {
+            // Example: If the server returns 443, parse its JSON
+            NSData *errorData = error.userInfo[@"com.alamofire.serialization.response.error.data"];
+            if (!errorData) break;
+            
+            NSDictionary *errorDict = [NSJSONSerialization JSONObjectWithData:errorData
+                                                                     options:0
+                                                                       error:nil];
+            NSString *errorMsg = errorDict[@"error_msg"];
+            
+            // If it's "Out of quota.", immediately pause the queue
+            if ([errorMsg isEqualToString:@"Out of quota."]) {
+                Debug(@"Detected 'Out of quota.' error. Pausing upload queue...");
+                [self pauseUploadTasksWithCode:statusCode];
+            }
+            break;
+        }
+        case HTTP_ERR_UNAUTHORIZED:
+            Debug(@"Unauthorized error (401).");
+            // Additional handling can be done here
+            break;
+        case HTTP_ERR_LOGIN_INCORRECT_PASSWORD:
+            Debug(@"Bad request error (400).");
+            break;
+        case HTTP_ERR_REPO_PASSWORD_REQUIRED:
+            Debug(@"Repository password required or invalid (440).");
+            break;
+        case HTTP_ERR_OPERATION_FAILED:
+            Debug(@"Operation failed on server side (520).");
+            break;
+        default:
+            // Handle other error codes here
+            Debug(@"Other server error, code=%ld", (long)statusCode);
+            break;
+    }
+}
+
+- (void)recordErrorCode:(NSInteger)statusCode
+{
+    NSNumber *codeKey = @(statusCode);
+    NSNumber *count = self.errorCodeCountDict[codeKey];
+    if (!count) {
+        count = @(1);
+    } else {
+        count = @(count.integerValue + 1);
+    }
+    self.errorCodeCountDict[codeKey] = count;
+    
+    // If the same error code occurs 5 times consecutively, pause the queue
+    if (count.integerValue >= 5) {
+        Debug(@"Error code %ld appeared 5 times consecutively, pausing the upload queue...", (long)statusCode);
+        [self pauseUploadTasksWithCode:statusCode];
+    }
+}
+
+- (void)pauseUploadTasksWithCode:(NSInteger)statusCode
+{
+    self.lastPausedErrorCode = @(statusCode);
+    [self pauseUploadTasks];
+}
+
+- (BOOL)canResumeTasks
+{
+    // Retrieve the current network status
+    NSDictionary *networkStatus = [Utils checkNetworkReachability];
+    BOOL isReachable = [networkStatus[@"isReachable"] boolValue];
+    BOOL isWiFiReachable = [networkStatus[@"isWiFiReachable"] boolValue];
+
+    // If the user allows uploads/downloads only on Wi-Fi, but Wi-Fi is not connected, do not resume
+    if (self.conn.wifiOnly && !isWiFiReachable) {
+        return NO;
+    }
+
+    // If there is no network at all, do not resume
+    if (!isReachable) {
+        return NO;
+    }
+    
+    return YES;
+}
 @end

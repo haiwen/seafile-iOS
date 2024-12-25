@@ -73,14 +73,17 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 
 @property (assign, nonatomic) BOOL shouldShowUploadFailure; // When modifying the file and uploading again during the upload editing process, do not show the upload failure dialog
 
-@property (strong) NSProgress *progress;
+//the error after operation
+@property (nonatomic, strong, nullable) NSError *uploadError;
 
-@property (strong) NSArray *missingblocks;
-@property (strong) NSArray *allblocks;
-@property (strong) NSString *commiturl;
-@property (strong) NSString *rawblksurl;
-@property (strong) NSString *uploadpath;
-@property (nonatomic, strong) NSString *blockDir;
+@property (strong) NSProgress * _Nullable progress;
+
+@property (strong) NSArray * _Nullable missingblocks;
+@property (strong) NSArray * _Nullable allblocks;
+@property (strong) NSString * _Nullable commiturl;
+@property (strong) NSString * _Nullable rawblksurl;
+@property (strong) NSString * _Nullable uploadpath;
+@property (nonatomic, strong) NSString * _Nullable blockDir;
 @property long blkidx;
 
 
@@ -89,14 +92,14 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
  * @param lpath The local path of the file to be uploaded.
  * @return An instance of SeafUploadFile.
  */
-- (id)initWithPath:(NSString *)lpath;
+- (id _Nullable )initWithPath:(NSString *_Nullable)lpath;
 
 /**
  * Sets the associated PHAsset and its URL.
  * @param asset The PHAsset to associate with this upload.
  * @param url The URL of the asset in the photo library.
  */
-- (void)setPHAsset:(PHAsset *)asset url:(NSURL *)url;
+- (void)setPHAsset:(PHAsset *_Nullable)asset url:(NSURL *_Nullable)url;
 
 /**
  * Waits for the upload task to complete.
@@ -112,15 +115,15 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 /**
  * Asynchronously get photo library images.
  */
-- (void)iconWithCompletion:(void (^)(UIImage *image))completion;
+- (void)iconWithCompletion:(void (^_Nullable)(UIImage * _Nullable image))completion;
 
 // Prepare for upload
-- (void)prepareForUploadWithCompletion:(void (^)(BOOL success, NSError *error))completion;
+- (void)prepareForUploadWithCompletion:(void (^_Nullable)(BOOL success, NSError * _Nullable error))completion;
 
-- (void)finishUpload:(BOOL)result oid:(NSString *)oid error:(NSError *)error;
+- (void)finishUpload:(BOOL)result oid:(NSString *_Nullable)oid error:(NSError *_Nullable)error;
 
-- (void)updateProgress:(NSProgress *)progress;
+- (void)updateProgress:(NSProgress *_Nullable)progress;
 
--(void)updateProgressWithoutKVO:(NSProgress *)progress;
+-(void)updateProgressWithoutKVO:(NSProgress *_Nullable)progress;
 
 @end
