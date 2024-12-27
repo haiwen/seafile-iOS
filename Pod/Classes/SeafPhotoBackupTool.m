@@ -222,8 +222,12 @@
             return;
         }
         _inCheckPhotos = true;
-        self.photosArray = [[NSMutableArray alloc] init];
     }
+    
+    self.photosArray = [[NSMutableArray alloc] init];
+    
+    SeafAccountTaskQueue *accountQueue =[SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection];
+    [accountQueue cancelAutoSyncTasks];
         
     PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
     fetchOptions.predicate = predicate;

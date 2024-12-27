@@ -73,6 +73,7 @@
         self.maxBatchSize = QUEUE_MAX_COUNT; // Maximum of 50 tasks per batch
         
         self.isPaused = NO;
+        self.errorCodeCountDict = [[NSMutableDictionary alloc] init];
         
         [self startCleanupTimer];
     }
@@ -1005,17 +1006,36 @@
     
     // Retrieve NSHTTPURLResponse from error.userInfo
     NSHTTPURLResponse *response = error.userInfo[AFNetworkingOperationFailingURLResponseErrorKey];
-    if (![response isKindOfClass:[NSHTTPURLResponse class]]) {
-        return;
-    }
-    
-    NSInteger statusCode = response.statusCode;
+    NSInteger statusCode = response ? response.statusCode : 999; // Default to 999 if response is nil
+    // NSInteger statusCode = response.statusCode;
     Debug(@"[Upload Error] statusCode=%ld, error=%@", (long)statusCode, error);
-
-    // 1. First, count the occurrences of this error code
+    // count the occurrences of this error code
     [self recordErrorCode:statusCode];
     
-    // 2. Then handle further based on the specific error code
+    if (!response || ![response isKindOfClass:[NSHTTPURLResponse class]]) {
+        Debug(@"Response is nil or invalid. Error Info: %@", error.userInfo);
+        NSError *underlyingError = error.userInfo[NSUnderlyingErrorKey];
+        if (underlyingError) {
+            Debug(@"Underlying Error: %@", underlyingError);
+        }
+        // Parse whether it contains ‘Out of quota’
+        NSData *errorData = underlyingError.userInfo[@"com.alamofire.serialization.response.error.data"];
+        if (errorData) {
+            NSString *rawResponse = [[NSString alloc] initWithData:errorData encoding:NSUTF8StringEncoding];
+            Debug(@"Raw Response Data: %@", rawResponse);
+            if ([rawResponse containsString:@"Out of quota"]) {
+                Debug(@"Detected 'Out of quota.' error. Pausing upload queue...");
+                [self pauseUploadTasksWithCode:statusCode];
+                return;
+            }
+        } else {
+            Debug(@"No error data found in underlying error.");
+        }
+    } else {
+        Debug(@"HTTP Status Code: %ld", (long)statusCode);
+    }
+    
+    // handle further based on the specific error code
     switch (statusCode) {
         case 443: {
             // Example: If the server returns 443, parse its JSON
