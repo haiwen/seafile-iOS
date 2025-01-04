@@ -95,6 +95,9 @@
  */
 - (void)clearAllCacheInAccount:(NSString *)account;
 
+
+- (NSArray *)getAllValuesForEntity:(NSString *)entity inAccount:(NSString *)account;
+
 @end
 
 #endif /* SeafCacheProvider_h */

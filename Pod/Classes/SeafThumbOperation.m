@@ -113,7 +113,13 @@
     NSString *thumburl = [NSString stringWithFormat:API_URL"/repos/%@/thumbnail/?size=%d&p=%@", self.file.repoId, size, self.file.path.escapedUrl];
     NSURLRequest *downloadRequest = [connection buildRequest:thumburl method:@"GET" form:nil];
     Debug("Request: %@", downloadRequest.URL);
-    NSString *target = [self thumbPath:self.file.oid];
+    
+    NSString *target;
+    if (self.file.oid) {
+        target = [self thumbPath:self.file.oid];
+    } else {
+        target = [SeafStorage.sharedObject.thumbsDir stringByAppendingPathComponent:[NSString stringWithFormat:@"/%@-%lld", self.file.name, self.file.mtime]];
+    }
     
     @synchronized (self) {
         if (self.file.thumb) {

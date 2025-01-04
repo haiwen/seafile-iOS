@@ -499,4 +499,6 @@ Checks the auto synchronization settings and updates the connection’s synchron
  */
 - (NSString *_Nullable)buildThumbnailImageUrlFromSFile:(SeafFile *_Nullable)sFile;
 
+- (void)cleanupOrphanedFileStatuses;
+
 @end

@@ -31,6 +31,7 @@
 #import "SKFileTypeImageLoader.h"
 #import "SeafDataTaskManager.h"
 #import "SeafUploadOperation.h"
+#import "SeafRealmManager.h"
 
 @interface SeafStarredFilesViewController ()<SWTableViewCellDelegate>
 @property (readonly) SeafDetailViewController *detailViewController;
@@ -175,6 +176,8 @@
                 }
             }
             [starFiles addObject:sfile];
+            
+            [self parseJsonToSeafFileStatus:sfile];
         }
     }
     
@@ -189,6 +192,17 @@
     _cellDataArray = jsonDataArray;
 
     return;
+}
+
+- (void)parseJsonToSeafFileStatus:(SeafStarredFile *)starfile {
+    SeafFileStatus *fileStatus = [[SeafFileStatus alloc] init];
+    
+    fileStatus.uniquePath = starfile.uniqueKey;
+    fileStatus.serverMTime = starfile.mtime;
+    fileStatus.fileName = starfile.name;
+    fileStatus.dirPath = starfile.path;
+
+    [[SeafRealmManager shared] updateFileStatus:fileStatus];
 }
 
 - (BOOL)loadCache

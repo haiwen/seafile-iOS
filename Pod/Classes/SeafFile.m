@@ -21,6 +21,7 @@
 #import "Utils.h"
 #import "SeafCacheManager.h"
 #import <FileProvider/NSFileProviderError.h>
+#import "SeafRealmManager.h"
 
 @interface SeafFile()
 
@@ -182,6 +183,8 @@
 
 - (void)finishDownload:(NSString *)ooid
 {
+    [self saveOidToLocalDB:ooid];
+    
     [self clearDownloadContext];
     Debug("%@ ooid=%@, self.ooid=%@, oid=%@", self.name, ooid, self.ooid, self.oid);
     BOOL updated = ![ooid isEqualToString:self.ooid];
@@ -190,6 +193,23 @@
     self.oid = ooid;
     [self downloadComplete:updated];
 }
+
+- (void)saveOidToLocalDB:(NSString *)oid{
+    NSString *filePath = [SeafStorage.sharedObject documentPath:self.downloadingFileOid];
+    NSString *uniKey = self.uniqueKey;
+    
+    SeafFileStatus *fileStatus = [[SeafFileStatus alloc] init];
+    fileStatus.uniquePath = uniKey;
+    fileStatus.serverOID = oid;
+    fileStatus.localFilePath = filePath;
+    fileStatus.localMTime = [[NSDate date] timeIntervalSince1970];
+    fileStatus.accountIdentifier = connection.accountIdentifier;
+    
+    fileStatus.fileName = self.name;
+
+    [[SeafRealmManager shared] updateFileStatus:fileStatus];
+}
+
 
 - (void)failedDownload:(NSError *)error
 {
@@ -247,11 +267,14 @@
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) return;
         NSString *url = JSON;
-        NSString *curId = [Utils getNewOidFromMtime:strongSelf.mtime repoId:strongSelf.repoId path:strongSelf.path];
+        NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
 
         Debug("Downloading file from file server url: %@, state:%d %@, %@", JSON, strongSelf.state, strongSelf.ooid, curId);
         if (!curId) curId = strongSelf.oid;
-        if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:curId]]) {
+        
+        NSString *cachePath = [[SeafRealmManager shared] getLocalCacheWithOid:curId mtime:0 uniKey:self.uniqueKey];
+        
+        if ([[NSFileManager defaultManager] fileExistsAtPath:cachePath]) {
             Debug("file %@ already exist curId=%@, ooid=%@", strongSelf.name, curId, strongSelf.ooid);
             [strongSelf finishDownload:curId];
             return;
@@ -395,9 +418,7 @@
     [handle closeFile];
     if (!self.downloadingFileOid)
         return -1;
-    
-    self.downloadingFileOid = [Utils getNewOidFromMtime:self.mtime repoId:self.repoId path:self.path];
-    
+        
     [[NSFileManager defaultManager] moveItemAtPath:tmpPath toPath:[SeafStorage.sharedObject documentPath:self.downloadingFileOid] error:nil];
     return 0;
 }
@@ -496,29 +517,30 @@
         @strongify(self);
          NSString *curId = [JSON objectForKey:@"file_id"];
         
-        NSString *oid = [Utils getNewOidFromMtime:self.mtime repoId:self.repoId path:self.path];
-
-         if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:oid]]) {
-             Debug("Already uptodate oid=%@\n", self.ooid);
-             [self finishDownload:oid];
-             return;
-         }
-         @synchronized (self) {
-             if (self.state != SEAF_DENTRY_LOADING) {
-                 return Info("Download file %@ already canceled", self.name);
-             }
-             self.downloadingFileOid = curId;
-         }
-         [self downloadProgress:0];
-         self.blkids = [JSON objectForKey:@"blklist"];
-         if (self.blkids.count <= 0) {
-             [@"" writeToFile:[SeafStorage.sharedObject documentPath:self.downloadingFileOid] atomically:YES encoding:NSUTF8StringEncoding error:nil];
-             [self finishDownload:self.downloadingFileOid];
-         } else {
-             self.index = 0;
-             Debug("blks=%@", self.blkids);
-             [self downloadBlocks];
-         }
+        NSString *cachePath = [[SeafRealmManager shared] getLocalCacheWithOid:curId mtime:0 uniKey:self.uniqueKey];
+        
+        if ([[NSFileManager defaultManager] fileExistsAtPath:cachePath]) {
+            Debug("Already uptodate oid=%@\n", self.ooid);
+            [self finishDownload:curId];
+            return;
+        }
+        
+        @synchronized (self) {
+            if (self.state != SEAF_DENTRY_LOADING) {
+                return Info("Download file %@ already canceled", self.name);
+            }
+            self.downloadingFileOid = curId;
+        }
+        [self downloadProgress:0];
+        self.blkids = [JSON objectForKey:@"blklist"];
+        if (self.blkids.count <= 0) {
+            [@"" writeToFile:[SeafStorage.sharedObject documentPath:self.downloadingFileOid] atomically:YES encoding:NSUTF8StringEncoding error:nil];
+            [self finishDownload:self.downloadingFileOid];
+        } else {
+            self.index = 0;
+            Debug("blks=%@", self.blkids);
+            [self downloadBlocks];
+        }
      }
                     failure:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
@@ -564,9 +586,14 @@
 - (BOOL)hasCache
 {
     if (self.mpath && [[NSFileManager defaultManager] fileExistsAtPath:self.mpath])
-        return true;
-    if (self.ooid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:self.ooid]])
         return YES;
+    NSString *cachePath = [[SeafRealmManager shared] getLocalCacheWithOid:self.oid mtime:self.mtime uniKey:self.uniqueKey];
+    if (cachePath && cachePath.length > 0) {
+        return YES;
+    } else if ((self.oid || self.oid.length > 0) && [[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:self.oid]]) {
+        return YES;
+    }
+
     self.ooid = nil;
     _preViewURL = nil;
     _exportURL = nil;
@@ -588,7 +615,13 @@
 - (UIImage *)icon
 {
     if (_icon) return _icon;
-    if ((self.isImageFile || self.isVideoFile) && self.oid) {
+    if (!self.oid) {
+        NSString *cacheOid = [[SeafRealmManager shared] getOidForUniKey:self.uniqueKey serverMtime:self.mtime];
+        if (cacheOid && cacheOid.length > 0) {
+            self.oid = cacheOid;
+        }
+    }
+    if ((self.isImageFile || self.isVideoFile)) {
         if (![connection isEncrypted:self.repoId]) {
             if (!self.isDeleted) {
                 UIImage *img = [self thumb];
@@ -620,7 +653,13 @@
 
 - (UIImage *)thumb
 {
-    NSString *thumbpath = [self thumbPath:self.oid];
+    NSString *thumbpath;
+    if (self.oid) {
+        thumbpath = [self thumbPath:self.oid];
+    } else {
+        thumbpath = [SeafStorage.sharedObject.thumbsDir stringByAppendingPathComponent:[NSString stringWithFormat:@"/%@-%lld", self.name, self.mtime]];
+    }
+
     UIImage *thumb = [SeafCacheManager.sharedManager getThumbFromCache:thumbpath];
     if (thumb) {
         return thumb;
@@ -646,10 +685,22 @@
             _exportURL = nil;
         }
         return true;
-    } else if (self.oid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:self.oid]]) {
-        if (![self.oid isEqualToString:self.ooid])
-            [self setOoid:self.oid];
-        return true;
+    }
+    
+    NSString *cachePath = [[SeafRealmManager shared] getLocalCacheWithOid:self.oid mtime:self.mtime uniKey:self.uniqueKey];
+    if ((cachePath && cachePath.length > 0) || self.oid) {
+        if (!self.oid || self.oid.length == 0) {
+            NSString *cacheOid = [[SeafRealmManager shared] getOidForUniKey:self.uniqueKey serverMtime:self.mtime];
+            if (cacheOid && cacheOid.length > 0) {
+                self.oid = cacheOid;
+            }
+        }
+        
+        if (self.oid && [[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:self.oid]]) {
+            if (![self.oid isEqualToString:self.ooid])
+                [self setOoid:self.oid];
+            return true;
+        }
     }
     [self setOoid:nil];
     return false;

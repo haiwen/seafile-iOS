@@ -134,11 +134,6 @@
 //convert dateString to UTC int
 + (int)convertTimeStringToUTC:(NSString *)timeStr;
 
-//modified from 2.9.28 use newOid
-+ (NSString *)getNewOidFromMtime:(long long)mtime
-                          repoId:(NSString *)repoId
-                            path:(NSString *)path;
-
 //Timestamp of the current time
 + (long long)currentTimestampAsLongLong;
 
@@ -150,4 +145,8 @@
 // - @"isReachable": A BOOL indicating whether the network is reachable.
 // - @"isWiFiReachable": A BOOL indicating whether the network is reachable via Wi-Fi.
 + (NSDictionary *)checkNetworkReachability;
+
+//modified from 2.9.34 use uniKey + name
++ (NSString *)uniquePathWithUniKey:(NSString *)uniKey fileName:(NSString *)fileName;
+
 @end

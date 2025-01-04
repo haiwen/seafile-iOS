@@ -15,6 +15,7 @@
 #import "SeafDir.h"
 #import "SeafRepos.h"
 #import "NSData+Encryption.h"
+#import "SeafRealmManager.h"
 
 @implementation SeafDownloadOperation
 
@@ -88,16 +89,19 @@
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) return;
         NSString *downloadUrl = JSON;
-        NSString *curId = [Utils getNewOidFromMtime:strongSelf.file.mtime repoId:strongSelf.file.repoId path:strongSelf.file.path];
-        
+//        NSString *curId = [Utils getNewOidFromMtime:strongSelf.file.mtime repoId:strongSelf.file.repoId path:strongSelf.file.path];
+        NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
+
         Debug("Downloading file from file server url: %@, state:%d %@, %@", JSON, strongSelf.file.state, strongSelf.file.ooid, curId);
 
         if (!curId) curId = strongSelf.file.oid;
-        if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:curId]]) {
+        NSString *cachePath = [[SeafRealmManager shared] getLocalCacheWithOid:curId mtime:0 uniKey:strongSelf.file.uniqueKey];
+        if ([[NSFileManager defaultManager] fileExistsAtPath:cachePath]) {
             Debug("File %@ already exists, curId=%@, ooid=%@", strongSelf.file.name, curId, strongSelf.file.ooid);
             [strongSelf finishDownload:YES error:nil ooid:curId];
             return;
         }
+        
         @synchronized (strongSelf.file) {
             if (strongSelf.file.state != SEAF_DENTRY_LOADING) {
                 Info("Download file %@ already canceled", strongSelf.file.name);
@@ -182,12 +186,14 @@
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) return;
         NSString *curId = JSON[@"file_id"];
-        NSString *oid = [Utils getNewOidFromMtime:strongSelf.file.mtime repoId:strongSelf.file.repoId path:strongSelf.file.path];
-        if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:oid]]) {
+        
+        NSString *cachePath = [[SeafRealmManager shared] getLocalCacheWithOid:curId mtime:0 uniKey:strongSelf.file.uniqueKey];
+        if (cachePath && cachePath.length > 0) {
             Debug("Already up-to-date oid=%@", strongSelf.file.ooid);
-            [strongSelf finishDownload:YES error:nil ooid:oid];
+            [strongSelf finishDownload:YES error:nil ooid:curId];
             return;
         }
+
         @synchronized (strongSelf.file) {
             if (strongSelf.file.state != SEAF_DENTRY_LOADING) {
                 Info("Download file %@ already canceled", strongSelf.file.name);
@@ -320,9 +326,7 @@
     [handle closeFile];
     if (!self.file.downloadingFileOid)
         return -1;
-    
-    self.file.downloadingFileOid = [Utils getNewOidFromMtime:self.file.mtime repoId:self.file.repoId path:self.file.path];
-    
+        
     [[NSFileManager defaultManager] moveItemAtPath:tmpPath toPath:[SeafStorage.sharedObject documentPath:self.file.downloadingFileOid] error:nil];
     return 0;
 }

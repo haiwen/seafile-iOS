@@ -352,6 +352,12 @@
     Debug("Enter background");
     self.background = YES;
     [self startBackgroundTask];
+    
+    for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+        if (conn.accountIdentifier) {
+            [conn cleanupOrphanedFileStatuses];
+        }
+    }
 }
 
 // Background tasks management to ensure the app can continue operations when sent to background.

@@ -379,4 +379,32 @@
     [self deleteAllObjectsForEntity:@"UploadedPhotos"];
 }
 
+- (NSArray *)getAllValuesForEntity:(NSString *)entity inAccount:(NSString *)account
+{
+    NSManagedObjectContext *context = self.managedObjectContext;
+    NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
+    [fetchRequest setEntity:[NSEntityDescription entityForName:entity inManagedObjectContext:context]];
+    [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"account == %@", account]];
+    
+    NSMutableArray *values = [NSMutableArray array];
+    __block NSArray *results;
+    __block NSError *error = nil;
+    
+    [context performBlockAndWait:^{
+        results = [context executeFetchRequest:fetchRequest error:&error];
+        if (error) {
+            Warning(@"Failed to fetch values for entity %@ in account %@: %@", entity, account, error);
+            results = @[];
+        }
+    }];
+    
+    for (SeafCacheObjV2 *obj in results) {
+        if (obj.value) {
+            [values addObject:obj.value];
+        }
+    }
+    
+    return [values copy];
+}
+
 @end

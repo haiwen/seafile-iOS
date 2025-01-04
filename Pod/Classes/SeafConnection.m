@@ -24,6 +24,8 @@
 #import "SeafPhotoAsset.h"
 #import "SeafRealmManager.h"
 #import "SeafFile.h"
+#import "SeafRealmManager.h"
+
 enum {
     FLAG_LOCAL_DECRYPT = 0x1,
 };
@@ -1535,6 +1537,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     // CLear old versiond data
     NSString *attrsFile = [[SeafStorage.sharedObject rootPath] stringByAppendingPathComponent:@"uploadfiles.plist"];
     [Utils removeFile:attrsFile];
+    [[SeafRealmManager shared] clearAllFileStatuses];
 }
 
 // fileProvider tagData
@@ -1596,6 +1599,47 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self name:NSUbiquitousKeyValueStoreDidChangeExternallyNotification object:[NSUbiquitousKeyValueStore defaultStore]];
+}
+
+- (NSSet *)getAllCachedDirectoryOids
+{
+    NSMutableSet *oids = [NSMutableSet new];
+    NSArray *values = [_cacheProvider getAllValuesForEntity:ENTITY_DIRECTORY inAccount:self.accountIdentifier];
+    
+    for (NSString *value in values) {
+        NSError *error = nil;
+        NSData *data = [NSData dataWithBytes:value.UTF8String length:[value lengthOfBytesUsingEncoding:NSUTF8StringEncoding]];
+        id JSON = [Utils JSONDecode:data error:&error];
+        
+        if (!error && [JSON isKindOfClass:[NSDictionary class]]) {
+            NSString *oid = [JSON objectForKey:@"oid"];
+            if (oid) {
+                [oids addObject:oid];
+            }
+        }
+    }
+    
+    return [oids copy];
+}
+
+- (void)cleanupOrphanedFileStatuses
+{
+    // Get last cleanup time
+    NSDate *lastCleanupDate = [SeafStorage.sharedObject objectForKey:@"LastOrphanedFileStatusCleanupDate"];
+    NSDate *now = [NSDate date];
+    
+    // If never cleaned up or more than 24 hours since last cleanup
+    int cleanTime = 24 * 3600;
+    //int cleanTime = 5;
+
+    if (!lastCleanupDate || [now timeIntervalSinceDate:lastCleanupDate] >= cleanTime) {
+        NSSet *cachedDirOids = [self getAllCachedDirectoryOids];
+        [[SeafRealmManager shared] deleteFileStatusesWithDirIdsNotIn:cachedDirOids forAccount:self.accountIdentifier];
+        
+        // Save current cleanup time
+        [SeafStorage.sharedObject setObject:now forKey:@"LastOrphanedFileStatusCleanupDate"];
+        Debug(@"Performed daily cleanup of orphaned file statuses");
+    }
 }
 
 @end
