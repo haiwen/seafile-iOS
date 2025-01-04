@@ -109,6 +109,13 @@
 - (NSString *)uniqueKey
 {
     if (!_uniqueKey) {
+        NSString *normalizedPath = _path;
+                
+        // 检查并移除 _path 前缀的 "/"
+        if ([normalizedPath hasPrefix:@"/"]) {
+            normalizedPath = [normalizedPath substringFromIndex:1];
+        }
+        
         _uniqueKey = [NSString stringWithFormat:@"%@/%@/%@", connection.accountIdentifier, _repoId, _path];
     }
     return _uniqueKey;

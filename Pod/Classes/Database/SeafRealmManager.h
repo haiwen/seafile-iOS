@@ -6,6 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "SeafFileStatus.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -14,8 +15,6 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)shared;
 
 - (void)migrateCachedPhotosFromCoreDataWithIdentifier:(NSString *)identifier forAccount:(NSString *)account andStatus:(NSString *)status;
-
-- (void)savePhotoWithIdentifier:(NSString *)identifier forAccount:(NSString *)account andStatus:(NSString *)status;
 
 - (void)updateCachePhotoWithIdentifier:(NSString *)identifier forAccount:(NSString *)account andStatus:(NSString *)status;
 
@@ -38,6 +37,30 @@ NS_ASSUME_NONNULL_BEGIN
 
 //Used for version update after 2.9.27,delete the status "false" photo.Only record uploaded photos.
 - (void)deletePhotoWithNotUploadedStatus;
+
+//- (void)addOrUpdateFileStatus:(SeafFileStatus *)fileStatus;
+
+// Get file status by path
+- (SeafFileStatus *)getFileStatusWithPath:(NSString *)path;
+
+// Clear all file statuses
+- (void)clearAllFileStatuses;
+
+// Get all file statuses
+- (NSArray<SeafFileStatus *> *)getAllFileStatuses;
+
+// Get cache path
+- (NSString *)getLocalCacheWithOid:(NSString *)oid
+                             mtime:(float)mtime
+                            uniKey:(NSString *)uniKey;
+
+- (void)updateFileStatus:(SeafFileStatus *)newStatus;
+
+- (NSString *)getOidForUniKey:(NSString *)uniKey serverMtime:(float)serverMtime;
+
+- (void)updateFileStatuses:(NSArray<SeafFileStatus *> *)statuses;
+
+- (void)deleteFileStatusesWithDirIdsNotIn:(NSSet *)dirIds forAccount:(NSString *)account;
 
 @end
 

@@ -62,7 +62,7 @@
         if (_underlyingImage) {
             [self imageLoadingComplete];
         } else if (!_underlyingImage && [_file hasCache]) {
-            [self performSelectorInBackground:@selector(loadCache) withObject:nil];
+            [self loadCache];
         } else {
             [self performLoadUnderlyingImageAndNotify];
         }

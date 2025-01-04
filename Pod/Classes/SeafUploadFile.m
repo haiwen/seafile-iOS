@@ -22,6 +22,7 @@
 #import <MobileCoreServices/MobileCoreServices.h> // Required for older system versions
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h> // Used for iOS 14/macOS 11 and later
 #import "FileMimeType.h"
+#import "SeafRealmManager.h"
 
 #ifndef kUTTypeHEIC
 #define kUTTypeHEIC CFSTR("public.heic")
@@ -194,15 +195,11 @@
     }
     
     self.lastFinishTimestamp = [[NSDate new] timeIntervalSince1970];
-    NSString *fOid = oid;
     
-    Debug("result=%d, name=%@, delegate=%@, oid=%@, err=%@\n", result, self.name, _delegate, fOid, err);
+    Debug("result=%d, name=%@, delegate=%@, oid=%@, err=%@\n", result, self.name, _delegate, oid, err);
 
     if (result) {
-        if (self.isEditedFile) {
-            long long mtime = [Utils currentTimestampAsLongLong];
-            fOid = [Utils getNewOidFromMtime:mtime repoId:self.editedFileRepoId path:self.editedFilePath];
-            
+        if (self.isEditedFile) {            
             if (self.editedFileOid) {
                 [Utils removeFile:[SeafStorage.sharedObject documentPath:self.editedFileOid]];
             }
@@ -214,13 +211,32 @@
         }
         
         if (!_uploadFileAutoSync) {
-            [Utils linkFileAtPath:self.lpath to:[SeafStorage.sharedObject documentPath:fOid] error:nil];
+            [Utils linkFileAtPath:self.lpath to:[SeafStorage.sharedObject documentPath:oid] error:nil];
+            [self saveFileStatusWithOid:oid];
         } else {
             // For auto sync photos, release local cache files immediately.
             [self cleanup];
         }
+        
     }
-    [self uploadComplete:fOid error:err];
+    [self uploadComplete:oid error:err];
+}
+
+- (void)saveFileStatusWithOid:(NSString *)oid {
+    if (!oid || oid.length == 0) return;
+
+    SeafFileStatus *fileStatus = [[SeafFileStatus alloc] init];
+    fileStatus.uniquePath = [Utils uniquePathWithUniKey:self.udir.uniqueKey fileName:self.name];
+    fileStatus.serverOID = oid;
+    fileStatus.localMTime = [[NSDate date] timeIntervalSince1970];
+    fileStatus.localFilePath = self.lpath;
+    fileStatus.fileSize = self.filesize;
+    fileStatus.accountIdentifier = self.udir->connection.accountIdentifier;
+    
+    fileStatus.fileName = self.name;
+
+    [[SeafRealmManager shared] updateFileStatus:fileStatus];
+    Debug("Updated file status: %@ with oid: %@", self.lpath, oid);
 }
 
 -(void)showDeserializedError:(NSError *)error

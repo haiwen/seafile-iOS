@@ -19,6 +19,7 @@
 #import "Utils.h"
 #import "Debug.h"
 #import "SeafUploadOperation.h"
+#import "SeafRealmManager.h"
 
 typedef NSComparisonResult (^SeafSortableCmp)(id<SeafSortable> obj1, id<SeafSortable> obj2);
 
@@ -131,6 +132,8 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
     NSArray *allUpLoadTasks = [accountQueue getNeedUploadTasks];
     
     NSMutableArray *newItems = [NSMutableArray array];
+    NSMutableArray<SeafFileStatus *> *statusArray = [NSMutableArray array]; // useFor sync status
+
     for (NSDictionary *itemInfo in JSON) {
         if ([itemInfo objectForKey:@"name"] == [NSNull null])
             continue;
@@ -150,15 +153,12 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
             
             NSNumber *mtimeNumber = [itemInfo objectForKey:@"mtime"];
 
-            //create oid by 'timeStr' 'repoId' 'path'
-            NSString *oid = [Utils getNewOidFromMtime:[mtimeNumber longLongValue] repoId:self.repoId path:path];
+            NSString *fOid = [itemInfo objectForKey:@"id"];
             
-            newItem.oid = oid;
             if (allUpLoadTasks.count > 0) {//if have uploadTask
                 for (SeafUploadFile *file in allUpLoadTasks) {
                     //check and set uploadFile to SeafFile
-//                    SeafUploadFile *file = uploadOperation.uploadFile;
-                    if ((file.editedFileOid != nil) && [file.editedFileOid isEqualToString:oid]) {
+                    if ((file.editedFileOid != nil) && [file.editedFileOid isEqualToString:fOid]) {
                         SeafFile *fileItem = (SeafFile *)newItem;
                         fileItem.ufile = file;
                         [fileItem setMpath:file.lpath];
@@ -168,13 +168,43 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
                 }
             }
             
+            SeafFileStatus *fStatus = [self parseFileStatus:itemInfo];
+            fStatus.dirId = oid;
+            if (fStatus) {
+                [statusArray addObject:fStatus];
+            }
+            
         } else if ([type isEqual:@"dir"]) {
             newItem = [[SeafDir alloc] initWithConnection:connection oid:[itemInfo objectForKey:@"id"] repoId:self.repoId perm:[itemInfo objectForKey:@"permission"] name:name path:path];
         }
         [newItems addObject:newItem];
     }
+    
+    [[SeafRealmManager shared] updateFileStatuses:statusArray];
+
     [self loadedItems:newItems];
     return YES;
+}
+
+- (SeafFileStatus *)parseFileStatus:(NSDictionary *)json {
+    if (!json || ![json isKindOfClass:[NSDictionary class]]) {
+        Debug(@"Invalid JSON data");
+        return nil;
+    }
+    
+    SeafFileStatus *fileStatus = [[SeafFileStatus alloc] init];
+    NSString *fileName = json[@"name"] ?: @"";
+    fileStatus.uniquePath     = [Utils uniquePathWithUniKey:self.uniqueKey fileName:fileName];
+    fileStatus.serverOID      = json[@"id"]     ?: @"";
+    fileStatus.serverMTime    = [json[@"mtime"] floatValue];
+    fileStatus.fileSize       = [json[@"size"]  floatValue];
+    fileStatus.isStarred      = [json[@"starred"] boolValue];
+    fileStatus.accountIdentifier = connection.accountIdentifier;
+    
+    fileStatus.fileName = [json objectForKey:@"name"] ?: @"";
+    fileStatus.dirPath = self.path;
+
+    return fileStatus;
 }
 
 - (void)handleResponse:(NSHTTPURLResponse *)response json:(id)JSON

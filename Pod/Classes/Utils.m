@@ -774,18 +774,6 @@
     }
 }
 
-//modified from 2.9.28 use newOid
-+ (NSString *)getNewOidFromMtime:(long long)mtime
-                          repoId:(NSString *)repoId
-                            path:(NSString *)path
-{
-    NSString *mtimeStr = [NSString stringWithFormat:@"%lld", mtime];
-    NSString *orginOid = [NSString stringWithFormat:@"%@%@%@", mtimeStr, repoId, path];
-    NSString *noSlashes = [orginOid stringByReplacingOccurrencesOfString:@"/" withString:@""];
-    NSString *newOid = [noSlashes stringByReplacingOccurrencesOfString:@"." withString:@""];
-    return newOid;
-}
-
 //Timestamp of the current time
 + (long long)currentTimestampAsLongLong {
     NSTimeInterval timeStamp;
@@ -831,5 +819,19 @@
         @"isReachable": @(isReachable),
         @"isWiFiReachable": @(isWiFiReachable)
     };
+}
+
++ (NSString *)uniquePathWithUniKey:(NSString *)uniKey fileName:(NSString *)fileName {
+    if (!uniKey || !fileName) {
+        NSLog(@"Error: Path or email is nil");
+        return nil;
+    }
+    
+    // If uniKey does not end with “/”, add “/”
+    if (![uniKey hasSuffix:@"/"]) {
+        uniKey = [uniKey stringByAppendingString:@"/"];
+    }
+    
+    return [NSString stringWithFormat:@"%@%@", uniKey, fileName];
 }
 @end

@@ -43,10 +43,8 @@
                  deleted:(BOOL)isDeleted
 {
     NSString *name = aPath.lastPathComponent;
-    //create oid by 'timeStr' 'repoId' 'path'
-    NSString *oid = [Utils getNewOidFromMtime:mtime repoId:aRepo path:aPath];
 
-    if (self = [super initWithConnection:aConnection oid:oid repoId:aRepo name:objName path:aPath mtime:mtime size:0 ]) {
+    if (self = [super initWithConnection:aConnection oid:nil repoId:aRepo name:objName path:aPath mtime:mtime size:0 ]) {
         
         _isDir = isDir;
         self.encrypted = repoEncrypted;
@@ -57,12 +55,6 @@
     }
     return self;
 }
-
-//- (void)setStarred:(BOOL)starred
-//{
-//    [connection setStarred:starred repo:self.repoId path:self.path];
-//    [_starDelegate fileStateChanged:starred file:self];
-//}
 
 - (NSString *)key
 {

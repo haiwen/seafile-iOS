@@ -174,13 +174,6 @@
 }
 
 - (void)addThumbTask:(SeafThumb * _Nonnull)thumb {
-    // Check if the task already exists
-    for (SeafThumbOperation *op in self.thumbQueue.operations) {
-        if ([op.file.oid isEqual:thumb.file.oid]) {
-            return;
-        }
-    }
-    
     SeafThumbOperation *operation = [[SeafThumbOperation alloc] initWithSeafFile:thumb.file];
     [self.thumbQueue addOperation:operation];
 }

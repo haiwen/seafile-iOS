@@ -652,10 +652,11 @@ enum {
         NSString *sizeStr = [FileSizeFormatter stringFromLongLong:file.filesize];
         if (file.uploaded) {
             cell.detailTextLabel.text = [NSString stringWithFormat:NSLocalizedString(@"%@, Uploaded %@", @"Seafile"), sizeStr, [SeafDateFormatter stringFromLongLong:(long long)file.lastFinishTimestamp]];
+            [self updateCellDownloadStatus:cell isDownloading:false waiting:false cached:true];
         } else {
             cell.detailTextLabel.text = [NSString stringWithFormat:NSLocalizedString(@"%@, waiting to upload", @"Seafile"), sizeStr];
+            [self updateCellDownloadStatus:cell isDownloading:false waiting:false cached:false];
         }
-        [self updateCellDownloadStatus:cell isDownloading:false waiting:false cached:false];
     }
     return cell;
 }
@@ -701,25 +702,10 @@ enum {
 {
     cell.textLabel.text = sfile.name;
     cell.detailTextLabel.text = sfile.detailText;
-    [self loadImageForCell:cell withFile:sfile];
+    cell.imageView.image = sfile.icon;
     cell.badgeLabel.text = nil;
     cell.moreButton.hidden = NO;
     [self updateCellDownloadStatus:cell file:sfile waiting:false];
-}
-
-- (void)loadImageForCell:(SeafCell *)cell withFile:(SeafFile *)sFile{
-    NSUInteger index = [self indexOfEntry:sFile];
-    // record current cell indexPath
-    NSString *currentIndexPath = [NSString stringWithFormat:@"%ld",index];
-    cell.imageLoadIdentifier = currentIndexPath;
-    
-    // Asynchronously load cached images,Not currently in use
-//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-    UIImage *image = sFile.icon;
-    //  Check if the current cell is still the cell corresponding to the current indexPath
-    if ([cell.imageLoadIdentifier isEqualToString:currentIndexPath]) {
-        cell.imageView.image = image;
-    }
 }
 
 // Configures and returns a cell for a file
