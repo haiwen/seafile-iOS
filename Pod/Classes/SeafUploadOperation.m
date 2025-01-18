@@ -16,6 +16,7 @@
 #import "SeafRepos.h"
 #import "NSData+Encryption.h"
 #import "SeafStorage.h"
+#import "SeafUploadFileModel.h"
 
 @implementation SeafUploadOperation
 
@@ -74,7 +75,7 @@
         return;
     }
 
-    SeafConnection *connection = self.uploadFile.udir->connection;
+    SeafConnection *connection = self.uploadFile.udir.connection;
     NSString *repoId = self.uploadFile.udir.repoId;
     NSString *uploadPath = self.uploadFile.udir.path;
 
@@ -97,10 +98,10 @@
         return;
     }
     
-    self.uploadFile.uploading = YES;
+    self.uploadFile.model.uploading = YES;
     
     NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:self.uploadFile.lpath error:nil];
-    self.uploadFile.filesize = attrs.fileSize;
+    self.uploadFile.model.filesize = attrs.fileSize;
     
     if (self.uploadFile.filesize > LARGE_FILE_SIZE) {
         Debug("Upload large file %@ by block: %lld", self.uploadFile.name, self.uploadFile.filesize);
@@ -136,22 +137,22 @@
 {
     NSMutableArray *blockids = [[NSMutableArray alloc] init];
     NSMutableArray *paths = [[NSMutableArray alloc] init];
-    self.uploadFile.uploadpath = uploadpath;
+    self.uploadpath = uploadpath;
     if (![self chunkFile:self.uploadFile.lpath repo:repo blockids:blockids paths:paths]) {
         Debug("Failed to chunk file");
         [self finishUpload:NO oid:nil error:[Utils defaultError]];
         return;
     }
-    self.uploadFile.allblocks = blockids;
+    self.allBlocks = blockids;
     NSString* upload_url = [NSString stringWithFormat:API_URL"/repos/%@/upload-blks-link/?p=%@", repo.repoId, uploadpath.escapedUrl];
     NSString *form = [NSString stringWithFormat: @"blklist=%@", [blockids componentsJoinedByString:@","]];
-    NSURLSessionDataTask *sendBlockInfoTask = [repo->connection sendPost:upload_url form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+    NSURLSessionDataTask *sendBlockInfoTask = [repo.connection sendPost:upload_url form:form success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
         Debug("upload largefile by blocks, JSON: %@", JSON);
-        self.uploadFile.rawblksurl = [JSON objectForKey:@"rawblksurl"];
-        self.uploadFile.commiturl = [JSON objectForKey:@"commiturl"];
-        self.uploadFile.missingblocks = [JSON objectForKey:@"blklist"];
-        self.uploadFile.blkidx = 0;
-        [self uploadRawBlocks:repo->connection];
+        self.rawBlksUrl = [JSON objectForKey:@"rawblksurl"];
+        self.commitUrl = [JSON objectForKey:@"commiturl"];
+        self.missingBlocks = [JSON objectForKey:@"blklist"];
+        self.blkidx = 0;
+        [self uploadRawBlocks:repo.connection];
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
         Debug("Failed to upload: %@", error);
         [self finishUpload:NO oid:nil error:error];
@@ -164,15 +165,15 @@
 
 - (void)uploadRawBlocks:(SeafConnection *)connection
 {
-    long count = MIN(3, (self.uploadFile.missingblocks.count - self.uploadFile.blkidx));
-    Debug("upload idx %ld, total: %ld, %ld", self.uploadFile.blkidx, (long)self.uploadFile.missingblocks.count, count);
+    long count = MIN(3, (self.missingBlocks.count - self.blkidx));
+    Debug("upload idx %ld, total: %ld, %ld", self.blkidx, (long)self.missingBlocks.count, count);
     if (count == 0) {
         [self uploadBlocksCommit:connection];
         return;
     }
     
-    NSArray *arr = [self.uploadFile.missingblocks subarrayWithRange:NSMakeRange(self.uploadFile.blkidx, count)];
-    NSMutableURLRequest *request = [[SeafConnection requestSerializer] multipartFormRequestWithMethod:@"POST" URLString:self.uploadFile.rawblksurl parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
+    NSArray *arr = [self.missingBlocks subarrayWithRange:NSMakeRange(self.blkidx, count)];
+    NSMutableURLRequest *request = [[SeafConnection requestSerializer] multipartFormRequestWithMethod:@"POST" URLString:self.rawBlksUrl parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
         [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
         for (NSString *blockid in arr) {
             NSString *blockpath = [self blockPath:blockid];
@@ -183,7 +184,8 @@
     __weak __typeof__ (self) wself = self;
     NSURLSessionUploadTask *blockDataUploadTask = [connection.sessionMgr uploadTaskWithStreamedRequest:request progress:^(NSProgress * _Nonnull uploadProgress) {
         __strong __typeof (wself) sself = wself;
-        [sself.uploadFile updateProgressWithoutKVO:uploadProgress];
+        [sself.uploadFile uploadProgress:1.0f * self.blkidx / self.allBlocks.count];
+        
     } completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
         __strong __typeof (wself) sself = wself;
         Debug("Upload blocks %@", arr);
@@ -193,7 +195,7 @@
             [sself showDeserializedError:error];
             [sself finishUpload:NO oid:nil error:error];
         } else {
-            sself.uploadFile.blkidx += count;
+            sself.blkidx += count;
             [sself performSelector:@selector(uploadRawBlocks:) withObject:connection afterDelay:0.0];
         }
     }];
@@ -224,27 +226,27 @@
 
 - (NSString *)blockDir
 {
-    if (!self.uploadFile.blockDir) {
-        self.uploadFile.blockDir = [SeafStorage uniqueDirUnder:SeafStorage.sharedObject.tempDir];
-        [Utils checkMakeDir:self.uploadFile.blockDir];
+    if (!_blockDir) {
+        _blockDir = [SeafStorage uniqueDirUnder:SeafStorage.sharedObject.tempDir];
+        [Utils checkMakeDir:_blockDir];
     }
-    return self.uploadFile.blockDir;
+    return _blockDir;
 }
 
 - (void)uploadBlocksCommit:(SeafConnection *)connection
 {
-    NSString *url = self.uploadFile.commiturl;
+    NSString *url = self.commitUrl;
     NSMutableURLRequest *request = [[SeafConnection requestSerializer] multipartFormRequestWithMethod:@"POST" URLString:url parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
         [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
         if (self.uploadFile.overwrite) {
             [formData appendPartWithFormData:[@"1" dataUsingEncoding:NSUTF8StringEncoding] name:@"replace"];
         }
-        [formData appendPartWithFormData:[self.uploadFile.uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"parent_dir"];
+        [formData appendPartWithFormData:[self.uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"parent_dir"];
         [formData appendPartWithFormData:[self.uploadFileName dataUsingEncoding:NSUTF8StringEncoding] name:@"file_name"];
         [formData appendPartWithFormData:[[NSString stringWithFormat:@"%lld", [Utils fileSizeAtPath1:self.uploadFile.lpath]] dataUsingEncoding:NSUTF8StringEncoding] name:@"file_size"];
         [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
-        [formData appendPartWithFormData:[Utils JSONEncode:self.uploadFile.allblocks] name:@"blockids"];
-        Debug("url:%@ parent_dir:%@, %@", url, self.uploadFile.uploadpath, [[NSString alloc] initWithData:[Utils JSONEncode:self.uploadFile.allblocks] encoding:NSUTF8StringEncoding]);
+        [formData appendPartWithFormData:[Utils JSONEncode:self.allBlocks] name:@"blockids"];
+        Debug("url:%@ parent_dir:%@, %@", url, self.uploadpath, [[NSString alloc] initWithData:[Utils JSONEncode:self.allBlocks] encoding:NSUTF8StringEncoding]);
     } error:nil];
     
     NSURLSessionDataTask *blockCompleteTask = [connection.sessionMgr dataTaskWithRequest:request uploadProgress:^(NSProgress * _Nonnull uploadProgress) {
@@ -280,7 +282,7 @@
 
 - (BOOL)chunkFile:(NSString *)path repo:(SeafRepo *)repo blockids:(NSMutableArray *)blockids paths:(NSMutableArray *)paths
 {
-    NSString *password = [repo->connection getRepoPassword:repo.repoId];
+    NSString *password = [repo.connection getRepoPassword:repo.repoId];
     if (repo.encrypted && !password)
         return false;
     BOOL ret = YES;
@@ -336,7 +338,8 @@
     __weak typeof(self) weakSelf = self;
     NSURLSessionUploadTask *uploadByFileTask = [connection.sessionMgr uploadTaskWithStreamedRequest:request progress:^(NSProgress * _Nonnull uploadProgress) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
-        [strongSelf.uploadFile updateProgressWithoutKVO:uploadProgress];
+//        [strongSelf.uploadFile updateProgressWithoutKVO:uploadProgress];
+        [strongSelf.uploadFile uploadProgress:uploadProgress.fractionCompleted];
     } completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if (error) {
@@ -371,7 +374,6 @@
             [self completeOperation];
             return;
         }
-//        if ([self isRetryableError:error] && self.retryCount < self.maxRetryCount) {//deal error
         if (self.retryCount < self.maxRetryCount) {
             self.retryCount += 1;
             Debug(@"Upload failed, retrying %ld/%ld in %.0f seconds", (long)self.retryCount, (long)self.maxRetryCount, self.retryDelay);
@@ -387,6 +389,23 @@
             [self completeOperation];
         }
     }
+}
+
+- (void)completeOperation {
+    [self dataCleanup];
+    [super completeOperation];
+}
+
+- (void)dataCleanup {
+    self.rawBlksUrl = nil;
+    self.commitUrl = nil;
+    self.missingBlocks = nil;
+    self.blkidx = 0;
+    if (_blockDir) {
+        [[NSFileManager defaultManager] removeItemAtPath:_blockDir error:nil];
+        _blockDir = nil;
+    }
+    
 }
 
 @end

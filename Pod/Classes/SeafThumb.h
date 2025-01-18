@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "SeafFile.h"
+#import "FileMimeType.h"
 /**
  * @class SeafThumb
  * @discussion The SeafThumb class is used to handle thumbnail retrieval tasks for files within the Seafile service.

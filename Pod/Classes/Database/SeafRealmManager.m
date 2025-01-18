@@ -51,6 +51,20 @@ static SeafRealmManager* instance;
                     Debug(@"Error copying default.realm to new location: %@", copyError.localizedDescription);
                 } else {
                     Debug(@"Successfully copied default.realm to new location.");
+                    
+                    // Delete original realm file and its auxiliary files
+                    NSArray *auxiliaryExtensions = @[@"", @"lock", @"management"];
+                    for (NSString *extension in auxiliaryExtensions) {
+                        NSURL *fileURL = [[originalFileURL.URLByDeletingPathExtension URLByAppendingPathExtension:@"realm"] URLByAppendingPathExtension:extension];
+                        NSError *removeError = nil;
+                        if ([[NSFileManager defaultManager] fileExistsAtPath:fileURL.path]) {
+                            if ([[NSFileManager defaultManager] removeItemAtURL:fileURL error:&removeError]) {
+                                Debug(@"Successfully removed %@", fileURL.lastPathComponent);
+                            } else {
+                                Debug(@"Error removing %@: %@", fileURL.lastPathComponent, removeError.localizedDescription);
+                            }
+                        }
+                    }
                 }
             } else {
                 Debug(@"default.realm already exists in the new location.");
@@ -299,6 +313,10 @@ static SeafRealmManager* instance;
         
         if (newStatus.localFilePath.length > 0 && newStatus.localFilePath != existingStatus.localFilePath) {
             existingStatus.localFilePath = newStatus.localFilePath;
+        }
+        
+        if (newStatus.localMTime > 0 && newStatus.localMTime != existingStatus.localMTime) {
+            existingStatus.localMTime = newStatus.localMTime;
         }
         
         if (newStatus.fileSize > 0 && newStatus.fileSize != existingStatus.fileSize) {

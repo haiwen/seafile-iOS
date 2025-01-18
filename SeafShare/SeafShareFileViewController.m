@@ -17,6 +17,7 @@
 #import "FileSizeFormatter.h"
 #import "SeafDataTaskManager.h"
 #import "SeafInputItemsProvider.h"
+#import "SeafUploadFileModel.h"
 
 @interface SeafShareFileViewController ()<UITableViewDataSource, UITableViewDelegate, SeafUploadDelegate>
 
@@ -103,7 +104,7 @@
 
 - (void)updateDestinationLabel {
     if (_directory) {
-        SeafRepo *repo = [_directory->connection getRepo:_directory.repoId];
+        SeafRepo *repo = [_directory.connection getRepo:_directory.repoId];
         NSString *showPath = [NSString stringWithFormat:@"/%@%@", repo.name, _directory.path];
         if ([_directory.path isEqualToString:@"/"]) {
             showPath = [NSString stringWithFormat:@"/%@", repo.name];
@@ -140,7 +141,7 @@
 }
 
 - (void)updateCell:(SeafCell *)cell file:(SeafUploadFile *)file {
-    if (file.isUploading) {
+    if (file.model.uploading) {
         cell.progressView.hidden = false;
         [cell.progressView setProgress:file.uProgress];
     } else {
@@ -205,13 +206,13 @@
 
 #pragma mark- action
 - (IBAction)cancel:(id)sender {
-    [SeafDataTaskManager.sharedObject cancelAllUploadTasks:_directory->connection];
+    [SeafDataTaskManager.sharedObject cancelAllUploadTasks:_directory.connection];
     [self done];
 }
 
 - (void)startUpload {
     for (SeafUploadFile *ufile in self.ufiles) {
-        ufile.overwrite = true;
+        ufile.model.overwrite = true;
         ufile.udir = _directory;
         ufile.delegate = self;
         [ufile setCompletionBlock:^(SeafUploadFile *file, NSString *oid, NSError *error) {

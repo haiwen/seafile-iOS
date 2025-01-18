@@ -11,10 +11,16 @@
 #import "SeafUploadFile.h"
 #import "SeafBase.h"
 #import "Utils.h"
+#import "SeafFileModel.h"
+#import "SeafFileStatus.h"
+#import "SeafCacheManager.h"
+#import "SeafFilePreviewHandler.h"
+
 
 #define THUMB_SIZE 96
 
 @class SeafFile;
+@class SeafThumb;
 /**
  * Completion block for download operations.
  * @param file The file being downloaded.
@@ -40,12 +46,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 /**
  * Represents a file in Seafile.
  */
-@interface SeafFile : SeafBase<QLPreviewItem, SeafPreView, SeafUploadDelegate, SeafTask> {
-@protected
-    long long _filesize;///< File size in bytes.
-    long long _mtime;///< Modification time.
-    NSString *_shareLink;///< Share link of the file.
-}
+@interface SeafFile : SeafBase<QLPreviewItem, SeafPreView, SeafUploadDelegate, SeafTask>
 
 /**
  * Initializes a new SeafFile with the specified parameters.
@@ -66,34 +67,35 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
                    mtime:(long long)mtime
                     size:(unsigned long long)size;
 
+- (instancetype _Nullable )initWithModel:(SeafFileModel *_Nullable)model 
+                              connection:(SeafConnection *_Nullable)connection;
+
 @property (strong, nonatomic, nullable) NSString *mpath;// For modified files
 @property (readonly, nullable) NSString *detailText;///< A string providing detailed information about the file.
-@property (readonly) long long filesize;///< Getter for file size.
-@property (readonly) long long mtime;///< Getter for last modification time.
+@property (nonatomic, assign) long long filesize;      ///< File size in bytes
+@property (nonatomic, assign) long long mtime;         ///< Modification time
+@property (nonatomic, copy) NSString * _Nullable shareLink;       ///< Share link of the file
 @property (strong, nullable) id <SeafFileUpdateDelegate> udelegate;///< The delegate for upload updates.
-@property (strong, nonatomic) NSProgress * _Nullable progress;///< Progress of the ongoing file operation.
 @property (nonatomic, readonly, getter=isUploaded) BOOL uploaded;///< Whether the file is uploaded.
 @property (nonatomic, readonly, getter=isUploading) BOOL uploading;///< Whether the file is currently uploading.
 @property (copy, nonatomic) NSString * _Nullable thumbnailURLStr;//image thumbnail Url String
-//@property (nonatomic, assign) NSInteger thumbFailedCount;//download thumb failure count
 @property (nonatomic, copy) NSURLSessionDownloadTask * _Nullable thumbtask;
 @property (strong, nonatomic) SeafUploadFile * _Nullable ufile;
 @property (assign, nonatomic) BOOL isDownloading;// Checks if the file is currently being downloaded.
 @property (assign, nonatomic) BOOL downloaded;// Checks if the file is downloaded.
+@property (strong, nonatomic) SeafThumb * _Nullable thumbTaskForQueue;
 
-@property (strong) NSString * _Nullable downloadingFileOid;
-@property NSURLSessionDownloadTask * _Nullable task;
-@property (strong) NSArray *blkids;
-@property int index;
+@property (strong, nonatomic) NSURL * _Nullable preViewURL;
+@property (strong, nonatomic) NSURL * _Nullable exportURL;
 
-//@property (assign, nonatomic) BOOL isTaskCanceled;
+@property (nonatomic, strong) SeafFileModel * _Nullable model;
+@property (nonatomic, weak) id<SeafFileDelegate> delegate;
 
+// Dependency injection
+@property (nonatomic, strong) SeafFilePreviewHandler * _Nullable previewHandler;
 
-///**
-// * Checks if the file is currently being downloaded.
-// * @return YES if the file is downloading, otherwise NO.
-// */
-//- (BOOL)isDownloading;
+@property (nonatomic) NSInteger retryCount;
+@property (nonatomic) BOOL retryable;
 
 /**
  * Checks if the file is starred.
@@ -142,11 +144,6 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
  */
 - (void)setFileUploadedBlock:(nullable SeafUploadCompletionBlock)block;
 
-/**
- * Initiates the download of the file's thumbnail.
- * @param completeBlock A block to execute when the thumbnail download is complete.
- */
-- (void)downloadThumb:(SeafThumbCompleteBlock _Nonnull)completeBlock;
 
 /**
  * Cancels any ongoing thumbnail download.
@@ -154,7 +151,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 - (void)cancelThumb;
 
 /**
- * Cancels the thumb which not download complete.
+ * Cancels the thumb which has not completed downloading.
  */
 - (void)cancelNotDisplayThumb;
 
@@ -164,12 +161,6 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
  * @return YES if the upload was initiated successfully, otherwise NO.
  */
 - (BOOL)uploadFromFile:(NSURL *_Nonnull)url;
-
-/**
- * Waits for the upload to complete.
- * @return YES if the upload completed, otherwise NO.
- */
-- (BOOL)waitUpload;
 
 /**
  * Saves the modified version of a file from a temporary preview URL to the local cache.
@@ -189,18 +180,29 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (void)getImageWithCompletion:(void (^_Nullable)(UIImage * _Nullable image))completion;
 
-- (NSString *_Nullable)downloadTempPath:(NSString *_Nullable)objId;
-
 - (void)downloadProgress:(float)progress;
 
 - (void)finishDownload:(NSString *_Nullable)ooid;
 
 - (void)failedDownload:(NSError *_Nullable)error;
 
-- (void)downloadBlocks;
-
 - (void)finishDownloadThumb:(BOOL)success;
 
-- (void)removeBlock:(NSString *)blkId;
+// Public interfaces
+- (void)unload;
+- (BOOL)hasCache;
+- (void)clearCache;
+
+// Download related
+- (void)cancelDownload;
+
+// Upload related
+- (void)uploadWithPath:(NSString *_Nullable)path
+            completion:(void(^_Nullable)(BOOL success, NSError * _Nullable error))completion;
+- (void)cancelUpload;
+
+// Preview related
+- (NSURL *  _Nullable)previewURL;
+- (NSURL * _Nullable)exportURL;
 
 @end

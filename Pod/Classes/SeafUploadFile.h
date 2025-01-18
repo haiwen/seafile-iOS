@@ -11,11 +11,14 @@
 #import <Photos/Photos.h>
 
 #import "SeafPreView.h"
-#import "SeafTaskQueue.h"
+#import "SeafTaskProtocol.h"
 
 @class SeafConnection;
 @class SeafUploadFile;
 @class SeafDir;
+@class SeafUploadFileModel;
+@class SeafAssetManager;
+@class SeafPreviewManager;
 
 typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, NSError *error);
 
@@ -28,84 +31,63 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 /**
  * The SeafUploadFile class represents a file upload task in the Seafile service, implementing preview capabilities and conforming to various protocols for file operations and task management.
  */
-@interface SeafUploadFile : NSObject<SeafPreView, QLPreviewItem, SeafTask>
+@interface SeafUploadFile : NSObject <SeafPreView, QLPreviewItem, SeafTask>
 
-@property (nonatomic, copy) NSString *lpath;/// The local path of the file to be uploaded.
+// Model and Managers
+@property (nonatomic, strong) SeafUploadFileModel *model;
+@property (nonatomic, strong) SeafAssetManager *assetManager;
 
-@property (readonly) NSString *name;
-@property (nonatomic, assign) long long filesize;
+// Delegates and Blocks
+@property (nonatomic, weak) id<SeafUploadDelegate> delegate;
+@property (nonatomic, weak) id<SeafUploadDelegate> staredFileDelegate;
+@property (nonatomic, copy) SeafUploadCompletionBlock completionBlock;
+@property (nonatomic, copy) TaskProgressBlock taskProgressBlock;
 
-@property (nonatomic, assign, getter=isUploaded) BOOL uploaded;
-@property (nonatomic, assign, getter=isUploading) BOOL uploading;
+// Upload Related
+@property (nonatomic, strong) SeafDir *udir;
+@property (nonatomic, strong) NSError *uploadError;
+@property (nonatomic, strong) NSURLSessionUploadTask *task;
+@property (nonatomic, strong) NSProgress *progress;
+@property (nonatomic) dispatch_semaphore_t semaphore;
 
-@property (readwrite) BOOL overwrite;
-@property (nonatomic, readonly) PHAsset *asset;/// The associated PHAsset, if the file is a photo from the photo library.
+// Convenience Properties (forwarded to model)
+@property (nonatomic, readonly) NSString *name;
+@property (nonatomic, readonly) NSString *lpath;
+@property (nonatomic, readonly) long long filesize;
+@property (nonatomic, readonly) float uProgress;
+@property (nonatomic, readonly) BOOL uploading;
+@property (nonatomic, readonly) BOOL uploaded;
+@property (nonatomic, readonly) BOOL overwrite;
+@property (nonatomic, readonly) PHAsset *asset;
+@property (nonatomic, readonly) NSString *assetIdentifier;
+@property (nonatomic, readonly) BOOL uploadFileAutoSync;
+@property (nonatomic, readonly) BOOL starred;
+@property (nonatomic, readonly) BOOL isEditedFile;
+@property (nonatomic, readonly) NSString *editedFileRepoId;
+@property (nonatomic, readonly) NSString *editedFilePath;
+@property (nonatomic, readonly) NSString *editedFileOid;
+@property (nonatomic, readonly) BOOL shouldShowUploadFailure;
 
-@property (nonatomic, readonly) NSURL *assetURL;/// The URL of the asset in the photo library.
+// SeafTask Protocol Properties
+@property (nonatomic) NSTimeInterval lastFinishTimestamp;
+@property (nonatomic) NSInteger retryCount;
+@property (nonatomic) BOOL retryable;
 
-@property (nonatomic, copy) NSString *assetIdentifier;/// The unique identifier of the asset.
-
-@property (readwrite) BOOL uploadFileAutoSync;/// Whether the uploadFile is added from autoSync photo album.
-
-@property (readonly) float uProgress;/// Current upload progress as a float between 0 and 1.
-
-@property (nonatomic, weak) id<SeafUploadDelegate> delegate;/// Delegate to handle progress and completion updates.
-
-@property (nonatomic, weak) id<SeafUploadDelegate> staredFileDelegate;/// Delegate to handle progress and completion for starred view.
-
-@property (nonatomic) SeafUploadCompletionBlock completionBlock;
-
-@property (nonatomic, strong, readwrite) SeafDir *udir;/// The directory in which this file will be uploaded.
-
-@property (nonatomic, strong) UIImage *previewImage;//NSItemProvider previewImage
-
-@property (nonatomic, assign, getter=isStarred) BOOL starred;
-
-@property (nonatomic, assign) NSTimeInterval uploadStartedTime;
-
-@property (nonatomic, assign) BOOL isEditedFile;//is edited from Seafile
-
-@property (nonatomic, copy) NSString *editedFileRepoId;//the edited Seafile repoId
-
-@property (nonatomic, copy) NSString *editedFilePath;//the edited Seafile path
-
-@property (nonatomic, copy) NSString *editedFileOid;//the edited Seafile oid
-
-@property (assign, nonatomic) BOOL shouldShowUploadFailure; // When modifying the file and uploading again during the upload editing process, do not show the upload failure dialog
-
-//the error after operation
-@property (nonatomic, strong, nullable) NSError *uploadError;
-
-@property (strong) NSProgress * _Nullable progress;
-
-@property (strong) NSArray * _Nullable missingblocks;
-@property (strong) NSArray * _Nullable allblocks;
-@property (strong) NSString * _Nullable commiturl;
-@property (strong) NSString * _Nullable rawblksurl;
-@property (strong) NSString * _Nullable uploadpath;
-@property (nonatomic, strong) NSString * _Nullable blockDir;
-@property long blkidx;
-
+@property (nonatomic, strong) UIImage *previewImage;
 
 /**
  * Initializes a SeafUploadFile with a local path.
- * @param lpath The local path of the file to be uploaded.
+ * @param path The local path of the file to be uploaded.
  * @return An instance of SeafUploadFile.
  */
-- (id _Nullable )initWithPath:(NSString *_Nullable)lpath;
+- (instancetype)initWithPath:(NSString *)path;
 
 /**
  * Sets the associated PHAsset and its URL.
  * @param asset The PHAsset to associate with this upload.
  * @param url The URL of the asset in the photo library.
  */
-- (void)setPHAsset:(PHAsset *_Nullable)asset url:(NSURL *_Nullable)url;
-
-/**
- * Waits for the upload task to complete.
- * @return YES if the file was uploaded successfully, NO otherwise.
- */
-- (BOOL)waitUpload;
+- (void)setPHAsset:(PHAsset *)asset url:(NSURL *)url;
 
 /**
  * Cleans up resources associated with the file once it has been uploaded.
@@ -118,12 +100,19 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 - (void)iconWithCompletion:(void (^_Nullable)(UIImage * _Nullable image))completion;
 
 // Prepare for upload
-- (void)prepareForUploadWithCompletion:(void (^_Nullable)(BOOL success, NSError * _Nullable error))completion;
+- (void)prepareForUploadWithCompletion:(void (^_Nonnull)(BOOL success, NSError * _Nonnull error))completion;
 
-- (void)finishUpload:(BOOL)result oid:(NSString *_Nullable)oid error:(NSError *_Nullable)error;
+- (void)finishUpload:(BOOL)result oid:(NSString *_Nonnull)oid error:(NSError *_Nonnull)error;
 
-- (void)updateProgress:(NSProgress *_Nullable)progress;
+// Update progress bar
+- (void)uploadProgress:(float)progress;
 
--(void)updateProgressWithoutKVO:(NSProgress *_Nullable)progress;
+// Public Methods
+- (void)cancel;
+
+// Class Methods
++ (void)clearCache;
+
+- (BOOL)uploadHeic;
 
 @end

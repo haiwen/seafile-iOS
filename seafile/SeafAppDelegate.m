@@ -18,7 +18,6 @@
 #import "Utils.h"
 #import "Version.h"
 #import "SeafWechatHelper.h"
-#import "SeafRealmManager.h"
 
 @interface SeafAppDelegate () <UITabBarControllerDelegate, CLLocationManagerDelegate, WXApiDelegate>
 
@@ -57,11 +56,9 @@
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
         if (conn.inAutoSync) return true;
     }
-//    NSInteger totalDownloadingNum = 0;
     NSInteger totalOngoingNum = 0;
     for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
         SeafAccountTaskQueue *accountQueue =[SeafDataTaskManager.sharedObject accountQueueForConnection:conn];
-//        totalUploadingNum += accountQueue.downloadQueue.operationCount + accountQueue.uploadQueue.operationCount;
         totalOngoingNum += [accountQueue getNeedUploadTasks].count + [accountQueue getNeedDownloadTasks].count;
     }
     // Continue if there are any active uploads or downloads.
@@ -699,11 +696,11 @@ new identifier is "'mtime' + 'repoId' + 'path'"
  */
 - (void)clearUserCacheFile {
     NSString *hasCleanCache = [[SeafStorage sharedObject] objectForKey:@"hasClearCachedByOid"];
-    if (hasCleanCache.length == 0 || hasCleanCache.intValue < 1) {
+    if (hasCleanCache.length == 0 || hasCleanCache.intValue < 2) {
         for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
             [conn clearAccountCache];
         }
-        [[SeafStorage sharedObject] setObject:@"1" forKey:@"hasClearCachedByOid"];
+        [[SeafStorage sharedObject] setObject:@"2" forKey:@"hasClearCachedByOid"];
     }
 }
 

@@ -19,6 +19,9 @@
 #import "SeafStorage.h"
 #import <MobileCoreServices/MobileCoreServices.h>
 #import "SeafFileProviderUtility.h"
+#import "SeafThumb.h"
+#import "SeafDataTaskManager.h"
+#import "SeafFileOperationManager.h"
 
 @interface FileProvider ()
 
@@ -202,7 +205,7 @@
     BOOL ret = [self copyItemAtURL:url toURL:tempURL];
     if (ret) {
         [sfile uploadFromFile:tempURL];
-        [sfile waitUpload];
+//        [sfile waitUpload];
     }
 }
 
@@ -326,42 +329,42 @@
     Debug("create dir parentItemIdentifier: %@, directoryName:%@", parentItemIdentifier, directoryName);
     SeafItem *item = [[SeafItem alloc] initWithItemIdentity:parentItemIdentifier];
     SeafDir *parentDir = (SeafDir *)[item toSeafObj];
-    [parentDir mkdir:directoryName success:^(SeafDir *dir) {
-        NSString *createdDirectoryPath = [dir.path stringByAppendingPathComponent:directoryName];
-        SeafItem *createdItem = [[SeafItem alloc] initWithServer:dir->connection.address username:dir->connection.username repo:dir.repoId path:createdDirectoryPath filename:nil];
-        SeafProviderItem *providerItem = [[SeafProviderItem alloc] initWithSeafItem:createdItem];
-        [self signalEnumerator:@[parentItemIdentifier, NSFileProviderWorkingSetContainerItemIdentifier]];
-        completionHandler(providerItem, nil);
-    } failure:^(SeafDir *dir, NSError *error) {
-        completionHandler(nil, [NSError fileProvierErrorServerUnreachable]);
+    
+    [[SeafFileOperationManager sharedManager] mkdir:directoryName inDir:parentDir completion:^(BOOL success, NSError * _Nullable error) {
+        if (success) {
+            NSString *createdDirectoryPath = [parentDir.path stringByAppendingPathComponent:directoryName];
+            SeafItem *createdItem = [[SeafItem alloc] initWithServer:parentDir.connection.address 
+                                                          username:parentDir.connection.username 
+                                                             repo:parentDir.repoId 
+                                                             path:createdDirectoryPath 
+                                                         filename:nil];
+            SeafProviderItem *providerItem = [[SeafProviderItem alloc] initWithSeafItem:createdItem];
+            [self signalEnumerator:@[parentItemIdentifier, NSFileProviderWorkingSetContainerItemIdentifier]];
+            completionHandler(providerItem, nil);
+        } else {
+            completionHandler(nil, [NSError fileProvierErrorServerUnreachable]);
+        }
     }];
 }
 
 - (void)renameItemWithIdentifier:(NSFileProviderItemIdentifier)itemIdentifier
                           toName:(NSString *)itemName
-               completionHandler:(void (^)(NSFileProviderItem _Nullable renamedItem, NSError * _Nullable error))completionHandler;
+               completionHandler:(void (^)(NSFileProviderItem _Nullable renamedItem, NSError * _Nullable error))completionHandler
 {
     Debug("itemIdentifier: %@, toName:%@", itemIdentifier, itemName);
     SeafItem *item = [[SeafItem alloc] initWithItemIdentity:itemIdentifier];
     SeafDir *dir = (SeafDir *)[item.parentItem toSeafObj];
 
-    [dir renameEntry:item.name newName:itemName success:^(SeafDir *dir) {
-        SeafBase *file;
-        for (SeafBase *obj in dir.items) {
-            if ([obj.name.precomposedStringWithCompatibilityMapping isEqualToString:itemName.precomposedStringWithCompatibilityMapping]) {
-                file = obj;
-                break;
-            }
-        }
-        if (file) {
-            [file loadCache];
-            SeafProviderItem *renamedItem = [[SeafProviderItem alloc] initWithSeafItem:[SeafItem fromSeafBase:file]];
+    [[SeafFileOperationManager sharedManager] renameEntry:item.name
+                                                newName:itemName
+                                                  inDir:dir
+                                             completion:^(BOOL success, SeafBase *renamedFile, NSError *error) {
+        if (success && renamedFile) {
+            SeafProviderItem *renamedItem = [[SeafProviderItem alloc] initWithSeafItem:[SeafItem fromSeafBase:renamedFile]];
             completionHandler(renamedItem, nil);
         } else {
-            completionHandler(nil, [Utils defaultError]);
+            completionHandler(nil, error ?: [Utils defaultError]);
         }
-    } failure:^(SeafDir *dir, NSError *error) {
-        completionHandler(nil, error ? error : [Utils defaultError]);
     }];
 }
 - (void)reparentItemWithIdentifier:(NSFileProviderItemIdentifier)itemIdentifier
@@ -376,29 +379,49 @@
     SeafDir *srcDir = (SeafDir *)[item.parentItem toSeafObj];
     SeafDir *dstDir = (SeafDir *)dstItem.toSeafObj;
 
-    [srcDir moveEntries:[NSArray arrayWithObject:item.name] dstDir:dstDir success:^(SeafDir *dir) {
+    [[SeafFileOperationManager sharedManager] moveEntries:@[item.name]
+                                                fromDir:srcDir
+                                                  toDir:dstDir
+                                             completion:^(BOOL success, NSError * _Nullable error) {
+        if (!success) {
+            Warning("Failed to reparent %@: %@", itemIdentifier, error);
+            completionHandler(nil, [NSError fileProvierErrorServerUnreachable]);
+            return;
+        }
+        
         NSString *newpath = [dstDir.path stringByAppendingPathComponent:item.name];
         NSString *filename = item.isFile ? item.filename : nil;
+        
         if (newName && ![newName isEqualToString:item.name]) {
-            [dstDir renameEntry:item.name newName:newName success:^(SeafDir *dir) {
-                NSString *renamedpath = [dstDir.path stringByAppendingPathComponent:newName];
-                SeafItem *renamedItem = [[SeafItem alloc] initWithServer:dstDir->connection.address username:dstDir->connection.username repo:dstDir.repoId path:renamedpath filename:newName];
-                Debug("reparent %@ successfully", itemIdentifier);
-                [self signalEnumerator:@[parentItemIdentifier, NSFileProviderWorkingSetContainerItemIdentifier]];
-                completionHandler([[SeafProviderItem alloc] initWithSeafItem:renamedItem], nil);
-            } failure:^(SeafDir *dir, NSError *error) {
-                Warning("Failed to reparent %@: %@", itemIdentifier, error);
-                completionHandler(nil, [NSError fileProvierErrorServerUnreachable]);
+            [[SeafFileOperationManager sharedManager] renameEntry:item.name
+                                                        newName:newName
+                                                          inDir:dstDir
+                                                     completion:^(BOOL success, SeafBase *renamedFile, NSError *error) {
+                if (success) {
+                    NSString *renamedpath = [dstDir.path stringByAppendingPathComponent:newName];
+                    SeafItem *renamedItem = [[SeafItem alloc] initWithServer:dstDir.connection.address 
+                                                                  username:dstDir.connection.username 
+                                                                     repo:dstDir.repoId 
+                                                                     path:renamedpath 
+                                                                 filename:newName];
+                    Debug("reparent %@ successfully", itemIdentifier);
+                    [self signalEnumerator:@[parentItemIdentifier, NSFileProviderWorkingSetContainerItemIdentifier]];
+                    completionHandler([[SeafProviderItem alloc] initWithSeafItem:renamedItem], nil);
+                } else {
+                    Warning("Failed to reparent %@: %@", itemIdentifier, error);
+                    completionHandler(nil, [NSError fileProvierErrorServerUnreachable]);
+                }
             }];
         } else {
-            SeafItem *newItem = [[SeafItem alloc] initWithServer:dstDir->connection.address username:dstDir->connection.username repo:dstDir.repoId path:newpath filename:filename];
+            SeafItem *newItem = [[SeafItem alloc] initWithServer:dstDir.connection.address 
+                                                      username:dstDir.connection.username 
+                                                         repo:dstDir.repoId 
+                                                         path:newpath 
+                                                     filename:filename];
             SeafProviderItem *reparentedItem = [[SeafProviderItem alloc] initWithSeafItem:newItem];
             [self signalEnumerator:@[parentItemIdentifier, NSFileProviderWorkingSetContainerItemIdentifier]];
             completionHandler(reparentedItem, nil);
         }
-    } failure:^(SeafDir *dir, NSError *error) {
-        Warning("Failed to reparent %@: %@", itemIdentifier, error);
-        completionHandler(nil, [NSError fileProvierErrorServerUnreachable]);
     }];
 }
 
@@ -408,11 +431,16 @@
     Debug("itemIdentifier: %@", itemIdentifier);
     SeafItem *item = [[SeafItem alloc] initWithItemIdentity:itemIdentifier];
     SeafDir *dir = (SeafDir *)[item.parentItem toSeafObj];
-    [dir delEntries:[NSArray arrayWithObject:item.name] success:^(SeafDir *dir) {
-        [self signalEnumerator:@[item.parentItem.itemIdentifier, NSFileProviderWorkingSetContainerItemIdentifier]];
-        completionHandler(nil);
-    } failure:^(SeafDir *dir, NSError *error) {
-        completionHandler([NSError fileProvierErrorServerUnreachable]);
+    
+    [[SeafFileOperationManager sharedManager] deleteEntries:@[item.name] 
+                                                    inDir:dir 
+                                               completion:^(BOOL success, NSError * _Nullable error) {
+        if (success) {
+            [self signalEnumerator:@[item.parentItem.itemIdentifier, NSFileProviderWorkingSetContainerItemIdentifier]];
+            completionHandler(nil);
+        } else {
+            completionHandler([NSError fileProvierErrorServerUnreachable]);
+        }
     }];
 }
 
@@ -478,7 +506,7 @@
                 }
             } else {
                 __weak typeof(sfile) weakFile = sfile;
-                [sfile downloadThumb:^(BOOL ret) {
+                [weakFile setThumbCompleteBlock:^(BOOL ret) {
                     counterProgress += 1;
                     if (ret) {
                         NSData *imageData = [NSData dataWithContentsOfFile:[weakFile thumbPath:weakFile.oid]];
@@ -491,6 +519,9 @@
                         completionHandler(nil);
                     }
                 }];
+                SeafThumb *thb = [[SeafThumb alloc] initWithSeafFile:weakFile];
+                [SeafDataTaskManager.sharedObject addThumbTask:thb];
+
             }
         } else {
             counterProgress += 1;

@@ -16,6 +16,8 @@
 #import "SeafGlobal.h"
 #import "SeafFile.h"
 #import "SeafDataTaskManager.h"
+#import "SeafFileOperationManager.h"
+#import "SeafUploadFileModel.h"
 
 @interface SeafActionDirViewController()<SeafDentryDelegate, SeafUploadDelegate>
 @property (strong, nonatomic) SeafDir *directory;
@@ -133,8 +135,8 @@
 {
      ufile.delegate = self;
      ufile.udir = _directory;
-     ufile.overwrite = overwrite;
-     Debug("file %@ %d %d", ufile.lpath, ufile.isUploading, ufile.isUploaded);
+     ufile.model.overwrite = overwrite;
+    Debug("file %@ %d %d", ufile.lpath, ufile.model.uploading, ufile.model.uploaded);
      [self showUploadProgress:ufile];
 }
 
@@ -149,11 +151,11 @@
             return;
         }
         [self showLoadingView];
-        [self.directory mkdir:input success:^(SeafDir *dir) {
+        [[SeafFileOperationManager sharedManager] mkdir:input inDir:self.directory completion:^(BOOL success, NSError * _Nullable error) {
             [self dismissLoadingView];
-        } failure:^(SeafDir *dir, NSError *error) {
-            [self dismissLoadingView];
-            [self alertWithTitle:NSLocalizedString(@"Failed to create folder", @"Seafile") handler:nil];
+            if (!success) {
+                [self alertWithTitle:NSLocalizedString(@"Failed to create folder", @"Seafile") handler:nil];
+            }
         }];
     }];
 }
@@ -216,7 +218,7 @@
         CGRect r = self.alert.view.frame;
         self.progressView.frame = CGRectMake(20, r.size.height-45, r.size.width - 40, 20);
         [self.alert.view addSubview:self.progressView];
-        [self.ufile run:nil];
+        [SeafDataTaskManager.sharedObject addUploadTask:self.ufile priority:NSOperationQueuePriorityVeryHigh];
     }];
 }
 
