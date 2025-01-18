@@ -200,6 +200,7 @@
     [self setOoid:ooid];
     self.state = SEAF_DENTRY_SUCCESS;
     self.oid = ooid;
+    [[SeafCacheManager sharedManager] saveThumbFromEncrypetedFile:self];
     [self downloadComplete:updated];
 }
 

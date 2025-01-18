@@ -231,7 +231,6 @@
         Warning("Copy failed, code=%ld", (long)response.statusCode);
         if (completion) completion(NO, error);
         [srcDir.delegate download:srcDir failed:error];
-
     }];
 }
 

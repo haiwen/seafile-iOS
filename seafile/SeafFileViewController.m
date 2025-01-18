@@ -168,6 +168,7 @@ enum {
     [super viewWillAppear:animated];
     [self checkUploadfiles];
     [self refreshDownloadStatus];
+    [self refreshEncryptedThumb];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -2094,6 +2095,12 @@ enum {
                 [self updateCellDownloadStatus:(SeafCell *)cell file:(SeafFile *)entry waiting:false];
             }
         }
+    }
+}
+
+- (void)refreshEncryptedThumb {
+    if ([self.connection isEncrypted:self.directory.repoId] && [self.connection isDecrypted:self.directory.repoId]) {
+        [self.tableView reloadData];
     }
 }
 
