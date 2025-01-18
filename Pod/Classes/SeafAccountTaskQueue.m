@@ -592,7 +592,7 @@
     NSArray *taskArrays = @[self.ongoingTasks, self.waitingTasks];
     for (NSMutableArray<SeafUploadFile *> *taskArray in taskArrays) {
         for (SeafUploadFile *ufile in taskArray) {
-            if (ufile.uploadFileAutoSync && ufile.udir->connection == self.conn) {
+            if (ufile.uploadFileAutoSync && ufile.udir.connection == self.conn) {
                 [tasksToCancel addObject:ufile];
             }
         }
@@ -620,7 +620,7 @@
     @synchronized(self.pendingUploadTasks) {
         for (NSInteger i = self.pendingUploadTasks.count - 1; i >= 0; i--) {
             SeafUploadFile *ufile = self.pendingUploadTasks[i];
-            if (ufile.uploadFileAutoSync && ufile.udir->connection == self.conn) {
+            if (ufile.uploadFileAutoSync && ufile.udir.connection == self.conn) {
                 [self.pendingUploadTasks removeObjectAtIndex:i]; // Remove elements that meet the condition
             }
         }
@@ -636,7 +636,7 @@
     @synchronized (self.ongoingTasks) {
         NSArray *ongoingTasksCopy = [self.ongoingTasks copy];
         for (SeafUploadFile *ufile in ongoingTasksCopy) {
-            if (ufile.uploadFileAutoSync && ufile.udir->connection == self.conn && !ufile.isImageFile) {
+            if (ufile.uploadFileAutoSync && ufile.udir.connection == self.conn && !ufile.isImageFile) {
                 // Find the corresponding SeafUploadOperation
                 for (SeafUploadOperation *op in self.uploadQueue.operations) {
                     if (op.uploadFile == ufile) {
@@ -655,7 +655,7 @@
     @synchronized (self.waitingTasks) {
         NSArray *waitingTasksCopy = [self.waitingTasks copy];
         for (SeafUploadFile *ufile in waitingTasksCopy) {
-            if (ufile.uploadFileAutoSync && ufile.udir->connection == self.conn && !ufile.isImageFile) {
+            if (ufile.uploadFileAutoSync && ufile.udir.connection == self.conn && !ufile.isImageFile) {
                 // Find the corresponding SeafUploadOperation
                 for (SeafUploadOperation *op in self.uploadQueue.operations) {
                     if (op.uploadFile == ufile) {
@@ -673,7 +673,7 @@
     @synchronized(self.pendingUploadTasks) {
         for (NSInteger i = self.pendingUploadTasks.count - 1; i >= 0; i--) {
             SeafUploadFile *ufile = self.pendingUploadTasks[i];
-            if (ufile.uploadFileAutoSync && ufile.udir->connection == self.conn) {
+            if (ufile.uploadFileAutoSync && ufile.udir.connection == self.conn) {
                 [self.pendingUploadTasks removeObjectAtIndex:i]; // Remove elements that meet the condition
             }
         }

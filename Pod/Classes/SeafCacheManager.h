@@ -6,17 +6,42 @@
 //
 
 #import <Foundation/Foundation.h>
-
-NS_ASSUME_NONNULL_BEGIN
-
+@class SeafFile;
+@class SeafConnection;
+@class SeafBase;
 @interface SeafCacheManager : NSObject
 
+// Singleton method
 + (SeafCacheManager *)sharedManager;
 
+// Thumbnail cache (maintain existing functionality)
 - (void)saveThumbToCache:(UIImage *)image key:(NSString *)key;
-
 - (UIImage *)getThumbFromCache:(NSString *)key;
 
-@end
+// File cache
+- (NSString *)getCachedPath:(NSString *)fileId;
+- (void)saveFileToCache:(NSString *)path fileId:(NSString *)fileId;
+- (BOOL)isCached:(NSString *)fileId;
+//- (void)clearFileCache:(NSString *)fileId;
 
-NS_ASSUME_NONNULL_END
+// Cache configuration
+- (void)setMemoryCacheLimit:(NSUInteger)totalCostLimit countLimit:(NSUInteger)countLimit;
+- (void)setDiskCacheLimit:(unsigned long long)maxSize;
+
+// Cache management
+- (unsigned long long)totalCacheSize;
+- (void)clearAllCache;
+- (void)trimCacheToSize:(unsigned long long)maxSize;
+
+// New interfaces to replace cache logic in SeafFile
+- (BOOL)fileHasCache:(SeafFile *)file;
+- (BOOL)loadFileCache:(SeafFile *)file;
+- (BOOL)saveFileCache:(SeafFile *)file;
+- (void)clearFileCache:(SeafFile *)file;
+- (void)deleteCacheForFile:(SeafFile *)file;
+- (BOOL)realLoadCache:(SeafFile *)file;
+- (void)saveOidToLocalDB:(NSString *)oid seafFile:(SeafFile *)sFile connection:(SeafConnection *)conn;
+- (NSString *)cachePathForFile:(SeafFile *)file;
+- (void)updateWithEntry:(SeafBase *)entry sFile:(SeafFile *)sFile;
+
+@end

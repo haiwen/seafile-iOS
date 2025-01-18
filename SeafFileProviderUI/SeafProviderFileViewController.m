@@ -16,6 +16,8 @@
 #import "SeafDateFormatter.h"
 #import "Utils.h"
 #import "Debug.h"
+#import "SeafDataTaskManager.h"
+#import "SeafUploadFileModel.h"
 
 @interface SeafProviderFileViewController ()<SeafDentryDelegate, SeafUploadDelegate, UIScrollViewDelegate>
 @property (strong, nonatomic) IBOutlet UIButton *chooseButton;
@@ -145,13 +147,14 @@
         CGRect r = self.alert.view.frame;
         self.progressView.frame = CGRectMake(20, r.size.height-45, r.size.width - 40, 20);
         [self.alert.view addSubview:self.progressView];
-        [self.ufile run:nil];
+        [SeafDataTaskManager.sharedObject addUploadTask:self.ufile priority:NSOperationQueuePriorityVeryHigh];
+//        [self.ufile run:nil];
     }];
 }
 
 - (void)uploadFileOverwrite:(BOOL)overwrite
 {
-    NSString *uniqDir = [Utils encodePath:_directory->connection.address username:_directory->connection.username repo:_directory.repoId path:_directory.path];
+    NSString *uniqDir = [Utils encodePath:_directory.connection.address username:_directory.connection.username repo:_directory.repoId path:_directory.path];
     NSString *tmpdir = [self.root.documentStorageURL.path stringByAppendingString:uniqDir];
     if (![Utils checkMakeDir:tmpdir]) {
         Warning("Failed to create temp dir.");
@@ -175,8 +178,8 @@
         SeafUploadFile *ufile = [[SeafUploadFile alloc] initWithPath:newURL.path];
         ufile.delegate = self;
         ufile.udir = _directory;
-        ufile.overwrite = overwrite;
-        Debug("file %@ %d %d", ufile.lpath, ufile.isUploading, ufile.isUploaded);
+        ufile.model.overwrite = overwrite;
+        Debug("file %@ %d %d", ufile.lpath, ufile.model.uploading, ufile.model.uploaded);
         [self showUploadProgress:ufile];
     }];
 }
@@ -351,7 +354,7 @@
 
         if (self.root.documentPickerMode == UIDocumentPickerModeImport
             || self.root.documentPickerMode == UIDocumentPickerModeOpen) {
-            NSString *encodeUniqDir = [Utils encodePath:file->connection.address username:file->connection.username repo:file.repoId path:file.path.stringByDeletingLastPathComponent];
+            NSString *encodeUniqDir = [Utils encodePath:file.connection.address username:file.connection.username repo:file.repoId path:file.path.stringByDeletingLastPathComponent];
             NSString *tmpdir = [self.root.documentStorageURL.path stringByAppendingPathComponent:encodeUniqDir];
             NSURL *url = [NSURL fileURLWithPath:[tmpdir stringByAppendingPathComponent:file.name]];
             Debug("dismissGrantingAccessToURL:%@", url);

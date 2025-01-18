@@ -25,7 +25,7 @@
 #import "SeafActionsManager.h"
 #import <WebKit/WebKit.h>
 #import <SafariServices/SafariServices.h>
-
+#import "SeafDataTaskManager.h"
 
 enum SHARE_STATUS {
     SHARE_BY_MAIL = 0,
@@ -60,6 +60,9 @@ enum SHARE_STATUS {
 @property (strong) UIDocumentInteractionController *docController;
 @property (nonatomic, assign) BOOL previewDidEdited;
 @property int shareStatus;
+
+// 新增：避免多次重复 present QLPreviewController
+@property (nonatomic, assign) BOOL isPresentingQL;
 
 @end
 
@@ -128,26 +131,26 @@ enum SHARE_STATUS {
 - (void)updatePreviewState
 {
     if (self.state == PREVIEW_PHOTO && self.photos)
-        return;// No change needed if already displaying photos
+        return; // No change needed if already displaying photos
 
     _state = PREVIEW_NONE;
-    if (!self.preViewItem) {        // No item to preview
+    if (!self.preViewItem) { // No item to preview
 
     } else if (self.preViewItem.previewItemURL) {
-        _state = PREVIEW_QL_MODAL;// Default state
+        _state = PREVIEW_QL_MODAL; // Default state
         if ([self.preViewItem.mime isEqualToString:@"image/svg+xml"]) {
             _state = PREVIEW_WEBVIEW;
         } else if([self.preViewItem.mime isEqualToString:@"text/x-markdown"] || [self.preViewItem.mime isEqualToString:@"text/x-seafile"]) {
             _state = PREVIEW_WEBVIEW_JS;
         } else if ([self.preViewItem.mime containsString:@"text/"]) {
             _state = PREVIEW_TEXT;
-        } else if (!IsIpad()) { // if (!IsIpad()) iPhone >= 10.0
-            _state = self.preViewItem.editable ? PREVIEW_WEBVIEW : PREVIEW_QL_MODAL; // Use Quick Look for non-editable files on iPhone
+        } else if (!IsIpad()) { // Use Quick Look for non-editable files on iPhone
+            _state = self.preViewItem.editable ? PREVIEW_WEBVIEW : PREVIEW_QL_MODAL;
         } else if (![QLPreviewController canPreviewItem:self.preViewItem]) {
-            _state = PREVIEW_FAILED;// Mark as failed if Quick Look can't preview the item
+            _state = PREVIEW_FAILED; // Mark as failed if Quick Look can't preview the item
         }
     } else {
-        _state = PREVIEW_DOWNLOADING;// Set state as downloading if no URL is available
+        _state = PREVIEW_DOWNLOADING; // Set state as downloading if no URL is available
     }
     if (_state != PREVIEW_QL_MODAL) { // Clear the preview if state is not Quick Look modal
         [self clearPreView];
@@ -157,10 +160,10 @@ enum SHARE_STATUS {
 
 - (void)refreshView
 {
-    [self updatePreviewState];// Update the state based on the current item
+    [self updatePreviewState]; // Update the state based on the current item
     if (!self.isViewLoaded) return;
 
-    [self updateNavigation];// Update the navigation items
+    [self updateNavigation]; // Update the navigation items
     CGFloat y = 64;
     if (@available(iOS 11.0, *)) {
        y = 44 + [UIApplication sharedApplication].keyWindow.safeAreaInsets.top;
@@ -182,19 +185,33 @@ enum SHARE_STATUS {
         case PREVIEW_QL_MODAL: {
             Debug (@"Preview file %@ mime=%@ QL modal\n", self.preViewItem.previewItemTitle, self.preViewItem.mime);
             [self.qlViewController reloadData]; // Reload data for Quick Look view controller
-            if (!self.qlViewController.presentingViewController) {
-                if (self.isModal && self.isVisible) { // Check if modal and visible
+            // If QLVC is already presented, do not present again
+            if (!self.qlViewController.presentingViewController && !self.presentedViewController && !self.isPresentingQL) {
+                if (self.isModal && self.isVisible) {
                     UIViewController *vc = self.presentingViewController;
+                    // Mark to avoid repetition
+                    self.isPresentingQL = YES;
                     [vc dismissViewControllerAnimated:NO completion:^{
-                        [vc presentViewController:self.qlViewController animated:NO completion:^{
-                            [self clearPreView];// Clear previous views after presenting Quick Look
-                        }];
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            [vc presentViewController:self.qlViewController animated:YES completion:^{
+                                dispatch_async(dispatch_get_main_queue(), ^{
+                                    [self clearPreView];
+                                    self.isPresentingQL = NO;
+                                });
+                            }];
+                        });
                     }];
                 } else if (IsIpad()) {
-                    [[SeafAppDelegate topViewController].parentViewController presentViewController:self.qlViewController animated:YES completion:^{
-                        [self clearPreView];
-                        [self resetNavigation];// Reset navigation items
-                    }];
+                    // In iPad scenario
+                    UIViewController *topVC = [SeafAppDelegate topViewController];
+                    if (!topVC.presentedViewController && !self.isPresentingQL) {
+                        self.isPresentingQL = YES;
+                        [topVC.parentViewController presentViewController:self.qlViewController animated:YES completion:^{
+                            [self clearPreView];
+                            [self resetNavigation];
+                            self.isPresentingQL = NO;
+                        }];
+                    }
                 }
             }
             break;
@@ -203,9 +220,9 @@ enum SHARE_STATUS {
         case PREVIEW_WEBVIEW: {
             Debug("Preview by webview %@\n", self.preViewItem.previewItemTitle);
             if (self.state == PREVIEW_WEBVIEW_JS) {
-                self.webView.navigationDelegate = self;// Set delegate for handling JavaScript
+                self.webView.navigationDelegate = self; // Set delegate for handling JavaScript
             } else {
-                self.webView.navigationDelegate = nil;// Clear delegate for regular web view
+                self.webView.navigationDelegate = nil; // Clear delegate for regular web view
             }
             self.webView.frame = r;
             [self.webView loadFileURL:self.preViewItem.previewItemURL allowingReadAccessToURL:self.preViewItem.previewItemURL];
@@ -218,7 +235,7 @@ enum SHARE_STATUS {
             self.textView.frame = r;
             self.textView.attributedText = [self attributedTextOfPreViewItem];
             self.textView.hidden = NO;
-            [self.textView scrollsToTop];// Scroll to top
+            [self.textView scrollsToTop]; // Scroll to top
             break;
         case PREVIEW_PHOTO:
             Debug("Preview photo %@\n", self.preViewItem.previewItemTitle);
@@ -231,9 +248,9 @@ enum SHARE_STATUS {
     }
     if (@available(iOS 13.0, *)) {
         if ([self isPortrait]) {
-            self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModePrimaryHidden;// Adjust split view controller display mode for portrait
+            self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModePrimaryHidden; // Adjust split view controller display mode for portrait
         } else {
-            self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModeAllVisible;// Adjust split view controller display mode for landscape
+            self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModeAllVisible; // Adjust split view controller display mode for landscape
         }
     }
 }
@@ -527,10 +544,17 @@ enum SHARE_STATUS {
 - (IBAction)cancelDownload:(id)sender
 {
     id<SeafPreView> item = self.preViewItem;
-    [self setPreViewItem:nil master:nil];// Clear the preview item and master
-    [item cancelAnyLoading];// Cancel any ongoing loading
+    [self setPreViewItem:nil master:nil]; // Clear the preview item and master
+//    [item cancelAnyLoading]; // Cancel any ongoing loading
+    // TODO: Only cancel the current account, not all accounts
+    for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+        if (conn.accountIdentifier) {
+            SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:conn];
+            [accountQueue removeFileDownloadTask:item];
+        }
+    }
     if (!IsIpad())
-        [self goBack:nil];// Go back if not iPad
+        [self goBack:nil]; // Go back if not iPad
 }
 
 - (void)showAlertWithAction:(NSArray *)arr fromBarItem:(UIBarButtonItem *)item withTitle:(NSString *)title

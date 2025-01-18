@@ -103,7 +103,7 @@
 
 - (void)downloadThumb
 {
-    SeafConnection *connection = self.file->connection;
+    SeafConnection *connection = self.file.connection;
     SeafRepo *repo = [connection getRepo:self.file.repoId];
     if (repo.encrypted) {
         [self finishDownloadThumbOperation:NO];

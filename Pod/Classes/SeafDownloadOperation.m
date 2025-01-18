@@ -68,7 +68,7 @@
         return;
     }
 
-    SeafConnection *connection = self.file->connection;
+    SeafConnection *connection = self.file.connection;
     self.file.state = SEAF_DENTRY_LOADING;
 
     if ([connection shouldLocalDecrypt:self.file.repoId] || self.file.filesize > LARGE_FILE_SIZE) {
@@ -89,10 +89,9 @@
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) return;
         NSString *downloadUrl = JSON;
-//        NSString *curId = [Utils getNewOidFromMtime:strongSelf.file.mtime repoId:strongSelf.file.repoId path:strongSelf.file.path];
         NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
 
-        Debug("Downloading file from file server url: %@, state:%d %@, %@", JSON, strongSelf.file.state, strongSelf.file.ooid, curId);
+        Debug("Downloading file from file server url: %@, state:%d %@, %@", JSON, strongSelf.file.state, strongSelf.downloadingFileOid, curId);
 
         if (!curId) curId = strongSelf.file.oid;
         NSString *cachePath = [[SeafRealmManager shared] getCachePathWithOid:curId mtime:0 uniKey:strongSelf.file.uniqueKey];
@@ -102,20 +101,18 @@
             return;
         }
         
-        @synchronized (strongSelf.file) {
+        @synchronized (strongSelf) {
             if (strongSelf.file.state != SEAF_DENTRY_LOADING) {
                 Info("Download file %@ already canceled", strongSelf.file.name);
                 [self completeOperation];
-
                 return;
             }
-            if (strongSelf.file.downloadingFileOid) {
-                Debug("Already downloading %@", strongSelf.file.downloadingFileOid);
+            if (strongSelf.downloadingFileOid) {
+                Debug("Already downloading %@", strongSelf.downloadingFileOid);
                 [self completeOperation];
-
                 return;
             }
-            strongSelf.file.downloadingFileOid = curId;
+            strongSelf.downloadingFileOid = curId;
         }
         [strongSelf.file downloadProgress:0];
         [strongSelf downloadFileWithUrl:downloadUrl connection:connection];
@@ -127,7 +124,18 @@
     }];
     
     [self addTaskToList:getDownloadUrlTask];
+}
 
+- (void)updateProgress:(float)progress
+{
+    float percent = 0;
+    if (self.blkids) {
+        percent = self.currentBlockIndex * 1.0f / self.blkids.count;
+    } else {
+        percent = progress;
+    }
+    
+    [self.file downloadProgress:percent];
 }
 
 - (void)downloadFileWithUrl:(NSString *)url connection:(SeafConnection *)connection
@@ -135,18 +143,15 @@
     url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url] cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:DEFAULT_TIMEOUT];
 
-    NSString *target = [SeafStorage.sharedObject documentPath:self.file.downloadingFileOid];
-    Debug("Download file %@ %@ from %@, target:%@", self.file.name, self.file.downloadingFileOid, url, target);
+    NSString *target = [SeafStorage.sharedObject documentPath:self.downloadingFileOid];
+    Debug("Download file %@ %@ from %@, target:%@", self.file.name, self.downloadingFileOid, url, target);
 
     __weak typeof(self) weakSelf = self;
     NSURLSessionDownloadTask *downloadTask = [connection.sessionMgr downloadTaskWithRequest:downloadRequest
                                                                                    progress:^(NSProgress * _Nonnull downloadProgress) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) return;
-        float fraction = downloadProgress.fractionCompleted;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self.file downloadProgress:fraction];
-        });
+        [strongSelf updateProgress:downloadProgress.fractionCompleted];
     } destination:^NSURL * _Nonnull(NSURL * _Nonnull targetPath, NSURLResponse * _Nonnull response) {
         return [NSURL fileURLWithPath:[target stringByAppendingPathExtension:@"tmp"]];
     } completionHandler:^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
@@ -155,7 +160,7 @@
             [strongSelf finishDownload:YES error:nil ooid:nil];
             return;
         }
-        if (!strongSelf.file.downloadingFileOid) {
+        if (!strongSelf.downloadingFileOid) {
             Info("Download file %@ already canceled", strongSelf.file.name);
             [strongSelf completeOperation];
             return;
@@ -169,7 +174,7 @@
                 [Utils removeFile:target];
                 [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
             }
-            [strongSelf finishDownload:YES error:nil ooid:strongSelf.file.downloadingFileOid];
+            [strongSelf finishDownload:YES error:nil ooid:strongSelf.downloadingFileOid];
         }
     }];
     [downloadTask resume];
@@ -182,11 +187,11 @@
     NSString *url = [NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@&op=downloadblks", self.file.repoId, [self.file.path escapedUrl]];
     __weak typeof(self) weakSelf = self;
     NSURLSessionDataTask *getBlockInfoTask = [connection sendRequest:url
-                                                             success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+                                                           success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
-        if (!strongSelf) return;
-        NSString *curId = JSON[@"file_id"];
+        if (!strongSelf || strongSelf.isCancelled) return;
         
+        NSString *curId = JSON[@"file_id"];
         NSString *cachePath = [[SeafRealmManager shared] getCachePathWithOid:curId mtime:0 uniKey:strongSelf.file.uniqueKey];
         if (cachePath && cachePath.length > 0) {
             Debug("Already up-to-date oid=%@", strongSelf.file.ooid);
@@ -194,141 +199,183 @@
             return;
         }
 
-        @synchronized (strongSelf.file) {
-            if (strongSelf.file.state != SEAF_DENTRY_LOADING) {
-                Info("Download file %@ already canceled", strongSelf.file.name);
-                [self completeOperation];
+        @synchronized (strongSelf) {
+            if (strongSelf.isCancelled) {
                 return;
             }
-            strongSelf.file.downloadingFileOid = curId;
-        }
-        [strongSelf.file downloadProgress:0];
-        strongSelf.file.blkids = JSON[@"blklist"];
-        if (strongSelf.file.blkids.count <= 0) {
-            [@"" writeToFile:[SeafStorage.sharedObject documentPath:strongSelf.file.downloadingFileOid] atomically:YES encoding:NSUTF8StringEncoding error:nil];
-            [strongSelf finishDownload:YES error:nil ooid:strongSelf.file.downloadingFileOid];
-        } else {
-            strongSelf.file.index = 0;
-            Debug("blks=%@", strongSelf.file.blkids);
-            [strongSelf downloadBlocks];
+            strongSelf.downloadingFileOid = curId;
+            strongSelf.blkids = JSON[@"blklist"];
+            strongSelf.currentBlockIndex = 0;
+            
+            if (strongSelf.blkids.count <= 0) {
+                [@"" writeToFile:[SeafStorage.sharedObject documentPath:strongSelf.downloadingFileOid] 
+                     atomically:YES 
+                      encoding:NSUTF8StringEncoding 
+                         error:nil];
+                [strongSelf finishDownload:YES error:nil ooid:strongSelf.downloadingFileOid];
+            } else {
+                Debug("blks=%@", strongSelf.blkids);
+                [strongSelf downloadBlocks];
+            }
         }
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) return;
-        strongSelf.file.state = SEAF_DENTRY_FAILURE;
         [strongSelf finishDownload:NO error:error ooid:nil];
     }];
+    
     [self addTaskToList:getBlockInfoTask];
 }
 
 - (void)downloadBlocks
 {
-    if (!self.file.isDownloading) return;
-    NSString *blk_id = [self.file.blkids objectAtIndex:self.file.index];
-    if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject blockPath:blk_id]])
+    if (self.isCancelled) return;
+    
+    NSString *blk_id = [self.blkids objectAtIndex:self.currentBlockIndex];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject blockPath:blk_id]]) {
         return [self finishBlock:blk_id];
+    }
 
-    NSString *link = [NSString stringWithFormat:API_URL"/repos/%@/files/%@/blks/%@/download-link/", self.file.repoId, self.file.downloadingFileOid, blk_id];
-    Debug("link=%@", link);
-    @weakify(self);
-    NSURLSessionDataTask *task = [self.file->connection sendRequest:link success:
-     ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-        @strongify(self);
-         NSString *url = JSON;
-         [self downloadBlock:blk_id fromUrl:url];
-     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
-         @strongify(self);
-         Warning("error=%@", error);
-         [self finishDownload:NO error:error ooid:nil];
-     }];
+    NSString *link = [NSString stringWithFormat:API_URL"/repos/%@/files/%@/blks/%@/download-link/",
+                     self.file.repoId,
+                     self.downloadingFileOid,
+                     blk_id];
+    
+    __weak typeof(self) weakSelf = self;
+    NSURLSessionDataTask *task = [self.file.connection sendRequest:link 
+        success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+            __strong typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf || strongSelf.isCancelled) return;
+            NSString *url = JSON;
+            [strongSelf downloadBlock:blk_id fromUrl:url];
+        } 
+        failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
+            __strong typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf) return;
+            Warning("error=%@", error);
+            [strongSelf finishDownload:NO error:error ooid:nil];
+        }];
     [self addTaskToList:task];
 }
 
-- (void)downloadBlock:(NSString *)blk_id fromUrl:(NSString *)url
+- (void)downloadBlock:(NSString *)blkId fromUrl:(NSString *)url
 {
-    if (!self.file.isDownloading) return;
-    NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
-    Debug("URL: %@", downloadRequest.URL);
-
-    NSString *target = [SeafStorage.sharedObject blockPath:blk_id];
-    __weak __typeof__ (self) wself = self;
-    NSURLSessionDownloadTask *task = [self.file->connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:^(NSProgress * _Nonnull downloadProgress) {
-        __strong __typeof (wself) sself = wself;
-        float fraction = downloadProgress.fractionCompleted;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [sself.file downloadProgress:fraction];
-        });
-    } destination:^NSURL * _Nonnull(NSURL * _Nonnull targetPath, NSURLResponse * _Nonnull response) {
-        return [NSURL fileURLWithPath:target];
-    } completionHandler:^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
-        __strong __typeof (wself) sself = wself;
+    url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url] 
+                                                   cachePolicy:NSURLRequestReloadIgnoringLocalCacheData 
+                                               timeoutInterval:DEFAULT_TIMEOUT];
+    
+    NSString *target = [SeafStorage.sharedObject blockPath:blkId];
+    Debug("Download block %@ from %@", blkId, url);
+    
+    __weak typeof(self) weakSelf = self;
+    NSURLSessionDownloadTask *downloadTask = [self.file.connection.sessionMgr
+                                              downloadTaskWithRequest:downloadRequest
+                                              progress:^(NSProgress * _Nonnull downloadProgress) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf || strongSelf.isCancelled) return;
+        //            float blockProgress = downloadProgress.fractionCompleted;
+        float overallProgress = strongSelf.currentBlockIndex * 1.0f / strongSelf.blkids.count;
+        strongSelf.progress = overallProgress;
+        [strongSelf updateProgress:overallProgress];
+    }
+                                              destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
+        return [NSURL fileURLWithPath:[target stringByAppendingPathExtension:@"tmp"]];
+    }
+                                              completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
+        
         if (error) {
-            Warning("error=%@", error);
-            [sself finishDownload:false error:error ooid:nil];
+            Debug("Failed to download block %@: %@", blkId, error);
+            [strongSelf finishDownload:NO error:error ooid:nil];
         } else {
-            Debug("Successfully downloaded file %@ block:%@, filePath:%@", sself.name, blk_id, filePath);
             if (![filePath.path isEqualToString:target]) {
-                [[NSFileManager defaultManager] removeItemAtPath:target error:nil];
+                [Utils removeFile:target];
                 [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
             }
-            [sself finishBlock:blk_id];
+            
+//            float overallProgress = (float)strongSelf.currentBlockIndex / (float)strongSelf.blkids.count;                strongSelf.progress = overallProgress;
+//            dispatch_async(dispatch_get_main_queue(), ^{
+//                [self.file downloadProgress:overallProgress];
+//            });
+            
+            [strongSelf finishBlock:blkId];
         }
     }];
     
-    [task resume];
-    [self addTaskToList:task];
+    [downloadTask resume];
+    [self addTaskToList:downloadTask];
 }
 
-- (void)finishBlock:(NSString *)blkid
+- (void)finishBlock:(NSString *)blkId
 {
-    if (!self.file.downloadingFileOid) {
-        Debug("file download has beeen canceled.");
-        [self.file removeBlock:blkid];
+    if (self.isCancelled) {
+        [self removeBlock:blkId];
         return;
     }
-    self.file.index ++;
-    if (self.file.index >= self.file.blkids.count) {
+    
+    self.currentBlockIndex++;
+    if (self.currentBlockIndex >= self.blkids.count) {
         if ([self checkoutFile] < 0) {
-            Debug("Faile to checkout out file %@\n", self.file.downloadingFileOid);
-            self.file.index = 0;
-            for (NSString *blk_id in self.file.blkids)
-                [self.file removeBlock:blk_id];
-            NSError *error = [NSError errorWithDomain:@"Faile to checkout out file" code:-1 userInfo:nil];
+            Debug("Failed to checkout file %@", self.downloadingFileOid);
+            self.currentBlockIndex = 0;
+            for (NSString *blk_id in self.blkids) {
+                [self removeBlock:blk_id];
+            }
+            NSError *error = [NSError errorWithDomain:@"SeafDownloadOperation" 
+                                               code:-1 
+                                           userInfo:@{NSLocalizedDescriptionKey: @"Failed to checkout file"}];
             [self finishDownload:NO error:error ooid:nil];
             return;
         }
-        [self finishDownload:YES error:nil ooid:self.file.downloadingFileOid];
+        [self finishDownload:YES error:nil ooid:self.downloadingFileOid];
         return;
     }
+    
     [self performSelector:@selector(downloadBlocks) withObject:nil afterDelay:0.0];
+}
+
+- (void)removeBlock:(NSString *)blkId
+{
+    [[NSFileManager defaultManager] removeItemAtPath:[SeafStorage.sharedObject blockPath:blkId] error:nil];
 }
 
 - (int)checkoutFile
 {
-    NSString *password = nil;
-    SeafRepo *repo = [self.file->connection getRepo:self.file.repoId];
-    if (repo.encrypted) {
-        password = [self.file->connection getRepoPassword:self.file.repoId];
+    // Implement file block merging logic
+    NSString *path = [SeafStorage.sharedObject documentPath:self.downloadingFileOid];
+    NSFileManager *fm = [NSFileManager defaultManager];
+    if ([fm fileExistsAtPath:path]) {
+        return 0;
     }
-    NSString *tmpPath = [self.file downloadTempPath:self.file.downloadingFileOid];
-    if (![[NSFileManager defaultManager] fileExistsAtPath:tmpPath])
-        [[NSFileManager defaultManager] createFileAtPath:tmpPath contents: nil attributes: nil];
-    NSFileHandle *handle = [NSFileHandle fileHandleForWritingAtPath:tmpPath];
-    [handle truncateFileAtOffset:0];
-    for (NSString *blk_id in self.file.blkids) {
-        NSData *data = [[NSData alloc] initWithContentsOfFile:[SeafStorage.sharedObject blockPath:blk_id]];
-        if (password)
-            data = [data decrypt:password encKey:repo.encKey version:repo.encVersion];
-        if (!data)
-            return -1;
-        [handle writeData:data];
+    
+    NSFileHandle *outfile = [NSFileHandle fileHandleForWritingAtPath:path];
+    if (!outfile) {
+        [@"" writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
+        outfile = [NSFileHandle fileHandleForWritingAtPath:path];
+        if (!outfile) return -1;
     }
-    [handle closeFile];
-    if (!self.file.downloadingFileOid)
-        return -1;
-        
-    [[NSFileManager defaultManager] moveItemAtPath:tmpPath toPath:[SeafStorage.sharedObject documentPath:self.file.downloadingFileOid] error:nil];
+    
+    for (NSString *blkId in self.blkids) {
+        NSString *blkPath = [SeafStorage.sharedObject blockPath:blkId];
+        NSData *data = [NSData dataWithContentsOfFile:blkPath];
+        if (!data) return -1;
+        [outfile writeData:data];
+    }
+    
+    [outfile closeFile];
     return 0;
+}
+
+- (void)clearDownloadContext
+{
+    self.downloadingFileOid = nil;
+    self.currentBlockIndex = 0;
+    for (int i = 0; i < self.blkids.count; ++i) {
+        [self removeBlock:[self.blkids objectAtIndex:i]];
+    }
+    self.blkids = nil;
 }
 
 - (void)finishDownload:(BOOL)success error:(NSError *)error ooid:(NSString *)ooid {
@@ -337,18 +384,19 @@
         self.file.downloaded = success;
         self.file.lastFinishTimestamp = [[NSDate new] timeIntervalSince1970];
         if (success && ooid != nil) {
+            [self clearDownloadContext];
+            Debug("%@ ooid=%@, self.file.ooid=%@, oid=%@", self.file.name, ooid, self.file.ooid, self.file.oid);
             [self.file finishDownload:ooid];
             [self completeOperation];
         }
         else {
             if (self.isCancelled) {
+                [self clearDownloadContext];
                 [self.file failedDownload:error];
                 [self completeOperation];
                 return;
             }
 
-//            if ([self isRetryableError:error] && self.retryCount < self.maxRetryCount) {
-            //if !success need to try,self.retryCount < self.maxRetryCount is a necessary condition for retry.
             if (self.retryCount < self.maxRetryCount && !success) {
                 self.retryCount += 1;
                 Debug(@"download failed，after %.0f second will retry %ld/%ld", self.retryDelay, (long)self.retryCount, (long)self.maxRetryCount);
@@ -360,6 +408,7 @@
                     }
                 });
             } else {
+                [self clearDownloadContext];
                 [self.file failedDownload:error];
                 [self completeOperation];
             }

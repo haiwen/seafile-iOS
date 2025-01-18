@@ -14,6 +14,7 @@
 #import "SeafDir.h"
 #import "SeafDataTaskManager.h"
 #import <FileProvider/NSFileProviderError.h>
+#import "SeafUploadFileModel.h"
 
 #define DEFAULT_UPLOADINGARRAY_INTERVAL 10*60 // 10 min
 
@@ -126,8 +127,8 @@
             NSString *path = [self.localUploadDir stringByAppendingPathComponent:photoAsset.name];
             SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
             file.retryable = false;
-            file.uploadFileAutoSync = true;
-            file.overwrite = true;
+            file.model.uploadFileAutoSync = true;
+            file.model.overwrite = true;
             [file setPHAsset:asset url:photoAsset.ALAssetURL];
             file.udir = dir;
             [file setCompletionBlock:^(SeafUploadFile *file, NSString *oid, NSError *error) {
@@ -168,8 +169,8 @@
             NSString *path = [self.localUploadDir stringByAppendingPathComponent:photoAsset.name];
             SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
             file.retryable = false;
-            file.uploadFileAutoSync = true;
-            file.overwrite = true;
+            file.model.uploadFileAutoSync = true;
+            file.model.overwrite = true;
             [file setPHAsset:asset url:photoAsset.ALAssetURL];
             file.udir = dir;
             [file setCompletionBlock:^(SeafUploadFile *file, NSString *oid, NSError *error) {
@@ -313,7 +314,7 @@
     if (identifier) {
         @synchronized (self) {
             NSTimeInterval cur = [[NSDate date] timeIntervalSince1970];
-            file.uploadStartedTime = cur;
+//            file.model.uploadStartedTime = cur;
         }
     }
 }

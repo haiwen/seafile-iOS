@@ -414,7 +414,7 @@
     
         //check if is encrypted
         if ([(SeafRepo *)entry passwordRequiredWithSyncRefresh]){
-            SeafRepo *repo = [[SeafRepo alloc] initWithConnection:starredRepo->connection andRepoId:starredRepo.repoId andRepoName:starredRepo.repoName];
+            SeafRepo *repo = [[SeafRepo alloc] initWithConnection:starredRepo.connection andRepoId:starredRepo.repoId andRepoName:starredRepo.repoName];
             @weakify(self);
             [self popupSetRepoPassword:(SeafRepo *)repo handler:^{
                 @strongify(self);
@@ -435,7 +435,7 @@
             
             if ([(SeafRepo *)entry passwordRequiredWithSyncRefresh]){
                 Debug("Star file %@ repo %@ password required.", sfile.name, sfile.repoId);
-                SeafRepo *repo = [[SeafRepo alloc] initWithConnection:sfile->connection andRepoId:sfile.repoId andRepoName:sfile.repoName];
+                SeafRepo *repo = [[SeafRepo alloc] initWithConnection:sfile.connection andRepoId:sfile.repoId andRepoName:sfile.repoName];
                 @weakify(self);
                 [self popupSetRepoPassword:(SeafRepo *)repo handler:^{
                     @strongify(self);
@@ -472,7 +472,7 @@
             [creatDirPath appendString:subPath];
         }
         NSString *pathStr = [NSString stringWithString:creatDirPath];
-        SeafDir *newDir = [[SeafDir alloc]initWithConnection:aDir->connection oid:nil repoId:aDir.repoId perm:nil name:repoName path:pathStr];
+        SeafDir *newDir = [[SeafDir alloc]initWithConnection:aDir.connection oid:nil repoId:aDir.repoId perm:nil name:repoName path:pathStr];
        
         [dirArray addObject:newDir];
         if ([subPath length] > 0){
@@ -625,7 +625,7 @@
         return;
     }
     if ([(SeafRepo *)entry passwordRequiredWithSyncRefresh]){
-        SeafRepo *repo = [[SeafRepo alloc] initWithConnection:entry->connection andRepoId:entry.repoId andRepoName:entry.repoName];
+        SeafRepo *repo = [[SeafRepo alloc] initWithConnection:entry.connection andRepoId:entry.repoId andRepoName:entry.repoName];
         @weakify(self);
         return [self popupSetRepoPassword:repo handler:^{
             @strongify(self);
