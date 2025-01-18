@@ -25,6 +25,7 @@
 #import "SeafRealmManager.h"
 #import "SeafFile.h"
 #import "SeafRealmManager.h"
+#import "SeafFileOperationManager.h"
 
 enum {
     FLAG_LOCAL_DECRYPT = 0x1,
@@ -1356,12 +1357,14 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             SeafDir *uploaddir = [self getSubdirUnderDir:repo withName:dirName];
             if (!uploaddir) {
                 Debug("mkdir %@ in repo %@", dirName, repo.repoId);
-                [repo mkdir:dirName success:^(SeafDir *dir) {
-                    SeafDir *udir = [self getSubdirUnderDir:repo withName:dirName];
-                    completionHandler(udir, nil);
-                } failure:^(SeafDir *dir, NSError *error) {
-                    Warning("Failed to create directory %@", dirName);
-                    completionHandler(nil, error);
+                [[SeafFileOperationManager sharedManager] mkdir:dirName inDir:repo completion:^(BOOL success, NSError * _Nullable error) {
+                    if (success) {
+                        SeafDir *udir = [self getSubdirUnderDir:repo withName:dirName];
+                        completionHandler(udir, nil);
+                    } else {
+                        Warning("Failed to create directory %@", dirName);
+                        completionHandler(nil, error);
+                    }
                 }];
             } else {
                 completionHandler(uploaddir, nil);

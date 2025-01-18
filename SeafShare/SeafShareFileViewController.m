@@ -103,7 +103,7 @@
 
 - (void)updateDestinationLabel {
     if (_directory) {
-        SeafRepo *repo = [_directory->connection getRepo:_directory.repoId];
+        SeafRepo *repo = [_directory.connection getRepo:_directory.repoId];
         NSString *showPath = [NSString stringWithFormat:@"/%@%@", repo.name, _directory.path];
         if ([_directory.path isEqualToString:@"/"]) {
             showPath = [NSString stringWithFormat:@"/%@", repo.name];
@@ -205,7 +205,7 @@
 
 #pragma mark- action
 - (IBAction)cancel:(id)sender {
-    [SeafDataTaskManager.sharedObject cancelAllUploadTasks:_directory->connection];
+    [SeafDataTaskManager.sharedObject cancelAllUploadTasks:_directory.connection];
     [self done];
 }
 

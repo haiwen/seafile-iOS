@@ -1,0 +1,258 @@
+//
+//  SeafFileOperationManager.m
+//  Seafile
+//
+//  Created by Henry on 2025/1/20.
+//
+
+#import "SeafFileOperationManager.h"
+#import "Debug.h"
+#import "Utils.h"
+#import "SeafDir.h"
+#import "SeafConnection.h"   // 需要拿到 connection
+#import "ExtentedString.h"   // for escapedUrl, escapedPostForm
+
+@implementation SeafFileOperationManager
+
++ (instancetype)sharedManager {
+    static SeafFileOperationManager *mgr = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        mgr = [[SeafFileOperationManager alloc] init];
+    });
+    return mgr;
+}
+
+#pragma mark - Create File
+- (void)createFile:(NSString *)fileName
+             inDir:(SeafDir *)directory
+        completion:(SeafOperationCompletion)completion
+{
+    if (!fileName || fileName.length == 0) {
+        if (completion) {
+            NSError *err = [NSError errorWithDomain:@"SeafFileOperation"
+                                               code:-1
+                                           userInfo:@{NSLocalizedDescriptionKey:@"File name must not be empty"}];
+            completion(NO, err);
+        }
+        return;
+    }
+
+    // 直接组装 requestUrl
+    NSString *fullPath = [directory.path stringByAppendingPathComponent:fileName];
+    NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@&reloaddir=true",
+                            directory.repoId, [fullPath escapedUrl]];
+
+    [directory.connection sendPost:requestUrl
+                              form:@"operation=create"
+                           success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON)
+    {
+        Debug("Create file success, statusCode=%ld", (long)response.statusCode);
+        // 如果需要在这里解析 JSON 并刷新 directory 的数据:
+        [directory handleResponse:response json:JSON]; // optional, if you want dir->items updated
+        if (completion) completion(YES, nil);
+    }
+                           failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error)
+    {
+        Warning("Create file failed, statusCode=%ld", (long)response.statusCode);
+        if (completion) completion(NO, error);
+    }];
+}
+
+
+#pragma mark - Create Folder (mkdir)
+- (void)mkdir:(NSString *)folderName
+        inDir:(SeafDir *)directory
+    completion:(SeafOperationCompletion)completion
+{
+    if (!folderName || folderName.length == 0) {
+        if (completion) {
+            NSError *err = [NSError errorWithDomain:@"SeafFileOperation"
+                                               code:-2
+                                           userInfo:@{NSLocalizedDescriptionKey:@"Folder name must not be empty"}];
+            completion(NO, err);
+        }
+        return;
+    }
+    
+    NSString *fullPath = [directory.path stringByAppendingPathComponent:folderName];
+    NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/dir/?p=%@&reloaddir=true",
+                            directory.repoId, [fullPath escapedUrl]];
+
+    [directory.connection sendPost:requestUrl
+                              form:@"operation=mkdir"
+                           success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON)
+    {
+        Debug("Mkdir success, code=%ld", (long)response.statusCode);
+        [directory handleResponse:response json:JSON]; // optional
+        if (completion) completion(YES, nil);
+    }
+                           failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error)
+    {
+        Warning("Mkdir failed, code=%ld", (long)response.statusCode);
+        if (completion) completion(NO, error);
+    }];
+}
+
+
+#pragma mark - Delete
+- (void)deleteEntries:(NSArray<NSString *> *)entries
+               inDir:(SeafDir *)directory
+          completion:(SeafOperationCompletion)completion
+{
+    if (!entries || entries.count == 0) {
+        if (completion) {
+            NSError *err = [NSError errorWithDomain:@"SeafFileOperation"
+                                               code:-3
+                                           userInfo:@{NSLocalizedDescriptionKey:@"No entries to delete"}];
+            completion(NO, err);
+        }
+        return;
+    }
+
+    NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/fileops/delete/?p=%@&reloaddir=true",
+                            directory.repoId, [directory.path escapedUrl]];
+
+    NSMutableString *form = [NSMutableString new];
+    [form appendFormat:@"file_names=%@", [[entries firstObject] escapedPostForm]];
+    for (NSInteger i = 1; i < entries.count; ++i) {
+        [form appendFormat:@":%@", [entries[i] escapedPostForm]];
+    }
+
+    [directory.connection sendPost:requestUrl
+                              form:form
+                           success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON)
+    {
+        Debug("Delete success, code=%ld", (long)response.statusCode);
+        [directory handleResponse:response json:JSON]; // optional
+        if (completion) completion(YES, nil);
+    }
+                           failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error)
+    {
+        Warning("Delete failed, code=%ld", (long)response.statusCode);
+        if (completion) completion(NO, error);
+    }];
+}
+
+
+#pragma mark - Rename
+- (void)renameEntry:(NSString *)oldName
+            newName:(NSString *)newName
+              inDir:(SeafDir *)directory
+         completion:(SeafOperationCompletion)completion
+{
+    if (!oldName || oldName.length == 0 || !newName || newName.length == 0) {
+        if (completion) {
+            NSError *err = [NSError errorWithDomain:@"SeafFileOperation"
+                                               code:-4
+                                           userInfo:@{NSLocalizedDescriptionKey:@"Invalid rename parameters"}];
+            completion(NO, err);
+        }
+        return;
+    }
+
+    NSString *oldPath = [directory.path stringByAppendingPathComponent:oldName];
+    NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@&reloaddir=true",
+                            directory.repoId, [oldPath escapedUrl]];
+    NSString *form = [NSString stringWithFormat:@"operation=rename&newname=%@", [newName escapedUrl]];
+
+    [directory.connection sendPost:requestUrl
+                              form:form
+                           success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON)
+    {
+        Debug("Rename success, code=%ld", (long)response.statusCode);
+        [directory handleResponse:response json:JSON]; // optional
+        if (completion) completion(YES, nil);
+    }
+                           failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error)
+    {
+        Warning("Rename failed, code=%ld", (long)response.statusCode);
+        if (completion) completion(NO, error);
+    }];
+}
+
+
+#pragma mark - Copy
+- (void)copyEntries:(NSArray<NSString *> *)entries
+             fromDir:(SeafDir *)srcDir
+               toDir:(SeafDir *)dstDir
+          completion:(SeafOperationCompletion)completion
+{
+    if (!entries || entries.count == 0 || !srcDir || !dstDir) {
+        if (completion) {
+            NSError *err = [NSError errorWithDomain:@"SeafFileOperation"
+                                               code:-5
+                                           userInfo:@{NSLocalizedDescriptionKey:@"Invalid copy parameters"}];
+            completion(NO, err);
+        }
+        return;
+    }
+
+    NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/fileops/copy/?p=%@&reloaddir=true",
+                            srcDir.repoId, [srcDir.path escapedUrl]];
+    NSMutableString *form = [NSMutableString new];
+    [form appendFormat:@"dst_repo=%@&dst_dir=%@&file_names=%@",
+        dstDir.repoId, [dstDir.path escapedUrl], [[entries firstObject] escapedPostForm]];
+    for (NSInteger i = 1; i < entries.count; ++i) {
+        [form appendFormat:@":%@", [entries[i] escapedPostForm]];
+    }
+
+    [srcDir.connection sendPost:requestUrl
+                           form:form
+                        success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON)
+    {
+        Debug("Copy success, code=%ld", (long)response.statusCode);
+        // Optionally refresh srcDir or dstDir:
+        [srcDir handleResponse:response json:JSON];
+        if (completion) completion(YES, nil);
+    }
+                        failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error)
+    {
+        Warning("Copy failed, code=%ld", (long)response.statusCode);
+        if (completion) completion(NO, error);
+    }];
+}
+
+
+#pragma mark - Move
+- (void)moveEntries:(NSArray<NSString *> *)entries
+             fromDir:(SeafDir *)srcDir
+               toDir:(SeafDir *)dstDir
+          completion:(SeafOperationCompletion)completion
+{
+    if (!entries || entries.count == 0 || !srcDir || !dstDir) {
+        if (completion) {
+            NSError *err = [NSError errorWithDomain:@"SeafFileOperation"
+                                               code:-6
+                                           userInfo:@{NSLocalizedDescriptionKey:@"Invalid move parameters"}];
+            completion(NO, err);
+        }
+        return;
+    }
+
+    NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/fileops/move/?p=%@&reloaddir=true",
+                            srcDir.repoId, [srcDir.path escapedUrl]];
+    NSMutableString *form = [NSMutableString new];
+    [form appendFormat:@"dst_repo=%@&dst_dir=%@&file_names=%@",
+        dstDir.repoId, [dstDir.path escapedUrl], [[entries firstObject] escapedPostForm]];
+    for (NSInteger i = 1; i < entries.count; ++i) {
+        [form appendFormat:@":%@", [entries[i] escapedPostForm]];
+    }
+
+    [srcDir.connection sendPost:requestUrl
+                           form:form
+                        success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON)
+    {
+        Debug("Move success, code=%ld", (long)response.statusCode);
+        // Optionally refresh
+        [srcDir handleResponse:response json:JSON];
+        if (completion) completion(YES, nil);
+    }
+                        failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error)
+    {
+        Warning("Move failed, code=%ld", (long)response.statusCode);
+        if (completion) completion(NO, error);
+    }];
+}
+
+@end

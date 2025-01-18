@@ -11,7 +11,7 @@
 #import <Photos/Photos.h>
 
 #import "SeafPreView.h"
-#import "SeafTaskQueue.h"
+#import "SeafTaskProtocol.h"
 
 @class SeafConnection;
 @class SeafUploadFile;
@@ -78,15 +78,6 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 
 @property (strong) NSProgress * _Nullable progress;
 
-@property (strong) NSArray * _Nullable missingblocks;
-@property (strong) NSArray * _Nullable allblocks;
-@property (strong) NSString * _Nullable commiturl;
-@property (strong) NSString * _Nullable rawblksurl;
-@property (strong) NSString * _Nullable uploadpath;
-@property (nonatomic, strong) NSString * _Nullable blockDir;
-@property long blkidx;
-
-
 /**
  * Initializes a SeafUploadFile with a local path.
  * @param lpath The local path of the file to be uploaded.
@@ -100,12 +91,6 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
  * @param url The URL of the asset in the photo library.
  */
 - (void)setPHAsset:(PHAsset *_Nullable)asset url:(NSURL *_Nullable)url;
-
-/**
- * Waits for the upload task to complete.
- * @return YES if the file was uploaded successfully, NO otherwise.
- */
-- (BOOL)waitUpload;
 
 /**
  * Cleans up resources associated with the file once it has been uploaded.
@@ -122,8 +107,7 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 
 - (void)finishUpload:(BOOL)result oid:(NSString *_Nullable)oid error:(NSError *_Nullable)error;
 
-- (void)updateProgress:(NSProgress *_Nullable)progress;
-
--(void)updateProgressWithoutKVO:(NSProgress *_Nullable)progress;
+//更新进度条
+- (void)uploadProgress:(float)progress;
 
 @end

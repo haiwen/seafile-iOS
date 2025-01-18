@@ -48,65 +48,6 @@
 @property (nonatomic, copy) NSString *perm;
 //@property (assign, nonatomic) BOOL encrypted;///< Indicates whether the repository is encrypted.
 
-
-// Api
-- (void)mkdir:(NSString *)newDirName;
-
-/**
- * Creates a new directory within this directory.
- * @param newDirName The name of the new directory to create.
- * @param success A block called on successful creation of the directory.
- * @param failure A block called on failure to create the directory.
- */
-- (void)mkdir:(NSString *)newDirName success:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir, NSError *error))failure;
-
-/**
- * Creates a new file within this directory.
- * @param newFileName The name of the new file to be created.
- */
-- (void)createFile:(NSString *)newFileName;
-
-/**
- * Deletes the specified entries from this directory.
- * @param entries An array of entries to delete.
- * @param success A block called on successful deletion of the entries.
- * @param failure A block called on failure to delete the entries.
- */
-- (void)delEntries:(NSArray *)entries success:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir, NSError *error))failure;
-
-- (void)delEntries:(NSArray *)entries;
-
-/**
- * Copies specified entries from the current directory to another directory.
- * @param entries An array of `SeafBase` objects representing the entries to be copied.
- * @param dstDir The destination `SeafDir` directory where the entries should be copied.
- * @param success A block that gets called upon successful completion of the copy operation. It passes the `SeafDir` instance where the entries were copied.
- * @param failure A block that gets called if the copy operation fails. It passes the `SeafDir` instance and an `NSError` with details about the failure.
- */
-- (void)copyEntries:(NSArray *)entries dstDir:(SeafDir *)dstDir success:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir, NSError *error))failure;
-- (void)copyEntries:(NSArray *)entries dstDir:(SeafDir *)dstDir;
-
-/**
- * Moves entries to another directory.
- * @param entries An array of entries to move.
- * @param dstDir The destination directory.
- * @param success A block called on successful movement of the entries.
- * @param failure A block called on failure to move the entries.
- */
-- (void)moveEntries:(NSArray *)entries dstDir:(SeafDir *)dstDir success:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir, NSError *error))failure;
-- (void)moveEntries:(NSArray *)entries dstDir:(SeafDir *)dstDir;
-
-/**
- * Renames an entry within the directory.
- * @param oldName The current name of the entry.
- * @param newName The new name for the entry.
- * @param success A block called on successful renaming of the entry.
- * @param failure A block called on failure to rename the entry.
- */
-- (void)renameEntry:(NSString *)oldName newName:(NSString *)newName success:(void (^)(SeafDir *dir))success failure:(void (^)(SeafDir *dir, NSError *error))failure;
-- (void)renameEntry:(NSString *)oldName newName:(NSString *)newName;
-
-
 /**
  * Unloads the directory's content from memory, resetting its state.
  */
@@ -171,4 +112,7 @@
  * @return An array containing the subdirectories.
  */
 - (NSArray *)subDirs;
+
+- (void)handleResponse:(NSHTTPURLResponse *)response json:(id)JSON;
+
 @end

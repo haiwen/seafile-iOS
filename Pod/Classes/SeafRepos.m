@@ -73,7 +73,7 @@
 
 - (BOOL)passwordRequired {
     //Debug("repoId;%@ %d %@", self.repoId, self.encrypted, [connection getRepoPassword:self.repoId]);
-    if (self.encrypted && ![connection getRepoPassword:self.repoId])
+    if (self.encrypted && ![self.connection getRepoPassword:self.repoId])
         return YES;
     else
         return NO;
@@ -81,15 +81,15 @@
 
 - (BOOL)passwordRequiredWithSyncRefresh {
     if (self.encrypted) {
-        if ([connection shouldLocalDecrypt:self.repoId]) {
-            return [connection getRepoPassword:self.repoId] == nil ? YES : NO;
+        if ([self.connection shouldLocalDecrypt:self.repoId]) {
+            return [self.connection getRepoPassword:self.repoId] == nil ? YES : NO;
         } else {
-            NSString *password = [connection getRepoPassword:self.repoId];
+            NSString *password = [self.connection getRepoPassword:self.repoId];
             if (!password) {
                 return YES;
             } else {
                 NSTimeInterval cur = [[NSDate date] timeIntervalSince1970];
-                if (cur - [connection getRepoLastRefreshPasswordTime:self.repoId] > REPO_PASSWORD_REFRESH_INTERVAL) {
+                if (cur - [self.connection getRepoLastRefreshPasswordTime:self.repoId] > REPO_PASSWORD_REFRESH_INTERVAL) {
                     __block BOOL result = YES;
                     __block BOOL wait = YES;
                     [self setRepoPassword:password block:^(SeafBase *entry, int ret) {
@@ -124,17 +124,17 @@
 
 - (int)encVersion
 {
-    NSDictionary *encInfo = [self->connection getRepoEncInfo:self.repoId];
-    return (int)[[encInfo objectForKey:@"encVersion"] integerValue: -1];
+    NSDictionary *encInfo = [self.connection getRepoEncInfo:self.repoId];
+    return (int)[[encInfo objectForKey:@"encVersion"] integerValue:-1];
 }
 - (NSString *)encKey
 {
-    NSDictionary *encInfo = [self->connection getRepoEncInfo:self.repoId];
+    NSDictionary *encInfo = [self.connection getRepoEncInfo:self.repoId];
     return [encInfo objectForKey:@"encKey"];
 }
 - (NSString *)magic
 {
-    NSDictionary *encInfo = [self->connection getRepoEncInfo:self.repoId];
+    NSDictionary *encInfo = [self.connection getRepoEncInfo:self.repoId];
     return [[encInfo objectForKey:@"magic"] stringValue];
 }
 
@@ -176,7 +176,7 @@
 - (void)checkRepoEncVersion:(void(^)(bool success, id repoInfo))completeBlock
 {
     NSString *url = [NSString stringWithFormat:API_URL"/repos/%@/", self.repoId];
-    [connection sendRequest:url success:^(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nonnull response, id  _Nonnull JSON) {
+    [self.connection sendRequest:url success:^(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nonnull response, id  _Nonnull JSON) {
         completeBlock(true, JSON);
     } failure:^(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nullable response, id  _Nullable JSON, NSError * _Nullable error) {
         completeBlock(false, nil);
@@ -187,7 +187,7 @@
 {
     repo_password_set_block_t block = ^(SeafBase *entry, int ret) {
         if (ret == RET_SUCCESS)
-            [entry->connection saveRepo:entry.repoId password:password];
+            [entry.connection saveRepo:entry.repoId password:password];
         [del entry:entry repoPasswordSet:ret];
     };
     [self checkOrSetRepoPassword:password block:block];
@@ -195,7 +195,7 @@
 
 - (void)doCheckOrSetRepoPassword:(NSString *)password block:(void(^)(SeafBase *entry, int ret))block
 {
-    if ([connection shouldLocalDecrypt:self.repoId]) {
+    if ([self.connection shouldLocalDecrypt:self.repoId]) {
         [self checkRepoPassword:password block:block];
     } else {
         [self setRepoPassword:password block:block];
@@ -215,7 +215,7 @@
             NSString *encKey = [repoInfo objectForKey:@"random_key"];
             NSDictionary *encInfo = [[NSDictionary alloc] initWithObjectsAndKeys:[NSNumber numberWithInteger:encVersion], @"encVersion", magic, @"magic", encKey, @"encKey", nil];
             Debug("Repo %@ encVersion:%d detail: %@", self.repoId, self.encVersion, repoInfo);
-            [self->connection saveRepo:self.repoId encInfo:encInfo];
+            [self.connection saveRepo:self.repoId encInfo:encInfo];
             return [self doCheckOrSetRepoPassword:password block:block];
         } else {
             block(self, false);
@@ -232,11 +232,11 @@
     NSString *request_str = [NSString stringWithFormat:API_URL"/repos/%@/?op=setpassword", self.repoId];
     NSString *formString = [NSString stringWithFormat:@"password=%@", password.escapedPostForm];
     __weak typeof(self) wself = self;
-    [connection sendPost:request_str form:formString
+    [self.connection sendPost:request_str form:formString
                  success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
                      __strong typeof(self) sself = wself;
                      Debug("Set repo %@ password success.", sself.repoId);
-                     [sself->connection saveRepo:sself.repoId password:password];
+                     [sself.connection saveRepo:sself.repoId password:password];
                      if (block)  block(sself, RET_SUCCESS);
                  } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
                      __strong typeof(self) sself = wself;
@@ -255,7 +255,7 @@
 
 - (void)checkRepoPasswordV2:(NSString *)password block:(void(^)(SeafBase *entry, int ret))block
 {
-    SeafRepo *repo = [connection getRepo:self.repoId];
+    SeafRepo *repo = [self.connection getRepo:self.repoId];
     Debug("check magic %@, %@", repo.magic, password);
     if (!repo.magic || !repo.encKey) {
         return block(self, RET_FAILED);
@@ -276,7 +276,7 @@
     }
     repo_password_set_block_t handler = ^(SeafBase *entry, int ret) {
         if (ret == RET_SUCCESS)
-            [self->connection saveRepo:self.repoId password:password];
+            [self.connection saveRepo:self.repoId password:password];
         if (block)
             block(entry, ret);
     };
@@ -364,7 +364,7 @@
         if ([repoInfo objectForKey:@"name"] == [NSNull null])
             continue;
         SeafRepo *newRepo = [[SeafRepo alloc]
-                             initWithConnection:connection
+                             initWithConnection:self.connection
                              oid:[repoInfo objectForKey:@"root"]
                              repoId:[repoInfo objectForKey:@"id"]
                              name:[repoInfo objectForKey:@"name"]
@@ -398,14 +398,14 @@
 // [{"password_need": false, "name": "test", "mtime": null, "owner": "pithier@163.com", "root": "e6098c7bfc18bb0221eac54988649ed3b884f901", "size": [7224782], "type": "repo", "id": "640fd90d-ef4e-490d-be1c-b34c24040da7", "desc": "dasdadwd"}]
 - (void)loadContentSuccess:(void (^)(SeafDir *dir)) success failure:(void (^)(SeafDir *dir, NSError *error))failure
 {
-    [connection sendRequest:self.url
+    [self.connection sendRequest:self.url
                     success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          @synchronized(self) {
              self.state = SEAF_DENTRY_UPTODATE;
              if ([self handleData:JSON]) {
                  NSData *data = [Utils JSONEncode:JSON];
-                 [self->connection setValue:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] forKey:KEY_REPOS entityName:ENTITY_OBJECT];
+                 [self.connection setValue:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] forKey:KEY_REPOS entityName:ENTITY_OBJECT];
                  if (success)
                      success(self);
              }
@@ -423,7 +423,7 @@
 
 - (BOOL)realLoadCache
 {
-    id JSON = [self->connection getCachedJson:KEY_REPOS entityName:ENTITY_OBJECT];
+    id JSON = [self.connection getCachedJson:KEY_REPOS entityName:ENTITY_OBJECT];
     if (!JSON)
         return NO;
     [self handleData:JSON];
@@ -488,7 +488,7 @@
     if (passwd) {
         [form appendFormat:@"&passwd=%@",passwd];
     }
-    [connection sendPost:requestUrl form:form
+    [self.connection sendPost:requestUrl form:form
                  success:
      ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
          Debug("resp=%ld\n", (long)response.statusCode);

@@ -48,7 +48,7 @@
         
         _isDir = isDir;
         self.encrypted = repoEncrypted;
-        _mtime = mtime;
+        self.mtime = mtime;
         self.thumbnailURLStr = thumbnail;
         self.repoName = repoName;
         self.isDeleted = isDeleted;
@@ -63,8 +63,8 @@
 
 - (void)updateWithEntry:(SeafBase *)entry
 {
-    _filesize = ((SeafStarredFile *)entry).filesize;
-    _mtime = ((SeafStarredFile *)entry).mtime;
+    self.filesize = ((SeafStarredFile *)entry).filesize;
+    self.mtime = ((SeafStarredFile *)entry).mtime;
     [self loadCache];
 }
 
