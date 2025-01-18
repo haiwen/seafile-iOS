@@ -25,7 +25,7 @@
 #import "SeafActionsManager.h"
 #import <WebKit/WebKit.h>
 #import <SafariServices/SafariServices.h>
-
+#import "SeafDataTaskManager.h"
 
 enum SHARE_STATUS {
     SHARE_BY_MAIL = 0,
@@ -60,6 +60,9 @@ enum SHARE_STATUS {
 @property (strong) UIDocumentInteractionController *docController;
 @property (nonatomic, assign) BOOL previewDidEdited;
 @property int shareStatus;
+
+// 新增：避免多次重复 present QLPreviewController
+@property (nonatomic, assign) BOOL isPresentingQL;
 
 @end
 
@@ -182,19 +185,33 @@ enum SHARE_STATUS {
         case PREVIEW_QL_MODAL: {
             Debug (@"Preview file %@ mime=%@ QL modal\n", self.preViewItem.previewItemTitle, self.preViewItem.mime);
             [self.qlViewController reloadData]; // Reload data for Quick Look view controller
-            if (!self.qlViewController.presentingViewController) {
-                if (self.isModal && self.isVisible) { // Check if modal and visible
+            // 若 QLVC 已经在呈现，就不要再 present
+            if (!self.qlViewController.presentingViewController && !self.presentedViewController && !self.isPresentingQL) {
+                if (self.isModal && self.isVisible) {
                     UIViewController *vc = self.presentingViewController;
+                    // 标记一下，避免重复
+                    self.isPresentingQL = YES;
                     [vc dismissViewControllerAnimated:NO completion:^{
-                        [vc presentViewController:self.qlViewController animated:NO completion:^{
-                            [self clearPreView];// Clear previous views after presenting Quick Look
-                        }];
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            [vc presentViewController:self.qlViewController animated:YES completion:^{
+                                dispatch_async(dispatch_get_main_queue(), ^{
+                                    [self clearPreView];
+                                    self.isPresentingQL = NO;
+                                });
+                            }];
+                        });
                     }];
                 } else if (IsIpad()) {
-                    [[SeafAppDelegate topViewController].parentViewController presentViewController:self.qlViewController animated:YES completion:^{
-                        [self clearPreView];
-                        [self resetNavigation];// Reset navigation items
-                    }];
+                    // 在 iPad 场景下
+                    UIViewController *topVC = [SeafAppDelegate topViewController];
+                    if (!topVC.presentedViewController && !self.isPresentingQL) {
+                        self.isPresentingQL = YES;
+                        [topVC.parentViewController presentViewController:self.qlViewController animated:YES completion:^{
+                            [self clearPreView];
+                            [self resetNavigation];
+                            self.isPresentingQL = NO;
+                        }];
+                    }
                 }
             }
             break;
@@ -528,7 +545,14 @@ enum SHARE_STATUS {
 {
     id<SeafPreView> item = self.preViewItem;
     [self setPreViewItem:nil master:nil];// Clear the preview item and master
-    [item cancelAnyLoading];// Cancel any ongoing loading
+//    [item cancelAnyLoading];// Cancel any ongoing loading
+    //todo 不用所有账号都取消，当前的取消就可以
+    for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+        if (conn.accountIdentifier) {
+            SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:conn];
+            [accountQueue removeFileDownloadTask:item];
+        }
+    }
     if (!IsIpad())
         [self goBack:nil];// Go back if not iPad
 }

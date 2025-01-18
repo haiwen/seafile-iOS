@@ -17,6 +17,14 @@
 @interface SeafDownloadOperation : SeafBaseOperation
 
 @property (nonatomic, strong) SeafFile *file;
+@property (nonatomic, strong) NSError *error;
+@property (nonatomic, assign) float progress;
+
+// 下载状态相关属性
+@property (nonatomic, strong) NSString *downloadingFileOid;
+@property (nonatomic, strong) NSArray *blkids;
+@property (nonatomic, assign) int currentBlockIndex;
+@property (nonatomic, strong) NSMutableArray<NSURLSessionTask *> *taskList;
 
 - (instancetype)initWithFile:(SeafFile *)file;
 

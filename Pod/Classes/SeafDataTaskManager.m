@@ -14,6 +14,7 @@
 #import "Debug.h"
 #import "SeafStorage.h"
 #import <AFNetworking/AFNetworking.h>
+#import "SeafUploadFileModel.h"
 
 @interface SeafDataTaskManager()
 
@@ -53,7 +54,7 @@
 }
 
 - (BOOL)addUploadTask:(SeafUploadFile *)file priority:(NSOperationQueuePriority)priority {
-    SeafAccountTaskQueue *accountQueue = [self accountQueueForConnection:file.udir->connection];
+    SeafAccountTaskQueue *accountQueue = [self accountQueueForConnection:file.udir.connection];
     BOOL res = [accountQueue addUploadTask:file];
     if (res && file.retryable) {
         [self saveUploadFileToTaskStorage:file];
@@ -70,7 +71,7 @@
 #pragma mark - Download Tasks
 
 - (void)addFileDownloadTask:(SeafFile * _Nonnull)dfile {
-    SeafAccountTaskQueue *accountQueue = [self accountQueueForConnection:dfile->connection];
+    SeafAccountTaskQueue *accountQueue = [self accountQueueForConnection:dfile.connection];
     [accountQueue addFileDownloadTask:dfile];
     if (dfile.retryable) {
         [self saveFileToTaskStorage:dfile];
@@ -80,12 +81,12 @@
 #pragma mark - Thumb Tasks
 
 - (void)addThumbTask:(SeafThumb * _Nonnull)thumb {
-    SeafAccountTaskQueue *accountQueue = [self accountQueueForConnection:thumb.file->connection];
+    SeafAccountTaskQueue *accountQueue = [self accountQueueForConnection:thumb.file.connection];
     [accountQueue addThumbTask:thumb];
 }
 
 - (void)removeThumbTaskFromAccountQueue:(SeafThumb * _Nonnull)thumb {
-    SeafAccountTaskQueue *accountQueue = [self accountQueueForConnection:thumb.file->connection];
+    SeafAccountTaskQueue *accountQueue = [self accountQueueForConnection:thumb.file.connection];
     [accountQueue removeThumbTask:thumb];
 }
 
@@ -182,7 +183,7 @@
             [Utils dict:dict setObject:ufile.editedFileRepoId forKey:@"editedFileRepoId"];
             [Utils dict:dict setObject:ufile.editedFileOid forKey:@"editedFileOid"];
         }
-        [Utils dict:dict setObject:[NSNumber numberWithBool:ufile.isUploaded] forKey:@"uploaded"];
+        [Utils dict:dict setObject:[NSNumber numberWithBool:ufile.model.uploaded] forKey:@"uploaded"];
     }
     return dict;
 }
@@ -222,7 +223,7 @@
             [toDelete addObject:key];
             continue;
         }
-        ufile.overwrite = [[dict objectForKey:@"overwrite"] boolValue];
+        ufile.model.overwrite = [[dict objectForKey:@"overwrite"] boolValue];
         SeafDir *udir = [[SeafDir alloc] initWithConnection:conn oid:[dict objectForKey:@"oid"] repoId:[dict objectForKey:@"repoId"] perm:[dict objectForKey:@"perm"] name:[dict objectForKey:@"name"] path:[dict objectForKey:@"path"] mime:[dict objectForKey:@"mime"]];
         ufile.udir = udir;
         
@@ -233,10 +234,10 @@
         }
         
         if (isEditedUploadFile) {
-            ufile.isEditedFile = YES;
-            ufile.editedFilePath = [dict objectForKey:@"editedFilePath"];
-            ufile.editedFileRepoId = [dict objectForKey:@"editedFileRepoId"];
-            ufile.editedFileOid = [dict objectForKey:@"editedFileOid"];
+            ufile.model.isEditedFile = YES;
+            ufile.model.editedFilePath = [dict objectForKey:@"editedFilePath"];
+            ufile.model.editedFileRepoId = [dict objectForKey:@"editedFileRepoId"];
+            ufile.model.editedFileOid = [dict objectForKey:@"editedFileOid"];
         }
         [self addUploadTask:ufile];
     }

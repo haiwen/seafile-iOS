@@ -10,6 +10,7 @@
 #import "Debug.h"
 #import "FileSizeFormatter.h"
 #import "UIImage+FileType.h"
+#import "SeafUploadFileModel.h"
 
 @interface SeafSyncInfoCell ()
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *sizeLabelLeftConstraint;
@@ -76,7 +77,7 @@
             }
         }];
         
-        if (ufile.isUploading) {
+        if (ufile.model.uploading) {
             self.progressView.hidden = NO;
             self.progressView.progress = ufile.uProgress;
             self.statusLabel.text = NSLocalizedString(@"Uploading", @"Seafile");

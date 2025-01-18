@@ -21,4 +21,15 @@
 
 - (instancetype)initWithUploadFile:(SeafUploadFile *)uploadFile;
 
+/**
+ 上传分块相关属性
+ */
+@property (nonatomic, strong, nullable) NSArray<NSString *> *missingBlocks;
+@property (nonatomic, strong, nullable) NSArray<NSString *> *allBlocks;
+@property (nonatomic, copy, nullable) NSString *rawBlksUrl;
+@property (nonatomic, copy, nullable) NSString *commitUrl;
+@property (strong) NSString * _Nullable uploadpath;
+@property long blkidx;
+@property (nonatomic, strong) NSString * _Nullable blockDir;
+
 @end

@@ -14,6 +14,7 @@
 #import "ExtentedString.h"
 #import "SeafGlobal.h"
 #import "SeafShareFileViewController.h"
+#import "SeafFileOperationManager.h"
 
 @interface SeafShareDirViewController ()<SeafDentryDelegate, UITableViewDelegate, UITableViewDataSource>
 
@@ -143,11 +144,11 @@
             return;
         }
         [self showLoadingView];
-        [self.directory mkdir:input success:^(SeafDir *dir) {
+        [[SeafFileOperationManager sharedManager] mkdir:input inDir:self.directory completion:^(BOOL success, NSError * _Nullable error) {
             [self dismissLoadingView];
-        } failure:^(SeafDir *dir, NSError *error) {
-            [self dismissLoadingView];
-            [self alertWithTitle:NSLocalizedString(@"Failed to create folder", @"Seafile") handler:nil];
+            if (!success) {
+                [self alertWithTitle:NSLocalizedString(@"Failed to create folder", @"Seafile") handler:nil];
+            }
         }];
     }];
 }

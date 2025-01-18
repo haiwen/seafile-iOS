@@ -239,15 +239,15 @@ static APLRUCache *cache() {
 
 + (SeafItem *)fromSeafRepo:(SeafRepo *)repo
 {
-    return [[SeafItem alloc] initWithServer:repo->connection.address username:repo->connection.username repo:repo.repoId path:@"/" filename:nil];
+    return [[SeafItem alloc] initWithServer:repo.connection.address username:repo.connection.username repo:repo.repoId path:@"/" filename:nil];
 }
 + (SeafItem *)fromSeafDir:(SeafDir *)dir
 {
-    return [[SeafItem alloc] initWithServer:dir->connection.address username:dir->connection.username repo:dir.repoId path:dir.path filename:nil];
+    return [[SeafItem alloc] initWithServer:dir.connection.address username:dir.connection.username repo:dir.repoId path:dir.path filename:nil];
 }
 + (SeafItem *)fromSeafFile:(SeafFile *)file
 {
-    return [[SeafItem alloc] initWithServer:file->connection.address username:file->connection.username repo:file.repoId path:file.path.stringByDeletingLastPathComponent filename:file.name];
+    return [[SeafItem alloc] initWithServer:file.connection.address username:file.connection.username repo:file.repoId path:file.path.stringByDeletingLastPathComponent filename:file.name];
 }
 
 - (NSDictionary *)convertToDict {
