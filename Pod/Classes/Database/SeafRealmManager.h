@@ -50,7 +50,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSArray<SeafFileStatus *> *)getAllFileStatuses;
 
 // Get cache path
-- (NSString *)getLocalCacheWithOid:(NSString *)oid
+- (NSString *)getCachePathWithOid:(NSString *)oid
                              mtime:(float)mtime
                             uniKey:(NSString *)uniKey;
 
