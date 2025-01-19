@@ -177,7 +177,7 @@
             }
             [starFiles addObject:sfile];
             
-            [self parseJsonToSeafFileStatus:sfile];
+            [self updateSeafFileStatusFromStarFile:sfile];
         }
     }
     
@@ -194,7 +194,7 @@
     return;
 }
 
-- (void)parseJsonToSeafFileStatus:(SeafStarredFile *)starfile {
+- (void)updateSeafFileStatusFromStarFile:(SeafStarredFile *)starfile {
     SeafFileStatus *fileStatus = [[SeafFileStatus alloc] init];
     
     fileStatus.uniquePath = starfile.uniqueKey;

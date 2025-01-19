@@ -272,7 +272,7 @@
         Debug("Downloading file from file server url: %@, state:%d %@, %@", JSON, strongSelf.state, strongSelf.ooid, curId);
         if (!curId) curId = strongSelf.oid;
         
-        NSString *cachePath = [[SeafRealmManager shared] getLocalCacheWithOid:curId mtime:0 uniKey:self.uniqueKey];
+        NSString *cachePath = [[SeafRealmManager shared] getCachePathWithOid:curId mtime:0 uniKey:self.uniqueKey];
         
         if ([[NSFileManager defaultManager] fileExistsAtPath:cachePath]) {
             Debug("file %@ already exist curId=%@, ooid=%@", strongSelf.name, curId, strongSelf.ooid);
@@ -517,7 +517,7 @@
         @strongify(self);
          NSString *curId = [JSON objectForKey:@"file_id"];
         
-        NSString *cachePath = [[SeafRealmManager shared] getLocalCacheWithOid:curId mtime:0 uniKey:self.uniqueKey];
+        NSString *cachePath = [[SeafRealmManager shared] getCachePathWithOid:curId mtime:0 uniKey:self.uniqueKey];
         
         if ([[NSFileManager defaultManager] fileExistsAtPath:cachePath]) {
             Debug("Already uptodate oid=%@\n", self.ooid);
@@ -587,7 +587,7 @@
 {
     if (self.mpath && [[NSFileManager defaultManager] fileExistsAtPath:self.mpath])
         return YES;
-    NSString *cachePath = [[SeafRealmManager shared] getLocalCacheWithOid:self.oid mtime:self.mtime uniKey:self.uniqueKey];
+    NSString *cachePath = [[SeafRealmManager shared] getCachePathWithOid:self.oid mtime:self.mtime uniKey:self.uniqueKey];
     if (cachePath && cachePath.length > 0) {
         return YES;
     } else if ((self.oid || self.oid.length > 0) && [[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:self.oid]]) {
@@ -687,7 +687,7 @@
         return true;
     }
     
-    NSString *cachePath = [[SeafRealmManager shared] getLocalCacheWithOid:self.oid mtime:self.mtime uniKey:self.uniqueKey];
+    NSString *cachePath = [[SeafRealmManager shared] getCachePathWithOid:self.oid mtime:self.mtime uniKey:self.uniqueKey];
     if ((cachePath && cachePath.length > 0) || self.oid) {
         if (!self.oid || self.oid.length == 0) {
             NSString *cacheOid = [[SeafRealmManager shared] getOidForUniKey:self.uniqueKey serverMtime:self.mtime];

@@ -13,8 +13,6 @@
 
 @interface SeafRealmManager()
 
-@property (nonatomic, strong) dispatch_queue_t realmQueue;
-
 @end
 
 @implementation SeafRealmManager
@@ -31,8 +29,6 @@ static SeafRealmManager* instance;
 
 - (instancetype)init {
     if (self = [super init]) {
-        _realmQueue = dispatch_queue_create("com.seafile.realmQueue", DISPATCH_QUEUE_SERIAL);
-
         RLMRealmConfiguration *config = [RLMRealmConfiguration defaultConfiguration];
 
         // Define the new safe directory in Library/Application Support
@@ -68,17 +64,6 @@ static SeafRealmManager* instance;
         [RLMRealmConfiguration setDefaultConfiguration:config];
     }
     return self;
-}
-
-- (void)performRealmTask:(void (^)(RLMRealm *realm))task {
-    dispatch_async(self.realmQueue, ^{
-        @autoreleasepool {
-            RLMRealm *realm = [RLMRealm defaultRealm];
-            if (realm) {
-                task(realm);
-            }
-        }
-    });
 }
 
 - (void)migrateCachedPhotosFromCoreDataWithIdentifier:(NSString *)identifier forAccount:(NSString *)account andStatus:(NSString *)status {
@@ -208,7 +193,7 @@ static SeafRealmManager* instance;
     return allFileStatuses.count > 0 ? [allFileStatuses valueForKey:@"self"] : @[];
 }
 
-- (NSString *)getLocalCacheWithOid:(NSString *)oid
+- (NSString *)getCachePathWithOid:(NSString *)oid
                             mtime:(float)mtime
                            uniKey:(NSString *)uniKey {
     // Query the SeafFileStatus table by uniKey
