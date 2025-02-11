@@ -19,7 +19,7 @@
                        size:(unsigned long long)size
                  connection:(SeafConnection *)conn
 {
-    // 使用父类 SeafBaseModel 的指定初始化方法，将 mime 直接通过 FileMimeType 计算得到
+    // Use the designated initializer of the superclass SeafBaseModel, and calculate the mime directly through FileMimeType
     self = [super initWithOid:oid
                        repoId:repoId
                          name:name
@@ -29,18 +29,19 @@
         _mtime    = mtime;
         _filesize = size;
         _conn     = conn;
+        _retryable = YES;
     }
     return self;
 }
 
-#pragma mark - 自定义方法
+#pragma mark - Custom Methods
 
 - (NSString *)uniqueKey {
     NSString *normalizedPath = self.path ?: @"";
     if ([normalizedPath hasPrefix:@"/"]) {
         normalizedPath = [normalizedPath substringFromIndex:1];
     }
-    // 这里假设 conn.accountIdentifier 存在，如无则自行兼容处理
+    // Here we assume conn.accountIdentifier exists, handle compatibility if not
     return [NSString stringWithFormat:@"%@/%@/%@", self.conn.accountIdentifier ?: @"",
                                           self.repoId ?: @"",
                                           normalizedPath];
@@ -55,7 +56,7 @@
 }
 
 - (BOOL)isEditable {
-    // 简单示例：判断 MIME 是否以 "text/" 开头
+    // Simple example: check if MIME starts with "text/"
     return [self.mime hasPrefix:@"text/"];
 }
 

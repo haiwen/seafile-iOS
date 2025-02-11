@@ -65,7 +65,7 @@ typedef void(^SeafOperationCompletion)(BOOL success, NSError *_Nullable error);
 - (void)renameEntry:(NSString *)oldName
             newName:(NSString *)newName
               inDir:(SeafDir *)directory
-         completion:(SeafOperationCompletion)completion;
+         completion:(void(^)(BOOL success, SeafBase *renamedFile, NSError *error))completion;
 
 /**
  Copy

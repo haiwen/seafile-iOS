@@ -433,7 +433,7 @@
         @try {
             sfile = [_cellDataArray objectAtIndex:indexPath.row];
             
-            if ([(SeafRepo *)entry passwordRequiredWithSyncRefresh]){
+            if ([tempSFile passwordRequiredWithSyncRefresh]){
                 Debug("Star file %@ repo %@ password required.", sfile.name, sfile.repoId);
                 SeafRepo *repo = [[SeafRepo alloc] initWithConnection:sfile.connection andRepoId:sfile.repoId andRepoName:sfile.repoName];
                 @weakify(self);

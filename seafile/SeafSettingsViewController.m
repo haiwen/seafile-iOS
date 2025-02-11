@@ -640,7 +640,6 @@ enum {
 {
     NSString *old = _connection.autoSyncRepo;
     if ([repo.repoId isEqualToString:old]) {
-//        [_connection photosDidChange:nil];
         return;
     }
     

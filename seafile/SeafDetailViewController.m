@@ -61,7 +61,7 @@ enum SHARE_STATUS {
 @property (nonatomic, assign) BOOL previewDidEdited;
 @property int shareStatus;
 
-// 新增：避免多次重复 present QLPreviewController
+// New: Avoid presenting QLPreviewController multiple times
 @property (nonatomic, assign) BOOL isPresentingQL;
 
 @end
@@ -192,14 +192,12 @@ enum SHARE_STATUS {
                     // Mark to avoid repetition
                     self.isPresentingQL = YES;
                     [vc dismissViewControllerAnimated:NO completion:^{
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            [vc presentViewController:self.qlViewController animated:YES completion:^{
-                                dispatch_async(dispatch_get_main_queue(), ^{
-                                    [self clearPreView];
-                                    self.isPresentingQL = NO;
-                                });
-                            }];
-                        });
+                        [vc presentViewController:self.qlViewController animated:YES completion:^{
+                            dispatch_async(dispatch_get_main_queue(), ^{
+                                [self clearPreView];
+                                self.isPresentingQL = NO;
+                            });
+                        }];
                     }];
                 } else if (IsIpad()) {
                     // In iPad scenario

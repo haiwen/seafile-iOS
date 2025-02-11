@@ -85,7 +85,7 @@ enum {
 @property (retain) NSDateFormatter *formatter;
 
 @property (nonatomic, strong) UISearchController *searchController;
-@property (nonatomic, strong) SeafSearchResultViewController *searchReslutController;
+@property (nonatomic, strong) SeafSearchResultViewController *searchResultController;
 
 @property (strong, retain) NSArray *photos;// Array of photo entries.
 @property (strong, retain) NSArray *thumbs;// Array of thumbnail entries.
@@ -164,10 +164,10 @@ enum {
     [self refreshView];
 }
 
-- (void)viewWillAppear:(BOOL)animated
-{
+- (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     [self checkUploadfiles];
+    [self refreshDownloadStatus];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -514,8 +514,8 @@ enum {
 
     _directory = directory;
     _connection = directory.connection;
-    self.searchReslutController.connection = _connection;
-    self.searchReslutController.directory = _directory;
+    self.searchResultController.connection = _connection;
+    self.searchResultController.directory = _directory;
     self.title = directory.name;
     [_directory loadContent:false];
     Debug("repoId:%@, %@, path:%@, loading ... cached:%d %@, editable:%d\n", _directory.repoId, _directory.name, _directory.path, _directory.hasCache, _directory.ooid, _directory.editable);
@@ -970,7 +970,7 @@ enum {
             renameEntry:oldName
             newName:input
             inDir:self.directory
-            completion:^(BOOL success, NSError * _Nullable error)
+            completion:^(BOOL success,SeafBase *renamedFile , NSError * _Nullable error)
         {
             if (success) {
                 [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Rename file success", @"Seafile")];
@@ -2096,4 +2096,39 @@ enum {
     [[self currentTableView] selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionMiddle];
 }
 
+- (void)refreshDownloadStatus {
+    NSArray *visibleCells = [self.tableView visibleCells];
+    for (UITableViewCell *cell in visibleCells) {
+        if ([cell isKindOfClass:[SeafCell class]]) {
+            NSIndexPath *indexPath = [self.tableView indexPathForCell:cell];
+            id entry = [self getDentrybyIndexPath:indexPath tableView:self.tableView];
+            if ([entry isKindOfClass:[SeafFile class]]) {
+                [self updateCellDownloadStatus:(SeafCell *)cell file:(SeafFile *)entry waiting:false];
+            }
+        }
+    }
+}
+
+#pragma mark - Lazy init
+// getter searchResultController
+- (SeafSearchResultViewController *)searchResultController {
+    if (!_searchResultController) {
+        _searchResultController = [[SeafSearchResultViewController alloc] init];
+    }
+    return _searchResultController;
+}
+
+- (UISearchController *)searchController {
+    if (!_searchController) {
+        _searchController = [[UISearchController alloc] initWithSearchResultsController:self.searchResultController];
+        _searchController.searchResultsUpdater = self.searchResultController;
+        _searchController.searchBar.searchBarStyle = UISearchBarStyleMinimal;
+        _searchController.searchBar.barTintColor = [UIColor clearColor];
+        _searchController.searchBar.backgroundColor = [UIColor clearColor];
+        [_searchController.searchBar sizeToFit];
+        
+        self.definesPresentationContext = YES;
+    }
+    return _searchController;
+}
 @end

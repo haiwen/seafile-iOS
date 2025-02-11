@@ -119,14 +119,7 @@
             if ([features containsObject:@"client-sso-via-local-browser"]) {
                 Debug(@"Client SSO via local browser is supported");
                 // Execute additional code for client SSO via local browser
-                if ([features containsObject:@"client-sso-via-local-browser"]) {
-                    Debug("Feature client-sso-via-local-browser is supported");
-                    //Send request to get the sso link url.
-                    [self sendClintSSOLinkRequest];
-                } else {//old sso login
-                    Debug("Using standard Shibboleth login");
-                    [self oldSSOLoginStart];
-                }
+                [self sendClintSSOLinkRequest];
             } else {
                 Debug(@"Using standard login method");
                 [self oldSSOLoginStart];

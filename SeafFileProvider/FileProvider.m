@@ -358,24 +358,12 @@
     [[SeafFileOperationManager sharedManager] renameEntry:item.name
                                                 newName:itemName
                                                   inDir:dir
-                                             completion:^(BOOL success, NSError * _Nullable error) {
-        if (success) {
-            SeafBase *file;
-            for (SeafBase *obj in dir.items) {
-                if ([obj.name.precomposedStringWithCompatibilityMapping isEqualToString:itemName.precomposedStringWithCompatibilityMapping]) {
-                    file = obj;
-                    break;
-                }
-            }
-            if (file) {
-                [file loadCache];
-                SeafProviderItem *renamedItem = [[SeafProviderItem alloc] initWithSeafItem:[SeafItem fromSeafBase:file]];
-                completionHandler(renamedItem, nil);
-            } else {
-                completionHandler(nil, [Utils defaultError]);
-            }
+                                             completion:^(BOOL success, SeafBase *renamedFile, NSError *error) {
+        if (success && renamedFile) {
+            SeafProviderItem *renamedItem = [[SeafProviderItem alloc] initWithSeafItem:[SeafItem fromSeafBase:renamedFile]];
+            completionHandler(renamedItem, nil);
         } else {
-            completionHandler(nil, error ? error : [Utils defaultError]);
+            completionHandler(nil, error ?: [Utils defaultError]);
         }
     }];
 }
@@ -408,7 +396,7 @@
             [[SeafFileOperationManager sharedManager] renameEntry:item.name
                                                         newName:newName
                                                           inDir:dstDir
-                                                     completion:^(BOOL success, NSError * _Nullable error) {
+                                                     completion:^(BOOL success, SeafBase *renamedFile, NSError *error) {
                 if (success) {
                     NSString *renamedpath = [dstDir.path stringByAppendingPathComponent:newName];
                     SeafItem *renamedItem = [[SeafItem alloc] initWithServer:dstDir.connection.address 

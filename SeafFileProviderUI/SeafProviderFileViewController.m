@@ -148,7 +148,6 @@
         self.progressView.frame = CGRectMake(20, r.size.height-45, r.size.width - 40, 20);
         [self.alert.view addSubview:self.progressView];
         [SeafDataTaskManager.sharedObject addUploadTask:self.ufile priority:NSOperationQueuePriorityVeryHigh];
-//        [self.ufile run:nil];
     }];
 }
 

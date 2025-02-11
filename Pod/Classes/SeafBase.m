@@ -351,11 +351,14 @@
         if ([JSON isKindOfClass:[NSArray class]]) {
             NSArray *list = (NSArray *)JSON;
             if (list.count > 0) {
-                NSDictionary *dict = list.firstObject;
-                NSString *link = dict[@"link"];
-                if (link) {
-                    completionHandler(YES, link);
-                    return;
+                id firstObject = list.firstObject;
+                if ([firstObject isKindOfClass:[NSDictionary class]]) {
+                    NSDictionary *dict = (NSDictionary *)firstObject;
+                    NSString *link = dict[@"link"];
+                    if (link) {
+                        completionHandler(YES, link);
+                        return;
+                    }
                 }
             }
         }
@@ -378,14 +381,7 @@
     if (!_uniqueKey) {
         // Create a unique key based on accountIdentifier + repoId + path
         NSString *accountIdentifier = self.connection.accountIdentifier ?: @"";
-        
-        // Ensure that if self.model.path has a leading "/", it is removed
-        NSString *normalizedPath = self.model.path ?: @"";
-        if ([normalizedPath hasPrefix:@"/"]) {
-            normalizedPath = [normalizedPath substringFromIndex:1];
-        }
-        
-        _uniqueKey = [NSString stringWithFormat:@"%@/%@/%@", accountIdentifier, self.model.repoId ?: @"", normalizedPath];
+        _uniqueKey = [NSString stringWithFormat:@"%@/%@/%@", accountIdentifier, self.model.repoId ?: @"", self.model.name];
     }
     return _uniqueKey;
 }

@@ -23,8 +23,8 @@ typedef void (^TaskProgressBlock)(id task, float progress);
 // Task protocol
 @protocol SeafTask<NSObject>
 @property NSTimeInterval lastFinishTimestamp;
-@property NSInteger retryCount;
-@property BOOL retryable;
+@property (nonatomic) NSInteger retryCount;
+@property (nonatomic) BOOL retryable;
 
 - (NSString *)accountIdentifier;
 - (NSString *)name;

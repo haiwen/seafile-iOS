@@ -43,8 +43,8 @@
 @synthesize exportURL = _exportURL;
 @synthesize preViewURL = _preViewURL;
 @synthesize lastFinishTimestamp = _lastFinishTimestamp;
-@synthesize retryable = _retryable;
-@synthesize retryCount = _retryCount;
+//@synthesize retryable = _retryable;
+//@synthesize retryCount = _retryCount;
 
 #pragma mark - Initialization
 
@@ -69,8 +69,6 @@
     if (self) {
         _model = model;
         self.connection = connection;
-        _stateManager = [[SeafFileStateManager alloc] initWithConnection:connection];
-        _cacheManager = [SeafCacheManager sharedManager];
         _previewHandler = [[SeafFilePreviewHandler alloc] initWithFile:model];
     }
     return self;
@@ -395,6 +393,7 @@
     if (self.ufile) {
         NSString *newModifiedPath = [self.mpath copy];
         [SeafDataTaskManager.sharedObject removeUploadTask:self.ufile forAccount:self.connection];
+        [self.ufile cleanup];
         self.ufile = nil;
         [self setMpath:newModifiedPath];
         self.isFileEditedAgain = true;
@@ -661,4 +660,19 @@
     return _exportURL;
 }
 
+- (BOOL)retryable {
+    return self.model.retryable;
+}
+
+- (void)setRetryable:(BOOL)retryable {
+    self.model.retryable = retryable;
+}
+
+- (NSInteger)retryCount {
+    return self.model.retryCount;
+}
+
+- (void)setRetryCount:(NSInteger)retryCount {
+    self.model.retryCount = retryCount;
+}
 @end

@@ -9,8 +9,8 @@
 #import "Debug.h"
 #import "Utils.h"
 #import "SeafDir.h"
-#import "SeafConnection.h"   // Need to get the connection
-#import "ExtentedString.h"   // for escapedUrl, escapedPostForm
+#import "SeafConnection.h"   // Required to get connection
+#import "ExtentedString.h"   // For escapedUrl, escapedPostForm
 
 @implementation SeafFileOperationManager
 
@@ -38,7 +38,7 @@
         return;
     }
 
-    // Directly assemble requestUrl
+    // Directly construct requestUrl
     NSString *fullPath = [directory.path stringByAppendingPathComponent:fileName];
     NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/file/?p=%@&reloaddir=true",
                             directory.repoId, [fullPath escapedUrl]];
@@ -139,14 +139,14 @@
 - (void)renameEntry:(NSString *)oldName
             newName:(NSString *)newName
               inDir:(SeafDir *)directory
-         completion:(SeafOperationCompletion)completion
+         completion:(void(^)(BOOL success, SeafBase *renamedFile, NSError *error))completion
 {
     if (!oldName || oldName.length == 0 || !newName || newName.length == 0) {
         if (completion) {
             NSError *err = [NSError errorWithDomain:@"SeafFileOperation"
-                                               code:-4
-                                           userInfo:@{NSLocalizedDescriptionKey:@"Invalid rename parameters"}];
-            completion(NO, err);
+                                             code:-4
+                                         userInfo:@{NSLocalizedDescriptionKey:@"Invalid rename parameters"}];
+            completion(NO, nil, err);
         }
         return;
     }
@@ -157,17 +157,37 @@
     NSString *form = [NSString stringWithFormat:@"operation=rename&newname=%@", [newName escapedUrl]];
 
     [directory.connection sendPost:requestUrl
-                              form:form
-                           success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON)
+                            form:form
+                         success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON)
     {
         Debug("Rename success, code=%ld", (long)response.statusCode);
-        [directory handleResponse:response json:JSON]; // optional
-        if (completion) completion(YES, nil);
+        [directory handleResponse:response json:JSON];
+        
+        // Find the renamed file in directory items
+        SeafBase *renamedFile = nil;
+        for (SeafBase *obj in directory.items) {
+            if ([obj.name.precomposedStringWithCompatibilityMapping isEqualToString:newName.precomposedStringWithCompatibilityMapping]) {
+                renamedFile = obj;
+                [renamedFile loadCache];
+                break;
+            }
+        }
+        
+        if (completion) {
+            if (renamedFile) {
+                completion(YES, renamedFile, nil);
+            } else {
+                NSError *err = [NSError errorWithDomain:@"SeafFileOperation"
+                                                 code:-5
+                                             userInfo:@{NSLocalizedDescriptionKey:@"Renamed file not found"}];
+                completion(NO, nil, err);
+            }
+        }
     }
-                           failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error)
+                         failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error)
     {
         Warning("Rename failed, code=%ld", (long)response.statusCode);
-        if (completion) completion(NO, error);
+        if (completion) completion(NO, nil, error);
     }];
 }
 

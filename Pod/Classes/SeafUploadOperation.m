@@ -184,7 +184,6 @@
     __weak __typeof__ (self) wself = self;
     NSURLSessionUploadTask *blockDataUploadTask = [connection.sessionMgr uploadTaskWithStreamedRequest:request progress:^(NSProgress * _Nonnull uploadProgress) {
         __strong __typeof (wself) sself = wself;
-//        [sself.uploadFile updateProgressWithoutKVO:uploadProgress];
         [sself.uploadFile uploadProgress:1.0f * self.blkidx / self.allBlocks.count];
         
     } completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
@@ -375,7 +374,6 @@
             [self completeOperation];
             return;
         }
-//        if ([self isRetryableError:error] && self.retryCount < self.maxRetryCount) {//deal error
         if (self.retryCount < self.maxRetryCount) {
             self.retryCount += 1;
             Debug(@"Upload failed, retrying %ld/%ld in %.0f seconds", (long)self.retryCount, (long)self.maxRetryCount, self.retryDelay);

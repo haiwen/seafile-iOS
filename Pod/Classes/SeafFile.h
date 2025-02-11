@@ -13,7 +13,6 @@
 #import "Utils.h"
 #import "SeafFileModel.h"
 #import "SeafFileStatus.h"
-#import "SeafFileStateManager.h"
 #import "SeafCacheManager.h"
 #import "SeafFilePreviewHandler.h"
 
@@ -48,11 +47,6 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
  * Represents a file in Seafile.
  */
 @interface SeafFile : SeafBase<QLPreviewItem, SeafPreView, SeafUploadDelegate, SeafTask>
-//@protected
-//    long long _filesize;///< File size in bytes.
-//    long long _mtime;///< Modification time.
-//    NSString *_shareLink;///< Share link of the file.
-
 
 /**
  * Initializes a new SeafFile with the specified parameters.
@@ -94,14 +88,14 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 @property (strong, nonatomic) NSURL * _Nullable preViewURL;
 @property (strong, nonatomic) NSURL * _Nullable exportURL;
 
-
 @property (nonatomic, strong) SeafFileModel * _Nullable model;
 @property (nonatomic, weak) id<SeafFileDelegate> delegate;
 
-// 依赖注入
-@property (nonatomic, strong) SeafCacheManager * _Nullable cacheManager;
-@property (nonatomic, strong) SeafFileStateManager * _Nullable stateManager;
+// Dependency injection
 @property (nonatomic, strong) SeafFilePreviewHandler * _Nullable previewHandler;
+
+@property (nonatomic) NSInteger retryCount;
+@property (nonatomic) BOOL retryable;
 
 /**
  * Checks if the file is starred.
@@ -157,7 +151,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 - (void)cancelThumb;
 
 /**
- * Cancels the thumb which not download complete.
+ * Cancels the thumb which has not completed downloading.
  */
 - (void)cancelNotDisplayThumb;
 
@@ -167,12 +161,6 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
  * @return YES if the upload was initiated successfully, otherwise NO.
  */
 - (BOOL)uploadFromFile:(NSURL *_Nonnull)url;
-
-/**
- * Waits for the upload to complete.
- * @return YES if the upload completed, otherwise NO.
- */
-//- (BOOL)waitUpload;
 
 /**
  * Saves the modified version of a file from a temporary preview URL to the local cache.
@@ -200,20 +188,20 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 
 - (void)finishDownloadThumb:(BOOL)success;
 
-// 公共接口
+// Public interfaces
 - (void)unload;
 - (BOOL)hasCache;
 - (void)clearCache;
 
-// 下载相关
+// Download related
 - (void)cancelDownload;
 
-// 上传相关
+// Upload related
 - (void)uploadWithPath:(NSString *_Nullable)path
             completion:(void(^_Nullable)(BOOL success, NSError * _Nullable error))completion;
 - (void)cancelUpload;
 
-// 预览相关
+// Preview related
 - (NSURL *  _Nullable)previewURL;
 - (NSURL * _Nullable)exportURL;
 

@@ -15,28 +15,32 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)download:(id)file failed:(NSError *)error;
 - (void)download:(id)file progress:(float)progress;
 @end
-//@class SeafBaseModel;
+
 @interface SeafFileModel : SeafBaseModel
 
-/// 文件修改时间
+/// File modification time
 @property (nonatomic, assign) long long mtime;
-/// 文件大小
+/// File size
 @property (nonatomic, assign) unsigned long long filesize;
-/// 文件在本地缓存的路径
+/// Local cache path of the file
 @property (nonatomic, copy, nullable) NSString *localPath;
-/// 对应的 SeafConnection
+/// Corresponding SeafConnection
 @property (nonatomic, strong, nullable) SeafConnection *conn;
 
-/**
- 自定义的初始化方法
+@property (nonatomic) BOOL retryable;
 
- @param oid    对象ID
- @param repoId 仓库ID
- @param name   文件名称
- @param path   文件在仓库中的路径
- @param mtime  文件修改时间
- @param size   文件大小
- @param conn   对应的 SeafConnection
+@property (nonatomic) NSInteger retryCount;
+
+/**
+ Custom initializer
+
+ @param oid    Object ID
+ @param repoId Repository ID
+ @param name   File name
+ @param path   File path in the repository
+ @param mtime  File modification time
+ @param size   File size
+ @param conn   Corresponding SeafConnection
  */
 - (instancetype)initWithOid:(NSString *)oid
                      repoId:(NSString *)repoId
@@ -48,19 +52,19 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)init NS_UNAVAILABLE;
 
-/** 生成一个唯一标识 key，用于区分同账号下同仓库同路径的文件 */
+/** Generate a unique key to distinguish files with the same account, repository, and path */
 - (NSString *)uniqueKey;
 
-/** 判断文件是否是图片类型 */
+/** Determine if the file is an image */
 - (BOOL)isImageFile;
 
-/** 判断文件是否是视频类型 */
+/** Determine if the file is a video */
 - (BOOL)isVideoFile;
 
-/** 判断文件是否可编辑 */
+/** Determine if the file is editable */
 - (BOOL)isEditable;
 
-/** 转为字典，可用于序列化、日志或其他场景 */
+/** Convert to dictionary, useful for serialization, logging, or other scenarios */
 - (NSDictionary *)toDictionary;
 
 @end

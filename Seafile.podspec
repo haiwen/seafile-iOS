@@ -1,13 +1,13 @@
 Pod::Spec.new do |s|
   s.name             = "Seafile"
-  s.version          = "2.9.33"
+  s.version          = "2.9.34"
   s.summary          = "iOS client for seafile."
   s.homepage         = "https://github.com/haiwen/seafile-iOS"
   s.license          = 'MIT'
   s.author           = { "wei.wang" => "poetwang@gmail.com" }
   s.source           = { :git => "https://github.com/haiwen/seafile-iOS.git", :tag => s.version.to_s }
   s.social_media_url = 'https://twitter.com/Seafile'
-  s.source_files     = 'Pod/Classes/*.{h,m}', 'Pod/Classes/Database/*.{h,m}','Pod/Classes/Managers/*.{h,m}','Pod/Classes/Handlers/*.{h,m}','Pod/Classes/Models/*.{h,m}'
+  s.source_files     = 'Pod/Classes/**/*.{h,m}'
   s.resource_bundles = { 'Seafile' => 'Pod/Resources/*' }
   s.platform         = :ios, '9.0'
   s.requires_arc     = true

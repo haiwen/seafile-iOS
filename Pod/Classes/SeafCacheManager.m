@@ -32,6 +32,14 @@
     return object;
 }
 
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _cacheQueue = dispatch_queue_create("com.seafile.cacheQueue", DISPATCH_QUEUE_SERIAL);
+    }
+    return self;
+}
+
 - (void)saveThumbToCache:(UIImage *)image key:(NSString *)key {
     if (!image || !key || key.length == 0) {
         return;
@@ -92,7 +100,7 @@
                                                              toPath:cachePath
                                                               error:&error];
         if (!success) {
-            NSLog(@"Failed to cache file: %@", error);
+            Debug(@"Failed to cache file: %@", error);
         }
     });
 }
@@ -132,9 +140,13 @@
         return YES;
     } else if (file.oid.length > 0
                && [[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:file.oid]]) {
+        if (![file.oid isEqualToString:file.ooid]) {
+            [file setOoid:file.oid];
+        }
         return YES;
     }
-    
+    file.preViewURL = nil;
+    file.exportURL = nil;
     // If none, there is no cache
     return NO;
 }
@@ -271,19 +283,19 @@
     if ([sFile.oid isEqualToString:entry.oid]) {
         if (file.ufile) {
             sFile.ufile = file.ufile;
-            sFile.ufile.delegate = self;
+            sFile.ufile.delegate = sFile;
             sFile.mpath = file.mpath;
             sFile.udelegate = file.udelegate;
         }
         return;
     }
-    if (sFile.oid != entry.oid)
+    if (sFile.oid != entry.oid) {
         sFile.oid = entry.oid;
-//    [super updateWithEntry:entry];
+    }
     sFile.filesize = file.filesize;
     sFile.mtime = file.mtime;
     sFile.ufile = file.ufile;
-    sFile.ufile.delegate = self;
+    sFile.ufile.delegate = sFile;
     sFile.mpath = file.mpath;
     sFile.udelegate = file.udelegate;
     sFile.state = SEAF_DENTRY_INIT;

@@ -17,6 +17,7 @@
 #import "SeafRepos.h"
 #import "SeafDataTaskManager.h"
 #import "SeafStorage.h"
+#import "SeafRealmManager.h"
 
 #ifndef kUTTypeHEIC
 #define kUTTypeHEIC CFSTR("public.heic")
@@ -83,6 +84,30 @@
 
 - (PHAsset *)asset {
     return self.model.asset;
+}
+
+- (BOOL)uploadFileAutoSync {
+    return self.model.uploadFileAutoSync;
+}
+
+- (BOOL)isEditedFile {
+    return self.model.isEditedFile;
+}
+
+- (NSString *)editedFileRepoId {
+    return self.model.editedFileRepoId;
+}
+
+- (NSString *)editedFilePath {
+    return self.model.editedFilePath;
+}
+
+- (NSString *)editedFileOid {
+    return self.model.editedFileOid;
+}
+
+- (BOOL)shouldShowUploadFailure {
+    return self.model.shouldShowUploadFailure;
 }
 
 #pragma mark - SeafPreView Protocol
@@ -306,8 +331,9 @@
             [_udir.connection setStarred:YES repo:_udir.repoId path:rpath];
         }
         
-        if (!_uploadFileAutoSync) {
+        if (!self.uploadFileAutoSync) {
             [Utils linkFileAtPath:self.lpath to:[SeafStorage.sharedObject documentPath:fOid] error:nil];
+            [self updateSeafFileStatusWithOid:fOid];
         } else {
             // For auto sync photos, release local cache files immediately.
             [self cleanup];
@@ -488,4 +514,24 @@
     self.model.retryCount = retryCount;
 }
 
+- (NSString *)uniqueKey
+{
+    NSString *uniqueKey = [NSString stringWithFormat:@"%@/%@/%@", self.udir.connection.accountIdentifier, self.udir.repoId, self.name];
+    return uniqueKey;
+}
+
+- (void)updateSeafFileStatusWithOid:(NSString *)oid{
+    NSString *filePath = [SeafStorage.sharedObject documentPath:oid];
+    
+    SeafFileStatus *fileStatus = [[SeafFileStatus alloc] init];
+    
+    fileStatus.uniquePath = self.uniqueKey;
+    fileStatus.serverOID = oid;
+    fileStatus.localMTime = [[NSDate date] timeIntervalSince1970];
+    fileStatus.fileName = self.name;
+    fileStatus.dirPath = self.udir.path;
+    fileStatus.localFilePath = filePath;
+
+    [[SeafRealmManager shared] updateFileStatus:fileStatus];
+}
 @end

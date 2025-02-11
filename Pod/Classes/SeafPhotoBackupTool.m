@@ -314,7 +314,6 @@
     if (identifier) {
         @synchronized (self) {
             NSTimeInterval cur = [[NSDate date] timeIntervalSince1970];
-//            file.model.uploadStartedTime = cur;
         }
     }
 }

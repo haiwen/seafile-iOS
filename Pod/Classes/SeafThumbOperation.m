@@ -130,7 +130,7 @@
     
     __weak typeof(self) weakSelf = self;
     self.thumbTask = [connection.sessionMgr downloadTaskWithRequest:downloadRequest progress:nil destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
-        return [NSURL fileURLWithPath:[target stringByAppendingPathExtension:@"tmp"]];
+        return [NSURL fileURLWithPath:target];
     } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if (strongSelf.isCancelled) {

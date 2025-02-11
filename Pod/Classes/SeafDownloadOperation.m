@@ -295,11 +295,6 @@
                 [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
             }
             
-//            float overallProgress = (float)strongSelf.currentBlockIndex / (float)strongSelf.blkids.count;                strongSelf.progress = overallProgress;
-//            dispatch_async(dispatch_get_main_queue(), ^{
-//                [self.file downloadProgress:overallProgress];
-//            });
-            
             [strongSelf finishBlock:blkId];
         }
     }];
