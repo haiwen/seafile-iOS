@@ -25,8 +25,6 @@
 @interface StartViewController ()<UIDocumentPickerDelegate>
 // Table view to display accounts and buttons
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
-// Button to go back to the last account
-@property (weak, nonatomic) IBOutlet ColorfulButton *backButton;
 // Label for displaying welcome message
 @property (weak, nonatomic) IBOutlet UILabel *welcomeLabel;
 // Label for additional messages or instructions
@@ -66,18 +64,6 @@
 
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
-//    self.navigationItem.rightBarButtonItem = [self getBarItemAutoSize:@"ellipsis".navItemImgName action:@selector(editSheet:)];
-
-    // Setup back button appearance and behavior
-    [self.backButton addTarget:self action:@selector(goToDefaultBtclicked:) forControlEvents:UIControlEventTouchUpInside];
-    self.backButton.layer.cornerRadius = 0;
-    self.backButton.layer.borderWidth = .5f;
-    self.backButton.layer.masksToBounds = YES;
-    self.backButton.layer.borderColor = [[UIColor lightGrayColor] CGColor];
-    self.backButton.backgroundColor = [UIColor colorWithRed:249.0f/255 green:249.0f/255 blue:249.0f/255 alpha:1];
-    [self.backButton setTitleColor:[UIColor colorWithRed:112/255.0 green:112/255.0 blue:112/255.0 alpha:1.0] forState:UIControlStateNormal];
-    [self.backButton setTitle:NSLocalizedString(@"Back to Last Account", @"Seafile") forState:UIControlStateNormal];
-    self.backButton.showsTouchWhenHighlighted = true;
 
     [self.tableView reloadData];
 }
@@ -159,6 +145,7 @@
 
 - (void)viewWillAppear:(BOOL)animated
 {
+    [self.tableView reloadData];
     [super viewWillAppear:animated];
 }
 
@@ -368,6 +355,7 @@
     @try {
         SeafConnection *conn = [SeafGlobal.sharedObject.conns objectAtIndex:indexPath.row];
         [self checkSelectAccount:conn];
+        
     } @catch(NSException *exception) {
         [self.tableView performSelector:@selector(reloadData) withObject:nil afterDelay:0.1];
     }
@@ -411,7 +399,7 @@
 
 #pragma mark - SSConnectionDelegate
 // Selects the given account and updates the app state
-- (BOOL)selectAccount:(SeafConnection *)conn;
+- (BOOL)selectAccount:(SeafConnection *)conn
 {
     if (!conn) return NO;
     if (![conn authorized]) {
@@ -433,6 +421,8 @@
 
     [SeafStorage.sharedObject setObject:conn.address forKey:@"DEAULT-SERVER"];
     [SeafStorage.sharedObject setObject:conn.username forKey:@"DEAULT-USER"];
+    
+    [self.tableView reloadData];
 
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [appdelegate enterAccount:conn];
@@ -449,11 +439,6 @@
     }
     SeafConnection *conn = [SeafGlobal.sharedObject getConnection:server username:username];
     [self checkSelectAccount:conn completeHandler:handler];
-}
-
-- (IBAction)goToDefaultBtclicked:(id)sender
-{
-    [self selectDefaultAccount:^(bool success) { }];
 }
 
 - (BOOL)shouldAutorotate
