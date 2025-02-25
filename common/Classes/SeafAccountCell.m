@@ -8,6 +8,7 @@
 #import "SeafAccountCell.h"
 #import "Debug.h"
 #import "SeafConnection.h"
+#import "SeafStorage.h"
 
 @implementation SeafAccountCell
 
@@ -52,9 +53,21 @@
 
 - (void)updateAccountCell:(SeafConnection *)conn {
     self.imageview.image = [UIImage imageWithContentsOfFile:conn.avatar];
-    self.serverLabel.text = conn.address;
-    self.emailLabel.text = conn.username;
+    //serverLabel change to userName
+    self.serverLabel.text = conn.name;
+    
+    //emailLabel change to address
+    self.emailLabel.text = conn.address;
     self.imageview.clipsToBounds = YES;
+    self.checkImageView.hidden = YES;
+
+    NSString *defaultServer = [SeafStorage.sharedObject objectForKey:@"DEAULT-SERVER"];
+    NSString *defaultUser = [SeafStorage.sharedObject objectForKey:@"DEAULT-USER"];
+    BOOL isSelected = ([conn.address isEqualToString:defaultServer] && [conn.username isEqualToString:defaultUser]);
+    
+    if (isSelected) {
+        self.checkImageView.hidden = NO;
+    }
 }
 
 @end

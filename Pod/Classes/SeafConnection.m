@@ -424,6 +424,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return [_info objectForKey:@"username"];
 }
 
+- (NSString *)name
+{
+    return [_info objectForKey:@"name"];
+}
+
 - (NSString *)password
 {
     return [_info objectForKey:@"password"];
@@ -678,6 +683,10 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [SeafStorage.sharedObject setObject:_info forKey:self.accountIdentifier];
 
     [self saveSettings];
+    
+    // Remove the default account settings
+    [SeafStorage.sharedObject removeObjectForKey:@"DEAULT-SERVER"];
+    [SeafStorage.sharedObject removeObjectForKey:@"DEAULT-USER"];
 }
 
 - (void)clearAccount
