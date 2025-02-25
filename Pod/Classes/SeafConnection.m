@@ -650,6 +650,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return repo.encrypted;
 }
 
+- (BOOL)isDecrypted:(NSString *)repoId {
+    SeafRepo *repo = [self getRepo:repoId];
+    return ![repo passwordRequired];
+}
+
 - (BOOL)shouldLocalDecrypt:(NSString * _Nonnull)repoId
 {
     SeafRepo *repo = [self getRepo:repoId];

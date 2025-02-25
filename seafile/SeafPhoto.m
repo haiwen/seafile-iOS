@@ -33,7 +33,7 @@
         if (!_underlyingImage && [_file hasCache]) {
             if ([_file isKindOfClass:[SeafFile class]]) {
                 SeafFile *sFile = (SeafFile *)_file;
-                //change load image from Synchronous to Asynchronous.
+                //Change load image from Synchronous to Asynchronous.
                 [sFile getImageWithCompletion:^(UIImage * _Nullable image) {
                     self.underlyingImage = image;
                     dispatch_async(dispatch_get_main_queue(), ^{

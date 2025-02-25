@@ -28,6 +28,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSString *)thumbPath:(NSString *)objId sFile:(SeafFile *)sFile;
 
+- (void)saveThumbFromEncrypetedFile:(SeafFile *)seafFile;
+
 @end
 
 NS_ASSUME_NONNULL_END

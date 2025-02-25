@@ -501,4 +501,6 @@ Checks the auto synchronization settings and updates the connection’s synchron
 
 - (void)cleanupOrphanedFileStatuses;
 
+- (BOOL)isDecrypted:(NSString *_Nonnull)repoId;
+
 @end
