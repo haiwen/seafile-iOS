@@ -13,6 +13,7 @@
 @property (strong, nonatomic) IBOutlet UILabel *serverLabel;
 @property (strong, nonatomic) IBOutlet UILabel *emailLabel;
 @property (strong, nonatomic) IBOutlet UIImageView *imageview;
+@property (weak, nonatomic) IBOutlet UIImageView *checkImageView;
 
 + (SeafAccountCell *)getInstance:(UITableView *)tableView WithOwner:(id)owner;
 - (void)updateAccountCell:(SeafConnection *)conn;

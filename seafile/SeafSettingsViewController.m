@@ -298,6 +298,8 @@ enum {
 {
     [super viewDidLoad];
     _nameCell.textLabel.text = NSLocalizedString(@"Username", @"Seafile");
+    _nameCell.detailTextLabel.textColor = BAR_COLOR;
+    _nameCell.detailTextLabel.text = NSLocalizedString(@"Switch Account", @"Seafile");
     _usedspaceCell.textLabel.text = NSLocalizedString(@"Space Used", @"Seafile");
     
     LAContext *lac = [[LAContext alloc] init];
@@ -389,7 +391,7 @@ enum {
     if (!_connection)
         return;
 
-    _nameCell.detailTextLabel.text = _connection.username;
+    _nameCell.textLabel.text = _connection.name;
     _enableTouchIDSwitch.on = _connection.touchIdEnabled;
 
     Debug("Account : %@, %lld, quota: %lld", _connection.username, _connection.usage, _connection.quota);
@@ -489,8 +491,16 @@ enum {
 {
     [self.tableView deselectRowAtIndexPath:[self.tableView indexPathForSelectedRow] animated:NO];
     if (indexPath.section == SECTION_ACCOUNT) {
-        if (indexPath.row == 1) // Select the quota cell
+        if (indexPath.row == 0) {
+            Debug("Switch Account");
+            UIStoryboard *startStoryboard = [UIStoryboard storyboardWithName:@"SeafStart" bundle:nil];
+            UINavigationController *navController = [startStoryboard instantiateInitialViewController];
+            StartViewController *startVC = (StartViewController *)navController.topViewController;
+            startVC.hidesBottomBarWhenPushed = YES;
+            [self.navigationController pushViewController:startVC animated:YES];
+        } else if (indexPath.row == 1) {// Select the quota cell
             [self updateAccountInfo];
+        }
     } else if (indexPath.section == SECTION_CAMERA) {
         Debug("selected %ld, autoSync: %d", (long)indexPath.row, self.autoSync);
         if (indexPath.row == CELL_CAMERA_DESTINATION) {
@@ -572,10 +582,6 @@ enum {
     [self alertWithTitle:MSG_LOG_OUT message:nil yes:^{
         Debug("Log out %@ %@", _connection.address, _connection.username);
         [_connection logout];
-        
-        // Remove the default account settings
-           [SeafStorage.sharedObject removeObjectForKey:@"DEAULT-SERVER"];
-           [SeafStorage.sharedObject removeObjectForKey:@"DEAULT-USER"];
         
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         [appdelegate exitAccount];

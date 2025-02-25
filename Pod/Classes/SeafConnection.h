@@ -104,6 +104,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 @property (readonly) AFHTTPSessionManager * _Nonnull loginMgr;///< Session manager for login requests.
 @property (nonatomic, readonly) NSString * _Nonnull accountIdentifier;///< Unique identifier for the user's account.
 @property (readonly) NSString * _Nullable username;///< Username of the Seafile account.
+@property (readonly) NSString * _Nullable name;///< Username of the Seafile account.
 @property (readonly) NSString * _Nullable password;///< Password of the Seafile account.
 @property (readonly) NSString * _Nullable host;///< Host URL of the Seafile server.
 @property (readonly) BOOL isShibboleth;///< Indicates whether Shibboleth authentication is used.

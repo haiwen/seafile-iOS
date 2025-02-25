@@ -496,10 +496,6 @@
 
 - (BOOL)tabBarController:(UITabBarController *)tabBarController shouldSelectViewController:(UIViewController *)viewController
 {
-    if ([self.viewControllers indexOfObject:viewController] == TABBED_ACCOUNTS) {
-        [self exitAccount];
-        return NO;
-    }
     return YES;
 }
 
@@ -517,7 +513,6 @@
     UIViewController *starredController = [tabs.viewControllers objectAtIndex:TABBED_STARRED];
     UIViewController *settingsController = [tabs.viewControllers objectAtIndex:TABBED_SETTINGS];
     UIViewController *activityController = [tabs.viewControllers objectAtIndex:TABBED_ACTIVITY];
-    UIViewController *accountvc = [tabs.viewControllers objectAtIndex:TABBED_ACCOUNTS];
 
     UITabBarItem *homeItem = [[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Libraries", @"Seafile") image:[UIImage imageNamed:@"tab-home.png"] tag:0];
     fileController.tabBarItem = homeItem;
@@ -530,9 +525,6 @@
     
     UITabBarItem *activityItem = [[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Activity", @"Seafile") image:[UIImage imageNamed:@"tab-modify.png"] tag:3];
     activityController.tabBarItem = activityItem;
-    
-    UITabBarItem *accountItem = [[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Accounts", @"Seafile") image:[UIImage imageNamed:@"tab-account.png"] tag:4];
-    accountvc.tabBarItem = accountItem;
 
     if (IsIpad()) {
         ((UISplitViewController *)fileController).delegate = (id)[[((UISplitViewController *)fileController).viewControllers lastObject] topViewController];

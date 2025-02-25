@@ -253,7 +253,7 @@
             break;
     }
     
-    // Restore previous session details if available.
+    // Modify this part of the code to allow editing all fields in edit mode
     if (self.connection) {
         https = [connection.address hasPrefix:HTTPS];
         _httpsSwitch.on = https;
@@ -261,9 +261,22 @@
         serverTextField.text = [connection.address componentsSeparatedByString:@"//"].lastObject;
         usernameTextField.text = connection.username;
         passwordTextField.text = nil;
-        serverTextField.enabled = false;
-        usernameTextField.enabled = false;
-        _httpsSwitch.enabled = false;
+        
+        // Keep these fields editable in edit mode
+        // But for seacloud.cc accounts, still disable the server field and HTTPS switch
+        if (self.type == ACCOUNT_SEACLOUD) {
+            serverTextField.enabled = false;
+            _httpsSwitch.enabled = false;
+        } else {
+            serverTextField.enabled = true;
+            usernameTextField.enabled = true;
+            _httpsSwitch.enabled = true;
+        }
+        
+        // Ensure the HTTPS switch remains disabled for Shibboleth type
+        if (self.type == ACCOUNT_SHIBBOLETH) {
+            _httpsSwitch.enabled = false;
+        }
     }
     [self.serverTextField setDelegate:self];
     
