@@ -126,6 +126,7 @@
 // Exit current account and display the start (login) screen.
 - (void)exitAccount
 {
+    [_startVC reloadAccountList];
     self.window.rootViewController = _startNav;
     [self.window makeKeyAndVisible];
 }
