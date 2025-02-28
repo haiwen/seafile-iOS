@@ -74,6 +74,8 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
  */
 - (NSData *_Nullable)getClientCertPersistentRef:(NSURLCredential *_Nullable __autoreleasing *_Nullable)credential; // return the persistentRef
 
+- (void)clearEditedAccount;
+
 @end
 
 @protocol SeafConnectionDelegate <NSObject>
@@ -102,7 +104,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 @property (strong) SeafRepos *_Nullable rootFolder;///< Root folder object representing the top directory in the server.
 @property (readonly) AFHTTPSessionManager * _Nonnull sessionMgr; ///< Session manager for regular HTTP requests.
 @property (readonly) AFHTTPSessionManager * _Nonnull loginMgr;///< Session manager for login requests.
-@property (nonatomic, readonly) NSString * _Nonnull accountIdentifier;///< Unique identifier for the user's account.
+@property (nonatomic, copy) NSString * _Nullable accountIdentifier;///< Unique identifier for the user's account.
 @property (readonly) NSString * _Nullable username;///< Username of the Seafile account.
 @property (readonly) NSString * _Nullable name;///< Username of the Seafile account.
 @property (readonly) NSString * _Nullable password;///< Password of the Seafile account.
@@ -138,6 +140,10 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 @property (nonatomic, strong) SeafPhotoBackupTool * _Nullable photoBackup;///< Tool for backing up photos.
 
 @property (readonly) NSString * _Nullable localUploadDir;
+
+// Properties to store the original account information
+@property (nonatomic, strong) NSString * _Nullable originalUsername;
+@property (nonatomic, strong) NSString * _Nullable originalAddress;
 
 /**
  * Initializes a new connection with a specified URL and an optional cache provider.
@@ -504,4 +510,9 @@ Checks the auto synchronization settings and updates the connection’s synchron
 
 - (BOOL)isDecrypted:(NSString *_Nonnull)repoId;
 
+- (void)clearSettings;
+
+- (void)logoutAndAccountClear;
+
++ (NSString *_Nullable)generateUrlFromConnection:(SeafConnection *_Nullable)connection;
 @end

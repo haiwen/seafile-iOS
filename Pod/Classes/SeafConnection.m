@@ -229,6 +229,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [SeafStorage.sharedObject setObject:_settings forKey:[self.accountIdentifier stringByAppendingString:@"/settings"]];
 }
 
+- (void)clearSettings {
+    self.settings = [NSMutableDictionary dictionary];
+    [self saveSettings];
+}
+
 - (void)setAttribute:(id)anObject forKey:(NSString *)aKey
 {
     [Utils dict:_settings setObject:anObject forKey:aKey];
@@ -759,6 +764,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [Utils dict:_info setObject:_address forKey:@"link"];
     [Utils dict:_info setObject:[NSNumber numberWithBool:isshib] forKey:@"isshibboleth"];
     [Utils dict:_info setObject:s2faToken forKey:@"s2faToken"];
+    self.accountIdentifier = nil;
     [self saveAccountInfo];
     [self.loginDelegate loginSuccess:self];
     
@@ -809,6 +815,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             [self showDeserializedError:error];
             [self.loginDelegate loginFailed:self response:resp error:error];
         } else {
+            [self.loginDelegate clearEditedAccount];//for after edited login account
+
             NSString *s2faToken = [resp.allHeaderFields objectForKey:@"X-SEAFILE-S2FA"];
             
             [Utils dict:self.info setObject:password forKey:@"password"];
@@ -1658,6 +1666,28 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         [SeafStorage.sharedObject setObject:now forKey:@"LastOrphanedFileStatusCleanupDate"];
         Debug(@"Performed daily cleanup of orphaned file statuses");
     }
+}
+
+-(void)logoutAndAccountClear {
+    Debug(@"Deleting original account before editing: %@ %@", self.address, self.username);
+    [[SeafDataTaskManager sharedObject] cancelAllUploadTasks:self];
+    [[SeafDataTaskManager sharedObject] cancelAllDownloadTasks:self];
+    [self clearSettings];
+    [self checkAutoSync];
+    [self clearAccount];
+    [self logout];
+}
+
++ (NSString *)generateUrlFromConnection:(SeafConnection *)connection
+{
+    if (connection && connection.address) {
+        NSString *url = connection.address;
+        if ([url hasSuffix:@"/"])
+            url = [url substringToIndex:url.length-1];
+        return url;
+    }
+    
+    return nil;
 }
 
 @end

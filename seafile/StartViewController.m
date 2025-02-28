@@ -167,13 +167,22 @@
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
     if (IsIpad()) {
         navController.modalPresentationStyle = UIModalPresentationFormSheet;
+        UINavigationController *nav = self.navigationController;
+        if (!nav) {
+            dispatch_async(dispatch_get_main_queue(), ^ {
+                SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+                [appdelegate.window.rootViewController presentViewController:navController animated:YES completion:nil];
+            });
+        } else {
+            [nav pushViewController:controller animated:YES];
+        }
     } else {
         navController.modalPresentationStyle = UIModalPresentationFullScreen;
+        dispatch_async(dispatch_get_main_queue(), ^ {
+            SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+            [appdelegate.window.rootViewController presentViewController:navController animated:YES completion:nil];
+        });
     }
-    dispatch_async(dispatch_get_main_queue(), ^ {
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        [appdelegate.window.rootViewController presentViewController:navController animated:YES completion:nil];
-    });
 }
 
 // Handles the action for adding a new account
@@ -182,16 +191,16 @@
     NSString *title = NSLocalizedString(@"Choose a Seafile server", @"Seafile");
     NSString *privserver = NSLocalizedString(@"Other Server", @"Seafile");
     
-    //Array of display at login view.
+    // Array of display at login view.
     NSArray *arrZH = [NSArray arrayWithObjects:SERVER_SEACLOUD_NAME, SERVER_SHIB_NAME, privserver, nil];
     NSArray *arrOther = [NSArray arrayWithObjects:SERVER_SHIB_NAME, privserver, nil];
     
-    //Detect the current locale
+    // Detect the current locale
     NSString *currentLanguage = [[NSLocale preferredLanguages] firstObject];
     
     UIAlertController *alert = nil;
     
-    //Show different login methods
+    // Show different login methods
     if ([currentLanguage hasPrefix:@"zh"]) {
         alert = [self generateAlert:arrZH withTitle:title handler:^(UIAlertAction *action) {
             long index = [arrZH indexOfObject:action.title];
@@ -251,13 +260,39 @@
         if (index < 0 || index >= arr.count)
             return;
         SeafConnection *conn = [SeafGlobal.sharedObject.conns objectAtIndex:pressedIndex.row];
-        if (index == 0) { //Edit
+        if (index == 0) { // Edit
             int type = conn.isShibboleth ? ACCOUNT_SHIBBOLETH : ACCOUNT_OTHER;
-            [self showAccountView:conn type:type];
-        } else if (index == 1) { //Delete
-            [conn clearAccount];
-            [SeafGlobal.sharedObject removeConnection:conn];
-            [self.tableView reloadData];
+            SeafConnection *connection = [[SeafConnection alloc] initWithUrl:[SeafConnection generateUrlFromConnection:conn] cacheProvider:SeafGlobal.sharedObject.cacheProvider];
+            
+            // Set original information to conn's extended properties
+            connection.originalUsername = conn.username;
+            connection.originalAddress = conn.address;
+            connection.address = conn.address;
+            [connection.info setObject:conn.username forKey:@"username"];
+            
+            [self showAccountView:connection type:type];
+        } else if (index == 1) { // Delete
+            // Get current login account information
+            NSString *currentServer = [SeafStorage.sharedObject objectForKey:@"DEAULT-SERVER"];
+            NSString *currentUsername = [SeafStorage.sharedObject objectForKey:@"DEAULT-USER"];
+            
+            // Check if the account to be deleted is the current login account
+            if (currentServer && currentUsername && 
+                [currentServer isEqualToString:conn.address] && 
+                [currentUsername isEqualToString:conn.username]) {
+                SeafConnection *oldConn = [SeafGlobal.sharedObject getConnection:currentServer username:currentUsername];
+                if (oldConn) {
+                    [oldConn logoutAndAccountClear];
+                    [SeafGlobal.sharedObject removeConnection:oldConn];
+                }
+                SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+                [appdelegate exitAccount];
+            } else {
+                // If it is not the current login account, allow deletion
+                [conn clearAccount];
+                [SeafGlobal.sharedObject removeConnection:conn];
+                [self.tableView reloadData];
+            }
         }
     }];
 
@@ -449,6 +484,42 @@
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations
 {
     return (UIInterfaceOrientationMaskAll);
+}
+
+#pragma mark - Account Info Refresh
+// Refreshes the account information and updates the UI
+- (void)refreshAccountInfo:(SeafConnection *)connection
+{
+    if (!connection) return;
+    
+    // Show loading status
+    [SVProgressHUD showWithStatus:NSLocalizedString(@"Updating account info", @"Seafile")];
+    
+    // Get account information
+    [connection getAccountInfo:^(bool result) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            // Hide loading status
+            [SVProgressHUD dismiss];
+            
+            if (result) {
+                // Successfully retrieved account information, refresh the table
+                Debug(@"Successfully refreshed account info for %@ %@", connection.address, connection.username);
+                [self.tableView reloadData];
+            } else {
+                // Failed to retrieve account information
+                Warning(@"Failed to get account info for %@ %@", connection.address, connection.username);
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to update account info", @"Seafile")];
+            }
+
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"SeafAccountInfoUpdated"
+                                                                object:connection
+                                                              userInfo:@{@"success": @(result)}];
+        });
+    }];
+}
+
+- (void)reloadAccountList {
+    [self.tableView reloadData];
 }
 
 @end

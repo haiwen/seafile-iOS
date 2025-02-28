@@ -180,6 +180,7 @@ enum {
     self.state = STATE_LOADING;
     self.directory.delegate = self;
     [_directory loadContent:true]; // get data from server
+    [self refreshDownloadStatus];
 }
 
 - (void)viewDidUnload
@@ -264,6 +265,7 @@ enum {
     if (![_directory isKindOfClass:[SeafRepos class]]) {
         return self.allItems.count;
     }
+    
     NSArray *repos =  [[((SeafRepos *)_directory) repoGroups] objectAtIndex:section];
     return repos.count;
 }
@@ -276,7 +278,7 @@ enum {
 {
     NSObject *entry = [self getDentrybyIndexPath:indexPath tableView:tableView];
     if (!entry) return [[UITableViewCell alloc] init];
-
+    
     if ([entry isKindOfClass:[SeafRepo class]]) {
         return [self getSeafRepoCell:(SeafRepo *)entry forTableView:tableView andIndexPath:indexPath];
     } else if ([entry isKindOfClass:[SeafFile class]]) {
@@ -406,26 +408,33 @@ enum {
     if (section == 0) {
         text = NSLocalizedString(@"My Own Libraries", @"Seafile");
     } else {
-        NSArray *repos =  [[((SeafRepos *)_directory)repoGroups] objectAtIndex:section];
-        SeafRepo *repo = (SeafRepo *)[repos objectAtIndex:0];
-        if (!repo) {
+        NSArray *repoGroups = [((SeafRepos *)_directory) repoGroups];
+        if (section >= repoGroups.count) return nil;
+        
+        NSArray *repos = [repoGroups objectAtIndex:section];
+        if (repos.count == 0) {
             text = @"";
-        } else if ([repo.type isEqualToString:SHARE_REPO]) {
-            text = NSLocalizedString(@"Shared to me", @"Seafile");
-        } else if ([repo.type isEqualToString:GROUP_REPO]) {
-            if (!repo.groupName || repo.groupName.length == 0) {
-                text = NSLocalizedString(@"Shared with groups", @"Seafile");
-            } else {
-                text = repo.groupName;
-            }
         } else {
-            if ([repo.owner isKindOfClass:[NSNull class]]) {
+            SeafRepo *repo = (SeafRepo *)[repos objectAtIndex:0];
+            if (!repo) {
                 text = @"";
-            } else {
-                if ([repo.owner isEqualToString:ORG_REPO]) {
-                    text = NSLocalizedString(@"Organization", @"Seafile");
+            } else if ([repo.type isEqualToString:SHARE_REPO]) {
+                text = NSLocalizedString(@"Shared to me", @"Seafile");
+            } else if ([repo.type isEqualToString:GROUP_REPO]) {
+                if (!repo.groupName || repo.groupName.length == 0) {
+                    text = NSLocalizedString(@"Shared with groups", @"Seafile");
                 } else {
-                    text = repo.owner;
+                    text = repo.groupName;
+                }
+            } else {
+                if ([repo.owner isKindOfClass:[NSNull class]]) {
+                    text = @"";
+                } else {
+                    if ([repo.owner isEqualToString:ORG_REPO]) {
+                        text = NSLocalizedString(@"Organization", @"Seafile");
+                    } else {
+                        text = repo.owner;
+                    }
                 }
             }
         }
@@ -788,6 +797,7 @@ enum {
             if (!idxs) return;
             NSMutableArray *entries = [[NSMutableArray alloc] init];
             for (NSIndexPath *indexPath in idxs) {
+                if (indexPath.row >= self.allItems.count) continue; // Add safety check
                 SeafBase *item = (SeafBase *)[self.allItems objectAtIndex:indexPath.row];
                 [entries addObject:item.name];
             }
@@ -1641,10 +1651,22 @@ enum {
 {
     if (!indexPath) return nil;
     @try {
-        if (![_directory isKindOfClass:[SeafRepos class]])
-            return [self.allItems objectAtIndex:[indexPath row]];
-        NSArray *repos = [[((SeafRepos *)_directory) repoGroups] objectAtIndex:[indexPath section]];
-        return [repos objectAtIndex:[indexPath row]];
+        if (![_directory isKindOfClass:[SeafRepos class]]) {
+            // Handle regular files/directories when the directory is not a repository list
+            if ([indexPath row] < self.allItems.count) {
+                return [self.allItems objectAtIndex:[indexPath row]];
+            } else {
+                return nil;
+            }
+        } else {
+            // Handle repository list when the directory is a repository list
+            NSArray *repos = [[((SeafRepos *)_directory) repoGroups] objectAtIndex:[indexPath section]];
+            if ([indexPath row] < repos.count) {
+                return [repos objectAtIndex:[indexPath row]];
+            } else {
+                return nil;
+            }
+        }
     } @catch(NSException *exception) {
         return nil;
     }
@@ -1676,7 +1698,7 @@ enum {
 - (SeafCell *)getEntryCell:(id)entry indexPath:(NSIndexPath **)indexPath
 {
     NSUInteger index = [self indexOfEntry:entry];
-    if (index == NSNotFound)
+    if (index == NSNotFound || index >= self.allItems.count) // Add safety check
         return nil;
     @try {
         NSIndexPath *path = [NSIndexPath indexPathForRow:index inSection:0];
@@ -1739,6 +1761,7 @@ enum {
     }
     NSMutableArray *entries = [NSMutableArray new];
     for (NSIndexPath *indexPath in idxs) {
+        if (indexPath.row >= self.allItems.count) continue; // Add safety check
         SeafBase *item = self.allItems[indexPath.row];
         [entries addObject:item.name];
     }
@@ -2060,19 +2083,15 @@ enum {
 }
 
 - (id <MWPhoto>)photoBrowser:(MWPhotoBrowser *)photoBrowser photoAtIndex:(NSUInteger)index {
-    if (index < self.photos.count) {
-        return [self.photos objectAtIndex:index];
-    }
-    return nil;
+    if (!self.photos || index >= self.photos.count) return nil; // Add safety check
+    return [self.photos objectAtIndex:index];
 }
 
 - (NSString *)photoBrowser:(MWPhotoBrowser *)photoBrowser titleForPhotoAtIndex:(NSUInteger)index
 {
-    if (index < self.photos.count) {
-        SeafPhoto *photo = [self.photos objectAtIndex:index];
-        return photo.file.name;
-    }
-    return nil;
+    if (!self.photos || index >= self.photos.count) return nil; // Add safety check
+    SeafPhoto *photo = [self.photos objectAtIndex:index];
+    return photo.file.name;
 }
 
 // Called when user scrolls to another photo
