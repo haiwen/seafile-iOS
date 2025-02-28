@@ -18,6 +18,7 @@
 #import "Debug.h"
 #import <openssl/x509.h>
 #import "SeafPrivacyPolicyViewController.h"
+#import "SeafDataTaskManager.h"
 
 
 #define HTTP @"http://"
@@ -154,6 +155,37 @@
     if ([url hasSuffix:@"/"])
         url = [url substringToIndex:url.length-1];
     
+    // Check if this is editing an existing account and account information hasn't changed
+    if (self.connection && self.connection.originalUsername && self.connection.originalAddress) {
+        if ([self.connection.originalUsername isEqualToString:username] && 
+            [self.connection.originalAddress isEqualToString:url]) {
+            Debug(@"Account information unchanged, returning directly");
+            [self dismissViewControllerAnimated:YES completion:nil];
+            return;
+        }
+        
+        // Account information has changed, check if it conflicts with an existing account
+        SeafConnection *existingConn = [SeafGlobal.sharedObject getConnection:url username:username];
+        if (existingConn) {
+            Debug(@"Edited account already exists, switching to that account and deleting the original");
+            
+            // Delete the original account
+            SeafConnection *oldConn = [SeafGlobal.sharedObject getConnection:self.connection.originalAddress 
+                                                                     username:self.connection.originalUsername];
+            if (oldConn) {
+                [oldConn clearAccount];
+                [SeafGlobal.sharedObject removeConnection:oldConn];
+            }
+            
+            // Close current view and return to account list
+            [self dismissViewControllerAnimated:YES completion:^{
+                // Switch account list to the existing account
+                [self.startController checkSelectAccount:existingConn];
+            }];
+            return;
+        }
+    }
+    
     // Setup or reset connection object based on the URL
     if (!self.connection)
         connection = [[SeafConnection alloc] initWithUrl:url cacheProvider:SeafGlobal.sharedObject.cacheProvider];
@@ -163,6 +195,8 @@
     }
     connection.loginDelegate = self;
     connection.delegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    
+    SeafConnection *connnn = [SeafGlobal sharedObject].conns.firstObject;
     [connection loginWithUsername:username password:password];
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Connecting to server", @"Seafile")];
 }
@@ -381,14 +415,17 @@
         return;
 
     Debug("login success");
+
     [conn getServerInfo:^(bool result) {
         Debug("Get server info result: %d", result);
         [SVProgressHUD dismiss];
-        connection.loginDelegate = nil;
+        connection.loginDelegate = nil;        
+        
         BOOL ret = [startController saveAccount:connection];
         if (ret) {
             [self.navigationController dismissViewControllerAnimated:YES completion:nil];
             [startController checkSelectAccount:connection];
+            [startController refreshAccountInfo:connection];
         } else {
             Warning("Failed to save account.");
             [self alertWithTitle:NSLocalizedString(@"Failed to save account", @"Seafile")];
@@ -463,6 +500,22 @@
     } else {
         vc.hidesBottomBarWhenPushed = true;
         [self.navigationController pushViewController:vc animated:true];
+    }
+}
+
+- (void)clearEditedAccount {
+    // Check if this is account editing mode (has original account information)
+    if (connection.originalUsername != nil && connection.originalAddress != nil) {
+        // Delete the original account before editing
+        SeafConnection *oldConn = [SeafGlobal.sharedObject getConnection:connection.originalAddress username:connection.originalUsername];
+        if (oldConn) {
+            [oldConn logoutAndAccountClear];
+            [SeafGlobal.sharedObject removeConnection:oldConn];
+        }
+        
+        // Clear temporarily saved original account information
+        connection.originalUsername = nil;
+        connection.originalAddress = nil;
     }
 }
 @end
