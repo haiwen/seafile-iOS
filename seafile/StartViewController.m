@@ -167,13 +167,22 @@
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
     if (IsIpad()) {
         navController.modalPresentationStyle = UIModalPresentationFormSheet;
+        UINavigationController *nav = self.navigationController;
+        if (!nav) {
+            dispatch_async(dispatch_get_main_queue(), ^ {
+                SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+                [appdelegate.window.rootViewController presentViewController:navController animated:YES completion:nil];
+            });
+        } else {
+            [nav pushViewController:controller animated:YES];
+        }
     } else {
         navController.modalPresentationStyle = UIModalPresentationFullScreen;
+        dispatch_async(dispatch_get_main_queue(), ^ {
+            SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+            [appdelegate.window.rootViewController presentViewController:navController animated:YES completion:nil];
+        });
     }
-    dispatch_async(dispatch_get_main_queue(), ^ {
-        SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-        [appdelegate.window.rootViewController presentViewController:navController animated:YES completion:nil];
-    });
 }
 
 // Handles the action for adding a new account
@@ -501,6 +510,10 @@
                 Warning(@"Failed to get account info for %@ %@", connection.address, connection.username);
                 [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to update account info", @"Seafile")];
             }
+
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"SeafAccountInfoUpdated"
+                                                                object:connection
+                                                              userInfo:@{@"success": @(result)}];
         });
     }];
 }

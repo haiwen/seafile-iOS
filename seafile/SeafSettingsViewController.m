@@ -368,6 +368,10 @@ enum {
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(uploadTaskStatusChanged:) name:@"SeafUploadTaskStatusChanged" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(uploadTaskStatusChanged:) name:@"SeafDownloadTaskStatusChanged" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self 
+                                             selector:@selector(accountInfoUpdated:) 
+                                                 name:@"SeafAccountInfoUpdated" 
+                                               object:nil];
 
 }
 
@@ -486,6 +490,19 @@ enum {
     });
 }
 
+- (void)accountInfoUpdated:(NSNotification *)notification
+{
+    SeafConnection *connection = notification.object;
+    BOOL success = [notification.userInfo[@"success"] boolValue];
+    
+    // Only update if this is the currently displayed account
+    if (success && connection == self.connection && self.isVisible) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self configureView];
+        });
+    }
+}
+
 #pragma mark - Table view delegate
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
@@ -497,7 +514,32 @@ enum {
             UINavigationController *navController = [startStoryboard instantiateInitialViewController];
             StartViewController *startVC = (StartViewController *)navController.topViewController;
             startVC.hidesBottomBarWhenPushed = YES;
-            [self.navigationController pushViewController:startVC animated:YES];
+            
+            if (IsIpad()) {
+                // Configure modal presentation style for iPad
+                navController.modalPresentationStyle = UIModalPresentationFormSheet;
+                
+                // Configure navigation bar appearance
+                navController.navigationBar.tintColor = BAR_COLOR;
+                navController.navigationBar.barTintColor = [UIColor whiteColor];
+                navController.navigationBar.translucent = NO;
+                
+                if (@available(iOS 15.0, *)) {
+                    UINavigationBarAppearance *appearance = [[UINavigationBarAppearance alloc] init];
+                    [appearance configureWithOpaqueBackground];
+                    appearance.backgroundColor = [UIColor whiteColor];
+                    navController.navigationBar.standardAppearance = appearance;
+                    navController.navigationBar.scrollEdgeAppearance = appearance;
+                }
+                
+                // Present the new view controller after dismissing any existing one
+                dispatch_async(dispatch_get_main_queue(), ^ {
+                    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+                    [appdelegate.window.rootViewController presentViewController:navController animated:YES completion:nil];
+                });
+            } else {
+                [self.navigationController pushViewController:startVC animated:YES];
+            }
         } else if (indexPath.row == 1) {// Select the quota cell
             [self updateAccountInfo];
         }
@@ -696,6 +738,7 @@ enum {
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self name:@"SeafUploadTaskStatusChanged" object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"SeafAccountInfoUpdated" object:nil];
 }
 
 @end
