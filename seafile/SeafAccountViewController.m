@@ -196,7 +196,6 @@
     connection.loginDelegate = self;
     connection.delegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     
-    SeafConnection *connnn = [SeafGlobal sharedObject].conns.firstObject;
     [connection loginWithUsername:username password:password];
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Connecting to server", @"Seafile")];
 }
