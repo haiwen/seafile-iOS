@@ -298,6 +298,8 @@ enum {
 {
     [super viewDidLoad];
     _nameCell.textLabel.text = NSLocalizedString(@"Username", @"Seafile");
+    _nameCell.detailTextLabel.textColor = BAR_COLOR;
+    _nameCell.detailTextLabel.text = NSLocalizedString(@"Switch Account", @"Seafile");
     _usedspaceCell.textLabel.text = NSLocalizedString(@"Space Used", @"Seafile");
     
     LAContext *lac = [[LAContext alloc] init];
@@ -366,6 +368,10 @@ enum {
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(uploadTaskStatusChanged:) name:@"SeafUploadTaskStatusChanged" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(uploadTaskStatusChanged:) name:@"SeafDownloadTaskStatusChanged" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self 
+                                             selector:@selector(accountInfoUpdated:) 
+                                                 name:@"SeafAccountInfoUpdated" 
+                                               object:nil];
 
 }
 
@@ -389,7 +395,7 @@ enum {
     if (!_connection)
         return;
 
-    _nameCell.detailTextLabel.text = _connection.username;
+    _nameCell.textLabel.text = _connection.name;
     _enableTouchIDSwitch.on = _connection.touchIdEnabled;
 
     Debug("Account : %@, %lld, quota: %lld", _connection.username, _connection.usage, _connection.quota);
@@ -484,13 +490,59 @@ enum {
     });
 }
 
+- (void)accountInfoUpdated:(NSNotification *)notification
+{
+    SeafConnection *connection = notification.object;
+    BOOL success = [notification.userInfo[@"success"] boolValue];
+    
+    // Only update if this is the currently displayed account
+    if (success && connection == self.connection && self.isVisible) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self configureView];
+        });
+    }
+}
+
 #pragma mark - Table view delegate
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     [self.tableView deselectRowAtIndexPath:[self.tableView indexPathForSelectedRow] animated:NO];
     if (indexPath.section == SECTION_ACCOUNT) {
-        if (indexPath.row == 1) // Select the quota cell
+        if (indexPath.row == 0) {
+            Debug("Switch Account");
+            UIStoryboard *startStoryboard = [UIStoryboard storyboardWithName:@"SeafStart" bundle:nil];
+            UINavigationController *navController = [startStoryboard instantiateInitialViewController];
+            StartViewController *startVC = (StartViewController *)navController.topViewController;
+            startVC.hidesBottomBarWhenPushed = YES;
+            
+            if (IsIpad()) {
+                // Configure modal presentation style for iPad
+                navController.modalPresentationStyle = UIModalPresentationFormSheet;
+                
+                // Configure navigation bar appearance
+                navController.navigationBar.tintColor = BAR_COLOR;
+                navController.navigationBar.barTintColor = [UIColor whiteColor];
+                navController.navigationBar.translucent = NO;
+                
+                if (@available(iOS 15.0, *)) {
+                    UINavigationBarAppearance *appearance = [[UINavigationBarAppearance alloc] init];
+                    [appearance configureWithOpaqueBackground];
+                    appearance.backgroundColor = [UIColor whiteColor];
+                    navController.navigationBar.standardAppearance = appearance;
+                    navController.navigationBar.scrollEdgeAppearance = appearance;
+                }
+                
+                // Present the new view controller after dismissing any existing one
+                dispatch_async(dispatch_get_main_queue(), ^ {
+                    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+                    [appdelegate.window.rootViewController presentViewController:navController animated:YES completion:nil];
+                });
+            } else {
+                [self.navigationController pushViewController:startVC animated:YES];
+            }
+        } else if (indexPath.row == 1) {// Select the quota cell
             [self updateAccountInfo];
+        }
     } else if (indexPath.section == SECTION_CAMERA) {
         Debug("selected %ld, autoSync: %d", (long)indexPath.row, self.autoSync);
         if (indexPath.row == CELL_CAMERA_DESTINATION) {
@@ -572,10 +624,6 @@ enum {
     [self alertWithTitle:MSG_LOG_OUT message:nil yes:^{
         Debug("Log out %@ %@", _connection.address, _connection.username);
         [_connection logout];
-        
-        // Remove the default account settings
-           [SeafStorage.sharedObject removeObjectForKey:@"DEAULT-SERVER"];
-           [SeafStorage.sharedObject removeObjectForKey:@"DEAULT-USER"];
         
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         [appdelegate exitAccount];
@@ -690,6 +738,7 @@ enum {
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self name:@"SeafUploadTaskStatusChanged" object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"SeafAccountInfoUpdated" object:nil];
 }
 
 @end

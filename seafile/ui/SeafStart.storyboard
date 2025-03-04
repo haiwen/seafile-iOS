@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="13196" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="k7e-C2-Uj2">
-    <device id="retina4_7" orientation="portrait">
-        <adaptation id="fullscreen"/>
-    </device>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23504" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="k7e-C2-Uj2">
+    <device id="retina4_7" orientation="portrait" appearance="light"/>
     <dependencies>
-        <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13174"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23506"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -61,22 +58,10 @@
                                     <outlet property="delegate" destination="NlU-3N-9qN" id="6YV-n6-Yk3"/>
                                 </connections>
                             </tableView>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="2ul-ed-trw" customClass="ColorfulButton">
-                                <rect key="frame" x="0.0" y="623" width="375" height="44"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="44" id="LaB-a2-DKd"/>
-                                </constraints>
-                                <state key="normal" title="Back to Last Account">
-                                    <color key="titleColor" red="0.66666668650000005" green="0.66666668650000005" blue="0.66666668650000005" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                </state>
-                            </button>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
                             <constraint firstItem="6GD-du-smx" firstAttribute="top" secondItem="xZO-qQ-YQ8" secondAttribute="bottom" constant="44" id="0TT-y1-Anl"/>
-                            <constraint firstItem="2ul-ed-trw" firstAttribute="leading" secondItem="nMx-oE-qDR" secondAttribute="leading" id="2Z9-er-et4"/>
-                            <constraint firstItem="6GD-du-smx" firstAttribute="top" secondItem="2ul-ed-trw" secondAttribute="bottom" id="3yf-16-mtY"/>
-                            <constraint firstAttribute="trailing" secondItem="2ul-ed-trw" secondAttribute="trailing" id="5cy-9U-Gno"/>
                             <constraint firstItem="xZO-qQ-YQ8" firstAttribute="top" secondItem="zkV-mJ-jzZ" secondAttribute="bottom" id="UPV-Zr-FV6"/>
                             <constraint firstAttribute="trailing" secondItem="xZO-qQ-YQ8" secondAttribute="trailing" id="YCL-co-MXe"/>
                             <constraint firstItem="xZO-qQ-YQ8" firstAttribute="leading" secondItem="nMx-oE-qDR" secondAttribute="leading" id="vfo-yb-YB3"/>
@@ -84,7 +69,6 @@
                     </view>
                     <navigationItem key="navigationItem" id="Kof-3C-CQ1"/>
                     <connections>
-                        <outlet property="backButton" destination="2ul-ed-trw" id="qTl-1m-UTi"/>
                         <outlet property="msgLabel" destination="EzT-5E-z23" id="Sdj-WS-bqP"/>
                         <outlet property="tableView" destination="xZO-qQ-YQ8" id="L46-zF-MwH"/>
                         <outlet property="welcomeLabel" destination="5cu-kk-QzD" id="Uuy-rN-3j0"/>

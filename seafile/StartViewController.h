@@ -17,5 +17,7 @@
 - (bool)saveAccount:(SeafConnection *)conn;
 - (void)checkSelectAccount:(SeafConnection *)conn;
 - (void)selectDefaultAccount:(void (^)(bool success))handler;
+- (void)refreshAccountInfo:(SeafConnection *)connection;
+- (void)reloadAccountList;
 
 @end
