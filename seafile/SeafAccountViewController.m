@@ -186,8 +186,7 @@
     if (!self.connection)
         connection = [[SeafConnection alloc] initWithUrl:url cacheProvider:SeafGlobal.sharedObject.cacheProvider];
     if (![url isEqualToString:connection.address]) {
-        connection = nil;
-        connection = [[SeafConnection alloc] initWithUrl:url cacheProvider:SeafGlobal.sharedObject.cacheProvider];
+        connection.address = url;
     }
     connection.loginDelegate = self;
     connection.delegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];

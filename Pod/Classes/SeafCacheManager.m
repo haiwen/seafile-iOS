@@ -127,6 +127,9 @@
 // Check if there is a local cache
 - (BOOL)fileHasCache:(SeafFile *)file
 {
+    if ([file isSdocFile]) {
+        return NO;
+    }
     // 1) If the local mpath exists and the file exists
     if (file.mpath && [[NSFileManager defaultManager] fileExistsAtPath:file.mpath]) {
         return YES;
