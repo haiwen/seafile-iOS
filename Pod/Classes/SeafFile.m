@@ -266,6 +266,10 @@
     return [Utils isVideoFile:self.name];
 }
 
+- (BOOL)isSdocFile {
+    return [self.mime isEqualToString:@"application/sdoc"];
+}
+
 #pragma mark - Icon & Thumbnail
 
 - (UIImage *)icon
@@ -674,5 +678,17 @@
 
 - (void)setRetryCount:(NSInteger)retryCount {
     self.model.retryCount = retryCount;
+}
+
+- (NSString *)getSdocWebViewURLString
+{
+    if (![self isSdocFile]) return nil;
+    
+    NSString *encodedPath = [self.path stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLPathAllowedCharacterSet]];
+    NSString *urlString = [NSString stringWithFormat:@"%@/lib/%@/file%@",
+                          self.connection.address, 
+                          self.repoId, 
+                          encodedPath];
+    return urlString;
 }
 @end
