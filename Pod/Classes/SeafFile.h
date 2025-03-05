@@ -205,4 +205,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 - (NSURL *  _Nullable)previewURL;
 - (NSURL * _Nullable)exportURL;
 
+- (BOOL)isSdocFile;
+- (NSString *_Nullable)getSdocWebViewURLString;
+
 @end

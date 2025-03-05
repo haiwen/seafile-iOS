@@ -138,7 +138,7 @@ enum SHARE_STATUS {
 
     } else if (self.preViewItem.previewItemURL) {
         _state = PREVIEW_QL_MODAL; // Default state
-        if ([self.preViewItem.mime isEqualToString:@"image/svg+xml"]) {
+        if ([self.preViewItem.mime isEqualToString:@"image/svg+xml"] || [self.preViewItem.mime isEqualToString:@"application/sdoc"]) {
             _state = PREVIEW_WEBVIEW;
         } else if([self.preViewItem.mime isEqualToString:@"text/x-markdown"] || [self.preViewItem.mime isEqualToString:@"text/x-seafile"]) {
             _state = PREVIEW_WEBVIEW_JS;
@@ -217,13 +217,22 @@ enum SHARE_STATUS {
         case PREVIEW_WEBVIEW_JS:
         case PREVIEW_WEBVIEW: {
             Debug("Preview by webview %@\n", self.preViewItem.previewItemTitle);
-            if (self.state == PREVIEW_WEBVIEW_JS) {
-                self.webView.navigationDelegate = self; // Set delegate for handling JavaScript
-            } else {
-                self.webView.navigationDelegate = nil; // Clear delegate for regular web view
-            }
+            self.webView.navigationDelegate = self;
             self.webView.frame = r;
-            [self.webView loadFileURL:self.preViewItem.previewItemURL allowingReadAccessToURL:self.preViewItem.previewItemURL];
+            if ([self.preViewItem isKindOfClass:[SeafFile class]]) {
+                SeafFile *sFile = (SeafFile *)self.preViewItem;
+                if ([sFile isSdocFile]) {
+                    NSString *sdocURLString = [sFile getSdocWebViewURLString];
+
+                    NSURLRequest *urlRequest = [sFile.connection buildRequest:sdocURLString method:@"GET" form:nil];
+                    [self.webView loadRequest:urlRequest];
+                } else {
+                    [self.webView loadFileURL:self.preViewItem.previewItemURL allowingReadAccessToURL:self.preViewItem.previewItemURL];
+                }
+            } else {
+                [self.webView loadFileURL:self.preViewItem.previewItemURL allowingReadAccessToURL:self.preViewItem.previewItemURL];
+            }
+            
             self.webView.hidden = NO;
             break;
         }
@@ -699,31 +708,42 @@ enum SHARE_STATUS {
 
 # pragma - WKWebViewDelegate
 - (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation {
-    if (self.preViewItem) {
-        NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [self.preViewItem.strContent stringEscapedForJavasacript]];// Prepare JavaScript for setting content
-        [self.webView evaluateJavaScript:js completionHandler:nil];// Evaluate JavaScript
-    }
-}
-
-- (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(nonnull WKNavigationAction *)navigationAction decisionHandler:(nonnull void (^)(WKNavigationActionPolicy))decisionHandler {
-    NSURL *requestURL = navigationAction.request.URL;
-    if ([requestURL.absoluteString hasPrefix:@"file://"]) {
-        decisionHandler(WKNavigationActionPolicyAllow);// Allow navigation for file URLs
-    } else {
-        if ([requestURL.absoluteString hasPrefix:@"http"]) {
-            if (@available(iOS 9.0, *)) {
-                SFSafariViewController *safariVC = [[SFSafariViewController alloc] initWithURL:requestURL];
-                [self presentViewController:safariVC animated:true completion:nil];// Present Safari view controller
-            } else {
-                [[UIApplication sharedApplication] openURL:requestURL];
-            }
+    SeafFile *sFile = (SeafFile *)self.preViewItem;
+    if (![sFile isSdocFile]) {
+        if (self.preViewItem) {
+            NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [self.preViewItem.strContent stringEscapedForJavasacript]];// Prepare JavaScript for setting content
+            [self.webView evaluateJavaScript:js completionHandler:nil];// Evaluate JavaScript
         }
-        decisionHandler(WKNavigationActionPolicyCancel);
     }
 }
 
-- (UIBarButtonItem *)getSpaceBarItem
-{
+- (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler {
+    SeafFile *sFile = (SeafFile *)self.preViewItem;
+    if ([sFile isSdocFile]) {
+        NSURL *originalURL = navigationAction.request.URL;
+        Debug(@"Request URL: %@", navigationAction.request.URL);
+        if ([originalURL.absoluteString containsString:@"login/?next"] && ![originalURL.absoluteString containsString:@"mobile-login/?next"]) {
+            // Cancel current loading first
+            decisionHandler(WKNavigationActionPolicyCancel);
+            
+            NSString *sdocURLString = [sFile getSdocWebViewURLString];
+            
+            NSString *mobileLoginURLString = [NSString stringWithFormat:@"%@/mobile-login/?next=%@",
+                                              sFile.connection.address,
+                                              sdocURLString];
+            NSURLRequest *urlRequest = [sFile.connection buildRequest:mobileLoginURLString method:@"GET" form:nil];
+            
+            [webView loadRequest:urlRequest];
+            
+            // Return here to avoid calling decisionHandler twice
+            return;
+        }
+    }
+    
+    decisionHandler(WKNavigationActionPolicyAllow);
+}
+
+- (UIBarButtonItem *)getSpaceBarItem {
     float spacewidth = IsIpad() ? 20.0f : 8.0f;
     UIBarButtonItem *space = [self getSpaceBarItem:spacewidth];
     return space;
