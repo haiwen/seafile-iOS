@@ -706,6 +706,8 @@
 	<string>application/x-shockwave-flash</string>
 	<key>swfl</key>
 	<string>application/x-shockwave-flash</string>
+	<key>sdoc</key>
+	<string>application/sdoc</string>
 	<key>t</key>
 	<string>application/x-troff</string>
 	<key>tad</key>
