@@ -1606,7 +1606,8 @@ enum {
 
 - (void)updateCellDownloadStatus:(SeafCell *)cell file:(SeafFile *)sfile waiting:(BOOL)waiting
 {
-    [self updateCellDownloadStatus:cell isDownloading:sfile.isDownloading waiting:waiting cached:sfile.hasCache];
+    BOOL fileHasCache = [sfile isSdocFile] ? NO : sfile.hasCache;
+    [self updateCellDownloadStatus:cell isDownloading:sfile.isDownloading waiting:waiting cached:fileHasCache];
 }
 
 - (void)updateCellDownloadStatus:(SeafCell *)cell isDownloading:(BOOL )isDownloading waiting:(BOOL)waiting cached:(BOOL)cached
