@@ -82,8 +82,11 @@
 
 
 #pragma mark - Add Download Task
-
 - (void)addFileDownloadTask:(SeafFile * _Nonnull)dfile {
+    [self addFileDownloadTask:dfile priority:NSOperationQueuePriorityNormal];
+}
+
+- (void)addFileDownloadTask:(SeafFile * _Nonnull)dfile priority:(NSOperationQueuePriority)priority {
     dfile.state = SEAF_DENTRY_INIT;
     // Check if the task already exists
     for (SeafDownloadOperation *op in self.downloadQueue.operations) {
@@ -96,6 +99,7 @@
     [operation addObserver:self forKeyPath:@"isFinished" options:NSKeyValueObservingOptionNew context:NULL];
     [operation addObserver:self forKeyPath:@"isCancelled" options:NSKeyValueObservingOptionNew context:NULL];
     operation.observersAdded = YES; // Set to YES after adding observers
+    operation.queuePriority = priority;
 
     // Initial state is waiting to execute, add to waitingDownloadTasks
     @synchronized (self.waitingDownloadTasks) {

@@ -13,7 +13,7 @@
 #define DEFAULT_CONCURRENCY 3
 #define DEFAULT_RETRYCOUNT 3
 #define Default_FileThumb_RetryCount 3
-#define DEFAULT_ATTEMPT_INTERVAL 60 // 1 min
+#define DEFAULT_RETRY_INTERVAL 3.0 // retry interval 3s
 #define DEFAULT_COMPLELE_INTERVAL 3*60 // 3 min
 
 // Task blocks
