@@ -18,10 +18,6 @@
         _taskList = [NSMutableArray array];
         _observersRemoved = NO;
         _operationCompleted = NO;
-
-        _retryCount = 0;
-        _maxRetryCount = 3; // Default maximum retry count, can be modified in subclasses
-        _retryDelay = 5;    // Default retry delay, can be modified in subclasses
     }
     return self;
 }
