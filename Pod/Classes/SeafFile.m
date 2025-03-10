@@ -43,8 +43,6 @@
 @synthesize exportURL = _exportURL;
 @synthesize preViewURL = _preViewURL;
 @synthesize lastFinishTimestamp = _lastFinishTimestamp;
-//@synthesize retryable = _retryable;
-//@synthesize retryCount = _retryCount;
 
 #pragma mark - Initialization
 
@@ -236,7 +234,7 @@
 
 - (void)downloadfile
 {
-    [[SeafDataTaskManager sharedObject] addFileDownloadTask:self];
+    [[SeafDataTaskManager sharedObject] addFileDownloadTask:self priority:NSOperationQueuePriorityVeryHigh];
 }
 
 - (void)realLoadContent

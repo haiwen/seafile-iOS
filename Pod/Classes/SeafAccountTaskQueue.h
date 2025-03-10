@@ -39,7 +39,10 @@
 @property (nonatomic, strong) SeafConnection * _Nonnull conn;
 
 - (void)addFileDownloadTask:(SeafFile * _Nonnull)dfile;
+- (void)addFileDownloadTask:(SeafFile * _Nonnull)dfile priority:(NSOperationQueuePriority)priority;
 - (BOOL)addUploadTask:(SeafUploadFile * _Nonnull)ufile;
+- (BOOL)addUploadTask:(SeafUploadFile * _Nonnull)ufile priority:(NSOperationQueuePriority)priority;
+
 - (void)addThumbTask:(SeafThumb * _Nonnull)thumb;
 
 - (void)removeFileDownloadTask:(SeafFile * _Nonnull)dfile;

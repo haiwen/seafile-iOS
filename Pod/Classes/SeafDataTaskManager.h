@@ -58,5 +58,6 @@ typedef void(^DownLoadFinshBlock)(id<SeafTask>  _Nonnull task);
 
 // Add an upload task with priority
 - (BOOL)addUploadTask:(SeafUploadFile *_Nonnull)file priority:(NSOperationQueuePriority)priority;
+- (void)addFileDownloadTask:(SeafFile * _Nonnull)dfile priority:(NSOperationQueuePriority)priority;
 
 @end

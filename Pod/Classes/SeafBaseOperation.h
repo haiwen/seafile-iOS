@@ -15,9 +15,8 @@
 
 @property (nonatomic, assign) BOOL operationCompleted;
 
-@property (nonatomic, assign) NSInteger retryCount;
 @property (nonatomic, assign) NSInteger maxRetryCount;
-@property (nonatomic, assign) NSTimeInterval retryDelay;
+
 
 - (void)cancelAllRequests;
 - (void)completeOperation;

@@ -55,7 +55,7 @@
 
 - (BOOL)addUploadTask:(SeafUploadFile *)file priority:(NSOperationQueuePriority)priority {
     SeafAccountTaskQueue *accountQueue = [self accountQueueForConnection:file.udir.connection];
-    BOOL res = [accountQueue addUploadTask:file];
+    BOOL res = [accountQueue addUploadTask:file priority:priority];
     if (res && file.retryable) {
         [self saveUploadFileToTaskStorage:file];
     }
@@ -69,13 +69,16 @@
 }
 
 #pragma mark - Download Tasks
-
-- (void)addFileDownloadTask:(SeafFile * _Nonnull)dfile {
+- (void)addFileDownloadTask:(SeafFile * _Nonnull)dfile priority:(NSOperationQueuePriority)priority {
     SeafAccountTaskQueue *accountQueue = [self accountQueueForConnection:dfile.connection];
-    [accountQueue addFileDownloadTask:dfile];
+    [accountQueue addFileDownloadTask:dfile priority:priority];
     if (dfile.retryable) {
         [self saveFileToTaskStorage:dfile];
     }
+}
+
+- (void)addFileDownloadTask:(SeafFile * _Nonnull)dfile {
+    [self addFileDownloadTask:dfile priority:NSOperationQueuePriorityNormal];
 }
 
 #pragma mark - Thumb Tasks
