@@ -30,6 +30,7 @@
         _filesize = size;
         _conn     = conn;
         _retryable = YES;
+        _retryCount = 0;
     }
     return self;
 }

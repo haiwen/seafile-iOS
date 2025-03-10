@@ -202,7 +202,7 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 - (void)cancelUpload;
 
 // Preview related
-- (NSURL *  _Nullable)previewURL;
+- (NSURL * _Nullable)previewURL;
 - (NSURL * _Nullable)exportURL;
 
 @end
