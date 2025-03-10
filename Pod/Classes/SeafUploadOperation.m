@@ -25,7 +25,7 @@
     if (self = [super init]) {
         _uploadFile = uploadFile;
         
-        self.retryDelay = UPLOAD_RETRY_DELAY;
+        _retryCount = 0;
         self.maxRetryCount = uploadFile.retryable ? DEFAULT_RETRYCOUNT : 0;
     }
     return self;
@@ -376,8 +376,8 @@
         }
         if (self.retryCount < self.maxRetryCount) {
             self.retryCount += 1;
-            Debug(@"Upload failed, retrying %ld/%ld in %.0f seconds", (long)self.retryCount, (long)self.maxRetryCount, self.retryDelay);
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.retryDelay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            Debug(@"Upload failed, retrying %ld/%ld in %.0f seconds", (long)self.retryCount, (long)self.maxRetryCount, UPLOAD_RETRY_DELAY);
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(UPLOAD_RETRY_DELAY * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                 if (!self.isCancelled) {
                     [self beginUpload];
                 } else {
