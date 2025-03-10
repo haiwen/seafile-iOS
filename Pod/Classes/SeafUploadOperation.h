@@ -8,7 +8,7 @@
 #import "SeafAccountTaskQueue.h"
 #import "SeafBaseOperation.h"
 
-#define UPLOAD_RETRY_DELAY 5
+#define UPLOAD_RETRY_DELAY 5.0
 
 @class SeafUploadFile;
 
@@ -31,5 +31,7 @@
 @property (strong) NSString * _Nullable uploadpath;
 @property long blkidx;
 @property (nonatomic, strong) NSString * _Nullable blockDir;
+
+@property (nonatomic, assign) NSInteger retryCount;
 
 @end

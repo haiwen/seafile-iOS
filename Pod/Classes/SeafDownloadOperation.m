@@ -16,6 +16,7 @@
 #import "SeafRepos.h"
 #import "NSData+Encryption.h"
 #import "SeafRealmManager.h"
+#import "SeafDataTaskManager.h"
 
 @implementation SeafDownloadOperation
 
@@ -23,10 +24,7 @@
 {
     if (self = [super init]) {
         self.file = file;
-
-        self.retryDelay = 5;
         self.maxRetryCount = file.retryable ? DEFAULT_RETRYCOUNT : 0;
-        
     }
     return self;
 }
@@ -376,10 +374,11 @@
 - (void)finishDownload:(BOOL)success error:(NSError *)error ooid:(NSString *)ooid {
     @synchronized (self.file) {
         self.file.isDownloading = NO;
-        self.file.downloaded = success;
-        self.file.lastFinishTimestamp = [[NSDate new] timeIntervalSince1970];
+        
         if (success && ooid != nil) {
             [self clearDownloadContext];
+            self.file.downloaded = success;
+            self.file.lastFinishTimestamp = [[NSDate new] timeIntervalSince1970];
             Debug("%@ ooid=%@, self.file.ooid=%@, oid=%@", self.file.name, ooid, self.file.ooid, self.file.oid);
             [self.file finishDownload:ooid];
             [self completeOperation];
@@ -392,15 +391,19 @@
                 return;
             }
 
-            if (self.retryCount < self.maxRetryCount && !success) {
-                self.retryCount += 1;
-                Debug(@"download failed，after %.0f second will retry %ld/%ld", self.retryDelay, (long)self.retryCount, (long)self.maxRetryCount);
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.retryDelay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                    if (!self.isCancelled) {
-                        [self beginDownload];
-                    } else {
-                        [self completeOperation];
-                    }
+            if (self.file.retryCount < self.maxRetryCount && !success) {
+                self.file.retryCount += 1;
+                Debug(@"Download failed, will retry %ld/%ld, task placed at the end of queue", (long)self.file.retryCount, (long)self.maxRetryCount);
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(DEFAULT_RETRY_INTERVAL * NSEC_PER_SEC)), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                    
+                    // Clear the current download context
+                    [self clearDownloadContext];
+                    
+                    // Complete the current operation
+                    [self completeOperation];
+                    
+                    // Add the task back to queue - using SeafDataTaskManager, a more appropriate task management approach
+                    [[SeafDataTaskManager sharedObject] addFileDownloadTask:self.file];
                 });
             } else {
                 [self clearDownloadContext];
