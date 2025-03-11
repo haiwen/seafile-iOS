@@ -121,7 +121,13 @@
     UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
     btn.frame = CGRectMake(0,0,size,size);
     UIImage *img = [UIImage imageNamed:imageName];
-    [btn setImage:img forState:UIControlStateNormal];
+    
+    UIGraphicsBeginImageContextWithOptions(CGSizeMake(size, size), NO, 0.0);
+    [img drawInRect:CGRectMake(0, 0, size, size)];
+    UIImage *resizedImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
+    [btn setImage:resizedImage forState:UIControlStateNormal];
     btn.showsTouchWhenHighlighted = YES;
     btn.clipsToBounds = true;
     [btn addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];

@@ -236,8 +236,8 @@
 
 #pragma mark - Star
 
-- (void)setStarred:(BOOL)starred {
-    [self.connection setStarred:starred repo:self.repoId path:self.path];
+- (void)setStarred:(BOOL)starred withBlock:(void(^)(BOOL success))completion {
+    [self.connection setStarred:starred repo:self.repoId path:self.path completion:completion];
 }
 
 #pragma mark - Repo Password

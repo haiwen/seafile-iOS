@@ -84,7 +84,7 @@ typedef enum {
 /**
  Set starred (favorite)
  */
-- (void)setStarred:(BOOL)starred;
+- (void)setStarred:(BOOL)starred withBlock:(void(^)(BOOL success))completion;
 
 /**
  Check if password is required (encrypted repository)

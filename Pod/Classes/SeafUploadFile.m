@@ -328,7 +328,7 @@
         
         if (_starred && self.udir) {
             NSString* rpath = [_udir.path stringByAppendingPathComponent:self.name];
-            [_udir.connection setStarred:YES repo:_udir.repoId path:rpath];
+            [_udir.connection setStarred:YES repo:_udir.repoId path:rpath completion:nil];
         }
         
         if (!self.uploadFileAutoSync) {

@@ -298,7 +298,7 @@ enum {
 {
     [super viewDidLoad];
     _nameCell.textLabel.text = NSLocalizedString(@"Username", @"Seafile");
-    _nameCell.detailTextLabel.textColor = BAR_COLOR;
+    _nameCell.detailTextLabel.textColor = BAR_COLOR_ORANGE;
     _nameCell.detailTextLabel.text = NSLocalizedString(@"Switch Account", @"Seafile");
     _usedspaceCell.textLabel.text = NSLocalizedString(@"Space Used", @"Seafile");
     

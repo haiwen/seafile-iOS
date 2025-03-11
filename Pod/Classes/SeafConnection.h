@@ -308,8 +308,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
  * @param path The path of the item within the repository.
  * @return A Boolean indicating whether the operation was successful.
  */
-- (BOOL)setStarred:(BOOL)starred repo:(NSString * _Nonnull)repo path:(NSString * _Nonnull)path;
-
+- (void)setStarred:(BOOL)starred repo:(NSString *)repo path:(NSString *)path completion:(void(^)(BOOL success))block;
 /**
  * Retrieves a SeafRepo object representing a repository by its identifier.
  * @param repo The identifier of the repository to retrieve.
