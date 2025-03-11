@@ -319,12 +319,13 @@ enum SHARE_STATUS {
     // Do any additional setup after loading the view, typically from a nib.
 
     self.backItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Back", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
+    self.backItem.tintColor = BAR_COLOR_ORANGE;
 
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
 
     self.editItem = [self getBarItem:@"editfile2" action:@selector(editFile:)size:18];
-    self.exportItem = [self getBarItemAutoSize:@"export2" action:@selector(export:)];
+    self.exportItem = [self getBarItem:@"export2" action:@selector(export:)size:18];
     self.deleteItem = [self getBarItemAutoSize:@"delete" action:@selector(delete:)];
 
     UIBarButtonItem *starItem = [self getBarItem:@"star" action:@selector(unstarFile:)size:22];
@@ -356,7 +357,7 @@ enum SHARE_STATUS {
 
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
-    self.navigationController.navigationBar.tintColor = BAR_COLOR;
+    self.navigationController.navigationBar.tintColor = BAR_COLOR_ORANGE;
     
     if (IsIpad() && self.navigationItem.leftBarButtonItem == nil && [self isPortrait]) {
         [self.navigationItem setLeftBarButtonItem:self.splitViewController.displayModeButtonItem animated:NO];
@@ -521,13 +522,13 @@ enum SHARE_STATUS {
 
 - (IBAction)starFile:(id)sender
 {
-    [(SeafFile *)self.preViewItem setStarred:YES];
+    [(SeafFile *)self.preViewItem setStarred:YES withBlock:nil];
     [self updateNavigation];// Update navigation items
 }
 
 - (IBAction)unstarFile:(id)sender
 {
-    [(SeafFile *)self.preViewItem setStarred:NO];
+    [(SeafFile *)self.preViewItem setStarred:NO withBlock:nil];
     [self updateNavigation];// Update navigation items
 }
 

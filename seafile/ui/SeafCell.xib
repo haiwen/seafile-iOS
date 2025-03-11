@@ -1,12 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="13528" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
-    <device id="ipad9_7" orientation="portrait">
-        <adaptation id="fullscreen"/>
-    </device>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="23504" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
+    <device id="ipad9_7" orientation="portrait" layout="fullscreen" appearance="light"/>
     <dependencies>
-        <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13526"/>
-        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23506"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -16,9 +12,25 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="68"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="2" id="7mC-NE-fI3">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="67.5"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="68"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
+                    <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="38E-yh-9co">
+                        <rect key="frame" x="10" y="0.0" width="300" height="68"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES" heightSizable="YES" flexibleMaxY="YES"/>
+                        <subviews>
+                            <button hidden="YES" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" id="Gk2-Gu-wRo">
+                                <rect key="frame" x="260" y="0.0" width="40" height="68"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMinY="YES" heightSizable="YES" flexibleMaxY="YES"/>
+                                <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
+                                <state key="normal" image="more_dot.png"/>
+                                <connections>
+                                    <action selector="moreButtonTouch:" destination="2" eventType="touchUpInside" id="s44-hN-XBw"/>
+                                </connections>
+                            </button>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    </view>
                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" placeholderIntrinsicWidth="230" placeholderIntrinsicHeight="14" text="Name" lineBreakMode="characterWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3">
                         <rect key="frame" x="67" y="10" width="191" height="14"/>
                         <fontDescription key="fontDescription" type="system" pointSize="15"/>
@@ -26,14 +38,14 @@
                         <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </label>
                     <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" translatesAutoresizingMaskIntoConstraints="NO" id="4">
-                        <rect key="frame" x="20" y="14" width="39" height="39.5"/>
+                        <rect key="frame" x="20" y="14.5" width="39" height="39"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="39" id="d2V-TX-kIr"/>
                             <constraint firstAttribute="width" constant="39" id="kYc-Mr-aMk"/>
                         </constraints>
                     </imageView>
                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="249" text="detail" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="25">
-                        <rect key="frame" x="88" y="40.5" width="170" height="15"/>
+                        <rect key="frame" x="88" y="41" width="170" height="15"/>
                         <fontDescription key="fontDescription" type="system" pointSize="12"/>
                         <color key="textColor" red="0.66666666666666663" green="0.66666666666666663" blue="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -47,7 +59,7 @@
                         </constraints>
                     </imageView>
                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" fixedFrame="YES" text="" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="38">
-                        <rect key="frame" x="304" y="11" width="0.0" height="28"/>
+                        <rect key="frame" x="359" y="11" width="0.0" height="28"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <fontDescription key="fontDescription" type="system" pointSize="15"/>
                         <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -55,7 +67,7 @@
                         <color key="shadowColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </label>
                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="scu-4L-n7D">
-                        <rect key="frame" x="67" y="37.5" width="21" height="21"/>
+                        <rect key="frame" x="67" y="38" width="21" height="21"/>
                         <subviews>
                             <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="download_finished.png" translatesAutoresizingMaskIntoConstraints="NO" id="Drf-gP-cHe">
                                 <rect key="frame" x="3" y="3" width="15" height="15"/>
@@ -65,7 +77,7 @@
                                 </constraints>
                             </imageView>
                             <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="i6P-DT-o4I">
-                                <rect key="frame" x="0.0" y="1" width="20" height="20"/>
+                                <rect key="frame" x="0.5" y="0.5" width="20" height="20"/>
                             </activityIndicatorView>
                         </subviews>
                         <constraints>
@@ -78,34 +90,21 @@
                         </constraints>
                     </view>
                     <progressView opaque="NO" contentMode="scaleToFill" progress="0.5" translatesAutoresizingMaskIntoConstraints="NO" id="DtI-c0-SVZ">
-                        <rect key="frame" x="67" y="47" width="211" height="2"/>
+                        <rect key="frame" x="67" y="46.5" width="211" height="4"/>
                     </progressView>
-                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="0jj-Fa-Je4">
-                        <rect key="frame" x="270" y="0.0" width="50" height="67.5"/>
-                        <constraints>
-                            <constraint firstAttribute="width" constant="50" id="gTm-gO-3lg"/>
-                        </constraints>
-                        <state key="normal" image="more_dot.png"/>
-                        <connections>
-                            <action selector="moreButtonTouch:" destination="2" eventType="touchUpInside" id="bQq-lE-5Rt"/>
-                        </connections>
-                    </button>
                 </subviews>
                 <color key="backgroundColor" red="1" green="1" blue="1" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
                 <constraints>
                     <constraint firstAttribute="bottom" secondItem="25" secondAttribute="bottom" constant="12" id="38R-3b-Nam"/>
                     <constraint firstItem="DtI-c0-SVZ" firstAttribute="leading" secondItem="3" secondAttribute="leading" id="3tj-bd-4ux"/>
                     <constraint firstItem="25" firstAttribute="top" relation="greaterThanOrEqual" secondItem="3" secondAttribute="bottom" constant="4" id="7zr-F7-Apv"/>
+                    <constraint firstAttribute="trailing" secondItem="3" secondAttribute="trailing" constant="62" id="90i-zR-k05"/>
                     <constraint firstAttribute="trailing" secondItem="DtI-c0-SVZ" secondAttribute="trailing" constant="42" id="EbH-V7-vkv"/>
                     <constraint firstItem="4" firstAttribute="centerY" secondItem="7mC-NE-fI3" secondAttribute="centerY" id="HIP-9c-yF7"/>
-                    <constraint firstItem="0jj-Fa-Je4" firstAttribute="leading" secondItem="3" secondAttribute="trailing" constant="12" id="LEH-EU-jvW"/>
                     <constraint firstItem="4" firstAttribute="leading" secondItem="7mC-NE-fI3" secondAttribute="leadingMargin" constant="4" id="S2o-gq-seY"/>
                     <constraint firstItem="vWy-Pk-w8f" firstAttribute="top" secondItem="3" secondAttribute="top" id="S8H-dV-txA"/>
-                    <constraint firstItem="0jj-Fa-Je4" firstAttribute="top" secondItem="7mC-NE-fI3" secondAttribute="top" id="SVg-DW-C5K"/>
                     <constraint firstItem="DtI-c0-SVZ" firstAttribute="centerY" secondItem="25" secondAttribute="centerY" id="Srf-6e-bPO"/>
                     <constraint firstItem="3" firstAttribute="leading" secondItem="4" secondAttribute="trailing" constant="8" id="WXN-Cl-RLd"/>
-                    <constraint firstAttribute="bottom" secondItem="0jj-Fa-Je4" secondAttribute="bottom" id="Wn6-nk-4hr"/>
-                    <constraint firstAttribute="trailing" secondItem="0jj-Fa-Je4" secondAttribute="trailing" id="XxQ-05-yjX"/>
                     <constraint firstItem="25" firstAttribute="centerY" secondItem="scu-4L-n7D" secondAttribute="centerY" id="Y06-a8-BT0"/>
                     <constraint firstAttribute="trailing" secondItem="vWy-Pk-w8f" secondAttribute="trailing" constant="8" id="aIV-aq-2iq"/>
                     <constraint firstItem="25" firstAttribute="leading" secondItem="scu-4L-n7D" secondAttribute="trailing" id="cTf-5c-axZ"/>
@@ -123,11 +122,11 @@
                 <outlet property="downloadStatusImageView" destination="Drf-gP-cHe" id="M1l-DY-SaH"/>
                 <outlet property="downloadingIndicator" destination="i6P-DT-o4I" id="D4g-yP-ME1"/>
                 <outlet property="imageView" destination="4" id="23"/>
-                <outlet property="moreButton" destination="0jj-Fa-Je4" id="mWC-ga-Jmz"/>
+                <outlet property="moreButton" destination="Gk2-Gu-wRo" id="B1b-95-lpk"/>
                 <outlet property="progressView" destination="DtI-c0-SVZ" id="hnw-y7-tft"/>
                 <outlet property="textLabel" destination="3" id="29"/>
             </connections>
-            <point key="canvasLocation" x="157" y="155"/>
+            <point key="canvasLocation" x="122.65625" y="90.8203125"/>
         </tableViewCell>
     </objects>
     <resources>

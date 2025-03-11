@@ -1029,8 +1029,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return NO;
 }
 
-- (BOOL)setStarred:(BOOL)starred repo:(NSString *)repo path:(NSString *)path
-{
+- (void)setStarred:(BOOL)starred repo:(NSString *)repo path:(NSString *)path completion:(void(^)(BOOL success))block {
     NSString *key = [NSString stringWithFormat:@"%@-%@", repo, path];
     if (starred) {
         [_starredFiles addObject:key];
@@ -1038,29 +1037,33 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         NSString *url = [NSString stringWithFormat:API_URL_V21"/starred-items/"];
 
         [self sendPost:url form:form
-               success:
-         ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-             Debug("Succeeded to star file %@, %@\n", repo, path);
-         }
-               failure:
-         ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
-             Warning("Failed to star file %@, %@\n", repo, path);
-         }];
+               success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+                   Debug("Succeeded to star file %@, %@\n", repo, path);
+                   if (block) block(YES);
+               }
+               failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
+                   Warning("Failed to star file %@, %@\n", repo, path);
+                   @synchronized(self->_starredFiles) {
+                       [self->_starredFiles removeObject:key];
+                   }
+                   if (block) block(NO);
+               }];
     } else {
         [_starredFiles removeObject:key];
         NSString *url = [NSString stringWithFormat:API_URL_V21"/starred-items/?repo_id=%@&path=%@", repo, path.escapedUrl];
         [self sendDelete:url
-               success:
-         ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-             Debug("Succeeded to unstar file %@, %@\n", repo, path);
-         }
-               failure:
-         ^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
-             Warning("Failed to unstar file %@, %@\n", repo, path);
-         }];
+               success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+                   Debug("Succeeded to unstar file %@, %@\n", repo, path);
+                   if (block) block(YES);
+               }
+               failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
+                   Warning("Failed to unstar file %@, %@\n", repo, path);
+                   @synchronized(self->_starredFiles) {
+                       [self->_starredFiles addObject:key];
+                   }
+                   if (block) block(NO);
+               }];
     }
-
-    return YES;
 }
 
 - (SeafRepo *)getRepo:(NSString *)repo

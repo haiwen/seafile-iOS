@@ -1,12 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="13528" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
-    <device id="ipad9_7" orientation="portrait">
-        <adaptation id="fullscreen"/>
-    </device>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="23504" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
+    <device id="ipad9_7" orientation="portrait" layout="fullscreen" appearance="light"/>
     <dependencies>
-        <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13526"/>
-        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23506"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -16,11 +12,16 @@
             <rect key="frame" x="0.0" y="0.0" width="318" height="87"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="2" id="jlK-iz-38C">
-                <rect key="frame" x="0.0" y="0.0" width="318" height="86.5"/>
+                <rect key="frame" x="0.0" y="0.0" width="318" height="87"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
+                    <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9JC-yM-t10">
+                        <rect key="frame" x="10" y="0.0" width="300" height="87"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" placeholderIntrinsicWidth="230" placeholderIntrinsicHeight="22" text="Name" lineBreakMode="characterWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3">
-                        <rect key="frame" x="67" y="31" width="193" height="30"/>
+                        <rect key="frame" x="67" y="11" width="230" height="30"/>
                         <accessibility key="accessibilityConfiguration">
                             <accessibilityTraits key="traits" staticText="YES" adjustable="YES"/>
                         </accessibility>
@@ -32,54 +33,40 @@
                         <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </label>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="4">
-                        <rect key="frame" x="20" y="31" width="39" height="39"/>
+                        <rect key="frame" x="20" y="11" width="39" height="39"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="39" id="RIP-FL-6N5"/>
                             <constraint firstAttribute="height" constant="39" id="eHM-2m-WjK"/>
                         </constraints>
                     </imageView>
                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" verticalHuggingPriority="249" verticalCompressionResistancePriority="749" text="detail" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="25">
-                        <rect key="frame" x="67" y="65.5" width="189" height="13"/>
+                        <rect key="frame" x="67" y="45.5" width="33.5" height="33.5"/>
                         <fontDescription key="fontDescription" type="system" pointSize="13"/>
                         <color key="textColor" red="0.66666666666666663" green="0.66666666666666663" blue="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </label>
-                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="VaX-pq-H6d">
-                        <rect key="frame" x="268" y="0.0" width="50" height="86.5"/>
-                        <constraints>
-                            <constraint firstAttribute="width" constant="50" id="qrf-09-21e"/>
-                        </constraints>
-                        <state key="normal" image="more_dot.png"/>
-                        <connections>
-                            <action selector="moreButtonTouch:" destination="2" eventType="touchUpInside" id="Ouj-RW-occ"/>
-                        </connections>
-                    </button>
                 </subviews>
                 <constraints>
                     <constraint firstAttribute="bottom" secondItem="25" secondAttribute="bottom" constant="8" id="ERK-qR-RGA"/>
                     <constraint firstItem="25" firstAttribute="top" secondItem="3" secondAttribute="bottom" constant="4.5" id="G9L-Db-qiR"/>
                     <constraint firstItem="25" firstAttribute="leading" secondItem="3" secondAttribute="leading" id="PVr-Hi-acc"/>
-                    <constraint firstAttribute="bottom" secondItem="VaX-pq-H6d" secondAttribute="bottom" id="QrV-Ze-bDM"/>
-                    <constraint firstItem="VaX-pq-H6d" firstAttribute="top" secondItem="jlK-iz-38C" secondAttribute="top" id="STp-MX-aC4"/>
                     <constraint firstItem="4" firstAttribute="leading" secondItem="jlK-iz-38C" secondAttribute="leadingMargin" constant="4" id="VgW-a0-jx4"/>
                     <constraint firstItem="3" firstAttribute="top" secondItem="4" secondAttribute="top" id="ZxL-U4-CWt"/>
                     <constraint firstItem="3" firstAttribute="leading" secondItem="4" secondAttribute="trailing" constant="8" id="bDK-nO-rPO"/>
                     <constraint firstItem="4" firstAttribute="top" secondItem="jlK-iz-38C" secondAttribute="topMargin" id="bGj-4Z-PmV"/>
-                    <constraint firstItem="VaX-pq-H6d" firstAttribute="leading" secondItem="3" secondAttribute="trailing" constant="8" id="bP4-hI-5E0"/>
-                    <constraint firstItem="VaX-pq-H6d" firstAttribute="leading" secondItem="25" secondAttribute="trailing" constant="12" id="gNO-9J-tB0"/>
-                    <constraint firstAttribute="trailing" secondItem="VaX-pq-H6d" secondAttribute="trailing" id="kyQ-VA-cnJ"/>
                 </constraints>
             </tableViewCellContentView>
             <connections>
                 <outlet property="detailTextLabel" destination="25" id="30"/>
                 <outlet property="imageView" destination="4" id="23"/>
-                <outlet property="moreButton" destination="VaX-pq-H6d" id="oAE-ky-tJC"/>
                 <outlet property="textLabel" destination="3" id="29"/>
             </connections>
-            <point key="canvasLocation" x="184" y="148.5"/>
+            <point key="canvasLocation" x="143.75" y="87.01171875"/>
         </tableViewCell>
     </objects>
     <resources>
-        <image name="more_dot.png" width="26" height="26"/>
+        <systemColor name="systemBackgroundColor">
+            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
     </resources>
 </document>

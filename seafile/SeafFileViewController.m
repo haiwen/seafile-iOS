@@ -94,6 +94,12 @@ enum {
 @property SeafUploadFile *ufile; // The file being uploaded.
 @property (nonatomic, strong) NSArray *allItems;// All items in the current directory.
 
+//@property (nonatomic, strong) NSMutableDictionary *expandedSections; // Dictionary to store expanded sections
+
+@property (nonatomic, strong) NSString *originalTitle; // Property to store the original title
+
+@property (nonatomic, strong) UIView *customToolView;
+
 @end
 
 @implementation SeafFileViewController
@@ -125,6 +131,11 @@ enum {
     [self.tableView registerNib:[UINib nibWithNibName:@"SeafDirCell" bundle:nil]
          forCellReuseIdentifier:@"SeafDirCell"];
     
+    // Add long press gesture recognizer
+    UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPress:)];
+    longPress.minimumPressDuration = 0.5; // Set duration to 0.5 seconds
+    [self.tableView addGestureRecognizer:longPress];
+    
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeAll;
 
@@ -133,9 +144,15 @@ enum {
 
     self.tableView.estimatedRowHeight = 55;
     self.state = STATE_INIT;
+    
+    // Initialize expandedSections dictionary with default values
+    self.expandedSections = [NSMutableDictionary dictionary];
+    
+    // By default, expand "My Own Libraries" (section 0)
+    [self.expandedSections setObject:@YES forKey:@(0)];
 
     UIView *bView = [[UIView alloc] initWithFrame:self.tableView.frame];
-    bView.backgroundColor = [UIColor whiteColor];
+    bView.backgroundColor = kPrimaryBackgroundColor;
     self.tableView.backgroundView = bView;
     
     self.tableView.tableHeaderView = self.searchController.searchBar;
@@ -161,6 +178,11 @@ enum {
     
     self.view.accessibilityElements = @[refreshControl, self.tableView];
     Debug(@"%@", self.view);
+    
+    self.tableView.cellLayoutMarginsFollowReadableWidth = NO;
+    self.tableView.layoutMargins = UIEdgeInsetsMake(0, 15, 0, 15);
+    self.tableView.separatorInset = SEAF_SEPARATOR_INSET;
+    
     [self refreshView];
 }
 
@@ -204,7 +226,6 @@ enum {
     [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
 }
 
-
 #pragma mark - UI & Navigation Items
 
 - (SeafDetailViewController *)detailViewController
@@ -218,15 +239,73 @@ enum {
     dispatch_async(dispatch_get_main_queue(), ^{
         if (![directory isKindOfClass:[SeafRepos class]] && directory.editable) {
             self.photoItem = [self getBarItem:@"plus2" action:@selector(addPhotos:) size:20];
-            self.doneItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(editDone:)];
-            self.editItem = [self getBarItemAutoSize:@"ellipsis2" action:@selector(editSheet:)];
-            UIBarButtonItem *space = [self getSpaceBarItem:16.0];
-            self.rightItems = [NSArray arrayWithObjects:self.editItem, space, self.photoItem, nil];
+            
+            // Left button (ImageError)
+            UIImage *originalImage = [UIImage imageNamed:@"close"];
+            CGSize newSize = CGSizeMake(25, 25);
+            UIGraphicsBeginImageContextWithOptions(newSize, NO, 0.0);
+            [originalImage drawInRect:CGRectMake(0, 0, newSize.width, newSize.height)];
+            UIImage *resizedImage = UIGraphicsGetImageFromCurrentImageContext();
+            UIGraphicsEndImageContext();
+            
+            UIBarButtonItem *imageErrorItem = [[UIBarButtonItem alloc] initWithImage:resizedImage
+                                                                             style:UIBarButtonItemStylePlain
+                                                                            target:self
+                                                                            action:@selector(editDone:)];
+            
+            self.doneItem = imageErrorItem;
+            self.editItem = [self getBarItemAutoSize:@"more" action:@selector(editSheet:)];
+            self.rightItems = [NSArray arrayWithObjects:self.editItem, nil];
 
-            _selectAllItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Select All", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(selectAll:)];
-            _selectNoneItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Select None", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(selectNone:)];
+            // Create "Select All" button - unchecked state
+            UIView *customView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 80, 30)];
+            customView.userInteractionEnabled = YES;
+            
+            UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(selectAll:)];
+            [customView addGestureRecognizer:tapGesture];
+            
+            // Adjust text label position and font size
+            UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(20, 0, 40, 30)];
+            label.text = NSLocalizedString(@"Select All", @"Seafile");
+            label.font = [UIFont systemFontOfSize:18];
+            label.textColor = BAR_COLOR;
+            [label sizeToFit];
+            label.center = CGPointMake(20 + label.bounds.size.width/2, 15);
+            [customView addSubview:label];
+            
+            // Adjust icon size and position
+            UIImageView *imageView = [[UIImageView alloc] initWithFrame:CGRectMake(label.frame.origin.x + label.frame.size.width + 15, 7, 20, 20)];
+            imageView.image = [UIImage imageNamed:@"ic_checkbox_unchecked"];
+            imageView.contentMode = UIViewContentModeScaleAspectFit;
+            imageView.center = CGPointMake(label.frame.origin.x + label.frame.size.width + 12, 15);
+            [customView addSubview:imageView];
+            
+            _selectNoneItem = [[UIBarButtonItem alloc] initWithCustomView:customView];
+            
+            // Create "Select All" button - checked state
+            UIView *customViewAll = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 80, 30)];
+            customViewAll.userInteractionEnabled = YES;
+            UITapGestureRecognizer *tapGestureALL = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(selectNone:)];
+            [customViewAll addGestureRecognizer:tapGestureALL];
+            
+            UILabel *labelALL = [[UILabel alloc] initWithFrame:CGRectMake(20, 0, 40, 30)];
+            labelALL.text = NSLocalizedString(@"Select All", @"Seafile");
+            labelALL.font = [UIFont systemFontOfSize:18];
+            labelALL.textColor = BAR_COLOR;
+            [labelALL sizeToFit];
+            labelALL.center = CGPointMake(20 + labelALL.bounds.size.width/2, 15);
+            [customViewAll addSubview:labelALL];
+            
+            // Adjust icon position - follow text label to the right
+            UIImageView *imageViewALL = [[UIImageView alloc] initWithFrame:CGRectMake(labelALL.frame.origin.x + labelALL.frame.size.width + 15, 7, 20, 20)];
+            imageViewALL.image = [UIImage imageNamed:@"ic_checkbox_checked"];
+            imageViewALL.contentMode = UIViewContentModeScaleAspectFit;
+            imageViewALL.center = CGPointMake(labelALL.frame.origin.x + labelALL.frame.size.width + 12, 15);
+            [customViewAll addSubview:imageViewALL];
+            
+            _selectAllItem = [[UIBarButtonItem alloc] initWithCustomView:customViewAll];
         } else {
-            self.editItem = [self getBarItemAutoSize:@"ellipsis2" action:@selector(editSheet:)];
+            self.editItem = [self getBarItemAutoSize:@"more" action:@selector(editSheet:)];
             self.rightItems = [NSArray arrayWithObjects:self.editItem, nil];
         }
         self.navigationItem.rightBarButtonItems = self.rightItems;
@@ -266,7 +345,15 @@ enum {
         return self.allItems.count;
     }
     
-    NSArray *repos =  [[((SeafRepos *)_directory) repoGroups] objectAtIndex:section];
+    // Check if the section is expanded
+    NSNumber *expanded = [self.expandedSections objectForKey:@(section)];
+    if (expanded && ![expanded boolValue]) {
+        // Section is collapsed
+        return 0;
+    }
+    
+    // Section is expanded, return the normal count
+    NSArray *repos = [[((SeafRepos *)_directory) repoGroups] objectAtIndex:section];
     return repos.count;
 }
 
@@ -327,7 +414,7 @@ enum {
     _selectedindex = indexPath;
     if (tableView.editing == YES) {
         [self noneSelected:NO];
-        [self updateExportBarItem];
+        [self updateToolButtonsState];
         return;
     }
     _curEntry = [self getDentrybyIndexPath:indexPath tableView:tableView];
@@ -385,8 +472,8 @@ enum {
             [self noneSelected:YES];
         } else {
             [self noneSelected:NO];
-            [self updateExportBarItem];
         }
+        [self updateToolButtonsState];
     }
 }
 
@@ -395,7 +482,7 @@ enum {
     if (![_directory isKindOfClass:[SeafRepos class]]) {
         return 0.01;
     } else {
-        return 24;
+        return 45;
     }
 }
 
@@ -439,15 +526,94 @@ enum {
             }
         }
     }
-    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
-    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 3, tableView.bounds.size.width - 10, 18)];
-    label.font = [UIFont systemFontOfSize:12];
+    
+    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 45)];
+        [headerView setBackgroundColor:kPrimaryBackgroundColor];
+    
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(15, 12, tableView.bounds.size.width - 50, 22)];
+    label.font = [UIFont systemFontOfSize:16 weight:UIFontWeightMedium];
     label.text = text;
-    label.textColor = [UIColor darkTextColor];
+    label.textColor = [UIColor blackColor];
     label.backgroundColor = [UIColor clearColor];
-    [headerView setBackgroundColor:[UIColor colorWithRed:246/255.0 green:246/255.0 blue:250/255.0 alpha:1.0]];
+    
+    // Add a button with arrow icon to expand/collapse
+    UIButton *toggleButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    toggleButton.frame = CGRectMake(tableView.bounds.size.width - 30, 16, 13, 13);
+    
+    // Set the arrow direction based on expanded state
+    NSNumber *expanded = [self.expandedSections objectForKey:@(section)];
+    BOOL isExpanded = expanded ? [expanded boolValue] : NO;
+    
+    // Use arrowDown_black image for collapsed state
+    UIImage *arrowImage = [UIImage imageNamed:@"arrowDown_black"];
+    [toggleButton setImage:arrowImage forState:UIControlStateNormal];
+    toggleButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
+
+    // Set rotation anchor point to button center
+    toggleButton.layer.anchorPoint = CGPointMake(0.5, 0.5);
+
+    // Set initial rotation based on expanded state
+    CGFloat initialRotation = isExpanded ? -M_PI : 0;
+    toggleButton.transform = CGAffineTransformMakeRotation(initialRotation);
+    
+    // Store the section index in the button's tag
+    toggleButton.tag = section;
+    [toggleButton addTarget:self action:@selector(toggleSection:) forControlEvents:UIControlEventTouchUpInside];
+    
+    // Add tap gesture to the entire header view
+    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(headerTapped:)];
+    [headerView addGestureRecognizer:tapGesture];
+    headerView.tag = section; // Store section index in the view's tag
+    
     [headerView addSubview:label];
+    [headerView addSubview:toggleButton];
+    
     return headerView;
+}
+
+// Method to handle header tap
+- (void)headerTapped:(UITapGestureRecognizer *)gesture
+{
+    NSInteger section = gesture.view.tag;
+    [self toggleSectionAtIndex:section];
+}
+
+// Method to handle toggle button tap
+- (void)toggleSection:(UIButton *)sender
+{
+    NSInteger section = sender.tag;
+    [self toggleSectionAtIndex:section];
+}
+
+// Helper method to toggle section
+- (void)toggleSectionAtIndex:(NSInteger)section
+{
+    // Toggle the expanded state
+    NSNumber *expanded = [self.expandedSections objectForKey:@(section)];
+    BOOL isExpanded = expanded ? [expanded boolValue] : NO;
+    BOOL willExpand = !isExpanded;
+    
+    // Find the toggle button in the section header
+    UIView *headerView = [self.tableView headerViewForSection:section];
+    UIButton *toggleButton = [headerView.subviews filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(id evaluatedObject, NSDictionary *bindings) {
+        return [evaluatedObject isKindOfClass:[UIButton class]];
+    }]].firstObject;
+    
+    toggleButton.layer.anchorPoint = CGPointMake(0.5, 0.5);
+    
+    [UIView animateWithDuration:0.25
+                          delay:0 
+                        options:UIViewAnimationOptionCurveEaseInOut 
+                     animations:^{
+        CGFloat targetRotation = willExpand ? M_PI_2 : 0;
+        toggleButton.transform = CGAffineTransformMakeRotation(targetRotation);
+    } completion:^(BOOL finished) {
+        if (finished) {
+            [self.expandedSections setObject:@(willExpand) forKey:@(section)];
+            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:section] 
+                        withRowAnimation:UITableViewRowAnimationFade];
+        }
+    }];
 }
 
 
@@ -529,6 +695,18 @@ enum {
     self.title = directory.name;
     [_directory loadContent:false];
     Debug("repoId:%@, %@, path:%@, loading ... cached:%d %@, editable:%d\n", _directory.repoId, _directory.name, _directory.path, _directory.hasCache, _directory.ooid, _directory.editable);
+    
+    // Initialize expanded states for repositories
+    if ([_directory isKindOfClass:[SeafRepos class]]) {
+        NSArray *repoGroups = [((SeafRepos *)_directory) repoGroups];
+        for (NSInteger i = 0; i < repoGroups.count; i++) {
+            // By default, expand section 0 (My Own Libraries), collapse others
+            if (![self.expandedSections objectForKey:@(i)]) {
+                [self.expandedSections setObject:i == 0 ? @YES : @NO forKey:@(i)];
+            }
+        }
+    }
+    
     if (![_directory isKindOfClass:[SeafRepos class]])
         self.tableView.sectionHeaderHeight = 0;
     [_directory setDelegate:self];
@@ -548,6 +726,15 @@ enum {
         dispatch_async(dispatch_get_main_queue(), ^{
             @strongify(self);
             self.searchController.searchBar.placeholder = NSLocalizedString(@"Search", @"Seafile");
+            
+            // Make sure all sections have an expanded state
+            NSArray *repoGroups = [((SeafRepos *)_directory) repoGroups];
+            for (NSInteger i = 0; i < repoGroups.count; i++) {
+                if (![self.expandedSections objectForKey:@(i)]) {
+                    // Default for new sections, expand section 0 (My Own Libraries), collapse others
+                    [self.expandedSections setObject:i == 0 ? @YES : @NO forKey:@(i)];
+                }
+            }
         });
     } else {
         @weakify(self);
@@ -720,7 +907,7 @@ enum {
             [self.tableView selectRowAtIndexPath:indexPath animated:YES scrollPosition:UITableViewScrollPositionNone];
     }
     [self noneSelected:NO];
-    [self updateExportBarItem];
+    [self updateToolButtonsState];
 }
 
 - (void)selectNone:(id)sender
@@ -731,25 +918,60 @@ enum {
         [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
     }
     [self noneSelected:YES];
+    [self updateToolButtonsState];
 }
 
 - (void)setEditing:(BOOL)editing animated:(BOOL)animated
 {
+    [super setEditing:editing animated:animated];
+    
     if (editing) {
         if (![self checkNetworkStatus]) return;
+        // Save original title
+        self.originalTitle = self.title;
+        
         [self.navigationController.toolbar sizeToFit];
-        [self setToolbarItems:self.editToolItems];
+        [self setupCustomTabToolWithTopPadding:15 bottomPadding:0 totalHeight:130];
         [self noneSelected:YES];
         [self.photoItem setEnabled:NO];
-        [self.navigationController setToolbarHidden:NO animated:YES];
+        [self.navigationController setToolbarHidden:YES animated:animated];
+        [self adjustContentInsetForCustomToolbar:YES];
     } else {
         self.navigationItem.leftBarButtonItem = nil;
-        [self.navigationController setToolbarHidden:YES animated:YES];
         [self.photoItem setEnabled:YES];
+        
+        // Restore original title
+        self.navigationItem.title = self.originalTitle;
+
+        // Remove custom toolbar
+        [self dismissCustomTabTool:^{
+            [self adjustContentInsetForCustomToolbar:NO];
+        }];
     }
 
     [super setEditing:editing animated:animated];
     [self.tableView setEditing:editing animated:animated];
+}
+
+// Method to remove custom toolbar when no longer needed
+- (void)dismissCustomTabTool:(void (^)(void))completion {
+    if (!self.customToolView) {
+        return;
+    }
+    
+    [UIView animateWithDuration:0.2 animations:^{
+        CGRect frame = self.customToolView.frame;
+        frame.origin.y = self.view.bounds.size.height;
+        self.customToolView.frame = frame;
+    } completion:^(BOOL finished) {
+        [self.customToolView removeFromSuperview];
+        self.customToolView = nil;
+        
+        // Execute completion callback
+        if (completion) {
+            completion();
+        }
+    }];
 }
 
 - (void)editStart:(id)sender
@@ -757,7 +979,7 @@ enum {
     [self setEditing:YES animated:YES];
     if (self.editing) {
         self.navigationItem.rightBarButtonItems = nil;
-        self.navigationItem.rightBarButtonItem = self.doneItem;
+        [self noneSelected:YES];  // Let noneSelected: handle the button setup
     }
 }
 
@@ -766,6 +988,8 @@ enum {
     [self setEditing:NO animated:YES];
     self.navigationItem.rightBarButtonItem = nil;
     self.navigationItem.rightBarButtonItems = self.rightItems;
+    
+    self.navigationItem.title = self.originalTitle;
 }
 
 - (void)editOperation:(id)sender
@@ -784,15 +1008,15 @@ enum {
             [self popupCreateView];
             break;
 
-        case EDITOP_COPY:
+        case EDITOP_COPY://for selected item
             self.state = STATE_COPY;
             [self popupDirChooseView:nil];
             break;
-        case EDITOP_MOVE:
+        case EDITOP_MOVE://for selected item
             self.state = STATE_MOVE;
             [self popupDirChooseView:nil];
             break;
-        case EDITOP_DELETE: {
+        case EDITOP_DELETE: {//for selected item
             NSArray *idxs = [self.tableView indexPathsForSelectedRows];
             if (!idxs) return;
             NSMutableArray *entries = [[NSMutableArray alloc] init];
@@ -821,7 +1045,7 @@ enum {
             
             break;
         }
-        case EDITOP_EXPORT: {
+        case EDITOP_EXPORT: {//for selected item
             [self exportSelected];
         }
         default:
@@ -832,30 +1056,50 @@ enum {
 - (void)noneSelected:(BOOL)none
 {
     if (none) {
-        self.navigationItem.leftBarButtonItem = _selectAllItem;
+        self.navigationItem.rightBarButtonItem = _selectNoneItem;
+        self.navigationItem.leftBarButtonItem = self.doneItem;
+        
+        // Only set "Please select items" title in edit mode
+        if (self.editing) {
+            self.navigationItem.title = NSLocalizedString(@"Please select items", @"Seafile");
+        }
     } else {
-        self.navigationItem.leftBarButtonItem = _selectNoneItem;
+        // Calculate total selectable rows (excluding upload files)
+        NSInteger selectableCount = 0;
+        for (id entry in self.allItems) {
+            if (![entry isKindOfClass:[SeafUploadFile class]]) {
+                selectableCount++;
+            }
+        }
+        
+        // Get number of selected items
+        NSArray *selectedRows = [self.tableView indexPathsForSelectedRows];
+        NSInteger selectedCount = selectedRows.count;
+        
+        // Decide which button to show based on selection state
+        if (selectedCount == selectableCount) {
+            self.navigationItem.rightBarButtonItem = _selectAllItem;
+        } else {
+            self.navigationItem.rightBarButtonItem = _selectNoneItem;
+        }
+        
+        self.navigationItem.leftBarButtonItem = self.doneItem;
+        
+        // Only set "X items selected" title in edit mode
+        if (self.editing) {
+            self.navigationItem.title = [NSString stringWithFormat:NSLocalizedString(@"%ld items selected", @"Seafile"), (long)selectedCount];
+        }
     }
-    [self setToolBarItemsEnabled:!none];
 }
 
-- (void)setToolBarItemsEnabled:(BOOL)enabled {
-    for (UIBarButtonItem *item in self.toolbarItems) {
-        [item setEnabled:enabled];
-    }
-}
-
-- (void)updateExportBarItem {
-    NSArray *idxs = [self.tableView indexPathsForSelectedRows];
-    UIBarButtonItem *item = self.toolbarItems.firstObject;
-    if (idxs.count > 9) {
-        [item setEnabled:NO];
+- (void)updateExportBarItem:(NSArray *)items {
+    if (items.count > 9) {
+        [self updateToolButton:ToolButtonShare enabled:NO];
         return;
     }
-    for (NSIndexPath *indexPath in idxs) {
-        id entry = [self getDentrybyIndexPath:indexPath tableView:self.tableView];
+    for (SeafBase * entry in items) {
         if ([entry isKindOfClass:[SeafDir class]] || [entry isKindOfClass:[SeafUploadFile class]]) {
-            [item setEnabled:NO];
+            [self updateToolButton:ToolButtonShare enabled:NO];
             break;
         }
     }
@@ -1284,7 +1528,7 @@ enum {
                 Debug("Download file %@", file.path);
                 [file setFileDownloadedBlock:^(SeafFile * _Nonnull file, NSError * _Nullable error) {
                     if (error) {
-                        Warning("Failed to donwload file %@: %@", file.path, error);
+                        Warning("Failed to download file %@: %@", file.path, error);
                         block(nil, [NSString stringWithFormat:NSLocalizedString(@"Failed to download file '%@'", @"Seafile"), file.previewItemTitle]);
                     } else {
                         [urls addObject:file.exportURL];
@@ -1380,13 +1624,6 @@ enum {
     [_connection performSelectorInBackground:@selector(downloadDir:) withObject:dir];
 }
 
-- (void)downloadRepo:(SeafRepo *)repo
-{
-    Debug("download repo: %@ %@", repo.repoId, repo.path);
-    [SVProgressHUD showSuccessWithStatus:[NSLocalizedString(@"Start to download library: ", @"Seafile") stringByAppendingString:repo.name]];
-    [_connection performSelectorInBackground:@selector(downloadDir:) withObject:repo];
-}
-
 - (void)renameEntry:(SeafBase *)obj
 {
     _curEntry = obj;
@@ -1437,8 +1674,8 @@ enum {
         [self redownloadFile:file];
     } else if ([S_RENAME isEqualToString:title]) {
         SeafBase *entry = (SeafBase *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-        [self renameEntry:entry];
-    } else if ([S_UPLOAD isEqualToString:title]) {
+        [self renameEntry:entry];//rename
+    } else if ([S_UPLOAD_FILE isEqualToString:title]) {
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [file update:self];
         [self reloadIndex:_selectedindex];
@@ -1476,10 +1713,10 @@ enum {
         [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Clear library password successfully.", @"Seafile")];
     } else if ([S_STAR isEqualToString:title]) {
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-        [file setStarred:YES];
+        [file setStarred:YES withBlock:nil];
     } else if ([S_UNSTAR isEqualToString:title]) {
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
-        [file setStarred:NO];
+        [file setStarred:NO withBlock:nil];
     } else if ([S_SHARE_TO_WECHAT isEqualToString:title]) {
         self.state = STATE_SHARE_SHARE_WECHAT;
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
@@ -1492,7 +1729,10 @@ enum {
     } else if ([S_MKLIB isEqualToString:title]) {
         Debug(@"create lib");
         [self popupMklibView];
+    } else if ([S_UPLOAD isEqualToString:title]) {
+        [self addPhotos:nil];
     }
+
 }
 
 
@@ -1540,6 +1780,9 @@ enum {
             [self updateCellDownloadStatus:cell isDownloading:false waiting:false cached:false];
         }
     }
+    
+    [self setLastCellSaparator:cell andIndexPath:indexPath];
+
     return cell;
 }
 
@@ -1557,6 +1800,9 @@ enum {
     [self updateCellContent:cell file:sfile];
     sfile.delegate = self;
     sfile.udelegate = self;
+    
+    [self setLastCellSaparator:cell andIndexPath:indexPath];
+
     return cell;
 }
 
@@ -1565,7 +1811,6 @@ enum {
     SeafCell *cell = [self getCell:@"SeafDirCell" forTableView:tableView];
     cell.textLabel.text = sdir.name;
     cell.detailTextLabel.text = @"";
-    cell.moreButton.hidden = false;
     cell.imageView.image = sdir.icon;
     cell.cellIndexPath = indexPath;
     cell.moreButtonBlock = ^(NSIndexPath *indexPath) {
@@ -1573,6 +1818,9 @@ enum {
         [self showActionSheetWithIndexPath:indexPath];
     };
     sdir.delegate = self;
+    
+    [self setLastCellSaparator:cell andIndexPath:indexPath];
+
     return cell;
 }
 
@@ -1589,8 +1837,27 @@ enum {
         [self showActionSheetWithIndexPath:indexPath];
     };
     srepo.delegate = self;
+    
+    [self setLastCellSaparator:cell andIndexPath:indexPath];
 
     return cell;
+}
+
+- (void)setLastCellSaparator:(UITableViewCell *)cell andIndexPath:(NSIndexPath *)indexPath {
+    // Check if it's the last cell in section
+    BOOL isLastCell = NO;
+    if (![_directory isKindOfClass:[SeafRepos class]]) {
+        isLastCell = (indexPath.row == self.allItems.count - 1);
+    } else {
+        NSArray *repoGroups = [((SeafRepos *)_directory) repoGroups];
+        NSArray *repos = [repoGroups objectAtIndex:indexPath.section];
+        isLastCell = (indexPath.row == repos.count - 1);
+    }
+    
+    // Update cell separator
+    if ([cell isKindOfClass:[SeafCell class]]) {
+        [(SeafCell *)cell updateSeparatorInset:isLastCell];
+    }
 }
 
 - (void)showActionSheetWithIndexPath:(NSIndexPath *)indexPath {
@@ -1643,7 +1910,6 @@ enum {
     cell.detailTextLabel.text = sfile.detailText;
     cell.imageView.image = sfile.icon;
     cell.badgeLabel.text = nil;
-    cell.moreButton.hidden = NO;
     [self updateCellDownloadStatus:cell file:sfile waiting:false];
 }
 
@@ -1753,18 +2019,24 @@ enum {
 #pragma mark - SeafDirDelegate
 - (void)chooseDir:(UIViewController *)c dir:(SeafDir *)dstDir
 {
-    [c.navigationController dismissViewControllerAnimated:YES completion:nil];
-    NSArray *idxs = [self.tableView indexPathsForSelectedRows];
-    if (!idxs) return;
-    if (self.ufile) {
-        return [self uploadFile:self.ufile toDir:dstDir];
-    }
+    NSArray *selectedIndexPaths = [self.tableView indexPathsForSelectedRows];
     NSMutableArray *entries = [NSMutableArray new];
-    for (NSIndexPath *indexPath in idxs) {
-        if (indexPath.row >= self.allItems.count) continue; // Add safety check
+    for (NSIndexPath *indexPath in selectedIndexPaths) {
+        if (indexPath.row >= self.allItems.count) continue;
         SeafBase *item = self.allItems[indexPath.row];
         [entries addObject:item.name];
     }
+    
+    // Exit edit mode first
+    [self editDone:nil];
+    
+    // Then close the directory picker
+    [c.navigationController dismissViewControllerAnimated:YES completion:nil];
+    
+    if (self.ufile) {
+        return [self uploadFile:self.ufile toDir:dstDir];
+    }
+
     _directory.delegate = self;
 
     if (self.state == STATE_COPY) {
@@ -2144,5 +2416,399 @@ enum {
         self.definesPresentationContext = YES;
     }
     return _searchController;
+}
+
+- (void)setupCustomTabToolWithTopPadding:(CGFloat)topPadding
+                         bottomPadding:(CGFloat)bottomPadding 
+                          totalHeight:(CGFloat)totalHeight {
+    // Remove existing custom view if present
+    if (self.customToolView) {
+        [self.customToolView removeFromSuperview];
+        self.customToolView = nil;
+    }
+    
+    // Calculate custom view size and position
+    CGFloat toolHeight = totalHeight;
+    
+    UIEdgeInsets safeAreaInsets = UIEdgeInsetsZero;
+    CGFloat pureHomeIndicator = 0;
+    if (@available(iOS 11.0, *)) {
+        UIWindow *window = UIApplication.sharedApplication.keyWindow;
+           pureHomeIndicator = window.safeAreaInsets.bottom;
+    }
+
+    // Apply bottom padding parameters
+    CGRect frame = CGRectMake(0, 
+                             self.view.bounds.size.height - toolHeight - pureHomeIndicator + bottomPadding,
+                             self.view.bounds.size.width,
+                             toolHeight + pureHomeIndicator - bottomPadding);
+    
+    // Create custom view
+    UIView *customToolView = [[UIView alloc] initWithFrame:frame];
+    customToolView.backgroundColor = [UIColor whiteColor];
+    
+    // Add top border
+    CALayer *topBorder = [CALayer layer];
+    topBorder.frame = CGRectMake(0, 0, customToolView.frame.size.width, 0.5);
+    topBorder.backgroundColor = [UIColor lightGrayColor].CGColor;
+    [customToolView.layer addSublayer:topBorder];
+    
+    // First row buttons - 5 buttons
+    NSArray *firstRowTitles = @[@"Download", @"Rename", @"Star", @"Copy", @"Share"];
+    NSArray *firstRowIcons = @[@"action_download", @"action_rename", @"action_star", @"action_copy", @"action_share"];
+    
+    // Second row buttons - 2 buttons
+    NSArray *secondRowTitles = @[@"Move", @"Delete"];
+    NSArray *secondRowIcons = @[@"action_move", @"action_delete"];
+    
+    // Set button sizes and spacing
+    CGFloat screenWidth = customToolView.bounds.size.width;
+    
+    // First row - evenly divide screen width
+    CGFloat firstRowButtonWidth = screenWidth / 5.0;
+    CGFloat firstRowTopPosition = topPadding;
+    
+    // Calculate second row position
+    CGFloat buttonHeight = 40;
+    CGFloat secondRowTopPosition = topPadding + buttonHeight + 25;
+    
+    // Create first row buttons
+    for (int i = 0; i < firstRowTitles.count; i++) {
+        CGFloat xPosition = i * firstRowButtonWidth;
+        UIView *buttonView = [self createTabButtonWithTitle:firstRowTitles[i] 
+                                                   iconName:firstRowIcons[i]
+                                                     width:firstRowButtonWidth
+                                                      tag:i + 1001];
+        
+        buttonView.frame = CGRectMake(xPosition, firstRowTopPosition, firstRowButtonWidth, buttonHeight);
+        [customToolView addSubview:buttonView];
+    }
+    
+    // Create second row buttons aligned with first row
+    CGFloat secondRowPositions[2] = {0, 1};
+    
+    for (int i = 0; i < secondRowTitles.count; i++) {
+        CGFloat xPosition = secondRowPositions[i] * firstRowButtonWidth;
+        UIView *buttonView = [self createTabButtonWithTitle:secondRowTitles[i] 
+                                                   iconName:secondRowIcons[i]
+                                                     width:firstRowButtonWidth
+                                                      tag:i + 5 + 1001];
+        
+        buttonView.frame = CGRectMake(xPosition, secondRowTopPosition, firstRowButtonWidth, buttonHeight);
+        [customToolView addSubview:buttonView];
+    }
+    
+    // Set initial position below screen
+    CGRect initialFrame = customToolView.frame;
+    initialFrame.origin.y = self.view.bounds.size.height;
+    customToolView.frame = initialFrame;
+    
+    // Add to key window to prevent scrolling with tableView
+    UIWindow *keyWindow = nil;
+    if (@available(iOS 13.0, *)) {
+        NSArray<UIWindowScene *> *scenes = UIApplication.sharedApplication.connectedScenes.allObjects;
+        for (UIWindowScene *scene in scenes) {
+            if (scene.activationState == UISceneActivationStateForegroundActive) {
+                keyWindow = scene.windows.firstObject;
+                break;
+            }
+        }
+    } else {
+        keyWindow = UIApplication.sharedApplication.keyWindow;
+    }
+    
+    [keyWindow addSubview:customToolView];
+    
+    // Store reference
+    self.customToolView = customToolView;
+    
+    // Animate from bottom
+    [UIView animateWithDuration:0.2 animations:^{
+        self.customToolView.frame = frame;
+    }];
+}
+
+// Create individual button view
+- (UIView *)createTabButtonWithTitle:(NSString *)title iconName:(NSString *)iconName width:(CGFloat)width tag:(NSInteger)tag {
+    UIView *buttonView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, width, 40)];
+    buttonView.tag = tag;
+    
+    // Create icon - centered at top
+    UIImageView *iconView = [[UIImageView alloc] initWithFrame:CGRectMake((width - 24) / 2, 0, 24, 24)];
+    iconView.tag = 100;
+    
+    UIImage *icon = [UIImage imageNamed:iconName];
+    if (icon) {
+        UIImage *grayIcon = [icon imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        iconView.image = grayIcon;
+        iconView.tintColor = BOTTOM_TOOL_VIEW_DISABLE_COLOR;
+    }
+    
+    [buttonView addSubview:iconView];
+    
+    // Create title label
+    UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 28, width, 14)];
+    titleLabel.tag = 101;
+    titleLabel.text = title;
+    titleLabel.textAlignment = NSTextAlignmentCenter;
+    titleLabel.font = [UIFont systemFontOfSize:12];
+    titleLabel.textColor = BOTTOM_TOOL_VIEW_DISABLE_COLOR;
+    
+    [buttonView addSubview:titleLabel];
+    
+    // Add tap gesture
+    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleToolButtonTap:)];
+    [buttonView addGestureRecognizer:tapGesture];
+    
+    // Disabled by default
+    buttonView.userInteractionEnabled = NO;
+    
+    return buttonView;
+}
+
+// Method to update button state
+- (void)updateToolButton:(NSInteger)tag enabled:(BOOL)enabled {
+    UIView *buttonView = [self.customToolView viewWithTag:tag];
+    if (!buttonView) return;
+    
+    UIImageView *iconView = [buttonView viewWithTag:100];
+    UILabel *titleLabel = [buttonView viewWithTag:101];
+    
+    UIColor *color = enabled ? BAR_COLOR : BOTTOM_TOOL_VIEW_DISABLE_COLOR;
+    
+    iconView.tintColor = color;
+    titleLabel.textColor = color;
+    buttonView.userInteractionEnabled = enabled;
+}
+
+// Define button tag constants
+typedef NS_ENUM(NSInteger, ToolButtonTag) {
+    ToolButtonDownload = 1001,
+    ToolButtonRename = 1002,
+    ToolButtonStar = 1003,
+    ToolButtonCopy = 1004,
+    ToolButtonShare = 1005,
+    ToolButtonMove = 1006,
+    ToolButtonDelete = 1007
+};
+
+// Handle button tap events
+- (void)handleToolButtonTap:(UITapGestureRecognizer *)gesture {
+    UIView *buttonView = gesture.view;
+    
+    // Get required info and save selected items
+    NSArray *selectedIndexPaths = [self.tableView indexPathsForSelectedRows];
+    NSMutableArray *selectedItems = [NSMutableArray new];
+    for (NSIndexPath *indexPath in selectedIndexPaths) {
+        id item = [self getDentrybyIndexPath:indexPath tableView:self.tableView];
+        if (item) {
+            [selectedItems addObject:item];
+        }
+    }
+    
+    // Return if no items selected
+    if (selectedItems.count == 0) return;
+    
+    // Execute action based on button type
+    switch (buttonView.tag) {
+        case ToolButtonShare: {
+            self.state = STATE_EXPORT;
+            [self editDone:nil]; // Exit edit mode here
+            @weakify(self);
+            [self downloadEntries:selectedItems completion:^(NSArray *array, NSString *errorStr) {
+                @strongify(self);
+                self.state = STATE_INIT;
+                @weakify(self);
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    @strongify(self);
+                    if (errorStr) {
+                        [SVProgressHUD showErrorWithStatus:errorStr];
+                    } else {
+                        [SeafActionsManager exportByActivityView:array item:self.toolbarItems.firstObject targerVC:self];
+                    }
+                });
+            }];
+            break;
+        }
+        case ToolButtonDownload: {
+            [self editDone:nil]; // Exit edit mode here
+            for (SeafBase *item in selectedItems) {
+                if ([item isKindOfClass:[SeafFile class]]) {
+                    SeafFile *file = (SeafFile *)item;
+                    Debug("download file: %@, %@", item.repoId, item.path);
+                    [SeafDataTaskManager.sharedObject addFileDownloadTask:file];
+                } else if ([item isKindOfClass:[SeafDir class]]) {
+                    Debug("download dir: %@, %@", item.repoId, item.path);
+                    [self performSelector:@selector(downloadDir:) withObject:(SeafDir *)item];
+                }
+            }
+            break;
+        }
+        case ToolButtonRename: {
+            if (selectedItems.count == 1) {
+                SeafBase *entry = selectedItems.firstObject;
+                [self editDone:nil]; // Exit edit mode here
+                [self renameEntry:entry];
+            }
+            break;
+        }
+        case ToolButtonStar: {
+            [self editDone:nil]; // Exit edit mode here
+            for (id item in selectedItems) {
+                if ([item isKindOfClass:[SeafFile class]]) {
+                    SeafFile *file = (SeafFile *)item;
+                    [SVProgressHUD showWithStatus:NSLocalizedString(@"Setting star...", @"Seafile")];
+                    [file setStarred:YES withBlock:^(BOOL success) {
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            if (success) {
+                                [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Successfully starred", @"Seafile")];
+                            } else {
+                                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to star", @"Seafile")];
+                            }
+                        });
+                    }];
+                } else if ([item isKindOfClass:[SeafDir class]]) {
+                    SeafDir *dir = (SeafDir *)item;
+                    [SVProgressHUD showWithStatus:NSLocalizedString(@"Setting star...", @"Seafile")];
+                    [dir setStarred:YES withBlock:^(BOOL success) {
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            if (success) {
+                                [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Successfully starred", @"Seafile")];
+                            } else {
+                                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to star", @"Seafile")];
+                            }
+                        });
+                    }];
+                }
+            }
+            break;
+        }
+        case ToolButtonCopy: {
+            self.state = STATE_COPY;
+            [self popupDirChooseView:nil];
+            break;
+        }
+        case ToolButtonMove: {
+            self.state = STATE_MOVE;
+            [self popupDirChooseView:nil];
+            break;
+        }
+        case ToolButtonDelete: {
+            NSMutableArray *entries = [[NSMutableArray alloc] init];
+            for (SeafBase *item in selectedItems) {
+                [entries addObject:item.name];
+            }
+            self.state = STATE_DELETE;
+            _directory.delegate = self;
+            [self editDone:nil]; // Exit edit mode here
+            [SVProgressHUD showWithStatus:NSLocalizedString(@"Deleting files ...", @"Seafile")];
+            [[SeafFileOperationManager sharedManager]
+             deleteEntries:entries
+             inDir:self.directory
+             completion:^(BOOL success, NSError * _Nullable error)
+             {
+                if (success) {
+                    [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Delete success", @"Seafile")];
+                    [self.directory loadContent:YES];
+                } else {
+                    NSString *errMsg = error.localizedDescription ?: NSLocalizedString(@"Failed to delete files", @"Seafile");
+                    [SVProgressHUD showErrorWithStatus:errMsg];
+                }
+            }];
+            break;
+        }
+    }
+}
+
+// Method to update tool buttons state
+- (void)updateToolButtonsState {
+    NSArray *selectedIndexPaths = [self.tableView indexPathsForSelectedRows];
+    // Get selected items
+    NSMutableArray *selectedItems = [NSMutableArray new];
+    for (NSIndexPath *indexPath in selectedIndexPaths) {
+        id item = [self getDentrybyIndexPath:indexPath tableView:self.tableView];
+        if (item) {
+            [selectedItems addObject:item];
+        }
+    }
+    if (selectedItems.count == 0) {
+        [self setAllToolButtonEnable:NO];
+    } else if (selectedItems.count == 1) {
+        [self setAllToolButtonEnable:YES];
+        
+        [self updateExportBarItem:selectedItems];//set share btn
+    } else {
+        //redownload
+        [self updateToolButton:ToolButtonDownload enabled:YES];
+        
+        // rename
+        [self updateToolButton:ToolButtonRename enabled:NO];
+        
+        //star
+        [self updateToolButton:ToolButtonStar enabled:YES];
+        
+        //copy
+        [self updateToolButton:ToolButtonCopy enabled:YES];
+                
+        //move
+        [self updateToolButton:ToolButtonMove enabled:YES];
+        
+        //delete
+        [self updateToolButton:ToolButtonDelete enabled:YES];
+        
+        //share
+        [self updateExportBarItem:selectedItems];
+    }
+}
+
+- (void)setAllToolButtonEnable:(BOOL)enable{
+    for (int i = 1;i < 8 ;i++) {
+        [self updateToolButton:i + 1000 enabled:enable];
+    }
+}
+
+// Adjust content insets to avoid custom toolbar overlap
+- (void)adjustContentInsetForCustomToolbar:(BOOL)showing {
+    if (showing) {
+        CGFloat toolbarHeight = self.customToolView.frame.size.height;
+        UIEdgeInsets contentInset = self.tableView.contentInset;
+        contentInset.bottom = toolbarHeight;
+        self.tableView.contentInset = contentInset;
+        self.tableView.scrollIndicatorInsets = contentInset;
+    } else {
+        UIEdgeInsets contentInset = self.tableView.contentInset;
+        contentInset.bottom = 0;
+        self.tableView.contentInset = contentInset;
+        self.tableView.scrollIndicatorInsets = contentInset;
+    }
+}
+
+// Add new method to handle long press
+- (void)handleLongPress:(UILongPressGestureRecognizer *)gestureRecognizer {
+    if (![_directory isKindOfClass:[SeafRepos class]]) {
+        if (gestureRecognizer.state == UIGestureRecognizerStateBegan) {
+            CGPoint p = [gestureRecognizer locationInView:self.tableView];
+            NSIndexPath *indexPath = [self.tableView indexPathForRowAtPoint:p];
+            if (indexPath) {
+                // Only trigger edit mode if we're not already editing
+                if (!self.editing) {
+                    [self editStart:nil];
+                    
+                    // Get the entry at this index path to check if it's an uploadFile
+                    NSObject *entry = [self getDentrybyIndexPath:indexPath tableView:self.tableView];
+                    
+                    // Only select if it's not an upload file
+                    if (![entry isKindOfClass:[SeafUploadFile class]]) {
+                        // Select the cell that was long pressed
+                        [self.tableView selectRowAtIndexPath:indexPath animated:YES scrollPosition:UITableViewScrollPositionNone];
+                        
+                        // Update selection status
+                        [self noneSelected:NO];
+                        [self updateToolButtonsState];
+                    }
+                }
+            }
+        }
+    }
 }
 @end
