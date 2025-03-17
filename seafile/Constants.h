@@ -16,6 +16,7 @@
 #define ios10 ([[[UIDevice currentDevice] systemVersion] floatValue] >= 10)
 
 #define HEADER_HEIGHT    24
+
 #define BAR_COLOR        [UIColor colorWithRed:102.0/255.0 green:102.0/255.0 blue:102.0/255.0 alpha:1.0]
 #define BAR_COLOR_ORANGE      [UIColor colorWithRed:240.0/256 green:128.0/256 blue:48.0/256 alpha:1.0]
 #define HEADER_COLOR     [UIColor colorWithRed:238.0/256 green:238.0/256 blue:238.0/256 alpha:1.0]
@@ -27,9 +28,12 @@
 
 
 #define SEAF_SEPARATOR_INSET UIEdgeInsetsMake(0, 25, 0, 15)
+#define SEAF_CELL_CORNER 6
 
 #define UIColorFromRGB(rgbValue) [UIColor \
     colorWithRed:((float)((rgbValue & 0xFF0000) >> 16))/255.0 \
     green:((float)((rgbValue & 0xFF00) >> 8))/255.0 \
     blue:((float)(rgbValue & 0xFF))/255.0 \
     alpha:1.0]
+
+

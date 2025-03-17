@@ -55,7 +55,7 @@
         self.checkboxImageView.translatesAutoresizingMaskIntoConstraints = NO;
         [self.contentView addSubview:self.checkboxImageView];
         
-        // 添加约束
+        // Add constraints
         self.checkboxWidthConstraint = [self.checkboxImageView.widthAnchor constraintEqualToConstant:0];
         self.checkboxWidthConstraint.active = YES;
         
@@ -65,10 +65,56 @@
             [self.checkboxImageView.heightAnchor constraintEqualToConstant:24],
         ]];
     }
+    
+    // Set basic properties for cellBackgroundView
+    self.cellBackgroundView.backgroundColor = [UIColor whiteColor];
+    self.cellBackgroundView.clipsToBounds = YES;
+}
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    
+    if (!self.isLastCell) {
+        // Get current layoutMargins
+        UIEdgeInsets margins = self.layoutMargins;
+        
+        // Calculate separator position considering layoutMargins
+        CGFloat leftInset = self.cellBackgroundView.frame.origin.x + 15.0 + margins.left - 11;
+        CGFloat rightInset = (self.bounds.size.width - CGRectGetMaxX(self.cellBackgroundView.frame)) - margins.right + 16;
+        
+        self.separatorInset = UIEdgeInsetsMake(0, leftInset, 0, rightInset);
+    }
+}
+
+- (void)updateCellStyle:(BOOL)isFirstCell isLastCell:(BOOL)isLastCell {
+    // Reset corner radius
+    self.cellBackgroundView.layer.mask = nil;
+    self.cellBackgroundView.layer.cornerRadius = 0;
+    self.cellBackgroundView.layer.maskedCorners = 0;
+    
+    if (!isFirstCell && !isLastCell) {
+        // No corner radius for middle cells
+        return;
+    }
+    
+    // Set corner radius
+    self.cellBackgroundView.layer.cornerRadius = SEAF_CELL_CORNER;
+    
+    if (isFirstCell && isLastCell) {
+        // If it's both the first and last row, all four corners are rounded
+        self.cellBackgroundView.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner | 
+                                                     kCALayerMinXMaxYCorner | kCALayerMaxXMaxYCorner;
+    } else if (isFirstCell) {
+        // First row, top two corners are rounded
+        self.cellBackgroundView.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner;
+    } else {
+        // Last row, bottom two corners are rounded
+        self.cellBackgroundView.layer.maskedCorners = kCALayerMinXMaxYCorner | kCALayerMaxXMaxYCorner;
+    }
 }
 
 - (void)setEditing:(BOOL)editing animated:(BOOL)animated {
-    // Don't use system default editing style
+    // Avoid using system default editing style
 //    [super setEditing:editing animated:animated];
     self.isUserEditing = editing;
     if (editing) {
@@ -84,7 +130,7 @@
     // Don't call super method, completely override default behavior
      [super setSelected:selected animated:animated];
     
-    // Only handle checkbox in editing mode
+    // Handle checkbox only in editing mode
     if (self.isUserEditing) {
         self.checkboxImageView.image = selected ?
             [UIImage imageNamed:@"ic_checkbox_checked"] : 
@@ -107,7 +153,7 @@
     [self resetCellFile];
 }
 
-//cancel thumb task,clear cell seafile,clear cache thumb image in memory
+// Cancel thumb task, clear cell seafile, and clear cached thumbnail image in memory
 - (void)resetCellFile {
     if (self.cellSeafFile){
         [self.cellSeafFile cancelNotDisplayThumb];
@@ -122,12 +168,11 @@
 }
 
 - (void)updateSeparatorInset:(BOOL)isLastCell {
+    self.isLastCell = isLastCell;
     if (isLastCell) {
-        // For the last cell, hide separator by setting left inset equal to cell width
-        self.separatorInset = UIEdgeInsetsMake(0, self.bounds.size.width, 0, 0); 
+        self.separatorInset = UIEdgeInsetsMake(0, self.bounds.size.width, 0, 0);
     } else {
-        // For normal cells, show separator with standard insets
-        self.separatorInset = SEAF_SEPARATOR_INSET;
+        [self setNeedsLayout];
     }
 }
 

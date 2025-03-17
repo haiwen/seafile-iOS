@@ -118,6 +118,7 @@
                 <outlet property="badgeLabel" destination="38" id="7y9-fQ-yLc"/>
                 <outlet property="cacheStatusView" destination="scu-4L-n7D" id="Ubw-iX-Tge"/>
                 <outlet property="cacheStatusWidthConstraint" destination="Ucy-d8-Qa9" id="LPk-SD-9Ph"/>
+                <outlet property="cellBackgroundView" destination="38E-yh-9co" id="aeA-qS-16H"/>
                 <outlet property="detailTextLabel" destination="25" id="30"/>
                 <outlet property="downloadStatusImageView" destination="Drf-gP-cHe" id="M1l-DY-SaH"/>
                 <outlet property="downloadingIndicator" destination="i6P-DT-o4I" id="D4g-yP-ME1"/>

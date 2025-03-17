@@ -18,6 +18,7 @@ static SeafDateFormatter *sharedLoaderSameDay = nil;
 static SeafDateFormatter *sharedLoaderSameYear = nil;
 static SeafDateFormatter *sharedLoader = nil;
 static SeafDateFormatter *sharedLoaderUTC = nil;
+static SeafDateFormatter *sharedLoaderChinese = nil;
 
 + (SeafDateFormatter *)sharedLoader
 {
@@ -56,6 +57,15 @@ static SeafDateFormatter *sharedLoaderUTC = nil;
     return sharedLoaderUTC;
 }
 
++ (SeafDateFormatter *)sharedLoaderChinese
+{
+    if (sharedLoaderChinese == nil) {
+        sharedLoaderChinese = [[SeafDateFormatter alloc] init];
+        [sharedLoaderChinese setDateFormat:@"yyyy-MM-dd"];
+    }
+    return sharedLoaderChinese;
+}
+
 + (NSString *)stringFromLongLong:(long long)time
 {
     NSDate *date = [NSDate dateWithTimeIntervalSince1970:time];
@@ -64,6 +74,15 @@ static SeafDateFormatter *sharedLoaderUTC = nil;
     NSDateComponents* comp2 = [calendar components:unitFlags fromDate:[NSDate date]];
     BOOL sameYear = [comp1 year] == [comp2 year];
     BOOL sameDay = sameYear &&  ([comp1 month] == [comp2 month]) && ([comp1 day]  == [comp2 day]);
+    
+    // Check if system language is Chinese
+    BOOL isChinese = [[[NSLocale preferredLanguages] firstObject] hasPrefix:@"zh"];
+    
+    if (isChinese && !sameDay) {
+        // Use Chinese date format for Chinese locale
+        return [[SeafDateFormatter sharedLoaderChinese] stringFromDate:date];
+    }
+    
     if (sameDay)
         return [[SeafDateFormatter sharedLoaderSameDay] stringFromDate:date];
     else if(sameYear)
