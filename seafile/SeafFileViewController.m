@@ -42,6 +42,11 @@
 #import "SeafFileOperationManager.h"
 #import "SeafUploadFileModel.h"
 
+#define kCustomTabToolWithTopPadding 15
+#define kCustomTabToolButtonHeight 40
+#define kCustomTabToolTotalHeight 130
+
+
 enum {
     STATE_INIT = 0,
     STATE_LOADING,
@@ -60,7 +65,7 @@ enum {
 };
 
 
-@interface SeafFileViewController ()<QBImagePickerControllerDelegate, SeafUploadDelegate, SeafDirDelegate, SeafShareDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate, MWPhotoBrowserDelegate, UIScrollViewAccessibilityDelegate>
+@interface SeafFileViewController ()<QBImagePickerControllerDelegate, SeafUploadDelegate, SeafDirDelegate, SeafShareDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate, MWPhotoBrowserDelegate, UIScrollViewAccessibilityDelegate, UIGestureRecognizerDelegate>
 
 - (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
 - (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
@@ -99,6 +104,7 @@ enum {
 @property (nonatomic, strong) NSString *originalTitle; // Property to store the original title
 
 @property (nonatomic, strong) UIView *customToolView;
+@property (nonatomic, strong) UILabel *customTitleLabel; // Add new property to track title label
 
 @end
 
@@ -126,6 +132,7 @@ enum {
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    
     [self.tableView registerNib:[UINib nibWithNibName:@"SeafCell" bundle:nil]
          forCellReuseIdentifier:@"SeafCell"];
     [self.tableView registerNib:[UINib nibWithNibName:@"SeafDirCell" bundle:nil]
@@ -143,6 +150,38 @@ enum {
     [self.formatter setDateFormat:@"yyyy-MM-dd HH.mm.ss"];
 
     self.tableView.estimatedRowHeight = 55;
+    
+    // Custom navigation bar left button
+    if (!self.isEditing) {
+        UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 200, 44)];
+        
+        // Add back button
+        UIButton *customButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        [customButton setImage:[UIImage imageNamed:@"arrowLeft_black"] forState:UIControlStateNormal];
+        // Keep the image size and position, but expand the button's touch area
+        [customButton setFrame:CGRectMake(0, 0, 30, 44)];
+        // Center the image in the expanded button
+        customButton.imageEdgeInsets = UIEdgeInsetsMake(12, 0, 12, 18);
+        customButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
+        [customButton addTarget:self action:@selector(backButtonTapped) forControlEvents:UIControlEventTouchUpInside];
+        [containerView addSubview:customButton];
+        
+        // Add title label (adjust x position to avoid overlap)
+        UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(30, 0, 210, 44)];
+        self.customTitleLabel = titleLabel; // Save reference
+        
+        // Use folder name as title
+        titleLabel.text = self.directory.name;
+        self.navigationItem.title = @""; // Hide navigation bar original title
+        
+        titleLabel.font = [UIFont systemFontOfSize:20 weight:UIFontWeightSemibold];
+        titleLabel.textColor = [UIColor blackColor];
+        [containerView addSubview:titleLabel];
+        
+        UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:containerView];
+        self.navigationItem.leftBarButtonItem = customBarButton;
+    }
+    
     self.state = STATE_INIT;
     
     // Initialize expandedSections dictionary with default values
@@ -188,21 +227,16 @@ enum {
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
+    
+    // Set delegate here to ensure it's properly set each time the view appears
+    if (self.navigationController) {
+        self.navigationController.interactivePopGestureRecognizer.delegate = self;
+        self.navigationController.interactivePopGestureRecognizer.enabled = YES;
+    }
+        
     [self checkUploadfiles];
     [self refreshDownloadStatus];
     [self refreshEncryptedThumb];
-}
-
-- (void)viewDidAppear:(BOOL)animated
-{
-    [super viewDidAppear:animated];
-    if ([_directory hasCache]) {
-        [SeafAppDelegate checkOpenLink:self];
-    }
-    self.state = STATE_LOADING;
-    self.directory.delegate = self;
-    [_directory loadContent:true]; // get data from server
-    [self refreshDownloadStatus];
 }
 
 - (void)viewDidUnload
@@ -224,6 +258,53 @@ enum {
        withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator
 {
     [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
+
+    [coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+        // Update customToolView frame for orientation change if it exists
+        if (self.customToolView) {
+            CGRect frame = self.customToolView.frame;
+            frame.size.width = size.width;
+            frame.origin.y = size.height - frame.size.height;
+            self.customToolView.frame = frame;
+            
+            // Update child subviews to match the new width
+            [self relayoutCustomToolViewSubviews];
+        }
+        // Update tableView headerView frame and refresh all its subviews layout
+        if (self.tableView.tableHeaderView) {
+            CGRect headerFrame = self.tableView.tableHeaderView.frame;
+            headerFrame.size.width = size.width;
+            self.tableView.tableHeaderView.frame = headerFrame;
+            
+            // Force headerView and its subviews to relayout
+            [self.tableView.tableHeaderView setNeedsLayout];
+            [self.tableView.tableHeaderView layoutIfNeeded];
+            
+            // Reassign to update headerView
+            self.tableView.tableHeaderView = self.tableView.tableHeaderView;
+        }
+        // Update section header views to adapt to the new width
+        NSInteger numberOfSections = [self.tableView numberOfSections];
+        for (NSInteger i = 0; i < numberOfSections; i++) {
+            UIView *sectionHeader = [self.tableView headerViewForSection:i];
+            if (sectionHeader) {
+                CGRect sectionFrame = sectionHeader.frame;
+                sectionFrame.size.width = size.width;
+                sectionHeader.frame = sectionFrame;
+                [sectionHeader setNeedsLayout];
+                [sectionHeader layoutIfNeeded];
+            }
+        }
+    } completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+        
+    }];
+}
+
+- (void)relayoutCustomToolViewSubviews {
+    if (!self.customToolView) {
+        return;
+    }
+    [self layoutCustomToolButtons];
 }
 
 #pragma mark - UI & Navigation Items
@@ -237,77 +318,81 @@ enum {
 - (void)initNavigationItems:(SeafDir *)directory
 {
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (![directory isKindOfClass:[SeafRepos class]] && directory.editable) {
             self.photoItem = [self getBarItem:@"plus2" action:@selector(addPhotos:) size:20];
             
-            // Left button (ImageError)
-            UIImage *originalImage = [UIImage imageNamed:@"close"];
-            CGSize newSize = CGSizeMake(25, 25);
-            UIGraphicsBeginImageContextWithOptions(newSize, NO, 0.0);
-            [originalImage drawInRect:CGRectMake(0, 0, newSize.width, newSize.height)];
-            UIImage *resizedImage = UIGraphicsGetImageFromCurrentImageContext();
-            UIGraphicsEndImageContext();
-            
-            UIBarButtonItem *imageErrorItem = [[UIBarButtonItem alloc] initWithImage:resizedImage
-                                                                             style:UIBarButtonItemStylePlain
-                                                                            target:self
-                                                                            action:@selector(editDone:)];
-            
-            self.doneItem = imageErrorItem;
+            // Create a container view containing icon and label
+            UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 210, 44)];
+
+            // Add close icon
+            UIButton *closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
+            [closeButton setImage:[UIImage imageNamed:@"close"] forState:UIControlStateNormal];
+            closeButton.frame = CGRectMake(0, 10, 24, 24);
+            [closeButton addTarget:self action:@selector(editDone:) forControlEvents:UIControlEventTouchUpInside];
+            [containerView addSubview:closeButton];
+
+            // Add selection count label
+            UILabel *countLabel = [[UILabel alloc] initWithFrame:CGRectMake(35, 0, 150, 44)];
+            countLabel.font = [UIFont systemFontOfSize:17];
+            countLabel.textColor = [UIColor blackColor];
+            countLabel.text = NSLocalizedString(@"Select items", @"Seafile");
+            [containerView addSubview:countLabel];
+
+            UIBarButtonItem *customBarItem = [[UIBarButtonItem alloc] initWithCustomView:containerView];
+            self.doneItem = customBarItem;
             self.editItem = [self getBarItemAutoSize:@"more" action:@selector(editSheet:)];
             self.rightItems = [NSArray arrayWithObjects:self.editItem, nil];
 
             // Create "Select All" button - unchecked state
-            UIView *customView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 80, 30)];
+            UIView *customView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 90, 30)];
             customView.userInteractionEnabled = YES;
-            
             UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(selectAll:)];
             [customView addGestureRecognizer:tapGesture];
             
-            // Adjust text label position and font size
-            UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(20, 0, 40, 30)];
-            label.text = NSLocalizedString(@"Select All", @"Seafile");
-            label.font = [UIFont systemFontOfSize:18];
-            label.textColor = BAR_COLOR;
-            [label sizeToFit];
-            label.center = CGPointMake(20 + label.bounds.size.width/2, 15);
-            [customView addSubview:label];
-            
             // Adjust icon size and position
-            UIImageView *imageView = [[UIImageView alloc] initWithFrame:CGRectMake(label.frame.origin.x + label.frame.size.width + 15, 7, 20, 20)];
+            UIImageView *imageView = [[UIImageView alloc] initWithFrame:CGRectMake(customView.frame.size.width - 20, 5, 20, 20)];
             imageView.image = [UIImage imageNamed:@"ic_checkbox_unchecked"];
             imageView.contentMode = UIViewContentModeScaleAspectFit;
-            imageView.center = CGPointMake(label.frame.origin.x + label.frame.size.width + 12, 15);
             [customView addSubview:imageView];
+            
+            // Adjust text label position and font size
+            UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, customView.frame.size.width - 20 - 5,30)];
+            label.text = NSLocalizedString(@"Select All", @"Seafile");
+            label.font = [UIFont systemFontOfSize:18];
+            label.adjustsFontSizeToFitWidth = YES;
+            label.minimumScaleFactor = 0.5;
+            label.numberOfLines = 1;
+            label.textAlignment = NSTextAlignmentRight;
+            label.textColor = BAR_COLOR;
+            label.baselineAdjustment = UIBaselineAdjustmentAlignCenters;
+            [customView addSubview:label];
             
             _selectNoneItem = [[UIBarButtonItem alloc] initWithCustomView:customView];
             
             // Create "Select All" button - checked state
-            UIView *customViewAll = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 80, 30)];
+            UIView *customViewAll = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 90, 30)];
             customViewAll.userInteractionEnabled = YES;
             UITapGestureRecognizer *tapGestureALL = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(selectNone:)];
             [customViewAll addGestureRecognizer:tapGestureALL];
             
-            UILabel *labelALL = [[UILabel alloc] initWithFrame:CGRectMake(20, 0, 40, 30)];
-            labelALL.text = NSLocalizedString(@"Select All", @"Seafile");
-            labelALL.font = [UIFont systemFontOfSize:18];
-            labelALL.textColor = BAR_COLOR;
-            [labelALL sizeToFit];
-            labelALL.center = CGPointMake(20 + labelALL.bounds.size.width/2, 15);
-            [customViewAll addSubview:labelALL];
-            
             // Adjust icon position - follow text label to the right
-            UIImageView *imageViewALL = [[UIImageView alloc] initWithFrame:CGRectMake(labelALL.frame.origin.x + labelALL.frame.size.width + 15, 7, 20, 20)];
+            UIImageView *imageViewALL = [[UIImageView alloc] initWithFrame:CGRectMake(customView.frame.size.width - 20, 5, 20, 20)];
             imageViewALL.image = [UIImage imageNamed:@"ic_checkbox_checked"];
             imageViewALL.contentMode = UIViewContentModeScaleAspectFit;
-            imageViewALL.center = CGPointMake(labelALL.frame.origin.x + labelALL.frame.size.width + 12, 15);
             [customViewAll addSubview:imageViewALL];
             
+            // Adjust text label position and font size
+            UILabel *labelAll = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, customView.frame.size.width - 20 - 5,30)];
+            labelAll.text = NSLocalizedString(@"Select All", @"Seafile");
+            labelAll.font = [UIFont systemFontOfSize:18];
+            labelAll.adjustsFontSizeToFitWidth = YES;
+            labelAll.minimumScaleFactor = 0.5;
+            labelAll.numberOfLines = 1;
+            labelAll.textAlignment = NSTextAlignmentRight;
+            labelAll.textColor = BAR_COLOR;
+            labelAll.baselineAdjustment = UIBaselineAdjustmentAlignCenters;
+            [customViewAll addSubview:labelAll];
+            
             _selectAllItem = [[UIBarButtonItem alloc] initWithCustomView:customViewAll];
-        } else {
-            self.editItem = [self getBarItemAutoSize:@"more" action:@selector(editSheet:)];
-            self.rightItems = [NSArray arrayWithObjects:self.editItem, nil];
-        }
         self.navigationItem.rightBarButtonItems = self.rightItems;
     });
 }
@@ -486,11 +571,10 @@ enum {
     }
 }
 
-- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
-{
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
     if (![_directory isKindOfClass:[SeafRepos class]])
         return nil;
-
+    
     NSString *text = nil;
     if (section == 0) {
         text = NSLocalizedString(@"My Own Libraries", @"Seafile");
@@ -527,47 +611,48 @@ enum {
         }
     }
     
-    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 45)];
-        [headerView setBackgroundColor:kPrimaryBackgroundColor];
+    // Dynamically set headerView size based on tableView current width
+    CGFloat headerHeight = 45.0;
+    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, headerHeight)];
+    headerView.backgroundColor = kPrimaryBackgroundColor;
+    headerView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     
-    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(15, 12, tableView.bounds.size.width - 50, 22)];
+    UIEdgeInsets margins = tableView.layoutMargins;
+    CGFloat leftPadding = MAX(14, margins.left);
+    CGFloat rightPadding = MAX(17, margins.right);
+    
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(leftPadding, 12, tableView.bounds.size.width - leftPadding - rightPadding, 22)];
     label.font = [UIFont systemFontOfSize:16 weight:UIFontWeightMedium];
     label.text = text;
     label.textColor = [UIColor blackColor];
     label.backgroundColor = [UIColor clearColor];
+    label.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     
-    // Add a button with arrow icon to expand/collapse
+    // Create right toggle button with fixed width and height, position calculated based on right margin
+    CGFloat toggleButtonWidth = 13.0;
     UIButton *toggleButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    toggleButton.frame = CGRectMake(tableView.bounds.size.width - 30, 16, 13, 13);
+    toggleButton.frame = CGRectMake(tableView.bounds.size.width - rightPadding - toggleButtonWidth, 16, toggleButtonWidth, toggleButtonWidth);
+    toggleButton.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
+
+    toggleButton.frame = CGRectMake(tableView.bounds.size.width - rightPadding - toggleButtonWidth, 16, toggleButtonWidth, toggleButtonWidth);
+    toggleButton.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
     
-    // Set the arrow direction based on expanded state
     NSNumber *expanded = [self.expandedSections objectForKey:@(section)];
     BOOL isExpanded = expanded ? [expanded boolValue] : NO;
-    
-    // Use arrowDown_black image for collapsed state
     UIImage *arrowImage = [UIImage imageNamed:@"arrowDown_black"];
     [toggleButton setImage:arrowImage forState:UIControlStateNormal];
     toggleButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
-
-    // Set rotation anchor point to button center
     toggleButton.layer.anchorPoint = CGPointMake(0.5, 0.5);
-
-    // Set initial rotation based on expanded state
     CGFloat initialRotation = isExpanded ? -M_PI : 0;
     toggleButton.transform = CGAffineTransformMakeRotation(initialRotation);
-    
-    // Store the section index in the button's tag
     toggleButton.tag = section;
     [toggleButton addTarget:self action:@selector(toggleSection:) forControlEvents:UIControlEventTouchUpInside];
-    
-    // Add tap gesture to the entire header view
+    // Add tap gesture to headerView
     UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(headerTapped:)];
     [headerView addGestureRecognizer:tapGesture];
-    headerView.tag = section; // Store section index in the view's tag
-    
+    headerView.tag = section;
     [headerView addSubview:label];
     [headerView addSubview:toggleButton];
-    
     return headerView;
 }
 
@@ -602,15 +687,15 @@ enum {
     toggleButton.layer.anchorPoint = CGPointMake(0.5, 0.5);
     
     [UIView animateWithDuration:0.25
-                          delay:0 
-                        options:UIViewAnimationOptionCurveEaseInOut 
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseInOut
                      animations:^{
         CGFloat targetRotation = willExpand ? M_PI_2 : 0;
         toggleButton.transform = CGAffineTransformMakeRotation(targetRotation);
     } completion:^(BOOL finished) {
         if (finished) {
             [self.expandedSections setObject:@(willExpand) forKey:@(section)];
-            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:section] 
+            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:section]
                         withRowAnimation:UITableViewRowAnimationFade];
         }
     }];
@@ -692,7 +777,12 @@ enum {
     _connection = directory.connection;
     self.searchResultController.connection = _connection;
     self.searchResultController.directory = _directory;
-    self.title = directory.name;
+    
+    // Update custom title
+    if (self.customTitleLabel) {
+        self.customTitleLabel.text = directory.name;
+    }
+    
     [_directory loadContent:false];
     Debug("repoId:%@, %@, path:%@, loading ... cached:%d %@, editable:%d\n", _directory.repoId, _directory.name, _directory.path, _directory.hasCache, _directory.ooid, _directory.editable);
     
@@ -711,6 +801,25 @@ enum {
         self.tableView.sectionHeaderHeight = 0;
     [_directory setDelegate:self];
     [self refreshView];
+    
+    if ([_directory isKindOfClass:[SeafRepos class]]) {
+        // Recreate container view without back button
+        UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 200, 44)];
+        
+        // Update title label position to leftmost
+        UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(5, 0, 185, 44)];
+        self.customTitleLabel = titleLabel;
+        
+        titleLabel.text = directory.name;
+        self.navigationItem.title = @""; // Hide navigation bar original title
+        
+        titleLabel.font = [UIFont systemFontOfSize:20 weight:UIFontWeightSemibold];
+        titleLabel.textColor = [UIColor blackColor];
+        [containerView addSubview:titleLabel];
+        
+        UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:containerView];
+        self.navigationItem.leftBarButtonItem = customBarButton;
+    }
     
     self.state = STATE_LOADING;
     self.directory.delegate = self;
@@ -931,7 +1040,7 @@ enum {
         self.originalTitle = self.title;
         
         [self.navigationController.toolbar sizeToFit];
-        [self setupCustomTabToolWithTopPadding:15 bottomPadding:0 totalHeight:130];
+        [self setupCustomTabTool];
         [self noneSelected:YES];
         [self.photoItem setEnabled:NO];
         [self.navigationController setToolbarHidden:YES animated:animated];
@@ -941,7 +1050,7 @@ enum {
         [self.photoItem setEnabled:YES];
         
         // Restore original title
-        self.navigationItem.title = self.originalTitle;
+        self.customTitleLabel.text = self.directory.name;
 
         // Remove custom toolbar
         [self dismissCustomTabTool:^{
@@ -989,7 +1098,40 @@ enum {
     self.navigationItem.rightBarButtonItem = nil;
     self.navigationItem.rightBarButtonItems = self.rightItems;
     
-    self.navigationItem.title = self.originalTitle;
+    // Restore original title
+    self.customTitleLabel.text = self.directory.name;
+    
+    UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 200, 44)];
+    // Add title label (adjust x position to avoid overlap)
+    UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+    // Add back button
+    if (![self.directory isKindOfClass:[SeafRepos class]]) {
+        UIButton *customButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        [customButton setImage:[UIImage imageNamed:@"arrowLeft_black"] forState:UIControlStateNormal];
+        // Keep the image size and position, but expand the button's touch area
+        [customButton setFrame:CGRectMake(0, 0, 30, 44)];
+        // Center the image in the expanded button
+        customButton.imageEdgeInsets = UIEdgeInsetsMake(12, 0, 12, 18);
+        customButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
+        [customButton addTarget:self action:@selector(backButtonTapped) forControlEvents:UIControlEventTouchUpInside];
+        [containerView addSubview:customButton];
+        
+        titleLabel.frame = CGRectMake(30, 0, 210, 44);
+    } else {
+        titleLabel.frame = CGRectMake(5, 0, 210, 44);
+    }
+    
+     self.customTitleLabel = titleLabel; // Save reference
+    
+    titleLabel.text = self.directory.name;
+    self.navigationItem.title = @""; // Hide navigation bar original title
+    
+    titleLabel.font = [UIFont systemFontOfSize:20 weight:UIFontWeightSemibold];
+    titleLabel.textColor = [UIColor blackColor];
+    [containerView addSubview:titleLabel];
+    
+    UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:containerView];
+    self.navigationItem.leftBarButtonItem = customBarButton;
 }
 
 - (void)editOperation:(id)sender
@@ -1056,25 +1198,32 @@ enum {
 - (void)noneSelected:(BOOL)none
 {
     if (none) {
+        // Get done button container view
+        UIView *containerView = (UIView *)self.doneItem.customView;
+        UILabel *countLabel = [containerView.subviews.lastObject isKindOfClass:[UILabel class]] ?
+                             (UILabel *)containerView.subviews.lastObject : nil;
+        countLabel.text = NSLocalizedString(@"Select items", @"Seafile");
+        
         self.navigationItem.rightBarButtonItem = _selectNoneItem;
         self.navigationItem.leftBarButtonItem = self.doneItem;
-        
-        // Only set "Please select items" title in edit mode
-        if (self.editing) {
-            self.navigationItem.title = NSLocalizedString(@"Please select items", @"Seafile");
-        }
+    
     } else {
-        // Calculate total selectable rows (excluding upload files)
+        NSArray *selectedRows = [self.tableView indexPathsForSelectedRows];
+        NSInteger selectedCount = selectedRows.count;
+        
+        // Update label text on done button
+        UIView *containerView = (UIView *)self.doneItem.customView;
+        UILabel *countLabel = [containerView.subviews.lastObject isKindOfClass:[UILabel class]] ?
+                             (UILabel *)containerView.subviews.lastObject : nil;
+        countLabel.text = [NSString stringWithFormat:NSLocalizedString(@"%ld selected", @"Seafile"), (long)selectedCount];
+        
+        // Calculate total selectable rows
         NSInteger selectableCount = 0;
         for (id entry in self.allItems) {
             if (![entry isKindOfClass:[SeafUploadFile class]]) {
                 selectableCount++;
             }
         }
-        
-        // Get number of selected items
-        NSArray *selectedRows = [self.tableView indexPathsForSelectedRows];
-        NSInteger selectedCount = selectedRows.count;
         
         // Decide which button to show based on selection state
         if (selectedCount == selectableCount) {
@@ -1085,9 +1234,9 @@ enum {
         
         self.navigationItem.leftBarButtonItem = self.doneItem;
         
-        // Only set "X items selected" title in edit mode
+        // Only update custom title in edit mode
         if (self.editing) {
-            self.navigationItem.title = [NSString stringWithFormat:NSLocalizedString(@"%ld items selected", @"Seafile"), (long)selectedCount];
+            self.customTitleLabel.text = [NSString stringWithFormat:NSLocalizedString(@"%ld items selected", @"Seafile"), (long)selectedCount];
         }
     }
 }
@@ -1221,21 +1370,43 @@ enum {
         
         [SVProgressHUD showWithStatus:NSLocalizedString(@"Renaming file ...", @"Seafile")];
         
-        [[SeafFileOperationManager sharedManager]
-            renameEntry:oldName
-            newName:input
-            inDir:self.directory
-            completion:^(BOOL success,SeafBase *renamedFile , NSError * _Nullable error)
-        {
-            if (success) {
-                [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Rename file success", @"Seafile")];
-                [self.directory loadContent:YES];
+        if ([self.directory isKindOfClass:[SeafRepos class]]) {
+            SeafRepo *repo = nil;
+            if ([_curEntry isKindOfClass:[SeafRepo class]]) {
+                repo = (SeafRepo *)_curEntry;
             } else {
-                NSString *errMsg = error.localizedDescription ?: NSLocalizedString(@"Failed to rename file", @"Seafile");
-                [SVProgressHUD showErrorWithStatus:errMsg];
-                // You can choose to pop up the rename interface again
+                repo = (SeafRepo *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
             }
-        }];
+            [[SeafFileOperationManager sharedManager]
+                renameEntry:oldName
+                newName:input
+                inRepo:repo
+                completion:^(BOOL success, SeafBase *renamedFile, NSError * _Nullable error)
+            {
+                if (success) {
+                    [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Rename file success", @"Seafile")];
+                    [self.directory loadContent:YES];
+                } else {
+                    NSString *errMsg = error.localizedDescription ?: NSLocalizedString(@"Failed to rename file", @"Seafile");
+                    [SVProgressHUD showErrorWithStatus:errMsg];
+                }
+            }];
+        } else {
+            [[SeafFileOperationManager sharedManager]
+                renameEntry:oldName
+                newName:input
+                inDir:self.directory
+                completion:^(BOOL success, SeafBase *renamedFile, NSError * _Nullable error)
+            {
+                if (success) {
+                    [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Rename file success", @"Seafile")];
+                    [self.directory loadContent:YES];
+                } else {
+                    NSString *errMsg = error.localizedDescription ?: NSLocalizedString(@"Failed to rename file", @"Seafile");
+                    [SVProgressHUD showErrorWithStatus:errMsg];
+                }
+            }];
+        }
     }];
 }
 
@@ -1575,7 +1746,7 @@ enum {
     self.state = STATE_DELETE;
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Deleting file ...", @"Seafile")];
     
-    [[SeafFileOperationManager sharedManager] 
+    [[SeafFileOperationManager sharedManager]
         deleteEntries:entries
         inDir:self.directory
         completion:^(BOOL success, NSError * _Nullable error) {
@@ -1603,7 +1774,7 @@ enum {
                 [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Delete success", @"Seafile")];
                 [self.directory loadContent:YES];
             } else {
-                NSString *errMsg = error.localizedDescription ?: NSLocalizedString(@"Failed to delete files", @"Seafile"); 
+                NSString *errMsg = error.localizedDescription ?: NSLocalizedString(@"Failed to delete files", @"Seafile");
                 [SVProgressHUD showErrorWithStatus:errMsg];
             }
         }];
@@ -1781,7 +1952,7 @@ enum {
         }
     }
     
-    [self setLastCellSaparator:cell andIndexPath:indexPath];
+    [self setCellSaparatorAndCorner:cell andIndexPath:indexPath];
 
     return cell;
 }
@@ -1801,7 +1972,7 @@ enum {
     sfile.delegate = self;
     sfile.udelegate = self;
     
-    [self setLastCellSaparator:cell andIndexPath:indexPath];
+    [self setCellSaparatorAndCorner:cell andIndexPath:indexPath];
 
     return cell;
 }
@@ -1819,7 +1990,7 @@ enum {
     };
     sdir.delegate = self;
     
-    [self setLastCellSaparator:cell andIndexPath:indexPath];
+    [self setCellSaparatorAndCorner:cell andIndexPath:indexPath];
 
     return cell;
 }
@@ -1838,12 +2009,12 @@ enum {
     };
     srepo.delegate = self;
     
-    [self setLastCellSaparator:cell andIndexPath:indexPath];
+    [self setCellSaparatorAndCorner:cell andIndexPath:indexPath];
 
     return cell;
 }
 
-- (void)setLastCellSaparator:(UITableViewCell *)cell andIndexPath:(NSIndexPath *)indexPath {
+- (void)setCellSaparatorAndCorner:(UITableViewCell *)cell andIndexPath:(NSIndexPath *)indexPath {
     // Check if it's the last cell in section
     BOOL isLastCell = NO;
     if (![_directory isKindOfClass:[SeafRepos class]]) {
@@ -1857,6 +2028,25 @@ enum {
     // Update cell separator
     if ([cell isKindOfClass:[SeafCell class]]) {
         [(SeafCell *)cell updateSeparatorInset:isLastCell];
+    }
+    
+    [self setCellCornerWithCell:cell andIndexPath:indexPath];
+}
+
+- (void)setCellCornerWithCell:(UITableViewCell *)cell andIndexPath:(NSIndexPath *)indexPath {
+    if ([cell isKindOfClass:[SeafCell class]]) {
+        BOOL isFirstCell = (indexPath.row == 0);
+        BOOL isLastCell = NO;
+        
+        if (![_directory isKindOfClass:[SeafRepos class]]) {
+            isLastCell = (indexPath.row == self.allItems.count - 1);
+        } else {
+            NSArray *repoGroups = [((SeafRepos *)_directory) repoGroups];
+            NSArray *repos = [repoGroups objectAtIndex:indexPath.section];
+            isLastCell = (indexPath.row == repos.count - 1);
+        }
+        
+        [(SeafCell *)cell updateCellStyle:isFirstCell isLastCell:isLastCell];
     }
 }
 
@@ -1873,7 +2063,8 @@ enum {
 
 - (void)updateCellDownloadStatus:(SeafCell *)cell file:(SeafFile *)sfile waiting:(BOOL)waiting
 {
-    [self updateCellDownloadStatus:cell isDownloading:sfile.isDownloading waiting:waiting cached:sfile.hasCache];
+    BOOL fileHasCache = [sfile isSdocFile] ? NO : sfile.hasCache; //To prevent downloading sfile files, force it to have no cache. Force set statusView hidden.
+    [self updateCellDownloadStatus:cell isDownloading:sfile.isDownloading waiting:waiting cached:fileHasCache];
 }
 
 - (void)updateCellDownloadStatus:(SeafCell *)cell isDownloading:(BOOL )isDownloading waiting:(BOOL)waiting cached:(BOOL)cached
@@ -2418,9 +2609,7 @@ enum {
     return _searchController;
 }
 
-- (void)setupCustomTabToolWithTopPadding:(CGFloat)topPadding
-                         bottomPadding:(CGFloat)bottomPadding 
-                          totalHeight:(CGFloat)totalHeight {
+- (void)setupCustomTabTool {
     // Remove existing custom view if present
     if (self.customToolView) {
         [self.customToolView removeFromSuperview];
@@ -2428,7 +2617,7 @@ enum {
     }
     
     // Calculate custom view size and position
-    CGFloat toolHeight = totalHeight;
+    CGFloat toolHeight = kCustomTabToolTotalHeight;
     
     UIEdgeInsets safeAreaInsets = UIEdgeInsetsZero;
     CGFloat pureHomeIndicator = 0;
@@ -2438,10 +2627,10 @@ enum {
     }
 
     // Apply bottom padding parameters
-    CGRect frame = CGRectMake(0, 
-                             self.view.bounds.size.height - toolHeight - pureHomeIndicator + bottomPadding,
+    CGRect frame = CGRectMake(0,
+                             self.view.bounds.size.height - toolHeight - pureHomeIndicator,
                              self.view.bounds.size.width,
-                             toolHeight + pureHomeIndicator - bottomPadding);
+                             toolHeight + pureHomeIndicator);
     
     // Create custom view
     UIView *customToolView = [[UIView alloc] initWithFrame:frame];
@@ -2454,50 +2643,44 @@ enum {
     [customToolView.layer addSublayer:topBorder];
     
     // First row buttons - 5 buttons
-    NSArray *firstRowTitles = @[@"Download", @"Rename", @"Star", @"Copy", @"Share"];
-    NSArray *firstRowIcons = @[@"action_download", @"action_rename", @"action_star", @"action_copy", @"action_share"];
+    NSArray *firstRowTitles = @[
+        NSLocalizedString(@"Download", @"Seafile"),
+        NSLocalizedString(@"Rename", @"Seafile"),
+        NSLocalizedString(@"Star", @"Seafile"),
+        NSLocalizedString(@"Copy", @"Seafile"),
+        NSLocalizedString(@"Share", @"Seafile")
+    ];
+    
+    NSArray *firstRowIcons = @[
+        @"action_download",
+        @"action_rename",
+        @"action_star",
+        @"action_copy",
+        @"action_share"
+    ];
     
     // Second row buttons - 2 buttons
-    NSArray *secondRowTitles = @[@"Move", @"Delete"];
-    NSArray *secondRowIcons = @[@"action_move", @"action_delete"];
+    NSArray *secondRowTitles = @[
+        NSLocalizedString(@"Move", @"Seafile"),
+        NSLocalizedString(@"Delete", @"Seafile")
+    ];
+    
+    NSArray *secondRowIcons = @[
+        @"action_move",
+        @"action_delete"
+    ];
     
     // Set button sizes and spacing
     CGFloat screenWidth = customToolView.bounds.size.width;
     
     // First row - evenly divide screen width
     CGFloat firstRowButtonWidth = screenWidth / 5.0;
-    CGFloat firstRowTopPosition = topPadding;
+    CGFloat firstRowTopPosition = kCustomTabToolWithTopPadding;
     
     // Calculate second row position
-    CGFloat buttonHeight = 40;
-    CGFloat secondRowTopPosition = topPadding + buttonHeight + 25;
-    
-    // Create first row buttons
-    for (int i = 0; i < firstRowTitles.count; i++) {
-        CGFloat xPosition = i * firstRowButtonWidth;
-        UIView *buttonView = [self createTabButtonWithTitle:firstRowTitles[i] 
-                                                   iconName:firstRowIcons[i]
-                                                     width:firstRowButtonWidth
-                                                      tag:i + 1001];
+    CGFloat buttonHeight = kCustomTabToolButtonHeight;
+    CGFloat secondRowTopPosition = kCustomTabToolWithTopPadding + buttonHeight + 25;
         
-        buttonView.frame = CGRectMake(xPosition, firstRowTopPosition, firstRowButtonWidth, buttonHeight);
-        [customToolView addSubview:buttonView];
-    }
-    
-    // Create second row buttons aligned with first row
-    CGFloat secondRowPositions[2] = {0, 1};
-    
-    for (int i = 0; i < secondRowTitles.count; i++) {
-        CGFloat xPosition = secondRowPositions[i] * firstRowButtonWidth;
-        UIView *buttonView = [self createTabButtonWithTitle:secondRowTitles[i] 
-                                                   iconName:secondRowIcons[i]
-                                                     width:firstRowButtonWidth
-                                                      tag:i + 5 + 1001];
-        
-        buttonView.frame = CGRectMake(xPosition, secondRowTopPosition, firstRowButtonWidth, buttonHeight);
-        [customToolView addSubview:buttonView];
-    }
-    
     // Set initial position below screen
     CGRect initialFrame = customToolView.frame;
     initialFrame.origin.y = self.view.bounds.size.height;
@@ -2522,12 +2705,68 @@ enum {
     // Store reference
     self.customToolView = customToolView;
     
+    // Create first row buttons
+    for (int i = 0; i < firstRowTitles.count; i++) {
+        UIView *buttonView = [self createTabButtonWithTitle:firstRowTitles[i]
+                                                   iconName:firstRowIcons[i]
+                                                     width:80.0  // Fixed width, consistent with common layout method
+                                                      tag:i + 1001];
+        [customToolView addSubview:buttonView];
+    }
+
+    // Create second row buttons
+    for (int i = 0; i < secondRowTitles.count; i++) {
+        UIView *buttonView = [self createTabButtonWithTitle:secondRowTitles[i]
+                                                   iconName:secondRowIcons[i]
+                                                     width:80.0
+                                                      tag:i + 5 + 1001];
+        [customToolView addSubview:buttonView];
+    }
+
+    [self layoutCustomToolButtons];
+
+    
     // Animate from bottom
     [UIView animateWithDuration:0.2 animations:^{
         self.customToolView.frame = frame;
     }];
 }
 
+- (void)layoutCustomToolButtons {
+    if (!self.customToolView) return;
+    
+    CGFloat screenWidth = self.customToolView.bounds.size.width;
+    // Fixed button width, button height, top padding and spacing between rows
+    CGFloat fixedButtonWidth = 80.0;
+    CGFloat buttonHeight = kCustomTabToolButtonHeight;
+    CGFloat topPadding = kCustomTabToolWithTopPadding;
+    CGFloat verticalSpacing = 25.0;
+    
+    // First row has 5 buttons, second row has 2 buttons
+    NSInteger firstRowButtonCount = 5;
+    NSInteger secondRowButtonCount = 2;
+    
+    // Calculate left and right spacing to ensure even distribution of buttons in the first row
+    CGFloat firstRowSpacing = (screenWidth - (fixedButtonWidth * firstRowButtonCount)) / (firstRowButtonCount + 1);
+    CGFloat firstRowTopPosition = topPadding;
+    CGFloat secondRowTopPosition = topPadding + buttonHeight + verticalSpacing;
+    
+    // Iterate through customToolView's subviews and layout based on tag values
+    for (UIView *subview in self.customToolView.subviews) {
+        if (subview.tag >= 1001 && subview.tag < 1001 + firstRowButtonCount) {
+            // First row buttons: tags 1001-1005
+            NSInteger index = subview.tag - 1001;
+            CGFloat xPosition = firstRowSpacing + index * (fixedButtonWidth + firstRowSpacing);
+            subview.frame = CGRectMake(xPosition, firstRowTopPosition, fixedButtonWidth, buttonHeight);
+        } else if (subview.tag >= 1001 + firstRowButtonCount && subview.tag < 1001 + firstRowButtonCount + secondRowButtonCount) {
+            // Second row buttons: tags 1006-1007, arranged according to desiredIndexes (here using @[@0, @1], aligned with first two buttons of first row)
+            NSArray *desiredIndexes = @[@0, @1];
+            NSInteger index = subview.tag - (1001 + firstRowButtonCount); // 0 or 1
+            CGFloat xPosition = firstRowSpacing + ([desiredIndexes[index] integerValue]) * (fixedButtonWidth + firstRowSpacing);
+            subview.frame = CGRectMake(xPosition, secondRowTopPosition, fixedButtonWidth, buttonHeight);
+        }
+    }
+}
 // Create individual button view
 - (UIView *)createTabButtonWithTitle:(NSString *)title iconName:(NSString *)iconName width:(CGFloat)width tag:(NSInteger)tag {
     UIView *buttonView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, width, 40)];
@@ -2698,22 +2937,25 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
             for (SeafBase *item in selectedItems) {
                 [entries addObject:item.name];
             }
-            self.state = STATE_DELETE;
-            _directory.delegate = self;
-            [self editDone:nil]; // Exit edit mode here
-            [SVProgressHUD showWithStatus:NSLocalizedString(@"Deleting files ...", @"Seafile")];
-            [[SeafFileOperationManager sharedManager]
-             deleteEntries:entries
-             inDir:self.directory
-             completion:^(BOOL success, NSError * _Nullable error)
-             {
-                if (success) {
-                    [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Delete success", @"Seafile")];
-                    [self.directory loadContent:YES];
-                } else {
-                    NSString *errMsg = error.localizedDescription ?: NSLocalizedString(@"Failed to delete files", @"Seafile");
-                    [SVProgressHUD showErrorWithStatus:errMsg];
-                }
+            [self alertWithTitle:nil message:NSLocalizedString(@"Are you sure you want to delete these items?", @"Seafile") yes:^{
+                 self.state = STATE_DELETE;
+                 _directory.delegate = self;
+                 [self editDone:nil]; // Exit edit mode after confirmation
+                 [SVProgressHUD showWithStatus:NSLocalizedString(@"Deleting files ...", @"Seafile")];
+                 [[SeafFileOperationManager sharedManager]
+                  deleteEntries:entries
+                  inDir:self.directory
+                  completion:^(BOOL success, NSError * _Nullable error) {
+                     if (success) {
+                         [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Delete success", @"Seafile")];
+                         [self.directory loadContent:YES];
+                     } else {
+                         NSString *errMsg = error.localizedDescription ?: NSLocalizedString(@"Failed to delete files", @"Seafile");
+                         [SVProgressHUD showErrorWithStatus:errMsg];
+                     }
+                 }];
+            } no:^{
+                
             }];
             break;
         }
@@ -2759,6 +3001,21 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
         //share
         [self updateExportBarItem:selectedItems];
     }
+    
+    if ([self.directory isKindOfClass:[SeafRepos class]]) {
+        [self updateSeafBaseToolButton];
+    }
+}
+
+- (void)updateSeafBaseToolButton {
+    //copy
+    [self updateToolButton:ToolButtonCopy enabled:NO];
+
+    //move
+    [self updateToolButton:ToolButtonMove enabled:NO];
+    
+    //delete
+    [self updateToolButton:ToolButtonDelete enabled:NO];
 }
 
 - (void)setAllToolButtonEnable:(BOOL)enable{
@@ -2785,30 +3042,54 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
 
 // Add new method to handle long press
 - (void)handleLongPress:(UILongPressGestureRecognizer *)gestureRecognizer {
-    if (![_directory isKindOfClass:[SeafRepos class]]) {
-        if (gestureRecognizer.state == UIGestureRecognizerStateBegan) {
-            CGPoint p = [gestureRecognizer locationInView:self.tableView];
-            NSIndexPath *indexPath = [self.tableView indexPathForRowAtPoint:p];
-            if (indexPath) {
-                // Only trigger edit mode if we're not already editing
-                if (!self.editing) {
-                    [self editStart:nil];
+    if (gestureRecognizer.state == UIGestureRecognizerStateBegan) {
+        CGPoint p = [gestureRecognizer locationInView:self.tableView];
+        NSIndexPath *indexPath = [self.tableView indexPathForRowAtPoint:p];
+        if (indexPath) {
+            // Only trigger edit mode if we're not already editing
+            if (!self.editing) {
+                [self editStart:nil];
+                
+                // Get the entry at this index path to check if it's an uploadFile
+                NSObject *entry = [self getDentrybyIndexPath:indexPath tableView:self.tableView];
+                
+                // Only select if it's not an upload file
+                if (![entry isKindOfClass:[SeafUploadFile class]]) {
+                    // Select the cell that was long pressed
+                    [self.tableView selectRowAtIndexPath:indexPath animated:YES scrollPosition:UITableViewScrollPositionNone];
                     
-                    // Get the entry at this index path to check if it's an uploadFile
-                    NSObject *entry = [self getDentrybyIndexPath:indexPath tableView:self.tableView];
-                    
-                    // Only select if it's not an upload file
-                    if (![entry isKindOfClass:[SeafUploadFile class]]) {
-                        // Select the cell that was long pressed
-                        [self.tableView selectRowAtIndexPath:indexPath animated:YES scrollPosition:UITableViewScrollPositionNone];
-                        
-                        // Update selection status
-                        [self noneSelected:NO];
-                        [self updateToolButtonsState];
-                    }
+                    // Update selection status
+                    [self noneSelected:NO];
+                    [self updateToolButtonsState];
                 }
             }
         }
     }
+}
+
+- (void)backButtonTapped {
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer {
+    if (gestureRecognizer == self.navigationController.interactivePopGestureRecognizer) {
+        // If in editing mode, prevent pop gesture
+        if (self.editing) {
+            return NO;
+        }
+        return self.navigationController.viewControllers.count > 1;
+    }
+    return YES;
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldBeRequiredToFailByGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+    if (gestureRecognizer == self.navigationController.interactivePopGestureRecognizer) {
+        return YES;
+    }
+    return NO;
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+    return NO;  // Return NO to avoid gesture conflict
 }
 @end
