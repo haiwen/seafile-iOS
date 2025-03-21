@@ -27,6 +27,8 @@ typedef void(^DownloadCompleteBlock)(NSArray *array, NSString *errorStr);
 
 @property (strong, readonly) SeafDetailViewController *detailViewController;
 
+@property (strong, nonatomic) NSMutableDictionary *expandedSections; // To track expanded/collapsed sections
+
 - (void)refreshView;
 - (void)uploadFile:(SeafUploadFile *)file;
 - (void)deleteFile:(SeafFile *)file;

@@ -11,6 +11,8 @@
 #import "SeafDir.h"
 #import "SeafConnection.h"   // Required to get connection
 #import "ExtentedString.h"   // For escapedUrl, escapedPostForm
+#import "SeafBase.h"         // Required for repoId property
+#import "SeafRepos.h"
 
 @implementation SeafFileOperationManager
 
@@ -182,6 +184,45 @@
                                              userInfo:@{NSLocalizedDescriptionKey:@"Renamed file not found"}];
                 completion(NO, nil, err);
             }
+        }
+    }
+                         failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error)
+    {
+        Warning("Rename failed, code=%ld", (long)response.statusCode);
+        if (completion) completion(NO, nil, error);
+    }];
+}
+
+- (void)renameEntry:(NSString *)oldName
+            newName:(NSString *)newName
+             inRepo:(SeafRepo *)repo
+         completion:(void(^)(BOOL success, SeafBase *renamedFile, NSError *error))completion
+{
+    if (!oldName || oldName.length == 0 || !newName || newName.length == 0) {
+        if (completion) {
+            NSError *err = [NSError errorWithDomain:@"SeafFileOperation"
+                                             code:-4
+                                         userInfo:@{NSLocalizedDescriptionKey:@"Invalid rename parameters"}];
+            completion(NO, nil, err);
+        }
+        return;
+    }
+
+    NSString *requestUrl = [NSString stringWithFormat:API_URL"/repos/%@/?op=rename",
+                            repo.repoId];
+    NSString *form = [NSString stringWithFormat:@"repo_name=%@", [newName escapedUrl]];
+
+    [repo.connection sendPost:requestUrl
+                            form:form
+                         success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON)
+    {
+        Debug("Rename success, code=%ld", (long)response.statusCode);
+        [repo handleResponse:response json:JSON];
+        
+        repo.name = newName;
+        
+        if (completion) {
+            completion(YES, repo, nil);
         }
     }
                          failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error)

@@ -31,9 +31,20 @@ typedef void(^MoreButtonTouchBlock)(NSIndexPath *indexPath);
 @property (nonatomic, copy) MoreButtonTouchBlock moreButtonBlock;
 @property (nonatomic, copy) NSString *imageLoadIdentifier;//Cell identifier is used for asynchronous image loading
 @property (nonatomic, strong) SeafFile *cellSeafFile;
+@property (nonatomic, assign) BOOL isStarredCell;//to show more button
 
+@property (strong, nonatomic) IBOutlet UIImageView *checkboxImageView;
+@property (strong, nonatomic) IBOutlet NSLayoutConstraint *checkboxWidthConstraint;
+@property (nonatomic, assign) BOOL isUserEditing;
+@property (nonatomic, assign) BOOL isLastCell;
+
+@property (weak, nonatomic) IBOutlet UIView *cellBackgroundView;
 - (void)reset;
 
 - (void)resetCellFile;
+
+- (void)updateSeparatorInset:(BOOL)isLastCell;
+
+- (void)updateCellStyle:(BOOL)isFirstCell isLastCell:(BOOL)isLastCell;
 
 @end

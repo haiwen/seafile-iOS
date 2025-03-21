@@ -6,7 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "SeafDir.h"
+#import "SeafRepos.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -92,6 +92,11 @@ typedef void(^SeafOperationCompletion)(BOOL success, NSError *_Nullable error);
              fromDir:(SeafDir *)srcDir
                toDir:(SeafDir *)dstDir
           completion:(SeafOperationCompletion)completion;
+
+- (void)renameEntry:(NSString *)oldName
+            newName:(NSString *)newName
+             inRepo:(SeafRepo *)repo
+         completion:(void(^)(BOOL success, SeafBase *renamedFile, NSError *error))completion;
 
 @end
 

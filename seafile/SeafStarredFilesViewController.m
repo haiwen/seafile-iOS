@@ -356,6 +356,7 @@
         Debug(@"%@", indexPath);
         [self showActionSheetWithIndexPath:indexPath];
     };
+    cell.isStarredCell = YES;
     [cell reset];
     
     NSObject *entry = [_cellDataArray objectAtIndex:indexPath.row];
@@ -613,7 +614,7 @@
 //set unStar
 - (void)setUnstar:(NSInteger)cellIndex {
     SeafBase *entry = [_cellDataArray objectAtIndex:cellIndex];
-    [entry setStarred:NO];
+    [entry setStarred:NO withBlock:nil];
     [self deleteRow:cellIndex];
 }
 
