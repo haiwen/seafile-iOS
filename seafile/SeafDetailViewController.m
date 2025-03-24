@@ -107,6 +107,15 @@ enum SHARE_STATUS {
     if ([self.preViewItem editable] && [self previewSuccess])
         [array addObject:self.editItem];
     self.navigationItem.rightBarButtonItems = array;
+    
+    if (@available(iOS 15.0, *)) {
+        UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
+        barAppearance.backgroundColor = [UIColor whiteColor];
+            barAppearance.shadowColor = [UIColor lightGrayColor]; // Add navigation bar bottom separator color
+        
+        self.navigationController.navigationBar.standardAppearance = barAppearance;
+        self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
+    }
 }
 
 // Clear current preview settings and restore to initial state.
@@ -366,6 +375,11 @@ enum SHARE_STATUS {
     [self refreshView];
 }
 
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    [self updateNavigation];
+}
+
 - (void)viewDidUnload
 {
     [super viewDidUnload];
@@ -415,6 +429,7 @@ enum SHARE_STATUS {
     if (@available(iOS 15.0, *)) {
         UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
         barAppearance.backgroundColor = [UIColor whiteColor];
+        barAppearance.shadowColor = [UIColor lightGrayColor]; // Add navigation bar bottom separator color
         
         self.navigationController.navigationBar.standardAppearance = barAppearance;
         self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
@@ -817,7 +832,7 @@ enum SHARE_STATUS {
         _mwPhotoBrowser.enableSwipeToDismiss = true;
         _mwPhotoBrowser.backgroundColor = [UIColor whiteColor];
         _mwPhotoBrowser.trackTintColor = SEAF_COLOR_LIGHT;
-        _mwPhotoBrowser.progressColor = SEAF_COLOR_DARK;
+        _mwPhotoBrowser.progressColor = SEAF_COLOR_GREY;
         _mwPhotoBrowser.preLoadNumLeft = 0;
         _mwPhotoBrowser.preLoadNumRight = 1;
     }

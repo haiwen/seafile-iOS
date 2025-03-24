@@ -92,6 +92,9 @@
 		BA0DB2C42D8831B500237211 /* arrowLeft_black.png in Resources */ = {isa = PBXBuildFile; fileRef = BA0DB2C02D8831B500237211 /* arrowLeft_black.png */; };
 		BA0DB2C52D8831B500237211 /* arrowLeft_black.png in Resources */ = {isa = PBXBuildFile; fileRef = BA0DB2C02D8831B500237211 /* arrowLeft_black.png */; };
 		BA0DB2C62D8831B500237211 /* arrowLeft_black.png in Resources */ = {isa = PBXBuildFile; fileRef = BA0DB2C02D8831B500237211 /* arrowLeft_black.png */; };
+		BA0E7E502D92470F00E3E3F0 /* SeafHeaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = BA0E7E4F2D92470F00E3E3F0 /* SeafHeaderView.m */; };
+		BA0E7E532D924A8D00E3E3F0 /* SeafEditNavRightItem.m in Sources */ = {isa = PBXBuildFile; fileRef = BA0E7E522D924A8D00E3E3F0 /* SeafEditNavRightItem.m */; };
+		BA11F5042D91457900F56208 /* SeafNavLeftItem.m in Sources */ = {isa = PBXBuildFile; fileRef = BA11F5032D91457900F56208 /* SeafNavLeftItem.m */; };
 		BA8AC7E02D802E8800F8DE57 /* Constants.m in Sources */ = {isa = PBXBuildFile; fileRef = BA8AC7DF2D802E8800F8DE57 /* Constants.m */; };
 		BA8AC7F32D8192D800F8DE57 /* ic_checkbox_checked.png in Resources */ = {isa = PBXBuildFile; fileRef = BA8AC7F02D8192D800F8DE57 /* ic_checkbox_checked.png */; };
 		BA8AC7F42D8192D800F8DE57 /* ic_checkbox_unchecked.png in Resources */ = {isa = PBXBuildFile; fileRef = BA8AC7F22D8192D800F8DE57 /* ic_checkbox_unchecked.png */; };
@@ -863,6 +866,12 @@
 		B3D78ABE0B0673E422054A82 /* libPods-seafileApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-seafileApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B6C7801D49498095B24DB644 /* Pods-seafileApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-seafileApp.release.xcconfig"; path = "Pods/Target Support Files/Pods-seafileApp/Pods-seafileApp.release.xcconfig"; sourceTree = "<group>"; };
 		BA0DB2C02D8831B500237211 /* arrowLeft_black.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = arrowLeft_black.png; sourceTree = "<group>"; };
+		BA0E7E4E2D92470F00E3E3F0 /* SeafHeaderView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafHeaderView.h; sourceTree = "<group>"; };
+		BA0E7E4F2D92470F00E3E3F0 /* SeafHeaderView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafHeaderView.m; sourceTree = "<group>"; };
+		BA0E7E512D924A8D00E3E3F0 /* SeafEditNavRightItem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafEditNavRightItem.h; sourceTree = "<group>"; };
+		BA0E7E522D924A8D00E3E3F0 /* SeafEditNavRightItem.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafEditNavRightItem.m; sourceTree = "<group>"; };
+		BA11F5032D91457900F56208 /* SeafNavLeftItem.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafNavLeftItem.m; sourceTree = "<group>"; };
+		BA11F5052D9145A400F56208 /* SeafNavLeftItem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafNavLeftItem.h; sourceTree = "<group>"; };
 		BA8AC7DE2D802E8800F8DE57 /* Constants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Constants.h; sourceTree = "<group>"; };
 		BA8AC7DF2D802E8800F8DE57 /* Constants.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Constants.m; sourceTree = "<group>"; };
 		BA8AC7E12D802F2800F8DE57 /* seafile-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "seafile-Prefix.pch"; sourceTree = "<group>"; };
@@ -1189,6 +1198,12 @@
 				F5EAAE92218419120068BFE3 /* SeafPrivacyPolicyViewController.m */,
 				F515E4B421AC3DBB00A62F64 /* SeafActionsManager.h */,
 				F515E4B521AC3DBB00A62F64 /* SeafActionsManager.m */,
+				BA11F5032D91457900F56208 /* SeafNavLeftItem.m */,
+				BA11F5052D9145A400F56208 /* SeafNavLeftItem.h */,
+				BA0E7E512D924A8D00E3E3F0 /* SeafEditNavRightItem.h */,
+				BA0E7E522D924A8D00E3E3F0 /* SeafEditNavRightItem.m */,
+				BA0E7E4E2D92470F00E3E3F0 /* SeafHeaderView.h */,
+				BA0E7E4F2D92470F00E3E3F0 /* SeafHeaderView.m */,
 			);
 			name = views;
 			sourceTree = "<group>";
@@ -2637,8 +2652,10 @@
 				570DFAC716A15D0100ADD5F2 /* SeafAccountViewController.m in Sources */,
 				F5CBCDC01F2C2F1500E8C35B /* SeafSyncInfoViewController.m in Sources */,
 				577B6C6616AADBA3008E82C2 /* SeafCell.m in Sources */,
+				BA0E7E532D924A8D00E3E3F0 /* SeafEditNavRightItem.m in Sources */,
 				58D40A6B1E9AF72200A68BEF /* SeafAccountCell.m in Sources */,
 				4A5E88CF22AD3102008146BA /* SeafActivitiesCell.m in Sources */,
+				BA0E7E502D92470F00E3E3F0 /* SeafHeaderView.m in Sources */,
 				57DA26F5173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */,
 				5757DCCD1AEBCF1600BC0426 /* SeafShibbolethViewController.m in Sources */,
 				58D40A681E9AF72200A68BEF /* UIViewController+Extend.m in Sources */,
@@ -2647,6 +2664,7 @@
 				57A90DA118C49F97005D8A53 /* SeafDetailViewController.m in Sources */,
 				5704C6D31753A1380028F4FE /* IntelligentSplitViewController.m in Sources */,
 				57F476EC1C00623300047395 /* SeafPhotoThumb.m in Sources */,
+				BA11F5042D91457900F56208 /* SeafNavLeftItem.m in Sources */,
 				576C91C4177EB43F007B50BD /* SeafDirViewController.m in Sources */,
 				58D40A7E1E9AF86D00A68BEF /* SeafData.m in Sources */,
 				F536DA191F30DB6F00F2EF3F /* SeafSyncInfoCell.m in Sources */,
