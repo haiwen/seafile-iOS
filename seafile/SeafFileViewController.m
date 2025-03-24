@@ -41,6 +41,9 @@
 #import "SeafUploadOperation.h"
 #import "SeafFileOperationManager.h"
 #import "SeafUploadFileModel.h"
+#import "SeafNavLeftItem.h"
+#import "SeafHeaderView.h"
+#import "SeafEditNavRightItem.h"
 
 #define kCustomTabToolWithTopPadding 15
 #define kCustomTabToolButtonHeight 40
@@ -153,32 +156,7 @@ enum {
     
     // Custom navigation bar left button
     if (!self.isEditing) {
-        UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 200, 44)];
-        
-        // Add back button
-        UIButton *customButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        [customButton setImage:[UIImage imageNamed:@"arrowLeft_black"] forState:UIControlStateNormal];
-        // Keep the image size and position, but expand the button's touch area
-        [customButton setFrame:CGRectMake(0, 0, 30, 44)];
-        // Center the image in the expanded button
-        customButton.imageEdgeInsets = UIEdgeInsetsMake(12, 0, 12, 18);
-        customButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
-        [customButton addTarget:self action:@selector(backButtonTapped) forControlEvents:UIControlEventTouchUpInside];
-        [containerView addSubview:customButton];
-        
-        // Add title label (adjust x position to avoid overlap)
-        UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(30, 0, 210, 44)];
-        self.customTitleLabel = titleLabel; // Save reference
-        
-        // Use folder name as title
-        titleLabel.text = self.directory.name;
-        self.navigationItem.title = @""; // Hide navigation bar original title
-        
-        titleLabel.font = [UIFont systemFontOfSize:20 weight:UIFontWeightSemibold];
-        titleLabel.textColor = [UIColor blackColor];
-        [containerView addSubview:titleLabel];
-        
-        UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:containerView];
+        UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:self.directory target:self action:@selector(backButtonTapped)]];
         self.navigationItem.leftBarButtonItem = customBarButton;
     }
     
@@ -318,81 +296,33 @@ enum {
 - (void)initNavigationItems:(SeafDir *)directory
 {
     dispatch_async(dispatch_get_main_queue(), ^{
-            self.photoItem = [self getBarItem:@"plus2" action:@selector(addPhotos:) size:20];
-            
-            // Create a container view containing icon and label
-            UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 210, 44)];
+//        self.photoItem = [self getBarItem:@"plus2" action:@selector(addPhotos:) size:20];
+        
+        // Create a container view containing icon and label
+        UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 180, 44)];
+        
+        // Add close icon
+        UIButton *closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        [closeButton setImage:[UIImage imageNamed:@"close"] forState:UIControlStateNormal];
+        closeButton.frame = CGRectMake(0, 10, 24, 24);
+        [closeButton addTarget:self action:@selector(editDone:) forControlEvents:UIControlEventTouchUpInside];
+        [containerView addSubview:closeButton];
+        
+        // Add selection count label
+        UILabel *countLabel = [[UILabel alloc] initWithFrame:CGRectMake(35, 0, containerView.frame.size.width - 24 - 20, 44)];
+        countLabel.font = [UIFont systemFontOfSize:17];
+        countLabel.textColor = [UIColor blackColor];
+        countLabel.text = NSLocalizedString(@"Select items", @"Seafile");
+        [containerView addSubview:countLabel];
+        
+        UIBarButtonItem *customBarItem = [[UIBarButtonItem alloc] initWithCustomView:containerView];
+        self.doneItem = customBarItem;
+        self.editItem = [self getBarItemAutoSize:@"more" action:@selector(editSheet:)];
+        self.rightItems = [NSArray arrayWithObjects:self.editItem, nil];
 
-            // Add close icon
-            UIButton *closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
-            [closeButton setImage:[UIImage imageNamed:@"close"] forState:UIControlStateNormal];
-            closeButton.frame = CGRectMake(0, 10, 24, 24);
-            [closeButton addTarget:self action:@selector(editDone:) forControlEvents:UIControlEventTouchUpInside];
-            [containerView addSubview:closeButton];
-
-            // Add selection count label
-            UILabel *countLabel = [[UILabel alloc] initWithFrame:CGRectMake(35, 0, 150, 44)];
-            countLabel.font = [UIFont systemFontOfSize:17];
-            countLabel.textColor = [UIColor blackColor];
-            countLabel.text = NSLocalizedString(@"Select items", @"Seafile");
-            [containerView addSubview:countLabel];
-
-            UIBarButtonItem *customBarItem = [[UIBarButtonItem alloc] initWithCustomView:containerView];
-            self.doneItem = customBarItem;
-            self.editItem = [self getBarItemAutoSize:@"more" action:@selector(editSheet:)];
-            self.rightItems = [NSArray arrayWithObjects:self.editItem, nil];
-
-            // Create "Select All" button - unchecked state
-            UIView *customView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 90, 30)];
-            customView.userInteractionEnabled = YES;
-            UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(selectAll:)];
-            [customView addGestureRecognizer:tapGesture];
-            
-            // Adjust icon size and position
-            UIImageView *imageView = [[UIImageView alloc] initWithFrame:CGRectMake(customView.frame.size.width - 20, 5, 20, 20)];
-            imageView.image = [UIImage imageNamed:@"ic_checkbox_unchecked"];
-            imageView.contentMode = UIViewContentModeScaleAspectFit;
-            [customView addSubview:imageView];
-            
-            // Adjust text label position and font size
-            UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, customView.frame.size.width - 20 - 5,30)];
-            label.text = NSLocalizedString(@"Select All", @"Seafile");
-            label.font = [UIFont systemFontOfSize:18];
-            label.adjustsFontSizeToFitWidth = YES;
-            label.minimumScaleFactor = 0.5;
-            label.numberOfLines = 1;
-            label.textAlignment = NSTextAlignmentRight;
-            label.textColor = BAR_COLOR;
-            label.baselineAdjustment = UIBaselineAdjustmentAlignCenters;
-            [customView addSubview:label];
-            
-            _selectNoneItem = [[UIBarButtonItem alloc] initWithCustomView:customView];
-            
-            // Create "Select All" button - checked state
-            UIView *customViewAll = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 90, 30)];
-            customViewAll.userInteractionEnabled = YES;
-            UITapGestureRecognizer *tapGestureALL = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(selectNone:)];
-            [customViewAll addGestureRecognizer:tapGestureALL];
-            
-            // Adjust icon position - follow text label to the right
-            UIImageView *imageViewALL = [[UIImageView alloc] initWithFrame:CGRectMake(customView.frame.size.width - 20, 5, 20, 20)];
-            imageViewALL.image = [UIImage imageNamed:@"ic_checkbox_checked"];
-            imageViewALL.contentMode = UIViewContentModeScaleAspectFit;
-            [customViewAll addSubview:imageViewALL];
-            
-            // Adjust text label position and font size
-            UILabel *labelAll = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, customView.frame.size.width - 20 - 5,30)];
-            labelAll.text = NSLocalizedString(@"Select All", @"Seafile");
-            labelAll.font = [UIFont systemFontOfSize:18];
-            labelAll.adjustsFontSizeToFitWidth = YES;
-            labelAll.minimumScaleFactor = 0.5;
-            labelAll.numberOfLines = 1;
-            labelAll.textAlignment = NSTextAlignmentRight;
-            labelAll.textColor = BAR_COLOR;
-            labelAll.baselineAdjustment = UIBaselineAdjustmentAlignCenters;
-            [customViewAll addSubview:labelAll];
-            
-            _selectAllItem = [[UIBarButtonItem alloc] initWithCustomView:customViewAll];
+        _selectNoneItem = [[SeafEditNavRightItem alloc] initWithTitle:@"Select All" imageName:@"ic_checkbox_unchecked" target:self action:@selector(selectAll:)];
+        
+        _selectAllItem = [[SeafEditNavRightItem alloc] initWithTitle:@"Select All" imageName:@"ic_checkbox_checked" target:self action:@selector(selectNone:)];
         self.navigationItem.rightBarButtonItems = self.rightItems;
     });
 }
@@ -572,9 +502,11 @@ enum {
 }
 
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
+    // 仅处理 SeafRepos 类型目录的 header
     if (![_directory isKindOfClass:[SeafRepos class]])
         return nil;
     
+    // 根据 section 计算 header 要显示的文本
     NSString *text = nil;
     if (section == 0) {
         text = NSLocalizedString(@"My Own Libraries", @"Seafile");
@@ -582,11 +514,11 @@ enum {
         NSArray *repoGroups = [((SeafRepos *)_directory) repoGroups];
         if (section >= repoGroups.count) return nil;
         
-        NSArray *repos = [repoGroups objectAtIndex:section];
+        NSArray *repos = repoGroups[section];
         if (repos.count == 0) {
             text = @"";
         } else {
-            SeafRepo *repo = (SeafRepo *)[repos objectAtIndex:0];
+            SeafRepo *repo = repos.firstObject;
             if (!repo) {
                 text = @"";
             } else if ([repo.type isEqualToString:SHARE_REPO]) {
@@ -601,59 +533,31 @@ enum {
                 if ([repo.owner isKindOfClass:[NSNull class]]) {
                     text = @"";
                 } else {
-                    if ([repo.owner isEqualToString:ORG_REPO]) {
-                        text = NSLocalizedString(@"Organization", @"Seafile");
-                    } else {
-                        text = repo.owner;
-                    }
+                    text = [repo.owner isEqualToString:ORG_REPO] ? NSLocalizedString(@"Organization", @"Seafile") : repo.owner;
                 }
             }
         }
     }
     
-    // Dynamically set headerView size based on tableView current width
-    CGFloat headerHeight = 45.0;
-    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, headerHeight)];
-    headerView.backgroundColor = kPrimaryBackgroundColor;
-    headerView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-    
-    UIEdgeInsets margins = tableView.layoutMargins;
-    CGFloat leftPadding = MAX(14, margins.left);
-    CGFloat rightPadding = MAX(17, margins.right);
-    
-    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(leftPadding, 12, tableView.bounds.size.width - leftPadding - rightPadding, 22)];
-    label.font = [UIFont systemFontOfSize:16 weight:UIFontWeightMedium];
-    label.text = text;
-    label.textColor = [UIColor blackColor];
-    label.backgroundColor = [UIColor clearColor];
-    label.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-    
-    // Create right toggle button with fixed width and height, position calculated based on right margin
-    CGFloat toggleButtonWidth = 13.0;
-    UIButton *toggleButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    toggleButton.frame = CGRectMake(tableView.bounds.size.width - rightPadding - toggleButtonWidth, 16, toggleButtonWidth, toggleButtonWidth);
-    toggleButton.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
-
-    toggleButton.frame = CGRectMake(tableView.bounds.size.width - rightPadding - toggleButtonWidth, 16, toggleButtonWidth, toggleButtonWidth);
-    toggleButton.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
-    
+    // 获取当前 section 是否展开
     NSNumber *expanded = [self.expandedSections objectForKey:@(section)];
     BOOL isExpanded = expanded ? [expanded boolValue] : NO;
-    UIImage *arrowImage = [UIImage imageNamed:@"arrowDown_black"];
-    [toggleButton setImage:arrowImage forState:UIControlStateNormal];
-    toggleButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
-    toggleButton.layer.anchorPoint = CGPointMake(0.5, 0.5);
-    CGFloat initialRotation = isExpanded ? -M_PI : 0;
-    toggleButton.transform = CGAffineTransformMakeRotation(initialRotation);
-    toggleButton.tag = section;
-    [toggleButton addTarget:self action:@selector(toggleSection:) forControlEvents:UIControlEventTouchUpInside];
-    // Add tap gesture to headerView
-    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(headerTapped:)];
-    [headerView addGestureRecognizer:tapGesture];
-    headerView.tag = section;
-    [headerView addSubview:label];
-    [headerView addSubview:toggleButton];
-    return headerView;
+    
+    // 创建 SeafHeaderView 实例
+    SeafHeaderView *header = [[SeafHeaderView alloc] initWithSection:section title:text expanded:isExpanded];
+    
+    // 设置 toggle 和 tap 回调
+    __weak typeof(self) weakSelf = self;
+    header.toggleAction = ^(NSInteger section) {
+        __strong typeof(weakSelf) self = weakSelf;
+        [self toggleSectionAtIndex:section];
+    };
+    header.tapAction = ^(NSInteger section) {
+        __strong typeof(weakSelf) self = weakSelf;
+        [self toggleSectionAtIndex:section];
+    };
+    
+    return header;
 }
 
 // Method to handle header tap
@@ -802,24 +706,8 @@ enum {
     [_directory setDelegate:self];
     [self refreshView];
     
-    if ([_directory isKindOfClass:[SeafRepos class]]) {
-        // Recreate container view without back button
-        UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 200, 44)];
-        
-        // Update title label position to leftmost
-        UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(5, 0, 185, 44)];
-        self.customTitleLabel = titleLabel;
-        
-        titleLabel.text = directory.name;
-        self.navigationItem.title = @""; // Hide navigation bar original title
-        
-        titleLabel.font = [UIFont systemFontOfSize:20 weight:UIFontWeightSemibold];
-        titleLabel.textColor = [UIColor blackColor];
-        [containerView addSubview:titleLabel];
-        
-        UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:containerView];
-        self.navigationItem.leftBarButtonItem = customBarButton;
-    }
+    UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:directory target:self action:@selector(backButtonTapped)]];
+    self.navigationItem.leftBarButtonItem = customBarButton;
     
     self.state = STATE_LOADING;
     self.directory.delegate = self;
@@ -1101,36 +989,7 @@ enum {
     // Restore original title
     self.customTitleLabel.text = self.directory.name;
     
-    UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 200, 44)];
-    // Add title label (adjust x position to avoid overlap)
-    UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectZero];
-    // Add back button
-    if (![self.directory isKindOfClass:[SeafRepos class]]) {
-        UIButton *customButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        [customButton setImage:[UIImage imageNamed:@"arrowLeft_black"] forState:UIControlStateNormal];
-        // Keep the image size and position, but expand the button's touch area
-        [customButton setFrame:CGRectMake(0, 0, 30, 44)];
-        // Center the image in the expanded button
-        customButton.imageEdgeInsets = UIEdgeInsetsMake(12, 0, 12, 18);
-        customButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
-        [customButton addTarget:self action:@selector(backButtonTapped) forControlEvents:UIControlEventTouchUpInside];
-        [containerView addSubview:customButton];
-        
-        titleLabel.frame = CGRectMake(30, 0, 210, 44);
-    } else {
-        titleLabel.frame = CGRectMake(5, 0, 210, 44);
-    }
-    
-     self.customTitleLabel = titleLabel; // Save reference
-    
-    titleLabel.text = self.directory.name;
-    self.navigationItem.title = @""; // Hide navigation bar original title
-    
-    titleLabel.font = [UIFont systemFontOfSize:20 weight:UIFontWeightSemibold];
-    titleLabel.textColor = [UIColor blackColor];
-    [containerView addSubview:titleLabel];
-    
-    UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:containerView];
+    UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:self.directory target:self action:@selector(backButtonTapped)]];
     self.navigationItem.leftBarButtonItem = customBarButton;
 }
 
@@ -2619,7 +2478,6 @@ enum {
     // Calculate custom view size and position
     CGFloat toolHeight = kCustomTabToolTotalHeight;
     
-    UIEdgeInsets safeAreaInsets = UIEdgeInsetsZero;
     CGFloat pureHomeIndicator = 0;
     if (@available(iOS 11.0, *)) {
         UIWindow *window = UIApplication.sharedApplication.keyWindow;

@@ -84,6 +84,10 @@
         
         self.separatorInset = UIEdgeInsetsMake(0, leftInset, 0, rightInset);
     }
+    else {
+        // reset separatorInset to default.
+        self.separatorInset = UIEdgeInsetsMake(0, self.bounds.size.width, 0, 0);
+    }
 }
 
 - (void)updateCellStyle:(BOOL)isFirstCell isLastCell:(BOOL)isLastCell {
@@ -102,7 +106,7 @@
     
     if (isFirstCell && isLastCell) {
         // If it's both the first and last row, all four corners are rounded
-        self.cellBackgroundView.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner | 
+        self.cellBackgroundView.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner |
                                                      kCALayerMinXMaxYCorner | kCALayerMaxXMaxYCorner;
     } else if (isFirstCell) {
         // First row, top two corners are rounded
@@ -133,7 +137,7 @@
     // Handle checkbox only in editing mode
     if (self.isUserEditing) {
         self.checkboxImageView.image = selected ?
-            [UIImage imageNamed:@"ic_checkbox_checked"] : 
+            [UIImage imageNamed:@"ic_checkbox_checked"] :
             [UIImage imageNamed:@"ic_checkbox_unchecked"];
     }
 }
