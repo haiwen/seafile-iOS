@@ -827,11 +827,17 @@
         return nil;
     }
     
-    // If uniKey does not end with “/”, add “/”
+    // If uniKey does not end with "
     if (![uniKey hasSuffix:@"/"]) {
         uniKey = [uniKey stringByAppendingString:@"/"];
     }
     
     return [NSString stringWithFormat:@"%@%@", uniKey, fileName];
 }
+
++ (BOOL)isMainApp {
+    NSString *bundleId = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleIdentifier"];
+    return [bundleId isEqualToString:@"com.seafile.seafilePro"];
+}
+
 @end
