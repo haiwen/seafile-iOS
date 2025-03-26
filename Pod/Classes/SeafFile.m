@@ -192,7 +192,9 @@
 
 - (void)finishDownload:(NSString *)ooid
 {
-    [[SeafCacheManager sharedManager] saveOidToLocalDB:ooid seafFile:self connection:self.connection];
+    if ([Utils isMainApp]) {
+        [[SeafCacheManager sharedManager] saveOidToLocalDB:ooid seafFile:self connection:self.connection];
+    }
     Debug("%@ ooid=%@, self.ooid=%@, oid=%@", self.name, ooid, self.ooid, self.oid);
     BOOL updated = ![ooid isEqualToString:self.ooid];
     [self setOoid:ooid];
@@ -690,4 +692,12 @@
                           encodedPath];
     return urlString;
 }
+
+- (BOOL)waitUpload
+{
+    if (self.ufile)
+        return [self.ufile waitUpload];
+    return true;
+}
+
 @end

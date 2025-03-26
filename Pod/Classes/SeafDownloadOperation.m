@@ -92,7 +92,7 @@
         Debug("Downloading file from file server url: %@, state:%d %@, %@", JSON, strongSelf.file.state, strongSelf.downloadingFileOid, curId);
 
         if (!curId) curId = strongSelf.file.oid;
-        NSString *cachePath = [[SeafRealmManager shared] getCachePathWithOid:curId mtime:0 uniKey:strongSelf.file.uniqueKey];
+        NSString *cachePath = [[SeafCacheManager sharedManager] getCachePathForFile:strongSelf.file];
         if ([[NSFileManager defaultManager] fileExistsAtPath:cachePath]) {
             Debug("File %@ already exists, curId=%@, ooid=%@", strongSelf.file.name, curId, strongSelf.file.ooid);
             [strongSelf finishDownload:YES error:nil ooid:curId];
@@ -190,8 +190,9 @@
         if (!strongSelf || strongSelf.isCancelled) return;
         
         NSString *curId = JSON[@"file_id"];
-        NSString *cachePath = [[SeafRealmManager shared] getCachePathWithOid:curId mtime:0 uniKey:strongSelf.file.uniqueKey];
-        if (cachePath && cachePath.length > 0) {
+        
+        NSString *cachePath = [[SeafCacheManager sharedManager] getCachePathForFile:strongSelf.file];
+        if (cachePath && cachePath.length > 0 && [[NSFileManager defaultManager] fileExistsAtPath:cachePath]) {
             Debug("Already up-to-date oid=%@", strongSelf.file.ooid);
             [strongSelf finishDownload:YES error:nil ooid:curId];
             return;

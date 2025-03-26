@@ -208,4 +208,6 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 - (BOOL)isSdocFile;
 - (NSString *_Nullable)getSdocWebViewURLString;
 
+- (BOOL)waitUpload;
+
 @end

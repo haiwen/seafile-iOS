@@ -180,7 +180,9 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
         [newItems addObject:newItem];
     }
     
-    [[SeafRealmManager shared] updateFileStatuses:statusArray];
+    if ([Utils isMainApp]) {
+        [[SeafRealmManager shared] updateFileStatuses:statusArray];
+    }
 
     [self loadedItems:newItems];
     return YES;
