@@ -39,6 +39,7 @@
 
 @property (retain)id lock;
 @property (nonatomic, strong)NSMutableArray *cellDataArray;
+@property (strong, nonatomic) UIActivityIndicatorView *loadingView;
 @end
 
 @implementation SeafStarredFilesViewController
@@ -62,16 +63,23 @@
 
 - (void)refresh:(id)sender
 {
+    // Only show loading view when there's no data
+    if (!_cellDataArray || _cellDataArray.count == 0) {
+        [self showLoadingView];
+    }
+    
     [_connection getStarredFiles:^(NSHTTPURLResponse *response, id JSON) {
         @synchronized(self) {
             Debug("Succeeded to get starred files ...\n");
             [self handleData:JSON];
             [self endPullRefresh];
             [self.tableView reloadData];
+            [self dismissLoadingView];
         }
     }
                          failure:^(NSHTTPURLResponse *response, NSError *error) {
                              Warning("Failed to get starred files ...\n");
+                             [self dismissLoadingView];
                              if (self.isVisible)
                                  [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get starred files", @"Seafile")];
                              [self.tableView.pullToRefreshView stopAnimating];
@@ -105,6 +113,17 @@
         
         self.tableView.sectionHeaderTopPadding = 0;
     }
+    
+    // Initialize loading indicator with Auto Layout centered in safe area
+    self.loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleLarge];
+    self.loadingView.color = [UIColor darkTextColor];
+    self.loadingView.hidesWhenStopped = YES;
+    self.loadingView.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.view addSubview:self.loadingView];
+    [NSLayoutConstraint activateConstraints:@[
+        [self.loadingView.centerXAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.centerXAnchor],
+        [self.loadingView.centerYAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.centerYAnchor]
+    ]];
     
     self.tableView.refreshControl = [[UIRefreshControl alloc] init];
     [self.tableView.refreshControl addTarget:self action:@selector(refreshControlChanged) forControlEvents:UIControlEventValueChanged];
@@ -352,9 +371,13 @@
     NSString *CellIdentifier = @"SeafCell";
     SeafCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
     cell.cellIndexPath = indexPath;
-    cell.moreButtonBlock = ^(NSIndexPath *indexPath) {
-        Debug(@"%@", indexPath);
-        [self showActionSheetWithIndexPath:indexPath];
+    __weak typeof(cell) weakCell = cell;
+    cell.moreButtonBlock = ^(NSIndexPath *unused) {
+        __strong typeof(weakCell) strongCell = weakCell;
+        if (!strongCell) return;
+        NSIndexPath *currentIndexPath = [tableView indexPathForCell:strongCell];
+        Debug(@"%@", currentIndexPath);
+        [self showActionSheetWithIndexPath:currentIndexPath];
     };
     cell.isStarredCell = YES;
     [cell reset];
@@ -669,5 +692,18 @@
     
     self.tabBarController.selectedIndex = 0;
 }
+
+- (void)showLoadingView {
+    [self.loadingView startAnimating];
+}
+
+- (void)dismissLoadingView {
+    [self.loadingView stopAnimating];
+}
+
+//- (void)viewDidLayoutSubviews {
+//    [super viewDidLayoutSubviews];
+//    self.loadingView.center = self.view.center;
+//}
 
 @end

@@ -32,6 +32,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 @property int eventsOffset;
 
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (strong, nonatomic) UIActivityIndicatorView *loadingView;
 
 @property NSMutableDictionary *eventDetails;
 @property UIImage *defaultAccountImage;
@@ -59,6 +60,13 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
     
+    // Initialize loading indicator
+    self.loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleLarge];
+    self.loadingView.color = [UIColor darkTextColor];
+    self.loadingView.hidesWhenStopped = YES;
+    [self.view addSubview:self.loadingView];
+    self.loadingView.center = self.view.center;
+    
     if (@available(iOS 15.0, *)) {
         UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
         barAppearance.backgroundColor = [UIColor whiteColor];
@@ -67,28 +75,42 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
     }
     
-    // Initialize the loading of more events and setup for infinite scrolling
+    // Initialize basic properties
     self.eventsMore = true;
     self.eventsOffset = 0;
     _eventDetails = [NSMutableDictionary new];
-    _defaultAccountImage = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"account" ofType:@"png"]];
-
-    NSArray *keys2 = [NSArray arrayWithObjects:
-                      @"Reverted library to status at",
-                      @"Recovered deleted directory",
-                      @"Changed library name or description",
-                      nil];
-    NSArray *values2 = [NSArray arrayWithObjects:
-                       NSLocalizedString(@"Reverted library to status at", @"Seafile"),
-                       NSLocalizedString(@"Recovered deleted directory", @"Seafile"),
-                       NSLocalizedString(@"Changed library name or description", @"Seafile"),
-                       nil];
-    // Setup dictionaries for operations and types mapping
-    self.prefixMap = [NSDictionary dictionaryWithObjects:values2 forKeys:keys2];
-    self.typesMap = [NSDictionary dictionaryWithObjectsAndKeys:
-                     NSLocalizedString(@"files", @"Seafile"), @"files",
-                     NSLocalizedString(@"directories", @"Seafile"), @"directories",
-                     nil];
+    
+    // Move time-consuming operations to background thread
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        // Load default account image
+        UIImage *defaultImage = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"account" ofType:@"png"]];
+        
+        // Initialize dictionaries
+        NSArray *keys2 = [NSArray arrayWithObjects:
+                          @"Reverted library to status at",
+                          @"Recovered deleted directory",
+                          @"Changed library name or description",
+                          nil];
+        NSArray *values2 = [NSArray arrayWithObjects:
+                           NSLocalizedString(@"Reverted library to status at", @"Seafile"),
+                           NSLocalizedString(@"Recovered deleted directory", @"Seafile"),
+                           NSLocalizedString(@"Changed library name or description", @"Seafile"),
+                           nil];
+        NSDictionary *prefixMap = [NSDictionary dictionaryWithObjects:values2 forKeys:keys2];
+        
+        NSDictionary *typesMap = [NSDictionary dictionaryWithObjectsAndKeys:
+                                 NSLocalizedString(@"files", @"Seafile"), @"files",
+                                 NSLocalizedString(@"directories", @"Seafile"), @"directories",
+                                 nil];
+        
+        // Update UI on main thread
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self->_defaultAccountImage = defaultImage;
+            self.prefixMap = prefixMap;
+            self.typesMap = typesMap;
+        });
+    });
+    
     __weak typeof(self) weakSelf = self;
     [self.tableView addInfiniteScrollingWithActionHandler:^{
         __strong typeof (weakSelf) strongSelf = weakSelf;
@@ -137,8 +159,22 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     [self.tableView reloadData];
 }
 
+- (void)showLoadingView {
+    self.loadingView.center = self.view.center;
+    [self.loadingView startAnimating];
+}
+
+- (void)dismissLoadingView {
+    [self.loadingView stopAnimating];
+}
+
 - (void)moreEvents:(int)offset
 {
+    // Only show loading view when there's no data
+    if (offset == 0 && (!self->_events || self->_events.count == 0)) {
+        [self showLoadingView];
+    }
+    
     // Check for the new API compatibility, if so use new method for requesting events
     if (_connection.isNewActivitiesApiSupported) {
         return [self newApiRequest:offset];
@@ -147,59 +183,82 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     // Standard request for older API versions
     NSString *url = [NSString stringWithFormat:API_URL"/events/?start=%d", offset];
     [_connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-        Debug("Succeeded to get events start=%d", offset);
-        NSArray *arr = [JSON objectForKey:@"events"];
-        if (offset == 0)
-            _events = nil;
-
-        NSMutableArray *marray = [NSMutableArray new];
-        [marray addObjectsFromArray:_events];
-        [marray addObjectsFromArray:arr];
-        _events = marray;
-        _eventsMore = [[JSON objectForKey:@"more"] boolValue];
-        _eventsOffset = [[JSON objectForKey:@"more_offset"] intValue];
-        Debug("%lu events, more:%d, offset:%d", (unsigned long)_events.count, _eventsMore, _eventsOffset);
-        [self reloadData];
+        // Process data in background thread
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            Debug("Succeeded to get events start=%d", offset);
+            NSArray *arr = [JSON objectForKey:@"events"];
+            NSMutableArray *marray = [NSMutableArray new];
+            if (offset != 0) {
+                [marray addObjectsFromArray:self->_events];
+            }
+            [marray addObjectsFromArray:arr];
+            
+            BOOL hasMore = [[JSON objectForKey:@"more"] boolValue];
+            int newOffset = [[JSON objectForKey:@"more_offset"] intValue];
+            
+            // Update UI in main thread
+            dispatch_async(dispatch_get_main_queue(), ^{
+                self->_events = marray;
+                self->_eventsMore = hasMore;
+                self->_eventsOffset = newOffset;
+                Debug("%lu events, more:%d, offset:%d", (unsigned long)self->_events.count, self->_eventsMore, self->_eventsOffset);
+                [self reloadData];
+                [self dismissLoadingView];
+            });
+        });
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
-        [self endRefreshing];
-        [self.tableView.infiniteScrollingView stopAnimating];
-        if (self.isVisible)
-            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load activities", @"Seafile")];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self endRefreshing];
+            [self.tableView.infiniteScrollingView stopAnimating];
+            [self dismissLoadingView];
+            if (self.isVisible)
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load activities", @"Seafile")];
+        });
     }];
 }
 
-// Handles the new API request specifically for loading events with pagination support.
 - (void)newApiRequest:(int)page {
+    // Only show loading view when there's no data and it's the first page
     if (page == 0) {
         page += 1;// Ensure the page starts from 1 if reset to 0
+        if (!self->_events || self->_events.count == 0) {
+            [self showLoadingView];
+        }
     }
+    
     NSString *url = [NSString stringWithFormat:API_URL_V21"/activities/?page=%d", page];
     [_connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-        Debug("Succeeded to get events start=%d  %@", page, JSON);
-        NSArray *arr = [JSON objectForKey:@"events"];
-        if (page == 1) {
-            _events = nil;// Clear existing events if refreshing
-        }
-        
-        NSMutableArray *marray = [NSMutableArray new];
-        [marray addObjectsFromArray:_events];
-        [marray addObjectsFromArray:arr];
-        _events = marray;
-        if (arr.count < 25) {// Check if there's likely more data based on page size
-            _eventsMore = false;
-        } else {
-            _eventsMore = true;
-        }
-        _eventsOffset = page + 1;// Prepare the next page number
-        Debug("%lu events, more:%d, offset:%d", (unsigned long)_events.count, _eventsMore, _eventsOffset);
-        [self reloadData];
+        // Process data in background thread
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            Debug("Succeeded to get events start=%d  %@", page, JSON);
+            NSArray *arr = [JSON objectForKey:@"events"];
+            NSMutableArray *marray = [NSMutableArray new];
+            if (page != 1) {
+                [marray addObjectsFromArray:self->_events];
+            }
+            [marray addObjectsFromArray:arr];
+            
+            BOOL hasMore = arr.count >= 25;  // Check if there's likely more data based on page size
+            
+            // Update UI in main thread
+            dispatch_async(dispatch_get_main_queue(), ^{
+                self->_events = marray;
+                self->_eventsMore = hasMore;
+                self->_eventsOffset = page + 1;
+                Debug("%lu events, more:%d, offset:%d", (unsigned long)self->_events.count, self->_eventsMore, self->_eventsOffset);
+                [self reloadData];
+                [self dismissLoadingView];
+            });
+        });
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
-        [self endRefreshing];
-        [self.tableView.infiniteScrollingView stopAnimating];
-        if (self.isVisible)
-            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load activities", @"Seafile")];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self endRefreshing];
+            [self.tableView.infiniteScrollingView stopAnimating];
+            [self dismissLoadingView];
+            if (self.isVisible)
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load activities", @"Seafile")];
+        });
     }];
-
 }
 
 - (void)didReceiveMemoryWarning
@@ -616,6 +675,11 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         }
     }
     return _opsMap;
+}
+
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    self.loadingView.center = self.view.center;
 }
 
 @end
