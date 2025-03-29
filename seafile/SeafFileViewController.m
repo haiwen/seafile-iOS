@@ -988,6 +988,7 @@ enum {
     
     // Restore original title
     self.customTitleLabel.text = self.directory.name;
+    _selectedindex = nil;
     
     UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:self.directory target:self action:@selector(backButtonTapped)]];
     self.navigationItem.leftBarButtonItem = customBarButton;
@@ -1058,6 +1059,7 @@ enum {
 {
     if (none) {
         // Get done button container view
+        _selectedindex = nil;
         UIView *containerView = (UIView *)self.doneItem.customView;
         UILabel *countLabel = [containerView.subviews.lastObject isKindOfClass:[UILabel class]] ?
                              (UILabel *)containerView.subviews.lastObject : nil;
@@ -1234,7 +1236,7 @@ enum {
             if ([_curEntry isKindOfClass:[SeafRepo class]]) {
                 repo = (SeafRepo *)_curEntry;
             } else {
-                repo = (SeafRepo *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
+                return;
             }
             [[SeafFileOperationManager sharedManager]
                 renameEntry:oldName
@@ -2531,13 +2533,8 @@ enum {
     // Set button sizes and spacing
     CGFloat screenWidth = customToolView.bounds.size.width;
     
-    // First row - evenly divide screen width
-    CGFloat firstRowButtonWidth = screenWidth / 5.0;
-    CGFloat firstRowTopPosition = kCustomTabToolWithTopPadding;
-    
     // Calculate second row position
     CGFloat buttonHeight = kCustomTabToolButtonHeight;
-    CGFloat secondRowTopPosition = kCustomTabToolWithTopPadding + buttonHeight + 25;
         
     // Set initial position below screen
     CGRect initialFrame = customToolView.frame;
@@ -2709,6 +2706,21 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
     // Execute action based on button type
     switch (buttonView.tag) {
         case ToolButtonShare: {
+            if (selectedItems.count == 1) {
+                SeafBase *selectedItem = selectedItems.firstObject;
+                if ([selectedItem isKindOfClass:[SeafDir class]]) {
+                    self.state = STATE_SHARE_LINK;
+                    [self editDone:nil]; // Exit edit mode here
+                    if (!selectedItem.shareLink) {
+                        [SVProgressHUD showWithStatus:NSLocalizedString(@"Generate share link ...", @"Seafile")];
+                        [selectedItem generateShareLink:self];
+                    } else {
+                        [self generateSharelink:selectedItem WithResult:YES];
+                    }
+                    break;
+                }
+            }
+            
             self.state = STATE_EXPORT;
             [self editDone:nil]; // Exit edit mode here
             @weakify(self);
@@ -2834,9 +2846,8 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
     if (selectedItems.count == 0) {
         [self setAllToolButtonEnable:NO];
     } else if (selectedItems.count == 1) {
+        _selectedindex = selectedIndexPaths.firstObject;
         [self setAllToolButtonEnable:YES];
-        
-        [self updateExportBarItem:selectedItems];//set share btn
     } else {
         //redownload
         [self updateToolButton:ToolButtonDownload enabled:YES];
