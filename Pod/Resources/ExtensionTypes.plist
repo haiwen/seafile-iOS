@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>jpg</key>
+    <string>public.jpeg</string>
+    <key>jpeg</key>
+    <string>public.jpeg</string>
+    <key>jfif</key>
+    <string>public.jpeg</string>
+    <key>png</key>
+    <string>public.png</string>
+    <key>gif</key>
+    <string>com.compuserve.gif</string>
+    <key>bmp</key>
+    <string>com.microsoft.bmp</string>
+    <key>heic</key>
+    <string>public.heic</string>
+    
+    <key>pdf</key>
+    <string>com.adobe.pdf</string>
+    <key>txt</key>
+    <string>public.plain-text</string>
+    <key>rtf</key>
+    <string>public.rtf</string>
+    <key>doc</key>
+    <string>com.microsoft.word.doc</string>
+    <key>docx</key>
+    <string>com.microsoft.word.doc</string>
+    <key>xls</key>
+    <string>com.microsoft.excel.xls</string>
+    <key>xlsx</key>
+    <string>com.microsoft.excel.xls</string>
+    <key>ppt</key>
+    <string>com.microsoft.powerpoint.ppt</string>
+    <key>pptx</key>
+    <string>com.microsoft.powerpoint.ppt</string>
+    
+    <key>mp3</key>
+    <string>public.mp3</string>
+    <key>mp4</key>
+    <string>public.mpeg-4</string>
+    <key>mov</key>
+    <string>com.apple.quicktime-movie</string>
+    <key>avi</key>
+    <string>public.avi</string>
+    <key>m4a</key>
+    <string>public.audio</string>
+    <key>wav</key>
+    <string>public.audio</string>
+    
+    <key>zip</key>
+    <string>com.pkware.zip-archive</string>
+    <key>rar</key>
+    <string>com.rarlab.rar-archive</string>
+    <key>7z</key>
+    <string>org.7-zip.7-zip-archive</string>
+    
+    <key>json</key>
+    <string>public.json</string>
+    <key>xml</key>
+    <string>public.xml</string>
+    <key>plist</key>
+    <string>com.apple.property-list</string>
+    <key>md</key>
+    <string>public.plain-text</string>
+    <key>swift</key>
+    <string>public.swift-source</string>
+    <key>m</key>
+    <string>public.objective-c-source</string>
+    <key>h</key>
+    <string>public.c-header</string>
+    <key>c</key>
+    <string>public.c-source</string>
+    <key>cpp</key>
+    <string>public.c-plus-plus-source</string>
+    <key>py</key>
+    <string>public.python-script</string>
+    <key>js</key>
+    <string>com.netscape.javascript-source</string>
+    <key>css</key>
+    <string>public.css</string>
+    <key>html</key>
+    <string>public.html</string>
+    <key>sh</key>
+    <string>public.shell-script</string>
+    
+    <key>sqlite</key>
+    <string>com.sqlite.data</string>
+    <key>db</key>
+    <string>com.sqlite.data</string>
+    
+    <key>log</key>
+    <string>com.apple.log</string>
+</dict>
+</plist>

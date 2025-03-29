@@ -24,7 +24,8 @@
 #import "SeafFileOperationManager.h"
 
 @interface FileProvider ()
-
+@property (nonatomic, strong) NSMutableDictionary<NSString *, NSLock *> *fileLocks;
+@property (nonatomic, strong) NSCache *urlCache;
 @end
 
 @implementation FileProvider
@@ -40,6 +41,16 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
+        self.fileLocks = [NSMutableDictionary new];
+        self.urlCache = [[NSCache alloc] init];
+        self.urlCache.countLimit = 100;
+        
+        self.identifierCache = [[NSCache alloc] init];
+        self.identifierCache.countLimit = 100;
+        
+        self.itemCache = [[NSCache alloc] init];
+        self.itemCache.countLimit = 100;
+        
         [self.fileCoordinator coordinateWritingItemAtURL:self.rootURL options:0 error:nil byAccessor:^(NSURL *newURL) {
             // ensure the documentStorageURL actually exists
             NSError *error = nil;
@@ -68,6 +79,13 @@
 
 - (nullable NSURL *)URLForItemWithPersistentIdentifier:(NSFileProviderItemIdentifier)itemIdentifier
 {
+    // Check cache
+    NSURL *cachedURL = [self.urlCache objectForKey:itemIdentifier];
+    if (cachedURL) {
+        return cachedURL;
+    }
+    
+    Debug(@"[FileProvider] Getting file URL called: itemIdentifier=%@", itemIdentifier);
     NSURL *ret;
     if (![itemIdentifier isEqualToString:NSFileProviderRootContainerItemIdentifier] && ![itemIdentifier hasPrefix:@"/"]) {
         itemIdentifier = [NSString stringWithFormat:@"/%@", itemIdentifier];
@@ -84,10 +102,23 @@
         ret = [url URLByAppendingPathComponent:[[pathComponents objectAtIndex:2] stringByRemovingPercentEncoding] isDirectory:false];
     }
     Debug(@"URLForItem url: %@", ret);
+    
+    // Cache result
+    if (ret) {
+        [self.urlCache setObject:ret forKey:itemIdentifier];
+    }
+    
     return ret;
 }
 
 - (nullable NSFileProviderItemIdentifier)persistentIdentifierForItemAtURL:(NSURL *)url {
+    // Check cache
+    NSString *cachedIdentifier = [self.identifierCache objectForKey:url];
+    if (cachedIdentifier) {
+        return cachedIdentifier;
+    }
+    
+    Debug(@"[FileProvider] Getting file identifier called: url=%@", url);
     NSRange range = [url.path rangeOfString:self.rootPath.lastPathComponent];
     if (range.location == NSNotFound) {
         Warning("Unknown url: %@", url);
@@ -102,13 +133,33 @@
         NSString *str = [NSString stringWithFormat:@"%@%@/%@", pathCompoents[0], pathCompoents[1], [fileName escapedUrl]];
         suffix = str;
     }
+    
+    // Cache result
+    if (suffix) {
+        [self.identifierCache setObject:suffix forKey:url];
+    }
+    
     return suffix;
 }
 
 - (nullable NSFileProviderItem)itemForIdentifier:(NSFileProviderItemIdentifier)identifier error:(NSError * _Nullable *)error
 {
+    // Check cache
+    SeafProviderItem *cachedItem = [self.itemCache objectForKey:identifier];
+    if (cachedItem) {
+        return cachedItem;
+    }
+    
+    Debug(@"[FileProvider] Getting file item called: identifier=%@", identifier);
     SeafItem *item = [[SeafItem alloc] initWithItemIdentity:identifier];
-    return [[SeafProviderItem alloc] initWithSeafItem:item itemIdentifier:identifier];
+    SeafProviderItem *providerItem = [[SeafProviderItem alloc] initWithSeafItem:item itemIdentifier:identifier];
+    
+    // Cache result
+    if (providerItem) {
+        [self.itemCache setObject:providerItem forKey:identifier];
+    }
+    
+    return providerItem;
 }
 
 - (NSURL *)getPlaceholderURLForURL:(NSURL *)url
@@ -122,6 +173,7 @@
 
 - (void)providePlaceholderAtURL:(NSURL *)url completionHandler:(void (^)(NSError *error))completionHandler
 {
+    Debug(@"[FileProvider] Providing placeholder called: url=%@", url);
     NSFileProviderItemIdentifier identifier = [self persistentIdentifierForItemAtURL:url];
     if (!identifier) {
         return completionHandler([NSError fileProvierErrorNoSuchItem]);
@@ -133,7 +185,7 @@
 
     [Utils checkMakeDir:url.path.stringByDeletingLastPathComponent];
     NSURL *placeholderURL = [self getPlaceholderURLForURL:url];
-    Debug("placeholderURL:%@ url:%@", placeholderURL, url);
+    Debug(@"placeholderURL:%@ url:%@", placeholderURL, url);
     NSError *error = nil;
     SeafProviderItem *providerItem = [[SeafProviderItem alloc] initWithSeafItem:item];
     if (@available(iOS 11.0, *)) {
@@ -147,56 +199,93 @@
     if (error) Warning("Failed to write placeholder: %@", error);
     completionHandler(error);
 }
-
 - (void)startProvidingItemAtURL:(NSURL *)url completionHandler:(void (^)(NSError *))completionHandler
 {
-    Debug("providing at url: %@", url);
-    NSFileProviderItemIdentifier identifier = [self persistentIdentifierForItemAtURL:url];
+    NSString *identifier = [self persistentIdentifierForItemAtURL:url];
     if (!identifier) {
         return completionHandler([NSError fileProvierErrorNoSuchItem]);
     }
-    SeafItem *item = [[SeafItem alloc] initWithItemIdentity:identifier];
-    if (!item) {
-        return completionHandler([NSError fileProvierErrorNoSuchItem]);
+    
+    // Get or create file lock
+    NSLock *lock = nil;
+    @synchronized(self.fileLocks) {
+        lock = self.fileLocks[identifier];
+        if (!lock) {
+            lock = [[NSLock alloc] init];
+            self.fileLocks[identifier] = lock;
+        }
     }
-
-    SeafFile *file = (SeafFile *)item.toSeafObj;
-    [file setFileDownloadedBlock:^(SeafFile * _Nonnull file, NSError * _Nullable error) {
-        if (error) {
-            Warning("Failed to download file %@: %@", identifier, error);
-            return completionHandler([NSError fileProvierErrorServerUnreachable]);
+    
+    // Try to acquire lock
+    if (![lock tryLock]) {
+        Debug(@"File is being processed, skipping duplicate operation: %@", identifier);
+        return completionHandler(nil);
+    }
+    
+    @try {
+        // Original file processing logic
+        SeafItem *item = [[SeafItem alloc] initWithItemIdentity:identifier];
+        SeafFile *file = (SeafFile *)item.toSeafObj;
+        
+        if ([file isKindOfClass:[SeafFile class]]) {
+            // Force reload to check if file needs update
+            [file setFileDownloadedBlock:^(SeafFile * _Nonnull file, NSError * _Nullable error) {
+                @try {
+                    if (error) {
+                        return completionHandler([NSError fileProvierErrorServerUnreachable]);
+                    }
+                    
+                    if ([Utils fileExistsAtPath:url.path]) {
+                        [Utils removeFile:url.path];
+                    }
+                    [Utils checkMakeDir:url.path.stringByDeletingLastPathComponent];
+                    
+                    BOOL ret = [Utils copyFile:file.exportURL to:url];
+                    completionHandler(ret ? nil : [NSError fileProvierErrorNoSuchItem]);
+                } @finally {
+                    [lock unlock];
+                    @synchronized(self.fileLocks) {
+                        [self.fileLocks removeObjectForKey:identifier];
+                    }
+                }
+            }];
+            
+            [file loadContent:true];
+        } else {
+            [lock unlock];
+            @synchronized(self.fileLocks) {
+                [self.fileLocks removeObjectForKey:identifier];
+            }
+            completionHandler([NSError fileProvierErrorNoSuchItem]);
         }
-        if ([Utils fileExistsAtPath:url.path]) {
-            [Utils removeFile:url.path];
+    } @catch (NSException *exception) {
+        [lock unlock];
+        @synchronized(self.fileLocks) {
+            [self.fileLocks removeObjectForKey:identifier];
         }
-        [Utils checkMakeDir:url.path.stringByDeletingLastPathComponent];
-        NSError *err = nil;
-        BOOL ret = [Utils copyFile:file.exportURL to:url];
-        if (!ret) {
-            err = [NSError fileProvierErrorNoSuchItem];
-        }
-        completionHandler(err);
-    }];
-    [file loadContent:true];
+        completionHandler([NSError fileProvierErrorNoSuchItem]);
+    }
 }
 
 - (void)itemChangedAtURL:(NSURL *)url
 {
     if ([url.path hasSuffix:@"/"] || [url.path isEqualToString:self.rootPath]) return;
 
-    // Called at some point after the file has changed; the provider may then trigger an upload
-    NSFileProviderItemIdentifier identifier = [self persistentIdentifierForItemAtURL:url];
+    NSString *identifier = [self persistentIdentifierForItemAtURL:url];
     if ([identifier isEqualToString:NSFileProviderRootContainerItemIdentifier] || [identifier isEqualToString:NSFileProviderWorkingSetContainerItemIdentifier]) {
         return;
     }
-    Debug("File changed: %@ %@", url, identifier);
+    
+    [self clearCachesForIdentifier:identifier];
+    
+    Debug(@"File changed: %@ %@", url, identifier);
     SeafItem *item = [self readFromLocal:identifier];
     if (!item) {
         item = [[SeafItem alloc] initWithItemIdentity:identifier];
     }
     
     if (!item.isFile) {
-        Debug("%@ is not a file.", identifier);
+        Debug(@"%@ is not a file.", identifier);
         return;
     }
 
@@ -205,7 +294,7 @@
     BOOL ret = [self copyItemAtURL:url toURL:tempURL];
     if (ret) {
         [sfile uploadFromFile:tempURL];
-//        [sfile waitUpload];
+        [sfile waitUpload];
     }
 }
 
@@ -218,9 +307,12 @@
 
 - (void)stopProvidingItemAtURL:(NSURL *)url
 {
-    // Called after the last claim to the file has been released. At this point, it is safe for the file provider to remove the content file.
-    // Care should be taken that the corresponding placeholder file stays behind after the content file has been deleted.
-    Debug(@"stopProvidingItemAtURL %@", url);
+    Debug(@"[FileProvider] Stopping providing file called: url=%@", url);
+    NSString *identifier = [self persistentIdentifierForItemAtURL:url];
+    if (identifier) {
+        [self clearCachesForIdentifier:identifier];
+    }
+    
     [self.fileCoordinator coordinateWritingItemAtURL:url options:NSFileCoordinatorWritingForDeleting error:nil byAccessor:^(NSURL *newURL) {
         [self removeProvidingItemAndParentIfEmpty:url];
     }];
@@ -265,6 +357,7 @@
      toParentItemIdentifier:(NSFileProviderItemIdentifier)parentItemIdentifier
           completionHandler:(void (^)(NSFileProviderItem _Nullable importedDocumentItem, NSError * _Nullable error))completionHandler
 {
+    Debug(@"[FileProvider] Importing file called: fileURL=%@, parentItemIdentifier=%@", fileURL, parentItemIdentifier);
     Debug("file path: %@, parentItemIdentifier:%@", fileURL.path, parentItemIdentifier);
     NSString *fileName = fileURL.path.lastPathComponent;
 
@@ -573,6 +666,24 @@
         }
     }
     return item;
+}
+
+// Add a method to clear all caches
+- (void)clearAllCaches {
+    [self.urlCache removeAllObjects];
+    [self.identifierCache removeAllObjects];
+    [self.itemCache removeAllObjects];
+}
+
+- (void)clearCachesForIdentifier:(NSString *)identifier {
+    [self.urlCache removeObjectForKey:identifier];
+    [self.itemCache removeObjectForKey:identifier];
+    // Iterate and clear related URL cache
+    NSString *urlString = [self.identifierCache.name copy];
+    if (urlString) {
+        NSURL *url = [NSURL URLWithString:urlString];
+        [self.identifierCache removeObjectForKey:url];
+    }
 }
 
 /*

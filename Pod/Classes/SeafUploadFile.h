@@ -115,4 +115,6 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 
 - (BOOL)uploadHeic;
 
+- (BOOL)waitUpload;
+
 @end

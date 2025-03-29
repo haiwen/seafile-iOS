@@ -44,4 +44,5 @@
 - (NSString *)cachePathForFile:(SeafFile *)file;
 - (void)updateWithEntry:(SeafBase *)entry sFile:(SeafFile *)sFile;
 
+- (NSString *)getCachePathForFile:(SeafFile *)file;
 @end

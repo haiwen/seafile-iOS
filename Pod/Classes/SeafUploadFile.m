@@ -521,6 +521,7 @@
 }
 
 - (void)updateSeafFileStatusWithOid:(NSString *)oid{
+    if (![Utils isMainApp]) return;
     NSString *filePath = [SeafStorage.sharedObject documentPath:oid];
     
     SeafFileStatus *fileStatus = [[SeafFileStatus alloc] init];
@@ -534,4 +535,10 @@
 
     [[SeafRealmManager shared] updateFileStatus:fileStatus];
 }
+
+- (BOOL)waitUpload {
+    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
+    return self.uploaded;
+}
+
 @end

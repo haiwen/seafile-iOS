@@ -149,4 +149,7 @@
 //modified from 2.9.34 use uniKey + name
 + (NSString *)uniquePathWithUniKey:(NSString *)uniKey fileName:(NSString *)fileName;
 
+/// Check if the app is running in the main app.
++ (BOOL)isMainApp;
+
 @end

@@ -6,12 +6,14 @@
 //  Copyright © 2017 Seafile. All rights reserved.
 //
 #import <MobileCoreServices/MobileCoreServices.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import "SeafProviderItem.h"
 #import "SeafGlobal.h"
 #import "SeafItem.h"
 #import "SeafDir.h"
 #import "SeafRepos.h"
 #import "Debug.h"
+#import "FileMimeType.h"
 
 @interface SeafProviderItem ()
 @property (nonatomic, strong) SeafItem *item;
@@ -54,23 +56,56 @@
 
 - (NSString *)typeIdentifier
 {
-    NSString *uti = nil;
     if (!_item.filename) {
-        uti = (NSString *)kUTTypeFolder;
-    } else {
-        uti = (NSString *)CFBridgingRelease(UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension,(__bridge CFStringRef)(_item.filename.pathExtension), NULL));
+        return (NSString *)kUTTypeFolder;
     }
-    return uti;
+    static NSDictionary *extensionTypes = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSString *plistPath = [SeafileBundle() pathForResource:@"ExtensionTypes" ofType:@"plist"];
+        extensionTypes = [NSDictionary dictionaryWithContentsOfFile:plistPath];
+    });
+    
+    NSString *extension = _item.filename.pathExtension.lowercaseString;
+    
+    //If there is no extension, return generic data type
+    if (extension.length == 0) {
+        return (NSString *)kUTTypeData;
+    }
+    
+    // Lookup predefined type
+    NSString *typeId = extensionTypes[extension];
+    if (typeId) {
+        return typeId;
+    }
+    
+    //Try system UTI recognition
+    NSString *uti = (NSString *)CFBridgingRelease(UTTypeCreatePreferredIdentifierForTag(
+        kUTTagClassFilenameExtension,
+        (__bridge CFStringRef)extension,
+        NULL
+    ));
+    
+    if (uti && ![uti hasPrefix:@"dyn."]) {
+        return uti;
+    }
+    
+    //If all else fails, return generic data type
+    return (NSString *)kUTTypeData;
 }
 
 - (NSFileProviderItemCapabilities)capabilities
 {
+    Debug(@"[SeafProviderItem] Get file capabilities called: itemIdentifier=%@", self.itemIdentifier);
     NSFileProviderItemCapabilities cap = NSFileProviderItemCapabilitiesAllowsReading;
     if (_item.isRoot || _item.isAccountRoot) {
         return cap;
     }
+    
     SeafRepo *repo = [_item.conn getRepo:_item.repoId];
-    if (!repo) return cap;
+    if (!repo) {
+        return cap;
+    }
 
     if (_item.isRepoRoot) {
         if (repo.editable) {
@@ -85,6 +120,7 @@
         | NSFileProviderItemCapabilitiesAllowsRenaming
         | NSFileProviderItemCapabilitiesAllowsDeleting;
     }
+    
     return cap;
 }
 
