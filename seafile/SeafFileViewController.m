@@ -46,12 +46,6 @@
 #import "SeafEditNavRightItem.h"
 #import "SeafLoadingView.h"
 
-// Add status bar customization support
-#import <UIKit/UIKit.h>
-@interface UIApplication (StatusBarStyle)
-- (void)setStatusBarStyle:(UIStatusBarStyle)style animated:(BOOL)animated;
-@end
-
 #define kCustomTabToolWithTopPadding 15
 #define kCustomTabToolButtonHeight 40
 #define kCustomTabToolTotalHeight 130
