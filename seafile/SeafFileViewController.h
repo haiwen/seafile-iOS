@@ -11,6 +11,7 @@
 typedef void(^DownloadCompleteBlock)(NSArray *array, NSString *errorStr);
 
 @class SeafDetailViewController;
+@class SeafLoadingView;
 
 #import <CoreData/CoreData.h>
 
@@ -28,6 +29,8 @@ typedef void(^DownloadCompleteBlock)(NSArray *array, NSString *errorStr);
 @property (strong, readonly) SeafDetailViewController *detailViewController;
 
 @property (strong, nonatomic) NSMutableDictionary *expandedSections; // To track expanded/collapsed sections
+
+@property (strong, nonatomic) SeafLoadingView *loadingView;
 
 - (void)refreshView;
 - (void)uploadFile:(SeafUploadFile *)file;
