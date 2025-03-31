@@ -44,6 +44,7 @@
 #import "SeafNavLeftItem.h"
 #import "SeafHeaderView.h"
 #import "SeafEditNavRightItem.h"
+#import "SeafLoadingView.h"
 
 #define kCustomTabToolWithTopPadding 15
 #define kCustomTabToolButtonHeight 40
@@ -75,7 +76,6 @@ enum {
 - (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
 
 @property (strong) id curEntry; // Currently selected directory entry.
-@property (strong, nonatomic) IBOutlet UIActivityIndicatorView *loadingView;
 
 @property (strong) UIBarButtonItem *selectAllItem;// Button to select all items in the directory.
 @property (strong) UIBarButtonItem *selectNoneItem;
@@ -135,6 +135,9 @@ enum {
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    
+    // Initialize loading view
+    self.loadingView = [SeafLoadingView loadingViewWithParentView:self.view];
     
     [self.tableView registerNib:[UINib nibWithNibName:@"SeafCell" bundle:nil]
          forCellReuseIdentifier:@"SeafCell"];
@@ -337,10 +340,7 @@ enum {
 
 - (void)viewWillLayoutSubviews {
     [super viewWillLayoutSubviews];
-    if (self.loadingView.isAnimating) {
-        CGRect viewBounds = self.view.bounds;
-        self.loadingView.center = CGPointMake(CGRectGetMidX(viewBounds), CGRectGetMidY(viewBounds));
-    }
+    [self.loadingView updatePosition];
 }
 
 
@@ -784,19 +784,19 @@ enum {
 
 - (void)showLoadingView
 {
-    if (!self.loadingView) {
-        self.loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
-        self.loadingView.color = [UIColor darkTextColor];
-        self.loadingView.hidesWhenStopped = YES;
-        [self.view addSubview:self.loadingView];
-    }
-    self.loadingView.center = self.view.center;
-    [self.loadingView startAnimating];
+    // Get the key window for proper centering in the entire screen
+    UIWindow *keyWindow = [[UIApplication sharedApplication] keyWindow];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        // Only show loading view if still in loading state
+        if (self.state == STATE_LOADING) {
+            [self.loadingView showInView:keyWindow];
+        }
+    });
 }
 
 - (void)dismissLoadingView
 {
-    [self.loadingView stopAnimating];
+    [self.loadingView dismiss];
 }
 
 - (void)loadDataFromServerAndRefresh {
@@ -988,7 +988,6 @@ enum {
     
     // Restore original title
     self.customTitleLabel.text = self.directory.name;
-    _selectedindex = nil;
     
     UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:self.directory target:self action:@selector(backButtonTapped)]];
     self.navigationItem.leftBarButtonItem = customBarButton;
@@ -1059,7 +1058,6 @@ enum {
 {
     if (none) {
         // Get done button container view
-        _selectedindex = nil;
         UIView *containerView = (UIView *)self.doneItem.customView;
         UILabel *countLabel = [containerView.subviews.lastObject isKindOfClass:[UILabel class]] ?
                              (UILabel *)containerView.subviews.lastObject : nil;
@@ -2926,7 +2924,7 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
                 if (![entry isKindOfClass:[SeafUploadFile class]]) {
                     // Select the cell that was long pressed
                     [self.tableView selectRowAtIndexPath:indexPath animated:YES scrollPosition:UITableViewScrollPositionNone];
-                    
+                    _selectedindex = indexPath;
                     // Update selection status
                     [self noneSelected:NO];
                     [self updateToolButtonsState];
