@@ -16,6 +16,7 @@
 #import "SeafDateFormatter.h"
 #import "SeafCell.h"
 #import "SeafActionSheet.h"
+#import "SeafLoadingView.h"
 
 #import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
@@ -39,7 +40,7 @@
 
 @property (retain)id lock;
 @property (nonatomic, strong)NSMutableArray *cellDataArray;
-@property (strong, nonatomic) UIActivityIndicatorView *loadingView;
+@property (strong, nonatomic) SeafLoadingView *loadingView;
 @end
 
 @implementation SeafStarredFilesViewController
@@ -114,17 +115,9 @@
         self.tableView.sectionHeaderTopPadding = 0;
     }
     
-    // Initialize loading indicator with Auto Layout centered in safe area
-    self.loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleLarge];
-    self.loadingView.color = [UIColor darkTextColor];
-    self.loadingView.hidesWhenStopped = YES;
-    self.loadingView.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.view addSubview:self.loadingView];
-    [NSLayoutConstraint activateConstraints:@[
-        [self.loadingView.centerXAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.centerXAnchor],
-        [self.loadingView.centerYAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.centerYAnchor]
-    ]];
-    
+    // Initialize loading view
+    self.loadingView = [SeafLoadingView loadingViewWithParentView:self.view];
+
     self.tableView.refreshControl = [[UIRefreshControl alloc] init];
     [self.tableView.refreshControl addTarget:self action:@selector(refreshControlChanged) forControlEvents:UIControlEventValueChanged];
 }
@@ -375,9 +368,7 @@
     cell.moreButtonBlock = ^(NSIndexPath *unused) {
         __strong typeof(weakCell) strongCell = weakCell;
         if (!strongCell) return;
-        NSIndexPath *currentIndexPath = [tableView indexPathForCell:strongCell];
-        Debug(@"%@", currentIndexPath);
-        [self showActionSheetWithIndexPath:currentIndexPath];
+        [self showActionSheetWithIndexPath:indexPath];
     };
     cell.isStarredCell = YES;
     [cell reset];
@@ -694,16 +685,13 @@
 }
 
 - (void)showLoadingView {
-    [self.loadingView startAnimating];
+    // Get the key window for proper centering in the entire screen
+    UIWindow *keyWindow = [[UIApplication sharedApplication] keyWindow];
+    [self.loadingView showInView:keyWindow];
 }
 
 - (void)dismissLoadingView {
-    [self.loadingView stopAnimating];
+    [self.loadingView dismiss];
 }
-
-//- (void)viewDidLayoutSubviews {
-//    [super viewDidLayoutSubviews];
-//    self.loadingView.center = self.view.center;
-//}
 
 @end

@@ -23,6 +23,7 @@
 #import "SeafDateFormatter.h"
 #import "ExtentedString.h"
 #import "Debug.h"
+#import "SeafLoadingView.h"
 
 typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 
@@ -32,7 +33,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 @property int eventsOffset;
 
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
-@property (strong, nonatomic) UIActivityIndicatorView *loadingView;
+@property (strong, nonatomic) SeafLoadingView *loadingView;
 
 @property NSMutableDictionary *eventDetails;
 @property UIImage *defaultAccountImage;
@@ -60,12 +61,8 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
     
-    // Initialize loading indicator
-    self.loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleLarge];
-    self.loadingView.color = [UIColor darkTextColor];
-    self.loadingView.hidesWhenStopped = YES;
-    [self.view addSubview:self.loadingView];
-    self.loadingView.center = self.view.center;
+    // Initialize loading view
+    self.loadingView = [SeafLoadingView loadingViewWithParentView:self.view];
     
     if (@available(iOS 15.0, *)) {
         UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
@@ -160,12 +157,11 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 }
 
 - (void)showLoadingView {
-    self.loadingView.center = self.view.center;
-    [self.loadingView startAnimating];
+    [self.loadingView showInView:self.view];
 }
 
 - (void)dismissLoadingView {
-    [self.loadingView stopAnimating];
+    [self.loadingView dismiss];
 }
 
 - (void)moreEvents:(int)offset
@@ -182,9 +178,11 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     
     // Standard request for older API versions
     NSString *url = [NSString stringWithFormat:API_URL"/events/?start=%d", offset];
+    @weakify(self);
     [_connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
         // Process data in background thread
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            @strongify(self);
             Debug("Succeeded to get events start=%d", offset);
             NSArray *arr = [JSON objectForKey:@"events"];
             NSMutableArray *marray = [NSMutableArray new];
@@ -198,6 +196,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
             
             // Update UI in main thread
             dispatch_async(dispatch_get_main_queue(), ^{
+                @strongify(self);
                 self->_events = marray;
                 self->_eventsMore = hasMore;
                 self->_eventsOffset = newOffset;
@@ -208,6 +207,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         });
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
         dispatch_async(dispatch_get_main_queue(), ^{
+            @strongify(self);
             [self endRefreshing];
             [self.tableView.infiniteScrollingView stopAnimating];
             [self dismissLoadingView];
@@ -679,7 +679,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
-    self.loadingView.center = self.view.center;
+    [self.loadingView updatePosition];
 }
 
 @end

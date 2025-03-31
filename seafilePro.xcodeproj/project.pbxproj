@@ -108,6 +108,12 @@
 		BA8AC8002D8192D800F8DE57 /* ic_checkbox_unchecked.png in Resources */ = {isa = PBXBuildFile; fileRef = BA8AC7F22D8192D800F8DE57 /* ic_checkbox_unchecked.png */; };
 		BA8AC8022D8192D800F8DE57 /* ic_checkbox_checked.png in Resources */ = {isa = PBXBuildFile; fileRef = BA8AC7F02D8192D800F8DE57 /* ic_checkbox_checked.png */; };
 		BA8AC8032D8192D800F8DE57 /* ic_checkbox_unchecked.png in Resources */ = {isa = PBXBuildFile; fileRef = BA8AC7F22D8192D800F8DE57 /* ic_checkbox_unchecked.png */; };
+		BA8DC95B2D9A6A030027EC46 /* SeafLoadingView.m in Sources */ = {isa = PBXBuildFile; fileRef = BA8DC95A2D9A6A030027EC46 /* SeafLoadingView.m */; };
+		BA8DC95C2D9A6A030027EC46 /* SeafLoadingView.m in Sources */ = {isa = PBXBuildFile; fileRef = BA8DC95A2D9A6A030027EC46 /* SeafLoadingView.m */; };
+		BA8DC95D2D9A6A030027EC46 /* SeafLoadingView.m in Sources */ = {isa = PBXBuildFile; fileRef = BA8DC95A2D9A6A030027EC46 /* SeafLoadingView.m */; };
+		BA8DC95E2D9A6A030027EC46 /* SeafLoadingView.m in Sources */ = {isa = PBXBuildFile; fileRef = BA8DC95A2D9A6A030027EC46 /* SeafLoadingView.m */; };
+		BA8DC95F2D9A6A030027EC46 /* SeafLoadingView.m in Sources */ = {isa = PBXBuildFile; fileRef = BA8DC95A2D9A6A030027EC46 /* SeafLoadingView.m */; };
+		BA8DC9602D9A6A030027EC46 /* SeafLoadingView.m in Sources */ = {isa = PBXBuildFile; fileRef = BA8DC95A2D9A6A030027EC46 /* SeafLoadingView.m */; };
 		BADC657B2D7FCDA30044E917 /* arrowRight_black.png in Resources */ = {isa = PBXBuildFile; fileRef = BADC657A2D7FCDA30044E917 /* arrowRight_black.png */; };
 		BADC657C2D7FCDA30044E917 /* arrowDown_black.png in Resources */ = {isa = PBXBuildFile; fileRef = BADC65792D7FCDA30044E917 /* arrowDown_black.png */; };
 		BADC657D2D7FCDA30044E917 /* arrowRight_black.png in Resources */ = {isa = PBXBuildFile; fileRef = BADC657A2D7FCDA30044E917 /* arrowRight_black.png */; };
@@ -877,6 +883,8 @@
 		BA8AC7E12D802F2800F8DE57 /* seafile-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "seafile-Prefix.pch"; sourceTree = "<group>"; };
 		BA8AC7F02D8192D800F8DE57 /* ic_checkbox_checked.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ic_checkbox_checked.png; sourceTree = "<group>"; };
 		BA8AC7F22D8192D800F8DE57 /* ic_checkbox_unchecked.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ic_checkbox_unchecked.png; sourceTree = "<group>"; };
+		BA8DC9592D9A6A030027EC46 /* SeafLoadingView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafLoadingView.h; sourceTree = "<group>"; };
+		BA8DC95A2D9A6A030027EC46 /* SeafLoadingView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafLoadingView.m; sourceTree = "<group>"; };
 		BADC65792D7FCDA30044E917 /* arrowDown_black.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = arrowDown_black.png; sourceTree = "<group>"; };
 		BADC657A2D7FCDA30044E917 /* arrowRight_black.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = arrowRight_black.png; sourceTree = "<group>"; };
 		BAE666552D82D3DA0079D4D7 /* close.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = close.png; sourceTree = "<group>"; };
@@ -1143,6 +1151,8 @@
 				571ABF511625DF31005C9B08 /* DownloadingProgressView.h */,
 				BA8AC7DE2D802E8800F8DE57 /* Constants.h */,
 				BA8AC7DF2D802E8800F8DE57 /* Constants.m */,
+				BA8DC9592D9A6A030027EC46 /* SeafLoadingView.h */,
+				BA8DC95A2D9A6A030027EC46 /* SeafLoadingView.m */,
 				571ABF521625DF31005C9B08 /* DownloadingProgressView.m */,
 				57655330161BEA40005E5327 /* FailToPreview.h */,
 				57655331161BEA40005E5327 /* FailToPreview.m */,
@@ -2663,6 +2673,7 @@
 				5775EA1217476FAD000A1765 /* SeafActivityViewController.m in Sources */,
 				57A90DA118C49F97005D8A53 /* SeafDetailViewController.m in Sources */,
 				5704C6D31753A1380028F4FE /* IntelligentSplitViewController.m in Sources */,
+				BA8DC95B2D9A6A030027EC46 /* SeafLoadingView.m in Sources */,
 				57F476EC1C00623300047395 /* SeafPhotoThumb.m in Sources */,
 				BA11F5042D91457900F56208 /* SeafNavLeftItem.m in Sources */,
 				576C91C4177EB43F007B50BD /* SeafDirViewController.m in Sources */,
@@ -2681,6 +2692,7 @@
 				58D40A6F1E9AF81B00A68BEF /* UIViewController+Extend.m in Sources */,
 				58D40A701E9AF81B00A68BEF /* SeafGlobal.m in Sources */,
 				58D40A711E9AF81B00A68BEF /* SeafDbCacheProvider.m in Sources */,
+				BA8DC9602D9A6A030027EC46 /* SeafLoadingView.m in Sources */,
 				58D40A721E9AF81B00A68BEF /* SeafAccountCell.m in Sources */,
 				57A029A41A170147009C9D7B /* SeafProviderFileViewController.m in Sources */,
 				57A029861A16F91F009C9D7B /* DocumentPickerViewController.m in Sources */,
@@ -2699,6 +2711,7 @@
 				5857EA2A1FB03F2C004F124D /* SeafItem.m in Sources */,
 				57A0298E1A16F935009C9D7B /* FileProvider.m in Sources */,
 				F5D753B928A14C1F00A6CAD6 /* SeafFileProviderUtility.m in Sources */,
+				BA8DC95F2D9A6A030027EC46 /* SeafLoadingView.m in Sources */,
 				F5E621EF20D16666001EDA7A /* NSError+SeafFileProvierError.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2715,6 +2728,7 @@
 				574D3DC81DFA88CF0093C18C /* SeafActionDirViewController.m in Sources */,
 				57B14B6E1DF5325B0045112E /* ActionViewController.m in Sources */,
 				F5B2090A2169994000762342 /* SeafInputItemsProvider.m in Sources */,
+				BA8DC95D2D9A6A030027EC46 /* SeafLoadingView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2722,6 +2736,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BA8DC95E2D9A6A030027EC46 /* SeafLoadingView.m in Sources */,
 				F5AD6ADF24C42D140067F9AF /* DocumentActionViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2740,6 +2755,7 @@
 				F5C64906210A25DB00842687 /* UIViewController+Extend.m in Sources */,
 				F5B2090B2169994000762342 /* SeafInputItemsProvider.m in Sources */,
 				F5C6490D210AD7F700842687 /* SeafActionDirViewController.m in Sources */,
+				BA8DC95C2D9A6A030027EC46 /* SeafLoadingView.m in Sources */,
 				F55A4AE4213A9E5A00AAF3DF /* ShareViewController.m in Sources */,
 				F5C6492A2112269800842687 /* SeafShareDirViewController.m in Sources */,
 				F5518092214E27DD00AA9D7A /* SeafShareFileViewController.m in Sources */,
