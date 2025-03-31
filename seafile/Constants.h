@@ -8,6 +8,10 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
+#define SEAFILE_SUITE_NAME @"group.com.seafile.seafilePro"
+#define APP_ID @"com.seafile.seafilePro"
+#define SEAF_FILE_PROVIDER @"com.seafile.seafilePro.fileprovider"
+
 #define kPrimaryBackgroundColor [UIColor colorWithRed:247.0/255.0 green:247.0/255.0 blue:247.0/255.0 alpha:1.0]
 
 #define ios7 ([[[UIDevice currentDevice] systemVersion] floatValue] >= 7)

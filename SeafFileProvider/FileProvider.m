@@ -199,6 +199,7 @@
     if (error) Warning("Failed to write placeholder: %@", error);
     completionHandler(error);
 }
+
 - (void)startProvidingItemAtURL:(NSURL *)url completionHandler:(void (^)(NSError *))completionHandler
 {
     NSString *identifier = [self persistentIdentifierForItemAtURL:url];
@@ -243,26 +244,17 @@
                     BOOL ret = [Utils copyFile:file.exportURL to:url];
                     completionHandler(ret ? nil : [NSError fileProvierErrorNoSuchItem]);
                 } @finally {
-                    [lock unlock];
-                    @synchronized(self.fileLocks) {
-                        [self.fileLocks removeObjectForKey:identifier];
-                    }
+                    [self unlockAndRemoveFileLock:lock forIdentifier:identifier];
                 }
             }];
             
             [file loadContent:true];
         } else {
-            [lock unlock];
-            @synchronized(self.fileLocks) {
-                [self.fileLocks removeObjectForKey:identifier];
-            }
+            [self unlockAndRemoveFileLock:lock forIdentifier:identifier];
             completionHandler([NSError fileProvierErrorNoSuchItem]);
         }
     } @catch (NSException *exception) {
-        [lock unlock];
-        @synchronized(self.fileLocks) {
-            [self.fileLocks removeObjectForKey:identifier];
-        }
+        [self unlockAndRemoveFileLock:lock forIdentifier:identifier];
         completionHandler([NSError fileProvierErrorNoSuchItem]);
     }
 }
@@ -683,6 +675,21 @@
     if (urlString) {
         NSURL *url = [NSURL URLWithString:urlString];
         [self.identifierCache removeObjectForKey:url];
+    }
+}
+
+- (void)unlockAndRemoveFileLock:(NSLock *)lock forIdentifier:(NSString *)identifier {
+    if (lock) {
+        [lock unlock];
+        @synchronized(self.fileLocks) {
+            [self.fileLocks removeObjectForKey:identifier];
+        }
+    }
+}
+
+- (void)dealloc {
+    @synchronized(self.fileLocks) {
+        [self.fileLocks removeAllObjects];
     }
 }
 
