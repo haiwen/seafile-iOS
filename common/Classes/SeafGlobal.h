@@ -13,11 +13,6 @@
 #import "SeafDbCacheProvider.h"
 #import "SeafPreView.h"
 
-
-#define SEAFILE_SUITE_NAME @"group.com.seafile.seafilePro"
-#define APP_ID @"com.seafile.seafilePro"
-#define SEAF_FILE_PROVIDER @"com.seafile.seafilePro.fileprovider"
-
 @protocol SeafBackgroundMonitor <NSObject>
 - (void)enterBackground;
 - (void)enterForeground;

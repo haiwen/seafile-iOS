@@ -12,6 +12,7 @@
 #import "Utils.h"
 #import "Debug.h"
 #import "ExtentedString.h"
+#import "SeafConstants.h"
 #import <sys/stat.h>
 #import <dirent.h>
 #import <sys/xattr.h>
@@ -837,7 +838,7 @@
 
 + (BOOL)isMainApp {
     NSString *bundleId = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleIdentifier"];
-    return [bundleId isEqualToString:@"com.seafile.seafilePro"];
+    return [bundleId isEqualToString:APP_ID];
 }
 
 @end
