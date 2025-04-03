@@ -58,7 +58,6 @@ static NSString *cellIdentifier = @"SeafSyncInfoCell";
         self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:CANCEL_DOWNLOAD style:UIBarButtonItemStyleDone target:self action:@selector(cancelAllDownloadTasks)];
     } else {
         self.navigationItem.title = NSLocalizedString(@"Uploading", @"Seafile");
-        self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:CANCEL_UPLOAD style:UIBarButtonItemStyleDone target:self action:@selector(cancelAllUploadTasks)];
     }
 
     self.connection = [SeafGlobal sharedObject].connection;
