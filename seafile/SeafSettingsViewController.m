@@ -27,6 +27,9 @@
 #import "Debug.h"
 #import "SeafPrivacyPolicyViewController.h"
 
+#define CELL_PADDING_HORIZONTAL 10.0
+#define CELL_CORNER_RADIUS 10.0
+
 enum {
     SECTION_ACCOUNT = 0,
     SECTION_CAMERA,
@@ -302,6 +305,9 @@ enum {
     _nameCell.detailTextLabel.text = NSLocalizedString(@"Switch Account", @"Seafile");
     _usedspaceCell.textLabel.text = NSLocalizedString(@"Space Used", @"Seafile");
     
+    // Set table view properties to remove top separator
+    self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+    
     LAContext *lac = [[LAContext alloc] init];
     if (@available(iOS 11.0, *)) {
         if (lac.biometryType == LABiometryTypeFaceID) {
@@ -366,6 +372,8 @@ enum {
         self.tableView.sectionHeaderTopPadding = 0;
     }
     
+    self.tableView.backgroundColor = kPrimaryBackgroundColor;
+    
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(uploadTaskStatusChanged:) name:@"SeafUploadTaskStatusChanged" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(uploadTaskStatusChanged:) name:@"SeafDownloadTaskStatusChanged" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self 
@@ -396,6 +404,7 @@ enum {
         return;
 
     _nameCell.textLabel.text = _connection.name;
+    
     _enableTouchIDSwitch.on = _connection.touchIdEnabled;
 
     Debug("Account : %@, %lld, quota: %lld", _connection.username, _connection.usage, _connection.quota);
@@ -407,12 +416,10 @@ enum {
         else
             _usedspaceCell.detailTextLabel.text = [FileSizeFormatter stringFromLongLong:_connection.usage];
     } else {
-        float usage = 100.0 * _connection.usage/_connection.quota;
+        // Format as "123.5KB / 5GB" instead of percentage
+        NSString *usageString = [FileSizeFormatter stringFromLongLong:_connection.usage];
         NSString *quotaString = [FileSizeFormatter stringFromLongLong:_connection.quota];
-        if (usage < 0)
-            _usedspaceCell.detailTextLabel.text = [NSString stringWithFormat:@"? of %@", quotaString];
-        else
-            _usedspaceCell.detailTextLabel.text = [NSString stringWithFormat:@"%.2f%% of %@", usage, quotaString];
+        _usedspaceCell.detailTextLabel.text = [NSString stringWithFormat:@"%@ / %@", usageString, quotaString];
     }
 
     _autoSyncSwitch.on = self.autoSync;
@@ -486,7 +493,6 @@ enum {
         // update the number of uploading and downloading
         [self updateSyncInfo];
         [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:SECTION_CAMERA] withRowAnimation:UITableViewRowAnimationNone];
-
     });
 }
 
@@ -504,9 +510,139 @@ enum {
 }
 
 #pragma mark - Table view delegate
+
+- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
+    // Ensure cell and content view are clear to show the custom background
+    cell.backgroundColor = [UIColor clearColor];
+    cell.contentView.backgroundColor = [UIColor clearColor];
+    // Set selection style to none to remove the highlighting effect when tapped
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+
+    // For all cells, apply indentation
+    cell.indentationLevel = 1;  // Each indentation level is typically 10 points
+    cell.indentationWidth = 30; // Override the default width
+
+    // Check if this is the logout cell or the privacy policy cell
+    if (indexPath.section == SECTION_LOGOUT || 
+        (indexPath.section == SECTION_ABOUT && indexPath.row == CELL_PRIVACY)) {
+        // Create a custom accessory view with the chevron shifted 5px to the left
+        // Instead of using the standard accessory type
+        cell.accessoryType = UITableViewCellAccessoryNone;
+        
+        // Create a custom view for the accessory
+        UIView *customAccessoryView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 15, 20)];
+        
+        // Create a chevron image view
+        UIImageView *chevronImageView = [[UIImageView alloc] initWithImage:[UIImage systemImageNamed:@"chevron.right"]];
+        if (chevronImageView.image == nil) {
+            // Fallback for older iOS versions
+            chevronImageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"arrowright2"]];
+        }
+        
+        // Set the frame to position it 5px to the left with smaller dimensions
+        chevronImageView.frame = CGRectMake(-5, 2, 12, 16); // Reduced size from 15x20 to 12x16
+        chevronImageView.contentMode = UIViewContentModeScaleAspectFit;
+        chevronImageView.tintColor = [UIColor lightGrayColor];
+        
+        [customAccessoryView addSubview:chevronImageView];
+        cell.accessoryView = customAccessoryView;
+        
+        // Only set the specific logout styling for the logout cell
+        if (indexPath.section == SECTION_LOGOUT) {
+            // Ensure the logout text is set properly
+            cell.textLabel.text = NSLocalizedString(@"Log out", @"Seafile");
+            cell.textLabel.textAlignment = NSTextAlignmentLeft;
+            cell.textLabel.textColor = BAR_COLOR_ORANGE;
+            // Reduce the font size
+//            cell.textLabel.font = [UIFont systemFontOfSize:16.0]; // Smaller font size
+        }
+    } else {
+        // For other cells, add the spacer accessory view
+        UIView *spacerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 5, 1)];
+        spacerView.backgroundColor = [UIColor clearColor];
+        cell.accessoryView = spacerView;
+        cell.accessoryType = UITableViewCellAccessoryNone;
+    }
+
+    // Define vertical padding (minimal, just for visual separation if needed)
+    CGFloat verticalPadding = 0; // Remove extra vertical padding
+    CGFloat bottomPadding = 0;
+
+    // Remove previous custom background view if reusing cell
+    UIView *existingBackground = [cell viewWithTag:999];
+    [existingBackground removeFromSuperview];
+    
+    // Remove any existing separator view
+    UIView *existingSeparator = [cell viewWithTag:888];
+    [existingSeparator removeFromSuperview];
+
+    // Create the card background view
+    UIView *cardBackgroundView = [[UIView alloc] init];
+    cardBackgroundView.tag = 999;
+    cardBackgroundView.backgroundColor = [UIColor whiteColor]; // Card color
+    cardBackgroundView.layer.cornerRadius = CELL_CORNER_RADIUS;
+    cardBackgroundView.clipsToBounds = YES;
+
+    // Determine corners to round
+    NSInteger numberOfRowsInSection = [tableView numberOfRowsInSection:indexPath.section];
+    BOOL isFirstCell = (indexPath.row == 0);
+    BOOL isLastCell = (indexPath.row == numberOfRowsInSection - 1);
+
+    if (isFirstCell && isLastCell) {
+        cardBackgroundView.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner | kCALayerMinXMaxYCorner | kCALayerMaxXMaxYCorner;
+    } else if (isFirstCell) {
+        cardBackgroundView.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner;
+    } else if (isLastCell) {
+        cardBackgroundView.layer.maskedCorners = kCALayerMinXMaxYCorner | kCALayerMaxXMaxYCorner;
+    } else {
+        cardBackgroundView.layer.cornerRadius = 0; // No rounding for middle cells
+    }
+
+    // Calculate frame relative to cell bounds with horizontal padding
+    // Make height almost full cell height
+    CGRect cardFrame = CGRectMake(CELL_PADDING_HORIZONTAL,
+                                0, // Start at the top
+                                cell.bounds.size.width - (2 * CELL_PADDING_HORIZONTAL),
+                                cell.bounds.size.height); // Fill height
+
+    cardBackgroundView.frame = cardFrame;
+    cardBackgroundView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+
+    // Insert the custom background view BELOW the cell's content view
+    [cell insertSubview:cardBackgroundView belowSubview:cell.contentView];
+
+    // Add separator line for all cells except the last one in each section
+    if (!isLastCell) {
+        // Create a separator view
+        UIView *separatorView = [[UIView alloc] init];
+        separatorView.tag = 888;
+        separatorView.backgroundColor = [UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1.0]; // Light gray color
+        
+        // Calculate separator frame - place it at the bottom of the cell
+        CGFloat separatorHeight = 0.5; // Standard separator height
+        CGFloat leftInset = CELL_PADDING_HORIZONTAL + 15.0;
+        CGRect separatorFrame = CGRectMake(leftInset,
+                                        cell.bounds.size.height - separatorHeight,
+                                        cell.bounds.size.width - leftInset - CELL_PADDING_HORIZONTAL,
+                                        separatorHeight);
+        
+        separatorView.frame = separatorFrame;
+        separatorView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
+        
+        // Add the separator on top of the card background but below content view
+        [cell insertSubview:separatorView aboveSubview:cardBackgroundView];
+    }
+
+    // Manage Separators - hide default separators
+    cell.separatorInset = UIEdgeInsetsMake(0, 0, 0, cell.bounds.size.width);
+}
+
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    [self.tableView deselectRowAtIndexPath:[self.tableView indexPathForSelectedRow] animated:NO];
+    // Keep existing selection logic, but deselect visually immediately
+    // The visual feedback comes from the row action itself (navigation, alert, etc.)
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+
     if (indexPath.section == SECTION_ACCOUNT) {
         if (indexPath.row == 0) {
             Debug("Switch Account");
@@ -665,6 +801,38 @@ enum {
     return sectionNames[section];
 }
 
+// Custom header view with 30-point left indentation for the title
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
+{
+    // First get the title from the standard method
+    NSString *title = [self tableView:tableView titleForHeaderInSection:section];
+    if (!title || [title isEqualToString:@""]) {
+        return nil;
+    }
+    
+    // Create a custom header view
+    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.frame.size.width, 35)];
+    headerView.backgroundColor = [UIColor clearColor];
+    
+    // Create a label with 30-point left indentation
+    UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(30, 5, tableView.frame.size.width - 40, 30)];
+    titleLabel.font = [UIFont systemFontOfSize:14];
+    titleLabel.textColor = [UIColor colorWithWhite:0.4 alpha:1.0]; // Gray text
+    titleLabel.text = title;
+    [headerView addSubview:titleLabel];
+    
+    return headerView;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section 
+{
+    NSString *title = [self tableView:tableView titleForHeaderInSection:section];
+    if (!title || [title isEqualToString:@""]) {
+        return 12; // Small height for empty header
+    }
+    return 35; // Standard height for headers with titles
+}
+
 - (void)viewDidUnload {
     [self setNameCell:nil];
     [self setUsedspaceCell:nil];
@@ -718,7 +886,11 @@ enum {
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self.isVisible) {
             [self updateSyncInfo];
-            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:SECTION_CAMERA] withRowAnimation:UITableViewRowAnimationNone];
+            // Update header view text instead of reloading the whole section
+            // This avoids potential visual glitches with cell styling updates
+             [self.tableView beginUpdates];
+             [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:SECTION_CAMERA] withRowAnimation:UITableViewRowAnimationNone];
+             [self.tableView endUpdates];
         }
     });
 }
