@@ -286,7 +286,7 @@
             [cell.cacheStatusWidthConstraint setConstant:0.0f];
             [cell layoutIfNeeded];
         } else {
-            if (sfile.hasCache || waiting || sfile.isDownloading) {
+            if (![sfile isSdocFile] && (sfile.hasCache || waiting || sfile.isDownloading)) {
                 cell.cacheStatusView.hidden = false;
                 [cell.cacheStatusWidthConstraint setConstant:21.0f];
                 if (sfile.isDownloading) {
