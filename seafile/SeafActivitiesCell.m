@@ -13,7 +13,15 @@
 
 - (void)awakeFromNib {
     [super awakeFromNib];
-    // Initialization code    
+    // Set text colors
+    self.authorLabel.textColor = [UIColor blackColor];
+    self.desLabel.textColor = BAR_COLOR_ORANGE;
+    self.timeLabel.textColor = [UIColor grayColor];
+    self.repoNameLabel.textColor = BAR_COLOR_ORANGE;
+    
+    // Set operation label and container colors
+    self.operationLabel.textColor = [UIColor darkGrayColor];
+    self.operationContainer.backgroundColor = [[UIColor lightGrayColor] colorWithAlphaComponent:0.2];
 }
 
 - (void)showWithImage:(NSURL *)imageURL author:(NSString *)author operation:(NSString *)operation time:(NSString *)time detail:(NSString *)detail repoName:(NSString *)repoName {
