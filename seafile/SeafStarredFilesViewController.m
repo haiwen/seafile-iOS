@@ -120,6 +120,8 @@
 
     self.tableView.refreshControl = [[UIRefreshControl alloc] init];
     [self.tableView.refreshControl addTarget:self action:@selector(refreshControlChanged) forControlEvents:UIControlEventValueChanged];
+    
+    [self refresh:nil];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -368,7 +370,9 @@
     cell.moreButtonBlock = ^(NSIndexPath *unused) {
         __strong typeof(weakCell) strongCell = weakCell;
         if (!strongCell) return;
-        [self showActionSheetWithIndexPath:indexPath];
+        NSIndexPath *currentIndexPath = [self.tableView indexPathForCell:strongCell];
+        if (!currentIndexPath) return;
+        [self showActionSheetWithIndexPath:currentIndexPath];
     };
     cell.isStarredCell = YES;
     [cell reset];
@@ -566,33 +570,40 @@
 }
 
 #pragma mark - Sheet
-- (void)showActionSheetWithIndexPath:(NSIndexPath *)indexPath
+-(void)showActionSheetWithIndexPath:(NSIndexPath *)indexPath
 {
     _selectedindex = indexPath;
 
     SeafCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
     NSString *title = NSLocalizedString(@"Navigate to Folder", @"Seafile");
-    
     NSString *unStar = S_UNSTAR;
-
-    NSArray *titles = @[title,unStar];
-
-    [self showSheetWithTitles:titles andFromIndex:indexPath andView:cell];
+    NSArray *titles = @[title, unStar];
+    SeafBase *entry = _cellDataArray[indexPath.row];
+    [self showSheetWithTitles:titles entry:entry andView:cell];
 }
 
-- (void)showSheetWithTitles:(NSArray*)titles andFromIndex:(NSIndexPath *)cellIndexPath andView:(id)view{
+
+- (void)showSheetWithTitles:(NSArray*)titles entry:(SeafBase *)entry andView:(UIView*)view
+{
     SeafActionSheet *actionSheet = [SeafActionSheet actionSheetWithoutCancelWithTitles:titles];
     actionSheet.targetVC = self;
 
-    [actionSheet setButtonPressedBlock:^(SeafActionSheet *actionSheet, NSIndexPath *indexPath){
+    [actionSheet setButtonPressedBlock:^(SeafActionSheet *actionSheet, NSIndexPath *buttonIndexPath){
         [actionSheet dismissAnimated:YES];
-        if (indexPath.section == 0) {
-            [self locateToTargetPathFromIndex:cellIndexPath.row];
-        } else if (indexPath.section == 1){
-            [self setUnstar:cellIndexPath.row];
+        if (buttonIndexPath.row == 0) {
+            NSInteger currentIndex = [_cellDataArray indexOfObject:entry];
+            if (currentIndex != NSNotFound) {
+                [self locateToTargetPathFromIndex:currentIndex];
+            }
+        } else if (buttonIndexPath.row == 1) {
+            [entry setStarred:NO withBlock:nil];
+            NSInteger currentIndex = [_cellDataArray indexOfObject:entry];
+            if (currentIndex != NSNotFound) {
+                [self deleteRow:currentIndex];
+            }
         }
     }];
-    
+
     [actionSheet showFromView:view];
 }
 

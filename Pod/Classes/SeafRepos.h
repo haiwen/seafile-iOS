@@ -32,6 +32,7 @@
 @property (assign, nonatomic) long long mtime;///< Modification time of the repository.
 @property (readonly) NSString *type;///< Type of the repository.
 @property (readonly) NSString *groupName;///< Group name associated with the repository, if any.
+@property (readonly) NSInteger groupid;///< Group ID associated with the repository, if any.
 
 /**
  * Returns a detailed description of the repository including its last modification time and owner's nickname.
