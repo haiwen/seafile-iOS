@@ -44,7 +44,7 @@
     
     // Returns a default local file path based on fileModel.localPath
     if (self.fileModel.localPath) {
-        self.previewItemURL = [NSURL fileURLWithPath:self.fileModel.localPath];
+        self.previewItemURL = [NSURL fileURLWithPath:self.fileModel.localPath isDirectory:NO];
     }
     return self.previewItemURL;
 }
@@ -105,7 +105,7 @@
     @synchronized (sFile) {
         if ([Utils fileExistsAtPath:dst] ||
             [Utils tryTransformEncoding:dst fromFile:src]) {
-            return [NSURL fileURLWithPath:dst];
+            return [NSURL fileURLWithPath:dst isDirectory:NO];
         }
     }
     
@@ -125,7 +125,7 @@
     
     // If there is a local editing file path, return it directly
     if (sFile.mpath) {
-        _exportItemURL = [NSURL fileURLWithPath:sFile.mpath];
+        _exportItemURL = [NSURL fileURLWithPath:sFile.mpath isDirectory:NO];
         return _exportItemURL;
     }
     
@@ -147,7 +147,7 @@
             [Utils linkFileAtPath:[SeafStorage.sharedObject documentPath:sFile.ooid]
                                to:tempFileName
                             error:nil]) {
-            _exportItemURL = [NSURL fileURLWithPath:tempFileName];
+            _exportItemURL = [NSURL fileURLWithPath:tempFileName isDirectory:NO];
         } else {
             Warning("Copy file to exportURL failed.\n");
             sFile.ooid = nil;
@@ -160,11 +160,11 @@
 #pragma mark - Private Methods: Local HTML file paths for markdown/seafile
 
 - (NSURL *)markdownPreviewURL {
-    return [NSURL fileURLWithPath:[SeafileBundle() pathForResource:@"htmls/view_markdown" ofType:@"html"]];
+    return [NSURL fileURLWithPath:[SeafileBundle() pathForResource:@"htmls/view_markdown" ofType:@"html"] isDirectory:NO];
 }
 
 - (NSURL *)seafPreviewURL {
-    return [NSURL fileURLWithPath:[SeafileBundle() pathForResource:@"htmls/view_seaf" ofType:@"html"]];
+    return [NSURL fileURLWithPath:[SeafileBundle() pathForResource:@"htmls/view_seaf" ofType:@"html"] isDirectory:NO];
 }
 
 @end

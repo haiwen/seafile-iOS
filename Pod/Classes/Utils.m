@@ -364,7 +364,7 @@
 + (BOOL)writeCIImage:(CIImage *)ciImage toPath:(NSString*)filePath {
     NSError *error = nil;
     CIContext *context = [[CIContext alloc] init];
-    NSURL *url = [[NSURL alloc] initFileURLWithPath:filePath];
+    NSURL *url = [[NSURL alloc] initFileURLWithPath:filePath isDirectory:NO];
     return [context writeJPEGRepresentationOfImage:ciImage toURL:url colorSpace:ciImage.colorSpace options:@{(CIImageRepresentationOption)kCGImageDestinationLossyCompressionQuality : @(0.8)} error:&error];
 }
 
@@ -675,7 +675,7 @@
 
 + (NSURL *)generateFileTempPath:(NSString *)name {
     NSString *tempPath = [NSTemporaryDirectory() stringByAppendingPathComponent:[name stringByAddingPercentEscapesUsingEncoding:NSUTF16StringEncoding]];
-    NSURL *tempURL = [NSURL fileURLWithPath:tempPath];
+    NSURL *tempURL = [NSURL fileURLWithPath:tempPath isDirectory:NO];
     if ([[NSFileManager defaultManager] fileExistsAtPath:tempPath]) {
         NSError *error;
         [[NSFileManager defaultManager] removeItemAtPath:tempPath error:&error];

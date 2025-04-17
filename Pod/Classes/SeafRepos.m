@@ -40,6 +40,7 @@
                encrypted:(BOOL)aEncrypted
            ownerNickName:(NSString *)nickname
                groupName:(NSString *)groupName
+                 groupid:(NSInteger)aGroupid
 {
     NSString *aMime = @"text/directory-documents";
     if ([aPerm.lowercaseString isEqualToString:@"r"]) {
@@ -61,6 +62,7 @@
         _type = aType;
         _ownerNickname = nickname;
         _groupName = groupName;
+        _groupid = aGroupid;
     }
     return self;
 }
@@ -149,6 +151,7 @@
     self.encrypted = repo.encrypted;
     _mtime = repo.mtime;
     _ownerNickname = repo.ownerNickname;
+    _groupid = repo.groupid;
 }
 
 - (NSString *)detailText
@@ -331,16 +334,13 @@
     if (grepos.count > 0) {
         NSMutableDictionary *dict = [NSMutableDictionary dictionary];
         for (SeafRepo *r in grepos) {
-            NSString *groupName = r.groupName;
-            if (!groupName || groupName.length == 0) {
-                groupName = GROUP_REPO;
-            }
-            if ([dict.allKeys containsObject:groupName]) {
-                [[dict objectForKey:groupName] addObject:r];
+            NSString *groupIdKey = r.groupid > 0 ? [NSString stringWithFormat:@"%ld", (long)r.groupid] : GROUP_REPO;
+            if ([dict.allKeys containsObject:groupIdKey]) {
+                [[dict objectForKey:groupIdKey] addObject:r];
             } else {
                 NSMutableArray *array = [NSMutableArray array];
                 [array addObject:r];
-                [dict setValue:array forKey:groupName];
+                [dict setValue:array forKey:groupIdKey];
             }
         }
         
@@ -378,6 +378,7 @@
                              encrypted:[[repoInfo objectForKey:@"encrypted"] booleanValue:NO]
                              ownerNickName:[repoInfo objectForKey:@"owner_nickname"]
                              groupName:[repoInfo objectForKey:@"group_name"]
+                             groupid:[[repoInfo objectForKey:@"groupid"] integerValue:0]
                              ];
         newRepo.delegate = self.delegate;
         [newRepos addObject:newRepo];
