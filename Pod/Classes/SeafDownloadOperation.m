@@ -69,7 +69,7 @@
     SeafConnection *connection = self.file.connection;
     self.file.state = SEAF_DENTRY_LOADING;
 
-    if ([connection shouldLocalDecrypt:self.file.repoId] || self.file.filesize > LARGE_FILE_SIZE) {
+    if ([connection shouldLocalDecrypt:self.file.repoId]) {
         Debug("Download file %@ by blocks: %lld", self.file.name, self.file.filesize);
         [self downloadByBlocks:connection];
     } else {
