@@ -2518,6 +2518,9 @@ enum {
     if (!_searchController) {
         _searchController = [[UISearchController alloc] initWithSearchResultsController:self.searchResultController];
         _searchController.searchResultsUpdater = self.searchResultController;
+        if (IsIpad()) {
+            _searchController.hidesNavigationBarDuringPresentation = NO; // Keep navigation bar visible
+        }
         
         // Set properties to ensure opaque status bar background
         _searchController.searchBar.searchBarStyle = UISearchBarStyleProminent; // Changed to prominent style
