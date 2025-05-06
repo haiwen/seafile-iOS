@@ -23,6 +23,7 @@
 @property (nonatomic, strong) UIScrollView  *infoScrollView;
 @property (nonatomic, strong) UITapGestureRecognizer *tapGesture;
 @property (nonatomic, strong) UITapGestureRecognizer *doubleTapGesture;
+@property (nonatomic, assign) BOOL isDisplayingPlaceholderOrErrorImage; // 添加标记属性
 
 // Declare internal setup method
 - (void)setupLoadingIndicator;
@@ -41,6 +42,9 @@
     // Initialize with info view hidden
     self.infoVisible = NO;
     self.infoView.hidden = YES;
+    
+    // Initialize placeholder image flag
+    self.isDisplayingPlaceholderOrErrorImage = NO;
 }
 
 - (void)setupScrollView {
@@ -706,7 +710,7 @@
 
 // Handle tap to toggle UI visibility
 - (void)handleTap:(UITapGestureRecognizer *)gesture {
-    // 获取父级导航控制器
+    // Get parent navigation controller
     UIViewController *parentVC = self.parentViewController;
     while (parentVC && ![parentVC isKindOfClass:[UINavigationController class]]) {
         parentVC = parentVC.parentViewController;
@@ -715,7 +719,7 @@
     if ([parentVC isKindOfClass:[UINavigationController class]]) {
         UINavigationController *navController = (UINavigationController *)parentVC;
         
-        // 切换导航栏可见性
+        // Toggle navigation bar visibility
         BOOL isHidden = navController.navigationBar.hidden;
         
         // Use fade transition instead of standard animation
@@ -735,16 +739,16 @@
             }];
         }
         
-        // 查找 SeafPhotoGalleryViewController
+        // Find SeafPhotoGalleryViewController
         UIViewController *galleryVC = navController.topViewController;
         if ([galleryVC isKindOfClass:NSClassFromString(@"SeafPhotoGalleryViewController")]) {
-            // 尝试获取并切换缩略图集合的可见性
+            // Try to get and toggle thumbnail collection visibility
             @try {
                 UIView *thumbnailCollection = [galleryVC valueForKey:@"thumbnailCollection"];
                 UIView *toolbarView = [galleryVC valueForKey:@"toolbarView"];
                 
                 if (isHidden) {
-                    // 从隐藏状态恢复 - 先设置可见但透明，然后动画淡入
+                    // Restore from hidden state - first set visible but transparent, then fade in
                     if (thumbnailCollection && [thumbnailCollection isKindOfClass:[UIView class]]) {
                         thumbnailCollection.hidden = NO;
                         thumbnailCollection.alpha = 0.0;
@@ -755,30 +759,30 @@
                         toolbarView.alpha = 0.0;
                     }
                     
-                    // 开始淡入动画，同时将背景色由黑色渐变为白色
+                    // Start fade-in animation, while changing background color from black to white
                     [UIView animateWithDuration:0.15
                                           delay:0.05
                                         options:UIViewAnimationOptionCurveEaseIn
                                      animations:^{
-                        // 恢复缩略图和工具栏的显示
+                        // Restore thumbnail and toolbar visibility
                         if (thumbnailCollection) thumbnailCollection.alpha = 1.0;
                         if (toolbarView) toolbarView.alpha = 1.0;
                         
-                        // 将背景色从黑色渐变为淡灰色
+                        // Change background color from black to light gray
                         self.view.backgroundColor = [UIColor colorWithWhite:0.95 alpha:1.0];
                         self.scrollView.backgroundColor = [UIColor colorWithWhite:0.95 alpha:1.0];
                         self.imageView.backgroundColor = [UIColor clearColor];
                     } completion:nil];
                     
                 } else {
-                    // 切换到隐藏状态 - 动画淡出然后设置为隐藏，同时将背景色由白色渐变为黑色
+                    // Switch to hidden state - fade out then set to hidden, while changing background color from white to black
                     [UIView animateWithDuration:0.15
                                      animations:^{
-                        // 隐藏缩略图和工具栏
+                        // Hide thumbnail and toolbar
                         if (thumbnailCollection) thumbnailCollection.alpha = 0.0;
                         if (toolbarView) toolbarView.alpha = 0.0;
                         
-                        // 将背景色从灰色渐变为黑色
+                        // Change background color from gray to black
                         self.view.backgroundColor = [UIColor blackColor];
                         self.scrollView.backgroundColor = [UIColor blackColor];
                         self.imageView.backgroundColor = [UIColor clearColor];
@@ -788,25 +792,25 @@
                     }];
                 }
             } @catch (NSException *exception) {
-                // 处理可能的异常，保持应用稳定
+                // Handle possible exceptions to maintain app stability
                 NSLog(@"Exception when accessing gallery properties: %@", exception);
             }
         }
         
-        // 设置状态栏样式 - 根据背景色调整状态栏样式
+        // Set status bar style - adjust status bar style based on background color
         if (@available(iOS 13.0, *)) {
             UIViewController *topVC = [UIApplication sharedApplication].keyWindow.rootViewController;
             while (topVC.presentedViewController) {
                 topVC = topVC.presentedViewController;
             }
             
-            // 当背景是黑色时，状态栏应该是亮色的；当背景是白色时，状态栏应该是深色的
+            // When background is black, status bar should be light; when background is white, status bar should be dark
             if ([topVC isKindOfClass:[UINavigationController class]]) {
                 UINavigationController *navVC = (UINavigationController *)topVC;
                 navVC.navigationBar.barStyle = isHidden ? UIBarStyleBlackTranslucent : UIBarStyleBlack;
             }
             
-            // 更新状态栏偏好
+            // Update status bar preference
             [topVC setNeedsStatusBarAppearanceUpdate];
         } else {
             [[UIApplication sharedApplication] setStatusBarHidden:!isHidden withAnimation:UIStatusBarAnimationFade];
@@ -817,7 +821,7 @@
 
 - (void)loadImage {
     Debug(@"[PhotoContent] loadImage called for %@, seafFile: %@, has ooid: %@", self.photoURL, self.seafFile.name, self.seafFile.ooid ? @"YES" : @"NO");
-    
+    self.imageView.image = nil;
     // If seafFile is available, use it to load the image
     if (self.seafFile) {
         // Only show indicator if the file is NOT yet downloaded/cached (ooid is nil)
@@ -848,6 +852,7 @@
                     if (image) {
                         // This prevents the brief flash of white/blank screen
                         self.imageView.image = image;
+                        self.isDisplayingPlaceholderOrErrorImage = NO; // Clear flag when setting real image
                         [self updateScrollViewContentSize];
                         Debug(@"[PhotoContent] Image set successfully for %@", self.seafFile.name);
                         
@@ -867,6 +872,7 @@
                     } else {
                         Debug(@"[PhotoContent] Image loading failed for %@", self.seafFile.name);
                         self.imageView.image = [UIImage imageNamed:@"gallery_failed.png"];
+                        self.isDisplayingPlaceholderOrErrorImage = YES; // Set flag when setting error image
                         [self clearExifDataView];
                         // Explicitly hide indicator even on failure
                         [self hideLoadingIndicator];
@@ -883,7 +889,8 @@
     }
     else {
         Debug(@"[PhotoContent] No SeafFile available to show image");
-        self.imageView.image = [UIImage imageNamed:@"placeholder"];
+        self.imageView.image = [UIImage imageNamed:@"gallery_failed.png"];
+        self.isDisplayingPlaceholderOrErrorImage = YES; // Set flag when setting error image
         [self hideLoadingIndicator];
     }
 }
@@ -1539,6 +1546,7 @@
     
     // Set the error image
     self.imageView.image = [UIImage imageNamed:@"gallery_failed.png"];
+    self.isDisplayingPlaceholderOrErrorImage = YES; // Set flag when setting error image
     
     // Update scroll view if needed
     [self updateScrollViewContentSize];
@@ -1767,6 +1775,9 @@
         self.infoView.hidden = YES;
     }
     
+    // Reset placeholder/error image flag
+    self.isDisplayingPlaceholderOrErrorImage = NO;
+    
     Debug(@"[PhotoContent] View controller reset and ready for reuse");
 }
 
@@ -1803,6 +1814,8 @@
     // Clear the image data to free memory
     if (self.imageView) {
         self.imageView.image = nil;
+        // Reset placeholder flag since we're clearing the image
+        self.isDisplayingPlaceholderOrErrorImage = NO;
     }
         
     Debug(@"[PhotoContent] Image memory released for %@", self.seafFile ? self.seafFile.name : @"unknown");
@@ -1903,8 +1916,8 @@
     BOOL shouldBeBlackBackground = NO;
     if ([parentVC isKindOfClass:[UINavigationController class]]) {
         UINavigationController *navController = (UINavigationController *)parentVC;
-        // If the navigation bar is hidden, assume we are in the black background state triggered by handleTap:
-        if (navController.navigationBarHidden) {
+        // If the navigation bar is hidden, AND the info view is NOT visible,
+        if (navController.navigationBarHidden && !self.infoVisible) {
             shouldBeBlackBackground = YES;
         }
     }
@@ -1931,8 +1944,20 @@
     }
 
     // Make sure the image is loaded
-    if (!self.imageView.image && self.seafFile) {
-        Debug(@"[PhotoContent] Image not loaded yet in viewWillAppear, loading now: %@", self.seafFile.name);
+    BOOL needsImageLoad = NO;
+    
+    if (!self.imageView.image) {
+        // No image at all
+        needsImageLoad = YES;
+    } else if (self.isDisplayingPlaceholderOrErrorImage && self.seafFile && [self.seafFile hasCache]) {
+        // If currently displaying a placeholder or error image, and seafFile has cache, need to reload
+        needsImageLoad = YES;
+    }
+    
+    if (needsImageLoad && self.seafFile) {
+        Debug(@"[PhotoContent] Image needs loading in viewWillAppear (placeholder: %@), loading now: %@", 
+              self.isDisplayingPlaceholderOrErrorImage ? @"YES" : @"NO", 
+              self.seafFile.name);
         [self loadImage];
     }
 }

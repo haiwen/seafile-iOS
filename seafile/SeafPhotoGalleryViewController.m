@@ -525,7 +525,6 @@
             if (!strongSelf) return;
 
             [strongSelf updateSelectedIndex:idx];
-            strongSelf.currentContentVC = to;
             
             // Update loading range and trigger loading for the newly selected index
             [strongSelf updateLoadedImagesRangeForIndex:idx];
@@ -535,6 +534,8 @@
 
             // Cancel downloads outside the range (Add this for consistency)
             [strongSelf cancelDownloadsExceptForIndex:idx withRange:2];
+
+            strongSelf.currentContentVC = to;
 
             NSString *titleText = nil;
             if (strongSelf.preViewItems && idx < strongSelf.preViewItems.count) {
@@ -563,7 +564,6 @@
     if (newIdx != self.currentIndex) {
         NSUInteger oldIndex = self.currentIndex;
         self.currentIndex = newIdx;
-        self.currentContentVC = vc;
 
         // Update loading range and trigger loading for the new index
         [self updateLoadedImagesRangeForIndex:newIdx];
@@ -573,6 +573,8 @@
 
         // Cancel downloads outside the range (This was already here, keep it)
         [self cancelDownloadsExceptForIndex:newIdx withRange:2];
+        
+        self.currentContentVC = vc;
 
         // Update thumbnail layout and title
         SeafThumbnailFlowLayout *layout = (SeafThumbnailFlowLayout *)self.thumbnailCollection.collectionViewLayout;
@@ -841,6 +843,7 @@
     // Create image view to fill the cell
     UIImageView *iv = [[UIImageView alloc] initWithFrame:cell.contentView.bounds];
     iv.contentMode = UIViewContentModeScaleAspectFill;
+    iv.image = [UIImage imageNamed:@"gallery_failed.png"]; // Default image
     iv.clipsToBounds = YES;
     [cell.contentView addSubview:iv];
     iv.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
@@ -884,13 +887,62 @@
                             __strong SeafPhotoGalleryViewController *strongSelf = weakSelf;
                             if (!strongFile || !strongSelf) return;
 
-                            // Refresh the corresponding cell on the main thread
+                            // Perform UI updates on the main thread
                             dispatch_async(dispatch_get_main_queue(), ^{
-                                // Ensure the index is still valid
-                                if (currentIndexPathItem < [strongSelf.thumbnailCollection numberOfItemsInSection:0]) {
-                                    NSIndexPath *indexPathToReload = [NSIndexPath indexPathForItem:currentIndexPathItem inSection:0];
-                                    // Reload only the specific item, let cellForItemAtIndexPath reconfigure it
-                                    [strongSelf.thumbnailCollection reloadItemsAtIndexPaths:@[indexPathToReload]];
+                                // Ensure the index is still valid before accessing the collection view
+                                if (currentIndexPathItem >= [strongSelf.thumbnailCollection numberOfItemsInSection:0]) {
+                                    return; // Index out of bounds, do nothing
+                                }
+
+                                NSIndexPath *indexPathToUpdate = [NSIndexPath indexPathForItem:currentIndexPathItem inSection:0];
+
+                                // Try to get the cell for the index path
+                                UICollectionViewCell *cell = [strongSelf.thumbnailCollection cellForItemAtIndexPath:indexPathToUpdate];
+                                if (ret) { // Task reported success
+                                    UIImage *currentThumbImage = [strongFile thumb];
+                                    if (currentThumbImage) {
+                                        // Thumb is actually available and valid
+                                        if (cell) { // Cell for indexPathToUpdate is visible
+                                            [strongSelf.thumbnailCollection reloadItemsAtIndexPaths:@[indexPathToUpdate]];
+                                        }
+                                        // If cell is not visible, cellForItemAtIndexPath will handle loading when it appears.
+                                    } else {
+                                        // Treat this as a failure to prevent a loop.
+                                        Debug(@"[Gallery] Thumb task for %@ reported success, but image is not loadable. Displaying error.", strongFile.name);
+                                        if (cell) { // Cell for indexPathToUpdate is visible
+                                            // Stop the loading indicator
+                                            for (UIView *subview in cell.contentView.subviews) {
+                                                if ([subview isKindOfClass:[UIActivityIndicatorView class]]) {
+                                                    [(UIActivityIndicatorView *)subview stopAnimating];
+                                                    break;
+                                                }
+                                            }
+                                            // Set the default error image
+                                            for (UIView *subview in cell.contentView.subviews) {
+                                                if ([subview isKindOfClass:[UIImageView class]]) {
+                                                    ((UIImageView *)subview).image = [UIImage imageNamed:@"gallery_failed.png"];
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    // Stop the loading indicator if the cell is visible
+                                    if (cell) {
+                                        for (UIView *subview in cell.contentView.subviews) {
+                                            if ([subview isKindOfClass:[UIActivityIndicatorView class]]) {
+                                                [(UIActivityIndicatorView *)subview stopAnimating];
+                                                break;
+                                            }
+                                        }
+                                        // Also set the default image
+                                        for (UIView *subview in cell.contentView.subviews) {
+                                            if ([subview isKindOfClass:[UIImageView class]]) {
+                                                ((UIImageView *)subview).image = [UIImage imageNamed:@"gallery_failed.png"];
+                                                break;
+                                            }
+                                        }
+                                    }
                                 }
                             });
                         }];
@@ -900,7 +952,7 @@
                         [[SeafDataTaskManager sharedObject] addThumbTask:thumbTask];
                     } else {
                         [loadingIndicator stopAnimating]; // Non-image file, stop loading indicator
-                        iv.image = [UIImage imageNamed:@"file_image"]; // Show generic file icon
+                        iv.image = [UIImage imageNamed:@"gallery_failed.png"]; // Show generic file icon
                     }
                 }
                 
@@ -910,13 +962,13 @@
             } else {
                 // Handle non-SeafFile items if needed (currently falls through)
                 Debug(@"[Gallery] Cell for item at index %ld is not a SeafFile.", (long)index);
-                iv.image = [UIImage imageNamed:@"file_image"]; // Default image
+                iv.image = [UIImage imageNamed:@"gallery_failed.png"]; // Default image
                 [loadingIndicator stopAnimating];
             }
         }
     } else {
         // Index out of range, show default image
-        iv.image = [UIImage imageNamed:@"file_image"];
+        iv.image = [UIImage imageNamed:@"gallery_failed.png"];
         [loadingIndicator stopAnimating];
     }
     
@@ -1263,20 +1315,80 @@
 
 #pragma mark - Actions
 
-- (void)dismissGallery {
-    // Cancel all image loading for page view controllers
-    for (NSNumber *key in self.contentVCCache) {
+- (void)cancelAllPendingFileOperations {
+    Debug(@"[Gallery] Cancelling all pending file operations (images and thumbnails).");
+
+    // Cancel operations for VCs in cache
+    // Iterate over a copy of keys in case `cancelImageLoading` modifies the cache indirectly (though unlikely)
+    for (NSNumber *key in [self.contentVCCache allKeys]) {
         SeafPhotoContentViewController *vc = [self.contentVCCache objectForKey:key];
         if (vc) {
-            [vc cancelImageLoading];
-            [vc releaseImageMemory];
+            Debug(@"[Gallery] Requesting VC (index %@, file: %@) to cancel image loading.", key, vc.seafFile.name ? vc.seafFile.name : @"N/A");
+            [vc cancelImageLoading]; // This will call [self.seafFile cancelDownload] and clear seafFile.delegate
+        }
+    }
+
+    // Cancel operations for all files in preViewItems
+    // This ensures files not currently in a VC are also handled,
+    // and specifically addresses thumbnail callbacks and direct file delegate.
+    if (self.preViewItems) {
+        for (id<SeafPreView> item in self.preViewItems) {
+            if ([item isKindOfClass:[SeafFile class]]) {
+                SeafFile *file = (SeafFile *)item;
+
+                // Cancel main file download if ongoing.
+                // SeafFile's cancelDownload should be idempotent and use SeafDataTaskManager.
+                // This is a bit redundant if a VC for this file existed and cancelImageLoading was called,
+                // but acts as a catch-all.
+                if (file.isDownloading) { // Assuming isDownloading property exists or method
+                    Debug(@"[Gallery] Directly cancelling download for file from preViewItems: %@", file.name);
+                    [file cancelDownload];
+                }
+               
+                file.thumbCompleteBlock = nil;
+
+
+                // If the gallery itself is a direct delegate for file loading (e.g., via [file load:self...])
+                if (file.delegate == self) {
+                    Debug(@"[Gallery] Clearing self as delegate for file: %@", file.name);
+                    file.delegate = nil;
+                }
+            }
         }
     }
     
-    // Clear active controllers set
+    // Stop any visible thumbnail loading indicators in the collection view
+    [self updateThumbnailLoadingIndicators];
+}
+
+- (void)dismissGallery {
+    // 1. Cancel all pending network operations and clear callbacks
+    [self cancelAllPendingFileOperations];
+
+    // 2. Release resources held by Content View Controllers
+    // Iterate over a copy of keys as we might modify the dictionary by removing VCs or VCs deallocating
+    for (NSNumber *key in [self.contentVCCache allKeys]) {
+        SeafPhotoContentViewController *vc = [self.contentVCCache objectForKey:key];
+        if (vc) {
+            // cancelImageLoading was called in cancelAllPendingFileOperations
+            // releaseImageMemory should be called to free up image data
+            [vc releaseImageMemory];
+        }
+    }
+    // Clear the cache of VCs after they have been processed
+    [self.contentVCCache removeAllObjects];
+    
+    // 3. Clear active controllers set
     [self.activeControllers removeAllObjects];
     
-    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+    // 4. Dismiss the view controller
+    // Check if navigationController is not nil before dismissing
+    if (self.navigationController) {
+        [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+    } else if (self.presentingViewController) {
+        // Fallback if not in a navigation controller but presented modally
+        [self dismissViewControllerAnimated:YES completion:nil];
+    }
 }
 
 // Helper method to create a 1px image for the shadow
@@ -1411,28 +1523,74 @@
     }
 
     NSNumber *key = @(fileIndex);
-    SeafPhotoContentViewController *vc = [self.contentVCCache objectForKey:key];
+    SeafPhotoContentViewController *vc = nil; // Initialize vc to nil
 
-    // If VC is not in cache, check if it's the current one being displayed
+    // Try to get from cache first
+    SeafPhotoContentViewController *cachedController = [self.contentVCCache objectForKey:key];
+    if (cachedController) {
+        vc = cachedController;
+        Debug(@"[Gallery] Applying update to cached VC for file '%@' at index %lu.", file.name, (unsigned long)fileIndex);
+        // Ensure the cached VC has the latest file object, especially if 'file' instance from delegate might be newer
+        // This also handles the case where the file object's internal state (like ooid, cachePath) was updated by the download.
+        vc.seafFile = file;
+        vc.repoId = file.repoId;
+        vc.filePath = file.path;
+        vc.connection = file.connection;
+    }
+
+    // If not in cache, check if it's the current one being displayed
     if (!vc && fileIndex == self.currentIndex && self.currentContentVC) {
         // Ensure the currentContentVC actually corresponds to this file's index
         if (self.currentContentVC.view.tag == fileIndex) {
              vc = self.currentContentVC;
              Debug(@"[Gallery] Applying update to currentContentVC for file '%@' at index %lu.", file.name, (unsigned long)fileIndex);
+             // Ensure currentContentVC also has the latest file object
+             vc.seafFile = file;
+             vc.repoId = file.repoId;
+             vc.filePath = file.path;
+             vc.connection = file.connection;
         } else {
-            Debug(@"[Gallery] WARNING: currentContentVC tag (%ld) does not match expected index (%lu) for file '%@'. Cannot apply update.", (long)self.currentContentVC.view.tag, (unsigned long)fileIndex, file.name);
-             // vc remains nil, updateBlock won't be called
+            Debug(@"[Gallery] WARNING: currentContentVC tag (%ld) does not match expected index (%lu) for file '%@'. Cannot apply update via currentContentVC.", (long)self.currentContentVC.view.tag, (unsigned long)fileIndex, file.name);
         }
-    } else if (vc) {
-         Debug(@"[Gallery] Applying update to cached VC for file '%@' at index %lu.", file.name, (unsigned long)fileIndex);
-    } else {
-         Debug(@"[Gallery] No active VC found for file '%@' at index %lu. Update block will not run.", file.name, (unsigned long)fileIndex);
-         // vc is nil, updateBlock won't be called
+    }
+
+    // If still not found, but should be an active/preloaded controller (current or immediate neighbor)
+    // attempt to get/create it. This makes the update process more robust for nearby items.
+    if (!vc) {
+        BOOL isKeyController = (fileIndex == self.currentIndex);
+        if (!isKeyController && self.currentIndex > 0 && fileIndex == self.currentIndex - 1) {
+            isKeyController = YES; // Previous item
+        }
+        if (!isKeyController && (self.currentIndex + 1 < self.preViewItems.count) && fileIndex == self.currentIndex + 1) {
+            isKeyController = YES; // Next item
+        }
+
+        if (isKeyController) {
+            Debug(@"[Gallery] VC for key index %lu (current or neighbor) not found initially. Attempting to get/create.", (unsigned long)fileIndex);
+            // viewControllerAtIndex: will create if not cached and assign the SeafFile from preViewItems.
+            // It will also update an existing cached VC's seafFile property.
+            SeafPhotoContentViewController *potentialVC = [self viewControllerAtIndex:fileIndex];
+            if (potentialVC) {
+                // The 'file' parameter to this method is the instance from the download delegate,
+                // which has the most up-to-date state. Ensure potentialVC uses this instance.
+                potentialVC.seafFile = file;
+                potentialVC.repoId = file.repoId;
+                potentialVC.filePath = file.path;
+                potentialVC.connection = file.connection;
+                vc = potentialVC; // Use this VC for the updateBlock
+                Debug(@"[Gallery] Obtained/created VC for key index %lu. Will use for update block.", (unsigned long)fileIndex);
+            } else {
+                Debug(@"[Gallery] Failed to obtain/create VC for key index %lu even after trying.", (unsigned long)fileIndex);
+            }
+        }
     }
 
     // Execute the update block if a relevant view controller was found
     if (vc && updateBlock) {
         updateBlock(vc, fileIndex);
+    } else if (updateBlock) { // vc is nil, but updateBlock was provided
+         Debug(@"[Gallery] No active VC found for file '%@' at index %lu. Update block will not run.", file.name, (unsigned long)fileIndex);
+         // vc is nil, updateBlock won't be called
     }
 }
 
@@ -2093,14 +2251,16 @@
     NSMutableSet<NSNumber *> *newActiveControllers = [NSMutableSet set];
     
     // Add current index
-    [newActiveControllers addObject:@(index)];
+    if (self.preViewItems.count > 0 && index < self.preViewItems.count) { // Add check for valid index
+        [newActiveControllers addObject:@(index)];
+    }
     
-    // Add one index to the left (if exists)
+    // Add one index to the left (if exists and valid)
     if (index > 0) {
         [newActiveControllers addObject:@(index - 1)];
     }
     
-    // Add one index to the right (if exists)
+    // Add one index to the right (if exists and valid)
     if (index + 1 < self.preViewItems.count) {
         [newActiveControllers addObject:@(index + 1)];
     }
@@ -2183,14 +2343,22 @@
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
     
-    // When leaving the gallery, cancel any pending requests
-    for (NSNumber *key in self.contentVCCache) {
-        NSUInteger index = [key unsignedIntegerValue];
-        // Only cancel requests for non-visible images
-        if (index != self.currentIndex) {
-            SeafPhotoContentViewController *vc = [self.contentVCCache objectForKey:key];
-            if (vc) {
-                [vc cancelImageLoading];
+    BOOL isBeingDismissed = [self isBeingDismissed] || [self isMovingFromParentViewController];
+    if (!isBeingDismissed) {
+        // Original logic for non-dismissal disappearance:
+        for (NSNumber *key in [self.contentVCCache allKeys]) { // Iterate a copy
+            NSUInteger controllerIndex = [key unsignedIntegerValue];
+            // Only cancel requests for images that are not the current one, and not its immediate neighbors
+            BOOL isCurrentOrNeighbor = (controllerIndex == self.currentIndex ||
+                                       (self.currentIndex > 0 && controllerIndex == self.currentIndex - 1) ||
+                                       (controllerIndex == self.currentIndex + 1));
+
+            if (!isCurrentOrNeighbor) {
+                SeafPhotoContentViewController *vc = [self.contentVCCache objectForKey:key];
+                if (vc) {
+                    Debug(@"[Gallery] viewWillDisappear: Canceling image loading for non-visible/non-neighbor VC at index %lu", (unsigned long)controllerIndex);
+                    [vc cancelImageLoading];
+                }
             }
         }
     }
