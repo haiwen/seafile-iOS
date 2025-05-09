@@ -8,9 +8,9 @@
 
 #import "SeafDir.h"
 
-#define SHARE_REPO @"srepo"
-#define GROUP_REPO @"grepo"
-#define MINE_REPO @"repo"
+#define SHARE_REPO @"shared"
+#define GROUP_REPO @"group"
+#define MINE_REPO @"mine"
 
 #define ORG_REPO @"Organization"
 

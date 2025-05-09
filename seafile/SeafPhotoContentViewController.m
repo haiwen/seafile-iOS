@@ -152,9 +152,9 @@
     // Define the items to display based on the design
     // Added "label" key for the display text
     NSArray *infoItems = @[
-        @{@"icon": @"detail_photo_size",     @"key": @"Size",        @"label": @"大小",         @"placeholder": @"N/A"},
-        @{@"icon": @"detail_photo_calendar", @"key": @"Modified",    @"label": @"修改时间",     @"placeholder": @"未知日期"},
-        @{@"icon": @"detail_photo_user",     @"key": @"Owner",       @"label": @"修改者",        @"placeholder": @"未知用户"}
+        @{@"icon": @"detail_photo_size",     @"key": @"Size",        @"label": NSLocalizedString(@"Size", @"Seafile"), @"placeholder": @"N/A"},
+        @{@"icon": @"detail_photo_calendar", @"key": @"Modified",    @"label": NSLocalizedString(@"Modified Time", @"Seafile"), @"placeholder": NSLocalizedString(@"Unknown Date", @"Seafile")},
+        @{@"icon": @"detail_photo_user",     @"key": @"Owner",       @"label": NSLocalizedString(@"Last Modifier", @"Seafile"), @"placeholder": NSLocalizedString(@"Unknown User", @"Seafile")}
     ];
 
     for (NSDictionary *itemInfo in infoItems) {
@@ -820,10 +820,11 @@
 }
 
 - (void)loadImage {
-    Debug(@"[PhotoContent] loadImage called for %@, seafFile: %@, has ooid: %@", self.photoURL, self.seafFile.name, self.seafFile.ooid ? @"YES" : @"NO");
     self.imageView.image = nil;
     // If seafFile is available, use it to load the image
-    if (self.seafFile) {
+    if (self.seafFile && [self.seafFile isKindOfClass:[SeafFile class]]) {
+        Debug(@"[PhotoContent] loadImage called for %@, seafFile: %@, has ooid: %@", self.photoURL, self.seafFile.name, ((SeafFile *)self.seafFile).ooid ? @"YES" : @"NO");
+
         // Only show indicator if the file is NOT yet downloaded/cached (ooid is nil)
         if (![self.seafFile hasCache]) {
             [self showLoadingIndicator];
@@ -838,7 +839,7 @@
             [self showLoadingIndicator];
             
             // File exists, proceed with loading
-            [self.seafFile getImageWithCompletion:^(UIImage *image) {
+            [((SeafFile *)self.seafFile) getImageWithCompletion:^(UIImage *image) {
                 Debug(@"[PhotoContent] getImageWithCompletion callback for %@, image: %@", self.seafFile.name, image ? @"SUCCESS" : @"FAILED");
                 
                 dispatch_async(dispatch_get_main_queue(), ^{
@@ -857,8 +858,8 @@
                         Debug(@"[PhotoContent] Image set successfully for %@", self.seafFile.name);
                         
                         // If we have the file path, get the data to display EXIF info
-                        if (self.seafFile.ooid) {
-                            NSString *path = [SeafStorage.sharedObject documentPath:self.seafFile.ooid];
+                        if (((SeafFile *)self.seafFile).ooid) {
+                            NSString *path = [SeafStorage.sharedObject documentPath:((SeafFile *)self.seafFile).ooid];
                             NSData *data = [NSData dataWithContentsOfFile:path];
                             if (data) {
                                 [self displayExifData:data];
@@ -886,6 +887,50 @@
             }
             return;
         }
+    }
+    else if ([self.seafFile isKindOfClass:[SeafUploadFile class]]) {
+        [((SeafUploadFile *)self.seafFile) getImageWithCompletion:^(UIImage *image) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                // Check if this view controller is still active and valid
+                if (!self.view.window) {
+                    Debug(@"[PhotoContent] View is no longer visible, skipping image update for %@", self.seafFile.name);
+                    [self hideLoadingIndicator];
+                    return;
+                }
+                
+                if (image) {
+                    // This prevents the brief flash of white/blank screen
+                    self.imageView.image = image;
+                    self.isDisplayingPlaceholderOrErrorImage = NO; // Clear flag when setting real image
+                    [self updateScrollViewContentSize];
+                    Debug(@"[PhotoContent] Image set successfully for %@", self.seafFile.name);
+                    
+                    // If we have the file path, get the data to display EXIF info
+                    [((SeafUploadFile *)self.seafFile) getDataForAssociatedAssetWithCompletion:^(NSData * _Nullable data, NSError * _Nullable error) {
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            if (data) {
+                                [self displayExifData:data];
+                            } else {
+                                Debug(@"[PhotoContent] WARNING: Could not read file data for EXIF from uploadImage: %@", self.seafFile.name);
+                            }
+                            // Explicitly hide indicator AFTER image is set
+                            [self hideLoadingIndicator];
+                        });
+                    }];
+                   
+                    Debug(@"[PhotoContent] Image loading complete, indicator hidden for %@", self.seafFile.name);
+                } else {
+                    Debug(@"[PhotoContent] Image loading failed for %@", self.seafFile.name);
+                    self.imageView.image = [UIImage imageNamed:@"gallery_failed.png"];
+                    self.isDisplayingPlaceholderOrErrorImage = YES; // Set flag when setting error image
+                    [self clearExifDataView];
+                    // Explicitly hide indicator even on failure
+                    [self hideLoadingIndicator];
+                }
+            });
+
+        }];
+        return;
     }
     else {
         Debug(@"[PhotoContent] No SeafFile available to show image");
@@ -1022,7 +1067,8 @@
     NSNumber *exposure = exifDict[(NSString *)kCGImagePropertyExifExposureTime];
 
     // Get color space
-    NSString *colorSpace = @"Unknown";
+    NSString *colorSpace = NSLocalizedString(@"Unknown", @"Seafile");
+
     // First try to read color space from EXIF dictionary
     NSNumber *exifColorSpaceVal = exifDict[(NSString *)kCGImagePropertyExifColorSpace];
     if (exifColorSpaceVal) {
@@ -1035,10 +1081,10 @@
                 colorSpace = @"RGB";//Adobe RGB
                 break;
             case 65535:
-                colorSpace = @"Uncalibrated";
+                colorSpace = NSLocalizedString(@"Uncalibrated", @"Seafile");;
                 break;
             default:
-                colorSpace = [NSString stringWithFormat:@"ColorSpace %d", cs];
+                colorSpace = [NSString stringWithFormat:NSLocalizedString(@"ColorSpace %d", @"Seafile"), cs];
                 break;
         }
     } else {
@@ -1707,32 +1753,33 @@
 }
 
 // Add setter method for seafFile
-- (void)setSeafFile:(SeafFile *)seafFile {
-    // If the same file, ignore
+- (void)setSeafFile:(id<SeafPreView>)seafFile {    // If the same file, ignore
     if (_seafFile == seafFile) {
         return;
     }
-    
-    // Store previous loading state to determine if we need to update UI
-    BOOL wasLoading = _seafFile && [_seafFile hasCache];
-    BOOL willBeLoading = seafFile && ![seafFile hasCache];
-    
     // Update the stored file
     _seafFile = seafFile;
     
-    Debug(@"[PhotoContent] Setting seafFile: %@, ooid: %@",
-          seafFile.name,
-          seafFile.ooid ? seafFile.ooid : @"nil (needs download)");
-    
-    // Update loading indicator based on new file state
-    if (wasLoading && !willBeLoading) {
-        // File was loading but now has loaded - hide indicator
-        Debug(@"[PhotoContent] File now loaded, hiding indicator");
-        [self hideLoadingIndicator];
-    }
-    else if (!wasLoading && willBeLoading) {
-        Debug(@"[PhotoContent] New file needs download, showing indicator");
-        [self showLoadingIndicator];
+    if ([self.seafFile isKindOfClass:[SeafFile class]]) {
+        // Store previous loading state to determine if we need to update UI
+        BOOL wasLoading = _seafFile && [_seafFile hasCache];
+        BOOL willBeLoading = seafFile && ![seafFile hasCache];
+        
+        SeafFile *f = seafFile;
+        Debug(@"[PhotoContent] Setting seafFile: %@, ooid: %@",
+              seafFile.name,
+              f.ooid ? f.ooid : @"nil (needs download)");
+        
+        // Update loading indicator based on new file state
+        if (wasLoading && !willBeLoading) {
+            // File was loading but now has loaded - hide indicator
+            Debug(@"[PhotoContent] File now loaded, hiding indicator");
+            [self hideLoadingIndicator];
+        }
+        else if (!wasLoading && willBeLoading) {
+            Debug(@"[PhotoContent] New file needs download/processing, showing indicator");
+            [self showLoadingIndicator];
+        }
     }
     
     // If view is loaded, reload image with the new file
@@ -1793,9 +1840,9 @@
         return;
     }
     // Cancel the SeafFile download task
-    if (self.seafFile) {
+    if (self.seafFile && [self.seafFile isKindOfClass:[SeafFile class]]) {
         // Cancel file download
-        [self.seafFile cancelDownload];
+        [(SeafFile *)self.seafFile cancelDownload];
         
         // Clean up any ongoing requests or operations
         [self.seafFile setDelegate:nil];
@@ -1881,14 +1928,13 @@
 // Add a new method for preloading images
 - (void)preloadImage {
     // Only preload if we have a valid seafFile with an ooid
-    if (self.seafFile && [self.seafFile hasCache]) {
-        
+    if ([self.seafFile isKindOfClass:[SeafFile class]] && self.seafFile && [self.seafFile hasCache]) {
         if (!self.imageView.image) {
             Debug(@"[PhotoContent] Preloading image for %@", self.seafFile.name);
             
             // Load in background without affecting UI
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                [self.seafFile getImageWithCompletion:^(UIImage *image) {
+                [(SeafFile *)self.seafFile getImageWithCompletion:^(UIImage *image) { // Assumes getImageWithCompletion exists on id<SeafPreView>
                     if (image) {
                         // Store in memory but don't display yet
                         dispatch_async(dispatch_get_main_queue(), ^{
@@ -2005,7 +2051,7 @@
         UILabel *timeLabel = [[UILabel alloc] initWithFrame:CGRectMake(cardPadding, currentY, availableWidth - 2 * cardPadding, 0)];
         timeLabel.font = mediumFont;
         timeLabel.textColor = textColor;
-        timeLabel.text = [NSString stringWithFormat:@"Capture Time • %@", formattedTime];
+        timeLabel.text = [NSString stringWithFormat:NSLocalizedString(@"Capture Time • %@", @"Seafile"), formattedTime];
         [timeLabel sizeToFit];
         CGRect timeFrame = timeLabel.frame;
         timeFrame.size.width = availableWidth - 2 * cardPadding;
@@ -2020,7 +2066,8 @@
         UILabel *dimLabel = [[UILabel alloc] initWithFrame:CGRectMake(cardPadding, currentY, availableWidth - 2 * cardPadding, 0)];
         dimLabel.font = mediumFont;
         dimLabel.textColor = textColor;
-        dimLabel.text = [NSString stringWithFormat:@"Dimensions • %@", dimensionsString];
+        dimLabel.text = [NSString stringWithFormat:NSLocalizedString(@"Dimensions • %@", @"Seafile"), dimensionsString];
+
         [dimLabel sizeToFit];
         CGRect dimFrame = dimLabel.frame;
         dimFrame.size.width = availableWidth - 2 * cardPadding;
