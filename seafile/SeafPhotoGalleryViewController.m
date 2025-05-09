@@ -234,17 +234,16 @@
             NSNumber *key = @(index);
             SeafPhotoContentViewController *vc = [self.contentVCCache objectForKey:key];
             
-            if ([file isKindOfClass:[SeafFile class]]) {
-                SeafFile *seafFile = (SeafFile *)file;
-                Debug(@"[Gallery] Updating VC with file %@, ooid: %@", seafFile.name, seafFile.ooid ? seafFile.ooid : @"nil");
-                
-                if (vc) {
-                    vc.seafFile = seafFile;
-                    
-                    // Also update repoId and filePath for API metadata
-                    vc.repoId = seafFile.repoId;
-                    vc.filePath = seafFile.path;
-                    vc.connection = seafFile.connection;
+            if (vc) {
+                vc.seafFile = file; // Directly assign the id<SeafPreView> object
+
+                if ([file isKindOfClass:[SeafFile class]]) {
+                    SeafFile *specificFile = (SeafFile *)file;
+                    Debug(@"[Gallery] Updating VC with SeafFile: %@, ooid: %@", specificFile.name, specificFile.ooid ? specificFile.ooid : @"nil");
+                    // they might still need to be set here for SeafFile.
+                    vc.repoId = specificFile.repoId;
+                    vc.filePath = specificFile.path;
+                    vc.connection = specificFile.connection;
                 }
             }
         }
@@ -288,7 +287,7 @@
     if (self.preViewItem) {
         titleText = self.preViewItem.name;
     } else {
-        titleText = @"Photo Gallery"; // Fallback title
+        titleText = NSLocalizedString(@"View Photos", @"Seafile");
     }
 
     // Create custom title view using styling utility
@@ -591,7 +590,7 @@
             self.preViewItem = self.preViewItems[newIdx];
             titleText = self.preViewItem.name;
         } else {
-            titleText = @"Gallery"; // Fallback title
+            titleText = NSLocalizedString(@"View Photos", @"Seafile");
         }
         [SeafNavigationBarStyler updateTitleView:(UILabel *)self.navigationItem.titleView withText:titleText];
         
@@ -632,9 +631,9 @@
         // Update the seafFile even for cached controllers to ensure they have latest info
         if (self.preViewItems && index < self.preViewItems.count) {
             id<SeafPreView> item = self.preViewItems[index];
+            cachedController.seafFile = item;
             if ([item isKindOfClass:[SeafFile class]]) {
                 SeafFile *seafFile = (SeafFile *)item;
-                cachedController.seafFile = seafFile;
                 cachedController.repoId = seafFile.repoId;
                 cachedController.filePath = seafFile.path;
                 cachedController.connection = seafFile.connection;
@@ -651,10 +650,10 @@
     // Configure the content controller
     if (self.preViewItems && index < self.preViewItems.count) {
         id<SeafPreView> item = self.preViewItems[index];
+        contentController.seafFile = item;
         if ([item isKindOfClass:[SeafFile class]]) {
             // Use the new seafFile property if it's a SeafFile
             SeafFile *seafFile = (SeafFile *)item;
-            contentController.seafFile = seafFile;
             contentController.repoId = seafFile.repoId;
             contentController.filePath = seafFile.path;
             contentController.connection = seafFile.connection;
@@ -793,12 +792,10 @@
         // If it's a SeafFile, try to get the aspect ratio of its thumbnail
         if (self.preViewItems && index < self.preViewItems.count) {
             id<SeafPreView> file = self.preViewItems[index];
-            if ([file isKindOfClass:[SeafFile class]]) {
-                SeafFile *seafFile = (SeafFile *)file;
-                UIImage *thumb = [seafFile thumb];
-                if (thumb) {
-                    aspectRatio = thumb.size.width / thumb.size.height;
-                }
+            UIImage *thumbImage = [file thumb];
+            
+            if (thumbImage && thumbImage.size.height > 0) {
+                aspectRatio = thumbImage.size.width / thumbImage.size.height;
             }
         }
         
@@ -959,7 +956,16 @@
                 // Style settings here
                 [self styleThumbnailCell:cell isSelected:(index == self.currentIndex)];
                 return cell;
-            } else {
+            }
+            else if ([file isKindOfClass:[SeafUploadFile class]]) {
+                SeafUploadFile *seafFile = (SeafUploadFile *)file;
+                UIImage *thumb = [seafFile thumb];
+                if (thumb) {
+                    iv.image = thumb;
+                    [loadingIndicator stopAnimating];
+                }
+            }
+            else {
                 // Handle non-SeafFile items if needed (currently falls through)
                 Debug(@"[Gallery] Cell for item at index %ld is not a SeafFile.", (long)index);
                 iv.image = [UIImage imageNamed:@"gallery_failed.png"]; // Default image
@@ -1033,7 +1039,19 @@
 - (void)toolbarButtonTapped:(UIButton*)btn {
     // Get the current file being operated on, prioritize using SeafFile
     id<SeafPreView> currentFile = self.preViewItem;
-    
+
+    // First, check if the current file is an instance of SeafUploadFile
+    if (currentFile && [currentFile isKindOfClass:[SeafUploadFile class]] && (btn.tag != 2)) {
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:nil
+                                                                       message:NSLocalizedString(@"Please wait for the image to upload and refresh the list before proceeding.", @"Seafile")
+                                                                preferredStyle:UIAlertControllerStyleAlert];
+        [alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"Seafile")
+                                                  style:UIAlertActionStyleDefault
+                                                handler:nil]];
+        [self presentViewController:alert animated:YES completion:nil];
+        return; // Do not proceed with other actions if it's an upload file
+    }
+
     switch (btn.tag) {
         case 0: // Download
             if (currentFile && [currentFile isKindOfClass:[SeafFile class]]) {
@@ -2240,7 +2258,7 @@
 - (void)showDownloadError:(NSString *)fileName {
     // Show an error message using SVProgressHUD
     dispatch_async(dispatch_get_main_queue(), ^{
-        NSString *errorMessage = [NSString stringWithFormat:@"Failed to download %@", fileName];
+        NSString *errorMessage = [NSString stringWithFormat:NSLocalizedString(@"Failed to download file '%@'", @"Seafile"), fileName];
         [SVProgressHUD showErrorWithStatus:errorMessage];
     });
 }

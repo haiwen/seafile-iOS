@@ -126,4 +126,25 @@ static SeafDateFormatter *sharedLoaderChinese = nil;
     }
 }
 
++ (long long)timestampFromLastModified:(NSString *)isoString
+{
+    if (!isoString || (id)isoString == [NSNull null])
+        return 0;
+
+    NSDate *date = nil;
+
+    // On iOS 10 and above, prefer using the system's built-in ISO‑8601 parser
+    if (@available(iOS 10.0, *)) {
+        static NSISO8601DateFormatter *isoFormatter;
+        static dispatch_once_t once;
+        dispatch_once(&once, ^{
+            isoFormatter = [[NSISO8601DateFormatter alloc] init];
+            isoFormatter.formatOptions = NSISO8601DateFormatWithInternetDateTime;
+        });
+        date = [isoFormatter dateFromString:isoString];
+    }
+
+    return date ? (long long)round([date timeIntervalSince1970]) : 0;
+}
+
 @end

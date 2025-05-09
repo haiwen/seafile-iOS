@@ -36,7 +36,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) BOOL draggedBeyondTopEdge;
 
 /// New SeafFile-based image loading
-@property (nonatomic, strong) SeafFile *seafFile;
+@property (nonatomic, strong) id<SeafPreView> seafFile;
 
 /// Metadata
 @property (nonatomic, strong) NSString *repoId;

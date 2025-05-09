@@ -204,7 +204,9 @@
         if ([sdir isKindOfClass:[SeafRepo class]]) {
             SeafRepo *repo = (SeafRepo *)sdir;
             if (repo.isGroupRepo) {
-                cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, %@", repo.detailText, repo.owner];
+                if (repo.owner.length > 0) {
+                    cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, %@", repo.detailText, repo.owner];
+                }
             } else {
                 cell.detailTextLabel.text = repo.detailText;
             }

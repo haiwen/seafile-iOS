@@ -42,7 +42,7 @@
                     mime:(NSString *)aMime;
 
 @property (readonly, copy) NSArray *allItems;//All items displayed in the current directory
-@property (readonly, copy) NSArray *items;//All items from server,after modified by - (void)updateItems:(NSMutableArray *)items
+@property (nonatomic, copy) NSArray *items;//All items from server,after modified by - (void)updateItems:(NSMutableArray *)items
 @property (readonly) NSArray *uploadFiles;// equal to uploadItems
 @property (readonly) BOOL editable;
 @property (nonatomic, copy) NSString *perm;

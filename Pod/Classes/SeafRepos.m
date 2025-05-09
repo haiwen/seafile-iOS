@@ -158,14 +158,16 @@
 {
     NSString *detail = [SeafDateFormatter stringFromLongLong:self.mtime];
     if ([SHARE_REPO isEqualToString:self.type]) {
-        if (self.ownerNickname) {
+        if (self.ownerNickname && self.ownerNickname.length > 0) {
             detail = [detail stringByAppendingFormat:@", %@", self.ownerNickname];
         } else {
             NSString *name = self.owner;
             unsigned long index = [self.owner indexOf:'@'];
             if (index != NSNotFound)
                 name = [self.owner substringToIndex:index];
-            detail = [detail stringByAppendingFormat:@", %@", name];
+            if (name.length > 0) {
+                detail = [detail stringByAppendingFormat:@", %@", name];
+            }
         }
     }
     return detail;
@@ -309,9 +311,8 @@
     NSMutableArray *grepos = [[NSMutableArray alloc] init];
     NSMutableDictionary *otherRepos = [[NSMutableDictionary alloc] init];
 
-    for (i = 0; i < [self.items count]; ++i) {
-        SeafRepo *r = (SeafRepo *)[self.items objectAtIndex:i];
-        if (!r.owner) continue;
+    NSArray *items = [self.items copy];
+    for (SeafRepo *r in items) {
         if ([MINE_REPO isEqualToString:r.type]){
             [ownRepos addObject:r];
         } else if ([SHARE_REPO isEqualToString:r.type]){
@@ -360,30 +361,40 @@
 - (BOOL)handleData:(id)JSON
 {
     NSMutableArray *newRepos = [NSMutableArray array];
-    for (NSDictionary *repoInfo in JSON) {
-        if ([repoInfo objectForKey:@"name"] == [NSNull null])
-            continue;
+    NSArray *repoArray = nil;
+    if ([JSON isKindOfClass:[NSDictionary class]]) {
+        repoArray = JSON[@"repos"];
+    } else if ([JSON isKindOfClass:[NSArray class]]) {
+        repoArray = (NSArray *)JSON;
+    }
+    if (!repoArray || repoArray.count == 0) {
+        return NO; // No data available, return failure directly
+    }
+    
+    for (NSDictionary *repoInfo in repoArray) {
+        NSString *repoName = repoInfo[@"repo_name"];
+        if (!repoName || repoName == (id)[NSNull null]) continue;
         SeafRepo *newRepo = [[SeafRepo alloc]
                              initWithConnection:self.connection
-                             oid:[repoInfo objectForKey:@"root"]
-                             repoId:[repoInfo objectForKey:@"id"]
-                             name:[repoInfo objectForKey:@"name"]
-                             desc:[repoInfo objectForKey:@"desc"]
-                             owner:[repoInfo objectForKey:@"owner"]
+                             oid:@""
+                             repoId:[repoInfo objectForKey:@"repo_id"]
+                             name:[repoInfo objectForKey:@"repo_name"]
+                             desc:nil
+                             owner:[repoInfo objectForKey:@"owner_email"]
                              type:[repoInfo objectForKey:@"type"]
                              repoType:[repoInfo objectForKey:@"type"]
                              perm:[repoInfo objectForKey:@"permission"]
                              size:[[repoInfo objectForKey:@"size"] integerValue:0]
-                             mtime:[[repoInfo objectForKey:@"mtime"] integerValue:0]
-                             encrypted:[[repoInfo objectForKey:@"encrypted"] booleanValue:NO]
-                             ownerNickName:[repoInfo objectForKey:@"owner_nickname"]
+                             mtime:[SeafDateFormatter timestampFromLastModified:repoInfo[@"last_modified"]]
+                             encrypted:[repoInfo[@"encrypted"] boolValue]
+                             ownerNickName:[repoInfo objectForKey:@"owner_name"]
                              groupName:[repoInfo objectForKey:@"group_name"]
-                             groupid:[[repoInfo objectForKey:@"groupid"] integerValue:0]
+                             groupid:[[repoInfo objectForKey:@"group_id"] integerValue:0]
                              ];
         newRepo.delegate = self.delegate;
         [newRepos addObject:newRepo];
     }
-    [self loadedItems:newRepos];
+    self.items = newRepos;
     [self groupingRepos];
     [self.delegate download:self complete:true];
     return YES;
@@ -391,7 +402,7 @@
 
 - (NSString *)url
 {
-    return API_URL"/repos/";
+    return API_URL_V21"/repos/";
 }
 
 
