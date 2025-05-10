@@ -99,6 +99,14 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
  */
 - (void)iconWithCompletion:(void (^_Nullable)(UIImage * _Nullable image))completion;
 
+/**
+ * Asynchronously gets the NSData for the associated PHAsset.
+ * @param completion A block to be executed when the data retrieval is complete.
+ *                   The block takes two arguments: the retrieved NSData (or nil on error/no asset)
+ *                   and an NSError object (or nil on success).
+ */
+- (void)getDataForAssociatedAssetWithCompletion:(void (^_Nullable)(NSData * _Nullable data, NSError * _Nullable error))completion;
+
 // Prepare for upload
 - (void)prepareForUploadWithCompletion:(void (^_Nonnull)(BOOL success, NSError * _Nonnull error))completion;
 
@@ -116,5 +124,7 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 - (BOOL)uploadHeic;
 
 - (BOOL)waitUpload;
+
+- (void)getImageWithCompletion:(void (^)(UIImage *image))completion;
 
 @end

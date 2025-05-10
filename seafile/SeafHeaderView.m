@@ -9,7 +9,7 @@
 #import "SeafHeaderView.h"
 
 #define kHeaderHeight 45.0
-#define kLeftPadding 14.0
+#define kLeftPadding 24.0
 #define kRightPadding 17.0
 #define kToggleButtonWidth 13.0
 
@@ -29,7 +29,7 @@
         
         // Create title label
         _titleLabel = [[UILabel alloc] initWithFrame:CGRectZero];
-        _titleLabel.font = [UIFont systemFontOfSize:16 weight:UIFontWeightMedium];
+        _titleLabel.font = [UIFont systemFontOfSize:15 weight:UIFontWeightRegular];
         _titleLabel.text = title;
         _titleLabel.textColor = [UIColor blackColor];
         _titleLabel.backgroundColor = [UIColor clearColor];

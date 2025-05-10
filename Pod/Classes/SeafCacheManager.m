@@ -144,6 +144,7 @@
     // 2) If the Realm records the local cache of the corresponding oid & the file actually exists
     NSString *cachePath = [self getCachePathForFile:file];
     if (cachePath && cachePath.length > 0 && [[NSFileManager defaultManager] fileExistsAtPath:cachePath]) {
+        [file setOoid:file.oid];
         return YES;
     } else if (file.oid.length > 0
                && [[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:file.oid]]) {

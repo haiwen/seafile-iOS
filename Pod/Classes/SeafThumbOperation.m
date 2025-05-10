@@ -35,7 +35,7 @@
 @synthesize executing = _executing;
 @synthesize finished = _finished;
 
-#define MAX_RETRY_COUNT 3
+#define THUMB_MAX_RETRY_COUNT 1
 
 - (instancetype)initWithSeafFile:(SeafFile *)file
 {
@@ -112,7 +112,10 @@
     int size = THUMB_SIZE * (int)[[UIScreen mainScreen] scale];
     NSString *thumburl = [NSString stringWithFormat:API_URL"/repos/%@/thumbnail/?size=%d&p=%@", self.file.repoId, size, self.file.path.escapedUrl];
     NSURLRequest *downloadRequest = [connection buildRequest:thumburl method:@"GET" form:nil];
-    Debug("Request: %@", downloadRequest.URL);
+    NSMutableURLRequest *mutableDownloadRequest = [downloadRequest mutableCopy];
+    mutableDownloadRequest.timeoutInterval = 10.0;
+    downloadRequest = [mutableDownloadRequest copy];
+    Debug("Request: %@, Timeout: %f", downloadRequest.URL, downloadRequest.timeoutInterval);
     
     NSString *target;
     if (self.file.oid) {
@@ -143,8 +146,8 @@
                 [strongSelf finishDownloadThumbOperation:NO];
             } else {
                 strongSelf.retryCount++; // Increment the retry count
-                if (strongSelf.retryCount < MAX_RETRY_COUNT) {
-                    Debug(@"Retrying download for %@ (Retry %ld/%ld)", self.file.name, (long)strongSelf.retryCount, (long)MAX_RETRY_COUNT);
+                if (strongSelf.retryCount < THUMB_MAX_RETRY_COUNT) {
+                    Debug(@"Retrying download for %@ (Retry %ld/%ld)", self.file.name, (long)strongSelf.retryCount, (long)THUMB_MAX_RETRY_COUNT);
                     // Retry after a 1-second delay to avoid retrying too quickly
                     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                         [strongSelf downloadThumb];

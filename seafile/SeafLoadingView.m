@@ -47,8 +47,10 @@
 }
 
 - (void)dismiss {
-    [self.activityIndicator stopAnimating];
-    [self removeFromSuperview];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.activityIndicator stopAnimating];
+        [self removeFromSuperview];
+    });
 }
 
 - (void)updatePosition {

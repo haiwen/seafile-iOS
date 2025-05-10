@@ -24,4 +24,8 @@
  */
 + (NSString *)compareGMTTimeWithNow:(NSString *)gmtTimeStr;
 
+/// Converts an ISO-8601 "last_modified" string (e.g., 2025‑05‑09T08:22:30+08:00)
+/// into the legacy mtime format (seconds since January 1, 1970).
++ (long long)timestampFromLastModified:(NSString *)isoString;
+
 @end

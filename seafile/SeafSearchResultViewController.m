@@ -44,10 +44,10 @@
     self.tableView.estimatedRowHeight = 55;
     self.tableView.tableFooterView = [UIView new];
 
-    if (@available(iOS 11.0, *)) {
+    if (!IsIpad()) {
         self.tableView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
     }
-    self.automaticallyAdjustsScrollViewInsets = NO;
+    
     [self.view addSubview:self.tableView];
     
     self.stateLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 50)];

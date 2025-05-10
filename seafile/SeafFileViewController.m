@@ -45,12 +45,7 @@
 #import "SeafHeaderView.h"
 #import "SeafEditNavRightItem.h"
 #import "SeafLoadingView.h"
-
-// Add status bar customization support
-#import <UIKit/UIKit.h>
-@interface UIApplication (StatusBarStyle)
-- (void)setStatusBarStyle:(UIStatusBarStyle)style animated:(BOOL)animated;
-@end
+#import "SeafPhotoGalleryViewController.h"
 
 #define kCustomTabToolWithTopPadding 15
 #define kCustomTabToolButtonHeight 40
@@ -481,7 +476,33 @@ enum {
         id<SeafPreView> item = (id<SeafPreView>)_curEntry;
 
         if ([self isCurrentFileImage:item]) {
-            [self.detailViewController setPreViewPhotos:[self getCurrentFileImagesInTableView:tableView] current:item master:self];
+            // 收集所有图片类型的文件
+            NSMutableArray *imageFiles = [NSMutableArray array];
+            for (id entry in self.allItems) {
+                if ([entry conformsToProtocol:@protocol(SeafPreView)] && [(id<SeafPreView>)entry isImageFile]) {
+                    [imageFiles addObject:entry];
+                }
+            }
+            
+            // 如果没有找到图片文件，使用旧版详情视图
+            if (imageFiles.count == 0) {
+                Warning("没有找到图片文件");
+                [self.detailViewController setPreViewItem:item master:self];
+                return;
+            }
+            
+            // 创建并设置照片库视图控制器，使用推荐的初始化方法
+            SeafPhotoGalleryViewController *gallery = [[SeafPhotoGalleryViewController alloc] initWithPhotos:imageFiles
+                                                                                                currentItem:item
+                                                                                                     master:self];
+            
+            // 将画廊视图控制器包装在导航控制器中，并模态显示
+            UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:gallery];
+            navController.modalPresentationStyle = UIModalPresentationFullScreen;
+            
+            // 模态显示导航控制器
+            [self presentViewController:navController animated:YES completion:nil];
+            return; // 处理图片文件后返回
         } else {
             [self.detailViewController setPreViewItem:item master:self];
         }
@@ -553,13 +574,17 @@ enum {
                 text = @"";
             } else if ([repo.type isEqualToString:SHARE_REPO]) {
                 text = NSLocalizedString(@"Shared to me", @"Seafile");
-            } else if ([repo.type isEqualToString:GROUP_REPO]) {
+            } else if ([repo.type isEqualToString:GROUP_REPO]) {//show group name, not id
                 if (!repo.groupName || repo.groupName.length == 0) {
                     text = NSLocalizedString(@"Shared with groups", @"Seafile");
                 } else {
-                    text = repo.groupName;
+                    if ([text isEqualToString:ORG_REPO]) {//Organization special
+                        text = NSLocalizedString(@"Organization", @"Seafile");
+                    } else {
+                        text = repo.groupName;
+                    }
                 }
-            } else {
+            } else {//old logic
                 if ([repo.owner isKindOfClass:[NSNull class]]) {
                     text = @"";
                 } else {
@@ -1335,7 +1360,15 @@ enum {
     imagePickerController.mediaType = QBImagePickerMediaTypeAny;
     if (IsIpad()) {
         imagePickerController.modalPresentationStyle = UIModalPresentationPopover;
-        imagePickerController.popoverPresentationController.barButtonItem = self.photoItem;
+        // Use self.editItem if self.photoItem is nil (when called from "more" menu)
+        UIBarButtonItem *sourceItem = sender && [sender isKindOfClass:[UIBarButtonItem class]] ? (UIBarButtonItem *)sender : (self.photoItem ? self.photoItem : self.editItem);
+        imagePickerController.popoverPresentationController.barButtonItem = sourceItem;
+        
+        // Fallback to using view controller's view as source view if no bar button item is available
+        if (!sourceItem) {
+            imagePickerController.popoverPresentationController.sourceView = self.view;
+            imagePickerController.popoverPresentationController.sourceRect = CGRectMake(self.view.bounds.size.width/2, self.view.bounds.size.height/2, 0, 0);
+        }
     } else {
         imagePickerController.modalPresentationStyle = UIModalPresentationFullScreen;
     }
@@ -1446,15 +1479,16 @@ enum {
     return item.isImageFile;
 }
 
-- (NSArray *)getCurrentFileImagesInTableView:(UITableView *)tableView
-{
-    NSMutableArray *arr = [[NSMutableArray alloc] init];
+- (NSArray *)getCurrentFileImagesInTableView:(UITableView *)tableView {
+    NSMutableArray *images = [NSMutableArray array];
+    
     for (id entry in self.allItems) {
-        if ([entry conformsToProtocol:@protocol(SeafPreView)]
-            && [(id<SeafPreView>)entry isImageFile])
-            [arr addObject:entry];
+        if ([entry conformsToProtocol:@protocol(SeafPreView)] && [(id<SeafPreView>)entry isImageFile]) {
+            [images addObject:entry];
+        }
     }
-    return arr;
+    
+    return [images copy];
 }
 
 - (void)browserAllPhotos
@@ -2484,6 +2518,9 @@ enum {
     if (!_searchController) {
         _searchController = [[UISearchController alloc] initWithSearchResultsController:self.searchResultController];
         _searchController.searchResultsUpdater = self.searchResultController;
+        if (IsIpad()) {
+            _searchController.hidesNavigationBarDuringPresentation = NO; // Keep navigation bar visible
+        }
         
         // Set properties to ensure opaque status bar background
         _searchController.searchBar.searchBarStyle = UISearchBarStyleProminent; // Changed to prominent style

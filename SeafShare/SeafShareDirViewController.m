@@ -237,7 +237,9 @@
         SeafRepo *repo = (SeafRepo *)entry;
         NSString *detail = [repo detailText];
         if (repo.isGroupRepo)
-            detail = [NSString stringWithFormat:@"%@, %@", detail, repo.owner];
+            if (repo.owner.length > 0) {
+                detail = [NSString stringWithFormat:@"%@, %@", detail, repo.owner];
+            }
         cell.detailTextLabel.text = detail;
     } else if ([entry isKindOfClass:[SeafDir class]]) {
         cell.detailTextLabel.text = nil;

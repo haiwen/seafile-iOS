@@ -8,9 +8,9 @@
 
 #import "SeafDir.h"
 
-#define SHARE_REPO @"srepo"
-#define GROUP_REPO @"grepo"
-#define MINE_REPO @"repo"
+#define SHARE_REPO @"shared"
+#define GROUP_REPO @"group"
+#define MINE_REPO @"mine"
 
 #define ORG_REPO @"Organization"
 
@@ -32,6 +32,7 @@
 @property (assign, nonatomic) long long mtime;///< Modification time of the repository.
 @property (readonly) NSString *type;///< Type of the repository.
 @property (readonly) NSString *groupName;///< Group name associated with the repository, if any.
+@property (readonly) NSInteger groupid;///< Group ID associated with the repository, if any.
 
 /**
  * Returns a detailed description of the repository including its last modification time and owner's nickname.

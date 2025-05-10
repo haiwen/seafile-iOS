@@ -91,6 +91,13 @@
         thumb = [UIImage imageWithContentsOfFile:thumbpath];
         if (thumb) {
             [SeafCacheManager.sharedManager saveThumbToCache:thumb key:thumbpath];
+        } else {
+            // If the image loading fails, delete the corrupted cache file
+            Debug(@"Thumbnail at path %@ is corrupted or invalid, deleting it.", thumbpath);
+            NSError *error = nil;
+            if (![[NSFileManager defaultManager] removeItemAtPath:thumbpath error:&error]) {
+                Debug(@"Failed to delete corrupted thumbnail at path %@: %@", thumbpath, error);
+            }
         }
     }
     return thumb;
