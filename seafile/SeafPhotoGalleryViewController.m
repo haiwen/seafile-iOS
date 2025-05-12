@@ -21,6 +21,17 @@
 #import "SeafGlobal.h"
 #import "SeafPhotoThumb.h"
 #import <ImageIO/ImageIO.h>
+#import "SeafPGThumbnailCell.h" // Added import
+#import "SeafPGThumbnailCellViewModel.h" // Added import
+
+// Define an enum for toolbar button types
+typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
+    SeafPhotoToolbarButtonTypeDownload,
+    SeafPhotoToolbarButtonTypeDelete,
+    SeafPhotoToolbarButtonTypeInfo,
+    SeafPhotoToolbarButtonTypeStar,
+    SeafPhotoToolbarButtonTypeShare
+};
 
 // Custom collection view layout to support different spacing between selected and unselected items
 @interface SeafThumbnailFlowLayout : UICollectionViewFlowLayout
@@ -240,9 +251,6 @@
                 if ([file isKindOfClass:[SeafFile class]]) {
                     SeafFile *specificFile = (SeafFile *)file;
                     Debug(@"[Gallery] Updating VC with SeafFile: %@, ooid: %@", specificFile.name, specificFile.ooid ? specificFile.ooid : @"nil");
-                    // they might still need to be set here for SeafFile.
-                    vc.repoId = specificFile.repoId;
-                    vc.filePath = specificFile.path;
                     vc.connection = specificFile.connection;
                 }
             }
@@ -355,14 +363,11 @@
     
     // Perform actions during the rotation animation
     [coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
-        // This will be called during the rotation animation
-        
         // Force layout update
         [self.view setNeedsLayout];
         
     } completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
         // This will be called after the rotation animation completes
-        
         dispatch_async(dispatch_get_main_queue(), ^{
             if (self.currentIndex < self.thumbnailCollection.numberOfSections) { // Check if index is valid
         [self.thumbnailCollection scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:self.currentIndex inSection:0]
@@ -441,7 +446,7 @@
     self.thumbnailCollection.showsHorizontalScrollIndicator = NO;
     
     // Register cell
-    [self.thumbnailCollection registerClass:[UICollectionViewCell class] forCellWithReuseIdentifier:@"ThumbnailCell"];
+    [self.thumbnailCollection registerClass:[SeafPGThumbnailCell class] forCellWithReuseIdentifier:@"ThumbnailCell"]; // Changed to SeafPGThumbnailCell
     
     // Set data source and delegate
     self.thumbnailCollection.dataSource = self;
@@ -634,8 +639,6 @@
             cachedController.seafFile = item;
             if ([item isKindOfClass:[SeafFile class]]) {
                 SeafFile *seafFile = (SeafFile *)item;
-                cachedController.repoId = seafFile.repoId;
-                cachedController.filePath = seafFile.path;
                 cachedController.connection = seafFile.connection;
             }
         }
@@ -654,8 +657,6 @@
         if ([item isKindOfClass:[SeafFile class]]) {
             // Use the new seafFile property if it's a SeafFile
             SeafFile *seafFile = (SeafFile *)item;
-            contentController.repoId = seafFile.repoId;
-            contentController.filePath = seafFile.path;
             contentController.connection = seafFile.connection;
             
             // Check if image needs loading
@@ -832,206 +833,19 @@
 }
 
 - (UICollectionViewCell*)collectionView:(UICollectionView *)cv cellForItemAtIndexPath:(NSIndexPath *)ip {
-    UICollectionViewCell *cell = [cv dequeueReusableCellWithReuseIdentifier:@"ThumbnailCell" forIndexPath:ip];
+    SeafPGThumbnailCell *cell = [cv dequeueReusableCellWithReuseIdentifier:@"ThumbnailCell" forIndexPath:ip];
     
-    // Clear and add image view
-    [cell.contentView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
-    
-    // Create image view to fill the cell
-    UIImageView *iv = [[UIImageView alloc] initWithFrame:cell.contentView.bounds];
-    iv.contentMode = UIViewContentModeScaleAspectFill;
-    iv.image = [UIImage imageNamed:@"gallery_failed.png"]; // Default image
-    iv.clipsToBounds = YES;
-    [cell.contentView addSubview:iv];
-    iv.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    
-    // Create loading indicator
-    UIActivityIndicatorView *loadingIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleMedium];
-    loadingIndicator.hidesWhenStopped = YES;
-    loadingIndicator.center = CGPointMake(cell.contentView.bounds.size.width/2, cell.contentView.bounds.size.height/2);
-    loadingIndicator.autoresizingMask = UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
-    [cell.contentView addSubview:loadingIndicator];
-    
-    // Tag cell for later identification
-    NSString *reuseIdentifier = [NSString stringWithFormat:@"thumbnail-%ld", (long)ip.item];
-    cell.contentView.accessibilityIdentifier = reuseIdentifier;
-    
-    // Load thumbnail for visible cell
     NSUInteger index = ip.item;
-    
     if (index < self.preViewItems.count) {
-        // If it's a SeafFile, prioritize using thumb property
-        if (self.preViewItems && index < self.preViewItems.count) { // Redundant check but okay
-            id<SeafPreView> file = self.preViewItems[index];
-            if ([file isKindOfClass:[SeafFile class]]) {
-                SeafFile *seafFile = (SeafFile *)file;
-                // Try to use thumbnail
-                UIImage *thumb = [seafFile thumb];
-                if (thumb) {
-                    iv.image = thumb;
-                    [loadingIndicator stopAnimating];
-                } else {
-                    // If thumbnail not loaded and it's an image file, start loading thumbnail
-                    if ([seafFile isImageFile]) {
-                        [loadingIndicator startAnimating];
-                        
-                        __weak SeafFile *weakFile = seafFile;
-                        __weak SeafPhotoGalleryViewController *weakSelf = self;
-                        NSUInteger currentIndexPathItem = ip.item; // Capture the index path item
-
-                        [seafFile setThumbCompleteBlock:^(BOOL ret) {
-                            __strong SeafFile *strongFile = weakFile;
-                            __strong SeafPhotoGalleryViewController *strongSelf = weakSelf;
-                            if (!strongFile || !strongSelf) return;
-
-                            // Perform UI updates on the main thread
-                            dispatch_async(dispatch_get_main_queue(), ^{
-                                // Ensure the index is still valid before accessing the collection view
-                                if (currentIndexPathItem >= [strongSelf.thumbnailCollection numberOfItemsInSection:0]) {
-                                    return; // Index out of bounds, do nothing
-                                }
-
-                                NSIndexPath *indexPathToUpdate = [NSIndexPath indexPathForItem:currentIndexPathItem inSection:0];
-
-                                // Try to get the cell for the index path
-                                UICollectionViewCell *cell = [strongSelf.thumbnailCollection cellForItemAtIndexPath:indexPathToUpdate];
-                                if (ret) { // Task reported success
-                                    UIImage *currentThumbImage = [strongFile thumb];
-                                    if (currentThumbImage) {
-                                        // Thumb is actually available and valid
-                                        if (cell) { // Cell for indexPathToUpdate is visible
-                                            [strongSelf.thumbnailCollection reloadItemsAtIndexPaths:@[indexPathToUpdate]];
-                                        }
-                                        // If cell is not visible, cellForItemAtIndexPath will handle loading when it appears.
-                                    } else {
-                                        // Treat this as a failure to prevent a loop.
-                                        Debug(@"[Gallery] Thumb task for %@ reported success, but image is not loadable. Displaying error.", strongFile.name);
-                                        if (cell) { // Cell for indexPathToUpdate is visible
-                                            // Stop the loading indicator
-                                            for (UIView *subview in cell.contentView.subviews) {
-                                                if ([subview isKindOfClass:[UIActivityIndicatorView class]]) {
-                                                    [(UIActivityIndicatorView *)subview stopAnimating];
-                                                    break;
-                                                }
-                                            }
-                                            // Set the default error image
-                                            for (UIView *subview in cell.contentView.subviews) {
-                                                if ([subview isKindOfClass:[UIImageView class]]) {
-                                                    ((UIImageView *)subview).image = [UIImage imageNamed:@"gallery_failed.png"];
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    // Stop the loading indicator if the cell is visible
-                                    if (cell) {
-                                        for (UIView *subview in cell.contentView.subviews) {
-                                            if ([subview isKindOfClass:[UIActivityIndicatorView class]]) {
-                                                [(UIActivityIndicatorView *)subview stopAnimating];
-                                                break;
-                                            }
-                                        }
-                                        // Also set the default image
-                                        for (UIView *subview in cell.contentView.subviews) {
-                                            if ([subview isKindOfClass:[UIImageView class]]) {
-                                                ((UIImageView *)subview).image = [UIImage imageNamed:@"gallery_failed.png"];
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-                            });
-                        }];
-                        
-                        // Create SeafPhotoThumb object and add to task queue
-                        SeafPhotoThumb *thumbTask = [[SeafPhotoThumb alloc] initWithSeafFile:seafFile];
-                        [[SeafDataTaskManager sharedObject] addThumbTask:thumbTask];
-                    } else {
-                        [loadingIndicator stopAnimating]; // Non-image file, stop loading indicator
-                        iv.image = [UIImage imageNamed:@"gallery_failed.png"]; // Show generic file icon
-                    }
-                }
-                
-                // Style settings here
-                [self styleThumbnailCell:cell isSelected:(index == self.currentIndex)];
-                return cell;
-            }
-            else if ([file isKindOfClass:[SeafUploadFile class]]) {
-                SeafUploadFile *seafFile = (SeafUploadFile *)file;
-                UIImage *thumb = [seafFile thumb];
-                if (thumb) {
-                    iv.image = thumb;
-                    [loadingIndicator stopAnimating];
-                }
-            }
-            else {
-                // Handle non-SeafFile items if needed (currently falls through)
-                Debug(@"[Gallery] Cell for item at index %ld is not a SeafFile.", (long)index);
-                iv.image = [UIImage imageNamed:@"gallery_failed.png"]; // Default image
-                [loadingIndicator stopAnimating];
-            }
-        }
+        id<SeafPreView> previewItem = self.preViewItems[index];
+        SeafPGThumbnailCellViewModel *viewModel = [[SeafPGThumbnailCellViewModel alloc] initWithPreviewItem:previewItem];
+        [cell configureWithViewModel:viewModel];
     } else {
-        // Index out of range, show default image
-        iv.image = [UIImage imageNamed:@"gallery_failed.png"];
-        [loadingIndicator stopAnimating];
+        // Handle index out of bounds if necessary, though configureWithViewModel should also handle nil/default state
+        SeafPGThumbnailCellViewModel *errorViewModel = [[SeafPGThumbnailCellViewModel alloc] initWithPreviewItem:nil]; // nil item will result in error state
+        [cell configureWithViewModel:errorViewModel];
     }
-    
-    // Set style
-    [self styleThumbnailCell:cell isSelected:(index == self.currentIndex)];
-    
     return cell;
-}
-
-// Style the thumbnail cell
-- (void)styleThumbnailCell:(UICollectionViewCell *)cell isSelected:(BOOL)isSelected {
-    // Ensure thumbnail is centered
-    for (UIView *subview in cell.contentView.subviews) {
-        if ([subview isKindOfClass:[UIImageView class]]) {
-            UIImageView *imageView = (UIImageView *)subview;
-            // Keep height at 42, ensure vertical centering
-            imageView.frame = cell.contentView.bounds;
-            imageView.contentMode = UIViewContentModeScaleAspectFill;
-            imageView.clipsToBounds = YES;
-            break;
-        }
-    }
-    
-    // Remove border
-    cell.layer.borderWidth = 0;
-    
-    // Remove corner radius
-    cell.layer.cornerRadius = 0;
-    cell.clipsToBounds = YES; // Clip bounds
-    
-    // Remove shadow effect
-    cell.layer.shadowOpacity = 0;
-}
-
-// Helper method: Generate thumbnail from original image
-- (UIImage *)thumbnailFromImage:(UIImage *)originalImage maxSize:(CGSize)size {
-    if (!originalImage) return nil;
-    
-    // If the original image is already smaller than the target size, return it directly
-    if (originalImage.size.width <= size.width && originalImage.size.height <= size.height) {
-        return originalImage;
-    }
-    
-    // Calculate the scaled size while maintaining aspect ratio
-    CGFloat widthRatio = size.width / originalImage.size.width;
-    CGFloat heightRatio = size.height / originalImage.size.height;
-    CGFloat ratio = MIN(widthRatio, heightRatio);
-    
-    CGSize newSize = CGSizeMake(originalImage.size.width * ratio, originalImage.size.height * ratio);
-    
-    // Create thumbnail
-    UIGraphicsBeginImageContextWithOptions(newSize, NO, 0.0);
-    [originalImage drawInRect:CGRectMake(0, 0, newSize.width, newSize.height)];
-    UIImage *thumbnail = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    
-    return thumbnail;
 }
 
 #pragma mark - Toolbar Action
@@ -1053,25 +867,25 @@
     }
 
     switch (btn.tag) {
-        case 0: // Download
+        case SeafPhotoToolbarButtonTypeDownload: // Download
             if (currentFile && [currentFile isKindOfClass:[SeafFile class]]) {
                 SeafFile *file = (SeafFile *)currentFile;
                 // New logic: Save file to album
                 [self saveCurrentPhotoToAlbum:file];
             } else {
-                NSLog(@"Download feature only supports SeafFile objects");
+                Debug(@"Download feature only supports SeafFile objects");
             }
             break;
             
-        case 1: // Delete
+        case SeafPhotoToolbarButtonTypeDelete: // Delete
             if (currentFile && [currentFile isKindOfClass:[SeafFile class]]) {
                 [self deleteFile:(SeafFile *)currentFile];
             } else {
-                NSLog(@"Delete feature only supports SeafFile objects");
+                Debug(@"Delete feature only supports SeafFile objects");
             }
             break;
             
-        case 2: // Info
+        case SeafPhotoToolbarButtonTypeInfo: // Info
             // Toggle info view with info button
             if (!self.infoVisible) {
                 [self handleSwipeUp:nil];
@@ -1082,7 +896,7 @@
             }
             break;
             
-        case 3: // Star
+        case SeafPhotoToolbarButtonTypeStar: // Star
             if (currentFile && [currentFile isKindOfClass:[SeafFile class]]) {
                 SeafFile *file = (SeafFile *)currentFile;
                 if ([file isStarred]) {
@@ -1091,15 +905,15 @@
                     [self starFile:file];
                 }
             } else {
-                NSLog(@"Star feature only supports SeafFile objects");
+                Debug(@"Star feature only supports SeafFile objects");
             }
             break;
             
-        case 4: // Share
+        case SeafPhotoToolbarButtonTypeShare: // Share
             if (currentFile && [currentFile isKindOfClass:[SeafFile class]]) {
                 [self shareFile:(SeafFile *)currentFile];
             } else {
-                NSLog(@"Share feature only supports SeafFile objects");
+                Debug(@"Share feature only supports SeafFile objects");
             }
             break;
     }
@@ -1182,7 +996,7 @@
         UIActivityViewController *activityVC = [[UIActivityViewController alloc] initWithActivityItems:@[file.exportURL] applicationActivities:nil];
         
         // Set popover source on iPad
-        if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+        if (IsIpad()) {
             activityVC.popoverPresentationController.sourceView = self.view;
             activityVC.popoverPresentationController.sourceRect = CGRectMake(self.view.bounds.size.width/2, self.view.bounds.size.height/2, 0, 0);
         }
@@ -1273,7 +1087,7 @@
     for (UIView *subview in self.toolbarView.subviews) {
         if ([subview isKindOfClass:[UIButton class]]) {
             UIButton *btn = (UIButton *)subview;
-            if (btn.tag == 3) {
+            if (btn.tag == SeafPhotoToolbarButtonTypeStar) {
                 // Check the starred status of the current file
                 BOOL isStarred = NO;
                 if (self.preViewItem && [self.preViewItem isKindOfClass:[SeafFile class]]) {
@@ -1323,7 +1137,7 @@
     UIActivityViewController *activityVC = [[UIActivityViewController alloc] initWithActivityItems:@[file.exportURL] applicationActivities:nil];
     
     // Set popover source on iPad
-    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+    if (IsIpad()) {
         activityVC.popoverPresentationController.sourceView = self.view;
         activityVC.popoverPresentationController.sourceRect = CGRectMake(self.view.bounds.size.width/2, self.view.bounds.size.height/2, 0, 0);
     }
@@ -1337,7 +1151,6 @@
     Debug(@"[Gallery] Cancelling all pending file operations (images and thumbnails).");
 
     // Cancel operations for VCs in cache
-    // Iterate over a copy of keys in case `cancelImageLoading` modifies the cache indirectly (though unlikely)
     for (NSNumber *key in [self.contentVCCache allKeys]) {
         SeafPhotoContentViewController *vc = [self.contentVCCache objectForKey:key];
         if (vc) {
@@ -1347,24 +1160,18 @@
     }
 
     // Cancel operations for all files in preViewItems
-    // This ensures files not currently in a VC are also handled,
-    // and specifically addresses thumbnail callbacks and direct file delegate.
     if (self.preViewItems) {
         for (id<SeafPreView> item in self.preViewItems) {
             if ([item isKindOfClass:[SeafFile class]]) {
                 SeafFile *file = (SeafFile *)item;
 
                 // Cancel main file download if ongoing.
-                // SeafFile's cancelDownload should be idempotent and use SeafDataTaskManager.
-                // This is a bit redundant if a VC for this file existed and cancelImageLoading was called,
-                // but acts as a catch-all.
                 if (file.isDownloading) { // Assuming isDownloading property exists or method
                     Debug(@"[Gallery] Directly cancelling download for file from preViewItems: %@", file.name);
                     [file cancelDownload];
                 }
                
                 file.thumbCompleteBlock = nil;
-
 
                 // If the gallery itself is a direct delegate for file loading (e.g., via [file load:self...])
                 if (file.delegate == self) {
@@ -1374,9 +1181,6 @@
             }
         }
     }
-    
-    // Stop any visible thumbnail loading indicators in the collection view
-    [self updateThumbnailLoadingIndicators];
 }
 
 - (void)dismissGallery {
@@ -1384,7 +1188,6 @@
     [self cancelAllPendingFileOperations];
 
     // 2. Release resources held by Content View Controllers
-    // Iterate over a copy of keys as we might modify the dictionary by removing VCs or VCs deallocating
     for (NSNumber *key in [self.contentVCCache allKeys]) {
         SeafPhotoContentViewController *vc = [self.contentVCCache objectForKey:key];
         if (vc) {
@@ -1457,9 +1260,6 @@
                 }
             }
         }
-        
-        // Ensure all thumbnail loading indicators are stopped
-        [self updateThumbnailLoadingIndicators];
     }
 }
 
@@ -1549,10 +1349,7 @@
         vc = cachedController;
         Debug(@"[Gallery] Applying update to cached VC for file '%@' at index %lu.", file.name, (unsigned long)fileIndex);
         // Ensure the cached VC has the latest file object, especially if 'file' instance from delegate might be newer
-        // This also handles the case where the file object's internal state (like ooid, cachePath) was updated by the download.
         vc.seafFile = file;
-        vc.repoId = file.repoId;
-        vc.filePath = file.path;
         vc.connection = file.connection;
     }
 
@@ -1564,8 +1361,6 @@
              Debug(@"[Gallery] Applying update to currentContentVC for file '%@' at index %lu.", file.name, (unsigned long)fileIndex);
              // Ensure currentContentVC also has the latest file object
              vc.seafFile = file;
-             vc.repoId = file.repoId;
-             vc.filePath = file.path;
              vc.connection = file.connection;
         } else {
             Debug(@"[Gallery] WARNING: currentContentVC tag (%ld) does not match expected index (%lu) for file '%@'. Cannot apply update via currentContentVC.", (long)self.currentContentVC.view.tag, (unsigned long)fileIndex, file.name);
@@ -1592,8 +1387,6 @@
                 // The 'file' parameter to this method is the instance from the download delegate,
                 // which has the most up-to-date state. Ensure potentialVC uses this instance.
                 potentialVC.seafFile = file;
-                potentialVC.repoId = file.repoId;
-                potentialVC.filePath = file.path;
                 potentialVC.connection = file.connection;
                 vc = potentialVC; // Use this VC for the updateBlock
                 Debug(@"[Gallery] Obtained/created VC for key index %lu. Will use for update block.", (unsigned long)fileIndex);
@@ -1664,7 +1457,6 @@
     }];
 
     // If no VC was found by the helper, and the download succeeded, the file object in preViewItems is now updated.
-    // When the VC is eventually created (e.g., by scrolling), it will pick up the updated file object.
     BOOL vcFoundOrHandled = ([self.contentVCCache objectForKey:key] != nil) || (fileIndex == self.currentIndex && self.currentContentVC && self.currentContentVC.view.tag == fileIndex);
     
     // If this is the current page, ensure the image is reloaded *even if* the helper didn't find the VC initially
@@ -1722,31 +1514,7 @@
             [accountQueue removeFileDownloadTask:item];
         }
     }
-    
-    // Update thumbnail loading indicators
-    [self updateThumbnailLoadingIndicators];
 }
-
-- (void)updateThumbnailLoadingIndicators {
-    // Ensure UI updates are performed on the main thread
-    if (![NSThread isMainThread]) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self updateThumbnailLoadingIndicators];
-        });
-        return;
-    }
-    
-    // Stop loading indicators for all visible thumbnails
-    for (UICollectionViewCell *cell in [self.thumbnailCollection visibleCells]) {
-        for (UIView *subview in cell.contentView.subviews) {
-            if ([subview isKindOfClass:[UIActivityIndicatorView class]]) {
-                [(UIActivityIndicatorView *)subview stopAnimating];
-            }
-        }
-    }
-}
-
-#pragma mark - Helper Methods
 
 #pragma mark - Memory Management
 
@@ -1885,7 +1653,24 @@
             btn.imageEdgeInsets = UIEdgeInsetsMake(5.0, 0, -5.0, 0);
         }
         
-        btn.tag = i;
+        // Assign tag using the enum
+        switch (i) {
+            case 0:
+                btn.tag = SeafPhotoToolbarButtonTypeDownload;
+                break;
+            case 1:
+                btn.tag = SeafPhotoToolbarButtonTypeDelete;
+                break;
+            case 2:
+                btn.tag = SeafPhotoToolbarButtonTypeInfo;
+                break;
+            case 3:
+                btn.tag = SeafPhotoToolbarButtonTypeStar;
+                break;
+            case 4:
+                btn.tag = SeafPhotoToolbarButtonTypeShare;
+                break;
+        }
         [btn addTarget:self action:@selector(toolbarButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
         [self.toolbarView addSubview:btn];
     }
@@ -1923,7 +1708,7 @@
 #pragma mark - Swipe Gesture Handlers
 
 // Handle up swipe gesture - show info view
-- (void)handleSwipeUp:(id)__ {
+- (void)handleSwipeUp:(UISwipeGestureRecognizer *)sender {
     if (self.infoVisible) return;
     self.infoVisible = YES;
     
@@ -1960,7 +1745,7 @@
 }
 
 // Handle down swipe gesture - hide info view
-- (void)handleSwipeDown:(id)__ {
+- (void)handleSwipeDown:(UISwipeGestureRecognizer *)sender {
     if (!self.infoVisible) return;
     self.infoVisible = NO;
     
@@ -2003,7 +1788,7 @@
     for (UIView *subview in self.toolbarView.subviews) {
         if ([subview isKindOfClass:[UIButton class]]) {
             UIButton *btn = (UIButton *)subview;
-            if (btn.tag == 2) {
+            if (btn.tag == SeafPhotoToolbarButtonTypeInfo) {
                 // Choose icon based on selected state
                 NSString *iconName = selected ? @"detail_information_selected" : @"detail_information";
                 UIImage *image = [UIImage imageNamed:iconName];
