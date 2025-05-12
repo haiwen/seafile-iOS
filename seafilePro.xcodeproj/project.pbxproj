@@ -95,6 +95,9 @@
 		BA0E7E502D92470F00E3E3F0 /* SeafHeaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = BA0E7E4F2D92470F00E3E3F0 /* SeafHeaderView.m */; };
 		BA0E7E532D924A8D00E3E3F0 /* SeafEditNavRightItem.m in Sources */ = {isa = PBXBuildFile; fileRef = BA0E7E522D924A8D00E3E3F0 /* SeafEditNavRightItem.m */; };
 		BA11F5042D91457900F56208 /* SeafNavLeftItem.m in Sources */ = {isa = PBXBuildFile; fileRef = BA11F5032D91457900F56208 /* SeafNavLeftItem.m */; };
+		BA38EEE92DD1A80F00EF10E2 /* SeafPGThumbnailCell.m in Sources */ = {isa = PBXBuildFile; fileRef = BA38EEE62DD1A80F00EF10E2 /* SeafPGThumbnailCell.m */; };
+		BA38EEEA2DD1A80F00EF10E2 /* SeafPGThumbnailCellViewModel.m in Sources */ = {isa = PBXBuildFile; fileRef = BA38EEE82DD1A80F00EF10E2 /* SeafPGThumbnailCellViewModel.m */; };
+		BA38EEED2DD1F0E900EF10E2 /* SeafPhotoInfoView.m in Sources */ = {isa = PBXBuildFile; fileRef = BA38EEEC2DD1F0E900EF10E2 /* SeafPhotoInfoView.m */; };
 		BA83A4402DA67D2D005712EA /* detail_starred.png in Resources */ = {isa = PBXBuildFile; fileRef = BA83A43C2DA67D2D005712EA /* detail_starred.png */; };
 		BA83A4412DA67D2D005712EA /* detail_starred_selected.png in Resources */ = {isa = PBXBuildFile; fileRef = BA83A43D2DA67D2D005712EA /* detail_starred_selected.png */; };
 		BA83A4422DA67D2D005712EA /* detail_share.png in Resources */ = {isa = PBXBuildFile; fileRef = BA83A43B2DA67D2D005712EA /* detail_share.png */; };
@@ -952,6 +955,12 @@
 		BA0E7E522D924A8D00E3E3F0 /* SeafEditNavRightItem.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafEditNavRightItem.m; sourceTree = "<group>"; };
 		BA11F5032D91457900F56208 /* SeafNavLeftItem.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafNavLeftItem.m; sourceTree = "<group>"; };
 		BA11F5052D9145A400F56208 /* SeafNavLeftItem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafNavLeftItem.h; sourceTree = "<group>"; };
+		BA38EEE52DD1A80F00EF10E2 /* SeafPGThumbnailCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafPGThumbnailCell.h; sourceTree = "<group>"; };
+		BA38EEE62DD1A80F00EF10E2 /* SeafPGThumbnailCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafPGThumbnailCell.m; sourceTree = "<group>"; };
+		BA38EEE72DD1A80F00EF10E2 /* SeafPGThumbnailCellViewModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafPGThumbnailCellViewModel.h; sourceTree = "<group>"; };
+		BA38EEE82DD1A80F00EF10E2 /* SeafPGThumbnailCellViewModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafPGThumbnailCellViewModel.m; sourceTree = "<group>"; };
+		BA38EEEB2DD1F0E900EF10E2 /* SeafPhotoInfoView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafPhotoInfoView.h; sourceTree = "<group>"; };
+		BA38EEEC2DD1F0E900EF10E2 /* SeafPhotoInfoView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafPhotoInfoView.m; sourceTree = "<group>"; };
 		BA83A4372DA67D2D005712EA /* detail_delete.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = detail_delete.png; sourceTree = "<group>"; };
 		BA83A4382DA67D2D005712EA /* detail_download.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = detail_download.png; sourceTree = "<group>"; };
 		BA83A4392DA67D2D005712EA /* detail_information.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = detail_information.png; sourceTree = "<group>"; };
@@ -1247,8 +1256,14 @@
 				BA83DEB12DB560520073EAA8 /* SeafNavigationBarStyler.m */,
 				BAA7CFE02DB0D32200D26ED3 /* SeafPhotoContentViewController.h */,
 				BAA7CFE12DB0D32200D26ED3 /* SeafPhotoContentViewController.m */,
+				BA38EEEB2DD1F0E900EF10E2 /* SeafPhotoInfoView.h */,
+				BA38EEEC2DD1F0E900EF10E2 /* SeafPhotoInfoView.m */,
 				BAA7CFE32DB0D37800D26ED3 /* SeafPhotoGalleryViewController.h */,
 				BAA7CFE42DB0D37800D26ED3 /* SeafPhotoGalleryViewController.m */,
+				BA38EEE52DD1A80F00EF10E2 /* SeafPGThumbnailCell.h */,
+				BA38EEE62DD1A80F00EF10E2 /* SeafPGThumbnailCell.m */,
+				BA38EEE72DD1A80F00EF10E2 /* SeafPGThumbnailCellViewModel.h */,
+				BA38EEE82DD1A80F00EF10E2 /* SeafPGThumbnailCellViewModel.m */,
 				BA8DC95A2D9A6A030027EC46 /* SeafLoadingView.m */,
 				571ABF521625DF31005C9B08 /* DownloadingProgressView.m */,
 				57655330161BEA40005E5327 /* FailToPreview.h */,
@@ -2835,6 +2850,8 @@
 				F515E4B621AC3DBB00A62F64 /* SeafActionsManager.m in Sources */,
 				BA8AC7E02D802E8800F8DE57 /* Constants.m in Sources */,
 				570DFAC716A15D0100ADD5F2 /* SeafAccountViewController.m in Sources */,
+				BA38EEE92DD1A80F00EF10E2 /* SeafPGThumbnailCell.m in Sources */,
+				BA38EEEA2DD1A80F00EF10E2 /* SeafPGThumbnailCellViewModel.m in Sources */,
 				F5CBCDC01F2C2F1500E8C35B /* SeafSyncInfoViewController.m in Sources */,
 				577B6C6616AADBA3008E82C2 /* SeafCell.m in Sources */,
 				BA0E7E532D924A8D00E3E3F0 /* SeafEditNavRightItem.m in Sources */,
@@ -2843,6 +2860,7 @@
 				BAA7CFE22DB0D32200D26ED3 /* SeafPhotoContentViewController.m in Sources */,
 				BA0E7E502D92470F00E3E3F0 /* SeafHeaderView.m in Sources */,
 				57DA26F5173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */,
+				BA38EEED2DD1F0E900EF10E2 /* SeafPhotoInfoView.m in Sources */,
 				5757DCCD1AEBCF1600BC0426 /* SeafShibbolethViewController.m in Sources */,
 				58D40A681E9AF72200A68BEF /* UIViewController+Extend.m in Sources */,
 				F5B209092169994000762342 /* SeafInputItemsProvider.m in Sources */,

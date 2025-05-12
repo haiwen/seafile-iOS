@@ -7,9 +7,11 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "SeafPhotoInfoView.h"
 #import "SeafConnection.h"
 
 @class SeafFile;
+@protocol SeafPreView;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -58,12 +60,6 @@ NS_ASSUME_NONNULL_BEGIN
 /// Updates the progress label.
 - (void)updateLoadingProgress:(float)progress;
 
-/// Sets the repository ID and file path for API requests
-- (void)setRepoId:(NSString *)repoId filePath:(NSString *)filePath;
-
-/// Sets the repository ID, file path, and connection for API requests
-- (void)setRepoId:(NSString *)repoId filePath:(NSString *)filePath connection:(SeafConnection *)connection;
-
 /// Sets an error image to display when loading fails
 - (void)showErrorImage;
 
@@ -80,6 +76,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// Releases memory used by loaded images when the controller is not in the view.
 - (void)releaseImageMemory;
+
+/// Updates scroll view content size to match image size
+- (void)updateScrollViewContentSize;
+
+/// Updates scroll view zoom scales for given size
+- (void)updateZoomScalesForSize:(CGSize)size;
 @end
 
 NS_ASSUME_NONNULL_END
