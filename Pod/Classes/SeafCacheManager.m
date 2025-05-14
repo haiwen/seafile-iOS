@@ -123,23 +123,28 @@
     return size;
 }
 
+- (NSString *)getCachePathForFile:(SeafFile *)file {
+    if ([Utils isMainApp]) {
+        return [[SeafRealmManager shared] getCachePathWithOid:file.oid
+                                                      mtime:file.mtime
+                                                     uniKey:file.uniqueKey];
+    } else {
+        return [SeafStorage.sharedObject documentPath:file.oid];
+    }
+}
 
 // Check if there is a local cache
 - (BOOL)fileHasCache:(SeafFile *)file
 {
-    if ([file isSdocFile]) {
-        return YES;
-    }
     // 1) If the local mpath exists and the file exists
     if (file.mpath && [[NSFileManager defaultManager] fileExistsAtPath:file.mpath]) {
         return YES;
     }
     
     // 2) If the Realm records the local cache of the corresponding oid & the file actually exists
-    NSString *cachePath = [[SeafRealmManager shared] getCachePathWithOid:file.oid
-                                                                   mtime:file.mtime
-                                                                  uniKey:file.uniqueKey];
-    if (cachePath && cachePath.length > 0) {
+    NSString *cachePath = [self getCachePathForFile:file];
+    if (cachePath && cachePath.length > 0 && [[NSFileManager defaultManager] fileExistsAtPath:cachePath]) {
+        [file setOoid:file.oid];
         return YES;
     } else if (file.oid.length > 0
                && [[NSFileManager defaultManager] fileExistsAtPath:[SeafStorage.sharedObject documentPath:file.oid]]) {
@@ -168,16 +173,16 @@
     }
     
     // 2) Find the cache from Realm and confirm whether the local file exists
-    NSString *cachePath = [[SeafRealmManager shared] getCachePathWithOid:file.oid
-                                                                   mtime:file.mtime
-                                                                  uniKey:file.uniqueKey];
+    NSString *cachePath = [self getCachePathForFile:file];
     if ((cachePath && cachePath.length > 0) || file.oid) {
         if (!file.oid || file.oid.length == 0) {
             // Try to update file.oid
-            NSString *cacheOid = [[SeafRealmManager shared] getOidForUniKey:file.uniqueKey
-                                                               serverMtime:file.mtime];
-            if (cacheOid && cacheOid.length > 0) {
-                file.oid = cacheOid;
+            if ([Utils isMainApp]) {
+                NSString *cacheOid = [[SeafRealmManager shared] getOidForUniKey:file.uniqueKey
+                                                                    serverMtime:file.mtime];
+                if (cacheOid && cacheOid.length > 0) {
+                    file.oid = cacheOid;
+                }
             }
         }
         NSString *docPath = [SeafStorage.sharedObject documentPath:file.oid];
@@ -237,7 +242,7 @@
         return true;
     }
     
-    NSString *cachePath = [[SeafRealmManager shared] getCachePathWithOid:file.oid mtime:file.mtime uniKey:file.uniqueKey];
+    NSString *cachePath = [self getCachePathForFile:file];
     if ((cachePath && cachePath.length > 0) || file.oid) {
         if (!file.oid || file.oid.length == 0) {
             NSString *cacheOid = [[SeafRealmManager shared] getOidForUniKey:file.uniqueKey serverMtime:file.mtime];

@@ -122,9 +122,20 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
                 return NO;
         }
     }
-    if (![JSON isKindOfClass:[NSArray class]]) {
-        Warning("Invalid response type: %@,  %@", NSStringFromClass([JSON class]), JSON);
-        return false;
+    
+    // v2.1: the server returns a dictionary { "dirent_list": [...] }
+    NSArray *dirArray = nil;
+    if ([JSON isKindOfClass:[NSDictionary class]]) {
+        dirArray = JSON[@"dirent_list"];
+        if (![dirArray isKindOfClass:[NSArray class]]) {
+            Warning("Invalid response type: %@, %@", NSStringFromClass([JSON class]), JSON);
+            return false;
+        }
+    } else if ([JSON isKindOfClass:[NSArray class]]) { // backward compatibility
+        dirArray = (NSArray *)JSON;
+    } else {
+        Warning("Invalid response type: %@, %@", NSStringFromClass([JSON class]), JSON);
+        return NO;
     }
     
     //check if has edited file not uploaded before.
@@ -134,7 +145,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
     NSMutableArray *newItems = [NSMutableArray array];
     NSMutableArray<SeafFileStatus *> *statusArray = [NSMutableArray array]; // useFor sync status
 
-    for (NSDictionary *itemInfo in JSON) {
+    for (NSDictionary *itemInfo in dirArray) {
         if ([itemInfo objectForKey:@"name"] == [NSNull null])
             continue;
         SeafBase *newItem = nil;
@@ -180,7 +191,9 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
         [newItems addObject:newItem];
     }
     
-    [[SeafRealmManager shared] updateFileStatuses:statusArray];
+    if ([Utils isMainApp]) {
+        [[SeafRealmManager shared] updateFileStatuses:statusArray];
+    }
 
     [self loadedItems:newItems];
     return YES;
@@ -211,11 +224,15 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 {
     @synchronized(self) {
         self.state = SEAF_DENTRY_UPTODATE;
-        NSString *curId = [[response allHeaderFields] objectForKey:@"oid"];
+        NSString *curId = nil;
+        if ([JSON isKindOfClass:[NSDictionary class]]) {
+            curId = JSON[@"dir_id"];
+        }
         if (!curId) curId = self.oid;
         if ([self handleData:curId data:JSON]) {
             self.ooid = curId;
-            NSString *dirPerm = [[response allHeaderFields] objectForKey:@"dir_perm"];
+            NSString *dirPerm = JSON[@"user_perm"];
+
             if (dirPerm) {
                 self.perm = dirPerm;
             }
@@ -234,10 +251,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 
 - (NSString *)url
 {
-    NSString *requestStr = [NSString stringWithFormat:API_URL"/repos/%@/dir/?p=%@", self.repoId, [self.path escapedUrl]];
-    if (self.ooid)
-        requestStr = [requestStr stringByAppendingFormat:@"&oid=%@", self.ooid ];
-
+    NSString *requestStr = [NSString stringWithFormat:API_URL_V21"/repos/%@/dir/?p=%@", self.repoId, [self.path escapedUrl]];
     return requestStr;
 }
 

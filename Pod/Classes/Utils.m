@@ -12,6 +12,7 @@
 #import "Utils.h"
 #import "Debug.h"
 #import "ExtentedString.h"
+#import "SeafConstants.h"
 #import <sys/stat.h>
 #import <dirent.h>
 #import <sys/xattr.h>
@@ -363,7 +364,7 @@
 + (BOOL)writeCIImage:(CIImage *)ciImage toPath:(NSString*)filePath {
     NSError *error = nil;
     CIContext *context = [[CIContext alloc] init];
-    NSURL *url = [[NSURL alloc] initFileURLWithPath:filePath];
+    NSURL *url = [[NSURL alloc] initFileURLWithPath:filePath isDirectory:NO];
     return [context writeJPEGRepresentationOfImage:ciImage toURL:url colorSpace:ciImage.colorSpace options:@{(CIImageRepresentationOption)kCGImageDestinationLossyCompressionQuality : @(0.8)} error:&error];
 }
 
@@ -674,7 +675,7 @@
 
 + (NSURL *)generateFileTempPath:(NSString *)name {
     NSString *tempPath = [NSTemporaryDirectory() stringByAppendingPathComponent:[name stringByAddingPercentEscapesUsingEncoding:NSUTF16StringEncoding]];
-    NSURL *tempURL = [NSURL fileURLWithPath:tempPath];
+    NSURL *tempURL = [NSURL fileURLWithPath:tempPath isDirectory:NO];
     if ([[NSFileManager defaultManager] fileExistsAtPath:tempPath]) {
         NSError *error;
         [[NSFileManager defaultManager] removeItemAtPath:tempPath error:&error];
@@ -827,11 +828,17 @@
         return nil;
     }
     
-    // If uniKey does not end with “/”, add “/”
+    // If uniKey does not end with "
     if (![uniKey hasSuffix:@"/"]) {
         uniKey = [uniKey stringByAppendingString:@"/"];
     }
     
     return [NSString stringWithFormat:@"%@%@", uniKey, fileName];
 }
+
++ (BOOL)isMainApp {
+    NSString *bundleId = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleIdentifier"];
+    return [bundleId isEqualToString:APP_ID];
+}
+
 @end

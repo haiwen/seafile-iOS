@@ -42,12 +42,12 @@
     self.tableView.dataSource = self;
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
     self.tableView.estimatedRowHeight = 55;
-    self.tableView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 0.01)];
     self.tableView.tableFooterView = [UIView new];
-    if (@available(iOS 11.0, *)) {
+
+    if (!IsIpad()) {
         self.tableView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
     }
-    self.automaticallyAdjustsScrollViewInsets = NO;
+    
     [self.view addSubview:self.tableView];
     
     self.stateLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 50)];
@@ -103,6 +103,21 @@
 
 // Resets the search when the cancel button on the search bar is clicked.
 - (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar {
+    // Immediately send notification to make search bar disappear
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"SeafSearchCancelled" object:nil];
+    
+    // Disable related animations
+    [UIView setAnimationsEnabled:NO];
+    
+    // Force end search state
+    [searchBar resignFirstResponder];
+    
+    // Restore animation settings
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [UIView setAnimationsEnabled:YES];
+    });
+    
+    // Reset search results view
     [self resetTableview];
 }
 

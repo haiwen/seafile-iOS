@@ -26,6 +26,7 @@
 #import <WebKit/WebKit.h>
 #import <SafariServices/SafariServices.h>
 #import "SeafDataTaskManager.h"
+#import "SeafNavigationBarStyler.h"
 
 enum SHARE_STATUS {
     SHARE_BY_MAIL = 0,
@@ -93,34 +94,45 @@ enum SHARE_STATUS {
 {
     if ([self isModal])
          [self.navigationItem setLeftBarButtonItem:self.backItem animated:NO];
-    self.title = self.preViewItem.previewItemTitle;
-    NSMutableArray *array = [[NSMutableArray alloc] init];
-    if ([self.preViewItem isKindOfClass:[SeafFile class]]) {
-        SeafFile *sfile = (SeafFile *)self.preViewItem;
-        if ([sfile isStarred])
-            [array addObjectsFromArray:self.barItemsStar];
-        else
-            [array addObjectsFromArray:self.barItemsUnStar];
 
-        [self.exportItem setEnabled:([self.preViewItem exportURL] != nil)];
+    // Set title using style tool
+    NSString *titleText = self.preViewItem.previewItemTitle;
+    if (!self.navigationItem.titleView) {
+        UILabel *titleLabel = [SeafNavigationBarStyler createCustomTitleViewWithText:titleText 
+                                                             maxWidthPercentage:0.7 
+                                                                  viewController:self];
+        self.navigationItem.titleView = titleLabel;
+    } else {
+        [SeafNavigationBarStyler updateTitleView:(UILabel *)self.navigationItem.titleView withText:titleText];
     }
-    if ([self.preViewItem editable] && [self previewSuccess])
-        [array addObject:self.editItem];
-    self.navigationItem.rightBarButtonItems = array;
     
-    if (@available(iOS 15.0, *)) {
-        UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
-        barAppearance.backgroundColor = [UIColor whiteColor];
-            barAppearance.shadowColor = [UIColor lightGrayColor]; // Add navigation bar bottom separator color
+    // Restore navigation bar right button display
+    NSMutableArray *rightItems = [NSMutableArray array];
+    
+    // Check current file status to determine which buttons to display
+    if ([self.preViewItem isKindOfClass:[SeafFile class]]) {
+        SeafFile *file = (SeafFile *)self.preViewItem;
         
-        self.navigationController.navigationBar.standardAppearance = barAppearance;
-        self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
+        // Add edit button (if file is editable)
+        if (self.preViewItem.editable && (self.state == PREVIEW_TEXT || self.state == PREVIEW_WEBVIEW || self.state == PREVIEW_WEBVIEW_JS)) {
+            [rightItems addObject:self.editItem];
+        }
     }
+    
+    // Set navigation bar right buttons
+    if (rightItems.count > 0) {
+        self.navigationItem.rightBarButtonItems = rightItems;
+    } else {
+        self.navigationItem.rightBarButtonItem = nil;
+    }
+    
+    // Update bottom toolbar button states
+    [self updateToolbarButtons];
 }
 
 // Clear current preview settings and restore to initial state.
 - (void)resetNavigation {
-    self.navigationItem.title = nil;
+    self.navigationItem.titleView = nil;
     self.navigationItem.rightBarButtonItems = nil;
 }
 
@@ -173,11 +185,61 @@ enum SHARE_STATUS {
     if (!self.isViewLoaded) return;
 
     [self updateNavigation]; // Update the navigation items
+
+    // --- Toolbar Visibility Control (iPad only) ---
+    if (IsIpad()) {
+        BOOL shouldShowToolbar = NO;
+        // Show toolbar only if there is a valid item being previewed successfully or potentially via QL
+        if (self.preViewItem) {
+            switch (self.state) {
+                case PREVIEW_WEBVIEW_JS:
+                case PREVIEW_WEBVIEW:
+                case PREVIEW_TEXT:
+                case PREVIEW_PHOTO:
+                case PREVIEW_QL_MODAL: // Assume toolbar context is relevant even if QL is modal
+                    shouldShowToolbar = YES;
+                    break;
+                // Don't show for downloading, failed, or none states
+                case PREVIEW_DOWNLOADING:
+                case PREVIEW_FAILED:
+                case PREVIEW_NONE:
+                default:
+                    shouldShowToolbar = NO;
+                    break;
+            }
+        } else {
+             // No preview item, definitely hide toolbar
+             shouldShowToolbar = NO;
+        }
+        // Only hide/show if toolbarView actually exists
+        if (self.toolbarView) {
+            self.toolbarView.hidden = !shouldShowToolbar;
+        }
+    } else {
+         // Ensure toolbar is visible on non-iPad devices if it exists
+         if (self.toolbarView) {
+             self.toolbarView.hidden = NO;
+         }
+    }
+    // --- End Toolbar Visibility Control ---
+
     CGFloat y = 64;
     if (@available(iOS 11.0, *)) {
        y = 44 + [UIApplication sharedApplication].keyWindow.safeAreaInsets.top;
     }
-    CGRect r = CGRectMake(self.view.frame.origin.x, y, self.view.frame.size.width, self.view.frame.size.height - 64);
+    
+    // Calculate bottom margin to account for toolbar, including safe area
+    CGFloat bottomMargin = 0;
+    if (self.toolbarView) {
+        CGFloat toolbarHeight = 36; // Toolbar standard height
+        CGFloat safeAreaBottom = 0;
+        if (@available(iOS 11.0, *)) {
+            safeAreaBottom = self.view.safeAreaInsets.bottom; // Get bottom safe area inset
+        }
+        bottomMargin = toolbarHeight + safeAreaBottom; // Total height occupied by toolbar
+    }
+    
+    CGRect r = CGRectMake(self.view.frame.origin.x, y, self.view.frame.size.width, self.view.frame.size.height - y - bottomMargin);
     switch (self.state) {
         case PREVIEW_DOWNLOADING:
             Debug (@"DownLoading file %@\n", self.preViewItem.previewItemTitle);
@@ -269,55 +331,11 @@ enum SHARE_STATUS {
             self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModeAllVisible; // Adjust split view controller display mode for landscape
         }
     }
-}
-
-// Set the preview item and refresh the view.
-- (void)setPreViewItem:(id<SeafPreView>)item master:(UIViewController<SeafDentryDelegate> *)c
-{
-    if (self.masterPopoverController != nil)
-        [self.masterPopoverController dismissPopoverAnimated:YES];
-    if (item) Debug("preview %@", item.previewItemTitle);
-    self.masterVc = c;
-    self.photos = nil;
-    self.preViewItem = item;
-    //if need load from cache.
-    [item load:(self.masterVc ? self.masterVc:self) force:NO];
-    [self refreshView];
-}
-
-// Set and prepare photo views for preview.
-- (void)setPreViewPhotos:(NSArray *)items current:(id<SeafPreView>)item master:(UIViewController<SeafDentryDelegate> *)c
-{
-    [self clearPreView];
-    if (self.masterPopoverController != nil)
-        [self.masterPopoverController dismissPopoverAnimated:YES];// Dismiss popover if exists
-    self.masterVc = c;
-    NSMutableArray *seafPhotos = [[NSMutableArray alloc] init];
-    for (id<SeafPreView> file in items) {
-        [file setDelegate:(self.masterVc ? self.masterVc:self)];
-        [seafPhotos addObject:[[SeafPhoto alloc] initWithSeafPreviewIem: file]];
+    
+    // Ensure toolbar always stays on top layer
+    if (self.toolbarView) {
+        [self.view bringSubviewToFront:self.toolbarView];
     }
-    self.photos = seafPhotos;
-    _state = PREVIEW_PHOTO;
-    Debug("Preview photos PREVIEW_PHOTO: %d, %@ hasCache:%d", self.state, [item name], [item hasCache]);
-    self.preViewItem = item;
-    self.currentPageIndex = [items indexOfObject:item];
-    _mwPhotoBrowser = nil;// force recreate mwPhotoBrowser
-    [self.mwPhotoBrowser setCurrentPhotoIndex:self.currentPageIndex];
-    [self.view addSubview:self.mwPhotoBrowser.view];
-    self.mwPhotoBrowser.view.frame = CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height);
-    [self.mwPhotoBrowser viewDidAppear:false];
-    [self updateNavigation];
-    [self.view setNeedsLayout];
-}
-
-// Handle the back button action.
-- (void)goBack:(id)sender
-{
-    if (self.isModal)
-        [self.navigationController dismissViewControllerAnimated:YES completion:nil];
-    else
-        [self.navigationController popViewControllerAnimated:NO];
 }
 
 - (void)viewDidLoad
@@ -327,8 +345,11 @@ enum SHARE_STATUS {
         self.edgesForExtendedLayout = UIRectEdgeAll;
     // Do any additional setup after loading the view, typically from a nib.
 
-    self.backItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Back", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(goBack:)];
-    self.backItem.tintColor = BAR_COLOR_ORANGE;
+    // Replace previous backItem implementation, use style tool to create gray back button
+    UIColor *grayColor = [UIColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1.0]; // Medium gray
+    self.backItem = [SeafNavigationBarStyler createBackButtonWithTarget:self 
+                                                                action:@selector(goBack:)
+                                                                 color:grayColor];
 
     self.view.autoresizesSubviews = YES;
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
@@ -372,11 +393,24 @@ enum SHARE_STATUS {
         [self.navigationItem setLeftBarButtonItem:self.splitViewController.displayModeButtonItem animated:NO];
     }
     
+    // Setup bottom toolbar
+    [self setupToolbar];
+    // Ensure toolbar starts hidden on iPad, will be shown by refreshView if needed
+    if (IsIpad() && self.toolbarView) {
+         self.toolbarView.hidden = YES;
+    }
+    
     [self refreshView];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
+    
+    // Apply navigation styling
+    if (self.navigationController) {
+        [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
+    }
+    
     [self updateNavigation];
 }
 
@@ -426,13 +460,28 @@ enum SHARE_STATUS {
         }
     }
     
-    if (@available(iOS 15.0, *)) {
-        UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
-        barAppearance.backgroundColor = [UIColor whiteColor];
-        barAppearance.shadowColor = [UIColor lightGrayColor]; // Add navigation bar bottom separator color
+    // Position the toolbar at the bottom of the screen
+    if (self.toolbarView) {
+        CGFloat toolbarHeight = 36; // Reduced height from 44 to 36
+        CGFloat safeAreaBottom = 0;
         
-        self.navigationController.navigationBar.standardAppearance = barAppearance;
-        self.navigationController.navigationBar.scrollEdgeAppearance = barAppearance;
+        if (@available(iOS 11.0, *)) {
+            safeAreaBottom = self.view.safeAreaInsets.bottom;
+        }
+        
+        CGRect toolbarFrame = CGRectMake(0,
+                                      self.view.bounds.size.height - toolbarHeight - safeAreaBottom,
+                                      self.view.bounds.size.width,
+                                      toolbarHeight + safeAreaBottom); // Include safe area in height
+        self.toolbarView.frame = toolbarFrame;
+        
+        // Ensure toolbar always stays on top layer
+        [self.view bringSubviewToFront:self.toolbarView];
+    }
+    
+    // Apply navigation bar style using style tool
+    if (self.navigationController) {
+        [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
     }
 }
 
@@ -494,6 +543,13 @@ enum SHARE_STATUS {
     if (_preViewItem != entry) return;
     if (updated) {
         [self refreshView];
+        [self updateToolbarButtons]; // Update toolbar buttons after download completes
+    } else if (self.state == PREVIEW_DOWNLOADING && entry.hasCache) {
+        // If not updated but still showing loading page and file has cache
+        // This can happen when file was already cached before but UI still shows loading
+        Debug("File not updated but has cache, refreshing view: %@", entry.name);
+        [self refreshView]; // This will update the view state based on cache
+        [self updateToolbarButtons]; // Update toolbar buttons
     }
 }
 
@@ -537,14 +593,28 @@ enum SHARE_STATUS {
 
 - (IBAction)starFile:(id)sender
 {
-    [(SeafFile *)self.preViewItem setStarred:YES withBlock:nil];
-    [self updateNavigation];// Update navigation items
+    __weak SeafDetailViewController *weakSelf = self;
+    [(SeafFile *)self.preViewItem setStarred:YES withBlock:^(BOOL success) {
+        if (success) {
+            [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Successfully starred", @"Seafile")];
+            [weakSelf updateToolbarButtons]; // Use weakSelf to avoid retain cycle
+        } else {
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to star", @"Seafile")];
+        }
+    }];
 }
 
 - (IBAction)unstarFile:(id)sender
 {
-    [(SeafFile *)self.preViewItem setStarred:NO withBlock:nil];
-    [self updateNavigation];// Update navigation items
+    __weak SeafDetailViewController *weakSelf = self;
+    [(SeafFile *)self.preViewItem setStarred:NO withBlock:^(BOOL success) {
+        if (success) {
+            [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Successfully unstarred", @"Seafile")];
+            [weakSelf updateToolbarButtons]; // Use weakSelf to avoid retain cycle
+        } else {
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to unstar", @"Seafile")];
+        }
+    }];
 }
 
 - (IBAction)editFile:(id)sender
@@ -836,6 +906,14 @@ enum SHARE_STATUS {
         _mwPhotoBrowser.preLoadNumLeft = 0;
         _mwPhotoBrowser.preLoadNumRight = 1;
     }
+    
+    // Ensure toolbar always stays on top layer
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (self.toolbarView) {
+            [self.view bringSubviewToFront:self.toolbarView];
+        }
+    });
+    
     return _mwPhotoBrowser;
 }
 
@@ -892,6 +970,11 @@ enum SHARE_STATUS {
         }
     }
     [self updateNavigation];
+    
+    // Ensure toolbar always stays on top layer
+    if (self.toolbarView) {
+        [self.view bringSubviewToFront:self.toolbarView];
+    }
 }
 
 - (BOOL)isPortrait {
@@ -926,6 +1009,227 @@ enum SHARE_STATUS {
     NSMutableAttributedString *attributedText = [[NSMutableAttributedString alloc] initWithFileURL:self.preViewItem.previewItemURL options:@{NSDocumentTypeDocumentAttribute : NSPlainTextDocumentType} documentAttributes:nil error:nil];
     [attributedText addAttributes:@{NSFontAttributeName : [UIFont systemFontOfSize:14.0]} range:NSMakeRange(0, attributedText.length)];
     return attributedText;
+}
+
+// New method to setup the toolbar
+- (void)setupToolbar {
+    // Bottom action bar - including bottom safe area
+    CGFloat toolbarH = 36; // Reduced height from 44 to 36
+    CGFloat safeAreaBottom = 0;
+    
+    if (@available(iOS 11.0, *)) {
+        safeAreaBottom = self.view.safeAreaInsets.bottom;
+    }
+    
+    CGRect tbFrame = CGRectMake(0,
+                                self.view.bounds.size.height - toolbarH - safeAreaBottom,
+                                self.view.bounds.size.width,
+                                toolbarH + safeAreaBottom); // Include bottom safe area
+    
+    // Remove existing toolbar (if exists) to avoid duplication
+    if (self.toolbarView) {
+        [self.toolbarView removeFromSuperview];
+    }
+    
+    self.toolbarView = [[UIView alloc] initWithFrame:tbFrame];
+    self.toolbarView.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleTopMargin;
+    self.toolbarView.backgroundColor = [UIColor whiteColor];
+    [self.view addSubview:self.toolbarView];
+
+    // Add top separator line
+    UIView *separator = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.toolbarView.bounds.size.width, 0.5)];
+    separator.backgroundColor = [UIColor colorWithRed:0.8 green:0.8 blue:0.8 alpha:1.0]; // Light gray
+    separator.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    [self.toolbarView addSubview:separator];
+
+    // Use same icons as SeafPhotoGalleryViewController, remove download and info buttons
+    NSArray<NSString*> *icons = @[@"detail_delete", @"detail_starred", @"detail_share"];
+    NSUInteger count = icons.count;
+    
+    // Adjust spacing and size according to design
+    CGFloat totalWidth = self.toolbarView.bounds.size.width;
+    
+    // Button spacing should be even, each button occupies the same space
+    CGFloat itemWidth = totalWidth / count;
+    
+    // Icon size itself
+    CGFloat iconSize = 20.0; // Icon size set to 20pt
+    
+    // Create and distribute buttons evenly
+    for (int i = 0; i < count; i++) {
+        UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
+        
+        // Center button in its area
+        CGFloat x = i * itemWidth;
+        btn.frame = CGRectMake(x, 0, itemWidth, toolbarH);
+        
+        // Set icon
+        NSString *iconName = icons[i];
+        UIImage *image = [UIImage imageNamed:iconName];
+        
+        if (image) {
+            // Adjust icon size
+            UIGraphicsBeginImageContextWithOptions(CGSizeMake(iconSize, iconSize), NO, 0.0);
+            [image drawInRect:CGRectMake(0, 0, iconSize, iconSize)];
+            UIImage *resizedImage = UIGraphicsGetImageFromCurrentImageContext();
+            UIGraphicsEndImageContext();
+            
+            // Set icon to gray
+            UIImage *grayImage = [self imageWithTintColor:[UIColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1.0] image:resizedImage];
+            [btn setImage:grayImage forState:UIControlStateNormal];
+            // Slightly adjust icon position in button
+            btn.imageEdgeInsets = UIEdgeInsetsMake(3.0, 0, -3.0, 0); // Adjust margins to fit smaller height
+        }
+        
+        // Set button label and event
+        btn.tag = i;
+        [btn addTarget:self action:@selector(toolbarButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+        [self.toolbarView addSubview:btn];
+    }
+    
+    // Ensure toolbar stays on top layer
+    [self.view bringSubviewToFront:self.toolbarView];
+}
+
+// Helper method: Set color for icon
+- (UIImage *)imageWithTintColor:(UIColor *)tintColor image:(UIImage *)image {
+    UIGraphicsBeginImageContextWithOptions(image.size, NO, image.scale);
+    CGRect rect = CGRectMake(0, 0, image.size.width, image.size.height);
+    
+    [image drawInRect:rect];
+    [tintColor set];
+    UIRectFillUsingBlendMode(rect, kCGBlendModeSourceAtop);
+    
+    UIImage *tintedImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
+    return tintedImage;
+}
+
+// New method to handle toolbar button taps
+- (void)toolbarButtonTapped:(UIButton*)btn {
+    if (![self.preViewItem isKindOfClass:[SeafFile class]]) return;
+    SeafFile *file = (SeafFile *)self.preViewItem;
+    
+    switch (btn.tag) {
+        case 0: // Delete button
+            [self delete:btn];
+            break;
+            
+        case 1: // Star button
+            if ([file isStarred]) {
+                [self unstarFile:btn]; // Call existing unstar method
+            } else {
+                [self starFile:btn]; // Call existing star method
+            }
+            break;
+            
+        case 2: // Share button
+            [self export:btn];
+            break;
+    }
+}
+
+// Update bottom toolbar button states
+- (void)updateToolbarButtons {
+    if (!self.toolbarView) return;
+    
+    // Check current file star status
+    BOOL isStarred = NO;
+    if ([self.preViewItem isKindOfClass:[SeafFile class]]) {
+        SeafFile *file = (SeafFile *)self.preViewItem;
+        isStarred = [file isStarred];
+    }
+    
+    // Update star button
+    for (UIView *subview in self.toolbarView.subviews) {
+        if ([subview isKindOfClass:[UIButton class]]) {
+            UIButton *btn = (UIButton *)subview;
+            if (btn.tag == 1) { // Star button is now index 1
+                NSString *iconName = isStarred ? @"detail_starred_selected" : @"detail_starred";
+                UIImage *image = [UIImage imageNamed:iconName];
+                
+                if (image) {
+                    // Adjust icon size
+                    CGFloat iconSize = 20.0;
+                    UIGraphicsBeginImageContextWithOptions(CGSizeMake(iconSize, iconSize), NO, 0.0);
+                    [image drawInRect:CGRectMake(0, 0, iconSize, iconSize)];
+                    UIImage *resizedImage = UIGraphicsGetImageFromCurrentImageContext();
+                    UIGraphicsEndImageContext();
+                    
+                    // Set icon color
+                    UIImage *finalImage;
+                    if (isStarred) {
+                        finalImage = resizedImage; // Keep original color for starred state
+                    } else {
+                        finalImage = [self imageWithTintColor:[UIColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1.0] image:resizedImage]; // Use gray for unstarred state
+                    }
+                    
+                    [btn setImage:finalImage forState:UIControlStateNormal];
+                }
+            }
+        }
+    }
+}
+
+// Set the preview item and refresh the view.
+- (void)setPreViewItem:(id<SeafPreView>)item master:(UIViewController<SeafDentryDelegate> *)c
+{
+    if (self.masterPopoverController != nil)
+        [self.masterPopoverController dismissPopoverAnimated:YES];
+    if (item) Debug("preview %@", item.previewItemTitle);
+    self.masterVc = c;
+    self.photos = nil;
+    self.preViewItem = item;
+    //if need load from cache.
+    [item load:(self.masterVc ? self.masterVc:self) force:NO];
+    [self refreshView];
+    [self updateToolbarButtons]; // Update toolbar buttons when setting a new preview item
+    
+    // Ensure toolbar always stays on top layer
+    if (self.toolbarView) {
+        [self.view bringSubviewToFront:self.toolbarView];
+    }
+}
+
+// Set and prepare photo views for preview.
+- (void)setPreViewPhotos:(NSArray *)items current:(id<SeafPreView>)item master:(UIViewController<SeafDentryDelegate> *)c
+{
+    [self clearPreView];
+    if (self.masterPopoverController != nil)
+        [self.masterPopoverController dismissPopoverAnimated:YES];// Dismiss popover if exists
+    self.masterVc = c;
+    NSMutableArray *seafPhotos = [[NSMutableArray alloc] init];
+    for (id<SeafPreView> file in items) {
+        [file setDelegate:(self.masterVc ? self.masterVc:self)];
+        [seafPhotos addObject:[[SeafPhoto alloc] initWithSeafPreviewIem: file]];
+    }
+    self.photos = seafPhotos;
+    _state = PREVIEW_PHOTO;
+    Debug("Preview photos PREVIEW_PHOTO: %d, %@ hasCache:%d", self.state, [item name], [item hasCache]);
+    self.preViewItem = item;
+    self.currentPageIndex = [items indexOfObject:item];
+    _mwPhotoBrowser = nil;// force recreate mwPhotoBrowser
+    [self.mwPhotoBrowser setCurrentPhotoIndex:self.currentPageIndex];
+    [self.view addSubview:self.mwPhotoBrowser.view];
+    self.mwPhotoBrowser.view.frame = CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height);
+    [self.mwPhotoBrowser viewDidAppear:false];
+    [self updateNavigation];
+    [self.view setNeedsLayout];
+    
+    // Ensure toolbar always stays on top layer
+    if (self.toolbarView) {
+        [self.view bringSubviewToFront:self.toolbarView];
+    }
+}
+
+// Handle the back button action.
+- (void)goBack:(id)sender
+{
+    if (self.isModal)
+        [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+    else
+        [self.navigationController popViewControllerAnimated:NO];
 }
 
 @end

@@ -7,6 +7,7 @@
 //
 
 #import "ExtentedString.h"
+#import "Debug.h"
 
 @implementation NSString (ExtentedString)
 
@@ -75,10 +76,20 @@
 
 - (NSString *)stringEscapedForJavasacript
 {
-    // valid JSON object need to be an array or dictionary
-    NSArray* arrayForEncoding = @[self];
-    NSString* jsonString = [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:arrayForEncoding options:0 error:nil] encoding:NSUTF8StringEncoding];
+    NSError *error = nil;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:@[self] options:0 error:&error];
+    if (error || !jsonData) {
+        Debug(@"Error serializing string for javascript escaping: %@", error);
+        return @"";
+    }
+    
+    NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+    if (!jsonString || jsonString.length < 4) {
+        return jsonString;
+    }
+    
     NSString* escapedString = [jsonString substringWithRange:NSMakeRange(2, jsonString.length - 4)];
+    
     return escapedString;
 }
 

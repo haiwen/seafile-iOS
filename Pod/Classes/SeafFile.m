@@ -192,7 +192,9 @@
 
 - (void)finishDownload:(NSString *)ooid
 {
-    [[SeafCacheManager sharedManager] saveOidToLocalDB:ooid seafFile:self connection:self.connection];
+    if ([Utils isMainApp]) {
+        [[SeafCacheManager sharedManager] saveOidToLocalDB:ooid seafFile:self connection:self.connection];
+    }
     Debug("%@ ooid=%@, self.ooid=%@, oid=%@", self.name, ooid, self.ooid, self.oid);
     BOOL updated = ![ooid isEqualToString:self.ooid];
     [self setOoid:ooid];
@@ -457,7 +459,7 @@
         return NO;
 
     NSString *newpath = [editDir stringByAppendingPathComponent:self.name];
-    NSURL *pathURL = [NSURL fileURLWithPath:newpath];
+    NSURL *pathURL = [NSURL fileURLWithPath:newpath isDirectory:NO];
     
     [url startAccessingSecurityScopedResource];
     BOOL ret = [Utils copyFile:url to:pathURL];
@@ -626,7 +628,40 @@
     });
 }
 
-- (void)cancel{}
+- (void)cancelDownload
+{
+    // Cancel the download task for the current file
+    if (self.connection && self.connection.accountIdentifier) {
+        Debug(@"Canceling download for file %@", self.name);
+        
+        // Get the account queue through DataTaskManager and remove the download task
+        SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection];
+        [accountQueue removeFileDownloadTask:self];
+        
+        // Reset file status
+        if (self.state == SEAF_DENTRY_LOADING) {
+            self.state = SEAF_DENTRY_INIT;
+            
+            // Notify delegate that download has been canceled
+            dispatch_async(dispatch_get_main_queue(), ^{
+                NSError *error = [NSError errorWithDomain:@"SeafFile" code:-999 userInfo:@{NSLocalizedDescriptionKey: @"Download canceled"}];
+                [self.delegate download:self failed:error];
+                
+                if (self.fileDidDownloadBlock) {
+                    self.fileDidDownloadBlock(self, error);
+                }
+            });
+        }
+        
+        // Remove file task from storage
+        [self removeFileTaskInStorage:self];
+    }
+}
+
+- (void)cancel
+{
+    [self cancelDownload];
+}
 
 #pragma mark - SeafFileDelegate
 
@@ -690,4 +725,12 @@
                           encodedPath];
     return urlString;
 }
+
+- (BOOL)waitUpload
+{
+    if (self.ufile)
+        return [self.ufile waitUpload];
+    return true;
+}
+
 @end

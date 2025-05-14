@@ -44,6 +44,8 @@
 #import "SeafNavLeftItem.h"
 #import "SeafHeaderView.h"
 #import "SeafEditNavRightItem.h"
+#import "SeafLoadingView.h"
+#import "SeafPhotoGalleryViewController.h"
 
 #define kCustomTabToolWithTopPadding 15
 #define kCustomTabToolButtonHeight 40
@@ -75,13 +77,13 @@ enum {
 - (UITableViewCell *)getSeafRepoCell:(SeafRepo *)srepo forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
 
 @property (strong) id curEntry; // Currently selected directory entry.
-@property (strong, nonatomic) IBOutlet UIActivityIndicatorView *loadingView;
 
 @property (strong) UIBarButtonItem *selectAllItem;// Button to select all items in the directory.
 @property (strong) UIBarButtonItem *selectNoneItem;
 @property (strong) UIBarButtonItem *photoItem; // Button to trigger photo actions.
 @property (strong) UIBarButtonItem *doneItem;
 @property (strong) UIBarButtonItem *editItem;
+@property (strong) UIBarButtonItem *searchItem;
 @property (strong) NSArray *rightItems;
 
 @property (retain) SWTableViewCell *selectedCell;// The cell currently selected.
@@ -121,6 +123,15 @@ enum {
 @synthesize selectedCell = _selectedCell;
 @synthesize editToolItems = _editToolItems;
 
+// Override status bar style for this view controller
+- (UIStatusBarStyle)preferredStatusBarStyle {
+    return UIStatusBarStyleDefault; // Use default (dark content, light background)
+}
+
+// Ensure view controller controls status bar
+- (BOOL)prefersStatusBarHidden {
+    return NO;
+}
 
 #pragma mark - Lifecycle
 
@@ -135,6 +146,9 @@ enum {
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    
+    // Initialize loading view
+    self.loadingView = [SeafLoadingView loadingViewWithParentView:self.view];
     
     [self.tableView registerNib:[UINib nibWithNibName:@"SeafCell" bundle:nil]
          forCellReuseIdentifier:@"SeafCell"];
@@ -172,7 +186,6 @@ enum {
     bView.backgroundColor = kPrimaryBackgroundColor;
     self.tableView.backgroundView = bView;
     
-    self.tableView.tableHeaderView = self.searchController.searchBar;
     self.tableView.tableFooterView = [UIView new];
     self.tableView.allowsMultipleSelection = NO;
 
@@ -188,6 +201,12 @@ enum {
     
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     [self.navigationController setToolbarHidden:YES animated:NO];
+
+    // Configure view controller for status bar appearance during search
+    if (@available(iOS 13.0, *)) {
+        // This ensures status bar uses proper background during search
+        self.modalPresentationCapturesStatusBarAppearance = YES;
+    }
 
     UIRefreshControl *refreshControl = [[UIRefreshControl alloc] init];
     self.tableView.refreshControl = refreshControl;
@@ -318,7 +337,16 @@ enum {
         UIBarButtonItem *customBarItem = [[UIBarButtonItem alloc] initWithCustomView:containerView];
         self.doneItem = customBarItem;
         self.editItem = [self getBarItemAutoSize:@"more" action:@selector(editSheet:)];
-        self.rightItems = [NSArray arrayWithObjects:self.editItem, nil];
+        if (directory.connection.isSearchEnabled) {
+            self.searchItem = [self getBarItem:@"fileNav_search" action:@selector(searchAction:) size:18];
+            // Add a fixed width space item to increase button spacing
+            UIBarButtonItem *spaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:nil action:nil];
+            spaceItem.width = 20; // Set spacing width
+            
+            self.rightItems = [NSArray arrayWithObjects:self.editItem, spaceItem, self.searchItem, nil];
+        } else {
+            self.rightItems = [NSArray arrayWithObjects:self.editItem,nil];
+        }
 
         _selectNoneItem = [[SeafEditNavRightItem alloc] initWithTitle:@"Select All" imageName:@"ic_checkbox_unchecked" target:self action:@selector(selectAll:)];
         
@@ -337,10 +365,7 @@ enum {
 
 - (void)viewWillLayoutSubviews {
     [super viewWillLayoutSubviews];
-    if (self.loadingView.isAnimating) {
-        CGRect viewBounds = self.view.bounds;
-        self.loadingView.center = CGPointMake(CGRectGetMidX(viewBounds), CGRectGetMidY(viewBounds));
-    }
+    [self.loadingView updatePosition];
 }
 
 
@@ -451,7 +476,33 @@ enum {
         id<SeafPreView> item = (id<SeafPreView>)_curEntry;
 
         if ([self isCurrentFileImage:item]) {
-            [self.detailViewController setPreViewPhotos:[self getCurrentFileImagesInTableView:tableView] current:item master:self];
+            // 收集所有图片类型的文件
+            NSMutableArray *imageFiles = [NSMutableArray array];
+            for (id entry in self.allItems) {
+                if ([entry conformsToProtocol:@protocol(SeafPreView)] && [(id<SeafPreView>)entry isImageFile]) {
+                    [imageFiles addObject:entry];
+                }
+            }
+            
+            // 如果没有找到图片文件，使用旧版详情视图
+            if (imageFiles.count == 0) {
+                Warning("没有找到图片文件");
+                [self.detailViewController setPreViewItem:item master:self];
+                return;
+            }
+            
+            // 创建并设置照片库视图控制器，使用推荐的初始化方法
+            SeafPhotoGalleryViewController *gallery = [[SeafPhotoGalleryViewController alloc] initWithPhotos:imageFiles
+                                                                                                currentItem:item
+                                                                                                     master:self];
+            
+            // 将画廊视图控制器包装在导航控制器中，并模态显示
+            UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:gallery];
+            navController.modalPresentationStyle = UIModalPresentationFullScreen;
+            
+            // 模态显示导航控制器
+            [self presentViewController:navController animated:YES completion:nil];
+            return; // 处理图片文件后返回
         } else {
             [self.detailViewController setPreViewItem:item master:self];
         }
@@ -502,11 +553,11 @@ enum {
 }
 
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
-    // 仅处理 SeafRepos 类型目录的 header
+    // Only process headers for SeafRepos type directories
     if (![_directory isKindOfClass:[SeafRepos class]])
         return nil;
     
-    // 根据 section 计算 header 要显示的文本
+    // Calculate header text based on section
     NSString *text = nil;
     if (section == 0) {
         text = NSLocalizedString(@"My Own Libraries", @"Seafile");
@@ -523,13 +574,17 @@ enum {
                 text = @"";
             } else if ([repo.type isEqualToString:SHARE_REPO]) {
                 text = NSLocalizedString(@"Shared to me", @"Seafile");
-            } else if ([repo.type isEqualToString:GROUP_REPO]) {
+            } else if ([repo.type isEqualToString:GROUP_REPO]) {//show group name, not id
                 if (!repo.groupName || repo.groupName.length == 0) {
                     text = NSLocalizedString(@"Shared with groups", @"Seafile");
                 } else {
-                    text = repo.groupName;
+                    if ([text isEqualToString:ORG_REPO]) {//Organization special
+                        text = NSLocalizedString(@"Organization", @"Seafile");
+                    } else {
+                        text = repo.groupName;
+                    }
                 }
-            } else {
+            } else {//old logic
                 if ([repo.owner isKindOfClass:[NSNull class]]) {
                     text = @"";
                 } else {
@@ -539,14 +594,14 @@ enum {
         }
     }
     
-    // 获取当前 section 是否展开
+    // Get whether the current section is expanded
     NSNumber *expanded = [self.expandedSections objectForKey:@(section)];
     BOOL isExpanded = expanded ? [expanded boolValue] : NO;
     
-    // 创建 SeafHeaderView 实例
+    // Create SeafHeaderView instance
     SeafHeaderView *header = [[SeafHeaderView alloc] initWithSection:section title:text expanded:isExpanded];
     
-    // 设置 toggle 和 tap 回调
+    // Set toggle and tap callbacks
     __weak typeof(self) weakSelf = self;
     header.toggleAction = ^(NSInteger section) {
         __strong typeof(weakSelf) self = weakSelf;
@@ -663,18 +718,8 @@ enum {
     [self setDirectory:(SeafDir *)conn.rootFolder];
 }
 
-- (void)hideSearchBar:(SeafConnection *)conn
-{
-    if (conn.isSearchEnabled) {
-        self.tableView.tableHeaderView = self.searchController.searchBar;
-    } else {
-        self.tableView.tableHeaderView = nil;
-    }
-}
-
 - (void)setDirectory:(SeafDir *)directory
 {
-    [self hideSearchBar:directory.connection];
     [self initNavigationItems:directory];
 
     _directory = directory;
@@ -701,8 +746,14 @@ enum {
         }
     }
     
-    if (![_directory isKindOfClass:[SeafRepos class]])
+    // Add a 10pt height blank header view if directory is not SeafRepos
+    if (![_directory isKindOfClass:[SeafRepos class]]) {
         self.tableView.sectionHeaderHeight = 0;
+        self.tableView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 10.0)];
+    } else {
+        self.tableView.tableHeaderView = nil;
+    }
+    
     [_directory setDelegate:self];
     [self refreshView];
     
@@ -784,19 +835,19 @@ enum {
 
 - (void)showLoadingView
 {
-    if (!self.loadingView) {
-        self.loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
-        self.loadingView.color = [UIColor darkTextColor];
-        self.loadingView.hidesWhenStopped = YES;
-        [self.view addSubview:self.loadingView];
-    }
-    self.loadingView.center = self.view.center;
-    [self.loadingView startAnimating];
+    // Get the key window for proper centering in the entire screen
+    UIWindow *keyWindow = [[UIApplication sharedApplication] keyWindow];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        // Only show loading view if still in loading state
+        if (self.state == STATE_LOADING) {
+            [self.loadingView showInView:keyWindow];
+        }
+    });
 }
 
 - (void)dismissLoadingView
 {
-    [self.loadingView stopAnimating];
+    [self.loadingView dismiss];
 }
 
 - (void)loadDataFromServerAndRefresh {
@@ -1234,7 +1285,7 @@ enum {
             if ([_curEntry isKindOfClass:[SeafRepo class]]) {
                 repo = (SeafRepo *)_curEntry;
             } else {
-                repo = (SeafRepo *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
+                return;
             }
             [[SeafFileOperationManager sharedManager]
                 renameEntry:oldName
@@ -1309,7 +1360,15 @@ enum {
     imagePickerController.mediaType = QBImagePickerMediaTypeAny;
     if (IsIpad()) {
         imagePickerController.modalPresentationStyle = UIModalPresentationPopover;
-        imagePickerController.popoverPresentationController.barButtonItem = self.photoItem;
+        // Use self.editItem if self.photoItem is nil (when called from "more" menu)
+        UIBarButtonItem *sourceItem = sender && [sender isKindOfClass:[UIBarButtonItem class]] ? (UIBarButtonItem *)sender : (self.photoItem ? self.photoItem : self.editItem);
+        imagePickerController.popoverPresentationController.barButtonItem = sourceItem;
+        
+        // Fallback to using view controller's view as source view if no bar button item is available
+        if (!sourceItem) {
+            imagePickerController.popoverPresentationController.sourceView = self.view;
+            imagePickerController.popoverPresentationController.sourceRect = CGRectMake(self.view.bounds.size.width/2, self.view.bounds.size.height/2, 0, 0);
+        }
     } else {
         imagePickerController.modalPresentationStyle = UIModalPresentationFullScreen;
     }
@@ -1420,15 +1479,16 @@ enum {
     return item.isImageFile;
 }
 
-- (NSArray *)getCurrentFileImagesInTableView:(UITableView *)tableView
-{
-    NSMutableArray *arr = [[NSMutableArray alloc] init];
+- (NSArray *)getCurrentFileImagesInTableView:(UITableView *)tableView {
+    NSMutableArray *images = [NSMutableArray array];
+    
     for (id entry in self.allItems) {
-        if ([entry conformsToProtocol:@protocol(SeafPreView)]
-            && [(id<SeafPreView>)entry isImageFile])
-            [arr addObject:entry];
+        if ([entry conformsToProtocol:@protocol(SeafPreView)] && [(id<SeafPreView>)entry isImageFile]) {
+            [images addObject:entry];
+        }
     }
-    return arr;
+    
+    return [images copy];
 }
 
 - (void)browserAllPhotos
@@ -2458,14 +2518,114 @@ enum {
     if (!_searchController) {
         _searchController = [[UISearchController alloc] initWithSearchResultsController:self.searchResultController];
         _searchController.searchResultsUpdater = self.searchResultController;
-        _searchController.searchBar.searchBarStyle = UISearchBarStyleMinimal;
-        _searchController.searchBar.barTintColor = [UIColor clearColor];
-        _searchController.searchBar.backgroundColor = [UIColor clearColor];
+        if (IsIpad()) {
+            _searchController.hidesNavigationBarDuringPresentation = NO; // Keep navigation bar visible
+        }
+        
+        // Set properties to ensure opaque status bar background
+        _searchController.searchBar.searchBarStyle = UISearchBarStyleProminent; // Changed to prominent style
+        _searchController.obscuresBackgroundDuringPresentation = NO;
+        
+        // Additional style settings for iOS appearance
+        _searchController.searchBar.translucent = YES;  // Make it translucent for the gray appearance
+        
+        // Configure search bar appearance like system search - Light gray background
+        UIColor *lightGrayColor = [UIColor colorWithRed:0.95 green:0.95 blue:0.95 alpha:1.0]; // Light gray
+        _searchController.searchBar.barTintColor = lightGrayColor;
+        _searchController.searchBar.backgroundColor = lightGrayColor;
+        
+        // Remove any background images to show the default system appearance
+        [_searchController.searchBar setBackgroundImage:nil forBarPosition:UIBarPositionAny barMetrics:UIBarMetricsDefault];
+        [_searchController.searchBar setBackgroundImage:nil];
+        
+        // Make the 'Cancel' button blue
+        _searchController.searchBar.tintColor = [UIColor systemBlueColor];
+        
+        // Set placeholder text style and color
+        NSAttributedString *placeholderAttributes = [[NSAttributedString alloc] initWithString:NSLocalizedString(@"Search files in this library", @"Seafile") 
+                                                                  attributes:@{NSForegroundColorAttributeName: [UIColor darkGrayColor]}];
+        
+        // Set the attributed placeholder text for iOS 13+ using searchTextField
+        if (@available(iOS 13.0, *)) {
+            UITextField *searchField = _searchController.searchBar.searchTextField;
+            searchField.attributedPlaceholder = placeholderAttributes;
+            searchField.backgroundColor = [UIColor colorWithRed:0.92 green:0.92 blue:0.92 alpha:1.0]; // Slightly darker than bar
+        } else {
+            // For older iOS versions
+            [[UILabel appearanceWhenContainedIn:[UISearchBar class], nil] setAttributedText:placeholderAttributes];
+        }
+        
+        // Configure custom appearance for search presentation
+        if (@available(iOS 15.0, *)) {
+            UINavigationBarAppearance *searchBarAppearance = [[UINavigationBarAppearance alloc] init];
+            [searchBarAppearance configureWithOpaqueBackground];
+            searchBarAppearance.backgroundColor = [UIColor whiteColor]; // Same as navigation bar
+            
+            // Apply to navigation bar instead of search bar
+            self.navigationController.navigationBar.standardAppearance = searchBarAppearance;
+            self.navigationController.navigationBar.scrollEdgeAppearance = searchBarAppearance;
+            
+            // For search bar, we can only set these properties
+            if (@available(iOS 13.0, *)) {
+                _searchController.searchBar.searchTextField.backgroundColor = [UIColor whiteColor];
+                // Style the text field for better visibility
+                _searchController.searchBar.searchTextField.borderStyle = UITextBorderStyleNone;
+                _searchController.searchBar.searchTextField.layer.cornerRadius = 8.0;
+                _searchController.searchBar.searchTextField.clipsToBounds = YES;
+                
+                // Make sure the background is solid
+                UIView *backgroundView = [[UIView alloc] init];
+                backgroundView.backgroundColor = [UIColor whiteColor];
+                [_searchController.searchBar insertSubview:backgroundView atIndex:0];
+            }
+            _searchController.searchBar.tintColor = BAR_COLOR;
+        }
+        
         [_searchController.searchBar sizeToFit];
+        
+        // Listen for notifications to handle search cancellation
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(searchCancelled:)
+                                                     name:@"SeafSearchCancelled"
+                                                   object:nil];
         
         self.definesPresentationContext = YES;
     }
     return _searchController;
+}
+
+// Handle search cancellation notification
+- (void)searchCancelled:(NSNotification *)notification {
+    // Disable animations
+    [UIView setAnimationsEnabled:NO];
+    
+    // Directly set search controller to inactive state
+    if (self.searchController.active) {
+        self.searchController.active = NO;
+    }
+    
+    // Immediately hide search bar without animation
+    if (![self.directory isKindOfClass:[SeafRepos class]]) {
+        self.tableView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 10.0)];
+    } else {
+        self.tableView.tableHeaderView = nil;
+    }
+    // Restore animation settings
+    [UIView setAnimationsEnabled:YES];
+    
+    // Add fade-in effect for table content
+    self.tableView.alpha = 0.9;
+    
+    // Add fade-in animation for navigation bar and table content
+    [UIView animateWithDuration:0.3 animations:^{
+        // Navigation bar fade-in
+        if (self.navigationController && self.navigationController.navigationBar) {
+            self.navigationController.navigationBar.alpha = 1.0;
+        }
+        
+        // Table content fade-in
+        self.tableView.alpha = 1.0;
+    }];
 }
 
 - (void)setupCustomTabTool {
@@ -2531,13 +2691,8 @@ enum {
     // Set button sizes and spacing
     CGFloat screenWidth = customToolView.bounds.size.width;
     
-    // First row - evenly divide screen width
-    CGFloat firstRowButtonWidth = screenWidth / 5.0;
-    CGFloat firstRowTopPosition = kCustomTabToolWithTopPadding;
-    
     // Calculate second row position
     CGFloat buttonHeight = kCustomTabToolButtonHeight;
-    CGFloat secondRowTopPosition = kCustomTabToolWithTopPadding + buttonHeight + 25;
         
     // Set initial position below screen
     CGRect initialFrame = customToolView.frame;
@@ -2709,6 +2864,21 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
     // Execute action based on button type
     switch (buttonView.tag) {
         case ToolButtonShare: {
+            if (selectedItems.count == 1) {
+                SeafBase *selectedItem = selectedItems.firstObject;
+                if ([selectedItem isKindOfClass:[SeafDir class]]) {
+                    self.state = STATE_SHARE_LINK;
+                    [self editDone:nil]; // Exit edit mode here
+                    if (!selectedItem.shareLink) {
+                        [SVProgressHUD showWithStatus:NSLocalizedString(@"Generate share link ...", @"Seafile")];
+                        [selectedItem generateShareLink:self];
+                    } else {
+                        [self generateSharelink:selectedItem WithResult:YES];
+                    }
+                    break;
+                }
+            }
+            
             self.state = STATE_EXPORT;
             [self editDone:nil]; // Exit edit mode here
             @weakify(self);
@@ -2834,9 +3004,8 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
     if (selectedItems.count == 0) {
         [self setAllToolButtonEnable:NO];
     } else if (selectedItems.count == 1) {
+        _selectedindex = selectedIndexPaths.firstObject;
         [self setAllToolButtonEnable:YES];
-        
-        [self updateExportBarItem:selectedItems];//set share btn
     } else {
         //redownload
         [self updateToolButton:ToolButtonDownload enabled:YES];
@@ -2915,7 +3084,7 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
                 if (![entry isKindOfClass:[SeafUploadFile class]]) {
                     // Select the cell that was long pressed
                     [self.tableView selectRowAtIndexPath:indexPath animated:YES scrollPosition:UITableViewScrollPositionNone];
-                    
+                    _selectedindex = indexPath;
                     // Update selection status
                     [self noneSelected:NO];
                     [self updateToolButtonsState];
@@ -2950,4 +3119,38 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
     return NO;  // Return NO to avoid gesture conflict
 }
+
+#pragma mark - Search Action
+
+- (void)searchAction:(id)sender {
+    // Set search bar as table header view
+    self.tableView.tableHeaderView = self.searchController.searchBar;
+    
+    // Ensure status bar style is set correctly before activating search
+    if (@available(iOS 13.0, *)) {
+        // Force status bar to update appearance
+        [self setNeedsStatusBarAppearanceUpdate];
+    }
+    
+    // Activate search bar
+    [self.searchController.searchBar becomeFirstResponder];
+}
+
+#pragma mark - Helper Methods
+
+// Helper method to create a solid color image for backgrounds
+- (UIImage *)imageWithColor:(UIColor *)color {
+    CGRect rect = CGRectMake(0, 0, 1, 1);
+    UIGraphicsBeginImageContext(rect.size);
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    
+    CGContextSetFillColorWithColor(context, [color CGColor]);
+    CGContextFillRect(context, rect);
+    
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
+    return image;
+}
+
 @end

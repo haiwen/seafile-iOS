@@ -16,6 +16,7 @@
 #import "SeafDateFormatter.h"
 #import "SeafCell.h"
 #import "SeafActionSheet.h"
+#import "SeafLoadingView.h"
 
 #import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
@@ -39,6 +40,7 @@
 
 @property (retain)id lock;
 @property (nonatomic, strong)NSMutableArray *cellDataArray;
+@property (strong, nonatomic) SeafLoadingView *loadingView;
 @end
 
 @implementation SeafStarredFilesViewController
@@ -62,16 +64,23 @@
 
 - (void)refresh:(id)sender
 {
+    // Only show loading view when there's no data
+    if (!_cellDataArray || _cellDataArray.count == 0) {
+        [self showLoadingView];
+    }
+    
     [_connection getStarredFiles:^(NSHTTPURLResponse *response, id JSON) {
         @synchronized(self) {
             Debug("Succeeded to get starred files ...\n");
             [self handleData:JSON];
             [self endPullRefresh];
             [self.tableView reloadData];
+            [self dismissLoadingView];
         }
     }
                          failure:^(NSHTTPURLResponse *response, NSError *error) {
                              Warning("Failed to get starred files ...\n");
+                             [self dismissLoadingView];
                              if (self.isVisible)
                                  [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get starred files", @"Seafile")];
                              [self.tableView.pullToRefreshView stopAnimating];
@@ -106,8 +115,13 @@
         self.tableView.sectionHeaderTopPadding = 0;
     }
     
+    // Initialize loading view
+    self.loadingView = [SeafLoadingView loadingViewWithParentView:self.view];
+
     self.tableView.refreshControl = [[UIRefreshControl alloc] init];
     [self.tableView.refreshControl addTarget:self action:@selector(refreshControlChanged) forControlEvents:UIControlEventValueChanged];
+    
+    [self refresh:nil];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -274,7 +288,7 @@
             [cell.cacheStatusWidthConstraint setConstant:0.0f];
             [cell layoutIfNeeded];
         } else {
-            if (sfile.hasCache || waiting || sfile.isDownloading) {
+            if (![sfile isSdocFile] && (sfile.hasCache || waiting || sfile.isDownloading)) {
                 cell.cacheStatusView.hidden = false;
                 [cell.cacheStatusWidthConstraint setConstant:21.0f];
                 if (sfile.isDownloading) {
@@ -352,9 +366,13 @@
     NSString *CellIdentifier = @"SeafCell";
     SeafCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
     cell.cellIndexPath = indexPath;
-    cell.moreButtonBlock = ^(NSIndexPath *indexPath) {
-        Debug(@"%@", indexPath);
-        [self showActionSheetWithIndexPath:indexPath];
+    __weak typeof(cell) weakCell = cell;
+    cell.moreButtonBlock = ^(NSIndexPath *unused) {
+        __strong typeof(weakCell) strongCell = weakCell;
+        if (!strongCell) return;
+        NSIndexPath *currentIndexPath = [self.tableView indexPathForCell:strongCell];
+        if (!currentIndexPath) return;
+        [self showActionSheetWithIndexPath:currentIndexPath];
     };
     cell.isStarredCell = YES;
     [cell reset];
@@ -552,33 +570,40 @@
 }
 
 #pragma mark - Sheet
-- (void)showActionSheetWithIndexPath:(NSIndexPath *)indexPath
+-(void)showActionSheetWithIndexPath:(NSIndexPath *)indexPath
 {
     _selectedindex = indexPath;
 
     SeafCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
     NSString *title = NSLocalizedString(@"Navigate to Folder", @"Seafile");
-    
     NSString *unStar = S_UNSTAR;
-
-    NSArray *titles = @[title,unStar];
-
-    [self showSheetWithTitles:titles andFromIndex:indexPath andView:cell];
+    NSArray *titles = @[title, unStar];
+    SeafBase *entry = _cellDataArray[indexPath.row];
+    [self showSheetWithTitles:titles entry:entry andView:cell];
 }
 
-- (void)showSheetWithTitles:(NSArray*)titles andFromIndex:(NSIndexPath *)cellIndexPath andView:(id)view{
+
+- (void)showSheetWithTitles:(NSArray*)titles entry:(SeafBase *)entry andView:(UIView*)view
+{
     SeafActionSheet *actionSheet = [SeafActionSheet actionSheetWithoutCancelWithTitles:titles];
     actionSheet.targetVC = self;
 
-    [actionSheet setButtonPressedBlock:^(SeafActionSheet *actionSheet, NSIndexPath *indexPath){
+    [actionSheet setButtonPressedBlock:^(SeafActionSheet *actionSheet, NSIndexPath *buttonIndexPath){
         [actionSheet dismissAnimated:YES];
-        if (indexPath.section == 0) {
-            [self locateToTargetPathFromIndex:cellIndexPath.row];
-        } else if (indexPath.section == 1){
-            [self setUnstar:cellIndexPath.row];
+        if (buttonIndexPath.row == 0) {
+            NSInteger currentIndex = [_cellDataArray indexOfObject:entry];
+            if (currentIndex != NSNotFound) {
+                [self locateToTargetPathFromIndex:currentIndex];
+            }
+        } else if (buttonIndexPath.row == 1) {
+            [entry setStarred:NO withBlock:nil];
+            NSInteger currentIndex = [_cellDataArray indexOfObject:entry];
+            if (currentIndex != NSNotFound) {
+                [self deleteRow:currentIndex];
+            }
         }
     }];
-    
+
     [actionSheet showFromView:view];
 }
 
@@ -668,6 +693,16 @@
     [navController setViewControllers:createdNavgationControllers animated:NO];
     
     self.tabBarController.selectedIndex = 0;
+}
+
+- (void)showLoadingView {
+    // Get the key window for proper centering in the entire screen
+    UIWindow *keyWindow = [[UIApplication sharedApplication] keyWindow];
+    [self.loadingView showInView:keyWindow];
+}
+
+- (void)dismissLoadingView {
+    [self.loadingView dismiss];
 }
 
 @end
