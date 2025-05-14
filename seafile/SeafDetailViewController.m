@@ -544,6 +544,12 @@ enum SHARE_STATUS {
     if (updated) {
         [self refreshView];
         [self updateToolbarButtons]; // Update toolbar buttons after download completes
+    } else if (self.state == PREVIEW_DOWNLOADING && entry.hasCache) {
+        // If not updated but still showing loading page and file has cache
+        // This can happen when file was already cached before but UI still shows loading
+        Debug("File not updated but has cache, refreshing view: %@", entry.name);
+        [self refreshView]; // This will update the view state based on cache
+        [self updateToolbarButtons]; // Update toolbar buttons
     }
 }
 

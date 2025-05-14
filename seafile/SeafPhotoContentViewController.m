@@ -161,7 +161,7 @@
                     [galleryVC performSelector:@selector(disableScrolling)];
                     hasSpecialGalleryHandling = YES;
                 } @catch (NSException *exception) {
-                    NSLog(@"Exception when calling disableScrolling: %@", exception);
+                    Debug(@"Exception when calling disableScrolling: %@", exception);
                 }
             }
             
@@ -184,7 +184,7 @@
                         toolbarView.alpha = 1.0;
                     }
                 } @catch (NSException *exception) {
-                    NSLog(@"Exception when accessing gallery properties: %@", exception);
+                    Debug(@"Exception when accessing gallery properties: %@", exception);
                 }
                 
                 // Hide navigation bar with fade
@@ -219,7 +219,7 @@
                         toolbarView.alpha = 1.0;
                     }
                 } @catch (NSException *exception) {
-                    NSLog(@"Exception when accessing gallery properties: %@", exception);
+                    Debug(@"Exception when accessing gallery properties: %@", exception);
                 }
             }
         }
@@ -491,7 +491,7 @@
                     } completion:nil];
                 }
             } @catch (NSException *exception) {
-                NSLog(@"Exception when accessing gallery properties: %@", exception);
+                Debug(@"Exception when accessing gallery properties: %@", exception);
             }
         }
     }
@@ -595,7 +595,7 @@
                 }
             } @catch (NSException *exception) {
                 // Handle possible exceptions to maintain app stability
-                NSLog(@"Exception when accessing gallery properties: %@", exception);
+                Debug(@"Exception when accessing gallery properties: %@", exception);
             }
         }
         
@@ -745,31 +745,31 @@
 // Add method to fetch file metadata from API
 - (void)fetchFileMetadata {
     if (!self.repoId || !self.filePath) {
-        NSLog(@"Cannot fetch file metadata: repoId or filePath is missing");
+        Debug(@"Cannot fetch file metadata: repoId or filePath is missing");
         return;
     }
     
     // Use the connection property instead of getting it from app delegate
     if (!self.connection || !self.connection.authorized) {
-        NSLog(@"No valid connection available for API request");
+        Debug(@"No valid connection available for API request");
         return;
     }
     
     // Build the API URL
     NSString *requestUrl = [NSString stringWithFormat:@"%@/repos/%@/file/detail/?p=%%2F%@", API_URL, self.repoId, [self.filePath escapedUrl]];
-    NSLog(@"Fetching file metadata from URL: %@", requestUrl);
+    Debug(@"Fetching file metadata from URL: %@", requestUrl);
     
     // Use SeafConnection's sendRequest method
     [self.connection sendRequest:requestUrl
                     success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
         // Handle success response
         if (!JSON) {
-            NSLog(@"No data received from file metadata API");
+            Debug(@"No data received from file metadata API");
             return;
         }
         
         // Log the response for debugging
-        NSLog(@"File metadata response: %@", JSON);
+        Debug(@"File metadata response: %@", JSON);
         
         // Extract the needed information
         NSNumber *fileSize = JSON[@"size"];
@@ -808,7 +808,7 @@
         });
     }
     failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
-        NSLog(@"Error fetching file metadata: %@", error);
+        Debug(@"Error fetching file metadata: %@", error);
     }];
 }
 
@@ -1180,7 +1180,7 @@
                 [parentVC performSelector:handleSwipeDownSelector withObject:nil];
             }
         } @catch (NSException *exception) {
-            NSLog(@"Exception when trying to call handleSwipeDown: %@", exception);
+            Debug(@"Exception when trying to call handleSwipeDown: %@", exception);
         }
     }
 }
