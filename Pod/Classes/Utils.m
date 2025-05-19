@@ -19,7 +19,7 @@
 #import <Photos/Photos.h>
 #import <MobileCoreServices/MobileCoreServices.h>
 #import <SystemConfiguration/SystemConfiguration.h>
-
+#import <UniversalDetector/UniversalDetector.h>
 @implementation Utils
 
 
@@ -266,32 +266,14 @@
 
 + (NSString *)stringContent:(NSString *)path
 {
-    if ([Utils fileSizeAtPath1:path] > 10 * 1024 * 1024)
-        return nil;
-    NSString *encodeContent;
-    NSStringEncoding encode;
-    encodeContent = [NSString stringWithContentsOfFile:path usedEncoding:&encode error:nil];
-    if (!encodeContent) {
-        int i = 0;
-        NSStringEncoding encodes[] = {
-            NSUTF8StringEncoding,
-            CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGB_18030_2000),
-            CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGB_2312_80),
-            CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGBK_95),
-            NSUnicodeStringEncoding,
-            NSASCIIStringEncoding,
-            0,
-        };
-        while (encodes[i]) {
-            encodeContent = [NSString stringWithContentsOfFile:path encoding:encodes[i] error:nil];
-             if (encodeContent) {
-                Debug("use encoding %d, %ld\n", i, (unsigned long)encodes[i]);
-                break;
-            }
-            ++i;
-        }
-    }
-    return encodeContent;
+    NSData *data = [NSData dataWithContentsOfFile:path];
+    if (!data || data.length > 10 * 1024 * 1024) return nil;
+
+    CFStringEncoding enc = [UniversalDetector encodingWithData:data];
+    if (enc == kCFStringEncodingInvalidId) return nil;
+
+    NSStringEncoding nsEnc = CFStringConvertEncodingToNSStringEncoding(enc);
+    return [[NSString alloc] initWithData:data encoding:nsEnc];
 }
 
 + (BOOL)isImageFile:(NSString *)name
