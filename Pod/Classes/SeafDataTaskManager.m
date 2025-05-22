@@ -15,6 +15,8 @@
 #import "SeafStorage.h"
 #import <AFNetworking/AFNetworking.h>
 #import "SeafUploadFileModel.h"
+#import "SeafFile.h"
+#import "SeafThumb.h"
 
 @interface SeafDataTaskManager()
 
@@ -70,6 +72,24 @@
 
 #pragma mark - Download Tasks
 - (void)addFileDownloadTask:(SeafFile * _Nonnull)dfile priority:(NSOperationQueuePriority)priority {
+    if (!self.reachabilityManager.isReachable) {
+        Debug(@"[SeafDataTaskManager] Network is not available. Failing download task for: %@", dfile.name);
+        NSError *networkUnreachableError = [NSError errorWithDomain:NSURLErrorDomain
+                                                               code:NSURLErrorNotConnectedToInternet
+                                                           userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Network unavailable", @"Seafile")}];
+
+        if ([dfile respondsToSelector:@selector(failedDownload:)]) {
+            [dfile failedDownload:networkUnreachableError];
+        } else if (dfile.delegate && [dfile.delegate respondsToSelector:@selector(download:failed:)]) {
+            dfile.state = SEAF_DENTRY_FAILURE; 
+            [dfile.delegate download:dfile failed:networkUnreachableError];
+        } else {
+            dfile.state = SEAF_DENTRY_FAILURE;
+            Debug(@"[SeafDataTaskManager] Could not notify delegate about download failure for: %@ due to network unavailability.", dfile.name);
+        }
+        return;
+    }
+
     SeafAccountTaskQueue *accountQueue = [self accountQueueForConnection:dfile.connection];
     [accountQueue addFileDownloadTask:dfile priority:priority];
     if (dfile.retryable) {
@@ -84,6 +104,27 @@
 #pragma mark - Thumb Tasks
 
 - (void)addThumbTask:(SeafThumb * _Nonnull)thumb {
+    // Check network availability before adding the task
+    if (!self.reachabilityManager.isReachable) {
+        Debug(@"[SeafDataTaskManager] Network is not available. Failing thumb task for: %@", thumb.file.name);
+        if (thumb.file) {
+            // Notify SeafFile that its thumbnail download has failed.
+            // This will update the file's state and inform its delegate.
+            [thumb.file finishDownloadThumb:NO];
+
+            // The 'finishDownloadThumb:NO' method on SeafFile should call its delegate's
+            // 'download:complete:NO' method. The delegate (e.g., SeafDetailViewController)
+            // will then handle this as a generic failure for the thumbnail.
+            // If a more specific error message like "Network unavailable" is desired in the UI
+            // for this specific scenario (similar to the file download change),
+            // SeafFile's API or its delegate handling would need to be augmented to pass an NSError.
+            // For now, this ensures the thumb download is correctly marked as failed.
+        } else {
+            Debug(@"[SeafDataTaskManager] Thumb task has no associated file. Cannot mark as failed.");
+        }
+        return; // Do not add the task to the queue
+    }
+
     SeafAccountTaskQueue *accountQueue = [self accountQueueForConnection:thumb.file.connection];
     [accountQueue addThumbTask:thumb];
 }
