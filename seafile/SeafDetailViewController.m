@@ -577,7 +577,15 @@ enum SHARE_STATUS {
     if (self.preViewItem != entry || self.preViewItem.hasCache)
         return;// Return if the entry is not the current item or if it is cached
 
-    [self showDownloadError:self.preViewItem.previewItemTitle];
+    // 如果是网络不可达错误，则显示特定提示
+    if (error && error.code == NSURLErrorNotConnectedToInternet) {
+        if (self.isVisible) {
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Network unavailable", @"Seafile")];
+        }
+    } else {
+         // 否则显示通用下载失败提示
+        [self showDownloadError:self.preViewItem.previewItemTitle];
+    }
     [self setPreViewItem:nil master:nil];// Clear the preview item and master
 }
 
