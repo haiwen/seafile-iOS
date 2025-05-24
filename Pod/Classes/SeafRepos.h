@@ -11,6 +11,7 @@
 #define SHARE_REPO @"shared"
 #define GROUP_REPO @"group"
 #define MINE_REPO @"mine"
+#define PUBLIC_REPO @"public"
 
 #define ORG_REPO @"Organization"
 

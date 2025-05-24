@@ -46,8 +46,8 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
 - (instancetype)init {
     if (self = [super init]) {
         _selectedIndex = 0;
-        _defaultSpacing = 1.0;
-        _spacingAroundSelectedItem = 12.0;
+        _defaultSpacing = 4.0; // Increased from 1.0
+        _spacingAroundSelectedItem = 13.0;
         _isDragging = NO; // Initialize dragging state
     }
     return self;
@@ -102,7 +102,7 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
    UIScrollViewDelegate,
    SeafDentryDelegate>
 
-@property (nonatomic, strong) UIPageViewController     *pageVC;
+//@property (nonatomic, strong) UIPageViewController     *pageVC;
 @property (nonatomic, strong) NSArray<NSDictionary *>  *infoModels;
 @property (nonatomic, assign) NSUInteger                currentIndex;
 
@@ -110,6 +110,8 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
 @property (nonatomic, strong) UICollectionView         *thumbnailCollection;
 @property (nonatomic, strong) UIView                   *toolbarView;
 @property (nonatomic, assign) CGFloat                   thumbnailHeight; // Thumbnail height
+@property (nonatomic, strong) UIView                   *leftThumbnailOverlay; // Added
+@property (nonatomic, strong) UIView                   *rightThumbnailOverlay; // Added
 
 /// Tracks whether it's in fullscreen or detail expanded state
 @property (nonatomic, assign) BOOL                      infoVisible;
@@ -356,6 +358,40 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
                                     bounds.size.width,
                                     toolbarHeight + safeAreaBottom); // Include safe area in height
     self.toolbarView.frame = toolbarFrame;
+
+    // Position overlays for thumbnailCollection
+    // CGFloat overlayWidth = 25.0; // This will be used in the new helper method
+    // CGRect tcFrame = self.thumbnailCollection.frame; // This will be used in the new helper method
+
+    // // The following is replaced by the new helper method call
+    // self.leftThumbnailOverlay.frame = CGRectMake(tcFrame.origin.x,
+    //                                              tcFrame.origin.y,
+    //                                              overlayWidth,
+    //                                              tcFrame.size.height);
+    // self.rightThumbnailOverlay.frame = CGRectMake(CGRectGetMaxX(tcFrame) - overlayWidth,
+    //                                               tcFrame.origin.y,
+    //                                               overlayWidth,
+    //                                               tcFrame.size.height);
+    // // Update gradient layer frames
+    // if (self.leftThumbnailOverlay.layer.sublayers.count > 0) {
+    //     CAGradientLayer *leftSubGradient = (CAGradientLayer *)self.leftThumbnailOverlay.layer.sublayers.firstObject;
+    //     if ([leftSubGradient isKindOfClass:[CAGradientLayer class]]) {
+    //         leftSubGradient.frame = self.leftThumbnailOverlay.bounds;
+    //     }
+    // }
+    // if (self.rightThumbnailOverlay.layer.sublayers.count > 0) {
+    //     CAGradientLayer *rightSubGradient = (CAGradientLayer *)self.rightThumbnailOverlay.layer.sublayers.firstObject;
+    //     if ([rightSubGradient isKindOfClass:[CAGradientLayer class]]) {
+    //         rightSubGradient.frame = self.rightThumbnailOverlay.bounds;
+    //     }
+    // }
+
+    [self synchronizeOverlayFramesAndVisibilityWithThumbnailCollectionFrame:self.thumbnailCollection.frame isAnimatingReveal:NO];
+
+    [self.view bringSubviewToFront:self.leftThumbnailOverlay];
+    [self.view bringSubviewToFront:self.rightThumbnailOverlay];
+
+    // [self updateThumbnailOverlaysVisibility]; // This is now called by the helper method
 }
 
 - (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
@@ -432,10 +468,10 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
     SeafThumbnailFlowLayout *layout = [[SeafThumbnailFlowLayout alloc] init];
     layout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
     layout.selectedIndex = self.currentIndex;
-    layout.defaultSpacing = 1.0;        // Spacing between unselected items is 1
-    layout.spacingAroundSelectedItem = 12.0; // Spacing between selected and unselected items is 12
-    layout.minimumLineSpacing = 1.0;
-    layout.minimumInteritemSpacing = 1.0;
+    layout.defaultSpacing = 4.0;        // Spacing between unselected items is 3
+    layout.spacingAroundSelectedItem = 13.0; // Spacing between selected and unselected items is 12
+    layout.minimumLineSpacing = 4.0; // Changed from 1.0
+    layout.minimumInteritemSpacing = 4.0; // Changed from 1.0
     layout.sectionInset = UIEdgeInsetsMake(1.5, 10, 1.5, 10); // Collection view inset
     
     // Create collection view
@@ -454,6 +490,27 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
     
     // Add to view
     [self.view addSubview:self.thumbnailCollection];
+
+    // Add overlays for left and right edges
+    self.leftThumbnailOverlay = [[UIView alloc] init];
+    self.leftThumbnailOverlay.userInteractionEnabled = NO;
+    self.leftThumbnailOverlay.backgroundColor = [UIColor clearColor]; // Ensure background is clear
+    CAGradientLayer *leftGradient = [CAGradientLayer layer];
+    leftGradient.colors = @[(id)[UIColor colorWithWhite:1.0 alpha:1.0].CGColor, (id)[UIColor colorWithWhite:1.0 alpha:0.0].CGColor];
+    leftGradient.startPoint = CGPointMake(0.0, 0.5);
+    leftGradient.endPoint = CGPointMake(1.0, 0.5);
+    [self.leftThumbnailOverlay.layer insertSublayer:leftGradient atIndex:0];
+    [self.view addSubview:self.leftThumbnailOverlay];
+
+    self.rightThumbnailOverlay = [[UIView alloc] init];
+    self.rightThumbnailOverlay.userInteractionEnabled = NO;
+    self.rightThumbnailOverlay.backgroundColor = [UIColor clearColor]; // Ensure background is clear
+    CAGradientLayer *rightGradient = [CAGradientLayer layer];
+    rightGradient.colors = @[(id)[UIColor colorWithWhite:1.0 alpha:0.0].CGColor, (id)[UIColor colorWithWhite:1.0 alpha:1.0].CGColor];
+    rightGradient.startPoint = CGPointMake(0.0, 0.5);
+    rightGradient.endPoint = CGPointMake(1.0, 0.5);
+    [self.rightThumbnailOverlay.layer insertSublayer:rightGradient atIndex:0];
+    [self.view addSubview:self.rightThumbnailOverlay];
     
     // For performance, preload some thumbnails
     if (self.preViewItems.count > 0) {
@@ -462,7 +519,10 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
         // Scroll to the currently selected item to ensure it's in the middle of the view - delay execution to ensure layout is complete
         dispatch_async(dispatch_get_main_queue(), ^{
             [self scrollToCurrentItemAnimated:NO];
+            [self updateThumbnailOverlaysVisibility]; // Update after scroll and layout
         });
+    } else {
+        [self updateThumbnailOverlaysVisibility]; // Hide if no items
     }
 }
 
@@ -601,6 +661,7 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
         
         // Update star icon in toolbar
         [self updateStarButtonIcon];
+        [self updateThumbnailOverlaysVisibility]; // Update after page change
         
         Debug(@"Page changed from %ld to %ld, updated loaded range: %@",
               (long)oldIndex, (long)newIdx, NSStringFromRange(self.loadedImagesRange));
@@ -686,6 +747,7 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
     
     // Set view tag to index for later identification
     contentController.view.tag = index;
+    contentController.delegate = self; // Set the gallery as the delegate
     
     // Store in cache
     [self.contentVCCache setObject:contentController forKey:key];
@@ -785,42 +847,26 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
     if (index == self.currentIndex) {
         // If dragging, make the width half of the height, same as unselected items
         if (isDragging) {
-            return CGSizeMake(height / 2.0, height);
+            return CGSizeMake(height * 2.0 / 3.0, height);
         }
         
-        CGFloat aspectRatio = 1.0; // Default is square
-        
-        // If it's a SeafFile, try to get the aspect ratio of its thumbnail
-        if (self.preViewItems && index < self.preViewItems.count) {
-            id<SeafPreView> file = self.preViewItems[index];
-            UIImage *thumbImage = [file thumb];
-            
-            if (thumbImage && thumbImage.size.height > 0) {
-                aspectRatio = thumbImage.size.width / thumbImage.size.height;
-            }
-        }
-        
-        // Safety check: ensure aspect ratio is not too small or too large
-        if (aspectRatio <= 0.1) aspectRatio = 0.75;
-        if (aspectRatio > 3.0) aspectRatio = 3.0;
-        
-        // Return size calculated based on actual aspect ratio and height
-        return CGSizeMake(height * aspectRatio, height);
+        // Return size where width and height are equal
+        return CGSizeMake(height, height);
     }
-    // Unselected items have a width that is half of the height
+    // Unselected items have a width that is 2/3 of the height
     else {
-        return CGSizeMake(height / 2.0, height);
+        return CGSizeMake(height * 2.0 / 3.0, height);
     }
 }
 
 // Set custom spacing
 - (CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumInteritemSpacingForSectionAtIndex:(NSInteger)section {
-    return 1.0; // Default spacing between items is 1 point
+    return 4.0; // Default spacing between items is 3 points
 }
 
 // Since the standard UICollectionViewFlowLayout doesn't support setting different spacing between different items
 - (CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumLineSpacingForSectionAtIndex:(NSInteger)section {
-    return 1.0;  // Default line spacing is 1 point
+    return 4.0;  // Default line spacing is 3 points
 }
 
 - (UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
@@ -1300,6 +1346,7 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
         [self.thumbnailCollection scrollToItemAtIndexPath:indexPath
                                         atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally
                                                 animated:YES];
+        [self updateThumbnailOverlaysVisibility]; // Update after reload and scroll
         });
     }
 }
@@ -1729,11 +1776,15 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
             safeAreaBottom = self.view.safeAreaInsets.bottom;
         }
         
-        // Move thumbnail strip above info view
-        self.thumbnailCollection.frame = CGRectMake(0,
-                                                  halfHeight - stripHeight, // Use stripHeight for positioning
-                                                  bounds.size.width,
-                                                  stripHeight); // Use stripHeight for size
+        // Calculate target frame for thumbnail collection
+        CGRect targetThumbnailFrame = CGRectMake(0,
+                                               halfHeight - stripHeight, // Use stripHeight for positioning
+                                               bounds.size.width,
+                                               stripHeight); // Use stripHeight for size
+        self.thumbnailCollection.frame = targetThumbnailFrame;
+        
+        // Synchronize overlays with the new thumbnail collection frame
+        [self synchronizeOverlayFramesAndVisibilityWithThumbnailCollectionFrame:targetThumbnailFrame isAnimatingReveal:NO]; // Modified
         
         // Toolbar stays at the bottom
         CGFloat toolbarHeight = 44;
@@ -1741,6 +1792,13 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
                                           bounds.size.height - toolbarHeight - safeAreaBottom,
                                           bounds.size.width,
                                           toolbarHeight + safeAreaBottom); // Include safe area
+    } completion:^(BOOL finished) {
+        if (finished) {
+            // Ensure the collection view is scrolled to the current item so contentOffset is correct
+            [self scrollToCurrentItemAnimated:NO];
+            // Re-synchronize overlays now that the thumbnail collection is in its final place and scrolled
+            [self synchronizeOverlayFramesAndVisibilityWithThumbnailCollectionFrame:self.thumbnailCollection.frame isAnimatingReveal:NO]; // Modified
+        }
     }];
 }
 
@@ -1754,6 +1812,11 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
     
     // Update info button icon to non-selected state
     [self updateInfoButtonIcon:NO];
+
+    // Prepare overlays for reveal animation: start transparent, ensure not hidden
+    self.leftThumbnailOverlay.alpha = 0.0;
+    self.rightThumbnailOverlay.alpha = 0.0;
+    // Hidden state will be set to NO by synchronize... with isAnimatingReveal:YES
     
     // Restore thumbnail strip position
     [UIView animateWithDuration:0.3 animations:^{
@@ -1766,17 +1829,32 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
             safeAreaBottom = self.view.safeAreaInsets.bottom;
         }
         
-        // Move thumbnail strip above toolbar
-        self.thumbnailCollection.frame = CGRectMake(0,
-                                                  bounds.size.height - stripHeight - toolbarHeight - safeAreaBottom, // Use stripHeight
-                                                  bounds.size.width,
-                                                  stripHeight); // Use stripHeight
+        // Calculate target frame for thumbnail collection
+        CGRect targetThumbnailFrame = CGRectMake(0,
+                                               bounds.size.height - stripHeight - toolbarHeight - safeAreaBottom, // Use stripHeight
+                                               bounds.size.width,
+                                               stripHeight); // Use stripHeight
+        self.thumbnailCollection.frame = targetThumbnailFrame;
+
+        // Synchronize overlays: positions them and ensures they are NOT hidden during this reveal animation
+        [self synchronizeOverlayFramesAndVisibilityWithThumbnailCollectionFrame:targetThumbnailFrame isAnimatingReveal:YES]; // Modified
+        
+        // Fade in overlays
+        self.leftThumbnailOverlay.alpha = 1.0;
+        self.rightThumbnailOverlay.alpha = 1.0;
         
         // Toolbar stays at the bottom
         self.toolbarView.frame = CGRectMake(0,
                                           bounds.size.height - toolbarHeight - safeAreaBottom,
                                           bounds.size.width,
                                           toolbarHeight + safeAreaBottom); // Include safe area
+    } completion:^(BOOL finished) {
+        if (finished) {
+            // Ensure the collection view is scrolled to the current item so contentOffset is correct
+            [self scrollToCurrentItemAnimated:NO];
+            // Re-synchronize overlays: final frame update and visibility check based on scroll state
+            [self synchronizeOverlayFramesAndVisibilityWithThumbnailCollectionFrame:self.thumbnailCollection.frame isAnimatingReveal:NO]; // Modified
+        }
     }];
 }
 
@@ -2163,6 +2241,139 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
                     [vc cancelImageLoading];
                 }
             }
+        }
+    }
+}
+
+// Add new method for updating overlay visibility
+- (void)updateThumbnailOverlaysVisibility {
+    if (!self.thumbnailCollection || self.thumbnailCollection.hidden || self.preViewItems.count == 0) { // Added self.thumbnailCollection.hidden
+        self.leftThumbnailOverlay.hidden = YES;
+        self.rightThumbnailOverlay.hidden = YES;
+        return;
+    }
+
+    CGFloat contentOffsetX = self.thumbnailCollection.contentOffset.x;
+    CGFloat contentWidth = self.thumbnailCollection.contentSize.width;
+    CGFloat boundsWidth = self.thumbnailCollection.bounds.size.width;
+    // Effective scrollable width, considering content insets.
+    // The thumbnailCollection has horizontal insets (left:10, right:10 from sectionInset)
+    // These insets are part of the scrollable content area, not the contentSize directly for this calculation.
+    // Simpler check: if contentSize.width is greater than bounds.width.
+    
+    CGFloat Epsilon = 1.0; // Increased epsilon for more robust edge detection
+
+    BOOL canScrollLeft = contentOffsetX > Epsilon;
+    BOOL canScrollRight = contentOffsetX + boundsWidth < contentWidth - Epsilon;
+    
+    // If the total content width is less than or equal to the bounds, no scrolling is possible.
+    if (contentWidth <= boundsWidth + Epsilon) { // Add Epsilon here too
+        self.leftThumbnailOverlay.hidden = YES;
+        self.rightThumbnailOverlay.hidden = YES;
+    } else {
+        self.leftThumbnailOverlay.hidden = !canScrollLeft;
+        self.rightThumbnailOverlay.hidden = !canScrollRight;
+    }
+}
+
+// Add UIScrollViewDelegate method
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    if (scrollView == self.thumbnailCollection) {
+        [self updateThumbnailOverlaysVisibility];
+    }
+}
+
+// New helper method to synchronize overlay frames and visibility
+- (void)synchronizeOverlayFramesAndVisibilityWithThumbnailCollectionFrame:(CGRect)targetThumbnailCollectionFrame isAnimatingReveal:(BOOL)isAnimatingReveal {
+    CGFloat overlayWidth = 25.0; // Width is defined here
+
+    // Set frames for the overlay views
+    self.leftThumbnailOverlay.frame = CGRectMake(targetThumbnailCollectionFrame.origin.x,
+                                                 targetThumbnailCollectionFrame.origin.y,
+                                                 overlayWidth,
+                                                 targetThumbnailCollectionFrame.size.height);
+    self.rightThumbnailOverlay.frame = CGRectMake(CGRectGetMaxX(targetThumbnailCollectionFrame) - overlayWidth,
+                                                  targetThumbnailCollectionFrame.origin.y,
+                                                  overlayWidth,
+                                                  targetThumbnailCollectionFrame.size.height);
+
+    // Update gradient layer frames to match new overlay bounds
+    if (self.leftThumbnailOverlay.layer.sublayers.count > 0) {
+        CAGradientLayer *leftSubGradient = (CAGradientLayer *)self.leftThumbnailOverlay.layer.sublayers.firstObject;
+        if ([leftSubGradient isKindOfClass:[CAGradientLayer class]]) {
+            leftSubGradient.frame = self.leftThumbnailOverlay.bounds;
+        }
+    }
+    if (self.rightThumbnailOverlay.layer.sublayers.count > 0) {
+        CAGradientLayer *rightSubGradient = (CAGradientLayer *)self.rightThumbnailOverlay.layer.sublayers.firstObject;
+        if ([rightSubGradient isKindOfClass:[CAGradientLayer class]]) {
+            rightSubGradient.frame = self.rightThumbnailOverlay.bounds;
+        }
+    }
+
+    if (isAnimatingReveal) {
+        // During reveal animation, ensure overlays are not hidden so they can animate into view.
+        // Alpha is handled by the animation block.
+        self.leftThumbnailOverlay.hidden = NO;
+        self.rightThumbnailOverlay.hidden = NO;
+    } else {
+        // For all other cases (layout, scroll, or animation completion), update visibility based on scroll state.
+        [self updateThumbnailOverlaysVisibility];
+    }
+}
+
+#pragma mark - SeafPhotoContentDelegate
+
+- (void)photoContentViewControllerRequestsRetryForFile:(id<SeafPreView>)file atIndex:(NSUInteger)index {
+    Debug(@"[Gallery] Received retry request for file: %@ at index: %lu", file.name, (unsigned long)index);
+    
+    if (!file || index >= self.preViewItems.count || self.preViewItems[index] != file) {
+        Debug(@"[Gallery] Invalid retry request: File mismatch or index out of bounds.");
+        // Optionally, inform the specific content VC that retry cannot proceed.
+        SeafPhotoContentViewController *contentVC = [self.contentVCCache objectForKey:@(index)];
+        if (contentVC) {
+            [contentVC hideLoadingIndicator]; // Hide its indicator
+            [contentVC showErrorImage];     // Show error again
+        }
+        return;
+    }
+
+    // Ensure the content VC shows its loading indicator if it was hidden by the retry tap
+    // (though the contentVC itself calls showLoadingIndicator before calling delegate)
+    SeafPhotoContentViewController *contentVC = [self.contentVCCache objectForKey:@(index)];
+    if (contentVC && !contentVC.activityIndicator.isAnimating) {
+         [contentVC showLoadingIndicator];
+    }
+
+    // Logic to re-attempt loading the file.
+    // This typically means calling [file load:...] again.
+    // We might want to use `force:YES` for a retry if the file system or cache state might be stale.
+    if ([file isKindOfClass:[SeafFile class]]) {
+        SeafFile *seafFile = (SeafFile *)file;
+        
+        // Reset any previous error state for the file if necessary, e.g. if it had a specific error property.
+        // seafFile.lastError = nil; // Example if SeafFile tracks errors
+
+        Debug(@"[Gallery] Retrying load for file: %@", seafFile.name);
+        // Setting the delegate again is important if it was cleared on a previous failure/cancel
+        if (seafFile.delegate != self) {
+             seafFile.delegate = self;
+        }
+        [seafFile load:self force:YES]; // Using force:YES for retry
+    }
+    // If it's an UploadFile, its getImageWithCompletion is usually self-contained for retries or reflects its current state.
+    // However, if there was a more fundamental load issue, this is where you might handle it.
+    else if ([file isKindOfClass:[SeafUploadFile class]]) {
+        Debug(@"[Gallery] Retrying for SeafUploadFile: %@. This typically involves its internal retry or re-fetching logic via getImageWithCompletion.", file.name);
+        // For SeafUploadFile, the loadImage in contentVC typically handles it.
+        // If a more forceful retry is needed, specific logic for SeafUploadFile would go here.
+        // For now, we assume that if the contentVC calls loadImage again after delegate call, it will work.
+        // Or, we can directly ask the content VC to try loading again.
+        if (contentVC) {
+            [contentVC loadImage]; // Ask the content view controller to attempt loading again.
+        } else {
+            // If no contentVC, it's harder to trigger its specific load.
+            // This case should be rare if the retry came from an active VC.
         }
     }
 }

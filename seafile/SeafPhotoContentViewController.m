@@ -27,6 +27,11 @@
 @property (nonatomic, strong) UITapGestureRecognizer *doubleTapGesture;
 @property (nonatomic, assign) BOOL isDisplayingPlaceholderOrErrorImage;
 
+// Error placeholder view components
+@property (nonatomic, strong) UIView *errorPlaceholderView;
+@property (nonatomic, strong) UIImageView *errorIconImageView;
+@property (nonatomic, strong) UILabel *errorLabel;
+
 // Loading indicator properties
 //@property (nonatomic, strong) UIActivityIndicatorView *activityIndicator;
 //@property (nonatomic, strong) UILabel *progressLabel;
@@ -56,7 +61,7 @@
     [self setupScrollView];
     [self setupInfoView];
     [self setupLoadingIndicator];
-    [self loadImage];
+    // [self loadImage]; // loadImage will be called by viewWillAppear or explicitly after file is set
     
     // Initialize with info view hidden
     self.infoVisible = NO;
@@ -548,6 +553,9 @@
             @try {
                 UIView *thumbnailCollection = [galleryVC valueForKey:@"thumbnailCollection"];
                 UIView *toolbarView = [galleryVC valueForKey:@"toolbarView"];
+                // Get overlay views
+                UIView *leftOverlay = [galleryVC valueForKey:@"leftThumbnailOverlay"];
+                UIView *rightOverlay = [galleryVC valueForKey:@"rightThumbnailOverlay"];
                 
                 if (isHidden) {
                     // Restore from hidden state - first set visible but transparent, then fade in
@@ -560,6 +568,11 @@
                         toolbarView.hidden = NO;
                         toolbarView.alpha = 0.0;
                     }
+
+                    // Prepare overlays for fade-in
+                    if (leftOverlay) leftOverlay.alpha = 0.0;
+                    if (rightOverlay) rightOverlay.alpha = 0.0;
+                    // Note: Overlays' .hidden state is managed by SeafPhotoGalleryViewController based on thumbnailCollection.hidden and scroll state.
                     
                     // Start fade-in animation, while changing background color from black to white
                     [UIView animateWithDuration:0.15
@@ -569,6 +582,9 @@
                         // Restore thumbnail and toolbar visibility
                         if (thumbnailCollection) thumbnailCollection.alpha = 1.0;
                         if (toolbarView) toolbarView.alpha = 1.0;
+                        // Fade in overlays
+                        if (leftOverlay) leftOverlay.alpha = 1.0;
+                        if (rightOverlay) rightOverlay.alpha = 1.0;
                         
                         // Change background color from black to light gray
                         self.view.backgroundColor = [UIColor colorWithWhite:0.95 alpha:1.0];
@@ -583,6 +599,9 @@
                         // Hide thumbnail and toolbar
                         if (thumbnailCollection) thumbnailCollection.alpha = 0.0;
                         if (toolbarView) toolbarView.alpha = 0.0;
+                        // Fade out overlays
+                        if (leftOverlay) leftOverlay.alpha = 0.0;
+                        if (rightOverlay) rightOverlay.alpha = 0.0;
                         
                         // Change background color from gray to black
                         self.view.backgroundColor = [UIColor blackColor];
@@ -591,6 +610,9 @@
                     } completion:^(BOOL finished) {
                         if (thumbnailCollection) thumbnailCollection.hidden = YES;
                         if (toolbarView) toolbarView.hidden = YES;
+                        // Hide overlays after animation
+                        if (leftOverlay) leftOverlay.hidden = YES;
+                        if (rightOverlay) rightOverlay.hidden = YES;
                     }];
                 }
             } @catch (NSException *exception) {
@@ -622,7 +644,14 @@
 }
 
 - (void)loadImage {
-    self.imageView.image = nil;
+    // At the beginning of loadImage, remove any existing error view
+    if (self.errorPlaceholderView) {
+        [self.errorPlaceholderView removeFromSuperview];
+        self.errorPlaceholderView = nil;
+    }
+    self.isDisplayingPlaceholderOrErrorImage = NO; // Reset flag
+
+    self.imageView.image = nil; // Clear previous image before loading new one
     // If seafFile is available, use it to load the image
     if (self.seafFile && [self.seafFile isKindOfClass:[SeafFile class]]) {
         Debug(@"[PhotoContent] loadImage called for %@, seafFile: %@, has ooid: %@", self.photoURL, self.seafFile.name, ((SeafFile *)self.seafFile).ooid ? @"YES" : @"NO");
@@ -659,6 +688,13 @@
                         [self updateScrollViewContentSize];
                         Debug(@"[PhotoContent] Image set successfully for %@", self.seafFile.name);
                         
+                        // Ensure error view is removed if it was somehow still there
+                        if (self.errorPlaceholderView) {
+                            [self.errorPlaceholderView removeFromSuperview];
+                            self.errorPlaceholderView = nil;
+                        }
+                        self.isDisplayingPlaceholderOrErrorImage = NO; // Ensure flag is cleared on success
+
                         // If we have the file path, get the data to display EXIF info
                         if (((SeafFile *)self.seafFile).ooid) {
                             NSString *path = [SeafStorage.sharedObject documentPath:((SeafFile *)self.seafFile).ooid];
@@ -674,8 +710,9 @@
                         Debug(@"[PhotoContent] Image loading complete, indicator hidden for %@", self.seafFile.name);
                     } else {
                         Debug(@"[PhotoContent] Image loading failed for %@", self.seafFile.name);
-                        self.imageView.image = [UIImage imageNamed:@"gallery_failed.png"];
-                        self.isDisplayingPlaceholderOrErrorImage = YES; // Set flag when setting error image
+                        // self.imageView.image = [UIImage imageNamed:@"gallery_failed.png"];
+                        // self.isDisplayingPlaceholderOrErrorImage = YES; // Set flag when setting error image
+                        [self showErrorImage];
                         [self clearExifDataView];
                         // Explicitly hide indicator even on failure
                         [self hideLoadingIndicator];
@@ -707,6 +744,13 @@
                     [self updateScrollViewContentSize];
                     Debug(@"[PhotoContent] Image set successfully for %@", self.seafFile.name);
                     
+                    // Ensure error view is removed if it was somehow still there
+                    if (self.errorPlaceholderView) {
+                        [self.errorPlaceholderView removeFromSuperview];
+                        self.errorPlaceholderView = nil;
+                    }
+                    self.isDisplayingPlaceholderOrErrorImage = NO; // Ensure flag is cleared on success
+
                     // If we have the file path, get the data to display EXIF info
                     [((SeafUploadFile *)self.seafFile) getDataForAssociatedAssetWithCompletion:^(NSData * _Nullable data, NSError * _Nullable error) {
                         dispatch_async(dispatch_get_main_queue(), ^{
@@ -723,8 +767,7 @@
                     Debug(@"[PhotoContent] Image loading complete, indicator hidden for %@", self.seafFile.name);
                 } else {
                     Debug(@"[PhotoContent] Image loading failed for %@", self.seafFile.name);
-                    self.imageView.image = [UIImage imageNamed:@"gallery_failed.png"];
-                    self.isDisplayingPlaceholderOrErrorImage = YES; // Set flag when setting error image
+                    [self showErrorImage];
                     [self clearExifDataView];
                     // Explicitly hide indicator even on failure
                     [self hideLoadingIndicator];
@@ -736,8 +779,7 @@
     }
     else {
         Debug(@"[PhotoContent] No SeafFile available to show image");
-        self.imageView.image = [UIImage imageNamed:@"gallery_failed.png"];
-        self.isDisplayingPlaceholderOrErrorImage = YES; // Set flag when setting error image
+        [self showErrorImage];
         [self hideLoadingIndicator];
     }
 }
@@ -809,6 +851,11 @@
     }
     failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
         Debug(@"Error fetching file metadata: %@", error);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (!self.imageView.image && !self.isDisplayingPlaceholderOrErrorImage) {
+                 // for metadata failure, we just log it. The user experience is primarily driven by image display.
+            }
+        });
     }];
 }
 
@@ -1027,7 +1074,7 @@
 // Sets an error image to display when loading fails
 - (void)showErrorImage {
     Debug(@"[PhotoContent] Showing error image for %@", self.seafFile ? self.seafFile.name : self.photoURL);
-    
+
     // Ensure this runs on the main thread
     if (![NSThread isMainThread]) {
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -1035,21 +1082,143 @@
         });
         return;
     }
+
+    // Clear the main image view content
+    self.imageView.image = nil;
+    self.isDisplayingPlaceholderOrErrorImage = YES;
+
+    // Remove existing error view if any to prevent duplicates
+    if (self.errorPlaceholderView) {
+        [self.errorPlaceholderView removeFromSuperview];
+        self.errorPlaceholderView = nil;
+    }
+
+    // Create the container view for the error placeholder
+    self.errorPlaceholderView = [[UIView alloc] initWithFrame:self.view.bounds];
+    self.errorPlaceholderView.backgroundColor = [UIColor clearColor]; // Match the scrollview background or use clear
+    self.errorPlaceholderView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    [self.view addSubview:self.errorPlaceholderView];
+
+    // Create the smaller error image view
+    UIImage *errorIconImage = [UIImage imageNamed:@"gallery_failed.png"]; // Use the same image name
+    self.errorIconImageView = [[UIImageView alloc] initWithImage:errorIconImage];
+    self.errorIconImageView.contentMode = UIViewContentModeScaleAspectFit;
+    CGFloat iconSize = 130.0; // Smaller icon size
+    self.errorIconImageView.frame = CGRectMake(0, 0, iconSize, iconSize);
+    [self.errorPlaceholderView addSubview:self.errorIconImageView];
+
+    // Create the error label
+    self.errorLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+    NSString *fullText = NSLocalizedString(@"加载失败，点击重试", @"Load failed, tap to retry");
+    NSString *retryText = NSLocalizedString(@"点击重试", @"tap to retry"); // Used to style "点击重试"
+
+    NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc] initWithString:fullText];
+    NSRange fullRange = NSMakeRange(0, fullText.length);
+    NSRange retryTapRange = [fullText rangeOfString:retryText];
+
+    // Default font and color
+    UIFont *defaultFont = [UIFont systemFontOfSize:14.0 weight:UIFontWeightRegular];
+    UIColor *defaultTextColor = [UIColor colorWithRed:0.4 green:0.4 blue:0.4 alpha:1.0]; // A medium gray
+
+    [attributedString addAttribute:NSFontAttributeName value:defaultFont range:fullRange];
+    [attributedString addAttribute:NSForegroundColorAttributeName value:defaultTextColor range:fullRange];
+
+    if (retryTapRange.location != NSNotFound) {
+        UIColor *retryTextColor = [UIColor colorWithRed:0.95 green:0.6 blue:0.2 alpha:1.0]; // Orange color for "点击重试"
+        [attributedString addAttribute:NSForegroundColorAttributeName value:retryTextColor range:retryTapRange];
+        // Optionally, make "点击重试" bold or underlined
+        // UIFont *boldFont = [UIFont systemFontOfSize:14.0 weight:UIFontWeightMedium];
+        // [attributedString addAttribute:NSFontAttributeName value:boldFont range:retryTapRange];
+        [attributedString addAttribute:NSUnderlineStyleAttributeName value:@(NSUnderlineStyleSingle) range:retryTapRange]; // Add underline
+    }
+
+    self.errorLabel.attributedText = attributedString;
+    self.errorLabel.textAlignment = NSTextAlignmentCenter;
+    self.errorLabel.numberOfLines = 0;
+    [self.errorLabel sizeToFit]; // Calculate height based on attributed text
+    [self.errorPlaceholderView addSubview:self.errorLabel];
+
+    // Position the icon and label in the center of errorPlaceholderView
+    CGFloat spacingBetweenIconAndLabel = 8.0;
+    CGFloat totalContentHeight = self.errorIconImageView.frame.size.height + spacingBetweenIconAndLabel + self.errorLabel.frame.size.height;
+
+    // Center vertically
+    CGFloat startY = (self.errorPlaceholderView.bounds.size.height - totalContentHeight) / 2.0 - 25.0;
     
-    // Set the error image
-    self.imageView.image = [UIImage imageNamed:@"gallery_failed.png"];
-    self.isDisplayingPlaceholderOrErrorImage = YES; // Set flag when setting error image
+    self.errorIconImageView.frame = CGRectMake(
+        (self.errorPlaceholderView.bounds.size.width - self.errorIconImageView.frame.size.width) / 2.0,
+        startY,
+        self.errorIconImageView.frame.size.width,
+        self.errorIconImageView.frame.size.height
+    );
+
+    self.errorLabel.frame = CGRectMake(
+        (self.errorPlaceholderView.bounds.size.width - self.errorLabel.frame.size.width) / 2.0,
+        startY + self.errorIconImageView.frame.size.height + spacingBetweenIconAndLabel,
+        self.errorLabel.frame.size.width,
+        self.errorLabel.frame.size.height
+    );
     
-    // Update scroll view if needed
+    // Ensure the label width doesn't exceed the placeholder view width with some padding
+    CGFloat maxLabelWidth = self.errorPlaceholderView.bounds.size.width - 40; // 20px padding on each side
+    if (self.errorLabel.frame.size.width > maxLabelWidth) {
+        CGRect labelFrame = self.errorLabel.frame;
+        labelFrame.size.width = maxLabelWidth;
+        self.errorLabel.frame = labelFrame;
+         // Recenter if width changed
+        self.errorLabel.center = CGPointMake(self.errorPlaceholderView.bounds.size.width / 2, self.errorLabel.center.y);
+    }
+
+
+    // Add tap gesture to the errorPlaceholderView for retry
+    UITapGestureRecognizer *retryTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleRetryTap:)];
+    [self.errorPlaceholderView addGestureRecognizer:retryTapGesture];
+    self.errorPlaceholderView.userInteractionEnabled = YES;
+
+    // Ensure the error view is on top
+    [self.view bringSubviewToFront:self.errorPlaceholderView];
+
+    // Update scroll view content size (imageView.image is nil, so contentSize should be minimal)
     [self updateScrollViewContentSize];
-    
+
     // Clear any EXIF data
     [self clearExifDataView];
-    
+
     // Make sure the loading indicator is hidden
     [self hideLoadingIndicator];
-    
-    Debug(@"[PhotoContent] Error image set and loading indicator hidden for %@", self.seafFile ? self.seafFile.name : self.photoURL);
+
+    Debug(@"[PhotoContent] Error placeholder view set and loading indicator hidden for %@", self.seafFile ? self.seafFile.name : self.photoURL);
+}
+
+// Method to handle the retry tap
+- (void)handleRetryTap:(UITapGestureRecognizer *)gesture {
+    Debug(@"[PhotoContent] Retry tapped for %@", self.seafFile ? self.seafFile.name : self.photoURL);
+    // Remove the error view before retrying
+    if (self.errorPlaceholderView) {
+        [self.errorPlaceholderView removeFromSuperview];
+        self.errorPlaceholderView = nil;
+    }
+    self.isDisplayingPlaceholderOrErrorImage = NO; // Reset flag
+
+    // Notify delegate to retry loading
+    if (self.delegate && [self.delegate respondsToSelector:@selector(photoContentViewControllerRequestsRetryForFile:atIndex:)]) {
+        // We need the index of this content view controller.
+        // The view.tag should hold the index set by SeafPhotoGalleryViewController.
+        NSUInteger currentIndex = self.view.tag;
+        if (self.seafFile) { // Ensure seafFile is not nil
+            [self.delegate photoContentViewControllerRequestsRetryForFile:self.seafFile atIndex:currentIndex];
+            [self showLoadingIndicator]; // Show loading indicator immediately in the content view
+        } else {
+            Debug(@"[PhotoContent] Cannot retry: seafFile is nil.");
+            // Optionally, show error again if seafFile is nil, as retry isn't possible
+            [self showErrorImage]; 
+        }
+    } else {
+        Debug(@"[PhotoContent] Delegate not set or does not respond to retry selector. Cannot retry.");
+        // Fallback or error handling if delegate is not correctly set up
+        // For example, re-show the error image as retry is not possible through delegate
+        [self showErrorImage];
+    }
 }
 
 // Ensure indicator remains centered during layout changes
@@ -1060,11 +1229,45 @@
     self.activityIndicator.center = self.view.center;
     self.progressLabel.center = CGPointMake(self.view.center.x, self.view.center.y + self.activityIndicator.bounds.size.height / 2 + 25);
 
+    // If the error placeholder view is visible, re-layout its contents
+    if (self.errorPlaceholderView && self.errorPlaceholderView.superview) {
+        self.errorPlaceholderView.frame = self.view.bounds; // Ensure it fills the view
+
+        // Recalculate sizes and positions for error icon and label
+        CGFloat iconSize = self.errorIconImageView.frame.size.width;
+        if (iconSize == 0 && self.errorIconImageView.image) { // if frame was reset
+             iconSize = 130.0; // default size
+             self.errorIconImageView.frame = CGRectMake(0,0,iconSize,iconSize);
+        }
+        [self.errorLabel sizeToFit]; // Recalculate label size based on current text/attributes
+
+        CGFloat spacingBetweenIconAndLabel = 8.0;
+        CGFloat totalContentHeight = self.errorIconImageView.frame.size.height + spacingBetweenIconAndLabel + self.errorLabel.frame.size.height;
+        
+        CGFloat startY = (self.errorPlaceholderView.bounds.size.height - totalContentHeight) / 2.0 - 25.0;
+
+        self.errorIconImageView.frame = CGRectMake(
+            (self.errorPlaceholderView.bounds.size.width - self.errorIconImageView.frame.size.width) / 2.0,
+            startY,
+            self.errorIconImageView.frame.size.width,
+            self.errorIconImageView.frame.size.height
+        );
+
+        // Ensure the label width doesn't exceed the placeholder view width with some padding
+        CGFloat maxLabelWidth = self.errorPlaceholderView.bounds.size.width - 40; // 20px padding on each side
+        CGRect currentLabelFrame = self.errorLabel.frame;
+        currentLabelFrame.size.width = MIN(currentLabelFrame.size.width, maxLabelWidth);
+        
+        self.errorLabel.frame = CGRectMake(
+            (self.errorPlaceholderView.bounds.size.width - currentLabelFrame.size.width) / 2.0,
+            startY + self.errorIconImageView.frame.size.height + spacingBetweenIconAndLabel,
+            currentLabelFrame.size.width,
+            currentLabelFrame.size.height
+        );
+    }
+
     // Update frames based on current state
     [self updateViewFramesForInfoVisibility:self.infoVisible];
-
-    // Update scroll view and image view
-    [self updateZoomScalesForSize:self.scrollView.bounds.size];
 }
 
 // New method to setup the loading indicator and progress label
@@ -1240,6 +1443,12 @@
 - (void)prepareForReuse {
     Debug(@"[PhotoContent] Preparing for reuse %@", self.seafFile ? self.seafFile.name : @"unknown");
     
+    // Remove error view if it exists
+    if (self.errorPlaceholderView) {
+        [self.errorPlaceholderView removeFromSuperview];
+        self.errorPlaceholderView = nil;
+    }
+
     // Cancel any ongoing image loading or download requests
     // Only if the image isn't already loaded
     if (!self.imageView.image || !self.seafFile || ![self.seafFile hasCache]) {
@@ -1296,6 +1505,12 @@
 - (void)releaseImageMemory {
     Debug(@"[PhotoContent] Releasing image memory for %@", self.seafFile ? self.seafFile.name : @"unknown");
     
+    // Clear the error placeholder view if it exists
+    if (self.errorPlaceholderView) {
+        [self.errorPlaceholderView removeFromSuperview];
+        self.errorPlaceholderView = nil;
+    }
+
     // Clear the image data to free memory
     if (self.imageView) {
         self.imageView.image = nil;
@@ -1414,9 +1629,9 @@
         self.imageView.backgroundColor = [UIColor clearColor]; // Ensure image view is clear over black
     } else {
         // Ensure the view is in the 'light mode' state
-        self.view.backgroundColor = [UIColor colorWithWhite:0.95 alpha:1.0];
-        self.scrollView.backgroundColor = [UIColor colorWithWhite:0.95 alpha:1.0];
-        self.imageView.backgroundColor = [UIColor clearColor]; // Ensure image view is clear over light gray
+        // self.view.backgroundColor = [UIColor colorWithWhite:0.95 alpha:1.0]; // This is already set in viewDidLoad
+        // self.scrollView.backgroundColor = [UIColor colorWithWhite:0.95 alpha:1.0]; // This is already set in setupScrollView
+        self.imageView.backgroundColor = [UIColor clearColor]; 
     }
     // When a new view is about to appear during a transition, make sure layout is correct
     [self updateViewFramesForInfoVisibility:self.infoVisible];
@@ -1442,6 +1657,12 @@
         Debug(@"[PhotoContent] Image needs loading in viewWillAppear (placeholder: %@), loading now: %@", 
               self.isDisplayingPlaceholderOrErrorImage ? @"YES" : @"NO", 
               self.seafFile.name);
+        // If currently displaying an error, remove it before attempting to load again
+        if (self.isDisplayingPlaceholderOrErrorImage && self.errorPlaceholderView) {
+            [self.errorPlaceholderView removeFromSuperview];
+            self.errorPlaceholderView = nil;
+            // self.isDisplayingPlaceholderOrErrorImage = NO; // loadImage will reset this
+        }
         [self loadImage];
     }
 }
