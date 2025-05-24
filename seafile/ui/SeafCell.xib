@@ -32,20 +32,20 @@
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     </view>
                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" placeholderIntrinsicWidth="230" placeholderIntrinsicHeight="14" text="Name" lineBreakMode="characterWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3">
-                        <rect key="frame" x="67" y="10" width="191" height="14"/>
+                        <rect key="frame" x="69" y="10" width="189" height="14"/>
                         <fontDescription key="fontDescription" type="system" pointSize="15"/>
                         <color key="textColor" red="0.26666666666666666" green="0.26666666666666666" blue="0.26666666666666666" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </label>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" translatesAutoresizingMaskIntoConstraints="NO" id="4">
-                        <rect key="frame" x="20" y="14.5" width="39" height="39"/>
+                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" translatesAutoresizingMaskIntoConstraints="NO" id="4">
+                        <rect key="frame" x="24" y="16.5" width="35" height="35"/>
                         <constraints>
-                            <constraint firstAttribute="height" constant="39" id="d2V-TX-kIr"/>
-                            <constraint firstAttribute="width" constant="39" id="kYc-Mr-aMk"/>
+                            <constraint firstAttribute="height" constant="35" id="d2V-TX-kIr"/>
+                            <constraint firstAttribute="width" constant="35" id="kYc-Mr-aMk"/>
                         </constraints>
                     </imageView>
                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="249" text="detail" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="25">
-                        <rect key="frame" x="88" y="41" width="170" height="15"/>
+                        <rect key="frame" x="90" y="41" width="168" height="15"/>
                         <fontDescription key="fontDescription" type="system" pointSize="12"/>
                         <color key="textColor" red="0.66666666666666663" green="0.66666666666666663" blue="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -67,7 +67,7 @@
                         <color key="shadowColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </label>
                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="scu-4L-n7D">
-                        <rect key="frame" x="67" y="38" width="21" height="21"/>
+                        <rect key="frame" x="69" y="38" width="21" height="21"/>
                         <subviews>
                             <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="download_finished.png" translatesAutoresizingMaskIntoConstraints="NO" id="Drf-gP-cHe">
                                 <rect key="frame" x="3" y="3" width="15" height="15"/>
@@ -90,7 +90,7 @@
                         </constraints>
                     </view>
                     <progressView opaque="NO" contentMode="scaleToFill" progress="0.5" translatesAutoresizingMaskIntoConstraints="NO" id="DtI-c0-SVZ">
-                        <rect key="frame" x="67" y="46.5" width="211" height="4"/>
+                        <rect key="frame" x="69" y="46.5" width="209" height="4"/>
                     </progressView>
                 </subviews>
                 <color key="backgroundColor" red="1" green="1" blue="1" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
@@ -101,10 +101,10 @@
                     <constraint firstAttribute="trailing" secondItem="3" secondAttribute="trailing" constant="62" id="90i-zR-k05"/>
                     <constraint firstAttribute="trailing" secondItem="DtI-c0-SVZ" secondAttribute="trailing" constant="42" id="EbH-V7-vkv"/>
                     <constraint firstItem="4" firstAttribute="centerY" secondItem="7mC-NE-fI3" secondAttribute="centerY" id="HIP-9c-yF7"/>
-                    <constraint firstItem="4" firstAttribute="leading" secondItem="7mC-NE-fI3" secondAttribute="leadingMargin" constant="4" id="S2o-gq-seY"/>
+                    <constraint firstItem="4" firstAttribute="leading" secondItem="7mC-NE-fI3" secondAttribute="leadingMargin" constant="8" id="S2o-gq-seY"/>
                     <constraint firstItem="vWy-Pk-w8f" firstAttribute="top" secondItem="3" secondAttribute="top" id="S8H-dV-txA"/>
                     <constraint firstItem="DtI-c0-SVZ" firstAttribute="centerY" secondItem="25" secondAttribute="centerY" id="Srf-6e-bPO"/>
-                    <constraint firstItem="3" firstAttribute="leading" secondItem="4" secondAttribute="trailing" constant="8" id="WXN-Cl-RLd"/>
+                    <constraint firstItem="3" firstAttribute="leading" secondItem="4" secondAttribute="trailing" constant="10" id="WXN-Cl-RLd"/>
                     <constraint firstItem="25" firstAttribute="centerY" secondItem="scu-4L-n7D" secondAttribute="centerY" id="Y06-a8-BT0"/>
                     <constraint firstAttribute="trailing" secondItem="vWy-Pk-w8f" secondAttribute="trailing" constant="8" id="aIV-aq-2iq"/>
                     <constraint firstItem="25" firstAttribute="leading" secondItem="scu-4L-n7D" secondAttribute="trailing" id="cTf-5c-axZ"/>

@@ -309,6 +309,7 @@
     NSMutableArray *ownRepos = [[NSMutableArray alloc] init];
     NSMutableArray *srepos = [[NSMutableArray alloc] init];
     NSMutableArray *grepos = [[NSMutableArray alloc] init];
+    NSMutableArray *publicRepos = [[NSMutableArray alloc] init];
     NSMutableDictionary *otherRepos = [[NSMutableDictionary alloc] init];
 
     NSArray *items = [self.items copy];
@@ -319,6 +320,8 @@
             [srepos addObject:r];
         } else if ([GROUP_REPO isEqualToString:r.type]) {
             [grepos addObject:r];
+        } else if ([PUBLIC_REPO isEqualToString:r.type]) {
+            [publicRepos addObject:r];
         } else {
             NSMutableArray *group = [otherRepos objectForKey:r.owner];
             if (!group) {
@@ -331,6 +334,8 @@
     [repoGroup addObject:ownRepos];
     if (srepos.count > 0)
         [repoGroup addObject:srepos];
+    if (publicRepos.count > 0)
+        [repoGroup addObject:publicRepos];
     
     if (grepos.count > 0) {
         NSMutableDictionary *dict = [NSMutableDictionary dictionary];
