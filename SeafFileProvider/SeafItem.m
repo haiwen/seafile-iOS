@@ -172,7 +172,7 @@ static APLRUCache *cache() {
         NSString *filepath = [self.path stringByAppendingPathComponent:self.filename];
         return [[SeafFile alloc] initWithConnection:self.conn oid:nil repoId:_repoId name:_filename path:filepath mtime:0 size:0];
     } else {
-        return [[SeafDir alloc] initWithConnection:self.conn oid:nil repoId:self.repoId perm:nil name:self.filename path:self.path];
+        return [[SeafDir alloc] initWithConnection:self.conn oid:nil repoId:self.repoId perm:nil name:self.filename path:self.path mtime:0];
     }
 }
 

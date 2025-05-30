@@ -505,7 +505,7 @@
             self.isFileEditedAgain = false;// reset flag
         }
         NSString *path = [self.path stringByDeletingLastPathComponent];
-        SeafDir *udir = [[SeafDir alloc] initWithConnection:self.connection oid:nil repoId:self.repoId perm:@"rw" name:path.lastPathComponent path:path];
+        SeafDir *udir = [[SeafDir alloc] initWithConnection:self.connection oid:nil repoId:self.repoId perm:@"rw" name:path.lastPathComponent path:path mtime:0];
         self.ufile.udir = udir;
         [udir addUploadFile:self.ufile];
     }

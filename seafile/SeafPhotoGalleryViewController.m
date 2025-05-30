@@ -359,33 +359,6 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
                                     toolbarHeight + safeAreaBottom); // Include safe area in height
     self.toolbarView.frame = toolbarFrame;
 
-    // Position overlays for thumbnailCollection
-    // CGFloat overlayWidth = 25.0; // This will be used in the new helper method
-    // CGRect tcFrame = self.thumbnailCollection.frame; // This will be used in the new helper method
-
-    // // The following is replaced by the new helper method call
-    // self.leftThumbnailOverlay.frame = CGRectMake(tcFrame.origin.x,
-    //                                              tcFrame.origin.y,
-    //                                              overlayWidth,
-    //                                              tcFrame.size.height);
-    // self.rightThumbnailOverlay.frame = CGRectMake(CGRectGetMaxX(tcFrame) - overlayWidth,
-    //                                               tcFrame.origin.y,
-    //                                               overlayWidth,
-    //                                               tcFrame.size.height);
-    // // Update gradient layer frames
-    // if (self.leftThumbnailOverlay.layer.sublayers.count > 0) {
-    //     CAGradientLayer *leftSubGradient = (CAGradientLayer *)self.leftThumbnailOverlay.layer.sublayers.firstObject;
-    //     if ([leftSubGradient isKindOfClass:[CAGradientLayer class]]) {
-    //         leftSubGradient.frame = self.leftThumbnailOverlay.bounds;
-    //     }
-    // }
-    // if (self.rightThumbnailOverlay.layer.sublayers.count > 0) {
-    //     CAGradientLayer *rightSubGradient = (CAGradientLayer *)self.rightThumbnailOverlay.layer.sublayers.firstObject;
-    //     if ([rightSubGradient isKindOfClass:[CAGradientLayer class]]) {
-    //         rightSubGradient.frame = self.rightThumbnailOverlay.bounds;
-    //     }
-    // }
-
     [self synchronizeOverlayFramesAndVisibilityWithThumbnailCollectionFrame:self.thumbnailCollection.frame isAnimatingReveal:NO];
 
     [self.view bringSubviewToFront:self.leftThumbnailOverlay];
@@ -2365,15 +2338,10 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
     // However, if there was a more fundamental load issue, this is where you might handle it.
     else if ([file isKindOfClass:[SeafUploadFile class]]) {
         Debug(@"[Gallery] Retrying for SeafUploadFile: %@. This typically involves its internal retry or re-fetching logic via getImageWithCompletion.", file.name);
-        // For SeafUploadFile, the loadImage in contentVC typically handles it.
-        // If a more forceful retry is needed, specific logic for SeafUploadFile would go here.
-        // For now, we assume that if the contentVC calls loadImage again after delegate call, it will work.
-        // Or, we can directly ask the content VC to try loading again.
         if (contentVC) {
             [contentVC loadImage]; // Ask the content view controller to attempt loading again.
         } else {
             // If no contentVC, it's harder to trigger its specific load.
-            // This case should be rare if the retry came from an active VC.
         }
     }
 }

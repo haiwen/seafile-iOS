@@ -491,7 +491,7 @@
             [creatDirPath appendString:subPath];
         }
         NSString *pathStr = [NSString stringWithString:creatDirPath];
-        SeafDir *newDir = [[SeafDir alloc]initWithConnection:aDir.connection oid:nil repoId:aDir.repoId perm:nil name:repoName path:pathStr];
+        SeafDir *newDir = [[SeafDir alloc]initWithConnection:aDir.connection oid:nil repoId:aDir.repoId perm:nil name:repoName path:pathStr mtime:0];
        
         [dirArray addObject:newDir];
         if ([subPath length] > 0){
