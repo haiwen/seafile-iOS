@@ -314,7 +314,7 @@
     }
     [cell.button setTitle:NSLocalizedString(@"Add account", @"Seafile") forState:UIControlStateNormal];
     [cell.button setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    cell.button.backgroundColor = SEAF_COLOR_GREY;
+    cell.button.backgroundColor = SEAF_COLOR_ORANGE;
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
     [cell.button addTarget:self action:@selector(addAccount:) forControlEvents:UIControlEventTouchUpInside];
 

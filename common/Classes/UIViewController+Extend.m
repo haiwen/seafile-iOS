@@ -152,16 +152,68 @@
     return [self isViewLoaded] && self.view.window;
 }
 
+// Action method for the password visibility toggle button in alerts
+- (void)alertTextFieldToggleVisibility:(UIButton *)sender {
+    // Try to find the UIAlertController.
+    // If 'self' is presenting it, self.presentedViewController should be it.
+    if ([self.presentedViewController isKindOfClass:[UIAlertController class]]) {
+        UIAlertController *alertController = (UIAlertController *)self.presentedViewController;
+        if (alertController.textFields.count > 0) {
+            UITextField *textField = alertController.textFields.firstObject;
+            textField.secureTextEntry = !textField.secureTextEntry;
+            sender.selected = !textField.secureTextEntry; // true if text is NOT secure (visible)
+        }
+    }
+}
+
 - (void)popupSetRepoPassword:(SeafRepo *)repo handler:(void (^)(void))handler
 {
     NSString *title = [NSString stringWithFormat:NSLocalizedString(@"Password of library '%@'", @"Seafile"), repo.name];
-    [self popupInputView:title placeholder:nil secure:true handler:^(NSString *input) {
+
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
+                                                                   message:nil
+                                                            preferredStyle:UIAlertControllerStyleAlert];
+
+    [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+        textField.placeholder = NSLocalizedString(@"Password", @"Password Placeholder");
+        textField.secureTextEntry = YES;
+        textField.autocorrectionType = UITextAutocorrectionTypeNo;
+
+        UIButton *visibilityButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        UIImage *eyeSlashImage = [UIImage imageNamed:@"icon_eye_close"]; // Password hidden state
+        UIImage *eyeImage = [UIImage imageNamed:@"icon_eye_open"];       // Password visible state
+        [visibilityButton setImage:eyeSlashImage forState:UIControlStateNormal];
+        [visibilityButton setImage:eyeImage forState:UIControlStateSelected];
+        
+        visibilityButton.frame = CGRectMake(0, 0, 30, 30); // Consistent with SeafMkLibAlertController
+        visibilityButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
+        visibilityButton.tintColor = [UIColor grayColor]; // A common tint color for such icons
+        
+        // Add target to the UIViewController instance (self)
+        [visibilityButton addTarget:self action:@selector(alertTextFieldToggleVisibility:) forControlEvents:UIControlEventTouchUpInside];
+
+        textField.rightView = visibilityButton;
+        textField.rightViewMode = UITextFieldViewModeAlways;
+    }];
+
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Cancel button title")
+                                                           style:UIAlertActionStyleCancel
+                                                         handler:nil];
+
+    UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"OK button title")
+                                                       style:UIAlertActionStyleDefault
+                                                     handler:^(UIAlertAction * _Nonnull action) {
+        UITextField *passwordField = alert.textFields.firstObject;
+        NSString *input = passwordField.text;
+
         if (!input || input.length == 0) {
             [self alertWithTitle:NSLocalizedString(@"Password must not be empty", @"Seafile")handler:^{
+                // Retry by calling the method again
                 [self popupSetRepoPassword:repo handler:handler];
             }];
             return;
         }
+        // Using existing length validation from the original method
         if (input.length < 3 || input.length  > 100) {
             [self alertWithTitle:NSLocalizedString(@"The length of password should be between 3 and 100", @"Seafile") handler:^{
                 [self popupSetRepoPassword:repo handler:handler];
@@ -176,17 +228,27 @@
 #ifdef SEAFILE_APP
                 [SVProgressHUD dismiss];
 #endif
-                handler();
+                if (handler) { // Ensure handler is not nil before calling
+                    handler();
+                }
             } else {
 #ifdef SEAFILE_APP
                 [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Wrong library password", @"Seafile")];
 #endif
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                // Add a slight delay before retrying to allow SVProgressHUD to be seen
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                     [self popupSetRepoPassword:repo handler:handler];
                 });
             }
         }];
     }];
+
+    [alert addAction:cancelAction];
+    [alert addAction:okAction];
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self presentViewController:alert animated:YES completion:nil];
+    });
 }
 
 #define STR_15 NSLocalizedString(@"Your device cannot authenticate using Touch ID.", @"Seafile")

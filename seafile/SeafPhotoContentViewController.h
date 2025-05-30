@@ -13,11 +13,19 @@
 @class SeafFile;
 @protocol SeafPreView;
 
+// Define a protocol for retry requests
+@protocol SeafPhotoContentDelegate <NSObject>
+- (void)photoContentViewControllerRequestsRetryForFile:(id<SeafPreView>)file atIndex:(NSUInteger)index;
+@end
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface SeafPhotoContentViewController : UIViewController <UIScrollViewDelegate>
 /// The photo URL to display
 @property (nonatomic, strong) NSURL *photoURL;
+
+/// Delegate to handle retry requests
+@property (nonatomic, weak, nullable) id<SeafPhotoContentDelegate> delegate;
 
 /// The connection to use for API requests
 @property (nonatomic, strong) SeafConnection *connection;

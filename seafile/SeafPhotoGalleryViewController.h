@@ -8,8 +8,10 @@
 
 #import <UIKit/UIKit.h>
 #import "SeafFile.h"
+#import "SeafPGThumbnailCellViewModel.h"
+#import "SeafPhotoContentViewController.h"
 
-@interface SeafPhotoGalleryViewController : UIViewController <SeafDentryDelegate>
+@interface SeafPhotoGalleryViewController : UIViewController <SeafDentryDelegate, SeafPhotoContentDelegate>
 
 // Initialization method using SeafFile object
 - (instancetype)initWithPhotos:(NSArray<id<SeafPreView>> *)files
@@ -19,4 +21,17 @@
 // Track the range of loaded images
 @property (nonatomic, readonly) NSRange loadedImagesRange;
 
+@end
+
+@interface SeafPhotoGalleryViewController () <UIPageViewControllerDataSource,
+                                             UIPageViewControllerDelegate,
+                                             UICollectionViewDataSource,
+                                             UICollectionViewDelegate,
+                                             UICollectionViewDelegateFlowLayout,
+                                             UIScrollViewDelegate,
+                                             SeafDentryDelegate,
+                                             SeafPhotoContentDelegate>
+
+@property (nonatomic, strong) UIPageViewController     *pageVC;
+@property (nonatomic, assign) BOOL isDragging;
 @end

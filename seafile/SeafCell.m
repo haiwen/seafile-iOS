@@ -69,6 +69,9 @@
     // Set basic properties for cellBackgroundView
     self.cellBackgroundView.backgroundColor = [UIColor whiteColor];
     self.cellBackgroundView.clipsToBounds = YES;
+
+    // Add rounded corners to the imageView
+    self.imageView.layer.cornerRadius = 5.0f;
 }
 
 - (void)layoutSubviews {

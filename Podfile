@@ -4,6 +4,7 @@ def shared
   pod 'AFNetworking', '~> 4.0.0'
   pod 'OpenSSL-Universal', '1.0.2.17'
   pod 'APLRUCache', '~> 1.0.0'
+  pod 'UniversalDetector'
 end
 
 target :"seafileApp" do

@@ -287,6 +287,18 @@
 		BAE6669F2D83246B0079D4D7 /* action_download.png in Resources */ = {isa = PBXBuildFile; fileRef = BAE666652D83246B0079D4D7 /* action_download.png */; };
 		BAE666A02D83246B0079D4D7 /* action_export.png in Resources */ = {isa = PBXBuildFile; fileRef = BAE666662D83246B0079D4D7 /* action_export.png */; };
 		BAE666A12D83246B0079D4D7 /* action_share.png in Resources */ = {isa = PBXBuildFile; fileRef = BAE6666A2D83246B0079D4D7 /* action_share.png */; };
+		BAEF7EB72DE9B28C0066746A /* icon_eye_close@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = BAEF7EB52DE9B28C0066746A /* icon_eye_close@2x.png */; };
+		BAEF7EB82DE9B28C0066746A /* icon_eye_open@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = BAEF7EB62DE9B28C0066746A /* icon_eye_open@2x.png */; };
+		BAEF7EB92DE9B28C0066746A /* icon_eye_close@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = BAEF7EB52DE9B28C0066746A /* icon_eye_close@2x.png */; };
+		BAEF7EBA2DE9B28C0066746A /* icon_eye_open@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = BAEF7EB62DE9B28C0066746A /* icon_eye_open@2x.png */; };
+		BAEF7EBB2DE9B28C0066746A /* icon_eye_close@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = BAEF7EB52DE9B28C0066746A /* icon_eye_close@2x.png */; };
+		BAEF7EBC2DE9B28C0066746A /* icon_eye_open@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = BAEF7EB62DE9B28C0066746A /* icon_eye_open@2x.png */; };
+		BAEF7EBD2DE9B28C0066746A /* icon_eye_close@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = BAEF7EB52DE9B28C0066746A /* icon_eye_close@2x.png */; };
+		BAEF7EBE2DE9B28C0066746A /* icon_eye_open@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = BAEF7EB62DE9B28C0066746A /* icon_eye_open@2x.png */; };
+		BAEF7EBF2DE9B28C0066746A /* icon_eye_close@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = BAEF7EB52DE9B28C0066746A /* icon_eye_close@2x.png */; };
+		BAEF7EC02DE9B28C0066746A /* icon_eye_open@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = BAEF7EB62DE9B28C0066746A /* icon_eye_open@2x.png */; };
+		BAEF7EC12DE9B28C0066746A /* icon_eye_close@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = BAEF7EB52DE9B28C0066746A /* icon_eye_close@2x.png */; };
+		BAEF7EC22DE9B28C0066746A /* icon_eye_open@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = BAEF7EB62DE9B28C0066746A /* icon_eye_open@2x.png */; };
 		D9BE2094AD9B16A02584A3C2 /* libPods-seafileApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B3D78ABE0B0673E422054A82 /* libPods-seafileApp.a */; };
 		DE940CA1A2BA2DD43C20EA2C /* libPods-SeafFileProviderUI.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 15EFA735E2957F22E301E23A /* libPods-SeafFileProviderUI.a */; };
 		E0FED1E93CBE02FB9B335ADB /* libPods-SeafFileProvider.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3583928919818364B46034EA /* libPods-SeafFileProvider.a */; };
@@ -1001,6 +1013,8 @@
 		BAE666692D83246B0079D4D7 /* action_rename.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = action_rename.png; sourceTree = "<group>"; };
 		BAE6666A2D83246B0079D4D7 /* action_share.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = action_share.png; sourceTree = "<group>"; };
 		BAE6666B2D83246B0079D4D7 /* action_star.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = action_star.png; sourceTree = "<group>"; };
+		BAEF7EB52DE9B28C0066746A /* icon_eye_close@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_eye_close@2x.png"; sourceTree = "<group>"; };
+		BAEF7EB62DE9B28C0066746A /* icon_eye_open@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_eye_open@2x.png"; sourceTree = "<group>"; };
 		DBDEFA043CD6CF7650726549 /* Pods-seafileApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-seafileApp.debug.xcconfig"; path = "Pods/Target Support Files/Pods-seafileApp/Pods-seafileApp.debug.xcconfig"; sourceTree = "<group>"; };
 		EE1E1FA7502D3F04292B11CB /* Pods-SeafAction.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafAction.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SeafAction/Pods-SeafAction.debug.xcconfig"; sourceTree = "<group>"; };
 		F515E4B421AC3DBB00A62F64 /* SeafActionsManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafActionsManager.h; sourceTree = "<group>"; };
@@ -1622,6 +1636,8 @@
 				BA83A43A2DA67D2D005712EA /* detail_information_selected.png */,
 				BA83A43B2DA67D2D005712EA /* detail_share.png */,
 				BADDEBC62DC0852100B12687 /* gallery_failed.png */,
+				BAEF7EB52DE9B28C0066746A /* icon_eye_close@2x.png */,
+				BAEF7EB62DE9B28C0066746A /* icon_eye_open@2x.png */,
 				BA83A43C2DA67D2D005712EA /* detail_starred.png */,
 				BA83A43D2DA67D2D005712EA /* detail_starred_selected.png */,
 				BA83DEB82DB5C80F0073EAA8 /* detail_photo_calendar.png */,
@@ -1943,6 +1959,8 @@
 				BA83DED12DB5C80F0073EAA8 /* detail_photo_size.png in Resources */,
 				BA83DED22DB5C80F0073EAA8 /* detail_photo_user.png in Resources */,
 				BA83DED32DB5C80F0073EAA8 /* detail_photo_calendar.png in Resources */,
+				BAEF7EB92DE9B28C0066746A /* icon_eye_close@2x.png in Resources */,
+				BAEF7EBA2DE9B28C0066746A /* icon_eye_open@2x.png in Resources */,
 				F5DF74E624FE83DB004CAB1E /* share2.png in Resources */,
 				F5DF755E24FE83DB004CAB1E /* download_waiting.png in Resources */,
 				F52111DD21E1C14D00D93BB8 /* SeafSyncInfoCell.xib in Resources */,
@@ -2150,6 +2168,8 @@
 				F52111C721E1C12000D93BB8 /* SeafTextEditorViewController_iPhone.xib in Resources */,
 				F5DF754D24FE83DB004CAB1E /* tab-settings.png in Resources */,
 				F5DF750B24FE83DB004CAB1E /* star2@2x.png in Resources */,
+				BAEF7EBB2DE9B28C0066746A /* icon_eye_close@2x.png in Resources */,
+				BAEF7EBC2DE9B28C0066746A /* icon_eye_open@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2232,6 +2252,8 @@
 				F5DF753024FE83DB004CAB1E /* tab-account@2x.png in Resources */,
 				F5DF757224FE83DB004CAB1E /* checkmask2@2x.png in Resources */,
 				F52111D221E1C12000D93BB8 /* FolderView_iPad.storyboard in Resources */,
+				BAEF7EC12DE9B28C0066746A /* icon_eye_close@2x.png in Resources */,
+				BAEF7EC22DE9B28C0066746A /* icon_eye_open@2x.png in Resources */,
 				F521118C21E1C12000D93BB8 /* SeafStart.storyboard in Resources */,
 				58AC97DA1FC3920500A7518C /* Settings.bundle in Resources */,
 				57A029A01A16F965009C9D7B /* SeafFileProvider.entitlements in Resources */,
@@ -2380,6 +2402,8 @@
 				F52111E521E1C14D00D93BB8 /* SeafMkLibAlertController_iPad.xib in Resources */,
 				F5DF754F24FE83DB004CAB1E /* tab-settings.png in Resources */,
 				F5DF750D24FE83DB004CAB1E /* star2@2x.png in Resources */,
+				BAEF7EBD2DE9B28C0066746A /* icon_eye_close@2x.png in Resources */,
+				BAEF7EBE2DE9B28C0066746A /* icon_eye_open@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2474,6 +2498,8 @@
 				F5DF75F324FE83DB004CAB1E /* more_dot.png in Resources */,
 				F5DF755D24FE83DB004CAB1E /* ImageError@2x.png in Resources */,
 				F5DF757524FE83DB004CAB1E /* checkmask2@2x.png in Resources */,
+				BAEF7EB72DE9B28C0066746A /* icon_eye_close@2x.png in Resources */,
+				BAEF7EB82DE9B28C0066746A /* icon_eye_open@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2576,6 +2602,8 @@
 				BAE666742D83246B0079D4D7 /* action_share.png in Resources */,
 				F5C648FD210A0B4E00842687 /* MainInterface.storyboard in Resources */,
 				F5DF762824FE83DC004CAB1E /* plus2@2x.png in Resources */,
+				BAEF7EBF2DE9B28C0066746A /* icon_eye_close@2x.png in Resources */,
+				BAEF7EC02DE9B28C0066746A /* icon_eye_open@2x.png in Resources */,
 				F5DF75E024FE83DB004CAB1E /* ellipsis2.png in Resources */,
 				F5DF758624FE83DB004CAB1E /* tab-home@2x.png in Resources */,
 				BA0DB2C22D8831B500237211 /* arrowLeft_black.png in Resources */,
@@ -3098,7 +3126,7 @@
 				INFOPLIST_FILE = "seafile/Supporting Files/seafile-appstore-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MARKETING_VERSION = 3.0.2;
+				MARKETING_VERSION = 3.0.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro;
 				PRODUCT_NAME = SeafilePro;
 				PROVISIONING_PROFILE = "";
@@ -3134,7 +3162,7 @@
 				INFOPLIST_FILE = "seafile/Supporting Files/seafile-appstore-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MARKETING_VERSION = 3.0.2;
+				MARKETING_VERSION = 3.0.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro;
 				PRODUCT_NAME = SeafilePro;
 				PROVISIONING_PROFILE = "";

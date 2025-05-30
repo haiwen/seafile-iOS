@@ -574,6 +574,8 @@ enum {
                 text = @"";
             } else if ([repo.type isEqualToString:SHARE_REPO]) {
                 text = NSLocalizedString(@"Shared to me", @"Seafile");
+            } else if ([repo.type isEqualToString:PUBLIC_REPO]) {
+                text = NSLocalizedString(@"Shared with all", @"Seafile");
             } else if ([repo.type isEqualToString:GROUP_REPO]) {//show group name, not id
                 if (!repo.groupName || repo.groupName.length == 0) {
                     text = NSLocalizedString(@"Shared with groups", @"Seafile");
@@ -2528,6 +2530,15 @@ enum {
         
         // Additional style settings for iOS appearance
         _searchController.searchBar.translucent = YES;  // Make it translucent for the gray appearance
+
+        // Apply a 38px leading margin to the UISearchBar to indent its content (the searchTextField)
+        // This makes space for our custom back button (30px width) and its 8px leading offset.
+        if (@available(iOS 11.0, *)) {
+            _searchController.searchBar.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(0, 42, 0, 0);
+        } else {
+            // Fallback for older iOS versions if needed, though UISearchController is iOS 8+
+            _searchController.searchBar.layoutMargins = UIEdgeInsetsMake(0, 42, 0, 0);
+        }
         
         // Configure search bar appearance like system search - Light gray background
         UIColor *lightGrayColor = [UIColor colorWithRed:0.95 green:0.95 blue:0.95 alpha:1.0]; // Light gray
@@ -2538,8 +2549,8 @@ enum {
         [_searchController.searchBar setBackgroundImage:nil forBarPosition:UIBarPositionAny barMetrics:UIBarMetricsDefault];
         [_searchController.searchBar setBackgroundImage:nil];
         
-        // Make the 'Cancel' button blue
-        _searchController.searchBar.tintColor = [UIColor systemBlueColor];
+        // Set the overall tint color for the search bar elements (custom buttons, cursor etc.)
+        _searchController.searchBar.tintColor = BAR_COLOR;
         
         // Set placeholder text style and color
         NSAttributedString *placeholderAttributes = [[NSAttributedString alloc] initWithString:NSLocalizedString(@"Search files in this library", @"Seafile") 
@@ -2549,7 +2560,22 @@ enum {
         if (@available(iOS 13.0, *)) {
             UITextField *searchField = _searchController.searchBar.searchTextField;
             searchField.attributedPlaceholder = placeholderAttributes;
-            searchField.backgroundColor = [UIColor colorWithRed:0.92 green:0.92 blue:0.92 alpha:1.0]; // Slightly darker than bar
+            searchField.backgroundColor = [UIColor whiteColor]; // Changed to white
+
+            // Add system search icon (magnifying glass) to the left of the text field
+            UIImageView *searchIconImageView = [[UIImageView alloc] initWithImage:[UIImage systemImageNamed:@"magnifyingglass"]];
+            searchIconImageView.tintColor = [UIColor secondaryLabelColor]; // Standard system color for icons
+            
+            // Create a container view for the leftView to provide padding
+            CGFloat iconSize = 22.0; // Made icon slightly larger
+            CGFloat padding = 0.0;   // Reduced padding further
+            UIView *leftViewContainer = [[UIView alloc] initWithFrame:CGRectMake(0, 0, iconSize + padding * 2, searchField.bounds.size.height)];
+            searchIconImageView.frame = CGRectMake(padding, (leftViewContainer.bounds.size.height - iconSize) / 2, iconSize, iconSize);
+            searchIconImageView.contentMode = UIViewContentModeScaleAspectFit;
+            [leftViewContainer addSubview:searchIconImageView];
+            
+            searchField.leftView = leftViewContainer;
+            searchField.leftViewMode = UITextFieldViewModeAlways;
         } else {
             // For older iOS versions
             [[UILabel appearanceWhenContainedIn:[UISearchBar class], nil] setAttributedText:placeholderAttributes];
@@ -2567,21 +2593,37 @@ enum {
             
             // For search bar, we can only set these properties
             if (@available(iOS 13.0, *)) {
-                _searchController.searchBar.searchTextField.backgroundColor = [UIColor whiteColor];
-                // Style the text field for better visibility
-                _searchController.searchBar.searchTextField.borderStyle = UITextBorderStyleNone;
-                _searchController.searchBar.searchTextField.layer.cornerRadius = 8.0;
-                _searchController.searchBar.searchTextField.clipsToBounds = YES;
-                
-                // Make sure the background is solid
-                UIView *backgroundView = [[UIView alloc] init];
-                backgroundView.backgroundColor = [UIColor whiteColor];
-                [_searchController.searchBar insertSubview:backgroundView atIndex:0];
+                // System default styling will now largely apply to the text field
             }
             _searchController.searchBar.tintColor = BAR_COLOR;
         }
         
+        // Hide the Cancel button
+        _searchController.searchBar.showsCancelButton = NO;
+
         [_searchController.searchBar sizeToFit];
+
+        // Get the actual height of the search bar for vertical centering
+        CGFloat searchBarHeight = _searchController.searchBar.bounds.size.height;
+
+        // Create and add custom back button on the far left
+        UIButton *customBackButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        UIImage *backImage = [[UIImage imageNamed:@"arrowLeft_black"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate]; // Ensure it's a template image
+        [customBackButton setImage:backImage forState:UIControlStateNormal];
+        customBackButton.tintColor = BAR_COLOR; // Match SeafNavigationBarStyler default
+        
+        CGFloat buttonHeight = 44.0;
+        CGFloat buttonY = 0;
+        if (IsIpad()) {
+            buttonY = (searchBarHeight - buttonHeight) / 2.0;
+        }
+        customBackButton.frame = CGRectMake(12, buttonY, 30, buttonHeight);
+        customBackButton.imageEdgeInsets = UIEdgeInsetsMake(12, 0, 12, 10);
+
+        customBackButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
+
+        [customBackButton addTarget:self action:@selector(customSearchDismissAction:) forControlEvents:UIControlEventTouchUpInside];
+        [_searchController.searchBar addSubview:customBackButton];
         
         // Listen for notifications to handle search cancellation
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -2592,6 +2634,35 @@ enum {
         self.definesPresentationContext = YES;
     }
     return _searchController;
+}
+
+- (void)customSearchDismissAction:(UIButton *)sender {
+    // Disable animations, similar to searchBarCancelButtonClicked
+    [UIView setAnimationsEnabled:NO];
+
+    // Ensure search bar resigns first responder and search controller is deactivated
+    if (self.searchController.searchBar && self.searchController.searchBar.isFirstResponder) {
+        [self.searchController.searchBar resignFirstResponder];
+    }
+    if (self.searchController.active) {
+        self.searchController.active = NO;
+    }
+
+    // Immediately hide search bar (tableView.tableHeaderView), similar to searchCancelled logic
+    if (![self.directory isKindOfClass:[SeafRepos class]]) {
+        self.tableView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 10.0)];
+    } else {
+        self.tableView.tableHeaderView = nil;
+    }
+
+    // Restore animation settings, similar to searchCancelled logic (synchronously)
+    [UIView setAnimationsEnabled:YES];
+    
+    if (self.navigationController && self.navigationController.navigationBar) {
+        self.navigationController.navigationBar.alpha = 1.0;
+    }
+    // Table content fade-in
+    self.tableView.alpha = 1.0;
 }
 
 // Handle search cancellation notification

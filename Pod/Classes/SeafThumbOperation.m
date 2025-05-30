@@ -14,6 +14,8 @@
 #import "SeafRepos.h"
 #import "Utils.h"
 #import "Debug.h"
+#import <AFNetworking/AFHTTPSessionManager.h> // For AFHTTPSessionManager
+#import <AFNetworking/AFNetworkReachabilityManager.h> // For AFNetworkReachabilityManager
 
 @interface SeafThumbOperation ()
 
@@ -35,7 +37,7 @@
 @synthesize executing = _executing;
 @synthesize finished = _finished;
 
-#define THUMB_MAX_RETRY_COUNT 1
+#define THUMB_MAX_RETRY_COUNT 0
 
 - (instancetype)initWithSeafFile:(SeafFile *)file
 {
@@ -72,6 +74,14 @@
     
     if (self.isCancelled) {
         [self completeOperation];
+        return;
+    }
+
+    // Check network availability when the operation starts
+    // Ensure file, connection, and sessionMgr are valid
+    if (!self.file || !self.file.connection || !self.file.connection.sessionMgr || !self.file.connection.sessionMgr.reachabilityManager.isReachable) {
+        Debug(@"[SeafThumbOperation] Network is not available or connection/session manager is invalid at start for: %@", self.file ? self.file.name : @"unknown file");
+        [self finishDownloadThumbOperation:NO]; // Marks failure and completes operation
         return;
     }
 

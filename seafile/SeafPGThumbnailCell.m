@@ -24,6 +24,8 @@
     self.thumbnailImageView.contentMode = UIViewContentModeScaleAspectFill;
     self.thumbnailImageView.clipsToBounds = YES;
     self.thumbnailImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    self.thumbnailImageView.layer.cornerRadius = 5.0;
+    self.thumbnailImageView.layer.masksToBounds = YES;
     [self.contentView addSubview:self.thumbnailImageView];
 
     self.loadingIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleMedium];
@@ -42,7 +44,15 @@
 - (void)configureWithViewModel:(SeafPGThumbnailCellViewModel *)viewModel {
     self.currentViewModel = viewModel;
     
-    self.thumbnailImageView.image = viewModel.thumbnailImage ?: [UIImage imageNamed:@"gallery_placeholder.png"]; // Use placeholder if nil
+    UIImage *imageToDisplay = viewModel.thumbnailImage ?: [UIImage imageNamed:@"gallery_placeholder.png"];
+    self.thumbnailImageView.image = imageToDisplay;
+
+    UIImage *failureImage = [UIImage imageNamed:@"gallery_failed.png"];
+    if (imageToDisplay && [imageToDisplay isEqual:failureImage]) {
+        self.thumbnailImageView.contentMode = UIViewContentModeScaleAspectFit;
+    } else {
+        self.thumbnailImageView.contentMode = UIViewContentModeScaleAspectFill;
+    }
 
     if (viewModel.isLoading) {
         [self.loadingIndicator startAnimating];
@@ -61,7 +71,16 @@
         }
         // Ensure UI updates are on the main thread
         dispatch_async(dispatch_get_main_queue(), ^{
-            strongSelf.thumbnailImageView.image = viewModel.thumbnailImage ?: [UIImage imageNamed:@"gallery_placeholder.png"];
+            UIImage *updatedImageToDisplay = viewModel.thumbnailImage ?: [UIImage imageNamed:@"gallery_placeholder.png"];
+            strongSelf.thumbnailImageView.image = updatedImageToDisplay;
+
+            UIImage *failureImage = [UIImage imageNamed:@"gallery_failed.png"];
+            if (updatedImageToDisplay && [updatedImageToDisplay isEqual:failureImage]) {
+                strongSelf.thumbnailImageView.contentMode = UIViewContentModeScaleAspectFit;
+            } else {
+                strongSelf.thumbnailImageView.contentMode = UIViewContentModeScaleAspectFill;
+            }
+
             if (viewModel.isLoading) {
                 [strongSelf.loadingIndicator startAnimating];
             } else {
@@ -84,6 +103,7 @@
     
     // Reset cell to a default state
     self.thumbnailImageView.image = nil;
+    self.thumbnailImageView.contentMode = UIViewContentModeScaleAspectFill; // Reset content mode
     [self.loadingIndicator stopAnimating];
 }
 
