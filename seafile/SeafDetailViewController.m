@@ -577,13 +577,13 @@ enum SHARE_STATUS {
     if (self.preViewItem != entry || self.preViewItem.hasCache)
         return;// Return if the entry is not the current item or if it is cached
 
-    // 如果是网络不可达错误，则显示特定提示
+    // If it is a network unreachable error, display a specific prompt
     if (error && error.code == NSURLErrorNotConnectedToInternet) {
         if (self.isVisible) {
             [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Network unavailable", @"Seafile")];
         }
     } else {
-         // 否则显示通用下载失败提示
+         // Otherwise, display a generic download failed prompt
         [self showDownloadError:self.preViewItem.previewItemTitle];
     }
     [self setPreViewItem:nil master:nil];// Clear the preview item and master
@@ -910,7 +910,7 @@ enum SHARE_STATUS {
         _mwPhotoBrowser.enableSwipeToDismiss = true;
         _mwPhotoBrowser.backgroundColor = [UIColor whiteColor];
         _mwPhotoBrowser.trackTintColor = SEAF_COLOR_LIGHT;
-        _mwPhotoBrowser.progressColor = SEAF_COLOR_GREY;
+        _mwPhotoBrowser.progressColor = SEAF_COLOR_ORANGE;
         _mwPhotoBrowser.preLoadNumLeft = 0;
         _mwPhotoBrowser.preLoadNumRight = 1;
     }

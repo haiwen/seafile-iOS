@@ -695,22 +695,22 @@
     BOOL shouldPerformFullPauseLogic = NO;
 
     @synchronized(self) {
-        if (!self.isPaused) { // 只有当状态从未暂停变为暂停时，才标记执行完整的暂停逻辑
+        if (!self.isPaused) { // Only when the state changes from not paused to paused, mark to perform the full pause logic
             self.isPaused = YES;
             shouldPerformFullPauseLogic = YES;
         } else {
-            // 即使已经标记为 paused，也确保队列是 suspended 状态
+            // Even if it is already marked as paused, ensure the queues are in suspended state
             Debug(@"[AccountQueue] Attempted to globally pause, but already paused. Ensured queues are suspended.");
         }
-        // 无论如何，如果调用了 pauseAllTasks，都应确保队列被挂起
+        // In any case, if pauseAllTasks is called, ensure the queues are suspended
         [self.uploadQueue setSuspended:YES];
         [self.downloadQueue setSuspended:YES];
         [self.thumbQueue setSuspended:YES];
     }
 
     if (shouldPerformFullPauseLogic) {
-        // 将任务从 ongoing 列表移动到 paused 列表的操作（这些操作内部有自己的同步）
-        // 这些操作应该在同步块之外，因为它们可能耗时，且它们操作的数组有自己的同步锁
+        // Operations to move tasks from the ongoing list to the paused list (these operations have their own internal synchronization)
+        // These operations should be outside the synchronized block as they might be time-consuming, and the arrays they operate on have their own synchronization locks
         [self cancelAutoSyncTasksWithoutSuspend];
         [self pauseAllUploadingTasks];
         [self pauseAllDownloadingTasks];
@@ -734,11 +734,11 @@
     
     BOOL stateChangedToResumed = NO;
     @synchronized(self) {
-        if (self.isPaused) { // 仅当之前是全局暂停状态时才进行全局恢复
+        if (self.isPaused) { // Only resume globally if it was previously in a global paused state
             self.isPaused = NO;
             stateChangedToResumed = YES;
             
-            // 解除队列挂起
+            // Unsuspend the queues
             [self.uploadQueue setSuspended:NO];
             [self.downloadQueue setSuspended:NO];
             [self.thumbQueue setSuspended:NO];
@@ -746,7 +746,7 @@
     }
 
     if (stateChangedToResumed) {
-        // 重新添加任务到队列
+        // Re-add tasks to the queue
         [self resumePausedUploadTasks];
         [self resumePausedDownloadTasks];
         [self resumePausedThumbTasks];

@@ -24,6 +24,7 @@
  * @param aPerm The permission string (e.g., "rw" for read-write).
  * @param aName The name of the directory.
  * @param aPath The full path of the directory.
+ * @param mtime The modification timestamp of the directory.
  * @return An initialized directory object, or nil if an object could not be created for some reason.
  */
 - (id)initWithConnection:(SeafConnection *)aConnection
@@ -31,7 +32,8 @@
                   repoId:(NSString *)aRepoId
                     perm:(NSString *)aPerm
                     name:(NSString *)aName
-                    path:(NSString *)aPath;
+                    path:(NSString *)aPath
+                   mtime:(long long)mtime;
 
 - (id)initWithConnection:(SeafConnection *)aConnection
                      oid:(NSString *)anId
@@ -39,13 +41,15 @@
                     perm:(NSString *)aPerm
                     name:(NSString *)aName
                     path:(NSString *)aPath
-                    mime:(NSString *)aMime;
+                    mime:(NSString *)aMime
+                   mtime:(long long)mtime;
 
 @property (readonly, copy) NSArray *allItems;//All items displayed in the current directory
 @property (nonatomic, copy) NSArray *items;//All items from server,after modified by - (void)updateItems:(NSMutableArray *)items
 @property (readonly) NSArray *uploadFiles;// equal to uploadItems
 @property (readonly) BOOL editable;
 @property (nonatomic, copy) NSString *perm;
+@property (nonatomic, assign) long long mtime;///< Modification time of the directory.
 //@property (assign, nonatomic) BOOL encrypted;///< Indicates whether the repository is encrypted.
 
 /**
@@ -114,5 +118,11 @@
 - (NSArray *)subDirs;
 
 - (void)handleResponse:(NSHTTPURLResponse *)response json:(id)JSON;
+
+/**
+ * Returns a string representation of the directory's modification time for display.
+ * @return A formatted string with the modification time, or an empty string if mtime is not available.
+ */
+- (NSString *)detailText;
 
 @end

@@ -45,10 +45,10 @@
                  repoName:(NSString *)repoName
                  deleted:(BOOL)isDeleted
 {
-    self = [super initWithConnection:connection oid:oid repoId:repoId perm:perm name:name path:path];
+    self = [super initWithConnection:connection oid:oid repoId:repoId perm:perm name:name path:path mtime:mtime];
     if (self) {
         _isDir = isDir;
-        _mtime = mtime;
+        self.mtime = mtime;
         self.encrypted = repoEncrypted;
         self.repoName = repoName;
         self.isDeleted = isDeleted;

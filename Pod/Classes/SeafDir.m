@@ -20,6 +20,7 @@
 #import "Debug.h"
 #import "SeafUploadOperation.h"
 #import "SeafRealmManager.h"
+#import "SeafDateFormatter.h"
 
 typedef NSComparisonResult (^SeafSortableCmp)(id<SeafSortable> obj1, id<SeafSortable> obj2);
 
@@ -77,7 +78,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
     if ([aPerm.lowercaseString isEqualToString:@"r"]) {
         aMime = @"text/directory-readonly";
     }
-    return [self initWithConnection:aConnection oid:anId repoId:aRepoId perm:aPerm name:aName path:aPath mime:aMime];
+    return [self initWithConnection:aConnection oid:anId repoId:aRepoId perm:aPerm name:aName path:aPath mime:aMime mtime:0];
 }
 
 - (id)initWithConnection:(SeafConnection *)aConnection
@@ -88,9 +89,39 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
                     path:(NSString *)aPath
                     mime:(NSString *)aMime
 {
+    return [self initWithConnection:aConnection oid:anId repoId:aRepoId perm:aPerm name:aName path:aPath mime:aMime mtime:0];
+}
+
+- (id)initWithConnection:(SeafConnection *)aConnection
+                     oid:(NSString *)anId
+                  repoId:(NSString *)aRepoId
+                    perm:(NSString *)aPerm
+                    name:(NSString *)aName
+                    path:(NSString *)aPath
+                   mtime:(long long)mtime
+{
+    NSString *theMime = @"text/directory";
+    if ([aPerm.lowercaseString isEqualToString:@"r"]) {
+        theMime = @"text/directory-readonly";
+    }
+    return [self initWithConnection:aConnection oid:anId repoId:aRepoId perm:aPerm name:aName path:aPath mime:theMime mtime:mtime];
+}
+
+- (id)initWithConnection:(SeafConnection *)aConnection
+                     oid:(NSString *)anId
+                  repoId:(NSString *)aRepoId
+                    perm:(NSString *)aPerm
+                    name:(NSString *)aName
+                    path:(NSString *)aPath
+                    mime:(NSString *)aMime
+                   mtime:(long long)theMtime
+{
     self = [super initWithConnection:aConnection oid:anId repoId:aRepoId name:aName path:aPath mime:aMime];
-    _uploadLock = [[NSObject alloc] init];
-    _perm = aPerm;
+    if (self) {
+        _uploadLock = [[NSObject alloc] init];
+        _perm = aPerm;
+        _mtime = theMtime;
+    }
     return self;
 }
 
@@ -186,7 +217,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
             }
             
         } else if ([type isEqual:@"dir"]) {
-            newItem = [[SeafDir alloc] initWithConnection:self.connection oid:[itemInfo objectForKey:@"id"] repoId:self.repoId perm:[itemInfo objectForKey:@"permission"] name:name path:path];
+            newItem = [[SeafDir alloc] initWithConnection:self.connection oid:[itemInfo objectForKey:@"id"] repoId:self.repoId perm:[itemInfo objectForKey:@"permission"] name:name path:path mtime:[[itemInfo objectForKey:@"mtime"] integerValue:0]];
         }
         [newItems addObject:newItem];
     }
@@ -479,6 +510,14 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
             [arr addObject:entry];
     }
     return arr;
+}
+
+- (NSString *)detailText
+{
+    if (self.mtime > 0) {
+        return [SeafDateFormatter stringFromLongLong:self.mtime];
+    }
+    return @"";
 }
 
 @end

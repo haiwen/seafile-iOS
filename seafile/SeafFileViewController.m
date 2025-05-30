@@ -1211,8 +1211,15 @@ enum {
     
     SeafMkLibAlertController *alter = [[SeafMkLibAlertController alloc] init];
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:alter];
-    [navController setModalPresentationStyle:UIModalPresentationOverCurrentContext];
-    [self presentViewController:navController animated:false completion:nil];
+    navController.navigationBarHidden = YES; // Hide nav bar as alert controller has its own title
+
+    if (IsIpad()) {
+        navController.modalPresentationStyle = UIModalPresentationFormSheet;
+        [self presentViewController:navController animated:YES completion:nil];
+    } else {
+        navController.modalPresentationStyle = UIModalPresentationOverCurrentContext;
+        [self presentViewController:navController animated:NO completion:nil]; // iPhone uses custom animation
+    }
     
     __weak typeof(self) weakSelf = self;
     alter.handlerBlock = ^(NSString *name, NSString *pwd) {
@@ -1902,7 +1909,7 @@ enum {
 {
     SeafCell *cell = [self getCell:@"SeafDirCell" forTableView:tableView];
     cell.textLabel.text = sdir.name;
-    cell.detailTextLabel.text = @"";
+    cell.detailTextLabel.text = [sdir detailText];
     cell.imageView.image = sdir.icon;
     cell.cellIndexPath = indexPath;
     cell.moreButtonBlock = ^(NSIndexPath *indexPath) {

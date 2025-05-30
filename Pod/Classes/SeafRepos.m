@@ -52,12 +52,12 @@
     if ([groupName isKindOfClass:[NSNull class]]) {
         groupName = nil;
     }
-    if (self = [super initWithConnection:aConnection oid:anId repoId:aRepoId perm:aPerm name:aName path:@"/" mime:aMime]) {
+    if (self = [super initWithConnection:aConnection oid:anId repoId:aRepoId perm:aPerm name:aName path:@"/" mime:aMime mtime:aMtime]) {
         _desc = aDesc;
         _owner = aOwner;
         _repoType = aRepoType;
         _size = aSize;
-        _mtime = aMtime;
+        self.mtime = aMtime;
         self.encrypted = aEncrypted;
         _type = aType;
         _ownerNickname = nickname;
@@ -68,7 +68,7 @@
 }
 
 - (id)initWithConnection:(SeafConnection *)aConnection andRepoId:(NSString *)aRepoId andRepoName:(NSString *)aName {
-    if (self = [super initWithConnection:aConnection oid:nil repoId:aRepoId perm:nil name:aName path:nil mime:nil]) {
+    if (self = [super initWithConnection:aConnection oid:nil repoId:aRepoId perm:nil name:aName path:nil mime:nil mtime:0]) {
     }
     return self;
 }
@@ -149,7 +149,7 @@
     _size = repo.size;
     _owner = repo.owner;
     self.encrypted = repo.encrypted;
-    _mtime = repo.mtime;
+    self.mtime = repo.mtime;
     _ownerNickname = repo.ownerNickname;
     _groupid = repo.groupid;
 }
