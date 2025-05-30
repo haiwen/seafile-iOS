@@ -1109,8 +1109,8 @@
 
     // Create the error label
     self.errorLabel = [[UILabel alloc] initWithFrame:CGRectZero];
-    NSString *fullText = NSLocalizedString(@"加载失败，点击重试", @"Load failed, tap to retry");
-    NSString *retryText = NSLocalizedString(@"点击重试", @"tap to retry"); // Used to style "点击重试"
+    NSString *fullText = NSLocalizedString(@"Load failed, tap to retry", @"Seafile");
+    NSString *retryText = NSLocalizedString(@"tap to retry", @"Seafile"); 
 
     NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc] initWithString:fullText];
     NSRange fullRange = NSMakeRange(0, fullText.length);
@@ -1124,9 +1124,8 @@
     [attributedString addAttribute:NSForegroundColorAttributeName value:defaultTextColor range:fullRange];
 
     if (retryTapRange.location != NSNotFound) {
-        UIColor *retryTextColor = [UIColor colorWithRed:0.95 green:0.6 blue:0.2 alpha:1.0]; // Orange color for "点击重试"
+        UIColor *retryTextColor = [UIColor colorWithRed:0.95 green:0.6 blue:0.2 alpha:1.0]; // Orange color for "Tap to retry"
         [attributedString addAttribute:NSForegroundColorAttributeName value:retryTextColor range:retryTapRange];
-        // Optionally, make "点击重试" bold or underlined
         // UIFont *boldFont = [UIFont systemFontOfSize:14.0 weight:UIFontWeightMedium];
         // [attributedString addAttribute:NSFontAttributeName value:boldFont range:retryTapRange];
         [attributedString addAttribute:NSUnderlineStyleAttributeName value:@(NSUnderlineStyleSingle) range:retryTapRange]; // Add underline

@@ -20,6 +20,8 @@
 #import <MobileCoreServices/MobileCoreServices.h>
 #import <SystemConfiguration/SystemConfiguration.h>
 #import <UniversalDetector/UniversalDetector.h>
+#import "SeafCustomInputAlertViewController.h"
+
 @implementation Utils
 
 
@@ -402,28 +404,13 @@
 
 + (void)popupInputView:(NSString *)title placeholder:(NSString *)tip inputs:(NSString *)inputs secure:(BOOL)secure handler:(void (^)(NSString *input))handler from:(UIViewController *)c
 {
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:STR_CANCEL style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-    }];
-    UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"Seafile") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        NSString *input = [[alert.textFields objectAtIndex:0] text];
-        if (handler)
-            handler(input);
-    }];
-    [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
-        textField.placeholder = tip;
-        if (inputs) {
-            textField.text = inputs;
-        }
-        textField.autocorrectionType = UITextAutocorrectionTypeNo;
-        textField.secureTextEntry = secure;
-
-    }];
-    [alert addAction:cancelAction];
-    [alert addAction:okAction];
-
+    SeafCustomInputAlertViewController *customAlert = [[SeafCustomInputAlertViewController alloc] initWithTitle:title
+                                                                                                placeholder:tip
+                                                                                               initialInput:inputs
+                                                                                          completionHandler:handler
+                                                                                              cancelHandler:nil];
     dispatch_async(dispatch_get_main_queue(), ^{
-        [c presentViewController:alert animated:true completion:nil];
+        [customAlert presentOverViewController:c];
     });
 }
 

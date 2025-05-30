@@ -37,7 +37,7 @@
 @synthesize executing = _executing;
 @synthesize finished = _finished;
 
-#define THUMB_MAX_RETRY_COUNT 1
+#define THUMB_MAX_RETRY_COUNT 0
 
 - (instancetype)initWithSeafFile:(SeafFile *)file
 {

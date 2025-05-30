@@ -111,18 +111,10 @@
             // Notify SeafFile that its thumbnail download has failed.
             // This will update the file's state and inform its delegate.
             [thumb.file finishDownloadThumb:NO];
-
-            // The 'finishDownloadThumb:NO' method on SeafFile should call its delegate's
-            // 'download:complete:NO' method. The delegate (e.g., SeafDetailViewController)
-            // will then handle this as a generic failure for the thumbnail.
-            // If a more specific error message like "Network unavailable" is desired in the UI
-            // for this specific scenario (similar to the file download change),
-            // SeafFile's API or its delegate handling would need to be augmented to pass an NSError.
-            // For now, this ensures the thumb download is correctly marked as failed.
         } else {
             Debug(@"[SeafDataTaskManager] Thumb task has no associated file. Cannot mark as failed.");
         }
-        return; // Do not add the task to the queue
+        return;
     }
 
     SeafAccountTaskQueue *accountQueue = [self accountQueueForConnection:thumb.file.connection];
