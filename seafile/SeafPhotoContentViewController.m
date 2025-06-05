@@ -7,6 +7,7 @@
 //
 
 #import "SeafPhotoContentViewController.h"
+#import "SeafPhotoGalleryViewController.h"
 #import <ImageIO/ImageIO.h>
 #import "FileSizeFormatter.h"
 #import "Debug.h"
@@ -18,6 +19,7 @@
 #import "SeafPreview.h"
 #import "SeafPhotoInfoView.h"
 #import "SeafUploadFile.h"
+#import "SeafErrorPlaceholderView.h"
 
 @interface SeafPhotoContentViewController ()<UIScrollViewDelegate>
 @property (nonatomic, strong) UIScrollView  *scrollView;
@@ -25,16 +27,8 @@
 @property (nonatomic, strong) SeafPhotoInfoView *infoView;
 @property (nonatomic, strong) UITapGestureRecognizer *tapGesture;
 @property (nonatomic, strong) UITapGestureRecognizer *doubleTapGesture;
-@property (nonatomic, assign) BOOL isDisplayingPlaceholderOrErrorImage;
-
-// Error placeholder view components
-@property (nonatomic, strong) UIView *errorPlaceholderView;
 @property (nonatomic, strong) UIImageView *errorIconImageView;
 @property (nonatomic, strong) UILabel *errorLabel;
-
-// Loading indicator properties
-//@property (nonatomic, strong) UIActivityIndicatorView *activityIndicator;
-//@property (nonatomic, strong) UILabel *progressLabel;
 
 @end
 
@@ -174,8 +168,9 @@
             if (hasSpecialGalleryHandling) {
                 // First move thumbnails out of the way immediately
                 @try {
-                    UIView *thumbnailCollection = [galleryVC valueForKey:@"thumbnailCollection"];
-                    UIView *toolbarView = [galleryVC valueForKey:@"toolbarView"];
+                    SeafPhotoGalleryViewController *specificGalleryVC = (SeafPhotoGalleryViewController *)galleryVC;
+                    UIView *thumbnailCollection = specificGalleryVC.thumbnailCollection;
+                    UIView *toolbarView = specificGalleryVC.toolbarView;
                     
                     // Hide thumbnail view immediately
                     if (thumbnailCollection) {
@@ -207,10 +202,11 @@
                 }];
             }
             
-            if ([galleryVC isKindOfClass:NSClassFromString(@"SeafPhotoGalleryViewController")]) {
+            if ([galleryVC isKindOfClass:[SeafPhotoGalleryViewController class]]) {
                 @try {
-                    UIView *thumbnailCollection = [galleryVC valueForKey:@"thumbnailCollection"];
-                    UIView *toolbarView = [galleryVC valueForKey:@"toolbarView"];
+                    SeafPhotoGalleryViewController *specificGalleryVC = (SeafPhotoGalleryViewController *)galleryVC;
+                    UIView *thumbnailCollection = specificGalleryVC.thumbnailCollection;
+                    UIView *toolbarView = specificGalleryVC.toolbarView;
                     
                     // Hide thumbnails immediately without animation
                     if (thumbnailCollection) {
@@ -237,10 +233,11 @@
                 navController.navigationBar.alpha = 1.0;
             }];
             
-            if ([galleryVC isKindOfClass:NSClassFromString(@"SeafPhotoGalleryViewController")]) {
+            if ([galleryVC isKindOfClass:[SeafPhotoGalleryViewController class]]) {
                 @try {
-                    UIView *thumbnailCollection = [galleryVC valueForKey:@"thumbnailCollection"];
-                    UIView *toolbarView = [galleryVC valueForKey:@"toolbarView"];
+                    SeafPhotoGalleryViewController *specificGalleryVC = (SeafPhotoGalleryViewController *)galleryVC;
+                    UIView *thumbnailCollection = specificGalleryVC.thumbnailCollection;
+                    UIView *toolbarView = specificGalleryVC.toolbarView;
                     
                     // Keep toolbar visible
                     if (toolbarView) {
@@ -480,9 +477,10 @@
         UINavigationController *navController = (UINavigationController *)parentVC;
         UIViewController *galleryVC = navController.topViewController;
         
-        if ([galleryVC isKindOfClass:NSClassFromString(@"SeafPhotoGalleryViewController")]) {
+        if ([galleryVC isKindOfClass:[SeafPhotoGalleryViewController class]]) {
             @try {
-                UIView *thumbnailCollection = [galleryVC valueForKey:@"thumbnailCollection"];
+                SeafPhotoGalleryViewController *specificGalleryVC = (SeafPhotoGalleryViewController *)galleryVC;
+                UIView *thumbnailCollection = specificGalleryVC.thumbnailCollection;
                 if (thumbnailCollection) {
                     // Add fade-in animation effect instead of showing immediately
                     thumbnailCollection.hidden = NO;
@@ -548,14 +546,15 @@
         
         // Find SeafPhotoGalleryViewController
         UIViewController *galleryVC = navController.topViewController;
-        if ([galleryVC isKindOfClass:NSClassFromString(@"SeafPhotoGalleryViewController")]) {
+        if ([galleryVC isKindOfClass:[SeafPhotoGalleryViewController class]]) {
             // Try to get and toggle thumbnail collection visibility
             @try {
-                UIView *thumbnailCollection = [galleryVC valueForKey:@"thumbnailCollection"];
-                UIView *toolbarView = [galleryVC valueForKey:@"toolbarView"];
+                SeafPhotoGalleryViewController *specificGalleryVC = (SeafPhotoGalleryViewController *)galleryVC;
+                UIView *thumbnailCollection = specificGalleryVC.thumbnailCollection;
+                UIView *toolbarView = specificGalleryVC.toolbarView;
                 // Get overlay views
-                UIView *leftOverlay = [galleryVC valueForKey:@"leftThumbnailOverlay"];
-                UIView *rightOverlay = [galleryVC valueForKey:@"rightThumbnailOverlay"];
+                UIView *leftOverlay = specificGalleryVC.leftThumbnailOverlay;
+                UIView *rightOverlay = specificGalleryVC.rightThumbnailOverlay;
                 
                 if (isHidden) {
                     // Restore from hidden state - first set visible but transparent, then fade in
@@ -1093,88 +1092,22 @@
         self.errorPlaceholderView = nil;
     }
 
-    // Create the container view for the error placeholder
-    self.errorPlaceholderView = [[UIView alloc] initWithFrame:self.view.bounds];
-    self.errorPlaceholderView.backgroundColor = [UIColor clearColor]; // Match the scrollview background or use clear
-    self.errorPlaceholderView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    // Create the new SeafErrorPlaceholderView
+    self.errorPlaceholderView = [[SeafErrorPlaceholderView alloc] initWithFrame:self.view.bounds];
+    // The autoresizingMask is set within SeafErrorPlaceholderView's initWithFrame
+
+    // Disable the main tap gesture when error view is visible
+    self.tapGesture.enabled = NO;
+
+    // Set the retry action block
+    __weak typeof(self) weakSelf = self;
+    self.errorPlaceholderView.retryActionBlock = ^{
+        // Call the existing retry tap handler
+        // We pass nil because the gesture recognizer isn't strictly needed by handleRetryTap's core logic anymore
+        [weakSelf handleRetryTap:nil]; 
+    };
+
     [self.view addSubview:self.errorPlaceholderView];
-
-    // Create the smaller error image view
-    UIImage *errorIconImage = [UIImage imageNamed:@"gallery_failed.png"]; // Use the same image name
-    self.errorIconImageView = [[UIImageView alloc] initWithImage:errorIconImage];
-    self.errorIconImageView.contentMode = UIViewContentModeScaleAspectFit;
-    CGFloat iconSize = 130.0; // Smaller icon size
-    self.errorIconImageView.frame = CGRectMake(0, 0, iconSize, iconSize);
-    [self.errorPlaceholderView addSubview:self.errorIconImageView];
-
-    // Create the error label
-    self.errorLabel = [[UILabel alloc] initWithFrame:CGRectZero];
-    NSString *fullText = NSLocalizedString(@"Load failed, tap to retry", @"Seafile");
-    NSString *retryText = NSLocalizedString(@"tap to retry", @"Seafile"); 
-
-    NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc] initWithString:fullText];
-    NSRange fullRange = NSMakeRange(0, fullText.length);
-    NSRange retryTapRange = [fullText rangeOfString:retryText];
-
-    // Default font and color
-    UIFont *defaultFont = [UIFont systemFontOfSize:14.0 weight:UIFontWeightRegular];
-    UIColor *defaultTextColor = [UIColor colorWithRed:0.4 green:0.4 blue:0.4 alpha:1.0]; // A medium gray
-
-    [attributedString addAttribute:NSFontAttributeName value:defaultFont range:fullRange];
-    [attributedString addAttribute:NSForegroundColorAttributeName value:defaultTextColor range:fullRange];
-
-    if (retryTapRange.location != NSNotFound) {
-        UIColor *retryTextColor = [UIColor colorWithRed:0.95 green:0.6 blue:0.2 alpha:1.0]; // Orange color for "Tap to retry"
-        [attributedString addAttribute:NSForegroundColorAttributeName value:retryTextColor range:retryTapRange];
-        // UIFont *boldFont = [UIFont systemFontOfSize:14.0 weight:UIFontWeightMedium];
-        // [attributedString addAttribute:NSFontAttributeName value:boldFont range:retryTapRange];
-        [attributedString addAttribute:NSUnderlineStyleAttributeName value:@(NSUnderlineStyleSingle) range:retryTapRange]; // Add underline
-    }
-
-    self.errorLabel.attributedText = attributedString;
-    self.errorLabel.textAlignment = NSTextAlignmentCenter;
-    self.errorLabel.numberOfLines = 0;
-    [self.errorLabel sizeToFit]; // Calculate height based on attributed text
-    [self.errorPlaceholderView addSubview:self.errorLabel];
-
-    // Position the icon and label in the center of errorPlaceholderView
-    CGFloat spacingBetweenIconAndLabel = 8.0;
-    CGFloat totalContentHeight = self.errorIconImageView.frame.size.height + spacingBetweenIconAndLabel + self.errorLabel.frame.size.height;
-
-    // Center vertically
-    CGFloat startY = (self.errorPlaceholderView.bounds.size.height - totalContentHeight) / 2.0 - 25.0;
-    
-    self.errorIconImageView.frame = CGRectMake(
-        (self.errorPlaceholderView.bounds.size.width - self.errorIconImageView.frame.size.width) / 2.0,
-        startY,
-        self.errorIconImageView.frame.size.width,
-        self.errorIconImageView.frame.size.height
-    );
-
-    self.errorLabel.frame = CGRectMake(
-        (self.errorPlaceholderView.bounds.size.width - self.errorLabel.frame.size.width) / 2.0,
-        startY + self.errorIconImageView.frame.size.height + spacingBetweenIconAndLabel,
-        self.errorLabel.frame.size.width,
-        self.errorLabel.frame.size.height
-    );
-    
-    // Ensure the label width doesn't exceed the placeholder view width with some padding
-    CGFloat maxLabelWidth = self.errorPlaceholderView.bounds.size.width - 40; // 20px padding on each side
-    if (self.errorLabel.frame.size.width > maxLabelWidth) {
-        CGRect labelFrame = self.errorLabel.frame;
-        labelFrame.size.width = maxLabelWidth;
-        self.errorLabel.frame = labelFrame;
-         // Recenter if width changed
-        self.errorLabel.center = CGPointMake(self.errorPlaceholderView.bounds.size.width / 2, self.errorLabel.center.y);
-    }
-
-
-    // Add tap gesture to the errorPlaceholderView for retry
-    UITapGestureRecognizer *retryTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleRetryTap:)];
-    [self.errorPlaceholderView addGestureRecognizer:retryTapGesture];
-    self.errorPlaceholderView.userInteractionEnabled = YES;
-
-    // Ensure the error view is on top
     [self.view bringSubviewToFront:self.errorPlaceholderView];
 
     // Update scroll view content size (imageView.image is nil, so contentSize should be minimal)
@@ -1198,6 +1131,9 @@
         self.errorPlaceholderView = nil;
     }
     self.isDisplayingPlaceholderOrErrorImage = NO; // Reset flag
+
+    // Re-enable the main tap gesture before attempting retry
+    self.tapGesture.enabled = YES;
 
     // Notify delegate to retry loading
     if (self.delegate && [self.delegate respondsToSelector:@selector(photoContentViewControllerRequestsRetryForFile:atIndex:)]) {
@@ -1229,19 +1165,21 @@
     self.progressLabel.center = CGPointMake(self.view.center.x, self.view.center.y + self.activityIndicator.bounds.size.height / 2 + 25);
 
     // If the error placeholder view is visible, re-layout its contents
+    // This part is now handled by SeafErrorPlaceholderView's layoutSubviews
+    /*
     if (self.errorPlaceholderView && self.errorPlaceholderView.superview) {
         self.errorPlaceholderView.frame = self.view.bounds; // Ensure it fills the view
 
         // Recalculate sizes and positions for error icon and label
-        CGFloat iconSize = self.errorIconImageView.frame.size.width;
-        if (iconSize == 0 && self.errorIconImageView.image) { // if frame was reset
+        CGFloat iconSize = self.errorIconImageView.frame.size.width; // This property is gone
+        if (iconSize == 0 && self.errorIconImageView.image) { // This property is gone
              iconSize = 130.0; // default size
-             self.errorIconImageView.frame = CGRectMake(0,0,iconSize,iconSize);
+             self.errorIconImageView.frame = CGRectMake(0,0,iconSize,iconSize); // This property is gone
         }
-        [self.errorLabel sizeToFit]; // Recalculate label size based on current text/attributes
+        [self.errorLabel sizeToFit]; // This property is gone
 
         CGFloat spacingBetweenIconAndLabel = 8.0;
-        CGFloat totalContentHeight = self.errorIconImageView.frame.size.height + spacingBetweenIconAndLabel + self.errorLabel.frame.size.height;
+        CGFloat totalContentHeight = self.errorIconImageView.frame.size.height + spacingBetweenIconAndLabel + self.errorLabel.frame.size.height; // These properties are gone
         
         CGFloat startY = (self.errorPlaceholderView.bounds.size.height - totalContentHeight) / 2.0 - 25.0;
 
@@ -1250,11 +1188,11 @@
             startY,
             self.errorIconImageView.frame.size.width,
             self.errorIconImageView.frame.size.height
-        );
+        ); // These properties are gone
 
         // Ensure the label width doesn't exceed the placeholder view width with some padding
         CGFloat maxLabelWidth = self.errorPlaceholderView.bounds.size.width - 40; // 20px padding on each side
-        CGRect currentLabelFrame = self.errorLabel.frame;
+        CGRect currentLabelFrame = self.errorLabel.frame; // This property is gone
         currentLabelFrame.size.width = MIN(currentLabelFrame.size.width, maxLabelWidth);
         
         self.errorLabel.frame = CGRectMake(
@@ -1262,8 +1200,9 @@
             startY + self.errorIconImageView.frame.size.height + spacingBetweenIconAndLabel,
             currentLabelFrame.size.width,
             currentLabelFrame.size.height
-        );
+        ); // These properties are gone
     }
+    */
 
     // Update frames based on current state
     [self updateViewFramesForInfoVisibility:self.infoVisible];
@@ -1370,7 +1309,7 @@
 // Helper method to notify the gallery view controller to hide the info panel
 - (void)notifyGalleryViewControllerToHideInfoPanel {
     UIViewController *parentVC = self.parentViewController;
-    while (parentVC && ![parentVC isKindOfClass:NSClassFromString(@"SeafPhotoGalleryViewController")]) {
+    while (parentVC && ![parentVC isKindOfClass:[SeafPhotoGalleryViewController class]]) {
         parentVC = parentVC.parentViewController;
     }
     
@@ -1537,18 +1476,18 @@
             
             // Try to get the photo gallery view controller
             UIViewController *galleryVC = pageVC.parentViewController;
-            if ([galleryVC isKindOfClass:NSClassFromString(@"SeafPhotoGalleryViewController")]) {
+            if ([galleryVC isKindOfClass:[SeafPhotoGalleryViewController class]]) {
                 @try {
+                    SeafPhotoGalleryViewController *specificGalleryVC = (SeafPhotoGalleryViewController *)galleryVC;
                     // Try to access the current index and the total array of view controllers
-                    NSArray *allPhotoVCs = [galleryVC valueForKey:@"photoViewControllers"];
-                    NSNumber *currentIdx = [galleryVC valueForKey:@"currentIndex"];
+                    NSArray<SeafPhotoContentViewController *> *allPhotoVCs = specificGalleryVC.photoViewControllers;
+                    NSUInteger currentPhotoIndex = specificGalleryVC.currentIndex;
                     
-                    if (allPhotoVCs && currentIdx) {
-                        currentIndex = [currentIdx integerValue];
+                    if (allPhotoVCs) { // Current index is always valid if galleryVC exists
                         thisIndex = [allPhotoVCs indexOfObject:self];
                         
                         // Only cancel if we're at least 2 pages away from current
-                        if (thisIndex != NSNotFound && abs((int)(thisIndex - currentIndex)) > 1) {
+                        if (thisIndex != NSNotFound && abs((int)(thisIndex - currentPhotoIndex)) > 1) {
                             Debug(@"[PhotoContent] View far from current page, canceling loads: %@", self.seafFile.name);
                             [self cancelImageLoading];
                         } else {

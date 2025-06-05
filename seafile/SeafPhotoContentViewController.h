@@ -9,6 +9,7 @@
 #import <UIKit/UIKit.h>
 #import "SeafPhotoInfoView.h"
 #import "SeafConnection.h"
+#import "SeafErrorPlaceholderView.h"
 
 @class SeafFile;
 @protocol SeafPreView;
@@ -55,6 +56,12 @@ NS_ASSUME_NONNULL_BEGIN
 /// View options and status
 @property (nonatomic, assign) BOOL fullscreenMode;
 @property (nonatomic, readonly) BOOL isZooming;
+
+/// Whether the view is displaying a placeholder or error image
+@property (nonatomic, assign) BOOL isDisplayingPlaceholderOrErrorImage;
+
+/// Error placeholder view components
+@property (nonatomic, strong, nullable) SeafErrorPlaceholderView *errorPlaceholderView;
 
 /// Method to toggle the info view
 - (void)toggleInfoView:(BOOL)show animated:(BOOL)animated;

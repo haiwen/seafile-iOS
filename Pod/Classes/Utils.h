@@ -13,10 +13,20 @@
 /// Maximum dimension for image processing.
 #define IMAGE_MAX_SIZE 2048
 
+// Forward declare UIViewController to avoid direct import if not already there
+@class UIViewController;
+
+// Define a block type for presenting the custom input view
+typedef void (^CustomInputViewPresenterBlock)(NSString *title, NSString *placeholder, NSString *initialInput, BOOL secure, UIViewController *presentingController, void (^completionHandler)(NSString *input), void (^cancelHandler)(void));
+
 /**
     Utility class for file and directory management, image processing, JSON encoding/decoding, and user interface alerts in the Seafile app.
  */
 @interface Utils : NSObject
+
+/// Set a custom presenter block for the input view.
+/// This block will be called by the pod to request the main app to show a custom input UI.
++ (void)setCustomInputViewPresenter:(CustomInputViewPresenterBlock)presenter;
 
 /// Check if a file exists at a given path.
 + (BOOL)fileExistsAtPath:(NSString *)path;

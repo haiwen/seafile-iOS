@@ -21,6 +21,16 @@
 // Track the range of loaded images
 @property (nonatomic, readonly) NSRange loadedImagesRange;
 
+// Expose UI Components as readonly properties
+@property (nonatomic, strong, readonly, nullable) UICollectionView *thumbnailCollection;
+@property (nonatomic, strong, readonly, nullable) UIView *toolbarView;
+@property (nonatomic, strong, readonly, nullable) UIView *leftThumbnailOverlay;
+@property (nonatomic, strong, readonly, nullable) UIView *rightThumbnailOverlay;
+
+// Expose internal state for specific use cases
+@property (nonatomic, strong, readonly, nullable) NSArray<SeafPhotoContentViewController *> *photoViewControllers;
+@property (nonatomic, readonly) NSUInteger currentIndex;
+
 @end
 
 @interface SeafPhotoGalleryViewController () <UIPageViewControllerDataSource,
