@@ -18,6 +18,7 @@
 #import "Utils.h"
 #import "Version.h"
 #import "SeafWechatHelper.h"
+#import "SeafCustomInputAlertViewController.h"
 
 @interface SeafAppDelegate () <UITabBarControllerDelegate, CLLocationManagerDelegate, WXApiDelegate>
 
@@ -277,6 +278,21 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     Info("%@", [[NSBundle mainBundle] infoDictionary]);
+    
+    // Setup the custom input view presenter for the Utils class in the Pod
+    [Utils setCustomInputViewPresenter:^(NSString *title, NSString *placeholder, NSString *initialInput, BOOL secure, UIViewController *presentingController, void (^completionHandler)(NSString *input), void (^cancelHandler)(void)) {
+        // This is where the main application takes responsibility for showing the UI
+        SeafCustomInputAlertViewController *customAlert = [[SeafCustomInputAlertViewController alloc] initWithTitle:title
+                                                                                                        placeholder:placeholder
+                                                                                                       initialInput:initialInput
+                                                                                                  completionHandler:completionHandler
+                                                                                                      cancelHandler:cancelHandler]; // You can pass the cancelHandler if SeafCustomInputAlertViewController supports it
+        dispatch_async(dispatch_get_main_queue(), ^{
+            // Ensure 'presentOverViewController:' is a valid method on your SeafCustomInputAlertViewController
+            // and that 'presentingController' is appropriate.
+            [customAlert presentOverViewController:presentingController];
+        });
+    }];
     
     _global = [SeafGlobal sharedObject];
     [_global migrate];
@@ -684,7 +700,7 @@
     }
 }
 
-/*from 2.9.28 Clear old cache files identified by the ‘oid’ field.
+/*from 2.9.28 Clear old cache files identified by the 'oid' field.
 new identifier is "'mtime' + 'repoId' + 'path'"
  */
 - (void)clearUserCacheFile {

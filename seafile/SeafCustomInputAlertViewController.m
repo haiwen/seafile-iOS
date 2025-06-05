@@ -27,6 +27,105 @@ static CGFloat const kInitialOffScreenBottomConstant = 350.0; // Adjust if alert
 
 @implementation SeafCustomInputAlertViewController
 
+#pragma mark - Lazy Initializers
+
+- (UIView *)backgroundDimmingView {
+    if (!_backgroundDimmingView) {
+        // This view is primarily for iPhone's custom presentation.
+        // Its frame is set to self.view.bounds, and autoresizingMask handles resizes.
+        // This is safe as it's accessed within setupViews after self.view is loaded.
+        _backgroundDimmingView = [[UIView alloc] initWithFrame:self.view.bounds];
+        _backgroundDimmingView.backgroundColor = [UIColor colorWithWhite:0 alpha:0.5];
+        _backgroundDimmingView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    }
+    return _backgroundDimmingView;
+}
+
+- (UIView *)alertView {
+    if (!_alertView) {
+        _alertView = [[UIView alloc] init];
+        _alertView.backgroundColor = [UIColor whiteColor];
+        _alertView.layer.masksToBounds = YES;
+        _alertView.translatesAutoresizingMaskIntoConstraints = NO;
+        if (IsIpad()) {
+            _alertView.layer.cornerRadius = 14.0; // Standard corner radius for alerts/sheets
+        } else {
+            _alertView.layer.cornerRadius = 14.0;
+            if (@available(iOS 11.0, *)) {
+                _alertView.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner;
+            }
+        }
+    }
+    return _alertView;
+}
+
+- (UILabel *)titleLabel {
+    if (!_titleLabel) {
+        _titleLabel = [[UILabel alloc] init];
+        _titleLabel.text = self.alertTitle; // Assumes self.alertTitle is set during init
+        _titleLabel.font = [UIFont systemFontOfSize:17.0];
+        _titleLabel.textColor = [UIColor blackColor];
+        _titleLabel.textAlignment = NSTextAlignmentLeft;
+        _titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    }
+    return _titleLabel;
+}
+
+- (UITextField *)inputTextField {
+    if (!_inputTextField) {
+        _inputTextField = [[UITextField alloc] init];
+        _inputTextField.placeholder = self.placeholderText; // Assumes self.placeholderText is set
+        _inputTextField.text = self.initialInputText;     // Assumes self.initialInputText is set
+        _inputTextField.font = [UIFont systemFontOfSize:14.0];
+        _inputTextField.borderStyle = UITextBorderStyleNone;
+        _inputTextField.autocorrectionType = UITextAutocorrectionTypeNo;
+        _inputTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
+        _inputTextField.delegate = self;
+        _inputTextField.returnKeyType = UIReturnKeyDone;
+        _inputTextField.layer.borderWidth = 0;
+        _inputTextField.layer.cornerRadius = 6.0;
+        _inputTextField.backgroundColor = [UIColor colorWithWhite:0.97 alpha:1.0];
+        UIView *paddingView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 10, 10)];
+        _inputTextField.leftView = paddingView;
+        _inputTextField.leftViewMode = UITextFieldViewModeAlways;
+        UIView *paddingRightView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 10, 10)];
+        _inputTextField.rightView = paddingRightView;
+        _inputTextField.rightViewMode = UITextFieldViewModeAlways;
+        _inputTextField.translatesAutoresizingMaskIntoConstraints = NO;
+    }
+    return _inputTextField;
+}
+
+- (UIButton *)cancelButton {
+    if (!_cancelButton) {
+        _cancelButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        [_cancelButton setTitle:NSLocalizedString(@"Cancel", @"Cancel button title") forState:UIControlStateNormal];
+        [_cancelButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+        _cancelButton.titleLabel.font = [UIFont systemFontOfSize:17.0];
+        _cancelButton.backgroundColor = [UIColor whiteColor];
+        _cancelButton.layer.cornerRadius = 8.0;
+        _cancelButton.layer.borderColor = [UIColor blackColor].CGColor;
+        _cancelButton.layer.borderWidth = 1.0;
+        [_cancelButton addTarget:self action:@selector(cancelButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+        _cancelButton.translatesAutoresizingMaskIntoConstraints = NO;
+    }
+    return _cancelButton;
+}
+
+- (UIButton *)confirmButton {
+    if (!_confirmButton) {
+        _confirmButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        [_confirmButton setTitle:NSLocalizedString(@"OK", @"Seafile") forState:UIControlStateNormal];
+        [_confirmButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        _confirmButton.titleLabel.font = [UIFont boldSystemFontOfSize:17.0];
+        _confirmButton.backgroundColor = UIColor.orangeColor;
+        _confirmButton.layer.cornerRadius = 8.0;
+        [_confirmButton addTarget:self action:@selector(confirmButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+        _confirmButton.translatesAutoresizingMaskIntoConstraints = NO;
+    }
+    return _confirmButton;
+}
+
 - (instancetype)initWithTitle:(NSString *)title
                   placeholder:(NSString *)placeholder
                  initialInput:(nullable NSString *)initialInput
@@ -103,76 +202,20 @@ static CGFloat const kInitialOffScreenBottomConstant = 350.0; // Adjust if alert
 
 - (void)setupViews {
     if (!IsIpad()) {
-        self.backgroundDimmingView = [[UIView alloc] initWithFrame:self.view.bounds];
-        self.backgroundDimmingView.backgroundColor = [UIColor colorWithWhite:0 alpha:0.5];
-        self.backgroundDimmingView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        // Accessing self.backgroundDimmingView will trigger its lazy initializer.
+        // The frame is set within the getter using self.view.bounds, which is available here.
         [self.view addSubview:self.backgroundDimmingView];
     }
 
-    self.alertView = [[UIView alloc] init];
-    self.alertView.backgroundColor = [UIColor whiteColor];
-    self.alertView.layer.masksToBounds = YES; 
-    self.alertView.translatesAutoresizingMaskIntoConstraints = NO;
+    // Accessing self.alertView will trigger its lazy initializer.
+    // Properties like backgroundColor, cornerRadius are set in the getter.
     [self.view addSubview:self.alertView]; // alertView is always added to self.view
 
-    if (IsIpad()) {
-        self.alertView.layer.cornerRadius = 14.0; // Standard corner radius for alerts/sheets
-    } else {
-        self.alertView.layer.cornerRadius = 14.0;
-        if (@available(iOS 11.0, *)) {
-            self.alertView.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner;
-        }
-    }
-
-    self.titleLabel = [[UILabel alloc] init];
-    self.titleLabel.text = self.alertTitle;
-    self.titleLabel.font = [UIFont systemFontOfSize:17.0];
-    self.titleLabel.textColor = [UIColor blackColor];
-    self.titleLabel.textAlignment = NSTextAlignmentLeft;
-    self.titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    // Add subviews to alertView. Accessing these properties triggers their lazy initializers.
+    // Properties like text, font, colors, targets are set in their respective getters.
     [self.alertView addSubview:self.titleLabel];
-
-    self.inputTextField = [[UITextField alloc] init];
-    self.inputTextField.placeholder = self.placeholderText;
-    self.inputTextField.text = self.initialInputText;
-    self.inputTextField.font = [UIFont systemFontOfSize:14.0];
-    self.inputTextField.borderStyle = UITextBorderStyleNone;
-    self.inputTextField.autocorrectionType = UITextAutocorrectionTypeNo;
-    self.inputTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
-    self.inputTextField.delegate = self;
-    self.inputTextField.returnKeyType = UIReturnKeyDone;
-    self.inputTextField.layer.borderWidth = 0;
-    self.inputTextField.layer.cornerRadius = 6.0;
-    self.inputTextField.backgroundColor = [UIColor colorWithWhite:0.97 alpha:1.0];
-    UIView *paddingView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 10, 10)];
-    self.inputTextField.leftView = paddingView;
-    self.inputTextField.leftViewMode = UITextFieldViewModeAlways;
-    UIView *paddingRightView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 10, 10)];
-    self.inputTextField.rightView = paddingRightView;
-    self.inputTextField.rightViewMode = UITextFieldViewModeAlways;
-    self.inputTextField.translatesAutoresizingMaskIntoConstraints = NO;
     [self.alertView addSubview:self.inputTextField];
-
-    self.cancelButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [self.cancelButton setTitle:NSLocalizedString(@"Cancel", @"Cancel button title") forState:UIControlStateNormal];
-    [self.cancelButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-    self.cancelButton.titleLabel.font = [UIFont systemFontOfSize:17.0];
-    self.cancelButton.backgroundColor = [UIColor whiteColor];
-    self.cancelButton.layer.cornerRadius = 8.0;
-    self.cancelButton.layer.borderColor = [UIColor blackColor].CGColor;
-    self.cancelButton.layer.borderWidth = 1.0;
-    [self.cancelButton addTarget:self action:@selector(cancelButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
-    self.cancelButton.translatesAutoresizingMaskIntoConstraints = NO;
     [self.alertView addSubview:self.cancelButton];
-
-    self.confirmButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [self.confirmButton setTitle:NSLocalizedString(@"OK", @"Seafile") forState:UIControlStateNormal];
-    [self.confirmButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    self.confirmButton.titleLabel.font = [UIFont boldSystemFontOfSize:17.0];
-    self.confirmButton.backgroundColor = UIColor.orangeColor;
-    self.confirmButton.layer.cornerRadius = 8.0;
-    [self.confirmButton addTarget:self action:@selector(confirmButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
-    self.confirmButton.translatesAutoresizingMaskIntoConstraints = NO;
     [self.alertView addSubview:self.confirmButton];
 }
 

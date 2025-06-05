@@ -95,6 +95,12 @@
 		BA0E7E502D92470F00E3E3F0 /* SeafHeaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = BA0E7E4F2D92470F00E3E3F0 /* SeafHeaderView.m */; };
 		BA0E7E532D924A8D00E3E3F0 /* SeafEditNavRightItem.m in Sources */ = {isa = PBXBuildFile; fileRef = BA0E7E522D924A8D00E3E3F0 /* SeafEditNavRightItem.m */; };
 		BA11F5042D91457900F56208 /* SeafNavLeftItem.m in Sources */ = {isa = PBXBuildFile; fileRef = BA11F5032D91457900F56208 /* SeafNavLeftItem.m */; };
+		BA2188BD2DF1397500D862BD /* SeafCustomInputAlertViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BA2188BC2DF1397500D862BD /* SeafCustomInputAlertViewController.m */; };
+		BA2188BE2DF1397500D862BD /* SeafCustomInputAlertViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BA2188BC2DF1397500D862BD /* SeafCustomInputAlertViewController.m */; };
+		BA2188BF2DF1397500D862BD /* SeafCustomInputAlertViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BA2188BC2DF1397500D862BD /* SeafCustomInputAlertViewController.m */; };
+		BA2188C02DF1397500D862BD /* SeafCustomInputAlertViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BA2188BC2DF1397500D862BD /* SeafCustomInputAlertViewController.m */; };
+		BA2188C22DF1397500D862BD /* SeafCustomInputAlertViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BA2188BC2DF1397500D862BD /* SeafCustomInputAlertViewController.m */; };
+		BA2188C52DF1758B00D862BD /* SeafErrorPlaceholderView.m in Sources */ = {isa = PBXBuildFile; fileRef = BA2188C42DF1758B00D862BD /* SeafErrorPlaceholderView.m */; };
 		BA38EEE92DD1A80F00EF10E2 /* SeafPGThumbnailCell.m in Sources */ = {isa = PBXBuildFile; fileRef = BA38EEE62DD1A80F00EF10E2 /* SeafPGThumbnailCell.m */; };
 		BA38EEEA2DD1A80F00EF10E2 /* SeafPGThumbnailCellViewModel.m in Sources */ = {isa = PBXBuildFile; fileRef = BA38EEE82DD1A80F00EF10E2 /* SeafPGThumbnailCellViewModel.m */; };
 		BA38EEED2DD1F0E900EF10E2 /* SeafPhotoInfoView.m in Sources */ = {isa = PBXBuildFile; fileRef = BA38EEEC2DD1F0E900EF10E2 /* SeafPhotoInfoView.m */; };
@@ -967,6 +973,10 @@
 		BA0E7E522D924A8D00E3E3F0 /* SeafEditNavRightItem.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafEditNavRightItem.m; sourceTree = "<group>"; };
 		BA11F5032D91457900F56208 /* SeafNavLeftItem.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafNavLeftItem.m; sourceTree = "<group>"; };
 		BA11F5052D9145A400F56208 /* SeafNavLeftItem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafNavLeftItem.h; sourceTree = "<group>"; };
+		BA2188BB2DF1397500D862BD /* SeafCustomInputAlertViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafCustomInputAlertViewController.h; sourceTree = "<group>"; };
+		BA2188BC2DF1397500D862BD /* SeafCustomInputAlertViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafCustomInputAlertViewController.m; sourceTree = "<group>"; };
+		BA2188C32DF1758B00D862BD /* SeafErrorPlaceholderView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafErrorPlaceholderView.h; sourceTree = "<group>"; };
+		BA2188C42DF1758B00D862BD /* SeafErrorPlaceholderView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafErrorPlaceholderView.m; sourceTree = "<group>"; };
 		BA38EEE52DD1A80F00EF10E2 /* SeafPGThumbnailCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafPGThumbnailCell.h; sourceTree = "<group>"; };
 		BA38EEE62DD1A80F00EF10E2 /* SeafPGThumbnailCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafPGThumbnailCell.m; sourceTree = "<group>"; };
 		BA38EEE72DD1A80F00EF10E2 /* SeafPGThumbnailCellViewModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafPGThumbnailCellViewModel.h; sourceTree = "<group>"; };
@@ -1262,12 +1272,16 @@
 		5709512615B9ACDF00F48C08 /* views */ = {
 			isa = PBXGroup;
 			children = (
+				BA2188BB2DF1397500D862BD /* SeafCustomInputAlertViewController.h */,
+				BA2188BC2DF1397500D862BD /* SeafCustomInputAlertViewController.m */,
 				571ABF511625DF31005C9B08 /* DownloadingProgressView.h */,
 				BA8AC7DE2D802E8800F8DE57 /* Constants.h */,
 				BA8AC7DF2D802E8800F8DE57 /* Constants.m */,
 				BA8DC9592D9A6A030027EC46 /* SeafLoadingView.h */,
 				BA83DEB02DB560520073EAA8 /* SeafNavigationBarStyler.h */,
 				BA83DEB12DB560520073EAA8 /* SeafNavigationBarStyler.m */,
+				BA2188C32DF1758B00D862BD /* SeafErrorPlaceholderView.h */,
+				BA2188C42DF1758B00D862BD /* SeafErrorPlaceholderView.m */,
 				BAA7CFE02DB0D32200D26ED3 /* SeafPhotoContentViewController.h */,
 				BAA7CFE12DB0D32200D26ED3 /* SeafPhotoContentViewController.m */,
 				BA38EEEB2DD1F0E900EF10E2 /* SeafPhotoInfoView.h */,
@@ -2863,6 +2877,7 @@
 				571D8CBF1677881400F1A22C /* StartViewController.m in Sources */,
 				F5EAAE93218419120068BFE3 /* SeafPrivacyPolicyViewController.m in Sources */,
 				57E5E7B31CC219C8004B7125 /* SeafEventCell.m in Sources */,
+				BA2188BF2DF1397500D862BD /* SeafCustomInputAlertViewController.m in Sources */,
 				F5B106AB23129A0C009348E1 /* UISearchBar+SeafExtend.m in Sources */,
 				F5DF76D724FE85C1004CAB1E /* main.m in Sources */,
 				571D8CC91677881400F1A22C /* FailToPreview.m in Sources */,
@@ -2887,6 +2902,7 @@
 				4A5E88CF22AD3102008146BA /* SeafActivitiesCell.m in Sources */,
 				BAA7CFE22DB0D32200D26ED3 /* SeafPhotoContentViewController.m in Sources */,
 				BA0E7E502D92470F00E3E3F0 /* SeafHeaderView.m in Sources */,
+				BA2188C52DF1758B00D862BD /* SeafErrorPlaceholderView.m in Sources */,
 				57DA26F5173E6DFC0003BA31 /* SeafTextEditorViewController.m in Sources */,
 				BA38EEED2DD1F0E900EF10E2 /* SeafPhotoInfoView.m in Sources */,
 				5757DCCD1AEBCF1600BC0426 /* SeafShibbolethViewController.m in Sources */,
@@ -2919,6 +2935,7 @@
 				58D40A721E9AF81B00A68BEF /* SeafAccountCell.m in Sources */,
 				BA83DEB22DB560520073EAA8 /* SeafNavigationBarStyler.m in Sources */,
 				57A029A41A170147009C9D7B /* SeafProviderFileViewController.m in Sources */,
+				BA2188C02DF1397500D862BD /* SeafCustomInputAlertViewController.m in Sources */,
 				57A029861A16F91F009C9D7B /* DocumentPickerViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2927,6 +2944,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BA2188BE2DF1397500D862BD /* SeafCustomInputAlertViewController.m in Sources */,
 				58D40A7A1E9AF84C00A68BEF /* seafile.xcdatamodeld in Sources */,
 				5857E9CE1FB0195C004F124D /* SeafEnumerator.m in Sources */,
 				58D40A731E9AF82900A68BEF /* SeafGlobal.m in Sources */,
@@ -2945,6 +2963,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BA2188C22DF1397500D862BD /* SeafCustomInputAlertViewController.m in Sources */,
 				58D40A7B1E9AF85100A68BEF /* seafile.xcdatamodeld in Sources */,
 				58D40A751E9AF83200A68BEF /* UIViewController+Extend.m in Sources */,
 				58D40A761E9AF83200A68BEF /* SeafGlobal.m in Sources */,
@@ -2972,6 +2991,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BA2188BD2DF1397500D862BD /* SeafCustomInputAlertViewController.m in Sources */,
 				F55A4ADF213A7D0500AAF3DF /* SeafShareFileViewController.h in Sources */,
 				F5C64909210A291100842687 /* SeafDbCacheProvider.m in Sources */,
 				F5C64910210DFF4B00842687 /* SeafShareNavigatioController.m in Sources */,

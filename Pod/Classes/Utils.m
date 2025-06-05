@@ -20,10 +20,17 @@
 #import <MobileCoreServices/MobileCoreServices.h>
 #import <SystemConfiguration/SystemConfiguration.h>
 #import <UniversalDetector/UniversalDetector.h>
-#import "SeafCustomInputAlertViewController.h"
+
+// Static variable to hold the presenter block
+static CustomInputViewPresenterBlock _sharedCustomInputPresenter = nil;
 
 @implementation Utils
 
++ (void)setCustomInputViewPresenter:(CustomInputViewPresenterBlock)presenter {
+    if (_sharedCustomInputPresenter != presenter) {
+        _sharedCustomInputPresenter = [presenter copy];
+    }
+}
 
 + (BOOL)addSkipBackupAttributeToItemAtPath:(NSString *)path
 {
@@ -391,27 +398,85 @@
 
 + (void)alertWithTitle:(NSString *)title message:(NSString*)message handler:(void (^)(void))handler from:(UIViewController *)c
 {
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"Seafile") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        if (handler)
+    // 1. Declare and initialize UIAlertController
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:title
+                                                                             message:message
+                                                                      preferredStyle:UIAlertControllerStyleAlert];
+
+    // 2. Declare and initialize UIAlertAction
+    UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"Seafile")
+                                                       style:UIAlertActionStyleDefault // Use Default for an OK button
+                                                     handler:^(UIAlertAction *action) {
+        if (handler) {
             handler();
+        }
     }];
-    [alert addAction:okAction];
+
+    // 3. Add action to the controller
+    [alertController addAction:okAction];
+
+    // 4. Present the controller
     dispatch_async(dispatch_get_main_queue(), ^{
-        [c presentViewController:alert animated:true completion:nil];
+        if (c) {
+            [c presentViewController:alertController animated:YES completion:nil];
+        } else {
+            Debug(@"[Utils] Error: Presenting view controller (from:) is nil in alertWithTitle. Cannot display alert.");
+            // If the handler should be called even if presentation fails, you might call it here:
+            // if (handler) { handler(); }
+        }
     });
 }
 
 + (void)popupInputView:(NSString *)title placeholder:(NSString *)tip inputs:(NSString *)inputs secure:(BOOL)secure handler:(void (^)(NSString *input))handler from:(UIViewController *)c
 {
-    SeafCustomInputAlertViewController *customAlert = [[SeafCustomInputAlertViewController alloc] initWithTitle:title
-                                                                                                placeholder:tip
-                                                                                               initialInput:inputs
-                                                                                          completionHandler:handler
-                                                                                              cancelHandler:nil];
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [customAlert presentOverViewController:c];
-    });
+    if (_sharedCustomInputPresenter) {
+        // Call the presenter block provided by the main application
+        _sharedCustomInputPresenter(title, tip, inputs, secure, c, handler, nil);
+    } else {
+        // Fallback to system alert if no presenter is set
+        Debug(@"[Utils] Warning: CustomInputViewPresenter not set. Using system default input alert.");
+        
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:title
+                                                                                   message:nil // System alerts with text fields usually don't have a separate message body
+                                                                            preferredStyle:UIAlertControllerStyleAlert];
+
+        [alertController addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
+            textField.placeholder = tip;
+            textField.text = inputs;
+            textField.secureTextEntry = secure;
+        }];
+
+        UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", @"Default OK action")
+                                                           style:UIAlertActionStyleDefault
+                                                         handler:^(UIAlertAction * _Nonnull action) {
+                                                             UITextField *textField = alertController.textFields.firstObject;
+                                                             if (handler) {
+                                                                 handler(textField.text);
+                                                             }
+                                                         }];
+
+        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Default Cancel action")
+                                                               style:UIAlertActionStyleCancel
+                                                             handler:^(UIAlertAction * _Nonnull action) {
+                                                                 if (handler) {
+                                                                     handler(nil); // Indicate cancellation
+                                                                 }
+                                                             }];
+        
+        [alertController addAction:cancelAction]; // Typically Cancel is on the left (or standard system position)
+        [alertController addAction:okAction];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (c) {
+                [c presentViewController:alertController animated:YES completion:nil];
+            } else {
+                Debug(@"[Utils] Error: Presenting view controller (from:) is nil for system default input alert. Cannot display.");
+                if (handler) {
+                    handler(nil); // Indicate failure to present
+                }
+            }
+        });
+    }
 }
 
 + (UIAlertController *)generateAlert:(NSArray *)arr withTitle:(NSString *)title handler:(void (^ __nullable)(UIAlertAction *action))handler cancelHandler:(void (^ __nullable)(UIAlertAction *action))cancelHandler preferredStyle:(UIAlertControllerStyle)preferredStyle
