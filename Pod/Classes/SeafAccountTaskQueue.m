@@ -698,9 +698,6 @@
         if (!self.isPaused) { // Only when the state changes from not paused to paused, mark to perform the full pause logic
             self.isPaused = YES;
             shouldPerformFullPauseLogic = YES;
-        } else {
-            // Even if it is already marked as paused, ensure the queues are in suspended state
-            Debug(@"[AccountQueue] Attempted to globally pause, but already paused. Ensured queues are suspended.");
         }
         // In any case, if pauseAllTasks is called, ensure the queues are suspended
         [self.uploadQueue setSuspended:YES];
@@ -709,18 +706,11 @@
     }
 
     if (shouldPerformFullPauseLogic) {
-        // Operations to move tasks from the ongoing list to the paused list (these operations have their own internal synchronization)
-        // These operations should be outside the synchronized block as they might be time-consuming, and the arrays they operate on have their own synchronization locks
         [self cancelAutoSyncTasksWithoutSuspend];
         [self pauseAllUploadingTasks];
         [self pauseAllDownloadingTasks];
         [self pauseAllThumbOngoingTasks];
-        
         [self pauseCleanupTimer];
-    } else {
-        // If not performing full pause logic (e.g., already paused), still ensure specific pause actions for active tasks if necessary,
-        // or this part can be removed if the queue suspension in the sync block is deemed sufficient.
-        // For simplicity, we assume the queue suspension is the primary goal if already paused.
     }
 }
 
@@ -764,8 +754,6 @@
 #pragma mark - Pause Helpers
 /// Pauses all upload tasks.
 - (void)pauseAllUploadingTasks {
-    // [self.uploadQueue setSuspended:YES]; // This is now handled by pauseAllTasks in a synchronized block
-
     // Create a snapshot of operations to iterate over, as the original array might change
     NSArray *currentUploadOperations = [self.uploadQueue.operations copy];
     for (SeafUploadOperation *op in currentUploadOperations) {
@@ -793,8 +781,6 @@
 
 /// Pauses all download tasks.
 - (void)pauseAllDownloadingTasks {
-    // [self.downloadQueue setSuspended:YES]; // Handled by pauseAllTasks
-
     NSArray *currentDownloadOperations = [self.downloadQueue.operations copy];
     for (SeafDownloadOperation *op in currentDownloadOperations) {
         if (op.isExecuting && !op.isCancelled && !op.isFinished) {
@@ -820,8 +806,6 @@
 
 /// Pauses all thumb tasks.
 - (void)pauseAllThumbOngoingTasks {
-    // [self.thumbQueue setSuspended:YES]; // Handled by pauseAllTasks
-
     NSArray *currentThumbOperations = [self.thumbQueue.operations copy];
     for (SeafThumbOperation *op in currentThumbOperations) {
         if (op.isExecuting && !op.isCancelled && !op.isFinished) {
@@ -838,8 +822,6 @@
             }
         }
     }
-    // Thumb tasks don't have an 'ongoingThumbTasks' array in the same way,
-    // their lifecycle is simpler, often just add and forget or cancelAll.
 }
 
 - (void)pauseUploadTasks {
@@ -1180,12 +1162,6 @@
     // Retrieve the current network status
     NSDictionary *networkStatus = [Utils checkNetworkReachability];
     BOOL isReachable = [networkStatus[@"isReachable"] boolValue];
-    // BOOL isWiFiReachable = [networkStatus[@"isWiFiReachable"] boolValue]; // No longer needed here for the Wi-Fi only check
-
-    // If the user allows uploads/downloads only on Wi-Fi, but Wi-Fi is not connected, do not resume
-    // if (self.conn.wifiOnly && !isWiFiReachable) { // REMOVED THIS BLOCK
-    //     return NO;
-    // }
 
     // If there is no network at all, do not resume
     if (!isReachable) {
