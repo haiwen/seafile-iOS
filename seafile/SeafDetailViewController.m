@@ -28,6 +28,8 @@
 #import "SeafDataTaskManager.h"
 #import "SeafNavigationBarStyler.h"
 
+extern NSString * const AFNetworkingOperationFailingURLResponseErrorKey;
+
 enum SHARE_STATUS {
     SHARE_BY_MAIL = 0,
     SHARE_BY_LINK = 1
