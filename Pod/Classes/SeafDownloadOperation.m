@@ -17,6 +17,9 @@
 #import "NSData+Encryption.h"
 #import "SeafRealmManager.h"
 #import "SeafDataTaskManager.h"
+#import "SeafAccountTaskQueue.h"
+
+extern NSString * const AFNetworkingOperationFailingURLResponseErrorKey;
 
 @implementation SeafDownloadOperation
 
@@ -24,7 +27,7 @@
 {
     if (self = [super init]) {
         self.file = file;
-        self.maxRetryCount = file.retryable ? DEFAULT_RETRYCOUNT : 0;
+//        self.maxRetryCount = file.retryable ? DEFAULT_RETRYCOUNT : 0;
     }
     return self;
 }
@@ -118,7 +121,13 @@
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) return;
         strongSelf.file.state = SEAF_DENTRY_INIT;
-        [strongSelf finishDownload:NO error:error ooid:nil];
+        NSError *newError = error;
+        if (response && [response isKindOfClass:[NSHTTPURLResponse class]]) {
+            NSMutableDictionary *userInfo = [error.userInfo mutableCopy] ?: [NSMutableDictionary dictionary];
+            [userInfo setObject:response forKey:AFNetworkingOperationFailingURLResponseErrorKey];
+            newError = [NSError errorWithDomain:error.domain code:error.code userInfo:userInfo];
+        }
+        [strongSelf finishDownload:NO error:newError ooid:nil];
     }];
     
     [self addTaskToList:getDownloadUrlTask];
@@ -165,7 +174,14 @@
         }
         if (error) {
             Debug("Failed to download %@, error=%@, %ld", strongSelf.file.name, [error localizedDescription], (long)((NSHTTPURLResponse *)response).statusCode);
-            [strongSelf finishDownload:NO error:error ooid:nil];
+            // Ensure the response object is in the error's userInfo for the retry logic
+            NSError *newError = error;
+            if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
+                NSMutableDictionary *userInfo = [error.userInfo mutableCopy] ?: [NSMutableDictionary dictionary];
+                [userInfo setObject:response forKey:AFNetworkingOperationFailingURLResponseErrorKey];
+                newError = [NSError errorWithDomain:error.domain code:error.code userInfo:userInfo];
+            }
+            [strongSelf finishDownload:NO error:newError ooid:nil];
         } else {
             Debug("Successfully downloaded file:%@, %@", strongSelf.file.name, downloadRequest.URL);
             if (![filePath.path isEqualToString:target]) {
@@ -220,7 +236,13 @@
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) return;
-        [strongSelf finishDownload:NO error:error ooid:nil];
+        NSError *newError = error;
+        if (response && [response isKindOfClass:[NSHTTPURLResponse class]]) {
+            NSMutableDictionary *userInfo = [error.userInfo mutableCopy] ?: [NSMutableDictionary dictionary];
+            [userInfo setObject:response forKey:AFNetworkingOperationFailingURLResponseErrorKey];
+            newError = [NSError errorWithDomain:error.domain code:error.code userInfo:userInfo];
+        }
+        [strongSelf finishDownload:NO error:newError ooid:nil];
     }];
     
     [self addTaskToList:getBlockInfoTask];
@@ -252,7 +274,13 @@
             __strong typeof(weakSelf) strongSelf = weakSelf;
             if (!strongSelf) return;
             Warning("error=%@", error);
-            [strongSelf finishDownload:NO error:error ooid:nil];
+            NSError *newError = error;
+            if (response && [response isKindOfClass:[NSHTTPURLResponse class]]) {
+                NSMutableDictionary *userInfo = [error.userInfo mutableCopy] ?: [NSMutableDictionary dictionary];
+                [userInfo setObject:response forKey:AFNetworkingOperationFailingURLResponseErrorKey];
+                newError = [NSError errorWithDomain:error.domain code:error.code userInfo:userInfo];
+            }
+            [strongSelf finishDownload:NO error:newError ooid:nil];
         }];
     [self addTaskToList:task];
 }
@@ -287,7 +315,14 @@
         
         if (error) {
             Debug("Failed to download block %@: %@", blkId, error);
-            [strongSelf finishDownload:NO error:error ooid:nil];
+            // Ensure the response object is in the error's userInfo for the retry logic
+            NSError *newError = error;
+            if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
+                NSMutableDictionary *userInfo = [error.userInfo mutableCopy] ?: [NSMutableDictionary dictionary];
+                [userInfo setObject:response forKey:AFNetworkingOperationFailingURLResponseErrorKey];
+                newError = [NSError errorWithDomain:error.domain code:error.code userInfo:userInfo];
+            }
+            [strongSelf finishDownload:NO error:newError ooid:nil];
         } else {
             if (![filePath.path isEqualToString:target]) {
                 [Utils removeFile:target];
@@ -385,38 +420,20 @@
             [self completeOperation];
         }
         else {
-            if (self.isCancelled) {
-                [self clearDownloadContext];
-                [self.file failedDownload:error];
-                [self completeOperation];
-                return;
-            }
+            self.error = error;
 
-            if (self.file.retryCount < self.maxRetryCount && !success) {
-                self.file.retryCount += 1;
-                Debug(@"Download failed, will retry %ld/%ld, task placed at the end of queue", (long)self.file.retryCount, (long)self.maxRetryCount);
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(DEFAULT_RETRY_INTERVAL * NSEC_PER_SEC)), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                    
-                    // Clear the current download context
-                    [self clearDownloadContext];
-                    
-                    // Complete the current operation
-                    [self completeOperation];
-                    
-                    // Add the task back to queue - using SeafDataTaskManager, a more appropriate task management approach
-                    [[SeafDataTaskManager sharedObject] addFileDownloadTask:self.file];
-                });
-            } else {
-                [self clearDownloadContext];
-                [self.file failedDownload:error];
-                [self completeOperation];
-            }
+            [self clearDownloadContext];
+            [self.file failedDownload:error];
+            [self completeOperation];
         }
     }
 }
 
 #pragma mark - Operation State Management
 - (void)addTaskToList:(NSURLSessionTask *)task {
+    if (task == nil) {
+        return;
+    }
     @synchronized (self.taskList) {
         [self.taskList addObject:task];
     }

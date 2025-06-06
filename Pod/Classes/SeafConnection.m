@@ -861,6 +861,29 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return request;
 }
 
+// Private helper method to handle 401 Unauthorized errors
+- (void)handleUnauthorizedErrorResponse:(NSHTTPURLResponse *)response {
+    NSString *wiped = [response.allHeaderFields objectForKey:@"X-Seafile-Wiped"];
+    Debug(@"handleUnauthorizedErrorResponse - wiped: %@ for URL: %@", wiped, response.URL.absoluteString);
+    @synchronized(self) {
+        if (![self authorized]) { // Check if already unauthorized or no token
+            Debug(@"handleUnauthorizedErrorResponse - Already unauthorized or no token, returning.");
+            return;
+        }
+        self->_token = nil;
+        [self.info removeObjectForKey:@"token"];
+        [self saveAccountInfo];
+        if (wiped) {
+            [self clearAccountCache];
+            Debug(@"handleUnauthorizedErrorResponse - Cleared account cache due to wiped flag.");
+        }
+    }
+    if (self.delegate) {
+        [self.delegate loginRequired:self];
+        Debug(@"handleUnauthorizedErrorResponse - Called loginRequired delegate.");
+    }
+}
+
 - (NSURLSessionDataTask *)sendRequestAsync:(NSString *)url method:(NSString *)method form:(NSString *)form
                  success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
                  failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure
@@ -879,18 +902,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             Warning("token=%@, resp=%ld %@, delegate=%@, url=%@, Error: %@", self.token, (long)resp.statusCode, responseObject, self.delegate, url, error);
             failure (request, resp, responseObject, error);
             if (resp.statusCode == HTTP_ERR_UNAUTHORIZED) {
-                NSString *wiped = [resp.allHeaderFields objectForKey:@"X-Seafile-Wiped"];
-                Debug("wiped: %@", wiped);
-                @synchronized(self) {
-                    if (![self authorized])   return;
-                    self->_token = nil;
-                    [self.info removeObjectForKey:@"token"];
-                    [self saveAccountInfo];
-                    if (wiped) {
-                        [self clearAccountCache];
-                    }
-                }
-                if (self.delegate) [self.delegate loginRequired:self];
+                [self handleUnauthorizedErrorResponse:resp];
             } else if (resp.statusCode == HTTP_ERR_OPERATION_FAILED && [responseObject isKindOfClass:[NSDictionary class]]) {
                 NSString *err_msg = [((NSDictionary *)responseObject) objectForKey:@"error_msg"];
                 if (err_msg && [@"Above quota" isEqualToString:err_msg]) {
