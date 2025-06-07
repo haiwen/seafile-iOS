@@ -1467,6 +1467,7 @@ enum {
         [nameSet addObject:filename];
         NSString *path = [uploadDir stringByAppendingPathComponent:filename];
         SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
+        file.lastModified = asset.modificationDate;
         file.model.overwrite = overwrite;
         [file setPHAsset:asset url:photoAsset.ALAssetURL];
         file.delegate = self;
