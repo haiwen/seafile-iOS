@@ -21,7 +21,23 @@
 
 extern NSString * const AFNetworkingOperationFailingURLResponseErrorKey;
 
+@interface SeafDownloadOperation ()
+- (NSError *)errorByAddingResponse:(NSURLResponse *)response toError:(NSError *)error;
+@end
+
 @implementation SeafDownloadOperation
+
+- (NSError *)errorByAddingResponse:(NSURLResponse *)response toError:(NSError *)error {
+    if (!error) {
+        return nil;
+    }
+    if (response && [response isKindOfClass:[NSHTTPURLResponse class]]) {
+        NSMutableDictionary *userInfo = [error.userInfo mutableCopy] ?: [NSMutableDictionary dictionary];
+        [userInfo setObject:response forKey:AFNetworkingOperationFailingURLResponseErrorKey];
+        return [NSError errorWithDomain:error.domain code:error.code userInfo:userInfo];
+    }
+    return error;
+}
 
 - (instancetype)initWithFile:(SeafFile *)file
 {
@@ -121,12 +137,7 @@ extern NSString * const AFNetworkingOperationFailingURLResponseErrorKey;
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) return;
         strongSelf.file.state = SEAF_DENTRY_INIT;
-        NSError *newError = error;
-        if (response && [response isKindOfClass:[NSHTTPURLResponse class]]) {
-            NSMutableDictionary *userInfo = [error.userInfo mutableCopy] ?: [NSMutableDictionary dictionary];
-            [userInfo setObject:response forKey:AFNetworkingOperationFailingURLResponseErrorKey];
-            newError = [NSError errorWithDomain:error.domain code:error.code userInfo:userInfo];
-        }
+        NSError *newError = [strongSelf errorByAddingResponse:response toError:error];
         [strongSelf finishDownload:NO error:newError ooid:nil];
     }];
     
@@ -175,12 +186,7 @@ extern NSString * const AFNetworkingOperationFailingURLResponseErrorKey;
         if (error) {
             Debug("Failed to download %@, error=%@, %ld", strongSelf.file.name, [error localizedDescription], (long)((NSHTTPURLResponse *)response).statusCode);
             // Ensure the response object is in the error's userInfo for the retry logic
-            NSError *newError = error;
-            if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
-                NSMutableDictionary *userInfo = [error.userInfo mutableCopy] ?: [NSMutableDictionary dictionary];
-                [userInfo setObject:response forKey:AFNetworkingOperationFailingURLResponseErrorKey];
-                newError = [NSError errorWithDomain:error.domain code:error.code userInfo:userInfo];
-            }
+            NSError *newError = [strongSelf errorByAddingResponse:response toError:error];
             [strongSelf finishDownload:NO error:newError ooid:nil];
         } else {
             Debug("Successfully downloaded file:%@, %@", strongSelf.file.name, downloadRequest.URL);
@@ -236,12 +242,7 @@ extern NSString * const AFNetworkingOperationFailingURLResponseErrorKey;
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) return;
-        NSError *newError = error;
-        if (response && [response isKindOfClass:[NSHTTPURLResponse class]]) {
-            NSMutableDictionary *userInfo = [error.userInfo mutableCopy] ?: [NSMutableDictionary dictionary];
-            [userInfo setObject:response forKey:AFNetworkingOperationFailingURLResponseErrorKey];
-            newError = [NSError errorWithDomain:error.domain code:error.code userInfo:userInfo];
-        }
+        NSError *newError = [strongSelf errorByAddingResponse:response toError:error];
         [strongSelf finishDownload:NO error:newError ooid:nil];
     }];
     
@@ -274,12 +275,7 @@ extern NSString * const AFNetworkingOperationFailingURLResponseErrorKey;
             __strong typeof(weakSelf) strongSelf = weakSelf;
             if (!strongSelf) return;
             Warning("error=%@", error);
-            NSError *newError = error;
-            if (response && [response isKindOfClass:[NSHTTPURLResponse class]]) {
-                NSMutableDictionary *userInfo = [error.userInfo mutableCopy] ?: [NSMutableDictionary dictionary];
-                [userInfo setObject:response forKey:AFNetworkingOperationFailingURLResponseErrorKey];
-                newError = [NSError errorWithDomain:error.domain code:error.code userInfo:userInfo];
-            }
+            NSError *newError = [strongSelf errorByAddingResponse:response toError:error];
             [strongSelf finishDownload:NO error:newError ooid:nil];
         }];
     [self addTaskToList:task];
@@ -316,12 +312,7 @@ extern NSString * const AFNetworkingOperationFailingURLResponseErrorKey;
         if (error) {
             Debug("Failed to download block %@: %@", blkId, error);
             // Ensure the response object is in the error's userInfo for the retry logic
-            NSError *newError = error;
-            if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
-                NSMutableDictionary *userInfo = [error.userInfo mutableCopy] ?: [NSMutableDictionary dictionary];
-                [userInfo setObject:response forKey:AFNetworkingOperationFailingURLResponseErrorKey];
-                newError = [NSError errorWithDomain:error.domain code:error.code userInfo:userInfo];
-            }
+            NSError *newError = [strongSelf errorByAddingResponse:response toError:error];
             [strongSelf finishDownload:NO error:newError ooid:nil];
         } else {
             if (![filePath.path isEqualToString:target]) {
