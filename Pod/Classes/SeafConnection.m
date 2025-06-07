@@ -1385,8 +1385,12 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
                 Debug("mkdir %@ in repo %@", dirName, repo.repoId);
                 [[SeafFileOperationManager sharedManager] mkdir:dirName inDir:repo completion:^(BOOL success, NSError * _Nullable error) {
                     if (success) {
-                        SeafDir *udir = [self getSubdirUnderDir:repo withName:dirName];
-                        completionHandler(udir, nil);
+                        [repo loadContentSuccess:^(SeafDir *dir) {
+                             SeafDir *udir = [self getSubdirUnderDir:repo withName:dirName];
+                             completionHandler(udir, nil);
+                        } failure:^(SeafDir *dir, NSError *error) {
+                             completionHandler(nil, error);
+                        }];
                     } else {
                         Warning("Failed to create directory %@", dirName);
                         completionHandler(nil, error);
