@@ -181,21 +181,31 @@
 
 // Processes the file URL for uploading by copying it to a designated upload directory.
 - (void)handleUploadPathWithUrl:(NSURL*)url {
+    NSDate *modDate = nil;
+    if ([url isFileURL]) {
+        NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:url.path error:nil];
+        if (attributes) {
+            modDate = [attributes fileModificationDate];
+        }
+    }
     NSString *uploadDir = [[SeafGlobal sharedObject].connection uniqueUploadDir];
     NSURL *to = [NSURL fileURLWithPath:[uploadDir stringByAppendingPathComponent:url.lastPathComponent]];
     BOOL ret = [Utils checkMakeDir:uploadDir];
     if (!ret) return;
     ret = [Utils copyFile:url to:to];
     if (ret) {
-        [self uploadFile:to.path];
+        [self uploadFile:to.path lastModified:modDate];
     }
 }
 
 // Upload the specified file to the connected Seafile server.
-- (void)uploadFile:(NSString *)path
+- (void)uploadFile:(NSString *)path lastModified:(NSDate *)modDate
 {
     [[self masterNavController:TABBED_SEAFILE] popToRootViewControllerAnimated:NO];
     SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
+    if (modDate) {
+        file.lastModified = modDate;
+    }
     [self.fileVC uploadFile:file];
 }
 
