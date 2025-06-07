@@ -97,11 +97,18 @@
         [self handleFailure:handler withErrorDisplayMessage:@"Sharing of NSData format is not supported."];
     } else if ([item isKindOfClass:[NSURL class]]) {
         NSURL *url = (NSURL *)item;
+        NSDate *modDate = nil;
+        if ([url isFileURL]) {
+            NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:url.path error:nil];
+            if (attributes) {
+                modDate = [attributes fileModificationDate];
+            }
+        }
         NSString *name = url.lastPathComponent;
         NSURL *targetUrl = [NSURL fileURLWithPath:[self.tmpdir stringByAppendingPathComponent:name]];
         BOOL ret = [Utils copyFile:url to:targetUrl];
         if (ret) {
-            [self loadPreviewImageWith:itemProvider toTargetUrl:targetUrl handler:handler];
+            [self loadPreviewImageWith:itemProvider toTargetUrl:targetUrl lastModified:modDate handler:handler];
         } else {
             [self handleFailure:handler];
         }
@@ -130,12 +137,12 @@
     }];
 }
 
-- (void)loadPreviewImageWith:(NSItemProvider *)itemProvider toTargetUrl:(NSURL *)targetUrl handler:(ItemLoadHandler)handler {
+- (void)loadPreviewImageWith:(NSItemProvider *)itemProvider toTargetUrl:(NSURL *)targetUrl lastModified:(NSDate *)modDate handler:(ItemLoadHandler)handler {
     [itemProvider loadPreviewImageWithOptions:nil completionHandler:^(id<NSSecureCoding, NSObject>  _Nullable item, NSError * _Null_unspecified error) {
         if (!error && item && [item isKindOfClass:[UIImage class]]) {
-            [self handleFile:targetUrl andPriview:(UIImage*)item handler:handler];
+            [self handleFile:targetUrl andPriview:(UIImage*)item lastModified:modDate handler:handler];
         } else {
-            [self handleFile:targetUrl andPriview:nil handler:handler];
+            [self handleFile:targetUrl andPriview:nil lastModified:modDate handler:handler];
         }
     }];
 }
@@ -150,13 +157,13 @@
 - (void)writeData:(NSData *)data toTarget:(NSURL *)targetUrl andPrivewImage:(UIImage *)preview handler:(ItemLoadHandler)handler {
     BOOL ret = [data writeToURL:targetUrl atomically:true];
     if (ret) {
-        [self handleFile:targetUrl andPriview:preview handler:handler];
+        [self handleFile:targetUrl andPriview:preview lastModified:nil handler:handler];
     } else {
         [self handleFailure:handler];
     }
 }
 
-- (void)handleFile:(NSURL *)url andPriview:(UIImage *)preview handler:(ItemLoadHandler)handler {
+- (void)handleFile:(NSURL *)url andPriview:(UIImage *)preview lastModified:(NSDate *)modDate handler:(ItemLoadHandler)handler {
     Debug("Received file : %@", url);
     if (!url) {
         Warning("Failed to load file.");
@@ -165,6 +172,9 @@
     }
     Debug("Upload file %@ %lld", url, [Utils fileSizeAtPath1:url.path]);
     SeafUploadFile *ufile = [[SeafUploadFile alloc] initWithPath:url.path];
+    if (modDate) {
+        ufile.lastModified = modDate;
+    }
     if (preview) {
         ufile.previewImage = preview;
     }

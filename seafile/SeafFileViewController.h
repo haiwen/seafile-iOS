@@ -35,6 +35,7 @@ typedef void(^DownloadCompleteBlock)(NSArray *array, NSString *errorStr);
 - (void)refreshView;
 - (void)uploadFile:(SeafUploadFile *)file;
 - (void)deleteFile:(SeafFile *)file;
+- (void)deleteFile:(SeafFile *)file completion:(void (^)(BOOL success, NSError *error))completion;
 - (void)uploadFile:(SeafUploadFile *)ufile toDir:(SeafDir *)dir overwrite:(BOOL)overwrite;
 
 - (void)photoSelectedChanged:(id<SeafPreView>)preViewItem to:(id<SeafPreView>)to;

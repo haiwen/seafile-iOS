@@ -23,6 +23,7 @@
 #import <ImageIO/ImageIO.h>
 #import "SeafPGThumbnailCell.h" // Added import
 #import "SeafPGThumbnailCellViewModel.h" // Added import
+#import "SeafFileViewController.h"
 
 // Define an enum for toolbar button types
 typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
@@ -1037,14 +1038,174 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
     [alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Yes", @"Seafile") style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
         // Execute delete operation
         if (self.masterVc && [self.masterVc respondsToSelector:@selector(deleteFile:)]) {
-            [self dismissGallery]; // Close gallery view
-            [self.masterVc performSelector:@selector(deleteFile:) withObject:file];
+
+            NSUInteger deletedItemIndex = [self.preViewItems indexOfObject:file]; // Get index before potential async operation
+            if (deletedItemIndex == NSNotFound) {
+                Debug(@"[Gallery] Error: File to delete '%@' not found in preViewItems before calling masterVc. Aborting deletion.", file.name);
+                // Show an error to the user or simply return.
+                [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Error preparing to delete '%@'", @"Seafile"), file.name]];
+                return;
+            }
+
+            // Use the new deleteFile:completion: method
+            if ([self.masterVc isKindOfClass:[SeafFileViewController class]]) {
+                SeafFileViewController *fileVC = (SeafFileViewController *)self.masterVc;
+                [fileVC deleteFile:file completion:^(BOOL success, NSError *error) {
+                    if (success) {
+                        // Proceed with UI update for the gallery only if masterVc confirms success
+                        [self handleSuccessfulDeletionOfFile:file atOriginalIndex:deletedItemIndex];
+                    } else {
+                        // Handle deletion failure reported by masterVc
+                        Debug(@"[Gallery] MasterVc reported failure to delete file: %@, error: %@", file.name, error);
+                        NSString *errMsg = error.localizedDescription ?: [NSString stringWithFormat:NSLocalizedString(@"Failed to delete '%@'", @"Seafile"), file.name];
+                        [SVProgressHUD showErrorWithStatus:errMsg];
+                    }
+                }];
+            } else {
+                // Fallback or error handling if masterVc is not the expected type
+                Debug(@"[Gallery] Error: masterVc is not of type SeafFileViewController. Cannot call deleteFile:completion:. Perform selector as fallback if available, or show error.");
+                // This part of the fallback might be removed if strict typing is enforced and SeafFileViewController is always expected.
+                if ([self.masterVc respondsToSelector:@selector(deleteFile:)]) {
+                     // Perform selector without completion, UI will update optimistically as before this series of changes.
+                    [self.masterVc performSelector:@selector(deleteFile:) withObject:file];
+                    // Optimistic UI update (consider if this is desired for this fallback path)
+                    [self handleSuccessfulDeletionOfFile:file atOriginalIndex:deletedItemIndex];
+                } else {
+                    [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Cannot delete file: Action not supported.", @"Seafile")];
+                }
+            }
         }
     }]];
     
     [alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"No", @"Seafile") style:UIAlertActionStyleCancel handler:nil]];
     
     [self presentViewController:alert animated:YES completion:nil];
+}
+
+// New private method to handle UI updates after successful deletion
+- (void)handleSuccessfulDeletionOfFile:(id<SeafPreView>)deletedFile atOriginalIndex:(NSUInteger)deletedItemIndex {
+    // 1. Update data sources
+    NSMutableArray<id<SeafPreView>> *mutablePreViewItems = [self.preViewItems mutableCopy];
+    // Since we passed deletedItemIndex, we use that.
+    if (deletedItemIndex < mutablePreViewItems.count) {
+        [mutablePreViewItems removeObjectAtIndex:deletedItemIndex];
+    } else {
+        Debug(@"[Gallery] Error: deletedItemIndex %lu is out of bounds for preViewItems (count %lu) during UI update.", (unsigned long)deletedItemIndex, (unsigned long)mutablePreViewItems.count);
+        // This case should be rare if logic is correct up to this point.
+        return;
+    }
+    self.preViewItems = [mutablePreViewItems copy];
+
+    // Also update infoModels if it corresponds by index and is in use
+    if (self.infoModels.count > deletedItemIndex) {
+        NSMutableArray *mutableInfoModels = [self.infoModels mutableCopy];
+        [mutableInfoModels removeObjectAtIndex:deletedItemIndex];
+        self.infoModels = [mutableInfoModels copy];
+    }
+    
+    // Clean up caches related to the deleted item's original index
+    NSNumber *deletedItemOriginalKey = @(deletedItemIndex);
+    [self.contentVCCache removeObjectForKey:deletedItemOriginalKey];
+    [self.downloadProgressDict removeObjectForKey:deletedItemOriginalKey];
+    [self.loadingStatusDict removeObjectForKey:deletedItemOriginalKey];
+
+    // 2. Determine the new current index for selection
+    NSUInteger newCurrentIndex;
+    if (self.preViewItems.count == 0) {
+        // If all items are deleted, then dismiss the gallery.
+        [self dismissGallery];
+        return;
+    } else if (deletedItemIndex >= self.preViewItems.count) {
+        // If the last item was deleted (or index is now out of bounds due to deletion), select the new last item.
+        newCurrentIndex = self.preViewItems.count - 1;
+    } else {
+        // Otherwise, the item at the deletedItemIndex is now the new item to select.
+        newCurrentIndex = deletedItemIndex;
+    }
+    
+    // 3. Update internal state for the new current item
+    self.currentIndex = newCurrentIndex;
+    // Ensure preViewItems has items before trying to access an element
+    if (newCurrentIndex < self.preViewItems.count) {
+        self.preViewItem = self.preViewItems[newCurrentIndex];
+    } else {
+        Debug(@"[Gallery] Critical Error: newCurrentIndex %lu is out of bounds for preViewItems after deletion. Dismissing.", (unsigned long)newCurrentIndex);
+        [self dismissGallery];
+        return;
+    }
+
+
+    // 4. Update Thumbnail Collection
+    NSIndexPath *indexPathOfDeletedItem = [NSIndexPath indexPathForItem:deletedItemIndex inSection:0];
+    __weak typeof(self) weakSelf = self; // Use weakSelf for blocks to avoid retain cycles
+
+    [self.thumbnailCollection performBatchUpdates:^{
+        if (deletedItemIndex < [weakSelf.thumbnailCollection numberOfItemsInSection:0]) {
+             [weakSelf.thumbnailCollection deleteItemsAtIndexPaths:@[indexPathOfDeletedItem]];
+        } else {
+            Debug(@"[Gallery] Thumbnail deletion skipped: indexPath for deleted item (%@) seems invalid for current collection state.", indexPathOfDeletedItem);
+            // Calling [self.thumbnailCollection reloadData] might be a safer fallback in the completion,
+        }
+    } completion:^(BOOL finished) {
+        __strong typeof(weakSelf) strongSelf = weakSelf; // Re-strongify self for use inside the block
+        if (!strongSelf || !finished) {
+            // If animation didn't finish or self is deallocated, abort further UI updates.
+            if (!finished) Debug(@"[Gallery] Thumbnail deletion animation did not complete.");
+            return;
+        }
+
+        // 5. Update PageViewController with the new current item
+        SeafPhotoContentViewController *nextContentVC = [strongSelf viewControllerAtIndex:strongSelf.currentIndex];
+        if (!nextContentVC) {
+            Debug(@"[Gallery] Critical Error: Could not get/create VC for new index %lu after deletion. Dismissing gallery.", (unsigned long)strongSelf.currentIndex);
+            [strongSelf dismissGallery]; // Fallback if VC cannot be prepared
+            return;
+        }
+        // Ensure the new VC's info view visibility matches the global state
+        if (nextContentVC.infoVisible != strongSelf.infoVisible) {
+            [nextContentVC toggleInfoView:strongSelf.infoVisible animated:NO];
+        }
+
+        UIPageViewControllerNavigationDirection direction = UIPageViewControllerNavigationDirectionForward;
+
+        [strongSelf.pageVC setViewControllers:@[nextContentVC]
+                                  direction:direction
+                                   animated:NO
+                                 completion:^(BOOL pageUpdateFinished){
+            __strong typeof(weakSelf) innerStrongSelf = weakSelf;
+            if (!innerStrongSelf || !pageUpdateFinished) return;
+
+            innerStrongSelf.currentContentVC = nextContentVC;
+
+            NSString *titleText = innerStrongSelf.preViewItem.name;
+            [SeafNavigationBarStyler updateTitleView:(UILabel *)innerStrongSelf.navigationItem.titleView withText:titleText];
+
+            SeafThumbnailFlowLayout *layout = (SeafThumbnailFlowLayout *)innerStrongSelf.thumbnailCollection.collectionViewLayout;
+            layout.selectedIndex = innerStrongSelf.currentIndex;
+            [layout invalidateLayout]; 
+
+            // reloadData() after a delete operation to ensure all views are consistent,
+            // Then scroll to the newly selected item.
+            [innerStrongSelf.thumbnailCollection reloadData];
+            NSIndexPath *newIndexPath = [NSIndexPath indexPathForItem:innerStrongSelf.currentIndex inSection:0];
+            
+            if (innerStrongSelf.currentIndex < [innerStrongSelf.thumbnailCollection numberOfItemsInSection:0]) {
+                 [innerStrongSelf.thumbnailCollection scrollToItemAtIndexPath:newIndexPath
+                                                      atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally
+                                                              animated:YES];
+            } else {
+                Debug(@"[Gallery] Thumbnail scroll skipped: newIndexPath (%@) is out of bounds after reloadData.", newIndexPath);
+            }
+            [innerStrongSelf updateThumbnailOverlaysVisibility]; 
+
+            [innerStrongSelf updateStarButtonIcon];
+
+            [innerStrongSelf updateLoadedImagesRangeForIndex:innerStrongSelf.currentIndex];
+            [innerStrongSelf loadImagesInCurrentRange]; 
+            [innerStrongSelf updateActiveControllersForIndex:innerStrongSelf.currentIndex]; 
+            [innerStrongSelf cancelDownloadsExceptForIndex:innerStrongSelf.currentIndex withRange:2];
+        }];
+    }];
 }
 
 // Capture both self and file weakly to avoid retain-cycles: file → block → self/file
