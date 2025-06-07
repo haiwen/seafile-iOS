@@ -78,7 +78,18 @@
         [self.extensionContext completeRequestReturningItems:self.extensionContext.inputItems completionHandler:nil];
     }
     Debug("Upload file %@ %lld", url, [Utils fileSizeAtPath1:url.path]);
+    
+    NSDate *modificationDate = nil;
+    [url getResourceValue:&modificationDate forKey:NSURLContentModificationDateKey error:nil];
+
+    NSDate *creationDate = nil;
+    [url getResourceValue:&creationDate forKey:NSURLCreationDateKey error:nil];
+    NSDate *modDate = modificationDate ?: creationDate;
+
     _ufile = [[SeafUploadFile alloc] initWithPath:url.path];
+    if (modDate) {
+        _ufile.lastModified = modDate;
+    }
 }
 
 - (void)didReceiveMemoryWarning {

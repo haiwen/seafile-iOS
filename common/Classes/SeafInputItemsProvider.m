@@ -97,10 +97,23 @@
         [self handleFailure:handler withErrorDisplayMessage:@"Sharing of NSData format is not supported."];
     } else if ([item isKindOfClass:[NSURL class]]) {
         NSURL *url = (NSURL *)item;
+        // Get file modificationDate or creationDate
+        NSDate *modificationDate = nil;
+        [url getResourceValue:&modificationDate forKey:NSURLContentModificationDateKey error:nil];
+
+        NSDate *creationDate = nil;
+        [url getResourceValue:&creationDate forKey:NSURLCreationDateKey error:nil];
+        NSDate *modDate = modificationDate ?: creationDate;
+
         NSString *name = url.lastPathComponent;
         NSURL *targetUrl = [NSURL fileURLWithPath:[self.tmpdir stringByAppendingPathComponent:name]];
         BOOL ret = [Utils copyFile:url to:targetUrl];
         if (ret) {
+            SeafUploadFile *ufile = [[SeafUploadFile alloc] initWithPath:targetUrl.path];
+            if (modDate) {
+                ufile.lastModified = modDate;
+            }
+            [self.ufiles addObject:ufile];
             [self loadPreviewImageWith:itemProvider toTargetUrl:targetUrl handler:handler];
         } else {
             [self handleFailure:handler];
@@ -164,11 +177,18 @@
         return;
     }
     Debug("Upload file %@ %lld", url, [Utils fileSizeAtPath1:url.path]);
-    SeafUploadFile *ufile = [[SeafUploadFile alloc] initWithPath:url.path];
+    
+    SeafUploadFile *ufile;
+    for (SeafUploadFile *file in self.ufiles) {
+        if ([file.lpath isEqualToString:url.path]) {
+            ufile = file;
+            break;
+        }
+    }
+
     if (preview) {
         ufile.previewImage = preview;
     }
-    [self.ufiles addObject:ufile];
     if (handler) {
         handler(true);
     }

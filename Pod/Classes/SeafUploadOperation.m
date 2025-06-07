@@ -236,6 +236,11 @@
 - (void)uploadBlocksCommit:(SeafConnection *)connection
 {
     NSString *url = self.commitUrl;
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZZZZZ"];
+    [formatter setLocale:[NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"]];
+    NSString *lastModifiedString = self.uploadFile.lastModified ? [formatter stringFromDate:self.uploadFile.lastModified] : nil;
+
     NSMutableURLRequest *request = [[SeafConnection requestSerializer] multipartFormRequestWithMethod:@"POST" URLString:url parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
         [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
         if (self.uploadFile.overwrite) {
@@ -243,6 +248,9 @@
         }
         [formData appendPartWithFormData:[self.uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"parent_dir"];
         [formData appendPartWithFormData:[self.uploadFileName dataUsingEncoding:NSUTF8StringEncoding] name:@"file_name"];
+        if (lastModifiedString) {
+            [formData appendPartWithFormData:[lastModifiedString dataUsingEncoding:NSUTF8StringEncoding] name:@"last_modify"];
+        }
         [formData appendPartWithFormData:[[NSString stringWithFormat:@"%lld", [Utils fileSizeAtPath1:self.uploadFile.lpath]] dataUsingEncoding:NSUTF8StringEncoding] name:@"file_size"];
         [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
         [formData appendPartWithFormData:[Utils JSONEncode:self.allBlocks] name:@"blockids"];
@@ -314,11 +322,19 @@
 
 - (void)uploadByFile:(SeafConnection *)connection url:(NSString *)surl path:(NSString *)uploadpath update:(BOOL)update
 {
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZZZZZ"];
+    [formatter setLocale:[NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"]];
+    NSString *lastModifiedString = self.uploadFile.lastModified ? [formatter stringFromDate:self.uploadFile.lastModified] : nil;
+
     NSMutableURLRequest *request = [[SeafConnection requestSerializer] multipartFormRequestWithMethod:@"POST" URLString:surl parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
         if (update) {
             [formData appendPartWithFormData:[@"1" dataUsingEncoding:NSUTF8StringEncoding] name:@"replace"];
         }
         [formData appendPartWithFormData:[uploadpath dataUsingEncoding:NSUTF8StringEncoding] name:@"parent_dir"];
+        if (lastModifiedString) {
+            [formData appendPartWithFormData:[lastModifiedString dataUsingEncoding:NSUTF8StringEncoding] name:@"last_modify"];
+        }
         [formData appendPartWithFormData:[@"n8ba38951c9ba66418311a25195e2e380" dataUsingEncoding:NSUTF8StringEncoding] name:@"csrfmiddlewaretoken"];
         NSError *error = nil;
         [formData appendPartWithFileURL:[NSURL fileURLWithPath:self.uploadFile.lpath] name:@"file" error:&error];
