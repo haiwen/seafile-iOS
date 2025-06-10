@@ -26,6 +26,7 @@
 #import "ExtentedString.h"
 #import "Debug.h"
 #import "SeafPrivacyPolicyViewController.h"
+#import "SeafBackupGuideViewController.h"
 
 #define CELL_PADDING_HORIZONTAL 10.0
 #define CELL_CORNER_RADIUS 10.0
@@ -75,7 +76,7 @@ enum {
 #define MSG_CLEAR_CACHE NSLocalizedString(@"Are you sure to clear all the cache?", @"Seafile")
 #define MSG_LOG_OUT NSLocalizedString(@"Are you sure to log out?", @"Seafile")
 
-@interface SeafSettingsViewController ()<SeafPhotoSyncWatcherDelegate, CLLocationManagerDelegate>
+@interface SeafSettingsViewController ()<SeafPhotoSyncWatcherDelegate, CLLocationManagerDelegate, SeafBackupGuideDelegate>
 // Holds the cell that displays the username.
 @property (strong, nonatomic) IBOutlet UITableViewCell *nameCell;
 // Displays the amount of space used by the user.
@@ -206,7 +207,21 @@ enum {
 - (void)autoSyncSwitchFlip:(id)sender
 {
     if (_autoSyncSwitch.on) {
-        [self checkPhotoLibraryAuthorizationStatus];
+        NSString *key = [NSString stringWithFormat:@"hasCompletedBackupGuide_%@_%@", self.connection.address, self.connection.username];
+        BOOL hasCompletedGuide = [[NSUserDefaults standardUserDefaults] boolForKey:key];
+
+        if (!self.connection.autoSyncRepo) {
+            if (hasCompletedGuide) {
+                [self checkPhotoLibraryAuthorizationStatus];
+            } else {
+                SeafBackupGuideViewController *guideVC = [[SeafBackupGuideViewController alloc] initWithConnection:self.connection];
+                guideVC.delegate = self;
+                guideVC.hidesBottomBarWhenPushed = YES;
+                [self.navigationController pushViewController:guideVC animated:YES];
+            }
+        } else {
+            [self checkPhotoLibraryAuthorizationStatus];
+        }
     } else {
         self.autoSync = _autoSyncSwitch.on;
         _syncRepoCell.detailTextLabel.text = @"";
@@ -389,6 +404,12 @@ enum {
         [self configureView];
     });
     [super viewDidAppear:animated];
+    
+    // If the user navigates back from the guide without saving, turn off the switch.
+    if (!self.connection.autoSyncRepo) {
+        self.autoSyncSwitch.on = NO;
+        self.autoSync = NO;
+    }
 }
 
 - (void)didReceiveMemoryWarning
@@ -911,6 +932,19 @@ enum {
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self name:@"SeafUploadTaskStatusChanged" object:nil];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:@"SeafAccountInfoUpdated" object:nil];
+}
+
+#pragma mark - SeafBackupGuideDelegate
+- (void)backupGuide:(SeafBackupGuideViewController *)guideVC didFinishWithRepo:(SeafRepo *)repo {
+    [self.navigationController popToViewController:self animated:YES];
+    [self setAutoSyncRepo:repo];
+    [self checkPhotoLibraryAuthorizationStatus];
+}
+
+- (void)backupGuideDidCancel:(SeafBackupGuideViewController *)guideVC {
+    [self.navigationController popToViewController:self animated:YES];
+    _autoSyncSwitch.on = false;
+    self.autoSync = false;
 }
 
 @end

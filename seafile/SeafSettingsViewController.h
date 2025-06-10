@@ -9,8 +9,9 @@
 #import <UIKit/UIKit.h>
 
 #import "SeafConnection.h"
+#import "SeafBackupGuideViewController.h"
 
-@interface SeafSettingsViewController : UITableViewController
+@interface SeafSettingsViewController : UITableViewController<SeafBackupGuideDelegate>
 
 @property (strong, nonatomic) SeafConnection *connection;
 

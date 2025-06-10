@@ -83,7 +83,7 @@
         
         // Calculate separator position considering layoutMargins
         CGFloat leftInset = self.cellBackgroundView.frame.origin.x + margins.left - 2;// 额外调整为了和图标的底部线对齐
-        CGFloat rightInset = (self.bounds.size.width - CGRectGetMaxX(self.cellBackgroundView.frame)) - margins.right + 16;
+        CGFloat rightInset = 16;
         
         self.separatorInset = UIEdgeInsetsMake(0, leftInset, 0, rightInset);
     }
