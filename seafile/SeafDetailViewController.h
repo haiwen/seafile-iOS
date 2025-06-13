@@ -20,7 +20,7 @@ enum PREVIEW_STATE {
     PREVIEW_TEXT
 };
 
-@interface SeafDetailViewController : UIViewController <UISplitViewControllerDelegate, QLPreviewControllerDelegate, QLPreviewControllerDataSource, SeafShareDelegate, SeafDentryDelegate>
+@interface SeafDetailViewController : UIViewController <UISplitViewControllerDelegate, QLPreviewControllerDelegate, QLPreviewControllerDataSource, SeafShareDelegate, SeafDentryDelegate, SeafFileUpdateDelegate>
 
 @property (readonly) int state;
 
