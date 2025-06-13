@@ -1242,4 +1242,19 @@ enum SHARE_STATUS {
         [self.navigationController popViewControllerAnimated:NO];
 }
 
+#pragma mark - SeafFileUpdateDelegate
+- (void)updateProgress:(nonnull SeafFile *)file progress:(float)progress {
+    if (file != self.preViewItem) return;
+    [SVProgressHUD showProgress:progress status:NSLocalizedString(@"Uploading", @"Seafile")];
+}
+
+- (void)updateComplete:(nonnull SeafFile *)file result:(BOOL)res {
+    if (file != self.preViewItem) return;
+    if (res) {
+        [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Success", @"Seafile")];
+    } else {
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to upload file", @"Seafile")];
+    }
+}
+
 @end

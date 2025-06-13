@@ -961,16 +961,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [_rootFolder loadContent:NO];
 }
 
-//befor 2.9.27 old api for handle data
-//- (void)handleStarredData:(id)JSON
-//{
-//    NSMutableSet *stars = [NSMutableSet set];
-//    for (NSDictionary *info in JSON) {
-//        [stars addObject:[NSString stringWithFormat:@"%@-%@", [info objectForKey:@"repo"], [info objectForKey:@"path"]]];
-//    }
-//    _starredFiles = stars;
-//}
-
 - (void)handleStarredData:(id)JSON
 {
     if (![JSON isKindOfClass:[NSDictionary class]]) {
@@ -1094,15 +1084,16 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         NSMutableArray *results = [[NSMutableArray alloc] init];
         for (NSDictionary *itemInfo in [JSON objectForKey:@"results"]) {
             if ([itemInfo objectForKey:@"name"] == [NSNull null]) continue;
-            NSString *oid = [itemInfo objectForKey:@"oid"];
+            NSString *oid = nil; // oid is missing in the new API response for search
             NSString *repoId = [itemInfo objectForKey:@"repo_id"];
-            NSString *name = [itemInfo objectForKey:@"name"];
             NSString *path = [itemInfo objectForKey:@"fullpath"];
+            NSString *name = [path lastPathComponent];
+            long long mtime = [[itemInfo objectForKey:@"mtime"] longLongValue];
             if ([[itemInfo objectForKey:@"is_dir"] integerValue]) {
-                SeafDir *dir = [[SeafDir alloc] initWithConnection:self oid:oid repoId:repoId perm:nil name:name path:path mtime:0];
+                SeafDir *dir = [[SeafDir alloc] initWithConnection:self oid:oid repoId:repoId perm:nil name:name path:path mtime:mtime];
                 [results addObject:dir];
             } else {
-                SeafFile *file = [[SeafFile alloc] initWithConnection:self oid:oid repoId:repoId name:name path:path mtime:[[itemInfo objectForKey:@"last_modified"] integerValue:0] size:[[itemInfo objectForKey:@"size"] integerValue:0]];
+                SeafFile *file = [[SeafFile alloc] initWithConnection:self oid:oid repoId:repoId name:name path:path mtime:mtime size:[[itemInfo objectForKey:@"size"] longLongValue]];
                 [results addObject:file];
             }
         }

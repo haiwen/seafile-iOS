@@ -351,6 +351,13 @@
             
             // Move scroll view to target position
             self.scrollView.frame = targetScrollFrame;
+
+            // If the error placeholder view is visible, move it along with the scroll view
+            if (self.errorPlaceholderView && self.errorPlaceholderView.superview) {
+                CGRect placeholderFrame = targetScrollFrame;
+                placeholderFrame.origin.y += 30.0; // Adjust position to be a bit lower
+                self.errorPlaceholderView.frame = placeholderFrame;
+            }
             
             // Restore content offset and scale
             self.scrollView.contentOffset = contentOffset;
@@ -373,6 +380,13 @@
             
             // Move scroll view to target position
             self.scrollView.frame = targetScrollFrame;
+
+            // If the error placeholder view is visible, move it along with the scroll view
+            if (self.errorPlaceholderView && self.errorPlaceholderView.superview) {
+                CGRect placeholderFrame = targetScrollFrame;
+                placeholderFrame.origin.y += 30.0; // Adjust position to be a bit lower
+                self.errorPlaceholderView.frame = placeholderFrame;
+            }
             
             // Restore content offset and scale
             self.scrollView.contentOffset = contentOffset;
@@ -421,6 +435,15 @@
     if (animated) {
         [UIView animateWithDuration:0.2 animations:^{
             self.scrollView.frame = targetFrame;
+
+            // If the error placeholder view is visible, move it along with the scroll view
+            if (self.errorPlaceholderView && self.errorPlaceholderView.superview) {
+                CGRect placeholderFrame = targetFrame;
+                if (infoVisible) {
+                    placeholderFrame.origin.y += 30.0; // Adjust position to be a bit lower
+                }
+                self.errorPlaceholderView.frame = placeholderFrame;
+            }
             
             // Restore offset and scale
             self.scrollView.contentOffset = contentOffset;
@@ -435,6 +458,15 @@
     } else {
         // Apply changes immediately
         self.scrollView.frame = targetFrame;
+
+        // If the error placeholder view is visible, move it along with the scroll view
+        if (self.errorPlaceholderView && self.errorPlaceholderView.superview) {
+            CGRect placeholderFrame = targetFrame;
+            if (infoVisible) {
+                placeholderFrame.origin.y += 30.0; // Adjust position to be a bit lower
+            }
+            self.errorPlaceholderView.frame = placeholderFrame;
+        }
         
         // Restore offset and scale
         self.scrollView.contentOffset = contentOffset;
@@ -1107,8 +1139,9 @@
         [weakSelf handleRetryTap:nil]; 
     };
 
-    [self.view addSubview:self.errorPlaceholderView];
-    [self.view bringSubviewToFront:self.errorPlaceholderView];
+    // [self.view addSubview:self.errorPlaceholderView];
+    // [self.view bringSubviewToFront:self.errorPlaceholderView];
+    [self.view insertSubview:self.errorPlaceholderView belowSubview:self.infoView];
 
     // Update scroll view content size (imageView.image is nil, so contentSize should be minimal)
     [self updateScrollViewContentSize];
