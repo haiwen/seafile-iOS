@@ -216,6 +216,7 @@
                     
                     // reset errorCode count
                     [self.errorCodeCountDict removeAllObjects];
+                    [[SeafDataTaskManager sharedObject] removeUploadFileTaskInStorage:ufile];
 
                 } else {
                     [self addTask:ufile toArray:self.completedFailedTasks];

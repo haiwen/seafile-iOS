@@ -8,6 +8,7 @@
 
 @import LocalAuthentication;
 @import QuartzCore;
+@import Photos;
 
 #import "SVProgressHUD.h"
 
@@ -207,20 +208,43 @@ enum {
 - (void)autoSyncSwitchFlip:(id)sender
 {
     if (_autoSyncSwitch.on) {
-        NSString *key = [NSString stringWithFormat:@"hasCompletedBackupGuide_%@_%@", self.connection.address, self.connection.username];
-        BOOL hasCompletedGuide = [[NSUserDefaults standardUserDefaults] boolForKey:key];
+        // The block to run on success
+        void (^proceed)(void) = ^{
+            NSString *key = [NSString stringWithFormat:@"hasCompletedBackupGuide_%@_%@", self.connection.address, self.connection.username];
+            BOOL hasCompletedGuide = [[NSUserDefaults standardUserDefaults] boolForKey:key];
 
-        if (!self.connection.autoSyncRepo) {
-            if (hasCompletedGuide) {
-                [self checkPhotoLibraryAuthorizationStatus];
+            if (!self.connection.autoSyncRepo) {
+                if (hasCompletedGuide) {
+                    [self checkPhotoLibraryAuthorizationStatus];
+                } else {
+                    SeafBackupGuideViewController *guideVC = [[SeafBackupGuideViewController alloc] initWithConnection:self.connection];
+                    guideVC.delegate = self;
+                    guideVC.hidesBottomBarWhenPushed = YES;
+                    [self.navigationController pushViewController:guideVC animated:YES];
+                }
             } else {
-                SeafBackupGuideViewController *guideVC = [[SeafBackupGuideViewController alloc] initWithConnection:self.connection];
-                guideVC.delegate = self;
-                guideVC.hidesBottomBarWhenPushed = YES;
-                [self.navigationController pushViewController:guideVC animated:YES];
+                [self checkPhotoLibraryAuthorizationStatus];
             }
-        } else {
-            [self checkPhotoLibraryAuthorizationStatus];
+        };
+
+        // Check permissions
+        PHAuthorizationStatus status = [PHPhotoLibrary authorizationStatus];
+        if (status == PHAuthorizationStatusAuthorized) {
+            proceed();
+        } else if (status == PHAuthorizationStatusNotDetermined) {
+            [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus newStatus) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    if (newStatus == PHAuthorizationStatusAuthorized) {
+                        proceed();
+                    } else {
+                        // Denied, turn switch off
+                        self->_autoSyncSwitch.on = false;
+                    }
+                });
+            }];
+        } else { // Restricted or Denied
+            [self alertWithTitle:NSLocalizedString(@"This app does not have access to your photos and videos.", @"Seafile") message:NSLocalizedString(@"You can enable access in Privacy Settings", @"Seafile")];
+            _autoSyncSwitch.on = false;
         }
     } else {
         self.autoSync = _autoSyncSwitch.on;
