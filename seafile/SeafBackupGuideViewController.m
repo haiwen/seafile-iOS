@@ -13,10 +13,17 @@
 #import "Debug.h"
 #import "SeafAppDelegate.h"
 #import "Utils.h"
-#import <CoreLocation/CoreLocation.h>
 #import "SVProgressHUD.h"
 
-@interface SeafBackupGuideViewController () <SeafDirDelegate, UIScrollViewDelegate, CLLocationManagerDelegate, UIGestureRecognizerDelegate>
+typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
+    SeafBackupButtonTypePhotos = 0,
+    SeafBackupButtonTypeVideos = 1,
+    SeafBackupButtonTypeHeic = 2,
+    SeafBackupButtonTypeWifiOnly = 10,
+    SeafBackupButtonTypeCellular = 11
+};
+
+@interface SeafBackupGuideViewController () <SeafDirDelegate, UIScrollViewDelegate, UIGestureRecognizerDelegate>
 
 @property (strong, nonatomic) UIScrollView *scrollView;
 @property (strong, nonatomic) UIPageControl *pageControl;
@@ -36,7 +43,6 @@
 @property (strong, nonatomic) UIView *page3View;
 @property (strong, nonatomic) UIButton *wifiOnlyButton;
 @property (strong, nonatomic) UIButton *cellularButton;
-@property (strong, nonatomic) CLLocationManager *locationManager;
 @property (strong, nonatomic) NSLayoutConstraint *nextButtonWidthConstraint;
 @property (strong, nonatomic) NSLayoutConstraint *nextButtonHeightConstraint;
 @property (strong, nonatomic) UIView *topSeparatorLine;
@@ -86,7 +92,6 @@
 
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
-    self.scrollView.contentSize = CGSizeMake(self.view.frame.size.width * 3, self.scrollView.frame.size.height);
 }
 
 - (void)setupScrollView {
@@ -237,14 +242,14 @@
     self.page2View.translatesAutoresizingMaskIntoConstraints = NO;
     [NSLayoutConstraint activateConstraints:@[
         [self.page2View.topAnchor constraintEqualToAnchor:self.scrollView.contentLayoutGuide.topAnchor],
-        [self.page2View.leadingAnchor constraintEqualToAnchor:self.scrollView.contentLayoutGuide.leadingAnchor constant:self.view.frame.size.width],
+        [self.page2View.leadingAnchor constraintEqualToAnchor:self.dirViewController.view.trailingAnchor],
         [self.page2View.widthAnchor constraintEqualToAnchor:self.view.widthAnchor],
         [self.page2View.heightAnchor constraintEqualToAnchor:self.scrollView.heightAnchor]
     ]];
 
-    UIView *photosOption = [self createOptionViewWithTitle:NSLocalizedString(@"Back up photos", @"Seafile") tag:0 selected:YES];
-    UIView *videosOption = [self createOptionViewWithTitle:NSLocalizedString(@"Back up photos and videos", @"Seafile") tag:1 selected:NO];
-    self.heicOptionView = [self createOptionViewWithTitle:NSLocalizedString(@"Keep HEIC format when backing up", @"Seafile") tag:2 selected:NO];
+    UIView *photosOption = [self createOptionViewWithTitle:NSLocalizedString(@"Back up photos", @"Seafile") type:SeafBackupButtonTypePhotos selected:YES];
+    UIView *videosOption = [self createOptionViewWithTitle:NSLocalizedString(@"Back up photos and videos", @"Seafile") type:SeafBackupButtonTypeVideos selected:NO];
+    self.heicOptionView = [self createOptionViewWithTitle:NSLocalizedString(@"Keep HEIC format when backing up", @"Seafile") type:SeafBackupButtonTypeHeic selected:NO];
 
     [self.backupPhotosButton removeTarget:self action:@selector(optionTapped:) forControlEvents:UIControlEventTouchUpInside];
     [self.backupVideosButton removeTarget:self action:@selector(optionTapped:) forControlEvents:UIControlEventTouchUpInside];
@@ -273,16 +278,19 @@
         [self.heicOptionView.trailingAnchor constraintEqualToAnchor:photosOption.trailingAnchor],
     ]];
 
+    CGFloat imageSize = [self isSmallScreen] ? 180 : 200;
+    CGFloat bottomConstant = [self isSmallScreen] ? -10 : -25;
+    CGFloat centerXConstant = [self isSmallScreen] ? 40 : 60;
     UIImageView *imageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"backupGuide_page2"]];
     imageView.contentMode = UIViewContentModeScaleAspectFit;
     [self.page2View addSubview:imageView];
     imageView.translatesAutoresizingMaskIntoConstraints = NO;
 
     [NSLayoutConstraint activateConstraints:@[
-        [imageView.centerXAnchor constraintEqualToAnchor:self.page2View.centerXAnchor constant:60],
-        [imageView.bottomAnchor constraintEqualToAnchor:self.page2View.bottomAnchor constant: -25],
-        [imageView.widthAnchor constraintEqualToConstant:200],
-        [imageView.heightAnchor constraintEqualToConstant:200]
+        [imageView.centerXAnchor constraintEqualToAnchor:self.page2View.centerXAnchor constant:centerXConstant],
+        [imageView.bottomAnchor constraintEqualToAnchor:self.page2View.bottomAnchor constant:bottomConstant],
+        [imageView.widthAnchor constraintEqualToConstant:imageSize],
+        [imageView.heightAnchor constraintEqualToConstant:imageSize]
     ]];
 }
 
@@ -292,13 +300,14 @@
     self.page3View.translatesAutoresizingMaskIntoConstraints = NO;
     [NSLayoutConstraint activateConstraints:@[
         [self.page3View.topAnchor constraintEqualToAnchor:self.scrollView.contentLayoutGuide.topAnchor],
-        [self.page3View.leadingAnchor constraintEqualToAnchor:self.scrollView.contentLayoutGuide.leadingAnchor constant:self.view.frame.size.width * 2],
+        [self.page3View.leadingAnchor constraintEqualToAnchor:self.page2View.trailingAnchor],
+        [self.page3View.trailingAnchor constraintEqualToAnchor:self.scrollView.contentLayoutGuide.trailingAnchor],
         [self.page3View.widthAnchor constraintEqualToAnchor:self.view.widthAnchor],
         [self.page3View.heightAnchor constraintEqualToAnchor:self.scrollView.heightAnchor]
     ]];
 
-    UIView *wifiOnlyOption = [self createOptionViewWithTitle:NSLocalizedString(@"Auto-sync only on Wi-Fi", @"Seafile") tag:10 selected:NO];
-    UIView *cellularOption = [self createOptionViewWithTitle:NSLocalizedString(@"Wi-Fi or cellular data", @"Seafile") tag:11 selected:YES];
+    UIView *wifiOnlyOption = [self createOptionViewWithTitle:NSLocalizedString(@"Auto-sync only on Wi-Fi", @"Seafile") type:SeafBackupButtonTypeWifiOnly selected:NO];
+    UIView *cellularOption = [self createOptionViewWithTitle:NSLocalizedString(@"Wi-Fi or cellular data", @"Seafile") type:SeafBackupButtonTypeCellular selected:YES];
 
     [self.wifiOnlyButton removeTarget:self action:@selector(optionTapped:) forControlEvents:UIControlEventTouchUpInside];
     [self.cellularButton removeTarget:self action:@selector(optionTapped:) forControlEvents:UIControlEventTouchUpInside];
@@ -311,26 +320,30 @@
     wifiOnlyOption.translatesAutoresizingMaskIntoConstraints = NO;
     cellularOption.translatesAutoresizingMaskIntoConstraints = NO;
 
+    CGFloat optionSpacing = [self isSmallScreen] ? 10 : 15;
     [NSLayoutConstraint activateConstraints:@[
         [wifiOnlyOption.topAnchor constraintEqualToAnchor:self.page3View.topAnchor constant:20],
         [wifiOnlyOption.leadingAnchor constraintEqualToAnchor:self.page3View.leadingAnchor constant:26],
         [wifiOnlyOption.trailingAnchor constraintEqualToAnchor:self.page3View.trailingAnchor constant:-20],
 
-        [cellularOption.topAnchor constraintEqualToAnchor:wifiOnlyOption.bottomAnchor constant:15],
+        [cellularOption.topAnchor constraintEqualToAnchor:wifiOnlyOption.bottomAnchor constant:optionSpacing],
         [cellularOption.leadingAnchor constraintEqualToAnchor:wifiOnlyOption.leadingAnchor],
         [cellularOption.trailingAnchor constraintEqualToAnchor:wifiOnlyOption.trailingAnchor],
     ]];
 
+    CGFloat imageSize = [self isSmallScreen] ? 150 : 200;
+    CGFloat bottomConstant = [self isSmallScreen] ? -10 : -25;
+    CGFloat centerXConstant = [self isSmallScreen] ? 30 : 50;
     UIImageView *imageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"backupGuide_page3"]];
     imageView.contentMode = UIViewContentModeScaleAspectFit;
     [self.page3View addSubview:imageView];
     imageView.translatesAutoresizingMaskIntoConstraints = NO;
 
     [NSLayoutConstraint activateConstraints:@[
-        [imageView.centerXAnchor constraintEqualToAnchor:self.page3View.centerXAnchor constant:50],
-        [imageView.bottomAnchor constraintEqualToAnchor:self.page3View.bottomAnchor constant: -25],
-        [imageView.widthAnchor constraintEqualToConstant:200],
-        [imageView.heightAnchor constraintEqualToConstant:200]
+        [imageView.centerXAnchor constraintEqualToAnchor:self.page3View.centerXAnchor constant:centerXConstant],
+        [imageView.bottomAnchor constraintEqualToAnchor:self.page3View.bottomAnchor constant:bottomConstant],
+        [imageView.widthAnchor constraintEqualToConstant:imageSize],
+        [imageView.heightAnchor constraintEqualToConstant:imageSize]
     ]];
 }
 
@@ -355,17 +368,21 @@
     ]];
 }
 
-- (UIView *)createOptionViewWithTitle:(NSString *)title tag:(NSInteger)tag selected:(BOOL)selected {
+- (BOOL)isSmallScreen {
+    return [UIScreen mainScreen].bounds.size.width <= 375.0;
+}
+
+- (UIView *)createOptionViewWithTitle:(NSString *)title type:(SeafBackupButtonType)type selected:(BOOL)selected {
     UIView *view = [[UIView alloc] init];
 
     UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
-    button.tag = tag;
+    button.tag = type;
     UIImage *unselectedImage;
     UIImage *selectedImage;
 
-    if (tag == 2) {
-        unselectedImage = [[UIImage systemImageNamed:@"square"] imageWithTintColor:[UIColor grayColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
-        selectedImage = [[UIImage systemImageNamed:@"checkmark.square.fill"] imageWithTintColor:[UIColor orangeColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
+    if (type == SeafBackupButtonTypeHeic) {
+        unselectedImage = [[UIImage systemImageNamed:@"circle"] imageWithTintColor:[UIColor grayColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
+        selectedImage = [[UIImage systemImageNamed:@"checkmark.circle.fill"] imageWithTintColor:[UIColor orangeColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
     } else {
         unselectedImage = [[UIImage systemImageNamed:@"circle"] imageWithTintColor:[UIColor grayColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
         selectedImage = [[UIImage systemImageNamed:@"circle.inset.filled"] imageWithTintColor:[UIColor orangeColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
@@ -375,14 +392,29 @@
     button.selected = selected;
     [button addTarget:self action:@selector(optionTapped:) forControlEvents:UIControlEventTouchUpInside];
 
-    if (tag == 0) self.backupPhotosButton = button;
-    else if (tag == 1) self.backupVideosButton = button;
-    else if (tag == 2) self.backupHeicButton = button;
-    else if (tag == 10) self.wifiOnlyButton = button;
-    else if (tag == 11) self.cellularButton = button;
+    switch (type) {
+        case SeafBackupButtonTypePhotos:
+            self.backupPhotosButton = button;
+            break;
+        case SeafBackupButtonTypeVideos:
+            self.backupVideosButton = button;
+            break;
+        case SeafBackupButtonTypeHeic:
+            self.backupHeicButton = button;
+            break;
+        case SeafBackupButtonTypeWifiOnly:
+            self.wifiOnlyButton = button;
+            break;
+        case SeafBackupButtonTypeCellular:
+            self.cellularButton = button;
+            break;
+    }
 
     UILabel *label = [[UILabel alloc] init];
     label.text = title;
+    if ([self isSmallScreen]) {
+        label.font = [UIFont systemFontOfSize:15];
+    }
 
     [view addSubview:button];
     [view addSubview:label];
@@ -390,17 +422,19 @@
     button.translatesAutoresizingMaskIntoConstraints = NO;
     label.translatesAutoresizingMaskIntoConstraints = NO;
 
+    CGFloat viewHeight = [self isSmallScreen] ? 25 : 30;
+    CGFloat labelLeading = [self isSmallScreen] ? 8 : 10;
     [NSLayoutConstraint activateConstraints:@[
         [button.leadingAnchor constraintEqualToAnchor:view.leadingAnchor],
         [button.centerYAnchor constraintEqualToAnchor:view.centerYAnchor],
         [button.widthAnchor constraintEqualToConstant:24],
         [button.heightAnchor constraintEqualToConstant:24],
 
-        [label.leadingAnchor constraintEqualToAnchor:button.trailingAnchor constant:10],
+        [label.leadingAnchor constraintEqualToAnchor:button.trailingAnchor constant:labelLeading],
         [label.trailingAnchor constraintEqualToAnchor:view.trailingAnchor],
         [label.centerYAnchor constraintEqualToAnchor:view.centerYAnchor],
 
-        [view.heightAnchor constraintEqualToConstant:30]
+        [view.heightAnchor constraintEqualToConstant:viewHeight]
     ]];
 
     UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(optionViewTapped:)];
@@ -540,23 +574,6 @@
         self.nextActionView.hidden = NO;
         self.startButton.hidden = YES;
     }
-}
-
-- (void)checkLocationAuthorization {
-    if (!self.locationManager) {
-        self.locationManager = [[CLLocationManager alloc] init];
-        self.locationManager.delegate = self;
-    }
-    CLAuthorizationStatus status = [CLLocationManager authorizationStatus];
-    if (status == kCLAuthorizationStatusNotDetermined) {
-        [self.locationManager requestAlwaysAuthorization];
-    } else if (status != kCLAuthorizationStatusAuthorizedAlways) {
-        [Utils alertWithTitle:NSLocalizedString(@"This app does not have access to your location service.", @"Seafile") message:NSLocalizedString(@"You can enable access in Privacy Settings", @"Seafile") handler:nil from:self];
-    }
-}
-
-#pragma mark - CLLocationManagerDelegate
-- (void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status {
 }
 
 #pragma mark - UIGestureRecognizerDelegate

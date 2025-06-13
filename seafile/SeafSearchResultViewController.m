@@ -20,15 +20,13 @@
 #define SEARCH_STATE_SEARCHING NSLocalizedString(@"Searching", @"Seafile")
 #define SEARCH_STATE_NORESULTS NSLocalizedString(@"No Results", @"Seafile")
 
-@interface SeafSearchResultViewController ()<UITableViewDelegate, UITableViewDataSource, SeafDentryDelegate, UISearchBarDelegate>
+@interface SeafSearchResultViewController ()<UITableViewDelegate, UITableViewDataSource, SeafDentryDelegate, UISearchBarDelegate, SeafFileUpdateDelegate>
 
 @property (nonatomic, strong) UITableView *tableView;
 
 @property (nonatomic, strong) NSArray *searchResults;
 
 @property (nonatomic, strong) UILabel *stateLabel;
-
-@property (strong, readonly) SeafDetailViewController *detailViewController;
 
 @end
 
@@ -44,6 +42,21 @@
     self.tableView.estimatedRowHeight = 55;
     self.tableView.tableFooterView = [UIView new];
 
+    // Make style same as SeafFileViewController
+    [self.tableView registerNib:[UINib nibWithNibName:@"SeafCell" bundle:nil]
+         forCellReuseIdentifier:@"SeafCell"];
+    [self.tableView registerNib:[UINib nibWithNibName:@"SeafDirCell" bundle:nil]
+         forCellReuseIdentifier:@"SeafDirCell"];
+
+    UIView *bView = [[UIView alloc] initWithFrame:self.tableView.frame];
+    bView.backgroundColor = kPrimaryBackgroundColor;
+    self.tableView.backgroundView = bView;
+    self.tableView.separatorInset = SEAF_SEPARATOR_INSET;
+
+    if (@available(iOS 15.0, *)) {
+        self.tableView.sectionHeaderTopPadding = 0;
+    }
+
     if (!IsIpad()) {
         self.tableView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
     }
@@ -52,17 +65,37 @@
     
     self.stateLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 50)];
     self.stateLabel.textAlignment = NSTextAlignmentCenter;
-    [self.view addSubview:self.stateLabel];
-    self.stateLabel.center = CGPointMake(self.view.center.x, self.view.center.y - 100);
-    
+    [self.tableView addSubview:self.stateLabel];
+    self.stateLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.stateLabel.centerXAnchor constraintEqualToAnchor:self.tableView.centerXAnchor].active = YES;
+    [self.stateLabel.centerYAnchor constraintEqualToAnchor:self.tableView.centerYAnchor constant:-100].active = YES;
 }
 
 - (void)viewWillLayoutSubviews {
     [super viewWillLayoutSubviews];
+    
+    CGFloat heightToSubtract = 0;
+    UIViewController *rootVC = [UIApplication sharedApplication].keyWindow.rootViewController;
+    if ([rootVC isKindOfClass:[UITabBarController class]]) {
+        UITabBarController *tabBarController = (UITabBarController *)rootVC;
+        if (!tabBarController.tabBar.isHidden) {
+            heightToSubtract = tabBarController.tabBar.frame.size.height;
+        }
+    }
+
+    if (heightToSubtract == 0) {
+        if (@available(iOS 11.0, *)) {
+            UIWindow *window = [UIApplication sharedApplication].keyWindow;
+            heightToSubtract = window.safeAreaInsets.bottom;
+        }
+    }
+
     if (IsIpad()) {
-        self.tableView.frame = CGRectMake(0, 0, self.presentingViewController.view.frame.size.width, self.view.window.frame.size.height);
-        self.stateLabel.frame = CGRectMake(0, 0, self.tableView.bounds.size.width, 50);
-        self.stateLabel.center = CGPointMake(self.tableView.center.x, self.tableView.center.y - 100);
+        self.tableView.frame = CGRectMake(0, 0, self.presentingViewController.view.frame.size.width, self.view.window.frame.size.height - heightToSubtract);
+    } else {
+        CGRect frame = self.view.bounds;
+        frame.size.height -= heightToSubtract;
+        self.tableView.frame = frame;
     }
 }
 
@@ -86,9 +119,12 @@
         [SVProgressHUD dismiss];
         if (results.count == 0) {
             [self updateStateLabel:SEARCH_STATE_NORESULTS];
+            self.searchResults = @[];
+            [self.tableView reloadData];
         } else {
             [self updateStateLabel:nil];
             self.searchResults = results;
+            self.tableView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 5.0)];
             [self.tableView reloadData];
         }
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
@@ -98,6 +134,8 @@
             [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to search", @"Seafile")];
         }
         [self updateStateLabel:SEARCH_STATE_NORESULTS];
+        self.searchResults = @[];
+        [self.tableView reloadData];
     }];
 }
 
@@ -124,6 +162,7 @@
 // Resets the table view to its initial state.
 - (void)resetTableview {
     self.searchResults = nil;
+    self.tableView.tableHeaderView = nil;
     [self updateStateLabel:SEARCH_STATE_INIT];
     [self.tableView reloadData];
 }
@@ -135,6 +174,29 @@
         self.stateLabel.hidden = false;
     } else {
         self.stateLabel.hidden = true;
+    }
+}
+
+#pragma mark - Cell Style Helpers
+
+- (void)setCellSaparatorAndCorner:(UITableViewCell *)cell andIndexPath:(NSIndexPath *)indexPath {
+    // Check if it's the last cell in section
+    BOOL isLastCell = (indexPath.row == self.searchResults.count - 1);
+
+    // Update cell separator
+    if ([cell isKindOfClass:[SeafCell class]]) {
+        [(SeafCell *)cell updateSeparatorInset:isLastCell];
+    }
+
+    [self setCellCornerWithCell:cell andIndexPath:indexPath];
+}
+
+- (void)setCellCornerWithCell:(UITableViewCell *)cell andIndexPath:(NSIndexPath *)indexPath {
+    if ([cell isKindOfClass:[SeafCell class]]) {
+        BOOL isFirstCell = (indexPath.row == 0);
+        BOOL isLastCell = (indexPath.row == self.searchResults.count - 1);
+
+        [(SeafCell *)cell updateCellStyle:isFirstCell isLastCell:isLastCell];
     }
 }
 
@@ -155,11 +217,14 @@
     NSObject *entry = [self.searchResults objectAtIndex:indexPath.row];
     if (!entry) return [UITableViewCell new];
     
+    SeafCell *cell;
     if ([entry isKindOfClass:[SeafDir class]]) {
-        return [self getSeafDirCell:(SeafDir *)entry forTableView:tableView andIndexPath: indexPath];
+        cell = [self getSeafDirCell:(SeafDir *)entry forTableView:tableView andIndexPath: indexPath];
     } else {
-        return [self getSeafFileCell:(SeafFile *)entry forTableView:tableView andIndexPath:indexPath];
+        cell = [self getSeafFileCell:(SeafFile *)entry forTableView:tableView andIndexPath:indexPath];
     }
+    [self setCellSaparatorAndCorner:cell andIndexPath:indexPath];
+    return cell;
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -176,26 +241,27 @@
         id<SeafPreView> item = (id<SeafPreView>)entry;
 
         if ([self isCurrentFileImage:item]) {
-            [self.detailViewController setPreViewPhotos:[self getCurrentFileImagesInTableView:tableView] current:item master:self];
+            [self.masterVC.detailViewController setPreViewPhotos:[self getCurrentFileImagesInTableView:tableView] current:item master:self];
         } else {
-            [self.detailViewController setPreViewItem:item master:self];
+            [self.masterVC.detailViewController setPreViewItem:item master:self];
         }
         
-        if (!IsIpad()) {
-            if (self.detailViewController.state == PREVIEW_QL_MODAL) { // Use fullscreen preview for doc, xls, etc.
-                [self.detailViewController.qlViewController reloadData];
-                [self.presentingViewController presentViewController:self.detailViewController.qlViewController animated:true completion:nil];
+        if (self.masterVC.detailViewController.state == PREVIEW_QL_MODAL) {
+            [self.masterVC.detailViewController.qlViewController reloadData];
+            if (IsIpad()) {
+                [[[SeafAppDelegate topViewController] parentViewController] presentViewController:self.masterVC.detailViewController.qlViewController animated:true completion:nil];
             } else {
-                SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-                [appdelegate showDetailView:self.detailViewController];
+                [self presentViewController:self.masterVC.detailViewController.qlViewController animated:true completion:nil];
             }
+        } else if (!IsIpad()) {
+            SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+            [appdelegate showDetailView:self.masterVC.detailViewController];
         }
     } else if ([entry isKindOfClass:[SeafDir class]]) {
+        [(SeafDir *)entry setDelegate:self];
         SeafFileViewController *controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
-        [(SeafDir *)entry setDelegate:controller];
         [controller setDirectory:(SeafDir *)entry];
-        
-        [self.presentingViewController.navigationController pushViewController:controller animated:YES];
+        [self.navigationController pushViewController:controller animated:YES];
     }
 }
 
@@ -219,36 +285,23 @@
 
 #pragma mark - SeafDentryDelegate
 - (void)download:(SeafBase *)entry complete:(BOOL)updated {
-    if ([entry isKindOfClass:[SeafFile class]]) {
-        SeafFile *file = (SeafFile *)entry;
-        [self updateEntryCell:file];
-        [self.detailViewController download:file complete:updated];
-        SeafPhoto *photo = [[SeafPhoto alloc] initWithSeafPreviewIem:(id<SeafPreView>)entry];
-        [photo complete:updated error:nil];
-    }
+    [self.masterVC.detailViewController download:entry complete:updated];
+    [SVProgressHUD dismiss];
+    [self updateEntryCell:entry];
 }
 
 // Handles errors during file download.
 - (void)download:(SeafBase *)entry failed:(NSError *)error {
-    if ([entry isKindOfClass:[SeafFile class]]) {
-        SeafFile *file = (SeafFile *)entry;
-        [self updateEntryCell:file];
-        [self.detailViewController download:entry failed:error];
-    }
+    [self.masterVC.detailViewController download:entry failed:error];
+    [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to download file", @"Seafile")];
+    [self updateEntryCell:entry];
 }
 
 // Updates the progress of a file being downloaded.
 - (void)download:(SeafBase *)entry progress:(float)progress {
-    if ([entry isKindOfClass:[SeafFile class]]) {
-        SeafFile *file = (SeafFile *)entry;
-        [self.detailViewController download:entry progress:progress];
-        SeafPhoto *photo = [[SeafPhoto alloc] initWithSeafPreviewIem:(id<SeafPreView>)entry];
-        [photo setProgress:progress];
-        NSUInteger index = [self.searchResults indexOfObject:entry];
-        NSIndexPath *path = [NSIndexPath indexPathForRow:index inSection:0];
-        SeafCell *cell = (SeafCell *)[self.tableView cellForRowAtIndexPath:path];
-        [self updateCellDownloadStatus:cell isDownloading:file.isDownloading waiting:false cached:file.hasCache];
-    }
+    [self.masterVC.detailViewController download:entry progress:progress];
+    SeafCell *cell = [self getEntryCell:entry];
+    [self updateCellDownloadStatus:cell isDownloading:true waiting:false cached:((SeafFile *)entry).hasCache];
 }
 
 #pragma mark - Tableview cell
@@ -280,11 +333,11 @@
 // Retrieves a cell configured for a file entry.
 - (SeafCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath {
     [sfile loadCache];
-    SeafCell *cell = (SeafCell *)[self getCell:@"SeafDirCell" forTableView:tableView];
+    SeafCell *cell = (SeafCell *)[self getCell:@"SeafCell" forTableView:tableView];
     cell.cellIndexPath = indexPath;
     sfile.delegate = self;
     SeafRepo *repo = [_connection getRepo:sfile.repoId];
-    cell.detailTextLabel.text = [NSString stringWithFormat:@"%@%@, %@", repo.name, sfile.path.stringByDeletingLastPathComponent, sfile.detailText];
+    cell.detailTextLabel.text = [NSString stringWithFormat:@"%@%@", repo.name, sfile.path.stringByDeletingLastPathComponent];
     [self updateCellContent:cell file:sfile];
     return cell;
 }
@@ -335,10 +388,37 @@
     [self updateCellContent:cell file:entry];
 }
 
+// Retrieves the cell for a given entry from the table view.
+- (SeafCell *)getEntryCell:(id)entry {
+    NSUInteger index = [self.searchResults indexOfObject:entry];
+    if (index == NSNotFound) return nil;
+    
+    NSIndexPath *path = [NSIndexPath indexPathForRow:index inSection:0];
+    return [self.tableView cellForRowAtIndexPath:path];
+}
+
 // Retrieves the detail view controller from the app delegate.
 - (SeafDetailViewController *)detailViewController {
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    return (SeafDetailViewController *)[appdelegate detailViewControllerAtIndex:TABBED_SEAFILE];
+    return self.masterVC.detailViewController;
+}
+
+#pragma mark - SeafFileUpdateDelegate
+
+- (void)updateProgress:(SeafFile *)file progress:(float)progress {
+    NSUInteger index = [self.searchResults indexOfObject:file];
+    if (index == NSNotFound) return;
+    
+    NSIndexPath *path = [NSIndexPath indexPathForRow:index inSection:0];
+    SeafCell *cell = (SeafCell *)[self.tableView cellForRowAtIndexPath:path];
+    
+    if (cell) {
+        // Show uploading indicator
+        [self updateCellDownloadStatus:cell isDownloading:true waiting:false cached:false];
+    }
+}
+
+- (void)updateComplete:(SeafFile *)file result:(BOOL)res {
+    [self updateEntryCell:file];
 }
 
 /*

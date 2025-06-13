@@ -309,6 +309,9 @@ enum {
 - (SeafDetailViewController *)detailViewController
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    if (self.tabBarController && self.tabBarController.selectedIndex != NSNotFound) {
+        return (SeafDetailViewController *)[appdelegate detailViewControllerAtIndex:self.tabBarController.selectedIndex];
+    }
     return (SeafDetailViewController *)[appdelegate detailViewControllerAtIndex:TABBED_SEAFILE];
 }
 
@@ -2548,6 +2551,7 @@ enum {
 - (SeafSearchResultViewController *)searchResultController {
     if (!_searchResultController) {
         _searchResultController = [[SeafSearchResultViewController alloc] init];
+        _searchResultController.masterVC = self;
     }
     return _searchResultController;
 }
@@ -2589,13 +2593,9 @@ enum {
         _searchController.searchBar.tintColor = BAR_COLOR;
         
         // Set placeholder text style and color
-        NSAttributedString *placeholderAttributes = [[NSAttributedString alloc] initWithString:NSLocalizedString(@"Search files in this library", @"Seafile") 
-                                                                  attributes:@{NSForegroundColorAttributeName: [UIColor darkGrayColor]}];
-        
-        // Set the attributed placeholder text for iOS 13+ using searchTextField
         if (@available(iOS 13.0, *)) {
             UITextField *searchField = _searchController.searchBar.searchTextField;
-            searchField.attributedPlaceholder = placeholderAttributes;
+            searchField.placeholder = NSLocalizedString(@"Search files in this library", @"Seafile");
             searchField.backgroundColor = [UIColor whiteColor]; // Changed to white
 
             // Add system search icon (magnifying glass) to the left of the text field
@@ -2614,7 +2614,7 @@ enum {
             searchField.leftViewMode = UITextFieldViewModeAlways;
         } else {
             // For older iOS versions
-            [[UILabel appearanceWhenContainedIn:[UISearchBar class], nil] setAttributedText:placeholderAttributes];
+            _searchController.searchBar.placeholder = NSLocalizedString(@"Search files in this library", @"Seafile");
         }
         
         // Configure custom appearance for search presentation
