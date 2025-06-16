@@ -100,6 +100,7 @@
         [self performSelector:@selector(doneLoadingTableViewData) withObject:nil afterDelay:0.1];
         return;
     }
+    _subDirs = nil;
     
     self.tableView.accessibilityElementsHidden = YES;
     UIAccessibilityPostNotification(UIAccessibilityScreenChangedNotification, self.tableView.refreshControl);
@@ -180,7 +181,6 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    _subDirs = nil;// Reset subdirectories to force refresh.
     return self.subDirs.count;
 }
 
@@ -273,6 +273,7 @@
 {
     [self doneLoadingTableViewData];
     if (updated && [self isViewLoaded]) {
+        _subDirs = nil;
         [self.tableView reloadData];
     }
 }
