@@ -54,10 +54,12 @@ typedef void(^DownLoadFinshBlock)(id<SeafTask>  _Nonnull task);
 - (NSMutableDictionary*_Nullable)convertTaskToDict:(id _Nullable )task;
 
 // Add a batch of upload tasks
-- (void)addUploadTasksInBatch:(NSArray<SeafUploadFile *> *_Nullable)tasks forConnection:(SeafConnection *_Nullable)conn;
+- (void)addUploadTasksInBatch:(NSArray<SeafUploadFile *> *)tasks forConnection:(SeafConnection *)conn;
 
 // Add an upload task with priority
 - (BOOL)addUploadTask:(SeafUploadFile *_Nonnull)file priority:(NSOperationQueuePriority)priority;
 - (void)addFileDownloadTask:(SeafFile * _Nonnull)dfile priority:(NSOperationQueuePriority)priority;
+
+- (void)removeUploadFileTaskInStorage:(SeafUploadFile *)ufile;
 
 @end

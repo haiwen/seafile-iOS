@@ -1467,6 +1467,7 @@ enum {
         [nameSet addObject:filename];
         NSString *path = [uploadDir stringByAppendingPathComponent:filename];
         SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
+        file.lastModified = asset.modificationDate ?: asset.creationDate;
         file.model.overwrite = overwrite;
         [file setPHAsset:asset url:photoAsset.ALAssetURL];
         file.delegate = self;
@@ -1668,22 +1669,50 @@ enum {
     }];
 }
 
-- (void)deleteFile:(SeafFile *)file
-{
+- (void)deleteFile:(SeafFile *)file {
     NSArray *entries = [NSArray arrayWithObject:file.name];
-    self.state = STATE_DELETE;
+     self.state = STATE_DELETE; // State management might need review if this method is called from gallery directly
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Deleting file ...", @"Seafile")];
     
     [[SeafFileOperationManager sharedManager]
         deleteEntries:entries
-        inDir:self.directory
+        inDir:self.directory // Assuming self.directory is the correct context for the file being deleted.
+                           // If file can be from any directory, 'inDir' might need to be more dynamic or passed in.
         completion:^(BOOL success, NSError * _Nullable error) {
             if (success) {
                 [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Delete success", @"Seafile")];
+                // It's important that masterVc reloads its content to reflect the deletion.
                 [self.directory loadContent:YES];
             } else {
                 NSString *errMsg = error.localizedDescription ?: NSLocalizedString(@"Failed to delete files", @"Seafile");
                 [SVProgressHUD showErrorWithStatus:errMsg];
+            }
+            // Call the provided completion handler
+        }];
+}
+
+- (void)deleteFile:(SeafFile *)file completion:(void (^)(BOOL success, NSError *error))completion
+{
+    NSArray *entries = [NSArray arrayWithObject:file.name];
+    // self.state = STATE_DELETE; // State management might need review if this method is called from gallery directly
+    [SVProgressHUD showWithStatus:NSLocalizedString(@"Deleting file ...", @"Seafile")];
+    
+    [[SeafFileOperationManager sharedManager]
+        deleteEntries:entries
+        inDir:self.directory // Assuming self.directory is the correct context for the file being deleted.
+                           // If file can be from any directory, 'inDir' might need to be more dynamic or passed in.
+        completion:^(BOOL success, NSError * _Nullable error) {
+            if (success) {
+                [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Delete success", @"Seafile")];
+                // It's important that masterVc reloads its content to reflect the deletion.
+                [self.directory loadContent:YES]; 
+            } else {
+                NSString *errMsg = error.localizedDescription ?: NSLocalizedString(@"Failed to delete files", @"Seafile");
+                [SVProgressHUD showErrorWithStatus:errMsg];
+            }
+            // Call the provided completion handler
+            if (completion) {
+                completion(success, error);
             }
         }];
 }
@@ -2560,13 +2589,9 @@ enum {
         _searchController.searchBar.tintColor = BAR_COLOR;
         
         // Set placeholder text style and color
-        NSAttributedString *placeholderAttributes = [[NSAttributedString alloc] initWithString:NSLocalizedString(@"Search files in this library", @"Seafile") 
-                                                                  attributes:@{NSForegroundColorAttributeName: [UIColor darkGrayColor]}];
-        
-        // Set the attributed placeholder text for iOS 13+ using searchTextField
         if (@available(iOS 13.0, *)) {
             UITextField *searchField = _searchController.searchBar.searchTextField;
-            searchField.attributedPlaceholder = placeholderAttributes;
+            searchField.placeholder = NSLocalizedString(@"Search files in this library", @"Seafile");
             searchField.backgroundColor = [UIColor whiteColor]; // Changed to white
 
             // Add system search icon (magnifying glass) to the left of the text field
@@ -2585,7 +2610,7 @@ enum {
             searchField.leftViewMode = UITextFieldViewModeAlways;
         } else {
             // For older iOS versions
-            [[UILabel appearanceWhenContainedIn:[UISearchBar class], nil] setAttributedText:placeholderAttributes];
+            _searchController.searchBar.placeholder = NSLocalizedString(@"Search files in this library", @"Seafile");
         }
         
         // Configure custom appearance for search presentation

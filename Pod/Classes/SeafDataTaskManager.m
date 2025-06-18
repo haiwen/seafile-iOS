@@ -213,6 +213,9 @@
         [Utils dict:dict setObject:ufile.udir.path forKey:@"path"];
         [Utils dict:dict setObject:ufile.udir.perm forKey:@"perm"];
         [Utils dict:dict setObject:ufile.udir.mime forKey:@"mime"];
+        if (ufile.lastModified) {
+            [Utils dict:dict setObject:ufile.lastModified forKey:@"lastModified"];
+        }
         if (ufile.isEditedFile) {
             [Utils dict:dict setObject:[NSNumber numberWithBool:ufile.isEditedFile] forKey:@"isEditedFile"];
             [Utils dict:dict setObject:ufile.editedFilePath forKey:@"editedFilePath"];
@@ -254,6 +257,10 @@
             continue;
         }
         SeafUploadFile *ufile = [[SeafUploadFile alloc] initWithPath:lpath];
+        id modDate = [dict objectForKey:@"lastModified"];
+        if (modDate && [modDate isKindOfClass:[NSDate class]]) {
+            ufile.lastModified = (NSDate *)modDate;
+        }
         if ([[dict objectForKey:@"uploaded"] boolValue]) {
             [ufile cleanup];
             [toDelete addObject:key];

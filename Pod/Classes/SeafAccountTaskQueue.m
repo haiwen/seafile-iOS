@@ -216,6 +216,7 @@
                     
                     // reset errorCode count
                     [self.errorCodeCountDict removeAllObjects];
+                    [[SeafDataTaskManager sharedObject] removeUploadFileTaskInStorage:ufile];
 
                 } else {
                     [self addTask:ufile toArray:self.completedFailedTasks];
@@ -259,9 +260,23 @@
                     
                     // Add to success or failure array based on the download result
                     if (dfile.downloaded) {
+                        dfile.retryCount = 0; // Reset retry count on success
                         [self addDownloadTask:dfile toArray:self.completedSuccessfulDownloadTasks];
                     } else {
-                        [self addDownloadTask:dfile toArray:self.completedFailedDownloadTasks];
+                        [self handleDownloadErrorIfNeeded:operation.error];
+                        NSInteger fileMaxRetryCount = dfile.retryable ? DEFAULT_RETRYCOUNT : 0;
+                        if (self.isPaused) { // If paused due to auth error, add to failed list directly
+                            [self addDownloadTask:dfile toArray:self.completedFailedDownloadTasks];
+                        } else if (dfile.retryCount < fileMaxRetryCount) {
+                            dfile.retryCount++;
+                            Debug(@"Download for %@ failed, will retry %ld/%ld", dfile.name, (long)dfile.retryCount, (long)fileMaxRetryCount);
+                            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(DEFAULT_RETRY_INTERVAL * NSEC_PER_SEC)), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                                [self addFileDownloadTask:dfile];
+                            });
+                        } else {
+                            Debug(@"Download for %@ failed after all retries.", dfile.name);
+                            [self addDownloadTask:dfile toArray:self.completedFailedDownloadTasks];
+                        }
                     }
 
                     // Remove observers
@@ -1060,6 +1075,17 @@
 }
 
 #pragma mark - Error Handling
+- (void)handleDownloadErrorIfNeeded:(NSError *)error {
+    if (!error) return;
+    
+    // Retrieve NSHTTPURLResponse from error.userInfo
+    NSHTTPURLResponse *response = error.userInfo[AFNetworkingOperationFailingURLResponseErrorKey];
+    if (response && (response.statusCode == HTTP_ERR_UNAUTHORIZED || response.statusCode == HTTP_ERR_FORBIDDEN)) {
+        Debug(@"[Download Error] Authentication error detected (status code: %ld). Pausing all tasks.", (long)response.statusCode);
+        [self pauseAllTasks];
+    }
+}
+
 - (void)handleUploadErrorIfNeeded:(NSError *)error {
     if (!error) return;
     

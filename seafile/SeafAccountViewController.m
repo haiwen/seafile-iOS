@@ -19,6 +19,7 @@
 #import <openssl/x509.h>
 #import "SeafPrivacyPolicyViewController.h"
 #import "SeafDataTaskManager.h"
+#import "SeafAccountTaskQueue.h"
 
 
 #define HTTP @"http://"
@@ -409,6 +410,10 @@
         return;
 
     Debug("login success");
+    
+    // Resume tasks for this account's queue
+    SeafAccountTaskQueue *accountQueue = [[SeafDataTaskManager sharedObject] accountQueueForConnection:conn];
+    [accountQueue resumeAllTasks];
 
     [conn getServerInfo:^(bool result) {
         Debug("Get server info result: %d", result);

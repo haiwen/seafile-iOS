@@ -126,6 +126,7 @@
             
             NSString *path = [self.localUploadDir stringByAppendingPathComponent:photoAsset.name];
             SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
+            file.lastModified = asset.modificationDate;
             file.retryable = false;
             file.model.uploadFileAutoSync = true;
             file.model.overwrite = true;
@@ -168,6 +169,7 @@
             
             NSString *path = [self.localUploadDir stringByAppendingPathComponent:photoAsset.name];
             SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
+            file.lastModified = asset.modificationDate;
             file.retryable = false;
             file.model.uploadFileAutoSync = true;
             file.model.overwrite = true;

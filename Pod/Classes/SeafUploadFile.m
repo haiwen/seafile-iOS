@@ -44,6 +44,10 @@
         _model = [[SeafUploadFileModel alloc] initWithPath:path];
         _assetManager = [[SeafAssetManager alloc] init];
         _semaphore = dispatch_semaphore_create(0);
+        if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
+            NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:nil];
+            self.lastModified = [attributes fileModificationDate];
+        }
     }
     return self;
 }

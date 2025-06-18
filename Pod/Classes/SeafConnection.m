@@ -861,6 +861,29 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return request;
 }
 
+// Private helper method to handle 401 Unauthorized errors
+- (void)handleUnauthorizedErrorResponse:(NSHTTPURLResponse *)response {
+    NSString *wiped = [response.allHeaderFields objectForKey:@"X-Seafile-Wiped"];
+    Debug(@"handleUnauthorizedErrorResponse - wiped: %@ for URL: %@", wiped, response.URL.absoluteString);
+    @synchronized(self) {
+        if (![self authorized]) { // Check if already unauthorized or no token
+            Debug(@"handleUnauthorizedErrorResponse - Already unauthorized or no token, returning.");
+            return;
+        }
+        self->_token = nil;
+        [self.info removeObjectForKey:@"token"];
+        [self saveAccountInfo];
+        if (wiped) {
+            [self clearAccountCache];
+            Debug(@"handleUnauthorizedErrorResponse - Cleared account cache due to wiped flag.");
+        }
+    }
+    if (self.delegate) {
+        [self.delegate loginRequired:self];
+        Debug(@"handleUnauthorizedErrorResponse - Called loginRequired delegate.");
+    }
+}
+
 - (NSURLSessionDataTask *)sendRequestAsync:(NSString *)url method:(NSString *)method form:(NSString *)form
                  success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
                  failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure
@@ -879,18 +902,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             Warning("token=%@, resp=%ld %@, delegate=%@, url=%@, Error: %@", self.token, (long)resp.statusCode, responseObject, self.delegate, url, error);
             failure (request, resp, responseObject, error);
             if (resp.statusCode == HTTP_ERR_UNAUTHORIZED) {
-                NSString *wiped = [resp.allHeaderFields objectForKey:@"X-Seafile-Wiped"];
-                Debug("wiped: %@", wiped);
-                @synchronized(self) {
-                    if (![self authorized])   return;
-                    self->_token = nil;
-                    [self.info removeObjectForKey:@"token"];
-                    [self saveAccountInfo];
-                    if (wiped) {
-                        [self clearAccountCache];
-                    }
-                }
-                if (self.delegate) [self.delegate loginRequired:self];
+                [self handleUnauthorizedErrorResponse:resp];
             } else if (resp.statusCode == HTTP_ERR_OPERATION_FAILED && [responseObject isKindOfClass:[NSDictionary class]]) {
                 NSString *err_msg = [((NSDictionary *)responseObject) objectForKey:@"error_msg"];
                 if (err_msg && [@"Above quota" isEqualToString:err_msg]) {
@@ -948,16 +960,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     _rootFolder.delegate = degt;
     [_rootFolder loadContent:NO];
 }
-
-//befor 2.9.27 old api for handle data
-//- (void)handleStarredData:(id)JSON
-//{
-//    NSMutableSet *stars = [NSMutableSet set];
-//    for (NSDictionary *info in JSON) {
-//        [stars addObject:[NSString stringWithFormat:@"%@-%@", [info objectForKey:@"repo"], [info objectForKey:@"path"]]];
-//    }
-//    _starredFiles = stars;
-//}
 
 - (void)handleStarredData:(id)JSON
 {
@@ -1082,15 +1084,16 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         NSMutableArray *results = [[NSMutableArray alloc] init];
         for (NSDictionary *itemInfo in [JSON objectForKey:@"results"]) {
             if ([itemInfo objectForKey:@"name"] == [NSNull null]) continue;
-            NSString *oid = [itemInfo objectForKey:@"oid"];
+            NSString *oid = nil; // oid is missing in the new API response for search
             NSString *repoId = [itemInfo objectForKey:@"repo_id"];
-            NSString *name = [itemInfo objectForKey:@"name"];
             NSString *path = [itemInfo objectForKey:@"fullpath"];
+            NSString *name = [path lastPathComponent];
+            long long mtime = [[itemInfo objectForKey:@"mtime"] longLongValue];
             if ([[itemInfo objectForKey:@"is_dir"] integerValue]) {
-                SeafDir *dir = [[SeafDir alloc] initWithConnection:self oid:oid repoId:repoId perm:nil name:name path:path mtime:0];
+                SeafDir *dir = [[SeafDir alloc] initWithConnection:self oid:oid repoId:repoId perm:nil name:name path:path mtime:mtime];
                 [results addObject:dir];
             } else {
-                SeafFile *file = [[SeafFile alloc] initWithConnection:self oid:oid repoId:repoId name:name path:path mtime:[[itemInfo objectForKey:@"last_modified"] integerValue:0] size:[[itemInfo objectForKey:@"size"] integerValue:0]];
+                SeafFile *file = [[SeafFile alloc] initWithConnection:self oid:oid repoId:repoId name:name path:path mtime:mtime size:[[itemInfo objectForKey:@"size"] longLongValue]];
                 [results addObject:file];
             }
         }

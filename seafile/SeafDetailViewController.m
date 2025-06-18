@@ -28,6 +28,8 @@
 #import "SeafDataTaskManager.h"
 #import "SeafNavigationBarStyler.h"
 
+extern NSString * const AFNetworkingOperationFailingURLResponseErrorKey;
+
 enum SHARE_STATUS {
     SHARE_BY_MAIL = 0,
     SHARE_BY_LINK = 1
@@ -1238,6 +1240,21 @@ enum SHARE_STATUS {
         [self.navigationController dismissViewControllerAnimated:YES completion:nil];
     else
         [self.navigationController popViewControllerAnimated:NO];
+}
+
+#pragma mark - SeafFileUpdateDelegate
+- (void)updateProgress:(nonnull SeafFile *)file progress:(float)progress {
+    if (file != self.preViewItem) return;
+    [SVProgressHUD showProgress:progress status:NSLocalizedString(@"Uploading", @"Seafile")];
+}
+
+- (void)updateComplete:(nonnull SeafFile *)file result:(BOOL)res {
+    if (file != self.preViewItem) return;
+    if (res) {
+        [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Success", @"Seafile")];
+    } else {
+        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to upload file", @"Seafile")];
+    }
 }
 
 @end

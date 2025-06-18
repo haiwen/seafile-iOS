@@ -167,6 +167,13 @@
         return [self uploadMovedFile:url];
     }
 
+    NSDate *modificationDate = nil;
+    [self.root.originalURL getResourceValue:&modificationDate forKey:NSURLContentModificationDateKey error:nil];
+
+    NSDate *creationDate = nil;
+    [self.root.originalURL getResourceValue:&creationDate forKey:NSURLCreationDateKey error:nil];
+    NSDate *modDate = modificationDate ?: creationDate;
+    
     [self.fileCoordinator coordinateWritingItemAtURL:url options:0 error:NULL byAccessor:^(NSURL *newURL) {
         BOOL ret = [Utils copyFile:self.root.originalURL to:newURL];
         Debug("from %@ %lld, url: %@ , ret:%d", self.root.originalURL.path, [Utils fileSizeAtPath1:self.root.originalURL.path], url, ret);
@@ -175,6 +182,9 @@
             return [self alertWithTitle:NSLocalizedString(@"Failed to upload file", @"Seafile") handler:nil];
         }
         SeafUploadFile *ufile = [[SeafUploadFile alloc] initWithPath:newURL.path];
+        if (modDate) {
+            ufile.lastModified = modDate;
+        }
         ufile.delegate = self;
         ufile.udir = _directory;
         ufile.model.overwrite = overwrite;

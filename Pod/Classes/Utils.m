@@ -278,11 +278,43 @@ static CustomInputViewPresenterBlock _sharedCustomInputPresenter = nil;
     NSData *data = [NSData dataWithContentsOfFile:path];
     if (!data || data.length > 10 * 1024 * 1024) return nil;
 
+    // New logic: First, try UniversalDetector
     CFStringEncoding enc = [UniversalDetector encodingWithData:data];
-    if (enc == kCFStringEncodingInvalidId) return nil;
 
-    NSStringEncoding nsEnc = CFStringConvertEncodingToNSStringEncoding(enc);
-    return [[NSString alloc] initWithData:data encoding:nsEnc];
+    // If UniversalDetector succeeds, use its result
+    if (enc != kCFStringEncodingInvalidId) {
+        NSStringEncoding nsEnc = CFStringConvertEncodingToNSStringEncoding(enc);
+        return [[NSString alloc] initWithData:data encoding:nsEnc];
+    }
+
+    // Fallback to old logic if UniversalDetector fails
+    Debug("UniversalDetector failed, trying old logic for file: %@", path);
+    NSString *encodeContent;
+    NSStringEncoding usedEncoding;
+    encodeContent = [NSString stringWithContentsOfFile:path usedEncoding:&usedEncoding error:nil];
+    if (encodeContent) {
+        return encodeContent;
+    }
+
+    int i = 0;
+    NSStringEncoding encodes[] = {
+        NSUTF8StringEncoding,
+        CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGB_18030_2000),
+        CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGB_2312_80),
+        CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingGBK_95),
+        NSUnicodeStringEncoding,
+        NSASCIIStringEncoding,
+        0,
+    };
+    while (encodes[i]) {
+        encodeContent = [NSString stringWithContentsOfFile:path encoding:encodes[i] error:nil];
+         if (encodeContent) {
+            Debug("Fallback success with encoding %d, %ld\n", i, (unsigned long)encodes[i]);
+            break;
+        }
+        ++i;
+    }
+    return encodeContent;
 }
 
 + (BOOL)isImageFile:(NSString *)name

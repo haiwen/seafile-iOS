@@ -15,6 +15,7 @@
 @class SeafFile;
 
 #define HTTP_ERR_UNAUTHORIZED                    401
+#define HTTP_ERR_FORBIDDEN                       403
 #define HTTP_ERR_LOGIN_INCORRECT_PASSWORD        400
 #define HTTP_ERR_REPO_PASSWORD_REQUIRED          440
 #define HTTP_ERR_OPERATION_FAILED                520

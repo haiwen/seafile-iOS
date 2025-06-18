@@ -1,3 +1,5 @@
 /* Localized versions of Info.plist keys */
 
 CFBundleDisplayName = "SeafilePro";
+
+"NSLocalNetworkUsageDescription" = "Seafile benötigt Zugriff auf Server im lokalen Netzwerk.";

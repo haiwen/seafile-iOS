@@ -68,6 +68,8 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 @property (nonatomic, readonly) NSString *editedFileOid;
 @property (nonatomic, readonly) BOOL shouldShowUploadFailure;
 
+@property (nonatomic, strong) NSDate * _Nullable lastModified;
+
 // SeafTask Protocol Properties
 @property (nonatomic) NSTimeInterval lastFinishTimestamp;
 @property (nonatomic) NSInteger retryCount;
