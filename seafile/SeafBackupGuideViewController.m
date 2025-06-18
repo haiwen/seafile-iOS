@@ -92,7 +92,6 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
 
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
-    self.scrollView.contentSize = CGSizeMake(self.view.frame.size.width * 3, self.scrollView.frame.size.height);
 }
 
 - (void)setupScrollView {
@@ -243,7 +242,7 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
     self.page2View.translatesAutoresizingMaskIntoConstraints = NO;
     [NSLayoutConstraint activateConstraints:@[
         [self.page2View.topAnchor constraintEqualToAnchor:self.scrollView.contentLayoutGuide.topAnchor],
-        [self.page2View.leadingAnchor constraintEqualToAnchor:self.scrollView.contentLayoutGuide.leadingAnchor constant:self.view.frame.size.width],
+        [self.page2View.leadingAnchor constraintEqualToAnchor:self.dirViewController.view.trailingAnchor],
         [self.page2View.widthAnchor constraintEqualToAnchor:self.view.widthAnchor],
         [self.page2View.heightAnchor constraintEqualToAnchor:self.scrollView.heightAnchor]
     ]];
@@ -301,7 +300,8 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
     self.page3View.translatesAutoresizingMaskIntoConstraints = NO;
     [NSLayoutConstraint activateConstraints:@[
         [self.page3View.topAnchor constraintEqualToAnchor:self.scrollView.contentLayoutGuide.topAnchor],
-        [self.page3View.leadingAnchor constraintEqualToAnchor:self.scrollView.contentLayoutGuide.leadingAnchor constant:self.view.frame.size.width * 2],
+        [self.page3View.leadingAnchor constraintEqualToAnchor:self.page2View.trailingAnchor],
+        [self.page3View.trailingAnchor constraintEqualToAnchor:self.scrollView.contentLayoutGuide.trailingAnchor],
         [self.page3View.widthAnchor constraintEqualToAnchor:self.view.widthAnchor],
         [self.page3View.heightAnchor constraintEqualToAnchor:self.scrollView.heightAnchor]
     ]];

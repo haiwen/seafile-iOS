@@ -28,8 +28,6 @@
 
 @property (nonatomic, strong) UILabel *stateLabel;
 
-@property (strong, readonly) SeafDetailViewController *detailViewController;
-
 @end
 
 @implementation SeafSearchResultViewController
@@ -243,26 +241,27 @@
         id<SeafPreView> item = (id<SeafPreView>)entry;
 
         if ([self isCurrentFileImage:item]) {
-            [self.detailViewController setPreViewPhotos:[self getCurrentFileImagesInTableView:tableView] current:item master:self];
+            [self.masterVC.detailViewController setPreViewPhotos:[self getCurrentFileImagesInTableView:tableView] current:item master:self];
         } else {
-            [self.detailViewController setPreViewItem:item master:self];
+            [self.masterVC.detailViewController setPreViewItem:item master:self];
         }
         
-        if (!IsIpad()) {
-            if (self.detailViewController.state == PREVIEW_QL_MODAL) { // Use fullscreen preview for doc, xls, etc.
-                [self.detailViewController.qlViewController reloadData];
-                [self.presentingViewController presentViewController:self.detailViewController.qlViewController animated:true completion:nil];
+        if (self.masterVC.detailViewController.state == PREVIEW_QL_MODAL) {
+            [self.masterVC.detailViewController.qlViewController reloadData];
+            if (IsIpad()) {
+                [[[SeafAppDelegate topViewController] parentViewController] presentViewController:self.masterVC.detailViewController.qlViewController animated:true completion:nil];
             } else {
-                SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-                [appdelegate showDetailView:self.detailViewController];
+                [self presentViewController:self.masterVC.detailViewController.qlViewController animated:true completion:nil];
             }
+        } else if (!IsIpad()) {
+            SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+            [appdelegate showDetailView:self.masterVC.detailViewController];
         }
     } else if ([entry isKindOfClass:[SeafDir class]]) {
+        [(SeafDir *)entry setDelegate:self];
         SeafFileViewController *controller = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"MASTERVC"];
-        [(SeafDir *)entry setDelegate:controller];
         [controller setDirectory:(SeafDir *)entry];
-        
-        [self.presentingViewController.navigationController pushViewController:controller animated:YES];
+        [self.navigationController pushViewController:controller animated:YES];
     }
 }
 
@@ -286,32 +285,23 @@
 
 #pragma mark - SeafDentryDelegate
 - (void)download:(SeafBase *)entry complete:(BOOL)updated {
-    if ([entry isKindOfClass:[SeafFile class]]) {
-        SeafFile *file = (SeafFile *)entry;
-        [self updateEntryCell:file];
-        [self.detailViewController download:file complete:updated];
-    }
+    [self.masterVC.detailViewController download:entry complete:updated];
+    [SVProgressHUD dismiss];
+    [self updateEntryCell:entry];
 }
 
 // Handles errors during file download.
 - (void)download:(SeafBase *)entry failed:(NSError *)error {
-    if ([entry isKindOfClass:[SeafFile class]]) {
-        SeafFile *file = (SeafFile *)entry;
-        [self updateEntryCell:file];
-        [self.detailViewController download:entry failed:error];
-    }
+    [self.masterVC.detailViewController download:entry failed:error];
+    [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to download file", @"Seafile")];
+    [self updateEntryCell:entry];
 }
 
 // Updates the progress of a file being downloaded.
 - (void)download:(SeafBase *)entry progress:(float)progress {
-    if ([entry isKindOfClass:[SeafFile class]]) {
-        SeafFile *file = (SeafFile *)entry;
-        [self.detailViewController download:entry progress:progress];
-        NSUInteger index = [self.searchResults indexOfObject:entry];
-        NSIndexPath *path = [NSIndexPath indexPathForRow:index inSection:0];
-        SeafCell *cell = (SeafCell *)[self.tableView cellForRowAtIndexPath:path];
-        [self updateCellDownloadStatus:cell isDownloading:file.isDownloading waiting:false cached:file.hasCache];
-    }
+    [self.masterVC.detailViewController download:entry progress:progress];
+    SeafCell *cell = [self getEntryCell:entry];
+    [self updateCellDownloadStatus:cell isDownloading:true waiting:false cached:((SeafFile *)entry).hasCache];
 }
 
 #pragma mark - Tableview cell
@@ -398,10 +388,18 @@
     [self updateCellContent:cell file:entry];
 }
 
+// Retrieves the cell for a given entry from the table view.
+- (SeafCell *)getEntryCell:(id)entry {
+    NSUInteger index = [self.searchResults indexOfObject:entry];
+    if (index == NSNotFound) return nil;
+    
+    NSIndexPath *path = [NSIndexPath indexPathForRow:index inSection:0];
+    return [self.tableView cellForRowAtIndexPath:path];
+}
+
 // Retrieves the detail view controller from the app delegate.
 - (SeafDetailViewController *)detailViewController {
-    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-    return (SeafDetailViewController *)[appdelegate detailViewControllerAtIndex:TABBED_SEAFILE];
+    return self.masterVC.detailViewController;
 }
 
 #pragma mark - SeafFileUpdateDelegate

@@ -12,11 +12,20 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class SeafDir;
+@class SeafFile;
+@class SeafConnection;
+@class SeafFileViewController;
+@class SeafCell;
+
 @interface SeafSearchResultViewController : UIViewController <UISearchResultsUpdating>
 
-@property (strong, nonatomic) SeafConnection *connection;
+@property (nonatomic, strong) SeafDir *directory;
+@property (nonatomic, strong) SeafConnection *connection;
+@property (weak, nonatomic) SeafFileViewController *masterVC;
 
-@property (strong, nonatomic) SeafDir *directory;
+- (void)searchWithText:(NSString *)text;
+- (SeafCell *)getEntryCell:(id)entry;
 
 @end
 

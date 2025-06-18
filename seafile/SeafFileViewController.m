@@ -309,6 +309,9 @@ enum {
 - (SeafDetailViewController *)detailViewController
 {
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+    if (self.tabBarController && self.tabBarController.selectedIndex != NSNotFound) {
+        return (SeafDetailViewController *)[appdelegate detailViewControllerAtIndex:self.tabBarController.selectedIndex];
+    }
     return (SeafDetailViewController *)[appdelegate detailViewControllerAtIndex:TABBED_SEAFILE];
 }
 
@@ -2548,6 +2551,7 @@ enum {
 - (SeafSearchResultViewController *)searchResultController {
     if (!_searchResultController) {
         _searchResultController = [[SeafSearchResultViewController alloc] init];
+        _searchResultController.masterVC = self;
     }
     return _searchResultController;
 }
