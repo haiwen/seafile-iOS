@@ -980,14 +980,16 @@
 }
 
 - (void)checkBackupNeedToUpload {
-    if (self.uploadQueue.isSuspended) {
-        Debug(@"Upload queue is suspended. Skip checkBackupNeedToUpload.");
-        return;
-    }
-    
-    if (self.conn.photoBackup.photosArray.count > 0 && self.ongoingTasks.count == 0 && self.waitingTasks.count == 0) {
-        NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
-        [self.conn photosDidChange:note];
+    @synchronized(self) {
+        if (self.uploadQueue.isSuspended) {
+            Debug(@"Upload queue is suspended. Skip checkBackupNeedToUpload.");
+            return;
+        }
+        
+        if (self.conn && self.conn.photoBackup && self.conn.photoBackup.photosArray.count > 0 && self.ongoingTasks.count == 0 && self.waitingTasks.count == 0) {
+            NSNotification *note = [NSNotification notificationWithName:@"photosDidChange" object:nil userInfo:@{@"force" : @(YES)}];
+            [self.conn photosDidChange:note];
+        }
     }
 }
 

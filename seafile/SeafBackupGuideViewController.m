@@ -123,6 +123,7 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
     self.pageControl.currentPage = 0;
     self.pageControl.pageIndicatorTintColor = [UIColor lightGrayColor];
     self.pageControl.currentPageIndicatorTintColor = [UIColor orangeColor];
+    self.pageControl.userInteractionEnabled = NO;
     [self.view addSubview:self.pageControl];
 
     self.pageControl.translatesAutoresizingMaskIntoConstraints = NO;
@@ -483,10 +484,8 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
         return;
     }
     if (currentPage < self.pageControl.numberOfPages - 1) {
-        CGRect frame = self.scrollView.frame;
-        frame.origin.x = frame.size.width * (currentPage + 1);
-        frame.origin.y = 0;
-        [self.scrollView scrollRectToVisible:frame animated:YES];
+        CGFloat newX = self.scrollView.bounds.size.width * (currentPage + 1);
+        [self.scrollView setContentOffset:CGPointMake(newX, 0) animated:YES];
     } else {
         self.connection.videoSync = self.backupVideosButton.selected;
         [self.connection setUploadHeicEnabled:self.backupHeicButton.selected];
