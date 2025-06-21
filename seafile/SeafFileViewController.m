@@ -6,8 +6,6 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
-#import "MWPhotoBrowser.h"
-
 #import "SeafAppDelegate.h"
 #import "SeafFileViewController.h"
 #import "SeafDetailViewController.h"
@@ -70,7 +68,7 @@ enum {
 };
 
 
-@interface SeafFileViewController ()<QBImagePickerControllerDelegate, SeafUploadDelegate, SeafDirDelegate, SeafShareDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate, MWPhotoBrowserDelegate, UIScrollViewAccessibilityDelegate, UIGestureRecognizerDelegate>
+@interface SeafFileViewController ()<QBImagePickerControllerDelegate, SeafUploadDelegate, SeafDirDelegate, SeafShareDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate, UIScrollViewAccessibilityDelegate, UIGestureRecognizerDelegate>
 
 - (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
 - (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
@@ -99,8 +97,6 @@ enum {
 
 @property (strong, retain) NSArray *photos;// Array of photo entries.
 @property (strong, retain) NSArray *thumbs;// Array of thumbnail entries.
-@property BOOL inPhotoBrowser;// Indicates whether the photo browser is active.
-
 @property SeafUploadFile *ufile; // The file being uploaded.
 @property (nonatomic, strong) NSArray *allItems;// All items in the current directory.
 
@@ -1504,89 +1500,6 @@ enum {
     return [images copy];
 }
 
-- (void)browserAllPhotos
-{
-    MWPhotoBrowser *_mwPhotoBrowser = [[MWPhotoBrowser alloc] initWithDelegate:self];
-    _mwPhotoBrowser.displayActionButton = false;
-    _mwPhotoBrowser.displayNavArrows = true;
-    _mwPhotoBrowser.displaySelectionButtons = false;
-    _mwPhotoBrowser.alwaysShowControls = false;
-    _mwPhotoBrowser.zoomPhotosToFill = YES;
-    _mwPhotoBrowser.enableGrid = true;
-    _mwPhotoBrowser.startOnGrid = true;
-    _mwPhotoBrowser.enableSwipeToDismiss = false;
-    _mwPhotoBrowser.preLoadNumLeft = 0;
-    _mwPhotoBrowser.preLoadNumRight = 1;
-
-    self.inPhotoBrowser = true;
-
-    UINavigationController *nc = [[UINavigationController alloc] initWithRootViewController:_mwPhotoBrowser];
-    nc.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
-    nc.modalPresentationStyle = UIModalPresentationFullScreen;
-    [nc.navigationBar setTitleTextAttributes:@{NSForegroundColorAttributeName:[UIColor whiteColor]}];
-    [self presentViewController:nc animated:YES completion:nil];
-}
-
-- (void)savePhotosToAlbum
-{
-    [self checkPhotoLibraryAuth:^{
-        __weak typeof(self) weakSelf = self;
-        [self alertWithTitle:nil message:NSLocalizedString(@"Are you sure to save all photos to album?", @"Seafile") yes:^{
-            __strong typeof(weakSelf) self = weakSelf;
-            __weak typeof(self) weakSelf2 = self;
-            SeafDownloadCompletionBlock block = ^(SeafFile *file, NSError *error) {
-                __strong typeof(weakSelf2) self = weakSelf2;
-                if (error) {
-                    Warning("Failed to donwload file %@: %@", file.path, error);
-                } else {
-                    [file setFileDownloadedBlock:nil];
-                    [self performSelectorInBackground:@selector(saveImageToAlbum:) withObject:file];
-                }
-            };
-            for (id entry in self.allItems) {
-                if (![entry isKindOfClass:[SeafFile class]]) continue;
-                SeafFile *file = (SeafFile *)entry;
-                if (!file.isImageFile) continue;
-                [file loadCache];
-                NSString *path = file.cachePath;
-                if (!path) {
-                    file.state = SEAF_DENTRY_INIT;
-                    [file setFileDownloadedBlock:block];
-                    [SeafDataTaskManager.sharedObject addFileDownloadTask:file];
-                } else {
-                    block(file, nil);
-                }
-            }
-            [SVProgressHUD showInfoWithStatus:S_SAVING_PHOTOS_ALBUM];
-        } no:nil];
-    }];
-}
-
-- (void)saveImageToAlbum:(SeafFile *)file
-{
-    self.state = STATE_INIT;
-    UIImage *img = [UIImage imageWithContentsOfFile:file.cachePath];
-    dispatch_time_t timeout = dispatch_time(DISPATCH_TIME_NOW, 30 * NSEC_PER_SEC);
-    dispatch_semaphore_wait(SeafGlobal.sharedObject.saveAlbumSem, timeout);
-    Info("Write image file %@ %@ to album", file.name, file.cachePath);
-    UIImageWriteToSavedPhotosAlbum(img, self, @selector(thisImage:hasBeenSavedInPhotoAlbumWithError:usingContextInfo:), (void *)CFBridgingRetain(file));
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [SVProgressHUD showInfoWithStatus:NSLocalizedString(@"Save to album", @"Seafile")];
-    });
-}
-
-- (void)thisImage:(UIImage *)image hasBeenSavedInPhotoAlbumWithError:(NSError *)error usingContextInfo:(void *)ctxInfo
-{
-    SeafFile *file = (__bridge SeafFile *)ctxInfo;
-    Info("Finish write image file %@ %@ to album", file.name, file.cachePath);
-    dispatch_semaphore_signal(SeafGlobal.sharedObject.saveAlbumSem);
-    if (error) {
-        Warning("Failed to save file %@ to album: %@", file.name, error);
-        [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Failed to save %@ to album", @"Seafile"), file.name]];
-    }
-}
-
-
 #pragma mark - Share & Export
 
 - (void)exportSelected {
@@ -1681,17 +1594,18 @@ enum {
         deleteEntries:entries
         inDir:self.directory // Assuming self.directory is the correct context for the file being deleted.
                            // If file can be from any directory, 'inDir' might need to be more dynamic or passed in.
-        completion:^(BOOL success, NSError * _Nullable error) {
-            if (success) {
-                [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Delete success", @"Seafile")];
-                // It's important that masterVc reloads its content to reflect the deletion.
-                [self.directory loadContent:YES];
-            } else {
-                NSString *errMsg = error.localizedDescription ?: NSLocalizedString(@"Failed to delete files", @"Seafile");
-                [SVProgressHUD showErrorWithStatus:errMsg];
-            }
-            // Call the provided completion handler
-        }];
+        completion:^(BOOL success, NSError * _Nullable error)
+    {
+        if (success) {
+            [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Delete success", @"Seafile")];
+            // It's important that masterVc reloads its content to reflect the deletion.
+            [self.directory loadContent:YES];
+        } else {
+            NSString *errMsg = error.localizedDescription ?: NSLocalizedString(@"Failed to delete files", @"Seafile");
+            [SVProgressHUD showErrorWithStatus:errMsg];
+        }
+        // Call the provided completion handler
+    }];
 }
 
 - (void)deleteFile:(SeafFile *)file completion:(void (^)(BOOL success, NSError *error))completion
@@ -1791,10 +1705,6 @@ enum {
     } else if ([S_DOWNLOAD isEqualToString:title]) {
         SeafDir *dir = (SeafDir *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [self downloadDir:dir];
-    } else if ([S_PHOTOS_ALBUM isEqualToString:title]) {
-        [self savePhotosToAlbum];
-    } else if ([S_PHOTOS_BROWSER isEqualToString:title]) {
-        [self browserAllPhotos];
     } else if ([S_EDIT isEqualToString:title]) {
         [self editStart:nil];
     } else if ([S_DELETE isEqualToString:title]) {
@@ -1858,7 +1768,7 @@ enum {
             [self shareToWechat:file];
         }
     } else if ([S_MKLIB isEqualToString:title]) {
-        Debug(@"create lib");
+        Debug("create lib");
         [self popupMklibView];
     } else if ([S_UPLOAD isEqualToString:title]) {
         [self addPhotos:nil];
@@ -2023,7 +1933,7 @@ enum {
 
 - (void)updateCellDownloadStatus:(SeafCell *)cell file:(SeafFile *)sfile waiting:(BOOL)waiting
 {
-    BOOL fileHasCache = [sfile isSdocFile] ? NO : sfile.hasCache; //To prevent downloading sfile files, force it to have no cache. Force set statusView hidden.
+    BOOL fileHasCache = [sfile isWebOpenFile] ? NO : sfile.hasCache; //To prevent downloading sfile files, force it to have no cache. Force set statusView hidden.
     [self updateCellDownloadStatus:cell isDownloading:sfile.isDownloading waiting:waiting cached:fileHasCache];
 }
 
@@ -2217,7 +2127,7 @@ enum {
 #pragma mark - SeafDentryDelegate (Download callbacks)
 
 - (SeafPhoto *)getSeafPhoto:(id<SeafPreView>)photo {
-    if (!self.inPhotoBrowser || ![photo isImageFile])
+    if (![photo isImageFile])
         return nil;
     for (SeafPhoto *sphoto in self.photos) {
         if (sphoto.file == photo) {
@@ -2495,26 +2405,6 @@ enum {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         [appdelegate cycleTheGlobalMailComposer];
     }];
-}
-
-
-#pragma mark - MWPhotoBrowserDelegate
-
-- (NSUInteger)numberOfPhotosInPhotoBrowser:(MWPhotoBrowser *)photoBrowser {
-    if (!self.photos) return 0;
-    return self.photos.count;
-}
-
-- (id <MWPhoto>)photoBrowser:(MWPhotoBrowser *)photoBrowser photoAtIndex:(NSUInteger)index {
-    if (!self.photos || index >= self.photos.count) return nil; // Add safety check
-    return [self.photos objectAtIndex:index];
-}
-
-- (NSString *)photoBrowser:(MWPhotoBrowser *)photoBrowser titleForPhotoAtIndex:(NSUInteger)index
-{
-    if (!self.photos || index >= self.photos.count) return nil; // Add safety check
-    SeafPhoto *photo = [self.photos objectAtIndex:index];
-    return photo.file.name;
 }
 
 // Called when user scrolls to another photo
@@ -2971,37 +2861,71 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
     // Execute action based on button type
     switch (buttonView.tag) {
         case ToolButtonShare: {
+            NSMutableArray *titles = [NSMutableArray array];
+
+            // Show "Share File" as disabled if a directory is selected
+            BOOL containsDirectory = NO;
+            for (id item in selectedItems) {
+                if ([item isKindOfClass:[SeafDir class]]) {
+                    containsDirectory = YES;
+                    break;
+                }
+            }
+            if (containsDirectory) {
+                NSString *disabledTitle = [@"DISABLED:" stringByAppendingString:NSLocalizedString(@"Share file", @"Seafile")];
+                [titles addObject:disabledTitle];
+            } else {
+                [titles addObject:NSLocalizedString(@"Share file", @"Seafile")];
+            }
+            
+            // Only show "Copy share link to clipboard" for a single item, otherwise show it as disabled.
             if (selectedItems.count == 1) {
-                SeafBase *selectedItem = selectedItems.firstObject;
-                if ([selectedItem isKindOfClass:[SeafDir class]]) {
-                    self.state = STATE_SHARE_LINK;
+                [titles addObject:NSLocalizedString(@"Copy share link to clipboard", @"Seafile")];
+            } else if (selectedItems.count > 1) {
+                NSString *disabledTitle = [@"DISABLED:" stringByAppendingString:NSLocalizedString(@"Copy share link to clipboard", @"Seafile")];
+                [titles addObject:disabledTitle];
+            }
+
+            SeafActionSheet *actionSheet = [SeafActionSheet actionSheetWithTitles:titles];
+            actionSheet.targetVC = self;
+            [actionSheet setButtonPressedBlock:^(SeafActionSheet *sheet, NSIndexPath *indexPath){
+                [sheet dismissAnimated:YES];
+                
+                NSString *selectedTitle = titles[indexPath.row];
+                
+                if ([selectedTitle isEqualToString:NSLocalizedString(@"Share file", @"Seafile")]) {
+                    // This is the original logic for sharing files
+                    self.state = STATE_EXPORT;
                     [self editDone:nil]; // Exit edit mode here
+                    @weakify(self);
+                    [self downloadEntries:selectedItems completion:^(NSArray *array, NSString *errorStr) {
+                        @strongify(self);
+                        self.state = STATE_INIT;
+                        @weakify(self);
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            @strongify(self);
+                            if (errorStr) {
+                                [SVProgressHUD showErrorWithStatus:errorStr];
+                            } else {
+                                [SeafActionsManager exportByActivityView:array item:buttonView targerVC:self];
+                            }
+                        });
+                    }];
+                } else if ([selectedTitle isEqualToString:NSLocalizedString(@"Copy share link to clipboard", @"Seafile")]) {
+                    [self editDone:nil];
+                    // This logic now applies to a single file OR a single directory
+                    SeafBase *selectedItem = selectedItems.firstObject;
+                    self.state = STATE_SHARE_LINK;
                     if (!selectedItem.shareLink) {
                         [SVProgressHUD showWithStatus:NSLocalizedString(@"Generate share link ...", @"Seafile")];
                         [selectedItem generateShareLink:self];
                     } else {
                         [self generateSharelink:selectedItem WithResult:YES];
                     }
-                    break;
                 }
-            }
-            
-            self.state = STATE_EXPORT;
-            [self editDone:nil]; // Exit edit mode here
-            @weakify(self);
-            [self downloadEntries:selectedItems completion:^(NSArray *array, NSString *errorStr) {
-                @strongify(self);
-                self.state = STATE_INIT;
-                @weakify(self);
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    @strongify(self);
-                    if (errorStr) {
-                        [SVProgressHUD showErrorWithStatus:errorStr];
-                    } else {
-                        [SeafActionsManager exportByActivityView:array item:self.toolbarItems.firstObject targerVC:self];
-                    }
-                });
             }];
+
+            [actionSheet showFromView:buttonView];
             break;
         }
         case ToolButtonDownload: {
