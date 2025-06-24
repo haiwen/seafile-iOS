@@ -864,12 +864,13 @@ enum SHARE_STATUS {
 #pragma -mark QLPreviewControllerDelegate
 
 - (QLPreviewItemEditingMode)previewController:(QLPreviewController *)controller editingModeForPreviewItem:(id<QLPreviewItem>)previewItem  API_AVAILABLE(ios(13.0)){
-    SeafFile *file = (SeafFile *)previewItem;
-    if ([file.mime isEqualToString:@"application/pdf"]) {
-        return QLPreviewItemEditingModeCreateCopy;// Allow creating a copy for PDF files
-    } else {
-        return QLPreviewItemEditingModeDisabled;// Disable editing for other files
+    if ([previewItem isKindOfClass:[SeafFile class]]) {
+        SeafFile *file = (SeafFile *)previewItem;
+        if ([file.mime isEqualToString:@"application/pdf"]) {
+            return QLPreviewItemEditingModeCreateCopy;// Allow creating a copy for PDF files
+        }
     }
+    return QLPreviewItemEditingModeDisabled;
 }
 
 - (void)previewController:(QLPreviewController *)controller didUpdateContentsOfPreviewItem:(id<QLPreviewItem>)previewItem {

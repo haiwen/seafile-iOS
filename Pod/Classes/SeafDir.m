@@ -335,6 +335,14 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
     _allItems = nil;
 }
 
+- (void)updateWithEntry:(SeafBase *)entry
+{
+    [super updateWithEntry:entry];
+    SeafDir *dir = (SeafDir *)entry;
+    self.mtime = dir.mtime;
+    self.perm = dir.perm;
+}
+
 - (BOOL)checkSorted:(NSArray *)items
 {
     NSComparator cmp = [self getCmpFunc];
@@ -460,6 +468,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 {
     if (force) {
         _uploadItems = nil;
+        self.ooid = nil;
     }
     _allItems = nil;
     [super loadContent:force];

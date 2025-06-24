@@ -37,7 +37,7 @@
         
         NSString *star = file.isStarred ? S_UNSTAR : S_STAR;
         if (file.mpath)
-            titles = [NSMutableArray arrayWithObjects:star, S_DELETE, S_UPLOAD_FILE, nil];
+            titles = [NSMutableArray arrayWithObjects:star, S_DELETE, S_RE_UPLOAD_FILE, nil];
         else
             titles = [NSMutableArray arrayWithObjects:star, S_DELETE, S_REDOWNLOAD, S_RENAME, nil];
         
@@ -68,7 +68,7 @@
     if ([directory isKindOfClass:[SeafRepos class]]) {
         titles = [NSMutableArray arrayWithObjects:S_MKLIB,S_SORT_NAME, S_SORT_MTIME, nil];
     } else if (directory.editable) {
-        titles = [NSMutableArray arrayWithObjects:S_UPLOAD, S_EDIT,S_NEWFILE, S_MKDIR, S_SORT_NAME, S_SORT_MTIME, nil];
+        titles = [NSMutableArray arrayWithObjects:S_UPLOAD, S_UPLOAD_FILE, S_EDIT,S_NEWFILE, S_MKDIR, S_SORT_NAME, S_SORT_MTIME, nil];
     } else {
         titles = [NSMutableArray arrayWithObjects:S_SORT_NAME, S_SORT_MTIME, nil];
     }
