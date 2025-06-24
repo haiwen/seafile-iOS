@@ -44,6 +44,8 @@
 #import "SeafEditNavRightItem.h"
 #import "SeafLoadingView.h"
 #import "SeafPhotoGalleryViewController.h"
+#import <MobileCoreServices/MobileCoreServices.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 #define kCustomTabToolWithTopPadding 15
 #define kCustomTabToolButtonHeight 40
@@ -68,7 +70,7 @@ enum {
 };
 
 
-@interface SeafFileViewController ()<QBImagePickerControllerDelegate, SeafUploadDelegate, SeafDirDelegate, SeafShareDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate, UIScrollViewAccessibilityDelegate, UIGestureRecognizerDelegate>
+@interface SeafFileViewController ()<QBImagePickerControllerDelegate, SeafUploadDelegate, SeafDirDelegate, SeafShareDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate, UIScrollViewAccessibilityDelegate, UIGestureRecognizerDelegate, UIDocumentPickerDelegate>
 
 - (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
 - (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
@@ -1450,6 +1452,24 @@ enum {
     NSString *uploadDir = [self.connection uniqueUploadDir];
     NSMutableSet *nameSet = overwrite ? [NSMutableSet new] : [self getExistedNameSet];
     BOOL uploadHeicEnabled = self.connection.isUploadHeicEnabled;
+
+    if (overwrite) {
+        NSMutableArray *newItems = [self.directory.items mutableCopy];
+        NSMutableSet *uploadingFilenames = [NSMutableSet set];
+        for (NSString *localIdentifier in identifiers) {
+            PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
+            PHAsset *asset = [result firstObject];
+            SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!uploadHeicEnabled];
+            if (photoAsset.name) {
+                [uploadingFilenames addObject:photoAsset.name];
+            }
+        }
+        NSIndexSet *indexes = [newItems indexesOfObjectsPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
+            return [obj isKindOfClass:[SeafFile class]] && [uploadingFilenames containsObject:((SeafFile *)obj).name];
+        }];
+        [newItems removeObjectsAtIndexes:indexes];
+        self.directory.items = newItems;
+    }
     
     for (NSString *localIdentifier in identifiers) {
         PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
@@ -1622,7 +1642,7 @@ enum {
             if (success) {
                 [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Delete success", @"Seafile")];
                 // It's important that masterVc reloads its content to reflect the deletion.
-                [self.directory loadContent:YES]; 
+                [self.directory loadContent:YES];
             } else {
                 NSString *errMsg = error.localizedDescription ?: NSLocalizedString(@"Failed to delete files", @"Seafile");
                 [SVProgressHUD showErrorWithStatus:errMsg];
@@ -1716,7 +1736,7 @@ enum {
     } else if ([S_RENAME isEqualToString:title]) {
         SeafBase *entry = (SeafBase *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [self renameEntry:entry];//rename
-    } else if ([S_UPLOAD_FILE isEqualToString:title]) {
+    } else if ([S_RE_UPLOAD_FILE isEqualToString:title]) {
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [file update:self];
         [self reloadIndex:_selectedindex];
@@ -1772,8 +1792,170 @@ enum {
         [self popupMklibView];
     } else if ([S_UPLOAD isEqualToString:title]) {
         [self addPhotos:nil];
+    } else if ([S_UPLOAD_FILE isEqualToString:title]) {
+        [self selectFileToUpload];
     }
 
+}
+
+#pragma mark - File Picker
+- (void)selectFileToUpload {
+    UIDocumentPickerViewController *documentPicker;
+    if (@available(iOS 14.0, *)) {
+        UTType *type = [UTType typeWithIdentifier:@"public.item"];
+        documentPicker = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:@[type] asCopy:YES];
+    } else {
+        documentPicker = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[(NSString *)kUTTypeItem] inMode:UIDocumentPickerModeImport];
+    }
+    documentPicker.delegate = self;
+    documentPicker.allowsMultipleSelection = YES;
+    [self presentViewController:documentPicker animated:YES completion:nil];
+}
+
+- (void)startFileUploadsFromPaths:(NSArray *)paths overwrite:(BOOL)overwrite {
+    if (paths.count == 0) return;
+    
+    NSMutableArray *files = [[NSMutableArray alloc] init];
+    NSMutableSet *nameSet = overwrite ? [NSMutableSet new] : [self getExistedNameSet];
+
+    if (overwrite) {
+        NSMutableArray *newItems = [self.directory.items mutableCopy];
+        NSMutableSet *uploadingFilenames = [NSMutableSet set];
+        for (NSString *path in paths) {
+            [uploadingFilenames addObject:[path lastPathComponent]];
+        }
+        NSIndexSet *indexes = [newItems indexesOfObjectsPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
+            return [obj isKindOfClass:[SeafFile class]] && [uploadingFilenames containsObject:((SeafFile *)obj).name];
+        }];
+        [newItems removeObjectsAtIndexes:indexes];
+        self.directory.items = newItems;
+    }
+    
+    for (NSString *path in paths) {
+        NSString *filename = [path lastPathComponent];
+        NSString *finalPath = path;
+        
+        if (!overwrite) {
+            if ([nameSet containsObject:filename]) {
+                NSString *name = filename.stringByDeletingPathExtension;
+                NSString *ext = filename.pathExtension;
+                NSString *newFilename = [self getUniqueFilename:name ext:ext nameSet:nameSet];
+                NSString *newPath = [path.stringByDeletingLastPathComponent stringByAppendingPathComponent:newFilename];
+                [[NSFileManager defaultManager] moveItemAtPath:path toPath:newPath error:nil];
+                finalPath = newPath;
+            }
+        }
+        [nameSet addObject:[finalPath lastPathComponent]];
+        
+        SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:finalPath];
+        file.model.overwrite = overwrite;
+        file.delegate = self;
+        [files addObject:file];
+        [self.directory addUploadFile:file];
+    }
+    
+    [self reloadTable];
+    
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        [SeafDataTaskManager.sharedObject addUploadTasksInBatch:files forConnection:self.connection];
+    });
+}
+
+// Refactored to ensure uploadDir exists once, and only stopAccessing if started.
+- (void)uploadFilesAtURLs:(NSArray<NSURL *> *)urls {
+    if (urls.count == 0) return;
+
+    // Ensure the upload directory exists once before copying
+    NSString *uploadDir = [self.connection uniqueUploadDir];
+    if (![[NSFileManager defaultManager] fileExistsAtPath:uploadDir]) {
+        [[NSFileManager defaultManager] createDirectoryAtPath:uploadDir
+                                      withIntermediateDirectories:YES
+                                                       attributes:nil
+                                                            error:nil];
+    }
+
+    NSSet *nameSet = [self getExistedNameSet];
+    NSMutableArray *filesToUpload = [NSMutableArray new];
+    int duplicated = 0;
+    int copyFailedCount = 0;
+
+    for (NSURL *url in urls) {
+        NSString *fileName = [url lastPathComponent];
+        // NSString *uploadDir = [self.connection uniqueUploadDir];
+        NSString *destinationPath = [uploadDir stringByAppendingPathComponent:fileName];
+
+        if ([[NSFileManager defaultManager] fileExistsAtPath:destinationPath]) {
+            [[NSFileManager defaultManager] removeItemAtPath:destinationPath error:NULL];
+        }
+
+        // It's necessary to gain access to the security-scoped resource.
+        BOOL accessing = [url startAccessingSecurityScopedResource];
+        if (!accessing) {
+            Warning("Failed to start accessing security-scoped resource for URL: %@", url);
+        }
+
+        __block BOOL success = NO;
+        __block NSError *coordinationError = nil;
+        NSFileCoordinator *coordinator = [[NSFileCoordinator alloc] init];
+
+        [coordinator coordinateReadingItemAtURL:url options:NSFileCoordinatorReadingWithoutChanges error:&coordinationError byAccessor:^(NSURL *newURL) {
+            NSError *copyError;
+            if ([[NSFileManager defaultManager] copyItemAtURL:newURL toURL:[NSURL fileURLWithPath:destinationPath] error:&copyError]) {
+                success = YES;
+            } else {
+                Warning("Failed to copy file for upload: %@", copyError);
+            }
+        }];
+
+        if (coordinationError) {
+            Warning("File coordination error: %@", coordinationError);
+        }
+
+        if (!success) {
+            copyFailedCount++;
+        } else {
+            [filesToUpload addObject:destinationPath];
+            if ([nameSet containsObject:fileName]) {
+                duplicated++;
+            }
+        }
+        
+        // Only stop accessing the resource if it was started
+        if (accessing) {
+            [url stopAccessingSecurityScopedResource];
+        }
+    }
+
+    if (copyFailedCount > 0 && copyFailedCount == urls.count) {
+        [self alertWithTitle:NSLocalizedString(@"Failed to access selected file(s)", @"Seafile")];
+        return;
+    }
+
+    if (duplicated > 0) {
+        NSString *title = duplicated == 1 ? STR_12 : STR_13;
+        @weakify(self);
+        [self alertWithTitle:title message:nil yes:^{
+            @strongify(self);
+            [self startFileUploadsFromPaths:filesToUpload overwrite:true];
+        } no:^{
+            @strongify(self);
+            [self startFileUploadsFromPaths:filesToUpload overwrite:false];
+        }];
+    } else {
+        [self startFileUploadsFromPaths:filesToUpload overwrite:false];
+    }
+}
+
+#pragma mark - UIDocumentPickerDelegate
+- (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
+    [controller dismissViewControllerAnimated:YES completion:^{
+        [self uploadFilesAtURLs:urls];
+    }];
+}
+
+- (void)documentPickerWasCancelled:(UIDocumentPickerViewController *)controller {
+    Debug("Document picker was cancelled");
+    [controller dismissViewControllerAnimated:YES completion:nil];
 }
 
 
