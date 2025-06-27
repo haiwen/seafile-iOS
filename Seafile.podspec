@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = "Seafile"
-  s.version          = "3.0.4"
+  s.version          = "3.0.5"
   s.summary          = "iOS client for seafile."
   s.homepage         = "https://github.com/haiwen/seafile-iOS"
   s.license          = 'MIT'

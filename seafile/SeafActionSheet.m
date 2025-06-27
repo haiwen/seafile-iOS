@@ -253,7 +253,15 @@ static BOOL disableCustomEasing = NO;
     
     SeafSectionButton *b = [[SeafSectionButton alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.bounds), buttonHeight)];
 
-    [b setTitle:title forState:UIControlStateNormal];
+    NSString *displayTitle = title;
+    BOOL enabled = YES;
+    static NSString * const disabledPrefix = @"DISABLED:";
+    if ([title hasPrefix:disabledPrefix]) {
+        displayTitle = [title substringFromIndex:disabledPrefix.length];
+        enabled = NO;
+    }
+
+    [b setTitle:displayTitle forState:UIControlStateNormal];
     [b setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
     [b setTitleEdgeInsets:titleInsets];
     [b addTarget:self action:@selector(buttonPressed:) forControlEvents:UIControlEventTouchUpInside];
@@ -270,6 +278,11 @@ static BOOL disableCustomEasing = NO;
         b.titleLabel.font = [UIFont boldSystemFontOfSize:14.0f];
     } else {
         b.titleLabel.font = [UIFont systemFontOfSize:14.0f];
+    }
+    
+    if (!enabled) {
+        b.enabled = NO;
+        [b setTitleColor:[UIColor lightGrayColor] forState:UIControlStateNormal];
     }
     
     b.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
@@ -635,6 +648,18 @@ static BOOL disableCustomEasing = NO;
             
             NSLog(@"Using default top right corner position: x=%f, y=%f", point.x, point.y);
         }
+    } else if ([view isKindOfClass:[UIView class]]) {
+        UIView *sourceView = (UIView *)view;
+        sourceRect = [sourceView.superview convertRect:sourceView.frame toView:[self topWindow]];
+        // Align the popover's right edge to the button's left edge.
+        // moveToPoint calculates final_x = point.x - (popover_width / 2).
+        // We want final_x = button.x - popover_width.
+        // So, we solve for point.x: point.x = button.x - popover_width / 2.
+        CGFloat popoverWidth = kFixedWidth;
+        CGFloat pointX = CGRectGetMinX(sourceRect) - popoverWidth / 2.0f;
+        point = CGPointMake(pointX + 15, CGRectGetMinY(sourceRect) - 50);
+        [self showFromPoint:point sourceRect:sourceRect arrowDirection:SFActionSheetArrowDirectionBottom animated:YES];
+        return;
     } else {
         // For other types of views, ensure using top right corner of navigation bar
         CGRect navBarFrame = _targetVC.navigationController.navigationBar.frame;

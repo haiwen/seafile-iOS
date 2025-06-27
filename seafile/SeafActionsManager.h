@@ -48,8 +48,9 @@ enum {
 #define S_SHARE_EMAIL NSLocalizedString(@"Send share link via email", @"Seafile")
 #define S_SHARE_LINK NSLocalizedString(@"Copy share link to clipboard", @"Seafile")
 #define S_REDOWNLOAD NSLocalizedString(@"Redownload", @"Seafile")
-#define S_UPLOAD NSLocalizedString(@"Upload", @"Seafile")
+#define S_UPLOAD NSLocalizedString(@"Upload photos", @"Seafile")
 #define S_UPLOAD_FILE NSLocalizedString(@"Upload file", @"Seafile")
+#define S_RE_UPLOAD_FILE NSLocalizedString(@"Re-upload", @"Seafile")
 
 #define S_RESET_PASSWORD NSLocalizedString(@"Reset repo password", @"Seafile")
 #define S_CLEAR_REPO_PASSWORD NSLocalizedString(@"Clear password", @"Seafile")

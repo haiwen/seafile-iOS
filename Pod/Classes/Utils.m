@@ -101,6 +101,10 @@ static CustomInputViewPresenterBlock _sharedCustomInputPresenter = nil;
 
 + (BOOL)copyFile:(NSURL *)from to:(NSURL *)to
 {
+    if (!from || !to) {
+        Warning(@"Failed to copy file, from or to URL is nil. From: %@, To: %@", from, to);
+        return false;
+    }
     NSError *error = nil;
     NSFileManager* fm = [NSFileManager defaultManager];
     if ([fm fileExistsAtPath:to.path]

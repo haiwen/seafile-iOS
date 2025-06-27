@@ -6,8 +6,6 @@
 //  Copyright (c) 2012 Seafile Ltd. All rights reserved.
 //
 
-#import "MWPhotoBrowser.h"
-
 #import "SeafAppDelegate.h"
 #import "SeafFileViewController.h"
 #import "SeafDetailViewController.h"
@@ -46,6 +44,8 @@
 #import "SeafEditNavRightItem.h"
 #import "SeafLoadingView.h"
 #import "SeafPhotoGalleryViewController.h"
+#import <MobileCoreServices/MobileCoreServices.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 #define kCustomTabToolWithTopPadding 15
 #define kCustomTabToolButtonHeight 40
@@ -70,7 +70,7 @@ enum {
 };
 
 
-@interface SeafFileViewController ()<QBImagePickerControllerDelegate, SeafUploadDelegate, SeafDirDelegate, SeafShareDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate, MWPhotoBrowserDelegate, UIScrollViewAccessibilityDelegate, UIGestureRecognizerDelegate>
+@interface SeafFileViewController ()<QBImagePickerControllerDelegate, SeafUploadDelegate, SeafDirDelegate, SeafShareDelegate, MFMailComposeViewControllerDelegate, SWTableViewCellDelegate, UIScrollViewAccessibilityDelegate, UIGestureRecognizerDelegate, UIDocumentPickerDelegate>
 
 - (UITableViewCell *)getSeafFileCell:(SeafFile *)sfile forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
 - (UITableViewCell *)getSeafDirCell:(SeafDir *)sdir forTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath;
@@ -99,8 +99,6 @@ enum {
 
 @property (strong, retain) NSArray *photos;// Array of photo entries.
 @property (strong, retain) NSArray *thumbs;// Array of thumbnail entries.
-@property BOOL inPhotoBrowser;// Indicates whether the photo browser is active.
-
 @property SeafUploadFile *ufile; // The file being uploaded.
 @property (nonatomic, strong) NSArray *allItems;// All items in the current directory.
 
@@ -1454,6 +1452,24 @@ enum {
     NSString *uploadDir = [self.connection uniqueUploadDir];
     NSMutableSet *nameSet = overwrite ? [NSMutableSet new] : [self getExistedNameSet];
     BOOL uploadHeicEnabled = self.connection.isUploadHeicEnabled;
+
+    if (overwrite) {
+        NSMutableArray *newItems = [self.directory.items mutableCopy];
+        NSMutableSet *uploadingFilenames = [NSMutableSet set];
+        for (NSString *localIdentifier in identifiers) {
+            PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
+            PHAsset *asset = [result firstObject];
+            SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!uploadHeicEnabled];
+            if (photoAsset.name) {
+                [uploadingFilenames addObject:photoAsset.name];
+            }
+        }
+        NSIndexSet *indexes = [newItems indexesOfObjectsPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
+            return [obj isKindOfClass:[SeafFile class]] && [uploadingFilenames containsObject:((SeafFile *)obj).name];
+        }];
+        [newItems removeObjectsAtIndexes:indexes];
+        self.directory.items = newItems;
+    }
     
     for (NSString *localIdentifier in identifiers) {
         PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
@@ -1503,89 +1519,6 @@ enum {
     
     return [images copy];
 }
-
-- (void)browserAllPhotos
-{
-    MWPhotoBrowser *_mwPhotoBrowser = [[MWPhotoBrowser alloc] initWithDelegate:self];
-    _mwPhotoBrowser.displayActionButton = false;
-    _mwPhotoBrowser.displayNavArrows = true;
-    _mwPhotoBrowser.displaySelectionButtons = false;
-    _mwPhotoBrowser.alwaysShowControls = false;
-    _mwPhotoBrowser.zoomPhotosToFill = YES;
-    _mwPhotoBrowser.enableGrid = true;
-    _mwPhotoBrowser.startOnGrid = true;
-    _mwPhotoBrowser.enableSwipeToDismiss = false;
-    _mwPhotoBrowser.preLoadNumLeft = 0;
-    _mwPhotoBrowser.preLoadNumRight = 1;
-
-    self.inPhotoBrowser = true;
-
-    UINavigationController *nc = [[UINavigationController alloc] initWithRootViewController:_mwPhotoBrowser];
-    nc.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
-    nc.modalPresentationStyle = UIModalPresentationFullScreen;
-    [nc.navigationBar setTitleTextAttributes:@{NSForegroundColorAttributeName:[UIColor whiteColor]}];
-    [self presentViewController:nc animated:YES completion:nil];
-}
-
-- (void)savePhotosToAlbum
-{
-    [self checkPhotoLibraryAuth:^{
-        __weak typeof(self) weakSelf = self;
-        [self alertWithTitle:nil message:NSLocalizedString(@"Are you sure to save all photos to album?", @"Seafile") yes:^{
-            __strong typeof(weakSelf) self = weakSelf;
-            __weak typeof(self) weakSelf2 = self;
-            SeafDownloadCompletionBlock block = ^(SeafFile *file, NSError *error) {
-                __strong typeof(weakSelf2) self = weakSelf2;
-                if (error) {
-                    Warning("Failed to donwload file %@: %@", file.path, error);
-                } else {
-                    [file setFileDownloadedBlock:nil];
-                    [self performSelectorInBackground:@selector(saveImageToAlbum:) withObject:file];
-                }
-            };
-            for (id entry in self.allItems) {
-                if (![entry isKindOfClass:[SeafFile class]]) continue;
-                SeafFile *file = (SeafFile *)entry;
-                if (!file.isImageFile) continue;
-                [file loadCache];
-                NSString *path = file.cachePath;
-                if (!path) {
-                    file.state = SEAF_DENTRY_INIT;
-                    [file setFileDownloadedBlock:block];
-                    [SeafDataTaskManager.sharedObject addFileDownloadTask:file];
-                } else {
-                    block(file, nil);
-                }
-            }
-            [SVProgressHUD showInfoWithStatus:S_SAVING_PHOTOS_ALBUM];
-        } no:nil];
-    }];
-}
-
-- (void)saveImageToAlbum:(SeafFile *)file
-{
-    self.state = STATE_INIT;
-    UIImage *img = [UIImage imageWithContentsOfFile:file.cachePath];
-    dispatch_time_t timeout = dispatch_time(DISPATCH_TIME_NOW, 30 * NSEC_PER_SEC);
-    dispatch_semaphore_wait(SeafGlobal.sharedObject.saveAlbumSem, timeout);
-    Info("Write image file %@ %@ to album", file.name, file.cachePath);
-    UIImageWriteToSavedPhotosAlbum(img, self, @selector(thisImage:hasBeenSavedInPhotoAlbumWithError:usingContextInfo:), (void *)CFBridgingRetain(file));
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [SVProgressHUD showInfoWithStatus:NSLocalizedString(@"Save to album", @"Seafile")];
-    });
-}
-
-- (void)thisImage:(UIImage *)image hasBeenSavedInPhotoAlbumWithError:(NSError *)error usingContextInfo:(void *)ctxInfo
-{
-    SeafFile *file = (__bridge SeafFile *)ctxInfo;
-    Info("Finish write image file %@ %@ to album", file.name, file.cachePath);
-    dispatch_semaphore_signal(SeafGlobal.sharedObject.saveAlbumSem);
-    if (error) {
-        Warning("Failed to save file %@ to album: %@", file.name, error);
-        [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Failed to save %@ to album", @"Seafile"), file.name]];
-    }
-}
-
 
 #pragma mark - Share & Export
 
@@ -1681,17 +1614,18 @@ enum {
         deleteEntries:entries
         inDir:self.directory // Assuming self.directory is the correct context for the file being deleted.
                            // If file can be from any directory, 'inDir' might need to be more dynamic or passed in.
-        completion:^(BOOL success, NSError * _Nullable error) {
-            if (success) {
-                [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Delete success", @"Seafile")];
-                // It's important that masterVc reloads its content to reflect the deletion.
-                [self.directory loadContent:YES];
-            } else {
-                NSString *errMsg = error.localizedDescription ?: NSLocalizedString(@"Failed to delete files", @"Seafile");
-                [SVProgressHUD showErrorWithStatus:errMsg];
-            }
-            // Call the provided completion handler
-        }];
+        completion:^(BOOL success, NSError * _Nullable error)
+    {
+        if (success) {
+            [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Delete success", @"Seafile")];
+            // It's important that masterVc reloads its content to reflect the deletion.
+            [self.directory loadContent:YES];
+        } else {
+            NSString *errMsg = error.localizedDescription ?: NSLocalizedString(@"Failed to delete files", @"Seafile");
+            [SVProgressHUD showErrorWithStatus:errMsg];
+        }
+        // Call the provided completion handler
+    }];
 }
 
 - (void)deleteFile:(SeafFile *)file completion:(void (^)(BOOL success, NSError *error))completion
@@ -1708,7 +1642,7 @@ enum {
             if (success) {
                 [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Delete success", @"Seafile")];
                 // It's important that masterVc reloads its content to reflect the deletion.
-                [self.directory loadContent:YES]; 
+                [self.directory loadContent:YES];
             } else {
                 NSString *errMsg = error.localizedDescription ?: NSLocalizedString(@"Failed to delete files", @"Seafile");
                 [SVProgressHUD showErrorWithStatus:errMsg];
@@ -1791,10 +1725,6 @@ enum {
     } else if ([S_DOWNLOAD isEqualToString:title]) {
         SeafDir *dir = (SeafDir *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [self downloadDir:dir];
-    } else if ([S_PHOTOS_ALBUM isEqualToString:title]) {
-        [self savePhotosToAlbum];
-    } else if ([S_PHOTOS_BROWSER isEqualToString:title]) {
-        [self browserAllPhotos];
     } else if ([S_EDIT isEqualToString:title]) {
         [self editStart:nil];
     } else if ([S_DELETE isEqualToString:title]) {
@@ -1806,7 +1736,7 @@ enum {
     } else if ([S_RENAME isEqualToString:title]) {
         SeafBase *entry = (SeafBase *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [self renameEntry:entry];//rename
-    } else if ([S_UPLOAD_FILE isEqualToString:title]) {
+    } else if ([S_RE_UPLOAD_FILE isEqualToString:title]) {
         SeafFile *file = (SeafFile *)[self getDentrybyIndexPath:_selectedindex tableView:self.tableView];
         [file update:self];
         [self reloadIndex:_selectedindex];
@@ -1858,12 +1788,174 @@ enum {
             [self shareToWechat:file];
         }
     } else if ([S_MKLIB isEqualToString:title]) {
-        Debug(@"create lib");
+        Debug("create lib");
         [self popupMklibView];
     } else if ([S_UPLOAD isEqualToString:title]) {
         [self addPhotos:nil];
+    } else if ([S_UPLOAD_FILE isEqualToString:title]) {
+        [self selectFileToUpload];
     }
 
+}
+
+#pragma mark - File Picker
+- (void)selectFileToUpload {
+    UIDocumentPickerViewController *documentPicker;
+    if (@available(iOS 14.0, *)) {
+        UTType *type = [UTType typeWithIdentifier:@"public.item"];
+        documentPicker = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:@[type] asCopy:YES];
+    } else {
+        documentPicker = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[(NSString *)kUTTypeItem] inMode:UIDocumentPickerModeImport];
+    }
+    documentPicker.delegate = self;
+    documentPicker.allowsMultipleSelection = YES;
+    [self presentViewController:documentPicker animated:YES completion:nil];
+}
+
+- (void)startFileUploadsFromPaths:(NSArray *)paths overwrite:(BOOL)overwrite {
+    if (paths.count == 0) return;
+    
+    NSMutableArray *files = [[NSMutableArray alloc] init];
+    NSMutableSet *nameSet = overwrite ? [NSMutableSet new] : [self getExistedNameSet];
+
+    if (overwrite) {
+        NSMutableArray *newItems = [self.directory.items mutableCopy];
+        NSMutableSet *uploadingFilenames = [NSMutableSet set];
+        for (NSString *path in paths) {
+            [uploadingFilenames addObject:[path lastPathComponent]];
+        }
+        NSIndexSet *indexes = [newItems indexesOfObjectsPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
+            return [obj isKindOfClass:[SeafFile class]] && [uploadingFilenames containsObject:((SeafFile *)obj).name];
+        }];
+        [newItems removeObjectsAtIndexes:indexes];
+        self.directory.items = newItems;
+    }
+    
+    for (NSString *path in paths) {
+        NSString *filename = [path lastPathComponent];
+        NSString *finalPath = path;
+        
+        if (!overwrite) {
+            if ([nameSet containsObject:filename]) {
+                NSString *name = filename.stringByDeletingPathExtension;
+                NSString *ext = filename.pathExtension;
+                NSString *newFilename = [self getUniqueFilename:name ext:ext nameSet:nameSet];
+                NSString *newPath = [path.stringByDeletingLastPathComponent stringByAppendingPathComponent:newFilename];
+                [[NSFileManager defaultManager] moveItemAtPath:path toPath:newPath error:nil];
+                finalPath = newPath;
+            }
+        }
+        [nameSet addObject:[finalPath lastPathComponent]];
+        
+        SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:finalPath];
+        file.model.overwrite = overwrite;
+        file.delegate = self;
+        [files addObject:file];
+        [self.directory addUploadFile:file];
+    }
+    
+    [self reloadTable];
+    
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        [SeafDataTaskManager.sharedObject addUploadTasksInBatch:files forConnection:self.connection];
+    });
+}
+
+// Refactored to ensure uploadDir exists once, and only stopAccessing if started.
+- (void)uploadFilesAtURLs:(NSArray<NSURL *> *)urls {
+    if (urls.count == 0) return;
+
+    // Ensure the upload directory exists once before copying
+    NSString *uploadDir = [self.connection uniqueUploadDir];
+    if (![[NSFileManager defaultManager] fileExistsAtPath:uploadDir]) {
+        [[NSFileManager defaultManager] createDirectoryAtPath:uploadDir
+                                      withIntermediateDirectories:YES
+                                                       attributes:nil
+                                                            error:nil];
+    }
+
+    NSSet *nameSet = [self getExistedNameSet];
+    NSMutableArray *filesToUpload = [NSMutableArray new];
+    int duplicated = 0;
+    int copyFailedCount = 0;
+
+    for (NSURL *url in urls) {
+        NSString *fileName = [url lastPathComponent];
+        // NSString *uploadDir = [self.connection uniqueUploadDir];
+        NSString *destinationPath = [uploadDir stringByAppendingPathComponent:fileName];
+
+        if ([[NSFileManager defaultManager] fileExistsAtPath:destinationPath]) {
+            [[NSFileManager defaultManager] removeItemAtPath:destinationPath error:NULL];
+        }
+
+        // It's necessary to gain access to the security-scoped resource.
+        BOOL accessing = [url startAccessingSecurityScopedResource];
+        if (!accessing) {
+            Warning("Failed to start accessing security-scoped resource for URL: %@", url);
+        }
+
+        __block BOOL success = NO;
+        __block NSError *coordinationError = nil;
+        NSFileCoordinator *coordinator = [[NSFileCoordinator alloc] init];
+
+        [coordinator coordinateReadingItemAtURL:url options:NSFileCoordinatorReadingWithoutChanges error:&coordinationError byAccessor:^(NSURL *newURL) {
+            NSError *copyError;
+            if ([[NSFileManager defaultManager] copyItemAtURL:newURL toURL:[NSURL fileURLWithPath:destinationPath] error:&copyError]) {
+                success = YES;
+            } else {
+                Warning("Failed to copy file for upload: %@", copyError);
+            }
+        }];
+
+        if (coordinationError) {
+            Warning("File coordination error: %@", coordinationError);
+        }
+
+        if (!success) {
+            copyFailedCount++;
+        } else {
+            [filesToUpload addObject:destinationPath];
+            if ([nameSet containsObject:fileName]) {
+                duplicated++;
+            }
+        }
+        
+        // Only stop accessing the resource if it was started
+        if (accessing) {
+            [url stopAccessingSecurityScopedResource];
+        }
+    }
+
+    if (copyFailedCount > 0 && copyFailedCount == urls.count) {
+        [self alertWithTitle:NSLocalizedString(@"Failed to access selected file(s)", @"Seafile")];
+        return;
+    }
+
+    if (duplicated > 0) {
+        NSString *title = duplicated == 1 ? STR_12 : STR_13;
+        @weakify(self);
+        [self alertWithTitle:title message:nil yes:^{
+            @strongify(self);
+            [self startFileUploadsFromPaths:filesToUpload overwrite:true];
+        } no:^{
+            @strongify(self);
+            [self startFileUploadsFromPaths:filesToUpload overwrite:false];
+        }];
+    } else {
+        [self startFileUploadsFromPaths:filesToUpload overwrite:false];
+    }
+}
+
+#pragma mark - UIDocumentPickerDelegate
+- (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
+    [controller dismissViewControllerAnimated:YES completion:^{
+        [self uploadFilesAtURLs:urls];
+    }];
+}
+
+- (void)documentPickerWasCancelled:(UIDocumentPickerViewController *)controller {
+    Debug("Document picker was cancelled");
+    [controller dismissViewControllerAnimated:YES completion:nil];
 }
 
 
@@ -2023,7 +2115,7 @@ enum {
 
 - (void)updateCellDownloadStatus:(SeafCell *)cell file:(SeafFile *)sfile waiting:(BOOL)waiting
 {
-    BOOL fileHasCache = [sfile isSdocFile] ? NO : sfile.hasCache; //To prevent downloading sfile files, force it to have no cache. Force set statusView hidden.
+    BOOL fileHasCache = [sfile isWebOpenFile] ? NO : sfile.hasCache; //To prevent downloading sfile files, force it to have no cache. Force set statusView hidden.
     [self updateCellDownloadStatus:cell isDownloading:sfile.isDownloading waiting:waiting cached:fileHasCache];
 }
 
@@ -2217,7 +2309,7 @@ enum {
 #pragma mark - SeafDentryDelegate (Download callbacks)
 
 - (SeafPhoto *)getSeafPhoto:(id<SeafPreView>)photo {
-    if (!self.inPhotoBrowser || ![photo isImageFile])
+    if (![photo isImageFile])
         return nil;
     for (SeafPhoto *sphoto in self.photos) {
         if (sphoto.file == photo) {
@@ -2495,26 +2587,6 @@ enum {
         SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
         [appdelegate cycleTheGlobalMailComposer];
     }];
-}
-
-
-#pragma mark - MWPhotoBrowserDelegate
-
-- (NSUInteger)numberOfPhotosInPhotoBrowser:(MWPhotoBrowser *)photoBrowser {
-    if (!self.photos) return 0;
-    return self.photos.count;
-}
-
-- (id <MWPhoto>)photoBrowser:(MWPhotoBrowser *)photoBrowser photoAtIndex:(NSUInteger)index {
-    if (!self.photos || index >= self.photos.count) return nil; // Add safety check
-    return [self.photos objectAtIndex:index];
-}
-
-- (NSString *)photoBrowser:(MWPhotoBrowser *)photoBrowser titleForPhotoAtIndex:(NSUInteger)index
-{
-    if (!self.photos || index >= self.photos.count) return nil; // Add safety check
-    SeafPhoto *photo = [self.photos objectAtIndex:index];
-    return photo.file.name;
 }
 
 // Called when user scrolls to another photo
@@ -2971,37 +3043,71 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
     // Execute action based on button type
     switch (buttonView.tag) {
         case ToolButtonShare: {
+            NSMutableArray *titles = [NSMutableArray array];
+
+            // Show "Share File" as disabled if a directory is selected
+            BOOL containsDirectory = NO;
+            for (id item in selectedItems) {
+                if ([item isKindOfClass:[SeafDir class]]) {
+                    containsDirectory = YES;
+                    break;
+                }
+            }
+            if (containsDirectory) {
+                NSString *disabledTitle = [@"DISABLED:" stringByAppendingString:NSLocalizedString(@"Share file", @"Seafile")];
+                [titles addObject:disabledTitle];
+            } else {
+                [titles addObject:NSLocalizedString(@"Share file", @"Seafile")];
+            }
+            
+            // Only show "Copy share link to clipboard" for a single item, otherwise show it as disabled.
             if (selectedItems.count == 1) {
-                SeafBase *selectedItem = selectedItems.firstObject;
-                if ([selectedItem isKindOfClass:[SeafDir class]]) {
-                    self.state = STATE_SHARE_LINK;
+                [titles addObject:NSLocalizedString(@"Copy share link to clipboard", @"Seafile")];
+            } else if (selectedItems.count > 1) {
+                NSString *disabledTitle = [@"DISABLED:" stringByAppendingString:NSLocalizedString(@"Copy share link to clipboard", @"Seafile")];
+                [titles addObject:disabledTitle];
+            }
+
+            SeafActionSheet *actionSheet = [SeafActionSheet actionSheetWithTitles:titles];
+            actionSheet.targetVC = self;
+            [actionSheet setButtonPressedBlock:^(SeafActionSheet *sheet, NSIndexPath *indexPath){
+                [sheet dismissAnimated:YES];
+                
+                NSString *selectedTitle = titles[indexPath.row];
+                
+                if ([selectedTitle isEqualToString:NSLocalizedString(@"Share file", @"Seafile")]) {
+                    // This is the original logic for sharing files
+                    self.state = STATE_EXPORT;
                     [self editDone:nil]; // Exit edit mode here
+                    @weakify(self);
+                    [self downloadEntries:selectedItems completion:^(NSArray *array, NSString *errorStr) {
+                        @strongify(self);
+                        self.state = STATE_INIT;
+                        @weakify(self);
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            @strongify(self);
+                            if (errorStr) {
+                                [SVProgressHUD showErrorWithStatus:errorStr];
+                            } else {
+                                [SeafActionsManager exportByActivityView:array item:buttonView targerVC:self];
+                            }
+                        });
+                    }];
+                } else if ([selectedTitle isEqualToString:NSLocalizedString(@"Copy share link to clipboard", @"Seafile")]) {
+                    [self editDone:nil];
+                    // This logic now applies to a single file OR a single directory
+                    SeafBase *selectedItem = selectedItems.firstObject;
+                    self.state = STATE_SHARE_LINK;
                     if (!selectedItem.shareLink) {
                         [SVProgressHUD showWithStatus:NSLocalizedString(@"Generate share link ...", @"Seafile")];
                         [selectedItem generateShareLink:self];
                     } else {
                         [self generateSharelink:selectedItem WithResult:YES];
                     }
-                    break;
                 }
-            }
-            
-            self.state = STATE_EXPORT;
-            [self editDone:nil]; // Exit edit mode here
-            @weakify(self);
-            [self downloadEntries:selectedItems completion:^(NSArray *array, NSString *errorStr) {
-                @strongify(self);
-                self.state = STATE_INIT;
-                @weakify(self);
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    @strongify(self);
-                    if (errorStr) {
-                        [SVProgressHUD showErrorWithStatus:errorStr];
-                    } else {
-                        [SeafActionsManager exportByActivityView:array item:self.toolbarItems.firstObject targerVC:self];
-                    }
-                });
             }];
+
+            [actionSheet showFromView:buttonView];
             break;
         }
         case ToolButtonDownload: {

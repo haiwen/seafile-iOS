@@ -242,7 +242,7 @@
                     [Utils checkMakeDir:url.path.stringByDeletingLastPathComponent];
                     
                     BOOL ret = [Utils copyFile:file.exportURL to:url];
-                    completionHandler(ret ? nil : [NSError fileProvierErrorNoSuchItem]);
+                    completionHandler(ret ? nil : [NSError fileProvierErrorServerUnreachable]);
                 } @finally {
                     [self unlockAndRemoveFileLock:lock forIdentifier:identifier];
                 }
