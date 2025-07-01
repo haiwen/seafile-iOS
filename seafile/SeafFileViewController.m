@@ -1865,85 +1865,90 @@ enum {
 - (void)uploadFilesAtURLs:(NSArray<NSURL *> *)urls {
     if (urls.count == 0) return;
 
-    // Ensure the upload directory exists once before copying
-    NSString *uploadDir = [self.connection uniqueUploadDir];
-    if (![[NSFileManager defaultManager] fileExistsAtPath:uploadDir]) {
-        [[NSFileManager defaultManager] createDirectoryAtPath:uploadDir
-                                      withIntermediateDirectories:YES
-                                                       attributes:nil
-                                                            error:nil];
-    }
+    // Show a HUD to indicate preprocessing work
+    [SVProgressHUD showWithStatus:NSLocalizedString(@"Preparing files …", @"Seafile")];
 
-    NSSet *nameSet = [self getExistedNameSet];
-    NSMutableArray *filesToUpload = [NSMutableArray new];
-    int duplicated = 0;
-    int copyFailedCount = 0;
-
-    for (NSURL *url in urls) {
-        NSString *fileName = [url lastPathComponent];
-        // NSString *uploadDir = [self.connection uniqueUploadDir];
-        NSString *destinationPath = [uploadDir stringByAppendingPathComponent:fileName];
-
-        if ([[NSFileManager defaultManager] fileExistsAtPath:destinationPath]) {
-            [[NSFileManager defaultManager] removeItemAtPath:destinationPath error:NULL];
+    @weakify(self);
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+        // Ensure the upload directory exists before copying
+        NSString *uploadDir = [self.connection uniqueUploadDir];
+        if (![[NSFileManager defaultManager] fileExistsAtPath:uploadDir]) {
+            [[NSFileManager defaultManager] createDirectoryAtPath:uploadDir
+                                          withIntermediateDirectories:YES
+                                                           attributes:nil
+                                                                error:nil];
         }
 
-        // It's necessary to gain access to the security-scoped resource.
-        BOOL accessing = [url startAccessingSecurityScopedResource];
-        if (!accessing) {
-            Warning("Failed to start accessing security-scoped resource for URL: %@", url);
-        }
+        NSSet *nameSet = [self getExistedNameSet];
+        NSMutableArray *filesToUpload = [NSMutableArray array];
+        int duplicated = 0;
+        int copyFailedCount = 0;
 
-        __block BOOL success = NO;
-        __block NSError *coordinationError = nil;
-        NSFileCoordinator *coordinator = [[NSFileCoordinator alloc] init];
+        for (NSURL *url in urls) {
+            NSString *fileName = url.lastPathComponent;
+            NSString *destinationPath = [uploadDir stringByAppendingPathComponent:fileName];
 
-        [coordinator coordinateReadingItemAtURL:url options:NSFileCoordinatorReadingWithoutChanges error:&coordinationError byAccessor:^(NSURL *newURL) {
-            NSError *copyError;
-            if ([[NSFileManager defaultManager] copyItemAtURL:newURL toURL:[NSURL fileURLWithPath:destinationPath] error:&copyError]) {
-                success = YES;
+            // Remove any existing file to avoid copy failure
+            if ([[NSFileManager defaultManager] fileExistsAtPath:destinationPath]) {
+                [[NSFileManager defaultManager] removeItemAtPath:destinationPath error:NULL];
+            }
+
+            BOOL accessing = [url startAccessingSecurityScopedResource];
+            __block BOOL success = NO;
+
+            NSFileCoordinator *coordinator = [[NSFileCoordinator alloc] init];
+            [coordinator coordinateReadingItemAtURL:url
+                                            options:NSFileCoordinatorReadingWithoutChanges
+                                              error:nil
+                                         byAccessor:^(NSURL *newURL) {
+                NSError *copyError = nil;
+                success = [[NSFileManager defaultManager] copyItemAtURL:newURL
+                                                                    toURL:[NSURL fileURLWithPath:destinationPath]
+                                                                    error:&copyError];
+                if (!success) {
+                    Warning("Failed to copy file for upload: %@", copyError);
+                }
+            }];
+
+            if (!success) {
+                copyFailedCount++;
             } else {
-                Warning("Failed to copy file for upload: %@", copyError);
+                [filesToUpload addObject:destinationPath];
+                if ([nameSet containsObject:fileName]) {
+                    duplicated++;
+                }
             }
-        }];
 
-        if (coordinationError) {
-            Warning("File coordination error: %@", coordinationError);
-        }
-
-        if (!success) {
-            copyFailedCount++;
-        } else {
-            [filesToUpload addObject:destinationPath];
-            if ([nameSet containsObject:fileName]) {
-                duplicated++;
+            if (accessing) {
+                [url stopAccessingSecurityScopedResource];
             }
         }
-        
-        // Only stop accessing the resource if it was started
-        if (accessing) {
-            [url stopAccessingSecurityScopedResource];
-        }
-    }
 
-    if (copyFailedCount > 0 && copyFailedCount == urls.count) {
-        [self alertWithTitle:NSLocalizedString(@"Failed to access selected file(s)", @"Seafile")];
-        return;
-    }
+        // Switch back to main thread for UI updates
+        dispatch_async(dispatch_get_main_queue(), ^{
+            @strongify(self);
+            [SVProgressHUD dismiss];
 
-    if (duplicated > 0) {
-        NSString *title = duplicated == 1 ? STR_12 : STR_13;
-        @weakify(self);
-        [self alertWithTitle:title message:nil yes:^{
-            @strongify(self);
-            [self startFileUploadsFromPaths:filesToUpload overwrite:true];
-        } no:^{
-            @strongify(self);
-            [self startFileUploadsFromPaths:filesToUpload overwrite:false];
-        }];
-    } else {
-        [self startFileUploadsFromPaths:filesToUpload overwrite:false];
-    }
+            if (copyFailedCount > 0 && copyFailedCount == urls.count) {
+                [self alertWithTitle:NSLocalizedString(@"Failed to access selected file(s)", @"Seafile")];
+                return;
+            }
+
+            if (duplicated > 0) {
+                NSString *title = duplicated == 1 ? STR_12 : STR_13;
+                @weakify(self);
+                [self alertWithTitle:title message:nil yes:^{
+                    @strongify(self);
+                    [self startFileUploadsFromPaths:filesToUpload overwrite:YES];
+                } no:^{
+                    @strongify(self);
+                    [self startFileUploadsFromPaths:filesToUpload overwrite:NO];
+                }];
+            } else {
+                [self startFileUploadsFromPaths:filesToUpload overwrite:NO];
+            }
+        });
+    });
 }
 
 #pragma mark - UIDocumentPickerDelegate
