@@ -199,11 +199,11 @@ enum SHARE_STATUS {
                 case PREVIEW_TEXT:
                 case PREVIEW_PHOTO:
                 case PREVIEW_QL_MODAL: // Assume toolbar context is relevant even if QL is modal
+                case PREVIEW_FAILED:
                     shouldShowToolbar = YES;
                     break;
-                // Don't show for downloading, failed, or none states
+                // Don't show for downloading, or none states
                 case PREVIEW_DOWNLOADING:
-                case PREVIEW_FAILED:
                 case PREVIEW_NONE:
                 default:
                     shouldShowToolbar = NO;

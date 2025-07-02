@@ -977,7 +977,7 @@ enum {
     [super setEditing:editing animated:animated];
     
     if (editing) {
-        if (![self checkNetworkStatus]) return;
+        [self checkNetworkStatus];
         // Save original title
         self.originalTitle = self.title;
         
@@ -2933,66 +2933,82 @@ enum {
     if (!self.customToolView) return;
     
     CGFloat screenWidth = self.customToolView.bounds.size.width;
-    // Fixed button width, button height, top padding and spacing between rows
-    CGFloat fixedButtonWidth = 80.0;
+    // Desired fixed width for button and minimal horizontal spacing
+    CGFloat desiredButtonWidth = 80.0;
+    CGFloat minSpacing = 10.0; // minimal spacing to the edges and between buttons
+
+    // First row configuration
+    NSInteger firstRowButtonCount = 5;
+    // Calculate button width dynamically to guarantee minimal spacing
+    CGFloat maxButtonsTotalWidth = screenWidth - minSpacing * (firstRowButtonCount + 1);
+    CGFloat buttonWidth = desiredButtonWidth;
+    if (firstRowButtonCount * desiredButtonWidth > maxButtonsTotalWidth) {
+        // Need to shrink button width so that everything fits with min spacing
+        buttonWidth = maxButtonsTotalWidth / firstRowButtonCount;
+    }
+    // Re-compute actual spacing with the (possibly) updated buttonWidth
+    CGFloat firstRowSpacing = (screenWidth - buttonWidth * firstRowButtonCount) / (firstRowButtonCount + 1);
+    firstRowSpacing = MAX(firstRowSpacing, minSpacing);
+
+    // Layout parameters
     CGFloat buttonHeight = kCustomTabToolButtonHeight;
     CGFloat topPadding = kCustomTabToolWithTopPadding;
     CGFloat verticalSpacing = 25.0;
-    
-    // First row has 5 buttons, second row has 2 buttons
-    NSInteger firstRowButtonCount = 5;
-    NSInteger secondRowButtonCount = 2;
-    
-    // Calculate left and right spacing to ensure even distribution of buttons in the first row
-    CGFloat firstRowSpacing = (screenWidth - (fixedButtonWidth * firstRowButtonCount)) / (firstRowButtonCount + 1);
-    CGFloat firstRowTopPosition = topPadding;
-    CGFloat secondRowTopPosition = topPadding + buttonHeight + verticalSpacing;
-    
-    // Iterate through customToolView's subviews and layout based on tag values
+    CGFloat firstRowTop = topPadding;
+    CGFloat secondRowTop = topPadding + buttonHeight + verticalSpacing;
+
+    // Layout each sub button view
     for (UIView *subview in self.customToolView.subviews) {
-        if (subview.tag >= 1001 && subview.tag < 1001 + firstRowButtonCount) {
-            // First row buttons: tags 1001-1005
-            NSInteger index = subview.tag - 1001;
-            CGFloat xPosition = firstRowSpacing + index * (fixedButtonWidth + firstRowSpacing);
-            subview.frame = CGRectMake(xPosition, firstRowTopPosition, fixedButtonWidth, buttonHeight);
-        } else if (subview.tag >= 1001 + firstRowButtonCount && subview.tag < 1001 + firstRowButtonCount + secondRowButtonCount) {
-            // Second row buttons: tags 1006-1007, arranged according to desiredIndexes (here using @[@0, @1], aligned with first two buttons of first row)
-            NSArray *desiredIndexes = @[@0, @1];
-            NSInteger index = subview.tag - (1001 + firstRowButtonCount); // 0 or 1
-            CGFloat xPosition = firstRowSpacing + ([desiredIndexes[index] integerValue]) * (fixedButtonWidth + firstRowSpacing);
-            subview.frame = CGRectMake(xPosition, secondRowTopPosition, fixedButtonWidth, buttonHeight);
+        NSInteger tag = subview.tag;
+        if (tag >= 1001 && tag < 1001 + firstRowButtonCount) {
+            NSInteger index = tag - 1001;
+            CGFloat x = firstRowSpacing + index * (buttonWidth + firstRowSpacing);
+            subview.frame = CGRectMake(x, firstRowTop, buttonWidth, buttonHeight);
+        } else if (tag >= 1001 + firstRowButtonCount && tag < 1001 + firstRowButtonCount + 2) {
+            // Second row (2 buttons) aligned to the first two columns of first row
+            NSInteger index = tag - (1001 + firstRowButtonCount); // 0 or 1
+            CGFloat x = firstRowSpacing + index * (buttonWidth + firstRowSpacing);
+            subview.frame = CGRectMake(x, secondRowTop, buttonWidth, buttonHeight);
+        }
+        // ---- Relayout internal icon & label to match new button width ----
+        UIImageView *iconView = [subview viewWithTag:100];
+        UILabel *titleLabel = [subview viewWithTag:101];
+        if (iconView && titleLabel) {
+            CGFloat iconSide = 24.0;
+            iconView.frame = CGRectMake((buttonWidth - iconSide) / 2.0, 0, iconSide, iconSide);
+            titleLabel.frame = CGRectMake(0, 28, buttonWidth, 14);
         }
     }
 }
-// Create individual button view
+
+// Update createTabButtonWithTitle to enable dynamic font sizing by setting adjustsFontSizeToFitWidth
 - (UIView *)createTabButtonWithTitle:(NSString *)title iconName:(NSString *)iconName width:(CGFloat)width tag:(NSInteger)tag {
     UIView *buttonView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, width, 40)];
     buttonView.tag = tag;
     
-    // Create icon - centered at top
+    // Icon image view
     UIImageView *iconView = [[UIImageView alloc] initWithFrame:CGRectMake((width - 24) / 2, 0, 24, 24)];
     iconView.tag = 100;
-    
     UIImage *icon = [UIImage imageNamed:iconName];
     if (icon) {
         UIImage *grayIcon = [icon imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
         iconView.image = grayIcon;
         iconView.tintColor = BOTTOM_TOOL_VIEW_DISABLE_COLOR;
     }
-    
     [buttonView addSubview:iconView];
     
-    // Create title label
+    // Title label
     UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 28, width, 14)];
     titleLabel.tag = 101;
     titleLabel.text = title;
     titleLabel.textAlignment = NSTextAlignmentCenter;
     titleLabel.font = [UIFont systemFontOfSize:12];
     titleLabel.textColor = BOTTOM_TOOL_VIEW_DISABLE_COLOR;
-    
+    titleLabel.adjustsFontSizeToFitWidth = YES;
+    titleLabel.minimumScaleFactor = 0.7;
     [buttonView addSubview:titleLabel];
     
-    // Add tap gesture
+    // Gesture recognizer
     UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleToolButtonTap:)];
     [buttonView addGestureRecognizer:tapGesture];
     
@@ -3369,6 +3385,17 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
     UIGraphicsEndImageContext();
     
     return image;
+}
+
+- (void)viewWillDisappear:(BOOL)animated {
+    [super viewWillDisappear:animated];
+    // On iPad, the master list (SeafFileViewController) can be hidden when the user focuses on the detail view.
+    // If we are in editing mode (custom bottom toolbar is visible), make sure we exit editing mode so the toolbar
+    // is dismissed together with the view.
+    if (IsIpad() && self.editing) {
+        // This will internally call `dismissCustomTabTool:` and restore insets.
+        [self editDone:nil];
+    }
 }
 
 @end
