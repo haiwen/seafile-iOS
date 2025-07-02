@@ -161,7 +161,7 @@ enum SHARE_STATUS {
 
     } else if (self.preViewItem.previewItemURL) {
         _state = PREVIEW_QL_MODAL; // Default state
-        if ([self.preViewItem.mime isEqualToString:@"image/svg+xml"] || [self.preViewItem.mime isEqualToString:@"application/sdoc"]) {
+        if ([self.preViewItem.mime isEqualToString:@"image/svg+xml"] || [self.preViewItem.mime isEqualToString:@"application/sdoc"] || [self.preViewItem.mime isEqualToString:@"application/x-exdraw"] || [self.preViewItem.mime isEqualToString:@"application/x-draw"]) {
             _state = PREVIEW_WEBVIEW;
         } else if([self.preViewItem.mime isEqualToString:@"text/x-markdown"] || [self.preViewItem.mime isEqualToString:@"text/x-seafile"]) {
             _state = PREVIEW_WEBVIEW_JS;
@@ -199,11 +199,11 @@ enum SHARE_STATUS {
                 case PREVIEW_TEXT:
                 case PREVIEW_PHOTO:
                 case PREVIEW_QL_MODAL: // Assume toolbar context is relevant even if QL is modal
+                case PREVIEW_FAILED:
                     shouldShowToolbar = YES;
                     break;
-                // Don't show for downloading, failed, or none states
+                // Don't show for downloading, or none states
                 case PREVIEW_DOWNLOADING:
-                case PREVIEW_FAILED:
                 case PREVIEW_NONE:
                 default:
                     shouldShowToolbar = NO;
@@ -294,10 +294,10 @@ enum SHARE_STATUS {
             self.webView.frame = r;
             if ([self.preViewItem isKindOfClass:[SeafFile class]]) {
                 SeafFile *sFile = (SeafFile *)self.preViewItem;
-                if ([sFile isSdocFile]) {
-                    NSString *sdocURLString = [sFile getSdocWebViewURLString];
+                if ([sFile isWebOpenFile]) {
+                    NSString *webViewURLString = [sFile getWebViewURLString];
 
-                    NSURLRequest *urlRequest = [sFile.connection buildRequest:sdocURLString method:@"GET" form:nil];
+                    NSURLRequest *urlRequest = [sFile.connection buildRequest:webViewURLString method:@"GET" form:nil];
                     [self.webView loadRequest:urlRequest];
                 } else {
                     [self.webView loadFileURL:self.preViewItem.previewItemURL allowingReadAccessToURL:self.preViewItem.previewItemURL];
@@ -804,7 +804,7 @@ enum SHARE_STATUS {
 # pragma - WKWebViewDelegate
 - (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation {
     SeafFile *sFile = (SeafFile *)self.preViewItem;
-    if (![sFile isSdocFile]) {
+    if (![sFile isWebOpenFile]) {
         if (self.preViewItem) {
             NSString *js = [NSString stringWithFormat:@"setContent(\"%@\");", [self.preViewItem.strContent stringEscapedForJavasacript]];// Prepare JavaScript for setting content
             [self.webView evaluateJavaScript:js completionHandler:nil];// Evaluate JavaScript
@@ -814,18 +814,18 @@ enum SHARE_STATUS {
 
 - (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler {
     SeafFile *sFile = (SeafFile *)self.preViewItem;
-    if ([sFile isSdocFile]) {
+    if ([sFile isWebOpenFile]) {
         NSURL *originalURL = navigationAction.request.URL;
         Debug(@"Request URL: %@", navigationAction.request.URL);
         if ([originalURL.absoluteString containsString:@"login/?next"] && ![originalURL.absoluteString containsString:@"mobile-login/?next"]) {
             // Cancel current loading first
             decisionHandler(WKNavigationActionPolicyCancel);
             
-            NSString *sdocURLString = [sFile getSdocWebViewURLString];
+            NSString *webViewURLString = [sFile getWebViewURLString];
             
             NSString *mobileLoginURLString = [NSString stringWithFormat:@"%@/mobile-login/?next=%@",
                                               sFile.connection.address,
-                                              sdocURLString];
+                                              webViewURLString];
             NSURLRequest *urlRequest = [sFile.connection buildRequest:mobileLoginURLString method:@"GET" form:nil];
             
             [webView loadRequest:urlRequest];
@@ -864,12 +864,13 @@ enum SHARE_STATUS {
 #pragma -mark QLPreviewControllerDelegate
 
 - (QLPreviewItemEditingMode)previewController:(QLPreviewController *)controller editingModeForPreviewItem:(id<QLPreviewItem>)previewItem  API_AVAILABLE(ios(13.0)){
-    SeafFile *file = (SeafFile *)previewItem;
-    if ([file.mime isEqualToString:@"application/pdf"]) {
-        return QLPreviewItemEditingModeCreateCopy;// Allow creating a copy for PDF files
-    } else {
-        return QLPreviewItemEditingModeDisabled;// Disable editing for other files
+    if ([previewItem isKindOfClass:[SeafFile class]]) {
+        SeafFile *file = (SeafFile *)previewItem;
+        if ([file.mime isEqualToString:@"application/pdf"]) {
+            return QLPreviewItemEditingModeCreateCopy;// Allow creating a copy for PDF files
+        }
     }
+    return QLPreviewItemEditingModeDisabled;
 }
 
 - (void)previewController:(QLPreviewController *)controller didUpdateContentsOfPreviewItem:(id<QLPreviewItem>)previewItem {

@@ -142,6 +142,8 @@
 	<string>application/msword</string>
 	<key>dot</key>
 	<string>application/x-dot</string>
+	<key>draw</key>
+	<string>application/x-draw</string>
 	<key>dvi</key>
 	<string>application/x-dvi</string>
 	<key>dwf</key>
@@ -174,6 +176,8 @@
 	<string>application/x-earthtime</string>
 	<key>etx</key>
 	<string>text/x-setext</string>
+	<key>exdraw</key>
+	<string>application/x-exdraw</string>
 	<key>evm</key>
 	<string>x-lml/x-evm</string>
 	<key>evy</key>

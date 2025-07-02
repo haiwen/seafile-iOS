@@ -267,8 +267,8 @@
     return [Utils isVideoFile:self.name];
 }
 
-- (BOOL)isSdocFile {
-    return [self.mime isEqualToString:@"application/sdoc"];
+- (BOOL)isWebOpenFile {
+    return [self.mime isEqualToString:@"application/sdoc"] || [self.mime isEqualToString:@"application/x-exdraw"] || [self.mime isEqualToString:@"application/x-draw"];
 }
 
 #pragma mark - Icon & Thumbnail
@@ -714,9 +714,9 @@
     self.model.retryCount = retryCount;
 }
 
-- (NSString *)getSdocWebViewURLString
+- (NSString *)getWebViewURLString
 {
-    if (![self isSdocFile]) return nil;
+    if (![self isWebOpenFile]) return nil;
     
     NSString *encodedPath = [self.path stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLPathAllowedCharacterSet]];
     NSString *urlString = [NSString stringWithFormat:@"%@/lib/%@/file%@",
