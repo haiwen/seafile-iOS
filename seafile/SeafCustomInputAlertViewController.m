@@ -17,6 +17,7 @@
 
 // For keyboard-aware animation
 @property (nonatomic, strong) NSLayoutConstraint *alertViewBottomConstraint;
+@property (nonatomic, strong) NSLayoutConstraint *alertViewCenterYConstraint; // Center Y constraint for iPad keyboard adjustments
 @property (nonatomic, assign) BOOL isBeingDismissedProgrammatically;
 @property (nonatomic, strong) id finalCompletionHandler; // To store either confirm or cancel block
 
@@ -155,12 +156,15 @@ static CGFloat const kInitialOffScreenBottomConstant = 350.0; // Adjust if alert
     
     if (IsIpad()) {
         self.view.backgroundColor = [UIColor clearColor]; // The form sheet content is alertView
-        self.preferredContentSize = CGSizeMake(450, 240); // Set preferredContentSize BEFORE setupViews/setupConstraints
+        self.preferredContentSize = CGSizeMake(450, 800); // Increase default height to avoid clipping
 
         [self setupViews]; // alertView needs to be created
         [self setupConstraints]; // alertView needs to be constrained
         self.alertView.alpha = 1.0; // Visible by default for form sheet
         // Estimate height: title(20) + space(20) + field(40) + space(25) + button(44) + padding(30+30) = 209. Let's use 240.
+
+        // Register for keyboard notifications so we can move the alert if it would be covered.
+        [self registerForKeyboardNotifications];
     } else {
         [self setupViews];
         [self setupConstraints]; // Constraints are set up here
@@ -189,15 +193,11 @@ static CGFloat const kInitialOffScreenBottomConstant = 350.0; // Adjust if alert
 
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
-    if (!IsIpad()) {
-        [self unregisterForKeyboardNotifications];
-    }
+    [self unregisterForKeyboardNotifications];
 }
 
 - (void)dealloc {
-    if (!IsIpad()) {
-        [self unregisterForKeyboardNotifications]; // Just in case
-    }
+    [self unregisterForKeyboardNotifications]; // Ensure removed for all device types
 }
 
 - (void)setupViews {
@@ -222,13 +222,13 @@ static CGFloat const kInitialOffScreenBottomConstant = 350.0; // Adjust if alert
 - (void)setupConstraints {
     // alertView constraints (leading/trailing for full width, bottom constraint for vertical positioning)
     if (IsIpad()) {
-        // Center alertView and set its size based on preferredContentSize
+        // Keep a reference to the center-Y constraint so we can move the alert when the keyboard shows up.
+        self.alertViewCenterYConstraint = [self.alertView.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor];
         [NSLayoutConstraint activateConstraints:@[
             [self.alertView.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
-            [self.alertView.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor],
-            [self.alertView.widthAnchor constraintEqualToConstant:self.preferredContentSize.width],
-            [self.alertView.heightAnchor constraintEqualToConstant:self.preferredContentSize.height]
-        ]];
+            self.alertViewCenterYConstraint,
+            [self.alertView.widthAnchor constraintEqualToConstant:self.preferredContentSize.width]
+        ]]; // Do not fix height so it can expand with content
     } else {
         self.alertViewBottomConstraint = [self.alertView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor constant:kInitialOffScreenBottomConstant];
         [NSLayoutConstraint activateConstraints:@[ // Full width, bottom constraint set above for iPhone
@@ -292,55 +292,70 @@ static CGFloat const kInitialOffScreenBottomConstant = 350.0; // Adjust if alert
 }
 
 - (void)keyboardWillShow:(NSNotification *)notification {
-    if (IsIpad()) return; // Only for iPhone
     NSDictionary *userInfo = notification.userInfo;
-    CGRect keyboardFrame = [userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
+    CGRect keyboardFrameInScreen = [userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
+    CGRect keyboardFrame = [self.view convertRect:keyboardFrameInScreen fromView:nil];
     NSTimeInterval animationDuration = [userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue];
-    UIViewAnimationCurve animationCurve = [userInfo[UIKeyboardAnimationCurveUserInfoKey] unsignedIntegerValue];
-    
-    self.alertViewBottomConstraint.constant = -keyboardFrame.size.height;
-    
-    [UIView animateWithDuration:animationDuration
-                          delay:0.0
-                        options:(animationCurve << 16) | UIViewAnimationOptionBeginFromCurrentState
-                     animations:^{
-                         self.alertView.alpha = 1.0;
-                         self.backgroundDimmingView.alpha = 1.0; 
-                         [self.view layoutIfNeeded];
-                     } completion:nil];
+    UIViewAnimationOptions options = (([userInfo[UIKeyboardAnimationCurveUserInfoKey] unsignedIntegerValue]) << 16) | UIViewAnimationOptionBeginFromCurrentState;
+
+    if (IsIpad()) {
+        // Move the alert view up by 30% of the keyboard height so it stays visible
+        CGFloat keyboardHeight = keyboardFrame.size.height;
+        self.alertViewCenterYConstraint.constant = -keyboardHeight * 0.3; // leave smaller gap
+
+        [UIView animateWithDuration:animationDuration delay:0.0 options:options animations:^{
+            [self.view layoutIfNeeded];
+        } completion:nil];
+    } else {
+        self.alertViewBottomConstraint.constant = -keyboardFrame.size.height;
+        [UIView animateWithDuration:animationDuration
+                              delay:0.0
+                            options:options
+                         animations:^{
+                             self.alertView.alpha = 1.0;
+                             self.backgroundDimmingView.alpha = 1.0;
+                             [self.view layoutIfNeeded];
+                         } completion:nil];
+    }
 }
 
 - (void)keyboardWillHide:(NSNotification *)notification {
-    if (IsIpad()) return; // Only for iPhone
     NSDictionary *userInfo = notification.userInfo;
     NSTimeInterval animationDuration = [userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue];
-    UIViewAnimationCurve animationCurve = [userInfo[UIKeyboardAnimationCurveUserInfoKey] unsignedIntegerValue];
-    
-    self.alertViewBottomConstraint.constant = kInitialOffScreenBottomConstant;
-    
-    [UIView animateWithDuration:animationDuration
-                          delay:0.0
-                        options:(animationCurve << 16) | UIViewAnimationOptionBeginFromCurrentState
-                     animations:^{
-                         self.alertView.alpha = 0.0;
-                         self.backgroundDimmingView.alpha = 0.0;
-                         [self.view layoutIfNeeded];
-                     } completion:^(BOOL finished) {
-                         if (self.isBeingDismissedProgrammatically) {
-                             [self dismissViewControllerAnimated:NO completion:^{
-                                 if (self.finalCompletionHandler) {
-                                     // Check which handler it is (void vs void(^)(NSString*))
-                                     if (self.cancelHandler == self.finalCompletionHandler && [self.finalCompletionHandler respondsToSelector:@selector(description)]) { // crude check for block type
-                                         ((void(^)(void))self.finalCompletionHandler)();
-                                     } else if (self.completionHandler == self.finalCompletionHandler && [self.finalCompletionHandler respondsToSelector:@selector(description)]) {
-                                         ((void(^)(NSString *))self.finalCompletionHandler)(self.inputTextField.text);
+    UIViewAnimationOptions options = (([userInfo[UIKeyboardAnimationCurveUserInfoKey] unsignedIntegerValue]) << 16) | UIViewAnimationOptionBeginFromCurrentState;
+
+    if (IsIpad()) {
+        self.alertViewCenterYConstraint.constant = 0; // Reset back to center
+        [UIView animateWithDuration:animationDuration delay:0.0 options:options animations:^{
+            [self.view layoutIfNeeded];
+        } completion:nil];
+    } else {
+        self.alertViewBottomConstraint.constant = kInitialOffScreenBottomConstant;
+
+        [UIView animateWithDuration:animationDuration
+                              delay:0.0
+                            options:options
+                         animations:^{
+                             self.alertView.alpha = 0.0;
+                             self.backgroundDimmingView.alpha = 0.0;
+                             [self.view layoutIfNeeded];
+                         } completion:^(BOOL finished) {
+                             if (self.isBeingDismissedProgrammatically) {
+                                 [self dismissViewControllerAnimated:NO completion:^{
+                                     if (self.finalCompletionHandler) {
+                                         // Determine which handler to call
+                                         if (self.cancelHandler == self.finalCompletionHandler) {
+                                             ((void(^)(void))self.finalCompletionHandler)();
+                                         } else if (self.completionHandler == self.finalCompletionHandler) {
+                                             ((void(^)(NSString *))self.finalCompletionHandler)(self.inputTextField.text);
+                                         }
                                      }
-                                 }
-                                 self.isBeingDismissedProgrammatically = NO;
-                                 self.finalCompletionHandler = nil;
-                             }];
-                         }
-                     }];
+                                     self.isBeingDismissedProgrammatically = NO;
+                                     self.finalCompletionHandler = nil;
+                                 }];
+                             }
+                         }];
+    }
 }
 
 #pragma mark - Actions
