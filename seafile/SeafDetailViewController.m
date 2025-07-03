@@ -650,17 +650,27 @@ enum SHARE_STATUS {
 - (IBAction)cancelDownload:(id)sender
 {
     id<SeafPreView> item = self.preViewItem;
-    [self setPreViewItem:nil master:nil]; // Clear the preview item and master
-//    [item cancelAnyLoading]; // Cancel any ongoing loading
-    // TODO: Only cancel the current account, not all accounts
-    for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
-        if (conn.accountIdentifier) {
-            SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:conn];
-            [accountQueue removeFileDownloadTask:item];
+    if (!item) return;
+
+    // If the preview item is a SeafFile, use its built-in cancel logic which also
+    // removes the persisted task from storage, ensuring the download will **not**
+    // be restarted on the next app launch.
+    if ([item isKindOfClass:[SeafFile class]]) {
+        [(SeafFile *)item cancelDownload];
+    } else {
+        // Fallback for legacy preview item types that are not SeafFile.
+        for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+            if (conn.accountIdentifier) {
+                SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:conn];
+                [accountQueue removeFileDownloadTask:item];
+            }
         }
     }
+
+    // Clear UI state after cancellation.
+    [self setPreViewItem:nil master:nil];
     if (!IsIpad())
-        [self goBack:nil]; // Go back if not iPad
+        [self goBack:nil];
 }
 
 - (void)showAlertWithAction:(NSArray *)arr fromBarItem:(UIBarButtonItem *)item withTitle:(NSString *)title
