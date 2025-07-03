@@ -477,6 +477,9 @@ enum SHARE_STATUS {
                                       toolbarHeight + safeAreaBottom); // Include safe area in height
         self.toolbarView.frame = toolbarFrame;
         
+        // Recalculate buttons layout for new width
+        [self layoutToolbarButtons];
+        
         // Ensure toolbar always stays on top layer
         [self.view bringSubviewToFront:self.toolbarView];
     }
@@ -1088,8 +1091,9 @@ enum SHARE_STATUS {
             // Set icon to gray
             UIImage *grayImage = [self imageWithTintColor:[UIColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1.0] image:resizedImage];
             [btn setImage:grayImage forState:UIControlStateNormal];
-            // Slightly adjust icon position in button
-            btn.imageEdgeInsets = UIEdgeInsetsMake(3.0, 0, -3.0, 0); // Adjust margins to fit smaller height
+            // Vertically center icon inside the button
+            CGFloat verticalOffset = (toolbarH - iconSize)/2.0;
+            btn.imageEdgeInsets = UIEdgeInsetsMake(verticalOffset, 0, verticalOffset, 0);
         }
         
         // Set button label and event
@@ -1097,6 +1101,9 @@ enum SHARE_STATUS {
         [btn addTarget:self action:@selector(toolbarButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
         [self.toolbarView addSubview:btn];
     }
+    
+    // Initial layout calculation
+    [self layoutToolbarButtons];
     
     // Ensure toolbar stays on top layer
     [self.view bringSubviewToFront:self.toolbarView];
@@ -1177,9 +1184,45 @@ enum SHARE_STATUS {
                     }
                     
                     [btn setImage:finalImage forState:UIControlStateNormal];
+                    // Vertically center icon again in case of state change
+                    CGFloat toolbarH = 36.0f;
+                    CGFloat verticalOffset = (toolbarH - iconSize)/2.0f;
+                    btn.imageEdgeInsets = UIEdgeInsetsMake(verticalOffset, 0, verticalOffset, 0);
                 }
             }
         }
+    }
+}
+
+// New helper method: layout toolbar buttons to fit current width
+- (void)layoutToolbarButtons {
+    if (!self.toolbarView) return;
+    // Determine the design height we used when creating buttons
+    CGFloat toolbarHeight = 36.0f; // Must be in sync with setupToolbar
+
+    // Safe-area bottom is already included in toolbarView height, but the buttons themselves
+    // should stay in the top part (outside the safe-area region).
+    // Therefore, keep button height equal to toolbarHeight, starting at y = 0.
+    NSUInteger buttonCount = 0;
+    for (UIView *v in self.toolbarView.subviews) {
+        if ([v isKindOfClass:[UIButton class]]) buttonCount += 1;
+    }
+    if (buttonCount == 0) return;
+
+    CGFloat totalWidth = self.toolbarView.bounds.size.width;
+    CGFloat itemWidth  = totalWidth / buttonCount;
+
+    // Re-position each button according to its tag order (tags were assigned 0,1,2 when created).
+    for (UIView *v in self.toolbarView.subviews) {
+        if (![v isKindOfClass:[UIButton class]]) continue;
+        UIButton *btn = (UIButton *)v;
+        NSInteger index = btn.tag; // 0,1,2
+        CGRect frame = CGRectMake(index * itemWidth, 0, itemWidth, toolbarHeight);
+        btn.frame = frame;
+        // Ensure icon remains vertically centered after layout change
+        CGFloat iconSize = 20.0f;
+        CGFloat verticalOffset = (toolbarHeight - iconSize)/2.0f;
+        btn.imageEdgeInsets = UIEdgeInsetsMake(verticalOffset, 0, verticalOffset, 0);
     }
 }
 

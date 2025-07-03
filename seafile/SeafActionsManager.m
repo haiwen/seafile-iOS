@@ -6,6 +6,7 @@
 //  Copyright © 2018 Seafile. All rights reserved.
 //
 
+#import <UIKit/UIKit.h>
 #import "SeafActionsManager.h"
 #import "SeafRepos.h"
 #import "SeafFile.h"
@@ -13,6 +14,7 @@
 #import "SeafActionSheet.h"
 #import "Debug.h"
 #import "SVProgressHUD.h"
+#import "SeafGlobal.h"
 
 @implementation SeafActionsManager
 
@@ -86,7 +88,7 @@
     [actionSheet showFromView:item];
 }
 
-+ (void)exportByActivityView:(NSArray <NSURL *> *)urls item:(UIBarButtonItem *)barButtonItem targerVC:(UIViewController *)targetVC {
++ (void)exportByActivityView:(NSArray <NSURL *> *)urls item:(id)item targerVC:(UIViewController *)targetVC {
     UIActivityViewController *controller = [[UIActivityViewController alloc] initWithActivityItems:urls applicationActivities:nil];
     controller.completionWithItemsHandler = ^(UIActivityType __nullable activityType, BOOL completed, NSArray * __nullable returnedItems, NSError * __nullable activityError) {
         Debug("activityType=%@ completed=%d, returnedItems=%@, activityError=%@", activityType, completed, returnedItems, activityError);
@@ -94,10 +96,19 @@
             [self savedToPhotoAlbumWithError:activityError];
         }
     };
-    if (barButtonItem) {
-        controller.popoverPresentationController.barButtonItem = barButtonItem;
+
+    if (IsIpad()) {
+        UIPopoverPresentationController *popover = controller.popoverPresentationController;
+        if (targetVC.view.window) {
+            popover.sourceView = targetVC.view.window;
+            popover.sourceRect = CGRectMake(CGRectGetMidX(targetVC.view.window.bounds), CGRectGetMidY(targetVC.view.window.bounds), 0, 0);
+        } else {
+            popover.sourceView = targetVC.view;
+            popover.sourceRect = CGRectMake(CGRectGetMidX(targetVC.view.bounds), CGRectGetMidY(targetVC.view.bounds), 0, 0);
+        }
+        popover.permittedArrowDirections = 0;
     }
-    
+
     [targetVC presentViewController:controller animated:true completion:nil];
 }
 
