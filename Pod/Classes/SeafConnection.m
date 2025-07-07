@@ -272,7 +272,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (BOOL)isSearchEnabled
 {
-    return [self isFeatureEnabled:@"file-search"];
+    return [self isFeatureEnabled:@"file-search"] && [self isFeatureEnabled:@"seafile-pro"];
 }
 
 - (NSString *)serverVersion

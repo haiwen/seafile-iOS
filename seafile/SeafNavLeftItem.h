@@ -10,8 +10,12 @@
 
 @class SeafDir;
 
+NS_ASSUME_NONNULL_BEGIN
+
 @interface SeafNavLeftItem : UIView
 
-+ (instancetype)navLeftItemWithDirectory:(SeafDir *)directory target:(id)target action:(SEL)action;
++ (instancetype)navLeftItemWithDirectory:(nullable SeafDir *)directory title:(nullable NSString *)title target:(id)target action:(SEL)action;
 
 @end
+
+NS_ASSUME_NONNULL_END

@@ -49,6 +49,7 @@
 #import <AVKit/AVKit.h>
 #import <AVFoundation/AVFoundation.h>
 #import "Version.h"
+#import "SeafVideoPlayerViewController.h"
 
 #define kCustomTabToolWithTopPadding 15
 #define kCustomTabToolButtonHeight 40
@@ -171,7 +172,7 @@ enum {
     
     // Custom navigation bar left button
     if (!self.isEditing) {
-        UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:self.directory target:self action:@selector(backButtonTapped)]];
+        UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:self.directory title:nil target:self action:@selector(backButtonTapped)]];
         self.navigationItem.leftBarButtonItem = customBarButton;
     }
     
@@ -479,7 +480,7 @@ enum {
 
         id<SeafPreView> item = (id<SeafPreView>)_curEntry;
 
-       if ([self isCurrentFileVideo:item]) {
+       if ([item isKindOfClass:[SeafFile class]] && [(SeafFile *)item isVideoFile]) {
            SeafFile *file = (SeafFile *)item;
            // Use custom SeafActionSheet style
            NSArray *titles = @[NSLocalizedString(@"Play", @"Seafile"), NSLocalizedString(@"Download", @"Seafile")];
@@ -491,7 +492,8 @@ enum {
                __strong typeof(weakSelf) self = weakSelf;
                [actionSheet dismissAnimated:YES];
                if (idx.row == 0) { // Play
-                   [self playVideoFile:file];
+                   SeafVideoPlayerViewController *playerVC = [[SeafVideoPlayerViewController alloc] initWithFile:file];
+                   [self presentViewController:playerVC animated:YES completion:nil];
                } else if (idx.row == 1) { // Download
                    // Continue with default preview flow, same as non-video files
                    [self.detailViewController setPreViewItem:item master:self];
@@ -515,11 +517,11 @@ enum {
            return;
        }
 
-        if ([self isCurrentFileImage:item]) {
+        if ([item isKindOfClass:[SeafFile class]] && [(SeafFile *)item isImageFile]) {
             // Collect all image type files
             NSMutableArray *imageFiles = [NSMutableArray array];
             for (id entry in self.allItems) {
-                if ([entry conformsToProtocol:@protocol(SeafPreView)] && [(id<SeafPreView>)entry isImageFile]) {
+                if ([entry isKindOfClass:[SeafFile class]] && [(SeafFile *)entry isImageFile]) {
                     [imageFiles addObject:entry];
                 }
             }
@@ -799,7 +801,7 @@ enum {
     [_directory setDelegate:self];
     [self refreshView];
     
-    UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:directory target:self action:@selector(backButtonTapped)]];
+    UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:directory title:nil target:self action:@selector(backButtonTapped)]];
     self.navigationItem.leftBarButtonItem = customBarButton;
     
     self.state = STATE_LOADING;
@@ -923,8 +925,8 @@ enum {
     NSMutableArray *seafThumbs = [NSMutableArray array];
 
     for (id entry in self.allItems) {
-        if ([entry conformsToProtocol:@protocol(SeafPreView)]
-            && [(id<SeafPreView>)entry isImageFile]) {
+        if ([entry isKindOfClass:[SeafFile class]]
+            && [(SeafFile *)entry isImageFile]) {
             id<SeafPreView> file = entry;
             [file setDelegate:self];
             [seafPhotos addObject:[[SeafPhoto alloc] initWithSeafPreviewIem:entry]];
@@ -1082,7 +1084,7 @@ enum {
     // Restore original title
     self.customTitleLabel.text = self.directory.name;
     
-    UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:self.directory target:self action:@selector(backButtonTapped)]];
+    UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:self.directory title:nil target:self action:@selector(backButtonTapped)]];
     self.navigationItem.leftBarButtonItem = customBarButton;
 }
 
@@ -1540,18 +1542,11 @@ enum {
     });
 }
 
-- (BOOL)isCurrentFileImage:(id<SeafPreView>)item
-{
-    if (![item conformsToProtocol:@protocol(SeafPreView)])
-        return NO;
-    return item.isImageFile;
-}
-
 - (NSArray *)getCurrentFileImagesInTableView:(UITableView *)tableView {
     NSMutableArray *images = [NSMutableArray array];
     
     for (id entry in self.allItems) {
-        if ([entry conformsToProtocol:@protocol(SeafPreView)] && [(id<SeafPreView>)entry isImageFile]) {
+        if ([entry isKindOfClass:[SeafFile class]] && [(SeafFile *)entry isImageFile]) {
             [images addObject:entry];
         }
     }
@@ -3435,107 +3430,6 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
         // This will internally call `dismissCustomTabTool:` and restore insets.
         [self editDone:nil];
     }
-}
-
-- (BOOL)isCurrentFileVideo:(id<SeafPreView>)item {
-    if (![item conformsToProtocol:@protocol(SeafPreView)])
-        return NO;
-    NSString *mime = item.mime;
-    if (mime) {
-        return [mime hasPrefix:@"video/"];
-    }
-    return NO;
-}
-
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context
-{
-    if ([keyPath isEqualToString:@"status"]) {
-        AVPlayerItem *playerItem = (AVPlayerItem *)object;
-        if (playerItem.status == AVPlayerItemStatusFailed) {
-            Warning(@"AVPlayerItem failed to play. Error: %@", playerItem.error);
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [SVProgressHUD dismiss];
-            });
-        } else if (playerItem.status == AVPlayerItemStatusReadyToPlay) {
-            Debug(@"AVPlayerItem is ready to play.");
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [SVProgressHUD dismiss];
-            });
-        }
-    }
-}
-
-- (void)playVideoFile:(SeafFile *)file {
-    // Always show a loading indicator first
-    [SVProgressHUD show];
-
-    // 1. Try to play the locally-cached file (exportURL keeps the original filename & extension)
-    if ([file hasCache]) {
-        NSURL *localURL = [file exportURL];
-        if (localURL && [[NSFileManager defaultManager] fileExistsAtPath:localURL.path]) {
-            Debug(@"Playing video from local cache: %@", localURL.path);
-
-            AVPlayerItem *playerItem = [AVPlayerItem playerItemWithURL:localURL];
-            // Observe status so we can dismiss the loading indicator later
-            [playerItem addObserver:self forKeyPath:@"status" options:NSKeyValueObservingOptionNew context:nil];
-
-            AVPlayer *player = [AVPlayer playerWithPlayerItem:playerItem];
-            player.automaticallyWaitsToMinimizeStalling = YES;
-
-            AVPlayerViewController *playerVC = [AVPlayerViewController new];
-            playerVC.player = player;
-            [self presentViewController:playerVC animated:YES completion:^{
-                [playerVC.player play];
-            }];
-            return; // Played from cache – skip remote download
-        }
-    }
-
-    // 2. Fallback to streaming from server if no valid local cache
-    [file.connection getFileDownloadLink:file.repoId
-                                    path:file.path
-                                 success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-        [SVProgressHUD dismiss];
-        Debug(@"Get video link success. Response: %@", JSON);
-        NSString *dlink = nil;
-        if ([JSON isKindOfClass:[NSDictionary class]]) {
-            dlink = [JSON objectForKey:@"url"];
-        } else if ([JSON isKindOfClass:[NSString class]]) {
-            dlink = [(NSString *)JSON stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"\""]];
-        }
-        Debug(@"Extracted video link: %@", dlink);
-        Debug(@"Seafile token: %@", file.connection.token);
-
-        if (!dlink || dlink.length == 0) {
-            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get video link", @"Seafile")];
-            Warning(@"Failed to get video link: dlink is nil or empty");
-            return;
-        }
-        NSURL *videoURL = [NSURL URLWithString:dlink];
-        Debug(@"Playing video from URL: %@", videoURL);
-
-        NSDictionary *headers = @{
-            @"Authorization": [NSString stringWithFormat:@"Token %@", file.connection.token],
-            @"X-Seafile-Client-Version": SEAFILE_VERSION,
-            @"X-Seafile-Platform-Version": [[UIDevice currentDevice] systemVersion]
-        };
-        AVURLAsset *asset = [AVURLAsset URLAssetWithURL:videoURL options:@{@"AVURLAssetHTTPHeaderFieldsKey": headers}];
-        AVPlayerItem *playerItem = [AVPlayerItem playerItemWithAsset:asset];
-        // Pre-buffer 3 s to reduce stutter
-        playerItem.preferredForwardBufferDuration = 3.0;
-        [playerItem addObserver:self forKeyPath:@"status" options:NSKeyValueObservingOptionNew context:nil];
-        AVPlayer *player = [AVPlayer playerWithPlayerItem:playerItem];
-        player.automaticallyWaitsToMinimizeStalling = YES;
-
-        AVPlayerViewController *playerVC = [AVPlayerViewController new];
-        playerVC.player = player;
-        [self presentViewController:playerVC animated:YES completion:^{
-            [playerVC.player play];
-        }];
-    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
-        [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to get video link", @"Seafile")];
-        Warning(@"Failed to get video link. Error: %@, Response: %@", error, JSON);
-    }];
 }
 
 @end
