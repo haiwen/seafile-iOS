@@ -12,14 +12,14 @@
 
 @implementation SeafNavLeftItem
 
-+ (instancetype)navLeftItemWithDirectory:(SeafDir *)directory target:(id)target action:(SEL)action {
++ (instancetype)navLeftItemWithDirectory:(nullable SeafDir *)directory title:(nullable NSString *)title target:(id)target action:(SEL)action {
     SeafNavLeftItem *view = [[SeafNavLeftItem alloc] initWithFrame:CGRectMake(0, 0, 200, 44)];
     
     // Create title label
     UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectZero];
     
-    // If the directory is not of SeafRepos type, add a back button
-    if (![directory isKindOfClass:[SeafRepos class]]) {
+    // If the directory is not of SeafRepos type, or if a title is provided (implying a custom view that needs a back button)
+    if ((directory && ![directory isKindOfClass:[SeafRepos class]]) || title) {
         UIButton *customButton = [UIButton buttonWithType:UIButtonTypeSystem];
         [customButton setImage:[UIImage imageNamed:@"arrowLeft_black"] forState:UIControlStateNormal];
         // Expand button touch area
@@ -34,7 +34,7 @@
         titleLabel.frame = CGRectMake(5, 0, 210, 44);
     }
     
-    titleLabel.text = directory.name;
+    titleLabel.text = title ?: directory.name;
     titleLabel.font = [UIFont systemFontOfSize:20 weight:UIFontWeightSemibold];
     titleLabel.textColor = [UIColor blackColor];
     [view addSubview:titleLabel];

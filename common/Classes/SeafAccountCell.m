@@ -53,12 +53,15 @@
 
 - (void)updateAccountCell:(SeafConnection *)conn {
     self.imageview.image = [UIImage imageWithContentsOfFile:conn.avatar];
-    //serverLabel change to userName
+    // Server label show user name
     self.serverLabel.text = conn.name;
-    
-    //emailLabel change to address
+    // Email label show server address
     self.emailLabel.text = conn.address;
+
+    // Round avatar
     self.imageview.clipsToBounds = YES;
+    self.imageview.layer.cornerRadius = self.imageview.frame.size.height / 2.0;
+    self.imageview.layer.masksToBounds = YES;
     self.checkImageView.hidden = YES;
 
     NSString *defaultServer = [SeafStorage.sharedObject objectForKey:@"DEAULT-SERVER"];
@@ -67,6 +70,28 @@
     
     if (isSelected) {
         self.checkImageView.hidden = NO;
+    }
+}
+
+#pragma mark - Layout
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    // Ensure avatar stays circular when cell size changes
+    self.imageview.layer.cornerRadius = self.imageview.bounds.size.height / 2.0;
+    self.imageview.layer.masksToBounds = YES;
+
+    // Adjust label vertical positions only once to avoid cumulative shifts on multiple layout passes
+    if (!self.framesAdjusted) {
+        CGRect nameFrame = self.serverLabel.frame;
+        nameFrame.origin.y += 2.0; // move down 2pt
+        self.serverLabel.frame = nameFrame;
+
+        CGRect addrFrame = self.emailLabel.frame;
+        addrFrame.origin.y -= 1.0; // move up 1pt
+        self.emailLabel.frame = addrFrame;
+
+        self.framesAdjusted = YES;
     }
 }
 

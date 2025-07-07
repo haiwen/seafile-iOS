@@ -12,6 +12,8 @@
 #import "Debug.h"
 #import "UIViewController+Extend.h"
 #import "SeafShareDirViewController.h"
+#import "SeafNavLeftItem.h"
+#import "Constants.h"
 
 @interface ShareViewController ()<UITableViewDataSource, UITableViewDelegate>
 
@@ -33,8 +35,17 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.navigationItem.title = NSLocalizedString(@"Save to Seafile", @"Seafile");
-    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancel:)];
+
+    // Force Light mode for share extension UI
+    if (@available(iOS 13.0, *)) {
+        self.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
+        self.navigationController.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
+        self.navigationController.navigationBar.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
+    }
+    // Custom navigation layout: arrow + title aligned to the left
+    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:nil title:NSLocalizedString(@"请选择一个账户", @"Seafile") target:self action:@selector(cancel:)]];
+    self.navigationItem.title = @"";
+    self.navigationController.navigationBar.tintColor = BAR_COLOR;
     
     [SeafGlobal.sharedObject loadAccounts];
     if (SeafGlobal.sharedObject.conns.count == 0) {
@@ -42,6 +53,10 @@
     }
     
     self.tableView.rowHeight = 64;
+    // Add top spacing for first row
+    UIView *header = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.tableView.bounds.size.width, 10)];
+    self.tableView.tableHeaderView = header;
+
     self.tableView.tableFooterView = [UIView new];
     self.tableView.separatorStyle = UITableViewCellSelectionStyleNone;
     self.tableView.delegate = self;
