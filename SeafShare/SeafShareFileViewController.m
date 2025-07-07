@@ -45,6 +45,13 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+
+    // Force Light appearance
+    if (@available(iOS 13.0, *)) {
+        self.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
+        self.navigationController.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
+        self.navigationController.navigationBar.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
+    }
     
     if (IsIpad()) {
         [self setPreferredContentSize:CGSizeMake(480.0f, 540.0f)];
@@ -96,9 +103,15 @@
 }
 
 - (void)showLoadingView {
-    [self.view addSubview:self.loadingView];
-    self.loadingView.center = self.view.center;
-    self.loadingView.frame = CGRectMake((self.view.frame.size.width-self.loadingView.frame.size.width)/2, (self.view.frame.size.height-self.loadingView.frame.size.height)/2, self.loadingView.frame.size.width, self.loadingView.frame.size.height);
+    if (!self.loadingView.superview) {
+        [self.view addSubview:self.loadingView];
+        // 使用 Auto Layout 让菊花始终居中
+        self.loadingView.translatesAutoresizingMaskIntoConstraints = NO;
+        [NSLayoutConstraint activateConstraints:@[
+            [self.loadingView.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
+            [self.loadingView.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor]
+        ]];
+    }
     [self.loadingView startAnimating];
 }
 
