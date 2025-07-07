@@ -17,4 +17,6 @@
 
 + (SeafAccountCell *)getInstance:(UITableView *)tableView WithOwner:(id)owner;
 - (void)updateAccountCell:(SeafConnection *)conn;
+
+@property (nonatomic, assign) BOOL framesAdjusted;
 @end

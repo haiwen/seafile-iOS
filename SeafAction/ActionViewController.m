@@ -16,6 +16,8 @@
 #import "Debug.h"
 #import "Utils.h"
 #import "SeafInputItemsProvider.h"
+#import "SeafNavLeftItem.h"
+#import "Constants.h"
 
 @interface ActionViewController ()<UITableViewDataSource, UITableViewDelegate>
 
@@ -29,6 +31,14 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
+    // Force Light mode regardless of system setting
+    if (@available(iOS 13.0, *)) {
+        self.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
+        // Also force navigation controller/bar into Light mode
+        self.navigationController.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
+        self.navigationController.navigationBar.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
+    }
+
     if (IsIpad()) {
         [self setPreferredContentSize:CGSizeMake(480.0f, 540.0f)];
     }
@@ -40,8 +50,11 @@
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
         self.edgesForExtendedLayout = UIRectEdgeAll;
 
-    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancel:)];
-    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Accounts", @"Seafile")
+    // Custom navigation layout: arrow + title aligned to the left
+    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:nil title:NSLocalizedString(@"请选择一个账户", @"Seafile") target:self action:@selector(cancel:)]];
+    self.navigationItem.title = @"";
+
+    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"账户列表", @"Seafile")
                                                                              style:UIBarButtonItemStylePlain
                                                                             target:nil
                                                                             action:nil];
@@ -56,6 +69,8 @@
         self.tableView.sectionHeaderTopPadding = 0;
     }
     
+    self.navigationController.navigationBar.tintColor = BAR_COLOR;
+
     __weak typeof(self) weakSelf = self;
     [SeafInputItemsProvider loadInputs:weakSelf.extensionContext complete:^(BOOL result, NSArray *array, NSString *errorDisplayMessage) {
         dispatch_async(dispatch_get_main_queue(), ^{

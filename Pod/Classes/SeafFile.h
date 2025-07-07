@@ -98,6 +98,18 @@ typedef void (^SeafThumbCompleteBlock)(BOOL ret);
 @property (nonatomic) BOOL retryable;
 
 /**
+ * Checks if the file is an image file.
+ * @return YES if the file is an image, otherwise NO.
+ */
+- (BOOL)isImageFile;
+
+/**
+ * Checks if the file is a video file.
+ * @return YES if the file is a video, otherwise NO.
+ */
+- (BOOL)isVideoFile;
+
+/**
  * Checks if the file is starred.
  * @return YES if the file is starred, otherwise NO.
  */
