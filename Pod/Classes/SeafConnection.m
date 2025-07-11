@@ -272,7 +272,7 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 
 - (BOOL)isSearchEnabled
 {
-    return [self isFeatureEnabled:@"file-search"];
+    return [self isFeatureEnabled:@"file-search"] && [self isFeatureEnabled:@"seafile-pro"];
 }
 
 - (NSString *)serverVersion
@@ -1698,6 +1698,15 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }
     
     return nil;
+}
+
+- (void)getFileDownloadLink:(NSString *)repoId
+                       path:(NSString *)path
+                    success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON))success
+                    failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error))failure
+{
+    NSString *url = [NSString stringWithFormat:@"/api2/repos/%@/file/?p=%@&op=download&reuse=1", repoId, [path escapedUrl]];
+    [self sendRequest:url success:success failure:failure];
 }
 
 @end
