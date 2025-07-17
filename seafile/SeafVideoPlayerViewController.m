@@ -4,8 +4,10 @@
 #import "Debug.h"
 #import "Version.h"
 #import "SeafFile.h"
+#import "SeafCacheManager+Thumb.h"
 #import <AVFoundation/AVFoundation.h>
 #import <MediaPlayer/MediaPlayer.h>
+#import <CoreMedia/CMMetadata.h>
 
 // For KVO context
 static void *SeafPlayerItemStatusContext = &SeafPlayerItemStatusContext;
@@ -19,6 +21,7 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
 @property (strong, nonatomic) AVPlayerItem *playerItem;
 @property (strong, nonatomic) AVPlayer *player;
 @property (strong, nonatomic) id periodicTimeObserver;
+@property (strong, nonatomic) UIImage *videoThumbnail;
 @end
 
 @implementation SeafVideoPlayerViewController
@@ -57,8 +60,40 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
     self.view.backgroundColor = [UIColor blackColor];
     [self setupAudioSession];
     [self setupPlayerViewController];
+    [self loadVideoThumbnail];
     [self startPlayback];
     [self setupRemoteCommandCenter];
+}
+
+- (void)loadVideoThumbnail {
+    // Try to get video thumbnail
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        // First try to get existing thumbnail
+        UIImage *thumb = [[SeafCacheManager sharedManager] thumbForFile:self.file];
+        
+        if (!thumb) {
+            // If no thumbnail, try to get file icon
+            thumb = [[SeafCacheManager sharedManager] iconForFile:self.file];
+        }
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (thumb) {
+                self.videoThumbnail = thumb;
+                Debug(@"Video thumbnail loaded successfully");
+                // If player is ready, immediately update Now Playing info
+                if (self.player && self.playerItem) {
+                    [self updateMetadataForPlayerItem];
+                }
+            } else {
+                Debug(@"No thumbnail available for video file");
+                // Use file's default icon
+                self.videoThumbnail = [self.file icon];
+                if (self.player && self.playerItem) {
+                    [self updateMetadataForPlayerItem];
+                }
+            }
+        });
+    });
 }
 
 - (void)viewDidLayoutSubviews {
@@ -68,9 +103,9 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
 
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
-    
-    // 如果是通过手势或其他方式关闭，确保清理资源
-    if (self.isBeingDismissed) {
+
+    // If being dismissed or popped, ensure resource cleanup
+    if (self.isBeingDismissed || self.isMovingFromParentViewController) {
         [self stopAndCleanup];
         if (activeVideoPlayer == self) {
             activeVideoPlayer = nil;
@@ -82,26 +117,97 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
     NSError *error = nil;
     AVAudioSession *audioSession = [AVAudioSession sharedInstance];
     
-    // 设置音频会话类别为播放，允许后台播放
-    [audioSession setCategory:AVAudioSessionCategoryPlayback error:&error];
-    if (error) {
+    // Set audio session category to playback, allow background playback
+    BOOL success = [audioSession setCategory:AVAudioSessionCategoryPlayback error:&error];
+    if (!success || error) {
         Warning(@"Failed to set audio session category: %@", error);
+        error = nil; // Reset error
+        
+        // Try simpler settings
+        [audioSession setCategory:AVAudioSessionCategoryPlayback 
+                     withOptions:0 
+                           error:&error];
+        if (error) {
+            Warning(@"Failed to set basic audio session category: %@", error);
+        }
     }
     
-    // 激活音频会话
-    [audioSession setActive:YES error:&error];
-    if (error) {
+    // Activate audio session
+    // Register for audio session interruption notifications so we can resume playback
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(handleAudioSessionInterruption:)
+                                                 name:AVAudioSessionInterruptionNotification
+                                               object:audioSession];
+
+    // Observe route change as well for debugging purposes
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(handleAudioSessionRouteChange:)
+                                                 name:AVAudioSessionRouteChangeNotification
+                                               object:audioSession];
+    error = nil;
+    success = [audioSession setActive:YES error:&error];
+    if (!success || error) {
         Warning(@"Failed to activate audio session: %@", error);
+        
+        // Try different activation options
+        error = nil;
+        [audioSession setActive:YES withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error:&error];
+        if (error) {
+            Warning(@"Failed to activate audio session with options: %@", error);
+        }
     }
+    
+    Debug(@"Audio session setup complete for video playback");
+}
+
+#pragma mark - Audio session interruption
+
+- (void)handleAudioSessionInterruption:(NSNotification *)notification {
+    NSDictionary *info = notification.userInfo;
+    AVAudioSessionInterruptionType type = [info[AVAudioSessionInterruptionTypeKey] unsignedIntegerValue];
+
+    if (type == AVAudioSessionInterruptionTypeEnded) {
+        AVAudioSessionInterruptionOptions options = [info[AVAudioSessionInterruptionOptionKey] unsignedIntegerValue];
+
+        Debug(@"Audio session interruption ended. options=%lu, player.rate=%f", (unsigned long)options, self.player.rate);
+
+        if (options & AVAudioSessionInterruptionOptionShouldResume) {
+            // Reactivate audio session and resume playback if possible
+            NSError *err = nil;
+            [[AVAudioSession sharedInstance] setActive:YES error:&err];
+            if (err) {
+                Warning(@"Failed to reactivate audio session after interruption: %@", err);
+            }
+
+            if (self.player && self.player.rate == 0) {
+                Debug(@"Resuming player after interruption");
+                [self.player play];
+            }
+        }
+    } else if (type == AVAudioSessionInterruptionTypeBegan) {
+        Debug(@"Audio session interruption began. player.rate=%f", self.player.rate);
+    }
+}
+
+#pragma mark - Audio session route change (debug)
+
+- (void)handleAudioSessionRouteChange:(NSNotification *)notification {
+    NSDictionary *info = notification.userInfo;
+    AVAudioSessionRouteChangeReason reason = [info[AVAudioSessionRouteChangeReasonKey] unsignedIntegerValue];
+    Debug(@"Audio session route changed. reason=%lu", (unsigned long)reason);
 }
 
 - (void)setupPlayerViewController {
     self.playerViewController = [[AVPlayerViewController alloc] init];
+    // Ensure the player view controller automatically updates the Now Playing info center
+    if (@available(iOS 10.0, *)) {
+        self.playerViewController.updatesNowPlayingInfoCenter = YES;
+    }
     [self addChildViewController:self.playerViewController];
     [self.view addSubview:self.playerViewController.view];
     [self.playerViewController didMoveToParentViewController:self];
     
-    // 允许画中画模式（iOS 14+）
+    // Allow picture-in-picture mode (iOS 14+)
     if (@available(iOS 14.0, *)) {
         self.playerViewController.allowsPictureInPicturePlayback = YES;
     }
@@ -161,22 +267,25 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
 
     self.player = [AVPlayer playerWithPlayerItem:playerItem];
     self.player.automaticallyWaitsToMinimizeStalling = YES;
+    if (@available(iOS 15.0, *)) {
+        self.player.audiovisualBackgroundPlaybackPolicy = AVPlayerAudiovisualBackgroundPlaybackPolicyContinuesIfPossible;
+    }
     self.playerViewController.player = self.player;
+    
+    // Add metadata so the system automatically updates Now Playing info
+    [self updateMetadataForPlayerItem];
+    
     [self.playerViewController.player play];
     
-    // 添加播放状态监听
-    [self addPlayerObservers];
+    // Add playback status listeners
+//    [self addPlayerObservers];
 }
 
 - (void)addPlayerObservers {
-    // 监听播放速率变化（播放/暂停）
+    // Listen for playback rate changes (play/pause)
     [self.player addObserver:self forKeyPath:@"rate" options:NSKeyValueObservingOptionNew context:nil];
     
-    // 定期更新播放信息
-    __weak typeof(self) weakSelf = self;
-    self.periodicTimeObserver = [self.player addPeriodicTimeObserverForInterval:CMTimeMake(1, 1) queue:dispatch_get_main_queue() usingBlock:^(CMTime time) {
-        [weakSelf updateNowPlayingInfo];
-    }];
+    // No need for periodic updates since AVPlayerViewController now manages Now Playing info automatically.
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context
@@ -195,17 +304,11 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
                 Debug(@"AVPlayerItem is ready to play.");
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [SVProgressHUD dismiss];
-                    // 视频准备好后立即更新播放信息
-                    [self updateNowPlayingInfo];
+                    // Metadata already set; system will handle Now Playing info.
                 });
             }
         }
-    } else if ([keyPath isEqualToString:@"rate"]) {
-        // 播放状态改变时更新控制中心信息
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self updateNowPlayingInfo];
-        });
-    } else {
+    }else {
         [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
     }
 }
@@ -216,15 +319,15 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
 }
 
 - (void)dismissViewController {
-    // 停止播放并清理资源
+    // Stop playback and cleanup resources
     [self stopAndCleanup];
     
-    // 清空活跃播放器引用
+    // Clear active player reference
     if (activeVideoPlayer == self) {
         activeVideoPlayer = nil;
     }
     
-    // 关闭视频播放器界面
+    // Close video player interface
     if (self.presentingViewController) {
         [self.presentingViewController dismissViewControllerAnimated:YES completion:nil];
     }
@@ -232,98 +335,111 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
 
 - (void)setupRemoteCommandCenter {
     MPRemoteCommandCenter *commandCenter = [MPRemoteCommandCenter sharedCommandCenter];
-    
-    // 启用播放/暂停命令
+    __weak typeof(self) weakSelf = self;
+
+    // Enable play/pause commands
     [commandCenter.playCommand setEnabled:YES];
     [commandCenter.pauseCommand setEnabled:YES];
-    
-    // 处理播放命令
+
+    // Handle play command
     [commandCenter.playCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
-        if (self.player && self.player.rate == 0.0) {
-            [self.player play];
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return MPRemoteCommandHandlerStatusCommandFailed;
+        if (strongSelf.player && strongSelf.player.rate == 0.0) {
+            [strongSelf.player play];
             return MPRemoteCommandHandlerStatusSuccess;
         }
         return MPRemoteCommandHandlerStatusCommandFailed;
     }];
-    
-    // 处理暂停命令
+
+    // Handle pause command
     [commandCenter.pauseCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
-        if (self.player && self.player.rate > 0.0) {
-            [self.player pause];
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return MPRemoteCommandHandlerStatusCommandFailed;
+        if (strongSelf.player && strongSelf.player.rate > 0.0) {
+            [strongSelf.player pause];
             return MPRemoteCommandHandlerStatusSuccess;
         }
         return MPRemoteCommandHandlerStatusCommandFailed;
     }];
-    
-    // 启用跳过命令（可选）
+
+    // Enable skip commands (optional)
     [commandCenter.skipForwardCommand setEnabled:YES];
     [commandCenter.skipBackwardCommand setEnabled:YES];
-    commandCenter.skipForwardCommand.preferredIntervals = @[@15];
-    commandCenter.skipBackwardCommand.preferredIntervals = @[@15];
-    
+    commandCenter.skipForwardCommand.preferredIntervals = @[@10];
+    commandCenter.skipBackwardCommand.preferredIntervals = @[@10];
+
     [commandCenter.skipForwardCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
-        CMTime currentTime = self.player.currentTime;
-        CMTime newTime = CMTimeAdd(currentTime, CMTimeMakeWithSeconds(15, NSEC_PER_SEC));
-        [self.player seekToTime:newTime];
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return MPRemoteCommandHandlerStatusCommandFailed;
+        CMTime currentTime = strongSelf.player.currentTime;
+        CMTime newTime = CMTimeAdd(currentTime, CMTimeMakeWithSeconds(10, NSEC_PER_SEC));
+        [strongSelf.player seekToTime:newTime];
         return MPRemoteCommandHandlerStatusSuccess;
     }];
-    
+
     [commandCenter.skipBackwardCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
-        CMTime currentTime = self.player.currentTime;
-        CMTime newTime = CMTimeSubtract(currentTime, CMTimeMakeWithSeconds(15, NSEC_PER_SEC));
-        [self.player seekToTime:newTime];
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return MPRemoteCommandHandlerStatusCommandFailed;
+        CMTime currentTime = strongSelf.player.currentTime;
+        CMTime newTime = CMTimeSubtract(currentTime, CMTimeMakeWithSeconds(10, NSEC_PER_SEC));
+        [strongSelf.player seekToTime:newTime];
         return MPRemoteCommandHandlerStatusSuccess;
     }];
 }
 
-- (void)updateNowPlayingInfo {
-    if (!self.player || !self.playerItem) return;
-    
-    NSMutableDictionary *nowPlayingInfo = [NSMutableDictionary dictionary];
-    
-    // 设置媒体标题
-    nowPlayingInfo[MPMediaItemPropertyTitle] = self.file.name ?: @"Video";
-    
-    // 设置时长
-    if (CMTIME_IS_VALID(self.playerItem.duration) && !CMTIME_IS_INDEFINITE(self.playerItem.duration)) {
-        nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = @(CMTimeGetSeconds(self.playerItem.duration));
-    }
-    
-    // 设置当前播放时间
-    if (CMTIME_IS_VALID(self.player.currentTime)) {
-        nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = @(CMTimeGetSeconds(self.player.currentTime));
-    }
-    
-    // 设置播放速率
-    nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = @(self.player.rate);
-    
-    // 更新控制中心信息
-    [[MPNowPlayingInfoCenter defaultCenter] setNowPlayingInfo:nowPlayingInfo];
+- (void)forceActivateNowPlayingInfo {
+    // Force activate Now Playing info to ensure lock screen controls display
+    dispatch_async(dispatch_get_main_queue(), ^{
+        // Clear first, then set, ensuring system receives the update
+//        [[MPNowPlayingInfoCenter defaultCenter] setNowPlayingInfo:nil];
+//        [self updateNowPlayingInfo];
+        
+        // Ensure audio session is active
+        NSError *error = nil;
+        [[AVAudioSession sharedInstance] setActive:YES error:&error];
+        if (error) {
+            Warning(@"Failed to reactivate audio session: %@", error);
+        }
+    });
 }
 
 - (void)stopAndCleanup {
-    // 移除定时器（在停止播放器之前）
+    // If PiP is active, stop it by setting player to nil
+    if (self.playerViewController) {
+        self.playerViewController.player = nil;
+    }
+
+    // Remove timer (before stopping player)
     if (self.periodicTimeObserver && self.player) {
         [self.player removeTimeObserver:self.periodicTimeObserver];
         self.periodicTimeObserver = nil;
     }
     
-    // 停止播放
+    // Stop playback
     if (self.player) {
         [self.player pause];
         self.player = nil;
     }
     
-    // 清理远程控制中心
+    // Cleanup remote command center
     [self cleanupRemoteCommandCenter];
     
-    // 移除播放器观察者
+    // Remove player observers
     [self cleanupObservers];
     
-    // 停用音频会话
+    // Cancel thumbnail download
+    if (self.file) {
+        [[SeafCacheManager sharedManager] cancelThumbForFile:self.file];
+    }
+    
+    // Cleanup thumbnail reference
+    self.videoThumbnail = nil;
+    
+    // Deactivate audio session
     [[AVAudioSession sharedInstance] setActive:NO error:nil];
     
-    // 清空当前播放信息
+    // Clear current playing info
     [[MPNowPlayingInfoCenter defaultCenter] setNowPlayingInfo:nil];
     
     Debug(@"SeafVideoPlayerViewController stopped and cleaned up");
@@ -336,7 +452,7 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
     [commandCenter.skipForwardCommand removeTarget:self];
     [commandCenter.skipBackwardCommand removeTarget:self];
     
-    // 禁用命令
+    // Disable commands
     [commandCenter.playCommand setEnabled:NO];
     [commandCenter.pauseCommand setEnabled:NO];
     [commandCenter.skipForwardCommand setEnabled:NO];
@@ -344,13 +460,13 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
 }
 
 - (void)cleanupObservers {
-    if (_player) {
-        @try {
-            [_player removeObserver:self forKeyPath:@"rate"];
-        } @catch (NSException *exception) {
-            Debug(@"Exception while removing rate observer: %@", exception);
-        }
-    }
+//    if (_player) {
+//        @try {
+//            [_player removeObserver:self forKeyPath:@"rate"];
+//        } @catch (NSException *exception) {
+//            Debug(@"Exception while removing rate observer: %@", exception);
+//        }
+//    }
     
     if (_playerItem) {
         @try {
@@ -362,25 +478,28 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
 }
 
 - (void)dealloc {
-    // 清理资源
+    // Remove notification observers
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    
+    // Cleanup resources
     [self cleanupRemoteCommandCenter];
     
-    // 移除定时器
+    // Remove timer
     if (self.periodicTimeObserver && self.player) {
         [self.player removeTimeObserver:self.periodicTimeObserver];
         self.periodicTimeObserver = nil;
     }
     
-    // 移除播放器观察者
+    // Remove player observers
     [self cleanupObservers];
     
-    // 停用音频会话
+    // Deactivate audio session
     [[AVAudioSession sharedInstance] setActive:NO error:nil];
     
-    // 清空当前播放信息
+    // Clear current playing info
     [[MPNowPlayingInfoCenter defaultCenter] setNowPlayingInfo:nil];
     
-    // 如果是当前活跃的播放器，清空引用
+    // If this is the current active player, clear reference
     if (activeVideoPlayer == self) {
         activeVideoPlayer = nil;
     }
@@ -390,6 +509,66 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
 
 - (BOOL)prefersStatusBarHidden {
     return YES;
+}
+
+#pragma mark - AVPlayerItem Metadata Helper
+
+- (void)updateMetadataForPlayerItem {
+    if (!self.playerItem) return;
+
+    NSMutableArray<AVMetadataItem *> *metadataItems = [NSMutableArray array];
+
+    // Title
+    AVMutableMetadataItem *titleItem = [[AVMutableMetadataItem alloc] init];
+    titleItem.identifier = AVMetadataCommonIdentifierTitle;
+    titleItem.keySpace = AVMetadataKeySpaceCommon;
+    titleItem.value = self.file.name ?: @"Video";
+    titleItem.extendedLanguageTag = @"und"; // undefined language
+    [metadataItems addObject:titleItem];
+
+    // Artist / app name
+//    AVMutableMetadataItem *artistItem = [[AVMutableMetadataItem alloc] init];
+//    artistItem.identifier = AVMetadataCommonIdentifierArtist;
+//    artistItem.keySpace = AVMetadataKeySpaceCommon;
+//    artistItem.value = @"Seafile";
+//    artistItem.extendedLanguageTag = @"und";
+//    [metadataItems addObject:artistItem];
+
+    // Subtitle (shows beneath title in system UI for video)
+//    AVMutableMetadataItem *subtitleItem = [[AVMutableMetadataItem alloc] init];
+//    if (@available(iOS 9.3, *)) { // identifier introduced earlier, but guard just in case
+//        subtitleItem.identifier = AVMetadataIdentifieriTunesMetadataTrackSubTitle;
+//    }
+//    subtitleItem.keySpace = AVMetadataKeySpaceiTunes;
+//    subtitleItem.value = @"Seafile";
+//    [metadataItems addObject:subtitleItem];
+
+    // Artwork (thumbnail) if available
+    if (self.videoThumbnail) {
+        NSData *imageData = UIImagePNGRepresentation(self.videoThumbnail);
+        if (!imageData) {
+            imageData = UIImageJPEGRepresentation(self.videoThumbnail, 0.9);
+        }
+        if (imageData) {
+            AVMutableMetadataItem *artworkItem = [[AVMutableMetadataItem alloc] init];
+            artworkItem.identifier = AVMetadataCommonIdentifierArtwork;
+            artworkItem.keySpace = AVMetadataKeySpaceCommon;
+            artworkItem.value = imageData;
+            artworkItem.dataType = (__bridge NSString *)kCMMetadataBaseDataType_PNG;
+            [metadataItems addObject:artworkItem];
+        }
+    }
+
+    // Assign to player item. This replaces any existing external metadata we may have set earlier.
+    self.playerItem.externalMetadata = metadataItems;
+
+    // The system may ignore the Artist field for video assets in some cases. Explicitly add it to
+    // the Now Playing info dictionary without disturbing other automatically-managed fields.
+//    dispatch_async(dispatch_get_main_queue(), ^{
+//        NSMutableDictionary *info = [[[MPNowPlayingInfoCenter defaultCenter] nowPlayingInfo] mutableCopy] ?: [NSMutableDictionary dictionary];
+//        info[MPMediaItemPropertyArtist] = @"Seafile";
+//        [[MPNowPlayingInfoCenter defaultCenter] setNowPlayingInfo:info];
+//    });
 }
 
 @end 
