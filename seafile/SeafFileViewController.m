@@ -20,6 +20,7 @@
 #import "SeafDataTaskManager.h"
 #import "SeafGlobal.h"
 #import "SeafPhotoAsset.h"
+#import "SeafVideoPlayerViewController.h"
 
 #import "FileSizeFormatter.h"
 #import "SeafDateFormatter.h"
@@ -112,6 +113,7 @@ enum {
 
 @property (nonatomic, strong) UIView *customToolView;
 @property (nonatomic, strong) UILabel *customTitleLabel; // Add new property to track title label
+@property (nonatomic, strong) SeafFile *pendingVideoFile; // Video file waiting to play after download
 
 @end
 
@@ -483,20 +485,10 @@ enum {
        if ([item isKindOfClass:[SeafFile class]] && [(SeafFile *)item isVideoFile]) {
            SeafFile *file = (SeafFile *)item;
            
-           // If video file is cached, go directly to detail page
+           // If video file is cached, use SeafVideoPlayerViewController to play
            if ([file hasCache]) {
-               [self.detailViewController setPreViewItem:item master:self];
-               if (self.detailViewController.state == PREVIEW_QL_MODAL) {
-                   [self.detailViewController.qlViewController reloadData];
-                   if (IsIpad()) {
-                       [[[SeafAppDelegate topViewController] parentViewController] presentViewController:self.detailViewController.qlViewController animated:YES completion:nil];
-                   } else {
-                       [self presentViewController:self.detailViewController.qlViewController animated:YES completion:nil];
-                   }
-               } else if (!IsIpad()) {
-                   SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
-                   [appdelegate showDetailView:self.detailViewController];
-               }
+               SeafVideoPlayerViewController *playerVC = [[SeafVideoPlayerViewController alloc] initWithFile:file];
+               [self presentViewController:playerVC animated:YES completion:nil];
                return;
            }
            
@@ -517,6 +509,8 @@ enum {
                    SeafVideoPlayerViewController *playerVC = [[SeafVideoPlayerViewController alloc] initWithFile:file];
                    [self presentViewController:playerVC animated:YES completion:nil];
                } else if (idx.row == 1) { // Download
+                   // Remember this file so we can auto-play it after the download finishes
+                   self.pendingVideoFile = file;
                    // Continue with default preview flow, same as non-video files
                    [self.detailViewController setPreViewItem:item master:self];
                    if (self.detailViewController.state == PREVIEW_QL_MODAL) {
@@ -2429,6 +2423,29 @@ enum {
         }
         self.state = STATE_INIT;
     }
+
+    /* Auto-play the video once it has been downloaded */
+    if ([entry isKindOfClass:[SeafFile class]]) {
+        SeafFile *videoFileTmp = (SeafFile *)entry;
+        if (videoFileTmp == self.pendingVideoFile && [videoFileTmp isVideoFile] && videoFileTmp.hasCache) {
+            // Reset pending flag first
+            self.pendingVideoFile = nil;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                void (^presentPlayer)(void) = ^{
+                    [SeafVideoPlayerViewController closeActiveVideoPlayer];
+                    SeafVideoPlayerViewController *playerVC = [[SeafVideoPlayerViewController alloc] initWithFile:videoFileTmp];
+                    [self presentViewController:playerVC animated:YES completion:nil];
+                };
+                if (self.presentedViewController) {
+                    [self dismissViewControllerAnimated:NO completion:presentPlayer];
+                } else if (self.detailViewController.presentedViewController) {
+                    [self.detailViewController dismissViewControllerAnimated:NO completion:presentPlayer];
+                } else {
+                    presentPlayer();
+                }
+            });
+        }
+    }
 }
 
 - (BOOL)checkIsEditedFileUploading:(SeafDir *)entry {
@@ -2517,6 +2534,10 @@ enum {
         }
         self.state = STATE_INIT;
         [self dismissLoadingView];
+    }
+
+    if (entry == self.pendingVideoFile) {
+        self.pendingVideoFile = nil; // Clear pending flag on failure
     }
 }
 
