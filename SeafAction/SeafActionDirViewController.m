@@ -18,6 +18,12 @@
 #import "SeafDataTaskManager.h"
 #import "SeafFileOperationManager.h"
 #import "SeafUploadFileModel.h"
+#import "SeafCell.h"
+#import "Constants.h"
+#import "FileSizeFormatter.h"
+#import "SeafNavLeftItem.h"
+#import "SeafRepos.h"
+#import "SeafBase+Display.h"
 
 @interface SeafActionDirViewController()<SeafDentryDelegate, SeafUploadDelegate>
 @property (strong, nonatomic) SeafDir *directory;
@@ -58,7 +64,7 @@
     _directory = directory;
     _directory.delegate = self;
     [_directory loadContent:true];
-    self.navigationItem.title = _directory.name;
+    [self setupNavigationItems];
 }
 
 - (UIProgressView *)progressView
@@ -84,9 +90,11 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    self.tableView.rowHeight = 50;
+    self.tableView.rowHeight = UITableViewAutomaticDimension;
     self.tableView.estimatedSectionFooterHeight = 0;
     self.tableView.estimatedSectionHeaderHeight = 0;
+    
+    self.navigationController.navigationBar.tintColor = BAR_COLOR;
     
     if (@available(iOS 15.0, *)) {
         UINavigationBarAppearance *barAppearance = [UINavigationBarAppearance new];
@@ -99,13 +107,45 @@
     }
     
     if (_directory.editable) {
-        self.saveButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSave target:self action:@selector(save:)];
-        self.navigationItem.title = _directory.name;
-        self.navigationItem.rightBarButtonItem = self.saveButton;
-        
-        self.createButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"New Folder", @"Seafile") style:UIBarButtonItemStylePlain target:self action:@selector(createFolder)];
-        UIBarButtonItem *flexItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
-        self.toolbarItems = @[flexItem, self.createButton, flexItem];
+        // Right bar addFolder icon
+        UIImage *addIcon = [[UIImage imageNamed:@"share_addFile"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        UIButton *addBtn = [UIButton buttonWithType:UIButtonTypeSystem];
+        [addBtn setImage:addIcon forState:UIControlStateNormal];
+        addBtn.tintColor = [UIColor labelColor];
+        addBtn.translatesAutoresizingMaskIntoConstraints = NO;
+        [addBtn.widthAnchor constraintEqualToConstant:24].active = YES;
+        [addBtn.heightAnchor constraintEqualToConstant:24].active = YES;
+        [addBtn addTarget:self action:@selector(createFolder) forControlEvents:UIControlEventTouchUpInside];
+        self.createButton = [[UIBarButtonItem alloc] initWithCustomView:addBtn];
+
+        // Save button centered in toolbar
+        UIButton *saveBtn = [UIButton buttonWithType:UIButtonTypeSystem];
+        [saveBtn setTitle:NSLocalizedString(@"确定", @"Seafile") forState:UIControlStateNormal];
+        saveBtn.titleLabel.font = [UIFont systemFontOfSize:18 weight:UIFontWeightSemibold];
+        [saveBtn setTitleColor:[UIColor labelColor] forState:UIControlStateNormal];
+        saveBtn.translatesAutoresizingMaskIntoConstraints = NO;
+        [saveBtn.widthAnchor constraintEqualToConstant:80].active = YES;
+        [saveBtn.heightAnchor constraintEqualToConstant:50].active = YES;
+        [saveBtn addTarget:self action:@selector(save:) forControlEvents:UIControlEventTouchUpInside];
+        self.saveButton = [[UIBarButtonItem alloc] initWithCustomView:saveBtn];
+
+        UIBarButtonItem *flex = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
+        self.toolbarItems = @[flex,self.saveButton,flex];
+
+        self.navigationItem.rightBarButtonItem = self.createButton;
+        self.navigationItem.title = @"";
+
+        // toolbar bg
+        UIColor *bgCol = [UIColor colorWithRed:242/255.0 green:242/255.0 blue:242/255.0 alpha:1.0];
+        if (@available(iOS 15.0,*)) {
+            UIToolbarAppearance *toolAp = [UIToolbarAppearance new];
+            [toolAp configureWithOpaqueBackground];
+            toolAp.backgroundColor = bgCol;
+            self.navigationController.toolbar.standardAppearance = toolAp;
+            self.navigationController.toolbar.scrollEdgeAppearance = toolAp;
+        } else {
+            self.navigationController.toolbar.barTintColor = bgCol;
+        }
     }
     
     if([self respondsToSelector:@selector(edgesForExtendedLayout)])
@@ -117,6 +157,20 @@
         weakSelf.directory.delegate = weakSelf;
         [weakSelf.directory loadContent:YES];
     }];
+
+    // Register SeafCell & background
+    [self.tableView registerNib:[UINib nibWithNibName:@"SeafCell" bundle:nil] forCellReuseIdentifier:@"SeafCell"];
+    UIView *bgView = [[UIView alloc] initWithFrame:self.tableView.bounds];
+    bgView.backgroundColor = kPrimaryBackgroundColor;
+    self.tableView.backgroundView = bgView;
+    self.view.backgroundColor = kPrimaryBackgroundColor;
+    self.tableView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(0,0,self.view.bounds.size.width,10)];
+
+    // Ensure custom navigation layout (arrow + title) is set for the initial directory
+    [self setupNavigationItems];
+
+    // Adjust bottom content inset for safe area (home indicator)
+    [self updateTableInsets];
 }
 
 - (void)doneLoadingTableViewData
@@ -155,6 +209,9 @@
             [self dismissLoadingView];
             if (!success) {
                 [self alertWithTitle:NSLocalizedString(@"Failed to create folder", @"Seafile") handler:nil];
+            } else {
+                // Refresh the directory list so user can select the newly created folder
+                [self.directory loadContent:YES];
             }
         }];
     }];
@@ -194,7 +251,12 @@
     if (self.loadingView && [self.loadingView isAnimating]) {
         self.loadingView.frame = CGRectMake((self.view.frame.size.width-self.loadingView.frame.size.width)/2, (self.view.frame.size.height-self.loadingView.frame.size.height)/2, self.loadingView.frame.size.width, self.loadingView.frame.size.height);
     }
-    self.navigationController.toolbarHidden = _directory.editable ? false : true;
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    // Show or hide toolbar immediately without animation
+    self.navigationController.toolbarHidden = _directory.editable ? NO : YES;
 }
 
 - (void)dismissLoadingView
@@ -244,35 +306,12 @@
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
-    if (_directory.editable) {
-        return 0.01;
-    } else {
-        return 30;
-    }
+    return 0.01;
 }
 
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
 {
-    if (_directory.editable) {
-        UIView *lineView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, tableView.frame.size.width, 1.0f)];
-        [lineView setBackgroundColor:[UIColor clearColor]];
-        return lineView;
-    } else {
-        UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 30)];
-        UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 6, tableView.bounds.size.width - 10, 18)];
-        label.text = NSLocalizedString(@"Save Destination", @"Seafile");
-        label.backgroundColor = [UIColor clearColor];
-        if (@available(iOS 13.0, *)) {
-            [headerView setBackgroundColor:[UIColor secondarySystemBackgroundColor]];
-            label.textColor = [UIColor labelColor];
-        } else {
-            [headerView setBackgroundColor:HEADER_COLOR];
-            label.textColor = [UIColor darkTextColor];
-        }
-        label.font = [UIFont systemFontOfSize:15];
-        [headerView addSubview:label];
-        return headerView;
-    }
+    return nil;
 }
 
 - (SeafBase *)getItemAtIndex:(NSUInteger)index
@@ -286,35 +325,19 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    NSString *CellIdentifier = @"SeafActionDirCell";
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-    if (cell == nil) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier];
-    }
     SeafBase *entry = [self getItemAtIndex:indexPath.row];
-    if (!entry)        return cell;
+    SeafCell *cell = [tableView dequeueReusableCellWithIdentifier:@"SeafCell" forIndexPath:indexPath];
+    [cell reset];
     cell.textLabel.text = entry.name;
-    cell.textLabel.font = [UIFont systemFontOfSize:17];
-    cell.textLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
-    cell.imageView.image = [Utils reSizeImage:entry.icon toSquare:32];
-    cell.detailTextLabel.font = [UIFont systemFontOfSize:13];
-    cell.detailTextLabel.textColor = [UIColor lightGrayColor];
-
-    if ([entry isKindOfClass:[SeafRepo class]]) {
-        SeafRepo *repo = (SeafRepo *)entry;
-        NSString *detail = [repo detailText];
-        if (repo.isGroupRepo)
-            if (repo.owner.length > 0) {
-                detail = [NSString stringWithFormat:@"%@, %@", detail, repo.owner];
-            }
-        cell.detailTextLabel.text = detail;
-    } else if ([entry isKindOfClass:[SeafDir class]]) {
-        cell.detailTextLabel.text = nil;
-    } else if ([entry isKindOfClass:[SeafFile class]]) {
-        SeafFile *sfile = (SeafFile *)entry;
-        cell.detailTextLabel.text = sfile.detailText;
-    }
-    cell.imageView.frame = CGRectMake(8, 8, 28, 28);
+    cell.imageView.image = entry.icon;
+    cell.moreButton.hidden = YES;
+    cell.detailTextLabel.text = [entry displayDetailText];
+    BOOL first = indexPath.row==0;
+    BOOL last = indexPath.row== self.directory.subDirs.count-1;
+    [cell updateCellStyle:first isLastCell:last];
+    [cell updateSeparatorInset:last];
+    cell.cacheStatusView.hidden = YES;
+    [cell.cacheStatusWidthConstraint setConstant:0.0f];
     return cell;
 }
 
@@ -413,6 +436,41 @@
 {
     SeafActionDirViewController *controller = [[SeafActionDirViewController alloc] initWithSeafDir:dir file:self.ufile];
     [self.navigationController pushViewController:controller animated:true];
+}
+
+#pragma mark - Navigation helper
+
+- (void)setupNavigationItems {
+    if ([self.directory isKindOfClass:[SeafRepos class]]) {
+        NSString *title = NSLocalizedString(@"保存到Seafile", @"Seafile");
+        self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:nil title:title target:self action:@selector(backAction)]];
+    } else {
+        self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:self.directory title:nil target:self action:@selector(backAction)]];
+    }
+    self.navigationItem.title = @"";
+}
+
+- (void)backAction {
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+#pragma mark - Safe Area Handling
+
+- (void)viewSafeAreaInsetsDidChange {
+    [super viewSafeAreaInsetsDidChange];
+    [self updateTableInsets];
+}
+
+- (void)updateTableInsets {
+    if (@available(iOS 11.0, *)) {
+        CGFloat bottomInset = self.view.safeAreaInsets.bottom;
+        UIEdgeInsets inset = self.tableView.contentInset;
+        if (inset.bottom != bottomInset) {
+            inset.bottom = bottomInset;
+            self.tableView.contentInset = inset;
+            self.tableView.scrollIndicatorInsets = inset;
+        }
+    }
 }
 
 @end

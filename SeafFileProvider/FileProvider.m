@@ -229,6 +229,27 @@
         SeafFile *file = (SeafFile *)item.toSeafObj;
         
         if ([file isKindOfClass:[SeafFile class]]) {
+            // Quick path: if we already have a cached copy, provide it immediately to avoid iOS timeout
+            if ([file hasCache] && file.exportURL) {
+                // Ensure target directory exists
+                if ([Utils fileExistsAtPath:url.path]) {
+                    [Utils removeFile:url.path];
+                }
+                [Utils checkMakeDir:url.path.stringByDeletingLastPathComponent];
+
+                BOOL copied = [Utils copyFile:file.exportURL to:url];
+
+                // Fire background refresh to get latest version, but don't block the caller
+                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                    // Remove any previous download callback to avoid duplicate completion handling
+                    [file setFileDownloadedBlock:nil];
+                    // Force refresh; newer version will be written later & enumerator signalled elsewhere
+                    [file loadContent:true];
+                });
+
+                [self unlockAndRemoveFileLock:lock forIdentifier:identifier];
+                return completionHandler(copied ? nil : [NSError fileProvierErrorServerUnreachable]);
+            }
             // Force reload to check if file needs update
             [file setFileDownloadedBlock:^(SeafFile * _Nonnull file, NSError * _Nullable error) {
                 @try {
