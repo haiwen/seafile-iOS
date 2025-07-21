@@ -148,6 +148,8 @@ enum SHARE_STATUS {
     self.textView = nil;
     [self.webView evaluateJavaScript:@"document.body.innerHTML='';" completionHandler:nil];
     [self clearPhotosVIew];
+    // Reset isPresentingQL flag when clearing preview
+    self.isPresentingQL = NO;
 }
 
 // Update the preview state based on the current item's properties and state.
@@ -161,6 +163,31 @@ enum SHARE_STATUS {
 
     } else if (self.preViewItem.previewItemURL) {
         _state = PREVIEW_QL_MODAL; // Default state
+
+        /*
+         * Special handling: For video files (mime type starts with "video/" or
+         * isVideoFile returns YES), Quick Look will internally create its own
+         * AVPlayer and keep the MPRemoteCommandCenter targets registered while
+         * the app is in background. After the download finishes this hidden
+         * player may resume and compete with our custom player for audio
+         * output, yielding double-audio issues.
+         *
+         * Hence, once a video file is detected we skip the Quick Look preview
+         * entirely and leave state as PREVIEW_NONE. The real playback is
+         * handled later by SeafFileViewController, which presents
+         * SeafVideoPlayerViewController after the download completes.
+         */
+        if ([self.preViewItem isKindOfClass:[SeafFile class]]) {
+            SeafFile *videoCheckFile = (SeafFile *)self.preViewItem;
+            if ([videoCheckFile isVideoFile] || [videoCheckFile.mime hasPrefix:@"video/"]) {
+                _state = PREVIEW_NONE;
+                if (_state != PREVIEW_QL_MODAL) {
+                    [self clearPreView];
+                }
+                Debug("preview %@ %@ state: %d (video file skipped QL)", self.preViewItem.name, self.preViewItem.previewItemURL, _state);
+                return;
+            }
+        }
         if ([self.preViewItem.mime isEqualToString:@"image/svg+xml"] || [self.preViewItem.mime isEqualToString:@"application/sdoc"] || [self.preViewItem.mime isEqualToString:@"application/x-exdraw"] || [self.preViewItem.mime isEqualToString:@"application/x-draw"]) {
             _state = PREVIEW_WEBVIEW;
         } else if([self.preViewItem.mime isEqualToString:@"text/x-markdown"] || [self.preViewItem.mime isEqualToString:@"text/x-seafile"]) {
@@ -191,8 +218,17 @@ enum SHARE_STATUS {
     // --- Toolbar Visibility Control (iPad only) ---
     if (IsIpad()) {
         BOOL shouldShowToolbar = NO;
+        // Determine if current preview item is a video file
+        BOOL isMediaFile = NO;
+        if (self.preViewItem && [self.preViewItem isKindOfClass:[SeafFile class]]) {
+            SeafFile *mediaCheckFile = (SeafFile *)self.preViewItem;
+            // Hide toolbar for both video and audio file types
+            if ([mediaCheckFile isVideoFile] || [mediaCheckFile.mime hasPrefix:@"audio/"]) {
+                isMediaFile = YES;
+            }
+        }
         // Show toolbar only if there is a valid item being previewed successfully or potentially via QL
-        if (self.preViewItem) {
+        if (self.preViewItem && !isMediaFile) {
             switch (self.state) {
                 case PREVIEW_WEBVIEW_JS:
                 case PREVIEW_WEBVIEW:
@@ -202,7 +238,7 @@ enum SHARE_STATUS {
                 case PREVIEW_FAILED:
                     shouldShowToolbar = YES;
                     break;
-                // Don't show for downloading, or none states
+                // Don't show for downloading, none states, or explicitly when video
                 case PREVIEW_DOWNLOADING:
                 case PREVIEW_NONE:
                 default:
@@ -210,7 +246,7 @@ enum SHARE_STATUS {
                     break;
             }
         } else {
-             // No preview item, definitely hide toolbar
+             // No preview item or media file, definitely hide toolbar
              shouldShowToolbar = NO;
         }
         // Only hide/show if toolbarView actually exists
@@ -232,7 +268,7 @@ enum SHARE_STATUS {
     
     // Calculate bottom margin to account for toolbar, including safe area
     CGFloat bottomMargin = 0;
-    if (self.toolbarView) {
+    if (self.toolbarView && !self.toolbarView.hidden) {
         CGFloat toolbarHeight = 36; // Toolbar standard height
         CGFloat safeAreaBottom = 0;
         if (@available(iOS 11.0, *)) {
@@ -650,17 +686,27 @@ enum SHARE_STATUS {
 - (IBAction)cancelDownload:(id)sender
 {
     id<SeafPreView> item = self.preViewItem;
-    [self setPreViewItem:nil master:nil]; // Clear the preview item and master
-//    [item cancelAnyLoading]; // Cancel any ongoing loading
-    // TODO: Only cancel the current account, not all accounts
-    for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
-        if (conn.accountIdentifier) {
-            SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:conn];
-            [accountQueue removeFileDownloadTask:item];
+    if (!item) return;
+
+    // If the preview item is a SeafFile, use its built-in cancel logic which also
+    // removes the persisted task from storage, ensuring the download will **not**
+    // be restarted on the next app launch.
+    if ([item isKindOfClass:[SeafFile class]]) {
+        [(SeafFile *)item cancelDownload];
+    } else {
+        // Fallback for legacy preview item types that are not SeafFile.
+        for (SeafConnection *conn in SeafGlobal.sharedObject.conns) {
+            if (conn.accountIdentifier) {
+                SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:conn];
+                [accountQueue removeFileDownloadTask:item];
+            }
         }
     }
+
+    // Clear UI state after cancellation.
+    [self setPreViewItem:nil master:nil];
     if (!IsIpad())
-        [self goBack:nil]; // Go back if not iPad
+        [self goBack:nil];
 }
 
 - (void)showAlertWithAction:(NSArray *)arr fromBarItem:(UIBarButtonItem *)item withTitle:(NSString *)title
@@ -900,6 +946,8 @@ enum SHARE_STATUS {
     }
     self.preViewItem = nil;
     self.qlViewController = nil;
+    // Ensure isPresentingQL is reset when QLViewController is dismissed
+    self.isPresentingQL = NO;
 }
 
 - (MWPhotoBrowser *)mwPhotoBrowser

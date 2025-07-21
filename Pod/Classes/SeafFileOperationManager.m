@@ -86,7 +86,13 @@
                            success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON)
     {
         Debug("Mkdir success, code=%ld", (long)response.statusCode);
-        [directory handleResponse:response json:JSON]; // optional
+        if ([JSON isKindOfClass:[NSDictionary class]]) {
+            // Server returned dir metadata dictionary; we can process directly.
+            [directory handleResponse:response json:JSON];
+        } else {
+            // Response format unexpected (e.g. array or simple string). Fall back to reloading directory content.
+            [directory loadContent:YES];
+        }
         if (completion) completion(YES, nil);
     }
                            failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error)

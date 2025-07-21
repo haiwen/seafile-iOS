@@ -515,4 +515,10 @@ Checks the auto synchronization settings and updates the connection’s synchron
 - (void)logoutAndAccountClear;
 
 + (NSString *_Nullable)generateUrlFromConnection:(SeafConnection *_Nullable)connection;
+
+- (void)getFileDownloadLink:(NSString *_Nullable)repoId
+                       path:(NSString *_Nullable)path
+                    success:(void (^_Nullable)(NSURLRequest * _Nullable request, NSHTTPURLResponse * _Nullable response, id _Nullable JSON))success
+                    failure:(void (^_Nullable)(NSURLRequest * _Nullable request, NSHTTPURLResponse * _Nullable response, id _Nullable JSON, NSError * _Nullable error))failure;
+
 @end

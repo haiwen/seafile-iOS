@@ -9,6 +9,7 @@
 #import "SeafThumb.h"
 #import "SeafFile.h"
 #import "Debug.h"
+#import "SeafDataTaskManager.h"
 
 @implementation SeafThumb
 - (id)initWithSeafFile:(SeafFile *)file
@@ -27,6 +28,12 @@
 - (NSString *)name
 {
     return [_file.name stringByAppendingString:@"(-thumb)"];
+}
+
+- (void)cancel
+{
+    // Remove this thumb task from the account queue
+    [[SeafDataTaskManager sharedObject] removeThumbTaskFromAccountQueue:self];
 }
 
 @end

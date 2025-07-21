@@ -20,6 +20,7 @@
 #import "SeafDataTaskManager.h"
 #import "SeafGlobal.h"
 #import "SeafPhotoAsset.h"
+#import "SeafVideoPlayerViewController.h"
 
 #import "FileSizeFormatter.h"
 #import "SeafDateFormatter.h"
@@ -46,6 +47,10 @@
 #import "SeafPhotoGalleryViewController.h"
 #import <MobileCoreServices/MobileCoreServices.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
+#import <AVKit/AVKit.h>
+#import <AVFoundation/AVFoundation.h>
+#import "Version.h"
+#import "SeafVideoPlayerViewController.h"
 
 #define kCustomTabToolWithTopPadding 15
 #define kCustomTabToolButtonHeight 40
@@ -108,6 +113,7 @@ enum {
 
 @property (nonatomic, strong) UIView *customToolView;
 @property (nonatomic, strong) UILabel *customTitleLabel; // Add new property to track title label
+@property (nonatomic, strong) SeafFile *pendingVideoFile; // Video file waiting to play after download
 
 @end
 
@@ -168,7 +174,7 @@ enum {
     
     // Custom navigation bar left button
     if (!self.isEditing) {
-        UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:self.directory target:self action:@selector(backButtonTapped)]];
+        UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:self.directory title:nil target:self action:@selector(backButtonTapped)]];
         self.navigationItem.leftBarButtonItem = customBarButton;
     }
     
@@ -476,28 +482,79 @@ enum {
 
         id<SeafPreView> item = (id<SeafPreView>)_curEntry;
 
-        if ([self isCurrentFileImage:item]) {
-            // 收集所有图片类型的文件
+       if ([item isKindOfClass:[SeafFile class]] && [(SeafFile *)item isVideoFile]) {
+           SeafFile *file = (SeafFile *)item;
+           
+           // If video file is cached, use SeafVideoPlayerViewController to play
+           if ([file hasCache]) {
+               SeafVideoPlayerViewController *playerVC = [[SeafVideoPlayerViewController alloc] initWithFile:file];
+               [self presentViewController:playerVC animated:YES completion:nil];
+               return;
+           }
+           
+           // Show selection menu when not cached
+           // Use custom SeafActionSheet style
+           NSArray *titles = @[NSLocalizedString(@"Play", @"Seafile"), NSLocalizedString(@"Download", @"Seafile")];
+           SeafActionSheet *sheet = [SeafActionSheet actionSheetWithoutCancelWithTitles:titles];
+           sheet.targetVC = self;
+
+           __weak typeof(self) weakSelf = self;
+           [sheet setButtonPressedBlock:^(SeafActionSheet * _Nonnull actionSheet, NSIndexPath * _Nonnull idx) {
+               __strong typeof(weakSelf) self = weakSelf;
+               [actionSheet dismissAnimated:YES];
+               if (idx.row == 0) { // Play
+                   // Close any existing video player first
+                   [SeafVideoPlayerViewController closeActiveVideoPlayer];
+                   
+                   SeafVideoPlayerViewController *playerVC = [[SeafVideoPlayerViewController alloc] initWithFile:file];
+                   [self presentViewController:playerVC animated:YES completion:nil];
+               } else if (idx.row == 1) { // Download
+                   // Remember this file so we can auto-play it after the download finishes
+                   self.pendingVideoFile = file;
+                   // Continue with default preview flow, same as non-video files
+                   [self.detailViewController setPreViewItem:item master:self];
+                   if (self.detailViewController.state == PREVIEW_QL_MODAL) {
+                       [self.detailViewController.qlViewController reloadData];
+                       if (IsIpad()) {
+                           [[[SeafAppDelegate topViewController] parentViewController] presentViewController:self.detailViewController.qlViewController animated:YES completion:nil];
+                       } else {
+                           [self presentViewController:self.detailViewController.qlViewController animated:YES completion:nil];
+                       }
+                   } else if (!IsIpad()) {
+                       SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+                       [appdelegate showDetailView:self.detailViewController];
+                   }
+               }
+           }];
+
+           // anchor from the tapped cell to keep style consistent
+           UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+           [sheet showFromView:cell];
+           return;
+       }
+
+        if ([item isKindOfClass:[SeafFile class]] && [(SeafFile *)item isImageFile]) {
+            // Collect all image type files
             NSMutableArray *imageFiles = [NSMutableArray array];
             for (id entry in self.allItems) {
-                if ([entry conformsToProtocol:@protocol(SeafPreView)] && [(id<SeafPreView>)entry isImageFile]) {
+                if ([entry isKindOfClass:[SeafFile class]] && [(SeafFile *)entry isImageFile]) {
                     [imageFiles addObject:entry];
                 }
             }
             
-            // 如果没有找到图片文件，使用旧版详情视图
+            // If no image files found, use old detail view
             if (imageFiles.count == 0) {
-                Warning("没有找到图片文件");
+                Warning("No image files found");
                 [self.detailViewController setPreViewItem:item master:self];
                 return;
             }
             
-            // 创建并设置照片库视图控制器，使用推荐的初始化方法
+            // Create and setup photo gallery view controller using recommended initialization method
             SeafPhotoGalleryViewController *gallery = [[SeafPhotoGalleryViewController alloc] initWithPhotos:imageFiles
                                                                                                 currentItem:item
                                                                                                      master:self];
             
-            // 将画廊视图控制器包装在导航控制器中，并模态显示
+            // Wrap gallery view controller in navigation controller and present modally
             UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:gallery];
             navController.modalPresentationStyle = UIModalPresentationFullScreen;
             
@@ -760,7 +817,7 @@ enum {
     [_directory setDelegate:self];
     [self refreshView];
     
-    UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:directory target:self action:@selector(backButtonTapped)]];
+    UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:directory title:nil target:self action:@selector(backButtonTapped)]];
     self.navigationItem.leftBarButtonItem = customBarButton;
     
     self.state = STATE_LOADING;
@@ -884,8 +941,8 @@ enum {
     NSMutableArray *seafThumbs = [NSMutableArray array];
 
     for (id entry in self.allItems) {
-        if ([entry conformsToProtocol:@protocol(SeafPreView)]
-            && [(id<SeafPreView>)entry isImageFile]) {
+        if ([entry isKindOfClass:[SeafFile class]]
+            && [(SeafFile *)entry isImageFile]) {
             id<SeafPreView> file = entry;
             [file setDelegate:self];
             [seafPhotos addObject:[[SeafPhoto alloc] initWithSeafPreviewIem:entry]];
@@ -1043,7 +1100,7 @@ enum {
     // Restore original title
     self.customTitleLabel.text = self.directory.name;
     
-    UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:self.directory target:self action:@selector(backButtonTapped)]];
+    UIBarButtonItem *customBarButton = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:self.directory title:nil target:self action:@selector(backButtonTapped)]];
     self.navigationItem.leftBarButtonItem = customBarButton;
 }
 
@@ -1501,18 +1558,11 @@ enum {
     });
 }
 
-- (BOOL)isCurrentFileImage:(id<SeafPreView>)item
-{
-    if (![item conformsToProtocol:@protocol(SeafPreView)])
-        return NO;
-    return item.isImageFile;
-}
-
 - (NSArray *)getCurrentFileImagesInTableView:(UITableView *)tableView {
     NSMutableArray *images = [NSMutableArray array];
     
     for (id entry in self.allItems) {
-        if ([entry conformsToProtocol:@protocol(SeafPreView)] && [(id<SeafPreView>)entry isImageFile]) {
+        if ([entry isKindOfClass:[SeafFile class]] && [(SeafFile *)entry isImageFile]) {
             [images addObject:entry];
         }
     }
@@ -2373,6 +2423,29 @@ enum {
         }
         self.state = STATE_INIT;
     }
+
+    /* Auto-play the video once it has been downloaded */
+    if ([entry isKindOfClass:[SeafFile class]]) {
+        SeafFile *videoFileTmp = (SeafFile *)entry;
+        if (videoFileTmp == self.pendingVideoFile && [videoFileTmp isVideoFile] && videoFileTmp.hasCache) {
+            // Reset pending flag first
+            self.pendingVideoFile = nil;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                void (^presentPlayer)(void) = ^{
+                    [SeafVideoPlayerViewController closeActiveVideoPlayer];
+                    SeafVideoPlayerViewController *playerVC = [[SeafVideoPlayerViewController alloc] initWithFile:videoFileTmp];
+                    [self presentViewController:playerVC animated:YES completion:nil];
+                };
+                if (self.presentedViewController) {
+                    [self dismissViewControllerAnimated:NO completion:presentPlayer];
+                } else if (self.detailViewController.presentedViewController) {
+                    [self.detailViewController dismissViewControllerAnimated:NO completion:presentPlayer];
+                } else {
+                    presentPlayer();
+                }
+            });
+        }
+    }
 }
 
 - (BOOL)checkIsEditedFileUploading:(SeafDir *)entry {
@@ -2461,6 +2534,10 @@ enum {
         }
         self.state = STATE_INIT;
         [self dismissLoadingView];
+    }
+
+    if (entry == self.pendingVideoFile) {
+        self.pendingVideoFile = nil; // Clear pending flag on failure
     }
 }
 

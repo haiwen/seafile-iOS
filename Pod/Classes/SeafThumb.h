@@ -22,5 +22,6 @@
  * @return An initialized SeafThumb object or nil if an object could not be created for some reason.
  */
 - (id)initWithSeafFile:(SeafFile *)file;
+- (void)cancel;
 
 @end
