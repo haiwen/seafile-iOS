@@ -7,6 +7,7 @@
 #import "SeafCacheManager+Thumb.h"
 #import <AVFoundation/AVFoundation.h>
 #import <MediaPlayer/MediaPlayer.h>
+#import <CoreMedia/CMMetadata.h>
 
 // For KVO context
 static void *SeafPlayerItemStatusContext = &SeafPlayerItemStatusContext;
@@ -65,37 +66,6 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
     [self setupApplicationLifecycleObservers];
 }
 
-- (void)loadVideoThumbnail {
-    // Try to get video thumbnail
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        // First try to get existing thumbnail
-        UIImage *thumb = [[SeafCacheManager sharedManager] thumbForFile:self.file];
-        
-        if (!thumb) {
-            // If no thumbnail, try to get file icon
-            thumb = [[SeafCacheManager sharedManager] iconForFile:self.file];
-        }
-        
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (thumb) {
-                self.videoThumbnail = thumb;
-                Debug(@"Video thumbnail loaded successfully");
-                // If player is ready, immediately update Now Playing info
-                if (self.player && self.playerItem) {
-                    [self updateNowPlayingInfo];
-                }
-            } else {
-                Debug(@"No thumbnail available for video file");
-                // Use file's default icon
-                self.videoThumbnail = [self.file icon];
-                if (self.player && self.playerItem) {
-                    [self updateNowPlayingInfo];
-                }
-            }
-        });
-    });
-}
-
 - (void)setupApplicationLifecycleObservers {
     // Listen for application become active events
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -122,6 +92,37 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
     if (self.player && self.playerItem && self.player.rate > 0) {
         [self forceActivateNowPlayingInfo];
     }
+}
+
+- (void)loadVideoThumbnail {
+    // Try to get video thumbnail
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        // First try to get existing thumbnail
+        UIImage *thumb = [[SeafCacheManager sharedManager] thumbForFile:self.file];
+        
+        if (!thumb) {
+            // If no thumbnail, try to get file icon
+            thumb = [[SeafCacheManager sharedManager] iconForFile:self.file];
+        }
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (thumb) {
+                self.videoThumbnail = thumb;
+                Debug(@"Video thumbnail loaded successfully");
+                // If player is ready, immediately update Now Playing info
+                if (self.player && self.playerItem) {
+                    [self updateMetadataForPlayerItem];
+                }
+            } else {
+                Debug(@"No thumbnail available for video file");
+                // Use file's default icon
+                self.videoThumbnail = [self.file icon];
+                if (self.player && self.playerItem) {
+                    [self updateMetadataForPlayerItem];
+                }
+            }
+        });
+    });
 }
 
 - (void)viewDidLayoutSubviews {
@@ -160,7 +161,17 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
         }
     }
     
-    // Activate audio session
+    // Register for audio session interruption notifications so we can resume playback
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(handleAudioSessionInterruption:)
+                                                 name:AVAudioSessionInterruptionNotification
+                                               object:audioSession];
+
+    // Observe route change as well for debugging purposes
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(handleAudioSessionRouteChange:)
+                                                 name:AVAudioSessionRouteChangeNotification
+                                               object:audioSession];
     error = nil;
     success = [audioSession setActive:YES error:&error];
     if (!success || error) {
@@ -177,8 +188,49 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
     Debug(@"Audio session setup complete for video playback");
 }
 
+#pragma mark - Audio session interruption
+
+- (void)handleAudioSessionInterruption:(NSNotification *)notification {
+    NSDictionary *info = notification.userInfo;
+    AVAudioSessionInterruptionType type = [info[AVAudioSessionInterruptionTypeKey] unsignedIntegerValue];
+
+    if (type == AVAudioSessionInterruptionTypeEnded) {
+        AVAudioSessionInterruptionOptions options = [info[AVAudioSessionInterruptionOptionKey] unsignedIntegerValue];
+
+        Debug(@"Audio session interruption ended. options=%lu, player.rate=%f", (unsigned long)options, self.player.rate);
+
+        if (options & AVAudioSessionInterruptionOptionShouldResume) {
+            // Reactivate audio session and resume playback if possible
+            NSError *err = nil;
+            [[AVAudioSession sharedInstance] setActive:YES error:&err];
+            if (err) {
+                Warning(@"Failed to reactivate audio session after interruption: %@", err);
+            }
+
+            if (self.player && self.player.rate == 0) {
+                Debug(@"Resuming player after interruption");
+                [self.player play];
+            }
+        }
+    } else if (type == AVAudioSessionInterruptionTypeBegan) {
+        Debug(@"Audio session interruption began. player.rate=%f", self.player.rate);
+    }
+}
+
+#pragma mark - Audio session route change (debug)
+
+- (void)handleAudioSessionRouteChange:(NSNotification *)notification {
+    NSDictionary *info = notification.userInfo;
+    AVAudioSessionRouteChangeReason reason = [info[AVAudioSessionRouteChangeReasonKey] unsignedIntegerValue];
+    Debug(@"Audio session route changed. reason=%lu", (unsigned long)reason);
+}
+
 - (void)setupPlayerViewController {
     self.playerViewController = [[AVPlayerViewController alloc] init];
+    // Ensure the player view controller automatically updates the Now Playing info center
+    if (@available(iOS 10.0, *)) {
+        self.playerViewController.updatesNowPlayingInfoCenter = YES;
+    }
     [self addChildViewController:self.playerViewController];
     [self.view addSubview:self.playerViewController.view];
     [self.playerViewController didMoveToParentViewController:self];
@@ -243,26 +295,20 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
 
     self.player = [AVPlayer playerWithPlayerItem:playerItem];
     self.player.automaticallyWaitsToMinimizeStalling = YES;
+    if (@available(iOS 15.0, *)) {
+        self.player.audiovisualBackgroundPlaybackPolicy = AVPlayerAudiovisualBackgroundPlaybackPolicyContinuesIfPossible;
+    }
     self.playerViewController.player = self.player;
     
-    // Immediately set initial Now Playing info (even if player isn't fully ready)
-    [self updateNowPlayingInfo];
+    // Add metadata so the system automatically updates Now Playing info
+    [self updateMetadataForPlayerItem];
     
     [self.playerViewController.player play];
-    
-    // Add playback status listeners
-    [self addPlayerObservers];
 }
 
 - (void)addPlayerObservers {
     // Listen for playback rate changes (play/pause)
     [self.player addObserver:self forKeyPath:@"rate" options:NSKeyValueObservingOptionNew context:nil];
-    
-    // Periodically update playback info
-    __weak typeof(self) weakSelf = self;
-    self.periodicTimeObserver = [self.player addPeriodicTimeObserverForInterval:CMTimeMake(1, 1) queue:dispatch_get_main_queue() usingBlock:^(CMTime time) {
-        [weakSelf updateNowPlayingInfo];
-    }];
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context
@@ -281,17 +327,11 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
                 Debug(@"AVPlayerItem is ready to play.");
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [SVProgressHUD dismiss];
-                    // Force activate Now Playing info after video is ready
-                    [self forceActivateNowPlayingInfo];
+                    // Metadata already set; system will handle Now Playing info.
                 });
             }
         }
-    } else if ([keyPath isEqualToString:@"rate"]) {
-        // Update control center info when playback state changes
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self updateNowPlayingInfo];
-        });
-    } else {
+    }else {
         [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
     }
 }
@@ -349,14 +389,14 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
     // Enable skip commands (optional)
     [commandCenter.skipForwardCommand setEnabled:YES];
     [commandCenter.skipBackwardCommand setEnabled:YES];
-    commandCenter.skipForwardCommand.preferredIntervals = @[@15];
-    commandCenter.skipBackwardCommand.preferredIntervals = @[@15];
-
+    commandCenter.skipForwardCommand.preferredIntervals = @[@10];
+    commandCenter.skipBackwardCommand.preferredIntervals = @[@10];
+    
     [commandCenter.skipForwardCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) return MPRemoteCommandHandlerStatusCommandFailed;
         CMTime currentTime = strongSelf.player.currentTime;
-        CMTime newTime = CMTimeAdd(currentTime, CMTimeMakeWithSeconds(15, NSEC_PER_SEC));
+        CMTime newTime = CMTimeAdd(currentTime, CMTimeMakeWithSeconds(10, NSEC_PER_SEC));
         [strongSelf.player seekToTime:newTime];
         return MPRemoteCommandHandlerStatusSuccess;
     }];
@@ -365,104 +405,15 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) return MPRemoteCommandHandlerStatusCommandFailed;
         CMTime currentTime = strongSelf.player.currentTime;
-        CMTime newTime = CMTimeSubtract(currentTime, CMTimeMakeWithSeconds(15, NSEC_PER_SEC));
+        CMTime newTime = CMTimeSubtract(currentTime, CMTimeMakeWithSeconds(10, NSEC_PER_SEC));
         [strongSelf.player seekToTime:newTime];
         return MPRemoteCommandHandlerStatusSuccess;
     }];
 }
 
-- (void)updateNowPlayingInfo {
-    if (!self.player || !self.playerItem) return;
-    
-    NSMutableDictionary *nowPlayingInfo = [NSMutableDictionary dictionary];
-    
-    // Set media title
-    nowPlayingInfo[MPMediaItemPropertyTitle] = self.file.name ?: @"Video";
-    
-    // Set media type to video
-    nowPlayingInfo[MPMediaItemPropertyMediaType] = @(MPMediaTypeAnyVideo);
-    
-    // Set app name as artist
-    nowPlayingInfo[MPMediaItemPropertyArtist] = @"Seafile";
-    
-    // Set album name (optional)
-    nowPlayingInfo[MPMediaItemPropertyAlbumTitle] = @"Seafile Videos";
-    
-    // Set video thumbnail as album artwork
-    if (self.videoThumbnail) {
-        UIImage *artworkImage = self.videoThumbnail;
-        MPMediaItemArtwork *artwork = [[MPMediaItemArtwork alloc] initWithBoundsSize:artworkImage.size requestHandler:^UIImage * _Nonnull(CGSize requestedSize) {
-            // Scale if requested size differs significantly from original
-            if (requestedSize.width > 0 && requestedSize.height > 0) {
-                CGSize originalSize = artworkImage.size;
-                if (originalSize.width <= 0 || originalSize.height <= 0) {
-                    return artworkImage;
-                }
-                CGFloat aspectRatio = originalSize.width / originalSize.height;
-                CGFloat requestedAspectRatio = requestedSize.width / requestedSize.height;
-                
-                // Return original if size difference is small
-                if (fabs(aspectRatio - requestedAspectRatio) < 0.1 && 
-                    fabs(originalSize.width - requestedSize.width) < 100) {
-                    return artworkImage;
-                }
-                
-                // Otherwise perform proportional scaling
-                CGSize targetSize = requestedSize;
-                if (aspectRatio > requestedAspectRatio) {
-                    // Original is wider, scale based on width
-                    targetSize.height = requestedSize.width / aspectRatio;
-                } else {
-                    // Original is taller, scale based on height
-                    targetSize.width = requestedSize.height * aspectRatio;
-                }
-                
-                UIGraphicsBeginImageContextWithOptions(targetSize, NO, 0.0);
-                [artworkImage drawInRect:CGRectMake(0, 0, targetSize.width, targetSize.height)];
-                UIImage *scaledImage = UIGraphicsGetImageFromCurrentImageContext();
-                UIGraphicsEndImageContext();
-                
-                return scaledImage ?: artworkImage;
-            }
-            return artworkImage;
-        }];
-        nowPlayingInfo[MPMediaItemPropertyArtwork] = artwork;
-        Debug(@"Set video thumbnail as album artwork");
-    }
-    
-    // Set duration
-    if (CMTIME_IS_VALID(self.playerItem.duration) && !CMTIME_IS_INDEFINITE(self.playerItem.duration)) {
-        Float64 duration = CMTimeGetSeconds(self.playerItem.duration);
-        if (duration > 0) {
-            nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = @(duration);
-        }
-    }
-    
-    // Set current playback time
-    if (CMTIME_IS_VALID(self.player.currentTime)) {
-        Float64 currentTime = CMTimeGetSeconds(self.player.currentTime);
-        nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = @(currentTime);
-    }
-    
-    // Set playback rate
-    nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = @(self.player.rate);
-    
-    // Set default playback rate (important: tells system this is controllable media)
-    nowPlayingInfo[MPNowPlayingInfoPropertyDefaultPlaybackRate] = @(1.0);
-    
-    // Update control center info
-    [[MPNowPlayingInfoCenter defaultCenter] setNowPlayingInfo:nowPlayingInfo];
-    
-    Debug(@"Updated Now Playing Info with %@artwork: %@", self.videoThumbnail ? @"" : @"no ", nowPlayingInfo);
-}
-
 - (void)forceActivateNowPlayingInfo {
     // Force activate Now Playing info to ensure lock screen controls display
     dispatch_async(dispatch_get_main_queue(), ^{
-        // Clear first, then set, ensuring system receives the update
-        [[MPNowPlayingInfoCenter defaultCenter] setNowPlayingInfo:nil];
-        [self updateNowPlayingInfo];
-        
         // Ensure audio session is active
         NSError *error = nil;
         [[AVAudioSession sharedInstance] setActive:YES error:&error];
@@ -528,13 +479,13 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
 }
 
 - (void)cleanupObservers {
-    if (_player) {
-        @try {
-            [_player removeObserver:self forKeyPath:@"rate"];
-        } @catch (NSException *exception) {
-            Debug(@"Exception while removing rate observer: %@", exception);
-        }
-    }
+//    if (_player) {
+//        @try {
+//            [_player removeObserver:self forKeyPath:@"rate"];
+//        } @catch (NSException *exception) {
+//            Debug(@"Exception while removing rate observer: %@", exception);
+//        }
+//    }
     
     if (_playerItem) {
         @try {
@@ -577,6 +528,42 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
 
 - (BOOL)prefersStatusBarHidden {
     return YES;
+}
+
+#pragma mark - AVPlayerItem Metadata Helper
+
+- (void)updateMetadataForPlayerItem {
+    if (!self.playerItem) return;
+
+    NSMutableArray<AVMetadataItem *> *metadataItems = [NSMutableArray array];
+
+    // Title
+    AVMutableMetadataItem *titleItem = [[AVMutableMetadataItem alloc] init];
+    titleItem.identifier = AVMetadataCommonIdentifierTitle;
+    titleItem.keySpace = AVMetadataKeySpaceCommon;
+    titleItem.value = self.file.name ?: @"Video";
+    titleItem.extendedLanguageTag = @"und"; // undefined language
+    [metadataItems addObject:titleItem];
+
+    // Artwork (thumbnail) if available
+    if (self.videoThumbnail) {
+        NSData *imageData = UIImagePNGRepresentation(self.videoThumbnail);
+        if (!imageData) {
+            imageData = UIImageJPEGRepresentation(self.videoThumbnail, 0.9);
+        }
+        if (imageData) {
+            AVMutableMetadataItem *artworkItem = [[AVMutableMetadataItem alloc] init];
+            artworkItem.identifier = AVMetadataCommonIdentifierArtwork;
+            artworkItem.keySpace = AVMetadataKeySpaceCommon;
+            artworkItem.value = imageData;
+            artworkItem.dataType = (__bridge NSString *)kCMMetadataBaseDataType_PNG;
+            [metadataItems addObject:artworkItem];
+        }
+    }
+
+    // Assign to player item. This replaces any existing external metadata we may have set earlier.
+    self.playerItem.externalMetadata = metadataItems;
+
 }
 
 @end 
