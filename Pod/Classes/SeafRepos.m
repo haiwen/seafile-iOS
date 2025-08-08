@@ -379,6 +379,12 @@
     for (NSDictionary *repoInfo in repoArray) {
         NSString *repoName = repoInfo[@"repo_name"];
         if (!repoName || repoName == (id)[NSNull null]) continue;
+        // Determine repository modification time: prefer ISO last_modified, fallback to legacy mtime
+        long long repoMtime = [SeafDateFormatter timestampFromLastModified:repoInfo[@"last_modified"]];
+        if (repoMtime == 0) {
+            repoMtime = [[repoInfo objectForKey:@"mtime"] integerValue:0];
+        }
+
         SeafRepo *newRepo = [[SeafRepo alloc]
                              initWithConnection:self.connection
                              oid:@""
@@ -390,7 +396,7 @@
                              repoType:[repoInfo objectForKey:@"type"]
                              perm:[repoInfo objectForKey:@"permission"]
                              size:[[repoInfo objectForKey:@"size"] integerValue:0]
-                             mtime:[SeafDateFormatter timestampFromLastModified:repoInfo[@"last_modified"]]
+                              mtime:repoMtime
                              encrypted:[repoInfo[@"encrypted"] boolValue]
                              ownerNickName:[repoInfo objectForKey:@"owner_name"]
                              groupName:[repoInfo objectForKey:@"group_name"]
