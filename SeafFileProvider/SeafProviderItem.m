@@ -127,9 +127,28 @@
 -(NSDate *)contentModificationDate
 {
     SeafBase *obj = [_item toSeafObj];
+    long long mtimeValue = 0;
     if (obj && [obj isKindOfClass:[SeafFile class]]) {
-        return [NSDate dateWithTimeIntervalSince1970:[(SeafFile *)obj mtime]];
+        mtimeValue = [(SeafFile *)obj mtime];
+    } else if (obj && [obj isKindOfClass:[SeafDir class]]) {
+        mtimeValue = [(SeafDir *)obj mtime];
+        // Special handling for account root (repositories container):
+        // If its own mtime is 0, try to derive from contained repos.
+        if (mtimeValue == 0 && [obj isKindOfClass:[SeafRepos class]]) {
+            SeafRepos *reposContainer = (SeafRepos *)obj;
+            long long latestRepoMtime = 0;
+            for (SeafBase *sub in reposContainer.items) {
+                if ([sub isKindOfClass:[SeafRepo class]]) {
+                    long long repoMtime = ((SeafRepo *)sub).mtime;
+                    if (repoMtime > latestRepoMtime) latestRepoMtime = repoMtime;
+                }
+            }
+            if (latestRepoMtime > 0) {
+                mtimeValue = latestRepoMtime;
+            }
+        }
     }
+    if (mtimeValue > 0) return [NSDate dateWithTimeIntervalSince1970:mtimeValue];
     return nil;
 }
 -(NSNumber *)documentSize
