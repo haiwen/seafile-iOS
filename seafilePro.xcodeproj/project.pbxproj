@@ -106,6 +106,9 @@
 		BA38EEE92DD1A80F00EF10E2 /* SeafPGThumbnailCell.m in Sources */ = {isa = PBXBuildFile; fileRef = BA38EEE62DD1A80F00EF10E2 /* SeafPGThumbnailCell.m */; };
 		BA38EEEA2DD1A80F00EF10E2 /* SeafPGThumbnailCellViewModel.m in Sources */ = {isa = PBXBuildFile; fileRef = BA38EEE82DD1A80F00EF10E2 /* SeafPGThumbnailCellViewModel.m */; };
 		BA38EEED2DD1F0E900EF10E2 /* SeafPhotoInfoView.m in Sources */ = {isa = PBXBuildFile; fileRef = BA38EEEC2DD1F0E900EF10E2 /* SeafPhotoInfoView.m */; };
+		BA4953B92E45CAC000F081C7 /* SeafAccountCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F521116A21E1BEE800D93BB8 /* SeafAccountCell.xib */; };
+		BA4953BA2E45CAC000F081C7 /* SeafAccountCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F521116A21E1BEE800D93BB8 /* SeafAccountCell.xib */; };
+		BA4953BB2E45CAC000F081C7 /* SeafAccountCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F521116A21E1BEE800D93BB8 /* SeafAccountCell.xib */; };
 		BA6CDB342DF7DEE80023AF29 /* SeafBackupGuideViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BA6CDB332DF7DEE80023AF29 /* SeafBackupGuideViewController.m */; };
 		BA6CDB372DF812750023AF29 /* SeafBackupDirViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BA6CDB362DF812750023AF29 /* SeafBackupDirViewController.m */; };
 		BA6CDB3B2DF8232D0023AF29 /* backupGuide_page2.png in Resources */ = {isa = PBXBuildFile; fileRef = BA6CDB392DF8232D0023AF29 /* backupGuide_page2.png */; };
@@ -2214,6 +2217,7 @@
 				F521118621E1C12000D93BB8 /* SeafTextEditorViewController_iPad.xib in Resources */,
 				F5DF75FB24FE83DC004CAB1E /* share2@2x.png in Resources */,
 				F521119F21E1C12000D93BB8 /* FolderView_iPhone.storyboard in Resources */,
+				BA4953B92E45CAC000F081C7 /* SeafAccountCell.xib in Resources */,
 				F521119A21E1C12000D93BB8 /* SeafAccountViewController_iPhone.xib in Resources */,
 				F5DF755F24FE83DB004CAB1E /* download_waiting.png in Resources */,
 				F5DF760724FE83DC004CAB1E /* arrowleft2@2x.png in Resources */,
@@ -2321,6 +2325,7 @@
 				F5DF757224FE83DB004CAB1E /* checkmask2@2x.png in Resources */,
 				F52111D221E1C12000D93BB8 /* FolderView_iPad.storyboard in Resources */,
 				BAEF7EC12DE9B28C0066746A /* icon_eye_close@2x.png in Resources */,
+				BA4953BA2E45CAC000F081C7 /* SeafAccountCell.xib in Resources */,
 				BAEF7EC22DE9B28C0066746A /* icon_eye_open@2x.png in Resources */,
 				F521118C21E1C12000D93BB8 /* SeafStart.storyboard in Resources */,
 				58AC97DA1FC3920500A7518C /* Settings.bundle in Resources */,
@@ -2555,6 +2560,7 @@
 				F5DF761D24FE83DC004CAB1E /* arrowright2@2x.png in Resources */,
 				F5DF74F724FE83DB004CAB1E /* delete2.png in Resources */,
 				F5DF750324FE83DB004CAB1E /* tab-account.png in Resources */,
+				BA4953BB2E45CAC000F081C7 /* SeafAccountCell.xib in Resources */,
 				F5DF74D324FE83DB004CAB1E /* Localizable.strings in Resources */,
 				F5DF75C324FE83DB004CAB1E /* arrowright2.png in Resources */,
 				F5DF74EB24FE83DB004CAB1E /* share2.png in Resources */,
