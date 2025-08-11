@@ -43,9 +43,16 @@
         self.navigationController.navigationBar.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
     }
     // Custom navigation layout: arrow + title aligned to the left
-    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:nil title:NSLocalizedString(@"请选择一个账户", @"Seafile") target:self action:@selector(cancel:)]];
+    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:nil title:NSLocalizedString(@"Select an account", @"Seafile") target:self action:@selector(cancel:)]];
     self.navigationItem.title = @"";
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
+    
+    // Widen share UI on iPad to better utilize available space
+    if (IsIpad()) {
+        CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
+        CGFloat preferredWidth = MIN(ceil(screenWidth * 0.75f), 800.0f);
+        [self setPreferredContentSize:CGSizeMake(preferredWidth, 540.0f)];
+    }
     
     [SeafGlobal.sharedObject loadAccounts];
     if (SeafGlobal.sharedObject.conns.count == 0) {
