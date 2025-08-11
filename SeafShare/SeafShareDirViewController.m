@@ -108,9 +108,9 @@
         self.createButton = [[UIBarButtonItem alloc] initWithCustomView:addBtn];
         self.navigationController.toolbarHidden = true;
         
-        // Create custom text button "确定"
+        // Create custom text button "OK"
         UIButton *saveBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-        [saveBtn setTitle:NSLocalizedString(@"确定", @"Seafile") forState:UIControlStateNormal];
+        [saveBtn setTitle:NSLocalizedString(@"OK", @"Seafile") forState:UIControlStateNormal];
         saveBtn.titleLabel.font = [UIFont systemFontOfSize:18 weight:UIFontWeightSemibold];
         [saveBtn setTitleColor:[UIColor labelColor] forState:UIControlStateNormal];
         saveBtn.translatesAutoresizingMaskIntoConstraints = NO;
@@ -417,7 +417,7 @@
 
 - (void)setupNavigationItems {
     if ([_directory isKindOfClass:[SeafRepos class]]) {
-        NSString *title = NSLocalizedString(@"保存到Seafile", @"Seafile");
+        NSString *title = NSLocalizedString(@"Save to Seafile", @"Seafile");
         self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:nil title:title target:self action:@selector(backAction)]];
     } else {
         self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:_directory title:nil target:self action:@selector(backAction)]];
