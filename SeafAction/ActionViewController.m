@@ -40,7 +40,10 @@
     }
 
     if (IsIpad()) {
-        [self setPreferredContentSize:CGSizeMake(480.0f, 540.0f)];
+        CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
+        // Use up to 75% of screen width on iPad, capped at 800pt
+        CGFloat preferredWidth = MIN(ceil(screenWidth * 0.75f), 800.0f);
+        [self setPreferredContentSize:CGSizeMake(preferredWidth, 540.0f)];
     }
 
     [SeafGlobal.sharedObject loadAccounts];
@@ -51,10 +54,10 @@
         self.edgesForExtendedLayout = UIRectEdgeAll;
 
     // Custom navigation layout: arrow + title aligned to the left
-    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:nil title:NSLocalizedString(@"请选择一个账户", @"Seafile") target:self action:@selector(cancel:)]];
+    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:[SeafNavLeftItem navLeftItemWithDirectory:nil title:NSLocalizedString(@"Please select an account", @"Seafile") target:self action:@selector(cancel:)]];
     self.navigationItem.title = @"";
 
-    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"账户列表", @"Seafile")
+    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Accounts", @"Seafile")
                                                                              style:UIBarButtonItemStylePlain
                                                                             target:nil
                                                                             action:nil];

@@ -54,7 +54,9 @@
     }
     
     if (IsIpad()) {
-        [self setPreferredContentSize:CGSizeMake(480.0f, 540.0f)];
+        CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
+        CGFloat preferredWidth = MIN(ceil(screenWidth * 0.75f), 800.0f);
+        [self setPreferredContentSize:CGSizeMake(preferredWidth, 540.0f)];
     }
     
     self.navigationItem.title = NSLocalizedString(@"Save to Seafile", @"Seafile");
