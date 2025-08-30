@@ -492,6 +492,24 @@ enum {
                return;
            }
            
+           // In encrypted libraries, skip the prompt and directly download, then auto-play
+           if ([self.connection isEncrypted:self.directory.repoId]) {
+               self.pendingVideoFile = file;
+               [self.detailViewController setPreViewItem:item master:self];
+               if (self.detailViewController.state == PREVIEW_QL_MODAL) {
+                   [self.detailViewController.qlViewController reloadData];
+                   if (IsIpad()) {
+                       [[[SeafAppDelegate topViewController] parentViewController] presentViewController:self.detailViewController.qlViewController animated:YES completion:nil];
+                   } else {
+                       [self presentViewController:self.detailViewController.qlViewController animated:YES completion:nil];
+                   }
+               } else if (!IsIpad()) {
+                   SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+                   [appdelegate showDetailView:self.detailViewController];
+               }
+               return;
+           }
+           
            // Show selection menu when not cached
            // Use custom SeafActionSheet style
            NSArray *titles = @[NSLocalizedString(@"Play", @"Seafile"), NSLocalizedString(@"Download", @"Seafile")];

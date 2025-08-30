@@ -22,6 +22,7 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
 @property (strong, nonatomic) AVPlayer *player;
 @property (strong, nonatomic) id periodicTimeObserver;
 @property (strong, nonatomic) UIImage *videoThumbnail;
+@property (strong, nonatomic) UIActivityIndicatorView *loadingIndicator;
 @end
 
 @implementation SeafVideoPlayerViewController
@@ -60,6 +61,7 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
     self.view.backgroundColor = [UIColor blackColor];
     [self setupAudioSession];
     [self setupPlayerViewController];
+    [self setupLoadingIndicator];
     [self loadVideoThumbnail];
     [self startPlayback];
     [self setupRemoteCommandCenter];
@@ -128,6 +130,43 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
     self.playerViewController.view.frame = self.view.bounds;
+}
+
+#pragma mark - Loading Indicator
+
+- (void)setupLoadingIndicator {
+    if (self.loadingIndicator) return;
+    UIActivityIndicatorView *indicator;
+    if (@available(iOS 13.0, *)) {
+        indicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleLarge];
+        indicator.color = [UIColor whiteColor];
+    } else {
+        indicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+    }
+    indicator.hidesWhenStopped = YES;
+    indicator.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.view addSubview:indicator];
+    [NSLayoutConstraint activateConstraints:@[
+        [indicator.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
+        [indicator.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor]
+    ]];
+    self.loadingIndicator = indicator;
+}
+
+- (void)startLoadingIndicator {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (!self.loadingIndicator) {
+            [self setupLoadingIndicator];
+        }
+        [self.view bringSubviewToFront:self.loadingIndicator];
+        [self.loadingIndicator startAnimating];
+    });
+}
+
+- (void)stopLoadingIndicator {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.loadingIndicator stopAnimating];
+    });
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
@@ -242,8 +281,6 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
 }
 
 - (void)startPlayback {
-    [SVProgressHUD show];
-
     if ([self.file hasCache]) {
         NSURL *localURL = [self.file exportURL];
         if (localURL && [[NSFileManager defaultManager] fileExistsAtPath:localURL.path]) {
@@ -253,6 +290,9 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
             return;
         }
     }
+
+    // Streaming from remote (non-encrypted library): show loading indicator
+    [self startLoadingIndicator];
 
     [self.file.connection getFileDownloadLink:self.file.repoId
                                          path:self.file.path
@@ -266,6 +306,7 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
         }
 
         if (!dlink || dlink.length == 0) {
+            [self stopLoadingIndicator];
             [self showErrorAndDismiss:NSLocalizedString(@"Failed to get video link", @"Seafile")];
             Warning(@"Failed to get video link: dlink is nil or empty");
             return;
@@ -285,6 +326,7 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
         [self setupPlayerWithItem:self.playerItem];
 
     } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
+        [self stopLoadingIndicator];
         [self showErrorAndDismiss:NSLocalizedString(@"Failed to get video link", @"Seafile")];
         Warning(@"Failed to get video link. Error: %@, Response: %@", error, JSON);
     }];
@@ -319,14 +361,14 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
             if (playerItem.status == AVPlayerItemStatusFailed) {
                 Warning(@"AVPlayerItem failed to play. Error: %@", playerItem.error);
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    [SVProgressHUD dismiss];
+                    [self stopLoadingIndicator];
                     NSString *errorMsg = playerItem.error.localizedDescription ?: NSLocalizedString(@"Failed to play video", @"Seafile");
                     [self showErrorAndDismiss:errorMsg];
                 });
             } else if (playerItem.status == AVPlayerItemStatusReadyToPlay) {
                 Debug(@"AVPlayerItem is ready to play.");
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    [SVProgressHUD dismiss];
+                    [self stopLoadingIndicator];
                     // Metadata already set; system will handle Now Playing info.
                 });
             }
@@ -440,6 +482,9 @@ static SeafVideoPlayerViewController *activeVideoPlayer = nil;
         [self.player pause];
         self.player = nil;
     }
+
+    // Stop loading indicator if any
+    [self stopLoadingIndicator];
     
     // Cleanup remote command center
     [self cleanupRemoteCommandCenter];
