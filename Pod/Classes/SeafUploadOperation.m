@@ -103,18 +103,8 @@
     NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:self.uploadFile.lpath error:nil];
     self.uploadFile.model.filesize = attrs.fileSize;
     
-    if (self.uploadFile.filesize > LARGE_FILE_SIZE) {
-        Debug("Upload large file %@ by block: %lld", self.uploadFile.name, self.uploadFile.filesize);
-        [self uploadLargeFileByBlocks:repo path:uploadpath];
-        return;
-    }
-    
-    BOOL byblock = [connection shouldLocalDecrypt:repo.repoId];
-    if (byblock) {
-        Debug("Upload with local decryption %@ by block: %lld", self.uploadFile.name, self.uploadFile.filesize);
-        [self uploadLargeFileByBlocks:repo path:uploadpath];
-        return;
-    }
+    // Force non-chunked upload path regardless of file size or local decryption setting
+    Debug("Chunked upload disabled. Uploading file %@ as single request (size=%lld)", self.uploadFile.name, self.uploadFile.filesize);
     
     NSString *uploadURL = [NSString stringWithFormat:API_URL"/repos/%@/upload-link/?p=%@", repoId, uploadpath.escapedUrl];
     
