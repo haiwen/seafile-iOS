@@ -27,6 +27,7 @@
 #import <SafariServices/SafariServices.h>
 #import "SeafDataTaskManager.h"
 #import "SeafNavigationBarStyler.h"
+#import "SeafSdocWebViewController.h"
 
 extern NSString * const AFNetworkingOperationFailingURLResponseErrorKey;
 
@@ -331,8 +332,23 @@ enum SHARE_STATUS {
             if ([self.preViewItem isKindOfClass:[SeafFile class]]) {
                 SeafFile *sFile = (SeafFile *)self.preViewItem;
                 if ([sFile isWebOpenFile]) {
+                    if ([sFile.mime isEqualToString:@"application/sdoc"]) {
+                        NSString *routeUrl = [sFile getWebViewURLString];
+                        Debug(@"[SDOC] route to SeafSdocWebViewController, mime=%@ url=%@", sFile.mime, routeUrl);
+                        SeafSdocWebViewController *vc = [[SeafSdocWebViewController alloc] initWithFile:sFile fileName:self.preViewItem.previewItemTitle];
+                        if (IsIpad()) {
+                            SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+                            [appdelegate showDetailView:vc];
+                            Debug(@"[SDOC] presented SeafSdocWebViewController fullscreen on iPad");
+                        } else {
+                            [self.navigationController pushViewController:vc animated:YES];
+                            Debug(@"[SDOC] pushed SeafSdocWebViewController");
+                        }
+                        return;
+                    }
                     NSString *webViewURLString = [sFile getWebViewURLString];
 
+                    Debug(@"[WEBOPEN] load in WKWebView url=%@", webViewURLString);
                     NSURLRequest *urlRequest = [sFile.connection buildRequest:webViewURLString method:@"GET" form:nil];
                     [self.webView loadRequest:urlRequest];
                 } else {

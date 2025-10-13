@@ -17,6 +17,7 @@
 #import "SeafUploadFileModel.h"
 #import "SeafFile.h"
 #import "SeafThumb.h"
+#import "Version.h"
 
 @interface SeafDataTaskManager()
 
@@ -119,6 +120,67 @@
 
     SeafAccountTaskQueue *accountQueue = [self accountQueueForConnection:thumb.file.connection];
     [accountQueue addThumbTask:thumb];
+}
+
+#pragma mark - Comment Image Tasks
+
+- (NSOperation *)addCommentImageDownload:(NSString *)url
+                               connection:(SeafConnection *)conn
+                               completion:(void(^)(UIImage * _Nullable image, NSString * _Nonnull url))completion
+{
+    if (url.length == 0 || !conn) return nil;
+    if (!self.reachabilityManager.isReachable) {
+        Debug(@"[SeafDataTaskManager] Network unavailable for comment image %@", url);
+        if (completion) completion(nil, url);
+        return nil;
+    }
+    NSURL *u = [NSURL URLWithString:url];
+    if (!u) { if (completion) completion(nil, url); return nil; }
+
+    NSMutableURLRequest *req = [NSMutableURLRequest requestWithURL:u cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:15.0];
+    if (conn.authorized && conn.token.length > 0) {
+        [req setValue:[NSString stringWithFormat:@"Token %@", conn.token] forHTTPHeaderField:@"Authorization"];
+        [req setValue:SEAFILE_VERSION forHTTPHeaderField:@"X-Seafile-Client-Version"];
+    }
+
+    NSBlockOperation *op = [NSBlockOperation new];
+    __weak NSBlockOperation *wop = op;
+    [op addExecutionBlock:^{
+        NSURLSessionConfiguration *cfg = [NSURLSessionConfiguration defaultSessionConfiguration];
+        cfg.timeoutIntervalForRequest = 15.0;
+        cfg.timeoutIntervalForResource = 30.0;
+        NSURLSession *session = [NSURLSession sessionWithConfiguration:cfg];
+        dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+        __block UIImage *img = nil;
+        NSURLSessionDataTask *task = [session dataTaskWithRequest:req completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+            if (!error && data.length > 0) {
+                img = [UIImage imageWithData:data];
+            }
+            dispatch_semaphore_signal(sema);
+            [session finishTasksAndInvalidate];
+        }];
+        [task resume];
+        // Wait until finished or cancelled
+        while (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(200 * NSEC_PER_MSEC))) != 0) {
+            NSBlockOperation *sop = wop;
+            if (!sop || sop.isCancelled) { [task cancel]; break; }
+        }
+        if (completion) {
+            dispatch_async(dispatch_get_main_queue(), ^{ completion(img, url); });
+        }
+    }];
+
+    // Enqueue into dedicated comment image queue
+    SeafAccountTaskQueue *accountQueue = [self accountQueueForConnection:conn];
+    [accountQueue.commentImageQueue addOperation:op];
+    return op;
+}
+
+- (void)cancelAllCommentImageDownloads:(SeafConnection *)conn
+{
+    SeafAccountTaskQueue *q = [self accountQueueForConnection:conn];
+    [q cancelAllCommentImageTasks];
+    Debug(@"[SeafDataTaskManager] cancelAllCommentImageDownloads for %@, remaining ops=%lu", conn.accountIdentifier, (unsigned long)q.commentImageQueue.operationCount);
 }
 
 - (void)removeThumbTaskFromAccountQueue:(SeafThumb * _Nonnull)thumb {

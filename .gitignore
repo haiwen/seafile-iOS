@@ -17,3 +17,6 @@ SeafAction/*.lproj
 # Ignore Claude configuration files
 .claude/
 CLAUDE.md
+
+# Ignore Android seadroid source directory
+seadroid-master/

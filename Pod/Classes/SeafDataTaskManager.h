@@ -62,4 +62,11 @@ typedef void(^DownLoadFinshBlock)(id<SeafTask>  _Nonnull task);
 
 - (void)removeUploadFileTaskInStorage:(SeafUploadFile *)ufile;
 
+// Comment image downloads via thumb queue
+- (NSOperation * _Nonnull)addCommentImageDownload:(NSString * _Nonnull)url
+                                       connection:(SeafConnection * _Nonnull)conn
+                                       completion:(void(^_Nonnull)(UIImage * _Nullable image, NSString * _Nonnull url))completion;
+
+- (void)cancelAllCommentImageDownloads:(SeafConnection * _Nonnull)conn;
+
 @end

@@ -11,6 +11,7 @@
 #import "AFNetworking.h"
 
 #import "SeafAppDelegate.h"
+#import <WebKit/WebKit.h>
 #import "SeafDataTaskManager.h"
 #import "SeafStorage.h"
 
@@ -82,6 +83,34 @@
             self.starredVC.connection = conn;
             self.settingVC.connection = conn;
             self.actvityVC.connection = conn;
+
+            // Clear web cookies for the target account host to avoid stale session after switching accounts
+            NSString *host = [NSURL URLWithString:conn.address].host;
+            if (host.length > 0) {
+                // 1) Persist a one-shot flag for WebViews created later to also clear once before first load
+                [[NSUserDefaults standardUserDefaults] setObject:host forKey:@"SEAF_COOKIE_CLEAR_HOST"];
+                [[NSUserDefaults standardUserDefaults] synchronize];
+
+                // 2) Proactively clear WKWebView cookie store for this host
+                if (@available(iOS 11.0, *)) {
+                    WKHTTPCookieStore *store = WKWebsiteDataStore.defaultDataStore.httpCookieStore;
+                    [store getAllCookies:^(NSArray<NSHTTPCookie *> *cookies) {
+                        for (NSHTTPCookie *c in cookies) {
+                            if ([c.domain containsString:host]) {
+                                [store deleteCookie:c completionHandler:nil];
+                            }
+                        }
+                    }];
+                }
+
+                // 3) Also clear shared NSHTTPCookieStorage as a best-effort fallback
+                NSHTTPCookieStorage *cookieStorage = NSHTTPCookieStorage.sharedHTTPCookieStorage;
+                for (NSHTTPCookie *each in cookieStorage.cookies) {
+                    if ([each.domain containsString:host]) {
+                        [cookieStorage deleteCookie:each];
+                    }
+                }
+            }
         }
     }
     // Register device for push notifications if token available.

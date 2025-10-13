@@ -648,6 +648,16 @@ static BOOL disableCustomEasing = NO;
             
             NSLog(@"Using default top right corner position: x=%f, y=%f", point.x, point.y);
         }
+    } else if ([view isKindOfClass:[UIButton class]]) {
+        // Anchor to a button: align popup's top-right corner to button's bottom-right corner
+        UIView *sourceView = (UIView *)view;
+        sourceRect = [sourceView.superview convertRect:sourceView.frame toView:[self topWindow]];
+        // Use button's bottom-right as anchor point
+        CGFloat px = CGRectGetMaxX(sourceRect);
+        CGFloat py = CGRectGetMaxY(sourceRect);
+        point = CGPointMake(px, py);
+        [self showFromPoint:point sourceRect:sourceRect arrowDirection:SFActionSheetArrowDirectionTop animated:YES];
+        return;
     } else if ([view isKindOfClass:[UIView class]]) {
         UIView *sourceView = (UIView *)view;
         sourceRect = [sourceView.superview convertRect:sourceView.frame toView:[self topWindow]];

@@ -434,6 +434,11 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     return [_info objectForKey:@"name"];
 }
 
+- (NSString *)email
+{
+    return [_info objectForKey:@"email"];
+}
+
 - (NSString *)password
 {
     return [_info objectForKey:@"password"];
@@ -914,6 +919,29 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             }
         } else {
             success(request, resp, responseObject);
+        }
+    }];
+    [task resume];
+    return task;
+}
+
+- (NSURLSessionDataTask * _Nullable)sendPreparedRequest:(NSURLRequest * _Nonnull)request
+            success:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nonnull response, id _Nonnull JSON))success
+            failure:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nullable response, id _Nullable JSON, NSError * _Nullable error))failure
+{
+    Debug("PreparedRequest: %@", request.URL);
+    NSURLSessionDataTask *task = [self.sessionMgr dataTaskWithRequest:request uploadProgress:^(NSProgress * _Nonnull uploadProgress) {
+        
+    } downloadProgress:^(NSProgress * _Nonnull downloadProgress) {
+        
+    } completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
+        NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
+        if (error) {
+            [self showDeserializedError:error];
+            Warning("prepared req error: resp=%ld %@, url=%@, Error: %@", (long)resp.statusCode, responseObject, request.URL, error);
+            if (failure) failure(request, resp, responseObject, error);
+        } else {
+            if (success) success(request, resp, responseObject);
         }
     }];
     [task resume];
