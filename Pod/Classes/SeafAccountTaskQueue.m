@@ -46,6 +46,11 @@
         self.thumbQueue.name = @"com.seafile.thumbDownloadQueue";
         self.thumbQueue.maxConcurrentOperationCount = THUMB_MAX_COUNT;
         self.thumbQueue.qualityOfService = NSQualityOfServiceUserInteractive;
+
+        self.commentImageQueue = [[NSOperationQueue alloc] init];
+        self.commentImageQueue.name = @"com.seafile.commentImageQueue";
+        self.commentImageQueue.maxConcurrentOperationCount = 8; // 专用评论图并发数
+        self.commentImageQueue.qualityOfService = NSQualityOfServiceUserInitiated;
         
         self.uploadQueue = [[NSOperationQueue alloc] init];
         self.uploadQueue.name = @"com.seafile.fileUploadQueue";
@@ -180,6 +185,17 @@
 - (void)addThumbTask:(SeafThumb * _Nonnull)thumb {
     SeafThumbOperation *operation = [[SeafThumbOperation alloc] initWithSeafFile:thumb.file];
     [self.thumbQueue addOperation:operation];
+}
+- (void)cancelAllCommentImageTasks
+{
+    [self.commentImageQueue cancelAllOperations];
+    Debug(@"[AccountQueue] cancelAllCommentImageTasks account=%@ ops=%lu", self.conn.accountIdentifier, (unsigned long)self.commentImageQueue.operationCount);
+}
+
+- (void)addCommentImageUploadOperation:(NSOperation * _Nonnull)op
+{
+    if (!op) return;
+    [self.commentImageQueue addOperation:op];
 }
 
 - (NSArray *)getUploadTasksInDir:(SeafDir *)dir {

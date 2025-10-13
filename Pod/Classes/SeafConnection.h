@@ -108,6 +108,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 @property (nonatomic, copy) NSString * _Nullable accountIdentifier;///< Unique identifier for the user's account.
 @property (readonly) NSString * _Nullable username;///< Username of the Seafile account.
 @property (readonly) NSString * _Nullable name;///< Username of the Seafile account.
+@property (readonly) NSString * _Nullable email;///< Email of the Seafile account.
 @property (readonly) NSString * _Nullable password;///< Password of the Seafile account.
 @property (readonly) NSString * _Nullable host;///< Host URL of the Seafile server.
 @property (readonly) BOOL isShibboleth;///< Indicates whether Shibboleth authentication is used.
@@ -193,6 +194,15 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
  * @param failure A block that is called if the request fails, returning the request, response, optional JSON data, and an error.
  */
 - (NSURLSessionDataTask *_Nullable)sendRequest:(NSString * _Nonnull)url
+            success:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nonnull response, id _Nonnull JSON))success
+            failure:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nullable response, id _Nullable JSON, NSError * _Nullable error))failure;
+
+/**
+ * Sends a prepared NSURLRequest without modifying headers or injecting tokens.
+ * Use this to call external services (e.g., Seadoc) with their own Authorization headers
+ * while still leveraging the shared AFNetworking stack (TLS, timeout, JSON serializer).
+ */
+- (NSURLSessionDataTask * _Nullable)sendPreparedRequest:(NSURLRequest * _Nonnull)request
             success:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nonnull response, id _Nonnull JSON))success
             failure:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nullable response, id _Nullable JSON, NSError * _Nullable error))failure;
 

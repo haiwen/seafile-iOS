@@ -1,0 +1,115 @@
+//  SeafTagChipCell.m
+
+#import "SeafTagChipCell.h"
+
+@interface SeafTagChipCell ()
+@property (nonatomic, strong) UILabel *label;
+@property (nonatomic, strong) NSLayoutConstraint *labelLeadingConstraint;
+@property (nonatomic, strong) CALayer *dotLayer;
+@property (nonatomic, assign) CGFloat lastDotDiameter;
+@end
+
+@implementation SeafTagChipCell
+
+- (instancetype)initWithFrame:(CGRect)frame
+{
+    if (self = [super initWithFrame:frame]) {
+        self.contentView.backgroundColor = [UIColor systemGrayColor];
+        self.contentView.layer.cornerRadius = 16;
+        self.contentView.layer.masksToBounds = YES;
+
+        _label = [UILabel new];
+        _label.font = [UIFont systemFontOfSize:15 weight:UIFontWeightRegular];
+        _label.textColor = [UIColor whiteColor];
+        _label.translatesAutoresizingMaskIntoConstraints = NO;
+        [self.contentView addSubview:_label];
+
+        self.labelLeadingConstraint = [_label.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor constant:10];
+        [NSLayoutConstraint activateConstraints:@[
+            self.labelLeadingConstraint,
+            [_label.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor constant:-10],
+            [_label.topAnchor constraintEqualToAnchor:self.contentView.topAnchor constant:2],
+            [_label.bottomAnchor constraintEqualToAnchor:self.contentView.bottomAnchor constant:-2]
+        ]];
+    }
+    return self;
+}
+
+- (void)prepareForReuse
+{
+    [super prepareForReuse];
+    self.contentView.backgroundColor = [UIColor clearColor];
+    self.label.textColor = [UIColor secondaryLabelColor];
+    self.label.text = @"";
+    self.contentView.layer.borderWidth = 0;
+    self.contentView.layer.borderColor = nil;
+    self.labelLeadingConstraint.constant = 10;
+    self.lastDotDiameter = 0;
+    self.dotLayer.hidden = YES;
+}
+
+- (void)layoutSubviews
+{
+    [super layoutSubviews];
+    CGFloat h = CGRectGetHeight(self.contentView.bounds);
+    self.contentView.layer.cornerRadius = h * 0.5;
+    if (self.dotLayer && !self.dotLayer.hidden) {
+        CGFloat d = (self.lastDotDiameter > 0) ? self.lastDotDiameter : MIN(18.0, MAX(14.0, h * 0.6));
+        CGFloat y = (h - d) / 2.0;
+        self.dotLayer.frame = CGRectMake(10, y, d, d);
+        self.dotLayer.cornerRadius = d * 0.5;
+    }
+}
+
+- (void)configureWithText:(NSString *)text color:(NSString *)colorHex textColor:(NSString *)textColorHex
+{
+    self.label.text = text ?: @"";
+    UIColor *bg = [self.class colorFromHex:colorHex] ?: [UIColor clearColor];
+    UIColor *tc = [self.class colorFromHex:textColorHex] ?: [UIColor secondaryLabelColor];
+    self.contentView.backgroundColor = bg;
+    self.label.textColor = tc;
+    self.contentView.layer.borderWidth = 0;
+    self.labelLeadingConstraint.constant = 10;
+    self.lastDotDiameter = 0;
+    self.dotLayer.hidden = YES;
+}
+
+- (void)configureDotStyleWithText:(NSString *)text dotColor:(NSString *)dotColorHex textColor:(NSString *)textColorHex
+{
+    self.label.text = text ?: @"";
+    UIColor *tc = [self.class colorFromHex:textColorHex] ?: [UIColor colorWithWhite:0.13 alpha:1.0];
+    UIColor *dot = [self.class colorFromHex:dotColorHex] ?: [UIColor colorWithWhite:0.95 alpha:1.0];
+    self.contentView.backgroundColor = [UIColor whiteColor];
+    self.contentView.layer.borderColor = [UIColor colorWithWhite:0.8 alpha:1.0].CGColor;
+    self.contentView.layer.borderWidth = 1.0;
+    self.label.textColor = tc;
+
+    // Ensure dot layer
+    if (!self.dotLayer) {
+        self.dotLayer = [CALayer layer];
+        self.dotLayer.name = @"dotLayer";
+        [self.contentView.layer insertSublayer:self.dotLayer atIndex:0];
+    }
+    CGFloat h = CGRectGetHeight(self.contentView.bounds);
+    CGFloat d = MIN(18.0, MAX(14.0, h * 0.6)); // bigger dot
+    self.lastDotDiameter = d;
+    self.dotLayer.hidden = NO;
+    self.dotLayer.backgroundColor = dot.CGColor;
+    CGFloat y = (h - d) / 2.0;
+    self.dotLayer.frame = CGRectMake(10, y, d, d);
+    self.dotLayer.cornerRadius = d * 0.5;
+
+    // Shift label to the right of dot with spacing 6
+    self.labelLeadingConstraint.constant = 10 + d + 6;
+}
+
++ (UIColor *)colorFromHex:(NSString *)hex
+{
+    if (![hex isKindOfClass:[NSString class]] || hex.length == 0) return nil;
+    NSString *h = [hex stringByReplacingOccurrencesOfString:@"#" withString:@""];
+    unsigned int rgb = 0; [[NSScanner scannerWithString:h] scanHexInt:&rgb];
+    return [UIColor colorWithRed:((rgb>>16)&0xFF)/255.0 green:((rgb>>8)&0xFF)/255.0 blue:(rgb&0xFF)/255.0 alpha:1];
+}
+
+@end
+

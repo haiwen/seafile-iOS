@@ -13,6 +13,7 @@
 
 @property (nonatomic, strong) NSOperationQueue * _Nonnull downloadQueue;
 @property (nonatomic, strong) NSOperationQueue * _Nonnull thumbQueue;
+@property (nonatomic, strong) NSOperationQueue * _Nonnull commentImageQueue;
 @property (nonatomic, strong) NSOperationQueue * _Nonnull uploadQueue;
 
 // Arrays for task status
@@ -44,6 +45,10 @@
 - (BOOL)addUploadTask:(SeafUploadFile * _Nonnull)ufile priority:(NSOperationQueuePriority)priority;
 
 - (void)addThumbTask:(SeafThumb * _Nonnull)thumb;
+
+// Comment image queue controls
+- (void)cancelAllCommentImageTasks;
+- (void)addCommentImageUploadOperation:(NSOperation * _Nonnull)op;
 
 - (void)removeFileDownloadTask:(SeafFile * _Nonnull)dfile;
 - (void)removeUploadTask:(SeafUploadFile * _Nonnull)ufile;

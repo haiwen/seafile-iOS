@@ -45,4 +45,8 @@
 - (void)updateWithEntry:(SeafBase *)entry sFile:(SeafFile *)sFile;
 
 - (NSString *)getCachePathForFile:(SeafFile *)file;
+
+// URL 图片缓存（与评论/预览页复用）
+- (UIImage *)getImageForURL:(NSString *)url;
+- (void)storeImage:(UIImage *)image forURL:(NSString *)url;
 @end

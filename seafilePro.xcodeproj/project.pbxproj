@@ -334,6 +334,25 @@
 		BAEF7EC02DE9B28C0066746A /* icon_eye_open@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = BAEF7EB62DE9B28C0066746A /* icon_eye_open@2x.png */; };
 		BAEF7EC12DE9B28C0066746A /* icon_eye_close@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = BAEF7EB52DE9B28C0066746A /* icon_eye_close@2x.png */; };
 		BAEF7EC22DE9B28C0066746A /* icon_eye_open@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = BAEF7EB62DE9B28C0066746A /* icon_eye_open@2x.png */; };
+		BAF4344A2EA23D880002ECD1 /* SeafDocsCommentService.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF434432EA23D880002ECD1 /* SeafDocsCommentService.m */; };
+		BAF4344B2EA23D880002ECD1 /* SDocPageOptionsModel.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF434402EA23D880002ECD1 /* SDocPageOptionsModel.m */; };
+		BAF4344C2EA23D880002ECD1 /* SeafSdocService.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF434452EA23D880002ECD1 /* SeafSdocService.m */; };
+		BAF4344D2EA23D880002ECD1 /* OutlineItemModel.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF4343E2EA23D880002ECD1 /* OutlineItemModel.m */; };
+		BAF4344E2EA23D880002ECD1 /* SeafSdocWebViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF434482EA23D880002ECD1 /* SeafSdocWebViewController.m */; };
+		BAF434512EA5C2760002ECD1 /* SeafSDocOutlineSheetViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF434502EA5C2750002ECD1 /* SeafSDocOutlineSheetViewController.m */; };
+		BAF4368C2EA63CE10002ECD1 /* SeafDocCommentInputView.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF436892EA63CE10002ECD1 /* SeafDocCommentInputView.m */; };
+		BAF4368D2EA63CE10002ECD1 /* SeafDocCommentCell.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF436872EA63CE10002ECD1 /* SeafDocCommentCell.m */; };
+		BAF4368E2EA63CE10002ECD1 /* SeafDocCommentItem.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF436812EA63CE10002ECD1 /* SeafDocCommentItem.m */; };
+		BAF4368F2EA63CE10002ECD1 /* SeafSdocCommentsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF436842EA63CE10002ECD1 /* SeafSdocCommentsViewController.m */; };
+		BAF436932EA68A0A0002ECD1 /* SeafDocCommentParser.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF436912EA68A090002ECD1 /* SeafDocCommentParser.m */; };
+		BAF436962EA68D9F0002ECD1 /* SeafImageAttachment.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF436952EA68D9F0002ECD1 /* SeafImageAttachment.m */; };
+		BAF4369C2EA7623C0002ECD1 /* SeafDocCommentContentItem.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF4369B2EA7623C0002ECD1 /* SeafDocCommentContentItem.m */; };
+		BAF4369F2EA7C8A80002ECD1 /* SeafImagePreviewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF4369E2EA7C8A80002ECD1 /* SeafImagePreviewController.m */; };
+		BAF436A42EA9D59E0002ECD1 /* SeafSdocProfileAssembler.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF436A12EA9D59E0002ECD1 /* SeafSdocProfileAssembler.m */; };
+		BAF436A52EA9D59E0002ECD1 /* SeafSdocProfileSheetViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF436A32EA9D59E0002ECD1 /* SeafSdocProfileSheetViewController.m */; };
+		BAF436AB2EA9D5A70002ECD1 /* SeafCollaboratorChipCell.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF436A72EA9D5A70002ECD1 /* SeafCollaboratorChipCell.m */; };
+		BAF436AC2EA9D5A70002ECD1 /* SeafTagChipCell.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF436A92EA9D5A70002ECD1 /* SeafTagChipCell.m */; };
+		BAF436B02EB304320002ECD1 /* SeadocImageUploadOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF436AE2EB304320002ECD1 /* SeadocImageUploadOperation.m */; };
 		D9BE2094AD9B16A02584A3C2 /* libPods-seafileApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B3D78ABE0B0673E422054A82 /* libPods-seafileApp.a */; };
 		DE940CA1A2BA2DD43C20EA2C /* libPods-SeafFileProviderUI.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 15EFA735E2957F22E301E23A /* libPods-SeafFileProviderUI.a */; };
 		E0FED1E93CBE02FB9B335ADB /* libPods-SeafFileProvider.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3583928919818364B46034EA /* libPods-SeafFileProvider.a */; };
@@ -1065,6 +1084,44 @@
 		BAE6666B2D83246B0079D4D7 /* action_star.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = action_star.png; sourceTree = "<group>"; };
 		BAEF7EB52DE9B28C0066746A /* icon_eye_close@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_eye_close@2x.png"; sourceTree = "<group>"; };
 		BAEF7EB62DE9B28C0066746A /* icon_eye_open@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_eye_open@2x.png"; sourceTree = "<group>"; };
+		BAF4343D2EA23D880002ECD1 /* OutlineItemModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OutlineItemModel.h; sourceTree = "<group>"; };
+		BAF4343E2EA23D880002ECD1 /* OutlineItemModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OutlineItemModel.m; sourceTree = "<group>"; };
+		BAF4343F2EA23D880002ECD1 /* SDocPageOptionsModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SDocPageOptionsModel.h; sourceTree = "<group>"; };
+		BAF434402EA23D880002ECD1 /* SDocPageOptionsModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SDocPageOptionsModel.m; sourceTree = "<group>"; };
+		BAF434422EA23D880002ECD1 /* SeafDocsCommentService.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafDocsCommentService.h; sourceTree = "<group>"; };
+		BAF434432EA23D880002ECD1 /* SeafDocsCommentService.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafDocsCommentService.m; sourceTree = "<group>"; };
+		BAF434442EA23D880002ECD1 /* SeafSdocService.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafSdocService.h; sourceTree = "<group>"; };
+		BAF434452EA23D880002ECD1 /* SeafSdocService.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafSdocService.m; sourceTree = "<group>"; };
+		BAF434472EA23D880002ECD1 /* SeafSdocWebViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafSdocWebViewController.h; sourceTree = "<group>"; };
+		BAF434482EA23D880002ECD1 /* SeafSdocWebViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafSdocWebViewController.m; sourceTree = "<group>"; };
+		BAF4344F2EA5C2750002ECD1 /* SeafSDocOutlineSheetViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafSDocOutlineSheetViewController.h; sourceTree = "<group>"; };
+		BAF434502EA5C2750002ECD1 /* SeafSDocOutlineSheetViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafSDocOutlineSheetViewController.m; sourceTree = "<group>"; };
+		BAF436802EA63CE10002ECD1 /* SeafDocCommentItem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafDocCommentItem.h; sourceTree = "<group>"; };
+		BAF436812EA63CE10002ECD1 /* SeafDocCommentItem.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafDocCommentItem.m; sourceTree = "<group>"; };
+		BAF436832EA63CE10002ECD1 /* SeafSdocCommentsViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafSdocCommentsViewController.h; sourceTree = "<group>"; };
+		BAF436842EA63CE10002ECD1 /* SeafSdocCommentsViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafSdocCommentsViewController.m; sourceTree = "<group>"; };
+		BAF436862EA63CE10002ECD1 /* SeafDocCommentCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafDocCommentCell.h; sourceTree = "<group>"; };
+		BAF436872EA63CE10002ECD1 /* SeafDocCommentCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafDocCommentCell.m; sourceTree = "<group>"; };
+		BAF436882EA63CE10002ECD1 /* SeafDocCommentInputView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafDocCommentInputView.h; sourceTree = "<group>"; };
+		BAF436892EA63CE10002ECD1 /* SeafDocCommentInputView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafDocCommentInputView.m; sourceTree = "<group>"; };
+		BAF436902EA68A090002ECD1 /* SeafDocCommentParser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafDocCommentParser.h; sourceTree = "<group>"; };
+		BAF436912EA68A090002ECD1 /* SeafDocCommentParser.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafDocCommentParser.m; sourceTree = "<group>"; };
+		BAF436942EA68D9F0002ECD1 /* SeafImageAttachment.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafImageAttachment.h; sourceTree = "<group>"; };
+		BAF436952EA68D9F0002ECD1 /* SeafImageAttachment.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafImageAttachment.m; sourceTree = "<group>"; };
+		BAF4369A2EA7623C0002ECD1 /* SeafDocCommentContentItem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafDocCommentContentItem.h; sourceTree = "<group>"; };
+		BAF4369B2EA7623C0002ECD1 /* SeafDocCommentContentItem.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafDocCommentContentItem.m; sourceTree = "<group>"; };
+		BAF4369D2EA7C8A80002ECD1 /* SeafImagePreviewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafImagePreviewController.h; sourceTree = "<group>"; };
+		BAF4369E2EA7C8A80002ECD1 /* SeafImagePreviewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafImagePreviewController.m; sourceTree = "<group>"; };
+		BAF436A02EA9D59E0002ECD1 /* SeafSdocProfileAssembler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafSdocProfileAssembler.h; sourceTree = "<group>"; };
+		BAF436A12EA9D59E0002ECD1 /* SeafSdocProfileAssembler.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafSdocProfileAssembler.m; sourceTree = "<group>"; };
+		BAF436A22EA9D59E0002ECD1 /* SeafSdocProfileSheetViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafSdocProfileSheetViewController.h; sourceTree = "<group>"; };
+		BAF436A32EA9D59E0002ECD1 /* SeafSdocProfileSheetViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafSdocProfileSheetViewController.m; sourceTree = "<group>"; };
+		BAF436A62EA9D5A70002ECD1 /* SeafCollaboratorChipCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafCollaboratorChipCell.h; sourceTree = "<group>"; };
+		BAF436A72EA9D5A70002ECD1 /* SeafCollaboratorChipCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafCollaboratorChipCell.m; sourceTree = "<group>"; };
+		BAF436A82EA9D5A70002ECD1 /* SeafTagChipCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafTagChipCell.h; sourceTree = "<group>"; };
+		BAF436A92EA9D5A70002ECD1 /* SeafTagChipCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafTagChipCell.m; sourceTree = "<group>"; };
+		BAF436AD2EB304320002ECD1 /* SeadocImageUploadOperation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeadocImageUploadOperation.h; sourceTree = "<group>"; };
+		BAF436AE2EB304320002ECD1 /* SeadocImageUploadOperation.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeadocImageUploadOperation.m; sourceTree = "<group>"; };
 		DBDEFA043CD6CF7650726549 /* Pods-seafileApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-seafileApp.debug.xcconfig"; path = "Pods/Target Support Files/Pods-seafileApp/Pods-seafileApp.debug.xcconfig"; sourceTree = "<group>"; };
 		EE1E1FA7502D3F04292B11CB /* Pods-SeafAction.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafAction.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SeafAction/Pods-SeafAction.debug.xcconfig"; sourceTree = "<group>"; };
 		F515E4B421AC3DBB00A62F64 /* SeafActionsManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafActionsManager.h; sourceTree = "<group>"; };
@@ -1312,6 +1369,8 @@
 		5709512615B9ACDF00F48C08 /* views */ = {
 			isa = PBXGroup;
 			children = (
+				BAF4368B2EA63CE10002ECD1 /* Comment */,
+				BAF434492EA23D880002ECD1 /* SDoc */,
 				BA6CDB352DF812750023AF29 /* SeafBackupDirViewController.h */,
 				BA6CDB362DF812750023AF29 /* SeafBackupDirViewController.m */,
 				BA6CDB322DF7DEE80023AF29 /* SeafBackupGuideViewController.h */,
@@ -1579,6 +1638,122 @@
 				58D40A6C1E9AF7A400A68BEF /* seafile.xcdatamodeld */,
 			);
 			name = Resources;
+			sourceTree = "<group>";
+		};
+		BAF434412EA23D880002ECD1 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				BAF4343D2EA23D880002ECD1 /* OutlineItemModel.h */,
+				BAF4343E2EA23D880002ECD1 /* OutlineItemModel.m */,
+				BAF4343F2EA23D880002ECD1 /* SDocPageOptionsModel.h */,
+				BAF434402EA23D880002ECD1 /* SDocPageOptionsModel.m */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		BAF434462EA23D880002ECD1 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				BAF434422EA23D880002ECD1 /* SeafDocsCommentService.h */,
+				BAF434432EA23D880002ECD1 /* SeafDocsCommentService.m */,
+				BAF434442EA23D880002ECD1 /* SeafSdocService.h */,
+				BAF434452EA23D880002ECD1 /* SeafSdocService.m */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		BAF434492EA23D880002ECD1 /* SDoc */ = {
+			isa = PBXGroup;
+			children = (
+				BAF436AF2EB304320002ECD1 /* Upload */,
+				BAF436AA2EA9D5A70002ECD1 /* Chips */,
+				BAF436A02EA9D59E0002ECD1 /* SeafSdocProfileAssembler.h */,
+				BAF436A12EA9D59E0002ECD1 /* SeafSdocProfileAssembler.m */,
+				BAF436A22EA9D59E0002ECD1 /* SeafSdocProfileSheetViewController.h */,
+				BAF436A32EA9D59E0002ECD1 /* SeafSdocProfileSheetViewController.m */,
+				BAF4344F2EA5C2750002ECD1 /* SeafSDocOutlineSheetViewController.h */,
+				BAF434502EA5C2750002ECD1 /* SeafSDocOutlineSheetViewController.m */,
+				BAF434412EA23D880002ECD1 /* Models */,
+				BAF434462EA23D880002ECD1 /* Services */,
+				BAF434472EA23D880002ECD1 /* SeafSdocWebViewController.h */,
+				BAF434482EA23D880002ECD1 /* SeafSdocWebViewController.m */,
+			);
+			path = SDoc;
+			sourceTree = "<group>";
+		};
+		BAF436822EA63CE10002ECD1 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				BAF4369A2EA7623C0002ECD1 /* SeafDocCommentContentItem.h */,
+				BAF4369B2EA7623C0002ECD1 /* SeafDocCommentContentItem.m */,
+				BAF436802EA63CE10002ECD1 /* SeafDocCommentItem.h */,
+				BAF436812EA63CE10002ECD1 /* SeafDocCommentItem.m */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		BAF436852EA63CE10002ECD1 /* ViewControllers */ = {
+			isa = PBXGroup;
+			children = (
+				BAF4369D2EA7C8A80002ECD1 /* SeafImagePreviewController.h */,
+				BAF4369E2EA7C8A80002ECD1 /* SeafImagePreviewController.m */,
+				BAF436832EA63CE10002ECD1 /* SeafSdocCommentsViewController.h */,
+				BAF436842EA63CE10002ECD1 /* SeafSdocCommentsViewController.m */,
+			);
+			path = ViewControllers;
+			sourceTree = "<group>";
+		};
+		BAF4368A2EA63CE10002ECD1 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				BAF436942EA68D9F0002ECD1 /* SeafImageAttachment.h */,
+				BAF436952EA68D9F0002ECD1 /* SeafImageAttachment.m */,
+				BAF436862EA63CE10002ECD1 /* SeafDocCommentCell.h */,
+				BAF436872EA63CE10002ECD1 /* SeafDocCommentCell.m */,
+				BAF436882EA63CE10002ECD1 /* SeafDocCommentInputView.h */,
+				BAF436892EA63CE10002ECD1 /* SeafDocCommentInputView.m */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		BAF4368B2EA63CE10002ECD1 /* Comment */ = {
+			isa = PBXGroup;
+			children = (
+				BAF436922EA68A090002ECD1 /* Utils */,
+				BAF436822EA63CE10002ECD1 /* Models */,
+				BAF436852EA63CE10002ECD1 /* ViewControllers */,
+				BAF4368A2EA63CE10002ECD1 /* Views */,
+			);
+			path = Comment;
+			sourceTree = "<group>";
+		};
+		BAF436922EA68A090002ECD1 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				BAF436902EA68A090002ECD1 /* SeafDocCommentParser.h */,
+				BAF436912EA68A090002ECD1 /* SeafDocCommentParser.m */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		BAF436AA2EA9D5A70002ECD1 /* Chips */ = {
+			isa = PBXGroup;
+			children = (
+				BAF436A62EA9D5A70002ECD1 /* SeafCollaboratorChipCell.h */,
+				BAF436A72EA9D5A70002ECD1 /* SeafCollaboratorChipCell.m */,
+				BAF436A82EA9D5A70002ECD1 /* SeafTagChipCell.h */,
+				BAF436A92EA9D5A70002ECD1 /* SeafTagChipCell.m */,
+			);
+			path = Chips;
+			sourceTree = "<group>";
+		};
+		BAF436AF2EB304320002ECD1 /* Upload */ = {
+			isa = PBXGroup;
+			children = (
+				BAF436AD2EB304320002ECD1 /* SeadocImageUploadOperation.h */,
+				BAF436AE2EB304320002ECD1 /* SeadocImageUploadOperation.m */,
+			);
+			path = Upload;
 			sourceTree = "<group>";
 		};
 		F521116E21E1C0DF00D93BB8 /* ui */ = {
@@ -2958,15 +3133,30 @@
 				571D8CC91677881400F1A22C /* FailToPreview.m in Sources */,
 				571D8CCB1677881400F1A22C /* DownloadingProgressView.m in Sources */,
 				571D8CD01677881400F1A22C /* SeafUploadingFileCell.m in Sources */,
+				BAF436962EA68D9F0002ECD1 /* SeafImageAttachment.m in Sources */,
 				F515E4D221B6D24E00A62F64 /* SeafSearchResultViewController.m in Sources */,
+				BAF436932EA68A0A0002ECD1 /* SeafDocCommentParser.m in Sources */,
 				571617B91BE39FBD00792316 /* SeafPhoto.m in Sources */,
 				58D40A6A1E9AF72200A68BEF /* SeafDbCacheProvider.m in Sources */,
 				571D8CD21677881400F1A22C /* SeafSettingsViewController.m in Sources */,
 				571D8CD41677881400F1A22C /* SeafStarredFilesViewController.m in Sources */,
+				BAF4369C2EA7623C0002ECD1 /* SeafDocCommentContentItem.m in Sources */,
 				58D40A6E1E9AF7A400A68BEF /* seafile.xcdatamodeld in Sources */,
 				F568C1FB1EF10F8900F1035D /* SeafActionSheet.m in Sources */,
 				F515E4B621AC3DBB00A62F64 /* SeafActionsManager.m in Sources */,
 				BA8AC7E02D802E8800F8DE57 /* Constants.m in Sources */,
+				BAF436A42EA9D59E0002ECD1 /* SeafSdocProfileAssembler.m in Sources */,
+				BAF436A52EA9D59E0002ECD1 /* SeafSdocProfileSheetViewController.m in Sources */,
+				BAF4344A2EA23D880002ECD1 /* SeafDocsCommentService.m in Sources */,
+				BAF4344B2EA23D880002ECD1 /* SDocPageOptionsModel.m in Sources */,
+				BAF4368C2EA63CE10002ECD1 /* SeafDocCommentInputView.m in Sources */,
+				BAF4368D2EA63CE10002ECD1 /* SeafDocCommentCell.m in Sources */,
+				BAF4368E2EA63CE10002ECD1 /* SeafDocCommentItem.m in Sources */,
+				BAF4368F2EA63CE10002ECD1 /* SeafSdocCommentsViewController.m in Sources */,
+				BAF4344C2EA23D880002ECD1 /* SeafSdocService.m in Sources */,
+				BAF434512EA5C2760002ECD1 /* SeafSDocOutlineSheetViewController.m in Sources */,
+				BAF4344D2EA23D880002ECD1 /* OutlineItemModel.m in Sources */,
+				BAF4344E2EA23D880002ECD1 /* SeafSdocWebViewController.m in Sources */,
 				570DFAC716A15D0100ADD5F2 /* SeafAccountViewController.m in Sources */,
 				BA38EEE92DD1A80F00EF10E2 /* SeafPGThumbnailCell.m in Sources */,
 				BA38EEEA2DD1A80F00EF10E2 /* SeafPGThumbnailCellViewModel.m in Sources */,
@@ -2985,6 +3175,8 @@
 				58D40A681E9AF72200A68BEF /* UIViewController+Extend.m in Sources */,
 				F5B209092169994000762342 /* SeafInputItemsProvider.m in Sources */,
 				5775EA1217476FAD000A1765 /* SeafActivityViewController.m in Sources */,
+				BAF436B02EB304320002ECD1 /* SeadocImageUploadOperation.m in Sources */,
+				BAF4369F2EA7C8A80002ECD1 /* SeafImagePreviewController.m in Sources */,
 				57A90DA118C49F97005D8A53 /* SeafDetailViewController.m in Sources */,
 				5704C6D31753A1380028F4FE /* IntelligentSplitViewController.m in Sources */,
 				BA8DC95B2D9A6A030027EC46 /* SeafLoadingView.m in Sources */,
@@ -2997,6 +3189,8 @@
 				58D40A691E9AF72200A68BEF /* SeafGlobal.m in Sources */,
 				F5ADEA042081B69C00FB6451 /* SeafMkLibAlertController.m in Sources */,
 				BA83DEB32DB560520073EAA8 /* SeafNavigationBarStyler.m in Sources */,
+				BAF436AB2EA9D5A70002ECD1 /* SeafCollaboratorChipCell.m in Sources */,
+				BAF436AC2EA9D5A70002ECD1 /* SeafTagChipCell.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

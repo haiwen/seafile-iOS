@@ -9,6 +9,7 @@
 #import "SeafAppDelegate.h"
 #import "SeafFileViewController.h"
 #import "SeafDetailViewController.h"
+#import "SeafSdocWebViewController.h"
 #import "SeafDirViewController.h"
 #import "SeafFile.h"
 #import "SeafRepos.h"
@@ -471,6 +472,22 @@ enum {
     }
     if ([_curEntry isKindOfClass:[SeafRepo class]] && [(SeafRepo *)_curEntry passwordRequiredWithSyncRefresh]) {
         return [self popupSetRepoPassword:(SeafRepo *)_curEntry];
+    }
+
+    if ([_curEntry isKindOfClass:[SeafFile class]]) {
+        SeafFile *sfile = (SeafFile *)_curEntry;
+        if ([sfile.mime isEqualToString:@"application/sdoc"]) {
+            Debug(@"[SDOC] direct open from list: %@", sfile.name);
+            SeafSdocWebViewController *vc = [[SeafSdocWebViewController alloc] initWithFile:sfile fileName:sfile.name];
+            if (IsIpad()) {
+                SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+                [appdelegate showDetailView:vc];
+            } else {
+                vc.hidesBottomBarWhenPushed = YES;
+                [self.navigationController pushViewController:vc animated:YES];
+            }
+            return;
+        }
     }
 
     if ([_curEntry conformsToProtocol:@protocol(SeafPreView)]) {
