@@ -11,6 +11,7 @@
 #import "SeafAppDelegate.h"
 #import "SeafStarredFilesViewController.h"
 #import "SeafDetailViewController.h"
+#import "SeafSdocWebViewController.h"
 #import "SeafStarredFile.h"
 #import "FileSizeFormatter.h"
 #import "SeafDateFormatter.h"
@@ -33,6 +34,7 @@
 #import "SeafDataTaskManager.h"
 #import "SeafUploadOperation.h"
 #import "SeafRealmManager.h"
+#import "SeafVideoPlayerViewController.h"
 
 @interface SeafStarredFilesViewController ()<SWTableViewCellDelegate>
 @property (readonly) SeafDetailViewController *detailViewController;
@@ -41,6 +43,7 @@
 @property (retain)id lock;
 @property (nonatomic, strong)NSMutableArray *cellDataArray;
 @property (strong, nonatomic) SeafLoadingView *loadingView;
+@property (strong, nonatomic) SeafFile *pendingVideoFile;
 @end
 
 @implementation SeafStarredFilesViewController
@@ -391,6 +394,79 @@
 //set and push detailViewController by selected file.
 - (void)selectFile:(SeafStarredFile *)sfile
 {
+    Debug("[Starred] selectFile: name=%@ repoId=%@ path=%@ mime=%@ isVideo=%d hasCache=%d", sfile.name, sfile.repoId, sfile.path, sfile.mime, [sfile isVideoFile], [sfile hasCache]);
+    // Further log cache and export path information
+    @try {
+        NSString *cachePath = [sfile cachePath];
+        NSURL *exportURL = [sfile exportURL];
+        BOOL cacheFileExists = cachePath ? [[NSFileManager defaultManager] fileExistsAtPath:cachePath] : NO;
+        BOOL exportFileExists = exportURL ? [[NSFileManager defaultManager] fileExistsAtPath:exportURL.path] : NO;
+        Debug(@"[Starred] cachePath=%@ exists=%d exportURL=%@ exists=%d", cachePath, cacheFileExists, exportURL, exportFileExists);
+    } @catch(NSException *exception) {
+        Debug(@"[Starred] exception while probing cache/export paths: %@", exception);
+    }
+    if ([sfile.mime isEqualToString:@"application/sdoc"]) {
+        SeafSdocWebViewController *vc = [[SeafSdocWebViewController alloc] initWithFile:sfile fileName:sfile.name];
+        if (IsIpad()) {
+            SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+            [appdelegate showDetailView:vc];
+        } else {
+            vc.hidesBottomBarWhenPushed = YES;
+            [self.navigationController pushViewController:vc animated:YES];
+        }
+        return;
+    }
+    // Video files: for encrypted libraries, enter detail to download then auto-play; for non-encrypted libraries, play directly
+    if ([sfile isVideoFile]) {
+        BOOL isEncryptedRepo = [self.connection isEncrypted:sfile.repoId];
+        BOOL shouldLocalDecrypt = [self.connection shouldLocalDecrypt:sfile.repoId];
+        BOOL decrypted = [self.connection isDecrypted:sfile.repoId];
+        NSString *pwd = [self.connection getRepoPassword:sfile.repoId];
+        NSDictionary *encInfo = [self.connection getRepoEncInfo:sfile.repoId];
+        Debug("[Starred] video flags: isEncryptedRepo=%d shouldLocalDecrypt=%d isDecrypted=%d hasCache=%d pwd_set=%d encInfo_keys=%@", isEncryptedRepo, shouldLocalDecrypt, decrypted, [sfile hasCache], (pwd!=nil), encInfo.allKeys);
+        if (isEncryptedRepo) {
+            // If already decrypted and cached locally, play directly
+            if (decrypted && [sfile hasCache]) {
+                Debug(@"[Starred] Encrypted video already decrypted & cached -> play local (before present)");
+                [SeafVideoPlayerViewController closeActiveVideoPlayer];
+                SeafVideoPlayerViewController *playerVC = [[SeafVideoPlayerViewController alloc] initWithFile:sfile];
+                [self presentViewController:playerVC animated:YES completion:nil];
+                Debug(@"[Starred] Presented player for decrypted&cached video");
+                return;
+            }
+
+            // Otherwise: enter detail to trigger download; after completion, auto-play
+            self.pendingVideoFile = sfile;
+            Debug("[Starred] Encrypted video NOT ready. decrypted=%d hasCache=%d -> enter detail to download: %@", decrypted, [sfile hasCache], sfile.name);
+            [self.detailViewController setPreViewItem:sfile master:self];
+            if (!IsIpad()) {
+                if (self.detailViewController.state == PREVIEW_QL_MODAL) {
+                    Debug(@"[Starred] Present QL modal for download. state=PREVIEW_QL_MODAL");
+                    [self.detailViewController.qlViewController reloadData];
+                    [self presentViewController:self.detailViewController.qlViewController animated:NO completion:nil];
+                } else {
+                    Debug(@"[Starred] Show detail view controller for download (non-QL)");
+                    SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+                    [appdelegate showDetailView:self.detailViewController];
+                }
+            }
+            return;
+        } else {
+            // Non-encrypted library: play directly if cached; otherwise stream in player
+            if ([sfile hasCache]) {
+                Debug(@"[Starred] Non-encrypted cached video -> play local");
+                [SeafVideoPlayerViewController closeActiveVideoPlayer];
+                SeafVideoPlayerViewController *playerVC = [[SeafVideoPlayerViewController alloc] initWithFile:sfile];
+                [self presentViewController:playerVC animated:YES completion:nil];
+            } else {
+                Debug(@"[Starred] Non-encrypted uncached video -> stream via player");
+                [SeafVideoPlayerViewController closeActiveVideoPlayer];
+                SeafVideoPlayerViewController *playerVC = [[SeafVideoPlayerViewController alloc] initWithFile:sfile];
+                [self presentViewController:playerVC animated:YES completion:nil];
+            }
+            return;
+        }
+    }
     Debug("Select file %@", sfile.name);
     [self.detailViewController setPreViewItem:sfile master:self];
 
@@ -540,11 +616,41 @@
 {
     [self updateEntryCell:(SeafBase *)entry];
     [self.detailViewController download:entry complete:updated];
+    // If this is the pending encrypted video file and caching is completed, close preview and auto-play
+    if ([entry isKindOfClass:[SeafFile class]]) {
+        SeafFile *videoFileTmp = (SeafFile *)entry;
+        Debug(@"[Starred] download complete: entry=%@ isVideo=%d hasCache=%d updated=%d pendingMatch=%d presentedSelf=%@ presentedDetail=%@", videoFileTmp.name, [videoFileTmp isVideoFile], videoFileTmp.hasCache, updated, (videoFileTmp == self.pendingVideoFile), self.presentedViewController, self.detailViewController.presentedViewController);
+        if (videoFileTmp == self.pendingVideoFile && [videoFileTmp isVideoFile] && videoFileTmp.hasCache) {
+            self.pendingVideoFile = nil;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                void (^presentPlayer)(void) = ^{
+                    [SeafVideoPlayerViewController closeActiveVideoPlayer];
+                    SeafVideoPlayerViewController *playerVC = [[SeafVideoPlayerViewController alloc] initWithFile:videoFileTmp];
+                    [self presentViewController:playerVC animated:YES completion:nil];
+                };
+                if (self.presentedViewController) {
+                    Debug(@"[Starred] Dismissing self.presentedViewController then present player");
+                    [self dismissViewControllerAnimated:NO completion:presentPlayer];
+                } else if (self.detailViewController.presentedViewController) {
+                    Debug(@"[Starred] Dismissing detailViewController.presentedViewController then present player");
+                    [self.detailViewController dismissViewControllerAnimated:NO completion:presentPlayer];
+                } else {
+                    Debug(@"[Starred] Present player directly (no presented VC)");
+                    presentPlayer();
+                }
+            });
+        }
+    }
 }
 - (void)download:(SeafBase *)entry failed:(NSError *)error
 {
     [self updateEntryCell:(SeafFile *)entry];
     [self.detailViewController download:entry failed:error];
+    // Clear pending-to-play flag to avoid leftover state
+    if (entry == self.pendingVideoFile) {
+        self.pendingVideoFile = nil;
+    }
+    Warning(@"[Starred] download failed: entry=%@ error=%@", [entry name], error);
 }
 
 #pragma mark - SeafFileUpdateDelegate
@@ -660,7 +766,7 @@
     }
     dirDataArray = [self createSubdirsFromTargetDir:(SeafBase *)entry];
     
-    // get the firest tab 的 UINavigationController
+    // Get the UINavigationController of the first tab
     UINavigationController *navController;
     if (IsIpad()){
         UISplitViewController *fileController = self.tabBarController.viewControllers[0];

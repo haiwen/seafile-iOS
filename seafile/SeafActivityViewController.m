@@ -12,6 +12,7 @@
 
 #import "SeafActivityViewController.h"
 #import "SeafAppDelegate.h"
+#import "SeafSdocWebViewController.h"
 #import "UIViewController+Extend.h"
 #import "SVProgressHUD.h"
 #import "SeafEventCell.h"
@@ -19,6 +20,10 @@
 #import "SeafBase.h"
 #import "SeafActivitiesCell.h"
 #import "SeafActivityModel.h"
+#import "SeafDetailViewController.h"
+#import "SeafVideoPlayerViewController.h"
+#import "SeafCacheManager.h"
+#import "SeafRealmManager.h"
 
 #import "SeafDateFormatter.h"
 #import "ExtentedString.h"
@@ -27,7 +32,7 @@
 
 typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 
-@interface SeafActivityViewController ()<UITableViewDelegate,UITableViewDataSource>
+@interface SeafActivityViewController ()<UITableViewDelegate,UITableViewDataSource, SeafDentryDelegate>
 @property (strong) NSArray *events;
 @property BOOL eventsMore;
 @property int eventsOffset;
@@ -40,6 +45,9 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 @property (strong, nonatomic) NSDictionary *opsMap;
 @property NSDictionary *prefixMap;
 @property NSDictionary *typesMap;
+
+@property (strong, nonatomic) SeafFile *pendingVideoFile;
+@property (strong, nonatomic) SeafDetailViewController *activeDetailViewController;
 
 @end
 
@@ -183,7 +191,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         // Process data in background thread
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             @strongify(self);
-            Debug("Succeeded to get events start=%d", offset);
+            
             NSArray *arr = [JSON objectForKey:@"events"];
             NSMutableArray *marray = [NSMutableArray new];
             if (offset != 0) {
@@ -200,7 +208,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
                 self->_events = marray;
                 self->_eventsMore = hasMore;
                 self->_eventsOffset = newOffset;
-                Debug("%lu events, more:%d, offset:%d", (unsigned long)self->_events.count, self->_eventsMore, self->_eventsOffset);
+                
                 [self reloadData];
                 [self dismissLoadingView];
             });
@@ -230,7 +238,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     [_connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
         // Process data in background thread
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            Debug("Succeeded to get events start=%d  %@", page, JSON);
+            
             NSArray *arr = [JSON objectForKey:@"events"];
             NSMutableArray *marray = [NSMutableArray new];
             if (page != 1) {
@@ -245,7 +253,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
                 self->_events = marray;
                 self->_eventsMore = hasMore;
                 self->_eventsOffset = page + 1;
-                Debug("%lu events, more:%d, offset:%d", (unsigned long)self->_events.count, self->_eventsMore, self->_eventsOffset);
+                
                 [self reloadData];
                 [self dismissLoadingView];
             });
@@ -520,7 +528,7 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 - (void)getCommitModificationDetail:(NSString *)repoId url:(NSString *)url fromCell:(UITableViewCell *)cell
 {
     [_connection sendRequest:url success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
-        Debug("Succeeded to get event: %@", JSON);
+        
         NSDictionary *detail = (NSDictionary *)JSON;
         [_eventDetails setObject:detail forKey:url];
         [self showEvent:repoId detail:detail fromCell:cell];
@@ -556,10 +564,10 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     NSString *commitId = [event objectForKey:@"commit_id"];
     NSString *url = [NSString stringWithFormat:API_URL"/repo_history_changes/%@/?commit_id=%@", repoId, commitId];
 
-    Debug("Select event %@", event);
+    
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
     NSDictionary *detail = [_eventDetails objectForKey:url];
-    Debug("detail: %@", detail);
+    
     SeafRepo *repo = [_connection getRepo:repoId];
     if (!repo) {
         Warning("No such repo %@", repoId);
@@ -580,8 +588,113 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 // Opens a file specified by path in a given repository
 - (void)openFile:(NSString *)path inRepo:(NSString *)repoId
 {
-    Debug("open file %@ in repo %@", path, repoId);
+    
     SeafFile *sfile = [[SeafFile alloc] initWithConnection:self.connection oid:nil repoId:repoId name:path.lastPathComponent path:path mtime:0 size:0];
+    // Probe cache before decision
+    NSString *cachePathBefore = nil;
+    NSURL *exportURLBefore = nil;
+    @try {
+        cachePathBefore = [sfile cachePath];
+        exportURLBefore = [sfile exportURL];
+    } @catch(NSException *exception) {}
+
+    // Load cached metadata if any
+    [sfile loadCache];
+    BOOL hasCacheAfter = [sfile hasCache];
+    NSString *cachePathAfter = nil;
+    NSURL *exportURLAfter = nil;
+    @try {
+        cachePathAfter = [sfile cachePath];
+        exportURLAfter = [sfile exportURL];
+    } @catch(NSException *exception) {}
+    BOOL exportExistsAfter = exportURLAfter ? [[NSFileManager defaultManager] fileExistsAtPath:exportURLAfter.path] : NO;
+    
+
+    // Try a stronger cache load to populate ooid/oid for encrypted repos
+    if (!hasCacheAfter && !exportExistsAfter) {
+        BOOL hasCacheReal = [sfile hasCache];
+        NSURL *exportURLReal = [sfile exportURL];
+        BOOL exportExistsReal = exportURLReal ? [[NSFileManager defaultManager] fileExistsAtPath:exportURLReal.path] : NO;
+        
+        // Update local variables for subsequent decision
+        hasCacheAfter = hasCacheReal;
+        exportURLAfter = exportURLReal;
+        exportExistsAfter = exportExistsReal;
+    }
+    if ([sfile.mime isEqualToString:@"application/sdoc"]) {
+        SeafSdocWebViewController *vc = [[SeafSdocWebViewController alloc] initWithFile:sfile fileName:sfile.name];
+        if (IsIpad()) {
+            SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+            [appdelegate showDetailView:vc];
+        } else {
+            vc.hidesBottomBarWhenPushed = YES;
+            [self.navigationController pushViewController:vc animated:YES];
+        }
+        return;
+    }
+    // Video files: follow the same strategy as the Starred page
+    if ([sfile isVideoFile]) {
+        BOOL isEncryptedRepo = [self.connection isEncrypted:repoId];
+        BOOL decrypted = [self.connection isDecrypted:repoId];
+        
+
+        if (isEncryptedRepo) {
+            // treat as cached if export file exists even when hasCache flag is false
+            if (decrypted && ([sfile hasCache] || exportExistsAfter)) {
+                // Already decrypted and cached locally, play immediately
+                [SeafVideoPlayerViewController closeActiveVideoPlayer];
+                SeafVideoPlayerViewController *playerVC = [[SeafVideoPlayerViewController alloc] initWithFile:sfile];
+                [self presentViewController:playerVC animated:YES completion:nil];
+                return;
+            }
+            // Fallback: if above checks miss but local DB indicates a cached file, play directly to avoid entering detail
+            if (decrypted && ![sfile hasCache] && !exportExistsAfter) {
+                @try {
+                    SeafFileStatus *status = [[SeafRealmManager shared] getFileStatusWithPath:sfile.uniqueKey];
+                    BOOL localExists = (status && status.localFilePath && [[NSFileManager defaultManager] fileExistsAtPath:status.localFilePath]);
+                    if (localExists) {
+                        if (status.serverOID.length > 0) {
+                            sfile.oid = status.serverOID;
+                            if (![sfile.ooid isEqualToString:status.serverOID]) {
+                                [sfile setOoid:status.serverOID];
+                            }
+                        }
+                        NSURL *exportURLTry = [sfile exportURL];
+                        BOOL exportExistsTry = exportURLTry ? [[NSFileManager defaultManager] fileExistsAtPath:exportURLTry.path] : NO;
+                        
+                        if (exportExistsTry || [sfile hasCache]) {
+                            [SeafVideoPlayerViewController closeActiveVideoPlayer];
+                            SeafVideoPlayerViewController *playerVC = [[SeafVideoPlayerViewController alloc] initWithFile:sfile];
+                            [self presentViewController:playerVC animated:YES completion:nil];
+                            return;
+                        }
+                    }
+                } @catch(NSException *exception) {}
+            }
+            // If not cached or decrypted, open the detail page to download, then auto-play after download completes.
+            self.pendingVideoFile = sfile;
+            SeafDetailViewController *detailvc;
+            if (IsIpad()) {
+                detailvc = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
+            } else {
+                detailvc = [[UIStoryboard storyboardWithName:@"FolderView_iPhone" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
+            }
+            self.activeDetailViewController = detailvc;
+            sfile.delegate = self; // This controller receives download callbacks and forwards them to the detail view controller
+            [detailvc setPreViewItem:sfile master:self];
+            SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
+            [appdelegate showDetailView:detailvc];
+            return;
+        } else {
+            // Non-encrypted library: play directly if cached; otherwise the player supports streaming
+            [SeafVideoPlayerViewController closeActiveVideoPlayer];
+            SeafVideoPlayerViewController *playerVC = [[SeafVideoPlayerViewController alloc] initWithFile:sfile];
+            [self presentViewController:playerVC animated:YES completion:nil];
+            return;
+        }
+    }
+
+    // Non-video: keep existing behavior
     SeafDetailViewController *detailvc;
     if (IsIpad()) {
         detailvc = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];
@@ -592,6 +705,51 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
     [detailvc setPreViewItem:sfile master:nil];
     SeafAppDelegate *appdelegate = (SeafAppDelegate *)[[UIApplication sharedApplication] delegate];
     [appdelegate showDetailView:detailvc];
+}
+
+#pragma mark - SeafDentryDelegate (forward to detail and auto-play video when ready)
+- (void)download:(id)entry progress:(float)progress
+{
+    if (self.activeDetailViewController) {
+        [self.activeDetailViewController download:entry progress:progress];
+    }
+}
+
+- (void)download:(id)entry complete:(BOOL)updated
+{
+    if (self.activeDetailViewController) {
+        [self.activeDetailViewController download:entry complete:updated];
+    }
+    if ([entry isKindOfClass:[SeafFile class]]) {
+        SeafFile *videoFileTmp = (SeafFile *)entry;
+        if (videoFileTmp == self.pendingVideoFile && [videoFileTmp isVideoFile] && videoFileTmp.hasCache) {
+            self.pendingVideoFile = nil;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                void (^presentPlayer)(void) = ^{
+                    [SeafVideoPlayerViewController closeActiveVideoPlayer];
+                    SeafVideoPlayerViewController *playerVC = [[SeafVideoPlayerViewController alloc] initWithFile:videoFileTmp];
+                    [self presentViewController:playerVC animated:YES completion:nil];
+                };
+                if (self.presentedViewController) {
+                    [self dismissViewControllerAnimated:NO completion:presentPlayer];
+                } else if (self.activeDetailViewController.presentedViewController) {
+                    [self.activeDetailViewController dismissViewControllerAnimated:NO completion:presentPlayer];
+                } else {
+                    presentPlayer();
+                }
+            });
+        }
+    }
+}
+
+- (void)download:(id)entry failed:(NSError *)error
+{
+    if (self.activeDetailViewController) {
+        [self.activeDetailViewController download:entry failed:error];
+    }
+    if (entry == self.pendingVideoFile) {
+        self.pendingVideoFile = nil;
+    }
 }
 
 - (NSDictionary *)opsMap {
