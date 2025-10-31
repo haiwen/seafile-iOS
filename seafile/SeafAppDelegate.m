@@ -92,16 +92,14 @@
                 [[NSUserDefaults standardUserDefaults] synchronize];
 
                 // 2) Proactively clear WKWebView cookie store for this host
-                if (@available(iOS 11.0, *)) {
-                    WKHTTPCookieStore *store = WKWebsiteDataStore.defaultDataStore.httpCookieStore;
-                    [store getAllCookies:^(NSArray<NSHTTPCookie *> *cookies) {
-                        for (NSHTTPCookie *c in cookies) {
-                            if ([c.domain containsString:host]) {
-                                [store deleteCookie:c completionHandler:nil];
-                            }
+                WKHTTPCookieStore *store = WKWebsiteDataStore.defaultDataStore.httpCookieStore;
+                [store getAllCookies:^(NSArray<NSHTTPCookie *> *cookies) {
+                    for (NSHTTPCookie *c in cookies) {
+                        if ([c.domain containsString:host]) {
+                            [store deleteCookie:c completionHandler:nil];
                         }
-                    }];
-                }
+                    }
+                }];
 
                 // 3) Also clear shared NSHTTPCookieStorage as a best-effort fallback
                 NSHTTPCookieStorage *cookieStorage = NSHTTPCookieStorage.sharedHTTPCookieStorage;

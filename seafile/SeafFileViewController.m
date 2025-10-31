@@ -22,6 +22,7 @@
 #import "SeafGlobal.h"
 #import "SeafPhotoAsset.h"
 #import "SeafVideoPlayerViewController.h"
+#import "SeafDestinationPickerViewController.h"
 
 #import "FileSizeFormatter.h"
 #import "SeafDateFormatter.h"
@@ -1425,26 +1426,32 @@ enum {
 - (void)popupDirChooseView:(SeafUploadFile *)file
 {
     self.ufile = file;
-    SeafDirViewController *controller = [[SeafDirViewController alloc] initWithSeafDir:self.connection.rootFolder delegate:self chooseRepo:false];
-    if (self.state == STATE_COPY) {
-        controller.operationState = OPERATION_STATE_COPY;
-    } else if (self.state == STATE_MOVE) {
-        controller.operationState = OPERATION_STATE_MOVE;
+
+    // Collect selected file names for title display in the destination picker
+    NSMutableArray<NSString *> *selectedNames = [NSMutableArray new];
+    NSArray *idxs = [self.tableView indexPathsForSelectedRows];
+    for (NSIndexPath *indexPath in idxs) {
+        if (indexPath.row >= self.allItems.count) continue;
+        SeafBase *item = (SeafBase *)[self.allItems objectAtIndex:indexPath.row];
+        [selectedNames addObject:item.name ?: @""];
     }
 
+    OperationState opState = OPERATION_STATE_OTHER;
+    if (self.state == STATE_COPY) opState = OPERATION_STATE_COPY;
+    else if (self.state == STATE_MOVE) opState = OPERATION_STATE_MOVE;
+
+    SeafDestinationPickerViewController *controller = [[SeafDestinationPickerViewController alloc]
+        initWithConnection:self.connection
+        sourceDirectory:self.directory
+        delegate:self
+        operationState:opState
+        fileNames:selectedNames];
+
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
-    if (IsIpad()) {
-        [navController setModalPresentationStyle:UIModalPresentationFormSheet];
-    } else {
-        [navController setModalPresentationStyle:UIModalPresentationFullScreen];
-    }
+    [navController setModalPresentationStyle:UIModalPresentationFullScreen];
     navController.navigationBar.tintColor = BAR_COLOR;
     navController.navigationBar.backgroundColor = [UIColor whiteColor];
     [self presentViewController:navController animated:YES completion:nil];
-    if (IsIpad()) {
-        CGRect frame = navController.view.superview.frame;
-        navController.view.superview.frame = CGRectMake(frame.origin.x+frame.size.width/2-320/2, frame.origin.y+frame.size.height/2-500/2, 320, 500);
-    }
 }
 
 
