@@ -353,6 +353,9 @@
 		BAF436AB2EA9D5A70002ECD1 /* SeafCollaboratorChipCell.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF436A72EA9D5A70002ECD1 /* SeafCollaboratorChipCell.m */; };
 		BAF436AC2EA9D5A70002ECD1 /* SeafTagChipCell.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF436A92EA9D5A70002ECD1 /* SeafTagChipCell.m */; };
 		BAF436B02EB304320002ECD1 /* SeadocImageUploadOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF436AE2EB304320002ECD1 /* SeadocImageUploadOperation.m */; };
+		BAF436C12EB468010002ECD1 /* SeafDestCell.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF436C02EB468010002ECD1 /* SeafDestCell.m */; };
+		BAF436C62EB484B70002ECD1 /* SeafDestinationPickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF436C32EB484B60002ECD1 /* SeafDestinationPickerViewController.m */; };
+		BAF436C72EB484B70002ECD1 /* SeafRecentDirsStore.m in Sources */ = {isa = PBXBuildFile; fileRef = BAF436C52EB484B60002ECD1 /* SeafRecentDirsStore.m */; };
 		D9BE2094AD9B16A02584A3C2 /* libPods-seafileApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B3D78ABE0B0673E422054A82 /* libPods-seafileApp.a */; };
 		DE940CA1A2BA2DD43C20EA2C /* libPods-SeafFileProviderUI.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 15EFA735E2957F22E301E23A /* libPods-SeafFileProviderUI.a */; };
 		E0FED1E93CBE02FB9B335ADB /* libPods-SeafFileProvider.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3583928919818364B46034EA /* libPods-SeafFileProvider.a */; };
@@ -1122,6 +1125,14 @@
 		BAF436A92EA9D5A70002ECD1 /* SeafTagChipCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafTagChipCell.m; sourceTree = "<group>"; };
 		BAF436AD2EB304320002ECD1 /* SeadocImageUploadOperation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeadocImageUploadOperation.h; sourceTree = "<group>"; };
 		BAF436AE2EB304320002ECD1 /* SeadocImageUploadOperation.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeadocImageUploadOperation.m; sourceTree = "<group>"; };
+		BAF436BC2EB4610C0002ECD1 /* SeafRecentDirsStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafRecentDirsStore.h; sourceTree = "<group>"; };
+		BAF436BD2EB4610C0002ECD1 /* SeafRecentDirsStore.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafRecentDirsStore.m; sourceTree = "<group>"; };
+		BAF436BF2EB468010002ECD1 /* SeafDestCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafDestCell.h; sourceTree = "<group>"; };
+		BAF436C02EB468010002ECD1 /* SeafDestCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafDestCell.m; sourceTree = "<group>"; };
+		BAF436C22EB484B60002ECD1 /* SeafDestinationPickerViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafDestinationPickerViewController.h; sourceTree = "<group>"; };
+		BAF436C32EB484B60002ECD1 /* SeafDestinationPickerViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafDestinationPickerViewController.m; sourceTree = "<group>"; };
+		BAF436C42EB484B60002ECD1 /* SeafRecentDirsStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafRecentDirsStore.h; sourceTree = "<group>"; };
+		BAF436C52EB484B60002ECD1 /* SeafRecentDirsStore.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafRecentDirsStore.m; sourceTree = "<group>"; };
 		DBDEFA043CD6CF7650726549 /* Pods-seafileApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-seafileApp.debug.xcconfig"; path = "Pods/Target Support Files/Pods-seafileApp/Pods-seafileApp.debug.xcconfig"; sourceTree = "<group>"; };
 		EE1E1FA7502D3F04292B11CB /* Pods-SeafAction.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SeafAction.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SeafAction/Pods-SeafAction.debug.xcconfig"; sourceTree = "<group>"; };
 		F515E4B421AC3DBB00A62F64 /* SeafActionsManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafActionsManager.h; sourceTree = "<group>"; };
@@ -1369,6 +1380,12 @@
 		5709512615B9ACDF00F48C08 /* views */ = {
 			isa = PBXGroup;
 			children = (
+				BAF436C22EB484B60002ECD1 /* SeafDestinationPickerViewController.h */,
+				BAF436C32EB484B60002ECD1 /* SeafDestinationPickerViewController.m */,
+				BAF436C42EB484B60002ECD1 /* SeafRecentDirsStore.h */,
+				BAF436C52EB484B60002ECD1 /* SeafRecentDirsStore.m */,
+				BAF436BF2EB468010002ECD1 /* SeafDestCell.h */,
+				BAF436C02EB468010002ECD1 /* SeafDestCell.m */,
 				BAF4368B2EA63CE10002ECD1 /* Comment */,
 				BAF434492EA23D880002ECD1 /* SDoc */,
 				BA6CDB352DF812750023AF29 /* SeafBackupDirViewController.h */,
@@ -1665,6 +1682,8 @@
 		BAF434492EA23D880002ECD1 /* SDoc */ = {
 			isa = PBXGroup;
 			children = (
+				BAF436BC2EB4610C0002ECD1 /* SeafRecentDirsStore.h */,
+				BAF436BD2EB4610C0002ECD1 /* SeafRecentDirsStore.m */,
 				BAF436AF2EB304320002ECD1 /* Upload */,
 				BAF436AA2EA9D5A70002ECD1 /* Chips */,
 				BAF436A02EA9D59E0002ECD1 /* SeafSdocProfileAssembler.h */,
@@ -3164,6 +3183,7 @@
 				577B6C6616AADBA3008E82C2 /* SeafCell.m in Sources */,
 				BA6CDB342DF7DEE80023AF29 /* SeafBackupGuideViewController.m in Sources */,
 				BA0E7E532D924A8D00E3E3F0 /* SeafEditNavRightItem.m in Sources */,
+				BAF436C12EB468010002ECD1 /* SeafDestCell.m in Sources */,
 				58D40A6B1E9AF72200A68BEF /* SeafAccountCell.m in Sources */,
 				4A5E88CF22AD3102008146BA /* SeafActivitiesCell.m in Sources */,
 				BAA7CFE22DB0D32200D26ED3 /* SeafPhotoContentViewController.m in Sources */,
@@ -3177,6 +3197,8 @@
 				5775EA1217476FAD000A1765 /* SeafActivityViewController.m in Sources */,
 				BAF436B02EB304320002ECD1 /* SeadocImageUploadOperation.m in Sources */,
 				BAF4369F2EA7C8A80002ECD1 /* SeafImagePreviewController.m in Sources */,
+				BAF436C62EB484B70002ECD1 /* SeafDestinationPickerViewController.m in Sources */,
+				BAF436C72EB484B70002ECD1 /* SeafRecentDirsStore.m in Sources */,
 				57A90DA118C49F97005D8A53 /* SeafDetailViewController.m in Sources */,
 				5704C6D31753A1380028F4FE /* IntelligentSplitViewController.m in Sources */,
 				BA8DC95B2D9A6A030027EC46 /* SeafLoadingView.m in Sources */,
@@ -3420,7 +3442,7 @@
 				INFOPLIST_FILE = "seafile/Supporting Files/seafile-appstore-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MARKETING_VERSION = 3.0.8;
+				MARKETING_VERSION = 3.0.9;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro;
 				PRODUCT_NAME = SeafilePro;
 				PROVISIONING_PROFILE = "";
@@ -3456,7 +3478,7 @@
 				INFOPLIST_FILE = "seafile/Supporting Files/seafile-appstore-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MARKETING_VERSION = 3.0.8;
+				MARKETING_VERSION = 3.0.9;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafilePro;
 				PRODUCT_NAME = SeafilePro;
 				PROVISIONING_PROFILE = "";

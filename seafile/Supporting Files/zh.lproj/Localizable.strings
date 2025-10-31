@@ -1,4 +1,16 @@
 ﻿
+/* 目的地选择页 */
+"Current library" = "当前资料库";
+"Other libraries" = "其他资料库";
+"Recent" = "最近使用";
+"Move here" = "移动至此";
+"Copy here" = "复制至此";
+"New folder" = "新建文件夹";
+"New folder name" = "新建文件夹名称";
+"Folder name invalid" = "文件夹名称不合法";
+"items" = "个项目";
+"Destination scope" = "目标范围";
+"Confirm move or copy to current directory" = "确认移动或复制到当前目录";
 
 /* Seafile */
 "%@ can't verify the identity of the website \"%@\"" = "%1$@ 无法验证网站 \\"%2$@\\" 的证书";

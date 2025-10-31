@@ -12,6 +12,21 @@
 //  IMAGE_WIDTH = (SCREEN_WIDTH - 120dp) / 3
 #define kImageWidth ((UIScreen.mainScreen.bounds.size.width - 120) / 3.0)
 
+// Common layout constants
+static const CGFloat kPaddingV = 8.0;
+static const CGFloat kPaddingH = 16.0;
+static const CGFloat kAvatarSize = 32.0;
+static const CGFloat kNameHeight = 18.0;
+static const CGFloat kNameRightRoom = 36.0; // room for trailing elements
+static const CGFloat kTimeTopMargin = 4.0;
+static const CGFloat kTimeHeight = 16.0;
+static const CGFloat kResolvedIconSize = 16.0;
+static const CGFloat kContentTopMargin = 4.0;
+static const CGFloat kMoreIconBox = 32.0;
+static const CGFloat kMoreIconSize = 20.0;
+static const CGFloat kGridImageMarginDefault = 4.0;
+static const NSInteger kGridColumns = 3;
+
 @interface SeafDocCommentCell ()
 
 @property (nonatomic, strong) UIImageView *avatarView;
@@ -42,47 +57,26 @@
 // Track running NSOperations created via SeafDataTaskManager
 @property (nonatomic, strong) NSHashTable<NSOperation *> *runningOperations;
 
+// Layout caching
+@property (nonatomic, assign) CGFloat lastMeasuredWidth;
+@property (nonatomic, assign) CGFloat cachedTotalHeight;
+@property (nonatomic, assign) CGFloat lastLaidOutWidth;
+@property (nonatomic, assign) BOOL needsLayoutRecalc;
+
 @end
 
 @implementation SeafDocCommentCell
 - (void)_computeGridParamsForContentWidth:(CGFloat)contentWidth
 {
-    self.gridImageMargin = 4.0;
-    self.gridColumns = 3;
+    self.gridImageMargin = kGridImageMarginDefault;
+    self.gridColumns = kGridColumns;
     CGFloat totalInterItem = self.gridImageMargin * 2 * self.gridColumns;
     CGFloat availableForImages = contentWidth - totalInterItem;
     self.gridImageSize = floor(availableForImages / self.gridColumns);
 }
 
 
-// Simple in-memory + disk cache for comment images
-static NSCache *gCommentImageCache; // deprecated local cache, kept for backward compat but not used
-static NSHashTable<NSURLSessionDataTask *> *gAllRunningImageTasks; // deprecated, kept for compat
-static NSURLSession *gImageSession; // deprecated, kept for compat
-
-+ (void)initialize
-{
-    if (self == [SeafDocCommentCell class]) {
-        gCommentImageCache = [NSCache new];
-        gCommentImageCache.countLimit = 200;
-        // Rough 50MB cost limit to avoid unbounded growth
-        gCommentImageCache.totalCostLimit = 50 * 1024 * 1024;
-        gAllRunningImageTasks = [NSHashTable weakObjectsHashTable];
-        NSURLSessionConfiguration *cfg = [NSURLSessionConfiguration defaultSessionConfiguration];
-        cfg.timeoutIntervalForRequest = 15.0;
-        cfg.timeoutIntervalForResource = 30.0;
-        cfg.HTTPMaximumConnectionsPerHost = 6;
-        gImageSession = [NSURLSession sessionWithConfiguration:cfg];
-
-        // Memory pressure handling
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_onMemoryWarning:) name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
-    }
-}
-
-+ (void)_onMemoryWarning:(NSNotification *)n
-{
-    [gCommentImageCache removeAllObjects];
-}
+// Legacy global image cache/session removed. Image caching is unified in SeafCacheManager.
 - (void)dealloc
 {
     [self cancelLoading];
@@ -91,12 +85,7 @@ static NSURLSession *gImageSession; // deprecated, kept for compat
 // Cancel all comment image downloads (class method)
 + (void)cancelAllImageLoads
 {
-    for (NSURLSessionDataTask *task in gAllRunningImageTasks) {
-        if (task && task.state == NSURLSessionTaskStateRunning) {
-            [task cancel];
-        }
-    }
-    [gAllRunningImageTasks removeAllObjects];
+    // No-op: image tasks are managed per-cell via runningOperations and cached by SeafCacheManager.
 }
 
 // SHA1 for stable filename
@@ -144,6 +133,10 @@ static NSString *commentImageCacheDir()
         self.selectionStyle = UITableViewCellSelectionStyleNone;
         _runningImageTasks = [NSHashTable weakObjectsHashTable];
         _runningOperations = [NSHashTable weakObjectsHashTable];
+        _lastMeasuredWidth = 0;
+        _cachedTotalHeight = 0;
+        _lastLaidOutWidth = 0;
+        _needsLayoutRecalc = YES;
 
         _avatarView = [[UIImageView alloc] initWithFrame:CGRectZero];
         _avatarView.layer.cornerRadius = 16.0;
@@ -188,13 +181,11 @@ static NSString *commentImageCacheDir()
         
         // 32dp × 32dp more button (added last to ensure topmost)
         _moreButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        // Prefer the same "more" asset as the file view
-        UIImage *moreAsset = [UIImage imageNamed:@"more"];
         UIImage *moreIcon = nil;
-        if (moreAsset) {
-            moreIcon = moreAsset;
-        } else if (@available(iOS 13.0, *)) {
+        if (@available(iOS 13.0, *)) {
             moreIcon = [UIImage systemImageNamed:@"ellipsis.vertical"];
+        } else {
+            moreIcon = [UIImage imageNamed:@"more"];
         }
         if (moreIcon) {
             // Keep consistent size and legibility
@@ -231,45 +222,52 @@ static NSString *commentImageCacheDir()
 - (void)layoutSubviews
 {
     [super layoutSubviews];
-    // paddingVertical="8dp", paddingHorizontal="16dp"
-    UIEdgeInsets insets = UIEdgeInsetsMake(8, 16, 8, 16);
+    // paddingVertical/Horizontal
+    UIEdgeInsets insets = UIEdgeInsetsMake(kPaddingV, kPaddingH, kPaddingV, kPaddingH);
     CGFloat width = self.contentView.bounds.size.width;
 
+    // Early exit if layout is up-to-date for current width and content hasn't changed
+    CGFloat contentWidth = width - insets.left - insets.right;
+    if (fabs(self.lastLaidOutWidth - contentWidth) < 0.5 && !self.needsLayoutRecalc) {
+        [self.contentView bringSubviewToFront:self.moreButton];
+        return;
+    }
+
     // 32dp × 32dp avatar
-    self.avatarView.frame = CGRectMake(insets.left, insets.top, 32, 32);
+    self.avatarView.frame = CGRectMake(insets.left, insets.top, kAvatarSize, kAvatarSize);
     
     // layout_marginStart="8dp" (avatar right margin)
     CGFloat rightStart = CGRectGetMaxX(self.avatarView.frame) + 8.0;
     CGFloat rightWidth = width - rightStart - insets.right;
 
     // Align with nav-bar "more" visuals: slightly smaller (near 24pt target) but keep 32pt container
-    CGFloat iconBox = 32.0;
-    CGFloat iconSize = 20.0;
+    CGFloat iconBox = kMoreIconBox;
+    CGFloat iconSize = kMoreIconSize;
     CGFloat bx = self.contentView.bounds.size.width - insets.right - iconBox;
     CGFloat by = insets.top;
     self.moreButton.frame = CGRectMake(bx, by, iconBox, iconBox);
     self.moreButton.imageEdgeInsets = UIEdgeInsetsMake((iconBox - iconSize)/2.0, (iconBox - iconSize)/2.0, (iconBox - iconSize)/2.0, (iconBox - iconSize)/2.0);
 
-    CGSize nameSize = [self.nameLabel sizeThatFits:CGSizeMake(rightWidth - 36, 20)];
-    self.nameLabel.frame = CGRectMake(rightStart, insets.top, MIN(rightWidth - 36, nameSize.width), 18);
+    CGSize nameSize = [self.nameLabel sizeThatFits:CGSizeMake(rightWidth - kNameRightRoom, 20)];
+    self.nameLabel.frame = CGRectMake(rightStart, insets.top, MIN(rightWidth - kNameRightRoom, nameSize.width), kNameHeight);
 
-    // layout_marginTop="4dp" (spacing from name to time)
-    CGSize timeSize = [self.timeLabel sizeThatFits:CGSizeMake(rightWidth, 16)];
-    self.timeLabel.frame = CGRectMake(rightStart, CGRectGetMaxY(self.nameLabel.frame) + 4, MIN(rightWidth, timeSize.width), 16);
+    // spacing from name to time
+    CGSize timeSize = [self.timeLabel sizeThatFits:CGSizeMake(rightWidth, kTimeHeight)];
+    self.timeLabel.frame = CGRectMake(rightStart, CGRectGetMaxY(self.nameLabel.frame) + kTimeTopMargin, MIN(rightWidth, timeSize.width), kTimeHeight);
 
     // Keep text label (backward compatibility)
     self.resolvedLabel.frame = CGRectMake(CGRectGetMaxX(self.timeLabel.frame) + 4, CGRectGetMinY(self.timeLabel.frame), 60, 16);
     
     // Make the Resolved icon 16dp; same height as time text and vertically aligned
-    self.resolvedImageView.frame = CGRectMake(CGRectGetMaxX(self.timeLabel.frame) + 4, CGRectGetMinY(self.timeLabel.frame), 16, 16);
+    self.resolvedImageView.frame = CGRectMake(CGRectGetMaxX(self.timeLabel.frame) + kTimeTopMargin, CGRectGetMinY(self.timeLabel.frame), kResolvedIconSize, kResolvedIconSize);
 
-    // layout_marginTop="4dp" (content area top margin)
-    CGFloat contentTop = MAX(CGRectGetMaxY(self.avatarView.frame), CGRectGetMaxY(self.timeLabel.frame)) + 4;
+    // content area top margin
+    CGFloat contentTop = MAX(CGRectGetMaxY(self.avatarView.frame), CGRectGetMaxY(self.timeLabel.frame)) + kContentTopMargin;
     
     // FlexboxLayout layout_width="match_parent": start from left margin, not from right of avatar
     // LinearLayout already has paddingHorizontal="16dp", so FlexboxLayout starts from the left margin
     CGFloat contentLeft = insets.left;
-    CGFloat contentWidth = width - insets.left - insets.right;
+    contentWidth = width - insets.left - insets.right;
     
     // Precompute grid parameters based on available width to avoid rounding drift
     [self _computeGridParamsForContentWidth:contentWidth];
@@ -336,22 +334,36 @@ static NSString *commentImageCacheDir()
 
     // Ensure the more button stays on top so later subviews don't cover it
     [self.contentView bringSubviewToFront:self.moreButton];
+
+    // Update layout cache
+    self.lastLaidOutWidth = contentWidth;
+    self.cachedTotalHeight = MAX(yOffset, 0);
+    self.needsLayoutRecalc = NO;
 }
 
 - (CGSize)sizeThatFits:(CGSize)size
 {
-    // paddingVertical="8dp", paddingHorizontal="16dp"
-    UIEdgeInsets insets = UIEdgeInsetsMake(8, 16, 8, 16);
+    // paddingVertical/Horizontal
+    UIEdgeInsets insets = UIEdgeInsetsMake(kPaddingV, kPaddingH, kPaddingV, kPaddingH);
     CGFloat width = size.width;
     
     // FlexboxLayout layout_width="match_parent": width = parent width - horizontal padding
     CGFloat contentWidth = width - insets.left - insets.right;
 
+    // If nothing changed and we have cached height, reuse it
+    if (fabs(self.lastMeasuredWidth - contentWidth) < 0.5 && !self.needsLayoutRecalc && self.cachedTotalHeight > 0) {
+        CGFloat avatarSectionHeight = insets.top + kAvatarSize;
+        CGFloat headerSectionHeight = insets.top + kNameHeight + kTimeTopMargin + kTimeHeight;
+        CGFloat headerHeight = MAX(avatarSectionHeight, headerSectionHeight);
+        CGFloat totalHeight = headerHeight + kContentTopMargin + self.cachedTotalHeight + insets.bottom;
+        return CGSizeMake(size.width, totalHeight);
+    }
+
     // 1) Avatar section height (from top)
-    CGFloat avatarSectionHeight = insets.top + 32; // avatar height 32pt
+    CGFloat avatarSectionHeight = insets.top + kAvatarSize; // avatar height
     
     // 2) Name + time section height (from top)
-    CGFloat headerSectionHeight = insets.top + 18 + 4 + 16; // name(18) + margin(4) + time(16)
+    CGFloat headerSectionHeight = insets.top + kNameHeight + kTimeTopMargin + kTimeHeight;
     
     // Take the larger value as the total header height
     CGFloat headerHeight = MAX(avatarSectionHeight, headerSectionHeight);
@@ -401,16 +413,16 @@ static NSString *commentImageCacheDir()
         }
         
         // Add the last row height
-        if (rowHeight > 0) yOffset += rowHeight;
-        
+    if (rowHeight > 0) yOffset += rowHeight;
+
         contentHeight = yOffset;
     }
     
     // 4) Total height = header + content top margin (4pt) + content height + bottom padding
-    CGFloat totalHeight = headerHeight + 4 + contentHeight + insets.bottom;
-    
-    
-    
+    CGFloat totalHeight = headerHeight + kContentTopMargin + contentHeight + insets.bottom;
+    // update measure cache
+    self.lastMeasuredWidth = contentWidth;
+    self.cachedTotalHeight = contentHeight;
     return CGSizeMake(size.width, totalHeight);
 }
 
@@ -433,6 +445,7 @@ static NSString *commentImageCacheDir()
         [subview removeFromSuperview];
     }
     [self.contentSubviews removeAllObjects];
+    self.needsLayoutRecalc = YES;
 }
 
 - (void)cancelLoading
@@ -468,6 +481,7 @@ static NSString *commentImageCacheDir()
         [subview removeFromSuperview];
     }
     [self.contentSubviews removeAllObjects];
+    self.needsLayoutRecalc = YES;
     
     self.nameLabel.text = item.author;
     self.timeLabel.text = item.timeString;

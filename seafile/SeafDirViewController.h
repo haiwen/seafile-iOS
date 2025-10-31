@@ -29,6 +29,10 @@ typedef void (^SeafDirCancelChoose)(UIViewController *c);
 @interface SeafDirViewController : UITableViewController
 
 @property (nonatomic, assign) OperationState operationState;
+// When enabled, adjust cell content for destination picker (e.g., show detail for normal dirs)
+@property (nonatomic, assign) BOOL useDestinationStyle;
+// When YES, show the "return to parent" header even at the root controller
+@property (nonatomic, assign) BOOL showReturnHeaderOnRoot;
 
 - (id)initWithSeafDir:(SeafDir *)dir delegate:(id<SeafDirDelegate>)delegate chooseRepo:(BOOL)chooseRepo;
 - (id)initWithSeafDir:(SeafDir *)dir dirChosen:(SeafDirChoose)choose cancel:(SeafDirCancelChoose)cancel chooseRepo:(BOOL)chooseRepo;
