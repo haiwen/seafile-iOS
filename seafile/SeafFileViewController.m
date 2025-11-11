@@ -22,12 +22,15 @@
 #import "SeafGlobal.h"
 #import "SeafPhotoAsset.h"
 #import "SeafVideoPlayerViewController.h"
+#import "SeafSelectionActionCoordinator.h"
 #import "SeafDestinationPickerViewController.h"
 
 #import "FileSizeFormatter.h"
 #import "SeafDateFormatter.h"
 #import "ExtentedString.h"
 #import "UIViewController+Extend.h"
+#import <Photos/Photos.h>
+#import <objc/runtime.h>
 #import "SVProgressHUD.h"
 #import "Debug.h"
 
@@ -116,6 +119,8 @@ enum {
 @property (nonatomic, strong) UIView *customToolView;
 @property (nonatomic, strong) UILabel *customTitleLabel; // Add new property to track title label
 @property (nonatomic, strong) SeafFile *pendingVideoFile; // Video file waiting to play after download
+
+@property (nonatomic, strong) SeafSelectionActionCoordinator *selectionCoordinator;
 
 @end
 
@@ -207,6 +212,9 @@ enum {
     
     self.navigationController.navigationBar.tintColor = BAR_COLOR;
     [self.navigationController setToolbarHidden:YES animated:NO];
+    
+    // Selection action coordinator
+    self.selectionCoordinator = [[SeafSelectionActionCoordinator alloc] initWithHostViewController:self];
 
     // Configure view controller for status bar appearance during search
     if (@available(iOS 13.0, *)) {
@@ -1644,7 +1652,9 @@ enum {
     NSMutableArray *urls = [NSMutableArray array];
     dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
     dispatch_group_t group = dispatch_group_create();
-    [SVProgressHUD show];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [SVProgressHUD show];
+    });
     for (id entry in entries) {
         dispatch_group_enter(group);
         dispatch_barrier_async(queue, ^{
@@ -2316,12 +2326,46 @@ enum {
     }
 }
 
+- (NSIndexPath *)indexPathForFileByIdentity:(SeafFile *)file
+{
+    if (!file) return nil;
+    NSString *targetKey = file.uniqueKey;
+    if (targetKey.length == 0) return nil;
+    NSUInteger count = self.allItems.count;
+    for (NSUInteger i = 0; i < count; i++) {
+        id obj = self.allItems[i];
+        if (![obj isKindOfClass:[SeafFile class]]) continue;
+        SeafFile *candidate = (SeafFile *)obj;
+        NSString *key = candidate.uniqueKey;
+        if (key.length > 0 && [key isEqualToString:targetKey]) {
+            return [NSIndexPath indexPathForRow:(NSInteger)i inSection:0];
+        }
+    }
+    return nil;
+}
+
 - (void)updateEntryCell:(SeafFile *)entry
 {
     @try {
-        SeafCell *cell = [self getEntryCell:entry indexPath:nil];
-        [self updateCellContent:cell file:entry];
+        NSIndexPath *path = nil;
+        SeafCell *cell = [self getEntryCell:entry indexPath:&path];
+        if (cell) {
+            [self updateCellContent:cell file:entry];
+        } else {
+            // If the pointer changed, locate by uniqueKey and refresh that row
+            NSIndexPath *ip = [self indexPathForFileByIdentity:entry];
+            if (ip) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    @try {
+                        [self.tableView reloadRowsAtIndexPaths:@[ip] withRowAnimation:UITableViewRowAnimationNone];
+                    } @catch(NSException *exception) {
+                        Warning("Failed to reload cell at %@: %@", ip, exception);
+                    }
+                });
+            }
+        }
     } @catch(NSException *exception) {
+        Warning("updateEntryCell exception: %@", exception);
     }
 }
 
@@ -2419,12 +2463,18 @@ enum {
 - (void)download:(SeafBase *)entry progress:(float)progress
 {
     if ([entry isKindOfClass:[SeafFile class]]) {
-        [self.detailViewController download:entry progress:progress];
+        // While unified progress is active, avoid triggering the detail view HUD to keep the custom overlay authoritative
+        if (!(self.selectionCoordinator.isAggregating) && !self.selectionCoordinator.unifiedAllMediaProgressActive) {
+            [self.detailViewController download:entry progress:progress];
+        }
+        // Still update the cell’s visible progress
         SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
         [photo setProgress:progress];
         SeafCell *cell = [self getEntryCell:(SeafFile *)entry indexPath:nil];
         [self updateCellDownloadStatus:cell file:(SeafFile *)entry waiting:false];
     }
+    // Aggregate progress update
+    [self updateAggregateProgressForEntry:entry progress:progress];
 }
 
 - (void)download:(SeafBase *)entry complete:(BOOL)updated
@@ -2433,19 +2483,29 @@ enum {
         [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Successfully copied", @"Seafile")];
     } else if (self.state == STATE_MOVE) {
         [SVProgressHUD showSuccessWithStatus:NSLocalizedString(@"Successfully moved", @"Seafile")];
-    } else if (self.state != STATE_EXPORT) {
+    } else if (self.state != STATE_EXPORT && !(self.selectionCoordinator.isAggregating) && !self.selectionCoordinator.unifiedAllMediaProgressActive) {
+        // Prevent the unified progress flow from dismissing the overall HUD
         [SVProgressHUD dismiss];
     }
     if ([entry isKindOfClass:[SeafFile class]]) {
         SeafFile *file = (SeafFile *)entry;
         [self updateEntryCell:file];
+        // If an early refresh missed hasCache, retry shortly to keep state current
+        if (![file isWebOpenFile] && !file.hasCache) {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [self updateEntryCell:file];
+            });
+        }
         if (self.state == STATE_SHARE_SHARE_WECHAT) {
             [self shareToWechat:file];
-        } else {
+        } else if (!(self.selectionCoordinator.isAggregating) && !self.selectionCoordinator.unifiedAllMediaProgressActive) {
+            // During unified progress, skip detail view callbacks so the overlay control stays consistent
             [self.detailViewController download:file complete:updated];
             SeafPhoto *photo = [self getSeafPhoto:(id<SeafPreView>)entry];
             [photo complete:updated error:nil];
         }
+        // Notify coordinator for aggregate bookkeeping
+        [self.selectionCoordinator notifyFileDownloadCompleted:file error:nil];
     } else if (entry == _directory) {
         [self dismissLoadingView];
         [self doneLoadingTableViewData];
@@ -2522,14 +2582,19 @@ enum {
 - (void)download:(SeafBase *)entry failed:(NSError *)error
 {
     if ([entry isKindOfClass:[SeafFile class]]) {
-        if (self.state != STATE_EXPORT) {
+        if (self.state != STATE_EXPORT && !(self.selectionCoordinator.isAggregating) && !self.selectionCoordinator.unifiedAllMediaProgressActive) {
             [SVProgressHUD dismiss];
         }
         SeafFile *file = (SeafFile *)entry;
         [self updateEntryCell:file];
-        [self.detailViewController download:entry failed:error];
-        SeafPhoto *photo = [self getSeafPhoto:file];
-        return [photo complete:false error:error];
+        if (!(self.selectionCoordinator.isAggregating) && !self.selectionCoordinator.unifiedAllMediaProgressActive) {
+            [self.detailViewController download:entry failed:error];
+            SeafPhoto *photo = [self getSeafPhoto:file];
+            [photo complete:false error:error];
+        }
+        // Notify coordinator for aggregate bookkeeping (failure)
+        [self.selectionCoordinator notifyFileDownloadCompleted:file error:error];
+        return;
     }
 
     NSCAssert([entry isKindOfClass:[SeafDir class]], @"entry must be SeafDir");
@@ -3251,17 +3316,9 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
             break;
         }
         case ToolButtonDownload: {
-            [self editDone:nil]; // Exit edit mode here
-            for (SeafBase *item in selectedItems) {
-                if ([item isKindOfClass:[SeafFile class]]) {
-                    SeafFile *file = (SeafFile *)item;
-                    Debug("download file: %@, %@", item.repoId, item.path);
-                    [SeafDataTaskManager.sharedObject addFileDownloadTask:file];
-                } else if ([item isKindOfClass:[SeafDir class]]) {
-                    Debug("download dir: %@, %@", item.repoId, item.path);
-                    [self performSelector:@selector(downloadDir:) withObject:(SeafDir *)item];
-                }
-            }
+            // 新逻辑：展开选中项 -> 分类 -> 执行三态分支
+            [self editDone:nil]; // 先退出编辑态，保持原交互
+            [self expandAndHandleDownloadForSelectedItems:selectedItems sourceView:buttonView];
             break;
         }
         case ToolButtonRename: {
@@ -3515,6 +3572,22 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
         // This will internally call `dismissCustomTabTool:` and restore insets.
         [self editDone:nil];
     }
+}
+
+#pragma mark - Expand, Classify and Handle Download/Export
+
+// Removed: collectFilesRecursivelyFromItems (moved into SeafSelectionActionCoordinator)
+
+// Forwarded handlers to coordinator
+- (void)expandAndHandleDownloadForSelectedItems:(NSArray<SeafBase *> *)selectedItems
+                                     sourceView:(UIView *)sourceView
+{
+    [self.selectionCoordinator handleSelectedItems:selectedItems sourceView:sourceView];
+}
+
+- (void)updateAggregateProgressForEntry:(SeafBase *)entry progress:(float)progress
+{
+    [self.selectionCoordinator updateAggregateProgressForEntry:entry progress:progress];
 }
 
 @end
