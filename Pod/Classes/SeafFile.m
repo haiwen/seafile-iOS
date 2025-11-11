@@ -162,7 +162,10 @@
     if ([normalizedPath hasPrefix:@"/"]) {
         normalizedPath = [normalizedPath substringFromIndex:1];
     }
-    self.uniqueKey = [NSString stringWithFormat:@"%@/%@/%@", self.connection.accountIdentifier, self.repoId, self.name];
+    NSString *accountIdentifier = self.connection.accountIdentifier ?: @"";
+    NSString *repoId = self.repoId ?: @"";
+    NSString *pathComponent = normalizedPath ?: @"";
+    self.uniqueKey = [NSString stringWithFormat:@"%@/%@/%@", accountIdentifier, repoId, pathComponent];
     return [super uniqueKey];
 }
 

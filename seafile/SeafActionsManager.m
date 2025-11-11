@@ -15,6 +15,61 @@
 #import "Debug.h"
 #import "SVProgressHUD.h"
 #import "SeafGlobal.h"
+#import "Utils.h"
+
+@interface SeafShareURLItem : NSObject <UIActivityItemSource>
+
+@property (nonatomic, strong) NSURL *fileURL;
+@property (nonatomic, assign) BOOL isImage;
+@property (nonatomic, assign) BOOL isVideo;
+
+- (instancetype)initWithURL:(NSURL *)url;
+
+@end
+
+@implementation SeafShareURLItem
+
+- (instancetype)initWithURL:(NSURL *)url
+{
+    self = [super init];
+    if (self) {
+        _fileURL = url;
+        NSString *fileName = url.lastPathComponent ?: @"";
+        _isImage = [Utils isImageFile:fileName];
+        _isVideo = [Utils isVideoFile:fileName];
+    }
+    return self;
+}
+
+- (id)activityViewControllerPlaceholderItem:(UIActivityViewController *)activityViewController
+{
+    return self.fileURL ?: [NSURL URLWithString:@"about:blank"];
+}
+
+- (id)activityViewController:(UIActivityViewController *)activityViewController
+        itemForActivityType:(UIActivityType)activityType
+{
+    if (!activityType) {
+        return self.fileURL;
+    }
+    if ([activityType isEqualToString:UIActivityTypeSaveToCameraRoll]) {
+        if (self.isImage || self.isVideo) {
+            if (self.isImage) {
+                UIImage *image = [UIImage imageWithContentsOfFile:self.fileURL.path];
+                if (image) {
+                    return image;
+                }
+            }
+            if (self.isVideo) {
+                return self.fileURL;
+            }
+        }
+        return nil;
+    }
+    return self.fileURL;
+}
+
+@end
 
 @implementation SeafActionsManager
 
@@ -89,7 +144,13 @@
 }
 
 + (void)exportByActivityView:(NSArray <NSURL *> *)urls item:(id)item targerVC:(UIViewController *)targetVC {
-    UIActivityViewController *controller = [[UIActivityViewController alloc] initWithActivityItems:urls applicationActivities:nil];
+    NSMutableArray *shareItems = [NSMutableArray arrayWithCapacity:urls.count];
+    for (NSURL *url in urls) {
+        if (![url isKindOfClass:[NSURL class]]) continue;
+        SeafShareURLItem *itemSource = [[SeafShareURLItem alloc] initWithURL:url];
+        [shareItems addObject:itemSource];
+    }
+    UIActivityViewController *controller = [[UIActivityViewController alloc] initWithActivityItems:shareItems.count > 0 ? shareItems : urls applicationActivities:nil];
     controller.completionWithItemsHandler = ^(UIActivityType __nullable activityType, BOOL completed, NSArray * __nullable returnedItems, NSError * __nullable activityError) {
         Debug("activityType=%@ completed=%d, returnedItems=%@, activityError=%@", activityType, completed, returnedItems, activityError);
         if ([UIActivityTypeSaveToCameraRoll isEqualToString:activityType]) {

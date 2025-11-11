@@ -234,6 +234,7 @@
 		BA8DC9602D9A6A030027EC46 /* SeafLoadingView.m in Sources */ = {isa = PBXBuildFile; fileRef = BA8DC95A2D9A6A030027EC46 /* SeafLoadingView.m */; };
 		BAA7CFE22DB0D32200D26ED3 /* SeafPhotoContentViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BAA7CFE12DB0D32200D26ED3 /* SeafPhotoContentViewController.m */; };
 		BAA7CFE52DB0D37900D26ED3 /* SeafPhotoGalleryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BAA7CFE42DB0D37800D26ED3 /* SeafPhotoGalleryViewController.m */; };
+		BAAF58EF2EC5AB8C00AB3F32 /* SeafSelectionActionCoordinator.m in Sources */ = {isa = PBXBuildFile; fileRef = BAAF58ED2EC5AB8C00AB3F32 /* SeafSelectionActionCoordinator.m */; };
 		BACC56582E1D051A00E1014F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BACC56572E1D051A00E1014F /* Assets.xcassets */; };
 		BACC56592E1D221800E1014F /* SeafCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 577B6C6416AADBA3008E82C2 /* SeafCell.m */; };
 		BACC565B2E1D299C00E1014F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BACC565A2E1D299C00E1014F /* Assets.xcassets */; };
@@ -1067,6 +1068,8 @@
 		BAA7CFE12DB0D32200D26ED3 /* SeafPhotoContentViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafPhotoContentViewController.m; sourceTree = "<group>"; };
 		BAA7CFE32DB0D37800D26ED3 /* SeafPhotoGalleryViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafPhotoGalleryViewController.h; sourceTree = "<group>"; };
 		BAA7CFE42DB0D37800D26ED3 /* SeafPhotoGalleryViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafPhotoGalleryViewController.m; sourceTree = "<group>"; };
+		BAAF58EC2EC5AB8C00AB3F32 /* SeafSelectionActionCoordinator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafSelectionActionCoordinator.h; sourceTree = "<group>"; };
+		BAAF58ED2EC5AB8C00AB3F32 /* SeafSelectionActionCoordinator.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SeafSelectionActionCoordinator.m; sourceTree = "<group>"; };
 		BACC56572E1D051A00E1014F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BACC565A2E1D299C00E1014F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BACC565C2E1E3C0E00E1014F /* SeafVideoPlayerViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SeafVideoPlayerViewController.h; sourceTree = "<group>"; };
@@ -1386,6 +1389,7 @@
 				BAF436C52EB484B60002ECD1 /* SeafRecentDirsStore.m */,
 				BAF436BF2EB468010002ECD1 /* SeafDestCell.h */,
 				BAF436C02EB468010002ECD1 /* SeafDestCell.m */,
+				BAAF58EE2EC5AB8C00AB3F32 /* Selection */,
 				BAF4368B2EA63CE10002ECD1 /* Comment */,
 				BAF434492EA23D880002ECD1 /* SDoc */,
 				BA6CDB352DF812750023AF29 /* SeafBackupDirViewController.h */,
@@ -1655,6 +1659,15 @@
 				58D40A6C1E9AF7A400A68BEF /* seafile.xcdatamodeld */,
 			);
 			name = Resources;
+			sourceTree = "<group>";
+		};
+		BAAF58EE2EC5AB8C00AB3F32 /* Selection */ = {
+			isa = PBXGroup;
+			children = (
+				BAAF58EC2EC5AB8C00AB3F32 /* SeafSelectionActionCoordinator.h */,
+				BAAF58ED2EC5AB8C00AB3F32 /* SeafSelectionActionCoordinator.m */,
+			);
+			path = Selection;
 			sourceTree = "<group>";
 		};
 		BAF434412EA23D880002ECD1 /* Models */ = {
@@ -3196,6 +3209,7 @@
 				F5B209092169994000762342 /* SeafInputItemsProvider.m in Sources */,
 				5775EA1217476FAD000A1765 /* SeafActivityViewController.m in Sources */,
 				BAF436B02EB304320002ECD1 /* SeadocImageUploadOperation.m in Sources */,
+				BAAF58EF2EC5AB8C00AB3F32 /* SeafSelectionActionCoordinator.m in Sources */,
 				BAF4369F2EA7C8A80002ECD1 /* SeafImagePreviewController.m in Sources */,
 				BAF436C62EB484B70002ECD1 /* SeafDestinationPickerViewController.m in Sources */,
 				BAF436C72EB484B70002ECD1 /* SeafRecentDirsStore.m in Sources */,

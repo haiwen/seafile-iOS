@@ -183,10 +183,17 @@ extern NSString * const AFNetworkingOperationFailingURLResponseErrorKey;
             }
             [strongSelf finishDownload:NO error:newError ooid:nil];
         } else {
-            Debug("Successfully downloaded file:%@, %@", strongSelf.file.name, downloadRequest.URL);
-            if (![filePath.path isEqualToString:target]) {
-                [Utils removeFile:target];
-                [[NSFileManager defaultManager] moveItemAtPath:filePath.path toPath:target error:nil];
+            NSString *sourcePath = filePath.path;
+            BOOL sourceExists = sourcePath.length > 0 && [[NSFileManager defaultManager] fileExistsAtPath:sourcePath];
+            if (sourceExists && ![sourcePath isEqualToString:target]) {
+                if ([[NSFileManager defaultManager] fileExistsAtPath:target]) {
+                    [Utils removeFile:target];
+                }
+                NSError *moveError = nil;
+                BOOL moved = [[NSFileManager defaultManager] moveItemAtPath:sourcePath toPath:target error:&moveError];
+                if (!moved) {
+                    Warning("moveItemAtPath failed: %@ -> %@, error=%@", sourcePath, target, moveError);
+                }
             }
             [strongSelf finishDownload:YES error:nil ooid:strongSelf.downloadingFileOid];
         }
@@ -209,7 +216,6 @@ extern NSString * const AFNetworkingOperationFailingURLResponseErrorKey;
         
         NSString *cachePath = [[SeafCacheManager sharedManager] getCachePathForFile:strongSelf.file];
         if (cachePath && cachePath.length > 0 && [[NSFileManager defaultManager] fileExistsAtPath:cachePath]) {
-            Debug("Already up-to-date oid=%@", strongSelf.file.ooid);
             [strongSelf finishDownload:YES error:nil ooid:curId];
             return;
         }
@@ -229,7 +235,6 @@ extern NSString * const AFNetworkingOperationFailingURLResponseErrorKey;
                          error:nil];
                 [strongSelf finishDownload:YES error:nil ooid:strongSelf.downloadingFileOid];
             } else {
-                Debug("blks=%@", strongSelf.blkids);
                 [strongSelf downloadBlocks];
             }
         }
