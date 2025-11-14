@@ -440,6 +440,7 @@ static NSString * const kSeafBridgeHelperScript =
             vc.pageOptions = sself.pageOptions;
             vc.docDisplayName = sself.navigationItem.title;
             vc.connection = sself.file.connection;
+            vc.repoId = sself.file.repoId;
             UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
             nav.modalPresentationStyle = UIModalPresentationFullScreen;
             [sself presentViewController:nav animated:YES completion:nil];

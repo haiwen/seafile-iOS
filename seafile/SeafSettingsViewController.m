@@ -457,7 +457,7 @@ enum {
     Debug("Total cache: %lld", cacheSize);
     if (_connection.quota <= 0) {
         if (_connection.usage < 0)
-            _usedspaceCell.detailTextLabel.text = @"Unknown";
+            _usedspaceCell.detailTextLabel.text = NSLocalizedString(@"Unknown", @"Seafile");
         else
             _usedspaceCell.detailTextLabel.text = [FileSizeFormatter stringFromLongLong:_connection.usage];
     } else {
