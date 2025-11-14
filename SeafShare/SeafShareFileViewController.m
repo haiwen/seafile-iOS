@@ -107,7 +107,7 @@
 - (void)showLoadingView {
     if (!self.loadingView.superview) {
         [self.view addSubview:self.loadingView];
-        // 使用 Auto Layout 让菊花始终居中
+        // Keep the activity indicator centered using Auto Layout
         self.loadingView.translatesAutoresizingMaskIntoConstraints = NO;
         [NSLayoutConstraint activateConstraints:@[
             [self.loadingView.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],

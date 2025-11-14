@@ -23,7 +23,7 @@ static const CGFloat kTimeHeight = 16.0;
 static const CGFloat kResolvedIconSize = 16.0;
 static const CGFloat kContentTopMargin = 4.0;
 static const CGFloat kMoreIconBox = 32.0;
-static const CGFloat kMoreIconSize = 20.0;
+static const CGFloat kMoreIconSize = 22.0;
 static const CGFloat kGridImageMarginDefault = 4.0;
 static const NSInteger kGridColumns = 3;
 
@@ -179,23 +179,12 @@ static NSString *commentImageCacheDir()
         _containerTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onContainerTapped:)];
         [_contentContainer addGestureRecognizer:_containerTap];
         
-        // 32dp × 32dp more button (added last to ensure topmost)
-        _moreButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        UIImage *moreIcon = nil;
-        if (@available(iOS 13.0, *)) {
-            moreIcon = [UIImage systemImageNamed:@"ellipsis.vertical"];
-        } else {
-            moreIcon = [UIImage imageNamed:@"more"];
-        }
+        // 32pt × 32pt more button (added last to ensure topmost) — align with directory nav bar style
+        _moreButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        UIImage *moreIcon = [UIImage imageNamed:@"more"];
         if (moreIcon) {
-            // Keep consistent size and legibility
-            if (@available(iOS 13.0, *)) {
-                UIImageSymbolConfiguration *cfg = [UIImageSymbolConfiguration configurationWithPointSize:15 weight:UIImageSymbolWeightRegular];
-                UIImage *sym = [moreIcon imageByApplyingSymbolConfiguration:cfg];
-                [_moreButton setImage:(sym ?: moreIcon) forState:UIControlStateNormal];
-            } else {
-                [_moreButton setImage:moreIcon forState:UIControlStateNormal];
-            }
+            UIImage *original = [moreIcon imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
+            [_moreButton setImage:(original ?: moreIcon) forState:UIControlStateNormal];
         } else {
             [_moreButton setTitle:@"⋮" forState:UIControlStateNormal];
             _moreButton.titleLabel.font = [UIFont systemFontOfSize:20 weight:UIFontWeightRegular];
@@ -205,11 +194,7 @@ static NSString *commentImageCacheDir()
                 [_moreButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
             }
         }
-        if (@available(iOS 13.0, *)) {
-            _moreButton.tintColor = [UIColor secondaryLabelColor]; // Slightly darker for better visibility
-        } else {
-            _moreButton.tintColor = [UIColor colorWithWhite:0.2 alpha:1.0];
-        }
+        _moreButton.showsTouchWhenHighlighted = YES;
         _moreButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
         _moreButton.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
         [self.contentView addSubview:_moreButton];

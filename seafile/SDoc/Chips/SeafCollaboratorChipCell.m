@@ -2,6 +2,20 @@
 
 #import "SeafCollaboratorChipCell.h"
 
+static UIImage *SeafDefaultAvatarImage(void)
+{
+    UIImage *img = [UIImage imageNamed:@"default_avatar"];
+    if (img) return img;
+    CGFloat side = 40.0;
+    UIGraphicsBeginImageContextWithOptions(CGSizeMake(side, side), NO, 0);
+    CGContextRef ctx = UIGraphicsGetCurrentContext();
+    [[UIColor colorWithWhite:0.9 alpha:1.0] setFill];
+    CGContextFillEllipseInRect(ctx, CGRectMake(0, 0, side, side));
+    UIImage *generated = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return generated;
+}
+
 @interface SeafCollaboratorChipCell ()
 @property (nonatomic, strong) UIImageView *avatarView;
 @property (nonatomic, strong) UILabel *nameLabel;
@@ -57,7 +71,7 @@
     [self.avatarTask cancel];
     self.avatarTask = nil;
     self.avatarURLString = nil;
-    self.avatarView.image = [UIImage imageNamed:@"default_avatar"];
+    self.avatarView.image = SeafDefaultAvatarImage();
     self.nameLabel.text = @"";
 }
 
@@ -83,7 +97,7 @@
     self.avatarURLString = avatarURL;
 
     if (avatarURL.length == 0) {
-        self.avatarView.image = [UIImage imageNamed:@"default_avatar"];
+        self.avatarView.image = SeafDefaultAvatarImage();
         return;
     }
 
@@ -93,7 +107,7 @@
         return;
     }
 
-    self.avatarView.image = [UIImage imageNamed:@"default_avatar"];
+    self.avatarView.image = SeafDefaultAvatarImage();
     NSURL *url = [NSURL URLWithString:avatarURL];
     if (!url) return;
 

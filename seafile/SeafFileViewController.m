@@ -604,7 +604,7 @@ enum {
             
             // 模态显示导航控制器
             [self presentViewController:navController animated:YES completion:nil];
-            return; // 处理图片文件后返回
+            return; // Return after handling image file
         } else {
             [self.detailViewController setPreViewItem:item master:self];
         }
@@ -3317,7 +3317,7 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
         }
         case ToolButtonDownload: {
             // 新逻辑：展开选中项 -> 分类 -> 执行三态分支
-            [self editDone:nil]; // 先退出编辑态，保持原交互
+            [self editDone:nil]; // Exit editing first to maintain expected interaction
             [self expandAndHandleDownloadForSelectedItems:selectedItems sourceView:buttonView];
             break;
         }

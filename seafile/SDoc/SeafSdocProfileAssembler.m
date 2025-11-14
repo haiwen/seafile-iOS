@@ -1,6 +1,7 @@
 //  SeafSdocProfileAssembler.m
 
 #import "SeafSdocProfileAssembler.h"
+#import "SeafSdocUserMapper.h"
 
 @implementation SeafSdocProfileAssembler
 
@@ -301,9 +302,10 @@
             for (id email in arr) {
                 NSDictionary *u = [self findUserByEmail:email users:users];
                 if (u) {
-                    NSString *name = u[@"name"] ?: @"";
-                    NSString *avatar = u[@"avatar_url"] ?: u[@"avatarUrl"];
-                    [cells addObject:@{ @"user_name": name ?: @"", @"avatar": avatar ?: @"" }];
+                    NSDictionary *norm = [SeafSdocUserMapper normalizeUserDict:u];
+                    NSString *name = norm[@"name"] ?: @"";
+                    NSString *avatar = norm[@"avatarURL"] ?: @"";
+                    [cells addObject:@{ @"user_name": name, @"avatar": avatar }];
                 }
             }
             return cells;

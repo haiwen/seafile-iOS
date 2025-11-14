@@ -18,10 +18,22 @@
 #import "SeafDocCommentCell.h"
 #import "SeafDataTaskManager.h"
 #import "SVProgressHUD.h"
+#import "SeafMentionSuggestionView.h"
+#import "SeafSdocService.h"
+#import "SeafGlobal.h"
+#import "SeafMentionSheetViewController.h"
+#import "SeafSdocUserMapper.h"
 
 static NSString * const kSeafDocCommentCellId = @"kSeafDocCommentCellId";
+static NSTimeInterval const kRelatedUsersCacheTTL = 300.0; // 5 minutes
+static NSMutableDictionary<NSString *, NSArray<NSDictionary *> *> *gRelatedUsersCache;
+static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 
-@interface SeafSdocCommentsViewController () <UITableViewDataSource, UITableViewDelegate, UIGestureRecognizerDelegate>
+@interface SeafSdocCommentsViewController () <UITableViewDataSource, UITableViewDelegate, UIGestureRecognizerDelegate
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
+, UIAdaptivePresentationControllerDelegate
+#endif
+>
 
 @property (nonatomic, strong) UITableView *tableView;
 @property (nonatomic, strong) UIRefreshControl *refreshControl;
@@ -41,6 +53,17 @@ static NSString * const kSeafDocCommentCellId = @"kSeafDocCommentCellId";
 @property (nonatomic, strong) NSMapTable<SeafImageAttachment *, NSDictionary *> *attachmentUploadPayloads; // { data, fileName, mime }
 @property (nonatomic, assign) BOOL isPostingComment;
 @property (nonatomic, assign) BOOL hasDoneInitialScrollToBottom;
+
+// Mention suggestions
+@property (nonatomic, strong) SeafMentionSuggestionView *mentionView;
+@property (nonatomic, strong) NSArray<NSDictionary *> *mentionAllUsers;
+@property (nonatomic, assign) BOOL mentionUsersLoaded;
+@property (nonatomic, strong) SeafSdocService *sdocService;
+@property (nonatomic, assign) NSRange currentMentionRange; // range of '@token' in plain string space
+@property (nonatomic, strong) SeafMentionSheetViewController *mentionSheetVC;
+@property (nonatomic, assign) BOOL isMentionSheetPresented;
+@property (nonatomic, assign) NSUInteger lastPlainTextLength;
+@property (nonatomic, assign) NSRange lastSelectedRange;
 
 @end
 
@@ -69,6 +92,8 @@ static NSString * const kSeafDocCommentCellId = @"kSeafDocCommentCellId";
     if (@available(iOS 7.0, *)) {
         _tableView.keyboardDismissMode = UIScrollViewKeyboardDismissModeOnDrag;
     }
+    // Provide estimated height to reduce synchronous measurements on first render
+    _tableView.estimatedRowHeight = 120.0;
     [_tableView registerClass:SeafDocCommentCell.class forCellReuseIdentifier:kSeafDocCommentCellId];
     [self.view addSubview:_tableView];
 
@@ -87,6 +112,18 @@ static NSString * const kSeafDocCommentCellId = @"kSeafDocCommentCellId";
     _inputViewBar.onTapPhoto = ^{ [wself onTapPhoto]; };
     _inputViewBar.onTapSend = ^(NSString * _Nonnull text) { [wself onTapSend:text]; };
     [self.view addSubview:_inputViewBar];
+
+    // Mention view
+    _mentionView = [SeafMentionSuggestionView new];
+    __weak typeof(_mentionView) wMention = _mentionView;
+    _mentionView.onSelectUser = ^(NSDictionary *user) {
+        __strong typeof(wself) sself = wself; if (!sself) return;
+        [sself insertMentionUser:user];
+        [wMention hide];
+    };
+    [self.view addSubview:_mentionView];
+    _mentionUsersLoaded = NO;
+    _sdocService = [[SeafSdocService alloc] initWithConnection:self.connection ?: [SeafGlobal sharedObject].connection];
 
     // Remove risky KVO; rely on viewDidLayoutSubviews and text-change notifications to drive layout
 
@@ -124,6 +161,10 @@ static NSString * const kSeafDocCommentCellId = @"kSeafDocCommentCellId";
             [_loadingIndicator.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor]
         ]];
     }
+    
+    // Init mention change tracking
+    _lastPlainTextLength = _inputViewBar.textView.text.length;
+    _lastSelectedRange = _inputViewBar.textView.selectedRange;
 }
 
 - (void)viewDidLayoutSubviews
@@ -372,6 +413,10 @@ static NSString * const kSeafDocCommentCellId = @"kSeafDocCommentCellId";
                 // Clear input content (ensure attachments removed)
                 self->_inputViewBar.textView.attributedText = [[NSAttributedString alloc] initWithString:@""];
                 self->_inputViewBar.textView.text = @"";
+                // Reset mention tracking state so next '@' can trigger immediately
+                self.lastPlainTextLength = 0;
+                self.lastSelectedRange = NSMakeRange(0, 0);
+                [self hideMentionUI];
                 // Reset scroll position to top
                 self->_inputViewBar.textView.contentOffset = CGPointZero;
                 // Remove any remaining overlay buttons
@@ -460,6 +505,20 @@ static NSString * const kSeafDocCommentCellId = @"kSeafDocCommentCellId";
     NSArray<SeafDocCommentItem *> *oldItems = _items ?: @[];
     NSInteger oldCount = oldItems.count;
     NSInteger newCount = newItems.count;
+
+    // On initial load (no old items), avoid per-row insert animations that cause heavy layout/animation cost
+    if (oldCount == 0) {
+        _items = [newItems mutableCopy];
+        [UIView performWithoutAnimation:^{
+            [_tableView reloadData];
+        }];
+        if (scroll && newCount > 0) {
+            NSIndexPath *last = [NSIndexPath indexPathForRow:newCount - 1 inSection:0];
+            // Scroll to bottom without animation to keep the initial frame smooth
+            [_tableView scrollToRowAtIndexPath:last atScrollPosition:UITableViewScrollPositionBottom animated:NO];
+        }
+        return;
+    }
 
     // Build id -> index map
     NSMutableDictionary<NSNumber *, NSNumber *> *oldIndexById = [NSMutableDictionary dictionaryWithCapacity:oldCount];
@@ -552,60 +611,96 @@ static NSString * const kSeafDocCommentCellId = @"kSeafDocCommentCellId";
             [sself showLoading:NO];
             if (sself->_refreshControl.isRefreshing) [sself->_refreshControl endRefreshing];
             if (error || ![resp isKindOfClass:[NSDictionary class]]) {
-                // If request fails and there is no data, show empty view to avoid a blank screen
                 if (sself->_items.count == 0) {
                     sself->_tableView.backgroundView = sself->_emptyView;
                     [sself->_tableView reloadData];
                 } else {
-                    // If there is existing data, show error without interrupting the current content
                     [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Network unavailable", nil)];
                 }
                 return;
             }
-            id list = resp[@"comments"];
-            if (![list isKindOfClass:[NSArray class]]) list = @[];
-            NSMutableArray<SeafDocCommentItem *> *arr = [NSMutableArray array];
-            for (NSDictionary *c in (NSArray *)list) {
-                if (![c isKindOfClass:[NSDictionary class]]) continue;
-                long long cid = [[c valueForKey:@"id"] longLongValue];
-                // Use user_name field instead of author
-                NSString *author = [c valueForKey:@"user_name"] ?: @"";
-                // Use avatar_url field
-                NSString *avatarURL = [c valueForKey:@"avatar_url"] ?: @"";
-                NSString *time = [c valueForKey:@"created_at"] ?: @"";
-                BOOL resolved = [[c valueForKey:@"resolved"] boolValue];
-                NSString *comment = [c valueForKey:@"comment"] ?: @"";
-                
-                // Android-style: parse into content items (separate text and images)
-                NSArray<SeafDocCommentContentItem *> *contentItems = [SeafDocCommentParser parseCommentToContentItems:comment];
-                // Parse time into NSDate here and generate the display string
-                NSDate *createdAt = [sself parseDateFromString:time];
-                NSString *displayTime = createdAt ? [sself stringFromDateAbsolute:createdAt] : ([sself formatAbsoluteTimeFromString:time] ?: time);
-                SeafDocCommentItem *item = [SeafDocCommentItem itemWithAuthor:author 
-                                                                    avatarURL:avatarURL 
-                                                                   timeString:displayTime 
-                                                                 contentItems:contentItems 
-                                                                       itemId:cid 
-                                                                     resolved:resolved];
-                item.createdAtDate = createdAt;
-                [arr addObject:item];
-            }
-            // Sort ascending by NSDate; if missing, fall back to commentId or timeString
-            [arr sortUsingComparator:^NSComparisonResult(SeafDocCommentItem *a, SeafDocCommentItem *b) {
-                if (a.createdAtDate && b.createdAtDate) {
-                    return [a.createdAtDate compare:b.createdAtDate];
-                } else if (a.createdAtDate) {
-                    return NSOrderedAscending;
-                } else if (b.createdAtDate) {
-                    return NSOrderedDescending;
-                } else if (a.commentId != b.commentId) {
-                    return (a.commentId < b.commentId) ? NSOrderedAscending : NSOrderedDescending;
-                } else {
-                    return [a.timeString compare:b.timeString];
+            id listObj = resp[@"comments"];
+            if (![listObj isKindOfClass:[NSArray class]]) listObj = @[];
+            NSArray *list = (NSArray *)listObj;
+
+            // Offload CPU-intensive parsing, time conversion, and sorting to a background queue
+            __weak typeof(sself) wwself = sself;
+            dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+                __strong typeof(wwself) s2 = wwself; if (!s2) return;
+                NSMutableArray<SeafDocCommentItem *> *arr = [NSMutableArray arrayWithCapacity:list.count];
+                // Use local date formatters to avoid thread-safety issues with shared singletons
+                NSISO8601DateFormatter *isoFmt = nil;
+                if (@available(iOS 10.0, *)) {
+                    isoFmt = [NSISO8601DateFormatter new];
                 }
-            }];
-            sself->_tableView.backgroundView = (arr.count == 0 ? sself->_emptyView : nil);
-            [sself _applyDiffWithNewItems:arr.copy scrollToBottom:YES];
+                NSDateFormatter *fallbackFmt = [NSDateFormatter new];
+                fallbackFmt.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+                NSArray<NSString *> *fmts = @[ @"yyyy-MM-dd'T'HH:mm:ssXXXXX",
+                                               @"yyyy-MM-dd HH:mm:ss",
+                                               @"yyyy/MM/dd HH:mm:ss" ];
+                NSDateFormatter *outputFmt = [NSDateFormatter new];
+                outputFmt.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+                outputFmt.dateFormat = @"yyyy-MM-dd HH:mm:ss";
+
+                for (NSDictionary *c in list) {
+                    if (![c isKindOfClass:[NSDictionary class]]) continue;
+                    long long cid = [[c valueForKey:@"id"] longLongValue];
+                    NSString *author = [c valueForKey:@"user_name"] ?: @"";
+                    NSString *avatarURL = [c valueForKey:@"avatar_url"] ?: @"";
+                    NSString *time = [c valueForKey:@"created_at"] ?: @"";
+                    BOOL resolved = [[c valueForKey:@"resolved"] boolValue];
+                    NSString *comment = [c valueForKey:@"comment"] ?: @"";
+
+                    NSArray<SeafDocCommentContentItem *> *contentItems = [SeafDocCommentParser parseCommentToContentItems:comment];
+
+                    NSDate *createdAt = nil;
+                    if (time.length > 0) {
+                        if (@available(iOS 10.0, *)) {
+                            createdAt = [isoFmt dateFromString:time];
+                        }
+                        if (!createdAt) {
+                            for (NSString *f in fmts) {
+                                fallbackFmt.dateFormat = f;
+                                createdAt = [fallbackFmt dateFromString:time];
+                                if (createdAt) break;
+                            }
+                        }
+                    }
+                    NSString *displayTime = time;
+                    if (createdAt) {
+                        displayTime = [outputFmt stringFromDate:createdAt] ?: time;
+                    }
+
+                    SeafDocCommentItem *item = [SeafDocCommentItem itemWithAuthor:author
+                                                                        avatarURL:avatarURL
+                                                                       timeString:displayTime
+                                                                     contentItems:contentItems
+                                                                           itemId:cid
+                                                                         resolved:resolved];
+                    item.createdAtDate = createdAt;
+                    [arr addObject:item];
+                }
+
+                [arr sortUsingComparator:^NSComparisonResult(SeafDocCommentItem *a, SeafDocCommentItem *b) {
+                    if (a.createdAtDate && b.createdAtDate) {
+                        return [a.createdAtDate compare:b.createdAtDate];
+                    } else if (a.createdAtDate) {
+                        return NSOrderedAscending;
+                    } else if (b.createdAtDate) {
+                        return NSOrderedDescending;
+                    } else if (a.commentId != b.commentId) {
+                        return (a.commentId < b.commentId) ? NSOrderedAscending : NSOrderedDescending;
+                    } else {
+                        return [a.timeString compare:b.timeString];
+                    }
+                }];
+
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    __strong typeof(wwself) s3 = wwself; if (!s3) return;
+                    s3->_tableView.backgroundView = (arr.count == 0 ? s3->_emptyView : nil);
+                    [s3 _applyDiffWithNewItems:arr.copy scrollToBottom:YES];
+                });
+            });
         });
     }];
 }
@@ -620,13 +715,20 @@ static NSString * const kSeafDocCommentCellId = @"kSeafDocCommentCellId";
         } else if (@available(iOS 10.0, *)) {
             isPullRefreshing = _tableView.refreshControl.isRefreshing;
         }
+        // For first load or non pull-to-refresh, use local loadingIndicator to avoid center HUD animation impacting the first frame
         if (!isPullRefreshing) {
-            [SVProgressHUD showWithStatus:NSLocalizedString(@"Loading...", nil)];
+            if (_loadingIndicator) {
+                [_loadingIndicator startAnimating];
+            }
+            [SVProgressHUD dismiss];
         } else {
             [SVProgressHUD dismiss];
         }
         _tableView.backgroundView = nil; // disable empty state during load
     } else {
+        if (_loadingIndicator) {
+            [_loadingIndicator stopAnimating];
+        }
         [SVProgressHUD dismiss];
     }
 }
@@ -763,6 +865,12 @@ static NSString * const kSeafDocCommentCellId = @"kSeafDocCommentCellId";
 
 #pragma mark - UITableView
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section { return _items.count; }
+
+- (CGFloat)tableView:(UITableView *)tableView estimatedHeightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    // Return a stable estimated height to avoid heavy synchronous measurements on initial render
+    return 120.0;
+}
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
@@ -1130,7 +1238,248 @@ static NSString * const kSeafDocCommentCellId = @"kSeafDocCommentCellId";
 {
     [self updateSendEnabledState];
     [self updateAttachmentDeleteButtonsLayout];
+    
+    UITextView *tv = self->_inputViewBar.textView;
+    NSString *plain = tv.text ?: @"";
+    NSUInteger curLen = plain.length;
+    NSUInteger prevLen = self.lastPlainTextLength;
+    NSRange sel = tv.selectedRange;
+    BOOL isInsertion = curLen > prevLen;
+    BOOL isDeletion = curLen < prevLen;
+    BOOL justTypedAt = NO;
+    if (isInsertion) {
+        NSUInteger delta = curLen - prevLen;
+        if (delta == 1 && sel.location > 0) {
+            unichar c = [plain characterAtIndex:sel.location - 1];
+            justTypedAt = (c == '@');
+        }
+    }
+    BOOL mentionVisible = [self isMentionUIVisible];
+    if (justTypedAt) {
+        // Only when user typed '@' should we present; start with empty query
+        [self handleMentionTokenWithAllowPresent:YES];
+    } else if (mentionVisible) {
+        // If already visible, keep updating/hiding as user types or deletes
+        [self handleMentionTokenWithAllowPresent:NO];
+    } else {
+        // Do not present on deletion or other typing
+    }
+    self.lastPlainTextLength = curLen;
+    self.lastSelectedRange = sel;
 }
+
+#pragma mark - Mention
+- (BOOL)isMentionUIVisible
+{
+    BOOL viewVisible = (self.mentionView && !self.mentionView.hidden);
+    BOOL sheetVisible = NO;
+    if (@available(iOS 15.0, *)) {
+        sheetVisible = (self.isMentionSheetPresented && self.mentionSheetVC.presentingViewController != nil);
+    }
+    return viewVisible || sheetVisible;
+}
+
+- (void)handleMentionTokenWithAllowPresent:(BOOL)allowPresent
+{
+    UITextView *tv = self->_inputViewBar.textView;
+    if (!tv) return;
+    NSString *plain = tv.text ?: @"";
+    NSRange sel = tv.selectedRange;
+    if (sel.location == NSNotFound) { [self hideMentionUI]; return; }
+    NSUInteger caret = sel.location;
+    if (caret == 0 || caret > plain.length) { [self hideMentionUI]; return; }
+    // Scan backwards to find start of token
+    NSInteger i = (NSInteger)caret - 1;
+    BOOL foundAt = NO;
+    while (i >= 0) {
+        unichar c = [plain characterAtIndex:(NSUInteger)i];
+        if (c == '@') { foundAt = YES; break; }
+        // Terminators
+        if ([[NSCharacterSet whitespaceAndNewlineCharacterSet] characterIsMember:c] ||
+            [[NSCharacterSet punctuationCharacterSet] characterIsMember:c]) {
+            break;
+        }
+        i--;
+    }
+    if (!foundAt) { [self hideMentionUI]; return; }
+    NSUInteger start = (NSUInteger)i;
+    NSRange tokenRange = NSMakeRange(start, caret - start);
+    if (NSMaxRange(tokenRange) > plain.length) { [self hideMentionUI]; return; }
+    NSString *token = [plain substringWithRange:tokenRange];
+    // Require token to start with '@'
+    if (![token hasPrefix:@"@"]) { [self hideMentionUI]; return; }
+    NSString *query = [token substringFromIndex:1];
+    self.currentMentionRange = tokenRange;
+    __weak typeof(self) wself = self;
+    [self ensureRelatedUsersLoaded:^{
+        __strong typeof(wself) sself = wself; if (!sself) return;
+        BOOL visible = [sself isMentionUIVisible];
+        if (@available(iOS 15.0, *)) {
+            if (!visible && allowPresent) {
+                [sself presentMentionSheetIfNeeded];
+            }
+            if ([sself isMentionUIVisible]) {
+                [sself.mentionSheetVC updateAllUsers:sself.mentionAllUsers];
+                [sself.mentionSheetVC applyFilter:query];
+            }
+        } else {
+            if (!visible && allowPresent) {
+                [sself.mentionView updateAllUsers:sself.mentionAllUsers];
+                [sself.mentionView applyFilter:query];
+                [sself.mentionView showInView:sself.view belowView:sself->_inputViewBar];
+            } else if ([sself isMentionUIVisible]) {
+                [sself.mentionView applyFilter:query];
+            }
+        }
+    }];
+}
+
+- (void)insertMentionUser:(NSDictionary *)user
+{
+    if (!user) return;
+    UITextView *tv = self->_inputViewBar.textView;
+    if (!tv) return;
+    NSString *name = [user[@"name"] isKindOfClass:NSString.class] ? user[@"name"] : @"";
+    NSString *email = [user[@"email"] isKindOfClass:NSString.class] ? user[@"email"] : @"";
+    NSString *nameOrEmail = name.length > 0 ? name : email;
+    NSString *rep = [NSString stringWithFormat:@"@%@ ", nameOrEmail ?: @""];
+    // Build default typing attributes (keep font size consistent)
+    NSMutableDictionary<NSAttributedStringKey, id> *attrs = [NSMutableDictionary dictionaryWithDictionary:(tv.typingAttributes ?: @{})];
+    if (!attrs[NSFontAttributeName]) {
+        UIFont *f = tv.font ?: [UIFont systemFontOfSize:17];
+        attrs[NSFontAttributeName] = f;
+    }
+    if (!attrs[NSForegroundColorAttributeName]) {
+        UIColor *c = tv.textColor ?: ([UIColor respondsToSelector:@selector(labelColor)] ? [UIColor labelColor] : [UIColor blackColor]);
+        attrs[NSForegroundColorAttributeName] = c;
+    }
+    // Current content: if not attributed, convert from plain with default attrs
+    NSAttributedString *current = tv.attributedText;
+    if (current.length == 0) {
+        current = [[NSAttributedString alloc] initWithString:(tv.text ?: @"") attributes:attrs];
+    }
+    NSMutableAttributedString *mut = [[NSMutableAttributedString alloc] initWithAttributedString:current];
+    NSRange r = self.currentMentionRange;
+    if (NSMaxRange(r) <= mut.length) {
+        NSAttributedString *repAttr = [[NSAttributedString alloc] initWithString:rep attributes:attrs];
+        [mut replaceCharactersInRange:r withAttributedString:repAttr];
+        tv.attributedText = mut;
+        tv.typingAttributes = attrs;
+        NSUInteger newCaret = r.location + rep.length;
+        tv.selectedRange = NSMakeRange(newCaret, 0);
+        // Manually sync last change tracking because programmatic setAttributedText may not fire notification immediately
+        self.lastPlainTextLength = tv.text.length;
+        self.lastSelectedRange = tv.selectedRange;
+    }
+    [self hideMentionUI];
+}
+
+- (void)ensureRelatedUsersLoaded:(void(^)(void))completion
+{
+    if (self.mentionUsersLoaded) { if (completion) completion(); return; }
+    if (self.repoId.length == 0) { if (completion) completion(); return; }
+    if (!self.sdocService) {
+        self.sdocService = [[SeafSdocService alloc] initWithConnection:self.connection ?: [SeafGlobal sharedObject].connection];
+    }
+    // Initialize caches
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        gRelatedUsersCache = [NSMutableDictionary dictionary];
+        gRelatedUsersCacheTS = [NSMutableDictionary dictionary];
+    });
+    // Try cache
+    NSArray<NSDictionary *> *cached = gRelatedUsersCache[self.repoId];
+    NSDate *ts = gRelatedUsersCacheTS[self.repoId];
+    if (cached.count > 0 && ts && ([[NSDate date] timeIntervalSinceDate:ts] < kRelatedUsersCacheTTL)) {
+        self.mentionAllUsers = cached;
+        [self.mentionView updateAllUsers:self.mentionAllUsers];
+        self.mentionUsersLoaded = YES;
+        if (completion) completion();
+        return;
+    }
+    __weak typeof(self) wself = self;
+    [self.sdocService getRelatedUsersWithRepoId:self.repoId completion:^(NSDictionary * _Nullable resp, NSError * _Nullable error) {
+        __strong typeof(wself) sself = wself; if (!sself) { if (completion) completion(); return; }
+        NSArray *list = (!error && [resp isKindOfClass:NSDictionary.class]) ? (resp[@"user_list"] ?: resp[@"users"] ?: @[]) : @[];
+        if (![list isKindOfClass:NSArray.class]) list = @[];
+        NSMutableArray<NSDictionary *> *arr = [NSMutableArray array];
+        for (id obj in list) {
+            if (![obj isKindOfClass:NSDictionary.class]) continue;
+            NSDictionary *norm = [SeafSdocUserMapper normalizeUserDict:(NSDictionary *)obj];
+            [arr addObject:norm];
+        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (arr.count > 0) {
+                sself.mentionAllUsers = arr.copy;
+                gRelatedUsersCache[sself.repoId] = sself.mentionAllUsers;
+                gRelatedUsersCacheTS[sself.repoId] = [NSDate date];
+                [sself.mentionView updateAllUsers:sself.mentionAllUsers];
+                sself.mentionUsersLoaded = YES;
+            } else if (cached.count > 0) {
+                // Fallback to stale cache if network failed but we had something
+                sself.mentionAllUsers = cached;
+                [sself.mentionView updateAllUsers:sself.mentionAllUsers];
+                sself.mentionUsersLoaded = YES;
+            } else {
+                // Keep hidden with empty data
+                sself.mentionAllUsers = @[];
+                [sself.mentionView updateAllUsers:sself.mentionAllUsers];
+                sself.mentionUsersLoaded = YES;
+            }
+            if (completion) completion();
+        });
+    }];
+}
+
+- (void)presentMentionSheetIfNeeded
+{
+    if (!@available(iOS 15.0, *)) return;
+    if (self.isMentionSheetPresented && self.mentionSheetVC.presentingViewController) {
+        return;
+    }
+    SeafMentionSheetViewController *vc = [SeafMentionSheetViewController new];
+    __weak typeof(self) wself = self;
+    vc.onSelectUser = ^(NSDictionary *user) {
+        __strong typeof(wself) sself = wself; if (!sself) return;
+        [sself insertMentionUser:user];
+        if (sself.mentionSheetVC) {
+            [sself.mentionSheetVC dismissViewControllerAnimated:YES completion:nil];
+        }
+        sself.isMentionSheetPresented = NO;
+    };
+    if (@available(iOS 15.0, *)) {
+        vc.modalPresentationStyle = UIModalPresentationPageSheet;
+    }
+    self.mentionSheetVC = vc;
+    self.isMentionSheetPresented = YES;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
+    if (@available(iOS 13.0, *)) {
+        vc.presentationController.delegate = self;
+    }
+#endif
+    [self presentViewController:vc animated:YES completion:nil];
+}
+
+- (void)hideMentionUI
+{
+    if (@available(iOS 15.0, *)) {
+        if (self.isMentionSheetPresented && self.mentionSheetVC.presentingViewController) {
+            [self.mentionSheetVC dismissViewControllerAnimated:YES completion:nil];
+            self.isMentionSheetPresented = NO;
+        }
+    }
+    [self.mentionView hide];
+}
+
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
+- (void)presentationControllerDidDismiss:(UIPresentationController *)presentationController API_AVAILABLE(ios(13.0))
+{
+    if (presentationController.presentedViewController == self.mentionSheetVC) {
+        self.isMentionSheetPresented = NO;
+        self.mentionSheetVC = nil;
+    }
+}
+#endif
 
 - (void)onKeyboard:(NSNotification *)notification
 {
@@ -1172,6 +1521,10 @@ static NSString * const kSeafDocCommentCellId = @"kSeafDocCommentCellId";
         }
         // Update overlay button layout inside the animation for consistent motion
         [self updateAttachmentDeleteButtonsLayout];
+        // Reposition mention suggestions if visible
+        if (!self.mentionView.hidden) {
+            [self.mentionView showInView:self.view belowView:self->_inputViewBar];
+        }
     } completion:nil];
 }
 
