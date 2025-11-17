@@ -14,6 +14,7 @@
 #import "SeafNavLeftItem.h"
 #import "SeafSdocProfileSheetViewController.h"
 #import "SVProgressHUD.h"
+#import "Constants.h"
 #import <string.h>
 
 typedef void (^SeafJSCallback)(NSString * _Nullable data);
@@ -83,6 +84,8 @@ static NSString * const kSeafBridgeHelperScript =
 @property (nonatomic, strong) SeafWeakScriptMessageHandler *weakCallbackHandler;
 @property (nonatomic, strong) NSLayoutConstraint *webViewBottomConstraint;
 @property (nonatomic, strong) NSLayoutConstraint *bottomBarHeightConstraint;
+@property (nonatomic, assign) BOOL isEditing;
+@property (nonatomic, assign) CGFloat keyboardVisibleHeight;
 
 @end
 
@@ -95,6 +98,8 @@ static NSString * const kSeafBridgeHelperScript =
         _file = file;
         _fileName = fileName;
         _nextEditMode = YES;
+        _isEditing = NO;
+        _keyboardVisibleHeight = 0;
     }
     return self;
 }
@@ -108,6 +113,20 @@ static NSString * const kSeafBridgeHelperScript =
     [self setupWebView];
     [self setupBottomToolbar];
     [self setupUserAgentAndLoad];
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    // Observe keyboard frame changes; used to adjust WebView bottom in editing mode
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(onKeyboardWillChangeFrame:)
+                                                 name:UIKeyboardWillChangeFrameNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(onKeyboardWillHide:)
+                                                 name:UIKeyboardWillHideNotification
+                                               object:nil];
 }
 
 - (void)setupAppearance
@@ -189,7 +208,8 @@ static NSString * const kSeafBridgeHelperScript =
         [self.webView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
         [self.webView.topAnchor constraintEqualToAnchor:topAnchor]
     ]];
-    [self updateWebViewBottomConstraintWithAnchor:self.view.bottomAnchor constant:0];
+    // By default the WebView bottom follows the safe area bottom to avoid being covered by the home indicator
+    [self updateWebViewBottomConstraintWithAnchor:[self contentBottomAnchor] constant:0];
     if (self.webViewBottomConstraint) {
         [constraints addObject:self.webViewBottomConstraint];
     }
@@ -221,6 +241,8 @@ static NSString * const kSeafBridgeHelperScript =
 {
     [super viewWillDisappear:animated];
     [self stopEditTimeout];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIKeyboardWillChangeFrameNotification object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIKeyboardWillHideNotification object:nil];
 }
 
 - (void)onTapBack
@@ -348,6 +370,38 @@ static NSString * const kSeafBridgeHelperScript =
     }
 }
 
+- (void)presentOutlineViewController:(SeafSDocOutlineSheetViewController *)vc
+{
+    if (!vc) return;
+    // On iPad, present outline as a popover anchored to the outline button for better UX
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+        vc.modalPresentationStyle = UIModalPresentationPopover;
+        UIPopoverPresentationController *popover = vc.popoverPresentationController;
+        UIView *sourceView = self.btnOutline ?: self.bottomBar ?: self.view;
+        popover.sourceView = sourceView;
+        CGRect sourceRect = CGRectZero;
+        if (self.btnOutline) {
+            sourceRect = self.btnOutline.bounds;
+        } else if (self.bottomBar) {
+            CGFloat midX = CGRectGetMidX(self.bottomBar.bounds);
+            CGFloat maxY = CGRectGetMaxY(self.bottomBar.bounds);
+            sourceRect = CGRectMake(midX, maxY, 1, 1);
+        } else {
+            CGFloat midX = CGRectGetMidX(self.view.bounds);
+            CGFloat maxY = CGRectGetMaxY(self.view.bounds);
+            sourceRect = CGRectMake(midX, maxY, 1, 1);
+        }
+        popover.sourceRect = sourceRect;
+        popover.permittedArrowDirections = UIPopoverArrowDirectionAny;
+        if (@available(iOS 13.0, *)) {
+            popover.backgroundColor = [UIColor systemBackgroundColor];
+        }
+        [self presentViewController:vc animated:YES completion:nil];
+    } else {
+        [self presentSheetViewController:vc];
+    }
+}
+
 - (BOOL)ensureEditModeAndEndEditing
 {
     if (!self.nextEditMode) {
@@ -424,7 +478,7 @@ static NSString * const kSeafBridgeHelperScript =
                 [sself selectOutlineAtIndex:index];
             }
         };
-        [sself presentSheetViewController:vc];
+        [sself presentOutlineViewController:vc];
     }];
 }
 
@@ -539,7 +593,7 @@ static NSString * const kSeafBridgeHelperScript =
 - (CGFloat)preferredEditButtonWidthForFont:(UIFont *)font edgeInsets:(UIEdgeInsets)insets
 {
     NSString *t1 = NSLocalizedString(@"Edit", nil);
-    NSString *t2 = NSLocalizedString(@"Complete", nil);
+    NSString *t2 = NSLocalizedString(@"Done", nil);
     CGFloat w1 = [t1 sizeWithAttributes:@{ NSFontAttributeName: font ?: [UIFont systemFontOfSize:17 weight:UIFontWeightRegular] }].width;
     CGFloat w2 = [t2 sizeWithAttributes:@{ NSFontAttributeName: font ?: [UIFont systemFontOfSize:17 weight:UIFontWeightRegular] }].width;
     CGFloat textWidth = MAX(w1, w2);
@@ -559,7 +613,10 @@ static NSString * const kSeafBridgeHelperScript =
         if ([data rangeOfString:@"success" options:NSCaseInsensitiveSearch].location == NSNotFound) return;
         if ([data rangeOfString:@"true" options:NSCaseInsensitiveSearch].location == NSNotFound) return;
         self.nextEditMode = !self.nextEditMode;
-        NSString *newTitle = self.nextEditMode ? NSLocalizedString(@"Edit", nil) : NSLocalizedString(@"Complete", nil);
+        BOOL isEditing = !self.nextEditMode; // nextEditMode == NO means we are currently in editing mode
+        self.isEditing = isEditing;
+        NSString *newTitle = self.nextEditMode ? NSLocalizedString(@"Edit", nil) : NSLocalizedString(@"Done", nil);
+        [self updateBottomBarForEditing:isEditing];
         [self updateEditButtonWithTitle:newTitle];
     }];
 }
@@ -569,6 +626,18 @@ static NSString * const kSeafBridgeHelperScript =
     if (!self.editButton) return;
     [UIView performWithoutAnimation:^{
         [self.editButton setTitle:title forState:UIControlStateNormal];
+        // Use green text in "Done" (editing) state, default bar color otherwise, with localization support
+        NSString *doneLocalized = NSLocalizedString(@"Done", nil);
+        BOOL isDoneState = (doneLocalized.length > 0 && [title isEqualToString:doneLocalized]);
+        UIColor *defaultColor = self.navigationController.navigationBar.tintColor ?: BAR_COLOR;
+        UIColor *greenColor = nil;
+        if (@available(iOS 13.0, *)) {
+            greenColor = [UIColor systemGreenColor];
+        } else {
+            greenColor = [UIColor colorWithRed:76.0/255.0 green:217.0/255.0 blue:100.0/255.0 alpha:1.0];
+        }
+        UIColor *appliedColor = isDoneState ? greenColor : defaultColor;
+        [self.editButton setTitleColor:appliedColor forState:UIControlStateNormal];
         [self.editButton layoutIfNeeded];
     }];
     CGRect f = self.editButton.frame;
@@ -772,10 +841,115 @@ static NSString * const kSeafBridgeHelperScript =
     return 0;
 }
 
+- (NSLayoutYAxisAnchor *)contentBottomAnchor
+{
+    if (@available(iOS 11.0, *)) {
+        return self.view.safeAreaLayoutGuide.bottomAnchor;
+    } else {
+        return self.bottomLayoutGuide.topAnchor;
+    }
+}
+
+- (void)applyKeyboardHeight:(CGFloat)keyboardHeight duration:(NSTimeInterval)duration curve:(UIViewAnimationCurve)curve
+{
+    self.keyboardVisibleHeight = keyboardHeight;
+    if (!self.isEditing) {
+        // Only in editing mode do we lift the page to sit above the keyboard
+        return;
+    }
+    CGFloat offset = -MAX(0.0, keyboardHeight);
+    [self updateWebViewBottomConstraintWithAnchor:[self contentBottomAnchor] constant:offset];
+
+    UIViewAnimationOptions options = (UIViewAnimationOptions)(curve << 16);
+    // Use the same animation curve as the keyboard, while allowing interruption and user interaction
+    options |= UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationOptionAllowUserInteraction;
+    [UIView animateWithDuration:duration delay:0 options:options animations:^{
+        [self.view layoutIfNeeded];
+    } completion:nil];
+}
+
+- (void)onKeyboardWillChangeFrame:(NSNotification *)note
+{
+    NSDictionary *userInfo = note.userInfo;
+    if (!userInfo) return;
+    CGRect endFrame = [userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
+    CGRect endInView = [self.view convertRect:endFrame fromView:nil];
+
+    // Compute effective keyboard overlap height relative to the view (excluding bottom safe area)
+    CGFloat viewBottom = CGRectGetMaxY(self.view.bounds);
+    CGFloat overlap = MAX(0.0, viewBottom - CGRectGetMinY(endInView));
+    CGFloat safeBottom = 0;
+    if (@available(iOS 11.0, *)) {
+        safeBottom = self.view.safeAreaInsets.bottom;
+    }
+    CGFloat keyboardHeight = MAX(0.0, overlap - safeBottom);
+
+    NSTimeInterval duration = [userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue];
+    UIViewAnimationCurve curve = (UIViewAnimationCurve)[userInfo[UIKeyboardAnimationCurveUserInfoKey] integerValue];
+    [self applyKeyboardHeight:keyboardHeight duration:duration curve:curve];
+}
+
+- (void)onKeyboardWillHide:(NSNotification *)note
+{
+    NSDictionary *userInfo = note.userInfo;
+    if (!userInfo) return;
+    self.keyboardVisibleHeight = 0;
+    NSTimeInterval duration = [userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue];
+    UIViewAnimationCurve curve = (UIViewAnimationCurve)[userInfo[UIKeyboardAnimationCurveUserInfoKey] integerValue];
+    [self applyKeyboardHeight:0 duration:duration curve:curve];
+}
+
 - (void)refreshBottomBarHeight
 {
     if (!self.bottomBarHeightConstraint) return;
     self.bottomBarHeightConstraint.constant = 36.0 + [self currentSafeAreaBottomInset];
+}
+
+- (void)updateBottomBarForEditing:(BOOL)isEditing
+{
+    if (!self.bottomBar) return;
+    CGFloat barHeight = self.bottomBarHeightConstraint.constant;
+
+    // If the bar is already in the target state, just ensure constraints are correct (no animation)
+    if (isEditing && self.bottomBar.hidden) {
+        [self.bottomBar setTransform:CGAffineTransformMakeTranslation(0, barHeight)];
+        // In editing mode the bottom bar is hidden, but we still need to keep the bottom safe inset
+        [self updateWebViewBottomConstraintWithAnchor:[self contentBottomAnchor] constant:0];
+        [self.view layoutIfNeeded];
+        return;
+    }
+    if (!isEditing && !self.bottomBar.hidden && CGAffineTransformIsIdentity(self.bottomBar.transform)) {
+        [self updateWebViewBottomConstraintWithAnchor:self.bottomBar.topAnchor constant:0];
+        [self.view layoutIfNeeded];
+        return;
+    }
+
+    if (isEditing) {
+        // Enter editing mode: bottom bar slides down and becomes hidden
+        self.bottomBar.hidden = NO;
+        self.bottomBar.transform = CGAffineTransformIdentity;
+        [self.view layoutIfNeeded];
+
+        // When editing, the toolbar is hidden and WebView should align to the safe area bottom
+        [self updateWebViewBottomConstraintWithAnchor:[self contentBottomAnchor] constant:0];
+        [UIView animateWithDuration:0.25 animations:^{
+            self.bottomBar.transform = CGAffineTransformMakeTranslation(0, barHeight);
+            [self.view layoutIfNeeded];
+        } completion:^(BOOL finished) {
+            self.bottomBar.hidden = YES;
+        }];
+    } else {
+        // Exit editing mode: bottom bar slides up from the bottom
+        self.bottomBar.hidden = NO;
+        self.bottomBar.transform = CGAffineTransformMakeTranslation(0, barHeight);
+        [self.view layoutIfNeeded];
+
+        [self updateWebViewBottomConstraintWithAnchor:self.bottomBar.topAnchor constant:0];
+        [UIView animateWithDuration:0.25 animations:^{
+            self.bottomBar.transform = CGAffineTransformIdentity;
+            [self.view layoutIfNeeded];
+        }];
+    }
 }
 
 #pragma mark - WKNavigationDelegate
@@ -783,7 +957,9 @@ static NSString * const kSeafBridgeHelperScript =
 {
     self.editItem.enabled = YES;
     [self readPageOptionsIfNeeded];
-    NSString *initTitle = self.nextEditMode ? NSLocalizedString(@"Edit", nil) : NSLocalizedString(@"Complete", nil);
+    NSString *initTitle = self.nextEditMode ? NSLocalizedString(@"Edit", nil) : NSLocalizedString(@"Done", nil);
+    // Initial state is typically non-editing, ensure bottom bar is visible
+    [self updateBottomBarForEditing:!self.nextEditMode ? YES : NO];
     [self updateEditButtonWithTitle:initTitle];
 }
 

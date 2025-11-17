@@ -15,6 +15,7 @@
 #import "SeafDetailViewController.h"
 #import "SeafAppDelegate.h"
 #import "SeafPhoto.h"
+#import "SeafConnection+Search.h"
 
 #define SEARCH_STATE_INIT NSLocalizedString(@"Click \"Search\" to start", @"Seafile")
 #define SEARCH_STATE_SEARCHING NSLocalizedString(@"Searching", @"Seafile")
@@ -114,7 +115,76 @@
     self.tableView.contentInset = UIEdgeInsetsMake(CGRectGetMaxY(searchBar.frame), 0, 0, 0);
     [SVProgressHUD showWithStatus:NSLocalizedString(@"Searching ...", @"Seafile")];
     [self updateStateLabel:SEARCH_STATE_SEARCHING];
-    NSString *repoId = [_directory isKindOfClass:[SeafRepos class]] ? nil : _directory.repoId;
+    BOOL isRoot = [_directory isKindOfClass:[SeafRepos class]];
+    NSString *repoId = isRoot ? nil : _directory.repoId;
+
+    // Decide which search API to use based on server capabilities
+    BOOL isPro = _connection.isProServer;
+    BOOL isAdvanced = _connection.isAdvancedSearchEnabled;
+    BOOL isCommunity = _connection.isCommunityServer;
+
+    // Pro + file-search: use advanced search API (existing behavior)
+    if (isPro && isAdvanced) {
+        [_connection search:searchBar.text repo:repoId success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSMutableArray *results) {
+            [SVProgressHUD dismiss];
+            if (results.count == 0) {
+                [self updateStateLabel:SEARCH_STATE_NORESULTS];
+                self.searchResults = @[];
+                [self.tableView reloadData];
+            } else {
+                [self updateStateLabel:nil];
+                self.searchResults = results;
+                self.tableView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 5.0)];
+                [self.tableView reloadData];
+            }
+        } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
+            if (response.statusCode == 404) {
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Search is not supported on the server", @"Seafile")];
+            } else {
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to search", @"Seafile")];
+            }
+            [self updateStateLabel:SEARCH_STATE_NORESULTS];
+            self.searchResults = @[];
+            [self.tableView reloadData];
+        }];
+        return;
+    }
+
+    // Community edition: only support searching inside a specific library
+    if (isCommunity) {
+        if (isRoot || repoId.length == 0) {
+            [SVProgressHUD dismiss];
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Search is only available inside a library", @"Seafile")];
+            [self updateStateLabel:SEARCH_STATE_INIT];
+            return;
+        }
+
+        [_connection searchFileInRepo:repoId keyword:searchBar.text success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSMutableArray *results) {
+            [SVProgressHUD dismiss];
+            if (results.count == 0) {
+                [self updateStateLabel:SEARCH_STATE_NORESULTS];
+                self.searchResults = @[];
+                [self.tableView reloadData];
+            } else {
+                [self updateStateLabel:nil];
+                self.searchResults = results;
+                self.tableView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 5.0)];
+                [self.tableView reloadData];
+            }
+        } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSError *error) {
+            if (response.statusCode == 404) {
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Search is not supported on the server", @"Seafile")];
+            } else {
+                [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to search", @"Seafile")];
+            }
+            [self updateStateLabel:SEARCH_STATE_NORESULTS];
+            self.searchResults = @[];
+            [self.tableView reloadData];
+        }];
+        return;
+    }
+
+    // Fallback: server-info not available or unknown combination, keep original behavior
     [_connection search:searchBar.text repo:repoId success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON, NSMutableArray *results) {
         [SVProgressHUD dismiss];
         if (results.count == 0) {
@@ -301,7 +371,11 @@
 - (void)download:(SeafBase *)entry progress:(float)progress {
     [self.masterVC.detailViewController download:entry progress:progress];
     SeafCell *cell = [self getEntryCell:entry];
-    [self updateCellDownloadStatus:cell isDownloading:true waiting:false cached:((SeafFile *)entry).hasCache];
+    BOOL cached = NO;
+    if ([entry isKindOfClass:[SeafFile class]]) {
+        cached = ((SeafFile *)entry).hasCache;
+    }
+    [self updateCellDownloadStatus:cell isDownloading:true waiting:false cached:cached];
 }
 
 #pragma mark - Tableview cell
@@ -380,12 +454,26 @@
     });
 }
 
-// Updates the display of a file entry cell after its data has changed.
-- (void)updateEntryCell:(SeafFile *)entry {
+// Updates the display of an entry cell after its data has changed.
+- (void)updateEntryCell:(SeafBase *)entry {
     NSUInteger index = [self.searchResults indexOfObject:entry];
+    if (index == NSNotFound) return;
     NSIndexPath *path = [NSIndexPath indexPathForRow:index inSection:0];
     SeafCell *cell = [self.tableView cellForRowAtIndexPath:path];
-    [self updateCellContent:cell file:entry];
+    if (!cell) return;
+
+    if ([entry isKindOfClass:[SeafFile class]]) {
+        [self updateCellContent:cell file:(SeafFile *)entry];
+    } else if ([entry isKindOfClass:[SeafDir class]]) {
+        // For directories we don't show download state; just refresh basic info.
+        SeafDir *sdir = (SeafDir *)entry;
+        cell.textLabel.text = sdir.name;
+        SeafRepo *repo = [_connection getRepo:sdir.repoId];
+        cell.detailTextLabel.text = [NSString stringWithFormat:@"%@%@", repo.name, sdir.path.stringByDeletingLastPathComponent];
+        cell.moreButton.hidden = true;
+        cell.imageView.image = sdir.icon;
+        [self setCellSaparatorAndCorner:cell andIndexPath:path];
+    }
 }
 
 // Retrieves the cell for a given entry from the table view.

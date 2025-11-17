@@ -122,6 +122,11 @@ enum {
 
 @property (nonatomic, strong) SeafSelectionActionCoordinator *selectionCoordinator;
 
+// Cache of entries selected at the moment user triggers copy/move (for both
+// toolbar and bottom tool button flows). This avoids relying solely on
+// tableView selection state when the destination picker returns.
+@property (nonatomic, strong) NSArray<NSString *> *pendingEntriesForOperation;
+
 @end
 
 @implementation SeafFileViewController
@@ -354,12 +359,29 @@ enum {
         UIBarButtonItem *customBarItem = [[UIBarButtonItem alloc] initWithCustomView:containerView];
         self.doneItem = customBarItem;
         self.editItem = [self getBarItemAutoSize:@"more" action:@selector(editSheet:)];
-        if (directory.connection.isSearchEnabled) {
+
+        // Determine whether to show search button based on server type and current level
+        SeafConnection *conn = directory.connection;
+        BOOL isRoot = [directory isKindOfClass:[SeafRepos class]];
+        BOOL isPro = conn.isProServer;
+        BOOL isAdvanced = conn.isAdvancedSearchEnabled;
+        BOOL isCommunity = conn.isCommunityServer;
+
+        BOOL shouldShowSearch = NO;
+        if (isPro && isAdvanced) {
+            // Pro + file-search: support search on root and inside repos
+            shouldShowSearch = YES;
+        } else if (isCommunity && !isRoot) {
+            // Community edition: only support search inside a specific repo
+            shouldShowSearch = YES;
+        }
+
+        if (shouldShowSearch) {
             self.searchItem = [self getBarItem:@"fileNav_search" action:@selector(searchAction:) size:18];
             // Add a fixed width space item to increase button spacing
             UIBarButtonItem *spaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:nil action:nil];
             spaceItem.width = 20; // Set spacing width
-            
+
             self.rightItems = [NSArray arrayWithObjects:self.editItem, spaceItem, self.searchItem, nil];
         } else {
             self.rightItems = [NSArray arrayWithObjects:self.editItem,nil];
@@ -1164,14 +1186,32 @@ enum {
             [self popupCreateView];
             break;
 
-        case EDITOP_COPY://for selected item
+        case EDITOP_COPY: { //for selected item
+            NSArray *idxs = [self.tableView indexPathsForSelectedRows];
+            NSMutableArray *names = [NSMutableArray new];
+            for (NSIndexPath *indexPath in idxs) {
+                if (indexPath.row >= self.allItems.count) continue;
+                SeafBase *item = (SeafBase *)self.allItems[indexPath.row];
+                [names addObject:item.name ?: @""];
+            }
+            self.pendingEntriesForOperation = [names copy];
             self.state = STATE_COPY;
             [self popupDirChooseView:nil];
             break;
-        case EDITOP_MOVE://for selected item
+        }
+        case EDITOP_MOVE: { //for selected item
+            NSArray *idxs = [self.tableView indexPathsForSelectedRows];
+            NSMutableArray *names = [NSMutableArray new];
+            for (NSIndexPath *indexPath in idxs) {
+                if (indexPath.row >= self.allItems.count) continue;
+                SeafBase *item = (SeafBase *)self.allItems[indexPath.row];
+                [names addObject:item.name ?: @""];
+            }
+            self.pendingEntriesForOperation = [names copy];
             self.state = STATE_MOVE;
             [self popupDirChooseView:nil];
             break;
+        }
         case EDITOP_DELETE: {//for selected item
             NSArray *idxs = [self.tableView indexPathsForSelectedRows];
             if (!idxs) return;
@@ -2405,10 +2445,16 @@ enum {
 {
     NSArray *selectedIndexPaths = [self.tableView indexPathsForSelectedRows];
     NSMutableArray *entries = [NSMutableArray new];
-    for (NSIndexPath *indexPath in selectedIndexPaths) {
-        if (indexPath.row >= self.allItems.count) continue;
-        SeafBase *item = self.allItems[indexPath.row];
-        [entries addObject:item.name];
+    // Prefer the cached entries captured at the moment user tapped Copy/Move,
+    // this is more reliable on iPad where table selection state might change.
+    if (self.pendingEntriesForOperation.count > 0) {
+        [entries addObjectsFromArray:self.pendingEntriesForOperation];
+    } else {
+        for (NSIndexPath *indexPath in selectedIndexPaths) {
+            if (indexPath.row >= self.allItems.count) continue;
+            SeafBase *item = self.allItems[indexPath.row];
+            [entries addObject:item.name];
+        }
     }
     
     // Exit edit mode first
@@ -2423,20 +2469,55 @@ enum {
 
     _directory.delegate = self;
 
+    // Clear cache after we have consumed it
+    self.pendingEntriesForOperation = nil;
+
     if (self.state == STATE_COPY) {
         [SVProgressHUD showWithStatus:NSLocalizedString(@"Copying files ...", @"Seafile")];
+        Debug("[CopyFlow] calling copyEntries, srcRepo=%@ srcPath=%@ dstRepo=%@ dstPath=%@ entries=%@",
+              self.directory.repoId, self.directory.path,
+              dstDir.repoId, dstDir.path,
+              entries);
         [[SeafFileOperationManager sharedManager]
             copyEntries:entries
             fromDir:self.directory
             toDir:dstDir
-            completion:^(BOOL success, NSError * _Nullable error){}];
+            completion:^(BOOL success, NSError * _Nullable error){
+                if (success) {
+                    Debug("[CopyFlow] copyEntries completion success, srcRepo=%@ srcPath=%@ dstRepo=%@ dstPath=%@ entries=%@",
+                          self.directory.repoId, self.directory.path,
+                          dstDir.repoId, dstDir.path,
+                          entries);
+                } else {
+                    Warning("[CopyFlow] copyEntries completion failed, srcRepo=%@ srcPath=%@ dstRepo=%@ dstPath=%@ entries=%@ error=%@",
+                            self.directory.repoId, self.directory.path,
+                            dstDir.repoId, dstDir.path,
+                            entries, error);
+                }
+            }];
     } else if (self.state == STATE_MOVE) {
         [SVProgressHUD showWithStatus:NSLocalizedString(@"Moving files ...", @"Seafile")];
+        Debug("[CopyFlow] calling moveEntries, srcRepo=%@ srcPath=%@ dstRepo=%@ dstPath=%@ entries=%@",
+              self.directory.repoId, self.directory.path,
+              dstDir.repoId, dstDir.path,
+              entries);
         [[SeafFileOperationManager sharedManager]
             moveEntries:entries
             fromDir:self.directory
             toDir:dstDir
-            completion:^(BOOL success, NSError * _Nullable error){}];
+            completion:^(BOOL success, NSError * _Nullable error){
+                if (success) {
+                    Debug("[CopyFlow] moveEntries completion success, srcRepo=%@ srcPath=%@ dstRepo=%@ dstPath=%@ entries=%@",
+                          self.directory.repoId, self.directory.path,
+                          dstDir.repoId, dstDir.path,
+                          entries);
+                } else {
+                    Warning("[CopyFlow] moveEntries completion failed, srcRepo=%@ srcPath=%@ dstRepo=%@ dstPath=%@ entries=%@ error=%@",
+                            self.directory.repoId, self.directory.path,
+                            dstDir.repoId, dstDir.path,
+                            entries, error);
+                }
+            }];
     }
 }
 
@@ -3361,11 +3442,21 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
             break;
         }
         case ToolButtonCopy: {
+            NSMutableArray *names = [NSMutableArray new];
+            for (SeafBase *item in selectedItems) {
+                [names addObject:item.name ?: @""];
+            }
+            self.pendingEntriesForOperation = [names copy];
             self.state = STATE_COPY;
             [self popupDirChooseView:nil];
             break;
         }
         case ToolButtonMove: {
+            NSMutableArray *names = [NSMutableArray new];
+            for (SeafBase *item in selectedItems) {
+                [names addObject:item.name ?: @""];
+            }
+            self.pendingEntriesForOperation = [names copy];
             self.state = STATE_MOVE;
             [self popupDirChooseView:nil];
             break;

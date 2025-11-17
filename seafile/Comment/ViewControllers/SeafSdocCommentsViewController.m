@@ -1237,8 +1237,14 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
 - (void)_onInputTextChanged:(NSNotification *)n
 {
     [self updateSendEnabledState];
+    // Recalculate and apply the bottom input bar height and position based on the
+    // current keyboard overlap so that when the text grows to multiple lines,
+    // the entire bar moves up with it and the caret area does not end up under the keyboard.
+    [self layoutBottomBarForKeyboardHeight:self.currentKeyboardOverlap animated:NO];
+    // After updating the bottom bar layout, refresh the positions of attachment delete
+    // buttons and loading overlays to match the latest textView geometry.
     [self updateAttachmentDeleteButtonsLayout];
-    
+
     UITextView *tv = self->_inputViewBar.textView;
     NSString *plain = tv.text ?: @"";
     NSUInteger curLen = plain.length;
