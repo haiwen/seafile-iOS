@@ -116,7 +116,10 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 @property (readonly) long long usage;///< Current data usage by the user.
 @property (readonly, strong) NSString* _Nullable token;///< Authentication token.
 @property (readonly) BOOL authorized;///< Indicates whether the user is currently authorized.
-@property (readonly) BOOL isSearchEnabled;///< Indicates whether search functionality is enabled on the server.
+@property (readonly) BOOL isSearchEnabled;///< Indicates whether any search functionality is enabled on the server (advanced or basic).
+@property (readonly) BOOL isProServer;///< Indicates whether the server is running Seafile Pro edition.
+@property (readonly) BOOL isCommunityServer;///< Indicates whether the server is running Seafile Community edition.
+@property (readonly) BOOL isAdvancedSearchEnabled;///< Indicates whether advanced search (file-search) is enabled on the server.
 @property (readonly) BOOL isActivityEnabled;///< Indicates whether activity tracking is enabled on the server.
 @property (readonly) BOOL isNewActivitiesApiSupported;///< Indicates whether the new activities API is supported.
 @property (readonly) NSData* _Nullable clientIdentityKey;///< Client identity key for secure communications.
@@ -303,6 +306,19 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 - (void)search:(NSString *_Nonnull)keyword repo:(NSString * _Nonnull)repoId
        success:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nonnull response, id  _Nonnull JSON, NSMutableArray * _Nonnull results))success
        failure:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nullable response, id _Nullable JSON, NSError * _Nullable error))failure;
+
+/**
+ * Searches for files within a single repository using the community edition search API.
+ * This API performs filename-only search inside the specified repository.
+ * @param repoId The identifier of the repository to search within.
+ * @param keyword The search term used to find files.
+ * @param success A block that is called with the request, response, JSON data, and an array of search results.
+ * @param failure A block that is called with the request, response, JSON data, and an error if the search fails.
+ */
+- (void)searchFileInRepo:(NSString *_Nonnull)repoId
+                 keyword:(NSString *_Nonnull)keyword
+                 success:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nonnull response, id  _Nonnull JSON, NSMutableArray * _Nonnull results))success
+                 failure:(void (^ _Nullable)(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nullable response, id _Nullable JSON, NSError * _Nullable error))failure;
 
 /**
  * Determines whether a specific repository item (file or folder) is starred.
