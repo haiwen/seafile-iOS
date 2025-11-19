@@ -2511,11 +2511,13 @@ enum {
                           self.directory.repoId, self.directory.path,
                           dstDir.repoId, dstDir.path,
                           entries);
+                    [self.directory loadContent:YES];
                 } else {
                     Warning("[CopyFlow] moveEntries completion failed, srcRepo=%@ srcPath=%@ dstRepo=%@ dstPath=%@ entries=%@ error=%@",
                             self.directory.repoId, self.directory.path,
                             dstDir.repoId, dstDir.path,
                             entries, error);
+                    [SVProgressHUD showErrorWithStatus:error.localizedDescription];
                 }
             }];
     }
