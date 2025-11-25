@@ -621,7 +621,7 @@ static NSSet *SeafChipTypes(void)
 {
     NSString *emptyText = NSLocalizedString(@"empty", nil);
     if (emptyText.length == 0 || [emptyText isEqualToString:@"empty"]) {
-        emptyText = NSLocalizedString(@"暂无", nil);
+        emptyText = NSLocalizedString(@"Empty", nil);
     }
     return emptyText ?: @"";
 }
