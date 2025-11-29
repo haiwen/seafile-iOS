@@ -52,8 +52,9 @@ static UIImage *SeafDefaultAvatarImage(void)
     _avatarView.frame = CGRectMake(padding, floor((self.contentView.bounds.size.height - avatarSide)/2.0), avatarSide, avatarSide);
     CGFloat textLeft = CGRectGetMaxX(_avatarView.frame) + 10.0;
     CGFloat textWidth = self.contentView.bounds.size.width - textLeft - padding;
-    self.textLabel.frame = CGRectMake(textLeft, padding - 2, textWidth, 20);
-    self.detailTextLabel.frame = CGRectMake(textLeft, CGRectGetMaxY(self.textLabel.frame) + 2, textWidth, 16);
+    self.textLabel.frame = CGRectMake(textLeft, 0, textWidth, self.contentView.bounds.size.height);
+    self.detailTextLabel.frame = CGRectZero;
+    self.separatorInset = UIEdgeInsetsMake(0, textLeft, 0, 0);
 }
 
 - (void)prepareForReuse
@@ -206,7 +207,7 @@ static UIImage *SeafDefaultAvatarImage(void)
     NSString *email = [u[@"email"] isKindOfClass:NSString.class] ? u[@"email"] : @"";
     NSString *avatar = [u[@"avatarURL"] isKindOfClass:NSString.class] ? u[@"avatarURL"] : @"";
     cell.textLabel.text = (name.length > 0) ? name : email;
-    cell.detailTextLabel.text = email;
+    cell.detailTextLabel.text = nil;
     [cell setAvatarURLStringSafely:avatar];
     return cell;
 }
