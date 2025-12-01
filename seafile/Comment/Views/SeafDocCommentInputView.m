@@ -25,8 +25,9 @@
         [self addSubview:_separator];
 
         _photoButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        UIImage *img = [UIImage systemImageNamed:@"photo.on.rectangle"]; // iOS13+
+        UIImage *img = [[UIImage imageNamed:@"gallery"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
         if (img) [_photoButton setImage:img forState:UIControlStateNormal];
+        _photoButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
         if (@available(iOS 13.0, *)) {
             _photoButton.tintColor = [UIColor systemGrayColor];
         } else {
@@ -90,7 +91,7 @@
 
     // Image button 48dp × 48dp (widened to 56pt here), layout_marginEnd="8dp"
     CGFloat buttonTop = 6.0;
-    self.photoButton.frame = CGRectMake(0, buttonTop, 56, 48);
+    self.photoButton.frame = CGRectMake(6, buttonTop, 56, 48);
     // padding="12dp" (so the icon renders at 24dp)
     self.photoButton.contentEdgeInsets = UIEdgeInsetsMake(12, 12, 12, 12);
     

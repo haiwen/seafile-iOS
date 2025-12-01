@@ -383,8 +383,9 @@ static NSSet *SeafChipTypes(void)
     leftW.priority = UILayoutPriorityDefaultHigh; // 750
     leftW.active = YES;
 
-    UIImage *img = [UIImage imageNamed:row[@"icon"] ?: @"ic_single_line_text"];
-    if (!img) { img = [UIImage imageNamed:@"ic_single_line_text"]; }
+    UIImage *img = [UIImage imageNamed:row[@"icon"] ?: @"text"];
+    if (!img) { img = [UIImage imageNamed:@"text"]; }
+    img = [img imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     UIImageView *icon = [[UIImageView alloc] initWithImage:img];
     icon.contentMode = UIViewContentModeScaleAspectFit;
     icon.tintColor = [UIColor secondaryLabelColor];

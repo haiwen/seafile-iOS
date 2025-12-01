@@ -488,7 +488,9 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
         [self.scrollView setContentOffset:CGPointMake(newX, 0) animated:YES];
     } else {
         self.connection.videoSync = self.backupVideosButton.selected;
+        // ============ Restored old uploadHeicEnabled logic ============
         [self.connection setUploadHeicEnabled:self.backupHeicButton.selected];
+        // [self.connection setUploadLivePhotoEnabled:self.backupHeicButton.selected];  // Motion Photo functionality temporarily disabled
 
         self.connection.wifiOnly = self.wifiOnlyButton.selected;
         

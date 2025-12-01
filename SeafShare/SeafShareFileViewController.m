@@ -18,6 +18,7 @@
 #import "SeafDataTaskManager.h"
 #import "SeafInputItemsProvider.h"
 #import "SeafUploadFileModel.h"
+#import "SeafRepos.h"
 
 @interface SeafShareFileViewController ()<UITableViewDataSource, UITableViewDelegate, SeafUploadDelegate>
 
@@ -226,6 +227,29 @@
 }
 
 - (void)startUpload {
+    SeafRepo *repo = [_directory.connection getRepo:_directory.repoId];
+    
+    // For encrypted libraries, ensure the password is verified on server before uploading
+    // This fixes the issue where first-time share to encrypted library fails because
+    // the server session might not be fully ready after password verification
+    if (repo.encrypted) {
+        NSString *password = [_directory.connection getRepoPassword:_directory.repoId];
+        if (password) {
+            [repo checkOrSetRepoPassword:password block:^(SeafBase *entry, int ret) {
+                // Proceed with upload regardless of verification result
+                // The upload will fail if the server truly rejects it
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self doStartUpload];
+                });
+            }];
+            return;
+        }
+    }
+    
+    [self doStartUpload];
+}
+
+- (void)doStartUpload {
     for (SeafUploadFile *ufile in self.ufiles) {
         ufile.model.overwrite = true;
         ufile.udir = _directory;

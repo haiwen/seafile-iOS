@@ -14,8 +14,12 @@
 #import "SeafStorage.h"
 #import "SVProgressHUD.h"
 #import "Debug.h"
+#import "SeafMotionPhotoExtractor.h"
+#import "SeafLivePhotoSaver.h"
 
 #import <Photos/Photos.h>
+#import <AVFoundation/AVFoundation.h>
+#import <ImageIO/ImageIO.h>
 #import <objc/runtime.h>
 
 typedef NS_ENUM(NSInteger, SeafSelectionMediaClass) {
@@ -671,6 +675,14 @@ typedef NS_ENUM(NSInteger, SeafSelectionMediaClass) {
         return;
     }
     if ([file isImageFile]) {
+        // Check if this is a Motion Photo (Live Photo) - HEIC format with embedded video
+        if (exists && [SeafLivePhotoSaver canSaveAsLivePhotoAtPath:path]) {
+            Debug(@"Detected Motion Photo, saving as Live Photo: %@", file.name);
+            [self saveLivePhotoToAlbum:file atPath:path];
+            return;
+        }
+        
+        // Regular image save
         UIImage *img = exists ? [UIImage imageWithContentsOfFile:path] : nil;
         if (img) {
             dispatch_async(dispatch_get_main_queue(), ^{
@@ -703,6 +715,29 @@ typedef NS_ENUM(NSInteger, SeafSelectionMediaClass) {
     } else {
         [self onSingleAlbumSaveFinishedWithError:YES];
     }
+}
+
+#pragma mark - Live Photo Save (Motion Photo to iOS Live Photo)
+
+/**
+ * Save a Motion Photo (HEIC with embedded video) as iOS Live Photo to the photo library.
+ * Uses SeafLivePhotoSaver for the actual save operation.
+ *
+ * @param file The SeafFile being saved
+ * @param path Path to the Motion Photo file
+ */
+- (void)saveLivePhotoToAlbum:(SeafFile *)file atPath:(NSString *)path
+{
+    __weak typeof(self) weakSelf = self;
+    
+    [SeafLivePhotoSaver saveLivePhotoFromPath:path completion:^(BOOL success, NSError * _Nullable error) {
+        __strong typeof(weakSelf) self = weakSelf;
+        if (!self) return;
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self onSingleAlbumSaveFinishedWithError:!success];
+        });
+    }];
 }
 
 - (void)waitAndSaveMediaFile:(SeafFile *)file maxRetry:(NSInteger)maxRetry interval:(NSTimeInterval)interval

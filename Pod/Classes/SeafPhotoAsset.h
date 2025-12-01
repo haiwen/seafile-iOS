@@ -32,7 +32,31 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @property (nonatomic, assign) BOOL isCompress;
 
+/**
+ Whether the asset is a Live Photo (contains both image and video)
+ */
+@property (nonatomic, assign, readonly) BOOL isLivePhoto;
+
+/**
+ The paired video resource for Live Photo (nil if not a Live Photo)
+ */
+@property (nonatomic, strong, readonly, nullable) PHAssetResource *pairedVideoResource;
+
+/**
+ The photo resource (main image)
+ */
+@property (nonatomic, strong, readonly, nullable) PHAssetResource *photoResource;
+
 - (instancetype)initWithAsset:(PHAsset*)asset isCompress:(BOOL)isCompress;
+
+/**
+ Get the final upload filename based on Live Photo setting
+ @param livePhotoEnabled Whether the "Upload Live Photo" setting is enabled
+ @return The filename that will be used for upload:
+         - If this is a Live Photo and livePhotoEnabled = YES → returns .heic extension
+         - Otherwise → returns original filename
+ */
+- (NSString *)uploadNameWithLivePhotoEnabled:(BOOL)livePhotoEnabled;
 
 @end
 

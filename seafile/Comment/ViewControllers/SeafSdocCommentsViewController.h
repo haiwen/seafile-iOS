@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) SDocPageOptionsModel *pageOptions;
 @property (nonatomic, copy) NSString *docDisplayName; // optional title shown on nav bar
 @property (nonatomic, copy) NSString *repoId; // repository id for fetching related users
+@property (nonatomic, copy) NSString *latestContributor; // Email of last modifier, used for @ mention user sorting
 
 // SeafConnection for authenticated requests (optional, but recommended for image loading)
 @property (nonatomic, weak) SeafConnection *connection;

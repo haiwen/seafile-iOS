@@ -27,6 +27,7 @@
         _retryCount = 0;
         _lastFinishTimestamp = 0;
         _isEditedFile = NO;
+        _isLivePhoto = NO;
         
         // Initialize file size
         [self updateFileSize];

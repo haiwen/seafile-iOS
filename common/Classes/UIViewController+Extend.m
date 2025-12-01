@@ -122,12 +122,22 @@
     btn.frame = CGRectMake(0,0,size,size);
     UIImage *img = [UIImage imageNamed:imageName];
     
-    UIGraphicsBeginImageContextWithOptions(CGSizeMake(size, size), NO, 0.0);
-    [img drawInRect:CGRectMake(0, 0, size, size)];
-    UIImage *resizedImage = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
+    // Use template rendering mode to apply tintColor
+    img = [img imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     
+    // Resize image using UIGraphicsImageRenderer for better quality
+    UIGraphicsImageRendererFormat *format = [[UIGraphicsImageRendererFormat alloc] init];
+    format.scale = [UIScreen mainScreen].scale;
+    UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:CGSizeMake(size, size) format:format];
+    UIImage *resizedImage = [renderer imageWithActions:^(UIGraphicsImageRendererContext * _Nonnull context) {
+        [img drawInRect:CGRectMake(0, 0, size, size)];
+    }];
+    
+    resizedImage = [resizedImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     [btn setImage:resizedImage forState:UIControlStateNormal];
+    btn.imageView.contentMode = UIViewContentModeScaleAspectFit;
+    // Set gray color to match original icon color (#666666)
+    btn.tintColor = [UIColor colorWithRed:102.0/255.0 green:102.0/255.0 blue:102.0/255.0 alpha:1.0];
     btn.showsTouchWhenHighlighted = YES;
     btn.clipsToBounds = true;
     [btn addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];

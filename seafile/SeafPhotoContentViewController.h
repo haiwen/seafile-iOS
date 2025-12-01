@@ -12,6 +12,7 @@
 #import "SeafErrorPlaceholderView.h"
 
 @class SeafFile;
+@class SeafLivePhotoPlayerView;
 @protocol SeafPreView;
 
 // Define a protocol for retry requests
@@ -62,6 +63,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// Error placeholder view components
 @property (nonatomic, strong, nullable) SeafErrorPlaceholderView *errorPlaceholderView;
+
+/// Live Photo / Motion Photo player view
+@property (nonatomic, strong, nullable) SeafLivePhotoPlayerView *livePhotoPlayerView;
+
+/// Whether the current content is a Motion Photo
+@property (nonatomic, assign, readonly) BOOL isMotionPhoto;
 
 /// Method to toggle the info view
 - (void)toggleInfoView:(BOOL)show animated:(BOOL)animated;

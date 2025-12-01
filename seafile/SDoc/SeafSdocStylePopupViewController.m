@@ -105,9 +105,10 @@
         // Setup checkmark icon view (hidden by default)
         UIImage *iconImage = [UIImage imageNamed:@"popup_window_icon"];
         if (!iconImage) {
-             // Fallback to system checkmark if custom asset missing (iOS 13+)
             if (@available(iOS 13.0, *)) {
                 iconImage = [UIImage systemImageNamed:@"checkmark"];
+            } else {
+                iconImage = [UIImage imageNamed:@"checkmask2"];
             }
         }
         UIImageView *checkIcon = [[UIImageView alloc] initWithImage:iconImage];

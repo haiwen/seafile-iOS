@@ -35,6 +35,7 @@
 #import "SeafUploadOperation.h"
 #import "SeafRealmManager.h"
 #import "SeafVideoPlayerViewController.h"
+#import "SeafPhotoGalleryViewController.h"
 
 @interface SeafStarredFilesViewController ()<SWTableViewCellDelegate>
 @property (readonly) SeafDetailViewController *detailViewController;
@@ -467,6 +468,38 @@
             return;
         }
     }
+    
+    // Image files: use SeafPhotoGalleryViewController for Live Photo/Motion Photo support
+    if ([sfile isImageFile]) {
+        Debug(@"[Starred] Image file detected, using SeafPhotoGalleryViewController: %@", sfile.name);
+        
+        // Collect all image files from starred list
+        NSMutableArray<id<SeafPreView>> *imageFiles = [NSMutableArray array];
+        for (NSObject *item in _cellDataArray) {
+            if ([item isKindOfClass:[SeafStarredFile class]]) {
+                SeafStarredFile *starredFile = (SeafStarredFile *)item;
+                if ([starredFile isImageFile] && !starredFile.isDeleted) {
+                    [imageFiles addObject:starredFile];
+                }
+            }
+        }
+        
+        if (imageFiles.count > 0) {
+            // Create and setup photo gallery view controller
+            SeafPhotoGalleryViewController *gallery = [[SeafPhotoGalleryViewController alloc] initWithPhotos:imageFiles
+                                                                                                currentItem:sfile
+                                                                                                     master:self];
+            
+            // Wrap gallery view controller in navigation controller and present modally
+            UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:gallery];
+            navController.modalPresentationStyle = UIModalPresentationFullScreen;
+            
+            [self presentViewController:navController animated:YES completion:nil];
+            Debug(@"[Starred] Presented SeafPhotoGalleryViewController with %lu images", (unsigned long)imageFiles.count);
+            return;
+        }
+    }
+    
     Debug("Select file %@", sfile.name);
     [self.detailViewController setPreViewItem:sfile master:self];
 

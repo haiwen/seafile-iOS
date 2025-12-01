@@ -96,7 +96,6 @@
 
 - (NSFileProviderItemCapabilities)capabilities
 {
-    Debug(@"[SeafProviderItem] Get file capabilities called: itemIdentifier=%@", self.itemIdentifier);
     NSFileProviderItemCapabilities cap = NSFileProviderItemCapabilitiesAllowsReading;
     if (_item.isRoot || _item.isAccountRoot) {
         return cap;

@@ -358,7 +358,7 @@ enum {
         
         UIBarButtonItem *customBarItem = [[UIBarButtonItem alloc] initWithCustomView:containerView];
         self.doneItem = customBarItem;
-        self.editItem = [self getBarItemAutoSize:@"more" action:@selector(editSheet:)];
+        self.editItem = [self getBarItem:@"more" action:@selector(editSheet:) size:26];
 
         // Determine whether to show search button based on server type and current level
         SeafConnection *conn = directory.connection;
@@ -377,7 +377,7 @@ enum {
         }
 
         if (shouldShowSearch) {
-            self.searchItem = [self getBarItem:@"fileNav_search" action:@selector(searchAction:) size:18];
+            self.searchItem = [self getBarItem:@"fileNav_search" action:@selector(searchAction:) size:20];
             // Add a fixed width space item to increase button spacing
             UIBarButtonItem *spaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:nil action:nil];
             spaceItem.width = 20; // Set spacing width
@@ -599,11 +599,13 @@ enum {
            return;
        }
 
-        if ([item isKindOfClass:[SeafFile class]] && [(SeafFile *)item isImageFile]) {
-            // Collect all image type files
+        if (([item isKindOfClass:[SeafFile class]] || [item isKindOfClass:[SeafUploadFile class]]) 
+            && [(id<SeafPreView>)item isImageFile]) {
+            // Collect all image type files (including upload files)
             NSMutableArray *imageFiles = [NSMutableArray array];
             for (id entry in self.allItems) {
-                if ([entry isKindOfClass:[SeafFile class]] && [(SeafFile *)entry isImageFile]) {
+                if (([entry isKindOfClass:[SeafFile class]] || [entry isKindOfClass:[SeafUploadFile class]]) 
+                    && [(id<SeafPreView>)entry isImageFile]) {
                     [imageFiles addObject:entry];
                 }
             }
@@ -1541,11 +1543,18 @@ enum {
     NSSet *nameSet = [self getExistedNameSet];
     NSMutableArray *identifiers = [[NSMutableArray alloc] init];
     int duplicated = 0;
+    // ============ Motion Photo functionality temporarily disabled ============
+    // BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
+    // ============ Restored old uploadHeic logic ============
     BOOL uploadHeicEnabled = self.connection.isUploadHeicEnabled;
     for (PHAsset *asset in assets) {
+        // When uploadHeic is disabled, isCompress should be YES to trigger HEIC→JPG conversion
         SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!uploadHeicEnabled];
         if (photoAsset.localIdentifier) {
-            if ([nameSet containsObject:photoAsset.name])
+            // Use the asset name directly (HEIC→JPG conversion is handled by assetName:)
+            // NSString *uploadName = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];  // Motion Photo disabled
+            NSString *uploadName = photoAsset.name;
+            if ([nameSet containsObject:uploadName])
                 duplicated++;
             [identifiers addObject:photoAsset.localIdentifier];
         } else
@@ -1598,6 +1607,9 @@ enum {
     NSMutableArray *files = [[NSMutableArray alloc] init];
     NSString *uploadDir = [self.connection uniqueUploadDir];
     NSMutableSet *nameSet = overwrite ? [NSMutableSet new] : [self getExistedNameSet];
+    // ============ Motion Photo functionality temporarily disabled ============
+    // BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
+    // ============ Restored old uploadHeic logic ============
     BOOL uploadHeicEnabled = self.connection.isUploadHeicEnabled;
 
     if (overwrite) {
@@ -1606,9 +1618,13 @@ enum {
         for (NSString *localIdentifier in identifiers) {
             PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
             PHAsset *asset = [result firstObject];
+            // When uploadHeic is disabled, isCompress should be YES to trigger HEIC→JPG conversion
             SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!uploadHeicEnabled];
-            if (photoAsset.name) {
-                [uploadingFilenames addObject:photoAsset.name];
+            // Use the asset name directly (HEIC→JPG conversion is handled by assetName:)
+            // NSString *uploadName = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];  // Motion Photo disabled
+            NSString *uploadName = photoAsset.name;
+            if (uploadName) {
+                [uploadingFilenames addObject:uploadName];
             }
         }
         NSIndexSet *indexes = [newItems indexesOfObjectsPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
@@ -1621,8 +1637,11 @@ enum {
     for (NSString *localIdentifier in identifiers) {
         PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
         PHAsset *asset = [result firstObject];
+        // When uploadHeic is disabled, isCompress should be YES to trigger HEIC→JPG conversion
         SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!uploadHeicEnabled];
         
+        // Use the asset name directly (HEIC→JPG conversion is handled by assetName:)
+        // NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];  // Motion Photo disabled
         NSString *filename = photoAsset.name;
         Debug("Upload picked file : %@", filename);
         if (!overwrite && [nameSet containsObject:filename]) {
@@ -1635,6 +1654,16 @@ enum {
         SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
         file.lastModified = asset.modificationDate ?: asset.creationDate;
         file.model.overwrite = overwrite;
+        
+        // ============ Motion Photo functionality temporarily disabled ============
+        // Mark Live Photo for Motion Photo processing only when "Upload Live Photo" setting is enabled
+        // When disabled, Live Photo uploads as static image only (no video part)
+        // if (photoAsset.isLivePhoto && uploadLivePhotoEnabled) {
+        //     file.model.isLivePhoto = YES;
+        //     Debug("Live Photo detected, will upload as Motion Photo: %@", filename);
+        // }
+        // ============ End of disabled Motion Photo code ============
+        
         [file setPHAsset:asset url:photoAsset.ALAssetURL];
         file.delegate = self;
         [files addObject:file];
@@ -2942,12 +2971,13 @@ enum {
             searchField.placeholder = NSLocalizedString(@"Search files in this library", @"Seafile");
             searchField.backgroundColor = [UIColor whiteColor]; // Changed to white
 
-            // Add system search icon (magnifying glass) to the left of the text field
-            UIImageView *searchIconImageView = [[UIImageView alloc] initWithImage:[UIImage systemImageNamed:@"magnifyingglass"]];
+            // Add custom search icon to the left of the text field
+            UIImage *searchIcon = [[UIImage imageNamed:@"fileNav_search"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+            UIImageView *searchIconImageView = [[UIImageView alloc] initWithImage:searchIcon];
             searchIconImageView.tintColor = [UIColor secondaryLabelColor]; // Standard system color for icons
             
             // Create a container view for the leftView to provide padding
-            CGFloat iconSize = 22.0; // Made icon slightly larger
+            CGFloat iconSize = 16.0; // Adjusted icon size
             CGFloat padding = 0.0;   // Reduced padding further
             UIView *leftViewContainer = [[UIView alloc] initWithFrame:CGRectMake(0, 0, iconSize + padding * 2, searchField.bounds.size.height)];
             searchIconImageView.frame = CGRectMake(padding, (leftViewContainer.bounds.size.height - iconSize) / 2, iconSize, iconSize);

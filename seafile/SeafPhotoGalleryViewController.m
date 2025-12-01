@@ -21,6 +21,8 @@
 #import "SeafGlobal.h"
 #import "SeafPhotoThumb.h"
 #import <ImageIO/ImageIO.h>
+#import "SeafMotionPhotoExtractor.h"
+#import "SeafLivePhotoSaver.h"
 #import "SeafPGThumbnailCell.h" // Added import
 #import "SeafPGThumbnailCellViewModel.h" // Added import
 #import "SeafFileViewController.h"
@@ -943,20 +945,14 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
 - (void)saveCurrentPhotoToAlbum:(SeafFile *)file {
     // Check photo library permission
     [self checkPhotoLibraryAuth:^{
-        // Check if the file is already downloaded
-        if (file.cachePath) {
-            // Already downloaded, save to album directly
-            UIImage *img = [UIImage imageWithContentsOfFile:file.cachePath];
-            if (img) {
-                UIImageWriteToSavedPhotosAlbum(img, self, @selector(image:didFinishSavingWithError:contextInfo:), (__bridge void *)(file));
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [SVProgressHUD showInfoWithStatus:NSLocalizedString(@"Saving to album", @"Seafile")];
-                });
-            } else {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load image", @"Seafile")];
-                });
-            }
+        // Get file path - prefer exportURL (contains full file with embedded video for Motion Photos)
+        NSURL *exportURL = file.exportURL;
+        NSString *path = exportURL ? exportURL.path : file.cachePath;
+        BOOL exists = path ? [[NSFileManager defaultManager] fileExistsAtPath:path] : NO;
+        
+        if (exists) {
+            // File already downloaded, save to album directly
+            [self saveFileToAlbumAtPath:path file:file];
         } else {
             // Not downloaded, download first then save
             dispatch_async(dispatch_get_main_queue(), ^{
@@ -974,23 +970,40 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
                     });
                 } else {
                     [file setFileDownloadedBlock:nil];
-                    // Save to album after downloading
-                    UIImage *img = [UIImage imageWithContentsOfFile:file.cachePath];
-                    if (img) {
-                        UIImageWriteToSavedPhotosAlbum(img, self, @selector(image:didFinishSavingWithError:contextInfo:), (__bridge void *)(file));
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            [SVProgressHUD showInfoWithStatus:NSLocalizedString(@"Saving to album", @"Seafile")];
-                        });
-                    } else {
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load image", @"Seafile")];
-                        });
-                    }
+                    // Get file path after download - prefer exportURL
+                    NSURL *downloadedExportURL = file.exportURL;
+                    NSString *downloadedPath = downloadedExportURL ? downloadedExportURL.path : file.cachePath;
+                    [self saveFileToAlbumAtPath:downloadedPath file:file];
                 }
             }];
             [SeafDataTaskManager.sharedObject addFileDownloadTask:file];
         }
     }];
+}
+
+// Save file to album - handles both regular images and Motion Photos (Live Photos)
+- (void)saveFileToAlbumAtPath:(NSString *)path file:(SeafFile *)file {
+    // Check if this is a Motion Photo (Live Photo) - HEIC format with embedded video
+    if ([SeafLivePhotoSaver canSaveAsLivePhotoAtPath:path]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [SVProgressHUD showInfoWithStatus:NSLocalizedString(@"Saving Live Photo to album", @"Seafile")];
+        });
+        [self saveLivePhotoToAlbum:file atPath:path];
+        return;
+    }
+    
+    // Regular image save
+    UIImage *img = [UIImage imageWithContentsOfFile:path];
+    if (img) {
+        UIImageWriteToSavedPhotosAlbum(img, self, @selector(image:didFinishSavingWithError:contextInfo:), (__bridge void *)(file));
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [SVProgressHUD showInfoWithStatus:NSLocalizedString(@"Saving to album", @"Seafile")];
+        });
+    } else {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [SVProgressHUD showErrorWithStatus:NSLocalizedString(@"Failed to load image", @"Seafile")];
+        });
+    }
 }
 
 // Handle the callback for saving to the album
@@ -1006,6 +1019,26 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
             [SVProgressHUD showSuccessWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Succeeded to save %@ to album", @"Seafile"), file.name]];
         });
     }
+}
+
+#pragma mark - Live Photo Save (Motion Photo to iOS Live Photo)
+
+/**
+ * Save a Motion Photo (HEIC with embedded video) as iOS Live Photo to the photo library.
+ * Uses SeafLivePhotoSaver for the actual save operation.
+ */
+- (void)saveLivePhotoToAlbum:(SeafFile *)file atPath:(NSString *)path {
+    NSString *fileName = file.name;
+    
+    [SeafLivePhotoSaver saveLivePhotoFromPath:path completion:^(BOOL success, NSError * _Nullable error) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (success) {
+                [SVProgressHUD showSuccessWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Succeeded to save %@ to album", @"Seafile"), fileName]];
+            } else {
+                [SVProgressHUD showErrorWithStatus:[NSString stringWithFormat:NSLocalizedString(@"Failed to save %@ to album", @"Seafile"), fileName]];
+            }
+        });
+    }];
 }
 
 // SeafFile operation related methods
@@ -1280,23 +1313,37 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
                 UIImage *image = [UIImage imageNamed:iconName];
                 
                 if (image) {
-                    // Resize icon
+                    // Use template rendering mode
+                    image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+                    
+                    // Calculate the target size while maintaining aspect ratio
                     CGFloat iconSize = 20.0;
-                    UIGraphicsBeginImageContextWithOptions(CGSizeMake(iconSize, iconSize), NO, 0.0);
-                    [image drawInRect:CGRectMake(0, 0, iconSize, iconSize)];
+                    CGSize originalSize = image.size;
+                    CGFloat aspectRatio = originalSize.width / originalSize.height;
+                    CGFloat targetWidth, targetHeight;
+                    
+                    if (aspectRatio >= 1.0) {
+                        targetWidth = iconSize;
+                        targetHeight = iconSize / aspectRatio;
+                    } else {
+                        targetHeight = iconSize;
+                        targetWidth = iconSize * aspectRatio;
+                    }
+                    
+                    // Resize icon while maintaining aspect ratio
+                    UIGraphicsBeginImageContextWithOptions(CGSizeMake(targetWidth, targetHeight), NO, 0.0);
+                    [image drawInRect:CGRectMake(0, 0, targetWidth, targetHeight)];
                     UIImage *resizedImage = UIGraphicsGetImageFromCurrentImageContext();
                     UIGraphicsEndImageContext();
                     
-                    // Set icon color
-                    UIImage *finalImage;
-                    if (isStarred) {
-                        finalImage = resizedImage; // Keep original color for starred status
-                    } else {
-                        finalImage = [self imageWithTintColor:[UIColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1.0] image:resizedImage]; // Gray for non-starred status
-                    }
+                    resizedImage = [resizedImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
                     
                     // Update button icon
-                    [btn setImage:finalImage forState:UIControlStateNormal];
+                    [btn setImage:resizedImage forState:UIControlStateNormal];
+                    btn.imageView.contentMode = UIViewContentModeScaleAspectFit;
+                    
+                    // Set tintColor: gray (#666666) for all states (selected states differ by icon style, not color)
+                    btn.tintColor = [UIColor colorWithRed:102.0/255.0 green:102.0/255.0 blue:102.0/255.0 alpha:1.0]; // Gray #666666
                 }
                 break;
             }
@@ -1815,21 +1862,35 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
         
         // If icon is found, adjust its size and color
         if (image) {
-            // Resize icon
-            UIGraphicsBeginImageContextWithOptions(CGSizeMake(iconSize, iconSize), NO, 0.0);
-            [image drawInRect:CGRectMake(0, 0, iconSize, iconSize)];
+            // Use template rendering mode
+            image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+            
+            // Calculate the target size while maintaining aspect ratio
+            CGSize originalSize = image.size;
+            CGFloat aspectRatio = originalSize.width / originalSize.height;
+            CGFloat targetWidth, targetHeight;
+            
+            if (aspectRatio >= 1.0) {
+                targetWidth = iconSize;
+                targetHeight = iconSize / aspectRatio;
+            } else {
+                targetHeight = iconSize;
+                targetWidth = iconSize * aspectRatio;
+            }
+            
+            // Resize icon while maintaining aspect ratio
+            UIGraphicsBeginImageContextWithOptions(CGSizeMake(targetWidth, targetHeight), NO, 0.0);
+            [image drawInRect:CGRectMake(0, 0, targetWidth, targetHeight)];
             UIImage *resizedImage = UIGraphicsGetImageFromCurrentImageContext();
             UIGraphicsEndImageContext();
             
-            // Set icon color to gray, but keep original color for selected icon
-            UIImage *finalImage;
-            if ([iconName isEqualToString:@"detail_starred_selected"] || [iconName isEqualToString:@"detail_information_selected"]) {
-                finalImage = resizedImage; // Keep original color for selected status
-            } else {
-                finalImage = [self imageWithTintColor:[UIColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1.0] image:resizedImage]; // Gray for non-selected status
-            }
+            resizedImage = [resizedImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+            [btn setImage:resizedImage forState:UIControlStateNormal];
+            btn.imageView.contentMode = UIViewContentModeScaleAspectFit;
             
-            [btn setImage:finalImage forState:UIControlStateNormal];
+            // Set tintColor: gray (#666666) for all icons (selected states differ by icon style, not color)
+            btn.tintColor = [UIColor colorWithRed:102.0/255.0 green:102.0/255.0 blue:102.0/255.0 alpha:1.0]; // Gray #666666
+            
             // Push the icon down slightly within the button's frame
             btn.imageEdgeInsets = UIEdgeInsetsMake(5.0, 0, -5.0, 0);
         }
@@ -2006,23 +2067,37 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
                 UIImage *image = [UIImage imageNamed:iconName];
                 
                 if (image) {
-                    // Resize icon
+                    // Use template rendering mode
+                    image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+                    
+                    // Calculate the target size while maintaining aspect ratio
                     CGFloat iconSize = 20.0;
-                    UIGraphicsBeginImageContextWithOptions(CGSizeMake(iconSize, iconSize), NO, 0.0);
-                    [image drawInRect:CGRectMake(0, 0, iconSize, iconSize)];
+                    CGSize originalSize = image.size;
+                    CGFloat aspectRatio = originalSize.width / originalSize.height;
+                    CGFloat targetWidth, targetHeight;
+                    
+                    if (aspectRatio >= 1.0) {
+                        targetWidth = iconSize;
+                        targetHeight = iconSize / aspectRatio;
+                    } else {
+                        targetHeight = iconSize;
+                        targetWidth = iconSize * aspectRatio;
+                    }
+                    
+                    // Resize icon while maintaining aspect ratio
+                    UIGraphicsBeginImageContextWithOptions(CGSizeMake(targetWidth, targetHeight), NO, 0.0);
+                    [image drawInRect:CGRectMake(0, 0, targetWidth, targetHeight)];
                     UIImage *resizedImage = UIGraphicsGetImageFromCurrentImageContext();
                     UIGraphicsEndImageContext();
                     
-                    // Set icon color
-                    UIImage *finalImage;
-                    if (selected) {
-                        finalImage = resizedImage; // Keep original color for selected status
-                    } else {
-                        finalImage = [self imageWithTintColor:[UIColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1.0] image:resizedImage]; // Gray for non-selected status
-                    }
+                    resizedImage = [resizedImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
                     
                     // Update button icon
-                    [btn setImage:finalImage forState:UIControlStateNormal];
+                    [btn setImage:resizedImage forState:UIControlStateNormal];
+                    btn.imageView.contentMode = UIViewContentModeScaleAspectFit;
+                    
+                    // Set tintColor: gray (#666666) for all states
+                    btn.tintColor = [UIColor colorWithRed:102.0/255.0 green:102.0/255.0 blue:102.0/255.0 alpha:1.0];
                 }
                 break;
             }

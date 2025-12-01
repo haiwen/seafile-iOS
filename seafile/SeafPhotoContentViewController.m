@@ -20,8 +20,10 @@
 #import "SeafPhotoInfoView.h"
 #import "SeafUploadFile.h"
 #import "SeafErrorPlaceholderView.h"
+#import "SeafLivePhotoPlayerView.h"
+#import "SeafMotionPhotoExtractor.h"
 
-@interface SeafPhotoContentViewController ()<UIScrollViewDelegate>
+@interface SeafPhotoContentViewController ()<UIScrollViewDelegate, SeafLivePhotoPlayerViewDelegate>
 @property (nonatomic, strong) UIScrollView  *scrollView;
 @property (nonatomic, strong) UIImageView   *imageView;
 @property (nonatomic, strong) SeafPhotoInfoView *infoView;
@@ -29,6 +31,11 @@
 @property (nonatomic, strong) UITapGestureRecognizer *doubleTapGesture;
 @property (nonatomic, strong) UIImageView *errorIconImageView;
 @property (nonatomic, strong) UILabel *errorLabel;
+@property (nonatomic, assign, readwrite) BOOL isMotionPhoto;
+
+/// Live Photo badge displayed in top-left corner (below navigation bar)
+/// Contains icon + "LIVE" text, similar to iOS native style
+@property (nonatomic, strong) UIView *livePhotoBadge;
 
 @end
 
@@ -55,6 +62,7 @@
     [self setupScrollView];
     [self setupInfoView];
     [self setupLoadingIndicator];
+    [self setupLivePhotoIcon];
     // [self loadImage]; // loadImage will be called by viewWillAppear or explicitly after file is set
     
     // Initialize with info view hidden
@@ -124,6 +132,129 @@
     self.infoView.hidden = YES;
 }
 
+- (void)setupLivePhotoIcon {
+    // Create Live Photo badge container (iOS native style)
+    // Badge contains: icon + "LIVE" text
+    CGFloat badgeHeight = 28.0;
+    CGFloat leftPadding = 6.0;
+    CGFloat rightPadding = 10.0;
+    CGFloat iconSize = 18.0;
+    CGFloat spacing = 4.0;
+    
+    // Calculate badge width based on content
+    CGFloat estimatedTextWidth = 32.0; // Approximate width for "LIVE" text
+    CGFloat badgeWidth = leftPadding + iconSize + spacing + estimatedTextWidth + rightPadding;
+    
+    // Create container view as the badge
+    self.livePhotoBadge = [[UIView alloc] initWithFrame:CGRectMake(0, 0, badgeWidth, badgeHeight)];
+    self.livePhotoBadge.backgroundColor = [UIColor clearColor];
+    self.livePhotoBadge.layer.masksToBounds = NO; // Allow shadow to show
+    
+    // Create a content view for clipping - white/light background with slight transparency
+    UIView *contentView = [[UIView alloc] initWithFrame:self.livePhotoBadge.bounds];
+    contentView.backgroundColor = [[UIColor whiteColor] colorWithAlphaComponent:0.9];
+    contentView.layer.cornerRadius = badgeHeight / 2.0;
+    contentView.layer.masksToBounds = YES;
+    contentView.layer.borderWidth = 0.5;
+    contentView.layer.borderColor = [[UIColor grayColor] colorWithAlphaComponent:0.3].CGColor;
+    contentView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    contentView.tag = 100; // Tag for later reference
+    [self.livePhotoBadge addSubview:contentView];
+    
+    // Create icon image view - centered vertically
+    UIImageView *iconView = [[UIImageView alloc] initWithFrame:CGRectMake(leftPadding, (badgeHeight - iconSize) / 2.0, iconSize, iconSize)];
+    if (@available(iOS 13.0, *)) {
+        UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:iconSize weight:UIImageSymbolWeightRegular];
+        UIImage *livePhotoSymbol = [UIImage systemImageNamed:@"livephoto" withConfiguration:config];
+        iconView.image = livePhotoSymbol;
+        // Darker gray color
+        iconView.tintColor = [UIColor colorWithRed:0.35 green:0.35 blue:0.35 alpha:1.0];
+    }
+    iconView.contentMode = UIViewContentModeScaleAspectFit;
+    iconView.tag = 101; // Tag for later reference
+    [contentView addSubview:iconView];
+    
+    // Create "LIVE" text label
+    UILabel *liveLabel = [[UILabel alloc] init];
+    liveLabel.text = @"LIVE";
+    liveLabel.font = [UIFont systemFontOfSize:13 weight:UIFontWeightMedium];
+    // Darker gray color
+    liveLabel.textColor = [UIColor colorWithRed:0.35 green:0.35 blue:0.35 alpha:1.0];
+    liveLabel.tag = 102; // Tag for later reference
+    [liveLabel sizeToFit];
+    liveLabel.frame = CGRectMake(leftPadding + iconSize + spacing, 
+                                  (badgeHeight - liveLabel.frame.size.height) / 2.0, 
+                                  liveLabel.frame.size.width, 
+                                  liveLabel.frame.size.height);
+    [contentView addSubview:liveLabel];
+    
+    // Recalculate badge width based on actual text width
+    CGFloat actualBadgeWidth = leftPadding + iconSize + spacing + liveLabel.frame.size.width + rightPadding;
+    CGRect badgeFrame = self.livePhotoBadge.frame;
+    badgeFrame.size.width = actualBadgeWidth;
+    self.livePhotoBadge.frame = badgeFrame;
+    contentView.frame = self.livePhotoBadge.bounds;
+    
+    // Add subtle shadow for depth (like iOS style)
+    self.livePhotoBadge.layer.shadowColor = [UIColor blackColor].CGColor;
+    self.livePhotoBadge.layer.shadowOffset = CGSizeMake(0, 1);
+    self.livePhotoBadge.layer.shadowOpacity = 0.1;
+    self.livePhotoBadge.layer.shadowRadius = 2.0;
+    
+    // Initially hidden
+    self.livePhotoBadge.hidden = YES;
+    self.livePhotoBadge.alpha = 1.0;
+    
+    // Add to view hierarchy (above other views)
+    [self.view addSubview:self.livePhotoBadge];
+}
+
+- (void)showLivePhotoIcon {
+    if (!self.livePhotoBadge) return;
+    
+    self.livePhotoBadge.hidden = NO;
+    self.livePhotoBadge.alpha = 1.0;
+    [self.view bringSubviewToFront:self.livePhotoBadge];
+    Debug(@"[PhotoContent] Live Photo badge shown");
+}
+
+- (void)hideLivePhotoIcon {
+    if (!self.livePhotoBadge) return;
+    
+    self.livePhotoBadge.hidden = YES;
+    Debug(@"[PhotoContent] Live Photo badge hidden");
+}
+
+- (void)showLivePhotoIconAnimated:(BOOL)animated {
+    if (!self.livePhotoBadge) return;
+    
+    if (animated) {
+        self.livePhotoBadge.alpha = 0.0;
+        self.livePhotoBadge.hidden = NO;
+        [self.view bringSubviewToFront:self.livePhotoBadge];
+        
+        [UIView animateWithDuration:0.2 animations:^{
+            self.livePhotoBadge.alpha = 1.0;
+        }];
+    } else {
+        [self showLivePhotoIcon];
+    }
+}
+
+- (void)hideLivePhotoIconAnimated:(BOOL)animated {
+    if (!self.livePhotoBadge) return;
+    
+    if (animated) {
+        [UIView animateWithDuration:0.2 animations:^{
+            self.livePhotoBadge.alpha = 0.0;
+        } completion:^(BOOL finished) {
+            self.livePhotoBadge.hidden = YES;
+        }];
+    } else {
+        [self hideLivePhotoIcon];
+    }
+}
+
 // Update the info view with data from the info model
 - (void)updateInfoView {
     self.infoView.infoModel = self.infoModel;
@@ -140,6 +271,31 @@
     
     // Update gesture recognizers based on info visibility
     [self updateGestureRecognizersForInfoVisibility:show];
+    
+    // Handle Live Photo badge visibility based on info panel state
+    if (show) {
+        // Hide Live Photo badge when info panel is shown
+        [self hideLivePhotoIconAnimated:animated];
+    } else {
+        // Show Live Photo badge when info panel is hidden (only if it's a Motion Photo and nav bar is visible)
+        if (self.isMotionPhoto) {
+            // Check if navigation bar is visible
+            UIViewController *navParentVC = self.parentViewController;
+            while (navParentVC && ![navParentVC isKindOfClass:[UINavigationController class]]) {
+                navParentVC = navParentVC.parentViewController;
+            }
+            
+            BOOL navBarVisible = YES;
+            if ([navParentVC isKindOfClass:[UINavigationController class]]) {
+                UINavigationController *navController = (UINavigationController *)navParentVC;
+                navBarVisible = !navController.navigationBarHidden;
+            }
+            
+            if (navBarVisible) {
+                [self showLivePhotoIconAnimated:animated];
+            }
+        }
+    }
     
     // Get parent navigation controller and top view controller for controlling navigation bar and bottom UI
     UIViewController *parentVC = self.parentViewController;
@@ -567,6 +723,11 @@
             [UIView animateWithDuration:0.15 animations:^{
                 navController.navigationBar.alpha = 1.0;
             }];
+            
+            // Show Live Photo badge when exiting browse mode (if it's a Motion Photo)
+            if (self.isMotionPhoto) {
+                [self showLivePhotoIconAnimated:YES];
+            }
         } else {
             // Hide navigation bar with fade out effect
             [UIView animateWithDuration:0.15 animations:^{
@@ -574,6 +735,9 @@
             } completion:^(BOOL finished) {
                 [navController setNavigationBarHidden:YES animated:NO];
             }];
+            
+            // Hide Live Photo badge when entering browse mode
+            [self hideLivePhotoIconAnimated:YES];
         }
         
         // Find SeafPhotoGalleryViewController
@@ -726,12 +890,15 @@
                         }
                         self.isDisplayingPlaceholderOrErrorImage = NO; // Ensure flag is cleared on success
 
-                        // If we have the file path, get the data to display EXIF info
+                        // If we have the file path, get the data to display EXIF info and check for Motion Photo
                         if (((SeafFile *)self.seafFile).ooid) {
                             NSString *path = [SeafStorage.sharedObject documentPath:((SeafFile *)self.seafFile).ooid];
                             NSData *data = [NSData dataWithContentsOfFile:path];
                             if (data) {
                                 [self displayExifData:data];
+                                
+                                // Check if this is a Motion Photo and setup player
+                                [self checkAndSetupMotionPhotoWithData:data];
                             } else {
                                 Debug(@"[PhotoContent] WARNING: Could not read file data for EXIF from path: %@", path);
                             }
@@ -782,11 +949,13 @@
                     }
                     self.isDisplayingPlaceholderOrErrorImage = NO; // Ensure flag is cleared on success
 
-                    // If we have the file path, get the data to display EXIF info
+                    // If we have the file path, get the data to display EXIF info and check for Motion Photo
                     [((SeafUploadFile *)self.seafFile) getDataForAssociatedAssetWithCompletion:^(NSData * _Nullable data, NSError * _Nullable error) {
                         dispatch_async(dispatch_get_main_queue(), ^{
                             if (data) {
                                 [self displayExifData:data];
+                                // Check if this is a Motion Photo and setup player
+                                [self checkAndSetupMotionPhotoWithData:data];
                             } else {
                                 Debug(@"[PhotoContent] WARNING: Could not read file data for EXIF from uploadImage: %@", self.seafFile.name);
                             }
@@ -1114,6 +1283,19 @@
         return;
     }
 
+    // IMPORTANT: Don't show error if we already have a valid image displayed
+    // This prevents thumbnail download failure from overwriting a successfully loaded full image
+    if (self.imageView.image != nil && !self.isDisplayingPlaceholderOrErrorImage) {
+        Debug(@"[PhotoContent] Skipping error image - already have valid image displayed for %@", self.seafFile.name);
+        return;
+    }
+    
+    // Also check if we have a live photo player view with content
+    if (self.livePhotoPlayerView && self.livePhotoPlayerView.hasMotionPhotoContent) {
+        Debug(@"[PhotoContent] Skipping error image - live photo player has content for %@", self.seafFile.name);
+        return;
+    }
+
     // Clear the main image view content
     self.imageView.image = nil;
     self.isDisplayingPlaceholderOrErrorImage = YES;
@@ -1196,6 +1378,27 @@
     // Re-center indicator and label
     self.activityIndicator.center = self.view.center;
     self.progressLabel.center = CGPointMake(self.view.center.x, self.view.center.y + self.activityIndicator.bounds.size.height / 2 + 25);
+    
+    // Position Live Photo badge in top-left corner (below navigation bar)
+    if (self.livePhotoBadge) {
+        CGFloat padding = 16.0;
+        CGFloat topOffset = padding;
+        
+        // Account for safe area (navigation bar area)
+        if (@available(iOS 11.0, *)) {
+            topOffset += self.view.safeAreaInsets.top;
+        }
+        
+        CGFloat leftOffset = padding;
+        if (@available(iOS 11.0, *)) {
+            leftOffset += self.view.safeAreaInsets.left;
+        }
+        
+        CGRect badgeFrame = self.livePhotoBadge.frame;
+        badgeFrame.origin.x = leftOffset;
+        badgeFrame.origin.y = topOffset;
+        self.livePhotoBadge.frame = badgeFrame;
+    }
 
     // If the error placeholder view is visible, re-layout its contents
     // This part is now handled by SeafErrorPlaceholderView's layoutSubviews
@@ -1419,6 +1622,13 @@
         [self.errorPlaceholderView removeFromSuperview];
         self.errorPlaceholderView = nil;
     }
+    
+    // Clean up Live Photo player view
+    [self removeLivePhotoPlayerView];
+    self.isMotionPhoto = NO;
+    
+    // Hide Live Photo icon
+    [self hideLivePhotoIcon];
 
     // Cancel any ongoing image loading or download requests
     // Only if the image isn't already loaded
@@ -1636,6 +1846,30 @@
         }
         [self loadImage];
     }
+    
+    // Ensure Live Photo badge visibility is correct based on navigation bar state
+    if (self.isMotionPhoto) {
+        // Check if navigation bar is visible
+        UIViewController *navParentVC = self.parentViewController;
+        while (navParentVC && ![navParentVC isKindOfClass:[UINavigationController class]]) {
+            navParentVC = navParentVC.parentViewController;
+        }
+        
+        BOOL navBarVisible = YES;
+        if ([navParentVC isKindOfClass:[UINavigationController class]]) {
+            UINavigationController *navController = (UINavigationController *)navParentVC;
+            navBarVisible = !navController.navigationBarHidden;
+        }
+        
+        // Only show badge when nav bar is visible and info panel is not visible
+        if (navBarVisible && !self.infoVisible) {
+            [self showLivePhotoIcon];
+        } else {
+            [self hideLivePhotoIcon];
+        }
+    } else {
+        [self hideLivePhotoIcon];
+    }
 }
 
 // Helper method to create the EXIF Camera Model row
@@ -1739,6 +1973,123 @@
     
     // Update image view size
     self.imageView.frame = CGRectMake(0, 0, size.width, size.height);
+}
+
+#pragma mark - Motion Photo / Live Photo Support
+
+// Set to 1 to enable Motion Photo / Live Photo feature, set to 0 to disable
+#define ENABLE_MOTION_PHOTO_FEATURE 0
+
+- (void)checkAndSetupMotionPhotoWithData:(NSData *)data {
+#if !ENABLE_MOTION_PHOTO_FEATURE
+    // Motion Photo / Live Photo playback feature is temporarily disabled, code preserved for future restoration
+    self.isMotionPhoto = NO;
+    [self hideLivePhotoIcon];
+    return;
+#endif
+    
+    if (!data || data.length == 0) {
+        self.isMotionPhoto = NO;
+        [self hideLivePhotoIcon];
+        return;
+    }
+    
+    // First, run detailed analysis for debugging purposes
+    NSString *fileName = self.seafFile ? self.seafFile.name : @"Unknown";
+    NSString *fileExt = [fileName.pathExtension lowercaseString];
+    
+    // Only analyze HEIC/HEIF files that might be Motion Photos
+    if ([fileExt isEqualToString:@"heic"] || [fileExt isEqualToString:@"heif"]) {
+        Debug(@"[PhotoContent] Running Motion Photo analysis for: %@", fileName);
+        [SeafMotionPhotoExtractor analyzeAndLogMotionPhotoIssues:data fileName:fileName];
+    }
+    
+    // Check if this is a Motion Photo
+    BOOL isMotionPhoto = [SeafMotionPhotoExtractor isMotionPhoto:data];
+    self.isMotionPhoto = isMotionPhoto;
+    
+    if (!isMotionPhoto) {
+        // Remove any existing live photo player view
+        [self removeLivePhotoPlayerView];
+        [self hideLivePhotoIcon];
+        Debug(@"[PhotoContent] Not a Motion Photo: %@", self.seafFile.name);
+        return;
+    }
+    
+    Debug(@"[PhotoContent] Motion Photo detected: %@", self.seafFile.name);
+    
+    // Show Live Photo icon
+    [self showLivePhotoIcon];
+    
+    // Setup Live Photo Player View
+    [self setupLivePhotoPlayerViewWithData:data];
+}
+
+- (void)setupLivePhotoPlayerViewWithData:(NSData *)data {
+    // Remove any existing player view first (but don't hide the badge)
+    if (self.livePhotoPlayerView) {
+        [self.livePhotoPlayerView cleanup];
+        [self.livePhotoPlayerView removeFromSuperview];
+        self.livePhotoPlayerView = nil;
+        
+        // Show the regular image view again temporarily
+        self.imageView.hidden = NO;
+    }
+    
+    // Create and configure the live photo player view
+    self.livePhotoPlayerView = [[SeafLivePhotoPlayerView alloc] initWithFrame:self.scrollView.bounds];
+    self.livePhotoPlayerView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    self.livePhotoPlayerView.delegate = self;
+    self.livePhotoPlayerView.imageContentMode = UIViewContentModeScaleAspectFit;
+    self.livePhotoPlayerView.showLiveBadge = NO;  // Disable built-in badge, we use our own Live Photo badge
+    self.livePhotoPlayerView.longPressToPlayEnabled = YES;
+    
+    // Load the Motion Photo data
+    [self.livePhotoPlayerView loadMotionPhotoFromData:data];
+    
+    // Add to scroll view, above the image view
+    [self.scrollView addSubview:self.livePhotoPlayerView];
+    
+    // Hide the regular image view when we have live photo player
+    self.imageView.hidden = YES;
+    
+    // Ensure badge is visible and on top
+    [self showLivePhotoIcon];
+    
+    Debug(@"[PhotoContent] Live Photo Player View setup complete for: %@", self.seafFile.name);
+}
+
+- (void)removeLivePhotoPlayerView {
+    if (self.livePhotoPlayerView) {
+        [self.livePhotoPlayerView cleanup];
+        [self.livePhotoPlayerView removeFromSuperview];
+        self.livePhotoPlayerView = nil;
+        
+        // Show the regular image view again
+        self.imageView.hidden = NO;
+    }
+    
+    // Hide the Live Photo badge since we're removing the Motion Photo player
+    // This indicates we're switching away from a Motion Photo
+    [self hideLivePhotoIcon];
+    self.isMotionPhoto = NO;
+}
+
+#pragma mark - SeafLivePhotoPlayerViewDelegate
+
+- (void)livePhotoPlayerViewDidStartPlaying:(SeafLivePhotoPlayerView *)playerView {
+    Debug(@"[PhotoContent] Live Photo started playing: %@", self.seafFile.name);
+    // Badge remains visible during playback - no action needed
+}
+
+- (void)livePhotoPlayerViewDidFinishPlaying:(SeafLivePhotoPlayerView *)playerView {
+    Debug(@"[PhotoContent] Live Photo finished playing: %@", self.seafFile.name);
+    // Badge remains visible - no action needed
+}
+
+- (void)livePhotoPlayerView:(SeafLivePhotoPlayerView *)playerView didFailWithError:(NSError *)error {
+    Debug(@"[PhotoContent] Live Photo playback failed: %@, error: %@", self.seafFile.name, error);
+    // Badge remains visible - no action needed
 }
 
 @end

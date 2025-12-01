@@ -1403,20 +1403,24 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
         if (completion) completion();
         return;
     }
+    
     __weak typeof(self) wself = self;
-    [self.sdocService getRelatedUsersWithRepoId:self.repoId completion:^(NSDictionary * _Nullable resp, NSError * _Nullable error) {
-        __strong typeof(wself) sself = wself; if (!sself) { if (completion) completion(); return; }
-        NSArray *list = (!error && [resp isKindOfClass:NSDictionary.class]) ? (resp[@"user_list"] ?: resp[@"users"] ?: @[]) : @[];
-        if (![list isKindOfClass:NSArray.class]) list = @[];
-        NSMutableArray<NSDictionary *> *arr = [NSMutableArray array];
-        for (id obj in list) {
-            if (![obj isKindOfClass:NSDictionary.class]) continue;
-            NSDictionary *norm = [SeafSdocUserMapper normalizeUserDict:(NSDictionary *)obj];
-            [arr addObject:norm];
-        }
+    
+    // Request two APIs concurrently: related-users (collaborators) and participants
+    __block NSArray<NSDictionary *> *collaboratorsResult = @[];
+    __block NSArray<NSDictionary *> *participantsResult = @[];
+    __block BOOL collaboratorsDone = NO;
+    __block BOOL participantsDone = NO;
+    
+    void (^mergeAndSort)(void) = ^{
+        __strong typeof(wself) sself = wself;
+        if (!sself || !collaboratorsDone || !participantsDone) return;
+        
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (arr.count > 0) {
-                sself.mentionAllUsers = arr.copy;
+            NSArray<NSDictionary *> *sortedUsers = [sself sortCollaborators:collaboratorsResult participants:participantsResult];
+            
+            if (sortedUsers.count > 0) {
+                sself.mentionAllUsers = sortedUsers;
                 gRelatedUsersCache[sself.repoId] = sself.mentionAllUsers;
                 gRelatedUsersCacheTS[sself.repoId] = [NSDate date];
                 [sself.mentionView updateAllUsers:sself.mentionAllUsers];
@@ -1434,7 +1438,95 @@ static NSMutableDictionary<NSString *, NSDate *> *gRelatedUsersCacheTS;
             }
             if (completion) completion();
         });
+    };
+    
+    // Request 1: related-users (collaborators)
+    [self.sdocService getRelatedUsersWithRepoId:self.repoId completion:^(NSDictionary * _Nullable resp, NSError * _Nullable error) {
+        NSArray *list = (!error && [resp isKindOfClass:NSDictionary.class]) ? (resp[@"user_list"] ?: resp[@"users"] ?: @[]) : @[];
+        if (![list isKindOfClass:NSArray.class]) list = @[];
+        NSMutableArray<NSDictionary *> *arr = [NSMutableArray array];
+        for (id obj in list) {
+            if (![obj isKindOfClass:NSDictionary.class]) continue;
+            NSDictionary *norm = [SeafSdocUserMapper normalizeUserDict:(NSDictionary *)obj];
+            [arr addObject:norm];
+        }
+        collaboratorsResult = arr.copy;
+        collaboratorsDone = YES;
+        mergeAndSort();
     }];
+    
+    // Request 2: participants (uses seahub server, no seadoc token needed)
+    if (self.pageOptions.docUuid.length > 0) {
+        [self->_service getParticipantsWithDocUUID:self.pageOptions.docUuid
+                                         completion:^(NSArray<NSDictionary *> * _Nullable participants, NSError * _Nullable error) {
+            NSMutableArray<NSDictionary *> *arr = [NSMutableArray array];
+            for (id obj in participants ?: @[]) {
+                if (![obj isKindOfClass:NSDictionary.class]) continue;
+                NSDictionary *norm = [SeafSdocUserMapper normalizeUserDict:(NSDictionary *)obj];
+                [arr addObject:norm];
+            }
+            participantsResult = arr.copy;
+            participantsDone = YES;
+            mergeAndSort();
+        }];
+    } else {
+        participantsDone = YES;
+        mergeAndSort();
+    }
+}
+
+// Sort user list according to frontend logic
+// Sort order: exclude current user -> lastModifyUser on top -> participants -> other collaborators
+- (NSArray<NSDictionary *> *)sortCollaborators:(NSArray<NSDictionary *> *)collaborators
+                                   participants:(NSArray<NSDictionary *> *)participants
+{
+    NSString *loginEmail = (self.connection.email ?: @"").lowercaseString;
+    NSString *lastModifyUser = (self.latestContributor ?: @"").lowercaseString;
+    
+    // Build participantsMap (excluding current user)
+    NSMutableDictionary<NSString *, NSDictionary *> *participantsMap = [NSMutableDictionary dictionary];
+    for (NSDictionary *item in participants) {
+        NSString *email = [item[@"email"] isKindOfClass:NSString.class] ? [item[@"email"] lowercaseString] : @"";
+        if (email.length == 0) continue;
+        if ([email isEqualToString:loginEmail]) continue; // Exclude current user
+        participantsMap[email] = item;
+    }
+    
+    // Process collaborators: exclude those already in participantsMap, exclude current user, extract stickyCollaborator
+    NSDictionary *stickyCollaborator = nil;
+    NSMutableArray<NSDictionary *> *newCollaborators = [NSMutableArray array];
+    
+    for (NSDictionary *item in collaborators) {
+        NSString *email = [item[@"email"] isKindOfClass:NSString.class] ? [item[@"email"] lowercaseString] : @"";
+        if (email.length == 0) continue;
+        
+        // Exclude current user
+        if ([email isEqualToString:loginEmail]) continue;
+        
+        // Exclude users already in participants
+        if (participantsMap[email]) continue;
+        
+        // Check if this is lastModifyUser
+        if (lastModifyUser.length > 0 && [email isEqualToString:lastModifyUser]) {
+            stickyCollaborator = item;
+            continue; // Don't add to newCollaborators, will be placed on top separately
+        }
+        
+        [newCollaborators addObject:item];
+    }
+    
+    // Get participants array (current user already excluded)
+    NSArray<NSDictionary *> *newParticipants = participantsMap.allValues;
+    
+    // Final order: [stickyCollaborator, ...participants, ...collaborators]
+    NSMutableArray<NSDictionary *> *result = [NSMutableArray array];
+    if (stickyCollaborator) {
+        [result addObject:stickyCollaborator];
+    }
+    [result addObjectsFromArray:newParticipants];
+    [result addObjectsFromArray:newCollaborators];
+    
+    return result.copy;
 }
 
 - (void)presentMentionSheetIfNeeded
