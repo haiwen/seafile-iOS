@@ -21,6 +21,9 @@
     m.seadocServerUrl = [dict objectForKey:@"seadocServerUrl"] ?: @"";
     m.seadocAccessToken = [dict objectForKey:@"seadocAccessToken"] ?: @"";
     m.docUuid = [dict objectForKey:@"docUuid"] ?: @"";
+    // Parse latestContributor, fallback to empty string
+    id latestContributor = [dict objectForKey:@"latestContributor"];
+    m.latestContributor = ([latestContributor isKindOfClass:NSString.class]) ? latestContributor : @"";
     return m;
 }
 

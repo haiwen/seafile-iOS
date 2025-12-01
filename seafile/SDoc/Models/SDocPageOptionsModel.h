@@ -9,6 +9,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) NSString *seadocServerUrl;
 @property (nonatomic, copy) NSString *seadocAccessToken;
 @property (nonatomic, copy) NSString *docUuid;
+@property (nonatomic, copy) NSString *latestContributor; // Email/username of the last modifier
 
 - (BOOL)canUse;
 

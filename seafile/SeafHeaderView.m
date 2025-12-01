@@ -11,7 +11,7 @@
 #define kHeaderHeight 45.0
 #define kLeftPadding 24.0
 #define kRightPadding 17.0
-#define kToggleButtonWidth 13.0
+#define kToggleButtonWidth 16.0
 
 @implementation SeafHeaderView {
     UILabel *_titleLabel;
@@ -39,8 +39,10 @@
         // Create right toggle button
         _toggleButton = [UIButton buttonWithType:UIButtonTypeCustom];
         _toggleButton.frame = CGRectZero;
-        UIImage *arrowImage = [UIImage imageNamed:@"arrowDown_black"];
+        UIImage *arrowImage = [[UIImage imageNamed:@"arrowDown_black"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
         [_toggleButton setImage:arrowImage forState:UIControlStateNormal];
+        // Set gray color to match other navigation icons (#666666)
+        _toggleButton.tintColor = [UIColor colorWithRed:102.0/255.0 green:102.0/255.0 blue:102.0/255.0 alpha:1.0];
         _toggleButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
         _toggleButton.layer.anchorPoint = CGPointMake(0.5, 0.5);
         _toggleButton.tag = section;
@@ -89,7 +91,8 @@
 #pragma mark - Public Methods
 
 - (void)setExpanded:(BOOL)isExpanded animated:(BOOL)animated {
-    CGFloat targetRotation = isExpanded ? -M_PI : 0;
+    // Arrow-up icon: expanded shows up (∧), collapsed shows down (∨) by rotating 180°
+    CGFloat targetRotation = isExpanded ? 0 : M_PI;
     if (animated) {
         [UIView animateWithDuration:0.25 animations:^{
             _toggleButton.transform = CGAffineTransformMakeRotation(targetRotation);

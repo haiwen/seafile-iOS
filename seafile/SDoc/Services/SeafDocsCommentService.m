@@ -238,5 +238,37 @@ static NSString * const kSeafDocsCommentServiceErrorDomain = @"SeafDocsCommentSe
     [q addCommentImageUploadOperation:op];
 }
 
+- (void)getParticipantsWithDocUUID:(NSString *)uuid
+                         completion:(void(^)(NSArray<NSDictionary *> * _Nullable participants, NSError * _Nullable error))completion
+{
+    if (uuid.length == 0) {
+        if (completion) dispatch_async(dispatch_get_main_queue(), ^{ completion(@[], nil); });
+        return;
+    }
+    // API path: /api/v2.1/seadoc/participants/{docUuid}/
+    // Uses seahub server (via SeafConnection), not seadoc server
+    NSString *url = [NSString stringWithFormat:@"/api/v2.1/seadoc/participants/%@/", uuid];
+    
+    [self.connection sendRequest:url
+                         success:^(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nonnull response, id  _Nonnull JSON) {
+        // Parse response data, support multiple formats, fallback to empty array
+        NSArray *list = nil;
+        if ([JSON isKindOfClass:NSArray.class]) {
+            list = (NSArray *)JSON;
+        } else if ([JSON isKindOfClass:NSDictionary.class]) {
+            // Try common keys: participant_list, participants, user_list, users
+            id arr = JSON[@"participant_list"] ?: JSON[@"participants"] ?: JSON[@"user_list"] ?: JSON[@"users"];
+            if ([arr isKindOfClass:NSArray.class]) {
+                list = (NSArray *)arr;
+            }
+        }
+        if (!list) list = @[];
+        if (completion) completion(list, nil);
+    } failure:^(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nullable response, id  _Nullable JSON, NSError * _Nullable error) {
+        // Return empty array on failure to prevent crash
+        if (completion) completion(@[], error);
+    }];
+}
+
 @end
 

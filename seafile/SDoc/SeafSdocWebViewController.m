@@ -3,6 +3,7 @@
 
 #import "SeafSdocWebViewController.h"
 #import "SeafSdocStylePopupViewController.h"
+#import "SeafSdocEditorToolbar.h"
 #import "SeafAppDelegate.h"
 #import "SeafFile.h"
 #import "SeafConnection.h"
@@ -28,7 +29,7 @@ static NSString * const kSeafBridgeShimScript =
 "    w.WebViewJavascriptBridge={\n"
 "      registerHandler:function(name,handler){ try{ _handlers[name]=handler; }catch(e){} },\n"
 "      callHandler:function(name,data,resp){ try{ if(w.webkit && w.webkit.messageHandlers && w.webkit.messageHandlers[name]){ var payload=(typeof data==='string')?data:JSON.stringify(data||{}); w.webkit.messageHandlers[name].postMessage(payload); if(typeof resp==='function'){ resp(''); } } }catch(e){} },\n"
-"      _invoke:function(name,data){ try{ var h=_handlers[name]; if(typeof h==='function'){ h(data, function(res){ try{ if(w.webkit && w.webkit.messageHandlers && w.webkit.messageHandlers.iosJsCallback){ w.webkit.messageHandlers.iosJsCallback.postMessage(res||''); } }catch(e){} }); } }catch(e){} }\n"
+"      _invoke:function(name,data){ try{ var h=_handlers[name]; if(typeof h==='function'){ h(data, function(res){ try{ if(w.webkit && w.webkit.messageHandlers && w.webkit.messageHandlers.callAndroidFunction){ w.webkit.messageHandlers.callAndroidFunction.postMessage(JSON.stringify({action:'N_N_N_N_Callback',data:res||''})); } }catch(e){} }); } }catch(e){} }\n"
 "    };\n"
 "  }\n"
 "})();";
@@ -61,7 +62,7 @@ static NSString * const kSeafBridgeHelperScript =
 
 @end
 
-@interface SeafSdocWebViewController () <SeafSdocStylePopupDelegate>
+@interface SeafSdocWebViewController () <SeafSdocStylePopupDelegate, SeafSdocEditorToolbarDelegate>
 
 @property (nonatomic, strong) WKWebView *webView;
 @property (nonatomic, strong) UIBarButtonItem *editItem;
@@ -84,20 +85,11 @@ static NSString * const kSeafBridgeHelperScript =
 @property (nonatomic, strong) NSLayoutConstraint *bottomBarHeightConstraint;
 
 // Editor Toolbar
-@property (nonatomic, strong) UIView *editorBar;
+@property (nonatomic, strong) SeafSdocEditorToolbar *editorToolbar;
 @property (nonatomic, strong) NSLayoutConstraint *editorBarBottomConstraint;
-@property (nonatomic, strong) UIButton *btnUndo;
-@property (nonatomic, strong) UIButton *btnRedo;
-@property (nonatomic, strong) UIButton *btnStyle;
-@property (nonatomic, strong) UIButton *btnUnordered;
-@property (nonatomic, strong) UIButton *btnOrdered;
-@property (nonatomic, strong) UIButton *btnCheck;
-@property (nonatomic, strong) UIButton *btnKeyboard;
-@property (nonatomic, strong) NSDictionary *selectedTextStyleModel;
 
 
 @property (nonatomic, strong) SeafWeakScriptMessageHandler *weakBridgeHandler;
-@property (nonatomic, strong) SeafWeakScriptMessageHandler *weakCallbackHandler;
 @property (nonatomic, strong) NSLayoutConstraint *webViewBottomConstraint;
 
 @property (nonatomic, assign) BOOL isEditing;
@@ -105,6 +97,8 @@ static NSString * const kSeafBridgeHelperScript =
 
 @property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, strong) UILabel *statusLabel;
+
+@property (nonatomic, copy) NSString *currentStyleType; // Current paragraph style type
 
 @end
 
@@ -269,9 +263,7 @@ static NSString * const kSeafBridgeHelperScript =
     WKWebViewConfiguration *config = [[WKWebViewConfiguration alloc] init];
     WKUserContentController *uc = [[WKUserContentController alloc] init];
     self.weakBridgeHandler = [[SeafWeakScriptMessageHandler alloc] initWithTarget:self];
-    self.weakCallbackHandler = [[SeafWeakScriptMessageHandler alloc] initWithTarget:self];
     [uc addScriptMessageHandler:self.weakBridgeHandler name:@"callAndroidFunction"];
-    [uc addScriptMessageHandler:self.weakCallbackHandler name:@"iosJsCallback"];
     [self injectBridgeScriptsIntoUserContentController:uc];
     config.userContentController = uc;
 
@@ -365,46 +357,6 @@ static NSString * const kSeafBridgeHelperScript =
     return fallback;
 }
 
-- (UIImage *)createResizableRoundedImageWithColor:(UIColor *)color cornerRadius:(CGFloat)radius inset:(CGFloat)inset
-{
-    CGFloat capSize = inset + radius;
-    CGFloat side = capSize * 2 + 1;
-    CGSize size = CGSizeMake(side, side);
-    
-    UIGraphicsBeginImageContextWithOptions(size, NO, 0.0);
-    CGContextRef context = UIGraphicsGetCurrentContext();
-    
-    // Clear (transparent)
-    CGContextClearRect(context, CGRectMake(0, 0, side, side));
-    
-    // Fill color
-    CGContextSetFillColorWithColor(context, color.CGColor);
-    
-    // Draw rounded rect
-    CGRect fillRect = CGRectMake(inset, inset, side - 2*inset, side - 2*inset);
-    UIBezierPath *path = [UIBezierPath bezierPathWithRoundedRect:fillRect cornerRadius:radius];
-    [path fill];
-    
-    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    
-    return [image resizableImageWithCapInsets:UIEdgeInsetsMake(capSize, capSize, capSize, capSize) resizingMode:UIImageResizingModeStretch];
-}
-
-- (UIImage *)imageWithColor:(UIColor *)color {
-    CGRect rect = CGRectMake(0.0f, 0.0f, 1.0f, 1.0f);
-    UIGraphicsBeginImageContext(rect.size);
-    CGContextRef context = UIGraphicsGetCurrentContext();
-    
-    CGContextSetFillColorWithColor(context, [color CGColor]);
-    CGContextFillRect(context, rect);
-    
-    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    
-    return image;
-}
-
 - (void)setupBottomToolbar
 {
     if (self.bottomBar) return;
@@ -480,172 +432,24 @@ static NSString * const kSeafBridgeHelperScript =
 
 - (void)setupEditorToolbar
 {
-    if (self.editorBar) return;
-
-    // Create container
-    self.editorBar = [[UIView alloc] initWithFrame:CGRectZero];
-    // Updated background color to match design #F2F2F2
-    self.editorBar.backgroundColor = [UIColor colorWithRed:242.0/255.0 green:242.0/255.0 blue:242.0/255.0 alpha:1.0];
-    self.editorBar.translatesAutoresizingMaskIntoConstraints = NO;
-    self.editorBar.hidden = YES;
-    [self.view addSubview:self.editorBar];
-
-    // Main Horizontal Stack
-    UIStackView *stack = [[UIStackView alloc] init];
-    stack.axis = UILayoutConstraintAxisHorizontal;
-    stack.distribution = UIStackViewDistributionFill;
-    stack.alignment = UIStackViewAlignmentFill;
-    stack.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.editorBar addSubview:stack];
-
-    // 1. Undo/Redo Group (Fixed width)
-    UIStackView *undoRedoStack = [self createEditorGroupStack];
-    undoRedoStack.layoutMargins = UIEdgeInsetsMake(0, 8, 0, 8);
-    undoRedoStack.layoutMarginsRelativeArrangement = YES;
+    if (self.editorToolbar) return;
     
-    self.btnUndo = [self createEditorButtonWithImageName:@"Revoke-black-nomal" selector:@selector(onEditorUndoTapped)];
-    [self.btnUndo setImage:[UIImage imageNamed:@"Revoke-black-disabled"] forState:UIControlStateDisabled];
+    self.editorToolbar = [[SeafSdocEditorToolbar alloc] initWithFrame:CGRectZero];
+    self.editorToolbar.delegate = self;
+    self.editorToolbar.translatesAutoresizingMaskIntoConstraints = NO;
+    self.editorToolbar.hidden = YES;
+    [self.view addSubview:self.editorToolbar];
     
-    self.btnRedo = [self createEditorButtonWithImageName:@"redo-black-nomal" selector:@selector(onEditorRedoTapped)];
-    [self.btnRedo setImage:[UIImage imageNamed:@"redo-black-disabled"] forState:UIControlStateDisabled];
-    
-    [undoRedoStack addArrangedSubview:self.btnUndo];
-    [undoRedoStack addArrangedSubview:self.btnRedo];
-
-    // 2. Style Group (Flex)
-    UIView *styleContainer = [[UIView alloc] init];
-    self.btnStyle = [UIButton buttonWithType:UIButtonTypeSystem];
-    [self.btnStyle setTitle:NSLocalizedString(@"Paragraph", nil) forState:UIControlStateNormal];
-    UIColor *iconColor = [UIColor colorWithWhite:0.3 alpha:1.0];
-    [self.btnStyle setTitleColor:iconColor forState:UIControlStateNormal];
-    self.btnStyle.tintColor = iconColor;
-    self.btnStyle.titleLabel.font = [UIFont systemFontOfSize:14];
-    [self.btnStyle setImage:[UIImage imageNamed:@"arrow down-nomal"] forState:UIControlStateNormal];
-    // Force image to right
-    self.btnStyle.semanticContentAttribute = UISemanticContentAttributeForceRightToLeft;
-    // Left inset controls space between text and image (increased to 35).
-    // Right inset controls spacing from right edge (reduced to 5).
-    self.btnStyle.imageEdgeInsets = UIEdgeInsetsMake(0, 35, 0, 5);
-    self.btnStyle.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.btnStyle addTarget:self action:@selector(onEditorStyleTapped) forControlEvents:UIControlEventTouchUpInside];
-    [styleContainer addSubview:self.btnStyle];
-    [NSLayoutConstraint activateConstraints:@[
-        [self.btnStyle.centerXAnchor constraintEqualToAnchor:styleContainer.centerXAnchor],
-        [self.btnStyle.centerYAnchor constraintEqualToAnchor:styleContainer.centerYAnchor],
-        [self.btnStyle.heightAnchor constraintEqualToAnchor:styleContainer.heightAnchor],
-        [self.btnStyle.widthAnchor constraintEqualToAnchor:styleContainer.widthAnchor]
-    ]];
-
-    // 3. Lists Group (Fixed width)
-    UIStackView *listStack = [self createEditorGroupStack];
-    listStack.layoutMargins = UIEdgeInsetsMake(0, 8, 0, 8);
-    listStack.layoutMarginsRelativeArrangement = YES;
-    
-    UIColor *selectedBgColor = [UIColor colorWithRed:0.933 green:0.886 blue:0.816 alpha:1.0];
-    UIImage *selectedBgImg = [self createResizableRoundedImageWithColor:selectedBgColor cornerRadius:6.0 inset:6.0];
-    
-    self.btnUnordered = [self createEditorButtonWithImageName:@"unordered list-nomal" selector:@selector(onEditorUnorderedTapped)];
-    [self.btnUnordered setImage:[UIImage imageNamed:@"unordered list-selected"] forState:UIControlStateSelected];
-    [self.btnUnordered setBackgroundImage:selectedBgImg forState:UIControlStateSelected];
-    
-    self.btnOrdered = [self createEditorButtonWithImageName:@"ordered list-nomal" selector:@selector(onEditorOrderedTapped)];
-    [self.btnOrdered setImage:[UIImage imageNamed:@"ordered list-selected"] forState:UIControlStateSelected];
-    [self.btnOrdered setBackgroundImage:selectedBgImg forState:UIControlStateSelected];
-
-    self.btnCheck = [self createEditorButtonWithImageName:@"To-do list-nomal" selector:@selector(onEditorCheckTapped)];
-    [self.btnCheck setImage:[UIImage imageNamed:@"To-do list-selected"] forState:UIControlStateSelected];
-    [self.btnCheck setBackgroundImage:selectedBgImg forState:UIControlStateSelected];
-
-    [listStack addArrangedSubview:self.btnUnordered];
-    [listStack addArrangedSubview:self.btnOrdered];
-    [listStack addArrangedSubview:self.btnCheck];
-
-    // 4. Keyboard Group (Fixed width)
-    UIStackView *kbStack = [self createEditorGroupStack];
-    kbStack.layoutMargins = UIEdgeInsetsZero;
-    kbStack.layoutMarginsRelativeArrangement = YES;
-    
-    self.btnKeyboard = [self createEditorButtonWithImageName:@"keyboard-off-nomal" selector:@selector(onEditorKeyboardTapped)];
-    [kbStack addArrangedSubview:self.btnKeyboard];
-
-    // Add groups to main stack with separators
-    [stack addArrangedSubview:undoRedoStack];
-    [stack addArrangedSubview:[self createVerticalSeparator]];
-    [stack addArrangedSubview:styleContainer];
-    [stack addArrangedSubview:[self createVerticalSeparator]];
-    [stack addArrangedSubview:listStack];
-    [stack addArrangedSubview:[self createVerticalSeparator]];
-    [stack addArrangedSubview:kbStack];
-
-    // Ensure fixed width groups don't expand, and style group fills remaining space
-    [undoRedoStack setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
-    [listStack setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
-    [kbStack setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
-    [styleContainer setContentHuggingPriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
-
-    // Constraints for EditorBar
     CGFloat height = 40.0;
-    NSLayoutConstraint *bottomC = [self.editorBar.bottomAnchor constraintEqualToAnchor:[self contentBottomAnchor]];
+    NSLayoutConstraint *bottomC = [self.editorToolbar.bottomAnchor constraintEqualToAnchor:[self contentBottomAnchor]];
     self.editorBarBottomConstraint = bottomC;
     
     [NSLayoutConstraint activateConstraints:@[
-        [self.editorBar.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
-        [self.editorBar.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+        [self.editorToolbar.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+        [self.editorToolbar.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
         bottomC,
-        [self.editorBar.heightAnchor constraintEqualToConstant:height],
-        [stack.leadingAnchor constraintEqualToAnchor:self.editorBar.leadingAnchor],
-        [stack.trailingAnchor constraintEqualToAnchor:self.editorBar.trailingAnchor],
-        [stack.topAnchor constraintEqualToAnchor:self.editorBar.topAnchor],
-        [stack.bottomAnchor constraintEqualToAnchor:self.editorBar.bottomAnchor]
+        [self.editorToolbar.heightAnchor constraintEqualToConstant:height]
     ]];
-}
-
-- (UIStackView *)createEditorGroupStack
-{
-    UIStackView *stack = [[UIStackView alloc] init];
-    stack.axis = UILayoutConstraintAxisHorizontal;
-    stack.distribution = UIStackViewDistributionFillEqually;
-    stack.alignment = UIStackViewAlignmentFill;
-    return stack;
-}
-
-- (UIView *)createVerticalSeparator
-{
-    UIView *container = [[UIView alloc] init];
-    container.translatesAutoresizingMaskIntoConstraints = NO;
-    [container.widthAnchor constraintEqualToConstant:1].active = YES;
-    
-    UIView *line = [[UIView alloc] init];
-    line.backgroundColor = [UIColor colorWithWhite:0.9 alpha:1.0];
-    line.translatesAutoresizingMaskIntoConstraints = NO;
-    [container addSubview:line];
-    
-    [NSLayoutConstraint activateConstraints:@[
-        [line.widthAnchor constraintEqualToConstant:1],
-        [line.centerXAnchor constraintEqualToAnchor:container.centerXAnchor],
-        [line.topAnchor constraintEqualToAnchor:container.topAnchor constant:12], // Shortened separator (more padding top)
-        [line.bottomAnchor constraintEqualToAnchor:container.bottomAnchor constant:-12] // Shortened separator (more padding bottom)
-    ]];
-    return container;
-}
-
-- (UIButton *)createEditorButtonWithImageName:(NSString *)imageName selector:(SEL)sel
-{
-    UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
-    UIImage *img = [UIImage imageNamed:imageName];
-    // Scale image if needed, but usually image assets are fixed.
-    [btn setImage:img forState:UIControlStateNormal];
-    btn.imageView.contentMode = UIViewContentModeScaleAspectFit;
-    
-    btn.contentVerticalAlignment = UIControlContentVerticalAlignmentFill; 
-    btn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentFill;
-    // Add padding so they don't touch edges
-    btn.imageEdgeInsets = UIEdgeInsetsMake(8, 8, 8, 8); // Adjusted for 40pt height
-    
-    btn.tintColor = [UIColor colorWithWhite:0.3 alpha:1.0]; // Default tint
-    [btn addTarget:self action:sel forControlEvents:UIControlEventTouchUpInside];
-    [btn.widthAnchor constraintEqualToConstant:40].active = YES;
-    return btn;
 }
 
 #pragma mark - Editor Actions
@@ -654,34 +458,30 @@ static NSString * const kSeafBridgeHelperScript =
 {
     NSDictionary *payload = @{@"type": type};
     [self callJsFunction:@"sdoc.toolbar.menu.trigger" payload:payload completion:^(NSString * _Nullable data) {
-        // After trigger, force update undo/redo state to be responsive
         [self updateUndoRedoState];
     }];
 }
 
-- (void)onEditorUndoTapped { [self triggerJsSdocEditorMenu:@"undo"]; }
-- (void)onEditorRedoTapped { [self triggerJsSdocEditorMenu:@"redo"]; }
-- (void)onEditorUnorderedTapped { [self triggerJsSdocEditorMenu:@"unordered_list"]; }
-- (void)onEditorOrderedTapped { [self triggerJsSdocEditorMenu:@"ordered_list"]; }
-- (void)onEditorCheckTapped { [self triggerJsSdocEditorMenu:@"check_list_item"]; }
-- (void)onEditorKeyboardTapped {     [self.view endEditing:YES];
-}
+#pragma mark - SeafSdocEditorToolbarDelegate
 
-- (void)onEditorStyleTapped
+- (void)editorToolbarDidTapUndo { [self triggerJsSdocEditorMenu:@"undo"]; }
+- (void)editorToolbarDidTapRedo { [self triggerJsSdocEditorMenu:@"redo"]; }
+- (void)editorToolbarDidTapUnorderedList { [self triggerJsSdocEditorMenu:@"unordered_list"]; }
+- (void)editorToolbarDidTapOrderedList { [self triggerJsSdocEditorMenu:@"ordered_list"]; }
+- (void)editorToolbarDidTapCheckList { [self triggerJsSdocEditorMenu:@"check_list_item"]; }
+- (void)editorToolbarDidTapKeyboard { [self.view endEditing:YES]; }
+
+- (void)editorToolbarDidTapStyle:(UIButton *)sender
 {
     SeafSdocStylePopupViewController *popupVC = [[SeafSdocStylePopupViewController alloc] init];
     popupVC.delegate = self;
-    
-    // Determine current style from selected model or default to paragraph
-    NSString *currentStyle = self.selectedTextStyleModel[@"type"];
-    if (!currentStyle) currentStyle = @"paragraph";
-    popupVC.currentStyle = currentStyle;
+    popupVC.currentStyle = self.currentStyleType ?: @"paragraph";
     
     popupVC.modalPresentationStyle = UIModalPresentationPopover;
     UIPopoverPresentationController *popover = popupVC.popoverPresentationController;
     if (popover) {
-        popover.sourceView = self.btnStyle;
-        popover.sourceRect = self.btnStyle.bounds;
+        popover.sourceView = sender;
+        popover.sourceRect = sender.bounds;
         popover.permittedArrowDirections = UIPopoverArrowDirectionDown | UIPopoverArrowDirectionUp;
         popover.delegate = (id<UIPopoverPresentationControllerDelegate>)self;
         popover.backgroundColor = [UIColor whiteColor];
@@ -699,59 +499,22 @@ static NSString * const kSeafBridgeHelperScript =
 #pragma mark - UIPopoverPresentationControllerDelegate
 
 - (UIModalPresentationStyle)adaptivePresentationStyleForPresentationController:(UIPresentationController *)controller {
-    return UIModalPresentationNone; // Force popover style even on iPhone
+    return UIModalPresentationNone;
 }
 
 - (void)updateEditorBarStateWithModel:(NSDictionary *)model
 {
-    if (!model || ![model isKindOfClass:[NSDictionary class]]) return;
-    self.selectedTextStyleModel = model;
+    [self.editorToolbar updateWithStyleModel:model];
+    
+    // Save current style type for style popup
     NSString *type = model[@"type"];
-    
-    // Update Style Text
-    NSDictionary *styleMap = @{
-        @"paragraph": NSLocalizedString(@"Paragraph", nil),
-        @"title": NSLocalizedString(@"Title", nil),
-        @"subtitle": NSLocalizedString(@"Subtitle", nil),
-        @"header1": NSLocalizedString(@"Heading 1", nil),
-        @"header2": NSLocalizedString(@"Heading 2", nil),
-        @"header3": NSLocalizedString(@"Heading 3", nil),
-        @"header4": NSLocalizedString(@"Heading 4", nil),
-        @"header5": NSLocalizedString(@"Heading 5", nil),
-        @"header6": NSLocalizedString(@"Heading 6", nil)
-    };
-    NSString *title = styleMap[type];
-    if (title) {
-        [self.btnStyle setTitle:title forState:UIControlStateNormal];
-    }
-    
-    // Update List Selection
-    self.btnUnordered.selected = [type isEqualToString:@"unordered_list"];
-    self.btnOrdered.selected = [type isEqualToString:@"ordered_list"];
-    self.btnCheck.selected = [type isEqualToString:@"check_list_item"];
-    
-    // Disable other buttons if check list item is selected (similar to Android logic)
-    BOOL isCheck = [type isEqualToString:@"check_list_item"];
-    
-    UIColor *disabledTint = [UIColor lightGrayColor];
-    UIColor *normalTint = [UIColor colorWithWhite:0.3 alpha:1.0];
-    
-    if (isCheck) {
-        self.btnStyle.enabled = NO;
-        [self.btnStyle setTitleColor:disabledTint forState:UIControlStateNormal];
-        self.btnUnordered.enabled = NO;
-        self.btnOrdered.enabled = NO;
-    } else {
-        self.btnStyle.enabled = YES;
-        [self.btnStyle setTitleColor:[UIColor colorWithWhite:0.3 alpha:1.0] forState:UIControlStateNormal];
-        self.btnUnordered.enabled = YES;
-        self.btnOrdered.enabled = YES;
+    if (type) {
+        self.currentStyleType = type;
     }
 }
 
 - (void)updateUndoRedoState
 {
-    // Ask JS for history
     NSString *js = @"(function(){if(window.seadroid&&window.seadroid.history){return JSON.stringify(window.seadroid.history);}else{return null;}})();";
     [self.webView evaluateJavaScript:js completionHandler:^(id _Nullable result, NSError * _Nullable error) {
         NSString *val = [self normalizedJSONStringFromEvaluateResult:result];
@@ -763,8 +526,7 @@ static NSString * const kSeafBridgeHelperScript =
                 NSArray *redos = history[@"redos"];
                 BOOL canUndo = (undos && undos.count > 0);
                 BOOL canRedo = (redos && redos.count > 0);
-                self.btnUndo.enabled = canUndo;
-                self.btnRedo.enabled = canRedo;
+                [self.editorToolbar updateUndoEnabled:canUndo redoEnabled:canRedo];
             }
         }
     }];
@@ -916,6 +678,7 @@ static NSString * const kSeafBridgeHelperScript =
             vc.docDisplayName = sself.navigationItem.title;
             vc.connection = sself.file.connection;
             vc.repoId = sself.file.repoId;
+            vc.latestContributor = sself.pageOptions.latestContributor ?: @"";
             UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
             nav.modalPresentationStyle = UIModalPresentationFullScreen;
             [sself presentViewController:nav animated:YES completion:nil];
@@ -972,7 +735,6 @@ static NSString * const kSeafBridgeHelperScript =
     WKUserContentController *uc = self.webView.configuration.userContentController;
     if (uc) {
         [uc removeScriptMessageHandlerForName:@"callAndroidFunction"];
-        [uc removeScriptMessageHandlerForName:@"iosJsCallback"];
     }
 }
 
@@ -1037,6 +799,13 @@ static NSString * const kSeafBridgeHelperScript =
         self.nextEditMode = !self.nextEditMode;
         BOOL isEditing = !self.nextEditMode; // nextEditMode == NO means we are currently in editing mode
         self.isEditing = isEditing;
+
+        // When first entering edit mode, disable undo/redo by default to avoid incorrect button states; then asynchronously sync the actual state from JS
+        if (isEditing && self.editorToolbar) {
+            [self.editorToolbar updateUndoEnabled:NO redoEnabled:NO];
+            [self updateUndoRedoState];
+        }
+
         NSString *newTitle = self.nextEditMode ? NSLocalizedString(@"Edit", nil) : NSLocalizedString(@"Done", nil);
         [self updateBottomBarForEditing:isEditing];
         [self updateEditButtonWithTitle:newTitle];
@@ -1164,14 +933,6 @@ static NSString * const kSeafBridgeHelperScript =
 
 - (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message
 {
-    if ([message.name isEqualToString:@"iosJsCallback"]) {
-        NSString *text = [message.body isKindOfClass:[NSString class]] ? (NSString *)message.body : nil;
-        SeafJSCallback callback = [self dequeuePendingCallbackFromFront:YES];
-        if (callback) {
-            callback(text);
-        }
-        return;
-    }
     if ([message.name isEqualToString:@"callAndroidFunction"]) {
         if (![message.body isKindOfClass:[NSString class]]) return;
         NSString *data = (NSString *)message.body;
@@ -1181,6 +942,17 @@ static NSString * const kSeafBridgeHelperScript =
         if (![obj isKindOfClass:[NSDictionary class]]) return;
         NSString *action = obj[@"action"];
         id payload = obj[@"data"];
+        
+        // Handle JS callback (iOS → JS → iOS response)
+        if ([action isEqualToString:@"N_N_N_N_Callback"]) {
+            NSString *text = [payload isKindOfClass:[NSString class]] ? (NSString *)payload : nil;
+            SeafJSCallback callback = [self dequeuePendingCallbackFromFront:YES];
+            if (callback) {
+                callback(text);
+            }
+            return;
+        }
+        
         if ([action isEqualToString:@"app.version.get"]) {
             NSString *version = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"] ?: @"";
             [self sendBridgeCallback:version];
@@ -1410,21 +1182,21 @@ static NSString * const kSeafBridgeHelperScript =
     // If the bar is already in the target state, just ensure constraints are correct (no animation)
     if (isEditing && self.bottomBar.hidden) {
         [self.bottomBar setTransform:CGAffineTransformMakeTranslation(0, barHeight)];
-        self.editorBar.hidden = NO;
+        self.editorToolbar.hidden = NO;
         self.bottomBar.hidden = YES;
         [self.view layoutIfNeeded];
         return;
     }
     if (!isEditing && !self.bottomBar.hidden && CGAffineTransformIsIdentity(self.bottomBar.transform)) {
-        self.editorBar.hidden = YES;
+        self.editorToolbar.hidden = YES;
         [self updateWebViewBottomConstraintWithAnchor:self.bottomBar.topAnchor constant:0];
         [self.view layoutIfNeeded];
         return;
     }
 
     if (isEditing) {
-        self.editorBar.hidden = NO;
-        self.editorBar.alpha = 0.0;
+        self.editorToolbar.hidden = NO;
+        self.editorToolbar.alpha = 0.0;
         
         self.editorBarBottomConstraint.constant = 0;
         [self updateWebViewBottomConstraintWithAnchor:[self contentBottomAnchor] constant:0];
@@ -1432,7 +1204,7 @@ static NSString * const kSeafBridgeHelperScript =
         
         [UIView animateWithDuration:0.25 animations:^{
             self.bottomBar.transform = CGAffineTransformMakeTranslation(0, barHeight);
-            self.editorBar.alpha = 1.0;
+            self.editorToolbar.alpha = 1.0;
             self.view.backgroundColor = [UIColor colorWithRed:242.0/255.0 green:242.0/255.0 blue:242.0/255.0 alpha:1.0];
             [self.view layoutIfNeeded];
         } completion:^(BOOL finished) {
@@ -1448,13 +1220,13 @@ static NSString * const kSeafBridgeHelperScript =
         
         [UIView animateWithDuration:0.25 animations:^{
             self.bottomBar.transform = CGAffineTransformIdentity;
-            self.editorBar.alpha = 0.0;
+            self.editorToolbar.alpha = 0.0;
             self.view.backgroundColor = [UIColor whiteColor];
             
             [self updateWebPaddingAndScroll:0];
             [self.view layoutIfNeeded];
         } completion:^(BOOL finished) {
-             self.editorBar.hidden = YES;
+             self.editorToolbar.hidden = YES;
              [self updateWebViewBottomConstraintWithAnchor:self.bottomBar.topAnchor constant:0];
         }];
     }

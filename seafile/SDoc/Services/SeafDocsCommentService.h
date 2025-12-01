@@ -47,6 +47,12 @@ NS_ASSUME_NONNULL_BEGIN
                         fileName:(NSString *)fileName
                       completion:(void(^)(NSDictionary * _Nullable resp, NSError * _Nullable error))completion;
 
+// Get participants (users who have been mentioned in this doc)
+// API: /api/v2.1/seadoc/participants/{docUuid}/
+// Uses seahub server (via SeafConnection), not seadoc server
+- (void)getParticipantsWithDocUUID:(NSString *)uuid
+                         completion:(void(^)(NSArray<NSDictionary *> * _Nullable participants, NSError * _Nullable error))completion;
+
 @end
 
 NS_ASSUME_NONNULL_END

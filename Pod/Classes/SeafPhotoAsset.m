@@ -10,17 +10,71 @@
 #import <objc/runtime.h>
 #import "Debug.h"
 
+@interface SeafPhotoAsset ()
+
+@property (nonatomic, assign, readwrite) BOOL isLivePhoto;
+@property (nonatomic, strong, readwrite, nullable) PHAssetResource *pairedVideoResource;
+@property (nonatomic, strong, readwrite, nullable) PHAssetResource *photoResource;
+
+@end
+
 @implementation SeafPhotoAsset
 
 - (instancetype)initWithAsset:(PHAsset *)asset isCompress:(BOOL)isCompress {
     self = [super init];
     if (self) {
         _isCompress = isCompress;
-        _name = [self assetName:asset];
         _localIdentifier = asset.localIdentifier;
         _ALAssetURL = [self assetURL:asset];
+        
+        // Detect Live Photo and extract resources
+        [self detectLivePhotoFromAsset:asset];
+        
+        // Get the name (must be after Live Photo detection for proper handling)
+        _name = [self assetName:asset];
     }
     return self;
+}
+
+#pragma mark - Live Photo Detection
+
+- (void)detectLivePhotoFromAsset:(PHAsset *)asset {
+    // Check if asset is a Live Photo
+    _isLivePhoto = (asset.mediaSubtypes & PHAssetMediaSubtypePhotoLive) != 0;
+    
+    if (!_isLivePhoto) {
+        return;
+    }
+    
+    // Get asset resources to find paired video
+    NSArray<PHAssetResource *> *resources = [PHAssetResource assetResourcesForAsset:asset];
+    
+    for (PHAssetResource *resource in resources) {
+        switch (resource.type) {
+            case PHAssetResourceTypePhoto:
+            case PHAssetResourceTypeFullSizePhoto:
+                if (!_photoResource) {
+                    _photoResource = resource;
+                }
+                break;
+                
+            case PHAssetResourceTypePairedVideo:
+            case PHAssetResourceTypeFullSizePairedVideo:
+                if (!_pairedVideoResource) {
+                    _pairedVideoResource = resource;
+                }
+                break;
+                
+            default:
+                break;
+        }
+    }
+    
+    // If we couldn't find the paired video resource, mark as not Live Photo
+    if (!_pairedVideoResource) {
+        Debug(@"SeafPhotoAsset: Live Photo detected but no paired video resource found");
+        _isLivePhoto = NO;
+    }
 }
 
 - (NSString *)assetName:(PHAsset *)asset {
@@ -42,9 +96,18 @@
             name = [self nameFormat:[name substringFromIndex:range.location-4] creationDate:asset.creationDate];
         }
     }
-    if ([name hasSuffix:@"HEIC"] && _isCompress == YES) {
-        name = [name stringByReplacingOccurrencesOfString:@"HEIC" withString:@"JPG"];
+    
+    // ============ Restored HEIC→JPG filename conversion logic ============
+    // When isCompress is YES (uploadHeic is NO), convert HEIC filename to JPG
+    // This ensures the filename matches the actual converted file format
+    if (_isCompress) {
+        NSString *ext = [name.pathExtension lowercaseString];
+        if ([ext isEqualToString:@"heic"] || [ext isEqualToString:@"heif"]) {
+            name = [[name stringByDeletingPathExtension] stringByAppendingPathExtension:@"jpg"];
+        }
     }
+    // ============ End of restored HEIC→JPG filename conversion logic ============
+    
     return name;
 }
 
@@ -76,5 +139,19 @@
     return URL;
 }
 
+- (NSString *)uploadNameWithLivePhotoEnabled:(BOOL)livePhotoEnabled {
+    // ============ Motion Photo functionality temporarily disabled ============
+    // If this is a Live Photo and the setting is enabled, use .heic extension for Motion Photo
+    // if (_isLivePhoto && livePhotoEnabled) {
+    //     NSString *ext = [_name.pathExtension lowercaseString];
+    //     if (![ext isEqualToString:@"heic"]) {
+    //         return [[_name stringByDeletingPathExtension] stringByAppendingPathExtension:@"heic"];
+    //     }
+    // }
+    // ============ End of disabled Motion Photo code ============
+    
+    // Current behavior: Just return the original filename (HEIC→JPG conversion is handled by assetName:)
+    return _name;
+}
 
 @end

@@ -123,7 +123,9 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 // Class Methods
 + (void)clearCache;
 
+// ============ Restored old uploadHeic method ============
 - (BOOL)uploadHeic;
+// - (BOOL)uploadLivePhoto;  // Motion Photo functionality temporarily disabled
 
 - (BOOL)waitUpload;
 

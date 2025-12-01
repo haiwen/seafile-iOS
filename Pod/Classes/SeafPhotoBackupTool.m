@@ -119,24 +119,42 @@
     
     NSArray *photos = [self.photosArray copy];
     PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:photos options:nil];
+    
     NSMutableArray *uploadFilesArray = [[NSMutableArray alloc] init];
+    // ============ Motion Photo functionality temporarily disabled ============
+    // BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
+    // ============ Restored old uploadHeic logic ============
+    BOOL uploadHeicEnabled = self.connection.isUploadHeicEnabled;
     for (PHAsset *asset in result) {
         if (asset) {
-            SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!self.connection.isUploadHeicEnabled];
+            // When uploadHeic is disabled, isCompress should be YES to trigger HEIC→JPG conversion
+            SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!uploadHeicEnabled];
             
-            NSString *path = [self.localUploadDir stringByAppendingPathComponent:photoAsset.name];
+            // Use the asset name directly (HEIC→JPG conversion is handled by assetName:)
+            // NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];  // Motion Photo disabled
+            NSString *filename = photoAsset.name;
+            NSString *path = [self.localUploadDir stringByAppendingPathComponent:filename];
             SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
             file.lastModified = asset.modificationDate;
             file.retryable = false;
             file.model.uploadFileAutoSync = true;
             file.model.overwrite = true;
+            
+            // ============ Motion Photo functionality temporarily disabled ============
+            // Mark Live Photo for Motion Photo processing only when "Upload Live Photo" setting is enabled
+            // When disabled, Live Photo uploads as static image only (no video part)
+            // if (photoAsset.isLivePhoto && uploadLivePhotoEnabled) {
+            //     file.model.isLivePhoto = YES;
+            // }
+            // ============ End of disabled Motion Photo code ============
+            
             [file setPHAsset:asset url:photoAsset.ALAssetURL];
             file.udir = dir;
             [file setCompletionBlock:^(SeafUploadFile *file, NSString *oid, NSError *error) {
                 [self autoSyncFileUploadComplete:file error:error];
             }];
             [self saveUploadingFile:file withIdentifier:asset.localIdentifier];
-            Debug("Add file %@ to upload list: %@ current %u", photoAsset.name, dir.path, (unsigned)self.photosArray.count);
+            Debug("Add file %@ to upload list: %@ current %u", filename, dir.path, (unsigned)self.photosArray.count);
             [uploadFilesArray addObject:file];
         }
     }
@@ -165,21 +183,38 @@
         PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
         PHAsset *asset = [result firstObject];
         if (asset) {
-            SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!self.connection.isUploadHeicEnabled];
+            // ============ Motion Photo functionality temporarily disabled ============
+            // BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
+            // ============ Restored old uploadHeic logic ============
+            BOOL uploadHeicEnabled = self.connection.isUploadHeicEnabled;
+            // When uploadHeic is disabled, isCompress should be YES to trigger HEIC→JPG conversion
+            SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!uploadHeicEnabled];
             
-            NSString *path = [self.localUploadDir stringByAppendingPathComponent:photoAsset.name];
+            // Use the asset name directly (HEIC→JPG conversion is handled by assetName:)
+            // NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];  // Motion Photo disabled
+            NSString *filename = photoAsset.name;
+            NSString *path = [self.localUploadDir stringByAppendingPathComponent:filename];
             SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
             file.lastModified = asset.modificationDate;
             file.retryable = false;
             file.model.uploadFileAutoSync = true;
             file.model.overwrite = true;
+            
+            // ============ Motion Photo functionality temporarily disabled ============
+            // Mark Live Photo for Motion Photo processing only when "Upload Live Photo" setting is enabled
+            // When disabled, Live Photo uploads as static image only (no video part)
+            // if (photoAsset.isLivePhoto && uploadLivePhotoEnabled) {
+            //     file.model.isLivePhoto = YES;
+            // }
+            // ============ End of disabled Motion Photo code ============
+            
             [file setPHAsset:asset url:photoAsset.ALAssetURL];
             file.udir = dir;
             [file setCompletionBlock:^(SeafUploadFile *file, NSString *oid, NSError *error) {
                 [self autoSyncFileUploadComplete:file error:error];
             }];
             [self saveUploadingFile:file withIdentifier:localIdentifier];
-            Debug("Add file %@ to upload list: %@ current %u", photoAsset.name, dir.path, (unsigned)self.photosArray.count);
+            Debug("Add file %@ to upload list: %@ current %u", filename, dir.path, (unsigned)self.photosArray.count);
             [SeafDataTaskManager.sharedObject addUploadTask:file];
         } else {
             @synchronized(self.photosArray) {
@@ -239,7 +274,7 @@
     self.fetchResult = [PHAsset fetchAssetsInAssetCollection:collection options:fetchOptions];
 
     [self.fetchResult enumerateObjectsUsingBlock:^(PHAsset *asset, NSUInteger idx, BOOL * _Nonnull stop) {
-        SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!self.connection.isUploadHeicEnabled];
+        SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
         if (photoAsset.name != nil) {
             //if is firstTimeSync ,check photo has already uploaded to dir.
             if (self.connection.isFirstTimeSync) {
@@ -383,7 +418,7 @@
         if (detail.insertedObjects.count > 0) {
             Debug("Inserted items : %@", detail.insertedObjects);
             for (PHAsset *asset in detail.insertedObjects) {
-                SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!self.connection.isUploadHeicEnabled];
+                SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
                 if (photoAsset.name != nil) {
                     //if not exist in realm,add to photos.
                     if (![self IsPhotoUploaded:photoAsset] &&![self IsPhotoUploading:photoAsset]) {

@@ -1146,15 +1146,35 @@ enum SHARE_STATUS {
         UIImage *image = [UIImage imageNamed:iconName];
         
         if (image) {
-            // Adjust icon size
-            UIGraphicsBeginImageContextWithOptions(CGSizeMake(iconSize, iconSize), NO, 0.0);
-            [image drawInRect:CGRectMake(0, 0, iconSize, iconSize)];
+            // Use template rendering mode
+            image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+            
+            // Calculate the target size while maintaining aspect ratio
+            CGSize originalSize = image.size;
+            CGFloat aspectRatio = originalSize.width / originalSize.height;
+            CGFloat targetWidth, targetHeight;
+            
+            if (aspectRatio >= 1.0) {
+                // Wider than tall: fit to width
+                targetWidth = iconSize;
+                targetHeight = iconSize / aspectRatio;
+            } else {
+                // Taller than wide: fit to height
+                targetHeight = iconSize;
+                targetWidth = iconSize * aspectRatio;
+            }
+            
+            // Adjust icon size while maintaining aspect ratio
+            UIGraphicsBeginImageContextWithOptions(CGSizeMake(targetWidth, targetHeight), NO, 0.0);
+            [image drawInRect:CGRectMake(0, 0, targetWidth, targetHeight)];
             UIImage *resizedImage = UIGraphicsGetImageFromCurrentImageContext();
             UIGraphicsEndImageContext();
             
-            // Set icon to gray
-            UIImage *grayImage = [self imageWithTintColor:[UIColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1.0] image:resizedImage];
-            [btn setImage:grayImage forState:UIControlStateNormal];
+            resizedImage = [resizedImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+            [btn setImage:resizedImage forState:UIControlStateNormal];
+            btn.imageView.contentMode = UIViewContentModeScaleAspectFit;
+            // Set gray color (#666666) to match other icons
+            btn.tintColor = [UIColor colorWithRed:102.0/255.0 green:102.0/255.0 blue:102.0/255.0 alpha:1.0];
             // Vertically center icon inside the button
             CGFloat verticalOffset = (toolbarH - iconSize)/2.0;
             btn.imageEdgeInsets = UIEdgeInsetsMake(verticalOffset, 0, verticalOffset, 0);
@@ -1232,22 +1252,34 @@ enum SHARE_STATUS {
                 UIImage *image = [UIImage imageNamed:iconName];
                 
                 if (image) {
-                    // Adjust icon size
+                    // Use template rendering mode
+                    image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+                    
+                    // Calculate the target size while maintaining aspect ratio
                     CGFloat iconSize = 20.0;
-                    UIGraphicsBeginImageContextWithOptions(CGSizeMake(iconSize, iconSize), NO, 0.0);
-                    [image drawInRect:CGRectMake(0, 0, iconSize, iconSize)];
+                    CGSize originalSize = image.size;
+                    CGFloat aspectRatio = originalSize.width / originalSize.height;
+                    CGFloat targetWidth, targetHeight;
+                    
+                    if (aspectRatio >= 1.0) {
+                        targetWidth = iconSize;
+                        targetHeight = iconSize / aspectRatio;
+                    } else {
+                        targetHeight = iconSize;
+                        targetWidth = iconSize * aspectRatio;
+                    }
+                    
+                    // Adjust icon size while maintaining aspect ratio
+                    UIGraphicsBeginImageContextWithOptions(CGSizeMake(targetWidth, targetHeight), NO, 0.0);
+                    [image drawInRect:CGRectMake(0, 0, targetWidth, targetHeight)];
                     UIImage *resizedImage = UIGraphicsGetImageFromCurrentImageContext();
                     UIGraphicsEndImageContext();
                     
-                    // Set icon color
-                    UIImage *finalImage;
-                    if (isStarred) {
-                        finalImage = resizedImage; // Keep original color for starred state
-                    } else {
-                        finalImage = [self imageWithTintColor:[UIColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1.0] image:resizedImage]; // Use gray for unstarred state
-                    }
-                    
-                    [btn setImage:finalImage forState:UIControlStateNormal];
+                    resizedImage = [resizedImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+                    [btn setImage:resizedImage forState:UIControlStateNormal];
+                    btn.imageView.contentMode = UIViewContentModeScaleAspectFit;
+                    // Set gray color (#666666) for all states (selected states differ by icon style, not color)
+                    btn.tintColor = [UIColor colorWithRed:102.0/255.0 green:102.0/255.0 blue:102.0/255.0 alpha:1.0];
                     // Vertically center icon again in case of state change
                     CGFloat toolbarH = 36.0f;
                     CGFloat verticalOffset = (toolbarH - iconSize)/2.0f;

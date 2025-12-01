@@ -22,6 +22,7 @@
 #import "SeafActivityModel.h"
 #import "SeafDetailViewController.h"
 #import "SeafVideoPlayerViewController.h"
+#import "SeafPhotoGalleryViewController.h"
 #import "SeafCacheManager.h"
 #import "SeafRealmManager.h"
 
@@ -588,6 +589,10 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 // Opens a file specified by path in a given repository
 - (void)openFile:(NSString *)path inRepo:(NSString *)repoId
 {
+    // Ensure path starts with "/" (repo_history_changes API returns relative paths)
+    if (path.length > 0 && ![path hasPrefix:@"/"]) {
+        path = [@"/" stringByAppendingString:path];
+    }
     
     SeafFile *sfile = [[SeafFile alloc] initWithConnection:self.connection oid:nil repoId:repoId name:path.lastPathComponent path:path mtime:0 size:0];
     // Probe cache before decision
@@ -693,8 +698,29 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
             return;
         }
     }
+    
+    // Image files: use SeafPhotoGalleryViewController for Live Photo/Motion Photo support
+    if ([sfile isImageFile]) {
+        Debug(@"[Activity] Image file detected, using SeafPhotoGalleryViewController: %@", sfile.name);
+        
+        // Create array with single image file
+        NSArray<id<SeafPreView>> *imageFiles = @[sfile];
+        
+        // Create and setup photo gallery view controller
+        SeafPhotoGalleryViewController *gallery = [[SeafPhotoGalleryViewController alloc] initWithPhotos:imageFiles
+                                                                                            currentItem:sfile
+                                                                                                 master:self];
+        
+        // Wrap gallery view controller in navigation controller and present modally
+        UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:gallery];
+        navController.modalPresentationStyle = UIModalPresentationFullScreen;
+        
+        [self presentViewController:navController animated:YES completion:nil];
+        Debug(@"[Activity] Presented SeafPhotoGalleryViewController for image file");
+        return;
+    }
 
-    // Non-video: keep existing behavior
+    // Non-video, non-image: keep existing behavior
     SeafDetailViewController *detailvc;
     if (IsIpad()) {
         detailvc = [[UIStoryboard storyboardWithName:@"FolderView_iPad" bundle:nil] instantiateViewControllerWithIdentifier:@"DETAILVC"];

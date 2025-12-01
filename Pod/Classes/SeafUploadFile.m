@@ -201,9 +201,16 @@
     return NO;
 }
 
+// ============ Restored old uploadHeic method ============
 - (BOOL)uploadHeic {
     return self.udir.connection.isUploadHeicEnabled;
 }
+
+// ============ Motion Photo functionality temporarily disabled ============
+// - (BOOL)uploadLivePhoto {
+//     return self.udir.connection.isUploadLivePhotoEnabled;
+// }
+// ============ End of disabled Motion Photo code ============
 
 - (NSString *)strContent {
     return [Utils stringContent:self.lpath];
@@ -255,7 +262,7 @@
 #pragma mark - Upload Methods
 
 - (void)prepareForUploadWithCompletion:(void (^)(BOOL success, NSError *error))completion {
-    Debug(@"Preparing upload for file at path: %@", self.model.lpath);
+//    Debug(@"Preparing upload for file at path: %@", self.model.lpath);
     
     // If there's an asset, process it first
     if (self.model.asset) {
@@ -358,6 +365,18 @@
 }
 
 - (void)getDataForAssociatedAssetWithCompletion:(void (^_Nullable)(NSData * _Nullable data, NSError * _Nullable error))completion {
+    // For Live Photo that has been processed, try to read from local file first
+    // because the local file contains the composed Motion Photo data
+    if (self.model.isLivePhoto && self.lpath) {
+        NSData *localData = [NSData dataWithContentsOfFile:self.lpath];
+        if (localData && localData.length > 0) {
+            if (completion) {
+                completion(localData, nil);
+            }
+            return;
+        }
+    }
+    
     if (!self.model.asset) {
         if (completion) {
             NSError *error = [NSError errorWithDomain:@"SeafUploadFile"

@@ -282,7 +282,9 @@ enum {
     _connection.localDecryptionEnabled = _localDecrySwitch.on;
 }
 - (IBAction)enableUploadHeicFlip:(UISwitch *)sender {
+    // ============ Restored old uploadHeicEnabled logic ============
     [_connection setUploadHeicEnabled:sender.on];
+    // [_connection setUploadLivePhotoEnabled:sender.on];  // Motion Photo functionality temporarily disabled
 }
 
 // Handles the toggle of the TouchID/FaceID switch.
@@ -482,7 +484,9 @@ enum {
     _localDecrySwitch.on = _connection.localDecryptionEnabled;
     _serverCell.detailTextLabel.text = [_connection.address trimUrl];
     
+    // ============ Restored old uploadHeicEnabled logic ============
     self.enableUploadHeic.on = _connection.isUploadHeicEnabled;
+    // self.enableUploadHeic.on = _connection.isUploadLivePhotoEnabled;  // Motion Photo functionality temporarily disabled
 
     [self updateSyncInfo];
 

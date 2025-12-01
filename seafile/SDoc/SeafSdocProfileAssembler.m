@@ -164,7 +164,7 @@
         NSString *title = [self titleForKey:key fallback:name];
         NSString *icon = [self iconForType:type];
         if ([key isEqualToString:@"_tags"]) {
-            icon = @"ic_tag"; // use dedicated tag icon per design
+            icon = @"tag-filled"; // use dedicated tag icon per design
         }
 
         // Fallback: for geolocation, if _location is empty, try _location_translated
@@ -235,26 +235,26 @@
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         map = @{
-            @"text": @"ic_single_line_text",
-            @"collaborator": @"ic_user_collaborator",
-            @"image": @"ic_picture",
+            @"text": @"text",
+            @"collaborator": @"group",
+            @"image": @"gallery",
             @"file": @"ic_file_alt_solid",
-            @"date": @"ic_calendar_alt_solid",
-            @"single_select": @"ic_single_election",
-            @"duration": @"ic_duration",
-            @"multiple_select": @"ic_multiple_selection",
-            @"checkbox": @"ic_check_square_solid",
-            @"geolocation": @"ic_location",
-            @"email": @"ic_email",
-            @"long_text": @"ic_long_text",
-            @"number": @"ic_number",
-            @"rate": @"ic_star_32",
+            @"date": @"date",
+            @"single_select": @"check-box",
+            @"duration": @"time",
+            @"multiple_select": @"multiple-select",
+            @"checkbox": @"single-select",
+            @"geolocation": @"location",
+            @"email": @"email",
+            @"long_text": @"long-text",
+            @"number": @"number",
+            @"rate": @"star",
             @"url": @"ic_url",
             @"link": @"ic_links"
         };
     });
     NSString *v = map[type];
-    return v ?: @"ic_single_line_text";
+    return v ?: @"text";
 }
 
 + (NSArray<NSDictionary *> *)renderValueCellsForType:(NSString *)type

@@ -23,6 +23,9 @@
 @property (nonatomic, strong) NSURL *assetURL;
 @property (nonatomic, copy) NSString *assetIdentifier;
 
+// Live Photo / Motion Photo support
+@property (nonatomic, assign) BOOL isLivePhoto;
+
 // File editing related
 @property (nonatomic, copy) NSString *editedFileRepoId;
 @property (nonatomic, copy) NSString *editedFilePath;

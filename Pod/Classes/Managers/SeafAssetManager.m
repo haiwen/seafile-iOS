@@ -8,9 +8,15 @@
 #import "FileMimeType.h"
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h> // Used for iOS 14/macOS 11 and later
 #import <MobileCoreServices/MobileCoreServices.h>
+#import "SeafMotionPhotoComposer.h"
+#import "SeafVideoConverter.h"
 
 #ifndef kUTTypeHEIC
 #define kUTTypeHEIC CFSTR("public.heic")
+#endif
+
+#ifndef kUTTypeHEIF
+#define kUTTypeHEIF CFSTR("public.heif")
 #endif
 
 @implementation SeafAssetManager
@@ -45,6 +51,21 @@
     }
     
     if (file.model.asset.mediaType == PHAssetMediaTypeImage) {
+        // ============ Motion Photo functionality temporarily disabled ============
+        // Check if this is a Live Photo and should be uploaded as Motion Photo
+        // Only upload as Motion Photo when:
+        // 1. The asset is a Live Photo
+        // 2. The file is marked as Live Photo (isLivePhoto = YES)
+        // 3. The "Upload Live Photo" setting is enabled
+        // When setting is disabled, Live Photo uploads as static image only (no video)
+        // if ([self isLivePhotoAsset:file.model.asset] && file.model.isLivePhoto && [file uploadLivePhoto]) {
+        //     [self getMotionPhotoDataForAsset:file completion:completion];
+        // } else {
+        //     [self getImageDataForAsset:file completion:completion];
+        // }
+        // ============ End of disabled Motion Photo code ============
+        
+        // Current behavior: Always upload as regular image, with HEIC→JPG conversion based on uploadHeic setting
         [self getImageDataForAsset:file completion:completion];
     } else if (file.model.asset.mediaType == PHAssetMediaTypeVideo) {
         [self getVideoForAsset:file completion:completion];
@@ -80,8 +101,25 @@
         resource = resources.firstObject;
     }
 
-    NSString *filePath = file.model.lpath;
-    NSOutputStream *stream = [NSOutputStream outputStreamToFileAtPath:filePath append:NO];
+    // ============ Restored HEIC→JPG conversion logic ============
+    // Check if we need to convert HEIC to JPG based on uploadHeic setting
+    BOOL shouldConvertToJPG = NO;
+    BOOL isHEIC = NO;
+    NSString *originalFilename = resource.originalFilename.lowercaseString;
+    if ([originalFilename hasSuffix:@".heic"] || [originalFilename hasSuffix:@".heif"]) {
+        isHEIC = YES;
+        // If uploadHeic is disabled (NO), we need to convert HEIC to JPG
+        if (![file uploadHeic]) {
+            shouldConvertToJPG = YES;
+        }
+    }
+    
+    NSString *writePath = file.model.lpath;
+    
+    // If we need to convert to JPG, write to a temp path first
+    NSString *tempPath = shouldConvertToJPG ? [writePath stringByAppendingString:@".tmp"] : writePath;
+    
+    NSOutputStream *stream = [NSOutputStream outputStreamToFileAtPath:tempPath append:NO];
     [stream open];
 
     PHAssetResourceRequestOptions *options = [[PHAssetResourceRequestOptions alloc] init];
@@ -99,18 +137,22 @@
             if (completion) completion(NO, error);
             return;
         }
-
-        // Check if HEIC conversion is needed
-        NSURL *sourceURL = [NSURL fileURLWithPath:file.model.lpath];
-        NSString *filename = resource.originalFilename;
-        NSString *fileExtension = filename.pathExtension.lowercaseString;
         
-        if (![file uploadHeic] && [fileExtension isEqualToString:@"heic"]) {
-            NSString *destinationPath = file.model.lpath;
-            NSURL *destinationURL = [NSURL fileURLWithPath:destinationPath];
-
-            if ([self convertHEICToJPEGAtURL:sourceURL destinationURL:destinationURL]) {
-                file.model.lpath = destinationPath;
+        // Convert HEIC to JPG if needed
+        if (shouldConvertToJPG) {
+            NSURL *tempURL = [NSURL fileURLWithPath:tempPath];
+            // Update the file path to use .jpg extension
+            NSString *jpgPath = [[writePath stringByDeletingPathExtension] stringByAppendingPathExtension:@"jpg"];
+            NSURL *destURL = [NSURL fileURLWithPath:jpgPath];
+            
+            BOOL convertSuccess = [self convertHEICToJPEGAtURL:tempURL destinationURL:destURL];
+            
+            // Clean up temp file
+            [[NSFileManager defaultManager] removeItemAtPath:tempPath error:nil];
+            
+            if (convertSuccess) {
+                // Update the file path in the model
+                file.model.lpath = jpgPath;
                 if (completion) completion(YES, nil);
             } else {
                 if (completion) completion(NO, nil);
@@ -149,14 +191,41 @@
             return;
         }
         
-        if (![file uploadHeic] && [dataUTI isEqualToString:@"public.heic"]) {
-            file.model.lpath = [file.model.lpath stringByReplacingOccurrencesOfString:@"HEIC" withString:@"JPG"];
-            CIImage* ciImage = [CIImage imageWithData:imageData];
-            if (![Utils writeCIImage:ciImage toPath:file.model.lpath]) {
-                if (completion) completion(NO, nil);
-                return;
-            }
+        // ============ Restored HEIC→JPG conversion logic ============
+        // Check if the image is HEIC format
+        BOOL isHEIC = NO;
+        if (@available(iOS 14.0, *)) {
+            UTType *type = [UTType typeWithIdentifier:dataUTI];
+            isHEIC = [type conformsToType:UTTypeHEIC];
         } else {
+            isHEIC = UTTypeConformsTo((__bridge CFStringRef)dataUTI, kUTTypeHEIC) ||
+                     UTTypeConformsTo((__bridge CFStringRef)dataUTI, kUTTypeHEIF);
+        }
+        
+        // Check if we need to convert HEIC to JPG
+        BOOL shouldConvertToJPG = isHEIC && ![file uploadHeic];
+        
+        NSData *dataToWrite = imageData;
+        NSString *finalExtension = nil;
+        
+        if (shouldConvertToJPG) {
+            // Convert HEIC data to JPG
+            UIImage *image = [UIImage imageWithData:imageData];
+            if (image) {
+                NSData *jpgData = UIImageJPEGRepresentation(image, 0.9);
+                if (jpgData) {
+                    dataToWrite = jpgData;
+                    finalExtension = @"jpg";
+                }
+            }
+        }
+        
+        // Update file extension if needed
+        if (finalExtension) {
+            file.model.lpath = [[file.model.lpath stringByDeletingPathExtension] stringByAppendingPathExtension:finalExtension];
+            Debug(@"Converted HEIC to JPG, updated file path to: %@", file.model.lpath);
+        } else {
+            // Keep original extension based on UTI
             NSString *newExtension = [FileMimeType fileExtensionForUTI:dataUTI];
             if (!newExtension) {
                 newExtension = file.model.lpath.pathExtension;
@@ -166,11 +235,12 @@
                 file.model.lpath = [[file.model.lpath stringByDeletingPathExtension] stringByAppendingPathExtension:newExtension];
                 Debug(@"Updated file path to: %@", file.model.lpath);
             }
-            
-            if (![Utils writeDataWithMeta:imageData toPath:file.model.lpath]) {
-                if (completion) completion(NO, nil);
-                return;
-            }
+        }
+        // ============ End of restored HEIC→JPG conversion logic ============
+        
+        if (![Utils writeDataWithMeta:dataToWrite toPath:file.model.lpath]) {
+            if (completion) completion(NO, nil);
+            return;
         }
         
         if (completion) completion(YES, nil);
@@ -214,6 +284,76 @@
 
     CFRelease(source);
     return success;
+}
+
+#pragma mark - JPG to HEIC Conversion
+
+- (nullable NSData *)convertJPEGDataToHEIC:(NSData *)jpegData {
+    if (!jpegData || jpegData.length == 0) return nil;
+    
+    UIImage *uiImage = [UIImage imageWithData:jpegData];
+    if (!uiImage) return nil;
+    
+    // Normalize orientation by redrawing
+    UIGraphicsBeginImageContextWithOptions(uiImage.size, NO, uiImage.scale);
+    [uiImage drawInRect:CGRectMake(0, 0, uiImage.size.width, uiImage.size.height)];
+    UIImage *normalizedImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
+    if (!normalizedImage || !normalizedImage.CGImage) return nil;
+    
+    // Get original metadata
+    CGImageSourceRef source = CGImageSourceCreateWithData((__bridge CFDataRef)jpegData, NULL);
+    NSMutableDictionary *props = [NSMutableDictionary dictionary];
+    if (source) {
+        NSDictionary *origProps = (__bridge_transfer NSDictionary *)CGImageSourceCopyPropertiesAtIndex(source, 0, NULL);
+        if (origProps) [props addEntriesFromDictionary:origProps];
+        CFRelease(source);
+    }
+    
+    // Set orientation to Up and remove TIFF orientation
+    props[(__bridge NSString *)kCGImagePropertyOrientation] = @(kCGImagePropertyOrientationUp);
+    NSMutableDictionary *tiffDict = [props[(__bridge NSString *)kCGImagePropertyTIFFDictionary] mutableCopy];
+    if (tiffDict) {
+        [tiffDict removeObjectForKey:(__bridge NSString *)kCGImagePropertyTIFFOrientation];
+        props[(__bridge NSString *)kCGImagePropertyTIFFDictionary] = tiffDict;
+    }
+    
+    // Create HEIC
+    NSMutableData *heicData = [NSMutableData data];
+    CGImageDestinationRef dest = NULL;
+    if (@available(iOS 14.0, *)) {
+        dest = CGImageDestinationCreateWithData((__bridge CFMutableDataRef)heicData,
+                                                 (__bridge CFStringRef)UTTypeHEIC.identifier, 1, NULL);
+    } else {
+        dest = CGImageDestinationCreateWithData((__bridge CFMutableDataRef)heicData, kUTTypeHEIC, 1, NULL);
+    }
+    if (!dest) return nil;
+    
+    props[(__bridge NSString *)kCGImageDestinationLossyCompressionQuality] = @0.9;
+    CGImageDestinationAddImage(dest, normalizedImage.CGImage, (__bridge CFDictionaryRef)props);
+    
+    BOOL success = CGImageDestinationFinalize(dest);
+    CFRelease(dest);
+    
+    return success ? [heicData copy] : nil;
+}
+
+- (BOOL)isJPEGData:(NSData *)data {
+    if (data.length < 3) return NO;
+    uint8_t header[3];
+    [data getBytes:header range:NSMakeRange(0, 3)];
+    return header[0] == 0xFF && header[1] == 0xD8 && header[2] == 0xFF;
+}
+
+- (BOOL)isHEICData:(NSData *)data {
+    if (data.length < 12) return NO;
+    char type[5] = {0}, brand[5] = {0};
+    [data getBytes:type range:NSMakeRange(4, 4)];
+    if (strcmp(type, "ftyp") != 0) return NO;
+    [data getBytes:brand range:NSMakeRange(8, 4)];
+    return strcmp(brand, "heic") == 0 || strcmp(brand, "mif1") == 0 || 
+           strcmp(brand, "msf1") == 0 || strcmp(brand, "heix") == 0;
 }
 
 - (void)getVideoForAsset:(SeafUploadFile *)file completion:(void (^)(BOOL success, NSError *error))completion {
@@ -270,6 +410,247 @@
             completion(YES, nil);
         }
     }];
+}
+
+#pragma mark - Live Photo / Motion Photo Support
+
+- (BOOL)isLivePhotoAsset:(PHAsset *)asset {
+    if (!asset) return NO;
+    return (asset.mediaSubtypes & PHAssetMediaSubtypePhotoLive) != 0;
+}
+
+- (void)getMotionPhotoDataForAsset:(SeafUploadFile *)file 
+                        completion:(void (^)(BOOL success, NSError *error))completion {
+    PHAsset *asset = file.model.asset;
+    if (!asset) {
+        if (completion) {
+            NSError *error = [NSError errorWithDomain:@"SeafAssetManager"
+                                                 code:-1
+                                             userInfo:@{NSLocalizedDescriptionKey: @"No asset provided"}];
+            completion(NO, error);
+        }
+        return;
+    }
+    
+    // Get asset resources
+    NSArray<PHAssetResource *> *resources = [PHAssetResource assetResourcesForAsset:asset];
+    
+    PHAssetResource *photoResource = nil;
+    PHAssetResource *videoResource = nil;
+    
+    for (PHAssetResource *resource in resources) {
+        switch (resource.type) {
+            case PHAssetResourceTypePhoto:
+            case PHAssetResourceTypeFullSizePhoto:
+                if (!photoResource) {
+                    photoResource = resource;
+                }
+                break;
+                
+            case PHAssetResourceTypePairedVideo:
+            case PHAssetResourceTypeFullSizePairedVideo:
+                if (!videoResource) {
+                    videoResource = resource;
+                }
+                break;
+                
+            default:
+                break;
+        }
+    }
+    
+    if (!photoResource || !videoResource) {
+        // Fallback to regular image processing
+        [self getImageDataForAsset:file completion:completion];
+        return;
+    }
+    
+    // Create temporary paths for image and video
+    // Use original filename extension from resource to preserve format info
+    NSString *tempDir = NSTemporaryDirectory();
+    NSString *originalImageExt = photoResource.originalFilename.pathExtension.lowercaseString ?: @"heic";
+    NSString *originalVideoExt = videoResource.originalFilename.pathExtension.lowercaseString ?: @"mov";
+    NSString *imageFileName = [NSString stringWithFormat:@"livephoto_image_%@.%@", [[NSUUID UUID] UUIDString], originalImageExt];
+    NSString *videoFileName = [NSString stringWithFormat:@"livephoto_video_%@.%@", [[NSUUID UUID] UUIDString], originalVideoExt];
+    NSString *tempImagePath = [tempDir stringByAppendingPathComponent:imageFileName];
+    NSString *tempVideoPath = [tempDir stringByAppendingPathComponent:videoFileName];
+    
+    // Request options
+    PHAssetResourceRequestOptions *options = [[PHAssetResourceRequestOptions alloc] init];
+    options.networkAccessAllowed = YES;
+    
+    // Use dispatch group to wait for both resources
+    dispatch_group_t group = dispatch_group_create();
+    
+    __block BOOL imageSuccess = NO;
+    __block BOOL videoSuccess = NO;
+    __block NSError *imageError = nil;
+    __block NSError *videoError = nil;
+    
+    // Request image data
+    dispatch_group_enter(group);
+    [[PHAssetResourceManager defaultManager] writeDataForAssetResource:photoResource
+                                                                toFile:[NSURL fileURLWithPath:tempImagePath]
+                                                               options:options
+                                                     completionHandler:^(NSError * _Nullable error) {
+        if (error) {
+            imageError = error;
+        } else {
+            imageSuccess = YES;
+        }
+        dispatch_group_leave(group);
+    }];
+    
+    // Request video data
+    dispatch_group_enter(group);
+    [[PHAssetResourceManager defaultManager] writeDataForAssetResource:videoResource
+                                                                toFile:[NSURL fileURLWithPath:tempVideoPath]
+                                                               options:options
+                                                     completionHandler:^(NSError * _Nullable error) {
+        if (error) {
+            videoError = error;
+        } else {
+            videoSuccess = YES;
+        }
+        dispatch_group_leave(group);
+    }];
+    
+    // Wait for both resources and then compose Motion Photo
+    dispatch_group_notify(group, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        // Mutable array to track temp files for cleanup
+        NSMutableArray<NSString *> *tempFilesToCleanup = [NSMutableArray arrayWithObjects:tempImagePath, tempVideoPath, nil];
+        
+        // Cleanup function
+        void (^cleanup)(void) = ^{
+            for (NSString *path in tempFilesToCleanup) {
+                [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
+            }
+        };
+        
+        if (!imageSuccess || !videoSuccess) {
+            cleanup();
+            
+            // Fallback to regular image processing
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self getImageDataForAsset:file completion:completion];
+            });
+            return;
+        }
+        
+        // Read image and video data
+        NSData *imageData = [NSData dataWithContentsOfFile:tempImagePath];
+        NSData *videoData = [NSData dataWithContentsOfFile:tempVideoPath];
+        
+        if (!imageData || !videoData) {
+            cleanup();
+            
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self getImageDataForAsset:file completion:completion];
+            });
+            return;
+        }
+        
+        [self composeV1V2MotionPhoto:imageData
+                           videoData:videoData
+                                file:file
+                             cleanup:cleanup
+                          completion:completion];
+    });
+}
+
+- (void)composeAndWriteMotionPhoto:(NSData *)imageData
+                         videoData:(NSData *)videoData
+             presentationTimestampUs:(int64_t)presentationTimestampUs
+                              file:(SeafUploadFile *)file
+                           cleanup:(void (^)(void))cleanup
+                        completion:(void (^)(BOOL success, NSError *error))completion {
+    
+    NSData *motionPhotoData = [SeafMotionPhotoComposer composeMotionPhotoWithImageData:imageData
+                                                                            videoData:videoData
+                                                                presentationTimestampUs:presentationTimestampUs];
+    if (!motionPhotoData) {
+        cleanup();
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self getImageDataForAsset:file completion:completion];
+        });
+        return;
+    }
+    
+    NSError *writeError = nil;
+    BOOL writeSuccess = [motionPhotoData writeToFile:file.model.lpath 
+                                             options:NSDataWritingAtomic 
+                                               error:&writeError];
+    cleanup();
+    
+    if (!writeSuccess) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (completion) completion(NO, writeError);
+        });
+        return;
+    }
+    
+    file.model.filesize = [Utils fileSizeAtPath1:file.model.lpath];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (completion) completion(YES, nil);
+    });
+}
+
+- (void)composeV1V2MotionPhoto:(NSData *)imageData
+                     videoData:(NSData *)videoData
+                          file:(SeafUploadFile *)file
+                       cleanup:(void (^)(void))cleanup
+                    completion:(void (^)(BOOL success, NSError *error))completion {
+    
+    // Convert JPEG to HEIC if necessary
+    NSData *heicImageData = imageData;
+    if ([self isJPEGData:imageData]) {
+        NSData *convertedData = [self convertJPEGDataToHEIC:imageData];
+        if (convertedData) {
+            heicImageData = convertedData;
+        } else {
+            cleanup();
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self getImageDataForAsset:file completion:completion];
+            });
+            return;
+        }
+    } else if (![self isHEICData:imageData]) {
+        cleanup();
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self getImageDataForAsset:file completion:completion];
+        });
+        return;
+    }
+    
+    // Compose Motion Photo
+    NSData *motionPhotoData = [SeafMotionPhotoComposer composeV1V2MotionPhotoWithImageData:heicImageData
+                                                                                 videoData:videoData];
+    if (!motionPhotoData) {
+        cleanup();
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self getImageDataForAsset:file completion:completion];
+        });
+        return;
+    }
+    
+    // Write to file
+    NSError *writeError = nil;
+    BOOL writeSuccess = [motionPhotoData writeToFile:file.model.lpath 
+                                             options:NSDataWritingAtomic 
+                                               error:&writeError];
+    cleanup();
+    
+    if (!writeSuccess) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (completion) completion(NO, writeError);
+        });
+        return;
+    }
+    
+    file.model.filesize = [Utils fileSizeAtPath1:file.model.lpath];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (completion) completion(YES, nil);
+    });
 }
 
 @end 
