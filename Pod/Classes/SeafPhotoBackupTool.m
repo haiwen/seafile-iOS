@@ -121,18 +121,15 @@
     PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:photos options:nil];
     
     NSMutableArray *uploadFilesArray = [[NSMutableArray alloc] init];
-    // ============ Motion Photo functionality temporarily disabled ============
-    // BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
-    // ============ Restored old uploadHeic logic ============
-    BOOL uploadHeicEnabled = self.connection.isUploadHeicEnabled;
+    // ============ Live Photo / Motion Photo upload setting ============
+    BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
     for (PHAsset *asset in result) {
         if (asset) {
-            // When uploadHeic is disabled, isCompress should be YES to trigger HEIC→JPG conversion
-            SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!uploadHeicEnabled];
+            // Always keep original format (no HEIC→JPG conversion)
+            SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
             
-            // Use the asset name directly (HEIC→JPG conversion is handled by assetName:)
-            // NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];  // Motion Photo disabled
-            NSString *filename = photoAsset.name;
+            // Get upload filename based on Live Photo setting
+            NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];
             NSString *path = [self.localUploadDir stringByAppendingPathComponent:filename];
             SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
             file.lastModified = asset.modificationDate;
@@ -140,13 +137,11 @@
             file.model.uploadFileAutoSync = true;
             file.model.overwrite = true;
             
-            // ============ Motion Photo functionality temporarily disabled ============
             // Mark Live Photo for Motion Photo processing only when "Upload Live Photo" setting is enabled
             // When disabled, Live Photo uploads as static image only (no video part)
-            // if (photoAsset.isLivePhoto && uploadLivePhotoEnabled) {
-            //     file.model.isLivePhoto = YES;
-            // }
-            // ============ End of disabled Motion Photo code ============
+            if (photoAsset.isLivePhoto && uploadLivePhotoEnabled) {
+                file.model.isLivePhoto = YES;
+            }
             
             [file setPHAsset:asset url:photoAsset.ALAssetURL];
             file.udir = dir;
@@ -183,16 +178,13 @@
         PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
         PHAsset *asset = [result firstObject];
         if (asset) {
-            // ============ Motion Photo functionality temporarily disabled ============
-            // BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
-            // ============ Restored old uploadHeic logic ============
-            BOOL uploadHeicEnabled = self.connection.isUploadHeicEnabled;
-            // When uploadHeic is disabled, isCompress should be YES to trigger HEIC→JPG conversion
-            SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!uploadHeicEnabled];
+            // ============ Live Photo / Motion Photo upload setting ============
+            BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
+            // Always keep original format (no HEIC→JPG conversion)
+            SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
             
-            // Use the asset name directly (HEIC→JPG conversion is handled by assetName:)
-            // NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];  // Motion Photo disabled
-            NSString *filename = photoAsset.name;
+            // Get upload filename based on Live Photo setting
+            NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];
             NSString *path = [self.localUploadDir stringByAppendingPathComponent:filename];
             SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
             file.lastModified = asset.modificationDate;
@@ -200,13 +192,11 @@
             file.model.uploadFileAutoSync = true;
             file.model.overwrite = true;
             
-            // ============ Motion Photo functionality temporarily disabled ============
             // Mark Live Photo for Motion Photo processing only when "Upload Live Photo" setting is enabled
             // When disabled, Live Photo uploads as static image only (no video part)
-            // if (photoAsset.isLivePhoto && uploadLivePhotoEnabled) {
-            //     file.model.isLivePhoto = YES;
-            // }
-            // ============ End of disabled Motion Photo code ============
+            if (photoAsset.isLivePhoto && uploadLivePhotoEnabled) {
+                file.model.isLivePhoto = YES;
+            }
             
             [file setPHAsset:asset url:photoAsset.ALAssetURL];
             file.udir = dir;

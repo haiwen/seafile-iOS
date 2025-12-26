@@ -282,9 +282,10 @@ enum {
     _connection.localDecryptionEnabled = _localDecrySwitch.on;
 }
 - (IBAction)enableUploadHeicFlip:(UISwitch *)sender {
-    // ============ Restored old uploadHeicEnabled logic ============
-    [_connection setUploadHeicEnabled:sender.on];
-    // [_connection setUploadLivePhotoEnabled:sender.on];  // Motion Photo functionality temporarily disabled
+    // ============ Live Photo / Motion Photo upload setting ============
+    // This switch now only controls Live Photo upload behavior
+    // Static photos always keep their original format (no HEIC→JPG conversion)
+    [_connection setUploadLivePhotoEnabled:sender.on];
 }
 
 // Handles the toggle of the TouchID/FaceID switch.
@@ -364,7 +365,7 @@ enum {
     _wifiOnlyLabel.text = NSLocalizedString(@"Wifi Only", @"Seafile");
     _backgroundSyncLable.text = NSLocalizedString(@"Background Upload", @"Seafile");
     _syncRepoCell.textLabel.text = NSLocalizedString(@"Upload Destination", @"Seafile");
-    _enableHeicLabel.text = NSLocalizedString(@"Upload HEIC", @"Seafile");
+    _enableHeicLabel.text = NSLocalizedString(@"Upload Live Photo", @"Seafile");
 
     _downloadingCell.textLabel.text = NSLocalizedString(@"Downloading", @"Seafile");
     _uploadingCell.textLabel.text = NSLocalizedString(@"Uploading", @"Seafile");
@@ -484,9 +485,9 @@ enum {
     _localDecrySwitch.on = _connection.localDecryptionEnabled;
     _serverCell.detailTextLabel.text = [_connection.address trimUrl];
     
-    // ============ Restored old uploadHeicEnabled logic ============
-    self.enableUploadHeic.on = _connection.isUploadHeicEnabled;
-    // self.enableUploadHeic.on = _connection.isUploadLivePhotoEnabled;  // Motion Photo functionality temporarily disabled
+    // ============ Live Photo / Motion Photo upload setting ============
+    // Switch state now reflects uploadLivePhotoEnabled
+    self.enableUploadHeic.on = _connection.isUploadLivePhotoEnabled;
 
     [self updateSyncInfo];
 

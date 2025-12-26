@@ -18,6 +18,9 @@
 #import "SeafStorage.h"
 #import "SeafUploadFileModel.h"
 
+// Time interval (in seconds) after which encrypted repo password should be refreshed on server
+#define REPO_PASSWORD_REFRESH_INTERVAL 300
+
 @implementation SeafUploadOperation
 
 - (instancetype)initWithUploadFile:(SeafUploadFile *)uploadFile
@@ -103,6 +106,40 @@
     NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:self.uploadFile.lpath error:nil];
     self.uploadFile.model.filesize = attrs.fileSize;
     
+    // For encrypted repos, ensure server-side password cache is valid before uploading
+    // This fixes the issue where uploads to encrypted libraries fail when accessed via iOS Files app
+    // after the server-side password cache has expired (typically ~1 hour)
+    if (repo.encrypted) {
+        NSString *password = [connection getRepoPassword:repoId];
+        if (password) {
+            NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
+            NSTimeInterval lastRefresh = [connection getRepoLastRefreshPasswordTime:repoId];
+            if (now - lastRefresh > REPO_PASSWORD_REFRESH_INTERVAL) {
+                Debug("Encrypted repo %@ password cache expired, refreshing before upload...", repoId);
+                __weak typeof(self) weakSelf = self;
+                [repo setRepoPassword:password block:^(SeafBase *entry, int ret) {
+                    __strong typeof(weakSelf) strongSelf = weakSelf;
+                    if (!strongSelf) return;
+                    
+                    if (ret == RET_SUCCESS) {
+                        Debug("Password refreshed successfully, proceeding with upload");
+                        [strongSelf doUpload:connection repo:repoId path:uploadpath];
+                    } else {
+                        Warning("Failed to refresh encrypted repo password, ret=%d", ret);
+                        [strongSelf finishUpload:NO oid:nil error:[Utils defaultError]];
+                    }
+                }];
+                return;
+            }
+        }
+    }
+    
+    [self doUpload:connection repo:repoId path:uploadpath];
+}
+
+// Actual upload logic after password validation
+- (void)doUpload:(SeafConnection *)connection repo:(NSString *)repoId path:(NSString *)uploadpath
+{
     // Force non-chunked upload path regardless of file size or local decryption setting
     Debug("Chunked upload disabled. Uploading file %@ as single request (size=%lld)", self.uploadFile.name, self.uploadFile.filesize);
     

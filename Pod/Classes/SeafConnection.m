@@ -408,18 +408,16 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     [self setAttribute:[NSNumber numberWithBool:uploadHeicEnabled] forKey:@"uploadHeicEnabled"];
 }
 
-// ============ Motion Photo functionality temporarily disabled ============
-// - (BOOL)isUploadLivePhotoEnabled {
-//     // Keep the storage key as "uploadHeicEnabled" for backward compatibility
-//     return [[self getAttribute:@"uploadHeicEnabled"] booleanValue:false];
-// }
-//
-// - (void)setUploadLivePhotoEnabled:(BOOL)uploadLivePhotoEnabled {
-//     if (self.uploadLivePhotoEnabled == uploadLivePhotoEnabled) return;
-//     // Keep the storage key as "uploadHeicEnabled" for backward compatibility
-//     [self setAttribute:[NSNumber numberWithBool:uploadLivePhotoEnabled] forKey:@"uploadHeicEnabled"];
-// }
-// ============ End of disabled Motion Photo code ============
+// ============ Live Photo / Motion Photo upload setting ============
+- (BOOL)isUploadLivePhotoEnabled {
+    return [[self getAttribute:@"uploadLivePhotoEnabled"] booleanValue:false];
+}
+
+- (void)setUploadLivePhotoEnabled:(BOOL)uploadLivePhotoEnabled {
+    if (self.uploadLivePhotoEnabled == uploadLivePhotoEnabled) return;
+    [self setAttribute:[NSNumber numberWithBool:uploadLivePhotoEnabled] forKey:@"uploadLivePhotoEnabled"];
+}
+// ============ End of Live Photo / Motion Photo upload setting ============
 
 - (NSString *)autoSyncRepo
 {

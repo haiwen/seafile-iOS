@@ -16,50 +16,6 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @interface SeafMotionPhotoComposer : NSObject
 
-#pragma mark - Main Composition Methods
-
-/**
- * Compose a Motion Photo from image and video data.
- * The video data is appended to the image data, and XMP metadata is injected.
- *
- * @param imageData HEIC or JPEG image data
- * @param videoData MOV or MP4 video data
- * @param presentationTimestampUs Video timestamp (in microseconds) corresponding to the still image.
- *                                Use -1 if not specified.
- * @return Combined Motion Photo data, or nil on failure
- */
-+ (nullable NSData *)composeMotionPhotoWithImageData:(NSData *)imageData
-                                           videoData:(NSData *)videoData
-                               presentationTimestampUs:(int64_t)presentationTimestampUs;
-
-/**
- * Compose a Motion Photo from image and video file paths.
- *
- * @param imagePath Path to HEIC or JPEG image file
- * @param videoPath Path to MOV or MP4 video file
- * @param presentationTimestampUs Video timestamp corresponding to the still image
- * @return Combined Motion Photo data, or nil on failure
- */
-+ (nullable NSData *)composeMotionPhotoWithImagePath:(NSString *)imagePath
-                                           videoPath:(NSString *)videoPath
-                               presentationTimestampUs:(int64_t)presentationTimestampUs;
-
-/**
- * Compose a Motion Photo and write directly to a file.
- *
- * @param imageData HEIC or JPEG image data
- * @param videoData MOV or MP4 video data
- * @param presentationTimestampUs Video timestamp corresponding to the still image
- * @param outputPath Path where the Motion Photo should be written
- * @param error Error pointer for failure information
- * @return YES on success, NO on failure
- */
-+ (BOOL)composeMotionPhotoWithImageData:(NSData *)imageData
-                              videoData:(NSData *)videoData
-                  presentationTimestampUs:(int64_t)presentationTimestampUs
-                             toFilePath:(NSString *)outputPath
-                                  error:(NSError * _Nullable * _Nullable)error;
-
 #pragma mark - Validation Methods
 
 /**
@@ -95,24 +51,6 @@ NS_ASSUME_NONNULL_BEGIN
  * @return MIME type string (e.g., "video/mp4", "video/quicktime"), or nil if unknown
  */
 + (nullable NSString *)mimeTypeForVideoData:(NSData *)videoData;
-
-#pragma mark - Advanced Options
-
-/**
- * Compose a Motion Photo with advanced options.
- *
- * @param imageData HEIC or JPEG image data
- * @param videoData MOV or MP4 video data
- * @param options Dictionary with optional settings:
- *                - @"presentationTimestampUs": NSNumber (int64_t) - video timestamp
- *                - @"preserveOriginalXMP": NSNumber (BOOL) - whether to preserve existing XMP
- *                - @"primaryMime": NSString - override primary MIME type
- *                - @"videoMime": NSString - override video MIME type
- * @return Combined Motion Photo data, or nil on failure
- */
-+ (nullable NSData *)composeMotionPhotoWithImageData:(NSData *)imageData
-                                           videoData:(NSData *)videoData
-                                             options:(nullable NSDictionary *)options;
 
 #pragma mark - V1+V2 Hybrid Format
 

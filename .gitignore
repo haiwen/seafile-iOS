@@ -23,3 +23,6 @@ seadroid-master/
 
 # Ignore test resources directory
 @8.28/
+
+# Ignore scripts directory
+scripts/
