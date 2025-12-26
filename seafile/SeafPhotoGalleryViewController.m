@@ -1846,10 +1846,12 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
         btn.frame = CGRectMake(x, 0, itemWidth, toolbarH); // Button height is toolbar height, not including safe area
         
         NSString *iconName = icons[i];        // Set icon
+        BOOL isInfoSelected = NO; // Track if this is the selected info icon
         
         // Check current state and update corresponding icon
         if (i == 2 && self.infoVisible) {
             iconName = @"detail_information_selected";// Info icon - use selected icon if info panel is already shown
+            isInfoSelected = YES;
         } else if (i == 3 && self.preViewItem && [self.preViewItem isKindOfClass:[SeafFile class]]) {
             // Star icon - use selected icon if current file is already starred
             SeafFile *file = (SeafFile *)self.preViewItem;
@@ -1862,9 +1864,6 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
         
         // If icon is found, adjust its size and color
         if (image) {
-            // Use template rendering mode
-            image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-            
             // Calculate the target size while maintaining aspect ratio
             CGSize originalSize = image.size;
             CGFloat aspectRatio = originalSize.width / originalSize.height;
@@ -1884,12 +1883,20 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
             UIImage *resizedImage = UIGraphicsGetImageFromCurrentImageContext();
             UIGraphicsEndImageContext();
             
-            resizedImage = [resizedImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+            // For selected info icon, use original rendering to preserve the dual-color design
+            // For other icons, use template rendering mode
+            if (isInfoSelected) {
+                resizedImage = [resizedImage imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
+            } else {
+                resizedImage = [resizedImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+            }
             [btn setImage:resizedImage forState:UIControlStateNormal];
             btn.imageView.contentMode = UIViewContentModeScaleAspectFit;
             
-            // Set tintColor: gray (#666666) for all icons (selected states differ by icon style, not color)
-            btn.tintColor = [UIColor colorWithRed:102.0/255.0 green:102.0/255.0 blue:102.0/255.0 alpha:1.0]; // Gray #666666
+            // Set tintColor: gray (#666666) for non-selected info icons
+            if (!isInfoSelected) {
+                btn.tintColor = [UIColor colorWithRed:102.0/255.0 green:102.0/255.0 blue:102.0/255.0 alpha:1.0]; // Gray #666666
+            }
             
             // Push the icon down slightly within the button's frame
             btn.imageEdgeInsets = UIEdgeInsetsMake(5.0, 0, -5.0, 0);
@@ -2067,9 +2074,6 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
                 UIImage *image = [UIImage imageNamed:iconName];
                 
                 if (image) {
-                    // Use template rendering mode
-                    image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-                    
                     // Calculate the target size while maintaining aspect ratio
                     CGFloat iconSize = 20.0;
                     CGSize originalSize = image.size;
@@ -2090,14 +2094,22 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
                     UIImage *resizedImage = UIGraphicsGetImageFromCurrentImageContext();
                     UIGraphicsEndImageContext();
                     
-                    resizedImage = [resizedImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+                    // For selected info icon, use original rendering to preserve the dual-color design
+                    // For other icons, use template rendering mode
+                    if (selected) {
+                        resizedImage = [resizedImage imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
+                    } else {
+                        resizedImage = [resizedImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+                    }
                     
                     // Update button icon
                     [btn setImage:resizedImage forState:UIControlStateNormal];
                     btn.imageView.contentMode = UIViewContentModeScaleAspectFit;
                     
-                    // Set tintColor: gray (#666666) for all states
-                    btn.tintColor = [UIColor colorWithRed:102.0/255.0 green:102.0/255.0 blue:102.0/255.0 alpha:1.0];
+                    // Set tintColor: gray (#666666) for non-selected state
+                    if (!selected) {
+                        btn.tintColor = [UIColor colorWithRed:102.0/255.0 green:102.0/255.0 blue:102.0/255.0 alpha:1.0];
+                    }
                 }
                 break;
             }
