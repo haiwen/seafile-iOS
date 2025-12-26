@@ -32,10 +32,12 @@
 
 - (BOOL)isCertInUse:(NSData*)clientIdentityKey;
 - (void)loadAccounts;
+- (void)syncAccountsFromStorage;
 - (SeafConnection *)getConnection:(NSString *)url username:(NSString *)username;
 - (BOOL)saveConnection:(SeafConnection *)conn;
 - (BOOL)removeConnection:(SeafConnection *)conn;
 
+- (void)notifyFileProviderRootChanged;
 - (void)startTimer;
 - (void)migrate;
 
