@@ -292,7 +292,7 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.view.backgroundColor = UIColor.whiteColor;
+    self.view.backgroundColor = [UIColor colorWithRed:254/255.0 green:255/255.0 blue:255/255.0 alpha:1.0]; // #FEFFFF
 
     // Determine title setting method based on whether SeafFile is initialized
     NSString *titleText;
@@ -454,7 +454,7 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
     CGFloat stripHeight = 45; // Total height is fixed at 45
     CGRect frame = CGRectMake(0, self.view.bounds.size.height - stripHeight, self.view.bounds.size.width, stripHeight);
     self.thumbnailCollection = [[UICollectionView alloc] initWithFrame:frame collectionViewLayout:layout];
-    self.thumbnailCollection.backgroundColor = [UIColor whiteColor]; // Set to pure white background
+    self.thumbnailCollection.backgroundColor = [UIColor colorWithRed:254/255.0 green:255/255.0 blue:255/255.0 alpha:1.0]; // #FEFFFF
     self.thumbnailCollection.showsHorizontalScrollIndicator = NO;
     
     // Register cell
@@ -1822,7 +1822,7 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
     
     self.toolbarView = [[UIView alloc] initWithFrame:tbFrame];
     self.toolbarView.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleTopMargin;
-    self.toolbarView.backgroundColor = [UIColor whiteColor];
+    self.toolbarView.backgroundColor = [UIColor colorWithRed:254/255.0 green:255/255.0 blue:255/255.0 alpha:1.0]; // #FEFFFF
     [self.view addSubview:self.toolbarView];
 
     // Update icon names to those in the design

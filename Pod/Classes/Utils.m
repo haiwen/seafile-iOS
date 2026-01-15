@@ -323,7 +323,7 @@ static CustomInputViewPresenterBlock _sharedCustomInputPresenter = nil;
 
 + (BOOL)isImageFile:(NSString *)name
 {
-    static NSString *imgexts[] = {@"tif", @"tiff", @"jpg", @"jpeg", @"gif", @"png", @"bmp", @"ico", @"heic",nil};
+    static NSString *imgexts[] = {@"tif", @"tiff", @"jpg", @"jpeg", @"gif", @"png", @"bmp", @"ico", @"heic", @"heif", nil};
     NSString *ext = name.pathExtension.lowercaseString;
     return [Utils isExt:ext In:imgexts];
 }

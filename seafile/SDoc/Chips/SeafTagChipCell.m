@@ -54,9 +54,11 @@
     CGFloat h = CGRectGetHeight(self.contentView.bounds);
     self.contentView.layer.cornerRadius = h * 0.5;
     if (self.dotLayer && !self.dotLayer.hidden) {
-        CGFloat d = (self.lastDotDiameter > 0) ? self.lastDotDiameter : MIN(18.0, MAX(14.0, h * 0.6));
-        CGFloat y = (h - d) / 2.0;
-        self.dotLayer.frame = CGRectMake(10, y, d, d);
+        // Dot padding: left 5px, top/bottom 4px per design spec
+        CGFloat d = (self.lastDotDiameter > 0) ? self.lastDotDiameter : (h - 8.0);
+        if (d < 10.0) d = 10.0; // minimum dot size
+        CGFloat y = 4.0; // top padding 4px
+        self.dotLayer.frame = CGRectMake(5, y, d, d); // left padding 5px
         self.dotLayer.cornerRadius = d * 0.5;
     }
 }
@@ -65,7 +67,8 @@
 {
     self.label.text = text ?: @"";
     UIColor *bg = [self.class colorFromHex:colorHex] ?: [UIColor clearColor];
-    UIColor *tc = [self.class colorFromHex:textColorHex] ?: [UIColor secondaryLabelColor];
+    // Text color: #212529 per design spec (fallback if not provided)
+    UIColor *tc = [self.class colorFromHex:textColorHex] ?: [UIColor colorWithRed:0x21/255.0 green:0x25/255.0 blue:0x29/255.0 alpha:1.0];
     self.contentView.backgroundColor = bg;
     self.label.textColor = tc;
     self.contentView.layer.borderWidth = 0;
@@ -77,10 +80,12 @@
 - (void)configureDotStyleWithText:(NSString *)text dotColor:(NSString *)dotColorHex textColor:(NSString *)textColorHex
 {
     self.label.text = text ?: @"";
-    UIColor *tc = [self.class colorFromHex:textColorHex] ?: [UIColor colorWithWhite:0.13 alpha:1.0];
+    // Text color: #212529 per design spec
+    UIColor *tc = [self.class colorFromHex:textColorHex] ?: [UIColor colorWithRed:0x21/255.0 green:0x25/255.0 blue:0x29/255.0 alpha:1.0];
     UIColor *dot = [self.class colorFromHex:dotColorHex] ?: [UIColor colorWithWhite:0.95 alpha:1.0];
     self.contentView.backgroundColor = [UIColor whiteColor];
-    self.contentView.layer.borderColor = [UIColor colorWithWhite:0.8 alpha:1.0].CGColor;
+    // Border color: #DBDBDB per design spec
+    self.contentView.layer.borderColor = [UIColor colorWithRed:0xDB/255.0 green:0xDB/255.0 blue:0xDB/255.0 alpha:1.0].CGColor;
     self.contentView.layer.borderWidth = 1.0;
     self.label.textColor = tc;
 
@@ -91,16 +96,19 @@
         [self.contentView.layer insertSublayer:self.dotLayer atIndex:0];
     }
     CGFloat h = CGRectGetHeight(self.contentView.bounds);
-    CGFloat d = MIN(18.0, MAX(14.0, h * 0.6)); // bigger dot
+    // Dot padding: left 5px, top/bottom 4px per design spec
+    // Dot size = height - top padding - bottom padding = h - 4 - 4 = h - 8
+    CGFloat d = h - 8.0;
+    if (d < 10.0) d = 10.0; // minimum dot size
     self.lastDotDiameter = d;
     self.dotLayer.hidden = NO;
     self.dotLayer.backgroundColor = dot.CGColor;
-    CGFloat y = (h - d) / 2.0;
-    self.dotLayer.frame = CGRectMake(10, y, d, d);
+    CGFloat y = 4.0; // top padding 4px
+    self.dotLayer.frame = CGRectMake(5, y, d, d); // left padding 5px
     self.dotLayer.cornerRadius = d * 0.5;
 
-    // Shift label to the right of dot with spacing 6
-    self.labelLeadingConstraint.constant = 10 + d + 6;
+    // Shift label to the right of dot: left padding 5 + dot size + spacing to text (4 for right padding of dot area)
+    self.labelLeadingConstraint.constant = 5 + d + 4;
 }
 
 + (UIColor *)colorFromHex:(NSString *)hex

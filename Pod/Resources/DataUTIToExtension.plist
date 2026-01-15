@@ -3,16 +3,20 @@
 <plist version="1.0">
 <dict>
 	<key>public.jpeg</key>
-	<string>JPG</string>
+	<string>jpg</string>
 	<key>public.png</key>
-	<string>PNG</string>
+	<string>png</string>
 	<key>public.gif</key>
-	<string>GIF</string>
+	<string>gif</string>
 	<key>public.tiff</key>
-	<string>TIF</string>
+	<string>tif</string>
 	<key>com.compuserve.gif</key>
-	<string>GIF</string>
+	<string>gif</string>
 	<key>com.microsoft.bmp</key>
-	<string>BMP</string>
+	<string>bmp</string>
+	<key>public.heic</key>
+	<string>heic</string>
+	<key>public.heif</key>
+	<string>heif</string>
 </dict>
 </plist>

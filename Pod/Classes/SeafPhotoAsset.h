@@ -37,6 +37,9 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @property (nonatomic, assign, readonly) BOOL isLivePhoto;
 
+/// Whether the asset has been edited (iOS exports edited photos as JPEG).
+@property (nonatomic, assign, readonly) BOOL isModified;
+
 /**
  The paired video resource for Live Photo (nil if not a Live Photo)
  */
@@ -46,6 +49,12 @@ NS_ASSUME_NONNULL_BEGIN
  The photo resource (main image)
  */
 @property (nonatomic, strong, readonly, nullable) PHAssetResource *photoResource;
+
+/// Photo resource size in bytes (for Live Photo detection).
+@property (nonatomic, readonly) unsigned long long photoResourceSize;
+
+/// Paired video resource size in bytes (for Live Photo detection).
+@property (nonatomic, readonly) unsigned long long pairedVideoResourceSize;
 
 - (instancetype)initWithAsset:(PHAsset*)asset isCompress:(BOOL)isCompress;
 

@@ -73,6 +73,14 @@ static SeafRealmManager* instance;
             Debug(@"No existing default.realm found. A new database will be created at the new location.");
         }
 
+        // Schema version 2: removed uploadedAsLivePhoto property
+        config.schemaVersion = 2;
+        config.migrationBlock = ^(RLMMigration *migration, uint64_t oldSchemaVersion) {
+            if (oldSchemaVersion < 2) {
+                Debug(@"Migrating Realm schema from version %llu to 2", oldSchemaVersion);
+            }
+        };
+
         // Update the configuration to use the new file URL
         config.fileURL = newFileURL;
         [RLMRealmConfiguration setDefaultConfiguration:config];
@@ -150,14 +158,14 @@ static SeafRealmManager* instance;
 }
 
 - (void)clearAllCachedPhotosInAccount:(NSString *)account {
-    Debug("clear photos in account: %@", account);
+    Debug(@"Clearing cached photos for account: %@", account);
     RLMResults<SeafCachePhoto *> *photos = [SeafCachePhoto objectsWhere:@"account == %@", account];
     
     RLMRealm *realm = [RLMRealm defaultRealm];
-    
     [realm transactionWithBlock:^{
         [realm deleteObjects:photos];
     }];
+    Debug(@"Deleted %lu photos for account: %@", (unsigned long)photos.count, account);
 }
 
 - (void)clearAllCachedPhotos {
@@ -171,9 +179,9 @@ static SeafRealmManager* instance;
     }];
 }
 
-// Check if a photo exists in the realm. added at 2024.7.30
 - (BOOL)isPhotoExistInRealm:(NSString *)identifier forAccount:(NSString *)account{
-    return [SeafCachePhoto objectsWhere:@"identifier == %@ AND account == %@", identifier, account].count > 0;
+    RLMResults *results = [SeafCachePhoto objectsWhere:@"identifier == %@ AND account == %@", identifier, account];
+    return results.count > 0;
 }
 
 //V2.9.27 delete the not uploaded photo in realm.

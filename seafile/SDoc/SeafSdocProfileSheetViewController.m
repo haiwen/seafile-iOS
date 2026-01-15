@@ -76,31 +76,35 @@
     }
 }
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
+    // Tag/chip height: 22px per design spec (mobile uses 22px, not same as PC)
+    CGFloat chipHeight = 22.0;
+    // Avatar size: 16px per design spec
+    CGFloat avatarSize = 16.0;
+    
     if ([self.type isEqualToString:@"collaborator"]) {
         NSDictionary *item = self.vals[indexPath.item];
         NSString *name = item[@"user_name"] ?: @"";
         UIFont *font = [UIFont systemFontOfSize:15];
         CGFloat nameW = ceil([name sizeWithAttributes:@{NSFontAttributeName:font}].width);
-        CGFloat width = 8 + 18 + 4 + nameW + 8;
-        CGFloat height = 24;
-        return CGSizeMake(MAX(32, width), height);
+        // Avatar chip padding: left 4 + avatar 16 + spacing 4 + text + right 8
+        CGFloat width = 4 + avatarSize + 4 + nameW + 8;
+        return CGSizeMake(MAX(32, width), chipHeight);
     } else {
         NSDictionary *item = self.vals[indexPath.item];
         NSString *text = item[@"text"] ?: @"";
         UIFont *font = [UIFont systemFontOfSize:15];
         CGFloat textW = ceil([text sizeWithAttributes:@{NSFontAttributeName:font}].width);
         CGFloat baseLeft = 10.0;
-        CGFloat baseRight = -10.0;
-        CGFloat height = 24;
+        CGFloat baseRight = 10.0;
         if ([self.type isEqualToString:@"link"]) {
-            // Include dot size and spacing: dot ~ 60% of height, min 14, max 18
-            CGFloat d = MIN(18.0, MAX(14.0, height * 0.6));
-            CGFloat spacing = 6.0;
-            CGFloat width = baseLeft + d + spacing + textW + (-baseRight);
-            return CGSizeMake(MAX(28, width), height);
+            // Dot style padding: left 5 + dot (height-8) + right 4 + text + right padding
+            CGFloat dotSize = chipHeight - 8.0; // top/bottom 4px each
+            if (dotSize < 10.0) dotSize = 10.0;
+            CGFloat width = 5 + dotSize + 4 + textW + baseRight;
+            return CGSizeMake(MAX(28, width), chipHeight);
         } else {
-            CGFloat width = baseLeft + textW + (-baseRight);
-            return CGSizeMake(MAX(28, width), height);
+            CGFloat width = baseLeft + textW + baseRight;
+            return CGSizeMake(MAX(28, width), chipHeight);
         }
     }
 }
@@ -388,15 +392,15 @@ static NSSet *SeafChipTypes(void)
     img = [img imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     UIImageView *icon = [[UIImageView alloc] initWithImage:img];
     icon.contentMode = UIViewContentModeScaleAspectFit;
-    icon.tintColor = [UIColor secondaryLabelColor];
+    icon.tintColor = [UIColor colorWithRed:0x99/255.0 green:0x99/255.0 blue:0x99/255.0 alpha:1.0]; // #999999
     icon.translatesAutoresizingMaskIntoConstraints = NO;
-    [icon.widthAnchor constraintEqualToConstant:16].active = YES;
-    [icon.heightAnchor constraintEqualToConstant:16].active = YES;
+    [icon.widthAnchor constraintEqualToConstant:14].active = YES;
+    [icon.heightAnchor constraintEqualToConstant:14].active = YES;
     [left addArrangedSubview:icon];
 
     UILabel *title = [UILabel new];
     title.text = NSLocalizedString(row[@"title"] ?: @"", nil);
-    title.textColor = [UIColor secondaryLabelColor];
+    title.textColor = [UIColor colorWithRed:0x66/255.0 green:0x66/255.0 blue:0x66/255.0 alpha:1.0]; // #666666
     title.font = [UIFont systemFontOfSize:16 weight:UIFontWeightRegular];
     title.numberOfLines = 0;
     title.lineBreakMode = NSLineBreakByWordWrapping;
@@ -424,10 +428,11 @@ static NSSet *SeafChipTypes(void)
         for (NSDictionary *v in values) {
             BOOL isEmpty = [[v objectForKey:@"isEmpty"] boolValue];
             NSString *t = v[@"text"] ?: @"";
-            if (isEmpty || ([t isKindOfClass:[NSString class]] && [t isEqualToString:@"empty"])) {
+            BOOL isEmptyValue = isEmpty || ([t isKindOfClass:[NSString class]] && [t isEqualToString:@"empty"]);
+            if (isEmptyValue) {
                 t = [self emptyDisplayText];
             }
-            UILabel *lab = [self makeSecondaryLabelWithText:t titleKey:row[@"title"]];
+            UILabel *lab = [self makeSecondaryLabelWithText:t titleKey:row[@"title"] isEmpty:isEmptyValue];
             [sv addArrangedSubview:lab];
         }
         return sv;
@@ -445,7 +450,7 @@ static NSSet *SeafChipTypes(void)
                 sv.axis = UILayoutConstraintAxisVertical;
                 sv.spacing = 4;
                 sv.alignment = UIStackViewAlignmentTrailing;
-                UILabel *lab = [self makeSecondaryLabelWithText:[self emptyDisplayText] titleKey:row[@"title"]];
+                UILabel *lab = [self makeSecondaryLabelWithText:[self emptyDisplayText] titleKey:row[@"title"] isEmpty:YES];
                 lab.numberOfLines = 1;
                 [sv addArrangedSubview:lab];
                 return sv;
@@ -466,7 +471,7 @@ static NSSet *SeafChipTypes(void)
                 sv.axis = UILayoutConstraintAxisVertical;
                 sv.spacing = 4;
                 sv.alignment = UIStackViewAlignmentTrailing;
-                UILabel *lab = [self makeSecondaryLabelWithText:[self emptyDisplayText] titleKey:row[@"title"]];
+                UILabel *lab = [self makeSecondaryLabelWithText:[self emptyDisplayText] titleKey:row[@"title"] isEmpty:YES];
                 lab.numberOfLines = 1;
                 [sv addArrangedSubview:lab];
                 return sv;
@@ -474,7 +479,7 @@ static NSSet *SeafChipTypes(void)
         }
         RightAlignedCollectionViewFlowLayout *layout = [RightAlignedCollectionViewFlowLayout new];
         layout.estimatedItemSize = CGSizeZero;
-        layout.minimumInteritemSpacing = 12;
+        layout.minimumInteritemSpacing = 4;
         layout.minimumLineSpacing = 12;
         UIView *wrapper = [UIView new];
         wrapper.translatesAutoresizingMaskIntoConstraints = NO;
@@ -557,9 +562,17 @@ static NSSet *SeafChipTypes(void)
         NSDictionary *v = values.firstObject ?: @{};
         BOOL checked = [v[@"checked"] boolValue];
         UIImage *img = nil;
+        // Use checkbox-filled style per design spec
         if (checked) {
-            UIImage *base = [UIImage imageNamed:@"ic_checkbox_checked"];
-            if (base) img = [base imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+            if (@available(iOS 13.0, *)) {
+                // Use SF Symbol checkmark.square.fill for filled checkbox style
+                UIImage *base = [UIImage systemImageNamed:@"checkmark.square.fill"];
+                if (base) img = [base imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+            }
+            if (!img) {
+                UIImage *base = [UIImage imageNamed:@"ic_checkbox_checked"];
+                if (base) img = [base imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+            }
         } else {
             if (@available(iOS 13.0, *)) {
                 UIImage *base = [UIImage systemImageNamed:@"square"]; // hollow square, transparent center
@@ -572,8 +585,8 @@ static NSSet *SeafChipTypes(void)
         }
         UIImageView *iv = [[UIImageView alloc] initWithImage:img];
         iv.contentMode = UIViewContentModeScaleAspectFit;
-        // Requirement: use the theme orange color
-        iv.tintColor = BAR_COLOR_ORANGE;
+        // Theme color: #FF9800 per design spec
+        iv.tintColor = [UIColor colorWithRed:0xFF/255.0 green:0x98/255.0 blue:0x00/255.0 alpha:1.0];
         iv.backgroundColor = UIColor.clearColor;
         iv.translatesAutoresizingMaskIntoConstraints = NO;
         [iv.widthAnchor constraintEqualToConstant:22].active = YES;
@@ -590,10 +603,11 @@ static NSSet *SeafChipTypes(void)
     sv.alignment = UIStackViewAlignmentTrailing;
     for (NSDictionary *v in values) {
         NSString *t = v[@"text"] ?: @"";
-        if ([t isKindOfClass:[NSString class]] && [t isEqualToString:@"empty"]) {
+        BOOL isEmptyValue = [t isKindOfClass:[NSString class]] && [t isEqualToString:@"empty"];
+        if (isEmptyValue) {
             t = [self emptyDisplayText];
         }
-        UILabel *lab = [self makeSecondaryLabelWithText:t titleKey:row[@"title"]];
+        UILabel *lab = [self makeSecondaryLabelWithText:t titleKey:row[@"title"] isEmpty:isEmptyValue];
         [sv addArrangedSubview:lab];
     }
     return sv;
@@ -627,11 +641,16 @@ static NSSet *SeafChipTypes(void)
     return emptyText ?: @"";
 }
 
-- (UILabel *)makeSecondaryLabelWithText:(NSString *)text titleKey:(NSString *)titleKey
+- (UILabel *)makeSecondaryLabelWithText:(NSString *)text titleKey:(NSString *)titleKey isEmpty:(BOOL)isEmpty
 {
     UILabel *lab = [UILabel new];
     lab.text = text ?: @"";
-    lab.textColor = [UIColor secondaryLabelColor];
+    // Text color: #212529 for data, #666666 for empty
+    if (isEmpty) {
+        lab.textColor = [UIColor colorWithRed:0x66/255.0 green:0x66/255.0 blue:0x66/255.0 alpha:1.0]; // #666666
+    } else {
+        lab.textColor = [UIColor colorWithRed:0x21/255.0 green:0x25/255.0 blue:0x29/255.0 alpha:1.0]; // #212529
+    }
     lab.font = [UIFont systemFontOfSize:16];
     lab.numberOfLines = 0;
     lab.textAlignment = NSTextAlignmentNatural;
