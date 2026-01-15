@@ -206,11 +206,9 @@
     return self.udir.connection.isUploadHeicEnabled;
 }
 
-// ============ Motion Photo functionality temporarily disabled ============
-// - (BOOL)uploadLivePhoto {
-//     return self.udir.connection.isUploadLivePhotoEnabled;
-// }
-// ============ End of disabled Motion Photo code ============
+- (BOOL)uploadLivePhoto {
+    return self.udir.connection.isUploadLivePhotoEnabled;
+}
 
 - (NSString *)strContent {
     return [Utils stringContent:self.lpath];

@@ -56,9 +56,10 @@
             NSError *error = nil;
             [[NSFileManager defaultManager] createDirectoryAtURL:newURL withIntermediateDirectories:YES attributes:nil error:&error];
         }];
-        if (SeafGlobal.sharedObject.conns.count == 0) {
-            [SeafGlobal.sharedObject loadAccounts];
-        }
+        
+        // Sync account list to get latest info
+        // Lightweight sync: reload only if changed
+        [SeafGlobal.sharedObject syncAccountsFromStorage];
     }
     return self;
 }

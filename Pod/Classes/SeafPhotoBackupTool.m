@@ -121,18 +121,15 @@
     PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:photos options:nil];
     
     NSMutableArray *uploadFilesArray = [[NSMutableArray alloc] init];
-    // ============ Motion Photo functionality temporarily disabled ============
-    // BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
-    // ============ Restored old uploadHeic logic ============
-    BOOL uploadHeicEnabled = self.connection.isUploadHeicEnabled;
+    // ============ Live Photo / Motion Photo upload setting ============
+    BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
     for (PHAsset *asset in result) {
         if (asset) {
-            // When uploadHeic is disabled, isCompress should be YES to trigger HEIC→JPG conversion
-            SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!uploadHeicEnabled];
+            // Always keep original format (no HEIC→JPG conversion)
+            SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
             
-            // Use the asset name directly (HEIC→JPG conversion is handled by assetName:)
-            // NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];  // Motion Photo disabled
-            NSString *filename = photoAsset.name;
+            // Get upload filename based on Live Photo setting
+            NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];
             NSString *path = [self.localUploadDir stringByAppendingPathComponent:filename];
             SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
             file.lastModified = asset.modificationDate;
@@ -140,13 +137,11 @@
             file.model.uploadFileAutoSync = true;
             file.model.overwrite = true;
             
-            // ============ Motion Photo functionality temporarily disabled ============
             // Mark Live Photo for Motion Photo processing only when "Upload Live Photo" setting is enabled
             // When disabled, Live Photo uploads as static image only (no video part)
-            // if (photoAsset.isLivePhoto && uploadLivePhotoEnabled) {
-            //     file.model.isLivePhoto = YES;
-            // }
-            // ============ End of disabled Motion Photo code ============
+            if (photoAsset.isLivePhoto && uploadLivePhotoEnabled) {
+                file.model.isLivePhoto = YES;
+            }
             
             [file setPHAsset:asset url:photoAsset.ALAssetURL];
             file.udir = dir;
@@ -183,16 +178,13 @@
         PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
         PHAsset *asset = [result firstObject];
         if (asset) {
-            // ============ Motion Photo functionality temporarily disabled ============
-            // BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
-            // ============ Restored old uploadHeic logic ============
-            BOOL uploadHeicEnabled = self.connection.isUploadHeicEnabled;
-            // When uploadHeic is disabled, isCompress should be YES to trigger HEIC→JPG conversion
-            SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!uploadHeicEnabled];
+            // ============ Live Photo / Motion Photo upload setting ============
+            BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
+            // Always keep original format (no HEIC→JPG conversion)
+            SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
             
-            // Use the asset name directly (HEIC→JPG conversion is handled by assetName:)
-            // NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];  // Motion Photo disabled
-            NSString *filename = photoAsset.name;
+            // Get upload filename based on Live Photo setting
+            NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];
             NSString *path = [self.localUploadDir stringByAppendingPathComponent:filename];
             SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
             file.lastModified = asset.modificationDate;
@@ -200,13 +192,11 @@
             file.model.uploadFileAutoSync = true;
             file.model.overwrite = true;
             
-            // ============ Motion Photo functionality temporarily disabled ============
             // Mark Live Photo for Motion Photo processing only when "Upload Live Photo" setting is enabled
             // When disabled, Live Photo uploads as static image only (no video part)
-            // if (photoAsset.isLivePhoto && uploadLivePhotoEnabled) {
-            //     file.model.isLivePhoto = YES;
-            // }
-            // ============ End of disabled Motion Photo code ============
+            if (photoAsset.isLivePhoto && uploadLivePhotoEnabled) {
+                file.model.isLivePhoto = YES;
+            }
             
             [file setPHAsset:asset url:photoAsset.ALAssetURL];
             file.udir = dir;
@@ -273,23 +263,73 @@
     
     self.fetchResult = [PHAsset fetchAssetsInAssetCollection:collection options:fetchOptions];
 
+    // Get Live Photo upload setting for first time sync check
+    BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
+    
     [self.fetchResult enumerateObjectsUsingBlock:^(PHAsset *asset, NSUInteger idx, BOOL * _Nonnull stop) {
         SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
         if (photoAsset.name != nil) {
-            //if is firstTimeSync ,check photo has already uploaded to dir.
+            // If first time sync, check if photo already exists on server (with backward compatibility)
             if (self.connection.isFirstTimeSync) {
-                if ([self.syncDir nameExist:photoAsset.name]) {
+                if ([self isPhotoExistsOnServer:photoAsset livePhotoEnabled:uploadLivePhotoEnabled]) {
                     [self setPhotoUploadedIdentifier:asset.localIdentifier];
                     Debug("First time sync, skip file %@(%@) which has already been uploaded", photoAsset.name, photoAsset.localIdentifier);
                     return;
                 }
             }
-            //if not exist in realm,add to photos.
+            // If not exist in realm, add to photos.
             if (![self IsPhotoUploaded:photoAsset] && ![self IsPhotoUploading:photoAsset]) {
                 [self addUploadPhoto:photoAsset.localIdentifier];
             }
         }
     }];
+}
+
+#pragma mark - First Time Sync Helper
+
+/// Check if photo already exists on server with backward compatibility for old naming conventions.
+/// This handles the case where photos were uploaded with different format settings (e.g., HEIC→JPG conversion).
+/// @param photoAsset The photo asset to check
+/// @param livePhotoEnabled Whether Live Photo upload is enabled
+/// @return YES if any variant of the filename exists on server
+- (BOOL)isPhotoExistsOnServer:(SeafPhotoAsset *)photoAsset livePhotoEnabled:(BOOL)livePhotoEnabled {
+    if (!photoAsset.name || !self.syncDir) {
+        return NO;
+    }
+    
+    // 1. Check current upload name (considering Live Photo setting)
+    NSString *uploadName = [photoAsset uploadNameWithLivePhotoEnabled:livePhotoEnabled];
+    if ([self.syncDir nameExist:uploadName]) {
+        return YES;
+    }
+    
+    // 2. Check original filename if different from upload name
+    if (![uploadName isEqualToString:photoAsset.name]) {
+        if ([self.syncDir nameExist:photoAsset.name]) {
+            return YES;
+        }
+    }
+    
+    // 3. Check format variants (HEIC ↔ JPG) for backward compatibility
+    //    Old versions may have converted HEIC to JPG during upload
+    NSString *baseName = [photoAsset.name stringByDeletingPathExtension];
+    NSString *ext = [photoAsset.name.pathExtension lowercaseString];
+    
+    if ([ext isEqualToString:@"heic"] || [ext isEqualToString:@"heif"]) {
+        // Original is HEIC, check if JPG variant exists (old version may have converted)
+        NSString *jpgVariant = [baseName stringByAppendingPathExtension:@"jpg"];
+        if ([self.syncDir nameExist:jpgVariant]) {
+            return YES;
+        }
+    } else if ([ext isEqualToString:@"jpg"] || [ext isEqualToString:@"jpeg"]) {
+        // Original is JPG, check if HEIC variant exists
+        NSString *heicVariant = [baseName stringByAppendingPathExtension:@"heic"];
+        if ([self.syncDir nameExist:heicVariant]) {
+            return YES;
+        }
+    }
+    
+    return NO;
 }
 
 - (NSPredicate *)buildAutoSyncPredicte {

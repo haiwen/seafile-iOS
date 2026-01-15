@@ -131,7 +131,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 @property (readwrite, nonatomic, getter=isFirstTimeSync) BOOL firstTimeSync;///< Indicates whether this is the first time syncing.
 // ============ Restored old uploadHeicEnabled property ============
 @property (assign, nonatomic, getter=isUploadHeicEnabled) BOOL uploadHeicEnabled;///< Indicates whether HEIC format should be kept (YES) or converted to JPG (NO).
-// @property (assign, nonatomic, getter=isUploadLivePhotoEnabled) BOOL uploadLivePhotoEnabled;///< Motion Photo functionality temporarily disabled
+@property (assign, nonatomic, getter=isUploadLivePhotoEnabled) BOOL uploadLivePhotoEnabled;///< Indicates whether Live Photos should be uploaded as Motion Photos.
 
 @property (readwrite, nonatomic) NSString * _Nullable autoSyncRepo;///< Repository ID for automatic synchronization.
 

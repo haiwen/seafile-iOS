@@ -51,22 +51,17 @@
     }
     
     if (file.model.asset.mediaType == PHAssetMediaTypeImage) {
-        // ============ Motion Photo functionality temporarily disabled ============
         // Check if this is a Live Photo and should be uploaded as Motion Photo
         // Only upload as Motion Photo when:
         // 1. The asset is a Live Photo
         // 2. The file is marked as Live Photo (isLivePhoto = YES)
         // 3. The "Upload Live Photo" setting is enabled
         // When setting is disabled, Live Photo uploads as static image only (no video)
-        // if ([self isLivePhotoAsset:file.model.asset] && file.model.isLivePhoto && [file uploadLivePhoto]) {
-        //     [self getMotionPhotoDataForAsset:file completion:completion];
-        // } else {
-        //     [self getImageDataForAsset:file completion:completion];
-        // }
-        // ============ End of disabled Motion Photo code ============
-        
-        // Current behavior: Always upload as regular image, with HEIC→JPG conversion based on uploadHeic setting
-        [self getImageDataForAsset:file completion:completion];
+        if ([self isLivePhotoAsset:file.model.asset] && file.model.isLivePhoto && [file uploadLivePhoto]) {
+            [self getMotionPhotoDataForAsset:file completion:completion];
+        } else {
+            [self getImageDataForAsset:file completion:completion];
+        }
     } else if (file.model.asset.mediaType == PHAssetMediaTypeVideo) {
         [self getVideoForAsset:file completion:completion];
     } else {
@@ -101,25 +96,11 @@
         resource = resources.firstObject;
     }
 
-    // ============ Restored HEIC→JPG conversion logic ============
-    // Check if we need to convert HEIC to JPG based on uploadHeic setting
-    BOOL shouldConvertToJPG = NO;
-    BOOL isHEIC = NO;
-    NSString *originalFilename = resource.originalFilename.lowercaseString;
-    if ([originalFilename hasSuffix:@".heic"] || [originalFilename hasSuffix:@".heif"]) {
-        isHEIC = YES;
-        // If uploadHeic is disabled (NO), we need to convert HEIC to JPG
-        if (![file uploadHeic]) {
-            shouldConvertToJPG = YES;
-        }
-    }
-    
+    // Always keep original format (no HEIC→JPG conversion)
+    // Per new specification: static photos always keep their original format
     NSString *writePath = file.model.lpath;
     
-    // If we need to convert to JPG, write to a temp path first
-    NSString *tempPath = shouldConvertToJPG ? [writePath stringByAppendingString:@".tmp"] : writePath;
-    
-    NSOutputStream *stream = [NSOutputStream outputStreamToFileAtPath:tempPath append:NO];
+    NSOutputStream *stream = [NSOutputStream outputStreamToFileAtPath:writePath append:NO];
     [stream open];
 
     PHAssetResourceRequestOptions *options = [[PHAssetResourceRequestOptions alloc] init];
@@ -137,29 +118,7 @@
             if (completion) completion(NO, error);
             return;
         }
-        
-        // Convert HEIC to JPG if needed
-        if (shouldConvertToJPG) {
-            NSURL *tempURL = [NSURL fileURLWithPath:tempPath];
-            // Update the file path to use .jpg extension
-            NSString *jpgPath = [[writePath stringByDeletingPathExtension] stringByAppendingPathExtension:@"jpg"];
-            NSURL *destURL = [NSURL fileURLWithPath:jpgPath];
-            
-            BOOL convertSuccess = [self convertHEICToJPEGAtURL:tempURL destinationURL:destURL];
-            
-            // Clean up temp file
-            [[NSFileManager defaultManager] removeItemAtPath:tempPath error:nil];
-            
-            if (convertSuccess) {
-                // Update the file path in the model
-                file.model.lpath = jpgPath;
-                if (completion) completion(YES, nil);
-            } else {
-                if (completion) completion(NO, nil);
-            }
-        } else {
-            if (completion) completion(YES, nil);
-        }
+        if (completion) completion(YES, nil);
     }];
 }
 
@@ -191,52 +150,20 @@
             return;
         }
         
-        // ============ Restored HEIC→JPG conversion logic ============
-        // Check if the image is HEIC format
-        BOOL isHEIC = NO;
-        if (@available(iOS 14.0, *)) {
-            UTType *type = [UTType typeWithIdentifier:dataUTI];
-            isHEIC = [type conformsToType:UTTypeHEIC];
-        } else {
-            isHEIC = UTTypeConformsTo((__bridge CFStringRef)dataUTI, kUTTypeHEIC) ||
-                     UTTypeConformsTo((__bridge CFStringRef)dataUTI, kUTTypeHEIF);
-        }
-        
-        // Check if we need to convert HEIC to JPG
-        BOOL shouldConvertToJPG = isHEIC && ![file uploadHeic];
-        
+        // Always keep original format (no HEIC→JPG conversion)
+        // Per new specification: static photos always keep their original format
         NSData *dataToWrite = imageData;
-        NSString *finalExtension = nil;
         
-        if (shouldConvertToJPG) {
-            // Convert HEIC data to JPG
-            UIImage *image = [UIImage imageWithData:imageData];
-            if (image) {
-                NSData *jpgData = UIImageJPEGRepresentation(image, 0.9);
-                if (jpgData) {
-                    dataToWrite = jpgData;
-                    finalExtension = @"jpg";
-                }
-            }
+        // Keep original extension based on UTI
+        NSString *newExtension = [FileMimeType fileExtensionForUTI:dataUTI];
+        if (!newExtension) {
+            newExtension = file.model.lpath.pathExtension;
         }
         
-        // Update file extension if needed
-        if (finalExtension) {
-            file.model.lpath = [[file.model.lpath stringByDeletingPathExtension] stringByAppendingPathExtension:finalExtension];
-            Debug(@"Converted HEIC to JPG, updated file path to: %@", file.model.lpath);
-        } else {
-            // Keep original extension based on UTI
-            NSString *newExtension = [FileMimeType fileExtensionForUTI:dataUTI];
-            if (!newExtension) {
-                newExtension = file.model.lpath.pathExtension;
-            }
-            
-            if (newExtension && ![[file.model.lpath.pathExtension lowercaseString] isEqualToString:[newExtension lowercaseString]]) {
-                file.model.lpath = [[file.model.lpath stringByDeletingPathExtension] stringByAppendingPathExtension:newExtension];
-                Debug(@"Updated file path to: %@", file.model.lpath);
-            }
+        if (newExtension && ![[file.model.lpath.pathExtension lowercaseString] isEqualToString:[newExtension lowercaseString]]) {
+            file.model.lpath = [[file.model.lpath stringByDeletingPathExtension] stringByAppendingPathExtension:newExtension];
+            Debug(@"Updated file path to: %@", file.model.lpath);
         }
-        // ============ End of restored HEIC→JPG conversion logic ============
         
         if (![Utils writeDataWithMeta:dataToWrite toPath:file.model.lpath]) {
             if (completion) completion(NO, nil);
@@ -555,43 +482,6 @@
                                 file:file
                              cleanup:cleanup
                           completion:completion];
-    });
-}
-
-- (void)composeAndWriteMotionPhoto:(NSData *)imageData
-                         videoData:(NSData *)videoData
-             presentationTimestampUs:(int64_t)presentationTimestampUs
-                              file:(SeafUploadFile *)file
-                           cleanup:(void (^)(void))cleanup
-                        completion:(void (^)(BOOL success, NSError *error))completion {
-    
-    NSData *motionPhotoData = [SeafMotionPhotoComposer composeMotionPhotoWithImageData:imageData
-                                                                            videoData:videoData
-                                                                presentationTimestampUs:presentationTimestampUs];
-    if (!motionPhotoData) {
-        cleanup();
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self getImageDataForAsset:file completion:completion];
-        });
-        return;
-    }
-    
-    NSError *writeError = nil;
-    BOOL writeSuccess = [motionPhotoData writeToFile:file.model.lpath 
-                                             options:NSDataWritingAtomic 
-                                               error:&writeError];
-    cleanup();
-    
-    if (!writeSuccess) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (completion) completion(NO, writeError);
-        });
-        return;
-    }
-    
-    file.model.filesize = [Utils fileSizeAtPath1:file.model.lpath];
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if (completion) completion(YES, nil);
     });
 }
 

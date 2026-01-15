@@ -253,60 +253,6 @@
 
 #pragma mark - Generation
 
-+ (nullable NSData *)generateXMPData:(SeafMotionPhotoXMP *)xmp {
-    NSString *xmpString = [self generateXMPStringWithPrimaryMime:xmp.primaryMime ?: @"image/heic"
-                                                       videoMime:xmp.videoMime ?: @"video/mp4"
-                                                     videoLength:xmp.videoLength
-                                         presentationTimestampUs:xmp.presentationTimestampUs];
-    return [xmpString dataUsingEncoding:NSUTF8StringEncoding];
-}
-
-+ (NSString *)generateXMPStringWithPrimaryMime:(NSString *)primaryMime
-                                     videoMime:(NSString *)videoMime
-                                   videoLength:(NSUInteger)videoLength
-                       presentationTimestampUs:(int64_t)presentationTimestampUs {
-    // Generate XMP compatible with both V1 (legacy) and V2 (Container) formats
-    // This ensures maximum compatibility across different Android versions and apps
-    //
-    // V1 format: Uses only GCamera namespace fields
-    // V2 format: Uses Container:Directory structure for explicit item definitions
-    //
-    // Reference: https://developer.android.com/media/platform/motion-photo-format
-    
-    NSMutableString *xmp = [NSMutableString string];
-    
-    [xmp appendString:@"<x:xmpmeta xmlns:x=\"adobe:ns:meta/\" x:xmptk=\"Seafile Motion Photo\">\n"];
-    [xmp appendString:@"   <rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n"];
-    [xmp appendString:@"      <rdf:Description rdf:about=\"\"\n"];
-    [xmp appendString:@"            xmlns:GCamera=\"http://ns.google.com/photos/1.0/camera/\">\n"];
-    
-    // V1 format fields (current standard)
-    [xmp appendString:@"         <GCamera:MotionPhoto>1</GCamera:MotionPhoto>\n"];
-    [xmp appendString:@"         <GCamera:MotionPhotoVersion>1</GCamera:MotionPhotoVersion>\n"];
-    
-    // Only include presentation timestamp if specified (>= 0)
-    if (presentationTimestampUs >= 0) {
-        [xmp appendFormat:@"         <GCamera:MotionPhotoPresentationTimestampUs>%lld</GCamera:MotionPhotoPresentationTimestampUs>\n", presentationTimestampUs];
-    }
-    
-    // Deprecated V1 fields (MicroVideo) - for legacy reader compatibility
-    // These are from the old MicroVideo V1 specification, now deprecated but
-    // some older readers may still use them
-    // Reference: https://developer.android.com/media/platform/motion-photo-format
-    [xmp appendString:@"         <GCamera:MicroVideo>1</GCamera:MicroVideo>\n"];
-    [xmp appendString:@"         <GCamera:MicroVideoVersion>1</GCamera:MicroVideoVersion>\n"];
-    [xmp appendFormat:@"         <GCamera:MicroVideoOffset>%lu</GCamera:MicroVideoOffset>\n", (unsigned long)videoLength];
-    if (presentationTimestampUs >= 0) {
-        [xmp appendFormat:@"         <GCamera:MicroVideoPresentationTimestampUs>%lld</GCamera:MicroVideoPresentationTimestampUs>\n", presentationTimestampUs];
-    }
-    
-    [xmp appendString:@"      </rdf:Description>\n"];
-    [xmp appendString:@"   </rdf:RDF>\n"];
-    [xmp appendString:@"</x:xmpmeta>"];
-    
-    return [xmp copy];
-}
-
 + (NSString *)generateV1V2HybridXMPWithVideoLength:(NSUInteger)videoLength
                            presentationTimestampUs:(int64_t)presentationTimestampUs {
     // Generate XMP in V1+V2 hybrid format

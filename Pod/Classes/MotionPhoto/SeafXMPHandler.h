@@ -97,26 +97,6 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Generation
 
 /**
- * Generate XMP XML data for a Motion Photo.
- * @param xmp Motion Photo XMP model with required properties set
- * @return XMP XML data ready to be embedded in image
- */
-+ (nullable NSData *)generateXMPData:(SeafMotionPhotoXMP *)xmp;
-
-/**
- * Generate XMP XML string for a Motion Photo (legacy simplified format).
- * @param primaryMime Primary image MIME type (e.g., "image/heic")
- * @param videoMime Video MIME type (e.g., "video/mp4")
- * @param videoLength Video data length in bytes
- * @param presentationTimestampUs Presentation timestamp in microseconds (-1 if not specified)
- * @return XMP XML string
- */
-+ (NSString *)generateXMPStringWithPrimaryMime:(NSString *)primaryMime
-                                     videoMime:(NSString *)videoMime
-                                   videoLength:(NSUInteger)videoLength
-                       presentationTimestampUs:(int64_t)presentationTimestampUs;
-
-/**
  * Generate XMP XML string compatible with both V1 and V2 Motion Photo formats.
  * This format combines:
  * - V1 format (GCamera:MotionPhoto, GCamera:MotionPhotoVersion, GCamera:MotionPhotoPresentationTimestampUs)

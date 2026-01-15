@@ -97,17 +97,16 @@
         }
     }
     
-    // ============ Restored HEIC→JPG filename conversion logic ============
-    // When isCompress is YES (uploadHeic is NO), convert HEIC filename to JPG
-    // This ensures the filename matches the actual converted file format
-    if (_isCompress) {
-        NSString *ext = [name.pathExtension lowercaseString];
-        if ([ext isEqualToString:@"heic"] || [ext isEqualToString:@"heif"]) {
-            name = [[name stringByDeletingPathExtension] stringByAppendingPathExtension:@"jpg"];
+    // Always keep original filename (no HEIC→JPG conversion)
+    // Per new specification: static photos always keep their original format
+    // Normalize file extension to lowercase for cross-platform compatibility
+    NSString *ext = name.pathExtension;
+    if (ext.length > 0) {
+        NSString *lowercaseExt = [ext lowercaseString];
+        if (![ext isEqualToString:lowercaseExt]) {
+            name = [[name stringByDeletingPathExtension] stringByAppendingPathExtension:lowercaseExt];
         }
     }
-    // ============ End of restored HEIC→JPG filename conversion logic ============
-    
     return name;
 }
 
@@ -140,17 +139,13 @@
 }
 
 - (NSString *)uploadNameWithLivePhotoEnabled:(BOOL)livePhotoEnabled {
-    // ============ Motion Photo functionality temporarily disabled ============
     // If this is a Live Photo and the setting is enabled, use .heic extension for Motion Photo
-    // if (_isLivePhoto && livePhotoEnabled) {
-    //     NSString *ext = [_name.pathExtension lowercaseString];
-    //     if (![ext isEqualToString:@"heic"]) {
-    //         return [[_name stringByDeletingPathExtension] stringByAppendingPathExtension:@"heic"];
-    //     }
-    // }
-    // ============ End of disabled Motion Photo code ============
-    
-    // Current behavior: Just return the original filename (HEIC→JPG conversion is handled by assetName:)
+    if (_isLivePhoto && livePhotoEnabled) {
+        NSString *ext = [_name.pathExtension lowercaseString];
+        if (![ext isEqualToString:@"heic"]) {
+            return [[_name stringByDeletingPathExtension] stringByAppendingPathExtension:@"heic"];
+        }
+    }
     return _name;
 }
 

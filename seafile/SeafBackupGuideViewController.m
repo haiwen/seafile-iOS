@@ -250,7 +250,7 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
 
     UIView *photosOption = [self createOptionViewWithTitle:NSLocalizedString(@"Back up photos", @"Seafile") type:SeafBackupButtonTypePhotos selected:YES];
     UIView *videosOption = [self createOptionViewWithTitle:NSLocalizedString(@"Back up photos and videos", @"Seafile") type:SeafBackupButtonTypeVideos selected:NO];
-    self.heicOptionView = [self createOptionViewWithTitle:NSLocalizedString(@"Keep HEIC format when backing up", @"Seafile") type:SeafBackupButtonTypeHeic selected:NO];
+    self.heicOptionView = [self createOptionViewWithTitle:NSLocalizedString(@"Upload Live Photo as Motion Photo", @"Seafile") type:SeafBackupButtonTypeHeic selected:NO];
 
     [self.backupPhotosButton removeTarget:self action:@selector(optionTapped:) forControlEvents:UIControlEventTouchUpInside];
     [self.backupVideosButton removeTarget:self action:@selector(optionTapped:) forControlEvents:UIControlEventTouchUpInside];
@@ -488,9 +488,9 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
         [self.scrollView setContentOffset:CGPointMake(newX, 0) animated:YES];
     } else {
         self.connection.videoSync = self.backupVideosButton.selected;
-        // ============ Restored old uploadHeicEnabled logic ============
-        [self.connection setUploadHeicEnabled:self.backupHeicButton.selected];
-        // [self.connection setUploadLivePhotoEnabled:self.backupHeicButton.selected];  // Motion Photo functionality temporarily disabled
+        // ============ Live Photo / Motion Photo upload setting ============
+        // This button now only controls Live Photo upload behavior
+        [self.connection setUploadLivePhotoEnabled:self.backupHeicButton.selected];
 
         self.connection.wifiOnly = self.wifiOnlyButton.selected;
         

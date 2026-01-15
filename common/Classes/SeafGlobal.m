@@ -6,6 +6,7 @@
 //  Copyright (c) 2014 Seafile. All rights reserved.
 //
 @import LocalAuthentication;
+@import FileProvider;
 
 #import "SeafGlobal.h"
 #import "SeafUploadFile.h"
@@ -204,29 +205,73 @@ static NSError * NewNSErrorFromException(NSException * exc) {
 
 - (void)loadAccounts
 {
-    NSUserDefaults * standardUserDefaults = [NSUserDefaults standardUserDefaults];
-    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-    [center addObserver:self
-               selector:@selector(defaultsChanged:)
-                   name:NSUserDefaultsDidChangeNotification
-                 object:standardUserDefaults];
-    [self loadSystemSettings:standardUserDefaults];
-    Debug("allowInvalidCert=%d", SeafStorage.sharedObject.allowInvalidCert);
+    // Register observer only once
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSUserDefaults *standardUserDefaults = [NSUserDefaults standardUserDefaults];
+        NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+        [center addObserver:self
+                   selector:@selector(defaultsChanged:)
+                       name:NSUserDefaultsDidChangeNotification
+                     object:standardUserDefaults];
+        [self loadSystemSettings:standardUserDefaults];
+        Debug("allowInvalidCert=%d", SeafStorage.sharedObject.allowInvalidCert);
+    });
 
+    [self reloadAccounts];
+}
+
+// Load accounts, reusing existing connections
+- (void)reloadAccounts
+{
     NSMutableArray *connections = [[NSMutableArray alloc] init];
     NSArray *accounts = [SeafStorage.sharedObject objectForKey:@"ACCOUNTS"];
+    
     for (NSDictionary *account in accounts) {
         NSString *url = [account objectForKey:@"url"];
         NSString *username = [account objectForKey:@"username"];
-        [_cacheProvider migrateUploadedPhotos:url username:username account:[NSString stringWithFormat:@"%@/%@", url, username]];
-        [_cacheProvider migrateUploadedPhotosToRealm];
-        [_cacheProvider checkAndUpgradeRealmDB];
         
-        SeafConnection *conn = [[SeafConnection alloc] initWithUrl:url cacheProvider:_cacheProvider username:username];
-        if (conn.username)
-            [connections addObject:conn];
+        // Reuse existing connection if available
+        SeafConnection *existingConn = [self getConnection:url username:username];
+        if (existingConn) {
+            [connections addObject:existingConn];
+        } else {
+            // Initialize only new accounts
+            [_cacheProvider migrateUploadedPhotos:url username:username account:[NSString stringWithFormat:@"%@/%@", url, username]];
+            [_cacheProvider migrateUploadedPhotosToRealm];
+            [_cacheProvider checkAndUpgradeRealmDB];
+            
+            SeafConnection *conn = [[SeafConnection alloc] initWithUrl:url cacheProvider:_cacheProvider username:username];
+            if (conn.username) {
+                [connections addObject:conn];
+            }
+        }
     }
     _conns = connections;
+}
+
+// Lightweight sync: reload only if account list changed
+- (void)syncAccountsFromStorage
+{
+    NSArray *storedAccounts = [SeafStorage.sharedObject objectForKey:@"ACCOUNTS"];
+    
+    // Build set of current account keys
+    NSMutableSet *currentKeys = [NSMutableSet set];
+    for (SeafConnection *conn in _conns) {
+        [currentKeys addObject:[NSString stringWithFormat:@"%@/%@", conn.address, conn.username]];
+    }
+    
+    // Build set of stored account keys
+    NSMutableSet *storedKeys = [NSMutableSet set];
+    for (NSDictionary *account in storedAccounts) {
+        [storedKeys addObject:[NSString stringWithFormat:@"%@/%@", account[@"url"], account[@"username"]]];
+    }
+    
+    // Reload only if list changed
+    if (![currentKeys isEqualToSet:storedKeys]) {
+        Debug("Account list changed, reloading accounts...");
+        [self reloadAccounts];
+    }
 }
 
 - (SeafConnection *)getConnection:(NSString *)url username:(NSString *)username
@@ -257,13 +302,37 @@ static NSError * NewNSErrorFromException(NSException * exc) {
         }
     }
     if (!existed) [self.conns addObject: conn];
-    return [self saveAccounts];
+    BOOL result = [self saveAccounts];
+    
+    // Notify FileProvider to refresh root
+    [self notifyFileProviderRootChanged];
+    
+    return result;
 }
 
 - (BOOL)removeConnection:(SeafConnection *)conn
 {
     [self.conns removeObject:conn];
-    return [self saveAccounts];
+    BOOL result = [self saveAccounts];
+    
+    // Notify FileProvider to refresh root
+    [self notifyFileProviderRootChanged];
+    
+    return result;
+}
+
+// Notify FileProvider extension to refresh root
+- (void)notifyFileProviderRootChanged
+{
+    if (@available(iOS 11.0, *)) {
+        [[NSFileProviderManager defaultManager]
+            signalEnumeratorForContainerItemIdentifier:NSFileProviderRootContainerItemIdentifier
+            completionHandler:^(NSError * _Nullable error) {
+                if (error) {
+                    Debug("Signal FileProvider root error: %@", error);
+                }
+            }];
+    }
 }
 
 - (NSArray *)publicAccounts {

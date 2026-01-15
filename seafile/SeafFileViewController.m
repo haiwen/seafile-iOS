@@ -1543,17 +1543,14 @@ enum {
     NSSet *nameSet = [self getExistedNameSet];
     NSMutableArray *identifiers = [[NSMutableArray alloc] init];
     int duplicated = 0;
-    // ============ Motion Photo functionality temporarily disabled ============
-    // BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
-    // ============ Restored old uploadHeic logic ============
-    BOOL uploadHeicEnabled = self.connection.isUploadHeicEnabled;
+    // ============ Live Photo / Motion Photo upload setting ============
+    BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
     for (PHAsset *asset in assets) {
-        // When uploadHeic is disabled, isCompress should be YES to trigger HEIC→JPG conversion
-        SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!uploadHeicEnabled];
+        // Always keep original format (no HEIC→JPG conversion)
+        SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
         if (photoAsset.localIdentifier) {
-            // Use the asset name directly (HEIC→JPG conversion is handled by assetName:)
-            // NSString *uploadName = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];  // Motion Photo disabled
-            NSString *uploadName = photoAsset.name;
+            // Get upload filename based on Live Photo setting
+            NSString *uploadName = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];
             if ([nameSet containsObject:uploadName])
                 duplicated++;
             [identifiers addObject:photoAsset.localIdentifier];
@@ -1607,10 +1604,8 @@ enum {
     NSMutableArray *files = [[NSMutableArray alloc] init];
     NSString *uploadDir = [self.connection uniqueUploadDir];
     NSMutableSet *nameSet = overwrite ? [NSMutableSet new] : [self getExistedNameSet];
-    // ============ Motion Photo functionality temporarily disabled ============
-    // BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
-    // ============ Restored old uploadHeic logic ============
-    BOOL uploadHeicEnabled = self.connection.isUploadHeicEnabled;
+    // ============ Live Photo / Motion Photo upload setting ============
+    BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
 
     if (overwrite) {
         NSMutableArray *newItems = [self.directory.items mutableCopy];
@@ -1618,31 +1613,39 @@ enum {
         for (NSString *localIdentifier in identifiers) {
             PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
             PHAsset *asset = [result firstObject];
-            // When uploadHeic is disabled, isCompress should be YES to trigger HEIC→JPG conversion
-            SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!uploadHeicEnabled];
-            // Use the asset name directly (HEIC→JPG conversion is handled by assetName:)
-            // NSString *uploadName = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];  // Motion Photo disabled
-            NSString *uploadName = photoAsset.name;
+            // Always keep original format (no HEIC→JPG conversion)
+            SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
+            // Get upload filename based on Live Photo setting
+            NSString *uploadName = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];
             if (uploadName) {
                 [uploadingFilenames addObject:uploadName];
             }
         }
+        // Remove from items (server-synced SeafFile objects)
         NSIndexSet *indexes = [newItems indexesOfObjectsPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
             return [obj isKindOfClass:[SeafFile class]] && [uploadingFilenames containsObject:((SeafFile *)obj).name];
         }];
         [newItems removeObjectsAtIndexes:indexes];
         self.directory.items = newItems;
+        
+        // Also remove from uploadItems (local SeafUploadFile objects not yet refreshed)
+        NSArray *existingUploadFiles = [self.directory.uploadFiles copy];
+        for (SeafUploadFile *ufile in existingUploadFiles) {
+            if ([uploadingFilenames containsObject:ufile.name]) {
+                [ufile cancel];
+                [self.directory removeUploadItem:ufile];
+            }
+        }
     }
     
     for (NSString *localIdentifier in identifiers) {
         PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
         PHAsset *asset = [result firstObject];
-        // When uploadHeic is disabled, isCompress should be YES to trigger HEIC→JPG conversion
-        SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:!uploadHeicEnabled];
+        // Always keep original format (no HEIC→JPG conversion)
+        SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
         
-        // Use the asset name directly (HEIC→JPG conversion is handled by assetName:)
-        // NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];  // Motion Photo disabled
-        NSString *filename = photoAsset.name;
+        // Get upload filename based on Live Photo setting
+        NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];
         Debug("Upload picked file : %@", filename);
         if (!overwrite && [nameSet containsObject:filename]) {
             NSString *name = filename.stringByDeletingPathExtension;
@@ -1655,14 +1658,12 @@ enum {
         file.lastModified = asset.modificationDate ?: asset.creationDate;
         file.model.overwrite = overwrite;
         
-        // ============ Motion Photo functionality temporarily disabled ============
         // Mark Live Photo for Motion Photo processing only when "Upload Live Photo" setting is enabled
         // When disabled, Live Photo uploads as static image only (no video part)
-        // if (photoAsset.isLivePhoto && uploadLivePhotoEnabled) {
-        //     file.model.isLivePhoto = YES;
-        //     Debug("Live Photo detected, will upload as Motion Photo: %@", filename);
-        // }
-        // ============ End of disabled Motion Photo code ============
+        if (photoAsset.isLivePhoto && uploadLivePhotoEnabled) {
+            file.model.isLivePhoto = YES;
+            Debug("Live Photo detected, will upload as Motion Photo: %@", filename);
+        }
         
         [file setPHAsset:asset url:photoAsset.ALAssetURL];
         file.delegate = self;
@@ -1995,11 +1996,21 @@ enum {
         for (NSString *path in paths) {
             [uploadingFilenames addObject:[path lastPathComponent]];
         }
+        // Remove from items (server-synced SeafFile objects)
         NSIndexSet *indexes = [newItems indexesOfObjectsPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
             return [obj isKindOfClass:[SeafFile class]] && [uploadingFilenames containsObject:((SeafFile *)obj).name];
         }];
         [newItems removeObjectsAtIndexes:indexes];
         self.directory.items = newItems;
+        
+        // Also remove from uploadItems (local SeafUploadFile objects not yet refreshed)
+        NSArray *existingUploadFiles = [self.directory.uploadFiles copy];
+        for (SeafUploadFile *ufile in existingUploadFiles) {
+            if ([uploadingFilenames containsObject:ufile.name]) {
+                [ufile cancel];
+                [self.directory removeUploadItem:ufile];
+            }
+        }
     }
     
     for (NSString *path in paths) {

@@ -1978,7 +1978,7 @@
 #pragma mark - Motion Photo / Live Photo Support
 
 // Set to 1 to enable Motion Photo / Live Photo feature, set to 0 to disable
-#define ENABLE_MOTION_PHOTO_FEATURE 0
+#define ENABLE_MOTION_PHOTO_FEATURE 1
 
 - (void)checkAndSetupMotionPhotoWithData:(NSData *)data {
 #if !ENABLE_MOTION_PHOTO_FEATURE
