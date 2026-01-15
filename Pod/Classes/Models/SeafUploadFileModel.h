@@ -26,6 +26,9 @@
 // Live Photo / Motion Photo support
 @property (nonatomic, assign) BOOL isLivePhoto;
 
+// Expected filename for post-upload rename.
+@property (nonatomic, copy) NSString *expectedFilename;
+
 // File editing related
 @property (nonatomic, copy) NSString *editedFileRepoId;
 @property (nonatomic, copy) NSString *editedFilePath;

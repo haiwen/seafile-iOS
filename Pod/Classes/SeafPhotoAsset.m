@@ -13,6 +13,7 @@
 @interface SeafPhotoAsset ()
 
 @property (nonatomic, assign, readwrite) BOOL isLivePhoto;
+@property (nonatomic, assign, readwrite) BOOL isModified;
 @property (nonatomic, strong, readwrite, nullable) PHAssetResource *pairedVideoResource;
 @property (nonatomic, strong, readwrite, nullable) PHAssetResource *photoResource;
 
@@ -39,40 +40,39 @@
 #pragma mark - Live Photo Detection
 
 - (void)detectLivePhotoFromAsset:(PHAsset *)asset {
-    // Check if asset is a Live Photo
     _isLivePhoto = (asset.mediaSubtypes & PHAssetMediaSubtypePhotoLive) != 0;
+    _isModified = NO;
     
-    if (!_isLivePhoto) {
-        return;
-    }
-    
-    // Get asset resources to find paired video
     NSArray<PHAssetResource *> *resources = [PHAssetResource assetResourcesForAsset:asset];
     
     for (PHAssetResource *resource in resources) {
-        switch (resource.type) {
-            case PHAssetResourceTypePhoto:
-            case PHAssetResourceTypeFullSizePhoto:
-                if (!_photoResource) {
-                    _photoResource = resource;
-                }
-                break;
-                
-            case PHAssetResourceTypePairedVideo:
-            case PHAssetResourceTypeFullSizePairedVideo:
-                if (!_pairedVideoResource) {
-                    _pairedVideoResource = resource;
-                }
-                break;
-                
-            default:
-                break;
+        if (resource.type == PHAssetResourceTypeAdjustmentData) {
+            _isModified = YES;
+        }
+        
+        if (_isLivePhoto) {
+            switch (resource.type) {
+                case PHAssetResourceTypePhoto:
+                case PHAssetResourceTypeFullSizePhoto:
+                    if (!_photoResource) {
+                        _photoResource = resource;
+                    }
+                    break;
+                    
+                case PHAssetResourceTypePairedVideo:
+                case PHAssetResourceTypeFullSizePairedVideo:
+                    if (!_pairedVideoResource) {
+                        _pairedVideoResource = resource;
+                    }
+                    break;
+                    
+                default:
+                    break;
+            }
         }
     }
     
-    // If we couldn't find the paired video resource, mark as not Live Photo
-    if (!_pairedVideoResource) {
-        Debug(@"SeafPhotoAsset: Live Photo detected but no paired video resource found");
+    if (_isLivePhoto && !_pairedVideoResource) {
         _isLivePhoto = NO;
     }
 }
@@ -97,9 +97,7 @@
         }
     }
     
-    // Always keep original filename (no HEIC→JPG conversion)
-    // Per new specification: static photos always keep their original format
-    // Normalize file extension to lowercase for cross-platform compatibility
+    // Normalize file extension to lowercase
     NSString *ext = name.pathExtension;
     if (ext.length > 0) {
         NSString *lowercaseExt = [ext lowercaseString];
@@ -139,7 +137,6 @@
 }
 
 - (NSString *)uploadNameWithLivePhotoEnabled:(BOOL)livePhotoEnabled {
-    // If this is a Live Photo and the setting is enabled, use .heic extension for Motion Photo
     if (_isLivePhoto && livePhotoEnabled) {
         NSString *ext = [_name.pathExtension lowercaseString];
         if (![ext isEqualToString:@"heic"]) {
@@ -147,6 +144,24 @@
         }
     }
     return _name;
+}
+
+#pragma mark - Resource Size for Live Photo Detection
+
+- (unsigned long long)photoResourceSize {
+    if (!_photoResource) {
+        return 0;
+    }
+    NSNumber *size = [_photoResource valueForKey:@"fileSize"];
+    return size ? [size unsignedLongLongValue] : 0;
+}
+
+- (unsigned long long)pairedVideoResourceSize {
+    if (!_pairedVideoResource) {
+        return 0;
+    }
+    NSNumber *size = [_pairedVideoResource valueForKey:@"fileSize"];
+    return size ? [size unsignedLongLongValue] : 0;
 }
 
 @end

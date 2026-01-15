@@ -1320,7 +1320,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         _syncDir = dir;
         _photoBackup.syncDir = dir;
     }
-        
     Debug("%ld photos remain, syncdir: %@ %@", (long)self.photoBackup.photosArray.count, _syncDir.repoId, _syncDir.name);
     [self checkPhotos:true];
 }
@@ -1343,19 +1342,15 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
             Warning("Failed to create camera sync folder: %@", error);
             completionHandler(false, error);
         } else {
-            if (self.firstTimeSync) {
-                Debug("First time sync, force fresh uploaddir content.");
-                [uploaddir loadContentSuccess:^(SeafDir *dir) {
-                    [self updateUploadDir:uploaddir];
-                    completionHandler(true, nil);
-                } failure:^(SeafDir *dir, NSError *error) {
-                    Warning("Failed to get uploaddir items: %@", error);
-                    completionHandler(false, error);
-                }];
-            } else {
+            // Load content to build serverFileIndex for Live Photo detection
+            [uploaddir loadContentSuccess:^(SeafDir *dir) {
                 [self updateUploadDir:uploaddir];
                 completionHandler(true, nil);
-            }
+            } failure:^(SeafDir *dir, NSError *error) {
+                Warning("Failed to get uploaddir items: %@", error);
+                [self updateUploadDir:uploaddir];
+                completionHandler(true, nil);
+            }];
         }
     }];
 }

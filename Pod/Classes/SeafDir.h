@@ -112,6 +112,11 @@
 - (BOOL)nameExist:(NSString *)name;
 
 /**
+ * Returns the actual filename on server for case-insensitive match.
+ */
+- (NSString * _Nullable)actualNameForCaseInsensitiveMatch:(NSString *)name;
+
+/**
  * Retrieves the array of subdirectories within this directory.
  * @return An array containing the subdirectories.
  */
@@ -124,5 +129,16 @@
  * @return A formatted string with the modification time, or an empty string if mtime is not available.
  */
 - (NSString *)detailText;
+
+#pragma mark - File Size Index for Live Photo Detection
+
+/// Filename to file size mapping (built when directory loads).
+@property (nonatomic, strong, readonly, nullable) NSDictionary<NSString *, NSNumber *> *serverFileIndex;
+
+/// Lowercase filename to actual filename mapping.
+@property (nonatomic, strong, readonly, nullable) NSDictionary<NSString *, NSString *> *serverFileLowercaseIndex;
+
+/// Get file size by name (case-insensitive).
+- (NSNumber * _Nullable)fileSizeForName:(NSString *)name;
 
 @end

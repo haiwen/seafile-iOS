@@ -58,7 +58,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.view.backgroundColor = [UIColor colorWithWhite:0.95 alpha:1.0]; // Light gray background
+    self.view.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
     [self setupScrollView];
     [self setupInfoView];
     [self setupLoadingIndicator];
@@ -78,7 +78,7 @@
     self.scrollView = [[UIScrollView alloc] initWithFrame:self.view.bounds];
     self.scrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
     self.scrollView.delegate = self;
-    self.scrollView.backgroundColor = [UIColor colorWithWhite:0.95 alpha:1.0]; // Light gray background
+    self.scrollView.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
     // Keep default zoom at 1.0, so the image is displayed at its original scale
     self.scrollView.minimumZoomScale = 1.0;
     self.scrollView.maximumZoomScale = 3.0;
@@ -133,54 +133,47 @@
 }
 
 - (void)setupLivePhotoIcon {
-    // Create Live Photo badge container (iOS native style)
-    // Badge contains: icon + "LIVE" text
-    CGFloat badgeHeight = 28.0;
-    CGFloat leftPadding = 6.0;
-    CGFloat rightPadding = 10.0;
-    CGFloat iconSize = 18.0;
-    CGFloat spacing = 4.0;
-    
-    // Calculate badge width based on content
-    CGFloat estimatedTextWidth = 32.0; // Approximate width for "LIVE" text
+    CGFloat badgeHeight = 20.0;
+    CGFloat leftPadding = 3.0;
+    CGFloat rightPadding = 8.0;
+    CGFloat iconSize = 16.0;
+    CGFloat spacing = 2.0;
+    CGFloat estimatedTextWidth = 24.0;
     CGFloat badgeWidth = leftPadding + iconSize + spacing + estimatedTextWidth + rightPadding;
     
-    // Create container view as the badge
     self.livePhotoBadge = [[UIView alloc] initWithFrame:CGRectMake(0, 0, badgeWidth, badgeHeight)];
     self.livePhotoBadge.backgroundColor = [UIColor clearColor];
-    self.livePhotoBadge.layer.masksToBounds = NO; // Allow shadow to show
+    self.livePhotoBadge.layer.masksToBounds = NO;
     
-    // Create a content view for clipping - white/light background with slight transparency
+    // Background: #F2F2F9 75%, border: #C7C7C7 75%
     UIView *contentView = [[UIView alloc] initWithFrame:self.livePhotoBadge.bounds];
-    contentView.backgroundColor = [[UIColor whiteColor] colorWithAlphaComponent:0.9];
+    contentView.backgroundColor = [[UIColor colorWithRed:242/255.0 green:242/255.0 blue:249/255.0 alpha:1.0] colorWithAlphaComponent:0.75];
     contentView.layer.cornerRadius = badgeHeight / 2.0;
     contentView.layer.masksToBounds = YES;
     contentView.layer.borderWidth = 0.5;
-    contentView.layer.borderColor = [[UIColor grayColor] colorWithAlphaComponent:0.3].CGColor;
+    contentView.layer.borderColor = [UIColor colorWithRed:199/255.0 green:199/255.0 blue:199/255.0 alpha:0.75].CGColor;
     contentView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    contentView.tag = 100; // Tag for later reference
+    contentView.tag = 100;
     [self.livePhotoBadge addSubview:contentView];
     
-    // Create icon image view - centered vertically
+    // Icon: #1C1C1C 60%
     UIImageView *iconView = [[UIImageView alloc] initWithFrame:CGRectMake(leftPadding, (badgeHeight - iconSize) / 2.0, iconSize, iconSize)];
     if (@available(iOS 13.0, *)) {
         UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:iconSize weight:UIImageSymbolWeightRegular];
         UIImage *livePhotoSymbol = [UIImage systemImageNamed:@"livephoto" withConfiguration:config];
         iconView.image = livePhotoSymbol;
-        // Darker gray color
-        iconView.tintColor = [UIColor colorWithRed:0.35 green:0.35 blue:0.35 alpha:1.0];
+        iconView.tintColor = [UIColor colorWithRed:28/255.0 green:28/255.0 blue:28/255.0 alpha:0.6];
     }
     iconView.contentMode = UIViewContentModeScaleAspectFit;
-    iconView.tag = 101; // Tag for later reference
+    iconView.tag = 101;
     [contentView addSubview:iconView];
     
-    // Create "LIVE" text label
+    // Text: #1C1C1C 60%
     UILabel *liveLabel = [[UILabel alloc] init];
-    liveLabel.text = @"LIVE";
-    liveLabel.font = [UIFont systemFontOfSize:13 weight:UIFontWeightMedium];
-    // Darker gray color
-    liveLabel.textColor = [UIColor colorWithRed:0.35 green:0.35 blue:0.35 alpha:1.0];
-    liveLabel.tag = 102; // Tag for later reference
+    liveLabel.text = NSLocalizedString(@"LIVE", @"Live Photo badge text");
+    liveLabel.font = [UIFont systemFontOfSize:12 weight:UIFontWeightRegular];
+    liveLabel.textColor = [UIColor colorWithRed:28/255.0 green:28/255.0 blue:28/255.0 alpha:0.6];
+    liveLabel.tag = 102;
     [liveLabel sizeToFit];
     liveLabel.frame = CGRectMake(leftPadding + iconSize + spacing, 
                                   (badgeHeight - liveLabel.frame.size.height) / 2.0, 
@@ -188,24 +181,14 @@
                                   liveLabel.frame.size.height);
     [contentView addSubview:liveLabel];
     
-    // Recalculate badge width based on actual text width
     CGFloat actualBadgeWidth = leftPadding + iconSize + spacing + liveLabel.frame.size.width + rightPadding;
     CGRect badgeFrame = self.livePhotoBadge.frame;
     badgeFrame.size.width = actualBadgeWidth;
     self.livePhotoBadge.frame = badgeFrame;
     contentView.frame = self.livePhotoBadge.bounds;
     
-    // Add subtle shadow for depth (like iOS style)
-    self.livePhotoBadge.layer.shadowColor = [UIColor blackColor].CGColor;
-    self.livePhotoBadge.layer.shadowOffset = CGSizeMake(0, 1);
-    self.livePhotoBadge.layer.shadowOpacity = 0.1;
-    self.livePhotoBadge.layer.shadowRadius = 2.0;
-    
-    // Initially hidden
     self.livePhotoBadge.hidden = YES;
     self.livePhotoBadge.alpha = 1.0;
-    
-    // Add to view hierarchy (above other views)
     [self.view addSubview:self.livePhotoBadge];
 }
 
@@ -215,14 +198,12 @@
     self.livePhotoBadge.hidden = NO;
     self.livePhotoBadge.alpha = 1.0;
     [self.view bringSubviewToFront:self.livePhotoBadge];
-    Debug(@"[PhotoContent] Live Photo badge shown");
 }
 
 - (void)hideLivePhotoIcon {
     if (!self.livePhotoBadge) return;
     
     self.livePhotoBadge.hidden = YES;
-    Debug(@"[PhotoContent] Live Photo badge hidden");
 }
 
 - (void)showLivePhotoIconAnimated:(BOOL)animated {
@@ -266,34 +247,15 @@
     // Skip if already in the requested state
     if (show == self.infoVisible) return;
     
-    // First update our internal state
     self.infoVisible = show;
-    
-    // Update gesture recognizers based on info visibility
     [self updateGestureRecognizersForInfoVisibility:show];
     
-    // Handle Live Photo badge visibility based on info panel state
+    // Toggle Live Photo badge with info panel
     if (show) {
-        // Hide Live Photo badge when info panel is shown
         [self hideLivePhotoIconAnimated:animated];
     } else {
-        // Show Live Photo badge when info panel is hidden (only if it's a Motion Photo and nav bar is visible)
         if (self.isMotionPhoto) {
-            // Check if navigation bar is visible
-            UIViewController *navParentVC = self.parentViewController;
-            while (navParentVC && ![navParentVC isKindOfClass:[UINavigationController class]]) {
-                navParentVC = navParentVC.parentViewController;
-            }
-            
-            BOOL navBarVisible = YES;
-            if ([navParentVC isKindOfClass:[UINavigationController class]]) {
-                UINavigationController *navController = (UINavigationController *)navParentVC;
-                navBarVisible = !navController.navigationBarHidden;
-            }
-            
-            if (navBarVisible) {
-                [self showLivePhotoIconAnimated:animated];
-            }
+            [self showLivePhotoIconAnimated:animated];
         }
     }
     
@@ -782,8 +744,8 @@
                         if (rightOverlay) rightOverlay.alpha = 1.0;
                         
                         // Change background color from black to light gray
-                        self.view.backgroundColor = [UIColor colorWithWhite:0.95 alpha:1.0];
-                        self.scrollView.backgroundColor = [UIColor colorWithWhite:0.95 alpha:1.0];
+                        self.view.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
+                        self.scrollView.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
                         self.imageView.backgroundColor = [UIColor clearColor];
                     } completion:nil];
                     
@@ -798,9 +760,9 @@
                         if (leftOverlay) leftOverlay.alpha = 0.0;
                         if (rightOverlay) rightOverlay.alpha = 0.0;
                         
-                        // Change background color from gray to black
-                        self.view.backgroundColor = [UIColor blackColor];
-                        self.scrollView.backgroundColor = [UIColor blackColor];
+                        // Change background color to #F9F9F9
+                        self.view.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
+                        self.scrollView.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
                         self.imageView.backgroundColor = [UIColor clearColor];
                     } completion:^(BOOL finished) {
                         if (thumbnailCollection) thumbnailCollection.hidden = YES;
@@ -1375,22 +1337,17 @@
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
 
-    // Re-center indicator and label
     self.activityIndicator.center = self.view.center;
     self.progressLabel.center = CGPointMake(self.view.center.x, self.view.center.y + self.activityIndicator.bounds.size.height / 2 + 25);
     
-    // Position Live Photo badge in top-left corner (below navigation bar)
+    // Position Live Photo badge below navigation bar
     if (self.livePhotoBadge) {
-        CGFloat padding = 16.0;
-        CGFloat topOffset = padding;
-        
-        // Account for safe area (navigation bar area)
+        CGFloat leftMargin = 8.0;
+        CGFloat topMargin = 12.0;
+        CGFloat topOffset = topMargin;
+        CGFloat leftOffset = leftMargin;
         if (@available(iOS 11.0, *)) {
             topOffset += self.view.safeAreaInsets.top;
-        }
-        
-        CGFloat leftOffset = padding;
-        if (@available(iOS 11.0, *)) {
             leftOffset += self.view.safeAreaInsets.left;
         }
         
@@ -1804,14 +1761,14 @@
 
     // Set background color immediately based on inferred state
     if (shouldBeBlackBackground) {
-        // Ensure the view is in the 'dark mode' state
-        self.view.backgroundColor = [UIColor blackColor];
-        self.scrollView.backgroundColor = [UIColor blackColor];
+        // Ensure the view is in the fullscreen state with #F9F9F9 background
+        self.view.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
+        self.scrollView.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
         self.imageView.backgroundColor = [UIColor clearColor]; // Ensure image view is clear over black
     } else {
         // Ensure the view is in the 'light mode' state
-        // self.view.backgroundColor = [UIColor colorWithWhite:0.95 alpha:1.0]; // This is already set in viewDidLoad
-        // self.scrollView.backgroundColor = [UIColor colorWithWhite:0.95 alpha:1.0]; // This is already set in setupScrollView
+        // self.view.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9 - already set in viewDidLoad
+        // self.scrollView.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9 - already set in setupScrollView
         self.imageView.backgroundColor = [UIColor clearColor]; 
     }
     // When a new view is about to appear during a transition, make sure layout is correct
