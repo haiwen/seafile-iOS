@@ -16,6 +16,8 @@
     <string>com.microsoft.bmp</string>
     <key>heic</key>
     <string>public.heic</string>
+    <key>heif</key>
+    <string>public.heif</string>
     
     <key>pdf</key>
     <string>com.adobe.pdf</string>

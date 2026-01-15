@@ -322,6 +322,11 @@
                 NSString *tc = opt[@"textColor"];
                 if ([key isEqualToString:@"_status"]) {
                     NSString *code = [value isKindOfClass:[NSString class]] ? (NSString *)value : @"";
+                    // Localize the display name for status (server may return raw code like "_in_progress")
+                    NSString *localizedDisp = NSLocalizedString(disp, nil);
+                    if (localizedDisp.length > 0 && ![localizedDisp isEqualToString:disp]) {
+                        disp = localizedDisp;
+                    }
                     if (![bg isKindOfClass:[NSString class]] || bg.length == 0) {
                         NSDictionary *fallback = [self statusOptionForCode:code];
                         NSString *mapped = fallback[@"color"];

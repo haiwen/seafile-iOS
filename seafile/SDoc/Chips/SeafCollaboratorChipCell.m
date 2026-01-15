@@ -41,24 +41,27 @@ static UIImage *SeafDefaultAvatarImage(void)
 
         _avatarView = [UIImageView new];
         _avatarView.contentMode = UIViewContentModeScaleAspectFill;
-        _avatarView.layer.cornerRadius = 9;
+        // Avatar size: 16px per design spec
+        _avatarView.layer.cornerRadius = 8;
         _avatarView.layer.masksToBounds = YES;
         _avatarView.translatesAutoresizingMaskIntoConstraints = NO;
-        [_avatarView.widthAnchor constraintEqualToConstant:18].active = YES;
-        [_avatarView.heightAnchor constraintEqualToConstant:18].active = YES;
+        [_avatarView.widthAnchor constraintEqualToConstant:16].active = YES;
+        [_avatarView.heightAnchor constraintEqualToConstant:16].active = YES;
 
         _nameLabel = [UILabel new];
         _nameLabel.font = [UIFont systemFontOfSize:15];
-        _nameLabel.textColor = [UIColor secondaryLabelColor];
+        // Text color: #212529 per design spec
+        _nameLabel.textColor = [UIColor colorWithRed:0x21/255.0 green:0x25/255.0 blue:0x29/255.0 alpha:1.0];
 
         [h addArrangedSubview:_avatarView];
         [h addArrangedSubview:_nameLabel];
 
+        // Padding for avatar chip: left 4px, right 8px, top/bottom 3px per design spec
         [NSLayoutConstraint activateConstraints:@[
-            [h.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor constant:8],
+            [h.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor constant:4],
             [h.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor constant:-8],
-            [h.topAnchor constraintEqualToAnchor:self.contentView.topAnchor constant:2],
-            [h.bottomAnchor constraintEqualToAnchor:self.contentView.bottomAnchor constant:-2]
+            [h.topAnchor constraintEqualToAnchor:self.contentView.topAnchor constant:3],
+            [h.bottomAnchor constraintEqualToAnchor:self.contentView.bottomAnchor constant:-3]
         ]];
     }
     return self;
@@ -80,7 +83,8 @@ static UIImage *SeafDefaultAvatarImage(void)
     [super layoutSubviews];
     CGFloat h = CGRectGetHeight(self.contentView.bounds);
     self.contentView.layer.cornerRadius = h * 0.5;
-    self.avatarView.layer.cornerRadius = 9;
+    // Avatar corner radius: half of 16px = 8px
+    self.avatarView.layer.cornerRadius = 8;
 }
 
 - (void)configureWithName:(NSString *)name avatarURL:(NSString *)avatarURL

@@ -180,6 +180,9 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 - (void)clearAccount;
 - (void)logout;
 
+// Trigger photo sync check (force=YES to refresh photo list from library)
+- (void)checkPhotos:(BOOL)force;
+
 - (NSUInteger)autoSyncedNum;
 - (NSString * _Nonnull)uniqueUploadDir;
 

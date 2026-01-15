@@ -59,6 +59,10 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 @property NSObject *uploadLock;
 @property (readonly, nonatomic) NSMutableArray *uploadItems;//Files being uploaded in the current directory.
 
+// File size index for Live Photo detection
+@property (nonatomic, strong, readwrite) NSDictionary<NSString *, NSNumber *> *serverFileIndex;
+@property (nonatomic, strong, readwrite) NSDictionary<NSString *, NSString *> *serverFileLowercaseIndex;
+
 @end
 
 @implementation SeafDir
@@ -226,6 +230,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
         [[SeafRealmManager shared] updateFileStatuses:statusArray];
     }
 
+    [self buildFileIndexFromItems:newItems];
     [self loadedItems:newItems];
     return YES;
 }
@@ -458,10 +463,20 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 - (BOOL)nameExist:(NSString *)name
 {
     for (SeafBase *entry in _items) {
-        if ([[name precomposedStringWithCanonicalMapping] isEqualToString:[entry.name precomposedStringWithCanonicalMapping]])
+        if ([[name precomposedStringWithCanonicalMapping] caseInsensitiveCompare:[entry.name precomposedStringWithCanonicalMapping]] == NSOrderedSame)
             return true;
     }
     return false;
+}
+
+- (NSString *)actualNameForCaseInsensitiveMatch:(NSString *)name
+{
+    for (SeafBase *entry in _items) {
+        if ([[name precomposedStringWithCanonicalMapping] caseInsensitiveCompare:[entry.name precomposedStringWithCanonicalMapping]] == NSOrderedSame) {
+            return entry.name;
+        }
+    }
+    return nil;
 }
 
 - (void)loadContent:(BOOL)force;
@@ -527,6 +542,40 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
         return [SeafDateFormatter stringFromLongLong:self.mtime];
     }
     return @"";
+}
+
+#pragma mark - File Size Index for Live Photo Detection
+
+- (void)buildFileIndexFromItems:(NSArray *)items {
+    NSMutableDictionary<NSString *, NSNumber *> *fileIndex = [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSString *, NSString *> *lowercaseIndex = [NSMutableDictionary dictionary];
+    
+    for (SeafBase *item in items) {
+        if ([item isKindOfClass:[SeafFile class]]) {
+            SeafFile *file = (SeafFile *)item;
+            NSString *name = file.name;
+            if (name) {
+                fileIndex[name] = @(file.filesize);
+                lowercaseIndex[name.lowercaseString] = name;
+            }
+        }
+    }
+    
+    self.serverFileIndex = [fileIndex copy];
+    self.serverFileLowercaseIndex = [lowercaseIndex copy];
+}
+
+- (NSNumber *)fileSizeForName:(NSString *)name {
+    if (!name || !self.serverFileLowercaseIndex || !self.serverFileIndex) {
+        return nil;
+    }
+    
+    NSString *actualName = self.serverFileLowercaseIndex[name.lowercaseString];
+    if (!actualName) {
+        return nil;
+    }
+    
+    return self.serverFileIndex[actualName];
 }
 
 @end

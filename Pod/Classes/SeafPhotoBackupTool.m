@@ -15,6 +15,7 @@
 #import "SeafDataTaskManager.h"
 #import <FileProvider/NSFileProviderError.h>
 #import "SeafUploadFileModel.h"
+#import "SeafFileOperationManager.h"
 
 #define DEFAULT_UPLOADINGARRAY_INTERVAL 10*60 // 10 min
 
@@ -117,28 +118,49 @@
         return;
     }
     
+    // Refresh syncDir to get latest file list for case-insensitive matching
+    @weakify(self);
+    [dir loadContentSuccess:^(SeafDir *refreshedDir) {
+        @strongify(self);
+        [self doPickPhotosForUploadWithDir:refreshedDir];
+    } failure:^(SeafDir *failedDir, NSError *error) {
+        @strongify(self);
+        Debug("Failed to refresh syncDir: %@", error);
+        [self doPickPhotosForUploadWithDir:failedDir];
+    }];
+}
+
+- (void)doPickPhotosForUploadWithDir:(SeafDir *)dir {
+    if (!dir) {
+        return;
+    }
+    
     NSArray *photos = [self.photosArray copy];
+    
     PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:photos options:nil];
     
     NSMutableArray *uploadFilesArray = [[NSMutableArray alloc] init];
-    // ============ Live Photo / Motion Photo upload setting ============
     BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
+    
     for (PHAsset *asset in result) {
         if (asset) {
-            // Always keep original format (no HEIC→JPG conversion)
             SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
-            
-            // Get upload filename based on Live Photo setting
             NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];
+            NSString *expectedFilename = filename;
+            
+            // Use actual server filename for case-insensitive overwrite on Linux
+            NSString *actualFilename = [dir actualNameForCaseInsensitiveMatch:filename];
+            if (actualFilename) {
+                filename = actualFilename;
+            }
+            
             NSString *path = [self.localUploadDir stringByAppendingPathComponent:filename];
             SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
             file.lastModified = asset.modificationDate;
             file.retryable = false;
             file.model.uploadFileAutoSync = true;
             file.model.overwrite = true;
-            
-            // Mark Live Photo for Motion Photo processing only when "Upload Live Photo" setting is enabled
-            // When disabled, Live Photo uploads as static image only (no video part)
+            file.model.expectedFilename = expectedFilename;
             if (photoAsset.isLivePhoto && uploadLivePhotoEnabled) {
                 file.model.isLivePhoto = YES;
             }
@@ -153,6 +175,7 @@
             [uploadFilesArray addObject:file];
         }
     }
+    
     [SeafDataTaskManager.sharedObject addUploadTasksInBatch:uploadFilesArray forConnection:self.connection];
 }
 
@@ -178,22 +201,24 @@
         PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
         PHAsset *asset = [result firstObject];
         if (asset) {
-            // ============ Live Photo / Motion Photo upload setting ============
             BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
-            // Always keep original format (no HEIC→JPG conversion)
             SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
-            
-            // Get upload filename based on Live Photo setting
             NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];
+            NSString *expectedFilename = filename;
+            
+            // Use actual server filename for case-insensitive overwrite on Linux
+            NSString *actualFilename = [dir actualNameForCaseInsensitiveMatch:filename];
+            if (actualFilename) {
+                filename = actualFilename;
+            }
+            
             NSString *path = [self.localUploadDir stringByAppendingPathComponent:filename];
             SeafUploadFile *file = [[SeafUploadFile alloc] initWithPath:path];
             file.lastModified = asset.modificationDate;
             file.retryable = false;
             file.model.uploadFileAutoSync = true;
             file.model.overwrite = true;
-            
-            // Mark Live Photo for Motion Photo processing only when "Upload Live Photo" setting is enabled
-            // When disabled, Live Photo uploads as static image only (no video part)
+            file.model.expectedFilename = expectedFilename;
             if (photoAsset.isLivePhoto && uploadLivePhotoEnabled) {
                 file.model.isLivePhoto = YES;
             }
@@ -226,6 +251,20 @@
 
 - (void)autoSyncFileUploadComplete:(SeafUploadFile *)ufile error:(NSError *)error {
     if (!error) {
+        // Rename file to normalize case if needed
+        NSString *currentName = ufile.name;
+        NSString *expectedName = ufile.model.expectedFilename;
+        if (expectedName && ![currentName isEqualToString:expectedName]) {
+            [[SeafFileOperationManager sharedManager] renameEntry:currentName
+                                                          newName:expectedName
+                                                            inDir:ufile.udir
+                                                       completion:^(BOOL success, SeafBase *renamedFile, NSError *renameError) {
+                if (!success) {
+                    Warning(@"Failed to rename %@ to %@: %@", currentName, expectedName, renameError);
+                }
+            }];
+        }
+        
         [self setPhotoUploadedIdentifier:ufile.assetIdentifier];
         @synchronized(self.photosArray) {
             [self.photosArray removeObject:ufile.assetIdentifier];
@@ -236,7 +275,6 @@
     }
 }
 
-//keep _photosArray as the current array of photos that need to be uploaded
 - (void)filterOutNeedUploadPhotos {
     PHFetchResult *result = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum subtype:PHAssetCollectionSubtypeSmartAlbumUserLibrary options:nil];
     
@@ -262,24 +300,120 @@
     PHAssetCollection *collection = result.firstObject;
     
     self.fetchResult = [PHAsset fetchAssetsInAssetCollection:collection options:fetchOptions];
-
+    BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
+    
     [self.fetchResult enumerateObjectsUsingBlock:^(PHAsset *asset, NSUInteger idx, BOOL * _Nonnull stop) {
         SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
         if (photoAsset.name != nil) {
-            //if is firstTimeSync ,check photo has already uploaded to dir.
+            // First time sync: check if photo already exists on server
             if (self.connection.isFirstTimeSync) {
-                if ([self.syncDir nameExist:photoAsset.name]) {
+                if ([self isPhotoExistsOnServer:photoAsset livePhotoEnabled:uploadLivePhotoEnabled]) {
                     [self setPhotoUploadedIdentifier:asset.localIdentifier];
-                    Debug("First time sync, skip file %@(%@) which has already been uploaded", photoAsset.name, photoAsset.localIdentifier);
                     return;
                 }
             }
-            //if not exist in realm,add to photos.
-            if (![self IsPhotoUploaded:photoAsset] && ![self IsPhotoUploading:photoAsset]) {
+            
+            BOOL isUploaded = [self IsPhotoUploaded:photoAsset];
+            BOOL isUploading = [self IsPhotoUploading:photoAsset];
+            
+            // Re-upload Live Photo if server only has static version
+            if (isUploaded && photoAsset.isLivePhoto && uploadLivePhotoEnabled) {
+                if (![self isMotionPhotoExistsOnServer:photoAsset]) {
+                    isUploaded = NO;
+                }
+            }
+            
+            if (!isUploaded && !isUploading) {
                 [self addUploadPhoto:photoAsset.localIdentifier];
             }
         }
     }];
+}
+
+#pragma mark - First Time Sync Helper
+
+/// Check if photo exists on server (with backward compatibility for HEIC/JPG variants).
+- (BOOL)isPhotoExistsOnServer:(SeafPhotoAsset *)photoAsset livePhotoEnabled:(BOOL)livePhotoEnabled {
+    if (!photoAsset.name || !self.syncDir) {
+        return NO;
+    }
+    
+    // Live Photo: use file size comparison
+    if (photoAsset.isLivePhoto && livePhotoEnabled) {
+        return [self isMotionPhotoExistsOnServer:photoAsset];
+    }
+    
+    // Check current upload name
+    NSString *uploadName = [photoAsset uploadNameWithLivePhotoEnabled:livePhotoEnabled];
+    if ([self.syncDir nameExist:uploadName]) {
+        return YES;
+    }
+    
+    // Check original filename
+    if (![uploadName isEqualToString:photoAsset.name]) {
+        if ([self.syncDir nameExist:photoAsset.name]) {
+            return YES;
+        }
+    }
+    
+    // Check format variants (HEIC ↔ JPG) for backward compatibility
+    NSString *baseName = [photoAsset.name stringByDeletingPathExtension];
+    NSString *ext = [photoAsset.name.pathExtension lowercaseString];
+    
+    if ([ext isEqualToString:@"heic"] || [ext isEqualToString:@"heif"]) {
+        NSString *jpgVariant = [baseName stringByAppendingPathExtension:@"jpg"];
+        if ([self.syncDir nameExist:jpgVariant]) {
+            return YES;
+        }
+    } else if ([ext isEqualToString:@"jpg"] || [ext isEqualToString:@"jpeg"]) {
+        NSString *heicVariant = [baseName stringByAppendingPathExtension:@"heic"];
+        if ([self.syncDir nameExist:heicVariant]) {
+            return YES;
+        }
+    }
+    
+    // Check edited photo's JPG variant (iOS exports edited photos as JPEG)
+    if (photoAsset.isModified) {
+        if (![ext isEqualToString:@"jpg"] && ![ext isEqualToString:@"jpeg"]) {
+            NSString *jpgVariant = [baseName stringByAppendingPathExtension:@"jpg"];
+            if ([self.syncDir nameExist:jpgVariant]) {
+                return YES;
+            }
+        }
+    }
+    
+    return NO;
+}
+
+/// Check if motion photo exists on server using file size comparison.
+- (BOOL)isMotionPhotoExistsOnServer:(SeafPhotoAsset *)photoAsset {
+    if (!photoAsset.isLivePhoto || !self.syncDir) {
+        return NO;
+    }
+    
+    NSString *uploadName = [photoAsset uploadNameWithLivePhotoEnabled:YES];
+    NSNumber *serverFileSize = [self.syncDir fileSizeForName:uploadName];
+    if (!serverFileSize) {
+        return NO;
+    }
+    
+    unsigned long long photoSize = photoAsset.photoResourceSize;
+    unsigned long long videoSize = photoAsset.pairedVideoResourceSize;
+    if (photoSize == 0 || videoSize == 0) {
+        return YES;
+    }
+    
+    // Compare server file size to expected static/motion sizes
+    unsigned long long serverSize = [serverFileSize unsignedLongLongValue];
+    unsigned long long expectedStaticSize = photoSize;
+    unsigned long long expectedMotionSize = photoSize + videoSize;
+    
+    unsigned long long distanceToStatic = (serverSize > expectedStaticSize) ?
+        (serverSize - expectedStaticSize) : (expectedStaticSize - serverSize);
+    unsigned long long distanceToMotion = (serverSize > expectedMotionSize) ?
+        (serverSize - expectedMotionSize) : (expectedMotionSize - serverSize);
+    
+    return (distanceToMotion < distanceToStatic);
 }
 
 - (NSPredicate *)buildAutoSyncPredicte {
@@ -300,7 +434,6 @@
     return self.photosArray.count;
 }
 
-//Determine whether it has been uploaded and recorded in realm.
 - (BOOL)IsPhotoUploaded:(SeafPhotoAsset *)asset {
     NSString *realmAssetId = [self.accountIdentifier stringByAppendingString:asset.localIdentifier];
     return [[SeafRealmManager shared] isPhotoExistInRealm:realmAssetId forAccount:self.accountIdentifier];

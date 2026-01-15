@@ -28,6 +28,7 @@
 #import "Debug.h"
 #import "SeafPrivacyPolicyViewController.h"
 #import "SeafBackupGuideViewController.h"
+#import "SeafRealmManager.h"
 
 #define CELL_PADDING_HORIZONTAL 10.0
 #define CELL_CORNER_RADIUS 10.0
@@ -282,10 +283,19 @@ enum {
     _connection.localDecryptionEnabled = _localDecrySwitch.on;
 }
 - (IBAction)enableUploadHeicFlip:(UISwitch *)sender {
-    // ============ Live Photo / Motion Photo upload setting ============
-    // This switch now only controls Live Photo upload behavior
-    // Static photos always keep their original format (no HEIC→JPG conversion)
-    [_connection setUploadLivePhotoEnabled:sender.on];
+    if (sender.on) {
+        NSString *message = NSLocalizedString(@"Previously backed up Live Photos will be re-uploaded as Motion Photos.", @"Seafile");
+        [self alertWithTitle:NSLocalizedString(@"Upload Live Photo", @"Seafile")
+                     message:message
+                         yes:^{
+            [self->_connection setUploadLivePhotoEnabled:YES];
+            [self->_connection checkPhotos:YES];
+        } no:^{
+            sender.on = NO;
+        }];
+    } else {
+        [_connection setUploadLivePhotoEnabled:NO];
+    }
 }
 
 // Handles the toggle of the TouchID/FaceID switch.

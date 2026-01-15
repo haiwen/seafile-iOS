@@ -24,6 +24,10 @@
 @property (nonatomic, copy) NSString *tempVideoPath;
 @property (nonatomic, strong) NSURL *videoURL;
 
+@property (nonatomic, assign) BOOL waitingForFirstFrame;
+@property (nonatomic, assign) BOOL transitionCompleted;
+@property (nonatomic, strong) UIImpactFeedbackGenerator *hapticFeedback;
+
 @end
 
 @implementation SeafLivePhotoPlayerView
@@ -47,7 +51,7 @@
 }
 
 - (void)commonInit {
-    self.backgroundColor = [UIColor blackColor];
+    self.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
     self.clipsToBounds = YES;
     
     _imageContentMode = UIViewContentModeScaleAspectFit;
@@ -59,6 +63,12 @@
     [self setupImageView];
     [self setupLiveBadge];
     [self setupGestures];
+    [self setupHapticFeedback];
+}
+
+- (void)setupHapticFeedback {
+    _hapticFeedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
+    [_hapticFeedback prepare];
 }
 
 - (void)setupImageView {
@@ -250,15 +260,25 @@
         return;
     }
     
+    [_hapticFeedback impactOccurred];
     [self setupPlayer];
     
     _isPlaying = YES;
-    _imageView.hidden = YES;
+    _waitingForFirstFrame = YES;
+    _transitionCompleted = NO;
+    
+    // playerLayer is below imageView; hide imageView when first frame is ready
+    _playerLayer.opacity = 1.0;
     _playerLayer.hidden = NO;
+    _imageView.hidden = NO;
+    _imageView.alpha = 1.0;
+    
+    if (_playerLayer.readyForDisplay) {
+        [self performCrossFadeTransition];
+    }
     
     [_player seekToTime:kCMTimeZero];
     [_player play];
-    
     [self updateLiveBadgeVisibility];
     
     if ([_delegate respondsToSelector:@selector(livePhotoPlayerViewDidStartPlaying:)]) {
@@ -280,13 +300,43 @@
     }
     
     [_player pause];
-    [_player seekToTime:kCMTimeZero];
     
     _isPlaying = NO;
-    _imageView.hidden = NO;
-    _playerLayer.hidden = YES;
+    _waitingForFirstFrame = NO;
+    _transitionCompleted = NO;
     
+    _imageView.hidden = NO;
+    _imageView.alpha = 1.0;
+    
+    [self destroyPlayer];
     [self updateLiveBadgeVisibility];
+}
+
+- (void)destroyPlayer {
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:AVPlayerItemDidPlayToEndTimeNotification
+                                                  object:_player.currentItem];
+    
+    @try {
+        if (_playerLayer) {
+            [_playerLayer removeObserver:self forKeyPath:@"readyForDisplay"];
+        }
+        if (_player.currentItem) {
+            [_player.currentItem removeObserver:self forKeyPath:@"status"];
+        }
+    } @catch (NSException *exception) {
+        Debug(@"[LivePhoto] Exception removing KVO: %@", exception);
+    }
+    
+    // Destroy player
+    [_player pause];
+    _player = nil;
+    
+    // Destroy playerLayer
+    [_playerLayer removeFromSuperlayer];
+    _playerLayer = nil;
+    
+    Debug(@"[LivePhoto] Player destroyed for clean state");
 }
 
 - (void)togglePlayback {
@@ -316,9 +366,11 @@
     _playerLayer.frame = self.bounds;
     _playerLayer.videoGravity = AVLayerVideoGravityResizeAspect;
     _playerLayer.hidden = YES;
-    [self.layer insertSublayer:_playerLayer above:_imageView.layer];
+    [self.layer insertSublayer:_playerLayer below:_imageView.layer];
     
-    // Observe playback end
+    [_playerLayer addObserver:self forKeyPath:@"readyForDisplay" options:NSKeyValueObservingOptionNew context:nil];
+    [playerItem addObserver:self forKeyPath:@"status" options:NSKeyValueObservingOptionNew context:nil];
+    
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(playerDidFinishPlaying:)
                                                  name:AVPlayerItemDidPlayToEndTimeNotification
@@ -333,6 +385,37 @@
             [self.delegate livePhotoPlayerViewDidFinishPlaying:self];
         }
     });
+}
+
+#pragma mark - Cross-Fade Transition
+
+/// Switch from static image to video when first frame is ready.
+- (void)performCrossFadeTransition {
+    if (_transitionCompleted || !_isPlaying) {
+        return;
+    }
+    
+    _waitingForFirstFrame = NO;
+    _transitionCompleted = YES;
+    _imageView.hidden = YES;
+}
+
+#pragma mark - KVO Observer
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
+    if ([keyPath isEqualToString:@"readyForDisplay"]) {
+        BOOL ready = [change[NSKeyValueChangeNewKey] boolValue];
+        if (ready && _waitingForFirstFrame && _isPlaying) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self performCrossFadeTransition];
+            });
+        }
+    } else if ([keyPath isEqualToString:@"status"]) {
+        AVPlayerItemStatus status = [change[NSKeyValueChangeNewKey] integerValue];
+        if (status == AVPlayerItemStatusFailed) {
+            Debug(@"[LivePhoto] AVPlayerItem failed: %@", _player.currentItem.error);
+        }
+    }
 }
 
 #pragma mark - Gesture Handling
@@ -361,19 +444,16 @@
 #pragma mark - Cleanup
 
 - (void)cleanup {
-    [self stop];
+    if (_isPlaying) {
+        [self stop];
+    } else {
+        [self destroyPlayer];
+    }
     
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     
-    [_player pause];
-    _player = nil;
-    
-    [_playerLayer removeFromSuperlayer];
-    _playerLayer = nil;
-    
     _videoURL = nil;
     
-    // Remove temp video file
     if (_tempVideoPath) {
         [[NSFileManager defaultManager] removeItemAtPath:_tempVideoPath error:nil];
         _tempVideoPath = nil;
@@ -381,8 +461,12 @@
     
     _staticImage = nil;
     _imageView.image = nil;
+    _imageView.alpha = 1.0;
+    _imageView.hidden = NO;
     _hasMotionPhotoContent = NO;
     _isPlaying = NO;
+    _waitingForFirstFrame = NO;
+    _transitionCompleted = NO;
 }
 
 @end
