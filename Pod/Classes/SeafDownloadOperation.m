@@ -147,7 +147,6 @@ extern NSString * const AFNetworkingOperationFailingURLResponseErrorKey;
 
 - (void)downloadFileWithUrl:(NSString *)url connection:(SeafConnection *)connection
 {
-    url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url] cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:DEFAULT_TIMEOUT];
 
     NSString *target = [SeafStorage.sharedObject documentPath:self.downloadingFileOid];
@@ -292,8 +291,7 @@ extern NSString * const AFNetworkingOperationFailingURLResponseErrorKey;
 
 - (void)downloadBlock:(NSString *)blkId fromUrl:(NSString *)url
 {
-    url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-    NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url] 
+    NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]
                                                    cachePolicy:NSURLRequestReloadIgnoringLocalCacheData 
                                                timeoutInterval:DEFAULT_TIMEOUT];
     
