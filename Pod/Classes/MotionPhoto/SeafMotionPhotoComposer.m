@@ -192,22 +192,17 @@ typedef struct {
 
 + (nullable NSData *)composeV1V2MotionPhotoWithImageData:(NSData *)imageData
                                                videoData:(NSData *)videoData {
-    Debug(@"SeafMotionPhotoComposer: Building V1+V2 hybrid HEIC Motion Photo...");
-    
     // Validate inputs
     if (![self isValidImageDataForComposition:imageData]) {
-        Debug(@"SeafMotionPhotoComposer: Invalid image data format");
         return nil;
     }
     
     if (![self isValidVideoDataForComposition:videoData]) {
-        Debug(@"SeafMotionPhotoComposer: Invalid video data format");
         return nil;
     }
     
     // Check if HEIC
     if (![self isHEICData:imageData]) {
-        Debug(@"SeafMotionPhotoComposer: V1+V2 format only supports HEIC images");
         return nil;
     }
     
@@ -219,15 +214,6 @@ typedef struct {
     // that indicates the exact frame corresponding to the still image
     int64_t presentationTimestampUs = [SeafVideoConverter extractPresentationTimestampFromVideoData:videoData];
     
-    if (presentationTimestampUs < 0) {
-        // Keep -1 to indicate "unspecified" per Google Motion Photo spec
-        // This tells the player to determine the appropriate frame itself
-        Debug(@"SeafMotionPhotoComposer: Could not extract timestamp, using -1 (unspecified)");
-    } else {
-        Debug(@"SeafMotionPhotoComposer: Extracted presentation timestamp: %lld us (%.3f s)", 
-              presentationTimestampUs, presentationTimestampUs / 1000000.0);
-    }
-    
     // Generate XMP metadata in V1+V2 hybrid format
     // This format is compatible with:
     // - V1 readers (via GCamera:MotionPhoto, GCamera:MotionPhotoVersion, MicroVideoOffset)
@@ -237,14 +223,11 @@ typedef struct {
                                                        presentationTimestampUs:presentationTimestampUs];
     NSData *xmpData = [xmpString dataUsingEncoding:NSUTF8StringEncoding];
     
-    Debug(@"SeafMotionPhotoComposer: Generated V1+V2 hybrid XMP metadata (%lu bytes)", (unsigned long)xmpData.length);
-    
     // Parse original HEIC structure
     SeafISOBMFFParser *parser = [[SeafISOBMFFParser alloc] initWithData:imageData];
     NSArray<SeafISOBMFFBox *> *boxes = [parser parseTopLevelBoxes];
     
     if (boxes.count == 0) {
-        Debug(@"SeafMotionPhotoComposer: Failed to parse HEIC structure");
         return nil;
     }
     
@@ -267,7 +250,6 @@ typedef struct {
     }
     
     if (!ftypBox || !metaBox || !mdatBox) {
-        Debug(@"SeafMotionPhotoComposer: Missing required boxes (ftyp, meta, or mdat)");
         return nil;
     }
     
@@ -277,7 +259,6 @@ typedef struct {
     SeafISOBMFFBox *irefBox = [parser findIrefInMetaBox:metaBox];
     
     if (!iinfBox || !ilocBox) {
-        Debug(@"SeafMotionPhotoComposer: Missing iinf or iloc box in meta");
         return nil;
     }
     
@@ -285,19 +266,15 @@ typedef struct {
     SeafIlocData *ilocData = [parser parseIlocBox:ilocBox];
     
     if (!iinfData || !ilocData) {
-        Debug(@"SeafMotionPhotoComposer: Failed to parse iinf or iloc data");
         return nil;
     }
     
     // Get primary item ID for cdsc reference
     uint32_t primaryItemID = [parser getPrimaryItemIDFromMetaBox:metaBox];
-    Debug(@"SeafMotionPhotoComposer: Primary item ID: %u", primaryItemID);
     
     // Get max item ID and create new XMP mime item
     uint32_t maxItemID = [parser getMaxItemIDFromIinfData:iinfData];
     uint32_t xmpItemID = maxItemID + 1;
-    
-    Debug(@"SeafMotionPhotoComposer: Creating XMP mime item with ID %u", xmpItemID);
     
     // Add new mime item to iinf
     SeafIinfItem *xmpItem = [parser createMimeInfeItemWithID:xmpItemID version:iinfData.version == 0 ? 2 : iinfData.version];
@@ -319,12 +296,8 @@ typedef struct {
                                                   toItemID:primaryItemID];
             if (newIrefBox) {
                 irefSizeDelta = (int64_t)newIrefBox.length - (int64_t)irefBox.size;
-                Debug(@"SeafMotionPhotoComposer: Added cdsc reference for XMP item %u -> primary item %u (iref delta: %lld)", 
-                      xmpItemID, primaryItemID, irefSizeDelta);
             }
         }
-    } else {
-        Debug(@"SeafMotionPhotoComposer: No iref box found or no primary item, skipping cdsc reference");
     }
     
     // Calculate boxes between meta and mdat
@@ -357,8 +330,6 @@ typedef struct {
     uint64_t newMetaEnd = newFtypEnd + newMetaSize;
     uint64_t newMdatStart = newMetaEnd + boxesBetweenSize;
     uint64_t xmpOffsetInFile = newMdatStart + 8 + originalMdatPayloadSize;
-    
-    Debug(@"SeafMotionPhotoComposer: XMP will be at offset %llu in new file", xmpOffsetInFile);
     
     // Step 3: Update XMP item's offset with correct value
     for (SeafIlocItem *item in ilocData.items) {
@@ -397,7 +368,6 @@ typedef struct {
     
     // 1. Copy ftyp
     [result appendData:[imageData subdataWithRange:NSMakeRange(ftypBox.offset, ftypBox.size)]];
-    Debug(@"SeafMotionPhotoComposer: Added ftyp (%llu bytes)", ftypBox.size);
     
     // 2. Build new meta box
     NSMutableData *newMetaContent = [NSMutableData data];
@@ -412,7 +382,6 @@ typedef struct {
         } else if ([child.type isEqualToString:@"iref"] && newIrefBox) {
             // Replace iref with updated version containing cdsc reference
             [newMetaContent appendData:newIrefBox];
-            Debug(@"SeafMotionPhotoComposer: Replaced iref box (%llu -> %lu bytes)", child.size, (unsigned long)newIrefBox.length);
         } else {
             [newMetaContent appendData:[imageData subdataWithRange:NSMakeRange(child.offset, child.size)]];
         }
@@ -423,7 +392,6 @@ typedef struct {
     [result appendBytes:&metaSizeBE length:4];
     [result appendBytes:"meta" length:4];
     [result appendData:newMetaContent];
-    Debug(@"SeafMotionPhotoComposer: Added meta (%u bytes, iref updated: %@)", metaSize, newIrefBox ? @"YES" : @"NO");
     
     // 3. Copy boxes between meta and mdat
     for (SeafISOBMFFBox *box in otherBoxes) {
@@ -439,7 +407,6 @@ typedef struct {
     [result appendBytes:"mdat" length:4];
     [result appendData:[imageData subdataWithRange:NSMakeRange(mdatBox.offset + 8, mdatBox.size - 8)]];
     [result appendData:xmpData];
-    Debug(@"SeafMotionPhotoComposer: Added mdat (%llu bytes, +XMP %lu)", newMdatTotalSize, (unsigned long)xmpData.length);
     
     // 5. Copy trailing boxes from original HEIC (if any)
     for (SeafISOBMFFBox *box in otherBoxes) {
@@ -451,10 +418,6 @@ typedef struct {
     // 6. Append video with mpvd box wrapper
     NSData *mpvdBox = [self createMPVDBox:videoData];
     [result appendData:mpvdBox];
-    Debug(@"SeafMotionPhotoComposer: Added mpvd box (%lu bytes, video: %lu bytes)", (unsigned long)mpvdBox.length, (unsigned long)videoData.length);
-    
-    Debug(@"SeafMotionPhotoComposer: V1+V2 hybrid HEIC Motion Photo composed. Total: %lu bytes", (unsigned long)result.length);
-    Debug(@"SeafMotionPhotoComposer: XMP stored as mime item (ID %u) in mdat", xmpItemID);
     
     return [result copy];
 }

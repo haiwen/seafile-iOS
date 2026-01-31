@@ -94,7 +94,6 @@ static SeafRealmManager* instance;
 }
 
 - (void)updateCachePhotoWithIdentifier:(NSString *)identifier forAccount:(NSString *)account andStatus:(NSString *)status {
-    Debug("Add or update photo: %@, status: %@, account: %@", identifier, status, account);
     RLMRealm *realm = [RLMRealm defaultRealm];
     
     SeafCachePhoto *cachePhoto = [[SeafCachePhoto alloc] init];
@@ -266,7 +265,6 @@ static SeafRealmManager* instance;
 // Private method: Handle single file status update
 - (void)handleFileStatusUpdate:(SeafFileStatus *)newStatus inRealm:(RLMRealm *)realm {
     if (!newStatus || newStatus.uniquePath.length == 0) {
-        Debug(@"Invalid SeafFileStatus object or missing uniquePath.");
         return;
     }
     
@@ -276,7 +274,6 @@ static SeafRealmManager* instance;
     if (!existingStatus) {
         // If not exists, add new status directly
         [realm addOrUpdateObject:newStatus];
-        Debug(@"Added new SeafFileStatus with uniquePath=%@", newStatus.uniquePath);
         return;
     }
     
@@ -341,7 +338,6 @@ static SeafRealmManager* instance;
         
         [realm addOrUpdateObject:existingStatus];
     }
-    Debug(@"Updated existing SeafFileStatus with uniquePath=%@", newStatus.uniquePath);
 }
 
 // Update single file status

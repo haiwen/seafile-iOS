@@ -487,10 +487,15 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
         CGFloat newX = self.scrollView.bounds.size.width * (currentPage + 1);
         [self.scrollView setContentOffset:CGPointMake(newX, 0) animated:YES];
     } else {
+        Debug("BackupGuide: completing setup, backupHeicButton.selected=%d, current uploadLivePhotoEnabled=%d, hasRespondedToLivePhotoReuploadPrompt=%d",
+              self.backupHeicButton.selected, self.connection.isUploadLivePhotoEnabled, self.connection.hasRespondedToLivePhotoReuploadPrompt);
+        
         self.connection.videoSync = self.backupVideosButton.selected;
         // ============ Live Photo / Motion Photo upload setting ============
         // This button now only controls Live Photo upload behavior
         [self.connection setUploadLivePhotoEnabled:self.backupHeicButton.selected];
+        
+        Debug("BackupGuide: after setUploadLivePhotoEnabled, uploadLivePhotoEnabled=%d", self.connection.isUploadLivePhotoEnabled);
 
         self.connection.wifiOnly = self.wifiOnlyButton.selected;
         

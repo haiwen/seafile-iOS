@@ -677,7 +677,6 @@
         [ilocData.items addObject:item];
     }
     
-    Debug(@"SeafISOBMFFParser: Parsed iloc with %lu items", (unsigned long)ilocData.items.count);
     return ilocData;
 }
 
@@ -707,7 +706,6 @@
         // Adjust base_offset if it points to or beyond mdat
         if (item.baseOffset >= threshold) {
             item.baseOffset += delta;
-            Debug(@"SeafISOBMFFParser: Adjusted item %u base_offset by %lld", item.itemID, delta);
         }
         
         // Adjust extent offsets
@@ -716,7 +714,6 @@
             // If base_offset > 0, extent_offset is relative to base_offset
             if (item.baseOffset == 0 && extent.extentOffset >= threshold) {
                 extent.extentOffset += delta;
-                Debug(@"SeafISOBMFFParser: Adjusted item %u extent_offset by %lld", item.itemID, delta);
             }
         }
     }
@@ -852,7 +849,6 @@
             NSData *newIlocBox = [self serializeIlocData:newIlocData];
             if (newIlocBox) {
                 [metaContent appendData:newIlocBox];
-                Debug(@"SeafISOBMFFParser: Replaced iloc box (%llu -> %lu bytes)", child.size, (unsigned long)newIlocBox.length);
             } else {
                 // Fallback to original
                 [metaContent appendData:[self.data subdataWithRange:NSMakeRange(child.offset, child.size)]];
@@ -867,7 +863,6 @@
     if (xmpData) {
         NSData *uuidBox = [self createXMPUuidBox:xmpData];
         [metaContent appendData:uuidBox];
-        Debug(@"SeafISOBMFFParser: Added XMP uuid box (%lu bytes)", (unsigned long)uuidBox.length);
     }
     
     // Build final meta box
@@ -876,8 +871,6 @@
     [result appendBytes:&metaSizeBE length:4];
     [result appendBytes:"meta" length:4];
     [result appendData:metaContent];
-    
-    Debug(@"SeafISOBMFFParser: Rebuilt meta box: %llu -> %u bytes", metaBox.size, metaSize);
     
     return [result copy];
 }
@@ -1053,7 +1046,6 @@
         offset += infeSize;
     }
     
-    Debug(@"SeafISOBMFFParser: Parsed iinf with %lu items", (unsigned long)iinfData.items.count);
     return iinfData;
 }
 
@@ -1201,8 +1193,6 @@
     
     [item.extents addObject:extent];
     [ilocData.items addObject:item];
-    
-    Debug(@"SeafISOBMFFParser: Added item %u to iloc (offset=%llu, length=%llu)", itemID, offset, length);
 }
 
 - (nullable NSData *)rebuildMetaBoxWithIlocData:(SeafIlocData *)ilocData
@@ -1228,10 +1218,8 @@
     for (SeafISOBMFFBox *child in metaBox.children) {
         if ([child.type isEqualToString:@"iinf"] && newIinfBox) {
             [metaContent appendData:newIinfBox];
-            Debug(@"SeafISOBMFFParser: Replaced iinf box (%llu -> %lu bytes)", child.size, (unsigned long)newIinfBox.length);
         } else if ([child.type isEqualToString:@"iloc"] && newIlocBox) {
             [metaContent appendData:newIlocBox];
-            Debug(@"SeafISOBMFFParser: Replaced iloc box (%llu -> %lu bytes)", child.size, (unsigned long)newIlocBox.length);
         } else {
             // Copy original child box
             [metaContent appendData:[self.data subdataWithRange:NSMakeRange(child.offset, child.size)]];
@@ -1245,8 +1233,6 @@
     [result appendBytes:&metaSizeBE length:4];
     [result appendBytes:"meta" length:4];
     [result appendData:metaContent];
-    
-    Debug(@"SeafISOBMFFParser: Rebuilt meta box: %llu -> %u bytes", metaBox.size, metaSize);
     
     return [result copy];
 }
@@ -1287,8 +1273,6 @@
     uint8_t flagBytes[3];
     [payload getBytes:flagBytes range:NSMakeRange(1, 3)];
     uint32_t flags = ((uint32_t)flagBytes[0] << 16) | ((uint32_t)flagBytes[1] << 8) | flagBytes[2];
-    
-    Debug(@"SeafISOBMFFParser: Parsed iref box (version=%u, flags=%u, size=%llu)", version, flags, payloadSize);
     
     return @{
         @"version": @(version),
@@ -1362,9 +1346,6 @@
     [newIrefBox appendBytes:&irefSize length:4];
     [newIrefBox appendBytes:"iref" length:4];
     [newIrefBox appendData:newIrefPayload];
-    
-    Debug(@"SeafISOBMFFParser: Added cdsc reference (from=%u, to=%u), new iref size=%lu", 
-          fromItemID, toItemID, (unsigned long)newIrefBox.length);
     
     return [newIrefBox copy];
 }

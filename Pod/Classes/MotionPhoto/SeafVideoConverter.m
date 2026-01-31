@@ -374,7 +374,6 @@
     
     // Check if already MP4
     if ([self isMP4Format:movData]) {
-        Debug(@"SeafVideoConverter: Video is already MP4 format, no conversion needed");
         if (completion) {
             completion(movData, nil);
         }
@@ -419,9 +418,6 @@
 + (void)convertMOVToMP4:(NSURL *)sourceURL
                 options:(nullable NSDictionary *)options
              completion:(void (^)(NSURL * _Nullable, NSError * _Nullable))completion {
-    
-    Debug(@"SeafVideoConverter: Starting MOV to MP4 conversion for %@", sourceURL.lastPathComponent);
-    
     // Create asset
     AVAsset *asset = [AVAsset assetWithURL:sourceURL];
     if (!asset) {
@@ -446,10 +442,6 @@
         return;
     }
     
-    // Log input format
-    SeafVideoCodecType codec = [self detectVideoCodec:asset];
-    Debug(@"SeafVideoConverter: Input video codec: %@", [self codecNameForType:codec]);
-    
     // Create export session
     // Use passthrough preset to preserve original video quality
     NSString *presetName = AVAssetExportPresetPassthrough;
@@ -458,7 +450,6 @@
     NSArray *compatiblePresets = [AVAssetExportSession exportPresetsCompatibleWithAsset:asset];
     if (![compatiblePresets containsObject:presetName]) {
         // Fallback to highest quality preset
-        Debug(@"SeafVideoConverter: Passthrough not available, using high quality preset");
         presetName = AVAssetExportPresetHighestQuality;
     }
     
@@ -510,32 +501,21 @@
     }
     
     // Start export
-    Debug(@"SeafVideoConverter: Exporting to MP4...");
-    
     [exportSession exportAsynchronouslyWithCompletionHandler:^{
         switch (exportSession.status) {
             case AVAssetExportSessionStatusCompleted: {
-                Debug(@"SeafVideoConverter: Conversion completed successfully");
-                
-                // Verify output format
-                NSData *outputData = [NSData dataWithContentsOfURL:outputURL];
-                NSString *outputBrand = [self detectContainerBrand:outputData];
-                Debug(@"SeafVideoConverter: Output container brand: %@", outputBrand);
-                
                 if (completion) {
                     completion(outputURL, nil);
                 }
                 break;
             }
             case AVAssetExportSessionStatusFailed: {
-                Debug(@"SeafVideoConverter: Conversion failed: %@", exportSession.error);
                 if (completion) {
                     completion(nil, exportSession.error);
                 }
                 break;
             }
             case AVAssetExportSessionStatusCancelled: {
-                Debug(@"SeafVideoConverter: Conversion cancelled");
                 NSError *error = [NSError errorWithDomain:@"SeafVideoConverter"
                                                      code:-4
                                                  userInfo:@{NSLocalizedDescriptionKey: @"Export cancelled"}];
@@ -571,7 +551,6 @@
     CMTime duration = asset.duration;
     if (CMTIME_IS_VALID(duration) && CMTimeGetSeconds(duration) > 0) {
         Float64 middleSeconds = CMTimeGetSeconds(duration) / 2.0;
-        Debug(@"SeafVideoConverter: Using video midpoint as timestamp: %.3f seconds", middleSeconds);
         return (int64_t)(middleSeconds * 1000000);
     }
     
@@ -631,7 +610,6 @@
                 
                 if ([item.value isKindOfClass:[NSNumber class]]) {
                     Float64 timeValue = [(NSNumber *)item.value doubleValue];
-                    Debug(@"SeafVideoConverter: Found still image time in metadata: %.3f", timeValue);
                     return CMTimeMakeWithSeconds(timeValue, 600);
                 }
             }
@@ -643,7 +621,6 @@
                 [item.identifier containsString:@"still-image-time"]) {
                 if ([item.value isKindOfClass:[NSNumber class]]) {
                     Float64 timeValue = [(NSNumber *)item.value doubleValue];
-                    Debug(@"SeafVideoConverter: Found still image time via identifier: %.3f", timeValue);
                     return CMTimeMakeWithSeconds(timeValue, 600);
                 }
             }
@@ -664,7 +641,6 @@
         }
     }
     
-    Debug(@"SeafVideoConverter: Still image time not found in metadata, will use fallback");
     return kCMTimeInvalid;
 }
 
@@ -710,9 +686,6 @@
     if (isAAC && validSampleRate && validChannels) {
         return SeafAudioComplianceStatusCompliant;
     }
-    
-    Debug(@"SeafVideoConverter: Audio non-compliant - AAC:%d, SampleRate:%.0f, Channels:%d",
-          isAAC, asbd->mSampleRate, asbd->mChannelsPerFrame);
     
     return SeafAudioComplianceStatusNonCompliant;
 }

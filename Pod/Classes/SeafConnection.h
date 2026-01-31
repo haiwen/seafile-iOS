@@ -23,6 +23,10 @@
 #define HTTP_ERR_REPO_DOWNLOAD_PASSWORD_EXPIRED  400
 
 #define DEFAULT_TIMEOUT 15
+
+/// Notification posted when syncDir is ready and Live Photo reupload prompt check is needed.
+/// Posted on main thread. Object is the SeafConnection instance.
+extern NSString * _Nonnull const SeafLivePhotoReuploadCheckNeededNotification;
 #define LARGE_FILE_SIZE 10*1024*1024
 
 #define REPO_LAST_UPDATE_PASSWORD_TIME @"repoLastPasswordUpdateTsMap"
@@ -133,6 +137,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 @property (assign, nonatomic, getter=isUploadHeicEnabled) BOOL uploadHeicEnabled;///< Indicates whether HEIC format should be kept (YES) or converted to JPG (NO).
 @property (assign, nonatomic, getter=isUploadLivePhotoEnabled) BOOL uploadLivePhotoEnabled;///< Indicates whether Live Photos should be uploaded as Motion Photos.
 @property (assign, nonatomic) BOOL skipExistingLivePhotoReupload;///< If YES, previously uploaded static Live Photos won't be re-uploaded as Motion Photos.
+@property (assign, nonatomic) BOOL hasRespondedToLivePhotoReuploadPrompt;///< Indicates whether user has responded to the Live Photo re-upload prompt (YES/NO selection made).
 
 @property (readwrite, nonatomic) NSString * _Nullable autoSyncRepo;///< Repository ID for automatic synchronization.
 

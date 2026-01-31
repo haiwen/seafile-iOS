@@ -64,6 +64,7 @@
     _photosArray = nil;
     _inCheckPhotos = false;
     _fetchResult = nil;
+    _syncDir = nil;
 }
 
 - (void)checkPhotos:(BOOL)force {
@@ -78,11 +79,27 @@
 - (void)backGroundCheckPhotos:(NSNumber *)forceNumber {
     bool force = [forceNumber boolValue];
     SeafDir *uploadDir = _syncDir;
+    
+    Debug("backGroundCheckPhotos: called with force=%d, inAutoSync=%d, firstTimeSync=%d, uploadDir=%@, isUploadLivePhotoEnabled=%d, hasRespondedToLivePhotoReuploadPrompt=%d, skipExistingLivePhotoReupload=%d",
+          force, _inAutoSync, _connection.firstTimeSync, uploadDir ? uploadDir.name : @"nil",
+          _connection.isUploadLivePhotoEnabled, _connection.hasRespondedToLivePhotoReuploadPrompt, _connection.skipExistingLivePhotoReupload);
+    
     //check whether is inAutoSync or firstTimeSync or uploadDir not exist
     bool shouldSkip = !_inAutoSync || (_connection.firstTimeSync && !uploadDir);
     if (shouldSkip) {
+        Debug("backGroundCheckPhotos: skip - inAutoSync=%d, firstTimeSync=%d, uploadDir=%@", 
+              _inAutoSync, _connection.firstTimeSync, uploadDir);
         return;
     }
+    
+    // Check if we're waiting for user to respond to Live Photo reupload prompt
+    // In this state, we should NOT start uploading - wait for user response first
+    if (_connection.isUploadLivePhotoEnabled && !_connection.hasRespondedToLivePhotoReuploadPrompt) {
+        Debug("backGroundCheckPhotos: waiting for Live Photo reupload prompt response, skip upload");
+        return;
+    }
+    
+    Debug("backGroundCheckPhotos: proceeding with photo check, force=%d", force);
     
     //If true check phone photo gallery.
     if (force) {
@@ -302,26 +319,48 @@
     self.fetchResult = [PHAsset fetchAssetsInAssetCollection:collection options:fetchOptions];
     BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
     
+    Debug("filterOutNeedUploadPhotos: uploadLivePhotoEnabled=%d, hasRespondedToLivePhotoReuploadPrompt=%d, skipExistingLivePhotoReupload=%d, isFirstTimeSync=%d",
+          uploadLivePhotoEnabled, self.connection.hasRespondedToLivePhotoReuploadPrompt, 
+          self.connection.skipExistingLivePhotoReupload, self.connection.isFirstTimeSync);
+    
+    __block int livePhotoCount = 0;
+    __block int reuploadCandidateCount = 0;
+    __block int actualReuploadCount = 0;
+    
     [self.fetchResult enumerateObjectsUsingBlock:^(PHAsset *asset, NSUInteger idx, BOOL * _Nonnull stop) {
         SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
         if (photoAsset.name != nil) {
+            BOOL isUploaded = NO;
+            BOOL isUploading = [self IsPhotoUploading:photoAsset];
+            BOOL existsOnServer = NO;
+            
             // First time sync: check if photo already exists on server
             if (self.connection.isFirstTimeSync) {
-                if ([self isPhotoExistsOnServer:photoAsset livePhotoEnabled:uploadLivePhotoEnabled]) {
+                existsOnServer = [self isPhotoExistsOnServer:photoAsset livePhotoEnabled:uploadLivePhotoEnabled];
+                if (existsOnServer) {
                     [self setPhotoUploadedIdentifier:asset.localIdentifier];
-                    return;
+                    isUploaded = YES;
                 }
+            } else {
+                isUploaded = [self IsPhotoUploaded:photoAsset];
             }
             
-            BOOL isUploaded = [self IsPhotoUploaded:photoAsset];
-            BOOL isUploading = [self IsPhotoUploading:photoAsset];
-            
             // Re-upload Live Photo if server only has static version
-            // Skip if user chose not to re-upload existing photos
+            // Only do this if:
+            // 1. User has responded to the Live Photo reupload prompt
+            // 2. User chose to re-upload (skipExistingLivePhotoReupload = NO)
+            // This ensures we don't accidentally overwrite photos before user makes a choice
+            // Note: This check applies to both first-time sync and subsequent syncs
             if (isUploaded && photoAsset.isLivePhoto && uploadLivePhotoEnabled) {
-                if (!self.connection.skipExistingLivePhotoReupload) {
-                    if (![self isMotionPhotoExistsOnServer:photoAsset]) {
+                livePhotoCount++;
+                if (self.connection.hasRespondedToLivePhotoReuploadPrompt && !self.connection.skipExistingLivePhotoReupload) {
+                    reuploadCandidateCount++;
+                    BOOL isMotionOnServer = [self isMotionPhotoExistsOnServer:photoAsset];
+                    if (!isMotionOnServer) {
+                        Debug("filterOutNeedUploadPhotos: Live Photo %@ needs reupload (isUploaded=%d, isMotionOnServer=%d)", 
+                              photoAsset.name, isUploaded, isMotionOnServer);
                         isUploaded = NO;
+                        actualReuploadCount++;
                     }
                 }
             }
@@ -331,33 +370,35 @@
             }
         }
     }];
+    
+    Debug("filterOutNeedUploadPhotos summary: livePhotos=%d, reuploadCandidates=%d, actualReupload=%d, totalToUpload=%lu",
+          livePhotoCount, reuploadCandidateCount, actualReuploadCount, (unsigned long)self.photosArray.count);
 }
 
 #pragma mark - First Time Sync Helper
 
 /// Check if photo exists on server (with backward compatibility for HEIC/JPG variants).
+/// This method checks if ANY version of the file exists (static or motion).
+/// Use isMotionPhotoExistsOnServer: to check if the server version is a motion photo.
 - (BOOL)isPhotoExistsOnServer:(SeafPhotoAsset *)photoAsset livePhotoEnabled:(BOOL)livePhotoEnabled {
     if (!photoAsset.name || !self.syncDir) {
         return NO;
     }
     
-    // Live Photo: use file size comparison
+    // Live Photo: check if any version exists on server (static or motion)
     if (photoAsset.isLivePhoto && livePhotoEnabled) {
-        // If user chose not to re-upload existing photos, check if any version exists on server
-        if (self.connection.skipExistingLivePhotoReupload) {
-            NSString *uploadName = [photoAsset uploadNameWithLivePhotoEnabled:YES];
-            if ([self.syncDir nameExist:uploadName]) {
-                return YES;  // Server has HEIC file (static or motion), skip upload
-            }
-            // Also check JPG variant for backward compatibility
-            // (old versions uploaded Live Photos as JPG)
-            NSString *baseName = [uploadName stringByDeletingPathExtension];
-            NSString *jpgVariant = [baseName stringByAppendingPathExtension:@"jpg"];
-            if ([self.syncDir nameExist:jpgVariant]) {
-                return YES;  // Server has JPG version, skip upload
-            }
+        NSString *uploadName = [photoAsset uploadNameWithLivePhotoEnabled:YES];
+        if ([self.syncDir nameExist:uploadName]) {
+            return YES;  // Server has HEIC file (static or motion)
         }
-        return [self isMotionPhotoExistsOnServer:photoAsset];
+        // Also check JPG variant for backward compatibility
+        // (old versions uploaded Live Photos as JPG)
+        NSString *baseName = [uploadName stringByDeletingPathExtension];
+        NSString *jpgVariant = [baseName stringByAppendingPathExtension:@"jpg"];
+        if ([self.syncDir nameExist:jpgVariant]) {
+            return YES;  // Server has JPG version
+        }
+        return NO;  // No version exists on server
     }
     
     // Check current upload name
@@ -411,12 +452,22 @@
     NSString *uploadName = [photoAsset uploadNameWithLivePhotoEnabled:YES];
     NSNumber *serverFileSize = [self.syncDir fileSizeForName:uploadName];
     if (!serverFileSize) {
-        return NO;
+        // Also check JPG variant for backward compatibility
+        NSString *baseName = [uploadName stringByDeletingPathExtension];
+        NSString *jpgVariant = [baseName stringByAppendingPathExtension:@"jpg"];
+        serverFileSize = [self.syncDir fileSizeForName:jpgVariant];
+        if (!serverFileSize) {
+            Debug("isMotionPhotoExistsOnServer: %@ - no file on server (checked heic and jpg)", photoAsset.name);
+            return NO;
+        }
+        Debug("isMotionPhotoExistsOnServer: %@ - found JPG variant on server", photoAsset.name);
     }
     
     unsigned long long photoSize = photoAsset.photoResourceSize;
     unsigned long long videoSize = photoAsset.pairedVideoResourceSize;
     if (photoSize == 0 || videoSize == 0) {
+        Debug("isMotionPhotoExistsOnServer: %@ - photoSize=%llu, videoSize=%llu, cannot determine, assume motion", 
+              photoAsset.name, photoSize, videoSize);
         return YES;
     }
     
@@ -430,7 +481,11 @@
     unsigned long long distanceToMotion = (serverSize > expectedMotionSize) ?
         (serverSize - expectedMotionSize) : (expectedMotionSize - serverSize);
     
-    return (distanceToMotion < distanceToStatic);
+    BOOL isMotion = (distanceToMotion < distanceToStatic);
+    Debug("isMotionPhotoExistsOnServer: %@ - serverSize=%llu, photoSize=%llu, videoSize=%llu, expectedStatic=%llu, expectedMotion=%llu, distToStatic=%llu, distToMotion=%llu, isMotion=%d",
+          photoAsset.name, serverSize, photoSize, videoSize, expectedStaticSize, expectedMotionSize, distanceToStatic, distanceToMotion, isMotion);
+    
+    return isMotion;
 }
 
 - (NSPredicate *)buildAutoSyncPredicte {
@@ -620,26 +675,31 @@
 #pragma mark - Check Live Photos Need Reupload
 
 - (void)checkHasLivePhotosNeedReupload:(void (^)(BOOL hasPhotosToReupload, NSError * _Nullable error))completion {
+    Debug("checkHasLivePhotosNeedReupload: called");
     if (!completion) {
+        Debug("checkHasLivePhotosNeedReupload: no completion handler, returning");
         return;
     }
     
     // Check if syncDir exists
     if (!_syncDir) {
-        Debug("syncDir is nil, no photos to reupload");
+        Debug("checkHasLivePhotosNeedReupload: syncDir is nil, no photos to reupload");
         completion(NO, nil);
         return;
     }
     
+    Debug("checkHasLivePhotosNeedReupload: refreshing syncDir to get latest file list");
     // Refresh syncDir to get latest file list from server
     @weakify(self);
     [_syncDir loadContentSuccess:^(SeafDir *dir) {
         @strongify(self);
+        Debug("checkHasLivePhotosNeedReupload: syncDir loaded successfully, checking Live Photos");
         [self doCheckLivePhotosNeedReuploadWithCompletion:^(BOOL hasPhotos) {
+            Debug("checkHasLivePhotosNeedReupload: check completed, hasPhotos=%d", hasPhotos);
             completion(hasPhotos, nil);
         }];
     } failure:^(SeafDir *dir, NSError *error) {
-        Debug("Failed to load syncDir content: %@", error);
+        Debug("checkHasLivePhotosNeedReupload: Failed to load syncDir content: %@", error);
         completion(NO, error);
     }];
 }
@@ -685,6 +745,10 @@
     Debug("Found %lu Live Photos, checking if any need reupload", (unsigned long)livePhotos.count);
     
     __block BOOL foundPhotoToReupload = NO;
+    __block int checkedCount = 0;
+    __block int realmUploadedCount = 0;
+    __block int serverExistsCount = 0;
+    __block int staticOnServerCount = 0;
     
     [livePhotos enumerateObjectsUsingBlock:^(PHAsset *asset, NSUInteger idx, BOOL * _Nonnull stop) {
         SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
@@ -693,8 +757,20 @@
             return;
         }
         
-        // Check if this photo has been uploaded before
-        BOOL isUploaded = [self IsPhotoUploaded:photoAsset];
+        checkedCount++;
+        
+        // Check if this photo has been uploaded before (Realm record)
+        BOOL isUploadedInRealm = [self IsPhotoUploaded:photoAsset];
+        
+        // Also check if photo exists on server (for cases where Realm record is missing)
+        BOOL existsOnServer = [self isPhotoExistsOnServer:photoAsset livePhotoEnabled:YES];
+        
+        if (isUploadedInRealm) realmUploadedCount++;
+        if (existsOnServer) serverExistsCount++;
+        
+        // Consider photo as "uploaded" if either Realm has record OR server has file
+        BOOL isUploaded = isUploadedInRealm || existsOnServer;
+        
         if (!isUploaded) {
             // Not uploaded yet, no need to reupload
             return;
@@ -703,12 +779,17 @@
         // Check if server only has static version
         BOOL hasMotionOnServer = [self isMotionPhotoExistsOnServer:photoAsset];
         if (!hasMotionOnServer) {
+            staticOnServerCount++;
             // Server only has static version, need to reupload
-            Debug("Found Live Photo that needs reupload: %@", photoAsset.name);
+            Debug("Found Live Photo that needs reupload: %@ (realmUploaded=%d, serverExists=%d)", 
+                  photoAsset.name, isUploadedInRealm, existsOnServer);
             foundPhotoToReupload = YES;
             *stop = YES;
         }
     }];
+    
+    Debug("checkLivePhotosNeedReuploadSync summary: checked=%d, realmUploaded=%d, serverExists=%d, staticOnServer=%d, needReupload=%d",
+          checkedCount, realmUploadedCount, serverExistsCount, staticOnServerCount, foundPhotoToReupload);
     
     return foundPhotoToReupload;
 }
