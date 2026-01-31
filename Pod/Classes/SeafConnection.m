@@ -417,6 +417,15 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (self.uploadLivePhotoEnabled == uploadLivePhotoEnabled) return;
     [self setAttribute:[NSNumber numberWithBool:uploadLivePhotoEnabled] forKey:@"uploadLivePhotoEnabled"];
 }
+
+- (BOOL)skipExistingLivePhotoReupload {
+    return [[self getAttribute:@"skipExistingLivePhotoReupload"] booleanValue:NO];
+}
+
+- (void)setSkipExistingLivePhotoReupload:(BOOL)skip {
+    if (self.skipExistingLivePhotoReupload == skip) return;
+    [self setAttribute:[NSNumber numberWithBool:skip] forKey:@"skipExistingLivePhotoReupload"];
+}
 // ============ End of Live Photo / Motion Photo upload setting ============
 
 - (NSString *)autoSyncRepo
