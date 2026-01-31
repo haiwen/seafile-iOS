@@ -284,14 +284,63 @@ enum {
 }
 - (IBAction)enableUploadHeicFlip:(UISwitch *)sender {
     if (sender.on) {
-        NSString *message = NSLocalizedString(@"Previously backed up Live Photos will be re-uploaded as Motion Photos.", @"Seafile");
-        [self alertWithTitle:NSLocalizedString(@"Upload Live Photo", @"Seafile")
-                     message:message
-                         yes:^{
-            [self->_connection setUploadLivePhotoEnabled:YES];
-            [self->_connection checkPhotos:YES];
-        } no:^{
-            sender.on = NO;
+        // Enable the feature first, so new photos taken during the check will be uploaded correctly
+        [_connection setUploadLivePhotoEnabled:YES];
+        
+        // Check if photoBackup exists and syncDir is set
+        if (!_connection.photoBackup || !_connection.photoBackup.syncDir) {
+            // Never configured backup or syncDir not set, no need to check for re-upload
+            Debug("No photoBackup or syncDir, Live Photo upload enabled");
+            return;
+        }
+        
+        // Show loading indicator while checking
+        [SVProgressHUD showWithStatus:NSLocalizedString(@"Checking photos...", @"Seafile")];
+        
+        // Check if there are Live Photos that need to be re-uploaded
+        [_connection.photoBackup checkHasLivePhotosNeedReupload:^(BOOL hasPhotosToReupload, NSError *error) {
+            [SVProgressHUD dismiss];
+            
+            // Handle check failure: revert switch and show error
+            if (error) {
+                Debug("Failed to check Live Photos: %@", error);
+                [self->_connection setUploadLivePhotoEnabled:NO];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    self->_enableUploadHeic.on = NO;
+                });
+                [self alertWithTitle:NSLocalizedString(@"Failed to check photos, please try again later.", @"Seafile")];
+                return;
+            }
+            
+            // Check if the switch was turned off during the async check
+            if (!self->_connection.isUploadLivePhotoEnabled) {
+                Debug("Live Photo upload was disabled during check, skip");
+                return;
+            }
+            
+            if (hasPhotosToReupload) {
+                // There are photos to re-upload, show confirmation dialog
+                NSString *message = NSLocalizedString(@"Do you want to re-upload previously backed up photos as Live Photos?", @"Seafile");
+                [self alertWithTitle:NSLocalizedString(@"Upload Live Photo", @"Seafile")
+                             message:message
+                                 yes:^{
+                    // Check again in case user toggled the switch while dialog was showing
+                    if (!self->_connection.isUploadLivePhotoEnabled) {
+                        return;
+                    }
+                    [self->_connection setSkipExistingLivePhotoReupload:NO];
+                    [self->_connection checkPhotos:YES];
+                } no:^{
+                    // Check again in case user toggled the switch while dialog was showing
+                    if (!self->_connection.isUploadLivePhotoEnabled) {
+                        return;
+                    }
+                    // Skip re-uploading existing photos
+                    [self->_connection setSkipExistingLivePhotoReupload:YES];
+                }];
+            }
+            // If no photos need re-upload, nothing more to do
+            // uploadLivePhotoEnabled is already YES
         }];
     } else {
         [_connection setUploadLivePhotoEnabled:NO];

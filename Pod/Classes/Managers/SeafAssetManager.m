@@ -19,6 +19,11 @@
 #define kUTTypeHEIF CFSTR("public.heif")
 #endif
 
+// Live Photo retry mechanism constants
+// Used to ensure paired video resource is available for newly captured Live Photos
+static const NSInteger kLivePhotoMaxRetryCount = 5;
+static const NSTimeInterval kLivePhotoRetryDelay = 1.0; // seconds
+
 @implementation SeafAssetManager
 
 - (void)setAsset:(PHAsset *)asset url:(NSURL *)url forFile:(SeafUploadFile *)file {
@@ -53,12 +58,16 @@
     if (file.model.asset.mediaType == PHAssetMediaTypeImage) {
         // Check if this is a Live Photo and should be uploaded as Motion Photo
         // Only upload as Motion Photo when:
-        // 1. The asset is a Live Photo
-        // 2. The file is marked as Live Photo (isLivePhoto = YES)
-        // 3. The "Upload Live Photo" setting is enabled
+        // 1. The asset is a Live Photo (mediaSubtypes check)
+        // 2. The "Upload Live Photo" setting is enabled
         // When setting is disabled, Live Photo uploads as static image only (no video)
-        if ([self isLivePhotoAsset:file.model.asset] && file.model.isLivePhoto && [file uploadLivePhoto]) {
-            [self getMotionPhotoDataForAsset:file completion:completion];
+        BOOL shouldUploadAsLivePhoto = [self isLivePhotoAsset:file.model.asset] && [file uploadLivePhoto];
+        
+        if (shouldUploadAsLivePhoto) {
+            // Use retry mechanism to ensure paired video resource is available
+            // This handles the timing issue where PHPhotoLibraryChangeObserver fires
+            // before the paired video resource is fully ready for newly captured Live Photos
+            [self uploadLivePhotoWithRetry:file retryCount:0 completion:completion];
         } else {
             [self getImageDataForAsset:file completion:completion];
         }
@@ -344,6 +353,64 @@
 - (BOOL)isLivePhotoAsset:(PHAsset *)asset {
     if (!asset) return NO;
     return (asset.mediaSubtypes & PHAssetMediaSubtypePhotoLive) != 0;
+}
+
+/// Check if the paired video resource is available for a Live Photo asset.
+/// @param asset The PHAsset to check
+/// @return YES if the paired video resource is available
+- (BOOL)checkPairedVideoAvailable:(PHAsset *)asset {
+    if (!asset) return NO;
+    
+    NSArray<PHAssetResource *> *resources = [PHAssetResource assetResourcesForAsset:asset];
+    for (PHAssetResource *resource in resources) {
+        if (resource.type == PHAssetResourceTypePairedVideo || 
+            resource.type == PHAssetResourceTypeFullSizePairedVideo) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+/// Upload Live Photo with retry mechanism.
+/// This ensures the paired video resource is available before uploading.
+/// @param file The upload file
+/// @param retryCount Current retry count
+/// @param completion Completion handler
+- (void)uploadLivePhotoWithRetry:(SeafUploadFile *)file 
+                      retryCount:(NSInteger)retryCount 
+                      completion:(void (^)(BOOL success, NSError *error))completion {
+    
+    // Check if paired video resource is available
+    BOOL hasPairedVideo = [self checkPairedVideoAvailable:file.model.asset];
+    
+    if (hasPairedVideo) {
+        // Paired video available, proceed with Motion Photo upload
+        file.model.isLivePhoto = YES;
+        Debug("Live Photo paired video available, uploading as Motion Photo: %@", file.name);
+        [self getMotionPhotoDataForAsset:file completion:completion];
+        
+    } else if (retryCount < kLivePhotoMaxRetryCount) {
+        // Paired video not available yet, retry after delay
+        Debug("Live Photo paired video not ready for %@, retry %ld/%ld after %.1fs", 
+              file.name, (long)(retryCount + 1), (long)kLivePhotoMaxRetryCount, kLivePhotoRetryDelay);
+        
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kLivePhotoRetryDelay * NSEC_PER_SEC)), 
+                      dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            [self uploadLivePhotoWithRetry:file retryCount:retryCount + 1 completion:completion];
+        });
+        
+    } else {
+        // Retry limit reached, fail with error instead of falling back to static image
+        // This ensures that when "Upload Live Photo" is enabled, we don't silently degrade to static
+        Warning("Live Photo paired video not available after %ld retries: %@", 
+                (long)kLivePhotoMaxRetryCount, file.name);
+        
+        NSError *error = [NSError errorWithDomain:@"SeafAssetManager"
+                                             code:-100
+                                         userInfo:@{NSLocalizedDescriptionKey: 
+                                             NSLocalizedString(@"Live Photo video resource not available, please retry later", @"Seafile")}];
+        if (completion) completion(NO, error);
+    }
 }
 
 - (void)getMotionPhotoDataForAsset:(SeafUploadFile *)file 

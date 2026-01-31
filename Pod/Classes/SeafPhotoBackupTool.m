@@ -317,9 +317,12 @@
             BOOL isUploading = [self IsPhotoUploading:photoAsset];
             
             // Re-upload Live Photo if server only has static version
+            // Skip if user chose not to re-upload existing photos
             if (isUploaded && photoAsset.isLivePhoto && uploadLivePhotoEnabled) {
-                if (![self isMotionPhotoExistsOnServer:photoAsset]) {
-                    isUploaded = NO;
+                if (!self.connection.skipExistingLivePhotoReupload) {
+                    if (![self isMotionPhotoExistsOnServer:photoAsset]) {
+                        isUploaded = NO;
+                    }
                 }
             }
             
@@ -340,6 +343,20 @@
     
     // Live Photo: use file size comparison
     if (photoAsset.isLivePhoto && livePhotoEnabled) {
+        // If user chose not to re-upload existing photos, check if any version exists on server
+        if (self.connection.skipExistingLivePhotoReupload) {
+            NSString *uploadName = [photoAsset uploadNameWithLivePhotoEnabled:YES];
+            if ([self.syncDir nameExist:uploadName]) {
+                return YES;  // Server has HEIC file (static or motion), skip upload
+            }
+            // Also check JPG variant for backward compatibility
+            // (old versions uploaded Live Photos as JPG)
+            NSString *baseName = [uploadName stringByDeletingPathExtension];
+            NSString *jpgVariant = [baseName stringByAppendingPathExtension:@"jpg"];
+            if ([self.syncDir nameExist:jpgVariant]) {
+                return YES;  // Server has JPG version, skip upload
+            }
+        }
         return [self isMotionPhotoExistsOnServer:photoAsset];
     }
     
@@ -537,23 +554,53 @@
             SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection];
             [accountQueue cancelUploadTasksForLocalIdentifier:localIdentifiersNeedRemove];
         }
-        //
+        // Handle newly inserted photos
         if (detail.insertedObjects.count > 0) {
             Debug("Inserted items : %@", detail.insertedObjects);
             for (PHAsset *asset in detail.insertedObjects) {
-                SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
-                if (photoAsset.name != nil) {
-                    //if not exist in realm,add to photos.
-                    if (![self IsPhotoUploaded:photoAsset] &&![self IsPhotoUploading:photoAsset]) {
-                        [self addUploadPhoto:photoAsset.localIdentifier];
-                        [self uploadPhotoByIdentifier:photoAsset.localIdentifier];
-                    }
-                }
+                NSString *localIdentifier = asset.localIdentifier;
+                
+                // Delay processing by 2 seconds to allow Live Photo paired video resource to be ready.
+                // This fixes the timing issue where PHPhotoLibraryChangeObserver fires before
+                // the paired video resource is fully available for newly captured Live Photos.
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), 
+                              dispatch_get_main_queue(), ^{
+                    [self processNewlyInsertedAssetWithIdentifier:localIdentifier];
+                });
             }
-            SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection];
-            [accountQueue postUploadTaskStatusChangedNotification];
         }
     }
+}
+
+/// Process a newly inserted photo after delay.
+/// This method is called after a 2-second delay to ensure Live Photo paired video resources are ready.
+- (void)processNewlyInsertedAssetWithIdentifier:(NSString *)localIdentifier {
+    // Ensure we're still in auto sync mode
+    if (!_inAutoSync) {
+        Debug("Not in auto sync mode, skip processing: %@", localIdentifier);
+        return;
+    }
+    
+    // Re-fetch the asset (it may have been deleted during the delay)
+    PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
+    PHAsset *asset = result.firstObject;
+    if (!asset) {
+        Debug("Asset no longer exists: %@", localIdentifier);
+        return;
+    }
+    
+    // Create SeafPhotoAsset with fresh detection (video resource should be ready now)
+    SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
+    if (photoAsset.name != nil) {
+        // Check if not already uploaded or uploading
+        if (![self IsPhotoUploaded:photoAsset] && ![self IsPhotoUploading:photoAsset]) {
+            [self addUploadPhoto:photoAsset.localIdentifier];
+            [self uploadPhotoByIdentifier:photoAsset.localIdentifier];
+        }
+    }
+    
+    SeafAccountTaskQueue *accountQueue = [SeafDataTaskManager.sharedObject accountQueueForConnection:self.connection];
+    [accountQueue postUploadTaskStatusChangedNotification];
 }
 
 #pragma mark - getter & setter
@@ -568,6 +615,102 @@
     if (_photosArray != photosArray) {
         _photosArray = photosArray;
     }
+}
+
+#pragma mark - Check Live Photos Need Reupload
+
+- (void)checkHasLivePhotosNeedReupload:(void (^)(BOOL hasPhotosToReupload, NSError * _Nullable error))completion {
+    if (!completion) {
+        return;
+    }
+    
+    // Check if syncDir exists
+    if (!_syncDir) {
+        Debug("syncDir is nil, no photos to reupload");
+        completion(NO, nil);
+        return;
+    }
+    
+    // Refresh syncDir to get latest file list from server
+    @weakify(self);
+    [_syncDir loadContentSuccess:^(SeafDir *dir) {
+        @strongify(self);
+        [self doCheckLivePhotosNeedReuploadWithCompletion:^(BOOL hasPhotos) {
+            completion(hasPhotos, nil);
+        }];
+    } failure:^(SeafDir *dir, NSError *error) {
+        Debug("Failed to load syncDir content: %@", error);
+        completion(NO, error);
+    }];
+}
+
+- (void)doCheckLivePhotosNeedReuploadWithCompletion:(void (^)(BOOL hasPhotosToReupload))completion {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        BOOL hasPhotosToReupload = [self checkLivePhotosNeedReuploadSync];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion(hasPhotosToReupload);
+        });
+    });
+}
+
+- (BOOL)checkLivePhotosNeedReuploadSync {
+    // Check photo library authorization
+    PHAuthorizationStatus status = [PHPhotoLibrary authorizationStatus];
+    if (status != PHAuthorizationStatusAuthorized) {
+        Debug("Photo library not authorized");
+        return NO;
+    }
+    
+    // Fetch all photos from Camera Roll
+    PHFetchResult *collections = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum 
+                                                                          subtype:PHAssetCollectionSubtypeSmartAlbumUserLibrary 
+                                                                          options:nil];
+    PHAssetCollection *cameraRoll = collections.firstObject;
+    if (!cameraRoll) {
+        Debug("Camera Roll not found");
+        return NO;
+    }
+    
+    // Fetch only Live Photos
+    PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
+    fetchOptions.predicate = [NSPredicate predicateWithFormat:@"(mediaSubtypes & %d) != 0", PHAssetMediaSubtypePhotoLive];
+    
+    PHFetchResult *livePhotos = [PHAsset fetchAssetsInAssetCollection:cameraRoll options:fetchOptions];
+    
+    if (livePhotos.count == 0) {
+        Debug("No Live Photos in library");
+        return NO;
+    }
+    
+    Debug("Found %lu Live Photos, checking if any need reupload", (unsigned long)livePhotos.count);
+    
+    __block BOOL foundPhotoToReupload = NO;
+    
+    [livePhotos enumerateObjectsUsingBlock:^(PHAsset *asset, NSUInteger idx, BOOL * _Nonnull stop) {
+        SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
+        
+        if (!photoAsset.name || !photoAsset.isLivePhoto) {
+            return;
+        }
+        
+        // Check if this photo has been uploaded before
+        BOOL isUploaded = [self IsPhotoUploaded:photoAsset];
+        if (!isUploaded) {
+            // Not uploaded yet, no need to reupload
+            return;
+        }
+        
+        // Check if server only has static version
+        BOOL hasMotionOnServer = [self isMotionPhotoExistsOnServer:photoAsset];
+        if (!hasMotionOnServer) {
+            // Server only has static version, need to reupload
+            Debug("Found Live Photo that needs reupload: %@", photoAsset.name);
+            foundPhotoToReupload = YES;
+            *stop = YES;
+        }
+    }];
+    
+    return foundPhotoToReupload;
 }
 
 @end

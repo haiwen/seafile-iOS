@@ -132,6 +132,7 @@ BOOL SeafServerTrustIsValid(SecTrustRef _Nonnull serverTrust);
 // ============ Restored old uploadHeicEnabled property ============
 @property (assign, nonatomic, getter=isUploadHeicEnabled) BOOL uploadHeicEnabled;///< Indicates whether HEIC format should be kept (YES) or converted to JPG (NO).
 @property (assign, nonatomic, getter=isUploadLivePhotoEnabled) BOOL uploadLivePhotoEnabled;///< Indicates whether Live Photos should be uploaded as Motion Photos.
+@property (assign, nonatomic) BOOL skipExistingLivePhotoReupload;///< If YES, previously uploaded static Live Photos won't be re-uploaded as Motion Photos.
 
 @property (readwrite, nonatomic) NSString * _Nullable autoSyncRepo;///< Repository ID for automatic synchronization.
 
