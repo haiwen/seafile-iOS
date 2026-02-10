@@ -138,7 +138,16 @@
 /// Lowercase filename to actual filename mapping.
 @property (nonatomic, strong, readonly, nullable) NSDictionary<NSString *, NSString *> *serverFileLowercaseIndex;
 
+/// Lowercase base name (without extension) to actual filename mapping.
+/// Used for checking if a photo is already backed up regardless of file extension.
+@property (nonatomic, strong, readonly, nullable) NSDictionary<NSString *, NSString *> *serverFileBaseNameIndex;
+
 /// Get file size by name (case-insensitive).
 - (NSNumber * _Nullable)fileSizeForName:(NSString *)name;
+
+/// Check if a file with the same base name (ignoring extension) exists on server.
+/// @param baseName The base name to check (without extension)
+/// @return YES if any file with this base name exists
+- (BOOL)baseNameExist:(NSString *)baseName;
 
 @end

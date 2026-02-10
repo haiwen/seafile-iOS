@@ -34,8 +34,6 @@ enum {
 
 #define CAMERA_UPLOADS_DIR @"Camera Uploads"
 
-NSString * const SeafLivePhotoReuploadCheckNeededNotification = @"SeafLivePhotoReuploadCheckNeededNotification";
-
 #define KEY_STARREDFILES @"STARREDFILES"
 #define TAGDATA @"TagData"
 
@@ -418,24 +416,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
 - (void)setUploadLivePhotoEnabled:(BOOL)uploadLivePhotoEnabled {
     if (self.uploadLivePhotoEnabled == uploadLivePhotoEnabled) return;
     [self setAttribute:[NSNumber numberWithBool:uploadLivePhotoEnabled] forKey:@"uploadLivePhotoEnabled"];
-}
-
-- (BOOL)skipExistingLivePhotoReupload {
-    return [[self getAttribute:@"skipExistingLivePhotoReupload"] booleanValue:NO];
-}
-
-- (void)setSkipExistingLivePhotoReupload:(BOOL)skip {
-    if (self.skipExistingLivePhotoReupload == skip) return;
-    [self setAttribute:[NSNumber numberWithBool:skip] forKey:@"skipExistingLivePhotoReupload"];
-}
-
-- (BOOL)hasRespondedToLivePhotoReuploadPrompt {
-    return [[self getAttribute:@"hasRespondedToLivePhotoReuploadPrompt"] booleanValue:NO];
-}
-
-- (void)setHasRespondedToLivePhotoReuploadPrompt:(BOOL)hasResponded {
-    if (self.hasRespondedToLivePhotoReuploadPrompt == hasResponded) return;
-    [self setAttribute:[NSNumber numberWithBool:hasResponded] forKey:@"hasRespondedToLivePhotoReuploadPrompt"];
 }
 // ============ End of Live Photo / Motion Photo upload setting ============
 
@@ -1342,25 +1322,8 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }
     Debug("%ld photos remain, syncdir: %@ %@", (long)self.photoBackup.photosArray.count, _syncDir.repoId, _syncDir.name);
     
-    // Check if Live Photo reupload prompt is needed before starting photo sync
-    // This handles the "enable switch first, select directory later" scenario
-    Debug("updateUploadDir: isUploadLivePhotoEnabled=%d, hasRespondedToLivePhotoReuploadPrompt=%d", 
-          self.isUploadLivePhotoEnabled, self.hasRespondedToLivePhotoReuploadPrompt);
-    
-    if (self.isUploadLivePhotoEnabled && !self.hasRespondedToLivePhotoReuploadPrompt) {
-        // Post notification to trigger prompt check on main thread
-        // The UI layer (SeafSettingsViewController) will handle the prompt
-        // and call checkPhotos after user responds
-        Debug("updateUploadDir: Posting SeafLivePhotoReuploadCheckNeededNotification");
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [[NSNotificationCenter defaultCenter] postNotificationName:SeafLivePhotoReuploadCheckNeededNotification
-                                                                object:self];
-        });
-    } else {
-        // No prompt needed, proceed with photo sync directly
-        Debug("updateUploadDir: No prompt needed, calling checkPhotos directly");
-        [self checkPhotos:true];
-    }
+    // Start photo sync directly
+    [self checkPhotos:true];
 }
 
 - (void)checkPhotosUploadDir:(CompletionBlock)handler
@@ -1421,20 +1384,6 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     }
 
     BOOL value = self.isAutoSync && (self.autoSyncRepo != nil);
-    
-    // Check if we're waiting for user to respond to Live Photo reupload prompt
-    // In this state, we should NOT restart sync or cancel tasks - just wait for user response
-    BOOL waitingForLivePhotoPrompt = self.isUploadLivePhotoEnabled && 
-                                      !self.hasRespondedToLivePhotoReuploadPrompt && 
-                                      _syncDir != nil;
-    
-    if (waitingForLivePhotoPrompt && value) {
-        Debug("checkAutoSync: waiting for Live Photo reupload prompt response, skip sync restart");
-        // Keep _inAutoSync = YES but don't restart sync flow
-        _inAutoSync = value;
-        self.photoBackup.inAutoSync = _inAutoSync;
-        return;
-    }
     
     if (_inAutoSync != value) {
         if (value) {

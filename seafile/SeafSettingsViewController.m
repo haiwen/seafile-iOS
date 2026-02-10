@@ -283,127 +283,26 @@ enum {
     _connection.localDecryptionEnabled = _localDecrySwitch.on;
 }
 
-/// Check if there are Live Photos that need to be re-uploaded and prompt user if needed.
-/// @param revertSwitchOnFailure If YES, revert the switch to OFF when check fails (used when turning on the switch).
-- (void)checkAndPromptForLivePhotoReuploadIfNeeded:(BOOL)revertSwitchOnFailure {
-    Debug("checkAndPromptForLivePhotoReuploadIfNeeded: called with revertSwitchOnFailure=%d", revertSwitchOnFailure);
-    Debug("checkAndPromptForLivePhotoReuploadIfNeeded: isUploadLivePhotoEnabled=%d, hasRespondedToLivePhotoReuploadPrompt=%d", 
-          _connection.isUploadLivePhotoEnabled, _connection.hasRespondedToLivePhotoReuploadPrompt);
-    Debug("checkAndPromptForLivePhotoReuploadIfNeeded: photoBackup=%@, syncDir=%@", 
-          _connection.photoBackup, _connection.photoBackup.syncDir);
-    
-    // Preconditions
-    if (!_connection.isUploadLivePhotoEnabled) {
-        // Not enabled, proceed with normal sync
-        Debug("checkAndPromptForLivePhotoReuploadIfNeeded: not enabled, calling checkPhotos");
-        [_connection checkPhotos:YES];
-        return;
-    }
-    if (_connection.hasRespondedToLivePhotoReuploadPrompt) {
-        // Already responded, proceed with normal sync
-        Debug("checkAndPromptForLivePhotoReuploadIfNeeded: already responded, calling checkPhotos");
-        [_connection checkPhotos:YES];
-        return;
-    }
-    if (!_connection.photoBackup || !_connection.photoBackup.syncDir) {
-        // syncDir not ready, can't check - this shouldn't happen when called from notification
-        Debug("checkAndPromptForLivePhotoReuploadIfNeeded: syncDir not ready, skip Live Photo check");
-        return;
-    }
-    
-    Debug("checkAndPromptForLivePhotoReuploadIfNeeded: checking for Live Photos that need reupload...");
-    // Show loading indicator while checking
-    [SVProgressHUD showWithStatus:NSLocalizedString(@"Checking photos...", @"Seafile")];
-    
-    // Check if there are Live Photos that need to be re-uploaded
-    [_connection.photoBackup checkHasLivePhotosNeedReupload:^(BOOL hasPhotosToReupload, NSError *error) {
-        [SVProgressHUD dismiss];
-        Debug("checkAndPromptForLivePhotoReuploadIfNeeded: checkHasLivePhotosNeedReupload completed, hasPhotosToReupload=%d, error=%@", 
-              hasPhotosToReupload, error);
-        
-        // Handle check failure
-        if (error) {
-            Debug("Failed to check Live Photos: %@", error);
-            if (revertSwitchOnFailure) {
-                [self->_connection setUploadLivePhotoEnabled:NO];
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    self->_enableUploadHeic.on = NO;
-                });
-            }
-            [self alertWithTitle:NSLocalizedString(@"Failed to check photos, please try again later.", @"Seafile")];
-            return;
-        }
-        
-        // Check if the switch was turned off during the async check
-        if (!self->_connection.isUploadLivePhotoEnabled) {
-            Debug("Live Photo upload was disabled during check, skip");
-            return;
-        }
-        
-        if (hasPhotosToReupload) {
-            // There are photos to re-upload, show confirmation dialog
-            Debug("checkAndPromptForLivePhotoReuploadIfNeeded: showing confirmation dialog");
-            NSString *message = NSLocalizedString(@"Do you want to re-upload previously backed up photos as Live Photos?", @"Seafile");
-            [self alertWithTitle:NSLocalizedString(@"Upload Live Photo", @"Seafile")
-                         message:message
-                             yes:^{
-                // Check again in case user toggled the switch while dialog was showing
-                if (!self->_connection.isUploadLivePhotoEnabled) {
-                    return;
-                }
-                Debug("checkAndPromptForLivePhotoReuploadIfNeeded: user chose YES, setting flags...");
-                [self->_connection setSkipExistingLivePhotoReupload:NO];
-                [self->_connection setHasRespondedToLivePhotoReuploadPrompt:YES];
-                Debug("checkAndPromptForLivePhotoReuploadIfNeeded: after setting - skipExistingLivePhotoReupload=%d, hasRespondedToLivePhotoReuploadPrompt=%d",
-                      self->_connection.skipExistingLivePhotoReupload, self->_connection.hasRespondedToLivePhotoReuploadPrompt);
-                // User chose YES, start photo sync with re-upload
-                Debug("checkAndPromptForLivePhotoReuploadIfNeeded: calling checkPhotos:YES");
-                [self->_connection checkPhotos:YES];
-            } no:^{
-                // Check again in case user toggled the switch while dialog was showing
-                if (!self->_connection.isUploadLivePhotoEnabled) {
-                    return;
-                }
-                Debug("checkAndPromptForLivePhotoReuploadIfNeeded: user chose NO");
-                // Skip re-uploading existing photos
-                [self->_connection setSkipExistingLivePhotoReupload:YES];
-                [self->_connection setHasRespondedToLivePhotoReuploadPrompt:YES];
-                // User chose NO, start photo sync without re-upload
-                [self->_connection checkPhotos:YES];
-            }];
-        } else {
-            // No photos need re-upload, mark as responded and proceed with normal sync
-            Debug("checkAndPromptForLivePhotoReuploadIfNeeded: no photos need reupload, calling checkPhotos");
-            [self->_connection setHasRespondedToLivePhotoReuploadPrompt:YES];
-            [self->_connection checkPhotos:YES];
-        }
-    }];
-}
-
 - (IBAction)enableUploadHeicFlip:(UISwitch *)sender {
     Debug("enableUploadHeicFlip: sender.on=%d", sender.on);
     if (sender.on) {
-        // Enable the feature first, so new photos taken during the check will be uploaded correctly
+        // Enable the feature - new Live Photos will be uploaded as Motion Photos
         [_connection setUploadLivePhotoEnabled:YES];
-        // Reset the prompt flag so user can be asked again
-        [_connection setHasRespondedToLivePhotoReuploadPrompt:NO];
-        Debug("enableUploadHeicFlip: set uploadLivePhotoEnabled=YES, hasRespondedToLivePhotoReuploadPrompt=NO");
         
-        // Check if photoBackup exists and syncDir is set
-        if (!_connection.photoBackup || !_connection.photoBackup.syncDir) {
-            // Never configured backup or syncDir not set, no need to check for re-upload
-            Debug("enableUploadHeicFlip: No photoBackup or syncDir, Live Photo upload enabled, will check later when syncDir is ready");
-            return;
+        // If auto sync is enabled and backup directory is configured, trigger photo check
+        if (_connection.isAutoSync && _connection.autoSyncRepo) {
+            if (_connection.photoBackup && _connection.photoBackup.syncDir) {
+                Debug("enableUploadHeicFlip: auto sync enabled and syncDir ready, triggering checkPhotos");
+                [_connection checkPhotos:YES];
+            } else {
+                Debug("enableUploadHeicFlip: auto sync enabled but syncDir not ready, will check when ready");
+            }
+        } else {
+            Debug("enableUploadHeicFlip: auto sync not enabled or no backup repo, just saving setting");
         }
-        
-        Debug("enableUploadHeicFlip: photoBackup and syncDir exist, checking for re-upload");
-        // Check and prompt for re-upload (revert switch on failure)
-        [self checkAndPromptForLivePhotoReuploadIfNeeded:YES];
     } else {
         Debug("enableUploadHeicFlip: turning off, set uploadLivePhotoEnabled=NO");
         [_connection setUploadLivePhotoEnabled:NO];
-        // Reset the prompt flag so user can be asked again when re-enabling
-        [_connection setHasRespondedToLivePhotoReuploadPrompt:NO];
     }
 }
 
@@ -540,10 +439,6 @@ enum {
     [[NSNotificationCenter defaultCenter] addObserver:self 
                                              selector:@selector(accountInfoUpdated:) 
                                                  name:@"SeafAccountInfoUpdated" 
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(handleLivePhotoReuploadCheckNeeded:)
-                                                 name:SeafLivePhotoReuploadCheckNeededNotification
                                                object:nil];
 
 }
@@ -1040,26 +935,7 @@ enum {
 
     dispatch_async(dispatch_get_main_queue(), ^ {
         [self setSyncRepo:repo];
-        // Live Photo reupload check is now handled via SeafLivePhotoReuploadCheckNeededNotification
-        // which is posted by SeafConnection when syncDir is ready
     });
-}
-
-/// Handle notification when syncDir is ready and Live Photo reupload check is needed
-- (void)handleLivePhotoReuploadCheckNeeded:(NSNotification *)notification {
-    SeafConnection *connection = notification.object;
-    Debug("handleLivePhotoReuploadCheckNeeded: received notification, connection=%@, self.connection=%@", 
-          connection.address, self.connection.address);
-    
-    // Only handle notification for the current connection
-    if (connection != self.connection) {
-        Debug("handleLivePhotoReuploadCheckNeeded: connection mismatch, ignoring");
-        return;
-    }
-    
-    Debug("handleLivePhotoReuploadCheckNeeded: calling checkAndPromptForLivePhotoReuploadIfNeeded");
-    // Trigger the prompt check (don't revert switch on failure since it's already enabled)
-    [self checkAndPromptForLivePhotoReuploadIfNeeded:NO];
 }
 
 - (void)dismissViewController:(UIViewController *)c
@@ -1103,7 +979,6 @@ enum {
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self name:@"SeafUploadTaskStatusChanged" object:nil];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:@"SeafAccountInfoUpdated" object:nil];
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:SeafLivePhotoReuploadCheckNeededNotification object:nil];
 }
 
 #pragma mark - SeafBackupGuideDelegate
