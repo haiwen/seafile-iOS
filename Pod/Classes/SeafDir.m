@@ -62,6 +62,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 // File size index for Live Photo detection
 @property (nonatomic, strong, readwrite) NSDictionary<NSString *, NSNumber *> *serverFileIndex;
 @property (nonatomic, strong, readwrite) NSDictionary<NSString *, NSString *> *serverFileLowercaseIndex;
+@property (nonatomic, strong, readwrite) NSDictionary<NSString *, NSString *> *serverFileBaseNameIndex;
 
 @end
 
@@ -549,6 +550,7 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
 - (void)buildFileIndexFromItems:(NSArray *)items {
     NSMutableDictionary<NSString *, NSNumber *> *fileIndex = [NSMutableDictionary dictionary];
     NSMutableDictionary<NSString *, NSString *> *lowercaseIndex = [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSString *, NSString *> *baseNameIndex = [NSMutableDictionary dictionary];
     
     for (SeafBase *item in items) {
         if ([item isKindOfClass:[SeafFile class]]) {
@@ -557,12 +559,20 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
             if (name) {
                 fileIndex[name] = @(file.filesize);
                 lowercaseIndex[name.lowercaseString] = name;
+                
+                // Build base name index (without extension) for backup duplicate detection
+                NSString *baseName = [name stringByDeletingPathExtension];
+                NSString *lowerBaseName = baseName.lowercaseString;
+                if (!baseNameIndex[lowerBaseName]) {
+                    baseNameIndex[lowerBaseName] = name;
+                }
             }
         }
     }
     
     self.serverFileIndex = [fileIndex copy];
     self.serverFileLowercaseIndex = [lowercaseIndex copy];
+    self.serverFileBaseNameIndex = [baseNameIndex copy];
 }
 
 - (NSNumber *)fileSizeForName:(NSString *)name {
@@ -576,6 +586,13 @@ static NSComparator seafSortByMtime = ^(id a, id b) {
     }
     
     return self.serverFileIndex[actualName];
+}
+
+- (BOOL)baseNameExist:(NSString *)baseName {
+    if (!baseName || !self.serverFileBaseNameIndex) {
+        return NO;
+    }
+    return self.serverFileBaseNameIndex[baseName.lowercaseString] != nil;
 }
 
 @end

@@ -89,11 +89,4 @@
  */
 - (void)clearUploadingVideos;
 
-/**
- Checks if there are any Live Photos that need to be re-uploaded as Motion Photos.
- This checks for Live Photos that have been uploaded before but only have static version on server.
- @param completion Callback with YES if there are photos to re-upload, NO otherwise. Error is non-nil if the check failed.
- */
-- (void)checkHasLivePhotosNeedReupload:(void (^_Nonnull)(BOOL hasPhotosToReupload, NSError * _Nullable error))completion;
-
 @end
