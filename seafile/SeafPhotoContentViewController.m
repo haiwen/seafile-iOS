@@ -747,6 +747,9 @@
                         self.view.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
                         self.scrollView.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
                         self.imageView.backgroundColor = [UIColor clearColor];
+                        if (self.livePhotoPlayerView) {
+                            self.livePhotoPlayerView.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
+                        }
                     } completion:nil];
                     
                 } else {
@@ -760,10 +763,13 @@
                         if (leftOverlay) leftOverlay.alpha = 0.0;
                         if (rightOverlay) rightOverlay.alpha = 0.0;
                         
-                        // Change background color to #F9F9F9
-                        self.view.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
-                        self.scrollView.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
+                        // Change background color to black for fullscreen viewing mode
+                        self.view.backgroundColor = [UIColor blackColor];
+                        self.scrollView.backgroundColor = [UIColor blackColor];
                         self.imageView.backgroundColor = [UIColor clearColor];
+                        if (self.livePhotoPlayerView) {
+                            self.livePhotoPlayerView.backgroundColor = [UIColor blackColor];
+                        }
                     } completion:^(BOOL finished) {
                         if (thumbnailCollection) thumbnailCollection.hidden = YES;
                         if (toolbarView) toolbarView.hidden = YES;
@@ -1761,15 +1767,21 @@
 
     // Set background color immediately based on inferred state
     if (shouldBeBlackBackground) {
-        // Ensure the view is in the fullscreen state with #F9F9F9 background
-        self.view.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
-        self.scrollView.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
+        // Ensure the view is in the fullscreen state with black background
+        self.view.backgroundColor = [UIColor blackColor];
+        self.scrollView.backgroundColor = [UIColor blackColor];
         self.imageView.backgroundColor = [UIColor clearColor]; // Ensure image view is clear over black
+        if (self.livePhotoPlayerView) {
+            self.livePhotoPlayerView.backgroundColor = [UIColor blackColor];
+        }
     } else {
         // Ensure the view is in the 'light mode' state
         // self.view.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9 - already set in viewDidLoad
         // self.scrollView.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9 - already set in setupScrollView
-        self.imageView.backgroundColor = [UIColor clearColor]; 
+        self.imageView.backgroundColor = [UIColor clearColor];
+        if (self.livePhotoPlayerView) {
+            self.livePhotoPlayerView.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
+        }
     }
     // When a new view is about to appear during a transition, make sure layout is correct
     [self updateViewFramesForInfoVisibility:self.infoVisible];

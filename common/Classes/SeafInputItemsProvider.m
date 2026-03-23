@@ -15,10 +15,11 @@
 
 @interface SeafInputItemsProvider()
 
-@property (nonatomic, strong) dispatch_group_t group;
 @property (nonatomic, strong) NSMutableArray *ufiles;
 @property (nonatomic, strong) CompleteBlock completeBlock;
 @property (nonatomic, copy) NSString *tmpdir;
+@property (nonatomic, strong) NSArray *pendingProviders;  // All item providers to process
+@property (nonatomic, assign) NSInteger currentIndex;      // Current processing index
 
 @end
 
@@ -28,7 +29,7 @@
     self = [super init];
     if (self) {
         self.ufiles = [[NSMutableArray alloc] init];
-        self.group = dispatch_group_create();
+        self.currentIndex = 0;
     }
     return self;
 }
@@ -47,38 +48,86 @@
     }
     provider.tmpdir = tmpdir;
     
+    // Collect all item providers for serial processing
+    NSMutableArray *allProviders = [NSMutableArray array];
     for (NSExtensionItem *item in extensionContext.inputItems) {
         for (NSItemProvider *itemProvider in item.attachments) {
-            dispatch_group_enter(provider.group);
-            Debug("itemProvider: %@", itemProvider);
-            if ([itemProvider hasItemConformingToTypeIdentifier:(NSString *)kUTTypeItem] || [itemProvider hasItemConformingToTypeIdentifier:@"public.url"]) {
-                //image or ics need to call with "public.url" as identifier
-                NSString *typeIdentifier = (NSString *)kUTTypeItem;
-                if ([itemProvider hasItemConformingToTypeIdentifier:@"public.url"]) {
-                    typeIdentifier = @"public.url";
-                }
-                [itemProvider loadItemForTypeIdentifier:typeIdentifier options:nil completionHandler:^(id<NSSecureCoding, NSObject>  _Nullable item, NSError * _Null_unspecified error) {
-                    if (!error) {
-                        [provider loadMatchingItem:item provider:itemProvider handler:^(BOOL result) {
-                            dispatch_group_leave(provider.group);
-                        }];
-                    } else {
-                        [provider handleFailure:^(BOOL result) {
-                            dispatch_group_leave(provider.group);
-                        }];
-                    }
-                }];
-            } else {
-                [provider handleFailure:^(BOOL result) {
-                    dispatch_group_leave(provider.group);
-                }];
-            }
+            [allProviders addObject:itemProvider];
         }
-    };
+    }
     
-    dispatch_group_notify(provider.group, dispatch_get_main_queue(), ^{
-        provider.completeBlock(true, provider.ufiles, @"");
-    });
+    provider.pendingProviders = allProviders;
+    provider.currentIndex = 0;
+    
+    Debug("Total items to process: %lu", (unsigned long)allProviders.count);
+    
+    // Start serial processing
+    [provider processNextItem];
+}
+
+#pragma mark - Serial Processing
+
+/// Process items one by one to avoid memory pressure
+- (void)processNextItem {
+    // All items processed
+    if (self.currentIndex >= self.pendingProviders.count) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (self.ufiles.count > 0) {
+                // At least one file was processed successfully
+                Debug("Completed: %lu items processed successfully", (unsigned long)self.ufiles.count);
+                self.completeBlock(true, self.ufiles, @"");
+            } else {
+                // No files were processed successfully
+                Warning("Failed: no items were processed successfully");
+                self.completeBlock(false, nil, @"Failed to load file");
+            }
+        });
+        return;
+    }
+    
+    NSItemProvider *itemProvider = self.pendingProviders[self.currentIndex];
+    Debug("Processing item %ld/%lu: %@", (long)(self.currentIndex + 1), (unsigned long)self.pendingProviders.count, itemProvider);
+    
+    if ([itemProvider hasItemConformingToTypeIdentifier:(NSString *)kUTTypeItem] || 
+        [itemProvider hasItemConformingToTypeIdentifier:@"public.url"]) {
+        
+        // Image or ics need to call with "public.url" as identifier
+        NSString *typeIdentifier = (NSString *)kUTTypeItem;
+        if ([itemProvider hasItemConformingToTypeIdentifier:@"public.url"]) {
+            typeIdentifier = @"public.url";
+        }
+        
+        [itemProvider loadItemForTypeIdentifier:typeIdentifier 
+                                        options:nil 
+                              completionHandler:^(id<NSSecureCoding, NSObject> _Nullable item, NSError * _Null_unspecified error) {
+            @autoreleasepool {
+                if (!error) {
+                    [self loadMatchingItem:item provider:itemProvider handler:^(BOOL result) {
+                        // Process next item regardless of result
+                        self.currentIndex++;
+                        // Use dispatch_async to avoid stack overflow with many items
+                        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                            [self processNextItem];
+                        });
+                    }];
+                } else {
+                    Warning("Failed to load item at index %ld: %@", (long)self.currentIndex, error);
+                    // Continue processing next item even if this one failed
+                    self.currentIndex++;
+                    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                        [self processNextItem];
+                    });
+                }
+            }
+        }];
+    } else {
+        Warning("Unsupported item type at index %ld", (long)self.currentIndex);
+        // Skip unsupported item and continue
+        self.currentIndex++;
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            [self processNextItem];
+        });
+    }
 }
 
 - (void)loadMatchingItem:(id<NSSecureCoding, NSObject>)item provider:(NSItemProvider*)itemProvider handler:(ItemLoadHandler)handler {
@@ -191,18 +240,26 @@
     }
 }
 
+/// Handle failure for a single item - continues processing remaining items
 - (void)handleFailure:(ItemLoadHandler)handler {
+    Warning("Failed to process item");
     if (handler) {
         handler(false);
     }
-    self.completeBlock(false, nil, @"Failed to load file");
+    // Note: In serial mode, we don't call completeBlock here.
+    // The processNextItem method will continue with the next item
+    // and call completeBlock when all items are processed.
 }
 
+/// Handle failure with custom error message - continues processing remaining items
 - (void)handleFailure:(ItemLoadHandler)handler withErrorDisplayMessage:(NSString *)errorMessage {
+    Warning("Failed to process item: %@", errorMessage);
     if (handler) {
         handler(false);
     }
-    self.completeBlock(false, nil, errorMessage);
+    // Note: In serial mode, we don't call completeBlock here.
+    // The processNextItem method will continue with the next item
+    // and call completeBlock when all items are processed.
 }
 
 @end
