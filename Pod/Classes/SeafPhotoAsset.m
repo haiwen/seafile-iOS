@@ -136,14 +136,32 @@
     return URL;
 }
 
-- (NSString *)uploadNameWithLivePhotoEnabled:(BOOL)livePhotoEnabled {
+- (NSString *)uploadNameWithLivePhotoEnabled:(BOOL)livePhotoEnabled
+                        useJpgForStaticPhoto:(BOOL)useJpg {
+    NSString *baseName = [_name stringByDeletingPathExtension];
+    NSString *ext = [_name.pathExtension lowercaseString];
+    
+    // Case 1: Live Photo + Live Photo switch ON → always use .heic (Motion Photo)
     if (_isLivePhoto && livePhotoEnabled) {
-        NSString *ext = [_name.pathExtension lowercaseString];
         if (![ext isEqualToString:@"heic"]) {
-            return [[_name stringByDeletingPathExtension] stringByAppendingPathExtension:@"heic"];
+            return [baseName stringByAppendingPathExtension:@"heic"];
+        }
+        return _name;
+    }
+    
+    // Case 2: Static photo (or Live Photo with switch OFF)
+    if (useJpg) {
+        // JPG switch ON → force .jpg extension
+        if (![ext isEqualToString:@"jpg"] && ![ext isEqualToString:@"jpeg"]) {
+            return [baseName stringByAppendingPathExtension:@"jpg"];
         }
     }
+    // JPG switch OFF → keep original format (heic stays heic, jpg stays jpg)
     return _name;
+}
+
+- (NSString *)uploadNameWithLivePhotoEnabled:(BOOL)livePhotoEnabled {
+    return [self uploadNameWithLivePhotoEnabled:livePhotoEnabled useJpgForStaticPhoto:NO];
 }
 
 #pragma mark - Resource Size for Live Photo Detection

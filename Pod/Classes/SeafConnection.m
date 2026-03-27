@@ -417,7 +417,39 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (self.uploadLivePhotoEnabled == uploadLivePhotoEnabled) return;
     [self setAttribute:[NSNumber numberWithBool:uploadLivePhotoEnabled] forKey:@"uploadLivePhotoEnabled"];
 }
-// ============ End of Live Photo / Motion Photo upload setting ============
+// ============ Static photo JPG format setting ============
+// Migration logic: if new key not set, check old "uploadHeicEnabled" key from 3.0.9
+// Old semantics: uploadHeicEnabled=YES → keep HEIC, uploadHeicEnabled=NO → convert to JPG
+// New semantics: useJpgForStaticPhoto=YES → convert to JPG, NO → keep original format
+// If neither key was ever set → default to NO (keep original format)
+- (BOOL)isUseJpgForStaticPhoto {
+    // 1. New property already explicitly set → use it directly
+    NSObject *newValue = [self getAttribute:@"useJpgForStaticPhoto"];
+    if (newValue) {
+        return [newValue booleanValue:NO];
+    }
+    
+    // 2. New property not set, check old "uploadHeicEnabled" for migration
+    NSObject *oldValue = [self getAttribute:@"uploadHeicEnabled"];
+    if (oldValue) {
+        // Old property exists → user had explicitly set it in 3.0.9
+        // Invert: old YES(keep HEIC) → new NO, old NO(convert JPG) → new YES
+        BOOL migratedValue = ![oldValue booleanValue:NO];
+        // One-time migration: persist to new key so we don't check old key again
+        [self setAttribute:@(migratedValue) forKey:@"useJpgForStaticPhoto"];
+        Debug("Migrated uploadHeicEnabled=%d → useJpgForStaticPhoto=%d", [oldValue booleanValue:NO], migratedValue);
+        return migratedValue;
+    }
+    
+    // 3. Neither key was ever set → default NO (keep original format)
+    return NO;
+}
+
+- (void)setUseJpgForStaticPhoto:(BOOL)useJpgForStaticPhoto {
+    if (self.useJpgForStaticPhoto == useJpgForStaticPhoto) return;
+    [self setAttribute:[NSNumber numberWithBool:useJpgForStaticPhoto] forKey:@"useJpgForStaticPhoto"];
+}
+// ============ End of Static photo JPG format setting ============
 
 - (NSString *)autoSyncRepo
 {

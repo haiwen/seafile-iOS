@@ -210,6 +210,10 @@
     return self.udir.connection.isUploadLivePhotoEnabled;
 }
 
+- (BOOL)useJpgForStaticPhoto {
+    return self.udir.connection.isUseJpgForStaticPhoto;
+}
+
 - (NSString *)strContent {
     return [Utils stringContent:self.lpath];
 }

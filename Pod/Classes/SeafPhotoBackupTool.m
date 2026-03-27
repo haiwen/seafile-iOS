@@ -151,11 +151,12 @@
     
     NSMutableArray *uploadFilesArray = [[NSMutableArray alloc] init];
     BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
+    BOOL useJpg = self.connection.isUseJpgForStaticPhoto;
     
     for (PHAsset *asset in result) {
         if (asset) {
             SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
-            NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];
+            NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled useJpgForStaticPhoto:useJpg];
             NSString *expectedFilename = filename;
             
             // Use actual server filename for case-insensitive overwrite on Linux
@@ -212,8 +213,9 @@
         PHAsset *asset = [result firstObject];
         if (asset) {
             BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
+            BOOL useJpg = self.connection.isUseJpgForStaticPhoto;
             SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
-            NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];
+            NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled useJpgForStaticPhoto:useJpg];
             NSString *expectedFilename = filename;
             
             // Use actual server filename for case-insensitive overwrite on Linux
