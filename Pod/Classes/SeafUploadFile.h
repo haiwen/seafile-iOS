@@ -126,6 +126,7 @@ typedef void (^SeafUploadCompletionBlock)(SeafUploadFile *file, NSString *oid, N
 // ============ Upload format settings ============
 - (BOOL)uploadHeic;
 - (BOOL)uploadLivePhoto;
+- (BOOL)useJpgForStaticPhoto;
 
 - (BOOL)waitUpload;
 

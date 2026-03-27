@@ -20,6 +20,7 @@
 @property (nonatomic, copy) NSString *tmpdir;
 @property (nonatomic, strong) NSArray *pendingProviders;  // All item providers to process
 @property (nonatomic, assign) NSInteger currentIndex;      // Current processing index
+@property (nonatomic, copy) NSString *lastErrorMessage;    // Last error message from failed items
 
 @end
 
@@ -79,7 +80,8 @@
             } else {
                 // No files were processed successfully
                 Warning("Failed: no items were processed successfully");
-                self.completeBlock(false, nil, @"Failed to load file");
+                NSString *errorMsg = self.lastErrorMessage ?: @"Failed to load file";
+                self.completeBlock(false, nil, errorMsg);
             }
         });
         return;
@@ -254,6 +256,9 @@
 /// Handle failure with custom error message - continues processing remaining items
 - (void)handleFailure:(ItemLoadHandler)handler withErrorDisplayMessage:(NSString *)errorMessage {
     Warning("Failed to process item: %@", errorMessage);
+    if (errorMessage) {
+        self.lastErrorMessage = errorMessage;
+    }
     if (handler) {
         handler(false);
     }

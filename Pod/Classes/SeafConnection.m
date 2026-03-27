@@ -188,6 +188,9 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
         Debug("Load client identity: %@, %@", _clientIdentityKey, self.clientCred);
     }
     
+    // One-time setting migrations (must be after _settings is loaded)
+    [self migrateUploadHeicSettingIfNeeded];
+    
     //Get the latest server info 
     [self getServerInfo:^(bool result) {}];
     if (self.autoClearRepoPasswd) {
@@ -417,7 +420,42 @@ static AFHTTPRequestSerializer <AFURLRequestSerialization> * _requestSerializer;
     if (self.uploadLivePhotoEnabled == uploadLivePhotoEnabled) return;
     [self setAttribute:[NSNumber numberWithBool:uploadLivePhotoEnabled] forKey:@"uploadLivePhotoEnabled"];
 }
-// ============ End of Live Photo / Motion Photo upload setting ============
+// ============ Static photo JPG format setting ============
+// Migration from old "uploadHeicEnabled" key (3.0.9):
+// Old semantics: uploadHeicEnabled=YES → keep HEIC, uploadHeicEnabled=NO → convert to JPG
+// New semantics: useJpgForStaticPhoto=YES → convert to JPG, NO → keep original format
+
+/// One-time migration: convert old uploadHeicEnabled to new useJpgForStaticPhoto.
+/// Call this once during connection initialization after settings are loaded.
+- (void)migrateUploadHeicSettingIfNeeded {
+    NSObject *newValue = [self getAttribute:@"useJpgForStaticPhoto"];
+    if (newValue) {
+        return; // Already migrated or explicitly set
+    }
+    
+    NSObject *oldValue = [self getAttribute:@"uploadHeicEnabled"];
+    if (oldValue) {
+        // Invert: old YES(keep HEIC) → new NO, old NO(convert JPG) → new YES
+        BOOL migratedValue = ![oldValue booleanValue:NO];
+        [self setAttribute:@(migratedValue) forKey:@"useJpgForStaticPhoto"];
+        Debug("Migrated uploadHeicEnabled=%d → useJpgForStaticPhoto=%d", [oldValue booleanValue:NO], migratedValue);
+    }
+}
+
+- (BOOL)isUseJpgForStaticPhoto {
+    NSObject *value = [self getAttribute:@"useJpgForStaticPhoto"];
+    if (value) {
+        return [value booleanValue:NO];
+    }
+    // Default: NO (keep original format)
+    return NO;
+}
+
+- (void)setUseJpgForStaticPhoto:(BOOL)useJpgForStaticPhoto {
+    if (self.useJpgForStaticPhoto == useJpgForStaticPhoto) return;
+    [self setAttribute:[NSNumber numberWithBool:useJpgForStaticPhoto] forKey:@"useJpgForStaticPhoto"];
+}
+// ============ End of Static photo JPG format setting ============
 
 - (NSString *)autoSyncRepo
 {

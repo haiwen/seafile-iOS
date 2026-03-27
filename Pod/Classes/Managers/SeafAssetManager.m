@@ -105,30 +105,70 @@ static const NSTimeInterval kLivePhotoRetryDelay = 1.0; // seconds
         resource = resources.firstObject;
     }
 
-    // Always keep original format (no HEIC→JPG conversion)
-    // Per new specification: static photos always keep their original format
-    NSString *writePath = file.model.lpath;
+    // Check if we need HEIC→JPG conversion
+    BOOL needsJpgConversion = [file useJpgForStaticPhoto] && [self isHEICResource:resource];
     
-    NSOutputStream *stream = [NSOutputStream outputStreamToFileAtPath:writePath append:NO];
-    [stream open];
+    if (needsJpgConversion) {
+        // Write original HEIC data to a temp path, then convert to JPG
+        NSString *tempDir = [file.model.lpath stringByDeletingLastPathComponent];
+        NSString *tempPath = [tempDir stringByAppendingPathComponent:
+                              [NSString stringWithFormat:@".heic_tmp_%@", [[NSUUID UUID] UUIDString]]];
+        
+        PHAssetResourceRequestOptions *options = [[PHAssetResourceRequestOptions alloc] init];
+        options.networkAccessAllowed = YES;
+        
+        [[PHAssetResourceManager defaultManager] writeDataForAssetResource:resource
+                                                                    toFile:[NSURL fileURLWithPath:tempPath]
+                                                                   options:options
+                                                         completionHandler:^(NSError * _Nullable error) {
+            if (error) {
+                [[NSFileManager defaultManager] removeItemAtPath:tempPath error:nil];
+                if (completion) completion(NO, error);
+                return;
+            }
+            
+            // Convert HEIC to JPG
+            BOOL success = [self convertHEICToJPEGAtURL:[NSURL fileURLWithPath:tempPath]
+                                         destinationURL:[NSURL fileURLWithPath:file.model.lpath]];
+            [[NSFileManager defaultManager] removeItemAtPath:tempPath error:nil];
+            
+            if (!success) {
+                Warning("HEIC→JPG conversion failed for %@", file.name);
+                NSError *conversionError = [NSError errorWithDomain:@"SeafAssetManager"
+                                                               code:-2
+                                                           userInfo:@{NSLocalizedDescriptionKey: [NSString stringWithFormat:@"HEIC to JPG conversion failed for %@", file.name]}];
+                if (completion) completion(NO, conversionError);
+                return;
+            }
+            
+            Debug("HEIC→JPG conversion successful for %@", file.name);
+            if (completion) completion(YES, nil);
+        }];
+    } else {
+        // No conversion needed, write original data directly
+        NSString *writePath = file.model.lpath;
+        
+        NSOutputStream *stream = [NSOutputStream outputStreamToFileAtPath:writePath append:NO];
+        [stream open];
 
-    PHAssetResourceRequestOptions *options = [[PHAssetResourceRequestOptions alloc] init];
-    options.networkAccessAllowed = YES;
+        PHAssetResourceRequestOptions *options = [[PHAssetResourceRequestOptions alloc] init];
+        options.networkAccessAllowed = YES;
 
-    [[PHAssetResourceManager defaultManager] requestDataForAssetResource:resource 
-                                                               options:options 
-                                                 dataReceivedHandler:^(NSData * _Nonnull data) {
-        @autoreleasepool {
-            [stream write:data.bytes maxLength:data.length];
-        }
-    } completionHandler:^(NSError * _Nullable error) {
-        [stream close];
-        if (error) {
-            if (completion) completion(NO, error);
-            return;
-        }
-        if (completion) completion(YES, nil);
-    }];
+        [[PHAssetResourceManager defaultManager] requestDataForAssetResource:resource 
+                                                                   options:options 
+                                                     dataReceivedHandler:^(NSData * _Nonnull data) {
+            @autoreleasepool {
+                [stream write:data.bytes maxLength:data.length];
+            }
+        } completionHandler:^(NSError * _Nullable error) {
+            [stream close];
+            if (error) {
+                if (completion) completion(NO, error);
+                return;
+            }
+            if (completion) completion(YES, nil);
+        }];
+    }
 }
 
 - (void)getModifiedImageDataForAsset:(SeafUploadFile *)file completion:(void (^)(BOOL success, NSError *error))completion {
@@ -145,6 +185,8 @@ static const NSTimeInterval kLivePhotoRetryDelay = 1.0; // seconds
         }
     };
     
+    BOOL needsJpgConversion = [file useJpgForStaticPhoto];
+    
     [[PHImageManager defaultManager] requestImageDataForAsset:file.model.asset 
                                                     options:options 
                                               resultHandler:^(NSData * _Nullable imageData, 
@@ -159,18 +201,31 @@ static const NSTimeInterval kLivePhotoRetryDelay = 1.0; // seconds
             return;
         }
         
-        // Always keep original format (no HEIC→JPG conversion)
-        // Per new specification: static photos always keep their original format
         NSData *dataToWrite = imageData;
+        NSString *targetExtension = nil;
         
-        // Keep original extension based on UTI
-        NSString *newExtension = [FileMimeType fileExtensionForUTI:dataUTI];
-        if (!newExtension) {
-            newExtension = file.model.lpath.pathExtension;
+        if (needsJpgConversion && [self isHEICData:imageData]) {
+            // Convert HEIC data to JPEG
+            NSData *jpegData = [self convertHEICDataToJPEG:imageData];
+            if (jpegData) {
+                dataToWrite = jpegData;
+                targetExtension = @"jpg";
+                Debug("Modified image HEIC→JPG conversion successful for %@", file.name);
+            } else {
+                Debug("Modified image HEIC→JPG conversion failed, keeping original format for %@", file.name);
+            }
         }
         
-        if (newExtension && ![[file.model.lpath.pathExtension lowercaseString] isEqualToString:[newExtension lowercaseString]]) {
-            file.model.lpath = [[file.model.lpath stringByDeletingPathExtension] stringByAppendingPathExtension:newExtension];
+        if (!targetExtension) {
+            // Keep original extension based on UTI
+            targetExtension = [FileMimeType fileExtensionForUTI:dataUTI];
+            if (!targetExtension) {
+                targetExtension = file.model.lpath.pathExtension;
+            }
+        }
+        
+        if (targetExtension && ![[file.model.lpath.pathExtension lowercaseString] isEqualToString:[targetExtension lowercaseString]]) {
+            file.model.lpath = [[file.model.lpath stringByDeletingPathExtension] stringByAppendingPathExtension:targetExtension];
             Debug(@"Updated file path to: %@", file.model.lpath);
         }
         
@@ -181,6 +236,44 @@ static const NSTimeInterval kLivePhotoRetryDelay = 1.0; // seconds
         
         if (completion) completion(YES, nil);
     }];
+}
+
+/// Check if a PHAssetResource is HEIC format by its UTI.
+- (BOOL)isHEICResource:(PHAssetResource *)resource {
+    if (!resource) return NO;
+    NSString *uti = resource.uniformTypeIdentifier;
+    if (!uti) return NO;
+    
+    if (@available(iOS 14.0, *)) {
+        UTType *type = [UTType typeWithIdentifier:uti];
+        return [type conformsToType:UTTypeHEIC];
+    } else {
+        return UTTypeConformsTo((__bridge CFStringRef)uti, kUTTypeHEIC);
+    }
+}
+
+/// Convert in-memory HEIC data to JPEG data, preserving metadata.
+- (nullable NSData *)convertHEICDataToJPEG:(NSData *)heicData {
+    if (!heicData || heicData.length == 0) return nil;
+    
+    CGImageSourceRef source = CGImageSourceCreateWithData((__bridge CFDataRef)heicData, NULL);
+    if (!source) return nil;
+    
+    NSMutableData *jpegData = [NSMutableData data];
+    CGImageDestinationRef dest = CGImageDestinationCreateWithData((__bridge CFMutableDataRef)jpegData, kUTTypeJPEG, 1, NULL);
+    if (!dest) {
+        CFRelease(source);
+        return nil;
+    }
+    
+    NSDictionary *options = @{(__bridge NSString *)kCGImageDestinationLossyCompressionQuality: @0.9};
+    CGImageDestinationAddImageFromSource(dest, source, 0, (__bridge CFDictionaryRef)options);
+    BOOL success = CGImageDestinationFinalize(dest);
+    
+    CFRelease(dest);
+    CFRelease(source);
+    
+    return success ? jpegData : nil;
 }
 
 - (BOOL)convertHEICToJPEGAtURL:(NSURL *)sourceURL destinationURL:(NSURL *)destinationURL {
@@ -195,7 +288,7 @@ static const NSTimeInterval kLivePhotoRetryDelay = 1.0; // seconds
         if ([type conformsToType:UTTypeHEIC]) {
             CGImageDestinationRef destination = CGImageDestinationCreateWithURL((__bridge CFURLRef)destinationURL, (__bridge CFStringRef)UTTypeJPEG.identifier, 1, NULL);
             if (destination) {
-                NSDictionary *options = @{(__bridge NSString *)kCGImageDestinationLossyCompressionQuality: @0.8};
+                NSDictionary *options = @{(__bridge NSString *)kCGImageDestinationLossyCompressionQuality: @0.9};
                 CGImageDestinationAddImageFromSource(destination, source, 0, (__bridge CFDictionaryRef)options);
                 success = CGImageDestinationFinalize(destination);
                 CFRelease(destination);
@@ -205,7 +298,7 @@ static const NSTimeInterval kLivePhotoRetryDelay = 1.0; // seconds
         if (UTTypeConformsTo(sourceType, kUTTypeHEIC)) {
             CGImageDestinationRef destination = CGImageDestinationCreateWithURL((__bridge CFURLRef)destinationURL, kUTTypeJPEG, 1, NULL);
             if (destination) {
-                NSDictionary *options = @{(__bridge NSString *)kCGImageDestinationLossyCompressionQuality: @0.8};
+                NSDictionary *options = @{(__bridge NSString *)kCGImageDestinationLossyCompressionQuality: @0.9};
                 CGImageDestinationAddImageFromSource(destination, source, 0, (__bridge CFDictionaryRef)options);
                 success = CGImageDestinationFinalize(destination);
                 CFRelease(destination);

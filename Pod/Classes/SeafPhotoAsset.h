@@ -59,11 +59,19 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithAsset:(PHAsset*)asset isCompress:(BOOL)isCompress;
 
 /**
- Get the final upload filename based on Live Photo setting
+ Get the final upload filename based on Live Photo and JPG format settings
  @param livePhotoEnabled Whether the "Upload Live Photo" setting is enabled
+ @param useJpg Whether the "Use JPG Format for static photo" setting is enabled
  @return The filename that will be used for upload:
-         - If this is a Live Photo and livePhotoEnabled = YES → returns .heic extension
-         - Otherwise → returns original filename
+         - If this is a Live Photo and livePhotoEnabled = YES → returns .heic extension (Motion Photo)
+         - If useJpg = YES and original is HEIC/HEIF → returns .jpg extension (converted to JPG)
+         - Otherwise → returns original filename (keep original format, PNG/GIF etc. unchanged)
+ */
+- (NSString *)uploadNameWithLivePhotoEnabled:(BOOL)livePhotoEnabled
+                        useJpgForStaticPhoto:(BOOL)useJpg;
+
+/**
+ Legacy method for backward compatibility. Calls new method with useJpg=NO.
  */
 - (NSString *)uploadNameWithLivePhotoEnabled:(BOOL)livePhotoEnabled;
 

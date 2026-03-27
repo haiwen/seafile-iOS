@@ -19,6 +19,7 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
     SeafBackupButtonTypePhotos = 0,
     SeafBackupButtonTypeVideos = 1,
     SeafBackupButtonTypeHeic = 2,
+    SeafBackupButtonTypeUseJpg = 3,
     SeafBackupButtonTypeWifiOnly = 10,
     SeafBackupButtonTypeCellular = 11
 };
@@ -39,6 +40,8 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
 @property (strong, nonatomic) UIButton *backupPhotosButton;
 @property (strong, nonatomic) UIButton *backupVideosButton;
 @property (strong, nonatomic) UIButton *backupHeicButton;
+@property (strong, nonatomic) UIButton *useJpgButton;
+@property (strong, nonatomic) UIView *useJpgOptionView;
 
 @property (strong, nonatomic) UIView *page3View;
 @property (strong, nonatomic) UIButton *wifiOnlyButton;
@@ -251,6 +254,7 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
     UIView *photosOption = [self createOptionViewWithTitle:NSLocalizedString(@"Back up photos", @"Seafile") type:SeafBackupButtonTypePhotos selected:YES];
     UIView *videosOption = [self createOptionViewWithTitle:NSLocalizedString(@"Back up photos and videos", @"Seafile") type:SeafBackupButtonTypeVideos selected:NO];
     self.heicOptionView = [self createOptionViewWithTitle:NSLocalizedString(@"Upload Live Photo as Motion Photo", @"Seafile") type:SeafBackupButtonTypeHeic selected:NO];
+    self.useJpgOptionView = [self createOptionViewWithTitle:NSLocalizedString(@"Use JPG Format for photos", @"Seafile") type:SeafBackupButtonTypeUseJpg selected:NO];
 
     [self.backupPhotosButton removeTarget:self action:@selector(optionTapped:) forControlEvents:UIControlEventTouchUpInside];
     [self.backupVideosButton removeTarget:self action:@selector(optionTapped:) forControlEvents:UIControlEventTouchUpInside];
@@ -260,10 +264,12 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
     [self.page2View addSubview:photosOption];
     [self.page2View addSubview:videosOption];
     [self.page2View addSubview:self.heicOptionView];
+    [self.page2View addSubview:self.useJpgOptionView];
 
     photosOption.translatesAutoresizingMaskIntoConstraints = NO;
     videosOption.translatesAutoresizingMaskIntoConstraints = NO;
     self.heicOptionView.translatesAutoresizingMaskIntoConstraints = NO;
+    self.useJpgOptionView.translatesAutoresizingMaskIntoConstraints = NO;
 
     [NSLayoutConstraint activateConstraints:@[
         [photosOption.topAnchor constraintEqualToAnchor:self.page2View.topAnchor constant:20],
@@ -277,6 +283,10 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
         [self.heicOptionView.topAnchor constraintEqualToAnchor:videosOption.bottomAnchor constant:30],
         [self.heicOptionView.leadingAnchor constraintEqualToAnchor:photosOption.leadingAnchor],
         [self.heicOptionView.trailingAnchor constraintEqualToAnchor:photosOption.trailingAnchor],
+
+        [self.useJpgOptionView.topAnchor constraintEqualToAnchor:self.heicOptionView.bottomAnchor constant:15],
+        [self.useJpgOptionView.leadingAnchor constraintEqualToAnchor:photosOption.leadingAnchor],
+        [self.useJpgOptionView.trailingAnchor constraintEqualToAnchor:photosOption.trailingAnchor],
     ]];
 
     CGFloat imageSize = [self isSmallScreen] ? 180 : 200;
@@ -381,7 +391,7 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
     UIImage *unselectedImage;
     UIImage *selectedImage;
 
-    if (type == SeafBackupButtonTypeHeic) {
+    if (type == SeafBackupButtonTypeHeic || type == SeafBackupButtonTypeUseJpg) {
         unselectedImage = [[UIImage systemImageNamed:@"circle"] imageWithTintColor:[UIColor grayColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
         selectedImage = [[UIImage systemImageNamed:@"checkmark.circle.fill"] imageWithTintColor:[UIColor orangeColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
     } else {
@@ -402,6 +412,9 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
             break;
         case SeafBackupButtonTypeHeic:
             self.backupHeicButton = button;
+            break;
+        case SeafBackupButtonTypeUseJpg:
+            self.useJpgButton = button;
             break;
         case SeafBackupButtonTypeWifiOnly:
             self.wifiOnlyButton = button;
@@ -494,8 +507,11 @@ typedef NS_ENUM(NSInteger, SeafBackupButtonType) {
         // ============ Live Photo / Motion Photo upload setting ============
         // This button now only controls Live Photo upload behavior
         [self.connection setUploadLivePhotoEnabled:self.backupHeicButton.selected];
+        // ============ Use JPG format for static photo (default NO, user must opt-in) ============
+        [self.connection setUseJpgForStaticPhoto:self.useJpgButton.selected];
         
-        Debug("BackupGuide: after setUploadLivePhotoEnabled, uploadLivePhotoEnabled=%d", self.connection.isUploadLivePhotoEnabled);
+        Debug("BackupGuide: after settings, uploadLivePhotoEnabled=%d, useJpgForStaticPhoto=%d", 
+              self.connection.isUploadLivePhotoEnabled, self.connection.isUseJpgForStaticPhoto);
 
         self.connection.wifiOnly = self.wifiOnlyButton.selected;
         

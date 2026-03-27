@@ -1545,12 +1545,12 @@ enum {
     int duplicated = 0;
     // ============ Live Photo / Motion Photo upload setting ============
     BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
+    BOOL useJpg = self.connection.isUseJpgForStaticPhoto;
     for (PHAsset *asset in assets) {
-        // Always keep original format (no HEIC→JPG conversion)
         SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
         if (photoAsset.localIdentifier) {
-            // Get upload filename based on Live Photo setting
-            NSString *uploadName = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];
+            // Get upload filename based on Live Photo and JPG format settings
+            NSString *uploadName = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled useJpgForStaticPhoto:useJpg];
             if ([nameSet containsObject:uploadName])
                 duplicated++;
             [identifiers addObject:photoAsset.localIdentifier];
@@ -1606,6 +1606,7 @@ enum {
     NSMutableSet *nameSet = overwrite ? [NSMutableSet new] : [self getExistedNameSet];
     // ============ Live Photo / Motion Photo upload setting ============
     BOOL uploadLivePhotoEnabled = self.connection.isUploadLivePhotoEnabled;
+    BOOL useJpg = self.connection.isUseJpgForStaticPhoto;
 
     if (overwrite) {
         NSMutableArray *newItems = [self.directory.items mutableCopy];
@@ -1613,10 +1614,9 @@ enum {
         for (NSString *localIdentifier in identifiers) {
             PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
             PHAsset *asset = [result firstObject];
-            // Always keep original format (no HEIC→JPG conversion)
             SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
-            // Get upload filename based on Live Photo setting
-            NSString *uploadName = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];
+            // Get upload filename based on Live Photo and JPG format settings
+            NSString *uploadName = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled useJpgForStaticPhoto:useJpg];
             if (uploadName) {
                 [uploadingFilenames addObject:uploadName];
             }
@@ -1641,11 +1641,10 @@ enum {
     for (NSString *localIdentifier in identifiers) {
         PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[localIdentifier] options:nil];
         PHAsset *asset = [result firstObject];
-        // Always keep original format (no HEIC→JPG conversion)
         SeafPhotoAsset *photoAsset = [[SeafPhotoAsset alloc] initWithAsset:asset isCompress:NO];
         
-        // Get upload filename based on Live Photo setting
-        NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled];
+        // Get upload filename based on Live Photo and JPG format settings
+        NSString *filename = [photoAsset uploadNameWithLivePhotoEnabled:uploadLivePhotoEnabled useJpgForStaticPhoto:useJpg];
         Debug("Upload picked file : %@", filename);
         if (!overwrite && [nameSet containsObject:filename]) {
             NSString *name = filename.stringByDeletingPathExtension;

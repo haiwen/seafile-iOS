@@ -49,6 +49,7 @@ enum CAMERA_CELL{
     CELL_CAMERA_WIFIONLY,
     CELL_CAMERA_BACKGROUND,
     CELL_CAMERA_HEIC,
+    CELL_CAMERA_USEJPG,
     CELL_CAMERA_DESTINATION,
     CELL_CAMERA_UPLOADING,
 };
@@ -114,6 +115,9 @@ enum {
 @property (strong, nonatomic) IBOutlet UISwitch *enableTouchIDSwitch;
 @property (weak, nonatomic) IBOutlet UISwitch *enableUploadHeic;
 @property (weak, nonatomic) IBOutlet UILabel *enableHeicLabel;
+@property (weak, nonatomic) IBOutlet UITableViewCell *useJpgCell;
+@property (weak, nonatomic) IBOutlet UISwitch *useJpgSwitch;
+@property (weak, nonatomic) IBOutlet UILabel *useJpgLabel;
 
 @property (strong, nonatomic) CLLocationManager *locationManager; // Manages location services for background upload functionality.
 
@@ -306,6 +310,19 @@ enum {
     }
 }
 
+- (IBAction)useJpgForStaticPhotoFlip:(UISwitch *)sender {
+    Debug("useJpgForStaticPhotoFlip: sender.on=%d", sender.on);
+    [_connection setUseJpgForStaticPhoto:sender.on];
+    
+    // If auto sync is enabled and backup directory is configured, trigger photo check
+    if (_connection.isAutoSync && _connection.autoSyncRepo) {
+        if (_connection.photoBackup && _connection.photoBackup.syncDir) {
+            Debug("useJpgForStaticPhotoFlip: triggering checkPhotos");
+            [_connection checkPhotos:YES];
+        }
+    }
+}
+
 // Handles the toggle of the TouchID/FaceID switch.
 - (IBAction)enableTouchIDSwtichFlip:(id)sender
 {
@@ -384,6 +401,7 @@ enum {
     _backgroundSyncLable.text = NSLocalizedString(@"Background Upload", @"Seafile");
     _syncRepoCell.textLabel.text = NSLocalizedString(@"Upload Destination", @"Seafile");
     _enableHeicLabel.text = NSLocalizedString(@"Upload Live Photo", @"Seafile");
+    _useJpgLabel.text = NSLocalizedString(@"Use JPG Format", @"Seafile");
 
     _downloadingCell.textLabel.text = NSLocalizedString(@"Downloading", @"Seafile");
     _uploadingCell.textLabel.text = NSLocalizedString(@"Uploading", @"Seafile");
@@ -506,6 +524,9 @@ enum {
     // ============ Live Photo / Motion Photo upload setting ============
     // Switch state now reflects uploadLivePhotoEnabled
     self.enableUploadHeic.on = _connection.isUploadLivePhotoEnabled;
+    
+    // ============ Use JPG format for static photo setting (default YES) ============
+    self.useJpgSwitch.on = _connection.isUseJpgForStaticPhoto;
 
     [self updateSyncInfo];
 
