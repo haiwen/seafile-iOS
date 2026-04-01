@@ -377,6 +377,15 @@
     
     // If we need to show the info view, make sure it's updated and visible
     if (show) {
+        // Restore background color from view mode (black) to normal mode (#F9F9F9)
+        UIColor *normalBgColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
+        self.view.backgroundColor = normalBgColor;
+        self.scrollView.backgroundColor = normalBgColor;
+        self.imageView.backgroundColor = [UIColor clearColor];
+        if (self.livePhotoPlayerView) {
+            self.livePhotoPlayerView.backgroundColor = normalBgColor;
+        }
+        
         [self updateInfoView];
         self.infoView.hidden = NO;
         
@@ -1775,9 +1784,10 @@
             self.livePhotoPlayerView.backgroundColor = [UIColor blackColor];
         }
     } else {
-        // Ensure the view is in the 'light mode' state
-        // self.view.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9 - already set in viewDidLoad
-        // self.scrollView.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9 - already set in setupScrollView
+        // Restore background to light mode - must explicitly set because VC may be reused
+        // after being in view mode (black background), and viewDidLoad won't be called again
+        self.view.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
+        self.scrollView.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
         self.imageView.backgroundColor = [UIColor clearColor];
         if (self.livePhotoPlayerView) {
             self.livePhotoPlayerView.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9

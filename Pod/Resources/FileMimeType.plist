@@ -222,6 +222,10 @@
 	<string>text/x-chdr</string>
 	<key>hdf</key>
 	<string>application/x-hdf</string>
+	<key>heic</key>
+	<string>image/heic</string>
+	<key>heif</key>
+	<string>image/heif</string>
 	<key>hdm</key>
 	<string>text/x-hdml</string>
 	<key>hdml</key>
