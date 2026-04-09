@@ -8,6 +8,7 @@
 
 #import "SeafPhotoContentViewController.h"
 #import "SeafPhotoGalleryViewController.h"
+#import "SeafZoomableScrollView.h"
 #import <ImageIO/ImageIO.h>
 #import "FileSizeFormatter.h"
 #import "Debug.h"
@@ -24,7 +25,7 @@
 #import "SeafMotionPhotoExtractor.h"
 
 @interface SeafPhotoContentViewController ()<UIScrollViewDelegate, SeafLivePhotoPlayerViewDelegate>
-@property (nonatomic, strong) UIScrollView  *scrollView;
+@property (nonatomic, strong, readwrite) UIScrollView  *scrollView;
 @property (nonatomic, strong) UIImageView   *imageView;
 @property (nonatomic, strong) SeafPhotoInfoView *infoView;
 @property (nonatomic, strong) UITapGestureRecognizer *tapGesture;
@@ -32,10 +33,35 @@
 @property (nonatomic, strong) UIImageView *errorIconImageView;
 @property (nonatomic, strong) UILabel *errorLabel;
 @property (nonatomic, assign, readwrite) BOOL isMotionPhoto;
+@property (nonatomic, assign, readwrite) BOOL isZooming;
+// Edge tracking removed: SeafZoomableScrollView now drives the
+// single-gesture handoff into the outer paging view directly, so the
+// content VC no longer has to surface edge events to the gallery.
+@property (nonatomic, assign) BOOL wasInZoomedState; // Tracks zoom threshold crossing for immersive mode
+@property (nonatomic, assign) BOOL wasImmersiveBeforeZoom; // Snapshot of chrome state captured right before a zoom-in begins
+@property (nonatomic, strong) UIPanGestureRecognizer *dismissPanGesture; // Pull-down-to-dismiss gesture
 
 /// Live Photo badge displayed in top-left corner (below navigation bar)
 /// Contains icon + "LIVE" text, similar to iOS native style
 @property (nonatomic, strong) UIView *livePhotoBadge;
+
+/// YES while this VC is the gallery's currently visible page.
+@property (nonatomic, assign) BOOL isCurrentVisiblePage;
+
+/// YES if `didBecomeCurrentVisiblePage` was called before the live photo
+/// player view was set up. The auto-preview will be triggered later, once
+/// `setupLivePhotoPlayerViewWithData:` finishes initializing the player.
+@property (nonatomic, assign) BOOL pendingAutoPreview;
+
+/// Previous hidden state of `livePhotoBadge` captured when the underlying
+/// scroll view is hidden during an interactive Hero dismiss, so it can be
+/// restored verbatim if the gesture cancels.
+@property (nonatomic, assign) BOOL savedLivePhotoBadgeHidden;
+
+// Forward declaration so call sites above the implementation don't trigger
+// -Wundeclared-selector. This is the SOLE entry point for re-centering the
+// image — every caller must supply a `reason` tag (used in [ZoomBug] logs).
+- (void)centerImageInScrollViewForReason:(NSString *)reason;
 
 @end
 
@@ -54,6 +80,34 @@
         return ((SeafFile *)self.seafFile).path;
     }
     return nil;
+}
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        // Patch §3.11.4: pageIndex defaults to NSNotFound — never to 0.
+        // A 0 default would cause the first real index-0 page to look like
+        // an unset placeholder for any nil-safe lookup. Gallery sets the
+        // real index before adding the VC into the paging view.
+        _pageIndex = NSNotFound;
+    }
+    return self;
+}
+
+- (instancetype)initWithCoder:(NSCoder *)coder {
+    self = [super initWithCoder:coder];
+    if (self) {
+        _pageIndex = NSNotFound;
+    }
+    return self;
+}
+
+- (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        _pageIndex = NSNotFound;
+    }
+    return self;
 }
 
 - (void)viewDidLoad {
@@ -75,22 +129,30 @@
 
 - (void)setupScrollView {
     // Create a scroll view that fills the entire view
-    self.scrollView = [[UIScrollView alloc] initWithFrame:self.view.bounds];
+    self.scrollView = [[SeafZoomableScrollView alloc] initWithFrame:self.view.bounds];
     self.scrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
     self.scrollView.delegate = self;
     self.scrollView.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
-    // Keep default zoom at 1.0, so the image is displayed at its original scale
+    // Initial zoom scales — will be updated by configureForImage: when image loads
     self.scrollView.minimumZoomScale = 1.0;
-    self.scrollView.maximumZoomScale = 3.0;
-    // Show horizontal and vertical scroll indicators
-    self.scrollView.showsHorizontalScrollIndicator = YES;
-    self.scrollView.showsVerticalScrollIndicator = YES;
+    self.scrollView.maximumZoomScale = 1.0;
+    // Hide scroll indicators (matches iOS system Photos behavior)
+    self.scrollView.showsHorizontalScrollIndicator = NO;
+    self.scrollView.showsVerticalScrollIndicator = NO;
+    self.scrollView.bouncesZoom = YES; // Rubber-band effect at min/max zoom
+    // Disable automatic content inset adjustment — we manage contentInset ourselves
+    // via centerImageInScrollView for precise Aspect Fit centering. Leaving this as
+    // 'automatic' causes UIKit to add safeAreaInsets on top of our centering inset,
+    // which leads to inconsistent image positioning on page transitions.
+    if (@available(iOS 11.0, *)) {
+        self.scrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
+    }
     [self.view addSubview:self.scrollView];
 
-    // Create an image view that matches the size of the scroll view
+    // Create an image view — frame will be set precisely by configureForImage:
     self.imageView = [[UIImageView alloc] initWithFrame:self.scrollView.bounds];
-    self.imageView.contentMode = UIViewContentModeScaleAspectFit; // Ensure image fits view and maintains aspect ratio
-    self.imageView.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
+    self.imageView.contentMode = UIViewContentModeScaleToFill; // Frame is precisely calculated, no need for AspectFit
+    // No autoresizingMask — imageView frame is managed by configureForImage:
     [self.scrollView addSubview:self.imageView];
     
     // Add tap gesture for toggling UI visibility
@@ -104,6 +166,22 @@
     
     // Ensure single tap gesture doesn't interfere with double tap
     [self.tapGesture requireGestureRecognizerToFail:self.doubleTapGesture];
+    
+    // Add pull-down-to-dismiss gesture (iOS Photos style).
+    // Restrict to single-finger pans only — pinch-to-zoom is always a two-finger
+    // gesture, and we want hardware-level separation from it. Without this,
+    // the natural slight downward drift of two-finger pinch-out (especially
+    // when zoom rubber-bands below `minimumZoomScale` and `isZoomedIn` returns
+    // NO so the soft gate in `gestureRecognizerShouldBegin:` no longer
+    // disqualifies the pan) was being mis-recognized as a dismiss-drag,
+    // hiding the underlying scroll view (`setUnderlyingPhotoHidden:YES`)
+    // mid-pinch and leaving the user staring at the Hero snapshot until
+    // release.
+    self.dismissPanGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handleDismissPan:)];
+    self.dismissPanGesture.delegate = self;
+    self.dismissPanGesture.minimumNumberOfTouches = 1;
+    self.dismissPanGesture.maximumNumberOfTouches = 1;
+    [self.scrollView addGestureRecognizer:self.dismissPanGesture];
 }
 
 - (void)setupInfoView {
@@ -493,8 +571,8 @@
             // Update image center with animation
             [self scrollViewDidZoom:self.scrollView];
         } completion:^(BOOL finished) {
-            // Ensure content is properly centered after animation
-            [self centerZoomedImageIfNeeded];
+            // Reconfigure imageView for the new scrollView bounds
+            [self configureForImage:self.imageView.image];
         }];
     } else {
         // Animate both info panel sliding down and scroll view moving back to full screen
@@ -525,8 +603,8 @@
             // After animation completes, hide the info view
             self.infoView.hidden = YES;
             
-            // Ensure content is properly centered
-            [self centerZoomedImageIfNeeded];
+            // Reconfigure imageView for the restored full-screen scrollView bounds
+            [self configureForImage:self.imageView.image];
             
             // Show thumbnails after info panel is hidden
             [self showThumbnailCollectionAfterInfoHidden];
@@ -579,8 +657,8 @@
             // Update image center with animation
             [self scrollViewDidZoom:self.scrollView];
         } completion:^(BOOL finished) {
-            // Ensure content is properly centered after animation
-            [self centerZoomedImageIfNeeded];
+            // Reconfigure imageView for the new scrollView bounds
+            [self configureForImage:self.imageView.image];
         }];
     } else {
         // Apply changes immediately
@@ -599,8 +677,8 @@
         self.scrollView.contentOffset = contentOffset;
         self.scrollView.zoomScale = zoomScale;
         
-        // Center the content within the visible area
-        [self centerZoomedImageIfNeeded];
+        // Reconfigure imageView for the new scrollView bounds
+        [self configureForImage:self.imageView.image];
     }
     
     // Force immediate layout update
@@ -666,152 +744,27 @@
     self.doubleTapGesture.enabled = !infoVisible;
 }
 
-// Helper method to center image after frame changes
-- (void)centerZoomedImageIfNeeded {
-    // Call scrollViewDidZoom to re-center the image with the updated frame
-    [self scrollViewDidZoom:self.scrollView];
-}
-
-// Handle tap to toggle UI visibility
+// Handle tap to toggle UI visibility.
+//
+// Single-tap intent only. The gallery is the authoritative owner of chrome
+// visibility (top nav bar, bottom toolbar, thumbnail strip, status bar) and
+// it drives the per-page contentVC's appearance via
+// `enterImmersiveAppearanceAnimated:` / `exitImmersiveAppearanceAnimated:`
+// when its chrome state flips. We therefore do NOT touch navigationBar /
+// status bar / gallery internals from here — that historically caused state
+// drift between the tap path and the pinch-to-zoom path (alpha vs hidden).
 - (void)handleTap:(UITapGestureRecognizer *)gesture {
-    // Get parent navigation controller
-    UIViewController *parentVC = self.parentViewController;
-    while (parentVC && ![parentVC isKindOfClass:[UINavigationController class]]) {
-        parentVC = parentVC.parentViewController;
+    if ([self.delegate respondsToSelector:@selector(photoContentViewControllerDidRequestToggleChrome:)]) {
+        [self.delegate photoContentViewControllerDidRequestToggleChrome:self];
+        return;
     }
-    
-    if ([parentVC isKindOfClass:[UINavigationController class]]) {
-        UINavigationController *navController = (UINavigationController *)parentVC;
-        
-        // Toggle navigation bar visibility
-        BOOL isHidden = navController.navigationBar.hidden;
-        
-        // Use fade transition instead of standard animation
-        if (isHidden) {
-            // Show navigation bar with fade in effect
-            [navController setNavigationBarHidden:NO animated:NO];
-            navController.navigationBar.alpha = 0.0;
-            [UIView animateWithDuration:0.15 animations:^{
-                navController.navigationBar.alpha = 1.0;
-            }];
-            
-            // Show Live Photo badge when exiting browse mode (if it's a Motion Photo)
-            if (self.isMotionPhoto) {
-                [self showLivePhotoIconAnimated:YES];
-            }
-        } else {
-            // Hide navigation bar with fade out effect
-            [UIView animateWithDuration:0.15 animations:^{
-                navController.navigationBar.alpha = 0.0;
-            } completion:^(BOOL finished) {
-                [navController setNavigationBarHidden:YES animated:NO];
-            }];
-            
-            // Hide Live Photo badge when entering browse mode
-            [self hideLivePhotoIconAnimated:YES];
-        }
-        
-        // Find SeafPhotoGalleryViewController
-        UIViewController *galleryVC = navController.topViewController;
-        if ([galleryVC isKindOfClass:[SeafPhotoGalleryViewController class]]) {
-            // Try to get and toggle thumbnail collection visibility
-            @try {
-                SeafPhotoGalleryViewController *specificGalleryVC = (SeafPhotoGalleryViewController *)galleryVC;
-                UIView *thumbnailCollection = specificGalleryVC.thumbnailCollection;
-                UIView *toolbarView = specificGalleryVC.toolbarView;
-                // Get overlay views
-                UIView *leftOverlay = specificGalleryVC.leftThumbnailOverlay;
-                UIView *rightOverlay = specificGalleryVC.rightThumbnailOverlay;
-                
-                if (isHidden) {
-                    // Restore from hidden state - first set visible but transparent, then fade in
-                    if (thumbnailCollection && [thumbnailCollection isKindOfClass:[UIView class]]) {
-                        thumbnailCollection.hidden = NO;
-                        thumbnailCollection.alpha = 0.0;
-                    }
-                    
-                    if (toolbarView && [toolbarView isKindOfClass:[UIView class]]) {
-                        toolbarView.hidden = NO;
-                        toolbarView.alpha = 0.0;
-                    }
 
-                    // Prepare overlays for fade-in
-                    if (leftOverlay) leftOverlay.alpha = 0.0;
-                    if (rightOverlay) rightOverlay.alpha = 0.0;
-                    // Note: Overlays' .hidden state is managed by SeafPhotoGalleryViewController based on thumbnailCollection.hidden and scroll state.
-                    
-                    // Start fade-in animation, while changing background color from black to white
-                    [UIView animateWithDuration:0.15
-                                          delay:0.05
-                                        options:UIViewAnimationOptionCurveEaseIn
-                                     animations:^{
-                        // Restore thumbnail and toolbar visibility
-                        if (thumbnailCollection) thumbnailCollection.alpha = 1.0;
-                        if (toolbarView) toolbarView.alpha = 1.0;
-                        // Fade in overlays
-                        if (leftOverlay) leftOverlay.alpha = 1.0;
-                        if (rightOverlay) rightOverlay.alpha = 1.0;
-                        
-                        // Change background color from black to light gray
-                        self.view.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
-                        self.scrollView.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
-                        self.imageView.backgroundColor = [UIColor clearColor];
-                        if (self.livePhotoPlayerView) {
-                            self.livePhotoPlayerView.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
-                        }
-                    } completion:nil];
-                    
-                } else {
-                    // Switch to hidden state - fade out then set to hidden, while changing background color from white to black
-                    [UIView animateWithDuration:0.15
-                                     animations:^{
-                        // Hide thumbnail and toolbar
-                        if (thumbnailCollection) thumbnailCollection.alpha = 0.0;
-                        if (toolbarView) toolbarView.alpha = 0.0;
-                        // Fade out overlays
-                        if (leftOverlay) leftOverlay.alpha = 0.0;
-                        if (rightOverlay) rightOverlay.alpha = 0.0;
-                        
-                        // Change background color to black for fullscreen viewing mode
-                        self.view.backgroundColor = [UIColor blackColor];
-                        self.scrollView.backgroundColor = [UIColor blackColor];
-                        self.imageView.backgroundColor = [UIColor clearColor];
-                        if (self.livePhotoPlayerView) {
-                            self.livePhotoPlayerView.backgroundColor = [UIColor blackColor];
-                        }
-                    } completion:^(BOOL finished) {
-                        if (thumbnailCollection) thumbnailCollection.hidden = YES;
-                        if (toolbarView) toolbarView.hidden = YES;
-                        // Hide overlays after animation
-                        if (leftOverlay) leftOverlay.hidden = YES;
-                        if (rightOverlay) rightOverlay.hidden = YES;
-                    }];
-                }
-            } @catch (NSException *exception) {
-                // Handle possible exceptions to maintain app stability
-                Debug(@"Exception when accessing gallery properties: %@", exception);
-            }
-        }
-        
-        // Set status bar style - adjust status bar style based on background color
-        if (@available(iOS 13.0, *)) {
-            UIViewController *topVC = [UIApplication sharedApplication].keyWindow.rootViewController;
-            while (topVC.presentedViewController) {
-                topVC = topVC.presentedViewController;
-            }
-            
-            // When background is black, status bar should be light; when background is white, status bar should be dark
-            if ([topVC isKindOfClass:[UINavigationController class]]) {
-                UINavigationController *navVC = (UINavigationController *)topVC;
-                navVC.navigationBar.barStyle = isHidden ? UIBarStyleBlackTranslucent : UIBarStyleBlack;
-            }
-            
-            // Update status bar preference
-            [topVC setNeedsStatusBarAppearanceUpdate];
-        } else {
-            [[UIApplication sharedApplication] setStatusBarHidden:!isHidden withAnimation:UIStatusBarAnimationFade];
-            [[UIApplication sharedApplication] setStatusBarStyle:isHidden ? UIStatusBarStyleDefault : UIStatusBarStyleLightContent animated:YES];
-        }
+    // Legacy fallback — the delegate hasn't migrated to the unified chrome
+    // contract. Keep the older toggle so a stale embedder still works, but
+    // tag the path so it's easy to find when removing the legacy branch.
+    if ([self.delegate respondsToSelector:@selector(photoContentViewController:didToggleImmersive:)]) {
+        BOOL enteringImmersive = !self.fullscreenMode;
+        [self.delegate photoContentViewController:self didToggleImmersive:enteringImmersive];
     }
 }
 
@@ -842,13 +795,17 @@
             [self showLoadingIndicator];
             
             // File exists, proceed with loading
+            NSString *expectedName = self.seafFile.name; // Capture for recycling check
             [((SeafFile *)self.seafFile) getImageWithCompletion:^(UIImage *image) {
                 Debug(@"[PhotoContent] getImageWithCompletion callback for %@, image: %@", self.seafFile.name, image ? @"SUCCESS" : @"FAILED");
                 
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    // Check if this view controller is still active and valid
-                    if (!self.view.window) {
-                        Debug(@"[PhotoContent] View is no longer visible, skipping image update for %@", self.seafFile.name);
+                    // Allow image loading even when view isn't visible — adjacent
+                    // pages pre-fetched by UIPageViewController need their images
+                    // set before becoming visible during a page transition.
+                    // Only skip if the seafFile has changed (VC was recycled).
+                    if (!self.seafFile || ![self.seafFile.name isEqualToString:expectedName]) {
+                        Debug(@"[PhotoContent] VC recycled, skipping image for %@", expectedName);
                         [self hideLoadingIndicator];
                         return;
                     }
@@ -1051,75 +1008,445 @@
     return self.imageView;
 }
 
+// Returns YES when the image is zoomed beyond its initial Aspect Fit size
+- (BOOL)isZoomedIn {
+    return self.scrollView.zoomScale > self.scrollView.minimumZoomScale + 0.01;
+}
+
 - (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
     [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
+
+    Debug(@"[ZoomBug] viewWillTransitionToSize newSize=%@ currentBounds=%@ isZooming=%d zoom=%.4f",
+          NSStringFromCGSize(size),
+          NSStringFromCGRect(self.view.bounds),
+          self.isZooming,
+          self.scrollView.zoomScale);
+
+    // Save current focal point (normalized 0~1 coordinates relative to image content)
+    CGPoint contentOffset = self.scrollView.contentOffset;
+    CGFloat zoomScale = self.scrollView.zoomScale;
+    CGSize contentSize = self.scrollView.contentSize;
     
-    // Save current zoom scale
-    CGFloat savedZoomScale = self.scrollView.zoomScale;
+    CGFloat normalizedCenterX = 0.5, normalizedCenterY = 0.5;
+    if (contentSize.width > 0 && contentSize.height > 0) {
+        normalizedCenterX = (contentOffset.x + self.scrollView.bounds.size.width  / 2.0) / contentSize.width;
+        normalizedCenterY = (contentOffset.y + self.scrollView.bounds.size.height / 2.0) / contentSize.height;
+    }
     
     [coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
-        // Reset zoom
-        self.scrollView.zoomScale = 1.0;
+        // Reconfigure imageView and zoom scales for the new bounds
+        [self configureForImage:self.imageView.image];
         
-        // Update zoom range and center
-        [self updateZoomScalesForSize:size];
-        [self scrollViewDidZoom:self.scrollView];
+        // Restore relative zoom scale
+        CGFloat newZoomScale = MIN(zoomScale, self.scrollView.maximumZoomScale);
+        newZoomScale = MAX(newZoomScale, self.scrollView.minimumZoomScale);
+        self.scrollView.zoomScale = newZoomScale;
+        
+        // Restore focal point position
+        CGFloat maxOffsetX = self.scrollView.contentSize.width  - self.scrollView.bounds.size.width;
+        CGFloat maxOffsetY = self.scrollView.contentSize.height - self.scrollView.bounds.size.height;
+        CGFloat newOffsetX = normalizedCenterX * self.scrollView.contentSize.width  - self.scrollView.bounds.size.width  / 2.0;
+        CGFloat newOffsetY = normalizedCenterY * self.scrollView.contentSize.height - self.scrollView.bounds.size.height / 2.0;
+        self.scrollView.contentOffset = CGPointMake(
+            MAX(0, MIN(newOffsetX, maxOffsetX)),
+            MAX(0, MIN(newOffsetY, maxOffsetY))
+        );
+
+        [self centerImageInScrollViewForReason:@"viewWillTransitionToSize"];
         
         // Refresh info view to adapt to new width
         if (self.infoVisible) {
             [self updateInfoView];
         }
-        
-    } completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
-        // Restore zoom scale
-        if (savedZoomScale != 1.0) {
-            self.scrollView.zoomScale = MIN(savedZoomScale, self.scrollView.maximumZoomScale);
-        }
-    }];
+    } completion:nil];
 }
 
 - (void)scrollViewDidZoom:(UIScrollView *)scrollView {
-    // Center image in scroll view as user zooms
-    CGFloat offsetX = MAX((scrollView.bounds.size.width - scrollView.contentSize.width) * 0.5, 0.0);
-    CGFloat offsetY = MAX((scrollView.bounds.size.height - scrollView.contentSize.height) * 0.5, 0.0);
+    if (scrollView != self.scrollView) return;
+
+    Debug(@"[ZoomBug] didZoom ENTER zoom=%.4f wasZoomedState=%d isConfiguringLayout=%d "
+          @"contentSize=%@ contentInset=%@ contentOffset=%@ "
+          @"scrollView.bounds=%@ imageView.frame=%@",
+          scrollView.zoomScale,
+          self.wasInZoomedState,
+          self.isConfiguringLayout,
+          NSStringFromCGSize(scrollView.contentSize),
+          NSStringFromUIEdgeInsets(scrollView.contentInset),
+          NSStringFromCGPoint(scrollView.contentOffset),
+          NSStringFromCGRect(scrollView.bounds),
+          NSStringFromCGRect(self.imageView.frame));
+
+    // Use contentInset to center the image — matches iOS system Photos behavior
+    [self centerImageInScrollViewForReason:@"scrollViewDidZoom"];
+
+    Debug(@"[ZoomBug] didZoom AFTER_CENTER contentInset=%@ contentOffset=%@ "
+          @"scrollView.bounds=%@",
+          NSStringFromUIEdgeInsets(scrollView.contentInset),
+          NSStringFromCGPoint(scrollView.contentOffset),
+          NSStringFromCGRect(scrollView.bounds));
+
+    // Skip immersive mode logic during programmatic layout resets
+    // (e.g. configureForImage: / prepareForReuse setting zoomScale = 1.0)
+    if (self.isConfiguringLayout) return;
     
-    // If info panel is visible, we need to adjust vertical centering for the top 2/5 visible area
-    if (self.infoVisible) {
-        // Calculate the visible area height (2/5 of screen height)
-        CGFloat visibleAreaHeight = self.view.bounds.size.height * 0.4; // 2/5 of screen
-        CGFloat visibleAreaCenterY = visibleAreaHeight / 2.0; // Center point of visible area
-        
-        // When scrollView's frame is larger than its visible portion, we need special handling
-        if (scrollView.contentSize.height < visibleAreaHeight) {
-            // Calculate adjustment to center content in the visible area (top 2/5 of screen)
-            // The scroll view's center is at visibleAreaCenterY (1/5 of screen height from top)
-            CGFloat scrollViewCenterY = (scrollView.bounds.size.height / 2.0) + scrollView.frame.origin.y;
-            offsetY = visibleAreaCenterY - scrollViewCenterY + (visibleAreaHeight - scrollView.contentSize.height) / 2.0;
+    // Detect transition into zoomed-in state for immersive viewing mode.
+    // This fires only once per zoom-in gesture when scale first exceeds minimum,
+    // avoiding false triggers from bounce-zoom-out at minimum scale.
+    BOOL currentlyZoomedIn = self.isZoomedIn;
+    if (currentlyZoomedIn && !self.wasInZoomedState) {
+        self.wasInZoomedState = YES;
+
+        // Snapshot whether chrome was already hidden BEFORE this zoom-in
+        // started. Read from the gallery (the chrome owner) so we capture
+        // both "tap hid the bar" and "previous zoom faded the bar" cases
+        // without re-checking navigationBar internals.
+        if ([self.delegate respondsToSelector:@selector(photoContentViewControllerIsChromeHidden:)]) {
+            self.wasImmersiveBeforeZoom = [self.delegate photoContentViewControllerIsChromeHidden:self];
+        } else {
+            UINavigationController *nav = self.navigationController;
+            self.wasImmersiveBeforeZoom = (nav.navigationBarHidden || nav.navigationBar.alpha < 0.01);
         }
+
+        Debug(@"[ZoomBug] FIRST_ENTER_ZOOMED_STATE zoom=%.4f wasImmersiveBeforeZoom=%d "
+              @"-> snapshot only; chrome-hide deferred until scrollViewDidEndZooming:",
+              scrollView.zoomScale, self.wasImmersiveBeforeZoom);
+
+        // NOTE: We intentionally do NOT trigger the chrome-hide pipeline
+        // here, even via dispatch_async. Hiding chrome (nav bar alpha
+        // fade + status bar visibility flip) WHILE the pinch is in
+        // flight has a subtle but unavoidable visual side-effect on iPad
+        // landscape with portrait images:
+        //
+        //   • Before chrome hides, the nav bar (~70pt safeArea.top)
+        //     occludes the top strip of the image. The user perceives
+        //     the image's visual center as being shifted DOWNWARD by
+        //     about 35pt (half of the occluded strip).
+        //   • As the nav bar's alpha fades to 0, that 35pt of image
+        //     content is suddenly revealed, and the perceived visual
+        //     center jumps UP to the true screen center.
+        //   • The `safeAreaInsets` change also fans out a
+        //     `viewDidLayoutSubviews` to every cached photo VC, adding
+        //     additional layout work on the same main-thread budget the
+        //     pinch is competing for.
+        //
+        // Even though the actual `imageView.frame`, `contentOffset` and
+        // `scrollView.frame` do not move (verified in the iPad logs),
+        // the user perceives this as "突然居中的闪动" — a sudden
+        // recentering flash overlaid on the focal-point-tracked pinch.
+        //
+        // Mirror what iOS Photos.app does instead: keep chrome visible
+        // throughout the pinch and hide it only on release (in
+        // `scrollViewDidEndZooming:`). The visual center shift then
+        // happens AFTER the user has stopped touching the image, where
+        // the human-perception cost is negligible.
+        //
+        // We still keep the snapshot above (`wasInZoomedState = YES` and
+        // `wasImmersiveBeforeZoom`) because the symmetric "restore on
+        // pinch-out to min zoom" branch in `scrollViewDidEndZooming:`
+        // depends on those flags.
     }
-    
-    // Update image center position
-    self.imageView.center = CGPointMake(scrollView.contentSize.width * 0.5 + offsetX,
-                                       scrollView.contentSize.height * 0.5 + offsetY);
 }
 
-// Handle double tap gesture
+
+- (void)scrollViewWillBeginZooming:(UIScrollView *)scrollView withView:(UIView *)view {
+    if (scrollView != self.scrollView) return;
+    self.isZooming = YES;
+
+    UIEdgeInsets safeArea = UIEdgeInsetsZero;
+    if (@available(iOS 11.0, *)) {
+        safeArea = self.view.safeAreaInsets;
+    }
+    Debug(@"[ZoomBug] WILL_BEGIN_ZOOMING file=%@ "
+          @"view.bounds=%@ safeArea=%@ "
+          @"scrollView.frame=%@ scrollView.bounds=%@ "
+          @"contentSize=%@ contentInset=%@ contentOffset=%@ "
+          @"zoomScale=%.4f minZoom=%.4f maxZoom=%.4f "
+          @"imageView.frame=%@ imageView.bounds=%@ "
+          @"isChromeHidden(viaDelegate)=%d",
+          self.seafFile ? self.seafFile.name : @"nil",
+          NSStringFromCGRect(self.view.bounds),
+          NSStringFromUIEdgeInsets(safeArea),
+          NSStringFromCGRect(self.scrollView.frame),
+          NSStringFromCGRect(self.scrollView.bounds),
+          NSStringFromCGSize(self.scrollView.contentSize),
+          NSStringFromUIEdgeInsets(self.scrollView.contentInset),
+          NSStringFromCGPoint(self.scrollView.contentOffset),
+          self.scrollView.zoomScale,
+          self.scrollView.minimumZoomScale,
+          self.scrollView.maximumZoomScale,
+          NSStringFromCGRect(self.imageView.frame),
+          NSStringFromCGRect(self.imageView.bounds),
+          [self.delegate respondsToSelector:@selector(photoContentViewControllerIsChromeHidden:)]
+            ? [self.delegate photoContentViewControllerIsChromeHidden:self] : -1);
+
+    if ([self.delegate respondsToSelector:@selector(photoContentViewControllerDidBeginZooming:)]) {
+        [self.delegate photoContentViewControllerDidBeginZooming:self];
+    }
+}
+
+- (void)scrollViewDidEndZooming:(UIScrollView *)scrollView withView:(UIView *)view atScale:(CGFloat)scale {
+    if (scrollView != self.scrollView) return;
+    self.isZooming = NO;
+    
+    // Skip immersive mode logic during programmatic layout resets
+    if (self.isConfiguringLayout) return;
+    
+    BOOL isAtMinZoom = (scale <= scrollView.minimumZoomScale + 0.01);
+
+    // When zoom returns to its minimum, the image is back to its Aspect Fit size
+    // and contentSize <= boundsSize, so the only valid contentOffset is the one
+    // that places the image visually centered (i.e. -contentInset.left/top).
+    // UIScrollView does NOT always clamp contentOffset itself after a pinch-out,
+    // especially if the user had scrolled the zoomed image off-center first.
+    // Without this explicit reset, residual contentOffset from the zoomed state
+    // would shift the now-fitted image toward a corner, which the user perceives
+    // as "图片变小了一圈 / 比浏览时尺寸小". Keep this re-center idempotent —
+    // re-applying when already centered is a no-op.
+    if (isAtMinZoom) {
+        [self centerImageInScrollViewForReason:@"scrollViewDidEndZooming-atMin"];
+        UIEdgeInsets insets = scrollView.contentInset;
+        CGPoint centeredOffset = CGPointMake(-insets.left, -insets.top);
+        if (!CGPointEqualToPoint(scrollView.contentOffset, centeredOffset)) {
+            DebugZoom(@"[ZoomDebug] scrollViewDidEndZooming: re-centering at min zoom, "
+                  @"oldOffset=%@, newOffset=%@, contentInset=%@, contentSize=%@, bounds=%@",
+                  NSStringFromCGPoint(scrollView.contentOffset),
+                  NSStringFromCGPoint(centeredOffset),
+                  NSStringFromUIEdgeInsets(insets),
+                  NSStringFromCGSize(scrollView.contentSize),
+                  NSStringFromCGRect(scrollView.bounds));
+            scrollView.contentOffset = centeredOffset;
+        }
+    }
+
+    // When zoomed back to initial size, decide whether to exit immersive based
+    // on whether the user was already in immersive BEFORE the zoom-in began.
+    // - If they tap-toggled into fullscreen first (wasImmersiveBeforeZoom == YES),
+    //   keep chrome hidden so the apparent state matches their pre-zoom intent.
+    // - Otherwise restore the normal (light, chrome-visible) appearance.
+    BOOL restoreChrome = YES;
+    if (isAtMinZoom && self.wasInZoomedState) {
+        self.wasInZoomedState = NO;
+        restoreChrome = !self.wasImmersiveBeforeZoom;
+        // Reset the snapshot for the next zoom cycle.
+        self.wasImmersiveBeforeZoom = NO;
+    }
+    
+    // Prefer the richer callback that carries the chrome-restoration intent;
+    // fall back to the legacy signature for any delegate that hasn't migrated.
+    // The gallery's restore path drives this page's appearance via the
+    // `setChromeHidden:` pipeline, so we don't need to re-call
+    // `exitImmersiveAppearanceAnimated:` locally here.
+    BOOL ownerHandledAppearance = NO;
+    if ([self.delegate respondsToSelector:@selector(photoContentViewControllerDidEndZooming:isAtMinZoom:restoreChrome:)]) {
+        [self.delegate photoContentViewControllerDidEndZooming:self
+                                                    isAtMinZoom:isAtMinZoom
+                                                  restoreChrome:restoreChrome];
+        ownerHandledAppearance = [self.delegate respondsToSelector:@selector(photoContentViewControllerIsChromeHidden:)];
+    } else if ([self.delegate respondsToSelector:@selector(photoContentViewControllerDidEndZooming:isAtMinZoom:)]) {
+        [self.delegate photoContentViewControllerDidEndZooming:self isAtMinZoom:isAtMinZoom];
+    }
+
+    // Legacy fallback: when no chrome owner is wired in, honor the
+    // restoreChrome decision locally so the per-page appearance still flips
+    // back to the light look on pinch-out.
+    if (!ownerHandledAppearance && isAtMinZoom && restoreChrome) {
+        [self exitImmersiveAppearanceAnimated:YES];
+    }
+
+    // Enter immersive mode on RELEASE, not mid-pinch.
+    //
+    // Historically the chrome-hide animation was triggered from
+    // `scrollViewDidZoom:` the moment zoomScale first crossed above the
+    // minimum. That made chrome fade out while the pinch was still in
+    // flight, which on iPad-landscape with a portrait image causes a
+    // perceptible "sudden centering" flicker — the nav bar's alpha
+    // fade reveals ~35pt of previously-occluded image content and the
+    // user's eye reads that as the image jumping to a new center.
+    //
+    // Defer the chrome-hide until the user actually releases. By then
+    // the image is no longer being focal-point-tracked, so the same
+    // 35pt visual-center shift is no longer overlaid on a moving image
+    // and is no longer perceived as a flicker. This also matches the
+    // iOS Photos.app pinch-zoom behavior.
+    //
+    // Conditions to enter immersive on release:
+    //   • not at min zoom (we ended a zoom-in gesture, not a snap-back)
+    //   • we observed the first-enter transition during the gesture
+    //     (i.e. `wasInZoomedState == YES`)
+    //   • chrome was NOT already hidden when the pinch started
+    //     (otherwise there is nothing to hide)
+    if (!isAtMinZoom && self.wasInZoomedState && !self.wasImmersiveBeforeZoom) {
+        Debug(@"[ZoomBug] DID_END_ZOOMING zoom=%.4f -> entering immersive on release "
+              @"(deferred from scrollViewDidZoom: to avoid mid-pinch chrome flicker)",
+              scale);
+        BOOL ownerHandledImmersive = NO;
+        if ([self.delegate respondsToSelector:@selector(photoContentViewControllerDidEnterZoomedState:)]) {
+            [self.delegate photoContentViewControllerDidEnterZoomedState:self];
+            ownerHandledImmersive = [self.delegate respondsToSelector:@selector(photoContentViewControllerIsChromeHidden:)];
+        }
+        if (!ownerHandledImmersive) {
+            [self enterImmersiveAppearanceAnimated:YES];
+        }
+    }
+}
+
+// Handle double tap gesture — aligned with iOS system Photos behavior
 - (void)handleDoubleTap:(UITapGestureRecognizer *)gesture {
-    // Check if current zoom level is near minimum
-    if (self.scrollView.zoomScale < self.scrollView.maximumZoomScale / 2) {
-        // Zoom to maximum zoom level
+    if (self.scrollView.zoomScale > self.scrollView.minimumZoomScale + 0.01) {
+        // Already zoomed in → zoom back to minimum
+        [self.scrollView setZoomScale:self.scrollView.minimumZoomScale animated:YES];
+    } else {
+        // Not zoomed → zoom in to a suitable level
         CGPoint location = [gesture locationInView:self.imageView];
-        CGSize size = self.scrollView.bounds.size;
         
-        CGRect zoomRect = CGRectMake(location.x - (size.width / 4),
-                                     location.y - (size.height / 4),
-                                     size.width / 2,
-                                     size.height / 2);
+        // Mirror iOS Photos: fill the screen on the dimension that has whitespace after aspect-fit.
+        // - Wide / panoramic / slightly-tall images (fit leaves vertical whitespace) → fill height
+        //   exactly, no floor — overshooting would push the image past the screen height, which
+        //   is exactly what we are trying to avoid for "略高一点" images.
+        // - Tall / portrait images (fit fills height, leaves horizontal whitespace) → fill width,
+        //   floored at 2x because widthFill can collapse to 1.0 when the image already fills width.
+        CGSize boundsSize = self.scrollView.bounds.size;
+        CGSize fitSize    = self.imageView.frame.size;
+        CGFloat targetScale;
+        if (fitSize.height > 0 && fitSize.height < boundsSize.height - 0.5) {
+            targetScale = boundsSize.height / fitSize.height;
+        } else {
+            targetScale = MAX(boundsSize.width / fitSize.width, 2.0);
+        }
+        targetScale = MIN(targetScale, self.scrollView.maximumZoomScale); // Don't exceed max
+        
+        // Calculate zoomToRect based on precise imageView coordinates
+        CGFloat width  = self.scrollView.bounds.size.width  / targetScale;
+        CGFloat height = self.scrollView.bounds.size.height / targetScale;
+        CGRect zoomRect = CGRectMake(location.x - width / 2,
+                                     location.y - height / 2,
+                                     width, height);
         
         [self.scrollView zoomToRect:zoomRect animated:YES];
+    }
+}
+
+#pragma mark - UIGestureRecognizerDelegate
+
+- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer {
+    if (gestureRecognizer != self.dismissPanGesture) return YES;
+
+    // Only begin dismiss drag when:
+    // 1. Not in the middle of a pinch-zoom gesture. `isZoomedIn` (zoom > min)
+    //    is NOT a sufficient guard here: while the user is pinching the image
+    //    smaller than its initial size, zoom enters the rubber-band region
+    //    (zoom < min), so `isZoomedIn` returns NO and the dismiss-drag would
+    //    otherwise be allowed to start mid-pinch. `isZooming` covers the
+    //    entire pinch lifecycle (set in scrollViewWillBeginZooming:, cleared
+    //    in scrollViewDidEndZooming:), including sub-min rubber-band frames.
+    // 2. Not already zoomed past the natural fit size — those gestures belong
+    //    to the scroll view's own pan for exploring the zoomed image.
+    // 3. Info panel is not visible.
+    // 4. Dragging direction is primarily downward.
+    if (self.isZooming) return NO;
+    if (self.isZoomedIn) return NO;
+    if (self.infoVisible) return NO;
+
+    CGPoint velocity = [(UIPanGestureRecognizer *)gestureRecognizer velocityInView:self.view];
+    return (fabs(velocity.y) > fabs(velocity.x) * 1.5) && (velocity.y > 0);
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer
+    shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+    // Allow dismiss pan to coexist with scrollView's internal pan gesture
+    if (gestureRecognizer == self.dismissPanGesture) {
+        return YES;
+    }
+    return NO;
+}
+
+// Handle pull-down-to-dismiss gesture — iOS Photos style.
+// We no longer manipulate the scroll view's transform here. Instead, the
+// gallery owns a Hero snapshot that follows the finger via a custom
+// interactive transition; we just relay translation/progress/velocity.
+- (void)handleDismissPan:(UIPanGestureRecognizer *)gesture {
+    CGPoint translation = [gesture translationInView:self.view];
+    CGPoint velocity = [gesture velocityInView:self.view];
+    CGFloat progress = translation.y / MAX(1.0, self.view.bounds.size.height);
+    progress = MAX(0, MIN(1, progress));
+
+    switch (gesture.state) {
+        case UIGestureRecognizerStateBegan: {
+            self.scrollView.scrollEnabled = NO;
+
+            if ([self.delegate respondsToSelector:@selector(photoContentViewControllerDidBeginDismissDrag:)]) {
+                [self.delegate photoContentViewControllerDidBeginDismissDrag:self];
+            }
+            break;
+        }
+
+        case UIGestureRecognizerStateChanged: {
+            if ([self.delegate respondsToSelector:@selector(photoContentViewController:dismissDragMoved:progress:velocity:)]) {
+                [self.delegate photoContentViewController:self
+                                         dismissDragMoved:translation
+                                                 progress:progress
+                                                 velocity:velocity];
+            }
+            break;
+        }
+
+        case UIGestureRecognizerStateEnded:
+        case UIGestureRecognizerStateCancelled:
+        case UIGestureRecognizerStateFailed: {
+            BOOL shouldDismiss = (progress > 0.25) || (velocity.y > 800);
+            if (gesture.state != UIGestureRecognizerStateEnded) {
+                shouldDismiss = NO;
+            }
+
+            if (shouldDismiss) {
+                if ([self.delegate respondsToSelector:@selector(photoContentViewController:didCompleteDismissDragWithVelocity:)]) {
+                    [self.delegate photoContentViewController:self didCompleteDismissDragWithVelocity:velocity];
+                }
+            } else {
+                self.scrollView.scrollEnabled = YES;
+                if ([self.delegate respondsToSelector:@selector(photoContentViewController:didCancelDismissDragWithVelocity:)]) {
+                    [self.delegate photoContentViewController:self didCancelDismissDragWithVelocity:velocity];
+                }
+            }
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+#pragma mark - Hero Transition Support
+
+- (UIImage *)currentDisplayedImage {
+    return self.imageView.image;
+}
+
+- (CGRect)displayedImageFrameInView:(UIView *)view {
+    UIView *referenceView = self.imageView.image ? self.imageView : (UIView *)self.scrollView;
+    if (!referenceView) return CGRectZero;
+    UIView *coordinateSpace = view ?: self.view.window;
+    if (!coordinateSpace) {
+        // Fall back to the gallery's own view if window isn't reachable yet.
+        coordinateSpace = self.view;
+    }
+    return [referenceView.superview convertRect:referenceView.frame toView:coordinateSpace];
+}
+
+- (void)setUnderlyingPhotoHidden:(BOOL)hidden {
+    if (hidden) {
+        // Remember the badge's previous hidden state so we can restore it
+        // exactly on cancel — the badge has its own visibility lifecycle
+        // driven by hasMotionPhotoContent.
+        if (!self.scrollView.hidden) {
+            self.savedLivePhotoBadgeHidden = self.livePhotoBadge ? self.livePhotoBadge.hidden : YES;
+        }
+        self.scrollView.hidden = YES;
+        self.livePhotoBadge.hidden = YES;
     } else {
-        // Zoom to minimum zoom level
-        [self.scrollView setZoomScale:self.scrollView.minimumZoomScale animated:YES];
+        self.scrollView.hidden = NO;
+        if (self.livePhotoBadge) {
+            self.livePhotoBadge.hidden = self.savedLivePhotoBadgeHidden;
+        }
     }
 }
 
@@ -1329,9 +1656,8 @@
 
     // Notify delegate to retry loading
     if (self.delegate && [self.delegate respondsToSelector:@selector(photoContentViewControllerRequestsRetryForFile:atIndex:)]) {
-        // We need the index of this content view controller.
-        // The view.tag should hold the index set by SeafPhotoGalleryViewController.
-        NSUInteger currentIndex = self.view.tag;
+        // Use the explicit pageIndex set by the gallery (replaces legacy view.tag).
+        NSUInteger currentIndex = self.pageIndex;
         if (self.seafFile) { // Ensure seafFile is not nil
             [self.delegate photoContentViewControllerRequestsRetryForFile:self.seafFile atIndex:currentIndex];
             [self showLoadingIndicator]; // Show loading indicator immediately in the content view
@@ -1413,7 +1739,84 @@
     */
 
     // Update frames based on current state
-    [self updateViewFramesForInfoVisibility:self.infoVisible];
+    DebugZoom(@"[ZoomDebug] viewDidLayoutSubviews: file=%@, view.bounds=%@, scrollView.frame=%@, scrollView.bounds=%@, imageView.frame=%@, zoomScale=%.3f",
+          self.seafFile ? self.seafFile.name : @"nil",
+          NSStringFromCGRect(self.view.bounds),
+          NSStringFromCGRect(self.scrollView.frame),
+          NSStringFromCGRect(self.scrollView.bounds),
+          NSStringFromCGRect(self.imageView.frame),
+          self.scrollView.zoomScale);
+
+    // CRITICAL — only run the heavy reconfigure chain (which calls
+    // configureForImage: and force-resets zoomScale) when the scrollView's
+    // frame actually needs to change. UIKit fires viewDidLayoutSubviews for
+    // many incidental reasons (e.g. when entering immersive mode the gallery
+    // animates alphas / pageVC.view.backgroundColor, which can mark the
+    // hierarchy needsLayout). If we unconditionally reconfigure here while
+    // the user is mid-pinch, configureForImage: will interrupt the gesture
+    // — and historically it could even pollute imageView.bounds. Now that
+    // configureForImage: is safe against mid-zoom calls (it pre-resets
+    // zoomScale before touching imageView.frame), the worst case is just
+    // wasted work plus a snap-out of the user's gesture, which is still
+    // user-visible. Guard with a frame-equality check so the reconfigure
+    // only fires on actual layout changes (orientation, info-panel toggle,
+    // first appearance, etc.).
+    CGRect targetScrollFrame = [self targetScrollViewFrameForInfoVisibility:self.infoVisible];
+    BOOL frameChanged = !CGRectEqualToRect(self.scrollView.frame, targetScrollFrame);
+    UIEdgeInsets safeArea = UIEdgeInsetsZero;
+    if (@available(iOS 11.0, *)) {
+        safeArea = self.view.safeAreaInsets;
+    }
+    Debug(@"[ZoomBug] viewDidLayoutSubviews isZooming=%d frameChanged=%d "
+          @"view.bounds=%@ safeArea=%@ scrollView.frame=%@ target=%@ "
+          @"zoom=%.4f contentInset=%@ contentOffset=%@",
+          self.isZooming, frameChanged,
+          NSStringFromCGRect(self.view.bounds),
+          NSStringFromUIEdgeInsets(safeArea),
+          NSStringFromCGRect(self.scrollView.frame),
+          NSStringFromCGRect(targetScrollFrame),
+          self.scrollView.zoomScale,
+          NSStringFromUIEdgeInsets(self.scrollView.contentInset),
+          NSStringFromCGPoint(self.scrollView.contentOffset));
+
+    if (frameChanged) {
+        DebugZoom(@"[ZoomDebug] viewDidLayoutSubviews: scrollView frame change detected, "
+              @"current=%@, target=%@, running full reconfigure",
+              NSStringFromCGRect(self.scrollView.frame),
+              NSStringFromCGRect(targetScrollFrame));
+        [self updateViewFramesForInfoVisibility:self.infoVisible];
+    } else if (!self.isZooming) {
+        // Frames already correct — just keep contentInset centered. This is
+        // cheap and idempotent OUTSIDE of an active pinch. During a pinch
+        // (`isZooming == YES`) `scrollViewDidZoom:` is already calling
+        // `centerImageInScrollViewForReason:@"scrollViewDidZoom"` on every
+        // zoom event, so the layout-time call here is purely redundant. It
+        // is also actively harmful: while the user is mid-pinch the gallery
+        // chrome may be animating (status bar / nav bar fade-out triggers a
+        // `safeAreaInsets` change, which UIKit fans out as a
+        // `viewDidLayoutSubviews` to every photo VC in the page strip).
+        // Doing an extra `setContentInset:` write on the active VC's scroll
+        // view in the middle of a pinch causes UIScrollView to re-run its
+        // internal clamp / dispatch chain. Combined with the chrome
+        // animation already monopolizing the main thread, that produces the
+        // "image suddenly jumps a few points" frame-skip the user reported
+        // around the moment immersive mode kicks in.
+        [self centerImageInScrollViewForReason:@"viewDidLayoutSubviews"];
+    }
+}
+
+// Compute the scrollView frame that updateScrollViewForInfoVisibility:
+// would target for the given infoVisible state, without applying it.
+// Kept in sync with the calculation in updateScrollViewForInfoVisibility:.
+- (CGRect)targetScrollViewFrameForInfoVisibility:(BOOL)infoVisible {
+    CGRect bounds = self.view.bounds;
+    if (infoVisible) {
+        CGFloat scrollHeight = roundf(bounds.size.height * 0.4);
+        CGFloat visibleAreaCenterY = scrollHeight / 2.0;
+        CGFloat yOffset = visibleAreaCenterY - (bounds.size.height / 2.0);
+        return CGRectMake(0, yOffset, bounds.size.width, bounds.size.height);
+    }
+    return bounds;
 }
 
 // New method to setup the loading indicator and progress label
@@ -1487,11 +1890,9 @@
                 }
             }
         }
-    } else if (scrollView == self.scrollView) {
-        // This is the main image scroll view
-        // Center image in scroll view as user zooms
-        [self scrollViewDidZoom:scrollView];
     }
+    // SeafZoomableScrollView handles edge handoff into the outer paging
+    // view; no edge tracking required here anymore.
 }
 
 // Detect when user finishes dragging the info scroll view down
@@ -1504,6 +1905,8 @@
             [self notifyGalleryViewControllerToHideInfoPanel];
         }
     }
+    // Edge-driven paging handoff is now handled inside SeafZoomableScrollView
+    // by observing its own pan gesture; no per-drag edge bookkeeping here.
 }
 
 // Track start of drag operation
@@ -1588,6 +1991,14 @@
 // Method to prepare the view controller for reuse (called from gallery when recycling)
 - (void)prepareForReuse {
     Debug(@"[PhotoContent] Preparing for reuse %@", self.seafFile ? self.seafFile.name : @"unknown");
+    DebugZoom(@"[ZoomDebug] prepareForReuse BEFORE: file=%@, scrollView.bounds=%@, imageView.frame=%@, zoomScale=%.3f, contentInset=%@, contentSize=%@, hasImage=%d",
+          self.seafFile ? self.seafFile.name : @"nil",
+          NSStringFromCGRect(self.scrollView.bounds),
+          NSStringFromCGRect(self.imageView.frame),
+          self.scrollView.zoomScale,
+          NSStringFromUIEdgeInsets(self.scrollView.contentInset),
+          NSStringFromCGSize(self.scrollView.contentSize),
+          self.imageView.image != nil);
     
     // Remove error view if it exists
     if (self.errorPlaceholderView) {
@@ -1598,6 +2009,8 @@
     // Clean up Live Photo player view
     [self removeLivePhotoPlayerView];
     self.isMotionPhoto = NO;
+    self.pendingAutoPreview = NO;
+    self.isCurrentVisiblePage = NO;
     
     // Hide Live Photo icon
     [self hideLivePhotoIcon];
@@ -1611,10 +2024,16 @@
     // Clean up any existing UI elements
     [self cleanupAllLoadingIndicators];
     
-    // Reset zoom scale
+    // Reset zoom scale and contentInset (suppress delegate callbacks)
     if (self.scrollView) {
+        self.isConfiguringLayout = YES;
         self.scrollView.zoomScale = 1.0;
+        self.scrollView.contentInset = UIEdgeInsetsZero;
+        self.scrollView.contentOffset = CGPointZero;
+        self.isConfiguringLayout = NO;
     }
+    self.wasInZoomedState = NO;
+    self.wasImmersiveBeforeZoom = NO;
     
     // Reset info view if needed
     if (self.infoVisible) {
@@ -1625,6 +2044,13 @@
     // Reset placeholder/error image flag
     self.isDisplayingPlaceholderOrErrorImage = NO;
     
+    DebugZoom(@"[ZoomDebug] prepareForReuse AFTER: file=%@, scrollView.bounds=%@, imageView.frame=%@, zoomScale=%.3f, contentInset=%@, contentSize=%@",
+          self.seafFile ? self.seafFile.name : @"nil",
+          NSStringFromCGRect(self.scrollView.bounds),
+          NSStringFromCGRect(self.imageView.frame),
+          self.scrollView.zoomScale,
+          NSStringFromUIEdgeInsets(self.scrollView.contentInset),
+          NSStringFromCGSize(self.scrollView.contentSize));
     Debug(@"[PhotoContent] View controller reset and ready for reuse");
 }
 
@@ -1676,57 +2102,39 @@
 
 - (void)viewDidDisappear:(BOOL)animated {
     [super viewDidDisappear:animated];
-    
-    // Check if we're still part of the UIPageViewController's view controllers array
+
+    // Patch §3.11.1: parent is now the gallery directly (the paging view is a
+    // plain UIView, not a UIViewController). Only cancel loads if we're more
+    // than 1 page away from the current page; the gallery already recycles
+    // non-adjacent containers, so a viewDidDisappear here typically means we
+    // were just kicked out of the alive window.
     UIViewController *parentVC = self.parentViewController;
-    if ([parentVC isKindOfClass:[UIPageViewController class]]) {
-        UIPageViewController *pageVC = (UIPageViewController *)parentVC;
-        NSArray *viewControllers = pageVC.viewControllers;
-        
-        // Only cancel loading if this VC is no longer in the viewControllers array
-        // AND we're at least 2 pages away from current view
-        if (![viewControllers containsObject:self]) {
-            NSInteger currentIndex = -1;
-            NSInteger thisIndex = -1;
-            
-            // Try to get the photo gallery view controller
-            UIViewController *galleryVC = pageVC.parentViewController;
-            if ([galleryVC isKindOfClass:[SeafPhotoGalleryViewController class]]) {
-                @try {
-                    SeafPhotoGalleryViewController *specificGalleryVC = (SeafPhotoGalleryViewController *)galleryVC;
-                    // Try to access the current index and the total array of view controllers
-                    NSArray<SeafPhotoContentViewController *> *allPhotoVCs = specificGalleryVC.photoViewControllers;
-                    NSUInteger currentPhotoIndex = specificGalleryVC.currentIndex;
-                    
-                    if (allPhotoVCs) { // Current index is always valid if galleryVC exists
-                        thisIndex = [allPhotoVCs indexOfObject:self];
-                        
-                        // Only cancel if we're at least 2 pages away from current
-                        if (thisIndex != NSNotFound && abs((int)(thisIndex - currentPhotoIndex)) > 1) {
-                            Debug(@"[PhotoContent] View far from current page, canceling loads: %@", self.seafFile.name);
-                            [self cancelImageLoading];
-                        } else {
-                            Debug(@"[PhotoContent] View still near current page, keeping loads: %@", self.seafFile.name);
-                        }
-                    } else {
-                        // Fallback to the old behavior if we can't get index info
-                        Debug(@"[PhotoContent] Could not determine page indices, using default behavior for %@", self.seafFile.name);
-                        [self cancelImageLoading];
-                    }
-                } @catch (NSException *exception) {
-                    Debug(@"[PhotoContent] Exception when accessing gallery properties: %@", exception);
-                    // Fallback to the old behavior
-                    [self cancelImageLoading];
-                }
-            } else {
-                // Not in a photo gallery, use old behavior
-                Debug(@"[PhotoContent] View disappeared and no longer in page VC: %@", self.seafFile.name);
+    if ([parentVC isKindOfClass:[SeafPhotoGalleryViewController class]]) {
+        SeafPhotoGalleryViewController *gallery = (SeafPhotoGalleryViewController *)parentVC;
+        @try {
+            NSUInteger currentPhotoIndex = gallery.currentIndex;
+            NSUInteger thisIndex = self.pageIndex;
+            if (thisIndex == NSNotFound) {
+                Debug(@"[PhotoContent] viewDidDisappear with no pageIndex; canceling loads for %@", self.seafFile.name);
                 [self cancelImageLoading];
+                return;
             }
+            NSInteger delta = labs((NSInteger)thisIndex - (NSInteger)currentPhotoIndex);
+            if (delta > 1) {
+                Debug(@"[PhotoContent] View far from current page (delta=%ld), canceling loads: %@",
+                      (long)delta, self.seafFile.name);
+                [self cancelImageLoading];
+            } else {
+                Debug(@"[PhotoContent] View still near current page (delta=%ld), keeping loads: %@",
+                      (long)delta, self.seafFile.name);
+            }
+        } @catch (NSException *exception) {
+            Debug(@"[PhotoContent] Exception when accessing gallery properties: %@", exception);
+            [self cancelImageLoading];
         }
     } else {
-        // If we're not part of a page view controller at all, we should cancel any downloads
-        Debug(@"[PhotoContent] View disappeared: %@", self.seafFile.name);
+        // Not currently in the gallery (e.g. being torn down) — cancel any downloads.
+        Debug(@"[PhotoContent] View disappeared (no gallery parent): %@", self.seafFile.name);
         [self cancelImageLoading];
     }
 }
@@ -1760,19 +2168,25 @@
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
 
-    UIViewController *parentVC = self.parentViewController;
-    while (parentVC && ![parentVC isKindOfClass:[UINavigationController class]]) {
-        parentVC = parentVC.parentViewController;
-    }
-
-    BOOL shouldBeBlackBackground = NO;
-    if ([parentVC isKindOfClass:[UINavigationController class]]) {
-        UINavigationController *navController = (UINavigationController *)parentVC;
-        // If the navigation bar is hidden, AND the info view is NOT visible,
-        if (navController.navigationBarHidden && !self.infoVisible) {
-            shouldBeBlackBackground = YES;
+    // Decide background based on the chrome owner's authoritative state when
+    // available — the legacy nav-bar inspection only catches the tap-toggle
+    // path and the alpha-fade path; the gallery's `isChromeHidden` flag is
+    // the single source of truth across both.
+    BOOL chromeHidden = NO;
+    if ([self.delegate respondsToSelector:@selector(photoContentViewControllerIsChromeHidden:)]) {
+        chromeHidden = [self.delegate photoContentViewControllerIsChromeHidden:self];
+    } else {
+        UIViewController *parentVC = self.parentViewController;
+        while (parentVC && ![parentVC isKindOfClass:[UINavigationController class]]) {
+            parentVC = parentVC.parentViewController;
+        }
+        if ([parentVC isKindOfClass:[UINavigationController class]]) {
+            UINavigationController *navController = (UINavigationController *)parentVC;
+            chromeHidden = navController.navigationBarHidden ||
+                           navController.navigationBar.alpha < 0.01;
         }
     }
+    BOOL shouldBeBlackBackground = (chromeHidden && !self.infoVisible);
 
     // Set background color immediately based on inferred state
     if (shouldBeBlackBackground) {
@@ -1813,6 +2227,15 @@
         needsImageLoad = YES;
     }
     
+    DebugZoom(@"[ZoomDebug] viewWillAppear: file=%@, needsImageLoad=%d, hasImage=%d, isPlaceholder=%d, scrollView.bounds=%@, imageView.frame=%@, zoomScale=%.3f",
+          self.seafFile ? self.seafFile.name : @"nil",
+          needsImageLoad,
+          self.imageView.image != nil,
+          self.isDisplayingPlaceholderOrErrorImage,
+          NSStringFromCGRect(self.scrollView.bounds),
+          NSStringFromCGRect(self.imageView.frame),
+          self.scrollView.zoomScale);
+    
     if (needsImageLoad && self.seafFile) {
         Debug(@"[PhotoContent] Image needs loading in viewWillAppear (placeholder: %@), loading now: %@", 
               self.isDisplayingPlaceholderOrErrorImage ? @"YES" : @"NO", 
@@ -1824,24 +2247,39 @@
             // self.isDisplayingPlaceholderOrErrorImage = NO; // loadImage will reset this
         }
         [self loadImage];
+    } else if (self.imageView.image) {
+        // Image already loaded — ensure layout is correct by reconfiguring
+        DebugZoom(@"[ZoomDebug] viewWillAppear: image already loaded, calling configureForImage to ensure correct layout");
+        [self configureForImage:self.imageView.image];
     }
     
-    // Ensure Live Photo badge visibility is correct based on navigation bar state
+    // Ensure Live Photo badge visibility is correct based on chrome state.
+    //
+    // We must ask the gallery (the chrome owner) instead of inferring from
+    // `navigationController.navigationBarHidden` alone, because the pinch-to
+    // -zoom path only fades the nav bar's alpha to 0 without flipping
+    // `navigationBarHidden`. Relying on the hidden flag here would make the
+    // LIVE badge re-appear on top of a fully transparent nav bar.
     if (self.isMotionPhoto) {
-        // Check if navigation bar is visible
-        UIViewController *navParentVC = self.parentViewController;
-        while (navParentVC && ![navParentVC isKindOfClass:[UINavigationController class]]) {
-            navParentVC = navParentVC.parentViewController;
+        BOOL chromeHidden = NO;
+        if ([self.delegate respondsToSelector:@selector(photoContentViewControllerIsChromeHidden:)]) {
+            chromeHidden = [self.delegate photoContentViewControllerIsChromeHidden:self];
+        } else {
+            // Legacy fallback: best-effort using both navigationBarHidden
+            // and alpha so we cover both code paths until the delegate is
+            // upgraded.
+            UIViewController *navParentVC = self.parentViewController;
+            while (navParentVC && ![navParentVC isKindOfClass:[UINavigationController class]]) {
+                navParentVC = navParentVC.parentViewController;
+            }
+            if ([navParentVC isKindOfClass:[UINavigationController class]]) {
+                UINavigationController *navController = (UINavigationController *)navParentVC;
+                chromeHidden = navController.navigationBarHidden ||
+                               navController.navigationBar.alpha < 0.01;
+            }
         }
-        
-        BOOL navBarVisible = YES;
-        if ([navParentVC isKindOfClass:[UINavigationController class]]) {
-            UINavigationController *navController = (UINavigationController *)navParentVC;
-            navBarVisible = !navController.navigationBarHidden;
-        }
-        
-        // Only show badge when nav bar is visible and info panel is not visible
-        if (navBarVisible && !self.infoVisible) {
+
+        if (!chromeHidden && !self.infoVisible) {
             [self showLivePhotoIcon];
         } else {
             [self hideLivePhotoIcon];
@@ -1922,36 +2360,193 @@
     return rowHeight;
 }
 
-// Update scroll view content size to match image size
-- (void)updateScrollViewContentSize {
-    if (!self.imageView.image) return;
+#pragma mark - Immersive Viewing Mode (Zoom-triggered)
+
+/// Transitions ContentVC's own appearance to immersive mode (black backgrounds, hide Live badge).
+/// Called when zoom scale first crosses into zoomed-in territory.
+- (void)enterImmersiveAppearanceAnimated:(BOOL)animated {
+    UIColor *blackColor = [UIColor blackColor];
+    void (^changes)(void) = ^{
+        self.view.backgroundColor = blackColor;
+        self.scrollView.backgroundColor = blackColor;
+        if (self.livePhotoPlayerView) {
+            self.livePhotoPlayerView.backgroundColor = blackColor;
+        }
+    };
     
-    // When info panel is visible, make sure the image view remains centered in the visible portion
-    if (self.infoVisible) {
-        // Keep the image view filling the scroll view frame
-        self.imageView.frame = self.scrollView.bounds;
-        self.scrollView.zoomScale = 1.0;
-        
-        // Make sure the content is centered in the visible part
-        [self scrollViewDidZoom:self.scrollView];
+    // Idempotent guard: when chrome was already immersive before this zoom
+    // (i.e. user tap-toggled into fullscreen first), the appearance is already
+    // black — apply state without playing another fade to avoid a visible flash.
+    BOOL skipAnimation = self.wasImmersiveBeforeZoom;
+    if (animated && !skipAnimation) {
+        [UIView animateWithDuration:0.15 animations:changes];
     } else {
-        // For normal full-screen mode, just fill the scroll view
-        self.imageView.frame = self.scrollView.bounds;
-        self.scrollView.zoomScale = 1.0;
+        changes();
+    }
+    [self hideLivePhotoIconAnimated:(animated && !skipAnimation)];
+}
+
+/// Transitions ContentVC's own appearance back to normal mode (light backgrounds, show Live badge).
+/// Called when zoom returns to minimum scale.
+- (void)exitImmersiveAppearanceAnimated:(BOOL)animated {
+    UIColor *normalBgColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
+    void (^changes)(void) = ^{
+        self.view.backgroundColor = normalBgColor;
+        self.scrollView.backgroundColor = normalBgColor;
+        if (self.livePhotoPlayerView) {
+            self.livePhotoPlayerView.backgroundColor = normalBgColor;
+        }
+    };
+    
+    if (animated) {
+        [UIView animateWithDuration:0.15 animations:changes];
+    } else {
+        changes();
+    }
+    if (self.isMotionPhoto) {
+        [self showLivePhotoIconAnimated:animated];
     }
 }
 
-// Update scroll view zoom scales
-- (void)updateZoomScalesForSize:(CGSize)size {
-    if (!self.imageView.image) return;
+#pragma mark - Image Layout
+
+// Configure imageView frame and zoom scales based on the image's actual size
+// and the current scrollView bounds. This is the core layout method that replaces
+// the old updateScrollViewContentSize and updateZoomScalesForSize: methods.
+- (void)configureForImage:(UIImage *)image {
+    if (!image) {
+        DebugZoom(@"[ZoomDebug] configureForImage: SKIPPED (image is nil), file=%@", self.seafFile ? self.seafFile.name : @"nil");
+        return;
+    }
     
-    // Reset minimum/maximum zoom levels
+    CGSize imageSize  = image.size;  // Logical point size (e.g. 4032×3024)
+    CGSize boundsSize = self.scrollView.bounds.size;
+    
+    DebugZoom(@"[ZoomDebug] configureForImage: file=%@, imageSize=%@, scrollView.bounds=%@, scrollView.frame=%@",
+          self.seafFile ? self.seafFile.name : @"nil",
+          NSStringFromCGSize(imageSize),
+          NSStringFromCGSize(boundsSize),
+          NSStringFromCGRect(self.scrollView.frame));
+    
+    if (imageSize.width == 0 || imageSize.height == 0 || boundsSize.width == 0 || boundsSize.height == 0) {
+        DebugZoom(@"[ZoomDebug] configureForImage: SKIPPED (zero dimensions)");
+        return;
+    }
+    
+    // ① Calculate Aspect Fit scale
+    CGFloat widthRatio  = boundsSize.width  / imageSize.width;
+    CGFloat heightRatio = boundsSize.height / imageSize.height;
+    CGFloat fitScale    = MIN(widthRatio, heightRatio);
+
+    // ② Compute the precise Aspect Fit dimensions
+    CGFloat fitWidth  = imageSize.width  * fitScale;
+    CGFloat fitHeight = imageSize.height * fitScale;
+
+    // ③ CRITICAL — reset zoomScale to 1.0 BEFORE assigning imageView.frame.
+    //
+    // UIScrollView treats imageView.bounds (not imageView.frame) as the unit-scale
+    // (zoomScale==1.0) size, and renders imageView.frame == imageView.bounds * zoomScale.
+    // Assigning imageView.frame directly while zoomScale != 1.0 causes UIScrollView
+    // to back-compute imageView.bounds = frame / zoomScale, which permanently
+    // shrinks the image's intrinsic size by a factor of the current zoom.
+    //
+    // This used to happen when viewDidLayoutSubviews fired mid-pinch (e.g. while
+    // entering immersive mode at zoomScale=3.247), polluting imageView.bounds and
+    // making the image appear ~1/3 of its proper Aspect Fit size after the user
+    // pinched back to 1.0. By forcing zoomScale=1.0 first, the subsequent
+    // imageView.frame assignment lands at the correct unit-scale size.
+    //
+    // We also need minimumZoomScale<=1.0 BEFORE this reset, otherwise UIScrollView
+    // clamps the new zoomScale into the existing min/max range. Skip the assignment
+    // entirely when already at 1.0 to avoid spurious delegate work.
+    self.isConfiguringLayout = YES;
     self.scrollView.minimumZoomScale = 1.0;
-    self.scrollView.maximumZoomScale = 3.0;
-    self.scrollView.zoomScale = 1.0;
+    if (fabs(self.scrollView.zoomScale - 1.0) > 0.001) {
+        self.scrollView.zoomScale = 1.0;
+    }
+    self.isConfiguringLayout = NO;
+
+    // ④ Now that zoomScale==1.0, frame assignment is unambiguous.
+    self.imageView.frame = CGRectMake(0, 0, fitWidth, fitHeight);
+
+    // ⑤ Set scrollView's contentSize to match
+    self.scrollView.contentSize = CGSizeMake(fitWidth, fitHeight);
+
+    // ⑥ Maximum zoom scale.
+    // Dynamic max zoom — high-res images can zoom to pixel level, low-res at least 3x.
+    // For wide / panoramic images, also ensure max is large enough to let double-tap
+    // fill the screen height (clamped by the same 10x memory cap).
+    CGFloat maxByResolution = 1.0 / fitScale;  // Scale needed to show original pixels
+    CGFloat heightFillScale = (fitHeight > 0 && fitHeight < boundsSize.height)
+        ? (boundsSize.height / fitHeight)
+        : 0.0;
+    CGFloat maxScale = MAX(MAX(maxByResolution, 3.0), heightFillScale);
+    maxScale = MIN(maxScale, 10.0); // Cap at 10x to limit memory
+    self.scrollView.maximumZoomScale = maxScale;
     
-    // Update image view size
-    self.imageView.frame = CGRectMake(0, 0, size.width, size.height);
+    // ⑦ Center the image using contentInset
+    [self centerImageInScrollViewForReason:@"configureForImage"];
+
+    DebugZoom(@"[ZoomDebug] configureForImage DONE: fitScale=%.4f, imageView.frame=%@, contentSize=%@, contentInset=%@, zoomRange=[%.2f, %.2f]",
+          fitScale,
+          NSStringFromCGRect(self.imageView.frame),
+          NSStringFromCGSize(self.scrollView.contentSize),
+          NSStringFromUIEdgeInsets(self.scrollView.contentInset),
+          self.scrollView.minimumZoomScale,
+          self.scrollView.maximumZoomScale);
+}
+
+// Center the imageView within the scrollView using contentInset.
+// This replaces the old approach of manually setting imageView.center in scrollViewDidZoom:.
+// Using contentInset is how iOS system Photos does it — it doesn't interfere with
+// contentOffset semantics and works naturally with bounce/deceleration.
+//
+// `reason` is REQUIRED: every call site must pass a short tag identifying who
+// is asking us to re-center. The tag shows up verbatim in the [ZoomBug]
+// centerImage logs, so when the layout pipeline fans this out an unexpected
+// number of times during a chrome animation / dismiss-drag interaction we
+// can identify the source from logs alone, instead of bisecting state. See
+// the analysis transcript "Photo gallery zoom flicker debugging" for context.
+// There is no zero-argument convenience overload — please don't add one.
+- (void)centerImageInScrollViewForReason:(NSString *)reason {
+    CGSize boundsSize  = self.scrollView.bounds.size;
+    CGSize contentSize = self.scrollView.contentSize;
+
+    CGFloat verticalPadding   = MAX(0, (boundsSize.height - contentSize.height) / 2.0);
+    CGFloat horizontalPadding = MAX(0, (boundsSize.width  - contentSize.width)  / 2.0);
+
+    UIEdgeInsets oldInset  = self.scrollView.contentInset;
+    CGPoint      oldOffset = self.scrollView.contentOffset;
+    CGFloat      zoomScale = self.scrollView.zoomScale;
+
+    self.scrollView.contentInset = UIEdgeInsetsMake(
+        verticalPadding, horizontalPadding,
+        verticalPadding, horizontalPadding
+    );
+
+    UIEdgeInsets newInset  = self.scrollView.contentInset;
+    CGPoint      newOffset = self.scrollView.contentOffset; // UIScrollView may clamp here
+
+    Debug(@"[ZoomBug] centerImage reason=%@ zoom=%.4f bounds=%@ contentSize=%@ "
+          @"inset:%@ -> %@ offset:%@ -> %@%@",
+          reason,
+          zoomScale,
+          NSStringFromCGSize(boundsSize),
+          NSStringFromCGSize(contentSize),
+          NSStringFromUIEdgeInsets(oldInset),
+          NSStringFromUIEdgeInsets(newInset),
+          NSStringFromCGPoint(oldOffset),
+          NSStringFromCGPoint(newOffset),
+          CGPointEqualToPoint(oldOffset, newOffset) ? @"" : @" [OFFSET CHANGED BY INSET WRITE]");
+}
+
+// Legacy compatibility — kept for callsites that still reference these methods
+- (void)updateScrollViewContentSize {
+    [self configureForImage:self.imageView.image];
+}
+
+- (void)updateZoomScalesForSize:(CGSize)size {
+    [self configureForImage:self.imageView.image];
 }
 
 #pragma mark - Motion Photo / Live Photo Support
@@ -2010,32 +2605,46 @@
         [self.livePhotoPlayerView cleanup];
         [self.livePhotoPlayerView removeFromSuperview];
         self.livePhotoPlayerView = nil;
-        
-        // Show the regular image view again temporarily
-        self.imageView.hidden = NO;
     }
     
     // Create and configure the live photo player view
-    self.livePhotoPlayerView = [[SeafLivePhotoPlayerView alloc] initWithFrame:self.scrollView.bounds];
+    // Use imageView.bounds since livePhotoPlayerView will be a subview of imageView
+    self.livePhotoPlayerView = [[SeafLivePhotoPlayerView alloc] initWithFrame:self.imageView.bounds];
     self.livePhotoPlayerView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     self.livePhotoPlayerView.delegate = self;
-    self.livePhotoPlayerView.imageContentMode = UIViewContentModeScaleAspectFit;
+    self.livePhotoPlayerView.imageContentMode = UIViewContentModeScaleToFill; // Frame is precisely Aspect Fit sized
     self.livePhotoPlayerView.showLiveBadge = NO;  // Disable built-in badge, we use our own Live Photo badge
     self.livePhotoPlayerView.longPressToPlayEnabled = YES;
     
     // Load the Motion Photo data
     [self.livePhotoPlayerView loadMotionPhotoFromData:data];
     
-    // Add to scroll view, above the image view
-    [self.scrollView addSubview:self.livePhotoPlayerView];
+    // Add as subview of imageView (the zoom target returned by viewForZoomingInScrollView:)
+    // so it naturally participates in the scroll view's zoom transform.
+    // Previously it was added to scrollView directly and imageView was hidden,
+    // causing zoom to only affect the hidden imageView while livePhotoPlayerView stayed static.
+    self.imageView.userInteractionEnabled = YES;  // Enable touch for long-press gesture on livePhotoPlayerView
+    [self.imageView addSubview:self.livePhotoPlayerView];
     
-    // Hide the regular image view when we have live photo player
-    self.imageView.hidden = YES;
+    // Keep imageView visible - livePhotoPlayerView overlays it
+    self.imageView.hidden = NO;
     
     // Ensure badge is visible and on top
     [self showLivePhotoIcon];
     
     Debug(@"[PhotoContent] Live Photo Player View setup complete for: %@", self.seafFile.name);
+    
+    // If this page is the gallery's current visible page and a silent
+    // auto-preview was queued before the player was ready, trigger it now.
+    if (self.isCurrentVisiblePage && self.pendingAutoPreview) {
+        self.pendingAutoPreview = NO;
+        SeafLivePhotoPlayerView *player = self.livePhotoPlayerView;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (player == self.livePhotoPlayerView && self.isCurrentVisiblePage) {
+                [player playMuted];
+            }
+        });
+    }
 }
 
 - (void)removeLivePhotoPlayerView {
@@ -2044,14 +2653,16 @@
         [self.livePhotoPlayerView removeFromSuperview];
         self.livePhotoPlayerView = nil;
         
-        // Show the regular image view again
+        // Restore imageView state
         self.imageView.hidden = NO;
+        self.imageView.userInteractionEnabled = NO;  // Restore default UIImageView behavior
     }
     
     // Hide the Live Photo badge since we're removing the Motion Photo player
     // This indicates we're switching away from a Motion Photo
     [self hideLivePhotoIcon];
     self.isMotionPhoto = NO;
+    self.pendingAutoPreview = NO;
 }
 
 #pragma mark - SeafLivePhotoPlayerViewDelegate
@@ -2069,6 +2680,32 @@
 - (void)livePhotoPlayerView:(SeafLivePhotoPlayerView *)playerView didFailWithError:(NSError *)error {
     Debug(@"[PhotoContent] Live Photo playback failed: %@, error: %@", self.seafFile.name, error);
     // Badge remains visible - no action needed
+}
+
+#pragma mark - Gallery Visibility Notifications
+
+- (void)didBecomeCurrentVisiblePage {
+    self.isCurrentVisiblePage = YES;
+    
+    // If the live photo player is already in place, kick off a silent
+    // auto-preview right away (mirrors iOS Photos behavior on swipe).
+    // Otherwise queue the request so it runs as soon as
+    // setupLivePhotoPlayerViewWithData: finishes initializing the player.
+    if (self.livePhotoPlayerView && self.livePhotoPlayerView.hasMotionPhotoContent) {
+        self.pendingAutoPreview = NO;
+        [self.livePhotoPlayerView playMuted];
+    } else {
+        self.pendingAutoPreview = YES;
+    }
+}
+
+- (void)didResignCurrentVisiblePage {
+    self.isCurrentVisiblePage = NO;
+    self.pendingAutoPreview = NO;
+    
+    if (self.livePhotoPlayerView && self.livePhotoPlayerView.isPlaying) {
+        [self.livePhotoPlayerView stop];
+    }
 }
 
 @end

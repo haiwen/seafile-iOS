@@ -9,6 +9,11 @@
 #import "Debug.h"
 #import "SeafMotionPhotoExtractor.h"
 
+/// Length of the silent "hint" preview run when the page becomes visible in the
+/// gallery. Tuned to roughly match the brief motion flash shown by the iOS
+/// system Photos app on swipe (about 1.0–1.5 s).
+static const NSTimeInterval kSeafLivePhotoHintPreviewDuration = 1.2;
+
 @interface SeafLivePhotoPlayerView ()
 
 @property (nonatomic, strong) UIImageView *imageView;
@@ -27,6 +32,19 @@
 @property (nonatomic, assign) BOOL waitingForFirstFrame;
 @property (nonatomic, assign) BOOL transitionCompleted;
 @property (nonatomic, strong) UIImpactFeedbackGenerator *hapticFeedback;
+
+/// YES when the current playback was started silently (e.g. auto-preview on page swipe).
+/// Reset to NO whenever playback stops.
+@property (nonatomic, assign) BOOL mutedForCurrentPlayback;
+
+/// YES while a brief muted hint preview (started via `playMuted`) is in flight.
+/// Distinguishes the auto-preview from a full long-press playback so that the
+/// scheduled stop only fires for the preview path.
+@property (nonatomic, assign) BOOL isPreviewPlayback;
+
+/// Cancellable dispatch block that stops the muted hint preview after
+/// `kSeafLivePhotoHintPreviewDuration`. nil when no preview is pending.
+@property (nonatomic, copy, nullable) dispatch_block_t previewStopBlock;
 
 @end
 
@@ -256,12 +274,78 @@
 #pragma mark - Playback Control
 
 - (void)play {
-    if (!_hasMotionPhotoContent || !_videoURL || _isPlaying) {
+    if (!_hasMotionPhotoContent || !_videoURL) {
+        return;
+    }
+    
+    // Long-press always wins over a pending muted hint preview: cancel the
+    // scheduled stop and tear down the preview player so the unmuted playback
+    // starts cleanly from the beginning with audio.
+    [self cancelScheduledPreviewStop];
+    _isPreviewPlayback = NO;
+    
+    if (_isPlaying && _mutedForCurrentPlayback) {
+        [self stop];
+    }
+    
+    if (_isPlaying) {
         return;
     }
     
     [_hapticFeedback impactOccurred];
+    [self playInternalMuted:NO];
+    
+    if ([_delegate respondsToSelector:@selector(livePhotoPlayerViewDidStartPlaying:)]) {
+        [_delegate livePhotoPlayerViewDidStartPlaying:self];
+    }
+}
+
+- (void)playMuted {
+    if (!_hasMotionPhotoContent || !_videoURL || _isPlaying) {
+        return;
+    }
+    
+    _isPreviewPlayback = YES;
+    [self playInternalMuted:YES];
+    [self schedulePreviewStop];
+    
+    if ([_delegate respondsToSelector:@selector(livePhotoPlayerViewDidStartPlaying:)]) {
+        [_delegate livePhotoPlayerViewDidStartPlaying:self];
+    }
+}
+
+- (void)schedulePreviewStop {
+    [self cancelScheduledPreviewStop];
+    
+    __weak typeof(self) weakSelf = self;
+    dispatch_block_t block = dispatch_block_create(0, ^{
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        if (strongSelf.isPreviewPlayback && strongSelf.isPlaying) {
+            [strongSelf stop];
+        }
+    });
+    _previewStopBlock = block;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW,
+                                 (int64_t)(kSeafLivePhotoHintPreviewDuration * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), block);
+}
+
+- (void)cancelScheduledPreviewStop {
+    if (_previewStopBlock) {
+        dispatch_block_cancel(_previewStopBlock);
+        _previewStopBlock = nil;
+    }
+}
+
+- (void)playInternalMuted:(BOOL)muted {
+    _mutedForCurrentPlayback = muted;
     [self setupPlayer];
+    
+    // Apply volume in case setupPlayer was a no-op due to an already-existing player.
+    _player.volume = muted ? 0.0f : 1.0f;
     
     _isPlaying = YES;
     _waitingForFirstFrame = YES;
@@ -280,10 +364,6 @@
     [_player seekToTime:kCMTimeZero];
     [_player play];
     [self updateLiveBadgeVisibility];
-    
-    if ([_delegate respondsToSelector:@selector(livePhotoPlayerViewDidStartPlaying:)]) {
-        [_delegate livePhotoPlayerViewDidStartPlaying:self];
-    }
 }
 
 - (void)pause {
@@ -295,6 +375,9 @@
 }
 
 - (void)stop {
+    [self cancelScheduledPreviewStop];
+    _isPreviewPlayback = NO;
+    
     if (!_isPlaying) {
         return;
     }
@@ -304,6 +387,7 @@
     _isPlaying = NO;
     _waitingForFirstFrame = NO;
     _transitionCompleted = NO;
+    _mutedForCurrentPlayback = NO;
     
     _imageView.hidden = NO;
     _imageView.alpha = 1.0;
@@ -361,6 +445,7 @@
     AVPlayerItem *playerItem = [AVPlayerItem playerItemWithURL:_videoURL];
     _player = [AVPlayer playerWithPlayerItem:playerItem];
     _player.actionAtItemEnd = AVPlayerActionAtItemEndNone;
+    _player.volume = _mutedForCurrentPlayback ? 0.0f : 1.0f;
     
     _playerLayer = [AVPlayerLayer playerLayerWithPlayer:_player];
     _playerLayer.frame = self.bounds;
@@ -444,6 +529,9 @@
 #pragma mark - Cleanup
 
 - (void)cleanup {
+    [self cancelScheduledPreviewStop];
+    _isPreviewPlayback = NO;
+    
     if (_isPlaying) {
         [self stop];
     } else {
@@ -467,6 +555,7 @@
     _isPlaying = NO;
     _waitingForFirstFrame = NO;
     _transitionCompleted = NO;
+    _mutedForCurrentPlayback = NO;
 }
 
 @end

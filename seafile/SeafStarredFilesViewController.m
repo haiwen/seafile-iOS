@@ -485,15 +485,11 @@
         }
         
         if (imageFiles.count > 0) {
-            // Create and setup photo gallery view controller
-            SeafPhotoGalleryViewController *gallery = [[SeafPhotoGalleryViewController alloc] initWithPhotos:imageFiles
-                                                                                                currentItem:sfile
-                                                                                                     master:self];
-            
-            // Wrap gallery view controller in navigation controller and present modally
-            UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:gallery];
-            navController.modalPresentationStyle = UIModalPresentationFullScreen;
-            
+            UINavigationController *navController = [SeafPhotoGalleryViewController heroNavigationControllerWithPhotos:imageFiles
+                                                                                                           currentItem:sfile
+                                                                                                                master:self
+                                                                                                          heroProvider:self];
+
             [self presentViewController:navController animated:YES completion:nil];
             Debug(@"[Starred] Presented SeafPhotoGalleryViewController with %lu images", (unsigned long)imageFiles.count);
             return;
@@ -842,6 +838,36 @@
 
 - (void)dismissLoadingView {
     [self.loadingView dismiss];
+}
+
+#pragma mark - SeafGalleryHeroProvider
+
+- (UIView *)gallerySourceViewForItem:(id<SeafPreView>)item {
+    SeafCell *cell = [self getEntryCell:item];
+    if (!cell) return nil;
+    return cell.imageView;
+}
+
+- (CGRect)gallerySourceFrameInWindowForItem:(id<SeafPreView>)item {
+    UIView *source = [self gallerySourceViewForItem:item];
+    if (!source) return CGRectZero;
+    return [source convertRect:source.bounds toView:nil];
+}
+
+- (void)galleryWillDismissToItem:(id<SeafPreView>)item {
+    NSUInteger index = [_cellDataArray indexOfObject:item];
+    if (index == NSNotFound) return;
+    NSIndexPath *path = [NSIndexPath indexPathForRow:index inSection:0];
+    @try {
+        if (![[self.tableView indexPathsForVisibleRows] containsObject:path]) {
+            [self.tableView scrollToRowAtIndexPath:path
+                                  atScrollPosition:UITableViewScrollPositionNone
+                                          animated:NO];
+        }
+        [self.tableView layoutIfNeeded];
+    } @catch (NSException *exception) {
+        Warning("scrollToRowAtIndexPath failed: %@", exception);
+    }
 }
 
 @end

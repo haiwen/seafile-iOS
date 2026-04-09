@@ -944,6 +944,9 @@
 
 /* Seafile */
 "This app does not have access to your photos and videos." = "该应用无法访问你的照片和视频.";
+"Seafile only has access to a limited set of photos." = "Seafile 仅可访问你选择的部分照片。";
+"Use selected photos" = "使用已选择的图片";
+"Select more photos..." = "选择更多图片…";
 
 /* Seafile */
 "This function is not supportted yet" = "该功能暂不支持";

@@ -26,11 +26,122 @@ typedef NSComparisonResult (^SeafSortableCmp)(id<SeafSortable> obj1, id<SeafSort
 
 typedef NSComparisonResult (^SeafCmpFunc)(id obj1, id obj2, SeafSortableCmp comparator);
 
+#pragma mark - Natural Sort Helpers (matching web frontend logic)
+
+/// Check if the string contains only ASCII letters and digits.
+static BOOL seafIsLetterOrNumber(NSString *str) {
+    if (str.length == 0) return NO;
+    static NSCharacterSet *nonAlnum = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSMutableCharacterSet *alnum = [NSMutableCharacterSet alphanumericCharacterSet];
+        nonAlnum = [alnum invertedSet];
+    });
+    return [str rangeOfCharacterFromSet:nonAlnum].location == NSNotFound;
+}
+
+/// Check if every character falls in the CJK Unified Ideographs range (U+4E00–U+9FA5).
+static BOOL seafIsAllChinese(NSString *str) {
+    if (str.length == 0) return NO;
+    for (NSUInteger i = 0; i < str.length; i++) {
+        unichar c = [str characterAtIndex:i];
+        if (c < 0x4E00 || c > 0x9FA5) return NO;
+    }
+    return YES;
+}
+
+/// Split a string into an array where consecutive digits are kept as one element
+/// and non-digit characters are split into individual characters.
+/// e.g. "file10中文" -> @[@"f", @"i", @"l", @"e", @"10", @"中", @"文"]
+static NSArray<NSString *> *seafSplitStringByNumber(NSString *str) {
+    NSMutableArray *result = [NSMutableArray array];
+    static NSRegularExpression *regex = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        regex = [NSRegularExpression regularExpressionWithPattern:@"\\d+|\\D+" options:0 error:nil];
+    });
+    NSArray *matches = [regex matchesInString:str options:0 range:NSMakeRange(0, str.length)];
+    for (NSTextCheckingResult *match in matches) {
+        NSString *part = [str substringWithRange:match.range];
+        unichar first = [part characterAtIndex:0];
+        if (first >= '0' && first <= '9') {
+            // Keep numeric segment as a whole for numeric comparison
+            [result addObject:part];
+        } else {
+            // Split non-numeric segment into individual characters
+            [part enumerateSubstringsInRange:NSMakeRange(0, part.length)
+                                    options:NSStringEnumerationByComposedCharacterSequences
+                                 usingBlock:^(NSString *substring, NSRange substringRange, NSRange enclosingRange, BOOL *stop) {
+                if (substring) [result addObject:substring];
+            }];
+        }
+    }
+    return result;
+}
+
+static NSLocale *seafZhLocale(void) {
+    static NSLocale *loc = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        loc = [NSLocale localeWithLocaleIdentifier:@"zh-Hans-CN"];
+    });
+    return loc;
+}
+
+/// Compare two strings using the same logic as the web frontend's compareTwoString().
+/// Sort order: non-Chinese before Chinese; numbers compared by numeric value; Chinese by pinyin.
+static NSComparisonResult seafNaturalCompare(NSString *a, NSString *b) {
+    // Fast path: both are pure letters/numbers
+    if (seafIsLetterOrNumber(a) && seafIsLetterOrNumber(b)) {
+        return [a compare:b options:NSCaseInsensitiveSearch | NSNumericSearch
+                    range:NSMakeRange(0, a.length) locale:seafZhLocale()];
+    }
+
+    // Fast path: both are pure Chinese
+    if (seafIsAllChinese(a) && seafIsAllChinese(b)) {
+        return [a compare:b options:NSCaseInsensitiveSearch
+                    range:NSMakeRange(0, a.length) locale:seafZhLocale()];
+    }
+
+    // Mixed content: split and compare element by element
+    NSArray *arrA = seafSplitStringByNumber(a);
+    NSArray *arrB = seafSplitStringByNumber(b);
+    NSUInteger len = MIN(arrA.count, arrB.count);
+
+    for (NSUInteger i = 0; i < len; i++) {
+        NSString *ca = arrA[i];
+        NSString *cb = arrB[i];
+
+        // Non-Chinese sorts before Chinese
+        BOOL caIsChinese = seafIsAllChinese(ca);
+        BOOL cbIsChinese = seafIsAllChinese(cb);
+        if (!caIsChinese && cbIsChinese) return NSOrderedAscending;
+        if (caIsChinese && !cbIsChinese) return NSOrderedDescending;
+
+        NSComparisonResult r;
+        if (caIsChinese && cbIsChinese) {
+            r = [ca compare:cb options:NSCaseInsensitiveSearch
+                      range:NSMakeRange(0, ca.length) locale:seafZhLocale()];
+        } else {
+            r = [ca compare:cb options:NSCaseInsensitiveSearch | NSNumericSearch
+                      range:NSMakeRange(0, ca.length) locale:seafZhLocale()];
+        }
+        if (r != NSOrderedSame) return r;
+    }
+
+    // All compared elements are equal; shorter string comes first
+    if (arrA.count > arrB.count) return NSOrderedDescending;
+    if (arrA.count < arrB.count) return NSOrderedAscending;
+    return NSOrderedSame;
+}
+
+#pragma mark - Sort Comparators
+
 static SeafCmpFunc seafCmpFunc = ^(id obj1, id obj2, SeafSortableCmp comparator) {
     if ([obj1 conformsToProtocol:@protocol(SeafSortable)] && [obj2 conformsToProtocol:@protocol(SeafSortable)]) {
         return comparator((id<SeafSortable>)obj1, (id<SeafSortable>)obj2);
     } else if ([obj1 isKindOfClass:[SeafDir class]] && [obj2 isKindOfClass:[SeafDir class]]) {
-        return [[(SeafDir *)obj1 name] caseInsensitiveCompare:[(SeafDir *)obj2 name]];
+        return seafNaturalCompare([(SeafDir *)obj1 name], [(SeafDir *)obj2 name]);
     } else if ([obj1 isKindOfClass:[SeafDir class]] || [obj2 isKindOfClass:[SeafDir class]]) {
         if ([obj1 isKindOfClass:[SeafDir class]]) {
             return NSOrderedAscending;
@@ -44,7 +155,7 @@ static SeafCmpFunc seafCmpFunc = ^(id obj1, id obj2, SeafSortableCmp comparator)
 
 static NSComparator seafSortByName = ^(id a, id b) {
     return seafCmpFunc(a, b, ^(id<SeafSortable> obj1, id<SeafSortable> obj2) {
-        return [obj1.name caseInsensitiveCompare:obj2.name];
+        return seafNaturalCompare(obj1.name, obj2.name);
     });
 };
 

@@ -17,9 +17,10 @@ typedef void(^DownloadCompleteBlock)(NSArray *array, NSString *errorStr);
 
 #import "SeafDir.h"
 #import "SeafFile.h"
+#import "SeafGalleryHeroProvider.h"
 
 
-@interface SeafFileViewController : UITableViewController <SeafDentryDelegate, SeafFileUpdateDelegate> {
+@interface SeafFileViewController : UITableViewController <SeafDentryDelegate, SeafFileUpdateDelegate, SeafGalleryHeroProvider> {
 }
 
 @property (strong, nonatomic) SeafConnection *connection;

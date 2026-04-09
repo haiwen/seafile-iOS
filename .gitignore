@@ -18,6 +18,9 @@ SeafAction/*.lproj
 .claude/
 CLAUDE.md
 
+# Ignore Cursor MCP config (contains tokens). Rules under .cursor/rules/ are kept.
+.cursor/mcp.json
+
 # Ignore Android seadroid source directory
 seadroid-master/
 
@@ -26,3 +29,6 @@ seadroid-master/
 
 # Ignore scripts directory
 scripts/
+
+# Xcode build output
+build/
