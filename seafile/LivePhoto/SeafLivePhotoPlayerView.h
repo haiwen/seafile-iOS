@@ -81,6 +81,16 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)play;
 
 /**
+ * Start a brief muted "hint" preview (used when the page becomes the current
+ * visible page in the gallery). Plays roughly the first ~1.2 s of the embedded
+ * video at volume 0 and then automatically stops on the static frame, mirroring
+ * the iOS system Photos app behavior on swipe. Does NOT play the full clip.
+ * No haptic feedback. Use `play` (e.g. from long-press) for full-length, audible
+ * playback.
+ */
+- (void)playMuted;
+
+/**
  * Pause video playback.
  */
 - (void)pause;

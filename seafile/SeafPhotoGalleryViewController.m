@@ -26,6 +26,9 @@
 #import "SeafPGThumbnailCell.h" // Added import
 #import "SeafPGThumbnailCellViewModel.h" // Added import
 #import "SeafFileViewController.h"
+#import "SeafPhotoHeroAnimator.h"
+#import "SeafPhotoPagingView.h"
+#import "SeafPhotoPageContainer.h"
 
 // Define an enum for toolbar button types
 typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
@@ -36,76 +39,362 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
     SeafPhotoToolbarButtonTypeShare
 };
 
-// Custom collection view layout to support different spacing between selected and unselected items
+/// iOS-Photos-style horizontal thumbnail strip layout.
+///
+/// State is split into two ORTHOGONAL axes — matches the real iOS Photos
+/// behavior where cells are uniformly small while sliding, and only the
+/// settled cell expands to a square thumbnail:
+///
+///   1. `fractionalSelectedIndex` ∈ [0, count-1] — which cell is
+///      "logically centered". Drives `centeringContentOffsetXForFraction:`
+///      so the strip's contentOffset can be slid in real time during
+///      pager drag (cell N vs cell N+1 interpolated by alpha = f - N).
+///      DOES NOT affect cell widths.
+///
+///   2. `expandedIndex` (NSInteger, -1 = none) + `expansionProgress`
+///      (CGFloat 0..1) — which single cell is "selected" and how much
+///      it's grown. ONLY this cell can have width > wMin; the rest are
+///      always wMin. Settling kicks off `expansionProgress: 0 → 1` in a
+///      UIView animation block (cells animate via UICollectionView's
+///      built-in invalidateLayout-in-animation pattern). Any new scroll
+///      collapses it back to 0 first.
+///
+/// Width formula:
+///   width(i) = lerp(wMin, thumbnailHeight,
+///                   expandedIndex == i ? expansionProgress : 0)
+///   The expanded cell becomes a square (height × height), matching iOS
+///   Photos. Aspect-ratio-aware widths are intentionally NOT supported —
+///   iOS Photos itself center-crops the selected thumbnail into a square,
+///   and our `SeafPGThumbnailCell` does the same via
+///   `UIViewContentModeScaleAspectFill + clipsToBounds`.
+///
+/// Spacing formula (between cells i and i+1):
+///   spacing(i, i+1) = lerp(defaultSpacing, selectedSpacing,
+///                          max(s(i), s(i+1)))
+///   where s(k) = (expandedIndex == k ? expansionProgress : 0).
+///
+/// Legacy callers that wrote `selectedIndex` (NSInteger) still work via
+/// the compat shim — it forwards to `expandedIndex`.
 @interface SeafThumbnailFlowLayout : UICollectionViewFlowLayout
-@property (nonatomic, assign) NSInteger selectedIndex;
-@property (nonatomic, assign) CGFloat defaultSpacing;
-@property (nonatomic, assign) CGFloat spacingAroundSelectedItem;
-@property (nonatomic, assign) BOOL isDragging; // Add property to track dragging state
+
+#pragma mark - State axis 1: which cell is logically centered (drives offset only)
+@property (nonatomic, assign) CGFloat fractionalSelectedIndex;
+
+#pragma mark - State axis 2: which cell is expanded and by how much (drives widths)
+@property (nonatomic, assign) NSInteger expandedIndex;     // -1 == none
+@property (nonatomic, assign) CGFloat expansionProgress;   // 0..1
+
+#pragma mark - Geometry constants
+@property (nonatomic, assign) CGFloat thumbnailHeight;     // 42 (also == expanded cell width)
+@property (nonatomic, assign) CGFloat wMin;                // 28 (== height * 2/3)
+@property (nonatomic, assign) CGFloat defaultSpacing;      // 4
+@property (nonatomic, assign) CGFloat selectedSpacing;     // 13
+@property (nonatomic, assign) UIEdgeInsets sectionInsets;  // (1.5, 10, 1.5, 10)
+
+#pragma mark - Compat shims (legacy callsites)
+@property (nonatomic, assign) NSInteger selectedIndex;     // forwards to expandedIndex
+@property (nonatomic, assign) CGFloat defaultSpacingValue; // legacy alias
+@property (nonatomic, assign) CGFloat spacingAroundSelectedItem; // legacy alias
+@property (nonatomic, assign) BOOL isDragging;             // ignored; kept for compat
+
+#pragma mark - Geometry queries (stateless; do NOT mutate cache)
+
+/// Centering content offset.x that places cell N..N+1 (interpolated by
+/// alpha=f-N) at `boundsWidth/2`. Self-contained — does not require
+/// prepareLayout to have run. Uses current `expandedIndex` /
+/// `expansionProgress` for cell widths.
+- (CGFloat)centeringContentOffsetXForFraction:(CGFloat)f boundsWidth:(CGFloat)bw;
+
+/// Inverse of `centeringContentOffsetXForFraction:`. Binary search;
+/// O(N * iters) but iters is fixed at 50 so still cheap for typical
+/// album sizes.
+- (CGFloat)fractionForCenteringContentOffsetX:(CGFloat)x boundsWidth:(CGFloat)bw;
+
+/// Width that cell `idx` will currently render at, taking expansion
+/// state into account. Useful for centering-inset calculation.
+- (CGFloat)currentWidthForIndex:(NSInteger)idx;
+
 @end
 
-@implementation SeafThumbnailFlowLayout
+@implementation SeafThumbnailFlowLayout {
+    NSMutableArray<NSValue *> *_cellFrames;     // cached after prepareLayout
+    CGSize _computedContentSize;
+    // Cache key: cell frames are a function of these three plus
+    // `expandedIndex` / `expansionProgress`. Fraction is NOT a key
+    // because it doesn't affect cell sizing.
+    CGFloat _cachedExpansionProgress;
+    NSInteger _cachedExpandedIndex;
+    CGFloat _cachedBoundsWidth;
+    NSInteger _cachedCount;
+}
 
 - (instancetype)init {
     if (self = [super init]) {
-        _selectedIndex = 0;
-        _defaultSpacing = 4.0; // Increased from 1.0
-        _spacingAroundSelectedItem = 13.0;
-        _isDragging = NO; // Initialize dragging state
+        _fractionalSelectedIndex = 0;
+        _expandedIndex = 0;        // first cell is the default "selected" target
+        _expansionProgress = 1.0;  // initial state: selected cell is fully expanded
+        _thumbnailHeight = 42;
+        _wMin = _thumbnailHeight * 2.0 / 3.0;        // 28
+        _defaultSpacing = 4.0;
+        _selectedSpacing = 13.0;
+        _sectionInsets = UIEdgeInsetsMake(1.5, 10, 1.5, 10);
+        _cachedExpansionProgress = -1;
+        _cachedExpandedIndex = NSIntegerMin;
+        _cachedBoundsWidth = -1;
+        _cachedCount = -1;
+        self.scrollDirection = UICollectionViewScrollDirectionHorizontal;
     }
     return self;
 }
 
-// Override layout method to customize spacing between items
-- (NSArray<UICollectionViewLayoutAttributes *> *)layoutAttributesForElementsInRect:(CGRect)rect {
-    // First, get the layout attributes from the superclass
-    NSArray<UICollectionViewLayoutAttributes *> *attributes = [super layoutAttributesForElementsInRect:rect];
-    
-    // Create a copy to modify
-    NSArray<UICollectionViewLayoutAttributes *> *copiedAttributes = [[NSArray alloc] initWithArray:attributes copyItems:YES];
-    
-    // Process each layout attribute
-    for (int i = 1; i < copiedAttributes.count; i++) {
-        UICollectionViewLayoutAttributes *currentAttr = copiedAttributes[i];
-        UICollectionViewLayoutAttributes *prevAttr = copiedAttributes[i-1];
-        
-        // Determine which spacing to use
-        CGFloat spacing = _defaultSpacing;
-        
-        // If the current or previous item is the selected item and not dragging, use larger spacing
-        if (!_isDragging && (currentAttr.indexPath.item == _selectedIndex || prevAttr.indexPath.item == _selectedIndex)) {
-            spacing = _spacingAroundSelectedItem;
-        }
-        
-        // Calculate the new X position
-        CGFloat originX = CGRectGetMaxX(prevAttr.frame) + spacing;
-        
-        // Update the layout attribute
-        CGRect frame = currentAttr.frame;
-        frame.origin.x = originX;
-        currentAttr.frame = frame;
-    }
-    
-    return copiedAttributes;
+#pragma mark - Compat shims
+
+- (void)setSelectedIndex:(NSInteger)v {
+    self.expandedIndex = v;
+    self.fractionalSelectedIndex = (CGFloat)v;
+}
+- (NSInteger)selectedIndex { return self.expandedIndex; }
+
+- (void)setDefaultSpacingValue:(CGFloat)v { self.defaultSpacing = v; }
+- (CGFloat)defaultSpacingValue { return self.defaultSpacing; }
+- (void)setSpacingAroundSelectedItem:(CGFloat)v { self.selectedSpacing = v; }
+- (CGFloat)spacingAroundSelectedItem { return self.selectedSpacing; }
+
+- (void)setIsDragging:(BOOL)v { /* no-op: expansion model doesn't need this */ }
+- (BOOL)isDragging { return NO; }
+
+#pragma mark - Setters that invalidate
+
+- (void)setFractionalSelectedIndex:(CGFloat)v {
+    // Doesn't affect cell sizes — cache stays valid. Just record.
+    if (_fractionalSelectedIndex == v) return;
+    _fractionalSelectedIndex = v;
 }
 
-// Must implement this method to ensure layout is recalculated during scrolling
+- (void)setExpandedIndex:(NSInteger)v {
+    if (_expandedIndex == v) return;
+    _expandedIndex = v;
+    [self invalidateLayout];
+}
+
+- (void)setExpansionProgress:(CGFloat)v {
+    if (v < 0) v = 0; else if (v > 1) v = 1;
+    if (_expansionProgress == v) return;
+    _expansionProgress = v;
+    [self invalidateLayout];
+}
+
+#pragma mark - Geometry primitives
+
+static inline CGFloat seaf_lerp(CGFloat a, CGFloat b, CGFloat t) { return a + (b - a) * t; }
+
+/// "Selectedness" of cell `i`: nonzero only for the single expanded
+/// cell, scaled by `expansionProgress`. Returns 0 during scroll
+/// (progress=0), 1 for the fully-expanded selected cell at rest.
+- (CGFloat)expansionStrengthForIndex:(NSInteger)i {
+    if (self.expandedIndex < 0 || i != self.expandedIndex) return 0;
+    return self.expansionProgress;
+}
+
+- (CGFloat)widthForIndex:(NSInteger)i {
+    CGFloat s = [self expansionStrengthForIndex:i];
+    if (s <= 0) return self.wMin;
+    // Selected cell expands to a square (height × height) — matches
+    // iOS Photos. AR-aware widths are intentionally not modeled; see
+    // class docstring above.
+    return seaf_lerp(self.wMin, self.thumbnailHeight, s);
+}
+
+- (CGFloat)spacingBetweenIndex:(NSInteger)i andIndex:(NSInteger)j {
+    CGFloat sLeft  = [self expansionStrengthForIndex:i];
+    CGFloat sRight = [self expansionStrengthForIndex:j];
+    CGFloat s = MAX(sLeft, sRight);
+    if (s <= 0) return self.defaultSpacing;
+    return seaf_lerp(self.defaultSpacing, self.selectedSpacing, s);
+}
+
+- (CGFloat)currentWidthForIndex:(NSInteger)i {
+    return [self widthForIndex:i];
+}
+
+#pragma mark - prepareLayout / cache
+
+- (NSInteger)numberOfItems {
+    UICollectionView *cv = self.collectionView;
+    if (!cv) return 0;
+    if ([cv numberOfSections] == 0) return 0;
+    return [cv numberOfItemsInSection:0];
+}
+
+- (void)prepareLayout {
+    [super prepareLayout];
+
+    UICollectionView *cv = self.collectionView;
+    if (!cv) {
+        _cellFrames = nil;
+        _computedContentSize = CGSizeZero;
+        return;
+    }
+
+    NSInteger count = [self numberOfItems];
+    CGFloat bw = cv.bounds.size.width;
+
+    if (_cellFrames
+        && _cachedCount == count
+        && _cachedBoundsWidth == bw
+        && _cachedExpandedIndex == self.expandedIndex
+        && _cachedExpansionProgress == self.expansionProgress) {
+        return; // cache hit — nothing changed
+    }
+
+    NSMutableArray<NSValue *> *frames = [NSMutableArray arrayWithCapacity:MAX(count, 1)];
+    CGFloat h = self.thumbnailHeight;
+    CGFloat y = self.sectionInsets.top;
+    CGFloat x = self.sectionInsets.left;
+
+    if (count == 0) {
+        _cellFrames = frames;
+        _computedContentSize = CGSizeMake(self.sectionInsets.left + self.sectionInsets.right,
+                                           h + self.sectionInsets.top + self.sectionInsets.bottom);
+    } else {
+        for (NSInteger i = 0; i < count; i++) {
+            if (i > 0) {
+                x += [self spacingBetweenIndex:i - 1 andIndex:i];
+            }
+            CGFloat w = [self widthForIndex:i];
+            [frames addObject:[NSValue valueWithCGRect:CGRectMake(x, y, w, h)]];
+            x += w;
+        }
+        x += self.sectionInsets.right;
+        _cellFrames = frames;
+        _computedContentSize = CGSizeMake(x, h + self.sectionInsets.top + self.sectionInsets.bottom);
+    }
+
+    _cachedCount = count;
+    _cachedBoundsWidth = bw;
+    _cachedExpandedIndex = self.expandedIndex;
+    _cachedExpansionProgress = self.expansionProgress;
+}
+
+- (CGSize)collectionViewContentSize {
+    return _computedContentSize;
+}
+
+- (NSArray<UICollectionViewLayoutAttributes *> *)layoutAttributesForElementsInRect:(CGRect)rect {
+    NSMutableArray<UICollectionViewLayoutAttributes *> *out = [NSMutableArray array];
+    for (NSInteger i = 0; i < (NSInteger)_cellFrames.count; i++) {
+        CGRect frame = [_cellFrames[i] CGRectValue];
+        if (CGRectIntersectsRect(frame, rect)) {
+            UICollectionViewLayoutAttributes *attr =
+                [UICollectionViewLayoutAttributes layoutAttributesForCellWithIndexPath:
+                    [NSIndexPath indexPathForItem:i inSection:0]];
+            attr.frame = frame;
+            [out addObject:attr];
+        }
+    }
+    return out;
+}
+
+- (UICollectionViewLayoutAttributes *)layoutAttributesForItemAtIndexPath:(NSIndexPath *)indexPath {
+    NSInteger i = indexPath.item;
+    if (i < 0 || i >= (NSInteger)_cellFrames.count) return nil;
+    UICollectionViewLayoutAttributes *attr =
+        [UICollectionViewLayoutAttributes layoutAttributesForCellWithIndexPath:indexPath];
+    attr.frame = [_cellFrames[i] CGRectValue];
+    return attr;
+}
+
 - (BOOL)shouldInvalidateLayoutForBoundsChange:(CGRect)newBounds {
-    return YES;
+    // Pure scrolling (origin change) doesn't affect cell frames in our
+    // model — they're authored in content coordinates. Only re-prepare
+    // when the visible width actually changes (rotation / resize).
+    return !CGSizeEqualToSize(newBounds.size, self.collectionView.bounds.size);
+}
+
+- (void)invalidateLayout {
+    // Bust the cache so the next prepareLayout recomputes cell frames
+    // after any explicit invalidate call (e.g. rotation, count change).
+    _cellFrames = nil;
+    _cachedExpandedIndex = NSIntegerMin;
+    _cachedExpansionProgress = -1;
+    [super invalidateLayout];
+}
+
+#pragma mark - Stateless geometry queries
+
+/// Walk index 0..N+1 to compute the centers of cells N and N+1 under
+/// the CURRENT expansion state (cell widths come from `widthForIndex:`,
+/// not affected by `f`). Returns N=⌊f⌋ and alpha=f-N so the caller can
+/// lerp between the two centers. Doesn't touch `_cellFrames` cache.
+- (void)_centerOfCellsAtFraction:(CGFloat)f
+                           count:(NSInteger)count
+                     outCenterN:(CGFloat *)outCenterN
+                   outCenterN1:(CGFloat *)outCenterN1
+                          outN:(NSInteger *)outN
+                      outAlpha:(CGFloat *)outAlpha {
+    CGFloat clamped = MAX(0, MIN((CGFloat)(count - 1), f));
+    NSInteger N = (NSInteger)floor(clamped);
+    CGFloat alpha = clamped - (CGFloat)N;
+
+    CGFloat x = self.sectionInsets.left;
+    CGFloat cN = 0, cN1 = 0;
+    NSInteger upper = MIN(count - 1, N + 1);
+    for (NSInteger i = 0; i <= upper; i++) {
+        if (i > 0) {
+            x += [self spacingBetweenIndex:i - 1 andIndex:i];
+        }
+        CGFloat w = [self widthForIndex:i];
+        CGFloat center = x + w / 2.0;
+        if (i == N)     cN  = center;
+        if (i == N + 1) cN1 = center;
+        x += w;
+    }
+    if (N + 1 >= count) cN1 = cN;
+    if (outCenterN)  *outCenterN  = cN;
+    if (outCenterN1) *outCenterN1 = cN1;
+    if (outN)        *outN        = N;
+    if (outAlpha)    *outAlpha    = alpha;
+}
+
+- (CGFloat)centeringContentOffsetXForFraction:(CGFloat)f boundsWidth:(CGFloat)bw {
+    NSInteger count = [self numberOfItems];
+    if (count == 0) return 0;
+    CGFloat cN = 0, cN1 = 0, alpha = 0;
+    NSInteger N = 0;
+    [self _centerOfCellsAtFraction:f count:count
+                        outCenterN:&cN outCenterN1:&cN1
+                              outN:&N outAlpha:&alpha];
+    CGFloat centerX = cN * (1.0 - alpha) + cN1 * alpha;
+    return centerX - bw / 2.0;
+}
+
+- (CGFloat)fractionForCenteringContentOffsetX:(CGFloat)x boundsWidth:(CGFloat)bw {
+    NSInteger count = [self numberOfItems];
+    if (count <= 1) return 0;
+    CGFloat lo = 0, hi = (CGFloat)(count - 1);
+    // 50 iterations bound the error to (count-1)/2^50 ~ 0 for any
+    // realistic count; we exit early once the bracket is < 1/256 of a
+    // step which is well below sub-pixel resolution.
+    for (int i = 0; i < 50; i++) {
+        CGFloat mid = (lo + hi) * 0.5;
+        CGFloat midX = [self centeringContentOffsetXForFraction:mid boundsWidth:bw];
+        if (midX < x) lo = mid; else hi = mid;
+        if (hi - lo < (1.0 / 256.0)) break;
+    }
+    return (lo + hi) * 0.5;
 }
 
 @end
 
 @interface SeafPhotoGalleryViewController ()
-  <UIPageViewControllerDataSource,
-   UIPageViewControllerDelegate,
+  <SeafPhotoPagingViewDataSource,
+   SeafPhotoPagingViewDelegate,
    UICollectionViewDataSource,
    UICollectionViewDelegate,
    UICollectionViewDelegateFlowLayout,
    UIScrollViewDelegate,
    SeafDentryDelegate>
 
-//@property (nonatomic, strong) UIPageViewController     *pageVC;
 @property (nonatomic, strong) NSArray<NSDictionary *>  *infoModels;
 @property (nonatomic, assign) NSUInteger                currentIndex;
 
@@ -140,8 +429,74 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
 // Add active controller set to track currently loading or loaded controllers
 @property (nonatomic, strong) NSMutableSet<NSNumber *> *activeControllers;
 
+#pragma mark - Thumbnail strip state (iOS-Photos-style)
+
+/// True while the user is actively dragging the thumbnail strip — we
+/// reverse-bind its contentOffset back to the pager during the gesture.
+/// Mutually exclusive with `pagerDriving` via the state-machine table
+/// in the plan.
+@property (nonatomic, assign) BOOL thumbDriving;
+
+/// True while we are programmatically writing the thumbnail strip's
+/// contentOffset from `pagingView:didScrollToOffset:`. Suppresses the
+/// strip's own `scrollViewDidScroll:` from firing the inverse binding
+/// and creating an infinite loop.
+@property (nonatomic, assign) BOOL pagerDriving;
+
+/// iOS-Photos-style strip scrubbing: while `thumbDriving` is YES, the
+/// big photo pager only swaps when the centered thumbnail crosses an
+/// integer boundary, instead of co-scrolling fractionally. This tracks
+/// the most recently-jumped-to integer index so we don't re-jump on
+/// every scroll frame. Reset to NSNotFound on settle / drag-begin.
+@property (nonatomic, assign) NSUInteger stripScrubDisplayedIndex;
+
+/// One-shot guard set ONLY around the very first programmatic
+/// `setCurrentIndex:animated:NO` in `settleInitialPageIfNeeded`.
+///
+/// Why this exists: when the gallery is opened on a non-zero index
+/// (the normal case — user taps the 5th photo in a grid), the initial
+/// pager-positioning write moves contentOffset from 0 → currentIndex *
+/// pageWidth. UIKit synchronously dispatches `scrollViewDidScroll:`,
+/// which routes through `pagingView:didScrollToOffset:` and would
+/// `collapseStripAnimated:YES` the strip — only for the immediately
+/// following `didSettleAtIndex:` to re-`expandStripForIndex:animated:YES`
+/// it back. The visible result is a ~0.6s "shrink → spring back"
+/// flicker on first appearance.
+///
+/// While this flag is YES the pager→strip live binding is short-circuited.
+/// The strip was already created in its expanded resting state by
+/// `setupThumbnailStrip` (`expansionProgress = 1`, `expandedIndex =
+/// currentIndex`), so suppressing the binding leaves it visually
+/// stable; the subsequent settle's `expandStripForIndex:` becomes a
+/// visual no-op that only re-centers the contentOffset.
+@property (nonatomic, assign) BOOL isPerformingInitialPagerSettle;
+
+#pragma mark - Hero dismiss state
+
+/// The active interactive transition during a pull-down dismiss. nil at all
+/// other times. Built in `photoContentViewControllerDidBeginDismissDrag:`,
+/// consumed by UIKit via `interactionControllerForDismissal:`, then released
+/// once the transition finishes / is cancelled.
+@property (nonatomic, strong, nullable) SeafPhotoInteractiveDismiss *activeInteractive;
+
+/// Hero context shared between the interactive controller and the animator.
+/// Captured at gesture start so target frame / corner radius / contentMode
+/// are stable for the whole transition.
+@property (nonatomic, strong, nullable) SeafPhotoHeroContext *activeHeroContext;
+
+/// Cached starting alpha of UI chrome (navbar/toolbar/thumb strip/overlays)
+/// so we can scale them with the drag progress and snap them back exactly
+/// on cancel.
+@property (nonatomic, assign) CGFloat chromeBaselineAlpha;
+
+/// Backing storage for `isChromeHidden`. Single source of truth — never
+/// write to it directly outside `setChromeHidden:animated:reason:`.
+@property (nonatomic, assign, readwrite) BOOL isChromeHidden;
+
 // Private method declarations
 - (void)showDownloadError:(NSString *)fileName;
+- (void)dismissGalleryAnimated:(BOOL)animated;
+- (UIWindow *)heroReferenceWindow;
 
 @end
 
@@ -164,6 +519,9 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
         _contentVCCache = [NSMutableDictionary dictionary];
         // Initialize the active controller set
         _activeControllers = [NSMutableSet set];
+        _thumbDriving = NO;
+        _pagerDriving = NO;
+        _stripScrubDisplayedIndex = NSNotFound;
         
         // Initialize active controllers with current index and its neighbors
         [_activeControllers addObject:@(_currentIndex)];
@@ -315,8 +673,8 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
                                                                                        action:@selector(dismissGallery)
                                                                                         color:grayColor];
     
-    // Set up page view controller and thumbnail strip
-    [self setupPageViewController];
+    // Set up paging view and thumbnail strip
+    [self setupPagingView];
     [self setupThumbnailStrip];
     
     [self setupToolbar];
@@ -334,7 +692,9 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
 
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
-    
+
+    CGRect prevPagingFrame = self.pagingView.frame;
+
     // Position the thumbnail collection and toolbar at the bottom of the screen
     CGRect bounds = self.view.bounds;
     CGFloat stripHeight = 45; // Use the fixed strip height
@@ -344,6 +704,13 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
     if (@available(iOS 11.0, *)) {
         safeAreaBottom = self.view.safeAreaInsets.bottom;
     }
+
+    Debug(@"[ZoomBug] gallery.viewDidLayoutSubviews bounds=%@ safeArea=%@ "
+          @"isChromeHidden=%d prevPagingFrame=%@",
+          NSStringFromCGRect(bounds),
+          NSStringFromUIEdgeInsets(self.view.safeAreaInsets),
+          self.isChromeHidden,
+          NSStringFromCGRect(prevPagingFrame));
     
     // Adjust the location of the thumbnail collection
     CGRect thumbnailFrame = CGRectMake(0,
@@ -352,9 +719,26 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
                                       stripHeight); // Use stripHeight
     self.thumbnailCollection.frame = thumbnailFrame;
     
-    // Make sure page view controller fills the available space
-    self.pageVC.view.frame = bounds;
-    
+    // Position the paging view so it extends `interPageSpacing` past the
+    // screen edges (shifted left by halfSpacing). With `pageWidth = stride
+    // = screenW + spacing` and each page rendered at width `screenW`
+    // centered within its stride, the inter-page gap naturally falls off
+    // both screen edges. Result: no left/right margin around photos, only
+    // a visible gap between adjacent photos during transitions.
+    CGFloat interSpacing = self.pagingView.interPageSpacing;
+    CGFloat halfSpacing  = interSpacing / 2.0;
+    self.pagingView.frame = CGRectMake(-halfSpacing,
+                                        0,
+                                        bounds.size.width + interSpacing,
+                                        bounds.size.height);
+
+    // Patch H + K: idempotent reload (no-op when bounds.size and pageCount
+    // are unchanged) followed by initial-page settle on the first frame
+    // where bounds is non-zero. Done here (NOT in viewDidLoad) so the Hero
+    // present animation captures a fully laid-out paging view.
+    [self.pagingView reloadPagesIfNeeded];
+    [self settleInitialPageIfNeeded];
+
     // Toolbar always stays at the bottom, including safe area
     CGRect toolbarFrame = CGRectMake(0,
                                     bounds.size.height - toolbarHeight - safeAreaBottom,
@@ -372,84 +756,150 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
 
 - (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
     [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
-    
-    // Perform actions during the rotation animation
+
+    // Patch I: rotation can land mid-handoff if the user starts a paging
+    // gesture and then rotates. Snap back so the alongside-animation
+    // re-layouts on a clean integer page offset.
+    [self.pagingView cancelHandoffIfNeeded];
+
+    NSUInteger snapshotIndex = self.currentIndex;
+
+    // A rotation can race with an in-flight strip drag (e.g. handoff
+    // active, decelerating). Force-clear binding flags + recenter so we
+    // don't land in a stuck `thumbDriving` state with the new bounds.
+    [self resetThumbnailDraggingState];
+
     [coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
-        // Force layout update
+        // Force layout update — viewDidLayoutSubviews will resize the paging
+        // view and reflow alive pages to the new bounds, then settle current.
         [self.view setNeedsLayout];
-        
+        [self.view layoutIfNeeded];
+        // Recompute the constant centering inset for the new bounds.
+        [self applyConstantCenteringInset];
+        // Recenter the strip first (under the new bounds) so the
+        // alongside animation interpolates the strip's contentOffset
+        // and the pager's snap together.
+        [self centerThumbnailForIndex:snapshotIndex animated:NO];
+        // Re-snap to the current page after the new bounds.size took effect,
+        // so the contentOffset matches the new pageWidth.
+        [self.pagingView setCurrentIndex:snapshotIndex animated:NO];
     } completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
-        // This will be called after the rotation animation completes
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (self.currentIndex < self.thumbnailCollection.numberOfSections) { // Check if index is valid
-        [self.thumbnailCollection scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:self.currentIndex inSection:0]
-                                       atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally
-                                               animated:YES];
-            }
-        });
+        // No completion-time scroll: the alongside block already centered
+        // the strip and snapped the pager. `applyPageSettleAtIndex:`
+        // (fired by the pager's didSettleAtIndex: delegate) will perform
+        // any final cleanup needed.
     }];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     
-    // Ensure the navigation bar is visible
+    // Ensure the navigation bar is visible — and reset the chrome state
+    // machine to "visible" up front so the first tap doesn't read a stale
+    // hidden flag from a previous gallery presentation.
     [self.navigationController setNavigationBarHidden:NO animated:animated];
-    
+    self.navigationController.navigationBar.alpha = 1.0;
+    self.isChromeHidden = NO;
+
+    // Wrapper nav controller is presented with `UIModalPresentationOverFullScreen`,
+    // which by default does NOT route status bar appearance to the presented
+    // VC. Opt in so our `prefersStatusBarHidden` / `preferredStatusBarStyle`
+    // overrides actually drive the system status bar.
+    self.navigationController.modalPresentationCapturesStatusBarAppearance = YES;
+    [self setNeedsStatusBarAppearanceUpdate];
+
     // Use styling utility to set navigation bar style
     [SeafNavigationBarStyler applyStandardAppearanceToNavigationController:self.navigationController];
 }
 
 #pragma mark - Layout Subviews
-- (void)setupPageViewController {
-    // Create page view controller
-    self.pageVC = [[UIPageViewController alloc] initWithTransitionStyle:UIPageViewControllerTransitionStyleScroll
-        navigationOrientation:UIPageViewControllerNavigationOrientationHorizontal
-                      options:nil];
-    
-    // Set data source and delegate
-    self.pageVC.dataSource = self;
-    self.pageVC.delegate = self;
-    
-    // Set page view controller's view
-    self.pageVC.view.frame = self.view.bounds;
-    [self.view addSubview:self.pageVC.view];
-    
-    // Set the first content view controller
+
+/// Patch K: create-only setup. We must not attach pages here because
+/// `self.view.bounds` is not final yet (the navigation controller hasn't
+/// laid out its child yet). The first real page attachment happens from
+/// `viewDidLayoutSubviews` → `reloadPagesIfNeeded` + `settleInitialPageIfNeeded`.
+- (void)setupPagingView {
+    // The paging view's frame is set up in viewDidLayoutSubviews (it must
+    // extend `interPageSpacing` past the screen edges so the inter-page gap
+    // falls off-screen instead of leaving a margin around each photo).
+    // Initialize to view.bounds for the very first layout pass; the real
+    // frame is applied below.
+    self.pagingView = [[SeafPhotoPagingView alloc] initWithFrame:self.view.bounds];
+    // Manage frame manually in viewDidLayoutSubviews — autoresizing would
+    // override the negative-x offset on rotation.
+    self.pagingView.autoresizingMask = UIViewAutoresizingNone;
+    self.pagingView.pagingDataSource = self;
+    self.pagingView.pagingDelegate = self;
+    self.pagingView.interPageSpacing = 20.0;
+    self.pagingView.backgroundColor = [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
+    [self.view addSubview:self.pagingView];
+
     if (self.preViewItems.count > 0 && self.currentIndex < self.preViewItems.count) {
-        // Ensure the current, left, and right images will be loaded
+        // Make sure the alive range / image preloads are seeded so the first
+        // attachment (in viewDidLayoutSubviews) can fetch the right images.
         [self updateLoadedImagesRangeForIndex:self.currentIndex];
         [self loadImagesInCurrentRange];
-        
-        // Get the content view controller for the current index
-        SeafPhotoContentViewController *contentVC = [self viewControllerAtIndex:self.currentIndex];
-        self.currentContentVC = contentVC;
-        
-        [self.pageVC setViewControllers:@[contentVC]
-                          direction:UIPageViewControllerNavigationDirectionForward
-                           animated:NO
-                         completion:nil];
+    }
+}
+
+/// First-time positioning: called from viewDidLayoutSubviews. Idempotent.
+- (void)settleInitialPageIfNeeded {
+    if (self.preViewItems.count == 0) return;
+    if (self.pagingView.pageWidth <= 0) return; // bounds still zero
+    NSUInteger desired = self.currentIndex;
+    if (desired >= self.preViewItems.count) {
+        desired = self.preViewItems.count - 1;
     }
 
-    // Add as child view controller
-    [self addChildViewController:self.pageVC];
-    [self.pageVC didMoveToParentViewController:self];
+    // If the contentOffset already lines up with the desired page AND the
+    // currentContentVC is set, this is a no-op.
+    CGFloat expected = (CGFloat)desired * self.pagingView.pageWidth;
+    BOOL alreadyPositioned = (fabs(self.pagingView.contentOffset.x - expected) < 0.5)
+                          && (self.currentContentVC != nil)
+                          && (self.currentContentVC.pageIndex == desired);
+    if (alreadyPositioned) return;
+
+    // Suppress the pager→strip live binding for the duration of this
+    // single programmatic positioning call. See
+    // `isPerformingInitialPagerSettle` docs for the full rationale —
+    // without this guard the strip would visibly collapse-then-expand
+    // on first appearance whenever currentIndex != 0.
+    self.isPerformingInitialPagerSettle = YES;
+    [self.pagingView setCurrentIndex:desired animated:NO];
+    self.isPerformingInitialPagerSettle = NO;
+
+    // The setCurrentIndex above triggered the alive-window attach; pick up
+    // the now-attached current contentVC and announce it as visible the
+    // first time.
+    SeafPhotoContentViewController *vc = [self.contentVCCache objectForKey:@(desired)];
+    if (vc && vc != self.currentContentVC) {
+        SeafPhotoContentViewController *previous = self.currentContentVC;
+        self.currentContentVC = vc;
+        if (previous && previous != vc) {
+            [previous didResignCurrentVisiblePage];
+        }
+        [vc didBecomeCurrentVisiblePage];
+    }
 }
 
 - (void)setupThumbnailStrip {
     // Set thumbnail height
     self.thumbnailHeight = 42; // Thumbnail height is 42
     
-    // Create custom flow layout
+    // Create custom flow layout (iOS-Photos-style fractional model)
     SeafThumbnailFlowLayout *layout = [[SeafThumbnailFlowLayout alloc] init];
-    layout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
-    layout.selectedIndex = self.currentIndex;
-    layout.defaultSpacing = 4.0;        // Spacing between unselected items is 3
-    layout.spacingAroundSelectedItem = 13.0; // Spacing between selected and unselected items is 12
-    layout.minimumLineSpacing = 4.0; // Changed from 1.0
-    layout.minimumInteritemSpacing = 4.0; // Changed from 1.0
-    layout.sectionInset = UIEdgeInsetsMake(1.5, 10, 1.5, 10); // Collection view inset
-    
+    layout.thumbnailHeight = self.thumbnailHeight;
+    layout.wMin = self.thumbnailHeight * 2.0 / 3.0;     // 28
+    layout.defaultSpacing = 4.0;
+    layout.selectedSpacing = 13.0;
+    layout.sectionInsets = UIEdgeInsetsMake(1.5, 10, 1.5, 10);
+    layout.fractionalSelectedIndex = (CGFloat)self.currentIndex;
+    // Initial state: selected cell is fully expanded. Any subsequent
+    // scroll (pager or strip) will collapse `expansionProgress` → 0
+    // first; settle re-expands it to 1.
+    layout.expandedIndex = (NSInteger)self.currentIndex;
+    layout.expansionProgress = 1.0;
+
     // Create collection view
     CGFloat stripHeight = 45; // Total height is fixed at 45
     CGRect frame = CGRectMake(0, self.view.bounds.size.height - stripHeight, self.view.bounds.size.width, stripHeight);
@@ -488,6 +938,10 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
     [self.rightThumbnailOverlay.layer insertSublayer:rightGradient atIndex:0];
     [self.view addSubview:self.rightThumbnailOverlay];
     
+    // Apply the constant centering inset (based on wMin) once now —
+    // it stays valid until the strip's bounds change.
+    [self applyConstantCenteringInset];
+
     // For performance, preload some thumbnails
     if (self.preViewItems.count > 0) {
         [self.thumbnailCollection reloadData];
@@ -516,30 +970,18 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
     // Update current index
     self.currentIndex = index;
     
-    // Update thumbnail collection view layout
-    SeafThumbnailFlowLayout *layout = (SeafThumbnailFlowLayout *)self.thumbnailCollection.collectionViewLayout;
-    layout.selectedIndex = index;
-    layout.isDragging = NO; // Ensure not in dragging state
-    
-    // Refresh layout
-    [layout invalidateLayout];
-    
-    // Create index path for scrolling
-    NSIndexPath *indexPath = [NSIndexPath indexPathForItem:index inSection:0];
-    
-    // Update selected item appearance and position with animation
-    [UIView animateWithDuration:0.3 animations:^{
-        // Refresh visible cell appearance
-        [self.thumbnailCollection performBatchUpdates:^{
-            // This empty block will trigger layout update
-        } completion:nil];
-        
-        // Scroll thumbnail to center position in the same animation
-        [self.thumbnailCollection scrollToItemAtIndexPath:indexPath
-                                       atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally
-                                               animated:NO]; // Use NO to include in current animation block
-    }];
-    
+    // Re-expand the new index to its true wAR width. The expand helper
+    // wraps cell-frame + centering + fractional snap in a single spring
+    // animation so the previous cell shrinks back to wMin and the new
+    // cell grows simultaneously. No `reloadData` / `reloadItems` —
+    // selection has no per-cell visual (no border / highlight); the
+    // size change is driven entirely by `expandedIndex` /
+    // `expansionProgress` on the layout, and the thumbnail image is
+    // refreshed via the viewModel's onUpdate callback. Reloading here
+    // would trigger UICollectionView's default crossfade animation,
+    // producing a visible fade-in flicker on the affected cells.
+    [self expandStripForIndex:index animated:YES];
+
     // Update active controllers, cancel unnecessary image loading
     [self updateActiveControllersForIndex:index];
     
@@ -551,100 +993,268 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
 
 - (void)collectionView:(UICollectionView *)cv didSelectItemAtIndexPath:(NSIndexPath *)ip {
     NSUInteger idx = ip.item;
-    SeafPhotoContentViewController *to = [self contentVCAtIndex:idx];
-    UIPageViewControllerNavigationDirection dir = (idx > self.currentIndex
-                                                   ? UIPageViewControllerNavigationDirectionForward
-                                                   : UIPageViewControllerNavigationDirectionReverse);
-    __weak typeof(self) wself = self;
-    [self.pageVC setViewControllers:@[to]
-                         direction:dir
-                          animated:YES
-                        completion:^(BOOL done){
-        if (done) {
-            __strong typeof(wself) strongSelf = wself;
-            if (!strongSelf) return;
-
-            [strongSelf updateSelectedIndex:idx];
-            
-            // Update loading range and trigger loading for the newly selected index
-            [strongSelf updateLoadedImagesRangeForIndex:idx];
-            [strongSelf loadImagesInCurrentRange]; // Ensure neighbor images start loading
-            // Update active controllers, cancel unnecessary image loading
-            [strongSelf updateActiveControllersForIndex:idx];
-
-            // Cancel downloads outside the range (Add this for consistency)
-            [strongSelf cancelDownloadsExceptForIndex:idx withRange:2];
-
-            strongSelf.currentContentVC = to;
-
-            NSString *titleText = nil;
-            if (strongSelf.preViewItems && idx < strongSelf.preViewItems.count) {
-                strongSelf.preViewItem = strongSelf.preViewItems[idx]; // Update the current preViewItem
-                titleText = strongSelf.preViewItem.name;
-            }
-            
-            if (titleText) {
-                [SeafNavigationBarStyler updateTitleView:(UILabel *)strongSelf.navigationItem.titleView withText:titleText];
-            }
-
-            [strongSelf updateStarButtonIcon];
-        }
-    }];
+    if (idx == self.currentIndex) return;
+    [self goToIndex:idx animated:YES];
 }
 
-- (void)pageViewController:(UIPageViewController *)pageViewController
-       didFinishAnimating:(BOOL)finished
-  previousViewControllers:(NSArray *)previousViewControllers
-      transitionCompleted:(BOOL)completed {
-    if (!finished || !completed) return;
+#pragma mark - Centralized programmatic page change
 
-    SeafPhotoContentViewController *vc = (SeafPhotoContentViewController *)pageViewController.viewControllers.firstObject;
-    // Directly use view.tag to get the new index
-    NSUInteger newIdx = vc.view.tag;
-    if (newIdx != self.currentIndex) {
-        NSUInteger oldIndex = self.currentIndex;
-        self.currentIndex = newIdx;
-
-        // Update loading range and trigger loading for the new index
-        [self updateLoadedImagesRangeForIndex:newIdx];
-        [self loadImagesInCurrentRange];
-        // Update active controllers, cancel unnecessary image loading
-        [self updateActiveControllersForIndex:newIdx];
-
-        // Cancel downloads outside the range (This was already here, keep it)
-        [self cancelDownloadsExceptForIndex:newIdx withRange:2];
-        
-        self.currentContentVC = vc;
-
-        // Update thumbnail layout and title
-        SeafThumbnailFlowLayout *layout = (SeafThumbnailFlowLayout *)self.thumbnailCollection.collectionViewLayout;
-        layout.selectedIndex = newIdx;
-        [self.thumbnailCollection reloadData];
-        NSIndexPath *idxPath = [NSIndexPath indexPathForItem:newIdx inSection:0];
-        [self.thumbnailCollection scrollToItemAtIndexPath:idxPath
-                                     atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally
-                                             animated:YES];
-
-        // Update navigation bar title
-        NSString *titleText = nil;
-        if (self.preViewItems && newIdx < self.preViewItems.count) {
-            self.preViewItem = self.preViewItems[newIdx];
-            titleText = self.preViewItem.name;
-        } else {
-            titleText = NSLocalizedString(@"View Photos", @"Seafile");
-        }
-        [SeafNavigationBarStyler updateTitleView:(UILabel *)self.navigationItem.titleView withText:titleText];
-        
-        // Update star icon in toolbar
-        [self updateStarButtonIcon];
-        [self updateThumbnailOverlaysVisibility]; // Update after page change
-        
-        Debug(@"Page changed from %ld to %ld, updated loaded range: %@",
-              (long)oldIndex, (long)newIdx, NSStringFromRange(self.loadedImagesRange));
+/// Single entry-point for every programmatic page change (thumbnail tap,
+/// delete, file update completion, etc.). Routes through the paging view's
+/// queueing logic so a background event cannot interrupt an in-flight
+/// user gesture (Patch §3.11.6).
+- (void)goToIndex:(NSUInteger)index animated:(BOOL)animated {
+    if (self.preViewItems.count == 0) return;
+    if (index >= self.preViewItems.count) {
+        index = self.preViewItems.count - 1;
     }
+    [self.pagingView setCurrentIndex:index animated:animated];
 }
 
-#pragma mark - PageVC DataSource
+/// Internal helper: applies all post-settle bookkeeping for a new index.
+/// Called from `pagingView:didSettleAtIndex:byUserGesture:` AND from the
+/// initial `settleInitialPageIfNeeded` flow.
+- (void)applyPageSettleAtIndex:(NSUInteger)newIdx byUserGesture:(BOOL)byUser {
+    if (newIdx >= self.preViewItems.count) return;
+
+    SeafPhotoContentViewController *vc = [self.contentVCCache objectForKey:@(newIdx)];
+    if (!vc) {
+        // Should not happen — paging view always attaches alive ± 1 around
+        // the new current index before firing settle.
+        Debug(@"[Gallery] applyPageSettleAtIndex:%lu — no cached VC, recreating",
+              (unsigned long)newIdx);
+        vc = [self viewControllerAtIndex:newIdx];
+    }
+
+    NSUInteger oldIndex = self.currentIndex;
+    self.currentIndex = newIdx;
+
+    [self updateLoadedImagesRangeForIndex:newIdx];
+    [self loadImagesInCurrentRange];
+    [self updateActiveControllersForIndex:newIdx];
+    [self cancelDownloadsExceptForIndex:newIdx withRange:2];
+
+    SeafPhotoContentViewController *previousVC = self.currentContentVC;
+    self.currentContentVC = vc;
+    if (previousVC && previousVC != vc) {
+        [previousVC didResignCurrentVisiblePage];
+
+        // Reset zoom on the page we just left so it's at default scale
+        // when the user comes back to it.
+        if (previousVC.isZoomedIn) {
+            previousVC.isConfiguringLayout = YES;
+            [previousVC.scrollView setZoomScale:previousVC.scrollView.minimumZoomScale animated:NO];
+            previousVC.isConfiguringLayout = NO;
+        }
+    }
+    [vc didBecomeCurrentVisiblePage];
+
+    // Sync thumbnail strip — settle the fractional model to the integer
+    // newIdx, then expand the new cell to its true aspect ratio. NO
+    // `reloadData` / `reloadItems` here:
+    //   • cells have no per-selection visual styling (no border /
+    //     highlight) — selection is expressed purely by the layout's
+    //     `expandedIndex` driving cell width;
+    //   • thumbnail images are refreshed via the viewModel's onUpdate
+    //     callback, not reload;
+    //   • `reloadItemsAtIndexPaths:` would trigger UICollectionView's
+    //     default cell crossfade, which is visible as a fade-in
+    //     flicker on the strip every time the user swipes pages.
+    // Strip ownership flags are released here because settle marks the
+    // end of any active drag/follow interaction.
+    self.thumbDriving = NO;
+    self.pagerDriving = NO;
+    self.stripScrubDisplayedIndex = NSNotFound;
+    // expandStripForIndex: snaps fractionalSelectedIndex inside its
+    // animation block — no need to assign it here.
+    //
+    // Initial-positioning path: when this settle is fired synchronously
+    // from `settleInitialPageIfNeeded` (one-shot guard set), expand
+    // without animation. The strip was already set up in its expanded
+    // resting state (`expansionProgress = 1`, `expandedIndex = newIdx`),
+    // so the only meaningful side-effect of expandStripForIndex: here
+    // is `centerThumbnailForIndex:animated:NO` — and inside an animated
+    // expand's UIView block that NO is overridden, causing the strip to
+    // visibly slide from offset 0 to the centered position over the
+    // spring's 0.45s. With animated:NO the centering write happens
+    // immediately and silently, which is what we want for first paint.
+    BOOL animateExpand = !self.isPerformingInitialPagerSettle;
+    [self expandStripForIndex:newIdx animated:animateExpand];
+
+    // Sync title + star
+    NSString *titleText = nil;
+    if (self.preViewItems && newIdx < self.preViewItems.count) {
+        self.preViewItem = self.preViewItems[newIdx];
+        titleText = self.preViewItem.name;
+    } else {
+        titleText = NSLocalizedString(@"View Photos", @"Seafile");
+    }
+    [SeafNavigationBarStyler updateTitleView:(UILabel *)self.navigationItem.titleView withText:titleText];
+    [self updateStarButtonIcon];
+    [self updateThumbnailOverlaysVisibility];
+
+    // After landing on a freshly settled page (and resetting the prior
+    // page's zoom above), the new active page is at zoomScale = 1, so
+    // outer paging is once again the right gesture target. Re-enable —
+    // the inner zoom view will toggle it back off via
+    // `photoContentViewControllerDidBeginZooming:` if the user re-zooms.
+    self.pagingView.scrollEnabled = YES;
+
+    Debug(@"[Gallery] Page settled %lu→%lu (byUser=%d), loaded range: %@",
+          (unsigned long)oldIndex, (unsigned long)newIdx, byUser,
+          NSStringFromRange(self.loadedImagesRange));
+}
+
+#pragma mark - SeafPhotoPagingView DataSource & content VC factory
+
+- (NSUInteger)numberOfPagesInPagingView:(SeafPhotoPagingView *)view {
+    return self.preViewItems.count;
+}
+
+- (UIView *)pagingView:(SeafPhotoPagingView *)view pageContainerForIndex:(NSUInteger)index {
+    SeafPhotoContentViewController *contentVC = [self viewControllerAtIndex:index];
+    if (!contentVC) return nil;
+
+    // Patch §3.11.4: assign explicit pageIndex (replaces view.tag).
+    contentVC.pageIndex = index;
+
+    // Look for an existing container for this VC (it may already be in the
+    // hierarchy from a previous attach). Reuse if found.
+    SeafPhotoPageContainer *container = nil;
+    for (UIView *parent = contentVC.view.superview; parent != nil; parent = parent.superview) {
+        if ([parent isKindOfClass:[SeafPhotoPageContainer class]]) {
+            container = (SeafPhotoPageContainer *)parent;
+            break;
+        }
+    }
+    if (!container) {
+        container = [[SeafPhotoPageContainer alloc] initWithFrame:CGRectZero];
+    }
+    container.pageIndex = index;
+    container.contentVC = contentVC;
+
+    // Patch §3.11.3: manual child VC lifecycle (replaces UIPageViewController
+    // doing this automatically). Skip the addChildViewController dance if
+    // we're already a child, otherwise UIKit asserts.
+    if (contentVC.parentViewController != self) {
+        if (contentVC.parentViewController) {
+            [contentVC willMoveToParentViewController:nil];
+            [contentVC.view removeFromSuperview];
+            [contentVC removeFromParentViewController];
+        }
+        [self addChildViewController:contentVC];
+    }
+    if (contentVC.view.superview != container) {
+        contentVC.view.frame = container.bounds;
+        contentVC.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        [container addSubview:contentVC.view];
+    }
+    if (contentVC.parentViewController == self) {
+        [contentVC didMoveToParentViewController:self];
+    }
+
+    // Patch §3.11.4: pre-sync infoVisible + immersive background to match
+    // the gallery state BEFORE the page becomes visible. Migrated from the
+    // old UIPageViewController willTransitionToViewControllers: callback.
+    if (contentVC.infoVisible != self.infoVisible) {
+        [contentVC toggleInfoView:self.infoVisible animated:NO];
+    }
+    if (self.isChromeHidden) {
+        contentVC.view.backgroundColor = [UIColor blackColor];
+        contentVC.scrollView.backgroundColor = [UIColor blackColor];
+    }
+
+    return container;
+}
+
+- (void)pagingView:(SeafPhotoPagingView *)view recyclePageContainer:(UIView *)container atIndex:(NSUInteger)index {
+    if (![container isKindOfClass:[SeafPhotoPageContainer class]]) {
+        [container removeFromSuperview];
+        return;
+    }
+    SeafPhotoPageContainer *box = (SeafPhotoPageContainer *)container;
+    SeafPhotoContentViewController *contentVC = box.contentVC;
+    if (contentVC) {
+        // Patch §3.11.3: tear down child VC relationship cleanly.
+        [contentVC willMoveToParentViewController:nil];
+        [contentVC.view removeFromSuperview];
+        [contentVC removeFromParentViewController];
+
+        // Mirror the old UIPageViewController behavior: the contentVC stays
+        // alive in `contentVCCache`, but we cancel non-current loads via
+        // `updateActiveControllersForIndex:` (already handled on page settle).
+    }
+    box.contentVC = nil;
+    box.pageIndex = NSNotFound;
+    [container removeFromSuperview];
+}
+
+#pragma mark - SeafPhotoPagingView Delegate
+
+- (void)pagingView:(SeafPhotoPagingView *)view willBeginNavigatingFromIndex:(NSUInteger)index {
+    // User started a pager drag — collapse the strip's expanded cell
+    // back to uniform wMin so all thumbnails are the same size while
+    // sliding (matches iOS Photos). Settle re-expands the new cell.
+    [self collapseStripAnimated:YES];
+}
+
+- (void)pagingView:(SeafPhotoPagingView *)view didSettleAtIndex:(NSUInteger)index byUserGesture:(BOOL)byUser {
+    [self applyPageSettleAtIndex:index byUserGesture:byUser];
+}
+
+/// pager → strip live binding. Fires for every paging scroll frame
+/// (user drag, programmatic animated change, even mid-handoff zoom-pan)
+/// so the thumbnail strip mirrors the pager's contentOffset in real
+/// time — matches the iOS Photos bottom-strip experience.
+///
+/// Suppressed when `thumbDriving` is set: the thumbnail strip is the
+/// authority and the pager is the follower in that direction; without
+/// this guard the two views would feedback-loop on every scroll frame.
+- (void)pagingView:(SeafPhotoPagingView *)view didScrollToOffset:(CGPoint)offset {
+    if (self.thumbDriving) return;
+    if (!self.thumbnailCollection) return;
+    if (self.preViewItems.count == 0) return;
+    // Initial-positioning guard: skip the pager→strip live binding
+    // during the one-shot programmatic offset write performed by
+    // `settleInitialPageIfNeeded`. Otherwise the strip — which was
+    // created already-expanded at currentIndex — would collapse here
+    // and then re-expand from `applyPageSettleAtIndex:`, producing the
+    // visible flicker. See `isPerformingInitialPagerSettle` docs.
+    if (self.isPerformingInitialPagerSettle) return;
+
+    CGFloat pw = view.pageWidth;
+    if (pw <= 0) return;
+
+    CGFloat f = offset.x / pw;
+    NSInteger maxIdx = (NSInteger)self.preViewItems.count - 1;
+    if (maxIdx < 0) return;
+    f = MAX(0, MIN((CGFloat)maxIdx, f));
+
+    SeafThumbnailFlowLayout *layout = (SeafThumbnailFlowLayout *)self.thumbnailCollection.collectionViewLayout;
+
+    // Defensive: programmatic pager scrolls (tap thumbnail → goToIndex)
+    // don't trigger willBeginNavigatingFromIndex:, so collapse here too.
+    // Idempotent — no-op once expansionProgress is already 0.
+    if (layout.expansionProgress != 0.0) {
+        [self collapseStripAnimated:YES];
+    }
+
+    layout.fractionalSelectedIndex = f;
+
+    CGFloat bw = self.thumbnailCollection.bounds.size.width;
+    if (bw <= 0) return;
+    CGFloat targetX = [layout centeringContentOffsetXForFraction:f boundsWidth:bw];
+
+    // Suppress the strip's own scrollViewDidScroll: from triggering the
+    // inverse binding while we apply the pager-driven offset.
+    self.pagerDriving = YES;
+    [self.thumbnailCollection setContentOffset:CGPointMake(targetX, 0) animated:NO];
+    self.pagerDriving = NO;
+
+    [self updateThumbnailOverlaysVisibility];
+}
+
+#pragma mark - Content VC factory
 
 - (SeafPhotoContentViewController *)viewControllerAtIndex:(NSUInteger)index {
     if (index >= self.preViewItems.count) {
@@ -656,8 +1266,11 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
     SeafPhotoContentViewController *cachedController = [self.contentVCCache objectForKey:key];
     if (cachedController) {
         // Call prepareForReuse to clean up any existing state
-        Debug(@"[Gallery] Preparing cached VC for reuse at index %ld", (long)index);
+        DebugZoom(@"[EdgeDebug] viewControllerAtIndex:%ld — calling prepareForReuse on cached VC, current bg=%@",
+              (long)index, cachedController.view.backgroundColor);
         [cachedController prepareForReuse];
+        DebugZoom(@"[EdgeDebug] viewControllerAtIndex:%ld — after prepareForReuse, bg=%@",
+              (long)index, cachedController.view.backgroundColor);
         
         // If we already have a cached VC, check loading status
         NSNumber *needsLoading = [self.loadingStatusDict objectForKey:key];
@@ -721,14 +1334,21 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
         contentController.infoModel = self.infoModels[index];
     }
     
-    // Set view tag to index for later identification
-    contentController.view.tag = index;
+    // Patch §3.11.4: prefer explicit pageIndex over view.tag.
+    contentController.pageIndex = index;
     contentController.delegate = self; // Set the gallery as the delegate
     
     // Store in cache
     [self.contentVCCache setObject:contentController forKey:key];
     
-    Debug(@"Created content VC for index %ld", (long)index);
+    // If currently in immersive mode (zoomed viewing), set black bg on new VC
+    // so it's ready before UIPageViewController displays it.
+    if (self.isChromeHidden) {
+        contentController.view.backgroundColor = [UIColor blackColor];
+        contentController.scrollView.backgroundColor = [UIColor blackColor];
+    }
+    
+    Debug(@"Created content VC for index %ld, immersive=%d", (long)index, self.isChromeHidden);
     
     return contentController;
 }
@@ -737,117 +1357,14 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
     return [self viewControllerAtIndex:idx];
 }
 
-- (UIViewController *)pageViewController:(UIPageViewController *)pvc
-      viewControllerBeforeViewController:(SeafPhotoContentViewController *)vc {
-    // Directly use view.tag to get the real index
-    NSUInteger i = vc.view.tag;
-    if (i == 0) return nil;  // No more images before the first one
-
-    NSUInteger prevIndex = i - 1;
-
-    // When swiping left, proactively expand the loading range to include the previous image
-    NSRange currentRange = self.loadedImagesRange;
-    if (prevIndex < currentRange.location) {
-        // Update the loading range to include the previous image
-        NSUInteger newLocation = prevIndex;
-        NSUInteger newLength = NSMaxRange(currentRange) - newLocation;
-        _loadedImagesRange = NSMakeRange(newLocation, newLength);
-        
-        // Load this image immediately
-        [self loadImageAtIndex:prevIndex];
-        
-        Debug(@"Expanded loading range to include previous image: %@", NSStringFromRange(_loadedImagesRange));
-    }
-
-    return [self contentVCAtIndex:prevIndex];
-}
-
-- (UIViewController *)pageViewController:(UIPageViewController *)pvc
-     viewControllerAfterViewController:(SeafPhotoContentViewController *)vc {
-    // Directly use view.tag to get the real index
-    NSUInteger i = vc.view.tag;
-    if (i + 1 >= self.preViewItems.count) return nil;  // Already at the last image
-
-    NSUInteger nextIndex = i + 1;
-
-    // When swiping right, proactively expand the loading range to include the next image
-    NSRange currentRange = self.loadedImagesRange;
-    if (nextIndex >= NSMaxRange(currentRange)) {
-        // Update the loading range to include the next image
-        NSUInteger newLocation = currentRange.location;
-        NSUInteger newLength = nextIndex - newLocation + 1;
-        _loadedImagesRange = NSMakeRange(newLocation, newLength);
-        
-        // Load this image immediately
-        [self loadImageAtIndex:nextIndex];
-        
-        Debug(@"Expanded loading range to include next image: %@", NSStringFromRange(_loadedImagesRange));
-    }
-
-    return [self contentVCAtIndex:nextIndex];
-}
-
-#pragma mark - PageVC Delegate
-
-- (void)pageViewController:(UIPageViewController *)pageViewController
-       willTransitionToViewControllers:(NSArray<UIViewController *> *)pendingViewControllers {
-    // Ensure the pending view controller has the correct info state
-    SeafPhotoContentViewController *pendingVC = pendingViewControllers.firstObject;
-    if ([pendingVC isKindOfClass:[SeafPhotoContentViewController class]]) {
-        // Ensure info view display state matches global state
-        if (pendingVC.infoVisible != self.infoVisible) {
-            // Update immediately without animation before transition
-            [pendingVC toggleInfoView:self.infoVisible animated:NO];
-            [pendingVC.view layoutIfNeeded];
-        }
-        
-        // Ensure info button icon state matches global state
-        [self updateInfoButtonIcon:self.infoVisible];
-    }
-}
-
 #pragma mark - UICollectionViewDelegateFlowLayout
-
-// Set the size for each item - the selected item's size is based on its actual aspect ratio, while unselected items have a width that is half of the height
-- (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
-    NSInteger index = indexPath.item;
-    
-    // Get standard height
-    CGFloat height = self.thumbnailHeight; // Fixed height of 42
-    
-    // Get custom layout to check dragging status
-    SeafThumbnailFlowLayout *layout = (SeafThumbnailFlowLayout *)collectionViewLayout;
-    BOOL isDragging = layout.isDragging;
-    
-    // If it's the currently selected item
-    if (index == self.currentIndex) {
-        // If dragging, make the width half of the height, same as unselected items
-        if (isDragging) {
-            return CGSizeMake(height * 2.0 / 3.0, height);
-        }
-        
-        // Return size where width and height are equal
-        return CGSizeMake(height, height);
-    }
-    // Unselected items have a width that is 2/3 of the height
-    else {
-        return CGSizeMake(height * 2.0 / 3.0, height);
-    }
-}
-
-// Set custom spacing
-- (CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumInteritemSpacingForSectionAtIndex:(NSInteger)section {
-    return 4.0; // Default spacing between items is 3 points
-}
-
-// Since the standard UICollectionViewFlowLayout doesn't support setting different spacing between different items
-- (CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumLineSpacingForSectionAtIndex:(NSInteger)section {
-    return 4.0;  // Default line spacing is 3 points
-}
-
-- (UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
-    return UIEdgeInsetsMake(1.5, 10, 1.5, 10); // Top, left, bottom, right insets
-}
+//
+// NOTE: cell sizing and inter-item spacing are now fully owned by
+// `SeafThumbnailFlowLayout` (fractional iOS-Photos-style model). The old
+// `sizeForItemAtIndexPath:` / `minimumInteritemSpacingForSectionAtIndex:` /
+// `insetForSectionAtIndex:` delegate hooks have been removed — they would
+// override the layout's interpolated frames mid-swipe and reintroduce the
+// binary "selected vs unselected" snap.
 
 #pragma mark - Thumbnail Collection
 - (NSInteger)collectionView:(UICollectionView *)cv numberOfItemsInSection:(NSInteger)section {
@@ -862,6 +1379,10 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
         id<SeafPreView> previewItem = self.preViewItems[index];
         SeafPGThumbnailCellViewModel *viewModel = [[SeafPGThumbnailCellViewModel alloc] initWithPreviewItem:previewItem];
         [cell configureWithViewModel:viewModel];
+        // Cell expansion is square (height × height) regardless of the
+        // underlying photo's aspect ratio — matches iOS Photos. The cell
+        // itself center-crops via UIViewContentModeScaleAspectFill, so
+        // no AR plumbing is needed here.
     } else {
         // Handle index out of bounds if necessary, though configureWithViewModel should also handle nil/default state
         SeafPGThumbnailCellViewModel *errorViewModel = [[SeafPGThumbnailCellViewModel alloc] initWithPreviewItem:nil]; // nil item will result in error state
@@ -1136,11 +1657,33 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
         self.infoModels = [mutableInfoModels copy];
     }
     
-    // Clean up caches related to the deleted item's original index
+    // Clean up caches related to the deleted item's original index. If the
+    // deleted VC is currently attached to the paging view, detach it first
+    // so child-VC lifecycle stays clean.
     NSNumber *deletedItemOriginalKey = @(deletedItemIndex);
+    SeafPhotoContentViewController *deletedVC = [self.contentVCCache objectForKey:deletedItemOriginalKey];
+    if (deletedVC && deletedVC.parentViewController == self) {
+        [deletedVC willMoveToParentViewController:nil];
+        [deletedVC.view.superview removeFromSuperview]; // remove the page container
+        [deletedVC.view removeFromSuperview];
+        [deletedVC removeFromParentViewController];
+    }
     [self.contentVCCache removeObjectForKey:deletedItemOriginalKey];
     [self.downloadProgressDict removeObjectForKey:deletedItemOriginalKey];
     [self.loadingStatusDict removeObjectForKey:deletedItemOriginalKey];
+
+    // Re-key any cached VCs whose original index sat above the deletion point.
+    NSArray<NSNumber *> *cachedKeysCopy = [self.contentVCCache.allKeys sortedArrayUsingSelector:@selector(compare:)];
+    for (NSNumber *k in cachedKeysCopy) {
+        NSUInteger oldIdx = k.unsignedIntegerValue;
+        if (oldIdx > deletedItemIndex) {
+            SeafPhotoContentViewController *vc = [self.contentVCCache objectForKey:k];
+            [self.contentVCCache removeObjectForKey:k];
+            NSUInteger newIdx = oldIdx - 1;
+            vc.pageIndex = newIdx;
+            [self.contentVCCache setObject:vc forKey:@(newIdx)];
+        }
+    }
 
     // 2. Determine the new current index for selection
     NSUInteger newCurrentIndex;
@@ -1187,57 +1730,20 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
             return;
         }
 
-        // 5. Update PageViewController with the new current item
-        SeafPhotoContentViewController *nextContentVC = [strongSelf viewControllerAtIndex:strongSelf.currentIndex];
-        if (!nextContentVC) {
-            Debug(@"[Gallery] Critical Error: Could not get/create VC for new index %lu after deletion. Dismissing gallery.", (unsigned long)strongSelf.currentIndex);
-            [strongSelf dismissGallery]; // Fallback if VC cannot be prepared
-            return;
-        }
-        // Ensure the new VC's info view visibility matches the global state
-        if (nextContentVC.infoVisible != strongSelf.infoVisible) {
-            [nextContentVC toggleInfoView:strongSelf.infoVisible animated:NO];
-        }
-
-        UIPageViewControllerNavigationDirection direction = UIPageViewControllerNavigationDirectionForward;
-
-        [strongSelf.pageVC setViewControllers:@[nextContentVC]
-                                  direction:direction
-                                   animated:NO
-                                 completion:^(BOOL pageUpdateFinished){
-            __strong typeof(weakSelf) innerStrongSelf = weakSelf;
-            if (!innerStrongSelf || !pageUpdateFinished) return;
-
-            innerStrongSelf.currentContentVC = nextContentVC;
-
-            NSString *titleText = innerStrongSelf.preViewItem.name;
-            [SeafNavigationBarStyler updateTitleView:(UILabel *)innerStrongSelf.navigationItem.titleView withText:titleText];
-
-            SeafThumbnailFlowLayout *layout = (SeafThumbnailFlowLayout *)innerStrongSelf.thumbnailCollection.collectionViewLayout;
-            layout.selectedIndex = innerStrongSelf.currentIndex;
-            [layout invalidateLayout]; 
-
-            // reloadData() after a delete operation to ensure all views are consistent,
-            // Then scroll to the newly selected item.
-            [innerStrongSelf.thumbnailCollection reloadData];
-            NSIndexPath *newIndexPath = [NSIndexPath indexPathForItem:innerStrongSelf.currentIndex inSection:0];
-            
-            if (innerStrongSelf.currentIndex < [innerStrongSelf.thumbnailCollection numberOfItemsInSection:0]) {
-                 [innerStrongSelf.thumbnailCollection scrollToItemAtIndexPath:newIndexPath
-                                                      atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally
-                                                              animated:YES];
-            } else {
-                Debug(@"[Gallery] Thumbnail scroll skipped: newIndexPath (%@) is out of bounds after reloadData.", newIndexPath);
-            }
-            [innerStrongSelf updateThumbnailOverlaysVisibility]; 
-
-            [innerStrongSelf updateStarButtonIcon];
-
-            [innerStrongSelf updateLoadedImagesRangeForIndex:innerStrongSelf.currentIndex];
-            [innerStrongSelf loadImagesInCurrentRange]; 
-            [innerStrongSelf updateActiveControllersForIndex:innerStrongSelf.currentIndex]; 
-            [innerStrongSelf cancelDownloadsExceptForIndex:innerStrongSelf.currentIndex withRange:2];
-        }];
+        // 5. Re-flow the paging view around the new current index. After the
+        // delete, the page count shrunk and the existing alive containers'
+        // contentSize must be recomputed. `reloadPages` (non-idempotent
+        // variant) forces it; we then explicitly apply the settle for the
+        // new index because setCurrentIndex no-ops when the paging view
+        // already considered itself on that index.
+        NSUInteger settledIndex = strongSelf.currentIndex;
+        // currentIndex above was already mutated; reset paging view's
+        // internal state to NSNotFound-equivalent so setCurrentIndex
+        // unconditionally drives a fresh settle.
+        strongSelf.currentIndex = NSNotFound;
+        [strongSelf.pagingView reloadPages];
+        [strongSelf.pagingView setCurrentIndex:settledIndex animated:NO];
+        [strongSelf applyPageSettleAtIndex:settledIndex byUserGesture:NO];
     }];
 }
 
@@ -1411,6 +1917,18 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
 }
 
 - (void)dismissGallery {
+    [self dismissGalleryAnimated:YES];
+}
+
+#pragma mark - Rotation lock
+
+// Lock rotation while the user is interactively dismissing — a mid-flight
+// rotation invalidates all the cached frames the Hero animator depends on.
+- (BOOL)shouldAutorotate {
+    return self.activeInteractive == nil;
+}
+
+- (void)dismissGalleryAnimated:(BOOL)animated {
     // 1. Cancel all pending network operations and clear callbacks
     [self cancelAllPendingFileOperations];
 
@@ -1418,24 +1936,19 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
     for (NSNumber *key in [self.contentVCCache allKeys]) {
         SeafPhotoContentViewController *vc = [self.contentVCCache objectForKey:key];
         if (vc) {
-            // cancelImageLoading was called in cancelAllPendingFileOperations
-            // releaseImageMemory should be called to free up image data
             [vc releaseImageMemory];
         }
     }
-    // Clear the cache of VCs after they have been processed
     [self.contentVCCache removeAllObjects];
-    
+
     // 3. Clear active controllers set
     [self.activeControllers removeAllObjects];
-    
+
     // 4. Dismiss the view controller
-    // Check if navigationController is not nil before dismissing
     if (self.navigationController) {
-        [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+        [self.navigationController dismissViewControllerAnimated:animated completion:nil];
     } else if (self.presentingViewController) {
-        // Fallback if not in a navigation controller but presented modally
-        [self dismissViewControllerAnimated:YES completion:nil];
+        [self dismissViewControllerAnimated:animated completion:nil];
     }
 }
 
@@ -1457,13 +1970,22 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
 
 // Clear views method
 - (void)clearViews {
-    // Release page view controller
-    if (self.pageVC) {
-        [self.pageVC.view removeFromSuperview];
-        [self.pageVC removeFromParentViewController];
-        self.pageVC = nil;
+    // Tear down each child content VC (mirrors paging view's recycle path).
+    for (NSNumber *key in [self.contentVCCache allKeys]) {
+        SeafPhotoContentViewController *vc = [self.contentVCCache objectForKey:key];
+        if (vc.parentViewController == self) {
+            [vc willMoveToParentViewController:nil];
+            [vc.view removeFromSuperview];
+            [vc removeFromParentViewController];
+        }
     }
-    
+
+    // Release the paging view
+    if (self.pagingView) {
+        [self.pagingView removeFromSuperview];
+        self.pagingView = nil;
+    }
+
     // Release thumbnail collection
     if (self.thumbnailCollection) {
         [self.thumbnailCollection removeFromSuperview];
@@ -1492,44 +2014,15 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
 
 // Update current content controller method
 - (void)updateCurrentContentController {
-    if (!self.pageVC || self.preViewItems.count == 0 || self.currentIndex >= self.preViewItems.count) return;
+    if (!self.pagingView || self.preViewItems.count == 0 || self.currentIndex >= self.preViewItems.count) return;
 
-    // Update load range
     [self updateLoadedImagesRangeForIndex:self.currentIndex];
-    
-    // Load images in current range
     [self loadImagesInCurrentRange];
-    
-    // Get content view controller for current index
-    SeafPhotoContentViewController *contentVC = [self viewControllerAtIndex:self.currentIndex];
-    
-    [self.pageVC setViewControllers:@[contentVC]
-                         direction:UIPageViewControllerNavigationDirectionForward
-                          animated:NO
-                        completion:nil];
-    
-    self.currentContentVC = contentVC;
-    
-    // Update title
-    if (self.preViewItem) {
-        // Update title view using styling utility
-        [SeafNavigationBarStyler updateTitleView:(UILabel *)self.navigationItem.titleView withText:self.preViewItem.name];
-    }
-    
-    // Update star icon in toolbar
-    [self updateStarButtonIcon];
-    
-    // If there's a thumbnail collection, scroll to current index - delay execution
-    if (self.thumbnailCollection) {
-        [self.thumbnailCollection reloadData]; // Reload first
-        dispatch_async(dispatch_get_main_queue(), ^{
-        NSIndexPath *indexPath = [NSIndexPath indexPathForItem:self.currentIndex inSection:0];
-        [self.thumbnailCollection scrollToItemAtIndexPath:indexPath
-                                        atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally
-                                                animated:YES];
-        [self updateThumbnailOverlaysVisibility]; // Update after reload and scroll
-        });
-    }
+
+    // Centralized programmatic page change. The paging view's settle
+    // callback will dispatch `applyPageSettleAtIndex:` so title/thumbnail/
+    // star icon stay in sync.
+    [self goToIndex:self.currentIndex animated:NO];
 }
 
 // Update file preview URL handling
@@ -1584,14 +2077,14 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
     // If not in cache, check if it's the current one being displayed
     if (!vc && fileIndex == self.currentIndex && self.currentContentVC) {
         // Ensure the currentContentVC actually corresponds to this file's index
-        if (self.currentContentVC.view.tag == fileIndex) {
+        if (self.currentContentVC.pageIndex == fileIndex) {
              vc = self.currentContentVC;
              Debug(@"[Gallery] Applying update to currentContentVC for file '%@' at index %lu.", file.name, (unsigned long)fileIndex);
              // Ensure currentContentVC also has the latest file object
              vc.seafFile = file;
              vc.connection = file.connection;
         } else {
-            Debug(@"[Gallery] WARNING: currentContentVC tag (%ld) does not match expected index (%lu) for file '%@'. Cannot apply update via currentContentVC.", (long)self.currentContentVC.view.tag, (unsigned long)fileIndex, file.name);
+            Debug(@"[Gallery] WARNING: currentContentVC pageIndex (%lu) does not match expected index (%lu) for file '%@'. Cannot apply update via currentContentVC.", (unsigned long)self.currentContentVC.pageIndex, (unsigned long)fileIndex, file.name);
         }
     }
 
@@ -1685,8 +2178,8 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
     }];
 
     // If no VC was found by the helper, and the download succeeded, the file object in preViewItems is now updated.
-    BOOL vcFoundOrHandled = ([self.contentVCCache objectForKey:key] != nil) || (fileIndex == self.currentIndex && self.currentContentVC && self.currentContentVC.view.tag == fileIndex);
-    
+    BOOL vcFoundOrHandled = ([self.contentVCCache objectForKey:key] != nil) || (fileIndex == self.currentIndex && self.currentContentVC && self.currentContentVC.pageIndex == fileIndex);
+
     // If this is the current page, ensure the image is reloaded *even if* the helper didn't find the VC initially
     if (fileIndex == self.currentIndex) {
         if (success) {
@@ -1696,18 +2189,15 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
                 self.currentContentVC.seafFile = file;
                 [self.currentContentVC loadImage];
             } else {
-                 Debug(@"[Gallery] WARNING: currentContentVC is nil on completion, attempting to recreate/set for index %lu", (unsigned long)fileIndex);
-                 // Attempt to create/set the VC if it's missing for the current index
-                 SeafPhotoContentViewController *newVC = [self contentVCAtIndex:fileIndex]; // This will create if needed and update file details
-                 if (newVC) {
-                     self.currentContentVC = newVC;
-                     // Trigger the load again after setting
-                     [newVC loadImage];
-                     // Set it in the page controller if it wasn't already the active one
-                     if (![self.pageVC.viewControllers containsObject:newVC]) {
-                          [self.pageVC setViewControllers:@[newVC] direction:UIPageViewControllerNavigationDirectionForward animated:NO completion:nil];
-                     }
-                 }
+                Debug(@"[Gallery] WARNING: currentContentVC is nil on completion, attempting to recreate/set for index %lu", (unsigned long)fileIndex);
+                // Re-route through the centralized programmatic page change so
+                // the paging view re-attaches the container if needed.
+                [self goToIndex:fileIndex animated:NO];
+                SeafPhotoContentViewController *newVC = [self.contentVCCache objectForKey:key];
+                if (newVC) {
+                    self.currentContentVC = newVC;
+                    [newVC loadImage];
+                }
             }
         } else {
             // If download failed for the current item, show the alert (if helper didn't handle it)
@@ -1753,21 +2243,37 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
     [self aggressiveMemoryCleanup];
 }
 
-// Aggressive memory cleanup: only keep the currently viewed image
+// Aggressive memory cleanup: only keep the currently viewed image. Previously
+// this method was effectively a no-op because re-inserting the existing entry
+// did not evict siblings. We now explicitly purge non-current entries and ask
+// the paging view to recycle off-screen pages.
 - (void)aggressiveMemoryCleanup {
-    // Save the current index's VC
-    NSNumber *currentKey = @(self.currentIndex);
-    SeafPhotoContentViewController *currentVC = [self.contentVCCache objectForKey:currentKey];
-    
-    // Re-add the current VC
-    if (currentVC) {
-        [self.contentVCCache setObject:currentVC forKey:currentKey];
+    NSUInteger currentIdx = self.currentIndex;
+    NSMutableArray<NSNumber *> *keysToRemove = [NSMutableArray array];
+    for (NSNumber *key in [self.contentVCCache.allKeys copy]) {
+        if (key.unsignedIntegerValue == currentIdx) continue;
+        SeafPhotoContentViewController *vc = [self.contentVCCache objectForKey:key];
+        if (!vc) continue;
+        // Detach from paging view container and tear down child relationship.
+        if (vc.parentViewController == self) {
+            [vc willMoveToParentViewController:nil];
+            [vc.view removeFromSuperview];
+            [vc removeFromParentViewController];
+        }
+        [keysToRemove addObject:key];
     }
-    
-    // Update load range to only include the current image
-    _loadedImagesRange = NSMakeRange(self.currentIndex, 1);
-    
-    Debug(@"Memory warning: Cleared non-current image cache, current load range: %@", NSStringFromRange(_loadedImagesRange));
+    for (NSNumber *key in keysToRemove) {
+        [self.contentVCCache removeObjectForKey:key];
+    }
+
+    // Ask the paging view to recycle adjacent containers it may still hold.
+    [self.pagingView recycleNonAdjacentPages];
+
+    _loadedImagesRange = NSMakeRange(currentIdx, 1);
+
+    Debug(@"Memory warning: cleared %lu non-current cache entries, load range: %@",
+          (unsigned long)keysToRemove.count,
+          NSStringFromRange(_loadedImagesRange));
 }
 
 - (void)dealloc {
@@ -1785,24 +2291,147 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
 
 // Ensure the current item is scrolled to the center position
 - (void)scrollToCurrentItemAnimated:(BOOL)animated {
-    if (self.currentIndex < [self.thumbnailCollection numberOfItemsInSection:0]) {
-        NSIndexPath *indexPath = [NSIndexPath indexPathForItem:self.currentIndex inSection:0];
-        
-        // Try to get the layout attributes for the current selected item to determine its width
-        UICollectionViewLayoutAttributes *attributes = [self.thumbnailCollection layoutAttributesForItemAtIndexPath:indexPath];
-        CGFloat cellWidth = attributes ? attributes.frame.size.width : (self.thumbnailHeight / 2.0); // Fallback width
-        
-        // Calculate the insets needed to ensure centering
-        CGFloat collectionViewWidth = self.thumbnailCollection.bounds.size.width;
-        CGFloat inset = MAX(0, (collectionViewWidth / 2.0) - (cellWidth / 2.0));
-        
-        // Update insets
-        self.thumbnailCollection.contentInset = UIEdgeInsetsMake(self.thumbnailCollection.contentInset.top, inset, self.thumbnailCollection.contentInset.bottom, inset);
-        
-        // Scroll to center
-        [self.thumbnailCollection scrollToItemAtIndexPath:indexPath
-                                       atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally
-                                                animated:animated];
+    [self centerThumbnailForIndex:self.currentIndex animated:animated];
+}
+
+/// Writes the strip's constant centering inset based on `wMin` (= the
+/// SMALLEST cell width). Since every cell's actual width is in the
+/// range [wMin, thumbnailHeight] and `thumbnailHeight < boundsWidth`,
+/// this inset always allows the first / last cell — at any expansion
+/// state — to reach the visual center via `setContentOffset:`. Keeping
+/// the inset CONSTANT removes one variable from the expand/collapse
+/// animation block, so UIScrollView never inserts a non-animated
+/// contentOffset adjustment when `adjustedContentInset` changes.
+///
+/// Called from `setupThumbnailStrip` and `viewWillTransitionToSize:`'s
+/// alongside block — i.e., only when bounds change.
+- (void)applyConstantCenteringInset {
+    if (!self.thumbnailCollection) return;
+    SeafThumbnailFlowLayout *layout =
+        (SeafThumbnailFlowLayout *)self.thumbnailCollection.collectionViewLayout;
+    CGFloat bw = self.thumbnailCollection.bounds.size.width;
+    if (bw <= 0) return;
+    CGFloat sideInset = MAX(0, (bw - layout.wMin) / 2.0);
+    UIEdgeInsets ins = self.thumbnailCollection.contentInset;
+    if (fabs(ins.left - sideInset) > 0.5 || fabs(ins.right - sideInset) > 0.5) {
+        ins.left = sideInset;
+        ins.right = sideInset;
+        self.thumbnailCollection.contentInset = ins;
+    }
+}
+
+/// Centers the strip on `index` using the layout's analytical centering
+/// offset. Only writes `contentOffset` — the centering inset is set
+/// once via `applyConstantCenteringInset` and never animated.
+- (void)centerThumbnailForIndex:(NSUInteger)index animated:(BOOL)animated {
+    if (!self.thumbnailCollection) return;
+    NSInteger count = [self.thumbnailCollection numberOfItemsInSection:0];
+    if (count == 0 || (NSInteger)index >= count) return;
+
+    SeafThumbnailFlowLayout *layout = (SeafThumbnailFlowLayout *)self.thumbnailCollection.collectionViewLayout;
+    CGFloat bw = self.thumbnailCollection.bounds.size.width;
+    if (bw <= 0) return;
+
+    CGFloat targetX = [layout centeringContentOffsetXForFraction:(CGFloat)index
+                                                      boundsWidth:bw];
+    [self.thumbnailCollection setContentOffset:CGPointMake(targetX, 0)
+                                       animated:animated];
+}
+
+#pragma mark - Collapse / expand transitions (iOS-Photos-style)
+
+/// Snaps the strip into "scrolling" mode: all cells become uniform wMin
+/// width. If `animated` is YES, the cell-frame transition is wrapped in
+/// a brief UIView animation so the previously-expanded cell visibly
+/// shrinks back to wMin instead of popping. ContentOffset is NOT
+/// repositioned — the caller (pager binding or user drag) immediately
+/// drives the offset to the new desired position so the visual stays
+/// continuous.
+///
+/// Idempotent: a no-op if `expansionProgress` is already 0.
+- (void)collapseStripAnimated:(BOOL)animated {
+    SeafThumbnailFlowLayout *layout = (SeafThumbnailFlowLayout *)self.thumbnailCollection.collectionViewLayout;
+    if (!layout) return;
+    if (layout.expansionProgress == 0.0) return;
+
+    void (^animations)(void) = ^{
+        // The setter calls invalidateLayout for us — no need to duplicate.
+        layout.expansionProgress = 0.0;
+        [self.thumbnailCollection layoutIfNeeded];
+    };
+    if (animated) {
+        [UIView animateWithDuration:0.18
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseOut
+                                  | UIViewAnimationOptionAllowUserInteraction
+                                  | UIViewAnimationOptionBeginFromCurrentState
+                         animations:animations
+                         completion:nil];
+    } else {
+        animations();
+    }
+}
+
+/// Expands `index` to its true wAR(index) width. Driven by settle paths
+/// (pager settled at a new index, strip drag released on the same
+/// index). The animation wraps the cell-frame change, the centering
+/// recenter, AND the `fractionalSelectedIndex` snap so all three
+/// interpolate together — preventing the "small jump" when fractional
+/// jumps from N+0.4 to N at settle time.
+- (void)expandStripForIndex:(NSUInteger)index animated:(BOOL)animated {
+    SeafThumbnailFlowLayout *layout = (SeafThumbnailFlowLayout *)self.thumbnailCollection.collectionViewLayout;
+    if (!layout) return;
+    NSInteger count = [self.thumbnailCollection numberOfItemsInSection:0];
+    if (count == 0 || (NSInteger)index >= count) return;
+
+    void (^animations)(void) = ^{
+        // Setters call invalidateLayout internally; no explicit invalidate.
+        layout.expandedIndex = (NSInteger)index;
+        layout.expansionProgress = 1.0;
+        // Snap fractional → integer INSIDE the animation block so the
+        // centering offset target shifts smoothly (UIView interpolates
+        // contentOffset.x from current to the new target).
+        layout.fractionalSelectedIndex = (CGFloat)index;
+        [self centerThumbnailForIndex:index animated:NO];
+        [self.thumbnailCollection layoutIfNeeded];
+    };
+    if (animated) {
+        // iOS-Photos uses a soft spring for the settle expand. Damping
+        // 0.85 lands without overshoot; 0.45s feels brisk but unhurried.
+        [UIView animateWithDuration:0.45
+                              delay:0
+             usingSpringWithDamping:0.85
+              initialSpringVelocity:0
+                            options:UIViewAnimationOptionAllowUserInteraction
+                                  | UIViewAnimationOptionBeginFromCurrentState
+                         animations:animations
+                         completion:nil];
+    } else {
+        animations();
+    }
+}
+
+/// Convenience: center on the controller's `currentIndex`.
+- (void)centerThumbnailForCurrentIndexAnimated:(BOOL)animated {
+    [self centerThumbnailForIndex:self.currentIndex animated:animated];
+}
+
+/// Resets transient drag/follow flags. Called from rotation, disappear,
+/// and any forced-recovery path so a stuck flag can't leave the strip
+/// stranded mid-binding.
+- (void)resetThumbnailDraggingState {
+    self.thumbDriving = NO;
+    self.pagerDriving = NO;
+    self.stripScrubDisplayedIndex = NSNotFound;
+    SeafThumbnailFlowLayout *layout = (SeafThumbnailFlowLayout *)self.thumbnailCollection.collectionViewLayout;
+    if (layout) {
+        layout.fractionalSelectedIndex = (CGFloat)self.currentIndex;
+        // Restore the settled visual: current cell square-expanded, no
+        // animation (we're recovering from an interrupted state, not
+        // performing a new transition).
+        layout.expandedIndex = (NSInteger)self.currentIndex;
+        layout.expansionProgress = 1.0;
+        [layout invalidateLayout];
     }
 }
 
@@ -1959,6 +2588,8 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
 // Handle up swipe gesture - show info view
 - (void)handleSwipeUp:(UISwipeGestureRecognizer *)sender {
     if (self.infoVisible) return;
+    // Don't trigger info panel when image is zoomed in (swipe should pan the image)
+    if (self.currentContentVC.isZoomedIn) return;
     self.infoVisible = YES;
     
     // Update current content view controller's info view display state
@@ -2007,6 +2638,8 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
 // Handle down swipe gesture - hide info view
 - (void)handleSwipeDown:(UISwipeGestureRecognizer *)sender {
     if (!self.infoVisible) return;
+    // Don't trigger info panel dismiss when image is zoomed in
+    if (self.currentContentVC.isZoomedIn) return;
     self.infoVisible = NO;
     
     // Update current content view controller's info view display state
@@ -2118,223 +2751,184 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
 }
 
 #pragma mark - UIScrollViewDelegate (for Thumbnail Collection)
+//
+// The strip is bound bidirectionally to the pager (see also
+// `pagingView:didScrollToOffset:`). The state machine:
+//
+//   * `thumbDriving == YES`  → user is dragging the strip; the pager
+//                              follows. `pagingView:didScrollToOffset:`
+//                              is suppressed for the duration.
+//   * `pagerDriving == YES`  → set briefly while
+//                              `pagingView:didScrollToOffset:` writes
+//                              the strip's contentOffset, suppresses
+//                              this object's `scrollViewDidScroll:` from
+//                              firing the inverse binding.
+//
+// Both flags are cleared at settle (`applyPageSettleAtIndex:`) and by
+// `resetThumbnailDraggingState` on rotation/disappear.
 
 // Called when the user begins dragging
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
-    // Check if this delegate call is for the thumbnailCollection
-    if (scrollView == self.thumbnailCollection) {
-        // Set dragging state to true in the layout
-        SeafThumbnailFlowLayout *layout = (SeafThumbnailFlowLayout *)self.thumbnailCollection.collectionViewLayout;
-        layout.isDragging = YES;
-        
-        // Force layout update
-        [layout invalidateLayout];
-        
-        // Animate the selected cell's size change
-        [UIView animateWithDuration:0.2 animations:^{
-            // Update the layout with animation
-            [self.thumbnailCollection performBatchUpdates:nil completion:nil];
-        }];
-    }
+    if (scrollView != self.thumbnailCollection) return;
+    self.thumbDriving = YES;
+    // Seed the scrub tracker with the page currently displayed so the
+    // first integer crossing actually triggers a jump.
+    self.stripScrubDisplayedIndex = self.currentIndex;
+    // Collapse the expanded cell so all thumbnails are uniform wMin
+    // while the user drags — matches iOS Photos. Settle re-expands.
+    [self collapseStripAnimated:YES];
 }
 
 // Called when the user lifts their finger after dragging
 - (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
-    // Check if this delegate call is for the thumbnailCollection
-    if (scrollView == self.thumbnailCollection) {
-        if (!decelerate) {
-            // If scrolling stops immediately, find and select the nearest item
-            [self selectItemNearestToCenter];
-            
-            // Reset dragging state and restore normal layout
-            [self endThumbnailDragging];
-        }
+    if (scrollView != self.thumbnailCollection) return;
+    if (!decelerate) {
+        [self settleThumbDriveAtNearestIndex];
     }
 }
 
 // Called when scrolling comes to a complete stop after deceleration
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
-    // Check if this delegate call is for the thumbnailCollection
-    if (scrollView == self.thumbnailCollection) {
-        // Find and select the nearest item
-        [self selectItemNearestToCenter];
-        
-        // Reset dragging state and restore normal layout
-        [self endThumbnailDragging];
-    }
+    if (scrollView != self.thumbnailCollection) return;
+    [self settleThumbDriveAtNearestIndex];
 }
 
-// Helper method to reset dragging state and restore layout
-- (void)endThumbnailDragging {
-    // Reset dragging state in the layout
-    SeafThumbnailFlowLayout *layout = (SeafThumbnailFlowLayout *)self.thumbnailCollection.collectionViewLayout;
-    layout.isDragging = NO;
-    
-    [layout invalidateLayout];    // Force layout update
-
-    
-    // Create index path for scrolling
-    NSIndexPath *indexPath = [NSIndexPath indexPathForItem:self.currentIndex inSection:0];
-    
-    // Animate back to normal layout with proper spacing around selected item
-    [UIView animateWithDuration:0.3 animations:^{
-        // Update the layout with animation
-        [self.thumbnailCollection performBatchUpdates:nil completion:nil];
-        
-        // Include the selected thumbnail scrolling to center position in the same animation
-        [self.thumbnailCollection scrollToItemAtIndexPath:indexPath
-                                      atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally
-                                              animated:NO]; // Use NO to include in current animation block
-    }];
+// Hook for overlay refresh on flick — UICollectionView doesn't always
+// fire scrollViewDidScroll: at the very last decelerating frame.
+- (void)scrollViewWillBeginDecelerating:(UIScrollView *)scrollView {
+    if (scrollView != self.thumbnailCollection) return;
+    [self updateThumbnailOverlaysVisibility];
 }
 
-// Helper method to find the item nearest to the center and select it
-- (void)selectItemNearestToCenter {
-    CGFloat contentOffsetX = self.thumbnailCollection.contentOffset.x;
-    CGFloat contentSizeWidth = self.thumbnailCollection.contentSize.width;
-    CGFloat boundsWidth = self.thumbnailCollection.bounds.size.width;
-    CGFloat leftInset = self.thumbnailCollection.contentInset.left;
-    CGFloat rightInset = self.thumbnailCollection.contentInset.right;
-    NSUInteger itemCount = self.preViewItems.count; // Use the actual count
+// Programmatic `scrollToItemAtIndexPath:animated:YES` ends here without
+// going through dragging/deceleration; refresh overlays so left/right
+// fades disappear at the strip edges.
+- (void)scrollViewDidEndScrollingAnimation:(UIScrollView *)scrollView {
+    if (scrollView != self.thumbnailCollection) return;
+    [self updateThumbnailOverlaysVisibility];
+}
 
-    // Check if item count is zero to avoid crashes
-    if (itemCount == 0) {
-        Debug(@"[Gallery] selectItemNearestToCenter called with zero items.");
+/// Settle path after the user releases the strip: derive the integer
+/// index from the current contentOffset's fractional position, drive the
+/// pager to that integer (which will fire didSettleAtIndex: → invokes
+/// `applyPageSettleAtIndex:` for the final cleanup including
+/// `thumbDriving = NO`).
+- (void)settleThumbDriveAtNearestIndex {
+    if (!self.thumbDriving) return; // already settled (e.g. via reset)
+    if (self.preViewItems.count == 0) {
+        self.thumbDriving = NO;
+        self.stripScrubDisplayedIndex = NSNotFound;
         return;
     }
 
-    NSIndexPath *forcedIndexPath = nil;
+    SeafThumbnailFlowLayout *layout = (SeafThumbnailFlowLayout *)self.thumbnailCollection.collectionViewLayout;
+    CGFloat bw = self.thumbnailCollection.bounds.size.width;
+    CGFloat f = [layout fractionForCenteringContentOffsetX:self.thumbnailCollection.contentOffset.x
+                                                boundsWidth:bw];
+    NSInteger maxIdx = (NSInteger)self.preViewItems.count - 1;
+    NSInteger nearest = (NSInteger)round(f);
+    if (nearest < 0) nearest = 0;
+    if (nearest > maxIdx) nearest = maxIdx;
 
-    // Check if scrolled to the absolute beginning (consider floating point inaccuracies)
-    if (contentOffsetX <= -leftInset + 0.5) { // Added tolerance
-        forcedIndexPath = [NSIndexPath indexPathForItem:0 inSection:0];
-        Debug(@"[Gallery] Scrolled to beginning, forcing selection of index 0.");
-    }
-    // Check if scrolled to the absolute end (consider floating point inaccuracies)
-    else if (contentOffsetX >= contentSizeWidth - boundsWidth + rightInset - 0.5) { // Added tolerance
-        forcedIndexPath = [NSIndexPath indexPathForItem:itemCount - 1 inSection:0];
-        Debug(@"[Gallery] Scrolled to end, forcing selection of index %lu.", (unsigned long)(itemCount - 1));
+    Debug(@"[Gallery] thumbDrive settle: f=%.3f → nearest=%ld", f, (long)nearest);
+
+    // Drag is over — clear the scrub tracker so a fresh drag re-seeds it.
+    self.stripScrubDisplayedIndex = NSNotFound;
+
+    if ((NSUInteger)nearest == self.currentIndex) {
+        // No net page change vs the gallery's last-settled index. The
+        // pager may still be parked at nearest (== currentIndex) from
+        // mid-drag jumps that ultimately rebounded back. Just re-expand
+        // the (still-current) cell to its true wAR and recenter.
+        self.thumbDriving = NO;
+        [self expandStripForIndex:self.currentIndex animated:YES];
+        [self updateThumbnailOverlaysVisibility];
+        return;
     }
 
-    NSIndexPath *closestIndexPath = nil;
-    if (forcedIndexPath) {
-        closestIndexPath = forcedIndexPath;
+    // Page change. Two paths to applyPageSettleAtIndex:
+    //   1. Pager is still at the OLD index (no mid-drag jumps fired —
+    //      e.g. the user only crossed half a thumbnail before releasing).
+    //      `setCurrentIndex:animated:NO` will move it and emit
+    //      `didSettleAtIndex:`, which routes through the gallery's
+    //      `pagingView:didSettleAtIndex:` → `applyPageSettleAtIndex:`.
+    //   2. Pager already at `nearest` from in-drag scrub jumps. In that
+    //      case `setCurrentIndex` short-circuits (currentIndex == index)
+    //      and never emits the delegate, so we fire the settle path
+    //      ourselves to give the gallery a chance to clean up
+    //      (release VCs, refresh chrome, expand strip cell, etc.).
+    //
+    // We DON'T animate the pager — the photo on screen already matches
+    // the centered thumbnail, so an animated jump would visually rewind
+    // and re-cross.
+    if (self.pagingView.currentIndex == (NSUInteger)nearest) {
+        [self applyPageSettleAtIndex:(NSUInteger)nearest byUserGesture:YES];
     } else {
-        // Original logic: Calculate the horizontal center of the visible area
-        CGFloat centerX = contentOffsetX + (boundsWidth / 2.0);
-        CGFloat minDistance = CGFLOAT_MAX;
+        [self.pagingView setCurrentIndex:(NSUInteger)nearest animated:NO];
+    }
+}
 
-        CGRect extendedBounds = CGRectInset(self.thumbnailCollection.bounds, -boundsWidth * 0.5, 0); // Extend horizontally by half the bounds width
-        NSArray<UICollectionViewLayoutAttributes *> *visibleAttributes = [self.thumbnailCollection.collectionViewLayout layoutAttributesForElementsInRect:extendedBounds];
+#pragma mark - Combined scrollViewDidScroll: (strip & pager paths)
 
-        if (visibleAttributes.count == 0) {
-            // Handle case where no attributes are returned (e.g., during rapid scrolling or empty collection)
-            Debug(@"[Gallery] No visible attributes found in extended bounds, cannot determine closest item.");
-            return;
-        }
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    if (scrollView != self.thumbnailCollection) return;
 
-        for (UICollectionViewLayoutAttributes *attributes in visibleAttributes) {
-            // Ensure the index path is valid before accessing it
-            if (attributes.indexPath.item < itemCount) {
-                CGFloat distance = fabs(attributes.center.x - centerX);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestIndexPath = attributes.indexPath;
-                }
+    // Always keep the edge overlays in sync with scroll position.
+    [self updateThumbnailOverlaysVisibility];
+
+    // If the pager is driving us, this scroll event is the result of
+    // our own programmatic write — don't bounce it back.
+    if (self.pagerDriving) return;
+
+    // If the user isn't actively dragging the strip, this is either an
+    // inertial settle (deceleration) or a programmatic scroll. Update
+    // the layout fraction so cell sizes stay in sync, but don't push
+    // the pager — wait for settle.
+    SeafThumbnailFlowLayout *layout = (SeafThumbnailFlowLayout *)self.thumbnailCollection.collectionViewLayout;
+    if (!self.thumbDriving) {
+        if (scrollView.isDragging || scrollView.isDecelerating) {
+            CGFloat bw = self.thumbnailCollection.bounds.size.width;
+            CGFloat f = [layout fractionForCenteringContentOffsetX:scrollView.contentOffset.x
+                                                        boundsWidth:bw];
+            NSInteger maxIdx = (NSInteger)self.preViewItems.count - 1;
+            if (maxIdx >= 0) {
+                f = MAX(0, MIN((CGFloat)maxIdx, f));
+                layout.fractionalSelectedIndex = f;
             }
         }
-        Debug(@"[Gallery] Found closest item via distance calculation: Index %ld", (long)closestIndexPath.item);
+        return;
     }
 
-    // If no closest item could be determined (should be rare with the checks above), do nothing
-    if (!closestIndexPath) {
-         Debug(@"[Gallery] Could not determine a closest index path. Aborting selection.");
-         return;
-    }
+    // ── Strip → pager: discrete scrubber binding (iOS-Photos behavior) ──
+    //
+    // The strip itself slides smoothly under the user's finger (UIKit
+    // owns that), and `fractionalSelectedIndex` keeps driving the
+    // selected-cell expansion animation continuously. The big photo,
+    // however, must NOT co-scroll fractionally — iOS Photos shows one
+    // complete photo at a time, swapping discretely when the centered
+    // thumbnail crosses the boundary between two adjacent images.
+    //
+    // We therefore compute the nearest integer page from the strip's
+    // fractional position and jump the pager only when that integer
+    // changes. The jump uses `jumpToIndexForStripScrub:` which writes
+    // contentOffset directly and updates the alive window, but does NOT
+    // fire the settle delegate — settle is reserved for drag-end.
+    if (self.preViewItems.count == 0) return;
+    CGFloat bw = self.thumbnailCollection.bounds.size.width;
+    if (bw <= 0) return;
+    CGFloat f = [layout fractionForCenteringContentOffsetX:scrollView.contentOffset.x
+                                                boundsWidth:bw];
+    NSInteger maxIdx = (NSInteger)self.preViewItems.count - 1;
+    f = MAX(0, MIN((CGFloat)maxIdx, f));
+    layout.fractionalSelectedIndex = f;
 
-    // If a closest item is found and it's not the current one, select it
-    if (closestIndexPath && closestIndexPath.item != self.currentIndex) {
-        NSUInteger newIndex = closestIndexPath.item;
-        
-        // Prepare the content view controller for transition
-        SeafPhotoContentViewController *toVC = [self contentVCAtIndex:newIndex];
-        if (toVC) {
-            UIPageViewControllerNavigationDirection direction = (newIndex > self.currentIndex) ? UIPageViewControllerNavigationDirectionForward : UIPageViewControllerNavigationDirectionReverse;
-            
-            __weak typeof(self) weakSelf = self;
-            
-            // Update current index and layout configuration immediately
-            self.currentIndex = newIndex;
-            SeafThumbnailFlowLayout *layout = (SeafThumbnailFlowLayout *)self.thumbnailCollection.collectionViewLayout;
-            layout.selectedIndex = newIndex;
-            layout.isDragging = NO;
-            
-            // Perform all animations in a single coordinated animation block
-            [UIView animateWithDuration:0.3 animations:^{
-                // Layout changes for thumbnail size and spacing
-                [layout invalidateLayout];
-                [self.thumbnailCollection performBatchUpdates:nil completion:nil];
-                
-                // Center the thumbnail at the same time
-                [self.thumbnailCollection scrollToItemAtIndexPath:closestIndexPath
-                                              atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally
-                                                      animated:NO]; // Use NO to include in current animation block
-            } completion:^(BOOL finished) {
-                // After visual changes are complete, perform page transition
-                [weakSelf.pageVC setViewControllers:@[toVC]
-                                         direction:direction
-                                          animated:NO
-                                        completion:^(BOOL pageTransitionFinished) {
-                    if (pageTransitionFinished) {
-                        // Update everything after the page transition
-                        weakSelf.currentContentVC = toVC;
-                        
-                        // Update title based on the new item
-                        NSString *titleText;
-                        if (weakSelf.preViewItems && newIndex < weakSelf.preViewItems.count) {
-                            weakSelf.preViewItem = weakSelf.preViewItems[newIndex];
-                            titleText = weakSelf.preViewItem.name;
-                        }
-                        
-                        // Use styling utility to update title view
-                        if (titleText) {
-                            [SeafNavigationBarStyler updateTitleView:(UILabel *)weakSelf.navigationItem.titleView withText:titleText];
-                        }
-                        
-                        // Update the star button icon based on the new item
-                        [weakSelf updateStarButtonIcon];
-                        
-                        // Update loading range for the new index
-                        [weakSelf updateLoadedImagesRangeForIndex:newIndex];
-                        [weakSelf loadImagesInCurrentRange];
-                        // Update active controllers, cancel unnecessary image loading
-                        [weakSelf updateActiveControllersForIndex:newIndex];
-                        
-                        // Cancel downloads outside the range
-                        [weakSelf cancelDownloadsExceptForIndex:newIndex withRange:2];
-                    }
-                }];
-            }];
-        } else {
-            // Fallback: Directly update the index if VC creation fails (should not happen ideally)
-            [self updateSelectedIndex:newIndex];
-        }
-    } else if (closestIndexPath && closestIndexPath.item == self.currentIndex) {
-        // If the closest item is already selected, just ensure it's centered and sized correctly
-        SeafThumbnailFlowLayout *layout = (SeafThumbnailFlowLayout *)self.thumbnailCollection.collectionViewLayout;
-        layout.isDragging = NO;
-        
-        // Perform all visual adjustments in a single animation block
-        [UIView animateWithDuration:0.3 animations:^{
-            // Update layout for correct sizing and spacing
-            [layout invalidateLayout];
-            [self.thumbnailCollection performBatchUpdates:nil completion:nil];
-            
-            // Center the item at the same time
-            [self.thumbnailCollection scrollToItemAtIndexPath:closestIndexPath
-                                          atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally
-                                                  animated:NO]; // Use NO to include in current animation block
-        }];
+    NSInteger nearest = (NSInteger)round(f);
+    if (nearest < 0) nearest = 0;
+    if (nearest > maxIdx) nearest = maxIdx;
+
+    if ((NSUInteger)nearest != self.stripScrubDisplayedIndex) {
+        self.stripScrubDisplayedIndex = (NSUInteger)nearest;
+        [self.pagingView jumpToIndexForStripScrub:(NSUInteger)nearest];
     }
 }
 
@@ -2347,55 +2941,63 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
     });
 }
 
-// Update active controllers and cancel unnecessary image requests
+// Update active controllers and release image memory of every cached VC
+// outside the new active window.
+//
+// Historically this method only diffed against `self.activeControllers`
+// (the previous active window). That was wrong: during a fast strip
+// drag the pager's alive-window machinery briefly attaches dozens of
+// in-between VCs, each `viewWillAppear:` triggering a full ~16 MB
+// `getImageWithCompletion:` decode (IMAGE_MAX_SIZE = 2048). Those
+// in-between VCs are NEVER members of `activeControllers` (settle
+// doesn't fire mid-drag), so they were skipped here and left holding
+// their decoded UIImage — leaking ~16 MB each. Long sessions could
+// accumulate hundreds of MB of bitmap data.
+//
+// Fix: iterate the FULL `contentVCCache` and release any VC's image
+// that isn't in the new active window. The new active window equals
+// the pager's alive window, so we never touch a currently-visible VC.
 - (void)updateActiveControllersForIndex:(NSUInteger)index {
-    // Create new set of active controllers (current index and its neighbors)
+    // Build the new active window: current ± 1.
     NSMutableSet<NSNumber *> *newActiveControllers = [NSMutableSet set];
-    
-    // Add current index
-    if (self.preViewItems.count > 0 && index < self.preViewItems.count) { // Add check for valid index
+    if (self.preViewItems.count > 0 && index < self.preViewItems.count) {
         [newActiveControllers addObject:@(index)];
     }
-    
-    // Add one index to the left (if exists and valid)
     if (index > 0) {
         [newActiveControllers addObject:@(index - 1)];
     }
-    
-    // Add one index to the right (if exists and valid)
     if (index + 1 < self.preViewItems.count) {
         [newActiveControllers addObject:@(index + 1)];
     }
-    
-    // Find controllers that are no longer active
-    NSMutableSet<NSNumber *> *controllersToInactivate = [NSMutableSet setWithSet:self.activeControllers];
-    [controllersToInactivate minusSet:newActiveControllers];
-    
-    // Cancel requests and release resources for inactive controllers
-    for (NSNumber *key in controllersToInactivate) {
-        NSUInteger controllerIndex = [key unsignedIntegerValue];
+
+    // Walk EVERY cached VC, not just `self.activeControllers`, so we
+    // catch any VC the strip-drag flow briefly attached and decoded
+    // an image into.
+    NSArray<NSNumber *> *allKeys = [self.contentVCCache.allKeys copy];
+    NSUInteger releasedCount = 0;
+    for (NSNumber *key in allKeys) {
+        if ([newActiveControllers containsObject:key]) continue;
+
         SeafPhotoContentViewController *vc = [self.contentVCCache objectForKey:key];
-        
         if (vc) {
-            // Cancel any ongoing loading or download
-            Debug(@"[Gallery] Canceling image loading for controller %ld, name: %@", (long)controllerIndex, vc.seafFile.name);
+            // Cancel any in-flight download (no-op if image already
+            // landed; the decode itself isn't cancellable).
             [vc cancelImageLoading];
-            
-            // Optionally release loaded image memory (optional)
+            // Drop the decoded UIImage — this is the actual memory win.
             [vc releaseImageMemory];
+            releasedCount++;
         }
-        
-        // Remove from loading status dictionary
+
         [self.loadingStatusDict removeObjectForKey:key];
-        
-        // Remove from download progress dictionary
         [self.downloadProgressDict removeObjectForKey:key];
     }
-    
-    // Update active controllers set
+
     self.activeControllers = newActiveControllers;
-    
-    Debug(@"[Gallery] Updated active controllers: %@", self.activeControllers);
+
+    if (releasedCount > 0) {
+        Debug(@"[Gallery] Released image memory for %lu inactive VC(s); active=%@",
+              (unsigned long)releasedCount, self.activeControllers);
+    }
 }
 
 /**
@@ -2444,8 +3046,26 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
 
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
-    
+
+    // Defensive: if we're going off-screen mid-binding (e.g. user swipes
+    // up to dismiss while the strip is decelerating), drop transient
+    // flags so the next presentation starts from a clean state.
+    [self resetThumbnailDraggingState];
+
     BOOL isBeingDismissed = [self isBeingDismissed] || [self isMovingFromParentViewController];
+    if (isBeingDismissed) {
+        // Stop any silent live-photo auto-preview before the gallery goes away.
+        if (self.currentContentVC) {
+            [self.currentContentVC didResignCurrentVisiblePage];
+        }
+
+        // Restore the parent navigation bar so a presenter / pushed-back VC
+        // doesn't inherit an alpha=0 / structurally-hidden chrome from us.
+        // Skip animation here — dismiss/pop already runs its own transition.
+        [self setChromeHidden:NO animated:NO reason:SeafChromeReasonRestore];
+        self.navigationController.navigationBar.alpha = 1.0;
+        [self.navigationController setNavigationBarHidden:NO animated:NO];
+    }
     if (!isBeingDismissed) {
         // Original logic for non-dismissal disappearance:
         for (NSNumber *key in [self.contentVCCache allKeys]) { // Iterate a copy
@@ -2466,6 +3086,23 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
     }
 }
 
+- (void)viewDidDisappear:(BOOL)animated {
+    [super viewDidDisappear:animated];
+
+    // The gallery is presented with `UIModalPresentationOverFullScreen` so
+    // the source list's `viewWillAppear:` does NOT fire on dismiss — and
+    // that's where it normally refreshes per-row download status. Notify
+    // the hero provider here instead so it can refresh after every dismiss
+    // path (close button, programmatic dismiss, Hero interactive dismiss).
+    BOOL dismissed = [self isBeingDismissed]
+                  || [self.navigationController isBeingDismissed]
+                  || self.presentingViewController == nil;
+    if (dismissed
+        && [self.heroProvider respondsToSelector:@selector(galleryDidDismissToItem:)]) {
+        [self.heroProvider galleryDidDismissToItem:self.preViewItem];
+    }
+}
+
 // Add new method for updating overlay visibility
 - (void)updateThumbnailOverlaysVisibility {
     if (!self.thumbnailCollection || self.thumbnailCollection.hidden || self.preViewItems.count == 0) { // Added self.thumbnailCollection.hidden
@@ -2482,10 +3119,21 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
     // These insets are part of the scrollable content area, not the contentSize directly for this calculation.
     // Simpler check: if contentSize.width is greater than bounds.width.
     
-    CGFloat Epsilon = 1.0; // Increased epsilon for more robust edge detection
+    // Sub-pixel-aware epsilon: any drift smaller than one device pixel
+    // can't actually be perceived, so treat it as "at the edge" and hide
+    // the gradient overlay. Without this, programmatic settle scrolls
+    // sometimes leave the overlay stuck visible at the very first / last
+    // index due to rounding in `setContentOffset:`.
+    CGFloat scale = MAX([UIScreen mainScreen].scale, 1.0);
+    CGFloat Epsilon = 1.0 / scale;
 
-    BOOL canScrollLeft = contentOffsetX > Epsilon;
-    BOOL canScrollRight = contentOffsetX + boundsWidth < contentWidth - Epsilon;
+    // Compensate for centering contentInset when comparing against the
+    // beginning of the scroll range: at the leftmost integer position
+    // contentOffset.x equals -leftInset, not 0.
+    CGFloat leftInset = self.thumbnailCollection.contentInset.left;
+    CGFloat rightInset = self.thumbnailCollection.contentInset.right;
+    BOOL canScrollLeft  = contentOffsetX > -leftInset + Epsilon;
+    BOOL canScrollRight = contentOffsetX + boundsWidth < contentWidth + rightInset - Epsilon;
     
     // If the total content width is less than or equal to the bounds, no scrolling is possible.
     if (contentWidth <= boundsWidth + Epsilon) { // Add Epsilon here too
@@ -2497,12 +3145,9 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
     }
 }
 
-// Add UIScrollViewDelegate method
-- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
-    if (scrollView == self.thumbnailCollection) {
-        [self updateThumbnailOverlaysVisibility];
-    }
-}
+// (Note: `scrollViewDidScroll:` is implemented above in the
+//        UIScrollViewDelegate (Thumbnail Collection) section — it now
+//        also handles the strip→pager live binding when thumbDriving.)
 
 // New helper method to synchronize overlay frames and visibility
 - (void)synchronizeOverlayFramesAndVisibilityWithThumbnailCollectionFrame:(CGRect)targetThumbnailCollectionFrame isAnimatingReveal:(BOOL)isAnimatingReveal {
@@ -2543,7 +3188,520 @@ typedef NS_ENUM(NSInteger, SeafPhotoToolbarButtonType) {
     }
 }
 
+#pragma mark - Chrome (single source of truth)
+
+/// Light gray background used by the gallery and per-page contentVCs in the
+/// non-immersive (chrome-visible) state. Kept here as a single constant so
+/// the value matches everywhere the page background is reset.
+static UIColor *SeafGalleryChromeVisibleBackground(void) {
+    return [UIColor colorWithRed:249.0/255.0 green:249.0/255.0 blue:249.0/255.0 alpha:1.0]; // #F9F9F9
+}
+
+- (void)setChromeHidden:(BOOL)hidden
+               animated:(BOOL)animated
+                 reason:(SeafChromeReason)reason {
+    BOOL stateChanged = (self.isChromeHidden != hidden);
+
+    Debug(@"[ZoomBug] setChromeHidden hidden=%d animated=%d reason=%ld stateChanged=%d "
+          @"prefersStatusBarHidden(before)=%d view.bounds=%@ safeArea=%@",
+          hidden, animated, (long)reason, stateChanged,
+          [self prefersStatusBarHidden],
+          NSStringFromCGRect(self.view.bounds),
+          NSStringFromUIEdgeInsets(self.view.safeAreaInsets));
+
+    // PageSettle / Restore are reapply-style callers — they ask the state
+    // machine to enforce the desired chrome appearance even when the boolean
+    // didn't change (e.g. swiping to a new page that needs to inherit the
+    // current immersive look without animating).
+    BOOL forceReapply = (reason == SeafChromeReasonPageSettle ||
+                         reason == SeafChromeReasonRestore);
+    if (!stateChanged && !forceReapply) {
+        return;
+    }
+
+    self.isChromeHidden = hidden;
+
+    if (hidden) {
+        [self applyChromeHiddenAnimated:animated reason:reason];
+    } else {
+        [self applyChromeVisibleAnimated:animated reason:reason];
+    }
+
+    // The status bar style/visibility piggy-backs on the chrome state via
+    // the prefersStatusBarHidden / preferredStatusBarStyle overrides, so all
+    // we need to do is request a refresh.
+    [self setNeedsStatusBarAppearanceUpdate];
+
+    Debug(@"[ZoomBug] setChromeHidden DONE reason=%ld safeArea(after)=%@",
+          (long)reason,
+          NSStringFromUIEdgeInsets(self.view.safeAreaInsets));
+}
+
+/// Apply chrome-hidden visuals. After the alpha fade completes we also
+/// structurally hide the bar via `setNavigationBarHidden:YES` so it stops
+/// swallowing taps and doesn't get re-rendered by an incidental layout
+/// pass (notably on iPad, where the wider nav bar in modal-over-fullscreen
+/// presentation could otherwise re-appear after the safe-area / status
+/// bar refresh that fires right after `setNeedsStatusBarAppearanceUpdate`).
+///
+/// Historically `SeafChromeReasonZoomIn` was excluded from the structural
+/// hide because the chrome-hide used to fire from `scrollViewDidZoom:`
+/// while the pinch was still in flight — `setNavigationBarHidden:` would
+/// re-lay out the scroll view bounds mid-gesture and make the image jump.
+/// That is no longer the case: the pinch / double-tap chrome-hide now
+/// fires from `scrollViewDidEndZooming:` (after the user releases), so
+/// the structural hide is safe and necessary on every reason.
+- (void)applyChromeHiddenAnimated:(BOOL)animated reason:(SeafChromeReason)reason {
+    UINavigationController *nav = self.navigationController;
+    NSTimeInterval duration = animated ? 0.15 : 0.0;
+
+    // Sync cached adjacent VCs to the immersive (black) appearance up front
+    // so a paging swipe mid-transition doesn't flash a light background.
+    [self updateCachedVCsForImmersiveMode:YES];
+
+    // Sync the currently visible page's own appearance. The contentVC owns
+    // its background colors, scroll indicators and LIVE badge visibility —
+    // delegating here keeps that knowledge inside the contentVC.
+    if ([self.currentContentVC respondsToSelector:@selector(enterImmersiveAppearanceAnimated:)]) {
+        [self.currentContentVC enterImmersiveAppearanceAnimated:animated];
+    }
+
+    void (^changes)(void) = ^{
+        nav.navigationBar.alpha = 0.0;
+        self.thumbnailCollection.alpha = 0.0;
+        self.toolbarView.alpha = 0.0;
+        self.leftThumbnailOverlay.alpha = 0.0;
+        self.rightThumbnailOverlay.alpha = 0.0;
+        self.pagingView.backgroundColor = [UIColor blackColor];
+    };
+    void (^completion)(BOOL) = ^(BOOL finished) {
+        // Mark thumbs / toolbar / overlays as structurally hidden so they
+        // don't intercept touches while invisible.
+        self.thumbnailCollection.hidden = YES;
+        self.toolbarView.hidden = YES;
+        self.leftThumbnailOverlay.hidden = YES;
+        self.rightThumbnailOverlay.hidden = YES;
+        [nav setNavigationBarHidden:YES animated:NO];
+    };
+
+    if (animated) {
+        [UIView animateWithDuration:duration animations:changes completion:completion];
+    } else {
+        changes();
+        completion(YES);
+    }
+}
+
+/// Apply chrome-visible visuals. The chrome consists of the parent nav bar,
+/// the bottom toolbar, the thumbnail strip and the two side overlays —
+/// they all fade back in together (with a slight delay on the bottom row to
+/// match the original tap-restore stagger).
+- (void)applyChromeVisibleAnimated:(BOOL)animated reason:(SeafChromeReason)reason {
+    UINavigationController *nav = self.navigationController;
+    NSTimeInterval duration = animated ? 0.15 : 0.0;
+
+    [self updateCachedVCsForImmersiveMode:NO];
+
+    if ([self.currentContentVC respondsToSelector:@selector(exitImmersiveAppearanceAnimated:)]) {
+        [self.currentContentVC exitImmersiveAppearanceAnimated:animated];
+    }
+
+    // The nav bar may have been structurally hidden by a tap-driven
+    // immersive entry. Make it visible first, then fade alpha back in.
+    BOOL navBarVisuallyHidden = nav.navigationBarHidden || nav.navigationBar.alpha < 0.01;
+    if (navBarVisuallyHidden) {
+        [nav setNavigationBarHidden:NO animated:NO];
+        nav.navigationBar.alpha = 0.0;
+    }
+
+    // Bring thumbs / toolbar / overlays back into the layout tree before
+    // animating their alpha — otherwise hidden=YES short-circuits the fade.
+    self.thumbnailCollection.hidden = NO;
+    self.thumbnailCollection.alpha = 0.0;
+    self.toolbarView.hidden = NO;
+    self.toolbarView.alpha = 0.0;
+    self.leftThumbnailOverlay.alpha = 0.0;
+    self.rightThumbnailOverlay.alpha = 0.0;
+
+    void (^topAnimations)(void) = ^{
+        nav.navigationBar.alpha = 1.0;
+        self.pagingView.backgroundColor = SeafGalleryChromeVisibleBackground();
+    };
+    void (^bottomAnimations)(void) = ^{
+        self.thumbnailCollection.alpha = 1.0;
+        self.toolbarView.alpha = 1.0;
+        self.leftThumbnailOverlay.alpha = 1.0;
+        self.rightThumbnailOverlay.alpha = 1.0;
+    };
+    void (^bottomCompletion)(BOOL) = ^(BOOL finished) {
+        // Side overlays' .hidden state is otherwise scroll-position driven;
+        // call back into the existing helper to restore the right value.
+        [self updateThumbnailOverlaysVisibility];
+    };
+
+    if (animated) {
+        [UIView animateWithDuration:duration animations:topAnimations];
+        [UIView animateWithDuration:duration
+                              delay:0.05
+                            options:UIViewAnimationOptionCurveEaseIn
+                         animations:bottomAnimations
+                         completion:bottomCompletion];
+    } else {
+        topAnimations();
+        bottomAnimations();
+        bottomCompletion(YES);
+    }
+}
+
+#pragma mark - Status bar (driven by isChromeHidden)
+
+- (BOOL)prefersStatusBarHidden {
+    return self.isChromeHidden;
+}
+
+- (UIStatusBarStyle)preferredStatusBarStyle {
+    if (self.isChromeHidden) {
+        return UIStatusBarStyleLightContent;
+    }
+    if (@available(iOS 13.0, *)) {
+        return UIStatusBarStyleDarkContent;
+    }
+    return UIStatusBarStyleDefault;
+}
+
+- (UIStatusBarAnimation)preferredStatusBarUpdateAnimation {
+    return UIStatusBarAnimationFade;
+}
+
+// Self-managed: do not let any pushed/contained child VC override our
+// status bar choices. The contentVC depends on isChromeHidden anyway.
+- (UIViewController *)childViewControllerForStatusBarStyle {
+    return nil;
+}
+
+- (UIViewController *)childViewControllerForStatusBarHidden {
+    return nil;
+}
+
 #pragma mark - SeafPhotoContentDelegate
+
+#pragma mark - SeafPhotoContentDelegate (Zoom)
+
+// Stale-VC guard for zoom delegate callbacks.
+//
+// Background: the gallery keeps a small cache of nearby contentVCs (current
+// page ± 1). UIScrollView delegate callbacks on a CACHED-but-not-current VC
+// could in theory race with a page swap and ask us to flip global chrome
+// state on behalf of a photo the user is no longer looking at. The
+// scrollView for an off-screen VC can briefly emit zoom callbacks during
+// `prepareForReuse` resets, programmatic `setZoomScale:` flips, or
+// safeAreaInsets fan-out from an animation, none of which represent user
+// intent. Honoring those would flip the nav bar / status bar / paging-scroll
+// state under the user's current photo — exactly the kind of "hard to
+// reproduce" cross-page contamination we want to make impossible.
+//
+// Logs a one-line warning rather than NSAssert: assertions disappear in
+// Release, but a stale callback in production should still no-op
+// gracefully (and be visible in console for triage).
+- (BOOL)isZoomCallbackFromCurrentVC:(SeafPhotoContentViewController *)viewController
+                            selector:(SEL)cmd {
+    if (viewController == self.currentContentVC) return YES;
+    Debug(@"[ZoomBug] %@ ignored — caller is not currentContentVC "
+          @"(callerIndex=%lu currentIndex=%lu currentVC=%p caller=%p)",
+          NSStringFromSelector(cmd),
+          (unsigned long)viewController.pageIndex,
+          (unsigned long)self.currentIndex,
+          self.currentContentVC,
+          viewController);
+    NSAssert(NO, @"Zoom delegate %@ fired from non-current VC (idx=%lu, current=%lu)",
+             NSStringFromSelector(cmd),
+             (unsigned long)viewController.pageIndex,
+             (unsigned long)self.currentIndex);
+    return NO;
+}
+
+- (void)photoContentViewControllerDidBeginZooming:(SeafPhotoContentViewController *)viewController {
+    if (![self isZoomCallbackFromCurrentVC:viewController selector:_cmd]) return;
+    // Disable page scrolling when user starts pinch-to-zoom — handoff state
+    // machine (commit 3) re-enables it situationally for edge transitions.
+    self.pagingView.scrollEnabled = NO;
+}
+
+- (void)photoContentViewControllerDidEnterZoomedState:(SeafPhotoContentViewController *)viewController {
+    if (![self isZoomCallbackFromCurrentVC:viewController selector:_cmd]) return;
+    DebugZoom(@"[EdgeDebug] DidEnterZoomedState — updating %lu cached VCs to immersive",
+          (unsigned long)[self.contentVCCache allKeys].count);
+    // This callback now fires from `scrollViewDidEndZooming:` (after the
+    // user releases the pinch / the double-tap zoom animation finishes),
+    // not from `scrollViewDidZoom:`. So `setChromeHidden:` is free to
+    // perform the full hide — alpha fade + structural `setNavigationBarHidden:` —
+    // without re-laying out the scroll view bounds mid-gesture.
+    [self setChromeHidden:YES animated:YES reason:SeafChromeReasonZoomIn];
+}
+
+- (void)photoContentViewControllerDidEndZooming:(SeafPhotoContentViewController *)viewController
+                                     isAtMinZoom:(BOOL)isAtMinZoom {
+    // Legacy callback — defaults to "restore chrome", preserving original behavior
+    // for any caller that hasn't migrated to the richer delegate signature.
+    // (Stale-VC check is performed by the richer overload below, so callers
+    //  routed through here are still guarded.)
+    [self photoContentViewControllerDidEndZooming:viewController
+                                       isAtMinZoom:isAtMinZoom
+                                     restoreChrome:YES];
+}
+
+- (void)photoContentViewControllerDidEndZooming:(SeafPhotoContentViewController *)viewController
+                                     isAtMinZoom:(BOOL)isAtMinZoom
+                                   restoreChrome:(BOOL)restoreChrome {
+    if (![self isZoomCallbackFromCurrentVC:viewController selector:_cmd]) return;
+    if (!isAtMinZoom) {
+        // Still zoomed in — keep page scrolling disabled and chrome untouched.
+        return;
+    }
+
+    // Image is back to initial size → always re-enable page scrolling so the
+    // user can swipe between photos, regardless of immersive intent.
+    self.pagingView.scrollEnabled = YES;
+
+    if (!restoreChrome) {
+        // User was already in immersive (chrome hidden) BEFORE the zoom-in;
+        // honor that intent. The cached adjacent VCs may have drifted to a
+        // non-immersive bg if they were touched between zoom-start and now,
+        // so re-assert the immersive sync without animating chrome.
+        [self updateCachedVCsForImmersiveMode:YES];
+        return;
+    }
+
+    [self setChromeHidden:NO animated:YES reason:SeafChromeReasonZoomOut];
+}
+
+- (void)photoContentViewController:(SeafPhotoContentViewController *)viewController
+                didToggleImmersive:(BOOL)immersive {
+    // Legacy callback — kept as a no-op now that the gallery owns the
+    // chrome state machine and `photoContentViewControllerDidRequestToggleChrome:`
+    // is the canonical tap path. Older callers that emit this without going
+    // through the request flow are not present in-tree, but the protocol
+    // method is left declared for source compatibility.
+}
+
+- (void)photoContentViewControllerDidRequestToggleChrome:(SeafPhotoContentViewController *)viewController {
+    // Single source of truth for the tap toggle. The contentVC no longer
+    // touches the parent navigation bar / status bar / gallery chrome
+    // directly — it just notifies us of intent.
+    [self setChromeHidden:!self.isChromeHidden animated:YES reason:SeafChromeReasonTap];
+}
+
+- (BOOL)photoContentViewControllerIsChromeHidden:(SeafPhotoContentViewController *)viewController {
+    return self.isChromeHidden;
+}
+
+// Edge-driven paging delegate methods removed: SeafZoomableScrollView now
+// performs the page handoff directly from the inner pan via the
+// `beginExternalHandoffFromIndex:` / `endExternalHandoffWithTargetIndex:animated:`
+// API on SeafPhotoPagingView.
+
+/// Update all cached content VCs (except current) to match immersive mode appearance.
+/// Called when entering/exiting zoomed-in immersive mode so that adjacent pages
+/// already have the correct background color before the paging view shows them.
+- (void)updateCachedVCsForImmersiveMode:(BOOL)immersive {
+    UIColor *bgColor = immersive
+        ? [UIColor blackColor]
+        : [UIColor colorWithRed:249/255.0 green:249/255.0 blue:249/255.0 alpha:1.0]; // #F9F9F9
+    for (NSNumber *key in [self.contentVCCache allKeys]) {
+        SeafPhotoContentViewController *vc = [self.contentVCCache objectForKey:key];
+        if (vc != self.currentContentVC) {
+            DebugZoom(@"[EdgeDebug] updateCachedVCs: index=%@, immersive=%d, oldBg=%@, hasImage=%d",
+                  key, immersive, vc.view.backgroundColor,
+                  vc.scrollView.subviews.firstObject != nil);
+            vc.view.backgroundColor = bgColor;
+            vc.scrollView.backgroundColor = bgColor;
+        }
+    }
+}
+
+
+#pragma mark - SeafPhotoContentDelegate (Dismiss Drag)
+
+- (void)photoContentViewControllerDidBeginDismissDrag:(SeafPhotoContentViewController *)viewController {
+    // Build the Hero context from the content VC's currently displayed image
+    // and the source thumbnail (if the heroProvider can supply one).
+    SeafPhotoHeroContext *ctx = [[SeafPhotoHeroContext alloc] init];
+    ctx.image = [viewController currentDisplayedImage];
+
+    UIWindow *window = [self heroReferenceWindow];
+    ctx.startFrameInWindow = [viewController displayedImageFrameInView:window];
+
+    // Ask the presenter to make the source cell visible, then resolve the
+    // target frame. If anything is missing the animator falls back to a
+    // generic shrink-to-bottom.
+    if (self.heroProvider && self.preViewItem) {
+        [self.heroProvider galleryWillDismissToItem:self.preViewItem];
+        UIView *sourceView = [self.heroProvider gallerySourceViewForItem:self.preViewItem];
+        if (sourceView) {
+            ctx.targetView = sourceView;
+            ctx.targetFrameInWindow = [self.heroProvider gallerySourceFrameInWindowForItem:self.preViewItem];
+            ctx.targetCornerRadius = sourceView.layer.cornerRadius;
+            ctx.targetContentMode = sourceView.contentMode;
+        }
+    }
+
+    self.activeHeroContext = ctx;
+    self.activeInteractive = [[SeafPhotoInteractiveDismiss alloc] initWithContext:ctx];
+
+    // Hide the on-screen photo so only the snapshot is visible during the
+    // hero flight. Restored on cancel / on completion (via the underlying
+    // view being torn down with the gallery).
+    [viewController setUnderlyingPhotoHidden:YES];
+
+    // Capture chrome baseline alpha so cancel can restore exactly what was
+    // there before the drag started.
+    self.chromeBaselineAlpha = self.thumbnailCollection.alpha;
+
+    // Stop any silent live-photo auto-preview while the gallery is going away.
+    [viewController didResignCurrentVisiblePage];
+
+    // Lock horizontal paging for the duration of the dismiss drag — once the
+    // user has committed to pulling the photo back to its source thumbnail,
+    // any residual horizontal motion must NOT slide the previous/next photo
+    // into view (mirrors iOS Photos). Restored on cancel; on completion the
+    // gallery is torn down so no restore is needed.
+    self.pagingView.scrollEnabled = NO;
+
+    // Kick off the dismiss; UIKit will pull the interactive controller out
+    // of -interactionControllerForDismissal: and hand it the context.
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (void)photoContentViewController:(SeafPhotoContentViewController *)viewController
+                  dismissDragMoved:(CGPoint)translation
+                          progress:(CGFloat)progress
+                          velocity:(CGPoint)velocity {
+    // Forward to the interactive controller so the snapshot follows the finger.
+    [self.activeInteractive updateWithTranslation:translation progress:progress];
+
+    // Fade UI chrome tied to drag progress — first 30% of the drag fades it
+    // completely out so the underlying presenter view is visible.
+    CGFloat chromeAlpha = MAX(0.0, 1.0 - progress / 0.3);
+    self.thumbnailCollection.alpha = chromeAlpha;
+    self.toolbarView.alpha = chromeAlpha;
+    self.navigationController.navigationBar.alpha = chromeAlpha;
+    self.leftThumbnailOverlay.alpha = chromeAlpha;
+    self.rightThumbnailOverlay.alpha = chromeAlpha;
+}
+
+- (void)photoContentViewController:(SeafPhotoContentViewController *)viewController
+        didCompleteDismissDragWithVelocity:(CGPoint)velocity {
+    SeafPhotoInteractiveDismiss *interactive = self.activeInteractive;
+    SeafPhotoContentViewController *content = viewController;
+    self.activeInteractive = nil;
+    self.activeHeroContext = nil;
+
+    if (interactive) {
+        [interactive finishWithVelocity:velocity];
+    } else {
+        // Fallback — should not normally happen.
+        [content setUnderlyingPhotoHidden:NO];
+        [self dismissGalleryAnimated:YES];
+    }
+}
+
+- (void)photoContentViewController:(SeafPhotoContentViewController *)viewController
+        didCancelDismissDragWithVelocity:(CGPoint)velocity {
+    SeafPhotoInteractiveDismiss *interactive = self.activeInteractive;
+    self.activeInteractive = nil;
+    self.activeHeroContext = nil;
+
+    [interactive cancelWithVelocity:velocity];
+
+    // Restore the underlying photo so the user can keep browsing.
+    [viewController setUnderlyingPhotoHidden:NO];
+
+    // Re-enable horizontal paging that we locked when the dismiss drag began,
+    // so the user can swipe between photos again after a cancelled dismiss.
+    self.pagingView.scrollEnabled = YES;
+
+    // Restore chrome alpha with a short tween so it doesn't pop.
+    CGFloat baseline = self.chromeBaselineAlpha > 0 ? self.chromeBaselineAlpha : 1.0;
+    [UIView animateWithDuration:0.2 animations:^{
+        self.thumbnailCollection.alpha = baseline;
+        self.toolbarView.alpha = baseline;
+        self.navigationController.navigationBar.alpha = 1;
+        self.leftThumbnailOverlay.alpha = baseline;
+        self.rightThumbnailOverlay.alpha = baseline;
+    }];
+
+    // Resume any live-photo silent auto-preview that was paused on Began.
+    [viewController didBecomeCurrentVisiblePage];
+}
+
+#pragma mark - UIViewControllerTransitioningDelegate (Hero dismiss)
+
+- (id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed {
+    // The transitioning delegate is set on the wrapper navigation controller,
+    // so `dismissed` will be that nav controller when the gallery is the root
+    // VC. Either way, we provide the same animator.
+    if (!self.activeHeroContext) {
+        // No active drag → build a one-shot context for the non-interactive
+        // dismiss path (close button, programmatic close).
+        SeafPhotoContentViewController *current = self.currentContentVC;
+        if (!current) return nil;
+
+        SeafPhotoHeroContext *ctx = [[SeafPhotoHeroContext alloc] init];
+        ctx.image = [current currentDisplayedImage];
+        UIWindow *window = [self heroReferenceWindow];
+        ctx.startFrameInWindow = [current displayedImageFrameInView:window];
+        if (self.heroProvider && self.preViewItem) {
+            [self.heroProvider galleryWillDismissToItem:self.preViewItem];
+            UIView *sourceView = [self.heroProvider gallerySourceViewForItem:self.preViewItem];
+            if (sourceView) {
+                ctx.targetView = sourceView;
+                ctx.targetFrameInWindow = [self.heroProvider gallerySourceFrameInWindowForItem:self.preViewItem];
+                ctx.targetCornerRadius = sourceView.layer.cornerRadius;
+                ctx.targetContentMode = sourceView.contentMode;
+            }
+        }
+        return [[SeafPhotoHeroAnimator alloc] initWithContext:ctx];
+    }
+    return [[SeafPhotoHeroAnimator alloc] initWithContext:self.activeHeroContext];
+}
+
+- (id<UIViewControllerInteractiveTransitioning>)interactionControllerForDismissal:(id<UIViewControllerAnimatedTransitioning>)animator {
+    return self.activeInteractive;
+}
+
+- (UIWindow *)heroReferenceWindow {
+    UIWindow *window = self.view.window;
+    if (window) return window;
+    if (@available(iOS 13.0, *)) {
+        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if ([scene isKindOfClass:[UIWindowScene class]] && scene.activationState == UISceneActivationStateForegroundActive) {
+                for (UIWindow *w in ((UIWindowScene *)scene).windows) {
+                    if (w.isKeyWindow) return w;
+                }
+            }
+        }
+    }
+    return [UIApplication sharedApplication].keyWindow;
+}
+
+#pragma mark - Hero navigation factory
+
++ (UINavigationController *)heroNavigationControllerWithPhotos:(NSArray<id<SeafPreView>> *)files
+                                                   currentItem:(id<SeafPreView>)currentItem
+                                                        master:(UIViewController<SeafDentryDelegate> *)masterVC
+                                                  heroProvider:(id<SeafGalleryHeroProvider>)heroProvider {
+    SeafPhotoGalleryViewController *gallery = [[SeafPhotoGalleryViewController alloc] initWithPhotos:files
+                                                                                          currentItem:currentItem
+                                                                                               master:masterVC];
+    gallery.heroProvider = heroProvider;
+
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:gallery];
+    // Custom presentation keeps the presenting view alive in the hierarchy
+    // so the Hero animator can fade the gallery to reveal the source list.
+    nav.modalPresentationStyle = UIModalPresentationOverFullScreen;
+    nav.transitioningDelegate = gallery;
+    return nav;
+}
 
 - (void)photoContentViewControllerRequestsRetryForFile:(id<SeafPreView>)file atIndex:(NSUInteger)index {
     Debug(@"[Gallery] Received retry request for file: %@ at index: %lu", file.name, (unsigned long)index);

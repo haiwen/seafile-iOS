@@ -8,8 +8,9 @@
 
 #import <UIKit/UIKit.h>
 #import "SeafConnection.h"
+#import "SeafGalleryHeroProvider.h"
 
-@interface SeafActivityViewController : UIViewController
+@interface SeafActivityViewController : UIViewController <SeafGalleryHeroProvider>
 
 @property (strong, nonatomic) SeafConnection *connection;
 

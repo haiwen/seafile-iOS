@@ -30,6 +30,7 @@
 #import "ExtentedString.h"
 #import "UIViewController+Extend.h"
 #import <Photos/Photos.h>
+#import <PhotosUI/PhotosUI.h>
 #import <objc/runtime.h>
 #import "SVProgressHUD.h"
 #import "Debug.h"
@@ -617,16 +618,12 @@ enum {
                 return;
             }
             
-            // Create and setup photo gallery view controller using recommended initialization method
-            SeafPhotoGalleryViewController *gallery = [[SeafPhotoGalleryViewController alloc] initWithPhotos:imageFiles
-                                                                                                currentItem:item
-                                                                                                     master:self];
-            
-            // Wrap gallery view controller in navigation controller and present modally
-            UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:gallery];
-            navController.modalPresentationStyle = UIModalPresentationFullScreen;
-            
-            // 模态显示导航控制器
+            // Create + wrap the gallery for the Hero dismiss transition.
+            UINavigationController *navController = [SeafPhotoGalleryViewController heroNavigationControllerWithPhotos:imageFiles
+                                                                                                           currentItem:item
+                                                                                                                master:self
+                                                                                                          heroProvider:self];
+
             [self presentViewController:navController animated:YES completion:nil];
             return; // Return after handling image file
         } else {
@@ -1508,15 +1505,73 @@ enum {
 #pragma mark - Photos / Album
 
 - (void)addPhotos:(id)sender {
-    if ([PHPhotoLibrary authorizationStatus] == PHAuthorizationStatusRestricted || [PHPhotoLibrary authorizationStatus] == PHAuthorizationStatusDenied) {
-        return [self alertWithTitle:NSLocalizedString(@"This app does not have access to your photos and videos.", @"Seafile") message:NSLocalizedString(@"You can enable access in Privacy Settings", @"Seafile")];
+    PHAuthorizationStatus status;
+    if (@available(iOS 14, *)) {
+        status = [PHPhotoLibrary authorizationStatusForAccessLevel:PHAccessLevelReadWrite];
+    } else {
+        status = [PHPhotoLibrary authorizationStatus];
     }
 
+    switch (status) {
+        case PHAuthorizationStatusNotDetermined: {
+            void (^completion)(PHAuthorizationStatus) = ^(PHAuthorizationStatus newStatus) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self addPhotos:sender];
+                });
+            };
+            if (@available(iOS 14, *)) {
+                [PHPhotoLibrary requestAuthorizationForAccessLevel:PHAccessLevelReadWrite handler:completion];
+            } else {
+                [PHPhotoLibrary requestAuthorization:completion];
+            }
+            return;
+        }
+        case PHAuthorizationStatusRestricted:
+        case PHAuthorizationStatusDenied:
+            [self alertWithTitle:NSLocalizedString(@"This app does not have access to your photos and videos.", @"Seafile") message:NSLocalizedString(@"You can enable access in Privacy Settings", @"Seafile")];
+            return;
+        case PHAuthorizationStatusLimited:
+        case PHAuthorizationStatusAuthorized:
+        default:
+            // Limited access no longer triggers a separate action sheet: the
+            // picker itself appends an "Add Photos" cell at the trailing
+            // position (right of the newest photo) when running in Limited
+            // mode (handled inside presentQBImagePicker:).
+            [self presentQBImagePicker:sender];
+            return;
+    }
+}
+
+- (void)presentQBImagePicker:(id)sender {
     QBImagePickerController *imagePickerController = [[QBImagePickerController alloc] init];
     imagePickerController.title = NSLocalizedString(@"Photos", @"Seafile");
     imagePickerController.delegate = self;
     imagePickerController.allowsMultipleSelection = YES;
     imagePickerController.mediaType = QBImagePickerMediaTypeAny;
+
+    // Theme the picker chrome to match the rest of the Seafile app:
+    //   - tintColor: navigation bar buttons (incl. the storyboard "Cancel"
+    //     text item) stay neutral gray.
+    //   - checkmarkTintColor: selection check uses the app's theme orange.
+    //   - addPhotosTintColor: trailing "Add New Photo" cell renders in #999999.
+    //   - addPhotosIconImage: replace the SF symbol "plus" with our asset.
+    //   - backIndicatorImage: match the main app's back chevron on the
+    //     pushed assets view.
+    // We intentionally do NOT set cancelImage here so the albums (root)
+    // screen keeps its default text "Cancel" button instead of an icon.
+    imagePickerController.tintColor          = BAR_COLOR;
+    imagePickerController.checkmarkTintColor = SEAF_COLOR_ORANGE;
+    imagePickerController.addPhotosTintColor = [UIColor colorWithWhite:153.0/255.0 alpha:1.0];
+    imagePickerController.addPhotosIconImage = [UIImage imageNamed:@"qb_add_photo"];
+    imagePickerController.backIndicatorImage = [UIImage imageNamed:@"arrowLeft_black"];
+
+    // Show the trailing "Add Photos" cell only when access is Limited so the
+    // user can expand the limited photo selection without leaving the picker.
+    if (@available(iOS 14, *)) {
+        PHAuthorizationStatus currentStatus = [PHPhotoLibrary authorizationStatusForAccessLevel:PHAccessLevelReadWrite];
+        imagePickerController.showsAddPhotosCell = (currentStatus == PHAuthorizationStatusLimited);
+    }
+
     if (IsIpad()) {
         imagePickerController.modalPresentationStyle = UIModalPresentationPopover;
         // Use self.editItem if self.photoItem is nil (when called from "more" menu)
@@ -1534,8 +1589,43 @@ enum {
     [self presentViewController:imagePickerController animated:YES completion:nil];
 }
 
+- (void)presentLimitedAccessActionSheet:(id)sender API_AVAILABLE(ios(14)) {
+    UIAlertController *sheet = [UIAlertController alertControllerWithTitle:nil message:NSLocalizedString(@"Seafile only has access to a limited set of photos.", @"Seafile") preferredStyle:UIAlertControllerStyleActionSheet];
+
+    [sheet addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Use selected photos", @"Seafile") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        [self presentQBImagePicker:sender];
+    }]];
+
+    [sheet addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Select more photos...", @"Seafile") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        [[PHPhotoLibrary sharedPhotoLibrary] presentLimitedLibraryPickerFromViewController:self];
+    }]];
+
+    [sheet addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Seafile") style:UIAlertActionStyleCancel handler:nil]];
+
+    if (IsIpad()) {
+        UIBarButtonItem *sourceItem = sender && [sender isKindOfClass:[UIBarButtonItem class]] ? (UIBarButtonItem *)sender : (self.photoItem ? self.photoItem : self.editItem);
+        sheet.popoverPresentationController.barButtonItem = sourceItem;
+        if (!sourceItem) {
+            sheet.popoverPresentationController.sourceView = self.view;
+            sheet.popoverPresentationController.sourceRect = CGRectMake(self.view.bounds.size.width/2, self.view.bounds.size.height/2, 0, 0);
+        }
+    }
+
+    [self presentViewController:sheet animated:YES completion:nil];
+}
+
 - (void)qb_imagePickerControllerDidCancel:(QBImagePickerController *)imagePickerController {
     [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (void)qb_imagePickerControllerDidTapAddPhotos:(QBImagePickerController *)imagePickerController {
+    // The trailing "Add Photos" cell in the QBImagePicker grid was tapped.
+    // Present the system limited library picker so the user can grant access
+    // to additional assets; PHPhotoLibraryChangeObserver inside the picker
+    // will refresh the grid automatically when new assets become visible.
+    if (@available(iOS 14, *)) {
+        [[PHPhotoLibrary sharedPhotoLibrary] presentLimitedLibraryPickerFromViewController:imagePickerController];
+    }
 }
 
 - (void)qb_imagePickerController:(QBImagePickerController *)imagePickerController didFinishPickingAssets:(NSArray *)assets {
@@ -3721,6 +3811,46 @@ typedef NS_ENUM(NSInteger, ToolButtonTag) {
 - (void)updateAggregateProgressForEntry:(SeafBase *)entry progress:(float)progress
 {
     [self.selectionCoordinator updateAggregateProgressForEntry:entry progress:progress];
+}
+
+#pragma mark - SeafGalleryHeroProvider
+
+- (UIView *)gallerySourceViewForItem:(id<SeafPreView>)item {
+    SeafCell *cell = [self getEntryCell:item indexPath:NULL];
+    if (!cell) return nil;
+    return cell.imageView;
+}
+
+- (CGRect)gallerySourceFrameInWindowForItem:(id<SeafPreView>)item {
+    UIView *source = [self gallerySourceViewForItem:item];
+    if (!source) return CGRectZero;
+    return [source convertRect:source.bounds toView:nil];
+}
+
+- (void)galleryWillDismissToItem:(id<SeafPreView>)item {
+    NSUInteger index = [self indexOfEntry:item];
+    if (index == NSNotFound || index >= self.allItems.count) return;
+    NSIndexPath *path = [NSIndexPath indexPathForRow:index inSection:0];
+    @try {
+        // Make sure the row is on screen so cellForRowAtIndexPath: returns
+        // a non-nil cell during the subsequent source-view lookup.
+        if (![[self.tableView indexPathsForVisibleRows] containsObject:path]) {
+            [self.tableView scrollToRowAtIndexPath:path
+                                  atScrollPosition:UITableViewScrollPositionNone
+                                          animated:NO];
+        }
+        [self.tableView layoutIfNeeded];
+    } @catch (NSException *exception) {
+        Warning("scrollToRowAtIndexPath failed: %@", exception);
+    }
+}
+
+- (void)galleryDidDismissToItem:(id<SeafPreView>)item {
+    // The gallery uses `UIModalPresentationOverFullScreen` so our own
+    // `viewWillAppear:` does not fire on dismiss; refresh the visible
+    // cells' download indicators here so files downloaded inside the
+    // gallery (or whose download state changed) reflect immediately.
+    [self refreshDownloadStatus];
 }
 
 @end

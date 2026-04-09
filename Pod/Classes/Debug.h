@@ -52,6 +52,20 @@
 #define Debug(fmt, args...) do{}while(0)
 #endif
 
+// `DebugZoom` is a hot-path-friendly variant of `Debug` for noisy callsites
+// inside the photo gallery's zoom + paging handoff machinery (e.g. logs in
+// `viewDidLayoutSubviews`, `prepareForReuse`, edge-state transitions).
+// These fire every frame the user pans / pinches and the format strings
+// involve `NSStringFromCGRect` style work that's measurable in dev builds
+// even though it's compiled out for release. Opt-in by defining
+// `SEAF_DEBUG_ZOOM=1` (Build Settings → preprocessor macros) when actively
+// debugging zoom/pan jank.
+#if DEBUG && defined(SEAF_DEBUG_ZOOM) && SEAF_DEBUG_ZOOM
+#define DebugZoom(fmt, args...) NSLog(@"#%d %s %@:" fmt, __LINE__, __FUNCTION__, [NSThread currentThread], ##args)
+#else
+#define DebugZoom(fmt, args...) do{}while(0)
+#endif
+
 #define Info(fmt, args...) NSLog(@"#%d %s %@:" fmt, __LINE__, __FUNCTION__, [NSThread currentThread], ##args)
 
 #define Warning(fmt, args...) NSLog(@"#%d %s:[WARNING]" fmt, __LINE__, __FUNCTION__, ##args)

@@ -706,15 +706,14 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
         // Create array with single image file
         NSArray<id<SeafPreView>> *imageFiles = @[sfile];
         
-        // Create and setup photo gallery view controller
-        SeafPhotoGalleryViewController *gallery = [[SeafPhotoGalleryViewController alloc] initWithPhotos:imageFiles
-                                                                                            currentItem:sfile
-                                                                                                 master:self];
-        
-        // Wrap gallery view controller in navigation controller and present modally
-        UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:gallery];
-        navController.modalPresentationStyle = UIModalPresentationFullScreen;
-        
+        // Activity rows show only an avatar, so the Hero animator falls back
+        // to a generic shrink-to-bottom dismissal — the heroProvider returns
+        // nil for `gallerySourceViewForItem:`.
+        UINavigationController *navController = [SeafPhotoGalleryViewController heroNavigationControllerWithPhotos:imageFiles
+                                                                                                       currentItem:sfile
+                                                                                                            master:self
+                                                                                                      heroProvider:self];
+
         [self presentViewController:navController animated:YES completion:nil];
         Debug(@"[Activity] Presented SeafPhotoGalleryViewController for image file");
         return;
@@ -864,6 +863,23 @@ typedef void (^ModificationHandler)(NSString *repoId, NSString *path);
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
     [self.loadingView updatePosition];
+}
+
+#pragma mark - SeafGalleryHeroProvider
+
+// Activity cells display the actor's avatar, not a thumbnail of the file
+// referenced by the activity, so there is no source view to animate back to.
+// The Hero animator detects the empty target and falls back to a generic
+// shrink-toward-bottom + fade-out dismiss.
+- (UIView *)gallerySourceViewForItem:(id<SeafPreView>)item {
+    return nil;
+}
+
+- (CGRect)gallerySourceFrameInWindowForItem:(id<SeafPreView>)item {
+    return CGRectZero;
+}
+
+- (void)galleryWillDismissToItem:(id<SeafPreView>)item {
 }
 
 @end

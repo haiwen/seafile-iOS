@@ -9,9 +9,10 @@
 #import <UIKit/UIKit.h>
 #import "SeafConnection.h"
 #import "SeafStarredFile.h"
+#import "SeafGalleryHeroProvider.h"
 
 
-@interface SeafStarredFilesViewController : UITableViewController<SeafFileUpdateDelegate, SeafDentryDelegate>
+@interface SeafStarredFilesViewController : UITableViewController<SeafFileUpdateDelegate, SeafDentryDelegate, SeafGalleryHeroProvider>
 
 @property (strong, nonatomic) SeafConnection *connection;
 

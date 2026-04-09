@@ -582,8 +582,16 @@ static CustomInputViewPresenterBlock _sharedCustomInputPresenter = nil;
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         UIImage *image = nil;
         if ([[NSFileManager defaultManager] fileExistsAtPath:cachePath]) {
-            // Load image from cache if it exists
+            // Cache hit: `imageWithContentsOfFile:` returns a UIImage whose
+            // CGImage is still JPEG-encoded — UIKit defers the decode to the
+            // first composit on the main thread. For the photo gallery this
+            // shows up as a hitch the first frame an adjacent (±1) image
+            // slides into the viewport during a zoom-handoff page-turn.
+            // Force the decode here on the background queue so the bitmap
+            // returned to the caller can be set straight onto a UIImageView
+            // without a main-thread surprise.
             image = [UIImage imageWithContentsOfFile:cachePath];
+            image = [Utils decodedImageWithImage:image];
             completion(image);
             return;
         }
